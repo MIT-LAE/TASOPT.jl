@@ -1,3 +1,20 @@
+"""
+fuseW sizes the fuselage and calculates the component weights
+
+Inputs: 
+
+- Geometry `xnose`, `Rfuse`, etc..
+- Fixed weights `Wfix`, `Wpay`, `Wseat` etc...
+- Material props `sigskin`, `rhoskin`, `E`, `G`, etc...
+
+Outputs:
+
+- `EI`, `GJ` 
+- Thickness `tskin` etc
+- Weights `Wfuse`
+- Moments `xWfuse`
+- Cabin Volume `cabVol`
+"""
 function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
                       fstring,fframe,ffadd,deltap,
                       Wpwindow,Wppinsul,Wppfloor,
