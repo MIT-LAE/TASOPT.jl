@@ -197,13 +197,13 @@
       end
 
 
-      rr(1)   = tl     - cfxa    *xl + (ha + 2.0)*ul  +  bl + rl
-      aa(1,1) = tl_th  - cfxa_th *xl +  ha_th    *ul
-      aa(1,2) =        - cfxa_ds *xl +  ha_ds    *ul  +  bl_ds
-      aa(1,3) =        - cfxa_ue *xl + (ha + 2.0)*ul_ue     + rl_ue
-      bb(1,1) = tl_thm - cfxa_thm*xl +  ha_thm   *ul
-      bb(1,2) =        - cfxa_dsm*xl +  ha_dsm   *ul  +  bl_dsm
-      bb(1,3) =        - cfxa_uem*xl + (ha + 2.0)*ul_uem    + rl_uem
+      rr[1]   = tl     - cfxa    *xl + (ha + 2.0)*ul  +  bl + rl
+      aa[1,1] = tl_th  - cfxa_th *xl +  ha_th    *ul
+      aa[1,2] =        - cfxa_ds *xl +  ha_ds    *ul  +  bl_ds
+      aa[1,3] =        - cfxa_ue *xl + (ha + 2.0)*ul_ue     + rl_ue
+      bb[1,1] = tl_thm - cfxa_thm*xl +  ha_thm   *ul
+      bb[1,2] =        - cfxa_dsm*xl +  ha_dsm   *ul  +  bl_dsm
+      bb[1,3] =        - cfxa_uem*xl + (ha + 2.0)*ul_uem    + rl_uem
 
 
       btmp     =  2.0*hca/hsa + 1.0 - ha 
@@ -219,32 +219,32 @@
       btmp_dsm = btmp_hca*hca_dsm + btmp_hsa*hsa_dsm + btmp_ha*ha_dsm
       btmp_uem = btmp_hca*hca_uem + btmp_hsa*hsa_uem
 
-      rr(2)   = hl     - dcxa    *xl + btmp    *ul
-      aa(2,1) = hl_th  - dcxa_th *xl + btmp_th *ul
-      aa(2,2) = hl_ds  - dcxa_ds *xl + btmp_ds *ul
-      aa(2,3) = hl_ue  - dcxa_ue *xl + btmp_ue *ul + btmp * ul_ue
-      bb(2,1) = hl_thm - dcxa_thm*xl + btmp_thm*ul
-      bb(2,2) = hl_dsm - dcxa_dsm*xl + btmp_dsm*ul
-      bb(2,3) = hl_uem - dcxa_uem*xl + btmp_uem*ul + btmp * ul_uem
+      rr[2]   = hl     - dcxa    *xl + btmp    *ul
+      aa[2,1] = hl_th  - dcxa_th *xl + btmp_th *ul
+      aa[2,2] = hl_ds  - dcxa_ds *xl + btmp_ds *ul
+      aa[2,3] = hl_ue  - dcxa_ue *xl + btmp_ue *ul + btmp * ul_ue
+      bb[2,1] = hl_thm - dcxa_thm*xl + btmp_thm*ul
+      bb[2,2] = hl_dsm - dcxa_dsm*xl + btmp_dsm*ul
+      bb[2,3] = hl_uem - dcxa_uem*xl + btmp_uem*ul + btmp * ul_uem
 
       if(direct)
-       rr(3)   = ue - uinv
-       aa(3,1) = 0.
-       aa(3,2) = 0.
-       aa(3,3) = 1.0
+       rr[3]   = ue - uinv
+       aa[3,1] = 0.
+       aa[3,2] = 0.
+       aa[3,3] = 1.0
       else
-       rr(3)   = hk - hksep
-       aa(3,1) = hk_th
-       aa(3,2) = hk_ds
-       aa(3,3) = hk_ue
+       rr[3]   = hk - hksep
+       aa[3,1] = hk_th
+       aa[3,2] = hk_ds
+       aa[3,3] = hk_ue
       end
 
-      bb(3,1) = 0.
-      bb(3,2) = 0.
-      bb(3,3) = 0.
+      bb[3,1] = 0.
+      bb[3,2] = 0.
+      bb[3,3] = 0.
 
       return aa, bb, rr
-      end ! blsys
+      end # blsys
 
 
 """
@@ -340,7 +340,7 @@ blvar
       end
 
       if(lami) 
-       call dil( hk, rt, di, di_hk, di_rt )
+       (di, di_hk, di_rt) = dil( hk, rt )
        di_th = di_hk*hk_th + di_rt*rt_th
        di_ds = di_hk*hk_ds
        di_ue = di_hk*hk_ue + di_rt*rt_ue
@@ -381,7 +381,7 @@ blvar
       end
  
       return
-      end ! blvar
+      end # blvar
 
 
 
@@ -401,7 +401,7 @@ blvar
  
 
 
-      function DIL( HK, RT, DI, DI_HK, DI_RT )
+      function dil( HK, RT )
 #
 #---- Laminar dissipation function  ( 2 CD/H* )     (from Falkner-Skan)
       if(HK<4.0) 
@@ -415,15 +415,14 @@ blvar
       end
       DI_RT = -DI/RT
 #
-      return
+      return DI, DI_HK, DI_RT
       end
 
 
-      function DILW( HK, RT, DI, DI_HK, DI_RT )
-      REAL MSQ
+      function DILW( HK, RT )
 #
       MSQ = 0.
-      CALL HSL( HK, RT, MSQ, HS, HS_HK, HS_RT, HS_MSQ )
+      HS, HS_HK, HS_RT, HS_MSQ = hsl( HK, RT, MSQ)
 #
 #---- Laminar wake dissipation function  ( 2 CD/H* )
       RCD    =  1.10 * (1.0 - 1.0/HK)^2  / HK
@@ -434,7 +433,7 @@ blvar
       DI_HK = 2.0*RCD_HK/(HS*RT) - (DI/HS)*HS_HK
       DI_RT = -DI/RT             - (DI/HS)*HS_RT
 #
-      return
+      return DI, DI_HK, DI_RT
       end
 
 
@@ -524,7 +523,7 @@ blvar
 #
       if(HK<HO) 
 #----- attached branch
-#=======================================================
+# =======================================================
 #----- old correlation
 #-     (from Swafford profiles)
 #       SRT = sqrt(RT)
@@ -534,7 +533,7 @@ blvar
 #       HS_HK = RTMP*HEX/HK*(-1.6/(HO-HK) - 1.0/HK)
 #       HS_RT = -4.0/RT^2 + HEX/HK*0.8/SRT/RT
 #     &             + RTMP*HEX/HK*1.6/(HO-HK)*HO_RT
-#=======================================================
+# =======================================================
 #----- new correlation  29 Nov 91
 #-     (from  arctan(y+) + Schlichting  profiles)
        HR    = ( HO - HK)/(HO-1.0)
@@ -623,7 +622,7 @@ CF_MSQ
       CF_MSQ = GEX*CFO/(FC*GRT) * (-0.25*gmi/FC^2) - 0.25*gmi*CF/FC^2
 #
       return CF, CF_HK, CF_RT, CF_MSQ
-      end ! CFT
+      end # CFT
 
 
 
