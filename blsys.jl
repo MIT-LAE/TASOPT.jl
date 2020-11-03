@@ -1,5 +1,5 @@
 
-      function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
+function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -21,7 +21,6 @@
       rr = zeros(3)
      
       gam = 1.4
-
       gmi = gam - 1.0
 
       trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-ue^2)
@@ -244,7 +243,8 @@
       bb[3,3] = 0.
 
       return aa, bb, rr
-      end # blsys
+
+end # blsys
 
 
 """
@@ -271,7 +271,7 @@ blvar
       msq = (ue*Mach)^2 / trat
       msq_ue = 2.0*ue*Mach^2 - (msq/trat)*trat_ue
 
-      h    =  ds/th
+      h    =  ds/th #H = delta star/ theta (2D shape parameter)
       h_th =  -h/th
       h_ds = 1.0/th
 
@@ -553,8 +553,7 @@ blvar
        RTMP = HK - HO + 4.0/GRT
        HTMP    = 0.007*GRT/RTMP^2 + DHSINF/HK
        HTMP_HK = -.014*GRT/RTMP^3 - DHSINF/HK^2
-       HTMP_RT = -.014*GRT/RTMP^3 * (-HO_RT - 4.0/GRT^2/RTZ * RTZ_RT) +
-	 0.007    /RTMP^2 / RTZ * RTZ_RT
+       HTMP_RT = -.014*GRT/RTMP^3 * (-HO_RT - 4.0/GRT^2/RTZ * RTZ_RT) + 0.007RTMP^2 / RTZ * RTZ_RT
        HS    = HDif^2 * HTMP + HSMIN + 4.0/RTZ
        HS_HK = HDif*2.0* HTMP + HDif^2 * HTMP_HK
        HS_RT = HDif^2 * HTMP_RT - 4.0/RTZ^2 * RTZ_RT + HDif*2.0* HTMP * (-HO_RT)
@@ -599,10 +598,11 @@ CF_MSQ
       function cft( HK, RT, MSQ )
       
       gam = 1.4
+      gmi = gam - 1.0
       CFFAC = 1.0
 
 #---- Turbulent skin friction function  ( Cf )    (Coles)
-      gmi = gam - 1.0
+      
       FC = sqrt(1.0 + 0.5*gmi*MSQ)
       GRT = log(RT/FC)
       GRT = max(GRT,3.0)
