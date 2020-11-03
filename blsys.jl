@@ -19,7 +19,7 @@
       aa = zeros(3,3)
       bb = zeros(3,3)
       rr = zeros(3)
-
+     
       gam = 1.4
 
       gmi = gam - 1.0
@@ -255,13 +255,7 @@ blvar
 
 
       function blvar(simi,lami,wake, Reyn,Mach, fexcr,
-                      x, th ,ds ,ue , 
-                      h , h_th, h_ds,
-                      hk, hk_th, hk_ds, hk_ue,
-                      hc, hc_th, hc_ds, hc_ue,
-                      hs, hs_th, hs_ds, hs_ue,
-                      cf, cf_th, cf_ds, cf_ue,
-                      di, di_th, di_ds, di_ue )
+                      x, th ,ds ,ue )
 
 #c    data acon, bcon / 6.70, 0.75 /
 
@@ -322,7 +316,7 @@ blvar
        cf    = 0.
        cf_th = 0.
        cf_ds = 0.
-       cd_ue = 0.
+       cf_ue = 0.
       else
        if(lami)
         (cf, cf_hk, cf_rt, cf_msq) = cfl( hk, rt, msq )
@@ -380,7 +374,13 @@ blvar
        di_ue = wfac*di_ue
       end
  
-      return
+      return h , h_th, h_ds,
+             hk, hk_th, hk_ds, hk_ue,
+             hc, hc_th, hc_ds, hc_ue,
+             hs, hs_th, hs_ds, hs_ue,
+             cf, cf_th, cf_ds, cf_ue,
+             di, di_th, di_ds, di_ue 
+    
       end # blvar
 
 
@@ -548,7 +548,7 @@ blvar
       else
 #
 #----- separated branch
-       GRT = LOG(RTZ)
+       GRT = log(RTZ)
        HDif = HK - HO 
        RTMP = HK - HO + 4.0/GRT
        HTMP    = 0.007*GRT/RTMP^2 + DHSINF/HK
@@ -565,8 +565,8 @@ blvar
 #-    (unnecessary with new correlation)
 #      HTF    = 0.485/9.0 * (HK-4.0)^2/HK  +  1.515
 #      HTF_HK = 0.485/9.0 * (1.0-16.0/HK^2)
-#      ARG = MAX( 10.0*(1.0 - HK) , -15.0 )
-#      HXX = EXP(ARG)
+#      ARG = max( 10.0*(1.0 - HK) , -15.0 )
+#      HXX = exp(ARG)
 #      HXX_HK = -10.0*HXX
 #C
 #      HS_HK  = (1.0-HXX)*HS_HK  +  HXX*HTF_HK
@@ -596,7 +596,7 @@ CF_HK
 CF_RT
 CF_MSQ
 """
-      function CFT( HK, RT, MSQ )
+      function cft( HK, RT, MSQ )
       
       gam = 1.4
       CFFAC = 1.0
@@ -604,19 +604,19 @@ CF_MSQ
 #---- Turbulent skin friction function  ( Cf )    (Coles)
       gmi = gam - 1.0
       FC = sqrt(1.0 + 0.5*gmi*MSQ)
-      GRT = LOG(RT/FC)
-      GRT = MAX(GRT,3.0)
+      GRT = log(RT/FC)
+      GRT = max(GRT,3.0)
 #
       GEX = -1.74 - 0.31*HK
 #
       ARG = -1.33*HK
-      ARG = MAX(-20.0, ARG )
+      ARG = max(-20.0, ARG )
 #
-      THK = TANH(4.0 - HK/0.875)
+      THK = tanh(4.0 - HK/0.875)
 #
-      CFO =  CFFAC * 0.3*EXP(ARG) * (GRT/2.3026)^GEX
+      CFO =  CFFAC * 0.3*exp(ARG) * (GRT/2.3026)^GEX
       CF     = ( CFO  +  1.1E-4*(THK-1.0) ) / FC
-      CF_HK  = (-1.33*CFO - 0.31*LOG(GRT/2.3026)*CFO -
+      CF_HK  = (-1.33*CFO - 0.31*log(GRT/2.3026)*CFO -
 	 1.1E-4*(1.0-THK^2) / 0.875    ) / FC
       CF_RT  = GEX*CFO/(FC*GRT) / RT
       CF_MSQ = GEX*CFO/(FC*GRT) * (-0.25*gmi/FC^2) - 0.25*gmi*CF/FC^2
