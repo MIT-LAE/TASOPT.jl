@@ -1,4 +1,8 @@
+"""
+# blsys returns the 3x3 BL equation system 
 
+
+"""
 function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
@@ -247,9 +251,30 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
 end # blsys
 
 
-"""
-blvar
 
+"""
+blvar returns the boundary layer variables needed 
+
+## Inputs - 
+
+simi: Similarity flag
+lami: Laminar flow flag
+wake: In wake? Flage
+
+Reyn: Reynolds number
+Mach: Mach number for compressibility
+fexcr: Exercense factor
+
+## Outputs - 
+
+h : Shape parameter
+hk: Kinematic shape parameter
+hc: 
+hs: 
+cf: Skin friciton factor
+cd: Dissipation factor
+
+and their derivatives
 
 """
 
@@ -585,15 +610,24 @@ blvar
  
  
 """
-CFT returns the turbulent skin friciton factor
+CFT returns the turbulent skin friciton factor using the turbulent compressible version
+of the Coles formula 
+
+
 MSQ: (Mach number)^2
+HK:  Kinematic shape parameter
+RT:  Momentum thickness (theta) Reynolds number 
 
 ### Outputs
 
-CF
-CF_HK
-CF_RT
-CF_MSQ
+CF:   Skin friction factor
+
+CF\\_HK: Derivative wrt to HK -> ``\\frac{\\partial C_f}{\\partial H_k}``
+
+CF\\_RT: Derivative wrt to RT -> dCf
+
+CF\\_MSQ: Derivative wrt to ``M^2``
+
 """
       function cft( HK, RT, MSQ )
       
@@ -606,18 +640,20 @@ CF_MSQ
       FC = sqrt(1.0 + 0.5*gmi*MSQ)
       GRT = log(RT/FC)
       GRT = max(GRT,3.0)
-#
+ 
       GEX = -1.74 - 0.31*HK
-#
+ 
       ARG = -1.33*HK
       ARG = max(-20.0, ARG )
-#
+
       THK = tanh(4.0 - HK/0.875)
-#
-      CFO =  CFFAC * 0.3*exp(ARG) * (GRT/2.3026)^GEX
+
+      CFO =  CFFAC * 0.3*exp(ARG) * (GRT/log(10))^GEX
+    # CFO =  CFFAC * 0.3*exp(ARG) * (GRT/2.3026)^GEX
       CF     = ( CFO  +  1.1E-4*(THK-1.0) ) / FC
       CF_HK  = (-1.33*CFO - 0.31*log(GRT/2.3026)*CFO -
-	 1.1E-4*(1.0-THK^2) / 0.875    ) / FC
+                 1.1E-4*(1.0-THK^2) / 0.875    ) / FC
+    
       CF_RT  = GEX*CFO/(FC*GRT) / RT
       CF_MSQ = GEX*CFO/(FC*GRT) * (-0.25*gmi/FC^2) - 0.25*gmi*CF/FC^2
 #
