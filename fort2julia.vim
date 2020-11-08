@@ -29,8 +29,10 @@
 :%s/\.gt\./>/gi
 :%s/\.lt\./</gi
 :%s/\.eq\./==/gi
-:%s/\.leq\./<=/gi
-:%s/\.geq\./>=/gi
+:%s/\.le\./<=/gi
+:%s/\.ge\./>=/gi
+:%s/\.true\./true/gi
+:%s/\.false\./false/gi
 "Replace do loops with for
 :%s/do\s*[0-9a-zA-Z]*\s*=\s*[0-9a-zA-Z]*\zs,\ze/:/g
 :%s/\zsdo\ze\s*[0-9a-zA-Z]*\s*=/for/g
