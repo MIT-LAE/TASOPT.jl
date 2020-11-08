@@ -1,6 +1,16 @@
 """
 # blsys returns the 3x3 BL equation system 
 
+## Inputs - 
+
+simi: Similarity flag
+lami: Laminar flow flag
+wake: In wake? Flag
+direct: Direct solution flag
+
+Mach: Mach number for compressibility
+uinv: Inviscid velocity
+fexcr: Exercense factor
 
 """
 function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
@@ -209,7 +219,7 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
       bb[1,3] =        - cfxa_uem*xl + (ha + 2.0)*ul_uem    + rl_uem
 
 
-      btmp     =  2.0*hca/hsa + 1.0 - ha 
+      btmp     =  2.0*hca/hsa + 1.0 - ha #This is the (2H**/H* + 1 - H) factor in the K.E. eqn
       btmp_hca =  2.0    /hsa
       btmp_hsa = -2.0*hca/hsa^2
       btmp_ha  =                    - 1.0
