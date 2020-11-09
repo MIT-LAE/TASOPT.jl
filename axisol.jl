@@ -1,39 +1,35 @@
+"""
+     Calculates compressible potential flow about
+     a quasi-axisymmetric body, using a simple 
+     piecewise-constant source line.
 
+   Inputs:
+     xnose     x location of nose point 
+     xend      x location of tail point 
+     xblend1   x location of nose-section blend point
+     xblend2   x location of tail-section blend point
+     Amax      maximum cross-sectional area
+     anose     nose-section shape exponent
+     btail     tail-section shape exponent
+     iclose    if 0, tail tapers to a point, otherwise to an edge
+     Mach      freestream Mach number for Prandtl-Glauert
+     nc        number of control points to be used
+     nldim     max dimension of passed arrays
+
+   Outputs:
+     nl       number of output surface and wake points
+     ilte     index of TE point
+     xl(.)    x locations of surface segment endpoints
+     zl(.)    z locations of surface segment endpoints
+     sl(.)    arc lengths along surface and wake
+     dyl(.)   half-width of edge-type tail section
+     ql(.)    velocities V/V_inf along surface and wake
+
+"""
 function axisol(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
-	Mach, nc,
-	nldim)
+	Mach, nc, nldim)
 
-# ============================================================
-#     Calculates compressible potential flow about
-#     a quasi-axisymmetric body, using a simple 
-#     piecewise-constant source line.
-#
-#   Inputs:
-#     xnose     x location of nose point 
-#     xend      x location of tail point 
-#     xblend1   x location of nose-section blend point
-#     xblend2   x location of tail-section blend point
-#     Amax      maximum cross-sectional area
-#     anose     nose-section shape exponent
-#     btail     tail-section shape exponent
-#     iclose    if 0, tail tapers to a point, otherwise to an edge
-#     Mach      freestream Mach number for Prandtl-Glauert
-#     nc        number of control points to be used
-#     nldim     max dimension of passed arrays
-#
-#   Outputs:
-#     nl       number of output surface and wake points
-#     ilte     index of TE point
-#     xl(.)    x locations of surface segment endpoints
-#     zl(.)    z locations of surface segment endpoints
-#     sl(.)    arc lengths along surface and wake
-#     dyl(.)   half-width of edge-type tail section
-#     ql(.)    velocities V/V_inf along surface and wake
-#
-# ============================================================
-#      implicit real (a-h,m,o-z)
-#      real xl(*), zl(*), sl(*), dyl(*), ql(*)
       
       idim  = 40
       xc = zeros(idim) 
@@ -320,15 +316,14 @@ function vline(x,y,z,x1,x2,b)
 # wl(x,y,z,b) = ((x2-x)/R(x-x2,y,z,b) - (x1-x)/R(x-x1,y,z,b))*(z*b)/((y*b)^2 + (z*b)^2) / b
 
       return u0, v0, w0
-      end # vline
+end # vline
 
-
-      function vsurf(x,y,z, x1,x2,y1,y2,b)
-#----------------------------------------------------------
-#     Sets velocity u0,v0,w0 at location x,y,z,
-#     due to unit-strength source panel segment located
-#     at (x1..x2, y1..y2, 0)
-#----------------------------------------------------------
+"""
+Sets velocity u0,v0,w0 at location x,y,z,
+due to unit-strength source panel segment located
+at (x1..x2, y1..y2, 0)
+"""
+function vsurf(x,y,z, x1,x2,y1,y2,b)
       qopi= 1/(4*pi)
 
       bsq = b^2
@@ -370,6 +365,6 @@ function vline(x,y,z,x1,x2,b)
 # ws(x,y,z,y1,y2,b) = (tz(x,y,z,x2,y2,b) - tz(x,y,z,x2,y1,b) - tz(x,y,z,x1,y2,b) + tz(x,y,z,x1,y1,b)) / (y2-y1) / b^2
 
       return u0,v0,w0
-      end # vsurf
+end # vsurf
 
 
