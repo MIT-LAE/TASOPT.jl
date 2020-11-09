@@ -2,8 +2,7 @@
 function axisol(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc,
-	nldim, 
-        nl, ilte, xl,zl,sl,dyl,ql)
+	nldim)
 
 # ============================================================
 #     Calculates compressible potential flow about
@@ -47,7 +46,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
       nxc = zeros(idim)
       nyc = zeros(idim)
       nzc = zeros(idim)
-
+      
       aa = zeros(idim,idim)
       rr = zeros(idim)
 
@@ -67,6 +66,13 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
         quit()
       end
 
+      xl = zeros(nldim)
+      zl = zeros(nldim)
+      sl = zeros(nldim)
+      dyl = zeros(nldim)
+      ql = zeros(nldim)
+
+
       beta = sqrt(1.0 - Mach^2)
 
 #---- max radius of equivalent round body
@@ -80,64 +86,64 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
         else
          frac = 0.5*(1.0 - cos(pi*tl))
         end
-        xl(i) = xnose*(1.0-frac) + xend*frac
+        xl[i] = xnose*(1.0-frac) + xend*frac
 
         if(i==1 || i==ilte) 
-         zl(i) = 0.
-        elseif(xl(i) < xblend1) 
-         f = 1.0 - (xl(i)-xnose)/(xblend1-xnose)
-         zl(i) = Rcyl*(1.0 - f^anose)^(1.0/anose)
-        elseif(xl(i) < xblend2) 
-         zl(i) = Rcyl
+         zl[i] = 0.
+        elseif(xl[i] < xblend1) 
+         f = 1.0 - (xl[i]-xnose)/(xblend1-xnose)
+         zl[i] = Rcyl*(1.0 - f^anose)^(1.0/anose)
+        elseif(xl[i] < xblend2) 
+         zl[i] = Rcyl
         else
-         f = (xl(i)-xblend2)/(xend-xblend2)
-         zl(i) = Rcyl*(1.0 - f^btail)
+         f = (xl[i]-xblend2)/(xend-xblend2)
+         zl[i] = Rcyl*(1.0 - f^btail)
         end
 
         if(iclose==0) 
-          dyl(i) = 0.
+          dyl[i] = 0.
         else
-          if(xl(i) < xblend2) 
-           dyl(i) = 0.
+          if(xl[i] < xblend2) 
+           dyl[i] = 0.
           else
-           dyl(i) = Rcyl - zl(i)
+           dyl[i] = Rcyl - zl[i]
           end
         end
 
       end
-      zl(ilte) = 0.25*zl(ilte-1)
+      zl[ilte] = 0.25*zl[ilte-1]
  
       if(iclose==0) 
-       dyl(ilte) = 0.
+       dyl[ilte] = 0.
       else
-       dyl(ilte) = Rcyl - zl(ilte)
+       dyl[ilte] = Rcyl - zl[ilte]
       end
 
 #---- wake geometry points
       for i = ilte+1: nl
-        xl(i) = 2.0*xend - xl(2*ilte-i)
-        zl(i) = 0.125*zl(ilte-1)
+        xl[i] = 2.0*xend - xl[2*ilte-i]
+        zl[i] = 0.125*zl[ilte-1]
 
         if(iclose==0) 
-         dyl(i) = 0.
+         dyl[i] = 0.
         else
-         dyl(i) = Rcyl - zl(i)
+         dyl[i] = Rcyl - zl[i]
         end
       end
 
 #---- calculate arc lengths
-      sl(1) = 0.
+      sl[1] = 0.
       for i = 1: nl-1
-        ds = sqrt((xl(i+1)-xl(i))^2 + (zl(i+1)-zl(i))^2)
-        sl(i+1) = sl(i) + ds
+        ds = sqrt((xl[i+1]-xl[i])^2 + (zl[i+1]-zl[i])^2)
+        sl[i+1] = sl[i] + ds
       end
 
 
 #----- calculate wetted area, out of interest
 #      Awet = 0.
 #      for i = 1: ilte-1
-#        ds = sqrt((xl(i+1)-xl(i))^2 + (zl(i+1)-zl(i))^2)
-#        ra = 0.5*(zl(i+1)+zl(i))
+#        ds = sqrt((xl[i+1]-xl[i])^2 + (zl[i+1]-zl[i])^2)
+#        ra = 0.5*(zl[i+1]+zl[i])
 #        Awet = Awet + 2.0*pi*ra*ds
 #      end
 
@@ -154,53 +160,53 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
         else
          frac = 0.5*(1.0 - cos(pi*tc))
         end
-        xc(i) = xnose*(1.0-frac) + xend*frac
+        xc[i] = xnose*(1.0-frac) + xend*frac
 
-#c      xc(i) = 0.5*(xl(i) + xl(i+1))
-        if    (xc(i) < xblend1) 
+#c      xc[i] = 0.5*(xl[i] + xl[i+1])
+        if    (xc[i] < xblend1) 
 #------- nose section
-         f = 1.0 - (xc(i)-xnose)/(xblend1-xnose)
+         f = 1.0 - (xc[i]-xnose)/(xblend1-xnose)
          f_x = -1.0/(xblend1-xnose)
-         zc(i) = Rcyl*(1.0 - f^anose)^(1.0/anose)
-         z_f = -zc(i)/(1.0 - f^anose) * f^(anose-1.0)
+         zc[i] = Rcyl*(1.0 - f^anose)^(1.0/anose)
+         z_f = -zc[i]/(1.0 - f^anose) * f^(anose-1.0)
          z_x = z_f*f_x
-         dyc(i) = 0.
+         dyc[i] = 0.
 
-        elseif(xc(i) < xblend2) 
+        elseif(xc[i] < xblend2) 
 #------- constant section
-         zc(i) = Rcyl
+         zc[i] = Rcyl
          z_x = 0.
-         dyc(i) = 0.
+         dyc[i] = 0.
 
         else
 #------- tail section
-         f = (xc(i)-xblend2)/(xend-xblend2)
+         f = (xc[i]-xblend2)/(xend-xblend2)
          f_x = 1.0/(xend-xblend2)
-         zc(i) = Rcyl*(1.0 - f^btail)
+         zc[i] = Rcyl*(1.0 - f^btail)
          z_f = -Rcyl*btail*f^(btail-1.0)
          z_x = z_f*f_x
 
          if(iclose==0) 
 #-------- taper to a point
-          dyc(i) = 0.
+          dyc[i] = 0.
          else
 #-------- taper to an edge
-          dyc(i) = Rcyl - zc(i)
+          dyc[i] = Rcyl - zc[i]
          end
         end
 
-#       dyc(i) = 0.05*zc(i)   ####
+#       dyc[i] = 0.05*zc[i]   ####
 
 #------ surface-normal vector
-        nxc(i) =  z_x / sqrt(1.0 + z_x^2)
-        nzc(i) = -1.0 / sqrt(1.0 + z_x^2)
-        nyc(i) = 0.
+        nxc[i] =  z_x / sqrt(1.0 + z_x^2)
+        nzc[i] = -1.0 / sqrt(1.0 + z_x^2)
+        nyc[i] = 0.
 
-        zxc(i) = z_x
+        zxc[i] = z_x
 
 #------ meridonal arc length and surface area of i..i+1 segment
-        ds = sqrt((xl(i+1)-xl(i))^2 + (zl(i+1)-zl(i))^2)
-        ac(i) = ds * 2.0*pi*(zl(i) + 4.0*zc(i) + zl(i+1))/6.0
+        ds = sqrt((xl[i+1]-xl[i])^2 + (zl[i+1]-zl[i])^2)
+        ac[i] = ds * 2.0*pi*(zl[i] + 4.0*zc[i] + zl[i+1])/6.0
       end
 
 
@@ -214,36 +220,36 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 #------ go over source segments, setting up V.n=0 contributions at control point i
         yc = 0.
         for j = 1: nc
-          if(dyc(j) == 0.0) 
-#--------- singularity element is source line over xl(i)...xl(i+1)
-           call vline(xc(i),yc,zc(i), xl(j),xl(j+1), u0,v0,w0,beta)
+          if(dyc[j] == 0.0) 
+#--------- singularity element is source line over xl[i]...xl[i+1]
+           u0, v0, w0 =  vline(xc[i],yc,zc[i], xl[j],xl[j+1],beta)
           else
-#--------- singularity element is source panel over xl(i)...xl(i+1), y1..y2
-           y1 = -dyc(j)
-           y2 =  dyc(j)
-           call vsurf(xc(i),yc,zc(i), xl(j),xl(j+1),y1,y2,u0,v0,w0,beta)
+#--------- singularity element is source panel over xl[i]...xl[i+1], y1..y2
+           y1 = -dyc[j]
+           y2 =  dyc[j]
+           u0, v0, w0 = vsurf(xc[i],yc,zc[i], xl[j],xl[j+1],y1,y2,beta)
           end
 
 #-------- add on contribution to V.n=0 equation
-          aa(i,j) = aa(i,j) + u0*nxc(i) + v0*nyc(i) + w0*nzc(i)
+          aa[i,j] = aa[i,j] + u0*nxc[i] + v0*nyc[i] + w0*nzc[i]
         end
 
 #------ unit-freestream contribtuion to V.n=0 equation
-        rr(i) = nxc(i)
+        rr[i] = nxc[i]
       end
 
 #---- solve for all source strenghts
-      call gaussn(idim,nc,aa,rr,1)
+      rr = aa\rr  #call gaussn(idim,nc,aa,rr,1)
       for i = 1: nc
-        src(i) = -rr(i)
+        src[i] = -rr[i]
       end
       
 #      for i = 1: n
-#        write(41,*) xc(i), src(i)
+#        write(41,*) xc[i], src[i]
 #      end
 
 #---- calculate velocities at all xl,zl points
-      ql(1) = 0.0
+      ql[1] = 0.0
       for i = 2: nl
 #------ clear velocity accumulators
         ul = 0.
@@ -253,40 +259,41 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 #------ accumulate source veleocities
         yl = 0.
         for j = 1: nc
-          if(dyc(j) == 0.0) 
-           call vline(xl(i),yl,zl(i), xl(j),xl(j+1), u0,v0,w0,beta)
+          if(dyc[j] == 0.0) 
+           u0,v0,w0 =  vline(xl[i],yl,zl[i], xl[j],xl[j+1],beta)
           else
-           y1 = -dyc(j)
-           y2 =  dyc(j)
-           call vsurf(xl(i),yl,zl(i), xl(j),xl(j+1),y1,y2,u0,v0,w0,beta)
+           y1 = -dyc[j]
+           y2 =  dyc[j]
+           u0,v0,w0 =  vsurf(xl[i],yl,zl[i], xl[j],xl[j+1],y1,y2,beta)
           end
-          ul = ul + u0*src(j)
-          vl = vl + v0*src(j)
-          wl = wl + w0*src(j)
+          ul = ul + u0*src[j]
+          vl = vl + v0*src[j]
+          wl = wl + w0*src[j]
         end
 #
 #------ add on freestream
         ul = ul + 1.0
 
 #------ set speed
-        ql(i) = sqrt(ul^2 + vl^2 + wl^2)
+        ql[i] = sqrt(ul^2 + vl^2 + wl^2)
 
 #        write(42,'(1x,9g13.5)') 
-#     &     xl(i),zl(i),sl(i), ql(i)
+#     &     xl[i],zl[i],sl[i], ql[i]
       end
 
-      return
+      return nl, ilte, xl,zl,sl,dyl,ql
       end # axisol
 
 
-      function vline(x,y,z,x1,x2, u0,v0,w0,b)
-#----------------------------------------------------------
-#     Sets velocity u0,v0,w0 at location x,y,z,
-#     due to unit-strength source line segment located 
-#     at (x1..x2, 0, 0)
-#----------------------------------------------------------
-#
-      data qopi / 0.0795774715459476678 /
+"""
+----------------------------------------------------------
+     Sets velocity u0,v0,w0 at location x,y,z,
+     due to unit-strength source line segment located 
+     at (x1..x2, 0, 0)
+----------------------------------------------------------
+"""   
+function vline(x,y,z,x1,x2,b)
+      qopi= 1/(4*pi)
 
       bsq = b^2
 
@@ -312,17 +319,17 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 # vl(x,y,z,b) = ((x2-x)/R(x-x2,y,z,b) - (x1-x)/R(x-x1,y,z,b))*(y*b)/((y*b)^2 + (z*b)^2) / b
 # wl(x,y,z,b) = ((x2-x)/R(x-x2,y,z,b) - (x1-x)/R(x-x1,y,z,b))*(z*b)/((y*b)^2 + (z*b)^2) / b
 
-      return
+      return u0, v0, w0
       end # vline
 
 
-      function vsurf(x,y,z, x1,x2,y1,y2, u0,v0,w0, b)
+      function vsurf(x,y,z, x1,x2,y1,y2,b)
 #----------------------------------------------------------
 #     Sets velocity u0,v0,w0 at location x,y,z,
 #     due to unit-strength source panel segment located
 #     at (x1..x2, y1..y2, 0)
 #----------------------------------------------------------
-      data qopi / 0.0795774715459476678 /
+      qopi= 1/(4*pi)
 
       bsq = b^2
 
@@ -345,10 +352,10 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
       h21 = atanh( (x2-x) / R21 )
       h22 = atanh( (x2-x) / R22 )
 
-      t11 = atan2( (x1-x)*y1b , zb*R11 )
-      t12 = atan2( (x1-x)*y2b , zb*R12 )
-      t21 = atan2( (x2-x)*y1b , zb*R21 )
-      t22 = atan2( (x2-x)*y2b , zb*R22 )
+      t11 = atan( (x1-x)*y1b , zb*R11 )
+      t12 = atan( (x1-x)*y2b , zb*R12 )
+      t21 = atan( (x2-x)*y1b , zb*R21 )
+      t22 = atan( (x2-x)*y2b , zb*R22 )
 
       u0 = qopi*(g22 - g21 - g12 + g11)/(y2b-y1b) / bsq
       v0 = qopi*(h22 - h21 - h12 + h11)/(y2b-y1b) / b
@@ -362,7 +369,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 # vs(x,y,z,y1,y2,b) = (hy(x,y,z,x2,y2,b) - hy(x,y,z,x2,y1,b) - hy(x,y,z,x1,y2,b) + hy(x,y,z,x1,y1,b)) / (y2-y1) / b^2
 # ws(x,y,z,y1,y2,b) = (tz(x,y,z,x2,y2,b) - tz(x,y,z,x2,y1,b) - tz(x,y,z,x1,y2,b) + tz(x,y,z,x1,y1,b)) / (y2-y1) / b^2
 
-      return
+      return u0,v0,w0
       end # vsurf
 
 
