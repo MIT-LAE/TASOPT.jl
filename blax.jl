@@ -64,7 +64,6 @@
 
 -----------------------------------------------------------------
 """
-
 function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 
 
@@ -84,8 +83,6 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
       bb = zeros(3,3)
       rr = zeros(3)
         
-      dmax = 1e20
-
       hm,  hm_thm, hm_dsm = 1e20*ones(3)
       hkm, hkm_thm, hkm_dsm, hkm_uem = 0*1e20*ones(4)
       hcm, hcm_thm, hcm_dsm, hcm_uem = 1e20*ones(4)
@@ -112,6 +109,8 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
       kdim = 3*n # instead of idim
       asys = zeros(kdim,kdim)
       rsys = zeros(kdim)
+    
+    simi, lami, wake, direct = true, true, true, true
 
 #---- pi  and  1/(4 pi)
       qopi = 1/(4*pi)
@@ -119,19 +118,21 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
       gmi = gam - 1.0
 
       hksep =  2.9 
-      eps =  1.0e-6 
+      eps =  1.0e-6 # Tolerance for Newton solver
 
       if(n > idim)
-       print("BLAX: Local array overflow.  Increase idim to", n)
+       println("BLAX: Local array overflow.  Increase idim to", n)
+       quit()
       end
+    
 #---- initialize ue to inviscid uinv, and initialize rhoe
-      uei = uinv
-      rhi = (1 .+ 0.5*gmi*Mach^2 .* (1.0 .- uei.^2)).^(1.0/gmi)
-     #for i = 1:n
-     #  uei[i] = uinv[i]
-     #  trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-uei[i]^2)
-     #  rhi[i] = trat^(1.0/gmi)
-     #end
+#       uei = uinv'
+#       rhi = (1 .+ 0.5*gmi*Mach^2 .* (1.0 .- uei.^2)).^(1.0/gmi)
+     for i = 1:n
+      uei[i] = uinv[i]
+      trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-uei[i]^2)
+      rhi[i] = trat^(1.0/gmi)
+     end
 
 #---- first point is not calculated if xi=0 there
       if(xi[1] == 0.0)
@@ -189,13 +190,11 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
          end
 
         end
-#         println(i,"-", hm," ", cfm," ", dim, " ", dmax)
 #------ always try direct mode first
         direct = true
         hkprev = 0.
 
         for iter = 1:20 
-#           println(simi," ", lami," ",wake," ", Reyn," ",Mach," ", x, " ",th, " ",ds ," ",ue)
           (h , h_th, h_ds,
           hk, hk_th, hk_ds, hk_ue,
           hc, hc_th, hc_ds, hc_ue,
@@ -246,8 +245,6 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 
           dmax = max( abs(dth)/th , abs(dds)/ds , abs(due)/ue )
             
-#           println("iter = $iter, direct = $direct, dmax = $dmax")
-#           println("rlx = $rlx, ue = $ue, hk = $hk, cf = $cf, di = $di")
 
           th = th + rlx*dth
           ds = ds + rlx*dds
@@ -338,7 +335,6 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 #---- global Newton iteration
      npass = 20
      for ipass = 1:npass 
-        println("ipass = $ipass")
 
 #---- clear system matrix and righthand side
       rsys = zeros(nsys)
@@ -353,7 +349,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 
 #---- set current uvis corresponding to current mdi
       dsi[1] = 0.
-#      uvis[2:n] = uinv[2:n]      
+    
       for i = 2: n
         uvis[i] = uinv[i]
         for j = 1: n
@@ -414,7 +410,6 @@ for i = 2:n
          end
         end
             
-# println(simi," ", lami," ",wake," ", Reyn," ",Mach," ", x, " ",th, " ",ds ," ",ue)
         (h , h_th, h_ds,
         hk, hk_th, hk_ds, hk_ue,
         hc, hc_th, hc_ds, hc_ue,
@@ -438,7 +433,7 @@ for i = 2:n
                       hsm, hsm_thm, hsm_dsm, hsm_uem,
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
-         println("\naa = ", aa[1,1])
+
 #------ put BL equations of small 3x3 system into big system
         for k = 1:2
           ksys = 3*(i-1) + k
@@ -568,9 +563,9 @@ end #end i = 2:n loop
           if(rlx*duei[i] >  0.2*ue) rlx =  0.2*ue/duei[i] end
           if(rlx*duei[i] < -0.1*ue) rlx = -0.1*ue/duei[i] end
             
-          println(i, ", ", rlx)
+#           println(i, ", ", rlx)
           dmax = max( dmax , abs(dthi[i])/th , abs(ddsi[i])/ds , abs(duei[i])/ue)
-          println("dmax = $dmax, ue = $ue")
+#           println("dmax = $dmax, ue = $ue")
         end
 
 #------ perform Newton updated, with limiter if rlx < 1
@@ -580,7 +575,6 @@ end #end i = 2:n loop
           uei[i] = uei[i] + rlx*duei[i]
           mdi[i] = uei[i]*dsi[i]*(bi[i] + 2.0*pi*dsi[i]*rni[i])
         end
-        
 
         if(dmax <  eps) break end
 

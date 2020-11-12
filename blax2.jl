@@ -208,7 +208,7 @@ for i = 2: n #BL march loop
           if(iter==1) 
            hkprev = hk
           else
-           if(hk > hksep) then # .and. hk > hkprev) 
+           if(hk > hksep)  # .and. hk > hkprev) 
 #---------- Hk limit exceeded... switch to inverse mode for this point
             direct = false
            end
