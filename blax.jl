@@ -362,7 +362,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
       end
 
 #---- sweep downstream to set up BL equations
-      for i = 2:n
+for i = 2:n
         
         simi = xi[i-1] == 0.0
 #c      lami = simi
@@ -438,7 +438,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
                       hsm, hsm_thm, hsm_dsm, hsm_uem,
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
-#          println("aa = ", aa)
+         println("\naa = ", aa[1,1])
 #------ put BL equations of small 3x3 system into big system
         for k = 1:2
           ksys = 3*(i-1) + k
@@ -523,7 +523,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
         dim_dsm = di_ds
         dim_uem = di_ue
 
-        end #end i = 2:n loop
+end #end i = 2:n loop
 
 
 #      do i = 1, n

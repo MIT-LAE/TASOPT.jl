@@ -301,7 +301,7 @@ and their derivatives
       gmi = gam - 1.0
 
       trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-ue^2)
-      trat_ue =       -gmi*Mach^2 *      ue
+      trat_ue =       -gmi*Mach^2 *      ue    #deriv of trat wrt to ue d(trat)/d(ue)
 
       msq = (ue*Mach)^2 / trat
       msq_ue = 2.0*ue*Mach^2 - (msq/trat)*trat_ue
@@ -499,7 +499,7 @@ and their derivatives
       function cfl( HK, RT, MSQ )
 #
 #---- Laminar skin friction function  ( Cf )    ( from Falkner-Skan )
-      if(HK<5.5)
+      if(HK < 5.5)
        TMP = (5.5-HK)^3 / (HK+1.0)
        CF    = ( 0.0727*TMP                      - 0.07       )/RT
        CF_HK = ( -.0727*TMP*3.0/(5.5-HK) - 0.0727*TMP/(HK+1.0))/RT
@@ -658,8 +658,8 @@ CF\\_MSQ: Derivative wrt to ``M^2``
 
       THK = tanh(4.0 - HK/0.875)
 
-      CFO =  CFFAC * 0.3*exp(ARG) * (GRT/log(10))^GEX
-    # CFO =  CFFAC * 0.3*exp(ARG) * (GRT/2.3026)^GEX
+#       CFO =  CFFAC * 0.3*exp(ARG) * (GRT/log(10))^GEX
+      CFO =  CFFAC * 0.3*exp(ARG) * (GRT/2.3026)^GEX
       CF     = ( CFO  +  1.1E-4*(THK-1.0) ) / FC
       CF_HK  = (-1.33*CFO - 0.31*log(GRT/2.3026)*CFO -
                  1.1E-4*(1.0-THK^2) / 0.875    ) / FC
