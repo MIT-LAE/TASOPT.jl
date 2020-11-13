@@ -126,13 +126,14 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
       end
     
 #---- initialize ue to inviscid uinv, and initialize rhoe
-#       uei = uinv'
-#       rhi = (1 .+ 0.5*gmi*Mach^2 .* (1.0 .- uei.^2)).^(1.0/gmi)
-     for i = 1:n
-      uei[i] = uinv[i]
-      trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-uei[i]^2)
-      rhi[i] = trat^(1.0/gmi)
-     end
+      uei[1:n] = uinv[1:n]
+      rhi = @. (1 + 0.5*gmi*Mach^2 * (1.0 - uei^2))^(1.0/gmi)
+    
+#      for i = 1:n
+#       uei[i] = uinv[i]
+#       trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-uei[i]^2)
+#       rhi[i] = trat^(1.0/gmi)
+#      end
 
 #---- first point is not calculated if xi=0 there
       if(xi[1] == 0.0)
