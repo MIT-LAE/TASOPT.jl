@@ -16,7 +16,7 @@ function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
 #    rni(.)  dr/dn
 #             = 0 for 2D
 #    uinv(.) inviscid velocity
-#    Reyn    Reynolds number,  ρ_ref u_ref l_ref / mu_ref
+#    Reyn    Reynolds number,  ρ_ref u_ref l_ref / μ_ref
 #    Mach    Mach number    ,  u_ref / a_ref
 #    fexcr   excrescence multiplier, applied to wall Cf 
 #             = 1 for smooth wall
@@ -26,15 +26,15 @@ function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
 #    u_ref   freestream velocity
 #    a_ref   freestream speed of sound
 #    ρ_ref freestream density
-#    mu_ref  freestream viscosity
+#    μ_ref  freestream viscosity
 #    
 #  Outputs
 #  -------
 #    uₑᵢ[i]  edge velocity, ( = uinv[i] + displacement correction )
 #    δᵢ[i]  displacement θᵢckness
 #    θᵢ[i]  momentum θᵢckness
-#    θ∗ᵢ[i]  kinetic energy θᵢckness
-#    δᵢ⁺⁺[i]  density flux θᵢckness
+#    θsᵢ[i]  kinetic energy θᵢckness
+#    δssᵢ[i]  density flux θᵢckness
 #    cfi[i]  skin friction coefficient, normalized with local ρ,u
 #    cdi[i]  dissipation coefficient  , normalized with local ρ,u
 #    cti[i]  max shear-stress coefficient, normalized with local ρ,u
@@ -49,7 +49,7 @@ function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
 #  Edge density         : ρᵢ = (1 + 0.5*(ɣ-1)*Mach^2*(1.0-uₑᵢ^2))^(1/(ɣ-1))
 #  Total mass defect    : mdef =  ρᵢ uₑᵢ   δᵢ beff
 #  Total mom. defect    : Pdef =  ρᵢ uₑᵢ^2 θᵢ beff
-#  Total KE defect      : Edef =  ρᵢ uₑᵢ^3 θ∗ᵢ beff / 2
+#  Total KE defect      : Edef =  ρᵢ uₑᵢ^3 θsᵢ beff / 2
 #  Wall shear force/span: tw b =  ρᵢ uₑᵢ^2 cfi beff / 2
 #  Dissipation integral : Diss =  ρᵢ uₑᵢ^3 cdi beff
 #
@@ -64,14 +64,14 @@ function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
 #
 #-----------------------------------------------------------------
 
-#      real xᵢ(ndim), bi(ndim), rni(ndim), uinv(ndim),
-
+# Declare variables TODO Type declarations?
+#
       uₑᵢ  = zeros(ndim)
       ρᵢ  = zeros(ndim)
       δᵢ  = zeros(ndim)
       θᵢ  = zeros(ndim)
-      θ∗ᵢ  = zeros(ndim)
-      δᵢ⁺⁺  = zeros(ndim)
+      θsᵢ  = zeros(ndim)
+      δssᵢ  = zeros(ndim)
       cfi  = zeros(ndim)
       cdi  = zeros(ndim)
       cti  = zeros(ndim)
@@ -117,7 +117,7 @@ function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
 
       hksep = 2.9
 
-      eps = 1.0e-6
+      ε = 1.0e-6
 
       if(n > idim) 
        println("BLAX: Local array overflow.  Increase idim to", n)
@@ -256,7 +256,7 @@ for i = 2: n #BL march loop
           ds = ds + rlx*dds
           ue = ue + rlx*due
 
-          if(dmax < eps) 
+          if(dmax < ε) 
             break; 
           end
        end #newton iteration
@@ -265,16 +265,16 @@ for i = 2: n #BL march loop
       uₑᵢ[i] = ue
       δᵢ[i] = ds
       θᵢ[i] = th
-      θ∗ᵢ[i] = hs*th
-      δᵢ⁺⁺[i] = hc*th
+      θsᵢ[i] = hs*th
+      δssᵢ[i] = hc*th
       cfi[i] = cf
       cdi[i] = di*hs/2.0
       cti[i] = 0.03 * 0.5*hs*((hk-1.0)/hk)^2
       hki[i] = hk
 
-      dib  = cdi[i]  *ρᵢ[i]  *uₑᵢ[i]^3   * (b  + 2.0*π*ds *rn )
-      dibm = cdi[i-1]*ρᵢ[i-1]*uₑᵢ[i-1]^3 * (bm + 2.0*π*dsm*rnm)
-      ϕ[i] = ϕ[i-1] + 0.5*(dib + dibm) * (x - xm)
+      𝒟ᵢb  = cdi[i]  *ρᵢ[i]  *uₑᵢ[i]^3   * (b  + 2.0*π*ds *rn )
+      𝒟ᵢbm = cdi[i-1]*ρᵢ[i-1]*uₑᵢ[i-1]^3 * (bm + 2.0*π*dsm*rnm)
+      ϕ[i] = ϕ[i-1] + 0.5*(𝒟ᵢb + 𝒟ᵢbm) * (x - xm)
       mdi[i] = ue*ds*(b + 2.0*π*ds)
 
 
@@ -513,8 +513,8 @@ end # BL march loop
         asys[ksys,lsys] = asys[ksys,lsys] + 1.0
 
 #------ also store dependent variables for returning
-        θ∗ᵢ[i] = hs*th
-        δᵢ⁺⁺[i] = hc*th
+        θsᵢ[i] = hs*th
+        δssᵢ[i] = hc*th
         cfi[i] = cf
         cdi[i] = di*hs/2.0
         cti[i] = 0.03 * 0.5*hs*((hk-1.0)/hk)^2
@@ -633,7 +633,7 @@ rsys = asys\rsys
 #        write(*,2200) ipass, dmax, rlx
 # 2200   format(1x,i4, e12.4, f8.4)
 
-            if(dmax < eps) break; end
+            if(dmax < ε) break; end
 
         end #End newton iteration
 
@@ -645,11 +645,11 @@ rsys = asys\rsys
         x  = xᵢ[i]
         xm = xᵢ[i-1]
 
-        dib  = cdi[i]  *ρᵢ[i]  *uₑᵢ[i]^3   * (bi[i]   + 2.0*π*δᵢ[i]  *rni[i])
-        dibm = cdi[i-1]*ρᵢ[i-1]*uₑᵢ[i-1]^3 * (bi[i-1] + 2.0*π*δᵢ[i-1]*rni[i-1])
+        𝒟ᵢb  = cdi[i]  *ρᵢ[i]  *uₑᵢ[i]^3   * (bi[i]   + 2.0*π*δᵢ[i]  *rni[i])
+        𝒟ᵢbm = cdi[i-1]*ρᵢ[i-1]*uₑᵢ[i-1]^3 * (bi[i-1] + 2.0*π*δᵢ[i-1]*rni[i-1])
 
-        ϕ[i] = ϕ[i-1] + 0.5*(dib + dibm) * (x - xm)
+        ϕ[i] = ϕ[i-1] + 0.5*(𝒟ᵢb + 𝒟ᵢbm) * (x - xm)
       end
 
-      return uₑᵢ, δᵢ, θᵢ, θ∗ᵢ, δᵢ⁺⁺, cfi, cdi, cti, hki, ϕ
+      return uₑᵢ, δᵢ, θᵢ, θsᵢ, δssᵢ, cfi, cdi, cti, hki, ϕ
       end # blax
