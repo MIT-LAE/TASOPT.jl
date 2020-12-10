@@ -21,10 +21,10 @@ function trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
-	Lspec,CLsurfsp,
-	CLsurf,CL,CD,spanef,
-	idim,ifrst,ilast,
-	yc,zc,gc,vc,wc,vnc, ycp,zcp)
+	Lspec,CLsurfsp,)
+#	CLsurf,CL,CD,spanef,
+#	idim,ifrst,ilast,
+#	yc,zc,gc,vc,wc,vnc, ycp,zcp)
 
 #      implicit real(a-h,l-z)
 #
@@ -58,7 +58,31 @@ function trefftz1(nsurf, npout, npinn, npimg,
 #     bunch = 0.75 
       bunch =  0.5 
 #c    bunch =  0. 
+      
+      idim::Int = 360
+      jdim::Int = 360
 
+      ifrst = zeros(Int, nsurf)
+      ilast = zeros(Int, nsurf)
+      
+      t     = zeros(Float64, jdim)
+      y     = zeros(Float64, jdim)
+      yp    = zeros(Float64, jdim)
+      z     = zeros(Float64, jdim)
+      zp    = zeros(Float64, jdim)
+      gw    = zeros(Float64, jdim)
+      
+      yc    = zeros(Float64, jdim)
+      ycp   = zeros(Float64, jdim)
+      zc    = zeros(Float64, jdim)
+      zcp   = zeros(Float64, jdim)
+      gc    = zeros(Float64, jdim)
+      vc    = zeros(Float64, jdim)
+      wc    = zeros(Float64, jdim)
+      vnc   = zeros(Float64, jdim)
+      
+      CLsurf= zeros(Float64, nsurf)
+      
       isum = 0
       for isurf = 1: nsurf
         isum = isum + npout[isurf] + npinn[isurf] + npimg[isurf] + 1
@@ -241,7 +265,7 @@ for isurf = 1: nsurf
 
  end # nsurf loop
 
-      ii = ilast(nsurf)
+ ii = ilast[nsurf]
 
       for isurf = 1: nsurf
         i = ifrst[isurf]
@@ -323,5 +347,5 @@ for isurf = 1: nsurf
 
       spanef = CDell / CD
 
-      return
+      return CLsurf, CL, CD , spanef
       end

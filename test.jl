@@ -1,8 +1,14 @@
+#include all the relavant functions
+
 include("wingpo.jl")
 include("fusew.jl")
+include("trefftz.jl")
+include("blsys.jl")
+
 
 #print(varinfo())
-
+# -------------------------------------------
+#test Fusew
 (gee, Nland, 
       Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, 
       fstring, fframe, ffadd, 
@@ -49,7 +55,7 @@ result = fusew(gee, Nland,
 
 print(result)
 
-include("blsys.jl")
+# -------------------------------------------
 
 (simi, lami, wake, direct) = (false, false, true, true)
 Mach = 0.83999999999999997 
@@ -150,3 +156,34 @@ solved_bl_sys = aa\rr
 
 print("\nSolved BL system = ", solved_bl_sys)
 print("\nTASOPT FORTRAN output = ", "-7.6910181160795242E-009  -8.8941884720010155E-009   0.0000000000000000" )
+
+# -------------------------------------------
+#
+#Test trefftz plane
+#
+
+nsurf, npout, npinn, npimg =[2      ,
+			     [  20          10], 
+			     [           6           0   ],
+			     [3           2 ]   ] 
+Sref, bref=   [91.334292450529617        30.372295826136508      ]
+ b,bs,bo,bop, zcent=[   [30.372295826136508        13.344274679545457] , 
+ [  8.6561043104489048        1.5240000000000000   ],
+ [  3.6067999999999998        1.5240000000000000   ],
+ [  0.72136000000000000        1.5240000000000000  ],
+ [  -1.6764000000000001        0.0000000000000000  ]  ]
+
+ po,gammat,gammas,fLo,ktip=[   [1.0000000000000000        1.0000000000000000   ],  
+   [ 0.22500000000000001       0.25000000000000000 ], 
+   [ 0.86659999999999993        1.0000000000000000 ],
+    -0.29999999999999999       ,        16 ]
+ Lspec = true
+CLsurfsp=[0.58890949708770191       -1.8909497087701926E-002 ]
+
+ idim,ifrst,ilast=[         360           0           0           0           0 ]
+ CLsurf,CL,CD,spanef=[  0.58890949708770202       -1.8909497087701926E-002  0.57000000000000006        1.1207407385896385E-002  0.91363621548216079      ]
+
+trefftz1(nsurf, npout, npinn, npimg,
+    Sref, bref, b, bs, bo, bop, zcent,
+    po, gammat, gammas, fLo, ktip,
+    Lspec, CLsurfsp, CLsurf)
