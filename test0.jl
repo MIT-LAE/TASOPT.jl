@@ -1,11 +1,11 @@
 include("wingpo.jl")
 include("atmos.jl")
-include("fusew.jl")
+include("tankW.jl")
 
 print(varinfo())
 
 (gee, Nland,
-      Wfix, Wpay, Wpadd, Wseat, Wapu, Weng,
+      Wfix, Wfuel, rhoFuel, Wpay, Wpadd, Wseat, Wapu, Weng,
       fstring, fframe, ffadd,
       deltap,
       Wpwindow, Wppinsul, Wppfloor,
@@ -21,7 +21,7 @@ print(varinfo())
       hfloor, sigskin, sigbend,
       rhoskin, rhobend,
       Eskin, Ebend, Gskin) = (9.81, 6.0,
-      0.13E+05,  0.46E+06,  0.16E+06,  0.46E+05,  0.16E+05,   0.0,
+      0.13E+05, 10000, 11.8,  0.46E+06,  0.16E+06,  0.46E+05,  0.16E+05,   0.0,
       0.34,      0.24,      0.20,
       0.56E+05,
       0.14E+03,   40.,       60.,      0.26E+05,  0.22E+05,
@@ -34,22 +34,19 @@ print(varinfo())
       0.27E+04,  0.69E+11,  0.69E+11,  0.27E+11,)
 
 
-result = fusew(gee, Nland,
-		    Wfix, Wpay, Wpadd, Wseat, Wapu, Weng,
-		    fstring, fframe, ffadd,
-		    deltap,
-		    Wpwindow, Wppinsul, Wppfloor, Whtail, Wvtail,
-		    rMh, rMv,
-		    Lhmax, Lvmax, bv, lambdav, nvtail,
-		    Rfuse, dRfuse, wfb, nfweb,
-		    lambdac, xnose, xshell1, xshell2, xconend,
-		    xhtail, xvtail, xwing, xwbox, cbox, xfix, xapu, xeng,
-		    hfloor, sigskin, sigbend,
-		    rhoskin, rhobend,
-		    Eskin, Ebend, Gskin)
+result = tankW(gee,Nland,Wfuel, rhoFuel,Weng,
+                      fstring,fframe,ffadd,deltap,
+                      Wppinsul,
+                      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
+                      bv,lambdav,nvtail,
+                      Rfuse,dRfuse,wfb,nfweb,lambdac,
+                      xshell1,xshell2,
+                      xhtail,xvtail,
+                      cbox,
+                      xeng,
+                      sigskin,sigbend, rhoskin,rhobend,
+                      Eskin,Ebend,Gskin)
 
-#print(result)
+print(result)
 #print("atmos(0)")
 #print("atmos vars = ", atmos(0))
-a=atmos(0)
-print(a)
