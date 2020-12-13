@@ -1,6 +1,7 @@
 include("wingpo.jl")
 include("atmos.jl")
 include("fusew.jl")
+include("tankwsize.jl")
 
 print(varinfo())
 
