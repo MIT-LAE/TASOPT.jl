@@ -35,8 +35,8 @@ function tankWthermal(gee, rhoFuel, deltap,
       Rgas = 1 / (hconvgas * 2 * pi * (r_inner + r_gas) * lshell)  #thermal resistance of purged gas
       R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)  #thermal resistance of LH2
 
-      rang = [1, 2, 3]
-      R_mli = zeros(N)
+      rang = [1, 2, 3] #This needs to be fixed, should be something like 1:1:N but didn't work. Checking julia format for array
+      R_mli = zeros(N)  #size of MLI resistance array (Based on number of layers)
       for n in rang
             R_mli[n] = log((r_inner  + t[n])/ (r_inner)) / (2 * pi * lshell * k[n])
             r_inner = r_inner + t[n]
