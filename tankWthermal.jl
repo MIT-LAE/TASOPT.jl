@@ -38,15 +38,15 @@ function tankWthermal(gee, rhoFuel, deltap,
       rang = [1, 2, 3] #This needs to be fixed, should be something like 1:1:N but didn't work. Checking julia format for array
       R_mli = zeros(N)  #size of MLI resistance array (Based on number of layers)
       for n in rang
-            R_mli[n] = log((r_inner  + t[n])/ (r_inner)) / (2 * pi * lshell * k[n])
-            r_inner = r_inner + t[n]
+            R_mli[n] = log((r_inner  + t[n])/ (r_inner)) / (2 * pi * lshell * k[n]) #Resistance of each MLI layer
+            r_inner = r_inner + t[n]  #Inner layer w.r.t the nth MLI layer being evaluated
       end
 
-      R_mli = sum(R_mli)
-      Req = R_mli + Rair + Rgas + R_LH2
+      R_mli = sum(R_mli)  #Total thermal resistance of MLI
+      Req = R_mli + Rair + Rgas + R_LH2  #Total equivalent resistance of thermal circuit
 
-      q = deltaT / Req
-      m_boiloff = q / h_e
+      q = deltaT / Req  #Heat flux from ambient to LH2
+      m_boiloff = q / h_e  #Boil-off mass equals the heat flux divided by heat of combustion
 
 return  m_boiloff
 end
