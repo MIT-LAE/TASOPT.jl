@@ -35,9 +35,11 @@ function tankWthermal(gee, rhoFuel, deltap,
       Rgas = 1 / (hconvgas * 2 * pi * (r_inner + r_gas) * lshell)
       R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)
 
-      for n in 1:1:N
-            R_mli(n) = log((r_inner  + t(n))/ (r_inner)) / (2 * pi * lshell * k(n))
-            r_inner = r_inner + t(n)
+      rang = [1, 2, 3]
+      R_mli = zeros(N)
+      for n in rang
+            R_mli[n] = log((r_inner  + t[n])/ (r_inner)) / (2 * pi * lshell * k[n])
+            r_inner = r_inner + t[n]
       end
 
       R_mli = sum(R_mli)
