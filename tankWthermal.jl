@@ -2,21 +2,23 @@
 tankWthermal calculates boil-off rate of LH2
 
 Inputs:
--Thermal conductivity array k comprising of k value for each MLI layer
--hconvgas is convective coefficient of insulating purged gas (e.g. N2)
--hconvair is convective coefficient of ambient air
--Thickness array t corresponds to thickness value of each layer in MLI
--h_LH2 corresponds to LH2 convective coefficient
--Tfuel is fuel temperature
--Tair is ambient temperature
--r_tank is tank outer radius
+
+NOTE: Everything is in SI units.
+-Thermal conductivity array k (W/(m*K)) comprising of k value for each MLI layer
+-hconvgas (W/m2*K)  is convective coefficient of insulating purged gas (e.g. N2)
+-hconvair (W/m2*K) is convective coefficient of ambient air
+-Thickness array t (m) corresponds to thickness value of each layer in MLI
+-h_LH2 ((W/m2*K) corresponds to LH2 convective coefficient
+-Tfuel (K) is fuel temperature
+-Tair (K) is ambient temperature
+-r_tank (m) is tank outer radius
 -pi is value of pi
--h_e is heat of combustion of liquid hydrogen
--r_gas is inner radius of gas-purged chamber
+-h_e (J/kg) is heat of combustion of liquid hydrogen (from Hydrogen tank design paper)
+-r_gas is inner radius of gas-purged chamber (m)
 
 
 Outputs:
-- m_boiloff is the boiloff LH2 mass for given mission
+- m_boiloff (kg) is the boiloff LH2 mass for given mission
 """
 function tankWthermal(gee, rhoFuel, deltap,
                       Rfuse, dRfuse,
