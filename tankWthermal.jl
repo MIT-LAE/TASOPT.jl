@@ -20,7 +20,7 @@ Outputs:
 """
 function tankWthermal(gee, rhoFuel, deltap,
                       Rfuse, dRfuse,
-                      xshell1, xshell2, P, hconvair, hconvgas, h_LH2, Tfuel, Tair, r_tank, pi,
+                      xshell1, xshell2, hconvair, hconvgas, h_LH2, Tfuel, Tair, r_tank, pi,
                       h_e, t, r_gas, k)
 
 #--- effective pressure-vessel length
@@ -44,15 +44,7 @@ function tankWthermal(gee, rhoFuel, deltap,
       Req = R_mli + Rair + Rgas + R_LH2
 
       q = deltaT / Req
-
       m_boiloff = q / h_e
 
-end
-
-
-#--- pressurized tank volume
-      tankVol = Afuse*(lshell + 0.67*Rfuse)
-      fuelVol = Wfuel/rhoFuel
-
-return  Wtank, Wfuel
+return  m_boiloff
 end
