@@ -16,7 +16,7 @@ Inputs:
 
 
 Outputs:
-- m_boiloff
+- m_boiloff is the boiloff LH2 mass for given mission
 """
 function tankWthermal(gee, rhoFuel, deltap,
                       Rfuse, dRfuse,
@@ -24,9 +24,9 @@ function tankWthermal(gee, rhoFuel, deltap,
                       h_e, t, r_gas, k)
 
 #--- effective pressure-vessel length
-      lshell = xshell2 - xshell1
-      N = size(t)
-      thickness = sum(t)
+      lshell = xshell2 - xshell1  #pressure vessel length, can be based on tank volume required to store LH2
+      N = size(t) #Number of layers in MLI
+      thickness = sum(t) #total thickness of MLI
 
 #--- Heat flux and resistances
       deltaT = Tair - Tfuel
