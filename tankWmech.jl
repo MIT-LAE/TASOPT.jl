@@ -9,10 +9,10 @@ Inputs:
 -Rfuse is fuselage radius, dRfuse is the subtraction factor that accounts for flatness of fuselage at bottom
 -wfb, nfb are parameters for multiple-bubble configuration
 -m_airplane is airplane mass
--range is specified for a given mission
+-R is specified range for a given mission
 -lcv is lower calorific value of fuel
 -eta is overall efficiency of gas turbine/turboelectric powertrain etc.
--sigskin, sigbend, rhoskin, rhobend are material properties
+-sigskin, rhoskin are material properties
 
 Outputs:
 
@@ -23,15 +23,15 @@ function tankWmech(gee, rhoFuel,
                       fstring,fframe,ffadd,deltap,
                       Rfuse,dRfuse,wfb,nfweb,
                       xshell1,xshell2,
-                      sigskin,sigbend, Wppinsul, rhoskin,rhobend,
-                      m_airplane, range, lcv, eta, LD)
+                      sigskin,Wppinsul, rhoskin,
+                      m_airplane, R, lcv, eta, LD)
 
 #--- effective pressure-vessel length
       lshell = xshell2 - xshell1
 
 #--- Calculate Wfuel
-      m_st = m_airplane * exp(range * gee / (lcv * eta * LD))
-      Wfuel = (m_st - m_airplane)*gee
+      m_st = m_airplane * exp(R * gee / (lcv * eta * LD))
+      Wfuel = (m_st - m_airplane) * gee
 
 #--- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
@@ -60,11 +60,11 @@ function tankWmech(gee, rhoFuel,
       Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rfuse*lshell
 
 #--- overall tank weight and moment
-      Wtank = Wshell + Winsul + Wfuel
+      Wtank = Wtank + Winsul + Wfuel
 
 #--- pressurized tank volume
-      #tankVol = Afuse*(lshell + 0.67*Rfuse)
-      tankVol = Wfuel/rhoFuel
+      tankVol = Atank*(lshell + 0.67*Rfuse)
+      fuelVol = Wfuel/rhoFuel
 
-return  tskin, Wtank, tankVol
-end # fusew
+return  Wtank, Wfuel
+end
