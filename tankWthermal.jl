@@ -13,7 +13,7 @@ NOTE: Everything is in SI units.
 -Tair (K) is ambient temperature
 -r_tank (m) is tank outer radius
 -pi is value of pi
--h_e (J/kg) is heat of combustion of liquid hydrogen (from Hydrogen tank design paper)
+-h_e (J/kg) is heat of vaporization of liquid hydrogen (from Hydrogen tank design paper)
 -r_gas is inner radius of gas-purged chamber (m)
 
 
@@ -48,7 +48,7 @@ function tankWthermal(gee, rhoFuel, deltap,
       Req = R_mli + Rair + Rgas + R_LH2  #Total equivalent resistance of thermal circuit
 
       q = deltaT / Req  #Heat flux from ambient to LH2
-      m_boiloff = q / h_e  #Boil-off mass equals the heat flux divided by heat of combustion
+      m_boiloff = q / h_e  #Boil-off mass equals the heat flux divided by heat of vaporization
 
 return  m_boiloff
 end
