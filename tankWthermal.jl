@@ -11,7 +11,7 @@ Inputs:
 -Tair is ambient temperature
 -r_tank is tank outer radius
 -pi is value of pi
--h_e is LCV of liquid hydrogen
+-h_e is heat of combustion of liquid hydrogen
 -r_gas is inner radius of gas-purged chamber
 
 
