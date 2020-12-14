@@ -29,11 +29,11 @@ function tankWthermal(gee, rhoFuel, deltap,
       thickness = sum(t) #total thickness of MLI
 
 #--- Heat flux and resistances
-      deltaT = Tair - Tfuel
-      Rair = 1 / (hconvair * 2 * pi * r_tank * lshell)
-      r_inner = r_tank - thickness
-      Rgas = 1 / (hconvgas * 2 * pi * (r_inner + r_gas) * lshell)
-      R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)
+      deltaT = Tair - Tfuel  #Overall temperature drop between ambient and LH2
+      Rair = 1 / (hconvair * 2 * pi * r_tank * lshell)  #thermal resistance of ambient air
+      r_inner = r_tank - thickness  #inner radius of tank
+      Rgas = 1 / (hconvgas * 2 * pi * (r_inner + r_gas) * lshell)  #thermal resistance of purged gas
+      R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)  #thermal resistance of LH2
 
       rang = [1, 2, 3]
       R_mli = zeros(N)
