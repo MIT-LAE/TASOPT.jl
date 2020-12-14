@@ -1,90 +1,58 @@
 """
-tankWmech calculates weight of the tank that holds the LH2
+tankWthermal calculates boil-off rate of LH2
 
 Inputs:
+-Thermal conductivity array k comprising of k value for each MLI layer
+-hconvgas is convective coefficient of insulating purged gas (e.g. N2)
+-hconvair is convective coefficient of ambient air
+-Thickness array t corresponds to thickness value of each layer in MLI
+-h_LH2 corresponds to LH2 convective coefficient
+-Tfuel is fuel temperature
+-Tair is ambient temperature
+-r_tank is tank outer radius
+-pi is value of pi
+-h_e is LCV of liquid hydrogen
+-r_gas is inner radius of gas-purged chamber
 
--LD: L/D of airplane
--
 
 Outputs:
-
-- `EI`
+- m_boiloff
 """
-function tankWmech(gee, rhoFuel,
-                      fstring,fframe,ffadd,deltap,
-                      Wppinsul,
-                      rMh,rMv,Lhmax,Lvmax,
-                      bv,lambdav,
-                      Rfuse,dRfuse,wfb,nfweb,lambdac,
-                      xshell1,xshell2,
-                      sigskin,sigbend, rhoskin,rhobend,
-                      Eskin,Ebend,Gskin, m_airplane, range, lcv, eta, LD)
+function tankWthermal(gee, rhoFuel, deltap,
+                      Rfuse, dRfuse,
+                      xshell1, xshell2, P, hconvair, hconvgas, h_LH2, Tfuel, Tair, r_tank, pi,
+                      h_e, t, r_gas, k)
 
 #--- effective pressure-vessel length
       lshell = xshell2 - xshell1
-      xshell = 0.5*(xshell1+xshell2)
+      N = size(t)
+      thickness = sum(t)
 
+#--- Heat flux and resistances
+      deltaT = Tair - Tfuel
+      Rair = 1 / (hconvair * 2 * pi * r_tank * lshell)
+      r_inner = r_tank - thickness
+      Rgas = 1 / (hconvgas * 2 * pi * (r_inner + r_gas) * lshell)
+      R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)
 
-#--- Calculate Wfuel
-     m_st = m_airplane * exp(range * gee / (lcv * eta * LD))
-     m_fuel = m_st - m_airplane
+      for n in 1:1:N
+            R_mli(n) = log((r_inner  + t(n))/ (r_inner)) / (2 * pi * lshell * k(n))
+            r_inner = r_inner + t(n)
+      end
 
-#--- fuselage cross-section geometric parameters
-      wfblim = max( min( wfb , Rfuse ) , 0.0 )
-      thetafb = asin(wfblim/Rfuse)
-      hfb = sqrt(Rfuse^2 - wfb^2)
-      sin2t = 2.0*hfb*wfb/Rfuse^2
-      cost  = hfb/Rfuse
-      perim = (2.0*pi + 4.0*thetafb)*Rfuse + 2.0*dRfuse
+      R_mli = sum(R_mli)
+      Req = R_mli + Rair + Rgas + R_LH2
 
-#--- fuselage skin and center web thicknesses to withstand pressure load
-      tskin =     deltap*Rfuse/sigskin
-      tfweb = 2.0*deltap*wfb  /sigskin
+      q = deltaT / Req
 
-#--- cross-sectional areas
-      Askin = (2.0*pi+4.0*nfweb*thetafb)*Rfuse*tskin + 2.0*dRfuse*tskin
-      Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-      Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rfuse^2 + 2.0*Rfuse*dRfuse
-#          + 2.0*(Rfuse+nfweb*wfb)*dRfuse
-#--- component volumes and volume moments
-      Vcyl  = Askin*lshell
-      xVcyl  = Vcyl  * 0.5*(xshell1 + xshell2)
-      #xVfweb = Vfweb * 0.5*(xshell1 + xshell2)
+      m_boiloff = q / h_e
 
-#--- weights and weight moments
-      Wskin = rhoskin*gee*(Vcyl)
-      #Wfweb = rhoskin*gee* Vfweb
-      xWskin = rhoskin*gee*(xVcyl)
-      #xWfweb = rhoskin*gee* xVfweb
+end
 
-      Wshell = Wskin*(1.0+fstring+fframe+ffadd)
-      xWshell = xWskin*(1.0+fstring+fframe+ffadd)
-
-#--- insulation weight
-      Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rfuse*lshell# + 0.55*(Snose+Sbulk))
-      xWinsul = Winsul * 0.5*(xshell1 + xshell2)
-
-#--- various weight moments
-      #xWfix  = Wfix  * xfix
-      xWfuel = Wfuel * 0.5*(xshell1 + xshell2)
-
-#--- shell bending inertias
-      tshell = tskin*(1.0 + rE*fstring*rhoskin/rhobend)
-
-#--- bending stress to be matched
-      sigMh = sigbend - rE*0.5*deltap*Rfuse/tshell
-      sigMv = sigbend - rE*0.5*deltap*Rfuse/tshell
-
-#--- rear bulkhead where tail structure attaches
-      xbulk = xshell2
-
-#--- overall tank weight and moment
-      Wtank = Wshell + Winsul + Wfuel
-             #Whbend + Wvbend + Wfuel
 
 #--- pressurized tank volume
-      #tankVol = Afuse*(lshell + 0.67*Rfuse)
-      tankVol = Wfuel/rhoFuel
+      tankVol = Afuse*(lshell + 0.67*Rfuse)
+      fuelVol = Wfuel/rhoFuel
 
-return  tskin, Wtank, tankVol
-end # fusew
+return  Wtank, Wfuel
+end
