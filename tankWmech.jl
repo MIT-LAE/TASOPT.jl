@@ -1,8 +1,8 @@
 """
 tankWmech calculates weight of the tank that holds the LH2
-
 Inputs:
 NOTE: Everything is in SI units.
+NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in OneNote)
 -LD is L/D of airplane
 -xshell1, xshell2 are start and end coordinates of tank (in meters)
 -gee is gravitational acceleration (m2/s)
