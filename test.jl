@@ -186,4 +186,4 @@ CLsurfsp=[0.58890949708770191       -1.8909497087701926E-002 ]
 trefftz1(nsurf, npout, npinn, npimg,
     Sref, bref, b, bs, bo, bop, zcent,
     po, gammat, gammas, fLo, ktip,
-    Lspec, CLsurfsp, CLsurf)
+    Lspec, CLsurfsp)

@@ -470,7 +470,7 @@ and their derivatives
       end
 
 
-      function hsl( HK, RT, MSQ, HS, HS_HK, HS_RT, HS_MSQ )
+      function hsl( HK, RT, MSQ)
 #
 #---- Laminar HS correlation
       if(HK<4.35) 

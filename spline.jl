@@ -1,26 +1,25 @@
 using LinearAlgebra
 
-function spline(S,X)
-#      DIMENSION X[N],XS[N],S[N]
-#      PARAMETER (NMAX=5001)
-#      DIMENSION A(NMAX),B(NMAX),C(NMAX)
-#
-#-------------------------------------------------------
-#     Calculates spline coefficients for X(S).          |
-#     Natural end conditions are used (zero 3rd         |
-#      derivative over first, last intervals).          |
-#                                                       |
-#     To evaluate the spline at some value of S,        |
-#     use SEVAL and/or DEVAL.                           |
-#                                                       |
-#     S        independent variable array (input)       |
-#     X        dependent variable array   (input)       |
-#     XS       dX/dS array                (calculated)  |
-#     N        number of points           (input)       |
-#                                                       |
-#-------------------------------------------------------
-#     
+"""
+Calculates spline coefficients for X(S).          
+Natural end conditions are used (zero 3rd        
+derivative over first, last intervals).         
+                                                  
+To evaluate the spline at some value of S,       
+use SEVAL and/or DEVAL.                          
+- Inputs
 
+  S        independent variable array (input)      
+  X        dependent variable array   (input) 
+  
+- Outputs
+
+  XS       dX/dS array                (calculated) 
+    
+                                                      
+"""
+function spline(S,X)
+ 
 N = length(S)
 B = zeros(N-1)
 A = zeros(N)
