@@ -277,11 +277,9 @@ rVnLE = max( 2.0*rVnace - pare[ieM2] / max(Mach,0.001) , 0.0 )
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- total CD
-      CD = CDi + CDfuse + CDwing + CDover
-	+ CDhtail + CDvtail + CDstrut
-	+ CDnace
-	+ dCDBLIf + dCDBLIw
+      CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw
       para[iaCD] = CD
+      CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
 
 #      tau = hboxo
 #      rsb3 = 0.25*((0.5*clpo + tau+1.0)    + (tau+1.0)   )
@@ -295,8 +293,8 @@ rVnLE = max( 2.0*rVnace - pare[ieM2] / max(Mach,0.001) , 0.0 )
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #      if(Ldebug) write(*,*) '...exiting CDSUM...'
-println("Total CD = ", CD)
-println("PARA = ", para)
+      # println("Total CD = ", CD)
+      # println("PARA = ", para)
       return
       end # cdsum
 
@@ -339,7 +337,21 @@ function cditrp(pari,parg,para)
 
       Lspec = true
 
+      b        = zeros(Float64, 2)
+      bs       = zeros(Float64, 2)
+      bo       = zeros(Float64, 2)
+      bop      = zeros(Float64, 2)
+      zcent    = zeros(Float64, 2)
+      gammas   = zeros(Float64, 2)
+      gammat   = zeros(Float64, 2)
+      po       = zeros(Float64, 2)
+      CLsurfsp = zeros(Float64, 2)
 
+      npout = zeros(Float64, 2) # outer panel
+      npinn = zeros(Float64, 2) # inner panel
+      npimg = zeros(Float64, 2) # image inside fuselage
+
+      #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
 #---- wing wake parameters
       fLo = parg[igfLo]
 #      fLo = 0.0
@@ -352,7 +364,7 @@ function cditrp(pari,parg,para)
 #---- span of wing-root streamline in Trefftz Plane
       bop[1] = parg[igbo] * 0.2
 
-      zcent[1] = parg[igzwing]
+      zcent[1]  = parg[igzwing]
       gammas[1] = parg[iglambdas]*para[iarcls]
       gammat[1] = parg[iglambdat]*para[iarclt]
       po[1]     = 1.0
@@ -414,8 +426,9 @@ function cditrp(pari,parg,para)
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo, ktip,
-	Lspec,CLsurfsp)
-      println("$CLsurf, $CLtp, $CDtp, $sefftp")
+      Lspec,CLsurfsp)
+      
+      # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 
       para[iaCDi] = CDtp
       para[iaspaneff] = sefftp
