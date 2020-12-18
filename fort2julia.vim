@@ -12,9 +12,16 @@
 
 "Move any operator to previous line
 :%s/\n\s*&\s*+/ +\r\t/g
+:%s/\n\s*+/ +\r\t/g
+
 :%s/\n\s*&\s*\*/ \*\r\t/g
+:%s/\n\s*\*/ \*\r\t/g
+
 :%s/\n\s*&\s*\// \/\r\t/g
+:%s/\n\s*\// \/\r\t/g
+
 :%s/\n\s*&\s*-/ -\r\t/g
+:%s/\n\s*-/ -\r\t/g
 
 "Change ** to ^
 :%s/\*\*/\^/g
