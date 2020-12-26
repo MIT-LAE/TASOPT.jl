@@ -126,7 +126,7 @@ function cdsum(pari,parg,para,pare, icdfun)
 #----- integrated across span for CDwing
 
       # if(Ldebug) write(*,*) 'calling SURFCD2...'
-        clpo,clps,clpt,
+      clpo,clps,clpt,
 	cdfw,cdpw,CDwing,CDover = surfcd2(S, b,bs,bo,
 	lambdat,lambdas,gammat,gammas,
 	hboxo,hboxs,hboxt,
@@ -139,26 +139,26 @@ function cdsum(pari,parg,para,pare, icdfun)
        #if(Ldebug) write(*,*) '...exited SURFCD2'
 
 #----- store CD values
-       para[iaCDwing] = CDwing
-       para[iaCDover] = CDover
-       para[iacdfw] = cdfw
-       para[iacdpw] = cdpw
+      para[iaCDwing] = CDwing
+      para[iaCDover] = CDover
+      para[iacdfw] = cdfw
+      para[iacdpw] = cdpw
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       else
 #----- just use stored values
-       cdfw = para[iacdfw] * fexcdw
-       cdpw = para[iacdpw] * fexcdw
+      cdfw = para[iacdfw] * fexcdw
+      cdpw = para[iacdpw] * fexcdw
 
 	CDwing,CDover = surfcd(S,
 	b,bs,bo,lambdat,lambdas,sweep,co, 
 	cdfw,cdpw,Reco,Rerefw,aRexp,rkSunsw,
        fCDwcen)
  
-       para[iaCDwing] = CDwing
-       para[iaCDover] = CDover
+      para[iaCDwing] = CDwing
+      para[iaCDover] = CDover
 
-       clpo, clps, clpt = wingcl(b,bs,bo,
+      clpo, clps, clpt = wingcl(b,bs,bo,
 	lambdat,lambdas,gammat,gammas,
 	sweep,AR,CL,CLhtail,fLo,fLt,
 	fduo,fdus,fdut)
@@ -234,7 +234,7 @@ function cdsum(pari,parg,para,pare, icdfun)
 
 #---- set Mnac on outside of nacelle, using vortex sheet model of nacelle,
 #-     (Mnac+M2)/2 = Mach*rVnace
-rVnLE = max( 2.0*rVnace - pare[ieM2] / max(Mach,0.001) , 0.0 )
+      rVnLE = max( 2.0*rVnace - pare[ieM2] / max(Mach,0.001) , 0.0 )
       rVnsurf3 = 0.25*(rVnLE+rVnace)*(rVnLE^2+rVnace^2)
       CDnace = fSnace * Cfnace * rVnsurf3
       para[iaCDnace] = CDnace
@@ -278,7 +278,7 @@ rVnLE = max( 2.0*rVnace - pare[ieM2] / max(Mach,0.001) , 0.0 )
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- total CD
       CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw
-      para[iaCD] = CD
+      para[iaCD] = CD      
       CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
 
 #      tau = hboxo
