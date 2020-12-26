@@ -1,6 +1,6 @@
 """
-     Calculates area centroid x-offset due to sweep
-     Calculates mean aerodynamic chord/co
+Calculates area centroid x-offset due to sweep
+Calculates mean aerodynamic chord/co
 """
 function surfdx(b,bs,bo,λt,λs,sweep)
 
