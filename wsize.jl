@@ -109,11 +109,20 @@ bh, coh, poh = tailpo(Sh, ARh, λh, qne, CLhmax)
 # set VT max loading magnitude, based on singel tail + its bottom image
 bv2, cov, pov = tailpo(2.0*Sv/nvtail, 2.0*ARv,lambdav,qne,CLvmax)
 
-#calculate fro start-of-cruise point
+# HT weight
+# HT centroid x-offset
+# HT pitching moment coeff
+
+# VT weight
+# VT centroid x-offset
+
+
+#calculate for start-of-cruise point
 ip = ipcruise1
-balance(pari,parg,para[1,ip],rfuel,rpay,xipay, itrim)
 
 # Pitch trim by adjusting Clh or by moving wing
+balance(pari,parg,para[1,ip],rfuel,rpay,xipay, itrim)
+
 
 # Drag buildup cdsum()
 cdsum(pari, parg, para, pare, 1)
