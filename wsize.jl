@@ -14,6 +14,16 @@ and iterates until the MTOW converges to within a specified tolerance.
 """
 function wsize()
 
+    
+    include("atmos.jl")
+    include("fuseW.jl")
+    include("wingsc.jl")
+    include("surfcm.jl")
+    include("surfdx.jl")
+    include("wingpo.jl")
+    include("tailpo.jl")
+
+
 ## Load parameters
 # Set specifed quantites during weight iteration loop
 # Store design-mission parameters
@@ -52,24 +62,61 @@ Wfuse, xWfuse, cabVol) = fuseW(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng,
                       Eskin, Ebend, Gskin)
 
 # Use cabin volume to get actual buoyancy weight
+
 # Engine weights
 
-# Wing sizing 
+# Update weights
+
+
+#----------------------
+## Wing sizing section
+#----------------------
+# Initial size of the wing area and chords
+S, b, bs, co = wingsc(W, CL, qinf, ηsi, bo, λt, λs)
+
+# x-offset of the wing centroid from wingbox
+dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
+
+# Calculate wing pitching moment constants
+CMw0, CMw1 = surfcm(b, bs, b0, sweep, Xaxis,
+                 λt,λs,γt,γs, 
+                 AR,fLo,fLt,cmpo,cmps,cmpt)
+
+ #repeat above for climb, cruise and descent
+
+# Wing center load po calculation using cruise spanload cl(y)
+po = wingpo(b,bs,bo,
+        λt,λs,γt,γs,
+        AR,N,W,Lhtail,fLo,fLt)
+
+
 results = surfw(gee,po,b,bs,bo,co,zs,
-	lambdat,lambdas,gammat,gammas,
-	Nload,iwplan,We,
-	Winn,Wout,dyWinn,dyWout,
-	sweep,wbox,hboxo,hboxs,rh, fLt,
-	tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
-	rhoweb,rhocap,rhostrut,rhofuel)
+                lambdat,lambdas,gammat,gammas,
+                Nload,iwplan,We,
+                Winn,Wout,dyWinn,dyWout,
+                sweep,wbox,hboxo,hboxs,rh, fLt,
+                tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
+                rhoweb,rhocap,rhostrut,rhofuel)
 
 # [TODO] note this assumes wings have some fuel, so need to ensure that is addressed
 
-#Tail sizing section
+##Tail sizing section
+
+# Size HT
+htsize(pari, parg, para[1, ipdescentn], para[1, ipcruise1], para[1, ipcruise1])
+# set HT max loading magnitude
+bh, coh, poh = tailpo(Sh, ARh, λh, qne, CLhmax)
+# set VT max loading magnitude, based on singel tail + its bottom image
+bv2, cov, pov = tailpo(2.0*Sv/nvtail, 2.0*ARv,lambdav,qne,CLvmax)
+
+#calculate fro start-of-cruise point
+ip = ipcruise1
+balance(pari,parg,para[1,ip],rfuel,rpay,xipay, itrim)
 
 # Pitch trim by adjusting Clh or by moving wing
 
 # Drag buildup cdsum()
+cdsum(pari, parg, para, pare, 1)
 
 # Size engine for TOC
 
