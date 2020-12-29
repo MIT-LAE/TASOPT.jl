@@ -1,8 +1,11 @@
 """
-     Sets wing area, span, root chord 
-     to be consistent with q,CL,weight,AR
+# wingsc
+
+Sets wing area, span, root chord 
+to be consistent with q,CL,weight,AR
+* See section 3.4.1 of TASOPT docs *
 """
-      function wingsc(W,CL,qinf,AR,ηsi,bo,λt,λs)
+function wingsc(W,CL,qinf,AR,ηsi,bo,λt,λs)
 
       S = W/(qinf*CL)
       b = sqrt(S*AR)
@@ -19,7 +22,7 @@
       co = S/(Kc*b)
 
       return  S,b,bs,co
-      end # wingsc
+end # wingsc
 
 
 #"""

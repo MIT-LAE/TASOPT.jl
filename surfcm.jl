@@ -1,7 +1,10 @@
 """
 Calculates components of wing CM about wing root axis
 
-    CM = CM0 + CM1*(CL-CLhtail)
+	CM = CM0 + CM1*(CL-CLhtail)
+	
+	i.e. according to eqn 172 of TASOPT docs
+	ΔCₘ,wing = ΔCₘ₀ + dCₘ/dCL × (CL - CLh)
 """
 function surfcm(b,bs,bo, sweep, Xaxis,
                        λt,λs,γt,γs,
