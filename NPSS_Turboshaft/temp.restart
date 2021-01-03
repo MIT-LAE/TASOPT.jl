@@ -1,0 +1,10 @@
+//solver Independent Variables:
+solver.independentNames = {"Eng.ind_SHP",
+"Eng.ind_TCLA_NC_fracW",
+"Eng.ind_TCLA_CH_fracW",
+"Eng.TrbH.S_map.ind_PRbase",
+"Eng.TrbP.S_map.ind_PRbase",
+"DESIGN_AIRFLOW",
+"DESIGN_FUELFLOW" }
+;
+solver.independentValues = { 13404.8, 0.164085, 0.162921, 6.80628, 3.75379, 66.436, 0.0967461 };

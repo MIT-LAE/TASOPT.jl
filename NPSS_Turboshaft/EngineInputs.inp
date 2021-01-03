@@ -1,0 +1,7 @@
+real SHP_dmd = 10e6/746; 
+real Tt41    = 3200; 
+
+Eng.FusEng.LHV = 120e6/430;
+
+Eng.CmpL.PRdes = 3.5;
+Eng.CmpH.PRdes = 10.0;

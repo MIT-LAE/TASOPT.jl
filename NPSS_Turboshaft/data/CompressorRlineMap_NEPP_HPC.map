@@ -1,0 +1,421 @@
+//******************************************************************************
+//*   (C) Copyright 2003.  The U.S. Government, as Represented by the Administrator
+//*     of the National Aeronautics and Space Administration (NASA).
+//*   (C) Copyright 2008, 2009, 2010, 2011, 2012.     The Ohio Aerospace Institute, on behalf of the NPSS(TM)
+//*     Consortium.  All rights reserved.  Includes content licensed from the 
+//*     U.S. Government, National Aeronautics and Space Administration under 
+//*     United States Copyright Registration Numbers  V3503D364 and V3482D344.
+//*******************************************************************************
+
+//******************************************************************************
+//*  NPSSTM software and related documentation is export controlled
+//*  with an Export Control Classification Number(ECCN) of 9D991, controlled for
+//*  Anti-Terrorism reasons, under U.S. Export Administration Regulations 15 CFR
+//*  730-774. It may not be transferred to a country checked under anti-terrorism
+//*  on the Commerce Country Chart structure or to foreign nationals of those
+//*  countries in the U.S. or abroad without first obtaining a license from the
+//*  Bureau of Industry and Security, United States Department of Commerce. 
+//*  Violations are punishable by fine, imprisonment, or both.
+//*******************************************************************************
+
+//  ---------------------------------------------------------------
+//  |    High Pressure Compressor Maps
+//  ---------------------------------------------------------------
+//  |    Declaration of a new Subelement instance called S_map
+//  |    that is of the type CompressorRlineMap
+//  ---------------------------------------------------------------
+
+Subelement CompressorRlineMap S_map {
+
+	// Do NOT change these values!  They are specific to these maps.
+	alphaMapDes    = 0.0; // Unscaled map design point vane angle.
+	RlineMapDes = 2.000; // Unscaled map design point Rline. Max eff point at 100% speed
+	NcMapDes    = 1.000; // Unscaled map design point corrected speed. Max eff point at 100% speed
+	PRmapDes    = 2.3; // Unscaled map design point total-to-total pressure ratio
+	effMapDes   = 0.84; // Unscaled map design point corrected adiabatic efficiency
+	SMWmap   = 25.0; // Unscaled map design point stall margin at constant flow
+	SMNmap   = 56.9777; // Unscaled map design point stall margin at constant speed
+	RlineStall = 1.0; // Rline at stall
+
+	//  ----------------------------------------------------------------------
+	//  |    Declare a table (or function) named TB_Wc(real alphaMap, real NcorrMap, real RlineMap)
+	//  |    To satisfy the TB_Wc socket requirement.
+	//  ---------------------------------------------------------------------- 
+
+	// HPC corrected flow VS. stator angle, fraction of design speed, and R-line
+	// Note: this map has alphaMap = 0 and alphaMap = 90
+	Table TB_Wc(real alphaMap, real NcorrMap, real RlineMap) {
+
+	 alphaMap =  0.000 {
+		NcorrMap =   0.3 {
+		  RlineMap = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8 }
+		  WcorrMap = { 0.351084, 0.434528, 0.517973, 0.601418, 0.684863, 0.768307, 0.919988, 1.07167, 1.22335, 1.37503 }
+		}
+		NcorrMap =   0.4 {
+		  RlineMap = *;
+		  WcorrMap = { 0.473172, 0.584265, 0.695358, 0.806451, 0.917544, 1.02864, 1.23044, 1.43225, 1.63406, 1.83586 }
+		}
+		NcorrMap =   0.5 {
+		  RlineMap = *;
+		  WcorrMap = { 0.598677, 0.736811, 0.874945, 1.01308, 1.15121, 1.28935, 1.53998, 1.79061, 2.04124, 2.29187 }
+		}
+		NcorrMap =   0.6 {
+		  RlineMap = *;
+		  WcorrMap = { 0.73062, 0.895115, 1.05961, 1.2241, 1.3886, 1.55309, 1.85093, 2.14877, 2.4466, 2.74444 }
+		}
+		NcorrMap =   0.7 {
+		  RlineMap = *;
+		  WcorrMap = { 0.873512, 1.06357, 1.25364, 1.4437, 1.63376, 1.82382, 2.16674, 2.50965, 2.85256, 3.19548 }
+		}
+		NcorrMap =   0.75 {
+		  RlineMap = *;
+		  WcorrMap = { 0.950866, 1.15333, 1.3558, 1.55826, 1.76073, 1.96319, 2.32755, 2.69191, 3.05628, 3.42064 }
+		}
+		NcorrMap =   0.8 {
+		  RlineMap = *;
+		  WcorrMap = { 1.03329, 1.24783, 1.46236, 1.67689, 1.89143, 2.10596, 2.49079, 2.87562, 3.26045, 3.64528 }
+		}
+		NcorrMap =   0.85 {
+		  RlineMap = *;
+		  WcorrMap = { 1.12174, 1.34792, 1.5741, 1.80027, 2.02645, 2.25263, 2.6567, 3.06076, 3.46483, 3.86889 }
+		}
+		NcorrMap =   0.9 {
+		  RlineMap = *;
+		  WcorrMap = { 1.21723, 1.45451, 1.69179, 1.92907, 2.16635, 2.40364, 2.82539, 3.24713, 3.66888, 4.09063 }
+		}
+		NcorrMap =   0.95 {
+		  RlineMap = *;
+		  WcorrMap = { 1.32081, 1.56852, 1.81622, 2.06393, 2.31163, 2.55934, 2.99685, 3.43435, 3.87186, 4.30937 }
+		}
+		NcorrMap =   1 {
+		  RlineMap = *;
+		  WcorrMap = { 1.43357, 1.69086, 1.94814, 2.20543, 2.46271, 2.72, 3.17093, 3.62185, 4.07278, 4.5237 }
+		}
+		NcorrMap =   1.05 {
+		  RlineMap = *;
+		  WcorrMap = { 1.55657, 1.82241, 2.08825, 2.35409, 2.61992, 2.88576, 3.34733, 3.80891, 4.27048, 4.73205 }
+		}
+		NcorrMap =   1.1 {
+		  RlineMap = *;
+		  WcorrMap = { 1.69078, 1.96395, 2.23713, 2.5103, 2.78348, 3.05665, 3.52567, 3.99469, 4.46371, 4.93273 }
+		}
+		NcorrMap =   1.15 {
+		  RlineMap = *;
+		  WcorrMap = { 1.83702, 2.11613, 2.39524, 2.67435, 2.95345, 3.23256, 3.70546, 4.17835, 4.65124, 5.12414 }
+		}
+	 } // end alphaMap = 0
+	
+	 alphaMap =  90.000 {
+		NcorrMap =   0.3 {
+		  RlineMap = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8 }
+		  WcorrMap = { 0.351084, 0.434528, 0.517973, 0.601418, 0.684863, 0.768307, 0.919988, 1.07167, 1.22335, 1.37503 }
+		}
+		NcorrMap =   0.4 {
+		  RlineMap = *;
+		  WcorrMap = { 0.473172, 0.584265, 0.695358, 0.806451, 0.917544, 1.02864, 1.23044, 1.43225, 1.63406, 1.83586 }
+		}
+		NcorrMap =   0.5 {
+		  RlineMap = *;
+		  WcorrMap = { 0.598677, 0.736811, 0.874945, 1.01308, 1.15121, 1.28935, 1.53998, 1.79061, 2.04124, 2.29187 }
+		}
+		NcorrMap =   0.6 {
+		  RlineMap = *;
+		  WcorrMap = { 0.73062, 0.895115, 1.05961, 1.2241, 1.3886, 1.55309, 1.85093, 2.14877, 2.4466, 2.74444 }
+		}
+		NcorrMap =   0.7 {
+		  RlineMap = *;
+		  WcorrMap = { 0.873512, 1.06357, 1.25364, 1.4437, 1.63376, 1.82382, 2.16674, 2.50965, 2.85256, 3.19548 }
+		}
+		NcorrMap =   0.75 {
+		  RlineMap = *;
+		  WcorrMap = { 0.950866, 1.15333, 1.3558, 1.55826, 1.76073, 1.96319, 2.32755, 2.69191, 3.05628, 3.42064 }
+		}
+		NcorrMap =   0.8 {
+		  RlineMap = *;
+		  WcorrMap = { 1.03329, 1.24783, 1.46236, 1.67689, 1.89143, 2.10596, 2.49079, 2.87562, 3.26045, 3.64528 }
+		}
+		NcorrMap =   0.85 {
+		  RlineMap = *;
+		  WcorrMap = { 1.12174, 1.34792, 1.5741, 1.80027, 2.02645, 2.25263, 2.6567, 3.06076, 3.46483, 3.86889 }
+		}
+		NcorrMap =   0.9 {
+		  RlineMap = *;
+		  WcorrMap = { 1.21723, 1.45451, 1.69179, 1.92907, 2.16635, 2.40364, 2.82539, 3.24713, 3.66888, 4.09063 }
+		}
+		NcorrMap =   0.95 {
+		  RlineMap = *;
+		  WcorrMap = { 1.32081, 1.56852, 1.81622, 2.06393, 2.31163, 2.55934, 2.99685, 3.43435, 3.87186, 4.30937 }
+		}
+		NcorrMap =   1 {
+		  RlineMap = *;
+		  WcorrMap = { 1.43357, 1.69086, 1.94814, 2.20543, 2.46271, 2.72, 3.17093, 3.62185, 4.07278, 4.5237 }
+		}
+		NcorrMap =   1.05 {
+		  RlineMap = *;
+		  WcorrMap = { 1.55657, 1.82241, 2.08825, 2.35409, 2.61992, 2.88576, 3.34733, 3.80891, 4.27048, 4.73205 }
+		}
+		NcorrMap =   1.1 {
+		  RlineMap = *;
+		  WcorrMap = { 1.69078, 1.96395, 2.23713, 2.5103, 2.78348, 3.05665, 3.52567, 3.99469, 4.46371, 4.93273 }
+		}
+		NcorrMap =   1.15 {
+		  RlineMap = *;
+		  WcorrMap = { 1.83702, 2.11613, 2.39524, 2.67435, 2.95345, 3.23256, 3.70546, 4.17835, 4.65124, 5.12414 }
+		}
+	 } // end alphaMap = 90
+	} // end TB_Wc
+
+	//  ----------------------------------------------------------------------
+	//  |    Declare a table (or function) named TB_eff(real alphaMap, real NcorrMap, real RlineMap)
+	//  |    To satisfy the TB_eff socket requirement.
+	//  ---------------------------------------------------------------------- 
+
+	// HPC corrected flow VS. stator angle, fraction of design speed, and R-line
+	// Note: this map has alphaMap = 0 and alphaMap = 90
+	Table TB_eff(real alphaMap, real NcorrMap, real RlineMap) {
+	 alphaMap =  0.000 {
+		NcorrMap =   0.3 {
+		  RlineMap = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8 }
+		  effAdiabMap = { 0.723474, 0.771737, 0.806316, 0.829318, 0.84214, 0.845954, 0.812261, 0.706062, 0.510447, 0.176802 }
+		}
+		NcorrMap =   0.4 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.72651, 0.774578, 0.809079, 0.832056, 0.844862, 0.84864, 0.81493, 0.708448, 0.512536, 0.180282 }
+		}
+		NcorrMap =   0.5 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.728979, 0.776608, 0.810881, 0.833742, 0.846489, 0.850217, 0.816696, 0.71038, 0.514869, 0.185296 }
+		}
+		NcorrMap =   0.6 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.731067, 0.777925, 0.811753, 0.834371, 0.846994, 0.850655, 0.817658, 0.712237, 0.518167, 0.192783 }
+		}
+		NcorrMap =   0.7 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.733434, 0.779105, 0.812219, 0.834431, 0.846851, 0.850429, 0.818422, 0.714909, 0.523636, 0.204048 }
+		}
+		NcorrMap =   0.75 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.734843, 0.779731, 0.812363, 0.834296, 0.846577, 0.850106, 0.818817, 0.71676, 0.527541, 0.211556 }
+		}
+		NcorrMap =   0.8 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.736363, 0.780319, 0.812367, 0.833958, 0.846069, 0.849542, 0.819152, 0.718967, 0.532359, 0.220559 }
+		}
+		NcorrMap =   0.85 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.737875, 0.780727, 0.812074, 0.833248, 0.845151, 0.84856, 0.819269, 0.721449, 0.53812, 0.231219 }
+		}
+		NcorrMap =   0.9 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.739173, 0.780729, 0.811238, 0.831909, 0.843559, 0.846894, 0.81892, 0.724034, 0.544786, 0.243663 }
+		}
+		NcorrMap =   0.95 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.739963, 0.78001, 0.809529, 0.829595, 0.84094, 0.844186, 0.81776, 0.726449, 0.552225, 0.257956 }
+		}
+		NcorrMap =   1 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.739862, 0.778172, 0.806531, 0.825882, 0.836859, 0.84, 0.815351, 0.728313, 0.56019, 0.274067 }
+		}
+		NcorrMap =   1.05 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.738404, 0.774739, 0.801761, 0.820274, 0.830817, 0.833832, 0.811171, 0.729134, 0.568303, 0.291841 }
+		}
+		NcorrMap =   1.1 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.735056, 0.769183, 0.794687, 0.812236, 0.822271, 0.825138, 0.80464, 0.728317, 0.576038, 0.31095 }
+		}
+		NcorrMap =   1.15 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.729244, 0.760947, 0.78476, 0.801219, 0.810673, 0.813369, 0.795153, 0.725186, 0.582721, 0.330865 }
+		}
+	 } // end alphaMap = 0
+	
+	 alphaMap =  90.000 {
+		NcorrMap =   0.3 {
+		  RlineMap = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8 }
+		  effAdiabMap = { 0.723474, 0.771737, 0.806316, 0.829318, 0.84214, 0.845954, 0.812261, 0.706062, 0.510447, 0.176802 }
+		}
+		NcorrMap =   0.4 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.72651, 0.774578, 0.809079, 0.832056, 0.844862, 0.84864, 0.81493, 0.708448, 0.512536, 0.180282 }
+		}
+		NcorrMap =   0.5 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.728979, 0.776608, 0.810881, 0.833742, 0.846489, 0.850217, 0.816696, 0.71038, 0.514869, 0.185296 }
+		}
+		NcorrMap =   0.6 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.731067, 0.777925, 0.811753, 0.834371, 0.846994, 0.850655, 0.817658, 0.712237, 0.518167, 0.192783 }
+		}
+		NcorrMap =   0.7 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.733434, 0.779105, 0.812219, 0.834431, 0.846851, 0.850429, 0.818422, 0.714909, 0.523636, 0.204048 }
+		}
+		NcorrMap =   0.75 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.734843, 0.779731, 0.812363, 0.834296, 0.846577, 0.850106, 0.818817, 0.71676, 0.527541, 0.211556 }
+		}
+		NcorrMap =   0.8 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.736363, 0.780319, 0.812367, 0.833958, 0.846069, 0.849542, 0.819152, 0.718967, 0.532359, 0.220559 }
+		}
+		NcorrMap =   0.85 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.737875, 0.780727, 0.812074, 0.833248, 0.845151, 0.84856, 0.819269, 0.721449, 0.53812, 0.231219 }
+		}
+		NcorrMap =   0.9 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.739173, 0.780729, 0.811238, 0.831909, 0.843559, 0.846894, 0.81892, 0.724034, 0.544786, 0.243663 }
+		}
+		NcorrMap =   0.95 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.739963, 0.78001, 0.809529, 0.829595, 0.84094, 0.844186, 0.81776, 0.726449, 0.552225, 0.257956 }
+		}
+		NcorrMap =   1 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.739862, 0.778172, 0.806531, 0.825882, 0.836859, 0.84, 0.815351, 0.728313, 0.56019, 0.274067 }
+		}
+		NcorrMap =   1.05 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.738404, 0.774739, 0.801761, 0.820274, 0.830817, 0.833832, 0.811171, 0.729134, 0.568303, 0.291841 }
+		}
+		NcorrMap =   1.1 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.735056, 0.769183, 0.794687, 0.812236, 0.822271, 0.825138, 0.80464, 0.728317, 0.576038, 0.31095 }
+		}
+		NcorrMap =   1.15 {
+		  RlineMap = *;
+		  effAdiabMap = { 0.729244, 0.760947, 0.78476, 0.801219, 0.810673, 0.813369, 0.795153, 0.725186, 0.582721, 0.330865 }
+		}
+	 } // end alphaMap = 90
+	} // end TB_eff
+
+	//  ----------------------------------------------------------------------
+	//  |    Declare a table (or function) named TB_PR(real alphaMap, real NcorrMap, real RlineMap)
+	//  |    To satisfy the TB_PR socket requirement.
+	//  ---------------------------------------------------------------------- 
+
+	// HPC total-to-total pressure ratio VS. stator angle, fraction of design speed, and R-line
+	// Note: this map has alphaMap = 0 and alphaMap = 90
+	Table TB_PR(real alphaMap, real NcorrMap, real RlineMap) {
+	 alphaMap =  0.000 {
+		NcorrMap =   0.3 {
+		  RlineMap = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8 }
+		  PratioMap = { 1.06628, 1.07422, 1.08141, 1.08782, 1.09339, 1.09809, 1.10158, 1.09447, 1.0724, 1.02626 }
+		}
+		NcorrMap =   0.4 {
+		  RlineMap = *;
+		  PratioMap = { 1.1199, 1.13431, 1.14739, 1.15906, 1.16921, 1.17775, 1.18398, 1.17059, 1.12995, 1.04726 }
+		}
+		NcorrMap =   0.5 {
+		  RlineMap = *;
+		  PratioMap = { 1.19113, 1.2141, 1.23501, 1.2537, 1.26995, 1.28359, 1.29328, 1.27097, 1.20506, 1.07512 }
+		}
+		NcorrMap =   0.6 {
+		  RlineMap = *;
+		  PratioMap = { 1.28174, 1.31551, 1.34632, 1.37388, 1.39784, 1.4179, 1.43176, 1.39751, 1.299, 1.11123 }
+		}
+		NcorrMap =   0.7 {
+		  RlineMap = *;
+		  PratioMap = { 1.39449, 1.44139, 1.48426, 1.52267, 1.55604, 1.5839, 1.6027, 1.55332, 1.4145, 1.15842 }
+		}
+		NcorrMap =   0.75 {
+		  RlineMap = *;
+		  PratioMap = { 1.46032, 1.51465, 1.56439, 1.60897, 1.6477, 1.67996, 1.70157, 1.64351, 1.48169, 1.18759 }
+		}
+		NcorrMap =   0.8 {
+		  RlineMap = *;
+		  PratioMap = { 1.53315, 1.59547, 1.6526, 1.70383, 1.74833, 1.78532, 1.81001, 1.74267, 1.5561, 1.22154 }
+		}
+		NcorrMap =   0.85 {
+		  RlineMap = *;
+		  PratioMap = { 1.6135, 1.6843, 1.74929, 1.80761, 1.85824, 1.90025, 1.92833, 1.85132, 1.63854, 1.26127 }
+		}
+		NcorrMap =   0.9 {
+		  RlineMap = *;
+		  PratioMap = { 1.7018, 1.78147, 1.8547, 1.92045, 1.97749, 2.02475, 2.05654, 1.96978, 1.72981, 1.30792 }
+		}
+		NcorrMap =   0.95 {
+		  RlineMap = *;
+		  PratioMap = { 1.79829, 1.88706, 1.96874, 2.04211, 2.10575, 2.15835, 2.19421, 2.09806, 1.83059, 1.36278 }
+		}
+		NcorrMap =   1 {
+		  RlineMap = *;
+		  PratioMap = { 1.9029, 2.00075, 2.09089, 2.17187, 2.24209, 2.3, 2.34022, 2.2356, 1.94131, 1.42718 }
+		}
+		NcorrMap =   1.05 {
+		  RlineMap = *;
+		  PratioMap = { 2.0151, 2.12168, 2.21995, 2.30826, 2.3848, 2.44777, 2.49258, 2.38106, 2.0619, 1.50235 }
+		}
+		NcorrMap =   1.1 {
+		  RlineMap = *;
+		  PratioMap = { 2.13367, 2.24824, 2.35393, 2.44893, 2.53121, 2.59875, 2.64819, 2.53204, 2.1915, 1.58927 }
+		}
+		NcorrMap =   1.15 {
+		  RlineMap = *;
+		  PratioMap = { 2.25655, 2.37789, 2.48986, 2.59049, 2.67758, 2.74889, 2.80276, 2.68488, 2.32817, 1.6883 }
+		}
+	 } // end alphaMap = 0
+	
+	 alphaMap =  90.000 {
+		NcorrMap =   0.3 {
+		  RlineMap = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8 }
+		  PratioMap = { 1.06628, 1.07422, 1.08141, 1.08782, 1.09339, 1.09809, 1.10158, 1.09447, 1.0724, 1.02626 }
+		}
+		NcorrMap =   0.4 {
+		  RlineMap = *;
+		  PratioMap = { 1.1199, 1.13431, 1.14739, 1.15906, 1.16921, 1.17775, 1.18398, 1.17059, 1.12995, 1.04726 }
+		}
+		NcorrMap =   0.5 {
+		  RlineMap = *;
+		  PratioMap = { 1.19113, 1.2141, 1.23501, 1.2537, 1.26995, 1.28359, 1.29328, 1.27097, 1.20506, 1.07512 }
+		}
+		NcorrMap =   0.6 {
+		  RlineMap = *;
+		  PratioMap = { 1.28174, 1.31551, 1.34632, 1.37388, 1.39784, 1.4179, 1.43176, 1.39751, 1.299, 1.11123 }
+		}
+		NcorrMap =   0.7 {
+		  RlineMap = *;
+		  PratioMap = { 1.39449, 1.44139, 1.48426, 1.52267, 1.55604, 1.5839, 1.6027, 1.55332, 1.4145, 1.15842 }
+		}
+		NcorrMap =   0.75 {
+		  RlineMap = *;
+		  PratioMap = { 1.46032, 1.51465, 1.56439, 1.60897, 1.6477, 1.67996, 1.70157, 1.64351, 1.48169, 1.18759 }
+		}
+		NcorrMap =   0.8 {
+		  RlineMap = *;
+		  PratioMap = { 1.53315, 1.59547, 1.6526, 1.70383, 1.74833, 1.78532, 1.81001, 1.74267, 1.5561, 1.22154 }
+		}
+		NcorrMap =   0.85 {
+		  RlineMap = *;
+		  PratioMap = { 1.6135, 1.6843, 1.74929, 1.80761, 1.85824, 1.90025, 1.92833, 1.85132, 1.63854, 1.26127 }
+		}
+		NcorrMap =   0.9 {
+		  RlineMap = *;
+		  PratioMap = { 1.7018, 1.78147, 1.8547, 1.92045, 1.97749, 2.02475, 2.05654, 1.96978, 1.72981, 1.30792 }
+		}
+		NcorrMap =   0.95 {
+		  RlineMap = *;
+		  PratioMap = { 1.79829, 1.88706, 1.96874, 2.04211, 2.10575, 2.15835, 2.19421, 2.09806, 1.83059, 1.36278 }
+		}
+		NcorrMap =   1 {
+		  RlineMap = *;
+		  PratioMap = { 1.9029, 2.00075, 2.09089, 2.17187, 2.24209, 2.3, 2.34022, 2.2356, 1.94131, 1.42718 }
+		}
+		NcorrMap =   1.05 {
+		  RlineMap = *;
+		  PratioMap = { 2.0151, 2.12168, 2.21995, 2.30826, 2.3848, 2.44777, 2.49258, 2.38106, 2.0619, 1.50235 }
+		}
+		NcorrMap =   1.1 {
+		  RlineMap = *;
+		  PratioMap = { 2.13367, 2.24824, 2.35393, 2.44893, 2.53121, 2.59875, 2.64819, 2.53204, 2.1915, 1.58927 }
+		}
+		NcorrMap =   1.15 {
+		  RlineMap = *;
+		  PratioMap = { 2.25655, 2.37789, 2.48986, 2.59049, 2.67758, 2.74889, 2.80276, 2.68488, 2.32817, 1.6883 }
+		}
+	 } // end alphaMap = 90
+	} // end TB_PR
+} // end S_map scope (CompressorRlineMap subelement)

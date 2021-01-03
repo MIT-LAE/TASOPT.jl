@@ -1,0 +1,76 @@
+//------------------------------------------------------------------------
+//                                                                       |
+//   File Name:     Tshaft.run                                           |
+//   Date(s):       January 2nd, 2021                                    |
+//   Author:        Prakash Prashanth                                    |
+//                                                                       |
+//   Description:   Turboshaft engine for integration with TAESOPT       |
+//                                                                       |
+//------------------------------------------------------------------------
+MODELNAME = "Turboshaft engine";
+AUTHOR    = "Prashanth";
+
+setThermoPackage("GasTbl");
+#include "TShaft.mdl"
+#include "printDetails.fnc"
+#include "utils.fnc"
+#include "save_solver.fnc"
+
+Eng.setOption("switchDes","DESIGN");
+
+//====================
+//Read input file
+//====================
+#include "EngineInputs.inp"
+
+//====================
+//Auto solver setup
+//====================
+solver.clear();
+autoSolverSetup();
+
+//====================
+//Custom solver setup
+//====================
+#include "SolverVariables.int"
+#include "CustomSolverSetup.int"
+
+DESIGN_TARGET_SHP.eq_rhs  = toStr(SHP_dmd);
+DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
+
+// printSolverDetails();
+
+//====================
+// Solver setup:
+//====================
+solver.maxIterations = 200;
+solver.maxJacobians  = 200;
+// solver.debugLevel = "ITERATION_DETAILS";
+// solver.diagnosticFile = "solver.diag";
+// solver.solutionMode = "ONE_PASS";
+// solver.defaultDxLimit = 0.001;
+// solver.defaultPerturbation = 0.0001;
+// solver.convergenceLimit = 0.8;
+solver.defaultTolerance = 1e-10;
+
+//====================
+//Run engine model
+//====================
+restart("temp.restart");
+
+run();
+
+MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+if(solver.converged == 1){
+    SaveIndepVals("solver", "temp.restart");
+}
+
+//====================
+// Outputs
+//====================
+cout<<"Mass Flow rate = "<<Eng.FsEng.W_in/2.205<<"kg/s"<<endl;
+cout<<"Thermal eff = "<<Eng.Perf.IdealThermalEff<<endl;
+cout<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
+cout<< "BSFC = "<<Eng.Perf.BSFC<<endl;
+cout<<"Tt41 = "<<Eng.TrbH.F041.Tt<<Eng.TrbH.F041.Tt.units<<endl;
+cout<<"Tt41 = "<<Eng.CmpH.Fl_O.Tt<<Eng.CmpH.Fl_O.Tt.units<<endl;
