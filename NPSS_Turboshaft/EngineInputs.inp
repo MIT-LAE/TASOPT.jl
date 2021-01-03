@@ -1,8 +1,0 @@
-// Targets
-real SHP_dmd = 13404.825737265415;
-real Tt41    = 3000;
-// LHV based on fuel
-Eng.FusEng.LHV = 279069.76744186046;
-// Design parameters
-Eng.CmpL.PRdes = 3.5;
-Eng.CmpH.PRdes = 10;

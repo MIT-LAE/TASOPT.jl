@@ -68,9 +68,14 @@ if(solver.converged == 1){
 //====================
 // Outputs
 //====================
-cout<<"Mass Flow rate = "<<Eng.FsEng.W_in/2.205<<"kg/s"<<endl;
-cout<<"Thermal eff = "<<Eng.Perf.IdealThermalEff<<endl;
-cout<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
-cout<< "BSFC = "<<Eng.Perf.BSFC<<endl;
-cout<<"Tt41 = "<<Eng.TrbH.F041.Tt<<Eng.TrbH.F041.Tt.units<<endl;
-cout<<"Tt41 = "<<Eng.CmpH.Fl_O.Tt<<Eng.CmpH.Fl_O.Tt.units<<endl;
+OutFileStream output {
+    filename = "Eng.output"; 
+}
+
+output<<"# Julia readable file of engine output"<<endl;
+output<<"Mass Flow rate = "<<Eng.FsEng.W_in/2.205<<"kg/s"<<endl;
+output<<"Thermal eff = "<<Eng.Perf.IdealThermalEff<<endl;
+output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
+output<< "BSFC = "<<Eng.Perf.BSFC<<endl;
+output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<Eng.TrbH.F041.Tt.units<<endl;
+output<<"Tt3 = "<<Eng.CmpH.Fl_O.Tt<<Eng.CmpH.Fl_O.Tt.units<<endl;
