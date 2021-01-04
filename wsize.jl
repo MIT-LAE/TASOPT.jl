@@ -877,33 +877,50 @@ Lconv = false # no convergence yet
             parg[igGJv]  = GJov
 
             # VT centroid x-offset
+            dxv, _ = surfdx(bv2, bov, bov, λv, λvs, sweepv)
+            parg[igxvtail] = xvbox + dxv
+
+        # -----------------------------
+        # Drag and engine calculations
+        # ------------------------------
+            # Total Drag
+
+                WMTO = parg[igWMTO]
+                #calculate for start-of-cruise point
+                ip = ipcruise1
+
+                # Pitch trim by adjusting Clh or by moving wing
+                Wzero = WMTO - parg[igWfuel] #Zero fuel weight
+                Wf    = para[iafracW, ip]*WMTO - Wzero
+                rfuel = Wf/parg[igWfuel]
+                rpay  = 1.0
+                ξpay  = 0.
+                itrim = 1
+                balance(pari,parg,para[1,ip],rfuel,rpay, ξpay, itrim)
+
+                # Drag buildup cdsum()
+                cdsum(pari, parg, para[:, ip], pare[:, ip], 1)
+
+            # L/D and Design point thrust
+                LoD = para[iaCL, ip]/para[iaCD, ip]
+                gamV = para[iagamV, ip]
+                W   = para[iafracW, ip] * WMTO
+                BW  = W + WbuoyCR
+                Fdes = BW*(1/LoD + gamV)
+
+                pare[ieFe, ip] = Fdes/neng
+
+            # Size engine for TOC
+
+            # Size PCEC - estimate weights 
+
+            # Engine weight section
+                #  Drela's weight model? Nate Fitszgerald - geared TF weight model
 
 
-#calculate for start-of-cruise point
-ip = ipcruise1
-
-# Pitch trim by adjusting Clh or by moving wing
-Wzero = WMTO - parg[igWfuel] #Zero fuel weight
-Wf    = para[iafracW, ip]*WMTO - Wzero
-rfuel = Wf/parg[igWfuel]
-rpay  = 1.0
-ξpay  = 0.
-itrim = 1
-balance(pari,parg,para[1,ip],rfuel,rpay, ξpay, itrim)
-
-# Drag buildup cdsum()
-cdsum(pari, parg, para, pare, 1)
-LoD = para[iaCL, ip]/para[iaCD, ip]
-
-# Size engine for TOC
-
-# Size PCEC - estimate weights 
-
-# Engine weight section
-#  Drela's weight model? Nate Fitszgerald - geared TF weight model
-
-
-# Fly mission
+        # ----------------------
+        #     Fly mission
+        # ----------------------
 # Get mission fuel burn (check if fuel capacity is sufficent)
 
 # Recalculate weight wupdate()
