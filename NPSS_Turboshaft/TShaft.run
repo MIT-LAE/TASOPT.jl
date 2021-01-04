@@ -60,9 +60,12 @@ restart("temp.restart");
 
 run();
 
-MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+// MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 if(solver.converged == 1){
     SaveIndepVals("solver", "temp.restart");
+}
+else{
+    cout<<"ERROR! Did not converge"<<endl;
 }
 
 //====================
@@ -72,10 +75,10 @@ OutFileStream output {
     filename = "Eng.output"; 
 }
 
-output<<"# Julia readable file of engine output"<<endl;
-output<<"Mass Flow rate = "<<Eng.FsEng.W_in/2.205<<"kg/s"<<endl;
+output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
+output<<"Mass Flow rate = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
 output<<"Thermal eff = "<<Eng.Perf.IdealThermalEff<<endl;
 output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
 output<< "BSFC = "<<Eng.Perf.BSFC<<endl;
-output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<Eng.TrbH.F041.Tt.units<<endl;
-output<<"Tt3 = "<<Eng.CmpH.Fl_O.Tt<<Eng.CmpH.Fl_O.Tt.units<<endl;
+output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;
+output<<"Tt3 = "<<Eng.CmpH.Fl_O.Tt <<"\t#" +Eng.CmpH.Fl_O.Tt.units<<endl;
