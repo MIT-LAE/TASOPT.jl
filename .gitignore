@@ -3,3 +3,4 @@
 *.inp
 *.restart
 *.output
+*.code-workspace
