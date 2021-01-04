@@ -12,9 +12,10 @@ and iterates until the MTOW converges to within a specified tolerance.
 - Mission specific paramters - alt, mach, P, T etc...
 - Engine specific parameters 
 """
-function wsize()
+function wsize(pari, parg, parm, para, pare,
+            itermax, wrlx, initwgt, initeng, iairf)
 
-    
+    #include all functions required [TOCHECK] might not include here but only in MAIN program
     include("atmos.jl")
     include("fuseW.jl")
     include("fusebl.jl")
@@ -24,14 +25,365 @@ function wsize()
     include("wingpo.jl")
     include("tailpo.jl")
 
+    # Weight convergence tolerance 
+    tolerW = 1.0e-10
 
-## Load parameters
-# Set specifed quantites during weight iteration loop
-# Store design-mission parameters
+    # Atmospheric conditions at sea-level
+    TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
+## Set quantities that are fixed during weight iteration
 
-# 
+    # Unpack payload and range for design mission - this is the mission that the structures are sized for
+        Rangetot = parm[imRange]
+        Wpay     = parm[imWpay ]
+    # Store the design mission in the geometry array as well
+        parg[igRange] = Rangetot
+        parg[igWpay ] = Wpay
 
-## Initial guess section
+    # Fixed weight and location of fixed weight
+        Wfix = parg[igWfix]
+        xfix = parg[igxfix]
+
+    # Weight fractions
+        fapu  = parg[igfapu ]
+        fpadd = parg[igfpadd]
+        fseat = parg[igfseat]
+        feadd = parg[igfeadd]
+        fnace = parg[igfnace]
+        fhadd = parg[igfhadd]
+        fvadd = parg[igfvadd]
+        fwadd = parg[igfflap] + parg[igfslat] + parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
+
+        fstring = parg[igfstring]
+        fframe  = parg[igfframe ]
+        ffadd   = parg[igffadd  ]
+        fpylon  = parg[igfpylon ]
+
+        fhpesys = parg[igfhpesys]
+        flgnose = parg[igflgnose]
+        flgmain = parg[igflgmain]
+
+        freserve = parg[igfreserve]
+
+    # fuselage lift carryover loss, tip lift loss fractions
+        fLo = parg[igfLo]
+        fLt = parg[igfLt]
+    
+    # fuselage dimensions and coordinates
+        Rfuse   = parg[igRfuse ] 
+        dRfuse  = parg[igdRfuse]
+        wfb     = parg[igwfb  ]
+        nfweb   = parg[ignfweb]
+        hfloor  = parg[ighfloor]
+        xnose   = parg[igxnose]
+        xend    = parg[igxend ]
+        xshell1 = parg[igxshell1]
+        xshell2 = parg[igxshell2]
+        xconend = parg[igxconend]
+        xwbox   = parg[igxwbox]
+        xhbox   = parg[igxhbox]
+        xvbox   = parg[igxvbox]
+        xapu    = parg[igxapu]
+        xeng    = parg[igxeng]
+
+    # calculate payload proportional weights from weight fractions
+        Wapu  = Wpay * fapu
+        Wpadd = Wpay * fpadd
+        Wseat = Wpay * fseat
+
+    # window and insulation densities per length and per area
+        Wpwindow = parg[igWpwindow]
+        Wppinsul = parg[igWppinsul]
+        Wppfloor = parg[igWppfloor]
+
+    # fuselage-bending inertial relief factors
+        rMh = parg[igrMh]
+        rMv = parg[igrMv]
+
+    # tail CL's at structural sizing cases
+        CLhmax = parg[igCLhmax]
+        CLvmax = parg[igCLvmax]
+
+    # wing break, wing tip taper ratios
+        λs = parg[iglambdas]
+        λt = parg[iglambdat]
+
+    # tail surface taper ratios (no inner panel, so λs=1)
+        λhs = 1.0
+        λh  = parg[iglambdah]
+        λvs = 1.0
+        λv  = parg[iglambdav]
+
+    # tailcone taper ratio
+        λc = parg[iglambdac]
+
+    # wing geometry parameters
+        sweep = parg[igsweep]
+        wbox  = parg[igwbox ]
+        hboxo = parg[ighboxo]
+        hboxs = parg[ighboxs]
+        rh    = parg[igrh]
+        AR    = parg[igAR]
+        bo    = parg[igbo]
+        ηs    = parg[igetas]
+        Xaxis = parg[igXaxis]
+
+    # tail geometry parameters
+        sweeph = parg[igsweeph]
+        wboxh  = parg[igwboxh]
+        hboxh  = parg[ighboxh]
+        rhh    = parg[igrhh]
+        ARh    = parg[igARh]
+        boh    = parg[igboh]
+
+        sweepv = parg[igsweepv]
+        wboxv  = parg[igwboxv]
+        hboxv  = parg[ighboxv]
+        rhv    = parg[igrhv]
+        ARv    = parg[igARv]
+        bov    = parg[igbov]
+
+    # number of vertical tails
+        nvtail = parg[ignvtail]
+
+    # strut vertical base height, h/c, strut shell t/h
+        zs     = parg[igzs]
+        hstrut = parg[ighstrut]
+        tohstrut = 0.05
+
+    # assume no struts on tails
+        zsh = 0.0
+        zsv = 0.0
+
+    # max g load factors for wing, fuselage
+        Nlift = parg[igNlift]
+        Nland = parg[igNland]
+
+    # never-exceed dynamic pressure for sizing tail structure
+        Vne = parg[igVne]
+        qne = 0.5*ρSL*Vne^2
+
+    # wingbox stresses and densities [section 3.1.9 taspot.pdf [prash]] #reference
+        σcap    = parg[igsigcap ] * parg[igsigfac]
+        tauweb  = parg[igtauweb ] * parg[igsigfac]
+        rhoweb  = parg[igrhoweb ]
+        rhocap  = parg[igrhocap ]
+
+    # fuselage stresses and densities
+        σskin = parg[igsigskin] * parg[igsigfac]
+        σbend = parg[igsigbend] * parg[igsigfac]
+        rhoskin = parg[igrhoskin]
+        rhobend = parg[igrhobend]
+
+    # fuselage shell bending/skin modulus ratio
+        rEshell = parg[igrEshell]
+
+    # strut stress and density
+        σstrut = parg[igsigstrut] * parg[igsigfac]
+        rhostrut = parg[igrhostrut]
+
+    # assume tail stresses and densities are same as wing's (keeps it simpler)
+        σcaph   = σcap
+        tauwebh = tauweb
+        rhowebh = rhoweb
+        rhocaph = rhocap
+
+        σcapv   = σcap
+        tauwebv = tauweb
+        rhowebv = rhoweb
+        rhocapv = rhocap
+
+    # number of engines, y-position of outermost engine
+        neng = parg[igneng]
+        yeng = parg[igyeng]
+
+    # fan hub/tip ratio
+        HTRf = parg[igHTRf]
+
+    # nacelle wetted area / fan area ratio
+        rSnace = parg[igrSnace]
+# -------------------------------------------------------    
+## Initial guess section [Section 3.2 of TASOPT docs]
+# -------------------------------------------------------
+    # Allow first iteration
+    if(initwgt == 0)
+        Whtail = 0.05 * Wpay/parg[igsigfac]
+        Wvtail = Whtail
+        Wwing  = 0.5  * Wpay/parg[igsigfac]
+        Wstrut = 0.0
+        Weng   = 0.3 * Wpay
+        feng   = 0.08
+
+        dxWhtail = 0.0
+        dxWvtail = 0.0
+
+        # Wing panel weights and moments (after estimating span first)
+            ip = ipcruise1
+            W = 5.0*Wpay
+            S = W / (0.5* pare[ierho0,ip] * pare[ieu0,ip]^2 * para(iaCL,ip))
+            b  = sqrt(S*parg[igAR])
+            bs = b*ηs
+            Winn = 0.15 * Wpay / parg[igsigfac]
+            Wout = 0.05 * Wpay / parg[igsigfac]
+            dyWinn = Winn*0.30*(0.5*(bs-bo))
+            dyWout = Wout*0.25*(0.5*(b -bs))
+
+            parg[igWhtail] = Whtail
+            parg[igWvtail] = Wvtail
+            parg[igWwing ] = Wwing
+            parg[igWstrut] = Wstrut
+            parg[igWeng  ] = Weng
+            parg[igWinn  ] = Winn
+            parg[igWout  ] = Wout
+            parg[igdxWhtail] = dxWhtail
+            parg[igdxWvtail] = dxWvtail
+            parg[igdyWinn] = dyWinn
+            parg[igdyWout] = dyWout
+
+        # wing centroid x-offset form wingbox
+            dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
+            xwing = xwbox * dxwing
+            parg[igxwing] = xwing
+
+        # tail area centroid locations (assume no offset from sweep initially)
+            parg[igxhtail], parg[igxvtail] = xhbox, xvbox
+        # center wingbox chord extent for fuse weight calcs (small effect)
+            cbox = 0.0
+        # nacelle, fan duct, core, cowl lengths ℛℯ calcs
+            parg[iglnace] = 0.5*S/b
+
+        # nacelle Awet/S
+            fSnace = 0.2
+            parg[igfSnace] = fSnace
+
+        # Initial fuel fraction estimate from BRE
+            LoD  = 18.0
+            TSFC = 1.0/ 7000.0
+            V    = pare[ieu0, ipcruise1]
+            ffburn = (1.0 - exp(-Rangetot*TSFC/(V*LoD))) # ffburn = Wfuel/Wstart
+            ffburn = min(ffburn, 0.8/(1.0 + freserve))
+        # mission-point fuel fractions
+            ffuelb = ffburn*(1.0  + freserve)  # start of climb
+            ffuelc = ffburn*(0.90 + freserve)  # start of cruise
+            ffueld = ffburn*(0.02 + freserve)  # start of descent
+            ffuele = ffburn*(0.0  + freserve)  # end of descent (landing) 
+
+        # max fuel fraction is at start of climb
+            ffuel = ffuelb # ffuel is max fuel fraction
+
+        # Set initial climb γ = 0 to force intial guesses
+            para[iagamV, :] .= 0.0
+
+        # Put initial-guess weight fractions in mission-point array. 
+        
+            # These are points before climb starts
+            para[iafracW, ipstatic ] = 1.0
+            para[iafracW, iprotate ] = 1.0
+            para[iafracW, iptakeoff] = 1.0
+            para[iafracW, ipcutback] = 1.0
+
+            # Interpolate for the rest
+            #--------- Simple linear interpolation ---------
+            #     y-y1   y2-y1
+            #     ---- = ----- => y = y1*(1-frac) + y2*frac
+            #     x-x1   x2-x1
+            #-----------------------------------------------
+            # Climb
+            for ip = ipclimb1:ipclimbn
+                frac = float(ip - ipclimb1)/float(ipclimbn - ipclimb1)
+                ffp  = ffuelb*(1.0 - frac) + ffuelc*frac
+                para[iafracW, ip] = 1.0 - ffuel + ffp
+            end
+            # Cruise
+            for ip = ipcruise1:ipcruisen
+                frac = float(ip - ipcruise1)/float(ipcruisen - ipcruise1)
+                ffp  = ffuelc*(1.0 - frac) + ffueld*frac
+                para[iafracW, ip] = 1.0 - ffuel + ffp
+            end
+            # Descent
+            for ip = ipdescent1:ipdescentn
+                frac = float(ip - ipdescent1)/float(ipdescentn - ipdescent1)
+                ffp  = ffueld*(1.0 - frac) + ffuele*frac
+                para[iafracW, ip] = 1.0 - ffuel + ffp
+            end
+        
+        # Initial tail info for sizing of fuselage bending and torsion added material 
+            Sh = (2.0*Wpay) / (qne*CLhmax)
+            Sv = (2.0*Wpay) / (qne*CLvmax)
+            bv = sqrt(Sv*ARv)
+    
+            parg[igSh] = Sh
+            parg[igSv] = Sv
+
+        # Initial wing and tail pitching moments (including sweep)
+            para[iaCMw0, :] .= 0.0
+            para[iaCMw1, :] .= 0.0
+            para[iaCMh0, :] .= 0.0
+            para[iaCMh1, :] .= 0.0
+            para[iaCLh , :] .= 0.0
+        
+        # Initial cruise-climb angle gamVcr needed to estimate end-of-cruise altitude
+            gamVcr = 0.0002
+            para[iaCD, ipcruise1] = para[iaCL, ipcruise1]/LoD
+            para[iagamV, ipcruise1] = gamVcr
+        
+        # Pressure and altitude at start of cruise
+            
+        # Guess for OEI [TODO] This needs some thinking about what is "One engine out" mean for a turbo-electric aircraft
+
+        # Guess fan face mach numbers for nacelle CD calcs
+
+    else #Second iteration onwards use previously calcualted values
+
+        # Wing parameters
+            S  = parg[igS]
+            b  = parg[igb]
+            bs = parg[igbs]
+            bo = parg[igbo]
+            cbox = parg[igco]*parg[igwbox]
+
+            xwing  = parg[igxwing]
+            dxwing = parg[igxwing] - parg[igxwbox]
+
+        # Tail parameters
+            bh = parg[igbh]
+            bv = parg[igbv]
+
+            coh = parg[igcoh]
+            cov = parg[igcov]
+
+            Sh  = parg[igSh]
+            Sv  = parg[igSv]
+            ARh = parg[igARh]
+            ARv = parg[igARv]
+
+            xhtail = parg[igxhtail]
+            xvtail = parg[igxvtail]
+    
+            xhbox = parg[igxhbox]
+            xvbox = parg[igxvbox]
+
+            dxWhtail = parg[igdxWhtail]
+            dxWvtail = parg[igdxWvtail]
+
+        # Weights
+            Whtail = parg[igWhtail]
+            Wvtail = parg[igWvtail]
+            Wwing  = parg[igWwing ]
+            Wstrut = parg[igWstrut]
+            Weng   = parg[igWeng  ]
+            Winn   = parg[igWinn  ]
+            Wout   = parg[igWout  ]
+
+        # Others       
+            dyWinn = parg[igdyWinn]
+            dyWout = parg[igdyWout]    
+
+            WMTO  = parg[igWMTO]
+            feng  = parg[igWeng]/WMTO
+            ffuel = parg[igWfuel]/WMTO
+
+            fSnace = parg[igfSnace]
+    endif
 # Wing panel weights and moments after estimating span
 # HT sizing estimate
 # Initial weight guesses
@@ -43,9 +395,21 @@ function wsize()
 # 
 
 ## Weight loop
+
 # Fuselage sizing
 
-fusebl!(pari, parg, para[1,ipcruise1])
+    # Calculate fuselage B.L. development at start of cruise: ipcruise1
+    fusebl!(pari, parg, para[1,ipcruise1])
+    KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
+    DAfsurf = para[iaDAfsurf, ipcruise1] # Surface dissapation area 
+    DAfwake = para[iaDAfwake, ipcruise1] # Wake dissapation area
+    PAfinf  = para[iaPAfinf , ipcruise1] # Momentum area at ∞
+
+    # Assume K.E., Disspation and momentum areas are const. for all mission points:
+    para[iaKAfTE  , :] .= KAfTE
+    para[iaDAfsurf, :] .= DAfsurf
+    para[iaDAfwake, :] .= DAfwake
+    para[iaPAfinf , :] .= PAfinf
 
 # Fixed weights and locations -> moments
 
@@ -69,14 +433,14 @@ Wfuse, xWfuse, cabVol) = fuseW(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng,
                       fstring, fframe, ffadd, deltap, 
                       Wpwindow, Wppinsul, Wppfloor, 
                       Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax, 
-                      bv, lambdav, nvtail, 
-                      Rfuse, dRfuse, wfb, nfweb, lambdac, 
+                      bv, λv, nvtail, 
+                      Rfuse, dRfuse, wfb, nfweb, λc, 
                       xnose, xshell1, xshell2, xconend, 
                       xhtail, xvtail, 
                       xwing, xwbox, cbox, 
                       xfix, xapu, xeng, 
                       hfloor, 
-                      sigskin, sigbend,  rhoskin, rhobend, 
+                      σskin, σbend,  rhoskin, rhobend, 
                       Eskin, Ebend, Gskin)
 
 parg[igtskin ]  = tskin
@@ -191,11 +555,11 @@ po = wingpo(b,bs,bo,
 
 
 results = surfw(gee,po,b,bs,bo,co,zs,
-                lambdat,lambdas,gammat,gammas,
+                λt,λs,gammat,gammas,
                 Nload,iwplan,We,
                 Winn,Wout,dyWinn,dyWout,
                 sweep,wbox,hboxo,hboxs,rh, fLt,
-                tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
+                tauweb,σcap,σstrut,Ecap,Eweb,Gcap,Gweb,
                 rhoweb,rhocap,rhostrut,rhofuel)
 
 # [TODO] note this assumes wings have some fuel, so need to ensure that is addressed
@@ -242,7 +606,7 @@ parg[igVh] = Sh*lhtail/(S*cma)
 # set HT max loading magnitude
 bh, coh, poh = tailpo(Sh, ARh, λh, qne, CLhmax)
 # set VT max loading magnitude, based on singel tail + its bottom image
-bv2, cov, pov = tailpo(2.0*Sv/nvtail, 2.0*ARv,lambdav,qne,CLvmax)
+bv2, cov, pov = tailpo(2.0*Sv/nvtail, 2.0*ARv,λv,qne,CLvmax)
 
 # HT weight
 # HT centroid x-offset
