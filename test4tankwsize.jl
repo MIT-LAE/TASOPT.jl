@@ -22,7 +22,7 @@ print(varinfo())
       hfloor, sigskin, sigbend,
       rhoskin, rhobend,
       Eskin, Ebend, Gskin, rhoFuel, m_airplane, R, lcv, eta, LD, v_cruise, hconvgas,
-      h_LH2, Tfuel, Tair, r_tank, h_e, t, r_gas, k, hconvair, time_flight) = (9.81, 6.0,
+      h_LH2, Tfuel, Tair, r_tank, h_e, t_cond, r_gas, k, hconvair, time_flight) = (9.81, 6.0,
       0.13E+05,  0.46E+06,  0.16E+06,  0.46E+05,  0.16E+05,   0.0,
       0.34,      0.24,      0.20,
       0.56E+05,
@@ -37,21 +37,20 @@ print(varinfo())
       50, 21, 173, 3, 80000000, [0.1, 0.1, 0.1], 0.1, [205.0, 205.0, 205.0], 100, 3600)
 
 #rhoFuel from hydrogen tank designv3 article
-
-m_boiloff = tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
-                        h_e, t, r_gas, k, hconvair, time_flight)
+thickness_insul = sum(t_cond)
+m_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                      h_e, t_cond, k, hconvair, time_flight)
 
 result = tankWmech(gee, rhoFuel,
-                      fstring,fframe,ffadd,deltap,
-                      Rfuse,dRfuse,wfb,nfweb,
-                      xshell1,xshell2,
-                      sigskin,Wppinsul, rhoskin,
-                      m_airplane, R, lcv, eta, LD, m_boiloff)
+                      fstring, fframe, ffadd, deltap,
+                      Rfuse, dRfuse, wfb, nfweb,
+                      sigskin, Wppinsul, rhoskin,
+                      Wfuel, m_boiloff, thickness_insul)
 
 Wtank = result[1]
 Wfuel = result[2]
 
-Wtank = Wtank + m_boiloff*gee + Wfuel #weight of tank including fuel
+#Wtank = Wtank + m_boiloff*gee + Wfuel #weight of tank including fuel
 
 #print(result)
 #print("atmos(0)")
