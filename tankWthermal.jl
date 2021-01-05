@@ -22,8 +22,8 @@ Outputs:
 """
 function tankWthermal(gee, rhoFuel, deltap,
                       Rfuse, dRfuse,
-                      xshell1, xshell2, hconvair, hconvgas, h_LH2, Tfuel, Tair, r_tank, pi,
-                      h_e, t, r_gas, k)
+                      xshell1, xshell2, v_cruise, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                      h_e, t, r_gas, k, hconvair)
 
 #--- effective pressure-vessel length
       lshell = xshell2 - xshell1  #pressure vessel length, can be based on tank volume required to store LH2
@@ -31,6 +31,7 @@ function tankWthermal(gee, rhoFuel, deltap,
       thickness = sum(t) #total thickness of MLI
 
 #--- Heat flux and resistances
+
       deltaT = Tair - Tfuel  #Overall temperature drop between ambient and LH2
       Rair = 1 / (hconvair * 2 * pi * r_tank * lshell)  #thermal resistance of ambient air
       r_inner = r_tank - thickness  #inner radius of tank
