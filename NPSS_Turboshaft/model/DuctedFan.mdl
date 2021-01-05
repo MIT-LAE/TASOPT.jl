@@ -1,0 +1,158 @@
+//------------------------------------------------------------------------
+//                                                                       |
+//   File Name:     DuctedFan.mdl                                        |
+//   Date(s):       January 4, 2021                                      |
+//   Author:        Prakash Prashanth                                    |
+//                                                                       |
+//   Description:   Ducted fan for turbo-electric                        |
+//                                                                       |
+//------------------------------------------------------------------------
+
+//------------------------------------------------------------------------
+//                            Model Definition 
+//------------------------------------------------------------------------
+
+Assembly Assembly DuctedFan
+{
+    // 1. Assembly level elements for solution control, interfacing, and power setting
+	Option switchDes {
+		description = "Determines if the ducted fan assembly is in design or off-design mode";
+		IOstatus = "input";
+		rewritableValues = FALSE;
+		trigger = TRUE;
+		allowedValues = {"DESIGN","OFFDESIGN"};
+	}
+    // 2. Free Stream definition - establish ambient conditions
+    // ------------------------------
+    // Ambient Amb
+    // ------------------------------
+    Element Ambient Amb
+    {
+        setOption( "switchMode", "ALDTMN" );
+        setOption( "switchDay" , "STD" );
+        // alt_in    = 0.0 "ft";
+        dTs_in    = 0.0 "dF";
+        // MN_in     = 0.25;
+    }
+    // 3. Flow start
+    // ------------------------------
+    // InletStart FsEng
+    // ------------------------------
+    Element InletStart FsEng
+    {
+        AmbientName = "Amb";
+        setOption("switchInd" , "W");
+		//Precalculate how much airflow needs to go through for a given area, 
+		//MN and flow conditions.	
+        W_in = 20.0;
+		real theta_0;
+		void postexecute(){
+			theta_0 = Fl_O.Tt/518.67;
+		}
+    }
+    // 4. Inlet
+    // ------------------------------
+    // Inlet InEng
+    // ------------------------------
+    Element Inlet InEng
+    {
+		PqP_in = 0.998;		
+		Fl_O.MN = 0.5;
+	}
+
+    Element Compressor Fan 
+    {
+		PRdes  = 1.95;
+		effDes = 0.91;
+		#include "fanCFM56.map"
+		Sh_O.inertia = 10.;     // slugs-ft**2.
+		real dia {value = 0; units = "in";}
+        real dT;
+        real HTR; // Hub-tip ratio
+        HTR = 0.34;
+		void postexecute()
+		{
+			dia	= (Fl_I.Aphy*4/3.1415/(1-HTR**2))**0.5;
+			dT = (Fl_O.Tt - Fl_I.Tt)*100/180; //temp diff in K
+		}
+		Fl_O.MN = 0.46;
+	}	
+
+    Element Duct FanDuct
+    {
+        switchDP = "INPUT";
+
+		void preexecute()
+		{
+			dPqP_in = 0.1 * Fl_I.MN * Fl_I.MN;
+		}
+		Fl_O.MN = 0.4;
+    }
+
+    Element Nozzle FanNozzle
+    {
+        PsExhName = "Amb.Ps";
+		switchType = "CON_DIV";
+		switchCoef = "CV";
+		Cv_in = 0.98;
+    }
+
+    Element FlowEnd FlowEnd{
+    }
+
+    Element Shaft FanShaft
+	{
+		ShaftInputPort Sh_Fan;
+		Nmech = 3500.0;
+		inertia = 13.0;
+    }
+    
+    real mdot, Vjet, Vin, Fn_N;
+    real eta_prop;
+    void postexecute()
+    {
+        Vjet = FanNozzle.Vactual*getUnitsFactor(FanNozzle.Vactual.units, "m/sec");
+        Vin  = InEng.Fl_I.V*getUnitsFactor(InEng.Fl_I.V.units, "m/sec");
+        mdot = InEng.Fl_I.W*getUnitsFactor(InEng.Fl_I.W.units, "kg/sec");
+        Fn_N = mdot*(Vjet - Vin);
+
+        eta_prop = 2*Vin/(Vjet + Vin);
+    }
+    //------------------------------------------------------------------------
+	// Component Links
+	//------------------------------------------------------------------------
+
+    linkPorts( "FsEng.Fl_O"     , "InEng.Fl_I"     , "F010"  ) ;
+	linkPorts( "InEng.Fl_O"     , "Fan.Fl_I"       , "F020"  ) ;
+	linkPorts( "Fan.Fl_O"       , "FanDuct.Fl_I"   , "F025"  ) ;
+	linkPorts( "FanDuct.Fl_O"   , "FanNozzle.Fl_I" , "F030"  ) ;
+	linkPorts( "FanNozzle.Fl_O" , "FlowEnd.Fl_I"   , "F090"  ) ;
+
+    linkPorts( "Fan.Sh_O"       , "FanShaft.Sh_Fan"  ,  "FanWork"   ) ;
+
+    Independent ind_ShaftPower{ varName = "FanShaft.HPX"; description = "ShaftPower from motor"; }
+    Independent ind_Win{ varName = "FsEng.W_in"; description = "Mass flow rate"; }
+
+    Dependent dep_Fn{ eq_lhs = "Fn_N"; eq_rhs = "Fn_target";}
+
+    void variableChanged(string name, any oldval)
+	{
+		if (name == "switchDes")
+		{
+			if (switchDes == "DESIGN")
+			{
+				ind_ShaftPower.autoSetup = TRUE;
+                ind_Win.autoSetup        = TRUE;
+
+                dep_Fn.autoSetup         = TRUE;
+			}
+			else
+			{
+                ind_Win.autoSetup        = FALSE; // The mass flow rate is automatically added by the NPSS solver
+				ind_ShaftPower.autoSetup = TRUE;	
+                dep_Fn.autoSetup         = TRUE;		
+			}
+		}
+	}
+
+}

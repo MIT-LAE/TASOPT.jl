@@ -1,0 +1,107 @@
+//------------------------------------------------------------------------
+//                                                                       |
+//   File Name:     Fan.run                                              |
+//   Date(s):       January 4th, 2021                                    |
+//   Author:        Prakash Prashanth                                    |
+//                                                                       |
+//   Description:   Ducted fan for integration with TAESOPT              |
+//                                                                       |
+//------------------------------------------------------------------------
+MODELNAME = "Ducted Fan";
+AUTHOR    = "Prashanth";
+
+setThermoPackage("GasTbl");
+#include "DuctedFan.mdl"
+
+#include "printDetails.fnc"
+#include "utils.fnc"
+#include "save_solver.fnc"
+
+//====================
+//Read input file
+//====================
+#include "FanInputs.inp"
+
+//====================
+//Auto solver setup
+//====================
+solver.clear();
+autoSolverSetup();
+// printSolverDetails();
+
+// //====================
+// //Custom solver setup
+// //====================
+// #include "SolverVariables.int"
+// #include "CustomSolverSetup.int"
+
+// DESIGN_TARGET_SHP.eq_rhs  = toStr(SHP_dmd);
+// DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
+
+// // printSolverDetails();
+
+//====================
+// Solver setup:
+//====================
+solver.maxIterations = 200;
+solver.maxJacobians  = 200;
+// solver.debugLevel = "ITERATION_DETAILS";
+// solver.diagnosticFile = "solver.diag";
+// solver.solutionMode = "ONE_PASS";
+// solver.defaultDxLimit = 0.001;
+// solver.defaultPerturbation = 0.0001;
+// solver.convergenceLimit = 0.8;
+solver.defaultTolerance = 1e-10;
+
+// //====================
+// //Run engine model
+// //====================
+// restart("temp.restart");
+
+run();
+
+
+// MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+// if(solver.converged == 1){
+//     SaveIndepVals("solver", "temp.restart");
+// }
+// else{
+//     cout<<"ERROR! Did not converge"<<endl;
+// }
+
+//====================
+// Outputs
+//====================
+OutFileStream output {
+    filename = "Fan.output"; 
+}
+
+output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
+output<<"mdot_fan = "<<DuctedFan.FsEng.W_in/2.205<<"\t# kg/s"<<endl;
+output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
+output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
+output<<"Fan_power = "<<convertUnits("DuctedFan.Fan.pwr", "kW") << "\t # kW"<<endl;
+output<<"Torque_fan     = "<<convertUnits("DuctedFan.Fan.trq", "N*m") << "\t # N*m"<<endl;
+output<<"N_fan     = "<<convertUnits("DuctedFan.Fan.Nmech", "rpm") << "\t # rpm"<<endl<<endl;
+
+output<<"# MapScalars"<<endl;
+output<<"MapScalars = ["<<DuctedFan.Fan.S_map.s_effDes<<", "<<DuctedFan.Fan.S_map.s_PRdes<<", "<<DuctedFan.Fan.S_map.s_WcDes<<", "<<DuctedFan.Fan.S_map.s_NcDes<<"]"<<endl;
+output<<"NozArea    = "<<DuctedFan.FanNozzle.AthCold << "\t # in^2"<<endl<<endl;
+
+// // TEST OFF DESIGN CONDITIONS
+// DuctedFan.setOption("switchDes","OFFDESIGN");
+// DuctedFan.Amb.alt_in = 10000;
+// DuctedFan.Amb.MN_in = 0.8;
+// Fn_target = Fn_target*0.5;
+
+// autoSolverSetup();
+// // printSolverDetails();
+
+// run();
+
+
+
+// cout<<"Mass Flow rate = "<<DuctedFan.Fan.Fl_I.W/2.205<<"\t#kg/s"<<endl;
+// cout<<"Dfan = "<<DuctedFan.Fan.dia <<"\t# inches"<<endl;
+// cout<<"eta prop = "<<DuctedFan.eta_prop<<endl;
+// cout<<"Fan power = "<<DuctedFan.Fan.pwr<< " Shaft = "<<DuctedFan.FanShaft.HPX<<endl;
