@@ -32,7 +32,9 @@ function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
       deltaT = Tair - Tfuel  #Overall temperature drop between ambient and LH2
       Rair_conv = 1 / (hconvair * 2 * pi * r_tank * lshell)  #thermal resistance of ambient air
       r_inner = r_tank - thickness  #inner radius of tank
+
       #Not needed for MLI. May add later for purged He etc. Rgas = 1 / (hconvgas * 2 * pi * r_inner * lshell)  #thermal resistance of purged gas
+
       R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)  #thermal resistance of LH2
 
       R_mli = zeros(N)  #size of MLI resistance array (Based on number of layers)
