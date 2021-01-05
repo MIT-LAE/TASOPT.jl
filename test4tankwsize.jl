@@ -22,8 +22,8 @@ print(varinfo())
       cbox, xfix, xapu, xeng,
       hfloor, sigskin, sigbend,
       rhoskin, rhobend,
-      Eskin, Ebend, Gskin, rhoFuel, m_airplane, R, lcv, eta, LD, hconvair, hconvgas,
-      h_LH2, Tfuel, Tair, r_tank, h_e, t, r_gas, k) = (9.81, 6.0,
+      Eskin, Ebend, Gskin, rhoFuel, m_airplane, R, lcv, eta, LD, v_cruise, hconvgas,
+      h_LH2, Tfuel, Tair, r_tank, h_e, t, r_gas, k, hconvair) = (9.81, 6.0,
       0.13E+05,  0.46E+06,  0.16E+06,  0.46E+05,  0.16E+05,   0.0,
       0.34,      0.24,      0.20,
       0.56E+05,
@@ -34,10 +34,10 @@ print(varinfo())
       2.4,       12.,       62.,       72,
       70.,       67.,       40.,       34,       5.7,       3.0,       71.,       31.,
       0.20,      0.10E+09,  0.21E+09,  0.27E+04,
-      0.27E+04,  0.69E+11,  0.69E+11,  0.27E+11, 71, 33000, 5000000, 80000000, 0.5, 18, 25, 25,
-      50, 173, 173, 3, 80000000, [0.1, 0.1, 0.1], 0.1, [205, 205, 205])
+      0.27E+04,  0.69E+11,  0.69E+11,  0.27E+11, 67.3, 33000, 5000000, 80000000, 0.5, 18, 280, 25,
+      50, 21, 173, 3, 80000000, [0.1, 0.1, 0.1], 0.1, [205.0, 205.0, 205.0], 100)
 
-
+#rhoFuel from hydrogen tank designv3 article
 result = tankWmech(gee, rhoFuel,
                       fstring,fframe,ffadd,deltap,
                       Rfuse,dRfuse,wfb,nfweb,
@@ -49,8 +49,8 @@ Wtank = result[1]
 
 m_boiloff = tankWthermal(gee, rhoFuel, deltap,
                         Rfuse, dRfuse,
-                        xshell1, xshell2, hconvair, hconvgas, h_LH2, Tfuel, Tair, r_tank, pi,
-                        h_e, t, r_gas, k)
+                        xshell1, xshell2, v_cruise, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                        h_e, t, r_gas, k, hconvair)
 
 Wtank = Wtank + m_boiloff
 
