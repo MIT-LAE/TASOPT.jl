@@ -3,7 +3,7 @@ Calculates aircraft CD components for operating point ipoint
 If icdfun=1, computes wing cdf,cdp from airfoil database # iairf,
 otherwise uses default values in para array.
 """
-function cdsum(pari,parg,para,pare, icdfun)
+function cdsum!(pari,parg,para,pare, icdfun)
 #      implicit real (a-h,l-z)
 #      include 'index.inc'
 #      integer pari(iitotal)
