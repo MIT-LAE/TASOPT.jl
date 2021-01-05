@@ -1,5 +1,5 @@
 """
-tankWthermal calculates boil-off rate of LH2
+tanksize sizes the fuel tank of aircraft
 
 Inputs:
 NOTE: Every parameter is in SI units
@@ -20,9 +20,11 @@ NOTE: Every parameter is in SI units
 -h_e (J/kg) is heat of vaporization of liquid hydrogen (from Hydrogen tank design paper)
 -r_gas is inner radius of gas-purged chamber (m)
 -threshold_percent is the max allowed percentage of fuel that is allowed to boil off
+-mode: '1' means optimize m_boiloff, '2' means find m_boiloff based on given thickness
 
 Outputs:
-- m_boiloff (kg) is the boiloff LH2 mass for given mission
+- Total thickness of the insulation (m)
+- Total weight of tank Wtank including fuel (N)
 """
 
 function tanksize(gee, rhoFuel, deltap,
@@ -34,19 +36,21 @@ function tanksize(gee, rhoFuel, deltap,
        include("tankWmech.jl")
        include("tankWthermal.jl")
 
+       m_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                               h_e, t, r_gas, k, hconvair, time_flight)
 
        result = tankWmech(gee, rhoFuel,
                 fstring,fframe,ffadd,deltap,
                 Rfuse,dRfuse,wfb,nfweb,
-                xshell1,xshell2,
                 sigskin,Wppinsul, rhoskin,
-                m_airplane, R, lcv, eta, LD, m_boiloff)
+                Wfuel, m_boiloff, thickness_insul)
 
         Wtank = result[1]
-        Wfuel = result[2]
+        Wfuel = result[2] #Don't need fuel weight for mission
 
+#Keep this loop optional Julia multiple dispatch
         while true #optimize boil off mass according to threshold
-                m_boiloff = tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                m_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
                                         h_e, t, r_gas, k, hconvair, time_flight)
                 if(m_boiloff > (threshold_percent *  Wfuel / (gee * 100))) || break
                 end
@@ -56,14 +60,17 @@ function tanksize(gee, rhoFuel, deltap,
         result = tankWmech(gee, rhoFuel,
                  fstring,fframe,ffadd,deltap,
                  Rfuse,dRfuse,wfb,nfweb,
-                 xshell1,xshell2,
                  sigskin,Wppinsul, rhoskin,
-                 m_airplane, R, lcv, eta, LD, m_boiloff)
+                 Wfuel, m_boiloff, thickness_insul)
+
 
         Wtank = result[1]
         Wfuel = result[2]
 
         Wtank = Wtank + m_boiloff*gee + Wfuel #weight of tank including fuel
 
-return Wtank, sum(t)
+return Wtank, sum(t) #boiloff rate output
 end
+ #ltank should vary
+ #while to for loop
+ #

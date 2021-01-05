@@ -14,16 +14,17 @@ NOTE: Everything is in SI units.
 -r_tank (m) is tank outer radius
 -h_e (J/kg) is heat of vaporization of liquid hydrogen (from Hydrogen tank design paper)
 -r_gas is inner radius of gas-purged chamber (m)
+-lshell is the length of tank (m)
+-Time of flight in given segment under analysis time_flight (s)
 
 
 Outputs:
-- m_boiloff (kg) is the boiloff LH2 mass for given mission
+- m_boiloff (kg) is the boiloff LH2 mass
+- mdot_boiloff (kg/s) is the boiloff rate of LH2
 """
-function tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
                       h_e, t, r_gas, k, hconvair, time_flight)
 
-#--- effective pressure-vessel length
-      lshell = xshell2 - xshell1  #pressure vessel length, can be based on tank volume required to store LH2
       N = size(t) #Number of layers in MLI
       thickness = sum(t) #total thickness of MLI
 
@@ -46,7 +47,8 @@ function tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
       Req = R_mli + Rair + Rgas + R_LH2  #Total equivalent resistance of thermal circuit
 
       q = deltaT / Req  #Heat flux from ambient to LH2
-      m_boiloff = q * time_flight / h_e  #Boil-off mass equals the heat flux divided by heat of vaporization
+      mdot_boiloff = q / h_e  #Boil-off rate equals the heat flux divided by heat of vaporization
+      m_boiloff = mdot_boiloff * time_flight #Boil-off mass calculation
 
-return  m_boiloff
+return  m_boiloff, mdot_boiloff
 end

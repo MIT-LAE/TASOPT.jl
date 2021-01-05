@@ -21,18 +21,18 @@ Outputs:
 """
 function tankWmech(gee, rhoFuel,
                       fstring,fframe,ffadd,deltap,
-                      Rfuse,dRfuse,wfb,nfweb,
-                      xshell1,xshell2,
+                      Rtank,dRfuse,wfb,nfweb,
                       sigskin,Wppinsul, rhoskin,
-                      m_airplane, R, lcv, eta, LD, m_boiloff)
+                      Wfuel, m_boiloff, thickness_insul)
 
-#--- effective pressure-vessel length
       lshell = xshell2 - xshell1 #length of pressure vessel
 
-#--- Calculate Wfuel
-      m_st = m_airplane * exp(R * gee / (lcv * eta * LD)) #mass at start of cruise
-      Wfuel = (m_st - m_airplane) * gee #fuel weight for the required LH2
-      Wfuel = (m_boiloff*gee)+Wfuel
+#--- Calculate updated Wfuel based on boil-off mass
+      Rtank = Rfuse - thickness_insul
+      Wfuel = (m_boiloff * gee) + Wfuel
+      Vfuel = Wfuel / (gee * rhoFuel)
+      lshell = Vfuel / (pi * (Rtank^2))
+      #volume of fuel (LH2) (calculate lshell based on Vfuel and rhoFuel)
 #--- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
       thetafb = asin(wfblim/Rfuse)
@@ -53,7 +53,7 @@ function tankWmech(gee, rhoFuel,
       Vcyl  = Askin*lshell
 
 #--- weights and weight moments
-      Wtank = rhoskin*gee*(Vcyl)
+      Wtank = rhoskin*gee*Vcyl
       Wtank = Wtank*(1.0+fstring+fframe+ffadd)
 
 #--- insulation weight
