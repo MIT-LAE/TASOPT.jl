@@ -24,7 +24,7 @@ function tankWmech(gee, rhoFuel,
                       Rfuse,dRfuse,wfb,nfweb,
                       xshell1,xshell2,
                       sigskin,Wppinsul, rhoskin,
-                      m_airplane, R, lcv, eta, LD)
+                      m_airplane, R, lcv, eta, LD, m_boiloff)
 
 #--- effective pressure-vessel length
       lshell = xshell2 - xshell1 #length of pressure vessel
@@ -32,7 +32,7 @@ function tankWmech(gee, rhoFuel,
 #--- Calculate Wfuel
       m_st = m_airplane * exp(R * gee / (lcv * eta * LD)) #mass at start of cruise
       Wfuel = (m_st - m_airplane) * gee #fuel weight for the required LH2
-
+      Wfuel = (m_boiloff*gee)+Wfuel
 #--- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
       thetafb = asin(wfblim/Rfuse)

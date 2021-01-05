@@ -23,7 +23,7 @@ Outputs:
 function tankWthermal(gee, rhoFuel, deltap,
                       Rfuse, dRfuse,
                       xshell1, xshell2, v_cruise, hconvgas, h_LH2, Tfuel, Tair, r_tank,
-                      h_e, t, r_gas, k, hconvair)
+                      h_e, t, r_gas, k, hconvair, time_flight)
 
 #--- effective pressure-vessel length
       lshell = xshell2 - xshell1  #pressure vessel length, can be based on tank volume required to store LH2
@@ -49,7 +49,7 @@ function tankWthermal(gee, rhoFuel, deltap,
       Req = R_mli + Rair + Rgas + R_LH2  #Total equivalent resistance of thermal circuit
 
       q = deltaT / Req  #Heat flux from ambient to LH2
-      m_boiloff = q / h_e  #Boil-off mass equals the heat flux divided by heat of vaporization
+      m_boiloff = q * time_flight / h_e  #Boil-off mass equals the heat flux divided by heat of vaporization
 
 return  m_boiloff
 end
