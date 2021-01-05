@@ -899,7 +899,7 @@ Lconv = false # no convergence yet
                 balance(pari,parg,para[1,ip],rfuel,rpay, ξpay, itrim)
 
                 # Drag buildup cdsum()
-                cdsum(pari, parg, para[:, ip], pare[:, ip], 1)
+                cdsum!(pari, parg, para[:, ip], pare[:, ip], 1)
 
             # L/D and Design point thrust
                 LoD = para[iaCL, ip]/para[iaCD, ip]
