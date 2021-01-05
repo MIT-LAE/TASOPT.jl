@@ -2,7 +2,6 @@ include("wingpo.jl")
 include("atmos.jl")
 include("tankWmech.jl")
 include("tankWthermal.jl")
-include("tankwsize.jl")
 
 print(varinfo())
 
@@ -39,9 +38,7 @@ print(varinfo())
 
 #rhoFuel from hydrogen tank designv3 article
 
-m_boiloff = tankWthermal(gee, rhoFuel, deltap,
-                        Rfuse, dRfuse,
-                        xshell1, xshell2, v_cruise, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+m_boiloff = tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
                         h_e, t, r_gas, k, hconvair, time_flight)
 
 result = tankWmech(gee, rhoFuel,

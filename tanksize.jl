@@ -1,0 +1,69 @@
+"""
+tankWthermal calculates boil-off rate of LH2
+
+Inputs:
+NOTE: Every parameter is in SI units
+-gee is gravitational acceleration (m/s^2)
+-rhoFuel is density of fuel (kg/m^3)
+-deltap is allowed pressure difference in vessel (Pa)
+-Rfuse is fuselage radius (m)
+-dRfuse accounts for flatness at bottom of fuselage (m)
+-xshell1 and xshell2 are start and end x-coordinates of tank (m)
+-Thermal conductivity array k (W/(m*K)) comprising of k value for each MLI layer
+-hconvgas (W/m2*K)  is convective coefficient of insulating purged gas (e.g. N2)
+-hconvair (W/m2*K) is convective coefficient of ambient air
+-Thickness array t (m) corresponds to thickness value of each layer in MLI
+-h_LH2 ((W/m2*K) corresponds to LH2 convective coefficient
+-Tfuel (K) is fuel temperature
+-Tair (K) is ambient temperature
+-r_tank (m) is tank outer radius
+-h_e (J/kg) is heat of vaporization of liquid hydrogen (from Hydrogen tank design paper)
+-r_gas is inner radius of gas-purged chamber (m)
+-threshold_percent is the max allowed percentage of fuel that is allowed to boil off
+
+Outputs:
+- m_boiloff (kg) is the boiloff LH2 mass for given mission
+"""
+
+function tanksize(gee, rhoFuel, deltap,
+                      Rfuse, dRfuse,
+                      xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                      h_e, t, r_gas, k, hconvair, time_flight, fstring,fframe,ffadd,
+                      wfb,nfweb,sigskin,Wppinsul, rhoskin, m_airplane, R, lcv, eta, LD, threshold_percent)
+
+       include("tankWmech.jl")
+       include("tankWthermal.jl")
+
+
+       result = tankWmech(gee, rhoFuel,
+                fstring,fframe,ffadd,deltap,
+                Rfuse,dRfuse,wfb,nfweb,
+                xshell1,xshell2,
+                sigskin,Wppinsul, rhoskin,
+                m_airplane, R, lcv, eta, LD, m_boiloff)
+
+        Wtank = result[1]
+        Wfuel = result[2]
+
+        while true #optimize boil off mass according to threshold
+                m_boiloff = tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+                                        h_e, t, r_gas, k, hconvair, time_flight)
+                if(m_boiloff > (threshold_percent *  Wfuel / (gee * 100))) || break
+                end
+                t = t + 0.01 * t  #increase insulation thickness ad try again
+        end
+
+        result = tankWmech(gee, rhoFuel,
+                 fstring,fframe,ffadd,deltap,
+                 Rfuse,dRfuse,wfb,nfweb,
+                 xshell1,xshell2,
+                 sigskin,Wppinsul, rhoskin,
+                 m_airplane, R, lcv, eta, LD, m_boiloff)
+
+        Wtank = result[1]
+        Wfuel = result[2]
+
+        Wtank = Wtank + m_boiloff*gee + Wfuel #weight of tank including fuel
+
+return Wtank, sum(t)
+end
