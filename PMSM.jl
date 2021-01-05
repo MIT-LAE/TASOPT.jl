@@ -3,32 +3,51 @@ PMSM sizes the electric machine for the motor and generator
     of the turbo electric powertrain
 
 Inputs:
- - 
+ - P      :   power [W]
+ - N      :   Rotational speed [1/s] 
+ - ratAsp :   Aspect ratiodRot/lRot 
+ - σAg    :   Air-gap shear stress
+
 
 Outputs:
- - 
+ - Preq   : Required input power
+ - η      : Overall efficiency P/Preq
+ - W      : Weight of machine [N]
+ - l      : Length of machine [m]
+ - d      : Diameter of machine [m]
 
 
 Originally based of code by W. Enders
+Modified and updated by P. Prashanth 
 """
-function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
+function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, parte::Array{Float64, 1} )
 
     # Setup/ assumptions
-        # Stator
-            ratSd = 1/50 #Slot depression to height ratio hsd/hsd
-            kpf   = 0.5  #kpf = syrat = Packing factor
-            z = 3        # phases
-            Nshrt = 1    # Number of short pitched slots
-            wSd   = 1e-6 # Slot depression width 
-        # Rotor
-            hRS = 0.002 #[m] Thickness of retaining sleeve for Vtip = 200 m/s
-        #Shaft
-            ratShft = 3/4 # Ratio of inner to outer dia for hollow Shaft
-        
-        # Material properties
-            Br = 
+        Vtip = 200 # [m/s] Rotor tip speed with retaining sleeve
+
+        # Rotor dimensions (See Hendershot p89)
+            # |T| = |F*r| = (π*D*L)*σ * D/2
+            # P = Tω =  (π*D*L)*σ * D/2 *V/(D/2) 
+            lRot = sqrt(P/(π*ratAsp*σAg*Vtip))
+            dRot = lRot*ratAsp
+
+            N = Vtip/(dRot*π)
+   
     # Rotational speed
         ω = 2π*N    
+
+    # Unpack paramters
+        ratAg = parte[ite_ratAg]
+        ratM  = parte[ite_ratM ]
+        hRS   = parte[ite_hRS  ]
+        ratSp = parte[ite_ratSp]
+        ratSM = parte[ite_ratSM]
+        ratSd = parte[ite_ratSd]
+        ratW  = parte[ite_ratW ]
+        Nshrt = parte[ite_Nshrt]
+
+        p     = parte[ite_p]
+        z     = parte[ite_z]
     # ------------------
     # Machine geometry
     # ------------------
@@ -38,16 +57,13 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
         rRot = dRot/2.0
 
         hAg = ratAg*dRot + hRS # Air-gap Thickness
-
         hM  = ratM*hAg
 
         # Electric frequency
-            rRoti = dRot/2 - (hM + hRS)
+            rRoti = dRot/2 - (hM + hRS) #inner radius of rotor
             f = p * N
             Ω = f * 2π
-            Vtip = (rRoti + 0.5*hM)*ω
-
-            #Catch if Vtip exceeds some values
+            Vtip >= (rRoti + 0.5*hM)*ω ? println("Vtip check passed") : println("Warning Vtip test not passed")
         
         # Calculate Slot geometry
             NS  = ratSp * p  # Number of slots
@@ -58,8 +74,8 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
             wT = wST * ratW # Tooth width
             wS = wST - wT
 
-            κS = wS/(rRoti + hAg - hRS + hSd + 0.5*hS)
-            wSi = κS * (rRoti + hAg + hM + hSd)
+            κS  = wS/(rRoti + hAg - hRS + hSd + 0.5*hS) # Angular width of stator gaps see W. Enders thesis
+            wSi = κS * (rRoti + hAg + hM + hSd)         # Arc length of inner part of stator
 
             δ = wS/wST
 
@@ -75,10 +91,10 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
                 cSp   = NSc/NS
 
             # Winding lengths
-                l_ax  =  π * cSp * (rRoti+hAg+hM+hSd+0.5*hS) * δ/sqrt(1-δ^2)
+                l_ax  =  π * cSp * (rRoti + hAg + hM + hSd + 0.5*hS) * δ/sqrt(1-δ^2)
                 l_cir = 2π * cSp
                 
-                lET   = 2. * sqrt(l_ax^2 + (l_cir/2)^2)
+                l_ewind = 2. * sqrt(l_ax^2 + (l_cir/2)^2)
             # Minimum magnet skew angle to prevent Cogging Torque
                 κMs = 1/p * 180./π
             
@@ -156,7 +172,7 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
             # SBI inside radius
                 rSBIi = rRoti+hM+hAg+hSd+hS;
             # SBI outside radius
-                rSBIo = rSBIi+hSBI;
+                rSBIo = rSBIi + hSBI;
             # Core mass
                 mSBI = pi*(rSBIo^2-rSBIi^2)*lRot*rhoIron; # SBI
                 mTeeth = (NS*wT*hS+2*pi*(rRoti+hAg)*hSd-NS*hSd*wSd)*lRot*rhoIron; # Teeth
@@ -174,13 +190,13 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
             tShft  = rShfto*(1-ratShft); #thickness of shaft, just for comparison
         
         # Service mass fraction
-            #kServ = 1.15; # Rucker2005
-            #kServ= 1.5;   # Yoon2016 (Tab.4) Excluding Ground Cylinder and Heat Sink
-            kServ= 1.7;    # Yoon2016 (Tab.4) Including Ground Cylinder and Heat Sink
+            # #kServ = 1.15; # Rucker2005
+            # #kServ= 1.5;   # Yoon2016 (Tab.4) Excluding Ground Cylinder and Heat Sink
+            # kServ= 1.7;    # Yoon2016 (Tab.4) Including Ground Cylinder and Heat Sink
         
         
         # Total mass
-        mPMSM = kServ*(mIron+mShft+mM+mArm); 
+            mPMSM = kServ*(mIron+mShft+mM+mArm); 
         
         
         # Final machine dimensions
@@ -193,7 +209,7 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
         ## Calculate design current and Armature resistance 
             #Armature RMS Current
                 #IrmsD=POutD/(z*cos(psi)*ErmsD);
-                IrmsD=1/(sqrt(2)*3)*QD/(kw*ks*NSz*BAg*(rRoti+hM)*lRot); #(Lipo2017)
+                IrmsD=1/(sqrt(2)*3)*Q/(kw*ks*NSz*BAg*(rRoti+hM)*lRot); #(Lipo2017)
         
             #Armature resistance per phase
                 Rarm = lArm*(1+thetaCon*(Tarm-293.15))/(sigCon*areaArm); #Pyrhönen2008 
@@ -243,4 +259,49 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
             end
 
 
+end
+
+function PMSM(P::Float64, N::Float64, parp)
+
+    # λ = 
+
+    # kw = 
+    # ks =
+    # NSz = 
+    # BAg = 
+    # rRot =
+    # hM   = 
+    # lRot =
+
+
+    # Calculations
+        ω = 2π*N
+        Q = P/ω
+
+        f = p * N
+        Ω = 2π*f
+
+        Erms = Ω * λ / sqrt(2)
+        Irms = 1/(3*sqrt(2)) * Q / 
+               (kw * ks * NSz * BAg * (rRot + hM)*lRot)
+
+        Jarm = Irms/areaArm
+
+        # Losses
+            PLsbi = mSBI  * pb0 * abs(Bsbi/Bb0)^epsb * abs(f/fb0)^epsf
+            PLt   = mTeeth* pb0 * abs(  Bt/Bb0)^epsb * abs(f/fb0)^epsf
+            PLiron = PLsbi + PLt
+
+            Re = ω*rRoti*hAg*ρair/μair
+            Cf = 0.0725/Re^0.2
+            PLwind = ρair * π * Cf * ω^3 * rRoti^4 * lRot
+
+            PLcu = z * Irms^2 * Rarm
+
+            PL = PLiron + PLwind + PLcu
+
+        Preq = P + PL
+        η    = P/Preq
+
+    return Preq, η, PL
 end
