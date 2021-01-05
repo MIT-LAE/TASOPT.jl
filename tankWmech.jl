@@ -20,19 +20,21 @@ Outputs:
 - Wfuel: fuel weight (N)
 """
 function tankWmech(gee, rhoFuel,
-                      fstring,fframe,ffadd,deltap,
-                      Rtank,dRfuse,wfb,nfweb,
-                      sigskin,Wppinsul, rhoskin,
+                      fstring, fframe, ffadd, deltap,
+                      Rfuse, dRfuse, wfb, nfweb,
+                      sigskin, Wppinsul, rhoskin,
                       Wfuel, m_boiloff, thickness_insul)
 
-      lshell = xshell2 - xshell1 #length of pressure vessel
+#--- fuselage skin and center web thicknesses to withstand pressure load
+      tskin = deltap * Rfuse / sigskin
+      Rtank = Rfuse - thickness_insul - tskin
+      tfweb = 2.0 * deltap * wfb  / sigskin
 
 #--- Calculate updated Wfuel based on boil-off mass
-      Rtank = Rfuse - thickness_insul
-      Wfuel = (m_boiloff * gee) + Wfuel
+
       Vfuel = Wfuel / (gee * rhoFuel)
       lshell = Vfuel / (pi * (Rtank^2))
-      #volume of fuel (LH2) (calculate lshell based on Vfuel and rhoFuel)
+
 #--- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
       thetafb = asin(wfblim/Rfuse)
@@ -41,9 +43,6 @@ function tankWmech(gee, rhoFuel,
       cost  = hfb/Rfuse
       perim = (2.0*pi + 4.0*thetafb)*Rfuse + 2.0*dRfuse
 
-#--- fuselage skin and center web thicknesses to withstand pressure load
-      tskin =     deltap*Rfuse/sigskin
-      tfweb = 2.0*deltap*wfb  /sigskin
 
 #--- areas
       Askin = (2.0*pi+4.0*nfweb*thetafb)*Rfuse*tskin + 2.0*dRfuse*tskin
@@ -63,8 +62,7 @@ function tankWmech(gee, rhoFuel,
       Wtank = Wtank + Winsul + Wfuel
 
 #--- pressurized tank volume
-      tankVol = Atank*(lshell + 0.67*Rfuse)
-      fuelVol = Wfuel/rhoFuel
+      #tankVol = Atank*(lshell + 0.67*Rfuse)
 
-return  Wtank, Wfuel
+return  Wtank, lshell, tskin
 end
