@@ -12,7 +12,6 @@ NOTE: Everything is in SI units.
 -Tfuel (K) is fuel temperature
 -Tair (K) is ambient temperature
 -r_tank (m) is tank outer radius
--pi is value of pi
 -h_e (J/kg) is heat of vaporization of liquid hydrogen (from Hydrogen tank design paper)
 -r_gas is inner radius of gas-purged chamber (m)
 
@@ -20,9 +19,7 @@ NOTE: Everything is in SI units.
 Outputs:
 - m_boiloff (kg) is the boiloff LH2 mass for given mission
 """
-function tankWthermal(gee, rhoFuel, deltap,
-                      Rfuse, dRfuse,
-                      xshell1, xshell2, v_cruise, hconvgas, h_LH2, Tfuel, Tair, r_tank,
+function tankWthermal(xshell1, xshell2, hconvgas, h_LH2, Tfuel, Tair, r_tank,
                       h_e, t, r_gas, k, hconvair, time_flight)
 
 #--- effective pressure-vessel length
