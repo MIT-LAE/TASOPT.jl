@@ -186,7 +186,61 @@ function PMSM(P::Float64, N::Float64, rAsp, τAg, rSplit, p )
         # Final machine dimensions
         lPMSM = lRot+2*lEtAx; #Total length
         dPMSM = 2*rSBIo; # Total diameter without housing
-
+    
+    # --------------------------
+    # Machine performance
+    # --------------------------
+        ## Calculate design current and Armature resistance 
+            #Armature RMS Current
+                #IrmsD=POutD/(z*cos(psi)*ErmsD);
+                IrmsD=1/(sqrt(2)*3)*QD/(kw*ks*NSz*BAg*(rRoti+hM)*lRot); #(Lipo2017)
+        
+            #Armature resistance per phase
+                Rarm = lArm*(1+thetaCon*(Tarm-293.15))/(sigCon*areaArm); #Pyrhönen2008 
+        
+        ##Terminal Voltage
+            VaD = sqrt(ErmsD^2-((Xtot+Rarm)*IrmsD*cos(psi))^2)-(Xtot+Rarm)*IrmsD*sin(psi);
+        
+        
+        ## Loss Calculations
+            #Copper losses
+                PLcopD = z*IrmsD^2*Rarm; #Total Design Copper Losses
+        
+            #Iron losses
+                Bt = (wT+wS)/wT*BAg; #Tooth Flux Density (eq. 8.77,Lipo2017IntroToACDesign)
+                if Bt > BSat
+                    println("ERROR: Bt > Saturation flux density BIronSat")
+                    limitsPMSM[3]=1;
+                end
+        
+                Bsbi = BAg*rRoti*pi/(2*p*kst*hSBI); #BackIron flux density(Hanselman eq 9.7)
+                if Bsbi > BSat
+                    println("ERROR: Bsbi > Saturation flux density BIronSat")
+                    limitsPMSM[4]=1;
+                end
+            
+            
+                PLsbiD = mSBI*pb0*abs(Bsbi/Bb0)^epsb*abs(f/fb0)^epsf; # Design SBI Losses
+                PLtD = mTeeth*pb0*abs(Bt/Bb0)^epsb*abs(f/fb0)^epsf; # Design Teeth Losses
+                PLironD = PLsbiD + PLtD;# Total Design Core Losses
+        
+            #Windage loss
+                Re = nD*2*pi*rRoti*hAg/nuAirD; #Reynold's number in air gap
+                Cf= 0.0725*Re^(-0.2); #Friction coefficient
+                PLwindD = Cf*pi*rhoAirD*(nD*2*pi)^3*rRoti^4*lRot; #Design Windage losses
+        
+        
+        ## Design Efficiency and Current Density Calculation
+            #Input power and efficiency
+            PinD = POutD+PLironD+PLcopD+PLwindD;
+            etaD= POutD/PinD;
+        
+        # Current density
+            JarmD = IrmsD/areaArm;
+            if JarmD > 3e7
+                println("ERROR: JaD > 3e7 [A/m^2]")
+                limitsPMSM[5]=1;
+            end
 
 
 end
