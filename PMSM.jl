@@ -3,10 +3,10 @@ PMSM sizes the electric machine for the motor and generator
     of the turbo electric powertrain
 
 Inputs:
- - P      :   power [W]
- - N      :   Rotational speed [1/s] 
- - ratAsp :   Aspect ratiodRot/lRot 
- - σAg    :   Air-gap shear stress
+ - P        :   power [W]
+ - N        :   Rotational speed [1/s] 
+ - ratSplit :   dRot/dStator 
+ - σAg      :   Air-gap shear stress
 
 
 Outputs:
@@ -32,6 +32,11 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             dRot = lRot*ratAsp
 
             N = Vtip/(dRot*π)
+
+        # [TODO] From Wilhelm's aircraft sizing code... but need to check why 240  
+        p     = parte[ite_p]
+
+        κM = 240/(2p)
    
     # Rotational speed
         ω = 2π*N    
@@ -45,9 +50,23 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
         ratSd = parte[ite_ratSd]
         ratW  = parte[ite_ratW ]
         Nshrt = parte[ite_Nshrt]
+        kpf   = parte[ite_kpf  ]
 
-        p     = parte[ite_p]
+        
         z     = parte[ite_z]
+        Br    = parte[ite_Br]
+
+        μ0    = parte[ite_mu0]
+
+        ρMag   = parte[ite_rhoMag  ]
+        ρCu    = parte[ite_rhoCu   ]
+        ρFe    = parte[ite_rhoFe   ]
+        ρSteel = parte[ite_rhoSteel]
+
+        ratShft  = parte[ite_ratShft]
+        τMax     = parte[ite_tauMax ]
+
+        ψ  = parte[ite_psi]
     # ------------------
     # Machine geometry
     # ------------------
@@ -63,13 +82,13 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             rRoti = dRot/2 - (hM + hRS) #inner radius of rotor
             f = p * N
             Ω = f * 2π
-            Vtip >= (rRoti + 0.5*hM)*ω ? println("Vtip check passed") : println("Warning Vtip test not passed")
+            Vtip ≤ (rRoti + 0.5*hM)*ω ? println("Warning Vtip test not passed") :
         
         # Calculate Slot geometry
-            NS  = ratSp * p  # Number of slots
+            NS  = ratSp * p  # Number of slots from slots-polepair ratio ratSp
             hS  = ratSM * hM # Slot height
             hSd = ratSd * hS # Slot depression height
-            wST = 2π/Ns * (rRoti + hM + hAg + hSd + 0.5*hS) # Slot pitch
+            wST = 2π/NS * (rRoti + hM + hAg + hSd + 0.5*hS) # Slot pitch
 
             wT = wST * ratW # Tooth width
             wS = wST - wT
@@ -83,51 +102,54 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
                 hSBI = rRot/ratSplit - (rRot + hAg + hRS + hSd + hS)
 
             # Slots/pole/phases
-                m = NS/(2*p*z)
-                NSz = NS/z
+                m   = NS/(2*p*z)  # Acc to Hanselman p125, this should usually be ≤ 2
+                NSz = NS/z        # Number of slots per phase
 
                 NSfpc = floor(m*z)
-                NSc   = NSfpc - Nshrt
-                cSp   = NSc/NS
+                NSc   = NSfpc - Nshrt  # Actual number of slots per pole
+                cSp   = NSc/NS         # Short pitch correction factor
 
-            # Winding lengths
+            # End-winding lengths
+            # Derived from (Ofori-Tenkorang1996), considering short pitch term 1/2p -> Nsct/Ns
                 l_ax  =  π * cSp * (rRoti + hAg + hM + hSd + 0.5*hS) * δ/sqrt(1-δ^2)
                 l_cir = 2π * cSp
                 
                 l_ewind = 2. * sqrt(l_ax^2 + (l_cir/2)^2)
-            # Minimum magnet skew angle to prevent Cogging Torque
-                κMs = 1/p * 180./π
+            # Minimum magnet skew angle to prevent Cogging Torque #[TODO] Check this - seems fishy
+                κMs = (NSc*2p)/ lcm(Int(NSc*2p), Int(2p)) *1/p * 180.0/π
             
-        # Calc correction factors
-            α = π * NSc/NSfpc
-            kp = sin(α/2)
-
-            γ  = 2π * p /NS
-            kb = sin(m*γ/2)/(m*sin(γ/2))
-
-            kw = kp*kb
+        # Calculate correction factors
+            # Calculate pitch factor kp
+                α = π * NSc/NSfpc # Angular dispalcement of two sides of the coil
+                kp = sin(α/2)
+            # Calculation of breadth factor kb
+                γ  = 2π * p /NS
+                kb = sin(m*γ/2)/(m*sin(γ/2))
+            # Winding factor
+                kw = kp*kb
 
             # Skew factor (Jagiela2013)
-            κMs_rad = κMs * π/180.
-            ks = sin(p*κMs_rad/2) / (p*κMs_rad/2)
+                κMs_rad = κMs * π/180.
+                ks = sin(p*κMs_rad/2) / (p*κMs_rad/2)
 
             # Magentic gap factor
-            rs = rRoti + hM + hAg
-            r2 = rRoti + hM
-            kg = ((rRoti^(p-1))/(rs^(2*p) - rRoti^(2*p))) * 
-                 (  (p/(p+1))            * (r2^(p+1) - rRoti^(p+1)) + 
-                    (p/(p-1)) * rs^(2*p) * (rRoti^(1-p) - r2^(1-p))  )
+                rs = rRoti + hM + hAg
+                r2 = rRoti + hM
+                kg = ((rRoti^(p-1))/(rs^(2*p) - rRoti^(2*p))) * 
+                    (  (p/(p+1))            * (r2^(p+1) - rRoti^(p+1)) + 
+                        (p/(p-1)) * rs^(2*p) * (rRoti^(1-p) - r2^(1-p))  )
             
         # Calcualte back EMF
+            # Accounting for slots, reluctance and leakage
             Kc = 1/(1-(1/((wST/wS)*((5*hAg/wS)+1))));
-            hAgEff = Kc*hAg        # Effective Air-gap
-            Cphi = (p*κM)/180  # Flux concentration factor
-            K1 = 0.95              # Leakage factor
-            Kr = 1.05              # Reluctance factor
-            murec = 1.05           # Recoil permeability
+            hAgEff = Kc*hAg            # Effective Air-gap 
+            Cphi   = (p*κM)/180.0      # Flux concentration factor
+            K1 = 0.95                  # Leakage factor
+            Kr = 1.05                  # Reluctance factor
+            μrec = 1.05                # Recoil permeability
 
-            PC  = hM/(hAgEff*Cphi);  # Permeance coefficient
-            BAg = ((K1*Cphi)/(1+(Kr*murec/PC)))*Br;
+            PC  = hM/(hAgEff * Cphi);  # Permeance coefficient
+            BAg = ((K1 * Cphi)/(1 + (Kr * μrec/PC) ))*Br;  # Flux density in the air-gap
 
         # Calculate magnetic flux and internal voltage
             κMrad = κM*(π/180);
@@ -135,129 +157,143 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             BC1 = (4/π)*BAg*kg*sin(p*κMrad/2);
             λ = 2*rs*lRot*NSz*kw*ks*BC1/p;
 
-            ErmsD  = omega*λ/sqrt(2); # RMS back voltage
+            Erms  = Ω*λ/sqrt(2); # RMS back voltage
     
-        # Calculation of inductance and total reactance
-            # Air-gap inductance
-                LAg = (z)*(2/π)*(mu0*NSz^2*kw^2*lRot*rs)/(p^2*(hAg+hM));
+        # Calculation of inductance and total reactance 
+            # Air-gap inductance [See 6.685 notes]
+                LAg = (z)*(2/π)*(μ0*NSz^2*kw^2*lRot*rs)/(p^2*(hAg+hM));
 
             # Slot leakage inductance
-                Cperm = mu0*((1/3)*(hS/wSi) + hSd/wSi);
-                Las = 2*p*lRot*Cperm*(4*(m-NShrt)+2*NShrt);
-                Lam = 2*p*lRot*NShrt*Cperm;
+                Cperm = μ0*((1/3)*(hS/wSi) + hSd/wSi);
+                Las = 2*p*lRot*Cperm*(4*(m-Nshrt)+2*Nshrt);
+                Lam = 2*p*lRot*Nshrt*Cperm;
                 Ls = Las - Lam; # equ. for 3 phases only
 
             # End-turn inductance 
                 areaS = wS*hS; # Slot area
-                Le = 0.25*(mu0*wST*NSz^2)*log(wST*sqrt(π)/sqrt(2*areaS));
+                Le = 0.25*(μ0*wST*NSz^2)*log(wST*sqrt(π)/sqrt(2*areaS));
                 #wST only true, if coils are placed in neighboring slots 
 
 
             # Total inductance and reactance per phase
-                Ltot = LAg+Ls+Le;
-                Xtot = omega*Ltot;
+                Ltot = LAg + Ls + Le;
+                Xtot = Ω*Ltot;
 
 
-        ## ------------Calculation of machine dimensions and weights---------------
+    ## ------------Calculation of machine dimensions and weights---------------
         #Armature
             #Total Armature length per phase (assuming two coils per slot)
-                lArm=2*NSz*(lRot+lEt); 
+                lArm=2*NSz*(lRot + l_ewind); 
             # Armature conductor area
                 areaArm = 0.5*areaS*kpf;
             # Total mass of armature conductor #mass=pha*l*area*rho
-                mArm = z*lArm*areaArm*rhoCon;
+                mArm = z*lArm*areaArm*ρCu;
         
         
         #Iron /Stator Core
+            wSd = parte[ite_wSd]
+
             # SBI inside radius
-                rSBIi = rRoti+hM+hAg+hSd+hS;
+                rSBIi = rRoti + hM + hAg + hSd + hS;
             # SBI outside radius
                 rSBIo = rSBIi + hSBI;
             # Core mass
-                mSBI = pi*(rSBIo^2-rSBIi^2)*lRot*rhoIron; # SBI
-                mTeeth = (NS*wT*hS+2*pi*(rRoti+hAg)*hSd-NS*hSd*wSd)*lRot*rhoIron; # Teeth
-                mIron = mSBI + mTeeth;
+                mSBI   = pi*(rSBIo^2 - rSBIi^2)*lRot*ρFe; # SBI
+                mTeeth = (NS*wT*hS + 2*pi*(rRoti+hAg)*hSd - NS*hSd*wSd)*lRot*ρFe; # Teeth
+                mIron  = mSBI + mTeeth;
         
         # Magnet mass
-            mM = (p*kappaMrad)*((rRoti+hM)^2-rRoti^2)*lRot*rhoMag; 
+            mM = (p*κMrad)*((rRoti+hM)^2-rRoti^2)*lRot*ρMag; 
         
         # Shaft mass (Hollow shaft)
             #tauMax=Qmax/Wt Wt=section modulus (Widerstandsmoment)
             #Wt=pi/16*(da^4-di^4)/da, (Dankert,Technische Mechanik, 2018)
-            lShft  = 1.2*lRot; #Assumption to account for bearings, endcaps, etc.
-            rShfto = 0.5*((16*Qmax)/(tauMax*pi*(1-ratShft^4)))^(1/3); #Outer shaft radius
-            mShft  = (pi*rShfto^2*(1-ratShft^2))*lShft*rhoShft; #Mass of shaft
-            tShft  = rShfto*(1-ratShft); #thickness of shaft, just for comparison
-        
-        # Service mass fraction
-            # #kServ = 1.15; # Rucker2005
-            # #kServ= 1.5;   # Yoon2016 (Tab.4) Excluding Ground Cylinder and Heat Sink
-            # kServ= 1.7;    # Yoon2016 (Tab.4) Including Ground Cylinder and Heat Sink
+            lShft  = 1.2*lRot               #A ssumption to account for bearings, endcaps, etc.
+            rShfto = 0.5*((16*Qmax)/(τMax*pi*(1-ratShft^4)))^(1/3) # Outer shaft radius
+
+            mShft  = (π*rShfto^2*(1-ratShft^2))*lShft*ρSteel       # Mass of shaft
+            tShft  = rShfto*(1-ratShft)                            # thickness of shaft, just for comparison
         
         
+        kServ = parte[ite_kServ]
         # Total mass
-            mPMSM = kServ*(mIron+mShft+mM+mArm); 
+            mPMSM = kServ*(mIron + mShft + mM + mArm)
+            W = mPMSM * gee
         
         
         # Final machine dimensions
-        lPMSM = lRot+2*lEtAx; #Total length
-        dPMSM = 2*rSBIo; # Total diameter without housing
+        lPMSM = lRot + 2l_ax # Total length
+        dPMSM = 2*rSBIo      # Total diameter without housing
     
     # --------------------------
     # Machine performance
     # --------------------------
         ## Calculate design current and Armature resistance 
             #Armature RMS Current
-                #IrmsD=POutD/(z*cos(psi)*ErmsD);
-                IrmsD=1/(sqrt(2)*3)*Q/(kw*ks*NSz*BAg*(rRoti+hM)*lRot); #(Lipo2017)
-        
+                #Irms=POutD/(z*cos(ψ)*Erms);
+                Irms = 1/(sqrt(2)*3)*Q/(kw*ks*NSz*BAg*(rRoti+hM)*lRot); # (Lipo2017)
+
             #Armature resistance per phase
-                Rarm = lArm*(1+thetaCon*(Tarm-293.15))/(sigCon*areaArm); #Pyrhönen2008 
+                θCu  = parte[ite_thetaCu]
+                σCu  = parte[ite_sigCu]
+                Tarm = parte[ite_Tarm]
+
+                Rarm = lArm*(1+ θCu*(Tarm - 293.15))/(σCu*areaArm) # Pyrhönen2008 
         
         ##Terminal Voltage
-            VaD = sqrt(ErmsD^2-((Xtot+Rarm)*IrmsD*cos(psi))^2)-(Xtot+Rarm)*IrmsD*sin(psi);
+            VaD = sqrt(Erms^2-((Xtot+Rarm)*Irms*cos(ψ))^2)-(Xtot+Rarm)*Irms*sin(ψ)
         
         
         ## Loss Calculations
             #Copper losses
-                PLcopD = z*IrmsD^2*Rarm; #Total Design Copper Losses
+                PLCu = z*Irms^2*Rarm # Total Design Copper Losses
         
             #Iron losses
-                Bt = (wT+wS)/wT*BAg; #Tooth Flux Density (eq. 8.77,Lipo2017IntroToACDesign)
+                BSat = parte[ite_BSat]
+                kst  = parte[ite_kst ]
+                pb0  = parte[ite_pb0 ]
+                Bb0  = parte[ite_Bb0 ]
+                fb0  = parte[ite_fb0 ]
+                ϵb   = parte[ite_epsb]
+                ϵf   = parte[ite_epsf]
+
+                Bt = (wT + wS)/wT*BAg; #Tooth Flux Density (eq. 8.77,Lipo2017IntroToACDesign)
                 if Bt > BSat
                     println("ERROR: Bt > Saturation flux density BIronSat")
-                    limitsPMSM[3]=1;
                 end
         
-                Bsbi = BAg*rRoti*pi/(2*p*kst*hSBI); #BackIron flux density(Hanselman eq 9.7)
+                Bsbi = BAg*rRoti*π/(2*p*kst*hSBI); #BackIron flux density(Hanselman eq 9.7)
                 if Bsbi > BSat
                     println("ERROR: Bsbi > Saturation flux density BIronSat")
-                    limitsPMSM[4]=1;
                 end
             
-            
-                PLsbiD = mSBI*pb0*abs(Bsbi/Bb0)^epsb*abs(f/fb0)^epsf; # Design SBI Losses
-                PLtD = mTeeth*pb0*abs(Bt/Bb0)^epsb*abs(f/fb0)^epsf; # Design Teeth Losses
-                PLironD = PLsbiD + PLtD;# Total Design Core Losses
+                PLsbi =   mSBI * pb0 * abs(Bsbi/Bb0)^ϵb * abs(f/fb0)^ϵf; # Design SBI Losses
+                PLt   = mTeeth * pb0 * abs(  Bt/Bb0)^ϵb * abs(f/fb0)^ϵf; # Design Teeth Losses
+                
+                PLiron = PLsbi + PLt # Total Design Core Losses
         
-            #Windage loss
-                Re = nD*2*pi*rRoti*hAg/nuAirD; #Reynold's number in air gap
-                Cf= 0.0725*Re^(-0.2); #Friction coefficient
-                PLwindD = Cf*pi*rhoAirD*(nD*2*pi)^3*rRoti^4*lRot; #Design Windage losses
+            #Windage loss 
+                # [TODO] This uses air as the gas, what if we use H2 vented out of the tank... is it stupidly dangerous? Not if you have a sealed enclosure with no O₂?
+                Re = N*2π*rRoti*hAg*ρAir/μAir  # Reynold's number in air gap
+                Cf = 0.0725*Re^(-0.2)          # Friction coefficient
+                PLwind = Cf*pi*ρAir*(2π*N)^3*rRoti^4*lRot  # Design Windage losses
+
+        # Current density
+            JarmD = Irms/areaArm;
+            if JarmD > 3e7
+                println("ERROR: JaD > 3e7 [A/m^2]")
+            end
         
         
         ## Design Efficiency and Current Density Calculation
-            #Input power and efficiency
-            PinD = POutD+PLironD+PLcopD+PLwindD;
-            etaD= POutD/PinD;
-        
-        # Current density
-            JarmD = IrmsD/areaArm;
-            if JarmD > 3e7
-                println("ERROR: JaD > 3e7 [A/m^2]")
-                limitsPMSM[5]=1;
-            end
+            # Required power and efficiency
+            PL   = PLiron + PLCu + PLwind
+            Preq = P + PL
+            η    = P/Preq
+            
+            rpm = 60N  # Output rotational speed
 
+return W, Preq, η, rpm, PL, PLiron/PL, PLCu/PL, PLwind/PL
 
 end
 
@@ -288,8 +324,8 @@ function PMSM(P::Float64, N::Float64, parp)
         Jarm = Irms/areaArm
 
         # Losses
-            PLsbi = mSBI  * pb0 * abs(Bsbi/Bb0)^epsb * abs(f/fb0)^epsf
-            PLt   = mTeeth* pb0 * abs(  Bt/Bb0)^epsb * abs(f/fb0)^epsf
+            PLsbi = mSBI  * pb0 * abs(Bsbi/Bb0)^epsb * abs(f/fb0)^ϵf
+            PLt   = mTeeth* pb0 * abs(  Bt/Bb0)^epsb * abs(f/fb0)^ϵf
             PLiron = PLsbi + PLt
 
             Re = ω*rRoti*hAg*ρair/μair
