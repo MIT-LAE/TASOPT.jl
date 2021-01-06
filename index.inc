@@ -305,6 +305,42 @@
       const igPofWMTO  = 254
       const igtotal    = 254 
 
+# indices for turbo-electric systems
+      const ite_ratSM   = 1
+      const ite_ratAg   = 2
+      const ite_ratM    = 3
+      const ite_ratSp   = 4
+      const ite_ratW    = 5
+      const ite_ratShft = 6
+      const ite_z       = 7
+      const ite_kServ   = 8
+      const ite_ratSd   = 9
+      const ite_kpf     = 10
+      const ite_wSd     = 11
+      const ite_Nshrt   = 12
+      const ite_hRS     = 13
+      const ite_Tarm    = 14
+      const ite_kst     = 15
+      const ite_p        = 16
+      const ite_Br       = 17
+      const ite_BSat     = 18
+      const ite_mu0      = 19
+      const ite_rhoMag   = 20
+      const ite_rhoCu    = 21
+      const ite_rhoFe    = 22
+      const ite_rhoSteel = 23
+      const ite_tauMax   = 24
+      const ite_sigCu    = 25
+      const ite_thetaCu  = 26
+      const ite_psi      = 27
+      const ite_pb0      = 28
+      const ite_Bb0      = 29
+      const ite_fb0      = 30
+      const ite_epsb     = 31   
+      const ite_epsf     = 32 
+
+      const ite_total    = 32
+
 #---- indices for aero variables at each mission point
       iaalt     =  1
       iatime    =  2
