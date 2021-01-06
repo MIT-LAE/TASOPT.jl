@@ -338,8 +338,24 @@
       const ite_fb0      = 30
       const ite_epsb     = 31   
       const ite_epsf     = 32 
+      const ite_lambda   = 33
+      const ite_kw       = 34
+      const ite_ks       = 35
+      const ite_BAg      = 36
+      const ite_rRoti    = 37
+      const ite_hM       = 38
+      const ite_lRot     = 39
+      const ite_hAg      = 40
+      const ite_areaArm  = 41
+      const ite_Bsbi     = 42
+      const ite_Bt       = 43
+      const ite_mSBI     = 44
+      const ite_mTeeth   = 45
+      const ite_lArm     = 46
+      const ite_NSz      = 47
+      const ite_Wpmsm    = 48
 
-      const ite_total    = 32
+      const ite_total    = 48
 
 #---- indices for aero variables at each mission point
       iaalt     =  1

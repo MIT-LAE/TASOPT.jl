@@ -31,6 +31,9 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             lRot = sqrt(P/(π*ratAsp*σAg*Vtip))
             dRot = lRot*ratAsp
 
+            parte[ite_lRot] = lRot
+            # parte[ite_dRot] = dRot
+
             N = Vtip/(dRot*π)
 
         # [TODO] From Wilhelm's aircraft sizing code... but need to check why 240  
@@ -76,10 +79,15 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
         rRot = dRot/2.0
 
         hAg = ratAg*dRot + hRS # Air-gap Thickness
+        parte[ite_hAg] = hAg
+
         hM  = ratM*hAg
+        parte[ite_hM] = hM
 
         # Electric frequency
             rRoti = dRot/2 - (hM + hRS) #inner radius of rotor
+            parte[ite_rRoti] = rRoti
+
             f = p * N
             Ω = f * 2π
             Vtip ≤ (rRoti + 0.5*hM)*ω ? println("Warning Vtip test not passed") :
@@ -104,6 +112,7 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             # Slots/pole/phases
                 m   = NS/(2*p*z)  # Acc to Hanselman p125, this should usually be ≤ 2
                 NSz = NS/z        # Number of slots per phase
+                parte[ite_NSz] = NSz
 
                 NSfpc = floor(m*z)
                 NSc   = NSfpc - Nshrt  # Actual number of slots per pole
@@ -127,10 +136,12 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
                 kb = sin(m*γ/2)/(m*sin(γ/2))
             # Winding factor
                 kw = kp*kb
+                parte[ite_kw] = kw
 
             # Skew factor (Jagiela2013)
                 κMs_rad = κMs * π/180.
                 ks = sin(p*κMs_rad/2) / (p*κMs_rad/2)
+                parte[ite_ks] = ks
 
             # Magentic gap factor
                 rs = rRoti + hM + hAg
@@ -150,12 +161,14 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
 
             PC  = hM/(hAgEff * Cphi);  # Permeance coefficient
             BAg = ((K1 * Cphi)/(1 + (Kr * μrec/PC) ))*Br;  # Flux density in the air-gap
+            parte[ite_BAg] = BAg
 
         # Calculate magnetic flux and internal voltage
             κMrad = κM*(π/180);
 
             BC1 = (4/π)*BAg*kg*sin(p*κMrad/2);
-            λ = 2*rs*lRot*NSz*kw*ks*BC1/p;
+            λ = 2*rs*lRot*NSz*kw*ks*BC1/p
+            parte[ite_lambda] = λ #Store for off-des
 
             Erms  = Ω*λ/sqrt(2); # RMS back voltage
     
@@ -183,9 +196,12 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
     ## ------------Calculation of machine dimensions and weights---------------
         #Armature
             #Total Armature length per phase (assuming two coils per slot)
-                lArm=2*NSz*(lRot + l_ewind); 
+                lArm=2*NSz*(lRot + l_ewind)
+                parte[ite_lArm] = lArm
+
             # Armature conductor area
-                areaArm = 0.5*areaS*kpf;
+                areaArm = 0.5*areaS*kpf
+                parte[ite_areaArm] = areaArm
             # Total mass of armature conductor #mass=pha*l*area*rho
                 mArm = z*lArm*areaArm*ρCu;
         
@@ -198,9 +214,12 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             # SBI outside radius
                 rSBIo = rSBIi + hSBI;
             # Core mass
-                mSBI   = pi*(rSBIo^2 - rSBIi^2)*lRot*ρFe; # SBI
-                mTeeth = (NS*wT*hS + 2*pi*(rRoti+hAg)*hSd - NS*hSd*wSd)*lRot*ρFe; # Teeth
-                mIron  = mSBI + mTeeth;
+                mSBI   = pi*(rSBIo^2 - rSBIi^2)*lRot*ρFe                         # SBI
+                mTeeth = (NS*wT*hS + 2*pi*(rRoti+hAg)*hSd - NS*hSd*wSd)*lRot*ρFe # Teeth
+                mIron  = mSBI + mTeeth
+
+                parte[ite_mSBI  ] = mSBI
+                parte[ite_mTeeth] = mTeeth
         
         # Magnet mass
             mM = (p*κMrad)*((rRoti+hM)^2-rRoti^2)*lRot*ρMag; 
@@ -219,7 +238,7 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
         # Total mass
             mPMSM = kServ*(mIron + mShft + mM + mArm)
             W = mPMSM * gee
-        
+            parte[ite_Wpmsm] = W
         
         # Final machine dimensions
         lPMSM = lRot + 2l_ax # Total length
@@ -241,7 +260,7 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
                 Rarm = lArm*(1+ θCu*(Tarm - 293.15))/(σCu*areaArm) # Pyrhönen2008 
         
         ##Terminal Voltage
-            VaD = sqrt(Erms^2-((Xtot+Rarm)*Irms*cos(ψ))^2)-(Xtot+Rarm)*Irms*sin(ψ)
+            Va = sqrt(Erms^2-((Xtot+Rarm)*Irms*cos(ψ))^2)-(Xtot+Rarm)*Irms*sin(ψ)
         
         
         ## Loss Calculations
@@ -258,11 +277,15 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
                 ϵf   = parte[ite_epsf]
 
                 Bt = (wT + wS)/wT*BAg; #Tooth Flux Density (eq. 8.77,Lipo2017IntroToACDesign)
+                parte[ite_Bt] = Bt
+
                 if Bt > BSat
                     println("ERROR: Bt > Saturation flux density BIronSat")
                 end
         
                 Bsbi = BAg*rRoti*π/(2*p*kst*hSBI); #BackIron flux density(Hanselman eq 9.7)
+                parte[ite_Bsbi] = Bsbi
+
                 if Bsbi > BSat
                     println("ERROR: Bsbi > Saturation flux density BIronSat")
                 end
@@ -297,18 +320,27 @@ return W, Preq, η, rpm, PL, PLiron/PL, PLCu/PL, PLwind/PL
 
 end
 
-function PMSM(P::Float64, N::Float64, parp)
+function PMSM(P::Float64, N::Float64, parte::Array{Float64, 1})
 
-    # λ = 
+    λ = parte[ite_lambda]
 
-    # kw = 
-    # ks =
-    # NSz = 
-    # BAg = 
-    # rRot =
-    # hM   = 
-    # lRot =
+    kw   = parte[ite_kw ] 
+    ks   = parte[ite_ks ]
+    NSz  = parte[ite_NSz] 
+    BAg  = parte[ite_BAg] 
+    hM   = parte[ite_hM  ] 
+    lRot = parte[ite_lRot]
+    hAg  = parte[ite_hAg ]
+    rRoti= parte[ite_rRoti]
 
+    areaArm = parte[ite_areaArm]
+    lArm    = parte[ite_lArm]
+
+    p = parte[ite_p]
+    z = parte[ite_z]
+
+    mTeeth = parte[ite_mTeeth]
+    mSBI   = parte[ite_mSBI]   
 
     # Calculations
         ω = 2π*N
@@ -319,18 +351,35 @@ function PMSM(P::Float64, N::Float64, parp)
 
         Erms = Ω * λ / sqrt(2)
         Irms = 1/(3*sqrt(2)) * Q / 
-               (kw * ks * NSz * BAg * (rRot + hM)*lRot)
+               (kw * ks * NSz * BAg * (rRoti + hM)*lRot)
+
+        #Armature resistance per phase
+            θCu  = parte[ite_thetaCu]
+            σCu  = parte[ite_sigCu]
+            Tarm = parte[ite_Tarm ] 
+
+            Rarm = lArm*(1+ θCu*(Tarm - 293.15))/(σCu*areaArm) # Pyrhönen2008 
 
         Jarm = Irms/areaArm
 
         # Losses
-            PLsbi = mSBI  * pb0 * abs(Bsbi/Bb0)^epsb * abs(f/fb0)^ϵf
-            PLt   = mTeeth* pb0 * abs(  Bt/Bb0)^epsb * abs(f/fb0)^ϵf
+
+            Bsbi = parte[ite_Bsbi]
+            Bt   = parte[ite_Bt  ]
+
+            pb0  = parte[ite_pb0 ]
+            Bb0  = parte[ite_Bb0 ]
+            fb0  = parte[ite_fb0 ]
+            ϵb   = parte[ite_epsb]
+            ϵf   = parte[ite_epsf]
+
+            PLsbi  = mSBI  * pb0 * abs(Bsbi/Bb0)^ϵb * abs(f/fb0)^ϵf
+            PLt    = mTeeth* pb0 * abs(  Bt/Bb0)^ϵb * abs(f/fb0)^ϵf
             PLiron = PLsbi + PLt
 
-            Re = ω*rRoti*hAg*ρair/μair
+            Re = ω*rRoti*hAg*ρAir/μAir
             Cf = 0.0725/Re^0.2
-            PLwind = ρair * π * Cf * ω^3 * rRoti^4 * lRot
+            PLwind = ρAir * π * Cf * ω^3 * rRoti^4 * lRot
 
             PLcu = z * Irms^2 * Rarm
 
