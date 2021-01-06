@@ -39,7 +39,11 @@ function tanksize(gee, rhoFuel, deltap,
        m_boiloff = 0 #initial value of boil-off mass
        thickness_insul = sum(t_cond)
 
+<<<<<<< HEAD
        ##First guess of tank weight, tank length and skin thickness of tank wall (non-insulator part)
+=======
+       ##To find tank weight, tank length and skin thickness of tank wall (non-insulator part)
+>>>>>>> 56eb18cd86a50321a278e36ad1c4508deb549551
        result = tankWmech(gee, rhoFuel,
                              fstring, fframe, ffadd, deltap,
                              Rfuse, dRfuse, wfb, nfweb,
