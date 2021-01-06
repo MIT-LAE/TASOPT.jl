@@ -18,11 +18,10 @@ function Boiloff(R_thermal, T_ambient, T_fuel)
 
 #--- Heat flux and resistances
 
-      deltaT = Tambient - Tfuel  #Overall temperature drop between ambient and LH2
+      deltaT = T_ambient - T_fuel  #Overall temperature drop between ambient and LH2
       R_insul = sum(R_thermal)  #Total equivalent thermal resistance of MLI
-      q = deltaT / Rinsul  #Heat flux from ambient to LH2
+      q = deltaT / R_insul  #Heat flux from ambient to LH2
       mdot_boiloff = q / h_e  #Boil-off rate equals the heat flux divided by heat of vaporization
-      m_boiloff = mdot_boiloff * time_flight #Boil-off mass calculation
-
-return  m_boiloff, mdot_boiloff
+     
+return  mdot_boiloff
 end
