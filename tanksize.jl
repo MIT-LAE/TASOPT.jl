@@ -90,5 +90,5 @@ function tanksize(gee, rhoFuel, deltap,
 
         Wtank = Wtank + m_boiloff * gee + Wfuel #weight of tank including fuel
 
-return Wtank, thickness_insul #boiloff rate output
+return Wtank, thickness_insul, lshell, mdot_boiloff #boiloff rate output
 end
