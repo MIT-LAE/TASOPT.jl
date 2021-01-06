@@ -65,28 +65,28 @@ function tanksize(gee, rhoFuel, deltap,
                              Wfuel, m_boiloff, thickness_insul)
 
         Wtank = mech[1]
-        Wfuel = mech[2] #Don't need fuel weight for mission
+        Wfuel = mech[2]
 
         if mode == 1
                 for n=1:500 #optimize boil off mass according to threshold
                         m_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
                                               h_e, t_cond, k, hconvair, time_flight)
-                                                if(m_boiloff > (threshold_percent *  Wfuel / (gee * 100))) || break
-                                                end
-                                                t = t + 0.01 * t  #increase insulation thickness ad try again
+                        if(m_boiloff > (threshold_percent *  Wfuel / (gee * 100))) || break
+                        end
+
+
+
+                        result = tankWmech(gee, rhoFuel,
+                                              fstring, fframe, ffadd, deltap,
+                                              Rfuse, dRfuse, wfb, nfweb,
+                                              sigskin, Wppinsul, rhoskin,
+                                              Wfuel, m_boiloff, thickness_insul)
+                        Wtank = mech[1]
+                        Wfuel = mech[2]
+                        t = t + 0.01 * t  #increase insulation thickness and try again
                 end
-
-
-        result = tankWmech(gee, rhoFuel,
-                              fstring, fframe, ffadd, deltap,
-                              Rfuse, dRfuse, wfb, nfweb,
-                              sigskin, Wppinsul, rhoskin,
-                              Wfuel, m_boiloff, thickness_insul)
         end
 
-
-        Wtank = mech[1]
-        Wfuel = mech[2]
 
         Wtank = Wtank + m_boiloff * gee + Wfuel #weight of tank including fuel
 
