@@ -1,0 +1,144 @@
+//******************************************************************************
+//*   (C) Copyright 2003.  The U.S. Government, as Represented by the Administrator
+//*     of the National Aeronautics and Space Administration (NASA).
+//*   (C) Copyright 2008, 2009, 2010, 2011, 2012.     The Ohio Aerospace Institute, on behalf of the NPSS(TM)
+//*     Consortium.  All rights reserved.  Includes content licensed from the 
+//*     U.S. Government, National Aeronautics and Space Administration under 
+//*     United States Copyright Registration Numbers  V3503D364 and V3482D344.
+//*******************************************************************************
+
+//******************************************************************************
+//*  NPSSTM software and related documentation is export controlled
+//*  with an Export Control Classification Number(ECCN) of 9D991, controlled for
+//*  Anti-Terrorism reasons, under U.S. Export Administration Regulations 15 CFR
+//*  730-774. It may not be transferred to a country checked under anti-terrorism
+//*  on the Commerce Country Chart structure or to foreign nationals of those
+//*  countries in the U.S. or abroad without first obtaining a license from the
+//*  Bureau of Industry and Security, United States Department of Commerce. 
+//*  Violations are punishable by fine, imprisonment, or both.
+//*******************************************************************************
+
+// ***********************************************************************
+// This data Map is generated from an existing NEPP map.
+// The original NEPP map tables were:                              
+//   1269    BASELINE HP TURBINE EFFICIENCY VS. PRdes, RPM, AND AREA 
+//   1270    BASELINE HP TURBINE FLOW FUNCTION VS. PRdes, RPM, AND AREA 
+//   
+// ***********************************************************************
+
+//  ---------------------------------------------------------------
+//  |    High Pressure Turbine Maps
+//  ---------------------------------------------------------------
+//  |    Declaration of a new Subelement instance called S_map
+//  |    that is of the type TurbinePRmap
+//  ---------------------------------------------------------------
+
+Subelement TurbinePRmap S_map {
+  
+  effMapDes = 0.9288; // unscaled map design point adiabatic efficiency
+  PRmapDes = 6.000; // unscaled map design point pressure ratio
+  NpMapDes  = 100.0; // unscaled map design point speed
+
+  //  ----------------------------------------------------------------------
+  //  |    Declare a table (or function) named TB_eff(real NcDes, real PRdes)
+  //  |    To satisfy the TB_eff socket requirement.
+  //  ---------------------------------------------------------------------- 
+  
+  // HP TURBINE adiabatic efficiency vs. PR and % of design corrected speed
+  Table TB_eff (real NcDes, real PRdes) {
+     NcDes =  60.000 {
+       PRdes = {   3.000,   3.250,   3.500,   3.750,   4.000,   4.250,   4.500,
+         4.750,   5.000,   5.250,   5.500,   5.750,   6.000,   6.250,
+         6.500,   6.750,   7.000,   7.250,   7.500,   8.000 }
+       effMap = {  0.8449,  0.8394,  0.8358,  0.8330,  0.8306,  0.8285,  0.8242,
+         0.8201,  0.8163,  0.8128,  0.8094,  0.8063,  0.8026,  0.7992,
+         0.7959,  0.7928,  0.7899,  0.7872,  0.7846,  0.7798 }
+     }
+     NcDes =  70.000 {
+      PRdes = *;
+      effMap = {  0.8801,  0.8767,  0.8743,  0.8723,  0.8698,  0.8659,  0.8622,
+        0.8589,  0.8557,  0.8520,  0.8480,  0.8443,  0.8408,  0.8376,
+        0.8345,  0.8316,  0.8288,  0.8262,  0.8233,  0.8178 }
+     }
+     NcDes =  80.000 {
+      PRdes = *;
+      effMap = {  0.9032,  0.9013,  0.8997,  0.8982,  0.8950,  0.8920,  0.8892,
+        0.8866,  0.8823,  0.8784,  0.8747,  0.8713,  0.8680,  0.8650,
+        0.8621,  0.8589,  0.8557,  0.8527,  0.8499,  0.8446 }
+     }
+     NcDes =  90.000 {
+      PRdes = *;
+      effMap = {  0.9177,  0.9165,  0.9155,  0.9140,  0.9118,  0.9097,  0.9077,
+        0.9041,  0.9002,  0.8966,  0.8933,  0.8901,  0.8871,  0.8840,
+        0.8806,  0.8774,  0.8743,  0.8714,  0.8687,  0.8635 }
+     }
+     NcDes = 100.000 {
+      PRdes = *;
+      effMap = {  0.9253,  0.9248,  0.9244,  0.9235,  0.9222,  0.9210,  0.9191,
+        0.9154,  0.9120,  0.9087,  0.9057,  0.9028,  0.8998,  0.8963,
+        0.8931,  0.8900,  0.8871,  0.8843,  0.8816,  0.8767 }
+     }
+     NcDes = 110.000 {
+      PRdes = *;
+      effMap = {  0.9277,  0.9279,  0.9280,  0.9279,  0.9275,  0.9271,  0.9252,
+        0.9220,  0.9189,  0.9160,  0.9133,  0.9107,  0.9074,  0.9042,
+        0.9011,  0.8982,  0.8954,  0.8927,  0.8902,  0.8854 }
+     }
+
+     NcDes.interp = "linear";
+     NcDes.extrap = "none";
+     PRdes.interp = "linear";
+     PRdes.extrap = "none";
+  } // end TB_eff
+
+  //  ----------------------------------------------------------------------
+  //  |    Declare a table (or function) named TB_Wp(real NcDes, real PRdes)
+  //  |    To satisfy the TB_Wp socket requirement.
+  //  ---------------------------------------------------------------------- 
+  
+  // HP TURBINE corrected flow vs. PR and % of design corrected speed
+  Table TB_Wp(real NcDes, real PRdes) {
+     NcDes =  60.000 {
+       PRdes = {   3.000,   3.250,   3.500,   3.750,   4.000,   4.250,   4.500,
+         4.750,   5.000,   5.250,   5.500,   5.750,   6.000,   6.250,
+         6.500,   6.750,   7.000,   7.250,   7.500,   8.000 }
+       WcMap =  {  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144 }
+      }
+     NcDes =  70.000 {
+       PRdes = *;
+       WcMap =  {  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144 }
+     }
+     NcDes =  80.000 {
+       PRdes = *;
+       WcMap =  {  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144 }
+     }
+     NcDes =  90.000 {
+       PRdes = *;
+       WcMap =  {  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144 }
+     }
+     NcDes = 100.000 {
+       PRdes = *;
+       WcMap =  {  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144 }
+     }
+     NcDes = 110.000 {
+       PRdes = *;
+       WcMap =  {  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144,  10.144,
+         10.144,  10.144,  10.144,  10.144,  10.144,  10.144 }
+     }
+     NcDes.interp = "linear";
+     NcDes.extrap = "none";
+     PRdes.interp = "linear";
+     PRdes.extrap = "none";
+  } // end TB_Wp
+}  // end S_map (TurbinePRmap subelement)
