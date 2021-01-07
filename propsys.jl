@@ -1,3 +1,7 @@
+
+include("PMSM.jl")  # Motor/generator functions
+include("PMSM.inc") # Motor/generator properties array
+
 """
 # Ducted Fan calculations
 
@@ -6,7 +10,7 @@
 Inputs: 
 - alt_in : Ambient altitude 
 - MN_in  : Ambient Mach number
-- Fn     : Design Thurst reqired 
+- Fn     : Design Thurst reqired in [N]
 - π_fan  : Fan pressure ratio
 
 Outputs:
@@ -57,5 +61,27 @@ function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64, MapScalars::Ar
     include("NPSS_Turboshaft/Fan.output")
 
     return Fan_power, Torque_fan, N_fan, eta_prop
+
+end
+
+"""
+PowerTrain 
+
+Design method - sizes the powertrain
+"""
+function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, π_fan::Float64, parte::Array{Float64, 1})
+
+    # Call ducted fan design method
+    Dfan, Fan_power, Torque_fan, N_fan, ηpropul, MapScalars, NozArea = DuctedFan(alt_in, MN_in, Fn, π_fan)
+
+    Pshaft_mot = -1000. * Fan_power
+
+    ratAsp  = 0.8
+    σAg     = 35e3
+    ratSplit = 0.75
+    Wpmsm, Preq, ηmot, RPMmot, _, _, _, _ = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
+
+
+    return ηmot, ηpropul, Pshaft_mot, Preq, Fn, Wpmsm
 
 end

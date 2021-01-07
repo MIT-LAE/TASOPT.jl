@@ -103,7 +103,7 @@ Assembly Assembly DuctedFan
     Element Shaft FanShaft
 	{
 		ShaftInputPort Sh_Fan;
-		Nmech = 3500.0;
+		Nmech = 4000.0;
 		inertia = 13.0;
     }
     
