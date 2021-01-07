@@ -354,8 +354,12 @@
       const ite_lArm     = 46
       const ite_NSz      = 47
       const ite_Wpmsm    = 48
+      const ite_k1       = 49  # k1, k2, k3 are inverter constants for efficiency calcs
+      const ite_k2       = 50
+      const ite_k3       = 51
+      const ite_Pinvdes  = 52  # Stores design inverter power
 
-      const ite_total    = 48
+      const ite_total    = 52
 
 #---- indices for aero variables at each mission point
       iaalt     =  1
