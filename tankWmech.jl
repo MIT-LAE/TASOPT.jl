@@ -21,14 +21,14 @@ Outputs:
 - Wfuel: fuel weight (N)
 """
 function tankWmech(gee, rhoFuel,
-                      fstring, fframe, ffadd, deltap,
+                      fstring, ffadd, deltap,
                       Rfuse, dRfuse, wfb, nfweb,
-                      sigskin, Wppinsul, rhoskin,
-                      Wfuel, m_boiloff, thickness_insul)
+                      sigskin, rho_insul, rhoskin,
+                      Wfuel, m_boiloff, thickness_insul, t_cond)
 
 #--- fuselage skin and center web thicknesses to withstand pressure load
       tskin = deltap * Rfuse / sigskin
-      Rtank = Rfuse - thickness_insul - tskin
+      Rtank = Rfuse - thickness_insul - tskin #Inner radius of tank
       tfweb = 2.0 * deltap * wfb  / sigskin
 
 #--- Calculate updated Wfuel based on boil-off mass
@@ -37,33 +37,41 @@ function tankWmech(gee, rhoFuel,
       lshell = Vfuel / (pi * (Rtank^2))
 
 #--- tank cross-section geometric parameters
-      wfblim = max( min( wfb , Rtank ) , 0.0 )
-      thetafb = asin(wfblim/Rtank)
-      hfb = sqrt(Rtank^2 - wfb^2)
-      sin2t = 2.0*hfb*wfb/Rtank^2
+      wfblim = max( min( wfb , Rfuse) , 0.0 )
+      thetafb = asin(wfblim/Rfuse)
+      hfb = sqrt(Rfuse^2 - wfb^2)
+      sin2t = 2.0*hfb*wfb/Rfuse^2
       cost  = hfb/Rtank
-      perim = (2.0*pi + 4.0*thetafb)*Rtank + 2.0*dRfuse
+      perim = (2.0*pi + 4.0*thetafb)*Rfuse + 2.0*dRfuse
 
 
 #--- areas
-      Askin = (2.0*pi+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin
+      Askin = (2.0*pi+4.0*nfweb*thetafb)*Rfuse*tskin + 2.0*dRfuse*tskin
       Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-      Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse + 2.0*(Rtank+nfweb*wfb)*dRfuse
+      Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rfuse^2 + 2.0*Rfuse*dRfuse + 2.0*(Rfuse+nfweb*wfb)*dRfuse
 #--- component volumes
       Vcyl  = Askin*lshell
 
 #--- weights and weight moments
       Wtank = rhoskin*gee*Vcyl
-      Wtank = Wtank*(1.0+fstring+fframe+ffadd)
+      Wtank = Wtank*(1.0+fstring+ffadd)
 
-#--- insulation weight
-      Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rtank*lshell
+#--- insulation weight!
+      N = length(t_cond)
+      Vinsul = zeros(N)
+      Winsul = zeros(N)
+      for n in 1:N
+            Vinsul[n] = pi * (((Rtank+sum(t[1:n]))^2)-(Rtank^2)) * lshell
+            Winsul[n] = Vinsul[n] * rho_insul[n]
+      end
+      Winsul_sum = sum(Winsul)
+      #Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rtank*lshell
 
 #--- overall tank weight
-      Wtank = Wtank + Winsul + Wfuel
+      Wtank = Wtank + Winsul_sum + Wfuel
 
 #--- pressurized tank volume
       #tankVol = Atank*(lshell + 0.67*Rfuse)
 
-return  Wtank, lshell, tskin, Rtank
+return  Wtank, lshell, tskin, Rtank, Vfuel
 end
