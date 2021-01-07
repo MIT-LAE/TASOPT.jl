@@ -1,52 +1,55 @@
 """
 Calculates components of wing CM about wing root axis
 
-    CM = CM0 + CM1*(CL-CLhtail)
+	CM = CM0 + CM1*(CL-CLhtail)
+	
+	i.e. according to eqn 172 of TASOPT docs
+	ΔCₘ,wing = ΔCₘ₀ + dCₘ/dCL × (CL - CLh)
 """
 function surfcm(b,bs,bo, sweep, Xaxis,
-                       lambdat,lambdas,gammat,gammas,
+                       λt,λs,γt,γs,
                        AR,fLo,fLt,cmpo,cmps,cmpt)
 
       cosL = cos(sweep*pi/180.0)
       tanL = tan(sweep*pi/180.0)
 
-      etao = bo/b
-      etas = bs/b
+      ηo = bo/b
+      ηs = bs/b
 
-      Kc = etao +
-	 0.5*(1.0    +lambdas)*(etas-etao) +
-	 0.5*(lambdas+lambdat)*(1.0 -etas)
+      Kc = ηo +
+	 0.5*(1.0    +λs)*(ηs-ηo) +
+	 0.5*(λs+λt)*(1.0 -ηs)
 
       Ko = 1.0/(AR*Kc)
 
-      Kp = etao +
-	 0.5*(1.0    +gammas )*(etas-etao) +
-	 0.5*(gammas +gammat )*(1.0 -etas) +
-	 fLo*etao + 2.0*fLt*Ko*gammat*lambdat
+      Kp = ηo +
+	 0.5*(1.0    +γs )*(ηs-ηo) +
+	 0.5*(γs +γt )*(1.0 -ηs) +
+	 fLo*ηo + 2.0*fLt*Ko*γt*λt
 
-      C1 = (1.0 + 0.5*(lambdas+gammas ) + lambdas*gammas)*(etas-etao) +
-	 (lambdas*gammas +
-	 0.5*(lambdas*gammat +
-	 gammas *lambdat) + lambdat*gammat)*(1.0 -etas)
+      C1 = (1.0 + 0.5*(λs+γs ) + λs*γs)*(ηs-ηo) +
+	 (λs*γs +
+	 0.5*(λs*γt +
+	 γs *λt) + λt*γt)*(1.0 -ηs)
 
-      C2 =     (1.0    + 2.0*gammas)*(etas-etao)^2 +
-	 (gammas + 2.0*gammat)*(1.0 -etas)^2 +
-	 3.0*(gammas +     gammat)*(etas-etao)*(1.0-etas)
+      C2 =     (1.0    + 2.0*γs)*(ηs-ηo)^2 +
+	 (γs + 2.0*γt)*(1.0 -ηs)^2 +
+	 3.0*(γs +     γt)*(ηs-ηo)*(1.0-ηs)
 
-      C3 = ( cmpo*(3.0            + 2.0*lambdas         + lambdas^2) +
-	 cmps*(3.0*lambdas^2 + 2.0*lambdas         + 1.0       ) ) *
-	 (etas-etao) +
-	 ( cmps*(3.0*lambdas^2 + 2.0*lambdas*lambdat + lambdat^2) +
-	 cmpt*(3.0*lambdat^2 + 2.0*lambdas*lambdat + lambdas^2) ) *
-	 (1.0-etas)
+      C3 = ( cmpo*(3.0            + 2.0*λs         + λs^2) +
+	 cmps*(3.0*λs^2 + 2.0*λs         + 1.0       ) ) *
+	 (ηs-ηo) +
+	 ( cmps*(3.0*λs^2 + 2.0*λs*λt + λt^2) +
+	 cmpt*(3.0*λt^2 + 2.0*λs*λt + λs^2) ) *
+	 (1.0-ηs)
 
       CM1 = (1.0/Kp) *
-	 (  etao*(1.0+fLo)*(Xaxis-0.25) +
+	 (  ηo*(1.0+fLo)*(Xaxis-0.25) +
 	 (Xaxis-0.25)*cosL^2 * C1/3.0 -
 	 (tanL/Ko) * C2/12.0 +
-	 2.0*fLt*lambdat*gammat *
-	( Ko*lambdat*(Xaxis-0.25)*cosL^2 -
-	 0.5*(1.0-etao)*tanL) )
+	 2.0*fLt*λt*γt *
+	( Ko*λt*(Xaxis-0.25)*cosL^2 -
+	 0.5*(1.0-ηo)*tanL) )
 
       CM0 = (cosL^4/Kc) * C3/12.0
 

@@ -2,7 +2,12 @@
 
 Transport Aircraft and the Environment System OPTimization - 
 
-Julia based TASOPT++ includes PCEC, hydrogen fuel options etc. Perhaps need some cooler name but can always change later.
+Julia based TASOPT++ includes PCEC, hydrogen fuel options etc. Perhaps need some cooler name but can always change later - how about ZITA: Zero Impact Transport Aircraft
+
+## NPSS integration
+
+Currently NPSS is being used to model the turboshaft engine by simply "file wrapping" - Julia writes to a file, NPSS reads that, computes and outputs to a file that julia can then read.
+
 
 ## Collaboration guide
 
