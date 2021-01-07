@@ -1,0 +1,512 @@
+#ifndef __COOLIT__
+#define __COOLIT__
+
+//--------------------------------------------------------------------------------
+//  Modified from NEPP Coolit routine originally formulated by J. Kretzing 12/1999
+//--------------------------------------------------------------------------------
+#include <InterpIncludes.ncp>
+
+// Maximum number of turbine stages supported by the calculation method
+#define MAXSTAGES 10
+
+class CoolIt extends Subelement {
+
+	//------------------------------------------------------------
+	//     ******* DOCUMENTATION *******
+	//------------------------------------------------------------
+
+	title =
+	"   	   COOLING ELEMENT
+
+	";
+
+	description =
+	"
+	This element will calculate the amount of cooling flow required to cool
+	a turbine.  The calculations are based on input metal temperature and 
+	effectiveness.  It will also calculate an efficiency delta based on the 
+	updated cooling flow.  These calculations are based on the NNEP COOLIT 
+	calculations.  The basic relation used to determine the cooling amount is:
+	cooling flow = 0.022 * ( phi/1-phi )^1.25 * xf * flow
+	";
+
+	usageNotes =
+	"
+	This element is designed to work in conjuction with a standard NPSS 
+	turbine element.  It will determine the amount of flow that it thinks
+	is needed to cool the turbine.  It is up the to user to take this 
+	information and feed it back into the cycle deck.  This is probably best
+	done using a solver balance to vary bleed flow fractions so that the 
+	calculated/required bleed flows match the actual bleed flows.
+	";
+
+	socketRequired = FALSE;
+
+	//------------------------------------------------------------
+	//     ******* SETUP VARIABLES ********
+	//------------------------------------------------------------
+
+	//------------------
+	// Inputs
+	//------------------
+	int nStages {
+		value = 1; IOstatus = INPUT; units = NONE;
+		description = "Number of stages (maximum = $MAXSTAGES)"; 
+	}
+
+	real profile {
+		value = 0.13; IOstatus = INPUT; units = NONE;
+		description = "Combustor pattern factor or radial Temp. profile used downstream of the first vane row"; 
+	}
+
+	real profileFirstRow {
+		value = 0.3; IOstatus = INPUT; units = NONE;
+		description = "Combustor pattern factor or radial Temp. profile used in the first vane row"; 
+	}
+
+	real rLeak {
+		value = (4. / 3.); IOstatus = INPUT; units = NONE;
+		description = "Cooling flow correction factor for leakage"; 
+	}
+
+	real Tmargin {
+		value = 150.; IOstatus = INPUT; units = RANKINE;
+		description = "safety margin for nonuniform inflow"; 
+	}
+
+	real TbladeDes[$MAXSTAGES];
+	TbladeDes {
+		IOstatus = INPUT; units = RANKINE;
+		description = "Design blade temperature for each stage";
+	}
+
+	real TvaneDes[$MAXSTAGES];
+	TvaneDes {
+		IOstatus = INPUT; units = RANKINE;
+		description = "Design vane temperature for each stage";	
+	}
+
+	string bldNameFirstRow {
+		value = ""; IOstatus = INPUT;
+		description = "String reference to turbine bleed in port that is introduced at the turbine inlet (first vane row) ";
+	}
+
+	string bldName {
+		value = ""; IOstatus = INPUT;
+		description = "String reference to turbine bleed in port that is used in all components downstream of the first vane row";
+	}
+
+	real s_Bld {
+		value = 1.; IOstatus = INPUT; units = NONE;  
+		description = "Cooling flow weighting factor for all turbine elements except the initial vane row (increasing this value increases the cooling flow calculated for a given temperature condition)";
+	}
+
+	real s_BldFirstRow {
+		value = 1.; IOstatus = INPUT; units = NONE;
+		description = "Cooling flow weighting factor for the initial vane row (increasing this value increases the cooling flow calculated for a given temperature condition)";	
+	}
+
+	// delnVane[i] = ((change in stage efficiency) / (efficiency of uncooled stage)) / ((vane cooling flow rate) / (primary hot gas flow rate)) 
+	// List serves as a library for different vane types
+	// Which values are used for each stage is determined by the input array coolTypeVane
+	
+	// [prash_20190321] WOW. Seriously? You don't think users should know what these values
+	// 			corresponds to? 
+	// Based on the reference : https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19800011581.pdf
+	// 
+	//
+	//---------------|----------|------|----------------|-------------|---------------------------|----------|-----------|------------|-----------|-------|
+	//Cooling config | UNCOOLED | CONV | CONV W COATING | ADVNCD CONV | FILM + CONV + 75 TE EJECT | F+C-50 TE| F+C-25 TE | TRANS CONV | FULL FILM | TRANS |
+	//---------------|----------|------|----------------|-------------|---------------------------|----------|-----------|------------|-----------|-------|
+	//EFF LOSS FAC   |			|	   |                |             |                           |          |           |            |           |       |
+	// STATOR VANE   | 	  0     |  0   |       0        |    0.10     |            0.12           |   0.15   |   0.18    |    0.50    |   0.35    |  1.0  |
+	//---------------|----------|------|----------------|-------------|---------------------------|----------|-----------|------------|-----------|-------|
+	//    ROTOR      | 	  0     |  0   |       0        |    0.20     |            0.24           |   0.30   |   0.36    |    1.00    |   0.80    |  1.5  |
+	//---------------|----------|------|----------------|-------------|---------------------------|----------|-----------|------------|-----------|-------|
+	// REL. COOL     |			|	   |                |             |                           |          |           |            |           |       |
+	// FACTOR (xf)   | 	  0     |  2   |      1.5       |     1.4     |             1.3           |    1.2   |    1.2    |     0.8    |    1.0    |  0.8  | 
+	//(input in .mdl)|			|	   |                |             |                           |          |           |            |           |       |
+	//---------------|----------|------|----------------|-------------|---------------------------|----------|-----------|------------|-----------|-------|
+	
+	real delnVane[] = { 0.,0.,0.,0.1,0.12,0.15,0.18,0.5,0.35,1.0 };
+	delnVane {
+		IOstatus = INPUT; units = NONE;
+		description = "Fractional change in stage efficiency per fractional change in vane cooling flow (positive means a decrease in efficiency)";	
+	}
+
+	// delnVane[i] = ((change in stage efficiency) / (efficiency of uncooled stage)) / ((blade cooling flow rate) / (primary hot gas flow rate)) 
+	// List serves as a library for different blade types
+	// Which values are used for each stage is determined by the input array coolTypeBlade  
+	real delnBlade[] = {  0.,0.,0.,0.2,0.24,0.30,0.36,1.0,.60,1.5 };
+	delnBlade {
+		IOstatus = INPUT; units = NONE;
+		description = "Fractional change in stage efficiency per fractional change in blade cooling flow (positive means a decrease in efficiency)";	
+	}
+
+	int coolTypeVane[$MAXSTAGES];
+	coolTypeVane {
+		IOstatus = INPUT; units = NONE;
+		description = "Vane type selection for each stage (determines the efficiency adjustment from cooling flow as listed in the array delnBlade)";
+	}
+	coolTypeVane.setAll(1);
+
+	int coolTypeBlade[$MAXSTAGES];
+	coolTypeBlade {
+		IOstatus = INPUT; units = NONE;
+		description = "Blade type selection for each stage (determines the efficiency adjustment from cooling flow as listed in the array delnBlade)";
+	}
+	coolTypeBlade.setAll(1);
+
+	//------------------
+	// Outputs
+	//------------------ 
+	real WbldBlades[$MAXSTAGES];
+	WbldBlades {
+		IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "Bleed flow to cool the blades in each stage";
+	}
+
+	real WbldVanes[$MAXSTAGES];
+	WbldVanes {
+		IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "Bleed flow to cool the vanes in each stage";
+	}
+
+	real WbldError {
+		value = 0; IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "(sum of all calculated blade and vane flows) - (actual Turbine bleed flows)"; 
+	}
+
+	real effCooled {
+		value = 0; IOstatus = OUTPUT; units = NONE;
+		description = "Adiabatic efficiency of the cooled turbine"; 
+	}
+
+	real TRcooled {
+		value = 1.; IOstatus = OUTPUT; units = NONE;
+		description = "Temperature ratio of the cooled turbine";	
+	}
+  
+	real WbldCalc1 {
+		value = 0; IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "Required bleed mass flow rate to achieve cooling targets, bleed source 1";
+	}
+
+	real WbldCalc2 {
+		value = 0; IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "Required bleed mass flow rate to achieve cooling targets, bleed source 2";  
+	}
+
+	real WbldAct1 {
+		value = 0; IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "Actual bleed mass flow rate, bleed source 1";  
+	}
+
+	real WbldAct2 {
+		value = 0; IOstatus = OUTPUT; units = LBM_PER_SEC;
+		description = "Actual bleed mass flow rate, bleed source 2";	  
+	}
+	real TbladeAct[$MAXSTAGES];
+	TbladeDes {
+		IOstatus = OUTPUT; units = RANKINE;
+		description = "Calculated blade temperature for each stage";
+	}
+
+	real TvaneAct[$MAXSTAGES];
+	TvaneDes {
+		IOstatus = OUTPUT; units = RANKINE;
+		description = "Calculated vane temperature for each stage";	
+	}
+
+	//------------------------------------------------------------
+	//   ******* OPTION VARIABLE SETUP *******
+	//------------------------------------------------------------
+
+	Option switchDes {
+		allowedValues = { DESIGN, OFFDESIGN }
+		description = "Design mode switch indicator [DESIGN / OFFDESIGN]";
+	}
+
+	//------------------------------------------------------------
+	// ******* INTERNAL SOLVER SETUP *******
+	//------------------------------------------------------------
+	Dependent dep_BleedFlow1{
+		eq_lhs = "WbldCalc1";
+		eq_rhs = "WbldAct1";
+		eq_Ref = "1.0";
+		description = "Error to balance calculated and actual bleed flow";
+	}
+
+	Dependent dep_BleedFlow2{
+		eq_lhs = "WbldCalc2";
+		eq_rhs = "WbldAct2";
+		eq_Ref = "1.0";
+		description = "Error to balance calculated and actual bleed flow";
+	}
+
+	//------------------------------------------------------------
+	// ******* FLOW STATIONS *******
+	//------------------------------------------------------------
+	FlowStation Fl_W;
+	FlowStation Fl_cool;
+
+	//---------------------------------------------------------------------------
+	// Respond to changes in the switches (especially the solver set-up)
+	//---------------------------------------------------------------------------
+	void variableChanged( string name, any oldVal ) {
+		if ( name == "switchDes" ){   
+			if ( switchDes == "DESIGN" ) {
+				dep_BleedFlow1.autoSetup = TRUE;
+				dep_BleedFlow2.autoSetup = TRUE;
+			}
+			else {
+				dep_BleedFlow1.autoSetup = FALSE;
+				dep_BleedFlow2.autoSetup = FALSE;
+			}
+		}
+	}
+
+	//---------------------------------------------------------------------
+	//  Perform engineering calculations
+	//---------------------------------------------------------------------
+	void calculate(){
+
+		//---------------------------------------------------------------------------
+		//  Calculate the exponent used in isentropic compressible flow calculations
+		//  based on the average ratio of specific heats
+		//---------------------------------------------------------------------------
+		real gamtAvg = 0.5 *( Fl_I.gamt + Fl_O.gamt );
+		real expIsen = ( gamtAvg - 1. )/ gamtAvg;
+		
+		// TbladeAct = TbladeDes;
+		// TvaneAct = TvaneDes;
+		// if(switchDes == "DESIGN")
+		// {
+
+			//-------------------------------------------------------------------
+			//  Initialize the flows
+			//-------------------------------------------------------------------
+
+			// Primary stream
+			Fl_W.copyFlow( "Fl_I" );
+
+			// Bleed source 1 (for use in the first vane row only)
+			Fl_cool.copyFlow( bldNameFirstRow );    
+			WbldAct1 = Fl_cool.W;
+			WbldCalc1 = 0.;
+
+			// Bleed source 2 (for use in all components except the first vane row)
+			Fl_cool.copyFlow( bldName );
+			WbldAct2 = Fl_cool.W;
+			WbldCalc2 = 0.;
+
+			// Reset the cooled turbine temperature ratio to 1 prior to iterating through the stages
+			// Value is calculated through cumulative mulitplication of stage temperature ratios
+			TRcooled = 1.;
+
+			//-----------------------------------------------------------------------------------------
+			// Adiabatic efficiency for each stage of the turbine without cooling flows
+			//-----------------------------------------------------------------------------------------
+			real effStageUncooled = ( 1. - (( 1. - eff *( 1. - ( PR ** -expIsen )))**( 1. / nStages )))/( 1. - ( PR ** ( -expIsen / nStages )));
+			
+			//[prash]: Start from adiabatic vs poly eff relation for a single stage
+			//			stage PR = PR^(1/nStages). Then take first order taylor exp.
+			//			ln(x)=x-1 then you can get this relationship.
+
+			//-------------------------------------------------------------------
+			// Determine the enthalpy change for an individual stage
+			//-------------------------------------------------------------------
+			real dH = ( pwr / nStages ) / C_BTU_PER_SECtoHP; 
+
+			//-------------------------------------------------------------------
+			// Iterate through stages to estimate the bleed flow required to 
+			// achieve the design metal temperature
+			//-------------------------------------------------------------------	
+			real effStageCooled;          // Estimated adiabatic efficiency of a cooled turbine stage
+			real dEffStage;               // Change in stage adiabatic efficiency caused by cooling flow (positive value means decreased in efficiency)
+
+			int i;
+			for ( i=0; i < nStages; i++ ) {
+
+				// Each stage consists of a vane row and a blade row (vane row is upstream of the blade row)
+
+				//----------------------------------------------------------------------------------------------
+				// Vane row calculations
+				//----------------------------------------------------------------------------------------------
+
+				// Calculate the cooling flow to this vane row
+				calcVaneFlow(i);
+
+				// Change in stage efficiency because of vane cooling flow
+				dEffStage = ( WbldVanes[i]  / Fl_W.W) * delnVane[coolTypeVane[i]] * effStageUncooled;
+
+				// Update the primary stream flow station (Fl_W) based on the injected bleed air
+				updatePriStream(WbldVanes[i], 0., i);
+
+				//----------------------------------------------------------------------------------------------
+				// Balde row calculations
+				//----------------------------------------------------------------------------------------------
+
+				// Calculate the cooling flow to this blade row
+				calcBladeFlow(i);
+
+				// Additional change in stage efficiency because of blade cooling flow (adds to the vane row contribution)
+				dEffStage += ( WbldBlades[i]  / Fl_W.W) * delnBlade[coolTypeBlade[i]] * effStageUncooled;
+
+				// Update the primary stream flow station (Fl_W) based on the injected bleed air and blade row power extraction
+				updatePriStream(WbldBlades[i], dH, i);
+
+				//----------------------------------------------------------------------------------------------
+				//  Calculate an updated stage efficiency for the cooled turbine
+				// (advisory only--not used to update FlowStation enthalpy)
+				//----------------------------------------------------------------------------------------------
+				effStageCooled = effStageUncooled - dEffStage;
+
+				// TRcooled is calculated from cumulative multiplication of the individual stage temperature ratios
+				TRcooled *= ( 1. - effStageCooled *( 1. - ( PR ** ( -expIsen / nStages ))))**-1.;
+				
+			}
+
+			//----------------------------------------------------------------------------------------------
+			// Assign the cooling flows to bleed sources
+			//----------------------------------------------------------------------------------------------
+			WbldCalc1 = WbldVanes[0];
+			WbldCalc2 = sumArray(WbldVanes) + sumArray(WbldBlades) - WbldCalc1;
+
+			//----------------------------------------------------------------------------------------------
+			//  Calculate the error between the calculated bleed flow and the actual Turbine bleed flows
+			//----------------------------------------------------------------------------------------------    
+			WbldError = WbldCalc1 + WbldCalc2 - WbldSum;
+
+			//----------------------------------------------------------------------------------------------
+			//  Calculate the cooled turbine efficiency (advisory only--not used to update FlowStation enthalpy)
+			//----------------------------------------------------------------------------------------------
+			effCooled = ( 1. - ( TRcooled ) ** -1. ) /( 1. - ( PR ) ** -expIsen );
+
+		// }
+	}
+
+	//----------------------------------------------------------------------------------------------
+	// Function calcVaneFlow
+	//----------------------------------------------------------------------------------------------
+	void calcVaneFlow(int i) {
+		// Hot gas temperature to use in cooling calculations (includes safety margin)
+		real Thot = 1.00 * Fl_W.Tt + Tmargin;
+
+		// The first vane row uses different properties than subsequent stators
+		real xf, p;
+		if (i == 0) {
+			xf = s_BldFirstRow;
+			p = profileFirstRow;
+			Fl_cool.copyFlow( bldNameFirstRow );
+		} else {
+			xf = s_Bld;
+			p = profile;
+			Fl_cool.copyFlow( bldName );			
+		}
+
+		// Calculate cooling flow if vane cooling is active for this stage
+		if ( coolTypeVane[i] > 0 ) { 
+			WbldVanes[i] = calcCoolFlow(Thot, TvaneDes[i], Fl_cool.Tt, xf, Fl_W.W, p);
+		} else {
+			WbldVanes[i] = 0.;
+		}
+	}
+	calcVaneFlow.description = "Calculate the cooling flow required for the vane row in stage [i] and store the result in WbldVanes[]";
+
+	//----------------------------------------------------------------------------------------------
+	// Function calcBladeFlow
+	//----------------------------------------------------------------------------------------------
+	void calcBladeFlow(int i) {
+		// Hot gas temperature to use in cooling calculations (includes safety margin)
+		real Thot = 0.92 * Fl_W.Tt + Tmargin;
+		Fl_cool.copyFlow( bldName );
+		// Calculate cooling flow if blade cooling is active for this stage
+		if ( coolTypeBlade[i] > 0) { 
+			WbldBlades[i] = calcCoolFlow(Thot, TbladeDes[i], Fl_cool.Tt, s_Bld, Fl_W.W, profile);
+		} else {
+			WbldBlades[i] = 0.;
+		}
+	}
+	calcBladeFlow.description = "Calculate the cooling flow required for the blade row in stage [i] and store the result in WbldVanes[]";
+
+	//----------------------------------------------------------------------------------------------
+	// Function calcCoolFlow
+	//----------------------------------------------------------------------------------------------
+	// Arguments:
+	// Tgas - effective hot gas temperature
+	// Tmetal - maximum temperature allowable in the metal
+	// Tbld - total temperature of the bleed cooling stream
+	// xf - cooling flow rate scaler
+	// Whot - hot gas mass flow rate
+	//
+	// Returns:
+	// Wcool - mass flow rate of bleed air to satisfy temperature limit (same units as Whot)
+	real calcCoolFlow(real Tgas, real Tmetal, real Tbld, real xf, real Whot, real profile) {
+
+		real Wcool = 0.;
+
+		// Nominal temperature parameter
+		real phi  = ( Tgas - Tmetal )/ abs( Tgas - Tbld );
+
+		// Adjust temperature parameter for pattern factor/radial profile
+		phi = ( profile + phi )/( profile + 1. );
+
+		// Calculate the nominal cooling flow
+		if ( phi <= 0.) { // Cooling is not required;
+			Wcool = 0.;
+		} else { // Cooling is required
+			Wcool = 0.022 * (( phi /( 1. - phi )) ** 1.25 )* xf * Whot;
+			if ( Wcool / ( Wcool + Whot) < 0.0001) { // Minimum cooling flow is enforced
+				Wcool = 0.0001 * Whot;
+			}
+		}
+
+		// Adjust the cooling flow for endwall leakage and disk/shroud cooling
+		Wcool *= rLeak;
+
+		return Wcool;
+	}
+	calcCoolFlow.description = "Estimate the cooling flow at temperature Tbld required to limit a blade or vane row to maximum temperature Tmetal when exposed to hot gas at flow rate Whot and temperature Tgas";
+
+	//----------------------------------------------------------------------------------------------
+	// Function updatePriStream
+	//----------------------------------------------------------------------------------------------
+	// Arguments:
+	// Wbld - bleed flow that is being added to the primary stream
+	// dHt - enthalpy that is being extracted from the primary stream due to work
+	// i - stage index
+	//
+	// Returns:
+	// none
+	void updatePriStream(real Wbld, real dHt, int i) {
+		Fl_cool.W = Wbld;
+		real ht = -dHt / Fl_W.W + ( Fl_W.W * Fl_W.ht + Fl_cool.W * Fl_cool.ht )/( Fl_W.W + Fl_cool.W );
+		Fl_W.add( "Fl_cool" );
+
+		// Total pressure is lost across a blade row because of work extraction
+		// Assume all stages have the same pressure ratio
+		real PRrow = 1.;
+		if ( dHt > 0 ) {
+			PRrow = PR**(1./nStages);
+		}
+
+		Fl_W.setTotal_hP( ht, Fl_W.Pt / PRrow );
+	}
+	updatePriStream.description = "Update the primary stream based on the added bleed flow and turbine power extraction";
+
+	//----------------------------------------------------------------------------------------------
+	// Function sumArray
+	//----------------------------------------------------------------------------------------------  
+	real sumArray( real array[]) {
+		int i;
+		real sum = 0.;
+		for ( i = 0; i < array.entries(); i++ ) {
+			sum += array[i];
+		}
+		return sum;
+	}
+	sumArray.description = "Helper function to sum the contents of an array.";
+
+}
+#endif 

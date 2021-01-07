@@ -42,6 +42,7 @@ function tanksize(gee, rhoFuel, deltap,
        ##To find tank weight, tank length and skin thickness of tank wall (non-insulator part)
        Wtank, lshell, tskin, r_tank, Vfuel = tankWmech(gee, rhoFuel,
                              fstring, ffadd, deltap,
+
                              Rfuse, dRfuse, wfb, nfweb,
                              sigskin, rho_insul, rhoskin,
                              Wfuel, m_boiloff, thickness_insul, t_cond)
