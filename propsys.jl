@@ -76,12 +76,12 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, π_fan::Float6
 
     Pshaft_mot = -1000. * Fan_power
 
-    ratAsp  = 0.8
-    σAg     = 35e3
-    ratSplit = 0.75
-    Wpmsm, Preq, ηmot, RPMmot, _, _, _, _ = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
+    # ratAsp   = 0.8
+    # σAg      = 20e3
+    # ratSplit = 0.86
+    Wpmsm, Preq, ηmot, RPMmot, _, _, _, _, SP = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
 
 
-    return ηmot, ηpropul, Pshaft_mot, Preq, Fn, Wpmsm
+    return ηmot, ηpropul, Pshaft_mot, Preq, Fn, Wpmsm, SP
 
 end
