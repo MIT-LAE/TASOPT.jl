@@ -130,6 +130,7 @@ println("Percentage diff for drag values = ", @. round(Percent_diff; digits = 3)
 # -------------------------------------
 ## Balances
 # -------------------------------------
+#=
 println("Testing Balances\n-----------")
 
 include("balance.jl")
@@ -174,3 +175,12 @@ balance(pari, parg, para, rfuel, rpay, xipay, itrim)
 results = para[iaxCG], para[iaxCP], para[iaxNP]
 println("Balance match?\n\t", all(results .- fortran_balance .≈ 0 ))
 # -------------------------------------
+=#
+
+## Testing PMSM
+include("index.inc")
+include("PMSM.inc")
+include("PMSM.jl")
+include("propsys.jl")
+include("NPSS_functions.jl")
+

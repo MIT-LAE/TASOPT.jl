@@ -6,7 +6,7 @@ Inputs:
  - P        :   power [W]
  - N        :   Rotational speed [1/s] 
  - ratSplit :   dRot/dStator 
- - σAg      :   Air-gap shear stress
+ - σAg      :   Air-gap shear stress [N/m²]
 
 
 Outputs:
@@ -316,7 +316,9 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             
             rpm = 60N  # Output rotational speed
 
-return W, Preq, η, rpm, PL, PLiron/PL, PLCu/PL, PLwind/PL
+            SP = P/mPMSM/1000.0 # Specific Power
+
+return W, Preq, η, rpm, PL, PLiron/PL, PLCu/PL, PLwind/PL, SP
 
 end
 
