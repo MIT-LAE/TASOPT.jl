@@ -16,28 +16,23 @@ setThermoPackage("GasTbl");
 #include "utils.fnc"
 #include "save_solver.fnc"
 
-Eng.setOption("switchDes","DESIGN");
-Eng.PCEC.setOption("switchMode", "ON");
+// Eng.PCEC.setOption("switchMode", "ON");
 
 //====================
 //Read input file
 //====================
 #include "EngineInputs.inp"
 
+Eng.DESIGN_TARGET_SHP.eq_rhs  = toStr(SHP_dmd);
+if (Eng.switchDes == "DESIGN") {
+    Eng.DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
+    Eng.dep_deNOx.eq_rhs = toStr(deNOx_target);
+}
 //====================
 //Auto solver setup
 //====================
 solver.clear();
-autoSolverSetup();
-
-//====================
-//Custom solver setup
-//====================
-#include "SolverVariables.int"
-#include "CustomSolverSetup.int"
-
-DESIGN_TARGET_SHP.eq_rhs  = toStr(SHP_dmd);
-DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
+autoSolverSetup(); // All setup in variable changed method in TShaft.mdl
 
 // printSolverDetails();
 
@@ -57,17 +52,28 @@ solver.defaultTolerance = 1e-10;
 //====================
 //Run engine model
 //====================
-restart("temp.restart");
-
+if (Eng.switchDes == "DESIGN") {
+    restart("temp.restart");
+}
 run();
 
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 if(solver.converged == 1){
-    SaveIndepVals("solver", "temp.restart");
+    if (Eng.switchDes == "DESIGN") {
+        SaveIndepVals("solver", "temp.restart");
+    }
 }
 else{
     cout<<"ERROR! Did not converge"<<endl;
 }
+
+Eng.setOption("switchDes", "OFFDESIGN");
+
+autoSolverSetup();
+Eng.Amb.alt_in = 100.0;
+// printSolverDetails();
+run();
+
 
 //====================
 // Outputs
@@ -91,4 +97,64 @@ output<<"deNOx = "<<Eng.PCEC.deNOx <<endl;
 output<<"mcat = "<<Eng.PCEC.m_cat <<"\t# kg"<<endl;
 output<<"Af = "<<Eng.PCEC.Af <<"\t#"+ Eng.PCEC.Af.units<<endl;
 output<<"lcat = "<<Eng.PCEC.l <<"\t#"+ Eng.PCEC.l.units<<endl;
+output<<"Diff_NOx = "<<Eng.PCEC.Deff <<"\t#"+ Eng.PCEC.Deff.units<<endl;
+output<<"t_res = "<<Eng.PCEC.t_res <<"\t#"+ Eng.PCEC.t_res.units<<endl;
+output<<"dPqP = "<<Eng.PCEC.dPqP<<"\t#"+ Eng.PCEC.dPqP.units<<endl;
+// output<<"OFA = "<<Eng.PCEC.OFA<<endl;
+output<<"d_hy = "<<Eng.PCEC.d_hy<<endl;
+output<<"cpsi = "<<Eng.PCEC.cpsi<<endl;
+output<<"w = "<<Eng.PCEC.w<<"\t#"+ Eng.PCEC.w.units<<endl;
+
+output<<"\n# MapScalars"<<endl;
+output<<"LPCscalars = ["<<Eng.CmpL.S_map.s_effDes<<", "<<Eng.CmpL.S_map.s_PRdes<<", "<<Eng.CmpL.S_map.s_WcDes<<", "<<Eng.CmpL.S_map.s_NcDes<<"]"<<endl;
+output<<"HPCscalars = ["<<Eng.CmpH.S_map.s_effDes<<", "<<Eng.CmpH.S_map.s_PRdes<<", "<<Eng.CmpH.S_map.s_WcDes<<", "<<Eng.CmpH.S_map.s_NcDes<<"]"<<endl;
+
+output<<"HPTscalars = ["<<Eng.TrbH.S_map.s_effDes<<", "<<Eng.TrbH.S_map.s_PRdes<<", "<<Eng.TrbH.S_map.s_WpDes<<", "<<Eng.TrbH.S_map.s_NpDes<<"]"<<endl;
+output<<"PTscalars = ["<<Eng.TrbP.S_map.s_effDes<<", "<<Eng.TrbP.S_map.s_PRdes<<", "<<Eng.TrbP.S_map.s_WpDes<<", "<<Eng.TrbP.S_map.s_NpDes<<"]"<<endl;
+
+real LPC[] = {Eng.CmpL.S_map.NcMapDes , 
+                Eng.CmpL.S_map.WcMapDes , 
+                Eng.CmpL.S_map.PRmapDes , 
+                Eng.CmpL.S_map.effMapDes, 
+                Eng.CmpL.S_map.RlineMapDes
+                };
+output<<strFmt1D("\nLPC = [", "%12.4f,", LPC,LPC.entries(),5)<<"]"<<endl;
+
+real HPC[] = {Eng.CmpH.S_map.NcMapDes , 
+                Eng.CmpH.S_map.WcMapDes , 
+                Eng.CmpH.S_map.PRmapDes , 
+                Eng.CmpH.S_map.effMapDes, 
+                Eng.CmpH.S_map.RlineMapDes
+                };
+output<<strFmt1D("HPC = [", "%12.4f,",HPC,HPC.entries(),5)<<"]"<<endl;
+
+real HPT[] = {Eng.TrbH.S_map.PRmapDes, Eng.TrbH.S_map.NpMapDes};
+output<<strFmt1D("HPT = [", "%12.4f,",HPT,HPT.entries(),5)<<"]"<<endl;
+
+real PT[] = {Eng.TrbP.S_map.PRmapDes, Eng.TrbP.S_map.NpMapDes};
+output<<strFmt1D("PT = [", "%12.4f,",PT,PT.entries(),5)<<"]"<<endl;
+
+output<<"\nNozArea    = "<<Eng.NozPri.AthCold << "\t # in^2"<<endl<<endl;
+
+output<<"\n# BleedFracs"<<endl;
+output<<"TCLA_NC = "<<Eng.B030.TCLA_NC.fracW<<endl;
+output<<"TCLA_CH = "<<Eng.B030.TCLA_CH.fracW<<endl;
+
+real Areas[] = {Eng.FsEng.Fl_O.Aphy     ,
+                Eng.InEng.Fl_O.Aphy     ,
+                Eng.CmpL.Fl_O.Aphy      ,
+                Eng.D025.Fl_O.Aphy      ,
+                Eng.CmpH.Fl_O.Aphy      ,
+                Eng.B030.Fl_O.Aphy      ,
+                Eng.BrnPri.Fl_O.Aphy    ,
+                Eng.TrbH.Fl_O.Aphy      ,
+                Eng.D050.Fl_O.Aphy      ,
+                Eng.TrbP.Fl_O.Aphy      ,
+                Eng.D060.Fl_O.Aphy      ,
+                Eng.PCEC.Fl_O.Aphy      ,
+                Eng.NozPri.Fl_O.Aphy  };
+
+output<<strFmt1D("\nAreas = [", "%12.4f,", Areas,Areas.entries(),5)<<"]"<<endl;
+
+
 

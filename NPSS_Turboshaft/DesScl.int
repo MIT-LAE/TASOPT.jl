@@ -1,0 +1,66 @@
+
+// LHV based on fuel
+Eng.FusEng.LHV = 51590.76;
+Eng.FsEng.W_in = 111.5048655;
+Eng.FusEng.Wfuel = 1.063447245;
+
+// Map scalars
+Eng.CmpL.S_map.s_effDes = 1.08233;
+Eng.CmpL.S_map.s_PRdes  = 0.454856;
+Eng.CmpL.S_map.s_WcDes  = 1.51091;
+Eng.CmpL.S_map.s_NcDes  = 37285.6;
+Eng.CmpH.S_map.s_effDes = 1.07143;
+Eng.CmpH.S_map.s_PRdes  = 4.61538;
+Eng.CmpH.S_map.s_WcDes  = 16.2449;
+Eng.CmpH.S_map.s_NcDes  = 31369.0;
+Eng.TrbH.S_map.s_effDes = 0.977995;
+Eng.TrbH.S_map.s_PRdes  = 0.560238;
+Eng.TrbH.S_map.s_WpDes  = 1.73261;
+Eng.TrbH.S_map.s_NpDes  = 6.35211;
+Eng.TrbP.S_map.s_effDes = 0.964143;
+Eng.TrbP.S_map.s_PRdes  = 0.63558;
+Eng.TrbP.S_map.s_WpDes  = 2.03107;
+Eng.TrbP.S_map.s_NpDes  = 6.20443;
+
+Eng.CmpL.S_map.NcMapDes    = 1.0;
+Eng.CmpL.S_map.WcMapDes    = 71.45;
+Eng.CmpL.S_map.PRmapDes    = 5.397;
+Eng.CmpL.S_map.effMapDes   = 0.8223;
+Eng.CmpL.S_map.RlineMapDes = 2.0;
+Eng.CmpH.S_map.NcMapDes    = 1.0;
+Eng.CmpH.S_map.WcMapDes    = 2.72;
+Eng.CmpH.S_map.PRmapDes    = 2.3;
+Eng.CmpH.S_map.effMapDes   = 0.84;
+Eng.CmpH.S_map.RlineMapDes = 2.0;
+Eng.TrbH.S_map.PRmapDes = 6.0;
+Eng.TrbH.S_map.NpMapDes = 100.0;
+Eng.TrbP.S_map.PRmapDes = 6.0;
+Eng.TrbP.S_map.NpMapDes = 100.0;
+
+// Nozzle Area
+Eng.NozPri.AthCold  = 683.661;
+
+// PCEC parameters
+Eng.PCEC.l = 0.03;
+Eng.PCEC.w = 2.0;
+Eng.PCEC.cpsi = 900.0;
+Eng.PCEC.Af = 12.71;
+
+// Bleeds
+Eng.B030.TCLA_NC.fracW = 0.126901;
+Eng.B030.TCLA_CH.fracW = 0.112051;
+
+// Areas
+Eng.FsEng.Fl_O.Aphy  = 783.4368;
+Eng.InEng.Fl_O.Aphy  = 421.4295;
+Eng.CmpL.Fl_O.Aphy   = 198.52;
+Eng.D025.Fl_O.Aphy   = 254.949;
+Eng.CmpH.Fl_O.Aphy   = 50.7067;
+Eng.B030.Fl_O.Aphy   = 30.1265;
+Eng.BrnPri.Fl_O.Aphy = 200.4174;
+Eng.TrbH.Fl_O.Aphy   = 282.8829;
+Eng.D050.Fl_O.Aphy   = 220.7248;
+Eng.TrbP.Fl_O.Aphy   = 662.0143;
+Eng.D060.Fl_O.Aphy   = 1033.9406;
+Eng.PCEC.Fl_O.Aphy   = 1514.2651;
+Eng.NozPri.Fl_O.Aphy = 656.315;

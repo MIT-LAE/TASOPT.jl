@@ -266,8 +266,19 @@ void variableChanged( string name, any oldVal ) {
 		cpsi.IOstatus = INPUT;
 		w.IOstatus = INPUT;
       }
+	  else if (switchDes == "OFFDESIGN") {
+		// Af.IOstatus   = INPUT;
+		// l.IOstatus    = INPUT;
+		// cpsi.IOstatus = INPUT;
+		// w.IOstatus    = INPUT;
 
-}
+		// // OFA.IOstatus  = INPUT;
+		// d_hy.IOstatus = INPUT;
+		// V_cat.IOstatus= INPUT;
+		  
+	  }
+
+	}
 }
 //------------------------------------------------------------
 //   ******* PERFORM ENGINEERING CALCULATIONS *******
@@ -312,20 +323,20 @@ void variableChanged( string name, any oldVal ) {
 	if (switchMode == "ON")
 	{	
 		
-		if (switchDes=="DESIGN")
-		{
+		// if (switchDes=="DESIGN")
+		// {
 			// Calculate Catalyst parameters
-			w = w*getUnitsFactor("mil","m"); // convert from mil to m
+			real w_m = w*getUnitsFactor("mil","m"); // convert from mil to m
 			real N = cpsi/getUnitsFactor("in2","m2"); 
 			real s = sqrt(1/N);
-			real GSA = 4*(1-w/s)*N**0.5;
-			real OFA = (1-w/s)**2;
+			real GSA = 4*(1-w_m/s)*N**0.5;
+			real OFA = (1-w_m/s)**2;
 			
 			d_hy = 4*OFA/GSA; 
 			
 			V_cat = Af*l ; // Bulk volume of catalyst;
 			m_cat = (2600 *(1 - porosity)*(1-OFA) + catalyst_loading)*V_cat;
-		}
+		// }
 		// -----------------------
 		// Flow Parameters
 		// -----------------------

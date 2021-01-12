@@ -21,12 +21,13 @@ Outputs:
 function TurboShaft(alt_in::Float64, MN_in::Float64, 
                     ShP::Float64, 
                     π_LPC::Float64, π_HPC::Float64, Tt41::Float64,
-                    lcat::Float64, deNOx::Float64; LHV = 120,
+                    cpsi::Float64, w::Float64, lcat::Float64, deNOx::Float64; LHV = 120,
                     file_name = "NPSS_Turboshaft/DesScl.int")
     
     ShP_hp = ShP / 746 # Convert shaft power from W to HP
     NPSS_TShaft_input(alt_in, MN_in, ShP_hp, 
-                        Tt41, π_LPC, π_HPC, lcat, deNOx; LHV )
+                        Tt41, π_LPC, π_HPC, 
+                        cpsi, w, lcat, deNOx; LHV = LHV)
 
     NPSS_run("NPSS_Turboshaft/", "TP.bat")
 
@@ -35,6 +36,8 @@ function TurboShaft(alt_in::Float64, MN_in::Float64,
     open(file_name, "w") do io
         println(io, "\n// LHV based on fuel")
         println(io, "Eng.FusEng.LHV = ", LHV*429.923, ";") # save to file to avoid later conflicts
+        println(io, "Eng.FsEng.W_in = ", mdot*2.205, ";")
+        println(io, "Eng.FusEng.Wfuel = ", mdotf*2.205, ";")
 
         println(io, "\n// Map scalars")
         println(io, "Eng.CmpL.S_map.s_effDes = ", LPCscalars[1], ";")
@@ -56,6 +59,25 @@ function TurboShaft(alt_in::Float64, MN_in::Float64,
         println(io, "Eng.TrbP.S_map.s_PRdes  = ", PTscalars[2], ";")
         println(io, "Eng.TrbP.S_map.s_WpDes  = ", PTscalars[3], ";")
         println(io, "Eng.TrbP.S_map.s_NpDes  = ", PTscalars[4], ";")
+
+        println(io, "\nEng.CmpL.S_map.NcMapDes    = ", LPC[1], ";")
+        println(io, "Eng.CmpL.S_map.WcMapDes    = ", LPC[2], ";")
+        println(io, "Eng.CmpL.S_map.PRmapDes    = ", LPC[3], ";")
+        println(io, "Eng.CmpL.S_map.effMapDes   = ", LPC[4], ";")
+        println(io, "Eng.CmpL.S_map.RlineMapDes = ", LPC[5], ";")
+
+        println(io, "Eng.CmpH.S_map.NcMapDes    = ", HPC[1], ";")
+        println(io, "Eng.CmpH.S_map.WcMapDes    = ", HPC[2], ";")
+        println(io, "Eng.CmpH.S_map.PRmapDes    = ", HPC[3], ";")
+        println(io, "Eng.CmpH.S_map.effMapDes   = ", HPC[4], ";")
+        println(io, "Eng.CmpH.S_map.RlineMapDes = ", HPC[5], ";")
+
+        println(io, "Eng.TrbH.S_map.PRmapDes = ", HPT[1], ";")
+        println(io, "Eng.TrbH.S_map.NpMapDes = ", HPT[2], ";")
+
+        println(io, "Eng.TrbP.S_map.PRmapDes = ", PT[1], ";")
+        println(io, "Eng.TrbP.S_map.NpMapDes = ", PT[2], ";")
+
         
    
         println(io, "\n// Nozzle Area")
@@ -64,6 +86,9 @@ function TurboShaft(alt_in::Float64, MN_in::Float64,
        
         println(io, "\n// PCEC parameters")
         println(io, "Eng.PCEC.l = ", lcat, ";")
+        println(io, "Eng.PCEC.w = ", w, ";")
+        println(io, "Eng.PCEC.cpsi = ", cpsi, ";")
+        println(io, "Eng.PCEC.Af = ", Af, ";")
 
         println(io, "\n// Bleeds")
         println(io, "Eng.B030.TCLA_NC.fracW = ", TCLA_NC,";")

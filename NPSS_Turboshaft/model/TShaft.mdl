@@ -57,7 +57,7 @@ Assembly Assembly Eng
     Element Inlet InEng
     {
 		PqP_in = 0.998;		
-		Fl_O.MN = 0.5;
+		Fl_O.MNdes = 0.5;
 	}
 	// ------------------------------
     // Inlet Drag CdragIn
@@ -68,7 +68,7 @@ Assembly Assembly Eng
 	// ------------------------------
 	Element Compressor CmpL {
 		#include "CompressorRlineMap_NEPP_LPC.map"
-		Fl_O.MN = 0.4; 
+		Fl_O.MNdes = 0.4; 
 		S_map.alphaMap = 0.00;
 		S_map.RlineMapDes = 2.0;
 		S_map.NcMapDes = 1.0;
@@ -86,7 +86,7 @@ Assembly Assembly Eng
         {
             dPqP_in = 0.2 * Fl_I.MN * Fl_I.MN;
         }
-		Fl_O.MN = 0.31;
+		Fl_O.MNdes = 0.31;
 
     }
 	
@@ -95,7 +95,7 @@ Assembly Assembly Eng
 	//------------------------------
 	Element Compressor CmpH {
 		#include <CompressorRlineMap_NEPP_HPC.map> 
-		Fl_O.MN = 0.3; 
+		Fl_O.MNdes = 0.3; 
 		S_map.alphaMap = 0.00;
 		S_map.RlineMapDes = 2.0;
 		S_map.NcMapDes = 1.0;
@@ -107,7 +107,7 @@ Assembly Assembly Eng
 	// Bleed B030
 	//------------------------------
 	Element Bleed B030 {
-		Fl_O.MN = 0.4; 
+		Fl_O.MNdes = 0.4; 
 
 		// Turbine Cooling and Leakage Air (TCLA) stream 1 (connects to turbine inlet)
 		BleedOutPort TCLA_NC {	              
@@ -132,7 +132,7 @@ Assembly Assembly Eng
 	Element Burner BrnPri {
 		effBase = 0.99;
 		dPqP_dmd = 0.07;
-		Fl_O.MN = 0.10;
+		Fl_O.MNdes = 0.10;
 
 		setOption("switchBurn", "WFUEL");
 		FAR = .024225;
@@ -145,7 +145,7 @@ Assembly Assembly Eng
 		
 	#include <TurbinePRmap_NEPP_HPT.map>
 	FlowStation F041;
-	Fl_O.MN = 0.30;
+	Fl_O.MNdes = 0.30;
 	effDes = 0.88;
 	PRbase = 3.603;
 
@@ -186,7 +186,7 @@ Assembly Assembly Eng
 	// Duct D050
 	// ------------------------------
 	Element  Duct D050{
-		Fl_O.MN = 0.4;
+		Fl_O.MNdes = 0.4;
 	}
 	//------------------------------
 	// Free Power Turbine TrbP
@@ -196,6 +196,7 @@ Assembly Assembly Eng
 		FlowStation F049;
 		effDes = 0.89;
 		PRbase = 4.2;
+		Fl_O.MNdes = 0.5;
 	}
 
 	//------------------------------
@@ -203,7 +204,7 @@ Assembly Assembly Eng
 	//------------------------------
 	Element Duct D060 {
 		dPqP_dmd = 0.025;
-		Fl_O.MN = 0.3; 
+		Fl_O.MNdes = 0.3; 
 	}
 	//------------------------------
 	// Post-combustion emissions control SCR
@@ -212,7 +213,8 @@ Assembly Assembly Eng
 		Af = 19.0;
 		l  = 0.0125;
 		cpsi = 900;
-		w    = 2 ;
+		w    = 2.0 ;
+		Fl_O.MNdes = 0.2;
 	}
 
 	//------------------------------
@@ -370,6 +372,8 @@ Assembly Assembly Eng
 
 	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
 	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "0.95";}
+
+	#include "SolverVariables.int"
 	
 	void variableChanged(string name, any oldval)
 	{
@@ -385,11 +389,30 @@ Assembly Assembly Eng
 
 				ind_Acat.autoSetup    = TRUE;
 				dep_deNOx.autoSetup   = TRUE;
+
+				// Design Independents
+				DESIGN_AIRFLOW.autoSetup  = TRUE;
+				DESIGN_FUELFLOW.autoSetup = TRUE;
+
+				// Design Dependents
+				DESIGN_TARGET_SHP.autoSetup  = TRUE;
+				DESIGN_TARGET_Tt41.autoSetup = TRUE;
 			}
 			else
 			{
 				ind_TCLA_NC_fracW.autoSetup = FALSE;
-				ind_TCLA_CH_fracW.autoSetup = FALSE;				
+				ind_TCLA_CH_fracW.autoSetup = FALSE;
+				
+				ind_Acat.autoSetup    = FALSE;
+				dep_deNOx.autoSetup   = FALSE;	
+
+				// Offdesign Independents
+				DESIGN_AIRFLOW.autoSetup  = FALSE;
+				DESIGN_FUELFLOW.autoSetup = TRUE;
+
+				// Offdesign Dependents
+				DESIGN_TARGET_SHP.autoSetup  = TRUE;
+				DESIGN_TARGET_Tt41.autoSetup = FALSE;			
 			}
 		}
 	}

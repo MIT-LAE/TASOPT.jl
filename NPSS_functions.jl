@@ -17,7 +17,7 @@ Writes an input file for NPSS Turboshaft model
 function NPSS_TShaft_input(alt_in, MN_in, 
     SHP_dmd, Tt41, 
     LPC_PR, HPC_PR,
-    lcat, deNOx ; PCEC = true,
+    cpsi, w, lcat, deNOx ; PCEC = true,
     LHV = 120, file_name = "NPSS_Turboshaft/EngineInputs.inp")
 
     open(file_name, "w") do io
@@ -43,7 +43,8 @@ function NPSS_TShaft_input(alt_in, MN_in,
 
         println(io, "\n// PCEC parameters")
         println(io, "Eng.PCEC.l = ", lcat, ";")
-
+        println(io, "Eng.PCEC.w = ", w, ";")
+        println(io, "Eng.PCEC.cpsi = ", cpsi, ";")
     end
 
 end
