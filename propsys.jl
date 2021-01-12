@@ -18,15 +18,88 @@ Outputs:
 
 
 """
-function TurboShaft(alt_in::Float64, MN_in::Float64,  ShP::Float64, π_LPC::Float64, π_HPC::Float64)
+function TurboShaft(alt_in::Float64, MN_in::Float64, 
+                    ShP::Float64, 
+                    π_LPC::Float64, π_HPC::Float64, Tt41::Float64,
+                    lcat::Float64, deNOx::Float64; LHV = 120,
+                    file_name = "NPSS_Turboshaft/DesScl.int")
     
     ShP_hp = ShP / 746 # Convert shaft power from W to HP
-    NPSS_TShaft_input(alt_in, MN_in, ShP_hp, 3200, π_LPC, π_HPC )
+    NPSS_TShaft_input(alt_in, MN_in, ShP_hp, 
+                        Tt41, π_LPC, π_HPC, lcat, deNOx; LHV )
+
     NPSS_run("NPSS_Turboshaft/", "TP.bat")
 
     include("NPSS_Turboshaft/Eng.output")
+    # Write all design point scalars to file
+    open(file_name, "w") do io
+        println(io, "\n// LHV based on fuel")
+        println(io, "Eng.FusEng.LHV = ", LHV*429.923, ";") # save to file to avoid later conflicts
+
+        println(io, "\n// Map scalars")
+        println(io, "Eng.CmpL.S_map.s_effDes = ", LPCscalars[1], ";")
+        println(io, "Eng.CmpL.S_map.s_PRdes  = ", LPCscalars[2], ";")
+        println(io, "Eng.CmpL.S_map.s_WcDes  = ", LPCscalars[3], ";")
+        println(io, "Eng.CmpL.S_map.s_NcDes  = ", LPCscalars[4], ";")
+
+        println(io, "Eng.CmpH.S_map.s_effDes = ", HPCscalars[1], ";")
+        println(io, "Eng.CmpH.S_map.s_PRdes  = ", HPCscalars[2], ";")
+        println(io, "Eng.CmpH.S_map.s_WcDes  = ", HPCscalars[3], ";")
+        println(io, "Eng.CmpH.S_map.s_NcDes  = ", HPCscalars[4], ";")
+
+        println(io, "Eng.TrbH.S_map.s_effDes = ", HPTscalars[1], ";")
+        println(io, "Eng.TrbH.S_map.s_PRdes  = ", HPTscalars[2], ";")
+        println(io, "Eng.TrbH.S_map.s_WpDes  = ", HPTscalars[3], ";")
+        println(io, "Eng.TrbH.S_map.s_NpDes  = ", HPTscalars[4], ";")
+  
+        println(io, "Eng.TrbP.S_map.s_effDes = ", PTscalars[1], ";")
+        println(io, "Eng.TrbP.S_map.s_PRdes  = ", PTscalars[2], ";")
+        println(io, "Eng.TrbP.S_map.s_WpDes  = ", PTscalars[3], ";")
+        println(io, "Eng.TrbP.S_map.s_NpDes  = ", PTscalars[4], ";")
+        
+   
+        println(io, "\n// Nozzle Area")
+        println(io, "Eng.NozPri.AthCold  = ", NozArea, ";")
     
-    return eta_thermal, mdotf, BSFC  #, MapScalars, NozArea
+       
+        println(io, "\n// PCEC parameters")
+        println(io, "Eng.PCEC.l = ", lcat, ";")
+
+        println(io, "\n// Bleeds")
+        println(io, "Eng.B030.TCLA_NC.fracW = ", TCLA_NC,";")
+        println(io, "Eng.B030.TCLA_CH.fracW = ", TCLA_CH,";")
+
+        println(io, "\n// Areas")
+        println(io, "Eng.FsEng.Fl_O.Aphy  = ", Areas[ 1], ";" ) 
+        println(io, "Eng.InEng.Fl_O.Aphy  = ", Areas[ 2], ";" ) 
+        println(io, "Eng.CmpL.Fl_O.Aphy   = ", Areas[ 3], ";" ) 
+        println(io, "Eng.D025.Fl_O.Aphy   = ", Areas[ 4], ";" ) 
+        println(io, "Eng.CmpH.Fl_O.Aphy   = ", Areas[ 5], ";" ) 
+        println(io, "Eng.B030.Fl_O.Aphy   = ", Areas[ 6], ";" ) 
+        println(io, "Eng.BrnPri.Fl_O.Aphy = ", Areas[ 7], ";" ) 
+        println(io, "Eng.TrbH.Fl_O.Aphy   = ", Areas[ 8], ";" ) 
+        println(io, "Eng.D050.Fl_O.Aphy   = ", Areas[ 9], ";" ) 
+        println(io, "Eng.TrbP.Fl_O.Aphy   = ", Areas[10], ";" ) 
+        println(io, "Eng.D060.Fl_O.Aphy   = ", Areas[11], ";" ) 
+        println(io, "Eng.PCEC.Fl_O.Aphy   = ", Areas[12], ";" ) 
+        println(io, "Eng.NozPri.Fl_O.Aphy = ", Areas[13], ";" ) 
+    end
+    
+    return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
+
+end
+function TurboShaft(alt_in::Float64, MN_in::Float64, 
+    ShP::Float64)
+
+    ShP_hp = ShP / 746 # Convert shaft power from W to HP
+    NPSS_TShaft_input(alt_in, MN_in, ShP_hp)
+
+    NPSS_run("NPSS_Turboshaft/", "TP.bat")
+
+    include("NPSS_Turboshaft/Eng.output")
+
+
+return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
 
 end
 
@@ -62,6 +135,7 @@ function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64, π_fan::Float6
     return Dfan, Fan_power, Torque_fan, N_fan, eta_prop, MapScalars, NozArea
 
 end
+
 """
 # Ducted Fan calculations
 
@@ -98,21 +172,23 @@ PowerTrain
 
 Design method - sizes the powertrain
 """
-function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, neng::Int64, ngen::Int64, π_fan::Float64, parte::Array{Float64, 1})
+function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, parpt::Array{Union{Float64, Int64},1}, parte::Array{Float64, 1})
     
     Wpowertrain = 0.0
-    Ffan = Fn/neng
+    
+    Ffan = Fn/parpt[ipt_neng]
     # Call ducted fan design method
-    Dfan, Fan_power, Torque_fan, N_fan, ηpropul, MapScalars, NozArea = DuctedFan(alt_in, MN_in, Ffan, π_fan)
+    πfan = parpt[ipt_pifan]
+    Dfan, Fan_power, Torque_fan, N_fan, ηpropul, MapScalars, NozArea = DuctedFan(alt_in, MN_in, Ffan, πfan)
     # println("Fan:")
     # println("Fan Ø = ", Dfan, " m")
     # println("Fan Fn = ", Ffan, " N")
 
     Pshaft_mot = -1000. * Fan_power
 
-    ratAsp   = 0.8
-    σAg      = 40e3
-    ratSplit = 0.7
+    ratAsp   = parpt[ipt_ARmot]
+    σAg      = parpt[ipt_sigAgMot]
+    ratSplit = parpt[ipt_ratSplitMot]
 
     Wpmsm, PreqMot, ηmot, RPMmot, PL, PLiron, PLCu, PLwind, SP = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
     # println("\nMotor:")
@@ -131,15 +207,14 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, neng::Int64, n
 
     PreqGen = PreqMot * ηinv * ηcable
 
-    ratAsp   = 0.6
-    σAg      = 48e3
-    ratSplit = 0.8
+    ratAsp   = parpt[ipt_ARgen]
+    σAg      = parpt[ipt_sigAgGen]
+    ratSplit = parpt[ipt_ratSplitGen]
 
     Wgen, PgenShaft, ηgen, RPMgen, PLgen, PLirongen, PLCugen, PLwindgen, SPgen = PMSM(PreqGen*neng/ngen, ratAsp, σAg, ratSplit, parte)
     Wpowertrain += Wgen*ngen
 
-    ηthermal, mdotf, BSFC = TurboShaft(alt_in, MN_in, PgenShaft, 3.0, 6.0)
-
+    ηthermal, mdotf, BSFC = TurboShaft(alt_in, MN_in, PgenShaft*ngen/nTshaft, 3.0, 6.0)
 
     return [ηmot, ηpropul, ηinv, ηcable, ηgen, ηthermal], Pshaft_mot, PreqMot, PgenShaft, Fn, Wpmsm, Winv, Wcable, Wgen, SP, SPgen, mdotf, BSFC 
 
