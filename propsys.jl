@@ -69,19 +69,40 @@ PowerTrain
 
 Design method - sizes the powertrain
 """
-function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, π_fan::Float64, parte::Array{Float64, 1})
+function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, neng::Int64, ngen::Int64, π_fan::Float64, parte::Array{Float64, 1})
 
+    Ffan = Fn/neng
     # Call ducted fan design method
-    Dfan, Fan_power, Torque_fan, N_fan, ηpropul, MapScalars, NozArea = DuctedFan(alt_in, MN_in, Fn, π_fan)
+    Dfan, Fan_power, Torque_fan, N_fan, ηpropul, MapScalars, NozArea = DuctedFan(alt_in, MN_in, Ffan, π_fan)
+    println("Fan:")
+    println("Fan Ø = ", Dfan, " m")
+    println("Fan Fn = ", Ffan, " N")
 
     Pshaft_mot = -1000. * Fan_power
 
-    # ratAsp   = 0.8
-    # σAg      = 20e3
-    # ratSplit = 0.86
-    Wpmsm, Preq, ηmot, RPMmot, _, _, _, _, SP = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
+    ratAsp   = 0.8
+    σAg      = 40e3
+    ratSplit = 0.7
+
+    Wpmsm, PreqMot, ηmot, RPMmot, PL, PLiron, PLCu, PLwind, SP = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
+    # println("Motor:")
+    # println(PL)
+    # println(PLiron)
+    # println(PLCu)
+    # println(PLwind)
+    ηinv, Winv = inverter(PreqMot, RPMmot/60, parte)
+    
+    ηcable, Wcable = cable()
+
+    PreqGen = PreqMot * ηinv * ηcable
+
+    ratAsp   = 0.6
+    σAg      = 48e3
+    ratSplit = 0.8
+
+    Wgen, PgenShaft, ηgen, RPMgen, PLgen, PLirongen, PLCugen, PLwindgen, SPgen = PMSM(PreqGen*neng/ngen, ratAsp, σAg, ratSplit, parte)
 
 
-    return ηmot, ηpropul, Pshaft_mot, Preq, Fn, Wpmsm, SP
+    return ηmot, ηpropul, ηinv, ηcable, ηgen, Pshaft_mot, PreqMot, PgenShaft, Fn, Wpmsm, Winv, Wcable, Wgen, SP, SPgen 
 
 end

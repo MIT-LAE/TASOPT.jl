@@ -107,7 +107,7 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             δ = wS/wST
 
             # Stator back Iron height
-                hSBI = rRot/ratSplit - (rRot + hAg + hRS + hSd + hS)
+                hSBI = max(rRot/ratSplit - (rRot + hAg + hRS + hSd + hS), hS) #Added this so the min stator back iron height is hS
 
             # Slots/pole/phases
                 m   = NS/(2*p*z)  # Acc to Hanselman p125, this should usually be ≤ 2

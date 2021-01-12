@@ -1,6 +1,6 @@
 # Unit tester for TAESOPT.jl
 using BenchmarkTools
-include("index.inc")
+# include("index.inc")
 
 # ---------------------------
 ## Testing the fuselage weight module
@@ -183,4 +183,7 @@ include("PMSM.inc")
 include("PMSM.jl")
 include("propsys.jl")
 include("NPSS_functions.jl")
-
+gee = 9.81
+μAir = 1.8e-5
+ρAir = 1.225
+PowerTrain(0.0, 0.25, 100.0e3*2, 16, 2, 1.3, parte)
