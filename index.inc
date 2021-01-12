@@ -361,6 +361,67 @@
 
       const ite_total    = 52
 
+
+# indices for powertrain
+      const ipt_nfan    = 1
+      const ipt_ngen    = 2
+      const ipt_nTshaft = 3
+
+      const ipt_pifan   = 4
+      const ipt_piLPC   = 5
+      const ipt_piHPC   = 6
+
+      const ipt_ARgen       = 7
+      const ipt_sigAgGen    = 8
+      const ipt_ratSplitGen = 9
+
+      const ipt_ARmot       = 10
+      const ipt_sigAgMot    = 11
+      const ipt_ratSplitMot = 12
+      
+      const ipt_hRS     = 13
+      const ipt_Tarm    = 14
+      const ipt_kst     = 15
+      const ipt_p        = 16
+      const ipt_Br       = 17
+      const ipt_BSat     = 18
+      const ipt_mu0      = 19
+      const ipt_rhoMag   = 20
+      const ipt_rhoCu    = 21
+      const ipt_rhoFe    = 22
+      const ipt_rhoSteel = 23
+      const ipt_tauMax   = 24
+      const ipt_sigCu    = 25
+      const ipt_thetaCu  = 26
+      const ipt_psi      = 27
+      const ipt_pb0      = 28
+      const ipt_Bb0      = 29
+      const ipt_fb0      = 30
+      const ipt_epsb     = 31   
+      const ipt_epsf     = 32 
+      const ipt_lambda   = 33
+      const ipt_kw       = 34
+      const ipt_ks       = 35
+      const ipt_BAg      = 36
+      const ipt_rRoti    = 37
+      const ipt_hM       = 38
+      const ipt_lRot     = 39
+      const ipt_hAg      = 40
+      const ipt_areaArm  = 41
+      const ipt_Bsbi     = 42
+      const ipt_Bt       = 43
+      const ipt_mSBI     = 44
+      const ipt_mTeeth   = 45
+      const ipt_lArm     = 46
+      const ipt_NSz      = 47
+      const ipt_Wpmsm    = 48
+      const ipt_k1       = 49  # k1, k2, k3 are inverter constants for efficiency calcs
+      const ipt_k2       = 50
+      const ipt_k3       = 51
+      const ipt_Pinvdes  = 52  # Stores design inverter power
+
+      const ipt_total    = 52
+
 #---- indices for aero variables at each mission point
       iaalt     =  1
       iatime    =  2
