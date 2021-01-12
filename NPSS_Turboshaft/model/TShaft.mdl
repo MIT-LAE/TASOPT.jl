@@ -205,6 +205,15 @@ Assembly Assembly Eng
 		dPqP_dmd = 0.025;
 		Fl_O.MN = 0.3; 
 	}
+	//------------------------------
+	// Post-combustion emissions control SCR
+	//------------------------------
+	Element SCR PCEC{
+		Af = 19.0;
+		l  = 0.0125;
+		cpsi = 900;
+		w    = 2 ;
+	}
 
 	//------------------------------
 	// Nozzle NozPri
@@ -333,7 +342,8 @@ Assembly Assembly Eng
 	linkPorts( "TrbH.Fl_O"      , "D050.Fl_I"     , "F045"  ) ;
 	linkPorts( "D050.Fl_O"      , "TrbP.Fl_I"     , "F050"  ) ;
 	linkPorts( "TrbP.Fl_O"      , "D060.Fl_I"     , "F060"  ) ;
-	linkPorts( "D060.Fl_O"      , "NozPri.Fl_I"   , "F070"  ) ;
+	linkPorts( "D060.Fl_O"      , "PCEC.Fl_I"     , "F0PCEC"  ) ;
+	linkPorts( "PCEC.Fl_O"      , "NozPri.Fl_I"   , "F070"  ) ;
 	linkPorts( "NozPri.Fl_O"    , "NozEnd.Fl_I"   , "F090"  ) ;
 
 	// Bleed Connections
@@ -357,6 +367,9 @@ Assembly Assembly Eng
 
 	Independent ind_SHP { varName = "ShP.HPX"; description = "ShaftPower from free turbine"; }
 	Dependent dep_noz_Ps_exit{ eq_lhs = "NozPri.PR"; eq_rhs = "1.2";}
+
+	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
+	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "0.95";}
 	
 	void variableChanged(string name, any oldval)
 	{
@@ -369,6 +382,9 @@ Assembly Assembly Eng
 
 				ind_SHP.autoSetup         = TRUE;
 				dep_noz_Ps_exit.autoSetup = TRUE;
+
+				ind_Acat.autoSetup    = TRUE;
+				dep_deNOx.autoSetup   = TRUE;
 			}
 			else
 			{
