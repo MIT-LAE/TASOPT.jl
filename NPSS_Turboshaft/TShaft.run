@@ -76,9 +76,11 @@ OutFileStream output {
 }
 
 output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
-output<<"Mass Flow rate = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
-output<<"Thermal eff = "<<Eng.Perf.IdealThermalEff<<endl;
+output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
+output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
+output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
+output<<"ShP = "<<Eng.ShP.HPX<<"\t#" +Eng.ShP.HPX.units<<endl;
 output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
-output<< "BSFC = "<<Eng.Perf.BSFC<<endl;
+output<<"BSFC = "<<Eng.Perf.BSFC<<endl;
 output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;
 output<<"Tt3 = "<<Eng.CmpH.Fl_O.Tt <<"\t#" +Eng.CmpH.Fl_O.Tt.units<<endl;
