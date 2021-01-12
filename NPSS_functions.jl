@@ -12,9 +12,16 @@ end
 """
 Writes an input file for NPSS Turboshaft model
 """
-function NPSS_TShaft_input(SHP_dmd, Tt41, LPC_PR, HPC_PR ; LHV = 120e6, file_name = "NPSS_Turboshaft/EngineInputs.inp")
+function NPSS_TShaft_input(alt_in, MN_in, SHP_dmd, Tt41, LPC_PR, HPC_PR ; LHV = 120e6, file_name = "NPSS_Turboshaft/EngineInputs.inp")
 
     open(file_name, "w") do io
+        println(io, "// Design State")
+        println(io, "Eng.setOption(\"switchDes\",\"DESIGN\");")
+        
+        println(io, "\n// Abmient conditions")
+        println(io, "Eng.Amb.alt_in = ", alt_in, ";" )
+        println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
+
         println(io, "// Targets")
         println(io, "real SHP_dmd = ", SHP_dmd, ";" )
         println(io, "real Tt41    = ", Tt41, ";" )

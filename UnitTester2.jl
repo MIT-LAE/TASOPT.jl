@@ -179,11 +179,12 @@ println("Balance match?\n\t", all(results .- fortran_balance .≈ 0 ))
 
 ## Testing PMSM
 include("index.inc")
-include("PMSM.inc")
-include("PMSM.jl")
 include("propsys.jl")
-include("NPSS_functions.jl")
+
 gee = 9.81
 μAir = 1.8e-5
 ρAir = 1.225
-PowerTrain(0.0, 0.25, 100.0e3*2, 16, 2, 1.3, parte)
+println("Running powertrain...")
+@timev PowerTrain(0.0, 0.25, 110.0e3*2, 16, 2, 1.3, parte)
+println("Second run...")
+@timev PowerTrain(0.0, 0.25, 100.0e3*2, 16, 2, 1.3, parte)
