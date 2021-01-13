@@ -27,8 +27,9 @@ function tankWmech(gee, rhoFuel,
                       Wfuel, m_boiloff, thickness_insul, t_cond)
 
 #--- fuselage skin and center web thicknesses to withstand pressure load
-      tskin = deltap * Rfuse / sigskin
-      Rtank = Rfuse - thickness_insul - tskin #Inner radius of tank
+      Rtank_outer = Rfuse - thickness_insul
+      tskin = deltap * Rtank_outer / sigskin
+      Rtank = Rtank_outer - tskin
       tfweb = 2.0 * deltap * wfb  / sigskin
 
 #--- Calculate updated Wfuel based on boil-off mass
@@ -37,18 +38,17 @@ function tankWmech(gee, rhoFuel,
       lshell = Vfuel / (pi * (Rtank^2))
 
 #--- tank cross-section geometric parameters
-      wfblim = max( min( wfb , Rfuse) , 0.0 )
-      thetafb = asin(wfblim/Rfuse)
-      hfb = sqrt(Rfuse^2 - wfb^2)
-      sin2t = 2.0*hfb*wfb/Rfuse^2
-      cost  = hfb/Rtank
-      perim = (2.0*pi + 4.0*thetafb)*Rfuse + 2.0*dRfuse
+      wfblim = max( min( wfb , Rtank) , 0.0 )
+      thetafb = asin(wfblim / Rtank)
+      hfb = sqrt(Rtank^2 - wfb^2)
+      sin2t = 2.0*hfb*wfb/Rtank^2
+      perim = (2.0*pi + 4.0*thetafb)*Rtank + 2.0*dRfuse
 
 
 #--- areas
-      Askin = (2.0*pi+4.0*nfweb*thetafb)*Rfuse*tskin + 2.0*dRfuse*tskin
+      Askin = (2.0*pi+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin
       Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-      Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rfuse^2 + 2.0*Rfuse*dRfuse + 2.0*(Rfuse+nfweb*wfb)*dRfuse
+      Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse + 2.0*(Rtank+nfweb*wfb)*dRfuse
 #--- component volumes
       Vcyl  = Askin*lshell
 
@@ -60,15 +60,17 @@ function tankWmech(gee, rhoFuel,
       N = length(t_cond)
       Vinsul = zeros(N)
       Winsul = zeros(N)
+      s=0 #thickness of previous layer
       for n in 1:N
-            Vinsul[n] = pi * (((Rtank+sum(t_cond[1:n]))^2)-(Rtank^2)) * lshell
+            Vinsul[n] = pi * (((Rtank_outer+sum(t_cond[1:n]))^2)-((Rtank_outer+s)^2)) * lshell
             Winsul[n] = Vinsul[n] * rho_insul[n]
+            s = sum(t_cond[1:n])
       end
       Winsul_sum = sum(Winsul)
       #Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rtank*lshell
 
 #--- overall tank weight
-      Wtank = Wtank + Winsul_sum + Wfuel
+      Wtank = Wtank + Wfuel + Winsul_sum
 
 #--- pressurized tank volume
       #tankVol = Atank*(lshell + 0.67*Rfuse)
