@@ -12,7 +12,7 @@ The body shape is defined by its area and perimeter distributions
    A(x),  b0(x),
 which are defined by the various geometric parameters in parg[.)
 """
-function fusebl(pari,parg,para)
+function fusebl!(pari,parg,para)
       
       include("index.inc") #include the array indices for pari, parg and para
     

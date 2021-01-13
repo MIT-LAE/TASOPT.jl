@@ -1,0 +1,7 @@
+// Design Independents
+solver.addIndependent("DESIGN_AIRFLOW"  );
+solver.addIndependent("DESIGN_FUELFLOW" );
+
+// Design Dependents
+solver.addDependent("DESIGN_TARGET_SHP" );
+solver.addDependent("DESIGN_TARGET_Tt41");

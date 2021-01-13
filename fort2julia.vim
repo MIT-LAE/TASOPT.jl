@@ -12,9 +12,16 @@
 
 "Move any operator to previous line
 :%s/\n\s*&\s*+/ +\r\t/g
+:%s/\n\s*+/ +\r\t/g
+
 :%s/\n\s*&\s*\*/ \*\r\t/g
+:%s/\n\s*\*/ \*\r\t/g
+
 :%s/\n\s*&\s*\// \/\r\t/g
+:%s/\n\s*\// \/\r\t/g
+
 :%s/\n\s*&\s*-/ -\r\t/g
+:%s/\n\s*-/ -\r\t/g
 
 "Change ** to ^
 :%s/\*\*/\^/g
@@ -36,3 +43,9 @@
 "Replace do loops with for
 :%s/do\s*[0-9a-zA-Z]*\s*=\s*[0-9a-zA-Z]*\zs,\ze/:/g
 :%s/\zsdo\ze\s*[0-9a-zA-Z]*\s*=/for/g
+
+
+"Replace () with [] specific to TASOPT
+:%s-\parg(\([^)]\+\))-parg[\1]-g
+:%s-\pari(\([^)]\+\))-pari[\1]-g
+:%s-\para(\([^)]\+\))-para[\1]-g

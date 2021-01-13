@@ -34,8 +34,8 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
       bb = zeros(3,3)
       rr = zeros(3)
      
-      gam = 1.4
-      gmi = gam - 1.0
+      ɣ = 1.4
+      gmi = ɣ - 1.0
 
       trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-ue^2)
       trat_ue =       -gmi*Mach^2 *      ue
@@ -114,8 +114,8 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
        hca_uem = 0.
 
       else
-       bd  = b  + 2.0*pi*ds *rn
-       bdm = bm + 2.0*pi*dsm*rnm
+       bd  = b  + 2.0*π*ds *rn
+       bdm = bm + 2.0*π*dsm*rnm
 
        xl = log(x/xm)
        bl = log(bd/bdm)
@@ -123,12 +123,12 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
        ul = log(ue/uem)
        tl = log(th/thm)
        hl = log(hs/hsm)
-       bl_ds  =  1.0/bd * 2.0*pi*rn
+       bl_ds  =  1.0/bd * 2.0*π*rn
        rl_ue  =  1.0/rh * rh_ue
        ul_ue  =  1.0/ue
        tl_th  =  1.0/th
        hl_hs  =  1.0/hs
-       bl_dsm = -1.0/bdm * 2.0*pi*rnm
+       bl_dsm = -1.0/bdm * 2.0*π*rnm
        rl_uem = -1.0/rhm * rhm_uem
        ul_uem = -1.0/uem
        tl_thm = -1.0/thm
@@ -290,15 +290,13 @@ and their derivatives
 
 
       function blvar(simi,lami,wake, Reyn,Mach, fexcr,
-                      x, th ,ds ,ue )
-
-#c    data acon, bcon / 6.70, 0.75 /
+                      x, θ ,δs ,ue )
 
       acon = 6.0
       bcon = 0.72
 
-      gam = 1.4
-      gmi = gam - 1.0
+      ɣ = 1.4
+      gmi = ɣ - 1.0
 
       trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-ue^2)
       trat_ue =       -gmi*Mach^2 *      ue    #deriv of trat wrt to ue d(trat)/d(ue)
@@ -306,13 +304,13 @@ and their derivatives
       msq = (ue*Mach)^2 / trat
       msq_ue = 2.0*ue*Mach^2 - (msq/trat)*trat_ue
 
-      h    =  ds/th #H = delta star/ theta (2D shape parameter)
-      h_th =  -h/th
-      h_ds = 1.0/th
+      h    =  δs/θ #H = delta star/ theta (2D shape parameter)
+      ∂h_∂θ =  -h/θ
+      ∂h_∂δs = 1.0/θ
 
       (hk, hk_h, hk_msq) = hkin( h , msq)
-      hk_th = hk_h*h_th
-      hk_ds = hk_h*h_ds
+      ∂hk_∂θ = hk_h*∂h_∂θ
+      ∂hk_∂δs = hk_h*∂h_∂δs
       hk_ue = hk_msq*msq_ue
 
       hk = max( hk , 1.005 )
@@ -324,33 +322,33 @@ and their derivatives
       mu = trat/Reyn
       mu_ue = trat_ue/Reyn
 
-      rt    = rh*ue*th/mu
-      rt_ue = rh   *th/mu + rh_ue*ue*th/mu  - (rt/mu)*mu_ue
-      rt_th = rh*ue   /mu
+      rt    = rh*ue*θ/mu
+      rt_ue = rh   *θ/mu + rh_ue*ue*θ/mu  - (rt/mu)*mu_ue
+      rt_θ = rh*ue   /mu
 
       if(lami)
        (hs, hs_hk, hs_rt, hs_msq) = hsl( hk, rt, msq)
       else
        (hs, hs_hk, hs_rt, hs_msq) = hst( hk, rt, msq)
       end
-      hs_th = hs_hk*hk_th + hs_rt*rt_th
-      hs_ds = hs_hk*hk_ds
+      ∂hs_∂θ = hs_hk*∂hk_∂θ + hs_rt*rt_θ
+      ∂hs_∂δs = hs_hk*∂hk_∂δs
       hs_ue = hs_hk*hk_ue + hs_rt*rt_ue + hs_msq*msq_ue
 
 #      (hc, hc_hk, hc_msq) = hct( hk, msq )
-#      hc_th = hc_hk*hk_th
-#      hc_ds = hc_hk*hk_ds
+#      ∂hc_∂θ = hc_hk*∂hk_∂θ
+#      ∂hc_∂δs = hc_hk*∂hk_∂δs
 #      hc_ue = hc_hk*hk_ue + hc_msq*msq_ue
 
       hc    = 0.5*gmi*msq   *h
       hc_ue = 0.5*gmi*msq_ue*h
-      hc_th = 0.5*gmi*msq   *h_th
-      hc_ds = 0.5*gmi*msq   *h_ds
+      ∂hc_∂θ = 0.5*gmi*msq   *∂h_∂θ
+      ∂hc_∂δs = 0.5*gmi*msq   *∂h_∂δs
 
       if(wake) 
        cf    = 0.
-       cf_th = 0.
-       cf_ds = 0.
+       ∂cf_∂θ = 0.
+       ∂cf_∂δs = 0.
        cf_ue = 0.
       else
        if(lami)
@@ -363,16 +361,16 @@ and their derivatives
        cf_rt  = fexcr * cf_rt
        cf_msq = fexcr * cf_msq
        
-       cf_th = cf_hk*hk_th + cf_rt*rt_th
-       cf_ds = cf_hk*hk_ds
+       ∂cf_∂θ = cf_hk*∂hk_∂θ + cf_rt*rt_θ
+       ∂cf_∂δs = cf_hk*∂hk_∂δs
        cf_ue = cf_hk*hk_ue + cf_rt*rt_ue + cf_msq*msq_ue
       end
 
       if(lami) 
-       (di, di_hk, di_rt) = dil( hk, rt )
-       di_th = di_hk*hk_th + di_rt*rt_th
-       di_ds = di_hk*hk_ds
-       di_ue = di_hk*hk_ue + di_rt*rt_ue
+       (𝒟ᵢ, 𝒟ᵢ_hk, 𝒟ᵢ_rt) = 𝒟ᵢl( hk, rt )
+       ∂𝒟ᵢ_∂θ = 𝒟ᵢ_hk*∂hk_∂θ + 𝒟ᵢ_rt*rt_θ
+       ∂𝒟ᵢ_∂δs = 𝒟ᵢ_hk*∂hk_∂δs
+       𝒟ᵢ_ue = 𝒟ᵢ_hk*hk_ue + 𝒟ᵢ_rt*rt_ue
       else
        hrat = (hk-1.0)/(acon*hk)
        hrat_hk = 1.0/(acon*hk^2)
@@ -387,34 +385,34 @@ and their derivatives
 
        uq_hk = uq_hrat*hrat_hk - uq/hk
 
-       uq_th = uq_cf*cf_th + uq_hk*hk_th
-       uq_ds = uq_cf*cf_ds + uq_hk*hk_ds
+       uq_θ = uq_cf*∂cf_∂θ + uq_hk*∂hk_∂θ
+       uq_δs = uq_cf*∂cf_∂δs + uq_hk*∂hk_∂δs
        uq_ue = uq_cf*cf_ue + uq_hk*hk_ue + uq_fc*fc_ue
 
-       di = 0.5*cf - (hk-1.0)*uq
-       di_cf = 0.5
-       di_hk = -uq
-       di_uq = -(hk-1.0)
+       𝒟ᵢ = 0.5*cf - (hk-1.0)*uq
+       𝒟ᵢ_cf = 0.5
+       𝒟ᵢ_hk = -uq
+       𝒟ᵢ_uq = -(hk-1.0)
 
-       di_th = di_cf*cf_th + di_hk*hk_th + di_uq*uq_th
-       di_ds = di_cf*cf_ds + di_hk*hk_ds + di_uq*uq_ds
-       di_ue = di_cf*cf_ue + di_hk*hk_ue + di_uq*uq_ue
+       ∂𝒟ᵢ_∂θ = 𝒟ᵢ_cf*∂cf_∂θ + 𝒟ᵢ_hk*∂hk_∂θ + 𝒟ᵢ_uq*uq_θ
+       ∂𝒟ᵢ_∂δs = 𝒟ᵢ_cf*∂cf_∂δs + 𝒟ᵢ_hk*∂hk_∂δs + 𝒟ᵢ_uq*uq_δs
+       𝒟ᵢ_ue = 𝒟ᵢ_cf*cf_ue + 𝒟ᵢ_hk*hk_ue + 𝒟ᵢ_uq*uq_ue
       end
 
       if(wake) 
        wfac = 2.0
-       di    = wfac*di
-       di_th = wfac*di_th
-       di_ds = wfac*di_ds
-       di_ue = wfac*di_ue
+       𝒟ᵢ    = wfac*𝒟ᵢ
+       ∂𝒟ᵢ_∂θ = wfac*∂𝒟ᵢ_∂θ
+       ∂𝒟ᵢ_∂δs = wfac*∂𝒟ᵢ_∂δs
+       𝒟ᵢ_ue = wfac*𝒟ᵢ_ue
       end
  
-      return h , h_th, h_ds,
-             hk, hk_th, hk_ds, hk_ue,
-             hc, hc_th, hc_ds, hc_ue,
-             hs, hs_th, hs_ds, hs_ue,
-             cf, cf_th, cf_ds, cf_ue,
-             di, di_th, di_ds, di_ue 
+      return h , ∂h_∂θ, ∂h_∂δs,
+             hk, ∂hk_∂θ, ∂hk_∂δs, hk_ue,
+             hc, ∂hc_∂θ, ∂hc_∂δs, hc_ue,
+             hs, ∂hs_∂θ, ∂hs_∂δs, hs_ue,
+             cf, ∂cf_∂θ, ∂cf_∂δs, cf_ue,
+             𝒟ᵢ, ∂𝒟ᵢ_∂θ, ∂𝒟ᵢ_∂δs, 𝒟ᵢ_ue 
     
       end # blvar
 
@@ -472,7 +470,7 @@ and their derivatives
       end
 
 
-      function hsl( HK, RT, MSQ, HS, HS_HK, HS_RT, HS_MSQ )
+      function hsl( HK, RT, MSQ)
 #
 #---- Laminar HS correlation
       if(HK<4.35) 
@@ -641,8 +639,8 @@ CF\\_MSQ: Derivative wrt to ``M^2``
 """
       function cft( HK, RT, MSQ )
       
-      gam = 1.4
-      gmi = gam - 1.0
+      ɣ = 1.4
+      gmi = ɣ - 1.0
       CFFAC = 1.0
 
 #---- Turbulent skin friction function  ( Cf )    (Coles)
