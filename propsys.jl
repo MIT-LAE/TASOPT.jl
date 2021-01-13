@@ -1,8 +1,3 @@
-
-include("PMSM.jl")  # Motor/generator functions
-include("PMSM.inc") # Motor/generator properties array
-include("NPSS_functions.jl") # NPSS functions
-
 """
 # TurboShaft calculations
 
@@ -126,7 +121,7 @@ function TurboShaft(alt_in::Float64, MN_in::Float64,
     include("NPSS_Turboshaft/Eng.output")
 
 
-return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
+    return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
 
 end
 
@@ -158,8 +153,17 @@ function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64, π_fan::Float6
     NPSS_run("NPSS_Turboshaft/", "Fan.bat")
 
     include("NPSS_Turboshaft/Fan.output")
+    
+    ARfan  = 3   # Blade aspeect ratio
+    bladeσ = 0.4 # Blade solidity c/s
+    ktech = 0.5 
+    Utip  = Dfan/2* (2π * N_fan /60)
+    # Sagerser 1971, NASA TM X-2406
+    # Note: The term "weight" in Sagerser1971 is actually mass
+    mfan = ktech*(135.0 * Dfan^2.7/sqrt(ARfan) * (bladeσ/1.25)^0.3 * (Utip/350.0)^0.3)
+    Wfan = mfan*gee
 
-    return Dfan, Fan_power, Torque_fan, N_fan, eta_prop, MapScalars, NozArea
+    return Dfan, Fan_power, Torque_fan, N_fan, eta_prop, MapScalars, NozArea, Wfan
 
 end
 
@@ -199,17 +203,26 @@ PowerTrain
 
 Design method - sizes the powertrain
 """
-function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, parpt::Array{Union{Float64, Int64},1}, parte::Array{Float64, 1})
+function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
+                    parpt::Array{Union{Float64, Int64},1},
+                    parmot::Array{Float64, 1},
+                    pargen::Array{Float64, 1})
     
     Wpowertrain = 0.0
-    
-    Ffan = Fn/parpt[ipt_neng]
+    Hrej = 0.0
+    nfan = parpt[ipt_nfan]
+    ngen = parpt[ipt_ngen]
+    nTshaft = parpt[ipt_nTshaft]
+
+    Ffan = Fn/nfan
     # Call ducted fan design method
     πfan = parpt[ipt_pifan]
-    Dfan, Fan_power, Torque_fan, N_fan, ηpropul, MapScalars, NozArea = DuctedFan(alt_in, MN_in, Ffan, πfan)
+    Dfan, Fan_power, Torque_fan, N_fan, ηpropul,
+     MapScalars, NozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, πfan)
     # println("Fan:")
     # println("Fan Ø = ", Dfan, " m")
     # println("Fan Fn = ", Ffan, " N")
+    Wpowertrain += Wfan*nfan
 
     Pshaft_mot = -1000. * Fan_power
 
@@ -217,19 +230,25 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, parpt::Array{U
     σAg      = parpt[ipt_sigAgMot]
     ratSplit = parpt[ipt_ratSplitMot]
 
-    Wpmsm, PreqMot, ηmot, RPMmot, PL, PLiron, PLCu, PLwind, SP = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parte)
+    Wpmsm, PreqMot, ηmot, RPMmot,
+     PL, PLiron, PLCu, PLwind, SPmot = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parmot)
     # println("\nMotor:")
     # println("Losses = ", PL)
     # println("\tIron losses    = ", PLiron, "%")
     # println("\tCopper losses  = ", PLCu)
     # println("\tWindage losses = ", PLwind)
-
-    Wpowertrain += Wpmsm*neng # Add to total powertrain weight
+    Hwaste_motor = PreqMot - Pshaft_mot
+    Hrej += nfan*Hwaste_motor # Heat rejected from motors
+    Wpowertrain += Wpmsm*nfan # Add to total powertrain weight
     
-    ηinv, Winv = inverter(PreqMot, RPMmot/60, parte)
-    Wpowertrain += Winv*neng # Add to total powertrain weight
-    
-    ηcable, Wcable = cable()
+    ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
+    Hwaste_inv = PreqMot*(1-ηinv)
+    Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
+    Wpowertrain += Winv*nfan # Add to total powertrain weight
+ 
+    ηcable, Wcable = cable() #TODO cable is dummy right now
+    Hwaste_cable = PreqMot*(1-ηcable)
+    Hrej += Hwaste_cable  # Heat rejected from all inverters
     Wpowertrain += Wcable # Add to total powertrain weight
 
     PreqGen = PreqMot * ηinv * ηcable
@@ -238,11 +257,39 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, parpt::Array{U
     σAg      = parpt[ipt_sigAgGen]
     ratSplit = parpt[ipt_ratSplitGen]
 
-    Wgen, PgenShaft, ηgen, RPMgen, PLgen, PLirongen, PLCugen, PLwindgen, SPgen = PMSM(PreqGen*neng/ngen, ratAsp, σAg, ratSplit, parte)
+    Wgen, PgenShaft, ηgen, RPMgen,
+    PLgen, PLirongen, PLCugen, PLwindgen, SPgen = PMSM(PreqGen*nfan/ngen,
+                                                        ratAsp, σAg, ratSplit,
+                                                        pargen)
+                                                        
+    Hwaste_gen = (PgenShaft - PreqGen*nfan/ngen)
+    Hrej += ngen*Hwaste_gen # Heat rejected from motors
     Wpowertrain += Wgen*ngen
 
-    ηthermal, mdotf, BSFC = TurboShaft(alt_in, MN_in, PgenShaft*ngen/nTshaft, 3.0, 6.0)
+    πLPC = parpt[ipt_piLPC]
+    πHPC = parpt[ipt_piHPC]
+    Tt41 = parpt[ipt_Tt41]
+    cpsi = parpt[ipt_cpsi]
+    w    = parpt[ipt_wcat]
+    lcat = parpt[ipt_lcat]
+    deNOx= parpt[ipt_deNOx]
 
-    return [ηmot, ηpropul, ηinv, ηcable, ηgen, ηthermal], Pshaft_mot, PreqMot, PgenShaft, Fn, Wpmsm, Winv, Wcable, Wgen, SP, SPgen, mdotf, BSFC 
+    ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, PgenShaft*ngen/nTshaft,
+                                        πLPC, πHPC, Tt41,
+                                        cpsi, w, lcat, deNOx)
+
+    Wcat = mcat*gee
+    Wpowertrain += Wcat*nTshaft
+
+    SPtshaft= 5000.0 # kW/kg
+    Wtshaft = gee*(PgenShaft*ngen/nTshaft)/SPtshaft
+    Wpowertrain += Wtshaft*nTshaft
+
+    return [ηmot, ηinv, ηcable, ηgen, ηthermal],
+           [Pshaft_mot, PreqMot, PgenShaft], 
+           [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
+           [Wfan, Wpmsm, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee./1000,
+           [SPmot, SPinv, SPgen, SPtshaft], mdotf, BSFC,
+           deNOx
 
 end

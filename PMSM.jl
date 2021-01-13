@@ -316,7 +316,7 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             
             rpm = 60N  # Output rotational speed
 
-            SP = P/mPMSM/1000.0 # Specific Power
+            SP = P/mPMSM # Specific Power
 
 return W, Preq, η, rpm, PL, PLiron/PL, PLCu/PL, PLwind/PL, SP
 
@@ -400,7 +400,7 @@ Simple inverter model that calculates the efficiency and mass of an inverter or 
 """
 function inverter(P::Float64, N::Float64, parte::Array{Float64, 1})
     kcf = 20.
-    SP  = 19.0e3 #W/kg
+    SPinv  = 19.0e3 #W/kg
 
     p = parte[ite_p]
 
@@ -425,9 +425,9 @@ function inverter(P::Float64, N::Float64, parte::Array{Float64, 1})
 
     parte[ite_Pinvdes] = P
     
-    Winverter = P/SP * gee # Weight in [N]
+    Winverter = P/SPinv * gee # Weight in [N]
 
-    return η, Winverter
+    return η, Winverter, SPinv
 
 end
 """
