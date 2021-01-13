@@ -1,25 +1,25 @@
 
 // LHV based on fuel
 Eng.FusEng.LHV = 51590.76;
-Eng.FsEng.W_in = 111.5048655;
-Eng.FusEng.Wfuel = 1.063447245;
+Eng.FsEng.W_in = 100.05959250000001;
+Eng.FusEng.Wfuel = 0.954290925;
 
 // Map scalars
 Eng.CmpL.S_map.s_effDes = 1.08233;
 Eng.CmpL.S_map.s_PRdes  = 0.454856;
-Eng.CmpL.S_map.s_WcDes  = 1.51091;
+Eng.CmpL.S_map.s_WcDes  = 1.35583;
 Eng.CmpL.S_map.s_NcDes  = 37285.6;
 Eng.CmpH.S_map.s_effDes = 1.07143;
 Eng.CmpH.S_map.s_PRdes  = 4.61538;
-Eng.CmpH.S_map.s_WcDes  = 16.2449;
+Eng.CmpH.S_map.s_WcDes  = 14.5775;
 Eng.CmpH.S_map.s_NcDes  = 31369.0;
 Eng.TrbH.S_map.s_effDes = 0.977995;
 Eng.TrbH.S_map.s_PRdes  = 0.560238;
-Eng.TrbH.S_map.s_WpDes  = 1.73261;
+Eng.TrbH.S_map.s_WpDes  = 1.55477;
 Eng.TrbH.S_map.s_NpDes  = 6.35211;
 Eng.TrbP.S_map.s_effDes = 0.964143;
-Eng.TrbP.S_map.s_PRdes  = 0.63558;
-Eng.TrbP.S_map.s_WpDes  = 2.03107;
+Eng.TrbP.S_map.s_PRdes  = 0.775128;
+Eng.TrbP.S_map.s_WpDes  = 1.82259;
 Eng.TrbP.S_map.s_NpDes  = 6.20443;
 
 Eng.CmpL.S_map.NcMapDes    = 1.0;
@@ -38,29 +38,29 @@ Eng.TrbP.S_map.PRmapDes = 6.0;
 Eng.TrbP.S_map.NpMapDes = 100.0;
 
 // Nozzle Area
-Eng.NozPri.AthCold  = 683.661;
+Eng.NozPri.AthCold  = 1625.48;
 
 // PCEC parameters
 Eng.PCEC.l = 0.03;
 Eng.PCEC.w = 2.0;
 Eng.PCEC.cpsi = 900.0;
-Eng.PCEC.Af = 12.71;
+Eng.PCEC.Af = 11.6891;
 
 // Bleeds
 Eng.B030.TCLA_NC.fracW = 0.126901;
 Eng.B030.TCLA_CH.fracW = 0.112051;
 
 // Areas
-Eng.FsEng.Fl_O.Aphy  = 783.4368;
-Eng.InEng.Fl_O.Aphy  = 421.4295;
-Eng.CmpL.Fl_O.Aphy   = 198.52;
-Eng.D025.Fl_O.Aphy   = 254.949;
-Eng.CmpH.Fl_O.Aphy   = 50.7067;
-Eng.B030.Fl_O.Aphy   = 30.1265;
-Eng.BrnPri.Fl_O.Aphy = 200.4174;
-Eng.TrbH.Fl_O.Aphy   = 282.8829;
-Eng.D050.Fl_O.Aphy   = 220.7248;
-Eng.TrbP.Fl_O.Aphy   = 662.0143;
-Eng.D060.Fl_O.Aphy   = 1033.9406;
-Eng.PCEC.Fl_O.Aphy   = 1514.2651;
-Eng.NozPri.Fl_O.Aphy = 656.315;
+Eng.FsEng.Fl_O.Aphy  = 703.0223;
+Eng.InEng.Fl_O.Aphy  = 378.1727;
+Eng.CmpL.Fl_O.Aphy   = 178.1433;
+Eng.D025.Fl_O.Aphy   = 228.7803;
+Eng.CmpH.Fl_O.Aphy   = 45.502;
+Eng.B030.Fl_O.Aphy   = 27.0342;
+Eng.BrnPri.Fl_O.Aphy = 179.846;
+Eng.TrbH.Fl_O.Aphy   = 253.8469;
+Eng.D050.Fl_O.Aphy   = 198.0689;
+Eng.TrbP.Fl_O.Aphy   = 681.3173;
+Eng.D060.Fl_O.Aphy   = 1064.1726;
+Eng.PCEC.Fl_O.Aphy   = 1560.4648;
+Eng.NozPri.Fl_O.Aphy = 1560.4648;
