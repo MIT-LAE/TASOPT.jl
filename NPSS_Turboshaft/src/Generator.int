@@ -1,0 +1,64 @@
+#ifndef __GENERATOR__
+#define __GENERATOR__
+
+#include <InterpIncludes.ncp>
+
+class Generator extends Element {
+
+	// Documentation
+	description = isA() + "generates electrical power from a shaft power input.";
+	
+	// Normal variables
+	
+	//Inputs
+	real ShP_dmd {
+		value = 0;  IOstatus = INPUT;  units = W;
+		description = "Power load (input)";
+	}
+	
+	//Outputs
+	
+	real Nmech {
+		value = 0; IOstatus = OUTPUT; units = RPM;
+		description = "Generator shaft speed";
+	}
+	
+	real trq {
+		value = 0; IOstatus = OUTPUT; units = FT_LBF;
+		description = "Torque supplied to the generator shaft";
+	}
+	
+	real pwr {
+		value = 0; IOstatus = OUTPUT; units = HORSEPOWER;
+		description = "Mechanical power consumption";
+	}	
+	
+	// Option variables
+	
+	// Ports
+	ShaftOutputPort Sh_O {
+		description = "Mechanical connection to the shaft";
+	}
+	
+	// Sockets
+	
+	// variableChanged()
+	void variableChanged(string name, any oldVal) {
+
+	}
+	
+	// Engineering calculations
+	void calculate() {
+		// Obtain the shaft speed
+		Nmech = Sh_O.Nmech;
+		
+		// Calculate torque required to satisfy load at current speed
+		trq = -(ShP_dmd) / (Nmech * 2.*PI / 60.) * getUnitsFactor("N*m","ft*lbf");
+		
+        pwr = Nmech;
+		// Supply the torque to the shaft port
+		Sh_O.trq = trq;
+	}
+
+}
+#endif

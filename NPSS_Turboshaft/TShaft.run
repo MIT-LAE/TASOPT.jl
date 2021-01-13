@@ -23,7 +23,9 @@ setThermoPackage("GasTbl");
 //====================
 #include "EngineInputs.inp"
 
+// Eng.Gen.ShP_dmd = SHP_dmd;
 Eng.Gen.ShP_dmd = SHP_dmd;
+// Eng.ShP.HPX = SHP_dmd*getUnitsFactor("W", "hp");
 
 if (Eng.switchDes == "DESIGN") {
     Eng.DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
@@ -67,13 +69,25 @@ if(solver.converged == 1){
 else{
     cout<<"ERROR! Did not converge"<<endl;
 }
+// cout<<Eng.ShP.trqNet<<endl;
+// cout<<Eng.ShH.trqNet<<endl;
+// cout<<Eng.ShP.pwrNet<<endl;
+// cout<<Eng.ShH.pwrNet<<endl;
 
 // Eng.setOption("switchDes", "OFFDESIGN");
-
+// // cout<<Eng.CmpH.switchDes<<endl;
+// // solver.clear();
 // autoSolverSetup();
-// Eng.Amb.alt_in = 100.0;
+// Eng.Amb.alt_in = 30000;
+// Eng.Amb.MN_in = 0.78;
+// Eng.Gen.ShP_dmd = 10e6;
+// Eng.dep_N2.eq_rhs = "30000";
+// // Eng.ShP.HPX = 25e6*getUnitsFactor("W", "hp");
 // // printSolverDetails();
 // run();
+// // cout<<Eng.ShP.pwrIn<<endl;
+// // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+
 
 
 //====================
@@ -88,7 +102,9 @@ output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
 output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
 output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
 // output<<"ShP = "<<Eng.Gen.ShP_dmd/getUnitsFactor("hp", "kW")<<"#\t kW"<<endl;
-output<<"ShP = "<<Eng.Gen.ShP_dmd<<"#\t " + Eng.Gen.ShP_dmd.units<<endl;
+output<<"ShP = "<<Eng.Gen.ShP_dmd<<"\t# " + Eng.Gen.ShP_dmd.units<<endl;
+output<<"Ngen = "<<Eng.ShP.Nmech<<"\t# " + Eng.ShP.Nmech.units<<endl;
+// output<<"ShP = "<<Eng.ShP.HPX<<"\t# " + Eng.ShP.HPX.units<<endl;
 output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
 output<<"BSFC = "<<Eng.Perf.BSFC<<endl;
 output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;

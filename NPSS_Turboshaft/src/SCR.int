@@ -261,10 +261,10 @@ void variableChanged( string name, any oldVal ) {
  
     if ( name == "switchDes" ) {
       if ( switchDes == "DESIGN" ) {
-		Af.IOstatus = INPUT;
-		l.IOstatus = INPUT;
+		Af.IOstatus   = INPUT;
+		l.IOstatus    = INPUT;
 		cpsi.IOstatus = INPUT;
-		w.IOstatus = INPUT;
+		w.IOstatus    = INPUT;
       }
 	  else if (switchDes == "OFFDESIGN") {
 		// Af.IOstatus   = INPUT;
@@ -323,8 +323,8 @@ void variableChanged( string name, any oldVal ) {
 	if (switchMode == "ON")
 	{	
 		
-		// if (switchDes=="DESIGN")
-		// {
+		if (switchDes=="DESIGN")
+		{
 			// Calculate Catalyst parameters
 			real w_m = w*getUnitsFactor("mil","m"); // convert from mil to m
 			real N = cpsi/getUnitsFactor("in2","m2"); 
@@ -336,7 +336,7 @@ void variableChanged( string name, any oldVal ) {
 			
 			V_cat = Af*l ; // Bulk volume of catalyst;
 			m_cat = (2600 *(1 - porosity)*(1-OFA) + catalyst_loading)*V_cat;
-		// }
+		}
 		// -----------------------
 		// Flow Parameters
 		// -----------------------

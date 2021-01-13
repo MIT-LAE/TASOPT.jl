@@ -248,15 +248,20 @@ Assembly Assembly Eng
 	//------------------------------
 	Element Shaft ShP {
 		ShaftInputPort TrbP, Gen;
-		HPX = 0.;
+		// HPX = 29.e6;
 		Nmech = 30000.;
 	}
 
-	Element Load Gen{
-		real ShP_dmd{value = 20e3; units ="W";}
-		void preexecute(){
-			trqLoad = - ShP_dmd/(Sh_O.Nmech*2.*PI/60.);
-		}
+	// Element Load Gen{
+	// 	real ShP_dmd{value = 20e6; units ="W";}
+	// 	void preexecute(){
+	// 		// cout<<Sh_O.Nmech<<endl;
+	// 		trqLoad = - ShP_dmd/(Sh_O.Nmech * 2.*PI/60.)*getUnitsFactor("N*m", "ft*lbf");
+
+	// 	}
+	// }
+	Element Generator Gen{
+		ShP_dmd = 20e6;
 	}
 
 	// 8. Performance calculations
@@ -375,11 +380,13 @@ Assembly Assembly Eng
 	Independent ind_TCLA_NC_fracW { varName = "B030.TCLA_NC.fracW"; description = "Bleed flow"; }
 	Independent ind_TCLA_CH_fracW { varName = "B030.TCLA_CH.fracW"; description = "Bleed flow"; }
 
-	// Independent ind_SHP { varName = "ShP.HPX"; description = "ShaftPower from free turbine"; }
-	Dependent dep_noz_Ps_exit{ eq_lhs = "NozPri.PR"; eq_rhs = "1.2";}
+	Dependent dep_noz_Ps_exit{ eq_lhs = "NozPri.Fl_O.MN"; eq_rhs = "0.2";}
+	// Dependent dep_noz_Ps_exit{ eq_lhs = "ShP.trqNet"; eq_rhs = "0.0";}
 
 	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
 	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "0.95";}
+
+	Dependent dep_N2{eq_lhs = "Perf.N2"; eq_rhs = "35000.";}
 
 	#include "SolverVariables.int"
 	
@@ -389,12 +396,12 @@ Assembly Assembly Eng
 		{
 			if (switchDes == "DESIGN")
 			{
+				// Bleed Flows sizing ON
 				ind_TCLA_NC_fracW.autoSetup = TRUE;
 				ind_TCLA_CH_fracW.autoSetup = TRUE;
+				// solver.addIndependent("Eng.ind_TCLA_NC_fracW");
 
-				// ind_SHP.autoSetup         = TRUE;
-				dep_noz_Ps_exit.autoSetup = TRUE;
-
+				// PCEC sizing ON
 				ind_Acat.autoSetup    = TRUE;
 				dep_deNOx.autoSetup   = TRUE;
 
@@ -403,14 +410,18 @@ Assembly Assembly Eng
 				DESIGN_FUELFLOW.autoSetup = TRUE;
 
 				// Design Dependents
-				// DESIGN_TARGET_SHP.autoSetup  = TRUE;
 				DESIGN_TARGET_Tt41.autoSetup = TRUE;
+				dep_noz_Ps_exit.autoSetup    = TRUE;
+
+				dep_N2.autoSetup = FALSE;
 			}
 			else
 			{
+				// Fixed Bleed flows
 				ind_TCLA_NC_fracW.autoSetup = FALSE;
 				ind_TCLA_CH_fracW.autoSetup = FALSE;
 				
+				//PCEC sizing OFF
 				ind_Acat.autoSetup    = FALSE;
 				dep_deNOx.autoSetup   = FALSE;	
 
@@ -419,8 +430,11 @@ Assembly Assembly Eng
 				DESIGN_FUELFLOW.autoSetup = TRUE;
 
 				// Offdesign Dependents
-				DESIGN_TARGET_SHP.autoSetup  = TRUE;
-				DESIGN_TARGET_Tt41.autoSetup = FALSE;			
+				DESIGN_TARGET_Tt41.autoSetup = FALSE;	
+				dep_noz_Ps_exit.autoSetup    = FALSE;
+
+				dep_N2.autoSetup = TRUE;
+
 			}
 		}
 	}
