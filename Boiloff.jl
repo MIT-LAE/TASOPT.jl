@@ -23,6 +23,6 @@ function Boiloff(R_thermal, T_ambient, T_fuel)
       q = deltaT / R_insul  #Heat flux from ambient to LH2
       mdot_boiloff = q / h_e  #Boil-off rate equals the heat flux divided by heat of vaporization
       m_boiloff = mdot_boiloff * time_flight #Boil-off mass calculation
-
-return  m_boiloff
+  
+return  mdot_boiloff
 end
