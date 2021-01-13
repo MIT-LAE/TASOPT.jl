@@ -73,7 +73,7 @@ function tanksize(gee, rhoFuel, deltap,
 
                         if(m_boiloff > (threshold_percent *  Wfuel / (gee * 100))) || break
                         end
-                        t = t + 0.01 * t  #increase insulation thickness and try again
+                        t_cond = t_cond + 0.01 * t_cond  #increase insulation thickness and try again
                 end
         end
 
