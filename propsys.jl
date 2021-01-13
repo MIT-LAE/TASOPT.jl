@@ -21,13 +21,16 @@ Outputs:
 function TurboShaft(alt_in::Float64, MN_in::Float64, 
                     ShP::Float64, 
                     π_LPC::Float64, π_HPC::Float64, Tt41::Float64,
-                    cpsi::Float64, w::Float64, lcat::Float64, deNOx::Float64; LHV = 120,
+                    cpsi::Float64, w::Float64, lcat::Float64, deNOx_in::Float64; LHV = 120,
                     file_name = "NPSS_Turboshaft/DesScl.int")
-    
-    ShP_hp = ShP / 746 # Convert shaft power from W to HP
-    NPSS_TShaft_input(alt_in, MN_in, ShP_hp, 
+
+    NPSS_TShaft_input(alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
-                        cpsi, w, lcat, deNOx; LHV = LHV)
+                        cpsi, w, lcat, deNOx_in; LHV = LHV)
+
+    open("NPSS_Turboshaft/OffDesInputs.inp", "w") do io
+        println(io, "//DUMMY since only running design point now")
+    end
 
     NPSS_run("NPSS_Turboshaft/", "TP.bat")
 
@@ -109,15 +112,14 @@ function TurboShaft(alt_in::Float64, MN_in::Float64,
         println(io, "Eng.PCEC.Fl_O.Aphy   = ", Areas[12], ";" ) 
         println(io, "Eng.NozPri.Fl_O.Aphy = ", Areas[13], ";" ) 
     end
-    
+  
     return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
 
 end
 function TurboShaft(alt_in::Float64, MN_in::Float64, 
-    ShP::Float64)
+                    ShP::Float64)
 
-    ShP_hp = ShP / 746 # Convert shaft power from W to HP
-    NPSS_TShaft_input(alt_in, MN_in, ShP_hp)
+    NPSS_TShaft_input(alt_in, MN_in, ShP; file_name = "NPSS_Turboshaft/OffDesInputs.inp")
 
     NPSS_run("NPSS_Turboshaft/", "TP.bat")
 

@@ -54,7 +54,7 @@ OffdesMode
 """
 function NPSS_TShaft_input(alt_in, MN_in, 
                             SHP_dmd ; 
-                            file_name = "NPSS_Turboshaft/EngineInputs.inp",
+                            file_name = "NPSS_Turboshaft/OffDesInputs.inp",
                             desScl_name = "DesScl.int")
 
     open(file_name, "w") do io
@@ -67,10 +67,12 @@ function NPSS_TShaft_input(alt_in, MN_in,
         println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
 
         println(io, "\n// Targets")
-        println(io, "real SHP_dmd = ", SHP_dmd, ";" )
+        println(io, "Eng.Gen.ShP_dmd = ", SHP_dmd, ";" )
 
         println(io, "\n// DesPt scalars")
-        println(io, "#include \"", desScl_name, "\"")
+        # println(io, "#include \"", desScl_name, "\"")
+
+        println(io, "autoSolverSetup(); run();")
         
     end
 
