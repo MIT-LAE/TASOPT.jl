@@ -242,14 +242,21 @@ Assembly Assembly Eng
 		ShaftInputPort CmpL, CmpH, TrbH;
 		Nmech = 37500.;
 	}
-
+	
 	//------------------------------
 	// Free Power Turbine Shaft ShP
 	//------------------------------
 	Element Shaft ShP {
-		ShaftInputPort TrbP;
-		HPX = 1708.;
+		ShaftInputPort TrbP, Gen;
+		HPX = 0.;
 		Nmech = 30000.;
+	}
+
+	Element Load Gen{
+		real ShP_dmd{value = 20e3; units ="W";}
+		void preexecute(){
+			trqLoad = - ShP_dmd/(Sh_O.Nmech*2.*PI/60.);
+		}
 	}
 
 	// 8. Performance calculations
@@ -357,6 +364,7 @@ Assembly Assembly Eng
 	linkPorts( "CmpH.Sh_O"   , "ShH.CmpH"  ,  "CmpH_Work"   ) ;
 	linkPorts( "TrbH.Sh_O"   , "ShH.TrbH"  ,  "TrbH_Work"   ) ;
 	linkPorts( "TrbP.Sh_O"   , "ShP.TrbP"  ,  "TrbP_Work"   ) ;
+	linkPorts( "Gen.Sh_O"    , "ShP.Gen"   ,  "Gen_input"   ) ;
 
 	// 10. Solver settings
 
@@ -367,7 +375,7 @@ Assembly Assembly Eng
 	Independent ind_TCLA_NC_fracW { varName = "B030.TCLA_NC.fracW"; description = "Bleed flow"; }
 	Independent ind_TCLA_CH_fracW { varName = "B030.TCLA_CH.fracW"; description = "Bleed flow"; }
 
-	Independent ind_SHP { varName = "ShP.HPX"; description = "ShaftPower from free turbine"; }
+	// Independent ind_SHP { varName = "ShP.HPX"; description = "ShaftPower from free turbine"; }
 	Dependent dep_noz_Ps_exit{ eq_lhs = "NozPri.PR"; eq_rhs = "1.2";}
 
 	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
@@ -384,7 +392,7 @@ Assembly Assembly Eng
 				ind_TCLA_NC_fracW.autoSetup = TRUE;
 				ind_TCLA_CH_fracW.autoSetup = TRUE;
 
-				ind_SHP.autoSetup         = TRUE;
+				// ind_SHP.autoSetup         = TRUE;
 				dep_noz_Ps_exit.autoSetup = TRUE;
 
 				ind_Acat.autoSetup    = TRUE;
@@ -395,7 +403,7 @@ Assembly Assembly Eng
 				DESIGN_FUELFLOW.autoSetup = TRUE;
 
 				// Design Dependents
-				DESIGN_TARGET_SHP.autoSetup  = TRUE;
+				// DESIGN_TARGET_SHP.autoSetup  = TRUE;
 				DESIGN_TARGET_Tt41.autoSetup = TRUE;
 			}
 			else

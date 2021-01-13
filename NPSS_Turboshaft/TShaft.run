@@ -23,7 +23,8 @@ setThermoPackage("GasTbl");
 //====================
 #include "EngineInputs.inp"
 
-Eng.DESIGN_TARGET_SHP.eq_rhs  = toStr(SHP_dmd);
+Eng.Gen.ShP_dmd = SHP_dmd;
+
 if (Eng.switchDes == "DESIGN") {
     Eng.DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
     Eng.dep_deNOx.eq_rhs = toStr(deNOx_target);
@@ -67,12 +68,12 @@ else{
     cout<<"ERROR! Did not converge"<<endl;
 }
 
-Eng.setOption("switchDes", "OFFDESIGN");
+// Eng.setOption("switchDes", "OFFDESIGN");
 
-autoSolverSetup();
-Eng.Amb.alt_in = 100.0;
-// printSolverDetails();
-run();
+// autoSolverSetup();
+// Eng.Amb.alt_in = 100.0;
+// // printSolverDetails();
+// run();
 
 
 //====================
@@ -86,7 +87,8 @@ output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + ti
 output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
 output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
 output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
-output<<"ShP = "<<Eng.ShP.HPX<<"\t#" +Eng.ShP.HPX.units<<endl;
+// output<<"ShP = "<<Eng.Gen.ShP_dmd/getUnitsFactor("hp", "kW")<<"#\t kW"<<endl;
+output<<"ShP = "<<Eng.Gen.ShP_dmd<<"#\t " + Eng.Gen.ShP_dmd.units<<endl;
 output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
 output<<"BSFC = "<<Eng.Perf.BSFC<<endl;
 output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;
