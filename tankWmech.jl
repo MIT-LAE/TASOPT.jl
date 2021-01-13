@@ -61,7 +61,7 @@ function tankWmech(gee, rhoFuel,
       Vinsul = zeros(N)
       Winsul = zeros(N)
       for n in 1:N
-            Vinsul[n] = pi * (((Rtank+sum(t[1:n]))^2)-(Rtank^2)) * lshell
+            Vinsul[n] = pi * (((Rtank+sum(t_cond[1:n]))^2)-(Rtank^2)) * lshell
             Winsul[n] = Vinsul[n] * rho_insul[n]
       end
       Winsul_sum = sum(Winsul)
