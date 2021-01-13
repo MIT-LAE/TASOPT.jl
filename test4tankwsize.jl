@@ -41,7 +41,7 @@ t=[.1 .1 .1]
 #rhoFuel from hydrogen tank designv3 article
 thickness_insul = sum(t_cond)
 m_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
-                      h_e, t_cond, k, hconvair, time_flight)
+                      h_v, t_cond, k, hconvair, time_flight)
 result = tankWmech(gee, rhoFuel,
                       fstring, ffadd, deltap,
                       Rfuse, dRfuse, wfb, nfweb,

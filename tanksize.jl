@@ -30,7 +30,7 @@ Outputs:
 
 function tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-                      h_v, t_cond, r_gas, k, hconvair, time_flight, fstring,ffadd,
+                      h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, mode)
 
        include("tankWmech.jl")
