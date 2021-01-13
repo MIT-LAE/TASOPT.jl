@@ -76,8 +76,8 @@ function tanksize(gee, rhoFuel, deltap,
                         t_cond = t_cond + 0.01 * t_cond  #increase insulation thickness and try again
                 end
         end
-
+        Wfuel = (m_boiloff * gee) + Wfuel
         Wtank = Wtank + m_boiloff * gee + Wfuel #weight of tank including fuel
 
-return Wtank, thickness_insul, lshell, mdot_boiloff, Vfuel #boiloff rate output
+return Wtank, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel, m_boiloff #boiloff rate output
 end
