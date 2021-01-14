@@ -17,25 +17,29 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 
 Outputs:
 
-- Wtank: tank weight (N)
-- Wfuel: fuel weight (N)
+- Wtank_total: tank weight including fuel (N)
+- Wtank: empty tank weight (N)
 """
 function tankWmech(gee, rhoFuel,
                       fstring, ffadd, deltap,
                       Rfuse, dRfuse, wfb, nfweb,
                       sigskin, rho_insul, rhoskin,
-                      Wfuel, m_boiloff, thickness_insul, t_cond)
+                      Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse)
 
 #--- fuselage skin and center web thicknesses to withstand pressure load
-      Rtank_outer = Rfuse - thickness_insul
-      tskin = deltap * Rtank_outer / sigskin
+      Rtank_outer = Rfuse - thickness_insul - clearance_fuse
+      #skin = 3 * deltap * Rtank_outer / sigskin
+      tskin = 3 * 1.1 * deltap * Rtank_outer / (2 * sigskin * 0.8 + 0.8 * 1.1 * deltap)
       Rtank = Rtank_outer - tskin
       tfweb = 2.0 * deltap * wfb  / sigskin
+      Rhead = Rtank
 
-#--- Calculate updated Wfuel based on boil-off mass
+#--- Calculate length of shell
 
       Vfuel = Wfuel / (gee * rhoFuel)
-      lshell = Vfuel / (pi * (Rtank^2))
+      Vfuel_allowance = (0.031 * Vfuel) + Vfuel #Recommended by Verstraete
+      #V_ellipsoid = (4/3) * pi * (Rtank^2) * Rhead
+      lshell = Vfuel_allowance / (pi * (Rtank^2))
 
 #--- tank cross-section geometric parameters
       wfblim = max( min( wfb , Rtank) , 0.0 )
@@ -44,16 +48,17 @@ function tankWmech(gee, rhoFuel,
       sin2t = 2.0*hfb*wfb/Rtank^2
       perim = (2.0*pi + 4.0*thetafb)*Rtank + 2.0*dRfuse
 
-
 #--- areas
       Askin = (2.0*pi+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin
       Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
       Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse + 2.0*(Rtank+nfweb*wfb)*dRfuse
+      Shead = (2.0*pi + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Rhead/Rtank)^1.6 )^0.625
 #--- component volumes
       Vcyl  = Askin*lshell
+      Vhead = Shead*tskin
 
 #--- weights and weight moments
-      Wtank = rhoskin*gee*Vcyl
+      Wtank = rhoskin*gee*(Vcyl+Vhead)
       Wtank = Wtank*(1.0+fstring+ffadd)
 
 #--- insulation weight!
@@ -70,10 +75,10 @@ function tankWmech(gee, rhoFuel,
       #Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rtank*lshell
 
 #--- overall tank weight
-      Wtank = Wtank + Wfuel + Winsul_sum
+      Wtank_total = Wtank + Wfuel + Winsul_sum + 20 * gee #20kg allowance according to Verstraete
 
 #--- pressurized tank volume
       #tankVol = Atank*(lshell + 0.67*Rfuse)
 
-return  Wtank, lshell, tskin, Rtank, Vfuel
+return  Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank
 end
