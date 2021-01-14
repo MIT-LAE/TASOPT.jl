@@ -26,6 +26,10 @@ NOTE: Every parameter is in SI units
 Outputs:
 - Total thickness of the insulation (m)
 - Total weight of tank Wtank including fuel (N)
+- Length of tank lshell (m)
+- Volume of fuel Vfuel (m^3)
+- Wfuel weight of fuel (N)
+- m_boiloff mass (kg)
 """
 
 function tanksize(gee, rhoFuel, deltap,
@@ -70,7 +74,7 @@ function tanksize(gee, rhoFuel, deltap,
                                               sigskin, rho_insul, rhoskin,
                                               Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse)
 
-                        if(m_boiloff > (threshold_percent *  Wfuel / (gee * 100))) || break
+                        if((m_boiloff / 5) > (threshold_percent *  Wfuel / (gee * 100))) || break
                         end
                         t_cond = t_cond + 0.01 * t_cond  #increase insulation thickness and try again
                 end
