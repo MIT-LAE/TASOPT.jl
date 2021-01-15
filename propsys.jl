@@ -215,81 +215,147 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
     nTshaft = parpt[ipt_nTshaft]
 
     Ffan = Fn/nfan
+
     # Call ducted fan design method
-    πfan = parpt[ipt_pifan]
-    Dfan, Fan_power, Torque_fan, N_fan, ηpropul,
-     MapScalars, NozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, πfan)
-    # println("Fan:")
-    # println("Fan Ø = ", Dfan, " m")
-    # println("Fan Fn = ", Ffan, " N")
-    Wpowertrain += Wfan*nfan
+        πfan = parpt[ipt_pifan]
+        Dfan, Fan_power, Torque_fan, N_fan, ηpropul,
+        FanMapScalars, FanNozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, πfan)
+        # println("Fan:")
+        # println("Fan Ø = ", Dfan, " m")
+        # println("Fan Fn = ", Ffan, " N")
+        parpt[ipt_Wfan] = Wfan
+        Wpowertrain += Wfan*nfan
+        Pshaft_mot = -1000. * Fan_power
+        parpt[ipt_NdesFan] = N_fan
 
+    # Size motor
+        ratAsp   = parpt[ipt_ARmot]
+        σAg      = parpt[ipt_sigAgMot]
+        ratSplit = parpt[ipt_ratSplitMot]
+
+        Wmot, PreqMot, ηmot, RPMmot,
+        PL, PLiron, PLCu, PLwind, SPmot = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parmot)
+        # println("\nMotor:")
+        # println("Losses = ", PL)
+        # println("\tIron losses    = ", PLiron, "%")
+        # println("\tCopper losses  = ", PLCu)
+        # println("\tWindage losses = ", PLwind)
+        Hwaste_motor = PreqMot - Pshaft_mot
+        Hrej += nfan*Hwaste_motor # Heat rejected from motors
+        parpt[ipt_Wmot] = Wmot
+        Wpowertrain += Wmot*nfan # Add to total powertrain weight
+        parpt[ipt_NdesMot] = RPMmot
+
+    
+    # Size Inverter and cables
+        ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
+        Hwaste_inv = PreqMot*(1-ηinv)
+        Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
+        parpt[ipt_Winv] = Winv
+        Wpowertrain += Winv*nfan # Add to total powertrain weight
+    
+        ηcable, Wcable = cable() #TODO cable is dummy right now
+        Hwaste_cable = PreqMot*(1-ηcable)
+        Hrej += Hwaste_cable  # Heat rejected from all inverters
+        parpt[ipt_Wcables] = Wcable
+        Wpowertrain += Wcable # Add to total powertrain weight
+
+    # Size generator
+        PreqGen = PreqMot * ηinv * ηcable
+
+        ratAsp   = parpt[ipt_ARgen]
+        σAg      = parpt[ipt_sigAgGen]
+        ratSplit = parpt[ipt_ratSplitGen]
+
+        Wgen, PgenShaft, ηgen, RPMgen,
+        PLgen, PLirongen, PLCugen, PLwindgen, SPgen = PMSM(PreqGen*nfan/ngen,
+                                                            ratAsp, σAg, ratSplit,
+                                                            pargen)
+                                                            
+        parpt[ipt_NdesGen] = RPMgen
+        Hwaste_gen = (PgenShaft - PreqGen*nfan/ngen)
+        Hrej += ngen*Hwaste_gen # Heat rejected from motors
+        parpt[ipt_Wgen] = Wgen
+        Wpowertrain += Wgen*ngen
+    
+    # Size tubo-shaft and PCEC
+        πLPC = parpt[ipt_piLPC]
+        πHPC = parpt[ipt_piHPC]
+        Tt41 = parpt[ipt_Tt41]
+        cpsi = parpt[ipt_cpsi]
+        w    = parpt[ipt_wcat]
+        lcat = parpt[ipt_lcat]
+        deNOx= parpt[ipt_deNOx]
+        Ptshaft = PgenShaft*ngen/nTshaft
+        ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, Ptshaft,
+                                            πLPC, πHPC, Tt41,
+                                            cpsi, w, lcat, deNOx)
+
+        Wcat = mcat*gee
+        parpt[ipt_Wcatalyst] = Wcat
+        Wpowertrain += Wcat*nTshaft
+
+        SPtshaft= 10.4e3 # W/kg Based on the RR T406 (4.58 MW power output). The GE38 (~5 MW) has a power density of 11.2 kW/kg
+        Wtshaft = gee*(PgenShaft*ngen/nTshaft)/SPtshaft
+        parpt[ipt_Wtshaft] = Wtshaft
+        Wpowertrain += Wtshaft*nTshaft
+
+    parpt[ipt_Wpttotal] = Wpowertrain
+
+    return [ηpropul, ηmot, ηinv, ηcable, ηgen, ηthermal],
+           [Pshaft_mot, PreqMot, PgenShaft, Ptshaft], 
+           [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
+           [Wfan, Wmot, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee,
+           [SPmot, SPinv, SPgen, SPtshaft], mdotf, BSFC,
+           deNOx, FanMapScalars, FanNozArea
+
+end
+function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, FanMapScalars, FanNozArea,
+                    parpt::Array{Union{Float64, Int64},1},
+                    parmot::Array{Float64, 1},
+                    pargen::Array{Float64, 1})
+    
+    Hrej = 0.0
+    nfan = parpt[ipt_nfan]
+    ngen = parpt[ipt_ngen]
+    nTshaft = parpt[ipt_nTshaft]
+
+    Ffan = Fn/nfan
+    # Call ducted fan off-design method
+    Fan_power, Torque_fan, N_fan, ηpropul = DuctedFan(alt_in, MN_in, Ffan, FanMapScalars, FanNozArea)
     Pshaft_mot = -1000. * Fan_power
-
-    ratAsp   = parpt[ipt_ARmot]
-    σAg      = parpt[ipt_sigAgMot]
-    ratSplit = parpt[ipt_ratSplitMot]
-
-    Wpmsm, PreqMot, ηmot, RPMmot,
-     PL, PLiron, PLCu, PLwind, SPmot = PMSM(Pshaft_mot, ratAsp, σAg, ratSplit, parmot)
-    # println("\nMotor:")
-    # println("Losses = ", PL)
-    # println("\tIron losses    = ", PLiron, "%")
-    # println("\tCopper losses  = ", PLCu)
-    # println("\tWindage losses = ", PLwind)
+    # println("P motor = ", Pshaft_mot)
+    
+    Nmot = parpt[ipt_NdesMot] * (N_fan/parpt[ipt_NdesFan])
+    # Off-des motor call
+    PreqMot, ηmot, PL = PMSM(Pshaft_mot, Nmot/60, parmot)
+    # println(ηmot)
     Hwaste_motor = PreqMot - Pshaft_mot
     Hrej += nfan*Hwaste_motor # Heat rejected from motors
-    Wpowertrain += Wpmsm*nfan # Add to total powertrain weight
     
-    ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
+    # Off-des inverter
+    ηinv = inverter(PreqMot, parmot)
     Hwaste_inv = PreqMot*(1-ηinv)
     Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
-    Wpowertrain += Winv*nfan # Add to total powertrain weight
- 
+   
     ηcable, Wcable = cable() #TODO cable is dummy right now
     Hwaste_cable = PreqMot*(1-ηcable)
     Hrej += Hwaste_cable  # Heat rejected from all inverters
-    Wpowertrain += Wcable # Add to total powertrain weight
-
-    PreqGen = PreqMot * ηinv * ηcable
-
-    ratAsp   = parpt[ipt_ARgen]
-    σAg      = parpt[ipt_sigAgGen]
-    ratSplit = parpt[ipt_ratSplitGen]
-
-    Wgen, PgenShaft, ηgen, RPMgen,
-    PLgen, PLirongen, PLCugen, PLwindgen, SPgen = PMSM(PreqGen*nfan/ngen,
-                                                        ratAsp, σAg, ratSplit,
-                                                        pargen)
-                                                        
+    # println(ηinv)
+    PreqGen = (PreqMot * nfan) * ηinv * ηcable /ngen
+    # println("Generator power req = ", PreqGen)
+    Ngen = parpt[ipt_NdesGen] 
+    PgenShaft, ηgen, PLgen = PMSM(PreqGen, Ngen/60, pargen)
+    # println(ηgen)          
     Hwaste_gen = (PgenShaft - PreqGen*nfan/ngen)
     Hrej += ngen*Hwaste_gen # Heat rejected from motors
-    Wpowertrain += Wgen*ngen
-
-    πLPC = parpt[ipt_piLPC]
-    πHPC = parpt[ipt_piHPC]
-    Tt41 = parpt[ipt_Tt41]
-    cpsi = parpt[ipt_cpsi]
-    w    = parpt[ipt_wcat]
-    lcat = parpt[ipt_lcat]
-    deNOx= parpt[ipt_deNOx]
-
-    ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, PgenShaft*ngen/nTshaft,
-                                        πLPC, πHPC, Tt41,
-                                        cpsi, w, lcat, deNOx)
-
-    Wcat = mcat*gee
-    Wpowertrain += Wcat*nTshaft
-
-    SPtshaft= 5000.0 # kW/kg
-    Wtshaft = gee*(PgenShaft*ngen/nTshaft)/SPtshaft
-    Wpowertrain += Wtshaft*nTshaft
+    # println("Tshaft power req = ", PgenShaft*ngen/nTshaft)
+    ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, PgenShaft*ngen/nTshaft)
 
     return [ηmot, ηinv, ηcable, ηgen, ηthermal],
            [Pshaft_mot, PreqMot, PgenShaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
-           [Wfan, Wpmsm, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee./1000,
-           [SPmot, SPinv, SPgen, SPtshaft], mdotf, BSFC,
+           mdotf, BSFC,
            deNOx
 
 end

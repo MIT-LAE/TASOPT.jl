@@ -181,10 +181,26 @@ println("Balance match?\n\t", all(results .- fortran_balance .≈ 0 ))
 include("index.inc")
 include("propsys.jl")
 
+
+include("PMSM.jl")  # Motor/generator functions
+include("PMSM.inc") # Motor/generator properties array
+include("NPSS_functions.jl") # NPSS functions
+include("PT.inc")
+
+
 gee = 9.81
 μAir = 1.8e-5
 ρAir = 1.225
-println("Running powertrain...")
-@timev PowerTrain(0.0, 0.25, 110.0e3*2, 16, 2, 1.3, parte)
-println("Second run...")
-@timev PowerTrain(0.0, 0.25, 100.0e3*2, 16, 2, 1.3, parte)
+# println("Running powertrain...")
+# @timev PowerTrain(0.0, 0.25, 110.0e3*2, parpt, parmot, pargen)
+# println("Second run...")
+ηpt, Ppt, Hpt, mpt, SPpt, mdotf, BSFC, deNOx, fanScalars, fanNozArea =  PowerTrain(30000., 0.75, 25.0e3*2, parpt, parmot, pargen)
+println("η powertrain = ", ηpt)
+println("P powertrain = ", Ppt)
+println("H powertrain = ", Hpt)
+println("SP powertrain = ", SPpt)
+println("Mass powertrain = ", mpt)
+
+println("Total η = ", prod(ηpt))
+
+PowerTrain(30000., 0.70, 25.0e3*2, fanScalars, fanNozArea, parpt, parmot, pargen)

@@ -383,20 +383,23 @@
 
       const ipt_cpsi    = 14
       const ipt_wcat    = 15
-      const ipt_lcat        = 16
-      const ipt_deNOx       = 17
-      const ipt_BSat     = 18
-      const ipt_mu0      = 19
-      const ipt_rhoMag   = 20
-      const ipt_rhoCu    = 21
-      const ipt_rhoFe    = 22
-      const ipt_rhoSteel = 23
-      const ipt_tauMax   = 24
-      const ipt_sigCu    = 25
-      const ipt_thetaCu  = 26
-      const ipt_psi      = 27
-      const ipt_pb0      = 28
-      const ipt_Bb0      = 29
+      const ipt_lcat    = 16
+      const ipt_deNOx   = 17
+
+      const ipt_Wfan     = 18
+      const ipt_Wmot     = 19
+      const ipt_Winv     = 20
+      const ipt_Wcables  = 21
+      const ipt_Wgen     = 22
+      const ipt_Wtshaft  = 23
+      const ipt_Wnacelle = 24
+      const ipt_Wcatalyst= 25
+      const ipt_Wpttotal = 26
+      
+      const ipt_NdesGen  = 27
+      const ipt_NdesFan  = 28
+      const ipt_NdesMot  = 29
+      
       const ipt_fb0      = 30
       const ipt_epsb     = 31   
       const ipt_epsf     = 32 
