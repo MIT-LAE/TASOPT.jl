@@ -6,9 +6,9 @@ rhoFuel = 1 / ((1 / v_f) + x * ((1 / v_g) - (1 / v_f)))
 
 gee = 9.81
 
-deltap = 101325 #121590 #based on 6000 ft cabin pressure, 2 bar LH2 pressure (energies)
+deltap = 51325#101325 #121590 #based on 6000 ft cabin pressure, 2 bar LH2 pressure (energies)
 
-Rfuse = 2.07 #radius of fuselage of A320
+Rfuse = 3.1#2.07 #radius of fuselage of A320
 
 dRfuse = 0 #extended portion of fuselage at bottom (take as zero due to cylindrical tank)
 
@@ -38,14 +38,14 @@ wfb = 0
 
 nfweb = 0
 
-sigskin = 172.4e6 #AL 2209 Brewer stress for operating conditions
+sigskin = 172.4e6 #AL 2209 Brewer stress for operating conditions (290e6 ultimate operatoin)
 
 rho_insul = [35.24, 14764, 35.24, 14764, 83]
 
 rhoskin = 2825 #Al 2209 Brewer
 
 #Wfuel = 8000
-Wfuel = 8000 * 9.81
+Wfuel = 2000 #8000 * 9.81
 
 threshold_percent = 0.1
 
