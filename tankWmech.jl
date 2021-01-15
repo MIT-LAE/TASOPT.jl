@@ -28,11 +28,11 @@ function tankWmech(gee, rhoFuel,
 
 #--- fuselage skin and center web thicknesses to withstand pressure load
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
-      #skin = 3 * deltap * Rtank_outer / sigskin
+      #tskin = 3 * deltap * Rtank_outer / sigskin
       tskin = 3 * 1.1 * deltap * Rtank_outer / (2 * sigskin * 0.8 + 0.8 * 1.1 * deltap)
       Rtank = Rtank_outer - tskin
       tfweb = 2.0 * deltap * wfb  / sigskin
-      Rhead = Rtank
+      Rhead = Rtank / 4
 
 #--- Calculate length of shell
 
