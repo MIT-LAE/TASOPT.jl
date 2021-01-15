@@ -1,9 +1,9 @@
 # Parameters for the PowerTrain
 parpt = zeros(Union{Int64, Float64}, ipt_total)
 
-parpt[ipt_nfan   ] = 16
-parpt[ipt_ngen   ] = 2
-parpt[ipt_nTshaft] = 3
+parpt[ipt_nfan   ] = 14
+parpt[ipt_ngen   ] = 4
+parpt[ipt_nTshaft] = 2
 
 #Turboshaft
 parpt[ipt_pifan]   = 1.3
@@ -18,11 +18,14 @@ parpt[ipt_lcat  ]  = 0.02    # Catalyst length
 parpt[ipt_deNOx ]  = 0.95    # DeNOx target at cruise
 
 #Generator
-parpt[ipt_ARgen]       = 0.6
-parpt[ipt_sigAgGen]    = 48e3
-parpt[ipt_ratSplitGen] = 0.8
+parpt[ipt_ARgen]       = 0.8
+parpt[ipt_sigAgGen]    = 55e3
+parpt[ipt_ratSplitGen] = 0.82
 
 #Motors
-parpt[ipt_ARmot]       = 0.8
-parpt[ipt_sigAgMot]    = 40e3
-parpt[ipt_ratSplitMot] = 0.8
+parpt[ipt_ARmot]       = 0.7
+parpt[ipt_sigAgMot]    = 30e3
+parpt[ipt_ratSplitMot] = 0.7
+
+
+# Weights are also stored here
