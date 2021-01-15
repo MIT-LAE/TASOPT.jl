@@ -44,7 +44,7 @@ Assembly Assembly DuctedFan
         setOption("switchInd" , "W");
 		//Precalculate how much airflow needs to go through for a given area, 
 		//MN and flow conditions.	
-        W_in = 20.0;
+        W_in = 60.0;
 		real theta_0;
 		void postexecute(){
 			theta_0 = Fl_O.Tt/518.67;
@@ -62,18 +62,25 @@ Assembly Assembly DuctedFan
 
     Element Compressor Fan 
     {
-		PRdes  = 1.95;
+		PRdes  = 1.4;
 		effDes = 0.91;
 		#include "fanCFM56.map"
 		Sh_O.inertia = 10.;     // slugs-ft**2.
 		real dia {value = 0; units = "in";}
-        real dT;
-        real HTR; // Hub-tip ratio
+        real dT, Ts, Rs, a, Vtip;
+        real HTR, Mtip; // Hub-tip ratio and Mtip
         HTR = 0.34;
 		void postexecute()
 		{
 			dia	= (Fl_I.Aphy*4/3.1415/(1-HTR**2))**0.5;
 			dT = (Fl_O.Tt - Fl_I.Tt)*100/180; //temp diff in K
+
+            Ts = Fl_I.Ts * 100/180;
+            Rs = Fl_I.Rs *getUnitsFactor(Fl_I.Rs.units, "J/(kg*K)");
+
+            a  = sqrt(Fl_I.gams * Ts *Rs);
+            Vtip = 2*PI*Nmech/60 * dia/2 * getUnitsFactor(dia.units, "m");
+            Mtip = Vtip/a;
 		}
 		Fl_O.MN = 0.46;
 	}	
@@ -135,6 +142,9 @@ Assembly Assembly DuctedFan
 
     Dependent dep_Fn{ eq_lhs = "Fn_N"; eq_rhs = "Fn_target";}
 
+    Independent ind_Nmech{varName = "FanShaft.Nmech"; description = "Fan shaft RPM";}
+    Dependent dep_Mtip{ eq_lhs = "Fan.Mtip"; eq_rhs = "0.8";}
+
     void variableChanged(string name, any oldval)
 	{
 		if (name == "switchDes")
@@ -145,12 +155,18 @@ Assembly Assembly DuctedFan
                 ind_Win.autoSetup        = TRUE;
 
                 dep_Fn.autoSetup         = TRUE;
+
+                dep_Mtip.autoSetup       = TRUE;
+                ind_Nmech.autoSetup      = TRUE;
 			}
 			else
 			{
                 ind_Win.autoSetup        = FALSE; // The mass flow rate is automatically added by the NPSS solver
 				ind_ShaftPower.autoSetup = TRUE;	
-                dep_Fn.autoSetup         = TRUE;		
+                dep_Fn.autoSetup         = TRUE;	
+                
+                dep_Mtip.autoSetup       = FALSE;
+                ind_Nmech.autoSetup      = FALSE;	
 			}
 		}
 	}
