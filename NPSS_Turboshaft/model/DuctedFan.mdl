@@ -57,7 +57,7 @@ Assembly Assembly DuctedFan
     Element Inlet InEng
     {
 		PqP_in = 0.998;		
-		Fl_O.MN = 0.5;
+		Fl_O.MNdes = 0.5;
 
         // Account for inlet KE defect if ingesting BL:
         real sbar, Kinl, asq;
@@ -103,7 +103,7 @@ Assembly Assembly DuctedFan
             Vtip = 2*PI*Nmech/60 * dia/2 * getUnitsFactor(dia.units, "m");
             Mtip = Vtip/a;
 		}
-		Fl_O.MN = 0.46;
+		Fl_O.MNdes = 0.46;
 	}	
 
     Element Duct FanDuct
@@ -114,7 +114,7 @@ Assembly Assembly DuctedFan
 		{
 			dPqP_in = 0.1 * Fl_I.MN * Fl_I.MN;
 		}
-		Fl_O.MN = 0.4;
+		Fl_O.MNdes = 0.4;
     }
 
     Element Nozzle FanNozzle

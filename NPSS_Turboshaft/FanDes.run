@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------
 //                                                                       |
-//   File Name:     Fan.run                                              |
-//   Date(s):       January 4th, 2021                                    |
+//   File Name:     FanDes.run                                           |
+//   Date(s):       January 4th, 18th, 2021                              |
 //   Author:        Prakash Prashanth                                    |
 //                                                                       |
 //   Description:   Ducted fan for integration with TAESOPT              |
@@ -21,15 +21,13 @@ setThermoPackage("GasTbl");
 //Read input file
 //====================
 #include "FanInputs.inp"
-
+DuctedFan.setOption("switchDes","DESIGN");
 //====================
 //Auto solver setup
 //====================
 solver.clear();
 autoSolverSetup();
 // printSolverDetails();
-
-
 //====================
 // Solver setup:
 //====================
@@ -49,8 +47,6 @@ solver.defaultTolerance = 1e-10;
 // restart("temp.restart");
 
 run();
-
-
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 // if(solver.converged == 1){
 //     SaveIndepVals("solver", "temp.restart");
@@ -67,7 +63,8 @@ OutFileStream output {
 }
 
 output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
-output<<"mdot_fan = "<<DuctedFan.FsEng.W_in/2.205<<"\t# kg/s"<<endl;
+output<<"# Mode = "<<DuctedFan.Fan.switchDes<<endl;
+output<<"mdot_fan = "<<DuctedFan.FsEng.W/2.205<<"\t# kg/s"<<endl;
 output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
 output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
 output<<"eta_DF    = "<<DuctedFan.eta_DF<<endl;
@@ -78,31 +75,46 @@ output<<"fracFBLI = "<<DuctedFan.Finl/DuctedFan.Fn_N<<endl<<endl;
 output<<"Fan_power = "<<convertUnits("DuctedFan.Fan.pwr", "kW") << "\t # kW"<<endl;
 output<<"Torque_fan     = "<<convertUnits("DuctedFan.Fan.trq", "N*m") << "\t # N*m"<<endl;
 output<<"N_fan     = "<<convertUnits("DuctedFan.Fan.Nmech", "rpm") << "\t # rpm"<<endl<<endl;
-
+output<<"Fan Nc = "<<DuctedFan.Fan.Nc<<endl;
+output<<"Fan NcPct = "<<DuctedFan.Fan.NcPct<<endl;
 output<<"# MapScalars"<<endl;
 output<<"MapScalars = ["<<DuctedFan.Fan.S_map.s_effDes<<", "<<DuctedFan.Fan.S_map.s_PRdes<<", "<<DuctedFan.Fan.S_map.s_WcDes<<", "<<DuctedFan.Fan.S_map.s_NcDes<<"]"<<endl;
 output<<"NozArea    = "<<DuctedFan.FanNozzle.AthCold << "\t # in^2"<<endl<<endl;
-output<<"Fan Nc = "<<DuctedFan.Fan.Nc<<endl;
-output<<"Fan NcPct = "<<DuctedFan.Fan.NcPct<<endl;
+
+
+output.filename = "FanScalars.inp";
+output<<"DuctedFan.Fan.S_map.s_effDes = "+toStr(DuctedFan.Fan.S_map.s_effDes)+";"<<endl;
+output<<"DuctedFan.Fan.S_map.s_PRdes  = "+toStr(DuctedFan.Fan.S_map.s_PRdes)+";"<<endl;
+output<<"DuctedFan.Fan.S_map.s_WcDes  = "+toStr(DuctedFan.Fan.S_map.s_WcDes)+";"<<endl;
+output<<"DuctedFan.Fan.S_map.s_NcDes  = "+toStr(DuctedFan.Fan.S_map.s_NcDes)+";"<<endl;
+output<<"DuctedFan.FanNozzle.AthCold  = "+toStr(DuctedFan.FanNozzle.AthCold)+";"<<endl<<endl;
+output<<"DuctedFan.Fan.NcDes    = "+toStr(DuctedFan.Fan.NcDes)+";"<<endl;
+output<<"// Areas"<<endl;
+output<<"DuctedFan.InEng.Fl_O.Aphy   = "+toStr(DuctedFan.InEng.Fl_O.Aphy)+";"<<endl;
+output<<"DuctedFan.Fan.Fl_O.Aphy     = "+toStr(DuctedFan.Fan.Fl_O.Aphy)+";"<<endl;
+output<<"DuctedFan.FanDuct.Fl_O.Aphy = "+toStr(DuctedFan.FanDuct.Fl_O.Aphy)+";"<<endl;
+
+
+
 
 // // TEST OFF DESIGN CONDITIONS:
 // // Note these are purely for testing and debugging - Julia/TAESOPT never calls this section
 // -----------------------------------------------------------------------------------------------
-// DuctedFan.setOption("switchDes","OFFDESIGN");
+DuctedFan.setOption("switchDes","OFFDESIGN");
 // DuctedFan.Amb.alt_in = 0000;
 // DuctedFan.Amb.MN_in = 0.0;
 // Fn_target = Fn_target*0.5;
+solver.clear();
+autoSolverSetup();
+// printSolverDetails();
 
-// autoSolverSetup();
-// // printSolverDetails();
+run();
 
-// run();
-
-// cout<<"Mass Flow rate = "<<DuctedFan.Fan.Fl_I.W/2.205<<"\t#kg/s"<<endl;
-// cout<<"Dfan = "<<DuctedFan.Fan.dia*getUnitsFactor("in", "m") <<"\t# m"<<endl;
-// cout<<"eta prop = "<<DuctedFan.eta_prop<<endl;
-// cout<<"Fan power = "<<DuctedFan.Fan.pwr<< " Shaft = "<<DuctedFan.FanShaft.HPX<<endl;
-// cout<<"Fn = "<< DuctedFan.Fn_N<<endl;
-// cout<<"Fan Nc = "<<DuctedFan.Fan.NcPct<<endl;
-// cout<<"Shaft net torque = "<<DuctedFan.FanShaft.trqNet<<endl;
-// cout<<"Shaft net power = "<<DuctedFan.FanShaft.pwrNet<<endl;
+cout<<"Mass Flow rate = "<<DuctedFan.Fan.Fl_I.W/2.205<<"\t#kg/s"<<endl;
+cout<<"Dfan = "<<DuctedFan.Fan.dia*getUnitsFactor("in", "m") <<"\t# m"<<endl;
+cout<<"eta prop = "<<DuctedFan.eta_prop<<endl;
+cout<<"Fan power = "<<DuctedFan.Fan.pwr<< " Shaft = "<<DuctedFan.FanShaft.HPX<<endl;
+cout<<"Fn = "<< DuctedFan.Fn_N<<endl;
+cout<<"Fan Nc = "<<DuctedFan.Fan.NcPct<<endl;
+cout<<"Shaft net torque = "<<DuctedFan.FanShaft.trqNet<<endl;
+cout<<"Shaft net power = "<<DuctedFan.FanShaft.pwrNet<<endl;

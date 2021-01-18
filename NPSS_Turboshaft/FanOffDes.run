@@ -1,0 +1,82 @@
+//------------------------------------------------------------------------
+//                                                                       |
+//   File Name:     FanOffDes.run                                        |
+//   Date(s):       January 18th, 2021                                   |
+//   Author:        Prakash Prashanth                                    |
+//                                                                       |
+//   Description:   Ducted fan for integration with TAESOPT  OffDes      |
+//                                                                       |
+//------------------------------------------------------------------------
+MODELNAME = "Ducted Fan";
+AUTHOR    = "Prashanth";
+
+setThermoPackage("GasTbl");
+#include "DuctedFan.mdl"
+
+#include "printDetails.fnc"
+#include "utils.fnc"
+#include "save_solver.fnc"
+
+//====================
+//Read input file
+//====================
+DuctedFan.setOption("switchDes","OFFDESIGN");
+#include "FanScalars.inp"
+#include "FanInputs.inp"
+
+//====================
+//Auto solver setup
+//====================
+solver.clear();
+autoSolverSetup();
+// printSolverDetails();
+//====================
+// Solver setup:
+//====================
+solver.maxIterations = 200;
+solver.maxJacobians  = 200;
+// solver.debugLevel = "ITERATION_DETAILS";
+// solver.diagnosticFile = "solver.diag";
+// solver.solutionMode = "ONE_PASS";
+// solver.defaultDxLimit = 0.001;
+// solver.defaultPerturbation = 0.0001;
+// solver.convergenceLimit = 0.8;
+solver.defaultTolerance = 1e-10;
+
+// //====================
+// //Run engine model
+// //====================
+// restart("temp.restart");
+
+run();
+// MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+// if(solver.converged == 1){
+//     SaveIndepVals("solver", "temp.restart");
+// }
+// else{
+//     cout<<"ERROR! Did not converge"<<endl;
+// }
+
+//====================
+// Outputs
+//====================
+OutFileStream output {
+    filename = "Fan.output"; 
+}
+
+output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
+output<<"# Mode = "<<DuctedFan.Fan.switchDes<<endl;
+output<<"mdot_fan = "<<DuctedFan.FsEng.W/2.205<<"\t# kg/s"<<endl;
+output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
+output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
+output<<"eta_DF    = "<<DuctedFan.eta_DF<<endl;
+output<<"Mtip  = "<<DuctedFan.Fan.Mtip<<endl<<endl;
+output<<"Fn  = "<<DuctedFan.Fn_N<<endl;
+output<<"FBLI  = "<<DuctedFan.Finl<<endl;
+output<<"fracFBLI = "<<DuctedFan.Finl/DuctedFan.Fn_N<<endl<<endl;
+output<<"Fan_power = "<<convertUnits("DuctedFan.Fan.pwr", "kW") << "\t # kW"<<endl;
+output<<"Torque_fan     = "<<convertUnits("DuctedFan.Fan.trq", "N*m") << "\t # N*m"<<endl;
+output<<"N_fan     = "<<convertUnits("DuctedFan.Fan.Nmech", "rpm") << "\t # rpm"<<endl<<endl;
+output<<"Fan Nc = "<<DuctedFan.Fan.Nc<<endl;
+output<<"Fan NcPct = "<<DuctedFan.Fan.NcPct<<endl;
+

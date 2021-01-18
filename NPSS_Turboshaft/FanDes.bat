@@ -10,6 +10,6 @@
 
 
 REM Run file
-runnpss Fan.run -I ./src -I ./model -I ./data
+runnpss FanDes.run -I ./src -I ./model -I ./data
 
 PAUSE
