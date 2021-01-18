@@ -58,6 +58,27 @@ Assembly Assembly DuctedFan
     {
 		PqP_in = 0.998;		
 		Fl_O.MN = 0.5;
+
+        // Account for inlet KE defect if ingesting BL:
+        real sbar, Kinl, asq;
+        real W, Ts, Rs, gam;
+        real Pt2, Tt2; 
+        Kinl = 50e3; // Based of D8 fuselage TE KE defect as an example. 
+                     // Needs to be reset in the run file correctly!
+        void postexecute()
+        {
+            W  = Fl_O.W *getUnitsFactor(Fl_O.W.units, "kg/sec");
+            Ts = Fl_O.Ts * 100/180;
+            Rs = Fl_O.Rs *getUnitsFactor(Fl_I.Rs.units, "J/(kg*K)");
+            gam = Fl_O.gams;
+            asq = gam * Rs * Ts;
+            sbar = (gam * Kinl)/(W * asq);
+            Pt2 = Fl_O.Pt/exp(sbar); // psia
+            Tt2 = Fl_O.Tt;           // dR
+
+            Fl_O.setTotalTP(Tt2, Pt2);
+
+        }
 	}
 
     Element Compressor Fan 
@@ -116,14 +137,24 @@ Assembly Assembly DuctedFan
     
     real mdot, Vjet, Vin, Fn_N;
     real eta_prop;
+    real Phiinl, Finl;
+    Phiinl = 50e3; // Example value based on D8
     void postexecute()
     {
         Vjet = FanNozzle.Vactual*getUnitsFactor(FanNozzle.Vactual.units, "m/sec");
         Vin  = InEng.Fl_I.V*getUnitsFactor(InEng.Fl_I.V.units, "m/sec");
         mdot = InEng.Fl_I.W*getUnitsFactor(InEng.Fl_I.W.units, "kg/sec");
-        Fn_N = mdot*(Vjet - Vin);
+
+        // Effective added thrust from BLI:
+        if(Vin > 0.0){
+            Finl = Phiinl/Vin;
+        }
+
+        Fn_N = mdot*(Vjet - Vin) + Finl;
 
         eta_prop = 2*Vin/(Vjet + Vin);
+
+
     }
     //------------------------------------------------------------------------
 	// Component Links

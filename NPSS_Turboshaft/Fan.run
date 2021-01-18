@@ -70,8 +70,10 @@ output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeO
 output<<"mdot_fan = "<<DuctedFan.FsEng.W_in/2.205<<"\t# kg/s"<<endl;
 output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
 output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
-output<<"Mtip  = "<<DuctedFan.Fan.Mtip<<endl;
+output<<"Mtip  = "<<DuctedFan.Fan.Mtip<<endl<<endl;
 output<<"Fn  = "<<DuctedFan.Fn_N<<endl;
+output<<"FBLI  = "<<DuctedFan.Finl<<endl;
+output<<"fracFBLI = "<<DuctedFan.Finl/DuctedFan.Fn_N<<endl<<endl;
 output<<"Fan_power = "<<convertUnits("DuctedFan.Fan.pwr", "kW") << "\t # kW"<<endl;
 output<<"Torque_fan     = "<<convertUnits("DuctedFan.Fan.trq", "N*m") << "\t # N*m"<<endl;
 output<<"N_fan     = "<<convertUnits("DuctedFan.Fan.Nmech", "rpm") << "\t # rpm"<<endl<<endl;
