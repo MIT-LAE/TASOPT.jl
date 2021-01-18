@@ -70,6 +70,7 @@ output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeO
 output<<"mdot_fan = "<<DuctedFan.FsEng.W_in/2.205<<"\t# kg/s"<<endl;
 output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
 output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
+output<<"eta_DF    = "<<DuctedFan.eta_DF<<endl;
 output<<"Mtip  = "<<DuctedFan.Fan.Mtip<<endl<<endl;
 output<<"Fn  = "<<DuctedFan.Fn_N<<endl;
 output<<"FBLI  = "<<DuctedFan.Finl<<endl;

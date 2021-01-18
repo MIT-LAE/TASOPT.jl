@@ -135,24 +135,26 @@ Assembly Assembly DuctedFan
 		inertia = 13.0;
     }
     
-    real mdot, Vjet, Vin, Fn_N;
-    real eta_prop;
+    real mdot, Vjet, Vin, Fn_N, ShP_W, dKE;
+    real eta_prop, eta_DF; // Froude propulsive eff, overall ducted fan eff.
     real Phiinl, Finl;
     Phiinl = 50e3; // Example value based on D8
     void postexecute()
     {
-        Vjet = FanNozzle.Vactual*getUnitsFactor(FanNozzle.Vactual.units, "m/sec");
-        Vin  = InEng.Fl_I.V*getUnitsFactor(InEng.Fl_I.V.units, "m/sec");
-        mdot = InEng.Fl_I.W*getUnitsFactor(InEng.Fl_I.W.units, "kg/sec");
-
+        Vjet  = FanNozzle.Vactual*getUnitsFactor(FanNozzle.Vactual.units, "m/sec");
+        Vin   = InEng.Fl_I.V * getUnitsFactor(InEng.Fl_I.V.units, "m/sec" );
+        mdot  = InEng.Fl_I.W * getUnitsFactor(InEng.Fl_I.W.units, "kg/sec");
+        ShP_W = FanShaft.HPX * getUnitsFactor(FanShaft.HPX.units, "W"     );
         // Effective added thrust from BLI:
         if(Vin > 0.0){
             Finl = Phiinl/Vin;
         }
 
         Fn_N = mdot*(Vjet - Vin) + Finl;
+        dKE  = 0.5* mdot*(Vjet**2 - Vin**2);
 
-        eta_prop = 2*Vin/(Vjet + Vin);
+        eta_prop = Fn_N*Vin/dKE;
+        eta_DF   = - Fn_N*Vin/ShP_W; // Thrust power/ shaft power to fan (negative sign since HPX is also negative)
 
 
     }
