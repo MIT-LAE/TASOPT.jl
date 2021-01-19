@@ -192,6 +192,7 @@ Assembly Assembly DuctedFan
                 ind_Win.autoSetup        = TRUE;
 
                 dep_Fn.autoSetup         = TRUE;
+                dep_NcPct.autoSetup      = FALSE;
 
                 dep_Mtip.autoSetup       = TRUE;
                 ind_Nmech.autoSetup      = TRUE;
