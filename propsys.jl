@@ -147,10 +147,13 @@ Outputs:
 - NozArea     : Fan nozzle area for off-des calcs [in^2] in inches so can easily pass back to NPSS
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64, π_fan::Float64,)
+function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64,
+                    Kinl::Float64, Φinl::Float64,
+                     π_fan::Float64)
     
-    NPSS_Fan_input(alt_in, MN_in, Fn, π_fan)
-    NPSS_run("NPSS_Turboshaft/", "Fan.bat")
+    NPSS_Fan_input(alt_in, MN_in, Fn, Kinl, Φinl, π_fan)
+    #Run Design model
+    NPSS_run("NPSS_Turboshaft/", "FanDes.bat")
 
     include("NPSS_Turboshaft/Fan.output")
     
@@ -163,7 +166,9 @@ function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64, π_fan::Float6
     mfan = ktech*(135.0 * Dfan^2.7/sqrt(ARfan) * (bladeσ/1.25)^0.3 * (Utip/350.0)^0.3)
     Wfan = mfan*gee
 
-    return Dfan, Fan_power, Torque_fan, N_fan, eta_prop, MapScalars, NozArea, Wfan
+    return Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+            eta_prop, eta_DF,
+            MapScalars, NozArea, Wfan
 
 end
 
@@ -187,14 +192,16 @@ Outputs:
 
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64, MapScalars::Array{Float64, 1}, NozArea::Float64)
+function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64,
+                    Kinl::Float64, Φinl::Float64)
     
-    NPSS_Fan_input(alt_in, MN_in, Fn, MapScalars, NozArea)
-    NPSS_run("NPSS_Turboshaft/", "Fan.bat")
+    NPSS_Fan_input(alt_in, MN_in, Fn, Kinl, Φinl)
+    #Run Off-Design model
+    NPSS_run("NPSS_Turboshaft/", "FanOffDes.bat")
 
     include("NPSS_Turboshaft/Fan.output")
 
-    return Fan_power, Torque_fan, N_fan, eta_prop
+    return Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
 
 end
 
@@ -215,11 +222,13 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
     nTshaft = parpt[ipt_nTshaft]
 
     Ffan = Fn/nfan
-
+    Kinl, Φinl = 0., 0.
     # Call ducted fan design method
         πfan = parpt[ipt_pifan]
-        Dfan, Fan_power, Torque_fan, N_fan, ηpropul,
-        FanMapScalars, FanNozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, πfan)
+
+        Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+        ηpropul, ηDF,
+        FanMapScalars, FanNozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, Kinl, Φinl, πfan )
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
         # println("Fan Fn = ", Ffan, " N")
@@ -320,9 +329,10 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, FanMapScalars,
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
+    Kinl, Φinl = 0., 0.
     Ffan = Fn/nfan
     # Call ducted fan off-design method
-    Fan_power, Torque_fan, N_fan, ηpropul = DuctedFan(alt_in, MN_in, Ffan, FanMapScalars, FanNozArea)
+    Fan_power, Torque_fan, N_fan, Mtip, ηpropul, ηDF = DuctedFan(alt_in, MN_in, Ffan, Kinl, Φinl)
     Pshaft_mot = -1000. * Fan_power
     # println("P motor = ", Pshaft_mot)
     
