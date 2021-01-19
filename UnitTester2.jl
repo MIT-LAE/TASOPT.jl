@@ -194,7 +194,8 @@ gee = 9.81
 # println("Running powertrain...")
 # @timev PowerTrain(0.0, 0.25, 110.0e3*2, parpt, parmot, pargen)
 # println("Second run...")
-ηpt, Ppt, Hpt, mpt, SPpt, mdotf, BSFC, deNOx, fanScalars, fanNozArea =  PowerTrain(30000., 0.75, 25.0e3*2, parpt, parmot, pargen)
+ηpt, Ppt, Hpt, mpt, SPpt, mdotf,
+ BSFC, deNOx, fanScalars, fanNozArea =  PowerTrain(30000., 0.7, 25.0e3*2, parpt, parmot, pargen)
 println("η powertrain = ", ηpt)
 println("P powertrain = ", Ppt)
 println("H powertrain = ", Hpt)
@@ -203,4 +204,4 @@ println("Mass powertrain = ", mpt)
 
 println("Total η = ", prod(ηpt))
 
-PowerTrain(30000., 0.70, 25.0e3*2, fanScalars, fanNozArea, parpt, parmot, pargen)
+PowerTrain(30000., 0.80, 25.0e3*2, fanScalars, fanNozArea, parpt, parmot, pargen)
