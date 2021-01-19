@@ -178,6 +178,7 @@ Assembly Assembly DuctedFan
     Independent ind_Win{ varName = "FsEng.W_in"; description = "Mass flow rate"; }
 
     Dependent dep_Fn{ eq_lhs = "Fn_N"; eq_rhs = "Fn_target";}
+    Dependent dep_NcPct{ eq_lhs = "Fan.NcPct"; eq_rhs = "NcPct_target";}
 
     Independent ind_Nmech{varName = "FanShaft.Nmech"; description = "Fan shaft RPM";}
     Dependent dep_Mtip{ eq_lhs = "Fan.Mtip"; eq_rhs = "0.8";}
@@ -202,6 +203,7 @@ Assembly Assembly DuctedFan
                 ind_Win.autoSetup        = FALSE; // The mass flow rate is automatically added by the NPSS solver
 				ind_ShaftPower.autoSetup = TRUE;	
                 dep_Fn.autoSetup         = TRUE;	
+                dep_NcPct.autoSetup      = FALSE;	
                 
                 dep_Mtip.autoSetup       = FALSE;
                 ind_Nmech.autoSetup      = FALSE;	

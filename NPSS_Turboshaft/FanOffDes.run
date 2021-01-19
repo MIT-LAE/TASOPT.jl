@@ -20,9 +20,9 @@ setThermoPackage("GasTbl");
 //====================
 //Read input file
 //====================
+#include "FanInputs.inp"
 DuctedFan.setOption("switchDes","OFFDESIGN");
 #include "FanScalars.inp"
-#include "FanInputs.inp"
 
 //====================
 //Auto solver setup
@@ -66,6 +66,7 @@ OutFileStream output {
 
 output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
 output<<"# Mode = "<<DuctedFan.Fan.switchDes<<endl;
+output<<"converged = "<<solver.converged<<endl;
 output<<"mdot_fan = "<<DuctedFan.FsEng.W/2.205<<"\t# kg/s"<<endl;
 output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
 output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
@@ -77,6 +78,6 @@ output<<"fracFBLI = "<<DuctedFan.Finl/DuctedFan.Fn_N<<endl<<endl;
 output<<"Fan_power = "<<convertUnits("DuctedFan.Fan.pwr", "kW") << "\t # kW"<<endl;
 output<<"Torque_fan     = "<<convertUnits("DuctedFan.Fan.trq", "N*m") << "\t # N*m"<<endl;
 output<<"N_fan     = "<<convertUnits("DuctedFan.Fan.Nmech", "rpm") << "\t # rpm"<<endl<<endl;
-output<<"Fan Nc = "<<DuctedFan.Fan.Nc<<endl;
-output<<"Fan NcPct = "<<DuctedFan.Fan.NcPct<<endl;
+output<<"Nc = "<<DuctedFan.Fan.Nc<<endl;
+output<<"NcPct = "<<DuctedFan.Fan.NcPct<<endl;
 
