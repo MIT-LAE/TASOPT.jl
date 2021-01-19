@@ -131,13 +131,16 @@ Assembly Assembly DuctedFan
     Element Shaft FanShaft
 	{
 		ShaftInputPort Sh_Fan;
-		Nmech = 4000.0;
+        // Initial guesses for HPX and Nmech:
+        HPX = -2000.; 
+		Nmech = 5000.0;
 		inertia = 13.0;
     }
     
     real mdot, Vjet, Vin, Fn_N, ShP_W, dKE;
     real eta_prop, eta_DF; // Froude propulsive eff, overall ducted fan eff.
     real Phiinl, Finl;
+    Finl   = 0.0;
     Phiinl = 50e3; // Example value based on D8
     void postexecute()
     {
@@ -146,6 +149,7 @@ Assembly Assembly DuctedFan
         mdot  = InEng.Fl_I.W * getUnitsFactor(InEng.Fl_I.W.units, "kg/sec");
         ShP_W = FanShaft.HPX * getUnitsFactor(FanShaft.HPX.units, "W"     );
         // Effective added thrust from BLI:
+        
         if(Vin > 0.0){
             Finl = Phiinl/Vin;
         }
