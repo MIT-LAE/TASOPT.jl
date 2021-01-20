@@ -252,14 +252,6 @@ Assembly Assembly Eng
 		Nmech = 30000.;
 	}
 
-	// Element Load Gen{
-	// 	real ShP_dmd{value = 20e6; units ="W";}
-	// 	void preexecute(){
-	// 		// cout<<Sh_O.Nmech<<endl;
-	// 		trqLoad = - ShP_dmd/(Sh_O.Nmech * 2.*PI/60.)*getUnitsFactor("N*m", "ft*lbf");
-
-	// 	}
-	// }
 	Element Generator Gen{
 		ShP_dmd = 20e6;
 	}
@@ -281,8 +273,6 @@ Assembly Assembly Eng
 
 		// \eta_{Thermal, ideal}  = Ideal_power_available/(fuel power)
 
-
-		
 		// Additional outputs
 		real IdealThermalEff{
 			value = 0.; IOstatus = OUTPUT; units = "none";
@@ -384,11 +374,27 @@ Assembly Assembly Eng
 	// Dependent dep_noz_Ps_exit{ eq_lhs = "ShP.trqNet"; eq_rhs = "0.0";}
 
 	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
-	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "0.95";}
+	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "deNOx_target";}
 
 	Dependent dep_N2{eq_lhs = "Perf.N2"; eq_rhs = "35000.";}
 
-	#include "SolverVariables.int"
+	Independent DESIGN_FUELFLOW {
+		varName = "Eng.FusEng.Wfuel";
+	}
+
+	Independent DESIGN_AIRFLOW {
+		varName = "Eng.FsEng.W_in"; 
+	}
+	// --
+	Dependent DESIGN_TARGET_Tt41 {
+		eq_lhs = "Eng.TrbH.F041.Tt"; eq_rhs = "Tt41";
+	}
+
+	Dependent DESIGN_TARGET_SHP {
+		eq_lhs = "Eng.Perf.SHP"; //Note this needs to be a negative value
+		eq_rhs = "SHP_dmd";
+
+	}
 	
 	void variableChanged(string name, any oldval)
 	{

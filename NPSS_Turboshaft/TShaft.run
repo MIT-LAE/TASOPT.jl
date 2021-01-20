@@ -20,13 +20,11 @@ setThermoPackage("GasTbl");
 //Read input file
 //====================
 #include "EngineInputs.inp"
+Eng.setOption("switchDes", "DESIGN");
+Eng.PCEC.setOption("switchMode","ON");
 
 Eng.Gen.ShP_dmd = SHP_dmd;
 
-if (Eng.switchDes == "DESIGN") {
-    Eng.DESIGN_TARGET_Tt41.eq_rhs = toStr(Tt41);
-    Eng.dep_deNOx.eq_rhs = toStr(deNOx_target);
-}
 //====================
 //Auto solver setup
 //====================
@@ -64,8 +62,6 @@ if(solver.converged == 1){
 else{
     cout<<"ERROR! Did not converge"<<endl;
 }
-
-#include "OffDesInputs.inp"
 
 
 //====================
