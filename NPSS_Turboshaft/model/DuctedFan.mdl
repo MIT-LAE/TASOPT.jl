@@ -120,7 +120,7 @@ Assembly Assembly DuctedFan
     Element Nozzle FanNozzle
     {
         PsExhName = "Amb.Ps";
-		switchType = "CON_DIV";
+		switchType = "CONIC";
 		switchCoef = "CV";
 		Cv_in = 0.98;
     }
@@ -156,6 +156,8 @@ Assembly Assembly DuctedFan
 
         Fn_N = mdot*(Vjet - Vin) + Finl;
         dKE  = 0.5* mdot*(Vjet**2 - Vin**2);
+        //mdot*(FanNozzle.Fl_O.ht - InEng.Fl_I.ht)*getUnitsFactor(InEng.Fl_I.ht.units, "J/kg");
+            
 
         eta_prop = Fn_N*Vin/dKE;
         eta_DF   = - Fn_N*Vin/ShP_W; // Thrust power/ shaft power to fan (negative sign since HPX is also negative)

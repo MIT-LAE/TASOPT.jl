@@ -81,6 +81,7 @@ output<<"NcPct = "<<DuctedFan.Fan.NcPct<<endl;
 output<<"# MapScalars"<<endl;
 output<<"MapScalars = ["<<DuctedFan.Fan.S_map.s_effDes<<", "<<DuctedFan.Fan.S_map.s_PRdes<<", "<<DuctedFan.Fan.S_map.s_WcDes<<", "<<DuctedFan.Fan.S_map.s_NcDes<<"]"<<endl;
 output<<"NozArea    = "<<DuctedFan.FanNozzle.AthCold << "\t # in^2"<<endl<<endl;
+output<<"NozMn    = "<<DuctedFan.FanNozzle.Fl_O.MN<< "\t # "<<endl<<endl;
 
 
 output.filename = "FanScalars.inp";
