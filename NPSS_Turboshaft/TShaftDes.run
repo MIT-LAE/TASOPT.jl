@@ -23,7 +23,8 @@ setThermoPackage("GasTbl");
 Eng.setOption("switchDes", "DESIGN");
 Eng.PCEC.setOption("switchMode","ON");
 
-Eng.Gen.ShP_dmd = SHP_dmd;
+// Eng.Gen.ShP_dmd = SHP_dmd;
+Eng.ShP.HPX = SHP_dmd/746;
 
 //====================
 //Auto solver setup
@@ -63,11 +64,13 @@ else{
     cout<<"ERROR! Did not converge"<<endl;
 }
 
+// real N2_dmd = 35000.;
 // Eng.setOption("switchDes", "OFFDESIGN");
 // autoSolverSetup();
 // printSolverConditions();
 // run();
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+
 
 //====================
 // Outputs
@@ -78,13 +81,15 @@ OutFileStream output {
 }
 
 output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
+output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
 output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
 output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
 output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
 // output<<"ShP = "<<Eng.Gen.ShP_dmd/getUnitsFactor("hp", "kW")<<"#\t kW"<<endl;
-output<<"ShP = "<<Eng.Gen.ShP_dmd<<"\t# " + Eng.Gen.ShP_dmd.units<<endl;
+// output<<"ShP = "<<Eng.Gen.ShP_dmd<<"\t# " + Eng.Gen.ShP_dmd.units<<endl;
 output<<"Ngen = "<<Eng.ShP.Nmech<<"\t# " + Eng.ShP.Nmech.units<<endl;
-// output<<"ShP = "<<Eng.ShP.HPX<<"\t# " + Eng.ShP.HPX.units<<endl;
+output<<"ShP = "<<Eng.ShP.HPX<<"\t# " + Eng.ShP.HPX.units<<endl;
+output<<"ShP = "<<Eng.ShP.HPX*746<<"\t# W"<<endl;
 output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
 output<<"BSFC = "<<Eng.Perf.BSFC<<endl;
 output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;

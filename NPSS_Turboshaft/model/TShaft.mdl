@@ -247,13 +247,9 @@ Assembly Assembly Eng
 	// Free Power Turbine Shaft ShP
 	//------------------------------
 	Element Shaft ShP {
-		ShaftInputPort TrbP, Gen;
-		// HPX = 29.e6;
+		ShaftInputPort TrbP;
+		HPX = 29.e6;
 		Nmech = 30000.;
-	}
-
-	Element Generator Gen{
-		ShP_dmd = 20e6;
 	}
 
 	// 8. Performance calculations
@@ -359,7 +355,6 @@ Assembly Assembly Eng
 	linkPorts( "CmpH.Sh_O"   , "ShH.CmpH"  ,  "CmpH_Work"   ) ;
 	linkPorts( "TrbH.Sh_O"   , "ShH.TrbH"  ,  "TrbH_Work"   ) ;
 	linkPorts( "TrbP.Sh_O"   , "ShP.TrbP"  ,  "TrbP_Work"   ) ;
-	linkPorts( "Gen.Sh_O"    , "ShP.Gen"   ,  "Gen_input"   ) ;
 
 	// 10. Solver settings
 
@@ -376,7 +371,7 @@ Assembly Assembly Eng
 	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
 	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "deNOx_target";}
 
-	Dependent dep_N2{eq_lhs = "Perf.N2"; eq_rhs = "35000.";}
+	Dependent dep_N2{eq_lhs = "Perf.N2"; eq_rhs = "N2_dmd";}
 
 	Independent DESIGN_FUELFLOW {
 		varName = "Eng.FusEng.Wfuel";
@@ -390,11 +385,13 @@ Assembly Assembly Eng
 		eq_lhs = "Eng.TrbH.F041.Tt"; eq_rhs = "Tt41";
 	}
 
-	Dependent DESIGN_TARGET_SHP {
+	Dependent TARGET_SHP {
 		eq_lhs = "Eng.Perf.SHP"; //Note this needs to be a negative value
 		eq_rhs = "SHP_dmd";
 
 	}
+
+	Independent ind_GenShP { varName = "Eng.ShP.HPX";}
 	
 	void variableChanged(string name, any oldval)
 	{
@@ -420,6 +417,9 @@ Assembly Assembly Eng
 				dep_noz_Ps_exit.autoSetup    = TRUE;
 
 				dep_N2.autoSetup = FALSE;
+
+				ind_GenShP.autoSetup = FALSE;
+				TARGET_SHP.autoSetup = FALSE;
 			}
 			else
 			{
@@ -437,9 +437,12 @@ Assembly Assembly Eng
 
 				// Offdesign Dependents
 				DESIGN_TARGET_Tt41.autoSetup = FALSE;	
-				dep_noz_Ps_exit.autoSetup    = FALSE;
+				dep_noz_Ps_exit.autoSetup    = TRUE;
 
 				dep_N2.autoSetup = TRUE;
+
+				ind_GenShP.autoSetup = TRUE;
+				TARGET_SHP.autoSetup = FALSE;
 
 			}
 		}
