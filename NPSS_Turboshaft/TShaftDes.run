@@ -63,10 +63,16 @@ else{
     cout<<"ERROR! Did not converge"<<endl;
 }
 
+// Eng.setOption("switchDes", "OFFDESIGN");
+// autoSolverSetup();
+// printSolverConditions();
+// run();
+// MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 
 //====================
 // Outputs
 //====================
+
 OutFileStream output {
     filename = "Eng.output"; 
 }
@@ -147,6 +153,5 @@ real Areas[] = {Eng.FsEng.Fl_O.Aphy     ,
                 Eng.NozPri.Fl_O.Aphy  };
 
 output<<strFmt1D("\nAreas = [", "%12.4f,", Areas,Areas.entries(),5)<<"]"<<endl;
-
 
 

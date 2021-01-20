@@ -10,6 +10,6 @@
 
 
 REM Run file
-runnpss TShaft.run -I ./src -I ./model -I ./data
+runnpss TShaftDes.run -I ./src -I ./model -I ./data
 
 PAUSE
