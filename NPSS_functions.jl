@@ -12,7 +12,14 @@ end
 """
 # Design mode
 
-Writes an input file for NPSS Turboshaft model
+Writes an input file for NPSS Turboshaft model 
+
+    - Abmient altitude and mach number
+    - Specifies πᵢ ∀ i ∈ {HPC, LPC}
+    - Shaft power demand, Tt41 
+    - DeNOx target
+    - SCR paramters -> CPSI, w, l
+
 """
 function NPSS_TShaft_input(alt_in, MN_in, 
     SHP_dmd, Tt41, 
@@ -48,28 +55,26 @@ end
 
 """
 OffdesMode
+
+Writes an input file for NPSS Turboshaft model in off-des conditions
+
+    - Abmient altitude and mach number
+    - Tt41 
+
 """
 function NPSS_TShaft_input(alt_in, MN_in, 
-                            SHP_dmd ; 
-                            file_name = "NPSS_Turboshaft/OffDesInputs.inp",
-                            desScl_name = "DesScl.int")
+                            Tt41, Nshaft ; 
+                            file_name = "NPSS_Turboshaft/OffDesInputs.inp")
 
     open(file_name, "w") do io
-        println(io, "// Design State")
-        println(io, "Eng.setOption(\"switchDes\",\"OFFDESIGN\");")
-        println(io, "Eng.PCEC.setOption(\"switchMode\",\"ON\");") 
-        
+
         println(io, "\n// Abmient conditions")
-        println(io, "Eng.Amb.alt_in = ", alt_in, ";" )
-        println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
+        println(io, "Eng.Amb.alt_in = ", alt_in, ";")
+        println(io, "Eng.Amb.MN_in  = ", MN_in , ";")
 
         println(io, "\n// Targets")
-        println(io, "Eng.Gen.ShP_dmd = ", SHP_dmd, ";" )
-
-        println(io, "\n// DesPt scalars")
-        # println(io, "#include \"", desScl_name, "\"")
-
-        println(io, "autoSolverSetup(); run();")
+        println(io, "real Tt41   = ", Tt41  , ";")
+        println(io, "real N2_dmd = ", Nshaft, ";")
         
     end
 
