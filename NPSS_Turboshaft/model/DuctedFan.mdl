@@ -185,6 +185,8 @@ Assembly Assembly DuctedFan
     Independent ind_Nmech{varName = "FanShaft.Nmech"; description = "Fan shaft RPM";}
     Dependent dep_Mtip{ eq_lhs = "Fan.Mtip"; eq_rhs = "0.8";}
 
+    Dependent dep_ShP_in{eq_lhs = "Fan.pwr"; eq_rhs = "ShP_input";}
+
     void variableChanged(string name, any oldval)
 	{
 		if (name == "switchDes")
@@ -199,16 +201,20 @@ Assembly Assembly DuctedFan
 
                 dep_Mtip.autoSetup       = TRUE;
                 ind_Nmech.autoSetup      = TRUE;
+
+                dep_ShP_in.autoSetup     = FALSE;
 			}
 			else
 			{
                 ind_Win.autoSetup        = FALSE; // The mass flow rate is automatically added by the NPSS solver
 				ind_ShaftPower.autoSetup = TRUE;	
-                dep_Fn.autoSetup         = TRUE;	
+                dep_Fn.autoSetup         = FALSE;	
                 dep_NcPct.autoSetup      = FALSE;	
                 
                 dep_Mtip.autoSetup       = FALSE;
                 ind_Nmech.autoSetup      = FALSE;	
+
+                dep_ShP_in.autoSetup     = TRUE;
 			}
 		}
 	}
