@@ -17,13 +17,10 @@ Writes an input file for NPSS Turboshaft model
 function NPSS_TShaft_input(alt_in, MN_in, 
     SHP_dmd, Tt41, 
     LPC_PR, HPC_PR,
-    cpsi, w, lcat, deNOx ; PCEC = true,
+    cpsi, w, lcat, deNOx ;
     LHV = 120, file_name = "NPSS_Turboshaft/EngineInputs.inp")
 
     open(file_name, "w") do io
-        println(io, "// Design State")
-        println(io, "Eng.setOption(\"switchDes\",\"DESIGN\");")
-        PCEC ? println(io, "Eng.PCEC.setOption(\"switchMode\",\"ON\");") : 
 
         println(io, "\n// Abmient conditions")
         println(io, "Eng.Amb.alt_in = ", alt_in, ";" )
