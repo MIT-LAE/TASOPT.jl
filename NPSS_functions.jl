@@ -108,7 +108,7 @@ function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
 
 end
 
-function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
+function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Pin::Float64,
                         Kinl::Float64, Φinl::Float64;
                         file_name = "NPSS_Turboshaft/FanInputs.inp")
 
@@ -120,8 +120,8 @@ function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
         println(io, "DuctedFan.Amb.alt_in = ", alt_in, ";" )
         println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
 
-        println(io, "\n// Thrust Target")
-        println(io, "real Fn_target = ", Fn, ";")
+        println(io, "\n// Input power")
+        println(io, "real ShP_input = ", -Pin/745.7, ";")
 
         
         println(io, "\n// BLI inputs")
