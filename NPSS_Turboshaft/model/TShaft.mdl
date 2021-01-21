@@ -214,7 +214,7 @@ Assembly Assembly Eng
 		l  = 0.0125;
 		cpsi = 900;
 		w    = 2.0 ;
-		Fl_O.MNdes = 0.2;
+		Fl_O.MNdes = 0.4;
 	}
 
 	//------------------------------
@@ -432,12 +432,12 @@ Assembly Assembly Eng
 				dep_deNOx.autoSetup   = FALSE;	
 
 				// Offdesign Independents
-				DESIGN_AIRFLOW.autoSetup  = FALSE;
+				DESIGN_AIRFLOW.autoSetup  = FALSE; // W_in doesn't change but W changes based on operation
 				DESIGN_FUELFLOW.autoSetup = TRUE;
 
 				// Offdesign Dependents
-				DESIGN_TARGET_Tt41.autoSetup = FALSE;	
-				dep_noz_Ps_exit.autoSetup    = TRUE;
+				DESIGN_TARGET_Tt41.autoSetup = TRUE;	
+				dep_noz_Ps_exit.autoSetup    = FALSE;
 
 				dep_N2.autoSetup = TRUE;
 
