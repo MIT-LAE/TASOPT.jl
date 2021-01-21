@@ -15,7 +15,7 @@ parpt[ipt_Tt41 ]   = 3200.0
 parpt[ipt_cpsi  ]  = 900.0   # Catalyst cells per square inch (CPSI)
 parpt[ipt_wcat  ]  = 2.0     # Catalyst wall thickness in [mil]
 parpt[ipt_lcat  ]  = 0.02    # Catalyst length
-parpt[ipt_deNOx ]  = 0.95    # DeNOx target at cruise
+parpt[ipt_deNOx ]  = 0.98    # DeNOx target at cruise
 
 #Generator
 parpt[ipt_ARgen]       = 0.8
