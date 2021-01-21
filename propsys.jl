@@ -148,16 +148,16 @@ Outputs:
 
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64,
+function DuctedFan(alt_in::Float64, MN_in::Float64,  Pin::Float64,
                     Kinl::Float64, Φinl::Float64)
     
-    NPSS_Fan_input(alt_in, MN_in, Fn, Kinl, Φinl)
+    NPSS_Fan_input(alt_in, MN_in, Pin, Kinl, Φinl)
     #Run Off-Design model
     NPSS_run("NPSS_Turboshaft/", "FanOffDes.bat")
 
     include("NPSS_Turboshaft/Fan.output")
 
-    return Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
+    return Fn, Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
 
 end
 
@@ -280,7 +280,8 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
            deNOx, FanMapScalars, FanNozArea
 
 end
-function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, FanMapScalars, FanNozArea,
+function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
+                    Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
                     pargen::Array{Float64, 1})
@@ -289,44 +290,55 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64, FanMapScalars,
     nfan = parpt[ipt_nfan]
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
+    Nshaft = 30000. #RPM
 
-    Kinl, Φinl = 0., 0.
-    Ffan = Fn/nfan
-    # Call ducted fan off-design method
-    Fan_power, Torque_fan, N_fan, Mtip, ηpropul, ηDF = DuctedFan(alt_in, MN_in, Ffan, Kinl, Φinl)
-    Pshaft_mot = -1000. * Fan_power
-    # println("P motor = ", Pshaft_mot)
-    
-    Nmot = parpt[ipt_NdesMot] * (N_fan/parpt[ipt_NdesFan])
-    # Off-des motor call
-    PreqMot, ηmot, PL = PMSM(Pshaft_mot, Nmot/60, parmot)
-    # println(ηmot)
-    Hwaste_motor = PreqMot - Pshaft_mot
-    Hrej += nfan*Hwaste_motor # Heat rejected from motors
-    
+    # Calculate Turboshaft power output
+        Pshaft, ηthermal,
+        mdotf, BSFC,
+        deNOx_out = TurboShaft(alt_in, MN_in, Tt41, Nshaft)
+
+    # Run generator
+        Pgen_in = Pshaft * nTshaft/ngen
+        Ngen = Nshaft
+        Pgen_out, ηgen, PLgen = PMSM(Pgen_in, Ngen/60, pargen)
+
+        Hwaste_gen = (Pgen_in - Pgen_out)
+        Hrej += ngen*Hwaste_gen # Heat rejected from motors
+
+    # Off-des cable
+        ηcable, Wcable = cable() #TODO cable is dummy right now
+        Hwaste_cable = Pgen_out*(1-ηcable)
+        Hrej += Hwaste_cable  # Heat rejected from cables
+        Pinv_in = Pgen_out*ηcable * ngen/nfan # for each inverter
+
     # Off-des inverter
-    ηinv = inverter(PreqMot, parmot)
-    Hwaste_inv = PreqMot*(1-ηinv)
-    Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
-   
-    ηcable, Wcable = cable() #TODO cable is dummy right now
-    Hwaste_cable = PreqMot*(1-ηcable)
-    Hrej += Hwaste_cable  # Heat rejected from all inverters
-    # println(ηinv)
-    PreqGen = (PreqMot * nfan) * ηinv * ηcable /ngen
-    # println("Generator power req = ", PreqGen)
-    Ngen = parpt[ipt_NdesGen] 
-    PgenShaft, ηgen, PLgen = PMSM(PreqGen, Ngen/60, pargen)
-    # println(ηgen)          
-    Hwaste_gen = (PgenShaft - PreqGen*nfan/ngen)
-    Hrej += ngen*Hwaste_gen # Heat rejected from motors
-    # println("Tshaft power req = ", PgenShaft*ngen/nTshaft)
-    ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, PgenShaft*ngen/nTshaft)
+        ηinv = inverter(Pinv_in, parmot)
+        Hwaste_inv = Pinv_in*(1-ηinv)
+        Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
+        Pmot_in = Pinv_in * ηinv
 
-    return [ηmot, ηinv, ηcable, ηgen, ηthermal],
-           [Pshaft_mot, PreqMot, PgenShaft], 
+    # Off-des motor
+        Nmot = parpt[ipt_NdesMot] #* (N_fan/parpt[ipt_NdesFan])
+        # Off-des motor call
+        Pmot_out, ηmot, PL = PMSM(Pmot_in, Nmot/60, parmot)
+        # println(ηmot)
+        Hwaste_motor = Pmot_in - Pmot_out
+        Hrej += nfan*Hwaste_motor # Heat rejected from motors
+        # println("Motor speed = ", Nmot)
+        # println("Motor power = ", Pmot_out)
+    # Ducted fan
+        Pfan_in = Pmot_out
+        Fn, Fan_power, Torque_fan, N_fan, Mtip,
+        ηpropul, ηDF = DuctedFan(alt_in, MN_in, Pfan_in, Kinl, Φinl)
+        # println("Fan speed = ", N_fan) 
+        # TODO fan vs motor speed discrepency 
+
+    Ftotal = Fn*nfan
+
+    return Ftotal, [ηmot, ηinv, ηcable, ηgen, ηthermal],
+           [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
            mdotf, BSFC,
-           deNOx
+           deNOx_out
 
 end
