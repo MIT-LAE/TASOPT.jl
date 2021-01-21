@@ -1,3 +1,13 @@
+    #include all functions required [TOCHECK] might not include here but only in MAIN program
+    include("atmos.jl")
+    include("fuseW.jl")
+    include("fusebl.jl")
+    include("wingsc.jl")
+    include("surfcm.jl")
+    include("surfdx.jl")
+    include("wingpo.jl")
+    include("tailpo.jl")
+
 """
 # wsize - Main weight sizing section
 
@@ -15,15 +25,6 @@ and iterates until the MTOW converges to within a specified tolerance.
 function wsize(pari, parg, parm, para, pare,
             itermax, wrlx, initwgt, initeng, iairf)
 
-    #include all functions required [TOCHECK] might not include here but only in MAIN program
-    include("atmos.jl")
-    include("fuseW.jl")
-    include("fusebl.jl")
-    include("wingsc.jl")
-    include("surfcm.jl")
-    include("surfdx.jl")
-    include("wingpo.jl")
-    include("tailpo.jl")
 
     # Weight convergence tolerance 
     tolerW = 1.0e-10
@@ -896,7 +897,7 @@ Lconv = false # no convergence yet
                 rpay  = 1.0
                 ξpay  = 0.
                 itrim = 1
-                balance(pari,parg,para[1,ip],rfuel,rpay, ξpay, itrim)
+                balance(pari,parg,para[:,ip],rfuel,rpay, ξpay, itrim)
 
                 # Drag buildup cdsum()
                 cdsum!(pari, parg, para[:, ip], pare[:, ip], 1)
@@ -911,8 +912,10 @@ Lconv = false # no convergence yet
                 pare[ieFe, ip] = Fdes/neng
 
             # Size engine for TOC
-
-            # Size PCEC - estimate weights 
+            ηpt, Ppt, Hpt, mpt, SPpt,
+            mdotf, BSFC,
+            deNOx, _, _  =  PowerTrain(para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
+                                        0.0, 0.0, parpt, parmot, pargen)
 
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model

@@ -280,6 +280,7 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
            deNOx, FanMapScalars, FanNozArea
 
 end
+
 function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},

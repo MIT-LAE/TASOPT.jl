@@ -1,66 +1,66 @@
 
 // LHV based on fuel
 Eng.FusEng.LHV = 51590.76;
-Eng.FsEng.W_in = 35.07273;
-Eng.FusEng.Wfuel = 0.370023255;
+Eng.FsEng.W_in = 33.344451;
+Eng.FusEng.Wfuel = 0.35473158;
 
 // Map scalars
 Eng.CmpL.S_map.s_effDes = 1.08233;
 Eng.CmpL.S_map.s_PRdes  = 0.454856;
-Eng.CmpL.S_map.s_WcDes  = 1.07164;
-Eng.CmpL.S_map.s_NcDes  = 39899.8;
+Eng.CmpL.S_map.s_WcDes  = 1.05975;
+Eng.CmpL.S_map.s_NcDes  = 40163.2;
 Eng.CmpH.S_map.s_effDes = 1.07143;
 Eng.CmpH.S_map.s_PRdes  = 4.61538;
-Eng.CmpH.S_map.s_WcDes  = 11.5281;
-Eng.CmpH.S_map.s_NcDes  = 33550.3;
+Eng.CmpH.S_map.s_WcDes  = 11.4007;
+Eng.CmpH.S_map.s_NcDes  = 33770.4;
 Eng.TrbH.S_map.s_effDes = 0.977995;
-Eng.TrbH.S_map.s_PRdes  = 0.406616;
-Eng.TrbH.S_map.s_WpDes  = 1.38489;
-Eng.TrbH.S_map.s_NpDes  = 6.39147;
+Eng.TrbH.S_map.s_PRdes  = 0.39538;
+Eng.TrbH.S_map.s_WpDes  = 1.38366;
+Eng.TrbH.S_map.s_NpDes  = 6.39429;
 Eng.TrbP.S_map.s_effDes = 0.964143;
-Eng.TrbP.S_map.s_PRdes  = 1.4727;
-Eng.TrbP.S_map.s_WpDes  = 1.26183;
-Eng.TrbP.S_map.s_NpDes  = 6.0543;
+Eng.TrbP.S_map.s_PRdes  = 1.42676;
+Eng.TrbP.S_map.s_WpDes  = 1.23542;
+Eng.TrbP.S_map.s_NpDes  = 6.042;
 
-Eng.CmpL.S_map.NcMapDes    = 1.0;
-Eng.CmpL.S_map.WcMapDes    = 71.45;
-Eng.CmpL.S_map.PRmapDes    = 5.397;
-Eng.CmpL.S_map.effMapDes   = 0.8223;
-Eng.CmpL.S_map.RlineMapDes = 2.0;
-Eng.CmpH.S_map.NcMapDes    = 1.0;
-Eng.CmpH.S_map.WcMapDes    = 2.72;
-Eng.CmpH.S_map.PRmapDes    = 2.3;
-Eng.CmpH.S_map.effMapDes   = 0.84;
-Eng.CmpH.S_map.RlineMapDes = 2.0;
-Eng.TrbH.S_map.PRmapDes = 6.0;
-Eng.TrbH.S_map.NpMapDes = 100.0;
-Eng.TrbP.S_map.PRmapDes = 6.0;
-Eng.TrbP.S_map.NpMapDes = 100.0;
+// Eng.CmpL.S_map.NcMapDes    = 1.0;
+// Eng.CmpL.S_map.WcMapDes    = 71.45;
+// Eng.CmpL.S_map.PRmapDes    = 5.397;
+// Eng.CmpL.S_map.effMapDes   = 0.8223;
+// Eng.CmpL.S_map.RlineMapDes = 2.0;
+// Eng.CmpH.S_map.NcMapDes    = 1.0;
+// Eng.CmpH.S_map.WcMapDes    = 2.72;
+// Eng.CmpH.S_map.PRmapDes    = 2.3;
+// Eng.CmpH.S_map.effMapDes   = 0.84;
+// Eng.CmpH.S_map.RlineMapDes = 2.0;
+// Eng.TrbH.S_map.PRmapDes = 6.0;
+// Eng.TrbH.S_map.NpMapDes = 100.0;
+// Eng.TrbP.S_map.PRmapDes = 6.0;
+// Eng.TrbP.S_map.NpMapDes = 100.0;
 
 // Nozzle Area
-Eng.NozPri.AthCold  = 1860.19;
+Eng.NozPri.AthCold  = 1778.35;
 
 // PCEC parameters
-Eng.PCEC.l = 0.02;
-Eng.PCEC.w = 2.0;
+Eng.PCEC.l    = 0.02;
+Eng.PCEC.w    = 2.0;
 Eng.PCEC.cpsi = 900.0;
-Eng.PCEC.Af = 6.43904;
+Eng.PCEC.Af   = 6.07551;
 
 // Bleeds
-Eng.B030.TCLA_NC.fracW = 0.106177;
-Eng.B030.TCLA_CH.fracW = 0.0878279;
+Eng.B030.TCLA_NC.fracW = 0.104611;
+Eng.B030.TCLA_CH.fracW = 0.086104;
 
 // Areas
-Eng.FsEng.Fl_O.Aphy  = 236.524;
-Eng.InEng.Fl_O.Aphy  = 298.8746;
-Eng.CmpL.Fl_O.Aphy   = 140.7367;
-Eng.D025.Fl_O.Aphy   = 180.7287;
-Eng.CmpH.Fl_O.Aphy   = 36.0042;
-Eng.B030.Fl_O.Aphy   = 22.6592;
-Eng.BrnPri.Fl_O.Aphy = 160.19;
-Eng.TrbH.Fl_O.Aphy   = 175.9556;
-Eng.D050.Fl_O.Aphy   = 137.2815;
-Eng.TrbP.Fl_O.Aphy   = 764.6866;
-Eng.D060.Fl_O.Aphy   = 1194.3549;
-Eng.PCEC.Fl_O.Aphy   = 1785.7816;
-Eng.NozPri.Fl_O.Aphy = 1785.7816;
+Eng.FsEng.Fl_O.Aphy  = 240.9317;
+Eng.InEng.Fl_O.Aphy  = 295.559;
+Eng.CmpL.Fl_O.Aphy   = 139.1735;
+Eng.D025.Fl_O.Aphy   = 178.719;
+Eng.CmpH.Fl_O.Aphy   = 35.6052;
+Eng.B030.Fl_O.Aphy   = 22.4993;
+Eng.BrnPri.Fl_O.Aphy = 160.0484;
+Eng.TrbH.Fl_O.Aphy   = 172.2871;
+Eng.D050.Fl_O.Aphy   = 134.4172;
+Eng.TrbP.Fl_O.Aphy   = 730.5485;
+Eng.D060.Fl_O.Aphy   = 1141.1084;
+Eng.PCEC.Fl_O.Aphy   = 1707.216;
+Eng.NozPri.Fl_O.Aphy = 1707.216;
