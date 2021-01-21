@@ -20,8 +20,9 @@ setThermoPackage("GasTbl");
 //Read input file
 //====================
 #include "EngineInputs.inp"
+restart("offdesTO.restart");
+// restart("offdes.restart");
 Eng.PCEC.setOption("switchMode","ON");
-
 #include "Tshaft_design.int"
 Eng.setOption("switchDes", "OFFDESIGN");
 
@@ -30,13 +31,10 @@ Eng.setOption("switchDes", "OFFDESIGN");
 //====================
 //Auto solver setup
 //====================
-solver.clear();
+// solver.clear();
 // All setup in variable changed method in TShaft.mdl
 autoSolverSetup();
-// SaveIndepVals("solver", "offdes.restart");
-restart("offdes.restart");
 // printSolverConditions();
-// quit();
 
 //====================
 // Solver setup:
@@ -60,8 +58,19 @@ run();
 if(solver.converged != 1){
     cout<<"ERROR! Did not converge"<<endl;
 }
-else{SaveIndepVals("solver", "offdes.restart");}
+else{SaveIndepVals("solver", "offdes1.restart");}
 
+
+// for(Eng.Amb.alt_in = 30000; Eng.Amb.alt_in >=0; Eng.Amb.alt_in-=1000){
+//     if (Eng.Amb.MN_in >=0.25){
+//     Eng.Amb.MN_in -= 0.01;}
+//     cout<<Eng.Amb.MN_in<<endl;
+//     cout<<Eng.Amb.alt_in<<endl;
+//     run();
+//     cout<<"Power =";
+//     cout<<Eng.ShP.HPX<<endl;
+// }
+// SaveIndepVals("solver", "offdesTO.restart");
 
 //====================
 // Outputs
