@@ -19,7 +19,7 @@ setThermoPackage("GasTbl");
 //====================
 //Read input file
 //====================
-#include "EngineInputs.inp"
+#include "OffDesInputs.inp"
 restart("offdesTO.restart");
 // restart("offdes.restart");
 Eng.PCEC.setOption("switchMode","ON");

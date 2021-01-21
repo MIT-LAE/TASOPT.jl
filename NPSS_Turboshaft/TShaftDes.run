@@ -24,7 +24,7 @@ Eng.setOption("switchDes", "DESIGN");
 Eng.PCEC.setOption("switchMode","ON");
 
 // Eng.Gen.ShP_dmd = SHP_dmd;
-Eng.ShP.HPX = SHP_dmd/746;
+Eng.ShP.HPX = SHP_dmd*getUnitsFactor("W", "hp");
 
 //====================
 //Auto solver setup

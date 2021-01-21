@@ -4,13 +4,23 @@
 ## Design pt. method
 
 Inputs: 
-- alt_in : Ambient altitude 
-- MN_in  : Ambient Mach number
-- ShP    : Design ShaftPower in [N]
-- π_fan  : Fan pressure ratio
+- alt_in : Ambient altitude [ft]
+- MN_in  : Ambient Mach number [-]
+- ShP    : Design ShaftPower in [W]
+- π_LPC  : LPC pressure ratio [-]
+- π_HPC  : HPC pressure ratio [-]
+- Tt41   : Design Turbine inlet temp [R]
+- cpsi   : Cells per square inch for catalyst [CPSI]
+- w      : Catalyst cell wall thickness [mil] 
+- lcat   : Reacting channel length [m]
+- deNOx_in: Target design deNOx [-]
 
 Outputs:
-
+- η eta_thermal
+- ṁf
+- BSFC
+- deNOx
+- mcat
 
 """
 function TurboShaft(alt_in::Float64, MN_in::Float64, 
@@ -36,17 +46,38 @@ function TurboShaft(alt_in::Float64, MN_in::Float64,
 
 end
 
+"""
+# TurboShaft calculations
+
+## Off-Design method
+
+Inputs: 
+- alt_in : Ambient altitude 
+- MN_in  : Ambient Mach number
+- Tt41   : Operating temp in [R]
+
+
+Outputs:
+- Pshaft
+- η eta_thermal
+- ṁf
+- BSFC
+- deNOx
+- mcat
+
+"""
 function TurboShaft(alt_in::Float64, MN_in::Float64, 
-                    ShP::Float64)
+                    Tt41::Float64, Nshaft::Float64)
 
-    NPSS_TShaft_input(alt_in, MN_in, ShP; file_name = "NPSS_Turboshaft/OffDesInputs.inp")
+    NPSS_TShaft_input(alt_in, MN_in,
+                    Tt41, Nshaft;
+                    file_name = "NPSS_Turboshaft/OffDesInputs.inp")
 
-    NPSS_run("NPSS_Turboshaft/", "TP.bat")
+    NPSS_run("NPSS_Turboshaft/", "TPoffDes.bat")
 
     include("NPSS_Turboshaft/Eng.output")
 
-
-    return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
+    return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
 
 end
 
