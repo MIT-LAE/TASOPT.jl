@@ -167,18 +167,22 @@ PowerTrain
 Design method - sizes the powertrain
 """
 function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
+                    Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
                     pargen::Array{Float64, 1})
     
-    Wpowertrain = 0.0
-    Hrej = 0.0
-    nfan = parpt[ipt_nfan]
-    ngen = parpt[ipt_ngen]
-    nTshaft = parpt[ipt_nTshaft]
+    # Initialize powertrain weight and waste heat 
+        Wpowertrain = 0.0
+        Hrej = 0.0
+    # Unpack number of powertrain elements
+        nfan = parpt[ipt_nfan]
+        ngen = parpt[ipt_ngen]
+        nTshaft = parpt[ipt_nTshaft]
 
-    Ffan = Fn/nfan
-    Kinl, Φinl = 0., 0.
+    # Thrust per fan
+        Ffan = Fn/nfan
+
     # Call ducted fan design method
         πfan = parpt[ipt_pifan]
 
@@ -188,11 +192,12 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
         # println("Fan Fn = ", Ffan, " N")
-        parpt[ipt_Wfan] = Wfan
-        Wpowertrain += Wfan*nfan
-        Pshaft_mot = -1000. * Fan_power
+        parpt[ipt_Wfan]    = Wfan # Save fan weight
         parpt[ipt_NdesFan] = N_fan
 
+        Wpowertrain += Wfan*nfan
+        Pshaft_mot = -1000. * Fan_power
+        
     # Size motor
         ratAsp   = parpt[ipt_ARmot]
         σAg      = parpt[ipt_sigAgMot]
@@ -205,13 +210,13 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         # println("\tIron losses    = ", PLiron, "%")
         # println("\tCopper losses  = ", PLCu)
         # println("\tWindage losses = ", PLwind)
-        Hwaste_motor = PreqMot - Pshaft_mot
-        Hrej += nfan*Hwaste_motor # Heat rejected from motors
-        parpt[ipt_Wmot] = Wmot
-        Wpowertrain += Wmot*nfan # Add to total powertrain weight
+        parpt[ipt_Wmot]    = Wmot
         parpt[ipt_NdesMot] = RPMmot
 
-    
+        Hwaste_motor = PreqMot - Pshaft_mot
+        Hrej += nfan*Hwaste_motor # Heat rejected from motors
+        Wpowertrain += Wmot*nfan  # Add to total powertrain weight
+           
     # Size Inverter and cables
         ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
         Hwaste_inv = PreqMot*(1-ηinv)
