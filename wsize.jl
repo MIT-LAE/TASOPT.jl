@@ -28,6 +28,21 @@ function wsize(pari, parg, parm, para, pare,
 
     # Weight convergence tolerance 
     tolerW = 1.0e-10
+    err2   = 1.0
+    # Initialze some variables
+    fsum = 0.0
+
+    # Flags
+    ifuel   = pari[iifuel  ] # Fuel type 24 == kerosene TODO need to update this for LH2
+    ifwcen  = pari[iifwcen ]
+    iwplan  = pari[iiwplan ]
+    iengloc = pari[iiengloc]
+    iengwgt = pari[iiengwgt]
+    iBLIc   = pari[iiBLIc  ]
+    ifclose = pari[iifclose]
+    iHTsize = pari[iiHTsize]
+    iVTsize = pari[iiVTsize]
+    ixwmove = pari[iixwmove]
 
     # Atmospheric conditions at sea-level
     TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
@@ -493,9 +508,8 @@ Lconv = false # no convergence yet
                 parg[igcabVol] = cabVol
                 
                 # Use cabin volume to get actual buoyancy weight
-                ρcab = max(parg[igpcabin], pambient)/ RSL*TSL
-                WbuoyCR = (ρcab - ρ0)*gee*cabVol
-
+                ρcab = max(parg[igpcabin], pare[iep0, ipcruise1])/ (RSL*TSL)
+                WbuoyCR = (ρcab - pare[ierho0, ipcruise1])*gee*cabVol
             # Total max Takeoff weight (MTOW)
                 
                 # WMTO = Wpay + Wfuse + Wwing + Wstrut + 
