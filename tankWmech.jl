@@ -28,17 +28,20 @@ function tankWmech(gee, rhoFuel,
 
 #--- fuselage skin and center web thicknesses to withstand pressure load
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
-      #tskin = 3 * deltap * Rtank_outer / sigskin
-      tskin = 3 * 1.1 * deltap * Rtank_outer / (2 * sigskin * 0.8 + 0.8 * 1.1 * deltap)
+      #tskin = 2.35 * deltap * Rtank_outer / sigskin
+      tskin = 2.35 * 1.1 * deltap * 2 * Rtank_outer / (2 * sigskin * 0.8 + 0.8 * 1.1 * deltap) #2.35 FOS https://www.nrel.gov/docs/fy02osti/32405b27.pdf
       Rtank = Rtank_outer - tskin
       tfweb = 2.0 * deltap * wfb  / sigskin
-      Rhead = Rtank / 4
+      Rhead = 0.8 * Rtank
+      K = (1/6) * (2+1.6)
+      t_head = 2.35 * 1.1 * deltap * 2 * Rtank_outer * K/ (2 * sigskin * 0.8 + 2 * 1.1 * deltap * (K-1))
 
 #--- Calculate length of shell
 
       Vfuel = Wfuel / (gee * rhoFuel)
       Vfuel_allowance = (0.031 * Vfuel) + Vfuel #Recommended by Verstraete
-      #V_ellipsoid = (4/3) * pi * (Rtank^2) * Rhead
+      V_ellipsoid = 8 * (Rtank^3) * 0.5 * pi / 12  #https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
+      V_remaining = Vfuel - V_ellipsoid
       lshell = Vfuel_allowance / (pi * (Rtank^2))
 
 #--- tank cross-section geometric parameters
@@ -55,7 +58,8 @@ function tankWmech(gee, rhoFuel,
       Shead = (2.0*pi + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Rhead/Rtank)^1.6 )^0.625
 #--- component volumes
       Vcyl  = Askin*lshell
-      Vhead = Shead*tskin
+      #Vhead = Shead*tskin
+      Vhead = Shead * t_head
 
 #--- weights and weight moments
       Wtank = rhoskin*gee*(Vcyl+Vhead)

@@ -2,13 +2,13 @@ v_f = 67.3 #specific volume as saturated liquid
 v_g = 2.5 #specific volume as saturated vapor
 x = 0.03 #quality (suggested by energies)
 
-rhoFuel = 1 / ((1 / v_f) + x * ((1 / v_g) - (1 / v_f)))
+rhoFuel = 0.96 * (1 / ((1 / v_f) + x * ((1 / v_g) - (1 / v_f)))) #96% due to pvent = 2atm in energies literature
 
 gee = 9.81
 
-deltap = 51325#101325 #121590 #based on 6000 ft cabin pressure, 2 bar LH2 pressure (energies)
+deltap = 150000#150000#101325  #based on 0.5 bar cabin pressure, 2 or 1.5 bar LH2 pressure (Verstraete / Brewer)
 
-Rfuse = 3.1#2.07 #radius of fuselage of A320
+Rfuse = 2.07 #radius of fuselage of A320
 
 dRfuse = 0 #extended portion of fuselage at bottom (take as zero due to cylindrical tank)
 
@@ -24,7 +24,7 @@ h_v = 447000 #Engineering toolbox, Hydrogen - Thermophysical properties
 
 t_cond = [0.1, 1.524e-5, 0.1, 1.524e-5, 1.57e-2] #assumed
 
-k = [20e-3, 20e-3, 20e-3, 20e-3, 20e-3] #foam thickness
+k = [20e-3, 20e-3, 20e-3, 20e-3, 20e-3] #foam conductivities
 
 hconvair = 25 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
 
@@ -45,7 +45,7 @@ rho_insul = [35.24, 14764, 35.24, 14764, 83]
 rhoskin = 2825 #Al 2209 Brewer
 
 #Wfuel = 8000
-Wfuel = 2000 #8000 * 9.81
+Wfuel = 8000 * 9.81 #8000 * 9.81
 
 threshold_percent = 0.1
 
