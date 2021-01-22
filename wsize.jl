@@ -231,6 +231,24 @@ function wsize(pari, parg, parm, para, pare,
 
     # nacelle wetted area / fan area ratio
         rSnace = parg[igrSnace]
+
+    # Set atmos conditions
+        ip = ipcruise1
+        altkm = para[iaalt, ip]/1000.0
+        T0, p0, ρ0, a0, μ0 = atmos(altkm)
+        Mach  = para[iaMach, ip]
+        pare[iep0  , ip] = p0 
+        pare[ieT0  , ip] = T0
+        pare[ierho0, ip] = ρ0
+        pare[iemu0 , ip] = μ0
+        pare[iea0  , ip] = a0
+
+        pare[ieM0, ip] = Mach
+        pare[ieu0, ip] = Mach*a0
+        para[iaReunit, ip] = Mach*a0 *ρ0/μ0
+
+        #TODO add rotation condition
+
 # -------------------------------------------------------    
 ## Initial guess section [Section 3.2 of TASOPT docs]
 # -------------------------------------------------------
@@ -249,7 +267,7 @@ function wsize(pari, parg, parm, para, pare,
         # Wing panel weights and moments (after estimating span first)
             ip = ipcruise1
             W = 5.0*Wpay
-            S = W / (0.5* pare[ierho0,ip] * pare[ieu0,ip]^2 * para(iaCL,ip))
+            S = W / (0.5* pare[ierho0,ip] * pare[ieu0,ip]^2 * para[iaCL,ip])
             b  = sqrt(S*parg[igAR])
             bs = b*ηs
             Winn = 0.15 * Wpay / parg[igsigfac]
@@ -357,10 +375,19 @@ function wsize(pari, parg, parm, para, pare,
             para[iagamV, ipcruise1] = gamVcr
         
         # Pressure and altitude at start of cruise
+            Mach = para[iaMach, ipcruise1]
+            p0c  = pare[iep0  , ipcruise1]
+            altc = para[iaalt , ipcruise1]
+            # Guess pressure at end-of-cruise (scales with weight)
+            p0d  = p0c * (1.0-ffuel+ffueld)/(1.0-ffuel+ffuelc)
+            pare[iep0, ipcruisen] = p0d
             
         # Guess for OEI [TODO] This needs some thinking about what is "One engine out" mean for a turbo-electric aircraft
 
         # Guess fan face mach numbers for nacelle CD calcs
+            M2des = pare[ieM2, ipcruise1] = 0.6
+            pare[ieM2, ipstatic: ipcruisen   ] .= M2des
+            pare[ieM2, ipdescent1: ipdescentn] .= 0.8*M2des
 
     else #Second iteration onwards use previously calcualted values
 
@@ -523,6 +550,10 @@ Lconv = false # no convergence yet
                     WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
 
                     Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain] 
+                    parg[igWMTO] = WMTO
+                    parg[igWeng] = Weng
+                    parg[igWfuel]= Wfuel
+
                 else 
                     # Call a better Wupdate function
                     Wupdate0!(parg, rlx, fsum)
