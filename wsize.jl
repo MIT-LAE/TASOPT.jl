@@ -441,7 +441,7 @@ function wsize(pari, parg, parm, para, pare,
 
             fSnace = parg[igfSnace]
     
-    endif
+    end
 
 # Initialize previous weight iterations
     WMTO1, WMTO2, WMTO3 = zeros(Float64, 3) #1st-previous to 3rd previous iteration weight for convergence criterion
@@ -457,12 +457,20 @@ Lconv = false # no convergence yet
             #Current weight iteration started from an initial guess so be cautious
             itrlx = 5
         else
-            # current weight started from previously converged solution
+            #Current weight started from previously converged solution
             itrlx = 2
         end
 
-        # Any under-relaxation logic should be added here:
-        # rlx = ???
+        if(iterw <= itrlx)
+            # under-relax first n itrlx iterations
+            rlx = wrlx1
+        elseif(iterw >= 3/4*itermax)
+            # under-relax after 3/4th of max iterations
+            rlx = wrlx3
+        else
+            # default is no under-relaxation for weight update
+            rlx = wrlx2
+        end
 
         # Fuselage sizing
 
