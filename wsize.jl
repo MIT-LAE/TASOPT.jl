@@ -500,8 +500,8 @@ Lconv = false # no convergence yet
                 (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                 EIhshell,EIhbend, EIvshell,EIvbend, GJshell ,GJcone,
                 Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-                Wfuse, xWfuse, cabVol) = fuseW(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, 
-                                                fstring, fframe, ffadd, deltap, 
+                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, 
+                                                fstring, fframe, ffadd, Δp, 
                                                 Wpwindow, Wppinsul, Wppfloor, 
                                                 Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax, 
                                                 bv, λv, nvtail, 
@@ -574,7 +574,7 @@ Lconv = false # no convergence yet
 
                 end
                 # this calculated WMTO is the design-mission WTO
-
+                parm[imWTO] = parg[igWMTO]
             # Convergence tests
                 WMTO = parg[igWMTO]
                 errw1 = (WMTO - WMTO1)/WMTO
@@ -583,8 +583,17 @@ Lconv = false # no convergence yet
 
                 errw = max(abs(errw1), abs(errw2), abs(errw3))
 
-                # [TODO] Print weight/ convergnce started
-            
+            # Print weight/ convergnce started
+            if(iterw ==1)
+            @printf("%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+            "iterw", "errW", "WMTO", "Wfuel", "Wwing", "Weng", "span", "area", "HTarea", "xwbox" )
+            end
+           
+            @printf("%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+             iterw, errw1, parm[imWTO], parg[igWfuel],
+             parg[igWwing], parg[igWeng], parg[igb], parg[igS], 
+             parg[igSh], parg[igxwbox])
+
             if(errw <= tolerW)
                 Lconv = true
                 break
