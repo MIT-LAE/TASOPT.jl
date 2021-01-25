@@ -62,8 +62,8 @@ function tankWmech(gee, rhoFuel,
       Vhead = Shead * t_head
 
 #--- weights and weight moments
-      Wtank = rhoskin*gee*(Vcyl+Vhead)
-      Wtank = Wtank*(1.0+fstring+ffadd)
+      Wtank = rhoskin*gee*(Vcyl+Vhead)*(1.0+fstring+ffadd)
+      #Wtank = Wtank*(1.0+fstring+ffadd)
 
 #--- insulation weight!
       N = length(t_cond)
@@ -72,7 +72,7 @@ function tankWmech(gee, rhoFuel,
       s=0 #thickness of previous layer
       for n in 1:N
             Vinsul[n] = pi * (((Rtank_outer+sum(t_cond[1:n]))^2)-((Rtank_outer+s)^2)) * lshell
-            Winsul[n] = Vinsul[n] * rho_insul[n]
+            Winsul[n] = Vinsul[n] * rho_insul[n] * gee
             s = sum(t_cond[1:n])
       end
       Winsul_sum = sum(Winsul)
