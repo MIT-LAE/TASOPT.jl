@@ -1,13 +1,4 @@
-    #include all functions required [TOCHECK] might not include here but only in MAIN program
-    include("atmos.jl")
-    include("fuseW.jl")
-    include("fusebl.jl")
-    include("wingsc.jl")
-    include("surfcm.jl")
-    include("surfdx.jl")
-    include("wingpo.jl")
-    include("tailpo.jl")
-
+using Printf
 """
 # wsize - Main weight sizing section
 
@@ -614,7 +605,7 @@ Lconv = false # no convergence yet
             BW = W + WbuoyCR #Weight including buoyancy
 
             # Initial size of the wing area and chords
-            S, b, bs, co = wingsc(BW, CL, qinf, ηsi, bo, λt, λs)
+            S, b, bs, co = wingsc(BW, CL, qinf, AR, ηs, bo, λt, λs)
             parg[[igS, igb, igbs, igco]] = [S, b, bs, co]
 
             #Updating wing box chord for fuseW in next iteration
@@ -624,16 +615,18 @@ Lconv = false # no convergence yet
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
             xwing = xwbox + dxwing
             cma   = macco * co
-            para[[igxwing, igcma]] = [xwing, cma]
+            parg[igxwing] = xwing
+            parg[igcma]   = cma
 
             # Calculate wing pitching moment constants
             #------------------------------------------
             ## Takeoff
             ip = iptakeoff
             cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-            γt, γs = parg[iglambdat]*para[iarclt, ip], parg[iglambdas]*para[iarcls, ip]
+            γt = parg[iglambdat]*para[iarclt, ip]
+            γs = parg[iglambdas]*para[iarcls, ip]
 
-            CMw0, CMw1 = surfcm(b, bs, b0, sweep, Xaxis,
+            CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                                 λt,λs,γt,γs, 
                                 AR,fLo,fLt,cmpo,cmps,cmpt)
 
@@ -643,9 +636,10 @@ Lconv = false # no convergence yet
             ## Cruise
             ip = ipcruise1
             cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-            γt, γs = parg[iglambdat]*para[iarclt, ip], parg[iglambdas]*para[iarcls, ip]
+            γt = parg[iglambdat]*para[iarclt, ip]
+            γs = parg[iglambdas]*para[iarcls, ip]
 
-            CMw0, CMw1 = surfcm(b, bs, b0, sweep, Xaxis,
+            CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                                 λt,λs,γt,γs, 
                                 AR,fLo,fLt,cmpo,cmps,cmpt)
 
@@ -655,14 +649,15 @@ Lconv = false # no convergence yet
             ## Descent
             ip = ipdescentn
             cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-            γt, γs = parg[iglambdat]*para[iarclt, ip], parg[iglambdas]*para[iarcls, ip]
-
-            CMw0, CMw1 = surfcm(b, bs, b0, sweep, Xaxis,
+            γt = parg[iglambdat]*para[iarclt, ip]
+            γs = parg[iglambdas]*para[iarcls, ip]
+            
+            CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
                             AR,fLo,fLt,cmpo,cmps,cmpt)
 
-            para[iaCMw0, ipdescentn] .= CMw0
-            para[iaCMw1, ipdescentn] .= CMw1
+            para[iaCMw0, ipdescentn] = CMw0
+            para[iaCMw1, ipdescentn] = CMw1
             #------------------------------------------
 
             # Wing center load po calculation using cruise spanload cl(y)
@@ -671,8 +666,9 @@ Lconv = false # no convergence yet
             Lhtail = WMTO * parg[igCLhNrat]*parg[igSh]/parg[igS]
 
             po = wingpo(b,bs,bo,
-                        λt,λs,γt,γs,
-                        AR,N,W,Lhtail,fLo,fLt)
+                        λt, λs, γt, γs,
+                        AR, Nlift, WMTO, Lhtail, fLo, fLt)
+
             if(iwplan == 1)
                 Weng1 = parg[igWeng]/ neng
             else
@@ -694,13 +690,13 @@ Lconv = false # no convergence yet
 
             Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
             So,Mo,tbwebo,tbcapo,EIco,EIno,GJo,
-            Astrut,lsp,cosLs,
+            Astrut,lstrutp,cosLs,
             Wscen,Wsinn,Wsout,dxWsinn,dxWsout,dyWsinn,dyWsout,
             Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,
             Wweb,  Wcap,  Wstrut,
             dxWweb,dxWcap,dxWstrut = surfw(gee,po,b,bs,bo,co,zs,
-                                            λt,λs,gammat,gammas,
-                                            Nload,iwplan,We,
+                                            λt,λs,γt, γs,
+                                            Nlift,iwplan,Weng1,
                                             Winn,Wout,dyWinn,dyWout,
                                             sweep,wbox,hboxo,hboxs,rh, fLt,
                                             tauweb,σcap,σstrut,Ecap,Eweb,Gcap,Gweb,
