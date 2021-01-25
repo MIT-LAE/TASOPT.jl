@@ -39,7 +39,7 @@ function wsize(pari, parg, parm, para, pare,
     TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
 
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    fusebl!(pari, parg, para[1,ipcruise1])
+    fusebl!(pari, parg, para, ipcruise1)
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
     DAfsurf = para[iaDAfsurf, ipcruise1] # Surface dissapation area 
     DAfwake = para[iaDAfwake, ipcruise1] # Wake dissapation area
@@ -238,7 +238,21 @@ function wsize(pari, parg, parm, para, pare,
         pare[ieu0, ip] = Mach*a0
         para[iaReunit, ip] = Mach*a0 *ρ0/μ0
 
-        #TODO add rotation condition
+        #Rotation condition
+        ip = iprotate
+        altkm = para[iaalt, ip]/1000.0
+        T0, p0, ρ0, a0, μ0 = atmos(altkm)
+        Mach  = para[iaMach, ip]
+        pare[iep0  , ip] = p0 
+        pare[ieT0  , ip] = T0
+        pare[ierho0, ip] = ρ0
+        pare[iemu0 , ip] = μ0
+        pare[iea0  , ip] = a0
+
+        pare[ieM0, ip] = Mach
+        pare[ieu0, ip] = Mach*a0
+        para[iaReunit, ip] = Mach*a0 *ρ0/μ0
+
 
 # -------------------------------------------------------    
 ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -374,6 +388,10 @@ function wsize(pari, parg, parm, para, pare,
             pare[iep0, ipcruisen] = p0d
             
         # Guess for OEI [TODO] This needs some thinking about what is "One engine out" mean for a turbo-electric aircraft
+            pare[ieFe, iprotate] = 2.0*Wpay/neng
+            pare[ieu0, iprotate] = 70.0
+            Afan = 3.0e-5 *Wpay/neng
+            parg[igdfan] = sqrt(Afan*4.0/π)
 
         # Guess fan face mach numbers for nacelle CD calcs
             M2des = pare[ieM2, ipcruise1] = 0.6
@@ -557,7 +575,8 @@ Lconv = false # no convergence yet
                     # Call a better Wupdate function
                     Wupdate0!(parg, rlx, fsum)
                     if(fsum >= 1.0) 
-                        ## THROW ERROR
+                        println("Something is wrong!! fsum ≥ 1.0")
+                        break
                     end
 
                     parm[imWTO]   = parg[igWMTO]
@@ -809,6 +828,7 @@ Lconv = false # no convergence yet
 
                     parg[igVh] = Sh*lhtail/(S*cma)
                 end
+                
             # Vertical tail sizing 
                 
                 # Estimate thrust at take-off and the resultant moment if OEI - to estimate Vertical tail size
@@ -821,7 +841,7 @@ Lconv = false # no convergence yet
                     De = qstall*CDAe
                     Fe = pare[ieFe, ip]
                     Me = (Fe + De)*yeng
-
+                    
                 #
                 if(iVTsize == 1)
                     lvtail = xvtail - xwing
@@ -893,7 +913,7 @@ Lconv = false # no convergence yet
             fLth = fLt
             cmph = 0.
 
-            CMh0, CMh1 = srufcm(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
+            CMh0, CMh1 = surfcm(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
                                 ARh, fLoh, fLth, 0.0, 0.0, 0.0)
             
             para[iaCMh0, :] .= CMh0
@@ -921,7 +941,7 @@ Lconv = false # no convergence yet
                                                 1.0,ivplan,Wengv,
                                                 0.0, 0.0, 0.0, 0.0,
                                                 sweepv,wboxv,hboxv,hboxv,rhv, fLt,
-                                                tauwebv,sigcapv,sigstrut,Ecap,Eweb,Gcap,Gweb,
+                                                tauwebv,σcapv,σstrut,Ecap,Eweb,Gcap,Gweb,
                                                 rhowebv,rhocapv,rhostrut,rhofuel)
 
             Wvtail   = (Wscenv +  Wsinnv +   Wsoutv)*(1.0 + fvadd) * nvtail
@@ -955,10 +975,10 @@ Lconv = false # no convergence yet
                 rpay  = 1.0
                 ξpay  = 0.
                 itrim = 1
-                balance(pari,parg,para[:,ip],rfuel,rpay, ξpay, itrim)
+                balance(pari,parg,view(para, :,ip),rfuel,rpay, ξpay, itrim)
 
                 # Drag buildup cdsum()
-                cdsum!(pari, parg, para[:, ip], pare[:, ip], 1)
+                cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), 1)
 
             # L/D and Design point thrust
                 LoD = para[iaCL, ip]/para[iaCD, ip]
@@ -992,5 +1012,26 @@ Lconv = false # no convergence yet
 
 # BFL calculations/ Noise? / Engine perf 
 
+"""
+Wupdate0 updates the weight of the aircraft
+"""
+function Wupdate0!(parg, rlx, fsum)
+    WMTO = parg[igWMTO]
+
+    ftotadd = sum(parg[[igfhpesys, igflgnose, igflgmain]])
+    fsum = 0.0
+
+    Wsum = parg[igWpay] + 
+            parg[igWfuse ] +
+            parg[igWwing ] +
+            parg[igWstrut] +
+            parg[igWhtail] +
+            parg[igWvtail] +
+            parg[igWeng  ] +
+            parg[igWfuel ] 
+
+    WMTO = rlx*Wsum/(1.0 - ftotadd) + (1.0 - rlx)*WMTO
+    parg[igWMTO] = WMTO
+    
 end
 
