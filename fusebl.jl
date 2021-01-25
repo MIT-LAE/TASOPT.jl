@@ -12,14 +12,13 @@ The body shape is defined by its area and perimeter distributions
    A(x),  b0(x),
 which are defined by the various geometric parameters in parg[.)
 """
-function fusebl!(pari,parg,para)
+function fusebl!(pari, parg, para, ip)
       
       include("index.inc") #include the array indices for pari, parg and para
     
 #       integer pari[iitotal]
 #       real parg[igtotal], para[iatotal]
 
-   
 #       integer nc, nbl, iblte
 #       common /fbl_i/
 #      &  nc,     ! number of control points for fuselage potential-flow problem
@@ -57,8 +56,8 @@ function fusebl!(pari,parg,para)
       xblend1 = parg[igxblend1]
       xblend2 = parg[igxblend2]
 
-      Mach  = para[iaMach]
-      altkm = para[iaalt]/1000.0
+      Mach  = para[iaMach, ip]
+      altkm = para[iaalt, ip]/1000.0
       T0,p0,rho0,a0,mu0 = atmos(altkm) #get atmospheric parameters
     
       Reunit = Mach*a0 * rho0/mu0
@@ -117,7 +116,7 @@ function fusebl!(pari,parg,para)
       rnbl[nbl] = max( rnbl[nbl] , 0.0 )
 
 #---- perform viscous/inviscid BL calculation driven by uinv(.)
-      fex = para[iafexcdf]
+      fex = para[iafexcdf, ip]
      
       uebl, dsbl, thbl, tsbl, dcbl,
       cfbl, cdbl, ctbl, hkbl, phbl  = blax(nbldim, nbl,iblte, 
@@ -162,17 +161,17 @@ function fusebl!(pari,parg,para)
 #---- store dissipation, KE, and drag areas
       Vinf = 1.0
       qinf = 0.5
-      para[iaDAfsurf] = Difsurf/(qinf*Vinf)
-      para[iaDAfwake] = Difwake/(qinf*Vinf)
-      para[iaKAfTE]   = KTE/(qinf*Vinf)
-      para[iaPAfinf]  = Pinf/qinf
+      para[iaDAfsurf, ip] = Difsurf/(qinf*Vinf)
+      para[iaDAfwake, ip] = Difwake/(qinf*Vinf)
+      para[iaKAfTE  , ip] = KTE/(qinf*Vinf)
+      para[iaPAfinf , ip] = Pinf/qinf
     
-      println(para[iaDAfsurf])
-      println(para[iaDAfwake])
-      println(para[iaKAfTE]  )
-      println(para[iaPAfinf] )
+      # println(para[iaDAfsurf])
+      # println(para[iaDAfwake])
+      # println(para[iaKAfTE]  )
+      # println(para[iaPAfinf] )
 
-      return
+      # return
       end # fusebl
 
 
