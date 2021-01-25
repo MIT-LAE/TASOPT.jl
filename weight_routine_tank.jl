@@ -26,6 +26,7 @@ t_cond = [0.1, 1.524e-5, 0.1, 1.524e-5, 1.57e-2] #assumed
 
 k = [20e-3, 20e-3, 20e-3, 20e-3, 20e-3] #foam conductivities
 
+#http://www.hysafe.org/download/1196/BRHS_Chap1_V1p2.pdf
 hconvair = 25 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
 
 time_flight = 18000 #seconds, 5 hr flight
