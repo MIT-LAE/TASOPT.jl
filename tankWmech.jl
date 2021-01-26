@@ -24,25 +24,26 @@ function tankWmech(gee, rhoFuel,
                       fstring, ffadd, deltap,
                       Rfuse, dRfuse, wfb, nfweb,
                       sigskin, rho_insul, rhoskin,
-                      Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse)
+                      Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse, AR)
 
 #--- fuselage skin and center web thicknesses to withstand pressure load
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
       #tskin = 2.35 * deltap * Rtank_outer / sigskin
-      tskin = 2.35 * 1.1 * deltap * 2 * Rtank_outer / (2 * sigskin * 0.8 + 0.8 * 1.1 * deltap) #2.35 FOS https://www.nrel.gov/docs/fy02osti/32405b27.pdf
+      tskin = 1.1 * deltap * 2 * Rtank_outer / (2 * sigskin * 0.8 + 0.8 * 1.1 * deltap) #2.35 FOS https://www.nrel.gov/docs/fy02osti/32405b27.pdf
       Rtank = Rtank_outer - tskin
       tfweb = 2.0 * deltap * wfb  / sigskin
-      Rhead = 0.8 * Rtank
-      K = (1/6) * (2+1.6)
-      t_head = 2.35 * 1.1 * deltap * 2 * Rtank_outer * K/ (2 * sigskin * 0.8 + 2 * 1.1 * deltap * (K-1))
+      #Rhead = 0.8 * Rtank * 2
+      Lhead = ((1 - (0.866^2))*(Rtank^2))^(0.5)
+      K = (1/6) * (AR+2) #Verstraete aspect ratio of 2:1 for the head (Put variable)
+      t_head = 1.1 * deltap * 2 * Rtank_outer * K/ (2 * sigskin * 0.8 + 2 * 1.1 * deltap * (K-.1)) #Verstraete
 
 #--- Calculate length of shell
-
-      Vfuel = Wfuel / (gee * rhoFuel)
+      Wfuel_tot = Wfuel + m_boiloff * gee
+      Vfuel = Wfuel_tot / (gee * rhoFuel)
       Vfuel_allowance = (0.031 * Vfuel) + Vfuel #Recommended by Verstraete
       V_ellipsoid = 8 * (Rtank^3) * 0.5 * pi / 12  #https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
-      V_remaining = Vfuel - V_ellipsoid
-      lshell = Vfuel_allowance / (pi * (Rtank^2))
+      V_cylinder = Vfuel - 2*V_ellipsoid
+      lshell = V_cylinder / (pi * (Rtank^2))
 
 #--- tank cross-section geometric parameters
       wfblim = max( min( wfb , Rtank) , 0.0 )
@@ -53,16 +54,18 @@ function tankWmech(gee, rhoFuel,
 
 #--- areas
       Askin = (2.0*pi+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin
-      Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-      Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse + 2.0*(Rtank+nfweb*wfb)*dRfuse
-      Shead = (2.0*pi + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Rhead/Rtank)^1.6 )^0.625
+      #Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
+      #Atank = (pi + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse + 2.0*(Rtank+nfweb*wfb)*dRfuse
+      Shead = (2.0*pi + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625
 #--- component volumes
-      Vcyl  = Askin*lshell
+      Vcyl  = Askin*lshell #volume of the metal
       #Vhead = Shead*tskin
-      Vhead = Shead * t_head
+      Vhead = Shead * t_head #volume of head
 
 #--- weights and weight moments
-      Wtank = rhoskin*gee*(Vcyl+Vhead)*(1.0+fstring+ffadd)
+      Whead = rhoskin*gee*2*Vhead
+      Wcyl = rhoskin*gee*Vcyl
+      Wtank = (Wcyl + Whead) #*(1.0+fstring+ffadd)
       #Wtank = Wtank*(1.0+fstring+ffadd)
 
 #--- insulation weight!
@@ -71,18 +74,22 @@ function tankWmech(gee, rhoFuel,
       Winsul = zeros(N)
       s=0 #thickness of previous layer
       for n in 1:N
-            Vinsul[n] = pi * (((Rtank_outer+sum(t_cond[1:n]))^2)-((Rtank_outer+s)^2)) * lshell
+            Vinsul[n] = (pi * (((Rtank_outer+sum(t_cond[1:n]))^2)-((Rtank_outer+s)^2)) * lshell) + (pi * t_cond[n] * (Rtank_outer+sum(t_cond[1:n]))^2)
             Winsul[n] = Vinsul[n] * rho_insul[n] * gee
             s = sum(t_cond[1:n])
       end
       Winsul_sum = sum(Winsul)
       #Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rtank*lshell
-
+#W_metal = Vhead*rhoskin*gee*(1+fstring+ffadd)
+#print(Wfuel)
+#print(Winsul_sum)
+#print(Vhead*rhoskin*gee*(1+fstring+ffadd))
+#print(Vcyl*rhoskin*gee*(1+fstring+ffadd))
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel + Winsul_sum + 20 * gee #20kg allowance according to Verstraete
 
 #--- pressurized tank volume
       #tankVol = Atank*(lshell + 0.67*Rfuse)
 
-return  Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank
+return  Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul
 end

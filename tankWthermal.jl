@@ -61,7 +61,7 @@ function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
       #Rair = (Rair_conv * Rair_rad) / (Rair_conv + Rair_rad)
       Req = R_mli_tot + Rair_conv_rad + R_LH2  #Total equivalent resistance of thermal circuit
 
-      q = deltaT / Req  #Heat flux from ambient to LH2
+      q = 1.3 * deltaT / Req  #Heat flux from ambient to LH2 30% extra as in eq 3.20 by Verstraete
       mdot_boiloff = q / h_v  #Boil-off rate equals the heat flux divided by heat of vaporization
       m_boiloff = mdot_boiloff * time_flight #Boil-off mass calculation
 
