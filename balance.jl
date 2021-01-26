@@ -2,7 +2,7 @@
 # balance
 
 Makes one of three (or none) changes to achieve pitch trim
-#alculates resulting CG, CP, NP locations
+calculates resulting CG, CP, NP locations
 
   Inputs:  pari[.]  integer fla array
            parg[.]  geometry parameter array
@@ -31,16 +31,6 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 #      integer pari[iitotal]
 #      real parg[igtotal], para[iatotal]
 #
-#      include 'constants.inc'
-#
-#      include 'time.inc'
-#
-#      common /com_ip/ iptemp
-#
-#      real a(3,3), r(3)
-#
-##     call tset(time0)
-
       iengloc = pari[iiengloc]
 
       # Unpack weights
@@ -112,10 +102,8 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 	 Wlgnose*parg[igxlgnose] +
 	 Wlgmain*(parg[igxwbox] + dxlg)
 
-      xW_xwbox = rfuel*Wfuel +
-	 Wwing +
-	 Wstrut +
-	 Wlgmain
+      xW_xwbox = rfuel*Wfuel + Wwing + Wstrut + Wlgmain
+       
       xW_Sh = (Whtail*parg[igxhbox] + parg[igdxWhtail]) /Sh1
 
 #---- total aero moment and derivatives
@@ -129,20 +117,21 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       CLMf0 = parg[igCLMf0]
 
       cCM       = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
-	 coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
-	 CMVf1*(CL-CLMf0)/S
+	       coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
+            CMVf1*(CL-CLMf0)/S
+            
       cCM_xwbox =                     -        (CL - CLh*Sh/S)
       cCM_Sh    =            (co*CMw1 - xwbox)*(   - CLh   /S) +
-	 coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
+	       coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
       cCM_CLh   =            (co*CMw1 - xwbox)*(   -     Sh/S) +
-	 (coh*CMh1 - xhbox)    *Sh/S
+	                       (coh*CMh1 - xhbox)    *Sh/S
 
 #---- current CP and CG location
 #      xCP = -cCM/CL
 #      xCG = xW/W
 
 #---- total-moment residual
-      Res       = cCM/CL       + xW/W 
+      Res       = cCM/CL       + xW/W                 # Eq. 300
       Res_CLh   = cCM_CLh  /CL
       Res_Sh    = cCM_Sh   /CL + xW_Sh   /W - (xW/W^2)*W_Sh
       Res_xwbox = cCM_xwbox/CL + xW_xwbox/W
@@ -295,23 +284,24 @@ function htsize(pari,parg,paraF,paraB,paraC)
 
       SM = parg[igSMmin]
       cma = parg[igcma]
+      
+      # Unpack flags
+            iengloc = pari[iiengloc]  # Engine location 
+            iHTsize = pari[iiHTsize]
+            ixwmove = pari[iixwmove]
+      # Unpack Weights
+            Wpay   = parg[igWpay  ]
+            Wfuel  = parg[igWfuel ]
+            Wfuse  = parg[igWfuse ]
+            Wwing  = parg[igWwing ]
+            Wstrut = parg[igWstrut]
+            Whtail = parg[igWhtail]
+            Wvtail = parg[igWvtail]
+            Weng   = parg[igWeng  ]
 
-      iengloc = pari[iiengloc]
-      iHTsize = pari[iiHTsize]
-      ixwmove = pari[iixwmove]
-
-      Wpay   = parg[igWpay  ]
-      Wfuel  = parg[igWfuel ]
-      Wfuse  = parg[igWfuse ]
-      Wwing  = parg[igWwing ]
-      Wstrut = parg[igWstrut]
-      Whtail = parg[igWhtail]
-      Wvtail = parg[igWvtail]
-      Weng   = parg[igWeng  ]
-
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+            Whpesys = parg[igWMTO] * parg[igfhpesys]
+            Wlgnose = parg[igWMTO] * parg[igflgnose]
+            Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       xWfuse = parg[igxWfuse]
 
@@ -325,7 +315,8 @@ function htsize(pari,parg,paraF,paraB,paraC)
       xeng    = parg[igxeng]   
       xhpesys = parg[igxhpesys]
       xlgnose = parg[igxlgnose]
-
+      
+      # Calculate x location of cabin centroid and length of cabin
       xcabin = 0.5*(parg[igxshell1] + parg[igxshell2])
       lcabin =      parg[igxshell2] - parg[igxshell1] 
 
@@ -333,7 +324,6 @@ function htsize(pari,parg,paraF,paraB,paraC)
       xpayF  = xcabin + (0.0  -0.5)*lcabin*(1.0-rpayF)
       xpayB  = xcabin + (1.0  -0.5)*lcabin*(1.0-rpayB)
       xpayC  = xcabin
-
 
       xwbox = parg[igxwbox]
 
@@ -360,7 +350,8 @@ function htsize(pari,parg,paraF,paraB,paraC)
 	 Weng -
 	 Whpesys -
 	 Wlgnose -
-	 Wlgmain
+       Wlgmain
+       
       rfuelC = WfuelC/Wfuel
 
 
@@ -376,224 +367,189 @@ function htsize(pari,parg,paraF,paraB,paraC)
      WF ,  WB,  Wc = 0.0, 0.0, 0.0
 
       for  iter = 1:itmax
-         
-#       if(iter==-1) 
-#        eps = 1.0e-5 * Sh
-#        Sh   = Sh$ + eps
-#        xwbox= xwbox$
-#        j = 1
-#       elseif(iter==-2) 
-#        eps = 1.0e-5 * lcabin
-#        Sh   = Sh$
-#        xwbox= xwbox$ + eps
-#        j = 2
-#       end
-#
 
-      Whtail    = (Whtail_o/Sh_o) * Sh
-      Whtail_Sh =  Whtail_o/Sh_o
+            # HT weight, moment and derivatives ∂Whtail/∂Sh
+            Whtail    = (Whtail_o/Sh_o) * Sh
+            Whtail_Sh =  Whtail_o/Sh_o
 
-      dxWhtail    = (dxWhtail_o/Sh_o) * Sh
-      dxWhtail_Sh =  dxWhtail_o/Sh_o
+            dxWhtail    = (dxWhtail_o/Sh_o) * Sh
+            dxWhtail_Sh =  dxWhtail_o/Sh_o
 
-#---- empty (no fuel, no payload) weight
-      We = Wfuse +
-	 Wwing +
-	 Wstrut +
-	 Whtail +
-	 Wvtail +
-	 Weng +
-	 Whpesys +
-	 Wlgnose +
-	 Wlgmain
+      #---- empty (no fuel, no payload) weight
+            We = Wfuse +
+                  Wwing +
+                  Wstrut +
+                  Whtail +
+                  Wvtail +
+                  Weng +
+                  Whpesys +
+                  Wlgnose +
+                  Wlgmain
 
-      We_Sh = Whtail_Sh
+            We_Sh = Whtail_Sh
 
-#---- empty (no-payload) weight moment
-      xWe = xWfuse +
-	 Wwing *xwbox    + dxWwing +
-	 Wstrut*xwbox    + dxWstrut +
-	 Whtail*xhbox    + dxWhtail +
-	 Wvtail*xvbox    + dxWvtail +
-	 Weng   *xeng +
-	 Whpesys*xhpesys +
-	 Wlgnose*xlgnose +
-	 Wlgmain*(xwbox + dxlg)
+      #---- empty (no-payload) weight moment
+            xWe = xWfuse +
+                  Wwing *xwbox    + dxWwing +
+                  Wstrut*xwbox    + dxWstrut +
+                  Whtail*xhbox    + dxWhtail +
+                  Wvtail*xvbox    + dxWvtail +
+                  Weng   *xeng +
+                  Whpesys*xhpesys +
+                  Wlgnose*xlgnose +
+                  Wlgmain*(xwbox + dxlg)
 
-      xWe_Sh = Whtail_Sh*xhbox + dxWhtail_Sh
-      xWe_xw = Wwing +
-	 Wstrut +
-	 Wlgmain
+            xWe_Sh = Whtail_Sh*xhbox + dxWhtail_Sh
+            xWe_xw = Wwing +
+                        Wstrut +
+                        Wlgmain
 
 
-#---- total weight at forward and aft CG limits, and cruise
-      WF = We + rfuelF*Wfuel + rpayF*Wpay
-      WB = We + rfuelB*Wfuel + rpayB*Wpay
-      WC = We + rfuelC*Wfuel + rpayC*Wpay
+      #---- total weight at forward and aft CG limits, and cruise
+            WF = We + rfuelF*Wfuel + rpayF*Wpay
+            WB = We + rfuelB*Wfuel + rpayB*Wpay
+            WC = We + rfuelC*Wfuel + rpayC*Wpay
 
-      WF_Sh = We_Sh
-      WB_Sh = We_Sh
-      WC_Sh = We_Sh
+            WF_Sh = We_Sh
+            WB_Sh = We_Sh
+            WC_Sh = We_Sh
 
-#---- total weight moment at forward and aft CG limits
-      xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xwbox + dxWfuel)
-      xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xwbox + dxWfuel)
-      xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xwbox + dxWfuel)
+      #---- total weight moment at forward and aft CG limits
+            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xwbox + dxWfuel)
+            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xwbox + dxWfuel)
+            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xwbox + dxWfuel)
 
-      xWF_xw = xWe_xw + rfuelF*Wfuel
-      xWB_xw = xWe_xw + rfuelB*Wfuel
-      xWC_xw = xWe_xw + rfuelC*Wfuel
+            xWF_xw = xWe_xw + rfuelF*Wfuel
+            xWB_xw = xWe_xw + rfuelB*Wfuel
+            xWC_xw = xWe_xw + rfuelC*Wfuel
 
-      xWF_Sh = xWe_Sh
-      xWB_Sh = xWe_Sh
-      xWC_Sh = xWe_Sh
+            xWF_Sh = xWe_Sh
+            xWB_Sh = xWe_Sh
+            xWC_Sh = xWe_Sh
 
-      if(iHTsize == 1) 
-#----- fix HT volume
-       lhtail = parg[igxhtail] - (xwbox + dxwing)
-       lhtail_xw = -1.0
-       Vh = parg[igVh]
-       Sh = Vh*S*cma/lhtail
+            if(iHTsize == 1) 
+            #----- fix HT volume (Section 2.12.1 of TASOPT docs)
+                  lhtail = parg[igxhtail] - (xwbox + dxwing)
+                  lhtail_xw = -1.0
 
-       r[1]   = Sh*lhtail - Vh*S*cma
-       a[1,1] =    lhtail
-       a[1,2] = Sh*lhtail_xw
+                  Vh = parg[igVh]      # Tail volume is specified here!
+                  Sh = Vh*S*cma/lhtail # Corresponding tail surf area
+                  
+                  r[1]   = Sh*lhtail - Vh*S*cma  # This is 0 (residual is 0 ∵ Vh = Sh*lh/(S*cma))
+                  a[1,1] =    lhtail
+                  a[1,2] = Sh*lhtail_xw
 
-      else
-#----- set HT area by pitch trim power at forward CG case
-       CMw0  = paraF[iaCMw0]
-       CMw1  = paraF[iaCMw1]
-       CMh0  = paraF[iaCMh0]
-       CMh1  = paraF[iaCMh1]
-       CMVf1 = parg[igCMVf1]
-       CLMf0 = parg[igCLMf0]
-       CL    = CLF
-       CLh   = CLhF
-       cCM    = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
-	 coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
-	 CMVf1*(CL-CLMf0)/S
-       cCM_xw =                     -        (CL - CLh*Sh/S)
-       cCM_Sh =            (co*CMw1 - xwbox)*(   - CLh   /S) +
-	 coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
+            else
+            #----- set HT area by pitch trim power at forward CG case
+                  CMw0  = paraF[iaCMw0]
+                  CMw1  = paraF[iaCMw1]
+                  CMh0  = paraF[iaCMh0]
+                  CMh1  = paraF[iaCMh1]
+                  CMVf1 = parg[igCMVf1]
+                  CLMf0 = parg[igCLMf0]
+                  CL    = CLF
+                  CLh   = CLhF
 
-       r[1]   = cCM   /CL + xWF   /WF 
-       a[1,1] = cCM_Sh/CL + xWF_Sh/WF - (xWF/WF^2)*WF_Sh
-       a[1,2] = cCM_xw/CL + xWF_xw/WF
+                  cCM    = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
+                  coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
+                        CMVf1*(CL-CLMf0)/S
+                  cCM_xw =                     -        (CL - CLh*Sh/S)
+                  cCM_Sh =            (co*CMw1 - xwbox)*(   - CLh   /S) +
+                  coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
+                  
+                  # Residual eqn ℛₘ that is equivalent to CP and CG coinciding
+                  r[1]   = cCM   /CL + xWF   /WF   
+                  a[1,1] = cCM_Sh/CL + xWF_Sh/WF - (xWF/WF^2)*WF_Sh  # ∂ℛₘ/∂Sₕ
+                  a[1,2] = cCM_xw/CL + xWF_xw/WF                     # ∂ℛₘ/∂xw
 
-#       cma = parg[igcma]
-#       write(*,'(1x,3f12.5)') CL,  CLh, CMVf1*(CL-CLMf0)/S/cma
+                  # +--                 --+  +-   -+      +-   -+
+                  # | ∂ℛₘ/∂Sₕ    ∂ℛₘ/∂xw |  | δSₕ  |      | ℛₘ |
+                  # |                     |  |     |  =   |     |
+                  # |                     |  | δxw |      |     |
+                  # +--                 --+  +-   -+      +-   -+
 
-      end
-
-
-      if(ixwmove == 0) 
-#----- fix wing location
-       r[2]   = 0.
-       a[2,1] = 0.
-       a[2,2] = 1.0
-
-      elseif(ixwmove == 1) 
-#----- set wing location to get CLh=CLhspec in cruise
-       CMw0  = paraC[iaCMw0]
-       CMw1  = paraC[iaCMw1]
-       CMh0  = paraC[iaCMh0]
-       CMh1  = paraC[iaCMh1]
-       CMVf1 = parg[igCMVf1]
-       CLMf0 = parg[igCLMf0]
-       CL    = CLC
-       CLh   = CLhC
-       cCM   = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
-	 coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
-	 CMVf1*(CL-CLMf0)/S
-#c   &        - neng*xenginl*CLn*Afan/S
-       cCM_xw =                     -        (CL - CLh*Sh/S)
-       cCM_Sh =            (co*CMw1 - xwbox)*(   - CLh   /S) +
-	 coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
-
-       r[2]   = cCM   /CL + xWC   /WC 
-       a[2,1] = cCM_Sh/CL + xWC_Sh/WC - (xWC/WC^2)*WC_Sh
-       a[2,2] = cCM_xw/CL + xWC_xw/WC
-
-      elseif(ixwmove == 2) 
-#----- set wing location by stability margin at aft-CG case
-       CMw1  = paraB[iaCMw1]
-       CMh1  = paraB[iaCMh1]
-       CMVf1 = parg[igCMVf1]
-       dCLhdCL  = parg[igdCLhdCL]
-
-       dCLndCL  = parg[igdCLndCL]
-       neng = parg[igneng]
-       xeng = parg[igxeng]
-       dfan = parg[igdfan]
-       Afan = 0.25*pi*dfan^2
-       xengcp = xeng - 0.25*dfan
-
-       xNP    = (co *CMw1 - xwbox)*(dCLhdCL*Sh/S - 1.0) -
-	 (coh*CMh1 - xhbox)* dCLhdCL*Sh/S -
-	 CMVf1/S -
-	 neng*xengcp*dCLndCL*Afan/S
-       xNP_xw =           -        (dCLhdCL*Sh/S - 1.0)
-       xNP_Sh = (co *CMw1 - xwbox)* dCLhdCL   /S -
-	 (coh*CMh1 - xhbox)* dCLhdCL   /S
-
-       r[2]   = xWB   /WB - xNP    + SM*cma
-       a[2,1] = xWB_Sh/WB - xNP_Sh   - (xWB/WB^2)*WB_Sh
-       a[2,2] = xWB_xw/WB - xNP_xw
-
-#       write(*,'(1x,i4,19f12.5)') 
-#     &   iter, xNP, xwbox,Sh,S,co,coh,xhbox,CMw1,CMh1,dCLhdCL
-
-      end
+            end
 
 
-##???????????????????????????????????????????????????
-#      if(iter == 0) 
-#
-#       r$[1] = r[1]
-#       r$[2] = r[2]
-#       a$[1,1] = a[1,1]
-#       a$[1,2] = a[1,2]
-#       a$[2,1] = a[2,1]
-#       a$[2,2] = a[2,2]
-#
-#       xwbox$ = xwbox
-#       Sh$ = Sh
-#
-#      elseif(iter < 0) 
-#       aa1 = (a(1,j)+a$[1,j])*0.5
-#       aa2 = (a(2,j)+a$[2,j])*0.5
-#       dd1 = (r(1)-r$[1])/eps
-#       dd2 = (r(2)-r$[2])/eps
-#       call compare(ss1,aa1,dd1)
-#       call compare(ss2,aa2,dd2)
-##
-##       write(*,3100) 1,j,aa1,ss1, 2,j,aa2,ss2,
-##	1,j,dd1,ss1, 2,j,dd2,ss2
-## 3100  format(2('   R',i1,'_',i1,g16.8,2x,a))
-#
-#      end
+            if(ixwmove == 0) 
+            #----- fix wing location
+                  r[2]   = 0.
+                  a[2,1] = 0.
+                  a[2,2] = 1.0
 
-      if(iter<=0)
-	 continue
-      end
+            elseif(ixwmove == 1) 
+            #----- set wing location to get CLh=CLhspec in cruise
+                  CMw0  = paraC[iaCMw0]
+                  CMw1  = paraC[iaCMw1]
+                  CMh0  = paraC[iaCMh0]
+                  CMh1  = paraC[iaCMh1]
+                  CMVf1 = parg[igCMVf1]
+                  CLMf0 = parg[igCLMf0]
+                  CL    = CLC
+                  CLh   = CLhC  #CLh is specified here
 
+                  cCM   = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
+                  coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
+                        CMVf1*(CL-CLMf0)/S
+            #c   &        - neng*xenginl*CLn*Afan/S
+                  cCM_xw =                     -        (CL - CLh*Sh/S)
+                  cCM_Sh =            (co*CMw1 - xwbox)*(   - CLh   /S) +
+                  coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
 
-      det = a[1,1]*a[2,2] - a[1,2]*a[2,1]
-      d1 = (r[1]  *a[2,2] - a[1,2]*r[2]  ) / det
-      d2 = (a[1,1]*r[2]   - r[1]  *a[2,1]) / det
+                  r[2]   = cCM   /CL + xWC   /WC 
+                  a[2,1] = cCM_Sh/CL + xWC_Sh/WC - (xWC/WC^2)*WC_Sh
+                  a[2,2] = cCM_xw/CL + xWC_xw/WC
 
-      dSh = -d1
-      dxw = -d2
+            elseif(ixwmove == 2) 
+            #----- set wing location by stability margin at aft-CG case
+                  CMw1  = paraB[iaCMw1]
+                  CMh1  = paraB[iaCMh1]
+                  CMVf1 = parg[igCMVf1]
+                  dCLhdCL  = parg[igdCLhdCL]
 
-      Sh    = Sh   + dSh
-      xwbox = xwbox+ dxw
+                  dCLndCL  = parg[igdCLndCL]
+                  neng = parg[igneng]
+                  xeng = parg[igxeng]
+                  dfan = parg[igdfan]
+                  Afan = 0.25*pi*dfan^2
+                  xengcp = xeng - 0.25*dfan
 
-      dmax = max( abs(dxw)/cma , abs(dSh)/(0.2*S) )
-      if(dmax < toler)
-	 break
-      end
+                  xNP    = (co *CMw1 - xwbox)*(dCLhdCL*Sh/S - 1.0) -
+                  (coh*CMh1 - xhbox)* dCLhdCL*Sh/S -
+                  CMVf1/S -
+                  neng*xengcp*dCLndCL*Afan/S
+                  xNP_xw =           -        (dCLhdCL*Sh/S - 1.0)
+                  xNP_Sh = (co *CMw1 - xwbox)* dCLhdCL   /S -
+                  (coh*CMh1 - xhbox)* dCLhdCL   /S
 
-end #end for loop iter
+                  r[2]   = xWB   /WB - xNP    + SM*cma
+                  a[2,1] = xWB_Sh/WB - xNP_Sh   - (xWB/WB^2)*WB_Sh
+                  a[2,2] = xWB_xw/WB - xNP_xw
+
+                  # +-                   -+  +-   -+      +-   -+
+                  # | ∂ℛₘ/∂Sₕ    ∂ℛₘ/∂xw |  | δSₕ  |      | ℛₘ |
+                  # |                     |  |     |  =   |     |
+                  # | ∂ℛsh/∂Sₕ   ∂ℛsh/∂xw|  | δxw |      |ℛsh |
+                  # +-                   -+  +-   -+      +-   -+
+
+            end
+
+            det = a[1,1]*a[2,2] - a[1,2]*a[2,1]
+            d1 = (r[1]  *a[2,2] - a[1,2]*r[2]  ) / det
+            d2 = (a[1,1]*r[2]   - r[1]  *a[2,1]) / det
+
+            dSh = -d1
+            dxw = -d2
+
+            Sh    = Sh   + dSh
+            xwbox = xwbox+ dxw
+
+            dmax = max( abs(dxw)/cma , abs(dSh)/(0.2*S) )
+            if(dmax < toler)
+                  break
+            end
+
+      end #end for loop iter
       #write(*,*) 'HTSIZE: Pitch not converged. dxwbox,dSh = ', dxw,dSh
 
 
@@ -614,10 +570,11 @@ end #end for loop iter
        CL    = CLF
        CLh   = CLhF
        cCM     = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
-	 coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
-	 CMVf1*(CL-CLMf0)/S
+	            coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
+	             CMVf1*(CL-CLMf0)/S
        cCM_CLh =            (co*CMw1 - xwbox)*(   -     Sh/S) +
-	 (coh*CMh1 - xhbox)    *Sh/S
+                            (coh*CMh1 - xhbox)    *Sh/S
+                            
        res     = cCM    /CL + xWF/WF 
        res_CLh = cCM_CLh/CL 
        dCLh = -res/res_CLh
