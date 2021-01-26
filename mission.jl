@@ -24,8 +24,9 @@ NOTE:
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
 """
-function mission(pari, parg, parm, para, pare, im, iairf, initeng, ipc1)
+function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
     
+    Ldebug = true
     itergmax::Int64 = 10
     gamVtol  = 1.0e-12
 
@@ -36,7 +37,7 @@ function mission(pari, parg, parm, para, pare, im, iairf, initeng, ipc1)
 
     # Mission range
         Rangetot = parm[imRange]
-        para[iaRange, ipdescent] = Rangetot
+        para[iaRange, ipdescentn] = Rangetot
 
     # MTOW
         WMTO = parg[igWMTO]
@@ -297,16 +298,23 @@ function mission(pari, parg, parm, para, pare, im, iairf, initeng, ipc1)
              Tfrac = fT1*(1.0-frac) + fTn*frac
              pare[ieTt4,ip] = Tt4TO*(1.0-Tfrac) + Tt4CR*Tfrac
            end
-     
      #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      #---- initial values for range, time, weight fraction
            para[iaRange, iprotate:ipclimb1] .= 0.0
            para[iatime , iprotate:ipclimb1] .= 0.0
            para[iafracW, iprotate:ipclimb1] .= WTO/WMTO
            para[iaWbuoy, iprotate:ipclimb1] .= 0.
-     
+
+      # Initialize climb integrands
+      FoW = zeros(Float64, ipclimbn)
+      FFC = zeros(Float64, ipclimbn)
+      Vgi = zeros(Float64, ipclimbn)
       # integrate trajectory over climb
       for ip = ipclimb1:ipclimbn
+            if(Ldebug)
+            printstyled("Climb angle integration - ip = ", ip-ipclimb1+1, "\n"; color=:red)
+            end
+            
             # velocity calculation from CL, Weight, altitude
             W  = para[iafracW, ip] * WMTO
             CL = para[iaCL, ip]
@@ -315,8 +323,17 @@ function mission(pari, parg, parm, para, pare, im, iairf, initeng, ipc1)
             Vsound = pare[iea0, ip]
             cosg = cos(para[iagamV, ip])
             BW   = W + para[iaWbuoy, ip]
-            DoL = 0.0
+            
 
+            dgamV  = 1.0
+            Ftotal = 0.0
+            DoL    = 0.0
+            mdotf  = 0.0
+            V      = 0.0
+            if(Ldebug)
+                  @printf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V")
+            end
             for iterg = 1:itergmax
                   V = sqrt(2.0*BW*cosg/(ρ*S*CL))
                   Mach = V/Vsound
@@ -340,9 +357,7 @@ function mission(pari, parg, parm, para, pare, im, iairf, initeng, ipc1)
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
-                  Ftotal, [ηmot, ηinv, ηcable, ηgen, ηthermal],
-                  [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
-                  [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej],
+                  Ftotal, η, P, Hrej,
                   mdotf, BSFC,
                   deNOx_out = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
                                                 0.0, 0.0, parpt, parmot, pargen)
@@ -350,30 +365,86 @@ function mission(pari, parg, parm, para, pare, im, iairf, initeng, ipc1)
                   DoL = para[iaCD, ip]/ para[iaCL, ip]
 
                   # Calculate improved flight angle
-                        ϕ = Ftotal/BW
-                        sing = (ϕ - DoL*sqrt(1.0 - ϕ^2 + DoL^2))/(1.0 - DoL^2)
-                        cosg = sqrt(1.0 - sing^2)
-                        gamV = atan(sing, cosg)
+                  ϕ = Ftotal/BW
+                  sing = (ϕ - DoL*sqrt(1.0 - ϕ^2 + DoL^2))/(1.0 - DoL^2)
+                  cosg = sqrt(1.0 - sing^2)
+                  gamV = atan(sing, cosg)
 
-                        dgamV = gamV - para[iagamV, ip]
-                        
-                        para[iagamV, ip] = gamV
-                        
-                        if(abs(dgamV) < gamVtol) 
-                              break
-                        end
-                  end
-                  if(abs(dgamV) > gamVtol) 
-                        println("Climb gamV not converged")
-                  end
-
-                  FoW[ip] = Ftotal/(BW*cosg) - DoL
-                  FFC[ip] = Ftotal*TSFC/(W*V*cosg)
-                  Vgi[ip] = 1.0/(V*cosg)
+                  dgamV = gamV - para[iagamV, ip]
                   
+                  para[iagamV, ip] = gamV
+                  if(Ldebug)
+                        @printf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+                                 iterg, abs(dgamV), gamV, BW, Ftotal, DoL, V)
+                  end
+                  
+                  if(abs(dgamV) < gamVtol) 
+                        break
+                  end
             end
 
-      end
+            if(abs(dgamV) > gamVtol) 
+                  println("Climb gamV not converged")
+            end
+
+            FoW[ip] = Ftotal/(BW*cosg) - DoL
+            # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
+            FFC[ip] = -mdotf*gee/(W*V*cosg)
+            Vgi[ip] = 1.0/(V*cosg)
+
+            Mach = para[iaMach, ip]
+            CL   = para[iaCL  , ip]
+            CD   = para[iaCD  , ip]
+            gamV = para[iagamV, ip]
+            
+            if(ip > ipclimb1)
+                  dh   = para[iaalt, ip] - para[iaalt, ip-1]
+                  dVsq = pare[ieu0, ip]^2 - pare[ieu0, ip-1]^2
+
+                  FoWavg = 0.5*(FoW[ip] + FoW[ip-1])
+                  FFCavg = 0.5*(FFC[ip] + FFC[ip-1])
+                  Vgiavg = 0.5*(Vgi[ip] + Vgi[ip-1])
+
+                  dR = (dh + 0.5*dVsq/gee) / FoWavg
+                  dt = dR*Vgiavg
+                  rW = exp(-dR*FFCavg)    #Ratio of weights Wᵢ₊₁/Wᵢ
+
+                  para[iaRange, ip] = para[iaRange, ip-1] + dR
+                  para[iatime , ip] = para[iatime , ip-1] + dt
+                  para[iafracW, ip] = para[iafracW, ip-1]*rW
+                
+            end
+            if(ip < ipclimbn)
+            # Predictor integration step, forward Euler
+                  if(para[iagamV,ip+1] ≤ 0.0)
+                  # if gamV guess is not passed in, use previous point as the guess
+                        para[iagamV,ip+1] = para[iagamV,ip]
+                  end
+                  
+                  W  = para[iafracW,ip+1]*WMTO   # Initial weight fractions have been set in wsize.jl
+                  CL = para[iaCL,ip+1]
+                  ρ  = pare[ierho0,ip+1]
+                  cosg = cos(para[iagamV,ip+1])
+      
+                  BW = W + para[iaWbuoy,ip+1]
+      
+                  V = sqrt(2*BW*cosg/(ρ*S*CL))
+                  pare[ieu0,ip+1] = V
+                  dh   = para[iaalt,ip+1]   - para[iaalt,ip]
+                  dVsq = pare[ieu0 ,ip+1]^2 - pare[ieu0 ,ip]^2 
+      
+                  dR = (dh + 0.5*dVsq/gee) / FoW[ip]
+                  dt = dR*Vgi[ip]
+                  rW = exp(-dR*FFC[ip])
+      
+                  para[iaRange,ip+1] = para[iaRange,ip] + dR
+                  para[iatime ,ip+1] = para[iatime ,ip] + dt
+                  para[iafracW,ip+1] = para[iafracW,ip]*rW
+            end 
+
+      end # done integrating climb
+
+      
      
 
 

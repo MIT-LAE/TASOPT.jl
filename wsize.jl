@@ -14,7 +14,8 @@ and iterates until the MTOW converges to within a specified tolerance.
 - Engine specific parameters 
 """
 function wsize(pari, parg, parm, para, pare,
-            itermax, wrlx, initwgt, initeng, iairf)
+            itermax, wrlx1, wrlx2, wrlx3,
+            initwgt, initeng, iairf)
 
 
     # Weight convergence tolerance 
@@ -808,7 +809,7 @@ Lconv = false # no convergence yet
             # Set Nacelle CL derivative fraction
                 dCLnda  = parg[igdCLnda]
                 dCLndCL = dCLnda * (β + 2.0/AR) * sqrt(β^2 + tanL^2)/ (2.0*π*(1.0 + 0.5*hboxo))
-                parg[dCLndCL] = dCLndCL
+                parg[igdCLndCL] = dCLndCL
 
             # Size HT
                 if(iterw<=2 && initwgt == 0)
@@ -841,7 +842,7 @@ Lconv = false # no convergence yet
                     De = qstall*CDAe
                     Fe = pare[ieFe, ip]
                     Me = (Fe + De)*yeng
-                    
+
                 #
                 if(iVTsize == 1)
                     lvtail = xvtail - xwing
@@ -990,10 +991,14 @@ Lconv = false # no convergence yet
                 pare[ieFe, ip] = Fdes/neng
 
             # Size engine for TOC
+            ρAir = pare[ierho0, ipcruise1]
+            μAir = pare[iemu0 , ipcruise1]
+            
             ηpt, Ppt, Hpt, mpt, SPpt,
             mdotf, BSFC,
             deNOx, _, _  =  PowerTrain(para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
                                         0.0, 0.0, parpt, parmot, pargen)
+
 
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
@@ -1002,6 +1007,9 @@ Lconv = false # no convergence yet
         # ----------------------
         #     Fly mission
         # ----------------------
+        mission(pari, parg, parm, para, pare)
+
+        #=
 # Get mission fuel burn (check if fuel capacity is sufficent)
 
 # Recalculate weight wupdate()
@@ -1011,6 +1019,9 @@ Lconv = false # no convergence yet
 # END weight sizing loop
 
 # BFL calculations/ Noise? / Engine perf 
+=#
+    end
+end
 
 """
 Wupdate0 updates the weight of the aircraft
@@ -1032,6 +1043,5 @@ function Wupdate0!(parg, rlx, fsum)
 
     WMTO = rlx*Wsum/(1.0 - ftotadd) + (1.0 - rlx)*WMTO
     parg[igWMTO] = WMTO
-    
-end
 
+end
