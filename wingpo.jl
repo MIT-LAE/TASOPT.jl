@@ -13,9 +13,9 @@ net load  N*W - Lhtail
 
 - `po` : wing's root loading magnitude
 """
-function wingpo(b,bs,bo,
-               λt,λs,γt,γs,
-               AR,N,W,Lhtail,fLo,fLt)
+function wingpo(b, bs, bo,
+               λt, λs, γt, γs,
+               AR, N, W, Lhtail, fLo, fLt)
       
       etao = bo/b #calculate non-dim. span locations eta
       etas = bs/b
