@@ -6,6 +6,12 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
+ft_to_m = 0.3048
+nmi_to_m = 1852.0
+deg_to_rad = π/180.0
+lbf_to_N = 4.448222
+kts_to_mps = 0.51444
+
 pari[iifuel]   = 1 # 1 = H2 120 MJ/kg
 pari[iifwcen ] = 1 # Fuel in center box
 pari[iiwplan ] = 1 # wing cantilever with engine 
@@ -13,13 +19,20 @@ pari[iiengloc] = 2 # engines on fuselage
 pari[iiengwgt] = 2 # advanced tech for eng weight
 pari[iiBLIc  ] = 0 # core in clean flow
 pari[iifclose] = 0 # fuse tapers to a point
-pari[iiHTsize] = 1 
-pari[iiVTsize] = 2
-pari[iixwmove] = 1 
+# pari[iiHTsize] = 1 # set Sh via Vh 
+pari[iiHTsize] = 2 # set Sh via igCLhCGfwd at max-forward CG during landing
+
+# pari[iixwmove] = 0 # ixwmove   fix wing position 
+# pari[iixwmove] = 1 # ixwmove   move wing to get CLh=CLhspec in cruise 
+pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
+
+pari[iiVTsize] = 1
+
+ 
 
 # parm[imwOpt   , :]  .=
-parm[imRange  , :]  .= 3000.0 * 1852.0 # m
-parm[imWpay   , :]  .= 180 * 215.0 * 4.45     # [N]
+parm[imRange  , :]  .= 3000.0 * nmi_to_m       # m
+parm[imWpay   , :]  .= 180 * 215.0 * lbf_to_N  # [N]
 parm[imaltTO  , :]  .= 0.0
 parm[imT0TO   , :]  .= 288.0 # dK
 parm[imgamVCB , :]  .=  3.0 * π/180.0
@@ -36,8 +49,8 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igCDspoil ] = 0.10      # CDspoiler CDA_spoiler/S   during braking            
         parg[igmuroll  ] = 0.025     # muroll    rolling-resistance coefficient         
         parg[igmubrake ] = 0.35      # mubrake   braking-resistance coefficient      
-        parg[ighobst   ] = 35.0   * 0.3048
-        parg[iglBFmax  ] = 8000.0 * 0.3048
+        parg[ighobst   ] = 35.0   * ft_to_m
+        parg[iglBFmax  ] = 8000.0 * ft_to_m
 
         # Noise stuff
         parg[iggtocmin ] = 0.015 #  gtocmin  specified min top-of-climb gradient
@@ -48,19 +61,19 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
     # Sizing load parameters
         parg[igNlift   ] = 3.0           # Nlift  max vertical load factor for wing bending loads
         parg[igNland   ] = 6.0           # Nland  max vertical load factor for fuse bending loads
-        parg[igVne     ] = 280.0 * 0.514 # Vne    never-exceed IAS, for tail loads
+        parg[igVne     ] = 280.0 * kts_to_mps # Vne    never-exceed IAS, for tail loads
 
         cabinPressureAlt = 8000.0 # Altitude for cabin pressure [ft]
-        _, p_cabin, _, _, _ = atmos(cabinPressureAlt*0.3048/1000.0)
+        _, p_cabin, _, _, _ = atmos(cabinPressureAlt*ft_to_m/1000.0)
 
         parg[igpcabin  ] = p_cabin
 
     # Wing 
         parg[igsweep   ] =  27.567         # λ wing
-        parg[igAR      ] =  10.44          # Aspect ratio
-        parg[igbmax    ] = 117.5  * 0.3048 # Max span for span constraint
+        parg[igAR      ] =  10.4411        # Aspect ratio
+        parg[igbmax    ] = 117.5  * ft_to_m # Max span for span constraint
         
-        parg[iglambdas ] = 0.878
+        parg[iglambdas ] = 0.8784
         parg[iglambdat ] = 0.1503
 
         parg[igfLo     ] = -0.3   # fLo   fuselage lift carryover loss factor
@@ -99,7 +112,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
             parg[igARh     ] = 6.0
             parg[iglambdah ] = 0.25
             parg[igsweeph  ] = 25.0
-            parg[igboh     ] = 2 * (2.5 * 0.3048) # 2 × half span
+            parg[igboh     ] = 2 * (2.5 * ft_to_m) # 2 × half span
             parg[igfCDhcen ] = 0.1
             parg[igCLhmax  ] = 2.0
             
@@ -144,23 +157,24 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[iganose   ] = 1.65
         parg[igbtail   ] = 2.0
 
-        parg[igxnose   ] =   0.0 * 0.3048
-        parg[igxend    ] = 124.0 * 0.3048
-        parg[igxblend1 ] =  20.0 * 0.3048
-        parg[igxblend2 ] =  97.0 * 0.3048
-        parg[igxshell1 ] =  17.0 * 0.3048
-        parg[igxshell2 ] = 102.0 * 0.3048
-        parg[igxconend ] = 117.0 * 0.3048
-        parg[igxwbox   ] =  57.0 * 0.3048  # x location of wing box
-        parg[igxhbox   ] = 114.5 * 0.3048
-        parg[igxvbox   ] = 110.5 * 0.3048
+        parg[igxnose   ] =   0.0 * ft_to_m
+        parg[igxend    ] = 124.0 * ft_to_m
+        parg[igxblend1 ] =  20.0 * ft_to_m
+        parg[igxblend2 ] =  97.0 * ft_to_m
+        parg[igxshell1 ] =  17.0 * ft_to_m
+        parg[igxshell2 ] = 102.0 * ft_to_m
+        parg[igxconend ] = 117.0 * ft_to_m
+        parg[igxwbox   ] =  57.0 * ft_to_m  # x location of wing box
+        parg[igxhbox   ] = 114.5 * ft_to_m
+        parg[igxvbox   ] = 110.0 * ft_to_m
         
-        parg[igzwing   ] = -5.5 * 0.3048
-        parg[igzhtail  ] =  0.0 * 0.3048
+        parg[igzwing   ] = -5.5 * ft_to_m
+        parg[igzhtail  ] =  0.0 * ft_to_m
 
-        parg[igxeng    ] = 52.0 * 0.3048
-        parg[igyeng    ] = 16.0 * 0.3048
-        parg[igneng    ] =  2.0
+        parg[igxeng    ] = 52.0 * ft_to_m
+        parg[igyeng    ] = 16.0 * ft_to_m
+        # parg[igneng    ] =  2.0
+        parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
 
         parg[iglambdac ] =  0.3 # Tail cone taper ratio
         
@@ -169,7 +183,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igffadd   ] = 0.20
 
         parg[igWfix    ] = 3000.0 * 4.45  # cockpit, pilots etc converted to [N]
-        parg[igxfix    ] =    7.0 * 0.3048
+        parg[igxfix    ] =    7.0 * ft_to_m
 
         # Insulation weight per length or area
             parg[igWpwindow] = 145.0 * 3.0 #[N/m]
@@ -188,15 +202,15 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         para[iafdut, :, :] .= 0.0045   # fdut   fuselage velocity overspeed at wing tip
 
     # Landing gear weight fractions and locations
-        parg[igxhpesys ] =  62.0 * 0.3048   #  xhpesys   hyd/pneu/ele system location
-        parg[igxlgnose ] =  14.0 * 0.3048   #  xlgnose   nose LG location
-        parg[igdxlgmain] =   1.0 * 0.3048   # dxlgmain   main LG offset behind wing lift centroid
+        parg[igxhpesys ] =  62.0 * ft_to_m   #  xhpesys   hyd/pneu/ele system location
+        parg[igxlgnose ] =  14.0 * ft_to_m   #  xlgnose   nose LG location
+        parg[igdxlgmain] =   1.0 * ft_to_m   # dxlgmain   main LG offset behind wing lift centroid
 
         parg[igfhpesys ] =  0.010     # fhpesys    Whpesys/WMTO
         parg[igflgnose ] =  0.011     # flgnose    Wlgnose/WMTO
         parg[igflgmain ] =  0.044     # flgmain    Wlgmain/WMTO
 
-        parg[igxapu    ] = 120.0 * 0.3048 # xapu                 APU location
+        parg[igxapu    ] = 120.0 * ft_to_m # xapu                 APU location
         parg[igfapu    ] = 0.035          # fapu   Wapu/Wpay     APU weight fraction
 
         parg[igfreserve] = 0.20  # freserve Wfreserve/Wburn
@@ -224,6 +238,8 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igrhocap  ] =  2700.0  #  rhocap  	wing, tail bending caps	 
         parg[igrhoweb  ] =  2700.0  #  rhoweb  	wing, tail shear webs	 
         parg[igrhostrut] =  2700.0  #  rhostrut	strut   
+
+        parg[igrhofuel]  = 817.0
         
     # Nacelle Drag stuff
         parg[igrSnace  ] = 16.0   # rSnace   nacelle+pylon wetted area/fan area  Snace/Afan
@@ -231,11 +247,18 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
     parg[igrWfmax  ] = 0.90
 
+    # Powertrain stuff
+        parg[igxtshaft]  = 60.0 * ft_to_m
+        parg[igxgen   ]  = 70.0 * ft_to_m
+        parg[igxinv   ]  = 57.0 * ft_to_m
+        parg[igxmot   ]  = 53.0 * ft_to_m
+        parg[igxfan   ]  = 52.0 * ft_to_m
+        parg[igxftank ]  = 90.0 * ft_to_m
 
 
 # Aerodynamic parameters
 
-para[iaalt, ipcruise1, :] .=  33000.0 * 0.3048 # Cruise altitude [m] Max fuel max payload
+para[iaalt, ipcruise1, :] .=  33000.0 * ft_to_m # Cruise altitude [m] Max fuel max payload
 
 # Takeoff and initial climb and descent
     para[iaalt,    ipstatic:ipcutback, :] .= parm[imaltTO]
@@ -292,3 +315,10 @@ para[iaalt, ipcruise1, :] .=  33000.0 * 0.3048 # Cruise altitude [m] Max fuel ma
     para[iafexcdt, 1 : iptotal, :] .=  1.02     #  fexcdt   # tail excrescence drag factor
     para[iafexcdf, 1 : iptotal, :] .=  1.03     #  fexcdf   # fuse excrescence drag factor
 
+# Engine parameters
+
+pare[ieTt4, 1:iptotal, :] .= 3200.0 # [R]
+pare[ieTt4, ipstatic:iptakeoff, :] .= 3300.0 #[R]
+
+parg[igfTt4CL1] = 0.2
+parg[igfTt4CLn] = 0.8
