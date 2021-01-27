@@ -168,6 +168,7 @@ Design method - sizes the powertrain
 """
 function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
+                    parg::Array{Float64, 1},
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
                     pargen::Array{Float64, 1})
@@ -192,6 +193,9 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
         # println("Fan Fn = ", Ffan, " N")
+        parg[igdfan] = Dfan
+        parg[igWfan] = Wfan
+
         parpt[ipt_Wfan]    = Wfan # Save fan weight
         parpt[ipt_NdesFan] = N_fan
 
@@ -210,6 +214,8 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         # println("\tIron losses    = ", PLiron, "%")
         # println("\tCopper losses  = ", PLCu)
         # println("\tWindage losses = ", PLwind)
+        parg[igWmot] = Wmot
+
         parpt[ipt_Wmot]    = Wmot
         parpt[ipt_NdesMot] = RPMmot
 
@@ -221,12 +227,16 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
         Hwaste_inv = PreqMot*(1-ηinv)
         Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
+        
+        parg[igWinv] = Winv
         parpt[ipt_Winv] = Winv
         Wpowertrain += Winv*nfan # Add to total powertrain weight
     
         ηcable, Wcable = cable() #TODO cable is dummy right now
         Hwaste_cable = PreqMot*(1-ηcable)
         Hrej += Hwaste_cable  # Heat rejected from all inverters
+        
+        parg[igWcables] = Wcable
         parpt[ipt_Wcables] = Wcable
         Wpowertrain += Wcable # Add to total powertrain weight
 
@@ -245,6 +255,8 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         parpt[ipt_NdesGen] = RPMgen
         Hwaste_gen = (PgenShaft - PreqGen*nfan/ngen)
         Hrej += ngen*Hwaste_gen # Heat rejected from motors
+        
+        parg[igWgen] = Wgen
         parpt[ipt_Wgen] = Wgen
         Wpowertrain += Wgen*ngen
     
@@ -256,17 +268,22 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         w    = parpt[ipt_wcat]
         lcat = parpt[ipt_lcat]
         deNOx= parpt[ipt_deNOx]
+
         Ptshaft = PgenShaft*ngen/nTshaft
         ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx)
 
         Wcat = mcat*gee
+        
+        parg[igWcat] = Wcat
         parpt[ipt_Wcatalyst] = Wcat
         Wpowertrain += Wcat*nTshaft
 
         SPtshaft= 10.4e3 # W/kg Based on the RR T406 (4.58 MW power output). The GE38 (~5 MW) has a power density of 11.2 kW/kg
         Wtshaft = gee*(PgenShaft*ngen/nTshaft)/SPtshaft
+        
+        parg[igWtshaft] = Wtshaft
         parpt[ipt_Wtshaft] = Wtshaft
         Wpowertrain += Wtshaft*nTshaft
 

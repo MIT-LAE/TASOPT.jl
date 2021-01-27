@@ -303,7 +303,29 @@
       const igmofWMTO  = 252
       const igPofWpay  = 253
       const igPofWMTO  = 254
-      const igtotal    = 254 
+
+      # Adding indices to store TE weights and locations
+      const igWtshaft  = 255
+      const igWgen     = 256
+      const igWinv     = 257
+      const igWmot     = 258
+      const igWfan     = 259
+      const igWftank   = 260
+
+      const igxtshaft  = 261
+      const igxgen     = 262
+      const igxinv     = 263
+      const igxmot     = 264
+      const igxfan     = 265
+      const igxftank   = 266
+      
+      const igxcables  = 267
+      const igWcables  = 268
+
+      const igxcat     = 269
+      const igWcat     = 270
+
+      const igtotal    = 270
 
 # indices for turbo-electric systems
       const ite_ratSM   = 1
@@ -664,7 +686,7 @@
       ieKinl  = 172
       ieepsl  = 173
       ieepsh  = 174
-      ieFe    = 175
+      ieFe    = 175 # now stores total thurst & NOT thrust per engine
       ieFsp   = 176
       ieTSFC  = 177
       ieA5fac = 178
