@@ -488,13 +488,13 @@ function htsize(pari,parg,paraF,paraB,paraC)
                   CL    = CLC
                   CLh   = CLhC  #CLh is specified here
 
-                  cCM   = co *CMw0 + (co*CMw1 - xwbox)*(CL - CLh*Sh/S) +
-                  coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
+                  cCM   = co *CMw0 + (co *CMw1 - xwbox)*(CL - CLh*Sh/S) +
+                     coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*CLh*Sh/S +
                         CMVf1*(CL-CLMf0)/S
             #c   &        - neng*xenginl*CLn*Afan/S
                   cCM_xw =                     -        (CL - CLh*Sh/S)
-                  cCM_Sh =            (co*CMw1 - xwbox)*(   - CLh   /S) +
-                  coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
+                  cCM_Sh =            (co *CMw1 - xwbox)*(   - CLh   /S) +
+                      coh*CMh0   /S + (coh*CMh1 - xhbox)*CLh   /S
 
                   r[2]   = cCM   /CL + xWC   /WC 
                   a[2,1] = cCM_Sh/CL + xWC_Sh/WC - (xWC/WC^2)*WC_Sh
@@ -513,15 +513,18 @@ function htsize(pari,parg,paraF,paraB,paraC)
                   dfan = parg[igdfan]
                   Afan = 0.25*pi*dfan^2
                   xengcp = xeng - 0.25*dfan
-
+                  # Eqn 297, 298:
                   xNP    = (co *CMw1 - xwbox)*(dCLhdCL*Sh/S - 1.0) -
-                  (coh*CMh1 - xhbox)* dCLhdCL*Sh/S -
-                  CMVf1/S -
-                  neng*xengcp*dCLndCL*Afan/S
+                           (coh*CMh1 - xhbox)* dCLhdCL*Sh/S -
+                            CMVf1/S -
+                            neng*xengcp*dCLndCL*Afan/S  #∂CLnace/∂CL moments caused by engines
+
                   xNP_xw =           -        (dCLhdCL*Sh/S - 1.0)
                   xNP_Sh = (co *CMw1 - xwbox)* dCLhdCL   /S -
-                  (coh*CMh1 - xhbox)* dCLhdCL   /S
+                           (coh*CMh1 - xhbox)* dCLhdCL   /S
 
+                  # ℛsh(xw, Sh) ≡ xCG - xNP + fSM*cma 
+                  # → must have some min static pitch stability i.e. xCG in front of xNP by a static margin
                   r[2]   = xWB   /WB - xNP    + SM*cma
                   a[2,1] = xWB_Sh/WB - xNP_Sh   - (xWB/WB^2)*WB_Sh
                   a[2,2] = xWB_xw/WB - xNP_xw
