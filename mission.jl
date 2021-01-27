@@ -26,7 +26,8 @@ NOTE:
 """
 function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
     
-    Ldebug = true
+    Ldebug = false
+    calc_ipc1 = true
     itergmax::Int64 = 10
     gamVtol  = 1.0e-12
 
@@ -386,7 +387,8 @@ function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             if(abs(dgamV) > gamVtol) 
                   println("Climb gamV not converged")
             end
-
+            pare[ieFe, ip] = Ftotal
+            # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal/(BW*cosg) - DoL
             # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
             FFC[ip] = -mdotf*gee/(W*V*cosg)
@@ -444,9 +446,52 @@ function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
       end # done integrating climb
 
-      
-     
+      # First cruise point is last climb point
+      para[iaRange, ipcruise1] = para[iaRange, ipclimbn]
+      para[iatime , ipcruise1] = para[iatime , ipclimbn]
+      para[iafracW, ipcruise1] = para[iafracW, ipclimbn]
+      para[iaWbuoy, ipcruise1] = para[iaWbuoy, ipclimbn]
 
+      # Cruise start
+      ip = ipcruise1
+      # Set pitch trim via adjusting CLh
+      Wf = para[iafracW, ip]*WMTO - Wzero
+      rfuel = Wf/parg[igWfuel]
+      itrim = 1
+      balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+
+      if(calc_ipc1)
+            # Calculate only if requested since for design mission TOC is the des point and ∴ already calcualted 
+            # Calculate drag
+            icdfun = 1
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+            DoL = para[iaCD, ip]/ para[iaCL, ip]
+            W  = para[iafracW, ip]*WMTO
+            BW = W + para[iaWbuoy, ip]
+            F  = BW*(DoL + para[iagamV, ip])
+
+            # Run powertrain
+            Ftotal, η, P, Hrej,
+            mdotf, BSFC,
+            deNOx_out = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                          0.0, 0.0, parpt, parmot, pargen)
+            
+            println("Cruise Ftotal, offdes = ", Ftotal)
+            println("Thrust req = ", F)
+            printstyled("Tt4 = $(pare[ieTt4, ip])\n"; color=:red)
+            println("Ftotal diff = ", Ftotal - pare[ieFe, ip])
+      end
+      V   = pare[ieu0, ip]
+      p0  = pare[iep0   ,ip]
+      ρ0  = pare[ierho0 ,ip]
+      DoL = para[iaCD, ip]/para[iaCL, ip]
+      W   = para[iafracW, ip]*WMTO
+
+      # gamVcr1 = DoL*p0*TSFC/(ρ0*gee*V - p0*TSFC)
+      gamVcr1 = mdotf*p0/(ρ0*W*V) # TSFC not the most useful for turbo-electric systems. Buoyancy weight has been neglected.
+
+         
+      
 
 
 end
