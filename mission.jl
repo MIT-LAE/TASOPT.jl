@@ -457,7 +457,7 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
       # Cruise start
       ip = ipcruise1
-      # Set pitch trim via adjusting CLh
+      # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip]*WMTO - Wzero
       rfuel = Wf/parg[igWfuel]
       itrim = 1
@@ -497,9 +497,136 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
       # gamVcr1 = DoL*p0*TSFC/(ρ0*gee*V - p0*TSFC)
       gamVcr1 = mdotf*p0/(ρ0*W*V) # TSFC not the most useful for turbo-electric systems. Buoyancy weight has been neglected.
-
-         
+      para[iagamV, ip] = gamVcr1
       
+      Ftotal = pare[ieFe, ip]
+      cosg = cos(gamVcr1)  
 
+      FoW[ip] = Ftotal/(BW*cosg) - DoL
+      # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
+      FFC[ip] = mdotf*gee/(W*V*cosg)
+      Vgi[ip] = 1.0/(V*cosg)
+
+      #---- set end-of-cruise point "d" using cruise and descent angles, 
+      #-     and remaining range legs
+            gamVde1 = parm[imgamVDE1]
+            gamVden = parm[imgamVDEn]
+            gamVdeb = 0.5*(gamVde1+gamVden)
+
+            alte = para[iaalt,ipdescentn]
+            dRclimb  = para[iaRange,ipclimbn] - para[iaRange,ipclimb1]
+            dRcruise = (alte - altc - gamVdeb*(Rangetot-dRclimb)) / (gamVcr1 - gamVdeb)
+
+            altd = altc + gamVcr1*dRcruise
+
+      # Final cruise point
+            ip = ipcruisen
+            Mach = para[iaMach, ip]
+            altkm = altd/1000.0
+
+            T0, p0, ρ0, a0, μ0 = atmos(altkm)
+            pare[iep0  ,ip] = p0
+            pare[ieT0  ,ip] = T0
+            pare[iea0  ,ip] = a0
+            pare[ierho0,ip] = ρ0
+            pare[iemu0 ,ip] = μ0
+ 
+            pare[ieM0  ,ip]   = Mach
+            pare[ieu0  ,ip]   = Mach*a0
+            para[iaReunit,ip] = Mach*a0 * ρ0/μ0
+
+            para[iaalt, ip]  = altd
+            
+            ρcab = max(parg[igpcabin], p0)/ (RSL*TSL)
+            para[iaWbuoy, ip] = (ρcab - ρ0)*gee*parg[igcabVol]
+            
+            # Set pitch trim by adjusting CLh
+            Wf = para[iafracW, ip]*WMTO - Wzero
+            rfuel = Wf/parg[igWfuel]
+            itrim = 1
+            balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+            # Calc Drag
+            icdfun = 1
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+            DoL = para[iaCD, ip]/ para[iaCL, ip]
+            W  = para[iafracW, ip]*WMTO
+            BW = W + para[iaWbuoy, ip]
+            F  = BW*(DoL + para[iagamV, ip])
+
+            Mach = pare[ieM0, ip]
+            # Run powertrain [TODO] actually should run this to a required thrust not Tt4
+            Ftotal, η, P, Hrej,
+            mdotf, BSFC,
+            deNOx = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                          0.0, 0.0, parpt, parmot, pargen)
+
+            pare[iedeNOx, ip] = deNOx
+            pare[iemdotf, ip] = mdotf
+
+            V   = pare[ieu0, ip]
+            p0  = pare[iep0   ,ip]
+            ρ0  = pare[ierho0 ,ip]
+            DoL = para[iaCD, ip]/para[iaCL, ip] 
+
+            gamVcr2 = mdotf*p0/(ρ0*W*V)
+            para[iagamV, ip] = gamVcr2
+
+            cosg = cos(gamVcr1)  
+
+            FoW[ip] = Ftotal/(BW*cosg) - DoL
+            # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
+            FFC[ip] = mdotf*gee/(W*V*cosg)
+            Vgi[ip] = 1.0/(V*cosg)
+
+            ip1 = ipcruise1
+            ipn = ipcruisen
+
+            FoWavg = 0.5*(FoW[ipn] + FoW[ip1])
+            FFCavg = 0.5*(FFC[ipn] + FFC[ip1])
+            Vgiavg = 0.5*(Vgi[ipn] + Vgi[ip1])
+      
+            dtcruise = dRcruise*Vgiavg
+            rWcruise = exp(-dRcruise*FFCavg)
+      
+            para[iaRange,ipn] = para[iaRange,ip1] + dRcruise
+            para[iatime ,ipn] = para[iatime ,ip1] + dtcruise
+            para[iafracW,ipn] = para[iafracW,ip1]*rWcruise
+
+      # Descent
+            ip = ipdescent1
+            pare[iep0  ,ip]  = pare[iep0  ,ipcruisen]  
+            pare[ieT0  ,ip]  = pare[ieT0  ,ipcruisen]  
+            pare[iea0  ,ip]  = pare[iea0  ,ipcruisen]  
+            pare[ierho0,ip]  = pare[ierho0,ipcruisen]  
+            pare[iemu0 ,ip]  = pare[iemu0 ,ipcruisen]  
+            pare[ieM0  ,ip]  = pare[ieM0  ,ipcruisen]  
+            pare[ieu0  ,ip]  = pare[ieu0  ,ipcruisen]  
+      
+            para[iaMach  ,ip] = para[iaMach  ,ipcruisen]
+            para[iaReunit,ip] = para[iaReunit,ipcruisen]
+            para[iaalt   ,ip] = para[iaalt   ,ipcruisen]
+      
+            para[iaRange,ip] = para[iaRange,ipcruisen]
+            para[iatime ,ip] = para[iatime ,ipcruisen]
+            para[iafracW,ip] = para[iafracW,ipcruisen]
+            para[iaWbuoy,ip] = para[iaWbuoy,ipcruisen]
+
+
+      # Mission fuel fractions and weights
+            fracWa = para[iafracW, ipclimb1  ]
+            # fracWe = para[iafracW, ipdescentn] 
+            fracWe = para[iafracW, ipdescent1] # Pp temp set to ipdescent1 instead of ipdescentn since descent has not been calculated yet 
+            freserve = parg[igfreserve]
+            fburn = fracWa - fracWe            # Burnt fuel fraction
+            ffuel = fburn*(1.0+freserve)
+            Wfuel  = WMTO*ffuel
+            WTO = Wzero + Wfuel
+
+            parm[imWTO  ] = WTO
+            parm[imWfuel] = Wfuel
+            # printstyled("Wfuel = $Wfuel \n fburn = $fburn \n", color=:red)
+
+            Wburn = WMTO*fburn
+            parm[imPFEI] = Wburn/gee*120.0e6 / (parm[imWpay]*parm[imRange])
 
 end
