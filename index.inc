@@ -707,7 +707,11 @@
       ieTmet2 = 193
       ieTmet3 = 194
       ieTmet4 = 195
-      ietotal = 195 
+
+      iedeNOx = 196
+      iemdotf = 197
+
+      ietotal = 197 
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

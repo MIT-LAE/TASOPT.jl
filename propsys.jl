@@ -274,6 +274,7 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx)
 
+        mdotf_tot = mdotf*nTshaft
         Wcat = mcat*gee
         
         parg[igWcat] = Wcat
@@ -293,7 +294,7 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
            [Pshaft_mot, PreqMot, PgenShaft, Ptshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
            [Wfan, Wmot, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee,
-           [SPmot, SPinv, SPgen, SPtshaft], mdotf, BSFC,
+           [SPmot, SPinv, SPgen, SPtshaft], mdotf_tot, BSFC,
            deNOx, FanMapScalars, FanNozArea
 
 end
@@ -314,6 +315,8 @@ function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
         Pshaft, ηthermal,
         mdotf, BSFC,
         deNOx_out = TurboShaft(alt_in, MN_in, Tt41, Nshaft)
+        
+        mdotf_tot = mdotf*nTshaft
 
     # Run generator
         Pgen_in = Pshaft * nTshaft/ngen
@@ -356,7 +359,7 @@ function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
     return Ftotal, [ηmot, ηinv, ηcable, ηgen, ηthermal],
            [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
-           mdotf, BSFC,
+           mdotf_tot, BSFC,
            deNOx_out
 
 end

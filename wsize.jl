@@ -19,8 +19,9 @@ function wsize(pari, parg, parm, para, pare,
 
 
     # Weight convergence tolerance 
-    tolerW = 1.0e-10
-    err2   = 1.0
+        # tolerW = 1.0e-10
+        tolerW = 1.0e-8
+        err2   = 1.0
     # Initialze some variables
     fsum = 0.0
 
@@ -313,9 +314,9 @@ function wsize(pari, parg, parm, para, pare,
             LoD  = 18.0
             TSFC = 1.0/ 7000.0
             V    = pare[ieu0, ipcruise1]
-            ffburn = (1.0 - exp(-Rangetot*TSFC/(V*LoD))) # ffburn = Wfuel/Wstart
-            ffburn = min(ffburn, 0.8/(1.0 + freserve))
-        # mission-point fuel fractions
+            ffburn = (1.0 - exp(-Rangetot*TSFC/(V*LoD))) # ffburn = Wfuel/WMTO
+            ffburn = min(ffburn, 0.8/(1.0 + freserve))   # 0.8 is the fuel useablilty? 
+        # mission-point fuel fractions ⇾ ffuel = Wfuel/WMTO
             ffuelb = ffburn*(1.0  + freserve)  # start of climb
             ffuelc = ffburn*(0.90 + freserve)  # start of cruise
             ffueld = ffburn*(0.02 + freserve)  # start of descent
@@ -389,7 +390,8 @@ function wsize(pari, parg, parm, para, pare,
             pare[iep0, ipcruisen] = p0d
             
         # Guess for OEI [TODO] This needs some thinking about what is "One engine out" mean for a turbo-electric aircraft
-            pare[ieFe, iprotate] = 2.0*Wpay/neng
+            # pare[ieFe, iprotate] = 2.0*Wpay/neng
+            pare[ieFe, iprotate] = 2.0*Wpay # ieFe now stores total thrust
             pare[ieu0, iprotate] = 70.0
             Afan = 3.0e-5 *Wpay/neng
             parg[igdfan] = sqrt(Afan*4.0/π)
@@ -820,7 +822,7 @@ Lconv = false # no convergence yet
                     parg[igSh] = Sh
                 else
                     # for subsequent iterations:
-                    htsize(pari, parg, para[1, ipdescentn], para[1, ipcruise1], para[1, ipcruise1])
+                    htsize(pari, parg, view(para, :, ipdescentn), view(para,:, ipcruise1), view(para,:, ipcruise1))
 
                     xwbox, xwing = parg[igxwbox], parg[igxwing]
 
@@ -988,17 +990,20 @@ Lconv = false # no convergence yet
                 BW  = W + WbuoyCR
                 Fdes = BW*(1/LoD + gamV)
 
-                pare[ieFe, ip] = Fdes/neng
+                pare[ieFe, ip] = Fdes # Let ieFe store total thrust 
+                # println("Cruise Ftotal, des = ", Fdes)
 
             # Size engine for TOC
             ρAir = pare[ierho0, ipcruise1]
             μAir = pare[iemu0 , ipcruise1]
             
             ηpt, Ppt, Hpt, mpt, SPpt,
-            mdotf, BSFC,
+            mdotf_tot, BSFC,
             deNOx, _, _  =  PowerTrain(para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
-                                        0.0, 0.0, parpt, parmot, pargen)
+                                        0.0, 0.0, parg, parpt, parmot, pargen)
 
+            pare[iedeNOx, ip] = deNOx
+            pare[iemdotf, ip] = mdotf_tot
 
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
@@ -1007,19 +1012,30 @@ Lconv = false # no convergence yet
         # ----------------------
         #     Fly mission
         # ----------------------
-        mission(pari, parg, parm, para, pare)
+        mission!(pari, parg, parm, para, pare)
+        parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
-        #=
+
 # Get mission fuel burn (check if fuel capacity is sufficent)
 
 # Recalculate weight wupdate()
+    ip = ipcruise1
+    Wupdate!(parg, rlx, fsum)
+
+    parm[imWTO] = parg[igWMTO]
+    parm[imWfuel] = parg[igWfuel]
+    # printstyled("Wfuel = $(parg[igWfuel]) \n", color=:blue)
+
 
 # Set previous iteration weights 
+    WMTO3 = WMTO2
+    WMTO2 = WMTO1
+    WMTO1 = parg[igWMTO]
 
 # END weight sizing loop
 
 # BFL calculations/ Noise? / Engine perf 
-=#
+
     end
 end
 
@@ -1043,5 +1059,45 @@ function Wupdate0!(parg, rlx, fsum)
 
     WMTO = rlx*Wsum/(1.0 - ftotadd) + (1.0 - rlx)*WMTO
     parg[igWMTO] = WMTO
+
+end
+
+
+"""
+Wupdate
+"""
+function Wupdate!(parg, rlx, fsum)
+    
+    WMTO = parg[igWMTO]
+
+    fwing  = parg[igWwing ]/WMTO
+    fstrut = parg[igWstrut]/WMTO
+    fhtail = parg[igWhtail]/WMTO
+    fvtail = parg[igWvtail]/WMTO
+    feng   = parg[igWeng  ]/WMTO
+    ffuel  = parg[igWfuel ]/WMTO
+    fhpesys = parg[igfhpesys]
+    flgnose = parg[igflgnose]
+    flgmain = parg[igflgmain]
+
+    Wpay    = parg[igWpay]
+    Wfuse   = parg[igWfuse]
+
+    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys + flgnose + flgmain
+
+    if(fsum ≥ 1.0)
+        println("SOMETHING IS WRONG fsum ≥ 1")
+    end
+
+    WMTO = rlx*(Wpay + Wfuse)/(1.0-fsum) + (1.0-rlx)*WMTO
+
+    parg[igWMTO  ]  = WMTO
+    parg[igWwing ]  = WMTO*fwing
+    parg[igWstrut]  = WMTO*fstrut
+    parg[igWhtail]  = WMTO*fhtail
+    parg[igWvtail]  = WMTO*fvtail
+    parg[igWeng  ]  = WMTO*feng
+    parg[igWfuel ]  = WMTO*ffuel
+
 
 end
