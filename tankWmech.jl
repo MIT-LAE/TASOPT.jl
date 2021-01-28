@@ -72,24 +72,21 @@ function tankWmech(gee, rhoFuel,
       N = length(t_cond)
       Vinsul = zeros(N)
       Winsul = zeros(N)
+      Shead_insul = zeros(N)
+      Vhead_insul = zeros(N)
       s=0 #thickness of previous layer
       for n in 1:N
-            Vinsul[n] = (pi * (((Rtank_outer+sum(t_cond[1:n]))^2)-((Rtank_outer+s)^2)) * lshell) + (pi * t_cond[n] * (Rtank_outer+sum(t_cond[1:n]))^2)
-            Winsul[n] = Vinsul[n] * rho_insul[n] * gee
+            Vinsul[n] = (pi * (((Rtank_outer+sum(t_cond[1:n]))^2)-((Rtank_outer+s)^2)) * lshell)# + (pi * t_cond[n] * (Rtank_outer+sum(t_cond[1:n]))^2)
+            Shead_insul[n] = (2.0*pi + 4.0*nfweb*thetafb)*(Rtank+sum(t_cond[1:n]))^2* ( 0.333 + 0.667*((Lhead+sum(t_cond[1:n]))/(Rtank+sum(t_cond[1:n])))^1.6 )^0.625
+            Vhead_insul[n] = 2 * Shead_insul[n] * t_cond[n]
+            Winsul[n] = (Vinsul[n] + Vhead_insul[n]) * rho_insul[n] * gee
             s = sum(t_cond[1:n])
       end
       Winsul_sum = sum(Winsul)
-      #Winsul = Wppinsul*(1.1*pi+2.0*thetafb)*Rtank*lshell
-#W_metal = Vhead*rhoskin*gee*(1+fstring+ffadd)
-#print(Wfuel)
-#print(Winsul_sum)
-#print(Vhead*rhoskin*gee*(1+fstring+ffadd))
-#print(Vcyl*rhoskin*gee*(1+fstring+ffadd))
+
 #--- overall tank weight
-      Wtank_total = Wtank + Wfuel + Winsul_sum + 20 * gee #20kg allowance according to Verstraete
+      Wtank_total = Wtank + Wfuel + Winsul_sum + 20 * gee #fuel allowance variable 20kg allowance according to Verstraete
+      l_tank = lshell + 2*Lhead
 
-#--- pressurized tank volume
-      #tankVol = Atank*(lshell + 0.67*Rfuse)
-
-return  Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul
+return  Wtank_total, lshell, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank
 end
