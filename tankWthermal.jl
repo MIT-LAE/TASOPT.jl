@@ -22,10 +22,10 @@ Outputs:
 - mdot_boiloff (kg/s) is the boiloff rate of LH2
 """
 function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
-                      h_v, t_cond, k, hconvair, time_flight)
+                      h_v, t_cond, k, hconvair, time_flight, Shead_insul)
 
-      N = length(t_cond) #Number of layers in MLI
-      thickness = sum(t_cond) #total thickness of MLI
+      N = length(t_cond) #Number of layers in insulation
+      thickness = sum(t_cond) #total thickness of insulation
 
 #--- Heat flux and resistances
 
@@ -35,7 +35,8 @@ function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
       hradair = sigma * e * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel)
       h_air = hconvair + hradair
       Rair_conv_rad = 1 / (h_air * 2 * pi * r_tank * lshell)  #thermal resistance of ambient air
-      r_inner = r_tank - thickness  #inner radius of tank
+      #r_inner = r_tank - thickness  #inner radius of tank
+      r_inner = r_tank
       r_inner_init = r_inner
 
       #Not needed for MLI. May add later for purged He etc. Rgas = 1 / (hconvgas * 2 * pi * r_inner * lshell)  #thermal resistance of purged gas
@@ -47,8 +48,9 @@ function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
       R_mli_cyl = zeros(N)
 
       for n in 1:N
-            R_mli_cyl[n] = log((r_inner  + t_cond[n])/ (r_inner)) / (2 * pi * r_inner * lshell * k[n]) #Resistance of each MLI layer
-            R_mli_lat[n] = t_cond[n] / (k[n] * pi * r_inner_init^2)
+            R_mli_cyl[n] = log((r_inner  + t_cond[n])/ (r_inner)) / (2 * pi * lshell * k[n]) #Resistance of each MLI layer
+            #R_mli_lat[n] = t_cond[n] / (2*k[n] * pi * (r_inner^2))
+            R_mli_lat[n] = t_cond[n] / (2*k[n] * Shead_insul[n])
             R_mli[n] = (R_mli_lat[n] * R_mli_cyl[n]/(R_mli_lat[n] + R_mli_cyl[n]))
             r_inner = r_inner + t_cond[n]  #Inner layer w.r.t the nth MLI layer being evaluated
 
