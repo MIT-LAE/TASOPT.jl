@@ -24,7 +24,7 @@ NOTE:
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
 """
-function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
+function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
     
     Ldebug = false
     calc_ipc1 = true
@@ -307,9 +307,9 @@ function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
            para[iaWbuoy, iprotate:ipclimb1] .= 0.
 
       # Initialize climb integrands
-      FoW = zeros(Float64, ipclimbn)
-      FFC = zeros(Float64, ipclimbn)
-      Vgi = zeros(Float64, ipclimbn)
+      FoW = zeros(Float64, iptotal)
+      FFC = zeros(Float64, iptotal)
+      Vgi = zeros(Float64, iptotal)
       # integrate trajectory over climb
       for ip = ipclimb1:ipclimbn
             if(Ldebug)
@@ -360,9 +360,12 @@ function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
                   Ftotal, η, P, Hrej,
                   mdotf, BSFC,
-                  deNOx_out = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
+                  deNOx = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
                                                 0.0, 0.0, parpt, parmot, pargen)
                   
+                  pare[iedeNOx, ip] = deNOx
+                  pare[iemdotf, ip] = mdotf
+
                   DoL = para[iaCD, ip]/ para[iaCL, ip]
 
                   # Calculate improved flight angle
@@ -391,7 +394,7 @@ function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal/(BW*cosg) - DoL
             # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
-            FFC[ip] = -mdotf*gee/(W*V*cosg)
+            FFC[ip] = mdotf*gee/(W*V*cosg)
             Vgi[ip] = 1.0/(V*cosg)
 
             Mach = para[iaMach, ip]
@@ -470,22 +473,27 @@ function mission(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             BW = W + para[iaWbuoy, ip]
             F  = BW*(DoL + para[iagamV, ip])
 
-            # Run powertrain
+            Mach = pare[ieM0, ip]
+            # Run powertrain [TODO] actually should run this to a required thrust not Tt4
             Ftotal, η, P, Hrej,
             mdotf, BSFC,
-            deNOx_out = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
+            deNOx = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
                                           0.0, 0.0, parpt, parmot, pargen)
             
-            println("Cruise Ftotal, offdes = ", Ftotal)
-            println("Thrust req = ", F)
-            printstyled("Tt4 = $(pare[ieTt4, ip])\n"; color=:red)
-            println("Ftotal diff = ", Ftotal - pare[ieFe, ip])
+            pare[iedeNOx, ip] = deNOx
+            pare[iemdotf, ip] = mdotf
+            
+            # println("Cruise Ftotal, offdes = ", Ftotal)
+            # println("Thrust req = ", F)
+            # printstyled("Tt4 = $(pare[ieTt4, ip])\n"; color=:red)
+            # println("Ftotal diff = ", Ftotal - pare[ieFe, ip])
       end
       V   = pare[ieu0, ip]
       p0  = pare[iep0   ,ip]
       ρ0  = pare[ierho0 ,ip]
       DoL = para[iaCD, ip]/para[iaCL, ip]
       W   = para[iafracW, ip]*WMTO
+      BW  = W + para[iaWbuoy, ip]
 
       # gamVcr1 = DoL*p0*TSFC/(ρ0*gee*V - p0*TSFC)
       gamVcr1 = mdotf*p0/(ρ0*W*V) # TSFC not the most useful for turbo-electric systems. Buoyancy weight has been neglected.
