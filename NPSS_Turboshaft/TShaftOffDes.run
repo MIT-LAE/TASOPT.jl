@@ -77,11 +77,13 @@ else{SaveIndepVals("solver", "offdes1.restart");}
 //====================
 
 OutFileStream output {
-    filename = "Eng.output"; 
+    filename = "Eng.output"; //autoFlush = FALSE;
 }
 
 output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
 output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
+output<<"M0 ="<<Eng.Amb.MN<<endl;
+output<<"Alt ="<<Eng.Amb.alt<<"\t# "+ Eng.Amb.alt.units<<endl;
 output<<"converged ="<<solver.converged<<endl;
 output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
 output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;

@@ -158,7 +158,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igbtail   ] = 2.0
 
         parg[igxnose   ] =   0.0 * ft_to_m
-        parg[igxend    ] = 124.0 * ft_to_m
+        parg[igxend    ] = 124.0 * ft_to_m *1.1
         parg[igxblend1 ] =  20.0 * ft_to_m
         parg[igxblend2 ] =  97.0 * ft_to_m
         parg[igxshell1 ] =  17.0 * ft_to_m
@@ -253,7 +253,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igxinv   ]  = 57.0 * ft_to_m
         parg[igxmot   ]  = 53.0 * ft_to_m
         parg[igxfan   ]  = 52.0 * ft_to_m
-        parg[igxftank ]  = 90.0 * ft_to_m
+        parg[igxftank ]  = 94.0 * ft_to_m
 
 
 # Aerodynamic parameters

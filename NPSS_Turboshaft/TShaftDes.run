@@ -78,11 +78,13 @@ else{
 //====================
 
 OutFileStream output {
-    filename = "Eng.output"; 
+    filename = "Eng.output"; //autoFlush = FALSE;
 }
 
 output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
 output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
+output<<"M0 ="<<Eng.Amb.MN<<endl;
+output<<"Alt ="<<Eng.Amb.alt<<"\t# "+ Eng.Amb.alt.units<<endl;
 output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
 output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
 output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
@@ -110,56 +112,56 @@ output<<"d_hy = "<<Eng.PCEC.d_hy<<endl;
 output<<"cpsi = "<<Eng.PCEC.cpsi<<endl;
 output<<"w = "<<Eng.PCEC.w<<"\t#"+ Eng.PCEC.w.units<<endl;
 
-output<<"\n# MapScalars"<<endl;
-output<<"LPCscalars = ["<<Eng.CmpL.S_map.s_effDes<<", "<<Eng.CmpL.S_map.s_PRdes<<", "<<Eng.CmpL.S_map.s_WcDes<<", "<<Eng.CmpL.S_map.s_NcDes<<"]"<<endl;
-output<<"HPCscalars = ["<<Eng.CmpH.S_map.s_effDes<<", "<<Eng.CmpH.S_map.s_PRdes<<", "<<Eng.CmpH.S_map.s_WcDes<<", "<<Eng.CmpH.S_map.s_NcDes<<"]"<<endl;
+// output<<"\n# MapScalars"<<endl;
+// output<<"LPCscalars = ["<<Eng.CmpL.S_map.s_effDes<<", "<<Eng.CmpL.S_map.s_PRdes<<", "<<Eng.CmpL.S_map.s_WcDes<<", "<<Eng.CmpL.S_map.s_NcDes<<"]"<<endl;
+// output<<"HPCscalars = ["<<Eng.CmpH.S_map.s_effDes<<", "<<Eng.CmpH.S_map.s_PRdes<<", "<<Eng.CmpH.S_map.s_WcDes<<", "<<Eng.CmpH.S_map.s_NcDes<<"]"<<endl;
 
-output<<"HPTscalars = ["<<Eng.TrbH.S_map.s_effDes<<", "<<Eng.TrbH.S_map.s_PRdes<<", "<<Eng.TrbH.S_map.s_WpDes<<", "<<Eng.TrbH.S_map.s_NpDes<<"]"<<endl;
-output<<"PTscalars = ["<<Eng.TrbP.S_map.s_effDes<<", "<<Eng.TrbP.S_map.s_PRdes<<", "<<Eng.TrbP.S_map.s_WpDes<<", "<<Eng.TrbP.S_map.s_NpDes<<"]"<<endl;
+// output<<"HPTscalars = ["<<Eng.TrbH.S_map.s_effDes<<", "<<Eng.TrbH.S_map.s_PRdes<<", "<<Eng.TrbH.S_map.s_WpDes<<", "<<Eng.TrbH.S_map.s_NpDes<<"]"<<endl;
+// output<<"PTscalars = ["<<Eng.TrbP.S_map.s_effDes<<", "<<Eng.TrbP.S_map.s_PRdes<<", "<<Eng.TrbP.S_map.s_WpDes<<", "<<Eng.TrbP.S_map.s_NpDes<<"]"<<endl;
 
-real LPC[] = {Eng.CmpL.S_map.NcMapDes , 
-                Eng.CmpL.S_map.WcMapDes , 
-                Eng.CmpL.S_map.PRmapDes , 
-                Eng.CmpL.S_map.effMapDes, 
-                Eng.CmpL.S_map.RlineMapDes
-                };
-output<<strFmt1D("\nLPC = [", "%12.4f,", LPC,LPC.entries(),5)<<"]"<<endl;
+// real LPC[] = {Eng.CmpL.S_map.NcMapDes , 
+//                 Eng.CmpL.S_map.WcMapDes , 
+//                 Eng.CmpL.S_map.PRmapDes , 
+//                 Eng.CmpL.S_map.effMapDes, 
+//                 Eng.CmpL.S_map.RlineMapDes
+//                 };
+// output<<strFmt1D("\nLPC = [", "%12.4f,", LPC,LPC.entries(),5)<<"]"<<endl;
 
-real HPC[] = {Eng.CmpH.S_map.NcMapDes , 
-                Eng.CmpH.S_map.WcMapDes , 
-                Eng.CmpH.S_map.PRmapDes , 
-                Eng.CmpH.S_map.effMapDes, 
-                Eng.CmpH.S_map.RlineMapDes
-                };
-output<<strFmt1D("HPC = [", "%12.4f,",HPC,HPC.entries(),5)<<"]"<<endl;
+// real HPC[] = {Eng.CmpH.S_map.NcMapDes , 
+//                 Eng.CmpH.S_map.WcMapDes , 
+//                 Eng.CmpH.S_map.PRmapDes , 
+//                 Eng.CmpH.S_map.effMapDes, 
+//                 Eng.CmpH.S_map.RlineMapDes
+//                 };
+// output<<strFmt1D("HPC = [", "%12.4f,",HPC,HPC.entries(),5)<<"]"<<endl;
 
-real HPT[] = {Eng.TrbH.S_map.PRmapDes, Eng.TrbH.S_map.NpMapDes};
-output<<strFmt1D("HPT = [", "%12.4f,",HPT,HPT.entries(),5)<<"]"<<endl;
+// real HPT[] = {Eng.TrbH.S_map.PRmapDes, Eng.TrbH.S_map.NpMapDes};
+// output<<strFmt1D("HPT = [", "%12.4f,",HPT,HPT.entries(),5)<<"]"<<endl;
 
-real PT[] = {Eng.TrbP.S_map.PRmapDes, Eng.TrbP.S_map.NpMapDes};
-output<<strFmt1D("PT = [", "%12.4f,",PT,PT.entries(),5)<<"]"<<endl;
+// real PT[] = {Eng.TrbP.S_map.PRmapDes, Eng.TrbP.S_map.NpMapDes};
+// output<<strFmt1D("PT = [", "%12.4f,",PT,PT.entries(),5)<<"]"<<endl;
 
-output<<"\nNozArea    = "<<Eng.NozPri.AthCold << "\t # in^2"<<endl<<endl;
+// output<<"\nNozArea    = "<<Eng.NozPri.AthCold << "\t # in^2"<<endl<<endl;
 
-output<<"\n# BleedFracs"<<endl;
-output<<"TCLA_NC = "<<Eng.B030.TCLA_NC.fracW<<endl;
-output<<"TCLA_CH = "<<Eng.B030.TCLA_CH.fracW<<endl;
+// output<<"\n# BleedFracs"<<endl;
+// output<<"TCLA_NC = "<<Eng.B030.TCLA_NC.fracW<<endl;
+// output<<"TCLA_CH = "<<Eng.B030.TCLA_CH.fracW<<endl;
 
-real Areas[] = {Eng.FsEng.Fl_O.Aphy     ,
-                Eng.InEng.Fl_O.Aphy     ,
-                Eng.CmpL.Fl_O.Aphy      ,
-                Eng.D025.Fl_O.Aphy      ,
-                Eng.CmpH.Fl_O.Aphy      ,
-                Eng.B030.Fl_O.Aphy      ,
-                Eng.BrnPri.Fl_O.Aphy    ,
-                Eng.TrbH.Fl_O.Aphy      ,
-                Eng.D050.Fl_O.Aphy      ,
-                Eng.TrbP.Fl_O.Aphy      ,
-                Eng.D060.Fl_O.Aphy      ,
-                Eng.PCEC.Fl_O.Aphy      ,
-                Eng.NozPri.Fl_O.Aphy  };
+// real Areas[] = {Eng.FsEng.Fl_O.Aphy     ,
+//                 Eng.InEng.Fl_O.Aphy     ,
+//                 Eng.CmpL.Fl_O.Aphy      ,
+//                 Eng.D025.Fl_O.Aphy      ,
+//                 Eng.CmpH.Fl_O.Aphy      ,
+//                 Eng.B030.Fl_O.Aphy      ,
+//                 Eng.BrnPri.Fl_O.Aphy    ,
+//                 Eng.TrbH.Fl_O.Aphy      ,
+//                 Eng.D050.Fl_O.Aphy      ,
+//                 Eng.TrbP.Fl_O.Aphy      ,
+//                 Eng.D060.Fl_O.Aphy      ,
+//                 Eng.PCEC.Fl_O.Aphy      ,
+//                 Eng.NozPri.Fl_O.Aphy  };
 
-output<<strFmt1D("\nAreas = [", "%12.4f,", Areas,Areas.entries(),5)<<"]"<<endl;
+// output<<strFmt1D("\nAreas = [", "%12.4f,", Areas,Areas.entries(),5)<<"]"<<endl;
 
 
 #include "saveTShaftDes.fnc"

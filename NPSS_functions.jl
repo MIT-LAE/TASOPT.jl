@@ -30,7 +30,7 @@ function NPSS_TShaft_input(alt_in, MN_in,
     open(file_name, "w") do io
 
         println(io, "\n// Abmient conditions")
-        println(io, "Eng.Amb.alt_in = ", alt_in, ";" )
+        println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";" )
         println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
 
         println(io, "\n// Targets")
@@ -69,7 +69,7 @@ function NPSS_TShaft_input(alt_in, MN_in,
     open(file_name, "w") do io
 
         println(io, "\n// Abmient conditions")
-        println(io, "Eng.Amb.alt_in = ", alt_in, ";")
+        println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";")
         println(io, "Eng.Amb.MN_in  = ", MN_in , ";")
 
         println(io, "\n// Targets")
@@ -92,7 +92,7 @@ function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
         # println(io, "DuctedFan.setOption(\"switchDes\",\"DESIGN\");")
 
         println(io, "\n// Abmient conditions")
-        println(io, "DuctedFan.Amb.alt_in = ", alt_in, ";" )
+        println(io, "DuctedFan.Amb.alt_in = ", alt_in/ft_to_m, ";" )
         println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
 
         println(io, "\n// Thrust Target")
@@ -117,7 +117,7 @@ function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Pin::Float64,
         # println(io, "DuctedFan.setOption(\"switchDes\",\"OFFDESIGN\");")
 
         println(io, "\n// Abmient conditions")
-        println(io, "DuctedFan.Amb.alt_in = ", alt_in, ";" )
+        println(io, "DuctedFan.Amb.alt_in = ", alt_in/ft_to_m, ";" )
         println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
 
         println(io, "\n// Input power")
