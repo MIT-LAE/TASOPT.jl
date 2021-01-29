@@ -85,7 +85,7 @@ function tankWmech(gee, rhoFuel,
       Winsul_sum = sum(Winsul)
 
 #--- overall tank weight
-      Wtank_total = Wtank + Wfuel + Winsul_sum + 20 * gee #fuel allowance variable 20kg allowance according to Verstraete
+      Wtank_total = Wtank + Wfuel + Winsul_sum
       l_tank = lshell + 2*Lhead
 
 return  Wtank_total, lshell, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank
