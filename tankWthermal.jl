@@ -28,44 +28,43 @@ function tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, r_tank,
       thickness = sum(t_cond) #total thickness of insulation
 
 #--- Heat flux and resistances
+      ΔT = Tair - Tfuel  # Overall temperature drop between ambient and LH2
+      
+      qfac = 1.3         # Account for heat leak from pipes and valves
+      
+      # Move constants to constant file
+      σ = 5.67e-8
+      ε = 0.95    # white aircraft (Verstraete)
 
-      deltaT = Tair - Tfuel  #Overall temperature drop between ambient and LH2
-      sigma = 5.67e-8
-      e = 0.95 #white aircraft (Verstraete)
-      hradair = sigma * e * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel)
+      hradair = σ * ε * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel)
       h_air = hconvair + hradair
-      Rair_conv_rad = 1 / (h_air * 2 * pi * r_tank * lshell)  #thermal resistance of ambient air
+      Rair_conv_rad = 1 / (h_air * (2π*r_tank*lshell + 2*Shead_insul[end]))  #thermal resistance of ambient air
       #r_inner = r_tank - thickness  #inner radius of tank
       r_inner = r_tank
-      r_inner_init = r_inner
 
       #Not needed for MLI. May add later for purged He etc. Rgas = 1 / (hconvgas * 2 * pi * r_inner * lshell)  #thermal resistance of purged gas
 
-      R_LH2 = 1 / (h_LH2 * 2 * pi * r_inner * lshell)  #thermal resistance of LH2
+      R_LH2 = 1 / (h_LH2 * (2*π*(r_inner - thickness) * lshell) + 2*Shead_insul[1]) #thermal resistance of LH2
 
-      R_mli = zeros(N)  #size of MLI resistance array (Based on number of layers)
+      R_mli     = zeros(N)  #size of MLI resistance array (Based on number of layers)
       R_mli_lat = zeros(N)
       R_mli_cyl = zeros(N)
 
       for n in 1:N
-            R_mli_cyl[n] = log((r_inner  + t_cond[n])/ (r_inner)) / (2 * pi * lshell * k[n]) #Resistance of each MLI layer
-            #R_mli_lat[n] = t_cond[n] / (2*k[n] * pi * (r_inner^2))
+            R_mli_cyl[n] = log((r_inner  + t_cond[n])/ (r_inner)) / (2 *π*lshell * k[n]) #Resistance of each MLI layer
             R_mli_lat[n] = t_cond[n] / (2*k[n] * Shead_insul[n])
-            R_mli[n] = (R_mli_lat[n] * R_mli_cyl[n]/(R_mli_lat[n] + R_mli_cyl[n]))
+            R_mli[n] = (R_mli_lat[n] * R_mli_cyl[n]/(R_mli_lat[n] + R_mli_cyl[n])) # || parallel addition
             r_inner = r_inner + t_cond[n]  #Inner layer w.r.t the nth MLI layer being evaluated
 
       end
 
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
 
-      #In case we add radiative resistance at some point
-      #Rair_rad =  1 / (hradair * 2 * pi * r_tank * lshell)
-      #Rair = (Rair_conv * Rair_rad) / (Rair_conv + Rair_rad)
-      Req = R_mli_tot + Rair_conv_rad + R_LH2  #Total equivalent resistance of thermal circuit
+      Req = R_mli_tot + Rair_conv_rad + R_LH2  # Total equivalent resistance of thermal circuit
 
-      q = 1.3 * deltaT / Req  #Heat flux from ambient to LH2 30% extra as in eq 3.20 by Verstraete
-      mdot_boiloff = q / h_v  #Boil-off rate equals the heat flux divided by heat of vaporization
-      m_boiloff = mdot_boiloff * time_flight #Boil-off mass calculation
+      q = qfac * ΔT / Req     # Heat flux from ambient to LH2 30% extra as in eq 3.20 by Verstraete
+      mdot_boiloff = q / h_v  # Boil-off rate equals the heat flux divided by heat of vaporization
+      m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
 
 return  m_boiloff, mdot_boiloff
 end
