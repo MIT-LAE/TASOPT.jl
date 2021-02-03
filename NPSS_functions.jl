@@ -24,11 +24,15 @@ Writes an input file for NPSS Turboshaft model
 function NPSS_TShaft_input(alt_in, MN_in, 
     SHP_dmd, Tt41, 
     LPC_PR, HPC_PR,
-    cpsi, w, lcat, deNOx ;
+    cpsi, w, lcat, deNOx, first ;
     LHV = 120, file_name = "NPSS_Turboshaft/EngineInputs.inp")
 
     open(file_name, "w") do io
-
+        if(first)
+            println(io, "int first = 1;")
+        else 
+            println(io, "int first = 0;")
+        end
         println(io, "\n// Abmient conditions")
         println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";" )
         println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
@@ -63,11 +67,15 @@ Writes an input file for NPSS Turboshaft model in off-des conditions
 
 """
 function NPSS_TShaft_input(alt_in, MN_in, 
-                            Tt41, Nshaft ; 
+                            Tt41, Nshaft, first ; 
                             file_name = "NPSS_Turboshaft/OffDesInputs.inp")
 
     open(file_name, "w") do io
-
+        if(first)
+            println(io, "int first = 1;")
+        else 
+            println(io, "int first = 0;")
+        end
         println(io, "\n// Abmient conditions")
         println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";")
         println(io, "Eng.Amb.MN_in  = ", MN_in , ";")
@@ -84,11 +92,16 @@ end
 Writes an input file for NPSS ducted fan model
 """
 function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
-                        Kinl::Float64, Φinl::Float64,
-                        πfan::Float64 ; file_name = "NPSS_Turboshaft/FanInputs.inp")
+                        Kinl::Float64, Φinl::Float64, 
+                        πfan::Float64, first ; file_name = "NPSS_Turboshaft/FanInputs.inp")
 
     open(file_name, "w") do io
         println(io, "// Design State")
+        if(first)
+            println(io, "int first = 1;")
+        else 
+            println(io, "int first = 0;")
+        end
         # println(io, "DuctedFan.setOption(\"switchDes\",\"DESIGN\");")
 
         println(io, "\n// Abmient conditions")
@@ -109,11 +122,16 @@ function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
 end
 
 function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Pin::Float64,
-                        Kinl::Float64, Φinl::Float64;
+                        Kinl::Float64, Φinl::Float64, first;
                         file_name = "NPSS_Turboshaft/FanInputs.inp")
 
     open(file_name, "w") do io
         println(io, "// Design State")
+        if(first)
+            println(io, "int first = 1;")
+        else 
+            println(io, "int first = 0;")
+        end
         # println(io, "DuctedFan.setOption(\"switchDes\",\"OFFDESIGN\");")
 
         println(io, "\n// Abmient conditions")
