@@ -26,12 +26,15 @@ Eng.PCEC.setOption("switchMode","ON");
 #include "Tshaft_design.int"
 Eng.setOption("switchDes", "OFFDESIGN");
 
+int Ldiag = FALSE;
+// Define true and false to make it easier to use from Julia
+int true  = 1;
+int false = 0;
 
 
 //====================
 //Auto solver setup
 //====================
-// solver.clear();
 // All setup in variable changed method in TShaft.mdl
 autoSolverSetup();
 // printSolverConditions();
@@ -56,7 +59,7 @@ solver.maxJacobians  = 200;
 //Run engine model
 //====================
 if( first == 1){
-    restart("offdes1.restart");
+    restart("offdesTO.restart");// restart("offdes1.restart");
 }
 if(first == 0){
     restart("offdes_prev_converged.restart");
@@ -74,19 +77,9 @@ else{
         SaveIndepVals("solver", "offdes_prev_converged.restart");
     }
 }
-
-diag<<first<<"> Tt41 demand = "<<Tt41<<"\t iter to converge = "<<solver.iterationCounter<<endl;
-
-// for(Eng.Amb.alt_in = 30000; Eng.Amb.alt_in >=0; Eng.Amb.alt_in-=1000){
-//     if (Eng.Amb.MN_in >=0.25){
-//     Eng.Amb.MN_in -= 0.01;}
-//     cout<<Eng.Amb.MN_in<<endl;
-//     cout<<Eng.Amb.alt_in<<endl;
-//     run();
-//     cout<<"Power =";
-//     cout<<Eng.ShP.HPX<<endl;
-// }
-// SaveIndepVals("solver", "offdesTO.restart");
+if(Ldiag) {
+    diag<<first<<"> Tt41 demand = "<<Tt41<<"\t iter to converge = "<<solver.iterationCounter<<endl;
+}
 
 //====================
 // Outputs
@@ -97,15 +90,11 @@ OutFileStream output {
 }
 parseFile("write_offDes_output.int");
 
-
+// Variables to read inputs from cin
 string t ;
 int i ;
 real M0, alt;
-
-InFileStream input{
-    filename = "cin";
-}
-
+// Loop while 999 is not sent to cin
 while(i!=999)
 {
     cin>> i;
@@ -119,6 +108,9 @@ while(i!=999)
         parseString(t);
         Eng.Amb.alt_in = alt;
         Eng.Amb.MN_in  = M0;
+        if(first){
+            restart("offdesTO.restart");
+        }
         run();
         parseFile("write_offDes_output.int");
     }

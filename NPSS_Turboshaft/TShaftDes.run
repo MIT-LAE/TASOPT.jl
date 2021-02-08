@@ -22,6 +22,11 @@ real includes_time = cpuTime;
 #include "utils.fnc"
 #include "save_solver.fnc"
 
+int Ldiag = FALSE;
+// Define true and false to make it easier to use from Julia
+int true  = 1;
+int false = 0;
+
 //====================
 //Read input file
 //====================
@@ -68,9 +73,10 @@ if(first == 0){
 real start_run = cpuTime;
 run();
 real end_run = cpuTime;
-
-diag<<first<<"> ShP demand = "<<SHP_dmd<<"\t iter to converge = "<<solver.iterationCounter<<endl;
-diag<<"Run time = "<<end_run - start_run<<endl;
+if(Ldiag){
+    diag<<first<<"> ShP demand = "<<SHP_dmd<<"\t iter to converge = "<<solver.iterationCounter<<endl;
+    diag<<"Run time = "<<end_run - start_run<<endl;
+}
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 if(solver.converged == 1){
     if (Eng.switchDes == "DESIGN") {
@@ -101,96 +107,12 @@ OutFileStream output {
     filename = "Eng.output"; //autoFlush = FALSE;
 }
 real start_write = cpuTime;
-output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
-output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
-output<<"M0 ="<<Eng.Amb.MN<<endl;
-output<<"Alt ="<<Eng.Amb.alt<<"\t# "+ Eng.Amb.alt.units<<endl;
-output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
-output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
-output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
-// output<<"ShP = "<<Eng.Gen.ShP_dmd/getUnitsFactor("hp", "kW")<<"#\t kW"<<endl;
-// output<<"ShP = "<<Eng.Gen.ShP_dmd<<"\t# " + Eng.Gen.ShP_dmd.units<<endl;
-output<<"Ngen = "<<Eng.ShP.Nmech<<"\t# " + Eng.ShP.Nmech.units<<endl;
-output<<"ShP_hp = "<<Eng.ShP.HPX<<"\t# " + Eng.ShP.HPX.units<<endl;
-output<<"ShP = "<<Eng.ShP.HPX*746<<"\t# W"<<endl;
-// output<<"ShP = "<<Eng.ShP.pwrOut<<"\t# W"<<endl;
-output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
-output<<"BSFC = "<<Eng.Perf.BSFC<<endl;
-output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;
-output<<"Tt3 = "<<Eng.CmpH.Fl_O.Tt <<"\t#" +Eng.CmpH.Fl_O.Tt.units<<endl;
-
-output<<"\n# PCEC related outputs"<<endl;
-output<<"deNOx = "<<Eng.PCEC.deNOx <<endl;
-output<<"mcat = "<<Eng.PCEC.m_cat <<"\t# kg"<<endl;
-output<<"Af = "<<Eng.PCEC.Af <<"\t#"+ Eng.PCEC.Af.units<<endl;
-output<<"lcat = "<<Eng.PCEC.l <<"\t#"+ Eng.PCEC.l.units<<endl;
-output<<"Diff_NOx = "<<Eng.PCEC.Deff <<"\t#"+ Eng.PCEC.Deff.units<<endl;
-output<<"t_res = "<<Eng.PCEC.t_res <<"\t#"+ Eng.PCEC.t_res.units<<endl;
-output<<"dPqP = "<<Eng.PCEC.dPqP<<"\t#"+ Eng.PCEC.dPqP.units<<endl;
-// output<<"OFA = "<<Eng.PCEC.OFA<<endl;
-output<<"d_hy = "<<Eng.PCEC.d_hy<<endl;
-output<<"cpsi = "<<Eng.PCEC.cpsi<<endl;
-output<<"w = "<<Eng.PCEC.w<<"\t#"+ Eng.PCEC.w.units<<endl;
-
-// output<<"\n# MapScalars"<<endl;
-// output<<"LPCscalars = ["<<Eng.CmpL.S_map.s_effDes<<", "<<Eng.CmpL.S_map.s_PRdes<<", "<<Eng.CmpL.S_map.s_WcDes<<", "<<Eng.CmpL.S_map.s_NcDes<<"]"<<endl;
-// output<<"HPCscalars = ["<<Eng.CmpH.S_map.s_effDes<<", "<<Eng.CmpH.S_map.s_PRdes<<", "<<Eng.CmpH.S_map.s_WcDes<<", "<<Eng.CmpH.S_map.s_NcDes<<"]"<<endl;
-
-// output<<"HPTscalars = ["<<Eng.TrbH.S_map.s_effDes<<", "<<Eng.TrbH.S_map.s_PRdes<<", "<<Eng.TrbH.S_map.s_WpDes<<", "<<Eng.TrbH.S_map.s_NpDes<<"]"<<endl;
-// output<<"PTscalars = ["<<Eng.TrbP.S_map.s_effDes<<", "<<Eng.TrbP.S_map.s_PRdes<<", "<<Eng.TrbP.S_map.s_WpDes<<", "<<Eng.TrbP.S_map.s_NpDes<<"]"<<endl;
-
-// real LPC[] = {Eng.CmpL.S_map.NcMapDes , 
-//                 Eng.CmpL.S_map.WcMapDes , 
-//                 Eng.CmpL.S_map.PRmapDes , 
-//                 Eng.CmpL.S_map.effMapDes, 
-//                 Eng.CmpL.S_map.RlineMapDes
-//                 };
-// output<<strFmt1D("\nLPC = [", "%12.4f,", LPC,LPC.entries(),5)<<"]"<<endl;
-
-// real HPC[] = {Eng.CmpH.S_map.NcMapDes , 
-//                 Eng.CmpH.S_map.WcMapDes , 
-//                 Eng.CmpH.S_map.PRmapDes , 
-//                 Eng.CmpH.S_map.effMapDes, 
-//                 Eng.CmpH.S_map.RlineMapDes
-//                 };
-// output<<strFmt1D("HPC = [", "%12.4f,",HPC,HPC.entries(),5)<<"]"<<endl;
-
-// real HPT[] = {Eng.TrbH.S_map.PRmapDes, Eng.TrbH.S_map.NpMapDes};
-// output<<strFmt1D("HPT = [", "%12.4f,",HPT,HPT.entries(),5)<<"]"<<endl;
-
-// real PT[] = {Eng.TrbP.S_map.PRmapDes, Eng.TrbP.S_map.NpMapDes};
-// output<<strFmt1D("PT = [", "%12.4f,",PT,PT.entries(),5)<<"]"<<endl;
-
-// output<<"\nNozArea    = "<<Eng.NozPri.AthCold << "\t # in^2"<<endl<<endl;
-
-// output<<"\n# BleedFracs"<<endl;
-// output<<"TCLA_NC = "<<Eng.B030.TCLA_NC.fracW<<endl;
-// output<<"TCLA_CH = "<<Eng.B030.TCLA_CH.fracW<<endl;
-
-// real Areas[] = {Eng.FsEng.Fl_O.Aphy     ,
-//                 Eng.InEng.Fl_O.Aphy     ,
-//                 Eng.CmpL.Fl_O.Aphy      ,
-//                 Eng.D025.Fl_O.Aphy      ,
-//                 Eng.CmpH.Fl_O.Aphy      ,
-//                 Eng.B030.Fl_O.Aphy      ,
-//                 Eng.BrnPri.Fl_O.Aphy    ,
-//                 Eng.TrbH.Fl_O.Aphy      ,
-//                 Eng.D050.Fl_O.Aphy      ,
-//                 Eng.TrbP.Fl_O.Aphy      ,
-//                 Eng.D060.Fl_O.Aphy      ,
-//                 Eng.PCEC.Fl_O.Aphy      ,
-//                 Eng.NozPri.Fl_O.Aphy  };
-
-// output<<strFmt1D("\nAreas = [", "%12.4f,", Areas,Areas.entries(),5)<<"]"<<endl;
-
+parseFile("write_des_output.int");
 
 #include "saveTShaftDes.fnc"
 real end_time = cpuTime;
 real end_write = cpuTime;
-diag<<"Write time = "<<end_write- start_write<<endl;
-diag<<"Total time = "<<end_time- start_time<<endl;
-
-InFileStream input{
-    filename = "source.in";
+if(Ldiag){
+    diag<<"Write time = "<<end_write- start_write<<endl;
+    diag<<"Total time = "<<end_time- start_time<<endl;
 }
-

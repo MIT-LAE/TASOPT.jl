@@ -5,8 +5,13 @@ A trivial wrapper that runs a NPSS batch file `bat_file` at the specifed `dir`
 >Remember to use `/` as separators
 """
 function NPSS_run(dir, bat_file)
-    run(`cmd /c cd $dir '&&' $bat_file `)
+    global time_run_NPSS += @elapsed run(`cmd /c cd $dir '&&' $bat_file `)
     return nothing
+end
+
+function NPSS_run(dir, bat_file)
+    NPSS = open(`cmd /c cd $dir '&&' $bat_file `)
+    return NPSS
 end
 
 """
