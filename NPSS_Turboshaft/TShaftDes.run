@@ -7,10 +7,16 @@
 //   Description:   Turboshaft engine for integration with TAESOPT       |
 //                                                                       |
 //------------------------------------------------------------------------
+real start_time = cpuTime;
+// #include <winsock2.h>
+// #include <ws2tcpip.h>
+// #pragma comment(lib, "Ws2_32.lib")
+
 MODELNAME = "Turboshaft engine";
 AUTHOR    = "Prashanth";
 
 setThermoPackage("GasTbl");
+real includes_time = cpuTime;
 #include "TShaft.mdl"
 #include "printDetails.fnc"
 #include "utils.fnc"
@@ -32,6 +38,9 @@ Eng.ShP.HPX = SHP_dmd*getUnitsFactor("W", "hp");
 solver.clear();
 autoSolverSetup(); // All setup in variable changed method in TShaft.mdl
 // printSolverDetails();
+OutFileStream diag {
+    filename = "Des_solver.diag"; append = TRUE;
+}
 
 //====================
 // Solver setup:
@@ -44,20 +53,31 @@ solver.maxJacobians  = 200;
 // solver.defaultDxLimit = 0.001;
 // solver.defaultPerturbation = 0.0001;
 // solver.convergenceLimit = 0.8;
-solver.defaultTolerance = 1e-10;
+// solver.defaultTolerance = 1e-10;
 
 //====================
 //Run engine model
 //====================
-if (Eng.switchDes == "DESIGN") {
-    restart("temp.restart");
+if( first == 1){
+    restart("des.restart");
 }
-run();
+if(first == 0){
+    restart("des_prev_converged.restart");
+}
 
+real start_run = cpuTime;
+run();
+real end_run = cpuTime;
+
+diag<<first<<"> ShP demand = "<<SHP_dmd<<"\t iter to converge = "<<solver.iterationCounter<<endl;
+diag<<"Run time = "<<end_run - start_run<<endl;
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 if(solver.converged == 1){
     if (Eng.switchDes == "DESIGN") {
-        SaveIndepVals("solver", "temp.restart");
+        SaveIndepVals("solver", "des.restart");
+    }
+    if (first == 1){
+        SaveIndepVals("solver", "des_prev_converged.restart");
     }
 }
 else{
@@ -80,7 +100,7 @@ else{
 OutFileStream output {
     filename = "Eng.output"; //autoFlush = FALSE;
 }
-
+real start_write = cpuTime;
 output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
 output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
 output<<"M0 ="<<Eng.Amb.MN<<endl;
@@ -165,3 +185,12 @@ output<<"w = "<<Eng.PCEC.w<<"\t#"+ Eng.PCEC.w.units<<endl;
 
 
 #include "saveTShaftDes.fnc"
+real end_time = cpuTime;
+real end_write = cpuTime;
+diag<<"Write time = "<<end_write- start_write<<endl;
+diag<<"Total time = "<<end_time- start_time<<endl;
+
+InFileStream input{
+    filename = "source.in";
+}
+
