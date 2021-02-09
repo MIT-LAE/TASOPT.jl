@@ -9,9 +9,22 @@ function NPSS_run(dir, bat_file)
     return nothing
 end
 
-function NPSS_run(dir, bat_file)
-    NPSS = open(`cmd /c cd $dir '&&' $bat_file `)
+"""
+This function starts up and returns an NPSS process that can then be written to
+"""
+function startNPSS(dir, bat_file)
+    NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w")
     return NPSS
+end
+
+"""
+Ends NPSS process that can then be written to
+"""
+function endNPSS(NPSS)
+    write(NPSS, "999 \\n")
+    if(NPSS.exitcode == 0)
+        close(NPSS)
+    end
 end
 
 """
