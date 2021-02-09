@@ -98,9 +98,7 @@ real M0, alt;
 while(i!=999)
 {
     cin>> i;
-    // input >> M0;
-    // input >> alt;
-    // input >> Tt41;
+
     if(i==111){
         t = cin.getline();
         i = 222;
