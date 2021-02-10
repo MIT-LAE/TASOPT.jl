@@ -107,49 +107,47 @@ function NPSS_TShaft_input(alt_in, MN_in,
 end
 
 """
-Writes an input file for NPSS ducted fan model
+Fan - Design mode:
+
+Writes the desired conditions to the external NPSS process
 """
-function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
-                        Kinl::Float64, Φinl::Float64, 
-                        πfan::Float64, first ; file_name = "NPSS_Turboshaft/FanInputs.inp")
+function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
+                    Kinl::Float64, Φinl::Float64, 
+                    πfan::Float64, first)
+    input_string = "111 "*
+                "first = $first;" *
+                "DuctedFan.Amb.alt_in = $(alt_in/ft_to_m);" *
+                "DuctedFan.Amb.MN_in  = $MN_in ;" *
+                "Fn_target = $Fn ;" *
+                "DuctedFan.InEng.Kinl = $Kinl;" *
+                "DuctedFan.Phiinl     = $Φinl;" *
+                "DuctedFan.Fan.PRdes = $πfan;" *
+                "\n"
 
-    open(file_name, "w") do io
-        println(io, "// Design State")
-        if(first)
-            println(io, "int first = 1;")
-        else 
-            println(io, "int first = 0;")
-        end
-        # println(io, "DuctedFan.setOption(\"switchDes\",\"DESIGN\");")
-
-        println(io, "\n// Abmient conditions")
-        println(io, "DuctedFan.Amb.alt_in = ", alt_in/ft_to_m, ";" )
-        println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
-
-        println(io, "\n// Thrust Target")
-        println(io, "real Fn_target = ", Fn, ";")
-
-        println(io, "\n// BLI inputs")
-        println(io, "DuctedFan.InEng.Kinl = ", Kinl, ";")
-        println(io, "DuctedFan.Phiinl     = ", Φinl, ";")
-
-        println(io, "\n// Design parameters")
-        println(io, "DuctedFan.Fan.PRdes = ", πfan, ";")
-    end
+    write(NPSS, input_string)
+    # sleep(0.5)
 
 end
 
-function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Pin::Float64,
-                        Kinl::Float64, Φinl::Float64, first;
-                        file_name = "NPSS_Turboshaft/FanInputs.inp")
+"""
+Fan - Off-design mode:
 
-    open(file_name, "w") do io
-        println(io, "// Design State")
-        if(first)
-            println(io, "int first = 1;")
-        else 
-            println(io, "int first = 0;")
-        end
+Writes the desired conditions to the external NPSS process
+"""
+function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Pin::Float64,
+                    Kinl::Float64, Φinl::Float64, first)
+    input_string = "222 "*
+                "first = $first;" *
+                "DuctedFan.Amb.alt_in = $(alt_in/ft_to_m);" *
+                "DuctedFan.Amb.MN_in  = $MN_in ;" *
+                "ShP_input = $(-Pin/745.7) ;" *
+                "DuctedFan.InEng.Kinl = $Kinl;" *
+                "DuctedFan.Phiinl     = $Φinl;" *
+                "\n"
+
+    write(NPSS, input_string)
+    # sleep(0.5)
+end
         # println(io, "DuctedFan.setOption(\"switchDes\",\"OFFDESIGN\");")
 
         println(io, "\n// Abmient conditions")
