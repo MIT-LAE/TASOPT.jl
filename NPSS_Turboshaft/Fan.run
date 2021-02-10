@@ -134,9 +134,9 @@ while(flag!=999){
             if(first){
                 SaveIndepVals("solver", "offDes_fan_start.restart");
             }
-            else{
-                SaveIndepVals("solver", "offDes_fan_prev.restart");
-            }
+            // else{
+            //     SaveIndepVals("solver", "offDes_fan_prev.restart");
+            // }
         }
         else{
             cout<<"ERROR! OFFDES Did not converge"<<endl;

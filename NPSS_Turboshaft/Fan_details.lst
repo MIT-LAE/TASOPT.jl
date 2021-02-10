@@ -1,5 +1,6 @@
 variableList = {
     "CASE:??????                    = CASE",
+    "first:?                        = first_run",
     "DuctedFan.switchDes:?????????  = switchDes",
     "solver.converged:??            = Conv",
     "solver.iterationCounter:???    = Iter",
