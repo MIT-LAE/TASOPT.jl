@@ -66,16 +66,17 @@ Outputs:
 - mcat
 
 """
-function TurboShaft(alt_in::Float64, MN_in::Float64, 
+function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64, 
                     Tt41::Float64, Nshaft::Float64, first)
 
-    global time_writing += @elapsed NPSS_TShaft_input(alt_in, MN_in,
-                    Tt41, Nshaft, first;
-                    file_name = "NPSS_Turboshaft/OffDesInputs.inp")
+    file_name = "NPSS_Turboshaft/Eng.output"
+    t0 = stat(file_name).mtime
 
-    NPSS_run("NPSS_Turboshaft/", "TPoffDes.bat")
-
-    include("NPSS_Turboshaft/Eng.output")
+    NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, first)
+    
+    while (stat(file_name).mtime - t0 < eps())
+    end
+    include(file_name)
 
     return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
 
@@ -103,15 +104,20 @@ Outputs:
 - NozArea     : Fan nozzle area for off-des calcs [in^2] in inches so can easily pass back to NPSS
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64,
+function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
                      π_fan::Float64, first)
     
-    global time_writing += @elapsed  NPSS_Fan_input(alt_in, MN_in, Fn, Kinl, Φinl, π_fan, first)
-    #Run Design model
-    NPSS_run("NPSS_Turboshaft/", "FanDes.bat")
+    file_name = "NPSS_Turboshaft/Fan.output"
+    t0 = stat(file_name).mtime # save the last modified time of the output file
 
-    include("NPSS_Turboshaft/Fan.output")
+    runNPSS_Fan(NPSS, alt_in, MN_in, Fn, Kinl, Φinl, π_fan, first)
+    
+    # Wait until NPSS finishes writing outputs to file
+    while (stat(file_name).mtime - t0 < eps())        
+    end
+    # Read the data
+    include(file_name)
     
     ARfan  = 3   # Blade aspeect ratio
     bladeσ = 0.4 # Blade solidity c/s
@@ -148,14 +154,19 @@ Outputs:
 
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Pin::Float64,
+function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Pin::Float64,
                     Kinl::Float64, Φinl::Float64, first)
     
-    global time_writing += @elapsed NPSS_Fan_input(alt_in, MN_in, Pin, Kinl, Φinl, first)
-    #Run Off-Design model
-    NPSS_run("NPSS_Turboshaft/", "FanOffDes.bat")
+    file_name = "NPSS_Turboshaft/Fan.output"
+    t0 = stat(file_name).mtime
 
-    include("NPSS_Turboshaft/Fan.output")
+    runNPSS_Fan(NPSS, alt_in, MN_in, Pin, Kinl, Φinl, first)
+    
+    # Wait until NPSS finishes writing outputs to file
+    while (stat(file_name).mtime - t0 < eps())
+    end
+    # Read the data
+    include(file_name)
 
     return Fn, Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
 
@@ -166,7 +177,7 @@ PowerTrain
 
 Design method - sizes the powertrain
 """
-function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
+function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parg::Array{Float64, 1},
                     parpt::Array{Union{Float64, Int64},1},
@@ -189,7 +200,7 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         NPSS_time = 0.0
     NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
-        FanMapScalars, FanNozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
+        FanMapScalars, FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
         # println("Fan Fn = ", Ffan, " N")
@@ -303,7 +314,8 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
 
 end
 
-function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
+function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
+                    alt_in::Float64, MN_in::Float64, Tt41::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
@@ -319,7 +331,7 @@ function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
     # Calculate Turboshaft power output
         NPSS_time += @elapsed Pshaft, ηthermal,
         mdotf, BSFC,
-        deNOx_out = TurboShaft(alt_in, MN_in, Tt41, Nshaft, first)
+        deNOx_out = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
         
         mdotf_tot = mdotf*nTshaft
 
@@ -356,7 +368,7 @@ function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
     Pfan_in = Pmot_out
 
   NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
-        ηpropul, ηDF = DuctedFan(alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
+        ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
         # println("Fan speed = ", N_fan) 
         # TODO fan vs motor speed discrepency 
 
