@@ -13,7 +13,7 @@ end
 This function starts up and returns an NPSS process that can then be written to
 """
 function startNPSS(dir, bat_file)
-    NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w")
+    NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w+")
     return NPSS
 end
 
@@ -80,30 +80,18 @@ OffdesMode
 
 Writes an input file for NPSS Turboshaft model in off-des conditions
 
-    - Abmient altitude and mach number
+    - Abmient altitude [in m]
+    - Flight mach number
     - Tt41 
+    - the flag first sets whether NPSS should restart or use previous value
 
 """
-function NPSS_TShaft_input(alt_in, MN_in, 
-                            Tt41, Nshaft, first ; 
-                            file_name = "NPSS_Turboshaft/OffDesInputs.inp")
+function NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, 
+                            Tt41, first)
 
-    open(file_name, "w") do io
-        if(first)
-            println(io, "int first = 1;")
-        else 
-            println(io, "int first = 0;")
-        end
-        println(io, "\n// Abmient conditions")
-        println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";")
-        println(io, "Eng.Amb.MN_in  = ", MN_in , ";")
-
-        println(io, "\n// Targets")
-        println(io, "real Tt41   = ", Tt41  , ";")
-        println(io, "real N2_dmd = ", Nshaft, ";")
-        
-    end
-
+    write(NPSS_TS, "111 Tt41=$Tt41; alt=$(alt_in/0.3048); M0 = $MN_in;first=$first;\n")
+    NPSS_success = parse(Bool, String(readavailable(NPSS_TS.out))) # `readavailable(stream)` blocks until data is available
+    return NPSS_success
 end
 
 """
@@ -125,8 +113,8 @@ function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Fl
                 "\n"
 
     write(NPSS, input_string)
-    # sleep(0.5)
-
+    NPSS_success = parse(Bool, String(readavailable(NPSS.out))) # `readavailable(stream)` is blocking only if no data is available
+    return NPSS_success
 end
 
 """
@@ -146,23 +134,6 @@ function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Pin::F
                 "\n"
 
     write(NPSS, input_string)
-    # sleep(0.5)
-end
-        # println(io, "DuctedFan.setOption(\"switchDes\",\"OFFDESIGN\");")
-
-        println(io, "\n// Abmient conditions")
-        println(io, "DuctedFan.Amb.alt_in = ", alt_in/ft_to_m, ";" )
-        println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
-
-        println(io, "\n// Input power")
-        println(io, "real ShP_input = ", -Pin/745.7, ";")
-
-        
-        println(io, "\n// BLI inputs")
-        println(io, "DuctedFan.InEng.Kinl = ", Kinl, ";")
-        println(io, "DuctedFan.Phiinl     = ", Φinl, ";")
-
-
-    end
-
+    NPSS_success = parse(Bool, String(readavailable(NPSS.out)))
+    return NPSS_success
 end
