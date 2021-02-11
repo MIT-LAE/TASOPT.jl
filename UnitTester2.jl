@@ -224,7 +224,7 @@ TOML.print(input)
 =#
 
 ## Testing build up of wsize
-using Profile
+using Profile, UnicodePlots
 include("index.inc")
 include("atmos.jl")
 include("fuseW.jl")
@@ -275,13 +275,17 @@ const cpSL  = 1004.0
 μAir = 1.78e-5 
 ρAir = ρSL
 
-function run_wsize(iter)
-
+time_writing = 0.0
+time_run_NPSS = 0.0
+function run_wsize(iter, Ldebug)
+    global time_writing = 0.0
+    global time_run_NPSS = 0.0
+    parpt[ipt_time_NPSS] = 0.0
 
     # println(parg[igWwing])
-    println("Max weight iterations = $iter")
+    Ldebug && println("Max weight iterations = $iter")
     wsize(pari, parg, parm, view(para,:,:,1), view(pare, :,:,1),
-                    iter, 0.5, 0.9, 0.5,0, 1, 1)
+                    iter, 0.5, 0.9, 0.5,0, 1, 1, Ldebug)
     # @benchmark PowerTrain(0.0, 0.8, 25.0e3*2,0.0, 0.0, parg, parpt, parmot, pargen)
 
     # println(parg[igWwing])
@@ -310,31 +314,38 @@ function run_wsize(iter)
     # println(temp3)
     # println(temp2)
 
-    println(pare[ieFe,:])
-    println("h     = np.array(",para[iaalt,:],")")
-    println("R     = np.array(",para[iaRange,:],")")
-    println("deNOx = np.array(",pare[iedeNOx, :],")")
-    println("fracW = np.array(",para[iafracW, :],")")
-    println("mdotf = np.array(",pare[iemdotf, :],")")
-    println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
-    println("Ptank = np.array(",pare[iePLH2, :],")")
-    println("CL = np.array(",para[iaCL, :],")")
-    println("CD = np.array(",para[iaCD, :],")")
+    ## Write outputs to screen
+    # println(pare[ieFe,:])
+    # println("h     = np.array(",para[iaalt,:],")")
+    # println("R     = np.array(",para[iaRange,:],")")
+    # println("deNOx = np.array(",pare[iedeNOx, :],")")
+    # println("fracW = np.array(",para[iafracW, :],")")
+    # println("mdotf = np.array(",pare[iemdotf, :],")")
+    # println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
+    # println("Ptank = np.array(",pare[iePLH2, :],")")
+    # println("CL = np.array(",para[iaCL, :],")")
+    # println("CD = np.array(",para[iaCD, :],")")
 
-    println("Weights:")
-    println("WMTO = ", parg[igWMTO]/gee)
-    println("Wfuel = ", parg[igWfuel]/gee)
+    # println("Weights:")
+    # println("WMTO = ", parg[igWMTO]/gee)
+    # println("Wfuel = ", parg[igWfuel]/gee)
 
-    println("Aero:")
-        println("L/D    = ", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
-        println("CL     = ", para[iaCL, ipcruise1])
-        println("CD     = ", para[iaCD, ipcruise1])
-        println("CDfuse = ", para[iaCDfuse, ipcruise1])
-        println("CDi    = ", para[iaCDi, ipcruise1])
-        println("CDwing = ", para[iaCDwing, ipcruise1])
+    # println("Aero:")
+    #     println("L/D    = ", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
+    #     println("CL     = ", para[iaCL, ipcruise1])
+    #     println("CD     = ", para[iaCD, ipcruise1])
+    #     println("CDfuse = ", para[iaCDfuse, ipcruise1])
+    #     println("CDi    = ", para[iaCDi, ipcruise1])
+    #     println("CDwing = ", para[iaCDwing, ipcruise1])
+
+    # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
+    println("Time writing       = $time_writing")
+    println("Time runnning NPSS = $time_run_NPSS")
 
 end
 
 # @timev run_wsize(20)
-time_wsize = @elapsed run_wsize(20)
-println("Wsize time = ", time_wsize)
+time_wsize = @elapsed run_wsize(5, true)
+println("Wsize time         = ", time_wsize)
+
+lineplot(replace!(para[iaRange, :], 0.0=>NaN), para[iaalt, :])
