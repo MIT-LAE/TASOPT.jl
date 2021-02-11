@@ -104,13 +104,20 @@ while(i!=999)
         i = 222;
         output.reopen();
         parseString(t);
+        if(first){
+            #include "Tshaft_design.int" //Reload the design point scalars if first of off-des calcs
+        }
         Eng.Amb.alt_in = alt;
         Eng.Amb.MN_in  = M0;
         if(first){
             restart("offdesTO.restart");
         }
         run();
-        parseFile("write_offDes_output.int");
+        if(solver.converged){
+            #include "write_offDes_output.int"
+            output.close();
+            cout<<"1";
+        }
     }
 }
-cout<<"Finished"<<endl;
+
