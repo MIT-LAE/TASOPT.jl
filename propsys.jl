@@ -70,12 +70,9 @@ function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64,
                     Tt41::Float64, Nshaft::Float64, first)
 
     file_name = "NPSS_Turboshaft/Eng.output"
-    t0 = stat(file_name).mtime
 
     NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, first)
     
-    while (stat(file_name).mtime - t0 < eps())
-    end
     include(file_name)
 
     return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
@@ -109,13 +106,9 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
                      π_fan::Float64, first)
     
     file_name = "NPSS_Turboshaft/Fan.output"
-    t0 = stat(file_name).mtime # save the last modified time of the output file
-
+ 
     runNPSS_Fan(NPSS, alt_in, MN_in, Fn, Kinl, Φinl, π_fan, first)
     
-    # Wait until NPSS finishes writing outputs to file
-    while (stat(file_name).mtime - t0 < eps())        
-    end
     # Read the data
     include(file_name)
     
@@ -158,13 +151,9 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Pin::Fl
                     Kinl::Float64, Φinl::Float64, first)
     
     file_name = "NPSS_Turboshaft/Fan.output"
-    t0 = stat(file_name).mtime
 
     runNPSS_Fan(NPSS, alt_in, MN_in, Pin, Kinl, Φinl, first)
     
-    # Wait until NPSS finishes writing outputs to file
-    while (stat(file_name).mtime - t0 < eps())
-    end
     # Read the data
     include(file_name)
 
