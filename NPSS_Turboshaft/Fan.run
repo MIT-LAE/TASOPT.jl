@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------
 MODELNAME = "Ducted Fan";
 AUTHOR    = "Prashanth";
-
+#include <System.fnc>
 setThermoPackage("GasTbl");
 #include "DuctedFan.mdl"
 
@@ -86,21 +86,23 @@ while(flag!=999){
 
         run();
         CASE++;
-        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
-        if(solver.converged == 1){
-            // SaveIndepVals("solver", "fandes.restart");
-            // cout<<"SUCCESS"<<endl;
-        }
-        else{
-            cout<<"ERROR! DES Did not converge"<<endl;
-        }
 
         //====================
         // Outputs
         //====================
-        output.reopen();
-        #include "write_fan_des.int"
-        output.close();
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            output.reopen();
+            #include "write_fan_des.int"
+            output.close();
+            cout<<"1";
+        }
+        else{
+            // cout<<"ERROR! DES Did not converge"<<endl;
+            cout<<"0"; // Tell's Julia that this didn't converge
+        }
+
+
     }
 
     if(flag==222){
@@ -129,25 +131,25 @@ while(flag!=999){
         }
         run();
         CASE++;
+
+        //====================
+        // Outputs
+        //====================
         // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
         if(solver.converged == 1){
             if(first){
                 SaveIndepVals("solver", "offDes_fan_start.restart");
             }
-            // else{
-            //     SaveIndepVals("solver", "offDes_fan_prev.restart");
-            // }
+            output.reopen();
+            #include "write_fan_offdes.int"
+            output.close();
+            cout<<"1";
         }
         else{
-            cout<<"ERROR! OFFDES Did not converge"<<endl;
+            cout<<"0"; // Tell's Julia that this didn't converge
+            // cout<<"ERROR! OFFDES Did not converge"<<endl;
         }
 
-        //====================
-        // Outputs
-        //====================
-        output.reopen();
-        #include "write_fan_offdes.int"
-        output.close();
     }
 
 }
