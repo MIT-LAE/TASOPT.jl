@@ -165,6 +165,15 @@ end
 PowerTrain 
 
 Design method - sizes the powertrain
+
+Inputs:
+- NPSS_Fan -  NPSS process that is running the fan calculations
+- alt_in, MN_in - Flight conditions (alt in m)
+- Fn            - Required Thrust [N]
+- Kinl, Φinl    - Ingested KE defect and disspation
+
+
+
 """
 function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
@@ -177,8 +186,8 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         Wpowertrain = 0.0
         Hrej = 0.0
     # Unpack number of powertrain elements
-        nfan = parpt[ipt_nfan]
-        ngen = parpt[ipt_ngen]
+        nfan    = parpt[ipt_nfan]
+        ngen    = parpt[ipt_ngen]
         nTshaft = parpt[ipt_nTshaft]
 
     # Thrust per fan
@@ -218,6 +227,7 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
 
         parpt[ipt_Wmot]    = Wmot
         parpt[ipt_NdesMot] = RPMmot
+        parpt[ipt_FanGR] = RPMmot/N_fan
 
         Hwaste_motor = PreqMot - Pshaft_mot
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
@@ -308,7 +318,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
                     Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
-                    pargen::Array{Float64, 1}, first)
+                    pargen::Array{Float64, 1}, first, Ldebug)
     
     Hrej = 0.0
     nfan = parpt[ipt_nfan]
@@ -344,6 +354,10 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
         Pmot_in = Pinv_in * ηinv
 
+    ## Motor and fan speed need to match through the gearing ratio - currently this is not guaranteed 
+    ##  during off-design operation. ∴ we iterate. Usually this should converge in ≈5 iterations. 
+    ##  This is def not ideal - it would be more efficient to converge the speeds via Newton simultaneously with the Fan model.
+
     # Off-des motor
         Nmot = parpt[ipt_NdesMot] #* (N_fan/parpt[ipt_NdesFan])
         # Off-des motor call
@@ -353,13 +367,52 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
         # println("Motor speed = ", Nmot)
         # println("Motor power = ", Pmot_out)
+
     # Ducted fan
     Pfan_in = Pmot_out
 
-  NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
+    NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
-        # println("Fan speed = ", N_fan) 
-        # TODO fan vs motor speed discrepency 
+
+
+        err = 1
+        maxiter = 10
+        GR = parpt[ipt_FanGR]
+        tol = 1e-6
+
+        if Ldebug
+            printstyled("\tMotor speed convergence = \n"; color=:blue)
+            printstyled(@sprintf("\t\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  \n",
+            "iter", "err", "Nmot/GR", "Nfan", "ηmot", "ηfan", "Mtip"); color =:blue)
+        end
+        
+        #iterate to converge fan and mot speeds
+        for i = 1:maxiter
+
+            err = (N_fan*GR - Nmot)/Nmot
+            
+            Ldebug && printstyled(@sprintf("\t\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+                                            i, abs(err), Nmot/GR, N_fan, ηmot, ηDF, Mtip); color = :blue)
+
+            if abs(err)≤tol
+                break;
+            end
+            Nmot = N_fan*GR
+            # Off-des motor call
+            Pmot_out, ηmot, PL = PMSM(Pmot_in, Nmot/60, parmot)
+
+            Hwaste_motor = Pmot_in - Pmot_out
+            Hrej += nfan*Hwaste_motor # Heat rejected from motors
+
+            # Ducted fan
+            Pfan_in = Pmot_out
+
+        NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
+                ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
+                
+        end
+
+        abs(err)≥tol && printstyled("Warning: Speeds not converged!\n"; color=:red)
 
     Ftotal = Fn*nfan
 

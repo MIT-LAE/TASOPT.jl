@@ -324,7 +324,7 @@ function mission!(pari, parg, parm, para, pare,
       # integrate trajectory over climb
       for ip = ipclimb1:ipclimbn
             if(Ldebug)
-            printstyled("Climb angle integration - ip = ", ip-ipclimb1+1, "\n"; color=:red)
+            printstyled("Climb angle integration - ip = ", ip-ipclimb1+1, "\n"; color=:light_green)
             end
             
             # velocity calculation from CL, Weight, altitude
@@ -343,8 +343,8 @@ function mission!(pari, parg, parm, para, pare,
             mdotf  = 0.0
             V      = 0.0
             if(Ldebug)
-                  @printf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V")
+                  printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V"); color = :light_green)
             end
             for iterg = 1:itergmax
                   V = sqrt(2.0*BW*cosg/(ρ*S*CL))
@@ -372,7 +372,7 @@ function mission!(pari, parg, parm, para, pare,
                   t_prop += @elapsed Ftotal, η, P, Hrej,
                   mdotf, BSFC,
                   deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                                0.0, 0.0, parpt, parmot, pargen, ifirst)
+                                                0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
                   ifirst = false
                   pare[iedeNOx, ip] = deNOx
                   pare[iemdotf, ip] = mdotf
@@ -389,8 +389,8 @@ function mission!(pari, parg, parm, para, pare,
                   
                   para[iagamV, ip] = gamV
                   if(Ldebug)
-                        @printf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-                                 iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V)
+                        printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+                                 iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V); color =:light_green)
                   end
                   
                   if(abs(dgamV) < gamVtol) 
@@ -517,7 +517,7 @@ function mission!(pari, parg, parm, para, pare,
             t_prop += @elapsed Ftotal, η, P, Hrej,
             mdotf, BSFC,
             deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                          0.0, 0.0, parpt, parmot, pargen, ifirst)
+                                          0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
             
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
@@ -603,7 +603,7 @@ function mission!(pari, parg, parm, para, pare,
             t_prop += @elapsed Ftotal, η, P, Hrej,
             mdotf, BSFC,
             deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                          0.0, 0.0, parpt, parmot, pargen, ifirst)
+                                          0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
 
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf

@@ -325,7 +325,9 @@
       const igxcat     = 269
       const igWcat     = 270
 
-      const igtotal    = 270
+      const igWtesys   = 271
+
+      const igtotal    = 271
 
 # indices for turbo-electric systems
       const ite_ratSM   = 1
@@ -446,7 +448,9 @@
       const ipt_k3       = 51
       const ipt_Pinvdes  = 52  # Stores design inverter power
 
-      const ipt_total    = 52
+      const ipt_time_NPSS = 53
+      const ipt_FanGR    = 54
+      const ipt_total    = 54
 
 #---- indices for aero variables at each mission point
       iaalt     =  1
@@ -711,7 +715,10 @@
       iedeNOx = 196
       iemdotf = 197
 
-      ietotal = 197 
+      iePLH2  = 198
+      ieyg    = 199
+
+      ietotal = 199 
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
