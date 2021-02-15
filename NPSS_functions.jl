@@ -5,8 +5,26 @@ A trivial wrapper that runs a NPSS batch file `bat_file` at the specifed `dir`
 >Remember to use `/` as separators
 """
 function NPSS_run(dir, bat_file)
-    run(`cmd /c cd $dir '&&' $bat_file `)
+    global time_run_NPSS += @elapsed run(`cmd /c cd $dir '&&' $bat_file `)
     return nothing
+end
+
+"""
+This function starts up and returns an NPSS process that can then be written to
+"""
+function startNPSS(dir, bat_file)
+    NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w+")
+    return NPSS
+end
+
+"""
+Ends NPSS process that can then be written to
+"""
+function endNPSS(NPSS)
+    write(NPSS, "999 \\n")
+    if(NPSS.exitcode == 0)
+        close(NPSS)
+    end
 end
 
 """
@@ -24,11 +42,15 @@ Writes an input file for NPSS Turboshaft model
 function NPSS_TShaft_input(alt_in, MN_in, 
     SHP_dmd, Tt41, 
     LPC_PR, HPC_PR,
-    cpsi, w, lcat, deNOx ;
+    cpsi, w, lcat, deNOx, first ;
     LHV = 120, file_name = "NPSS_Turboshaft/EngineInputs.inp")
 
     open(file_name, "w") do io
-
+        if(first)
+            println(io, "int first = 1;")
+        else 
+            println(io, "int first = 0;")
+        end
         println(io, "\n// Abmient conditions")
         println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";" )
         println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
@@ -58,77 +80,60 @@ OffdesMode
 
 Writes an input file for NPSS Turboshaft model in off-des conditions
 
-    - Abmient altitude and mach number
+    - Abmient altitude [in m]
+    - Flight mach number
     - Tt41 
+    - the flag first sets whether NPSS should restart or use previous value
 
 """
-function NPSS_TShaft_input(alt_in, MN_in, 
-                            Tt41, Nshaft ; 
-                            file_name = "NPSS_Turboshaft/OffDesInputs.inp")
+function NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, 
+                            Tt41, first)
 
-    open(file_name, "w") do io
-
-        println(io, "\n// Abmient conditions")
-        println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";")
-        println(io, "Eng.Amb.MN_in  = ", MN_in , ";")
-
-        println(io, "\n// Targets")
-        println(io, "real Tt41   = ", Tt41  , ";")
-        println(io, "real N2_dmd = ", Nshaft, ";")
-        
-    end
-
+    write(NPSS_TS, "111 Tt41=$Tt41; alt=$(alt_in/0.3048); M0 = $MN_in;first=$first;\n")
+    NPSS_success = parse(Bool, String(readavailable(NPSS_TS.out))) # `readavailable(stream)` blocks until data is available
+    return NPSS_success
 end
 
 """
-Writes an input file for NPSS ducted fan model
+Fan - Design mode:
+
+Writes the desired conditions to the external NPSS process
 """
-function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Fn::Float64,
-                        Kinl::Float64, Φinl::Float64,
-                        πfan::Float64 ; file_name = "NPSS_Turboshaft/FanInputs.inp")
+function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
+                    Kinl::Float64, Φinl::Float64, 
+                    πfan::Float64, first)
+    input_string = "111 "*
+                "first = $first;" *
+                "DuctedFan.Amb.alt_in = $(alt_in/ft_to_m);" *
+                "DuctedFan.Amb.MN_in  = $MN_in ;" *
+                "Fn_target = $Fn ;" *
+                "DuctedFan.InEng.Kinl = $Kinl;" *
+                "DuctedFan.Phiinl     = $Φinl;" *
+                "DuctedFan.Fan.PRdes = $πfan;" *
+                "\n"
 
-    open(file_name, "w") do io
-        println(io, "// Design State")
-        # println(io, "DuctedFan.setOption(\"switchDes\",\"DESIGN\");")
-
-        println(io, "\n// Abmient conditions")
-        println(io, "DuctedFan.Amb.alt_in = ", alt_in/ft_to_m, ";" )
-        println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
-
-        println(io, "\n// Thrust Target")
-        println(io, "real Fn_target = ", Fn, ";")
-
-        println(io, "\n// BLI inputs")
-        println(io, "DuctedFan.InEng.Kinl = ", Kinl, ";")
-        println(io, "DuctedFan.Phiinl     = ", Φinl, ";")
-
-        println(io, "\n// Design parameters")
-        println(io, "DuctedFan.Fan.PRdes = ", πfan, ";")
-    end
-
+    write(NPSS, input_string)
+    NPSS_success = parse(Bool, String(readavailable(NPSS.out))) # `readavailable(stream)` is blocking only if no data is available
+    return NPSS_success
 end
 
-function NPSS_Fan_input(alt_in::Float64, MN_in::Float64, Pin::Float64,
-                        Kinl::Float64, Φinl::Float64;
-                        file_name = "NPSS_Turboshaft/FanInputs.inp")
+"""
+Fan - Off-design mode:
 
-    open(file_name, "w") do io
-        println(io, "// Design State")
-        # println(io, "DuctedFan.setOption(\"switchDes\",\"OFFDESIGN\");")
+Writes the desired conditions to the external NPSS process
+"""
+function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Pin::Float64,
+                    Kinl::Float64, Φinl::Float64, first)
+    input_string = "222 "*
+                "first = $first;" *
+                "DuctedFan.Amb.alt_in = $(alt_in/ft_to_m);" *
+                "DuctedFan.Amb.MN_in  = $MN_in ;" *
+                "ShP_input = $(-Pin/745.7) ;" *
+                "DuctedFan.InEng.Kinl = $Kinl;" *
+                "DuctedFan.Phiinl     = $Φinl;" *
+                "\n"
 
-        println(io, "\n// Abmient conditions")
-        println(io, "DuctedFan.Amb.alt_in = ", alt_in/ft_to_m, ";" )
-        println(io, "DuctedFan.Amb.MN_in  = ", MN_in, ";" )
-
-        println(io, "\n// Input power")
-        println(io, "real ShP_input = ", -Pin/745.7, ";")
-
-        
-        println(io, "\n// BLI inputs")
-        println(io, "DuctedFan.InEng.Kinl = ", Kinl, ";")
-        println(io, "DuctedFan.Phiinl     = ", Φinl, ";")
-
-
-    end
-
+    write(NPSS, input_string)
+    NPSS_success = parse(Bool, String(readavailable(NPSS.out)))
+    return NPSS_success
 end
