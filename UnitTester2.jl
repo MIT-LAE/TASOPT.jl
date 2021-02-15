@@ -1,5 +1,6 @@
 # Unit tester for TAESOPT.jl
 using BenchmarkTools
+using Printf
 # include("index.inc")
 
 # ---------------------------
