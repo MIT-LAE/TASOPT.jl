@@ -348,4 +348,3 @@ end
 time_wsize = @elapsed run_wsize(5, true)
 println("Wsize time         = ", time_wsize)
 
-lineplot(replace!(para[iaRange, :], 0.0=>NaN), para[iaalt, :])
