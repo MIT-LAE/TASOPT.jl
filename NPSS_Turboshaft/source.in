@@ -1,0 +1,1 @@
+919  cout<<"hello from NPSS\n";Eng.ShP.HPX=SHP_dmd*1.01*getUnitsFactor("W", "hp");run();diag<<"HAHA"<<endl;diag<<first<<"> ShP demand = "<<Eng.ShP.HPX<<"\t iter to converge = "<<solver.iterationCounter<<endl;

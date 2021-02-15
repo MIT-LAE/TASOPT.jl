@@ -26,12 +26,12 @@ Outputs:
 function TurboShaft(alt_in::Float64, MN_in::Float64, 
                     ShP::Float64, 
                     π_LPC::Float64, π_HPC::Float64, Tt41::Float64,
-                    cpsi::Float64, w::Float64, lcat::Float64, deNOx_in::Float64; LHV = 120,
+                    cpsi::Float64, w::Float64, lcat::Float64, deNOx_in::Float64, first; LHV = 120,
                     file_name = "NPSS_Turboshaft/DesScl.int")
 
-    NPSS_TShaft_input(alt_in, MN_in, ShP, 
+    global time_writing += @elapsed NPSS_TShaft_input(alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
-                        cpsi, w, lcat, deNOx_in; LHV = LHV)
+                        cpsi, w, lcat, deNOx_in, first; LHV = LHV)
 
     # open("NPSS_Turboshaft/OffDesInputs.inp", "w") do io
     #     println(io, "//DUMMY since only running design point now")
@@ -66,16 +66,14 @@ Outputs:
 - mcat
 
 """
-function TurboShaft(alt_in::Float64, MN_in::Float64, 
-                    Tt41::Float64, Nshaft::Float64)
+function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64, 
+                    Tt41::Float64, Nshaft::Float64, first)
 
-    NPSS_TShaft_input(alt_in, MN_in,
-                    Tt41, Nshaft;
-                    file_name = "NPSS_Turboshaft/OffDesInputs.inp")
+    file_name = "NPSS_Turboshaft/Eng.output"
 
-    NPSS_run("NPSS_Turboshaft/", "TPoffDes.bat")
-
-    include("NPSS_Turboshaft/Eng.output")
+    NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, first)
+    
+    include(file_name)
 
     return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
 
@@ -103,15 +101,16 @@ Outputs:
 - NozArea     : Fan nozzle area for off-des calcs [in^2] in inches so can easily pass back to NPSS
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Fn::Float64,
+function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
-                     π_fan::Float64)
+                     π_fan::Float64, first)
     
-    NPSS_Fan_input(alt_in, MN_in, Fn, Kinl, Φinl, π_fan)
-    #Run Design model
-    NPSS_run("NPSS_Turboshaft/", "FanDes.bat")
-
-    include("NPSS_Turboshaft/Fan.output")
+    file_name = "NPSS_Turboshaft/Fan.output"
+ 
+    runNPSS_Fan(NPSS, alt_in, MN_in, Fn, Kinl, Φinl, π_fan, first)
+    
+    # Read the data
+    include(file_name)
     
     ARfan  = 3   # Blade aspeect ratio
     bladeσ = 0.4 # Blade solidity c/s
@@ -148,14 +147,15 @@ Outputs:
 
 
 """
-function DuctedFan(alt_in::Float64, MN_in::Float64,  Pin::Float64,
-                    Kinl::Float64, Φinl::Float64)
+function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Pin::Float64,
+                    Kinl::Float64, Φinl::Float64, first)
     
-    NPSS_Fan_input(alt_in, MN_in, Pin, Kinl, Φinl)
-    #Run Off-Design model
-    NPSS_run("NPSS_Turboshaft/", "FanOffDes.bat")
+    file_name = "NPSS_Turboshaft/Fan.output"
 
-    include("NPSS_Turboshaft/Fan.output")
+    runNPSS_Fan(NPSS, alt_in, MN_in, Pin, Kinl, Φinl, first)
+    
+    # Read the data
+    include(file_name)
 
     return Fn, Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
 
@@ -165,20 +165,29 @@ end
 PowerTrain 
 
 Design method - sizes the powertrain
+
+Inputs:
+- NPSS_Fan -  NPSS process that is running the fan calculations
+- alt_in, MN_in - Flight conditions (alt in m)
+- Fn            - Required Thrust [N]
+- Kinl, Φinl    - Ingested KE defect and disspation
+
+
+
 """
-function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
+function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parg::Array{Float64, 1},
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
-                    pargen::Array{Float64, 1})
+                    pargen::Array{Float64, 1}, first)
     
     # Initialize powertrain weight and waste heat 
         Wpowertrain = 0.0
         Hrej = 0.0
     # Unpack number of powertrain elements
-        nfan = parpt[ipt_nfan]
-        ngen = parpt[ipt_ngen]
+        nfan    = parpt[ipt_nfan]
+        ngen    = parpt[ipt_ngen]
         nTshaft = parpt[ipt_nTshaft]
 
     # Thrust per fan
@@ -186,10 +195,10 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
 
     # Call ducted fan design method
         πfan = parpt[ipt_pifan]
-
-        Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+        NPSS_time = 0.0
+    NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
-        FanMapScalars, FanNozArea, Wfan = DuctedFan(alt_in, MN_in, Ffan, Kinl, Φinl, πfan )
+        FanMapScalars, FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
         # println("Fan Fn = ", Ffan, " N")
@@ -218,6 +227,7 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
 
         parpt[ipt_Wmot]    = Wmot
         parpt[ipt_NdesMot] = RPMmot
+        parpt[ipt_FanGR] = RPMmot/N_fan
 
         Hwaste_motor = PreqMot - Pshaft_mot
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
@@ -269,10 +279,10 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
         lcat = parpt[ipt_lcat]
         deNOx= parpt[ipt_deNOx]
 
-        Ptshaft = PgenShaft*ngen/nTshaft
+        NPSS_time += @elapsed  Ptshaft = PgenShaft*ngen/nTshaft
         ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
-                                            cpsi, w, lcat, deNOx)
+                                            cpsi, w, lcat, deNOx, first)
 
         mdotf_tot = mdotf*nTshaft
         Wcat = mcat*gee
@@ -290,6 +300,10 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
 
     parpt[ipt_Wpttotal] = Wpowertrain
 
+    parg[igWtesys] = Wpowertrain
+
+    parpt[ipt_time_NPSS] += NPSS_time
+
     return [ηpropul, ηmot, ηinv, ηcable, ηgen, ηthermal],
            [Pshaft_mot, PreqMot, PgenShaft, Ptshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
@@ -299,22 +313,24 @@ function PowerTrain(alt_in::Float64, MN_in::Float64, Fn::Float64,
 
 end
 
-function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
+function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
+                    alt_in::Float64, MN_in::Float64, Tt41::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},
                     parmot::Array{Float64, 1},
-                    pargen::Array{Float64, 1})
+                    pargen::Array{Float64, 1}, first, Ldebug)
     
     Hrej = 0.0
     nfan = parpt[ipt_nfan]
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
     Nshaft = 30000. #RPM
+    NPSS_time = 0.0
 
     # Calculate Turboshaft power output
-        Pshaft, ηthermal,
+        NPSS_time += @elapsed Pshaft, ηthermal,
         mdotf, BSFC,
-        deNOx_out = TurboShaft(alt_in, MN_in, Tt41, Nshaft)
+        deNOx_out = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
         
         mdotf_tot = mdotf*nTshaft
 
@@ -338,6 +354,10 @@ function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
         Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
         Pmot_in = Pinv_in * ηinv
 
+    ## Motor and fan speed need to match through the gearing ratio - currently this is not guaranteed 
+    ##  during off-design operation. ∴ we iterate. Usually this should converge in ≈5 iterations. 
+    ##  This is def not ideal - it would be more efficient to converge the speeds via Newton simultaneously with the Fan model.
+
     # Off-des motor
         Nmot = parpt[ipt_NdesMot] #* (N_fan/parpt[ipt_NdesFan])
         # Off-des motor call
@@ -347,15 +367,56 @@ function PowerTrainOD(alt_in::Float64, MN_in::Float64, Tt41::Float64,
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
         # println("Motor speed = ", Nmot)
         # println("Motor power = ", Pmot_out)
+
     # Ducted fan
-        Pfan_in = Pmot_out
-        Fn, Fan_power, Torque_fan, N_fan, Mtip,
-        ηpropul, ηDF = DuctedFan(alt_in, MN_in, Pfan_in, Kinl, Φinl)
-        # println("Fan speed = ", N_fan) 
-        # TODO fan vs motor speed discrepency 
+    Pfan_in = Pmot_out
+
+    NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
+        ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
+
+
+        err = 1
+        maxiter = 10
+        GR = parpt[ipt_FanGR]
+        tol = 1e-6
+
+        if Ldebug
+            printstyled("\tMotor speed convergence = \n"; color=:blue)
+            printstyled(@sprintf("\t\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  \n",
+            "iter", "err", "Nmot/GR", "Nfan", "ηmot", "ηfan", "Mtip"); color =:blue)
+        end
+        
+        #iterate to converge fan and mot speeds
+        for i = 1:maxiter
+
+            err = (N_fan*GR - Nmot)/Nmot
+            
+            Ldebug && printstyled(@sprintf("\t\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+                                            i, abs(err), Nmot/GR, N_fan, ηmot, ηDF, Mtip); color = :blue)
+
+            if abs(err)≤tol
+                break;
+            end
+            Nmot = N_fan*GR
+            # Off-des motor call
+            Pmot_out, ηmot, PL = PMSM(Pmot_in, Nmot/60, parmot)
+
+            Hwaste_motor = Pmot_in - Pmot_out
+            Hrej += nfan*Hwaste_motor # Heat rejected from motors
+
+            # Ducted fan
+            Pfan_in = Pmot_out
+
+        NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
+                ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
+                
+        end
+
+        abs(err)≥tol && printstyled("Warning: Speeds not converged!\n"; color=:red)
 
     Ftotal = Fn*nfan
 
+    parpt[ipt_time_NPSS] += NPSS_time
     return Ftotal, [ηmot, ηinv, ηcable, ηgen, ηthermal],
            [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,

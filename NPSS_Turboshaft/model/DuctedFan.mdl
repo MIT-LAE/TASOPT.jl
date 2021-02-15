@@ -30,9 +30,9 @@ Assembly Assembly DuctedFan
     {
         setOption( "switchMode", "ALDTMN" );
         setOption( "switchDay" , "STD" );
-        // alt_in    = 0.0 "ft";
+        alt_in    = 0.0 "ft";
         dTs_in    = 0.0 "dF";
-        // MN_in     = 0.25;
+        MN_in     = 0.25;
     }
     // 3. Flow start
     // ------------------------------
@@ -63,7 +63,7 @@ Assembly Assembly DuctedFan
         real sbar, Kinl, asq;
         real W, Ts, Rs, gam;
         real Pt2, Tt2; 
-        Kinl = 50e3; // Based of D8 fuselage TE KE defect as an example. 
+        Kinl = 0.e3; // Based of D8 fuselage TE KE defect as an example. 
                      // Needs to be reset in the run file correctly!
         void postexecute()
         {
@@ -103,7 +103,7 @@ Assembly Assembly DuctedFan
             Vtip = 2*PI*Nmech/60 * dia/2 * getUnitsFactor(dia.units, "m");
             Mtip = Vtip/a;
 		}
-		Fl_O.MNdes = 0.46;
+		Fl_O.MNdes = 0.3;
 	}	
 
     Element Duct FanDuct
@@ -141,7 +141,7 @@ Assembly Assembly DuctedFan
     real eta_prop, eta_DF; // Froude propulsive eff, overall ducted fan eff.
     real Phiinl, Finl;
     Finl   = 0.0;
-    Phiinl = 50e3; // Example value based on D8
+    Phiinl = 0.0e3; // Example value based on D8
     void postexecute()
     {
         Vjet  = FanNozzle.Vactual*getUnitsFactor(FanNozzle.Vactual.units, "m/sec");
@@ -185,7 +185,7 @@ Assembly Assembly DuctedFan
     Independent ind_Nmech{varName = "FanShaft.Nmech"; description = "Fan shaft RPM";}
     Dependent dep_Mtip{ eq_lhs = "Fan.Mtip"; eq_rhs = "0.8";}
 
-    Dependent dep_ShP_in{eq_lhs = "Fan.pwr"; eq_rhs = "ShP_input";}
+    Dependent dep_ShP_in{eq_lhs = "FanShaft.pwrOut"; eq_rhs = "ShP_input";}
 
     void variableChanged(string name, any oldval)
 	{

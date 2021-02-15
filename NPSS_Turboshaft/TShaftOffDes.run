@@ -26,15 +26,21 @@ Eng.PCEC.setOption("switchMode","ON");
 #include "Tshaft_design.int"
 Eng.setOption("switchDes", "OFFDESIGN");
 
+int Ldiag = FALSE;
+// Define true and false to make it easier to use from Julia
+int true  = 1;
+int false = 0;
 
 
 //====================
 //Auto solver setup
 //====================
-// solver.clear();
 // All setup in variable changed method in TShaft.mdl
 autoSolverSetup();
 // printSolverConditions();
+OutFileStream diag {
+    filename = "Offdes_solver.diag"; append = TRUE;
+}
 
 //====================
 // Solver setup:
@@ -47,30 +53,33 @@ solver.maxJacobians  = 200;
 // solver.defaultDxLimit = 0.001;
 // solver.defaultPerturbation = 0.0001;
 // solver.convergenceLimit = 0.8;
-solver.defaultTolerance = 1e-8;
+// solver.defaultTolerance = 1e-8;
 
 //====================
 //Run engine model
 //====================
-
+if( first == 1){
+    restart("offdesTO.restart");// restart("offdes1.restart");
+}
+if(first == 0){
+    restart("offdes_prev_converged.restart");
+}
 run();
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
 if(solver.converged != 1){
     cout<<"ERROR! Did not converge"<<endl;
 }
-else{SaveIndepVals("solver", "offdes1.restart");}
-
-
-// for(Eng.Amb.alt_in = 30000; Eng.Amb.alt_in >=0; Eng.Amb.alt_in-=1000){
-//     if (Eng.Amb.MN_in >=0.25){
-//     Eng.Amb.MN_in -= 0.01;}
-//     cout<<Eng.Amb.MN_in<<endl;
-//     cout<<Eng.Amb.alt_in<<endl;
-//     run();
-//     cout<<"Power =";
-//     cout<<Eng.ShP.HPX<<endl;
-// }
-// SaveIndepVals("solver", "offdesTO.restart");
+else{
+    if (first == 1){
+        SaveIndepVals("solver", "offdes1.restart");
+    }
+    if (first == 0){
+        SaveIndepVals("solver", "offdes_prev_converged.restart");
+    }
+}
+if(Ldiag) {
+    diag<<first<<"> Tt41 demand = "<<Tt41<<"\t iter to converge = "<<solver.iterationCounter<<endl;
+}
 
 //====================
 // Outputs
@@ -79,35 +88,36 @@ else{SaveIndepVals("solver", "offdes1.restart");}
 OutFileStream output {
     filename = "Eng.output"; //autoFlush = FALSE;
 }
+parseFile("write_offDes_output.int");
 
-output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
-output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
-output<<"M0 ="<<Eng.Amb.MN<<endl;
-output<<"Alt ="<<Eng.Amb.alt<<"\t# "+ Eng.Amb.alt.units<<endl;
-output<<"converged ="<<solver.converged<<endl;
-output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
-output<<"mdotf = "<<Eng.FusEng.Wfuel/2.205<<"\t#kg/s"<<endl;
-output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
-// output<<"ShP = "<<Eng.Gen.ShP_dmd/getUnitsFactor("hp", "kW")<<"#\t kW"<<endl;
-// output<<"ShP = "<<Eng.Gen.ShP_dmd<<"\t# " + Eng.Gen.ShP_dmd.units<<endl;
-output<<"Ngen = "<<Eng.ShP.Nmech<<"\t# " + Eng.ShP.Nmech.units<<endl;
-output<<"ShP_hp = "<<Eng.ShP.HPX<<"\t# " + Eng.ShP.HPX.units<<endl;
-output<<"ShP = "<<Eng.ShP.HPX*746<<"\t# W"<<endl;
-// output<<"ShP = "<<Eng.ShP.pwrOut<<"\t# W"<<endl;
-output<<"OPR = "<<Eng.CmpH.Fl_O.Pt/Eng.CmpL.Fl_I.Pt<<endl;
-output<<"BSFC = "<<Eng.Perf.BSFC<<endl;
-output<<"Tt41 = "<<Eng.TrbH.F041.Tt<<"\t#" +Eng.TrbH.F041.Tt.units<<endl;
-output<<"Tt3 = "<<Eng.CmpH.Fl_O.Tt <<"\t#" +Eng.CmpH.Fl_O.Tt.units<<endl;
+// Variables to read inputs from cin
+string t ;
+int i ;
+real M0, alt;
+// Loop while 999 is not sent to cin
+while(i!=999)
+{
+    cin>> i;
 
-output<<"\n# PCEC related outputs"<<endl;
-output<<"deNOx = "<<Eng.PCEC.deNOx <<endl;
-output<<"mcat = "<<Eng.PCEC.m_cat <<"\t# kg"<<endl;
-output<<"Af = "<<Eng.PCEC.Af <<"\t#"+ Eng.PCEC.Af.units<<endl;
-output<<"lcat = "<<Eng.PCEC.l <<"\t#"+ Eng.PCEC.l.units<<endl;
-output<<"Diff_NOx = "<<Eng.PCEC.Deff <<"\t#"+ Eng.PCEC.Deff.units<<endl;
-output<<"t_res = "<<Eng.PCEC.t_res <<"\t#"+ Eng.PCEC.t_res.units<<endl;
-output<<"dPqP = "<<Eng.PCEC.dPqP<<"\t#"+ Eng.PCEC.dPqP.units<<endl;
-// output<<"OFA = "<<Eng.PCEC.OFA<<endl;
-output<<"d_hy = "<<Eng.PCEC.d_hy<<endl;
-output<<"cpsi = "<<Eng.PCEC.cpsi<<endl;
-output<<"w = "<<Eng.PCEC.w<<"\t#"+ Eng.PCEC.w.units<<endl;
+    if(i==111){
+        t = cin.getline();
+        i = 222;
+        output.reopen();
+        parseString(t);
+        if(first){
+            #include "Tshaft_design.int" //Reload the design point scalars if first of off-des calcs
+        }
+        Eng.Amb.alt_in = alt;
+        Eng.Amb.MN_in  = M0;
+        if(first){
+            restart("offdesTO.restart");
+        }
+        run();
+        if(solver.converged){
+            #include "write_offDes_output.int"
+            output.close();
+            cout<<"1";
+        }
+    }
+}
+
