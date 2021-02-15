@@ -1,5 +1,6 @@
 # Unit tester for TAESOPT.jl
 using BenchmarkTools
+using Printf
 # include("index.inc")
 
 # ---------------------------
@@ -348,4 +349,3 @@ end
 time_wsize = @elapsed run_wsize(5, true)
 println("Wsize time         = ", time_wsize)
 
-lineplot(replace!(para[iaRange, :], 0.0=>NaN), para[iaalt, :])
