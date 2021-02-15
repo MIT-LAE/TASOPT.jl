@@ -248,13 +248,14 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
     parg[igrWfmax  ] = 0.90
 
     # Powertrain stuff
-        parg[igxtshaft]  = 60.0 * ft_to_m
+        parg[igxtshaft]  = 95.0 * ft_to_m
         parg[igxgen   ]  = 70.0 * ft_to_m
         parg[igxinv   ]  = 57.0 * ft_to_m
         parg[igxmot   ]  = 53.0 * ft_to_m
         parg[igxfan   ]  = 52.0 * ft_to_m
-        parg[igxftank ]  = 94.0 * ft_to_m
+        parg[igxftank ]  = 90.0 * ft_to_m
 
+        #include tank parameters
 
 # Aerodynamic parameters
 
@@ -321,4 +322,4 @@ pare[ieTt4, 1:iptotal, :] .= 3200.0 # [R]
 pare[ieTt4, ipstatic:iptakeoff, :] .= 3300.0 #[R]
 
 parg[igfTt4CL1] = 0.2
-parg[igfTt4CLn] = 0.8
+parg[igfTt4CLn] = 0.2
