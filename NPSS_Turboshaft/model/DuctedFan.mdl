@@ -183,7 +183,7 @@ Assembly Assembly DuctedFan
     Dependent dep_NcPct{ eq_lhs = "Fan.NcPct"; eq_rhs = "NcPct_target";}
 
     Independent ind_Nmech{varName = "FanShaft.Nmech"; description = "Fan shaft RPM";}
-    Dependent dep_Mtip{ eq_lhs = "Fan.Mtip"; eq_rhs = "0.8";}
+    Dependent dep_Mtip{ eq_lhs = "Fan.Mtip"; eq_rhs = "0.9";}
 
     Dependent dep_ShP_in{eq_lhs = "FanShaft.pwrOut"; eq_rhs = "ShP_input";}
 
