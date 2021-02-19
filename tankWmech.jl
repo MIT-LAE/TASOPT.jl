@@ -21,7 +21,9 @@ function tankWmech(gee, ρfuel,
                       sigskin, rho_insul, rhoskin,
                       Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse, AR)
 
-#--- fuselage skin and center web thicknesses to withstand pressure load
+# Total thickness:
+      thickness_insul = sum(t_cond)
+# Input paramters:
       weld_eff = 0.9
       ullage_frac = 0.1
       β = 2.0
