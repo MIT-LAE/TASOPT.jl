@@ -1,16 +1,26 @@
 // LHV based on fuel
 Eng.FusEng.LHV   = 51590.8;
+<<<<<<< HEAD
 Eng.FsEng.W_in   = 45.8606;
 Eng.FusEng.Wfuel = 0.696391;
+=======
+Eng.FsEng.W_in   = 30.5733;
+Eng.FusEng.Wfuel = 0.325129;
+>>>>>>> upstream/master
 
 // Map Scalars
 Eng.CmpL.S_map.s_effDes = 1.08233;
 Eng.CmpL.S_map.s_PRdes  = 0.454856;
+<<<<<<< HEAD
 Eng.CmpL.S_map.s_WcDes  = 1.52372;
+=======
+Eng.CmpL.S_map.s_WcDes  = 1.0158;
+>>>>>>> upstream/master
 Eng.CmpL.S_map.s_NcDes  = 40149.1;
 
 Eng.CmpH.S_map.s_effDes = 1.07143;
 Eng.CmpH.S_map.s_PRdes  = 4.61538;
+<<<<<<< HEAD
 Eng.CmpH.S_map.s_WcDes  = 16.392;
 Eng.CmpH.S_map.s_NcDes  = 33758.7;
 
@@ -28,6 +38,25 @@ Eng.CmpL.NcDes = 40149.1;
 Eng.CmpH.NcDes = 33758.7;
 Eng.TrbH.NpDes = 603.304;
 Eng.TrbP.NpDes = 557.358;
+=======
+Eng.CmpH.S_map.s_WcDes  = 10.9278;
+Eng.CmpH.S_map.s_NcDes  = 33758.7;
+
+Eng.TrbH.S_map.s_effDes = 0.977995;
+Eng.TrbH.S_map.s_PRdes  = 0.395945;
+Eng.TrbH.S_map.s_WpDes  = 1.32556;
+Eng.TrbH.S_map.s_NpDes  = 6.39398;
+
+Eng.TrbP.S_map.s_effDes = 0.964143;
+Eng.TrbP.S_map.s_PRdes  = 1.58892;
+Eng.TrbP.S_map.s_WpDes  = 1.18478;
+Eng.TrbP.S_map.s_NpDes  = 6.04252;
+
+Eng.CmpL.NcDes = 40149.1;
+Eng.CmpH.NcDes = 33758.7;
+Eng.TrbH.NpDes = 639.398;
+Eng.TrbP.NpDes = 604.252;
+>>>>>>> upstream/master
 
 Eng.CmpL.S_map.NcMapDes    = 1;
 Eng.CmpL.S_map.WcMapDes    = 71.45;
@@ -43,6 +72,7 @@ Eng.TrbH.S_map.PRmapDes = 6;
 Eng.TrbH.S_map.NpMapDes = 100;
 Eng.TrbP.S_map.PRmapDes = 6;
 Eng.TrbP.S_map.NpMapDes = 100;
+<<<<<<< HEAD
 Eng.NozPri.AthCold = 1666.95;
 Eng.PCEC.l    = 0.02;
 Eng.PCEC.w    = 2;
@@ -65,3 +95,27 @@ Eng.TrbP.Fl_O.Aphy   = 1209.54;
 Eng.D060.Fl_O.Aphy   = 1890.02;
 Eng.PCEC.Fl_O.Aphy   = 1527.89;
 Eng.NozPri.Fl_O.Aphy = 1600.28;
+=======
+Eng.NozPri.AthCold = 1852.98;
+Eng.PCEC.l    = 0.02;
+Eng.PCEC.w    = 2;
+Eng.PCEC.cpsi = 900;
+Eng.PCEC.Af   = 7.55678;
+
+Eng.B030.TCLA_NC.fracW = 0.104701;
+Eng.B030.TCLA_CH.fracW = 0.0862012;
+
+Eng.FsEng.Fl_O.Aphy  = 219.084;
+Eng.InEng.Fl_O.Aphy  = 283.3;
+Eng.CmpL.Fl_O.Aphy   = 133.401;
+Eng.D025.Fl_O.Aphy   = 171.307;
+Eng.CmpH.Fl_O.Aphy   = 34.1284;
+Eng.B030.Fl_O.Aphy   = 21.5611;
+Eng.BrnPri.Fl_O.Aphy = 153.328;
+Eng.TrbH.Fl_O.Aphy   = 165.225;
+Eng.D050.Fl_O.Aphy   = 128.907;
+Eng.TrbP.Fl_O.Aphy   = 762.523;
+Eng.D060.Fl_O.Aphy   = 1190.89;
+Eng.PCEC.Fl_O.Aphy   = 952.332;
+Eng.NozPri.Fl_O.Aphy = 1778.86;
+>>>>>>> upstream/master

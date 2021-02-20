@@ -8,6 +8,12 @@ Julia based TASOPT++ includes PCEC, hydrogen fuel options etc. Perhaps need some
 
 Currently NPSS is being used to model the turboshaft engine by simply "file wrapping" - Julia writes to a file, NPSS reads that, computes and outputs to a file that julia can then read.
 
+> Update (Feb 12th 2021):
+
+> Using NPSS to do the propulsion system calculations becomes slow if NPSS has to be started/ compiled and then the engine model solved for each call to the propulsion system. 
+> To circumvent this issue Julia now starts up an asynchronous process on your system that runs NPSS and then writes engine inputs to the `STDIN` of the NPSS process and waits till NPSS returns a success/ failure code on its `STDOUT` before continuing onto the next calcualtions. 
+> This ideally means that we can get rid of file-based transfer but, that remains to be implemented
+
 
 ## Collaboration guide
 
@@ -41,9 +47,9 @@ After committing to your local machine, you need to *push* these changes to the 
 ```
 for subsequent pushes, you only need to do `git push`.
 
-### Sync your repo with this master repo periodically
+### Sync your repo with this main repo periodically
 
-Keep syncing your fork to this repo regularly so that you have all the latest bug fixes and changes that others have done. Prash will maintain this repo wrt to the master openMDAO repo to ensure that any bug fixes there are here.
+Keep syncing your fork to this repo regularly so that you have all the latest bug fixes and changes that others have done. 
 
 To sync your fork, `cd` into the right folder on your terminal and do the following
 ```bash

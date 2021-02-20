@@ -3,4 +3,5 @@
 *.inp
 *.restart
 *.output
+*.log
 *.code-workspace

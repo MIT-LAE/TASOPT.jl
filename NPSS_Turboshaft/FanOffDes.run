@@ -7,27 +7,38 @@
 //   Description:   Ducted fan for integration with TAESOPT  OffDes      |
 //                                                                       |
 //------------------------------------------------------------------------
+
 MODELNAME = "Ducted Fan";
 AUTHOR    = "Prashanth";
+#include <System.fnc>
 
 setThermoPackage("GasTbl");
 #include "DuctedFan.mdl"
-
 #include "printDetails.fnc"
 #include "utils.fnc"
 #include "save_solver.fnc"
+// Define true and false to make it easier to use from Julia
 
+int true  = 1;
+int false = 0;
+int first;
+real ShP_input;
 //====================
 //Read input file
 //====================
 #include "FanInputs.inp"
-DuctedFan.setOption("switchDes","OFFDESIGN");
+restart("offDes_fan_start.restart");
+// real ShP_input = -1971.3672778948226;
+// first=1;
+
 #include "FanScalars.inp"
+DuctedFan.setOption("switchDes","OFFDESIGN");
+
 
 //====================
 //Auto solver setup
 //====================
-solver.clear();
+// solver.clear();
 autoSolverSetup();
 // printSolverDetails();
 //====================
@@ -41,22 +52,33 @@ solver.maxJacobians  = 200;
 // solver.defaultDxLimit = 0.001;
 // solver.defaultPerturbation = 0.0001;
 // solver.convergenceLimit = 0.8;
-solver.defaultTolerance = 1e-10;
+// solver.defaultTolerance = 1e-10;
 
 // //====================
 // //Run engine model
 // //====================
-// restart("temp.restart");
+
+if(first){
+    restart("offDes_fan_start.restart");
+}
+else {
+    restart("offDes_fan_prev.restart");
+}
 
 run();
 // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
-// if(solver.converged == 1){
-//     SaveIndepVals("solver", "temp.restart");
-// }
+if(solver.converged == 1){
+    if(first){
+        SaveIndepVals("solver", "offDes_fan_start.restart");
+    }
+    else{
+        SaveIndepVals("solver", "offDes_fan_prev.restart");
+    }
+}
 // else{
 //     cout<<"ERROR! Did not converge"<<endl;
 // }
-
+// cout<< " STARTED FAN"<<endl;
 //====================
 // Outputs
 //====================
@@ -64,20 +86,42 @@ OutFileStream output {
     filename = "Fan.output"; 
 }
 
-output<<"# Julia readable file of fan output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
-output<<"# Mode = "<<DuctedFan.Fan.switchDes<<endl;
-output<<"converged = "<<solver.converged<<endl;
-output<<"mdot_fan = "<<DuctedFan.FsEng.W/2.205<<"\t# kg/s"<<endl;
-output<<"Dfan = "<<convertUnits("DuctedFan.Fan.dia", "m") <<"\t# m"<<endl;
-output<<"eta_prop  = "<<DuctedFan.eta_prop<<endl;
-output<<"eta_DF    = "<<DuctedFan.eta_DF<<endl;
-output<<"Mtip  = "<<DuctedFan.Fan.Mtip<<endl<<endl;
-output<<"Fn  = "<<DuctedFan.Fn_N<<endl;
-output<<"FBLI  = "<<DuctedFan.Finl<<endl;
-output<<"fracFBLI = "<<DuctedFan.Finl/DuctedFan.Fn_N<<endl<<endl;
-output<<"Fan_power = "<<convertUnits("DuctedFan.Fan.pwr", "kW") << "\t # kW"<<endl;
-output<<"Torque_fan     = "<<convertUnits("DuctedFan.Fan.trq", "N*m") << "\t # N*m"<<endl;
-output<<"N_fan     = "<<convertUnits("DuctedFan.Fan.Nmech", "rpm") << "\t # rpm"<<endl<<endl;
-output<<"Nc = "<<DuctedFan.Fan.Nc<<endl;
-output<<"NcPct = "<<DuctedFan.Fan.NcPct<<endl;
+parseFile("write_fan_offdes.int");
 
+
+// Variables to read inputs from cin
+string t ;
+int i ;
+real M0, alt;
+// // Loop while 999 is not sent to cin
+// while(i!=999)
+// {
+//     cin>> i;
+//     if(i==111){
+//         t = cin.getline();
+//         i = 222;
+//         output.reopen();
+//         parseString(t);
+//         DuctedFan.Amb.alt_in = alt;
+//         DuctedFan.Amb.MN_in  = M0;
+//         // DuctedFan.setOption("switchDes","OFFDESIGN");
+//         // #include "FanScalars.inp"
+//         // autoSolverSetup();
+//         // if(first){
+//             restart("offDes_fan_start.restart");
+//         // }
+//         // else{
+//         //     restart("offDes_fan_prev.restart");
+//         // }
+        
+//         run();
+//         if(solver.converged){
+//             SaveIndepVals("solver", "offDes_fan_prev.restart");
+//         }
+//         else{ break; quit();}
+//         parseFile("write_fan_offdes.int");
+//         // sys.sleep(1);
+        
+//     }
+// }
+// // cout<<"Finished"<<endl;

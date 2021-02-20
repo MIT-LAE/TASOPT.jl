@@ -2,15 +2,56 @@ include("tanksize.jl")
 include("tankWmech.jl")
 include("tankWthermal.jl")
 
-v_f = 67.3 #specific volume as saturated liquid
-v_g = 2.5 #specific volume as saturated vapor
-x = 0.03 #quality (suggested by energies)
+# # Suggested alternate approach:
+# # NIST data for saturated LH2:https://webbook.nist.gov/cgi/fluid.cgi?Action=Load&ID=B5000001&Type=SatT&Digits=5&PLow=1&PHigh=3&PInc=0.05&RefState=DEF&TUnit=K&PUnit=atm&DUnit=kg%2Fm3&HUnit=kJ%2Fkg&WUnit=m%2Fs&VisUnit=uPa*s&STUnit=N%2Fm
 
-rhoFuel = 0.96 * (1 / ((1 / v_f) + x * ((1 / v_g) - (1 / v_f)))) #96% due to pvent = 2atm in energies literature
+# ρLH2satP(P) = 0.3175*P^2 - 4.1121*P + 74.544 # Fit to above data P is in atm!
+# uLH2satP(P) = -2.8443*P^2 + 34.84P - 33.044
+
+# ρGH2satP(P) = 9.0e-5*P^2 + 1.1838*P + 0.1589
+# uGH2satP(P) = -2.3398*P^2 + 13.435P + 359.02
+# # Let yg be the ullage volume fraction - 3% ullage ⟹ a volume fill factor of 97%
+# ρLH2_mix(yg,P) = ρLH2satP(P)*(1-yg) + ρGH2satP(P)*yg
+
+# #Calculate energy derivative
+# qual(yg, P) = 1/(1 + (ρLH2satP(P)/ρGH2satP(P))*(1-yg)/yg)
+# println("qualtiy = ",qual(0.03, 2))
+
+# function φ(P,δP,yg)
+#     # x = qual(yg, P)
+#     ρ = 0.5*(ρLH2_mix(yg, P) + ρLH2_mix(yg, P+δP))
+#     x = ( 1/ρ - 1/ρLH2satP(P) ) / ( 1/ρGH2satP(P) - 1/ρLH2satP(P) )
+#     uᵢ   = x*uGH2satP(P)    + (1-x)*uLH2satP(P)
+#     uᵢ₊₁ = x*uGH2satP(P+δP) + (1-x)*uLH2satP(P+δP)
+#     #dumb - just diff the poly approx!
+#     φ = (ρ*(uᵢ₊₁ - uᵢ)/(δP*101.325))^-1
+#     return φ, ρ
+# end
+
+using PyPlot
+yg = 0.01:0.01:0.8
+ϕ = zeros(length(yg))
+ρ = zeros(length(yg))
+
+for (i, y) in enumerate(yg)
+    ϕ[i], ρ[i] = φ(1.5, 0.01, y)
+end
+
+plt1 = plot(yg, ϕ, label="ϕ vs yg")
+title("Energy derivative ϕ vs volume fill fraction")
+
+# show(plt1)
+# display(plot(ρ, ϕ, label="ϕ vs ρ"))
+
+y = 0.1
+ρmean = ρLH2_mix(y, 1.5)
+println(ρmean)
+rhoFuel=ρmean
+println("ρ fuel = $rhoFuel")
 
 gee = 9.81
 
-deltap = 150000 #150000#150000#101325  #based on 0.5 bar cabin pressure, 2 or 1.5 bar LH2 pressure (Verstraete / Brewer)
+deltap = 200_000 #150000#150000#101325  #based on 0.5 bar cabin pressure, 2 or 1.5 bar LH2 pressure (Verstraete / Brewer)
 
 Rfuse = 2.07 #radius of fuselage of A320
 
@@ -18,7 +59,7 @@ dRfuse = 0 #extended portion of fuselage at bottom (take as zero due to cylindri
 
 hconvgas = 0 #no purged gas in foam insulated tank
 
-h_LH2 = 550 #based on elsevier pub film boiling heat transfer properties of liq hydrogen
+h_LH2 = 550 #based on elsevier pub film boiling heat transfer properties of liq hydrogen 
 
 Tfuel = 20 #20 K
 
@@ -51,7 +92,7 @@ rhoskin = 2825 #Al 2219 / energies
 AR = 2 #ellipsoidal head aspect ratio
 #Wfuel = 8000
 use_factor = 0.8
-Wfuel = 10000 * 9.81 / use_factor #8000 * 9.81
+Wfuel = 1400 * 9.81 / use_factor #8000 * 9.81
 
 #threshold_percent = 0.1:0.1:1
 
@@ -69,10 +110,13 @@ boiloff_percentage = zeros(5)
 
 clearance_fuse = 0.13 #m , Brewer suggests 5 in clearance
 #n = 1
-for n in 1:1:5
-threshold_percent = 0.5:-0.1:0.1
+threshold_percent = 0.2:-0.1:0.1
+for n in 1:1:2
+
 #deltap = 50000:50000:250000
-Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead, Wcyl, Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhoFuel, deltap,
+Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
+ m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+  Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
                       h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent[n], mode, clearance_fuse, AR)
@@ -81,8 +125,8 @@ Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot, m_boiloff,
 grav_index = Wfuel_tot / Wtank_total
 percent_boiloff = 100 * m_boiloff*gee / (Wfuel * time_flight / 3600)
 boiloff_percentage[n] = percent_boiloff
-println("\ngrav index =  ", grav_index)
-println("\npercent boiloff =  ", percent_boiloff)
+# println("grav index =  ", grav_index)
+# println("percent boiloff =  ", percent_boiloff)
 Winsulation[n] = Winsul_sum
 Wtot_tank[n] = Wtank_total
 gravimetric_eff[n] = grav_index
@@ -90,7 +134,8 @@ boiloff[n] = m_boiloff
 Wmetal[n] = Wtank
 Wins_to_tot[n] = Winsulation[n]/Wtot_tank[n]
 Wmet_to_tot[n] = Wmetal[n]/Wtot_tank[n]
-
+println("Boil off = $(threshold_percent[n]), η = $grav_index, Wtank  = $(Wtank_total) Total insulation weight = ",Winsul_sum)
+println(Vfuel)
 #n = n + 1
 end
 #comments

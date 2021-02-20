@@ -24,12 +24,15 @@ NOTE:
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
 """
-function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
-    
-    Ldebug = false
+function mission!(pari, parg, parm, para, pare,
+       NPSS_TS::Base.Process, NPSS_Fan::Base.Process, Ldebug)#, iairf, initeng, ipc1)
+    t_prop = 0.0
     calc_ipc1 = true
-    itergmax::Int64 = 10
+    ifirst = true
+
+    itergmax::Int64 = 15
     gamVtol  = 1.0e-12
+#     gamVtol  = 1.0e-10
 
     # unpack flags
         iengloc = pari[iiengloc]
@@ -310,10 +313,18 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
       FoW = zeros(Float64, iptotal)
       FFC = zeros(Float64, iptotal)
       Vgi = zeros(Float64, iptotal)
+      dPdt = zeros(Float64, iptotal)
+      dygdt = zeros(Float64, iptotal)
+
+      pare[iePLH2, ipclimb1] = 1.5
+      pare[ieyg, ipclimb1] = 0.1
+
+      
+
       # integrate trajectory over climb
       for ip = ipclimb1:ipclimbn
             if(Ldebug)
-            printstyled("Climb angle integration - ip = ", ip-ipclimb1+1, "\n"; color=:red)
+            printstyled("Climb angle integration - ip = ", ip-ipclimb1+1, "\n"; color=:light_green)
             end
             
             # velocity calculation from CL, Weight, altitude
@@ -332,8 +343,8 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             mdotf  = 0.0
             V      = 0.0
             if(Ldebug)
-                  @printf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V")
+                  printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V"); color = :light_green)
             end
             for iterg = 1:itergmax
                   V = sqrt(2.0*BW*cosg/(ρ*S*CL))
@@ -358,11 +369,11 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
-                  Ftotal, η, P, Hrej,
+                  t_prop += @elapsed Ftotal, η, P, Hrej,
                   mdotf, BSFC,
-                  deNOx = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                                0.0, 0.0, parpt, parmot, pargen)
-                  
+                  deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                                0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+                  ifirst = false
                   pare[iedeNOx, ip] = deNOx
                   pare[iemdotf, ip] = mdotf
 
@@ -370,7 +381,7 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
                   # Calculate improved flight angle
                   ϕ = Ftotal/BW
-                  sing = (ϕ - DoL*sqrt(1.0 - ϕ^2 + DoL^2))/(1.0 - DoL^2)
+                  sing = (ϕ - DoL*sqrt(1.0 - ϕ^2 + DoL^2))/(1.0 + DoL^2)
                   cosg = sqrt(1.0 - sing^2)
                   gamV = atan(sing, cosg)
 
@@ -378,8 +389,8 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
                   
                   para[iagamV, ip] = gamV
                   if(Ldebug)
-                        @printf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-                                 iterg, abs(dgamV), gamV, BW, Ftotal, DoL, V)
+                        printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+                                 iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V); color =:light_green)
                   end
                   
                   if(abs(dgamV) < gamVtol) 
@@ -397,12 +408,19 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             FFC[ip] = mdotf*gee/(W*V*cosg)
             Vgi[ip] = 1.0/(V*cosg)
 
+            ΔT = pare[ieT0, ip] - 20.0
+            P = pare[iePLH2, ip]
+            yg = pare[ieyg, ip]
+            dygdt[ip] =  mdotf/ρmix(yg, P)
+            dPdt[ip] = dPdt_LH2(ΔT, mdotf, P, yg)
+
             Mach = para[iaMach, ip]
             CL   = para[iaCL  , ip]
             CD   = para[iaCD  , ip]
             gamV = para[iagamV, ip]
             
             if(ip > ipclimb1)
+                  # Corrector step
                   dh   = para[iaalt, ip] - para[iaalt, ip-1]
                   dVsq = pare[ieu0, ip]^2 - pare[ieu0, ip-1]^2
 
@@ -410,13 +428,25 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
                   FFCavg = 0.5*(FFC[ip] + FFC[ip-1])
                   Vgiavg = 0.5*(Vgi[ip] + Vgi[ip-1])
 
+                  dPdtavg = 0.5*(dPdt[ip] + dPdt[ip-1])
+                  dygdtavg = 0.5*(dygdt[ip] + dygdt[ip-1])
+
+
                   dR = (dh + 0.5*dVsq/gee) / FoWavg
                   dt = dR*Vgiavg
                   rW = exp(-dR*FFCavg)    #Ratio of weights Wᵢ₊₁/Wᵢ
-
+                 
+                  dP = dPdtavg*Vgiavg *dR
+                  dyg = dygdtavg*Vgiavg *dR
+               
                   para[iaRange, ip] = para[iaRange, ip-1] + dR
                   para[iatime , ip] = para[iatime , ip-1] + dt
                   para[iafracW, ip] = para[iafracW, ip-1]*rW
+
+                  pare[iePLH2, ip] = pare[iePLH2, ip-1] + dP
+                  pare[ieyg  , ip] = pare[ieyg  , ip-1] + dyg
+
+                  ifirst = false
                 
             end
             if(ip < ipclimbn)
@@ -441,10 +471,16 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
                   dR = (dh + 0.5*dVsq/gee) / FoW[ip]
                   dt = dR*Vgi[ip]
                   rW = exp(-dR*FFC[ip])
+
+                  dP = dPdt[ip]*Vgi[ip] * dR
+                  dyg = dygdt[ip]*Vgi[ip] *dR
       
                   para[iaRange,ip+1] = para[iaRange,ip] + dR
                   para[iatime ,ip+1] = para[iatime ,ip] + dt
                   para[iafracW,ip+1] = para[iafracW,ip]*rW
+
+                  pare[iePLH2, ip+1] = pare[iePLH2, ip] + dP
+                  pare[ieyg  , ip+1] = pare[ieyg  , ip] + dyg
             end 
 
       end # done integrating climb
@@ -454,6 +490,9 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
       para[iatime , ipcruise1] = para[iatime , ipclimbn]
       para[iafracW, ipcruise1] = para[iafracW, ipclimbn]
       para[iaWbuoy, ipcruise1] = para[iaWbuoy, ipclimbn]
+
+      pare[iePLH2, ipcruise1] = pare[iePLH2, ipclimbn] 
+      pare[ieyg  , ipcruise1] = pare[ieyg  , ipclimbn] 
 
       # Cruise start
       ip = ipcruise1
@@ -475,10 +514,10 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            Ftotal, η, P, Hrej,
+            t_prop += @elapsed Ftotal, η, P, Hrej,
             mdotf, BSFC,
-            deNOx = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                          0.0, 0.0, parpt, parmot, pargen)
+            deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                          0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
             
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
@@ -506,6 +545,12 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
       # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
       FFC[ip] = mdotf*gee/(W*V*cosg)
       Vgi[ip] = 1.0/(V*cosg)
+
+      ΔT = pare[ieT0, ip] - 20.0
+      P = pare[iePLH2, ip]
+      yg = pare[ieyg, ip]
+      dygdt[ip] =  mdotf/ρmix(yg, P)
+      dPdt[ip] = dPdt_LH2(ΔT, mdotf, P, yg)
 
       #---- set end-of-cruise point "d" using cruise and descent angles, 
       #-     and remaining range legs
@@ -555,10 +600,10 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            Ftotal, η, P, Hrej,
+            t_prop += @elapsed Ftotal, η, P, Hrej,
             mdotf, BSFC,
-            deNOx = PowerTrainOD(para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                          0.0, 0.0, parpt, parmot, pargen)
+            deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                          0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
 
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
@@ -578,12 +623,22 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             FFC[ip] = mdotf*gee/(W*V*cosg)
             Vgi[ip] = 1.0/(V*cosg)
 
+            ΔT = pare[ieT0, ip] - 20.0
+            P = pare[iePLH2, ip]
+            dygdt[ip] =  mdotf/ρmix(yg, P)
+            dPdt[ip] = dPdt_LH2(ΔT, mdotf, P, yg)
+
             ip1 = ipcruise1
             ipn = ipcruisen
 
             FoWavg = 0.5*(FoW[ipn] + FoW[ip1])
             FFCavg = 0.5*(FFC[ipn] + FFC[ip1])
             Vgiavg = 0.5*(Vgi[ipn] + Vgi[ip1])
+
+            dPdtavg = 0.5*(dPdt[ipn] + dPdt[ip1])
+            dygdtavg = 0.5*(dygdt[ipn] + dygdt[ip1])
+            dP = dPdtavg*Vgiavg *dRcruise
+            dyg = dygdtavg*Vgiavg *dRcruise
       
             dtcruise = dRcruise*Vgiavg
             rWcruise = exp(-dRcruise*FFCavg)
@@ -591,6 +646,9 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             para[iaRange,ipn] = para[iaRange,ip1] + dRcruise
             para[iatime ,ipn] = para[iatime ,ip1] + dtcruise
             para[iafracW,ipn] = para[iafracW,ip1]*rWcruise
+
+            pare[iePLH2, ipn] = pare[iePLH2, ip1] + dP
+            pare[ieyg, ipn] = pare[ieyg, ip1] + dyg
 
       # Descent
             ip = ipdescent1
@@ -629,4 +687,5 @@ function mission!(pari, parg, parm, para, pare)#, iairf, initeng, ipc1)
             Wburn = WMTO*fburn
             parm[imPFEI] = Wburn/gee*120.0e6 / (parm[imWpay]*parm[imRange])
 
+      return t_prop
 end

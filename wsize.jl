@@ -15,15 +15,18 @@ and iterates until the MTOW converges to within a specified tolerance.
 """
 function wsize(pari, parg, parm, para, pare,
             itermax, wrlx1, wrlx2, wrlx3,
-            initwgt, initeng, iairf)
+            initwgt, initeng, iairf, Ldebug)
 
-
+time_propsys = 0.0
     # Weight convergence tolerance 
         # tolerW = 1.0e-10
         tolerW = 1.0e-8
-        err2   = 1.0
+        errw   = 1.0
     # Initialze some variables
     fsum = 0.0
+    ifirst = true
+    NPSS_TS = Base.Process
+    NPSS_Fan = Base.Process
 
     # Flags
     ifuel   = pari[iifuel  ] # Fuel type 24 == kerosene TODO need to update this for LH2
@@ -268,6 +271,12 @@ function wsize(pari, parg, parm, para, pare,
         Weng   = 0.3 * Wpay
         feng   = 0.08
 
+        # Wfan    = Weng*0.2
+        # Wmot    = Weng*0.3
+        # Winv    = Weng*0.2
+        # Wgen    = Weng*0.5
+        # Wtshaft = Weng*0.5
+
         dxWhtail = 0.0
         dxWvtail = 0.0
 
@@ -293,6 +302,14 @@ function wsize(pari, parg, parm, para, pare,
             parg[igdxWvtail] = dxWvtail
             parg[igdyWinn] = dyWinn
             parg[igdyWout] = dyWout
+
+        # Turbo-electric weights
+            # parg[igWfan   ] = Wfan   
+            # parg[igWmot   ] = Wmot   
+            # parg[igWinv   ] = Winv   
+            # parg[igWgen   ] = Wgen   
+            # parg[igWtshaft] = Wtshaft
+            parg[igWtesys ] = 1.0*Weng
 
         # wing centroid x-offset form wingbox
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
@@ -452,6 +469,9 @@ function wsize(pari, parg, parm, para, pare,
             ffuel = parg[igWfuel]/WMTO
 
             fSnace = parg[igfSnace]
+
+        # Turbo-electric system
+            Wtesys = parg[igWtesys]
     
     end
 
@@ -503,6 +523,8 @@ Lconv = false # no convergence yet
             xvtail = parg[igxvtail]
             xwbox  = parg[igxwbox ]    
             xwing  = parg[igxwing ]
+
+            Wtesys = parg[igWtesys]
 
             # Call fusew
                 Eskin = parg[igEcap]
@@ -567,7 +589,9 @@ Lconv = false # no convergence yet
                     # To allow pwerforming aerodynamic and weight-burn calculations on the first iteration, 
                     # an interim MTOW is computed: 
                     fsum = feng + ffuel + fhpesys + flgnose + flgmain
-                    WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
+                    # WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
+                    WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail +
+                            Wtesys)/(1.0 - fsum)
 
                     Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain] 
                     parg[igWMTO] = WMTO
@@ -598,12 +622,13 @@ Lconv = false # no convergence yet
 
             # Print weight/ convergnce started
             if(iterw ==1)
-            @printf("%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-            "iterw", "errW", "WMTO", "Wfuel", "Wwing", "Weng", "span", "area", "HTarea", "xwbox" )
+            @printf("%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+            "iterw", "errW", "WMTO", "Wfuel", "Wtesys", "Wgen", "Wtshaft", "Wwing", "Weng", "span", "area", "HTarea", "xwbox" )
             end
            
-            @printf("%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-             iterw, errw1, parm[imWTO], parg[igWfuel],
+            @printf("%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+             iterw, errw1, parm[imWTO], parg[igWfuel], 
+             parg[igWtesys], parg[igWgen], parg[igWtshaft],
              parg[igWwing], parg[igWeng], parg[igb], parg[igS], 
              parg[igSh], parg[igxwbox])
 
@@ -996,15 +1021,19 @@ Lconv = false # no convergence yet
             # Size engine for TOC
             ρAir = pare[ierho0, ipcruise1]
             μAir = pare[iemu0 , ipcruise1]
-            
-            ηpt, Ppt, Hpt, mpt, SPpt,
+
+        if (iterw==1)
+            NPSS_Fan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
+        end
+           time_propsys += @elapsed  ηpt, Ppt, Hpt, mpt, SPpt,
             mdotf_tot, BSFC,
-            deNOx, _, _  =  PowerTrain(para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
-                                        0.0, 0.0, parg, parpt, parmot, pargen)
+            deNOx, _, _  =  PowerTrain(NPSS_Fan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
+                                        0.0, 0.0, parg, parpt, parmot, pargen, ifirst)
+            ifirst = false
 
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf_tot
-
+            # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
 
@@ -1012,7 +1041,10 @@ Lconv = false # no convergence yet
         # ----------------------
         #     Fly mission
         # ----------------------
-        mission!(pari, parg, parm, para, pare)
+        if (iterw==1)
+            NPSS_TS  = startNPSS("NPSS_Turboshaft/", "TPoffDes.bat" )
+        end
+        time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, Ldebug)
         parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
 
@@ -1037,6 +1069,11 @@ Lconv = false # no convergence yet
 # BFL calculations/ Noise? / Engine perf 
 
     end
+ 
+    endNPSS(NPSS_TS)
+    endNPSS(NPSS_Fan)
+
+    println("Propsys time = ", time_propsys)
 end
 
 """
@@ -1055,7 +1092,8 @@ function Wupdate0!(parg, rlx, fsum)
             parg[igWhtail] +
             parg[igWvtail] +
             parg[igWeng  ] +
-            parg[igWfuel ] 
+            parg[igWfuel ] +
+            parg[igWtesys]
 
     WMTO = rlx*Wsum/(1.0 - ftotadd) + (1.0 - rlx)*WMTO
     parg[igWMTO] = WMTO
@@ -1080,16 +1118,19 @@ function Wupdate!(parg, rlx, fsum)
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
 
+    # ftesys = parg[igWtesys]/WMTO
+    Wtesys  = parg[igWtesys]
     Wpay    = parg[igWpay]
     Wfuse   = parg[igWfuse]
 
-    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys + flgnose + flgmain
+    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys +
+     flgnose + flgmain #+ ftesys
 
     if(fsum ≥ 1.0)
         println("SOMETHING IS WRONG fsum ≥ 1")
     end
 
-    WMTO = rlx*(Wpay + Wfuse)/(1.0-fsum) + (1.0-rlx)*WMTO
+    WMTO = rlx*(Wpay + Wfuse + Wtesys)/(1.0-fsum) + (1.0-rlx)*WMTO
 
     parg[igWMTO  ]  = WMTO
     parg[igWwing ]  = WMTO*fwing
