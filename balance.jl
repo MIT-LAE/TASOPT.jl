@@ -224,20 +224,25 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 
 """
 Sets horizontal tail area and wing position to simultaneously:
+
       1) Meet pitch trim requirement with forward CG
       2) Meet stability requirement with aft CG
 
      Calculates resulting CG, CP, NP locations
 
-  Inputs:  pari[.]  integer fla array
-           parg[.]  geometry parameter array
-           paraF[.] aero parameter array for fwdCG case
-           paraB[.] aero parameter array for aft CG case
-           paraC[.] aero parameter array for cruise tail CL case
+  Inputs:  
+      
+      pari[.]  integer fla array
+      parg[.]  geometry parameter array
+      paraF[.] aero parameter array for fwdCG case
+      paraB[.] aero parameter array for aft CG case
+      paraC[.] aero parameter array for cruise tail CL case
 
-  Outputs: parg[igSh]    HT area
-           parg[igxwbox] wingbox location
-           parg[igxwing] wing centroid location
+  Outputs: 
+  
+      parg[igSh]    HT area
+      parg[igxwbox] wingbox location
+      parg[igxwing] wing centroid location
 
 """
 function htsize(pari,parg,paraF,paraB,paraC)
@@ -299,6 +304,13 @@ function htsize(pari,parg,paraF,paraB,paraC)
             Wvtail = parg[igWvtail]
             Weng   = parg[igWeng  ]
 
+            Wtshaft = parg[igWtshaft] 
+            Wgen    = parg[igWgen   ] 
+            Winv    = parg[igWinv   ] 
+            Wmot    = parg[igWmot   ] 
+            Wfan    = parg[igWfan   ] 
+            Wftank  = parg[igWftank ] 
+
             Whpesys = parg[igWMTO] * parg[igfhpesys]
             Wlgnose = parg[igWMTO] * parg[igflgnose]
             Wlgmain = parg[igWMTO] * parg[igflgmain]
@@ -315,6 +327,13 @@ function htsize(pari,parg,paraF,paraB,paraC)
       xeng    = parg[igxeng]   
       xhpesys = parg[igxhpesys]
       xlgnose = parg[igxlgnose]
+
+      xtshaft = parg[igxtshaft ]
+      xgen    = parg[igxgen    ]
+      xinv    = parg[igxinv    ]
+      xmot    = parg[igxmot    ]
+      xfan    = parg[igxfan    ]
+      xftank  = parg[igxftank  ]
       
       # Calculate x location of cabin centroid and length of cabin
       xcabin = 0.5*(parg[igxshell1] + parg[igxshell2])
