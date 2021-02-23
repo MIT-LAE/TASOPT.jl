@@ -82,7 +82,8 @@ time_propsys = 0.0
         fnace = parg[igfnace]
         fhadd = parg[igfhadd]
         fvadd = parg[igfvadd]
-        fwadd = parg[igfflap] + parg[igfslat] + parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
+        fwadd = parg[igfflap] + parg[igfslat] + 
+                parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
 
         fstring = parg[igfstring]
         fframe  = parg[igfframe ]
