@@ -309,7 +309,7 @@ time_propsys = 0.0
             # parg[igWinv   ] = Winv   
             # parg[igWgen   ] = Wgen   
             # parg[igWtshaft] = Wtshaft
-            parg[igWtesys ] = 1.0*Weng
+            parg[igWtesys ] = 0.32*Wpay
 
         # wing centroid x-offset form wingbox
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
@@ -515,7 +515,12 @@ Lconv = false # no convergence yet
                 parg[igdeltap] = Δp
             
             # Engine weight mounted on tailcone, if any
-                iengloc==1 ? Wengtail = 0.0 : Wengtail = parg[igWeng]
+                if (iengloc==1)
+                    Wengtail = 0.0 
+                else
+                    Wengtail = (parg[igWtshaft] + parg[igWcat])*nTshaft +
+                                parg[igWgen]*ngen + parg[igWftank]
+                end
             
             Whtail = parg[igWhtail]
             Wvtail = parg[igWvtail]
