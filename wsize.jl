@@ -49,7 +49,8 @@ time_propsys = 0.0
     TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
 
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    fusebl!(pari, parg, para, ipcruise1)
+    time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
+    println("Fuse bl time = $time_fusebl")
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
     DAfsurf = para[iaDAfsurf, ipcruise1] # Surface dissapation area 
     DAfwake = para[iaDAfwake, ipcruise1] # Wake dissapation area
@@ -634,7 +635,7 @@ Lconv = false # no convergence yet
                 errw = max(abs(errw1), abs(errw2), abs(errw3))
 
             # Print weight/ convergnce started
-            if(iterw ==1)
+            if(iterw == 1)
             @printf("%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
             "iterw", "errW", "WMTO", "Wfuel", "Wtesys", "Wgen", "Wtshaft", "Wwing", "Weng", "span", "area", "HTarea", "xwbox" )
             end
@@ -730,7 +731,7 @@ Lconv = false # no convergence yet
                         AR, Nlift, WMTO, Lhtail, fLo, fLt)
 
             if(iwplan == 1)
-                Weng1 = parg[igWeng]/ neng
+                Weng1 = parg[igWfan] + parg[igWmot] + parg[igWinv]
             else
                 Weng1 = 0.0
             end
@@ -1086,7 +1087,7 @@ Lconv = false # no convergence yet
     endNPSS(NPSS_TS)
     endNPSS(NPSS_Fan)
 
-    println("Propsys time = ", time_propsys)
+    # println("Propsys time = ", time_propsys)
 end
 
 """
