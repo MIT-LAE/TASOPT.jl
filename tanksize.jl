@@ -37,36 +37,24 @@ function tanksize(gee, rhoFuel, deltap,
                       h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, mode, clearance_fuse, AR)
 
-       #include("tankWmech.jl")
-       #include("tankWthermal.jl")
        Wfuel_init = Wfuel
-       m_boiloff = 0 #initial value of boil-off mass
+       m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
        thickness_insul = sum(t_cond)
 
-       ##To find tank weight, tank length and skin thickness of tank wall (non-insulator part)
-       Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
-                             fstring, ffadd, deltap,
-                             Rfuse, dRfuse, wfb, nfweb,
-                             sigskin, rho_insul, rhoskin,
-                             Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse, AR)
-
-
-       m_boiloff, mdot_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, Rtank,
-                             h_v, t_cond, k, hconvair, time_flight, Shead_insul)
-
-
-       #Wfuel = (m_boiloff * gee) + Wfuel
-
+mdot_boiloff = 0.0
        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
                              fstring, ffadd, deltap,
                              Rfuse, dRfuse, wfb, nfweb,
                              sigskin, rho_insul, rhoskin,
-                             Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse, AR)
+                             Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
         if mode == 1
+                
                 for n = 1:500 #optimize boil off mass according to threshold
-                        m_boiloff, mdot_boiloff = tankWthermal(lshell, hconvgas, h_LH2, Tfuel, Tair, Rtank,
-                                              h_v, t_cond, k, hconvair, time_flight, Shead_insul)
+                        m_boiloff, mdot_boiloff = tankWthermal(lshell, Rtank, Shead_insul,
+                                              hconvgas, h_LH2, hconvair,
+                                              t_cond, k,
+                                              Tfuel, Tair,
+                                              h_v, time_flight)
 
 
                         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
@@ -74,16 +62,17 @@ function tanksize(gee, rhoFuel, deltap,
                                               fstring, ffadd, deltap,
                                               Rfuse, dRfuse, wfb, nfweb,
                                               sigskin, rho_insul, rhoskin,
-                                              Wfuel, m_boiloff, thickness_insul, t_cond, clearance_fuse, AR)
-
+                                              Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
+                        println("l = $lshell, thickness_insul = $(sum(t_cond))")
                         Wfuel = Wfuel_init
-
                         if((m_boiloff / (time_flight/3600)) < (threshold_percent *  Wfuel / (gee * 100)))
+                                println("iter = $n")
+                                println("Boil off fraction $(mdot_boiloff*gee*3600/Wfuel *100) %")
                                 break
                         end
                         t_cond[1] = t_cond[1] + 0.01 * t_cond[1]  #increase foam insulation thickness and try again
                         t_cond[3] = t_cond[3] + 0.01 * t_cond[3]
-                        # println(m_boiloff/Wfuel_tot)
+                #        println(Vfuel)
                 end
         end
 
