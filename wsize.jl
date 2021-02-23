@@ -40,6 +40,11 @@ time_propsys = 0.0
     iVTsize = pari[iiVTsize]
     ixwmove = pari[iixwmove]
 
+    # Unpack number of powertrain elements
+       nfan    = parpt[ipt_nfan]
+       ngen    = parpt[ipt_ngen]
+       nTshaft = parpt[ipt_nTshaft]
+
     # Atmospheric conditions at sea-level
     TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
 
@@ -268,7 +273,7 @@ time_propsys = 0.0
         Wvtail = Whtail
         Wwing  = 0.5  * Wpay/parg[igsigfac]
         Wstrut = 0.0
-        Weng   = 0.3 * Wpay
+        Weng   = 0.0 * Wpay
         feng   = 0.08
 
         # Wfan    = Weng*0.2
@@ -539,7 +544,7 @@ Lconv = false # no convergence yet
                 (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                 EIhshell,EIhbend, EIvshell,EIvbend, GJshell ,GJcone,
                 Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, 
+                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, 
                                                 fstring, fframe, ffadd, Δp, 
                                                 Wpwindow, Wppinsul, Wppfloor, 
                                                 Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax, 
@@ -591,6 +596,8 @@ Lconv = false # no convergence yet
                 #        Weng + Wfuel + 
                 #        Whpesys + Wlgnose + Wlgmain
                 if (iterw == 1 && initwgt == 0)
+                    feng = 0.0 # Set feng to be zero since we are not using the TFan but a TE system
+
                     # To allow pwerforming aerodynamic and weight-burn calculations on the first iteration, 
                     # an interim MTOW is computed: 
                     fsum = feng + ffuel + fhpesys + flgnose + flgmain
