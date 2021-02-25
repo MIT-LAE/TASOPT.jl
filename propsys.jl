@@ -119,7 +119,7 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
     # Sagerser 1971, NASA TM X-2406
     # Note: The term "weight" in Sagerser1971 is actually mass
     mfan = ktech*(135.0 * Dfan^2.7/sqrt(ARfan) * (bladeσ/1.25)^0.3 * (Utip/350.0)^0.3)
-    Wfan = mfan*gee
+    Wfan = mfan*gee*1.4 # TODO - relace fudge factor 1.4 with nacelle calcs
 
     return Dfan, Fan_power, Torque_fan, N_fan, Mtip,
             eta_prop, eta_DF,
@@ -291,7 +291,7 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
                                             cpsi, w, lcat, deNOx, first)
 
         mdotf_tot = mdotf*nTshaft
-        Wcat = mcat*gee
+        Wcat = mcat*gee*1.5 # TODO replace fudge factor 1.5 with ammonia tanks/ pumps etc
         
         parg[igWcat] = Wcat
         parpt[ipt_Wcatalyst] = Wcat
