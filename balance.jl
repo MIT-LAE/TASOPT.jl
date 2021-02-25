@@ -43,6 +43,9 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       Wvtail = parg[igWvtail]
       Weng   = parg[igWeng  ]
 
+      Wtesys = parg[igWtesys ]
+     xWtesys = parg[igxWtesys]
+
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -79,6 +82,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       W  = rpay *Wpay +
 	 rfuel*Wfuel +
 	 Wfuse +
+       Wtesys +
 	 Wwing +
 	 Wstrut +
 	 Whtail*Sh/Sh1 +
@@ -92,7 +96,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 
       xW = rpay * Wpay *xpay +
 	 rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel]) +
-	 parg[igxWfuse] +
+	 parg[igxWfuse] + xWtesys +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
 	 (Whtail*parg[igxhbox] + parg[igdxWhtail])*Sh/Sh1 +
@@ -311,6 +315,9 @@ function htsize(pari,parg,paraF,paraB,paraC)
             Wfan    = parg[igWfan   ] 
             Wftank  = parg[igWftank ] 
 
+            Wtesys = parg[igWtesys ]
+           xWtesys = parg[igxWtesys]
+
             Whpesys = parg[igWMTO] * parg[igfhpesys]
             Wlgnose = parg[igWMTO] * parg[igflgnose]
             Wlgmain = parg[igWMTO] * parg[igflgmain]
@@ -362,6 +369,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
       WfuelC = paraC[iafracW]*parg[igWMTO] -
 	 rpayC*Wpay -
 	 Wfuse -
+       Wtesys -
 	 Wwing -
 	 Wstrut -
 	 Whtail -
@@ -384,6 +392,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
      
      xWF, xWB, xWc = 0.0, 0.0, 0.0
      WF ,  WB,  Wc = 0.0, 0.0, 0.0
+     dmax = 0.0
 
       for  iter = 1:itmax
 
@@ -397,6 +406,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
       #---- empty (no fuel, no payload) weight
             We = Wfuse +
                   Wwing +
+                  Wtesys +
                   Wstrut +
                   Whtail +
                   Wvtail +
@@ -408,7 +418,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
             We_Sh = Whtail_Sh
 
       #---- empty (no-payload) weight moment
-            xWe = xWfuse +
+            xWe = xWfuse + xWtesys +
                   Wwing *xwbox    + dxWwing +
                   Wstrut*xwbox    + dxWstrut +
                   Whtail*xhbox    + dxWhtail +
@@ -572,7 +582,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
             end
 
       end #end for loop iter
-      #write(*,*) 'HTSIZE: Pitch not converged. dxwbox,dSh = ', dxw,dSh
+      dmax > toler && println("HTSIZE: Pitch not converged. dxwbox,dSh = $dxw, $dSh")
 
 
 #---- set converged results
@@ -643,6 +653,9 @@ function cglpay(parg)
       Wvtail = parg[igWvtail]
       Weng   = parg[igWeng  ]
 
+      Wtesys = parg[igWtesys ]
+     xWtesys = parg[igxWtesys]
+
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
@@ -661,6 +674,7 @@ function cglpay(parg)
       
      We =  rfuel*Wfuel +
 	 Wfuse +
+       Wtesys +
 	 Wwing +
 	 Wstrut +
 	 Whtail +
@@ -671,7 +685,7 @@ function cglpay(parg)
 	 Wlgmain
 
       xWe = rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel]) +
-	 parg[igxWfuse] +
+	 parg[igxWfuse] + parg[igxWtesys] +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
 	 Whtail*parg[igxhbox] + parg[igdxWhtail] +
