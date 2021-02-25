@@ -271,6 +271,7 @@ include("wsize.jl")
 include("mission.jl")
 
 include("input.jl")
+include("outputs.jl")
 
 const gee = 9.81
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
@@ -321,72 +322,35 @@ function run_wsize(iter, Ldebug)
     # println(temp2)
 
     ## Write outputs to screen
-    # println(pare[ieFe,:])
-    # println("h     = np.array(",para[iaalt,:],")")
-    # println("R     = np.array(",para[iaRange,:],")")
-    # println("deNOx = np.array(",pare[iedeNOx, :],")")
-    # println("fracW = np.array(",para[iafracW, :],")")
-    # println("mdotf = np.array(",pare[iemdotf, :],")")
-    # println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
-    # println("Ptank = np.array(",pare[iePLH2, :],")")
-    # println("CL = np.array(",para[iaCL, :],")")
-    # println("CD = np.array(",para[iaCD, :],")")
+    println(pare[ieFe,:])
+    println("h     = np.array(",para[iaalt,:],")")
+    println("R     = np.array(",para[iaRange,:],")")
+    println("deNOx = np.array(",pare[iedeNOx, :],")")
+    println("fracW = np.array(",para[iafracW, :],")")
+    println("mdotf = np.array(",pare[iemdotf, :],")")
+    println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
+    println("Ptank = np.array(",pare[iePLH2, :],")")
+    println("CL = np.array(",para[iaCL, :],")")
+    println("CD = np.array(",para[iaCD, :],")")
 
-    Wempty = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-    Whpesys = parg[igWMTO] * parg[igfhpesys]
-    Wlgnose = parg[igWMTO] * parg[igflgnose]
-    Wlgmain = parg[igWMTO] * parg[igflgmain]
-    Wtotadd = Whpesys + Wlgnose + Wlgmain
-    printstyled("Weight build-up:\n -------------- \n", color=:bold )
-    @printf("Wempty  + %10.1f N (%8.1f lb)\n", Wempty, Wempty/lbf_to_N)
-    @printf("Wpay    + %10.1f N (%8.1f lb)\n", parg[igWpay], parg[igWpay]/lbf_to_N)
-    @printf("Wfuel   + %10.1f N (%8.1f lb)\n", parg[igWfuel], parg[igWfuel]/lbf_to_N)
-    @printf("--------------------\n")
-    printstyled(@sprintf("WMTO    = %10.1f N (%8.1f lb)\n\n",
-                         parg[igWMTO], parg[igWMTO]/lbf_to_N); color=:bold)
-
-    @printf("Wfuse   + %10.1f N (%8.1f lb)\n", parg[igWfuse ], parg[igWfuse ]/lbf_to_N)
-    @printf("Wwing   + %10.1f N (%8.1f lb)\n", parg[igWwing ], parg[igWwing ]/lbf_to_N)
-    @printf("Wvtail  + %10.1f N (%8.1f lb)\n", parg[igWvtail], parg[igWvtail]/lbf_to_N)
-    @printf("Whtail  + %10.1f N (%8.1f lb)\n", parg[igWhtail], parg[igWhtail]/lbf_to_N)
-    @printf("Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
-    @printf("Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
-    @printf("Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
-    @printf("--------------------\n")
-    printstyled(@sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
-    parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
-    parg[igWtesys] + +parg[igWftank] + Wtotadd, 
-    (parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
-    parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
-
-    @printf("Wtshaft + %10.1f N × %d\n", parg[igWtshaft], parpt[ipt_nTshaft])
-    @printf("Wcat    + %10.1f N × %d\n", parg[igWcat   ], parpt[ipt_nTshaft])
-    @printf("Wgen    + %10.1f N × %d\n", parg[igWgen   ], parpt[ipt_ngen]) 
-    @printf("Winv    + %10.1f N × %d\n", parg[igWinv   ], parpt[ipt_nfan]) 
-    @printf("Wmot    + %10.1f N × %d\n", parg[igWmot   ], parpt[ipt_nfan]) 
-    @printf("Wfan    + %10.1f N × %d\n", parg[igWfan   ], parpt[ipt_nfan]) 
-    @printf("--------------------\n")
-    printstyled(@sprintf("Wtesys  = %10.1f N (%8.1f lb)\n\n",
-     parg[igWtesys], parg[igWtesys]/lbf_to_N ), color = :bold)
-
-    @printf("Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank ], parg[igWftank ]/lbf_to_N) 
-
-    @printf("ηtank = %3.1f %% \n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
-    # println("Aero:")
-    #     println("L/D    = ", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
-    #     println("CL     = ", para[iaCL, ipcruise1])
-    #     println("CD     = ", para[iaCD, ipcruise1])
-    #     println("CDfuse = ", para[iaCDfuse, ipcruise1])
-    #     println("CDi    = ", para[iaCDi, ipcruise1])
-    #     println("CDwing = ", para[iaCDwing, ipcruise1])
+    println("Aero:")
+        @printf("L/D     = %5.4f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
+        @printf("CL      = %5.4f\n", para[iaCL, ipcruise1])
+        @printf("CD      = %5.4f\n", para[iaCD, ipcruise1])
+        @printf("CDfuse  = %5.4f\n", para[iaCDfuse, ipcruise1])
+        @printf("CDi     = %5.4f\n", para[iaCDi, ipcruise1])
+        @printf("CDwing  = %5.4f\n", para[iaCDwing, ipcruise1])
+        @printf("CDhtail = %5.4f\n", para[iaCDhtail, ipcruise1])
+        @printf("CDvtail = %5.4f\n", para[iaCDvtail, ipcruise1])
 
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
     # println("Time writing       = $time_writing")
     # println("Time runnning NPSS = $time_run_NPSS")
-
+    weight_buildup(parg)
+    geometry(parg)
 end
 
 # @timev run_wsize(20)
-time_wsize = @elapsed run_wsize(20, false)
+time_wsize = @elapsed run_wsize(25, false)
 println("Wsize time         = ", time_wsize)
 
