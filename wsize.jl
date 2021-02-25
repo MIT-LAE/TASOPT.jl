@@ -276,7 +276,7 @@ time_propsys = 0.0
         Wwing  = 0.5  * Wpay/parg[igsigfac]
         Wstrut = 0.0
         Weng   = 0.0 * Wpay
-        feng   = 0.08
+        feng   = 0.0
 
         # Wfan    = Weng*0.2
         # Wmot    = Weng*0.3
@@ -311,12 +311,8 @@ time_propsys = 0.0
             parg[igdyWout] = dyWout
 
         # Turbo-electric weights
-            # parg[igWfan   ] = Wfan   
-            # parg[igWmot   ] = Wmot   
-            # parg[igWinv   ] = Winv   
-            # parg[igWgen   ] = Wgen   
-            # parg[igWtshaft] = Wtshaft
             parg[igWtesys ] = 0.32*Wpay
+            parg[igWftank ] = 0.0
 
         # wing centroid x-offset form wingbox
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
@@ -479,6 +475,7 @@ time_propsys = 0.0
 
         # Turbo-electric system
             Wtesys = parg[igWtesys]
+            Wftank = parg[igWftank]
     
     end
 
@@ -537,6 +534,7 @@ Lconv = false # no convergence yet
             xwing  = parg[igxwing ]
 
             Wtesys = parg[igWtesys]
+            Wftank = parg[igWftank]
 
             # Call fusew
                 Eskin = parg[igEcap]
@@ -593,7 +591,7 @@ Lconv = false # no convergence yet
                 WbuoyCR = (ρcab - pare[ierho0, ipcruise1])*gee*cabVol
             # Total max Takeoff weight (MTOW)
                 
-                # WMTO = Wpay + Wfuse + Wwing + Wstrut + 
+                # WMTO = Wpay + Wfuse + Wwing + Wstrut + Wtesys + Wftank
                 #        Whtail + Wvtail +
                 #        Weng + Wfuel + 
                 #        Whpesys + Wlgnose + Wlgmain
@@ -605,12 +603,13 @@ Lconv = false # no convergence yet
                     fsum = feng + ffuel + fhpesys + flgnose + flgmain
                     # WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
                     WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail +
-                            Wtesys)/(1.0 - fsum)
+                            Wtesys + Wftank)/(1.0 - fsum)
 
                     Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain] 
                     parg[igWMTO] = WMTO
                     parg[igWeng] = Weng
                     parg[igWfuel]= Wfuel
+                    println("Wfuel initial = $(ffuel*WMTO)")
 
                 else 
                     # Call a better Wupdate function
@@ -636,14 +635,14 @@ Lconv = false # no convergence yet
 
             # Print weight/ convergnce started
             if(iterw == 1)
-            @printf("%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-            "iterw", "errW", "WMTO", "Wfuel", "Wtesys", "Wgen", "Wtshaft", "Wwing", "Weng", "span", "area", "HTarea", "xwbox" )
+            @printf("%5s  %11s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+            "iterw", "errW", "WMTO", "Wfuel", "Wftank", "Wtesys", "Wgen", "Wtshaft", "Wwing", "span", "area", "HTarea", "xwbox" )
             end
            
-            @printf("%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-             iterw, errw1, parm[imWTO], parg[igWfuel], 
+            @printf("%5d  %+9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+             iterw, errw1, parm[imWTO], parg[igWfuel], parg[igWftank],
              parg[igWtesys], parg[igWgen], parg[igWtshaft],
-             parg[igWwing], parg[igWeng], parg[igb], parg[igS], 
+             parg[igWwing], parg[igb], parg[igS], 
              parg[igSh], parg[igxwbox])
 
             if(errw <= tolerW)
@@ -1061,6 +1060,35 @@ Lconv = false # no convergence yet
         time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, Ldebug)
         parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
+        # ----------------------
+        #     LH₂ Tank weight
+        # ----------------------
+        hconvgas = 0.0
+        h_LH2 = 550.0
+        Tfuel = 20.0
+        Tair  = 288.0 #Heated cabin temp
+        h_v = 447000.0
+        t_cond = [0.2, 1.524e-5, 0.2, 1.524e-5, 1.57e-2] #assumed from energies
+        k = [5e-3, 5e-3, 5e-3, 5e-3, 5e-3] #foam conductivities
+        hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
+        time_flight = para[iatime, ipdescent1]
+        sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
+        rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
+        rhoskintank =  2825.0 #Al 2219 / energies
+        max_boiloff = 0.1
+        ARtank = 2.0
+        clearance_fuse = 0.13
+
+        Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+        m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+        Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, Δp,
+                      Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+                      h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
+                      wfb, nfweb, sigskin, rho_insul, rhoskintank, 
+                      parg[igWfuel], max_boiloff, clearance_fuse, ARtank)
+        
+        parg[igWfmax] = Vfuel*rhofuel
+        parg[igWftank] = Wtank
 
 # Get mission fuel burn (check if fuel capacity is sufficent)
 
@@ -1107,7 +1135,8 @@ function Wupdate0!(parg, rlx, fsum)
             parg[igWvtail] +
             parg[igWeng  ] +
             parg[igWfuel ] +
-            parg[igWtesys]
+            parg[igWtesys] +
+            parg[igWftank]
 
     WMTO = rlx*Wsum/(1.0 - ftotadd) + (1.0 - rlx)*WMTO
     parg[igWMTO] = WMTO
@@ -1134,6 +1163,7 @@ function Wupdate!(parg, rlx, fsum)
 
     # ftesys = parg[igWtesys]/WMTO
     Wtesys  = parg[igWtesys]
+    Wftank  = parg[igWftank]
     Wpay    = parg[igWpay]
     Wfuse   = parg[igWfuse]
 
@@ -1144,7 +1174,7 @@ function Wupdate!(parg, rlx, fsum)
         println("SOMETHING IS WRONG fsum ≥ 1")
     end
 
-    WMTO = rlx*(Wpay + Wfuse + Wtesys)/(1.0-fsum) + (1.0-rlx)*WMTO
+    WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
 
     parg[igWMTO  ]  = WMTO
     parg[igWwing ]  = WMTO*fwing
