@@ -1068,8 +1068,8 @@ Lconv = false # no convergence yet
         Tfuel = 20.0
         Tair  = 288.0 #Heated cabin temp
         h_v = 447000.0
-        t_cond = [0.2, 1.524e-5, 0.2, 1.524e-5, 1.57e-2] #assumed from energies
-        k = [5e-3, 5e-3, 5e-3, 5e-3, 5e-3] #foam conductivities
+        t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies
+        k = ones(length(t_cond)).*5.0e-3#foam conductivities
         hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
         time_flight = para[iatime, ipdescent1]
         sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
@@ -1077,7 +1077,7 @@ Lconv = false # no convergence yet
         rhoskintank =  2825.0 #Al 2219 / energies
         max_boiloff = 0.1
         ARtank = 2.0
-        clearance_fuse = 0.13
+        clearance_fuse = 0.10
 
         Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
         m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
@@ -1087,8 +1087,13 @@ Lconv = false # no convergence yet
                       wfb, nfweb, sigskin, rho_insul, rhoskintank, 
                       parg[igWfuel], max_boiloff, clearance_fuse, ARtank)
         
-        parg[igWfmax] = Vfuel*rhofuel
+        parg[igWfmax] = Vfuel*rhofuel*9.81
         parg[igWftank] = Wtank
+        parg[igxWftank] = Wtank * parg[igxftank]
+        parg[iglftank] = ltank
+        parg[igRftank] = Rtank
+        parg[igWinsftank] = Winsul_sum
+
 
 # Get mission fuel burn (check if fuel capacity is sufficent)
 
