@@ -35,46 +35,46 @@ Outputs:
 function tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
                       h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, mode, clearance_fuse, AR)
+                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
 
        Wfuel_init = Wfuel
        m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
        thickness_insul = sum(t_cond)
 
-mdot_boiloff = 0.0
+       mdot_boiloff = 0.0
        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
                              fstring, ffadd, deltap,
                              Rfuse, dRfuse, wfb, nfweb,
                              sigskin, rho_insul, rhoskin,
                              Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
-        if mode == 1
+        
                 
-                for n = 1:500 #optimize boil off mass according to threshold
-                        m_boiloff, mdot_boiloff = tankWthermal(lshell, Rtank, Shead_insul,
-                                              hconvgas, h_LH2, hconvair,
-                                              t_cond, k,
-                                              Tfuel, Tair,
-                                              h_v, time_flight)
+        for n = 1:500 #optimize boil off mass according to threshold
+                m_boiloff, mdot_boiloff = tankWthermal(lshell, Rtank, Shead_insul,
+                                        hconvgas, h_LH2, hconvair,
+                                        t_cond, k,
+                                        Tfuel, Tair,
+                                        h_v, time_flight)
 
 
-                        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
-                         Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
-                                              fstring, ffadd, deltap,
-                                              Rfuse, dRfuse, wfb, nfweb,
-                                              sigskin, rho_insul, rhoskin,
-                                              Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
-                        println("l = $lshell, thickness_insul = $(sum(t_cond))")
-                        Wfuel = Wfuel_init
-                        if((m_boiloff / (time_flight/3600)) < (threshold_percent *  Wfuel / (gee * 100)))
-                                println("iter = $n")
-                                println("Boil off fraction $(mdot_boiloff*gee*3600/Wfuel *100) %")
-                                break
-                        end
-                        t_cond[1] = t_cond[1] + 0.01 * t_cond[1]  #increase foam insulation thickness and try again
-                        t_cond[3] = t_cond[3] + 0.01 * t_cond[3]
-                #        println(Vfuel)
+                Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
+                        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
+                                        fstring, ffadd, deltap,
+                                        Rfuse, dRfuse, wfb, nfweb,
+                                        sigskin, rho_insul, rhoskin,
+                                        Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
+                # println("l = $lshell, thickness_insul = $(sum(t_cond))")
+                Wfuel = Wfuel_init
+                if(mdot_boiloff*gee*3600/Wfuel *100) < threshold_percent 
+                        # println("iter = $n")
+                        # println("Boil off fraction $(mdot_boiloff*gee*3600/Wfuel *100) %")
+                        break
                 end
+                t_cond[1] = t_cond[1] + 0.01 * t_cond[1]  #increase foam insulation thickness and try again
+                t_cond[3] = t_cond[3] + 0.01 * t_cond[3]
+        #        println(Vfuel)
         end
+
 
 
 return Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead, Wcyl, Winsul_sum, Winsul, l_tank, Wtank #boiloff rate output
