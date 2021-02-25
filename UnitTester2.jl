@@ -243,7 +243,8 @@ include("wingpo.jl")
 include("tailpo.jl")
 
 include("airtable.jl")
-nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air")
+# Create airtables right away cause we aren't going to change them
+nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air") 
 ARe = 20e6
 include("airfun.jl")
 
@@ -261,6 +262,10 @@ include("PT.inc")
 include("propsys.jl")
 
 include("hydrogen.jl")
+
+include("tankWmech.jl")
+include("tankWthermal.jl")
+include("tanksize.jl")
 
 include("wsize.jl")
 include("mission.jl")
@@ -327,10 +332,46 @@ function run_wsize(iter, Ldebug)
     # println("CL = np.array(",para[iaCL, :],")")
     # println("CD = np.array(",para[iaCD, :],")")
 
-    # println("Weights:")
-    # println("WMTO = ", parg[igWMTO]/gee)
-    # println("Wfuel = ", parg[igWfuel]/gee)
+    Wempty = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+    Whpesys = parg[igWMTO] * parg[igfhpesys]
+    Wlgnose = parg[igWMTO] * parg[igflgnose]
+    Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wtotadd = Whpesys + Wlgnose + Wlgmain
+    printstyled("Weight build-up:\n -------------- \n", color=:bold )
+    @printf("Wempty  + %10.1f N (%8.1f lb)\n", Wempty, Wempty/lbf_to_N)
+    @printf("Wpay    + %10.1f N (%8.1f lb)\n", parg[igWpay], parg[igWpay]/lbf_to_N)
+    @printf("Wfuel   + %10.1f N (%8.1f lb)\n", parg[igWfuel], parg[igWfuel]/lbf_to_N)
+    @printf("--------------------\n")
+    printstyled(@sprintf("WMTO    = %10.1f N (%8.1f lb)\n\n",
+                         parg[igWMTO], parg[igWMTO]/lbf_to_N); color=:bold)
 
+    @printf("Wfuse   + %10.1f N (%8.1f lb)\n", parg[igWfuse ], parg[igWfuse ]/lbf_to_N)
+    @printf("Wwing   + %10.1f N (%8.1f lb)\n", parg[igWwing ], parg[igWwing ]/lbf_to_N)
+    @printf("Wvtail  + %10.1f N (%8.1f lb)\n", parg[igWvtail], parg[igWvtail]/lbf_to_N)
+    @printf("Whtail  + %10.1f N (%8.1f lb)\n", parg[igWhtail], parg[igWhtail]/lbf_to_N)
+    @printf("Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
+    @printf("Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
+    @printf("Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
+    @printf("--------------------\n")
+    printstyled(@sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
+    parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
+    parg[igWtesys] + +parg[igWftank] + Wtotadd, 
+    (parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
+    parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
+
+    @printf("Wtshaft + %10.1f N × %d\n", parg[igWtshaft], parpt[ipt_nTshaft])
+    @printf("Wcat    + %10.1f N × %d\n", parg[igWcat   ], parpt[ipt_nTshaft])
+    @printf("Wgen    + %10.1f N × %d\n", parg[igWgen   ], parpt[ipt_ngen]) 
+    @printf("Winv    + %10.1f N × %d\n", parg[igWinv   ], parpt[ipt_nfan]) 
+    @printf("Wmot    + %10.1f N × %d\n", parg[igWmot   ], parpt[ipt_nfan]) 
+    @printf("Wfan    + %10.1f N × %d\n", parg[igWfan   ], parpt[ipt_nfan]) 
+    @printf("--------------------\n")
+    printstyled(@sprintf("Wtesys  = %10.1f N (%8.1f lb)\n\n",
+     parg[igWtesys], parg[igWtesys]/lbf_to_N ), color = :bold)
+
+    @printf("Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank ], parg[igWftank ]/lbf_to_N) 
+
+    @printf("ηtank = %3.1f %% \n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
     # println("Aero:")
     #     println("L/D    = ", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
     #     println("CL     = ", para[iaCL, ipcruise1])
@@ -340,12 +381,12 @@ function run_wsize(iter, Ldebug)
     #     println("CDwing = ", para[iaCDwing, ipcruise1])
 
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
-    println("Time writing       = $time_writing")
-    println("Time runnning NPSS = $time_run_NPSS")
+    # println("Time writing       = $time_writing")
+    # println("Time runnning NPSS = $time_run_NPSS")
 
 end
 
 # @timev run_wsize(20)
-time_wsize = @elapsed run_wsize(5, true)
+time_wsize = @elapsed run_wsize(20, false)
 println("Wsize time         = ", time_wsize)
 
