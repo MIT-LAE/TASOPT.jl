@@ -328,7 +328,13 @@
       const igWtesys   = 271
       const igxWtesys  = 272
 
-      const igtotal    = 272
+      const iglftank   = 273
+      const igWinsftank= 274
+      const igxWftank  = 275
+      
+      const igRftank   = 276
+
+      const igtotal    = 276
 
 # indices for turbo-electric systems
       const ite_ratSM   = 1
