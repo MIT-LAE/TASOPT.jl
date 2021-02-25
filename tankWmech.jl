@@ -94,13 +94,13 @@ function tankWmech(gee::Float64, ρfuel::Float64,
             Vhead_insul[n] = Shead_insul[n] * t_cond[n]
             
             Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee
-            println("AR = $(Ro/L)")
+            # println("AR = $(Ro/L)")
             Ri = Ro
       end
       Winsul_sum = sum(Winsul)
-
+      Wtank = Wtank + Winsul_sum
 #--- overall tank weight
-      Wtank_total = Wtank + Wfuel_tot + Winsul_sum
+      Wtank_total = Wtank + Wfuel_tot
       l_tank = l_cyl + 2*Lhead
 
 return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank
