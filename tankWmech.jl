@@ -62,7 +62,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
 #--- areas
       Askin = (2.0*π+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin # Cross-sectional area of the cylindrical part
       #Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-      #Atank = (π + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse + 2.0*(Rtank+nfweb*wfb)*dRfuse
+      #Atank = (π + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse #+ 2.0*(Rtank+nfweb*wfb)*dRfuse
       Shead = (2.0*π + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
                                                                                           # but just as a note to reader this comes from  semi- oblate spheroid surf area is ≈ 2π×R²[1/3 + 2/3×(1/AR)^1.6]^(1/1.6)
 #--- component volumes
@@ -98,7 +98,8 @@ function tankWmech(gee::Float64, ρfuel::Float64,
             Ri = Ro
       end
       Winsul_sum = sum(Winsul)
-      Wtank = Wtank + Winsul_sum
+      fadd = 0.5
+      Wtank = (Wtank + Winsul_sum)*(1 + fadd)
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
       l_tank = l_cyl + 2*Lhead
