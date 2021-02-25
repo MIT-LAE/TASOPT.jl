@@ -673,7 +673,7 @@ function mission!(pari, parg, parm, para, pare,
       # Mission fuel fractions and weights
             fracWa = para[iafracW, ipclimb1  ]
             # fracWe = para[iafracW, ipdescentn] 
-            fracWe = para[iafracW, ipdescent1] # Pp temp set to ipdescent1 instead of ipdescentn since descent has not been calculated yet 
+            fracWe = para[iafracW, ipdescent1]*0.99# Pp temp set to 95% of ipdescent1 instead of ipdescentn since descent has not been calculated yet 
             freserve = parg[igfreserve]
             fburn = fracWa - fracWe            # Burnt fuel fraction
             ffuel = fburn*(1.0+freserve)
