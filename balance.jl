@@ -46,6 +46,9 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       Wtesys = parg[igWtesys ]
      xWtesys = parg[igxWtesys]
 
+      Wftank = parg[igWftank]
+     xWftank = parg[igxWftank]
+
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -83,6 +86,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 	 rfuel*Wfuel +
 	 Wfuse +
        Wtesys +
+       Wftank +
 	 Wwing +
 	 Wstrut +
 	 Whtail*Sh/Sh1 +
@@ -95,8 +99,8 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       W_Sh = Whtail  /Sh1
 
       xW = rpay * Wpay *xpay +
-	 rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel]) +
-	 parg[igxWfuse] + xWtesys +
+	 rfuel*(Wfuel*parg[igxftank]) +
+	 parg[igxWfuse] + xWtesys + xWftank +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
 	 (Whtail*parg[igxhbox] + parg[igdxWhtail])*Sh/Sh1 +
@@ -106,7 +110,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 	 Wlgnose*parg[igxlgnose] +
 	 Wlgmain*(parg[igxwbox] + dxlg)
 
-      xW_xwbox = rfuel*Wfuel + Wwing + Wstrut + Wlgmain
+      xW_xwbox = Wwing + Wstrut + Wlgmain
        
       xW_Sh = (Whtail*parg[igxhbox] + parg[igdxWhtail]) /Sh1
 
@@ -318,6 +322,9 @@ function htsize(pari,parg,paraF,paraB,paraC)
             Wtesys = parg[igWtesys ]
            xWtesys = parg[igxWtesys]
 
+            Wftank = parg[igWftank ]
+           xWftank = parg[igxWftank]
+
             Whpesys = parg[igWMTO] * parg[igfhpesys]
             Wlgnose = parg[igWMTO] * parg[igflgnose]
             Wlgmain = parg[igWMTO] * parg[igflgmain]
@@ -370,6 +377,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
 	 rpayC*Wpay -
 	 Wfuse -
        Wtesys -
+       Wftank -
 	 Wwing -
 	 Wstrut -
 	 Whtail -
@@ -407,6 +415,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
             We = Wfuse +
                   Wwing +
                   Wtesys +
+                  Wftank +
                   Wstrut +
                   Whtail +
                   Wvtail +
@@ -418,7 +427,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
             We_Sh = Whtail_Sh
 
       #---- empty (no-payload) weight moment
-            xWe = xWfuse + xWtesys +
+            xWe = xWfuse + xWtesys + xWftank +
                   Wwing *xwbox    + dxWwing +
                   Wstrut*xwbox    + dxWstrut +
                   Whtail*xhbox    + dxWhtail +
@@ -444,13 +453,13 @@ function htsize(pari,parg,paraF,paraB,paraC)
             WC_Sh = We_Sh
 
       #---- total weight moment at forward and aft CG limits
-            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xwbox + dxWfuel)
-            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xwbox + dxWfuel)
-            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xwbox + dxWfuel)
+            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xftank)
+            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xftank)
+            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xftank)
 
-            xWF_xw = xWe_xw + rfuelF*Wfuel
-            xWB_xw = xWe_xw + rfuelB*Wfuel
-            xWC_xw = xWe_xw + rfuelC*Wfuel
+            xWF_xw = xWe_xw
+            xWB_xw = xWe_xw
+            xWC_xw = xWe_xw
 
             xWF_Sh = xWe_Sh
             xWB_Sh = xWe_Sh
@@ -655,6 +664,9 @@ function cglpay(parg)
 
       Wtesys = parg[igWtesys ]
      xWtesys = parg[igxWtesys]
+     
+      Wftank = parg[igWftank ]
+     xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -675,6 +687,7 @@ function cglpay(parg)
      We =  rfuel*Wfuel +
 	 Wfuse +
        Wtesys +
+       Wftank +
 	 Wwing +
 	 Wstrut +
 	 Whtail +
@@ -685,7 +698,7 @@ function cglpay(parg)
 	 Wlgmain
 
       xWe = rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel]) +
-	 parg[igxWfuse] + parg[igxWtesys] +
+	 parg[igxWfuse] + parg[igxWtesys] + parg[igxWftank] +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
 	 Whtail*parg[igxhbox] + parg[igdxWhtail] +
