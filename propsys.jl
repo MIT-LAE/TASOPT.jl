@@ -119,7 +119,7 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
     # Sagerser 1971, NASA TM X-2406
     # Note: The term "weight" in Sagerser1971 is actually mass
     mfan = ktech*(135.0 * Dfan^2.7/sqrt(ARfan) * (bladeσ/1.25)^0.3 * (Utip/350.0)^0.3)
-    Wfan = mfan*gee
+    Wfan = mfan*gee*1.4 # TODO - relace fudge factor 1.4 with nacelle calcs
 
     return Dfan, Fan_power, Torque_fan, N_fan, Mtip,
             eta_prop, eta_DF,
@@ -184,6 +184,7 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
     
     # Initialize powertrain weight and waste heat 
         Wpowertrain = 0.0
+       xWpowertrain = 0.0
         Hrej = 0.0
     # Unpack number of powertrain elements
         nfan    = parpt[ipt_nfan]
@@ -209,6 +210,8 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         parpt[ipt_NdesFan] = N_fan
 
         Wpowertrain += Wfan*nfan
+       xWpowertrain += Wfan*nfan*parg[igxfan]
+
         Pshaft_mot = -1000. * Fan_power
         
     # Size motor
@@ -232,7 +235,8 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         Hwaste_motor = PreqMot - Pshaft_mot
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
         Wpowertrain += Wmot*nfan  # Add to total powertrain weight
-           
+       xWpowertrain += Wmot*nfan*parg[igxmot]           
+
     # Size Inverter and cables
         ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
         Hwaste_inv = PreqMot*(1-ηinv)
@@ -241,7 +245,8 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         parg[igWinv] = Winv
         parpt[ipt_Winv] = Winv
         Wpowertrain += Winv*nfan # Add to total powertrain weight
-    
+       xWpowertrain += Winv*nfan*parg[igxinv]    
+
         ηcable, Wcable = cable() #TODO cable is dummy right now
         Hwaste_cable = PreqMot*(1-ηcable)
         Hrej += Hwaste_cable  # Heat rejected from all inverters
@@ -249,7 +254,7 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         parg[igWcables] = Wcable
         parpt[ipt_Wcables] = Wcable
         Wpowertrain += Wcable # Add to total powertrain weight
-
+    #    xWpowertrain += Wcable*parg[igxcable] #need to add x of cable 
     # Size generator
         PreqGen = PreqMot * ηinv * ηcable
 
@@ -269,7 +274,8 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         parg[igWgen] = Wgen
         parpt[ipt_Wgen] = Wgen
         Wpowertrain += Wgen*ngen
-    
+       xWpowertrain += Wgen*ngen*parg[igxgen]  
+
     # Size tubo-shaft and PCEC
         πLPC = parpt[ipt_piLPC]
         πHPC = parpt[ipt_piHPC]
@@ -285,11 +291,12 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
                                             cpsi, w, lcat, deNOx, first)
 
         mdotf_tot = mdotf*nTshaft
-        Wcat = mcat*gee
+        Wcat = mcat*gee*1.5 # TODO replace fudge factor 1.5 with ammonia tanks/ pumps etc
         
         parg[igWcat] = Wcat
         parpt[ipt_Wcatalyst] = Wcat
         Wpowertrain += Wcat*nTshaft
+       xWpowertrain += Wcat*nTshaft*parg[igxtshaft]
 
         SPtshaft= 10.4e3 # W/kg Based on the RR T406 (4.58 MW power output). The GE38 (~5 MW) has a power density of 11.2 kW/kg
         Wtshaft = gee*(PgenShaft*ngen/nTshaft)/SPtshaft
@@ -297,10 +304,12 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         parg[igWtshaft] = Wtshaft
         parpt[ipt_Wtshaft] = Wtshaft
         Wpowertrain += Wtshaft*nTshaft
+       xWpowertrain += Wtshaft*nTshaft*parg[igxtshaft]
 
     parpt[ipt_Wpttotal] = Wpowertrain
 
-    parg[igWtesys] = Wpowertrain
+    parg[ igWtesys] = Wpowertrain
+    parg[igxWtesys] = xWpowertrain
 
     parpt[ipt_time_NPSS] += NPSS_time
 
@@ -378,7 +387,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         err = 1
         maxiter = 10
         GR = parpt[ipt_FanGR]
-        tol = 1e-6
+        tol = 1e-5
 
         if Ldebug
             printstyled("\tMotor speed convergence = \n"; color=:blue)
@@ -412,7 +421,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
                 
         end
 
-        abs(err)≥tol && printstyled("Warning: Speeds not converged!\n"; color=:red)
+        abs(err)≥tol && printstyled("Warning [propsys]: Motor-fan speeds not converged! Error = ",abs(err),"\n"; color=:red)
 
     Ftotal = Fn*nfan
 

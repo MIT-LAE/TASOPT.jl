@@ -244,7 +244,8 @@ include("wingpo.jl")
 include("tailpo.jl")
 
 include("airtable.jl")
-nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air")
+# Create airtables right away cause we aren't going to change them
+nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air") 
 ARe = 20e6
 include("airfun.jl")
 
@@ -263,10 +264,15 @@ include("propsys.jl")
 
 include("hydrogen.jl")
 
+include("tankWmech.jl")
+include("tankWthermal.jl")
+include("tanksize.jl")
+
 include("wsize.jl")
 include("mission.jl")
 
 include("input.jl")
+include("outputs.jl")
 
 const gee = 9.81
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
@@ -317,36 +323,35 @@ function run_wsize(iter, Ldebug)
     # println(temp2)
 
     ## Write outputs to screen
-    # println(pare[ieFe,:])
-    # println("h     = np.array(",para[iaalt,:],")")
-    # println("R     = np.array(",para[iaRange,:],")")
-    # println("deNOx = np.array(",pare[iedeNOx, :],")")
-    # println("fracW = np.array(",para[iafracW, :],")")
-    # println("mdotf = np.array(",pare[iemdotf, :],")")
-    # println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
-    # println("Ptank = np.array(",pare[iePLH2, :],")")
-    # println("CL = np.array(",para[iaCL, :],")")
-    # println("CD = np.array(",para[iaCD, :],")")
+    println(pare[ieFe,:])
+    println("h     = np.array(",para[iaalt,:],")")
+    println("R     = np.array(",para[iaRange,:],")")
+    println("deNOx = np.array(",pare[iedeNOx, :],")")
+    println("fracW = np.array(",para[iafracW, :],")")
+    println("mdotf = np.array(",pare[iemdotf, :],")")
+    println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
+    println("Ptank = np.array(",pare[iePLH2, :],")")
+    println("CL = np.array(",para[iaCL, :],")")
+    println("CD = np.array(",para[iaCD, :],")")
 
-    # println("Weights:")
-    # println("WMTO = ", parg[igWMTO]/gee)
-    # println("Wfuel = ", parg[igWfuel]/gee)
-
-    # println("Aero:")
-    #     println("L/D    = ", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
-    #     println("CL     = ", para[iaCL, ipcruise1])
-    #     println("CD     = ", para[iaCD, ipcruise1])
-    #     println("CDfuse = ", para[iaCDfuse, ipcruise1])
-    #     println("CDi    = ", para[iaCDi, ipcruise1])
-    #     println("CDwing = ", para[iaCDwing, ipcruise1])
+    println("Aero:")
+        @printf("L/D     = %5.4f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
+        @printf("CL      = %5.4f\n", para[iaCL, ipcruise1])
+        @printf("CD      = %5.4f\n", para[iaCD, ipcruise1])
+        @printf("CDfuse  = %5.4f\n", para[iaCDfuse, ipcruise1])
+        @printf("CDi     = %5.4f\n", para[iaCDi, ipcruise1])
+        @printf("CDwing  = %5.4f\n", para[iaCDwing, ipcruise1])
+        @printf("CDhtail = %5.4f\n", para[iaCDhtail, ipcruise1])
+        @printf("CDvtail = %5.4f\n", para[iaCDvtail, ipcruise1])
 
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
-    println("Time writing       = $time_writing")
-    println("Time runnning NPSS = $time_run_NPSS")
-
+    # println("Time writing       = $time_writing")
+    # println("Time runnning NPSS = $time_run_NPSS")
+    weight_buildup(parg)
+    geometry(parg)
 end
 
 # @timev run_wsize(20)
-time_wsize = @elapsed run_wsize(5, true)
+time_wsize = @elapsed run_wsize(25, false)
 println("Wsize time         = ", time_wsize)
 
