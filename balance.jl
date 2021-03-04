@@ -43,6 +43,12 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       Wvtail = parg[igWvtail]
       Weng   = parg[igWeng  ]
 
+      Wtesys = parg[igWtesys ]
+     xWtesys = parg[igxWtesys]
+
+      Wftank = parg[igWftank]
+     xWftank = parg[igxWftank]
+
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -79,6 +85,8 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       W  = rpay *Wpay +
 	 rfuel*Wfuel +
 	 Wfuse +
+       Wtesys +
+       Wftank +
 	 Wwing +
 	 Wstrut +
 	 Whtail*Sh/Sh1 +
@@ -91,8 +99,8 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       W_Sh = Whtail  /Sh1
 
       xW = rpay * Wpay *xpay +
-	 rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel]) +
-	 parg[igxWfuse] +
+	 rfuel*(Wfuel*parg[igxftank]) +
+	 parg[igxWfuse] + xWtesys + xWftank +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
 	 (Whtail*parg[igxhbox] + parg[igdxWhtail])*Sh/Sh1 +
@@ -102,7 +110,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 	 Wlgnose*parg[igxlgnose] +
 	 Wlgmain*(parg[igxwbox] + dxlg)
 
-      xW_xwbox = rfuel*Wfuel + Wwing + Wstrut + Wlgmain
+      xW_xwbox = Wwing + Wstrut + Wlgmain
        
       xW_Sh = (Whtail*parg[igxhbox] + parg[igdxWhtail]) /Sh1
 
@@ -224,20 +232,25 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 
 """
 Sets horizontal tail area and wing position to simultaneously:
+
       1) Meet pitch trim requirement with forward CG
       2) Meet stability requirement with aft CG
 
      Calculates resulting CG, CP, NP locations
 
-  Inputs:  pari[.]  integer fla array
-           parg[.]  geometry parameter array
-           paraF[.] aero parameter array for fwdCG case
-           paraB[.] aero parameter array for aft CG case
-           paraC[.] aero parameter array for cruise tail CL case
+  Inputs:  
+      
+      pari[.]  integer fla array
+      parg[.]  geometry parameter array
+      paraF[.] aero parameter array for fwdCG case
+      paraB[.] aero parameter array for aft CG case
+      paraC[.] aero parameter array for cruise tail CL case
 
-  Outputs: parg[igSh]    HT area
-           parg[igxwbox] wingbox location
-           parg[igxwing] wing centroid location
+  Outputs: 
+  
+      parg[igSh]    HT area
+      parg[igxwbox] wingbox location
+      parg[igxwing] wing centroid location
 
 """
 function htsize(pari,parg,paraF,paraB,paraC)
@@ -299,6 +312,19 @@ function htsize(pari,parg,paraF,paraB,paraC)
             Wvtail = parg[igWvtail]
             Weng   = parg[igWeng  ]
 
+            Wtshaft = parg[igWtshaft] 
+            Wgen    = parg[igWgen   ] 
+            Winv    = parg[igWinv   ] 
+            Wmot    = parg[igWmot   ] 
+            Wfan    = parg[igWfan   ] 
+            Wftank  = parg[igWftank ] 
+
+            Wtesys = parg[igWtesys ]
+           xWtesys = parg[igxWtesys]
+
+            Wftank = parg[igWftank ]
+           xWftank = parg[igxWftank]
+
             Whpesys = parg[igWMTO] * parg[igfhpesys]
             Wlgnose = parg[igWMTO] * parg[igflgnose]
             Wlgmain = parg[igWMTO] * parg[igflgmain]
@@ -315,6 +341,13 @@ function htsize(pari,parg,paraF,paraB,paraC)
       xeng    = parg[igxeng]   
       xhpesys = parg[igxhpesys]
       xlgnose = parg[igxlgnose]
+
+      xtshaft = parg[igxtshaft ]
+      xgen    = parg[igxgen    ]
+      xinv    = parg[igxinv    ]
+      xmot    = parg[igxmot    ]
+      xfan    = parg[igxfan    ]
+      xftank  = parg[igxftank  ]
       
       # Calculate x location of cabin centroid and length of cabin
       xcabin = 0.5*(parg[igxshell1] + parg[igxshell2])
@@ -343,6 +376,8 @@ function htsize(pari,parg,paraF,paraB,paraC)
       WfuelC = paraC[iafracW]*parg[igWMTO] -
 	 rpayC*Wpay -
 	 Wfuse -
+       Wtesys -
+       Wftank -
 	 Wwing -
 	 Wstrut -
 	 Whtail -
@@ -365,6 +400,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
      
      xWF, xWB, xWc = 0.0, 0.0, 0.0
      WF ,  WB,  Wc = 0.0, 0.0, 0.0
+     dmax = 0.0
 
       for  iter = 1:itmax
 
@@ -378,6 +414,8 @@ function htsize(pari,parg,paraF,paraB,paraC)
       #---- empty (no fuel, no payload) weight
             We = Wfuse +
                   Wwing +
+                  Wtesys +
+                  Wftank +
                   Wstrut +
                   Whtail +
                   Wvtail +
@@ -389,7 +427,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
             We_Sh = Whtail_Sh
 
       #---- empty (no-payload) weight moment
-            xWe = xWfuse +
+            xWe = xWfuse + xWtesys + xWftank +
                   Wwing *xwbox    + dxWwing +
                   Wstrut*xwbox    + dxWstrut +
                   Whtail*xhbox    + dxWhtail +
@@ -415,13 +453,13 @@ function htsize(pari,parg,paraF,paraB,paraC)
             WC_Sh = We_Sh
 
       #---- total weight moment at forward and aft CG limits
-            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xwbox + dxWfuel)
-            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xwbox + dxWfuel)
-            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xwbox + dxWfuel)
+            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xftank)
+            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xftank)
+            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xftank)
 
-            xWF_xw = xWe_xw + rfuelF*Wfuel
-            xWB_xw = xWe_xw + rfuelB*Wfuel
-            xWC_xw = xWe_xw + rfuelC*Wfuel
+            xWF_xw = xWe_xw
+            xWB_xw = xWe_xw
+            xWC_xw = xWe_xw
 
             xWF_Sh = xWe_Sh
             xWB_Sh = xWe_Sh
@@ -553,7 +591,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
             end
 
       end #end for loop iter
-      #write(*,*) 'HTSIZE: Pitch not converged. dxwbox,dSh = ', dxw,dSh
+      dmax > toler && println("HTSIZE: Pitch not converged. dxwbox,dSh = $dxw, $dSh")
 
 
 #---- set converged results
@@ -624,6 +662,12 @@ function cglpay(parg)
       Wvtail = parg[igWvtail]
       Weng   = parg[igWeng  ]
 
+      Wtesys = parg[igWtesys ]
+     xWtesys = parg[igxWtesys]
+     
+      Wftank = parg[igWftank ]
+     xWftank = parg[igxWftank]
+
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
@@ -642,6 +686,8 @@ function cglpay(parg)
       
      We =  rfuel*Wfuel +
 	 Wfuse +
+       Wtesys +
+       Wftank +
 	 Wwing +
 	 Wstrut +
 	 Whtail +
@@ -652,7 +698,7 @@ function cglpay(parg)
 	 Wlgmain
 
       xWe = rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel]) +
-	 parg[igxWfuse] +
+	 parg[igxWfuse] + parg[igxWtesys] + parg[igxWftank] +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
 	 Whtail*parg[igxhbox] + parg[igdxWhtail] +
