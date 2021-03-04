@@ -7,6 +7,7 @@ para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
 ft_to_m = 0.3048
+in_to_m = 0.0254
 nmi_to_m = 1852.0
 deg_to_rad = π/180.0
 lbf_to_N = 4.448222
@@ -29,10 +30,14 @@ pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
 pari[iiVTsize] = 1
 
  
+pax = 180
+seat_pitch = 30.0 * in_to_m
+seat_width = 19.0 * in_to_m
+aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
 
 # parm[imwOpt   , :]  .=
 parm[imRange  , :]  .= 3000.0 * nmi_to_m       # m
-parm[imWpay   , :]  .= 180 * 215.0 * lbf_to_N  # [N]
+parm[imWpay   , :]  .= pax * 215.0 * lbf_to_N  # [N]
 parm[imaltTO  , :]  .= 0.0
 parm[imT0TO   , :]  .= 288.0 # dK
 parm[imgamVCB , :]  .=  3.0 * π/180.0
