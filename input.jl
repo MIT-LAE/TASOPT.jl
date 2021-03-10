@@ -7,6 +7,7 @@ para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
 ft_to_m = 0.3048
+in_to_m = 0.0254
 nmi_to_m = 1852.0
 deg_to_rad = π/180.0
 lbf_to_N = 4.448222
@@ -29,10 +30,14 @@ pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
 pari[iiVTsize] = 1
 
  
+pax = 180
+seat_pitch = 30.0 * in_to_m
+seat_width = 19.0 * in_to_m
+aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
 
 # parm[imwOpt   , :]  .=
 parm[imRange  , :]  .= 3000.0 * nmi_to_m       # m
-parm[imWpay   , :]  .= 180 * 215.0 * lbf_to_N  # [N]
+parm[imWpay   , :]  .= pax * 215.0 * lbf_to_N  # [N]
 parm[imaltTO  , :]  .= 0.0
 parm[imT0TO   , :]  .= 288.0 # dK
 parm[imgamVCB , :]  .=  3.0 * π/180.0
@@ -79,16 +84,16 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igfLo     ] = -0.3   # fLo   fuselage lift carryover loss factor
         parg[igfLt     ] = -0.05  # fLt   tip lift rolloff factor
 
-        parg[igzs      ] = 154.0 * 0.0254
+        parg[igzs      ] = 154.0 * in_to_m
 
-        parg[igbo      ] = 2 * (71.0 * 0.0254) # 2 × half span
+        parg[igbo      ] = 2 * (120.0 * in_to_m) # 2 × wing centerbox halfspan
         parg[igetas    ] = 0.285 # ηs panel break eta location  (strut-attach if iwplan=2)
         parg[igrVstrut ] = 1.0   # Strut local/free sream velocity
 
         # Structural box
             parg[igwbox    ] = 0.50   # wbox    box width/c
-            parg[ighboxo   ] = 0.1499 # hboxo   box height/c  (airfoil t/c) at root
-            parg[ighboxs   ] = 0.1307 # hboxs   box height/c  (airfoil t/c) at break and tip
+            parg[ighboxo   ] = 0.13 # hboxo   box height/c  (airfoil t/c) at root
+            parg[ighboxs   ] = 0.10 # hboxs   box height/c  (airfoil t/c) at break and tip
             parg[igrh      ] = 0.75   # rh      web-height/hbox ratio
             parg[igXaxis   ] = 0.40   # Xaxis   spar box axis x/c location
             parg[ighstrut  ] = 0.15   # hstrut  strut t/c    (used only if iwplan=2)
@@ -146,35 +151,56 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
         parg[igdCLnda  ] = 3.8
 
-    # Cabin and Fuselage
+    # Cabin and Fuselage and PowerTrain stuff
 
-        parg[igRfuse   ] = 77.0 * 0.0254 
-        parg[igdRfuse  ] = 15.0 * 0.0254
-        parg[igwfb     ] =  0.0 * 0.0254
+        parg[igRfuse   ] = 122.0 * in_to_m 
+        parg[igdRfuse  ] = 15.0 * in_to_m
+        parg[igwfb     ] =  0.0 * in_to_m
         parg[ignfweb   ] =  1.0
-        parg[ighfloor  ] =  5.0 * 0.0254
+        parg[ighfloor  ] =  5.0 * in_to_m
 
         parg[iganose   ] = 1.65
         parg[igbtail   ] = 2.0
 
+        seats_per_row = 2*Int(parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
+        rows = ceil(pax ÷ seats_per_row)
+        lcabin = rows * seat_pitch 
+        println("Seats per row = $seats_per_row, rows = $rows, lcabin = $(lcabin/ft_to_m) ft")
+
         parg[igxnose   ] =   0.0 * ft_to_m
-        parg[igxend    ] = 124.0 * ft_to_m *1.1
         parg[igxblend1 ] =  20.0 * ft_to_m
-        parg[igxblend2 ] =  97.0 * ft_to_m
         parg[igxshell1 ] =  17.0 * ft_to_m
-        parg[igxshell2 ] = 102.0 * ft_to_m
-        parg[igxconend ] = 117.0 * ft_to_m
+        parg[igxshell2 ] = parg[igxshell1] + lcabin + 30.0*ft_to_m # 10ft for cockpit + 2 ends* 10 ft for galley + lavatory 
+
+        ltank = 20.0 * ft_to_m
+        parg[igxftank ]  = parg[igxshell2] + ltank/2
+        parg[igxblend2 ] = parg[igxshell2] + ltank 
+
+        ltshaft = 7.0 * ft_to_m # length of T406 ~ 6.5 ft + 0.5 ft margin
+        lgen    = 5.0 * ft_to_m 
+        parg[igxtshaft]  = parg[igxblend2] + ltshaft/2
+        parg[igxgen   ]  = parg[igxblend2] + ltshaft + lgen/2
+        parg[igxcat   ]  = parg[igxgen   ]
+
+        parg[igxconend ] = parg[igxgen] + lgen/2
+        parg[igxend    ] = parg[igxconend] + 7.0*ft_to_m
+
         parg[igxwbox   ] =  57.0 * ft_to_m  # x location of wing box
-        parg[igxhbox   ] = 114.5 * ft_to_m
-        parg[igxvbox   ] = 110.0 * ft_to_m
+        parg[igxhbox   ] = parg[igxconend ] - 3*ft_to_m
+        parg[igxvbox   ] = parg[igxconend ] - 5*ft_to_m
+
+        parg[igxinv   ]  =  60.0 * ft_to_m
+        parg[igxmot   ]  =  57.0 * ft_to_m
+        parg[igxfan   ]  =  55.0 * ft_to_m
         
         parg[igzwing   ] = -5.5 * ft_to_m
         parg[igzhtail  ] =  0.0 * ft_to_m
 
-        parg[igxeng    ] = 52.0 * ft_to_m
-        parg[igyeng    ] = 16.0 * ft_to_m
-        # parg[igneng    ] =  2.0
         parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
+
+        parg[igxeng    ] = 52.0 * ft_to_m
+        parg[igyeng    ] = 50.0 * ft_to_m
+        # parg[igneng    ] =  2.0
 
         parg[iglambdac ] =  0.3 # Tail cone taper ratio
         
@@ -210,7 +236,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igflgnose ] =  0.011     # flgnose    Wlgnose/WMTO
         parg[igflgmain ] =  0.044     # flgmain    Wlgmain/WMTO
 
-        parg[igxapu    ] = 120.0 * ft_to_m # xapu                 APU location
+        parg[igxapu    ] = parg[igxconend] * ft_to_m # xapu      APU location
         parg[igfapu    ] = 0.035          # fapu   Wapu/Wpay     APU weight fraction
 
         parg[igfreserve] = 0.20  # freserve Wfreserve/Wburn
@@ -239,23 +265,20 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igrhoweb  ] =  2700.0  #  rhoweb  	wing, tail shear webs	 
         parg[igrhostrut] =  2700.0  #  rhostrut	strut   
 
-        parg[igrhofuel]  = 817.0
+        parg[igrhofuel]  = ρmix(0.1, 1.5)#817.0 #kg/m³
+        # if pari[iifuel] == 0
+        #     parg[igrhofuel]  = 817.0 #kg/m³
+        #     pare[iehfuel] = 43.0 #MJ/kg
+        # elseif pari[iifuel] == 1
+        #     # parg[igrhofuel] = ρmix(0.1, 1.5)
+        #     pare[iehfuel]= 120.0
+        # end
         
     # Nacelle Drag stuff
         parg[igrSnace  ] = 16.0   # rSnace   nacelle+pylon wetted area/fan area  Snace/Afan
         parg[igrVnace  ] =  1.02  # rVnace   nacelle local/freesteam velocity ratio
 
     parg[igrWfmax  ] = 0.90
-
-    # Powertrain stuff
-        parg[igxtshaft]  = 95.0 * ft_to_m
-        parg[igxgen   ]  = 70.0 * ft_to_m
-        parg[igxinv   ]  = 57.0 * ft_to_m
-        parg[igxmot   ]  = 53.0 * ft_to_m
-        parg[igxfan   ]  = 52.0 * ft_to_m
-        parg[igxftank ]  = 90.0 * ft_to_m
-
-        #include tank parameters
 
 # Aerodynamic parameters
 
