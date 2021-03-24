@@ -14,6 +14,6 @@
 
 
 REM Run file
-runnpss TShaftDes.run -I ./src -I ./model -I ./data
+runnpss TShaft.run -I ./src -I ./model -I ./data
 
 PAUSE
