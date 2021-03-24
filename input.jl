@@ -24,8 +24,8 @@ pari[iifclose] = 0 # fuse tapers to a point
 pari[iiHTsize] = 2 # set Sh via igCLhCGfwd at max-forward CG during landing
 
 # pari[iixwmove] = 0 # ixwmove   fix wing position 
-# pari[iixwmove] = 1 # ixwmove   move wing to get CLh=CLhspec in cruise 
-pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
+pari[iixwmove] = 1 # ixwmove   move wing to get CLh=CLhspec in cruise 
+# pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
 
 pari[iiVTsize] = 1
 

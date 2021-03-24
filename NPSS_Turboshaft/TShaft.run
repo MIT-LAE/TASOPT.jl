@@ -1,0 +1,167 @@
+//------------------------------------------------------------------------
+//                                                                       |
+//   File Name:     Tshaft.run                                           |
+//   Date(s):       March 23rd , 2021                                    |
+//   Author:        Prakash Prashanth                                    |
+//                                                                       |
+//   Description:   Turboshaft engine for integration with TAESOPT       |
+//                 Combined des and offdes                               |
+//------------------------------------------------------------------------
+
+MODELNAME = "Turboshaft engine";
+AUTHOR    = "Prashanth";
+
+setThermoPackage("GasTbl");
+#include "TShaft.mdl"
+#include "printDetails.fnc"
+#include "utils.fnc"
+#include "save_solver.fnc"
+
+// Define true and false to make it easier to use from Julia
+// int true  = 1;
+// int false = 0;
+
+Eng.PCEC.setOption("switchMode", "ON");
+//====================
+// Solver setup:
+//====================
+solver.maxIterations = 200;
+solver.maxJacobians  = 200;
+// solver.debugLevel = "ITERATION_DETAILS";
+// solver.diagnosticFile = "solver.diag";
+// solver.solutionMode = "ONE_PASS";
+// solver.defaultDxLimit = 0.001;
+// solver.defaultPerturbation = 0.0001;
+// solver.convergenceLimit = 0.8;
+// solver.defaultTolerance = 1e-10;
+
+//====================
+// Outputs
+//====================
+OutFileStream output {
+    filename = "Eng.output"; //autoFlush = FALSE;
+}
+// Set up a log file to track/ debug and just generally enjoy NPSS output
+OutFileStream logfile{
+    filename = "Tshaft.log";
+}
+CaseRowViewer Output {
+    outStreamHandle = "logfile";
+	titleBody = "???????????????????? \t run on: ?????????\t		at: ?????????? by: ??????\t Model Author: ??????????" ;
+	titleVars = {"MODELNAME","date","timeOfDay","USER","AUTHOR"}		
+	caseHeaderBody ="";
+	caseHeaderVars = {}
+    #include "TshaftDetails.lst"
+    showHeaders = -1;
+}
+postsolverSequence.append("Output");
+
+int first;
+int true  = 1;
+int false = 0;
+real ShP_input;
+real Fn_target;
+real deNOx_target, Tt41, N2_dmd;
+int flag;
+string inString;
+
+//---------------------------------------------
+// Start looping: 
+//---------------------------------------------
+while(flag!=999){
+
+    cin >> flag;
+    if(flag == 999){
+        break;
+    }
+
+    if(flag==111){
+        flag = 0;
+        inString = cin.getline();
+        //====================
+        //  Read input file
+        //====================
+        parseString(inString);
+        Eng.setOption("switchDes","DESIGN");
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+
+        //====================
+        //  Run engine model
+        //====================
+        restart("des.restart");
+
+        run();
+        CASE++;
+
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            output.reopen();
+            #include "write_des_output.int"
+            output.close();
+            cout<<"1";
+        }
+        else{
+            // cout<<"ERROR! DES Did not converge"<<endl;
+            cout<<"0"; // Tell's Julia that this didn't converge
+        }
+
+
+    }
+
+    if(flag==222){
+        flag = 0;
+        inString = cin.getline();
+        //====================
+        //  Read input file
+        //====================
+        parseString(inString);
+        Eng.setOption("switchDes","OFFDESIGN");
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+
+        //====================
+        //Run engine model
+        //====================
+
+        if(first){
+            // restart("offDes_fan_start.restart");
+        }
+        // else {
+        //     restart("offDes_fan_prev.restart");
+        // }
+        run();
+        CASE++;
+
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            if(first){
+                SaveIndepVals("solver", "offDes1.restart");
+            }
+            output.reopen();
+            #include "write_offdes_output.int"
+            output.close();
+            cout<<"1";
+        }
+        else{
+            cout<<"0"; // Tell's Julia that this didn't converge
+            // cout<<"ERROR! OFFDES Did not converge"<<endl;
+        }
+
+    }
+
+}
+
+Output.display();
