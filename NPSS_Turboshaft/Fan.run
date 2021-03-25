@@ -124,7 +124,7 @@ while(flag!=999){
         //====================
 
         if(first){
-            restart("offDes_fan_start.restart");
+            // restart("offDes_fan_start.restart");
         }
         // else {
         //     restart("offDes_fan_prev.restart");

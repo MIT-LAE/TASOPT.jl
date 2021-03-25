@@ -1,0 +1,91 @@
+//------------------------------------------------------------------------
+//                                                                       |
+//   File Name:     FanOffDes.run                                        |
+//   Date(s):       January 18th, 2021                                   |
+//   Author:        Prakash Prashanth                                    |
+//                                                                       |
+//   Description:   Ducted fan for integration with TAESOPT  OffDes      |
+//                                                                       |
+//------------------------------------------------------------------------
+
+MODELNAME = "Ducted Fan";
+AUTHOR    = "Prashanth";
+#include <System.fnc>
+
+setThermoPackage("GasTbl");
+#include "DuctedFan.mdl"
+#include "printDetails.fnc"
+#include "utils.fnc"
+#include "save_solver.fnc"
+// Define true and false to make it easier to use from Julia
+
+int true  = 1;
+int false = 0;
+int first;
+real ShP_input;
+
+
+//====================
+// Solver setup:
+//====================
+solver.maxIterations = 200;
+solver.maxJacobians  = 200;
+// solver.debugLevel = "ITERATION_DETAILS";
+// solver.diagnosticFile = "solver.diag";
+// solver.solutionMode = "ONE_PASS";
+// solver.defaultDxLimit = 0.001;
+// solver.defaultPerturbation = 0.0001;
+// solver.convergenceLimit = 0.8;
+// solver.defaultTolerance = 1e-10;
+
+
+OutFileStream logfile{
+    filename = "Experiments.out";
+}
+CaseRowViewer Output {
+    outStreamHandle = "logfile";
+	titleBody = "???????????????????? \t run on: ?????????\t		at: ?????????? by: ??????\t Model Author: ??????????" ;
+	titleVars = {"MODELNAME","date","timeOfDay","USER","AUTHOR"}		
+	caseHeaderBody ="";
+	caseHeaderVars = {}
+    #include "Fan_details.lst"
+    showHeaders = -1;
+}
+postsolverSequence.append("Output");
+
+DuctedFan.setOption("switchDes","DESIGN");
+//====================
+//Auto solver setup
+//====================
+solver.clear();
+autoSolverSetup();
+
+//====================
+//  Run engine model
+//====================
+DuctedFan.Amb.alt_in = 33000.0;
+DuctedFan.Amb.MN_in  = 0.8;
+real Fn_target = 5e3;
+DuctedFan.InEng.Kinl = 0.0;
+DuctedFan.Phiinl     = 0.0;
+DuctedFan.Fan.PRdes = 1.3;
+
+
+restart("fandes.restart");
+
+run();
+CASE++;
+
+
+DuctedFan.setOption("switchDes","OFFDESIGN");
+solver.clear();
+autoSolverSetup();
+printSolverConditions();
+
+ShP_input = -1890e3/746;
+for (ShP_input = -1900e3/746; ShP_input <= -1000e3/746; ShP_input -= -200e3/746){
+run();
+CASE++;
+}
+Output.display();
+cout<<solver.jacobian;
