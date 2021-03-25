@@ -74,7 +74,7 @@ function geometry(parg; io = stdout)
     @printf(io, "xcat    = %5.1f m (%8.1f ft)\n", parg[igxcat   ] , parg[igxcat    ]/ft_to_m)
     @printf(io, "xftank  = %5.1f m (%8.1f ft)\n", parg[igxftank ] , parg[igxftank  ]/ft_to_m)
 
-    printstyled(io, "Wing Layout:\n -------------- \n", color=:bold )
+    printstyled(io, "\nWing Layout:\n -------------- \n", color=:bold )
     @printf(io, "AR      = %5.3f \n" , parg[igAR     ])
     @printf(io, "sweep   = %5.3f \n" , parg[igsweep  ])
     @printf(io, "lambdas = %5.3f \n" , parg[iglambdas])
