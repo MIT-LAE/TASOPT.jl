@@ -20,7 +20,7 @@ function wsize(pari, parg, parm, para, pare,
 time_propsys = 0.0
     # Weight convergence tolerance 
         # tolerW = 1.0e-10
-        tolerW = 1.0e-8
+        tolerW = 1.0e-6
         errw   = 1.0
     # Initialze some variables
     fsum = 0.0
@@ -1037,10 +1037,11 @@ Lconv = false # no convergence yet
 
         if (iterw==1)
             NPSS_Fan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
+            NPSS_TS  = startNPSS("NPSS_Turboshaft/", "TP.bat" )
         end
            time_propsys += @elapsed  ηpt, Ppt, Hpt, mpt, SPpt,
             mdotf_tot, BSFC,
-            deNOx, _, _  =  PowerTrain(NPSS_Fan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
+            deNOx, _, _  =  PowerTrain(NPSS_TS, NPSS_Fan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
                                         0.0, 0.0, parg, parpt, parmot, pargen, ifirst)
             ifirst = false
 
@@ -1054,9 +1055,6 @@ Lconv = false # no convergence yet
         # ----------------------
         #     Fly mission
         # ----------------------
-        if (iterw==1)
-            NPSS_TS  = startNPSS("NPSS_Turboshaft/", "TPoffDes.bat" )
-        end
         time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, Ldebug)
         parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
@@ -1064,7 +1062,7 @@ Lconv = false # no convergence yet
         #     LH₂ Tank weight
         # ----------------------
         hconvgas = 0.0
-        h_LH2 = 550.0
+        h_LH2 = 210.0
         Tfuel = 20.0
         Tair  = 288.0 #Heated cabin temp
         h_v = 447000.0
@@ -1079,9 +1077,11 @@ Lconv = false # no convergence yet
         ARtank = 2.0
         clearance_fuse = 0.10
 
+        ptank = 2.0 #atm
+
         Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
         m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-        Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, Δp,
+        Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank*101325.0,
                       Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
                       h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, rho_insul, rhoskintank, 
