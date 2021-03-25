@@ -456,8 +456,10 @@
       const ipt_Pinvdes  = 52  # Stores design inverter power
 
       const ipt_time_NPSS = 53
-      const ipt_FanGR    = 54
-      const ipt_total    = 54
+      const ipt_FanGR     = 54
+
+      const ipt_Ptshaft   = 55
+      const ipt_total     = 55
 
 #---- indices for aero variables at each mission point
       iaalt     =  1
