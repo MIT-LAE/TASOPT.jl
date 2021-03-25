@@ -7,4 +7,4 @@ solver.independentNames = {"Eng.ind_TCLA_NC_fracW",
 "Eng.DESIGN_FUELFLOW",
 "Eng.ind_Acat" }
 ;
-solver.independentValues = { 0.104701, 0.0862012, 2.97972, 8.9446, 30.5733, 0.325129, 7.55678 };
+solver.independentValues = { 0.104693, 0.0861936, 2.97983, 8.94422, 50.3579, 0.535489, 12.4453 };
