@@ -280,6 +280,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         deNOx= parpt[ipt_deNOx]
 
         Ptshaft = PgenShaft*ngen/nTshaft
+        parpt[ipt_Ptshaft] = Ptshaft
         ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx, first)

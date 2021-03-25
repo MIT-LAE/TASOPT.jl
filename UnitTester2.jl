@@ -229,7 +229,7 @@ TOML.print(input)
 using Profile, UnicodePlots
 using PyPlot
 pygui(true)
-plt.style.use(["~/prash.mplstyle", "tableau-colorblind10"])
+# plt.style.use(["~/prash.mplstyle", "tableau-colorblind10"])
 
 include("index.inc")
 include("atmos.jl")

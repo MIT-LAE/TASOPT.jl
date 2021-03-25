@@ -14,14 +14,14 @@ cost    total program cost estimate
 
 """
 
-function CostEst(parg, pare, prod_Q)
+function CostEst(parg, pare, parm, parpt, prod_Q)
     Wmod = (1.49*parg[igWfuse] + 2.42*(parg[igWhtail]+parg[igWvtail]) + 0.82*parg[igWwing] + 0.40*(parg[igWtesys])
     + 0.12*parg[igWMTO]*(parg[igflgnose]+parg[igflgmain]) + 1.59*(parg[igWMTO]*parg[igfhpesys]+parg[igWftank])) / 9.81
     # a modified OEW (in kg) that assigns more weight to systems with a higher cost per pound
     # based on methods using in Markish (2000), with componenent weights determined from data for a 777-200
     Vmax = maximum(pare[ieu0,:]) * 3.6 #maximum velocity (km/h)
-    Npax = 180 #number of pax (TODO - make a parameter)
-
+    Npax = parm[imWpay]/215/lbf_to_N #number of pax
+    P_hp = parpt[ipt_Ptshaft]/745.7 #turboshaft gas turbine engine power [hp]
 
     PPI = 242.8/144.8 #aerospace producer price index ratio from 1999 to 2020 (from US BLS)
     FTA = 6 #number of flight test aircraft (assume upper end due to novelty of propulsion system tech)
@@ -44,9 +44,11 @@ function CostEst(parg, pare, prod_Q)
     CI = 2500*Npax #interior cost (e.g. seats, floors, etc.)
     # source: Raymer (2006), Collinson (2002)
 
-    #TODO - other adjustments specific to H2 (e.g. fuel system, propulsion system)
+    CTS = parpt[ipt_nTshaft]*3310*P_hp^0.7758 # source: Loh (2002)
 
-    cost = PPI*(HE*RE + HT*RT + HM*RM + HQ*RQ + CD + CF + CM + CI)*cA
+    cost_airframe = PPI*(HE*RE + HT*RT + HM*RM + HQ*RQ + CD + CF + CM + CI)*cA
+    cost_prop = CTS #plus other unmodeled components (motors, generators, fans, tanks)
+    cost = cost_airframe + cost_prop
     # returns total program cost - divide by prod_Q to yield cost per aircraft
 
     return cost
