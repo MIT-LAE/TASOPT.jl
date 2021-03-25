@@ -4,4 +4,4 @@ solver.independentNames = {"DuctedFan.ind_ShaftPower",
 "DuctedFan.Fan.S_map.ind_RlineMap",
 "DuctedFan.FanShaft.ind_Nmech" }
 ;
-solver.independentValues = { -3303.24, 235.045, 1.6435, 5362.72 };
+solver.independentValues = { -3847.05, 309.559, 1.6581, 4348.85 };
