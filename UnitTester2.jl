@@ -226,6 +226,10 @@ TOML.print(input)
 
 ## Testing build up of wsize
 using Profile, UnicodePlots
+using PyPlot
+pygui(true)
+plt.style.use(["~/prash.mplstyle", "tableau-colorblind10"])
+
 include("index.inc")
 include("atmos.jl")
 include("fuseW.jl")
@@ -284,7 +288,12 @@ const cpSL  = 1004.0
 
 time_writing = 0.0
 time_run_NPSS = 0.0
-function run_wsize(iter, Ldebug)
+f = open("temp.results", "w")
+# f = stdout
+
+initwgt = 0
+
+function run_wsize(iter, initwgt, Ldebug)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
     parpt[ipt_time_NPSS] = 0.0
@@ -292,7 +301,7 @@ function run_wsize(iter, Ldebug)
     # println(parg[igWwing])
     Ldebug && println("Max weight iterations = $iter")
     wsize(pari, parg, parm, view(para,:,:,1), view(pare, :,:,1),
-                    iter, 0.5, 0.9, 0.5,0, 1, 1, Ldebug)
+                    iter, 0.9, 0.9, 0.5, initwgt, 1, 1, Ldebug)
     # @benchmark PowerTrain(0.0, 0.8, 25.0e3*2,0.0, 0.0, parg, parpt, parmot, pargen)
 
     # println(parg[igWwing])
@@ -321,36 +330,105 @@ function run_wsize(iter, Ldebug)
     # println(temp3)
     # println(temp2)
 
-    ## Write outputs to screen
-    println(pare[ieFe,:])
-    println("h     = np.array(",para[iaalt,:],")")
-    println("R     = np.array(",para[iaRange,:],")")
-    println("deNOx = np.array(",pare[iedeNOx, :],")")
-    println("fracW = np.array(",para[iafracW, :],")")
-    println("mdotf = np.array(",pare[iemdotf, :],")")
-    println("mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
-    println("Ptank = np.array(",pare[iePLH2, :],")")
-    println("CL = np.array(",para[iaCL, :],")")
-    println("CD = np.array(",para[iaCD, :],")")
+    ## Write outputs to io stream f
+    println(f, "AR  = $(parg[igAR])\n")
+    println(f, "CL  = $(para[iaCL, ipcruise1])\n")
+    println(f, "Alt  = $(para[iaalt, ipcruise1])\n")
+    @printf(f,"--------------------\n")
+    println(f, "Fe    = np.array(",pare[ieFe,:], ")")
+    println(f, "h     = np.array(",para[iaalt,:],")")
+    println(f, "R     = np.array(",para[iaRange,:],")")
+    println(f, "deNOx = np.array(",pare[iedeNOx, :],")")
+    println(f, "fracW = np.array(",para[iafracW, :],")")
+    println(f, "mdotf = np.array(",pare[iemdotf, :],")")
+    println(f, "mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
+    println(f, "Ptank = np.array(",pare[iePLH2, :],")")
+    println(f, "CL = np.array(",para[iaCL, :],")")
+    println(f, "CD = np.array(",para[iaCD, :],")")
+    println(f, "CLh = np.array(",para[iaCLh, :],")\n")
 
-    println("Aero:")
-        @printf("L/D     = %5.4f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
-        @printf("CL      = %5.4f\n", para[iaCL, ipcruise1])
-        @printf("CD      = %5.4f\n", para[iaCD, ipcruise1])
-        @printf("CDfuse  = %5.4f\n", para[iaCDfuse, ipcruise1])
-        @printf("CDi     = %5.4f\n", para[iaCDi, ipcruise1])
-        @printf("CDwing  = %5.4f\n", para[iaCDwing, ipcruise1])
-        @printf("CDhtail = %5.4f\n", para[iaCDhtail, ipcruise1])
-        @printf("CDvtail = %5.4f\n", para[iaCDvtail, ipcruise1])
+    println(f, "Aero:")
+        @printf(f, "L/D     = %5.4f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
+        @printf(f, "CL      = %5.4f\n", para[iaCL, ipcruise1])
+        @printf(f, "CD      = %5.4f\n", para[iaCD, ipcruise1])
+        @printf(f, "CDfuse  = %5.4f\n", para[iaCDfuse, ipcruise1])
+        @printf(f, "CDi     = %5.4f\n", para[iaCDi, ipcruise1])
+        @printf(f, "CDwing  = %5.4f\n", para[iaCDwing, ipcruise1])
+        @printf(f, "CDhtail = %5.4f\n", para[iaCDhtail, ipcruise1])
+        @printf(f, "CDvtail = %5.4f\n", para[iaCDvtail, ipcruise1])
 
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
     # println("Time writing       = $time_writing")
     # println("Time runnning NPSS = $time_run_NPSS")
-    weight_buildup(parg)
-    geometry(parg)
+    @printf(f, "\nPFEI = %5.4f J/Nm\n", parm[imPFEI])
+    weight_buildup(parg, io = f)
+    geometry(parg, io = f)
 end
 
-# @timev run_wsize(20)
-time_wsize = @elapsed run_wsize(25, false)
-println("Wsize time         = ", time_wsize)
+time_wsize = @elapsed run_wsize(25, 0, false)
+println("Wsize time = $time_wsize s")
 
+for AR = 10:0.5:12
+    parg[igAR] = AR
+    run_wsize(25, 0, false)
+end
+
+# for CL in [0.5, 0.54, 0.57, 0.60]
+#     para[iaCL  , ipclimb1+1:ipdescentn-1, :] .= CL
+#     run_wsize(25, false)
+# end
+
+# for alt in 30000:1000:35000
+#     para[iaalt, ipcruise1, :] .=  alt * ft_to_m
+#     run_wsize(25, false)
+# end
+
+# sweep = 15:2:35
+# AR = 7.0:0.2:10.0
+
+# x = AR
+# xname = "AR"
+
+# Geom    = zeros(Float64, (length(x),igtotal))
+# Mission = zeros(Float64, (length(x),imtotal))
+# Aero    = zeros(Float64, (length(x),iatotal))
+
+# for (i, val) in enumerate(x)
+#     println(f, "Parametric variation of $xname")
+#     println("\t", xname, " = $val")
+#     if xname == "Sweep"
+#         parg[igsweep] = val
+#     elseif xname == "AR"
+#         parg[igAR] = val
+#     elseif xname == "Alt"
+#         para[iaalt, ipcruise1, :] .=  val * ft_to_m
+#     end
+
+
+#     if i == 1
+#         initializewgt = 0
+#     else
+#         initializewgt = 1
+#     end
+#     run_wsize(25, initializewgt, false)
+#     Geom[i,:] = parg
+#     Mission[i,:] = parm[:,1]
+#     Aero[i,:] = para[:, ipcruise1, 1]
+# end
+
+
+
+
+
+# fig, ax = plt.subplots(4,1,figsize = (8, 5), sharex=true)
+# ax[1].plot(x, Mission[:, imPFEI])
+# ax[1].set_ylabel("PFEI [J/Nm]")
+# ax[2].plot(x, Geom[:, igWMTO]./lbf_to_N)
+# ax[2].set_ylabel("MTOW [lbm]")
+# ax[3].plot(x, Mission[:, imWfuel]./lbf_to_N)
+# ax[3].set_ylabel("Wfuel [lbm]")
+# ax[4].plot(x, Aero[:, iaCD])
+# ax[4].set_ylabel("CD")
+# ax[end].set_xlabel(xname)
+
+close(f)
