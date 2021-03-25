@@ -23,24 +23,17 @@ Outputs:
 - mcat
 
 """
-function TurboShaft(alt_in::Float64, MN_in::Float64, 
+function TurboShaft(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, 
                     ShP::Float64, 
                     π_LPC::Float64, π_HPC::Float64, Tt41::Float64,
                     cpsi::Float64, w::Float64, lcat::Float64, deNOx_in::Float64, first; LHV = 120,
                     file_name = "NPSS_Turboshaft/DesScl.int")
 
-    global time_writing += @elapsed NPSS_TShaft_input(alt_in, MN_in, ShP, 
+    NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
                         cpsi, w, lcat, deNOx_in, first; LHV = LHV)
 
-    # open("NPSS_Turboshaft/OffDesInputs.inp", "w") do io
-    #     println(io, "//DUMMY since only running design point now")
-    # end
-
-    NPSS_run("NPSS_Turboshaft/", "TP.bat")
-
     include("NPSS_Turboshaft/Eng.output")
-    # Write all design point scalars to file
       
     return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
 
@@ -71,7 +64,7 @@ function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64,
 
     file_name = "NPSS_Turboshaft/Eng.output"
 
-    NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, first)
+    NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
     
     include(file_name)
 
@@ -175,7 +168,8 @@ Inputs:
 
 
 """
-function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
+function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, 
+                    alt_in::Float64, MN_in::Float64, Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parg::Array{Float64, 1},
                     parpt::Array{Union{Float64, Int64},1},
@@ -197,7 +191,7 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
     # Call ducted fan design method
         πfan = parpt[ipt_pifan]
         NPSS_time = 0.0
-    NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+        Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
         FanMapScalars, FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
         # println("Fan:")
@@ -212,7 +206,7 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         Wpowertrain += Wfan*nfan
        xWpowertrain += Wfan*nfan*parg[igxfan]
 
-        Pshaft_mot = -1000. * Fan_power
+        Pshaft_mot = -1000. * Fan_power # convert to W (minus sign since NPSS output is power into fan which is negative)
         
     # Size motor
         ratAsp   = parpt[ipt_ARmot]
@@ -285,8 +279,8 @@ function PowerTrain(NPSS_Fan::Base.Process, alt_in::Float64, MN_in::Float64, Fn:
         lcat = parpt[ipt_lcat]
         deNOx= parpt[ipt_deNOx]
 
-        NPSS_time += @elapsed  Ptshaft = PgenShaft*ngen/nTshaft
-        ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(alt_in, MN_in, Ptshaft,
+        Ptshaft = PgenShaft*ngen/nTshaft
+        ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx, first)
 

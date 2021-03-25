@@ -83,7 +83,7 @@ Writes an input file for NPSS Turboshaft model in off-des conditions
 function NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, 
                             Tt41, N2_dmd, first)
 
-    write(NPSS_TS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd ; Eng.Amb.alt_in=$(alt_in/0.3048); Eng.Amb.MN_in = $MN_in;first=$first;\n")
+    write(NPSS_TS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/0.3048); Eng.Amb.MN_in = $MN_in;first=$first;\n")
     NPSS_success = parse(Bool, String(readavailable(NPSS_TS.out))) # `readavailable(stream)` blocks until data is available
     return NPSS_success
 end
