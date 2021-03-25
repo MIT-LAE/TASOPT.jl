@@ -39,39 +39,33 @@ Writes an input file for NPSS Turboshaft model
     - SCR paramters -> CPSI, w, l
 
 """
-function NPSS_TShaft_input(alt_in, MN_in, 
+function NPSS_TShaft_input(NPSS, alt_in, MN_in, 
     SHP_dmd, Tt41, 
     LPC_PR, HPC_PR,
     cpsi, w, lcat, deNOx, first ;
     LHV = 120, file_name = "NPSS_Turboshaft/EngineInputs.inp")
 
-    open(file_name, "w") do io
-        if(first)
-            println(io, "int first = 1;")
-        else 
-            println(io, "int first = 0;")
-        end
-        println(io, "\n// Abmient conditions")
-        println(io, "Eng.Amb.alt_in = ", alt_in/ft_to_m, ";" )
-        println(io, "Eng.Amb.MN_in  = ", MN_in, ";" )
+    input_string = "111 "*
+    "first = $first;" *
+    "Eng.Amb.alt_in = $(alt_in/ft_to_m);" *
+    "Eng.Amb.MN_in  = $MN_in ;" *
+   
+    "Eng.ShP.HPX = $(SHP_dmd/745.699) ;" *
+    "Tt41 = $Tt41 ;" *
+    "deNOx_target = $deNOx ;"*
 
-        println(io, "\n// Targets")
-        println(io, "real SHP_dmd = ", SHP_dmd, ";" )
-        println(io, "real Tt41    = ", Tt41, ";" )
-        println(io, "real deNOx_target = ", deNOx, ";")
+    "Eng.FusEng.LHV = $(LHV*429.923); "*
+    "Eng.CmpL.PRdes = $(LPC_PR) ;" *
+    "Eng.CmpH.PRdes = $(HPC_PR) ;" *
 
-        println(io, "\n// LHV based on fuel")
-        println(io, "Eng.FusEng.LHV = ", LHV*429.923, ";")
+    "Eng.PCEC.l = $lcat ;"*
+    "Eng.PCEC.w = $w ;"*
+    "Eng.PCEC.cpsi = $cpsi ;"*
+    "\n"
 
-        println(io, "\n// Design parameters")
-        println(io, "Eng.CmpL.PRdes = ", LPC_PR, ";")
-        println(io, "Eng.CmpH.PRdes = ", HPC_PR, ";")
-
-        println(io, "\n// PCEC parameters")
-        println(io, "Eng.PCEC.l = ", lcat, ";")
-        println(io, "Eng.PCEC.w = ", w, ";")
-        println(io, "Eng.PCEC.cpsi = ", cpsi, ";")
-    end
+    write(NPSS, input_string)
+    NPSS_success = parse(Bool, String(readavailable(NPSS.out))) # `readavailable(stream)` is blocking only if no data is available
+    return NPSS_success
 
 end
 
@@ -87,9 +81,9 @@ Writes an input file for NPSS Turboshaft model in off-des conditions
 
 """
 function NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, 
-                            Tt41, first)
+                            Tt41, N2_dmd, first)
 
-    write(NPSS_TS, "111 Tt41=$Tt41; alt=$(alt_in/0.3048); M0 = $MN_in;first=$first;\n")
+    write(NPSS_TS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/0.3048); Eng.Amb.MN_in = $MN_in;first=$first;\n")
     NPSS_success = parse(Bool, String(readavailable(NPSS_TS.out))) # `readavailable(stream)` blocks until data is available
     return NPSS_success
 end
