@@ -421,7 +421,7 @@ Assembly Assembly Eng
 				ind_GenShP.autoSetup = FALSE;
 				TARGET_SHP.autoSetup = FALSE;
 			}
-			else
+			else if (switchDes == "OFFDESIGN")
 			{
 				// Fixed Bleed flows
 				ind_TCLA_NC_fracW.autoSetup = FALSE;
@@ -446,6 +446,32 @@ Assembly Assembly Eng
 
 			}
 		}
+	}
+	void OFFDES2(){
+
+		setOption("switchDes", "OFFDESIGN");
+		// Bleed Flows sizing OFF
+		ind_TCLA_NC_fracW.autoSetup = FALSE;
+		ind_TCLA_CH_fracW.autoSetup = FALSE;
+		// solver.addIndependent("Eng.ind_TCLA_NC_fracW");
+
+		// PCEC sizing OFF
+		ind_Acat.autoSetup    = FALSE;
+		dep_deNOx.autoSetup   = FALSE;
+
+		// Design Independents
+		DESIGN_AIRFLOW.autoSetup  = FALSE;
+		DESIGN_FUELFLOW.autoSetup = TRUE;
+
+		// Design Dependents
+		DESIGN_TARGET_Tt41.autoSetup = FALSE;
+		dep_noz_Ps_exit.autoSetup    = FALSE;
+
+		dep_N2.autoSetup = TRUE;
+
+		ind_GenShP.autoSetup = FALSE;
+		TARGET_SHP.autoSetup = FALSE;
+
 	}
 }
 
