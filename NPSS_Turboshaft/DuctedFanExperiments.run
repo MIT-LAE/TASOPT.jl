@@ -84,8 +84,25 @@ printSolverConditions();
 
 ShP_input = -1890e3/746;
 for (ShP_input = -1900e3/746; ShP_input <= -1000e3/746; ShP_input -= -200e3/746){
+    run();
+    CASE++;
+}
+
+DuctedFan.OFFDES2();
+solver.clear();
+autoSolverSetup();
+printSolverConditions();
+Fn_target = 4e3;
 run();
 CASE++;
-}
+
+Fn_target = 5e3;
+run();
+CASE++;
+
+Fn_target = 1e3;
+run();
+CASE++;
+
 Output.display();
 cout<<solver.jacobian;
