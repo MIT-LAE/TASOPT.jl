@@ -204,7 +204,7 @@ Assembly Assembly DuctedFan
 
                 dep_ShP_in.autoSetup     = FALSE;
 			}
-			else
+			else if (switchDes == "OFFDESIGN")
 			{
                 ind_Win.autoSetup        = FALSE; // The mass flow rate is automatically added by the NPSS solver
 				ind_ShaftPower.autoSetup = TRUE;	
@@ -218,5 +218,18 @@ Assembly Assembly DuctedFan
 			}
 		}
 	}
+
+    void OFFDES2(){
+                setOption("switchDes", "OFFDESIGN");
+                ind_Win.autoSetup        = FALSE; // The mass flow rate is automatically added by the NPSS solver
+				ind_ShaftPower.autoSetup = TRUE;	
+                dep_Fn.autoSetup         = TRUE;	
+                dep_NcPct.autoSetup      = FALSE;	
+                
+                dep_Mtip.autoSetup       = FALSE;
+                ind_Nmech.autoSetup      = FALSE;	
+
+                dep_ShP_in.autoSetup     = FALSE;
+    }
 
 }
