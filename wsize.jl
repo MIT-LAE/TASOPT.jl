@@ -1166,20 +1166,23 @@ function Wupdate!(parg, rlx, fsum)
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
 
-    # ftesys = parg[igWtesys]/WMTO
+    ftank   = parg[igWftank]/WMTO
+    ftesys = parg[igWtesys]/WMTO
+
     Wtesys  = parg[igWtesys]
     Wftank  = parg[igWftank]
     Wpay    = parg[igWpay]
     Wfuse   = parg[igWfuse]
 
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys +
-     flgnose + flgmain #+ ftesys
+     flgnose + flgmain + ftank + ftesys
 
     if(fsum ≥ 1.0)
         println("SOMETHING IS WRONG fsum ≥ 1")
     end
 
-    WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
+    # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
+    WMTO = rlx*(Wpay + Wfuse )/(1.0-fsum) + (1.0-rlx)*WMTO
 
     parg[igWMTO  ]  = WMTO
     parg[igWwing ]  = WMTO*fwing
@@ -1188,6 +1191,8 @@ function Wupdate!(parg, rlx, fsum)
     parg[igWvtail]  = WMTO*fvtail
     parg[igWeng  ]  = WMTO*feng
     parg[igWfuel ]  = WMTO*ffuel
+    parg[igWftank]  = WMTO*ftank
+    parg[igWtesys]  = WMTO*ftesys
 
 
 end
