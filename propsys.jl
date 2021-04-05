@@ -191,9 +191,10 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
     # Call ducted fan design method
         πfan = parpt[ipt_pifan]
         NPSS_time = 0.0
-        Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+        NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
         FanMapScalars, FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
+        parpt[ipt_calls_NPSS] += 1
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
         # println("Fan Fn = ", Ffan, " N")
@@ -281,9 +282,11 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
         Ptshaft = PgenShaft*ngen/nTshaft
         parpt[ipt_Ptshaft] = Ptshaft
-        ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
+        NPSS_time += @elapsed ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx, first)
+        
+        parpt[ipt_calls_NPSS] += 1
 
         mdotf_tot = mdotf*nTshaft
         Wcat = mcat*gee*1.5 # TODO replace fudge factor 1.5 with ammonia tanks/ pumps etc
@@ -336,6 +339,8 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         mdotf, BSFC,
         deNOx_out = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
         
+        parpt[ipt_calls_NPSS] += 1
+
         mdotf_tot = mdotf*nTshaft
 
     # Run generator
@@ -378,6 +383,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
     NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
 
+        parpt[ipt_calls_NPSS] += 1
 
         err = 1
         maxiter = 10
@@ -413,7 +419,8 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
         NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
                 ηpropul, ηDF = DuctedFan(NPSS_Fan, alt_in, MN_in, Pfan_in, Kinl, Φinl, first)
-                
+        
+        parpt[ipt_calls_NPSS] += 1
         end
 
         abs(err)≥tol && printstyled("Warning [propsys]: Motor-fan speeds not converged! Error = ",abs(err),"\n"; color=:red)
