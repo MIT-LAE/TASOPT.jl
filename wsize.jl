@@ -1017,6 +1017,8 @@ Lconv = false # no convergence yet
                 ξpay  = 0.
                 itrim = 1
                 balance(pari,parg,view(para, :,ip),rfuel,rpay, ξpay, itrim)
+                # Set N.P. at cruise
+                parg[igxNP] = para[iaxNP, ip]
 
                 # Drag buildup cdsum()
                 cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), 1)
