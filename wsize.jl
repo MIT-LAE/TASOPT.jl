@@ -635,12 +635,12 @@ Lconv = false # no convergence yet
 
             # Print weight/ convergnce started
             if(iterw == 1)
-            @printf("%5s  %11s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-            "iterw", "errW", "WMTO", "Wfuel", "Wftank", "Wtesys", "Wgen", "Wtshaft", "Wwing", "span", "area", "HTarea", "xwbox" )
+            @printf("%5s  %11s  %11s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+            "iterw", "errW", "errW1", "WMTO", "Wfuel", "Wftank", "Wtesys", "Wgen", "Wtshaft", "Wwing", "span", "area", "HTarea", "xwbox" )
             end
            
-            @printf("%5d  %+9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-             iterw, errw1, parm[imWTO], parg[igWfuel], parg[igWftank],
+            @printf("%5d  %+9.4e  %+9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+             iterw, errw, errw1, parm[imWTO], parg[igWfuel], parg[igWftank],
              parg[igWtesys], parg[igWgen], parg[igWtshaft],
              parg[igWwing], parg[igb], parg[igS], 
              parg[igSh], parg[igxwbox])
