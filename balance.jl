@@ -317,7 +317,6 @@ function htsize(pari,parg,paraF,paraB,paraC)
             Winv    = parg[igWinv   ] 
             Wmot    = parg[igWmot   ] 
             Wfan    = parg[igWfan   ] 
-            Wftank  = parg[igWftank ] 
 
             Wtesys = parg[igWtesys ]
            xWtesys = parg[igxWtesys]
@@ -680,7 +679,8 @@ function cglpay(parg)
 #---- zero fuel is assumed to be worst case
       rfuel  = 0.
       rfuelF = 0.
-      rfuelB = 0.
+      # rfuelB = 0.
+      rfuelB = 1.0
 
 # See Eqn 283 in TASOPT documentation
       
@@ -708,6 +708,7 @@ function cglpay(parg)
 	 Wlgnose*parg[igxlgnose] +
 	 Wlgmain*(parg[igxwbox] + delxw + parg[igdxlgmain])
 
+       xWfuel = parg[igxftank]*Wfuel
 
 #cc   xpay = xcabin + (ξpay-0.5)*lcabin*(1.0-rpay)
 #cc    W =      Wpay*rpay +  We
@@ -724,6 +725,7 @@ function cglpay(parg)
 #
       ξ   = [ 0.0, 1.0]
       sgn = [-1.0, 1.0]
+      rf  = [ 0.0, 1.0]
       rpay = zeros(Float64, 2)
       xcg  = zeros(Float64, 2)
 
@@ -736,14 +738,14 @@ function cglpay(parg)
         a2 =         - (ξ[i]-0.5)*lcabin *Wpay
 
         AA = a2*b1
-        BB = 2.0*a2*b0
-        CC = a1*b0 - a0*b1
+        BB = 2.0*a2*b0 + 2.0*a2*rf[i]*Wfuel
+        CC = a1*b0 - a0*b1 + a1*rf[i]*Wfuel - xWfuel*rf[i]*b1
 
         rpay[i] = (-BB - sgn[i]*sqrt(BB^2 - 4.0*AA*CC)) * 0.5/AA
 
         xpay = xcabin + (ξ[i]-0.5)*lcabin*(1.0-rpay[i])
-        W  =      Wpay*rpay[i] +  We
-        xW = xpay*Wpay*rpay[i] + xWe
+        W  =      Wpay*rpay[i] +  We + rf[i]*Wfuel
+        xW = xpay*Wpay*rpay[i] + xWe + rf[i]*xWfuel
         
 	xcg[i] = xW/W
       end
