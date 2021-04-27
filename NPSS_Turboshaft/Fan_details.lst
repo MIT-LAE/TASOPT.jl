@@ -4,6 +4,7 @@ variableList = {
     "DuctedFan.switchDes:?????????  = switchDes",
     "solver.converged:??            = Conv",
     "solver.iterationCounter:???    = Iter",
+    "t_to_solve*1000:?????.???   = SolveTime[ms]",
 
     "DuctedFan.Amb.alt:??????.??            = Alt[ft]", 
     "DuctedFan.Amb.MN:?.??                  = MN", 
