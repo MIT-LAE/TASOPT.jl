@@ -104,7 +104,7 @@ function geometry(parg; io = stdout)
 
 end
 
-function stickfig(parg, pari; ax = nothing)
+function stickfig(parg, pari, parm; ax = nothing)
 
     # Wing
         co = parg[igco]
@@ -176,7 +176,7 @@ function stickfig(parg, pari; ax = nothing)
         
         nnose = 10
         ntail = 10
-        
+
         xf = zeros(nnose + ntail + 1)
         yf = zeros(nnose + ntail + 1)
 
@@ -302,7 +302,7 @@ function stickfig(parg, pari; ax = nothing)
         xcyl0 = parg[igxftank] - parg[iglftank]/2
         xcyl1 = xcyl0 + parg[iglftank]
         ARtank = 2.0
-        ntank = 5
+        ntank = 8
         xt = zeros(ntank*2 )
         yt = zeros(ntank*2 )
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
@@ -356,8 +356,8 @@ function stickfig(parg, pari; ax = nothing)
             ax.fill_between(xf, -yf, yf, facecolor = "w", edgecolor = "k", zorder = 5, linewidth = 2.0)
             
             # Tank
-            # ax.plot(xt,  yt, "k", lw = 1.5, zorder = 10)
-            # ax.plot(xt, -yt, "k", lw = 1.5, zorder = 10)
+            ax.plot(xt,  yt, "k", lw = 1.5, zorder = 10)
+            ax.plot(xt, -yt, "k", lw = 1.5, zorder = 10)
             ax.fill_between(xt, -yt, yt, facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
             ax.text(parg[igxftank], 0.0, "LH\$_2\$", fontsize = 14, zorder = 10, ha="center", va="center")
 
@@ -376,7 +376,7 @@ function stickfig(parg, pari; ax = nothing)
     ax.set_xlabel("x[m]")
 
     # Annotations
-    ax.text(0, 15, @sprintf("Span = %5.1f m\nco    = %5.1f m", parg[igb], parg[igco]),
+    ax.text(0, 15, @sprintf("PFEI = %5.3f J/Nm\nSpan = %5.1f m\nco    = %5.1f m", parm[imPFEI], parg[igb], parg[igco]),
      fontsize = 16, ha="left", va="top")
 
     yloc = -12
@@ -385,6 +385,27 @@ function stickfig(parg, pari; ax = nothing)
             arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
              zorder = 30)
     ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
+
+    # Span annotations:
+    codeD = true
+    codeE = false
+        if codeD
+            # ICAO code D 
+            bmaxD = 36
+            ax.vlines(-4.0, -bmaxD/2, bmaxD/2, lw = 5, alpha = 0.2, color = "y")
+            ax.hlines( bmaxD/2, -4.0, 40.0, lw = 5, alpha = 0.2, color = "y")
+            ax.hlines(-bmaxD/2, -4.0, 40.0, lw = 5, alpha = 0.2, color = "y")
+            ax.text(20, bmaxD/2+1, "ICAO Code D/ FAA Group III", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
+        end
+        if codeE
+            # ICAO code E
+            bmaxE = 52
+            ax.vlines(-5.0, -bmaxE/2, bmaxE/2, lw = 5, alpha = 0.2, color = "b")
+            ax.hlines( bmaxE/2, -5.0, 40.0, lw = 5, alpha = 0.2, color = "b")
+            ax.hlines(-bmaxE/2, -5.0, 40.0, lw = 5, alpha = 0.2, color = "b")
+            ax.text(20, bmaxE/2+1, "ICAO Code E/ FAA Group IV", color = "b", alpha = 0.5, fontsize = 12, ha="center", va="center")
+        end
+
     plt.tight_layout()
     # ax.legend()
 
