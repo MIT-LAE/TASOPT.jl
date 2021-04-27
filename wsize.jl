@@ -15,7 +15,7 @@ and iterates until the MTOW converges to within a specified tolerance.
 """
 function wsize(pari, parg, parm, para, pare,
             itermax, wrlx1, wrlx2, wrlx3,
-            initwgt, initeng, iairf, Ldebug)
+            initwgt, initeng, iairf, Ldebug, printiter)
 
 time_propsys = 0.0
     # Weight convergence tolerance 
@@ -50,7 +50,7 @@ time_propsys = 0.0
 
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
     time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
-    println("Fuse bl time = $time_fusebl")
+    # println("Fuse bl time = $time_fusebl")
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
     DAfsurf = para[iaDAfsurf, ipcruise1] # Surface dissapation area 
     DAfwake = para[iaDAfwake, ipcruise1] # Wake dissapation area
@@ -634,17 +634,17 @@ Lconv = false # no convergence yet
                 errw = max(abs(errw1), abs(errw2), abs(errw3))
 
             # Print weight/ convergnce started
-            if(iterw == 1)
+            if(printiter && iterw == 1)
             @printf("%5s  %11s  %11s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
             "iterw", "errW", "errW1", "WMTO", "Wfuel", "Wftank", "Wtesys", "Wgen", "Wtshaft", "Wwing", "span", "area", "HTarea", "xwbox" )
             end
-           
+           if printiter
             @printf("%5d  %+9.4e  %+9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
              iterw, errw, errw1, parm[imWTO], parg[igWfuel], parg[igWftank],
              parg[igWtesys], parg[igWgen], parg[igWtshaft],
              parg[igWwing], parg[igb], parg[igS], 
              parg[igSh], parg[igxwbox])
-
+           end
             if(errw <= tolerW)
                 Lconv = true
                 break
