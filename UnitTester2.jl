@@ -294,15 +294,17 @@ f = open("temp.results", "w")
 
 initwgt = 0
 
-function run_wsize(iter, initwgt, Ldebug)
+track_fig = nothing
+function run_wsize(iter, initwgt, Ldebug, printiter)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
     parpt[ipt_time_NPSS] = 0.0
+    parpt[ipt_calls_NPSS] = 0
 
     # println(parg[igWwing])
     Ldebug && println("Max weight iterations = $iter")
     wsize(pari, parg, parm, view(para,:,:,1), view(pare, :,:,1),
-                    iter, 0.9, 0.9, 0.5, initwgt, 1, 1, Ldebug)
+                    iter, 0.9, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter)
     # @benchmark PowerTrain(0.0, 0.8, 25.0e3*2,0.0, 0.0, parg, parpt, parmot, pargen)
 
     # println(parg[igWwing])
@@ -361,75 +363,107 @@ function run_wsize(iter, initwgt, Ldebug)
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
     # println("Time writing       = $time_writing")
     # println("Time runnning NPSS = $time_run_NPSS")
-    @printf(f, "\nPFEI = %5.4f J/Nm\n", parm[imPFEI])
+    @printf(f, "\nPFEI = %.5f J/Nm\n", parm[imPFEI])
+
     weight_buildup(parg, io = f)
     geometry(parg, io = f)
+    global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
 end
 
-time_wsize = @elapsed run_wsize(25, 0, false)
+time_wsize = @elapsed run_wsize(25, 0, false, true)
 println("Wsize time = $time_wsize s")
+println("NPSS Time = $(parpt[ipt_time_NPSS]) s")
+println("NPSS Calls = $(parpt[ipt_calls_NPSS])")
 
-for AR = 10:0.5:12
-    parg[igAR] = AR
-    run_wsize(25, 0, false)
+
+# for AR = 10:0.1:10.5
+#     parg[igAR] = AR
+#     Time_wsize = @elapsed run_wsize(25, 1, false)
+#     println("Wsize time = $Time_wsize s")
+#     println("NPSS Time = $(parpt[ipt_time_NPSS]) s")
+# end
+
+# ------ Optimzation ---------------
+using NLopt
+xarray = []
+farray = []
+
+function obj(x, grad)
+    parg[igAR] = x[1]
+    para[iaalt, ipcruise1, :] .=  x[2] *ft_to_m
+    para[iaCL  , ipclimb1+1:ipdescentn-1, :] .= x[3]
+    parpt[ipt_pifan] = x[4]
+    parg[igsweep   ] = x[5]
+    
+    # para[iaMach, ipclimbn:ipdescent1  , :] .= x[6]
+    pare[ieTt4, 1:iptotal, :] .= x[6] # [R]
+    parpt[ipt_Tt41] = pare[ieTt4,ipcruise1, 1]
+
+    pare[ieTt4, ipstatic:iptakeoff, :] .= x[7] #[R]
+
+    parg[iglambdat]  = x[8]
+    parg[ighboxo   ] = x[9]
+    parg[ighboxs   ] = x[10]
+
+    parpt[ipt_piHPC] = x[11]
+
+    parg[igARh] = x[12]
+    parg[igsweeph] = x[13]
+
+    wsize_time = @elapsed run_wsize(30, 1, false, false)
+
+    f = parm[imPFEI]
+    push!(farray, parm[imPFEI])
+    push!(xarray, x)
+    
+    # Span constriant
+    bmax = parg[igbmax]
+    b    = parg[igb]
+    constraint  = b/bmax - 1.0
+    penfac  = 25.0* parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+    
+    printstyled(@sprintf("\t%10.2f  %5.2f  %10.2f  %5.4f  %5.2f  %5.2f  %10.2f  %10.2f  %5.4f  %5.4f  %5.4f  %10.2f  %5.2f  %5.2f  | %10.4f  %10.2f  %10.2f  %10.2f  %10.2f  %10.2f  %10.3f \n",
+                        wsize_time, x[1],   x[2],   x[3],  x[4],  x[5],   x[6],   x[7],  x[8], x[9],  x[10],  x[11], x[12], x[13],
+                           parm[imPFEI], parm[imWfuel], parg[igWMTO], parg[igb], parg[igbh], parg[igxwbox], parg[igWfmax]/parm[imWfuel] ); color = :light_green)
+
+    # println("X̄ = $x  ⇨  PFEI = $(parm[imPFEI]) f = $f, MTOW = $(parg[igWMTO]), Wtank = $(parg[igWftank]), Wfan = $(parg[igWfan])")
+    
+    return f
 end
 
-# for CL in [0.5, 0.54, 0.57, 0.60]
-#     para[iaCL  , ipclimb1+1:ipdescentn-1, :] .= CL
-#     run_wsize(25, false)
-# end
+lower      = [5.0 , 30000.0, 0.50, 1.30, 10.0, 3200.0, 3200.0, 0.1, 0.1, 0.1,  6.0, 3.0,  5.0] 
+upper      = [12.0, 40000.0, 0.62, 1.60, 30.0, 3400.0, 3400.0, 1.0, 1.0, 1.0, 20.0, 7.0, 30.0] 
 
-# for alt in 30000:1000:35000
-#     para[iaalt, ipcruise1, :] .=  alt * ft_to_m
-#     run_wsize(25, false)
-# end
+initial    = [ 9.4  , 36000.0, 0.590 , 1.30, 28.0, 3250.0, 3250.0,  0.15,  0.13,  0.13, 10.0, 6.0, 10.0] 
+initial_dx = [ 0.5  ,   500.0, 0.001 , 0.05,  1.0,   15.0,   15.0, 0.001,  0.01,  0.01,  2.0, 0.1,  1.0]
 
-# sweep = 15:2:35
-# AR = 7.0:0.2:10.0
+x_tol_abs = [0.01, 50.0, 0.0001, 0.001, 0.05, 1.0, 1.0, 0.0001, 0.001, 0.001, 0.01, 0.001, 0.05]
+f_tol_rel = 0.001
 
-# x = AR
-# xname = "AR"
+opt = NLopt.Opt(:LN_NELDERMEAD, length(initial))
+# opt = NLopt.Opt(:LN_SBPLX, 5)
+opt.lower_bounds = lower
+opt.upper_bounds = upper
+opt.min_objective = obj
+opt.initial_step = initial_dx
 
-# Geom    = zeros(Float64, (length(x),igtotal))
-# Mission = zeros(Float64, (length(x),imtotal))
-# Aero    = zeros(Float64, (length(x),iatotal))
+opt.xtol_abs = x_tol_abs
+opt.ftol_rel = f_tol_rel
+# opt.maxeval = 10
 
-# for (i, val) in enumerate(x)
-#     println(f, "Parametric variation of $xname")
-#     println("\t", xname, " = $val")
-#     if xname == "Sweep"
-#         parg[igsweep] = val
-#     elseif xname == "AR"
-#         parg[igAR] = val
-#     elseif xname == "Alt"
-#         para[iaalt, ipcruise1, :] .=  val * ft_to_m
-#     end
+printstyled(@sprintf("\t%10s  %5s  %10s  %6s  %5s  %5s  %10s  %10s  %5s  %5s  %5s  %10s  %5s  %5s | %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+"time2size", "AR", "hcr[ft]", "CLcr", "FPR", "Sweep[deg]", "Tt4cr[R]", "Tt4ro[R]", "λt", "hbo", "hbs", "πHPC", "ARh", "λh",
+           "PFEI[J/Nm]", "Wfuel[N]", "WMTO[N]", "Span", "Tail span", "xwbox", "Wfmax/Wfreq" ); color = :light_green)
 
+opt_time = @elapsed (optf, optx, ret) = NLopt.optimize(opt, initial)
+numevals = opt.numevals # the number of function evaluations
+println("got $optf at $optx after $numevals iterations which took $opt_time s (returned $ret)")
 
-#     if i == 1
-#         initializewgt = 0
-#     else
-#         initializewgt = 1
-#     end
-#     run_wsize(25, initializewgt, false)
-#     Geom[i,:] = parg
-#     Mission[i,:] = parm[:,1]
-#     Aero[i,:] = para[:, ipcruise1, 1]
-# end
+fig, ax = plt.subplots()
+ax.plot(farray)
+ax.set_xlabel("Iterations")
+ax.set_ylabel("PFEI [J/Nm]")
 
-
-
-
-
-# fig, ax = plt.subplots(4,1,figsize = (8, 5), sharex=true)
-# ax[1].plot(x, Mission[:, imPFEI])
-# ax[1].set_ylabel("PFEI [J/Nm]")
-# ax[2].plot(x, Geom[:, igWMTO]./lbf_to_N)
-# ax[2].set_ylabel("MTOW [lbm]")
-# ax[3].plot(x, Mission[:, imWfuel]./lbf_to_N)
-# ax[3].set_ylabel("Wfuel [lbm]")
-# ax[4].plot(x, Aero[:, iaCD])
-# ax[4].set_ylabel("CD")
-# ax[end].set_xlabel(xname)
 
 close(f)
