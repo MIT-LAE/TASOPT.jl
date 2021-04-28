@@ -64,8 +64,25 @@ function NPSS_TShaft_input(NPSS, alt_in, MN_in,
     "\n"
 
     write(NPSS, input_string)
-    NPSS_success = parse(Bool, String(readavailable(NPSS.out))) # `readavailable(stream)` is blocking only if no data is available
-    return NPSS_success
+
+    out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
+    NPSS_success = parse(Float64, out[1] )
+    
+    if length(out) > 1
+        ηtherm = parse(Float64, out[2] )
+        mdotf  = parse(Float64, out[3] )
+        BSFC   = parse(Float64, out[4] )
+        deNOx  = parse(Float64, out[5] )
+        mcat   = parse(Float64, out[6] )
+    else
+        ηtherm = NaN
+        mdotf  = NaN
+        BSFC   = NaN
+        deNOx  = NaN
+        mcat   = NaN
+    end
+
+    return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat
 
 end
 
@@ -80,12 +97,29 @@ Writes an input file for NPSS Turboshaft model in off-des conditions
     - the flag first sets whether NPSS should restart or use previous value
 
 """
-function NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, 
+function NPSS_TShaft_run(NPSS, alt_in, MN_in, 
                             Tt41, N2_dmd, first)
 
-    write(NPSS_TS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/0.3048); Eng.Amb.MN_in = $MN_in;first=$first;\n")
-    NPSS_success = parse(Bool, String(readavailable(NPSS_TS.out))) # `readavailable(stream)` blocks until data is available
-    return NPSS_success
+    write(NPSS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/0.3048); Eng.Amb.MN_in = $MN_in;first=$first;\n")
+    
+    out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
+    NPSS_success = parse(Float64, out[1] )
+    
+    if length(out) > 1
+        ShP    = parse(Float64, out[2] )
+        ηtherm = parse(Float64, out[3] )
+        mdotf  = parse(Float64, out[4] )
+        BSFC   = parse(Float64, out[5] )
+        deNOx  = parse(Float64, out[6] )
+    else
+        ShP    = NaN
+        ηtherm = NaN
+        mdotf  = NaN
+        BSFC   = NaN
+        deNOx  = NaN
+    end
+    
+    return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx
 end
 
 """
@@ -107,8 +141,22 @@ function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Fl
                 "\n"
 
     write(NPSS, input_string)
-    NPSS_success = parse(Bool, String(readavailable(NPSS.out))) # `readavailable(stream)` is blocking only if no data is available
-    return NPSS_success
+
+    out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
+    NPSS_success = parse(Float64, out[1] )
+    
+    if length(out) > 1
+        Dfan = parse(Float64, out[2] )
+        Power  = parse(Float64, out[3] )
+        Torque = parse(Float64, out[4] )
+        Nmech  = parse(Float64, out[5] )
+        Mtip   = parse(Float64, out[6] )
+        ηprop  = parse(Float64, out[7] )
+        ηDF    = parse(Float64, out[8] )
+        ANoz   = parse(Float64, out[9] )
+    end
+
+    return NPSS_success, Dfan, Power, Torque, Nmech, Mtip, ηprop, ηDF, ANoz
 end
 
 """
@@ -128,6 +176,19 @@ function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Pin::F
                 "\n"
 
     write(NPSS, input_string)
-    NPSS_success = parse(Bool, String(readavailable(NPSS.out)))
-    return NPSS_success
+
+    out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
+    NPSS_success = parse(Float64, out[1] )
+    
+    if length(out) > 1
+        Fn_N = parse(Float64, out[2] )
+        Power  = parse(Float64, out[3] )
+        Torque = parse(Float64, out[4] )
+        Nmech  = parse(Float64, out[5] )
+        Mtip   = parse(Float64, out[6] )
+        ηprop  = parse(Float64, out[7] )
+        ηDF    = parse(Float64, out[8] )
+    end
+
+    return NPSS_success, Fn_N, Power, Torque, Nmech, Mtip, ηprop, ηDF
 end
