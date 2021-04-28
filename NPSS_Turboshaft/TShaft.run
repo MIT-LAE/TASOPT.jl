@@ -54,7 +54,7 @@ CaseRowViewer Output {
     #include "TshaftDetails.lst"
     showHeaders = -1;
 }
-postsolverSequence.append("Output");
+// postsolverSequence.append("Output");
 
 int first;
 int true  = 1;
@@ -102,10 +102,20 @@ while(flag!=999){
         //====================
         // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
         if(solver.converged == 1){
-            output.reopen();
-            #include "write_des_output.int"
-            output.close();
-            cout<<"1";
+            // output.reopen();
+            // #include "write_des_output.int"
+            // output.close();
+            // cout<<"1";
+
+            // Write following outputs to outstream
+            // eta_thermal, mdotf, BSFC, deNOx, mcat
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.Perf.IdealThermalEff<<"_"
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.Perf.BSFC<<"_"
+            <<Eng.PCEC.deNOx<<"_"
+            <<Eng.PCEC.m_cat;
+
         }
         else{
             // cout<<"ERROR! DES Did not converge"<<endl;
@@ -151,10 +161,19 @@ while(flag!=999){
             if(first){
                 SaveIndepVals("solver", "offDes1.restart");
             }
-            output.reopen();
-            #include "write_offdes_output.int"
-            output.close();
-            cout<<"1";
+            // output.reopen();
+            // #include "write_offdes_output.int"
+            // output.close();
+            // cout<<"1";
+
+            // Write following outputs to outstream
+            // ShP, eta_thermal, mdotf, BSFC, deNOx 
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.ShP.HPX*746<<"_"
+            <<Eng.Perf.IdealThermalEff<<"_"
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.Perf.BSFC<<"_"
+            <<Eng.PCEC.deNOx;
         }
         else{
             cout<<"0"; // Tell's Julia that this didn't converge
