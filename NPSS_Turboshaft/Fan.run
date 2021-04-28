@@ -25,7 +25,7 @@ solver.maxJacobians  = 200;
 // solver.debugLevel = "ITERATION_DETAILS";
 // solver.diagnosticFile = "solver.diag";
 // solver.solutionMode = "ONE_PASS";
-// solver.defaultDxLimit = 0.001;
+solver.defaultDxLimit = 0.05;
 // solver.defaultPerturbation = 0.0001;
 // solver.convergenceLimit = 0.8;
 // solver.defaultTolerance = 1e-10;
@@ -46,13 +46,16 @@ CaseRowViewer Output {
     #include "Fan_details.lst"
     showHeaders = -1;
 }
-postsolverSequence.append("Output");
+// postsolverSequence.append("Output");
 
+real t_start, t_end;
+real t_to_solve;
 int first;
 int true  = 1;
 int false = 0;
 real ShP_input;
-real Fn_target;
+real Fn_target, NcPct_target;
+real Alt[];
 int flag;
 string inString;
 
@@ -83,8 +86,10 @@ while(flag!=999){
         //  Run engine model
         //====================
         restart("fandes.restart");
-
+        t_start = wallTime;
         run();
+        t_end = wallTime;
+        t_to_solve = t_end - t_start;
         CASE++;
 
         //====================
@@ -92,10 +97,25 @@ while(flag!=999){
         //====================
         // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
         if(solver.converged == 1){
-            output.reopen();
-            #include "write_fan_des.int"
-            output.close();
-            cout<<"1";
+            // output.reopen();
+            // #include "write_fan_des.int"
+            // output.close();
+
+            // cout<<"1";
+            
+            // Want the following outputs:
+            // Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+            // eta_prop, eta_DF,
+            // NozArea
+            cout<<"1"<<"_"
+            <<convertUnits("DuctedFan.Fan.dia", "m")<<"_"
+            <<convertUnits("DuctedFan.Fan.pwr", "kW")<<"_"
+            <<convertUnits("DuctedFan.Fan.trq", "N*m")<<"_"
+            <<convertUnits("DuctedFan.Fan.Nmech", "rpm")<<"_"
+            <<DuctedFan.Fan.Mtip<<"_"
+            <<DuctedFan.eta_prop<<"_"
+            <<DuctedFan.eta_DF<<"_"
+            <<DuctedFan.FanNozzle.AthCold;
         }
         else{
             // cout<<"ERROR! DES Did not converge"<<endl;
@@ -129,7 +149,11 @@ while(flag!=999){
         // else {
         //     restart("offDes_fan_prev.restart");
         // }
+        t_start = wallTime;
         run();
+        t_end = wallTime;
+        t_to_solve = t_end - t_start;
+        
         CASE++;
 
         //====================
@@ -140,10 +164,22 @@ while(flag!=999){
             if(first){
                 SaveIndepVals("solver", "offDes_fan_start.restart");
             }
-            output.reopen();
-            #include "write_fan_offdes.int"
-            output.close();
-            cout<<"1";
+            // output.reopen();
+            // #include "write_fan_offdes.int"
+            // output.close();
+            // cout<<"1";
+
+
+            // Write following outputs to outstream
+            // Fn, Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
+            cout<<"1"<<"_"
+            <<DuctedFan.Fn_N<<"_"
+            <<convertUnits("DuctedFan.Fan.pwr", "kW")<<"_"
+            <<convertUnits("DuctedFan.Fan.trq", "N*m")<<"_"
+            <<convertUnits("DuctedFan.Fan.Nmech", "rpm")<<"_"
+            <<DuctedFan.Fan.Mtip<<"_"
+            <<DuctedFan.eta_prop<<"_"
+            <<DuctedFan.eta_DF;
         }
         else{
             cout<<"0"; // Tell's Julia that this didn't converge
