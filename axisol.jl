@@ -55,7 +55,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
       end
 
       ilte  = nc + 1
-      nl = nc + Int(nc/2) + 2
+      nl = nc + Int(floor(nc/2)) + 2
 
       if(nl > nldim) 
 	println("AXISOL: Passed-in array overflow.  Increase nldim to", nl)
