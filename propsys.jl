@@ -29,11 +29,13 @@ function TurboShaft(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,
                     cpsi::Float64, w::Float64, lcat::Float64, deNOx_in::Float64, first; LHV = 120,
                     file_name = "NPSS_Turboshaft/DesScl.int")
 
-    NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
+    NPSS_success, 
+    eta_thermal, mdotf, BSFC,
+     deNOx, mcat  = NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
                         cpsi, w, lcat, deNOx_in, first; LHV = LHV)
 
-    include("NPSS_Turboshaft/Eng.output")
+    # include("NPSS_Turboshaft/Eng.output")
       
     return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
 
@@ -62,11 +64,13 @@ Outputs:
 function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64, 
                     Tt41::Float64, Nshaft::Float64, first)
 
-    file_name = "NPSS_Turboshaft/Eng.output"
+    # file_name = "NPSS_Turboshaft/Eng.output"
 
-    NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
+    NPSS_success, 
+    ShP, eta_thermal, mdotf,
+    BSFC, deNOx = NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
     
-    include(file_name)
+    # include(file_name)
 
     return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
 
@@ -98,12 +102,15 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
                     Kinl::Float64, Φinl::Float64,
                      π_fan::Float64, first)
     
-    file_name = "NPSS_Turboshaft/Fan.output"
+    # file_name = "NPSS_Turboshaft/Fan.output"
  
-    runNPSS_Fan(NPSS, alt_in, MN_in, Fn, Kinl, Φinl, π_fan, first)
+    NPSS_success,
+    Dfan, Fan_power, Torque_fan, N_fan, Mtip,
+    eta_prop, eta_DF,
+    NozArea = runNPSS_Fan(NPSS, alt_in, MN_in, Fn, Kinl, Φinl, π_fan, first)
     
     # Read the data
-    include(file_name)
+    # include(file_name)
     
     ARfan  = 3   # Blade aspeect ratio
     bladeσ = 0.4 # Blade solidity c/s
@@ -116,7 +123,7 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
 
     return Dfan, Fan_power, Torque_fan, N_fan, Mtip,
             eta_prop, eta_DF,
-            MapScalars, NozArea, Wfan
+            NozArea, Wfan
 
 end
 
@@ -143,12 +150,14 @@ Outputs:
 function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Pin::Float64,
                     Kinl::Float64, Φinl::Float64, first)
     
-    file_name = "NPSS_Turboshaft/Fan.output"
+    # file_name = "NPSS_Turboshaft/Fan.output"
 
-    runNPSS_Fan(NPSS, alt_in, MN_in, Pin, Kinl, Φinl, first)
+    NPSS_success, 
+    Fn, Fan_power, Torque_fan, N_fan,
+     Mtip, eta_prop, eta_DF = runNPSS_Fan(NPSS, alt_in, MN_in, Pin, Kinl, Φinl, first)
     
     # Read the data
-    include(file_name)
+    # include(file_name)
 
     return Fn, Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
 
@@ -193,7 +202,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         NPSS_time = 0.0
         NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
-        FanMapScalars, FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
+        FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
         parpt[ipt_calls_NPSS] += 1
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
@@ -316,7 +325,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
            [Wfan, Wmot, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee,
            [SPmot, SPinv, SPgen, SPtshaft], mdotf_tot, BSFC,
-           deNOx, FanMapScalars, FanNozArea
+           deNOx, FanNozArea
 
 end
 
@@ -397,7 +406,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         end
         
         #iterate to converge fan and mot speeds
-        for i = 1:maxiter
+        @inbounds for  i = 1:maxiter
 
             err = (N_fan*GR - Nmot)/Nmot
             
