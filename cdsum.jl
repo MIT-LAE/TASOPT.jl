@@ -122,7 +122,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
       Reco = Reunit*co
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      if(icdfun==1) 
+      if (icdfun==1) 
 #----- integrated across span for CDwing
 
       # if(Ldebug) write(*,*) 'calling SURFCD2...'
@@ -224,7 +224,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
 #-     (use fuselage excrescence factor)
       lnace = parg[iglnace]
       Reunit = para[iaReunit]
-      if(Reunit == 0.0) 
+      if (Reunit == 0.0) 
        Cfnace = 0.
       else
        Renace = Reunit*lnace
@@ -322,7 +322,7 @@ function cditrp(pari,parg,para)
 
       CL = para[iaCL]
 
-      if(CL == 0.0) 
+      if (CL == 0.0) 
 	    para[iaCDi]  = 0.
 	    para[iaspaneff] = 1.0
        return
@@ -398,7 +398,7 @@ function cditrp(pari,parg,para)
   
       npout[2] = 10  # outer panel
       npinn[2] = 0   # inner panel
-      if(bo[2] == 0.0) 
+      if (bo[2] == 0.0) 
        npimg[2] = 0
       else
        npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
