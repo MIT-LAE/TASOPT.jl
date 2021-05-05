@@ -721,15 +721,19 @@ Lconv = false # no convergence yet
             #------------------------------------------
 
             # Wing center load po calculation using cruise spanload cl(y)
+            # -----------------------------------------
             ip = ipcruise1
-            γt, γs = parg[iglambdat]*para[iarclt, ip], parg[iglambdas]*para[iarcls, ip]
+            γt, γs = parg[iglambdat]*para[iarclt, ip], parg[iglambdas]*para[iarcls, ip] # Lift "taper ratios"
             Lhtail = WMTO * parg[igCLhNrat]*parg[igSh]/parg[igS]
 
             po = wingpo(b,bs,bo,
                         λt, λs, γt, γs,
                         AR, Nlift, WMTO, Lhtail, fLo, fLt)
-
-            if(iwplan == 1)
+         
+            # Wing structure
+            # -----------------------------------------
+            
+            if (iwplan == 1)
                 Weng1 = parg[igWfan] + parg[igWmot] + parg[igWinv]
             else
                 Weng1 = 0.0
@@ -739,8 +743,11 @@ Lconv = false # no convergence yet
             Wout = parg[igWout]
             dyWinn  = parg[igdyWinn]
             dyWout  = parg[igdyWout]
-
-            rhofuel = parg[igrhofuel]
+            if (pari[iifwing] == 0) 
+                rhofuel = 0.0 # tell surfw that there is no fuel in wings
+            else
+                rhofuel = parg[igrhofuel]
+            end
             
             Ecap = parg[igEcap]
             Eweb = Ecap
@@ -766,17 +773,22 @@ Lconv = false # no convergence yet
             Wwing   = 2.0 * (Wscen + Wsinn +   Wsout) * (1.0 + fwadd)
             dxWwing = 2.0 * (      dxWsinn + dxWsout) * (1.0 + fwadd)
 
-            # [TODO] note this assumes wings have some fuel, so need to ensure that is addressed
+            # Note this assumes wings have some fuel, so additional check is performed to see if iifwing is 1
             #Calculate volume limited fuel weight depending on if wing center box has fuel or not
-                if(pari[iifwcen] == 0)
+            Wfmax = 0.0
+            dxWfmax = 0.0
+            rfmax = 0.0
+            if (pari[iifwing] == 1) # if fuel is stored in wings only then do this
+                if (pari[iifwcen] == 0)
                     Wfmax   = 2.0*(         Wfinn +   Wfout)
                     dxWfmax = 2.0*(       dxWfinn + dxWfout)
                 else
                     Wfmax   = 2.0*(Wfcen +  Wfinn +   Wfout)
                     dxWfmax = 2.0*(       dxWfinn + dxWfout)
                 end
-         
                 rfmax = parg[igWfuel]/Wfmax
+            end
+
             
             # Save wing details into geometry array
             parg[igWwing] = Wwing * rlx + parg[igWwing]*(1.0-rlx)
@@ -1078,7 +1090,7 @@ Lconv = false # no convergence yet
         max_boiloff = 0.1
         ARtank = 2.0
         clearance_fuse = 0.10
-
+        rhofuel = parg[igrhofuel] 
         ptank = 2.0 #atm
 
         Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
