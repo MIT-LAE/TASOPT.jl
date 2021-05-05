@@ -16,12 +16,13 @@ function surfw(gee,po,b,bs,bo,co,zs,
       cosL = cos(sweep*pi/180)
       sinL = sin(sweep*pi/180)
 
+      # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
       etao = bo/b
       etas = bs/b
 
       cop = co*cosL
       csp = co*cosL*lambdas
-
+      # Tip roll off Lift (modeled as a point load) and it's moment about ηs
       dLt = fLt*po*co*gammat*lambdat
       dMt = dLt*0.5*b*(1.0-etas)
 
