@@ -1,6 +1,7 @@
 """
 Calculates wing root loading po to balance 
 net load  N*W - Lhtail
+2*∫̃p(η) dy + 2*ΔL₀ + 2ΔLₜ = N*W - (Lhtail) Eqn. 154 to 160 of TASOPT docs
 
 ## Inputs: 
 - `b`, `bs`, `bo`: span, panel break location, wing root location
@@ -17,19 +18,19 @@ function wingpo(b, bs, bo,
                λt, λs, γt, γs,
                AR, N, W, Lhtail, fLo, fLt)
       
-      etao = bo/b #calculate non-dim. span locations eta
-      etas = bs/b
+      ηo = bo/b #calculate non-dim. span locations eta
+      ηs = bs/b
      
-      Kc = etao +
-	 0.5*(1.0    +λs)*(etas-etao) +
-	 0.5*(λs+λt)*(1.0 -etas)
+      Kc = ηo +
+	 0.5*(1.0    +λs)*(ηs-ηo) +
+	 0.5*(λs+λt)*(1.0 -ηs)
 
       Ko = 1.0/(AR*Kc)
 
-      Kp = etao +
-	 0.5*(1.0    +γs )*(etas-etao) +
-	 0.5*(γs +γt )*(1.0 -etas) +
-	 fLo*etao + 2.0*fLt*Ko*γt*λt
+      Kp = ηo +
+	 0.5*(1.0    +γs )*(ηs-ηo) +
+	 0.5*(γs +γt )*(1.0 -ηs) +
+	 fLo*ηo + 2.0*fLt*Ko*γt*λt
 
       po = (N*W - Lhtail)/(Kp*b)
 
@@ -38,7 +39,7 @@ end # wingpo
 
 
 """
-Calculates section cl at  eta = etao,etas,1
+Calculates section cl at  eta = ηo,ηs,1
 """
 function wingcl(b,bs,bo,
                 λt,λs,γt,γs,
@@ -47,19 +48,19 @@ function wingcl(b,bs,bo,
 
       cosL = cos(sweep*pi/180.0)
 
-      etao = bo/b
-      etas = bs/b
+      ηo = bo/b
+      ηs = bs/b
      
-      Kc = etao +
-	 0.5*(1.0    +λs)*(etas-etao) +
-	 0.5*(λs+λt)*(1.0 -etas)
+      Kc = ηo +
+	 0.5*(1.0    +λs)*(ηs-ηo) +
+	 0.5*(λs+λt)*(1.0 -ηs)
 
       Ko = 1.0/(AR*Kc)
 
-      Kp = etao +
-	 0.5*(1.0    +γs )*(etas-etao) +
-	 0.5*(γs +γt )*(1.0 -etas) +
-	 fLo*etao + 2.0*fLt*Ko*γt*λt
+      Kp = ηo +
+	 0.5*(1.0    +γs )*(ηs-ηo) +
+	 0.5*(γs +γt )*(1.0 -ηs) +
+	 fLo*ηo + 2.0*fLt*Ko*γt*λt
 
       cl1 = (CL-CLhtail)/cosL^2 * (Kc/Kp)
 
