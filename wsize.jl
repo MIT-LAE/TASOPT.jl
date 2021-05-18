@@ -421,7 +421,7 @@ time_propsys = 0.0
             pare[ieM2, ipstatic: ipcruisen   ] .= M2des
             pare[ieM2, ipdescent1: ipdescentn] .= 0.8*M2des
 
-    else #Second iteration onwards use previously calcualted values
+    else #Second iteration onwards use previously calculated values
 
         # Wing parameters
             S  = parg[igS]
