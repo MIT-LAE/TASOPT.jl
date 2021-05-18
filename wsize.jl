@@ -363,19 +363,19 @@ time_propsys = 0.0
             #     x-x1   x2-x1
             #-----------------------------------------------
             # Climb
-            for ip = ipclimb1:ipclimbn
+            @inbounds for ip = ipclimb1:ipclimbn
                 frac = float(ip - ipclimb1)/float(ipclimbn - ipclimb1)
                 ffp  = ffuelb*(1.0 - frac) + ffuelc*frac
                 para[iafracW, ip] = 1.0 - ffuel + ffp
             end
             # Cruise
-            for ip = ipcruise1:ipcruisen
+            @inbounds for ip = ipcruise1:ipcruisen
                 frac = float(ip - ipcruise1)/float(ipcruisen - ipcruise1)
                 ffp  = ffuelc*(1.0 - frac) + ffueld*frac
                 para[iafracW, ip] = 1.0 - ffuel + ffp
             end
             # Descent
-            for ip = ipdescent1:ipdescentn
+            @inbounds for  ip = ipdescent1:ipdescentn
                 frac = float(ip - ipdescent1)/float(ipdescentn - ipdescent1)
                 ffp  = ffueld*(1.0 - frac) + ffuele*frac
                 para[iafracW, ip] = 1.0 - ffuel + ffp
@@ -488,7 +488,7 @@ Lconv = false # no convergence yet
 #                   Weight loop
 # -------------------------------------------------------    
 
-    for iterw = 1:itermax
+    @inbounds for  iterw = 1:itermax
         if(initwgt == 0)
             #Current weight iteration started from an initial guess so be cautious
             itrlx = 5
@@ -598,7 +598,7 @@ Lconv = false # no convergence yet
                 if (iterw == 1 && initwgt == 0)
                     feng = 0.0 # Set feng to be zero since we are not using the TFan but a TE system
 
-                    # To allow pwerforming aerodynamic and weight-burn calculations on the first iteration, 
+                    # To allow performing aerodynamic and weight-burn calculations on the first iteration, 
                     # an interim MTOW is computed: 
                     fsum = feng + ffuel + fhpesys + flgnose + flgmain
                     # WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
@@ -609,7 +609,7 @@ Lconv = false # no convergence yet
                     parg[igWMTO] = WMTO
                     parg[igWeng] = Weng
                     parg[igWfuel]= Wfuel
-                    println("Wfuel initial = $(ffuel*WMTO)")
+                    println("Wfuel initial = ",(ffuel*WMTO))
 
                 else 
                     # Call a better Wupdate function
@@ -768,6 +768,13 @@ Lconv = false # no convergence yet
                                             sweep,wbox,hboxo,hboxs,rh, fLt,
                                             tauweb,σcap,σstrut,Ecap,Eweb,Gcap,Gweb,
                                             rhoweb,rhocap,rhostrut,rhofuel)
+            # println([Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
+            # So,Mo,tbwebo,tbcapo,EIco,EIno,GJo,
+            # Astrut,lstrutp,cosLs,
+            # Wscen,Wsinn,Wsout,dxWsinn,dxWsout,dyWsinn,dyWsout,
+            # Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,
+            # Wweb,  Wcap,  Wstrut,
+            # dxWweb,dxWcap,dxWstrut])
             # Wsinn is the in-board skin weight, Wsout is the outboard skin weight. 
             # Multiply by 2 to account for the two wing-halves: 
             Wwing   = 2.0 * (Wscen + Wsinn +   Wsout) * (1.0 + fwadd)
@@ -826,8 +833,6 @@ Lconv = false # no convergence yet
             parg[igSstrut] = Ssturt
 
             # Individual panel weights
-            Wfuel = parg[igWfuel]
-            rfmax = Wfuel/Wfmax
 
             #[TODO] again fuel is assumed to be in wings here - need to addressed
             Winn = Wsinn*(1.0 + fwadd) + rfmax*Wfinn
@@ -1055,12 +1060,22 @@ Lconv = false # no convergence yet
         end
            time_propsys += @elapsed  ηpt, Ppt, Hpt, mpt, SPpt,
             mdotf_tot, BSFC,
-            deNOx, _, _  =  PowerTrain(NPSS_TS, NPSS_Fan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
+            deNOx, EINOx1, EINOx2,
+            FAR, Tt3, OPR, Wc3, FanNozArea =  PowerTrain(NPSS_TS, NPSS_Fan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
                                         0.0, 0.0, parg, parpt, parmot, pargen, ifirst)
             ifirst = false
 
-            pare[iedeNOx, ip] = deNOx
+            pare[iedeNOx , ip] = deNOx
+            pare[ieEINOx1, ip] = EINOx1
+            pare[ieEINOx2, ip] = EINOx2
+            
+            pare[ieOPR, ip] = OPR
+            pare[ieTt3, ip] = Tt3
+            pare[ieWc3, ip] = Wc3
+            parg[igWc3des]  = Wc3
+            pare[ieFAR, ip] = FAR
             pare[iemdotf, ip] = mdotf_tot
+            pare[ieemot:ieethermal, ip] .= ηpt[2:end]
             # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
