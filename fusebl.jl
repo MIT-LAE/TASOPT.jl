@@ -26,24 +26,24 @@ function fusebl!(pari, parg, para, ip)
 #      &  iblte   ! index of TE point
 
       nbldim = 60
-      xbl  = zeros(nbldim)     # body x coordinates
-      zbl  = zeros(nbldim)     # body z coordinates
-      sbl  = zeros(nbldim)     # body + wake arc length  (BL coordinate)
-      dybl = zeros(nbldim)     # body y-offset of edge-type tail
-      bbl  = zeros(nbldim)     # transverse width (body perimeter)
-      rnbl = zeros(nbldim)     # dr/dn  (cosine of body contour angle from axis)
-      uinv = zeros(nbldim)     # inviscid edge velocity (in absence of delta*)
-      uebl = zeros(nbldim)     # actual edge velocity
-      dsbl = zeros(nbldim)     # displacement thickness delta*
-      thbl = zeros(nbldim)     # momentum thickness theta
-      tsbl = zeros(nbldim)     # K.E. thickness  theta*
-      dcbl = zeros(nbldim)     # density flux thickness  delta**
-      ctbl = zeros(nbldim)     # max shear stress coefficient
-      cqbl = zeros(nbldim)     # equilib.max shear stress coefficient
-      cfbl = zeros(nbldim)     # skin friction coefficient
-      cdbl = zeros(nbldim)     # dissipation coefficient
-      hkbl = zeros(nbldim)     # kinematic shape parameter
-      phbl = zeros(nbldim)     # running integral of dissipation
+      xbl  = @MVector zeros(nbldim)     # body x coordinates
+      zbl  = @MVector zeros(nbldim)     # body z coordinates
+      sbl  = @MVector zeros(nbldim)     # body + wake arc length  (BL coordinate)
+      dybl = @MVector zeros(nbldim)     # body y-offset of edge-type tail
+      bbl  = @MVector zeros(nbldim)     # transverse width (body perimeter)
+      rnbl = @MVector zeros(nbldim)     # dr/dn  (cosine of body contour angle from axis)
+      uinv = @MVector zeros(nbldim)     # inviscid edge velocity (in absence of delta*)
+      uebl = @MVector zeros(nbldim)     # actual edge velocity
+      dsbl = @MVector zeros(nbldim)     # displacement thickness delta*
+      thbl = @MVector zeros(nbldim)     # momentum thickness theta
+      tsbl = @MVector zeros(nbldim)     # K.E. thickness  theta*
+      dcbl = @MVector zeros(nbldim)     # density flux thickness  delta**
+      ctbl = @MVector zeros(nbldim)     # max shear stress coefficient
+      cqbl = @MVector zeros(nbldim)     # equilib.max shear stress coefficient
+      cfbl = @MVector zeros(nbldim)     # skin friction coefficient
+      cdbl = @MVector zeros(nbldim)     # dissipation coefficient
+      hkbl = @MVector zeros(nbldim)     # kinematic shape parameter
+      phbl = @MVector zeros(nbldim)     # running integral of dissipation
 
 #       include 'constants.inc'
 
@@ -79,23 +79,23 @@ function fusebl!(pari, parg, para, ip)
 #---- calculate potential-flow surface velocity uinv(.) using PG source line
       nc = 30
 
-      nbl, iblte, xbl,zbl,sbl,dybl,uinv =  axisol(xnose,xend,xblend1,xblend2,Sfuse, 
+      nbl, iblte =  axisol!(xnose,xend,xblend1,xblend2,Sfuse, 
                                                      anose,btail,ifclose,
-                                                     Mach, nc, nbldim)
+                                                     Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
      
 #---- fuselage perimeter
       if(ifclose==0) 
-       for ibl = 1: nbl
+       @inbounds for  ibl = 1: nbl
          bbl[ibl] = 2.0*pi*zbl[ibl]
        end
       else
-       for ibl = 1: nbl
+       @inbounds for  ibl = 1: nbl
          bbl[ibl] = 2.0*pi*zbl[ibl] + 4.0*dybl[ibl]
        end
       end
 
 #---- dr/dn  (cosine of body contour angle from axis)
-      for ibl = 2: nbl-1
+      @inbounds for  ibl = 2: nbl-1
         dxm = xbl[ibl] - xbl[ibl-1]
         dzm = zbl[ibl] - zbl[ibl-1]
         dsm = sbl[ibl] - sbl[ibl-1]
