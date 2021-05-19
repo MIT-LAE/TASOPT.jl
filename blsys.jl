@@ -30,9 +30,9 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       dim, dim_thm, dim_dsm, dim_uem)
       
       
-      aa = zeros(3,3)
-      bb = zeros(3,3)
-      rr = zeros(3)
+      aa = @MMatrix zeros(3,3)
+      bb = @MMatrix zeros(3,3)
+      rr = @MVector zeros(3)
      
       ɣ = 1.4
       gmi = ɣ - 1.0

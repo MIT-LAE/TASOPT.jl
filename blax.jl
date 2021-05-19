@@ -64,24 +64,24 @@
 
 -----------------------------------------------------------------
 """
-function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
+function blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
 
-      uei  = zeros(ndim)
-      rhi  = zeros(ndim)
-      dsi  = zeros(ndim)
-      thi  = zeros(ndim)
-      tsi  = zeros(ndim)
-      dci  = zeros(ndim)
-      cfi  = zeros(ndim)
-      cdi  = zeros(ndim)
-      cti  = zeros(ndim)
-      hki  = zeros(ndim)
-      phi  = zeros(ndim)
+      uei  = @MVector zeros(ndim) 
+      rhi  = @MVector zeros(ndim)
+      dsi  = @MVector zeros(ndim)
+      thi  = @MVector zeros(ndim)
+      tsi  = @MVector zeros(ndim)
+      dci  = @MVector zeros(ndim)
+      cfi  = @MVector zeros(ndim)
+      cdi  = @MVector zeros(ndim)
+      cti  = @MVector zeros(ndim)
+      hki  = @MVector zeros(ndim)
+      phi  = @MVector zeros(ndim)
 
-      aa = zeros(3,3)
-      bb = zeros(3,3)
-      rr = zeros(3)
+      # aa = @MMatrix zeros(3,3)
+      # bb = @MMatrix zeros(3,3)
+      # rr = @MVector zeros(3)
         
       hm,  hm_thm, hm_dsm = 1e20*ones(3)
       hkm, hkm_thm, hkm_dsm, hkm_uem = 0*1e20*ones(4)
@@ -128,12 +128,12 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 #---- initialize ue to inviscid uinv, and initialize rhoe
       uei[1:n] = uinv[1:n]
       rhi = @. (1 + 0.5*gmi*Mach^2 * (1.0 - uei^2))^(1.0/gmi)
-    
-#      for i = 1:n
-#       uei[i] = uinv[i]
-#       trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-uei[i]^2)
-#       rhi[i] = trat^(1.0/gmi)
-#      end
+
+    #  @inbounds for i = 1:n
+    #   uei[i] = uinv[i]
+    #   trat = 1.0 + 0.5*gmi*Mach^2 * (1.0-uei[i]^2)
+    #   rhi[i] = trat^(1.0/gmi)
+    #  end
 
 #---- first point is not calculated if xi=0 there
       if(xi[1] == 0.0)
@@ -149,7 +149,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 #-    (this is to provide an intial guess only, later the global system is solved simultaneously via Newton iteration)
 
    direct = true
-   for i = 2:n
+ @inbounds for i = 2:n
 
         simi = xi[i-1] == 0.0
 #c      lami = simi    # laminar   similarity station
@@ -159,7 +159,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
         x = xi[i] #xlocation
         b = bi[i] #perimeter
         rn = rni[i] #dr/dn
-#[prash] previous points
+#[prash] previous points x minus
         xm = xi[i-1]
         bm = bi[i-1]
         rnm = rni[i-1]
@@ -195,7 +195,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
         direct = true
         hkprev = 0.
 
-        for iter = 1:20 
+      @inbounds for iter = 1:20 
           (h , h_th, h_ds,
           hk, hk_th, hk_ds, hk_ue,
           hc, hc_th, hc_ds, hc_ue,
@@ -228,7 +228,6 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
                       hsm, hsm_thm, hsm_dsm, hsm_uem,
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
-
 
           rr = aa\rr #solve linear system
           dth = -rr[1]
@@ -323,8 +322,8 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 
 #---- clear and accumulate source-influence matrix
       uvis_mdi=zeros(n,n)
-      for i = 1:n
-        for j = 1: n-1
+    @inbounds for i = 1:n
+      @inbounds for j = 1: n-1
           dx = xi[i] - 0.5*(xi[j+1]+xi[j])
           uvis_mdi[i,j+1] = uvis_mdi[i,j+1] + qopi/(dx*abs(dx))
           uvis_mdi[i,j  ] = uvis_mdi[i,j  ] - qopi/(dx*abs(dx))
@@ -335,7 +334,7 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 #------------------------------------------------------------
 #---- global Newton iteration
      npass = 20
-     for ipass = 1:npass 
+   @inbounds for ipass = 1:npass 
 
 #---- clear system matrix and righthand side
       rsys = zeros(nsys)
@@ -351,9 +350,9 @@ function blax(ndim, n,ite, xi, bi,rni, uinv, Reyn, Mach, fexcr)
 #---- set current uvis corresponding to current mdi
       dsi[1] = 0.
     
-      for i = 2: n
+    @inbounds for i = 2: n
         uvis[i] = uinv[i]
-        for j = 1: n
+      @inbounds for j = 1: n
           uvis[i] = uvis[i] + uvis_mdi[i,j]*mdi[j]
         end
       end
@@ -436,7 +435,7 @@ for i = 2:n
                       dim, dim_thm, dim_dsm, dim_uem)
 
 #------ put BL equations of small 3x3 system into big system
-        for k = 1:2
+      @inbounds for k = 1:2
           ksys = 3*(i-1) + k
           rsys[ksys] = rr[k]
 
@@ -466,7 +465,7 @@ for i = 2:n
         ksys = 3*(i-1) + k
         rsys[ksys] = ue - uvis[i]
 
-        for j = 1:n
+      @inbounds for j = 1:n
           lsys = 3*(j-1) + 2
           asys[ksys,lsys] = -uvis_mdi[i,j]
         end
@@ -536,7 +535,7 @@ end #end i = 2:n loop
 #---- set Newton changes, set max change >dmax, and set limiter rlx
         dmax = 0.
         rlx = 1.0
-        for i = 2:n
+      @inbounds for i = 2:n
           b  = bi[i]
           th = thi[i]
           md = mdi[i]
@@ -570,7 +569,7 @@ end #end i = 2:n loop
         end
 
 #------ perform Newton updated, with limiter if rlx < 1
-        for i = 2:n
+      @inbounds for i = 2:n
           thi[i] = thi[i] + rlx*dthi[i]
           dsi[i] = dsi[i] + rlx*ddsi[i]
           uei[i] = uei[i] + rlx*duei[i]
@@ -584,7 +583,7 @@ end
 
 #---- integrate running dissipation
       phi[1] = 0.
-      for i = 2: n
+    @inbounds for i = 2: n
         x  = xi[i]
         xm = xi[i-1]
 
