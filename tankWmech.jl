@@ -98,7 +98,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
             Ri = Ro
       end
       Winsul_sum = sum(Winsul)
-      fadd = 0.5
+      fadd = 0.1
       Wtank = (Wtank + Winsul_sum)*(1 + fadd)
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
