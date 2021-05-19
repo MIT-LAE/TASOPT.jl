@@ -489,6 +489,9 @@ Lconv = false # no convergence yet
 # -------------------------------------------------------    
 
     @inbounds for  iterw = 1:itermax
+        if iterw == itermax
+            println("Reached max iterations in weight sizing loop!")
+        end
         if(initwgt == 0)
             #Current weight iteration started from an initial guess so be cautious
             itrlx = 5
@@ -853,8 +856,6 @@ Lconv = false # no convergence yet
             parg[igSstrut] = Ssturt
 
             # Individual panel weights
-
-            #[TODO] again fuel is assumed to be in wings here - need to addressed
             Winn = Wsinn*(1.0 + fwadd) + rfmax*Wfinn
             Wout = Wsout*(1.0 + fwadd) + rfmax*Wfout
 
