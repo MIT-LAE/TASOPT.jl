@@ -64,6 +64,9 @@ real Fn_target;
 real deNOx_target, Tt41, N2_dmd;
 int flag;
 string inString;
+real solverIndeps1[] = { 0.129679, 0.113856, 4.23255, 10.7817, 54.9322, 0.541746, 14.6579 }; // Design restart values
+real solverIndeps2[] = { 18941.7, 0.684967, 66.5537, 0.226413, 2.0045, 2.95941, 5.02227, 36801.1, 30000 }; // OffDes1 restart values
+real solverIndeps3[];
 
 //---------------------------------------------
 // Start looping: 
@@ -92,7 +95,16 @@ while(flag!=999){
         //====================
         //  Run engine model
         //====================
-        restart("des.restart");
+        // restart("des.restart");
+        // Include this here directly to save on IO costs:
+        solver.independentNames = {"Eng.ind_TCLA_NC_fracW",
+                                    "Eng.ind_TCLA_CH_fracW",
+                                    "Eng.TrbH.S_map.ind_PRbase",
+                                    "Eng.TrbP.S_map.ind_PRbase",
+                                    "Eng.DESIGN_AIRFLOW",
+                                    "Eng.DESIGN_FUELFLOW",
+                                    "Eng.ind_Acat" };
+        solver.independentValues = solverIndeps1;
 
         run();
         CASE++;
@@ -102,11 +114,13 @@ while(flag!=999){
         //====================
         // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
         if(solver.converged == 1){
+            // SaveIndepVals("solver", "des.restart");
+            solverIndeps1 = solver.independentValues;
             // output.reopen();
             // #include "write_des_output.int"
             // output.close();
             // cout<<"1";
-
+            // #include "saveTShaftDes.fnc"
             // Write following outputs to outstream
             // eta_thermal, mdotf, BSFC, deNOx, mcat
             cout<<"1"<<"_"                                     // Success/ Failure indicator
@@ -114,10 +128,18 @@ while(flag!=999){
             <<Eng.FusEng.Wfuel/2.205<<"_"
             <<Eng.Perf.BSFC<<"_"
             <<Eng.PCEC.deNOx<<"_"
-            <<Eng.PCEC.m_cat;
+            <<Eng.PCEC.m_cat<<"_"
+            <<Eng.BrnPri.EINOx<<"_"
+            <<Eng.BrnPri.Fl_I.W/2.205<<"_"
+            <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
+            <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
+            <<Eng.CmpH.Fl_O.Wc;
 
         }
         else{
+            output.reopen();
+            #include "write_des_output.int"
+            output.close();
             // cout<<"ERROR! DES Did not converge"<<endl;
             cout<<"0"; // Tell's Julia that this didn't converge
         }
@@ -144,11 +166,14 @@ while(flag!=999){
         //====================
 
         if(first){
-            // #include "Tshaft_design.int"
-            restart("offdesTO.restart");
+            #include "Tshaft_design.int"
+            // restart("offdesTO.restart");
+            solver.independentValues = solverIndeps2;
+            // restart("offDes1.restart");
         }
         // else {
-        //     restart("offDes_fan_prev.restart");
+            // restart("offDes_fan_prev.restart");
+            // restart("offDes1.restart");
         // }
         run();
         CASE++;
@@ -159,7 +184,8 @@ while(flag!=999){
         // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
         if(solver.converged == 1){
             if(first){
-                SaveIndepVals("solver", "offDes1.restart");
+                // SaveIndepVals("solver", "offDes1.restart");
+                solverIndeps2 = solver.independentValues;
             }
             // output.reopen();
             // #include "write_offdes_output.int"
@@ -176,6 +202,67 @@ while(flag!=999){
             <<Eng.PCEC.deNOx;
         }
         else{
+            output.reopen();
+            #include "write_offdes_output.int"
+            output.close();
+            cout<<"0"; // Tell's Julia that this didn't converge
+            // cout<<"ERROR! OFFDES Did not converge"<<endl;
+        }
+
+    }
+
+    if(flag==333){
+        flag = 0;
+        inString = cin.getline();
+        //====================
+        //  Read input file
+        //====================
+        parseString(inString);
+        Eng.OFFDES2();
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+
+        //====================
+        //Run engine model
+        //====================
+
+        if(first){
+            #include "Tshaft_design.int"
+            // restart("offdesTO.restart");
+            restart("offDes2.restart");
+        }
+        // else {
+            // restart("offDes_fan_prev.restart");
+            // restart("offDes1.restart");
+        // }
+        run();
+        CASE++;
+
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            if(first){
+                SaveIndepVals("solver", "offDes2.restart");
+            }
+
+            // Write following outputs to outstream
+            // ShP, eta_thermal, mdotf, BSFC, deNOx 
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.ShP.HPX*746<<"_"
+            <<Eng.Perf.IdealThermalEff<<"_"
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.Perf.BSFC<<"_"
+            <<Eng.PCEC.deNOx;
+        }
+        else{
+            output.reopen();
+            #include "write_offdes_output.int"
+            output.close();
             cout<<"0"; // Tell's Julia that this didn't converge
             // cout<<"ERROR! OFFDES Did not converge"<<endl;
         }
