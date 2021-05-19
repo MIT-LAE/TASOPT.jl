@@ -136,6 +136,22 @@ Assembly Assembly Eng
 
 		setOption("switchBurn", "WFUEL");
 		FAR = .024225;
+
+		real EINOx = 0;
+
+		void postexecute(){
+			// Calcualte EINOx based on P3T3 method calibarated to CFM56-5B
+			real T3 = Fl_I.Tt*100/180;
+			real P3 = Fl_I.Pt*getUnitsFactor(Fl_I.Pt.units, "kPa");
+
+			real a,b,c,d;
+			a = 6.25528852e-08;
+			b = -1.17064467e-04;
+			c = 7.36953400e-02;
+			d = -1.50392850e+01;
+			EINOx = P3**0.4*(a*T3**3 + b*T3**2 + c*T3 +d);
+
+		}
 	}
 
 	//------------------------------
