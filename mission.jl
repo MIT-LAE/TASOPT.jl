@@ -131,7 +131,7 @@ function mission!(pari, parg, parm, para, pare,
            CLa = para[iaCL,ipclimb1+1]
            CLb = para[iaCL,ipcruise1 ]
      
-           for ip = ipclimb1+1 : ipclimbn
+           @inbounds for  ip = ipclimb1+1 : ipclimbn
              frac = float(ip       - (ipclimb1+1)) /
                     float(ipclimbn - (ipclimb1+1))
              para[iaCL,ip] = CLa*(1.0-frac^2) +
@@ -145,7 +145,7 @@ function mission!(pari, parg, parm, para, pare,
            CLd = para[iaCL,ipcruisen] * 0.96
            CLe = para[iaCL,ipcruisen] * 0.50
      
-           for ip = ipdescent1: ipdescentn-1
+           @inbounds for  ip = ipdescent1: ipdescentn-1
              frac = float( ip           -ipdescent1) /
 	              float((ipdescentn-1)-ipdescent1)
              fb = 1.0-frac
@@ -174,14 +174,14 @@ function mission!(pari, parg, parm, para, pare,
             pare[ieu0    , iprotate: ipclimb1] .= VTO
             para[iaReunit, iprotate: ipclimb1] .= ReTO
 
-           for ip = ipclimb1+1: ipclimbn
+           @inbounds for  ip = ipclimb1+1: ipclimbn
              frac = float(ip-ipclimb1) / float(ipclimbn-ipclimb1)
              V  =  VTO*(1.0-frac) + pare[ieu0,ipcruise1]*frac
              Re = ReTO*(1.0-frac) + para[iaReunit,ipcruise1]*frac
              pare[ieu0,ip] = V
              para[iaReunit,ip] = Re
            end
-           for ip = ipdescent1: ipdescentn
+           @inbounds for  ip = ipdescent1: ipdescentn
              frac = float(ip-ipdescent1) / float(ipdescentn-ipdescent1)
              V  =  VTO*frac + pare[ieu0,ipcruisen]*(1.0-frac)
              Re = ReTO*frac + para[iaReunit,ipcruisen]*(1.0-frac)
@@ -274,7 +274,7 @@ function mission!(pari, parg, parm, para, pare,
      #-    (takeoff ground temperature is neglected here -- std atmosphere is used)
            altb = para[iaalt,iptakeoff]
            altc = para[iaalt,ipcruise1]
-           for ip = ipclimb1+1: ipclimbn
+           @inbounds for   ip = ipclimb1+1: ipclimbn
              frac = float(ip-ipclimb1) / float(ipclimbn-ipclimb1)
              para[iaalt,ip] = altb*(1.0-frac) + altc*frac
 
@@ -296,7 +296,7 @@ function mission!(pari, parg, parm, para, pare,
            fTn = parg[igfTt4CLn]
            Tt4TO = pare[ieTt4,iptakeoff]
            Tt4CR = pare[ieTt4,ipcruise1]
-           for ip = ipclimb1: ipclimbn
+           @inbounds for   ip = ipclimb1: ipclimbn
              frac = float(ip      -ipclimb1) /
 	              float(ipclimbn-ipclimb1)
              Tfrac = fT1*(1.0-frac) + fTn*frac
@@ -322,7 +322,7 @@ function mission!(pari, parg, parm, para, pare,
       
 
       # integrate trajectory over climb
-      for ip = ipclimb1:ipclimbn
+      @inbounds for   ip = ipclimb1:ipclimbn
             if(Ldebug)
             printstyled("Climb angle integration - ip = ", ip-ipclimb1+1, "\n"; color=:light_green)
             end
@@ -346,7 +346,7 @@ function mission!(pari, parg, parm, para, pare,
                   printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
                         "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V"); color = :light_green)
             end
-            for iterg = 1:itergmax
+            @inbounds for  iterg = 1:itergmax
                   V = sqrt(2.0*BW*cosg/(ρ*S*CL))
                   Mach = V/Vsound
 
@@ -376,6 +376,7 @@ function mission!(pari, parg, parm, para, pare,
                   ifirst = false
                   pare[iedeNOx, ip] = deNOx
                   pare[iemdotf, ip] = mdotf
+                  pare[ieemot:ieethermal, ip] .= η
 
                   DoL = para[iaCD, ip]/ para[iaCL, ip]
 
@@ -521,6 +522,7 @@ function mission!(pari, parg, parm, para, pare,
             
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
+            pare[ieemot:ieethermal, ip] .= η
             
             # println("Cruise Ftotal, offdes = ", Ftotal)
             # println("Thrust req = ", F)
@@ -613,6 +615,7 @@ function mission!(pari, parg, parm, para, pare,
 
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
+            pare[ieemot:ieethermal, ip] .= η
 
             V   = pare[ieu0, ip]
             p0  = pare[iep0   ,ip]
@@ -679,7 +682,7 @@ function mission!(pari, parg, parm, para, pare,
       # Mission fuel fractions and weights
             fracWa = para[iafracW, ipclimb1  ]
             # fracWe = para[iafracW, ipdescentn] 
-            fracWe = para[iafracW, ipdescent1]*0.99# Pp temp set to 95% of ipdescent1 instead of ipdescentn since descent has not been calculated yet 
+            fracWe = para[iafracW, ipdescent1]*(1-(1-0.993)*((para[iaalt, ipdescent1]/ft_to_m)/39858.0))# Pp temp set to 95% of ipdescent1 instead of ipdescentn since descent has not been calculated yet 
             freserve = parg[igfreserve]
             fburn = fracWa - fracWe            # Burnt fuel fraction
             ffuel = fburn*(1.0+freserve)
