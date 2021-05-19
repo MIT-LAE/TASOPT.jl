@@ -292,7 +292,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
       CLF  = paraF[iaclpmax]*cosL^2
       CLhF = parg[igCLhCGfwd]
 
-      CLC  = paraF[iaCL]
+      CLC  = paraC[iaCL]
       CLhC = parg[igCLhspec]
 
       SM = parg[igSMmin]
