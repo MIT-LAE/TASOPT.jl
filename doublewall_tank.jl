@@ -51,10 +51,10 @@ function doublewalled_tank(Rfuse::Float64, dRfuse::Float64, fuse_clearance, d_va
     # Inner vessel
         Doi = 2*Roi # OD of inner vessel
         t_cyl  = p*Doi/(2*σa_inner*ew + 0.8*p) # Min thickness of cylindrical vessel ASME pressure vessel
-        println("t_cyl = $t_cyl")
+        # println("t_cyl = $t_cyl")
         K = (1/6) * (AR^2 + 2)            # Aspect ratio of 2:1 for the head (# Barron pg 359)
         t_head = p*Doi*K/(2*σa_inner*ew + 2*p*(K-1)) # Min thickness of hemisphirical/ ellpitical heads ASME pressure vessel
-        println("t_head = $t_head")
+        # println("t_head = $t_head")
         
         ## Areas
         Ahead = 2π*Roi^2 * (1.0/3.0 + 2.0/3.0*(1/AR)^1.6) ^ (1/1.6) # Surface area of head
@@ -102,18 +102,18 @@ function doublewalled_tank(Rfuse::Float64, dRfuse::Float64, fuse_clearance, d_va
         # pc = 2*E(t_cyl/Doo)^3 / (1 - poiss^2)
         pc = 4*pSL
         t_cyl = Doo*cbrt(pc*(1-poiss^2)/(2*E_outer))
-        println("t_cyl = $t_cyl")
+        # println("t_cyl = $t_cyl")
         
         if L/Doo < 1.140*(1-poiss^2)^(1.0/4)*sqrt(Doo/t_cyl) 
-            println("Warning: Outer Cycl isn't really 'long' - using 'short' tank relation instead")
+            # println("Warning: Outer Cycl isn't really 'long' - using 'short' tank relation instead")
             t_cyl = tank_buckling(pc, E_outer, poiss, L, Doo, t_cyl)
-            println("t_cyl = $t_cyl")
+            # println("t_cyl = $t_cyl")
             L/Doo > 1.140*(1-poiss^2)^(1.0/4)*sqrt(Doo/t_cyl) && println("ohhh snap")
         end
         
         K1 = 0.90 # See table 7.6 in Barron p. 367
         t_head = K1*Doo*sqrt(pc*sqrt(3*(1 - poiss^2))/ (0.5*E_outer))
-        println("t_head = $t_head")
+        # println("t_head = $t_head")
         
         ## Areas
         Ahead = 2π*Roo^2 * (1.0/3.0 + 2.0/3.0*(Lh_outer/Roo)^1.6) ^ (1/1.6) # Surface area of head
@@ -126,10 +126,13 @@ function doublewalled_tank(Rfuse::Float64, dRfuse::Float64, fuse_clearance, d_va
         Wcyl  = Vcyl *ρouter*gee
         Whead = Vhead*ρouter*gee   
         Wtank_outer = Wcyl + Whead
+        println("Wtank_outer = $Wtank_outer")
 
         tank_total = Wtank_inner + Wtank_outer + W_stiffners + Wfuel_tot
         η = Wfuel_tot/ tank_total *100
         println("Tank total = $tank_total, η = $η")
+        println("fadd = ", W_stiffners/(tank_total - W_stiffners))
+        println((tank_total - W_stiffners)*(1+0.032413))
 
 end
 
@@ -157,7 +160,7 @@ end
 Visualize the bending moment distribution
 """
 function plot_stiffeners()
-    plt.style.use(["~/prash.mplstyle", "tableau-colorblind10"])
+    plt.style.use(["./prash.mplstyle", "tableau-colorblind10"])
     fig, ax = plt.subplots(figsize = (8,5))
     for θ in [30, 60, 80]
         ϕ, k, ϕmax, kmax = stiffeners_bendingM(θ*π/180.0)
@@ -178,7 +181,26 @@ end
 
 gee = 9.81
 pSL = 101325.0
-doublewalled_tank(3.5, 0.0, 0.05, 0.3,  12.0,
-    2*101.325e3, 130.0e6, 1.0, 2.0, 7900.0, 4, 80*π/180.0,
-     130e6, 0.33, 69.0e9, 2700.0 ,
-     0.1, 67.0)
+
+Rfuse = 2.9
+dRfuse = 0.0
+fuse_clearance = 0.05
+d_vaccuum = 0.1
+Ltank = 7.0
+p = 2*101.325e3
+σa_inner = 130.0e6
+ew = 1.0
+AR = 2.0
+ρinner = 2700.0#7900.0
+Nstiff_in = 3
+θin_support = 80*π/180.0
+σa_outer = 130.0e6
+poiss = 0.33
+E_outer = 69.0e9
+ρouter = 2700.0
+ullage = 0.1
+ρfuel = 67.0
+doublewalled_tank(Rfuse, dRfuse, fuse_clearance, d_vaccuum,  Ltank,
+    p, σa_inner, ew, AR, ρinner, Nstiff_in, θin_support,
+     σa_outer, poiss, E_outer, ρouter,
+     ullage, ρfuel,)
