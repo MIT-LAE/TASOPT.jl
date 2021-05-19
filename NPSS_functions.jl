@@ -50,7 +50,7 @@ function NPSS_TShaft_input(NPSS, alt_in, MN_in,
     "Eng.Amb.alt_in = $(alt_in/ft_to_m);" *
     "Eng.Amb.MN_in  = $MN_in ;" *
    
-    "Eng.ShP.HPX = $(SHP_dmd/745.699) ;" *
+    "Eng.ShP.HPX = $(SHP_dmd/hp_to_W) ;" * #convert to hp before sending to NPSS
     "Tt41 = $Tt41 ;" *
     "deNOx_target = $deNOx ;"*
 
@@ -74,15 +74,15 @@ function NPSS_TShaft_input(NPSS, alt_in, MN_in,
         BSFC   = parse(Float64, out[4] )
         deNOx  = parse(Float64, out[5] )
         mcat   = parse(Float64, out[6] )
-    else
-        ηtherm = NaN
-        mdotf  = NaN
-        BSFC   = NaN
-        deNOx  = NaN
-        mcat   = NaN
+        EINOx1 = parse(Float64, out[7] )
+        EINOx2 = EINOx1*(1-deNOx)
+        mdot   = parse(Float64, out[8] )
+        Tt3    = parse(Float64, out[9] )
+        OPR    = parse(Float64, out[10])
+        Wc3    = parse(Float64, out[11])
     end
 
-    return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat
+    return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3
 
 end
 
@@ -100,28 +100,40 @@ Writes an input file for NPSS Turboshaft model in off-des conditions
 function NPSS_TShaft_run(NPSS, alt_in, MN_in, 
                             Tt41, N2_dmd, first)
 
-    write(NPSS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/0.3048); Eng.Amb.MN_in = $MN_in;first=$first;\n")
+    write(NPSS, "222 Tt41=$Tt41; N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/ft_to_m); Eng.Amb.MN_in = $MN_in;first=$first;\n")
     
     out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
     NPSS_success = parse(Float64, out[1] )
     
     if length(out) > 1
-        ShP    = parse(Float64, out[2] )
+        ShP    = parse(Float64, out[2] ) #NPSS returns in W
         ηtherm = parse(Float64, out[3] )
         mdotf  = parse(Float64, out[4] )
         BSFC   = parse(Float64, out[5] )
         deNOx  = parse(Float64, out[6] )
-    else
-        ShP    = NaN
-        ηtherm = NaN
-        mdotf  = NaN
-        BSFC   = NaN
-        deNOx  = NaN
     end
     
     return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx
 end
 
+function NPSS_TShaft_run2(NPSS, alt_in, MN_in, 
+    SHP_dmd, N2_dmd, first)
+
+write(NPSS, "333 Eng.ShP.HPX=$(SHP_dmd/hp_to_W); N2_dmd = $N2_dmd; Eng.Amb.alt_in=$(alt_in/ft_to_m); Eng.Amb.MN_in = $MN_in; first=$first;\n")
+
+out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
+NPSS_success = parse(Float64, out[1] )
+
+if length(out) > 1
+ShP    = parse(Float64, out[2] )
+ηtherm = parse(Float64, out[3] )
+mdotf  = parse(Float64, out[4] )
+BSFC   = parse(Float64, out[5] )
+deNOx  = parse(Float64, out[6] )
+end
+
+return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx
+end
 """
 Fan - Design mode:
 
@@ -191,4 +203,33 @@ function runNPSS_Fan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Pin::F
     end
 
     return NPSS_success, Fn_N, Power, Torque, Nmech, Mtip, ηprop, ηDF
+end
+function runNPSS_Fan2(NPSS::Base.Process, alt_in::Float64, MN_in::Float64, Fn::Float64,
+    Kinl::Float64, Φinl::Float64, first)
+
+    input_string = "333 "*
+"first = $first;" *
+"DuctedFan.Amb.alt_in = $(alt_in/ft_to_m);" *
+"DuctedFan.Amb.MN_in  = $MN_in ;" *
+"Fn_target = $Fn ;" *
+"DuctedFan.InEng.Kinl = $Kinl;" *
+"DuctedFan.Phiinl     = $Φinl;" *
+"\n"
+
+write(NPSS, input_string)
+
+out = split(String(readavailable(NPSS.out)), "_") # `readavailable(stream)` is blocking only if no data is available
+NPSS_success = parse(Float64, out[1] )
+
+if length(out) > 1
+Fn_N = parse(Float64, out[2] )
+Power  = parse(Float64, out[3] )
+Torque = parse(Float64, out[4] )
+Nmech  = parse(Float64, out[5] )
+Mtip   = parse(Float64, out[6] )
+ηprop  = parse(Float64, out[7] )
+ηDF    = parse(Float64, out[8] )
+end
+
+return NPSS_success, Fn_N, Power, Torque, Nmech, Mtip, ηprop, ηDF
 end
