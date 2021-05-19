@@ -26,9 +26,10 @@
      ql(.)    velocities V/V_inf along surface and wake
 
 """
-function axisol(xnose,xend,xblend1,xblend2, Amax, 
+function axisol!(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
-	Mach, nc, nldim)
+	Mach, nc, nldim,
+      xl, zl, sl, dyl, ql)
 
       
       idim  = 40
@@ -43,8 +44,8 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
       nyc = zeros(idim)
       nzc = zeros(idim)
       
-      aa = zeros(idim,idim)
-      rr = zeros(idim)
+      aa = @MMatrix zeros(idim,idim)
+      rr = @MVector zeros(idim)
 
 #cc   ispace =  0     # uniform x spacing
       ispace =  1     # cosine  x spacing
@@ -62,11 +63,11 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
         quit()
       end
 
-      xl = zeros(nldim)
-      zl = zeros(nldim)
-      sl = zeros(nldim)
-      dyl = zeros(nldim)
-      ql = zeros(nldim)
+      # xl  = @MVector zeros(nldim)
+      # zl  = @MVector zeros(nldim)
+      # sl  = @MVector zeros(nldim)
+      # dyl = @MVector zeros(nldim)
+      # ql  = @MVector zeros(nldim)
 
 
       beta = sqrt(1.0 - Mach^2)
@@ -75,7 +76,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
       Rcyl = sqrt(Amax/pi)
 
 #---- set body geometry points
-      for i = 1: ilte
+    @inbounds for  i = 1: ilte
         tl = float(i-1) / float(ilte-1)
         if(ispace==0) 
          frac = tl
@@ -116,7 +117,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
       end
 
 #---- wake geometry points
-      for i = ilte+1: nl
+      @inbounds for  i = ilte+1: nl
         xl[i] = 2.0*xend - xl[2*ilte-i]
         zl[i] = 0.125*zl[ilte-1]
 
@@ -129,7 +130,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 
 #---- calculate arc lengths
       sl[1] = 0.
-      for i = 1: nl-1
+      @inbounds for  i = 1: nl-1
         ds = sqrt((xl[i+1]-xl[i])^2 + (zl[i+1]-zl[i])^2)
         sl[i+1] = sl[i] + ds
       end
@@ -146,7 +147,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 
 #---- set control points xc(),zc(.) on actual surface
 #-     dyc() is lateral offset over edge-type tail section
-      for i = 1: nc
+      @inbounds for  i = 1: nc
         tlo = float(i-1) / float(ilte-1)
         tlp = float(i  ) / float(ilte-1)
 
@@ -211,11 +212,11 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 	aa = zeros(nc,nc)      
 
 #---- go over control points
-      for i = 1: nc
+      @inbounds for  i = 1: nc
 #
 #------ go over source segments, setting up V.n=0 contributions at control point i
         yc = 0.
-        for j = 1: nc
+        @inbounds for  j = 1: nc
           if(dyc[j] == 0.0) 
 #--------- singularity element is source line over xl[i]...xl[i+1]
            u0, v0, w0 =  vline(xc[i],yc,zc[i], xl[j],xl[j+1],beta)
@@ -236,7 +237,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 
 #---- solve for all source strenghts
       rr = aa\rr  #call gaussn(idim,nc,aa,rr,1)
-      for i = 1: nc
+      @inbounds for  i = 1: nc
         src[i] = -rr[i]
       end
       
@@ -246,7 +247,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 
 #---- calculate velocities at all xl,zl points
       ql[1] = 0.0
-      for i = 2: nl
+      @inbounds for  i = 2: nl
 #------ clear velocity accumulators
         ul = 0.
         vl = 0.
@@ -254,7 +255,7 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 #
 #------ accumulate source veleocities
         yl = 0.
-        for j = 1: nc
+        @inbounds for  j = 1: nc
           if(dyc[j] == 0.0) 
            u0,v0,w0 =  vline(xl[i],yl,zl[i], xl[j],xl[j+1],beta)
           else
@@ -277,7 +278,14 @@ function axisol(xnose,xend,xblend1,xblend2, Amax,
 #     &     xl[i],zl[i],sl[i], ql[i]
       end
 
-      return nl, ilte, xl,zl,sl,dyl,ql
+      #Create static arrays for performance
+      # sxl  = SVector{nldim}(xl)
+      # szl  = SVector{nldim}(zl)
+      # ssl  = SVector{nldim}(sl)
+      # sdyl = SVector{nldim}(dyl)
+      # sql  = SVector{nldim}(ql)
+
+      return nl, ilte #xl, zl, sl, dyl, ql
       end # axisol
 
 
