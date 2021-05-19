@@ -84,7 +84,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       CLsurf= zeros(Float64, nsurf)
       
       isum = 0
-      for isurf = 1: nsurf
+      @inbounds for  isurf = 1: nsurf
         isum = isum + npout[isurf] + npinn[isurf] + npimg[isurf] + 1
       end
 
@@ -100,7 +100,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
 
 
       i = 0
-for isurf = 1: nsurf
+@inbounds for  isurf = 1: nsurf
 
 #---- eta at center, side-of-body, wing break, tip
       e0 = 0.0
@@ -162,7 +162,7 @@ for isurf = 1: nsurf
       zp[i] = z0
 
 #---- set points over fuselage
-      for k = k0+1: ko
+      @inbounds for  k = k0+1: ko
         i = i+1
 
         fk = float(k-k0)/float(ko-k0)
@@ -196,7 +196,7 @@ for isurf = 1: nsurf
         zcp[i-1] = zc[i-1]
       end
 
-      for k = ko+1: ks
+      @inbounds for  k = ko+1: ks
         i = i+1
 
         fk = float(k-ko)/float(ks-ko)
@@ -227,7 +227,7 @@ for isurf = 1: nsurf
         zcp[i-1] = zc[i-1]
       end
 
-      for k = ks+1: k1
+      @inbounds for  k = ks+1: k1
         i = i+1
 
         fk = float(k-ks)/float(k1-ks)
@@ -267,10 +267,10 @@ for isurf = 1: nsurf
 
  ii = ilast[nsurf]
 
-      for isurf = 1: nsurf
+      @inbounds for  isurf = 1: nsurf
         i = ifrst[isurf]
         gw[i] = 0.
-        for i = ifrst[isurf]+1: ilast[isurf]-1
+        @inbounds for  i = ifrst[isurf]+1: ilast[isurf]-1
           gw[i] = gc[i-1] - gc[i]
         end
         i = ilast[isurf]
@@ -280,9 +280,9 @@ for isurf = 1: nsurf
 
       if(Lspec) 
 #----- scale circulations to get specified lift for each surface
-       for isurf = 1: nsurf
+       @inbounds for  isurf = 1: nsurf
          cltest = 0.
-         for i = ifrst[isurf]: ilast[isurf]-1
+         @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
            dy = yp[i+1] - yp[i]
            cltest = cltest + 2.0*gc[i]*dy * bref/(0.5*Sref)
          end
@@ -290,7 +290,7 @@ for isurf = 1: nsurf
          gfac = CLsurfsp[isurf]/cltest
 #c         write(*,*) isurf, gfac
 
-         for i = ifrst[isurf]: ilast[isurf]
+         @inbounds for  i = ifrst[isurf]: ilast[isurf]
            gc[i] = gc[i]*gfac
            gw[i] = gw[i]*gfac
          end
@@ -300,18 +300,18 @@ for isurf = 1: nsurf
 
       CL = 0.
       CD = 0.
-      for isurf = 1: nsurf
+      @inbounds for  isurf = 1: nsurf
 
       CLsurf[isurf] = 0.
 
-      for i = ifrst[isurf]: ilast[isurf]-1
+      @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
         dy = yp[i+1] - yp[i]
         dz = zp[i+1] - zp[i]
         ds = sqrt(dy^2 + dz^2)
 
         vsum = 0.
         wsum = 0.
-        for j = 1: ii
+        @inbounds for  j = 1: ii
 #-------- velocities of wake vortex, at control point
           yb = ycp[i] - yp[j]
           zb = zcp[i] - zp[j]
