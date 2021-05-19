@@ -534,6 +534,12 @@ function mission!(pari, parg, parm, para, pare,
       W   = para[iafracW, ip]*WMTO
       BW  = W + para[iaWbuoy, ip]
 
+      # Calculate Cruise-climb angle:
+      # ------
+      # γ ≈ dh/dR = dh/dp × dp/dW × dW/dR
+      #           = -1/(ρg) × p/W × -̇mf g/(Vcosγ)
+      #        ∴γ ≈ ̇mf*p/(ρWV)
+      # For conventional aircraft can represent this as function of TSFC: (see TASOPT docs Eq 438)
       # gamVcr1 = DoL*p0*TSFC/(ρ0*gee*V - p0*TSFC)
       gamVcr1 = mdotf*p0/(ρ0*W*V) # TSFC not the most useful for turbo-electric systems. Buoyancy weight has been neglected.
       para[iagamV, ip] = gamVcr1
