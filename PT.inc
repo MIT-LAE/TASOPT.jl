@@ -6,9 +6,9 @@ parpt[ipt_ngen   ] = 4
 parpt[ipt_nTshaft] = 2
 
 #Turboshaft
-parpt[ipt_pifan]   = 1.3
+parpt[ipt_pifan]   = 1.4
 parpt[ipt_piLPC]   = 3.0
-parpt[ipt_piHPC]   = 7.0
+parpt[ipt_piHPC]   = 17.0
 parpt[ipt_Tt41 ]   = 3200.0
 
 #PCEC
