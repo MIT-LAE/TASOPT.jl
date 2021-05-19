@@ -733,6 +733,26 @@ Lconv = false # no convergence yet
             # Wing structure
             # -----------------------------------------
             
+            # Fans, mot, inv centre of mass:
+            # -----
+            dy = 1.0 # space to leave near wing root and tip [m]
+            yi = LinRange(bo/2 + dy , b/2/2 - dy, Int(parg[igneng]/2))
+            ηi = yi/(b/2)
+            ηo = bo/b
+            ci = zero(yi)
+            for (i, η)  in enumerate(ηi)
+                if η <=ηs
+                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                else
+                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                end
+            end
+
+            tanL = tan(parg[igsweep]*π/180.0)
+            parg[igxfan] = mean(tanL * yi - 0.4ci) + parg[igxwbox]
+            parg[igxmot] = parg[igxfan] + 0.5
+            # -----
+            
             if (iwplan == 1)
                 Weng1 = parg[igWfan] + parg[igWmot] + parg[igWinv]
             else
