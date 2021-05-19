@@ -31,13 +31,14 @@ function TurboShaft(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,
 
     NPSS_success, 
     eta_thermal, mdotf, BSFC,
-     deNOx, mcat  = NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
+     deNOx, mcat, 
+     EINOx1, EINOx2, mdot, Tt3, OPR, Wc3  = NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
                         cpsi, w, lcat, deNOx_in, first; LHV = LHV)
 
     # include("NPSS_Turboshaft/Eng.output")
       
-    return eta_thermal, mdotf, BSFC, deNOx, mcat  #, MapScalars, NozArea
+    return eta_thermal, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3  #, MapScalars, NozArea
 
 end
 
@@ -75,7 +76,20 @@ function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64,
     return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
 
 end
+function TurboShaft2(NPSS_TS, alt_in::Float64, MN_in::Float64, 
+    ShP_dmd::Float64, Nshaft::Float64, first)
 
+# file_name = "NPSS_Turboshaft/Eng.output"
+
+NPSS_success, 
+ShP, eta_thermal, mdotf,
+BSFC, deNOx = NPSS_TShaft_run2(NPSS_TS, alt_in, MN_in, ShP_dmd, 30_000.0, first)
+
+# include(file_name)
+
+return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
+
+end
 
 """
 # Ducted Fan calculations
@@ -163,6 +177,21 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Pin::Fl
 
 end
 
+function DuctedFan2(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Float64,
+    Kinl::Float64, Φinl::Float64, first)
+
+# file_name = "NPSS_Turboshaft/Fan.output"
+
+NPSS_success, 
+Fn, Fan_power, Torque_fan, N_fan,
+Mtip, eta_prop, eta_DF = runNPSS_Fan2(NPSS, alt_in, MN_in, Fn, Kinl, Φinl, first)
+
+# Read the data
+# include(file_name)
+
+return Fn, Fan_power, Torque_fan, N_fan, Mtip, eta_prop, eta_DF
+
+end
 """
 PowerTrain 
 
@@ -212,7 +241,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
         parpt[ipt_Wfan]    = Wfan # Save fan weight
         parpt[ipt_NdesFan] = N_fan
-
+        
         Wpowertrain += Wfan*nfan
        xWpowertrain += Wfan*nfan*parg[igxfan]
 
@@ -260,7 +289,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         Wpowertrain += Wcable # Add to total powertrain weight
     #    xWpowertrain += Wcable*parg[igxcable] #need to add x of cable 
     # Size generator
-        PreqGen = PreqMot * ηinv * ηcable
+        PreqGen = PreqMot /( ηinv * ηcable)
 
         ratAsp   = parpt[ipt_ARgen]
         σAg      = parpt[ipt_sigAgGen]
@@ -291,11 +320,14 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
         Ptshaft = PgenShaft*ngen/nTshaft
         parpt[ipt_Ptshaft] = Ptshaft
-        NPSS_time += @elapsed ηthermal, mdotf, BSFC, deNOx_out, mcat = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
+        NPSS_time += @elapsed ηthermal, mdotf, BSFC,
+         deNOx_out, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3 = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx, first)
         
         parpt[ipt_calls_NPSS] += 1
+        
+        FAR = mdotf/mdot # fuel air ratio in each turboshaft engine
 
         mdotf_tot = mdotf*nTshaft
         Wcat = mcat*gee*1.5 # TODO replace fudge factor 1.5 with ammonia tanks/ pumps etc
@@ -305,8 +337,9 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         Wpowertrain += Wcat*nTshaft
        xWpowertrain += Wcat*nTshaft*parg[igxtshaft]
 
-        SPtshaft= 10.4e3 # W/kg Based on the RR T406 (4.58 MW power output). The GE38 (~5 MW) has a power density of 11.2 kW/kg
-        Wtshaft = gee*(PgenShaft*ngen/nTshaft)/SPtshaft
+        # SPtshaft = SPadv(Ptshaft/hp_to_W)*hp_to_W*2.205 #returns in hp/lb so convert to W/kg
+        SPtshaft= 10.4e3 # Alternate W/kg Based on the RR T406 (4.58 MW power output) power density = 10.4 kW/kg. The GE38 (~5 MW) has a power density of 11.2 kW/kg
+        Wtshaft = gee*(Ptshaft)/SPtshaft
         
         parg[igWtshaft] = Wtshaft
         parpt[ipt_Wtshaft] = Wtshaft
@@ -325,7 +358,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
            [Wfan, Wmot, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee,
            [SPmot, SPinv, SPgen, SPtshaft], mdotf_tot, BSFC,
-           deNOx, FanNozArea
+           deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, FanNozArea
 
 end
 
@@ -443,4 +476,91 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
            mdotf_tot, BSFC,
            deNOx_out
 
+end
+
+
+function PowerTrainOD2(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
+    alt_in::Float64, MN_in::Float64, Fn::Float64,
+    Kinl::Float64, Φinl::Float64,
+    parpt::Array{Union{Float64, Int64},1},
+    parmot::Array{Float64, 1},
+    pargen::Array{Float64, 1}, first, Ldebug)
+
+Hrej = 0.0
+nfan = parpt[ipt_nfan]
+ngen = parpt[ipt_ngen]
+nTshaft = parpt[ipt_nTshaft]
+Nshaft = 30000. #RPM
+NPSS_time = 0.0
+
+# Ducted fan
+
+# Thrust per fan
+Ffan = Fn/nfan
+
+NPSS_time += @elapsed Fn, Fan_power, Torque_fan, N_fan, Mtip,
+ηpropul, ηDF = DuctedFan2(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, first)
+
+parpt[ipt_calls_NPSS] += 1
+Pmot_out = -1000.0 * Fan_power
+
+GR = parpt[ipt_FanGR]
+Nmot = N_fan*GR
+
+# Off-des motor call
+Pmot_in, ηmot, PL = PMSM(Pmot_out, Nmot/60, parmot)
+
+Hwaste_motor =  Pmot_in - Pmot_out
+Hrej += nfan*Hwaste_motor # Heat rejected from motors
+    
+Pinv_out = Pmot_in
+# Off-des inverter
+ηinv = inverter(Pinv_out, parmot)
+Hwaste_inv = Pinv_out*(1-ηinv)
+Hrej += nfan * Hwaste_inv # Heat rejected from all inverters
+Pinv_in = Pinv_out / ηinv
+
+# Off-des cable
+ηcable, Wcable = cable() #TODO cable is dummy right now
+Hwaste_cable = Pinv_in*(1-ηcable)
+Hrej += Hwaste_cable  # Heat rejected from cables
+Pgen_out = Pinv_in/ηcable * ngen/nfan # for each inverter
+
+# Run generator
+Ngen = Nshaft
+Pgen_in, ηgen, PLgen = PMSM(Pgen_out, Ngen/60, pargen)
+
+Hwaste_gen = (Pgen_in - Pgen_out)
+Hrej += ngen*Hwaste_gen # Heat rejected from motors
+
+Pshaft = Pgen_in * nTshaft/ngen
+println(Pshaft)
+# Calculate Turboshaft power output
+NPSS_time += @elapsed Pshaft, ηthermal,
+mdotf, BSFC,
+deNOx_out = TurboShaft2(NPSS_TS, alt_in, MN_in, Pshaft, Nshaft, first)
+
+parpt[ipt_calls_NPSS] += 1
+
+mdotf_tot = mdotf*nTshaft
+
+
+
+parpt[ipt_time_NPSS] += NPSS_time
+
+return [ηmot, ηinv, ηcable, ηgen, ηthermal],
+[Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
+[Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
+mdotf_tot, BSFC,
+deNOx_out
+
+end
+
+"""
+Specific power for advanced turboshaft engines
+Curve fit for SP of turboshaft engines based on https://ntrs.nasa.gov/api/citations/20190025407/downloads/20190025407.pdf
+
+"""
+function SPadv(Php)
+    -1.185e-7*Php^2 + 2.008e-3*Php + 1.608
 end
