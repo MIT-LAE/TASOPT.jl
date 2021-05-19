@@ -151,14 +151,14 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 
 #---- drive to Res=0 (pitch trim) by one of three changes...
 
-      if(itrim==1) 
+      if (itrim==1) 
 #----- ... adjust horizontal tail CLh
        delCLh = -Res/Res_CLh
        CLh = CLh + delCLh
        cCM = cCM + cCM_CLh*delCLh
        para[iaCLh] = CLh
 
-      elseif(itrim==2) 
+      elseif (itrim==2) 
 #----- ... adjust horizontal tail area
        delSh = -Res/Res_Sh
        Sh = Sh + delSh
@@ -167,7 +167,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 
        parg[igSh] = Sh
 
-      elseif(itrim==3) 
+      elseif (itrim==3) 
 #----- ... adjust wing box location
        delxwbox = -Res/Res_xwbox
        xwbox = xwbox + delxwbox
@@ -312,11 +312,11 @@ function htsize(pari,parg,paraF,paraB,paraC)
             Wvtail = parg[igWvtail]
             Weng   = parg[igWeng  ]
 
-            Wtshaft = parg[igWtshaft] 
-            Wgen    = parg[igWgen   ] 
-            Winv    = parg[igWinv   ] 
-            Wmot    = parg[igWmot   ] 
-            Wfan    = parg[igWfan   ] 
+            # Wtshaft = parg[igWtshaft] 
+            # Wgen    = parg[igWgen   ] 
+            # Winv    = parg[igWinv   ] 
+            # Wmot    = parg[igWmot   ] 
+            # Wfan    = parg[igWfan   ] 
 
             Wtesys = parg[igWtesys ]
            xWtesys = parg[igxWtesys]
@@ -330,22 +330,22 @@ function htsize(pari,parg,paraF,paraB,paraC)
 
       xWfuse = parg[igxWfuse]
 
-      dxWfuel  = parg[igdxWfuel ]
+      # dxWfuel  = parg[igdxWfuel ]
       dxWwing  = parg[igdxWwing ]
       dxWstrut = parg[igdxWstrut]
       dxWhtail = parg[igdxWhtail]
       dxWvtail = parg[igdxWvtail]
-      dxlgmain = parg[igdxlgmain]
+      # dxlgmain = parg[igdxlgmain]
 
       xeng    = parg[igxeng]   
       xhpesys = parg[igxhpesys]
       xlgnose = parg[igxlgnose]
 
-      xtshaft = parg[igxtshaft ]
-      xgen    = parg[igxgen    ]
-      xinv    = parg[igxinv    ]
-      xmot    = parg[igxmot    ]
-      xfan    = parg[igxfan    ]
+      # xtshaft = parg[igxtshaft ]
+      # xgen    = parg[igxgen    ]
+      # xinv    = parg[igxinv    ]
+      # xmot    = parg[igxmot    ]
+      # xfan    = parg[igxfan    ]
       xftank  = parg[igxftank  ]
       
       # Calculate x location of cabin centroid and length of cabin
@@ -401,7 +401,7 @@ function htsize(pari,parg,paraF,paraB,paraC)
      WF ,  WB,  Wc = 0.0, 0.0, 0.0
      dmax = 0.0
 
-      for  iter = 1:itmax
+      @inbounds for  iter = 1:itmax
 
             # HT weight, moment and derivatives ∂Whtail/∂Sh
             Whtail    = (Whtail_o/Sh_o) * Sh
@@ -662,10 +662,10 @@ function cglpay(parg)
       Weng   = parg[igWeng  ]
 
       Wtesys = parg[igWtesys ]
-     xWtesys = parg[igxWtesys]
+#      xWtesys = parg[igxWtesys]
      
       Wftank = parg[igWftank ]
-     xWftank = parg[igxWftank]
+#      xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * parg[igfhpesys]
       Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -676,7 +676,7 @@ function cglpay(parg)
 
       delxw = parg[igxwing] - parg[igxwbox]
 
-#---- zero fuel is assumed to be worst case
+#---- zero fuel is assumed to be worst case forward and full fuel worst case aft
       rfuel  = 0.
       rfuelF = 0.
       # rfuelB = 0.
@@ -733,7 +733,7 @@ function cglpay(parg)
       b0 = We
       b1 = Wpay
 
-      for i = 1:2
+      @inbounds for i = 1:2
         a1 = (xcabin + (ξ[i]-0.5)*lcabin)*Wpay
         a2 =         - (ξ[i]-0.5)*lcabin *Wpay
 
