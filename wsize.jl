@@ -1097,6 +1097,7 @@ Lconv = false # no convergence yet
             pare[ieFAR, ip] = FAR
             pare[iemdotf, ip] = mdotf_tot
             pare[ieemot:ieethermal, ip] .= ηpt[2:end]
+            pare[ieHrejmot:ieHrejtot, ip] .= Hpt
             # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
