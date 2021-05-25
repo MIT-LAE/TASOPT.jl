@@ -613,11 +613,11 @@ function plot_details(parg, pari, para, parm; ax = nothing)
 
 end
 
-function label_bars(a, Bararray, labels; val_multiplier = 1)
+function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
     for (i,bar) in enumerate(Bararray)
         w, h = bar[1].get_width(), bar[1].get_height()
         x, y = bar[1].get_x(), bar[1].get_y()
-        a.text(x+w, y+h/2, @sprintf("%7.3f", h*val_multiplier), ha = "left", va = "center", fontsize = 8)
-        a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = 8)
+        a.text(x+w, y+h/2, @sprintf("%7.3f", h*val_multiplier), ha = "left", va = "center", fontsize = fontsize)
+        a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = fontsize)
     end
 end
