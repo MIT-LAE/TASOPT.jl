@@ -12,6 +12,7 @@ nmi_to_m = 1852.0
 deg_to_rad = π/180.0
 lbf_to_N = 4.448222
 kts_to_mps = 0.51444
+hp_to_W    = 745.7
 
 pari[iifuel]   = 1 # 1 = H2 120 MJ/kg
 pari[iifwcen ] = 1 # Fuel in center box
@@ -29,6 +30,7 @@ pari[iiHTsize] = 2 # set Sh via igCLhCGfwd at max-forward CG during landing
 pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
 
 pari[iiVTsize] = 1
+pari[iifwing] = 0 # no fuel in wings
 
  
 pax = 220
