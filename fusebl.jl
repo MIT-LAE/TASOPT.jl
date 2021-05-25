@@ -14,16 +14,9 @@ which are defined by the various geometric parameters in parg[.)
 """
 function fusebl!(pari, parg, para, ip)
       
-      include("index.inc") #include the array indices for pari, parg and para
-    
-#       integer pari[iitotal]
-#       real parg[igtotal], para[iatotal]
-
-#       integer nc, nbl, iblte
-#       common /fbl_i/
-#      &  nc,     ! number of control points for fuselage potential-flow problem
-#      &  nbl,    ! number of BL+wake points
-#      &  iblte   ! index of TE point
+#     nc,     # number of control points for fuselage potential-flow problem
+#     nbl,    # number of BL+wake points
+#     iblte   # index of TE point
 
       nbldim = 60
       xbl  = @MVector zeros(nbldim)     # body x coordinates
