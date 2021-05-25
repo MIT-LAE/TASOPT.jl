@@ -616,6 +616,7 @@ function mission!(pari, parg, parm, para, pare,
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
             pare[ieemot:ieethermal, ip] .= η
+            pare[ieHrejmot:ieHrejtot, ip] .= Hrej
 
             V   = pare[ieu0, ip]
             p0  = pare[iep0   ,ip]
