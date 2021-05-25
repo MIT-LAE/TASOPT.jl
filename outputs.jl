@@ -621,3 +621,107 @@ function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
         a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = fontsize)
     end
 end
+
+#737-800 from TASOPT w 220 pax
+function plot737compare()
+    fig, ax = plt.subplots(1,2,figsize=(8,5), dpi = 100)
+    
+    Wempty  = 110860.0* lbf_to_N
+    Wpay    =  47318.9* lbf_to_N
+    Wfuel   =  56415.7* lbf_to_N
+    WMTO    = 214594.7* lbf_to_N
+    
+    Wemptyfrac  = Wempty  /9.81/1000 #/WMTO
+    Wpayfrac    = Wpay    /9.81/1000 #/WMTO
+    Wfuelfrac   = Wfuel   /9.81/1000 #/WMTO
+    bar_width = 0.2
+    a = ax[1]
+    Wbar1 = a.bar(0.0, Wpayfrac  , color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
+    Wbar2 = a.bar(0.0, Wfuelfrac , color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
+    Wbar3 = a.bar(0.0, Wemptyfrac, color = "#D55E00", width = bar_width, label = "Wempty")
+    Wbars = [Wbar1, Wbar2, Wbar3]
+    Wlabels = ["", "", ""]
+    # label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
+    label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+    
+    Wpay  = parg[igWpay]
+    Wfuel = parg[igWfuel]
+    WMTO  = parg[igWMTO]
+    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+
+    Wemptyfrac = Wempty/9.81/1000 #/WMTO
+    Wfuelfrac  = Wfuel /9.81/1000 #/WMTO
+    Wpayfrac   = Wpay  /9.81/1000 #/WMTO
+
+    Wbar1 = a.bar(1.0, Wpayfrac  ,  color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
+    Wbar2 = a.bar(1.0, Wfuelfrac ,  color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
+    Wbar3 = a.bar(1.0, Wemptyfrac,  color = "#D55E00", width = bar_width, label = "Wempty")
+    Wbars = [Wbar1, Wbar2, Wbar3]
+    Wlabels = ["Wpay", "Wfuel", "Wempty"]
+    # label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
+    label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+    a.set_ylabel("Mass [tonnes]", fontsize = 20)
+    a.set_xticks([0, 1])
+    a.set_xticklabels(["737-800", "ZIA_FWT"], fontsize = 20)
+    
+    CD     = 0.03185
+    CDi    = 0.01114
+    CDfuse = 0.00622
+    CDwing = 0.00830
+    CDhtail= 0.00261
+    CDvtail= 0.00176
+    CDnace = 0.00182
+    
+    CDifrac    = CDi     #/CD
+    CDfusefrac = CDfuse  #/CD
+    CDwingfrac = CDwing  #/CD
+    CDhtailfrac= CDhtail #/CD
+    CDvtailfrac= CDvtail #/CD
+    CDnacefrac = CDnace  #/CD
+    
+    a = ax[2]
+    CDbars = []
+    push!(CDbars, a.bar(0, CDifrac    , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac+CDnacefrac, label = "CDi"))
+    push!(CDbars, a.bar(0, CDnacefrac , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac           , label = "CDnace"))
+    push!(CDbars, a.bar(0, CDvtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac                       , label = "CDvtail"))
+    push!(CDbars, a.bar(0, CDhtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac                                   , label = "CDhtail"))
+    push!(CDbars, a.bar(0, CDwingfrac , width = bar_width, bottom = CDfusefrac                                              , label = "CDwing"))
+    push!(CDbars, a.bar(0, CDfusefrac , width = bar_width, label = "CDfuse"))
+    
+    CDlabels = ["", "", "", "", "", ""]
+    
+    label_bars(a, CDbars, CDlabels; val_multiplier = 1/CD, fontsize = 18)
+    
+    
+    CD      = para[iaCD, ipcruise1]
+    CDfuse  = para[iaCDfuse, ipcruise1]
+    CDi     = para[iaCDi, ipcruise1]
+    CDwing  = para[iaCDwing, ipcruise1]
+    CDhtail = para[iaCDhtail, ipcruise1]
+    CDvtail = para[iaCDvtail, ipcruise1]
+    CDnace  = para[iaCDnace, ipcruise1]
+    
+    CDfusefrac  = CDfuse  #/CD
+    CDifrac     = CDi     #/CD
+    CDwingfrac  = CDwing  #/CD
+    CDhtailfrac = CDhtail #/CD
+    CDvtailfrac = CDvtail #/CD
+    CDnacefrac  = CDnace  #/CD
+    CDbars = []
+    push!(CDbars, a.bar(1, CDifrac    , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac+CDnacefrac, label = "CDi"))
+    push!(CDbars, a.bar(1, CDnacefrac , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac           , label = "CDnace"))
+    push!(CDbars, a.bar(1, CDvtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac                       , label = "CDvtail"))
+    push!(CDbars, a.bar(1, CDhtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac                                   , label = "CDhtail"))
+    push!(CDbars, a.bar(1, CDwingfrac , width = bar_width, bottom = CDfusefrac                                              , label = "CDwing"))
+    push!(CDbars, a.bar(1, CDfusefrac , width = bar_width, label = "CDfuse"))
+    
+    CDlabels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
+    
+    label_bars(a, CDbars, CDlabels; val_multiplier = 1/CD, fontsize = 18)
+    
+    a.set_ylabel("CD [-]", fontsize = 20)
+    a.set_xticks([0, 1])
+    a.set_xticklabels(["737-800", "ZIA"], fontsize = 20)
+    
+    plt.tight_layout()
+    end
