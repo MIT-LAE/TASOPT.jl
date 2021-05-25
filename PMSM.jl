@@ -388,9 +388,8 @@ function PMSM(P::Float64, N::Float64, parte::Array{Float64, 1})
             PL = PLiron + PLwind + PLcu
 
         Preq = P + PL
-        η    = P/Preq
 
-    return Preq, η, PL
+    return PL
 end
 
 """
