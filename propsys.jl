@@ -597,7 +597,7 @@ parpt[ipt_time_NPSS] += NPSS_time
 
 return [ηmot, ηinv, ηcable, ηgen, ηthermal],
 [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
-[Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
+[Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej],
 mdotf_tot, BSFC,
 deNOx_out
 
