@@ -114,7 +114,7 @@ Outputs:
 """
 function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
-                     π_fan::Float64, first)
+                     π_fan::Float64, rSnace, first)
     
     # file_name = "NPSS_Turboshaft/Fan.output"
  
@@ -133,11 +133,21 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
     # Sagerser 1971, NASA TM X-2406
     # Note: The term "weight" in Sagerser1971 is actually mass
     mfan = ktech*(135.0 * Dfan^2.7/sqrt(ARfan) * (bladeσ/1.25)^0.3 * (Utip/350.0)^0.3)
-    Wfan = mfan*gee*1.4 # TODO - relace fudge factor 1.4 with nacelle calcs
+
+    #Nacelle weight model from NASA CR 151970 but excluding core cowl for this ∵ this is only a ducted fan
+    Snace1 = rSnace * 0.25 * π*Dfan^2
+    Ainlet = 0.4*Snace1
+    Acowl  = 0.2*Snace1
+    Aexh   = 0.4*Snace1
+    Wnace1 = 4.45*(Ainlet/0.3048^2) * (2.5+0.0238*Dfan/0.0254) +
+             4.45*(Acowl /0.3048^2) *  1.9 +
+             4.45*(Aexh  /0.3048^2) * (2.5+0.0363*Dfan/0.0254)
+  
+    Wfan = mfan*gee + Wnace1*0.5 #TODO need more recent weight model for nace - here just using 50% of the DC10 one
 
     return Dfan, Fan_power, Torque_fan, N_fan, Mtip,
             eta_prop, eta_DF,
-            NozArea, Wfan
+            NozArea, Wfan, Snace1
 
 end
 
@@ -248,7 +258,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         NPSS_time = 0.0
         NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
-        FanNozArea, Wfan = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, first )
+        FanNozArea, Wfan, Snace1 = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, rSnace, first )
         parpt[ipt_calls_NPSS] += 1
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
@@ -375,7 +385,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
            [Wfan, Wmot, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee,
            [SPmot, SPinv, SPgen, SPtshaft], mdotf_tot, BSFC,
-           deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, FanNozArea
+           deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, FanNozArea, Snace1, AftSnace1
 
 end
 
