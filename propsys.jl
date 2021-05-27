@@ -373,6 +373,11 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         Wpowertrain += Wtshaft*nTshaft
        xWpowertrain += Wtshaft*nTshaft*parg[igxtshaft]
 
+    # Cryo cooling capacity:
+    # H2 hfg at BP ~ 432 kJ/kg + 22K to 400K --> 5465 kJ/kg => total 5898 kJ/kg
+    cryocool = mdotf_tot*5898e3
+    heatexcess = Hrej - cryocool
+
     parpt[ipt_Wpttotal] = Wpowertrain
 
     parg[ igWtesys] = Wpowertrain
@@ -382,7 +387,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
 
     return [ηpropul, ηmot, ηinv, ηcable, ηgen, ηthermal],
            [Pshaft_mot, PreqMot, PgenShaft, Ptshaft], 
-           [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
+           [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej], heatexcess,
            [Wfan, Wmot, Winv, Wcable, Wgen, Wtshaft, Wcat, Wpowertrain]./gee,
            [SPmot, SPinv, SPgen, SPtshaft], mdotf_tot, BSFC,
            deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, FanNozArea, Snace1, AftSnace1
@@ -505,12 +510,14 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
 
         abs(err)≥tol && printstyled("Warning [propsys]: Motor-fan speeds not converged! Error = ",abs(err),"\n"; color=:red)
 
-    Ftotal = Fn*nfan
+    Ftotal = Fn*nfan + 2*FnAft
+    cryocool = mdotf_tot*5898e3
+    heatexcess = Hrej - cryocool
 
     parpt[ipt_time_NPSS] += NPSS_time
     return Ftotal, [ηmot, ηinv, ηcable, ηgen, ηthermal],
            [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
-           [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej]./1000,
+           [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej], heatexcess,
            mdotf_tot, BSFC,
            deNOx_out
 
