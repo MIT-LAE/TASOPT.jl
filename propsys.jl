@@ -459,7 +459,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
         Pmot_out = Pmot_in - PL
         ηmot = Pmot_out/Pmot_in
         Hwaste_motor = PL
-        Hrej += nfan*Hwaste_motor # Heat rejected from motors
+        # Hrej += nfan*Hwaste_motor # Heat rejected from motors
         # println("Motor speed = ", Nmot)
         # println("Motor power = ", Pmot_out)
 
@@ -511,7 +511,8 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
         end
 
         abs(err)≥tol && printstyled("Warning [propsys]: Motor-fan speeds not converged! Error = ",abs(err),"\n"; color=:red)
-
+    Hrej += nfan*Hwaste_motor
+    
     Ftotal = Fn*nfan + 2*FnAft
     cryocool = mdotf_tot*5898e3
     heatexcess = Hrej - cryocool
