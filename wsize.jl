@@ -1106,15 +1106,25 @@ Lconv = false # no convergence yet
             pare[iemdotf, ip] = mdotf_tot
             pare[ieemot:ieethermal, ip] .= ηpt[2:end]
             pare[ieHrejmot:ieHrejtot, ip] .= Hpt
+            pare[ieHexcess, ip] = heatexcess
             # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
 
+            # Snace = Snace1*neng
+            # fSnace = Snace/S
+            # parg[igfSnace] = fSnace
+            lnace = parg[igdfan]*parg[igrSnace]*0.15
+            parg[iglnace] = lnace
+            
+            #Aft fan
+            lnace = parg[igdaftfan]*parg[igrSnace]*0.15
+            parg[iglnaceaft] = lnace
 
         # ----------------------
         #     Fly mission
         # ----------------------
-        time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, Ldebug)
+        time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
         parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         # ----------------------
@@ -1178,6 +1188,7 @@ Lconv = false # no convergence yet
  
     endNPSS(NPSS_TS)
     endNPSS(NPSS_Fan)
+    endNPSS(NPSS_AftFan)
 
     # println("Propsys time = ", time_propsys)
 end
