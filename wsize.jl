@@ -739,7 +739,7 @@ Lconv = false # no convergence yet
             # Fans, mot, inv centre of mass:
             # -----
             dy = 1.0 # space to leave near wing root and tip [m]
-            yi = LinRange(bo/2 + dy , b/2/2 - dy, Int(parg[igneng]/2))
+            yi = LinRange(bo/2 + dy , b/2 - dy, Int(parg[igneng]/2))
             ηi = yi/(b/2)
             ηo = bo/b
             ci = zero(yi)
@@ -752,7 +752,7 @@ Lconv = false # no convergence yet
             end
 
             tanL = tan(parg[igsweep]*π/180.0)
-            parg[igxfan] = mean(tanL * yi - 0.4ci) + parg[igxwbox]
+            parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 1.0
             parg[igxmot] = parg[igxfan] + 0.5
             # -----
             
