@@ -1077,6 +1077,7 @@ Lconv = false # no convergence yet
 
         if (iterw==1)
             NPSS_Fan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
+            NPSS_AftFan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
             NPSS_TS  = startNPSS("NPSS_Turboshaft/", "TP.bat" )
         end
            time_propsys += @elapsed  ηpt, Ppt, Hpt, mpt, SPpt,
