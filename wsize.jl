@@ -1080,11 +1080,18 @@ Lconv = false # no convergence yet
             NPSS_AftFan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
             NPSS_TS  = startNPSS("NPSS_Turboshaft/", "TP.bat" )
         end
-           time_propsys += @elapsed  ηpt, Ppt, Hpt, mpt, SPpt,
+            ρ0 = pare[ierho0, ipcruise1]
+            u0 = pare[ieu0  , ipcruise1] 
+            fBLIf = parg[igfBLIf]
+
+            Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
+            Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
+
+           time_propsys += @elapsed  ηpt, Ppt, Hpt, heatexcess, mpt, SPpt,
             mdotf_tot, BSFC,
             deNOx, EINOx1, EINOx2,
-            FAR, Tt3, OPR, Wc3, FanNozArea =  PowerTrain(NPSS_TS, NPSS_Fan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
-                                        0.0, 0.0, parg, parpt, parmot, pargen, ifirst)
+            FAR, Tt3, OPR, Wc3, FanNozArea, Snace1, AftSnace1 =  PowerTrain(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
+                                        Kinl, Φinl, parg, parpt, parmot, pargen, ifirst)
             ifirst = false
 
             pare[iedeNOx , ip] = deNOx
