@@ -206,7 +206,7 @@ Inputs:
 
 
 """
-function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, 
+function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::Base.Process,
                     alt_in::Float64, MN_in::Float64, Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parg::Array{Float64, 1},
@@ -222,9 +222,26 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         nfan    = parpt[ipt_nfan]
         ngen    = parpt[ipt_ngen]
         nTshaft = parpt[ipt_nTshaft]
+        FnSplit = parpt[ipt_Fnsplit] # How much of the thrust comes from aft BLI fans
 
+        FnAft = Fn*FnSplit
+        rSnace = parg[igrSnace]
+        #Assume 2 aft fans:
+        DAftFan, AftFan_power, AftFan_torque, AftFan_N, AftFan_Mtip,
+        AftFan_ηpropul, AftFan_η,
+        AftFanNozArea, WAftfan, AftSnace1 = DuctedFan(NPSS_AftFan, alt_in, MN_in, FnAft/2, Kinl, Φinl, 1.25, rSnace, first )
+
+        parg[igdaftfan] = DAftFan
+        
+        Pshaft_AftFan = -1000.0 * AftFan_power
+        Wpowertrain += WAftfan*2.0
+       xWpowertrain += WAftfan*2.0*parg[igxgen]
+        # println(DAftFan)
+        #Make these 0 for wings
+        Kinl = 0.0
+        Φinl = 0.0
     # Thrust per fan
-        Ffan = Fn/nfan
+        Ffan = (Fn - FnAft)/nfan
 
     # Call ducted fan design method
         πfan = parpt[ipt_pifan]
@@ -241,7 +258,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
         parpt[ipt_Wfan]    = Wfan # Save fan weight
         parpt[ipt_NdesFan] = N_fan
-        
+
         Wpowertrain += Wfan*nfan
        xWpowertrain += Wfan*nfan*parg[igxfan]
 
@@ -318,7 +335,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
         lcat = parpt[ipt_lcat]
         deNOx= parpt[ipt_deNOx]
 
-        Ptshaft = PgenShaft*ngen/nTshaft
+        Ptshaft = PgenShaft*ngen/nTshaft + Pshaft_AftFan # Assume one aft fan per Tshaft
         parpt[ipt_Ptshaft] = Ptshaft
         NPSS_time += @elapsed ηthermal, mdotf, BSFC,
          deNOx_out, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3 = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
@@ -362,7 +379,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
 end
 
-function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
+function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::Base.Process,
                     alt_in::Float64, MN_in::Float64, Tt41::Float64,
                     Kinl::Float64, Φinl::Float64,
                     parpt::Array{Union{Float64, Int64},1},
@@ -385,8 +402,16 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process,
 
         mdotf_tot = mdotf*nTshaft
 
+    #Aft fan
+        PAftFan = Pshaft*parpt[ipt_Fnsplit]
+        FnAft, AftFan_power, AftFan_torque, AftFan_N, AftFan_Mtip,
+        AftFan_ηpropul, AftFan_ηDF = DuctedFan(NPSS_AftFan, alt_in, MN_in, PAftFan, Kinl, Φinl, first)
+
+        Kinl = 0.0
+        Φinl = 0.0
+
     # Run generator
-        Pgen_in = Pshaft * nTshaft/ngen
+        Pgen_in = Pshaft*(1 - parpt[ipt_Fnsplit]) * nTshaft/ngen # Assume power is split the same as the thrust split at design
         Ngen = Nshaft
         Pgen_out, ηgen, PLgen = PMSM(Pgen_in, Ngen/60, pargen)
 
