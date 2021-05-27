@@ -413,9 +413,10 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
     # Run generator
         Pgen_in = Pshaft*(1 - parpt[ipt_Fnsplit]) * nTshaft/ngen # Assume power is split the same as the thrust split at design
         Ngen = Nshaft
-        Pgen_out, ηgen, PLgen = PMSM(Pgen_in, Ngen/60, pargen)
-
-        Hwaste_gen = (Pgen_in - Pgen_out)
+        PLgen = PMSM(Pgen_in, Ngen/60, pargen)
+        Pgen_out = Pgen_in - PLgen #don't directly use Pgen_out 
+        ηgen = Pgen_out/Pgen_in
+        Hwaste_gen = PLgen
         Hrej += ngen*Hwaste_gen # Heat rejected from motors
 
     # Off-des cable
@@ -437,9 +438,10 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
     # Off-des motor
         Nmot = parpt[ipt_NdesMot] #* (N_fan/parpt[ipt_NdesFan])
         # Off-des motor call
-        Pmot_out, ηmot, PL = PMSM(Pmot_in, Nmot/60, parmot)
-        # println(ηmot)
-        Hwaste_motor = Pmot_in - Pmot_out
+        PL = PMSM(Pmot_in, Nmot/60, parmot)
+        Pmot_out = Pmot_in - PL
+        ηmot = Pmot_out/Pmot_in
+        Hwaste_motor = PL
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
         # println("Motor speed = ", Nmot)
         # println("Motor power = ", Pmot_out)
@@ -476,10 +478,11 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
             end
             Nmot = N_fan*GR
             # Off-des motor call
-            Pmot_out, ηmot, PL = PMSM(Pmot_in, Nmot/60, parmot)
-
-            Hwaste_motor = Pmot_in - Pmot_out
-            Hrej += nfan*Hwaste_motor # Heat rejected from motors
+            PL = PMSM(Pmot_in, Nmot/60, parmot)
+            Pmot_out = Pmot_in - PL
+            ηmot = Pmot_out/Pmot_in
+            Hwaste_motor = PL
+            Hrej += nfan*Hwaste_motor
 
             # Ducted fan
             Pfan_in = Pmot_out
