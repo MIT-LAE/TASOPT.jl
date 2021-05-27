@@ -364,8 +364,10 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         Wpowertrain += Wcat*nTshaft
        xWpowertrain += Wcat*nTshaft*parg[igxtshaft]
 
-        # SPtshaft = SPadv(Ptshaft/hp_to_W)*hp_to_W*2.205 #returns in hp/lb so convert to W/kg
-        SPtshaft= 10.4e3 # Alternate W/kg Based on the RR T406 (4.58 MW power output) power density = 10.4 kW/kg. The GE38 (~5 MW) has a power density of 11.2 kW/kg
+        # SPtshaft = SPadv(Ptshaft/hp_to_W)*hp_to_W*2.205 #returns in hp/lb so convert to W/kg ONLY works for shaft power ≤ 8000 hp. 
+        SPtshaft = 10.4e3 # Alternate W/kg Based on the RR T406 (4.58 MW power output) power density = 10.4 kW/kg. The GE38 (~5 MW) has a power density of 11.2 kW/kg
+        # SPtshaft = 4.41e3 # Based of TP400
+        # SPtshaft = 8.0e3 # Rough estimate based on LEAP1B (choked flow ~ 340m/s and Fn = 130 kN P = 1/2 Fn Vj; Mass = 2780 kg)
         Wtshaft = gee*(Ptshaft)/SPtshaft
         
         parg[igWtshaft] = Wtshaft
