@@ -381,7 +381,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
         
         # Plot Tail
         tailz = 1
-        pari[iifclose] == 1 ? tailz = 21 : tailz = 1
+        parg[igzhtail] > 0 ? tailz = 21 : tailz = 1
             # ax.plot(xh,  yh, "-k", zorder = tailz)
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
@@ -399,6 +399,35 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
             ax.plot(xshell,  yshell, "k", lw = 1.5, zorder = 10)
             ax.plot(xshell, -yshell, "k", lw = 1.5, zorder = 10)
+        # Plot Engines:
+            D = parg[igdaftfan]
+            
+            lnace = parg[iglnaceaft]
+            x = parg[igxgen]
+            ax.plot([x,x, x+lnace, x+lnace, x], [ D/8,  D/8 + D,  D/8 + D*3/4,  D/8,  D/8], lw = 1.5, color = "r", zorder = 25)
+            ax.plot([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8, -D/8], lw = 1.5, color = "r", zorder = 25)
+
+            D = parg[igdfan]
+            neng = parg[igneng]
+            lnace = parg[iglnace]
+            dy = 1.0 # space to leave near wing root and tip [m]
+            yi = LinRange(bo/2 + dy , b/2 - dy, Int(neng/2))
+            xi = zero(yi)
+            ηi = yi/(b/2)
+            ηs = bs/b
+            ηo = bo/b
+            ci = zero(yi)
+            for (i, η)  in enumerate(ηi)
+                if η <=ηs
+                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                else
+                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                end
+            end
+
+            tanL = tan(parg[igsweep]*π/180.0)
+            @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
+            ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ], color = "r")
 
         # Plot NP and CG range
             ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
@@ -599,11 +628,17 @@ function plot_details(parg, pari, para, parm; ax = nothing)
         fracW = [para[iafracW, ipclimb1:ipcruisen]; para[iafracW, ipdescentn]]
         mdotf = pare[iemdotf, :]
         mdotH2O = pare[iemdotf, :].*9.0
+        gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
 
         a.plot(R, h)
         a.set_ylim(0, 60.0)
         a.set_xlabel("Range [nmi]")
         a.set_ylabel("Altitude [kft]")
+        
+        # ar = a.twinx()
+        # ar.plot(R, gamV, color = "r")
+        # ar.axhline(0.015, lw = 1.0, color = "r")
+        # ar.set_ylabel("Climb angle")
 
         # Draw stick figure to keep track
         stickfig(parg, pari, parm; ax = ax[3], label_fs = 12)
@@ -662,7 +697,7 @@ function plot737compare()
     label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
     a.set_ylabel("Mass [tonnes]", fontsize = 20)
     a.set_xticks([0, 1])
-    a.set_xticklabels(["737-800", "ZIA_FWT"], fontsize = 20)
+    a.set_xticklabels(["737-800", "ZIA"], fontsize = 20)
     
     CD     = 0.03185
     CDi    = 0.01114
