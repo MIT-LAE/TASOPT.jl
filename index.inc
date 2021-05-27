@@ -10,7 +10,8 @@
       iiHTsize =  8  # 1 = set Sh via Vh 2 = set Sh via CLh at forward CG trim
       iiVTsize =  9  # 1 = set Sv via Vv 2 = set Sv via CLv at engine-out trim
       iixwmove = 10  # 0 = wing centroid fixed 1 = move wing to balance
-      iitotal  = 10 
+      iifwing  = 11  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
+      iitotal  = 11
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
@@ -333,10 +334,14 @@
       const igxWftank  = 275
       
       const igRftank   = 276
+      const igWc3des   = 277
 
-      const igtotal    = 276
+      const igdaftfan  = 278
+      const iglnaceaft = 279
 
-# indices for turbo-electric systems
+      const igtotal    = 279
+
+# indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
       const ite_ratAg   = 2
       const ite_ratM    = 3
@@ -460,8 +465,9 @@
       const ipt_FanGR      = 55
 
       const ipt_Ptshaft   = 56
+      const ipt_Fnsplit   = 57 # Thrust split between fuse mounted fans and wing podded fans
       
-      const ipt_total     = 56
+      const ipt_total     = 57
 
 #---- indices for aero variables at each mission point
       iaalt     =  1
@@ -524,7 +530,9 @@
       iacdfs    = 59
       iacdps    = 60
       iaRerefs  = 61
-      iatotal   = 61 
+      iadCDBLIf = 62
+      iadCDBLIw = 63
+      iatotal   = 63 
 
 #---- indices for engine variables at each mission point
       iehfuel =   1
@@ -729,7 +737,34 @@
       iePLH2  = 198
       ieyg    = 199
 
-      ietotal = 199 
+      ieemot     = 200
+      ieeinv     = 201
+      ieecable   = 202
+      ieegen     = 203
+      ieethermal = 204
+
+      iePinmot     = 205
+      iePininv     = 206
+      iePincable   = 207
+      iePingen     = 208
+      iePinthermal = 209
+
+      ieEINOx1     = 210
+      ieEINOx2     = 211
+      ieFAR        = 212
+      ieOPR        = 213
+      ieWc3        = 214
+      
+      # Heat rejection:
+      ieHrejmot   = 215
+      ieHrejinv   = 216
+      ieHrejcab   = 217
+      ieHrejgen   = 218
+      ieHrejtot   = 219
+
+      ieHexcess   = 220
+
+      ietotal = 220
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
