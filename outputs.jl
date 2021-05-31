@@ -49,6 +49,20 @@ function weight_buildup(parg; io=stdout)
     @printf(io,"ηtank   = %3.1f %% \n\n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
 end
 
+function aero(parg, para; io = stdout)
+    printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
+
+        @printf(io, "Ref.Area= %6.5f m²\n", parg[igS])
+        @printf(io, "L/D     = %6.5f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
+        @printf(io, "CL      = %6.5f\n", para[iaCL, ipcruise1])
+        @printf(io, "CD      = %6.5f\n", para[iaCD, ipcruise1])
+        @printf(io, "CDfuse  = %6.5f\n", para[iaCDfuse, ipcruise1])
+        @printf(io, "CDi     = %6.5f\n", para[iaCDi, ipcruise1])
+        @printf(io, "CDwing  = %6.5f\n", para[iaCDwing, ipcruise1])
+        @printf(io, "CDhtail = %6.5f\n", para[iaCDhtail, ipcruise1])
+        @printf(io, "CDvtail = %6.5f\n", para[iaCDvtail, ipcruise1])
+        @printf(io, "CDnace  = %6.5f\n", para[iaCDnace, ipcruise1])
+end
 """
 `geometry` prints out the layout of the aircraft
 """
@@ -403,7 +417,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             D = parg[igdaftfan]
             
             lnace = parg[iglnaceaft]
-            x = parg[igxgen]
+            x = parg[igxtshaft]
             ax.plot([x,x, x+lnace, x+lnace, x], [ D/8,  D/8 + D,  D/8 + D*3/4,  D/8,  D/8], lw = 1.5, color = "r", zorder = 25)
             ax.plot([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8, -D/8], lw = 1.5, color = "r", zorder = 25)
 
@@ -411,7 +425,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             neng = parg[igneng]
             lnace = parg[iglnace]
             dy = 1.0 # space to leave near wing root and tip [m]
-            yi = LinRange(bo/2 + dy , b/2 - dy, Int(neng/2))
+            yi = LinRange(bo/2 + dy , b/2*4/5, Int(neng/2))
             xi = zero(yi)
             ηi = yi/(b/2)
             ηs = bs/b
@@ -427,7 +441,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
             tanL = tan(parg[igsweep]*π/180.0)
             @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
-            ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ], color = "r")
+            ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ], color = "r", lw = 1.5)
 
         # Plot NP and CG range
             ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
