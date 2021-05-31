@@ -9,6 +9,17 @@ function weight_buildup(parg; io=stdout)
     Wlgmain = parg[igWMTO] * parg[igflgmain]
     Wtotadd = Whpesys + Wlgnose + Wlgmain
 
+    Wbox    = parg[igWweb] + parg[igWcap]
+    Wflap   = Wbox * parg[igfflap]
+    Wslat   = Wbox * parg[igfslat]
+    Waile   = Wbox * parg[igfaile]
+    Wlete   = Wbox * parg[igflete]
+    Wribs   = Wbox * parg[igfribs]
+    Wspoi   = Wbox * parg[igfspoi]
+    Wwatt   = Wbox * parg[igfwatt]
+    Wwing   = Wbox + Wflap + Wslat + Waile + Wlete + Wribs + Wspoi + Wwatt
+
+
     printstyled(io, "Weight build-up:\n -------------- \n", color=:bold )
     @printf(io, "Wempty  + %10.1f N (%8.1f lb)\n", Wempty, Wempty/lbf_to_N)
     @printf(io, "Wpay    + %10.1f N (%8.1f lb)\n", parg[igWpay], parg[igWpay]/lbf_to_N)
@@ -30,6 +41,18 @@ function weight_buildup(parg; io=stdout)
     parg[igWtesys] + +parg[igWftank] + Wtotadd, 
     (parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
     parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
+
+    @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", parg[igWcap], parg[igWcap]/lbf_to_N)
+    @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", parg[igWweb], parg[igWweb]/lbf_to_N)
+    @printf(io,"Wflap   + %10.1f N (%8.1f lb)\n", Wflap, Wflap/lbf_to_N)
+    @printf(io,"Wslat   + %10.1f N (%8.1f lb)\n", Wslat, Wslat/lbf_to_N)
+    @printf(io,"Waile   + %10.1f N (%8.1f lb)\n", Waile, Waile/lbf_to_N)
+    @printf(io,"Wlete   + %10.1f N (%8.1f lb)\n", Wlete, Wlete/lbf_to_N)
+    @printf(io,"Wribs   + %10.1f N (%8.1f lb)\n", Wribs, Wribs/lbf_to_N)
+    @printf(io,"Wspoi   + %10.1f N (%8.1f lb)\n", Wspoi, Wspoi/lbf_to_N)
+    @printf(io,"Wwatt   + %10.1f N (%8.1f lb)\n", Wwatt, Wwatt/lbf_to_N)
+    @printf(io,"--------------------\n")
+    printstyled(io, @sprintf("Wwing  = %10.1f N (%8.1f lb)\n\n", Wwing, Wwing/lbf_to_N); color=:bold)
 
     @printf(io,"Wtshaft + %10.1f N × %d\n", parg[igWtshaft], parpt[ipt_nTshaft])
     @printf(io,"Wcat    + %10.1f N × %d\n", parg[igWcat   ], parpt[ipt_nTshaft])
