@@ -62,6 +62,9 @@ function aero(parg, para; io = stdout)
         @printf(io, "CDhtail = %6.5f\n", para[iaCDhtail, ipcruise1])
         @printf(io, "CDvtail = %6.5f\n", para[iaCDvtail, ipcruise1])
         @printf(io, "CDnace  = %6.5f\n", para[iaCDnace, ipcruise1])
+        @printf(io, "CDBLIf  = %6.5f\n", para[iadCDBLIf, ipcruise1])
+        @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
+
 end
 """
 `geometry` prints out the layout of the aircraft
