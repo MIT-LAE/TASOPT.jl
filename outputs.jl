@@ -91,6 +91,9 @@ function geometry(parg; io = stdout)
     @printf(io, "xcat    = %5.1f m (%8.1f ft)\n", parg[igxcat   ] , parg[igxcat    ]/ft_to_m)
     @printf(io, "xftank  = %5.1f m (%8.1f ft)\n", parg[igxftank ] , parg[igxftank  ]/ft_to_m)
     
+    @printf(io, "\nRfuse  = %5.1f m (%8.1f ft)\n", parg[igRfuse ] , parg[igRfuse  ]/ft_to_m)
+
+    
     SMfwd = (parg[igxNP] - parg[igxCGfwd])/parg[igcma]
     SMaft = (parg[igxNP] - parg[igxCGaft])/parg[igcma]
     printstyled(io, "\nStability:\n -------------- \n", color=:bold )
