@@ -268,12 +268,14 @@ function cdsum!(pari,parg,para,pare, icdfun)
 #---- apparent fuselage deltaCD from ingestion
       fBLIf = parg[igfBLIf]
       dCDBLIf = -fBLIf*DAfwake/S
+      para[iadCDBLIf] = dCDBLIf
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- apparent wing deltaCD from ingestion
       fBLIw = parg[igfBLIw]
       CDWwake = CDwing * 0.15  # assume 15% of the wing dissipation is in wake
       dCDBLIw = -fBLIw*CDWwake
+      para[iadCDBLIw] = dCDBLIw
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- total CD
