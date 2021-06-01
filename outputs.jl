@@ -440,6 +440,9 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             # ax.plot(xh,  yh, "-k", zorder = tailz)
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
+        xvt = [-0.4, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
+        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(parg[igcov]*parg[ighboxv]/2) 0.0])[:]
+        ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 
         # Plot fuse
             # ax.fill(xf,  yf, facecolor = "w", edgecolor = "k")
