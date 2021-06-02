@@ -725,7 +725,11 @@ function cglpay(parg)
 #
       ξ   = [ 0.0, 1.0]
       sgn = [-1.0, 1.0]
-      rf  = [ 0.0, 1.0]
+      if parg[igxftank] < xcabin
+            rf = [1.0, 0.0]
+      else
+            rf = [ 0.0, 1.0]
+      end
       rpay = zeros(Float64, 2)
       xcg  = zeros(Float64, 2)
 
