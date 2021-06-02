@@ -88,7 +88,7 @@ function aero(parg, para; io = stdout)
     @printf(io, "CDBLIf  = %6.5f\n", para[iadCDBLIf, ipcruise1])
     @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
 
-    printstyled(io, "Drag Areas = CD × Sref:\n", color=:bold)
+    printstyled(io, "\nDrag Areas = CD × Sref:\n", color=:bold)
     @printf(io, "CL     × Sref = %6.5f m²\n", parg[igS]*para[iaCL, ipcruise1])
     @printf(io, "CD     × Sref = %6.5f m²\n", parg[igS]*para[iaCD, ipcruise1])
     @printf(io, "CDfuse × Sref = %6.5f m²\n", parg[igS]*para[iaCDfuse, ipcruise1])
@@ -98,7 +98,7 @@ function aero(parg, para; io = stdout)
     @printf(io, "CDvtail× Sref = %6.5f m²\n", parg[igS]*para[iaCDvtail, ipcruise1])
     @printf(io, "CDnace × Sref = %6.5f m²\n", parg[igS]*para[iaCDnace, ipcruise1])
     @printf(io, "CDBLIf × Sref = %6.5f m²\n", parg[igS]*para[iadCDBLIf, ipcruise1])
-    @printf(io, "CDBLIw × Sref = %6.5f m²\n", parg[igS]*para[iadCDBLIw, ipcruise1])
+    @printf(io, "CDBLIw × Sref = %6.5f m²\n\n", parg[igS]*para[iadCDBLIw, ipcruise1])
 
 end
 """
@@ -705,6 +705,9 @@ function plot_details(parg, pari, para, parm; ax = nothing)
         # Draw stick figure to keep track
         stickfig(parg, pari, parm; ax = ax[3], label_fs = 12)
         plt.tight_layout()
+
+        #Print other details:
+        # ax[3].text(48,20, @sprintf("WMTO = %.1f tons\n\$ \\Lambda \$ = %.1f\$ ^\\circ \$\n", parg[igWMTO]/9.81/1000, parg[igsweep]), va = "top")
 
         return ax
 
