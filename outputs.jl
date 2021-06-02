@@ -468,8 +468,12 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
-            dy = 1.0 # space to leave near wing root and tip [m]
-            yi = LinRange(bo/2 + dy , b/2*4/5, Int(neng/2))
+            dy = 2*D # space to leave near wing root and tip [m]
+            if parg[igneng] == 2
+                yi = [ηs*b/2]
+            else
+                yi = LinRange(bo/2 + dy , b/2 *4/5, Int(parg[igneng]/2))
+            end
             xi = zero(yi)
             ηi = yi/(b/2)
             ηs = bs/b
@@ -510,8 +514,8 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
 
     # Annotations
-    ax.text(0, 15, @sprintf("PFEI = %5.3f J/Nm\nSpan = %5.1f m\nco    = %5.1f m\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], parg[igb], parg[igco], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+    ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
+     parm[imPFEI], parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
