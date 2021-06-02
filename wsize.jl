@@ -744,21 +744,34 @@ Lconv = false # no convergence yet
             ηi = yi/(b/2)
             ηo = bo/b
             ci = zero(yi)
+            ys = ηs*b/2
+            nout = 0   # number of outboard engines
+            yout = 0.0 # avg. moment arm of outboard engines
+            yinn = 0.0 # avg. moment arm of inboard engines
             for (i, η)  in enumerate(ηi)
                 if η <=ηs
                     ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                    yinn += yi[i]
                 else
+                    nout += 1
+                    yout += yi[i] - ys
                     ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
                 end
             end
+            nin = parg[igneng] - nout
+            yout = yout/nout   
+            yinn = yinn/nin
+            parg[igyeout] = yout
+            parg[igyeinn] = yinn
+            parg[igneout] = nout
 
             tanL = tan(parg[igsweep]*π/180.0)
-            parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 1.0
+            parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
             parg[igxmot] = parg[igxfan] + 0.5
             # -----
-            
+            # Weight of single engine/ ducted fan assembly
             if (iwplan == 1)
-                Weng1 = parg[igWfan] + parg[igWmot] + parg[igWinv]
+                Weng1 = parg[igWfan] + parg[igWmot] #+ parg[igWinv]
             else
                 Weng1 = 0.0
             end
@@ -787,7 +800,7 @@ Lconv = false # no convergence yet
             Wweb,  Wcap,  Wstrut,
             dxWweb,dxWcap,dxWstrut = surfw(gee,po,b,bs,bo,co,zs,
                                             λt,λs,γt, γs,
-                                            Nlift,iwplan,Weng1,
+                                            Nlift,iwplan,Weng1, nout, yout, nin, yinn,
                                             Winn,Wout,dyWinn,dyWout,
                                             sweep,wbox,hboxo,hboxs,rh, fLt,
                                             tauweb,σcap,σstrut,Ecap,Eweb,Gcap,Gweb,
@@ -967,7 +980,7 @@ Lconv = false # no convergence yet
             Wwebh,  Wcaph,  Wstruth,
             dxWwebh,dxWcaph,dxWstruth = surfw(gee,poh,bh,boh,boh,coh,zsh,
                                             λh,λhs,γh,γhs,
-                                            1, ihplan, Wengh,
+                                            1, ihplan, Wengh, 0.0, 0.0, 0.0, 0.0,
                                             0.0, 0.0, 0.0, 0.0,
                                             sweeph,wboxh,hboxh,hboxh,rhh, fLt,
                                             tauwebh,σcaph,σstrut,Ecap,Eweb,Gcap,Gweb,
@@ -1018,7 +1031,7 @@ Lconv = false # no convergence yet
             Wwebv2,  Wcapv2,  Wstrutv,
             dxWwebv2,dxWcapv2,dxWstrutv = surfw(gee,pov, bv2, bov, bov,cov,zsv,
                                                 λv, λvs, γv, γvs,
-                                                1.0,ivplan,Wengv,
+                                                1.0,ivplan,Wengv, 0.0, 0.0, 0.0, 0.0,
                                                 0.0, 0.0, 0.0, 0.0,
                                                 sweepv,wboxv,hboxv,hboxv,rhv, fLt,
                                                 tauwebv,σcapv,σstrut,Ecap,Eweb,Gcap,Gweb,

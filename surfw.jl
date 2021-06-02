@@ -7,7 +7,7 @@ Outputs:  Ss  ... Wstrut
 """
 function surfw(gee,po,b,bs,bo,co,zs,
 	lambdat,lambdas,gammat,gammas,
-	Nload,iwplan,We,
+	Nload,iwplan,We,neout, dyeout, neinn, dyeinn,
 	Winn,Wout,dyWinn,dyWout,
 	sweep,wbox,hboxo,hboxs,rh, fLt,
 	tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
@@ -32,11 +32,14 @@ function surfw(gee,po,b,bs,bo,co,zs,
       hrmso = hboxo * sqrt(1.0 - (1.0-rh)/1.5 + (1.0-rh)^2 / 5.0)
       hrmss = hboxs * sqrt(1.0 - (1.0-rh)/1.5 + (1.0-rh)^2 / 5.0)
 
-#---- strut-attach shear,moment from outer-wing loading
+      # Inboard engines
+
+
+#---- strut-attach shear,moment from outer-wing loading. Note added term to account for outboard engines
       Ss = (po*b   / 4.0)*(gammas+    gammat)*(1.0-etas) +
-	 dLt - Nload*Wout
+	 dLt - Nload*Wout - Nload*neout*We
       Ms = (po*b^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
-	 dMt - Nload*dyWout
+	 dMt - Nload*dyWout - Nload*neout*We*dyeout
 
 #---- size strut-attach station at etas
       cs = co*lambdas
@@ -76,12 +79,20 @@ function surfw(gee,po,b,bs,bo,co,zs,
        Tstrut = 0.
        Rstrut = 0.
        Pstrut = 0.
-       So = Ss - Nload*We +
+# Original from TASOPT
+       # So = Ss - Nload*We +
+	#  0.25*po*b*(1.0+gammas)*(etas-etao) -
+	#  Nload*Winn
+       # Mo = Ms + (Ss-Nload*We)*0.5*b*(etas-etao) +
+	#  (1.0/24.0)*po*b^2*(1.0+2.0*gammas)*(etas-etao)^2 -
+	#  Nload*dyWinn
+# Modifed to account for bending relief from multiple engines:
+       So = Ss - Nload*neinn*We +
 	 0.25*po*b*(1.0+gammas)*(etas-etao) -
 	 Nload*Winn
-       Mo = Ms + (Ss-Nload*We)*0.5*b*(etas-etao) +
+       Mo = Ms + Ss*0.5*b*(etas-etao) +
 	 (1.0/24.0)*po*b^2*(1.0+2.0*gammas)*(etas-etao)^2 -
-	 Nload*dyWinn
+	 Nload*dyWinn - Nload*neinn*We*dyeinn
 
 #----- limit So,Mo to Ss,Ms, which might be needed with heavy outboard engine
 #-      (rules out negatively-tapered structure, deemed not feasible for downloads)
