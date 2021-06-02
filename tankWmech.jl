@@ -19,7 +19,7 @@ Outputs:
 - Wtank: empty tank weight (N)
 """
 function tankWmech(gee::Float64, ρfuel::Float64,
-                  fstring::Float64, ffadd::Float64, Δp::Float64,
+                  ftankstiff::Float64, ftankadd::Float64, Δp::Float64,
                   Rfuse::Float64, dRfuse::Float64, wfb, nfweb,
                   sigskin, rho_insul, rhoskin,
                   Wfuel, m_boiloff, t_cond::Array{Float64,1}, clearance_fuse, AR)
@@ -73,7 +73,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
 #--- weights and weight moments
       Whead = rhoskin*gee*Vhead
       Wcyl  = rhoskin*gee*Vcyl
-      Wtank = (Wcyl + 2*Whead) *(1.0 + fstring + ffadd) # What is an appropriate mass addtion from fasteners/ supports
+      Wtank = (Wcyl + 2*Whead) *(1.0 + ftankstiff + ftankadd) # What is an appropriate mass addtion from fasteners/ supports
 
 #--- insulation weight!
       N = length(t_cond)
@@ -98,8 +98,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
             Ri = Ro
       end
       Winsul_sum = sum(Winsul)
-      fadd = 0.1
-      Wtank = (Wtank + Winsul_sum)*(1 + fadd)
+      Wtank = (Wtank + Winsul_sum)
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
       l_tank = l_cyl + 2*Lhead
