@@ -710,10 +710,18 @@ function cglpay(parg)
 
        xWfuel = parg[igxftank]*Wfuel
 
-#cc   xpay = xcabin + (ξpay-0.5)*lcabin*(1.0-rpay)
-#cc    W =      Wpay*rpay +  We
-#cc   xW = xpay*Wpay*rpay + xWe
+# Some derivation here:        
+#   xpay = xcabin + (ξpay-0.5)*lcabin*(1.0-rpay)  [1]                                   
+#    W =   We +      Wpay*rpay + rf* Wf           [2]                         
+#   xW =  xWe + xpay*Wpay*rpay + rf*xWf           [3]                         
+#  xcg = xW/W                                     [4]
 #
+#  Now, xpay*Wpay*rpay = (xcabin + (ξpay-0.5)*lcabin)*Wpay*rpay - (ξpay-0.5)*lcabin*Wpay*rpay²
+#                      =               a₁                 *rpay +            a₂         *rpay²
+#
+#  ∴ xW = a₀ + a₁rpay + a₂rpay² ;  a₀ = xWe + rf*xWf
+#     W = b₀ + b₁rpay           ;  b₀ =  We + rf* Wf, b₁ = Wpay
+
 # Explanation:
 #  now we find the stationary points of 
 #  xcg wrt to rpay. xcg = xW/W by setting 
@@ -733,17 +741,18 @@ function cglpay(parg)
       rpay = zeros(Float64, 2)
       xcg  = zeros(Float64, 2)
 
-      a0 = xWe
-      b0 = We
-      b1 = Wpay
-
       @inbounds for i = 1:2
+
+        a0 = xWe + rf[i]*xWfuel
+        b0 =  We + rf[i]* Wfuel
+        b1 = Wpay
+
         a1 = (xcabin + (ξ[i]-0.5)*lcabin)*Wpay
         a2 =         - (ξ[i]-0.5)*lcabin *Wpay
 
         AA = a2*b1
-        BB = 2.0*a2*b0 + 2.0*a2*rf[i]*Wfuel
-        CC = a1*b0 - a0*b1 + a1*rf[i]*Wfuel - xWfuel*rf[i]*b1
+        BB = 2.0*a2*b0 
+        CC = a1*b0 - a0*b1 
 
         rpay[i] = (-BB - sgn[i]*sqrt(BB^2 - 4.0*AA*CC)) * 0.5/AA
 
