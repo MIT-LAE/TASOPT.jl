@@ -754,6 +754,10 @@ function cglpay(parg)
         BB = 2.0*a2*b0 
         CC = a1*b0 - a0*b1 
 
+        if BB^2 - 4.0*AA*CC ≤ 0.0
+            println("a2 = $a2 ; b0^2 = $(b0^2); a0 = $(a0); b1^2 = $(b1^2); a1 = $(a1)")
+        end
+
         rpay[i] = (-BB - sgn[i]*sqrt(BB^2 - 4.0*AA*CC)) * 0.5/AA
 
         xpay = xcabin + (ξ[i]-0.5)*lcabin*(1.0-rpay[i])

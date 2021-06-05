@@ -313,6 +313,9 @@ time_propsys = 0.0
 
         # Turbo-electric weights
             parg[igWtesys ] = 0.32*Wpay
+            parg[igWtshaft] = 0.5*parg[igWtesys]
+            parg[igWcat]    = 0.1*parg[igWtesys]
+            parg[igWgen]    = 0.2*parg[igWtesys]
             parg[igWftank ] = 0.0
 
         # wing centroid x-offset form wingbox
