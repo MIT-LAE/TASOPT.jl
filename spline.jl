@@ -18,72 +18,89 @@ use SEVAL and/or DEVAL.
     
                                                       
 """
-function spline(S,X)
+function spline(S, X)
  
-N = length(S)
-B = zeros(N-1)
-A = zeros(N)
-C = zeros(N-1)
-D = zeros(N)
+# Create the N x N system to solve for spline parameters --> dX/dS
+    N = length(S)
+    B = zeros(N-1) # sub-diagonal
+    A = zeros(N)   # diagonal
+    C = zeros(N-1) # sup-diagonal
+    D = zeros(N)   # RHS
 
-for i=2:N-1
-    DSM = S[i] - S[i-1]
-    DSP = S[i+1] - S[i]
-    B[i] = DSP
-    A[i] = 2.0*(DSM+DSP)
-    C[i] = DSM
-    D[i] = 3.0*((X[i+1]-X[i])*DSM/DSP + (X[i]-X[i-1])*DSP/DSM)
-end
+    for i = 2:N - 1
+        ΔS₋ = S[i    ] - S[i - 1]
+        ΔS₊ = S[i + 1] - S[i    ]
+        ΔX₊ = X[i + 1] - X[i    ]
+        ΔX₋ = X[i    ] - X[i - 1]
 
-#---- set zero 3rd derivative end conditions
-  A[1] = 1.0
-  C[1] = 1.0
-  D[1] = 2.0*(X[2]-X[1]) / (S[2]-S[1])
+        B[i] = ΔS₊
+        A[i] = 2.0 * (ΔS₋ + ΔS₊)
+        C[i] = ΔS₋
+        D[i] = 3.0 * (ΔX₊ * ΔS₋/ΔS₊ + ΔX₋ * ΔS₊/ΔS₋)
+    end
 
-  B[N-1] = 1.0
-  A[N] = 1.0
-  D[N] = 2.0*(X[N]-X[N-1]) / (S[N]-S[N-1])
+# ---- set zero 3rd derivative end conditions
+    A[1] = 1.0
+    C[1] = 1.0
+    D[1] = 2.0 * (X[2] - X[1]) / (S[2] - S[1])
 
-  if(N==2)
-#----- if only two points are present, specify zero 2nd derivative instead
-#-     (straight line interpolation will result)
-   B[N] = 1.0
-   A[N] = 2.0
-   D[N] = 3.0*(X[N]-X[N-1]) / (S[N]-S[N-1])
-  end
+    B[N-1] = 1.0
+    A[N] = 1.0
+    D[N] = 2.0 * (X[N] - X[N - 1]) / (S[N] - S[N - 1])
 
-#---- solve for derivative array XS
-SYS = Tridiagonal(B,A,C)
-XS = SYS\D    
+    if (N == 2)
+# ----- if only two points are present, specify zero 2nd derivative instead
+# -     (straight line interpolation will result)
+        B[N-1] = 1.0
+        A[N] = 2.0
+        D[N] = 3.0 * (X[N] - X[N - 1]) / (S[N] - S[N - 1])
+    end
 
-  return XS
+# ---- solve for derivative array XS
+    SYS = Tridiagonal(B, A, C)
+    XS = SYS \ D    
+
+    return XS
 end # SPLINE
 
 
-function SEVAL(SS,X,XS,S)
-#--------------------------------------------------
+function SEVAL(SS, X, XS, S)
+# --------------------------------------------------
 #     Calculates X(SS)                             |
 #     XS array must have been calculated by SPLINE |
-#--------------------------------------------------
-i_low = 1
-i = N
+#                                                  |
+#     X is dependent variable, S is independent    |
+#     - Inputs                                     |
+#        XS = dX/dS                                |
+#        SS independent point to interpolate at    |
+#        X is dependent array                      |
+#        S is independent array                    |
+#                                                  |
+#     - Outputs                                    |
+#        XX is interpolated value                  |
+# --------------------------------------------------
+    i_low = 1
+    i = length(S)
 
-while(i-i_low>1)
-i_mid = Int((i+i_low)/2)	
-  if(SS < S[i_mid])
-   i = i_mid
-  else
-   i_low = i_mid
-  end
-end
+    # Use bisection to find right segment where SS is.
+    # i stores the closest index S[i] > SS
+    while (i - i_low > 1)
+        i_mid = Int(round((i + i_low) / 2))
+        if (SS < S[i_mid])
+            i = i_mid
+        else
+            i_low = i_mid
+        end
+    end
 
-DS = S[i] - S[i-1]
-T = (SS - S[i-1]) / DS
+    ΔS = S[i] - S[i - 1]
+    ΔX = X[i] - X[i - 1]
+    T  = (SS - S[i - 1]) / ΔS
 
-CX1 = DS*XS[i-1] - X[i] + X[i-1]
-CX2 = DS*XS[i]   - X[i] + X[i-1]
+    CX1 = ΔS*XS[i - 1] - ΔX
+    CX2 = ΔS*XS[i    ] - ΔX
 
-XX = T*X[i] + (1.0-T)*X[i-1] + (T-T*T)*((1.0-T)*CX1 - T*CX2)
+    XX = T * X[i] + (1.0 - T) * X[i - 1] + (T - T * T) * ((1.0 - T) * CX1 - T * CX2)
 
-return XX 
+    return XX 
 end # SEVAL
