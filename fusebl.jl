@@ -42,6 +42,8 @@ function fusebl!(pari, parg, para, ip)
 
       Pend, Pinf, KTE, Kend, Kinf = zeros(5)
 
+      Vol = 0.0
+
       ifclose = pari[iifclose]
 
       xnose   = parg[igxnose]
@@ -76,7 +78,13 @@ function fusebl!(pari, parg, para, ip)
                                                      anose,btail,ifclose,
                                                      Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
      
-#---- fuselage perimeter
+#---- fuselage volume and perimeter
+      @inbounds for i = 1:iblte-1
+            ra = 0.5*(zbl[i+1]+zbl[i])
+            Vol += π*ra^2*(xbl[i+1] - xbl[i])
+      end
+      parg[igfuseVol] = Vol
+      
       if(ifclose==0) 
        @inbounds for  ibl = 1: nbl
          bbl[ibl] = 2.0*pi*zbl[ibl]
