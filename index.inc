@@ -1,6 +1,6 @@
 
 #---- indices for integer variables and flags
-      iifuel   =  1  # index specifying the fuel (see gasfun.f)          
+      iifuel   =  1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
       iifwcen  =  2  # 0 = no fuel in center box  1 = fuel in center box
       iiwplan  =  3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
       iiengloc =  4  # 1 = engines on wing 2 = engines on fuselage   
@@ -338,8 +338,14 @@
 
       const igdaftfan  = 278
       const iglnaceaft = 279
+      const igfuseVol  = 280
+      const igneout    = 281
+      const igyeout    = 282
+      const igyeinn    = 283
+      const iglftankin = 284 #lftank input
+      const igLHVfuel  = 285
 
-      const igtotal    = 279
+      const igtotal    = 285
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
