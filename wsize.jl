@@ -1202,6 +1202,16 @@ Lconv = false # no convergence yet
 # BFL calculations/ Noise? / Engine perf 
 
     end
+    # Ldebug = true
+    W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo   = odperf!(pari, parg, parm, para, pare, 0.8, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
+    W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom  = odperf!(pari, parg, parm, para, pare, 0.9, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
+    W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh = odperf!(pari, parg, parm, para, pare, 1.0, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
+
+    open("ZIA_.PTF", "w") do f
+        printBADA(f, "ZIA", [W0lo, W0nom, W0high], max(h1,h2,h3),
+         V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+         hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom)
+    end
  
     endNPSS(NPSS_TS)
     endNPSS(NPSS_Fan)
