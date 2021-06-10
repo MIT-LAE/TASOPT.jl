@@ -15,7 +15,7 @@ and iterates until the MTOW converges to within a specified tolerance.
 """
 function wsize(pari, parg, parm, para, pare,
             itermax, wrlx1, wrlx2, wrlx3,
-            initwgt, initeng, iairf, Ldebug, printiter)
+            initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
 
 time_propsys = 0.0
     # Weight convergence tolerance 
@@ -745,8 +745,12 @@ Lconv = false # no convergence yet
             
             # Fans, mot, inv centre of mass:
             # -----
-            dy = 1.0 # space to leave near wing root and tip [m]
-            yi = LinRange(bo/2 + dy , b/2 - dy, Int(parg[igneng]/2))
+            dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
+            if parg[igneng] == 2
+                yi = [ηs*b/2]
+            else
+                yi = LinRange(bo/2 + dy , b/2 *4/5, Int(parg[igneng]/2))
+            end
             ηi = yi/(b/2)
             ηo = bo/b
             ci = zero(yi)
@@ -791,7 +795,6 @@ Lconv = false # no convergence yet
             else
                 rhofuel = parg[igrhofuel]
             end
-            
             Ecap = parg[igEcap]
             Eweb = Ecap
             Gcap = Ecap*0.5/(1.0+0.3)
@@ -1235,17 +1238,32 @@ Lconv = false # no convergence yet
 # BFL calculations/ Noise? / Engine perf 
 
     end
-    # Ldebug = true
-    W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo   = odperf!(pari, parg, parm, para, pare, 0.8, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
-    W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom  = odperf!(pari, parg, parm, para, pare, 0.9, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
-    W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh = odperf!(pari, parg, parm, para, pare, 1.0, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug)
+    if saveODperf
+        # Ldebug = true
+        W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFcrzmaxhigh, ROCmaxhigh  = odperf!(pari, parg, parm, para, pare, 1.0, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
+        W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFcrzmaxnom , ROCmaxnom   = odperf!(pari, parg, parm, para, pare, 0.8, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
+        W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFcrzmaxlo  , ROCmaxlo    = odperf!(pari, parg, parm, para, pare, 0.7, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
 
-    open("ZIA_.PTF", "w") do f
-        printBADA(f, "ZIA", [W0lo, W0nom, W0high], max(h1,h2,h3),
-         V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-         hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom)
+        open("ZIA_.PTF", "w") do f
+            printBADA(f, "ZIA", [W0lo, W0nom, W0high], max(h1,h2,h3),
+            V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom)
+        end
+        FL = [  0 ,    5 ,   10 ,   15 ,   20 ,   
+        30 ,   40 ,   60 ,   80 ,  100 , 
+        120 ,  140 ,  160 ,  180 ,  200 ,
+        220 ,  240 ,  260 ,  280 ,  290 , 
+        310 ,  330 ,  350 ,  370 ,  390 ,
+        410 ,  430 ,  431 ]
+        # # FL = LinRange(0,430, 44)
+        # open("ZIACRZ.perf", "w") do f
+        #     cruisechar(f, "ZIA", [1.0, 0.8, 0.7], para[iaMach, ipcruise1], FL,
+        #      hcat(FFcrzmaxhigh, FFcrzmaxnom, FFcrzmaxlo)',
+        #      hcat(crzmdotfhigh, crzmdotfnom, crzmdotflo)',
+        #      hcat(ROCmaxhigh, ROCmaxnom, ROCmaxlo)',
+        #      hcat(EGThigh, EGTnom, EGTlo)')
+        # end
     end
- 
     endNPSS(NPSS_TS)
     endNPSS(NPSS_Fan)
     endNPSS(NPSS_AftFan)
