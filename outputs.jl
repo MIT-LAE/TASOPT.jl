@@ -355,7 +355,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
     # Fuel tank
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
-        l = max(ltank, parg[iglftank])
+        l = max(parg[iglftankin], parg[iglftank])
         ARtank = 2.0
         xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
         xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
@@ -400,6 +400,9 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
         end
 
     #Seats
+    seats_per_row = 2*Int(parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
+    rows = Int(ceil(pax / seats_per_row))
+    
     yseats = zeros(Int(seats_per_row/2))
     yseats[1] = seat_width/2.0
     yseats[2] = yseats[1] + seat_width
@@ -449,14 +452,18 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             # ax.fill(xf, -yf, facecolor = "w", edgecolor = "k")
             ax.fill_between(xf, -yf, yf, facecolor = "w", edgecolor = "k", zorder = 5, linewidth = 2.0)
             
-            # Tank
+        # Tank
+        if (pari[iifwing] == 0)
             ax.plot(xt,  yt, "k", lw = 1.5, zorder = 10)
             ax.plot(xt, -yt, "k", lw = 1.5, zorder = 10)
             ax.fill_between(xt, -yt, yt, facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
             ax.text(parg[igxftank], 0.0, "LH\$_2\$", fontsize = label_fs-2.0, zorder = 10, ha="center", va="center")
+        end
 
-            ax.plot(xshell,  yshell, "k", lw = 1.5, zorder = 10)
-            ax.plot(xshell, -yshell, "k", lw = 1.5, zorder = 10)
+        # Xshell2
+        ax.plot(xshell,  yshell, "k", lw = 1.5, zorder = 10)
+        ax.plot(xshell, -yshell, "k", lw = 1.5, zorder = 10)
+
         # Plot Engines:
             D = parg[igdaftfan]
             
