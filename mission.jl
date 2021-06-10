@@ -25,7 +25,7 @@ NOTE:
  They are updated and returned in the same para[iagamV,ip] array.
 """
 function mission!(pari, parg, parm, para, pare,
-       NPSS_TS::Base.Process, NPSS_Fan::Base.Process, Ldebug)#, iairf, initeng, ipc1)
+       NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::Base.Process, Ldebug)#, iairf, initeng, ipc1)
     t_prop = 0.0
     calc_ipc1 = true
     ifirst = true
@@ -38,6 +38,11 @@ function mission!(pari, parg, parm, para, pare,
         iengloc = pari[iiengloc]
         ifclose = pari[iifclose]
         ifuel   = pari[iifuel  ]
+
+    # BLI
+        fBLIf = parg[igfBLIf]
+        DAfsurf = para[iaDAfsurf, ipcruise1]
+        KAfTE = para[iaKAfTE, ipcruise1]
 
     # Mission range
         Rangetot = parm[imRange]
@@ -153,13 +158,6 @@ function mission!(pari, parg, parm, para, pare,
 	                       CLe*(1.0-fb^2)
            end
      
-#      #---- interpolate altitudes over climb
-#            altb = para[iaalt,iptakeoff]
-#            altc = para[iaalt,ipcruise1]
-#            for ip = ipclimb1+1: ipclimbn
-#              frac = float(ip-ipclimb1) / float(ipclimbn-ipclimb1)
-#              para[iaalt,ip] = altb*(1.0-frac) + altc*frac
-#            end
      
      #---- estimate takeoff speed and set V,Re over climb and descent
            cosL = cos(parg[igsweep]*π/180.0)
@@ -368,27 +366,36 @@ function mission!(pari, parg, parm, para, pare,
                         icdfun = 1
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+      
+                  ρ0 = pare[ierho0, ipcruise1]
+                  u0 = pare[ieu0  , ipcruise1] 
+                  Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
+                  Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
-                  t_prop += @elapsed Ftotal, η, P, Hrej,
+                  t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
                   mdotf, BSFC,
-                  deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                                0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+                  deNOx, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                                Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
                   ifirst = false
                   pare[iedeNOx, ip] = deNOx
                   pare[iemdotf, ip] = mdotf
                   pare[ieemot:ieethermal, ip] .= η
+                  pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+                  pare[ieHexcess, ip] = heatexcess
 
                   DoL = para[iaCD, ip]/ para[iaCL, ip]
 
                   # Calculate improved flight angle
                   ϕ = Ftotal/BW
                   sing = (ϕ - DoL*sqrt(1.0 - ϕ^2 + DoL^2))/(1.0 + DoL^2)
-                  cosg = sqrt(1.0 - sing^2)
-                  gamV = atan(sing, cosg)
+                  gamV = asin(sing)
+                  # cosg = sqrt(1.0 - sing^2)
+                  # gamV = atan(sing, cosg)
 
                   dgamV = gamV - para[iagamV, ip]
                   
                   para[iagamV, ip] = gamV
+                  para[iaROC, ip]  = sing*V*60/ft_to_m #ft per min
                   if(Ldebug)
                         printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
                                  iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V); color =:light_green)
@@ -515,14 +522,21 @@ function mission!(pari, parg, parm, para, pare,
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            t_prop += @elapsed Ftotal, η, P, Hrej,
+            ρ0 = pare[ierho0, ipcruise1]
+            u0 = pare[ieu0  , ipcruise1] 
+            Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
+            Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
+
+            t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
-            deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                          0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+            deNOx, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                          Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
             
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
             pare[ieemot:ieethermal, ip] .= η
+            pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+            pare[ieHexcess, ip] = heatexcess
             
             # println("Cruise Ftotal, offdes = ", Ftotal)
             # println("Thrust req = ", F)
@@ -608,15 +622,21 @@ function mission!(pari, parg, parm, para, pare,
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            t_prop += @elapsed Ftotal, η, P, Hrej,
+            ρ0 = pare[ierho0, ipcruise1]
+            u0 = pare[ieu0  , ipcruise1] 
+            Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
+            Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
+
+            t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
-            deNOx = PowerTrainOD(NPSS_TS, NPSS_Fan, para[iaalt, ip], Mach, pare[ieTt4, ip],
-                                          0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+            deNOx, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                                          Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
 
             pare[iedeNOx, ip] = deNOx
             pare[iemdotf, ip] = mdotf
             pare[ieemot:ieethermal, ip] .= η
             pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+            pare[ieHexcess, ip] = heatexcess
 
             V   = pare[ieu0, ip]
             p0  = pare[iep0   ,ip]
