@@ -738,6 +738,9 @@ function cglpay(parg)
       else
             rf = [ 0.0, 1.0]
       end
+      if parg[igrhofuel] > 200
+            rf = [0.0, 0.0]
+      end
       rpay = zeros(Float64, 2)
       xcg  = zeros(Float64, 2)
 
