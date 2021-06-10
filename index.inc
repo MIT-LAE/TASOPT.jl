@@ -538,7 +538,8 @@
       iaRerefs  = 61
       iadCDBLIf = 62
       iadCDBLIw = 63
-      iatotal   = 63 
+      iaROC     = 64
+      iatotal   = 64 
 
 #---- indices for engine variables at each mission point
       iehfuel =   1
