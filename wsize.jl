@@ -29,6 +29,8 @@ time_propsys = 0.0
     NPSS_Fan = Base.Process
     NPSS_AftFan = Base.Process
 
+    update_fuse!(parg)
+
     # Flags
     ifuel   = pari[iifuel  ] # Fuel type 24 == kerosene TODO need to update this for LH2
     ifwcen  = pari[iifwcen ]

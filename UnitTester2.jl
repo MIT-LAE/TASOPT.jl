@@ -278,6 +278,12 @@ include("mission.jl")
 
 include("input.jl")
 include("outputs.jl")
+include("savemodel.jl")
+include("update_fuse.jl")
+include("cost_est.jl")
+include("printBADA.jl")
+include("odperformance.jl")
+include("AircraftDeck.jl")
 
 const gee = 9.81
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
