@@ -42,6 +42,7 @@ time_propsys = 0.0
     iHTsize = pari[iiHTsize]
     iVTsize = pari[iiVTsize]
     ixwmove = pari[iixwmove]
+    ifwing  = pari[iifwing ]
 
     # Unpack number of powertrain elements
        nfan    = parpt[ipt_nfan]
@@ -1149,38 +1150,68 @@ Lconv = false # no convergence yet
         # ----------------------
         #     LH₂ Tank weight
         # ----------------------
-        hconvgas = 0.0
-        h_LH2 = 210.0
-        Tfuel = 20.0
-        Tair  = 288.0 #Heated cabin temp
-        h_v = 447000.0
-        t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies
-        k = ones(length(t_cond)).*5.0e-3#foam conductivities
-        hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
-        time_flight = para[iatime, ipdescent1]
-        sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
-        rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
-        rhoskintank =  2825.0 #Al 2219 / energies
-        max_boiloff = 0.1
-        ARtank = 2.0
-        clearance_fuse = 0.10
-        rhofuel = parg[igrhofuel] 
-        ptank = 2.0 #atm
+        if (pari[iifwing] == 0) # if fuel isn't in wings then you need a tank for it!
+            hconvgas = 0.0
+            h_LH2 = 210.0
+            Tfuel = 20.0
+            Tair  = 288.0 #Heated cabin temp
+            h_v = 447000.0
+            t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies
+            k = ones(length(t_cond)).*5.0e-3#foam conductivities
+            hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
+            time_flight = para[iatime, ipdescent1]
+            sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
+            rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
+            rhoskintank =  2825.0 #Al 2219 / energies
+            max_boiloff = 0.1
+            ARtank = 2.0
+            clearance_fuse = 0.10
+            rhofuel = parg[igrhofuel] 
+            ptank = 2.0 #atm
+            ftankstiff = 0.1
+            ftankadd   = 0.1
+            
+            cargotank = false
+            
+            if cargotank
+                Wfmaintank  = parg[igWfuel]*2/3
+                Wfcargotank = parg[igWfuel]*1/3
+            else
+                Wfmaintank  = parg[igWfuel]
+                Wfcargotank = 0.0
+            end
 
-        Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
-        m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-        Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank*101325.0,
-                      Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-                      h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, rho_insul, rhoskintank, 
-                      parg[igWfuel], max_boiloff, clearance_fuse, ARtank)
-        
-        parg[igWfmax] = Vfuel*rhofuel*9.81
-        parg[igWftank] = Wtank
-        parg[igxWftank] = Wtank * parg[igxftank]
-        parg[iglftank] = ltank
-        parg[igRftank] = Rtank
-        parg[igWinsftank] = Winsul_sum
+            Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+            m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+            Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank*101325.0,
+                        Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+                        h_v, t_cond, k, hconvair, time_flight, ftankstiff,ftankadd,
+                        wfb, nfweb, sigskin, rho_insul, rhoskintank, 
+                        Wfmaintank, max_boiloff, clearance_fuse, ARtank)
+            
+            parg[igWfmax] = Vfuel*rhofuel*9.81
+            parg[igWftank] = Wtank
+            parg[igxWftank] = Wtank * parg[igxftank]
+            parg[iglftank] = ltank
+            parg[igRftank] = Rtank
+            parg[igWinsftank] = Winsul_sum
+
+            if cargotank
+                Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+                m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+                Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank*101325.0,
+                            Rfuse/2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
+                            h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
+                            wfb, nfweb, sigskin, rho_insul, rhoskintank, 
+                            Wfcargotank, max_boiloff, clearance_fuse, ARtank)
+
+                parg[igWfmax] += Vfuel*rhofuel*9.81
+                parg[igWftank] += Wtank
+                parg[igxWftank] += Wtank * parg[igxwbox]
+                parg[igWinsftank] += Winsul_sum
+
+            end
+        end
 
 
 # Get mission fuel burn (check if fuel capacity is sufficent)
