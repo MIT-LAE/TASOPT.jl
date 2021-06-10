@@ -105,7 +105,16 @@ function surfcd2(
         Rec   = Reco *  C    * (1.0+fdu)
         Mperp = Mach * cosL  * (1.0+fdu)
       
-	cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, AMa,Acl,Atau,ARe,A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M)
+	# cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, AMa,Acl,Atau,ARe,A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M)
+	cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, Acl, Aτ, AMa,
+                                          A,
+                                          A_M,
+                                          A_τ,
+                                          A_cl,
+                                          A_M_τ,
+                                          A_M_cl,
+                                          A_cl_τ,
+                                          A_M_cl_τ)
         #println(cdf1, " ", cdp1, " ", cm)
         
         Refac = (Rec/ARe)^aRexp
@@ -139,7 +148,16 @@ function surfcd2(
         Rec   = Reco *  C    * (1.0+fdu)
         Mperp = Mach * cosL  * (1.0+fdu)
        
-        cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, AMa,Acl,Atau,ARe,A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M)
+      #   cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, AMa,Acl,Atau,ARe,A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M)
+        cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, Acl, Aτ, AMa,
+                                                A,
+                                                A_M,
+                                                A_τ,
+                                                A_cl,
+                                                A_M_τ,
+                                                A_M_cl,
+                                                A_cl_τ,
+                                                A_M_cl_τ)
         
 	Refac = (Rec/ARe)^aRexp
         cdf = cdf1*Refac * fexcd * (1.0+fdu)^3
