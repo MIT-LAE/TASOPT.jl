@@ -231,6 +231,7 @@ using Profile, UnicodePlots
 using PyPlot
 pygui(true)
 # plt.style.use(["~/prash.mplstyle", "tableau-colorblind10"])
+using Dates
 
 include("index.inc")
 include("atmos.jl")
@@ -248,18 +249,18 @@ include("surfw.jl")
 include("wingpo.jl")
 include("tailpo.jl")
 
-include("airtable.jl")
+# include("airtable.jl")
 # Create airtables right away cause we aren't going to change them
-nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air") 
-ARe = 20e6
-include("airfun.jl")
+# nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air") 
+# ARe = 20e6
+# include("airfun.jl")
+include("airtable2.jl")
+include("airfun2.jl")
 
 include("balance.jl")
 include("surfcd.jl")
 include("trefftz.jl")
 include("cdsum.jl")
-
-
 
 include("PMSM.jl")  # Motor/generator functions
 include("PMSM.inc") # Motor/generator properties array
@@ -277,6 +278,7 @@ include("wsize.jl")
 include("mission.jl")
 
 include("input.jl")
+# include("input_fwdTank.jl")
 include("outputs.jl")
 include("savemodel.jl")
 include("update_fuse.jl")
@@ -300,9 +302,9 @@ f = open("temp.results", "w")
 # f = stdout
 
 initwgt = 0
-
+saveOD = false
 track_fig = nothing
-function run_wsize(iter, initwgt, Ldebug, printiter)
+function run_wsize(iter, initwgt, Ldebug, printiter, saveOD)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
     parpt[ipt_time_NPSS] = 0.0
@@ -311,7 +313,7 @@ function run_wsize(iter, initwgt, Ldebug, printiter)
     # println(parg[igWwing])
     Ldebug && println("Max weight iterations = $iter")
     wsize(pari, parg, parm, view(para,:,:,1), view(pare, :,:,1),
-                    iter, 0.9, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter)
+                    iter, 0.9, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, saveOD)
     # @benchmark PowerTrain(0.0, 0.8, 25.0e3*2,0.0, 0.0, parg, parpt, parmot, pargen)
 
     ## Write outputs to io stream f
@@ -326,6 +328,12 @@ function run_wsize(iter, initwgt, Ldebug, printiter)
     println(f, "ηcable   = np.array(", pare[ieecable  , :], ")")
     println(f, "ηgen     = np.array(", pare[ieegen    , :], ")")
     println(f, "ηthermal = np.array(", pare[ieethermal, :], ")")
+
+    println(f, "Hmot     = np.array(", pare[ieHrejmot , :], ")")
+    println(f, "Hinv     = np.array(", pare[ieHrejinv , :], ")")
+    println(f, "Hcable   = np.array(", pare[ieHrejcab , :], ")")
+    println(f, "Hgen     = np.array(", pare[ieHrejgen , :], ")")
+    println(f, "Htot     = np.array(", pare[ieHrejtot , :], ")")
     println(f, "EINOx1 = np.array(", pare[ieEINOx1, :], ")")
     println(f, "EINOx2 = np.array(", pare[ieEINOx2, :], ")")
     println(f, "FAR = np.array(", pare[ieFAR, :], ")")
@@ -341,15 +349,6 @@ function run_wsize(iter, initwgt, Ldebug, printiter)
     println(f, "CD = np.array(",para[iaCD, :],")")
     println(f, "CLh = np.array(",para[iaCLh, :],")\n")
 
-    println(f, "Aero:")
-        @printf(f, "L/D     = %5.4f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
-        @printf(f, "CL      = %5.4f\n", para[iaCL, ipcruise1])
-        @printf(f, "CD      = %5.4f\n", para[iaCD, ipcruise1])
-        @printf(f, "CDfuse  = %5.4f\n", para[iaCDfuse, ipcruise1])
-        @printf(f, "CDi     = %5.4f\n", para[iaCDi, ipcruise1])
-        @printf(f, "CDwing  = %5.4f\n", para[iaCDwing, ipcruise1])
-        @printf(f, "CDhtail = %5.4f\n", para[iaCDhtail, ipcruise1])
-        @printf(f, "CDvtail = %5.4f\n", para[iaCDvtail, ipcruise1])
 
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
     # println("Time writing       = $time_writing")
@@ -357,136 +356,284 @@ function run_wsize(iter, initwgt, Ldebug, printiter)
     @printf(f, "\nPFEI = %.5f J/Nm\n", parm[imPFEI])
 
     weight_buildup(parg, io = f)
+    aero(parg, para, io = f)
     geometry(parg, io = f)
+
     # global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
     global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
 end
 
-time_wsize = @elapsed run_wsize(35, 0, false, true)
+# time_wsize = @elapsed run_wsize(35, 0, false, true, saveOD)
 # @profview run_wsize(25, 0, false, true)
-println("Wsize time = $time_wsize s")
-println("NPSS Time = $(parpt[ipt_time_NPSS]) s")
-println("NPSS Calls = $(parpt[ipt_calls_NPSS])")
+# println("Wsize time = $time_wsize s")
+# println("NPSS Time = $(parpt[ipt_time_NPSS]) s")
+# println("NPSS Calls = $(parpt[ipt_calls_NPSS])")
 
-
-# for AR = 10:0.1:10.5
-#     parg[igAR] = AR
-#     Time_wsize = @elapsed run_wsize(25, 1, false)
-#     println("Wsize time = $Time_wsize s")
-#     println("NPSS Time = $(parpt[ipt_time_NPSS]) s")
-# end
-
-# ------ Optimzation ---------------
-using NLopt
-xarray = []
-farray = []
-PFEIarray = []
-CDarray = []
-WMTOarray = []
-
-function obj(x, grad)
-    parg[igAR] = x[1]
-    para[iaalt, ipcruise1, :] .=  x[2] *ft_to_m
-    para[iaCL  , ipclimb1+1:ipdescentn-1, :] .= x[3]
-    parpt[ipt_pifan] = x[4]
-    parg[igsweep   ] = x[5]
-    
-    # para[iaMach, ipclimbn:ipdescent1  , :] .= x[6]
-    pare[ieTt4, 1:iptotal, :] .= x[6] # [R]
-    parpt[ipt_Tt41] = pare[ieTt4,ipcruise1, 1]
-
-    pare[ieTt4, ipstatic:iptakeoff, :] .= x[7] #[R]
-
-    parg[iglambdat]  = x[8]
-    parg[ighboxo   ] = x[9]
-    parg[ighboxs   ] = x[10]
-
-    parpt[ipt_piHPC] = x[11]
-
-    para[iarcls, ipclimb1+1 : ipdescentn-1, :] .= x[12]   #  rcls  
-    para[iarclt, ipclimb1+1 : ipdescentn-1, :] .= x[13]   #  rclt  
-
-    parg[igARh] = x[14]
-    parg[igsweeph] = x[15]
-
-    wsize_time = @elapsed run_wsize(30, 1, false, false)
-
-    f = parm[imPFEI]
-    push!(PFEIarray, parm[imPFEI])
-    push!(xarray, x)
-    push!(CDarray, para[iaCD, ipcruise1, 1])
-    push!(WMTOarray, parg[igWMTO])
-    
-    # Max span constriant
-    bmax = parg[igbmax]
-    b    = parg[igb]
-    constraint  = b/bmax - 1.0
-    penfac  = 25.0* parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
-
-    # Min climb gradient
-    gtocmin = parg[iggtocmin]
-    gtoc    = para[iagamV, ipclimbn]
-    constraint = 1.0 - gtoc/gtocmin
-    penfac = 1.0*parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
-
-    # Max Tt3 at TOC 
-    Tt3max = 900.0
-    Tt3    = pare[ieTt3, ipcruise1, 1]
-    constraint = Tt3/Tt3max - 1
-    penfac = 5.0*parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
-    
-    printstyled(@sprintf("\t%10.2f  %5.2f  %10.2f  %5.4f  %5.2f  %5.2f  %10.2f  %10.2f  %5.4f  %5.4f  %5.4f  %10.2f  %5.4f  %5.4f  %5.2f  %5.2f | %10.6f  %10.2f  %10.2f  %10.2f  %10.2f  %10.2f  %10.5f %10.3f %6.4f\n",
-                        wsize_time, x[1],   x[2],   x[3],  x[4],  x[5],   x[6],   x[7],  x[8], x[9],  x[10],  x[11], x[12], x[13], x[14], x[15],
-                           parm[imPFEI], parm[imWfuel], parg[igWMTO], parg[igb], parg[igbh], parg[igxwbox], parg[igWfmax]/parm[imWfuel], para[iaalt, ipdescent1, 1]/ft_to_m, para[iagamV, ipclimbn, 1]); color = :light_green)
-
-    # println("X̄ = $x  ⇨  PFEI = $(parm[imPFEI]) f = $f, MTOW = $(parg[igWMTO]), Wtank = $(parg[igWftank]), Wfan = $(parg[igWfan])")
-    push!(farray, f)
-
-    return f
-end
-# Des. vars:  AR    Alt      Cl    FPR   Λ     Tt4 TO  Tt4 CR  λt   hboxo  hboxs  πHPC  rcls  rclt  ARh     Λh
-lower      = [5.0 , 30000.0, 0.50, 1.20, 10.0, 3200.0, 3200.0, 0.1,   0.1,   0.1,  6.0, 0.1,  0.1 ,  2.0,  5.0] 
-upper      = [12.0, 60000.0, 0.62, 1.60, 30.0, 3400.0, 3400.0, 1.0, 0.145, 0.145, 20.0, 1.2,  1.0 , 12.0, 30.0] 
-
-# initial    = [ 8.4  , 34000.0, 0.580 , 1.30, 27.5, 3250.0, 3250.0,  0.15,  0.3,  0.3, 18.0, 1.07, 1.08] 
-# initial    = [ 8.92 , 36508.0, 0.5773,  1.20, 29.97,3200.0, 3400.0,  0.1729, 0.12771,  0.12707, 19.92, 1.1985, 1.0971] # got from prior optimization run → gives PFEI of 0.875
-initial    = [ 9.02 ,  33034.67,  0.5837,   1.25,  26.46,  3202.80,   3398.57, 0.1730,  0.1373,  0.1197, 19.12,  1.1063,  1.1451, 6.0, 20.0]  # got from prior optimization run → gives PFEI of 0.994
-initial = [9.113203742029963, 36937.16966311362, 0.5803475453396321, 1.2126591103869193, 26.686300660179352, 3200.0030186046956, 3400.0, 0.1752945276646451, 0.14370268603230857, 0.11313806224206764, 19.716722758017823, 1.1030458855952907, 0.9, 6.0, 20.0]
-initial_dx = [ 0.5  ,   500.0, 0.001 , 0.05,  1.0,   15.0,   15.0, 0.001,  0.01,  0.01,  2.0, 0.1,  1.0, 2.0, 5.0]
-
-# include("ZIA.mdl") # note this will override constraints too!!
-# include("ZIA_343_880.mdl")
-
-# x_tol_abs = [0.01, 50.0, 0.0001, 0.001, 0.05, 1.0, 1.0, 0.0001, 0.001, 0.001, 0.01, 0.001, 0.05]
-f_tol_rel = 1e-4
-
-opt = NLopt.Opt(:LN_NELDERMEAD, length(initial))
-# opt = NLopt.Opt(:LN_COBYLA, length(initial))
-# opt = NLopt.Opt(:LN_SBPLX, 5)
-opt.lower_bounds = lower
-opt.upper_bounds = upper
-opt.min_objective = obj
-opt.initial_step = initial_dx
-
-# opt.xtol_abs = x_tol_abs
-opt.ftol_rel = f_tol_rel
-# opt.maxeval = 10
-
-printstyled(@sprintf("\t%10s  %5s  %10s  %6s  %5s  %5s  %10s  %10s  %5s  %5s  %5s  %10s  %5s  %5s %5s  %5s| %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-"time2size", "AR", "hcr[ft]", "CLcr", "FPR", "λ[deg]", "Tt4cr[R]", "Tt4ro[R]", "λt", "hbo", "hbs", "πHPC", "rcls", "rclt", "λh", "ARh",
-           "PFEI[J/Nm]", "Wfuel[N]", "WMTO[N]", "Span", "Tail span", "xwbox", "Wfmax/Wfreq", "hend[ft]" ); color = :light_green)
-
-opt_time = @elapsed (optf, optx, ret) = NLopt.optimize(opt, initial)
-numevals = opt.numevals # the number of function evaluations
-println("got $optf at $optx after $numevals iterations which took $opt_time s (returned $ret)")
-
-fig, ax = plt.subplots()
-ax.plot(farray)
-ax.set_xlabel("Iterations")
-ax.set_ylabel("Obj")
-
+include("./Models/ZIA_BLI_10_ 8_0.772_14.5.mdl")
+# include("./Models/ZIA_BLI_10_ 8_0.781_14.5.mdl")
+time_wsize = @elapsed run_wsize(35, 1, false, true, saveOD)
 
 close(f)
+
+CostEst(parg, pare, parm, parpt, 500)
+# # for AR = 10:0.1:10.5
+# #     parg[igAR] = AR
+# #     Time_wsize = @elapsed run_wsize(25, 1, false)
+# #     println("Wsize time = $Time_wsize s")
+# #     println("NPSS Time = $(parpt[ipt_time_NPSS]) s")
+# # end
+
+# # ------ Optimzation ---------------
+# using NLopt
+# xarray = []
+# farray = []
+# PFEIarray = []
+# CDarray = []
+# WMTOarray = []
+
+# function obj(x, grad)
+#     parg[igAR] = x[1]
+#     para[iaalt, ipcruise1, :] .=  x[2] *ft_to_m
+#     para[iaCL  , ipclimb1+1:ipdescentn-1, :] .= x[3]
+#     parpt[ipt_pifan] = x[4]
+#     parg[igsweep   ] = x[5]
+    
+#     # para[iaMach, ipclimbn:ipdescent1  , :] .= x[6]
+#     pare[ieTt4, 1:iptotal, :] .= x[6] # [R]
+#     parpt[ipt_Tt41] = pare[ieTt4,ipcruise1, 1]
+
+#     pare[ieTt4, ipstatic:iptakeoff, :] .= x[7] #[R]
+
+#     parg[iglambdat]  = x[8]
+#     parg[ighboxo   ] = x[9]
+#     parg[ighboxs   ] = x[10]
+
+#     parpt[ipt_piHPC] = x[11]
+
+#     para[iarcls, ipclimb1+1 : ipdescentn-1, :] .= x[12]   #  rcls  
+#     para[iarclt, ipclimb1+1 : ipdescentn-1, :] .= x[13]   #  rclt  
+
+#     parg[igARh] = x[14]
+#     parpt[ipt_Fnsplit] = x[15]
+#     parg[igsweeph] = x[16]
+#     # parg[igsweeph] = parg[igsweep]
+
+#     # parg[igRfuse] = x[16]
+#     # parg[iglftankin] = x[17]
+
+#     wsize_time = @elapsed run_wsize(30, 1, false, false, saveOD)
+
+#     f = parm[imPFEI]
+#     push!(PFEIarray, parm[imPFEI])
+#     push!(xarray, x)
+#     push!(CDarray, para[iaCD, ipcruise1, 1])
+#     push!(WMTOarray, parg[igWMTO])
+    
+#     # Max span constriant
+#     bmax = parg[igbmax]
+#     b    = parg[igb]
+#     constraint  = b/bmax - 1.0
+#     penfac  = 25.0* parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+
+#     # Min climb gradient
+#     gtocmin = parg[iggtocmin]
+#     gtoc    = para[iagamV, ipclimbn]
+#     constraint = 1.0 - gtoc/gtocmin
+#     penfac = 1.0*parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+
+#     # Max Tt3 at TOC 
+#     Tt3max = 900.0
+#     Tt3    = pare[ieTt3, ipcruise1, 1]
+#     constraint = Tt3/Tt3max - 1
+#     penfac = 5.0*parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+
+#     # Ensure fuel volume makes sense
+#     Wfmax = parg[iglftankin]  #parg[igWfmax]
+#     Wf    = parg[iglftank]    #parg[igWfuel]
+#     constraint = Wf/Wfmax - 1.0
+#     penfac = 10*parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+
+#     # Max Fan diameters
+#     dfanmax = 2.0
+#     dfan = parg[igdfan]
+#     constraint = dfan/dfanmax - 1.0
+#     penfac = parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+
+#     daftfanmax = 3.0
+#     daftfan = parg[igdaftfan]
+#     constraint = daftfan/daftfanmax - 1.0
+#     penfac = parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+
+#     # Ensure Fans will fit on wing
+#     bo = parg[igbo]
+#     b  = parg[igb]
+#     lmax = b/2*4/5 - (bo/2+2*parg[igdfan])
+#     lfans = parg[igneng]/2*parg[igdfan]*1.25
+#     constraint = lfans/lmax - 1.0
+#     penfac = parg[igWpay]
+#     f = f + penfac*max(0.0, constraint)^2
+    
+#     printstyled(@sprintf("\t%10.2f  %5.2f  %10.2f  %5.4f  %5.2f  %5.2f  %10.2f  %10.2f  %5.4f  %5.4f  %5.4f  %10.2f  %5.4f  %5.4f  %5.2f  %5.2f  %5.2f | %5.3e %10.6f  %5.2f  %6.4f  %6.4f %6.1f %5.3f %5.3f  %5.3f  %5.3f\n",
+#                         wsize_time, x[1],   x[2],   x[3],  x[4],  x[5],   x[6],   x[7],  x[8], x[9],  x[10],  x[11], x[12], x[13], x[14], x[15], x[16],# x[17], 
+#     f, parm[imPFEI], parm[imWfuel]/9.81/1000, parg[igWfuel]/parg[igWfmax], para[iagamV, ipclimbn, 1], Tt3, Wf, Wfmax, dfan, daftfan); color = :light_green)
+
+#     # println("X̄ = $x  ⇨  PFEI = $(parm[imPFEI]) f = $f, MTOW = $(parg[igWMTO]), Wtank = $(parg[igWftank]), Wfan = $(parg[igWfan])")
+#     push!(farray, f)
+
+#     return f
+# end
+# # Des. vars:  AR    Alt      Cl    FPR   Λ     Tt4 CR  Tt4 TO  λt   hboxo  hboxs  πHPC  rcls  rclt  ARh   Fnsplit Rf   lftank   Λh
+# lower      = [7.0 , 25000.0, 0.0, 1.15, 10.0, 3200.0, 3200.0, 0.1,   0.1,   0.1,  6.0, 0.1,  0.1 ,  4.0,  0.20,  5.0]#, 2.83,  6.0]#,  5.0] 
+# upper      = [12.0, 60000.0, 0.65, 1.60, 40.0, 3400.0, 3600.0, 1.0, 0.145, 0.145, 20.0, 1.2,  1.0 ,  8.0, 0.55, 30.0]#, 2.87, 20.0]#, 30.0] 
+
+# # got from prior optimization run 
+# inintial = [7.773081944713115, 40181.603962553054, 0.5527508383478996, 1.230675138085258, 28.62473706060067, 3203.5726595187757, 3598.340134020528, 0.1964082835266504, 0.14368441782959446, 0.11825599806307492, 17.045255858009348, 1.1116365925303677, 0.922992859170234, 5.0445229907657145, 0.5499037770914472, 24.70786719622403]
+# initial = [9.113203742029963, 36937.16966311362, 0.5003475453396321, 1.2126591103869193, 26.686300660179352, 3200.0030186046956, 3400.0, 0.1752945276646451, 0.14370268603230857, 0.11313806224206764, 19.716722758017823, 1.1030458855952907, 0.9, 6.0, 0.3, 25.0]
+# # initial = [10.4, 35000.071539689154, 0.50, 1.25, 25, 3200.0022995749187, 3593.214291425442, 0.12456150546785258, 0.11306781786077835, 0.14394751727778923, 18.097753388594892, 1.0276064393869042, 0.93331132336281, 6.817241843138645, 0.302809851067255]#, 2.83, 6.5]
+# initial_dx = [ 0.5  ,  100.0, 0.05 , 0.05,  0.1,   15.0,   15.0, 0.01,  0.001,  0.001,  2.0, 0.01,  0.01, 2.0, 0.1, 0.1]#, 0.2, 2.0]#, 5.0]
+
+# # include("ZIA.mdl") # note this will override constraints too!!
+# # include("ZIA_343_918.mdl")
+
+# # x_tol_abs = [0.01, 50.0, 0.0001, 0.001, 0.05, 1.0, 1.0, 0.0001, 0.001, 0.001, 0.01, 0.001, 0.05]
+# f_tol_rel = 1e-5
+
+# opt = NLopt.Opt(:LN_NELDERMEAD, length(initial))
+# # opt = NLopt.Opt(:LN_COBYLA, length(initial))
+# # opt = NLopt.Opt(:LN_SBPLX, 5)
+# opt.lower_bounds = lower
+# opt.upper_bounds = upper
+# opt.min_objective = obj
+# opt.initial_step = initial_dx
+
+# # opt.xtol_abs = x_tol_abs
+# opt.ftol_rel = f_tol_rel
+# # opt.maxeval = 10
+# # # nprop = [4, 6, 8, 10, 12, 14, 16]
+# # include("./Models/ZIA_BLI_10_ 8_0.781_14.5.mdl")
+# nprop = [6, 8]
+
+# for n in nprop
+#     parpt[ipt_nfan] = n
+#     parg[igneng] =  parpt[ipt_nfan]
+
+#     printstyled(@sprintf("\t%10s  %5s  %10s  %6s  %5s  %5s  %10s  %10s  %5s  %5s  %5s  %10s  %5s  %5s %5s  %5s| %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+#     "time2size", "AR", "hcr[ft]", "CLcr", "FPR", "λ[deg]", "Tt4cr[R]", "Tt4ro[R]", "λt", "hbo", "hbs", "πHPC", "rcls", "rclt", "λh", "ARh",
+#             "PFEI[J/Nm]", "Wf[tons]", "Wf/Wfmax", "γ", "Tt3", "ltank", "ltankin" ); color = :light_green)
+
+#     opt_time = @elapsed (optf, optx, ret) = NLopt.optimize(opt, initial)
+#     numevals = opt.numevals # the number of function evaluations
+
+#     global initial = optx 
+
+#     println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
+
+#     savedir = "./Figures/"
+#     figname = @sprintf("ZIA_BLI_%d_%2d_%.3f_%.1f", seats_per_row, parg[igneng], parm[imPFEI],  para[iaCL, ipcruise1]/para[iaCD, ipcruise1])
+#     global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
+#     plt.savefig(savedir*figname*".png")
+#     savemodel("./Models/"*figname*".mdl", pari, parg, parm, para, pare, parpt, parmot, pargen)
+
+#     fig, ax = plt.subplots()
+#     ax.plot(farray)
+#     ax.set_xlabel("Iterations")
+#     ax.set_ylabel("Obj")
+
+# end
+
+# # # Prepare comparison 
+# models = readdir("./OldModels")
+# PFEI  = zeros(length(models))
+# nProp = zero(PFEI)
+# Ssmax = zero(PFEI)
+# Somax = zero(PFEI)
+# Msmax = zero(PFEI)
+# Momax = zero(PFEI)
+# LD    = zero(PFEI)
+# CD    = zero(PFEI)
+# CDfuse    = zero(PFEI)
+# CDwing    = zero(PFEI)
+# CDi    = zero(PFEI)
+# CDnace    = zero(PFEI)
+# CL    = zero(PFEI)
+# WMTO  = zero(PFEI)
+# Wfuel = zero(PFEI)
+# Wwing = zero(PFEI)
+# Wtesys = zero(PFEI)
+# Wdfans = zero(PFEI)
+# Sref = zero(PFEI)
+# hcr = zero(PFEI)
+# Cost = zero(PFEI)
+
+# for (i,model) in enumerate(models)
+#     include("./OldModels/"*model)
+#     Cost[i] = CostEst(parg, pare, parm, parpt, 500)/500
+
+#     PFEI[i]  = parm[imPFEI]
+#     nProp[i] = parg[igneng]
+#     Ssmax[i] = parg[igSsmax]
+#     Somax[i] = parg[igSomax]
+#     Msmax[i] = parg[igMsmax]
+#     Momax[i] = parg[igMomax]
+#     LD[i]    = para[iaCL, ipcruise1]/para[iaCD, ipcruise1]   
+#     CD[i]    = para[iaCD, ipcruise1]  
+#     CDfuse[i]    = para[iaCDfuse, ipcruise1]  
+#     CDwing[i]    = para[iaCDwing, ipcruise1]  
+#     CDi[i]    = para[iaCDi, ipcruise1]  
+#     CDnace[i]    = para[iaCDnace, ipcruise1]  
+#     CL[i]    = para[iaCL, ipcruise1]   
+#     WMTO[i]  = parg[igWMTO] 
+#     Wfuel[i] = parg[igWfuel]
+#     Wwing[i] = parg[igWwing]
+#     Sref[i] = parg[igS]
+#     hcr[i] = para[iaalt, ipcruise1]
+#     Wtesys[i] = parg[igWtesys]
+#     Wdfans[i] = parg[igneng]*(parg[igWfan] + parg[igWmot])
+# end
+
+# fig, ax = plt.subplots(4,1, figsize = (6, 8), dpi = 100)
+# ax[1].plot(nProp, PFEI, "o-k")
+# ax[1].set_ylabel("PFEI")
+# ax[2].plot(nProp, WMTO/9.81/1000, "o-k")
+# ax[2].set_ylabel("Max. TO weight [tonnes]")
+# ax[3].plot(nProp, Wfuel/9.81/1000, "o-k")
+# ax[3].set_ylabel("Fuel weight [tonnes]")
+# ax[4].plot(nProp, Cost/1e6,    "o-k")
+# ax[4].set_ylabel("Cost (million \$)")
+# ax[4].set_xlabel("Number of ducted fans")
+# plt.tight_layout()
+
+# fig, ax = plt.subplots(2,1, figsize = (8,5.5), dpi = 100)
+# ax[1].plot(nProp, Ssmax/1000, "o-k")
+# ax[1].plot(nProp, Somax/1000, "o-b")
+# ax[2].plot(nProp, Msmax/1000, "o-k")
+# ax[2].plot(nProp, Momax/1000, "o-b")
+
+# fig, ax = plt.subplots(5,1, figsize = (8,5.5), dpi = 100)
+# ax[1].plot(nProp, Sref.*CD, "o-k")
+# ax[2].plot(nProp, Sref.*CDfuse, "o-k")
+# ax[3].plot(nProp, Sref.*CDwing, "o-k")
+# ax[4].plot(nProp, Sref.*CDnace,    "o-k")
+# ax[5].plot(nProp, Sref.*CDi,    "o-k")
+
+# fig, ax = plt.subplots(5,1, figsize = (8,5.5), dpi = 100)
+# ax[1].plot(nProp, Sref.*CL, "o-k")
+# ax[1].set_ylabel("\$C_L\\times S_{ref}\$")
+# ax[2].plot(nProp, Sref.*CD, "o-k")
+# ax[2].set_ylabel("\$C_D\\times S_{ref}\$")
+# ax[3].plot(nProp, LD, "o-k")
+# ax[3].set_ylabel("\$ \\frac{L}{D} \$")
+# ax[4].plot(nProp, Sref, "o-k")
+# ax[4].set_ylabel("\$ S_{ref}\$")
+# ax[5].plot(nProp, hcr, "o-k")
+
+# fig, ax = plt.subplots(3,1, figsize = (8,5.5), dpi = 100)
+# ax[1].plot(nProp, Wwing./9.81./1000, "o-k")
+# ax[2].plot(nProp, Wdfans./9.81./1000, "o-k")
+# ax[3].plot(nProp, Wtesys./9.81./1000, "o-k")
