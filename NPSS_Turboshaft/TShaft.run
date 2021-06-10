@@ -133,7 +133,8 @@ while(flag!=999){
             <<Eng.BrnPri.Fl_I.W/2.205<<"_"
             <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
             <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
-            <<Eng.CmpH.Fl_O.Wc;
+            <<Eng.CmpH.Fl_O.Wc<<"_"
+            <<Eng.FusEng.LHV;
 
         }
         else{
@@ -199,7 +200,8 @@ while(flag!=999){
             <<Eng.Perf.IdealThermalEff<<"_"
             <<Eng.FusEng.Wfuel/2.205<<"_"
             <<Eng.Perf.BSFC<<"_"
-            <<Eng.PCEC.deNOx;
+            <<Eng.PCEC.deNOx<<"_"
+            <<Eng.NozPri.Fl_O.Tt*10/18;
         }
         else{
             output.reopen();
