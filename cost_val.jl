@@ -38,7 +38,7 @@ function CostVal(prod_Q)
     # source: Raymer (2006), Collinson (2002)
 
     #CTS_h2 = 3560*P_hp^0.7758 # source: Loh (2002), includes inflation from 1998#
-    CTS = 2251*(9.66*Tmax+243.25*Mmax+1.74*Tin-2228)*1.2*PPI #birkler's model for gas turbine engines as published in Raymer
+    CTS = 2251*(9.66*Fmax+243.25*Mmax+1.74*Tin-2228)*1.2*PPI #birkler's model for gas turbine engines as published in Raymer
     CPE = 0
     CEC = 0
 
@@ -54,3 +54,4 @@ function CostVal(prod_Q)
     prop_cost = 2*CTS
 
     return dev_cost, prod_cost, prop_cost
+end

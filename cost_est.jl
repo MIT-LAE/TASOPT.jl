@@ -85,12 +85,13 @@ function CostEst(parg, pare, parm, parpt, prod_Q)
     delta_prop = cost_ts + cost_pe + cost_pcec - conv_prop
     delta_total = delta_dev + delta_prod + delta_prop
 
-    # println((HE*RE + HT*RT + CD + CF)*cA*PPI/ prod_Q) #development cost
-    # println((HM*RM + HQ*RQ + CM + CI)*cA*PPI/ prod_Q) #airframe manufacturing cost
-    # println(parpt[ipt_nTshaft]*CTS)
-    # println(parpt[ipt_nTshaft]*CPE)
-    # println(parpt[ipt_nTshaft]*CEC)
-    # println(cost_tank)
+    println("Wmod = $Wmod")
+    println("Dev cost = ", (HE*RE + HT*RT + CD + CF)*cA*PPI/ prod_Q) #development cost
+    println("Airframe manufac. cost = ",(HM*RM + HQ*RQ + CM + CI)*cA*PPI/ prod_Q) #airframe manufacturing cost
+    println(parpt[ipt_nTshaft]*CTS)
+    println(parpt[ipt_nTshaft]*CPE)
+    println(parpt[ipt_nTshaft]*CEC)
+    println(cost_tank)
 
     return cost, delta_total
 end
