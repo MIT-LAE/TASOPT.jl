@@ -14,14 +14,16 @@ lbf_to_N = 4.448222
 kts_to_mps = 0.51444
 hp_to_W    = 745.7
 
-pari[iifuel]   = 1 # 1 = H2 120 MJ/kg
+pari[iifuel]   = 1 # 1 = H2 120 MJ/kg 2= JetA
+pari[iifwing]  = 0 # 0 = no fuel in wings 1 = fuel in wings
 pari[iifwcen ] = 1 # Fuel in center box
+
 pari[iiwplan ] = 1 # wing cantilever with engine 
 pari[iiengloc] = 2 # engines on fuselage
 pari[iiengwgt] = 2 # advanced tech for eng weight
 pari[iiBLIc  ] = 0 # core in clean flow
-# pari[iifclose] = 0 # fuse tapers to a point
-pari[iifclose] = 1 # fuse end is flat
+pari[iifclose] = 0 # fuse tapers to a point
+# pari[iifclose] = 1 # fuse end is flat
 # pari[iiHTsize] = 1 # set Sh via Vh 
 pari[iiHTsize] = 2 # set Sh via igCLhCGfwd at max-forward CG during landing
 
@@ -30,7 +32,6 @@ pari[iiHTsize] = 2 # set Sh via igCLhCGfwd at max-forward CG during landing
 pari[iixwmove] = 2 # ixwmove   move wing to get min static margin = SMmin
 
 pari[iiVTsize] = 1
-pari[iifwing] = 0 # no fuel in wings
 
  
 pax = 220
@@ -75,12 +76,15 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         _, p_cabin, _, _, _ = atmos(cabinPressureAlt*ft_to_m/1000.0)
 
         parg[igpcabin  ] = p_cabin
-
-    # Wing 
+        
+        # Wing 
         parg[igsweep   ] =  27.567         # λ wing
         parg[igAR      ] =  10.4411        # Aspect ratio
         parg[igbmax    ] = 117.5  * ft_to_m # Max span for span constraint ICAO Code D/ FAA Group IV
+        # parg[igbmax    ] = 117.5*1.10  * ft_to_m # Max span for span constraint ICAO Code D/ FAA Group IV + 10% foldable wing tips based on the 777x dimensions 64.82 m ⇾ 71.75 m
         # parg[igbmax    ] = 171.0  * ft_to_m # Max span for span constraint ICAO Code E/ FAA Group V
+        
+        parg[igzwing   ] = -5.5 * ft_to_m
         
         parg[iglambdas ] = 0.8784
         parg[iglambdat ] = 0.1503
@@ -90,8 +94,8 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
         parg[igzs      ] = 154.0 * in_to_m
 
-        parg[igbo      ] = 2 * (120.0 * in_to_m) # 2 × wing centerbox halfspan
-        parg[igetas    ] = 0.29 # ηs panel break eta location  (strut-attach if iwplan=2)
+        # parg[igbo      ] = 2 * (120.0 * in_to_m) # 2 × wing centerbox halfspan
+        parg[igetas    ] = 0.3 # ηs panel break eta location  (strut-attach if iwplan=2)
         parg[igrVstrut ] = 1.0   # Strut local/free sream velocity
 
         # Structural box
@@ -101,28 +105,28 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
             parg[igrh      ] = 0.75   # rh      web-height/hbox ratio
             parg[igXaxis   ] = 0.40   # Xaxis   spar box axis x/c location
             parg[ighstrut  ] = 0.15   # hstrut  strut t/c    (used only if iwplan=2)
-        # Weight fractions of flight surfaces and secondary wing components, 
-        # as fractions of dry total wing weight
-            parg[igfflap   ] = 0.20
-            parg[igfslat   ] = 0.10
-            parg[igfaile   ] = 0.04
-            parg[igflete   ] = 0.10
-            parg[igfribs   ] = 0.15
-            parg[igfspoi   ] = 0.02
-            parg[igfwatt   ] = 0.03
+            # Weight fractions of flight surfaces and secondary wing components, 
+            # as fractions of dry total wing weight
+            parg[igfflap   ] = 0.20*0.9
+            parg[igfslat   ] = 0.10*0.9
+            parg[igfaile   ] = 0.04*0.9
+            parg[igflete   ] = 0.10*0.9
+            parg[igfribs   ] = 0.15*0.9 #+ 0.01 #Adding this for folding wingtips
+            parg[igfspoi   ] = 0.02*0.9
+            parg[igfwatt   ] = 0.03*0.9
 
     # Tails
         # Horizontal Tail
             parg[igVh      ] = 1.45 # HT volume coeff
-            parg[igCLhCGfwd] = -0.305
+            parg[igCLhCGfwd] = -1.0
             parg[igCLhspec ] = -0.02
             parg[igSMmin   ] = 0.05
-            parg[igdepsda  ] = 0.60
+            parg[igdepsda  ] = 0.50
             parg[igARh     ] = 6.0
             parg[iglambdah ] = 0.25
-            parg[igsweeph  ] = 25.0
-            parg[igboh     ] = 2 * (2.5 * ft_to_m) # 2 × half span
-            parg[igfCDhcen ] = 0.1
+            parg[igsweeph  ] = 20.0
+            parg[igboh     ] = 2 * (4. * ft_to_m) # 2 × half span
+            parg[igfCDhcen ] = 1.0
             parg[igCLhmax  ] = 2.0
             
             parg[igwboxh   ] = 0.50
@@ -131,16 +135,16 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
             parg[igfhadd   ] = 0.30
 
-            parg[igsweeph ] = 8.0#parg[igsweep] #Copy wing values
+            # parg[igsweeph ] = 8.0#parg[igsweep] #Copy wing values
 
             parg[igCLhNrat ] = -0.5 #CLh/ CLmax
     
         # Vertical Tail
-            parg[ignvtail  ] = 2.0
+            parg[ignvtail  ] = 1.0
 
             parg[igVv      ] = 0.10
-            parg[igCLveout ] =  0.453
-            parg[igARv     ] = 2.0
+            parg[igCLveout ] = 0.453
+            parg[igARv     ] = 2.2
             parg[iglambdav ] = 0.30
             parg[igsweepv  ] = 25.0
             parg[igbov     ] = 0.0
@@ -153,12 +157,13 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
             parg[igfvadd   ] = 0.40
 
 
-        parg[igdCLnda  ] = 3.8
+        parg[igdCLnda  ] = 1.0# 3.8
 
     # Cabin and Fuselage and PowerTrain stuff
 
-        parg[igRfuse   ] = 120.0 * in_to_m 
-        parg[igdRfuse  ] = 15.0 * in_to_m
+        parg[igRfuse   ] = 113 * in_to_m 
+        parg[igbo      ] = 2 * (113 * in_to_m) # 2 × wing centerbox halfspan
+        parg[igdRfuse  ] = 1.0 * in_to_m
         parg[igwfb     ] =  0.0 * in_to_m
         parg[ignfweb   ] =  1.0
         parg[ighfloor  ] =  5.0 * in_to_m
@@ -167,43 +172,49 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igbtail   ] = 2.0
 
         seats_per_row = 2*Int(parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
-        rows = ceil(pax ÷ seats_per_row)
+        rows = Int(ceil(pax / seats_per_row))
         lcabin = rows * seat_pitch 
         println("Seats per row = $seats_per_row, rows = $rows, lcabin = $(lcabin/ft_to_m) ft")
 
         parg[igxnose   ] =   0.0 * ft_to_m
         parg[igxblend1 ] =  20.0 * ft_to_m
         parg[igxshell1 ] =  17.0 * ft_to_m
-        parg[igxshell2 ] = parg[igxshell1] + lcabin + 30.0*ft_to_m # 10ft for cockpit + 2 ends* 10 ft for galley + lavatory 
+        parg[igxshell2 ] = parg[igxshell1] + lcabin + 20.0*ft_to_m + 2*seat_pitch # 2 ends* 10 ft (for galley (6ft) + lavatory (4ft length) ) + space for emergency_exit
 
-        ltank = 20.0 * ft_to_m
-        parg[igxftank ]  = parg[igxshell2] + ltank/2
-        parg[igxblend2 ] = parg[igxshell2] + ltank 
+        ltank = 25.0 * ft_to_m 
+        if pari[iifwing] == 1
+            ltank = 0.0
+        end
+        # ltank = 10.7
+        parg[iglftankin] = ltank
+        # ltank = 58.0 * ft_to_m 
+        parg[igxftank ]  = parg[igxshell2] + ltank/2 + 1.0*ft_to_m #(buffer)
+        parg[igxblend2 ] = parg[igxftank]  + ltank/2 
 
-        ltshaft = 9.0 * ft_to_m # length of T406 ~ 6.5 ft + 2.5 ft margin
+        ltshaft = 9.0 * ft_to_m # length of T46 ~ 6.5 ft + 2.5 ft margin
         lgen    = 5.0 * ft_to_m 
         parg[igxtshaft]  = parg[igxblend2] + ltshaft/2
         parg[igxgen   ]  = parg[igxblend2] + ltshaft + lgen/2
         parg[igxcat   ]  = parg[igxgen   ]
 
         parg[igxconend ] = parg[igxgen] + lgen/2 + 5.0*ft_to_m
-        parg[igxend    ] = parg[igxconend] + 10.0*ft_to_m # 10 ft margin/ other things not accounted for
+        parg[igxend    ] = parg[igxconend] + 5.0*ft_to_m # 5 ft margin/ other things not accounted for
 
-        parg[igxwbox   ] =  65.0 * ft_to_m  # x location of wing box
-        parg[igxhbox   ] = parg[igxconend ] #- 3*ft_to_m
-        parg[igxvbox   ] = parg[igxconend ] #- 5*ft_to_m
+        parg[igxwbox   ] =  70.0 * ft_to_m  # x location of wing box
+        parg[igxhbox   ] = parg[igxconend ] - 2*ft_to_m
+        parg[igxvbox   ] = parg[igxconend ] - 2*ft_to_m
 
         parg[igxinv   ]  =  60.0 * ft_to_m
-        parg[igxmot   ]  =  57.0 * ft_to_m
-        parg[igxfan   ]  =  55.0 * ft_to_m
+        parg[igxmot   ]  =  parg[igxwbox] # 57.0 * ft_to_m
+        parg[igxfan   ]  =  parg[igxwbox] # 55.0 * ft_to_m
         
-        parg[igzwing   ] = -5.5 * ft_to_m
         parg[igzhtail  ] =  0.0 * ft_to_m
         # parg[igzhtail  ] =  13.0 * ft_to_m
+        # parg[igzhtail  ] =  7.0 #5.0 * ft_to_m
 
         parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
 
-        parg[igxeng    ] = 52.0 * ft_to_m
+        parg[igxeng    ] = parg[igxwbox] #52.0 * ft_to_m
         parg[igyeng    ] = 50.0 * ft_to_m
         # parg[igneng    ] =  2.0
 
@@ -225,15 +236,18 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igrMh     ] = 0.4
         parg[igrMv     ] = 0.7
 
-        parg[igCMVf1   ] =  2390.0 * 0.0283  # CMVf1  fuselage moment volume derivative  d(Mfuse/q)/dCL
+        # parg[igCMVf1   ] =  7470.0 * 0.0283  # CMVf1  fuselage moment volume derivative  d(Mfuse/q)/dCL (0.0283 is conversion from ft³ to m³)
+        # parg[igCMVf1   ] =  127.0  #m³ based on cab vol of 800 m³ CMVf1 ≈ 2×cabvol/2π
+        parg[igCMVf1   ] =  2390.0 *0.0283 #60.0  
+        # parg[igCMVf1   ] =  332.0 #60.0  
         parg[igCLMf0   ] =  0.185            # CLMf1  CL where Mfuse = 0
 
-        para[iafduo, :, :] .= 0.018    # fduo   fuselage velocity overspeed at wing root
-        para[iafdus, :, :] .= 0.014    # fdus   fuselage velocity overspeed at wing break
-        para[iafdut, :, :] .= 0.0045   # fdut   fuselage velocity overspeed at wing tip
+        para[iafduo, :, :] .= 0.019# 0.018    # fduo   fuselage velocity overspeed at wing root
+        para[iafdus, :, :] .= 0.011#0.014    # fdus   fuselage velocity overspeed at wing break
+        para[iafdut, :, :] .= 0.004#0.0045   # fdut   fuselage velocity overspeed at wing tip
 
     # Landing gear weight fractions and locations
-        parg[igxhpesys ] =  62.0 * ft_to_m   #  xhpesys   hyd/pneu/ele system location
+        parg[igxhpesys ] =  80.0 * ft_to_m   #  xhpesys   hyd/pneu/ele system location
         parg[igxlgnose ] =  14.0 * ft_to_m   #  xlgnose   nose LG location
         parg[igdxlgmain] =   1.0 * ft_to_m   # dxlgmain   main LG offset behind wing lift centroid
 
@@ -270,7 +284,14 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igrhoweb  ] =  2700.0  #  rhoweb  	wing, tail shear webs	 
         parg[igrhostrut] =  2700.0  #  rhostrut	strut   
 
-        parg[igrhofuel]  = ρmix(0.1, 1.5)#817.0 #kg/m³
+        if pari[iifuel] == 1
+            parg[igrhofuel]  = ρmix(0.1, 1.5)
+            parg[igLHVfuel]  = 120 # MJ/kg
+        elseif pari[iifuel] == 2
+            parg[igrhofuel]  = 817.0 #kg/m³
+            parg[igLHVfuel]  = 43.0 # MJ/kg
+        end
+
         # if pari[iifuel] == 0
         #     parg[igrhofuel]  = 817.0 #kg/m³
         #     pare[iehfuel] = 43.0 #MJ/kg
@@ -280,10 +301,13 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         # end
         
     # Nacelle Drag stuff
-        parg[igrSnace  ] = 16.0   # rSnace   nacelle+pylon wetted area/fan area  Snace/Afan
+        parg[igrSnace  ] = 16.0/3   # rSnace   nacelle+pylon wetted area/fan area  Snace/Afan
         parg[igrVnace  ] =  1.02  # rVnace   nacelle local/freesteam velocity ratio
 
     parg[igrWfmax  ] = 0.90
+
+    # Boundary Layer Ingestion (BLI)
+        parg[igfBLIf] = 0.6
 
 # Aerodynamic parameters
 
@@ -330,7 +354,7 @@ para[iaalt, ipcruise1, :] .=  33000.0 * ft_to_m # Cruise altitude [m] Max fuel m
     para[iacdpw  , 1 : iptotal, :] .=  0.0035  #  cdpw    
     para[iaRerefw, 1 : iptotal, :] .=  20.0e6  #  Rerefw
                                         
-    para[iacdft  , 1 : iptotal, :] .=  0.0060  #  cdft    tail profile cd
+    para[iacdft  , 1 : iptotal, :] .=  0.0055  #  cdft    tail profile cd
     para[iacdpt  , 1 : iptotal, :] .=  0.0030  #  cdpt    
     para[iaRereft, 1 : iptotal, :] .=  10.0e6  #  Rereft  
                                        
@@ -340,14 +364,14 @@ para[iaalt, ipcruise1, :] .=  33000.0 * ft_to_m # Cruise altitude [m] Max fuel m
                                        
     para[iaaRexp , 1 : iptotal, :] .=  -0.15   #  aRexp   exponent for Re-scaling:  CD = cd * (Re/Re_ref)^aRexp
                                        
-    para[iafexcdw, 1 : iptotal, :] .=  1.02     #  fexcdw   # wing excrescence drag factor
-    para[iafexcdt, 1 : iptotal, :] .=  1.02     #  fexcdt   # tail excrescence drag factor
-    para[iafexcdf, 1 : iptotal, :] .=  1.03     #  fexcdf   # fuse excrescence drag factor
+    para[iafexcdw, 1 : iptotal, :] .=  1.015     #  fexcdw   # wing excrescence drag factor
+    para[iafexcdt, 1 : iptotal, :] .=  1.015     #  fexcdt   # tail excrescence drag factor
+    para[iafexcdf, 1 : iptotal, :] .=  1.020    #  fexcdf   # fuse excrescence drag factor
 
 # Engine parameters
 
-pare[ieTt4, 1:iptotal, :] .= 3200.0 # [R]
-pare[ieTt4, ipstatic:iptakeoff, :] .= 3300.0 #[R]
+pare[ieTt4, 1:iptotal, :] .= 3000.0 # [R]
+pare[ieTt4, ipstatic:iptakeoff, :] .= 3200.0 #[R]
 
 parg[igfTt4CL1] = 0.2
 parg[igfTt4CLn] = 0.2
