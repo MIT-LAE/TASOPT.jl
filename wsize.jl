@@ -1131,9 +1131,9 @@ Lconv = false # no convergence yet
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
 
-            # Snace = Snace1*neng
-            # fSnace = Snace/S
-            # parg[igfSnace] = fSnace
+            Snace = Snace1*neng
+            fSnace = Snace/S
+            parg[igfSnace] = fSnace
             lnace = parg[igdfan]*parg[igrSnace]*0.15
             parg[iglnace] = lnace
             
