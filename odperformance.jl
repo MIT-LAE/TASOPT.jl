@@ -1,10 +1,10 @@
 function odperf!(pari, parg, parm, para, pare, Wfrac0,
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
-    NPSS_AftFan::Base.Process, Ldebug)
+    NPSS_AftFan::Base.Process, Ldebug, ifirst)
 
 calc_ipc1 = true
-ifirst = true
+# ifirst = true
 
 itergmax::Int64 = 15
 gamVtol  = 1.0e-12
@@ -28,6 +28,7 @@ FL = [  0 ,    5 ,   10 ,   15 ,   20 ,
       220 ,  240 ,  260 ,  280 ,  290 , 
       310 ,  330 ,  350 ,  370 ,  390 ,
       410 ,  430 ,  431 ]
+# FL = LinRange(0,430, 44)
 
 alts = FL*100*ft_to_m
 N = length(FL)
@@ -47,6 +48,10 @@ Tt4s = zeros(Float64, N)
 deNOx = zeros(Float64, N)
 mdotf = zeros(Float64, N)
 ROC   = zeros(Float64, N)
+ROCcrz = zeros(Float64, N)
+FFcrz  = zeros(Float64, N)
+EGTcrz = zeros(Float64, N)
+
 iceil = N
 crzmdotf = zeros(Float64, N)
 crzTAS   = zeros(Float64, N)
@@ -86,8 +91,8 @@ ReTO = VTO*pare[ierho0,iptakeoff]/pare[iemu0 ,iptakeoff]
 end
 # println(Ws)
 #---- set climb Tt4's from fractions
-fT1 = parg[igfTt4CL1]
-fTn = parg[igfTt4CLn]
+fT1 = 0.2#parg[igfTt4CL1]
+fTn = 0.2#parg[igfTt4CLn]
 Tt4TO = pare[ieTt4,iptakeoff]
 Tt4CR = pare[ieTt4,ipcruise1]
 for  ip = 1:N
@@ -119,18 +124,16 @@ for   i = 1:N
     DoL    = 0.0
     V      = 0.0
     if (Ldebug)
-        printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V"); color = :light_green)
+        printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
+                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V", "Alt", "M", "Tt4"); color = :light_green)
     end
     for  iterg = 1:itergmax
         V = sqrt(2.0*BW*cosg/(ρ*S*CL))
         Mach = V/Vsound
 
-        M0s[i] = Mach
-        Reunits[i] = V*ρ/μ
-
         V0s[i] = V
         M0s[i] = Mach
+        Reunits[i] = V*ρ/μ
 
         # Set pitch trim by adjusting CLh
         Wf = W - Wzero
@@ -154,10 +157,10 @@ for   i = 1:N
         # ifirst = false
         Ftotal, η, P, Hrej, heatexcess,
         mdotf[i], BSFC,
-        deNOx[i] = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4s[i],
-                                    Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
+        deNOx[i], EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4s[i],
+                                    Kinl, Φinl, parpt, parmot, pargen, ifirst, false)
         ifirst = false
-
+        # println(Tt4s[i]*10/18/T0s[i])
         DoL = para[iaCD, ip]/ para[iaCL, ip]
         # println("LoD = $(1/DoL)")
         # Calculate improved flight angle
@@ -171,8 +174,8 @@ for   i = 1:N
         
         # para[iagamV, ip] = gamV
         if (Ldebug)
-            printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-                        iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V); color =:light_green)
+            printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4f  %9.4f  %9.4f\n",
+                        iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V, alts[i], Mach, Tt4s[i]); color =:light_green)
         end
         
         if(abs(dgamV) < gamVtol) 
@@ -250,8 +253,9 @@ for   i = 1:N
 
     end
     # Do cruise too 
-    if FL[i]≥ 370 && FL[i]≤430
+    if FL[i]≥ 270 && FL[i]≤430
         ip = ipcruise1
+        
         Wf = Ws[i] - Wzero
         rfuel = Wf/parg[igWfuel]
         itrim = 1
@@ -261,24 +265,46 @@ for   i = 1:N
         DoL = para[iaCD, ip]/ para[iaCL, ip]
         W  = Ws[i]
         BW = W + Wbouys[i]
-        F  = BW*(DoL + 0.015)
+        F  = BW*(DoL)
 
-        Mach = pare[ieM0, ip]
+        Mach = 0.8
+        V = Mach*a0s[i]
         # Run powertrain [TODO] actually should run this to a required thrust not Tt4
         ρ0 = ρ0s[i]
         u0 = Mach*a0s[i]
         Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
         Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
-
+        TR = 8.5 # Tt4/ Tamb
+        Tt4 = max(2850, min(3550, T0s[i]*TR*18/10)) # convert to [R]
+        # println(alts[i], " ", Tt4)
         Ftotal, η, P, Hrej, heatexcess,
-        crzmdotf[i], BSFC,
-        deNOxcrz = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, 3200.0,
+        FFcrz[i], BSFC,
+        deNOxcrz, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
                                         Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
-        
+
+        gam = Ftotal/BW - DoL
+        ROCcrz[i] = sin(gam)*V*60/0.3048
+        while gam>0
+            TR = TR*0.99
+            Tt4 = max(2850, min(3550, T0s[i]*TR*18/10)) # convert to [R]
+            # println(alts[i], " ", Tt4)
+            Ftotal, η, P, Hrej, heatexcess,
+            crzmdotf[i], BSFC,
+            deNOxcrz, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
+            Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
+            gam = Ftotal/BW - DoL
+            if Tt4 == 2850.0 && gam>0
+                gam = 0.0
+                println("Min Temp reached")
+            end
+        end
+        EGTcrz[i] = EGT
+
+
         crzTAS[i] = V0s[i]/kts_to_mps
     end
 
 end # done integrating climb
 
-return Ws[1], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS
+return Ws[1], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFcrz, ROCcrz
 end
