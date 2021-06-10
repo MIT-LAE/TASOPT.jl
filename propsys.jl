@@ -34,7 +34,7 @@ function TurboShaft(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,
      deNOx, mcat, 
      EINOx1, EINOx2, mdot, Tt3, OPR, Wc3  = NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
-                        cpsi, w, lcat, deNOx_in, first; LHV = LHV)
+                        cpsi, w, lcat, deNOx_in, first, LHV)
 
     # include("NPSS_Turboshaft/Eng.output")
       
@@ -69,11 +69,11 @@ function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64,
 
     NPSS_success, 
     ShP, eta_thermal, mdotf,
-    BSFC, deNOx = NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
+    BSFC, deNOx, EGT = NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
     
     # include(file_name)
 
-    return ShP, eta_thermal, mdotf, BSFC, deNOx #, MapScalars, NozArea
+    return ShP, eta_thermal, mdotf, BSFC, deNOx, EGT #, MapScalars, NozArea
 
 end
 function TurboShaft2(NPSS_TS, alt_in::Float64, MN_in::Float64, 
@@ -245,7 +245,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         
         Pshaft_AftFan = -1000.0 * AftFan_power
         Wpowertrain += WAftfan*2.0
-       xWpowertrain += WAftfan*2.0*parg[igxgen]
+       xWpowertrain += WAftfan*2.0*parg[igxtshaft]
         # println(DAftFan)
         #Make these 0 for wings
         Kinl = 0.0
@@ -344,13 +344,14 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         w    = parpt[ipt_wcat]
         lcat = parpt[ipt_lcat]
         deNOx= parpt[ipt_deNOx]
+        LHV  = parg[igLHVfuel]
 
         Ptshaft = PgenShaft*ngen/nTshaft + Pshaft_AftFan # Assume one aft fan per Tshaft
         parpt[ipt_Ptshaft] = Ptshaft
         NPSS_time += @elapsed ηthermal, mdotf, BSFC,
          deNOx_out, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3 = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
-                                            cpsi, w, lcat, deNOx, first)
+                                            cpsi, w, lcat, deNOx, first; LHV = LHV)
         
         parpt[ipt_calls_NPSS] += 1
         
@@ -413,7 +414,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
     # Calculate Turboshaft power output
         NPSS_time += @elapsed Pshaft, ηthermal,
         mdotf, BSFC,
-        deNOx_out = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
+        deNOx_out, EGT = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
         
         parpt[ipt_calls_NPSS] += 1
 
@@ -499,7 +500,6 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
             Pmot_out = Pmot_in - PL
             ηmot = Pmot_out/Pmot_in
             Hwaste_motor = PL
-            Hrej += nfan*Hwaste_motor
 
             # Ducted fan
             Pfan_in = Pmot_out
@@ -512,7 +512,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
 
         abs(err)≥tol && printstyled("Warning [propsys]: Motor-fan speeds not converged! Error = ",abs(err),"\n"; color=:red)
     Hrej += nfan*Hwaste_motor
-    
+
     Ftotal = Fn*nfan + 2*FnAft
     cryocool = mdotf_tot*5898e3
     heatexcess = Hrej - cryocool
@@ -522,7 +522,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
            [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej], heatexcess,
            mdotf_tot, BSFC,
-           deNOx_out
+           deNOx_out, EGT
 
 end
 

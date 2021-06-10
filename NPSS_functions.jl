@@ -42,8 +42,7 @@ Writes an input file for NPSS Turboshaft model
 function NPSS_TShaft_input(NPSS, alt_in, MN_in, 
     SHP_dmd, Tt41, 
     LPC_PR, HPC_PR,
-    cpsi, w, lcat, deNOx, first ;
-    LHV = 120, file_name = "NPSS_Turboshaft/EngineInputs.inp")
+    cpsi, w, lcat, deNOx, first, LHV)
 
     input_string = "111 "*
     "first = $first;" *
@@ -80,8 +79,8 @@ function NPSS_TShaft_input(NPSS, alt_in, MN_in,
         Tt3    = parse(Float64, out[9] )
         OPR    = parse(Float64, out[10])
         Wc3    = parse(Float64, out[11])
+        LHV    = parse(Float64, out[12])
     end
-
     return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3
 
 end
@@ -111,9 +110,10 @@ function NPSS_TShaft_run(NPSS, alt_in, MN_in,
         mdotf  = parse(Float64, out[4] )
         BSFC   = parse(Float64, out[5] )
         deNOx  = parse(Float64, out[6] )
+        EGT    = parse(Float64, out[7] )
     end
     
-    return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx
+    return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx, EGT
 end
 
 function NPSS_TShaft_run2(NPSS, alt_in, MN_in, 
