@@ -715,7 +715,7 @@ function mission!(pari, parg, parm, para, pare,
             # printstyled("Wfuel = $Wfuel \n fburn = $fburn \n", color=:red)
 
             Wburn = WMTO*fburn
-            parm[imPFEI] = Wburn/gee*120.0e6 / (parm[imWpay]*parm[imRange])
+            parm[imPFEI] = Wburn/gee*parg[igLHVfuel]*1e6 / (parm[imWpay]*parm[imRange])
 
       return t_prop
 end
