@@ -1,6 +1,5 @@
-function printBADA(io, name, W0, flightceil, TAS, ROC, ffpmin, crzf, crzTAS )
+function printBADA(io, name, W0, bestalt, TAS, ROC, ffpmin, crzf, crzTAS )
 
-    alt = flightceil
     γdes = 3.0 * π/180.0
     sing = sin(γdes)
 # Flight levels to output in BADA file:
@@ -10,7 +9,7 @@ function printBADA(io, name, W0, flightceil, TAS, ROC, ffpmin, crzf, crzTAS )
         220 ,  240 ,  260 ,  280 ,  290 , 
         310 ,  330 ,  350 ,  370 ,  390 ,
         410 ,  430 ,  431 ]
-    maxalt = alt/ft_to_m + 7000 #idk why but AEIC subtracts 7000 ft
+    maxalt = bestalt/ft_to_m + 7000 #idk why but AEIC subtracts 7000 ft
 
     println(io, "BADA PERFORMANCE FILE                                    "*Dates.format(now(), DateFormat("u dd yyyy")) )
     println(io, @sprintf(""))
@@ -31,7 +30,7 @@ function printBADA(io, name, W0, flightceil, TAS, ROC, ffpmin, crzf, crzTAS )
    
     n = length(FL)
     for i = 1:n
-        if FL[i]≥ 330 && FL[i]≤430
+        if FL[i]≥ 330 && FL[i]≤431
     println(io, @sprintf("%3.0f |  %3.0f   %4.1f  %5.1f  %5.1f |  %3.0f     %4.0f  %4.0f  %4.0f   %4.1f  |  %3.0f   %4.0f  %4.1f  ", 
             FL[i], crzTAS[i], crzf[1, i], crzf[2, i], crzf[3, i], 
                                                                 TAS[i],  ROC[1, i], ROC[2, i], ROC[3, i], ffpmin[i], TAS[i], TAS[i]*sing*60/ft_to_m, ffpmin[i]*0.1))

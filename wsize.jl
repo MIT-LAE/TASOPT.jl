@@ -1239,13 +1239,14 @@ Lconv = false # no convergence yet
 
     end
     if saveODperf
+        cruisealt = para[iaalt, ipcruise1]
         # Ldebug = true
         W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFcrzmaxhigh, ROCmaxhigh  = odperf!(pari, parg, parm, para, pare, 1.0, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
         W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFcrzmaxnom , ROCmaxnom   = odperf!(pari, parg, parm, para, pare, 0.8, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
         W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFcrzmaxlo  , ROCmaxlo    = odperf!(pari, parg, parm, para, pare, 0.7, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
 
         open("ZIA_.PTF", "w") do f
-            printBADA(f, "ZIA", [W0lo, W0nom, W0high], max(h1,h2,h3),
+            printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
             V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
             hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom)
         end
