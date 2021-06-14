@@ -98,8 +98,17 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 
       W_Sh = Whtail  /Sh1
 
+      #Calcualte fuel moment and derivaties wrt to wing box location 
+      if pari[iifwing] == 0 # No fuel in wings - typically for Hydrogen fuel 
+            xWfuel = rfuel*(Wfuel*parg[igxftank])
+            xWfuel_xwbox = 0.0
+      else 
+            xWfuel = rfuel*(Wfuel*parg[igxwbox] + parg[igdxWfuel])
+            xWfuel_xwbox = rfuel*Wfuel
+      end
+      
       xW = rpay * Wpay *xpay +
-	 rfuel*(Wfuel*parg[igxftank]) +
+	 xWfuel +
 	 parg[igxWfuse] + xWtesys + xWftank +
 	 Wwing *parg[igxwbox] + parg[igdxWwing ] +
 	 Wstrut*parg[igxwbox] + parg[igdxWstrut] +
@@ -110,7 +119,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 	 Wlgnose*parg[igxlgnose] +
 	 Wlgmain*(parg[igxwbox] + dxlg)
 
-      xW_xwbox = Wwing + Wstrut + Wlgmain
+      xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
        
       xW_Sh = (Whtail*parg[igxhbox] + parg[igdxWhtail]) /Sh1
 
@@ -330,12 +339,11 @@ function htsize(pari,parg,paraF,paraB,paraC)
 
       xWfuse = parg[igxWfuse]
 
-      # dxWfuel  = parg[igdxWfuel ]
+      dxWfuel  = parg[igdxWfuel ]
       dxWwing  = parg[igdxWwing ]
       dxWstrut = parg[igdxWstrut]
       dxWhtail = parg[igdxWhtail]
       dxWvtail = parg[igdxWvtail]
-      # dxlgmain = parg[igdxlgmain]
 
       xeng    = parg[igxeng]   
       xhpesys = parg[igxhpesys]
@@ -452,13 +460,20 @@ function htsize(pari,parg,paraF,paraB,paraC)
             WC_Sh = We_Sh
 
       #---- total weight moment at forward and aft CG limits
-            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*(Wfuel*xftank)
-            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*(Wfuel*xftank)
-            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*(Wfuel*xftank)
+            if pari[iifwing] == 0
+                  xWfuel = Wfuel*xftank
+                  xWfuel_xw = 0.0
+            else
+                  xWfuel = Wfuel*xwbox + dxWfuel
+                  xWfuel_xw = Wfuel
+            end
+            xWF = xWe + rpayF*Wpay*xpayF + rfuelF*xWfuel
+            xWB = xWe + rpayB*Wpay*xpayB + rfuelB*xWfuel
+            xWC = xWe + rpayC*Wpay*xpayC + rfuelC*xWfuel
 
-            xWF_xw = xWe_xw
-            xWB_xw = xWe_xw
-            xWC_xw = xWe_xw
+            xWF_xw = xWe_xw + rfuelF*xWfuel_xw
+            xWB_xw = xWe_xw + rfuelB*xWfuel_xw
+            xWC_xw = xWe_xw + rfuelC*xWfuel_xw
 
             xWF_Sh = xWe_Sh
             xWB_Sh = xWe_Sh
@@ -678,9 +693,6 @@ function cglpay(parg)
 
 #---- zero fuel is assumed to be worst case forward and full fuel worst case aft
       rfuel  = 0.
-      rfuelF = 0.
-      # rfuelB = 0.
-      rfuelB = 1.0
 
 # See Eqn 283 in TASOPT documentation
       
@@ -733,6 +745,7 @@ function cglpay(parg)
 #
       ξ   = [ 0.0, 1.0]
       sgn = [-1.0, 1.0]
+
       if parg[igxftank] < xcabin
             rf = [1.0, 0.0]
       else
@@ -776,7 +789,7 @@ function cglpay(parg)
 #      xcgF = xcg[1]
 #      xcgB = xcg[2]
      
-      return rfuelF, rfuelB, rpay[1], rpay[2], xcg[1], xcg[2]
+      return rf[1], rf[2], rpay[1], rpay[2], xcg[1], xcg[2]
 end # cglpay
 
 
