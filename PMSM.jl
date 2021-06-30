@@ -313,10 +313,12 @@ function PMSM(P::Float64, ratAsp::Float64, σAg::Float64, ratSplit::Float64, par
             PL   = PLiron + PLCu + PLwind
             Preq = P + PL
             η    = P/Preq
+            parte[ite_effdes] = η
             
             rpm = 60N  # Output rotational speed
 
             SP = P/mPMSM # Specific Power
+            parte[ite_SPdes] = SP
 
 return W, Preq, η, rpm, PL, PLiron/PL, PLCu/PL, PLwind/PL, SP
 
@@ -399,7 +401,7 @@ Simple inverter model that calculates the efficiency and mass of an inverter or 
 """
 function inverter(P::Float64, N::Float64, parte::Array{Float64, 1})
     kcf = 20.
-    SPinv  = 19.0e3 #W/kg
+    SPinv  = 19.0e3 #W/kg per GE and Uni Illinois using SiC and GaN switches respectively - https://arc.aiaa.org/doi/pdf/10.2514/6.2017-4701
 
     p = parte[ite_p]
 
@@ -452,10 +454,49 @@ Cable sizing
 #[TODO] See NPSS-PSL which uses real world data for typical wires 
 
 """
-function cable()
+function cable(P, V, lcable, parpt)
     
-    η = 1.0
-    Wcable = 0.0
+    # Conductor:
+    σ = parpt[ipt_sigcon] #using σ instead of ρ (resistivity) to avoid conflict with density
+    α = parpt[ipt_alphacon] 
+    Tcon = 273.15 + 0.0
+
+    σcon = σ/(1+α*(Tcon - 293.15))
+    ρcon = parpt[ipt_rhocon]  #[kg/m³]
+    Jmax = parpt[ipt_Jmax] 
+    kpf  = parpt[ipt_kpf]
+
+    # Dielectric:
+    ρins = parpt[ipt_rhoins]  
+    Emax = parpt[ipt_Emax] 
+    tins = V/Emax
+
+    
+    I = P/V
+    Acon = I/Jmax
+    ri = sqrt(Acon/π/kpf) # A = πr²×kpf
+    ro = ri + tins
+    Ains = π*(ro^2 - ri^2)
+
+    Rcable = lcable/(Acon*σcon)
+    parpt[ipt_Rcable] = Rcable
+    
+    Lohmic = I^2 * Rcable
+    Pin = P + Lohmic
+    η = P/Pin
+
+    parpt[ipt_rholcable] = (Acon*ρcon + Ains*ρins)
+    mcable = lcable*(Acon*ρcon + Ains*ρins)
+    Wcable = mcable*gee
     
     return η, Wcable
+end
+
+function cable(Pin, parpt)
+    
+    I = Pin/parpt[ipt_Vcable]
+    Lohmic = I^2 * parpt[ipt_Rcable]
+    Pout = Pin - Lohmic
+    η = Pout/Pin
+    return η
 end
