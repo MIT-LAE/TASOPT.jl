@@ -732,46 +732,165 @@ function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
 end
 
 #737-800 from TASOPT w 220 pax
-function plot737compare()
+function plot737compare(;weightdetail= true, fracs = false)
     fig, ax = plt.subplots(1,2,figsize=(8,5), dpi = 100)
     
-    Wempty  = 110860.0* lbf_to_N
+    Wempty  = 105757.5* lbf_to_N
+
     Wpay    =  47318.9* lbf_to_N
-    Wfuel   =  56415.7* lbf_to_N
-    WMTO    = 214594.7* lbf_to_N
-    
-    Wemptyfrac  = Wempty  /9.81/1000 #/WMTO
-    Wpayfrac    = Wpay    /9.81/1000 #/WMTO
-    Wfuelfrac   = Wfuel   /9.81/1000 #/WMTO
+    Wfuel   =  49862.7* lbf_to_N
+    WMTO    = 202939.1* lbf_to_N
+
+    Wtotadd =  13191.0* lbf_to_N
+    Wfuse   =  44496.3* lbf_to_N
+    Wwing   =  26043.3* lbf_to_N
+    Whtail  =   2650.0* lbf_to_N
+    Wvtail  =   1749.0* lbf_to_N
+    Weng    =  17628.0* lbf_to_N
+
+    if fracs
+        Wemptyfrac  = Wempty  /WMTO
+        Wpayfrac    = Wpay    /WMTO
+        Wfuelfrac   = Wfuel   /WMTO
+        Wtotaddfrac = Wtotadd /WMTO
+        Wfusefrac   = Wfuse   /WMTO
+        Wwingfrac   = Wwing   /WMTO
+        Whtailfrac  = Whtail  /WMTO
+        Wvtailfrac  = Wvtail  /WMTO
+        Wengfrac    = Weng    /WMTO
+    else
+        Wemptyfrac  = Wempty  /9.81/1000 
+        Wpayfrac    = Wpay    /9.81/1000 
+        Wfuelfrac   = Wfuel   /9.81/1000 
+        Wtotaddfrac = Wtotadd /9.81/1000
+        Wfusefrac   = Wfuse   /9.81/1000
+        Wwingfrac   = Wwing   /9.81/1000
+        Whtailfrac  = Whtail  /9.81/1000
+        Wvtailfrac  = Wvtail  /9.81/1000
+        Wengfrac    = Weng    /9.81/1000
+    end
+
     bar_width = 0.2
     a = ax[1]
-    Wbar1 = a.bar(0.0, Wpayfrac  , color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
-    Wbar2 = a.bar(0.0, Wfuelfrac , color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
-    Wbar3 = a.bar(0.0, Wemptyfrac, color = "#D55E00", width = bar_width, label = "Wempty")
-    Wbars = [Wbar1, Wbar2, Wbar3]
-    Wlabels = ["", "", ""]
-    # label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
-    label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
-    
-    Wpay  = parg[igWpay]
-    Wfuel = parg[igWfuel]
-    WMTO  = parg[igWMTO]
-    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+    if weightdetail == false
+        Wbar1 = a.bar(0.0, Wpayfrac  , color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
+        Wbar2 = a.bar(0.0, Wfuelfrac , color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
+        Wbar3 = a.bar(0.0, Wemptyfrac, color = "#D55E00", width = bar_width, label = "Wempty")
+        Wbars = [Wbar1, Wbar2, Wbar3]
+        Wlabels = ["", "", ""]
+        if fracs
+            label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
+        else
+            label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+        end
+        # =======
+        #   ZIA
+        # =======
+        Wpay  = parg[igWpay]
+        Wfuel = parg[igWfuel]
+        WMTO  = parg[igWMTO]
+        Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+        if fracs
+            Wemptyfrac = Wempty/WMTO
+            Wfuelfrac  = Wfuel /WMTO
+            Wpayfrac   = Wpay  /WMTO
+        else
+            Wemptyfrac = Wempty/9.81/1000 #/WMTO
+            Wfuelfrac  = Wfuel /9.81/1000 #/WMTO
+            Wpayfrac   = Wpay  /9.81/1000 #/WMTO
+        end    
 
-    Wemptyfrac = Wempty/9.81/1000 #/WMTO
-    Wfuelfrac  = Wfuel /9.81/1000 #/WMTO
-    Wpayfrac   = Wpay  /9.81/1000 #/WMTO
+        Wbar1 = a.bar(1.0, Wpayfrac  ,  color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
+        Wbar2 = a.bar(1.0, Wfuelfrac ,  color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
+        Wbar3 = a.bar(1.0, Wemptyfrac,  color = "#D55E00", width = bar_width, label = "Wempty")
+        Wbars = [Wbar1, Wbar2, Wbar3]
+        Wlabels = ["Wpay", "Wfuel", "Wempty"]
+        if fracs
+            label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
+        else
+            label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+        end
+    else
+        
+        Wbars = []
+        push!(Wbars, a.bar(0.0, Wpayfrac  , color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay"))
+        push!(Wbars, a.bar(0.0, Wfuelfrac , color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel"))
+        push!(Wbars, a.bar(0.0, Wtotaddfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac + Whtailfrac + Wvtailfrac + Wengfrac, label = "Wadd"))
+        push!(Wbars, a.bar(0.0, Wengfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac + Whtailfrac + Wvtailfrac, label = "Weng"))
+        push!(Wbars, a.bar(0.0, Wvtailfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac + Whtailfrac, label = "Wvtail"))
+        push!(Wbars, a.bar(0.0, Whtailfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac, label = "Whtail"))
+        push!(Wbars, a.bar(0.0, Wwingfrac, width = bar_width, bottom = Wfusefrac, label = "Wwing"))
+        push!(Wbars, a.bar(0.0, Wfusefrac,color = "k",  width = bar_width, label = "Wfuse"))
+        Wlabels = fill("", length(Wbars))
+        if fracs
+            label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
+        else
+            label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+        end
 
-    Wbar1 = a.bar(1.0, Wpayfrac  ,  color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
-    Wbar2 = a.bar(1.0, Wfuelfrac ,  color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
-    Wbar3 = a.bar(1.0, Wemptyfrac,  color = "#D55E00", width = bar_width, label = "Wempty")
-    Wbars = [Wbar1, Wbar2, Wbar3]
-    Wlabels = ["Wpay", "Wfuel", "Wempty"]
-    # label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
-    label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+        # =======
+        #   ZIA
+        # =======
+        Wpay  = parg[igWpay]
+        Wfuel = parg[igWfuel]
+        WMTO  = parg[igWMTO]
+        Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+        Wwing = parg[igWwing]
+        Wfuse = parg[igWfuse]
+        Whtail = parg[igWhtail]
+        Wvtail = parg[igWvtail]
+        Weng = parg[igWtesys]
+            Whpesys = parg[igWMTO] * parg[igfhpesys]
+            Wlgnose = parg[igWMTO] * parg[igflgnose]
+            Wlgmain = parg[igWMTO] * parg[igflgmain]
+        Wtotadd = Whpesys + Wlgnose + Wlgmain
+        Wftank = parg[igWftank]
+
+        if fracs
+            Wemptyfrac = Wempty /WMTO
+            Wfuelfrac  = Wfuel  /WMTO
+            Wpayfrac   = Wpay   /WMTO
+            Wtotaddfrac = Wtotadd /WMTO
+            Wfusefrac   = Wfuse   /WMTO
+            Wwingfrac   = Wwing   /WMTO
+            Whtailfrac  = Whtail  /WMTO
+            Wvtailfrac  = Wvtail  /WMTO
+            Wengfrac    = Weng    /WMTO
+            Wftankfrac  = Wftank  /WMTO
+        else
+            Wemptyfrac = Wempty/9.81/1000 #/WMTO
+            Wfuelfrac  = Wfuel /9.81/1000 #/WMTO
+            Wpayfrac   = Wpay  /9.81/1000 #/WMTO
+            Wtotaddfrac = Wtotadd /9.81/1000
+            Wfusefrac   = Wfuse   /9.81/1000
+            Wwingfrac   = Wwing   /9.81/1000
+            Whtailfrac  = Whtail  /9.81/1000
+            Wvtailfrac  = Wvtail  /9.81/1000
+            Wengfrac    = Weng    /9.81/1000
+            Wftankfrac  = Wftank  /9.81/1000
+        end
+
+        Wbars = []
+        push!(Wbars, a.bar(1.0, Wpayfrac  , color = "#0072B2", bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay"))
+        push!(Wbars, a.bar(1.0, Wfuelfrac , color = "#009E73", bottom = Wemptyfrac, width = bar_width, label = "Wfuel"))
+        push!(Wbars, a.bar(1.0, Wftankfrac , bottom = Wfusefrac + Wwingfrac + Whtailfrac + Wvtailfrac + Wengfrac+Wtotaddfrac, width = bar_width, label = "Wftank"))
+        push!(Wbars, a.bar(1.0, Wtotaddfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac + Whtailfrac + Wvtailfrac + Wengfrac, label = "Wadd"))
+        push!(Wbars, a.bar(1.0, Wengfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac + Whtailfrac + Wvtailfrac, label = "Weng"))
+        push!(Wbars, a.bar(1.0, Wvtailfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac + Whtailfrac, label = "Wvtail"))
+        push!(Wbars, a.bar(1.0, Whtailfrac, width = bar_width, bottom = Wfusefrac + Wwingfrac, label = "Whtail"))
+        push!(Wbars, a.bar(1.0, Wwingfrac, width = bar_width, bottom = Wfusefrac, label = "Wwing"))
+        push!(Wbars, a.bar(1.0, Wfusefrac, color = "k", width = bar_width, label = "Wfuse"))
+        Wlabels = ["Wpay", "Wfuel", "Wftank", "Wadd", "Wprop", "Wvtail", "Whtail", "Wwing", "Wfuse" ]
+        if fracs
+            label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000, fontsize = 18)
+        else
+            label_bars(a, Wbars, Wlabels, val_multiplier = 1/(WMTO/9.81/1000), fontsize = 18)
+        end
+    end
     a.set_ylabel("Mass [tonnes]", fontsize = 20)
     a.set_xticks([0, 1])
     a.set_xticklabels(["737-800", "ZIA"], fontsize = 20)
+    a.grid()
     
     CD     = 0.03185
     CDi    = 0.01114
@@ -831,6 +950,6 @@ function plot737compare()
     a.set_ylabel("CD [-]", fontsize = 20)
     a.set_xticks([0, 1])
     a.set_xticklabels(["737-800", "ZIA"], fontsize = 20)
-    
+    a.grid()
     plt.tight_layout()
     end
