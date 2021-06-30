@@ -80,7 +80,9 @@ function NPSS_TShaft_input(NPSS, alt_in, MN_in,
         OPR    = parse(Float64, out[10])
         Wc3    = parse(Float64, out[11])
         LHV    = parse(Float64, out[12])
+        W_in    = parse(Float64, out[13])
     end
+    # println(W_in, "lbm/s; If m/mdot^1.2 = 38.9 -> Wtshaft = ", (W_in/2.205)^1.2 * 38.9 * gee) # 38.9 kg/(kg/s) from Hall et al. https://arc.aiaa.org/doi/pdf/10.2514/6.2018-3973
     return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3
 
 end
@@ -111,9 +113,14 @@ function NPSS_TShaft_run(NPSS, alt_in, MN_in,
         BSFC   = parse(Float64, out[5] )
         deNOx  = parse(Float64, out[6] )
         EGT    = parse(Float64, out[7] )
+        Tt3    = parse(Float64, out[8] )
+        W3     = parse(Float64, out[9] )
+        EINOx1 = parse(Float64, out[10] )
+        EINOx2 = EINOx1*(1-deNOx)
+        FAR    = parse(Float64, out[11])
     end
     
-    return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx, EGT
+    return NPSS_success, ShP, ηtherm, mdotf, BSFC, deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR
 end
 
 function NPSS_TShaft_run2(NPSS, alt_in, MN_in, 
