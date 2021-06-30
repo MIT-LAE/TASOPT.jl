@@ -162,7 +162,7 @@ Assembly Assembly Eng
 	#include <TurbinePRmap_NEPP_HPT.map>
 	FlowStation F041;
 	Fl_O.MNdes = 0.30;
-	effDes = 0.88;
+	effDes = 0.89;
 	PRbase = 3.603;
 
 		// Turbine Cooling and Leakage Air (TCLA) stream 1 (introduced at turbine inlet)
@@ -210,7 +210,7 @@ Assembly Assembly Eng
 	Element Turbine TrbP {
 		#include <TurbinePRmap_NEPP_FPT.map>
 		FlowStation F049;
-		effDes = 0.89;
+		effDes = 0.91;
 		PRbase = 4.2;
 		Fl_O.MNdes = 0.5;
 	}
