@@ -426,7 +426,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
     ## Plot
     if ax === nothing
-        plt.style.use(["~/prash.mplstyle"])
+        plt.style.use(["./prash.mplstyle"])
         fig, ax = plt.subplots(figsize=(8,5), dpi = 100)
     else
         ax.cla()
@@ -523,8 +523,8 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
 
     # Annotations
-    ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+    ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
@@ -575,7 +575,7 @@ end
 function plot_details(parg, pari, para, parm; ax = nothing)
         ## Create empty plot
         if ax === nothing
-            plt.style.use(["~/prash.mplstyle", "seaborn-colorblind"])
+            plt.style.use(["./prash.mplstyle", "seaborn-colorblind"])
             fig, atemp = plt.subplots(2, 2, figsize=(8,5), dpi = 100, gridspec_kw=Dict("height_ratios"=>[1, 3], "width_ratios"=>[1,3]))
             gs = atemp[1,2].get_gridspec()
             gssub = matplotlib.gridspec.SubplotSpec(gs, 0,1)
