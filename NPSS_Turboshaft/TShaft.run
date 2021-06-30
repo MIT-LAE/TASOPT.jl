@@ -134,7 +134,8 @@ while(flag!=999){
             <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
             <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
             <<Eng.CmpH.Fl_O.Wc<<"_"
-            <<Eng.FusEng.LHV;
+            <<Eng.FusEng.LHV<<"_"
+            <<Eng.FsEng.Fl_O.W;
 
         }
         else{
@@ -168,6 +169,7 @@ while(flag!=999){
 
         if(first){
             #include "Tshaft_design.int"
+            // Eng.FusEng.LHV   = 18490;
             // restart("offdesTO.restart");
             solver.independentValues = solverIndeps2;
             // restart("offDes1.restart");
@@ -201,7 +203,11 @@ while(flag!=999){
             <<Eng.FusEng.Wfuel/2.205<<"_"
             <<Eng.Perf.BSFC<<"_"
             <<Eng.PCEC.deNOx<<"_"
-            <<Eng.NozPri.Fl_O.Tt*10/18;
+            <<Eng.NozPri.Fl_O.Tt*10/18<<"_"
+            <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
+            <<Eng.CmpH.Fl_O.W<<"_"
+            <<Eng.BrnPri.EINOx<<"_"
+            <<Eng.BrnPri.FAR;
         }
         else{
             output.reopen();
