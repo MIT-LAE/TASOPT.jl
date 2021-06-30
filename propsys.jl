@@ -114,7 +114,7 @@ Outputs:
 """
 function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Float64,
                     Kinl::Float64, Φinl::Float64,
-                     π_fan::Float64, rSnace, first)
+                     π_fan::Float64, rSnace, fpylon, first)
     
     # file_name = "NPSS_Turboshaft/Fan.output"
  
@@ -142,8 +142,9 @@ function DuctedFan(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,  Fn::Flo
     Wnace1 = 4.45*(Ainlet/0.3048^2) * (2.5+0.0238*Dfan/0.0254) +
              4.45*(Acowl /0.3048^2) *  1.9 +
              4.45*(Aexh  /0.3048^2) * (2.5+0.0363*Dfan/0.0254)
-  
-    Wfan = mfan*gee + Wnace1*0.5 #TODO need more recent weight model for nace - here just using 50% of the DC10 one
+    # println(Wnace1," ", (mfan*gee))
+    Wfan = (mfan*gee + Wnace1*0.6)*(1+fpylon) # fpylon is the added weight fraction for the pylon
+    #TODO need more recent weight model for nace - here just using 60% of the DC10 one
 
     return Dfan, Fan_power, Torque_fan, N_fan, Mtip,
             eta_prop, eta_DF,
@@ -236,12 +237,14 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
 
         FnAft = Fn*FnSplit
         rSnace = parg[igrSnace]
+        fpylon = parg[igfpylon]
         #Assume 2 aft fans:
         DAftFan, AftFan_power, AftFan_torque, AftFan_N, AftFan_Mtip,
         AftFan_ηpropul, AftFan_η,
-        AftFanNozArea, WAftfan, AftSnace1 = DuctedFan(NPSS_AftFan, alt_in, MN_in, FnAft/2, Kinl, Φinl, 1.25, rSnace, first )
+        AftFanNozArea, WAftfan, AftSnace1 = DuctedFan(NPSS_AftFan, alt_in, MN_in, FnAft/2, Kinl, Φinl, 1.25, rSnace, fpylon, first )
 
         parg[igdaftfan] = DAftFan
+        parg[igWaftfan] = WAftfan
         
         Pshaft_AftFan = -1000.0 * AftFan_power
         Wpowertrain += WAftfan*2.0
@@ -258,7 +261,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         NPSS_time = 0.0
         NPSS_time += @elapsed  Dfan, Fan_power, Torque_fan, N_fan, Mtip,
         ηpropul, ηDF,
-        FanNozArea, Wfan, Snace1 = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, rSnace, first )
+        FanNozArea, Wfan, Snace1 = DuctedFan(NPSS_Fan, alt_in, MN_in, Ffan, Kinl, Φinl, πfan, rSnace, fpylon, first )
         parpt[ipt_calls_NPSS] += 1
         # println("Fan:")
         # println("Fan Ø = ", Dfan, " m")
@@ -367,11 +370,13 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         Wpowertrain += Wcat*nTshaft
        xWpowertrain += Wcat*nTshaft*parg[igxtshaft]
 
+        feadd = parg[igfeadd] # Added weight fraction for engine accessories, fuel systems etc.
+
         # SPtshaft = SPadv(Ptshaft/hp_to_W)*hp_to_W*2.205 #returns in hp/lb so convert to W/kg ONLY works for shaft power ≤ 8000 hp. 
         SPtshaft = 10.4e3 # Alternate W/kg Based on the RR T406 (4.58 MW power output) power density = 10.4 kW/kg. The GE38 (~5 MW) has a power density of 11.2 kW/kg
         # SPtshaft = 4.41e3 # Based of TP400
         # SPtshaft = 8.0e3 # Rough estimate based on LEAP1B (choked flow ~ 340m/s and Fn = 130 kN P = 1/2 Fn Vj; Mass = 2780 kg)
-        Wtshaft = gee*(Ptshaft)/SPtshaft
+        Wtshaft = gee*(Ptshaft)/SPtshaft * (1+feadd)
         
         parg[igWtshaft] = Wtshaft
         parpt[ipt_Wtshaft] = Wtshaft
