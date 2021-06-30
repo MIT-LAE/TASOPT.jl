@@ -344,8 +344,11 @@
       const igyeinn    = 283
       const iglftankin = 284 #lftank input
       const igLHVfuel  = 285
+      const igWfburn   = 286
 
-      const igtotal    = 285
+      const igWaftfan  = 287
+
+      const igtotal    = 287
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -400,8 +403,10 @@
       const ite_k2       = 50
       const ite_k3       = 51
       const ite_Pinvdes  = 52  # Stores design inverter power
+      const ite_SPdes    = 53  # Specific power at design
+      const ite_effdes   = 54  
 
-      const ite_total    = 52
+      const ite_total    = 54
 
 
 # indices for powertrain
@@ -472,8 +477,21 @@
 
       const ipt_Ptshaft   = 56
       const ipt_Fnsplit   = 57 # Thrust split between fuse mounted fans and wing podded fans
+
+      const ipt_Rcable    = 58
+      const ipt_Vcable    = 59
+      const ipt_lcable    = 60
+      const ipt_sigcon    = 61 # Conductance of conductor
+      const ipt_alphacon  = 62 # Temp coeff
+      const ipt_rholcable = 63 # linear density kg/m
+      const ipt_rhocon    = 64
+      const ipt_Jmax      = 65
+      const ipt_rhoins    = 66
+      const ipt_Emax      = 67
+      const ipt_kpf       = 68
+
       
-      const ipt_total     = 57
+      const ipt_total     = 68
 
 #---- indices for aero variables at each mission point
       iaalt     =  1
