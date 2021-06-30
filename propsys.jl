@@ -69,11 +69,12 @@ function TurboShaft(NPSS_TS, alt_in::Float64, MN_in::Float64,
 
     NPSS_success, 
     ShP, eta_thermal, mdotf,
-    BSFC, deNOx, EGT = NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
+    BSFC, deNOx, EGT, Tt3, W3,
+    EINOx1, EINOx2, FAR = NPSS_TShaft_run(NPSS_TS, alt_in, MN_in, Tt41, 30_000.0, first)
     
     # include(file_name)
 
-    return ShP, eta_thermal, mdotf, BSFC, deNOx, EGT #, MapScalars, NozArea
+    return ShP, eta_thermal, mdotf, BSFC, deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR #, MapScalars, NozArea
 
 end
 function TurboShaft2(NPSS_TS, alt_in::Float64, MN_in::Float64, 
@@ -421,7 +422,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
     # Calculate Turboshaft power output
         NPSS_time += @elapsed Pshaft, ηthermal,
         mdotf, BSFC,
-        deNOx_out, EGT = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
+        deNOx_out, EGT, Tt3, W3, EINOx1, EINOx2, FAR = TurboShaft(NPSS_TS, alt_in, MN_in, Tt41, Nshaft, first)
         
         parpt[ipt_calls_NPSS] += 1
 
@@ -445,7 +446,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
         Hrej += ngen*Hwaste_gen # Heat rejected from motors
 
     # Off-des cable
-        ηcable, Wcable = cable() #TODO cable is dummy right now
+        ηcable = cable(Pgen_out*ngen/nfan, parpt) 
         Hwaste_cable = Pgen_out*(1-ηcable)
         Hrej += Hwaste_cable  # Heat rejected from cables
         Pinv_in = Pgen_out*ηcable * ngen/nfan # for each inverter
@@ -529,7 +530,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
            [Pmot_out, Pmot_in, Pinv_in, Pgen_in, Pshaft], 
            [Hwaste_motor, Hwaste_inv, Hwaste_cable, Hwaste_gen, Hrej], heatexcess,
            mdotf_tot, BSFC,
-           deNOx_out, EGT
+           deNOx_out, EGT, Tt3, W3, EINOx1, EINOx2, FAR
 
 end
 
