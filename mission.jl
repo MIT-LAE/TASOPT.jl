@@ -374,7 +374,7 @@ function mission!(pari, parg, parm, para, pare,
 
                   t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
                   mdotf, BSFC,
-                  deNOx, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+                  deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
                                                 Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
                   ifirst = false
                   pare[iedeNOx, ip] = deNOx
@@ -511,7 +511,7 @@ function mission!(pari, parg, parm, para, pare,
       balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
 
       if(calc_ipc1)
-            # Calculate only if requested since for design mission TOC is the des point and ∴ already calcualted 
+            # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
             cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
@@ -529,7 +529,7 @@ function mission!(pari, parg, parm, para, pare,
 
             t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
-            deNOx, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+            deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
                                           Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
             
             pare[iedeNOx, ip] = deNOx
@@ -629,7 +629,7 @@ function mission!(pari, parg, parm, para, pare,
 
             t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
-            deNOx, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
+            deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
                                           Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
 
             pare[iedeNOx, ip] = deNOx
@@ -715,6 +715,7 @@ function mission!(pari, parg, parm, para, pare,
             # printstyled("Wfuel = $Wfuel \n fburn = $fburn \n", color=:red)
 
             Wburn = WMTO*fburn
+            parg[igWfburn] = Wburn
             parm[imPFEI] = Wburn/gee*parg[igLHVfuel]*1e6 / (parm[imWpay]*parm[imRange])
 
       return t_prop

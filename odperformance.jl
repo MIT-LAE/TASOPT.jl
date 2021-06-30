@@ -1,4 +1,4 @@
-function odperf!(pari, parg, parm, para, pare, Wfrac0,
+function odperf!(pari, parg, parm, para, pare, Wfrac0, FL, 
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
     NPSS_AftFan::Base.Process, Ldebug, ifirst)
@@ -22,12 +22,12 @@ gamVtol  = 1.0e-12
 
 S    = parg[igS]
 # Flight levels to output in BADA file:
-FL = [  0 ,    5 ,   10 ,   15 ,   20 ,   
-       30 ,   40 ,   60 ,   80 ,  100 , 
-      120 ,  140 ,  160 ,  180 ,  200 ,
-      220 ,  240 ,  260 ,  280 ,  290 , 
-      310 ,  330 ,  350 ,  370 ,  390 ,
-      410 ,  430 ,  431 ]
+# FL = [  0 ,    5 ,   10 ,   15 ,   20 ,   
+#        30 ,   40 ,   60 ,   80 ,  100 , 
+#       120 ,  140 ,  160 ,  180 ,  200 ,
+#       220 ,  240 ,  260 ,  280 ,  290 , 
+#       310 ,  330 ,  350 ,  370 ,  390 ,
+#       410 ,  430 ,  431 ]
 # FL = LinRange(0,430, 44)
 
 alts = FL*100*ft_to_m
@@ -48,13 +48,18 @@ Tt4s = zeros(Float64, N)
 deNOx = zeros(Float64, N)
 mdotf = zeros(Float64, N)
 ROC   = zeros(Float64, N)
-ROCcrz = zeros(Float64, N)
-FFcrz  = zeros(Float64, N)
+ROCmaxcrz = zeros(Float64, N)
+FFmaxcrz  = zeros(Float64, N)
 EGTcrz = zeros(Float64, N)
 
 iceil = N
 crzmdotf = zeros(Float64, N)
+crzEINOx = zeros(Float64, N)
+crzFAR   = zeros(Float64, N)
+clmbEINOx = zeros(Float64, N)
 crzTAS   = zeros(Float64, N)
+Tt4crz   = zeros(Float64, N)
+Tt4crzmax   = zeros(Float64, N)
 
 # Initialize climb integrands
 FoW = zeros(Float64, N)
@@ -80,16 +85,21 @@ VTO = pare[ieu0,ipcruise1] *
         sqrt(para[iaCL  ,ipcruise1] / CLTO )
 ReTO = VTO*pare[ierho0,iptakeoff]/pare[iemu0 ,iptakeoff]
 
+# Determine guesses for start and end of climb weights from fracW
+# at end of climb of design mission, but fuel weights adjusted 
+# by Wfrac0
+Wclimb1 = Wfrac0*parg[igWMTO]     #Wzero + Wfrac0*parg[igWfuel]
+Wclimbn = Wfrac0*parg[igWMTO]*0.9 #Wzero + Wfrac0*parg[igWfuel]*para[iafracW, ipclimbn]
 @inbounds for  ip = 1:N
     frac = (alts[ip] - 0.0)/(alts[N] - 0.0)
     V  =  VTO*(1.0-frac) + V0s[end]*frac
     Re = ReTO*(1.0-frac) + Reunits[end]*frac
-    W  = Wfrac0*parg[igWMTO]*(1.0 - frac) + parg[igWMTO]*0.9*frac
+    W  = Wclimb1*(1.0 - frac) + Wclimbn*frac
     V0s[ip] = V
     Ws[ip] = W
     Reunits[ip] = Re
 end
-# println(Ws)
+# println(Ws/9.81/1000)
 #---- set climb Tt4's from fractions
 fT1 = 0.2#parg[igfTt4CL1]
 fTn = 0.2#parg[igfTt4CLn]
@@ -157,9 +167,10 @@ for   i = 1:N
         # ifirst = false
         Ftotal, η, P, Hrej, heatexcess,
         mdotf[i], BSFC,
-        deNOx[i], EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4s[i],
+        deNOx[i], EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4s[i],
                                     Kinl, Φinl, parpt, parmot, pargen, ifirst, false)
         ifirst = false
+        clmbEINOx[i] = EINOx2
         # println(Tt4s[i]*10/18/T0s[i])
         DoL = para[iaCD, ip]/ para[iaCL, ip]
         # println("LoD = $(1/DoL)")
@@ -182,10 +193,11 @@ for   i = 1:N
             break
         end
     end
-    if ROC[i] < 100
+    if ROC[i] <= 100
         iceil = i
-        ROC[i] = 0.0
         println("Climb ceiling reached at FL",FL[i])
+        println("ROC = $(ROC[i]), Tt4 = $(Tt4s[i]), M = $Mach, W = $BW , CL = $CL, Ftotal = $Ftotal")
+        ROC[i:end] .= 0.0
         break
     end
     if (abs(dgamV) > gamVtol) 
@@ -253,58 +265,91 @@ for   i = 1:N
 
     end
     # Do cruise too 
-    if FL[i]≥ 270 && FL[i]≤430
+    if FL[i]≥ 270 && FL[i]≤431
         ip = ipcruise1
-        
-        Wf = Ws[i] - Wzero
+
+        Wf = parg[igWMTO]*0.95*(Wfrac0 - Wzero/parg[igWMTO])
+        W  = parg[igWMTO]*0.95*Wfrac0
+
         rfuel = Wf/parg[igWfuel]
         itrim = 1
         balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
         icdfun = 1
         cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
         DoL = para[iaCD, ip]/ para[iaCL, ip]
-        W  = Ws[i]
+        # println(1/DoL)
         BW = W + Wbouys[i]
-        F  = BW*(DoL)
+        F  = BW*(DoL) #zero climb angle
+
+        # println("F = $F, BW = $BW, W = $W, Wb = $(Wbouys[i])")
 
         Mach = 0.8
         V = Mach*a0s[i]
-        # Run powertrain [TODO] actually should run this to a required thrust not Tt4
         ρ0 = ρ0s[i]
         u0 = Mach*a0s[i]
         Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
         Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
         TR = 8.5 # Tt4/ Tamb
-        Tt4 = max(2850, min(3550, T0s[i]*TR*18/10)) # convert to [R]
-        # println(alts[i], " ", Tt4)
+        Tt4 = max(2850, min(Tt4s[i], T0s[i]*TR*18/10)) # convert to [R]
+
+        # Calculate max possible thrust at this Tt4, alt and Mach
+        # Tt4 = Tt4s[i]
+        Tt4crzmax[i] = Tt4
         Ftotal, η, P, Hrej, heatexcess,
-        FFcrz[i], BSFC,
-        deNOxcrz, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
+        FFmaxcrz[i], BSFC,
+        deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
                                         Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
 
         gam = Ftotal/BW - DoL
-        ROCcrz[i] = sin(gam)*V*60/0.3048
-        while gam>0
-            TR = TR*0.99
-            Tt4 = max(2850, min(3550, T0s[i]*TR*18/10)) # convert to [R]
+        Tt4crzmax[i] = Tt4
+        ROCmaxcrz[i] = sin(gam)*V*60/0.3048 # this is the max possible ROC at this weight, alt etc.
+        if Ftotal <F
+            println("Ehhhhh Ftotal = ", Ftotal, "Freq = ",F)
+        end
+        iter = 1
+        itermax = 20
+        for iter = 1:itermax
+            if abs(Ftotal - F)<1
+                break
+            end
+            ΔF = F - Ftotal
+            Tt4 = Tt4*(1 + ΔF/Ftotal/5) # 5 is just a scale factor so you don't get random oscillations
+            # println(Tt4)
+            Tt4 = max(2850, min(Tt4, Tt4s[i]))
+            Tt4crz[i] = Tt4
+            # println("Adjusted --> ",Tt4)
+            # TR = TR*0.99
+            # Tt4 = max(2850, min(Tt4s[i], T0s[i]*TR*18/10)) # convert to [R]
             # println(alts[i], " ", Tt4)
             Ftotal, η, P, Hrej, heatexcess,
             crzmdotf[i], BSFC,
-            deNOxcrz, EGT = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
+            deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
             Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
+
+            crzEINOx[i] = EINOx2
+            crzFAR[i]   = FAR
+
             gam = Ftotal/BW - DoL
-            if Tt4 == 2850.0 && gam>0
+            # println(Wfrac0, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
+            if Tt4 ≤ 2850 && Ftotal>F    
+                println("gam = ", gam, "ROC = ", sin(gam)*V*60/0.3048)
                 gam = 0.0
                 println("Min Temp reached")
             end
         end
+        if iter == itermax && abs(Ftotal - F)>1
+            println("Steady level cruise not converged - increase itermax?")
+        end
+
         EGTcrz[i] = EGT
 
-
+        if ROCmaxcrz[i]<=0
+            ROCmaxcrz[i] = 0.0
+        end
         crzTAS[i] = V0s[i]/kts_to_mps
     end
 
 end # done integrating climb
 
-return Ws[1], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFcrz, ROCcrz
+return Ws[1], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
 end
