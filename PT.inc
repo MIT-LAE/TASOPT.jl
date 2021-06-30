@@ -27,5 +27,14 @@ parpt[ipt_ARmot]       = 0.7
 parpt[ipt_sigAgMot]    = 30e3
 parpt[ipt_ratSplitMot] = 0.7
 
+#Cables
+parpt[ipt_Vcable] = 540 # Volts
+parpt[ipt_sigcon  ] = 5.96e7 # Conductivity of Copper @ 293K [S/m]
+parpt[ipt_alphacon] = 0.00429
+parpt[ipt_rhocon]   = 8960.0 # Density of copper
+parpt[ipt_Jmax]     = 5.0e6  #A/m²
+parpt[ipt_kpf]      = 0.91 # Packing factor of Litz cables from Dowdle 2018
+parpt[ipt_rhoins]   = 1700 #[kg/m³] polyamide insulation #Dowdle 2018
+parpt[ipt_Emax]     = 1.0e7 #V/m Polyamide dielectric strength Dowdle 2018
 
 # Weights are also stored here
