@@ -893,6 +893,18 @@ Lconv = false # no convergence yet
         # -------------------------------
         #      Tail sizing section
         # -------------------------------
+            ip = ipcruise1
+            Mach = para[iaMach, ip]
+            β  = sqrt(1.0 - Mach^2) #Prandtl-Glauert factor √(1-M²)
+            # Fuselage pitching moment
+                cosL = cos(sweep*π/180.0)
+                Mperp = Mach*cosL
+                βn = sqrt(1 - Mperp^2) # PG correction factor with M⟂ 
+                # Estimate finite wing ∂CL/∂α from thin airfoil lift-slope 2π and 
+                #  corrections for sweep and compressibility:
+                CLα = 2π*cosL/(sqrt(βn^2 + (2*cosL/AR)^2) + 2*cosL/AR)
+                # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
+                parg[igCMVf1] = parg[igfuseVol]/CLα
 
             # Set tail CL derivative 
                 dϵdα   = parg[igdepsda]
@@ -900,9 +912,6 @@ Lconv = false # no convergence yet
                 tanL   = tan(sweep *π/180.)
                 tanLh  = tan(sweeph*π/180.)
 
-                ip = ipcruise1
-                Mach = para[iaMach, ip]
-                β  = sqrt(1.0 - Mach^2) #Prandtl-Glauert factor √(1-M²)
                 # Calculate the tail lift-curve slope
                 dCLhdCL = (β + 2.0/AR)/(β + 2.0/ARh) * sqrt(β^2 + tanL^2)/sqrt(β^2 + tanLh^2) * (1.0 - dϵdα)
                 parg[igdCLhdCL] = dCLhdCL
