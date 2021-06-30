@@ -306,14 +306,16 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         parpt[ipt_Winv] = Winv
         Wpowertrain += Winv*nfan # Add to total powertrain weight
        xWpowertrain += Winv*nfan*parg[igxinv]    
-
-        ηcable, Wcable = cable() #TODO cable is dummy right now
+        lcable = (parg[igxgen] - parg[igxwbox]) + parg[igyeout]
+        parpt[ipt_lcable] = lcable
+        Vcable = parpt[ipt_Vcable]
+        ηcable, Wcable = cable(PreqMot/ηinv, Vcable, lcable, parpt) #TODO cable is dummy right now
         Hwaste_cable = PreqMot*(1-ηcable)
         Hrej += Hwaste_cable  # Heat rejected from all inverters
         
-        parg[igWcables] = Wcable
-        parpt[ipt_Wcables] = Wcable
-        Wpowertrain += Wcable # Add to total powertrain weight
+        parg[igWcables] = Wcable*nfan
+        parpt[ipt_Wcables] = Wcable*nfan
+        Wpowertrain += Wcable*nfan # Add to total powertrain weight
     #    xWpowertrain += Wcable*parg[igxcable] #need to add x of cable 
     # Size generator
         PreqGen = PreqMot /( ηinv * ηcable)
