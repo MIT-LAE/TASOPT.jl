@@ -1240,30 +1240,37 @@ Lconv = false # no convergence yet
     end
     if saveODperf
         cruisealt = para[iaalt, ipcruise1]
+
+        FL = vcat([0, 5, 10, 15, 20, 30, 40, 60, 80], LinRange(100,430, 34), [431])
+        ZFW = parg[igWMTO] - parg[igWfuel]
+        Wfracs = LinRange(1.0, ZFW/parg[igWMTO], 3)
         # Ldebug = true
-        W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFcrzmaxhigh, ROCmaxhigh  = odperf!(pari, parg, parm, para, pare, 1.0, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
-        W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFcrzmaxnom , ROCmaxnom   = odperf!(pari, parg, parm, para, pare, 0.8, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
-        W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFcrzmaxlo  , ROCmaxlo    = odperf!(pari, parg, parm, para, pare, 0.7, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
+        W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh = odperf!(pari, parg, parm, para, pare, Wfracs[1], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
+        W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom  = odperf!(pari, parg, parm, para, pare, Wfracs[2], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
+        W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo   = odperf!(pari, parg, parm, para, pare, Wfracs[3], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
 
         open("ZIA_.PTF", "w") do f
             printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
             V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom)
+            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom, FL)
         end
-        FL = [  0 ,    5 ,   10 ,   15 ,   20 ,   
-        30 ,   40 ,   60 ,   80 ,  100 , 
-        120 ,  140 ,  160 ,  180 ,  200 ,
-        220 ,  240 ,  260 ,  280 ,  290 , 
-        310 ,  330 ,  350 ,  370 ,  390 ,
-        410 ,  430 ,  431 ]
-        # # FL = LinRange(0,430, 44)
-        # open("ZIACRZ.perf", "w") do f
-        #     cruisechar(f, "ZIA", [1.0, 0.8, 0.7], para[iaMach, ipcruise1], FL,
-        #      hcat(FFcrzmaxhigh, FFcrzmaxnom, FFcrzmaxlo)',
-        #      hcat(crzmdotfhigh, crzmdotfnom, crzmdotflo)',
-        #      hcat(ROCmaxhigh, ROCmaxnom, ROCmaxlo)',
-        #      hcat(EGThigh, EGTnom, EGTlo)')
-        # end
+
+        open("ZIA_NOx_.PTF", "w") do f
+            printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
+            V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom.*60.0.*clmbEINOxnom,
+            hcat(crzmdotflo*60 .*crzEINOxlo, crzmdotfnom*60 .*crzEINOxnom, crzmdotfhigh*60 .*crzEINOxhigh)', crzTASnom, FL; NOx = true)
+        end
+
+        open("ZIACRZ.perf", "w") do f
+            cruisechar(f, "ZIA", Wfracs, para[iaMach, ipcruise1], FL,
+             hcat(FFmaxcrzhigh, FFmaxcrznom, FFmaxcrzlo)',
+             hcat(crzmdotfhigh, crzmdotfnom, crzmdotflo)',
+             hcat(ROCmaxhigh, ROCmaxnom, ROCmaxlo)',
+             hcat(EGThigh, EGTnom, EGTlo)',
+             hcat(Tt4crzhigh, Tt4crznom, Tt4crzlo)',
+             hcat(Tt4crzmaxhigh, Tt4crzmaxnom, Tt4crzmaxlo)',
+             hcat(crzFARhigh, crzFARnom, crzFARlo)')
+        end
     end
     endNPSS(NPSS_TS)
     endNPSS(NPSS_Fan)
