@@ -69,16 +69,16 @@ function CostEst(parg, pare, parm, parpt, prod_Q)
     cost_airframe = PPI*(HE*RE + HT*RT + HM*RM + HQ*RQ + CD + CF + CM + CI)*cA / prod_Q
     cost_prop = parpt[ipt_nTshaft]*(CTS + CEC + CPE)
     #cost_prop = CTS*2 + CEC # x2 is rough estimate from Epstein & O'Flarity for turboelectric systems 
-    cost_tank = PPI_07*800e3*parg[igWftank]/48264  # scaled from 4000kg tank (as calculated by tankWmech) for tanker trucks, cost taken from Yang(2008)
+    cost_tank = PPI_07*800e3*parg[igWftank]/31870  # scaled from 4000kg tank (as calculated by tankWmech) for tanker trucks, cost taken from Yang(2008)
     # alternate version of tank sizing code not for aircraft yields 17903N (less) - is this more representative of a tanker truck??
     cost = cost_prop + cost_airframe + cost_tank 
     # returns cost per aircraft
 
     cost_dev = (HE*RE + HT*RT + CD + CF)*cA*PPI/ prod_Q
     cost_prod = (HM*RM + HQ*RQ + CM + CI)*cA*PPI/ prod_Q
-    cost_ts = parpt[ipt_nTshaft]*CTS
-    cost_pe = parpt[ipt_nTshaft]*CPE
-    cost_pcec = parpt[ipt_nTshaft]*CEC
+    cost_ts = parpt[ipt_nTshaft]*CTS  *(prod_Q+3)/prod_Q
+    cost_pe = parpt[ipt_nTshaft]*CPE  *(prod_Q+3)/prod_Q
+    cost_pcec = parpt[ipt_nTshaft]*CEC*(prod_Q+3)/prod_Q
 
     delta_dev = cost_dev - conv_dev
     delta_prod = cost_prod + cost_tank - conv_prod #should tank cost be included in airframe production or propulsion system?
