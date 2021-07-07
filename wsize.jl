@@ -323,7 +323,7 @@ time_propsys = 0.0
 
         # wing centroid x-offset form wingbox
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
-            xwing = xwbox * dxwing
+            xwing = xwbox + dxwing
             parg[igxwing] = xwing
 
         # tail area centroid locations (assume no offset from sweep initially)
