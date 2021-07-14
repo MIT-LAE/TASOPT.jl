@@ -1257,20 +1257,20 @@ Lconv = false # no convergence yet
         W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh = odperf!(pari, parg, parm, para, pare, Wfracs[1], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
         W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom  = odperf!(pari, parg, parm, para, pare, Wfracs[2], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
         W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo   = odperf!(pari, parg, parm, para, pare, Wfracs[3], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true)
-
-        open("ZIA_.PTF", "w") do f
+        date = Dates.format(now(), DateFormat("uddyyyy"))
+        open(date*"ZIA_.PTF", "w") do f
             printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
             V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
             hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom, FL)
         end
 
-        open("ZIA_NOx_.PTF", "w") do f
+        open(date*"ZIA_NOx_.PTF", "w") do f
             printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
             V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom.*60.0.*clmbEINOxnom,
             hcat(crzmdotflo*60 .*crzEINOxlo, crzmdotfnom*60 .*crzEINOxnom, crzmdotfhigh*60 .*crzEINOxhigh)', crzTASnom, FL; NOx = true)
         end
 
-        open("ZIACRZ.perf", "w") do f
+        open(date*"ZIACRZ.perf", "w") do f
             cruisechar(f, "ZIA", Wfracs, para[iaMach, ipcruise1], FL,
              hcat(FFmaxcrzhigh, FFmaxcrznom, FFmaxcrzlo)',
              hcat(crzmdotfhigh, crzmdotfnom, crzmdotflo)',
