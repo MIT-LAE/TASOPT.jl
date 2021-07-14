@@ -15,7 +15,7 @@ Outputs:
 - Moments `xWfuse`
 - Cabin Volume `cabVol`
 """
-function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
+function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
                       fstring,fframe,ffadd,deltap,
                       Wpwindow,Wppinsul,Wppfloor,
                       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
@@ -24,7 +24,7 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
                       xnose,xshell1,xshell2,xconend,
                       xhtail,xvtail,
                       xwing,xwbox,cbox,
-                      xfix,xapu,xeng,
+                      xfix,xapu,xeng,xfuel,
                       hfloor,
                       sigskin,sigbend, rhoskin,rhobend, 
                       Eskin,Ebend,Gskin)
@@ -158,12 +158,13 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + Wcone + Wapu + Weng
+      Wtail = Whtail + Wvtail + Wcone + Wapu + Weng + Waftfuel
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +
                xapu*Wapu +
-               xeng*Weng ) / Wtail
+               xeng*Weng +
+               xfuel*Waftfuel) / Wtail
 
 #--------------------------------------------------------------------
 #--- shell bending inertias
@@ -200,8 +201,8 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       xf = xwing + dxwing + 0.5*cbox
       xb = xwing - dxwing + 0.5*cbox
 
-      Ahbendf = Abar2*xf^2 - Abar1*xf + Abar0
-      Ahbendb = Abar2*xb^2 - Abar1*xb + Abar0
+      Ahbendf = max(Abar2*xf^2 - Abar1*xf + Abar0, 0)
+      Ahbendb = max(Abar2*xb^2 - Abar1*xb + Abar0, 0)
 
       Vhbendf = A2*((xbulk-xf)^3 - (xbulk-xhbend)^3)/3.0 +
                A1*((xtail-xf)^2 - (xtail-xhbend)^2)/2.0 +
@@ -231,17 +232,20 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
                  8.0*cost*nfweb*wfb*Rfuse +
                  (2.0*pi + 4.0*thetafb)*(nfweb*wfb)^2+
                  4.0*thetafb*wfb^2 * ksum )*Rfuse*tshell
+                 # ^This simplifies to π×Rfuse³×tshell 
+                 # which is the area moment of inertia for a thin walled tube
 
       widf = Rfuse + nfweb*wfb
       B1 = 1.0/(widf*sigMv) * (rMv*Lvmax*nvtail)
       B0 = -Ivshell/(rE*widf^2)
-      xvbend = xvtail + B0/B1
+      xvbend = xvtail + B0/B1 # point where Avbend = 0 
 
-      Avbendb = B1*(xtail-xb) + B0
-      Vvbendb = B1*((xtail-xb)^2 - (xtail-xvbend)^2)/2.0+
-               B0*(xvbend-xb)
+      Avbendb = max(B1*(xtail-xb) + B0, 0)
+      Vvbendb = max(B1*((xtail-xb)^2 - (xtail-xvbend)^2)/2.0+
+               B0*(xvbend-xb), 0)
       Vvbendc = 0.5*Avbendb*cbox
       Wvbend = rhobend*gee*(Vvbendb + Vvbendc)
+      # println("W, Vvb, Vvc Avbend = $Wvbend, $Vvbendb, $Vvbendc, $Avbendb")
 
       xWvbend = Wvbend * (2.0*xwing + xvbend)/3.0
 
