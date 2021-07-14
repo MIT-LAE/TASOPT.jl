@@ -19,8 +19,8 @@ function wsize(pari, parg, parm, para, pare,
 
 time_propsys = 0.0
     # Weight convergence tolerance 
-        # tolerW = 1.0e-10
-        tolerW = 1.0e-6
+        tolerW = 1.0e-10
+        # tolerW = 1.0e-8
         errw   = 1.0
     # Initialze some variables
     fsum = 0.0
