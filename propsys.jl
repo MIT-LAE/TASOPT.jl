@@ -240,16 +240,17 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         rSnace = parg[igrSnace]
         fpylon = parg[igfpylon]
         #Assume 2 aft fans:
+        naftfan = 2
         DAftFan, AftFan_power, AftFan_torque, AftFan_N, AftFan_Mtip,
         AftFan_ηpropul, AftFan_η,
-        AftFanNozArea, WAftfan, AftSnace1 = DuctedFan(NPSS_AftFan, alt_in, MN_in, FnAft/2, Kinl, Φinl, 1.25, rSnace, fpylon, first )
+        AftFanNozArea, WAftfan, AftSnace1 = DuctedFan(NPSS_AftFan, alt_in, MN_in, FnAft/naftfan, Kinl, Φinl, 1.25, rSnace, fpylon, first )
 
         parg[igdaftfan] = DAftFan
         parg[igWaftfan] = WAftfan
         
         Pshaft_AftFan = -1000.0 * AftFan_power
-        Wpowertrain += WAftfan*2.0
-       xWpowertrain += WAftfan*2.0*parg[igxtshaft]
+        Wpowertrain += WAftfan*naftfan
+       xWpowertrain += WAftfan*naftfan*parg[igxtshaft]
         # println(DAftFan)
         #Make these 0 for wings
         Kinl = 0.0
@@ -310,14 +311,15 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         parpt[ipt_Winv] = Winv
         Wpowertrain += Winv*nfan # Add to total powertrain weight
        xWpowertrain += Winv*nfan*parg[igxinv]    
-        lcable = (parg[igxgen] - parg[igxwbox]) + parg[igyeout]
+        # Cables
+        lcable = (parg[igxgen] - parg[igxwbox]) + parg[igyeout] # length of cable from gen to one fan is gen to wingbox and then ~ to centroid of outboard engines
         parpt[ipt_lcable] = lcable
         Vcable = parpt[ipt_Vcable]
-        ηcable, Wcable = cable(PreqMot/ηinv, Vcable, lcable, parpt) #TODO cable is dummy right now
+        ηcable, Wcable = cable(PreqMot/ηinv, Vcable, lcable, parpt) 
         Hwaste_cable = PreqMot*(1-ηcable)
         Hrej += Hwaste_cable  # Heat rejected from all inverters
         
-        parg[igWcables] = Wcable*nfan
+        parg[igWcables] = Wcable*nfan # multiply by number of fans
         parpt[ipt_Wcables] = Wcable*nfan
         Wpowertrain += Wcable*nfan # Add to total powertrain weight
     #    xWpowertrain += Wcable*parg[igxcable] #need to add x of cable 
@@ -352,7 +354,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         deNOx= parpt[ipt_deNOx]
         LHV  = parg[igLHVfuel]
 
-        Ptshaft = PgenShaft*ngen/nTshaft + Pshaft_AftFan # Assume one aft fan per Tshaft
+        Ptshaft = PgenShaft*ngen/nTshaft + Pshaft_AftFan*naftfan/nTshaft # Assume equally distributed aft fans for Tshaft
         parpt[ipt_Ptshaft] = Ptshaft
         NPSS_time += @elapsed ηthermal, mdotf, BSFC,
          deNOx_out, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3 = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
@@ -418,6 +420,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
     nTshaft = parpt[ipt_nTshaft]
     Nshaft = 30000. #RPM
     NPSS_time = 0.0
+    naftfan = 2.0
 
     # Calculate Turboshaft power output
         NPSS_time += @elapsed Pshaft, ηthermal,
@@ -428,8 +431,8 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
 
         mdotf_tot = mdotf*nTshaft
 
-    #Aft fan
-        PAftFan = Pshaft*parpt[ipt_Fnsplit]
+    #Aft fan (for a single aftfan)
+        PAftFan = Pshaft*nTshaft*parpt[ipt_Fnsplit]/naftfan
         FnAft, AftFan_power, AftFan_torque, AftFan_N, AftFan_Mtip,
         AftFan_ηpropul, AftFan_ηDF = DuctedFan(NPSS_AftFan, alt_in, MN_in, PAftFan, Kinl, Φinl, first)
 
@@ -521,7 +524,7 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
         abs(err)≥tol && printstyled("Warning [propsys]: Motor-fan speeds not converged! Error = ",abs(err),"\n"; color=:red)
     Hrej += nfan*Hwaste_motor
 
-    Ftotal = Fn*nfan + 2*FnAft
+    Ftotal = Fn*nfan + FnAft*naftfan
     cryocool = mdotf_tot*5898e3
     heatexcess = Hrej - cryocool
 
