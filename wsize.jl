@@ -950,8 +950,8 @@ Lconv = false # no convergence yet
                     qstall = 0.5 * pare[ierho0, ip] *(pare[ieu0, ip]/1.2)^2
                     CDAe = parg[igcdefan] * 0.25π *parg[igdfan]^2
                     De = qstall*CDAe
-                    Fe = pare[ieFe, ip]
-                    Me = (Fe + De)*yeng
+                    Fe = pare[ieFe, ip]/neng #Fe stores total thrust
+                    Me = (Fe + De)*yi[end]
 
                 #
                 if(iVTsize == 1)
@@ -989,7 +989,6 @@ Lconv = false # no convergence yet
             Gcap = Ecap*0.5/(1.0+0.3)
             Gweb = Ecap*0.5/(1.0+0.3)
             
-            #[TODO] Use multiple dispatch here to create a new method for surfw
             Ssh,Msh,tbwebsh,tbcapsh,EIcsh,EInsh,GJsh,
             Soh,Moh,tbweboh,tbcapoh,EIcoh,EInoh,GJoh,
             _, _, _,
