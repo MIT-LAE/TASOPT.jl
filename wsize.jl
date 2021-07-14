@@ -531,9 +531,11 @@ Lconv = false # no convergence yet
             # Engine weight mounted on tailcone, if any
                 if (iengloc==1)
                     Wengtail = 0.0 
+                    Waftfuel = 0.0
                 else
                     Wengtail = (parg[igWtshaft] + parg[igWcat])*nTshaft +
-                                parg[igWgen]*ngen + parg[igWftank]
+                                parg[igWgen]*ngen
+                    Waftfuel = parg[igWftank] + parg[igWfuel]
                 end
             
             Whtail = parg[igWhtail]
@@ -542,6 +544,7 @@ Lconv = false # no convergence yet
             xvtail = parg[igxvtail]
             xwbox  = parg[igxwbox ]    
             xwing  = parg[igxwing ]
+            xfuel  = parg[igxftank]
 
             Wtesys = parg[igWtesys]
             Wftank = parg[igWftank]
@@ -554,7 +557,7 @@ Lconv = false # no convergence yet
                 (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                 EIhshell,EIhbend, EIvshell,EIvbend, GJshell ,GJcone,
                 Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, 
+                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
                                                 fstring, fframe, ffadd, Δp, 
                                                 Wpwindow, Wppinsul, Wppfloor, 
                                                 Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax, 
@@ -563,7 +566,7 @@ Lconv = false # no convergence yet
                                                 xnose, xshell1, xshell2, xconend, 
                                                 xhtail, xvtail, 
                                                 xwing, xwbox, cbox, 
-                                                xfix, xapu, xeng, 
+                                                xfix, xapu, xeng, xfuel,
                                                 hfloor, 
                                                 σskin, σbend,  rhoskin, rhobend, 
                                                 Eskin, Ebend, Gskin)
