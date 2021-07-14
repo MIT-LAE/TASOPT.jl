@@ -1108,9 +1108,9 @@ Lconv = false # no convergence yet
             μAir = pare[iemu0 , ipcruise1]
 
         if (iterw==1)
-            NPSS_Fan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
+            NPSS_Fan    = startNPSS("NPSS_Turboshaft/", "Fan.bat")
             NPSS_AftFan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
-            NPSS_TS  = startNPSS("NPSS_Turboshaft/", "TP.bat" )
+            NPSS_TS     = startNPSS("NPSS_Turboshaft/", "TP.bat" )
         end
             ρ0 = pare[ierho0, ipcruise1]
             u0 = pare[ieu0  , ipcruise1] 
