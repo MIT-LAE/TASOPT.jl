@@ -104,6 +104,7 @@ while(flag!=999){
                                     "Eng.DESIGN_AIRFLOW",
                                     "Eng.DESIGN_FUELFLOW",
                                     "Eng.ind_Acat" };
+        solverIndeps1 = { 0.129679, 0.113856, 4.23255, 10.7817, 54.9322, 0.541746*120*430/Eng.FusEng.LHV, 14.6579 }; // Design restart values
         solver.independentValues = solverIndeps1;
 
         run();
@@ -171,6 +172,7 @@ while(flag!=999){
             #include "Tshaft_design.int"
             // Eng.FusEng.LHV   = 18490;
             // restart("offdesTO.restart");
+            solverIndeps2 = { 18941.7, 0.684967*120*430/Eng.FusEng.LHV, 66.5537, 0.226413, 2.0045, 2.95941, 5.02227, 36801.1, 30000 };
             solver.independentValues = solverIndeps2;
             // restart("offDes1.restart");
         }
@@ -190,9 +192,9 @@ while(flag!=999){
                 // SaveIndepVals("solver", "offDes1.restart");
                 solverIndeps2 = solver.independentValues;
             }
-            // output.reopen();
-            // #include "write_offdes_output.int"
-            // output.close();
+            output.reopen();
+            #include "write_offdes_output.int"
+            output.close();
             // cout<<"1";
 
             // Write following outputs to outstream
