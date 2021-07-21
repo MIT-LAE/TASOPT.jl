@@ -82,8 +82,12 @@ function NPSS_TShaft_input(NPSS, alt_in, MN_in,
         LHV    = parse(Float64, out[12])
         W_in    = parse(Float64, out[13])
     end
-    # println(W_in, "lbm/s; If m/mdot^1.2 = 38.9 -> Wtshaft = ", (W_in/2.205)^1.2 * 38.9 * gee) # 38.9 kg/(kg/s) from Hall et al. https://arc.aiaa.org/doi/pdf/10.2514/6.2018-3973
-    return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3
+
+    # println(W_in, "lbm/s; If m/mdot^1.2 = 38.9   -> Wtshaft = ", (W_in/2.205)^1.2 * 38.9   * gee, " SP [kW/kg] = ", SHP_dmd/1000/((W_in/2.205)^1.2 * 38.9) ) # 38.9 kg/(kg/s) from Hall et al. https://arc.aiaa.org/doi/pdf/10.2514/6.2018-3973
+    # println(W_in, "lbm/s; If m/mdot^1.2 = 45.605 -> Wtshaft = ", (W_in/2.205)^1.2 * 45.605 * gee, " SP [kW/kg] = ", SHP_dmd/1000/((W_in/2.205)^1.2 * 45.605) ) # 38.9 kg/(kg/s) from Dowdle et al
+    Wtshaft = (W_in/2.205)^1.2 * 45.605 * gee
+    
+    return NPSS_success, ηtherm, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3, Wtshaft
 
 end
 
