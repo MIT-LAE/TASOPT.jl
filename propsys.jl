@@ -32,13 +32,13 @@ function TurboShaft(NPSS::Base.Process, alt_in::Float64, MN_in::Float64,
     NPSS_success, 
     eta_thermal, mdotf, BSFC,
      deNOx, mcat, 
-     EINOx1, EINOx2, mdot, Tt3, OPR, Wc3  = NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
+     EINOx1, EINOx2, mdot, Tt3, OPR, Wc3, Wtshaft  = NPSS_TShaft_input(NPSS, alt_in, MN_in, ShP, 
                         Tt41, π_LPC, π_HPC, 
                         cpsi, w, lcat, deNOx_in, first, LHV)
 
     # include("NPSS_Turboshaft/Eng.output")
       
-    return eta_thermal, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3  #, MapScalars, NozArea
+    return eta_thermal, mdotf, BSFC, deNOx, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3, Wtshaft  #, MapScalars, NozArea
 
 end
 
@@ -297,10 +297,16 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         parpt[ipt_NdesMot] = RPMmot
         parpt[ipt_FanGR] = RPMmot/N_fan
 
+        # Gearbox weight per Tong and Jones NASA https://ntrs.nasa.gov/api/citations/20090042817/downloads/20090042817.pdf
+        β  = (Pshaft_mot/hp_to_W / N_fan)^0.75 * (RPMmot/N_fan)^0.15
+        Wgb_lbm = -37.4262+116.3297*β
+        Wgb = Wgb_lbm*lbf_to_N
+        parg[igWfanGB] = Wgb
+        
         Hwaste_motor = PreqMot - Pshaft_mot
         Hrej += nfan*Hwaste_motor # Heat rejected from motors
-        Wpowertrain += Wmot*nfan  # Add to total powertrain weight
-       xWpowertrain += Wmot*nfan*parg[igxmot]           
+        Wpowertrain += (Wmot+Wgb)*nfan  # Add to total powertrain weight
+       xWpowertrain += (Wmot+Wgb)*nfan*parg[igxmot]           
 
     # Size Inverter and cables
         ηinv, Winv, SPinv = inverter(PreqMot, RPMmot/60, parmot)
@@ -356,8 +362,9 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
 
         Ptshaft = PgenShaft*ngen/nTshaft + Pshaft_AftFan*naftfan/nTshaft # Assume equally distributed aft fans for Tshaft
         parpt[ipt_Ptshaft] = Ptshaft
+
         NPSS_time += @elapsed ηthermal, mdotf, BSFC,
-         deNOx_out, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3 = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
+         deNOx_out, mcat, EINOx1, EINOx2, mdot, Tt3, OPR, Wc3, Wtshaft = TurboShaft(NPSS_TS, alt_in, MN_in, Ptshaft,
                                             πLPC, πHPC, Tt41,
                                             cpsi, w, lcat, deNOx, first; LHV = LHV)
         
@@ -379,7 +386,12 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         SPtshaft = 10.4e3 # Alternate W/kg Based on the RR T406 (4.58 MW power output) power density = 10.4 kW/kg. The GE38 (~5 MW) has a power density of 11.2 kW/kg
         # SPtshaft = 4.41e3 # Based of TP400
         # SPtshaft = 8.0e3 # Rough estimate based on LEAP1B (choked flow ~ 340m/s and Fn = 130 kN P = 1/2 Fn Vj; Mass = 2780 kg)
-        Wtshaft = gee*(Ptshaft)/SPtshaft * (1+feadd)
+        
+        # Tshaft weight based on specific power:
+        # Wtshaft = gee*(Ptshaft)/SPtshaft * (1+feadd)
+
+        # Alternate method using scaling from core flow size per Dowdle et al
+        Wtshaft = Wtshaft*(1+feadd)
         
         parg[igWtshaft] = Wtshaft
         parpt[ipt_Wtshaft] = Wtshaft
