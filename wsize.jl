@@ -953,7 +953,7 @@ Lconv = false # no convergence yet
                     qstall = 0.5 * pare[ierho0, ip] *(pare[ieu0, ip]/1.2)^2
                     CDAe = parg[igcdefan] * 0.25π *parg[igdfan]^2
                     De = qstall*CDAe
-                    Fe = pare[ieFe, ip]/neng #Fe stores total thrust
+                    Fe = pare[ieFe, ip]*(1-parpt[ipt_Fnsplit])/neng #pare[ieFe, :] stores total thrust
                     Me = (Fe + De)*yi[end]
 
                 #
