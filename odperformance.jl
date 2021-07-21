@@ -110,6 +110,46 @@ for  ip = 1:N
     Tfrac = fT1*(1.0-frac) + fTn*frac
     Tt4s[ip] = Tt4TO*(1.0-Tfrac) + Tt4CR*Tfrac
 end
+#LTO values
+LTOpoints = [1.0, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.07]
+LTOEINOx = zero(LTOpoints)
+LTOmdotf = zero(LTOpoints)
+# Get Foo based on static Tt4
+Tt4 = pare[ieTt4, ipstatic]
+Ftotal, η, P, Hrej, heatexcess,
+LTOmdotf[1], BSFC,
+deNOxLTO, EGT, Tt3, W3, EINOx1, LTOEINOx[1], FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, 0.0, 0.0, Tt4,
+0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+
+Foo = Ftotal
+
+# for (i, TS) in enumerate(LTOpoints[2:end])
+#     F = Foo*TS
+#     iter = 1
+#     itermax = 20
+#     for iter = 1:itermax
+#         if abs(Ftotal - F)<1
+#             break
+#         end
+#         println("TS = ",TS)
+#         ΔF = F - Ftotal
+#         Tt4 = Tt4*(1 + ΔF/Ftotal/10) # 5 is just a scale factor so you don't get random oscillations
+#         Tt4 = max(2800, min(Tt4, pare[ieTt4, ipstatic]))
+#         println(Tt4)
+#         Ftotal, η, P, Hrej, heatexcess,
+#         LTOmdotf[i+1], BSFC,
+#         deNOxLTO, EGT, Tt3, W3, EINOx1, LTOEINOx[i+1], FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, 0.0, 0.0, Tt4 ,
+#         0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+
+#         if Tt4 ≤ 2850 && Ftotal>F    
+#             println("Min Temp reached at TS = ", TS)
+#         end
+#     end
+#     if iter == itermax && abs(Ftotal - F)>1
+#         println("LTO did not converge - increase itermax?")
+#     end
+
+# end
 # println(Tt4s)
 # integrate trajectory over climb
 for   i = 1:N
@@ -268,8 +308,10 @@ for   i = 1:N
     if FL[i]≥ 270 && FL[i]≤431
         ip = ipcruise1
 
-        Wf = parg[igWMTO]*0.95*(Wfrac0 - Wzero/parg[igWMTO])
-        W  = parg[igWMTO]*0.95*Wfrac0
+        # Wf = parg[igWMTO]*0.95*(Wfrac0 - Wzero/parg[igWMTO])
+        # W  = parg[igWMTO]*0.95*Wfrac0
+        Wf = 0.95*Wfrac0*(parg[igWMTO] - Wzero)
+        W  = Wf + Wzero
 
         rfuel = Wf/parg[igWfuel]
         itrim = 1
@@ -289,7 +331,7 @@ for   i = 1:N
         u0 = Mach*a0s[i]
         Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
         Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
-        TR = 8.5 # Tt4/ Tamb
+        TR = 9.0 # Tt4/ Tamb
         Tt4 = max(2850, min(Tt4s[i], T0s[i]*TR*18/10)) # convert to [R]
 
         # Calculate max possible thrust at this Tt4, alt and Mach
@@ -350,6 +392,7 @@ for   i = 1:N
     end
 
 end # done integrating climb
+
 
 return Ws[1], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
 end
