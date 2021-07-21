@@ -347,8 +347,9 @@
       const igWfburn   = 286
 
       const igWaftfan  = 287
+      const igWfanGB   = 288
 
-      const igtotal    = 287
+      const igtotal    = 288
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
