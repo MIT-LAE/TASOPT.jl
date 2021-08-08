@@ -122,11 +122,19 @@ deNOxLTO, EGT, Tt3, W3, EINOx1, LTOEINOx[1], FAR = PowerTrainOD(NPSS_TS, NPSS_Fa
 0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
 
 Foo = Ftotal
-
+# for Tt4 in LinRange(3500,2800, 5)
+#             Ftotal, η, P, Hrej, heatexcess,
+#         _, BSFC,
+#         deNOxLTO, EGT, Tt3, W3, EINOx1, _, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, 0.0, 0.0, Tt4 ,
+#         0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
+#         println("Tt4 = $Tt4")
+#         println("TS =", Ftotal/Foo)
+# end
 # for (i, TS) in enumerate(LTOpoints[2:end])
 #     F = Foo*TS
 #     iter = 1
 #     itermax = 20
+#     ifirst = false
 #     for iter = 1:itermax
 #         if abs(Ftotal - F)<1
 #             break
@@ -134,7 +142,7 @@ Foo = Ftotal
 #         println("TS = ",TS)
 #         ΔF = F - Ftotal
 #         Tt4 = Tt4*(1 + ΔF/Ftotal/10) # 5 is just a scale factor so you don't get random oscillations
-#         Tt4 = max(2800, min(Tt4, pare[ieTt4, ipstatic]))
+#         Tt4 = max(3100, min(Tt4, pare[ieTt4, ipstatic]))
 #         println(Tt4)
 #         Ftotal, η, P, Hrej, heatexcess,
 #         LTOmdotf[i+1], BSFC,
