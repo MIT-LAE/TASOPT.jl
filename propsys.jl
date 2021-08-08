@@ -395,6 +395,9 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         
         parg[igWtshaft] = Wtshaft
         parpt[ipt_Wtshaft] = Wtshaft
+
+        SPtshaft = Ptshaft/Wtshaft * gee
+        
         Wpowertrain += Wtshaft*nTshaft
        xWpowertrain += Wtshaft*nTshaft*parg[igxtshaft]
 
