@@ -10,3 +10,4 @@
 *.perf
 *.PTF
 *.LTO
+**/Models/*
