@@ -25,7 +25,7 @@ NOTE:
  They are updated and returned in the same para[iagamV,ip] array.
 """
 function mission!(pari, parg, parm, para, pare,
-       NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::Base.Process, Ldebug)#, iairf, initeng, ipc1)
+       NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::Base.Process, Ldebug, NPSS_PT, NPSS)#, iairf, initeng, ipc1)
     t_prop = 0.0
     calc_ipc1 = true
     ifirst = true
@@ -367,17 +367,27 @@ function mission!(pari, parg, parm, para, pare,
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
       
-                  ρ0 = pare[ierho0, ipcruise1]
-                  u0 = pare[ieu0  , ipcruise1] 
+                  ρ0 = pare[ierho0, ip]
+                  u0 = pare[ieu0  , ip] 
                   Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
                   Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
+                  if NPSS_PT
+                        NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+                        mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, 0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+                  else
                   t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
                   mdotf, BSFC,
                   deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
                                                 Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
+                  end
                   ifirst = false
+                  pare[ieOPR, ip] = OPR
+                  pare[ieTt3, ip] = Tt3
+                  pare[ieWc3, ip] = Wc3
                   pare[iedeNOx, ip] = deNOx
+                  pare[ieEINOx1, ip] = EINOx1
+                  pare[ieEINOx2, ip] = EINOx2
                   pare[iemdotf, ip] = mdotf
                   pare[ieemot:ieethermal, ip] .= η
                   pare[ieHrejmot:ieHrejtot, ip] .= Hrej
@@ -522,17 +532,26 @@ function mission!(pari, parg, parm, para, pare,
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            ρ0 = pare[ierho0, ipcruise1]
-            u0 = pare[ieu0  , ipcruise1] 
+            ρ0 = pare[ierho0, ip]
+            u0 = pare[ieu0  , ip] 
             Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
             Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
+            if NPSS_PT
+                  NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+            else
             t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
             deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
                                           Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
-            
+            end
+            pare[ieOPR, ip] = OPR
+            pare[ieTt3, ip] = Tt3
+            pare[ieWc3, ip] = Wc3
             pare[iedeNOx, ip] = deNOx
+            pare[ieEINOx1, ip] = EINOx1
+            pare[ieEINOx2, ip] = EINOx2
             pare[iemdotf, ip] = mdotf
             pare[ieemot:ieethermal, ip] .= η
             pare[ieHrejmot:ieHrejtot, ip] .= Hrej
@@ -622,17 +641,26 @@ function mission!(pari, parg, parm, para, pare,
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            ρ0 = pare[ierho0, ipcruise1]
-            u0 = pare[ieu0  , ipcruise1] 
+            ρ0 = pare[ierho0, ip]
+            u0 = pare[ieu0  , ip] 
             Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
             Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
+            if NPSS_PT
+                  NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+            else
             t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
             deNOx, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ip], Mach, pare[ieTt4, ip],
                                           Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
-
+            end
+            pare[ieOPR, ip] = OPR
+            pare[ieTt3, ip] = Tt3
+            pare[ieWc3, ip] = Wc3
             pare[iedeNOx, ip] = deNOx
+            pare[ieEINOx1, ip] = EINOx1
+            pare[ieEINOx2, ip] = EINOx2
             pare[iemdotf, ip] = mdotf
             pare[ieemot:ieethermal, ip] .= η
             pare[ieHrejmot:ieHrejtot, ip] .= Hrej
