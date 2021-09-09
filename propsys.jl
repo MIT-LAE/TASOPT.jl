@@ -245,6 +245,7 @@ function PowerTrain(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::
         AftFan_ηpropul, AftFan_η,
         AftFanNozArea, WAftfan, AftSnace1 = DuctedFan(NPSS_AftFan, alt_in, MN_in, FnAft/naftfan, Kinl, Φinl, 1.25, rSnace, fpylon, first )
 
+        println("Aft fan speed = ", AftFan_N)
         parg[igdaftfan] = DAftFan
         parg[igWaftfan] = WAftfan
         
@@ -436,6 +437,14 @@ function PowerTrainOD(NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan
     Nshaft = 30000. #RPM
     NPSS_time = 0.0
     naftfan = 2.0
+    # if Tt41 < 3200
+    #     Nshaft = 10e3;# 30e3 - (30e3 - 1e3)/(3200 - 3000)*(3200- Tt41)
+    #     println("Nshaft = ", Nshaft)
+    # end
+    # if Tt41 < 3100
+    #     Nshaft = 8e3;# 30e3 - (30e3 - 1e3)/(3200 - 3000)*(3200- Tt41)
+    #     println("Nshaft = ", Nshaft)
+    # end
 
     # Calculate Turboshaft power output
         NPSS_time += @elapsed Pshaft, ηthermal,
