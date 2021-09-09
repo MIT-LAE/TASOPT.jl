@@ -459,7 +459,7 @@ function cable(P, V, lcable, parpt)
     # Conductor:
     σ = parpt[ipt_sigcon] #using σ instead of ρ (resistivity) to avoid conflict with density
     α = parpt[ipt_alphacon] 
-    Tcon = 273.15 + 0.0
+    Tcon = 273.15 + 50.0
 
     σcon = σ/(1+α*(Tcon - 293.15))
     ρcon = parpt[ipt_rhocon]  #[kg/m³]
