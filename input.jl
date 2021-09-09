@@ -163,6 +163,9 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
         parg[igRfuse   ] = 113 * in_to_m 
         parg[igbo      ] = 2 * (113 * in_to_m) # 2 × wing centerbox halfspan
+
+        # parg[igRfuse   ] = 78 * in_to_m 
+        # parg[igbo      ] = 2 * (78 * in_to_m) # 2 × wing centerbox halfspan
         parg[igdRfuse  ] = 1.0 * in_to_m
         parg[igwfb     ] =  0.0 * in_to_m
         parg[ignfweb   ] =  1.0
@@ -214,7 +217,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
         parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
 
-        parg[igxeng    ] = parg[igxwbox] #52.0 * ft_to_m
+        parg[igxeng    ] = parg[igxtshaft] #52.0 * ft_to_m
         parg[igyeng    ] = 50.0 * ft_to_m
         # parg[igneng    ] =  2.0
 
@@ -237,9 +240,9 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igrMv     ] = 0.7
 
         # parg[igCMVf1   ] =  7470.0 * 0.0283  # CMVf1  fuselage moment volume derivative  d(Mfuse/q)/dCL (0.0283 is conversion from ft³ to m³)
-        # parg[igCMVf1   ] =  127.0  #m³ based on cab vol of 800 m³ CMVf1 ≈ 2×cabvol/2π
-        parg[igCMVf1   ] =  2390.0 *0.0283 #60.0  
-        # parg[igCMVf1   ] =  332.0 #60.0  
+        # parg[igCMVf1   ] =  127.0  #m³ based on cab vol of 800 m³ CMVf1 ≈ 2𝒱/(∂Cl/∂α), where 𝒱 = fuselage volume
+        # parg[igCMVf1   ] =  2390.0 *0.0283 #60.0  
+        parg[igCMVf1   ] =  83.0 #60.0  
         parg[igCLMf0   ] =  0.185            # CLMf1  CL where Mfuse = 0
 
         para[iafduo, :, :] .= 0.019# 0.018    # fduo   fuselage velocity overspeed at wing root
@@ -307,7 +310,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
     parg[igrWfmax  ] = 0.90
 
     # Boundary Layer Ingestion (BLI)
-        parg[igfBLIf] = 0.6
+        parg[igfBLIf] = 0.5
 
 # Aerodynamic parameters
 
