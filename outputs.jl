@@ -56,13 +56,16 @@ function weight_buildup(parg; io=stdout)
 
     @printf(io,"Wtshaft + %10.1f N (%8.1f lb) × %d\n", parg[igWtshaft], parg[igWtshaft]/lbf_to_N, parpt[ipt_nTshaft])
     @printf(io,"Wcat    + %10.1f N (%8.1f lb) × %d\n", parg[igWcat   ], parg[igWcat   ]/lbf_to_N, parpt[ipt_nTshaft])
+    @printf(io,"Waftfan + %10.1f N (%8.1f lb) × %d\n", parg[igWaftfan], parg[igWaftfan]/lbf_to_N, 2.0) 
+    @printf(io,"WaftGB  + %10.1f N (%8.1f lb) × %d\n", parg[igWaftfanGB ], parg[igWaftfanGB ]/lbf_to_N, parpt[ipt_nTshaft]) 
     @printf(io,"Wgen    + %10.1f N (%8.1f lb) × %d\n", parg[igWgen   ], parg[igWgen   ]/lbf_to_N, parpt[ipt_ngen]) 
+    @printf(io,"Wrect   + %10.1f N (%8.1f lb) × %d\n", parg[igWrect  ], parg[igWrect  ]/lbf_to_N, parpt[ipt_ngen]) 
     @printf(io,"Wcables + %10.1f N (%8.1f lb) ----\n", parg[igWcables], parg[igWcables]/lbf_to_N) 
     @printf(io,"Winv    + %10.1f N (%8.1f lb) × %d\n", parg[igWinv   ], parg[igWinv   ]/lbf_to_N, parpt[ipt_nfan]) 
     @printf(io,"Wmot    + %10.1f N (%8.1f lb) × %d\n", parg[igWmot   ], parg[igWmot   ]/lbf_to_N, parpt[ipt_nfan]) 
     @printf(io,"Wfan    + %10.1f N (%8.1f lb) × %d\n", parg[igWfan   ], parg[igWfan   ]/lbf_to_N, parpt[ipt_nfan]) 
     @printf(io,"WfanGB  + %10.1f N (%8.1f lb) × %d\n", parg[igWfanGB ], parg[igWfanGB ]/lbf_to_N, parpt[ipt_nfan]) 
-    @printf(io,"Waftfan + %10.1f N (%8.1f lb) × %d\n", parg[igWaftfan], parg[igWaftfan]/lbf_to_N, 2.0) 
+    @printf(io,"Wtms    + %10.1f N (%8.1f lb) ----\n", parg[igWtms   ], parg[igWtms   ]/lbf_to_N) 
     @printf(io,"--------------------\n")
     printstyled(io,@sprintf("Wtesys  = %10.1f N (%8.1f lb)\n\n",
      parg[igWtesys], parg[igWtesys]/lbf_to_N ), color = :bold)
@@ -472,8 +475,8 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             
             lnace = parg[iglnaceaft]
             x = parg[igxtshaft]
-            ax.plot([x,x, x+lnace, x+lnace, x], [ D/8,  D/8 + D,  D/8 + D*3/4,  D/8,  D/8], lw = 1.5, color = "r", zorder = 25)
-            ax.plot([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8, -D/8], lw = 1.5, color = "r", zorder = 25)
+            ax.plot([x,x, x+lnace, x+lnace, x], [ D/8,  D/8 + D,  D/8 + D*3/4,  D/8 + 1/4*D,  D/8], lw = 1.5, color = "r", zorder = 25)
+            ax.plot([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8 - 1/4*D, -D/8], lw = 1.5, color = "r", zorder = 25)
 
             D = parg[igdfan]
             neng = parg[igneng]
@@ -482,7 +485,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             if parg[igneng] == 2
                 yi = [ηs*b/2]
             else
-                yi = LinRange(bo/2 + dy , b/2 *4/5, Int(parg[igneng]/2))
+                yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
             end
             xi = zero(yi)
             ηi = yi/(b/2)
