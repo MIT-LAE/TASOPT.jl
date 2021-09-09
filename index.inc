@@ -348,8 +348,11 @@
 
       const igWaftfan  = 287
       const igWfanGB   = 288
+      const igWaftfanGB   = 289
+      const igWrect    = 290
+      const igWtms     = 291
 
-      const igtotal    = 288
+      const igtotal    = 291
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -490,8 +493,10 @@
       const ipt_rhoins    = 66
       const ipt_Emax      = 67
       const ipt_kpf       = 68
-
       
+      const ipt_Pelec_mot = 69
+      const ipt_Pelec_gen = 70
+
       const ipt_total     = 68
 
 #---- indices for aero variables at each mission point
@@ -789,8 +794,30 @@
       ieHrejtot   = 219
 
       ieHexcess   = 220
+#Guesses for NPSS offdes:
+      iegsFnsplit = 221
+      iegsMotShP  = 222
+      iegsmdotf   = 223
+      iegsWin     = 224
+      iegsRlineF  = 225
+      iegsBPR     = 226
+      iegsRlinelc = 227
+      iegsRlinehc = 228
+      iegsPRhtrb  = 239
+      iegsPRltrb  = 230
+      iegsNmechH  = 231
+      iegsGBtrq   = 232
+      iegsNmechL  = 233
+      iegsNmechF  = 234
+      iegsPodWin  = 235
 
-      ietotal = 220
+      iegsPodRlineF   = 236
+      iegsPodGBtrq    = 237
+      iegsPodMotNmech = 238
+      iegsPodFanNmech = 239
+
+
+      ietotal = 239
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
