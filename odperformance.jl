@@ -1,7 +1,7 @@
 function odperf!(pari, parg, parm, para, pare, Wfrac0, FL, 
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
-    NPSS_AftFan::Base.Process, Ldebug, ifirst)
+    NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process)
 
 calc_ipc1 = true
 # ifirst = true
@@ -110,55 +110,7 @@ for  ip = 1:N
     Tfrac = fT1*(1.0-frac) + fTn*frac
     Tt4s[ip] = Tt4TO*(1.0-Tfrac) + Tt4CR*Tfrac
 end
-#LTO values
-LTOpoints = [1.0, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.07]
-LTOEINOx = zero(LTOpoints)
-LTOmdotf = zero(LTOpoints)
-# Get Foo based on static Tt4
-Tt4 = pare[ieTt4, ipstatic]
-Ftotal, η, P, Hrej, heatexcess,
-LTOmdotf[1], BSFC,
-deNOxLTO, EGT, Tt3, W3, EINOx1, LTOEINOx[1], FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, 0.0, 0.0, Tt4,
-0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
 
-Foo = Ftotal
-# for Tt4 in LinRange(3500,2800, 5)
-#             Ftotal, η, P, Hrej, heatexcess,
-#         _, BSFC,
-#         deNOxLTO, EGT, Tt3, W3, EINOx1, _, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, 0.0, 0.0, Tt4 ,
-#         0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
-#         println("Tt4 = $Tt4")
-#         println("TS =", Ftotal/Foo)
-# end
-# for (i, TS) in enumerate(LTOpoints[2:end])
-#     F = Foo*TS
-#     iter = 1
-#     itermax = 20
-#     ifirst = false
-#     for iter = 1:itermax
-#         if abs(Ftotal - F)<1
-#             break
-#         end
-#         println("TS = ",TS)
-#         ΔF = F - Ftotal
-#         Tt4 = Tt4*(1 + ΔF/Ftotal/10) # 5 is just a scale factor so you don't get random oscillations
-#         Tt4 = max(3100, min(Tt4, pare[ieTt4, ipstatic]))
-#         println(Tt4)
-#         Ftotal, η, P, Hrej, heatexcess,
-#         LTOmdotf[i+1], BSFC,
-#         deNOxLTO, EGT, Tt3, W3, EINOx1, LTOEINOx[i+1], FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, 0.0, 0.0, Tt4 ,
-#         0.0, 0.0, parpt, parmot, pargen, ifirst, Ldebug)
-
-#         if Tt4 ≤ 2850 && Ftotal>F    
-#             println("Min Temp reached at TS = ", TS)
-#         end
-#     end
-#     if iter == itermax && abs(Ftotal - F)>1
-#         println("LTO did not converge - increase itermax?")
-#     end
-
-# end
-# println(Tt4s)
 # integrate trajectory over climb
 for   i = 1:N
     
@@ -207,16 +159,23 @@ for   i = 1:N
         end
         cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
-        ρ0 = pare[ierho0, ipcruise1]
-        u0 = pare[ieu0  , ipcruise1] 
+        ρ0 = pare[ierho0, ip]
+        u0 = pare[ieu0  , ip] 
         Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
         Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
         # ifirst = false
+        if NPSS_PT
+            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+            mdotf[i], deNOx_, EINOx1, EINOx2, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4s[i], 
+                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+        else
         Ftotal, η, P, Hrej, heatexcess,
         mdotf[i], BSFC,
         deNOx[i], EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4s[i],
                                     Kinl, Φinl, parpt, parmot, pargen, ifirst, false)
+        end
         ifirst = false
         clmbEINOx[i] = EINOx2
         # println(Tt4s[i]*10/18/T0s[i])
@@ -316,10 +275,9 @@ for   i = 1:N
     if FL[i]≥ 270 && FL[i]≤431
         ip = ipcruise1
 
-        # Wf = parg[igWMTO]*0.95*(Wfrac0 - Wzero/parg[igWMTO])
-        # W  = parg[igWMTO]*0.95*Wfrac0
-        Wf = 0.95*Wfrac0*(parg[igWMTO] - Wzero)
-        W  = Wf + Wzero
+        W = Wfrac0*parg[igWMTO]
+        Wf = W - Wzero
+
 
         rfuel = Wf/parg[igWfuel]
         itrim = 1
@@ -345,10 +303,17 @@ for   i = 1:N
         # Calculate max possible thrust at this Tt4, alt and Mach
         # Tt4 = Tt4s[i]
         Tt4crzmax[i] = Tt4
+        if NPSS_PT
+            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+            FFmaxcrz[i], deNOx, EINOx1, EINOx2, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4, 
+                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+        else
         Ftotal, η, P, Hrej, heatexcess,
         FFmaxcrz[i], BSFC,
         deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
                                         Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
+        end
 
         gam = Ftotal/BW - DoL
         Tt4crzmax[i] = Tt4
@@ -356,39 +321,47 @@ for   i = 1:N
         if Ftotal <F
             println("Ehhhhh Ftotal = ", Ftotal, "Freq = ",F)
         end
-        iter = 1
-        itermax = 20
-        for iter = 1:itermax
-            if abs(Ftotal - F)<1
-                break
-            end
-            ΔF = F - Ftotal
-            Tt4 = Tt4*(1 + ΔF/Ftotal/5) # 5 is just a scale factor so you don't get random oscillations
-            # println(Tt4)
-            Tt4 = max(2850, min(Tt4, Tt4s[i]))
-            Tt4crz[i] = Tt4
-            # println("Adjusted --> ",Tt4)
-            # TR = TR*0.99
-            # Tt4 = max(2850, min(Tt4s[i], T0s[i]*TR*18/10)) # convert to [R]
-            # println(alts[i], " ", Tt4)
-            Ftotal, η, P, Hrej, heatexcess,
-            crzmdotf[i], BSFC,
-            deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
-            Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
 
-            crzEINOx[i] = EINOx2
-            crzFAR[i]   = FAR
+        if NPSS_PT
+            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+            crzmdotf[i], deNOx, EINOx1, crzEINOx[i], crzFAR[i], Tt3, OPR,
+            Wc3, Tt4crz[i], EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, F, 0.0, 
+                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+        else
+            iter = 1
+            itermax = 20
+            for iter = 1:itermax
+                if abs(Ftotal - F)<1
+                    break
+                end
+                ΔF = F - Ftotal
+                Tt4 = Tt4*(1 + ΔF/Ftotal/5) # 5 is just a scale factor so you don't get random oscillations
+                # println(Tt4)
+                Tt4 = max(2850, min(Tt4, Tt4s[i]))
+                Tt4crz[i] = Tt4
+                # println("Adjusted --> ",Tt4)
+                # TR = TR*0.99
+                # Tt4 = max(2850, min(Tt4s[i], T0s[i]*TR*18/10)) # convert to [R]
+                # println(alts[i], " ", Tt4)
+                Ftotal, η, P, Hrej, heatexcess,
+                crzmdotf[i], BSFC,
+                deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
+                Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
 
-            gam = Ftotal/BW - DoL
-            # println(Wfrac0, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
-            if Tt4 ≤ 2850 && Ftotal>F    
-                println("gam = ", gam, "ROC = ", sin(gam)*V*60/0.3048)
-                gam = 0.0
-                println("Min Temp reached")
+                crzEINOx[i] = EINOx2
+                crzFAR[i]   = FAR
+
+                gam = Ftotal/BW - DoL
+                # println(Wfrac0, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
+                if Tt4 ≤ 2850 && Ftotal>F    
+                    println("gam = ", gam, "ROC = ", sin(gam)*V*60/0.3048)
+                    gam = 0.0
+                    println("Min Temp reached")
+                end
             end
-        end
-        if iter == itermax && abs(Ftotal - F)>1
-            println("Steady level cruise not converged - increase itermax?")
+            if iter == itermax && abs(Ftotal - F)>1
+                println("Steady level cruise not converged - increase itermax?")
+            end
         end
 
         EGTcrz[i] = EGT
