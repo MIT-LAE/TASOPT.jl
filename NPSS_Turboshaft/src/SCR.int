@@ -291,7 +291,7 @@ void variableChanged( string name, any oldVal ) {
 	  else {
 		  real ep = 1e-6;
 		  f=(1/(-2*log10((ep/d_hy)/3.7 + 5.74/Re**0.9)))**2;
-		  cout<< "ATTN: FLOW IS TURBULENT IN CATALYST CHANNELS" << endl;
+		//   cout<< "ATTN: FLOW IS TURBULENT IN CATALYST CHANNELS" << endl;
 	  }
 	  
 	  return f;
