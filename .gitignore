@@ -7,3 +7,5 @@
 *.code-workspace
 *.results
 *.png
+*.perf
+*.PTF
