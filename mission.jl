@@ -709,6 +709,8 @@ function mission!(pari, parg, parm, para, pare,
             pare[ieyg, ipn] = pare[ieyg, ip1] + dyg
 
       # Descent
+      #TODO descent has not been properly implemented yet - below it just performs an approximate scaling based
+      #     on TASOPT to estimate the descent fuel burn
             ip = ipdescent1
             pare[iep0  ,ip]  = pare[iep0  ,ipcruisen]  
             pare[ieT0  ,ip]  = pare[ieT0  ,ipcruisen]  
