@@ -521,6 +521,8 @@ function mission!(pari, parg, parm, para, pare,
       balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
 
       if(calc_ipc1)
+            # println("Calculating cruise point")
+            # println(pare[ieFe, ip])
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
@@ -539,7 +541,7 @@ function mission!(pari, parg, parm, para, pare,
 
             if NPSS_PT
                   NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, 0*pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
             else
             t_prop += @elapsed Ftotal, η, P, Hrej, heatexcess,
             mdotf, BSFC,
@@ -556,6 +558,7 @@ function mission!(pari, parg, parm, para, pare,
             pare[ieemot:ieethermal, ip] .= η
             pare[ieHrejmot:ieHrejtot, ip] .= Hrej
             pare[ieHexcess, ip] = heatexcess
+            pare[ieFe, ip] = Ftotal
             
             # println("Cruise Ftotal, offdes = ", Ftotal)
             # println("Thrust req = ", F)
