@@ -785,9 +785,9 @@ Lconv = false # no convergence yet
             parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
             parg[igxmot] = parg[igxfan] + 0.5
             # -----
-            # Weight of single engine/ ducted fan assembly
+            # Weight of single (1) engine/ ducted fan assembly that consists of fan, gearbox and motor
             if (iwplan == 1)
-                Weng1 = parg[igWfan] + parg[igWmot] #+ parg[igWinv]
+                Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB] #+ parg[igWinv]
             else
                 Weng1 = 0.0
             end
