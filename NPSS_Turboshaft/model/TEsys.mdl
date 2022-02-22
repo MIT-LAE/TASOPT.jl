@@ -195,6 +195,10 @@ Assembly Assembly Eng
 		Fl_O.MNdes = 0.10;
 
 		setOption("switchBurn", "WFUEL");
+
+		if(THERMPACKAGE == "allFuel"){
+			Fl_I.switchFuelType = "H2";
+		}
 		// FAR = .024225;
 
 		real EINOx = 0;
