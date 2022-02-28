@@ -450,8 +450,8 @@ function obj(x, grad)
     f = f + penfac*max(0.0, constraint)^2
 
     # Max Tt3 at TOC 
-    Tt3max = 920.0
-    Tt3    = pare[ieTt3, ipcruise1, 1]
+    Tt3max = 900.0
+    Tt3    = maximum(pare[ieTt3, :, 1])
     constraint = Tt3/Tt3max - 1
     penfac = 5.0*parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
