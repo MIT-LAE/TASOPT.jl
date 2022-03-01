@@ -380,7 +380,7 @@ void variableChanged( string name, any oldVal ) {
 		kc = (kNO("Fl_I")*Deff)**0.5;
 		Da = kc*d_hy/D;
 		
-		real zstar = l*Deff/(u_c*d_hy**2);
+		zstar = l*Deff/(u_c*d_hy**2);
 
 		deNOx = deNOxTbl(zstar,Da); // Calculate deNOx from look up table
 		
