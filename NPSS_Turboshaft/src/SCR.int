@@ -124,6 +124,10 @@ real u_c{
 	value = 0; IOstatus = OUTPUT; units = "m/sec";
 	description = "Cat channel velocity";
 }
+real kc{
+	value =0; IOstatus = OUTPUT; units = "m/sec";
+	description = "Effective reaction rate = (kNO*DeffNO)**0.5";
+}
 
 real Deff{
 	value = 0; IOstatus = OUTPUT; units = "m2/sec";
