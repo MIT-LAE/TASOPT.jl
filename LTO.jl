@@ -41,6 +41,4 @@ println(fileout, @sprintf("%2s) %4s %15s %15s %15s %15s %15s %15s %8s %16s",
         println(@sprintf("ZIAENG, %d, 0.00, 0.00, %10.5f, 0.00, 1.00,  %10.5f, ZIAENG, 1.0", j, EIs[i], mfs[i]))
     end
 
-
-
 end
