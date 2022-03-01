@@ -374,7 +374,11 @@ void variableChanged( string name, any oldVal ) {
 		GHSV = 3600*u_c*OFA*Af/V_cat;
 		t_res = 3600/GHSV;
 		
-		Deff = porosity/tortuosity*NO_diffusivity("Fl_I");
+		D = NO_diffusivity("Fl_I");
+		Deff = porosity/tortuosity*D;
+
+		kc = (kNO("Fl_I")*Deff)**0.5;
+		Da = kc*d_hy/D;
 		
 		real zstar = l*Deff/(u_c*d_hy**2);
 
