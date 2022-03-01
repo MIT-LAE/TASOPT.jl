@@ -307,11 +307,13 @@ f = open("temp.results", "w")
 initwgt = 0
 saveOD = false
 track_fig = nothing
+opt_iter_counter = 0
 function run_wsize(iter, initwgt, Ldebug, printiter, saveOD)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
     parpt[ipt_time_NPSS] = 0.0
     parpt[ipt_calls_NPSS] = 0
+    global opt_iter_counter += 1
 
     # println(parg[igWwing])
     Ldebug && println("Max weight iterations = $iter")
@@ -320,50 +322,55 @@ function run_wsize(iter, initwgt, Ldebug, printiter, saveOD)
     # @benchmark PowerTrain(0.0, 0.8, 25.0e3*2,0.0, 0.0, parg, parpt, parmot, pargen)
 
     ## Write outputs to io stream f
-    println(f, "AR  = $(parg[igAR])\n")
-    println(f, "CL  = $(para[iaCL, ipcruise1])\n")
-    println(f, "Alt  = $(para[iaalt, ipcruise1])\n")
-    @printf(f,"--------------------\n")
-    println(f, "Fe    = np.array(",pare[ieFe,:], ")")
+    printoutput = false
+    if printoutput
+        println(f, "AR  = $(parg[igAR])\n")
+        println(f, "CL  = $(para[iaCL, ipcruise1])\n")
+        println(f, "Alt  = $(para[iaalt, ipcruise1])\n")
+        @printf(f,"--------------------\n")
+        println(f, "Fe    = np.array(",pare[ieFe,:], ")")
 
-    println(f, "ηmot     = np.array(", pare[ieemot    , :], ")")
-    println(f, "ηinv     = np.array(", pare[ieeinv    , :], ")")
-    println(f, "ηcable   = np.array(", pare[ieecable  , :], ")")
-    println(f, "ηgen     = np.array(", pare[ieegen    , :], ")")
-    println(f, "ηthermal = np.array(", pare[ieethermal, :], ")")
+        println(f, "ηmot     = np.array(", pare[ieemot    , :], ")")
+        println(f, "ηinv     = np.array(", pare[ieeinv    , :], ")")
+        println(f, "ηcable   = np.array(", pare[ieecable  , :], ")")
+        println(f, "ηgen     = np.array(", pare[ieegen    , :], ")")
+        println(f, "ηthermal = np.array(", pare[ieethermal, :], ")")
 
-    println(f, "Hmot     = np.array(", pare[ieHrejmot , :], ")")
-    println(f, "Hinv     = np.array(", pare[ieHrejinv , :], ")")
-    println(f, "Hcable   = np.array(", pare[ieHrejcab , :], ")")
-    println(f, "Hgen     = np.array(", pare[ieHrejgen , :], ")")
-    println(f, "Htot     = np.array(", pare[ieHrejtot , :], ")")
-    println(f, "EINOx1 = np.array(", pare[ieEINOx1, :], ")")
-    println(f, "EINOx2 = np.array(", pare[ieEINOx2, :], ")")
-    println(f, "FAR = np.array(", pare[ieFAR, :], ")")
+        println(f, "Hmot     = np.array(", pare[ieHrejmot , :], ")")
+        println(f, "Hinv     = np.array(", pare[ieHrejinv , :], ")")
+        println(f, "Hcable   = np.array(", pare[ieHrejcab , :], ")")
+        println(f, "Hgen     = np.array(", pare[ieHrejgen , :], ")")
+        println(f, "Htot     = np.array(", pare[ieHrejtot , :], ")")
+        println(f, "EINOx1 = np.array(", pare[ieEINOx1, :], ")")
+        println(f, "EINOx2 = np.array(", pare[ieEINOx2, :], ")")
+        println(f, "FAR = np.array(", pare[ieFAR, :], ")")
 
-    println(f, "h     = np.array(",para[iaalt,:],")")
-    println(f, "R     = np.array(",para[iaRange,:],")")
-    println(f, "deNOx = np.array(",pare[iedeNOx, :],")")
-    println(f, "fracW = np.array(",para[iafracW, :],")")
-    println(f, "mdotf = np.array(",pare[iemdotf, :],")")
-    println(f, "mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
-    println(f, "Ptank = np.array(",pare[iePLH2, :],")")
-    println(f, "CL = np.array(",para[iaCL, :],")")
-    println(f, "CD = np.array(",para[iaCD, :],")")
-    println(f, "CLh = np.array(",para[iaCLh, :],")\n")
+        println(f, "h     = np.array(",para[iaalt,:],")")
+        println(f, "R     = np.array(",para[iaRange,:],")")
+        println(f, "deNOx = np.array(",pare[iedeNOx, :],")")
+        println(f, "fracW = np.array(",para[iafracW, :],")")
+        println(f, "mdotf = np.array(",pare[iemdotf, :],")")
+        println(f, "mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
+        println(f, "Ptank = np.array(",pare[iePLH2, :],")")
+        println(f, "CL = np.array(",para[iaCL, :],")")
+        println(f, "CD = np.array(",para[iaCD, :],")")
+        println(f, "CLh = np.array(",para[iaCLh, :],")\n")
 
 
-    # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
-    # println("Time writing       = $time_writing")
-    # println("Time runnning NPSS = $time_run_NPSS")
-    @printf(f, "\nPFEI = %.5f J/Nm\n", parm[imPFEI])
+        # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
+        # println("Time writing       = $time_writing")
+        # println("Time runnning NPSS = $time_run_NPSS")
+        @printf(f, "\nPFEI = %.5f J/Nm\n", parm[imPFEI])
 
-    weight_buildup(parg, io = f)
-    aero(parg, para, io = f)
-    geometry(parg, io = f)
+        weight_buildup(parg, io = f)
+        aero(parg, para, io = f)
+        geometry(parg, io = f)
+    end
 
     # global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
-    global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
+    if (opt_iter_counter%5 == 0) || (opt_iter_counter == 1)
+        global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
+    end
 end
 
 # time_wsize = @elapsed run_wsize(35, 0, false, true, saveOD)
@@ -490,7 +497,13 @@ function obj(x, grad)
     penfac = parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
     
-    printstyled(@sprintf("%3.1fs %5.2f %5.2f %5.4f %5.2f %5.2fᵒ %4.0f R %4.0f R %5.4f %5.4f  %5.4f  %5.4f  %5.2f  %5.3f  %5.3f  %5.2f  %5.2fᵒ %5.2f | %8.6e %10.6f %5.2f %6.3f %5.4f  %6.4f  %6.4f %6.1f %5.3f %5.3f  %5.3f  %5.3f\n",
+    if (opt_iter_counter%10 == 0) || (opt_iter_counter == 2)
+    printstyled(@sprintf("%6s %4s %4s %5s %5s %5s  %4s  %4s  %5s %5s %5s  %5s  %5s %5s %5s %5s %5s  %5s | %-8s %10s %5s %6s %5s  %6s  %6s %6s %6s %5s %6s %5s  %5s \n",
+    "t", "AR", "h", "CLcr", "FPR", "λ", "T4c", "T4r", "λs", "λt", "hbo", "hbs", "πHPC", "rcls", "rclt", "λh", "ARh", "Fnrat",
+           "f", "PFEI[J/Nm]", "Wf[tons]", "Wwing", "CDwing", "Wf/Wfmax", "γ", "Tt3", "Tvane", "b", "L/D", "dfan", "dfanaft" ); color = :light_green)
+    end
+    
+    printstyled(@sprintf("%5.1fs %4.1f %4.1f %5.4f %5.2f %5.2fᵒ %4.0fR %4.0fR %5.4f %5.4f %5.4f  %5.4f  %5.2f %5.3f %5.3f %5.2f %5.2fᵒ %5.2f | %8.6e %10.6f %5.2f %6.3f %5.4f  %6.4f  %6.4f %6.1f %6.1f %5.1fm %6.1f %5.3fm  %5.3fm\n",
                     wsize_time, x[1], x[2]/1e3, x[3],x[4],x[5],  x[6],  x[7], x[8], x[9],  x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], 
     f, parm[imPFEI], parm[imWfuel]/9.81/1000, parg[igWwing]/9.81/1000, para[iaCDwing, ipcruise1], parg[igWfuel]/parg[igWfmax], para[iagamV, ipclimbn, 1], Tt3, Wf, Wfmax, dfan, daftfan); color = :light_green)
 
