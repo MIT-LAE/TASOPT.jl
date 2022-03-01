@@ -129,8 +129,7 @@ real Deff{
 	value = 0; IOstatus = OUTPUT; units = "m2/sec";
 	description = "Effective diffusivity in the channels";
 }
-  
-  
+real zstar, D;  
 
 //------------------------------------------------------------
 //   ******* OPTION VARIABLE SETUP *******
