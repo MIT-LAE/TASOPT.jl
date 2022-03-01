@@ -462,6 +462,14 @@ function obj(x, grad)
     constraint = Tt3/Tt3max - 1
     penfac = 5.0*parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
+    
+    # Max Tmetal at Rotation
+    Tvanemax = 2400 #Rankine
+    Tvane    = maximum(pare[ieTmet1, :, 1]) #Rankine
+    constraint = Tvane/Tvanemax - 1
+    penfac = 5.0*parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
+
 
     # Ensure fuel volume makes sense
     Wfmax = parg[iglftankin]  #parg[igWfmax]
