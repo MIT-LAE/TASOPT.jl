@@ -310,6 +310,12 @@ void variableChanged( string name, any oldVal ) {
 	  
 	  return D;
   }
+// Reaction rate taken from Tronconi, Interaction between chem and trans in monolithc catalysts. Catalysis Today 1997
+  real kNO(string port){
+	  real T_K = port->Tt.value*100/180;
+	  real k = 1.28e11*exp(-22400/8.314/T_K);
+	  return k;
+  }
 
 
   void calculate() {	 
