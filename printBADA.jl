@@ -13,7 +13,7 @@ function printBADA(io, name, W0, bestalt, TAS, ROC, ffpmin, crzf, crzTAS, FLin; 
 
     println(io, "BADA PERFORMANCE FILE                                    "*Dates.format(now(), DateFormat("u dd yyyy")) )
     println(io, @sprintf(""))
-    println(io, @sprintf("AC/Type: %6s", name))
+    println(io, @sprintf("AC/Type: %6s___", name))
     println(io, "                              Source OPF File:               "*Dates.format(now(), DateFormat("u dd yyyy")) )
     println(io, "                              Source APF file:               "*Dates.format(now(), DateFormat("u dd yyyy")) )
     println(io, @sprintf(""))
