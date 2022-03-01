@@ -477,9 +477,10 @@ function obj(x, grad)
     if (pari[iifwing] ==1)
         Wfmax = parg[igWfmax]
         Wf    = parg[igWfuel]
-        constraint = Wf/Wfmax - 1.0
-        penfac = 10*parg[igWpay]
-        f = f + penfac*max(0.0, constraint)^2
+    end
+    constraint = Wf/Wfmax - 1.0
+    penfac = 10*parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
     end
 
     # Max Fan diameters
