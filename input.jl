@@ -309,7 +309,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         
     # Nacelle Drag stuff
         parg[igrSnace  ] = 16.0/3   # rSnace   nacelle+pylon wetted area/fan area  Snace/Afan
-        parg[igrVnace  ] =  1.02  # rVnace   nacelle local/freesteam velocity ratio
+        parg[igrVnace  ] =  1.02    # rVnace   nacelle local/freesteam velocity ratio
 
     parg[igrWfmax  ] = 0.90
 

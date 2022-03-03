@@ -110,7 +110,7 @@ for  ip = 1:N
     Tfrac = fT1*(1.0-frac) + fTn*frac
     Tt4s[ip] = Tt4TO*(1.0-Tfrac) + Tt4CR*Tfrac
 end
-
+println(@sprintf("%12s %12s %12s %12s %12s %12s %12s", "FL", "Tt4max", "Tmetmax", "FFmax", "Tt4cruise", "Tmetcruise", "FFcruise"))
 # integrate trajectory over climb
 for   i = 1:N
     
@@ -272,6 +272,7 @@ for   i = 1:N
 
     end
     # Do cruise too 
+
     if FL[i]≥ 270 && FL[i]≤431
         ip = ipcruise1
 
@@ -308,6 +309,7 @@ for   i = 1:N
             FFmaxcrz[i], deNOx, EINOx1, EINOx2, FAR, Tt3, OPR,
             Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4, 
                 Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+            Tmetmax = pare[ieTmet1, iptest]
         else
         Ftotal, η, P, Hrej, heatexcess,
         FFmaxcrz[i], BSFC,
@@ -327,6 +329,7 @@ for   i = 1:N
             crzmdotf[i], deNOx, EINOx1, crzEINOx[i], crzFAR[i], Tt3, OPR,
             Wc3, Tt4crz[i], EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, F, 0.0, 
                 Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+            Tmetcrz= pare[ieTmet1, iptest]
         else
             iter = 1
             itermax = 20
@@ -370,6 +373,9 @@ for   i = 1:N
             ROCmaxcrz[i] = 0.0
         end
         crzTAS[i] = V0s[i]/kts_to_mps
+
+        println(@sprintf("%12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f", 
+        FL[i], Tt4crzmax[i], Tmetmax, FFmaxcrz[i], Tt4crz[i], Tmetcrz, crzmdotf[i]))
     end
 
 end # done integrating climb
