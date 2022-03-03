@@ -37,8 +37,9 @@ println(fileout, @sprintf("%2s) %4s %15s %15s %15s %15s %15s %15s %8s %16s",
     #     NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
     #     mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, 0.0, 0.0, Foo*TS, 0.0, 0.0, 0.0, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
     # end
+    println(fileout, "------------------------- AEIC ENG_EI output --------------------------")
     for (i,j) in zip([3,2,1,4], [1,2,3,4])
-        println(@sprintf("ZIAENG, %d, 0.00, 0.00, %10.5f, 0.00, 1.00,  %10.5f, ZIAENG, 1.0", j, EIs[i], mfs[i]))
+        println(fileout,@sprintf("ZIAENG, %d, 0.00, 0.00, %10.5f, 0.00, 1.00,  %10.5f, ZIAENG, 1.0", j, EIs[i], mfs[i]))
     end
 
 end
