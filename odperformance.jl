@@ -15,20 +15,12 @@ gamVtol  = 1.0e-12
     KAfTE = para[iaKAfTE, ipcruise1]
 
 # Zero-fuel weight for this mission
-    Wzero = parg[igWMTO] - parg[igWfuel] - parg[igWpay] + parm[imWpay]
+    Wzero = parg[igWMTO] - parg[igWfuel] - parg[igWpay] + parm[imWpay]  #This ensures that this will work for multi-mission in the future
 # Payload fraction for this mission
     rpay = parm[imWpay]/parg[igWpay]
     ξpay = 0.
 
 S    = parg[igS]
-# Flight levels to output in BADA file:
-# FL = [  0 ,    5 ,   10 ,   15 ,   20 ,   
-#        30 ,   40 ,   60 ,   80 ,  100 , 
-#       120 ,  140 ,  160 ,  180 ,  200 ,
-#       220 ,  240 ,  260 ,  280 ,  290 , 
-#       310 ,  330 ,  350 ,  370 ,  390 ,
-#       410 ,  430 ,  431 ]
-# FL = LinRange(0,430, 44)
 
 alts = FL*100*ft_to_m
 N = length(FL)
