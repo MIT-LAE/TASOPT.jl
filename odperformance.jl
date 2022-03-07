@@ -1,4 +1,4 @@
-function odperf!(pari, parg, parm, para, pare, Wfrac0, FL, 
+function odperf!(pari, parg, parm, para, pare, Wfrac, FL, 
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
     NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process)
@@ -10,19 +10,22 @@ itergmax::Int64 = 15
 gamVtol  = 1.0e-12
 
 # BLI
-    fBLIf = parg[igfBLIf]
+    fBLIf   = parg[igfBLIf]
     DAfsurf = para[iaDAfsurf, ipcruise1]
-    KAfTE = para[iaKAfTE, ipcruise1]
+    KAfTE   = para[iaKAfTE, ipcruise1]
 
 # Zero-fuel weight for this mission
-    Wzero = parg[igWMTO] - parg[igWfuel] - parg[igWpay] + parm[imWpay]  #This ensures that this will work for multi-mission in the future
+    Wzero   = parg[igWMTO] - parg[igWfuel] - parg[igWpay] + parm[imWpay]  #This ensures that this will work for multi-mission in the future
+    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
 # Payload fraction for this mission
     rpay = parm[imWpay]/parg[igWpay]
     ξpay = 0.
 
 S    = parg[igS]
-
+# Convert FLs to altitude in m
 alts = FL*100*ft_to_m
+
+# Initialize arrays
 N = length(FL)
 T0s = zeros(Float64, N)
 p0s = zeros(Float64, N)
@@ -79,9 +82,9 @@ ReTO = VTO*pare[ierho0,iptakeoff]/pare[iemu0 ,iptakeoff]
 
 # Determine guesses for start and end of climb weights from fracW
 # at end of climb of design mission, but fuel weights adjusted 
-# by Wfrac0
-Wclimb1 = Wfrac0*parg[igWMTO]     #Wzero + Wfrac0*parg[igWfuel]
-Wclimbn = Wfrac0*parg[igWMTO]*0.9 #Wzero + Wfrac0*parg[igWfuel]*para[iafracW, ipclimbn]
+# by Wfrac
+Wclimb1 = Wfrac*parg[igWMTO]     #Wzero + Wfrac*parg[igWfuel]
+Wclimbn = Wfrac*parg[igWMTO]*0.9 #Wzero + Wfrac*parg[igWfuel]*para[iafracW, ipclimbn]
 @inbounds for  ip = 1:N
     frac = (alts[ip] - 0.0)/(alts[N] - 0.0)
     V  =  VTO*(1.0-frac) + V0s[end]*frac
@@ -102,12 +105,14 @@ for  ip = 1:N
     Tfrac = fT1*(1.0-frac) + fTn*frac
     Tt4s[ip] = Tt4TO*(1.0-Tfrac) + Tt4CR*Tfrac
 end
+
+
 println(@sprintf("%12s %12s %12s %12s %12s %12s %12s", "FL", "Tt4max", "Tmetmax", "FFmax", "Tt4cruise", "Tmetcruise", "FFcruise"))
 # integrate trajectory over climb
 for   i = 1:N
     
     # velocity calculation from CL, Weight, altitude
-    W  = Ws[i]
+    W  = Wfrac
     if i == 1
         ip = ipclimbn # dummy location to store values
         CL = para[iaCL, ipclimb1]
@@ -268,7 +273,7 @@ for   i = 1:N
     if FL[i]≥ 270 && FL[i]≤431
         ip = ipcruise1
 
-        W = Wfrac0*parg[igWMTO]
+        W = Wfrac*parg[igWMTO]
         Wf = W - Wzero
 
 
@@ -347,7 +352,7 @@ for   i = 1:N
                 crzFAR[i]   = FAR
 
                 gam = Ftotal/BW - DoL
-                # println(Wfrac0, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
+                # println(Wfrac, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
                 if Tt4 ≤ 2850 && Ftotal>F    
                     println("gam = ", gam, "ROC = ", sin(gam)*V*60/0.3048)
                     gam = 0.0
@@ -374,4 +379,64 @@ end # done integrating climb
 
 
 return Ws[1], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
+end
+
+
+function get_cruisespeed(h, Mcr)
+    h_ft = h/0.3048
+    htrans_ft = Hptrans(280/1.944, 0.8)
+    T, P, ρ,  a = atmos(h/1000)
+
+    if 6000<=h_ft<=13999
+        CAS = 250/1.944 #Assume 250 kts CAS cruise consistent with BADA
+        TAS =  CAS_TAS(CAS, h)
+    elseif 14000<=h_ft< htrans_ft
+        CAS = 280/1.944  #Assume 280 kts CAS cruise similar to BADA
+        TAS =  CAS_TAS(CAS, h)
+    elseif h_ft>= htrans_ft
+        TAS =  MNcr * a
+        CAS =  TAS_CAS(TAS, h)
+    end
+    
+     MN =  TAS/ a
+     return TAS, MN
+end
+
+function Hptrans(CAS, MNcr)
+
+    gam = gamSL
+    gmi = gam - 1
+    βT = -0.0065
+    R = 287.05287
+
+    δtrans = ((1+0.5*gmi*(CAS/aSL)^2)^(gam/gmi) - 1)/((1+0.5*gmi*MNcr^2)^(gam/gmi) - 1)
+    θtrans = δtrans^(-βT*R/gee)
+
+    htrans_ft = 1000/0.3048/6.5 * TSL*(1-θtrans)
+
+    return htrans_ft
+end
+
+function CAS_TAS(CAS, h)
+    T, P, ρ,  a = atmos(h/1000) 
+    gam = gamSL
+    gmi = gam - 1
+    k = gmi/gam
+
+    temp1 = (1 + k/2*ρ0/PSL*CAS^2)^(1/k)
+    temp2 = (1 + PSL/P * (temp1 - 1))^k
+    TAS   = (2/k *P/ρ * (temp2 - 1))^0.5
+    return TAS
+end
+
+function TAS_CAS(TAS, h)
+    T, P, ρ,  a = atmos(h/1000) 
+    gam = gamSL
+    gmi = gam - 1
+    k = gmi/gam
+
+    temp1 = (1 + k/2*ρ/P*TAS^2)^(1/k)
+    temp2 = (1 + P/PSL * (temp1 - 1))^k
+    CAS   = (2/k *PSL/ρ0 * (temp2 - 1))^0.5
+    return CAS
 end
