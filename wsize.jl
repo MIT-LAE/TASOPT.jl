@@ -1341,32 +1341,44 @@ end
 
         FL = vcat([0, 5, 10, 15, 20, 30, 40, 60, 80], LinRange(100,430, 34), [431])
         ZFW = parg[igWMTO] - parg[igWfuel]
-        Wfracs = LinRange(1.0, ZFW/parg[igWMTO], 3)
+        OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+        Wfracs = LinRange(1.0, 1.2*OEW/parg[igWMTO], 3)
         # Ldebug = true
         W0high, h3, V0shigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh = odperf!(pari, parg, parm, para, pare, Wfracs[1], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true, NPSS_PT, NPSS)
         W0nom , h2, V0snom , ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom  = odperf!(pari, parg, parm, para, pare, Wfracs[2], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true, NPSS_PT, NPSS)
         W0lo  , h1, V0slo  , ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo   = odperf!(pari, parg, parm, para, pare, Wfracs[3], FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true, NPSS_PT, NPSS)
         open(date*"ZIA_.PTF", "w") do f
             printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
-            V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASnom, FL)
+            V0slo./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL)
         end
 
         open(date*"ZIA_NOx_.PTF", "w") do f
             printBADA(f, "ZIA", [W0lo, W0nom, W0high], cruisealt,
-            V0snom./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom.*60.0.*clmbEINOxnom,
-            hcat(crzmdotflo*60 .*crzEINOxlo, crzmdotfnom*60 .*crzEINOxnom, crzmdotfhigh*60 .*crzEINOxhigh)', crzTASnom, FL; NOx = true)
+            V0slo./kts_to_mps, hcat(ROClo, ROCnom, ROChigh)', mdotfnom.*60.0.*clmbEINOxnom,
+            hcat(crzmdotflo*60 .*crzEINOxlo, crzmdotfnom*60 .*crzEINOxnom, crzmdotfhigh*60 .*crzEINOxhigh)', crzTASlo, FL; NOx = true)
+        end
+
+        Wfracs = LinRange(1.0, 1.2*OEW/parg[igWMTO], 10)
+
+        FFmax     = zeros((length(FL), length(Wfracs)))
+        mdotfcrz  = zeros((length(FL), length(Wfracs)))
+        ROC       = zeros((length(FL), length(Wfracs)))
+        EGT       = zeros((length(FL), length(Wfracs)))
+        Tt4crz    = zeros((length(FL), length(Wfracs)))
+        Tt4crzmax = zeros((length(FL), length(Wfracs)))
+        FARcrz    = zeros((length(FL), length(Wfracs)))
+
+        for (i,Wfrac) in enumerate(Wfracs)
+            _, _, _, _, _, mdotfcrz[:,i], _,
+             EGT[:,i], FFmax[:,i], ROC[:,i] , Tt4crz[:,i], Tt4crzmax[:,i], 
+             _, _, FARcrz[:,i] = odperf!(pari, parg, parm, para, pare, Wfrac, FL, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, true, NPSS_PT, NPSS)
+
         end
 
         open(date*"ZIACRZ.perf", "w") do f
-            cruisechar(f, "ZIA", Wfracs, para[iaMach, ipcruise1], FL,
-             hcat(FFmaxcrzhigh, FFmaxcrznom, FFmaxcrzlo)',
-             hcat(crzmdotfhigh, crzmdotfnom, crzmdotflo)',
-             hcat(ROCmaxhigh, ROCmaxnom, ROCmaxlo)',
-             hcat(EGThigh, EGTnom, EGTlo)',
-             hcat(Tt4crzhigh, Tt4crznom, Tt4crzlo)',
-             hcat(Tt4crzmaxhigh, Tt4crzmaxnom, Tt4crzmaxlo)',
-             hcat(crzFARhigh, crzFARnom, crzFARlo)')
+            cruisechar(f, "ZIA", Wfracs, para[iaMach, ipcruise1], FL, V0slo,
+            FFmax,mdotfcrz, ROC, EGT, Tt4crz, Tt4crzmax, FARcrz)
         end
     end
     endNPSS(NPSS_TS)

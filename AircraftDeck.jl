@@ -4,8 +4,8 @@
 Cruise characteristics
 Aircraft deck for contrail avoidence
 """
-function cruisechar(io, name, fracW0, M0, FL, FFmax, FFcrz, ROC, EGT, Tt4crz, Tt4crzmax, crzFAR)
-
+function cruisechar(io, name, fracW0, M0, FL, TAS, FFmax, FFcrz, ROC, EGT, Tt4crz, Tt4crzmax, crzFAR)
+    FLcutoff = 150
     N = length(FL)
     println(io, "Aircraft cruise characteristics              "*Dates.format(now(), DateFormat("u dd yyyy")))
     println(io, name)
@@ -15,64 +15,42 @@ function cruisechar(io, name, fracW0, M0, FL, FFmax, FFcrz, ROC, EGT, Tt4crz, Tt
      "ZFW = WMTO - Wfuel", (parg[igWMTO] - parg[igWfuel])/9.81 ))
      println(io, "Note: Following values assume fixed 100% payload")
     
+     println(io,"")
+     println(io, @sprintf("%15s", "TAS[m/s]",))
+     println(io, @sprintf("%4s  %9s", "FL", "TAS"))
+     for i = 1:N
+         if FL[i]≥FLcutoff
+             println(io, @sprintf("%4.0f  %9.4f", FL[i], TAS[i]))
+         end
+     end
+
+    print_variables(io, fracW0, FL, FLcutoff, FFmax, "FFmax [kg/s]")
+    print_variables(io, fracW0, FL, FLcutoff, FFcrz, "FFcrz [kg/s]")
+    print_variables(io, fracW0, FL, FLcutoff, ROC, "ROCmax [ft/min]")
+    print_variables(io, fracW0, FL, FLcutoff, EGT, "Cruise EGT [K]")
+    print_variables(io, fracW0, FL, FLcutoff, crzFAR, "Cruise FAR")
+    print_variables(io, fracW0, FL, FLcutoff, Tt4crzmax, "MaxClmb Tt4 [R]")
+    print_variables(io, fracW0, FL, FLcutoff, Tt4crz, "Cruise FAR")
+
+end
+
+function print_variables(io, W_lst, FL, FLcutoff, Var, Varname)
     println(io,"")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "FFmax [kg/s]", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], FFmax[1, i], FFmax[2, i], FFmax[3, i]))
-        end
+    println(io, @sprintf("%15s  %-7s%6s%7s", Varname, "--","Wfracs", "--"))
+    print(io, @sprintf("%4s", "FL"))
+    for W in W_lst
+        print(io, @sprintf("%12.4f", W))
     end
- 
     println(io,"")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "FFcrz [kg/s]", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], FFcrz[1, i], FFcrz[2, i], FFcrz[3, i]))
+    
+    for i = 1:length(FL)
+        if FL[i]≥FLcutoff
+            print(io, @sprintf("%4.0f", FL[i]))
+            for var in Var[i,:]
+                print(io, @sprintf("%12.4f", var))
+            end
+            println(io,"")
         end
     end
 
-    println(io,"")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "ROCmax [ft/min]", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], ROC[1, i], ROC[2, i], ROC[3, i]))
-        end
-    end
-
-    println(io, "")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "Cruise EGT [K]", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], EGT[1, i], EGT[2, i], EGT[3, i]))
-        end
-    end
-
-    println(io, "")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "Cruise FAR", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], crzFAR[1, i], crzFAR[2, i], crzFAR[3, i]))
-        end
-    end
-    println(io, "")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "MaxClmb Tt4 [R]", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], Tt4crzmax[1, i], Tt4crzmax[2, i], Tt4crzmax[3, i]))
-        end
-    end
-    println(io, "")
-    println(io, @sprintf("%15s  %-7s%6s%7s", "Cruise Tt4 [R]", "--","Wfracs", "--"))
-    println(io, @sprintf("%4s  %9.2f  %9.2f  %9.2f", "FL", fracW0[1], fracW0[2], fracW0[3]))
-    for i = 1:N
-        if FL[i]≥270
-            println(io, @sprintf("%4.0f  %9.4f  %9.4f  %9.4f", FL[i], Tt4crz[1, i], Tt4crz[2, i], Tt4crz[3, i]))
-        end
-    end
 end
