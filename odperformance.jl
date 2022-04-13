@@ -57,56 +57,11 @@ crzTAS   = zeros(Float64, N)
 Tt4crz   = zeros(Float64, N)
 Tt4crzmax   = zeros(Float64, N)
 
-# # Initialize climb integrands
-# FoW = zeros(Float64, N)
-# FFC = zeros(Float64, N)
-# Vgi = zeros(Float64, N)
-
 @inbounds for i =1:N
     T0s[i], p0s[i], ρ0s[i], a0s[i], μ0s[i] = atmos(alts[i]/1000)
     rhocab = max( parg[igpcabin] , p0s[i] ) / (RSL*TSL) #Should be T0s to be more accurate?
     Wbouys[i] = (rhocab-ρ0s[i])*gee*parg[igcabVol]
 end
-
-# M0s[end] = 0.8
-# V0s[end] = 0.8 * a0s[end]
-# Reunits[end] = V0s[end] *ρ0s[end]/μ0s[end]
-
-# #---- estimate takeoff speed and set V,Re over climb and descent
-# cosL = cos(parg[igsweep]*π/180.0)
-# CLTO = para[iaclpmax,iptakeoff]*cosL^2
-# # [prash] The assumption here is that Wcruise/WTO~1 and
-# # just scaling it with rho and CL to get an initial estimate for V
-# VTO = pare[ieu0,ipcruise1] *
-#         sqrt(pare[ierho0,ipcruise1] / pare[ierho0,iptakeoff]) *
-#         sqrt(para[iaCL  ,ipcruise1] / CLTO )
-# ReTO = VTO*pare[ierho0,iptakeoff]/pare[iemu0 ,iptakeoff]
-
-# # Determine guesses for start and end of climb weights from fracW
-# # at end of climb of design mission, but fuel weights adjusted 
-# # by Wfrac
-# Wclimb1 = Wfrac*parg[igWMTO]     #Wzero + Wfrac*parg[igWfuel]
-# Wclimbn = Wfrac*parg[igWMTO]*0.9 #Wzero + Wfrac*parg[igWfuel]*para[iafracW, ipclimbn]
-# @inbounds for  ip = 1:N
-#     frac = (alts[ip] - 0.0)/(alts[N] - 0.0)
-#     V  =  VTO*(1.0-frac) + V0s[end]*frac
-#     Re = ReTO*(1.0-frac) + Reunits[end]*frac
-#     W  = Wclimb1*(1.0 - frac) + Wclimbn*frac
-#     V0s[ip] = V
-#     Ws[ip] = W
-#     Reunits[ip] = Re
-# end
-# # println(Ws/9.81/1000)
-# #---- set climb Tt4's from fractions
-# fT1 = 0.2#parg[igfTt4CL1]
-# fTn = 0.2#parg[igfTt4CLn]
-# Tt4TO = pare[ieTt4,iptakeoff]
-# Tt4CR = pare[ieTt4,ipcruise1]
-# for  ip = 1:N
-#     frac = (alts[ip] - 0.0)/(alts[N] - 0.0)
-#     Tfrac = fT1*(1.0-frac) + fTn*frac
-#     Tt4s[ip] = Tt4TO*(1.0-Tfrac) + Tt4CR*Tfrac
-# end
 
 MNcr = para[iaMach, ipcruise1]
 Tt4max = maximum(pare[ieTt4, :])
