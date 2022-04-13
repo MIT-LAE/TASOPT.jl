@@ -1113,7 +1113,7 @@ Lconv = false # no convergence yet
                 Fdes = BW*(1/LoD + gamV)*1.05 #Ad-hoc 5% addition for OEI
 
                 pare[ieFe, ip] = Fdes # Let ieFe store total thrust 
-                # println("Cruise Ftotal, des = ", Fdes)
+                # println("Cruise Ftotal, des = ", Fdes," ", pare[ieFe, ipcruise1])
 
             # Size engine for TOC
             ρAir = pare[ierho0, ipcruise1]
@@ -1142,7 +1142,7 @@ Lconv = false # no convergence yet
                NPSSsuccess, ηpt, SPpt, Ppt, Hpt, heatexcess, mdotf_tot,
                deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, EGT,
                Snace1, Saftnace1 = NPSS_TEsys(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes, parpt[ipt_Tt41],
-                1.35, parpt[ipt_pifan], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt)
+                1.25, parpt[ipt_pifan], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt)
             else
 
            time_propsys += @elapsed  ηpt, Ppt, Hpt, heatexcess, mpt, SPpt,
@@ -1197,7 +1197,7 @@ Lconv = false # no convergence yet
             Tfuel = 20.0
             Tair  = 288.0 #Heated cabin temp
             h_v = 447000.0
-            t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies
+            t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
             k = ones(length(t_cond)).*5.0e-3#foam conductivities
             hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
             time_flight = para[iatime, ipdescent1]
@@ -1233,7 +1233,7 @@ Lconv = false # no convergence yet
             parg[igWfmax] = Vfuel*rhofuel*9.81
             parg[igWftank] = Wtank
             parg[igxWftank] = Wtank * parg[igxftank]
-            parg[iglftank] = ltank
+            parg[iglftank] = l_tank
             parg[igRftank] = Rtank
             parg[igWinsftank] = Winsul_sum
 
