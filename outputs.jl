@@ -958,7 +958,61 @@ function plot737compare(;weightdetail= true, fracs = false)
     plt.tight_layout()
     end
 
+"""
+Moment and shear diagrams
+"""
+function MomentShear(parg)
+    co = parg[igco]
+    cs = parg[igco]*parg[iglambdas]
+    ct = parg[igco]*parg[iglambdat]
+  
+    bo = parg[igbo]
+    bs = parg[igbs]
+    b  = parg[igb ]
 
+    etas = bs/b
+    etao = bo/b
+
+    λs = parg[iglambdas]
+    λt = parg[iglambdat]
+
+    Ss = parg[igSsmax]
+    Ms = parg[igMsmax]
+    So = parg[igSomax]
+    Mo = parg[igMomax]
+    
+    etaRange =[LinRange(etao,etas,20) ; LinRange(etas,1,20)]
+    c = zero(etaRange)
+    S = zero(etaRange)
+    M = zero(etaRange)
+
+    for (i,eta) in enumerate(etaRange)
+        if eta<etao
+            c[i] = co
+        elseif eta<etas
+            c[i] = co*( 1 + (λs - 1)*(eta - etao)/(etas - etao))
+            S[i] = So
+            M[i] = Mo
+        else
+            c[i] = co*(λs + (λt -λs)*(eta - etas)/(   1 - etas))
+            S[i] = Ss*(c[i]/cs)^2
+            M[i] = Ms*(c[i]/cs)^3
+        end
+    end
+    fig, ax = plt.subplots(2,1,figsize=(8,5), sharex = true, dpi = 100)
+    ax[1].plot(etaRange,S)
+    ax[1].set_ylabel("Shear")
+    ax[2].plot(etaRange,M)
+    ax[2].set_ylabel("Moment")
+
+    for a in ax
+        a.axvline(etas, ls = "--")
+        a.axvline(etao)
+    end
+
+    return ax
+
+end
 
 """
 High resolution plot for publications
@@ -1159,7 +1213,7 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
 
     # Fuel tank
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
-        l = max(parg[iglftankin], parg[iglftank])
+        l = parg[iglftankin]
         ARtank = 2.0
         xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
         xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
