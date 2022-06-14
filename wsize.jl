@@ -538,7 +538,12 @@ Lconv = false # no convergence yet
                 else
                     Wengtail = (parg[igWtshaft] + parg[igWcat])*nTshaft +
                                 parg[igWgen]*ngen
-                    Waftfuel = parg[igWftank] + parg[igWfuel]
+                end
+
+                if (pari[iifwing] == 0) # If fuel is not stored in the wings then assume it is stored in fuse @ fuel tank
+                    Waftfuel = parg[igWftank] + parg[igWfuel] 
+                else
+                    Waftfuel = 0.0
                 end
             
             Whtail = parg[igWhtail]
