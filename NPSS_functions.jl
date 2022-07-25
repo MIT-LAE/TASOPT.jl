@@ -13,7 +13,13 @@ end
 This function starts up and returns an NPSS process that can then be written to
 """
 function startNPSS(dir, bat_file)
-    NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w+")
+    if Sys.iswindows()
+        NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w+")
+    elseif Sys.islinux()
+        cd(dir) # quick fix cant figure out how to cd in open()
+        NPSS = open(`bash $bat_file `, "w+")
+        cd("../")
+    end
     return NPSS
 end
 
