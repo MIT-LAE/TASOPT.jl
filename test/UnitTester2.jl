@@ -3,13 +3,13 @@ using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
 # Unit tester for TAESOPT.jl
 using BenchmarkTools
 using Printf
-# include("index.inc")
+# include("../index.inc")
 
 # ---------------------------
 ## Testing the fuselage weight module
 # ---------------------------
 #=
-include("fusew.jl")
+include("../fusew.jl")
 (gee, Nland,
 Wfix, Wpay, Wpadd, Wseat, Wapu, Weng,
 fstring, fframe, ffadd,
@@ -66,9 +66,9 @@ Eskin, Ebend, Gskin)
 ## Testing blax full
 # ---------------------------
 #=
-include("blax.jl")
-include("blsys.jl")
-include("blax2.jl")
+include("../blax.jl")
+include("../blsys.jl")
+include("../blax2.jl")
 #inputs from 737
 nbldim, nbl, iblte  = [          60          47          31 ];
 sbl = [   0.0000000000000000       0.25841299983870264       0.69309443916718450        1.3001178125821706        2.0803642302394660        3.0297111639838339        4.1405214334091553        5.4026510157169643        6.8043898816286141        8.3416218446335328        10.000552428355771        11.763006042166527        13.609672875455766        15.520320459958088        17.474015340908966        19.449352428355770        21.424689515802580        23.378384396753461        25.289031981255782        27.135698814545016        28.898152428355768        30.557093575238806        32.098527634941931        33.515875832618846        34.797462100476722        35.927263281032928        36.886781329295545        37.657175681161526        38.221334951814825        38.565663707653812        38.676246842534837        38.779972475720939        39.089407346005252        39.601363823293127        40.310232805285608        41.208247775075613        42.285569892732411        43.530395791690815        44.929086898905268        46.466318861910182        48.125249445632427        49.887703059443183        51.734369892732417        53.645017477234731        55.598712358185615        57.574049445632426        59.549386533079229        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000      ]; 
@@ -92,15 +92,15 @@ match = all(uebl .- uei' .<= sqrt(eps()))
 println("Do the blax results match?\n\t $match")
 
 
-include("airtable.jl")
+include("../airtable.jl")
 
 nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air")
 ARe = 20e6
-include("airfun.jl")
-include("surfcd.jl")
-include("fusebl.jl")
-include("cdsum.jl")
-include("trefftz.jl")
+include("../airfun.jl")
+include("../surfcd.jl")
+include("../fusebl.jl")
+include("../cdsum.jl")
+include("../trefftz.jl")
 
 ### Test total drag calculation
 
@@ -137,7 +137,7 @@ println("Percentage diff for drag values = ", @. round(Percent_diff; digits = 3)
 #=
 println("Testing Balances\n-----------")
 
-include("balance.jl")
+include("../balance.jl")
 parg = vec([ 8.9884656743115795E+307   8.9884656743115795E+307   5556000.0000000000        648362.01179575408        172215.00000000000        13350.000000000000        130391.29613267015        118078.52012781396       0.90000000000000002        19403.519814310472        11269.980000000001        4779.8514160257109        11808.103388796697        1070.0687457149429        2843.8803993915940        364.54518846014219        148414.22395269960        2620.6267705543960        57724.520038175215        92536.770383158291        8.9884656743115795E+307   8.9884656743115795E+307   51868.960943660328        6692.5288922094587        4734.0821916628865        0.0000000000000000        2588867.3172535407        176177.20049393113        179889.18474135827        0.0000000000000000        4669.7561950661729        4664.3309590702556        31329.420951929664        51910.921143353014        34943.047351167166        199022.07245716383        8.9884656743115795E+307   8.9884656743115795E+307  0.20000000000000001       0.34999999999999998       0.10000000000000001       0.10000000000000001       0.10000000000000001        8.9884656743115795E+307  0.20000000000000001       0.10000000000000001        4.0000000000000001E-002  0.10000000000000001       0.14999999999999999        2.0000000000000000E-002   2.9999999999999999E-002  0.29999999999999999       0.40000000000000002        3.5000000000000003E-002   1.0000000000000000E-002   1.0999999999999999E-002   4.3999999999999997E-002  0.34999999999999998       0.25000000000000000       0.20000000000000001        435.00000000000000        22.000000000000000        60.000000000000000        3.0000000000000000        6.0000000000000000        143.92000000000002        2.0000000000000000        1.0000000000000000       0.20000000000000001       0.20000000000000001       0.29999999999999999       0.59999999999999998       0.80000000000000004        16.000000000000000        1.0200000000000000        1.0000000000000000       0.20000000000000001        75205.036158796240        51899.806343219178        1.6499999999999999        2.0000000000000000        0.0000000000000000        37.795200000000001        6.0960000000000001        29.565600000000000        5.1816000000000004        31.089600000000001        35.661600000000000        26.450051770741371        22.397553036942153        35.855445604585157        34.729827466896509        15.849600000000001        19.470338479735002        17.373600000000000        34.899600000000000        33.527999999999999        2.1335999999999999        36.576000000000001        18.897600000000001        4.2671999999999999       0.30480000000000002        4.8768000000000002       -1.6764000000000001        0.0000000000000000        1.0000000000000000        0.0000000000000000        1.9558000000000000       0.38100000000000001       0.12700000000000000       0.29999999999999999        414.54271063740043        1.0000000000000000        0.0000000000000000        8.9884656743115795E+307   8.9884656743115795E+307   8.9884656743115795E+307   67.637000000000000       0.18500000000000000       0.59999999999999998        3.7999999999999998       0.34200848656294203       0.35093676723249817       -2.0000000000000000E-002 -0.69999999999999996        1.4746689630063814        2.0000000000000000        2.6000000000000001       0.10000000000000001        5.0000000000000003E-002  0.40000000000000002       0.69999999999999996       0.40000000000000002       0.50000000000000000       0.12680000000000000       0.12659999999999999       0.75000000000000000       0.50000000000000000       0.14000000000000001       0.75000000000000000       0.50000000000000000       0.14000000000000001       0.75000000000000000        1.0000000000000000        103448275.86206897        206896551.72413793        206896551.72413793        137931034.48275861        206896551.72413793        1.0000000000000000        68965517241.379318        68965517241.379318        2700.0000000000000        2700.0000000000000        2700.0000000000000        2700.0000000000000        2700.0000000000000        817.00000000000000        8.9884656743115795E+307   8.9884656743115795E+307 -0.50000000000000000        683485.87429233151        4135814.6761137857        592397.61226051906        2607866.7469768757        4.9360939188703434E-003   1.2825514741779673E-003   9.9422410532113217E-003   2.2722077041955049E-003   2.2511393356952833E-003   1.1227437653367604E-003   1.8274674395819396E-003   1.1658057574696773E-003   443520352.21829826        3360305548.7945046        393626458.25637054        195365920.57341191        1599509633.6481340        167588748.44332612        66566661.441134661        444788132.91194797        70138876.718455210        192501484.78230000        1354389028.5291059        215052260.51051947        9.8122119871199131E-004   2.3101299478311559E-004   0.0000000000000000        7.0928467266495859E-004   2720415969.0601053        9863437522.9549618        2147117870.7814922        2414531412.2033792        1455447152.9086437        342661986.90299046      -0.29999999999999999       -5.0000000000000003E-002   8.9884656743115795E+307   3.4576574438701595        10.100000000000000        91.334292450529617        30.372295826136508        3.6067999999999998        8.6561043104489048       0.28499999999999998       0.25000000000000000       0.69999999999999996        5.0145380334078409        26.000000000000000        1.4500000000000000        6.0000000000000000        29.678277787192997        13.344274679545457        1.5240000000000000       0.25000000000000000        3.5584732478787875        26.000000000000000       0.10000000000000001        2.0000000000000000        19.733240449554231        6.2822353425439630        0.0000000000000000       0.29999999999999999        4.8324887250338175        25.000000000000000        1.0000000000000000        3.9116000000000000       0.14999999999999999        0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000        1.8135777410821106        8.9884656743115795E+307   8.9884656743115795E+307   1.7447684296861372        8.9884656743115795E+307   8.9884656743115795E+307   1280.0000000000000       0.50000000000000000        1.4999999999999999E-002  0.10000000000000001        2.5000000000000001E-002  0.34999999999999998        10.668000000000001        2438.4000000000001        35.814000000000000        1.4999999999999999E-002   90.000000000000000        75.000000000000000        8.3616409720407640E-006   8.6646279306829776E-007  0.20904102430101906        5.0968399592252800E-002])
 
 a = cglpay(parg)
@@ -183,14 +183,14 @@ println("Balance match?\n\t", all(results .- fortran_balance .≈ 0 ))
 
 ## Testing power PowerTrain
     #= 
-    include("index.inc")
-    include("propsys.jl")
+    include("../index.inc")
+    include("../propsys.jl")
 
 
-    include("PMSM.jl")  # Motor/generator functions
-    include("PMSM.inc") # Motor/generator properties array
-    include("NPSS_functions.jl") # NPSS functions
-    include("PT.inc")
+    include("../PMSM.jl")  # Motor/generator functions
+    include("../PMSM.inc") # Motor/generator properties array
+    include("../NPSS_functions.jl") # NPSS functions
+    include("../PT.inc")
 
 
     gee = 9.81
@@ -235,60 +235,60 @@ using PyPlot
 # plt.style.use(["./prash.mplstyle", "tableau-colorblind10"])
 using Dates
 
-include("index.inc")
-include("atmos.jl")
-include("fuseW.jl")
+include("../index.inc")
+include("../atmos.jl")
+include("../fuseW.jl")
 
-include("fusebl.jl")
-include("axisol.jl")
-include("blax.jl")
-include("blsys.jl")
+include("../fusebl.jl")
+include("../axisol.jl")
+include("../blax.jl")
+include("../blsys.jl")
 
-include("wingsc.jl")
-include("surfcm.jl")
-include("surfdx.jl")
-include("surfw.jl")
-include("wingpo.jl")
-include("tailpo.jl")
+include("../wingsc.jl")
+include("../surfcm.jl")
+include("../surfdx.jl")
+include("../surfw.jl")
+include("../wingpo.jl")
+include("../tailpo.jl")
 
-# include("airtable.jl")
+# include("../airtable.jl")
 # Create airtables right away cause we aren't going to change them
 # nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air") 
 # ARe = 20e6
-# include("airfun.jl")
-include("airtable2.jl")
-include("airfun2.jl")
+# include("../airfun.jl")
+include("../airtable2.jl")
+include("../airfun2.jl")
 
-include("balance.jl")
-include("surfcd.jl")
-include("trefftz.jl")
-include("cdsum.jl")
+include("../balance.jl")
+include("../surfcd.jl")
+include("../trefftz.jl")
+include("../cdsum.jl")
 
-include("PMSM.jl")  # Motor/generator functions
-include("PMSM.inc") # Motor/generator properties array
-include("NPSS_functions.jl") # NPSS functions
-include("PT.inc")
-include("propsys.jl")
+include("../PMSM.jl")  # Motor/generator functions
+include("../PMSM.inc") # Motor/generator properties array
+include("../NPSS_functions.jl") # NPSS functions
+include("../PT.inc")
+include("../propsys.jl")
 
-include("hydrogen.jl")
+include("../hydrogen.jl")
 
-include("tankWmech.jl")
-include("tankWthermal.jl")
-include("tanksize.jl")
+include("../tankWmech.jl")
+include("../tankWthermal.jl")
+include("../tanksize.jl")
 
-include("wsize.jl")
-include("mission.jl")
+include("../wsize.jl")
+include("../mission.jl")
 
-include("input.jl")
-# include("input_fwdTank.jl")
-include("outputs.jl")
-include("savemodel.jl")
-include("update_fuse.jl")
-include("cost_est.jl")
-include("printBADA.jl")
-include("odperformance.jl")
-include("AircraftDeck.jl")
-include("LTO.jl")
+include("../input.jl")
+# include("../input_fwdTank.jl")
+include("../outputs.jl")
+include("../savemodel.jl")
+include("../update_fuse.jl")
+include("../cost_est.jl")
+include("../printBADA.jl")
+include("../odperformance.jl")
+include("../AircraftDeck.jl")
+include("../LTO.jl")
 
 const gee = 9.81
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
@@ -380,11 +380,11 @@ time_wsize = @elapsed run_wsize(35, 0, false, true, saveOD)
 # println("NPSS Calls = $(parpt[ipt_calls_NPSS])")
 
 
-# include("LoadModel.jl")
+# include("../LoadModel.jl")
 
 # Final aircraft:
-# include("./ZIHA/ZIA_BLI_10_8_0.760_15.3.mdl")
-# include("./ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
+# include(".././ZIHA/ZIA_BLI_10_8_0.760_15.3.mdl")
+# include(".././ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
 
 # saveOD = false
 # time_wsize = @elapsed run_wsize(30, 1, false, false, saveOD)
@@ -545,8 +545,8 @@ CostEst(pari, parg, pare, parm, parpt, 1000)
 # #     initial = [8.706823321294936, 39324.133600477624, 0.6334358715728483, 1.1932525623004469, 26.344302712899477, 3200.3360554740043, 3459.6712394659494, 0.9, 0.1094619379183989, 0.14110572372270128, 0.11737767098627176, 13.208536486517602, 1.0628009618249974, 0.9933437602824484, 6.542082548728352, 29.246724429560665, 0.5241858300077095]
 # #     initial = [8.498746697625975, 36107.236835519856, 0.6412478193423614, 1.2196594875246485, 25.55061885049667, 3200.061100009788, 3300.622159663861, 0.9446505022053928, 0.10000058746957677, 0.12809079514244112, 0.10249631007922386, 15.0, 1.0068733417143467, 0.9546250624086424, 6.4065976827230315, 29.182176695467813, 0.5499999999999989]
 # # end
-# # include("ZIA.mdl") # note this will override constraints too!!
-# # include("ZIA_343_918.mdl")
+# # include("../ZIA.mdl") # note this will override constraints too!!
+# # include("../ZIA_343_918.mdl")
 
 # # x_tol_abs = [0.01, 50.0, 0.0001, 0.001, 0.05, 1.0, 1.0, 0.0001, 0.001, 0.001, 0.01, 0.001, 0.05]
 # # f_tol_rel = 1e-6
@@ -577,9 +577,9 @@ CostEst(pari, parg, pare, parm, parpt, 1000)
 # opt.ftol_rel = f_tol_rel
 # # opt.maxeval = 10
 # # # nprop = [4, 6, 8, 10, 12, 14, 16]
-# # include("./Models/ZIA_BLI_10_ 8_0.781_14.5.mdl")
-# # include("./Models/ZIA_BLI_10_6_0.823_15.2.mdl")
-# # include("./Models/ZIA_BLI_10_12_0.847_15.2.mdl")    
+# # include(".././Models/ZIA_BLI_10_ 8_0.781_14.5.mdl")
+# # include(".././Models/ZIA_BLI_10_6_0.823_15.2.mdl")
+# # include(".././Models/ZIA_BLI_10_12_0.847_15.2.mdl")    
 # nprop = [6, 8, 10, 12]
 # nprop = [8]
 # # para[iaMach, ipclimbn:ipdescent1  , :] .= 0.8
@@ -668,7 +668,7 @@ CostEst(pari, parg, pare, parm, parpt, 1000)
 # # Cost = zero(PFEI)
 
 # # for (i,model) in enumerate(models)
-# #     include("./OldModels/"*model)
+# #     include(".././OldModels/"*model)
 # #     Cost[i] = CostEst(parg, pare, parm, parpt, 500)/500
 
 # #     PFEI[i]  = parm[imPFEI]

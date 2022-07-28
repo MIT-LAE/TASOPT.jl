@@ -115,4 +115,4 @@ A_cl,
 A_M_τ,
 A_M_cl,
 A_cl_τ,
-A_M_cl_τ = airtable("./air/C.air");
+A_M_cl_τ = airtable("../air/C.air");
