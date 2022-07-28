@@ -1133,7 +1133,7 @@ Lconv = false # no convergence yet
 
                 elseif Sys.islinux()
 
-                    NPSS = startNPSS("NPSS_Turboshaft/", "TEsys.sh")
+                    NPSS = startNPSS("../NPSS_Turboshaft/", "TEsys.sh")
 
                 end
 
