@@ -106,7 +106,7 @@ return  AMa, Acl, Aτ, ARe,
         A_M_cl_τ
 end
 
-include("spline.jl")
+include("../utils/spline.jl")
 AMa, Acl, Aτ, ARe,
 A,
 A_M,
@@ -115,4 +115,4 @@ A_cl,
 A_M_τ,
 A_M_cl,
 A_cl_τ,
-A_M_cl_τ = airtable("../air/C.air");
+A_M_cl_τ = airtable("../aero/air/C.air"); # HACK

@@ -235,60 +235,60 @@ using PyPlot
 # plt.style.use(["./prash.mplstyle", "tableau-colorblind10"])
 using Dates
 
-include("../index.inc")
-include("../atmos.jl")
-include("../fuseW.jl")
+include("../index/index.inc")
+include("../atmos/atmos.jl")
+include("../fuselage/fuseW.jl")
 
-include("../fusebl.jl")
-include("../axisol.jl")
-include("../blax.jl")
-include("../blsys.jl")
+include("../fuselage/fusebl.jl")
+include("../boundary_layer/axisol.jl")
+include("../boundary_layer/blax.jl")
+include("../boundary_layer/blsys.jl")
 
-include("../wingsc.jl")
-include("../surfcm.jl")
-include("../surfdx.jl")
-include("../surfw.jl")
-include("../wingpo.jl")
-include("../tailpo.jl")
+include("../wing/wingsc.jl")
+include("../surf/surfcm.jl")
+include("../surf/surfdx.jl")
+include("../surf/surfw.jl")
+include("../wing/wingpo.jl")
+include("../tail/tailpo.jl")
 
 # include("../airtable.jl")
 # Create airtables right away cause we aren't going to change them
 # nAMa, nAcl, nAτ, nAfun, AMa, Acl, Aτ, A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M = airtable("./air/C.air") 
 # ARe = 20e6
 # include("../airfun.jl")
-include("../airtable2.jl")
-include("../airfun2.jl")
+include("../aero/airtable2.jl")
+include("../aero/airfun2.jl")
 
-include("../balance.jl")
-include("../surfcd.jl")
-include("../trefftz.jl")
-include("../cdsum.jl")
+include("../balance/balance.jl")
+include("../surf/surfcd.jl")
+include("../aero/trefftz.jl")
+include("../aero/cdsum.jl")
 
-include("../PMSM.jl")  # Motor/generator functions
-include("../PMSM.inc") # Motor/generator properties array
-include("../NPSS_functions.jl") # NPSS functions
-include("../PT.inc")
-include("../propsys.jl")
+include("../engine/PMSM.jl")  # Motor/generator functions
+include("../engine/PMSM.inc") # Motor/generator properties array
+include("../engine/NPSS_functions.jl") # NPSS functions
+include("../engine/PT.inc")
+include("../engine/propsys.jl")
 
-include("../hydrogen.jl")
+include("../fuel/hydrogen.jl")
 
-include("../tankWmech.jl")
-include("../tankWthermal.jl")
-include("../tanksize.jl")
+include("../tank/tankWmech.jl")
+include("../tank/tankWthermal.jl")
+include("../tank/tanksize.jl")
 
-include("../wsize.jl")
-include("../mission.jl")
+include("../sizing/wsize.jl")
+include("../mission/mission.jl")
 
-include("../input.jl")
+include("input.jl")
 # include("../input_fwdTank.jl")
-include("../outputs.jl")
-include("../savemodel.jl")
-include("../update_fuse.jl")
-include("../cost_est.jl")
-include("../printBADA.jl")
-include("../odperformance.jl")
-include("../AircraftDeck.jl")
-include("../LTO.jl")
+include("../IO/outputs.jl")
+include("../IO/savemodel.jl")
+include("../fuselage/update_fuse.jl")
+include("../cost/cost_est.jl")
+include("../utils/printBADA.jl")
+include("../mission/odperformance.jl")
+include("../contrail/AircraftDeck.jl")
+include("../mission/LTO.jl")
 
 const gee = 9.81
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
