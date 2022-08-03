@@ -145,6 +145,7 @@ function NPSS_TEsys(NPSS, alt_in, MN_in, Fn, Tt41,
         Vcable    = parse(Float64, out[38])
 
         Pshaft_aftfan = parse(Float64, out[39])
+        # pare[ieTmet1, ip] = parse(Float64, out[40])
 
     end
     mdotf_tot = mdotf*nTshaft
