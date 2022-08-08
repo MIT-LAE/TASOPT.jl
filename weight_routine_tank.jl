@@ -1,99 +1,59 @@
 include("tanksize.jl")
 include("tankWmech.jl")
 include("tankWthermal.jl")
+include("hydrogen.jl")
 
-# # Suggested alternate approach:
-# # NIST data for saturated LH2:https://webbook.nist.gov/cgi/fluid.cgi?Action=Load&ID=B5000001&Type=SatT&Digits=5&PLow=1&PHigh=3&PInc=0.05&RefState=DEF&TUnit=K&PUnit=atm&DUnit=kg%2Fm3&HUnit=kJ%2Fkg&WUnit=m%2Fs&VisUnit=uPa*s&STUnit=N%2Fm
-
-# ρLH2satP(P) = 0.3175*P^2 - 4.1121*P + 74.544 # Fit to above data P is in atm!
-# uLH2satP(P) = -2.8443*P^2 + 34.84P - 33.044
-
-# ρGH2satP(P) = 9.0e-5*P^2 + 1.1838*P + 0.1589
-# uGH2satP(P) = -2.3398*P^2 + 13.435P + 359.02
-# # Let yg be the ullage volume fraction - 3% ullage ⟹ a volume fill factor of 97%
-# ρLH2_mix(yg,P) = ρLH2satP(P)*(1-yg) + ρGH2satP(P)*yg
-
-# #Calculate energy derivative
-# qual(yg, P) = 1/(1 + (ρLH2satP(P)/ρGH2satP(P))*(1-yg)/yg)
-# println("qualtiy = ",qual(0.03, 2))
-
-# function φ(P,δP,yg)
-#     # x = qual(yg, P)
-#     ρ = 0.5*(ρLH2_mix(yg, P) + ρLH2_mix(yg, P+δP))
-#     x = ( 1/ρ - 1/ρLH2satP(P) ) / ( 1/ρGH2satP(P) - 1/ρLH2satP(P) )
-#     uᵢ   = x*uGH2satP(P)    + (1-x)*uLH2satP(P)
-#     uᵢ₊₁ = x*uGH2satP(P+δP) + (1-x)*uLH2satP(P+δP)
-#     #dumb - just diff the poly approx!
-#     φ = (ρ*(uᵢ₊₁ - uᵢ)/(δP*101.325))^-1
-#     return φ, ρ
-# end
-
-using PyPlot
-yg = 0.01:0.01:0.8
-ϕ = zeros(length(yg))
-ρ = zeros(length(yg))
-
-for (i, y) in enumerate(yg)
-    ϕ[i], ρ[i] = φ(1.5, 0.01, y)
-end
-
-plt1 = plot(yg, ϕ, label="ϕ vs yg")
-title("Energy derivative ϕ vs volume fill fraction")
-
-# show(plt1)
-# display(plot(ρ, ϕ, label="ϕ vs ρ"))
 
 y = 0.1
-ρmean = ρLH2_mix(y, 1.5)
-println(ρmean)
-rhoFuel=ρmean
+ρmean = ρmix(y, 1.5)
+rhoFuel = ρmean
 println("ρ fuel = $rhoFuel")
 
-gee = 9.81
+# gee = 9.81
 
-deltap = 200_000 #150000#150000#101325  #based on 0.5 bar cabin pressure, 2 or 1.5 bar LH2 pressure (Verstraete / Brewer)
+deltap = 200_000.0 #150000#150000#101325  #based on 0.5 bar cabin pressure, 2 or 1.5 bar LH2 pressure (Verstraete / Brewer)
 
 Rfuse = 2.07 #radius of fuselage of A320
 
-dRfuse = 0 #extended portion of fuselage at bottom (take as zero due to cylindrical tank)
+dRfuse = 0.0 #extended portion of fuselage at bottom (take as zero due to cylindrical tank)
 
-hconvgas = 0 #no purged gas in foam insulated tank
+hconvgas = 0.0 #no purged gas in foam insulated tank
 
-h_LH2 = 550 #based on elsevier pub film boiling heat transfer properties of liq hydrogen 
+h_LH2 = 550.0 #based on elsevier pub film boiling heat transfer properties of liq hydrogen 
 
-Tfuel = 20 #20 K
+Tfuel = 20.0 #20 K
 
-Tair = 288 #cabin heated temperature
+Tair = 288.0 #cabin heated temperature
 
-h_v = 447000 #Engineering toolbox, Hydrogen - Thermophysical properties
+h_v = 447000.0 #Engineering toolbox, Hydrogen - Thermophysical properties
 
 t_cond = [0.1, 1.524e-5, 0.1, 1.524e-5, 1.57e-2] #assumed from energies
 
 k = [5e-3, 5e-3, 5e-3, 5e-3, 5e-3] #foam conductivities
 
 #http://www.hysafe.org/download/1196/BRHS_Chap1_V1p2.pdf
-hconvair = 15 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
+hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
 
-time_flight = 18000 #seconds, 5 hr flight
+time_flight = 18000.0 #seconds, 5 hr flight
 
 fstring = 0.34
 
 ffadd = 0.2
 
-wfb = 0
+wfb = 0.0
 
-nfweb = 0
+nfweb = 0.0
 
 sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
 
 rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
 
-rhoskin = 2825 #Al 2219 / energies
+rhoskin = 2825.0 #Al 2219 / energies
 AR = 2 #ellipsoidal head aspect ratio
 #Wfuel = 8000
 use_factor = 0.8
-Wfuel = 1400 * 9.81 / use_factor #8000 * 9.81
-
+Wfuel = 14000 * 9.81 / use_factor #8000 * 9.81
+# Wfuel = 9.3e4
 #threshold_percent = 0.1:0.1:1
 
 #r_tank = 1.722
@@ -110,8 +70,8 @@ boiloff_percentage = zeros(5)
 
 clearance_fuse = 0.13 #m , Brewer suggests 5 in clearance
 #n = 1
-threshold_percent = 0.2:-0.1:0.1
-for n in 1:1:2
+threshold_percent = 0.2:-0.05:0.1
+for n in 1:1:length(threshold_percent)
 
 #deltap = 50000:50000:250000
 Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
@@ -119,7 +79,7 @@ Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
   Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
                       h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent[n], mode, clearance_fuse, AR)
+                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent[n], clearance_fuse, AR)
 #println("\nlength of tank=", l_tank)
 #println("\nn =", threshold_percent[n])
 grav_index = Wfuel_tot / Wtank_total
