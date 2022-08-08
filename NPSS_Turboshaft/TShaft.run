@@ -169,18 +169,21 @@ while(flag!=999){
         //====================
 
         if(first){
-            #include "Tshaft_design.int"
+            #include "Tshaft_design copy.int"
             // Eng.FusEng.LHV   = 18490;
             // restart("offdesTO.restart");
             solverIndeps2 = { 18941.7, 0.684967*120*430/Eng.FusEng.LHV, 66.5537, 0.226413, 2.0045, 2.95941, 5.02227, 36801.1, 30000 };
             solver.independentValues = solverIndeps2;
+            solverIndeps3 = solverIndeps2;
             // restart("offDes1.restart");
         }
-        // else {
+        else {
+            solver.independentValues = solverIndeps3;
             // restart("offDes_fan_prev.restart");
             // restart("offDes1.restart");
-        // }
+        }
         run();
+        // cerr<<Eng.ShP.HPX<<endl;
         CASE++;
 
         //====================
@@ -191,6 +194,9 @@ while(flag!=999){
             if(first){
                 // SaveIndepVals("solver", "offDes1.restart");
                 solverIndeps2 = solver.independentValues;
+            }
+            else{
+                solverIndeps3 = solver.independentValues;
             }
             output.reopen();
             #include "write_offdes_output.int"

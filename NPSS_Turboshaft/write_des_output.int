@@ -2,6 +2,7 @@
 
 output<<"# Julia readable file of engine output.\n# Date:"+ date + " Time:" + timeOfDay<<endl<<endl;
 output<<"#Mode "<<Eng.CmpL.switchDes<<endl;
+output<<"converged ="<<solver.converged<<endl;
 output<<"M0 ="<<Eng.Amb.MN<<endl;
 output<<"Alt ="<<Eng.Amb.alt<<"\t# "+ Eng.Amb.alt.units<<endl;
 output<<"mdot = "<<Eng.FsEng.W_in/2.205<<"\t#kg/s"<<endl;
