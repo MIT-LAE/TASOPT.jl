@@ -383,11 +383,60 @@ end
 include("LoadModel.jl")
 
 # Final aircraft:
-include("./ZIHA/ZIA_BLI_10_8_0.760_15.3.mdl")
+# include("./ZIHA/ZIA_BLI_10_8_0.760_15.3.mdl")
+# include("./ZIHA/ZIA_BLI_10_8_0.732_15.1_Tmetal2400_2300.mdl") # Allfuel with improved Tmetal
+# include("./ZIHA/ZIA_BLI_10_8_0.718_15.7_allFuel_H2.mdl") # This saved model uses allFuel therm package with fuelType = "H2"
+# include("./ZIHA/ZIA_BLI_10_8_0.702_15.8.mdl") # Allfuel with improved Tmetal
+# include("./ZIHA/ZIA_BLI_10_8_0.706_15.0.mdl") # Allfuel with improved Tmetal
+# include("./ZIHA/ZIA_BLI_10_8_0.682_15.2_FinalCandidate.mdl") # Allfuel with improved Tmetal
+# include("./ZIHA/ZIA_BLI_10_8_0.696_15.8_FinalCandidate.mdl") # Allfuel with improved Tmetal
+# include("./ZIHA/ZIA_BLI_10_8_0.753_15.5_FinalCandidate_28Feb.mdl") # Allfuel H2 xf= 1.0, Tmet@TO<2400R
+# include("./ZIHA/ZIA_BLI_10_8_0.737_16.0_FinalCandidate_maxT3lim.mdl") # Allfuel H2 xf= 1.2, Tmet@TO<2400R, max(Tt3) <900K
+include("./ZIHA/ZIA_BLI_10_8_0.723_15.4_FinalCandidate_Mar2_maxT3_850.mdl") # Allfuel H2 xf= 1.2, Tmet@TO<2400R, max(Tt3) <850K
+# parpt[ipt_nfan   ] = 4
+# parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
+
+# ltank = 30.0 * ft_to_m # Total length including ellipsoids
+# if pari[iifwing] == 1
+#     ltank = 0.0
+# end
+# # ltank = 10.7
+# parg[iglftankin] = ltank
+# # ltank = 58.0 * ft_to_m 
+# parg[igxftank ]  = parg[igxshell2] + ltank/2 + 1.0*ft_to_m #(buffer)
+# parg[igxblend2 ] = parg[igxftank]  + ltank/2 
+
+# ltshaft = 9.0 * ft_to_m # length of T46 ~ 6.5 ft + 2.5 ft margin
+# lgen    = 5.0 * ft_to_m 
+# parg[igxtshaft]  = parg[igxblend2] + ltshaft/2
+# parg[igxgen   ]  = parg[igxblend2] + ltshaft + lgen/2
+# parg[igxcat   ]  = parg[igxgen   ]
+
+# parg[igxconend ] = parg[igxgen] + lgen/2 + 5.0*ft_to_m
+# parg[igxend    ] = parg[igxconend] + 5.0*ft_to_m # 5 ft margin/ other things not accounted for
+
+# parg[igxwbox   ] =  70.0 * ft_to_m  # x location of wing box
+# parg[igxhbox   ] = parg[igxconend ] - 2*ft_to_m
+# parg[igxvbox   ] = parg[igxconend ] - 2*ft_to_m
+
+
+
+
 # include("./ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
+# include("./ZISA/ZIA_SAF_BLI_10_8_0.575_18.2_allFuel.mdl")
+# include("./ZISA/ZIA_SAF_BLI_10_8_0.600_18.1.mdl")
+# include("./ZISA/ZIA_SAF_BLI_10_8_0.583_17.5.mdl")
+# include("./ZISA/ZIA_SAF_BLI_10_8_0.582_17.8.mdl") #Feb25th Final candidate
+include("./ZISA/ZIA_SAF_BLI_10_8_0.623_19.6_FinalCandidate.mdl") #Mar2nd Final candidate
+include("./ZISA/ZIA_SAF_BLI_10_8_0.598_18.7.mdl") 
+
+
+# parg[igVv] = 0.1
+parpt[ipt_deNOx] = 0.99
 
 saveOD = false
-time_wsize = @elapsed run_wsize(30, 1, false, false, saveOD)
+# parg[igLHVfuel] = 43
+time_wsize = @elapsed run_wsize(30, 1, false, true, saveOD)
 println(para[iagamV, ipclimbn])
 
 # load_aircraft("ZIA_BLI_10_8_0.811_15.8.mdl", "./Models", true)
@@ -437,10 +486,10 @@ function obj(x, grad)
     wsize_time = @elapsed run_wsize(50, 1, false, false, saveOD)
 
     f = parm[imPFEI]
-    push!(PFEIarray, parm[imPFEI])
-    push!(xarray, x)
-    push!(CDarray, para[iaCD, ipcruise1, 1])
-    push!(WMTOarray, parg[igWMTO])
+    # push!(PFEIarray, parm[imPFEI])
+    # push!(xarray, x)
+    # push!(CDarray, para[iaCD, ipcruise1, 1])
+    # push!(WMTOarray, parg[igWMTO])
     
     # Max span constriant
     bmax = parg[igbmax]
@@ -457,7 +506,7 @@ function obj(x, grad)
     f = f + penfac*max(0.0, constraint)^2
 
     # Max Tt3 at TOC 
-    Tt3max = 900.0
+    Tt3max = 850.0
     Tt3    = maximum(pare[ieTt3, :, 1])
     constraint = Tt3/Tt3max - 1
     penfac = 5.0*parg[igWpay]
@@ -481,7 +530,6 @@ function obj(x, grad)
     constraint = Wf/Wfmax - 1.0
     penfac = 10*parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
-    end
 
     # Max Fan diameters
     dfanmax = 2.0
@@ -504,26 +552,26 @@ function obj(x, grad)
     lfans = parg[igneng]/2*parg[igdfan]*1.25
     constraint = lfans/lmax - 1.0
     penfac = parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
-    
+    # f = f + penfac*max(0.0, constraint)^2
+
     if (opt_iter_counter%10 == 0) || (opt_iter_counter == 2)
-    printstyled(@sprintf("%6s %4s %4s %5s %5s %5s  %4s  %4s  %5s %5s %5s  %5s  %5s %5s %5s %5s %5s  %5s | %-8s %10s %5s %6s %5s  %6s  %6s %6s %6s %5s %6s %5s  %5s \n",
+    printstyled(@sprintf("%6s %4s %4s %5s %5s %5s  %4s  %4s  %6s %6s %6s %6s  %5s %5s %5s %5s %5s  %5s | %-12s %10s %5s %6s %6s  %13s  %6s %6s %6s %5s  %6s %5s  %5s \n",
     "t", "AR", "h", "CLcr", "FPR", "λ", "T4c", "T4r", "λs", "λt", "hbo", "hbs", "πHPC", "rcls", "rclt", "λh", "ARh", "Fnrat",
-           "f", "PFEI[J/Nm]", "Wf[tons]", "Wwing", "CDwing", "Wf/Wfmax", "γ", "Tt3", "Tvane", "b", "L/D", "dfan", "dfanaft" ); color = :light_green)
+           "f", "PFEI[J/Nm]", "Wf", "Wwing", "CDwing", "--Wf/Wfmax --", "γ", "Tt3", "Tvane", "b", "L/D", "dfan", "dfanaft"); color = :light_green)
     end
     
-    printstyled(@sprintf("%5.1fs %4.1f %4.1f %5.4f %5.2f %5.2fᵒ %4.0fR %4.0fR %5.4f %5.4f %5.4f  %5.4f  %5.2f %5.3f %5.3f %5.2f %5.2fᵒ %5.2f | %8.6e %10.6f %5.2f %6.3f %5.4f  %6.4f  %6.4f %6.1f %6.1f %5.1fm %6.1f %5.3fm  %5.3fm\n",
+    printstyled(@sprintf("%5.1fs %4.1f %4.1f %5.3f %5.2f %5.1fᵒ %4.0fR %4.0fR %6.4f %6.4f %6.4f %6.4f  %5.2f %5.3f %5.3f %5.2f %5.2fᵒ %5.2f | %12.6e %10.6f %5.2f %6.3f %6.4f  %6.4f %6.4f  %6.4f %6.1f %6.1f %5.1fm %6.1f %5.3fm  %5.3fm\n",
                     wsize_time, x[1], x[2]/1e3, x[3],x[4],x[5],  x[6],  x[7], x[8], x[9],  x[10], x[11], x[12], x[13], x[14], x[15], x[16], x[17], 
-    f, parm[imPFEI], parm[imWfuel]/9.81/1000, parg[igWwing]/9.81/1000, para[iaCDwing, ipcruise1], parg[igWfuel]/parg[igWfmax], para[iagamV, ipclimbn, 1], Tt3, Wf, Wfmax, dfan, daftfan); color = :light_green)
+    f, parm[imPFEI], parm[imWfuel]/9.81/1000, parg[igWwing]/9.81/1000, para[iaCDwing, ipcruise1], parg[igWfuel]/parg[igWfmax], Wf/Wfmax, para[iagamV, ipclimbn, 1], Tt3, Tvane, parg[igb], para[iaCL, ipcruise1]/para[iaCD, ipcruise1], dfan, daftfan); color = :light_green)
 
     # println("X̄ = $x  ⇨  PFEI = $(parm[imPFEI]) f = $f, MTOW = $(parg[igWMTO]), Wtank = $(parg[igWftank]), Wfan = $(parg[igWfan])")
-    push!(farray, f)
+    # push!(farray, f)
 
     return f
 end
 # Des. vars:  AR    Alt      Cl    FPR   Λ     Tt4 CR  Tt4 TO  λs   λt   hboxo  hboxs  πHPC  rcls  rclt  ARh     Λh  Fnsplit Rf   lftank   Λh
-lower      = [7.0 , 20000.0, 0.40, 1.20, 10.0, 3200.0, 3200.0, 0.1, 0.1,  0.10,  0.10, 10.0, 0.1,  0.1,  4.0,   5.0, 0.45 ]#, 2.83,  6.0]#,  5.0] 
-upper      = [12.0, 60000.0, 0.65, 1.60, 40.0, 3400.0, 3400.0, 1.0, 1.0,  0.15,  0.15, 20.0, 1.2,  1.0,  8.0,  30.0, 0.7 ]#, 2.87, 20.0]#, 30.0] 
+lower      = [7.0 , 20000.0, 0.40, 1.20, 10.0, 3000.0, 3000.0, 0.1, 0.1,  0.10,  0.10, 10.0, 0.1,  0.1,  4.0,   5.0, 0.45 ]#, 2.83,  6.0]#,  5.0] 
+upper      = [20.0, 60000.0, 0.65, 1.60, 40.0, 4000.0, 4000.0, 1.0, 1.0,  0.15,  0.15, 20.0, 1.2,  1.0,  8.0,  30.0, 0.7 ]#, 2.87, 20.0]#, 30.0] 
 
 # got from prior optimization run 
 initial = [7.773081944713115, 40181.603962553054, 0.5527508383478996, 1.230675138085258, 28.62473706060067, 3203.5726595187757, 3598.340134020528, 0.1964082835266504, 0.14368441782959446, 0.11825599806307492, 17.045255858009348, 1.1116365925303677, 0.922992859170234, 5.0445229907657145, 24.70786719622403, 0.5499037770914472]
@@ -532,14 +580,14 @@ initial =  [11.0, 34937.0, 0.500, 1.2126591103869193, 26.686300660179352, 3200.0
 initial = [9.800808554263122, 39209.734944039534, 0.5435602263841047, 1.2187326499096856, 26.415133350952154, 3203.546649444036, 3599.4481633997107, 0.9, 0.10009111870159837, 0.1398701097353828, 0.12337129359538086, 18.881719264268169, 1.0369829799562946, 0.9734146535956018, 7.668225570367148, 29.515164166878304, 0.5490999469170115]
 initial = [8.228454349920403, 39100.86744271755, 0.5852077089083737, 1.2524597900932806, 26.45720878711301, 3201.530593286635, 3599.9974291129274, 0.9655671908068356, 0.10164563435148659, 0.14922775264607838, 0.10853595139952857, 19.364634746000252, 1.0478356751809224, 0.9735662117689496, 5.787416863799637, 29.56757563957012, 0.5308090351667302]
 
-initial = [parg[igAR], 33000.0, 0.57,
-1.20, parg[igsweep], 3200, 3300,
-parg[iglambdas], parg[iglambdat], parg[ighboxo   ], parg[ighboxs   ],
+initial = [parg[igAR], 32000.0, 0.57,
+1.20, 25, 3200, 3300,
+parg[iglambdas], parg[iglambdat], 0.14, 0.14,
 15.0, para[iarcls, ipcruise1], para[iarclt, ipcruise1], 
 parg[igARh], parg[igsweeph], 0.5]
 
 initial_dx = [ 0.5  ,  1000.0, 0.005 , 0.05,  0.1,   15.0,   15.0, 0.01, 0.01,  0.001,  0.001,  2.0, 0.01,  0.01, 2.0, 0.1, 0.1]#, 0.2, 2.0]#, 5.0]
-# initial_dx = [ 0.1  ,  10.0, 0.001 , 0.01,  0.01,   1.0,   1.0, 0.001, 0.001,  0.005,  0.005,  0.5, 0.001,  0.001, 0.10, 0.01, 0.05]#, 0.2, 2.0]#, 5.0]
+initial_dx = [ 0.1  ,  100.0, 0.001 , 0.01,  0.1,   10.0,   10.0, 0.001, 0.001,  0.005,  0.005,  0.5, 0.001,  0.001, 0.10, 0.01, 0.05]#, 0.2, 2.0]#, 5.0]
 
 # if pari[iifuel] == 2
 #     initial = [8.706823321294936, 39324.133600477624, 0.6334358715728483, 1.1932525623004469, 26.344302712899477, 3200.3360554740043, 3459.6712394659494, 0.9, 0.1094619379183989, 0.14110572372270128, 0.11737767098627176, 13.208536486517602, 1.0628009618249974, 0.9933437602824484, 6.542082548728352, 29.246724429560665, 0.5241858300077095]
@@ -550,7 +598,8 @@ initial_dx = [ 0.5  ,  1000.0, 0.005 , 0.05,  0.1,   15.0,   15.0, 0.01, 0.01,  
 
 # x_tol_abs = [0.01, 50.0, 0.0001, 0.001, 0.05, 1.0, 1.0, 0.0001, 0.001, 0.001, 0.01, 0.001, 0.05]
 # f_tol_rel = 1e-6
-f_tol_rel = 1e-5
+f_tol_rel = 1e-6
+x_tol_rel = 1e-6
 
 opt = NLopt.Opt(:LN_NELDERMEAD, length(initial))
 # opt = NLopt.Opt(:LN_BOBYQA, length(initial))
@@ -575,6 +624,7 @@ opt.initial_step = initial_dx
 
 # opt.xtol_abs = x_tol_abs
 opt.ftol_rel = f_tol_rel
+opt.xtol_rel = x_tol_rel
 # opt.maxeval = 10
 # # nprop = [4, 6, 8, 10, 12, 14, 16]
 # include("./Models/ZIA_BLI_10_ 8_0.781_14.5.mdl")
@@ -598,10 +648,9 @@ b = []
 #     parpt[ipt_nfan] = n
 #     parg[igneng] =  parpt[ipt_nfan]
 
-# #     printstyled(@sprintf("\t%10s  %5s  %10s  %6s  %5s  %5s  %10s  %10s  %5s  %5s  %5s  %10s  %5s  %5s %5s  %5s| %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-# #     "time2size", "AR", "hcr[ft]", "CLcr", "FPR", "λ[deg]", "Tt4cr[R]", "Tt4ro[R]", "λt", "hbo", "hbs", "πHPC", "rcls", "rclt", "λh", "ARh",
-# #             "PFEI[J/Nm]", "Wf[tons]", "Wf/Wfmax", "γ", "Tt3", "ltank", "ltankin" ); color = :light_green)
+
 # println(pari[iiVTsize])
+
     # opt_time = @elapsed (optf, optx, ret) = NLopt.optimize(opt, initial)
     # numevals = opt.numevals # the number of function evaluations
 
@@ -618,6 +667,7 @@ b = []
     # global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
     # plt.savefig(savedir*figname*".png")
     # savemodel("./Models/"*figname*".mdl", pari, parg, parm, para, pare, parpt, parmot, pargen)
+
 # push!(Alts, para[iaalt, ipcruise1])
 # push!(Weight, parg[igWMTO])
 # push!(PaxWeight, parg[igWpay])
