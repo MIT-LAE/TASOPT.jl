@@ -1210,6 +1210,54 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
         yh[ 5] = yoTEh
         yh[ 6] = ycTEh
   
+    # Vtail
+    xv = zeros(6)
+    yv = zeros(6)
+    
+    bov = parg[igbov]
+    Sv  = parg[igSv]
+    ARv = parg[igARv]
+    lambdav = parg[iglambdav]
+    sweepv  = parg[igsweepv]
+
+    bv = parg[igbv]
+    cov = parg[igcov]
+
+
+    dx = parg[igxvbox]
+    tanLv = tan(sweepv*π/180.0)
+    ctv = cov*lambdav
+
+    xaxv = 0.40
+
+    xoLEv = cov*(    - xaxv) + dx
+    xoTEv = cov*(1.0 - xaxv) + dx
+    xtLEv = ctv*(    - xaxv) + dx + 0.5*(bv - bov)*tanLv
+    xtTEv = ctv*(1.0 - xaxv) + dx + 0.5*(bv - bov)*tanLv
+
+    yoLEv = 0.5*bov
+    yoTEv = 0.5*bov
+    ytLEv = 0.5*bv
+    ytTEv = 0.5*bv
+
+    xcLEv = xoLEv
+    xcTEv = xoTEv
+    ycLEv = yoLEv
+    ycTEv = yoTEv
+
+    xv[ 1] = xcLEv
+    xv[ 2] = xoLEv
+    xv[ 3] = xtLEv
+    xv[ 4] = xtTEv
+    xv[ 5] = xoTEv
+    xv[ 6] = xcTEv
+
+    yv[ 1] = ycLEv
+    yv[ 2] = yoLEv
+    yv[ 3] = ytLEv
+    yv[ 4] = ytTEv
+    yv[ 5] = yoTEv
+    yv[ 6] = ycTEv
 
     # Fuel tank
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
@@ -1321,6 +1369,8 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
         tailthick = (parg[igcov]*parg[ighboxv]/2)
         yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
+
+        ax.plot(xv,yv, "--r", zorder = 21)
 
         # Plot fuse
             # ax.fill(xf,  yf, facecolor = "w", edgecolor = "k")
@@ -1464,6 +1514,9 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
         end
         plt.savefig(save_name*".png", metadata = Dict("Title"=>figname))
     end
+
+    # Scale bar
+
 
 
     return ax
