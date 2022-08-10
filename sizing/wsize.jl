@@ -1126,11 +1126,17 @@ Lconv = false # no convergence yet
 
         if (iterw==1)
             if NPSS_PT
+
                 if Sys.iswindows()
-                        NPSS = startNPSS("NPSS_Turboshaft/", "TEsys.bat")
+
+                    NPSS = startNPSS("NPSS_Turboshaft/", "TEsys.bat")
+
                 elseif Sys.islinux()
-                        NPSS = startNPSS("NPSS_Turboshaft/", "TEsys.sh")
+
+                    NPSS = startNPSS("../NPSS_Turboshaft/", "TEsys.sh")
+
                 end
+
                 NPSS_Fan     = NPSS
                 NPSS_AftFan  = NPSS
                 NPSS_TS      = NPSS

@@ -368,7 +368,7 @@ function NPSS_TEsysOD(NPSS, alt_in, MN_in, Fn, Tt41,
        pare[iegsPodGBtrq   , ip] = parse(Float64, out[38])
        pare[iegsPodMotNmech, ip] = parse(Float64, out[39])
        pare[iegsPodFanNmech, ip] = parse(Float64, out[40])
-       pare[ieTmet1, ip] = parse(Float64, out[41])
+       #pare[ieTmet1, ip] = parse(Float64, out[41])
 
    end
    mdotf_tot = mdotf*nTshaft
