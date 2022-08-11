@@ -47,11 +47,11 @@ function tankWmech(gee::Float64, ρfuel::Float64,
 #--- Calculate length of cylindrical portion
       Wfuel_tot = Wfuel + (m_boiloff * gee)
       Vfuel = Wfuel_tot / (gee * ρfuel)
-      Vinternal = (1 + ullage_frac)*Vfuel 
+      Vinternal = (1 + ullage_frac)*Vfuel  # required interal volume
       V_ellipsoid = 2π*(Rtank^3/AR)/3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
                                        # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid
-      l_cyl = V_cylinder / (π * (Rtank^2))
+      l_cyl = V_cylinder / (π * (Rtank^2)) #required length of cylindrical portion
 
 #--- tank cross-section geometric parameters
       wfblim = max( min( wfb , Rtank) , 0.0 )

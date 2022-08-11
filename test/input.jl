@@ -190,7 +190,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         parg[igxshell1 ] =  17.0 * ft_to_m
         parg[igxshell2 ] = parg[igxshell1] + lcabin + 20.0*ft_to_m + 2*seat_pitch # 2 ends* 10 ft (for galley (6ft) + lavatory (4ft length) ) + space for emergency_exit
 
-        ltank = 25.0 * ft_to_m 
+        ltank = 25.0 * ft_to_m # Total length including ellipsoids
         if pari[iifwing] == 1
             ltank = 0.0
         end

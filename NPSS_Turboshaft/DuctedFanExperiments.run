@@ -23,7 +23,7 @@ int true  = 1;
 int false = 0;
 int first;
 real ShP_input;
-
+real t_to_solve = 0.0;
 
 //====================
 // Solver setup:
@@ -36,7 +36,7 @@ solver.maxJacobians  = 200;
 // solver.defaultDxLimit = 0.001;
 // solver.defaultPerturbation = 0.0001;
 // solver.convergenceLimit = 0.8;
-// solver.defaultTolerance = 1e-10;
+solver.defaultTolerance = 1e-10;
 
 
 OutFileStream logfile{
@@ -83,26 +83,26 @@ autoSolverSetup();
 printSolverConditions();
 
 ShP_input = -1890e3/746;
-for (ShP_input = -1900e3/746; ShP_input <= -1000e3/746; ShP_input -= -200e3/746){
+for (ShP_input = -1900e3/746; ShP_input <= -500e3/746; ShP_input -= -50e3/746){
     run();
     CASE++;
 }
 
-DuctedFan.OFFDES2();
-solver.clear();
-autoSolverSetup();
-printSolverConditions();
-Fn_target = 4e3;
-run();
-CASE++;
+// DuctedFan.OFFDES2();
+// solver.clear();
+// autoSolverSetup();
+// printSolverConditions();
+// Fn_target = 4e3;
+// run();
+// CASE++;
 
-Fn_target = 5e3;
-run();
-CASE++;
+// Fn_target = 5e3;
+// run();
+// CASE++;
 
-Fn_target = 1e3;
-run();
-CASE++;
+// Fn_target = 1e3;
+// run();
+// CASE++;
 
 Output.display();
 cout<<solver.jacobian;
