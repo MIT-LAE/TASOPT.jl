@@ -75,7 +75,7 @@ for   i = 1:N
 
     #Get flight speed from climb schedule
     CAScl, TAScl, Mcl = get_climbspeed(alts[i], MNcr)
-    # println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
+    println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
 
     if i == 1 #assume climb CL below 
         ip = iptest # dummy location to store values
@@ -155,10 +155,10 @@ for   i = 1:N
         TR = 11.5
         Tt4s[i] =  max(2850, min(Tt4max, T0s[i]*TR*18/10)) # convert to [R]
         if NPSS_PT
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            mdotf[i], deNOx_, EINOx1, EINOx2, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4max, 
-                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+            NPSS_success, Ftotal, heatexcess, 
+            mdotf[i], EINOx1, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt4s[i], 
+                ifirst, parg, parpt, pare, iptest)
         else
             Ftotal, η, P, Hrej, heatexcess,
             mdotf[i], BSFC,
@@ -166,7 +166,7 @@ for   i = 1:N
                                         Kinl, Φinl, parpt, parmot, pargen, ifirst, false)
         end
         ifirst = false
-        clmbEINOx[i] = EINOx2
+        clmbEINOx[i] = EINOx1
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         # Calculate improved flight angle
@@ -204,7 +204,7 @@ for   i = 1:N
     pare[ieFe, ip] = Ftotal
   
     # Cruise Section
-    if FL[i]≥ 150 && FL[i]≤431
+    if FL[i]≥ 30 && FL[i]≤410
         ip = iptest
         #Get flight speed from climb schedule
         CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
@@ -256,11 +256,12 @@ for   i = 1:N
         # Tt4 = Tt4s[i]
         Tt4crzmax[i] = Tt4
         if NPSS_PT
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            FFmaxcrz[i], deNOx, EINOx1, EINOx2, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4, 
-                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+            NPSS_success, Ftotal, heatexcess, 
+            FFmaxcrz[i], EINOx1, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt4s[i], 
+                ifirst, parg, parpt, pare, iptest)
             Tmetmax = pare[ieTmet1, iptest]
+
         else
             Ftotal, η, P, Hrej, heatexcess,
             FFmaxcrz[i], BSFC,
@@ -277,11 +278,13 @@ for   i = 1:N
         end
 
         if NPSS_PT
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            crzmdotf[i], deNOx, EINOx1, crzEINOx[i], crzFAR[i], Tt3, OPR,
-            Wc3, Tt4crz[i], EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, F, 0.0, 
-                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
+            NPSS_success, Ftotal, heatexcess, 
+            crzmdotf[i], EINOx1, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, F, Tt4s[i],
+                ifirst, parg, parpt, pare, iptest)
             Tmetcrz= pare[ieTmet1, iptest]
+            crzEINOx[i] = EINOx1
+            crzFAR[i]   = FAR
         else
             iter = 1
             itermax = 20
@@ -324,7 +327,7 @@ for   i = 1:N
         if ROCmaxcrz[i]<=0
             ROCmaxcrz[i] = 0.0
         end
-
+        println("V0s:", V0s)
         println(@sprintf("%12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f", 
         FL[i], TAScr/kts_to_mps, CAScr/kts_to_mps, Mcr, F, 1/DoL, Tt4crzmax[i], Tmetmax, FFmaxcrz[i], Tt4crz[i], Tmetcrz, crzmdotf[i], CL, para[iaCLh, ip]))
     end #cruise section done

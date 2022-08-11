@@ -1,0 +1,372 @@
+//******************************************************************************
+//*   © Copyright 2003.  The U.S. Government, as Represented by the Administrator
+//*     of the National Aeronautics and Space Administration (NASA).
+//*   © Copyright 2008, 2009, 2010, 2011, 2012.     The Ohio Aerospace Institute, on behalf of the NPSS(TM)
+//*     Consortium.  All rights reserved.  Includes content licensed from the 
+//*     U.S. Government, National Aeronautics and Space Administration under 
+//*     United States Copyright Registration Numbers  V3503D364 and V3482D344.
+//*******************************************************************************
+
+//******************************************************************************
+//*  NPSSTM software and related documentation is export controlled
+//*  with an Export Control Classification Number(ECCN) of 9D991, controlled for
+//*  Anti-Terrorism reasons, under U.S. Export Administration Regulations 15 CFR
+//*  730-774. It may not be transferred to a country checked under anti-terrorism
+//*  on the Commerce Country Chart structure or to foreign nationals of those
+//*  countries in the U.S. or abroad without first obtaining a license from the
+//*  Bureau of Industry and Security, United States Department of Commerce. 
+//*  Violations are punishable by fine, imprisonment, or both.
+//*******************************************************************************
+
+// ******************************************************************
+// This data Map is generated from an existing NEPP map.
+// ******************************************************************
+
+//  ---------------------------------------------------------------
+//  |    Low Pressure Compressor Maps
+//  ---------------------------------------------------------------
+//  |    Declaration of a new Subelement instance called S_map
+//  |    that is of the type CompressorRlineMap
+//  ---------------------------------------------------------------
+
+
+//This map was pulled from the NPSS v2.5D1 consortium folder. It changes a number of parameter names from version 2.3
+Subelement CompressorRlineMap S_map {
+
+	// Do NOT change these values!  They are specific to these maps.
+	alphaMapDes = 0.0; // Unscaled map design point vane angle.
+	NcMapDes = 1.0; // Unscaled map design point corrected speed. Max eff point at 100% speed	
+	RlineMapDes = 2.; // Unscaled map design point Rline. Max eff point at 100% speed
+	RlineStall= 1.0; // Rline at stall
+
+	//  ----------------------------------------------------------------------
+	//  |    Declare a table (or function) named TB_Wc(real ALPHA, real SPED, real R)
+	//  |    To satisfy the TB_Wc socket requirement.
+	//  ---------------------------------------------------------------------- 
+
+	// 2001 BOOSTER FLOW VS. R, SPEED, AND ANGL   
+	// Note: this map has ALPHA = 0 and ALPHA = 1, but both submaps are identical
+
+	Table TB_Wc ( real ALPHA, real SPED, real R) {
+
+		ALPHA = 0.0 {
+			SPED = 0.4 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 35.0194, 38.558, 41.4864, 44.9029, 82.9728, 104.814 } 
+			}
+			SPED = 0.5 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 45.147, 49.9057, 56.3727, 61.3755, 99.8114, 123.605 } 
+			}
+			SPED = 0.6 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 63.5718, 69.1847, 76.7498, 82.2407, 118.968, 141.298 } 
+			}
+			SPED = 0.7 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 79.9223, 88.3416, 97.7371, 106.034, 136.661, 156.184 } 
+			}
+			SPED = 0.8 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 104.692, 115.796, 124.459, 134.221, 155.696, 170.704 } 
+			}
+			SPED = 0.85 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 114.82, 127.632, 137.149, 147.765, 164.725, 177.171 } 
+			}
+			SPED = 0.9 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 128.608, 141.298, 153.134, 164.115, 176.561, 186.689 } 
+			}
+			SPED = 0.95 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 143.86, 153.866, 163.627, 174.121, 186.811, 197.793 } 
+			}
+			SPED = 1.0 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 162.529, 170.338, 179.612, 187.665, 198.891, 208.286 } 
+			}
+			SPED = 1.05 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 179.002, 185.835, 193.522, 200.355, 209.14, 217.316 } 
+			}
+		} // end ALPHA = 0.0
+	  
+		ALPHA = 1.0 {
+			SPED = 0.4 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 35.0194, 38.558, 41.4864, 44.9029, 82.9728, 104.814 } 
+			}
+			SPED = 0.5 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 45.147, 49.9057, 56.3727, 61.3755, 99.8114, 123.605 } 
+			}
+			SPED = 0.6 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 63.5718, 69.1847, 76.7498, 82.2407, 118.968, 141.298 } 
+			}
+			SPED = 0.7 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 79.9223, 88.3416, 97.7371, 106.034, 136.661, 156.184 } 
+			}
+			SPED = 0.8 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 104.692, 115.796, 124.459, 134.221, 155.696, 170.704 } 
+			}
+			SPED = 0.85 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 114.82, 127.632, 137.149, 147.765, 164.725, 177.171 } 
+			}
+			SPED = 0.9 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 128.608, 141.298, 153.134, 164.115, 176.561, 186.689 } 
+			}
+			SPED = 0.95 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 143.86, 153.866, 163.627, 174.121, 186.811, 197.793 } 
+			}
+			SPED = 1.0 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 162.529, 170.338, 179.612, 187.665, 198.891, 208.286 } 
+			}
+			SPED = 1.05 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				FLOW = { 179.002, 185.835, 193.522, 200.355, 209.14, 217.316 } 
+			}
+		} // end ALPHA = 1.0
+  		  
+		ALPHA.interp = "linear" ;
+		ALPHA.extrap = "linear" ;
+
+		SPED.interp = "linear" ;
+		SPED.extrap = "linear" ;
+
+		R.interp = "linear" ;
+		R.extrap = "linear" ;
+
+	  	extrapIsError = 0;		
+		printExtrap = 0;
+		
+	} // end TB_Wc
+	cout<<TB_Wc(alphaMapDes, NcMapDes, RlineMapDes)<<endl;
+
+	//  ----------------------------------------------------------------------
+	//  |    Declare a table (or function) named TB_eff(real ALPHA, real SPED, real R)
+	//  |    To satisfy the TB_eff socket requirement.
+	//  ----------------------------------------------------------------------
+
+	// 2002 BOOSTER EFF VS. R, SPEED, AND ANGL        
+	// Note: this map has ALPHA = 0 and ALPHA = 1, but both submaps are identical
+	Table TB_eff(real ALPHA, real SPED, real R) {
+
+		ALPHA= 0.00 {
+			SPED = 0.4 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.816, 0.8294, 0.838, 0.8503, 0.9043, 0.6074 } 
+			}
+			SPED = 0.5 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.7939, 0.8209, 0.8417, 0.8589, 0.8871, 0.6221 } 
+			}
+			SPED = 0.6 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8503, 0.8626, 0.8761, 0.8847, 0.8773, 0.6933 } 
+			}
+			SPED = 0.7 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8393, 0.8614, 0.8798, 0.8945, 0.8883, 0.7178 } 
+			}
+			SPED = 0.8 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8552, 0.8773, 0.8908, 0.9031, 0.8785, 0.7632 } 
+			}
+			SPED = 0.85 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8601, 0.881, 0.8945, 0.8957, 0.8724, 0.7681 } 
+			}
+			SPED = 0.9 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8736, 0.8896, 0.8982, 0.9043, 0.9031, 0.8994 } 
+			}
+			SPED = 0.95 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8699, 0.8834, 0.892, 0.8982, 0.9018, 0.8969 } 
+			}
+			SPED = 1.0 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8859, 0.892, 0.8933, 0.8969, 0.8834, 0.8638 } 
+			}
+			SPED = 1.05 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8871, 0.892, 0.8945, 0.8859, 0.8724, 0.8564 } 
+			}
+		}
+
+		ALPHA= 1.00 {
+			SPED = 0.4 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.816, 0.8294, 0.838, 0.8503, 0.9043, 0.6074 } 
+			}
+			SPED = 0.5 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.7939, 0.8209, 0.8417, 0.8589, 0.8871, 0.6221 } 
+			}
+			SPED = 0.6 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8503, 0.8626, 0.8761, 0.8847, 0.8773, 0.6933 } 
+			}
+			SPED = 0.7 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8393, 0.8614, 0.8798, 0.8945, 0.8883, 0.7178 } 
+			}
+			SPED = 0.8 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8552, 0.8773, 0.8908, 0.9031, 0.8785, 0.7632 } 
+			}
+			SPED = 0.85 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8601, 0.881, 0.8945, 0.8957, 0.8724, 0.7681 } 
+			}
+			SPED = 0.9 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8736, 0.8896, 0.8982, 0.9043, 0.9031, 0.8994 } 
+			}
+			SPED = 0.95 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8699, 0.8834, 0.892, 0.8982, 0.9018, 0.8969 } 
+			}
+			SPED = 1.0 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8859, 0.892, 0.8933, 0.8969, 0.8834, 0.8638 } 
+			}
+			SPED = 1.05 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				EFF = { 0.8871, 0.892, 0.8945, 0.8859, 0.8724, 0.8564 } 
+			}
+		}
+
+		ALPHA.interp = "linear" ;
+		ALPHA.extrap = "linear" ;
+
+		SPED.interp = "linear" ;
+		SPED.extrap = "linear" ;
+
+		R.interp = "linear" ;
+		R.extrap = "linear" ;
+
+		extrapIsError = 0;		
+		printExtrap = 0;
+		
+	} // end TB_eff
+	cout<<"Default eff = "<<TB_eff(alphaMapDes, NcMapDes, RlineMapDes)<<endl;
+	//  ----------------------------------------------------------------------
+	//  |    Declare a table (or function) named TB_PR(real ALPHA, real SPED, real R)
+	//  |    To satisfy the TB_PR socket requirement.
+	//  ---------------------------------------------------------------------- 
+
+	// BOOSTER total-to-total pressure ratio VS. stator vane angle, fraction of design speed, and R-line 
+	// Note: this map has ALPHA = 0 and ALPHA = 1, but both submaps are identical
+	Table TB_PR(real ALPHA, real SPED, real R) {
+
+		ALPHA= 0.00 {
+			SPED = 0.4 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.0997, 1.1007, 1.1007, 1.1016, 1.085, 1.0489 } 
+			}
+			SPED = 0.5 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.1446, 1.1524, 1.1603, 1.1642, 1.1358, 1.0762 } 
+			}
+			SPED = 0.6 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.2336, 1.2404, 1.2453, 1.2433, 1.2023, 1.127 } 
+			}
+			SPED = 0.7 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.3205, 1.3303, 1.3362, 1.3371, 1.2805, 1.1925 } 
+			}
+			SPED = 0.8 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.4534, 1.4622, 1.4603, 1.4505, 1.3782, 1.2824 } 
+			}
+			SPED = 0.85 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.5121, 1.5238, 1.5209, 1.5042, 1.43, 1.3342 } 
+			}
+			SPED = 0.9 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.5902, 1.599, 1.599, 1.5746, 1.5052, 1.4163 } 
+			}
+			SPED = 0.95 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.6743, 1.6684, 1.6528, 1.6244, 1.5775, 1.5257 } 
+			}
+			SPED = 1.0 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.7642, 1.7544, 1.7349, 1.7104, 1.6752, 1.6362 } 
+			}
+			SPED = 1.05 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.8404, 1.8257, 1.8101, 1.7906, 1.7642, 1.7349 } 
+			}
+		} // end ALPHA = 0.0	  
+			  
+		ALPHA= 1.0 {
+			SPED = 0.4 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.0997, 1.1007, 1.1007, 1.1016, 1.085, 1.0489 } 
+			}
+			SPED = 0.5 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.1446, 1.1524, 1.1603, 1.1642, 1.1358, 1.0762 } 
+			}
+			SPED = 0.6 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.2336, 1.2404, 1.2453, 1.2433, 1.2023, 1.127 } 
+			}
+			SPED = 0.7 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.3205, 1.3303, 1.3362, 1.3371, 1.2805, 1.1925 } 
+			}
+			SPED = 0.8 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.4534, 1.4622, 1.4603, 1.4505, 1.3782, 1.2824 } 
+			}
+			SPED = 0.85 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.5121, 1.5238, 1.5209, 1.5042, 1.43, 1.3342 } 
+			}
+			SPED = 0.9 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.5902, 1.599, 1.599, 1.5746, 1.5052, 1.4163 } 
+			}
+			SPED = 0.95 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.6743, 1.6684, 1.6528, 1.6244, 1.5775, 1.5257 } 
+			}
+			SPED = 1.0 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.7642, 1.7544, 1.7349, 1.7104, 1.6752, 1.6362 } 
+			}
+			SPED = 1.05 {
+				R = { 1.0, 1.33, 1.67, 2.0, 2.25, 2.5 } 
+				PR = { 1.8404, 1.8257, 1.8101, 1.7906, 1.7642, 1.7349 } 
+			}
+		} // end ALPHA = 1.0	  
+
+		ALPHA.interp = "linear" ;
+		ALPHA.extrap = "linear" ;
+
+		SPED.interp = "linear" ;
+		SPED.extrap = "linear" ;
+
+		R.interp = "linear" ;
+		R.extrap = "linear" ;
+
+		extrapIsError = 0;		
+		printExtrap = 0;
+		
+	} // end TB_PR
+	cout<<TB_PR(alphaMapDes, NcMapDes, RlineMapDes)<<endl;
+	
+} // end S_map scope (CompressorRlineMap subelement)

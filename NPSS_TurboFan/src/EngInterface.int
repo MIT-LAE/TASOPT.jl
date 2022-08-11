@@ -1,0 +1,110 @@
+
+#ifndef __ENGINTERFACE__
+#define __ENGINTERFACE__
+
+/******************************************************************************
+*   Copyright 2003.  The U.S. Government, as Represented by the Administrator
+*     of the National Aeronautics and Space Administration (NASA).
+*   Copyright 2009.  The Ohio Aerospace Institute, on behalf of the NPSS(TM)
+*     Consortium.  All rights reserved.  Includes content licensed from the 
+*     U.S. Government, National Aeronautics and Space Administration under 
+*     United States Copyright Registration Numbers  V3503D364 and V3482D344.
+*******************************************************************************/
+//
+// For further information contact support@wolverine-ventures.com
+//
+
+
+#include <InterpIncludes.ncp>
+
+
+class EngInterface extends Element {
+//------------------------------------------------------------
+//  DOCUMENTATION 
+//------------------------------------------------------------
+
+  title = "";
+
+
+  description = isA() + " Sets Interface parameters to the engine ";
+
+  usageNotes = isA() + 
+"
+
+- This element sets typical aircraft inputs to the engine model
+ 
+";
+
+  background = "";
+
+//------------------------------------------------------------
+//  SETUP VARIABLES 
+//------------------------------------------------------------
+
+  real AOA_in{
+    value = 0.0; IOstatus = INPUT; units = DEG;
+    description = "Aircraft Angle of Attack -aka Alpha ";    
+  }
+  real AOS_in{
+    value = 0.0; IOstatus = INPUT; units = DEG;
+    description = "Aircraft Angle of Sideslip -aka Beta";    
+  }
+  real PLA_in{
+    value = 0.0; IOstatus = INPUT; units = DEG;
+    description = "Power Lever Angle Input";    
+  }
+  real PLA{
+    value = 0.0; IOstatus = OUTPUT; units = DEG;
+    description = "Power Lever Angle attained";    
+  }
+  string switchWOW{
+    value = "OFF"; IOstatus = INPUT; units = NONE;
+    description = "Weight on Wheels Switch: OFF (0) / ON (1)";    
+  }
+  string switchLG{
+    value = "UP"; IOstatus = INPUT; units = NONE;
+    description = "Landing gear retracted/extended:UP (0) / DOWN (1) ";    
+  }
+  string switchAI{
+    value = "OFF"; IOstatus = INPUT; units = NONE;
+    description = "Engine Anti-Ice Request: OFF (0) / ON (1) ";    
+  }
+  string switchPA{
+    value = "OFF"; IOstatus = INPUT; units = NONE;
+    description = "Aircraft in Power Approach mode: OFF (0) / ON (1) ";    
+  }
+
+//------------------------------------------------------------
+//  During verify find the necessary elements
+//------------------------------------------------------------
+  int verify(){
+
+    //------------------------------------------------------------
+    // get the the appropritate element lists (start from top)
+    //------------------------------------------------------------
+    string tpname = ".";
+    string flights[] = tpname->list( "Ambient" );
+    
+
+    //------------------------------------------------------------
+    // test existance of an Ambient component
+    //------------------------------------------------------------
+    if (flights.entries() <= 0){
+      cout << "ERROR: an Ambient component must be defined in model\n";
+    }
+
+   
+    return 1;
+
+  }
+
+//------------------------------------------------------------
+//  Calculate the performance
+//------------------------------------------------------------
+  void calculate(){  
+  }
+
+
+}
+ 
+#endif

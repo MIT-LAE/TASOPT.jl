@@ -1,0 +1,140 @@
+
+// --- CHOOSE ENGINE MODEL HERE --- //
+
+#ifndef THERMO
+	#define THERMO GasTbl
+#endif
+
+setThermoPackage("$THERMO");
+
+
+#include "printDetails.fnc"
+
+// Include separate viewer just for storing row data from PLA sweep
+// #include "DesPt.view"
+// #include "dumpViewer.int"
+#include "CorePump.view"
+
+//#include "caseColumn.view"
+//------------------------------------------------------------------------
+//                           Run Points
+//------------------------------------------------------------------------
+Assembly Assembly Eng
+{ 
+	Option switchDes {
+		description = "Determines if the overall model is in design or off-design mode";
+		IOstatus = "input";
+		rewritableValues = FALSE;
+		trigger = FALSE;
+		allowedValues = {"DESIGN","OFFDESIGN"};
+	}
+	
+	Element Ambient Amb
+		{
+			setOption( "switchMode", "ALDTMN" );
+			setOption( "switchDay" , "STD" );
+			alt_in    = 0.0 "ft";
+			dTs_in    = 0.0 "dK";
+			MN_in     = 0.0;
+		}
+		// ------------------------------
+		// InletStart FsEng
+		// ------------------------------
+	Element InletStart FsEng
+		{
+			AmbientName = "Amb";
+			setOption("switchInd" , "W");
+			W_in = 100.0;
+		}
+	#include <CorePumpingChar.mdl>	
+
+	Element FlowEnd Fe{}
+	Element FlowEnd Fe_B_NC{}
+	Element FlowEnd Fe_B_CH{}
+	
+	linkPorts( "FsEng.Fl_O"  , "Core.Fl_I"  , "F025"  );
+	linkPorts( "Core.Fl_O"   , "Fe.Fl_I"    , "F045"  );
+	linkPorts( "Core.LPT_NC" , "Fe_B_NC.Fl_I"    , "TrbL_NC"   );
+	linkPorts( "Core.LPT_CH" , "Fe_B_CH.Fl_I"    , "TrbL_CH"   );
+	
+	
+	//Independent ind_Win { varName = "Eng.FsEng.W_in"; autoSetup = TRUE; }
+	Dependent dep_T4qT2 {
+		eq_lhs = "Eng.Core.BrnPri.TtCombOut/Eng.Core.Fl_I.Tt"; 
+		eq_rhs = "6"; 
+		autoSetup = TRUE;
+	}
+	Dependent dep_NcPct {
+		eq_lhs = "Eng.Core.CmpH.Nc/Eng.Core.CmpH.NcDes";
+		eq_rhs = "0.9";
+		autoSetup = TRUE;
+	}
+	
+	real ThermalEff;
+	real ThermalEff2;
+	real deltaKE, deltaEnthalpy;
+	FlowStation Core_in, Core_out;
+	real ftpers_TO_mpers = getUnitsFactor("ft/sec","m/sec");
+	real lbmpers_TO_kgpers = getUnitsFactor("lbm/sec","kg/sec");
+	real lbf_TO_N = getUnitsFactor("lbf","N");
+	real lbmhrlbf_TO_kgNs = getUnitsFactor("lbm/(hr*lbf)","kg/(N*sec)");
+	real BTUperlbm_TO_JperKg = getUnitsFactor("Btu/lbm", "J/kg");
+	
+	void postexecute(){
+		//Copy the core flows and expand to ambient pressure to get ideal velocity
+		Core_in.copyFlow("Core.CmpH.Fl_I");  Core_in.setStaticPs(Amb.Ps);
+		Core_out.copyFlow("Core.TrbH.Fl_O"); Core_out.setStaticPs(Amb.Ps);
+		real fuelLHV = convertUnits("Eng.Core.FusPri.LHV","J/kg");
+		real fuelflow = convertUnits("Eng.Core.BrnPri.Wfuel","kg/sec");
+		
+		deltaKE = 0.5*(Core_out.W*lbmpers_TO_kgpers*(Core_out.V*ftpers_TO_mpers)**2 - Core_in.W*lbmpers_TO_kgpers*(Core_in.V*ftpers_TO_mpers)**2);
+		//Calculate thermal efficiency
+		ThermalEff = deltaKE/(fuelLHV*fuelflow);
+		deltaEnthalpy = (Eng.Core.TrbH.Fl_O.ht - Eng.Core.CmpH.Fl_I.ht)*BTUperlbm_TO_JperKg;
+		//cout<<deltaEnthalpy<<" / "<<fuelLHV*fuelflow<<endl;
+		
+		ThermalEff2 = deltaEnthalpy/(fuelLHV*fuelflow);
+	}
+	
+}// end Eng Assembly
+#include "../mapScalars.out" //include the scalar values
+
+
+setOption("switchDes","OFFDESIGN");
+//postsolverSequence.append("tf02SummaryView");
+
+Eng.Core.FusPri.ind_Wfuel.autoSetup = TRUE;
+Eng.Core.FusPri.Wfuel = 3.225;
+
+solver.maxIterations = 2000;
+solver.maxJacobians  = 500;
+solver.defaultDxLimit = 0.01;
+solver.defaultPerturbation = 0.0001;
+solver.convergenceLimit = 0.8;
+autoSolverSetup();
+//solver.regenNewJacobian = "EVERY_ITERATION";
+printSolverDetails();
+run();
+
+// cout<<"Scalar = "<<Eng.Core.CmpH.S_map.s_NcDes<<endl;
+// cout<<"Scalar = "<<Eng.Core.CmpH.NcDes<<endl;
+
+real Nc;
+real TR;
+for(TR = 3.2; TR<6.2;TR+=0.2) {
+	Eng.dep_T4qT2.eq_rhs = toStr(TR);
+	for(Nc = 1.1; Nc>0.3; Nc-=0.01){
+		Eng.dep_NcPct.eq_rhs = toStr(Nc);
+		run();
+		CASE++;
+		cout<<"#";
+		//cout<<Eng.Core.CmpH.Wc<<endl;
+		Pump.update();
+	}
+	cout<<endl;
+}
+cout<<endl;
+Pump.display();
+
+cout<< Eng.switchDes << " run complete"<<endl;
+printSolverConditions();

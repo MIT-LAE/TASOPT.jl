@@ -1,0 +1,308 @@
+/*******************************************************************************
+© Copyright 2003. The U.S. Government, as Represented by the Administrator of
+the National Aeronautics and Space Administration (NASA). All rights reserved.
+Includes content licensed from the U.S. Government, National Aeronautics and
+Space Administration under United States Copyright Registration Numbers
+V3503D364 and V3482D344.
+© 2008-2016 NPSS® Consortium, www.NPSSConsortium.org/AllRightsReserved
+*******************************************************************************/
+
+/*******************************************************************************
+NPSS® software and related documentation is export controlled with an Export
+Control Classification Number(ECCN) of 9D991, controlled for Anti-Terrorism
+reasons, under U.S. Export Administration Regulations 15 CFR 730-774. It may
+not be transferred to a country checked under anti-terrorism on the Commerce
+Country Chart structure or to foreign nationals of those countries in the U.S.
+or abroad without first obtaining a license from the Bureau of Industry and
+Security, United States Department of Commerce. Violations are punishable by
+fine, imprisonment, or both.
+*******************************************************************************/
+
+/*
+  Date          Description
+  -----------   --------------------------------------------------------
+  13 Apr 1999   added HPX to Shaft output
+   7 Dec 2005   modifications for new mixer and minor format changes
+  20 Jul 2006   ARP5571 changes
+*/
+
+class TitleBlock extends SimpleBlock {
+  body = "*******************************************************************************\n" +
+         "NCP ????????????????????????????    model:???????????????     run by:?????????????    solutionMode=?????????????    converge=?????    case:?????\n" +
+         "time:???.???    timeStep:?.????     therm_package:??????      Mode:??????????         iter/pas/Jac/Broy=???/???/??/??     run: ???????? ????????" ;
+  vars = {"VERSION","MODELNAME","USER","solver.solutionMode","solver.converged", "CASE", 
+           "time","timeStep","THERMPACKAGE","switchDes","solver.iterationCounter","solver.passCounter","solver.numJacobians","solver.numBroydens","date","timeOfDay"}
+//           "time","timeStep","THERMPACKAGE","Mode","solver.iterationCounter","solver.passCounter","solver.numJacobians","solver.numBroydens","date","timeOfDay"}
+}
+ 
+//issue: need to input path of input file here (will be long)
+//issue: should have the ability to transfer up to 2 lines of user defined title
+
+class SummaryBlock extends SimpleBlock {
+  body = "                        Summary Output Data \n" +
+         "    MN       alt    dTs        W        Fg        Fn     SFC       Wfuel      WAR      OPR\n" +
+
+         " ?.???   ?????.?   ???.??   ????.?   ?????.?   ?????.?   ?.????   ?????.??  ??.????   ??.???";
+  vars = {"Amb.MN","Amb.alt","Amb.dTs","InletStart.W",
+          "Perf.Fg","Perf.Fn","Perf.SFC","Perf.Wfuel","InletStart.Fl_O.WAR","Cycle.OPR"}
+}
+//issue: include calc for OPR, EPR, FPR, CDT, CET, RIT in EngPerf.cmp
+//issue: this summary block could be used for default interactive display after each case (preceed with Case #)(allow user to append variables)
+     
+//
+// Define the PageViewer "ncpView".
+
+OutFileStream pvStream {
+  filename = "viewOut";
+}
+
+DataViewer PageViewer ncpView {
+
+  GroupBlock TnBGroup {
+    TitleBlock title;
+    SummaryBlock summary;
+    title.bottom = "summary";
+    anchor = "title";   // Defaults to first declared block.
+    addGutter = TRUE;
+  }
+
+  LinkColTBlock inputs {
+    titleBody = "          INPUT FLOW";
+    titleVars = { }
+    compType = "FluidInputPort";
+    compTypeFormat = "?????????????????";
+    excludeCompTypes = { "BleedInPort" }     //remove to include bleed ports 
+    compAttr = {"W:????.??","Pt:????.???","Tt:?????.??","ht:????.??",
+      "FAR:?.????","Wc:????.??","Ps:????.???","Ts:?????.??","Aphy:?????.?",
+      "MN:?.????","gamt:??.?????"}
+  }
+  anchor = "TnBGroup";      // Defaults to first declared block.
+//issue: add station identifier after component string and again at RH end of row
+//issue: Input Flow - split into 2 blocks to ease interactive display (maybe 3 blocks, 1st contains element,station)
+//issue: remove element extensions
+  GroupBlock Ablock {
+    DColTBlock inlets {
+      titleBody = "          INLETS";
+      compType = "Inlet";
+      compTypeFormat = "??????????";
+      compAttr = {"eRam:?.????","Afs:????.??","Fram:?????.?"}
+  //issue: should have del_T here in Inlet (?) which requires moving flight cond
+    }
+  
+    DColTBlock ducts {
+      titleBody = "            DUCTS";
+      compType = "Duct";
+      compTypeFormat = "??????????";
+      compAttr = {"dPqP:??.?????","Fl_I.MN:?.????=MNin","Fl_I.Aphy:????.??=Aphy"}
+    }
+  
+    DColTBlock splitters {
+      titleBody = "          SPLITTERS";
+      compType = "Splitter";
+      compTypeFormat = "??????????";
+      compAttr = {"BPR:??.?????","dPqP1:?.????=dP/P1",
+                  "dPqP2:?.????=dP/P2"}
+    }
+//issue: don't insert newline when section skipped because there is no data
+  
+    DColTBlock mixers {
+      titleBody = "          MIXERS";
+      compType = "Mixer";
+      compTypeFormat = "?????????";
+      compAttr = {"partialMix:?.??=%mix","switchDesStream:?=des","Fl_I1.MN:??.???=MN1","Fl_I2.MN:??.???=MN2","Fl_I1.A:????.?=A1","Fl_I2.A:????.?=A2","Fl_I1.Ps:??.???=Ps1","Fl_I2.Ps:??.???=Ps2"}
+    }
+  
+    DColTBlock burners {
+      titleBody = "          BURNERS";
+      compType = "Burner";
+      compTypeFormat = "???????????";
+      compAttr = {"TtCombOut:?????.??=TtOut","eff:??.????","dPqP:??.????",
+        "Wfuel:???.?????","FAR:??.?????"}
+    }
+
+//issue: need method to convert wf units
+  
+    DColTBlock nozzles {
+      titleBody = "          NOZZLES";
+      compType = "Nozzle";
+      compTypeFormat = "?????????";
+      compAttr = {"PR:??.???","Cfg:?.????","CdTh:?.????","Cv:?.????",
+        "Ath:????.??","Vactual:?????.?","Fg:?????.?"}
+    }
+  //issue: provide option to override default 2 column space between adjoing var names and values
+  //issue: only CDNozzle types listed in Noz section; want to include all types (should only be 1 nozzle element w subelements for types)
+
+    DColTBlock shafts {
+      titleBody = "          SHAFTS";
+      compType = "Shaft";
+      compTypeFormat = "????????";
+//      compAttr = {"Nmech:?????.?","trqIn:?????.?","trqNet:???.????","pwrIn:?????.?","dNqdt:????.??"}
+      compAttr = {"Nmech:??????.?","trqIn:??????.?","trqNet:????.????","pwrIn:??????.?","HPX:????.??","dNqdt:?????.??"}
+//      compAttr = {"Nmech:?????.?","trqIn:?????.?","trqNet:???.????","pwrIn:?????.?","eff:?.????","HPX:???.??","dNqdt:????.??"}
+    }
+
+    GroupBlock inertiaGroup {
+      DColTBlock shaftI {
+        titleBody = "          INERTIA";
+        compType = "Shaft";
+        compTypeFormat = "????????";
+        compAttr = {"inertia:????.??","inertiaSum:?????.??"}
+      }
+
+      DColTBlock compI {
+        compType = "Compressor";
+        compTypeFormat = "????????";
+        compAttr = {"Sh_O.inertia:????.??"}
+        showColHeader=FALSE;
+      }
+      shaftI.bottom = "compI";
+      addGutter = FALSE;
+    
+      DColTBlock turbI {
+        compType = "Turbine";
+        compTypeFormat = "????????";
+        compAttr = {"Sh_O.inertia:????.??"}
+        showColHeader=FALSE;
+      }
+      compI.bottom = "turbI";
+      addGutter = FALSE;
+    
+      DColTBlock loadI {
+        compType = "Load";
+        compTypeFormat = "????????";
+        compAttr = {"inertia:????.??"}
+        showColHeader=FALSE;
+      }
+      turbI.bottom = "loadI";
+      addGutter = FALSE;
+    }  //end of inertiaGroup block
+
+    DColTBlock loads {
+      titleBody = "          LOADS";
+      compType = "Load";
+      compTypeFormat = "??????????";
+      compAttr = {"Nload:?????","NR:??.?????","trqLoad:?????.?","pwr:?????"}
+    }
+
+    inlets.bottom = "ducts";
+    ducts.bottom = "splitters";
+    splitters.bottom = "mixers";
+    mixers.bottom  = "burners";
+    burners.bottom = "nozzles";
+    nozzles.bottom = "shafts";
+    shafts.bottom = "inertiaGroup";
+    inertiaGroup.bottom = "loads";
+  
+  }   //end of Ablock block
+
+
+  EmptyTextBlock colspace {
+    width = 0;         //use 0 to cause all cases to be width = 4 (see issues)
+    height = 0;  // Height is usually irrelavent.  A 0-height block still has a width.
+  }
+
+//issue: need to fix EmptyTextBlock; the input width does not translate correctly to output
+//issue: EmptyTextBlock: fist case is input width+4 for 1st case; remaining cases = 4
+
+
+  GroupBlock Bblock {
+    GroupBlock CTgroup {
+      DColTBlock comps {
+        titleBody = "          COMPRESSORS & TURBINES";
+        compType = "Compressor";
+        compTypeFormat = "??????????";
+        compAttr = {"Fl_I.Wc:????.??=Wc|Wp","PR:??.???","TR:??.????",
+          "effPoly:??.????=effPoly","eff:??.????","Nc:?????.?=Nc|Np","pwr:??????.?"}
+      }
+    
+      DColTBlock turbs {
+        compType = "Turbine";
+        compTypeFormat = "??????????";
+        compAttr = {"Wp:????.??","PR:??.???","TR:??.????",
+          "effPoly:??.????=effPoly","eff:??.????","Np:?????.?","pwrExpand:??????.?"}
+        showColHeader=FALSE;
+      }
+      comps.bottom = "turbs";
+      addGutter = FALSE;
+    }  //end of CTgroup block
+  
+    GroupBlock MapsGroup {
+      DColTBlock compMaps {
+        titleBody = "          MAP POINTS - COMPRESSORS & TURBINES";
+        compType = "Compressor";
+        compTypeFormat = "??????????";
+        compAttr = {"S_map.WcMap:????.??=Wc|WpMap","S_map.PRmap:??.???=PRmap",
+          "S_map.effMap:????????????????????.????=effMap","S_map.NcMap:?????.???=Nc|NpMap",
+          "S_map.RlineMap:??.????=Rline"
+		}
+      }
+    
+      DColTBlock turbMaps {
+        compType = "Turbine";
+        compTypeFormat = "??????????";
+        compAttr = {"S_map.WpMap:????.??=WpMap","S_map.PRmap:??.???=PRmap",
+          "S_map.effMap:????????????????????.????=effMap","S_map.NpMap:?????.???=NpMap"
+		}
+        showColHeader=FALSE;
+      }
+      compMaps.bottom = "turbMaps";
+      addGutter = FALSE;
+    }  //end of MapsGroup
+//issue: need branching for different types of subelement maps
+
+    GroupBlock ScaleGroup {
+      DColTBlock compScale {
+        titleBody = "          ADDERS AND SCALARS";
+        compType = "Compressor";
+        compTypeFormat = "????????";
+        compAttr = {"s_WcAud:?.????=s_Wc|WpAud","a_WcAud:?.????=a_Wc|WpAud",
+          "s_PRaud:?.????","a_PRaud:?.????",
+		  "s_effAud:?.????","a_effAud:?.????"
+		}
+      }
+    
+      DColTBlock turbScale {
+        compType = "Turbine";
+        compTypeFormat = "????????";
+        compAttr = {"s_WpAud:?.????","a_WpAud:?.????",
+          "s_PRaud:?.????","a_PRaud:?.????",
+          "s_effAud:?.????","a_effAud:?.????"}
+        showColHeader=FALSE;
+      }
+      compScale.bottom = "turbScale";
+      addGutter = FALSE;
+    }  //end of ScaleGroup
+
+
+      LinkColTBlock bleeds {
+        titleBody = "          BLEEDS";
+        compType = "InterStageBleedOutPort";
+        compTypeFormat = "????????????????????????";
+//issue: need to shorten format and just print port names
+        compAttr = {"fracBldW:??.????=Wb/Win","fracBldWork:??.????=dhb/dh","fracBldP:??.????=dPb/dP",
+          "Tt:??????.??","ht:??????.??"}
+      }
+//issue: need code that tests all ports to extract bld data (use isA() )
+
+    CTgroup.bottom = "MapsGroup";
+    MapsGroup.bottom = "ScaleGroup";
+      ScaleGroup.bottom = "bleeds";
+
+  }  //end of Bblock
+
+
+  TnBGroup.bottom = "inputs";
+  inputs.bottom = "Ablock";
+  Ablock.right = "colspace";   // this is where i've tried to add space between Ablock
+  colspace.right = "Bblock";   // and Bblock (when they sit side by side
+
+  pageWidth = 0;
+  pageHeight = 0;
+
+  outStreamHandle = "pvStream";
+
+}
+
+cout << " \n";
+
+//ncpView.display();
