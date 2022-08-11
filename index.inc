@@ -1,17 +1,18 @@
 
 #---- indices for integer variables and flags
-      iifuel   =  1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
-      iifwcen  =  2  # 0 = no fuel in center box  1 = fuel in center box
-      iiwplan  =  3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
-      iiengloc =  4  # 1 = engines on wing 2 = engines on fuselage   
-      iiengwgt =  5  # 1 = basic tech eng. weight 2 = advanced tech eng. weight 
-      iiBLIc   =  6  # 0 = core in clean flow 1 = core ingests KE defect   
-      iifclose =  7  # 0 = fuse tapers to point 1 = tapers to edge 
-      iiHTsize =  8  # 1 = set Sh via Vh 2 = set Sh via CLh at forward CG trim
-      iiVTsize =  9  # 1 = set Sv via Vv 2 = set Sv via CLv at engine-out trim
-      iixwmove = 10  # 0 = wing centroid fixed 1 = move wing to balance
-      iifwing  = 11  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
-      iitotal  = 11
+      iifuel    =  1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
+      iifwcen   =  2  # 0 = no fuel in center box  1 = fuel in center box
+      iiwplan   =  3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
+      iiengloc  =  4  # 1 = engines on wing 2 = engines on fuselage   
+      iiengwgt  =  5  # 1 = basic tech eng. weight 2 = advanced tech eng. weight 
+      iiBLIc    =  6  # 0 = core in clean flow 1 = core ingests KE defect   
+      iifclose  =  7  # 0 = fuse tapers to point 1 = tapers to edge 
+      iiHTsize  =  8  # 1 = set Sh via Vh 2 = set Sh via CLh at forward CG trim
+      iiVTsize  =  9  # 1 = set Sv via Vv 2 = set Sv via CLv at engine-out trim
+      iixwmove  = 10  # 0 = wing centroid fixed 1 = move wing to balance
+      iifwing   = 11  # 0 = all fuel stored in wings; 1 = all fuel stored in tanks; 2 = fuel stored across tanks and wings
+      iiengtype = 12  # 0 = Turboelectric engine; 1 = Turbofan engine
+      iitotal   = 12
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)

@@ -6,12 +6,6 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
-parpt = zeros(Union{Int64, Float64}, ipt_total)
-parmot = zeros(Float64, ite_total)
-pargen = zeros(Float64, ite_total)
-
-aero_file = "./air/C.air"
-
 ft_to_m = 0.3048
 in_to_m = 0.0254
 nmi_to_m = 1852.0
@@ -20,14 +14,14 @@ lbf_to_N = 4.448222
 kts_to_mps = 0.51444
 hp_to_W    = 745.7
 
-pari[iifuel]   = 1 # 1 = H2 120 MJ/kg 2= JetA
-pari[iifwing]  = 0 # 0 = no fuel in wings 1 = fuel in wings
-pari[iifwcen ] = 1 # Fuel in center box
+pari[iifuel]   = 2 # 1 = H2 120 MJ/kg 2= JetA
+pari[iifwing]  = 1 # 0 = no fuel in wings 1 = fuel in wings
+pari[iifwcen ] = 0 # Fuel in center box
 
 pari[iiwplan ] = 1 # wing cantilever with engine 
-pari[iiengloc] = 2 # engines on fuselage
+pari[iiengloc] = 0 # engines on fuselage
 pari[iiengwgt] = 2 # advanced tech for eng weight
-pari[iiBLIc  ] = 0 # core in clean flow
+pari[iiBLIc  ] = 1 # core in clean flow
 pari[iifclose] = 0 # fuse tapers to a point
 # pari[iifclose] = 1 # fuse end is flat
 # pari[iiHTsize] = 1 # set Sh via Vh 
@@ -221,6 +215,8 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         # parg[igzhtail  ] =  13.0 * ft_to_m
         # parg[igzhtail  ] =  7.0 #5.0 * ft_to_m
 
+        parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
+
         parg[igxeng    ] = parg[igxtshaft] #52.0 * ft_to_m
         parg[igyeng    ] = 50.0 * ft_to_m
         # parg[igneng    ] =  2.0
@@ -309,7 +305,7 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
         
     # Nacelle Drag stuff
         parg[igrSnace  ] = 16.0/3   # rSnace   nacelle+pylon wetted area/fan area  Snace/Afan
-        parg[igrVnace  ] =  1.02    # rVnace   nacelle local/freesteam velocity ratio
+        parg[igrVnace  ] =  1.02  # rVnace   nacelle local/freesteam velocity ratio
 
     parg[igrWfmax  ] = 0.90
 
@@ -382,43 +378,3 @@ pare[ieTt4, ipstatic:iptakeoff, :] .= 3200.0 #[R]
 
 parg[igfTt4CL1] = 0.2
 parg[igfTt4CLn] = 0.2
-
-# Parameters for the PowerTrain
-
-parpt[ipt_nfan   ] = 6
-parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
-parpt[ipt_ngen   ] = 4
-parpt[ipt_nTshaft] = 2
-parpt[ipt_Fnsplit] = 1/2
-
-#Turboshaft
-parpt[ipt_pifan]   = 1.4
-parpt[ipt_piLPC]   = 3.0
-parpt[ipt_piHPC]   = 17.0
-parpt[ipt_Tt41 ]   = 3200.0
-
-#PCEC
-parpt[ipt_cpsi  ]  = 900.0   # Catalyst cells per square inch (CPSI)
-parpt[ipt_wcat  ]  = 2.0     # Catalyst wall thickness in [mil]
-parpt[ipt_lcat  ]  = 0.02    # Catalyst length
-parpt[ipt_deNOx ]  = 0.98    # DeNOx target at cruise
-
-#Generator
-parpt[ipt_ARgen]       = 0.6
-parpt[ipt_sigAgGen]    = 45e3
-parpt[ipt_ratSplitGen] = 0.82
-
-#Motors
-parpt[ipt_ARmot]       = 0.6
-parpt[ipt_sigAgMot]    = 30e3
-parpt[ipt_ratSplitMot] = 0.7
-
-#Cables
-parpt[ipt_Vcable] = 540 # Volts
-parpt[ipt_sigcon  ] = 5.96e7 # Conductivity of Copper @ 293K [S/m]
-parpt[ipt_alphacon] = 0.00429
-parpt[ipt_rhocon]   = 8960.0 # Density of copper
-parpt[ipt_Jmax]     = 5.0e6  #A/m²
-parpt[ipt_kpf]      = 0.91 # Packing factor of Litz cables from Dowdle 2018
-parpt[ipt_rhoins]   = 1700 #[kg/m³] polyamide insulation #Dowdle 2018
-parpt[ipt_Emax]     = 1.0e7 #V/m Polyamide dielectric strength Dowdle 2018

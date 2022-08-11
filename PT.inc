@@ -7,10 +7,10 @@ parpt[ipt_nTshaft] = 2
 parpt[ipt_Fnsplit] = 1/2
 
 #Turboshaft
-parpt[ipt_pifan]   = 1.4
-parpt[ipt_piLPC]   = 3.0
-parpt[ipt_piHPC]   = 17.0
-parpt[ipt_Tt41 ]   = 3200.0
+parpt[ipt_pifan]   = 1.685
+parpt[ipt_piLPC]   = 1.935
+parpt[ipt_piHPC]   = 9.369
+parpt[ipt_Tt41 ]   = 2750.0
 
 #PCEC
 parpt[ipt_cpsi  ]  = 900.0   # Catalyst cells per square inch (CPSI)
