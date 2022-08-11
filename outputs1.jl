@@ -32,15 +32,15 @@ function weight_buildup(parg; io=stdout)
     @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", parg[igWwing ], parg[igWwing ]/lbf_to_N)
     @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", parg[igWvtail], parg[igWvtail]/lbf_to_N)
     @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", parg[igWhtail], parg[igWhtail]/lbf_to_N)
-    @printf(io,"Weng    + %10.1f N (%8.1f lb)\n", parg[igWeng], parg[igWeng]/lbf_to_N)
+    @printf(io,"Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
     @printf(io,"Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
     @printf(io,"Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
     @printf(io,"--------------------\n")
     printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
     parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
-    parg[igWeng] + +parg[igWftank] + Wtotadd, 
+    parg[igWtesys] + +parg[igWftank] + Wtotadd, 
     (parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
-    parg[igWeng] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
+    parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
 
     @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", parg[igWcap], parg[igWcap]/lbf_to_N)
     @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", parg[igWweb], parg[igWweb]/lbf_to_N)
@@ -137,12 +137,12 @@ function geometry(parg; io = stdout)
     
     SMfwd = (parg[igxNP] - parg[igxCGfwd])/parg[igcma]
     SMaft = (parg[igxNP] - parg[igxCGaft])/parg[igcma]
-    printstyled(io, "\nStability:\n -------------- \n", color=:bold )
-    @printf(io, "xNP     = %5.1f m (%8.1f ft)\n", parg[igxNP ] , parg[igxNP ]/ft_to_m)
-    @printf(io, "xCGfwd  = %5.1f m (%8.1f ft)\n", parg[igxCGfwd ] , parg[igxCGfwd ]/ft_to_m)
-    @printf(io, "xCGaft  = %5.1f m (%8.1f ft)\n", parg[igxCGaft ] , parg[igxCGaft ]/ft_to_m)
-    @printf(io, "xSMfwd  = %5.4f\n", SMfwd)
-    @printf(io, "xSMaft  = %5.4f\n", SMaft)
+    # printstyled(io, "\nStability:\n -------------- \n", color=:bold )
+    # @printf(io, "xNP     = %5.1f m (%8.1f ft)\n", parg[igxNP ] , parg[igxNP ]/ft_to_m)
+    # @printf(io, "xCGfwd  = %5.1f m (%8.1f ft)\n", parg[igxCGfwd ] , parg[igxCGfwd ]/ft_to_m)
+    # @printf(io, "xCGaft  = %5.1f m (%8.1f ft)\n", parg[igxCGaft ] , parg[igxCGaft ]/ft_to_m)
+    # @printf(io, "xSMfwd  = %5.4f\n", SMfwd)
+    # @printf(io, "xSMaft  = %5.4f\n", SMaft)
 
     
     printstyled(io, "\nWing Layout:\n -------------- \n", color=:bold )
@@ -481,8 +481,9 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
-            ηs = bs/b
             dy = 2*D # space to leave near wing root and tip [m]
+
+            ηs = bs/b
 
             if parg[igneng] == 2
                 yi = ηs*b/2
@@ -491,9 +492,12 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             end
             xi = zero(yi)
             ηi = yi/(b/2)
+            
             ηo = bo/b
-            # ci = zero(yi)
+
             ci = co*(1  + (λs -  1)*(ηs - ηo)/(ηs - ηo))
+
+            # ci = zero(yi)
             # for (i, η)  in enumerate(ηi)
             #     if η <=ηs
             #         ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
@@ -508,14 +512,14 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ], color = "r", lw = 1.5)
 
         # Plot NP and CG range
-            ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
-            ax.text(parg[igxNP], -1.0, "NP", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
+            # ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
+            # ax.text(parg[igxNP], -1.0, "NP", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
 
-            ax.annotate("", xy=(parg[igxCGfwd ] , 0.0), xytext=(parg[igxCGaft ] , 0.0),
-            fontsize=16, ha="center", va="bottom",
-            arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.2, widthB=0.2"),
-            zorder = 21, label = "CG movement")
-            ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
+            # ax.annotate("", xy=(parg[igxCGfwd ] , 0.0), xytext=(parg[igxCGaft ] , 0.0),
+            # fontsize=16, ha="center", va="bottom",
+            # arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.2, widthB=0.2"),
+            # zorder = 21, label = "CG movement")
+            # ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
 
         # Show seats
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
@@ -530,16 +534,16 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
 
     # Annotations
-    ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
-     fontsize = label_fs, ha="left", va="top")
+    # ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
+    #  parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+    #  fontsize = label_fs, ha="left", va="top")
 
-    yloc = -20
-    ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
-            fontsize=16, ha="center", va="bottom",
-            arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
-             zorder = 30)
-    ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
+    # yloc = -20
+    # ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
+    #         fontsize=16, ha="center", va="bottom",
+    #         arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
+    #          zorder = 30)
+    # ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
 
     # Span annotations:
     codeD = true
@@ -548,11 +552,11 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
     xcodeE = -3.5
         if codeD
             # ICAO code D 
-            bmaxD = 36
-            ax.vlines(xcodeD, -bmaxD/2, bmaxD/2, lw = 5, alpha = 0.2, color = "y")
-            ax.hlines( bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
-            ax.hlines(-bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
-            ax.text(20, bmaxD/2+1, "ICAO Code D/ FAA Group III", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
+            # bmaxD = 36
+            # ax.vlines(xcodeD, -bmaxD/2, bmaxD/2, lw = 5, alpha = 0.2, color = "y")
+            # ax.hlines( bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
+            # ax.hlines(-bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
+            # ax.text(20, bmaxD/2+1, "ICAO Code D/ FAA Group III", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
         end
         if codeE
             # ICAO code E
@@ -571,8 +575,8 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
         ax.set_ylim(-20, 20)
     end
     ax.set_aspect(1)
-    ax.set_ylabel("y[m]")
-    ax.set_xlabel("x[m]")
+    # ax.set_ylabel("y[m]")
+    # ax.set_xlabel("x[m]")
     plt.tight_layout()
     # ax.legend()
 
@@ -583,7 +587,9 @@ function plot_details(parg, pari, para, parm; ax = nothing)
         ## Create empty plot
         if ax === nothing
             plt.style.use(["./prash.mplstyle", "seaborn-colorblind"])
-            fig, atemp = plt.subplots(2, 2, figsize=(8,5), dpi = 100, gridspec_kw=Dict("height_ratios"=>[1, 3], "width_ratios"=>[1,3]))
+            fig, atemp = plt.subplots(2, 2, figsize=(16,10), dpi = 100, gridspec_kw=Dict("height_ratios"=>[1, 3], "width_ratios"=>[1,3]))
+            # fig, atemp = plt.subplots(2, 2, figsize=(8,5), dpi = 100)
+
             gs = atemp[1,2].get_gridspec()
             gssub = matplotlib.gridspec.SubplotSpec(gs, 0,1)
             atemp[1,1].remove()
@@ -644,48 +650,48 @@ function plot_details(parg, pari, para, parm; ax = nothing)
         Wfuelfrac  = Wfuel /WMTO
         Wpayfrac   = Wpay  /WMTO
 
-        a = ax[2]
-        bar_width = 0.2
+        a = ax[3]
+        bar_width = 1.5
         # ax[1,1].bar("CL", CL)
-        CDbars = []
-        push!(CDbars, a.bar(0, CDifrac    , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac+CDnacefrac, label = "CDi"))
-        push!(CDbars, a.bar(0, CDnacefrac , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac           , label = "CDnace"))
-        push!(CDbars, a.bar(0, CDvtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac                       , label = "CDvtail"))
-        push!(CDbars, a.bar(0, CDhtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac                                   , label = "CDhtail"))
-        push!(CDbars, a.bar(0, CDwingfrac , width = bar_width, bottom = CDfusefrac                                              , label = "CDwing"))
-        push!(CDbars, a.bar(0, CDfusefrac , width = bar_width, label = "CDfuse"))
+        # CDbars = []
+        # push!(CDbars, a.bar(0, CDifrac    , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac+CDnacefrac, label = "CDi"))
+        # push!(CDbars, a.bar(0, CDnacefrac , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac           , label = "CDnace"))
+        # push!(CDbars, a.bar(0, CDvtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac                       , label = "CDvtail"))
+        # push!(CDbars, a.bar(0, CDhtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac                                   , label = "CDhtail"))
+        # push!(CDbars, a.bar(0, CDwingfrac , width = bar_width, bottom = CDfusefrac                                              , label = "CDwing"))
+        # push!(CDbars, a.bar(0, CDfusefrac , width = bar_width, label = "CDfuse"))
         
-        CDlabels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
+        # CDlabels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
 
-        label_bars(a, CDbars, CDlabels; val_multiplier = CD)
-        # a.legend(loc = "upper center")
-        # a.legend(bbox_to_anchor=(1.05, 1))
-        a.set_xlim(-1,3.5)
+        # label_bars(a, CDbars, CDlabels; val_multiplier = CD)
+        # # a.legend(loc = "upper center")
+        # # a.legend(bbox_to_anchor=(1.05, 1))
+        a.set_xlim(-3,10.0)
 
         
-        Wbar1 = a.bar(1.5, Wpayfrac  , bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
-        Wbar2 = a.bar(1.5, Wfuelfrac , bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
-        Wbar3 = a.bar(1.5, Wemptyfrac, width = bar_width, label = "Wempty")
+        Wbar1 = a.bar(0, Wpayfrac  , bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
+        Wbar2 = a.bar(0, Wfuelfrac , bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
+        Wbar3 = a.bar(0, Wemptyfrac, width = bar_width, label = "Wempty")
         Wbars = [Wbar1, Wbar2, Wbar3]
         Wlabels = ["Wpay", "Wfuel", "Wempty"]
         label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000)
         
         Webars = []
-        push!(Webars, a.bar(3, Wtotaddfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac, width = bar_width, label = "Wadd"))
-        push!(Webars, a.bar(3, Wftankfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac, width = bar_width, label = "Wftank"))
-        push!(Webars, a.bar(3, Wtesysfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac, width = bar_width, label = "Wtesys"))
-        push!(Webars, a.bar(3, Wvtailfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac, width = bar_width, label = "Wvtail"))
-        push!(Webars, a.bar(3, Whtailfrac  , bottom = Wfusefrac+Wwingfrac, width = bar_width, label = "Whtail"))
-        push!(Webars, a.bar(3, Wwingfrac   , bottom = Wfusefrac, width = bar_width, label = "Wwing"))
-        push!(Webars, a.bar(3, Wfusefrac   , width = bar_width, label = "Wfuse"))
+        push!(Webars, a.bar(7, Wtotaddfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac, width = bar_width, label = "Wadd"))
+        push!(Webars, a.bar(7, Wftankfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac, width = bar_width, label = "Wftank"))
+        push!(Webars, a.bar(7, Wtesysfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac, width = bar_width, label = "Wtesys"))
+        push!(Webars, a.bar(7, Wvtailfrac+Whtailfrac  , bottom = Wfusefrac+Wwingfrac, width = bar_width, label = "Wtail"))
+        # push!(Webars, a.bar(7, Whtailfrac  , bottom = Wfusefrac+Wwingfrac, width = bar_width, label = "Whtail"))
+        push!(Webars, a.bar(7, Wwingfrac   , bottom = Wfusefrac, width = bar_width, label = "Wwing"))
+        push!(Webars, a.bar(7, Wfusefrac   , width = bar_width, label = "Wfuse"))
         
-        Welabels = ["Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"]
+        Welabels = ["Wadd" "Wftank" "Wtesys" "Wtail" "Wwing" "Wfuse"]
         label_bars(a, Webars, Welabels, val_multiplier = WMTO/9.81/1000)
 
-        a.hlines(Wemptyfrac, 1.5+bar_width/2, 3-bar_width/2, lw=0.8, color = "k", ls = "--")
-        a.grid()
-        a.set_xticks([0, 1.5, 3])
-        a.set_xticklabels(["CD","WMTO", "Wempty"])
+        a.hlines(Wemptyfrac, 0+bar_width/2, 7-bar_width/2, lw=0.8, color = "k", ls = "--")
+        # a.grid()
+        a.set_xticks([0, 7.0])
+        a.set_xticklabels(["Total Weight", "Empty Weight"])
         # ar.cla()
         # ar = a.twinx()
         # ar.bar(1.7, CDi     , width = 0.4, bottom = CDfuse +CDwing +CDhtail +CDvtail +CDnace , label = "CDi")
@@ -699,33 +705,33 @@ function plot_details(parg, pari, para, parm; ax = nothing)
 
 
         # Draw mission profile
-        a = ax[1]
-        h     = [para[iaalt,ipclimb1:ipcruisen]; 0.0]./ft_to_m./1000 # show in 1000s of ft.
-        R     = [para[iaRange,ipclimb1:ipcruisen]; para[iaRange, ipdescentn]]./nmi_to_m
-        deNOx = pare[iedeNOx, :]
-        fracW = [para[iafracW, ipclimb1:ipcruisen]; para[iafracW, ipdescentn]]
-        mdotf = pare[iemdotf, :]
-        mdotH2O = pare[iemdotf, :].*9.0
-        gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
+#         a = ax[1]
+#         h     = [para[iaalt,ipclimb1:ipcruisen]; 0.0]./ft_to_m./1000 # show in 1000s of ft.
+#         R     = [para[iaRange,ipclimb1:ipcruisen]; para[iaRange, ipdescentn]]./nmi_to_m
+#         deNOx = pare[iedeNOx, :]
+#         fracW = [para[iafracW, ipclimb1:ipcruisen]; para[iafracW, ipdescentn]]
+#         mdotf = pare[iemdotf, :]
+#         mdotH2O = pare[iemdotf, :].*9.0
+#         gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
 
-        a.plot(R, h)
-        a.set_ylim(0, 60.0)
-        a.set_xlabel("Range [nmi]")
-        a.set_ylabel("Altitude [kft]")
+#         a.plot(R, h)
+#         a.set_ylim(0, 60.0)
+#         a.set_xlabel("Range [nmi]")
+#         a.set_ylabel("Altitude [kft]")
         
-        # ar = a.twinx()
-        # ar.plot(R, gamV, color = "r")
-        # ar.axhline(0.015, lw = 1.0, color = "r")
-        # ar.set_ylabel("Climb angle")
+#         # ar = a.twinx()
+#         # ar.plot(R, gamV, color = "r")
+#         # ar.axhline(0.015, lw = 1.0, color = "r")
+#         # ar.set_ylabel("Climb angle")
 
         # Draw stick figure to keep track
         stickfig(parg, pari, parm; ax = ax[3], label_fs = 12)
         plt.tight_layout()
 
-        #Print other details:
-        # ax[3].text(48,20, @sprintf("WMTO = %.1f tons\n\$ \\Lambda \$ = %.1f\$ ^\\circ \$\n", parg[igWMTO]/9.81/1000, parg[igsweep]), va = "top")
+#         #Print other details:
+#         # ax[3].text(48,20, @sprintf("WMTO = %.1f tons\n\$ \\Lambda \$ = %.1f\$ ^\\circ \$\n", parg[igWMTO]/9.81/1000, parg[igsweep]), va = "top")
 
-        return ax
+#         return ax
 
 end
 
@@ -897,7 +903,7 @@ function plot737compare(;weightdetail= true, fracs = false)
     a.set_ylabel("Mass [tonnes]", fontsize = 20)
     a.set_xticks([0, 1])
     a.set_xticklabels(["737-800", "ZIA"], fontsize = 20)
-    a.grid()
+    # a.grid()
     
     CD     = 0.03185
     CDi    = 0.01114
@@ -957,7 +963,7 @@ function plot737compare(;weightdetail= true, fracs = false)
     a.set_ylabel("CD [-]", fontsize = 20)
     a.set_xticks([0, 1])
     a.set_xticklabels(["737-800", "ZIA"], fontsize = 20)
-    a.grid()
+    # a.grid()
     plt.tight_layout()
     end
 
@@ -1403,8 +1409,8 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
     ax.set_xlabel("x[m]")
     plt.tight_layout()
     # ax.legend()
-    ax.grid()
-
+    # ax.grid()
+# 
     if save_name !== nothing
         if pari[iifuel] == 1
             figname = @sprintf("ZIA_BLI_%d_%d_%.3f_%.1f", seats_per_row, parg[igneng], parm[imPFEI],  para[iaCL, ipcruise1]/para[iaCD, ipcruise1])
