@@ -336,6 +336,33 @@ end #outer loop
 return Wfrac*parg[igWMTO], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
 end
 
+function get_cruisespeed(h, MNcr)
+    h_ft = h/0.3048
+    Vcr2 = 280/1.944 # From BADA 737__.APF
+    htrans_ft = Hptrans(Vcr2, 0.8)
+    T, P, ρ,  a = atmos(h/1000)
+    TAS = MNcr*a
+    if h_ft<3000
+        CAS = 170/1.944
+        TAS = CAS_TAS(CAS, h)
+    elseif 3000<=h_ft<6000
+        CAS = 220/1.944
+        TAS = CAS_TAS(CAS, h)
+    elseif 6000<=h_ft<14000
+        CAS = 250/1.944 #Assume 250 kts CAS cruise consistent with BADA
+        TAS =  CAS_TAS(CAS, h)
+    elseif 14000<=h_ft< htrans_ft
+        CAS = Vcr2  #Assume CAS cruise similar to BADA
+        TAS =  CAS_TAS(CAS, h)
+    elseif h_ft>= htrans_ft
+        TAS =  MNcr * a
+        CAS =  TAS_CAS(TAS, h)
+    end
+    
+    MN =  TAS/ a
+    return CAS, TAS, MN
+end
+
 function get_climbspeed(h,MNcr)
     h_ft = h/0.3048
     T, P, ρ,  a = atmos(h/1000)
