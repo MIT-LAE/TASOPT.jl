@@ -15,8 +15,8 @@ xtick.labelsize:14
 ytick.labelsize:14
 
 #Font
-font.family: cmss10
-#font.sans-serif: cmss10 #, DejaVu Sans
+font.family: Arial
+font.sans-serif: Arial #, DejaVu Sans
 #font.serif: DejaVu Sans
 
 #Grid

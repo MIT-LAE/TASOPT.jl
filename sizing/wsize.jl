@@ -552,7 +552,7 @@ Lconv = false # no convergence yet
                                 parg[igWgen]*ngen
                     Waftfuel = parg[igWftank] + parg[igWfuel]
                 end
-            
+
             Whtail = parg[igWhtail]
             Wvtail = parg[igWvtail]
             xhtail = parg[igxhtail]
@@ -1142,15 +1142,18 @@ Lconv = false # no convergence yet
             μAir = pare[iemu0 , ipcruise1]
 
         if (iterw==1)
-          
-            if Sys.iswindows()
-                NPSS = startNPSS("NPSS_TurboFan/", "TFsys.bat")
-            elseif Sys.islinux()
-                NPSS = startNPSS("NPSS_TurboFan/", "TFsys.sh")
-            end
-            NPSS_Fan     = NPSS
-            NPSS_AftFan  = NPSS
-            NPSS_TS      = NPSS                # NPSS = startNPSS("NPSS_TurboFan/run/", "CFM56-7B")
+            if NPSS_PT
+
+                if Sys.iswindows()
+
+                    NPSS = startNPSS("NPSS_Turboshaft/", "TEsys.bat")
+
+                elseif Sys.islinux()
+
+                    NPSS = startNPSS("../NPSS_Turboshaft/", "TEsys.sh")
+
+                end
+
                 NPSS_Fan     = NPSS
                 NPSS_AftFan  = NPSS
                 NPSS_TS      = NPSS
