@@ -343,27 +343,26 @@ function get_climbspeed(h,MNcr)
     Vcl1 = 300/1.944 # From BADA 737__.APF
     Vcl2 = 300/1.944 # From BADA 737__.APF
     htrans_ft = Hptrans(Vcl2/1.944, 0.8)
-    Vstallflap5 = 117/1.944 # From 738__.PTF file BADA, flap 5
-    Vstallflap1 = 119/1.944 # From 738__.PTF file BADA, flap 1
-    Vstallclean = 149/1.944 # From 738__.PTF file BADA, clean
+
+    VstallTO = 117/1.944 # From 738__.PTF file BADA, flap 5 (Standard Takeoff Setting for B738)
     
-    CVmin = 1.3 # From BADA manual, takeoff phase
+    CVmin = 1.3 # From BADA manual
     VdCL1, VdCL2, VdCL3, VdCL4, VdCL5 = [5, 10, 30, 60, 80]/1.944
 
     if 0<=h_ft<1500
-        CAS = min(CVmin*Vstallflap5 + VdCL1, 250/1.944)
+        CAS = CVmin*VstallTO + VdCL1
         TAS = CAS_TAS(CAS, h)
     elseif 1500<=h_ft<3000
-        CAS = min(CVmin*Vstallflap1 + VdCL2, 250/1.944)
+        CAS = CVmin*VstallTO + VdCL2
         TAS = CAS_TAS(CAS, h)
     elseif 3000<=h_ft<4000
-        CAS = min(CVmin*Vstallflap1 + VdCL3, 250/1.944)
+        CAS = CVmin*VstallTO + VdCL3
         TAS = CAS_TAS(CAS, h)
     elseif 4000<=h_ft<5000
-        CAS = min(CVmin*Vstallclean + VdCL4, 250/1.944)
+        CAS = CVmin*VstallTO + VdCL4
         TAS = CAS_TAS(CAS, h)
     elseif 5000<=h_ft<6000
-        CAS = min(CVmin*Vstallclean + VdCL5, 250/1.944)
+        CAS = CVmin*VstallTO + VdCL5
         TAS = CAS_TAS(CAS, h)
     elseif 6000<=h_ft<10000 
         CAS = min(Vcl1, 250/1.944)
