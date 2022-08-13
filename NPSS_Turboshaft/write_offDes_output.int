@@ -11,6 +11,7 @@ output<<"eta_thermal = "<<Eng.Perf.IdealThermalEff<<endl;
 // output<<"ShP = "<<Eng.Gen.ShP_dmd/getUnitsFactor("hp", "kW")<<"#\t kW"<<endl;
 // output<<"ShP = "<<Eng.Gen.ShP_dmd<<"\t# " + Eng.Gen.ShP_dmd.units<<endl;
 output<<"Ngen = "<<Eng.ShP.Nmech<<"\t# " + Eng.ShP.Nmech.units<<endl;
+output<<"TrbP_NpPct = "<<Eng.TrbP.NpqNpDes<<endl;
 output<<"ShP_hp = "<<Eng.ShP.HPX<<"\t# " + Eng.ShP.HPX.units<<endl;
 output<<"ShP = "<<Eng.ShP.HPX*746<<"\t# W"<<endl;
 // output<<"ShP = "<<Eng.ShP.pwrOut<<"\t# W"<<endl;

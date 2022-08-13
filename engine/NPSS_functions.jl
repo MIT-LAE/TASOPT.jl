@@ -13,7 +13,13 @@ end
 This function starts up and returns an NPSS process that can then be written to
 """
 function startNPSS(dir, bat_file)
-    NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w+")
+    if Sys.iswindows()
+        NPSS = open(`cmd /c cd $dir '&&' $bat_file `, "w+")
+    elseif Sys.islinux()
+        cd(dir) # quick fix cant figure out how to cd in open()
+        NPSS = open(`bash $bat_file `, "w+")
+        cd("../")
+    end
     return NPSS
 end
 
@@ -145,6 +151,7 @@ function NPSS_TEsys(NPSS, alt_in, MN_in, Fn, Tt41,
         Vcable    = parse(Float64, out[38])
 
         Pshaft_aftfan = parse(Float64, out[39])
+        # pare[ieTmet1, ip] = parse(Float64, out[40])
 
     end
     mdotf_tot = mdotf*nTshaft
@@ -161,7 +168,7 @@ function NPSS_TEsys(NPSS, alt_in, MN_in, Fn, Tt41,
     parg[igWaftfan] = Waftfan
   
      naftfan = nTshaft
-     Wpowertrain += (Waftfan + Wgb)*naftfan
+     Wpowertrain += (Waftfan + Wgb)*naftfan #Aft fan and gearbox per fan
     xWpowertrain += (Waftfan + Wgb)*naftfan*parg[igxtshaft]
      
      parg[igdfan] = Dfan
@@ -361,6 +368,7 @@ function NPSS_TEsysOD(NPSS, alt_in, MN_in, Fn, Tt41,
        pare[iegsPodGBtrq   , ip] = parse(Float64, out[38])
        pare[iegsPodMotNmech, ip] = parse(Float64, out[39])
        pare[iegsPodFanNmech, ip] = parse(Float64, out[40])
+       #pare[ieTmet1, ip] = parse(Float64, out[41])
 
    end
    mdotf_tot = mdotf*nTshaft

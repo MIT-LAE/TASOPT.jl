@@ -343,8 +343,8 @@ function mission!(pari, parg, parm, para, pare,
             mdotf  = 0.0
             V      = 0.0
             if(Ldebug)
-                  printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-                        "iterg", "dgamV", "gamV", "BW", "Ftotal", "DoL", "V"); color = :light_green)
+                  printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+                        "iterg", "dgamV", "gamV", "cosg", "BW", "Ftotal", "DoL", "V"); color = :light_green)
             end
             @inbounds for  iterg = 1:itergmax
                   V = sqrt(2.0*BW*cosg/(ρ*S*CL))
@@ -363,9 +363,9 @@ function mission!(pari, parg, parm, para, pare,
                   balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
 
                   if(ip == ipclimb1)
-                        icdfun = 0
+                        icdfun = 0 #use explicitly specified wing cdf, cdp
                   else 
-                        icdfun = 1
+                        icdfun = 1 #use airfoil database
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
       
@@ -396,7 +396,7 @@ function mission!(pari, parg, parm, para, pare,
                   ϕ = Ftotal/BW
                   sing = (ϕ - DoL*sqrt(1.0 - ϕ^2 + DoL^2))/(1.0 + DoL^2)
                   gamV = asin(sing)
-                  # cosg = sqrt(1.0 - sing^2)
+                  cosg = sqrt(1.0 - sing^2)
                   # gamV = atan(sing, cosg)
 
                   dgamV = gamV - para[iagamV, ip]
@@ -404,8 +404,8 @@ function mission!(pari, parg, parm, para, pare,
                   para[iagamV, ip] = gamV
                   para[iaROC, ip]  = sing*V*60/ft_to_m #ft per min
                   if(Ldebug)
-                        printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-                                 iterg, abs(dgamV), gamV*180/π, BW, Ftotal, DoL, V); color =:light_green)
+                        printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
+                                 iterg, abs(dgamV), gamV*180/π, cosg, BW, Ftotal, DoL, V); color =:light_green)
                   end
                   
                   if(abs(dgamV) < gamVtol) 
@@ -599,7 +599,7 @@ function mission!(pari, parg, parm, para, pare,
             dRcruise = (alte - altc - gamVdeb*(Rangetot-dRclimb)) / (gamVcr1 - gamVdeb)
 
             altd = altc + gamVcr1*dRcruise
-
+# println("Cruise Fe inside mission", pare[ieFe, ipcruise1])
       # Final cruise point
             ip = ipcruisen
             Mach = para[iaMach, ip]
