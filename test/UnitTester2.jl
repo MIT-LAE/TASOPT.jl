@@ -1,5 +1,6 @@
 using Base: SignedMultiplicativeInverse
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
+# Unit tester for TAESOPT.jl
 using BenchmarkTools
 using Printf
 # include("../index.inc")
@@ -304,14 +305,15 @@ f = open("temp.results", "w")
 # f = stdout
 
 initwgt = 0
-saveOD = true
+saveOD = false
 track_fig = nothing
-
+opt_iter_counter = 0
 function run_wsize(iter, initwgt, Ldebug, printiter, saveOD)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
     parpt[ipt_time_NPSS] = 0.0
     parpt[ipt_calls_NPSS] = 0
+    global opt_iter_counter += 1
 
     # println(parg[igWwing])
     Ldebug && println("Max weight iterations = $iter")
@@ -320,45 +322,55 @@ function run_wsize(iter, initwgt, Ldebug, printiter, saveOD)
     # @benchmark PowerTrain(0.0, 0.8, 25.0e3*2,0.0, 0.0, parg, parpt, parmot, pargen)
 
     ## Write outputs to io stream f
-    println(f, "AR  = $(parg[igAR])\n")
-    println(f, "CL  = $(para[iaCL, ipcruise1])\n")
-    println(f, "Alt  = $(para[iaalt, ipcruise1])\n")
-    @printf(f,"--------------------\n")
-    println(f, "Fe    = np.array(",pare[ieFe,:], ")")
+    printoutput = false
+    if printoutput
+        println(f, "AR  = $(parg[igAR])\n")
+        println(f, "CL  = $(para[iaCL, ipcruise1])\n")
+        println(f, "Alt  = $(para[iaalt, ipcruise1])\n")
+        @printf(f,"--------------------\n")
+        println(f, "Fe    = np.array(",pare[ieFe,:], ")")
 
-    println(f, "ηthermal = np.array(", pare[ieethermal, :], ")")
+        println(f, "ηmot     = np.array(", pare[ieemot    , :], ")")
+        println(f, "ηinv     = np.array(", pare[ieeinv    , :], ")")
+        println(f, "ηcable   = np.array(", pare[ieecable  , :], ")")
+        println(f, "ηgen     = np.array(", pare[ieegen    , :], ")")
+        println(f, "ηthermal = np.array(", pare[ieethermal, :], ")")
 
-    # println(f, "Hmot     = np.array(", pare[ieHrejmot , :], ")")
-    # println(f, "Hinv     = np.array(", pare[ieHrejinv , :], ")")
-    # println(f, "Hcable   = np.array(", pare[ieHrejcab , :], ")")
-    # println(f, "Hgen     = np.array(", pare[ieHrejgen , :], ")")
-    # println(f, "Htot     = np.array(", pare[ieHrejtot , :], ")")
-    # println(f, "EINOx1 = np.array(", pare[ieEINOx1, :], ")")
-    # println(f, "EINOx2 = np.array(", pare[ieEINOx2, :], ")")
-    println(f, "FAR = np.array(", pare[ieFAR, :], ")")
+        println(f, "Hmot     = np.array(", pare[ieHrejmot , :], ")")
+        println(f, "Hinv     = np.array(", pare[ieHrejinv , :], ")")
+        println(f, "Hcable   = np.array(", pare[ieHrejcab , :], ")")
+        println(f, "Hgen     = np.array(", pare[ieHrejgen , :], ")")
+        println(f, "Htot     = np.array(", pare[ieHrejtot , :], ")")
+        println(f, "EINOx1 = np.array(", pare[ieEINOx1, :], ")")
+        println(f, "EINOx2 = np.array(", pare[ieEINOx2, :], ")")
+        println(f, "FAR = np.array(", pare[ieFAR, :], ")")
 
-    println(f, "h     = np.array(",para[iaalt,:],")")
-    println(f, "R     = np.array(",para[iaRange,:],")")
-    println(f, "fracW = np.array(",para[iafracW, :],")")
-    println(f, "mdotf = np.array(",pare[iemdotf, :],")")
-    println(f, "mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
-    println(f, "Ptank = np.array(",pare[iePLH2, :],")")
-    println(f, "CL = np.array(",para[iaCL, :],")")
-    println(f, "CD = np.array(",para[iaCD, :],")")
-    println(f, "CLh = np.array(",para[iaCLh, :],")\n")
+        println(f, "h     = np.array(",para[iaalt,:],")")
+        println(f, "R     = np.array(",para[iaRange,:],")")
+        println(f, "deNOx = np.array(",pare[iedeNOx, :],")")
+        println(f, "fracW = np.array(",para[iafracW, :],")")
+        println(f, "mdotf = np.array(",pare[iemdotf, :],")")
+        println(f, "mdotH2O = np.array(",pare[iemdotf, :].* 9.0,")")
+        println(f, "Ptank = np.array(",pare[iePLH2, :],")")
+        println(f, "CL = np.array(",para[iaCL, :],")")
+        println(f, "CD = np.array(",para[iaCD, :],")")
+        println(f, "CLh = np.array(",para[iaCLh, :],")\n")
 
 
-    # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
-    # println("Time writing       = $time_writing")
-    # println("Time runnning NPSS = $time_run_NPSS")
-    @printf(f, "\nPFEI = %.5f J/Nm\n", parm[imPFEI])
+        # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
+        # println("Time writing       = $time_writing")
+        # println("Time runnning NPSS = $time_run_NPSS")
+        @printf(f, "\nPFEI = %.5f J/Nm\n", parm[imPFEI])
 
-    weight_buildup(parg, io = f)
-    aero(parg, para, io = f)
-    geometry(parg, io = f)
+        weight_buildup(parg, io = f)
+        aero(parg, para, io = f)
+        geometry(parg, io = f)
+    end
 
     # global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
-    global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
+    if (opt_iter_counter%5 == 0) || (opt_iter_counter == 1)
+        global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
+    end
 end
 
 time_wsize = @elapsed run_wsize(35, 0, false, true, saveOD)
