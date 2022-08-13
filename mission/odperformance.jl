@@ -75,7 +75,7 @@ for   i = 1:N
 
     #Get flight speed from climb schedule
     CAScl, TAScl, Mcl = get_climbspeed(alts[i], MNcr)
-    println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
+    # println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
 
     if i == 1 #assume climb CL below 
         ip = iptest # dummy location to store values
@@ -155,10 +155,10 @@ for   i = 1:N
         TR = 11.5
         Tt4s[i] =  max(2850, min(Tt4max, T0s[i]*TR*18/10)) # convert to [R]
         if NPSS_PT
-            NPSS_success, Ftotal, heatexcess, 
-            mdotf[i], EINOx1, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt4s[i], 
-                ifirst, parg, parpt, pare, iptest)
+            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+            mdotf[i], deNOx_, EINOx1, EINOx2, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4max, 
+                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
         else
             Ftotal, η, P, Hrej, heatexcess,
             mdotf[i], BSFC,
@@ -166,7 +166,7 @@ for   i = 1:N
                                         Kinl, Φinl, parpt, parmot, pargen, ifirst, false)
         end
         ifirst = false
-        clmbEINOx[i] = EINOx1
+        clmbEINOx[i] = EINOx2
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         # Calculate improved flight angle
@@ -204,7 +204,7 @@ for   i = 1:N
     pare[ieFe, ip] = Ftotal
   
     # Cruise Section
-    if FL[i]≥ 30 && FL[i]≤410
+    if FL[i]≥ 150 && FL[i]≤431
         ip = iptest
         #Get flight speed from climb schedule
         CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
@@ -219,7 +219,9 @@ for   i = 1:N
         para[iaCL, ip] = CL
 
         V = TAScr
-        V0s[i] = TAScr
+        # Commented out: 
+        # Because climb/descent TAS has been overwritten by cruise TAS if run for same altitude. "crzTAS" is separately saved and sent to printBADA
+        # V0s[i] = TAScr 
         Mach = Mcr
         para[iaMach, ip] = Mach
         para[iaReunit, ip] = V*ρ/μ
@@ -256,12 +258,11 @@ for   i = 1:N
         # Tt4 = Tt4s[i]
         Tt4crzmax[i] = Tt4
         if NPSS_PT
-            NPSS_success, Ftotal, heatexcess, 
-            FFmaxcrz[i], EINOx1, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt4s[i], 
-                ifirst, parg, parpt, pare, iptest)
+            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+            FFmaxcrz[i], deNOx, EINOx1, EINOx2, FAR, Tt3, OPR,
+            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4, 
+                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
             Tmetmax = pare[ieTmet1, iptest]
-
         else
             Ftotal, η, P, Hrej, heatexcess,
             FFmaxcrz[i], BSFC,
@@ -278,13 +279,11 @@ for   i = 1:N
         end
 
         if NPSS_PT
-            NPSS_success, Ftotal, heatexcess, 
-            crzmdotf[i], EINOx1, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, F, Tt4s[i],
-                ifirst, parg, parpt, pare, iptest)
+            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+            crzmdotf[i], deNOx, EINOx1, crzEINOx[i], crzFAR[i], Tt3, OPR,
+            Wc3, Tt4crz[i], EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, F, 0.0, 
+                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
             Tmetcrz= pare[ieTmet1, iptest]
-            crzEINOx[i] = EINOx1
-            crzFAR[i]   = FAR
         else
             iter = 1
             itermax = 20
@@ -327,74 +326,46 @@ for   i = 1:N
         if ROCmaxcrz[i]<=0
             ROCmaxcrz[i] = 0.0
         end
-        println("V0s:", V0s)
+
         println(@sprintf("%12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f", 
         FL[i], TAScr/kts_to_mps, CAScr/kts_to_mps, Mcr, F, 1/DoL, Tt4crzmax[i], Tmetmax, FFmaxcrz[i], Tt4crz[i], Tmetcrz, crzmdotf[i], CL, para[iaCLh, ip]))
     end #cruise section done
 
 end #outer loop
 
-
 return Wfrac*parg[igWMTO], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
 end
 
-
-function get_cruisespeed(h, MNcr)
-    h_ft = h/0.3048
-    Vcr2 = 300/1.944
-    htrans_ft = Hptrans(Vcr2, 0.8)
-    T, P, ρ,  a = atmos(h/1000)
-    TAS = MNcr*a
-    if h_ft<3000
-        CAS = 170/1.944
-        TAS = CAS_TAS(CAS, h)
-    elseif 3000<=h_ft<6000
-        CAS = 220/1.944
-        TAS = CAS_TAS(CAS, h)
-    elseif 6000<=h_ft<14000
-        CAS = 250/1.944 #Assume 250 kts CAS cruise consistent with BADA
-        TAS =  CAS_TAS(CAS, h)
-    elseif 14000<=h_ft< htrans_ft
-        CAS = Vcr2  #Assume CAS cruise similar to BADA
-        TAS =  CAS_TAS(CAS, h)
-    elseif h_ft>= htrans_ft
-        TAS =  MNcr * a
-        CAS =  TAS_CAS(TAS, h)
-    end
-    
-    MN =  TAS/ a
-    return CAS, TAS, MN
-end
-
-
 function get_climbspeed(h,MNcr)
     h_ft = h/0.3048
-    htrans_ft = Hptrans(250/1.944, 0.8)
     T, P, ρ,  a = atmos(h/1000)
     TAS = a*MNcr
-    Vcl1 = 300/1.944
-    Vcl2 = 300/1.944
-    VstallTO = 150/1.944
+    Vcl1 = 300/1.944 # From BADA 737__.APF
+    Vcl2 = 300/1.944 # From BADA 737__.APF
+    htrans_ft = Hptrans(Vcl2/1.944, 0.8)
+    Vstallflap5 = 117/1.944 # From 738__.PTF file BADA, flap 5
+    Vstallflap1 = 119/1.944 # From 738__.PTF file BADA, flap 1
+    Vstallclean = 149/1.944 # From 738__.PTF file BADA, clean
     
-    CVmin = 1.3
+    CVmin = 1.3 # From BADA manual, takeoff phase
     VdCL1, VdCL2, VdCL3, VdCL4, VdCL5 = [5, 10, 30, 60, 80]/1.944
 
     if 0<=h_ft<1500
-        CAS = CVmin*VstallTO + VdCL1
+        CAS = min(CVmin*Vstallflap5 + VdCL1, 250/1.944)
         TAS = CAS_TAS(CAS, h)
     elseif 1500<=h_ft<3000
-        CAS = CVmin*VstallTO + VdCL2
+        CAS = min(CVmin*Vstallflap1 + VdCL2, 250/1.944)
         TAS = CAS_TAS(CAS, h)
     elseif 3000<=h_ft<4000
-        CAS = CVmin*VstallTO + VdCL3
+        CAS = min(CVmin*Vstallflap1 + VdCL3, 250/1.944)
         TAS = CAS_TAS(CAS, h)
     elseif 4000<=h_ft<5000
-        CAS = CVmin*VstallTO + VdCL4
+        CAS = min(CVmin*Vstallclean + VdCL4, 250/1.944)
         TAS = CAS_TAS(CAS, h)
     elseif 5000<=h_ft<6000
-        CAS = CVmin*VstallTO + VdCL5
+        CAS = min(CVmin*Vstallclean + VdCL5, 250/1.944)
         TAS = CAS_TAS(CAS, h)
-    elseif 6000<=h_ft<10000
+    elseif 6000<=h_ft<10000 
         CAS = min(Vcl1, 250/1.944)
         TAS = CAS_TAS(CAS, h)
     elseif 10000<=h_ft<htrans_ft
@@ -404,7 +375,7 @@ function get_climbspeed(h,MNcr)
         TAS = MNcr*a
         CAS = TAS_CAS(TAS, h)
     end
-    
+
     MN = TAS/a
     #Limit MN to be less than MNcr at design
     if MN>MNcr
