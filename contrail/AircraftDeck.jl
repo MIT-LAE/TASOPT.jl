@@ -5,7 +5,7 @@ Cruise characteristics
 Aircraft deck for contrail avoidence
 """
 function cruisechar(io, name, fracW0, M0, FL, TAS, FFmax, FFcrz, ROC, EGT, Tt4crz, Tt4crzmax, crzFAR)
-    FLcutoff = 30
+    FLcutoff = 150
     N = length(FL)
     println(io, "Aircraft cruise characteristics              "*Dates.format(now(), DateFormat("u dd yyyy")))
     println(io, name)
@@ -34,7 +34,6 @@ function cruisechar(io, name, fracW0, M0, FL, TAS, FFmax, FFcrz, ROC, EGT, Tt4cr
 
 end
 
-
 function print_variables(io, W_lst, FL, FLcutoff, Var, Varname)
     println(io,"")
     println(io, @sprintf("%15s  %-7s%6s%7s", Varname, "--","Wfracs", "--"))
@@ -47,7 +46,7 @@ function print_variables(io, W_lst, FL, FLcutoff, Var, Varname)
     for i = 1:length(FL)
         if FL[i]≥FLcutoff
             print(io, @sprintf("%4.0f", FL[i]))
-            for var in Var[:,i]
+            for var in Var[i,:]
                 print(io, @sprintf("%12.4f", var))
             end
             println(io,"")

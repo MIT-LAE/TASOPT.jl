@@ -32,15 +32,15 @@ function weight_buildup(parg; io=stdout)
     @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", parg[igWwing ], parg[igWwing ]/lbf_to_N)
     @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", parg[igWvtail], parg[igWvtail]/lbf_to_N)
     @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", parg[igWhtail], parg[igWhtail]/lbf_to_N)
-    @printf(io,"Weng    + %10.1f N (%8.1f lb)\n", parg[igWeng], parg[igWeng]/lbf_to_N)
+    @printf(io,"Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
     @printf(io,"Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
     @printf(io,"Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
     @printf(io,"--------------------\n")
     printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
     parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
-    parg[igWeng] + +parg[igWftank] + Wtotadd, 
+    parg[igWtesys] + +parg[igWftank] + Wtotadd, 
     (parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
-    parg[igWeng] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
+    parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
 
     @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", parg[igWcap], parg[igWcap]/lbf_to_N)
     @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", parg[igWweb], parg[igWweb]/lbf_to_N)
@@ -481,30 +481,27 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
-            ηs = bs/b
             dy = 2*D # space to leave near wing root and tip [m]
-
             if parg[igneng] == 2
-                yi = ηs*b/2
+                yi = [ηs*b/2]
             else
                 yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
             end
             xi = zero(yi)
             ηi = yi/(b/2)
+            ηs = bs/b
             ηo = bo/b
-            # ci = zero(yi)
-            ci = co*(1  + (λs -  1)*(ηs - ηo)/(ηs - ηo))
-            # for (i, η)  in enumerate(ηi)
-            #     if η <=ηs
-            #         ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
-            #     else
-            #         ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
-            #     end
-            # end
+            ci = zero(yi)
+            for (i, η)  in enumerate(ηi)
+                if η <=ηs
+                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                else
+                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                end
+            end
 
             tanL = tan(parg[igsweep]*π/180.0)
-            # @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
-            xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
+            @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
             ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ], color = "r", lw = 1.5)
 
         # Plot NP and CG range
@@ -961,7 +958,61 @@ function plot737compare(;weightdetail= true, fracs = false)
     plt.tight_layout()
     end
 
+"""
+Moment and shear diagrams
+"""
+function MomentShear(parg)
+    co = parg[igco]
+    cs = parg[igco]*parg[iglambdas]
+    ct = parg[igco]*parg[iglambdat]
+  
+    bo = parg[igbo]
+    bs = parg[igbs]
+    b  = parg[igb ]
 
+    etas = bs/b
+    etao = bo/b
+
+    λs = parg[iglambdas]
+    λt = parg[iglambdat]
+
+    Ss = parg[igSsmax]
+    Ms = parg[igMsmax]
+    So = parg[igSomax]
+    Mo = parg[igMomax]
+    
+    etaRange =[LinRange(etao,etas,20) ; LinRange(etas,1,20)]
+    c = zero(etaRange)
+    S = zero(etaRange)
+    M = zero(etaRange)
+
+    for (i,eta) in enumerate(etaRange)
+        if eta<etao
+            c[i] = co
+        elseif eta<etas
+            c[i] = co*( 1 + (λs - 1)*(eta - etao)/(etas - etao))
+            S[i] = So
+            M[i] = Mo
+        else
+            c[i] = co*(λs + (λt -λs)*(eta - etas)/(   1 - etas))
+            S[i] = Ss*(c[i]/cs)^2
+            M[i] = Ms*(c[i]/cs)^3
+        end
+    end
+    fig, ax = plt.subplots(2,1,figsize=(8,5), sharex = true, dpi = 100)
+    ax[1].plot(etaRange,S)
+    ax[1].set_ylabel("Shear")
+    ax[2].plot(etaRange,M)
+    ax[2].set_ylabel("Moment")
+
+    for a in ax
+        a.axvline(etas, ls = "--")
+        a.axvline(etao)
+    end
+
+    return ax
+
+end
 
 """
 High resolution plot for publications
@@ -1210,7 +1261,7 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
 
     # Fuel tank
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
-        l = max(parg[iglftankin], parg[iglftank])
+        l = parg[iglftankin]
         ARtank = 2.0
         xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
         xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
