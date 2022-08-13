@@ -385,6 +385,55 @@ function get_climbspeed(h,MNcr)
     return CAS, TAS, MN
 end
 
+function get_descentspeed(h,MNcr)
+    h_ft = h/0.3048
+    T, P, ρ,  a = atmos(h/1000)
+    TAS = a*MNcr
+    Vdes1 = 290/1.944 # From BADA 737__.APF
+    Vdes2 = 290/1.944 # From BADA 737__.APF
+    htrans_ft = Hptrans(Vdes2/1.944, 0.8)
+
+    VstallLD = 107/1.944 # From 738__.PTF file BADA, flap 30 (Standard Landing Setting for B738)
+    
+    CVmin = 1.3 # From BADA manual
+    VdCL1, VdCL2, VdCL3, VdCL4, VdCL5 = [5, 10, 20, 50]/1.944
+
+    if 0<=h_ft<1000
+        CAS = CVmin*VstallLD + VdCL1
+        TAS = CAS_TAS(CAS, h)
+    elseif 1000<=h_ft<1500
+        CAS = CVmin*VstallLD + VdCL2
+        TAS = CAS_TAS(CAS, h)
+    elseif 1500<=h_ft<2000
+        CAS = CVmin*VstallLD + VdCL3
+        TAS = CAS_TAS(CAS, h)
+    elseif 2000<=h_ft<3000
+        CAS = CVmin*VstallLD + VdCL4
+        TAS = CAS_TAS(CAS, h)
+    elseif 3000<=h_ft<6000
+        CAS = min(Vdes1, 220/1.944)
+        TAS = CAS_TAS(CAS, h)
+    elseif 6000<=h_ft<10000 
+        CAS = min(Vdes1, 250/1.944)
+        TAS = CAS_TAS(CAS, h)
+    elseif 10000<=h_ft<htrans_ft
+        CAS = Vdes2
+        TAS = CAS_TAS(CAS, h)
+    elseif h_ft>=htrans_ft
+        TAS = MNcr*a
+        CAS = TAS_CAS(TAS, h)
+    end
+
+    MN = TAS/a
+    #Limit MN to be less than MNcr at design
+    if MN>MNcr
+        MN = MNcr
+        TAS = MN*a
+    end
+
+    return CAS, TAS, MN
+end
+
 function Hptrans(CAS, MNcr)
 
     gam = gamSL
