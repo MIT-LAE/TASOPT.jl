@@ -54,6 +54,7 @@ crzEINOx = zeros(Float64, N)
 crzFAR   = zeros(Float64, N)
 clmbEINOx = zeros(Float64, N)
 crzTAS   = zeros(Float64, N)
+desTAS   = zeros(Float64, N)
 Tt4crz   = zeros(Float64, N)
 Tt4crzmax   = zeros(Float64, N)
 
@@ -76,6 +77,7 @@ for   i = 1:N
     #Get flight speed from climb schedule
     CAScl, TAScl, Mcl = get_climbspeed(alts[i], MNcr)
     # println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
+    CASdes, TASdes, Mdes = get_descentspeed(alts[i], MNcr)
 
     if i == 1 #assume climb CL below 
         ip = iptest # dummy location to store values
@@ -117,7 +119,8 @@ for   i = 1:N
         Mach = V/Vsound
         para[iaMach, ip] = Mach
 
-        V0s[i] = V
+        V0s[i] = V # Save climb TAS (m/s) to V0s
+        desTAS[i] = TASdes/kts_to_mps # Save descent TAS separately, convert to knots
         M0s[i] = Mach
         Reunits[i] = V*ρ/μ
         
@@ -204,7 +207,7 @@ for   i = 1:N
     pare[ieFe, ip] = Ftotal
   
     # Cruise Section
-    if FL[i]≥ 150 && FL[i]≤431
+    if FL[i]≥ 30 && FL[i]≤431
         ip = iptest
         #Get flight speed from climb schedule
         CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
@@ -333,7 +336,7 @@ for   i = 1:N
 
 end #outer loop
 
-return Wfrac*parg[igWMTO], alts[iceil], V0s, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
+return Wfrac*parg[igWMTO], alts[iceil], V0s, desTAS, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
 end
 
 function get_cruisespeed(h, MNcr)
@@ -423,7 +426,7 @@ function get_descentspeed(h,MNcr)
     VstallLD = 107/1.944 # From 738__.PTF file BADA, flap 30 (Standard Landing Setting for B738)
     
     CVmin = 1.3 # From BADA manual
-    VdCL1, VdCL2, VdCL3, VdCL4, VdCL5 = [5, 10, 20, 50]/1.944
+    VdCL1, VdCL2, VdCL3, VdCL4 = [5, 10, 20, 50]/1.944
 
     if 0<=h_ft<1000
         CAS = CVmin*VstallLD + VdCL1
