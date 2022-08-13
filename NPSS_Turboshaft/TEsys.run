@@ -3,7 +3,8 @@ AUTHOR    = "Prashanth";
 #include <System.fnc>
 
 
-setThermoPackage("GasTbl");
+// setThermoPackage("GasTbl");
+setThermoPackage("allFuel");
 #include "TEsys.mdl"
 
 
@@ -144,7 +145,7 @@ while(flag!=999){
                                     "Eng.PodProp.GB.ind_trq" };
         solver.independentValues = solverIndeps111;
         run();
-        // Output.update();
+        Output.update();
         CASE++;
         //---------------------------------------------
         // Gen speed check:
@@ -216,7 +217,8 @@ while(flag!=999){
             <<Eng.PodProp.GB.Wgb<<"_"
             <<Eng.Gen.V<<"_"
             // Aft fan shaft power
-            <<-Eng.CmpF.pwr*getUnitsFactor(Eng.CmpF.pwr.units, "W");
+            <<-Eng.CmpF.pwr*getUnitsFactor(Eng.CmpF.pwr.units, "W")<<"_"
+            <<Eng.TrbH.Tvane;
             
             
             // cerr<<solverIndeps111<<endl;
@@ -304,6 +306,8 @@ while(flag!=999){
           
         solver.independentValues = solverIndeps222;
         }
+        parseString(inString);// Read again to get the right Mach number and altitude
+        
         // cerr<<"input Guess val is "<<Eng.ind_FnSplit.x<<endl;
         // else {
             // restart("offDes_fan_prev.restart");
@@ -371,7 +375,8 @@ while(flag!=999){
             <<Eng.PodProp.Fan.S_map.ind_RlineMap.x<<"_"
             <<Eng.PodProp.GB.ind_trq.x<<"_"
             <<Eng.PodProp.MotorShaft.ind_Nmech.x<<"_"
-            <<Eng.PodProp.FanShaft.ind_Nmech.x;
+            <<Eng.PodProp.FanShaft.ind_Nmech.x<<"_"
+            <<Eng.TrbH.Tvane;
             // cerr<<Eng.ind_FnSplit.x<<endl;
         }
         else{
@@ -476,7 +481,8 @@ while(flag!=999){
             <<Eng.PodProp.Fan.S_map.ind_RlineMap.x<<"_"
             <<Eng.PodProp.GB.ind_trq.x<<"_"
             <<Eng.PodProp.MotorShaft.ind_Nmech.x<<"_"
-            <<Eng.PodProp.FanShaft.ind_Nmech.x;
+            <<Eng.PodProp.FanShaft.ind_Nmech.x<<"_"
+            <<Eng.TrbH.Tvane;
 
         }
         else{
@@ -487,3 +493,4 @@ while(flag!=999){
 
     }
 }
+Output.display();

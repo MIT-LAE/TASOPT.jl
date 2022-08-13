@@ -37,6 +37,7 @@ Assembly Assembly Eng
         alt_in    = 0.0 "ft";
         dTs_in    = 0.0 "dF";
         MN_in     = 0.0;
+		setOption("switchHum", "FAR25");
     }
     // ------------------------------
     // InletStart FsEng
@@ -184,6 +185,7 @@ Assembly Assembly Eng
 
 		Wfuel = 0.09 * 120 * 430/LHV;
 		// LHV = 18400.*120/43; 
+		// setOption("switchGasTblOpt", "GASEQL2");
 	}
 
 	//------------------------------
@@ -197,7 +199,7 @@ Assembly Assembly Eng
 		setOption("switchBurn", "WFUEL");
 
 		if(THERMPACKAGE == "allFuel"){
-			Fl_I.switchFuelType = "H2";
+			Fl_I.switchFuelType = "JP";
 		}
 		// FAR = .024225;
 
@@ -208,12 +210,14 @@ Assembly Assembly Eng
 			real T3 = Fl_I.Tt*100/180;
 			real P3 = Fl_I.Pt*getUnitsFactor(Fl_I.Pt.units, "kPa");
 
-			real a,b,c,d;
+			real a,b,c,d, H;
 			a = 6.25528852e-08;
 			b = -1.17064467e-04;
 			c = 7.36953400e-02;
 			d = -1.50392850e+01;
-			EINOx = P3**0.4*(a*T3**3 + b*T3**2 + c*T3 +d)*FusEng.LHV/18400; //this applies a scaling if different fuels are used
+			
+			H = -19.0*(Amb.humSp - 0.006344);
+			EINOx = exp(H)*P3**0.4*(a*T3**3 + b*T3**2 + c*T3 +d)*FusEng.LHV/18400; //this applies a scaling if different fuels are used
 
 		}
 	}
@@ -228,6 +232,8 @@ Assembly Assembly Eng
 	Fl_O.MNdes = 0.30;
 	effDes = 0.89;
 	PRbase = 3.603;
+	real Tvane, Tblade;
+	real coolfrac;
 
 		// Turbine Cooling and Leakage Air (TCLA) stream 1 (introduced at turbine inlet)
 		InterStageBleedInPort TCLA_NC { 
@@ -246,10 +252,12 @@ Assembly Assembly Eng
 			nStages = 1;
 			bldNameFirstRow = "TCLA_NC";
 			bldName = "TCLA_CH";
-			TvaneDes[0] = 2100;
-			TbladeDes[0] = 1930;
-			s_BldFirstRow = 1.5;  
-			s_Bld = 1.5;  
+			TvaneDes[0] = 2200;
+			TbladeDes[0] = 2100;
+			coolTypeVane[0]  = 5;
+			coolTypeBlade[0] = 5;
+			s_BldFirstRow = 1.2;  
+			s_Bld = 1.2;  
 		}   
 		void postexecute() { 
 			F041.copyFlow("Fl_I");
@@ -257,6 +265,27 @@ Assembly Assembly Eng
 			if ( switchDes == "DESIGN" ) {
 				Cool.run();
 			} 	 
+			//Calculate Tmetal at OD conditions
+			real safety_margin = 150;
+			real k, phi_dash, phi;
+			real profile = 0.3;
+			real r_leak = 4.0/3.0;
+			
+			k = ((TCLA_NC.W/Fl_I.W)/(Cool.s_BldFirstRow*0.022*r_leak))**(1/1.25);
+
+	        phi_dash = k/(1+k);
+			phi = (profile+1)*phi_dash - profile;
+					
+			Tvane  = (Fl_I.Tt+safety_margin) - phi*abs(Fl_I.Tt+safety_margin - TCLA_NC.Tt);
+			
+			
+			k = ((TCLA_NC.W/Fl_I.W)/(Cool.s_Bld*0.022*r_leak))**(1/1.25);
+
+	        phi_dash = k/(1+k);
+			phi = (profile+1)*phi_dash - profile;
+			
+			Tblade = (Fl_I.Tt+safety_margin) - phi*abs(Fl_I.Tt+safety_margin - TCLA_NC.Tt);
+			
 		} 
 	}
 
@@ -560,6 +589,7 @@ Assembly Assembly Eng
     //3 PCEC sizing:
 	Independent ind_Acat{varName = "PCEC.Af"; description = "Catalyst Frontal Area";}
 	Dependent dep_deNOx{eq_lhs = "PCEC.deNOx"; eq_rhs = "deNOx_target";}
+	// Dependent dep_deNOx{eq_lhs = "BrnPri.EINOx"; eq_rhs = "1.2";}
 
     // 4 Fuel and Tt4
 	Independent DESIGN_FUELFLOW { varName = "Eng.FusEng.Wfuel";	}
