@@ -305,7 +305,7 @@ f = open("temp.results", "w")
 # f = stdout
 
 initwgt = 0
-saveOD = true
+saveOD = false
 track_fig = nothing
 opt_iter_counter = 0
 function run_wsize(iter, initwgt, Ldebug, printiter, saveOD)
