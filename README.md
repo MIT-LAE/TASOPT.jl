@@ -64,3 +64,41 @@ Once you are in your master branch do:
    git merge upstream/master
 ```
 This brings your fork's `master` branch into sync with the upstream repository, without losing your local changes.
+
+## Convert Fortran to Julia
+
+The file `fort2julia.vim` was created to help this conversion. 
+At first, make sure the target file (e.g., `tar_file.f`) and the vim file (`fort2vim.vim`) are in the same directory.
+Then, open the target file in vim.
+```bash
+    vim tar_file.f
+```
+Next, type
+```
+    :source fort2vim.vim
+```
+Now, the file has been edited by vim. 
+But we do not want it to overwrite the original file.
+Thus, we save it to a different file (e.g., `tar_file.jl`), and we also need to ensure that the original file is not changed.
+```
+    :w tar_file.jl
+```
+The updated file is saved in `tar_file.jl`.
+Now, we exit vim without changing the original f77 file by
+```
+    :q!
+```
+
+To check it, you should have two files now: `tar_file.jl` and `tar_file.f` where the former is the edited Julia file and the latter is the original f77 file.
+
+Running `fort2julia.vim` **cannot solve all the problems**, though.
+You need to debug the code to make sure: 
+* The syntax is correct. Several items to check:
+  * The array indexing is still using `()` inherting from f77. You need to change it to Julia's `[]`.
+  * Some data type such as `parameter`, `data` are from f77 but not used in Julia. They need to be changed.
+  * Some function is with a type, e.g., `real function dot(x)`, this needs to be modified.
+  * Some function will modify input parameters, (say it is named as f(x)). 
+    A regular Julia function cannot do it. 
+    You need to let Julia know it by adding a `!` mark behind the function. 
+    So the new function will be: `f!(x)` in Julia.
+* It gives the same output with the original f77 code. 
