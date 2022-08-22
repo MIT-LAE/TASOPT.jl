@@ -4,21 +4,6 @@ If icdfun=1, computes wing cdf,cdp from airfoil database # iairf,
 otherwise uses default values in para array.
 """
 function cdsum!(pari,parg,para,pare, icdfun)
-#      implicit real (a-h,l-z)
-#      include 'index.inc'
-#      integer pari(iitotal)
-#      real parg[igtotal], 
-#	para[iatotal],
-#	pare(ietotal)
-#      integer icdfun
-#
-#      include 'airf.inc'
-#      include 'constants.inc'
-#
-#      logical Ldebug
-#
-#      common /com_lu/ ilu
-
 
       Ldebug = false
 #      Ldebug = true
