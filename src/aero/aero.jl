@@ -1,10 +1,14 @@
+"""
+`aerodynamics` is a module that contains all aerodynamic calculations
+required in the aircraft sizing. Only functions used in other routines
+are exported other functions are kept within the `aerodynamics` namespace.
+"""
 module aerodynamics
 
 using StaticArrays
 using ..atmosphere
 
-export airfun, airtable, trefftz1, cdsum!, cfturb, cditrp, surfcd, surfcd2, surfcm, wingsc, wingpo, wingcl,
-fusebl!
+export cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
 
 #include index to access arrays
 include("../misc/index.inc")
