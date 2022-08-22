@@ -16,14 +16,7 @@ include("../src/misc/index.inc")
 include("../tasopt.jl")
 
 
-# include("../atmos/atmos.jl")
 include("../fuselage/fuseW.jl")
-
-# include("../fuselage/fusebl.jl")
-# include("../boundary_layer/axisol.jl")
-# include("../boundary_layer/blax.jl")
-# include("../boundary_layer/blsys.jl")
-
 
 include("../surf/surfdx.jl")
 include("../surf/surfw.jl")
