@@ -1,4 +1,7 @@
 """
+    airtable(fname)
+
+
 Reads airfoil file and outputs a matrix and spline objects
 
 nAfun  = 3 usually:
@@ -106,13 +109,10 @@ return  AMa, Acl, Aτ, ARe,
         A_M_cl_τ
 end
 
-include("../utils/spline.jl")
+airfoil_data = "air/C.air"
+
 AMa, Acl, Aτ, ARe,
 A,
-A_M,
-A_τ,
-A_cl,
-A_M_τ,
-A_M_cl,
-A_cl_τ,
-A_M_cl_τ = airtable("../aero/air/C.air"); # HACK
+A_M, A_τ, A_cl,
+A_M_τ, A_M_cl, A_cl_τ,
+A_M_cl_τ = airtable(airfoil_data);

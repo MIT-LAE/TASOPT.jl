@@ -1,3 +1,7 @@
+module atmosphere
+
+export atmos
+
 """
 Atmospheric functions ` T(h)`, `ρ(h)` etc
 valid to `h`=20km, `p(h)` valid to `h`=70km
@@ -32,3 +36,5 @@ function atmos(h)
  return T,p,ρ,a,μ
 
 end # atmos
+
+end
