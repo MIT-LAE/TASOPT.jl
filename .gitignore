@@ -12,3 +12,4 @@
 *.LTO
 **/Models/*
 *.pptx
+*.DS_Store
