@@ -2,6 +2,7 @@ function printBADA(io, name, W0, bestalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS
 
     γdes = 3.0 * π/180.0
     sing = sin(γdes)
+    kts_to_ft = 1.68781
 # Flight levels to output in BADA file:
     FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
         30 ,   40 ,   60 ,   80 ,  100 , 
@@ -39,11 +40,11 @@ function printBADA(io, name, W0, bestalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS
         if FL[i]≥ 30 && FL[i]≤431
     println(io, @sprintf("%3.0f |  %3.0f   %5.2f  %5.2f  %5.2f |  %3.0f    %4.0f  %4.0f  %4.0f   %6.2f   |  %3.0f   %4.0f  %4.2f  ", 
             FLin[iin], crzTAS[iin], crzf[1, iin], crzf[2, iin], crzf[3, iin], 
-                                                                TAS[iin],  ROC[1, iin], ROC[2, iin], ROC[3, iin], ffpmin[iin], desTAS[iin], desTAS[iin]*sing*60/ft_to_m, ffpmin[iin]*0.1))
+                                                                TAS[iin],  ROC[1, iin], ROC[2, iin], ROC[3, iin], ffpmin[iin], desTAS[iin], desTAS[iin]*sing*60*kts_to_ft, ffpmin[iin]*0.1))
     println(io, @sprintf("    |                            |                                     | "))
         else
     println(io, @sprintf("%3.0f |                            |  %3.0f    %4.0f  %4.0f  %4.0f   %6.2f   |  %3.0f   %4.0f  %4.2f  ", 
-                         FLin[iin],                               TAS[iin],  ROC[1, iin], ROC[2, iin], ROC[3, iin], ffpmin[iin], desTAS[iin], desTAS[iin]*sing*60/ft_to_m, ffpmin[iin]*0.1))
+                         FLin[iin],                               TAS[iin],  ROC[1, iin], ROC[2, iin], ROC[3, iin], ffpmin[iin], desTAS[iin], desTAS[iin]*sing*60*kts_to_ft, ffpmin[iin]*0.1))
     println(io, @sprintf("    |                            |                                     | "))
         end
     end
