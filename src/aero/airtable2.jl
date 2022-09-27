@@ -9,6 +9,9 @@ nAfun  = 3 usually:
     cdp(Ma, cl, τ)
      cm(Ma, cl, τ)
 """
+
+include("../../utils/spline.jl")
+
 function airtable(fname)
 
 # Read airfoil data
@@ -109,7 +112,7 @@ return  AMa, Acl, Aτ, ARe,
         A_M_cl_τ
 end
 
-airfoil_data = "air/C.air"
+airfoil_data = "../air/C.air"
 
 AMa, Acl, Aτ, ARe,
 A,
