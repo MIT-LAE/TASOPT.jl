@@ -112,7 +112,11 @@ return  AMa, Acl, Aτ, ARe,
         A_M_cl_τ
 end
 
-airfoil_data = "../air/C.air"
+if Sys.iswindows()
+    airfoil_data = "air/C.air"
+elseif Sys.islinux()
+    airfoil_data = "../air/C.air"
+end
 
 AMa, Acl, Aτ, ARe,
 A,
