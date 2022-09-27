@@ -17,6 +17,11 @@ Currently NPSS is being used to model the turboshaft engine by simply "file wrap
 
 ## Collaboration guide
 
+**Important**
+Before issueing any pull request (PR), go to the `test` folder and run the regression test `run_wsize_test.jl`.
+If there is an error information, it is your responsibility to edit your code and make it work.
+PR will not be reviewed if this regression test fails.
+
 Some guidelines to add to this repo
 
 ### Work in branches
