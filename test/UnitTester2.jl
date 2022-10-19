@@ -15,17 +15,7 @@ using Dates
 include("../src/misc/index.inc")
 include("../tasopt.jl")
 
-
-include("../fuselage/fuseW.jl")
-
-include("../surf/surfdx.jl")
-include("../surf/surfw.jl")
-
-include("../tail/tailpo.jl")
-
-
 include("../balance/balance.jl")
-
 
 include("../engine/PMSM.jl")  # Motor/generator functions
 include("../engine/PMSM.inc") # Motor/generator properties array
@@ -35,10 +25,6 @@ include("../engine/propsys.jl")
 
 include("../fuel/hydrogen.jl")
 
-include("../tank/tankWmech.jl")
-include("../tank/tankWthermal.jl")
-include("../tank/tanksize.jl")
-
 include("../sizing/wsize.jl")
 include("../src/mission/mission.jl")
 
@@ -46,7 +32,7 @@ include("input.jl")
 # include("../input_fwdTank.jl")
 include("../IO/outputs.jl")
 include("../IO/savemodel.jl")
-include("../fuselage/update_fuse.jl")
+# include("../fuselage/update_fuse.jl")
 include("../cost/cost_est.jl")
 include("../utils/printBADA.jl")
 include("../src/mission/odperformance.jl")
