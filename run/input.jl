@@ -12,13 +12,6 @@ pargen = zeros(Float64, ite_total)
 
 aero_file = "./air/C.air"
 
-ft_to_m = 0.3048
-in_to_m = 0.0254
-nmi_to_m = 1852.0
-deg_to_rad = π/180.0
-lbf_to_N = 4.448222
-kts_to_mps = 0.51444
-hp_to_W    = 745.7
 
 pari[iifuel]   = 1 # 1 = H2 120 MJ/kg 2= JetA
 pari[iifwing]  = 0 # 0 = no fuel in wings 1 = fuel in wings
