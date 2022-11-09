@@ -1,3 +1,7 @@
+using Pkg
+Pkg.activate("../")
+Pkg.instantiate()
+
 using Base: SignedMultiplicativeInverse
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
 
@@ -10,15 +14,16 @@ using PyPlot
 using Dates
 
 include("../src/misc/index.inc")
+include("../src/misc/constants.jl")
+
+include("../engine/PT.inc")
 include("../tasopt.jl")
 
 include("../balance/balance.jl")
 
-include("../engine/PMSM.jl")  # Motor/generator functions
-include("../engine/PMSM.inc") # Motor/generator properties array
-include("../engine/NPSS_functions.jl") # NPSS functions
-include("../engine/PT.inc")
-include("../engine/propsys.jl")
+# include("../engine/PMSM.jl")  # Motor/generator functions
+# include("../engine/NPSS_functions.jl") # NPSS functions
+
 
 include("../fuel/hydrogen.jl")
 
@@ -34,11 +39,10 @@ include("../src/mission/odperformance.jl")
 include("../contrail/AircraftDeck.jl")
 include("../src/mission/LTO.jl")
 
-const gee = 9.81
+
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
 RSL =  pSL/(ρSL * TSL)
-const gamSL = 1.4
-const cpSL  = 1004.0
+
 
 # temporary
 μAir = 1.78e-5 
