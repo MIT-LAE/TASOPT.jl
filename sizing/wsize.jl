@@ -1140,11 +1140,7 @@ Lconv = false # no convergence yet
                 NPSS_Fan     = NPSS
                 NPSS_AftFan  = NPSS
                 NPSS_TS      = NPSS
-            else
-            NPSS_Fan    = startNPSS("NPSS_Turboshaft/", "Fan.bat")
-            NPSS_AftFan = startNPSS("NPSS_Turboshaft/", "Fan.bat")
-            NPSS_TS     = startNPSS("NPSS_Turboshaft/", "TP.bat" )
-            end
+             end
         end
             ρ0 = pare[ierho0, ipcruise1]
             u0 = pare[ieu0  , ipcruise1] 

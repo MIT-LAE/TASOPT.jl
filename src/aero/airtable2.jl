@@ -9,9 +9,6 @@ nAfun  = 3 usually:
     cdp(Ma, cl, τ)
      cm(Ma, cl, τ)
 """
-
-include("../../utils/spline.jl")
-
 function airtable(fname)
 
 # Read airfoil data
