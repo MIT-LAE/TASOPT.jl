@@ -8,3 +8,4 @@ const hp_to_W    = 745.7
 const gee = 9.81
 const gamSL = 1.4
 const cpSL  = 1004.0
+const μAir = 1.78e-5
