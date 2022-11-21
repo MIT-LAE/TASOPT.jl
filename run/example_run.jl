@@ -19,3 +19,7 @@ geometry(parg)
 # Show weight buildup of the aircraft
 weight_buildup(parg)
 
+# 5) Plot figures
+pygui(true)
+stickfig(parg,pari,parm)
+plt.savefig("./run/Example.png")
