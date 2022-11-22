@@ -4,6 +4,15 @@ Transport Aircraft and the Environment System OPTimization -
 
 Julia based TASOPT++ includes PCEC, hydrogen fuel options etc. Perhaps need some cooler name but can always change later - how about ZITA: Zero Impact Transport Aircraft
 
+## Getting started
+
+Within the `run` folder is an example set of files to get started. To run the code on hex first `cd` into the run directory. Then you have 2 choices:
+
+1. `julia example_run.jl` : runs the example file in the current session
+2. `sbatch tas.sh example_run.jl` : submits the job to slurm
+
+The slurm script `tas.sh` has further details on options (including emailing you when your job is done etc.) that you can set while submitting to slurm.
+
 ## NPSS integration
 
 Currently NPSS is being used to model the turboshaft engine by simply "file wrapping" - Julia writes to a file, NPSS reads that, computes and outputs to a file that julia can then read.

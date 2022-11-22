@@ -741,7 +741,7 @@
       ieKinl  = 172
       ieepsl  = 173
       ieepsh  = 174
-      ieFe    = 175 # now stores total thurst & NOT thrust per engine
+      ieFe    = 175 # now stores total thrust & NOT thrust per engine
       ieFsp   = 176
       ieTSFC  = 177
       ieA5fac = 178
