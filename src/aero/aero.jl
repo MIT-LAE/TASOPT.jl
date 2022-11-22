@@ -13,7 +13,7 @@ export cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
 #include index to access arrays
 include("../misc/index.inc")
 
-include("../../utils/spline.jl")
+include("../utils/spline.jl")
 
 # Aerofoil calculations
 include("airtable2.jl")
