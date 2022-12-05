@@ -14,3 +14,4 @@
 **/Models/*
 *.pptx
 *.DS_Store
+docs/build/*
