@@ -1,3 +1,4 @@
+
 using Pkg
 Pkg.activate("../")
 Pkg.instantiate()
@@ -22,4 +23,4 @@ weight_buildup(parg)
 # 5) Plot figures
 pygui(true)
 stickfig(parg,pari,parm)
-plt.savefig("./run/Example.png")
+plt.savefig("../../example/Example.png")
