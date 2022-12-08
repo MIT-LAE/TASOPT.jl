@@ -1,10 +1,15 @@
 """
+    surfcm(b,bs,bo, sweep, 
+	Xaxis, λt,λs,γt,γs, 
+	AR,fLo,fLt,cmpo,cmps,cmpt)
+
 Calculates components of wing CM about wing root axis
 
-	CM = CM0 + CM1*(CL-CLhtail)
-	
-	i.e. according to eqn 172 of TASOPT docs
-	ΔCₘ,wing = ΔCₘ₀ + dCₘ/dCL × (CL - CLh)
+``CM = CM0 + CM1*(CL-CLhtail)``
+``ΔCₘ,wing = ΔCₘ₀ + dCₘ/dCL × (CL - CLh)``
+
+See eqn 172 of TASOPT docs.
+See also [`surfcd`](@ref) and [`surfcd2`](@ref).
 """
 function surfcm(b,bs,bo, sweep, Xaxis,
                        λt,λs,γt,γs,

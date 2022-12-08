@@ -1,7 +1,27 @@
 """
-Calculates aircraft CD components for operating point ipoint
-If icdfun=1, computes wing cdf,cdp from airfoil database # iairf,
+    cdsum!(pari,parg,para,pare,icdfun)
+
+Calculates aircraft `CD` components for operating point ipoint.
+If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
 otherwise uses default values in para array.
+
+The total drag is computed by
+
+``CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw``,
+
+where `CDi` is the total induced drag including the wing and tail, 
+`CDfuse` is the fuselage profile drage computed by solving a boundary layer integral equation,
+`CDwing` is the wing profile drag (viscous + pressure) computed using airfoil data obtained from CFD,
+`CDover` is the fuselage added CD due to lift carryover,
+`CDhtail` is the horizontal tail profile drag computed in a similar manner with `CDwing`,
+`CDvtail` is the vertical tail profile drag computed in a similar manner with `CDwing`,
+`CDstrut` is the struct profile drag, 
+`CDnace` is the nacelle profile drag,
+`dCDBLIf` is related to the boundary layer ingestion on the fuselage,
+and `dCDBLIw` is related to the boundary layer ingestion on the wing.
+
+See section A 2.13 of TASOPT docs.
+See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref).
 """
 function cdsum!(pari,parg,para,pare, icdfun)
 
