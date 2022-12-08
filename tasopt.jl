@@ -19,7 +19,7 @@ include("src/misc/constants.jl")
 include("src/misc/index.inc")
 
 #Load modules
-include("atmos/atmos.jl")
+include("src/atmos/atmos.jl")
 include("src/sizing/wsize.jl")
 include("src/mission/mission.jl")
 include("src/aero/aero.jl")
@@ -34,7 +34,7 @@ include("src/mission/LTO.jl")
 include("src/mission/AircraftDeck.jl")
 
 include("src/fuel/hydrogen.jl")
-include("engine/PT.inc")
+include("src/engine/PT.inc")
 
 # Input and output functions
 include("src/IO/outputs.jl")
