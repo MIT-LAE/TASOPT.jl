@@ -1,7 +1,0 @@
-//solver Independent Variables:
-solver.independentNames = {"DuctedFan.ind_ShaftPower",
-"DuctedFan.FsEng.ind_W",
-"DuctedFan.Fan.S_map.ind_RlineMap",
-"DuctedFan.FanShaft.ind_Nmech" }
-;
-solver.independentValues = { -4056.5, 417.837, 1.66593, 3217.01 };
