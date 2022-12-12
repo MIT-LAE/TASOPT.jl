@@ -450,7 +450,7 @@ Returns the total ``C_f`` for turbulent flat plate as a function of
 ``\\mathrm{Re}_l``
 
 ```math
-C_{f, turb} = \\frac{0.523}{(log(0.06\mathrm{Re}))^2} 
+C_{f, turb} = \\frac{0.523}{(log(0.06\\mathrm{Re}))^2} 
 ```
 
 """
