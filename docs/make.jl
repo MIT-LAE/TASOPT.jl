@@ -1,3 +1,6 @@
+using Pkg
+Pkg.activate("../")
+
 push!(LOAD_PATH, "../src")
 
 include("../src/sizing/wsize.jl")
