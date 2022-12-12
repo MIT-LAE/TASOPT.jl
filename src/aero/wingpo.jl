@@ -5,11 +5,12 @@
 
 Calculates wing root loading po to balance  net load 
 
-``N*W - Lhtail 2*∫̃p(η) dy + 2*ΔL₀ + 2ΔLₜ = N*W - (Lhtail)``.
+``N*W - L_{h tail} \times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail})``.
 
 
 # Inputs
-- `b::Float64`, `bs::Float64`, `bo::Float64`: span, panel break location, wing root location.
+- `b::Float64`: span in [m]
+- `bs::Float64`, `bo::Float64`: panel break location, wing root location.
 - `λt::Float64`, `λs::Float64` : inner and outer taper ratios.
 - `γt::Float64`,`γs::Float64` : inner and outer local cl factors - γt = rclt*λt etc.
 - `AR::Float64`, `N::Float64`, `W::Float64`, `Lhtail` : Aspect ratio, Load factor, weight and H-tail lift.
