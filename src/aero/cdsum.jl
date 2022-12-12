@@ -443,6 +443,17 @@ function cditrp(pari,parg,para)
       return
 end # cditrp
 
+"""
+      cfturb(Re)
+
+Returns the total ``C_f`` for turbulent flat plate as a function of
+``\\mathrm{Re}_l``
+
+```math
+C_{f, turb} = \\frac{0.523}{(log(0.06\mathrm{Re}))^2} 
+```
+
+"""
 function cfturb(Re)
 # -------------------------------------------------------------
 #     Returns total Cf for turbulent flat plate, versus Re_l
