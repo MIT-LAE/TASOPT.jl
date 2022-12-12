@@ -12,6 +12,10 @@ axisol!(xnose,xend,xblend1,xblend2, Amax,
 ```
 
 ```@docs
+cfturb(Re)
+```
+
+```@docs
 blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
