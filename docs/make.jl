@@ -19,7 +19,7 @@ include("../src/aero/airfun2.jl")
 using Documenter
 
 makedocs(
-    sitename = "TAESOPT.jl document",
+    sitename = "TAESOPT.jl documentation",
     pages = [ "Home" => "index.md", 
     "Aerodynamics" => Any[
         "aero/geometry.md",
