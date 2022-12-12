@@ -2,12 +2,13 @@
     airtable(fname)
 
 
-Reads airfoil file and outputs a matrix and spline objects
+Reads airfoil file and outputs a matrix and spline objects.
 
 nAfun  = 3 usually:
     cdf(Ma, cl, τ)
     cdp(Ma, cl, τ)
      cm(Ma, cl, τ)
+
 """
 function airtable(fname)
 

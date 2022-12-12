@@ -1,68 +1,65 @@
 """
------------------------------------------------------------------
-     Axisymmetric boundary layer + wake calculation routine.
-     Uses specified inviscid velocity, corrects for viscous
-     displacement to allow calculation of separated flow.
+    blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+     
+Axisymmetric boundary layer + wake calculation routine.
+Uses specified inviscid velocity, corrects for viscous
+displacement to allow calculation of separated flow.
 
-  Inputs
-  ------
+# Inputs
 
-    ndim    physical array dimension
-    n       number of BL+wake points
-    ite     index of trailing edge point, start of wake
-    xi(.)   arc length array (BL coordinate)
-    bi(.)   lateral width of BL (body perimeter, zero for wake)
-             = 1 for 2D
-    rni(.)  dr/dn
-             = 0 for 2D
-    uinv(.) inviscid velocity
-    Reyn    Reynolds number,  rho_ref u_ref l_ref / mu_ref
-    Mach    Mach number    ,  u_ref / a_ref
-    fexcr   excrescence multiplier, applied to wall Cf 
-             = 1 for smooth wall
+- `ndim::Integer`: physical array dimension.
+- `n::Integer`: number of BL+wake points.
+- `ite::Integer`: index of trailing edge point, start of wake.
+- `xi::Array{Float64}`: arc length array (BL coordinate).
+- `bi::Array{Float64}`: lateral width of BL (body perimeter, zero for wake) = 1 for 2D.
+- `rni::Array{Float64}`: ``dr/dn`` ``= 0`` for 2D.
+- `uinv::Array{Float64}`: inviscid velocity.
+- `Reyn::Float64`: Reynolds number,  ``rho_ref u_ref l_ref / mu_ref``.
+- `Mach::Float64`: Mach number,  ``u_ref / a_ref``.
+- `fexcr::Float64`: excrescence multiplier, applied to wall `Cf` ``= 1`` for smooth wall.
 
-  Assumed units for all quantities:
-    l_ref   same unit as used for input xi,bi
-    u_ref   freestream velocity
-    a_ref   freestream speed of sound
-    rho_ref freestream density
-    mu_ref  freestream viscosity
+Assumed units for all quantities:
+- `l_ref`: same unit as used for input `xi`,`bi`.
+- `u_ref`: freestream velocity.
+- `a_ref`: freestream speed of sound.
+- `rho_ref`: freestream density.
+- `mu_ref`: freestream viscosity.
     
-  Outputs
-  -------
-    uei[i]  edge velocity, ( = uinv[i] + displacement correction )
-    dsi[i]  displacement thickness (``\\delta^*``)
-    thi[i]  momentum thickness     (``\\theta``)
-    tsi[i]  kinetic energy thickness (``\\theta^*``)
-    dci[i]  density flux thickness   (``\\delta^{**}``)
-    cfi[i]  skin friction coefficient, normalized with local rho,u
-    cdi[i]  dissipation coefficient  , normalized with local rho,u
-    cti[i]  max shear-stress coefficient, normalized with local rho,u
-    hki[i]  kinematic shape parameter
-    phi[i]  integrated dissipation
+# Outputs
+- `uei::Array{Float64}`:  edge velocity, ( ``= uinv[i] + displacement correction`` ).
+- `dsi::Array{Float64}`:  displacement thickness (``\\delta^*``).
+- `thi::Array{Float64}`:  momentum thickness     (``\\theta``).
+- `tsi::Array{Float64}`:  kinetic energy thickness (``\\theta^*``).
+- `dci::Array{Float64}`:  density flux thickness   (``\\delta^{**}``).
+- `cfi::Array{Float64}`:  skin friction coefficient, normalized with local `rho`, `u`.
+- `cdi::Array{Float64}`:  dissipation coefficient  , normalized with local `rho`,`u`.
+- `cti::Array{Float64}`:  max shear-stress coefficient, normalized with local `rho`,`u`.
+- `hki::Array{Float64}`:  kinematic shape parameter.
+- `phi::Array{Float64}`:  integrated dissipation.
 
 
-  Other outputs of interest can be computed as follows.
-  These are in units of l_ref, rho_ref, u_ref
+Other outputs of interest can be computed as follows.
+  These are in units of `l_ref`, `rho_ref`, `u_ref`
 
-  Effective perimeter  : beff  =  bi  +  2 pi dsi rni
-  Edge density         : rhi = (1 + 0.5*(gam-1)*Mach^2*(1.0-uei^2))^(1/(gam-1))
-  Total mass defect    : mdef =  rhi uei   dsi beff
-  Total mom. defect    : Pdef =  rhi uei^2 thi beff
-  Total KE defect      : Edef =  rhi uei^3 tsi beff / 2
-  Wall shear force/span: tw b =  rhi uei^2 cfi beff / 2
-  Dissipation integral : Diss =  rhi uei^3 cdi beff
+- `beff`: Effective perimeter,  ``bi  +  2 pi dsi rni``.
+- `rhi`: Edge density, ``(1 + 0.5*(gam-1)*Mach^2*(1.0-uei^2))^(1/(gam-1))``.
+- `mdef`: Total mass defect, ``rhi uei   dsi beff``.
+- `Pdef`: Total mom. defect, ``rhi uei^2 thi beff``.
+- `Edef`: Total KE defect, ``rhi uei^3 tsi beff / 2``.
+- `rhi`: Wall shear force/span, ``tw b =   uei^2 cfi beff / 2``.
+- `Diss`: Dissipation integral, ``rhi uei^3 cdi beff``.
 
-  Body profile drag Dp is the far-downstream momentum defect Pinf,
-  best obtained by applying Squire-Young to the last wake point i = n :
+Body profile drag `Dp` is the far-downstream momentum defect `Pinf`,
+best obtained by applying Squire-Young to the last wake point ``i = n`` :
 
-   Pend = rhi*uei^2 * thi * beff
-   Hend = dsi/thi
-   Hinf = 1.0 + (gam-1)*Mach^2
-   Havg = 0.5*(Hend+Hinf)
-   Pinf = Pend * uei^Havg  =  Dp
+- ``Pend = rhi*uei^2 * thi * beff``
+- ``Hend = dsi/thi``
+- ``Hinf = 1.0 + (gam-1)*Mach^2``
+- ``Havg = 0.5*(Hend+Hinf)``
+- ``Pinf = Pend * uei^Havg  =  Dp``
 
------------------------------------------------------------------
+See Appendix E.4 of TASOPT docs.
+See also [`blsys`](@ref) and [`blvar`](@ref).
 """
 function blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
