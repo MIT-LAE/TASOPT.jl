@@ -1,14 +1,19 @@
 # Drag calculations
 
+The key drag contributions are assumed to come from the fuselage, wing and tail surfaces and the lift induced drag calcualted at the trefftz plane
+
+
+## Axisymmetric fuselage drag 
+The fuselage profile drag is determined by a quasi-axisymmetric coupled viscous-inviscid calculation. See "Simplified Viscous/Inviscid Calculation for Nearly-Axisymmetric Bodies" by M. Drela.
+
+This method does not require reliance on any wetted area approximations or fineness-ratio correlations.
+
 ```@docs
-cdsum!(pari,parg,para,pare, icdfun)
 
 axisol!(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
-
-cfturb(Re)
 
 blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
@@ -32,6 +37,16 @@ blvar(simi,lami,wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
 fusebl!(pari, parg, para, ip)
+```
+
+## Total drag calculation
+```@docs
+cdsum!(pari,parg,para,pare, icdfun)
+```
+
+## Wing and tail surfaces
+```@docs
+airtable(fname)
 
 surfcd2(
       S,
@@ -48,12 +63,18 @@ surfcd(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
+```
 
-airtable(fname)
-
+## Treftz plane drag calculation
+```@docs
 trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
 	Lspec,CLsurfsp,)
+```
+
+## Other utilites
+```@docs
+cfturb(Re)
 ```
