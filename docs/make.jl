@@ -14,7 +14,17 @@ include("../src/aero/wingsc.jl")
 include("../src/aero/wingpo.jl")
 include("../src/aero/surfcm.jl")
 include("../src/aero/surfcd.jl")
+
+include("../src/utils/spline.jl")
+
 include("../src/aero/airfun2.jl")
+include("../src/aero/airtable2.jl")
+
+## Structures
+#include sizing of surfaces
+include("../src/structures/surfdx.jl")
+include("../src/structures/surfw.jl")
+include("../src/structures/tailpo.jl")
 
 using Documenter
 
@@ -26,4 +36,7 @@ makedocs(
         "aero/lift.md",
         "aero/drag.md",
         "aero/moment.md",
+    ],
+    "Structures" => Any[
+        "structures/wing.md",
     ],])
