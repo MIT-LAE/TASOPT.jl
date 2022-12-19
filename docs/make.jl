@@ -26,5 +26,6 @@ makedocs(
         "propulsion/propsys.md",
     ],
     "Stability" => "balance/balance.md",
+    "Sizing" => "sizing/sizing.md",
     "Miscellaneous" => "misc/misc.md"
     ])
