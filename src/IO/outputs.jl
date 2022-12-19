@@ -77,7 +77,12 @@ function weight_buildup(parg; io=stdout)
 
     @printf(io,"ηtank     = %3.1f %% \n\n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
 end
+"""
+    aero(parg, para; io = stdout)
 
+`aero` returns a summary of all aerodynamic properties 
+of the aircraft
+"""
 function aero(parg, para; io = stdout)
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
@@ -107,6 +112,7 @@ function aero(parg, para; io = stdout)
     @printf(io, "CDBLIw × Sref = %6.5f m²\n\n", parg[igS]*para[iadCDBLIw, ipcruise1])
 
 end
+
 """
 `geometry` prints out the layout of the aircraft
 """
@@ -165,6 +171,14 @@ function geometry(parg; io = stdout)
 
 end
 
+"""
+    stickfig(parg,pari,parm; ax = nothing, label_fs = 16)
+
+`stickfig` plots a "stick figure" airplane on the axis `ax` if provided 
+(else a new axis is created). This is used in conjuction with other functions
+like [`plot_details`](@ref) to create summary plots to track progress of optimization
+or present results.
+"""
 function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
 
     # Wing
@@ -576,6 +590,12 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
     return ax
 end
 
+"""
+    plot_details(parg, pari, para, parm; ax = nothing)
+
+`plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
+weight and drag buildup stacked bar charts to present results.
+"""
 function plot_details(parg, pari, para, parm; ax = nothing)
         ## Create empty plot
         if ax === nothing
@@ -726,6 +746,9 @@ function plot_details(parg, pari, para, parm; ax = nothing)
 
 end
 
+"""
+Simple utility function to label bars in a stacked bar chart
+"""
 function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
     for (i,bar) in enumerate(Bararray)
         w, h = bar[1].get_width(), bar[1].get_height()
@@ -959,7 +982,9 @@ function plot737compare(;weightdetail= true, fracs = false)
     end
 
 """
-Moment and shear diagrams
+    MomentShear(parg)
+
+Plot moment and shear diagrams
 """
 function MomentShear(parg)
     co = parg[igco]
@@ -1015,7 +1040,9 @@ function MomentShear(parg)
 end
 
 """
-High resolution plot for publications
+    high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, save_name = nothing)
+
+Plot high resolution figure for publications
 """
 function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, save_name = nothing)
 
