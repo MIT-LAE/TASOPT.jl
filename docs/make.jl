@@ -26,6 +26,14 @@ include("../src/structures/surfdx.jl")
 include("../src/structures/surfw.jl")
 include("../src/structures/tailpo.jl")
 
+#include fuselage sizing
+include("../src/structures/fuseW.jl")
+
+#Hydrogen tank related code
+include("../src/structures/tankWmech.jl")
+include("../src/structures/tankWthermal.jl")
+include("../src/structures/tanksize.jl")
+
 using Documenter
 
 makedocs(
@@ -39,4 +47,7 @@ makedocs(
     ],
     "Structures" => Any[
         "structures/wing.md",
-    ],])
+        "structures/fuselage.md",
+        "structures/fueltanks.md"
+    ],
+    ])

@@ -1,5 +1,19 @@
 """
-fuseW sizes the fuselage and calculates the component weights
+      fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
+      fstring,fframe,ffadd,deltap,
+      Wpwindow,Wppinsul,Wppfloor,
+      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
+      bv,lambdav,nvtail,
+      Rfuse,dRfuse,wfb,nfweb,lambdac,
+      xnose,xshell1,xshell2,xconend,
+      xhtail,xvtail,
+      xwing,xwbox,cbox,
+      xfix,xapu,xeng,xfuel,
+      hfloor,
+      sigskin,sigbend, rhoskin,rhobend, 
+      Eskin,Ebend,Gskin
+
+`fusew` sizes the fuselage and calculates the component weights
 
 Inputs: 
 
