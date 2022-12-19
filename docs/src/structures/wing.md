@@ -1,4 +1,4 @@
-# Wing sturctural calculations
+# Wings and tails
 
 ```@docs
 surfdx
