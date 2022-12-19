@@ -4,7 +4,7 @@
 Makes one of three (or none) changes to achieve pitch trim
 calculates resulting CG, CP, NP locations
 
-  Inputs:  pari[.]  integer fla array
+  Inputs:  pari[.]  integer flag array
            parg[.]  geometry parameter array
            para[.]  aero parameter array
            rfuel    fuel fraction   Wfuel_actual/Wfuel_MTOW
@@ -25,12 +25,7 @@ calculates resulting CG, CP, NP locations
 
 """
 function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
-#      implicit real (a-h,l-z)
-#
-#      include 'index.inc'
-#      integer pari[iitotal]
-#      real parg[igtotal], para[iatotal]
-#
+
       iengloc = pari[iiengloc]
 
       # Unpack weights
@@ -233,8 +228,6 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       para[iaxCP] = xCP
       para[iaxNP] = xNP
 
-#     call tadd(time0,t_balance)
-
       return
       end # balance
 
@@ -264,23 +257,6 @@ Sets horizontal tail area and wing position to simultaneously:
 """
 function htsize(pari,parg,paraF,paraB,paraC)
 
-#      implicit real (a-h,l-z)
-#
-#      include 'index.inc'
-#      integer pari[iitotal]
-#      real parg[igtotal]
-#      real paraF(iatotal),
-#	paraB(iatotal),
-#	paraC(iatotal)
-#
-#      include 'constants.inc'
-#
-#      real a[2,2], r[2]
-#      real a$[2,2], r$[2]
-#      character*2 ss1, ss2
-#
-#      include 'time.inc'
- 
       itmax =  10 
       toler = 1.0e-7 
       
@@ -656,14 +632,6 @@ The alternative 2D search for rfuel,rpay is kinda ugly,
 and unwarranted in practice.
 """
 function cglpay(parg)
-
-#
-#      include 'index.inc'
-#      real parg[igtotal]
-#
-#      include 'constants.inc'
-#
-#      real ξ[2], sgn[2], rpay[2], xcg[2]
 
       Wpay   = parg[igWpay ]
       Wfuel  = parg[igWfuel]
