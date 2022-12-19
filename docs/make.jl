@@ -24,5 +24,6 @@ makedocs(
     ],
     "Propulsion systems" => Any[
         "propulsion/propsys.md",
-    ]
+    ],
+    "Stability" => "balance/balance.md",
     ])
