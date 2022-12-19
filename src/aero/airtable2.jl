@@ -3,11 +3,14 @@
 
 
 Reads airfoil file and outputs a matrix and spline objects.
+The airfoil data is stored as a function of three variables, typically
+    Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord ratio ``\\tau``.
 
-nAfun  = 3 usually:
     cdf(Ma, cl, τ)
+
     cdp(Ma, cl, τ)
-     cm(Ma, cl, τ)
+    
+    cm(Ma, cl, τ)
 
 """
 function airtable(fname)
