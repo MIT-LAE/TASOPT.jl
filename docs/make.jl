@@ -34,6 +34,9 @@ include("../src/structures/tankWmech.jl")
 include("../src/structures/tankWthermal.jl")
 include("../src/structures/tanksize.jl")
 
+#include propsys
+include("../src/propsys/NPSS_functions.jl")
+
 using Documenter
 
 makedocs(
@@ -50,4 +53,7 @@ makedocs(
         "structures/fuselage.md",
         "structures/fueltanks.md"
     ],
+    "Propulsion systems" => Any[
+        "propulsion/propsys.md",
+    ]
     ])
