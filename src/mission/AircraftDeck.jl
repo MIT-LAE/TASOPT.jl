@@ -1,8 +1,11 @@
 # This file will help print useful aircraft level parameters/ performance 
 
 """
-Cruise characteristics
-Aircraft deck for contrail avoidence
+    cruisechar(io, name, fracW0, M0, FL, TAS, 
+    FFmax, FFcrz, ROC, EGT, Tt4crz, Tt4crzmax, crzFAR)
+
+Cruise characteristics of a sized aircraft. 
+Outputs an aircraft deck for contrail avoidence simulations.
 """
 function cruisechar(io, name, fracW0, M0, FL, TAS, FFmax, FFcrz, ROC, EGT, Tt4crz, Tt4crzmax, crzFAR)
     FLcutoff = 150
@@ -34,6 +37,9 @@ function cruisechar(io, name, fracW0, M0, FL, TAS, FFmax, FFcrz, ROC, EGT, Tt4cr
 
 end
 
+"""
+Helper function to print variables in a given format
+"""
 function print_variables(io, W_lst, FL, FLcutoff, Var, Varname)
     println(io,"")
     println(io, @sprintf("%15s  %-7s%6s%7s", Varname, "--","Wfracs", "--"))

@@ -1,3 +1,7 @@
+"""
+`odperf!` runs the aircraft in off-design mode to generate a `BADA` like 
+`PTF` file for use in `AEIC`.
+"""
 function odperf!(pari, parg, parm, para, pare, Wfrac, FL, 
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
