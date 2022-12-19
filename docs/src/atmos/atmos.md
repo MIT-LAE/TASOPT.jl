@@ -1,0 +1,5 @@
+# Atmospheric properties
+
+```@docs
+atmos
+```

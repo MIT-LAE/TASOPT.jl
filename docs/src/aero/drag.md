@@ -10,13 +10,13 @@ This method does not require reliance on any wetted area approximations or finen
 
 ```@docs
 
-axisol!(xnose,xend,xblend1,xblend2, Amax, 
+aerodynamics.axisol!(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
 
-blsys(simi,lami,wake,direct, Mach, uinv,hksep,
-                      x,b,rn,th,ds,ue,
+aerodynamics.blsys(simi,lami,wake,direct, Mach, uinv,
+                      hksep, x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
                       hc, hc_th, hc_ds, hc_ue,
@@ -31,9 +31,9 @@ blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
 
-blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
-blvar(simi,lami,wake, Reyn,Mach, fexcr,
+aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
 fusebl!(pari, parg, para, ip)
@@ -46,9 +46,9 @@ cdsum!(pari,parg,para,pare, icdfun)
 
 ## Wing and tail surfaces
 ```@docs
-airtable(fname)
+aerodynamics.airtable(fname)
 
-surfcd2(
+aerodynamics.surfcd2(
       S,
       b, bs, bo,
       λt, λs, γt, γs,
@@ -59,7 +59,7 @@ surfcd2(
       AMa, Acl, Atau, ARe, A,
       fduo, fdus, fdut)
 
-surfcd(S,
+aerodynamics.surfcd(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
@@ -67,7 +67,7 @@ surfcd(S,
 
 ## Treftz plane drag calculation
 ```@docs
-trefftz1(nsurf, npout, npinn, npimg,
+aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
@@ -75,6 +75,17 @@ trefftz1(nsurf, npout, npinn, npimg,
 ```
 
 ## Other utilites
+
 ```@docs
+aerodynamics.cfturb
+```
+```@setup cfturb
+include("../../../src/aero/cdsum.jl")
+
+```
+For example, the turbulent flat plate ``C_f`` for a ``Re`` of ``10e6`` can be calculated as follows:
+
+```@example cfturb
+Re = 10e6
 cfturb(Re)
 ```
