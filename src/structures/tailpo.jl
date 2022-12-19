@@ -1,5 +1,9 @@
 """
-Calculate stabilizer area and root chord for tail
+    tailpo(S, AR, λa, qne, CLmax)
+
+Calculate stabilizer span, root chord and root loading based on the 
+never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
+
 """
 function tailpo(S, AR, λa, qne, CLmax)
 

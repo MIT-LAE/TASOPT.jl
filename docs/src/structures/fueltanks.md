@@ -6,7 +6,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
 ```@docs
 tanksize
-tankWmech
-tankWthermal
+structures.tankWmech
+structures.tankWthermal
 
 ```
