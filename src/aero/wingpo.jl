@@ -1,18 +1,28 @@
 """
-Calculates wing root loading po to balance 
-net load  N*W - Lhtail
-2*∫̃p(η) dy + 2*ΔL₀ + 2ΔLₜ = N*W - (Lhtail) Eqn. 154 to 160 of TASOPT docs
+    wingpo(b, bs, bo, λt, 
+    λs, γt, γs, AR, N, 
+    W, Lhtail, fLo, fLt)
 
-## Inputs: 
-- `b`, `bs`, `bo`: span, panel break location, wing root location
-- `λt`, `λs` : inner and outer taper ratios
-- `γt`,`γs` : inner and outer local cl factors - γt = rclt*λt etc.
-- `AR`, `N`, `W`, `Lhtail` : Aspect ratio, Load factor, weight and H-tail lift
-- `fLo`, `flt` : wing root and tip load adjustment factors
+Calculates wing root loading po to balance net load 
 
-## Outputs:
+```math
+N*W - L_{h tail} \\times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
+```
 
-- `po` : wing's root loading magnitude
+
+# Inputs
+- `b::Float64`: span in [m]
+- `bs::Float64`: panel break location [m]
+- `bo::Float64`:  wing root location [m]
+- `λt::Float64`, `λs::Float64` : inner and outer taper ratios.
+- `γt::Float64`,`γs::Float64` : inner and outer local ``c_l`` factors - ``\\gamma_t = r_{c_l,t}\\times \\lambda_t`` etc.
+- `AR::Float64`, `N::Float64`, `W::Float64`, `Lhtail` : Aspect ratio, Load factor, weight and H-tail lift.
+- `fLo::Float64`, `flt::Float64` : wing root and tip load adjustment factors.
+
+# Outputs
+- `po::Float64`: wing's root loading magnitude.
+
+See Eqn. 154 to 160 of TASOPT docs.
 """
 function wingpo(b, bs, bo,
                λt, λs, γt, γs,
