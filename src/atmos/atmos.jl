@@ -3,8 +3,12 @@ module atmosphere
 export atmos
 
 """
+    atmos(h)
+    
 Atmospheric functions ` T(h)`, `ρ(h)` etc
-valid to `h`=20km, `p(h)` valid to `h`=70km
+valid to `h`=20km, `p(h)` valid to `h`=70km.
+
+Also calculates viscosity using Sutherland's approach
      
 - h   = km ASL
 - T   = Kelvin
