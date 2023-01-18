@@ -645,7 +645,7 @@ Lconv = false # no convergence yet
                         feng = 0.08
                         WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
                     end
-                    
+
                     Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain] 
                     parg[igWMTO] = WMTO
                     parg[igWeng] = Weng
@@ -769,7 +769,7 @@ Lconv = false # no convergence yet
 
             po = wingpo(b,bs,bo,
                         λt, λs, γt, γs,
-                        AR, Nlift, WMTO, Lhtail, fLo, fLt)
+                        AR, Nlift, BW, Lhtail, fLo, fLt)
          
             # Wing structure
             # -----------------------------------------
