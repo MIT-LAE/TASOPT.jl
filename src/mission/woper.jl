@@ -1,8 +1,7 @@
 """
 `woper` runs the aircraft through input off-design missions
 """
-function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, 
-    NPSS_TS::Base.Process, NPSS_Fan::Base.Process, NPSS_AftFan::Base.Process, NPSS_PT, NPSS)
+function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, NPSS)
 
     # # Initialze some variables
     # ifirst = true
@@ -222,42 +221,6 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng,
 # -------------------------------------------------------    
 #                   Weight loop
 # -------------------------------------------------------    
-# # Run EDB points
-# ip = ipstatic 
-# ρ0 = pare[ierho0, ip]
-# u0 = pare[ieu0  , ip] 
-# ifirst = true
-
-# Wf_EDB = [1.293, 1.213, 1.086, 1.031, 1.004, 0.986, 0.896, 0.895, 0.842, 0.832,
-# 	0.746, 0.702, 0.343, 0.331, 0.308, 0.291, 0.268, 0.256, 0.11 , 0.108,
-# 	0.103, 0.099, 0.094, 0.092]
-
-# kk = 1
-# RMS_error = 0
-#     if NPSS_PT
-#             for BaseThrust in 2*27290*4.44822*[1.        , 0.96375618, 0.88632619, 0.85      , 0.83196046, 0.81919275,
-#                   0.75453048, 0.75337727, 0.71416804, 0.70716639, 0.64135091, 0.60704283,
-#                   0.3       , 0.28912685, 0.26589786, 0.24958814, 0.22635914, 0.21425041,
-#                   0.07      , 0.06746293, 0.06204283, 0.05823723, 0.05281713, 0.04999176]
-
-#                   NPSS_success, Ftotal, heatexcess, 
-#                   mdotf, EINOx1, FAR, Mtip, Tblade, Tt3,
-#                   OPR, BPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
-#                   BaseThrust, pare[ieTt41, ip], ifirst, parg, parpt, pare, -1)
-#                   #HACK to allow first point to converge and then actually run it properly ifirst is then set to false
-#                   ifirst = false
-#                   NPSS_success, Ftotal, heatexcess, 
-#                   mdotf, EINOx1, FAR, Mtip, Tblade, Tt3,
-#                   OPR, BPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
-#                   BaseThrust, pare[ieTt41, ip],  ifirst, parg, parpt, pare, -1)
-                
-#                   RMS_error += (1-mdotf/2/Wf_EDB[kk])^2
-#                   kk += 1
-#             end
-
-#       RMS_error = (100*sqrt(RMS_error/length(Wf_EDB)))
-#     end
-
   @inbounds for  iterw = 1:itermax
 
     if iterw == itermax
@@ -284,7 +247,7 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng,
     para[iaReunit, ip] = Mach*a0 *ρ0/μ0
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, NPSS_AftFan, false, NPSS_PT, NPSS, true, false)
+    time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
 #-------------------------------------------------------------------------
 
 # Convergence tests
