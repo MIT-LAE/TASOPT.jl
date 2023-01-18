@@ -73,7 +73,13 @@ NPSS_PT = true
 
     # Unpack payload and range for design mission - this is the mission that the structures are sized for
         Rangetot = parm[imRange]
-        Wpay     = parm[imWpay ]
+        Wpay     = parm[imWpay ] #Typical payload
+        Wpaymax  = parg[igWpaymax] # Max payload
+        # if Wpay or Wpaymax is unset
+        if (Wpaymax == 0) 
+            println("Max payload weight was not set, setting Wpaymax = Wpay")
+            Wpaymax = parg[igWpaymax] = max(Wpay, Wpaymax)
+        end
     # Store the design mission in the geometry array as well
         parg[igRange] = Rangetot
         parg[igWpay ] = Wpay
