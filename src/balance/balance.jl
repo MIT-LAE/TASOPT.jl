@@ -38,11 +38,19 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       Wvtail = parg[igWvtail]
       Weng   = parg[igWeng  ]
 
-      Wtesys = parg[igWtesys ]
-     xWtesys = parg[igxWtesys]
+      if pari[iiengtype] == 0
+             Wtesys = parg[igWtesys ]
+            xWtesys = parg[igxWtesys]
 
-      Wftank = parg[igWftank]
-     xWftank = parg[igxWftank]
+             Wftank = parg[igWftank]
+            xWftank = parg[igxWftank]
+      else
+             Wtesys = 0.0
+            xWtesys = 0.0
+       
+             Wftank = 0.0
+            xWftank = 0.0
+      end 
 
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
@@ -77,6 +85,10 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       Sh1 = Sh
 
 #---- total weight, weight moment, and derivatives
+      if pari[iiengtype] == 1
+            Wtesys = 0
+            Wftank = 0
+      end
       W  = rpay *Wpay +
 	 rfuel*Wfuel +
 	 Wfuse +
@@ -90,6 +102,21 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 	 Whpesys +
 	 Wlgnose +
 	 Wlgmain
+
+      #  println("rpay = $rpay, rufel = $rfuel;
+      #   rpay *Wpay  = $(rpay *Wpay ) 
+	#  rfuel*Wfuel = $(rfuel*Wfuel ) 
+	#  Wfuse  = $(Wfuse  ) 
+      #  Wtesys = $(Wtesys ) 
+      #  Wftank = $(Wftank ) 
+	#  Wwing  = $(Wwing  ) 
+	#  Wstrut = $(Wstrut ) 
+	#  Whtail*Sh/Sh1 = $(Whtail*Sh/Sh1) 
+	#  Wvtail  = $(Wvtail  ) 
+	#  Weng    = $(Weng    ) 
+	#  Whpesys = $(Whpesys ) 
+	#  Wlgnose = $(Wlgnose ) 
+	#  Wlgmain = $(Wlgmain )")
 
       W_Sh = Whtail  /Sh1
 
@@ -125,6 +152,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
       CMh1 = para[iaCMh1]
       CL  = para[iaCL ]
       CLh = para[iaCLh]
+      # println("before itrim $(para[iaCLh]), CL = $CL")
       CMVf1 = parg[igCMVf1]
       CLMf0 = parg[igCLMf0]
 
@@ -159,6 +187,7 @@ function balance(pari,parg,para,rfuel,rpay,ξpay, itrim)
 #----- ... adjust horizontal tail CLh
        delCLh = -Res/Res_CLh
        CLh = CLh + delCLh
+      #  println("inside itrim = 1: $delCLh, $CLh")
        cCM = cCM + cCM_CLh*delCLh
        para[iaCLh] = CLh
 
