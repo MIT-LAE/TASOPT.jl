@@ -1253,7 +1253,8 @@ Lconv = false # no convergence yet
                 while (Ftotal < Fdes)
         
                     FnGuess = Fdes * Fnfrac
-                    NPSSsuccess, heatexcess, mdotf_tot, EINOx1, FAR, Tt3, OPR, Wc3, EGT, Snace1 = NPSS_TFsys(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], FnGuess, parpt[ipt_Tt41], parpt[ipt_pifan], ifirst, parg, parpt, mofft, Pofft, Elec_PowerTot)
+                    NPSSsuccess, heatexcess, mdotf_tot, 
+                    EINOx1, FAR, Tt3, OPR, Wc3, EGT, Snace1 = NPSS_TFsys(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], FnGuess, parpt[ipt_Tt41], parpt[ipt_pifan], ifirst, parg, parpt, mofft, Pofft, Elec_PowerTot)
         
                     if NPSSsuccess == 0.0
                         break
@@ -1418,29 +1419,53 @@ u0 = pare[ieu0  , ip]
 Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
 Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 ifirst = true
-    if NPSS_PT
+    if pari[iiengtype] == 0 
         NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
         mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
         OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
         0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+        
         #HACK to allow first point to converge and then actually run it properly ifirst is then set to false
         ifirst = false
         NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
         mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
         OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
         0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        pare[iedeNOx, ip] = deNOx
+        pare[ieEINOx1, ip] = EINOx1
+        pare[ieEINOx2, ip] = EINOx2
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= η
+        pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+        pare[ieHexcess, ip] = heatexcess
+
+    else
+        NPSS_success, Ftotal, heatexcess, 
+        mdotf, EINOx1, FAR, Tt3,
+        OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
+        0.0, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 100.0, 0.0, 0.0)
+        #HACK to allow first point to converge and then actually run it properly ifirst is then set to false
+        ifirst = false
+        NPSS_success, Ftotal, heatexcess, 
+        mdotf, EINOx1, FAR, Tt3,
+        OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
+        0.0, pare[ieTt4, ip],  ifirst, parg, parpt, pare, ip, 100.0, 0.0, 0.0)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        pare[ieEINOx1, ip] = EINOx1
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= 0.0
+        pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+        pare[ieHexcess, ip] = heatexcess
     end
-    pare[ieFe, ip] = Ftotal
-    pare[ieOPR, ip] = OPR
-    pare[ieTt3, ip] = Tt3
-    pare[ieWc3, ip] = Wc3
-    pare[iedeNOx, ip] = deNOx
-    pare[ieEINOx1, ip] = EINOx1
-    pare[ieEINOx2, ip] = EINOx2
-    pare[iemdotf, ip] = mdotf
-    pare[ieemot:ieethermal, ip] .= η
-    pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-    pare[ieHexcess, ip] = heatexcess
 
 ip = iprotate
 ρ0 = pare[ierho0, ip]
@@ -1448,23 +1473,43 @@ u0 = pare[ieu0  , ip]
 Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0  
 Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0  # Assume 2 engines
 
-    if NPSS_PT
+    if pari[iiengtype] == 0 
         NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
         mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
         OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
         0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        pare[iedeNOx, ip] = deNOx
+        pare[ieEINOx1, ip] = EINOx1
+        pare[ieEINOx2, ip] = EINOx2
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= η
+        pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+        pare[ieHexcess, ip] = heatexcess
+
+    else
+        NPSS_success, Ftotal, heatexcess, 
+        mdotf, EINOx1, FAR, Tt3,
+        OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
+        0.0, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 100.0, 0.0, 0.0)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        # pare[iedeNOx, ip] = deNOx
+        pare[ieEINOx1, ip] = EINOx1
+        # pare[ieEINOx2, ip] = EINOx2
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= 0.0
+        pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+        pare[ieHexcess, ip] = heatexcess
     end
-    pare[ieFe, ip] = Ftotal
-    pare[ieOPR, ip] = OPR
-    pare[ieTt3, ip] = Tt3
-    pare[ieWc3, ip] = Wc3
-    pare[iedeNOx, ip] = deNOx
-    pare[ieEINOx1, ip] = EINOx1
-    pare[ieEINOx2, ip] = EINOx2
-    pare[iemdotf, ip] = mdotf
-    pare[ieemot:ieethermal, ip] .= η
-    pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-    pare[ieHexcess, ip] = heatexcess
+
 
 # BFL calculations/ Noise? / Engine perf 
 
