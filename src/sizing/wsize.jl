@@ -791,45 +791,89 @@ Lconv = false # no convergence yet
             
             # Fans, mot, inv centre of mass:
             # -----
-            dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
-            if parg[igneng] == 2
-                yi = [ηs*b/2]
-            else
-                yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
-            end
-            ηi = yi/(b/2)
-            ηo = bo/b
-            ci = zero(yi)
-            ys = ηs*b/2
-            nout = 0   # number of outboard engines
-            yout = 0.0 # avg. moment arm of outboard engines
-            yinn = 0.0 # avg. moment arm of inboard engines
-            for (i, η)  in enumerate(ηi)
-                if η <=ηs
-                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
-                    yinn += yi[i]
-                else
-                    nout += 1
-                    yout += yi[i] - ys
-                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
-                end
-            end
-            nin = parg[igneng] - nout
-            yout = yout/nout   
-            yinn = yinn/nin
-            parg[igyeout] = yout*1.5
-            parg[igyeinn] = yinn
-            parg[igneout] = nout
-
-            tanL = tan(parg[igsweep]*π/180.0)
             if pari[iiengtype] == 0
-                parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
-                parg[igxmot] = parg[igxfan] + 0.5
+                dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
+                if parg[igneng] == 2
+                    yi = [ηs*b/2]
+                else
+                    yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
+                end
+                ηi = yi/(b/2)
+                ηo = bo/b
+                ci = zero(yi)
+                ys = ηs*b/2
+                nout = 0   # number of outboard engines
+                yout = 0.0 # avg. moment arm of outboard engines
+                yinn = 0.0 # avg. moment arm of inboard engines
+                for (i, η)  in enumerate(ηi)
+                    if η <=ηs
+                        ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                        yinn += yi[i]
+                    else
+                        nout += 1
+                        yout += yi[i] - ys
+                        ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                    end
+                end
+                nin = parg[igneng] - nout
+                yout = yout/nout   
+            yout = yout/nout   
+                yout = yout/nout   
+            yout = yout/nout   
+                yout = yout/nout   
+                yinn = yinn/nin
+                parg[igyeout] = yout*1.5
+                parg[igyeinn] = yinn
+                parg[igneout] = nout
+
+                tanL = tan(parg[igsweep]*π/180.0)
+                if pari[iiengtype] == 0
+                    parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
+                    parg[igxmot] = parg[igxfan] + 0.5
+                else
+                    parg[igxfan] = 0.0
+                    parg[igxmot] = 0.0
+                end
             else
+                dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
+                if parg[igneng] == 2
+                    yi = ηs*b/2
+                else
+                    yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
+                end
+                ηi = yi/(b/2)
+                ηo = bo/b
+                ci = zero(yi)
+                ys = ηs*b/2
+                nout = 0.0   # number of outboard engines
+                yout = 0.0 # avg. moment arm of outboard engines
+                yinn = ηs*(b/2) # avg. moment arm of inboard engines
+                # for (i, η)  in enumerate(ηi)
+                #     if η <=ηs
+                #         ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                #         yinn += yi[i]
+                #     else
+                #         nout += 1
+                #         yout += yi[i] - ys
+                #         ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                #     end
+                # end
+                # nin = parg[igneng] - nout
+                ci = co*(1  + (λs -  1)*(ηs - ηo)/(ηs - ηo))
+                nin = parg[igneng]
+                # yout = yout/nout   
+                yinn = yinn/nin
+                parg[igyeout] = yout*1.5
+                parg[igyeinn] = yinn
+                parg[igneout] = nout
+
+                tanL = tan(parg[igsweep]*π/180.0)
+                # parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
+                # parg[igxmot] = parg[igxfan] + 0.5
+
                 parg[igxfan] = 0.0
                 parg[igxmot] = 0.0
             end
-                
             # -----
             # Weight of single (1) engine/ ducted fan assembly that consists of fan, gearbox and motor
             if (iwplan == 1)
@@ -969,7 +1013,7 @@ Lconv = false # no convergence yet
                 #  corrections for sweep and compressibility:
                 CLα = 2π*cosL/(sqrt(βn^2 + (2*cosL/AR)^2) + 2*cosL/AR)
                 # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
-                parg[igCMVf1] = parg[igfuseVol]/CLα
+                # parg[igCMVf1] = parg[igfuseVol]/CLα
 
             # Set tail CL derivative 
                 dϵdα   = parg[igdepsda]
@@ -1174,6 +1218,7 @@ Lconv = false # no convergence yet
                 cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), 1)
 
             # L/D and Design point thrust
+            # println("CD = ", para[iaCD,ip])
                 LoD = para[iaCL, ip]/para[iaCD, ip]
                 gamV = para[iagamV, ip]
                 W   = para[iafracW, ip] * WMTO
@@ -1198,7 +1243,7 @@ Lconv = false # no convergence yet
                 else
                     if pari[iiaircraftclass] == 737    
                         if Sys.iswindows()
-                            NPSS = startNPSS("NPSS_TurboFan/", "737.bat")
+                            NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "737.bat")
                         elseif Sys.islinux()
                             NPSS = startNPSS("NPSS_TurboFan/", "737.sh")
                         end
@@ -1239,7 +1284,7 @@ Lconv = false # no convergence yet
 
                 Elec_PowerTot = 0.0
 
-                NPSSsuccess = missing
+                NPSSsuccess = false
                 heatexcess = 0.0
                 mdotf_tot = 0.0
                 EINOx1 = 0.0
@@ -1273,7 +1318,7 @@ Lconv = false # no convergence yet
 
             end
 
-            if NPSSsuccess == 0.0
+            if !NPSSsuccess
                 println("NPSS failed to converge at design point")
                 wsize_fail = true
                 # endNPSS(NPSS)
