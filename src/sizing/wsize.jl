@@ -1216,7 +1216,7 @@ Lconv = false # no convergence yet
         # ----------------------
         #     Fly mission
         # ----------------------
-        time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, NPSS_PT, NPSS)
+        time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
         parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         # ----------------------
