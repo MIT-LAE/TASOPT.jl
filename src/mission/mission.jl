@@ -38,6 +38,12 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
         ifclose = pari[iifclose]
         ifuel   = pari[iifuel  ]
 
+        mofWpay = parg[igmofWpay]
+        mofWMTO = parg[igmofWMTO]
+        PofWpay = parg[igPofWpay]
+        PofWMTO = parg[igPofWMTO]
+
+
     # BLI
         fBLIf = parg[igfBLIf]
         DAfsurf = para[iaDAfsurf, ipcruise1]
@@ -332,7 +338,18 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             Vsound = pare[iea0, ip]
             cosg = cos(para[iagamV, ip])
             BW   = W + para[iaWbuoy, ip]
-            
+            Wpay = parg[igWpay]
+            neng = parg[igneng]
+                             
+            if pari[iiengtype] == 1
+                  initfanPCT = 80.0
+                  finalfanPCT = parg[igfanPCT]
+                  frac = float(ip - ipclimb1)/float(ipclimbn - ipclimb1)
+                  fanPCT  = initfanPCT*(1.0 - frac) + finalfanPCT*frac
+      
+                  mofft = (mofWpay*Wpay + mofWMTO*W) / neng
+                  Pofft = (PofWpay*Wpay + PofWMTO*W) / neng
+            end
 
             dgamV  = 1.0
             Ftotal = 0.0
@@ -371,21 +388,32 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
                   Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
                   Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
-         
-                  NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, 0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+                  if pari[iiengtype] == 0
+                        NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+                        mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, 0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+  
+                        pare[iedeNOx, ip] = deNOx
+                        pare[ieEINOx1, ip] = EINOx1
+                        pare[ieEINOx2, ip] = EINOx2
+                        pare[ieemot:ieethermal, ip] .= η
+                        pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+                        pare[ieHexcess, ip] = heatexcess
+                  else
+                        NPSS_success, Ftotal, heatexcess, 
+                        mdotf, EINOx1, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], Mach, 0.0, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, fanPCT, mofft, Pofft)
+     
+                        pare[ieEINOx1, ip] = EINOx1
+
+                        pare[ieemot:ieethermal, ip] .= 0.0
+                        pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+                        pare[ieHexcess, ip] = heatexcess
+                  end
 
                   ifirst = false
                   pare[ieOPR, ip] = OPR
                   pare[ieTt3, ip] = Tt3
                   pare[ieWc3, ip] = Wc3
-                  pare[iedeNOx, ip] = deNOx
-                  pare[ieEINOx1, ip] = EINOx1
-                  pare[ieEINOx2, ip] = EINOx2
                   pare[iemdotf, ip] = mdotf
-                  pare[ieemot:ieethermal, ip] .= η
-                  pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-                  pare[ieHexcess, ip] = heatexcess
 
                   DoL = para[iaCD, ip]/ para[iaCL, ip]
 
@@ -525,6 +553,18 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             W  = para[iafracW, ip]*WMTO
             BW = W + para[iaWbuoy, ip]
             F  = BW*(DoL + para[iagamV, ip])
+            Wpay = parg[igWpay]
+
+            if pari[iiengtype] == 1
+                  mofWpay = parg[igmofWpay]
+                  mofWMTO = parg[igmofWMTO]
+                  PofWpay = parg[igPofWpay]
+                  PofWMTO = parg[igPofWMTO]
+                  neng    = parg[igneng]
+      
+                  mofft = (mofWpay*Wpay + mofWMTO*W) / neng
+                  Pofft = (PofWpay*Wpay + PofWMTO*W) / neng
+            end
 
             Mach = pare[ieM0, ip]
             # Run powertrain [TODO] actually should run this to a required thrust not Tt4
@@ -533,20 +573,37 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
             Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, 0*pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+            if pari[iiengtype] == 0
+                  NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, 0*pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
 
-            pare[ieOPR, ip] = OPR
-            pare[ieTt3, ip] = Tt3
-            pare[ieWc3, ip] = Wc3
-            pare[iedeNOx, ip] = deNOx
-            pare[ieEINOx1, ip] = EINOx1
-            pare[ieEINOx2, ip] = EINOx2
-            pare[iemdotf, ip] = mdotf
-            pare[ieemot:ieethermal, ip] .= η
-            pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-            pare[ieHexcess, ip] = heatexcess
-            pare[ieFe, ip] = Ftotal
+                  pare[ieOPR, ip] = OPR
+                  pare[ieTt3, ip] = Tt3
+                  pare[ieWc3, ip] = Wc3
+                  pare[iedeNOx, ip] = deNOx
+                  pare[ieEINOx1, ip] = EINOx1
+                  pare[ieEINOx2, ip] = EINOx2
+                  pare[iemdotf, ip] = mdotf
+                  pare[ieemot:ieethermal, ip] .= η
+                  pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+                  pare[ieHexcess, ip] = heatexcess
+                  pare[ieFe, ip] = Ftotal
+
+            else
+                  NPSS_success, Ftotal, heatexcess, 
+                  mdotf, EINOx1, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 0.0, mofft, Pofft)
+                 
+                  ifirst = false
+                  
+                  pare[ieOPR, ip] = OPR
+                  pare[ieTt3, ip] = Tt3
+                  pare[ieWc3, ip] = Wc3
+                  pare[ieEINOx1, ip] = EINOx1
+                  pare[iemdotf, ip] = mdotf
+                  pare[ieemot:ieethermal, ip] .= 0.0
+                  pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+                  pare[ieHexcess, ip] = heatexcess
+            end
             
             # println("Cruise Ftotal, offdes = ", Ftotal)
             # println("Thrust req = ", F)
@@ -637,20 +694,33 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
             Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
+            if pari[iiengtype] == 0 
+                  NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
+                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
 
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
-
-            pare[ieOPR, ip] = OPR
-            pare[ieTt3, ip] = Tt3
-            pare[ieWc3, ip] = Wc3
-            pare[iedeNOx, ip] = deNOx
-            pare[ieEINOx1, ip] = EINOx1
-            pare[ieEINOx2, ip] = EINOx2
-            pare[iemdotf, ip] = mdotf
-            pare[ieemot:ieethermal, ip] .= η
-            pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-            pare[ieHexcess, ip] = heatexcess
+                  pare[ieOPR, ip] = OPR
+                  pare[ieTt3, ip] = Tt3
+                  pare[ieWc3, ip] = Wc3
+                  pare[iedeNOx, ip] = deNOx
+                  pare[ieEINOx1, ip] = EINOx1
+                  pare[ieEINOx2, ip] = EINOx2
+                  pare[iemdotf, ip] = mdotf
+                  pare[ieemot:ieethermal, ip] .= η
+                  pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+                  pare[ieHexcess, ip] = heatexcess
+            else
+                  NPSS_success, Ftotal, heatexcess, 
+                  mdotf,  EINOx1, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 0.0, mofft, Pofft)
+            
+                  pare[ieOPR, ip] = OPR
+                  pare[ieTt3, ip] = Tt3
+                  pare[ieWc3, ip] = Wc3
+                  pare[ieEINOx1, ip] = EINOx1
+                  pare[iemdotf, ip] = mdotf
+                  pare[ieemot:ieethermal, ip] .= 0.0
+                  pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+                  pare[ieHexcess, ip] = heatexcess
+            end
 
             V   = pare[ieu0, ip]
             p0  = pare[iep0   ,ip]
