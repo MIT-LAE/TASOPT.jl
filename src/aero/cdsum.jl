@@ -287,7 +287,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
       CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw
       para[iaCD] = CD      
       CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
-
+      # println(CD_components)
 #      tau = hboxo
 #      rsb3 = 0.25*((0.5*clpo + tau+1.0)    + (tau+1.0)   )
 #     &           *((0.5*clpo + tau+1.0)^2 + (tau+1.0)^2)
@@ -336,7 +336,7 @@ function cditrp(pari,parg,para)
       end
 
       CLhtail = para[iaCLh]*parg[igSh]/parg[igS]
-
+      # println("CLhtail: $(para[iaCLh]) $(parg[igSh]) $(parg[igS])")
       bref = parg[igb]
       Sref = parg[igS]
 
@@ -429,6 +429,12 @@ function cditrp(pari,parg,para)
 
       ktip = 16
       #CLsurf = zeros(Float64, nsurf)
+      # println("$nsurf, $npout, $npinn, $npimg, 
+	# $Sref, $bref,
+	# $b,$bs,$bo,$bop, $zcent,
+	# $po,$gammat,gammas, $fLo, $ktip,
+      # $Lspec,$CLsurfsp")
+
       CLsurf, CLtp, CDtp, sefftp = trefftz1(nsurf, npout, npinn, npimg, 
 	Sref, bref,
 	b,bs,bo,bop, zcent,

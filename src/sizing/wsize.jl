@@ -1318,7 +1318,7 @@ Lconv = false # no convergence yet
 
             end
 
-            if !NPSSsuccess
+            if NPSSsuccess==0
                 println("NPSS failed to converge at design point")
                 wsize_fail = true
                 # endNPSS(NPSS)
