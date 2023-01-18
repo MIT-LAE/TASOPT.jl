@@ -12,7 +12,10 @@
       iixwmove = 10  # 0 = wing centroid fixed 1 = move wing to balance
       iifwing  = 11  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
       iicalcCMVf = 12
-      iitotal  = 12
+      iiengtype  = 13  # 0 = Turboelectric engine; 1 = Turbofan engine
+      iiopt      = 14  # 0 = run sizing loop only; 1 = run optimization procedure
+      iiaircraftclass = 15 # 737 = 737 size aircraft; 777 = 777 size aircraft
+      iitotal    = 15
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
@@ -353,7 +356,21 @@
       const igWrect    = 290
       const igWtms     = 291
 
-      const igtotal    = 291
+      const igfanPCT   = 292
+
+      const iggamVtarget = 293
+
+      const igWpaymax    = 294
+
+      const ig_YC = 295
+      const ig_YH = 296
+      const ig_YO = 297
+      const ig_YN = 298
+      const ig_MW = 299
+      const ighfuel      = 300
+      const igTfuel      = 301
+
+      const igtotal    = 301
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -498,7 +515,8 @@
       const ipt_Pelec_mot = 69
       const ipt_Pelec_gen = 70
 
-      const ipt_total     = 68
+
+      const ipt_total     = 70
 
 #---- indices for aero variables at each mission point
       iaalt     =  1
