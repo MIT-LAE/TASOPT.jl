@@ -495,6 +495,7 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
+            ηs = parg[igetas]
             dy = 2*D # space to leave near wing root and tip [m]
             if parg[igneng] == 2
                 yi = [ηs*b/2]
