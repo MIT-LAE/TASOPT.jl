@@ -19,6 +19,8 @@ function wsize(pari, parg, parm, para, pare,
 
 time_propsys = 0.0
 NPSS_PT = true
+NPSSsuccess = true
+wsize_fail = false
 # Weight convergence tolerance 
         # tolerW = 1.0e-10
         # tolerW = 1.0e-8
@@ -132,9 +134,9 @@ NPSS_PT = true
         xeng    = parg[igxeng]
 
     # calculate payload proportional weights from weight fractions
-        Wapu  = Wpay * fapu
-        Wpadd = Wpay * fpadd
-        Wseat = Wpay * fseat
+        Wapu  = Wpaymax * fapu
+        Wpadd = Wpaymax * fpadd
+        Wseat = Wpaymax * fseat
 
     # window and insulation densities per length and per area
         Wpwindow = parg[igWpwindow]
@@ -324,12 +326,19 @@ NPSS_PT = true
             parg[igdyWout] = dyWout
 
         # Turbo-electric weights
+        if pari[iiengtype] == 0
             parg[igWtesys ] = 0.32*Wpay
             parg[igWtshaft] = 0.5*parg[igWtesys]
             parg[igWcat]    = 0.1*parg[igWtesys]
             parg[igWgen]    = 0.2*parg[igWtesys]
             parg[igWftank ] = 0.0
-
+        else 
+            parg[igWtesys ] = 0.0
+            parg[igWtshaft] = 0.0*parg[igWtesys]
+            parg[igWcat]    = 0.0*parg[igWtesys]
+            parg[igWgen]    = 0.0*parg[igWtesys]
+            parg[igWftank ] = 0.0
+        end
         # wing centroid x-offset form wingbox
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
             xwing = xwbox + dxwing
@@ -351,7 +360,7 @@ NPSS_PT = true
             TSFC = 1.0/ 7000.0
             V    = pare[ieu0, ipcruise1]
             ffburn = (1.0 - exp(-Rangetot*TSFC/(V*LoD))) # ffburn = Wfuel/WMTO
-            ffburn = min(ffburn, 0.8/(1.0 + freserve))   # 0.8 is the fuel useablilty? 
+            ffburn = min(ffburn, 0.8/(1.0 + freserve))   # 0.8 is the fuel useability? 
         # mission-point fuel fractions ⇾ ffuel = Wfuel/WMTO
             ffuelb = ffburn*(1.0  + freserve)  # start of climb
             ffuelc = ffburn*(0.90 + freserve)  # start of cruise
@@ -398,8 +407,8 @@ NPSS_PT = true
             end
         
         # Initial tail info for sizing of fuselage bending and torsion added material 
-            Sh = (2.0*Wpay) / (qne*CLhmax)
-            Sv = (2.0*Wpay) / (qne*CLvmax)
+            Sh = (2.0*Wpaymax) / (qne*CLhmax)
+            Sv = (2.0*Wpaymax) / (qne*CLvmax)
             bv = sqrt(Sv*ARv)
     
             parg[igSh] = Sh
@@ -571,7 +580,7 @@ Lconv = false # no convergence yet
                 (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                 EIhshell,EIhbend, EIvshell,EIvbend, GJshell ,GJcone,
                 Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
+                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
                                                 fstring, fframe, ffadd, Δp, 
                                                 Wpwindow, Wppinsul, Wppfloor, 
                                                 Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax, 
@@ -623,21 +632,26 @@ Lconv = false # no convergence yet
                 #        Weng + Wfuel + 
                 #        Whpesys + Wlgnose + Wlgmain
                 if (iterw == 1 && initwgt == 0)
-                    feng = 0.0 # Set feng to be zero since we are not using the TFan but a TE system
+                    if pari[iiengtype] == 0
+                        feng = 0.0 # Set feng to be zero since we are not using the TFan but a TE system
 
-                    # To allow performing aerodynamic and weight-burn calculations on the first iteration, 
-                    # an interim MTOW is computed: 
-                    fsum = feng + ffuel + fhpesys + flgnose + flgmain
-                    # WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
-                    WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail +
-                            Wtesys + Wftank)/(1.0 - fsum)
-
+                        # To allow performing aerodynamic and weight-burn calculations on the first iteration, 
+                        # an interim MTOW is computed: 
+                        fsum = feng + ffuel + fhpesys + flgnose + flgmain
+                        
+                        WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail +
+                                Wtesys + Wftank)/(1.0 - fsum)
+                    else
+                        feng = 0.08
+                        WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
+                    end
+                    
                     Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain] 
                     parg[igWMTO] = WMTO
                     parg[igWeng] = Weng
                     parg[igWfuel]= Wfuel
                     println("Wfuel initial = ",(ffuel*WMTO))
-
+                    
                 else 
                     # Call a better Wupdate function
                     Wupdate0!(parg, rlx, fsum)
