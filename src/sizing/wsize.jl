@@ -19,6 +19,8 @@ function wsize(pari, parg, parm, para, pare,
 
 time_propsys = 0.0
 NPSS_PT = true
+NPSSsuccess = true
+wsize_fail = false
 # Weight convergence tolerance 
         # tolerW = 1.0e-10
         # tolerW = 1.0e-8
@@ -73,7 +75,13 @@ NPSS_PT = true
 
     # Unpack payload and range for design mission - this is the mission that the structures are sized for
         Rangetot = parm[imRange]
-        Wpay     = parm[imWpay ]
+        Wpay     = parm[imWpay ] #Typical payload
+        Wpaymax  = parg[igWpaymax] # Max payload
+        # if Wpay or Wpaymax is unset
+        if (Wpaymax == 0) 
+            println("Max payload weight was not set, setting Wpaymax = Wpay")
+            Wpaymax = parg[igWpaymax] = max(Wpay, Wpaymax)
+        end
     # Store the design mission in the geometry array as well
         parg[igRange] = Rangetot
         parg[igWpay ] = Wpay
@@ -126,9 +134,9 @@ NPSS_PT = true
         xeng    = parg[igxeng]
 
     # calculate payload proportional weights from weight fractions
-        Wapu  = Wpay * fapu
-        Wpadd = Wpay * fpadd
-        Wseat = Wpay * fseat
+        Wapu  = Wpaymax * fapu
+        Wpadd = Wpaymax * fpadd
+        Wseat = Wpaymax * fseat
 
     # window and insulation densities per length and per area
         Wpwindow = parg[igWpwindow]
@@ -257,6 +265,22 @@ NPSS_PT = true
         pare[ieu0, ip] = Mach*a0
         para[iaReunit, ip] = Mach*a0 *ρ0/μ0
 
+
+    # Set atmos conditions for top of climb
+        ip = ipclimbn
+        altkm = para[iaalt, ipcruise1]/1000.0
+        T0, p0, ρ0, a0, μ0 = atmos(altkm)
+        Mach  = para[iaMach, ip]
+        pare[iep0  , ip] = p0 
+        pare[ieT0  , ip] = T0
+        pare[ierho0, ip] = ρ0
+        pare[iemu0 , ip] = μ0
+        pare[iea0  , ip] = a0
+
+        pare[ieM0, ip] = Mach
+        pare[ieu0, ip] = Mach*a0
+        para[iaReunit, ip] = Mach*a0 *ρ0/μ0
+
         #Rotation condition
         ip = iprotate
         altkm = para[iaalt, ip]/1000.0
@@ -318,12 +342,19 @@ NPSS_PT = true
             parg[igdyWout] = dyWout
 
         # Turbo-electric weights
+        if pari[iiengtype] == 0
             parg[igWtesys ] = 0.32*Wpay
             parg[igWtshaft] = 0.5*parg[igWtesys]
             parg[igWcat]    = 0.1*parg[igWtesys]
             parg[igWgen]    = 0.2*parg[igWtesys]
             parg[igWftank ] = 0.0
-
+        else 
+            parg[igWtesys ] = 0.0
+            parg[igWtshaft] = 0.0*parg[igWtesys]
+            parg[igWcat]    = 0.0*parg[igWtesys]
+            parg[igWgen]    = 0.0*parg[igWtesys]
+            parg[igWftank ] = 0.0
+        end
         # wing centroid x-offset form wingbox
             dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
             xwing = xwbox + dxwing
@@ -345,7 +376,7 @@ NPSS_PT = true
             TSFC = 1.0/ 7000.0
             V    = pare[ieu0, ipcruise1]
             ffburn = (1.0 - exp(-Rangetot*TSFC/(V*LoD))) # ffburn = Wfuel/WMTO
-            ffburn = min(ffburn, 0.8/(1.0 + freserve))   # 0.8 is the fuel useablilty? 
+            ffburn = min(ffburn, 0.8/(1.0 + freserve))   # 0.8 is the fuel useability? 
         # mission-point fuel fractions ⇾ ffuel = Wfuel/WMTO
             ffuelb = ffburn*(1.0  + freserve)  # start of climb
             ffuelc = ffburn*(0.90 + freserve)  # start of cruise
@@ -392,8 +423,8 @@ NPSS_PT = true
             end
         
         # Initial tail info for sizing of fuselage bending and torsion added material 
-            Sh = (2.0*Wpay) / (qne*CLhmax)
-            Sv = (2.0*Wpay) / (qne*CLvmax)
+            Sh = (2.0*Wpaymax) / (qne*CLhmax)
+            Sv = (2.0*Wpaymax) / (qne*CLvmax)
             bv = sqrt(Sv*ARv)
     
             parg[igSh] = Sh
@@ -532,7 +563,7 @@ Lconv = false # no convergence yet
                 parg[igdeltap] = Δp
             
             # Engine weight mounted on tailcone, if any
-                if (iengloc==1)
+                if (iengloc==1) # 1: Eng on wing. 2: Eng on aft fuse
                     Wengtail = 0.0 
                     Waftfuel = 0.0
                 else
@@ -565,7 +596,7 @@ Lconv = false # no convergence yet
                 (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                 EIhshell,EIhbend, EIvshell,EIvbend, GJshell ,GJcone,
                 Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
+                Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
                                                 fstring, fframe, ffadd, Δp, 
                                                 Wpwindow, Wppinsul, Wppfloor, 
                                                 Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax, 
@@ -617,21 +648,25 @@ Lconv = false # no convergence yet
                 #        Weng + Wfuel + 
                 #        Whpesys + Wlgnose + Wlgmain
                 if (iterw == 1 && initwgt == 0)
-                    feng = 0.0 # Set feng to be zero since we are not using the TFan but a TE system
-
-                    # To allow performing aerodynamic and weight-burn calculations on the first iteration, 
-                    # an interim MTOW is computed: 
-                    fsum = feng + ffuel + fhpesys + flgnose + flgmain
-                    # WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
-                    WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail +
-                            Wtesys + Wftank)/(1.0 - fsum)
+                    if pari[iiengtype] == 0
+                        feng = 0.0 # Set feng to be zero since we are not using the TFan but a TE system
+                        # To allow performing aerodynamic and weight-burn calculations on the first iteration, 
+                        # an interim MTOW is computed: 
+                        fsum = feng + ffuel + fhpesys + flgnose + flgmain
+                        
+                        WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail +
+                                Wtesys + Wftank)/(1.0 - fsum)
+                    else
+                        feng = 0.08
+                        WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail)/(1.0 - fsum)
+                    end
 
                     Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain] 
                     parg[igWMTO] = WMTO
                     parg[igWeng] = Weng
                     parg[igWfuel]= Wfuel
                     println("Wfuel initial = ",(ffuel*WMTO))
-
+                    
                 else 
                     # Call a better Wupdate function
                     Wupdate0!(parg, rlx, fsum)
@@ -749,50 +784,105 @@ Lconv = false # no convergence yet
 
             po = wingpo(b,bs,bo,
                         λt, λs, γt, γs,
-                        AR, Nlift, WMTO, Lhtail, fLo, fLt)
+                        AR, Nlift, BW, Lhtail, fLo, fLt)
          
             # Wing structure
             # -----------------------------------------
             
             # Fans, mot, inv centre of mass:
             # -----
-            dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
-            if parg[igneng] == 2
-                yi = [ηs*b/2]
-            else
-                yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
-            end
-            ηi = yi/(b/2)
-            ηo = bo/b
-            ci = zero(yi)
-            ys = ηs*b/2
-            nout = 0   # number of outboard engines
-            yout = 0.0 # avg. moment arm of outboard engines
-            yinn = 0.0 # avg. moment arm of inboard engines
-            for (i, η)  in enumerate(ηi)
-                if η <=ηs
-                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
-                    yinn += yi[i]
+            if pari[iiengtype] == 0
+                dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
+                if parg[igneng] == 2
+                    yi = [ηs*b/2]
                 else
-                    nout += 1
-                    yout += yi[i] - ys
-                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                    yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
                 end
-            end
-            nin = parg[igneng] - nout
+                ηi = yi/(b/2)
+                ηo = bo/b
+                ci = zero(yi)
+                ys = ηs*b/2
+                nout = 0   # number of outboard engines
+                yout = 0.0 # avg. moment arm of outboard engines
+                yinn = 0.0 # avg. moment arm of inboard engines
+                for (i, η)  in enumerate(ηi)
+                    if η <=ηs
+                        ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                        yinn += yi[i]
+                    else
+                        nout += 1
+                        yout += yi[i] - ys
+                        ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                    end
+                end
+                nin = parg[igneng] - nout
+                yout = yout/nout   
             yout = yout/nout   
-            yinn = yinn/nin
-            parg[igyeout] = yout*1.5
-            parg[igyeinn] = yinn
-            parg[igneout] = nout
+                yout = yout/nout   
+            yout = yout/nout   
+                yout = yout/nout   
+                yinn = yinn/nin
+                parg[igyeout] = yout*1.5
+                parg[igyeinn] = yinn
+                parg[igneout] = nout
 
-            tanL = tan(parg[igsweep]*π/180.0)
-            parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
-            parg[igxmot] = parg[igxfan] + 0.5
+                tanL = tan(parg[igsweep]*π/180.0)
+                if pari[iiengtype] == 0
+                    parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
+                    parg[igxmot] = parg[igxfan] + 0.5
+                else
+                    parg[igxfan] = 0.0
+                    parg[igxmot] = 0.0
+                end
+            else
+                dy = 2*parg[igdfan] # space to leave near wing root and tip [m]
+                if parg[igneng] == 2
+                    yi = ηs*b/2
+                else
+                    yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
+                end
+                ηi = yi/(b/2)
+                ηo = bo/b
+                ci = zero(yi)
+                ys = ηs*b/2
+                nout = 0.0   # number of outboard engines
+                yout = 0.0 # avg. moment arm of outboard engines
+                yinn = ηs*(b/2) # avg. moment arm of inboard engines
+                # for (i, η)  in enumerate(ηi)
+                #     if η <=ηs
+                #         ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
+                #         yinn += yi[i]
+                #     else
+                #         nout += 1
+                #         yout += yi[i] - ys
+                #         ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
+                #     end
+                # end
+                # nin = parg[igneng] - nout
+                ci = co*(1  + (λs -  1)*(ηs - ηo)/(ηs - ηo))
+                nin = parg[igneng]
+                # yout = yout/nout   
+                yinn = yinn/nin
+                parg[igyeout] = yout*1.5
+                parg[igyeinn] = yinn
+                parg[igneout] = nout
+
+                tanL = tan(parg[igsweep]*π/180.0)
+                # parg[igxfan] = mean(tanL * (yi .- bo/2) - 0.4ci) + parg[igxwbox] - 2.0
+                # parg[igxmot] = parg[igxfan] + 0.5
+
+                parg[igxfan] = 0.0
+                parg[igxmot] = 0.0
+            end
             # -----
             # Weight of single (1) engine/ ducted fan assembly that consists of fan, gearbox and motor
             if (iwplan == 1)
-                Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB] #+ parg[igWinv]
+                if pari[iiengtype] == 0
+                    Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB] 
+                else
+                    Weng1 = parg[igWeng]/parg[igneng]
+                end
+
             else
                 Weng1 = 0.0
             end
@@ -850,7 +940,10 @@ Lconv = false # no convergence yet
                     Wfmax   = 2.0*(Wfcen +  Wfinn +   Wfout)
                     dxWfmax = 2.0*(       dxWfinn + dxWfout)
                 end
-                rfmax = parg[igWfuel]/Wfmax
+
+                #at full payload, the fuel tank cannot be full, so less bending relief from fuel
+                Wfuelmp = Wpay - Wpaymax + parg[igWfuel] # Wfuelmp == parg[igWfuel] if Wpaymax = Wpay
+                rfmax = Wfuelmp/Wfmax
             end
 
             
@@ -920,7 +1013,7 @@ Lconv = false # no convergence yet
                 #  corrections for sweep and compressibility:
                 CLα = 2π*cosL/(sqrt(βn^2 + (2*cosL/AR)^2) + 2*cosL/AR)
                 # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
-                parg[igCMVf1] = parg[igfuseVol]/CLα
+                # parg[igCMVf1] = parg[igfuseVol]/CLα
 
             # Set tail CL derivative 
                 dϵdα   = parg[igdepsda]
@@ -966,11 +1059,22 @@ Lconv = false # no convergence yet
 
                     ip = iprotate
                     qstall = 0.5 * pare[ierho0, ip] *(pare[ieu0, ip]/1.2)^2
-                    CDAe = parg[igcdefan] * 0.25π *parg[igdfan]^2
-                    De = qstall*CDAe
-                    Fe = pare[ieFe, ip]*(parpt[ipt_Fnsplit])/2 #pare[ieFe, :] stores total thrust
-                    Me = (Fe + De)*Rfuse/2 #This assumes that the most unbalanced case is when the aft propulsor fails #TODO make generic/ option switches
+                    dfan = pari[iiengtype] == 0 ? parg[igdaftfan] : parg[igdfan]
 
+                    CDAe = parg[igcdefan] * 0.25π *dfan^2
+                    De = qstall*CDAe
+
+                    if pari[iiengtype] == 0
+                        Fe = pare[ieFe, ip]*(parpt[ipt_Fnsplit])/2 #pare[ieFe, :] stores total thrust
+                    else
+                        Fe = pare[ieFe, ip]/2
+                    end
+                    # Calcualte max eng out moment
+                    if iengloc == 1
+                        Me = (Fe + De)*igyeng
+                    else
+                        Me = (Fe + De)*Rfuse/2 #This assumes that the most unbalanced case is when the aft propulsor fails #TODO make generic/ option switches
+                    end
                 #
                 if (iVTsize == 1)
                     lvtail = xvtail - xwing
@@ -1094,6 +1198,7 @@ Lconv = false # no convergence yet
 
                 WMTO = parg[igWMTO]
                 #calculate for start-of-cruise point
+                # ip = ipclimbn
                 ip = ipcruise1
 
                 # Pitch trim by adjusting Clh or by moving wing
@@ -1107,10 +1212,13 @@ Lconv = false # no convergence yet
                 # Set N.P. at cruise
                 parg[igxNP] = para[iaxNP, ip]
 
+                para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
+
                 # Drag buildup cdsum()
                 cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), 1)
 
             # L/D and Design point thrust
+            # println("CD = ", para[iaCD,ip])
                 LoD = para[iaCL, ip]/para[iaCD, ip]
                 gamV = para[iagamV, ip]
                 W   = para[iafracW, ip] * WMTO
@@ -1126,15 +1234,26 @@ Lconv = false # no convergence yet
 
         if (iterw==1)
             if NPSS_PT
-
-                if Sys.iswindows()
-
-                    NPSS = startNPSS("NPSS_Turboshaft/", "TEsys.bat")
-
-                elseif Sys.islinux()
-
-                    NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "TEsys.sh")
-
+                if pari[iiengtype] == 0 
+                    if Sys.iswindows()
+                        NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "TEsys.bat")
+                    elseif Sys.islinux()
+                        NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "TEsys.sh")
+                    end
+                else
+                    if pari[iiaircraftclass] == 737    
+                        if Sys.iswindows()
+                            NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "737.bat")
+                        elseif Sys.islinux()
+                            NPSS = startNPSS("NPSS_TurboFan/", "737.sh")
+                        end
+                    elseif pari[iiaircraftclass] == 777
+                        if Sys.iswindows()
+                            NPSS = startNPSS("NPSS_TurboFan/", "777.bat")
+                        elseif Sys.islinux()
+                            NPSS = startNPSS("NPSS_TurboFan/", "777.sh")
+                        end
+                    end
                 end
 
                 NPSS_Fan     = NPSS
@@ -1149,27 +1268,89 @@ Lconv = false # no convergence yet
             Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
             Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
-            if NPSS_PT
-               NPSSsuccess, ηpt, SPpt, Ppt, Hpt, heatexcess, mdotf_tot,
-               deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, EGT,
-               Snace1, Saftnace1 = NPSS_TEsys(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes, parpt[ipt_Tt41],
-                1.25, parpt[ipt_pifan], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt)
+            if pari[iiengtype] == 1 #TFan
+                Ftotal = 0.0
+                Fnfrac = 0.85
+                fanPCT = 110.0
+
+                #offtake air/power parameters
+                mofWpay = parg[igmofWpay]
+                mofWMTO = parg[igmofWMTO]
+                PofWpay = parg[igPofWpay]
+                PofWMTO = parg[igPofWMTO]
+
+                mofft = (mofWpay*Wpay + mofWMTO*WMTO) / neng
+                Pofft = (PofWpay*Wpay + PofWMTO*WMTO) / neng
+
+                Elec_PowerTot = 0.0
+
+                NPSSsuccess = false
+                heatexcess = 0.0
+                mdotf_tot = 0.0
+                EINOx1 = 0.0
+                FAR = 0.0
+                Tt3 = 0.0
+                OPR = 0.0
+                Wc3 = 0.0
+                EGT = 0.0
+                Snace1 = 0.0
+                #[TODO] Interesting logic from Diego. Discuss possiblity for cleaner solution
+                while (Ftotal < Fdes)
+        
+                    FnGuess = Fdes * Fnfrac
+                    NPSSsuccess, heatexcess, mdotf_tot, 
+                    EINOx1, FAR, Tt3, OPR, Wc3, EGT, Snace1 = NPSS_TFsys(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], FnGuess, parpt[ipt_Tt41], parpt[ipt_pifan], ifirst, parg, parpt, mofft, Pofft, Elec_PowerTot)
+        
+                    if NPSSsuccess == 0.0
+                        break
+                    end
+                    
+                    NPSSsuccess, Ftotal = NPSS_TFsysOD2(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], 0.0, pare[ieTt4, ip], false, parg, parpt, pare, ip, fanPCT, mofft, Pofft)
+                    Fnfrac = Fnfrac + 0.02     
+                end
+            
             else
 
-           time_propsys += @elapsed  ηpt, Ppt, Hpt, heatexcess, mpt, SPpt,
-            mdotf_tot, BSFC,
-            deNOx, EINOx1, EINOx2,
-            FAR, Tt3, OPR, Wc3, FanNozArea, Snace1, AftSnace1 =  PowerTrain(NPSS_TS, NPSS_Fan, NPSS_AftFan, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes,
-                                        Kinl, Φinl, parg, parpt, parmot, pargen, ifirst)
+                NPSSsuccess, ηpt, SPpt, Ppt, Hpt, heatexcess, mdotf_tot,
+                deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, EGT,
+                Snace1, Saftnace1 = NPSS_TEsys(NPSS, para[iaalt, ipcruise1], para[iaMach, ipcruise1], Fdes, parpt[ipt_Tt41],
+                1.25, parpt[ipt_pifan], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt)
+
             end
+
+            if NPSSsuccess==0
+                println("NPSS failed to converge at design point")
+                wsize_fail = true
+                # endNPSS(NPSS)
+                return wsize_fail
+            end
+
             ifirst = false
 
-            # println(SPpt)
-            # println(ηpt[2:end])
-            # println(Ppt)
-            pare[iedeNOx , ip] = deNOx
-            pare[ieEINOx1, ip] = EINOx1
-            pare[ieEINOx2, ip] = EINOx2
+            if pari[iiengtype] == 0 # assumes TEsys with PCEC
+                pare[iedeNOx , ip] = deNOx
+                pare[ieEINOx1, ip] = EINOx1
+                pare[ieEINOx2, ip] = EINOx2
+
+                pare[ieemot:ieethermal, ip] .= ηpt[2:end]
+                pare[ieHrejmot:ieHrejtot, ip] .= Hpt
+                pare[ieHexcess, ip] = heatexcess
+
+                #Aft fan
+                lnace = parg[igdaftfan]*parg[igrSnace]*0.15
+                parg[iglnaceaft] = lnace
+            else
+                pare[iedeNOx , ip] = 0.0
+                pare[ieEINOx1, ip] = EINOx1
+                pare[ieEINOx2, ip] = 0.0
+
+                pare[ieemot:ieethermal, ip] .= 0.0
+                pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+                pare[ieHexcess, ip] = heatexcess
+            
+                #No aft fan
+                parg[iglnaceaft] = 0.0
+            end
             
             pare[ieOPR, ip] = OPR
             pare[ieTt3, ip] = Tt3
@@ -1177,9 +1358,7 @@ Lconv = false # no convergence yet
             parg[igWc3des]  = Wc3
             pare[ieFAR, ip] = FAR
             pare[iemdotf, ip] = mdotf_tot
-            pare[ieemot:ieethermal, ip] .= ηpt[2:end]
-            pare[ieHrejmot:ieHrejtot, ip] .= Hpt
-            pare[ieHexcess, ip] = heatexcess
+          
             # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
             # Engine weight section
                 #  Drela's weight model? Nate Fitszgerald - geared TF weight model
@@ -1188,15 +1367,11 @@ Lconv = false # no convergence yet
             parg[igfSnace] = fSnace
             lnace = parg[igdfan]*parg[igrSnace]*0.15
             parg[iglnace] = lnace
-            
-            #Aft fan
-            lnace = parg[igdaftfan]*parg[igrSnace]*0.15
-            parg[iglnaceaft] = lnace
 
         # ----------------------
         #     Fly mission
         # ----------------------
-        time_propsys += mission!(pari, parg, parm, para, pare, NPSS_TS, NPSS_Fan, NPSS_AftFan, Ldebug, NPSS_PT, NPSS)
+        time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
         parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         # ----------------------
@@ -1209,7 +1384,7 @@ Lconv = false # no convergence yet
             Tair  = 288.0 #Heated cabin temp
             h_v = 447000.0
             t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
-            k = ones(length(t_cond)).*5.0e-3#foam conductivities
+            k = ones(length(t_cond)).*5.0e-3 #foam conductivities
             hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
             time_flight = para[iatime, ipdescent1]
             sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
@@ -1289,29 +1464,53 @@ u0 = pare[ieu0  , ip]
 Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
 Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 ifirst = true
-    if NPSS_PT
+    if pari[iiengtype] == 0 
         NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
         mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
         OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
         0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+        
         #HACK to allow first point to converge and then actually run it properly ifirst is then set to false
         ifirst = false
         NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
         mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
         OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
         0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        pare[iedeNOx, ip] = deNOx
+        pare[ieEINOx1, ip] = EINOx1
+        pare[ieEINOx2, ip] = EINOx2
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= η
+        pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+        pare[ieHexcess, ip] = heatexcess
+
+    else
+        NPSS_success, Ftotal, heatexcess, 
+        mdotf, EINOx1, FAR, Tt3,
+        OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
+        0.0, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 100.0, 0.0, 0.0)
+        #HACK to allow first point to converge and then actually run it properly ifirst is then set to false
+        ifirst = false
+        NPSS_success, Ftotal, heatexcess, 
+        mdotf, EINOx1, FAR, Tt3,
+        OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
+        0.0, pare[ieTt4, ip],  ifirst, parg, parpt, pare, ip, 100.0, 0.0, 0.0)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        pare[ieEINOx1, ip] = EINOx1
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= 0.0
+        pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+        pare[ieHexcess, ip] = heatexcess
     end
-    pare[ieFe, ip] = Ftotal
-    pare[ieOPR, ip] = OPR
-    pare[ieTt3, ip] = Tt3
-    pare[ieWc3, ip] = Wc3
-    pare[iedeNOx, ip] = deNOx
-    pare[ieEINOx1, ip] = EINOx1
-    pare[ieEINOx2, ip] = EINOx2
-    pare[iemdotf, ip] = mdotf
-    pare[ieemot:ieethermal, ip] .= η
-    pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-    pare[ieHexcess, ip] = heatexcess
 
 ip = iprotate
 ρ0 = pare[ierho0, ip]
@@ -1319,23 +1518,43 @@ u0 = pare[ieu0  , ip]
 Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0  
 Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0  # Assume 2 engines
 
-    if NPSS_PT
+    if pari[iiengtype] == 0 
         NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
         mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
         OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
         0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        pare[iedeNOx, ip] = deNOx
+        pare[ieEINOx1, ip] = EINOx1
+        pare[ieEINOx2, ip] = EINOx2
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= η
+        pare[ieHrejmot:ieHrejtot, ip] .= Hrej
+        pare[ieHexcess, ip] = heatexcess
+
+    else
+        NPSS_success, Ftotal, heatexcess, 
+        mdotf, EINOx1, FAR, Tt3,
+        OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], pare[ieM0, ip], 
+        0.0, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 100.0, 0.0, 0.0)
+
+        pare[ieFe, ip] = Ftotal
+        pare[ieOPR, ip] = OPR
+        pare[ieTt3, ip] = Tt3
+        pare[ieWc3, ip] = Wc3
+        # pare[iedeNOx, ip] = deNOx
+        pare[ieEINOx1, ip] = EINOx1
+        # pare[ieEINOx2, ip] = EINOx2
+        pare[iemdotf, ip] = mdotf
+        pare[ieemot:ieethermal, ip] .= 0.0
+        pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+        pare[ieHexcess, ip] = heatexcess
     end
-    pare[ieFe, ip] = Ftotal
-    pare[ieOPR, ip] = OPR
-    pare[ieTt3, ip] = Tt3
-    pare[ieWc3, ip] = Wc3
-    pare[iedeNOx, ip] = deNOx
-    pare[ieEINOx1, ip] = EINOx1
-    pare[ieEINOx2, ip] = EINOx2
-    pare[iemdotf, ip] = mdotf
-    pare[ieemot:ieethermal, ip] .= η
-    pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-    pare[ieHexcess, ip] = heatexcess
+
 
 # BFL calculations/ Noise? / Engine perf 
 
