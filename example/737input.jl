@@ -19,6 +19,7 @@ pari[iiopt]    = 0 # 0 run sizing loop only; 1 run optimization procedure
 pari[iifuel]   = 2 # 1 = H2 120 MJ/kg; 2= JetA; 3 = specied by composition (JANAF)
 pari[iifwing]   = 1 # 0 = all fuel stored in tanks; 1 = all fuel stored in wings
 pari[iifwcen]   = 1 # Fuel in center box 
+
 pari[iiengtype] = 1  # 0 = Turboelectric engine; 1 = Turbofan engine
 
 # Boundary Layer Ingestion (BLI)
@@ -526,7 +527,8 @@ parpt[ipt_piLPC]   = 1.935
 parpt[ipt_piHPC]   = 9.369
 parpt[ipt_Tt41 ]   = 2750.0
 
-
+parpt[ipt_nfan   ] = 2
+parg[igneng    ] =  parpt[ipt_nfan] # Represents ducted fans + motors for TE config
 
 
 

@@ -1,0 +1,670 @@
+MODELNAME = "TFsys";
+AUTHOR    = "Diego";
+#include <System.fnc>
+
+
+// setThermoPackage("allFuel");
+// setThermoPackage("GasTbl");
+
+
+
+// setThermoPackage( "CEA", "thermo.inp", "trans.inp", "Air", "H2O", "Jet-A(g)" );
+// #include "CFM56-7B27.mdl"
+// #include "777engine.mdl"
+
+// #define THERMO Janaf
+#define THERMO GasTbl
+
+setThermoPackage("$THERMO");
+// #include "GE90_115.mdl"
+#include "CFM56-7B27.mdl"
+
+
+real n_carbon  , n_hydrogen, n_oxygen  , n_nitrogen, hfuel, Tfuel;    
+
+if (THERMPACKAGE == "Janaf" ) {
+
+        // Define your fuel here
+//---------------------------------------------
+// Setup Thermodynamic package
+// +-----------------+----------+----+----+-------------------+
+// |       Fuel      |   Fuel   |  C |  H |  O | hfuel [J/mol] | |
+// +-----------------+----------+----+----+----------------------+
+// |     Hydrogen    |    H2    |  0 |  2 |    |         0       |
+// +-----------------+----------+----+----+----------------------+
+// | Vaporized Jet-A | Jet-A(g) | 12 | 23 |    |   -249657.0     |
+// +-----------------+----------+----+----+----------------------+
+// |     Methane     |    CH4   |  1 |  4 |    |    -74600.0     |
+// +-----------------+----------+----+----+----------------------+
+// |    Napthalene   |   C10H8  | 10 |  8 |    |   -150580.0     |
+// +-----------------+----------+----+----+----------------------+
+// |    Ethanol      |  C2H5OH  | 2  |  6 | 1  |   -234950.0     |
+// +-----------------+----------+----+----+----------------------+
+// |    Butanol      |  C4H10O  |  4 | 10 | 1  |   -281400.0     |
+// +-----------------+----------+----+----+----------------------+
+
+        string assembly = "Eng";
+        n_carbon   =  12.0;
+        n_hydrogen =  23.0;
+        n_oxygen   =  0.0;
+        n_nitrogen =  0.0;
+        hfuel      =  -249657.0;
+
+        // Information about enthalpy, molecular weights, etc.
+        real Tref   = Tfuel*9.0/5.0; // R
+        real hf_CO2 = -393510; // J/mol
+        real hf_H2O = -241826; // J/mol (vapor)
+        real MW_C = 12.011e-3; // kg/mol
+        real MW_H = 1.0008e-3; // kg/mol
+        real MW_O = 15.99940e-3; // kg/mol
+        real MW_N = 14.0067e-3; // kg/mol
+        real ConvFromJkgToBtuLbm = 0.9478171*0.4535924/1000;// = 0.000429923 (BTU/lbm)/(J/kg)
+
+    // Calcualte the molecular weight of the fuel and mass fractions of C and H
+    real MW = n_carbon*MW_C + n_hydrogen*MW_H + n_oxygen*MW_O + n_nitrogen*MW_N; // kg/mol
+    real YC = n_carbon*MW_C/MW;
+    real YH = n_hydrogen*MW_H/MW;
+    real YO = n_oxygen*MW_O/MW;
+    real YN = n_nitrogen*MW_N/MW;
+
+    // Calculate the LHV - this assumes fuel is of the form CnHm + m/4 O2 --> nCO2 + m/2 H2O
+    // Assume fuel is CnHmOz --> nCO2 + m/2 H2O 
+    real LHV_J_kg = abs(n_carbon*hf_CO2 + n_hydrogen/2*hf_H2O - hfuel)/MW;
+    real LHV = LHV_J_kg * ConvFromJkgToBtuLbm; // BTU/lbm
+    real hf_Fuel_BTU_lbm = hfuel/MW*ConvFromJkgToBtuLbm;
+        // Janaf only accepts LHV and composition as inputs. The LHV applied here matches the JetA(g)
+        // heat of formation based on the thermo.inp file for CEA
+        // Calculation (at T=298.15 degK per CEA thermo.inp):
+        //     LHV = (n*hf_CO2 + m/2*hf_H2O - hf_Fuel)/MW*ConvFromJkgToBtuLbm
+        //     For this fuel (Jet-A(g)), Carbon(n) = 12.00 and Hydrogen(m) = 23.00
+        //     hf_CO2  = -393,510 J/mol
+        //     hf_H2O  = -241,826 J/mol (vapor)
+        //     hf_Fuel = -249,657 J/mol = -1,492,140 J/kg
+        //     MW = (12.0*12.011 + 23.0*1.008) = 167.31462 kg/kmol
+        //     ConvFromJkgToBtuLbm = 0.9478171*0.4535924 = 0.429923 (BTU/lbm)/(kJ/kg)
+        //
+        //     LHV = abs{[(12.0)*(-393510) + (23.0/2.0)*(-241826) - (-249657)]/(167.31462)*(0.429923)}
+        //         = abs[(-7253462.0)/(167.31462)*(0.429923)] = 18638 BTU/lbm
+
+        // Eng.FusEng.Tref  = Tref;
+        Eng.FusEng.Tfuel = Tref;
+        // Eng.FusEng.Pfuel = 1.0*getUnitsFactor("atm", "psia");
+        // Eng.FusEng.hRef  = hf_Fuel_BTU_lbm;
+        Eng.FusEng.hFuel = hf_Fuel_BTU_lbm;
+        Eng.FusEng.LHV   = LHV; // (BTU/lbm) f
+        Eng.FusEng.Carbon   = YC; 
+        Eng.FusEng.Hydrogen = YH; 
+        Eng.FusEng.Oxygen = YO; 
+        Eng.FusEng.Nitrogen2 = YN;
+    }
+
+
+Eng.TrbH.Cool.TvaneDes[0] = 2450;
+Eng.TrbH.Cool.TbladeDes[0] = 2350;
+// Eng.BrnPri.Fl_O.switchFuelType = "JP";
+
+Eng.TrbH.Cool.s_BldFirstRow = 1.4;
+Eng.TrbH.Cool.s_Bld = 1.1;
+
+real effFanP = 0.884490;
+real effLPCP = 0.923328;
+real effHPCP = 0.920471;
+real effHPTP = 0.907955;
+real effLPTP = 0.910727;
+
+
+#include "printDetails.fnc"
+#include "utils.fnc"
+#include "save_solver.fnc"
+
+// Include separate viewer just for storing row data from PLA sweep
+// #include "OffDes.view"
+// #include "saveModelDetails.fnc"
+// #include "linspace.h"
+
+void printSolverConditions (){
+		string Sname = "solver";
+		string indeps[] = Sname->independentNames;
+		real indepVals[] = Sname -> independentValues;
+
+		string deps[] = Sname->list("Dependent", FALSE );
+		cout << Sname << " Independent Variables:" << endl;
+		int i;
+		string var;
+		for (i=0; i<indeps.entries(); i++) {
+		var = indeps[i]->varName;
+		cout << " " << i+1 << " " << indeps[i] << ": \n\t"
+		<< var <<" = "<<indepVals[i]<< var.units << endl;
+		}
+		
+		cout << Sname << " Dependent Conditions:" << endl;
+		string lhs, rhs;
+		for (i=0; i<deps.entries(); i++) {
+		lhs = deps[i]->eq_lhs;
+		rhs = deps[i]->eq_rhs;
+		cout << " " << i+1 << " " << deps[i] << ": \n\t"
+		<< lhs << " = " << rhs << endl;
+		}
+
+}
+
+
+//====================
+// Solver setup:
+//====================
+solver.maxIterations = 500;
+solver.maxJacobians  = 500;
+solver.firstNewJacobian = "CALCULATE";
+// solver.regenNewJacobian = "EVERY_ITERATION";
+// solver.debugLevel = "ITERATION_DETAILS";
+// solver.diagnosticFile = "solver.diag";
+// solver.solutionMode = "ONE_PASS";
+solver.defaultDxLimit = 0.05;
+// solver.defaultPerturbation = 0.01;
+// solver.convergenceLimit = 0.8;
+// solver.defaultTolerance = 1e-10;
+// solver.defaultTolerance = 1e-8;
+//---------------------------------------------
+
+int first;
+int true  = 1;
+int false = 0;
+real Tt41, N2_dmd, Fn_target, fanPCT, Elec_Power;
+int flag;
+string inString;
+
+Eng.setOption("switchDes","DESIGN");
+
+OutFileStream logfile{
+    filename = "737.log";
+
+}
+CaseRowViewer Output {
+    outStreamHandle = "logfile";
+	titleBody = "???????????????????? \t run on: ?????????\t		at: ?????????? by: ??????\t Model Author: ??????????" ;
+	titleVars = {"MODELNAME","date","timeOfDay","USER","AUTHOR"}		
+	caseHeaderBody ="";
+	caseHeaderVars = {}
+    #include "737.lst"
+    showHeaders = -1;
+}
+
+postsolverSequence.append("Output");
+
+
+//---------------------------------------------
+// Solver guesses
+//---------------------------------------------
+// real solverIndeps111[] = { 8.54549, 4701.4, 1069.49, 0.162575, 0.459619, 26.2961,
+//  4302.49, 535.427, 0.161435, 3.76299, 17.1722, 4098.26, 61.1551, 9612.66, 280.855 };
+real solverIndeps111[] = { 16.2975, 2316.38, 1076.82, 0.138928, 0.377295, 11.868, 2519.17, 721.546, 0.127468, 3.28825, 16.9419, 4284.05, 151.984, 5014.43, 471.3};
+// real solverIndeps222[] ={ 4820.93, 2295.09, 0.631357, 966.575, 1.57596, 13.0545, 2.239,
+//  2.01887, 4.81329, 8.68941, 40128.4, 5084.73, 11915.5, 3123.46, 214.647, 1.46468, 635.297, 18973.9, 6148.03 };
+// real solverIndeps222[] ={ 879.326, 0.721656, 1173.33, 1.54771, 13.1937, 0.842919, 1.92293, 4.72535, 10.5777, 38132, 7837.2, 14184, 3718.12, 167.294, 1.57662, 318.009, 14522.6, 4705.7 };
+// real solverIndeps222[] ={ 5216.57, 2506.03, 0.687761, 1236.5, 1.68419, 18.3473, 3.15545, 2.0175, 3.33907, 6.84022, 41875.7, 5398.35, 9845.91, 2106.9, 325.113, 1.27913, 1168.6, 11263, 4706.45 };
+
+real solverIndeps222[] ={0.847855, 944.928, 1.64556, 9.55472, 1.25646, 1.99455, 4.06351, 8.11708, 38316.5, 12343.1, 3382.14 };
+
+// real solverIndeps222[] ={2.5*0.377295*120*430/Eng.FusEng.LHV, 800.928, 2.24556, 5.555, 1.45646, 1.99455, 4.06351, 8.11708 };
+
+
+
+               // "Eng.DESIGN_FUELFLOW",
+                // "Eng.FsEng.ind_W",
+                // "Eng.CmpF.S_map.ind_RlineMap",
+                // "Eng.Splt.ind_BPR",
+                // "Eng.CmpL.S_map.ind_RlineMap",
+                // "Eng.CmpH.S_map.ind_RlineMap",
+                // "Eng.TrbH.S_map.ind_PRbase",
+                // "Eng.TrbL.S_map.ind_PRbase",
+                // "Eng.ShH.ind_Nmech",
+                // "Eng.ShL.ind_Nmech",
+                // "Eng.ShF.ind_Nmech"};
+
+
+// Removed Noz Pri: 
+// real solverIndeps222[] ={ 1463.62, 1.13827, 922.322, 1.63761, 7.04608, 3.305, 2.02903, 4.11954, 2.02725, 40439.5, 3877.2, 9436.5, 2264.56, 315.254, 1.50816, 861.229, 8925.72, 3511.5 };
+//---------------------------------------------
+// Start looping: 
+//---------------------------------------------
+while(flag!=999){
+// Output.display();
+    cin >> flag;
+    if(flag == 999){
+        break;
+    }
+
+    if(flag==111){
+        flag = 0;
+        inString = cin.getline();
+        //====================
+        //  Read input file
+        //====================
+        // cerr<<" ----------- inside des -------"<<endl;
+        // cerr<<inString<<endl;
+        parseString(inString);
+
+        Eng.setOption("switchDes","DESIGN");
+        // solverIndeps111={ 16.2975, 0.138928, 0.377295*120*430/Eng.FusEng.LHV, 2519.17, 721.546, 0.127468, 3.28825, 16.9419};
+        solverIndeps111={ 5.129, 0.138928, 0.377295*120*430/Eng.FusEng.LHV, 721.546, 0.127468, 3.28825, 16.9419};
+        
+        // solverIndeps111={ 9.1, 0.05, 1.15*120*430.0/Eng.FusEng.LHV, 1690.2, 0.03, 3.28825, 19.9419, 0.92, 0.94, 0.88, 0.888, 0.898 };
+
+        // solverIndeps111={ 9.1, 0.05, 1.15*120*430.0/Eng.FusEng.LHV, 1690.2, 0.03, 4.991665, 6.951006, 0.92, 0.94, 0.88, 0.888, 0.898 };
+
+
+        // solverIndeps111={ 9.1, 0.138928, 1.15*120*430.0/(43.0*429.923), 1390.2, 0.127468, 3.28825, 16.9419};
+
+
+
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+        // printSolverConditions();
+        //====================
+        //  Run engine model
+        //====================
+        // Include this here directly to save on IO costs:
+        solver.independentNames = {"Eng.ind_BPR",
+                                    "Eng.ind_TCLA_NC_fracW",
+                                    "Eng.DESIGN_FUELFLOW",
+                                    // "Eng.ind_FanSpeed",
+                                    "Eng.DESIGN_AIRFLOW",
+                                    "Eng.ind_TCLA_CH_fracW",
+                                    "Eng.TrbH.S_map.ind_PRbase",
+                                    "Eng.TrbL.S_map.ind_PRbase"
+                                    // "Eng.ind_Gen_ShP" 
+                                    };
+
+        solver.independentValues = solverIndeps111;
+        run();
+        // Output.update();
+        CASE++;
+        //---------------------------------------------
+        // Gen speed check:
+        // cerr<<Eng.Gen.Nmech<<"\t"<<Eng.CmpF.Nmech<<endl;
+        // cerr<<Eng.ShL.Nmech<<"\t"<<Eng.ShF.Nmech<<endl;
+        // cerr<<Eng.GB.Sh_O2.Nmech<<"\t"<<Eng.GB.Sh_O1.Nmech<<endl;
+        // cerr<<Eng.GB.gearRatio<<endl;
+        // cerr<<Eng.GB.dep_Nmatch.autoSetup<<endl;
+        //---------------------------------------------
+        // Motor speeds check:
+        // cerr<<Eng.PodProp.MotorShaft.Nmech<<"\t"<<Eng.PodProp.FanShaft.Nmech<<endl;
+        // cerr<<Eng.PodProp.GB.Sh_O2.Nmech<<"\t"<<Eng.PodProp.GB.Sh_O1.Nmech<<endl;
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            solverIndeps111 = solver.independentValues;
+            
+            // Write following outputs to outstream
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.BrnPri.EINOx<<"_"
+            <<Eng.BrnPri.Fl_I.W/2.205<<"_"
+            <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
+            <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
+            <<Eng.CmpH.Fl_O.Wc<<"_"
+            <<Eng.FusEng.LHV<<"_"   
+            <<Eng.FsEng.Fl_O.W<<"_"
+            
+            <<Eng.Weng<<"_"
+
+            <<Eng.CmpF.dia*0.0254<<"_" 
+
+
+            <<Eng.BrnPri.FAR<<"_"
+
+            <<Eng.Snace1<<"_"
+
+            <<Eng.TrbH.F041.Tt<<"_"
+            <<Eng.NozPri.Fl_O.Tt*100/180<<"_"
+            // <<Eng.PCEC.Fl_O.Tt<<"_"
+            
+            <<Eng.IdealThermalEff<<"_"
+            
+            // Aft fan shaft power
+            <<-Eng.CmpF.pwr*getUnitsFactor(Eng.CmpF.pwr.units, "W")
+            <<"END";
+            
+            
+            // cerr<<solverIndeps111<<endl;
+
+        }
+        else{
+            cerr<<inString<<endl;
+            // output.reopen();
+            // // #include "write_des_output.int"
+            // output.close();
+            // cout<<"ERROR! DES Did not converge"<<endl;
+            cout<<"0"; // Tell's Julia that this didn't converge
+            Output.update();
+            quit();
+        }
+
+
+    }
+
+    if(flag==222){
+        flag = 0;
+        inString = cin.getline();
+        //====================
+        //  Read input file
+        //====================
+        // cerr<<" ----------- inside off des -------"<<endl;
+
+        // Fn_target      = 40e3;
+        // Tt41           = 3000;
+        // Eng.Amb.alt_in = 33000.0;
+        // Eng.Amb.MN_in  = 0.8;
+        // deNOx_target   = 0.98;
+        // FnSplitTarget  = 0.8;
+        // Eng.n_poddedprops = 8;
+        // Eng.CmpF.PRdes    = 1.4;
+        // Eng.CmpH.PRdes    = 12.0;
+
+        // Eng.PodProp.Fan.PRdes = 1.4;
+        // Eng.InEng.Kinl        = 0.0;
+        // Eng.PodProp.InEng.Kinl= 0.0;
+        // Eng.Phiinl            = 0.0;
+        // Eng.PodProp.Phiinl    = 0.0;
+
+
+        Eng.setOption("switchDes","OFFDESIGN");
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+
+        //====================
+        //Run engine model
+        //====================
+
+                // solver.independentNames = {
+                // "Eng.DESIGN_FUELFLOW",
+                // "Eng.FsEng.ind_W",
+                // "Eng.CmpF.S_map.ind_RlineMap",
+                // "Eng.Splt.ind_BPR",
+                // "Eng.CmpL.S_map.ind_RlineMap",
+                // "Eng.CmpH.S_map.ind_RlineMap",
+                // "Eng.TrbH.S_map.ind_PRbase",
+                // "Eng.TrbL.S_map.ind_PRbase",
+                // "Eng.ShH.ind_Nmech",
+                // "Eng.ShL.ind_Nmech",
+                // "Eng.ShF.ind_Nmech"};
+        // real TempTt41 = Tt41;
+        parseString(inString);// this has the first flag so has to be before the check below
+        if(first){
+                while((Eng.Amb.alt > 0.0) && (Eng.Amb.MN >0.2)){
+                    Eng.Amb.alt_in = Eng.Amb.alt*0.8;
+                    Eng.Amb.MN_in  = Eng.Amb.MN *0.8;
+                    // Tt41 = TempTt41;
+                    run();
+                    solverIndeps222 = solver.independentValues;
+
+                }
+          
+        solver.independentValues = solverIndeps222;
+        }
+        parseString(inString);// this has the first flag so has to be before the check below
+
+        // cerr<<"input Guess val is "<<Eng.ind_FnSplit.x<<endl;
+        // else {
+            // restart("offDes_fan_prev.restart");
+            // restart("offDes1.restart");
+        // }
+        // cerr<<Eng.FusEng.LHV<<endl;
+        // cerr<<inString<<endl;
+        run();
+        CASE++;
+
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            if(first){
+
+                solverIndeps222 = solver.independentValues;
+            }
+
+
+            // Write following outputs to outstream
+            // ShP, eta_thermal, mdotf, BSFC, deNOx 
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.Perf.Fn_total_N<<"_"
+            <<Eng.BrnPri.EINOx<<"_"
+            <<Eng.BrnPri.Fl_I.W/2.205<<"_"
+            <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
+            <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
+            <<Eng.CmpH.Fl_O.Wc<<"_"
+            <<Eng.FsEng.Fl_O.W<<"_"
+
+            <<Eng.BrnPri.FAR<<"_"
+            <<Eng.TrbH.F041.Tt<<"_"
+            <<Eng.NozPri.Fl_O.Tt*100/180<<"_"
+            
+            <<Eng.IdealThermalEff<<"_"
+            
+            // Solver indeps at each mission point
+            <<Eng.DESIGN_FUELFLOW.x<<"_"
+            <<Eng.FsEng.ind_W.x<<"_"
+            <<Eng.CmpF.S_map.ind_RlineMap.x<<"_"
+            <<Eng.SpltFan.ind_BPR.x<<"_"
+            <<Eng.CmpL.S_map.ind_RlineMap.x<<"_"
+            <<Eng.CmpH.S_map.ind_RlineMap.x<<"_"
+            <<Eng.TrbH.S_map.ind_PRbase.x<<"_"
+            <<Eng.TrbL.S_map.ind_PRbase.x<<"_"
+            <<Eng.ShH.ind_Nmech.x<<"_"
+            <<Eng.ShL.ind_Nmech.x;
+            // <<Eng.ShF.ind_Nmech.x;
+
+        }
+        else{
+            cerr<<inString<<endl;
+            cerr<<solver.dependentNames<<endl;
+            cerr<<solver.errorConverged<<endl;
+            cerr<<solver.updateConverged<<endl;
+            cerr<<solver.independentValues<<endl;
+            cerr<<solver.independentNames<<endl;
+            Output.update();
+            cout<<"0"; // Tell's Julia that this didn't converge
+            // cout<<"ERROR! OFFDES Did not converge"<<endl;
+            quit();
+        }
+
+    }
+    if(flag==333){
+        flag = 0;
+        inString = cin.getline();
+
+        
+
+        Eng.setOption("switchDes","OFFDESIGN");
+
+        
+        // fanPCT = 100.0;
+        // run();
+        // solverIndeps222 = solver.independentValues;
+
+            
+        
+
+        Eng.OFFDES2();
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+
+        //====================
+        //  Read input file
+        //====================
+        parseString(inString);
+        //====================
+        //Run engine model
+        //====================
+
+        if(first){
+        
+            solver.independentValues = solverIndeps222;
+
+        }
+        // else {
+            // restart("offDes_fan_prev.restart");
+            // restart("offDes1.restart");
+        // }
+        run();
+        CASE++;
+
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            if(first){
+                // SaveIndepVals("solver", "offDes1.restart");
+                // solverIndeps2 = solver.independentValues;
+            }
+
+
+            // Write following outputs to outstream
+            // ShP, eta_thermal, mdotf, BSFC, deNOx 
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.Perf.Fn_total_N<<"_"
+            <<Eng.BrnPri.EINOx<<"_"
+            <<Eng.BrnPri.Fl_I.W/2.205<<"_"
+            <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
+            <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
+            <<Eng.CmpH.Fl_O.Wc<<"_"
+            <<Eng.FsEng.Fl_O.W<<"_"
+
+            <<Eng.BrnPri.FAR<<"_"
+            <<Eng.TrbH.F041.Tt<<"_"
+            <<Eng.NozPri.Fl_O.Tt*100/180<<"_"
+            
+            <<Eng.IdealThermalEff<<"_"
+            
+            // Solver indeps at each mission point
+            <<Eng.DESIGN_FUELFLOW.x<<"_"
+            <<Eng.FsEng.ind_W.x<<"_"
+            <<Eng.CmpF.S_map.ind_RlineMap.x<<"_"
+            <<Eng.SpltFan.ind_BPR.x<<"_"
+            <<Eng.CmpL.S_map.ind_RlineMap.x<<"_"
+            <<Eng.CmpH.S_map.ind_RlineMap.x<<"_"
+            <<Eng.TrbH.S_map.ind_PRbase.x<<"_"
+            <<Eng.TrbL.S_map.ind_PRbase.x<<"_"
+            <<Eng.ShH.ind_Nmech.x<<"_"
+            <<Eng.ShL.ind_Nmech.x;
+            // <<Eng.ShF.ind_Nmech.x;
+
+        }
+        else{
+
+            cout<<"0"; // Tell's Julia that this didn't converge
+            // cout<<"ERROR! OFFDES Did not converge"<<endl;
+        }
+
+    }
+
+    if(flag==444){
+        flag = 0;
+        inString = cin.getline();
+
+        
+
+        Eng.setOption("switchDes","OFFDESIGN");
+
+        
+        // fanPCT = 100.0;
+        // run();
+        // solverIndeps222 = solver.independentValues;
+
+            
+        
+
+        Eng.OFFDES3();
+        //====================
+        //Auto solver setup
+        //====================
+        solver.clear();
+        autoSolverSetup();
+
+        //====================
+        //  Read input file
+        //====================
+        parseString(inString);
+        //====================
+        //Run engine model
+        //====================
+
+        if(first){
+        
+            solver.independentValues = solverIndeps222;
+
+        }
+        // else {
+            // restart("offDes_fan_prev.restart");
+            // restart("offDes1.restart");
+        // }
+        run();
+        CASE++;
+
+        //====================
+        // Outputs
+        //====================
+        // MsgBlock1( "Number of Iterations to solve = "+toStr(solver.iterationCounter));
+        if(solver.converged == 1){
+            if(first){
+                // SaveIndepVals("solver", "offDes1.restart");
+                // solverIndeps2 = solver.independentValues;
+            }
+
+
+            // Write following outputs to outstream
+            // ShP, eta_thermal, mdotf, BSFC, deNOx 
+            cout<<"1"<<"_"                                     // Success/ Failure indicator
+            <<Eng.FusEng.Wfuel/2.205<<"_"
+            <<Eng.Perf.Fn_total_N<<"_"
+            <<Eng.BrnPri.EINOx<<"_"
+            <<Eng.BrnPri.Fl_I.W/2.205<<"_"
+            <<Eng.CmpH.Fl_O.Tt*100/180<<"_"
+            <<Eng.CmpH.Fl_O.Pt/Eng.InEng.Fl_I.Pt<<"_"
+            <<Eng.CmpH.Fl_O.Wc<<"_"
+            <<Eng.FsEng.Fl_O.W<<"_"
+
+            <<Eng.BrnPri.FAR<<"_"
+            <<Eng.TrbH.F041.Tt<<"_"
+            <<Eng.NozPri.Fl_O.Tt*100/180<<"_"
+            
+            <<Eng.IdealThermalEff<<"_"
+            
+            // Solver indeps at each mission point
+            <<Eng.DESIGN_FUELFLOW.x<<"_"
+            <<Eng.FsEng.ind_W.x<<"_"
+            <<Eng.CmpF.S_map.ind_RlineMap.x<<"_"
+            <<Eng.SpltFan.ind_BPR.x<<"_"
+            <<Eng.CmpL.S_map.ind_RlineMap.x<<"_"
+            <<Eng.CmpH.S_map.ind_RlineMap.x<<"_"
+            <<Eng.TrbH.S_map.ind_PRbase.x<<"_"
+            <<Eng.TrbL.S_map.ind_PRbase.x<<"_"
+            <<Eng.ShH.ind_Nmech.x<<"_"
+            <<Eng.ShL.ind_Nmech.x;
+            // <<Eng.ShF.ind_Nmech.x;
+
+        }
+        else{
+
+            cout<<"0"; // Tell's Julia that this didn't converge
+            // cout<<"ERROR! OFFDES Did not converge"<<endl;
+        }
+
+    }
+    Output.display();
+}

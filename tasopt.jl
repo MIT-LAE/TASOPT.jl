@@ -26,10 +26,12 @@ include("src/aero/aero.jl")
 include("src/structures/structures.jl")
 include("src/propsys/propsys.jl")
 include("src/balance/balance.jl")
+include("src/engine/engine.jl")
 
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
 include("src/mission/odperformance.jl")
+include("src/mission/woper.jl")
 include("src/mission/LTO.jl")
 include("src/mission/AircraftDeck.jl")
 
@@ -47,6 +49,7 @@ using .atmosphere
 using .aerodynamics
 using .structures
 using .propsys
+using .engine
 
 #------------------------------------------------------
 #End imports/loading files

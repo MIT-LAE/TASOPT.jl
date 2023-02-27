@@ -36,6 +36,7 @@ include("../IO/savemodel.jl")
 include("../cost/cost_est.jl")
 include("../utils/printBADA.jl")
 include("../src/mission/odperformance.jl")
+include("../src/mission/woper.jl")
 include("../contrail/AircraftDeck.jl")
 include("../src/mission/LTO.jl")
 
