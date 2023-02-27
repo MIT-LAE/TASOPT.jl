@@ -12,7 +12,7 @@
       iixwmove = 10  # 0 = wing centroid fixed 1 = move wing to balance
       iifwing  = 11  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
       iicalcCMVf = 12
-      iitotal  = 12
+      iitotal    = 12
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)

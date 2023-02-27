@@ -12,7 +12,7 @@ include("input.jl")
 
 # 3) Size aircraft
 time_wsize = @elapsed size_aircraft(35, 0, false, true, saveOD)
-
+println("Time to size aircraft = $time_wsize s")
 # 4) Visualize outputs
 # Output resulting geometry of aircraft
 geometry(parg)
