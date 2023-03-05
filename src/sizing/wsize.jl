@@ -19,7 +19,7 @@ function wsize(pari, parg, parm, para, pare,
 
     time_propsys = 0.0
 
-    use_NPSS = false
+    use_NPSS = true
 
     if use_NPSS
         NPSS_PT = true
@@ -1539,119 +1539,120 @@ function wsize(pari, parg, parm, para, pare,
 
         ifirst = false
 
-        if pari[iiengtype] == 0 # assumes TEsys with PCEC
-            pare[iedeNOx, ip] = deNOx
-            pare[ieEINOx1, ip] = EINOx1
-            pare[ieEINOx2, ip] = EINOx2
+        if use_NPSS
+            if pari[iiengtype] == 0 # assumes TEsys with PCEC
+                pare[iedeNOx, ip] = deNOx
+                pare[ieEINOx1, ip] = EINOx1
+                pare[ieEINOx2, ip] = EINOx2
 
-            pare[ieemot:ieethermal, ip] .= ηpt[2:end]
-            pare[ieHrejmot:ieHrejtot, ip] .= Hpt
-            pare[ieHexcess, ip] = heatexcess
+                pare[ieemot:ieethermal, ip] .= ηpt[2:end]
+                pare[ieHrejmot:ieHrejtot, ip] .= Hpt
+                pare[ieHexcess, ip] = heatexcess
 
-            #Aft fan
-            lnace = parg[igdaftfan] * parg[igrSnace] * 0.15
-            parg[iglnaceaft] = lnace
-        else
-            pare[iedeNOx, ip] = 0.0
-            pare[ieEINOx1, ip] = EINOx1
-            pare[ieEINOx2, ip] = 0.0
-
-            pare[ieemot:ieethermal, ip] .= 0.0
-            pare[ieHrejmot:ieHrejtot, ip] .= 0.0
-            pare[ieHexcess, ip] = heatexcess
-
-            #No aft fan
-            parg[iglnaceaft] = 0.0
-        end
-
-        pare[ieOPR, ip] = OPR
-        pare[ieTt3, ip] = Tt3
-        pare[ieWc3, ip] = Wc3
-        parg[igWc3des] = Wc3
-        pare[ieFAR, ip] = FAR
-        pare[iemdotf, ip] = mdotf_tot
-
-        # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
-        # Engine weight section
-        #  Drela's weight model? Nate Fitszgerald - geared TF weight model
-        Snace = Snace1 * neng
-        fSnace = Snace / S
-        parg[igfSnace] = fSnace
-        lnace = parg[igdfan] * parg[igrSnace] * 0.15
-        parg[iglnace] = lnace
-
-        # ----------------------
-        #     Fly mission
-        # ----------------------
-        time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
-        parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
-
-        # ----------------------
-        #     LH₂ Tank weight
-        # ----------------------
-        if (pari[iifwing] == 0) # if fuel isn't in wings then you need a tank for it!
-            hconvgas = 0.0
-            h_LH2 = 210.0
-            Tfuel = 20.0
-            Tair = 288.0 #Heated cabin temp
-            h_v = 447000.0
-            t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
-            k = ones(length(t_cond)) .* 5.0e-3 #foam conductivities
-            hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
-            time_flight = para[iatime, ipdescent1]
-            sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
-            rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
-            rhoskintank = 2825.0 #Al 2219 / energies
-            max_boiloff = 0.1
-            ARtank = 2.0
-            clearance_fuse = 0.10
-            rhofuel = parg[igrhofuel]
-            ptank = 2.0 #atm
-            ftankstiff = 0.1
-            ftankadd = 0.1
-
-            cargotank = false
-
-            if cargotank
-                Wfmaintank = parg[igWfuel] * 2 / 3
-                Wfcargotank = parg[igWfuel] * 1 / 3
+                #Aft fan
+                lnace = parg[igdaftfan] * parg[igrSnace] * 0.15
+                parg[iglnaceaft] = lnace
             else
-                Wfmaintank = parg[igWfuel]
-                Wfcargotank = 0.0
+                pare[iedeNOx, ip] = 0.0
+                pare[ieEINOx1, ip] = EINOx1
+                pare[ieEINOx2, ip] = 0.0
+
+                pare[ieemot:ieethermal, ip] .= 0.0
+                pare[ieHrejmot:ieHrejtot, ip] .= 0.0
+                pare[ieHexcess, ip] = heatexcess
+
+                #No aft fan
+                parg[iglnaceaft] = 0.0
             end
 
-            Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
-            m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-            Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-                h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
-                wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                Wfmaintank, max_boiloff, clearance_fuse, ARtank)
+            pare[ieOPR, ip] = OPR
+            pare[ieTt3, ip] = Tt3
+            pare[ieWc3, ip] = Wc3
+            parg[igWc3des] = Wc3
+            pare[ieFAR, ip] = FAR
+            pare[iemdotf, ip] = mdotf_tot
 
-            parg[igWfmax] = Vfuel * rhofuel * 9.81
-            parg[igWftank] = Wtank
-            parg[igxWftank] = Wtank * parg[igxftank]
-            parg[iglftank] = l_tank
-            parg[igRftank] = Rtank
-            parg[igWinsftank] = Winsul_sum
+            # parg[igWtesys] = Wtesys * rlx + parg[igWtesys]*(1.0 - rlx)
+            # Engine weight section
+            #  Drela's weight model? Nate Fitszgerald - geared TF weight model
+            Snace = Snace1 * neng
+            fSnace = Snace / S
+            parg[igfSnace] = fSnace
+            lnace = parg[igdfan] * parg[igrSnace] * 0.15
+            parg[iglnace] = lnace
 
-            if cargotank
+            # ----------------------
+            #     Fly mission
+            # ----------------------
+            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
+            parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
+
+            # ----------------------
+            #     LH₂ Tank weight
+            # ----------------------
+            if (pari[iifwing] == 0) # if fuel isn't in wings then you need a tank for it!
+                hconvgas = 0.0
+                h_LH2 = 210.0
+                Tfuel = 20.0
+                Tair = 288.0 #Heated cabin temp
+                h_v = 447000.0
+                t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
+                k = ones(length(t_cond)) .* 5.0e-3 #foam conductivities
+                hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
+                time_flight = para[iatime, ipdescent1]
+                sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
+                rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
+                rhoskintank = 2825.0 #Al 2219 / energies
+                max_boiloff = 0.1
+                ARtank = 2.0
+                clearance_fuse = 0.10
+                rhofuel = parg[igrhofuel]
+                ptank = 2.0 #atm
+                ftankstiff = 0.1
+                ftankadd = 0.1
+
+                cargotank = false
+
+                if cargotank
+                    Wfmaintank = parg[igWfuel] * 2 / 3
+                    Wfcargotank = parg[igWfuel] * 1 / 3
+                else
+                    Wfmaintank = parg[igWfuel]
+                    Wfcargotank = 0.0
+                end
+
                 Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
                 m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
                 Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                    Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
+                    Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
                     h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                     wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                    Wfcargotank, max_boiloff, clearance_fuse, ARtank)
+                    Wfmaintank, max_boiloff, clearance_fuse, ARtank)
 
-                parg[igWfmax] += Vfuel * rhofuel * 9.81
-                parg[igWftank] += Wtank
-                parg[igxWftank] += Wtank * parg[igxwbox]
-                parg[igWinsftank] += Winsul_sum
+                parg[igWfmax] = Vfuel * rhofuel * 9.81
+                parg[igWftank] = Wtank
+                parg[igxWftank] = Wtank * parg[igxftank]
+                parg[iglftank] = l_tank
+                parg[igRftank] = Rtank
+                parg[igWinsftank] = Winsul_sum
 
+                if cargotank
+                    Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+                    m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+                    Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+                        Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
+                        h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
+                        wfb, nfweb, sigskin, rho_insul, rhoskintank,
+                        Wfcargotank, max_boiloff, clearance_fuse, ARtank)
+
+                    parg[igWfmax] += Vfuel * rhofuel * 9.81
+                    parg[igWftank] += Wtank
+                    parg[igxWftank] += Wtank * parg[igxwbox]
+                    parg[igWinsftank] += Winsul_sum
+
+                end
             end
         end
-
 
         # Get mission fuel burn (check if fuel capacity is sufficent)
 
@@ -1670,14 +1671,16 @@ function wsize(pari, parg, parm, para, pare,
         WMTO1 = parg[igWMTO]
 
         # END weight sizing loop
-        ip = ipstatic
-        ρ0 = pare[ierho0, ip]
-        u0 = pare[ieu0, ip]
-        Φinl = 0.5 * ρ0 * u0^3 * (DAfsurf * fBLIf) / 2.0
-        Kinl = 0.5 * ρ0 * u0^3 * (KAfTE * fBLIf) / 2.0 # Assume 2 engines
-        ifirst = true
-
         if use_NPSS
+
+            ip = ipstatic
+            ρ0 = pare[ierho0, ip]
+            u0 = pare[ieu0, ip]
+            Φinl = 0.5 * ρ0 * u0^3 * (DAfsurf * fBLIf) / 2.0
+            Kinl = 0.5 * ρ0 * u0^3 * (KAfTE * fBLIf) / 2.0 # Assume 2 engines
+            ifirst = true
+
+
             if pari[iiengtype] == 0
                 NPSS_success, Ftotal, η, P, Hrej, heatexcess,
                 mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3,
@@ -1833,6 +1836,30 @@ function wsize(pari, parg, parm, para, pare,
         if NPSS_PT
             endNPSS(NPSS)
         end
+
+    else
+
+        # set static thrust for takeoff routine
+        ip = ipstatic
+        icall = 1
+        icool = 1
+
+        ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
+
+        # set rotation thrust for takeoff routine
+        # (already available from cooling calculations)
+        ip = iprotate
+        icall = 1
+        icool = 1
+        ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
+
+        # calculate takeoff and balanced-field lengths
+        # TODO takeoff!
+
+        # TODO cglpay
+
+        # TODO: finish the rest
+
     end
     # println("Propsys time = ", time_propsys)
 end
