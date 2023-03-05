@@ -26,6 +26,8 @@ function wsize(pari, parg, parm, para, pare,
         NPSSsuccess = true
         wsize_fail = false
     else
+        ichoke5 = zeros(iptotal)
+        ichoke7 = zeros(iptotal)
         Tmrow = zeros(ncrowx)
         epsrow = zeros(ncrowx)
         epsrow_Tt3 = zeros(ncrowx)
@@ -483,45 +485,47 @@ function wsize(pari, parg, parm, para, pare,
         pare[ieM2, ipstatic:ipcruisen] .= M2des
         pare[ieM2, ipdescent1:ipdescentn] .= 0.8 * M2des
 
-        # calculate initial guesses for cooling mass flow ratios epsrow(.)
-        ip = iprotate
-        cpc = 1080.0
-        cp4 = 1340.0
-        Rgc = 288.0
-        Rg4 = 288.0
-        M0to = pare[ieu0, ip] / pare[iea0, ip]
-        T0to = pare[ieT0, ip]
-        epolhc = pare[ieepolhc, ip]
-        OPRto = pare[iepilc, ipcruise1] * pare[iepihc, ipcruise1]
-        Tt4to = pare[ieTt4, ip]
-        dTstrk = pare[iedTstrk, ip]
-        Mtexit = pare[ieMtexit, ip]
-        efilm = pare[ieefilm, ip]
-        tfilm = pare[ietfilm, ip]
-        StA = pare[ieStA, ip]
-        for icrow = 1:ncrowx
-            Tmrow[icrow] = parg[igTmetal]
-        end
-
-        Tt2to = T0to * (1.0 + 0.5 * (gamSL - 1.0) * M0to^2)
-        Tt3to = Tt2to * OPRto^(Rgc / (epolhc * cpc))
-        Trrat = 1.0 / (1.0 + 0.5 * Rg4 / (cp4 - Rg4) * Mtexit^2)
-
-        ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr = mcool(ncrowx, Tmrow,
-            Tt3to, Tt4to, dTstrk, Trrat, efilm, tfilm, StA)
-
-        epstot = 0.0
-        for icrow = 1:ncrow
-            epstot = epstot + epsrow[icrow]
-        end
-        fo = pare[iemofft, ip] / pare[iemcore, ip]
-        fc = (1.0 - fo) * epstot
-
-        for jp = 1:iptotal
-            pare[iefc, jp] = fc
+        if (!use_NPSS)
+            # calculate initial guesses for cooling mass flow ratios epsrow(.)
+            ip = iprotate
+            cpc = 1080.0
+            cp4 = 1340.0
+            Rgc = 288.0
+            Rg4 = 288.0
+            M0to = pare[ieu0, ip] / pare[iea0, ip]
+            T0to = pare[ieT0, ip]
+            epolhc = pare[ieepolhc, ip]
+            OPRto = pare[iepilc, ipcruise1] * pare[iepihc, ipcruise1]
+            Tt4to = pare[ieTt4, ip]
+            dTstrk = pare[iedTstrk, ip]
+            Mtexit = pare[ieMtexit, ip]
+            efilm = pare[ieefilm, ip]
+            tfilm = pare[ietfilm, ip]
+            StA = pare[ieStA, ip]
             for icrow = 1:ncrowx
-                pare[ieepsc1+icrow-1, jp] = epsrow[icrow]
-                pare[ieTmet1+icrow-1, jp] = Tmrow[icrow]
+                Tmrow[icrow] = parg[igTmetal]
+            end
+
+            Tt2to = T0to * (1.0 + 0.5 * (gamSL - 1.0) * M0to^2)
+            Tt3to = Tt2to * OPRto^(Rgc / (epolhc * cpc))
+            Trrat = 1.0 / (1.0 + 0.5 * Rg4 / (cp4 - Rg4) * Mtexit^2)
+
+            ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr = mcool(ncrowx, Tmrow,
+                Tt3to, Tt4to, dTstrk, Trrat, efilm, tfilm, StA)
+
+            epstot = 0.0
+            for icrow = 1:ncrow
+                epstot = epstot + epsrow[icrow]
+            end
+            fo = pare[iemofft, ip] / pare[iemcore, ip]
+            fc = (1.0 - fo) * epstot
+
+            for jp = 1:iptotal
+                pare[iefc, jp] = fc
+                for icrow = 1:ncrowx
+                    pare[ieepsc1+icrow-1, jp] = epsrow[icrow]
+                    pare[ieTmet1+icrow-1, jp] = Tmrow[icrow]
+                end
             end
         end
 
@@ -587,11 +591,13 @@ function wsize(pari, parg, parm, para, pare,
     Lconv = false
 
     # set these to zero for first-iteration info printout
-    parg(igb) = 0.0
-    parg(igS) = 0.0
-    for ip = 1:iptotal
-        ichoke5[ip] = 0
-        ichoke7[ip] = 0
+    parg[igb] = 0.0
+    parg[igS] = 0.0
+    if (!use_NPSS)
+        for ip = 1:iptotal
+            ichoke5[ip] = 0
+            ichoke7[ip] = 0
+        end
     end
 
     # -------------------------------------------------------    
@@ -1143,7 +1149,7 @@ function wsize(pari, parg, parm, para, pare,
         if use_NPSS
             dfan = pari[iiengtype] == 0 ? parg[igdaftfan] : parg[igdfan]
         else
-            dfan = parg(igdfan)
+            dfan = parg[igdfan]
         end
         CDAe = parg[igcdefan] * 0.25π * dfan^2
         De = qstall * CDAe
@@ -1154,7 +1160,7 @@ function wsize(pari, parg, parm, para, pare,
                 Fe = pare[ieFe, ip] / 2
             end
         else
-            Fe = pare(ieFe, ip)
+            Fe = pare[ieFe, ip]
         end
 
         # Calcualte max eng out moment
