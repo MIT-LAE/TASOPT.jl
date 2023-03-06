@@ -2,7 +2,7 @@
 using Pkg
 Pkg.activate("../")
 Pkg.instantiate()
-
+using Profile
 # 1) Load TASOPT
 include("../tasopt.jl")
 
@@ -11,6 +11,7 @@ include("../tasopt.jl")
 include("input.jl")
 
 # 3) Size aircraft
+saveOD = false
 time_wsize = @elapsed size_aircraft(35, 0, false, true, saveOD)
 
 # 4) Visualize outputs
