@@ -328,8 +328,8 @@ function wsize(pari, parg, parm, para, pare,
         Wvtail = Whtail
         Wwing = 0.5 * Wpay / parg[igsigfac]
         Wstrut = 0.0
-        Weng = 0.3 * Wpay
-        feng = 0.08
+        Weng = 0.0 * Wpay
+        feng = 0.0
 
         dxWhtail = 0.0
         dxWvtail = 0.0
@@ -481,7 +481,7 @@ function wsize(pari, parg, parm, para, pare,
         parg[igdfan] = sqrt(Afan * 4.0 / π)
 
         # Guess fan face mach numbers for nacelle CD calcs
-        M2des = pare[ieM2, ipcruise1]
+        M2des = pare[ieM2, ipcruise1] = 0.6
         pare[ieM2, ipstatic:ipcruisen] .= M2des
         pare[ieM2, ipdescent1:ipdescentn] .= 0.8 * M2des
 
