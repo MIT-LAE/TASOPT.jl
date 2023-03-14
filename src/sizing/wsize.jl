@@ -1860,15 +1860,16 @@ function wsize(pari, parg, parm, para, pare,
         ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
 
         # calculate takeoff and balanced-field lengths
-        # TODO takeoff!
+        # HACK: not tested!
+        takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
 
         # calculate CG limits from worst-case payload fractions and packings
-        # TODO cglpay
+        # HACK: not tested!
+        rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(parg)
 
         # set neutral point at cruise
-        # TODO balance
-
-        # TODO: finish the rest
+        # HACK: not tested! This function seems missing a !.
+        balance(pari, parg, para[:, ip], rfuel, rpay, ξpay, itrim)
 
     end
     # println("Propsys time = ", time_propsys)
@@ -1947,3 +1948,21 @@ function Wupdate!(parg, rlx, fsum)
 
 
 end
+
+"""
+Returns total Cf for turbulent flat plate, versus Re_l
+"""
+function cfturb(re)
+
+    # original Hoerner
+    # cfturb = 0.427/(log10(re) - 0.407)**2.64 
+
+    # modified (weaker dependence on Re)
+    # cfturb = 0.310/(log10(re) - 0.407)**2.47 
+
+    # White
+    cfturb = 0.523/(log(0.06*re))**2       
+
+    return cfturb
+end
+    
