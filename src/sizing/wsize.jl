@@ -1862,7 +1862,11 @@ function wsize(pari, parg, parm, para, pare,
         # calculate takeoff and balanced-field lengths
         # TODO takeoff!
 
+        # calculate CG limits from worst-case payload fractions and packings
         # TODO cglpay
+
+        # set neutral point at cruise
+        # TODO balance
 
         # TODO: finish the rest
 
