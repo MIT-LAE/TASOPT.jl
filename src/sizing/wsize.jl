@@ -1502,8 +1502,9 @@ function wsize(pari, parg, parm, para, pare,
         else
 
             # aero calculations and mission-simulation section
-            ipc = 1
-            # TODO: mission
+            # ipc1 = 1
+            # mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
+            # # TODO: mission
 
             # this calculated fuel is the design-mission fuel 
             parg[igWfuel] = parm[imWfuel]
