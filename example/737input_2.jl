@@ -1,3 +1,11 @@
+
+using Pkg
+Pkg.activate("../")
+Pkg.instantiate()
+
+# 1) Load TASOPT
+include("../tasopt.jl")
+
 # Inputs for testing runs
 nmisx = 1
 pari = zeros(Int64, iitotal)
@@ -10,8 +18,8 @@ ft_to_m = 0.3048
 in_to_m = 0.0254
 nmi_to_m = 1852.0
 deg_to_rad = π / 180.0
-lbf_to_N = 4.448222
-kts_to_mps = 0.51444
+lbf_to_N = 4.45
+kts_to_mps = 0.514
 hp_to_W = 745.7
 
 pari[iiaircraftclass] = 737 #specifies aircraft class in order to run appropriate NPSS model
@@ -86,6 +94,7 @@ para[iaMach, ipclimbn:ipdescent1, :] .= 0.80
 #- basic wing parameters  
 parg[igsweep] = 26.0         # λ wing
 parg[igAR] = 10.1        # Aspect ratio
+parg[igsweeph] = parg[igsweep]
 
 parg[igbmax] = 117.5 * ft_to_m # Max span for span constraint ICAO Code D/ FAA Group IV
 
@@ -177,7 +186,7 @@ parg[igARh] = 6.0
 parg[igARv] = 2.0
 parg[iglambdah] = 0.25
 parg[iglambdav] = 0.30
-parg[igsweeph] = 25.0
+# parg[igsweeph] = 25.0
 parg[igsweepv] = 25.0
 
 parg[igboh] = 2 * (2.5 * ft_to_m) # 2 × half span
@@ -332,7 +341,7 @@ pari[iiBLIc] = 0 # core in clean flow
 
 #-----------------------------------------
 #- fuel parameters
-pari[iifuel] == 24
+pari[iifuel] = 24
 parg[igrhofuel] = 817.0
 Tfuel = 280.0
 pare[ieTfuel, :, :] .= Tfuel
@@ -354,35 +363,29 @@ tfilm = 0.30
 M4a = 0.9
 ruc = 0.15
 
-
-for km = 1:nmisx
-
-    T0TO = parm[imT0TO, i]
-
-    pare[ieTt4, :, km] .= Tt4CR
-    pare[ieM4a, :, km] .= M4a
-    pare[ieruc, :, km] .= ruc
-    pare[iedTstrk, :, km] .= dTstrk
-    pare[ieMtexit, :, km] .= Mtexit
-    pare[ieStA, :, km] .= StA
-    pare[ieefilm, :, km] .= efilm
-    pare[ietfilm, :, km] .= tfilm
+pare[ieTt4, :, :] .= Tt4CR
+pare[ieM4a, :, :] .= M4a
+pare[ieruc, :, :] .= ruc
+pare[iedTstrk, :, :] .= dTstrk
+pare[ieMtexit, :, :] .= Mtexit
+pare[ieStA, :, :] .= StA
+pare[ieefilm, :, :] .= efilm
+pare[ietfilm, :, :] .= tfilm
 
 
-    pare[ieT0, ipstatic, km] = T0TO
-    pare[ieT0, iprotate, km] = T0TO
-    pare[ieT0, iptakeoff, km] = T0TO
+pare[ieT0, ipstatic, :] .= T0TO
+pare[ieT0, iprotate, :] .= T0TO
+pare[ieT0, iptakeoff, :] .= T0TO
 
-    pare[ieTt4, ipstatic, km] = Tt4TO
-    pare[ieTt4, iprotate, km] = Tt4TO
-    pare[ieTt4, iptakeoff, km] = Tt4TO
-end
+pare[ieTt4, ipstatic, :] .= Tt4TO
+pare[ieTt4, iprotate, :] .= Tt4TO
+pare[ieTt4, iptakeoff, :] .= Tt4TO
 
 #------------------------------
 #- design pressure ratios, efficiencies, etc.
 OPR = 30.0
 pilc = 8.0
-FPR = 1.685
+pif = 1.685
 pid = 0.998
 pib = 0.94
 pifn = 0.98
@@ -395,8 +398,8 @@ epollt = 0.899
 
 etab = 0.985
 
-FPRo = 1.685
-K_epf = -0.077
+pifK = 1.685
+epfK = -0.077
 
 BPR = 5.1
 Gearf = 1.0
@@ -414,25 +417,26 @@ epsh = 0.022
 
 #- - - - - - - - - - - - - - - - - - - - -
 # offtakes (total for both engines)
-pare[iepib, ip, :] = pib
-pare[iepifn, ip, :] = pifn
-pare[iepitn, ip, :] = pitn
-pare[iepif, ip, :] = pif
-pare[iepilc, ip, :] = pilc
-pare[iepihc, ip, :] = pihc
-pare[ieepolf, ip, :] = epolf
-pare[ieepollc, ip, :] = epollc
-pare[ieepolhc, ip, :] = epolhc
-pare[ieepolht, ip, :] = epolht
-pare[ieepollt, ip, :] = epollt
-pare[ieetab, ip, :] = etab
-pare[iepifK, ip, :] = pifK
-pare[ieepfK, ip, :] = epfK
-pare[ieBPR, ip, :] = BPR
-pare[ieM2, ip, :] = M2
-pare[ieM25, ip, :] = M25
-pare[ieepsl, ip, :] = epsl
-pare[ieepsh, ip, :] = epsh
+pihc = OPR / pilc
+pare[iepib, :, :] .= pib
+pare[iepifn, :, :] .= pifn
+pare[iepitn, :, :] .= pitn
+pare[iepif, :, :] .= pif
+pare[iepilc, :, :] .= pilc
+pare[iepihc, :, :] .= pihc
+pare[ieepolf, :, :] .= epolf
+pare[ieepollc, :, :] .= epollc
+pare[ieepolhc, :, :] .= epolhc
+pare[ieepolht, :, :] .= epolht
+pare[ieepollt, :, :] .= epollt
+pare[ieetab, :, :] .= etab
+pare[iepifK, :, :] .= pifK
+pare[ieepfK, :, :] .= epfK
+pare[ieBPR, :, :] .= BPR
+pare[ieM2, :, :] .= M2
+pare[ieM25, :, :] .= M25
+pare[ieepsl, :, :] .= epsl
+pare[ieepsh, :, :] .= epsh
 
 #- - - - - - - - - - - - - - - - - - - - -
 # offtakes (total for both engines)
@@ -450,8 +454,8 @@ parg[igPofWMTO] = PofftmMTO / 9.81
 Tt9 = 300.0
 pt9 = 30000.0
 
-pare[ieTt9, :, :] = Tt9
-pare[iept9, ip, km] = pt9
+pare[ieTt9, :, :] .= Tt9
+pare[iept9, :, :] .= pt9
 
 #------------------------------
 #- fan nozzle area factors relative to cruise design area
@@ -492,8 +496,8 @@ for ip = ipclimb1:ipclimbn
 
 end
 
-pare[ieA7fac, ipcruise1:ipcruisen, :] = 1.0
-pare[ieA5fac, ipcruise1:ipcruisen, :] = 1.0
+pare[ieA7fac, ipcruise1:ipcruisen, :] .= 1.0
+pare[ieA5fac, ipcruise1:ipcruisen, :] .= 1.0
 
 for ip = ipdescent1:ipdescentn
 
@@ -504,8 +508,8 @@ for ip = ipdescent1:ipdescentn
 
 end
 
-pare[ieA7fac, iptest, km] = A7static
-pare[ieA5fac, iptest, km] = A5static
+pare[ieA7fac, iptest, :] .= A7static
+pare[ieA5fac, iptest, :] .= A5static
 
 parg[igGearf] = Gearf
 parg[igHTRf] = HTRf
@@ -519,8 +523,22 @@ parg[igrVnace] = 1.02
 
 #------------------------------
 #- engine weight model
-pari(iiengwgt) = 1
+pari[iiengwgt] = 1
 
 #------------------------------
 # Other
 parg[ignfweb] = 1.0
+
+# importing the module
+using DelimitedFiles
+
+writedlm("pari_jl.txt", pari)
+writedlm("parg_jl.txt", parg)
+writedlm("parm_jl.txt", parm)
+
+# println(size(pari))
+# println(size(parg))
+# println(size(parm))
+# println(size(para))
+# println(size(pare))
+
