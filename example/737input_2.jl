@@ -418,6 +418,7 @@ epsh = 0.022
 #- - - - - - - - - - - - - - - - - - - - -
 # offtakes (total for both engines)
 pihc = OPR / pilc
+pare[iepid, :, :] .= pid
 pare[iepib, :, :] .= pib
 pare[iepifn, :, :] .= pifn
 pare[iepitn, :, :] .= pitn
@@ -532,13 +533,19 @@ parg[ignfweb] = 1.0
 # importing the module
 using DelimitedFiles
 
+
+println("pari", pari)
 writedlm("pari_jl.txt", pari)
 writedlm("parg_jl.txt", parg)
 writedlm("parm_jl.txt", parm)
+writedlm("para_jl.txt", para)
+writedlm("pare_jl.txt", pare)
 
-# println(size(pari))
-# println(size(parg))
-# println(size(parm))
-# println(size(para))
-# println(size(pare))
+
+
+println(size(pari))
+println(size(parg))
+println(size(parm))
+println(size(para))
+println(size(pare))
 
