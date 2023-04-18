@@ -19,11 +19,6 @@ ichoke5,ichoke7)
             1  use current variables as initial guesses in TFOPER
 """
 
-include("tfsize.jl")
-include("tfoper.jl")
-include("index.inc")
-include("constants.inc")
-
 function tfcalc!(pari, parg, para, pare, ip,
         icall, icool, initeng)
 
@@ -396,7 +391,6 @@ function tfcalc!(pari, parg, para, pare, ip,
 
                 end
 
-                Tmrow,
                 TSFC, Fsp, hfuel, ff,
                 Feng, mcore,
                 pif, pilc, pihc,
@@ -425,7 +419,7 @@ function tfcalc!(pari, parg, para, pare, ip,
                 u9, A9,
                 epf, eplc, ephc, epht, eplt,
                 etaf, etalc, etahc, etaht, etalt,
-                Lconv = tfoper(gee, M0, T0, p0, a0, Tref, pref,
+                Lconv = tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         Phiinl, Kinl, iBLIc,
                         pid, pib, pifn, pitn,
                         Gearf,
@@ -444,7 +438,7 @@ function tfcalc!(pari, parg, para, pare, ip,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
-                        epsrow,
+                        epsrow, Tmrow,
                         M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
 
                 if (Lprint)

@@ -11,7 +11,7 @@ export tfcalc!, mcool, tfweight
 
 include("gasfun.jl")
 include("gascalc.jl")
-include("tfan.jl")
+# include("tfan.jl")
 include("tfmap.jl")
 include("tfcool.jl")
 include("tfsize.jl")
