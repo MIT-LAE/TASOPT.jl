@@ -30,7 +30,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       calc_ipc1 = true
       ifirst = true
 
-      use_NPSS = true
+      use_NPSS = false
       if (NPSS_PT == Nothing || NPSS == Nothing)
             use_NPSS = false
       end

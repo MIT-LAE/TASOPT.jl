@@ -302,9 +302,13 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
       Pc = pt5
       Mi = M2
 
+      println("pif", pif)
+
       if (pf == 0.0)
             pf = pifD
       end
+      println("pifD", pifD)
+      println("pf", pf)
       if (pl == 0.0)
             pl = pilcD
       end
@@ -536,6 +540,11 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
                   epf_mf = (-1.0 / epf^2) * epf_mf
                   epf = 1.0 / epf
             end
+
+            println("alpha, nair, pt2, Tt2, ht2")
+            println([alpha, nair, pt2, Tt2, ht2])
+            println("st2, cpt2, Rt2, pf, epf")
+            println([st2, cpt2, Rt2, pf, epf])
 
             pt21, Tt21, ht21, st21, cpt21, Rt21,
             pt21_pt2,

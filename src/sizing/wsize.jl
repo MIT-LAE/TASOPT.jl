@@ -19,7 +19,7 @@ function wsize(pari, parg, parm, para, pare,
 
     time_propsys = 0.0
 
-    use_NPSS = true
+    use_NPSS = false
 
     if use_NPSS
         NPSS_PT = true
@@ -960,6 +960,12 @@ function wsize(pari, parg, parm, para, pare,
                 parg[igxfan] = 0.0
                 parg[igxmot] = 0.0
             end
+        else
+            # HACK not tested
+            nout = 0
+            yout = 0.0 # avg. moment arm of outboard engines
+            nin = 0
+            yinn = 0.0
         end
 
         if (iwplan == 1)
@@ -996,7 +1002,8 @@ function wsize(pari, parg, parm, para, pare,
         Wweb, Wcap, Wstrut,
         dxWweb, dxWcap, dxWstrut = surfw(gee, po, b, bs, bo, co, zs,
             λt, λs, γt, γs,
-            Nlift, iwplan, Weng1, nout, yout, nin, yinn,
+            Nlift, iwplan, Weng1,
+            nout, yout, nin, yinn,
             Winn, Wout, dyWinn, dyWout,
             sweep, wbox, hboxo, hboxs, rh, fLt,
             tauweb, σcap, σstrut, Ecap, Eweb, Gcap, Gweb,
@@ -1372,8 +1379,7 @@ function wsize(pari, parg, parm, para, pare,
                 inite1 = 1
             end
 
-            # HACK: use view
-            ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
             # store engine design-point parameters for all operating points
             parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -1418,7 +1424,7 @@ function wsize(pari, parg, parm, para, pare,
 
             # weight of engine and related stuff
             Gearf = parg[igGearf]
-            Weng, Wnac, Webare, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
+            Weng, Wnace, Webare, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
                 dlcomp, neng, feadd, fpylon)
 
             parg[igWeng] = Weng
@@ -1520,7 +1526,7 @@ function wsize(pari, parg, parm, para, pare,
 
             icall = 1
             icool = 2
-            ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
             # Tmetal was specified... set blade row cooling flow ratios for all points
             for jp = 1:iptotal
@@ -1851,14 +1857,14 @@ function wsize(pari, parg, parm, para, pare,
         icall = 1
         icool = 1
 
-        ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
+        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
         # set rotation thrust for takeoff routine
         # (already available from cooling calculations)
         ip = iprotate
         icall = 1
         icool = 1
-        ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite1)
+        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
         # calculate takeoff and balanced-field lengths
         # HACK: not tested!

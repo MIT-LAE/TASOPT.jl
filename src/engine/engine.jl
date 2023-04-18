@@ -7,7 +7,7 @@ module engine
 
 using StaticArrays
 
-export tfcalc!, mcool
+export tfcalc!, mcool, tfweight
 
 include("gasfun.jl")
 include("gascalc.jl")
@@ -19,5 +19,6 @@ include("gaussn.jl")
 include("compare.jl")
 include("tfoper.jl")
 include("tfcalc.jl")
+include("tfweight.jl")
 
 end

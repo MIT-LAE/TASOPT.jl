@@ -1,11 +1,3 @@
-
-using Pkg
-Pkg.activate("../")
-Pkg.instantiate()
-
-# 1) Load TASOPT
-include("../tasopt.jl")
-
 # Inputs for testing runs
 nmisx = 1
 pari = zeros(Int64, iitotal)
@@ -534,18 +526,18 @@ parg[ignfweb] = 1.0
 using DelimitedFiles
 
 
-println("pari", pari)
-writedlm("pari_jl.txt", pari)
-writedlm("parg_jl.txt", parg)
-writedlm("parm_jl.txt", parm)
-writedlm("para_jl.txt", para)
-writedlm("pare_jl.txt", pare)
+# println("pari", pari)
+# writedlm("pari_jl.txt", pari)
+# writedlm("parg_jl.txt", parg)
+# writedlm("parm_jl.txt", parm)
+# writedlm("para_jl.txt", para)
+# writedlm("pare_jl.txt", pare)
 
 
 
-println(size(pari))
-println(size(parg))
-println(size(parm))
-println(size(para))
-println(size(pare))
+# println(size(pari))
+# println(size(parg))
+# println(size(parm))
+# println(size(para))
+# println(size(pare))
 
