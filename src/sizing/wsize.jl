@@ -21,6 +21,8 @@ function wsize(pari, parg, parm, para, pare,
 
     use_NPSS = false
 
+    inite1 = 0
+
     if use_NPSS
         NPSS_PT = true
         NPSSsuccess = true
@@ -293,7 +295,7 @@ function wsize(pari, parg, parm, para, pare,
     ip = iprotate
     altkm = para[iaalt, ip] / 1000.0
     T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = para[iaMach, ip]
+    Mach = 0.25
     pare[iep0, ip] = p0
     pare[ieT0, ip] = T0
     pare[iea0, ip] = a0
@@ -738,6 +740,7 @@ function wsize(pari, parg, parm, para, pare,
                     WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
                 end
             else
+                feng = 0.08
                 fsum = feng + ffuel + fhpesys + flgnose + flgmain
                 WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
             end
@@ -1324,7 +1327,8 @@ function wsize(pari, parg, parm, para, pare,
         gamV = para[iagamV, ip]
         W = para[iafracW, ip] * WMTO
         BW = W + WbuoyCR
-        Fdes = BW * (1 / LoD + gamV) * 1.05 #Ad-hoc 5% addition for OEI
+        # Fdes = BW * (1 / LoD + gamV) * 1.05 #Ad-hoc 5% addition for OEI
+        Fdes = BW * (1 / LoD + gamV)
 
         if use_NPSS
             pare[ieFe, ip] = Fdes # Let ieFe store total thrust 
@@ -1438,6 +1442,10 @@ function wsize(pari, parg, parm, para, pare,
             parg[igfSnace] = fSnace
             lnace = parg[igdfan] * parg[igrSnace] * 0.15
             parg[iglnace] = lnace
+
+            ipc1 = 1
+            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, Nothing, Nothing, ipc1)
+            parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         end
 
@@ -1597,7 +1605,9 @@ function wsize(pari, parg, parm, para, pare,
             # ----------------------
             #     Fly mission
             # ----------------------
-            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
+            ipc1 = 1
+            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)
+
             parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
             # ----------------------
@@ -1852,6 +1862,7 @@ function wsize(pari, parg, parm, para, pare,
 
     else
 
+        # normal takeoff and balanced-field takeoff calculations
         # set static thrust for takeoff routine
         ip = ipstatic
         icall = 1
@@ -1867,16 +1878,24 @@ function wsize(pari, parg, parm, para, pare,
         ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
         # calculate takeoff and balanced-field lengths
-        # HACK: not tested!
         takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
 
         # calculate CG limits from worst-case payload fractions and packings
-        # HACK: not tested!
         rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(parg)
+        parg[igxCGfwd] = xCG0
+        parg[igxCGaft] = xCG1
+        parg[igrpayfwd] = rpay0
+        parg[igrpayaft] = rpay1
 
         # set neutral point at cruise
-        # HACK: not tested! This function seems missing a !.
-        balance(pari, parg, para[:, ip], rfuel, rpay, ξpay, itrim)
+        ip = ipcruise1
+        Wzero = WMTO - parg[igWfuel]
+        Wf = para[iafracW, ip] * WMTO - Wzero
+        rfuel = Wf / parg[igWfuel]
+        rpay = 1.0
+        ξpay = 0.0
+        itrim = 0
+        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
 
     end
     # println("Propsys time = ", time_propsys)

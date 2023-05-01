@@ -9,14 +9,6 @@ function takeoff!(pari, parg, parm, para, pare,
     initeng,
     ichoke5, ichoke7)
 
-    include("index.inc")
-
-    #---- airfoil database arrays
-    include("airf.inc")
-
-    #---- constants.inc  contains pi,gee,cp,gamma
-    include("constants.inc")
-
     #---- Newton convergence tolerance
     toler = 1.0e-7
 
@@ -62,7 +54,7 @@ function takeoff!(pari, parg, parm, para, pare,
 
     #---- normal takeoff
     ip = iprotate
-    rho0 = pare(ierho0, ip)
+    rho0 = pare[ierho0, ip]
     CLroll = 0.0
     para[iaCL, ip] = CLroll
     para[iaCLh, ip] = 0.0
@@ -71,8 +63,8 @@ function takeoff!(pari, parg, parm, para, pare,
 
     #---- total CD during roll
     icdfun = 0
-    iairf = 1
-    cdsum(pari, parg, para[1, ip], pare[1, ip], icdfun, iairf)
+    # iairf = 1
+    cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
     CDroll = para[iaCD, ip] + parg[igCDgear]
 
     #---- thrust constants for all engines operating
@@ -135,8 +127,8 @@ function takeoff!(pari, parg, parm, para, pare,
         #---- calculate fuel burn during takeoff run
         ip1 = ipstatic
         ip2 = iprotate
-        mdotf1 = pare(iemcore, ip1) * pare(ieff, ip1) * neng
-        mdotf2 = pare(iemcore, ip2) * pare(ieff, ip2) * neng
+        mdotf1 = pare[iemcore, ip1] * pare[ieff, ip1] * neng
+        mdotf2 = pare[iemcore, ip2] * pare[ieff, ip2] * neng
         WfTO = 0.5 * (mdotf1 + mdotf2) * tTO * gee
         para[iafracW, ipstatic] = para[iafracW, iptakeoff] +
                                   WfTO / parg[igWMTO]
@@ -174,7 +166,7 @@ function takeoff!(pari, parg, parm, para, pare,
         exB_lBF = kB * exB
         exC_lBF = kC * exC
 
-        r1 = VAlimsq * (1.0 - exA) + (VBlimsq - V2sq) * exB - Vblimsq
+        r1 = VAlimsq * (1.0 - exA) + (VBlimsq - V2sq) * exB - VBlimsq
         a11 = VAlimsq * (-exA_l1) + (VBlimsq - V2sq) * exB_l1
         a12 = VAlimsq * (-exA_lBF) + (VBlimsq - V2sq) * exB_lBF
 
@@ -208,8 +200,8 @@ function takeoff!(pari, parg, parm, para, pare,
             #---- calculate fuel burn during takeoff run
             ip1 = ipstatic
             ip2 = iprotate
-            mdotf1 = pare(iemcore, ip1) * pare(ieff, ip1) * neng
-            mdotf2 = pare(iemcore, ip2) * pare(ieff, ip2) * neng
+            mdotf1 = pare[iemcore, ip1] * pare[ieff, ip1] * neng
+            mdotf2 = pare[iemcore, ip2] * pare[ieff, ip2] * neng
             WfTO = 0.5 * (mdotf1 + mdotf2) * tTO * gee
             para[iafracW, ipstatic] = para[iafracW, iptakeoff] +
                                       WfTO / parg[igWMTO]
@@ -224,8 +216,8 @@ function takeoff!(pari, parg, parm, para, pare,
             parm[imlBF] = lBF
             parm[imtTO] = tTO
             parm[imFTO] = FTO
-            parm[imgamVTO] = asin[singTO]
-            parm[imgamVBF] = asin[singBF]
+            parm[imgamVTO] = asin(singTO)
+            parm[imgamVBF] = asin(singBF)
 
             return
         end

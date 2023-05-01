@@ -24,7 +24,7 @@ NOTE:
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
 """
-function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, initeng, ipc1)
+function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, iairf, initeng, ipc1)
 
       t_prop = 0.0
       calc_ipc1 = true
@@ -38,7 +38,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       # HACK TODO add the para back
       # iairf
       initeng = 0
-      ipc1 = 0
+      # ipc1 = 0
 
       itergmax::Int64 = 15
       gamVtol = 1.0e-12
@@ -438,11 +438,12 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
                   else
                         icall = 1
                         icool = 1
-                        ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, initeng)
+
+                        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
                         Ftotal = pare[ieFe, ip] * parg[igneng]
                         TSFC = pare[ieTSFC, ip]
-                        DoL = para[iaCD, ip] / parap[iaCL, ip]
+                        DoL = para[iaCD, ip] / para[iaCL, ip]
 
                   end
 
@@ -481,7 +482,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             end
             Vgi[ip] = 1.0 / (V * cosg)
 
-            if (!use_NPSS)
+            if (use_NPSS)
                   ΔT = pare[ieT0, ip] - 20.0
                   P = pare[iePLH2, ip]
                   yg = pare[ieyg, ip]
@@ -503,23 +504,28 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
                   FFCavg = 0.5 * (FFC[ip] + FFC[ip-1])
                   Vgiavg = 0.5 * (Vgi[ip] + Vgi[ip-1])
 
-                  dPdtavg = 0.5 * (dPdt[ip] + dPdt[ip-1])
-                  dygdtavg = 0.5 * (dygdt[ip] + dygdt[ip-1])
-
+                  if (use_NPSS)
+                        dPdtavg = 0.5 * (dPdt[ip] + dPdt[ip-1])
+                        dygdtavg = 0.5 * (dygdt[ip] + dygdt[ip-1])
+                  end
 
                   dR = (dh + 0.5 * dVsq / gee) / FoWavg
                   dt = dR * Vgiavg
                   rW = exp(-dR * FFCavg)    #Ratio of weights Wᵢ₊₁/Wᵢ
 
-                  dP = dPdtavg * Vgiavg * dR
-                  dyg = dygdtavg * Vgiavg * dR
+                  if (use_NPSS)
+                        dP = dPdtavg * Vgiavg * dR
+                        dyg = dygdtavg * Vgiavg * dR
+                  end
 
                   para[iaRange, ip] = para[iaRange, ip-1] + dR
                   para[iatime, ip] = para[iatime, ip-1] + dt
                   para[iafracW, ip] = para[iafracW, ip-1] * rW
 
-                  pare[iePLH2, ip] = pare[iePLH2, ip-1] + dP
-                  pare[ieyg, ip] = pare[ieyg, ip-1] + dyg
+                  if (use_NPSS)
+                        pare[iePLH2, ip] = pare[iePLH2, ip-1] + dP
+                        pare[ieyg, ip] = pare[ieyg, ip-1] + dyg
+                  end
 
                   ifirst = false
 
@@ -547,15 +553,19 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
                   dt = dR * Vgi[ip]
                   rW = exp(-dR * FFC[ip])
 
-                  dP = dPdt[ip] * Vgi[ip] * dR
-                  dyg = dygdt[ip] * Vgi[ip] * dR
+                  if (use_NPSS)
+                        dP = dPdt[ip] * Vgi[ip] * dR
+                        dyg = dygdt[ip] * Vgi[ip] * dR
+                  end
 
                   para[iaRange, ip+1] = para[iaRange, ip] + dR
                   para[iatime, ip+1] = para[iatime, ip] + dt
                   para[iafracW, ip+1] = para[iafracW, ip] * rW
 
-                  pare[iePLH2, ip+1] = pare[iePLH2, ip] + dP
-                  pare[ieyg, ip+1] = pare[ieyg, ip] + dyg
+                  if (use_NPSS)
+                        pare[iePLH2, ip+1] = pare[iePLH2, ip] + dP
+                        pare[ieyg, ip+1] = pare[ieyg, ip] + dyg
+                  end
             end
 
       end # done integrating climb
@@ -577,7 +587,8 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       itrim = 1
       balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
 
-      if (calc_ipc1)
+      # if (calc_ipc1)
+      if (ipc1 == 0)
             # println("Calculating cruise point")
             # println(pare[ieFe, ip])
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
@@ -643,13 +654,8 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             else
                   icall = 2
                   icool = 1
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, initeng)
+                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
             end
-
-            # println("Cruise Ftotal, offdes = ", Ftotal)
-            # println("Thrust req = ", F)
-            # printstyled("Tt4 = $(pare[ieTt4, ip])\n"; color=:red)
-            # println("Ftotal diff = ", Ftotal - pare[ieFe, ip])
       end
 
       # set cruise-climb climb angle, from fuel burn rate and atmospheric dp/dz
@@ -677,7 +683,11 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       end
       para[iagamV, ip] = gamVcr1
 
-      Ftotal = pare[ieFe, ip]
+      if use_NPSS
+            Ftotal = pare[ieFe, ip]
+      else
+            Ftotal = pare[ieFe, ip] * parg[igneng]
+      end
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
@@ -739,9 +749,9 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
-      F = BW * (DoL + para[iagamV, ip])
+      Ftotal = BW * (DoL + para[iagamV, ip])
       if !use_NPSS
-            pare[ieFe, ip] = F / parg[igneng]
+            pare[ieFe, ip] = Ftotal / parg[igneng]
       end
 
       if use_NPSS
@@ -783,7 +793,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             icall = 2
             icool = 1
 
-            ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, initeng)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
       end
 
@@ -804,8 +814,11 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      # FFC[ip] = Ftotal*TSFC/(W*V*cosg)
-      FFC[ip] = mdotf * gee / (W * V * cosg)
+      if (!use_NPSS)
+            FFC[ip] = Ftotal * TSFC / (W * V * cosg)
+      else
+            FFC[ip] = mdotf * gee / (W * V * cosg)
+      end
       Vgi[ip] = 1.0 / (V * cosg)
 
       if use_NPSS
@@ -839,6 +852,31 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
       if use_NPSS
             pare[iePLH2, ipn] = pare[iePLH2, ip1] + dP
             pare[ieyg, ipn] = pare[ieyg, ip1] + dyg
+      end
+
+      # set intermediate points over cruise, if any, just by interpolating
+      for ip = ipcruise1+1:ipcruisen-1
+            frac = float(ip - ipcruise1) / float(ipcruisen - ipcruise1)
+            Mach = para[iaMach, ip]
+            para[iaalt, ip] = altc * (1.0 - frac) + altd * frac
+            altkm = para[iaalt, ip] / 1000.0
+            T0, p0, rho0, a0, mu0 = atmos(altkm)
+            pare[iep0, ip] = p0
+            pare[ieT0, ip] = T0
+            pare[iea0, ip] = a0
+            pare[ierho0, ip] = rho0
+            pare[iemu0, ip] = mu0
+            pare[ieM0, ip] = Mach
+            pare[ieu0, ip] = Mach * a0
+            para[iaReunit, ip] = Mach * a0 * rho0 / mu0
+
+            rhocab = max(parg[igpcabin], p0) / (RSL * TSL)
+            para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
+
+            para[iaRange, ip] = para[iaRange, ipcruise1] + dRcruise * frac
+            para[iatime, ip] = para[iatime, ipcruise1] + dtcruise * frac
+            para[iafracW, ip] = para[iafracW, ipcruise1] * rWcruise^frac
+
       end
 
       # Descent
@@ -891,7 +929,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             para[iagamV, ipdescent1] = gamVde1
             para[iagamV, ipdescentn] = gamVden
 
-            for i = ipdescent1+1:ipdescentn-1
+            for ip = ipdescent1+1:ipdescentn-1
                   frac = float(ip - ipdescent1) / float(ipdescentn - ipdescent1)
                   R = Rd * (1.0 - frac) + Re * frac
 
@@ -916,7 +954,9 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
             para[iaWbuoy, ipdescentn] = 0.0
 
             # integrate time and weight over descent
-            for ip = 1:ipdescentn
+            for ip = ipdescent1:ipdescentn
+
+                  # velocity calculation from CL, Weight, altitude
                   gamVde = para[iagamV, ip]
                   cosg = cos(gamVde)
                   W = para[iafracW, ip] * WMTO
@@ -981,7 +1021,8 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
                   icall = 2
                   # use previously-set turbine cooling mass flow
                   icool = 1
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, para[:, ip], pare[:, ip], ip, icall, icool, inite)
+
+                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
 
                   # store effective thrust, effective TSFC
                   F = pare[ieFe, ip] * parg[igneng]
@@ -1032,7 +1073,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)#, iairf, 
                         dVsq = pare[ieu0, ip+1]^2 - pare[ieu0, ip]^2
 
                         dR = para[iaRange, ip] - para[iaRange, ip-1]
-                        dt = dR * Vgi(ip)
+                        dt = dR * Vgi[ip]
                         rW = exp(-dR * FFC[ip])
 
                         para[iatime, ip+1] = para[iatime, ip] + dt

@@ -20,10 +20,12 @@ using ForwardDiff
 include("src/misc/constants.jl")
 include("src/misc/index.inc")
 
+
 #Load modules
 include("src/atmos/atmos.jl")
 include("src/sizing/wsize.jl")
 include("src/mission/mission.jl")
+include("src/mission/takeoff.jl")
 include("src/aero/aero.jl")
 include("src/structures/structures.jl")
 include("src/propsys/propsys.jl")
