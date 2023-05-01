@@ -526,18 +526,7 @@ parg[ignfweb] = 1.0
 using DelimitedFiles
 
 
-# println("pari", pari)
-# writedlm("pari_jl.txt", pari)
-# writedlm("parg_jl.txt", parg)
-# writedlm("parm_jl.txt", parm)
-# writedlm("para_jl.txt", para)
-# writedlm("pare_jl.txt", pare)
-
-
-
-# println(size(pari))
-# println(size(parg))
-# println(size(parm))
-# println(size(para))
-# println(size(pare))
-
+aisle_halfwidth = 10.0 * in_to_m
+seat_width = 19.0 * in_to_m
+seat_pitch = 30.0 * in_to_m
+pax = Npax

@@ -22,5 +22,5 @@ weight_buildup(parg)
 
 # 5) Plot figures
 pygui(true)
-stickfig(parg,pari,parm)
-plt.savefig("../../example/Example.png")
+stickfig(parg, pari, parm)
+# plt.savefig("../../example/Example.png") # BUG

@@ -146,6 +146,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow,
+      Feng,
       M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
 
       #---- ncrowy must be at least as big as ncrowx defined in index.inc
@@ -2574,8 +2575,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   println("pt5  Tt5  =", pt5, Tt5)
                   println("p5        =", p5)
                   println("FPR  BPR  =", pf, BPR)
-
-                  println("Fe =", Feng)
 
                   Lconv = false
                   return TSFC, Fsp, hfuel, ff,
