@@ -21,7 +21,6 @@ Currently NPSS is being used to model the turboshaft engine by simply "file wrap
 
 > Using NPSS to do the propulsion system calculations becomes slow if NPSS has to be started/ compiled and then the engine model solved for each call to the propulsion system. 
 > To circumvent this issue Julia now starts up an asynchronous process on your system that runs NPSS and then writes engine inputs to the `STDIN` of the NPSS process and waits till NPSS returns a success/ failure code on its `STDOUT` before continuing onto the next calcualtions. 
-> This ideally means that we can get rid of file-based transfer but, that remains to be implemented
 
 
 ## Collaboration guide
