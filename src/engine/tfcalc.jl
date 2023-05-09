@@ -18,12 +18,6 @@ ichoke5,ichoke7)
   initeng = 0  initialize variables for iteration in TFOPER
             1  use current variables as initial guesses in TFOPER
 """
-
-include("tfsize.jl")
-include("tfoper.jl")
-include("index.inc")
-include("constants.inc")
-
 function tfcalc!(pari, parg, para, pare, ip,
         icall, icool, initeng)
 
