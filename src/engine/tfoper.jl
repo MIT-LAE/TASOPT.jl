@@ -1,11 +1,4 @@
-include("gasfun.jl")
-include("gascalc.jl")
-include("tfan.jl")
-include("tfmap.jl")
-include("tfcool.jl")
-include("tfsize.jl")
-include("gaussn.jl")
-include("compare.jl")
+
 using LinearAlgebra
 
 function tfoper(gee, M0, T0, p0, a0, Tref, pref,
