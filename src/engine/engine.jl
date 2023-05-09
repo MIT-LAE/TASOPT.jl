@@ -2,7 +2,6 @@
 `engine` is a module that contains all low-fidelity (NPSS is included in a different directory) calculations
 required in the aircraft sizing. 
 """
-
 module engine
 
 using StaticArrays
