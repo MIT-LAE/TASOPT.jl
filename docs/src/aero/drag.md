@@ -8,6 +8,8 @@ The fuselage profile drag is determined by a quasi-axisymmetric coupled viscous-
 
 This method does not require reliance on any wetted area approximations or fineness-ratio correlations.
 
+![ADfuse](../assets/ADfuse.png)
+
 ```@docs
 
 aerodynamics.axisol!(xnose,xend,xblend1,xblend2, Amax, 
