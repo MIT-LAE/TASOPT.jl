@@ -1,10 +1,3 @@
-include("gasfun.jl")
-include("gascalc.jl")
-include("tfan.jl")
-include("tfmap.jl")
-include("tfcool.jl")
-
-
 function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Feng, Phiinl, Kinl, iBLIc,
       BPR, pif, pilc, pihc,
