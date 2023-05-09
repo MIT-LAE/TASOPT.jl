@@ -78,8 +78,8 @@ function fusebl!(pari, parg, para, ip)
       nc = 30
 
       nbl, iblte =  axisol!(xnose,xend,xblend1,xblend2,Sfuse, 
-                                                     anose,btail,ifclose,
-                                                     Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
+                            anose,btail,ifclose,
+                            Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
      
 #---- fuselage volume and perimeter
       @inbounds for i = 1:iblte-1
@@ -123,7 +123,7 @@ function fusebl!(pari, parg, para, ip)
       fex = para[iafexcdf, ip]
      
       uebl, dsbl, thbl, tsbl, dcbl,
-      cfbl, cdbl, ctbl, hkbl, phbl  = blax(nbldim, nbl,iblte, 
+      cfbl, cdbl, ctbl, hkbl, phbl  = blax2(nbldim, nbl,iblte, 
 					sbl, bbl, rnbl, uinv, Reunit, Mach, fex)
 
       gam = 1.4 #gamSL
