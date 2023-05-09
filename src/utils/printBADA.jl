@@ -13,11 +13,11 @@ function printBADA(io, name, W0, bestalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS
     maxalt = bestalt/ft_to_m + 7000 #idk why but AEIC subtracts 7000 ft
 
     println(io, "BADA PERFORMANCE FILE                                    "*Dates.format(now(), DateFormat("u dd yyyy")) )
-    println(io, @sprintf(""))
+    println(io, @sprintf(" "))
     println(io, @sprintf("AC/Type: %6s___", name))
     println(io, "                              Source OPF File:               "*Dates.format(now(), DateFormat("u dd yyyy")) )
     println(io, "                              Source APF file:               "*Dates.format(now(), DateFormat("u dd yyyy")) )
-    println(io, @sprintf(""))
+    println(io, @sprintf(" "))
     println(io, @sprintf(" Speeds:   CAS(LO/HI)  Mach   Mass Levels [kg]         Temperature:  ISA"))
     println(io, @sprintf(" climb   - 250/310     0.80   low     -  %6.0f", W0[1]/9.81))
     println(io, @sprintf(" cruise  - 250/310     0.80   nominal -  %6.0f        Max Alt. [ft]:%7.0f", W0[2]/9.81, maxalt))
