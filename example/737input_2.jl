@@ -18,6 +18,7 @@ pari[iiaircraftclass] = 737 #specifies aircraft class in order to run appropriat
 pari[iiopt] = 0 # 0 run sizing loop only; 1 run optimization procedure
 pari[iifwing] = 1 # 0 = all fuel stored in tanks; 1 = all fuel stored in wings
 pari[iiengtype] = 1  # 0 = Turboelectric engine; 1 = Turbofan engine
+pari[iiengmodel] = 0 # 0 = drela engine model; 1 = NPSS model
 
 #-----------------------------------------
 #- parameters for each mission 
