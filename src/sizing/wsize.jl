@@ -19,7 +19,13 @@ function wsize(pari, parg, parm, para, pare,
 
     time_propsys = 0.0
 
-    use_NPSS = false
+    if pari[iiengmodel] == 0
+        # Drela engine model
+        use_NPSS = false
+    else
+        # NPSS
+        use_NPSS = true
+    end
 
     inite1 = 0
 

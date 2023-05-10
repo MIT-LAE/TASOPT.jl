@@ -30,9 +30,12 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       calc_ipc1 = true
       ifirst = true
 
-      use_NPSS = false
-      if (NPSS_PT == Nothing || NPSS == Nothing)
+      if pari[iiengmodel] == 0
+            # Drela engine model
             use_NPSS = false
+      else
+            # NPSS
+            use_NPSS = true
       end
 
       # HACK TODO add the para back
