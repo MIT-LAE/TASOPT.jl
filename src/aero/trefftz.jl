@@ -29,42 +29,11 @@ function trefftz1(nsurf, npout, npinn, npimg,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
 	Lspec,CLsurfsp,)
-#	CLsurf,CL,CD,spanef,
-#	idim,ifrst,ilast,
-#	yc,zc,gc,vc,wc,vnc, ycp,zcp)
-
-#      implicit real(a-h,l-z)
-#
-#      integer nsurf, npout(nsurf), npinn(nsurf), npimg(nsurf)
-#      real b(nsurf), bs(nsurf), bo(nsurf), bop(nsurf)
-#      real zcent(nsurf)
-#      real po(nsurf)
-#      real gammat(nsurf), gammas(nsurf)
-#      integer ktip
-#      real CLsurfsp(nsurf), CLsurf(nsurf)
-#      real CL, CD
-#      logical Lspec
-#
-#      real yc(idim), ycp(idim),
-#	zc(idim), zcp(idim)
-#      real gc(idim), vc(idim), wc(idim), vnc(idim)
-#      integer ifrst(nsurf), ilast(nsurf)
-#
-#
-#      parameter (jdim=360)
-#      real t(jdim), 
-#	y(jdim), yp(jdim),
-#	z(jdim), zp(jdim)
-#      real gw(jdim)
-#
-#      common  /com_lu/ ilu
-#
-#      data π / 3.1415926535897932384626 /
 
 #---- center resolution increase factor (0..1)
 #     bunch = 0.75 
       bunch =  0.5 
-#c    bunch =  0. 
+#     bunch =  0. 
       
       idim::Int = 360
       jdim::Int = 360
@@ -97,12 +66,12 @@ function trefftz1(nsurf, npout, npinn, npimg,
 
       if(isum > idim) 
 	      println("TREFFTZ: Passed array overflow. Increase idim to ",isum)
-       quit()
+        exit()
       end
 
       if(isum > jdim) 
 	      println("TREFFTZ: Local array overflow. Increase jdim to ", isum)
-       quit()
+        exit()
       end
 
 
@@ -144,20 +113,10 @@ function trefftz1(nsurf, npout, npinn, npimg,
       gs = po[isurf]*gammas[isurf]
       g1 = po[isurf]*gammat[isurf]
 
-
-#      k0 = 1
-#      ko = 1 + int( float(n[isurf])*(to-t0)/(t1-t0) + 0.5 )
-#      ks = 1 + int( float(n[isurf])*(ts-t0)/(t1-t0) + 0.5 )
-#      k1 = 1 + n[isurf]
-
       k0 = 1
       ko = 1 + npimg[isurf]
       ks = 1 + npimg[isurf] + npinn[isurf]
       k1 = 1 + npimg[isurf] + npinn[isurf] + npout[isurf]
-
-#      write(*,*) y0, yo, ys, y1
-#      write(*,*) t0, to, ts, t1
-#      write(*,*) 1, ko, ks, n[isurf]+1
 
       i = i+1
       ifrst[isurf] = i
@@ -169,7 +128,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       zp[i] = z0
 
 #---- set points over fuselage
-      @inbounds for  k = k0+1: ko
+      @inbounds for  k = k0+1 : ko
         i = i+1
 
         fk = float(k-k0)/float(ko-k0)
@@ -234,7 +193,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
         zcp[i-1] = zc[i-1]
       end
 
-      @inbounds for  k = ks+1: k1
+      @inbounds for  k = ks+1 : k1
         i = i+1
 
         fk = float(k-ks)/float(k1-ks)
@@ -295,7 +254,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
          end
 
          gfac = CLsurfsp[isurf]/cltest
-#c         write(*,*) isurf, gfac
+#        println("$isurf, $gfac")
 
          @inbounds for  i = ifrst[isurf]: ilast[isurf]
            gc[i] = gc[i]*gfac
