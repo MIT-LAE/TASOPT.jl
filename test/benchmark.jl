@@ -16,7 +16,11 @@ include("input.jl")
 
 println("Start Benchmarking...")
 
+function benchmark_fuseBL()
+println("---------------------------------------")
 println("Fuselage boundary layer calculations")
+println("---------------------------------------")
+
 # Blax benchmarks
 # Load required inputs:
 ndim, n, ite = 60, 47, 31
@@ -60,30 +64,117 @@ Mach = 0.84
 fexcr = 1.03  
 
 println("Benchmarking... blax")
-b = @benchmarkable aerodynamics.blax(ndim, n, ite, xi, bi, rni, uinv, Reyn, Mach, fexcr) seconds=10 evals=50
+
+b = @benchmarkable aerodynamics.blax($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
+ $Reyn, $Mach, $fexcr) seconds=30 evals=5
 bench_blax = run(b)
 
 println("Benchmarking... blax2")
-b = @benchmarkable aerodynamics.blax2(ndim, n, ite, xi, bi, rni, uinv, Reyn, Mach, fexcr) seconds=10 evals=50
+b = @benchmarkable aerodynamics.blax2($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
+ $Reyn, $Mach, $fexcr) seconds=30 evals=5
 bench_blax2 = run(b)
 
 println("Benchmarking... fusebl")
-b = @benchmarkable fusebl!(pari, parg, para, ipcruise1) seconds=10 evals=50
+b = @benchmarkable fusebl!($pari, $parg, $para, $ipcruise1) seconds=30 evals=5
 bench_fusebl = run(b)
 
 println("Benchmark results...")
-println("-------------")
-println("blax")
-println("-------------")
+println("\nNotes (from BenchmarkTools Manual):
+- The minimum is a robust estimator for the location parameter of the time distribution, and should not be considered an outlier
+- The median, as a robust measure of central tendency, should be relatively unaffected by outliers
+- The mean, as a non-robust measure of central tendency, will usually be positively skewed by outliers
+- The maximum should be considered a primarily noise-driven outlier, and can change drastically between benchmark trials.")
+println("---------------------------------------")
+println("blax (FORTRAN on MacPro M2 ~ 1.9 ms)")
+println("---------------------------------------")
 display(bench_blax)
 
-println("-------------")
-println("blax2")
-println("-------------")
+println("---------------------------------------")
+println("blax2 (FORTRAN on MacPro M2 ~ 1.9 ms)")
+println("---------------------------------------")
 display(bench_blax2)
 
-println("-------------")
-println("fusebl")
-println("-------------")
-
+println("---------------------------------------")
+println("fusebl (FORTRAN on MacPro M2 ~ 1.95 ms)")
+println("---------------------------------------")
 display(bench_fusebl)
+end
+
+function benchmark_drag()
+# ====================
+#  Drag calculations
+# ====================
+
+println("\n---------------------------------------")
+println("\nDrag calculations")
+println("---------------------------------------")
+
+Re = 2e6
+println("Benchmarking... cfturb")
+bench_cfturb = @benchmark aerodynamics.cfturb($Re)
+
+
+# # aerodynamics.cditrp(pari, parg, view(para, :, ipcruise1))
+# bench_cditrp = @benchmark aerodynamics.cditrp($pari, $parg,
+#  $view(para, :, ipcruise1))
+# println("---------------------------------------")
+# println("cditrp (FORTRAN on MacPro M2 ~ 4.5 μs)")
+# println("---------------------------------------")
+# display(bench_cditrp)
+
+nsurf = 2
+npout = [20, 10]
+npinn = [6, 0]
+npimg = [3, 2]
+Sref = 124.68530761144433
+bref =  35.486921631434697
+b = [35.486921631434697, 15.958117796995291]
+bs = [10.113772664958887, 1.5240000000000000]
+bo = [3.6067999999999998, 1.5240000000000000]
+bop = [0.72136000000000000, 1.5240000000000000]
+zcent = [-1.6764000000000001,  0.0000000000000000]
+po = [1.0000000000000000, 1.0000000000000000]
+gammat = [0.14999999999999999,  0.25000000000000000]
+gammas = [0.77000000000000002,  1.0000000000000000]
+fLo = -0.29999999999999999 
+ktip = 16
+Lspec = true
+CLsurfsp =[1.2502595056643222, 1.1976021933848557E-002] 
+
+println("Benchmarking... trefftz1")
+b = @benchmarkable aerodynamics.trefftz1($nsurf, $npout,
+                        $npinn, $npimg, 
+	                    $Sref, $bref,
+	                    $b,$bs,$bo,$bop, $zcent,
+	                    $po,$gammat,$gammas, $fLo, $ktip,
+                       $Lspec,$CLsurfsp) seconds=30 evals=50
+bench_trefftz = run(b)
+
+println("Benchmarking... cdsum!")
+b = @benchmarkable aerodynamics.cdsum!($pari, $parg, 
+$view(para, :, 10),
+$view(pare,:, 10), $(1)) seconds=30 evals=1
+bench_cdsum = run(b)
+
+
+
+println("---------------------------------------")
+println("cfturb (FORTRAN on MacPro M2 ~ --- μs)")
+println("---------------------------------------")
+display(bench_cfturb)
+
+println("---------------------------------------")
+println("trefftz (FORTRAN on MacPro M2 ~ 4.6 μs)")
+println("---------------------------------------")
+display(bench_trefftz)
+
+println("---------------------------------------")
+println("cdsum (FORTRAN on MacPro M2 ~ 5.8 - 6.0 μs)")
+println("---------------------------------------")
+display(bench_cdsum)
+
+end
+
+include("../Models/ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
+benchmark_fuseBL()
+benchmark_drag()
