@@ -48,14 +48,14 @@ function trefftz1(nsurf, npout, npinn, npimg,
       zp    = zeros(Float64, jdim)
       gw    = zeros(Float64, jdim)
       
-      yc    = zeros(Float64, jdim)
-      ycp   = zeros(Float64, jdim)
-      zc    = zeros(Float64, jdim)
-      zcp   = zeros(Float64, jdim)
-      gc    = zeros(Float64, jdim)
-      vc    = zeros(Float64, jdim)
-      wc    = zeros(Float64, jdim)
-      vnc   = zeros(Float64, jdim)
+      yc    = zeros(Float64, idim)
+      ycp   = zeros(Float64, idim)
+      zc    = zeros(Float64, idim)
+      zcp   = zeros(Float64, idim)
+      gc    = zeros(Float64, idim)
+      vc    = zeros(Float64, idim)
+      wc    = zeros(Float64, idim)
+      vnc   = zeros(Float64, idim)
       
       CLsurf= zeros(Float64, nsurf)
       
