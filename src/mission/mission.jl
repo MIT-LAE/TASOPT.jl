@@ -42,11 +42,11 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       # iairf
       initeng = 0
       # ipc1 = 0
+      ipc1 = 0 # HACK
 
       itergmax::Int64 = 15
       gamVtol = 1.0e-12
       #     gamVtol  = 1.0e-10
-
 
       # unpack flags
       iengloc = pari[iiengloc]
