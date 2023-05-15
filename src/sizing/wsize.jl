@@ -1,11 +1,8 @@
 using Printf
 """
 # wsize - Main weight sizing section
-
 Calls on various sub-functions to calculate weight of fuselage, wings, tails etc,
-
 and iterates until the MTOW converges to within a specified tolerance.
-
 ### Inputs:
 - Array of flags that control design choices - fuel types, where to store fuel etc
 - Geometrical and structural parameters - dimensions primarily

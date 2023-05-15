@@ -1,0 +1,50 @@
+2023-05-09
+Current location /Users/prashanth/codes/TAESOPT.jl/test
+Loading TASOPT...
+Loading input file...
+Seats per row = 10, rows = 22, lcabin = 54.99999999999999 ft
+Start Benchmarking...
+Fuselage boundary layer calculations
+Benchmarking... blax
+Benchmarking... blax2
+Benchmarking... fusebl
+Benchmark results...
+-------------
+blax
+-------------
+BenchmarkTools.Trial: 62 samples with 50 evaluations.
+ Range (min … max):  2.585 ms … 19.088 ms  ┊ GC (min … max): 6.40% … 5.33%
+ Time  (median):     2.686 ms              ┊ GC (median):    7.69%
+ Time  (mean ± σ):   3.012 ms ±  2.083 ms  ┊ GC (mean ± σ):  8.92% ± 3.22%
+
+   ▅█▂                                                        
+  ▅███▆▆█▃▁▅▅█▅█▃▃▃▃▃▁▁▃▁▁▁▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▃ ▁
+  2.59 ms        Histogram: frequency by time        3.65 ms <
+
+ Memory estimate: 4.00 MiB, allocs estimate: 96669.
+-------------
+blax2
+-------------
+BenchmarkTools.Trial: 124 samples with 50 evaluations.
+ Range (min … max):  1.384 ms …  10.072 ms  ┊ GC (min … max): 0.00% … 2.31%
+ Time  (median):     1.542 ms               ┊ GC (median):    8.24%
+ Time  (mean ± σ):   1.595 ms ± 777.727 μs  ┊ GC (mean ± σ):  5.98% ± 4.49%
+
+   ▄      █▂                                                   
+  ▆█▄▃▃▁▁▄██▆▄▃▃▁▁▂▁▁▁▁▂▁▂▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂ ▂
+  1.38 ms         Histogram: frequency by time        2.49 ms <
+
+ Memory estimate: 2.11 MiB, allocs estimate: 44243.
+-------------
+	 fusebl
+-------------
+BenchmarkTools.Trial: 94 samples with 50 evaluations.
+ Range (min … max):  1.776 ms … 12.590 ms  ┊ GC (min … max): 0.00% … 3.47%
+ Time  (median):     1.976 ms              ┊ GC (median):    8.34%
+ Time  (mean ± σ):   2.080 ms ±  1.104 ms  ┊ GC (mean ± σ):  7.10% ± 3.72%
+
+         ▅  ▇█                                                
+  ▇▇▃▄▁▁▄█▆▄██▇▄▁▁▃▁▄▄▁▁▁▁▁▁▁▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▃ ▁
+  1.78 ms        Histogram: frequency by time         2.9 ms <
+
+ Memory estimate: 2.62 MiB, allocs estimate: 54025.

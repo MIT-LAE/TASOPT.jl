@@ -1,5 +1,3 @@
-include("gasfun.jl")
-
 """
      Calculates temperature for a specified enthalpy.
      The constant-cp equivalent is
