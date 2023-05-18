@@ -1,32 +1,31 @@
+using ForwardDiff
+"""
+      Calculates cooling mass flow requirement.
 
+      # Input
+      -----
+      ncrowx   dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
+      Tmrow(.) design metal temperature for each blade row
+      Tt3      cooling flow temperature
+      Tt4      hot gas temperature from burner
+      dTstreak hot-streak temperature increase over Tt4, for first blade row 
+      Trrat    static temperature ratio across each blade row, T4.1 / T4
+      efilm    cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
+      tfilm    film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
+            Tco = temperature of cooling air exiting  blade
+            Tci = temperature of cooling air entering blade
+            Tfaw = film adiabatic wall temperature (for insulated-wall case)
+      StA      area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
+
+      # Output
+      ------
+      ncrow     number of blade rows which need cooling
+      epsrow(.) cooling mass flow ratio for each blade row, m_c_row/m_air
+
+"""
 function mcool(ncrowx,
       Tmrow, Tt3, Tt4, dTstreak, Trrat,
       efilm, tfilm, StA)
-
-      # ==============================================================
-      #     Calculates cooling mass flow requirement.
-      #
-      #  Input
-      #  -----
-      #  ncrowx   dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
-      #  Tmrow(.) design metal temperature for each blade row
-      #  Tt3      cooling flow temperature
-      #  Tt4      hot gas temperature from burner
-      #  dTstreak hot-streak temperature increase over Tt4, for first blade row 
-      #  Trrat    static temperature ratio across each blade row, T4.1 / T4
-      #  efilm    cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
-      #  tfilm    film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
-      #            Tco = temperature of cooling air exiting  blade
-      #            Tci = temperature of cooling air entering blade
-      #            Tfaw = film adiabatic wall temperature (for insulated-wall case)
-      #  StA      area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
-      #
-      #  Output
-      #  ------
-      #  ncrow     number of blade rows which need cooling
-      #  epsrow(.) cooling mass flow ratio for each blade row, m_c_row/m_air
-      #
-      # ==============================================================
 
       #---- assume zero cooling mass flow for all blade rows
       epsrow = zeros(ncrowx)
@@ -81,7 +80,7 @@ function mcool(ncrowx,
 
       end
 
-      println("Cooling does not work.")
+      return ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr
 end # mcool
 
 function Tmcalc(ncrowx, ncrow,
@@ -112,8 +111,55 @@ function Tmcalc(ncrowx, ncrow,
       #
       # ==============================================================
 
-      Tmrow = zeros(ncrowx)
-      buf = Zygote.Buffer(Tmrow, length(Tmrow))
+      # Zygote
+      # Tmrow = zeros(ncrowx)
+      # buf = Zygote.Buffer(Tmrow, ncrowx)
+      # for icrow = 1:ncrow
+      #       if (icrow == 1)
+      #             Tg = Tt4 + dTstreak
+      #       else
+      #             Tg = Tt4 * Trrat^(icrow - 1)
+      #       end
+
+      #       eps = epsrow[icrow]
+      #       theta = (eps * efilm + StA * tfilm * (1.0 - efilm) * (1.0 - eps)) /
+      #               (eps * efilm + StA * (1.0 - efilm * tfilm) * (1.0 - eps))
+
+      #       # To make Zygote.jl happy
+      #       buf[icrow] = Tg - (Tg - Tt3) * theta
+      #       theta = (Tg - buf[icrow]) / (Tg - Tt3)
+
+      # end
+
+      # Tmrow = copy(buf)
+
+      # General
+      # Tmrow = zeros(ncrowx)
+      # for icrow = 1:ncrow
+      #       if (icrow == 1)
+      #             Tg = Tt4 + dTstreak
+      #       else
+      #             Tg = Tt4 * Trrat^(icrow - 1)
+      #       end
+
+      #       eps = epsrow[icrow]
+      #       theta = (eps * efilm + StA * tfilm * (1.0 - efilm) * (1.0 - eps)) /
+      #               (eps * efilm + StA * (1.0 - efilm * tfilm) * (1.0 - eps))
+
+      #       # Original code, Zygote.jl does not like it
+      #       Tmrow[icrow] = Tg - (Tg - Tt3) * theta
+      #       theta = (Tg - Tmrow[icrow]) / (Tg - Tt3)
+
+      # end
+
+      # ForwardDiff
+      if (typeof(Tt3) <: ForwardDiff.Dual || typeof(Tt4) <: ForwardDiff.Dual || typeof(dTstreak) <: ForwardDiff.Dual || typeof(Trrat) <: ForwardDiff.Dual || typeof(efilm) <: ForwardDiff.Dual || typeof(tfilm) <: ForwardDiff.Dual || typeof(StA) <: ForwardDiff.Dual || typeof(epsrow[1]) <: ForwardDiff.Dual)
+            T = ForwardDiff.Dual
+      else
+            T = typeof(Tt3)
+      end
+
+      Tmrow = zeros(T, ncrowx)
       for icrow = 1:ncrow
             if (icrow == 1)
                   Tg = Tt4 + dTstreak
@@ -126,16 +172,11 @@ function Tmcalc(ncrowx, ncrow,
                     (eps * efilm + StA * (1.0 - efilm * tfilm) * (1.0 - eps))
 
             # Original code, Zygote.jl does not like it
-            # Tmrow[icrow] = Tg - (Tg - Tt3) * theta
-            # theta = (Tg - Tmrow[icrow]) / (Tg - Tt3)
-
-            # To make Zygote.jl happy
-            buf[icrow] = Tg - (Tg - Tt3) * theta
-            theta = (Tg - buf[icrow]) / (Tg - Tt3)
+            Tmrow[icrow] = Tg - (Tg - Tt3) * theta
+            theta = (Tg - Tmrow[icrow]) / (Tg - Tt3)
 
       end
 
-      Tmrow = copy(buf)
 
       return Tmrow
 end # Tmcalc

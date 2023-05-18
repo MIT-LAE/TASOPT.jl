@@ -1,7 +1,132 @@
+"""
+    Turbofan operation routine
 
-using LinearAlgebra
+    Calculation procedure follows that of Kerrebrock,
+    but the usual gas property formulas are replaced
+    by function calls, which can therefore implement
+    more general gas models.  
+    In addition, a turbine cooling model is added.
 
-function tfoper(gee, M0, T0, p0, a0, Tref, pref,
+    The gas routines reside in the following source files:
+     gascalc.f  Routines for various processes 
+                (compressor, turbine, combustor, etc)
+     gasfun.f   Routines for computing cp[T], h[t], sigma[T], R,
+                called by the routines in gascalc.f
+
+    # Input
+    -----
+    gee    gravity acceleration
+    M0     freestream Mach
+    T0     freestream temperature  [K]
+    p0     freestream pressure  [Pa]
+    Tref   reference temperature for corrected mass flow and speed
+    pref   reference pressure for corrected mass flow
+    Phiinl inlet ingested dissipation  Phi_inl
+    iBLIc  0=core in clear flow, 1=core sees Phiinl
+    pid    diffuser pressure ratio  ( = pt2/pt0)
+    pib    burner   pressure ratio  ( = pt4/pt3)
+    pifn   fan     nozzle pressure ratio  ( = pt7/pt6.9)
+    pitn   turbine nozzle pressure ratio  ( = pt5/pt4.9)
+    Gearf  fan gear ratio  ( = Nl/Nf )
+    pifD   design fan pressure ratio  ( = pt21/pt2 )
+    pilcD  design LPC pressure ratio  ( = pt25/pt19)
+    pihcD  design HPC pressure ratio  ( = pt3 /pt25)
+    pihtD  design HPT pressure ratio  ( = pt45/pt41)
+    piltD  design LPT pressure ratio  ( = pt49/pt45)
+    mbfD   design corrected fan mass flow ( = mf*sqrt(Tt2 /Tref)/(pt2 /pref) )
+    mblcD  design corrected LPC mass flow ( = mc*sqrt(Tt19/Tref)/(pt19/pref) )
+    mbhcD  design corrected HLC mass flow ( = mc*sqrt(Tt25/Tref)/(pt25/pref) )
+    mbhtD  design corrected HPT mass flow ( = mt*sqrt(Tt41/Tref)/(pt41/pref) )
+    mbltD  design corrected LPT mass flow ( = mt*sqrt(Tt45/Tref)/(pt45/pref) )
+    NbfD   design corrected fan speed ( = Nf/sqrt(Tt2 /Tref) )
+    NblcD  design corrected LPC speed ( = Nl/sqrt(Tt19/Tref) )
+    NbhcD  design corrected HPC speed ( = Nh/sqrt(Tt25/Tref) )
+    NbhtD  design corrected HPT speed ( = Nh/sqrt(Tt41/Tref) )
+    NbltD  design corrected LPT speed ( = Nl/sqrt(Tt45/Tref) )
+    A2     fan-face area [m^2]                mf = mc*BPR, mt = mc*(1+ff)
+    A25    HPC-face area [m^2]
+    A5     core nozzle area [m^2]
+    A7     fan  nozzle area [m^2]
+    iTFspec  = 1 Tt4  is specified
+             = 2 Feng is specified
+    Tt4    turbine-inlet total temperature [K]
+    Ttf    fuel temperature entering combustor
+    ifuel  fuel index, see function gasfun (in gasfun.f)
+    etab   combustor efficiency (fraction of fuel burned)
+    epf0   max fan polytropic efficiency
+    eplc0  LPC max polytropic efficiency
+    ephc0  HPC max polytropic efficiency
+    epht0  HPT max polytropic efficiency
+    eplt0  LPT max polytropic efficiency
+    pifK   fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
+    epfK   fan efficiency pif derivative
+
+    mofft   mass flow offtake at LPC discharge station 2.5
+    Pofft   low spool power offtake
+    Tt9    offtake air discharge total temperature
+    pt9    offtake air discharge total pressure
+    epsl   low  spool power loss fraction
+    epsh   high spool power loss fraction
+
+    icool   turbine cooling flag
+             0 = no cooling, ignore all cooling parameters below
+             1 = usual cooling, using passed-in fc
+             2 = usual cooling, but set (and return) fc from Tmetal
+    Mtexit  turbine blade-row exit Mach, for setting temperature drops
+    Tmetal  specified metal temperature  [K], used only if icool=2
+    dTstrk  hot-streak temperature delta {K}, used only if icool=2
+    StA     area-weighted Stanton number    , used only if icool=2
+    M4a     effective Mach at cooling-flow outlet (start of mixing)
+    ruc     cooling-flow outlet velocity ratio, u/ue
+    ncrowx     dimension of epsrow array
+    ncrow      number of blade rows requiring cooling
+    epsrow(.)  input specified  cooling-flow bypass ratio if icool=1
+               output resulting cooling-flow bypass ratio if icool=2
+    Tmrow(.)   input specified  metal temperature  [K]    if icool=2
+               output resulting metal temperature  [K]    if icool=1
+
+    # Output
+    ------
+    epsrow(.)  see above
+    Tmrow(.)   see above
+    TSFC   thrust specific fuel consumption = mdot_fuel g / F   [1/s]
+    Fsp    specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
+    hfuel  fuel heating value   [J / kg K]
+    ff     fuel mass flow fraction  =  mdot_fuel / mdot_core
+    Feng   net effective thrust  = (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
+    mcore  core mass flow = mdot_core  [kg/s]
+    BPR    bypass ratio   = mdot_fan/mdot_core
+    Tt?    total temperature
+    ht?    total complete enthalpy (includes heat of formation)
+    pt?    total pressure
+    cpt?   specific heat at stagnation temperature  (= dh/dT)
+    Rt?    gas constant  at stagnation conditions
+    T?     static temperature
+    u?     velocity
+    etaf   fan          overall efficiency
+    etac   compressor   overall efficiency
+    etatf  fan-turbine  overall efficiency
+    etatc  comp-turbine overall efficiency
+    Lconv  T if convergence was successful, F otherwise
+
+    The "?" symbol denotes the station index:
+      0  freestream
+      18 fan face outside of casing BLs
+      19 fan face over LPC portion
+      2  fan face over fan portion
+      21 fan exit
+      25 LPC exit, HPC inlet
+      3  compressor exit
+      4  combustor exit before cooling air addition
+      41 turbine  inlet after  cooling air addition
+      45 HPT exit, LPT inlet
+      49 LPT exit
+      5  core nozzle
+      6  core flow downstream
+      7  fan nozzle
+      8  fan flow downstream
+"""
+function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, iBLIc,
       pid, pib, pifn, pitn,
       Gearf,
@@ -20,184 +145,70 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
       Mtexit, dTstrk, StA, efilm, tfilm,
       M4a, ruc,
       ncrowx, ncrow,
-      epsrow,
+      epsrow, Tmrow,
+      Feng,
       M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
-      #----------------------------------------------------------------
-      #     Turbofan operation routine
-      #
-      #     Calculation procedure follows that of Kerrebrock,
-      #     but the usual gas property formulas are replaced
-      #     by function calls, which can therefore implement
-      #     more general gas models.  
-      #     In addition, a turbine cooling model is added.
-      #
-      #     The gas routines reside in the following source files:
-      #      gascalc.f  Routines for various processes 
-      #                 (compressor, turbine, combustor, etc)
-      #      gasfun.f   Routines for computing cp[T], h[t], sigma[T], R,
-      #                 called by the routines in gascalc.f
-      #
-      #     Input
-      #     -----
-      #     gee    gravity acceleration
-      #     M0     freestream Mach
-      #     T0     freestream temperature  [K]
-      #     p0     freestream pressure  [Pa]
-      #     Tref   reference temperature for corrected mass flow and speed
-      #     pref   reference pressure for corrected mass flow
-      #     Phiinl inlet ingested dissipation  Phi_inl
-      #     iBLIc  0=core in clear flow, 1=core sees Phiinl
-      #     pid    diffuser pressure ratio  ( = pt2/pt0)
-      #     pib    burner   pressure ratio  ( = pt4/pt3)
-      #     pifn   fan     nozzle pressure ratio  ( = pt7/pt6.9)
-      #     pitn   turbine nozzle pressure ratio  ( = pt5/pt4.9)
-      #     Gearf  fan gear ratio  ( = Nl/Nf )
-      #     pifD   design fan pressure ratio  ( = pt21/pt2 )
-      #     pilcD  design LPC pressure ratio  ( = pt25/pt19)
-      #     pihcD  design HPC pressure ratio  ( = pt3 /pt25)
-      #     pihtD  design HPT pressure ratio  ( = pt45/pt41)
-      #     piltD  design LPT pressure ratio  ( = pt49/pt45)
-      #     mbfD   design corrected fan mass flow ( = mf*sqrt(Tt2 /Tref)/(pt2 /pref) )
-      #     mblcD  design corrected LPC mass flow ( = mc*sqrt(Tt19/Tref)/(pt19/pref) )
-      #     mbhcD  design corrected HLC mass flow ( = mc*sqrt(Tt25/Tref)/(pt25/pref) )
-      #     mbhtD  design corrected HPT mass flow ( = mt*sqrt(Tt41/Tref)/(pt41/pref) )
-      #     mbltD  design corrected LPT mass flow ( = mt*sqrt(Tt45/Tref)/(pt45/pref) )
-      #     NbfD   design corrected fan speed ( = Nf/sqrt(Tt2 /Tref) )
-      #     NblcD  design corrected LPC speed ( = Nl/sqrt(Tt19/Tref) )
-      #     NbhcD  design corrected HPC speed ( = Nh/sqrt(Tt25/Tref) )
-      #     NbhtD  design corrected HPT speed ( = Nh/sqrt(Tt41/Tref) )
-      #     NbltD  design corrected LPT speed ( = Nl/sqrt(Tt45/Tref) )
-      #     A2     fan-face area [m^2]                mf = mc*BPR, mt = mc*(1+ff)
-      #     A25    HPC-face area [m^2]
-      #     A5     core nozzle area [m^2]
-      #     A7     fan  nozzle area [m^2]
-      #     iTFspec  = 1 Tt4  is specified
-      #              = 2 Feng is specified
-      #     Tt4    turbine-inlet total temperature [K]
-      #     Ttf    fuel temperature entering combustor
-      #     ifuel  fuel index, see function gasfun (in gasfun.f)
-      #     etab   combustor efficiency (fraction of fuel burned)
-      #     epf0   max fan polytropic efficiency
-      #     eplc0  LPC max polytropic efficiency
-      #     ephc0  HPC max polytropic efficiency
-      #     epht0  HPT max polytropic efficiency
-      #     eplt0  LPT max polytropic efficiency
-      #     pifK   fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-      #     epfK   fan efficiency pif derivative
-      #
-      #     mofft   mass flow offtake at LPC discharge station 2.5
-      #     Pofft   low spool power offtake
-      #     Tt9    offtake air discharge total temperature
-      #     pt9    offtake air discharge total pressure
-      #     epsl   low  spool power loss fraction
-      #     epsh   high spool power loss fraction
-      #
-      #     icool   turbine cooling flag
-      #              0 = no cooling, ignore all cooling parameters below
-      #              1 = usual cooling, using passed-in fc
-      #              2 = usual cooling, but set (and return) fc from Tmetal
-      #     Mtexit  turbine blade-row exit Mach, for setting temperature drops
-      #     Tmetal  specified metal temperature  [K], used only if icool=2
-      #     dTstrk  hot-streak temperature delta {K}, used only if icool=2
-      #     StA     area-weighted Stanton number    , used only if icool=2
-      #     M4a     effective Mach at cooling-flow outlet (start of mixing)
-      #     ruc     cooling-flow outlet velocity ratio, u/ue
-      #     ncrowx     dimension of epsrow array
-      #     ncrow      number of blade rows requiring cooling
-      #     epsrow(.)  input specified  cooling-flow bypass ratio if icool=1
-      #                output resulting cooling-flow bypass ratio if icool=2
-      #     Tmrow(.)   input specified  metal temperature  [K]    if icool=2
-      #                output resulting metal temperature  [K]    if icool=1
-      #
-      #     Output
-      #     ------
-      #     epsrow(.)  see above
-      #     Tmrow(.)   see above
-      #     TSFC   thrust specific fuel consumption = mdot_fuel g / F   [1/s]
-      #     Fsp    specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
-      #     hfuel  fuel heating value   [J / kg K]
-      #     ff     fuel mass flow fraction  =  mdot_fuel / mdot_core
-      #     Feng   net effective thrust  = (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
-      #     mcore  core mass flow = mdot_core  [kg/s]
-      #     BPR    bypass ratio   = mdot_fan/mdot_core
-      #     Tt?    total temperature
-      #     ht?    total complete enthalpy (includes heat of formation)
-      #     pt?    total pressure
-      #     cpt?   specific heat at stagnation temperature  (= dh/dT)
-      #     Rt?    gas constant  at stagnation conditions
-      #     T?     static temperature
-      #     u?     velocity
-      #     etaf   fan          overall efficiency
-      #     etac   compressor   overall efficiency
-      #     etatf  fan-turbine  overall efficiency
-      #     etatc  comp-turbine overall efficiency
-      #     Lconv  T if convergence was successful, F otherwise
-      #
-      #     The "?" symbol denotes the station index:
-      #       0  freestream
-      #       18 fan face outside of casing BLs
-      #       19 fan face over LPC portion
-      #       2  fan face over fan portion
-      #       21 fan exit
-      #       25 LPC exit, HPC inlet
-      #       3  compressor exit
-      #       4  combustor exit before cooling air addition
-      #       41 turbine  inlet after  cooling air addition
-      #       45 HPT exit, LPT inlet
-      #       49 LPT exit
-      #       5  core nozzle
-      #       6  core flow downstream
-      #       7  fan nozzle
-      #       8  fan flow downstream
-      #----------------------------------------------------------------
-
-
 
       #---- ncrowy must be at least as big as ncrowx defined in index.inc
       ncrowy = 8
 
-      #---- Newton system arrays
-      res = zeros(9, 1)
-      a = zeros(9, 9)
-      rrel = zeros(9)
-      rsav = zeros(9)
-      asav = zeros(9, 10)
+      # Determine whether we are in AD...
+      prod = gee * M0 * T0 * p0 * a0 * Tref * pref * Phiinl * Kinl * pid * pib * pifn * pitn * Gearf
+      prod *= pifD * pilcD * pihcD * pihtD * piltD
+      prod *= mbfD * mblcD * mbhcD * mbhtD * mbltD
+      prod *= NbfD * NblcD * NbhcD * NbhtD * NbltD
+      prod *= A2 * A25 * A5 * A7
+      prod *= Ttf * ifuel * etab
+      prod *= epf0 * eplc0 * ephc0 * epht0 * eplt0
+      prod *= pifK * epfK * mofft * Pofft * Tt9 * pt9 * epsl * epsh
+      prod *= Mtexit * dTstrk * StA * efilm * tfilm
+      prod *= M4a * ruc
+      prod *= epsrow[1] * M2 * pif * pilc * pihc * mbf * mblc * mbhc * Tt4 * pt5 * mcore * M25
+      T = typeof(prod)
 
-      res_dlls = zeros(9)
-      a_dlls = zeros(9, 9)
+
+      #---- Newton system arrays
+      res = zeros(T, 9, 1)
+      a = zeros(T, 9, 9)
+      rrel = zeros(T, 9)
+      rsav = zeros(T, 9)
+      asav = zeros(T, 9, 10)
+
+      res_dlls = zeros(T, 9)
+      a_dlls = zeros(T, 9, 9)
 
 
       #---- number of gas constituents
       n = 6
 
       #---- mass fractions
-      alpha = zeros(n)    # air
-      beta = zeros(n)     # fuel
-      gamma = zeros(n)    # combustion-caused change in air
-      lambda = zeros(n)   # combustion product gas
-      lambdap = zeros(n)  # combustion product gas with cooling flow added
+      alpha = zeros(T, n)    # air
+      beta = zeros(T, n)     # fuel
+      gamma = zeros(T, n)    # combustion-caused change in air
+      lambda = zeros(T, n)   # combustion product gas
+      lambdap = zeros(T, n)  # combustion product gas with cooling flow added
 
-      lam_Tt3 = zeros(n)
-      lam_Ttf = zeros(n)
-      lam_pl = zeros(n)
-      lam_ph = zeros(n)
-      lam_ml = zeros(n)
-      lam_mh = zeros(n)
-      lam_Tb = zeros(n)
-      lamp_pl = zeros(n)
-      lamp_ph = zeros(n)
-      lamp_mf = zeros(n)
-      lamp_ml = zeros(n)
-      lamp_mh = zeros(n)
-      lamp_Tb = zeros(n)
-      lamp_Mi = zeros(n)
+      lam_Tt3 = zeros(T, n)
+      lam_Ttf = zeros(T, n)
+      lam_pl = zeros(T, n)
+      lam_ph = zeros(T, n)
+      lam_ml = zeros(T, n)
+      lam_mh = zeros(T, n)
+      lam_Tb = zeros(T, n)
+      lamp_pl = zeros(T, n)
+      lamp_ph = zeros(T, n)
+      lamp_mf = zeros(T, n)
+      lamp_ml = zeros(T, n)
+      lamp_mh = zeros(T, n)
+      lamp_Tb = zeros(T, n)
+      lamp_Mi = zeros(T, n)
 
-      T_al = zeros(n)
-      p_al = zeros(n)
-      h_al = zeros(n)
-      s_al = zeros(n)
-      R_al = zeros(n)
-      cp_al = zeros(n)
+      T_al = zeros(T, n)
+      p_al = zeros(T, n)
+      h_al = zeros(T, n)
+      s_al = zeros(T, n)
+      R_al = zeros(T, n)
+      cp_al = zeros(T, n)
 
       # from "tfmap.inc"
       #        a     b     k     mo     da    c    d     C    D
@@ -240,7 +251,11 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
       # ===============================================================
       #---- set combustion-change mass fractions gamma[i] for specified fuel
       gamma = gasfuel(ifuel, n)
-      #
+
+      # Convert type for ForwardDiff
+      if (typeof(etab) <: ForwardDiff.Dual)
+            gamma = convert(Array{typeof(etab)}, gamma)
+      end
       #---- apply combustor efficiency
       for i = 1:nair
             gamma[i] = etab * gamma[i]
@@ -793,9 +808,10 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
 
                   if (icool == 1)
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
-                        Tmrow = Tmcalc(ncrowx, ncrow,
+                        Tmrow_copy = Tmcalc(ncrowx, ncrow,
                               Tt3, Tb, dTstrk, Trrat,
                               efilm, tfilm, StA, epsrow)
+                        Tmrow[:] = Tmrow_copy[:]
 
                         #------ total cooling flow fraction
                         fc = 0.0
@@ -814,10 +830,10 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
 
                   else
                         #------ calculate cooling mass flow ratios epsrow(.) to get specified Tmrow(.)
-                        ncrow, epsrow, epsrow_Tt3, epsrow_Tb, epsrow_Trr =
-                              mcool(ncrowx,
-                                    Tmrow, Tt3, Tb, dTstrk, Trrat,
-                                    efilm, tfilm, StA)
+                        ncrow, epsrow_copy, epsrow_Tt3, epsrow_Tb, epsrow_Trr = mcool(ncrowx,
+                              Tmrow, Tt3, Tb, dTstrk, Trrat,
+                              efilm, tfilm, StA)
+                        epsrow[:] = epsrow_copy[:]
 
                         #------ total cooling flow fraction
                         fc = 0.0
@@ -1689,7 +1705,6 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
             ht49_Mi = ht49_pt45 * pt45_Mi + ht49_st45 * st45_Mi + ht49_eplt * eplt_Mi
             st49_Mi = st49_pt45 * pt45_Mi + st49_st45 * st45_Mi + st49_eplt * eplt_Mi
 
-
             for i = 1:nair
                   pt49_pl = pt49_pl + p_al[i] * lamp_pl[i]
                   Tt49_pl = Tt49_pl + T_al[i] * lamp_pl[i]
@@ -2020,16 +2035,17 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
 
             end
 
-            R5_pl = 0.0
-            R5_ph = 0.0
-            R5_mf = 0.0
-            R5_ml = 0.0
-            R5_mh = 0.0
-            R5_Tb = 0.0
-            R5_Pc = 0.0
-            R5_Mi = 0.0
+            R5_pl = zeros(T, 1)[1]
+            R5_ph = zeros(T, 1)[1]
+            R5_mf = zeros(T, 1)[1]
+            R5_ml = zeros(T, 1)[1]
+            R5_mh = zeros(T, 1)[1]
+            R5_Tb = zeros(T, 1)[1]
+            R5_Pc = zeros(T, 1)[1]
+            R5_Mi = zeros(T, 1)[1]
 
             for i = 1:nair
+
                   p5_pl = p5_pl + p_al[i] * lamp_pl[i]
                   T5_pl = T5_pl + T_al[i] * lamp_pl[i]
                   h5_pl = h5_pl + h_al[i] * lamp_pl[i]
@@ -2560,11 +2576,8 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
                   println("p5        =", p5)
                   println("FPR  BPR  =", pf, BPR)
 
-                  println("Fe =", Feng)
-
                   Lconv = false
-                  return Tmrow,
-                  TSFC, Fsp, hfuel, ff,
+                  return TSFC, Fsp, hfuel, ff,
                   Feng, mcore,
                   pif, pilc, pihc,
                   mbf, mblc, mbhc,
@@ -3029,8 +3042,7 @@ function tfoper(gee, M0, T0, p0, a0, Tref, pref,
                   end
 
                   Lconv = true
-                  return Tmrow,
-                  TSFC, Fsp, hfuel, ff,
+                  return TSFC, Fsp, hfuel, ff,
                   Feng, mcore,
                   pif, pilc, pihc,
                   mbf, mblc, mbhc,

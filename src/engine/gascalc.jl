@@ -22,6 +22,7 @@ function gas_tset(alpha, n, hspec, tguess)
 
       t = tguess
 
+      dt = 0.0
       for iter = 1:itmax
             s, s_t, h, h_t, cp, r = gassum(alpha, n, t)
             res = h - hspec
@@ -51,7 +52,7 @@ function gas_tsetd(alpha, n, hspec, tguess)
 
       t_al = zeros(n)
 
-
+      dt = 0.0
       for iter = 1:itmax
             s, s_t, h, h_t, cp, r = gassum(alpha, n, t)
             res = h - hspec
@@ -190,7 +191,7 @@ function gas_prat(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
 
       pile = log(pratio) / epol
 
-
+      dt = 0.0
       for iter = 1:itmax
             s, s_t, h, h_t, cp, r = gassum(alpha, n, t)
             res = (s - so) / r - pile
@@ -355,6 +356,7 @@ function gas_delh(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
       t = to + delh / cpo
 
+      dt = 0.0
       for iter = 1:itmax
             s, s_t, h, h_t, cp, r = gassum(alpha, n, t)
             res = h - ho - delh
@@ -393,6 +395,7 @@ function gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
       cp_al = zeros(n)
       r_al = zeros(n)
 
+      dt = 0.0
       for iter = 1:itmax
 
             s, s_t, h, h_t, cp, r = gassum(alpha, n, t)
@@ -597,6 +600,7 @@ function gas_mach(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
           (1.0 + 0.5 * ro / (cpo - ro) * m^2)
 
 
+      dt = 0.0
       #---- Newton iteration for actual temperature
       for iter = 1:itmax
             s, s_t, h, h_t, cp, r = gassum(alpha, n, t)
@@ -653,6 +657,7 @@ function gas_machd(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
       cp_al = zeros(n)
       r_al = zeros(n)
 
+      dt = 0.0
       #---- Newton iteration for actual temperature
       for iter = 1:itmax
             #c       gassum(alpha,n, t, s,s_t, h,h_t, cp,r)
