@@ -3,6 +3,8 @@ using Pkg
 Pkg.activate(dirname(@__DIR__))
 Pkg.instantiate()
 
+# ENV["PYTHON"] = "C:\\Users\\jnsgn\\anaconda3\\envs\\juliaetal\\python.exe"
+
 # 1) Load TASOPT
 
 include("../tasopt.jl")
@@ -21,8 +23,9 @@ println(parg[igWMTO])
 geometry(parg)
 
 
-# Show weight buildup of the aircraft
-weight_buildup(parg)
+
+# # Show weight buildup of the aircraft
+# weight_buildup(parg)
 
 # 5) Plot figures
 pygui(true)
