@@ -14,14 +14,18 @@ using Profile, UnicodePlots
 using PyPlot
 using Dates
 
+using ForwardDiff
+
 # Constants and array indices
 include("src/misc/constants.jl")
 include("src/misc/index.inc")
+
 
 #Load modules
 include("src/atmos/atmos.jl")
 include("src/sizing/wsize.jl")
 include("src/mission/mission.jl")
+include("src/mission/takeoff.jl")
 include("src/aero/aero.jl")
 include("src/structures/structures.jl")
 include("src/propsys/propsys.jl")
@@ -57,7 +61,7 @@ using .engine
 
 # Derived constants
 TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
-RSL =  pSL/(ρSL * TSL)
+RSL = pSL / (ρSL * TSL)
 ρAir = ρSL
 
 # ----------------------
@@ -79,11 +83,11 @@ function size_aircraft(iter, initwgt, Ldebug, printiter, saveOD)
     global opt_iter_counter += 1
 
     Ldebug && println("Max weight iterations = $iter")
-    wsize(pari, parg, parm, view(para,:,:,1), view(pare, :,:,1),
-                    iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, saveOD)
-    
+    wsize(pari, parg, parm, view(para, :, :, 1), view(pare, :, :, 1),
+        iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, saveOD)
+
     # global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
-    if (opt_iter_counter%5 == 0) || (opt_iter_counter == 1)
-        global track_fig = plot_details(parg, pari, para, parm; ax = track_fig)
+    if (opt_iter_counter % 5 == 0) || (opt_iter_counter == 1)
+        global track_fig = plot_details(parg, pari, para, parm; ax=track_fig)
     end
 end

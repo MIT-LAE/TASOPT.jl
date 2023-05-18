@@ -88,7 +88,6 @@ function tfcalc!(pari, parg, para, pare, ip,
         tfilm = pare[ietfilm]
         epsl = pare[ieepsl]
         epsh = pare[ieepsh]
-
         epsrow = zeros(ncrowx)
         Tmrow = zeros(ncrowx)
 
@@ -155,6 +154,7 @@ function tfcalc!(pari, parg, para, pare, ip,
 
                 #        tset[time0]
 
+                # println("===========================")
                 # println(["gee, M0, T0, p0, a0, M2, M25,
                 # Fe, Phiinl, Kinl, iBLIc,
                 # BPR, pif, pilc, pihc,
@@ -170,20 +170,21 @@ function tfcalc!(pari, parg, para, pare, ip,
                 # M4a, ruc,
                 # ncrowx, ncrow,
                 # epsrow,", gee, M0, T0, p0, a0, M2, M25,
-                # Fe, Phiinl, Kinl, iBLIc,
-                # BPR, pif, pilc, pihc,
-                # pid, pib, pifn, pitn,
-                # Tfuel, ifuel, etab,
-                # epolf, epollc, epolhc, epolht, epollt,
-                # pifK, epfK,
-                # mofft, Pofft,
-                # Tt9, pt9, Tt4,
-                # epsl, epsh,
-                # icool,
-                # Mtexit, dTstrk, StA, efilm, tfilm,
-                # M4a, ruc,
-                # ncrowx, ncrow,
-                # epsrow])
+                #         Fe, Phiinl, Kinl, iBLIc,
+                #         BPR, pif, pilc, pihc,
+                #         pid, pib, pifn, pitn,
+                #         Tfuel, ifuel, etab,
+                #         epolf, epollc, epolhc, epolht, epollt,
+                #         pifK, epfK,
+                #         mofft, Pofft,
+                #         Tt9, pt9, Tt4,
+                #         epsl, epsh,
+                #         icool,
+                #         Mtexit, dTstrk, StA, efilm, tfilm,
+                #         M4a, ruc,
+                #         ncrowx, ncrow,
+                #         epsrow])
+                # println("===========================")
 
                 epsrow, Tmrow,
                 TSFC, Fsp, hfuel, ff, mcore,
@@ -366,16 +367,16 @@ function tfcalc!(pari, parg, para, pare, ip,
                         M25 = pare[ieM25]
                 end
 
+                Fe = 0.0
+                Tt4 = pare[ieTt4]
+
                 if (icall == 1)
                         #------ specified Tt4 -- Fe will be computed
-                        Fe = 0.0
-                        Tt4 = pare[ieTt4]
                         iTFspec = 1
 
                 else
                         #------ specified Fe -- Tt4 will be computed (set initial guess here)
                         Fe = pare[ieFe]
-                        Tt4 = pare[ieTt4]
                         iTFspec = 2
 
                 end
@@ -390,9 +391,33 @@ function tfcalc!(pari, parg, para, pare, ip,
 
                 end
 
-                Tmrow,
+                # println("================================")
+                # println([gee, M0, T0, p0, a0, Tref, pref])
+                # println([Phiinl, Kinl, iBLIc])
+                # println([pid, pib, pifn, pitn])
+                # println([Gearf])
+                # println([pifD, pilcD, pihcD, pihtD, piltD])
+                # println([mbfD, mblcD, mbhcD, mbhtD, mbltD])
+                # println([NbfD, NblcD, NbhcD, NbhtD, NbltD])
+                # println([A2, A25, A5, A7])
+                # println([iTFspec])
+                # println([Tfuel, ifuel, etab])
+                # println([epolf, epollc, epolhc, epolht, epollt])
+                # println([pifK, epfK])
+                # println([mofft, Pofft])
+                # println([Tt9, pt9])
+                # println([epsl, epsh])
+                # println([icool])
+                # println([Mtexit, dTstrk, StA, efilm, tfilm])
+                # println([M4a, ruc])
+                # println([ncrowx, ncrow])
+                # println([epsrow, Tmrow])
+                # println(Fe)
+                # println([M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25])
+                # println("================================")
+
                 TSFC, Fsp, hfuel, ff,
-                Feng, mcore,
+                Fe, mcore,
                 pif, pilc, pihc,
                 mbf, mblc, mbhc,
                 Nbf, Nblc, Nbhc,
@@ -419,7 +444,7 @@ function tfcalc!(pari, parg, para, pare, ip,
                 u9, A9,
                 epf, eplc, ephc, epht, eplt,
                 etaf, etalc, etahc, etaht, etalt,
-                Lconv = tfoper(gee, M0, T0, p0, a0, Tref, pref,
+                Lconv = tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         Phiinl, Kinl, iBLIc,
                         pid, pib, pifn, pitn,
                         Gearf,
@@ -438,8 +463,10 @@ function tfcalc!(pari, parg, para, pare, ip,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
-                        epsrow,
+                        epsrow, Tmrow,
+                        Fe,
                         M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
+
 
                 if (Lprint)
                         println("exited TFOPER", Lconv)
@@ -469,7 +496,7 @@ function tfcalc!(pari, parg, para, pare, ip,
 
                 pare[ieBPR] = mbf / mblc * sqrt(Tt19 / Tt2) * pt2 / pt19
 
-                println("exited TFOPER call")
+                # println("exited TFOPER call")
 
         end
         #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
