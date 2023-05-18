@@ -8,6 +8,8 @@ using StaticArrays
 
 export tfcalc!, mcool, tfweight
 
+include("../misc/index.inc")
+include("../misc/constants.jl")
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")
