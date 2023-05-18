@@ -1,6 +1,3 @@
-include("index.inc")
-include("constants.inc")
-
 """ 
     tfcalc(pari,parg,para,pare, ip,
 icall,icool,initeng,
