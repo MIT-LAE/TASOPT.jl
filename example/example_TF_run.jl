@@ -3,8 +3,6 @@ using Pkg
 Pkg.activate(dirname(@__DIR__))
 Pkg.instantiate()
 
-# ENV["PYTHON"] = "C:\\Users\\jnsgn\\anaconda3\\envs\\juliaetal\\python.exe"
-
 # 1) Load TASOPT
 
 include("../tasopt.jl")
