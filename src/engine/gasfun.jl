@@ -117,9 +117,9 @@ function gaschem(igas)
     return nchon
 end # gaschem
 
-function gas_N2(t1)
+function gas_N2(t1,)# t, tl, cp, cpt,h, s)
 
-    ndim = 52
+    ndim::Int = 52
 
     r = 296.94
     hform = 0.0000
@@ -184,13 +184,13 @@ function gas_N2(t1)
         2.54926e3, 2.59710e3, 2.64337e3, 2.68817e3, 2.89293e3, 3.07152e3,
         3.23001e3, 3.37245e3, 3.50192e3, 3.62073e3]
     #- - - - - - - - - - -
-    ilow = 1
-    i = ndim
+    ilow::Int = 1
+    i::Int = ndim
     #- - - - - - - - - - -
 
     while !(i <= ilow + 1)
 
-        imid = (i + ilow) ÷ 2
+        imid = (i + ilow) ÷ 2 
         if (t1 < t[imid])
             i = imid
         else
