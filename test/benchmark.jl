@@ -210,13 +210,14 @@ bench = @benchmarkable aerodynamics.trefftz($tf) seconds=30 evals=100
 bench_trefftz_struct = run(bench)
 
 # You can use the following tempalte to profile code in the REPL
+# using ProfView
 # Profile.init(delay = 1e-6)
-# a = @profile (for i=1:10000; aerodynamics.trefftz1(nsurf, npout,
+# a = ProfileView.@profile (for i=1:10000; aerodynamics.trefftz1(nsurf, npout,
 # npinn, npimg, 
 # Sref, bref,
 # b,bs,bo,bop, zcent,
 # po,gammat,gammas, fLo, ktip,
-# Lspec,CLsurfsp); end)
+# Lspec,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc); end)
 # # Profile.print()
 
 
@@ -249,7 +250,7 @@ end
 
 
 function benchmark_gasfuns()
-t = [   175.00e0, 200.00e0, 225.00e0, 250.00e0, 275.00e0, 300.00e0,
+    t = [   175.00e0, 200.00e0, 225.00e0, 250.00e0, 275.00e0, 300.00e0,
         325.00e0, 350.00e0, 375.00e0, 400.00e0, 450.00e0, 500.00e0,
         550.00e0, 600.00e0, 650.00e0, 700.00e0, 750.00e0, 800.00e0,
         850.00e0, 900.00e0, 950.00e0, 1000.00e0, 1050.00e0, 1100.00e0,
