@@ -59,6 +59,8 @@ function trefftz1(nsurf, npout, npinn, npimg,
       
       CLsurf= zeros(Float64, nsurf)
       
+      # Calcualte total number of points
+      # outboard point + inboard + points within fuselage + dummy between surfaces
       isum = 0
       @inbounds for  isurf = 1: nsurf
         isum = isum + npout[isurf] + npinn[isurf] + npimg[isurf] + 1
@@ -78,12 +80,13 @@ function trefftz1(nsurf, npout, npinn, npimg,
       i = 0
 @inbounds for  isurf = 1: nsurf
 
-#---- eta at center, side-of-body, wing break, tip
+#---- η at center, side-of-body, wing break, tip
       e0 = 0.0
       eo = bo[isurf]/b[isurf]
       es = bs[isurf]/b[isurf]
       e1 = 1.0
 
+      # ηₒ' fuse non-dim y location that is constricted in the Trefftz plane 
       eop = bop[isurf]/b[isurf]
 
       t0 = 1.0
@@ -150,7 +153,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
 
         yc[i-1] =  y0*(1.0-fc) + yo*fc
         zc[i-1] =  z0*(1.0-fc) + zo*fc
-        gc[i-1] = (g0*(1.0-fc) + go*fc) * sqrt(1.0-ec^ktip)
+        gc[i-1] = (g0*(1.0-fc) + go*fc) * sqrt(1.0-ec^ktip) #Eq. 389
 
         yexp = (eo/eop)^2
 
@@ -186,7 +189,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
         zc[i-1] =  zo*(1.0-fc) + zs*fc
         gc[i-1] = (go*(1.0-fc) + gs*fc) * sqrt(1.0-ec^ktip)
 
-        yp[i] = sqrt(y[i]^2 - yo^2 + yop^2)
+        yp[i] = sqrt(y[i]^2 - yo^2 + yop^2) #Calculate y'[i] from Eq 391. conservtion of mass effectively
         zp[i] = z[i]
 
         ycp[i-1] = sqrt(yc[i-1]^2 - yo^2 + yop^2)
