@@ -88,11 +88,19 @@ using Base: NamedTuple_typename
 end
 
 
-function findsegment(x, xarr)
-    ilow = 1
-    io   = length(xarr)
+"""
+    findsegment(x::T, xarr::Vector{T})
+
+Uses bisection to find the right interval of the array `xarr` where x lies.
+Returns im and io s.t. `xarr[im] < x < xarr[io]`.
+
+Additionally returns the interval `dx = xarr[io] - xarr[im]`
+"""
+function findsegment(x::Float64, xarr::AbstractArray{Float64})
+    ilow::Int = 1
+    io::Int   = length(xarr)
     while (io - ilow >1)
-        imid = (io + ilow) ÷ 2
+        imid::Int = (io + ilow) ÷ 2
         if (x < xarr[imid])
             io = imid
         else
