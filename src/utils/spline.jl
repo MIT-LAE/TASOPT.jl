@@ -85,7 +85,7 @@ function SEVAL(SS, X, XS, S)
     # Use bisection to find right segment where SS is.
     # i stores the closest index S[i] > SS
     while (i - i_low > 1)
-        i_mid = Int(round((i + i_low) / 2))
+        i_mid = (i + i_low) ÷ 2
         if (SS < S[i_mid])
             i = i_mid
         else
