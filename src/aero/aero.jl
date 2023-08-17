@@ -15,6 +15,24 @@ include("../misc/index.inc")
 
 include("../utils/spline.jl")
 
+idim::Int = 360
+jdim::Int = 360
+ t     = zeros(Float64, jdim)
+ y     = zeros(Float64, jdim)
+ yp    = zeros(Float64, jdim)
+ z     = zeros(Float64, jdim)
+ zp    = zeros(Float64, jdim)
+ gw    = zeros(Float64, jdim)
+
+ yc    = zeros(Float64, idim)
+ ycp   = zeros(Float64, idim)
+ zc    = zeros(Float64, idim)
+ zcp   = zeros(Float64, idim)
+ gc    = zeros(Float64, idim)
+ vc    = zeros(Float64, idim)
+ wc    = zeros(Float64, idim)
+ vnc   = zeros(Float64, idim)
+ 
 # Aerofoil calculations
 include("airtable2.jl")
 include("airfun2.jl")

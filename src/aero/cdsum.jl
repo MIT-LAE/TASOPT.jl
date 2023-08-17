@@ -434,23 +434,7 @@ function cditrp(pari,parg,para)
 	# $b,$bs,$bo,$bop, $zcent,
 	# $po,$gammat,gammas, $fLo, $ktip,
       # $Lspec,$CLsurfsp")
-      idim::Int = 360
-      jdim::Int = 360
-       t     = zeros(Float64, jdim)
-       y     = zeros(Float64, jdim)
-       yp    = zeros(Float64, jdim)
-       z     = zeros(Float64, jdim)
-       zp    = zeros(Float64, jdim)
-       gw    = zeros(Float64, jdim)
-      
-       yc    = zeros(Float64, idim)
-       ycp   = zeros(Float64, idim)
-       zc    = zeros(Float64, idim)
-       zcp   = zeros(Float64, idim)
-       gc    = zeros(Float64, idim)
-       vc    = zeros(Float64, idim)
-       wc    = zeros(Float64, idim)
-       vnc   = zeros(Float64, idim)
+
 
       CLsurf, CLtp, CDtp, sefftp = trefftz1(nsurf, npout, npinn, npimg, 
 	Sref, bref,
