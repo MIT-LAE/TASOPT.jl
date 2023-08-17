@@ -10,9 +10,6 @@ using Base: NamedTuple_typename
                 A_cl_τ,
                 A_M_cl_τ)
 
-    nAcl::Int = length(Acl)
-    nAMa::Int = length(AMa)
-    nAτ ::Int = length(Aτ)
     nAfun::Int = 3
 
     Ai = zeros(2,2)
