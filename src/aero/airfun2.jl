@@ -1,5 +1,5 @@
 using Base: NamedTuple_typename
-function airfun(cl, τ, Mach, 
+@views function airfun(cl, τ, Mach, 
                 Acl, Aτ, AMa,
                 A,
                 A_M,
@@ -69,21 +69,19 @@ function airfun(cl, τ, Mach,
     cdw = 0.0
 
     #Add quadratic penalties for exceeding database cl or h/c limits
-    clmin, clmax = Acl[[1, end]]
-    if cl < clmin
-        cdp = cdp + 1.0*(cl-clmin)^2
-    elseif cl > clmax
-        cdp = cdp + 1.0*(cl-clmax)^2
-    end
-    τmin, τmax = Aτ[[1, end]]
-
-    if τ < τmin
-        cdp = cdp + 25.0*(τ - τmin)^2
-    elseif τ > τmax
-        cdp = cdp + 25.0*(τ - τmax)^2
+    # clmin, clmax = Acl[[1, end]]
+    if cl < Acl[1]
+        cdp = cdp + 1.0*(cl-Acl[1])^2
+    elseif cl > Acl[end]
+        cdp = cdp + 1.0*(cl-Acl[end])^2
     end
 
-
+    # τmin, τmax = Aτ[[1, end]]
+    if τ < Aτ[1]
+        cdp = cdp + 25.0*(τ - Aτ[1])^2
+    elseif τ > Aτ[end]
+        cdp = cdp + 25.0*(τ - Aτ[end])^2
+    end
 
     return cdf, cdp, cdw, cm
 
@@ -94,7 +92,7 @@ function findsegment(x, xarr)
     ilow = 1
     io   = length(xarr)
     while (io - ilow >1)
-        imid = Int(round((io + ilow)/2))
+        imid = (io + ilow) ÷ 2
         if (x < xarr[imid])
             io = imid
         else
