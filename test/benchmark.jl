@@ -149,13 +149,9 @@ function benchmark_drag()
     bench_cfturb = @benchmark aerodynamics.cfturb($Re)
 
 
-    # # aerodynamics.cditrp(pari, parg, view(para, :, ipcruise1))
-    # bench_cditrp = @benchmark aerodynamics.cditrp($pari, $parg,
-    #  $view(para, :, ipcruise1))
-    # println("---------------------------------------")
-    # println("cditrp (FORTRAN on MacPro M2 ~ 4.5 μs)")
-    # println("---------------------------------------")
-    # display(bench_cditrp)
+    println("Benchmarking... cditrp")
+    bench_cditrp = @benchmark aerodynamics.cditrp($pari, $parg,
+     $view(para, :, ipcruise1))
 
     nsurf = 2
     npout = [20, 10]
@@ -192,6 +188,22 @@ function benchmark_drag()
     vc    = zeros(Float64, idim)
     wc    = zeros(Float64, idim)
     vnc   = zeros(Float64, idim)
+
+    AMa, Acl, Aτ, ARe,
+    A,
+    A_M, A_τ, A_cl,
+    A_M_τ, A_M_cl, A_cl_τ,
+    A_M_cl_τ = aerodynamics.airtable("../src/air/C.air");
+
+    clp =  0.37291377381997937     
+    toc  = 0.12667499999999998     
+    Mperp  = 0.53807817174303085  
+    println("Benchmarking... airfun")
+    bench = @benchmarkable aerodynamics.airfun($clp, $toc, $Mperp, 
+                                            $Acl, $Aτ, $AMa,
+                                            $A, $A_M, $A_τ, $A_cl,
+                                            $A_M_τ, $A_M_cl, $A_cl_τ, $A_M_cl_τ) seconds = 30 evals = 100
+    bench_airfun = run(bench)
 
     println("Benchmarking... trefftz1")
     bench = @benchmarkable aerodynamics.trefftz1($nsurf, $npout,
@@ -231,20 +243,37 @@ function benchmark_drag()
     println("---------------------------------------")
     println("cfturb (FORTRAN on MacPro M2 ~ --- μs)")
     println("---------------------------------------")
-    display(bench_cfturb)
+    show(stdout, MIME("text/plain"),bench_cfturb)
+    println(" ")
+
+    println("---------------------------------------")
+    println("cditrp (FORTRAN on MacPro M2 ~ 4.5 μs)")
+    println("---------------------------------------")
+    show(stdout, MIME("text/plain"), bench_cditrp)
+    println(" ")
+    
+    println("---------------------------------------")
+    println("airfun (FORTRAN on MacPro M2 ~ 420 ns)")
+    println("---------------------------------------")
+    show(stdout, MIME("text/plain"),bench_airfun)
+    println(" ")
 
     println("---------------------------------------")
     println("trefftz (FORTRAN on MacPro M2 ~ 4.6 μs)")
     println("---------------------------------------")
-    display(bench_trefftz)
+    show(stdout, MIME("text/plain"),bench_trefftz)
+    println(" ")
+
     println("---------------------------------------")
     println("trefftz struct (FORTRAN on MacPro M2 ~ 4.6 μs)")
     println("---------------------------------------")
-    display(bench_trefftz_struct)
+    show(stdout, MIME("text/plain"),bench_trefftz_struct)
+    println(" ")
+
     println("---------------------------------------")
-    println("cdsum (FORTRAN on MacPro M2 ~ 5.8 - 6.0 μs)")
+    println("cdsum (FORTRAN on MacPro M2 ~ 6.7 μs)")
     println("---------------------------------------")
-    display(bench_cdsum)
+    show(stdout, MIME("text/plain"),bench_cdsum)
 
 end
 

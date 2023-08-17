@@ -6,17 +6,11 @@ It can currently model tube-and-wing aircraft using 2D viscous-invisicd CFD to c
 
 
 ```@setup bench
-include("../../src/aero/trefftz.jl")
 cd("../../test")
-#using BenchmarkTools, Pkg
-#println("Current location $(pwd())")
-#Pkg.activate("../")
-#include("../tasopt.jl")
-#include("input.jl")
-#include("benchmark.jl")
+include("benchmark.jl")
 
 ```
 
-```@example bench
+```@example bench; ansicolor=true
 benchmark_drag()
 ```
