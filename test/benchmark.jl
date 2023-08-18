@@ -117,22 +117,26 @@ function benchmark_fuseBL()
     println("---------------------------------------")
     println("axisol (FORTRAN on MacPro M2 ~ 30 μs)")
     println("---------------------------------------")
-    display(bench_axisol)
+    show(stdout, MIME("text/plain"),bench_axisol)
+    println(" ")
 
     println("---------------------------------------")
     println("blax (FORTRAN on MacPro M2 ~ 1.9 ms)")
     println("---------------------------------------")
-    display(bench_blax)
+    show(stdout, MIME("text/plain"),bench_blax)
+    println(" ")
 
     println("---------------------------------------")
     println("blax2 (FORTRAN on MacPro M2 ~ 1.9 ms)")
     println("---------------------------------------")
-    display(bench_blax2)
+    show(stdout, MIME("text/plain"),bench_blax2)
+    println(" ")
 
     println("---------------------------------------")
     println("fusebl (FORTRAN on MacPro M2 ~ 1.95 ms)")
     println("---------------------------------------")
-    display(bench_fusebl)
+    show(stdout, MIME("text/plain"),bench_fusebl)
+    println(" ")
 end
 
 function benchmark_drag()
@@ -141,7 +145,7 @@ function benchmark_drag()
     # ====================
 
     println("\n---------------------------------------")
-    println("\nDrag calculations")
+    println("Drag calculations")
     println("---------------------------------------")
 
     Re = 2e6
@@ -193,11 +197,11 @@ function benchmark_drag()
     A,
     A_M, A_τ, A_cl,
     A_M_τ, A_M_cl, A_cl_τ,
-    A_M_cl_τ = aerodynamics.airtable("../src/air/C.air");
+    A_M_cl_τ = aerodynamics.airtable(joinpath(__TASOPTroot__, "src/air/C.air"));
 
-    clp =  0.37291377381997937     
-    toc  = 0.12667499999999998     
-    Mperp  = 0.53807817174303085  
+    clp =  0.45     
+    toc  = 0.126   
+    Mperp  = 0.53  
     println("Benchmarking... airfun")
     bench = @benchmarkable aerodynamics.airfun($clp, $toc, $Mperp, 
                                             $Acl, $Aτ, $AMa,
@@ -340,4 +344,4 @@ end
 include("../Models/ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
 
 # benchmark_fuseBL()
-benchmark_drag()
+# benchmark_drag()
