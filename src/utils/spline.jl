@@ -64,7 +64,8 @@ function spline(S, X)
 end # SPLINE
 
 
-function SEVAL(SS, X, XS, S)
+function SEVAL(SS::H, X::AbstractVector{H}, 
+               XS::AbstractVector{H}, S::AbstractVector{H}) where H
 # --------------------------------------------------
 #     Calculates X(SS)                             |
 #     XS array must have been calculated by SPLINE |
@@ -79,28 +80,18 @@ function SEVAL(SS, X, XS, S)
 #     - Outputs                                    |
 #        XX is interpolated value                  |
 # --------------------------------------------------
-    i_low = 1
-    i = length(S)
 
-    # Use bisection to find right segment where SS is.
-    # i stores the closest index S[i] > SS
-    while (i - i_low > 1)
-        i_mid = (i + i_low) ÷ 2
-        if (SS < S[i_mid])
-            i = i_mid
-        else
-            i_low = i_mid
-        end
-    end
+    i::Int = searchsortedlast(S, SS) + 1
+    im::Int = i - 1
 
-    ΔS = S[i] - S[i - 1]
-    ΔX = X[i] - X[i - 1]
-    T  = (SS - S[i - 1]) / ΔS
+    ΔS = S[i] - S[im]
+    ΔX = X[i] - X[im]
+    T  = (SS - S[im]) / ΔS
 
-    CX1 = ΔS*XS[i - 1] - ΔX
-    CX2 = ΔS*XS[i    ] - ΔX
+    CX1 = ΔS*XS[im] - ΔX
+    CX2 = ΔS*XS[i] - ΔX
 
-    XX = T * X[i] + (1.0 - T) * X[i - 1] + (T - T * T) * ((1.0 - T) * CX1 - T * CX2)
+    XX = T * X[i] + (1.0 - T) * X[im] + (T - T * T) * ((1.0 - T) * CX1 - T * CX2)
 
     return XX 
 end # SEVAL
