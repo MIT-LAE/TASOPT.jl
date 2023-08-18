@@ -435,11 +435,12 @@ function cditrp(pari,parg,para)
 	# $po,$gammat,gammas, $fLo, $ktip,
       # $Lspec,$CLsurfsp")
 
+
       CLsurf, CLtp, CDtp, sefftp = trefftz1(nsurf, npout, npinn, npimg, 
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo, ktip,
-      Lspec,CLsurfsp)
+      Lspec,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
       
       # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 
@@ -461,14 +462,12 @@ C_{f, turb} = \\frac{0.523}{(\\log(0.06\\mathrm{Re}))^2}
 
 """
 function cfturb(Re)
-# -------------------------------------------------------------
-#     Returns total Cf for turbulent flat plate, versus Re_l
-# -------------------------------------------------------------
-#cc   cfturb = 0.427/(log10(re) - 0.407)**2.64   ! original Hoerner
-#cc   cfturb = 0.310/(log10(re) - 0.407)**2.47   ! modified (weaker dependence on Re)
-#
+
+#   cfturb = 0.427/(log10(re) - 0.407)**2.64   ! original Hoerner
+#   cfturb = 0.310/(log10(re) - 0.407)**2.47   ! modified (weaker dependence on Re)
+
       cfturb = 0.523/(log(0.06*Re))^2           # White
-#
+
       return cfturb
 end # cfturb
 

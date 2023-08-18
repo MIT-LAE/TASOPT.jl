@@ -1,3 +1,56 @@
+# Investigating potential to have wrappers to make code cleaner
+struct tfp_workarrays
+  t::Vector{Float64}
+  y::Vector{Float64}
+  yp::Vector{Float64}
+  z::Vector{Float64}
+  zp::Vector{Float64}
+  gw::Vector{Float64}
+  yc::Vector{Float64}
+  ycp::Vector{Float64}
+  zc::Vector{Float64}
+  zcp::Vector{Float64}
+  gc::Vector{Float64}
+  vc::Vector{Float64}
+  wc::Vector{Float64}
+  vnc::Vector{Float64}
+end
+
+struct tfp
+  nsurf::Int
+  npout::Vector{Int}
+  npinn::Vector{Int}
+  npimg::Vector{Int}
+  Sref::Float64
+  bref::Float64
+  b::Vector{Float64}
+  bs::Vector{Float64}
+  bo::Vector{Float64}
+  bop::Vector{Float64}
+  zcent::Vector{Float64}
+  po::Vector{Float64}
+  γt::Vector{Float64}
+  γs::Vector{Float64}
+  CLsurfsp::Vector{Float64}
+  ktip::Float64
+  workarrays::tfp_workarrays
+end
+
+function trefftz(tf::tfp)
+  
+  trefftz1(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
+	tf.Sref, tf.bref,
+	tf.b, tf.bs, tf.bo, tf.bop, tf.zcent,
+	tf.po,tf.γt,tf.γs, 1, tf.ktip,
+	true,tf.CLsurfsp,
+  tf.workarrays.t, tf.workarrays.y, tf.workarrays.yp, tf.workarrays.z, tf.workarrays.zp, 
+  tf.workarrays.gw, tf.workarrays.yc, tf.workarrays.ycp, tf.workarrays.zc, tf.workarrays.zcp,
+  tf.workarrays.gc, tf.workarrays.vc, tf.workarrays.wc, tf.workarrays.vnc)
+  ## Note: do not do the following. This will slow the code down. Interestingly seems to have more allocations than the above.
+  # [getproperty(tf.workarrays,f) for f in fieldnames(typeof(tf.workarrays))]...)
+
+end
+
 """
     trefftz1(nsurf, npout, npinn, npimg, Sref, bref,
     b,bs,bo,bop, zcent, 
@@ -27,38 +80,21 @@ See section A 2.13 of TASOPT docs.
 function trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo,ktip,
-	Lspec,CLsurfsp,)
+	po,gammat,gammas, fLo, ktip,
+	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
 #---- center resolution increase factor (0..1)
 #     bunch = 0.75 
       bunch =  0.5 
 #     bunch =  0. 
-      
-      idim::Int = 360
-      jdim::Int = 360
 
       ifrst = zeros(Int, nsurf)
       ilast = zeros(Int, nsurf)
       
-      t     = zeros(Float64, jdim)
-      y     = zeros(Float64, jdim)
-      yp    = zeros(Float64, jdim)
-      z     = zeros(Float64, jdim)
-      zp    = zeros(Float64, jdim)
-      gw    = zeros(Float64, jdim)
-      
-      yc    = zeros(Float64, idim)
-      ycp   = zeros(Float64, idim)
-      zc    = zeros(Float64, idim)
-      zcp   = zeros(Float64, idim)
-      gc    = zeros(Float64, idim)
-      vc    = zeros(Float64, idim)
-      wc    = zeros(Float64, idim)
-      vnc   = zeros(Float64, idim)
-      
       CLsurf= zeros(Float64, nsurf)
       
+      # Calcualte total number of points
+      # outboard point + inboard + points within fuselage + dummy between surfaces
       isum = 0
       @inbounds for  isurf = 1: nsurf
         isum = isum + npout[isurf] + npinn[isurf] + npimg[isurf] + 1
@@ -78,12 +114,13 @@ function trefftz1(nsurf, npout, npinn, npimg,
       i = 0
 @inbounds for  isurf = 1: nsurf
 
-#---- eta at center, side-of-body, wing break, tip
+#---- η at center, side-of-body, wing break, tip
       e0 = 0.0
       eo = bo[isurf]/b[isurf]
       es = bs[isurf]/b[isurf]
       e1 = 1.0
 
+      # ηₒ' fuse non-dim y location that is constricted in the Trefftz plane 
       eop = bop[isurf]/b[isurf]
 
       t0 = 1.0
@@ -150,7 +187,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
 
         yc[i-1] =  y0*(1.0-fc) + yo*fc
         zc[i-1] =  z0*(1.0-fc) + zo*fc
-        gc[i-1] = (g0*(1.0-fc) + go*fc) * sqrt(1.0-ec^ktip)
+        gc[i-1] = (g0*(1.0-fc) + go*fc) * sqrt(1.0-ec^ktip) #Eq. 389
 
         yexp = (eo/eop)^2
 
@@ -186,7 +223,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
         zc[i-1] =  zo*(1.0-fc) + zs*fc
         gc[i-1] = (go*(1.0-fc) + gs*fc) * sqrt(1.0-ec^ktip)
 
-        yp[i] = sqrt(y[i]^2 - yo^2 + yop^2)
+        yp[i] = sqrt(y[i]^2 - yo^2 + yop^2) #Calculate y'[i] from Eq 391. conservtion of mass effectively
         zp[i] = z[i]
 
         ycp[i-1] = sqrt(yc[i-1]^2 - yo^2 + yop^2)
@@ -262,7 +299,6 @@ function trefftz1(nsurf, npout, npinn, npimg,
          end
        end
       end
-      
 
       CL = 0.
       CD = 0.

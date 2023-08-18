@@ -1,5 +1,5 @@
 using Base: NamedTuple_typename
-function airfun(cl, τ, Mach, 
+@views function airfun(cl, τ, Mach, 
                 Acl, Aτ, AMa,
                 A,
                 A_M,
@@ -10,9 +10,6 @@ function airfun(cl, τ, Mach,
                 A_cl_τ,
                 A_M_cl_τ)
 
-    nAcl::Int = length(Acl)
-    nAMa::Int = length(AMa)
-    nAτ ::Int = length(Aτ)
     nAfun::Int = 3
 
     Ai = zeros(2,2)
@@ -23,7 +20,7 @@ function airfun(cl, τ, Mach,
     Aij_tau = zeros(2)
     Aijk = zeros(nAfun) # for the three vars cdf, cdp and cm
     
-    io, im, dMa , tMa  = findsegment(Mach, AMa)
+    # io, im, dMa , tMa  = findsegment(Mach, AMa)
     jo, jm, dcl , tcl  = findsegment(cl, Acl)
     ko, km, dtau, ttau = findsegment(τ, Aτ)
     
@@ -69,40 +66,47 @@ function airfun(cl, τ, Mach,
     cdw = 0.0
 
     #Add quadratic penalties for exceeding database cl or h/c limits
-    clmin, clmax = Acl[[1, end]]
-    if cl < clmin
-        cdp = cdp + 1.0*(cl-clmin)^2
-    elseif cl > clmax
-        cdp = cdp + 1.0*(cl-clmax)^2
-    end
-    τmin, τmax = Aτ[[1, end]]
-
-    if τ < τmin
-        cdp = cdp + 25.0*(τ - τmin)^2
-    elseif τ > τmax
-        cdp = cdp + 25.0*(τ - τmax)^2
+    # clmin, clmax = Acl[[1, end]]
+    if cl < Acl[1]
+        cdp = cdp + 1.0*(cl-Acl[1])^2
+    elseif cl > Acl[end]
+        cdp = cdp + 1.0*(cl-Acl[end])^2
     end
 
-
+    # τmin, τmax = Aτ[[1, end]]
+    if τ < Aτ[1]
+        cdp = cdp + 25.0*(τ - Aτ[1])^2
+    elseif τ > Aτ[end]
+        cdp = cdp + 25.0*(τ - Aτ[end])^2
+    end
 
     return cdf, cdp, cdw, cm
 
 end
 
 
-function findsegment(x, xarr)
-    ilow = 1
-    io   = length(xarr)
-    while (io - ilow >1)
-        imid = Int(round((io + ilow)/2))
-        if (x < xarr[imid])
-            io = imid
-        else
-            ilow = imid
-        end
+"""
+    findsegment(x::T, xarr::Vector{T})
+
+Uses bisection to find the right interval of the array `xarr` where x lies.
+Returns im and io s.t. `xarr[im] < x < xarr[io]`.
+
+Additionally returns the interval `dx = xarr[io] - xarr[im]`
+"""
+function findsegment(x::Float64, xarr::AbstractArray{Float64})
+
+    io::Int = length(xarr)
+
+    if x ≤ xarr[1]
+        im = 1
+        io = 2
+    elseif x ≥ xarr[end]
+        im = io - 1
+    else
+        im = searchsortedlast(xarr, x)
+        io = im + 1
     end
 
-    im = io - 1
     dx = xarr[io] - xarr[im]
     t = (x - xarr[im])/dx
 

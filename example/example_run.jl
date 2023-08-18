@@ -1,5 +1,6 @@
 
 using Pkg
+TAESOPT = pwd()
 Pkg.activate("../")
 Pkg.instantiate()
 using Profile
