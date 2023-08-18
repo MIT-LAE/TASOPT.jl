@@ -12,5 +12,6 @@ include("benchmark.jl")
 ```
 
 ```@example bench; ansicolor=true
+benchmark_fuseBL()
 benchmark_drag()
 ```
