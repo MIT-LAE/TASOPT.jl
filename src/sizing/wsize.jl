@@ -1357,7 +1357,7 @@ function wsize(pari, parg, parm, para, pare,
                             if Sys.iswindows()
                                 NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "737.bat")
                             elseif Sys.islinux()
-                                NPSS = startNPSS("NPSS_TurboFan/", "737.sh")
+                                NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "737.sh")
                             end
                         elseif pari[iiaircraftclass] == 777
                             if Sys.iswindows()
