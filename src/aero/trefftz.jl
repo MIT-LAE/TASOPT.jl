@@ -87,9 +87,6 @@ function trefftz1(nsurf, npout, npinn, npimg,
 #     bunch = 0.75 
       bunch =  0.5 
 #     bunch =  0. 
-      
-      idim::Int = 360
-      jdim::Int = 360
 
       ifrst = zeros(Int, nsurf)
       ilast = zeros(Int, nsurf)
@@ -302,7 +299,6 @@ function trefftz1(nsurf, npout, npinn, npimg,
          end
        end
       end
-      
 
       CL = 0.
       CD = 0.
