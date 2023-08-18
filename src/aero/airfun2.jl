@@ -20,7 +20,7 @@ using Base: NamedTuple_typename
     Aij_tau = zeros(2)
     Aijk = zeros(nAfun) # for the three vars cdf, cdp and cm
     
-    io, im, dMa , tMa  = findsegment(Mach, AMa)
+    # io, im, dMa , tMa  = findsegment(Mach, AMa)
     jo, jm, dcl , tcl  = findsegment(cl, Acl)
     ko, km, dtau, ttau = findsegment(τ, Aτ)
     
@@ -94,18 +94,19 @@ Returns im and io s.t. `xarr[im] < x < xarr[io]`.
 Additionally returns the interval `dx = xarr[io] - xarr[im]`
 """
 function findsegment(x::Float64, xarr::AbstractArray{Float64})
-    ilow::Int = 1
-    io::Int   = length(xarr)
-    while (io - ilow >1)
-        imid::Int = (io + ilow) ÷ 2
-        if (x < xarr[imid])
-            io = imid
-        else
-            ilow = imid
-        end
+
+    io::Int = length(xarr)
+
+    if x ≤ xarr[1]
+        im = 1
+        io = 2
+    elseif x ≥ xarr[end]
+        im = io - 1
+    else
+        im = searchsortedlast(xarr, x)
+        io = im + 1
     end
 
-    im = io - 1
     dx = xarr[io] - xarr[im]
     t = (x - xarr[im])/dx
 
