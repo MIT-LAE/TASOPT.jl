@@ -4,7 +4,7 @@
 
 It can currently model tube-and-wing aircraft using 2D viscous-invisicd CFD to calculate aerodynamic performance, simple beam bending theory to size the wings, and thermodynamic cycle modeling to calculate engine performance.
 
-
+<!-- Benchmarking here will show confusing results since the FORTRAN comparison was done on a Mac M2 pro 
 ```@setup bench
 cd("../../test")
 include("benchmark.jl")
@@ -14,4 +14,4 @@ include("benchmark.jl")
 ```@example bench; ansicolor=true
 benchmark_fuseBL()
 benchmark_drag()
-```
+``` -->
