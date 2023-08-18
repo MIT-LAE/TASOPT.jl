@@ -1,4 +1,4 @@
-include("cost_val.jl")
+
 """
 cost_est estimates the program and airframe cost for the aircraft
 aircraft cost model developed from DAPCA IV, as found in Raymer's

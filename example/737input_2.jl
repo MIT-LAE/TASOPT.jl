@@ -6,7 +6,6 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
-
 pari[iiaircraftclass] = 737 #specifies aircraft class in order to run appropriate NPSS model
 pari[iiopt] = 0 # 0 run sizing loop only; 1 run optimization procedure
 pari[iifwing] = 1 # 0 = all fuel stored in tanks; 1 = all fuel stored in wings

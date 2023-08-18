@@ -15,39 +15,40 @@ using PyPlot
 using Dates
 
 using ForwardDiff
-
+const __TASOPTroot__ = @__DIR__
 # Constants and array indices
-include("src/misc/constants.jl")
-include("src/misc/index.inc")
+include(joinpath(__TASOPTroot__, "src/misc/constants.jl"))
+include(joinpath(__TASOPTroot__, "src/misc/index.inc"))
 
 
 #Load modules
-include("src/atmos/atmos.jl")
-include("src/sizing/wsize.jl")
-include("src/mission/mission.jl")
-include("src/mission/takeoff.jl")
-include("src/aero/aero.jl")
-include("src/structures/structures.jl")
-include("src/propsys/propsys.jl")
-include("src/balance/balance.jl")
-include("src/engine/engine.jl")
+include(joinpath(__TASOPTroot__,"src/atmos/atmos.jl"))
+include(joinpath(__TASOPTroot__,"src/sizing/wsize.jl"))
+include(joinpath(__TASOPTroot__,"src/mission/mission.jl"))
+include(joinpath(__TASOPTroot__,"src/mission/takeoff.jl"))
+include(joinpath(__TASOPTroot__,"src/aero/aero.jl"))
+include(joinpath(__TASOPTroot__,"src/structures/structures.jl"))
+include(joinpath(__TASOPTroot__,"src/propsys/propsys.jl"))
+include(joinpath(__TASOPTroot__,"src/balance/balance.jl"))
+include(joinpath(__TASOPTroot__,"src/engine/engine.jl"))
 
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
-include("src/mission/odperformance.jl")
-include("src/mission/woper.jl")
-include("src/mission/LTO.jl")
-include("src/mission/AircraftDeck.jl")
+include(joinpath(__TASOPTroot__,"src/mission/odperformance.jl"))
+include(joinpath(__TASOPTroot__,"src/mission/woper.jl"))
+include(joinpath(__TASOPTroot__,"src/mission/LTO.jl"))
+include(joinpath(__TASOPTroot__,"src/mission/AircraftDeck.jl"))
 
-include("src/fuel/hydrogen.jl")
-include("src/engine/PT.inc")
+include(joinpath(__TASOPTroot__,"src/fuel/hydrogen.jl"))
+include(joinpath(__TASOPTroot__,"src/engine/PT.inc"))
 
 # Input and output functions
-include("src/IO/outputs.jl")
-include("src/IO/savemodel.jl")
+include(joinpath(__TASOPTroot__,"src/IO/outputs.jl"))
+include(joinpath(__TASOPTroot__,"src/IO/savemodel.jl"))
 
-include("src/cost/cost_est.jl")
-include("src/utils/printBADA.jl")
+include(joinpath(__TASOPTroot__,"src/cost/cost_est.jl"))
+include(joinpath(__TASOPTroot__,"src/cost/cost_val.jl"))
+include(joinpath(__TASOPTroot__,"src/utils/printBADA.jl"))
 
 using .atmosphere
 using .aerodynamics

@@ -117,6 +117,8 @@ if Sys.iswindows()
     airfoil_data = "air/C.air"
 elseif Sys.islinux()
     airfoil_data = "../src/air/C.air"
+elseif Sys.isunix()
+    airfoil_data = "../src/air/C.air"
 end
 
 AMa, Acl, Aτ, ARe,
