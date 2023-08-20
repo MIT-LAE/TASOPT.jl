@@ -2624,7 +2624,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
                   i = 9
                   for k = 1:9
-                        a(i, k) = 0.0
+                        a[i, k] = 0.0
                   end
                   res[i, 1] = Mi - Mimax
                   a[i, i] = 1.0
