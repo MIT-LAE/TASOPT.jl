@@ -12,13 +12,21 @@ authors:
     affiliation: 1
   - name: Sicheng He
     orcid:https://orcid.org/0000-0003-1307-4909
+    affiliation: 1
   - name: Diego Salgado Bobadilla
+    affiliation: 1
   - name: Kanghyun Lee
+    affiliation: 1
   - name: Prateek Ranjan
+    affiliation: 1
   - name: Sayed Shayan Zahid 
+    affiliation: 1
   - name: James Abel
-  - name: Mark Drela
+    affiliation: 1
   - name: Raymond Speth
+    affiliation: 1
+  - name: Mark Drela
+    affiliation: 1
 
 affiliations:
   - name: Massachusetts Institute of Technology, Cambridge, MA, USA
