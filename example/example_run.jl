@@ -1,7 +1,7 @@
 
 using Pkg
 TAESOPT = pwd()
-Pkg.activate("../")
+Pkg.activate(dirname(@__DIR__))
 Pkg.instantiate()
 using Profile
 # 1) Load TASOPT

@@ -1,10 +1,10 @@
 
 using Pkg
-Pkg.activate("../")
+Pkg.activate(dirname(@__DIR__))
 Pkg.instantiate()
 
 # 1) Load TASOPT
-# println(pwd())
+
 include("../tasopt.jl")
 # println(pwd())
 # 2) Include input file for desired aircraft/
