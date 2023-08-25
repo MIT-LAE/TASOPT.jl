@@ -3,7 +3,8 @@ TASOPT
 """
 module TASOPT
 
-export atmos
+export atmos, size_aircraft
+
 # Add basic pacakges required by TASOPT
 using Base: SignedMultiplicativeInverse
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
@@ -15,12 +16,16 @@ using StaticArrays
 using Profile, UnicodePlots
 using PyPlot
 using Dates
-
 using ForwardDiff
+
 const __TASOPTroot__ = @__DIR__
+
 # Constants and array indices
-include(joinpath("./misc/constants.jl"))
-include(joinpath("./misc/index.inc"))
+include("./misc/constants.jl")
+export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
+       lbf_to_N, kts_to_mps, hp_to_W, lb_N
+export gee, gamSL, cpSL, μAir, pref, Tref
+include("./misc/index.inc")
 
 
 #Load modules
@@ -78,20 +83,29 @@ saveOD = false
 track_fig = nothing
 opt_iter_counter = 0
 
-function size_aircraft(iter, initwgt, Ldebug, printiter, saveOD)
+struct aircraft
+    pari::AbstractVector{Int64}
+    parg::AbstractVector{Float64}
+    parm::AbstractArray{Float64}
+    para::AbstractArray{Float64}
+    pare::AbstractArray{Float64}
+end
+
+function size_aircraft(ac::aircraft, iter, initwgt, Ldebug, printiter, saveOD)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
-    parpt[ipt_time_NPSS] = 0.0
-    parpt[ipt_calls_NPSS] = 0
+    # parpt[ipt_time_NPSS] = 0.0
+    # parpt[ipt_calls_NPSS] = 0
     global opt_iter_counter += 1
 
     Ldebug && println("Max weight iterations = $iter")
-    wsize(pari, parg, parm, view(para, :, :, 1), view(pare, :, :, 1),
+    wsize(ac.pari, ac.parg, ac.parm, view(ac.para, :, :, 1), view(ac.pare, :, :, 1),
         iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, saveOD)
 
     # global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
     if (opt_iter_counter % 5 == 0) || (opt_iter_counter == 1)
-        global track_fig = plot_details(parg, pari, para, parm; ax=track_fig)
+        global track_fig = plot_details(ac.parg, ac.pari, ac.para, ac.pare, 
+                                        ac.parm; ax=track_fig)
     end
 end
 
