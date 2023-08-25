@@ -1,3 +1,4 @@
+include("../src/misc/index.inc")
 # Inputs for testing runs
 nmisx = 1
 pari = zeros(Int64, iitotal)
