@@ -8,7 +8,7 @@ include("../tasopt.jl")
 using Documenter
 
 makedocs(
-    sitename = "TAESOPT.jl documentation",
+    sitename = "TASOPT.jl documentation",
     pages = [ "Home" => "index.md", 
     "Atmospheric properties" => "atmos/atmos.md",
     "Aerodynamics" => Any[
