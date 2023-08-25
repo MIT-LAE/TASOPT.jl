@@ -524,3 +524,5 @@ aisle_halfwidth = 10.0 * in_to_m
 seat_width = 19.0 * in_to_m
 seat_pitch = 30.0 * in_to_m
 pax = Npax
+
+B737 = TASOPT.aircraft(pari, parg, parm, para, pare);
