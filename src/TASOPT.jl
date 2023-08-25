@@ -2,6 +2,8 @@
 TASOPT
 """
 module TASOPT
+
+export atmos
 # Add basic pacakges required by TASOPT
 using Base: SignedMultiplicativeInverse
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
@@ -17,7 +19,6 @@ using Dates
 using ForwardDiff
 const __TASOPTroot__ = @__DIR__
 # Constants and array indices
-println(pwd())
 include(joinpath("./misc/constants.jl"))
 include(joinpath("./misc/index.inc"))
 
