@@ -1,5 +1,3 @@
-export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, lbf_to_N, kts_to_mps, hp_to_W, lb_N
-export gee, gamSL, cpSL, μAir, pref, Tref
 
 const ft_to_m = 0.3048
 const in_to_m = 0.0254
