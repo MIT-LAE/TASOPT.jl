@@ -1,7 +1,7 @@
 """
 TASOPT
 """
-
+module TASOPT
 # Add basic pacakges required by TASOPT
 using Base: SignedMultiplicativeInverse
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
@@ -17,38 +17,39 @@ using Dates
 using ForwardDiff
 const __TASOPTroot__ = @__DIR__
 # Constants and array indices
-include(joinpath(__TASOPTroot__, "src/misc/constants.jl"))
-include(joinpath(__TASOPTroot__, "src/misc/index.inc"))
+println(pwd())
+include(joinpath("./misc/constants.jl"))
+include(joinpath("./misc/index.inc"))
 
 
 #Load modules
-include(joinpath(__TASOPTroot__,"src/atmos/atmos.jl"))
-include(joinpath(__TASOPTroot__,"src/sizing/wsize.jl"))
-include(joinpath(__TASOPTroot__,"src/mission/mission.jl"))
-include(joinpath(__TASOPTroot__,"src/mission/takeoff.jl"))
-include(joinpath(__TASOPTroot__,"src/aero/aero.jl"))
-include(joinpath(__TASOPTroot__,"src/structures/structures.jl"))
-include(joinpath(__TASOPTroot__,"src/propsys/propsys.jl"))
-include(joinpath(__TASOPTroot__,"src/balance/balance.jl"))
-include(joinpath(__TASOPTroot__,"src/engine/engine.jl"))
+include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
+include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
+include(joinpath(__TASOPTroot__,"mission/mission.jl"))
+include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
+include(joinpath(__TASOPTroot__,"aero/aero.jl"))
+include(joinpath(__TASOPTroot__,"structures/structures.jl"))
+include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
+include(joinpath(__TASOPTroot__,"balance/balance.jl"))
+include(joinpath(__TASOPTroot__,"engine/engine.jl"))
 
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
-include(joinpath(__TASOPTroot__,"src/mission/odperformance.jl"))
-include(joinpath(__TASOPTroot__,"src/mission/woper.jl"))
-include(joinpath(__TASOPTroot__,"src/mission/LTO.jl"))
-include(joinpath(__TASOPTroot__,"src/mission/AircraftDeck.jl"))
+include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
+include(joinpath(__TASOPTroot__,"mission/woper.jl"))
+include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
+include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
-include(joinpath(__TASOPTroot__,"src/fuel/hydrogen.jl"))
-include(joinpath(__TASOPTroot__,"src/engine/PT.inc"))
+include(joinpath(__TASOPTroot__,"fuel/hydrogen.jl"))
+include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions
-include(joinpath(__TASOPTroot__,"src/IO/outputs.jl"))
-include(joinpath(__TASOPTroot__,"src/IO/savemodel.jl"))
+include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
+include(joinpath(__TASOPTroot__,"IO/savemodel.jl"))
 
-include(joinpath(__TASOPTroot__,"src/cost/cost_est.jl"))
-include(joinpath(__TASOPTroot__,"src/cost/cost_val.jl"))
-include(joinpath(__TASOPTroot__,"src/utils/printBADA.jl"))
+include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
+include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
+include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
 
 using .atmosphere
 using .aerodynamics
@@ -91,4 +92,6 @@ function size_aircraft(iter, initwgt, Ldebug, printiter, saveOD)
     if (opt_iter_counter % 5 == 0) || (opt_iter_counter == 1)
         global track_fig = plot_details(parg, pari, para, parm; ax=track_fig)
     end
+end
+
 end

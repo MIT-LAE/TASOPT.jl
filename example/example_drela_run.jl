@@ -4,7 +4,7 @@ Pkg.activate("../")
 Pkg.instantiate()
 
 # 1) Load TASOPT
-include("../tasopt.jl")
+include("../src/TASOPT.jl")
 
 # 2) Include input file for desired aircraft/
 #  can also be a saved model
