@@ -113,16 +113,3 @@ return  AMa, Acl, Aτ, ARe,
         A_M_cl_τ
 end
 
-if Sys.iswindows()
-    airfoil_data = "air/C.air"
-elseif Sys.islinux()
-    airfoil_data = "../src/air/C.air"
-elseif Sys.isunix()
-    airfoil_data = "../src/air/C.air"
-end
-
-AMa, Acl, Aτ, ARe,
-A,
-A_M, A_τ, A_cl,
-A_M_τ, A_M_cl, A_cl_τ,
-A_M_cl_τ = airtable(airfoil_data);
