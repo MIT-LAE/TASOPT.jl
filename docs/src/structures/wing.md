@@ -1,7 +1,7 @@
 # Wings and tails
 
 ```@docs
-surfdx
-surfw
-tailpo
+structures.surfdx
+structures.surfw
+structures.tailpo
 ```

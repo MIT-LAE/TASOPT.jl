@@ -9,5 +9,5 @@ The loads on the fuselage are shown below
 ![FuseLoads](../assets/fuselage.png)
 
 ```@docs
-fusew
+TASOPT.fusew
 ```

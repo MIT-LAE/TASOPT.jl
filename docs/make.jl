@@ -3,12 +3,14 @@ Pkg.activate("../")
 
 push!(LOAD_PATH, "../src")
 
-include("../tasopt.jl")
+include("../src/TASOPT.jl")
+aerodynamics = TASOPT.aerodynamics
+structures = TASOPT.structures
 
 using Documenter
 
 makedocs(
-    sitename = "TAESOPT.jl documentation",
+    sitename = "TASOPT.jl documentation",
     pages = [ "Home" => "index.md", 
     "Atmospheric properties" => "atmos/atmos.md",
     "Aerodynamics" => Any[

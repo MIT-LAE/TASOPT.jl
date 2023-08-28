@@ -172,15 +172,19 @@ function geometry(parg; io = stdout)
 end
 
 """
-    stickfig(parg,pari,parm; ax = nothing, label_fs = 16)
+    stickfig(parg,para,pari,parm; ax = nothing, label_fs = 16)
 
 `stickfig` plots a "stick figure" airplane on the axis `ax` if provided 
 (else a new axis is created). This is used in conjuction with other functions
 like [`plot_details`](@ref) to create summary plots to track progress of optimization
 or present results.
 """
-function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
-
+function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
+    pari = ac.pari
+    parg = ac.parg
+    pare = ac.pare
+    para = ac.para
+    parm = ac.parm
     # Wing
         co = parg[igco]
         cs = parg[igco]*parg[iglambdas]
@@ -420,6 +424,11 @@ function stickfig(parg, pari, parm; ax = nothing, label_fs = 16)
         end
 
     #Seats
+    pax = 200
+    seat_pitch = 30.0 * in_to_m
+    seat_width = 19.0 * in_to_m
+    aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
+
     seats_per_row = 2*Int(parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
     rows = Int(ceil(pax / seats_per_row))
     
@@ -597,7 +606,13 @@ end
 `plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
 weight and drag buildup stacked bar charts to present results.
 """
-function plot_details(parg, pari, para, parm; ax = nothing)
+function plot_details(ac::aircraft; ax = nothing)
+
+    pari = ac.pari
+    parg = ac.parg
+    pare = ac.pare
+    para = ac.para
+    parm = ac.parm
         ## Create empty plot
         if ax === nothing
             # plt.style.use(["../miscellaneous/prash.mplstyle", "seaborn-colorblind"]) # HACK
@@ -737,7 +752,7 @@ function plot_details(parg, pari, para, parm; ax = nothing)
         # ar.set_ylabel("Climb angle")
 
         # Draw stick figure to keep track
-        stickfig(parg, pari, parm; ax = ax[3], label_fs = 12)
+        stickfig(ac; ax = ax[3], label_fs = 12)
         plt.tight_layout()
 
         #Print other details:

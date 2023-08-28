@@ -1,7 +1,7 @@
 # Atmospheric properties
 
 ```@docs
-atmos
+TASOPT.atmos
 ```
 This function can be used to return the atmospheric properties at a given altitude as follows:
 ```@setup atmos
