@@ -38,12 +38,12 @@ aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
-fusebl!(pari, parg, para, ip)
+aerodynamics.fusebl!(pari, parg, para, ip)
 ```
 
 ## Total drag calculation
 ```@docs
-cdsum!(pari,parg,para,pare, icdfun)
+aerodynamics.cdsum!(pari,parg,para,pare, icdfun)
 ```
 
 ## Wing and tail surfaces

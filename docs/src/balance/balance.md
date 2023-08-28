@@ -1,7 +1,7 @@
 # Stability and balance
 
 ```@docs
-balance
-cglpay
-htsize
+TASOPT.balance
+TASOPT.cglpay
+TASOPT.htsize
 ```
