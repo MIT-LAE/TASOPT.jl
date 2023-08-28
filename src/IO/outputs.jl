@@ -179,8 +179,12 @@ end
 like [`plot_details`](@ref) to create summary plots to track progress of optimization
 or present results.
 """
-function stickfig(parg, para, pari, parm; ax = nothing, label_fs = 16)
-
+function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
+    pari = ac.pari
+    parg = ac.parg
+    pare = ac.pare
+    para = ac.para
+    parm = ac.parm
     # Wing
         co = parg[igco]
         cs = parg[igco]*parg[iglambdas]
@@ -602,7 +606,13 @@ end
 `plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
 weight and drag buildup stacked bar charts to present results.
 """
-function plot_details(parg, pari, para, pare, parm; ax = nothing)
+function plot_details(ac::aircraft; ax = nothing)
+
+    pari = ac.pari
+    parg = ac.parg
+    pare = ac.pare
+    para = ac.para
+    parm = ac.parm
         ## Create empty plot
         if ax === nothing
             # plt.style.use(["../miscellaneous/prash.mplstyle", "seaborn-colorblind"]) # HACK
@@ -742,7 +752,7 @@ function plot_details(parg, pari, para, pare, parm; ax = nothing)
         # ar.set_ylabel("Climb angle")
 
         # Draw stick figure to keep track
-        stickfig(parg, para, pari, parm; ax = ax[3], label_fs = 12)
+        stickfig(ac; ax = ax[3], label_fs = 12)
         plt.tight_layout()
 
         #Print other details:
