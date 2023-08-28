@@ -25,8 +25,10 @@ include("./misc/constants.jl")
 export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
        lbf_to_N, kts_to_mps, hp_to_W, lb_N
 export gee, gamSL, cpSL, μAir, pref, Tref
-include("./misc/index.inc")
 
+include("./misc/index.inc")
+include("./misc/aircraft.jl")
+export aircraft
 
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
@@ -83,14 +85,6 @@ saveOD = false
 track_fig = nothing
 opt_iter_counter = 0
 
-struct aircraft
-    pari::AbstractVector{Int64}
-    parg::AbstractVector{Float64}
-    parm::AbstractArray{Float64}
-    para::AbstractArray{Float64}
-    pare::AbstractArray{Float64}
-end
-
 function size_aircraft(ac::aircraft, iter, initwgt, Ldebug, printiter, saveOD)
     global time_writing = 0.0
     global time_run_NPSS = 0.0
@@ -104,8 +98,7 @@ function size_aircraft(ac::aircraft, iter, initwgt, Ldebug, printiter, saveOD)
 
     # global track_fig = stickfig(parg, pari,  parm; ax = track_fig)
     if (opt_iter_counter % 5 == 0) || (opt_iter_counter == 1)
-        global track_fig = plot_details(ac.parg, ac.pari, ac.para, ac.pare, 
-                                        ac.parm; ax=track_fig)
+        global track_fig = plot_details(ac; ax=track_fig)
     end
 end
 
