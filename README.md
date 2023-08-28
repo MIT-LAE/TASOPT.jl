@@ -6,6 +6,47 @@ Julia based TASOPT++ includes PCEC, hydrogen fuel options etc. Perhaps need some
 
 ## Getting started
 
+### Simple install
+
+The easiest way to run `TASOPT.jl` would be to add the package using the julia package manager using the github repository.
+
+You can do this by starting a Julia session and then activating the package manager by typing `]` and then entering:
+```julia-repl
+pkg> add "git@github.mit.edu:LAE/TAESOPT.jl.git"
+```
+
+You can then import `TASOPT` as you would with any Julia package:
+```julia-repl
+julia> using TASOPT
+```
+### Local development
+
+If you are going to develop the source code of `TASOPT.jl` you might benefit from a local clone of the git repository which
+can then fit into a workflow using [`Revise.jl`](https://timholy.github.io/Revise.jl/stable/) for example.
+
+Step 1: Clone the git repo locally
+```bash
+git clone git@github.mit.edu:LAE/TAESOPT.jl.git
+```
+
+Step 2: `cd` to the folder where TASOPT is cloned
+
+Step 3: Use `Pkg` to install/ develop the package
+
+```julia
+pkg> dev .
+```
+
+You should now be able to import TASOPT from within any Julia script in your base environment.
+
+If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOPT`
+
+```julia
+using Revise
+using TASOPT
+```
+
+
 Within the `run` folder is an example set of files to get started. To run the code on hex first `cd` into the run directory. Then you have 2 choices:
 
 1. `julia example_run.jl` : runs the example file in the current session
