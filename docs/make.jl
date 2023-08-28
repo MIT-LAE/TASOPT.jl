@@ -3,7 +3,9 @@ Pkg.activate("../")
 
 push!(LOAD_PATH, "../src")
 
-include("../tasopt.jl")
+include("../src/TASOPT.jl")
+aerodynamics = TASOPT.aerodynamics
+structures = TASOPT.structures
 
 using Documenter
 

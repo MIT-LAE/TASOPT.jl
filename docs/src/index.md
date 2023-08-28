@@ -41,7 +41,8 @@ pkg> dev .
 
 You should now be able to import TASOPT from within any Julia script in your base environment.
 
-!!! tip If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOPT`
+!!! tip "Tip"
+    If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOPT`
 
     ```julia
     using Revise
