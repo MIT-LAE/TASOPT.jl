@@ -1,4 +1,4 @@
-using Base: NamedTuple_typename
+
 @views function airfun(cl, τ, Mach, 
                 Acl, Aτ, AMa,
                 A,
