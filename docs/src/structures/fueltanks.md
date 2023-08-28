@@ -5,7 +5,7 @@ Liquid hydrocarbon fuel is assumed to be stored in the interior of the wings and
 However, alternate fuels such as cryogenic liquid hydrogen require additional storage tanks that are insulated pressure vessels.
 
 ```@docs
-tanksize
+structures.tanksize
 structures.tankWmech
 structures.tankWthermal
 

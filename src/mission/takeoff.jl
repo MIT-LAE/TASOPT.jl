@@ -154,6 +154,9 @@ function takeoff!(pari, parg, parm, para, pare,
     lBF = 1.3 * lTO
     V2sq = V2^2
 
+    @printf("\nTakeoff:\n%2s %10s %10s %10s %10s\n", 
+    "#", "lTO", "l1", "lBF", "dmax")
+    
     #---- Newton iteration loop
     for iter = 1:15
         exA = exp(kA * (-l1))
@@ -181,7 +184,8 @@ function takeoff!(pari, parg, parm, para, pare,
         dmax = max(abs(dl1), abs(dlBF))
 
         #  print convergence history for debugging
-        println("(1x, i3, 3g13.5, e12.4)", iter, lTO * 3.28, l1 * 3.28, lBF * 3.28, dmax * 3.28)
+        @printf("%2d %10.3f %10.3f %10.3f %10.3f\n", 
+        iter, lTO * 3.28, l1 * 3.28, lBF * 3.28, dmax * 3.28)
 
         l1 = l1 + dl1
         lBF = lBF + dlBF
