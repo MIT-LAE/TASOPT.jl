@@ -8,10 +8,10 @@ tags:
 
 authors:
   - name: Prakash Prashanth
-    orcid:https://orcid.org/0000-0002-2346-0697
+    orcid: https://orcid.org/0000-0002-2346-0697
     affiliation: 1
   - name: Sicheng He
-    orcid:https://orcid.org/0000-0003-1307-4909
+    orcid: https://orcid.org/0000-0003-1307-4909
     affiliation: 1
   - name: Diego Salgado Bobadilla
     affiliation: 1
@@ -26,6 +26,7 @@ authors:
   - name: James Abel
     affiliation: 1
   - name: Raymond Speth
+    orcid: https://orcid.org/0000-0002-8941-4554
     affiliation: 1
   - name: Mark Drela
     affiliation: 1
