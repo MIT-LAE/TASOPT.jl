@@ -19,6 +19,8 @@ authors:
     affiliation: 1
   - name: Prateek Ranjan
     affiliation: 1
+  - name: Jonas J Gonzalez
+    affiliation: 1
   - name: Sayed Shayan Zahid 
     affiliation: 1
   - name: James Abel
