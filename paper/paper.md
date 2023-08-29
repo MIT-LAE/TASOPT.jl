@@ -55,6 +55,7 @@ Most modern aircraft design tools generally fall either into two categories: hig
 `TASOPT.jl` is intended to be easily integrated into existing research workflows due to the ease of integrating Julia code into existing python code or driving other executable codes such as NPSS engine design. Future work includes integrating noise calculations using `pyNA` [@pyna] to estimate certification landing and take-off noise for aircraft. 
 # Acknowledgements
 
-We acknowledge the funding received under ASCENT Project 52 and ASCENT Project 82b of the FAA award number 13-C-AJFE-MIT. 
+Work on this package was supported in part by the U.S. Federal Aviation Administration Office of Environment and Energy through ASCENT, the FAA Center of Excellence for Alternative Jet Fuels and the Environment, Projects 52 and 82b through FAA Award Number 13-C-AJFE-MIT.
+
 
 # References
