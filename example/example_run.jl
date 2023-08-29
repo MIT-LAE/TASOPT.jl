@@ -1,7 +1,7 @@
 
 using Pkg
 TAESOPT = pwd()
-Pkg.activate("../")
+Pkg.activate(dirname(@__DIR__))
 Pkg.instantiate()
 using Profile
 # 1) Load TASOPT
@@ -25,4 +25,4 @@ weight_buildup(parg)
 # 5) Plot figures
 pygui(true)
 stickfig(parg,pari,parm)
-plt.savefig("../../example/Example.png")
+# plt.savefig("../../example/Example.png")
