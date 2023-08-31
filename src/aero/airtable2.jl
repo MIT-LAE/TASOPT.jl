@@ -1,9 +1,9 @@
 
 struct airfoil
-    AMa::AbstractVector{Float64}
-    Acl::AbstractVector{Float64}
-    Aτ::AbstractVector{Float64}
-    ARe::Float64 # Data assumed for a single Re
+    Ma::AbstractVector{Float64}
+    cl::AbstractVector{Float64}
+    τ::AbstractVector{Float64}
+    Re::Float64 # Data assumed for a single Re
   
     A::AbstractArray{Float64} # Airfoil aero data 
     

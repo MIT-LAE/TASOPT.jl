@@ -1,9 +1,8 @@
 """
-    urfcd2(S,b, bs, bo,λt, λs, γt, γs,
+    surfcd2(S,b, bs, bo,λt, λs, γt, γs,
     toco, tocs, toct,Mach, sweep, co,
     CL, CLhtail, fLo, fLt,Reco, 
-    aRexp, kSuns, fexcd, AMa, Acl, 
-    Atau, ARe, A,fduo, fdus, fdut)
+    aRexp, kSuns, fexcd,fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD`.
 
@@ -49,7 +48,6 @@ function surfcd2(
       Mach, sweep, co,
       CL, CLhtail, fLo, fLt,
       Reco, aRexp, kSuns, fexcd,
-      AMa, Acl, Atau, ARe, A,
       fduo, fdus, fdut)
 
       #     n = 4     #  ~0.30% error
@@ -97,6 +95,7 @@ function surfcd2(
       CDpwing = 0.0
       CDwing = 0.0
       Snorm = 0.0
+      ARe = airsection.Re
 
       for i = 1:n/2
             frac = (float(i) - 0.5) / float(n / 2)
@@ -113,16 +112,7 @@ function surfcd2(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            # cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, AMa,Acl,Atau,ARe,A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M)
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, Acl, Aτ, AMa,
-                  A,
-                  A_M,
-                  A_τ,
-                  A_cl,
-                  A_M_τ,
-                  A_M_cl,
-                  A_cl_τ,
-                  A_M_cl_τ)
+            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, airsection)
             #println(cdf1, " ", cdp1, " ", cm)
 
             Refac = (Rec / ARe)^aRexp
@@ -156,16 +146,7 @@ function surfcd2(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            #   cdf1, cdp1, cdwbar, cm = airfun(clp,toc,Mperp, AMa,Acl,Atau,ARe,A, ∂cdf_∂M, ∂cdp_∂M, ∂cm_∂M)
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, Acl, Aτ, AMa,
-                  A,
-                  A_M,
-                  A_τ,
-                  A_cl,
-                  A_M_τ,
-                  A_M_cl,
-                  A_cl_τ,
-                  A_M_cl_τ)
+            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, airsection)
 
             Refac = (Rec / ARe)^aRexp
             cdf = cdf1 * Refac * fexcd * (1.0 + fdu)^3
