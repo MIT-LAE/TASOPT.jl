@@ -23,12 +23,15 @@ julia> parse_unit_string("3.2 ft")
 julia> parse_unit_string("8m2")
 (8.0, "m2")
 
-julia> parse_unit_string("5000 kN")
+julia> parse_unit_string("5e3  kN")
 (5000.0, "kN")
+
+julia> parse_unit_string("-32e2 W")
+(-3200.0, "W")
 ```
 """
 function parse_unit_string(str::String)
-    m = match(r"(\d+\.?\d*)\s*(\w*\/?\w*)", str)
+    m = match(r"(\+?\-?\d+\.?e?\d*)\s*(\w*\/?\w*)", str)
     mag = parse(Float64, m[1])
     units = m[2]
     return mag, units
