@@ -10,6 +10,51 @@ function convertDist(value::Float64, units_in::String, units_out="m")
     return value * dict[units_in]/dict[units_out]
 end
 
+function parse_unit_string(str::String)
+    m = match(r"(\d+\.?\d*)\s*(\w*\/?\w*)", str)
+    mag = parse(Float64, m[1])
+    units = m[2]
+    return mag, units
+end
+
+function get_unit_dim(str::String)
+    m = match(r"([^\d]+)(\d*)", str)
+    unit = m[1]
+    if m[2] == ""
+        dim = 1.0
+    else
+        dim = parse(Float64, m[2])
+    end
+    return unit, dim
+end
+
+function convertArea(value::Float64, units_in::String, units_out="m2")
+    dict = _convSIdist
+    baseunit_in, exp_in = get_unit_dim(units_in)
+    baseunit_out, exp_out = get_unit_dim(units_out)
+
+    if exp_out != exp_in
+        error("Units don't have the same dimensions")
+    elseif exp_in != 2.0
+        error("Area needs to be units of length squared (exponent = 2)")
+    end
+
+    return value * (dict[baseunit_in]^exp_in)/(dict[baseunit_out]^exp_out)
+end
+
+function convertVolume(value::Float64, units_in::String, units_out="m3")
+    dict = _convSIdist
+    baseunit_in, exp_in = get_unit_dim(units_in)
+    baseunit_out, exp_out = get_unit_dim(units_out)
+
+    if exp_out != exp_in
+        error("Units don't have the same dimensions")
+    elseif exp_in != 3.0
+        error("Volume needs to be units of length cubed (exponent = 3)")
+    end
+
+    return value * (dict[baseunit_in]^exp_in)/(dict[baseunit_out]^exp_out)
+end
 #Mass
 const _convSImass = Dict("kg"=>1.0,
                          "lbm"=>1.0/2.205)
