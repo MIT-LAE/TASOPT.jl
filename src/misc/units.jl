@@ -10,6 +10,23 @@ function convertDist(value::Float64, units_in::String, units_out="m")
     return value * dict[units_in]/dict[units_out]
 end
 
+"""
+    parse_unit_string(str::String)
+
+Uses a regex match to split a string with magnitude and units and return them.
+
+# Examples
+```julia-repl
+julia> parse_unit_string("3.2 ft")
+(3.2, "ft")
+
+julia> parse_unit_string("8m2")
+(8.0, "m2")
+
+julia> parse_unit_string("5000 kN")
+(5000.0, "kN")
+```
+"""
 function parse_unit_string(str::String)
     m = match(r"(\d+\.?\d*)\s*(\w*\/?\w*)", str)
     mag = parse(Float64, m[1])
