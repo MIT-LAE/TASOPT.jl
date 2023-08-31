@@ -138,7 +138,6 @@ function cdsum!(pari,parg,para,pare, icdfun)
 	Mach,sweep,co, 
 	CL,CLhtail, fLo,fLt,
 	Reco,aRexp, rkSunsw,fexcdw,
-	AMa,Acl,Aτ,ARe,A,
 	fduo,fdus,fdut)
 	
        #if(Ldebug) write(*,*) '...exited SURFCD2'

@@ -1,7 +1,7 @@
 @views function airfun(cl, τ, Mach, air::airfoil)
 
     return airfun(cl, τ, Mach, 
-                    air.Acl, air.Aτ, air.AMa,
+                    air.cl, air.τ, air.Ma,
                     air.A,
                     air.A_M,
                     air.A_τ,
