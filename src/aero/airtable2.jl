@@ -1,19 +1,19 @@
 
-struct airfoil2{nMa, ncl, nτ, nfun} 
-    AMa::SVector{nMa, Float64}
-    Acl::SVector{ncl, Float64}
-    Aτ::SVector{nτ, Float64}
+struct airfoil
+    AMa::AbstractVector{Float64}
+    Acl::AbstractVector{Float64}
+    Aτ::AbstractVector{Float64}
     ARe::Float64 # Data assumed for a single Re
   
-    A::SArray{Tuple{nMa, ncl, nτ, nfun},Float64} # Airfoil aero data 
+    A::AbstractArray{Float64} # Airfoil aero data 
     
-    A_M::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
-    A_τ::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
-    A_cl::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
-    A_M_τ::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
-    A_M_cl::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
-    A_cl_τ::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
-    A_M_cl_τ::SArray{Tuple{nMa, ncl, nτ, nfun},Float64}
+    A_M::AbstractArray{Float64}
+    A_τ::AbstractArray{Float64}
+    A_cl::AbstractArray{Float64}
+    A_M_τ::AbstractArray{Float64}
+    A_M_cl::AbstractArray{Float64}
+    A_cl_τ::AbstractArray{Float64}
+    A_M_cl_τ::AbstractArray{Float64}
 end 
 
 """
@@ -121,7 +121,7 @@ for l = 1:nAfun
 
 end
 
-return  airfoil2{nAMa, nAcl, nAτ, nAfun}(AMa, Acl, Aτ, ARe,
+return  airfoil(AMa, Acl, Aτ, ARe,
         A,
         A_M,
         A_τ,

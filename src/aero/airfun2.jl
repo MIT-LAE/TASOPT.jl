@@ -1,14 +1,30 @@
+@views function airfun(cl, τ, Mach, air::airfoil)
+
+    return airfun(cl, τ, Mach, 
+                    air.Acl, air.Aτ, air.AMa,
+                    air.A,
+                    air.A_M,
+                    air.A_τ,
+                    air.A_cl,
+                    air.A_M_τ,
+                    air.A_M_cl,
+                    air.A_cl_τ,
+                    air.A_M_cl_τ)
+
+end
 
 @views function airfun(cl, τ, Mach, 
-                Acl, Aτ, AMa,
-                A,
-                A_M,
-                A_τ,
-                A_cl,
-                A_M_τ,
-                A_M_cl,
-                A_cl_τ,
-                A_M_cl_τ)
+                Acl::AbstractVector{Float64},
+                Aτ::AbstractVector{Float64},
+                AMa::AbstractVector{Float64},
+                A::AbstractArray{Float64},
+                A_M::AbstractArray{Float64},
+                A_τ::AbstractArray{Float64},
+                A_cl::AbstractArray{Float64},
+                A_M_τ::AbstractArray{Float64},
+                A_M_cl::AbstractArray{Float64},
+                A_cl_τ::AbstractArray{Float64},
+                A_M_cl_τ::AbstractArray{Float64})
 
     nAfun::Int = 3
 
@@ -24,25 +40,21 @@
     jo, jm, dcl , tcl  = findsegment(cl, Acl)
     ko, km, dtau, ttau = findsegment(τ, Aτ)
     
-    for l = 1:nAfun
-
-        for jd = 1:2
-            for kd = 1:2
+    @inbounds for l = 1:nAfun
+        @inbounds for jd = 1:2
+            @inbounds for kd = 1:2
                 j = jo + jd-2
                 k = ko + kd-2
 
-                       Ai[jd,kd] = SEVAL(Mach,      A[:, j, k, l],      A_M[:, j, k, l], AMa)
-                    Ai_cl[jd,kd] = SEVAL(Mach,   A_cl[:, j, k, l],   A_M_cl[:, j, k, l], AMa)
-                   Ai_tau[jd,kd] = SEVAL(Mach,    A_τ[:, j, k, l],    A_M_τ[:, j, k, l], AMa)
-                Ai_cl_tau[jd,kd] = SEVAL(Mach, A_cl_τ[:, j, k, l], A_M_cl_τ[:, j, k, l], AMa)
+                @views        Ai[jd,kd] = SEVAL(Mach,      A[:, j, k, l],      A_M[:, j, k, l], AMa)
+                @views     Ai_cl[jd,kd] = SEVAL(Mach,   A_cl[:, j, k, l],   A_M_cl[:, j, k, l], AMa)
+                @views    Ai_tau[jd,kd] = SEVAL(Mach,    A_τ[:, j, k, l],    A_M_τ[:, j, k, l], AMa)
+                @views Ai_cl_tau[jd,kd] = SEVAL(Mach, A_cl_τ[:, j, k, l], A_M_cl_τ[:, j, k, l], AMa)
 
-                # fxm = dMa*A_M[im,j,k,l] - A[io,j,k,l] + A[im,j,k,l]
-                # fxo = dMa*A_M[io,j,k,l] - A[io,j,k,l] + A[im,j,k,l]
-                # Ai[jd, kd] = tMa*A[io,j,k,l] + (1 - tMa)*A[im,j,k,l] + tMa*(1 - tMa)*((1-tMa)*fxm - tMa*fxo)
             end
         end
 
-        for kd = 1:2
+        @inbounds for kd = 1:2
             Δ = Ai[2, kd] - Ai[1, kd]
             fxm = dcl*Ai_cl[1, kd] - Δ
             fxo = dcl*Ai_cl[2, kd] - Δ
