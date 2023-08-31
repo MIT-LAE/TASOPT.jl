@@ -1,10 +1,29 @@
+
+struct airfoil
+    Ma::AbstractVector{Float64}
+    cl::AbstractVector{Float64}
+    τ::AbstractVector{Float64}
+    Re::Float64 # Data assumed for a single Re
+  
+    A::AbstractArray{Float64} # Airfoil aero data 
+    
+    A_M::AbstractArray{Float64}
+    A_τ::AbstractArray{Float64}
+    A_cl::AbstractArray{Float64}
+    A_M_τ::AbstractArray{Float64}
+    A_M_cl::AbstractArray{Float64}
+    A_cl_τ::AbstractArray{Float64}
+    A_M_cl_τ::AbstractArray{Float64}
+end 
+
 """
     airtable(fname)
 
 
 Reads airfoil file and outputs a matrix and spline objects.
 The airfoil data is stored as a function of three variables, typically
-    Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord ratio ``\\tau``.
+Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``,
+and thickness to chord ratio ``\\tau``.
 
     cdf(Ma, cl, τ)
 
@@ -102,7 +121,7 @@ for l = 1:nAfun
 
 end
 
-return  AMa, Acl, Aτ, ARe,
+return  airfoil(AMa, Acl, Aτ, ARe,
         A,
         A_M,
         A_τ,
@@ -110,6 +129,6 @@ return  AMa, Acl, Aτ, ARe,
         A_M_τ,
         A_M_cl,
         A_cl_τ,
-        A_M_cl_τ
+        A_M_cl_τ)
 end
 

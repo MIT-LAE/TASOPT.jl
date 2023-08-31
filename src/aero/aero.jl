@@ -40,11 +40,7 @@ include("airfun2.jl")
 __abs_path_prefix__ = dirname(@__DIR__)
 airfoil_data = joinpath(__abs_path_prefix__,"air/C.air")
 
-AMa, Acl, Aτ, ARe,
-A,
-A_M, A_τ, A_cl,
-A_M_τ, A_M_cl, A_cl_τ,
-A_M_cl_τ = airtable(airfoil_data);
+airsection = airtable(airfoil_data);
 
 
 include("surfcd.jl")
