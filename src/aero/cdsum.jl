@@ -36,33 +36,14 @@ function cdsum!(pari,parg,para,pare, icdfun)
       fSnace   = parg[igfSnace ]
       bo       = parg[igbo     ]
       bs       = parg[igbs     ]
-      zs       = parg[igzs     ]
       boh      = parg[igboh    ]
       bov      = parg[igbov    ]
-      hstrut   = parg[ighstrut ]
-
-
-      Rfuse    = parg[igRfuse  ]
-      dRfuse   = parg[igdRfuse ]
-      wfb      = parg[igwfb    ]
-
-      xnose    = parg[igxnose  ]
-      xend     = parg[igxend   ]
-      xblend1  = parg[igxblend1]
-      xblend2  = parg[igxblend2]
-      xhtail   = parg[igxhtail ]
-      xvtail   = parg[igxvtail ]
-      xwing    = parg[igxwing  ]
-
-      lambdac  = parg[iglambdac]
 
       lambdat  = parg[iglambdat]
       lambdas  = parg[iglambdas]
       gammat   = parg[iglambdat]*para[iarclt]
       gammas   = parg[iglambdas]*para[iarcls]
 
-      ARh      = parg[igARh    ]
-      ARv      = parg[igARv    ]
       lambdah  = parg[iglambdah]
       lambdav  = parg[iglambdav]
       sweeph   = parg[igsweeph ]
@@ -175,14 +156,6 @@ function cdsum!(pari,parg,para,pare, icdfun)
       para[iaclpt] = clpt
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-#      write(*,*) ip
-#      write(*,*) 'cdf cdp', cdf, cdp
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- tail profile Cd's
       cdft = para[iacdft] * para[iafexcdt]
       cdpt = para[iacdpt] * para[iafexcdt]
@@ -193,8 +166,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
 	bh,boh,boh,lambdah,1.0,sweeph,coh, 
 	cdft,cdpt,Recoh,Rereft,aRexp,rkSunsh,
 	fCDhcen)
-#      write(*,*) 'CDhtail', CDhtail
-#
+
 #---- vertical tail profile CD
       Recov = Reunit*cov
       CDvtail1,CDvover1 = surfcd(S,
@@ -203,19 +175,9 @@ function cdsum!(pari,parg,para,pare, icdfun)
       fCDvcen)
 	
       CDvtail = CDvtail1*nvtail
-#      write(*,*) 'CDvtail', CDvtail
-#
+
       para[iaCDhtail] = CDhtail
       para[iaCDvtail] = CDvtail
-
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#---- fuselage profile CD from wetted area
-#      ltot = xend - xnose
-#      Rel = Reunit*ltot
-#      Cfwet = cfturb(Rel) * para[iafexcdf]
-#      call bodycd(S,
-#     &  Rfuse,dRfuse,wfb,xnose,xblend1,xblend2,xend, Cfwet,
-#     &  CDfuse)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- fuselage profile CD, using fuselage CDA from BLI calculation
@@ -258,16 +220,6 @@ function cdsum!(pari,parg,para,pare, icdfun)
       cditrp(pari,parg,para)
       CDi = para[iaCDi]
 
-#      spaneff = 0.8825
-#      CDi = CL^2 / (pi*AR*spaneff)
-#      para[iaCDi] = CDi
-#      para[iaspaneff] = spaneff
-#      write(*,*)
-#      write(*,*) para[iaCDi], para[iaspaneff]
-#      write(*,*) CDi, spaneff
-
-
-
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- apparent fuselage deltaCD from ingestion
       fBLIf = parg[igfBLIf]
@@ -287,44 +239,19 @@ function cdsum!(pari,parg,para,pare, icdfun)
       para[iaCD] = CD      
       CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
       # println(CD_components)
-#      tau = hboxo
-#      rsb3 = 0.25*((0.5*clpo + tau+1.0)    + (tau+1.0)   )
-#     &           *((0.5*clpo + tau+1.0)^2 + (tau+1.0)^2)
-#      Cdiss = 0.0009 * 1.5
-#      aksb = 0.25
-#      CDsb = 2.0*Cdiss*(rsb3-1.0)*(co^2/S)*2.0*aksb
-#      CD = CD + CDsb
-#      para[iaCD] = CD
-#c      write(*,'(1x,3f12.7)') CDsb, CD, CDsb/CD
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #      if(Ldebug) write(*,*) '...exiting CDSUM...'
       # println("Total CD = ", CD)
       # println("PARA = ", para)
       return
-      end # cdsum
+end # cdsum
 
 
 """
 cditrip calcualtes the induced drag from the treftz plane
 """
 function cditrp(pari,parg,para)
-
-#      include("index.inc") #include the array indices for pari, parg and para
-      
-#      integer pari(iitotal)
-#      real parg[igtotal], 
-#	para[iatotal]
-#
-#      include 'trp.inc'
-#
-#      include 'time.inc'
-#
-#      logical Lspec
-#      common /com_lu/ ilu
-#
-
-     ifclose = pari[iifclose]
 
       CL = para[iaCL]
 
