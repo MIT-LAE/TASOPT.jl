@@ -5,13 +5,13 @@ const _convSIdist = Dict("m" => 1.0,
                         "ft"=> ft_to_m, 
                         "in"=> in_to_m)
 
-function convertDist(value::Float64, units_in::String, units_out="m")
+function convertDist(value::Float64, units_in::AbstractString="m", units_out="m")
     dict = _convSIdist
     return value * dict[units_in]/dict[units_out]
 end
 
 """
-    parse_unit_string(str::String)
+    parse_unit(str::AbstractString)
 
 Uses a regex match to split a string with magnitude and units and return them.
 
@@ -30,14 +30,22 @@ julia> parse_unit_string("-32e2 W")
 (-3200.0, "W")
 ```
 """
-function parse_unit_string(str::String)
+function parse_unit(str::AbstractString)
     m = match(r"(\+?\-?\d+\.?e?\d*)\s*(\w*\/?\w*)", str)
     mag = parse(Float64, m[1])
     units = m[2]
-    return mag, units
+    if units == ""
+        return mag
+    else
+        return mag, units
+    end
 end
 
-function get_unit_dim(str::String)
+function parse_unit(input::T) where T<:Real
+    return float(input)
+end
+
+function get_unit_dim(str::AbstractString)
     m = match(r"([^\d]+)(\d*)", str)
     unit = m[1]
     if m[2] == ""
@@ -48,7 +56,7 @@ function get_unit_dim(str::String)
     return unit, dim
 end
 
-function convertArea(value::Float64, units_in::String, units_out="m2")
+function convertArea(value::Float64, units_in::AbstractString="m2", units_out="m2")
     dict = _convSIdist
     baseunit_in, exp_in = get_unit_dim(units_in)
     baseunit_out, exp_out = get_unit_dim(units_out)
@@ -62,7 +70,7 @@ function convertArea(value::Float64, units_in::String, units_out="m2")
     return value * (dict[baseunit_in]^exp_in)/(dict[baseunit_out]^exp_out)
 end
 
-function convertVolume(value::Float64, units_in::String, units_out="m3")
+function convertVolume(value::Float64, units_in::String="m3", units_out="m3")
     dict = _convSIdist
     baseunit_in, exp_in = get_unit_dim(units_in)
     baseunit_out, exp_out = get_unit_dim(units_out)
@@ -75,11 +83,12 @@ function convertVolume(value::Float64, units_in::String, units_out="m3")
 
     return value * (dict[baseunit_in]^exp_in)/(dict[baseunit_out]^exp_out)
 end
+
 #Mass
 const _convSImass = Dict("kg"=>1.0,
                          "lbm"=>1.0/2.205)
 
-function convertMass(value::Float64, units_in::String, units_out="kg")
+function convertMass(value::Float64, units_in::AbstractString="kg", units_out="kg")
     dict = _convSImass
     return value * dict[units_in]/dict[units_out]
 end
@@ -89,18 +98,28 @@ const _convSIforce = Dict("N" => 1.0,
                           "kN" => 1000.0,
                           "lbf" => lbf_to_N)       
 
-function convertForce(value::Float64, units_in::String, units_out="N")
+function convertForce(value::Float64, units_in::AbstractString="N", units_out="N")
     dict = _convSIforce
     return value * dict[units_in]/dict[units_out]
 end
 
+const _convSIpressure = Dict("Pa" => 1.0,
+                            "atm" => 101325.0,
+                            "lbf/in2" => lbf_to_N/in_to_m^2,
+                            "psi" => lbf_to_N/in_to_m^2,
+                            "lbf/ft2" => lbf_to_N/ft_to_m^2)
+
+function convertPressure(value::Float64, units_in::AbstractString="Pa", units_out="Pa")
+    dict = _convSIpressure
+    return value * dict[units_in]/dict[units_out]
+end
 #Speed
 const _convSIspeed = Dict("m/s" => 1.0, 
                           "kts" => kts_to_mps,
                           "km/hr"=>1000.0/3600.0,
                           "ft/s"=>ft_to_m/1.0)
 
-function convertSpeed(value::Float64, units_in::String, units_out="m/s")
+function convertSpeed(value::Float64, units_in::AbstractString="m/s", units_out="m/s")
     dict = _convSIspeed
     return value * dict[units_in]/dict[units_out]
 end
@@ -111,7 +130,7 @@ const _convSIpower = Dict("W"=>1.0,
                         "MW"=>1e6,
                         "hp"=>hp_to_W)
 
-function convertPower(value::Float64, units_in::String, units_out="W")
+function convertPower(value::Float64, units_in::AbstractString="W", units_out="W")
     dict = _convSIpower
     return value * dict[units_in]/dict[units_out]
 end
@@ -119,7 +138,7 @@ end
 #Angle
 const _convSIangle = Dict("rad" => 1.0, "deg"=> deg_to_rad)
 
-function convertAngle(value::Float64, units_in::String, units_out="deg")
+function convertAngle(value::Float64, units_in::AbstractString="rad", units_out="rad")
     dict = _convSIangle
     return value * dict[units_in]/dict[units_out]
 end
