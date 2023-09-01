@@ -1179,7 +1179,7 @@ function wsize(pari, parg, parm, para, pare,
         # Calcualte max eng out moment
         if use_NPSS
             if iengloc == 1
-                Me = (Fe + De) * igyeng
+                Me = (Fe + De) * yeng
             else
                 Me = (Fe + De) * Rfuse / 2 #This assumes that the most unbalanced case is when the aft propulsor fails #TODO make generic/ option switches
             end
