@@ -909,10 +909,6 @@ function wsize(pari, parg, parm, para, pare,
                 end
                 nin = parg[igneng] - nout
                 yout = yout / nout
-                yout = yout / nout
-                yout = yout / nout
-                yout = yout / nout
-                yout = yout / nout
                 yinn = yinn / nin
                 parg[igyeout] = yout * 1.5
                 parg[igyeinn] = yinn
