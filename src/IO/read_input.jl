@@ -27,7 +27,13 @@ function read_input(k::String, dict=data, default_dict = default)
     end
 end
 
-data = TOML.parsefile("input.toml")
+Speed(x)    = convertSpeed(parse_unit(x)...)
+Len(x)      = convertDist(parse_unit(x)...)
+Force(x)    = convertForce(parse_unit(x)...)
+Pressure(x) = convertPressure(parse_unit(x)...)
+Area(x)     = convertArea(parse_unit(x)...)
+Vol(x)      = convertVolume(parse_unit(x)...)
+Angle(x)    = convertAngle(parse_unit(x)...)
 
 nmisx = data["N_missions"]
 pari = zeros(Int64, iitotal)
