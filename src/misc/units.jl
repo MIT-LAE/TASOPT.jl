@@ -70,7 +70,7 @@ function convertArea(value::Float64, units_in::AbstractString="m2", units_out="m
     return value * (dict[baseunit_in]^exp_in)/(dict[baseunit_out]^exp_out)
 end
 
-function convertVolume(value::Float64, units_in::String="m3", units_out="m3")
+function convertVolume(value::Float64, units_in::AbstractString="m3", units_out="m3")
     dict = _convSIdist
     baseunit_in, exp_in = get_unit_dim(units_in)
     baseunit_out, exp_out = get_unit_dim(units_out)
@@ -86,13 +86,21 @@ end
 
 #Mass
 const _convSImass = Dict("kg"=>1.0,
-                         "lbm"=>1.0/2.205)
+                         "g"=>1e-3,
+                         "lbm"=>1.0/2.20462)
 
 function convertMass(value::Float64, units_in::AbstractString="kg", units_out="kg")
     dict = _convSImass
     return value * dict[units_in]/dict[units_out]
 end
+function convertDensity(value::Float64, units_in:: AbstractString="kg/m3", units_out="kg/m3")
+    massdict = _convSImass
+    lendict = _convSIdist
+    massunitin, lenunitin = split(units_in, "/")
+    massunitout, lenunitout = split(units_out, "/")
 
+    return value * (massdict[massunitin]/massdict[massunitout]) /convertVolume(1.0, lenunitin, lenunitout)
+end
 #Force
 const _convSIforce = Dict("N" => 1.0,
                           "kN" => 1000.0,
@@ -141,6 +149,36 @@ const _convSIangle = Dict("rad" => 1.0, "deg"=> deg_to_rad)
 function convertAngle(value::Float64, units_in::AbstractString="rad", units_out="rad")
     dict = _convSIangle
     return value * dict[units_in]/dict[units_out]
+end
+
+function convertTemp(value::Float64, units_in::AbstractString="K", units_out = "K")
+    units_in = uppercase(units_in)
+    units_out = uppercase(units_out)
+    if units_in == units_out
+        return value
+    else
+        # First just convert to K
+        if units_in == "K"
+            temp = value
+        elseif units_in == "C"
+            temp =  value + 273.15
+        elseif units_in == "F"
+            temp = (value - 32.0) * 100.0/180.0 + 273.5
+        elseif units_in == "R"
+            temp = value /1.8
+        end
+        # Convert to desired output unit
+        if units_out == "K"
+            return temp
+        elseif units_out == "C"
+            return temp - 273.15
+        elseif units_out == "F"
+            return (temp - 273.15) * 180.0/100.0 + 32
+        elseif units_out == "R"
+            return temp*1.8
+        end
+    end
+
 end
 
 _allowed_units = vcat(([keys(x) for x in [_convSIdist,
