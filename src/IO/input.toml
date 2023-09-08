@@ -1,7 +1,7 @@
 # This is a template TOML input file and are the default values that will
 # be used by TASOPT
 ["Aircraft Description"]
-    name = "Default TASOPT Model"
+    name = "Example TASOPT Model"
     description = """
     This model file describes a basic single-aisle aircraft to 
     demonstrate how to define a model file. The contents of this file are 

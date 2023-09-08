@@ -59,6 +59,9 @@ function read_aircraft_model(datafile;
 
 data = TOML.parsefile(datafile)
 default = TOML.parsefile(defaultfile)
+ac_descrip = get(data, "Aircraft Description", Dict{})
+name = get(ac_descrip, "name", "Untitled Model")
+description = get(ac_descrip, "description", "---")
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
 dmis = default["Mission"]
@@ -731,6 +734,7 @@ dweight = dprop["Weight"]
         Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
     end
 
-return TASOPT.aircraft(pari, parg, parm, para, pare)
+return TASOPT.aircraft(name, description,
+pari, parg, parm, para, pare)
 
 end
