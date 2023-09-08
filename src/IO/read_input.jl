@@ -17,9 +17,10 @@ function read_input(k::String, dict::AbstractDict=data,
 
     get!(dict, k) do 
         if k in keys(default_dict)
+            println("\n")
             @info """$k not found in user specified input file. 
             Reading $k from default TASOPT input:
-            \n\n$k = $(default_dict[k])\n"""
+            \n$k = $(default_dict[k])\n\n"""
             default_dict[k]
         else
             error("Requested key/parameter is not supported. Check the default 
