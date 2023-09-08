@@ -42,10 +42,8 @@
     engloc = 1      # 1: Engines on wing
                     # 2: Engines on fuselage
 
-    coreBLI = 0 # 0: Core in clean flow
-
-    prop_sys_architecutre = "TF" #Options are TF: Turbofan
-                                 #            TE: Turbo-electric
+    prop_sys_arch = "TF" #Options are TF: Turbofan
+                         #            TE: Turbo-electric
 [Fuel]
     fuel_type       = "Jet-A" # Choices are ... [TODO]
     fuel_in_wing    = true # Is fuel stored in wings?
@@ -87,7 +85,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_altitude   = "35000.0 ft" 
+    cruise_alt  = "35000.0 ft" 
     cruise_mach = 0.80
     cruise_CL   = 0.57
 
@@ -95,9 +93,8 @@
     descent_angle_top-of-descent = "-3.0 deg"
     descent_angle_bottom-of-descent = "-3.0 deg"
 
-
 [Fuselage]
-    Cabin_pressure_altitude = "8000.0 ft"
+    cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
     radius = "77 in"       # Fuselage radius
@@ -160,7 +157,9 @@
     wingbreak_fuse_overspeed = 0.014
     wingtip_fuse_overspeed   = 0.0045
 
-    exerescence_drag_factor = 1.05 # Rivets, sheet breaks etc
+    excrescence_drag_factor = 1.05 # Rivets, sheet breaks etc
+
+    BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
 [Wing]
     wing_planform = 1 # 0: Wing cantilever, plain
@@ -177,8 +176,9 @@
     panel_break_location = 0.285 # eta_s panel break eta location. eta = y/b
     
     center_box_halfspan = "71.0 in"
-    root_thickness_to_chord = 0.125
-    spanbreak_thickness_to_chord = 0.126
+    box_width_chord = 0.50
+    root_thickness_to_chord = 0.1268
+    spanbreak_thickness_to_chord = 0.1266
 
     hweb_to_hbox = 0.75 #web-height/hbox ratio
     spar_box_x_c = 0.40 # spar box axis x/c location
@@ -206,12 +206,14 @@
 
     Reynolds_scaling = -0.15 # = aRe, used for Re-scaling CD = cd*(Re/Re_ref)^aRe
 
-    exerescence_drag_factor = 1.03 # Rivets, sheet breaks etc
+    excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
+
+    BLI_frac = 0.0 #Fraction of wing BL KE defect ingested
 
 # Spanwise cl and cm distributions:
 [Wing.Aero.Takeoff]
     cls_clo = 1.1 #rcls = break/root cl ratio = cls/clo
-    clt_clo = 0.7 #rclt = tip  /root cl ratio = clt/clo
+    clt_clo = 0.6 #rclt = tip  /root cl ratio = clt/clo
     cm_o = -0.20 # root section cm
     cm_s = -0.20 # span-break section cm
     cm_t = -0.02 # tip section cm
@@ -250,12 +252,12 @@
     lowspeed_cdp = 0.0035
     Re_ref       = 10e6
 
-    exerescence_drag_factor = 1.03 # Rivets, sheet breaks etc
+    excrescence_drag_factor = 1.03 # Rivets, sheet breaks etc
 
     [Stabilizers.Htail]
         AR_Htail = 6.0
         taper = 0.25
-        sweep = 26.0
+        sweep = 26.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
         x_Htail = "114.5 ft"
         z_Htail = "0 ft"
@@ -269,9 +271,9 @@
         Vh = 1.45 # Horizontal tail volume
         CLh_at_max_forward_CG = -0.7
 
-        move_wingbox = 2 # 0: fix wing position 
-                         # 1: move wing to get CLh=CLhspec in cruise 
-                         # 2: move wing to get min static margin = SMmin
+        move_wingbox = "fix" # 0: "fix" wing position 
+                             # 1: move wing to get CLh="CLhspec" in cruise 
+                             # 2: move wing to get min static margin = "SMmin"
 
         SM_min = 0.05 # Minimum static margin
         CLh_spec = -0.02
@@ -297,7 +299,7 @@
         x_Vtail = "110 ft"
         number_Vtails = 1.0
 
-        VTsize = 1 #
+        VTsize = "Vv" #
         Vv = 0.1
         CLv_at_engine_out = 0.5
         CLv_max = 2.6
@@ -340,6 +342,9 @@
     Tt4_frac_bottom_of_climb = 0.2
     Tt4_frac_top_of_climb = 0.9
     Tt4_cruise = 1587.0
+
+    # Core in clean flow or does core ingests KE defect?
+    core_in_clean_flow = true
 
 [Propulsion.Turbomachinery]
 
