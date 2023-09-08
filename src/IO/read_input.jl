@@ -48,6 +48,11 @@ Temp(x)     = convertTemp(parse_unit(x)...)
 Reads a specified TOML file that describes a TASOPT aircraft model 
 with a fall back to the default aircraft definition 
 provided in \"src/IO/default_input.toml\""
+# Examples
+```julia-repl
+julia> read_aircraft_model("src/IO/input.toml")
+
+```
 """
 function read_aircraft_model(datafile; 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
@@ -515,7 +520,7 @@ readstruct(x) = read_input(x, structures, dstructures)
 
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
-readprop(x) = read_input(x, prop, dprop)å
+readprop(x) = read_input(x, prop, dprop)
     parg[igneng] = readprop("number_of_engines")
     parg[igTmetal] = Temp(readprop("T_max_metal"))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
