@@ -1,7 +1,4 @@
 using TOML
-using TASOPT
-include("../misc/index.inc")
-include("../misc/units.jl")
 
 """
     read_input(k::String, dict::AbstractDict=data, 
@@ -72,7 +69,8 @@ Cruise Mach = 0.8
 
 ```
 """
-function read_aircraft_model(datafile; 
+function read_aircraft_model(
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"); 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
 
 data = TOML.parsefile(datafile)
@@ -133,6 +131,7 @@ fuel = read_input("Fuel", data, default)
 dfuel = default["Fuel"]
 readfuel(x::String) = read_input(x, fuel, dfuel)
 fueltype = readfuel("fuel_type")
+#TODO this needs to be updated once I include Gas.jl into TASOPT
 if uppercase(fueltype) == "LH2"
     pari[iifuel] = 1
 elseif uppercase(fueltype) == "JET-A"
@@ -755,4 +754,9 @@ dweight = dprop["Weight"]
 return TASOPT.aircraft(name, description,
 pari, parg, parm, para, pare)
 
+end
+
+function load_default_model()
+    println("Loading default aircraft model")
+    read_aircraft_model()
 end
