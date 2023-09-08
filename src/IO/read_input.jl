@@ -48,9 +48,27 @@ Temp(x)     = convertTemp(parse_unit(x)...)
 Reads a specified TOML file that describes a TASOPT aircraft model 
 with a fall back to the default aircraft definition 
 provided in \"src/IO/default_input.toml\""
+
 # Examples
 ```julia-repl
 julia> read_aircraft_model("src/IO/input.toml")
+
+
+┌ Info: engine_location not found in user specified input file. 
+│ Reading engine_location from default TASOPT input:
+│ 
+│ engine_location = wing
+└ 
+
+┌ Info: pylon_weight_fraction not found in user specified input file. 
+│ Reading pylon_weight_fraction from default TASOPT input:
+│ 
+│ pylon_weight_fraction = 0.1
+└ 
+Name: Example TASOPT Model;
+Wpay = 210.0 kN
+Des. Range  = 5.56e6 km
+Cruise Mach = 0.8
 
 ```
 """
