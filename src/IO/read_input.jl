@@ -136,7 +136,7 @@ fueltype = readfuel("fuel_type")
 if uppercase(fueltype) == "LH2"
     pari[iifuel] = 1
 elseif uppercase(fueltype) == "JET-A"
-    pari[iifuel] = 2
+    pari[iifuel] = 24
 else
     error("Check fuel type")
 end
