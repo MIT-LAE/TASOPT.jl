@@ -1,8 +1,8 @@
 """
 `weight_buildup` prints out the weight build up for the aircraft
 """
-function weight_buildup(parg; io=stdout)
-
+function weight_buildup(ac::aircraft; io=stdout)
+    parg = ac.parg
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * parg[igfhpesys]
     Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -83,7 +83,9 @@ end
 `aero` returns a summary of all aerodynamic properties 
 of the aircraft
 """
-function aero(parg, para; io = stdout)
+function aero(ac::aircraft; io = stdout)
+    parg = ac.parg
+    para = ac.para
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
     @printf(io, "Ref.Area= %6.5f m²\n", parg[igS])
@@ -116,8 +118,8 @@ end
 """
 `geometry` prints out the layout of the aircraft
 """
-function geometry(parg; io = stdout)
-
+function geometry(ac::aircraft; io = stdout)
+    parg = ac.parg
     printstyled(io, "Fuselage Layout:\n -------------- \n", color=:bold )
     @printf(io, "xnose   = %5.1f m (%8.1f ft)\n", parg[igxnose  ] , parg[igxnose   ]/ft_to_m)
     @printf(io, "xend    = %5.1f m (%8.1f ft)\n", parg[igxend   ] , parg[igxend    ]/ft_to_m)
