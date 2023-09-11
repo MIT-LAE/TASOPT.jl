@@ -14,7 +14,9 @@ using Printf
 
 using StaticArrays
 using Profile, UnicodePlots
+# using PyCall
 using PyPlot
+# pygui(true)
 using Dates
 using ForwardDiff
 
@@ -60,7 +62,7 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/savemodel.jl"))
-export summary
+
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
