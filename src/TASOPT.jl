@@ -34,6 +34,8 @@ include("./misc/index.inc")
 include("./misc/aircraft.jl")
 export aircraft
 
+include("./IO/read_input.jl")
+export read_aircraft_model, load_default_model
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
@@ -58,7 +60,7 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/savemodel.jl"))
-
+export summary
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
