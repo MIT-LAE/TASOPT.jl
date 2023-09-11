@@ -33,3 +33,4 @@ summary(example_ac)
 using PyPlot
 TASOPT.stickfig(example_ac)
 plt.savefig("Example.png")
+
