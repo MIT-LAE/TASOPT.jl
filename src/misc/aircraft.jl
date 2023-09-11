@@ -8,6 +8,13 @@ struct aircraft
     pare::AbstractArray{Float64}
 end
 
+function Base.summary(ac::aircraft)
+    println(ac.name)
+    println(ac.description)
+    geometry(ac)
+    weight_buildup(ac)
+    aero(ac)
+end
 function Base.show(io::IO, ac::aircraft)
     print(io, 
     """Name: $(ac.name);
