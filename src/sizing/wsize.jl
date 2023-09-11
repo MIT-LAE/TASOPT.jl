@@ -1342,18 +1342,19 @@ function wsize(pari, parg, parm, para, pare,
             μAir = pare[iemu0, ipcruise1]
             if (iterw == 1)
                 if NPSS_PT
+                    srcdir = dirname(@__DIR__)
                     if pari[iiengtype] == 0
                         if Sys.iswindows()
-                            NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "TEsys.bat")
+                            NPSS = startNPSS(srcdir*"/NPSS/NPSS_Turboshaft/", "TEsys.bat")
                         elseif Sys.islinux()
-                            NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "TEsys.sh")
+                            NPSS = startNPSS(srcdir*"/NPSS/NPSS_Turboshaft/", "TEsys.sh")
                         end
                     else
                         if pari[iiaircraftclass] == 737
                             if Sys.iswindows()
-                                NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "737.bat")
+                                NPSS = startNPSS(srcdir*"/NPSS/NPSS_Turboshaft/", "737.bat")
                             elseif Sys.islinux()
-                                NPSS = startNPSS("../src/NPSS/NPSS_Turboshaft/", "737.sh")
+                                NPSS = startNPSS(srcdir*"/NPSS/NPSS_Turboshaft/", "737.sh")
                             end
                         elseif pari[iiaircraftclass] == 777
                             if Sys.iswindows()
