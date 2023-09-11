@@ -1,7 +1,4 @@
 using TOML
-using TASOPT
-include("../misc/index.inc")
-include("../misc/units.jl")
 
 """
     read_input(k::String, dict::AbstractDict=data, 
@@ -48,12 +45,39 @@ Temp(x)     = convertTemp(parse_unit(x)...)
 Reads a specified TOML file that describes a TASOPT aircraft model 
 with a fall back to the default aircraft definition 
 provided in \"src/IO/default_input.toml\""
+
+# Examples
+```julia-repl
+julia> read_aircraft_model("src/IO/input.toml")
+
+
+┌ Info: engine_location not found in user specified input file. 
+│ Reading engine_location from default TASOPT input:
+│ 
+│ engine_location = wing
+└ 
+
+┌ Info: pylon_weight_fraction not found in user specified input file. 
+│ Reading pylon_weight_fraction from default TASOPT input:
+│ 
+│ pylon_weight_fraction = 0.1
+└ 
+Name: Example TASOPT Model;
+Wpay = 210.0 kN
+Des. Range  = 5.56e6 km
+Cruise Mach = 0.8
+
+```
 """
-function read_aircraft_model(datafile; 
+function read_aircraft_model(
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"); 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
 
 data = TOML.parsefile(datafile)
 default = TOML.parsefile(defaultfile)
+ac_descrip = get(data, "Aircraft Description", Dict{})
+name = get(ac_descrip, "name", "Untitled Model")
+description = get(ac_descrip, "description", "---")
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
 dmis = default["Mission"]
@@ -107,10 +131,11 @@ fuel = read_input("Fuel", data, default)
 dfuel = default["Fuel"]
 readfuel(x::String) = read_input(x, fuel, dfuel)
 fueltype = readfuel("fuel_type")
+#TODO this needs to be updated once I include Gas.jl into TASOPT
 if uppercase(fueltype) == "LH2"
     pari[iifuel] = 1
 elseif uppercase(fueltype) == "JET-A"
-    pari[iifuel] = 2
+    pari[iifuel] = 24
 else
     error("Check fuel type")
 end
@@ -515,7 +540,7 @@ readstruct(x) = read_input(x, structures, dstructures)
 
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
-readprop(x) = read_input(x, prop, dprop)å
+readprop(x) = read_input(x, prop, dprop)
     parg[igneng] = readprop("number_of_engines")
     parg[igTmetal] = Temp(readprop("T_max_metal"))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
@@ -726,6 +751,12 @@ dweight = dprop["Weight"]
         Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
     end
 
-return TASOPT.aircraft(pari, parg, parm, para, pare)
+return TASOPT.aircraft(name, description,
+pari, parg, parm, para, pare)
 
+end
+
+function load_default_model()
+    println("Loading default aircraft model")
+    read_aircraft_model()
 end

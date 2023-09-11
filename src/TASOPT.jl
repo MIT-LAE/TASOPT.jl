@@ -14,7 +14,9 @@ using Printf
 
 using StaticArrays
 using Profile, UnicodePlots
+# using PyCall
 using PyPlot
+# pygui(true)
 using Dates
 using ForwardDiff
 
@@ -34,6 +36,8 @@ include("./misc/index.inc")
 include("./misc/aircraft.jl")
 export aircraft
 
+include("./IO/read_input.jl")
+export read_aircraft_model, load_default_model
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
