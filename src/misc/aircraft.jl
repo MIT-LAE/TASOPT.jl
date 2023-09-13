@@ -1,3 +1,17 @@
+"""
+This is a structure representing an aircraft with various parameters.
+It is designed to hold information related to the aircraft's name, description,
+as well as different sets of parameters used for analysis and optimization.
+
+Fields:
+- `name::String` : Aircraft name (eg: "Boeing 777")      
+- `description::String` : A brief description of the aircraft
+- `pari::AbstractVector{Int64}` : integer flag parameters               
+- `parg::AbstractArray{Float64}` : Geometry parameters                   
+- `parm::AbstractArray{Float64}` : Mission parameters                    
+- `para::AbstractArray{Float64}` : Aero parameters                       
+- `pare::AbstractArray{Float64}` : Engine parameters                     
+"""
 struct aircraft
     name::String
     description::String
