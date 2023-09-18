@@ -55,7 +55,7 @@
     fuel_density = 817.0 #kg/m3
 
 [Mission]
-    N_missions = 2 # Number of missions to be modeled
+    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = [180, 150]            # Number of passengers in each mission
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
 
