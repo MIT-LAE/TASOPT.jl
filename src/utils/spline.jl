@@ -80,9 +80,16 @@ function SEVAL(SS::H, X::AbstractVector{H},
 #     - Outputs                                    |
 #        XX is interpolated value                  |
 # --------------------------------------------------
-
-    i::Int = searchsortedlast(S, SS) + 1
-    im::Int = i - 1
+    if SS ≤ S[1]
+        im = 1
+        i  = 2
+    elseif SS ≥ S[end]
+        i = length(S)
+        im = i - 1
+    else
+        i::Int = searchsortedlast(S, SS) + 1
+        im::Int = i - 1
+    end
 
     ΔS = S[i] - S[im]
     ΔX = X[i] - X[im]
