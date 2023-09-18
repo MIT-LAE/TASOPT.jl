@@ -3,7 +3,7 @@ TASOPT
 """
 module TASOPT
 
-export atmos, size_aircraft
+export atmos, size_aircraft!
 
 # Add basic pacakges required by TASOPT
 using Base: SignedMultiplicativeInverse
@@ -85,21 +85,21 @@ RSL = pSL / (ρSL * TSL)
 # ----------------------
 # Sizing function
 # ----------------------
-time_writing = 0.0
-time_run_NPSS = 0.0
 
-initwgt = 0
-saveOD = false
-track_fig = nothing
-opt_iter_counter = 0
+"""
+    size_aircraft(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
+        printiter=true, saveOD=false)
 
-function size_aircraft(ac::aircraft, iter, initwgt, Ldebug, printiter, saveOD)
+sizes the given `aircraft` instance
+"""
+function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
+        printiter=true, saveOD=false)
 
     Ldebug && println("Max weight iterations = $iter")
-    wsize(ac.pari, ac.parg, ac.parm, 
+    wsize(ac.pari, ac.parg, view(ac.parm, :, 1), 
         view(ac.para, :, :, 1), view(ac.pare, :, :, 1),
-        iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, saveOD)
-
+        iter, 0.5, 0.9, 0.5, initwgt, 0, 1, Ldebug, printiter, saveOD)
+       @printf("%13.8e %13.8e", ac.parg[igWMTO], ac.parm[imWTO])
 end
 
 end

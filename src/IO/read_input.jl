@@ -146,8 +146,9 @@ pare[ieTfuel, :, :] .= readfuel("fuel_temp")
 parg[igrhofuel] = readfuel("fuel_density")
 
 # Setup mission variables
-range, units = parse_unit(readmis("range"))
-parm[imRange, :] .= convertDist(range, units)
+ranges = readmis("range")
+parm[imRange, :] .= Len.(ranges)
+
 Wpax =  Force(readmis("weight_per_pax"))
 parm[imWpay, :] .= readmis("pax") * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
@@ -158,7 +159,7 @@ parg[igNlift] = readmis("Nlift")
 takeoff = readmis("Takeoff")
 dtakeoff = dmis["Takeoff"]
 readtakeoff(x) = read_input(x, takeoff, dtakeoff)
-parm[imaltTO, :] .= Len(readtakeoff("takeoff_alt"))
+parm[imaltTO, :] .= Len.(readtakeoff("takeoff_alt"))
 parg[igmubrake] = readtakeoff("braking_resistance_coeff")
 parg[igmuroll]  = readtakeoff("rolling_resistance_coeff")
 parg[ighobst]   = Len(readtakeoff("takeoff_obstacle_height"))
@@ -168,7 +169,7 @@ parg[igCDspoil] = readtakeoff("CD_spoilers")
 parg[iglBFmax]  = Len(readtakeoff("max_balanced_field_length"))
 parg[igNland]   = readtakeoff("Nland")
 
-T0TO = Temp(readtakeoff("takeoff_T"))
+T0TO = Temp.(readtakeoff("takeoff_T"))
 parm[imT0TO, :] .= T0TO 
 para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
 para[iaclpmax, ipstatic:ipcutback, :] .= readtakeoff("CL_max_perp")
@@ -184,7 +185,7 @@ parg[iggtocmin] = Angle(read_input("minimum_top-of-climb_gradient",
 cruise = readmis("Cruise")
 dcruise = dmis["Cruise"]
 readcruise(x) = read_input(x, cruise, dcruise)
-para[iaalt, ipcruise1, :] .= Len(readcruise("cruise_alt"))
+para[iaalt, ipcruise1, :] .= Len.(readcruise("cruise_alt"))
 para[iaMach, ipclimbn:ipdescent1, :] .= readcruise("cruise_mach")
 para[iaCL, ipclimb1+1:ipdescentn-1, :] .= readcruise("cruise_CL")
 
