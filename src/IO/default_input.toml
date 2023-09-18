@@ -55,9 +55,9 @@
     fuel_density = 817.0 #kg/m3
 
 [Mission]
-    N_missions = 1 # Number of missions to be modeled
-    pax = 180            # Number of passengers
-    range = "3000.0 nmi" # Design Range
+    N_missions = 2 # Number of missions to be modeled
+    pax = [180, 150]            # Number of passengers in each mission
+    range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
 
     weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] 
@@ -69,8 +69,8 @@
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = "0.0 ft" 
-    takeoff_T = 288.0
+    takeoff_alt = ["0.0 ft", "500 ft"] 
+    takeoff_T = [288.0, 298.0]
 
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
@@ -89,7 +89,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = "35000.0 ft" 
+    cruise_alt  = ["35000.0 ft", "30e3 ft"]
     cruise_mach = 0.80
     cruise_CL   = 0.57
 
