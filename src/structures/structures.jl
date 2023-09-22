@@ -6,7 +6,7 @@ required to size an aircraft
 module structures
 
 export surfw, surfdx, fusew, tailpo, tanksize
-
+include("../misc/constants.jl")
 #include fuselage sizing
 include("fuseW.jl")
 
