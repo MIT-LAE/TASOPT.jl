@@ -9,6 +9,7 @@ struct aircraft
 end
 
 function Base.summary(ac::aircraft)
+    println("\n----- TASOPT model summary -----")
     println(ac.name)
     println(ac.description)
     geometry(ac)
@@ -23,11 +24,4 @@ function Base.show(io::IO, ac::aircraft)
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
 
-function Base.getproperty(ac::aircraft, sym::Symbol)
-    if sym == :description
-        println(getfield(ac, sym))
-    else
-        getfield(ac, sym)
-    end
-end
 
