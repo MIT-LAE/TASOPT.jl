@@ -29,7 +29,7 @@ Outputs:
 - Moments `xWfuse`
 - Cabin Volume `cabVol`
 """
-function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
+function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
                       fstring,fframe,ffadd,deltap,
                       Wpwindow,Wppinsul,Wppfloor,
                       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
@@ -42,9 +42,7 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
                       hfloor,
                       sigskin,sigbend, rhoskin,rhobend, 
                       Eskin,Ebend,Gskin)
-# -------------------------------------------------------------
-#Fuselage sizing and weight routine
-#-------------------------------------------------------------
+
 #--- cone material properties
 #     (assumed same as skin, but could be different)
       taucone = sigskin
@@ -67,9 +65,9 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 
 #--- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
-      thetafb = asin(wfblim/Rfuse)
+      thetafb = asin(wfblim/Rfuse) #θfb fuselage bubble subtended half-angle
       hfb = sqrt(Rfuse^2 - wfb^2)
-      sin2t = 2.0*hfb*wfb/Rfuse^2
+      sin2t = 2.0*hfb*wfb/Rfuse^2 #sin(2θ) = 2sinθcosθ
       cost  = hfb/Rfuse
 
       perim = (2.0*pi + 4.0*thetafb)*Rfuse + 2.0*dRfuse
@@ -266,27 +264,6 @@ function fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 
       EIvshell = Eskin * Ivshell
       EIvbend  = Ebend * Avbendb * 2.0*widf^2
-
-#c      write(*,*) B0*(xvbend-xwbox)
-#c      write(*,*) B1*((xvtail-xwbox)^2 - (xvtail-xvbend)^2)/2.0
-#c      write(*,*) 'I', Ihshell, Ivshell, tshell
-#c      write(*,*) 'A', A0, A1, A2
-#c      write(*,*) 'B', B0, B1
-#c      write(*,*) 'Lhmax Lvmax', Lhmax/4.45, Lvmax/4.45
-#
-#c      write(*,*) Ab1^2 - 4.0*Ab0*Ab2
-#c      write(*,*) A2 *(xbulk-xhbend)^2 + A1*(xhtail-xhbend) + A0
-#c      write(*,*) Ab2*xhbend^2 + Ab1*xhbend + Ab0
-#
-#c      write(*,*) 'R dR wfb', Rfuse, dRfuse, wfb
-#c      write(*,*) 'xt', xwbox, xbulk, xtail
-#c      write(*,*) 'xhbend', xhbend, xvbend
-#c      pause
-#
-#c      Ishell = (pi + 2.0*thetafb + sin2t)*Rfuse^3*tshell
-#c            + 0.66667*hfb^3*tfweb
-
-#       write(*,*) Ishell, Ihshell, Ivshell
 
 #----------------------------------------------------------------
 #--- overall fuse weight and moment
