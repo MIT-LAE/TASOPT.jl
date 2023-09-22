@@ -328,7 +328,7 @@ function wsize(pari, parg, parm, para, pare,
     # -------------------------------------------------------
     # Allow first iteration
     if (initwgt == 0)
-        
+
         Whtail = 0.05 * Wpay / parg[igsigfac]
         Wvtail = Whtail
         Wwing = 0.5 * Wpay / parg[igsigfac]
@@ -677,7 +677,7 @@ function wsize(pari, parg, parm, para, pare,
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew(gee, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
+            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
             fstring, fframe, ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
