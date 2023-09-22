@@ -1,14 +1,16 @@
 using Zygote
 
 """
-     Computes properties of a thermally-perfect gas
-     with some variable specific heat cp[T].
+    gasfun(igas, t)
 
-  Input:
+Computes properties of a thermally-perfect gas
+with some variable specific heat cp[T].
+
+## Input:
      igas   index specifying the gas (see if blocks below for list)
      t      temperature T in Kelvin
 
-  Output:
+## Output:
      s      entropy-complement function s[T]
      s_t    ds/dT
      h      complete enthalpy function h[T]
