@@ -1,18 +1,15 @@
 # Propulsion system
 
-Currently TASOPT uses Numerical Propulsion System Simulation (NPSS) to perform gas turbine calculations.
+A turbofan model is provided in `TASOPT.jl`
 
-The following functions are wrappers to access NPSS.
-
+## Ideal gas with variable $c_p$
 ```@docs
-startNPSS
-endNPSS
-NPSS_run
+engine.gasfun
 ```
 
-The following functions are specifc to the turbo-electric system programmed into NPSS
+## Turbo-fan model
 
 ```@docs
-NPSS_TEsys
-NPSS_TEsysOD
+
+engine.tfcalc!
 ```
