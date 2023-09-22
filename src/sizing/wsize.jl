@@ -328,7 +328,7 @@ function wsize(pari, parg, parm, para, pare,
     # -------------------------------------------------------
     # Allow first iteration
     if (initwgt == 0)
-
+        
         Whtail = 0.05 * Wpay / parg[igsigfac]
         Wvtail = Whtail
         Wwing = 0.5 * Wpay / parg[igsigfac]
@@ -777,14 +777,13 @@ function wsize(pari, parg, parm, para, pare,
 
         # Print weight/ convergnce started
         if (printiter && iterw == 1)
-            @printf("%5s  %15s  %15s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s \n",
-                "iterw", "errW", "errW1", "WMTO", "Wfuel", "Wftank", "Wtesys", "Wmot", "Wgen", "Wtshaft", "Wwing", "span", "area", "HTarea", "xwbox")
+            @printf("%5s %15s %15s %14s %14s %14s %14s %14s %14s %14s %14s %14s %14s \n",
+                "iterw", "errW", "errW1", "WMTO", "Wpay", "Wfuel", "Weng", "Wfuse", "Wwing", "span", "area", "HTarea", "xwbox")
         end
         if printiter
-            @printf("%5d  %+13.8e  %+13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e  %13.8e\n",
-                iterw, errw, errw1, parm[imWTO], parg[igWfuel], parg[igWftank],
-                parg[igWtesys], parg[igWmot], parg[igWgen], parg[igWtshaft],
-                parg[igWwing], parg[igb], parg[igS],
+            @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
+                iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
+                parg[igWfuse], parg[igWwing], parg[igb], parg[igS],
                 parg[igSh], parg[igxwbox])
         end
         if (errw <= tolerW)
@@ -1204,7 +1203,8 @@ function wsize(pari, parg, parm, para, pare,
 
         # set VT max loading magnitude, based on single tail + its bottom image
         bv2, cov, pov = tailpo(2.0 * Sv / nvtail, 2.0 * ARv, λv, qne, CLvmax)
-        parg[igbv] = bv2 / 2
+        bv = bv2/2
+        parg[igbv] = bv
         parg[igcov] = cov
 
         # HT weight
