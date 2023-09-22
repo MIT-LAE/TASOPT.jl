@@ -14,8 +14,7 @@ example_ac = load_default_model() # simply a synonym to read_aircraft_model()
 # example_ac = read_aircraft_model("../src/IO/input.toml") # MODIFY <path> appropriately
 
 # 3) Size aircraft
-saveOD = false
-time_wsize = @elapsed size_aircraft(example_ac, 35, 0, false, true, saveOD)
+time_wsize = @elapsed size_aircraft!(example_ac)
 println("Time to size aircraft = $time_wsize s")
 
 # 4) Visualize outputs
