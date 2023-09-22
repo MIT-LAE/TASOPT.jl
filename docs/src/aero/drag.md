@@ -58,7 +58,6 @@ aerodynamics.surfcd2(
       Mach, sweep, co,
       CL, CLhtail, fLo, fLt,
       Reco, aRexp, kSuns, fexcd,
-      AMa, Acl, Atau, ARe, A,
       fduo, fdus, fdut)
 
 aerodynamics.surfcd(S,
