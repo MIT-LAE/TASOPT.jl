@@ -2,24 +2,36 @@
 using Pkg, Dates
 println(today())
 println("Current location $(pwd())")
-Pkg.activate("../")
-Pkg.instantiate()
+using TASOPT
+const aerodynamics = TASOPT.aerodynamics
+include("../src/misc/index.inc")
+nmisx = 1
+pari = zeros(Int64, iitotal)
+parg = zeros(Float64, igtotal)
+parm = zeros(Float64, (imtotal, nmisx))
+para = zeros(Float64, (iatotal, iptotal, nmisx))
+pare = zeros(Float64, (ietotal, iptotal, nmisx))
+parpt = zeros(Union{Int64, Float64}, ipt_total)
+parmot = zeros(Float64, ite_total)
+pargen = zeros(Float64, ite_total)
 
 using Profile
 using BenchmarkTools
 
 println("Loading TASOPT...")
-include("../tasopt.jl")
-Pkg.precompile()
 
 println("Loading input file...")
-include("input.jl")
+# include("input.jl")
 
 println("\nNotes (from BenchmarkTools Manual):
-- The minimum is a robust estimator for the location parameter of the time distribution, and should not be considered an outlier
-- The median, as a robust measure of central tendency, should be relatively unaffected by outliers
-- The mean, as a non-robust measure of central tendency, will usually be positively skewed by outliers
-- The maximum should be considered a primarily noise-driven outlier, and can change drastically between benchmark trials.\n\n")
+- The minimum is a robust estimator for the location parameter of the
+  time distribution, and should not be considered an outlier
+- The median, as a robust measure of central tendency,
+  should be relatively unaffected by outliers
+- The mean, as a non-robust measure of central tendency,
+  will usually be positively skewed by outliers
+- The maximum should be considered a primarily noise-driven outlier,
+  and can change drastically between benchmark trials.\n\n")
 
 println("Start Benchmarking...")
 
@@ -109,7 +121,7 @@ function benchmark_fuseBL()
     bench_blax2 = run(b)
 
     println("Benchmarking... fusebl")
-    b = @benchmarkable fusebl!($pari, $parg, $para, $ipcruise1) seconds=30 evals=5
+    b = @benchmarkable aerodynamics.fusebl!($pari, $parg, $para, $ipcruise1) seconds=30 evals=5
     bench_fusebl = run(b)
 
     println("Benchmark results...")
@@ -193,20 +205,14 @@ function benchmark_drag()
     wc    = zeros(Float64, idim)
     vnc   = zeros(Float64, idim)
 
-    AMa, Acl, Aτ, ARe,
-    A,
-    A_M, A_τ, A_cl,
-    A_M_τ, A_M_cl, A_cl_τ,
-    A_M_cl_τ = aerodynamics.airtable(joinpath(__TASOPTroot__, "src/air/C.air"));
+    airfoil_section = aerodynamics.airtable(joinpath(TASOPT.__TASOPTroot__,"air/C.air"));
 
     clp =  0.45     
     toc  = 0.126   
     Mperp  = 0.53  
     println("Benchmarking... airfun")
     bench = @benchmarkable aerodynamics.airfun($clp, $toc, $Mperp, 
-                                            $Acl, $Aτ, $AMa,
-                                            $A, $A_M, $A_τ, $A_cl,
-                                            $A_M_τ, $A_M_cl, $A_cl_τ, $A_M_cl_τ) seconds = 30 evals = 100
+                                            $airfoil_section) seconds = 30 evals = 100
     bench_airfun = run(bench)
 
     println("Benchmarking... trefftz1")
@@ -343,5 +349,5 @@ end
 
 include("../Models/ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
 
-# benchmark_fuseBL()
-# benchmark_drag()
+benchmark_fuseBL()
+benchmark_drag()
