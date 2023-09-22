@@ -1,9 +1,8 @@
 """ 
     tfcalc(pari,parg,para,pare, ip,
-icall,icool,initeng,
-ichoke5,ichoke7)
+    icall,icool,initeng)
 
-     Calls function tfsize or tfoper for one operating point.
+Calls function tfsize or tfoper for one operating point.
 
 # Input
 

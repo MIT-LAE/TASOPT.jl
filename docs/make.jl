@@ -1,11 +1,11 @@
 using Pkg
-Pkg.activate("../")
+using TASOPT
 
 push!(LOAD_PATH, "../src")
 
-include("../src/TASOPT.jl")
 aerodynamics = TASOPT.aerodynamics
 structures = TASOPT.structures
+engine = TASOPT.engine
 aircraft = TASOPT.aircraft
 
 using Documenter
