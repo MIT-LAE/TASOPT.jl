@@ -42,10 +42,11 @@ function surfw(gee,po,b,bs,bo,co,zs,
       hrmso = hboxo * sqrt(1.0 - (1.0-rh)/1.5 + (1.0-rh)^2 / 5.0)
       hrmss = hboxs * sqrt(1.0 - (1.0-rh)/1.5 + (1.0-rh)^2 / 5.0)
 
-      # Inboard engines
-
-
-#---- strut-attach shear,moment from outer-wing loading. Note added term to account for outboard engines
+# Outboard section:
+#---- strut-attach shear,moment from outer-wing loading. 
+#     Note added term to account for any outboard engines.
+#     If neout = 0 this simplifies to Drela's version which assumes engine
+#     fixed at ηs locations only.
       Ss = (po*b   / 4.0)*(gammas+    gammat)*(1.0-etas) +
 	 dLt - Nload*Wout - Nload*neout*We
       Ms = (po*b^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
@@ -67,36 +68,16 @@ function surfw(gee,po,b,bs,bo,co,zs,
 	 (  (rh*hboxs-tbcaps)/(Gweb*tbwebs) +
 	 (   wbox -tbwebs)/(Gcap*tbcaps) )
 
-#      if(iwplan==0) 
-#c----- no strut, no engine
-#       ls = 0.
-#       Tstrut = 0.
-#       Rstrut = 0.
-#       Pstrut = 0.
-#       So = Ss
-#       Mo = Ms
-#       tbwebo = tbwebs
-#       tbcapo = tbcaps
-#       Abwebo = Abwebs
-#       Abcapo = Abcaps
-#       lsp = 0.
-#       Tstrutp = 0.
-#       cosLs = 1.0
-
+# Inboard Section:
       if(iwplan==0 || iwplan==1) 
 #----- no strut, with or without engine at etas
        ls = 0.
        Tstrut = 0.
        Rstrut = 0.
        Pstrut = 0.
-# Original from TASOPT
-       # So = Ss - Nload*We +
-	#  0.25*po*b*(1.0+gammas)*(etas-etao) -
-	#  Nload*Winn
-       # Mo = Ms + (Ss-Nload*We)*0.5*b*(etas-etao) +
-	#  (1.0/24.0)*po*b^2*(1.0+2.0*gammas)*(etas-etao)^2 -
-	#  Nload*dyWinn
-# Modifed to account for bending relief from multiple engines:
+
+# Modifed to account for bending relief from multiple engines.
+# dyeinn allows engine to be in locations other than ηs
        So = Ss - Nload*neinn*We +
 	 0.25*po*b*(1.0+gammas)*(etas-etao) -
 	 Nload*Winn
@@ -106,8 +87,8 @@ function surfw(gee,po,b,bs,bo,co,zs,
 
 #----- limit So,Mo to Ss,Ms, which might be needed with heavy outboard engine
 #-      (rules out negatively-tapered structure, deemed not feasible for downloads)
-       So = max( So , Ss )
-       Mo = max( Mo , Ms )
+       So = max(So ,Ss)
+       Mo = max(Mo ,Ms)
 
 #----- size root station at etao
        tbwebo = So*0.5/(co^2*tauweb*rh*hboxo*cosL^2)
@@ -211,7 +192,6 @@ function surfw(gee,po,b,bs,bo,co,zs,
 
       dyWfinn = rhofuel*Abfueli *gee*dyVinn
       dyWfout = rhofuel*Abfuels *gee*dyVout
-
 
       Wcap   = 2.0*rhocap*gee*(Abcapo*Vcen + Abcapi*Vinn + Abcaps*Vout)
       Wweb   = 2.0*rhoweb*gee*(Abwebo*Vcen + Abwebi*Vinn + Abwebs*Vout)
