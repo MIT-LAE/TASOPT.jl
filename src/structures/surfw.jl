@@ -1,5 +1,5 @@
 """
-       surfw(gee,po,b,bs,bo,co,zs,
+       surfw(po,b,bs,bo,co,zs,
        lambdat,lambdas,gammat,gammas,
        Nload,iwplan,We,neout, dyeout, neinn, dyeinn,
        Winn,Wout,dyWinn,dyWout,
@@ -15,7 +15,7 @@ Inputs :  gee ... rhostrut
 Outputs:  Ss  ... Wstrut
 
 """
-function surfw(gee,po,b,bs,bo,co,zs,
+function surfw(po,b,bs,bo,co,zs,
 	lambdat,lambdas,gammat,gammas,
 	Nload,iwplan,We,neout, dyeout, neinn, dyeinn,
 	Winn,Wout,dyWinn,dyWout,
