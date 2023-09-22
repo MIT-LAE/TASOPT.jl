@@ -6,6 +6,7 @@ push!(LOAD_PATH, "../src")
 aerodynamics = TASOPT.aerodynamics
 structures = TASOPT.structures
 engine = TASOPT.engine
+aircraft = TASOPT.aircraft
 
 using Documenter
 
@@ -20,6 +21,7 @@ makedocs(
         "aero/moment.md",
     ],
     "Structures" => Any[
+       
         "structures/wing.md",
         "structures/fuselage.md",
         "structures/fueltanks.md"
@@ -29,5 +31,8 @@ makedocs(
     ],
     "Stability" => "balance/balance.md",
     "Sizing" => "sizing/sizing.md",
-    "Miscellaneous" => "misc/misc.md"
+    "Miscellaneous" => Any[
+        "misc/aircraft.md",
+        "misc/misc.md"
+    ]
     ])
