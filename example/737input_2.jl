@@ -231,7 +231,7 @@ parg[igfstring] = 0.35
 parg[igfframe] = 0.25
 parg[igffadd] = 0.20
 
-parg[igWfix] = 3000.0 * 4.45  # cockpit, pilots etc converted to [N]
+parg[igWfix] = 3000.0 * lbf_to_N  # cockpit, pilots etc converted to [N]
 parg[igxfix] = 7.0 * ft_to_m
 
 parg[igWpwindow] = 145.0 * 3.0 #[N/m]
@@ -370,7 +370,7 @@ pare[ieTt4, iptakeoff, :] .= Tt4TO
 #------------------------------
 #- design pressure ratios, efficiencies, etc.
 OPR = 30.0
-pilc = 8.0
+pilc = 2.5
 pif = 1.685
 pid = 0.998
 pib = 0.94
@@ -525,4 +525,4 @@ seat_width = 19.0 * in_to_m
 seat_pitch = 30.0 * in_to_m
 pax = Npax
 
-B737 = TASOPT.aircraft(pari, parg, parm, para, pare);
+B737 = TASOPT.aircraft("", "", pari, parg, parm, para, pare);
