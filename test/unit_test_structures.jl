@@ -1,6 +1,3 @@
-using Test
-using Revise
-using TASOPT
 
 @testset "structural components" begin
 
@@ -229,7 +226,7 @@ rhoweb,rhocap,rhostrut,rhofuel)
 @test fort_EIno ≈ EIno 
 @test fort_GJo ≈ GJo 
 @test fort_Astrut ≈ Astrut 
-@test fort_lstrutp ≈ lstrutp 
+@test fort_lstrutp ≈ lsp 
 @test fort_cosLs ≈ cosLs 
 @test fort_Wscen ≈ Wscen 
 @test fort_Wsinn ≈ Wsinn 
