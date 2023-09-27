@@ -1,4 +1,5 @@
 using Pkg
+Pkg.activate("..")
 using TASOPT
 
 push!(LOAD_PATH, "../src")
