@@ -7,18 +7,21 @@ otherwise uses default values in para array.
 
 The total drag is computed by
 
-``CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw``,
+```math
+C_{D} = C_{D, i} + C_{D,fuse} + C_{D,wing} + C_{D,over} + C_{D,htail} + C_{D,vtail} + C_{D,strut} + C_{D,nace} + \\Delta C_{D,BLI,f} + \\Delta C_{D,BLI,w}
+```
 
-where `CDi` is the total induced drag including the wing and tail, 
-`CDfuse` is the fuselage profile drage computed by solving a boundary layer integral equation,
-`CDwing` is the wing profile drag (viscous + pressure) computed using airfoil data obtained from CFD,
-`CDover` is the fuselage added CD due to lift carryover,
-`CDhtail` is the horizontal tail profile drag computed in a similar manner with `CDwing`,
-`CDvtail` is the vertical tail profile drag computed in a similar manner with `CDwing`,
-`CDstrut` is the struct profile drag, 
-`CDnace` is the nacelle profile drag,
-`dCDBLIf` is related to the boundary layer ingestion on the fuselage,
-and `dCDBLIw` is related to the boundary layer ingestion on the wing.
+where:
+- ``C_{D,i}`` (`CDi`) is the total induced drag including the wing and tail,
+- ``C_{D,fuse}`` (`CDfuse`) is the fuselage profile drage computed by solving a boundary layer integral equation,
+- ``C_{D,wing}`` (`CDwing`) is the wing profile drag (viscous + pressure) computed using airfoil data obtained from CFD,
+- ``C_{D,over}`` (`CDover`) is the fuselage added CD due to lift carryover,
+- ``C_{D,htail}`` (`CDhtail`) is the horizontal tail profile drag computed in a similar manner with `CDwing`,
+- ``C_{D,vtail}`` (`CDvtail`) is the vertical tail profile drag computed in a similar manner with `CDwing`,
+- ``C_{D,strut}`` (`CDstrut`) is the struct profile drag, 
+- ``C_{D,nace}`` (`CDnace`) is the nacelle profile drag,
+- ``\\Delta C_{D,BLI,f}`` (`dCDBLIf`) is related to the boundary layer ingestion on the fuselage,
+- and ``\\Delta C_{D,BLI,w}`` (`dCDBLIw`) is related to the boundary layer ingestion on the wing.
 
 See section A 2.13 of TASOPT docs.
 See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref).
@@ -249,7 +252,7 @@ end # cdsum
 
 
 """
-cditrip calcualtes the induced drag from the treftz plane
+cditrip calculates the induced drag from the Treftz plane
 """
 function cditrp(pari,parg,para)
 

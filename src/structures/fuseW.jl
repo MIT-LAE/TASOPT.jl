@@ -1,33 +1,33 @@
 """
-      fusew(gee,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
-      fstring,fframe,ffadd,deltap,
-      Wpwindow,Wppinsul,Wppfloor,
-      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
-      bv,lambdav,nvtail,
-      Rfuse,dRfuse,wfb,nfweb,lambdac,
-      xnose,xshell1,xshell2,xconend,
-      xhtail,xvtail,
-      xwing,xwbox,cbox,
-      xfix,xapu,xeng,xfuel,
-      hfloor,
-      sigskin,sigbend, rhoskin,rhobend, 
-      Eskin,Ebend,Gskin
+      fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, Waftfuel,
+            fstring, fframe, ffadd, deltap,
+            Wpwindow, Wppinsul, Wppfloor,
+            Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
+            bv, lambdav, nvtail,
+            Rfuse, dRfuse, wfb, nfweb, lambdac,
+            xnose, xshell1, xshell2, xconend,
+            xhtail, xvtail,
+            xwing, xwbox, cbox,
+            xfix, xapu, xeng, xfuel,
+            hfloor,
+            sigskin, sigbend, rhoskin, rhobend, 
+            Eskin, Ebend, Gskin)
 
 `fusew` sizes the fuselage and calculates the component weights
 
 Inputs: 
 
-- Geometry `xnose`, `Rfuse`, etc..
-- Fixed weights `Wfix`, `Wpay`, `Wseat` etc...
-- Material props `sigskin`, `rhoskin`, `E`, `G`, etc...
+- Geometry: `xnose`, `Rfuse`, etc..
+- Fixed weights: `Wfix`, `Wpay`, `Wseat` etc...
+- Material props: `sigskin`, `rhoskin`, `E`, `G`, etc...
 
 Outputs:
 
-- `EI`, `GJ` 
-- Thickness `tskin` etc
-- Weights `Wfuse`
-- Moments `xWfuse`
-- Cabin Volume `cabVol`
+- Bending/Torsion inertias: `EI`, `GJ` 
+- Thicknesses: `tskin` etc
+- Weights: `Wfuse`
+- Moments: `xWfuse`
+- Cabin Volume: `cabVol`
 """
 function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
                       fstring,fframe,ffadd,deltap,

@@ -1,8 +1,8 @@
 """
     axisol!(xnose,xend,xblend1,xblend2, Amax, 
-	anose, btail, iclose,
-	Mach, nc, nldim,
-      xl, zl, sl, dyl, ql)
+	      anose, btail, iclose,
+	      Mach, nc, nldim,
+            xl, zl, sl, dyl, ql)
 
 Calculates compressible potential flow about a quasi-axisymmetric body, 
 using a simple piecewise-constant source line.

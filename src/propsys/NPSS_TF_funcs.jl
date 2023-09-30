@@ -125,7 +125,7 @@ function NPSS_TFsys(NPSS, alt_in, MN_in, Fn, Tt41,
 end
 
 """ 
-Off Des NPSS_TEsys
+Off-design NPSS for turbofan prop.
 """
 function NPSS_TFsysOD(NPSS, alt_in, MN_in, Fn, Tt41,
      first, parg::Array{Float64, 1}, parpt::Array{Union{Float64, Int64},1}, 
