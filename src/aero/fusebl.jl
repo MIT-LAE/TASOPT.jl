@@ -10,7 +10,7 @@ A compressible source line represents the potential flow.
 An integral BL formulation with lateral divergence represents the surface BL and wake.
 An added-source distribution represents the viscous displacement influence on the potential flow.
 The body shape is defined by its area and perimeter distributions `A(x)`,  `b0(x)`,
-which are defined by the various geometric parameters in parg[.]
+which are defined by the various geometric parameters in `parg`.
 
 See Appendix E of TASOPT docs.
 See also [`blax`](@ref) and [`axisol!`](@ref).

@@ -8,14 +8,15 @@ export atmos
 Atmospheric functions ` T(h)`, `ρ(h)` etc
 valid to `h`=20km, `p(h)` valid to `h`=70km.
 
-Also calculates viscosity using Sutherland's approach
-     
-- h   = km ASL
-- T   = Kelvin
-- p   = Pa
-- ρ = kg/m^3
-- a   = m/s
-- μ  = kg/m-s 
+Also calculates viscosity using Sutherland's law.
+
+Units:
+- [h]   = km ASL
+- [T]   = Kelvin
+- [p]   = Pa
+- [ρ]   = kg/m^3
+- [a]   = m/s
+- [μ]   = kg/m-s 
 """
 function atmos(h)
 

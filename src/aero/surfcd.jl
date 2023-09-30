@@ -1,8 +1,13 @@
 """
-    surfcd2(S,b, bs, bo,λt, λs, γt, γs,
-    toco, tocs, toct,Mach, sweep, co,
-    CL, CLhtail, fLo, fLt,Reco, 
-    aRexp, kSuns, fexcd,fduo, fdus, fdut)
+    surfcd2(S,
+            b, bs, bo,
+            λt, λs, γt, γs,
+            toco, tocs, toct,
+            Mach, sweep, co,
+            CL, CLhtail, fLo, fLt,
+            Reco, aRexp, kSuns, fexcd,
+            AMa, Acl, Atau, ARe, A,
+            fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD`.
 
@@ -181,9 +186,12 @@ function surfcd2(
 end # surfcd2
 
 """
-    surfcd(S, b, bs, bo, λt, λs, 
-    sweep, co, cdf, cdp, 
-    Reco, Reref, aRexp, kSuns, fCDcen)
+    surfcd(S, 
+    b, bs, bo, 
+    λt, λs, sweep, 
+    co, cdf, cdp, 
+    Reco, Reref, 
+    aRexp, kSuns, fCDcen)
 
 Calculates wing or tail surface profile CD
 
@@ -202,6 +210,7 @@ Calculates wing or tail surface profile CD
 - `Reref::Float64`: reference Reynolds number for cd scaling.
 - `aRexp::Float64`: Re-scaling exponent.
 - `kSuns::Float64`: shock-unsweep area constant.
+- `fCDcen::Float64` : .
 
 # Outputs
 - `CDsurf`: overall profile CD.
