@@ -10,7 +10,7 @@ function NPSS_run(dir, bat_file)
 end
 
 """
-This function starts up and returns an NPSS process that can then be written to
+Starts up and returns an NPSS process that can then be written to.
 """
 function startNPSS(dir, bat_file)
     if Sys.iswindows()
@@ -24,7 +24,7 @@ function startNPSS(dir, bat_file)
 end
 
 """
-Ends the NPSS process that can then be written to
+Ends the NPSS process.
 """
 function endNPSS(NPSS)
     write(NPSS, "999 \\n")
@@ -34,11 +34,10 @@ function endNPSS(NPSS)
 end
 
 """
-    NPSS_TEsys
-
 Writes an input file for NPSS Turbo-electric system model 
 
-- Abmient altitude and mach number
+Inputs:
+- Ambient altitude and Mach number
 - Specifies πᵢ ∀ i ∈ {HPC, LPC}
 - Shaft power demand, Tt41 
 - DeNOx target
@@ -271,7 +270,7 @@ function NPSS_TEsys(NPSS, alt_in, MN_in, Fn, Tt41,
 end
 
 """ 
-Off Des NPSS_TEsys
+Off-design NPSS for turboelectric system
 """
 function NPSS_TEsysOD(NPSS, alt_in, MN_in, Fn, Tt41,
      Kinlaft, Φinlaft, Kinl, Φinl, first, parg::Array{Float64, 1}, 

@@ -1,6 +1,6 @@
 using Pkg
 Pkg.activate("..")
-using TASOPT
+# using TASOPT
 
 push!(LOAD_PATH, "../src")
 
@@ -12,7 +12,7 @@ aircraft = TASOPT.aircraft
 using Documenter
 
 makedocs(
-    sitename = "TASOPT.jl documentation",
+    sitename = "TASOPT.jl Documentation",
     pages = [ "Home" => "index.md", 
     "Atmospheric properties" => "atmos/atmos.md",
     "Aerodynamics" => Any[
@@ -34,6 +34,7 @@ makedocs(
     "Sizing" => "sizing/sizing.md",
     "Miscellaneous" => Any[
         "misc/aircraft.md",
-        "misc/misc.md"
+        "misc/misc.md",
+        "misc/dreladocs.md"
     ]
     ])

@@ -8,15 +8,15 @@ displacement to allow calculation of separated flow.
 # Inputs
 
 - `ndim::Integer`: physical array dimension.
-- `n::Integer`: number of BL+wake points.
+- `n::Integer`: number of boundary layer + wake points.
 - `ite::Integer`: index of trailing edge point, start of wake.
 - `xi::Array{Float64}`: arc length array (BL coordinate).
-- `bi::Array{Float64}`: lateral width of BL (body perimeter, zero for wake) = 1 for 2D.
-- `rni::Array{Float64}`: ``dr/dn`` ``= 0`` for 2D.
-- `uinv::Array{Float64}`: inviscid velocity.
-- `Reyn::Float64`: Reynolds number,  ``rho_ref u_ref l_ref / mu_ref``.
-- `Mach::Float64`: Mach number,  ``u_ref / a_ref``.
-- `fexcr::Float64`: excrescence multiplier, applied to wall `Cf` ``= 1`` for smooth wall.
+- `bi::Array{Float64}`: lateral width of BL at surface (i.e., body perimeter). ``b_i`` = 0 for wake, 1 for 2D.
+- `rni::Array{Float64}`: ``dr/dn`` to account for near-axisymmetric bodies, 0 for 2D.
+- `uinv::Array{Float64}`: inviscid velocity, ``u_{inv}``.
+- `Reyn::Float64`: Reynolds number,  ``\\rho_{ref} u_{ref} l_{ref} / \\mu_{ref}``.
+- `Mach::Float64`: Mach number,  ``M = u_{ref} / a_{ref}``.
+- `fexcr::Float64`: excrescence multiplier applied to wall ``c_f``, 1 for smooth wall.
 
 Assumed units for all quantities:
 - `l_ref`: same unit as used for input `xi`,`bi`.
@@ -26,37 +26,37 @@ Assumed units for all quantities:
 - `mu_ref`: freestream viscosity.
     
 # Outputs
-- `uei::Array{Float64}`:  edge velocity, ( ``= uinv[i] + displacement correction`` ).
+- `uei::Array{Float64}`:  edge velocity, (``u_{e,i} = u_{inv,i} +`` {displacement correction}).
 - `dsi::Array{Float64}`:  displacement thickness (``\\delta^*``).
 - `thi::Array{Float64}`:  momentum thickness     (``\\theta``).
 - `tsi::Array{Float64}`:  kinetic energy thickness (``\\theta^*``).
 - `dci::Array{Float64}`:  density flux thickness   (``\\delta^{**}``).
-- `cfi::Array{Float64}`:  skin friction coefficient, normalized with local `rho`, `u`.
-- `cdi::Array{Float64}`:  dissipation coefficient  , normalized with local `rho`,`u`.
-- `cti::Array{Float64}`:  max shear-stress coefficient, normalized with local `rho`,`u`.
-- `hki::Array{Float64}`:  kinematic shape parameter.
-- `phi::Array{Float64}`:  integrated dissipation.
+- `cfi::Array{Float64}`:  skin friction coefficient, normalized with local ``\\rho``, ``u`` (``c_{f,i}``).
+- `cdi::Array{Float64}`:  dissipation coefficient  , normalized with local ``\\rho``,``u`` (``c_{\\mathcal{D},i}``).
+- `cti::Array{Float64}`:  max shear-stress coefficient, normalized with local ``\\rho``,``u`` (``c_{t,i}``).
+- `hki::Array{Float64}`:  kinematic shape parameter (``H_{K,i}``).
+- `phi::Array{Float64}`:  integrated dissipation (``\\Phi``).
 
 
 Other outputs of interest can be computed as follows.
   These are in units of `l_ref`, `rho_ref`, `u_ref`
 
-- `beff`: Effective perimeter,  ``bi  +  2 pi dsi rni``.
-- `rhi`: Edge density, ``(1 + 0.5*(gam-1)*Mach^2*(1.0-uei^2))^(1/(gam-1))``.
-- `mdef`: Total mass defect, ``rhi uei   dsi beff``.
-- `Pdef`: Total mom. defect, ``rhi uei^2 thi beff``.
-- `Edef`: Total KE defect, ``rhi uei^3 tsi beff / 2``.
-- `rhi`: Wall shear force/span, ``tw b =   uei^2 cfi beff / 2``.
-- `Diss`: Dissipation integral, ``rhi uei^3 cdi beff``.
+- `beffi`: Effective perimeter,  ``b_{eff,i} = b_i  +  2 \\pi \\delta^* dr/dn``.
+- `rhi`: Edge density, ``\\rho_i = (1 + \\frac{(\\gamma-1)}{2}M^2 (1.0-u_{e,i}^2))^\\frac{1}{(\\gamma-1)}``.
+- `mdef`: Total mass defect, ``\\rho_i u_{e,i} \\delta^* b_{eff}``.
+- `Pdef`: Total momentum defect, ``\\rho_i u_{e,i}^2 \\theta b_{eff}``.
+- `Edef`: Total kinetic energy defect, ``\\frac{1}{2} \\rho_i u_{e,i}^3 \\theta^* b_{eff}``.
+- `tauwb`: Wall shear force/span, ``\\frac{\\tau_w}{b} = \\frac{1}{2} u_{e,i}^2 c_{f,i} b_{eff}``.
+- `Diss`: Dissipation integral, ``\\rho_i u_{e,i}^3 c_{\\mathcal{D},i} b_{eff,i}``.
 
-Body profile drag `Dp` is the far-downstream momentum defect `Pinf`,
-best obtained by applying Squire-Young to the last wake point ``i = n`` :
+Body profile drag `D_p` is the far-downstream momentum defect ``P_\\infty``,
+best obtained by applying Squire-Young to the last wake point, ``i = n`` :
 
-- ``Pend = rhi*uei^2 * thi * beff``
-- ``Hend = dsi/thi``
-- ``Hinf = 1.0 + (gam-1)*Mach^2``
-- ``Havg = 0.5*(Hend+Hinf)``
-- ``Pinf = Pend * uei^Havg  =  Dp``
+- ``P_{end} = \\rho_i u_{e,i}^2 \\theta b_{eff}``
+- ``H_{end} = \\delta^*/\\theta``
+- ``H_{\\infty} = 1 + (\\gamma-1) M^2``
+- ``H_{avg} = \\frac{1}{2} (H_{end} + H_{inf})``
+- ``P_{inf} = P_{end} u_{e,i}^{H_{avg}}  =  D_p``
 
 See Appendix E.4 of TASOPT docs.
 See also [`blsys`](@ref) and [`blvar`](@ref).
