@@ -1,22 +1,22 @@
 """
-`tankWmech` calculates weight of the tank that holds the LH2
+`tankWmech` calculates weight of the cryogenic fuel tank for a LH-fueled aircraft
 
 ## Inputs:
 NOTE: Everything is in SI units.
 
 NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in OneNote)
 
-- Rfuse is fuselage radius (m), dRfuse (m) is the subtraction factor that accounts for flatness of fuselage at bottom
-- wfb, nfb are parameters for multiple-bubble configuration
-- lcv (J/kg) is lower calorific value of fuel
-- eta is overall efficiency of gas turbine/turboelectric powertrain etc.
-- sigskin, rhoskin are material properties
-- thickness_insul is insulation thickness of all layers combined (m)
+- `Rfuse` is fuselage radius (m), `dRfuse` (m) is the subtraction factor that accounts for flatness of fuselage at bottom
+- `wfb`, `nfb` are parameters for multiple-bubble configuration
+- `lcv` (J/kg) is lower calorific value of fuel
+- `eta` is overall efficiency of gas turbine/turboelectric powertrain etc.
+- `sigskin`, `rhoskin` are material properties
+- `thickness_insul` is insulation thickness of all layers combined (m)
 
 Outputs:
 
-- Wtank_total: tank weight including fuel (N)
-- Wtank: empty tank weight (N)
+- `Wtank_total`: tank weight including fuel (N)
+- `Wtank`: empty tank weight (N)
 """
 function tankWmech(gee::Float64, ρfuel::Float64,
                   ftankstiff::Float64, ftankadd::Float64, Δp::Float64,

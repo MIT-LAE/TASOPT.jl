@@ -2,34 +2,30 @@
 `tankthermal`
 
 This subroutine does **not** size the thermal insulation layers
-but rather calcualtes the boil-off rate of fLH2, 
+but rather calculates the boil-off rate of fLH2, 
 for a given insulation thickness
       
 ## Inputs:
 
 NOTE: Everything is in SI units. MLI: Multi-layer insulation
 
-- l_cyl   : length of tank (m)
-- r_tank   : tank outer radius (m)
-- Shead    : Array of surface areas of each layer of the end/ head of the tank [m²]
-
-- hconvgas : convective coefficient of insulating purged gas (e.g. N2) (W/m²*K)
-- h_LH2    : LH2 convective coefficient (W/m2*K) 
-- hconvair : convective coefficient of ambient air (W/m2*K)
-
-- t_cond   : Array of thickness of each layer in MLI (m)
-- k        : Thermal conductivity array  (W/(m*K)) comprising of k value for each MLI layer
-
-- Tfuel    : fuel temperature (K)
-- Tair     : ambient temperature (K)
-
-- h_v         : heat of vaporization of liquid hydrogen (from Hydrogen tank design paper) (J/kg)
-- time_flight : Time of flight (s)
+- `l_cyl`   : length of tank (m)
+- `r_tank`   : tank outer radius (m)
+- `Shead`    : Array of surface areas of each layer of the end/ head of the tank [m²]
+- `hconvgas` : convective coefficient of insulating purged gas (e.g. N2) (W/m²*K)
+- `h_LH2`    : LH2 convective coefficient (W/m2*K) 
+- `hconvair` : convective coefficient of ambient air (W/m2*K)
+- `t_cond`   : Array of thickness of each layer in MLI (m)
+- `k`        : Thermal conductivity array  (W/(m*K)) comprising of k value for each MLI layer
+- `Tfuel`    : fuel temperature (K)
+- `Tair`     : ambient temperature (K)
+- `h_v`         : heat of vaporization of liquid hydrogen (from Hydrogen tank design paper) (J/kg)
+- `time_flight` : Time of flight (s)
 
 
 ## Outputs:
-- m_boiloff :(kg) is the boiloff LH2 mass
-- mdot_boiloff (kg/s) is the boiloff rate of LH2
+- `m_boiloff` :(kg) is the boiloff LH2 mass
+- `mdot_boiloff` (kg/s) is the boiloff rate of LH2
 """
 function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1},
                       hconvgas::Float64, h_LH2::Float64,  hconvair::Float64, 

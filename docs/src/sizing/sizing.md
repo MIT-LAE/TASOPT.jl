@@ -1,6 +1,6 @@
 # Sizing the aircraft
 
-`wsize` sizes the aircraft via a fixed point iteration
+`wsize` sizes the aircraft via a fixed point iteration.
 
 ```@docs
 TASOPT.wsize(pari, parg, parm, para, pare,

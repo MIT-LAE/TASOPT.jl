@@ -116,7 +116,7 @@ function aero(ac::aircraft; io = stdout)
 end
 
 """
-`geometry` prints out the layout of the aircraft
+`geometry` prints out a numerical description of the aircraft layout
 """
 function geometry(ac::aircraft; io = stdout)
     parg = ac.parg
@@ -1060,7 +1060,7 @@ end
 """
     high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, save_name = nothing)
 
-Plot high resolution figure for publications
+plots high resolution figure for publications
 """
 function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, save_name = nothing)
 
