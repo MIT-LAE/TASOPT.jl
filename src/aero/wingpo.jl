@@ -1,7 +1,7 @@
 """
-    wingpo(b, bs, bo, λt, 
-    λs, γt, γs, AR, N, 
-    W, Lhtail, fLo, fLt)
+    wingpo(b, bs, bo, 
+        λt, λs, γt, γs, 
+        AR, N, W, Lhtail, fLo, fLt)
 
 Calculates wing root loading po to balance net load 
 

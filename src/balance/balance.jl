@@ -1,27 +1,28 @@
 """
-# balance
-
 Makes one of three (or none) changes to achieve pitch trim
 calculates resulting CG, CP, NP locations
 
-  Inputs:  pari[.]  integer flag array
-           parg[.]  geometry parameter array
-           para[.]  aero parameter array
-           rfuel    fuel fraction   Wfuel_actual/Wfuel_MTOW
-           rpay     payload fraction Wpay_actual/Wpay_MTOW
-           ξpay    partial-payload packing location
-                      = 0.0   all the way in front  of cabin
-                      = 0.5   all the way in middle of cabin
-                      = 1.0   all the way in back   of cabin
-           iengloc  engine location index
-           itrim      = 0  no changes
-                      = 1  adjust CLh   (horizontal tail cl)
-                      = 2  adjust Sh    (horizontal tail area)
-                      = 3  adjust xwbox (wing box location)
+Inputs:
+- `pari[.]`  integer flag array
+- `parg[.]`  geometry parameter array
+- `para[.]`  aero parameter array
+- `rfuel`    fuel fraction   Wfuel_actual/Wfuel_MTOW
+- `rpay`     payload fraction Wpay_actual/Wpay_MTOW
+- `ξpay`    partial-payload packing location
+    * = 0.0   all the way in front  of cabin
+    * = 0.5   all the way in middle of cabin
+    * = 1.0   all the way in back   of cabin
+- `iengloc`  engine location index
+- `itrim`      = 0  no changes
+    * = 1  adjust CLh   (horizontal tail cl)
+    * = 2  adjust Sh    (horizontal tail area)
+    * = 3  adjust xwbox (wing box location)
 
-  Outputs: para[iaxCG]  center of gravity
-           para[iaxCP]  center of pressure ( = xCG if itrim=1,2,3 )
-           para[iaxNP]  neutral point location
+Outputs: 
+
+- `para[iaxCG]`  center of gravity
+- `para[iaxCP]`  center of pressure ( = xCG if itrim=1,2,3 )
+- `para[iaxNP]`  neutral point location
 
 """
 function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
@@ -264,24 +265,24 @@ end # balance
 """
 Sets horizontal tail area and wing position to simultaneously:
 
-      1) Meet pitch trim requirement with forward CG
-      2) Meet stability requirement with aft CG
+1) Meet pitch trim requirement with forward CG
+2) Meet stability requirement with aft CG
 
-     Calculates resulting CG, CP, NP locations
+Calculates resulting CG, CP, NP locations
 
-  Inputs:  
+Inputs:  
       
-      pari[.]  integer fla array
-      parg[.]  geometry parameter array
-      paraF[.] aero parameter array for fwdCG case
-      paraB[.] aero parameter array for aft CG case
-      paraC[.] aero parameter array for cruise tail CL case
+- `pari[.]`  integer fla array
+- `parg[.]`  geometry parameter array
+- `paraF[.]` aero parameter array for fwdCG case
+- `paraB[.]` aero parameter array for aft CG case
+- `paraC[.]` aero parameter array for cruise tail CL case
 
-  Outputs: 
+Outputs: 
   
-      parg[igSh]    HT area
-      parg[igxwbox] wingbox location
-      parg[igxwing] wing centroid location
+- `parg[igSh]`    HT area
+- `parg[igxwbox]` wingbox location
+- `parg[igxwing]` wing centroid location
 
 """
 function htsize(pari, parg, paraF, paraB, paraC)
@@ -651,13 +652,13 @@ end # htsize
 Calculates min and max xCG locations from payload extremes,
 and corresponding payload fractions.
 
-rfuelF,rpayF   give most-forward  location xcgF
-rfuelB,rpayB   give most-rearward location xcgB
+`rfuelF`,`rpayF`   give most-forward  location `xcgF`
+`rfuelB`,`rpayB`   give most-rearward location `xcgB`
 
-This version always returns rfuelF = rfuelB = 0.0
-which gives an explicit solution for rpayF,rpayB.
+This version always returns `rfuelF` = `rfuelB` = 0.0
+which gives an explicit solution for `rpayF`,`rpayB`.
 
-The alternative 2D search for rfuel,rpay is kinda ugly, 
+The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
 function cglpay(parg)

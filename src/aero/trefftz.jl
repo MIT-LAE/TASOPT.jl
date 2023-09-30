@@ -52,9 +52,10 @@ function trefftz(tf::tfp)
 end
 
 """
-    trefftz1(nsurf, npout, npinn, npimg, Sref, bref,
-    b,bs,bo,bop, zcent, 
-    po,gammat,gammas, fLo,ktip, Lspec,CLsurfsp,)
+    trefftz1(nsurf, npout, npinn, npimg, 
+          Sref, bref, b, bs, bo, bop, 
+          zcent, po, gammat, gammas, 
+          fLo,ktip, Lspec, CLsurfsp)
 
 Trefftz plane routine for the induced drag computation.
 

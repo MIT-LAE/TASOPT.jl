@@ -3,8 +3,7 @@
 
 Reads airfoil file and outputs a matrix and spline objects.
 The airfoil data is stored as a function of three variables, typically
-Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``,
-and thickness to chord ratio ``\\tau``.
+    Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord ratio ``\\tau``.
 
     cdf(Ma, cl, τ)
 
