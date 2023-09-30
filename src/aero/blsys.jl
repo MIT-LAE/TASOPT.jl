@@ -3,20 +3,20 @@ using StaticArrays
 
 """
     blsys(simi,lami,wake,direct, Mach, uinv,hksep,
-                      x,b,rn,th,ds,ue,
-                      h , h_th, h_ds,
-                      hk, hk_th, hk_ds, hk_ue,
-                      hc, hc_th, hc_ds, hc_ue,
-                      hs, hs_th, hs_ds, hs_ue,
-                      cf, cf_th, cf_ds, cf_ue,
-                      di, di_th, di_ds, di_ue,
-                      xm,bm,rnm,thm,dsm,uem, 
-                      hm , hm_thm, hm_dsm,
-                      hkm, hkm_thm, hkm_dsm, hkm_uem,
-                      hcm, hcm_thm, hcm_dsm, hcm_uem,
-                      hsm, hsm_thm, hsm_dsm, hsm_uem,
-                      cfm, cfm_thm, cfm_dsm, cfm_uem,
-                      dim, dim_thm, dim_dsm, dim_uem)
+          x,b,rn,th,ds,ue,
+          h , h_th, h_ds,
+          hk, hk_th, hk_ds, hk_ue,
+          hc, hc_th, hc_ds, hc_ue,
+          hs, hs_th, hs_ds, hs_ue,
+          cf, cf_th, cf_ds, cf_ue,
+          di, di_th, di_ds, di_ue,
+          xm,bm,rnm,thm,dsm,uem, 
+          hm , hm_thm, hm_dsm,
+          hkm, hkm_thm, hkm_dsm, hkm_uem,
+          hcm, hcm_thm, hcm_dsm, hcm_uem,
+          hsm, hsm_thm, hsm_dsm, hsm_uem,
+          cfm, cfm_thm, cfm_dsm, cfm_uem,
+          dim, dim_thm, dim_dsm, dim_uem)
 
 # Inputs
 - `simi::Integer`: Similarity flag.
@@ -26,16 +26,16 @@ using StaticArrays
 - `Mach::Float64`: Mach number for compressibility.
 - `uinv::Float64`: Inviscid velocity.
 - `x::Float64`: Arc length.
-- `b::Float64`: lateral width of BL.
-- `rn::Float64`: ``dr/dn`` ``= 0`` for 2D.
-- `th::Float64`: momentum thickness.
-- `ds::Float64`: displacement thickness.
-- `ue::Float64`: edge velocity.
+- `b::Float64`: Lateral width of BL.
+- `rn::Float64`: ``dr/dn``, ``= 0`` for 2D.
+- `th::Float64`: Momentum thickness.
+- `ds::Float64`: Displacement thickness.
+- `ue::Float64`: Edge velocity.
 - `h::Float64`: Shape parameter.
 - `hk::Float64`: Kinematic shape parameter.
 - `hc::Float64`: 
 - `hs::Float64`:
-- `cf::Float64`: Skin friciton factor.
+- `cf::Float64`: Skin friction factor.
 - `di::Float64`: Dissipation factor.
 
 `m` denotes the previous point (minus one) in the upstream.
@@ -309,7 +309,7 @@ blvar returns the boundary layer variables needed.
 - `wake::Integer`: In wake? Flage
 - `Reyn::Float64`: Reynolds number
 - `Mach::Float64`: Mach number for compressibility
-- `fexcr::Float64`: Exercense factor
+- `fexcr::Float64`: Excrescence factor
 
 # Outputs
 
@@ -317,7 +317,7 @@ blvar returns the boundary layer variables needed.
 - `hk::Float64`: Kinematic shape parameter
 - `hc::Float64`: 
 - `hs::Float64`: 
-- `cf::Float64`: Skin friciton factor
+- `cf::Float64`: Skin friction factor
 - `cd::Float64`: Dissipation factor and their derivatives
 
 """

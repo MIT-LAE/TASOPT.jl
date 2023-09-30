@@ -1,12 +1,12 @@
 # Drag calculations
 
-The key drag contributions are assumed to come from the fuselage, wing and tail surfaces and the lift induced drag calcualted at the trefftz plane
+The key drag contributions are assumed to come from the fuselage, wing and tail surfaces, and the lift induced drag calculated at the Trefftz plane.
 
 
 ## Axisymmetric fuselage drag 
 The fuselage profile drag is determined by a quasi-axisymmetric coupled viscous-inviscid calculation. See "Simplified Viscous/Inviscid Calculation for Nearly-Axisymmetric Bodies" by M. Drela.
 
-This method does not require reliance on any wetted area approximations or fineness-ratio correlations.
+This method does not require any wetted area approximations or fineness-ratio correlations.
 
 The method requires the geometry to be specified in the form of a
 cross-sectional area distribution $A{\scriptstyle (x)}$ and also a

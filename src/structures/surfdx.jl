@@ -2,7 +2,7 @@
       surfdx(b, bs, bo, λt, λs, sweep)
 
 Calculates area centroid x-offset due to sweep
-and the mean aerodynamic chord/co
+and the mean aerodynamic chord (normalized by root chord, `co`)
 """
 function surfdx(b,bs,bo,λt,λs,sweep)
 

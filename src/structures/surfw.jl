@@ -1,18 +1,28 @@
 """
-       surfw(po,b,bs,bo,co,zs,
-       lambdat,lambdas,gammat,gammas,
-       Nload,iwplan,We,neout, dyeout, neinn, dyeinn,
-       Winn,Wout,dyWinn,dyWout,
-       sweep,wbox,hboxo,hboxs,rh, fLt,
-       tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
-       rhoweb,rhocap,rhostrut,rhofuel)
+       surfw(po, b, bs, bo, co, zs,
+              lambdat, lambdas, gammat, gammas,
+              Nload, iwplan, We, neout, dyeout, neinn, dyeinn,
+              Winn, Wout, dyWinn, dyWout,
+              sweep, wbox, hboxo, hboxs, rh, fLt,
+              tauweb, sigcap, sigstrut, Ecap, Eweb, Gcap, Gweb,
+              rhoweb, rhocap, rhostrut, rhofuel)
 
 Calculates Wing or Tail loads, stresses, weights of individual wing sections.
-Also returns the guages, torsional and bending stiffness
+Also returns the material gauges, torsional and bending stiffness.
 
-Inputs :  gee ... rhostrut
+Inputs :  
 
-Outputs:  Ss  ... Wstrut
+       gee ... rhostrut
+
+Outputs:  
+
+       Ss, Ms, tbwebs, tbcaps, EIcs, EIns, GJs,
+              So, Mo, tbwebo, tbcapo, EIco, EIno, GJo,
+              Astrut, lsp, cosLs,
+              Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
+              Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
+              Wweb, Wcap, Wstrut,
+              dxWweb, dxWcap, dxWstrut
 
 """
 function surfw(po,b,bs,bo,co,zs,
