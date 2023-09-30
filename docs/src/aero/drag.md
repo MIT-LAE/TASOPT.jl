@@ -8,7 +8,22 @@ The fuselage profile drag is determined by a quasi-axisymmetric coupled viscous-
 
 This method does not require reliance on any wetted area approximations or fineness-ratio correlations.
 
+The method requires the geometry to be specified in the form of a
+cross-sectional area distribution $A{\scriptstyle (x)}$ and also a
+perimeter distribution $b_0{\scriptstyle (x)}$, shown in the
+Figure below. For a
+round cross-section these are of course related, but to allow treating
+more general fuselage cross-sections, they are assumed to be specified
+separately. The cross section sizes and shapes can vary along the body,
+provided the variation is reasonably smooth.
+
 ![ADfuse](../assets/ADfuse.png)
+
+
+```@eval
+using Markdown
+Markdown.parse_file(joinpath("../..", "src/aero","theory_fuse_profile_drag.md"))
+```
 
 ```@docs
 
