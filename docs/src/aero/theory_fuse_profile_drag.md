@@ -1,4 +1,4 @@
-!!! details "Theory" 
+!!! details "📖 Theory - axisymmetric fuselage profile drag" 
     The viscous calculation
     produces displacement, momentum, and kinetic energy areas
     $\Delta^*, \Theta, \Theta^* {\scriptstyle (x)}$.
@@ -61,21 +61,27 @@
     
     If the fuselage is nearly round, the necessary area and perimeter
     distributions follow immediately. 
+
     $$\begin{aligned}
     A {\scriptstyle (x)}& = & \pi \, {R{\scriptstyle (x)}}^2
     \\
     b_0 {\scriptstyle (x)}& = & 2 \pi R {\scriptstyle (x)}
-    \end{aligned}$$ This would be suitably modified for non-circular
+    \end{aligned}$$ 
+    
+    This would be suitably modified for non-circular
     cross-sections.
     
     With this geometry definition, the viscous/inviscid calculation
     procedure provides the momentum and kinetic energy area distributions
-    along the body and wake, 
+    along the body and wake,
+
     $$\begin{aligned}
     \left\{ \Theta {\scriptstyle (s)}\, , \: \Theta^* {\scriptstyle (s)}\right\} & = &
     f_{\rm f_{excr}} \:
     {\cal F}(M_{{\scriptscriptstyle \infty}}, Re_\ell\, ; \, A {\scriptstyle (x)}, b_0 {\scriptstyle (x)})
-    \end{aligned}$$ where ${\cal F}$ denotes the overall viscous/inviscid
+    \end{aligned}$$ 
+    
+    where ${\cal F}$ denotes the overall viscous/inviscid
     calculation procedure, and $f_{\rm f_{excr}} \geq 1$ is an empirical
     factor to allow for fuselage excrescence drag sources.
     
@@ -102,8 +108,8 @@
     downstream.
     
     The fuselage surface + wake dissipated power in the absence of BLI is
-    then evaluated as follows, consistent with the usual wake momentum
-    defect relations. 
+    then evaluated as follows, consistent with the usual wake momentum defect relations. 
+
     $$\begin{aligned}
     C'_{\!D_{\rm fuse}} & \equiv &
     \frac{\Phi_{\rm surf}-P_{V_{\rm surf}} + \Phi_{\rm wake}-P_{V_{\rm wake}}}
@@ -128,20 +134,21 @@
     wake dissipation $\Phi_{\rm wake}$ will be reduced by the same fraction.
     This then gives the following overall fuselage dissipation coefficient
     for the BLI case. 
+
     $$\begin{aligned}
     C_{\!D_{\rm fuse}} &\!=\! &
     \frac{\Phi_{\rm surf}\!-\!P_{V_{\rm surf}} \,+\, 
            (\Phi_{\rm wake}\!-\!P_{V_{\rm wake}})(1\!-\!{f_{\rm {\scriptscriptstyle BLI}_{\scriptstyle \,f}}})}
          {{\textstyle \frac{1}{2}}\rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}^3 S} 
     \hspace{3ex}
-    \rm{(with BLI)}
+    \mathrm{(with BLI)}
     \hspace{-2ex}
     \\
     C_{\!D_{\rm fuse}} 
     & \!\simeq\! &
     C_{\!D_{\rm fuse}} \,-\, C_{\Phi_{\rm wake}} {f_{\rm {\scriptscriptstyle BLI}_{\scriptstyle \,f}}}
     \hspace{23ex}
-    \rm{(with BLI)}
+    \mathrm{(with BLI)}
     \hspace{-2ex}
     \\[0.5em]
     \rm{where} \hspace{3ex}

@@ -51,8 +51,7 @@ You should now be able to import TASOPT from within any Julia script in your bas
 
 ## Loading and running a TASOPT aircraft model
 
-`TASOPT.jl` uses TOML files to define aircraft models. You can find an example
-[input file here](../../src/IO/default_input.toml).
+`TASOPT.jl` uses TOML files to define aircraft models. You can find an example input file here `/src/IO/default_input.toml`.
 
 The following section gives an example of using `TASOPT.jl`:
 

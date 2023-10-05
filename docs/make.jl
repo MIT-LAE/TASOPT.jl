@@ -12,6 +12,7 @@ aircraft = TASOPT.aircraft
 using Documenter
 
 makedocs(
+    remotes = nothing,
     sitename = "TASOPT.jl Documentation",
     pages = [ "Home" => "index.md", 
     "Atmospheric properties" => "atmos/atmos.md",
@@ -35,6 +36,6 @@ makedocs(
     "Miscellaneous" => Any[
         "misc/aircraft.md",
         "misc/misc.md",
-        "misc/dreladocs.md"
+        # "misc/dreladocs.md"
     ]
-    ])
+    ],)

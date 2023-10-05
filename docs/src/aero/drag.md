@@ -19,7 +19,6 @@ provided the variation is reasonably smooth.
 
 ![ADfuse](../assets/ADfuse.png)
 
-
 ```@eval
 using Markdown
 Markdown.parse_file(joinpath("../..", "src/aero","theory_fuse_profile_drag.md"))
@@ -56,6 +55,37 @@ aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
 aerodynamics.fusebl!(pari, parg, para, ip)
 ```
 
+## Treftz plane drag calculation
+
+![Wake streamline contraction due to fuselage thickness, carrying wing
+circulation into the wake. Two shaded streamtubes are shown. Wake center
+radius $y'_o$ is nonzero due to the fuselage viscous wake displacement
+area.](../assets/trefftz.png)
+Wake streamline contraction due to fuselage thickness, carrying wing
+circulation into the wake. Two shaded streamtubes are shown. Wake center
+radius $y'_o$ is nonzero due to the fuselage viscous wake displacement
+area.
+
+![Trefftz Plane vortices $i,i\!+\!1 \ldots$ and collocation points
+$i\!+\!1/2$ used for velocity, impulse, and kinetic energy calculations.
+Left/right symmetry is exploited.](../assets/tpvort.png)
+Trefftz Plane vortices $i,i\!+\!1 \ldots$ and collocation points
+$i\!+\!1/2$ used for velocity, impulse, and kinetic energy calculations.
+Left/right symmetry is exploited.  
+
+```@eval
+using Markdown
+Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
+```
+
+```@docs
+aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+	Sref, bref,
+	b,bs,bo,bop, zcent,
+	po,gammat,gammas, fLo,ktip,
+	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+```
+
 ## Total drag calculation
 ```@docs
 aerodynamics.cdsum!(pari,parg,para,pare, icdfun)
@@ -79,15 +109,6 @@ aerodynamics.surfcd(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
-```
-
-## Treftz plane drag calculation
-```@docs
-aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
-	Sref, bref,
-	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo,ktip,
-	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 ```
 
 ## Other utilites
