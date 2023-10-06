@@ -7,29 +7,30 @@
 Calculates compressible potential flow about a quasi-axisymmetric body, 
 using a simple piecewise-constant source line.
 
-# Inputs:
-- `xnose::Float64`: x location of nose point. 
-- `xend::Float64`: x location of tail point.
-- `xblend1::Float64`: x location of nose-section blend point.
-- `xblend2::Float64`: x location of tail-section blend point.
-- `Amax::Float64`: maximum cross-sectional area.
-- `anose::Float64`: nose-section shape exponent.
-- `btail::Float64`: tail-section shape exponent.
-- `iclose::Integer`: if 0, tail tapers to a point, otherwise to an edge.
-- `Mach::Float64`: freestream Mach number for Prandtl-Glauert.
-- `nc::Integer`: number of control points to be used.
-- `nldim::Integer`: max dimension of passed arrays.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `xnose::Float64`: x location of nose point. 
+    - `xend::Float64`: x location of tail point.
+    - `xblend1::Float64`: x location of nose-section blend point.
+    - `xblend2::Float64`: x location of tail-section blend point.
+    - `Amax::Float64`: maximum cross-sectional area.
+    - `anose::Float64`: nose-section shape exponent.
+    - `btail::Float64`: tail-section shape exponent.
+    - `iclose::Integer`: if 0, tail tapers to a point, otherwise to an edge.
+    - `Mach::Float64`: freestream Mach number for Prandtl-Glauert.
+    - `nc::Integer`: number of control points to be used.
+    - `nldim::Integer`: max dimension of passed arrays.
 
-Outputs:
-- `nl::Integer`: number of output surface and wake points.
-- `ilte::Integer`: index of TE point.
-- `xl::Array{Float64}`: x locations of surface segment endpoints.
-- `zl::Array{Float64}`: z locations of surface segment endpoints.
-- `sl::Array{Float64}`: arc lengths along surface and wake.
-- `dyl::Array{Float64}`: half-width of edge-type tail section.
-- `ql::Array{Float64}`: velocities V/V_inf along surface and wake.
+    **Outputs:**
+    - `nl::Integer`: number of output surface and wake points.
+    - `ilte::Integer`: index of TE point.
+    - `xl::Array{Float64}`: x locations of surface segment endpoints.
+    - `zl::Array{Float64}`: z locations of surface segment endpoints.
+    - `sl::Array{Float64}`: arc lengths along surface and wake.
+    - `dyl::Array{Float64}`: half-width of edge-type tail section.
+    - `ql::Array{Float64}`: velocities V/V_inf along surface and wake.
 
-See Appendix E.4 of TASOPT docs.
+See [here](@ref axi) or Section ___  of TASOPT docs. See also [`fusebl!`](@ref)
 """
 function axisol!(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
