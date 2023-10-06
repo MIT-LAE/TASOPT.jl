@@ -1,6 +1,7 @@
 # Original Drela Docs
 
 Obtained from Mark Drela's [`TASOPT`](http://web.mit.edu/drela/Public/web/tasopt/) site.
+You can obtain all the documents and the FORTRAN code from the above link.
 
 ```@eval
 #Copy files from source to build
@@ -15,3 +16,4 @@ nothing #needs to either return nothing or a .md
 - [Thermally-Perfect Gas Calculations](../assets/drela_TASOPT_2p16/gasfun.pdf)
 - [Balanced Field Length Calculation](../assets/drela_TASOPT_2p16/takeoff.pdf)
 - [Turbofan Weight Model from Historical Data](../assets/drela_TASOPT_2p16/tfweight.pdf)
+
