@@ -59,24 +59,24 @@ end
 
 Trefftz plane routine for the induced drag computation.
 
-Inputs
-- `nsurf::Integer`: number of surfaces (typically wing and horizontal tail)
-- `npout`::Integer: number of spanwise intervals (outer panel)
-- `npinn`::Integer:  "     "       (inner panel)
-- `npimg`::Integer:  "     "       (image inside fuselage)
-- `b::Float64`: span
-- `bs::Float64`: wing-break span.
-- `bo::Float64`: wing-root span.
-- `bop::Float64`: span of wing-root streamline in Trefftz plane
-- `zcent`:
-- `gammat`:
-- `gammas`:
-- `fLo`: wing root load adjustment factors.
-- `ktip`: wing tip load adjustment factors.
-- `Lspec`:
-- `CLsurfsp`:
+!!! details "🔃 Inputs"
+    - `nsurf::Integer`: number of surfaces (typically wing and horizontal tail)
+    - `npout`::Integer: number of spanwise intervals (outer panel)
+    - `npinn`::Integer:  "     "       (inner panel)
+    - `npimg`::Integer:  "     "       (image inside fuselage)
+    - `b::Float64`: span
+    - `bs::Float64`: wing-break span.
+    - `bo::Float64`: wing-root span.
+    - `bop::Float64`: span of wing-root streamline in Trefftz plane
+    - `zcent`:
+    - `gammat`:
+    - `gammas`:
+    - `fLo`: wing root load adjustment factors.
+    - `ktip`: wing tip load adjustment factors.
+    - `Lspec`:
+    - `CLsurfsp`:
 
-See section A 2.13 of TASOPT docs.
+See [here](@ref trefftz) or section ____ of TASOPT docs.
 """
 function trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
