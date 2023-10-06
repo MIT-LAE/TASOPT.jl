@@ -3,12 +3,27 @@
 The key drag contributions are assumed to come from the fuselage, wing and tail surfaces, and the lift induced drag calculated at the Trefftz plane.
 
 
-## Axisymmetric fuselage drag 
+## [Axisymmetric fuselage drag](@id axi)
 The fuselage profile drag is determined by a quasi-axisymmetric coupled viscous-inviscid calculation. See "Simplified Viscous/Inviscid Calculation for Nearly-Axisymmetric Bodies" by M. Drela.
 
 This method does not require any wetted area approximations or fineness-ratio correlations.
 
+The method requires the geometry to be specified in the form of a
+cross-sectional area distribution $A{\scriptstyle (x)}$ and also a
+perimeter distribution $b_0{\scriptstyle (x)}$, shown in the
+Figure below. For a
+round cross-section these are of course related, but to allow treating
+more general fuselage cross-sections, they are assumed to be specified
+separately. The cross section sizes and shapes can vary along the body,
+provided the variation is reasonably smooth.
+
+
 ![ADfuse](../assets/ADfuse.png)
+
+```@eval
+using Markdown
+Markdown.parse_file(joinpath("../..", "src/aero","theory_fuse_profile_drag.md"))
+```
 
 ```@docs
 
@@ -41,6 +56,37 @@ aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
 aerodynamics.fusebl!(pari, parg, para, ip)
 ```
 
+## [Treftz plane drag calculation](@id trefftz)
+
+![Wake streamline contraction due to fuselage thickness, carrying wing
+circulation into the wake. Two shaded streamtubes are shown. Wake center
+radius $y'_o$ is nonzero due to the fuselage viscous wake displacement
+area.](../assets/trefftz.png)
+Wake streamline contraction due to fuselage thickness, carrying wing
+circulation into the wake. Two shaded streamtubes are shown. Wake center
+radius $y'_o$ is nonzero due to the fuselage viscous wake displacement
+area.
+
+![Trefftz Plane vortices $i,i\!+\!1 \ldots$ and collocation points
+$i\!+\!1/2$ used for velocity, impulse, and kinetic energy calculations.
+Left/right symmetry is exploited.](../assets/tpvort.png)
+Trefftz Plane vortices $i,i\!+\!1 \ldots$ and collocation points
+$i\!+\!1/2$ used for velocity, impulse, and kinetic energy calculations.
+Left/right symmetry is exploited.  
+
+```@eval
+using Markdown
+Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
+```
+
+```@docs
+aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+	Sref, bref,
+	b,bs,bo,bop, zcent,
+	po,gammat,gammas, fLo,ktip,
+	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+```
+
 ## Total drag calculation
 ```@docs
 aerodynamics.cdsum!(pari,parg,para,pare, icdfun)
@@ -64,15 +110,6 @@ aerodynamics.surfcd(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
-```
-
-## Treftz plane drag calculation
-```@docs
-aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
-	Sref, bref,
-	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo,ktip,
-	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 ```
 
 ## Other utilites
