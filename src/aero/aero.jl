@@ -8,7 +8,7 @@ module aerodynamics
 using StaticArrays
 using ..atmosphere
 
-export cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
+export airfoil, cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
 
 #include index to access arrays
 include("../misc/index.inc")
@@ -34,6 +34,7 @@ jdim::Int = 360
  vnc   = zeros(Float64, idim)
  
 # Aerofoil calculations
+include("airfoil.jl")
 include("airtable2.jl")
 include("airfun2.jl")
 
