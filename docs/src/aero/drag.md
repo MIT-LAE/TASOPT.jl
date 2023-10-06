@@ -55,7 +55,7 @@ aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
 aerodynamics.fusebl!(pari, parg, para, ip)
 ```
 
-## Treftz plane drag calculation
+## [Treftz plane drag calculation](@id trefftz)
 
 ![Wake streamline contraction due to fuselage thickness, carrying wing
 circulation into the wake. Two shaded streamtubes are shown. Wake center
