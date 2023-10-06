@@ -347,6 +347,15 @@ function benchmark_gasfuns()
         bench = @benchmarkable gas_N2($t1, $t, $tl, $cp, $cpt, $h, $s) seconds=30 evals=50
 end
 
+function benchmark_gas()
+    function f(n)
+        for T in rand(200.0:500.0, n)
+        _,_,cp,_ = TASOPT.engine.gas_N2(T)
+        end
+    end
+    @benchmark f($100)
+end
+
 include("../Models/ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
 
 benchmark_fuseBL()
