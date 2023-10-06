@@ -17,6 +17,7 @@ more general fuselage cross-sections, they are assumed to be specified
 separately. The cross section sizes and shapes can vary along the body,
 provided the variation is reasonably smooth.
 
+
 ![ADfuse](../assets/ADfuse.png)
 
 ```@eval
