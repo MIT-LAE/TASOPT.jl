@@ -184,9 +184,9 @@ or present results.
 function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     pari = ac.pari
     parg = ac.parg
-    pare = ac.pare
-    para = ac.para
-    parm = ac.parm
+    @views pare = ac.pare[:,:,1]
+    @views para = ac.para[:,:,1]
+    @views parm = ac.parm[:,:,1]
     # Wing
         co = parg[igco]
         cs = parg[igco]*parg[iglambdas]
@@ -612,9 +612,9 @@ function plot_details(ac::aircraft; ax = nothing)
 
     pari = ac.pari
     parg = ac.parg
-    pare = ac.pare
-    para = ac.para
-    parm = ac.parm
+    @views pare = ac.pare[:,:,1]
+    @views para = ac.para[:,:,1]
+    @views parm = ac.parm[:,:,1]
         ## Create empty plot
         if ax === nothing
             # plt.style.use(["../miscellaneous/prash.mplstyle", "seaborn-colorblind"]) # HACK
