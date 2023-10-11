@@ -1099,7 +1099,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
 
             # mission PFEI
             Wburn = WMTO * fburn
-            parm[imPFEI] = Wburn * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
+            parm[imPFEI] = Wburn/gee * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
 
       end
 
