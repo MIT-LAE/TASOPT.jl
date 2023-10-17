@@ -12,8 +12,9 @@ include("../tasopt.jl")
 include("737input.jl")
 
 # 3) Size aircraft
-saveOD = false
-time_wsize = @elapsed size_aircraft(35, 0, false, true, saveOD)
+time_wsize = @elapsed size_aircraft(iter=35, initwgt=false, 
+                                    Ldebug=false, printiter=true, 
+                                    saveOD=false)
 println(parg[igWMTO])
 
 # 4) Visualize outputs

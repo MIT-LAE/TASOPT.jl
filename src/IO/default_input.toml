@@ -56,12 +56,11 @@
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
-    pax = [180, 150]            # Number of passengers in each mission
+
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
 
-    weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
-                            # includes luggage [lbm or lbf or kg or N] 
-                            # judging you if you use imperial units but wtvs
+    pax = [180, 150]                    # Number of passengers in each mission
+                                        # weight per pax defined as TASOPT constant Wpax
 
     fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
 
