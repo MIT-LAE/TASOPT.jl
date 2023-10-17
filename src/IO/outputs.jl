@@ -85,7 +85,7 @@ of the aircraft
 """
 function aero(ac::aircraft; io = stdout)
     parg = ac.parg
-    para = ac.para
+    @views para = ac.para[:,:,1]
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
     @printf(io, "Ref.Area= %6.5f m²\n", parg[igS])
