@@ -2,7 +2,7 @@
 
 Transport Aircraft and the Environment System OPTimization - 
 
-Julia based TASOPT++ includes PCEC, hydrogen fuel options etc. Perhaps need some cooler name but can always change later - how about ZITA: Zero Impact Transport Aircraft
+Julia based TASOPT includes PCEC, hydrogen fuel options etc. See documentation here: https://hex.mit.edu/~prash/tasopt.jl/
 
 ## Getting started
 
