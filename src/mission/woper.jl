@@ -16,18 +16,22 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, 
     tolerW = 1.0e-8
     errw   = 1.0
 
+    #iterate through mission points
     for ip = 1: iptotal
+        #iterate through aero parameters
           for ia = 1: iatotal
+                #Setting altitude and mach speeds
                 para[ia,ip] = parad[ia,ip]
-
-                para[iaalt, ipcruise1] = 10668
-                para[iaalt, ipclimbn] = 10668
-                para[iaMach, ipclimbn:ipdescent1] .= 0.78
           end
+          #iterate through engine parameters
           for ie = 1: ietotal
                 pare[ie,ip] = pared[ie,ip]
           end
     end
+    
+    para[iaalt, ipcruise1] = 10668
+    para[iaalt, ipclimbn] = 10668
+    para[iaMach, ipclimbn:ipdescent1] .= 0.78
 
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
@@ -35,7 +39,8 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, 
 #        para(iafexcdt,ip) = parm[imfexcdt]
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
-    time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
+    # Calculates surface velocities, boundary layer, wake 
+    fusebl!(pari, parg, para, ipcruise1)
 
 #---- assume K.E., dissipation, drag areas will be the same for all points
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
@@ -94,13 +99,8 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, 
           para[iafracW,ip] = parad[iafracW,ip] * rCR
     end
     # Descent
-    @inbounds for  ip = ipdescent1:ipdescentn
-          para[iafracW,ip] = parad[iafracW,ip] * rDE
-    end
-
-    @inbounds for ip = 1: iptotal
-          para[iagamV,ip] = parad[iagamV,ip]
-    end
+    para[iafracW,ipdescent1:ipdescentn] .= parad[iafracW,ipdescent1:ipdescentn] .* rDE
+    para[iagamV,:] .= parad[iagamV,:]
 
 #---- estimate takeoff speed and set V,Re over climb and descent
 #-    (needed to start trajectory integration)
@@ -247,10 +247,13 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, 
     para[iaReunit, ip] = Mach*a0 *ρ0/μ0
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS)
+    time_propsys += mission!(pari, parg, parm, para, pare, false, NPSS_PT, NPSS,true)
+    # println(parm[imWfuel,:])
+    
 #-------------------------------------------------------------------------
 
 # Convergence tests
+    
     WMTO = parg[igWMTO]
     errw1 = (WMTO - WMTO1)/WMTO
     errw2 = (WMTO - WMTO2)/WMTO
@@ -258,8 +261,10 @@ function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, 
 
     errw = max(abs(errw1), abs(errw2), abs(errw3))
 
-    if (errw <= tolerW)
+    if (errw <= tolerW) 
           Lconv = true
+          printstyled("Converged!", "\n"; color=:green)
+        
           break
     end
 
