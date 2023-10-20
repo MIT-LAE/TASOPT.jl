@@ -8,11 +8,9 @@ const kts_to_mps = 0.51444
 const hp_to_W = 745.7
 const lb_N = 0.22480902473348890
 
-const Wpax = 215*lbf_to_N #weight per passenger
-
 const gee = 9.81
 const gamSL = 1.4
 const cpSL = 1004.0
 const μAir = 1.78e-5
-const pref = 101320.00000000000
-const Tref = 288.19999999999999
+const pref = 101320.0
+const Tref = 288.2

@@ -25,6 +25,7 @@ struct aircraft
     parm::AbstractArray{Float64}
     para::AbstractArray{Float64}
     pare::AbstractArray{Float64}
+    sized::MVector{1,Bool}
 end
 
 function Base.summary(ac::aircraft)
