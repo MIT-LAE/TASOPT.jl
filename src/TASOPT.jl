@@ -26,7 +26,7 @@ const __TASOPTroot__ = @__DIR__
 include("./misc/constants.jl")
 export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
        lbf_to_N, kts_to_mps, hp_to_W, lb_N
-export gee, gamSL, cpSL, μAir, pref, Tref, Wpax
+export gee, gamSL, cpSL, μAir, pref, Tref
 
 include("./misc/units.jl")
 export convertMass, convertForce, convertDist, 
@@ -64,7 +64,7 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 export read_aircraft_model, load_default_model
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
-include(joinpath(__TASOPTroot__,"IO/savemodel.jl"))
+include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
@@ -105,6 +105,9 @@ function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
     wsize(ac.pari, ac.parg, view(ac.parm, :, 1), 
         view(ac.para, :, :, 1), view(ac.pare, :, :, 1),
         iter, 0.5, 0.9, 0.5, initwgt, 0, 1, Ldebug, printiter, saveOD)
+
+    #if sized properly, mark as such
+    ac.sized .= true
 end
 
 end

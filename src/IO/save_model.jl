@@ -42,6 +42,7 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_desc = Dict()
     d_desc["name"] = ac.name
     d_desc["description"] = ac.description
+    d_desc["sized"] = ac.sized
     d_out["Aircraft Description"] = d_desc
 
     #Options------------------------
@@ -71,7 +72,8 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_miss["N_missions"] = size(ac_m,2)
         
         d_miss["range"] = ac_m[imRange,:]
-        d_miss["pax"] = ac_m[imWpay,:]/Wpax
+        d_miss["weight_per_pax"] = ac_g[igWpax]
+        d_miss["pax"] = ac_m[imWpay,:]./ ac_g[igWpax]
         d_miss["fuel_reserves"] = ac_g[igfreserve]
         d_miss["Vne"] = ac_g[igVne]
         d_miss["Nlift"] = ac_g[igNlift]
@@ -286,6 +288,14 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Stabilizers------------------------
     d_stab = Dict()
+
+        d_stab["lowspeed_cdf"] = ac_a[iacdft,1,1]
+        d_stab["lowspeed_cdp"] = ac_a[iacdpt,1,1]
+        d_stab["Re_ref"] = ac_a[iaRereft,1,1]
+
+        d_stab["excrescence_drag_factor"] = ac_a[iafexcdt,1,1]
+
+
     #Horz tail
     d_stab_htail  = Dict()
         d_stab_htail["AR_Htail"] = ac_g[igARh]
@@ -306,7 +316,7 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_stab_htail["CLh_at_max_forward_CG"] = ac_g[igCLhCGfwd]
         end
 
-        d_stab_htail["movewing"] = ac_i[iixwmove]
+        d_stab_htail["move_wingbox"] = ac_i[iixwmove]
 
         d_stab_htail["SM_min"] = ac_g[igSMmin]
 
@@ -450,10 +460,10 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_prop_offt = Dict()
         #TODO: check if htese expressions are correct (Wpax)
         #Also, check matrix slicing thing here too
-        d_prop_offt["LPC_mass_offtake_per_pax"] = ac_g[igmofWpay]*Wpax
+        d_prop_offt["LPC_mass_offtake_per_pax"] = ac_g[igmofWpay]*ac_g[igWpax]
         d_prop_offt["LPC_mass_offtake_per_max_mass"] = ac_g[igmofWMTO]*gee
 
-        d_prop_offt["Low_spool_power_offtake_per_pax"] = ac_g[igPofWpay]*Wpax
+        d_prop_offt["Low_spool_power_offtake_per_pax"] = ac_g[igPofWpay]*ac_g[igWpax]
         d_prop_offt["Low_spool_power_offtake_per_max_mass"] = ac_g[igPofWMTO]*gee
 
         d_prop_offt["Tt_offtake_air"] = ac_e[ieTt9,1,1]
@@ -494,7 +504,7 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_prop_weight = Dict()
         d_prop_weight["engine_access_weight_fraction"] = ac_g[igfeadd]
         d_prop_weight["pylon_weight_fraction"] = ac_g[igfpylon]
-        d_prop_weight["weight_model"] = engweightmodel[ac_g[iiengwgt]]
+        d_prop_weight["weight_model"] = engweightmodel[ac_i[iiengwgt]]
     d_prop["Weight"] = d_prop_weight
 
     d_out["Propulsion"] = d_prop
@@ -514,9 +524,11 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         if save_output
             println("Functions for saving sized params not yet implemented.")
-            if ac.sized
+            if ac.sized[1]
                 #TODO: sized aircraft output
 
+            else
+                @warn ac.name * " is not sized. Outputs will not be saved."
             end #if
         end #if
     end #open()

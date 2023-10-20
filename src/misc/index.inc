@@ -370,8 +370,10 @@
       const ig_MW = 299
       const ighfuel      = 300
       const igTfuel      = 301
+      const igWpax = 302
 
-      const igtotal    = 301
+      const igtotal    = 302
+
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

@@ -78,6 +78,7 @@ default = TOML.parsefile(defaultfile)
 ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
+sized = get(ac_descrip, "sized",[false])
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
 dmis = default["Mission"]
@@ -149,7 +150,8 @@ parg[igrhofuel] = readfuel("fuel_density")
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
 
-parm[imWpay, :] .= readmis("pax") * Wpax
+parg[igWpax, :] .= Force(readmis("weight_per_pax"))
+parm[imWpay, :] .= readmis("pax") .* parg[igWpax]
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
@@ -673,9 +675,9 @@ readoff(x) = read_input(x, off, doff)
     pare[ieTt9, :, :] .= Ttdischarge
     pare[iept9, :, :] .= Ptdischarge
 
-    parg[igmofWpay] = mofftpax / Wpax
+    parg[igmofWpay] = mofftpax ./ parg[igWpax]
     parg[igmofWMTO] = mofftmMTO / gee
-    parg[igPofWpay] = Pofftpax / Wpax
+    parg[igPofWpay] = Pofftpax ./ parg[igWpax]
     parg[igPofWMTO] = PofftmMTO / gee
 
 ## Nozzle areas
@@ -760,7 +762,7 @@ dweight = dprop["Weight"]
     end
 
 return TASOPT.aircraft(name, description,
-pari, parg, parm, para, pare)
+        pari, parg, parm, para, pare, sized)
 
 end
 
