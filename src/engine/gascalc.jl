@@ -899,3 +899,110 @@ function gasfuel(ifuel, n)
 
       return gamma
 end # gasfuel
+
+"""
+    gasPr(gas, T)
+
+This function calculates some gas thermodynamic properties of different species, including
+viscosity, thermal conductivity, specific heat, and Prandtl number.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `gas::char`: gas name
+    - `T::Float64`: temperature (K)
+ 
+    **Outputs:**
+    - `R::Float64`: gas constant (J/kg/K)
+    - `Pr::Float64`: Prandtl number
+    - `γ::Float64`: ratio of specific heats
+    - `cp::Float64`: specific heat at constant pressure (J/kg/K)
+    - `μ::Float64`: dynamic viscosity (Pa s)
+    - `k::Float64`: thermal conductivity (W/m/K) 
+"""
+
+function gasPr(gas, T)
+      #TODO: replace with new gas model
+      if (gas == "air")
+            μ0 = 1.716e-5
+            S_μ = 111
+            K0 = 0.0241
+            S_k = 194
+            T0 = 273
+
+            alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
+            nair = 5
+            s, dsdt, ht, dhdt, cp, R = gassum(alpha, nair, T)
+
+      elseif (gas == "co2")
+            μ0 = 1.370e-5
+            S_μ = 222
+            K0 = 0.0146
+            S_k = 1800
+            T0 = 273
+
+            igas = 3
+            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+
+      elseif (gas == "n2")
+            μ0 = 1.663e-5
+            S_μ = 107
+            K0 = 0.0242
+            S_k = 150
+            T0 = 273
+
+            igas = 1
+            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+      elseif (gas == "o2")
+            μ0 = 1.919e-5
+            S_μ = 139
+            K0 = 0.0244
+            S_k = 240  
+            T0 = 273   
+
+            igas = 2
+            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+
+      elseif (gas == "h2o")
+            #parameters obtained by a fit to NIST data
+            μ0 = 1.147e-5
+            S_μ = 1010
+            K0 = 0.02133
+            S_k = 8331   
+            T0 = 350 
+            
+            igas = 4
+            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+
+      elseif (gas == "ch4")
+            #parameters obtained by a fit to NIST data
+            μ0 = 1.024e-05 
+            S_μ = 179.1
+            K0 = 0.02977
+            S_k = 2859   
+            T0 = 273 
+            
+            igas = 11
+            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+
+      elseif (gas == "h2")
+            #parameters obtained by a fit to NIST data
+            μ0 = 8.485e-06
+            S_μ = 99.95
+            K0 = 0.1701
+            S_k = 161.1    
+            T0 = 273
+            
+            R = 8.3144598 / (2.016e-3)
+            cp = 14200 #TODO: replace this with a proper evaluation as a function of T
+      end
+      
+
+      # Apply Sutherland's laws for viscosity and thermal conductivity
+      μ = μ0 * (T / T0)^(3 / 2) * ( (T0 + S_μ) / (T + S_μ) )
+      k = K0 * (T / T0)^(3 / 2) * ( (T0 + S_k) / (T + S_k) )
+
+      Pr = cp * μ / k
+      γ = cp / (cp - R)
+
+      return R, Pr, γ, cp, μ, k 
+end
