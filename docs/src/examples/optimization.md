@@ -1,7 +1,5 @@
 # Example for a Multi-variable Optimization
 
-![Optimization Iteration Plot](../assets/Opt_tutorial_iterations.png)
-
 To run a multi variable optimization run on an aircraft model first determing your design variables. For this example the design variables are:
 
 1. Aspect Ratio: `AR`

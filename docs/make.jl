@@ -15,10 +15,6 @@ makedocs(
     remotes = nothing,
     sitename = "TASOPT.jl Documentation",
     pages = [ "Home" => "index.md", 
-    "Examples" => Any[
-        "Payload Range Diagram" => "examples/payload_range.md",
-        "Multivariable Optimization"=>"examples/optimization.md"
-        ],
     "Atmospheric properties" => "atmos/atmos.md",
     "Aerodynamics" => Any[
         "aero/geometry.md",
@@ -32,6 +28,7 @@ makedocs(
         ],
         "Propulsion systems" => Any[
             "propulsion/propsys.md",
+            "propulsion/hxfun.md",
         ],
         "Stability" => "balance/balance.md",
         "Sizing" => "sizing/sizing.md",
