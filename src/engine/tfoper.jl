@@ -2552,7 +2552,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         println("Ja", i, j, aa, ss, "Jd", i, j, dd, ss)
                   end
 
-                  exit()
+                  error("tfoper.jl error due to iter == -1")
 
             end
 

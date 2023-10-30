@@ -400,11 +400,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   end
 
                   if (fc >= 0.99)
-                        println("")
-                        println("TFSIZE: Excessive cooling flow")
-                        println("mcool/mcore =", fc)
-                        println("Tt3 Tt4 Tmetal", Tt3, Tt4, Tmrow[1])
-                        exit()
+                        error("TFSIZE: Excessive cooling flow", 
+                              "\n\tmcool/mcore = ", fc, 
+                              "\n\tTt3 Tt4 Tmetal ", Tt3, " K, ", Tt4, " K, ", Tmrow[1], " K")
                   end
 
                   #----- set ff = mdot_fuel/mdot_core = ffb * mdot_burner/mdot_core
@@ -513,15 +511,15 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pratfn = p0 / pt8
             p8, T8, h8, s8, cp8, R8 = gas_prat(alpha, nair, pt8, Tt8, ht8, st8, cpt8, Rt8, pratfn, 1.0)
             if (h8 >= ht8)
-                  println("TFSIZE: Negative fan plume velocity")
-                  println("pt2  Tt2  =", pt2, Tt2)
-                  println("pt8  Tt8  =", pt8, Tt8)
-                  println("p8   T8   =", p8, T8)
-                  println("pif  BPR  =", pif, BPR)
+
                   Lconv = false
 
                   u8 = 0.001 * sqrt(R8 * T8)
-                  exit()
+                  error("TFSIZE: Negative fan plume velocity", 
+                        "\n\tpt2,  Tt2  = ", pt2, " Pa, ",  Tt2, " K",
+                        "\n\tpt8,  Tt8  = ", pt8, " Pa, ",  Tt8, " K", 
+                        "\n\tp8,  T8  = "  , p8,  " Pa, ",  T8,  " K", 
+                        "\n\tpif,  BPR  = ", pif, " Pa, ",  BPR)
             else
                   u8 = sqrt(2.0 * (ht8 - h8))
             end
@@ -538,17 +536,17 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             prattn = p0 / pt6
             p6, T6, h6, s6, cp6, R6 = gas_prat(lambdap, nair, pt6, Tt6, ht6, st6, cpt6, Rt6, prattn, 1.0)
             if (h6 >= ht6)
-                  println("TFSIZE: Negative core plume velocity")
-                  println("pt2  Tt2  =", pt2, Tt2)
-                  println("pt3  Tt3  =", pt3, Tt3)
-                  println("pt4  Tt4  =", pt4, Tt4)
-                  println("pt41 Tt41 =", pt41, Tt41)
-                  println("pt6  Tt6  =", pt6, Tt6)
-                  println("p6   T6   =", p6, T6)
-                  println("pif  BPR  =", pif, BPR)
+                  
                   Lconv = false
-                  exit()
                   u6 = 0.001 * sqrt(R6 * T6)
+                  error("TFSIZE: Negative core plume velocity", 
+                        "\n\tpt2,  Tt2  = ", pt2, " Pa, ",  Tt2, " K",
+                        "\n\tpt3,  Tt3  = ", pt3, " Pa, ",  Tt3, " K", 
+                        "\n\tpt4,  Tt4  = ", pt4, " Pa, ",  Tt4, " K", 
+                      "\n\tpt41,  Tt41  = ", pt41," Pa, ",  Tt41," K", 
+                        "\n\tpt6,  Tt6  = ", pt6, " Pa, ",  Tt6, " K", 
+                        "\n\tp6,  T6  = "  , p6,  " Pa, ",  T6,  " K", 
+                        "\n\tpif,  BPR  = ", pif, " Pa, ",  BPR)
             else
                   u6 = sqrt(2.0 * (ht6 - h6))
             end
