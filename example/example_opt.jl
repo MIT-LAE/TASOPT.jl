@@ -168,23 +168,24 @@ numevals = opt.numevals # the number of function evaluations
 
 println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
 
+savedir = "./example/optimization/"
 figure()
-savedir = "./example/optimization/local_test"
 if !isdir(savedir)
     # If it doesn't exist, create the "optimization" directory
     mkdir(savedir)
     println("The 'optimization' directory has been created.")
 end
+
 figname = "Opt_tutorial_ac_details"
 global track_fig = TASOPT.plot_details(ac; ax = track_fig)
 plt.savefig(savedir*figname*".png")
 # savemodel("./Models/"*figname*".mdl", pari, parg, parm, para, pare, parpt, parmot, pargen)
 
-fig, ax = plt.subplots(2,2, figsize = (12,8))
+fig, ax = plt.subplots(2,2, figsize = (12,8), dpi = 300)
 ax[1].plot(PFEIarray)
 ax[1].set_xlabel("Iterations")
 ax[1].set_ylabel("PFEI (J/Nm)")
-ax[2].plot(farray)
+ax[2].semilogy(farray)
 ax[2].set_xlabel("Iterations")
 ax[2].set_ylabel("Objective f")
 ax[3].plot(CDarray)
