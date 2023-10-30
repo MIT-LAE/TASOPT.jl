@@ -9,13 +9,12 @@ include("../src/misc/index.inc")
 # import indices for calling parameters
 using NLopt
 
-
 # Declare dataframes used for plotting later
 xarray = []
 farray = []
 PFEIarray = []
 CDarray = []
-WMTOarray = []
+OPRarray = []
 track_fig = nothing
 ft_to_m = 0.3048
 
@@ -26,9 +25,8 @@ ft_to_m = 0.3048
 # Load default model
 ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/opt_input.toml"))
 
-#     datafile
 # Size aircraft once to get initial values
-time_wsize = @elapsed size_aircraft!(ac)
+#time_wsize = @elapsed size_aircraft!(ac)
 
 parg = ac.parg 
 para = ac.para 
@@ -48,29 +46,31 @@ function obj(x, grad)
     parg[ighboxs] = x[8] #spanbreak_thickness_to_chord
     para[iarcls, ipclimb1+1 : ipdescentn-1, :] .= x[9]   #  rcls    break/root cl ratio = cls/clo
     para[iarclt, ipclimb1+1 : ipdescentn-1, :] .= x[10]   #  rclt    tip  /root cl ratio = clt/clo
-
+    pare[ieTt4, ipcruise1:ipcruise2, :] .= x[11]
+    pare[iepilc] = 3
+    pare[iepihc] = x[12] #lpc PR fixed  = 3 hpc design var
+    pare[iepif] = x[13] #Fan PR
     # Sizing aircraft with new parameters
     TASOPT.size_aircraft!(ac, iter =50, printiter=false)
     f = parm[imPFEI]
     push!(PFEIarray, parm[imPFEI])
     push!(xarray, x)
     push!(CDarray, para[iaCD, ipcruise1, 1])
-    push!(WMTOarray, parg[igWMTO])
+    push!(OPRarray, pare[iept3]/pare[iept2])
 
-    #0.827 0.7759
     # Max span constriant
-    bmax = parg[igbmax]
-    b    = parg[igb]
-    constraint  = b/bmax - 1.0
-    penfac  = 25.0* parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # bmax = parg[igbmax]
+    # b    = parg[igb]
+    # constraint  = b/bmax - 1.0
+    # penfac  = 25.0* parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
 
-    # Min climb gradient
-    gtocmin = parg[iggtocmin]
-    gtoc    = para[iagamV, ipclimbn,1]
-    constraint = 1.0 - gtoc/gtocmin
-    penfac = 1.0*parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # # Min climb gradient
+    # gtocmin = parg[iggtocmin]
+    # gtoc    = para[iagamV, ipclimbn,1]
+    # constraint = 1.0 - gtoc/gtocmin
+    # penfac = 1.0*parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
 
     # # Max Tt3 at TOC 
     # Tt3max = 900 
@@ -86,6 +86,13 @@ function obj(x, grad)
     # penfac = 5.0*parg[igWpay]
     # f = f + penfac*max(0.0, constraint)^2
     
+    # Ensure aircraft weight makes sense
+    WTOmax = ac.parg[igWMTO]
+    WTO = ac.parm[imWTO,1]
+    constraint = WTO/WTOmax - 1.0
+    penfac = 10*parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+
     # Ensure fuel volume makes sense
     Wfmax = parg[igWfmax]
     Wf    = parg[igWfuel]
@@ -93,30 +100,30 @@ function obj(x, grad)
     penfac = 10*parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
 
-    # Max Fan diameters
-    dfanmax = 2.0
-    dfan = parg[igdfan]
-    constraint = dfan/dfanmax - 1.0
-    penfac = parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # # Max Fan diameters
+    # dfanmax = 2.0
+    # dfan = parg[igdfan]
+    # constraint = dfan/dfanmax - 1.0
+    # penfac = parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
 
-    # Ensure fans will fit within fuselage
-    daftfanmax = min(3.0, 0.9*parg[igRfuse])
-    daftfan = parg[igdaftfan]
-    constraint = daftfan/daftfanmax - 1.0
-    penfac = parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # # Ensure fans will fit within fuselage
+    # daftfanmax = min(3.0, 0.9*parg[igRfuse])
+    # daftfan = parg[igdaftfan]
+    # constraint = daftfan/daftfanmax - 1.0
+    # penfac = parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
 
-    # Ensure Fans will fit on wing
-    bo = parg[igbo]
-    b  = parg[igb]
-    lmax = b/2*4/5 - (bo/2+2*parg[igdfan])
-    lfans = parg[igneng]/2*parg[igdfan]*1.25
-    constraint = lfans/lmax - 1.0
-    penfac = parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # # Ensure Fans will fit on wing
+    # bo = parg[igbo]
+    # b  = parg[igb]
+    # lmax = b/2*4/5 - (bo/2+2*parg[igdfan])
+    # lfans = parg[igneng]/2*parg[igdfan]*1.25
+    # constraint = lfans/lmax - 1.0
+    # penfac = parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
     
-    println("X̄ = $x  ⇨  PFEI = $(parm[imPFEI]) f = $f, MTOW = $(parg[igWMTO])")
+    println("X̄ = $x  ⇨  PFEI = $(parm[imPFEI]) f = $f, OPR = $(pare[iept3]/pare[iept2]),")
     push!(farray, f)
     
     return f
@@ -124,18 +131,18 @@ end
 
 # Set lower and upper limits
 # DESIGN VARIABLES
-#             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt 
-lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1]
-upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0] 
+#             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
+lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6,      0]
+upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15,     10] 
 
 # Set initial changes
-initial_dx = [ 0.5, 1000.0,  0.05, 0.1,  0.01,0.01,0.01,   0.01,   0.01,   0.01]
+initial_dx = [ 0.5, 1000.0,  0.05, 0.1,  0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.5]
 
 # Set initial values
 initial =[
         parg[igAR], 33000.0, 0.57, parg[igsweep], 
         parg[iglambdas], parg[iglambdat], parg[ighboxo], 
-        parg[ighboxs], para[iarcls, ipcruise1,1], para[iarclt, ipcruise1,1], 
+        parg[ighboxs], para[iarcls, ipcruise1,1], para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
 ]
 
 # Set FTOL
@@ -161,7 +168,13 @@ numevals = opt.numevals # the number of function evaluations
 
 println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
 
-savedir = "./example/optimization/"
+figure()
+savedir = "./example/optimization/local_test"
+if !isdir(savedir)
+    # If it doesn't exist, create the "optimization" directory
+    mkdir(savedir)
+    println("The 'optimization' directory has been created.")
+end
 figname = "Opt_tutorial_ac_details"
 global track_fig = TASOPT.plot_details(ac; ax = track_fig)
 plt.savefig(savedir*figname*".png")
@@ -177,8 +190,9 @@ ax[2].set_ylabel("Objective f")
 ax[3].plot(CDarray)
 ax[3].set_xlabel("Iterations")
 ax[3].set_ylabel("CD")
-ax[4].plot(WMTOarray./1000)
+ax[4].plot(OPRarray)
 ax[4].set_xlabel("Iterations")
-ax[4].set_ylabel("WMTO (1000kg)")
+ax[4].set_ylabel("OPR")
 plt.suptitle("Optimization outputs")
-fig.savefig("./example/Optimization/Opt_tutorial_iterations.png")
+figname2 = "./example/Optimization/local_test/Opt_tutorial_iterations"
+fig.savefig(figname2*".png")
