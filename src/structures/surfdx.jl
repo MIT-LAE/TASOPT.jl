@@ -3,6 +3,21 @@
 
 Calculates area centroid x-offset due to sweep
 and the mean aerodynamic chord (normalized by root chord, `co`)
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `b::Float64`: Wingspan
+    - `bs::Float64`: Spanwise location of the start of the taper
+    - `bo::Float64`: Spanwise location of the root chord
+    - `λt::Float64`: Tip chord ratio (tip chord / root chord)
+    - `λs::Float64`: Start chord ratio (start chord / root chord).
+    - `sweep::Float64`: Sweep angle in degrees.
+
+    **Outputs:**
+    - `dx::Float64`: Area centroid x-offset due to sweep
+    - `macco::Float64`: Mean aerodynamic chord normalized by root chord.
+
+See [here](@ref wingtail) or Section 2.5.1  of TASOPT docs.
 """
 function surfdx(b,bs,bo,λt,λs,sweep)
 
