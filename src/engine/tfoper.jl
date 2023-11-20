@@ -2552,7 +2552,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         println("Ja", i, j, aa, ss, "Jd", i, j, dd, ss)
                   end
 
-                  exit()
+                  error("tfoper.jl error due to iter == -1")
 
             end
 
@@ -3040,7 +3040,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         u25 = sqrt(2.0 * (ht25 - h25))
                         M25 = u25 / sqrt(T25 * R25 * cp25 / (cp25 - R25))
                   end
-
+                  
                   Lconv = true
                   return TSFC, Fsp, hfuel, ff,
                   Feng, mcore,

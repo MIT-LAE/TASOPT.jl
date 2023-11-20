@@ -49,8 +49,7 @@ function gasfun(igas, t)
     elseif (igas == 24)
         s, h, cp, r = gas_C14H30(t)
     else
-        println("GASFUN: undefined gas index: ", igas)
-        exit(code=0)
+        error("GASFUN: undefined gas index: ", igas, " & code=0")
     end
     s_t = cp / t
     h_t = cp
@@ -112,8 +111,7 @@ function gaschem(igas)
         buf[kc] = 14
         buf[kh] = 30
     else
-        println("GASFUN: undefined gas index: ", igas)
-        exit(code=0)
+        error("GASFUN: undefined gas index: ", igas, " & code=0")
     end
     nchon = copy(buf)
     return nchon

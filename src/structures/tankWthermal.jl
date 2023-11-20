@@ -1,31 +1,35 @@
 """
-`tankthermal`
+      tankWthermal(l_cyl, r_tank, Shead,
+            hconvgas, h_LH2, hconvair, 
+            t_cond, k, Tfuel, Tair, 
+            h_v:, time_flight)
+
+`tankWthermal` calculates the boil-off rate of LH2 for a given insulation thickness.
 
 This subroutine does **not** size the thermal insulation layers
 but rather calculates the boil-off rate of fLH2, 
 for a given insulation thickness
       
-## Inputs:
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `l_cyl::Float64`: Length of the tank (m).
+      - `r_tank::Float64`: Tank outer radius (m).
+      - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
+      - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
+      - `h_LH2::Float64`: LH2 convective coefficient (W/m²*K).
+      - `hconvair::Float64`: Convective coefficient of ambient air (W/m²*K).
+      - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
+      - `k::Array{Float64,1}`: Thermal conductivity array (W/(m*K)) comprising k values for each MLI layer.
+      - `Tfuel::Float64`: Fuel temperature (K).
+      - `Tair::Float64`: Ambient temperature (K).
+      - `h_v::Float64`: Heat of vaporization of liquid hydrogen (J/kg).
+      - `time_flight::Float64`: Time of flight (s).
 
-NOTE: Everything is in SI units. MLI: Multi-layer insulation
+      **Outputs:**
+      - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
+      - `mdot_boiloff::Float64`: Boil-off rate of LH2 (kg/s).
 
-- `l_cyl`   : length of tank (m)
-- `r_tank`   : tank outer radius (m)
-- `Shead`    : Array of surface areas of each layer of the end/ head of the tank [m²]
-- `hconvgas` : convective coefficient of insulating purged gas (e.g. N2) (W/m²*K)
-- `h_LH2`    : LH2 convective coefficient (W/m2*K) 
-- `hconvair` : convective coefficient of ambient air (W/m2*K)
-- `t_cond`   : Array of thickness of each layer in MLI (m)
-- `k`        : Thermal conductivity array  (W/(m*K)) comprising of k value for each MLI layer
-- `Tfuel`    : fuel temperature (K)
-- `Tair`     : ambient temperature (K)
-- `h_v`         : heat of vaporization of liquid hydrogen (from Hydrogen tank design paper) (J/kg)
-- `time_flight` : Time of flight (s)
-
-
-## Outputs:
-- `m_boiloff` :(kg) is the boiloff LH2 mass
-- `mdot_boiloff` (kg/s) is the boiloff rate of LH2
+See [here](@ref fueltanks).
 """
 function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1},
                       hconvgas::Float64, h_LH2::Float64,  hconvair::Float64, 
