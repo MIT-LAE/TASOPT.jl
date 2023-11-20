@@ -1,7 +1,5 @@
 # Example for a Payload-Range diagram
 
-![PayloadRangePlot](../assets/PayloadRangeExample.png)
-
 ## Choosing a design mission
 
 To plot a payload-range diagram with a fleet of missions you must first load a model with >=1 non design mission

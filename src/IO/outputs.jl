@@ -456,7 +456,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     ## Plot
     if ax === nothing
         # plt.style.use(["../miscellaneous/prash.mplstyle"]) # HACK
-        fig, ax = plt.subplots(figsize=(8,5), dpi = 100)
+        fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
     else
         ax.cla()
     end
@@ -587,11 +587,11 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         end
 
     if codeE
-        ax.set_ylim(-27,27)
+        ax.set_ylim(min(-27, -b/2.0), max(27, b/2.0))
     elseif codeD
-        ax.set_ylim(-23,23)
+        ax.set_ylim(min(-23, -b/2.0),max(23, b/2.0))
     else
-        ax.set_ylim(-20, 20)
+        ax.set_ylim(min(-20, -2b/2.0), max(20, b/2.0))
     end
     ax.set_aspect(1)
     ax.set_ylabel("y[m]")
@@ -618,7 +618,7 @@ function plot_details(ac::aircraft; ax = nothing)
         ## Create empty plot
         if ax === nothing
             # plt.style.use(["../miscellaneous/prash.mplstyle", "seaborn-colorblind"]) # HACK
-            fig, atemp = plt.subplots(2, 2, figsize=(8,5), dpi = 100, gridspec_kw=Dict("height_ratios"=>[1, 3], "width_ratios"=>[1,3]))
+            fig, atemp = plt.subplots(2, 2, figsize=(8,5), dpi = 300, gridspec_kw=Dict("height_ratios"=>[1, 3], "width_ratios"=>[1,3]))
             gs = atemp[1,2].get_gridspec()
             gssub = matplotlib.gridspec.SubplotSpec(gs, 0,1)
             atemp[1,1].remove()
@@ -778,7 +778,7 @@ end
 
 #737-800 from TASOPT w 220 pax
 function plot737compare(;weightdetail= true, fracs = false)
-    fig, ax = plt.subplots(1,2,figsize=(8,5), dpi = 100)
+    fig, ax = plt.subplots(1,2,figsize=(8,5), dpi = 300)
     
     Wempty  = 105757.5* lbf_to_N
 
@@ -1042,7 +1042,7 @@ function MomentShear(parg)
             M[i] = Ms*(c[i]/cs)^3
         end
     end
-    fig, ax = plt.subplots(2,1,figsize=(8,5), sharex = true, dpi = 100)
+    fig, ax = plt.subplots(2,1,figsize=(8,5), sharex = true, dpi = 300)
     ax[1].plot(etaRange,S)
     ax[1].set_ylabel("Shear")
     ax[2].plot(etaRange,M)
@@ -1388,7 +1388,7 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
     ## Plot
     if ax === nothing
         # plt.style.use(["../miscellaneous/prash.mplstyle"]) # HACK
-        fig, ax = plt.subplots(figsize=(8,5), dpi = 100)
+        fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
     else
         ax.cla()
     end
