@@ -1,38 +1,53 @@
 """
+        tanksize(gee, rhoFuel, deltap,
+                Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+                h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
+                wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
+
 `tanksize` sizes a cryogenic fuel tank for a LH-fueled aircraft
 
-Inputs:
+!!! details "🔃 Inputs and Outputs"
+        **Inputs:**
+        - `gee::Float64`: Gravitational acceleration (m/s^2).
+        - `rhoFuel::Float64`: Density of fuel (kg/m^3).
+        - `deltap::Float64`: Allowed pressure difference in vessel (Pa).
+        - `Rfuse::Float64`: Fuselage radius (m).
+        - `rho_insul::Array{Float64}`: Array of insulation layer densities (kg/m3).
+        - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
+        - `xshell1::Float64`: Start x-coordinate of the tank (m).
+        - `xshell2::Float64`: End x-coordinate of the tank (m).
+        - `Thermal::Array{Float64}`: Conductivity array k (W/(m*K)) for each MLI layer.
+        - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
+        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
+        - `Thickness::Array{Float64}`: Thickness array t (m) for each MLI layer.
+        - `h_LH2::Float64`: LH2 convective coefficient (W/m2*K).
+        - `Tfuel::Float64`: Fuel temperature (K).
+        - `Tair::Float64`: Ambient temperature (K).
+        - `r_tank::Float64`: Tank outer radius (m).
+        - `h_v::Float64`: Heat of vaporization of liquid hydrogen (J/kg).
+        - `r_gas::Float64`: Inner radius of the gas-purged chamber (m).
+        - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off.
+        - `mode::Char`: '1' means optimize m_boiloff, '2' means find m_boiloff based on given thickness.
 
-NOTE: Every parameter is in SI units
+        **Outputs:**
+        - `Wtank_total::Float64`: Total weight of the tank including fuel (N).
+        - `thickness_insul::Float64`: Total thickness of the insulation (m).
+        - `lshell::Float64`: Length of the tank (m).
+        - `mdot_boiloff::Float64`: Mass boiled off during the mission flight (kg).
+        - `Vfuel::Float64`: Volume of fuel (m^3).
+        - `Wfuel_tot::Float64`: Weight of fuel (N).
+        - `m_boiloff::Float64`: Mass boiled off (kg).
+        - `tskin::Float64`: Thickness of the tank's skin (m).
+        - `t_head::Float64`: Thickness of the tank's head (m).
+        - `Rtank::Float64`: Radius of the tank (m).
+        - `Whead::Float64`: Weight of the tank's head (N).
+        - `Wcyl::Float64`: Weight of the tank's cylinder (N).
+        - `Winsul_sum::Float64`: Sum of the insulation weight (N).
+        - `Winsul::Float64`: Weight of insulation (N).
+        - `l_tank::Float64`: Length of the tank (m).
+        - `Wtank::Float64`: Weight of the tank structure (N).
 
-- `gee` is gravitational acceleration (m/s^2)
-- `rhoFuel` is density of fuel (kg/m^3)
-- `deltap` is allowed pressure difference in vessel (Pa)
-- `Rfuse` is fuselage radius (m)
-- `rho_insul` (kg/m3) is an array of insulation layer densities
-- `dRfuse` accounts for flatness at bottom of fuselage (m)
-- `xshell1` and xshell2 are start and end x-coordinates of tank (m)
-- `Thermal` conductivity array k (W/(m*K)) comprising of k value for each MLI layer
-- `hconvgas` (W/m2*K)  is convective coefficient of insulating purged gas (e.g. N2)
-- `hconvair` (W/m2*K) is convective coefficient of ambient air
-- `Thickness` array t (m) corresponds to thickness value of each layer in MLI
-- `h_LH2` ((W/m2*K) corresponds to LH2 convective coefficient
-- `Tfuel` (K) is fuel temperature
-- `Tair` (K) is ambient temperature
-- `r_tank` (m) is tank outer radius
-- `h_v` (J/kg) is heat of vaporization of liquid hydrogen (from Hydrogen tank design paper)
-- `r_gas` is inner radius of gas-purged chamber (m)
-- `threshold_percent` is the max allowed percentage of fuel that is allowed to boil off
-- `mode`: '1' means optimize m_boiloff, '2' means find m_boiloff based on given thickness
-
-Outputs:
-
-- Total thickness of the insulation (m)
-- Total weight of tank (`Wtank`) including fuel (N)
-- Length of tank lshell (m)
-- Volume of fuel Vfuel (m^3)
-- `Wfuel` weight of fuel (N)
-- `m_boiloff` mass boiled off during the mission flight (kg)
+See [here](@ref fueltanks).
 """
 function tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,

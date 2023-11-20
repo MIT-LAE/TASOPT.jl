@@ -1,22 +1,51 @@
 """
-`tankWmech` calculates weight of the cryogenic fuel tank for a LH-fueled aircraft
+      tankWmech(gee, ρfuel,
+            ftankstiff, ftankadd, Δp,
+            Rfuse, dRfuse, wfb, nfweb,
+            sigskin, rho_insul, rhoskin,
+            Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
 
-## Inputs:
-NOTE: Everything is in SI units.
+`tankWmech` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `gee::Float64`: Gravitational acceleration (m/s^2).
+      - `ρfuel::Float64`: Fuel density (kg/m^3).
+      - `ftankstiff::Float64`: Tank stiffness factor.
+      - `ftankadd::Float64`: Additional mass factor for the tank.
+      - `Δp::Float64`: Pressure difference (Pa).
+      - `Rfuse::Float64`: Fuselage radius (m).
+      - `dRfuse::Float64`: Subtraction factor accounting for fuselage flatness (m).
+      - `wfb`: Parameters for multiple-bubble configuration.
+      - `nfweb`: Number of bubbles.
+      - `sigskin::Float64`: Material property.
+      - `rho_insul::Array{Float64}`: Array of insulation layer densities (kg/m3).
+      - `rhoskin::Float64`: Material property.
+      - `Wfuel::Float64`: Weight of fuel (N).
+      - `m_boiloff::Float64`: Mass boiled off during the mission flight (kg).
+      - `t_cond::Array{Float64,1}`: Thickness of insulation layers (m).
+      - `clearance_fuse::Float64`: Clearance for the fuselage (m).
+      - `AR::Float64`: Aspect ratio.
+
+      **Outputs:**
+      - `Wtank_total::Float64`: Total tank weight including fuel (N).
+      - `l_cyl::Float64`: Length of the cylindrical portion (m).
+      - `tskin::Float64`: Thickness of the tank's skin (m).
+      - `Rtank_outer::Float64`: Outer radius of the tank (m).
+      - `Vfuel::Float64`: Volume of fuel (m^3).
+      - `Wtank::Float64`: Weight of the empty tank (N).
+      - `Wfuel_tot::Float64`: Total weight of fuel (N).
+      - `Winsul_sum::Float64`: Sum of insulation weight (N).
+      - `t_head::Float64`: Thickness of the tank's head (m).
+      - `Whead::Float64`: Weight of the tank's head (N).
+      - `Wcyl::Float64`: Weight of the tank's cylinder (N).
+      - `Winsul::Float64`: Weight of insulation (N).
+      - `Shead_insul::Float64`: Insulated surface area of the head (m^2).
+      - `l_tank::Float64`: Total length of the tank (m).
 
 NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in OneNote)
 
-- `Rfuse` is fuselage radius (m), `dRfuse` (m) is the subtraction factor that accounts for flatness of fuselage at bottom
-- `wfb`, `nfb` are parameters for multiple-bubble configuration
-- `lcv` (J/kg) is lower calorific value of fuel
-- `eta` is overall efficiency of gas turbine/turboelectric powertrain etc.
-- `sigskin`, `rhoskin` are material properties
-- `thickness_insul` is insulation thickness of all layers combined (m)
-
-Outputs:
-
-- `Wtank_total`: tank weight including fuel (N)
-- `Wtank`: empty tank weight (N)
+See [here](@ref fueltanks).
 """
 function tankWmech(gee::Float64, ρfuel::Float64,
                   ftankstiff::Float64, ftankadd::Float64, Δp::Float64,
