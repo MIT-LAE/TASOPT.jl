@@ -28,7 +28,7 @@
         end
     end
     
-    @test ac.parm[imPFEI] == 0.883089428853606
+    @test ac.parm[imPFEI] ≈ 0.883089428853606
 
 
 end

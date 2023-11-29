@@ -39,6 +39,8 @@ pkg> dev .
 
 You should now be able to import TASOPT from within any Julia script in your base environment.
 
+Note: If you clone another version of TASOPT, `using TASOPT` will always use the directory where `dev .` was used.
+
 If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOPT`
 
 ```julia
@@ -76,7 +78,7 @@ Some guidelines to add to this repo
 ### Work in branches
 
 Usually you should be working on your own fork, **exceptions** are if you have been added as a collaborator to this repo. If you think you are going to be writing large chunks and would like to be added to this repo as a collaborater contact Prashanth, so you can directly modify this repo, without having to create pull requests (you should still be working on separate branches and then you can just do pull requests).
-Don't commit anything to the master branch. Here's how you create your own fork and branch.  
+Don't commit anything to the main branch. Here's how you create your own fork and branch.  
 First create a fork of this repo by clicking on "fork" on the top right hand of the github page. This creates a copy of this repo that is separate form this one. This ensures that any chagnes made to your fork will not affect other's forks.
 
 You will now need to clone your forked version of the repo to your machine where you will be writing code. This [page](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) has a good overview of how to do this whole process.
@@ -109,15 +111,15 @@ To sync your fork, `cd` into the right folder on your terminal and do the follow
 ```bash
     git fetch upstream
 ```
-This fetches all the changes made to the master repo. Then switch to your master branch (you should be working in branches even in your own repo)
+This fetches all the changes made to the main repo. Then switch to your main branch (you should be working in branches even in your own repo)
 ```bash
-   git checkout master
+   git checkout main
 ```
-Once you are in your master branch do:
+Once you are in your main branch do:
 ```bash
-   git merge upstream/master
+   git merge upstream/main
 ```
-This brings your fork's `master` branch into sync with the upstream repository, without losing your local changes.
+This brings your fork's `main` branch into sync with the upstream repository, without losing your local changes.
 
 ## Convert Fortran to Julia
 
