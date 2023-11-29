@@ -1,5 +1,7 @@
 # Example for a Payload-Range diagram
 
+![PayloadRangePlot](../assets/PayloadRangeExample.png)
+
 ## Choosing a design mission
 
 To plot a payload-range diagram with a fleet of missions you must first load a model with >=1 non design mission
@@ -14,10 +16,12 @@ Start by choosing a design mission. Your design mission should be what you want 
                             #["3000.0 nmi", "500.0 nmi", "2500.0 nmi", "3550.0 nmi", "3734.0 nmi"] # Design Range + second mission range
     weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] 
-                            # judging you if you use imperial units but wtvs
 ```
+
 ## Julia script for Payload Range Diagram
+
 Start the script importing `TASOPT.jl`, `PyPlot` and `index.inc` and then loading the default aircraft model.
+
 ```julia
 # Import modules
 using PyPlot
@@ -34,6 +38,7 @@ time_wsize = @elapsed size_aircraft!(ac)
 ```
 
 Initialize some variables for mission range and payloads
+
 ```julia
 nmis = size(ac.parm)[2] # Get number of missions
 MAX_PAYLOAD = 230 * 215 * 4.448222 # Starting Payload, #Passengers * 215 lb * lb_to_N
@@ -45,7 +50,8 @@ curr_range = Range_arr[1]
 prev_range = 0.1
 ```
 
-## Initialize variables for mission iterations:
+## Initialize variables for mission iterations
+
 ```julia
 NPSS = Base.Process
 NPSS_PT = true
@@ -60,6 +66,7 @@ y_Wemtpy = []
 ```
 
 ## Main iteration loop
+
 ```julia
 while MAX_PAYLOAD >= 0
     println("-----------------------")
@@ -108,6 +115,7 @@ end
 ```
 
 ## Plot Payload Range diagram
+
 ```julia
 using PyPlot
 figure()
@@ -122,4 +130,3 @@ legend()
 grid()
 savefig("./PayloadRangeExample.png")
 ```
-
