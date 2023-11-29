@@ -92,3 +92,7 @@ Takeoff:
  3   6474.360   5538.586   8485.689      0.000
 ```
 
+```@example
+using Dates # hide
+println("Documentation built $(Dates.now()) with Julia $(VERSION)") # hide
+```
