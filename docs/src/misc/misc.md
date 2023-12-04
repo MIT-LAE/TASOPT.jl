@@ -1,4 +1,4 @@
-# Other utilites
+# Other utilities
 
 ## General outputs
 ```@autodocs

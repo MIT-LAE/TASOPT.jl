@@ -9,41 +9,42 @@
             AMa, Acl, Atau, ARe, A,
             fduo, fdus, fdut)
 
-Calculates wing or tail surface profile `CD`.
+Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
+Called by [`cdsum!`](@ref) if `icdfun` flag set to 1.
 
-# Inputs
-- `S::Float64`: reference area.
-- `b::Float64`: span.
-- `bs::Float64`: outer panel break span.
-- `bo::Float64`: wing-root (fuselage) span.
-- `λt::Float64`: outer-panel chord taper ratio  ct/co.
-- `λs::Float64`: inner-panel chord taper ratio  cs/co.
-- `γt::Float64`: outer-panel load  taper ratio  pt/po.
-- `γs::Float64`: inner-panel load  taper ratio  ps/po.
-- `toco::Float64`: root  airfoil t/c.
-- `tocs::Float64`: break airfoil t/c.
-- `toct::Float64`: tip   airfoil t/c.
-- `sweep::Float64`: wing sweep, degrees.
-- `co::Float64`: wing root chord.
-- `Reco::Float64`: Reynolds number for co.
-- `aRexp::Float64`: Re-scaling exponent.
-- `kSuns::Float64`: shock-unsweep area constant.
-- `fexcd::Float64`: excrescence cd scaling factor.
-- `fduo::Float64`: fractional overspeeds at wing stations.
-- `fdus::Float64`:
-- `fdut::Float64`:
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `S::Float64`: Reference area.
+      - `b::Float64`: Span.
+      - `bs::Float64`: Outer panel break span.
+      - `bo::Float64`: Wing-root (fuselage) span.
+      - `λt::Float64`: Outer-panel chord taper ratio  ct/co.
+      - `λs::Float64`: Inner-panel chord taper ratio  cs/co.
+      - `γt::Float64`: Outer-panel load  taper ratio  pt/po.
+      - `γs::Float64`: Inner-panel load  taper ratio  ps/po.
+      - `toco::Float64`: Root  airfoil t/c.
+      - `tocs::Float64`: Break airfoil t/c.
+      - `toct::Float64`: Tip   airfoil t/c.
+      - `sweep::Float64`: Wing sweep, degrees.
+      - `co::Float64`: Wing root chord.
+      - `Reco::Float64`: Reynolds number for co.
+      - `aRexp::Float64`: Re-scaling exponent.
+      - `kSuns::Float64`: Shock-unsweep area constant.
+      - `fexcd::Float64`: Excrescence cd scaling factor.
+      - `fduo::Float64`, `fdus::Float64`, `fdut::Float64`: Velocity-change fractions at wing root, break ("snag"), and tip due to fuselage flow.
 
-# Outputs
-- `clpo::Float64`: cl at wing stations.
-- `clps::Float64`: 
-- `clpt::Float64`:
-- `CDfwing::Float64`: friction profile cd in perp. plane.
-- `CDpwing::Float64`: pressure profile cd in perp. plane.
-- `CDwing::Float64`: overall profile CD.
-- `CDover::Float64`: fuselage added CD due to lift carryover.
+      **Outputs:**
+      - `clpo::Float64`,`clps::Float64`,`clpt::Float64`: Perpendicular sectional lift coefficient at wing root, break ("snag"), and tip.
+      - `CDfwing::Float64`: Friction profile cd in perp. plane.
+      - `CDpwing::Float64`: Pressure profile cd in perp. plane.
+      - `CDwing::Float64`: Overall profile CD.
+      - `CDover::Float64`: Fuselage added CD due to lift carryover.
 
-See A. 2. 13 Wing Profile Drag of TASOPT docs.
-See also [`surfcm`](@ref) and [`airtable`](@ref).
+See Sections 2.14.3 and 3.8.3 of TASOPT Technical Desc.
+See also [`cdsum!`](@ref), [`surfcd`](@ref), [`surfcm`], and [`airfun`].
+
+!!! compat "Future Changes" 
+      This function will be renamed for clarity of use.
 """
 function surfcd2(
       S,
@@ -111,6 +112,7 @@ function surfcd2(
             toc = toco * (1.0 - frac) + tocs * frac
             fdu = fduo * (1.0 - frac) + fdus * frac
 
+            #wing root shock "unsweep" function
             fSuns = exp(-(η - ηo) * b / (kSuns * C * 2.0 * co))
 
             clp = clp1 * (P / C) / (1.0 + fdu)^2
@@ -193,28 +195,36 @@ end # surfcd2
     Reco, Reref, 
     aRexp, kSuns, fCDcen)
 
-Calculates wing or tail surface profile CD
+Computes wing or tail surface profile CD from pre-computed chord quantities and corrections.
+Called by [`cdsum!`](@ref) if `icdfun` flag set to 0.
 
-# Inputs
-- `S::Float64`: reference area.
-- `b::Float64`: span.
-- `bs::Float64`: outer panel break span.
-- `bo::Float64`: wing-root (fuselage) span.
-- `λt::Float64`: outer-panel taper ratio  ``ct/co``.
-- `λs::Float64`: inner-panel taper ratio  ``cs/co``.
-- `sweep::Float64`: wing sweep, degrees.
-- `co::Float64`: wing root chord.
-- `cdf::Float64`: friction profile cd.
-- `cdp::Float64`: pressure profile cd.
-- `Reco::Float64`: Reynolds number for co.
-- `Reref::Float64`: reference Reynolds number for cd scaling.
-- `aRexp::Float64`: Re-scaling exponent.
-- `kSuns::Float64`: shock-unsweep area constant.
-- `fCDcen::Float64` : .
+!!! compat "Future Changes" 
+      This function may be renamed for clarity of use.
 
-# Outputs
-- `CDsurf`: overall profile CD.
-- `CDover`: fuselage added CD due to lift carryover.
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `S::Float64`: reference area.
+      - `b::Float64`: span.
+      - `bs::Float64`: outer panel break span.
+      - `bo::Float64`: wing-root (fuselage) span.
+      - `λt::Float64`: outer-panel taper ratio  ``ct/co``.
+      - `λs::Float64`: inner-panel taper ratio  ``cs/co``.
+      - `sweep::Float64`: wing sweep, degrees.
+      - `co::Float64`: wing root chord.
+      - `cdf::Float64`: friction profile cd.
+      - `cdp::Float64`: pressure profile cd.
+      - `Reco::Float64`: Reynolds number for co.
+      - `Reref::Float64`: reference Reynolds number for cd scaling.
+      - `aRexp::Float64`: Re-scaling exponent.
+      - `kSuns::Float64`: shock-unsweep area constant.
+      - `fCDcen::Float64` : related to fraction of wing BLI (see Eqns. 619 - 621).
+
+      **Outputs:**
+      - `CDsurf`: overall profile CD.
+      - `CDover`: fuselage added CD due to lift carryover.
+
+See Sections 2.14.3 and 3.8.3 of the [TASOPT Technical Desc](@ref dreladocs).
+
 """
 function surfcd(S,
       b, bs, bo, λt, λs, sweep, co,

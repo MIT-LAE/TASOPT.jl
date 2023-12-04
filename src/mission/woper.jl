@@ -1,7 +1,15 @@
 """
+    woper(pari, parg, parm, para, pare, 
+          parad, pared, itermax, initeng, NPSS_PT, NPSS)
+
 `woper` runs the aircraft through input off-design missions
+
+!!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
 """
-function woper(pari,parg,parm,para,pare, parad,pared, itermax,initeng, NPSS_PT, NPSS)
+function woper(pari, parg, parm, para, pare, 
+              parad, pared, itermax, initeng, NPSS_PT, NPSS)
 
     # # Initialze some variables
     # ifirst = true

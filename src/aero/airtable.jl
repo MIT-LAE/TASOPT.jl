@@ -2,6 +2,10 @@ using Dierckx
 
 """
 Reads airfoil file and outputs a matrix and spline objects
+
+!!! compat "Future Changes"
+      Deprecated by faster [`airtable`](@ref) in `airtable2.jl`. Will be removed in a future revision.
+
 """
 function airtable(fname)
 

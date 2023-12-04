@@ -19,9 +19,7 @@ Start by choosing a design mission. Your design mission should be what you want 
 ```
 
 ## Julia script for Payload Range Diagram
-
-Start the script importing `TASOPT.jl`, `PyPlot` and `index.inc` and then loading the default aircraft model.
-
+Start the script importing `TASOPT.jl`, `PyPlot` and `index.inc` and then loading the default `aircraft` model.
 ```julia
 # Import modules
 using PyPlot

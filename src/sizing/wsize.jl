@@ -1,13 +1,22 @@
 using Printf
 """
+    wsize(pari, parg, parm, para, pare,
+        itermax, wrlx1, wrlx2, wrlx3,
+        initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
 and iterates until the MTOW converges to within a specified tolerance.
-### Inputs:
-- Array of flags that control design choices - fuel types, where to store fuel, etc.
-- Geometric and structural parameters - dimensions primarily
-- Aerodynamic parameters - CL, CD, KE dissipation, etc.
-- Mission-specific parameters - alt, mach, P, T etc.
-- Engine-specific parameters 
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - Array of flags that control design choices - fuel types, where to store fuel, etc.
+    - Geometric and structural parameters - dimensions primarily
+    - Aerodynamic parameters - CL, CD, KE dissipation, etc.
+    - Mission-specific parameters - alt, mach, P, T etc.
+    - Engine-specific parameters 
+
+    **Outputs:**
+    - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
 function wsize(pari, parg, parm, para, pare,
     itermax, wrlx1, wrlx2, wrlx3,
