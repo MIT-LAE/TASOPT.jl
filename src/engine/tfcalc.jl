@@ -89,6 +89,15 @@ function tfcalc!(pari, parg, para, pare, ip,
         epsrow = zeros(ncrowx)
         Tmrow = zeros(ncrowx)
 
+        #Heat exchanger variables
+        Δh_PreC = pare[iePreCDeltah]
+        Δh_InterC = pare[ieInterCDeltah]
+        Δh_Regen = pare[ieRegenDeltah]
+        Δh_TurbC = pare[ieTurbCDeltah]
+        Δp_PreC = pare[iePreCDeltap]
+        Δp_InterC = pare[ieInterCDeltap]
+        Δp_Regen = pare[ieRegenDeltap]
+
         if (icool == 1)
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
@@ -189,9 +198,11 @@ function tfcalc!(pari, parg, para, pare, ip,
                 Tt0, ht0, pt0, cpt0, Rt0,
                 Tt18, ht18, pt18, cpt18, Rt18,
                 Tt19, ht19, pt19, cpt19, Rt19,
+                Tt19c, ht19c, pt19c, cpt19c, Rt19c,
                 Tt2, ht2, pt2, cpt2, Rt2,
                 Tt21, ht21, pt21, cpt21, Rt21,
                 Tt25, ht25, pt25, cpt25, Rt25,
+                Tt25c, ht25c, pt25c, cpt25c, Rt25c,
                 Tt3, ht3, pt3, cpt3, Rt3,
                 ht4, pt4, cpt4, Rt4,
                 Tt41, ht41, pt41, cpt41, Rt41,
@@ -223,7 +234,9 @@ function tfcalc!(pari, parg, para, pare, ip,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
-                        epsrow, Tmrow)
+                        epsrow, Tmrow,
+                        Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
+                        Δp_PreC, Δp_InterC, Δp_Regen)
 
                 #        tadd(time0,t_tfsize)
 
@@ -245,8 +258,8 @@ function tfcalc!(pari, parg, para, pare, ip,
 
                 #----- corrected mass flows
                 mbf = mcore * sqrt(Tt2 / Tref) / (pt2 / pref) * BPR
-                mblc = mcore * sqrt(Tt19 / Tref) / (pt19 / pref)
-                mbhc = mcore * sqrt(Tt25 / Tref) / (pt25 / pref) * (1.0 - fo)
+                mblc = mcore * sqrt(Tt19c / Tref) / (pt19c / pref)
+                mbhc = mcore * sqrt(Tt25c / Tref) / (pt25c / pref) * (1.0 - fo)
                 mbht = mcore * sqrt(Tt41 / Tref) / (pt41 / pref) * (1.0 - fo + ff)
                 mblt = mcore * sqrt(Tt45 / Tref) / (pt45 / pref) * (1.0 - fo + ff)
 
@@ -256,8 +269,8 @@ function tfcalc!(pari, parg, para, pare, ip,
                 N2 = 1.0
 
                 Nbf = Nf / sqrt(Tt2 / Tref)
-                Nblc = N1 / sqrt(Tt19 / Tref)
-                Nbhc = N2 / sqrt(Tt25 / Tref)
+                Nblc = N1 / sqrt(Tt19c / Tref)
+                Nbhc = N2 / sqrt(Tt25c / Tref)
                 Nbht = N2 / sqrt(Tt41 / Tref)
                 Nblt = N1 / sqrt(Tt45 / Tref)
 
@@ -422,9 +435,11 @@ function tfcalc!(pari, parg, para, pare, ip,
                 Tt0, ht0, pt0, cpt0, Rt0,
                 Tt18, ht18, pt18, cpt18, Rt18,
                 Tt19, ht19, pt19, cpt19, Rt19,
+                Tt19c, ht19c, pt19c, cpt19c, Rt19c,
                 Tt2, ht2, pt2, cpt2, Rt2,
                 Tt21, ht21, pt21, cpt21, Rt21,
                 Tt25, ht25, pt25, cpt25, Rt25,
+                Tt25c, ht25c, pt25c, cpt25c, Rt25c,
                 Tt3, ht3, pt3, cpt3, Rt3,
                 Tt4, ht4, pt4, cpt4, Rt4,
                 Tt41, ht41, pt41, cpt41, Rt41,
@@ -463,7 +478,9 @@ function tfcalc!(pari, parg, para, pare, ip,
                         ncrowx, ncrow,
                         epsrow, Tmrow,
                         Fe,
-                        M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
+                        M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25, 
+                        Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
+                        Δp_PreC, Δp_InterC, Δp_Regen)
 
 
                 if (Lprint)
@@ -480,8 +497,8 @@ function tfcalc!(pari, parg, para, pare, ip,
                 fo = mofft / mcore
 
                 Nf = Nbf * sqrt(Tt2 / Tref)
-                N1 = Nblc * sqrt(Tt19 / Tref)
-                N2 = Nbhc * sqrt(Tt25 / Tref)
+                N1 = Nblc * sqrt(Tt19c / Tref)
+                N2 = Nbhc * sqrt(Tt25c / Tref)
 
                 pare[ieM2] = M2
                 pare[ieM25] = M25
@@ -492,7 +509,7 @@ function tfcalc!(pari, parg, para, pare, ip,
                         pare[ieTt4] = Tt4
                 end
 
-                pare[ieBPR] = mbf / mblc * sqrt(Tt19 / Tt2) * pt2 / pt19
+                pare[ieBPR] = mbf / mblc * sqrt(Tt19c / Tt2) * pt2 / pt19c
 
                 # println("exited TFOPER call")
 
@@ -538,8 +555,8 @@ function tfcalc!(pari, parg, para, pare, ip,
         pare[ieKinl] = Kinl
 
         pare[ieNf] = Nbf * sqrt(Tt2 / Tref)
-        pare[ieN1] = Nblc * sqrt(Tt19 / Tref)
-        pare[ieN2] = Nbhc * sqrt(Tt25 / Tref)
+        pare[ieN1] = Nblc * sqrt(Tt19c / Tref)
+        pare[ieN2] = Nbhc * sqrt(Tt25c / Tref)
         pare[ieNbf] = Nbf
         pare[ieNblc] = Nblc
         pare[ieNbhc] = Nbhc

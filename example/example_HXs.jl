@@ -9,9 +9,8 @@ using TASOPT
 
 # 2) Include input file for desired aircraft/
 #  load default model
-example_ac = load_default_model() # simply a synonym to read_aircraft_model()
-# Alternatively you can load your desired input file 
-# example_ac = read_aircraft_model("../src/IO/input.toml") # MODIFY <path> appropriately
+
+example_ac = read_aircraft_model("example/HX_input.toml") # MODIFY <path> appropriately
 
 # 3) Size aircraft
 time_wsize = @elapsed size_aircraft!(example_ac)

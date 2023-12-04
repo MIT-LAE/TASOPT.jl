@@ -1,12 +1,10 @@
-# This is a template TOML input file and are the default values that will
-# be used by TASOPT
+# This TOML file has the inputs for a sample aircraft using heat exchangers in the engine
 ["Aircraft Description"]
-    name = "Default TASOPT Model"
-    description = """
-    This model file describes a basic single-aisle aircraft to 
-    demonstrate how to define a model file. The contents of this file are 
-    also loaded by the `TASOPT.jl` package as default if no other details are 
-    provided by the user.
+name = "Default TASOPT Model with HX"
+    description = """737-800
+    This file is a slightly modified version of the default TASOPT file. It replaces the fuel
+    with methane (but does not make the corresponding fuel system changes, like fuselage storage and insulation) 
+    to demonstrate the heat exchanger capabilities.
     """
 
 #-------------------------------------------------#
@@ -46,12 +44,12 @@
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "Jet-A" # Choices are ... [TODO]
+    fuel_type       = "CH4" # Choices are ... [TODO]
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
-    fuel_temp = 280.0
+    fuel_temp = 90.0
     fuel_density = 817.0 #kg/m3
 
 [Mission]
@@ -441,26 +439,26 @@
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
-    recirculation_flag = 0
-    recirculation_temperature = 0
+    recirculation_flag = 1
+    recirculation_temperature = 200
     latent_heat = 0
-    core_inner_diameter = 0
+    core_inner_diameter = 0.564
 
-    precooler_order = 0
+    precooler_order = 1
     precooler_effectiveness = 0
-    precooler_inlet_mach = 0
+    precooler_inlet_mach = 0.1
 
-    intercooler_order = 0
+    intercooler_order = 2
     intercooler_effectiveness = 0
-    intercooler_inlet_mach = 0
+    intercooler_inlet_mach = 0.1
 
-    regenerative_order = 0
+    regenerative_order = 4
     regenerative_effectiveness = 0
-    regenerative_inlet_mach = 0
+    regenerative_inlet_mach = 0.2
 
-    turbine_cooler_order = 0
-    turbine_cooler_effectiveness = 0
-    turbine_cooler_inlet_mach = 0
+    turbine_cooler_order = 3
+    turbine_cooler_effectiveness = 0.6
+    turbine_cooler_inlet_mach = 0.02
     
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 

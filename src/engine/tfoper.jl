@@ -133,21 +133,24 @@ Turbofan operation routine
     - `Lconv`:   T if convergence was successful, F otherwise
 
     The "?" symbol denotes the station index:
-      0  freestream
-      18 fan face outside of casing BLs
-      19 fan face over LPC portion
-      2  fan face over fan portion
-      21 fan exit
-      25 LPC exit, HPC inlet
-      3  compressor exit
-      4  combustor exit before cooling air addition
-      41 turbine  inlet after  cooling air addition
-      45 HPT exit, LPT inlet
-      49 LPT exit
-      5  core nozzle
-      6  core flow downstream
-      7  fan nozzle
-      8  fan flow downstream
+      0   freestream
+      18  fan face outside of casing BLs
+      19  fan face over LPC portion
+      2   fan face over fan portion
+      21  fan exit, precooler inlet
+      19c precooler outlet, LPC inlet
+      25  LPC exit, intercooler inlet 
+      25c intercooler exit, HPC inlet
+      3   compressor exit
+      4   combustor exit before cooling air addition
+      41  turbine  inlet after  cooling air addition
+      45  HPT exit, LPT inlet
+      49  LPT exit, regenerative cooler inlet
+      49c regenerative cooler outlet
+      5   core nozzle
+      6   core flow downstream
+      7   fan nozzle
+      8   fan flow downstream
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, iBLIc,
@@ -170,7 +173,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       ncrowx, ncrow,
       epsrow, Tmrow,
       Feng,
-      M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
+      M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25, 
+      Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
+      Δp_PreC, Δp_InterC, Δp_Regen)
 
       #---- ncrowy must be at least as big as ncrowx defined in index.inc
       ncrowy = 8
@@ -379,7 +384,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       fc_Tb = 0.0
 
       for iter = 1:itmax
-
+      
             if (iter == -1)
                   eps1 = 2.0e-7
                   eps = eps1
@@ -488,6 +493,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             ht19 = ht18
             st19 = st18
             cpt19 = cpt18
+            Tt19_ht19 = 1 / cpt19
             Rt19 = Rt18
             pt19 = pt18 * exp(-sbcore)
             pt19_mf = pt19 * (-sbcore_mf)
@@ -538,20 +544,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                        rho19_p19 * (p19_pt19 * pt19_Mi + p19_Mi)
             rho19_mf = rho19_p19 * p19_pt19 * pt19_mf
             rho19_ml = rho19_p19 * p19_pt19 * pt19_ml
-
-            #--------------------------------------------------------------
-            #---- offtake mass ratio
-            #cc   fo = mofft / mcore
-            fo = mofft / ml * sqrt(Tt19 / Tref) * pref / pt19
-            fo_ml = -fo / ml - (fo / pt19) * pt19_ml
-            fo_mf = -(fo / pt19) * pt19_mf
-            fo_Mi = -(fo / pt19) * pt19_Mi
-
-            #---- normalized power offtake Pofft / mcore
-            Pom = Pofft / ml * sqrt(Tt19 / Tref) * pref / pt19
-            Pom_ml = -Pom / ml - (Pom / pt19) * pt19_ml
-            Pom_mf = -(Pom / pt19) * pt19_mf
-            Pom_Mi = -(Pom / pt19) * pt19_Mi
 
             # ===============================================================
             #---- fan flow 2-7
@@ -613,7 +605,59 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             pt7_Mi = pt21_Mi * pifn
             ht7_Mi = 0.0
+            # ===============================================================
+            #---- Compressor precooler 19-19c
+            pt19c = pt19 - Δp_PreC
+            ht19c = ht19 + Δh_PreC
+            Tt19c, Tt19c_ht19c, _ = gas_tsetd(alpha, nair, ht19c, Tt19)
+            st19c, st19c_Tt19c, ht19c, ht29c_Tt29c, cpt19c, cpt19c_Tt19c, Rt19c = gassumd(alpha, nair, Tt19c)
 
+             #Derivatives with respect to pressure are unchanged because pt19c_pt19 = 1
+            pt19c_pt19 = 1.0
+            ht19c_ht19 = 1.0
+
+            Tt19c_Tt19 = Tt19c_ht19c * ht19c_ht19 / Tt19_ht19
+            pt19c_mf = pt19_mf * pt19c_pt19
+            pt19c_Mi = pt19_Mi * pt19c_pt19
+            pt19c_ml = pt19_ml * pt19c_pt19
+
+            p19c, T19c, h19c, s19c, cp19c, R19c,
+            p19c_st19c,
+            p19c_pt19c,
+            dum,
+            p19c_Tt19c, T19c_Tt19c, h19c_Tt19c, s19c_Tt19c,
+            p19c_ht19c, T19c_ht19c, h19c_ht19c, s19c_ht19c,
+            p19c_Mi, T19c_Mi, h19c_Mi, s19c_Mi,
+            p_al, T_al, h_al, s_al,
+            cp_al, R_al = gas_machd(alpha, nair,
+                  pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, 0.0, Mi, 1.0)
+            u19c = sqrt(2.0 * (ht19c - h19c))
+            u19c_Mi = (-1.0 / u19c) * h19c_Mi
+
+            rho19c = p19c / (R19c * T19c)
+            rho19c_p19c = 1.0 / (R19c * T19c)
+            rho19c_T19c = -rho19c / T19c
+
+            rho19c_Mi = rho19c_T19c * T19c_Mi +
+                       rho19c_p19c * (p19c_pt19c * pt19c_Mi + p19c_Mi)
+            rho19c_mf = rho19c_p19c * p19c_pt19c * pt19c_mf
+            rho19c_ml = rho19c_p19c * p19c_pt19c * pt19c_ml
+
+
+            #--------------------------------------------------------------
+            #---- offtake mass ratio
+            #cc   fo = mofft / mcore
+            fo = mofft / ml * sqrt(Tt19c / Tref) * pref / pt19c
+            fo_ml = -fo / ml - (fo / pt19c) * pt19c_ml
+            fo_mf = -(fo / pt19c) * pt19c_mf
+            fo_Mi = -(fo / pt19c) * pt19c_Mi
+
+            #---- normalized power offtake Pofft / mcore
+            Pom = Pofft / ml * sqrt(Tt19c / Tref) * pref / pt19c
+            Pom_ml = -Pom / ml - (Pom / pt19c) * pt19c_ml
+            Pom_mf = -(Pom / pt19c) * pt19c_mf
+            Pom_Mi = -(Pom / pt19c) * pt19c_Mi
+      
             # ===============================================================
             #---- LP compressor flow 2-25
             eplc, eplc_pl, eplc_ml = ecmap(pl, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
@@ -625,27 +669,58 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             end
 
             pt25, Tt25, ht25, st25, cpt25, Rt25,
-            pt25_pt19,
-            pt25_st19, Tt25_st19, ht25_st19, st25_st19,
+            pt25_pt19c,
+            pt25_st19c, Tt25_st19c, ht25_st19c, st25_st19c,
             pt25_pl, Tt25_pl, ht25_pl, st25_pl,
             pt25_eplc, Tt25_eplc, ht25_eplc, st25_eplc,
             p_al, T_al, h_al, s_al,
             cp_al, R_al = gas_pratd(alpha, nair,
-                  pt19, Tt19, ht19, st19, cpt19, Rt19, pl, eplc)
+                  pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pl, eplc)
 
             pt25_pl = pt25_eplc * eplc_pl + pt25_pl
             Tt25_pl = Tt25_eplc * eplc_pl + Tt25_pl
             ht25_pl = ht25_eplc * eplc_pl + ht25_pl
             st25_pl = st25_eplc * eplc_pl + st25_pl
 
-            pt25_ml = pt25_eplc * eplc_ml + pt25_pt19 * pt19_ml
+            pt25_ml = pt25_eplc * eplc_ml + pt25_pt19c * pt19c_ml
             Tt25_ml = Tt25_eplc * eplc_ml
             ht25_ml = ht25_eplc * eplc_ml
             st25_ml = st25_eplc * eplc_ml
 
-            pt25_mf = pt25_pt19 * pt19_mf
-            pt25_Mi = pt25_pt19 * pt19_Mi
+            pt25_mf = pt25_pt19c * pt19c_mf
+            pt25_Mi = pt25_pt19c * pt19c_Mi
 
+            Tt25_ht25 = 1 / cpt25
+            st25_Tt25 = cpt25 / Tt25
+
+            # ===============================================================
+            #---- Compressor intercooler 25-25c
+            pt25c = pt25 - Δp_InterC
+            ht25c = ht25 + Δh_InterC
+            Tt25c, Tt25c_ht25c, _ = gas_tsetd(alpha, nair, ht25c, Tt25)
+            st25c, st25c_Tt25c, ht25c, ht25c_Tt25c, cpt25c, cpt25c_Tt25c, Rt25c = gassumd(alpha, nair, Tt25c)
+
+            #Derivatives with respect to pressure are unchanged
+            pt25c_pt25 = 1.0
+            ht25c_ht25 = 1.0
+
+            Tt25c_Tt25 = Tt25c_ht25c * ht25c_ht25 / Tt25_ht25
+            st25c_st25 = st25c_Tt25c * Tt25c_Tt25 / st25_Tt25
+
+            pt25c_pl = pt25_pl * pt25c_pt25
+            Tt25c_pl = Tt25_pl * Tt25c_Tt25
+            ht25c_pl = ht25_pl * ht25c_ht25
+            st25c_pl = st25_pl * st25c_st25
+
+            pt25c_ml = pt25_ml * pt25c_pt25
+            Tt25c_ml = Tt25_ml * Tt25c_Tt25
+            ht25c_ml = ht25_ml * ht25c_ht25
+            st25c_ml = st25_ml * st25c_st25
+
+            pt25c_mf = pt25_mf * pt25c_pt25
+            pt25c_Mi = pt25_Mi * pt25c_pt25
+            pt25c_ml = pt25_ml * pt25c_pt25
+      
             # ===============================================================
             #---- HP compressor flow 25-3
             ephc, ephc_ph, ephc_mh = ecmap(ph, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
@@ -656,39 +731,41 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             end
 
             pt3, Tt3, ht3, st3, cpt3, Rt3,
-            pt3_pt25,
-            pt3_st25, Tt3_st25, ht3_st25, st3_st25,
+            pt3_pt25c,
+            pt3_st25c, Tt3_st25c, ht3_st25c, st3_st25c,
             pt3_ph, Tt3_ph, ht3_ph, st3_ph,
             pt3_ephc, Tt3_ephc, ht3_ephc, st3_ephc,
             p_al, T_al, h_al, s_al,
             cp_al, R_al = gas_pratd(alpha, nair,
-                  pt25, Tt25, ht25, st25, cpt25, Rt25, ph, ephc)
+                  pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, ph, ephc)
 
-            pt3_pl = pt3_pt25 * pt25_pl +
-                     pt3_st25 * st25_pl
-            Tt3_pl = Tt3_st25 * st25_pl
-            ht3_pl = ht3_st25 * st25_pl
-            st3_pl = st3_st25 * st25_pl
+            pt3_pl = pt3_pt25c * pt25c_pl +
+                     pt3_st25c * st25c_pl
+            Tt3_pl = Tt3_st25c * st25c_pl
+            ht3_pl = ht3_st25c * st25c_pl
+            st3_pl = st3_st25c * st25c_pl
 
             pt3_ph = pt3_ephc * ephc_ph + pt3_ph
             Tt3_ph = Tt3_ephc * ephc_ph + Tt3_ph
             ht3_ph = ht3_ephc * ephc_ph + ht3_ph
             st3_ph = st3_ephc * ephc_ph + st3_ph
 
-            pt3_mf = pt3_pt25 * pt25_mf
+            pt3_mf = pt3_pt25c * pt25c_mf
 
-            pt3_ml = pt3_pt25 * pt25_ml +
-                     pt3_st25 * st25_ml
-            Tt3_ml = Tt3_st25 * st25_ml
-            ht3_ml = ht3_st25 * st25_ml
-            st3_ml = st3_st25 * st25_ml
+            pt3_ml = pt3_pt25c * pt25c_ml +
+                     pt3_st25c * st25c_ml
+            Tt3_ml = Tt3_st25c * st25c_ml
+            ht3_ml = ht3_st25c * st25c_ml
+            st3_ml = st3_st25c * st25c_ml
 
             pt3_mh = pt3_ephc * ephc_mh
             Tt3_mh = Tt3_ephc * ephc_mh
             ht3_mh = ht3_ephc * ephc_mh
             st3_mh = st3_ephc * ephc_mh
 
-            pt3_Mi = pt3_pt25 * pt25_Mi
+            pt3_Mi = pt3_pt25c * pt25c_Mi
+
+            Tt3_ht3 = 1 / cpt3
 
             # ===============================================================
             #---- burner fuel flow from Tt3-Tb difference   (ffb = m_fuel/m_burner)
@@ -852,25 +929,34 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         fc_Mi = fc_fo * fo_Mi
 
                   else
+                        # Heat exchanger to cool turbine cooling air
+                        ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
+                        Tt_tc, Tttc_httc, _ = gas_tsetd(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
+
+                        httc_ht3 = 1.0
+                        Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
+
                         #------ calculate cooling mass flow ratios epsrow(.) to get specified Tmrow(.)
-                        ncrow, epsrow_copy, epsrow_Tt3, epsrow_Tb, epsrow_Trr = mcool(ncrowx,
-                              Tmrow, Tt3, Tb, dTstrk, Trrat,
+                        ncrow, epsrow_copy, epsrow_Tttc, epsrow_Tb, epsrow_Trr = mcool(ncrowx,
+                              Tmrow, Tt_tc, Tb, dTstrk, Trrat,
                               efilm, tfilm, StA)
                         epsrow[:] = epsrow_copy[:]
 
                         #------ total cooling flow fraction
                         fc = 0.0
                         fc_fo = 0.0
-                        fc_Tt3 = 0.0
+                        fc_Tttc = 0.0
                         fc_Tb = 0.0
                         fc_Trr = 0.0
                         for icrow = 1:ncrow
                               fc = fc + (1.0 - fo) * epsrow[icrow]
                               fc_fo = fc_fo - epsrow[icrow]
-                              fc_Tt3 = fc_Tt3 + (1.0 - fo) * epsrow_Tt3[icrow]
+                              fc_Tttc = fc_Tttc + (1.0 - fo) * epsrow_Tttc[icrow]
                               fc_Tb = fc_Tb + (1.0 - fo) * epsrow_Tb[icrow]
                               fc_Trr = fc_Trr + (1.0 - fo) * epsrow_Trr[icrow]
                         end
+                        fc_Tt3 = fc_Tttc * Tttc_Tt3
+
                         fc_pl = fc_Tt3 * Tt3_pl + fc_Trr * Trr_pl
                         fc_ph = fc_Tt3 * Tt3_ph + fc_Trr * Trr_ph
                         fc_mf = fc_fo * fo_mf
@@ -1288,15 +1374,15 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             #---- HPT and LPT work
 
             #---- bypass ratio
-            BPR = mf / ml * sqrt(Tt19 / Tt2) * pt2 / pt19
-            BPR_mf = 1.0 / ml * sqrt(Tt19 / Tt2) * pt2 / pt19 +
+            BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
+            BPR_mf = 1.0 / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c +
                      BPR / pt2 * pt2_mf -
-                     BPR / pt19 * pt19_mf
+                     BPR / pt19c * pt19c_mf
             BPR_ml = -BPR / ml +
                      BPR / pt2 * pt2_ml -
-                     BPR / pt19 * pt19_ml
+                     BPR / pt19c * pt19c_ml
             BPR_Mi = BPR / pt2 * pt2_Mi -
-                     BPR / pt19 * pt19_Mi
+                     BPR / pt19c * pt19c_Mi
 
             #---- HPT work
             dhfac = -(1.0 - fo) / (1.0 - fo + ff) / (1.0 - epsh)
@@ -1312,14 +1398,14 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             dhfac_Tb = dhfac_ff * ff_Tb
             dhfac_Mi = dhfac_ff * ff_Mi + dhfac_fo * fo_Mi
 
-            dhht = (ht3 - ht25) * dhfac
-            dhht_pl = (ht3 - ht25) * dhfac_pl + (ht3_pl - ht25_pl) * dhfac
-            dhht_ph = (ht3 - ht25) * dhfac_ph + (ht3_ph) * dhfac
-            dhht_mf = (ht3 - ht25) * dhfac_mf
-            dhht_ml = (ht3 - ht25) * dhfac_ml + (ht3_ml - ht25_ml) * dhfac
-            dhht_mh = (ht3 - ht25) * dhfac_mh + (ht3_mh) * dhfac
-            dhht_Tb = (ht3 - ht25) * dhfac_Tb
-            dhht_Mi = (ht3 - ht25) * dhfac_Mi
+            dhht = (ht3 - ht25c) * dhfac
+            dhht_pl = (ht3 - ht25c) * dhfac_pl + (ht3_pl - ht25c_pl) * dhfac
+            dhht_ph = (ht3 - ht25c) * dhfac_ph + (ht3_ph) * dhfac
+            dhht_mf = (ht3 - ht25c) * dhfac_mf
+            dhht_ml = (ht3 - ht25c) * dhfac_ml + (ht3_ml - ht25c_ml) * dhfac
+            dhht_mh = (ht3 - ht25c) * dhfac_mh + (ht3_mh) * dhfac
+            dhht_Tb = (ht3 - ht25c) * dhfac_Tb
+            dhht_Mi = (ht3 - ht25c) * dhfac_Mi
 
             #---- LPT work
             dlfac = -1.0 / (1.0 - fo + ff) / (1.0 - epsl)
@@ -1334,51 +1420,51 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             dlfac_Tb = dlfac_ff * ff_Tb
             dlfac_Mi = dlfac_ff * ff_Mi + dlfac_fo * fo_Mi
 
-            dhlt = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac
+            dhlt = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac
             dhlt_pf = (BPR * ht21_pf) * dlfac
-            dhlt_pl = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac_pl +
+            dhlt_pl = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac_pl +
                       (ht25_pl) * dlfac
-            dhlt_ph = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac_ph
-            dhlt_mf = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac_mf +
+            dhlt_ph = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac_ph
+            dhlt_mf = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac_mf +
                       (BPR * ht21_mf + Pom_mf +
                        BPR_mf * (ht21 - ht2)) * dlfac
-            dhlt_ml = (ht25 - ht19 + BPR * (ht21 - ht2)) * dlfac_ml +
+            dhlt_ml = (ht25 - ht19c + BPR * (ht21 - ht2)) * dlfac_ml +
                       (ht25_ml + BPR_ml * (ht21 - ht2) + Pom_ml) * dlfac
-            dhlt_mh = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac_mh
-            dhlt_Tb = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac_Tb
-            dhlt_Mi = (ht25 - ht19 + BPR * (ht21 - ht2) + Pom) * dlfac_Mi +
+            dhlt_mh = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac_mh
+            dhlt_Tb = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac_Tb
+            dhlt_Mi = (ht25 - ht19c + BPR * (ht21 - ht2) + Pom) * dlfac_Mi +
                       (BPR_Mi * (ht21 - ht2) + Pom_Mi) * dlfac
 
             #---- HPT corrected mass flow, using LPC corrected mass flow and fuel/air ratio
-            mbht = ml * (1.0 - fo + ff) * sqrt(Tt41 / Tt19) * pt19 / pt41
-            mbht_ml = (1.0 - fo + ff) * sqrt(Tt41 / Tt19) * pt19 / pt41
-            mbht_ff = ml * sqrt(Tt41 / Tt19) * pt19 / pt41
-            mbht_fo = -ml * sqrt(Tt41 / Tt19) * pt19 / pt41
+            mbht = ml * (1.0 - fo + ff) * sqrt(Tt41 / Tt19c) * pt19c / pt41
+            mbht_ml = (1.0 - fo + ff) * sqrt(Tt41 / Tt19c) * pt19c / pt41
+            mbht_ff = ml * sqrt(Tt41 / Tt19c) * pt19c / pt41
+            mbht_fo = -ml * sqrt(Tt41 / Tt19c) * pt19c / pt41
             mbht_Tt41 = 0.5 * mbht / Tt41
             mbht_pt41 = -mbht / pt41
-            mbht_pt19 = ml * (1.0 - fo + ff) * sqrt(Tt41 / Tt19) / pt41
+            mbht_pt19c = ml * (1.0 - fo + ff) * sqrt(Tt41 / Tt19c) / pt41
 
             mbht_pl = mbht_ff * ff_pl + mbht_Tt41 * Tt41_pl + mbht_pt41 * pt41_pl
             mbht_ph = mbht_ff * ff_ph + mbht_Tt41 * Tt41_ph + mbht_pt41 * pt41_ph
             mbht_mf = mbht_ff * ff_mf + mbht_Tt41 * Tt41_mf + mbht_pt41 * pt41_mf +
-                      mbht_fo * fo_mf + mbht_pt19 * pt19_mf
+                      mbht_fo * fo_mf + mbht_pt19c * pt19c_mf
             mbht_ml = mbht_ff * ff_ml + mbht_Tt41 * Tt41_ml + mbht_pt41 * pt41_ml +
-                      mbht_fo * fo_ml + mbht_pt19 * pt19_ml + mbht_ml
+                      mbht_fo * fo_ml + mbht_pt19c * pt19c_ml + mbht_ml
             mbht_mh = mbht_ff * ff_mh + mbht_Tt41 * Tt41_mh + mbht_pt41 * pt41_mh
             mbht_Tb = mbht_ff * ff_Tb + mbht_Tt41 * Tt41_Tb + mbht_pt41 * pt41_Tb
             mbht_Mi = mbht_ff * ff_Mi + mbht_Tt41 * Tt41_Mi + mbht_pt41 * pt41_Mi +
-                      mbht_fo * fo_Mi + mbht_pt19 * pt19_Mi
+                      mbht_fo * fo_Mi + mbht_pt19c * pt19c_Mi
 
             #---- HPT corrected speed
-            Nbht = Nh * sqrt(Tt25 / Tt41)
-            Nbht_Nh = sqrt(Tt25 / Tt41)
-            Nbht_Tt25 = 0.5 * Nbht / Tt25
+            Nbht = Nh * sqrt(Tt25c / Tt41)
+            Nbht_Nh = sqrt(Tt25c / Tt41)
+            Nbht_Tt25c = 0.5 * Nbht / Tt25c
             Nbht_Tt41 = -0.5 * Nbht / Tt41
 
-            Nbht_pl = Nbht_Tt25 * Tt25_pl + Nbht_Tt41 * Tt41_pl
+            Nbht_pl = Nbht_Tt25c * Tt25c_pl + Nbht_Tt41 * Tt41_pl
             Nbht_ph = Nbht_Nh * Nh_ph + Nbht_Tt41 * Tt41_ph
             Nbht_mf = Nbht_Tt41 * Tt41_mf
-            Nbht_ml = Nbht_Tt25 * Tt25_ml + Nbht_Tt41 * Tt41_ml
+            Nbht_ml = Nbht_Tt25c * Tt25c_ml + Nbht_Tt41 * Tt41_ml
             Nbht_mh = Nbht_Nh * Nh_mh + Nbht_Tt41 * Tt41_mh
             Nbht_Tb = Nbht_Tt41 * Tt41_Tb
             Nbht_Mi = Nbht_Tt41 * Tt41_Mi
@@ -1572,28 +1658,28 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #---- LPT corrected mass flow (in terms of Newton variables)
-            mblt = ml * (1.0 - fo + ff) * sqrt(Tt45 / Tt19) * pt19 / pt45
-            mblt_ml = (1.0 - fo + ff) * sqrt(Tt45 / Tt19) * pt19 / pt45
-            mblt_ff = ml * sqrt(Tt45 / Tt19) * pt19 / pt45
-            mblt_fo = -ml * sqrt(Tt45 / Tt19) * pt19 / pt45
+            mblt = ml * (1.0 - fo + ff) * sqrt(Tt45 / Tt19c) * pt19c / pt45
+            mblt_ml = (1.0 - fo + ff) * sqrt(Tt45 / Tt19c) * pt19c / pt45
+            mblt_ff = ml * sqrt(Tt45 / Tt19c) * pt19c / pt45
+            mblt_fo = -ml * sqrt(Tt45 / Tt19c) * pt19c / pt45
             mblt_Tt45 = 0.5 * mblt / Tt45
             mblt_pt45 = -mblt / pt45
-            mblt_pt19 = ml * (1.0 - fo + ff) * sqrt(Tt45 / Tt19) / pt45
+            mblt_pt19c = ml * (1.0 - fo + ff) * sqrt(Tt45 / Tt19c) / pt45
 
             mblt_pl = mblt_ff * ff_pl + mblt_Tt45 * Tt45_pl + mblt_pt45 * pt45_pl
             mblt_ph = mblt_ff * ff_ph + mblt_Tt45 * Tt45_ph + mblt_pt45 * pt45_ph
             mblt_mf = mblt_ff * ff_mf + mblt_Tt45 * Tt45_mf + mblt_pt45 * pt45_mf +
-                      mblt_fo * fo_mf + mblt_pt19 * pt19_mf
+                      mblt_fo * fo_mf + mblt_pt19c * pt19c_mf
             mblt_ml = mblt_ff * ff_ml + mblt_Tt45 * Tt45_ml + mblt_pt45 * pt45_ml +
-                      mblt_fo * fo_ml + mblt_pt19 * pt19_ml + mblt_ml
+                      mblt_fo * fo_ml + mblt_pt19c * pt19c_ml + mblt_ml
             mblt_mh = mblt_ff * ff_mh + mblt_Tt45 * Tt45_mh + mblt_pt45 * pt45_mh
             mblt_Tb = mblt_ff * ff_Tb + mblt_Tt45 * Tt45_Tb + mblt_pt45 * pt45_Tb
             mblt_Mi = mblt_ff * ff_Mi + mblt_Tt45 * Tt45_Mi + mblt_pt45 * pt45_Mi +
-                      mblt_fo * fo_Mi + mblt_pt19 * pt19_Mi
+                      mblt_fo * fo_Mi + mblt_pt19c * pt19c_Mi
 
             #---- LPT corrected speed
-            Nblt = Nl * sqrt(Tt19 / Tt45)
-            Nblt_Nl = sqrt(Tt19 / Tt45)
+            Nblt = Nl * sqrt(Tt19c / Tt45)
+            Nblt_Nl = sqrt(Tt19c / Tt45)
             Nblt_Tt45 = -0.5 * Nblt / Tt45
 
             Nblt_pl = Nblt_Nl * Nl_pl + Nblt_Tt45 * Tt45_pl
@@ -1764,59 +1850,121 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   ht49_Mi = ht49_Mi + h_al[i] * lamp_Mi[i]
                   st49_Mi = st49_Mi + s_al[i] * lamp_Mi[i]
             end
+            Tt49_ht49 = 1 / cpt49
+            st49_Tt49 = cpt49 / Tt49
+
+            # ===============================================================
+            #---- Regenerative cooling heat exchanger 49-49c
+            pt49c = pt49 - Δp_Regen
+            ht49c = ht49 + Δh_Regen
+            Tt49c, Tt49c_ht49c, _ = gas_tsetd(lambdap, nair, ht49c, Tt49)
+            st49c, st49c_Tt49c, ht49c, ht49c_Tt49, cpt49c, cpt49c_Tt49c, Rt49c = gassumd(lambdap, nair, Tt49c)
+
+            #Derivatives with respect to pressure are unchanged
+            pt49c_pt49 = 1.0
+            ht49c_ht49 = 1.0
+
+            Tt49c_Tt49 = Tt49c_ht49c * ht49c_ht49 / Tt49_ht49
+            st49c_st49 = st49c_Tt49c * Tt49c_Tt49 / st49_Tt49
+
+            #Apply chain rule
+            pt49c_pf = pt49_pf * pt49c_pt49
+            Tt49c_pf = Tt49_pf * pt49c_pt49
+            ht49c_pf = ht49_pf * pt49c_pt49
+            st49c_pf = st49_pf * pt49c_pt49
+
+            pt49c_pl = pt49_pl * pt49c_pt49 
+            Tt49c_pl = Tt49_pl * Tt49c_Tt49
+            ht49c_pl = ht49_pl * ht49c_ht49
+            st49c_pl = st49_pl * st49c_st49
+
+            pt49c_ph = pt49_ph * pt49c_pt49  
+            Tt49c_ph = Tt49_ph * Tt49c_Tt49
+            ht49c_ph = ht49_ph * ht49c_ht49
+            st49c_ph = st49_ph * st49c_st49
+
+            pt49c_mf = pt49_mf * pt49c_pt49  
+            Tt49c_mf = Tt49_mf * Tt49c_Tt49
+            ht49c_mf = ht49_mf * ht49c_ht49
+            st49c_mf = st49_mf * st49c_st49
+
+            pt49c_ml = pt49_ml * pt49c_pt49 
+            Tt49c_ml = Tt49_ml * Tt49c_Tt49
+            ht49c_ml = ht49_ml * ht49c_ht49
+            st49c_ml = st49_ml * st49c_st49
+
+            pt49c_mh = pt49_mh * pt49c_pt49  
+            Tt49c_mh = Tt49_mh * Tt49c_Tt49
+            ht49c_mh = ht49_mh * ht49c_ht49
+            st49c_mh = st49_mh * st49c_st49
+
+            pt49c_Tb = pt49_Tb * pt49c_pt49  
+            Tt49c_Tb = Tt49_Tb * Tt49c_Tt49
+            ht49c_Tb = ht49_Tb * ht49c_ht49
+            st49c_Tb = st49_Tb * st49c_st49
+
+            pt49c_Pc = pt49_Pc * pt49c_pt49  
+            Tt49c_Pc = Tt49_Pc * Tt49c_Tt49
+            ht49c_Pc = ht49_Pc * ht49c_ht49
+            st49c_Pc = st49_Pc * st49c_st49
+
+            pt49c_Mi = pt49_Mi * pt49c_pt49  
+            Tt49c_Mi = Tt49_Mi * Tt49c_Tt49
+            ht49c_Mi = ht49_Mi * ht49c_ht49
+            st49c_Mi = st49_Mi * st49c_st49
 
             #---- apply core nozzle loss
-            pt5 = pt49 * pitn
-            Tt5 = Tt49
-            ht5 = ht49
-            st5 = st49
-            cpt5 = cpt49
-            Rt5 = Rt49
+            pt5 = pt49c * pitn
+            Tt5 = Tt49c
+            ht5 = ht49c
+            st5 = st49c
+            cpt5 = cpt49c
+            Rt5 = Rt49c
 
-            pt5_pf = pt49_pf * pitn
-            Tt5_pf = Tt49_pf
-            ht5_pf = ht49_pf
-            st5_pf = st49_pf
+            pt5_pf = pt49c_pf * pitn
+            Tt5_pf = Tt49c_pf
+            ht5_pf = ht49c_pf
+            st5_pf = st49c_pf
 
-            pt5_pl = pt49_pl * pitn
-            Tt5_pl = Tt49_pl
-            ht5_pl = ht49_pl
-            st5_pl = st49_pl
+            pt5_pl = pt49c_pl * pitn
+            Tt5_pl = Tt49c_pl
+            ht5_pl = ht49c_pl
+            st5_pl = st49c_pl
 
-            pt5_ph = pt49_ph * pitn
-            Tt5_ph = Tt49_ph
-            ht5_ph = ht49_ph
-            st5_ph = st49_ph
+            pt5_ph = pt49c_ph * pitn
+            Tt5_ph = Tt49c_ph
+            ht5_ph = ht49c_ph
+            st5_ph = st49c_ph
 
-            pt5_mf = pt49_mf * pitn
-            Tt5_mf = Tt49_mf
-            ht5_mf = ht49_mf
-            st5_mf = st49_mf
+            pt5_mf = pt49c_mf * pitn
+            Tt5_mf = Tt49c_mf
+            ht5_mf = ht49c_mf
+            st5_mf = st49c_mf
 
-            pt5_ml = pt49_ml * pitn
-            Tt5_ml = Tt49_ml
-            ht5_ml = ht49_ml
-            st5_ml = st49_ml
+            pt5_ml = pt49c_ml * pitn
+            Tt5_ml = Tt49c_ml
+            ht5_ml = ht49c_ml
+            st5_ml = st49c_ml
 
-            pt5_mh = pt49_mh * pitn
-            Tt5_mh = Tt49_mh
-            ht5_mh = ht49_mh
-            st5_mh = st49_mh
+            pt5_mh = pt49c_mh * pitn
+            Tt5_mh = Tt49c_mh
+            ht5_mh = ht49c_mh
+            st5_mh = st49c_mh
 
-            pt5_Tb = pt49_Tb * pitn
-            Tt5_Tb = Tt49_Tb
-            ht5_Tb = ht49_Tb
-            st5_Tb = st49_Tb
+            pt5_Tb = pt49c_Tb * pitn
+            Tt5_Tb = Tt49c_Tb
+            ht5_Tb = ht49c_Tb
+            st5_Tb = st49c_Tb
 
-            pt5_Pc = pt49_Pc * pitn
-            Tt5_Pc = Tt49_Pc
-            ht5_Pc = ht49_Pc
-            st5_Pc = st49_Pc
+            pt5_Pc = pt49c_Pc * pitn
+            Tt5_Pc = Tt49c_Pc
+            ht5_Pc = ht49c_Pc
+            st5_Pc = st49c_Pc
 
-            pt5_Mi = pt49_Mi * pitn
-            Tt5_Mi = Tt49_Mi
-            ht5_Mi = ht49_Mi
-            st5_Mi = st49_Mi
+            pt5_Mi = pt49c_Mi * pitn
+            Tt5_Mi = Tt49c_Mi
+            ht5_Mi = ht49c_Mi
+            st5_Mi = st49c_Mi
 
             # ===============================================================
             #---- fan nozzle flow 7-8, use alpha mass fraction (air)
@@ -2153,7 +2301,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #---- fan/LPC speed constraint
             trf = sqrt(Tt2 / Tref)
-            trl = sqrt(Tt19 / Tref)
+            trl = sqrt(Tt19c / Tref)
             res[1, 1] = Gearf * trf * Nf - trl * Nl
             a[1, 1] = Gearf * trf * Nf_pf
             a[1, 2] = -trl * Nl_pl
@@ -2215,20 +2363,20 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #-------------------------------------------------------------------------
             #---- core nozzle mass flow, choked or unchoked
-            mdotc = (1.0 - fo + ff) * ml * sqrt(Tref / Tt19) * pt19 / pref
-            mdotc_ml = (1.0 - fo + ff) * sqrt(Tref / Tt19) * pt19 / pref
-            mdotc_fo = -ml * sqrt(Tref / Tt19) * pt19 / pref
-            mdotc_ff = ml * sqrt(Tref / Tt19) * pt19 / pref
-            mdotc_pt19 = (1.0 - fo + ff) * ml * sqrt(Tref / Tt19) / pref
+            mdotc = (1.0 - fo + ff) * ml * sqrt(Tref / Tt19c) * pt19c / pref
+            mdotc_ml = (1.0 - fo + ff) * sqrt(Tref / Tt19c) * pt19c / pref
+            mdotc_fo = -ml * sqrt(Tref / Tt19c) * pt19c / pref
+            mdotc_ff = ml * sqrt(Tref / Tt19c) * pt19c / pref
+            mdotc_pt19c = (1.0 - fo + ff) * ml * sqrt(Tref / Tt19c) / pref
 
             mdotc_pl = mdotc_ff * ff_pl
             mdotc_ph = mdotc_ff * ff_ph
-            mdotc_mf = mdotc_ff * ff_mf + mdotc_fo * fo_mf + mdotc_pt19 * pt19_mf
-            mdotc_ml = mdotc_ff * ff_ml + mdotc_fo * fo_ml + mdotc_pt19 * pt19_ml +
+            mdotc_mf = mdotc_ff * ff_mf + mdotc_fo * fo_mf + mdotc_pt19c * pt19c_mf
+            mdotc_ml = mdotc_ff * ff_ml + mdotc_fo * fo_ml + mdotc_pt19c * pt19c_ml +
                        mdotc_ml
             mdotc_mh = mdotc_ff * ff_mh
             mdotc_Tb = mdotc_ff * ff_Tb
-            mdotc_Mi = mdotc_ff * ff_Mi + mdotc_fo * fo_Mi + mdotc_pt19 * pt19_Mi
+            mdotc_Mi = mdotc_ff * ff_Mi + mdotc_fo * fo_Mi + mdotc_pt19c * pt19c_Mi
 
             res[5, 1] = mdotc - rho5 * u5 * A5
             a[5, 1] = -(rho5_pf * u5 + rho5 * u5_pf) * A5
@@ -2244,24 +2392,24 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #-------------------------------------------------------------------------
             #---- LPC mass flow = HPC mass flow + mass offtake
-            mdotl = ml * sqrt(Tref / Tt19) * pt19 / pref
-            mdotl_ml = sqrt(Tref / Tt19) * pt19 / pref
-            mdotl_pt19 = mdotl / pt19
+            mdotl = ml * sqrt(Tref / Tt19c) * pt19c / pref
+            mdotl_ml = sqrt(Tref / Tt19c) * pt19c / pref
+            mdotl_pt19c = mdotl / pt19c
 
-            mdotl_mf = mdotl_pt19 * pt19_mf
-            mdotl_ml = mdotl_pt19 * pt19_ml + mdotl_ml
-            mdotl_Mi = mdotl_pt19 * pt19_Mi
+            mdotl_mf = mdotl_pt19c * pt19c_mf
+            mdotl_ml = mdotl_pt19c * pt19c_ml + mdotl_ml
+            mdotl_Mi = mdotl_pt19c * pt19c_Mi
 
 
-            mdoth = mh * sqrt(Tref / Tt25) * pt25 / pref
-            mdoth_mh = sqrt(Tref / Tt25) * pt25 / pref
-            mdoth_Tt25 = -0.5 * mdoth / Tt25
-            mdoth_pt25 = mdoth / pt25
+            mdoth = mh * sqrt(Tref / Tt25c) * pt25c / pref
+            mdoth_mh = sqrt(Tref / Tt25c) * pt25c / pref
+            mdoth_Tt25c = -0.5 * mdoth / Tt25c
+            mdoth_pt25c = mdoth / pt25c
 
-            mdoth_pl = mdoth_Tt25 * Tt25_pl + mdoth_pt25 * pt25_pl
-            mdoth_mf = mdoth_pt25 * pt25_mf
-            mdoth_ml = mdoth_Tt25 * Tt25_ml + mdoth_pt25 * pt25_ml
-            mdoth_Mi = mdoth_pt25 * pt25_Mi
+            mdoth_pl = mdoth_Tt25c * Tt25c_pl + mdoth_pt25c * pt25c_pl
+            mdoth_mf = mdoth_pt25c * pt25c_mf
+            mdoth_ml = mdoth_Tt25c * Tt25c_ml + mdoth_pt25c * pt25c_ml
+            mdoth_Mi = mdoth_pt25c * pt25c_Mi
 
             res[6, 1] = mdoth - mdotl + mofft
             a[6, 1] = 0.0
@@ -2389,12 +2537,12 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         u6_Mi = (ht5_Mi - h6_Mi) / u6tmp
                   end
 
-                  BPR = mf / ml * sqrt(Tt19 / Tt2) * pt2 / pt19
-                  BPR_mf = 1.0 / ml * sqrt(Tt19 / Tt2) * pt2 / pt19 +
-                           BPR / pt2 * pt2_mf - BPR / pt19 * pt19_mf
+                  BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
+                  BPR_mf = 1.0 / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c +
+                           BPR / pt2 * pt2_mf - BPR / pt19c * pt19c_mf
                   BPR_ml = -BPR / ml +
-                           BPR / pt2 * pt2_ml - BPR / pt19 * pt19_ml
-                  BPR_Mi = BPR / pt2 * pt2_Mi - BPR / pt19 * pt19_Mi
+                           BPR / pt2 * pt2_ml - BPR / pt19c * pt19c_ml
+                  BPR_Mi = BPR / pt2 * pt2_Mi - BPR / pt19c * pt19c_Mi
 
                   #- - - - - - - - - - - - - - - - - - - - - - - - - - - - 
                   #----- overall thrust
@@ -2504,17 +2652,17 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   pt5h_Mi = pt5h_Mi + p_al[i] * lamp_Mi[i]
             end
 
-            res[8, 1] = pt5 - pitn * pt5h
-            a[8, 1] = pt5_pf - pitn * pt5h_pf
-            a[8, 2] = pt5_pl - pitn * pt5h_pl
-            a[8, 3] = pt5_ph - pitn * pt5h_ph
-            a[8, 4] = pt5_mf - pitn * pt5h_mf
-            a[8, 5] = pt5_ml - pitn * pt5h_ml
-            a[8, 6] = pt5_mh - pitn * pt5h_mh
-            a[8, 7] = pt5_Tb - pitn * pt5h_Tb
-            a[8, 8] = pt5_Pc
-            a[8, 9] = pt5_Mi - pitn * pt5h_Mi
-            rrel[8] = res[8, 1] / pt5
+            res[8, 1] = pt49 - pt5h
+            a[8, 1] = pt49_pf - pt5h_pf
+            a[8, 2] = pt49_pl - pt5h_pl
+            a[8, 3] = pt49_ph - pt5h_ph
+            a[8, 4] = pt49_mf - pt5h_mf
+            a[8, 5] = pt49_ml - pt5h_ml
+            a[8, 6] = pt49_mh - pt5h_mh
+            a[8, 7] = pt49_Tb - pt5h_Tb
+            a[8, 8] = pt49_Pc
+            a[8, 9] = pt49_Mi - pt5h_Mi
+            rrel[8] = res[8, 1] / pt49
             # ===========================================================================
             #---- inlet Mach - area constraint
             mfA = mf * sqrt(Tref / Tt2) * pt2 / pref / (rho2 * u2)
@@ -2523,11 +2671,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             mfA_ml = mfA * (pt2_ml / pt2 - rho2_ml / rho2)
             mfA_Mi = mfA * (pt2_Mi / pt2 - rho2_Mi / rho2 - u2_Mi / u2)
 
-            mlA = ml * sqrt(Tref / Tt19) * pt19 / pref / (rho19 * u19)
-            mlA_mf = mlA * (pt19_mf / pt19 - rho19_mf / rho19)
-            mlA_ml = mlA * (pt19_ml / pt19 - rho19_ml / rho19) +
-                     sqrt(Tt19 / Tref) * pref / pt19 / (rho19 * u19)
-            mlA_Mi = mlA * (pt19_Mi / pt19 - rho19_Mi / rho19 - u19_Mi / u19)
+            mlA = ml * sqrt(Tref / Tt19c) * pt19c / pref / (rho19c * u19c)
+            mlA_mf = mlA * (pt19c_mf / pt19c - rho19c_mf / rho19c)
+            mlA_ml = mlA * (pt19c_ml / pt19c - rho19c_ml / rho19c) +
+                     sqrt(Tt19c / Tref) * pref / pt19c / (rho19c * u19c)
+            mlA_Mi = mlA * (pt19c_Mi / pt19c - rho19c_Mi / rho19c - u19c_Mi / u19c)
 
             res[9, 1] = mfA + mlA - A2
             a[9, 1] = 0.0
@@ -2586,7 +2734,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
                   Tt4 = Tb
                   pt5 = Pc
-                  BPR = mf / ml * sqrt(Tt19 / Tt2) * pt2 / pt19
+                  BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
 
                   println("pt18 Tt18 =", pt18, Tt18)
                   println("pt2  Tt2  =", pt2, Tt2)
@@ -2620,7 +2768,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Tt7, ht7, pt7, cpt7, Rt7,
                   u0,
                   T2, u2, p2, cp2, R2, M2,
-                  T25, u25, p25, cp25, R25, M25,
+                  T25c, u25c, p25c, cp25c, R25c, M25c,
                   T5, u5, p5, cp5, R5, M5,
                   T6, u6, p6, cp6, R6, M6, A6,
                   T7, u7, p7, cp7, R7, M7,
@@ -2943,8 +3091,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   pt5 = Pc
 
                   #---- final core mass flow and bypass ratio
-                  mcore = ml * sqrt(Tref / Tt19) * pt19 / pref
-                  BPR = mf / ml * sqrt(Tt19 / Tt2) * pt2 / pt19
+                  mcore = ml * sqrt(Tref / Tt19c) * pt19c / pref
+                  BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
 
                   #---- offtake mass ratio
                   fo = mofft / mcore
@@ -3010,14 +3158,14 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
                   #---- LP compressor
                   pt25i, Tt25i, ht25i, st25i, cpt25i, Rt25i = gas_prat(alpha, nair,
-                        pt19, Tt19, ht19, st19, cpt19, Rt19, pilc, 1.0)
-                  etalc = (ht25i - ht19) / (ht25 - ht19)
+                        pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pilc, 1.0)
+                  etalc = (ht25i - ht19c) / (ht25 - ht19c)
 
                   #---- HP compressor
 
                   pt3i, Tt3i, ht3i, st3i, cpt3i, Rt3i = gas_prat(alpha, nair,
-                        pt25, Tt25, ht25, st25, cpt25, Rt25, pihc, 1.0)
-                  etahc = (ht3i - ht25) / (ht3 - ht25)
+                        pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, pihc, 1.0)
+                  etahc = (ht3i - ht25c) / (ht3 - ht25c)
 
                   #---- HP turbine
                   piht = pt45 / pt41
@@ -3042,26 +3190,26 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   #-    (first check for choking)
                   M25s = 0.99
                   p25s, T25s, h25s, s25s, cp25s, R25s = gas_mach(alpha, nair,
-                        pt25, Tt25, ht25, st25, cpt25, Rt25, 0.0, M25s, 1.0)
-                  u25s = sqrt(2.0 * (ht25 - h25s))
+                        pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, 0.0, M25s, 1.0)
+                  u25s = sqrt(2.0 * (ht25c - h25s))
                   mdot25s = p25s / (R25s * T25s) * u25s * A25
 
                   if ((1.0 - fo) * mcore >= mdot25s)
                         #----- HPC face is choked... artificially use sonic quantities
-                        u25 = u25s
-                        p25 = p25s
-                        T25 = T25s
-                        cp25 = cp25s
-                        R25 = R25s
-                        M25 = M25s
+                        u25c = u25s
+                        p25c = p25s
+                        T25c = T25s
+                        cp25c = cp25s
+                        R25c = R25s
+                        M25c = M25s
                   else
                         #----- normal case... set static quantities from prescribed mass flux
                         Mguess = min(M25, 0.90)
                         mp25 = (1.0 - fo) * mcore / A25
-                        p25, T25, h25, s25, cp25, R25 = gas_mass(alpha, nair,
-                              pt25, Tt25, ht25, st25, cpt25, Rt25, mp25, Mguess)
-                        u25 = sqrt(2.0 * (ht25 - h25))
-                        M25 = u25 / sqrt(T25 * R25 * cp25 / (cp25 - R25))
+                        p25c, T25c, h25c, s25c, cp25c, R25c = gas_mass(alpha, nair,
+                              pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, mp25, Mguess)
+                        u25c = sqrt(2.0 * (ht25c - h25c))
+                        M25c = u25c / sqrt(T25c * R25c * cp25c / (cp25c - R25c))
                   end
                   
                   Lconv = true
@@ -3073,9 +3221,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Tt0, ht0, pt0, cpt0, Rt0,
                   Tt18, ht18, pt18, cpt18, Rt18,
                   Tt19, ht19, pt19, cpt19, Rt19,
+                  Tt19c, ht19c, pt19c, cpt19c, Rt19c,
                   Tt2, ht2, pt2, cpt2, Rt2,
                   Tt21, ht21, pt21, cpt21, Rt21,
                   Tt25, ht25, pt25, cpt25, Rt25,
+                  Tt25c, ht25c, pt25c, cpt25c, Rt25c,
                   Tt3, ht3, pt3, cpt3, Rt3,
                   Tt4, ht4, pt4, cpt4, Rt4,
                   Tt41, ht41, pt41, cpt41, Rt41,
@@ -3085,7 +3235,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Tt7, ht7, pt7, cpt7, Rt7,
                   u0,
                   T2, u2, p2, cp2, R2, M2,
-                  T25, u25, p25, cp25, R25, M25,
+                  T25c, u25c, p25c, cp25c, R25c, M25c,
                   T5, u5, p5, cp5, R5, M5,
                   T6, u6, p6, cp6, R6, M6, A6,
                   T7, u7, p7, cp7, R7, M7,
