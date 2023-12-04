@@ -144,7 +144,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Mtexit, dTstrk, StA, efilm, tfilm,
       M4a, ruc,
       ncrowx, ncrow,
-      epsrow, Tmrow)
+      epsrow, Tmrow,
+      Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
+      Δp_PreC, Δp_InterC, Δp_Regen)
 
       n = 6
 
