@@ -63,7 +63,7 @@ All dimensional quantities are treated internally as SI.
 
 Refer to `/src/IO/default_input.toml` for the input file's conversion capability and formatting. It's also useful for typical values and explaining inputs.
 
-Non-dimensionalization follows the Drela conventions (see [TASOPT Technical Desc](@ref dreladocs)).
+Non-dimensionalization follows the Drela conventions (see [TASOPT Technical Description](@ref dreladocs)).
 
 ```@example
 using Dates # hide
