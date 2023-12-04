@@ -1,5 +1,7 @@
 using Pkg
+
 Pkg.activate(dirname(@__DIR__))
+
 using TASOPT
 
 push!(LOAD_PATH, "../src")
@@ -32,8 +34,9 @@ makedocs(
         "structures/fueltanks.md"
         ],
     "Propulsion systems" => Any[
-        "propulsion/propsys.md",
-        "propulsion/hxfun.md",
+            "propulsion/propsys.md",
+            "propulsion/hxfun.md",
+            "propulsion/gascalc.md"
         ],
     "Stability" => "balance/balance.md",
     "Mission and sizing" => Any[

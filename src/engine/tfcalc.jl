@@ -1,21 +1,20 @@
 """ 
-    tfcalc(pari,parg,para,pare, ip,
-    icall,icool,initeng)
+    tfcalc(pari,parg,para,pare, ip, icall,icool,initeng)
 
 Calls function tfsize or tfoper for one operating point.
 
-# Input
-
-  icall = 0  call on-design  sizing   routine tfsize
-          1  call off-design analysis routine tfoper, specified Tt4
-          2  call off-design analysis routine tfoper, specified Fe
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `icall`:    0  call on-design  sizing   routine tfsize
+                  1  call off-design analysis routine tfoper, specified Tt4
+                  2  call off-design analysis routine tfoper, specified Fe
           
-  icool = 0  use zero cooling mass flow ratio regardless
-          1  use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
-          2  use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
+    - `icool`:    0  use zero cooling mass flow ratio regardless
+                  1  use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
+                  2  use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
 
-  initeng = 0  initialize variables for iteration in TFOPER
-            1  use current variables as initial guesses in TFOPER
+    - `initeng`:    0  initialize variables for iteration in TFOPER
+                1  use current variables as initial guesses in TFOPER
 """
 function tfcalc!(pari, parg, para, pare, ip,
         icall, icool, initeng)

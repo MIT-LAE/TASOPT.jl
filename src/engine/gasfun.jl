@@ -6,23 +6,25 @@ using Zygote
 Computes properties of a thermally-perfect gas
 with some variable specific heat cp[T].
 
-## Input:
-     igas   index specifying the gas (see if blocks below for list)
-     t      temperature T in Kelvin
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `igas`: index specifying the gas (see if blocks below for list)
+    - `t`: temperature T in Kelvin
 
-## Output:
-     s      entropy-complement function s[T]
-     s_t    ds/dT
-     h      complete enthalpy function h[T]
-     h_t    dh/dT
-     cp     specific heat cp[T]
-     r      ideal-gas constant R
+    **Output:**
+    - `s`: entropy-complement function s[T]
+    - `s_t`: ds/dT
+    - `h`: complete enthalpy function h[T]
+    - `h_t`: dh/dT
+    - `cp`: specific heat cp[T]
+    - `r`: ideal-gas constant R
 
 
-     The adiabatic pressure change over a process 1..2 
-     with some polytropic efficiency epol is 
-       p2  =  p1  exp [   epol   (s2-s1)/R ]    compression
-       p2  =  p1  exp [ (1/epol) (s2-s1)/R ]    expansion
+The adiabatic pressure change over a process 1->2 with some polytropic efficiency epol is:
+
+``\\ p2  = \\ p1  exp [   epol   (s2-s1)/R ] ``   compression
+
+``\\ p2  = \\ p1  exp [ (1/epol) (s2-s1)/R ] ``   expansion
 """
 function gasfun(igas, t)
     
@@ -56,19 +58,21 @@ function gasfun(igas, t)
     return s, s_t, h, h_t, cp, r
 end # gasfun
 
+"""
+    gaschem(igas)
 
+Returns number of C,H,O,N atoms in gas molecule, for the gases implemented in function gasfun above.
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `igas`: index specifying the gas (see if blocks below for list)
+
+    **Output:**
+    - `nchon(.)`: number of C,H,O,N atoms in gas molecule
+
+"""
 function gaschem(igas)
-    #--------------------------------------------------------------------
-    #     Returns number of C,H,O,N atoms in gas molecule,
-    #     for the gases implemented in function gasfun above.
-    #
-    #  Input:
-    #     igas   index specifying the gas (see if blocks below for list)
-    #
-    #  Output:
-    #     nchon(.)  number of C,H,O,N atoms in gas molecule
-    #
-    #--------------------------------------------------------------------
+
     kc = 1
     kh = 2
     ko = 3
