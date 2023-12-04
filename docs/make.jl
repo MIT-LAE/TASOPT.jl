@@ -36,7 +36,7 @@ makedocs(
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
             "propulsion/hxfun.md",
-            "propulsion/gascalc.md"
+            # "propulsion/gascalc.md"
         ],
     "Stability" => "balance/balance.md",
     "Mission and sizing" => Any[
