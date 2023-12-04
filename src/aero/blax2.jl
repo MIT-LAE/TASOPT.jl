@@ -62,72 +62,7 @@ See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric B
 See also [`blsys`](@ref) and [`blvar`](@ref). Deprecates `blax`.
 """
 function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
-#-----------------------------------------------------------------
-#     Axᵢsymmetric boundary layer + wake calculation routine.
-#     Uses specified inviscid velocity, corrects for viscous
-#     displacement to allow calculation of separated flow.
-#
-#  Inputs
-#  ------
-#    ndim    physical array dimension
-#    n       number of BL+wake points
-#    ite     index of trailing edge point, start of wake
-#    xᵢ(.)   arc length array (BL coordinate)
-#    bi(.)   lateral width of BL (body perimeter, zero for wake)
-#             = 1 for 2D
-#    rni(.)  dr/dn
-#             = 0 for 2D
-#    uinv(.) inviscid velocity
-#    Reyn    Reynolds number,  ρ_ref u_ref l_ref / μ_ref
-#    Mach    Mach number    ,  u_ref / a_ref
-#    fexcr   excrescence multiplier, applied to wall Cf 
-#             = 1 for smooth wall
-#
-#  Assumed units for all quantities:
-#    l_ref   same unit as used for input xᵢ,bi
-#    u_ref   freestream velocity
-#    a_ref   freestream speed of sound
-#    ρ_ref freestream density
-#    μ_ref  freestream viscosity
-#    
-#  Outputs
-#  -------
-#    uₑᵢ[i]  edge velocity, ( = uinv[i] + displacement correction )
-#    δᵢ[i]  displacement θᵢckness
-#    θᵢ[i]  momentum θᵢckness
-#    θsᵢ[i]  kinetic energy θᵢckness
-#    δssᵢ[i]  density flux θᵢckness
-#    cfi[i]  skin friction coefficient, normalized with local ρ,u
-#    cdi[i]  dissipation coefficient  , normalized with local ρ,u
-#    cti[i]  max shear-stress coefficient, normalized with local ρ,u
-#    hki[i]  kinematic shape parameter
-#    ϕ[i]  integrated dissipation
-#
-#
-#  Other outputs of interest can be computed as follows.
-#  These are in units of l_ref, ρ_ref, u_ref
-#
-#  Effective perimeter  : beff  =  bi  +  2 π δᵢ rni
-#  Edge density         : ρᵢ = (1 + 0.5*(ɣ-1)*Mach^2*(1.0-uₑᵢ^2))^(1/(ɣ-1))
-#  Total mass defect    : mdef =  ρᵢ uₑᵢ   δᵢ beff
-#  Total mom. defect    : Pdef =  ρᵢ uₑᵢ^2 θᵢ beff
-#  Total KE defect      : Edef =  ρᵢ uₑᵢ^3 θsᵢ beff / 2
-#  Wall shear force/span: tw b =  ρᵢ uₑᵢ^2 cfi beff / 2
-#  Dissipation integral : Diss =  ρᵢ uₑᵢ^3 cdi beff
-#
-#  Body profile drag Dp is the far-downstream momentum defect P∞,
-#  best obtained by applying Squire-Young to the last wake point i = n :
-#
-#   Pend = ρᵢ*uₑᵢ^2 * θᵢ * beff
-#   Hend = δᵢ/θᵢ
-#   H∞ = 1.0 + (ɣ-1)*Mach^2
-#   Havg = 0.5*(Hend+H∞)
-#   P∞ = Pend * uₑᵢ^Havg  =  Dp
-#
-#-----------------------------------------------------------------
 
-# Declare variables TODO Type declarations?
-#
       uₑᵢ  = zeros(ndim)
       ρᵢ  = zeros(ndim)
       δᵢ  = zeros(ndim)
