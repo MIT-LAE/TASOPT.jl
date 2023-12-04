@@ -133,7 +133,9 @@ readfuel(x::String) = read_input(x, fuel, dfuel)
 fueltype = readfuel("fuel_type")
 #TODO this needs to be updated once I include Gas.jl into TASOPT
 if uppercase(fueltype) == "LH2"
-    pari[iifuel] = 1
+    pari[iifuel] = 40
+elseif uppercase(fueltype) == "CH4"
+        pari[iifuel] = 11
 elseif uppercase(fueltype) == "JET-A"
     pari[iifuel] = 24
 else
@@ -142,7 +144,8 @@ end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
-pare[ieTfuel, :, :] .= readfuel("fuel_temp")
+pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
+pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
 parg[igrhofuel] = readfuel("fuel_density")
 
 # Setup mission variables
@@ -752,6 +755,34 @@ dweight = dprop["Weight"]
         error("\"$TF_wmodel\" engine weight model was specifed. 
         Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
     end
+
+# Heat exchangers
+
+try #If heat exchanger field exists in the input file
+    HEx = readprop("HeatExchangers")
+    dHEx = dprop["HeatExchangers"]
+        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
+        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
+        pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
+        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+        
+        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
+        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
+        pare[iePreCMh, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+
+        pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
+        pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
+        pare[ieInterCMh, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+
+        pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
+        pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
+        pare[ieRegenMh, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+
+        pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
+        pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
+        pare[ieTurbCMh, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+catch #Do nothing if the heat exchanger field does not exist
+end
 
 return TASOPT.aircraft(name, description,
 pari, parg, parm, para, pare)

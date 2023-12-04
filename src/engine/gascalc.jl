@@ -1072,7 +1072,7 @@ function gasPr(gas, T)
             T0 = 273
 
             igas = 3
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "n2")
             μ0 = 1.663e-5
@@ -1082,7 +1082,7 @@ function gasPr(gas, T)
             T0 = 273
 
             igas = 1
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
       elseif (gas == "o2")
             μ0 = 1.919e-5
             S_μ = 139
@@ -1091,7 +1091,7 @@ function gasPr(gas, T)
             T0 = 273   
 
             igas = 2
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "h2o")
             #parameters obtained by a fit to NIST data
@@ -1102,7 +1102,7 @@ function gasPr(gas, T)
             T0 = 350 
             
             igas = 4
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "ch4")
             #parameters obtained by a fit to NIST data
@@ -1113,7 +1113,7 @@ function gasPr(gas, T)
             T0 = 273 
             
             igas = 11
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "h2")
             #parameters obtained by a fit to NIST data
@@ -1123,8 +1123,8 @@ function gasPr(gas, T)
             S_k = 161.1    
             T0 = 273
             
-            R = 8.3144598 / (2.016e-3)
-            cp = 14200 #TODO: replace this with a proper evaluation as a function of T
+            igas = 40
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
       end
       
 
@@ -1137,3 +1137,44 @@ function gasPr(gas, T)
 
       return R, Pr, γ, cp, μ, k 
 end
+
+"""
+     Calculates temperature for a specified enthalpy for a single gas species.
+     The constant-cp equivalent is
+
+              t = (hspec - hf) /cp  
+
+     where hf is the heat of formation included in h[t]
+
+  # Input:
+     igas      gas index
+     hspec     specified enthalpy
+     tguess    first guess for temperature
+
+  # Output:
+     t        temperature
+"""
+function gas_tset_single(igas, hspec, tguess)
+
+      itmax = 15
+      ttol = 0.000001
+
+      t = tguess
+
+      dt = 0.0
+      for iter = 1:itmax
+            s, s_t, h, h_t, cp, r = gasfun(igas, t)
+            res = h - hspec
+            res_t = h_t
+
+            dt = -res / res_t
+
+            if (abs(dt) < ttol)
+                  return t
+            end
+
+            t = t + dt
+      end
+      println("gas_tset_single: convergence failed.  dT =", dt)
+
+end # gas_tset

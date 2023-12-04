@@ -15,16 +15,16 @@
     ```
     where ``\dot{m}`` is the mass flow rate, ``c_p`` is the specific heat at constant pressure, and the subscripts ``h`` and ``c`` refer to the hot and cold streams. The capacity ratio is ``C_r = \frac{C_{\mathrm{min}}}{C_{\mathrm{max}}}``. 
     
-    A maximum heat flux is defined as
+    A maximum heat transfer rate is defined as
     ```math
-    \dot{q}_{max} = C_{\mathrm{min}} (T_{i,h} - T_{i,c}),
+    \dot{Q}_{max} = C_{\mathrm{min}} (T_{i,h} - T_{i,c}),
     ```
     where ``T`` is the absolute temperature. A measure of the HX is the effectiveness, ``\varepsilon``, defined as
     
     ```math
-    \varepsilon = \frac{\dot{q}}{\dot{q}_{max}},
+    \varepsilon = \frac{\dot{Q}}{\dot{Q}_{max}},
     ```
-    where ``\dot{q}`` is the actual heat flux. The effectiveness can range between 0 and 1. A related quantity known as the number of transfer units (NTU) is defined as
+    where ``\dot{Q}`` is the actual heat transfer rate. The effectiveness can range between 0 and 1. A related quantity known as the number of transfer units (NTU) is defined as
     ```math
     \mathrm{NTU} = \frac{1}{C_{\mathrm{min}} R_o},
     ```
@@ -38,26 +38,62 @@
     ```math
     \mathrm{NTU} = -\ln\left(1 + \frac{\ln(1 - C_r\varepsilon)}{C_r}\right).
     ```
-    
-    Once the effectiveness is known, the outlet temperatures can be computed using
+    On the other hand, if the cold stream has the maximum heat capacity rate, the effectiveness is given by
     ```math
-    T_{h,o} = T_{h,i} - \frac{\dot{q}}{\dot{m}_h c_{p,h}}
+    \varepsilon = 1 - \exp\left[-\frac{1}{C_{r}} (1 - \exp(-C_r \mathrm{NTU}))\right],
+    ```
+    and the corresponding NTU is
+    ```math
+    \mathrm{NTU} = -\frac{1}{C_{r}} \ln\left[ 1 + C_r \ln(1 - \varepsilon)\right].
+    ```
+    A notable property of these expressions is that there is a maximum effectiveness ``\varepsilon_\mathrm{max} < 1`` as the NTU tends to infinity. In the code, there is a check to see if the desired effectiveness exceeds the maximum possible one, in which case there is no solution. The effectiveness is limited to 95% of ``\varepsilon_\mathrm{max}`` to prevent a very large NTU.
+
+    Once the effectiveness is known, the outlet specific enthalpies can be computed using
+    ```math
+    h_{o,h} = h_{i,h} - \frac{\dot{Q}}{\dot{m}_h}
     ```
     ```math
-    T_{c,o} = T_{c,i} - \frac{\dot{q}}{\dot{m}_c c_{p,c}}.
+    h_{o,c} = h_{i,c} + \frac{\dot{Q}}{\dot{m}_c},
     ```
+    where ``h`` represents the specific enthalpy, and the outlet temperatures can be determined from these.
+
+    ### Recirculation
+    If the coolant is originally in liquid form, it needs to undergo a phase change at some point in the heat exchanger. For cryogenic liquids, such as hydrogen or methane, it is unadvisable to expose air to these cryogenic temperatures as it can result in freezing or liquefaction of some species in air. A possible approach to overcome this is to introduce recirculation in the heat exchanger: this increases the coolant mass flow rate and allows for a higher coolant temperature while still having the same heat transfer. 
+
+    The way recirculation is currently modeled in TASOPT is via a virtual "mixing chamber", where the hot recirculating mass flow that comes of of the HX is mixed with the colder coolant (which may be liquid in general) and heats it up to a desired HX inlet temperature,``T_{i,c}``. Neglecting the kinetic energy in the fluids, conservation of energy requires that
+    ```math
+    \dot{m}_{c,\infty} (h_{c,\infty}-h_{lat}) + \dot{m}_{r} h_{o,c} = (\dot{m}_{c,\infty}+\dot{m}_{r})h_{i,c},
+    ```
+    where ``\dot{m}_r`` is the recirculating mass flow rate and ``\dot{m}_{c,\infty}`` is the coolant mass flow rate before mixing with recirculation and, by mass conservation, the mass flow rate that leaves the system. The term ``h_{lat}`` represents a latent heat and may account for vaporization or, in the case of hydrogen, the ortho- to parahydrogen conversion. The specific enthalpies into and out of the HX are related by 
+    ```math
+    h_{o,c} = h_{i,c} + \frac{\dot{Q}}{\dot{m}_{c,\infty}+\dot{m}_{r}}.
+    ```
+    As the heat transfer rate is given by ``\dot{Q} = \varepsilon C_{\mathrm{min}} (T_{i,h} - T_{i,c})``, we can distinguish two cases depending on whether the coolant has the minimum or maximum heat capacity rate. If ``C_{\mathrm{min}}=(\dot{m}_{c,\infty}+\dot{m}_{r}) c_{pi,c}``,
+    ```math
+    \dot{m}_r = \dot{m}_{c,\infty} \frac{h_{i,c} - h_{c,\infty} + h_{lat}}{\varepsilon c_{pi,c}(T_{i,h} - T_{i,c})},
+    ```
+    and if ``C_{\mathrm{max}}=(\dot{m}_{c,\infty}+\dot{m}_{r}) c_{pi,c}``,
+    ```math
+    \dot{m}_r = \dot{m}_{c,\infty}\frac{A}{1-A},
+    ```
+    where 
+    ```math
+    A = \dot{m}_{c,\infty}\frac{h_{i,c} -h_{c,\infty} + h_{lat}}{\varepsilon C_h (T_{i,h} - T_{i,c})}.
+    ```
+    A failure case exists if ``A\geq 1``: in this case, the hot stream does not have enough heat capacity to provide the heat needed to get the coolant to the desired ``T_{i,c}``.
+
     ### Heat exchanger geometry
     ![HXfig](../assets/tubular_HX.svg)
 
-    The heat exchanger is assumed to have ``N_\mathrm{stages}`` different serial stages, with each stage containing ``N_\mathrm{passes}`` tube rows, each corresponding to a coolant pass. For example, the HX in the figure above with 2 stages and 3 coolant passes has a total of ``N_L=N_\mathrm{stages}N_\mathrm{passes}=6`` tube rows. The number of tubes at every row is `0`N_t``; this parameter can be calculated from the mass flow rate through the cold side or from the geometry of the stage
+    Two HX cross-sections are currently supported: rectangular and concentric cylinders (e.g., for a jet engine core). If the geometry is rectangular, the length of the tubes dictates the width of the rectangle, but if it is concentric, the tubes could have any length greater or equal to the distance between the cylinders as involute tubes could be used. The heat exchanger is assumed to have ``N_\mathrm{stages}`` different serial stages, with each stage containing ``N_\mathrm{passes}`` tube rows, each corresponding to a coolant pass. For example, the HX in the figure above with 2 stages and 3 coolant passes has a total of ``N_L=N_\mathrm{stages}N_\mathrm{passes}=6`` tube rows. The number of tubes at every row is ``N_t``; this parameter can be calculated from the mass flow rate through the cold side or from the geometry of the stage
     ```math
-    N_t = \frac{4 \dot{m}_c}{\rho_{c,i}V_{c,i} \pi D_{t,i}^2 N_\mathrm{stages}} = \frac{\pi D_{c,i}}{\frac{x_t}{D} D_{t,o}},
+    N_t = \frac{4 \dot{m}_c}{\rho_{c,i}V_{c,i} \pi D_{t,i}^2 N_\mathrm{stages}} = \frac{b}{\frac{x_t}{D} D_{t,o}},
     ```
-    where ``D_{c,i}`` is the core inner diameter. Since the tube inner diameter can be expressed as ``D_{t,i} = D_{t,o} - 2t``, this equation can be solved for the tube outer diameter
+    where ``b`` is length across which the tubes are distributed. If the cross-section is concentric, ``b=\pi D_{c,i}`` with ``D_{c,i}`` being the inner cylinder diameter; if it is rectangular, ``b = \frac{A_{cs}}{l}``. In this expressions, ``A_{cs}=\frac{\dot{m}_h}{\rho_{h,i}V_{h,i}}`` is the freestream cross-sectional area. Since the tube inner diameter can be expressed as ``D_{t,i} = D_{t,o} - 2t``, this equation can be solved for the tube outer diameter
     ```math
     D_{t,o} = \frac{4  K  t + \sqrt{8  K t + 1} + 1}{2 K},
     ```
-    with ``K = \frac{\pi^2 D_{c,i} N_\mathrm{stages} \rho_{c,i}V_{c,i}}{4 \frac{x_t}{D} \dot{m}_c}``.
+    with ``K = \frac{\pi b N_\mathrm{stages} \rho_{c,i}V_{c,i}}{4 \frac{x_t}{D} \dot{m}_c}``.
     
     The total length of the HX is simply ``L = N_L \frac{x_l}{D} D_{t,o}``.
 
@@ -65,15 +101,13 @@
     ```math
     x_{t,m} = \frac{A_{cs}}{N_t l},
     ```
-    where ``A_{cs}=\frac{\dot{m}_h}{\rho_{h,i}V_{h,i}}`` is the freestream cross-sectional area.
-    
-    If the length of each involute tube is ``l``, the mass flow rate per unit area at the minimum free flow area is 
+    where ``l`` is the length of each involute tube. The mass flow rate per unit area at the minimum free flow area is 
     ```math
-    G = \frac{\dot{m}_h}{A_cs - N_t l D_{t,o}}.
+    G = \frac{\dot{m}_h}{A_{cs} - N_t l D_{t,o}}.
     ```
-    If the general geometry and total hot-side heat transfer area are known (e.g., from the NTU), but the length of the involute tubes has not been determined yet, this can be calculated as
+    Note that for this expression to be valid, it is sufficient that $x_l/D\geq 1$. If the general geometry and total hot-side heat transfer area are known (e.g., from the NTU), but the number of coolant passes has not been determined yet, this can be calculated as
     ```math
-    l = \frac{A_h}{N_t N_\mathrm{passes} N_\mathrm{stages} \pi D_{t,o}}.
+    N_\mathrm{passes} = \frac{A_h}{N_t N_\mathrm{stages} \pi D_{t,o} l}.
     ```
 
     ### Heat transfer coefficients
@@ -151,20 +185,35 @@
     ```
     with ``\tau_w = C_f \frac{1}{2}\rho_{c,m} V_{c,m}^2``.
 
+## Structures
+```@docs
+engine.HX_gas
+```
+```@docs
+engine.HX_tubular
+```
+```@docs
+engine.HX_struct
+```
 ## Functions
 ### Heat exchanger sizing and off-design operations
 ```@docs
-engine.hxsize
+engine.hxsize!
 ```
 ```@docs
-engine.hxoper
+engine.hxoper!
 ```
 ### Optimization
 ```@docs
-engine.hxoptim
+engine.hxoptim!
 ```
 ```@docs
 engine.hxobjf
+```
+
+### Overall design and analysis
+```@docs
+engine.hxdesign!
 ```
 ### Heating and pressure calculations
 ```@docs

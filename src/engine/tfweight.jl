@@ -24,7 +24,7 @@ Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald m
     - `Snace1`: Nacelle area.
 """
 function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-    dlcomp, neng, feadd, fpylon)
+    dlcomp, neng, feadd, fpylon, HXs)
 
     # include("constants.inc")
 
@@ -148,6 +148,13 @@ function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
 
     end
 
+    for HX in HXs #For every heat exchanger in the engine
+        W_HX = hxweight(gee, HX.HXgeom, 1.0) * neng #Weight of a heat exchanger times number of engines
+        
+        Webare = Webare + W_HX #Add heat exchanger weight to bare and full engine
+        Weng = Weng + W_HX
+
+    end
 
     return Weng, Wnac, Webare, Snace1
 end
