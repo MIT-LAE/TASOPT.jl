@@ -1,4 +1,66 @@
+"""
+    blax2(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+     
+Axisymmetric boundary layer + wake calculation routine.
+Uses specified inviscid velocity, corrects for viscous
+displacement to allow calculation of separated flow.
 
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `ndim::Integer`: physical array dimension.
+      - `n::Integer`: number of boundary layer + wake points.
+      - `ite::Integer`: index of trailing edge point, start of wake.
+      - `xi::Array{Float64}`: arc length array (BL coordinate).
+      - `bi::Array{Float64}`: lateral width of BL at surface (i.e., body perimeter). ``b_i`` = 0 for wake, 1 for 2D.
+      - `rni::Array{Float64}`: ``dr/dn`` to account for near-axisymmetric bodies, 0 for 2D.
+      - `uinv::Array{Float64}`: inviscid velocity, ``u_{inv}``.
+      - `Reyn::Float64`: Reynolds number,  ``\\rho_{ref} u_{ref} l_{ref} / \\mu_{ref}``.
+      - `Mach::Float64`: Mach number,  ``M = u_{ref} / a_{ref}``.
+      - `fexcr::Float64`: excrescence multiplier applied to wall ``c_f``, 1 for smooth wall.
+
+      Assumed units for all quantities:
+      - `l_ref`: same unit as used for input `xi`,`bi`.
+      - `u_ref`: freestream velocity.
+      - `a_ref`: freestream speed of sound.
+      - `rho_ref`: freestream density.
+      - `mu_ref`: freestream viscosity.
+        
+      **Outputs:**
+      - `uei::Array{Float64}`:  edge velocity, (``u_{e,i} = u_{inv,i} +`` {displacement correction}).
+      - `dsi::Array{Float64}`:  displacement thickness (``\\delta^*``).
+      - `thi::Array{Float64}`:  momentum thickness     (``\\theta``).
+      - `tsi::Array{Float64}`:  kinetic energy thickness (``\\theta^*``).
+      - `dci::Array{Float64}`:  density flux thickness   (``\\delta^{**}``).
+      - `cfi::Array{Float64}`:  skin friction coefficient, normalized with local ``\\rho``, ``u`` (``c_{f,i}``).
+      - `cdi::Array{Float64}`:  dissipation coefficient  , normalized with local ``\\rho``,``u`` (``c_{\\mathcal{D},i}``).
+      - `cti::Array{Float64}`:  max shear-stress coefficient, normalized with local ``\\rho``,``u`` (``c_{t,i}``).
+      - `hki::Array{Float64}`:  kinematic shape parameter (``H_{K,i}``).
+      - `phi::Array{Float64}`:  integrated dissipation (``\\Phi``).
+
+
+      Other outputs of interest can be computed as follows.
+      These are in units of `l_ref`, `rho_ref`, `u_ref`
+
+      - `beffi`: Effective perimeter,  ``b_{eff,i} = b_i  +  2 \\pi \\delta^* dr/dn``.
+      - `rhi`: Edge density, ``\\rho_i = (1 + \\frac{(\\gamma-1)}{2}M^2 (1.0-u_{e,i}^2))^\\frac{1}{(\\gamma-1)}``.
+      - `mdef`: Total mass defect, ``\\rho_i u_{e,i} \\delta^* b_{eff}``.
+      - `Pdef`: Total momentum defect, ``\\rho_i u_{e,i}^2 \\theta b_{eff}``.
+      - `Edef`: Total kinetic energy defect, ``\\frac{1}{2} \\rho_i u_{e,i}^3 \\theta^* b_{eff}``.
+      - `tauwb`: Wall shear force/span, ``\\frac{\\tau_w}{b} = \\frac{1}{2} u_{e,i}^2 c_{f,i} b_{eff}``.
+      - `Diss`: Dissipation integral, ``\\rho_i u_{e,i}^3 c_{\\mathcal{D},i} b_{eff,i}``.
+
+      Body profile drag `D_p` is the far-downstream momentum defect ``P_\\infty``,
+      best obtained by applying Squire-Young to the last wake point, ``i = n`` :
+
+      - ``P_{end} = \\rho_i u_{e,i}^2 \\theta b_{eff}``
+      - ``H_{end} = \\delta^*/\\theta``
+      - ``H_{\\infty} = 1 + (\\gamma-1) M^2``
+      - ``H_{avg} = \\frac{1}{2} (H_{end} + H_{inf})``
+      - ``P_{inf} = P_{end} u_{e,i}^{H_{avg}}  =  D_p``
+
+See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
+See also [`blsys`](@ref) and [`blvar`](@ref). Deprecates `blax`.
+"""
 function blax2(ndim, n,ite, xᵢ,bi,rni, uinv, Reyn, Mach, fexcr )
 #-----------------------------------------------------------------
 #     Axᵢsymmetric boundary layer + wake calculation routine.

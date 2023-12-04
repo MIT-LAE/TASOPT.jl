@@ -1,4 +1,6 @@
 """
+      mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)
+
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
 
@@ -23,6 +25,10 @@ NOTE:
  These appear as cos(gamma) factors in the climb equations,
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
+
+ !!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
 """
 function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, iairf, initeng, ipc1)
 

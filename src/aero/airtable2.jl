@@ -1,16 +1,22 @@
 """
     airtable(fname)
 
-Reads airfoil file and outputs a matrix and spline objects.
+Reads airfoil file and outputs the matrix and splines as an `airfoil`.
+
 The airfoil data is stored as a function of three variables, typically
-    Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord ratio ``\\tau``.
+Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord ratio ``\\tau``.
 
-    cdf(Ma, cl, τ)
+    cdf(Ma, cl, τ), cdp(Ma, cl, τ), cm(Ma, cl, τ)
 
-    cdp(Ma, cl, τ)
-    
-    cm(Ma, cl, τ)
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `fname::String`: Path to file.
 
+    **Outputs:**
+    - `airf::TASOPT.aerodynamics.airfoil`: struct with airfoil performance characteristics.
+
+!!! compat "Future Changes" 
+    Deprecates `airtable` in `airtable.jl`. The current file will be renamed.
 """
 function airtable(fname)
 

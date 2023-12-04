@@ -17,7 +17,7 @@ never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
     - `co::Float64`: Stabilizer root chord length.
     - `po::Float64`: Stabilizer root loading.
 
-See [here](@ref wingtail) or Section 2.3.2 and 2.9.6 of TASOPT docs.
+See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
 """
 function tailpo(S, AR, λa, qne, CLmax)
 

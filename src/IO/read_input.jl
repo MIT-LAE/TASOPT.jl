@@ -7,7 +7,7 @@ using TOML
 Reads the input from a given dictonary (typically parsed from a TOML file).
 If requested input does not exist in dictonary, looks for value in default input
 and stores default value into the given dictonary (primarily for later output/
-saving as an aircraft model file)
+saving as an `aircraft` model file)
 """
 function read_input(k::String, dict::AbstractDict=data, 
     default_dict::AbstractDict = default)
@@ -42,8 +42,8 @@ Temp(x)     = convertTemp(parse_unit(x)...)
     read_aircraft_model(datafile; 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
 
-Reads a specified TOML file that describes a TASOPT aircraft model 
-with a fall back to the default aircraft definition 
+Reads a specified TOML file that describes a TASOPT `aircraft` model 
+with a fall back to the default `aircraft` definition 
 provided in \"src/IO/default_input.toml\""
 
 # Examples

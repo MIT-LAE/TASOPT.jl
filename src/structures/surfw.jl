@@ -90,7 +90,7 @@ Also returns the material gauges, torsional and bending stiffness.
     - `dxWcap::Float64`: Lateral distribution of cap weight.
     - `dxWstrut::Float64`: Lateral distribution of strut weight.
 
-See [here](@ref wingtail) or Section 2.7  of TASOPT docs. 
+See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
 function surfw(po,b,bs,bo,co,zs,
 	lambdat,lambdas,gammat,gammas,

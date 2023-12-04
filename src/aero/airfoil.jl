@@ -1,3 +1,30 @@
+"""
+    airfoil
+
+A type representing a database of pre-computed airfoil data for a single Reyolds number and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord ratios.
+By default, this is the original TASOPT transonic airfoil, as modelled by M. Drela in MSES and stored in `src/air/`.
+
+Overloads Base.show to print a summary of the `airfoil` model.
+
+# Fields:
+- `Ma::AbstractVector{Float64}` :  Mach nos.
+- `cl::AbstractVector{Float64}` :  Sectional lift coefficients.
+- `τ::AbstractVector{Float64}` :  Thickness-to-chord ratios.
+- `Re::Float64` :  Reynolds number.
+
+- `A::AbstractArray{Float64}`: Multi-dimensional array of aero performance data.
+
+Various views of the data:
+- `A_M::AbstractArray{Float64}`:
+- `A_τ::AbstractArray{Float64}`:
+- `A_cl::AbstractArray{Float64}`:
+- `A_M_τ::AbstractArray{Float64}`:
+- `A_M_cl::AbstractArray{Float64}`:
+- `A_cl_τ::AbstractArray{Float64}`:
+- `A_M_cl_τ::AbstractArray{Float64}`:
+
+See also [`airfun`](@ref) and [`airtable`](@ref).
+"""
 struct airfoil
     Ma::AbstractVector{Float64}
     cl::AbstractVector{Float64}

@@ -57,31 +57,37 @@ end
           zcent, po, gammat, gammas, 
           fLo,ktip, Lspec, CLsurfsp)
 
-Trefftz plane routine for the induced drag computation.
+Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces.
 
-!!! details "🔃 Inputs"
-    - `nsurf::Integer`: number of surfaces (typically wing and horizontal tail)
-    - `npout`::Integer: number of spanwise intervals (outer panel)
-    - `npinn`::Integer:  "     "       (inner panel)
-    - `npimg`::Integer:  "     "       (image inside fuselage)
-    - `b::Float64`: span
-    - `bs::Float64`: wing-break span.
-    - `bo::Float64`: wing-root span.
-    - `bop::Float64`: span of wing-root streamline in Trefftz plane
-    - `zcent`:
-    - `gammat`:
-    - `gammas`:
-    - `fLo`: wing root load adjustment factors.
-    - `ktip`: wing tip load adjustment factors.
-    - `Lspec`:
-    - `CLsurfsp`:
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `nsurf::Integer`: Number of surfaces (typically wing and horizontal tail).
+    - `npout::Integer`: Number of spanwise intervals (outer panel).
+    - `npinn::Integer`:  "     "       (inner panel).
+    - `npimg::Integer`:  "     "       (image inside fuselage).
+    - `b::Float64`: Span.
+    - `bs::Float64`: Wing-break span.
+    - `bo::Float64`: Wing-root span.
+    - `bop::Float64`: Span of wing-root streamline in Trefftz plane
+    - `zcent::Vector{Float64}`: Vertical position at centerline for each surface.
+    - `gammat::Vector{Float64}`, gammas::Vector{Float64}`: Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
+    - `fLo`: wing root load adjustment factors (currently not implemented).
+    - `ktip::Float64`: wing tip load adjustment factors.
+    - `Lspec::Integer`: Flag for specified lift calculation (scales vorticities to achieve `CLsurfsp` before computing induced drag).
+    - `CLsurfsp::Vector{Float64}`: Prescribed surface lift coefficient.
 
-See [here](@ref trefftz) or section ____ of TASOPT docs.
+    **Outputs:**
+    -`CLsurf::Vector{Float64}`: Lift coefficients for each surface. 
+    -`CL::Float64`: Sum of lift coefficients of all surfaces.
+    -`CD::Float64`: Sum of induced drag coefficients of all surfaces.
+    -`spanef::Float64`: Span efficiency of combined surfaces (``= (CL^2 / (π*AR))/CD``).
+
+See [theory above](@ref trefftz) or Sections 2.14.7 and 3.8.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
 function trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo, ktip,
+	po, gammat, gammas, fLo, ktip,
 	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
 #---- center resolution increase factor (0..1)
