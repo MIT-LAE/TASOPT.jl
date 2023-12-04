@@ -1,8 +1,4 @@
-using Pkg
-
-Pkg.activate(dirname(@__DIR__))
-
-using TASOPT
+using Documenter, TASOPT
 
 push!(LOAD_PATH, "../src")
 
