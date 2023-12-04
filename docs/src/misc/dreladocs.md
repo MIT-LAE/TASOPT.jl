@@ -1,7 +1,6 @@
-# Original Drela Docs
+# [Original Drela docs](@id dreladocs)
 
-Obtained from Mark Drela's [`TASOPT`](http://web.mit.edu/drela/Public/web/tasopt/) site.
-You can obtain all the documents and the FORTRAN code from the above link.
+Obtained from Mark Drela's [`TASOPT`](http://web.mit.edu/drela/Public/web/tasopt/) site where all documents and Fortran code can be found.
 
 ```@eval
 #Copy files from source to build
@@ -17,3 +16,7 @@ nothing #needs to either return nothing or a .md
 - [Balanced Field Length Calculation](../assets/drela_TASOPT_2p16/takeoff.pdf)
 - [Turbofan Weight Model from Historical Data](../assets/drela_TASOPT_2p16/tfweight.pdf)
 
+---
+
+# [TASOPT Flowchart](@id flowchart)
+For an attempt to make graphical sense of the workflow, see [here](../assets/TASOPT_flowchart.pdf).

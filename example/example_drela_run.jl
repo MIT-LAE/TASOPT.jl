@@ -1,3 +1,5 @@
+#!!! compat
+#DELETE ME. I NO LONGER WORK
 
 # 1) Load TASOPT
 using TASOPT

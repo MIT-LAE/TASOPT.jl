@@ -12,8 +12,22 @@ An added-source distribution represents the viscous displacement influence on th
 The body shape is defined by its area and perimeter distributions `A(x)`,  `b0(x)`,
 which are defined by the various geometric parameters in `parg`.
 
-See Appendix E of TASOPT docs.
-See also [`blax`](@ref) and [`axisol!`](@ref).
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
+      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
+      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `ip::Integer`: Index of flight point in `par` arrays.
+      
+      **Outputs:**
+      - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
+
+See [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
+See also [`blax2`](@ref) and [`axisol!`](@ref).
+
+!!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
 """
 function fusebl!(pari, parg, para, ip)
       

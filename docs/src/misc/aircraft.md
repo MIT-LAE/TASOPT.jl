@@ -1,5 +1,0 @@
-# Aircraft
-
-```@docs
-aircraft
-```

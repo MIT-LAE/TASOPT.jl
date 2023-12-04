@@ -2,7 +2,7 @@
 
 ![Optimization Iteration Plot](../assets/Opt_tutorial_iterations.png)
 
-To run a multi variable optimization run on an aircraft model first determing your design variables. For this example the design variables are:
+To run a multi-variable optimization run on an aircraft model first determining your design variables. For this example, the design variables are:
 
 1. Aspect Ratio: `AR`
 2. Cruise Altitude: `Alt`
@@ -46,7 +46,7 @@ track_fig = nothing
 ft_to_m = 0.3048
 ```
 
-Load aircraft model and size it to get initial values:
+Load `aircraft` model and size it to get initial values:
 
 ```julia
 # Load default model

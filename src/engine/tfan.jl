@@ -13,56 +13,55 @@
     gasfun.f   Routines for computing cp[T], h[t], sigma[T], R,
                called by the routines in gascalc.f
 
-   Input
-   -----
-   gee    gravity acceleration
-   M0     freestream Mach
-   T0     freestream temperature  [K]
-   p0     freestream pressure  [Pa]
-   Mfan   fan-face Mach number, for computing engine mass flow
-   Afan   fan-face area [m^2] , for computing engine mass flow
-   BPR    bypass ratio  = mdot_fan/mdot_core
-   pif    fan      pressure ratio  ( = pt7/pt2)
-   pic    overall  pressure ratio  ( = pt3/pt2)
-   pid    diffuser pressure ratio  ( = pt2/pt0)
-   pib    burner   pressure ratio  ( = pt4/pt3)
-   Tt4    turbine-inlet total temperature [K]
-   Ttf    fuel temperature entering combustor
-   ifuel  fuel index, see function gasfun (in gasfun.f)
-   epolf  fan        polytropic efficiency
-   epolc  compressor polytropic efficiency
-   epolt  turbine    polytropic efficiency
+!!! details "🔃 Inputs and Outputs"
+   **Input:**
+    - `gee`:     gravity acceleration
+    - `M0`:      freestream Mach
+    - `T0`:      freestream temperature  [K]
+    - `p0`:     freestream pressure  [Pa]
+    - `Mfan`:    fan-face Mach number, for computing engine mass flow
+    - `Afan`:    fan-face area [m^2] , for computing engine mass flow
+    - `BPR`:     bypass ratio  = mdot_fan/mdot_core
+    - `pif`:     fan      pressure ratio  ( = pt7/pt2)
+    - `pic`:     overall  pressure ratio  ( = pt3/pt2)
+    - `pid`:     diffuser pressure ratio  ( = pt2/pt0)
+    - `pib`:     burner   pressure ratio  ( = pt4/pt3)
+    - `Tt4`:     turbine-inlet total temperature [K]
+    - `Ttf`:     fuel temperature entering combustor
+    - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
+    - `epolf`:   fan        polytropic efficiency
+    - `epolc`:   compressor polytropic efficiency
+    - `epolt`:   turbine    polytropic efficiency
 
-   icool   turbine cooling flag
+    - `icool`:    turbine cooling flag
             0 = no cooling, ignore all cooling parameters below
             1 = usual cooling, using passed-in BPRc
             2 = usual cooling, but set (and return) BPRc from Tmetal
-   Mtexit  turbine blade-row exit Mach, for setting temperature drops
-   Tmetal  specified metal temperature  [K], used only if icool=2
-   dTstrk  hot-streak temperature delta {K}, used only if icool=2
-   Stc     area-weighted Stanton number    , used only if icool=2
-   M4a     effective Mach at cooling-flow outlet (start of mixing)
-   ruc     cooling-flow outlet velocity ratio, u/ue
-   BPRc    cooling-flow bypass ratio, mdot_cool/mdot_core, input if icool=1
+    - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
+    - `Tmetal`:   specified metal temperature  [K], used only if icool=2
+    - `dTstrk`:   hot-streak temperature delta {K}, used only if icool=2
+    - `Stc`:      area-weighted Stanton number    , used only if icool=2
+    - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
+    - `ruc`:      cooling-flow outlet velocity ratio, u/ue
+    - `BPRc`:     cooling-flow bypass ratio, mdot_cool/mdot_core, input if icool=1
 
-   Output
-   ------
-   BPRc    cooling-flow bypass ratio, mdot_cool/mdot_core, output if icool=2
-   TSFC   thrust specific fuel consumption = mdot_fuel g / F   [1/s]
-   Fsp    specific thrust  = F / (mdot a) = F / ((1+BPR) mdot_core a)
-   hfuel  fuel heating value   [J / kg K]
-   ff     fuel mass flow fraction  =  mdot_fuel / mdot_core
-   mdot   core mass flow = mdot_core  [kg/s]
-   Tt?    total temperature
-   ht?    total complete enthalpy (includes heat of formation)
-   pt?    total pressure
-   cpt?   specific heat at stagnation temperature  (= dh/dT)
-   Rt?    gas constant  at stagnation conditions
-   T?     static temperature
-   u?     velocity
-   etaf   fan        overall efficiency
-   etac   compressor overall efficiency
-   etat   turbine    overall efficiency
+   **Output**
+   - `BPRc`:    cooling-flow bypass ratio, mdot_cool/mdot_core, output if icool=2
+   - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
+   - `Fsp`:     specific thrust  = F / (mdot a) = F / ((1+BPR) mdot_core a)
+   - `hfuel`:   fuel heating value   [J / kg K]
+   - `ff`:      fuel mass flow fraction  =  mdot_fuel / mdot_core
+   - `mdot`:    core mass flow = mdot_core  [kg/s]
+   - `Tt?`:     total temperature
+   - `ht?`:    total complete enthalpy (includes heat of formation)
+   - `pt?`:     total pressure
+   - `cpt?`:    specific heat at stagnation temperature  (= dh/dT)
+   - `Rt?`:     gas constant  at stagnation conditions
+   - `T?`:     static temperature
+   - `u?`:     velocity
+   - `etaf`:    fan        overall efficiency
+   - `etac`:    compressor overall efficiency
+   - `etat`:    turbine    overall efficiency
 
    The "?" symbol denotes the station index:
      0  freestream
@@ -342,33 +341,31 @@ function tfan(gee, M0, T0, p0, Mfan, Afan,
     etaf, etac, etat
 end # tfan
 
+"""
+    mcool(Tmetal, Tt3, Tt4, dTstreak, Trrat, efilm, tfilm, Stc)
 
+Calculates cooling mass flow requirement.
+All temperatures are in Kelvin.
 
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `Tmetal`:     design metal temperature
+    - `Tt3`:       cooling flow temperature
+    - `Tt4`:        hot gas temperature from burner
+    - `dTstreak`:   added temperature seen by first IGV
+    - `Trrat`:      static temperature ratio across each blade row, T4.1 / T4  
+
+    **Outputs:**
+    - `throw(.)`:   cooling effectiveness for each blade row 1,2,3...nrow
+    - `epsrow(.)`:  cooling mass flow ratio for each blade row, m_c_row/m_core
+    - `BPRc`:       total cooling mass flow for all rows with cooling
+    - `nrow`:       number of blade rows which need cooling
+    - `nrowx`:      dimension of arrays
+
+"""
 function mcool(Tmetal, Tt3, Tt4, dTstreak, Trrat,
     efilm, tfilm, Stc)
 
-    # =========================
-    #     Calculates cooling mass flow requirement.
-    #     All temperatures are in Kelvin.
-    #
-    #     Input
-    #     -----
-    #     Tmetal    design metal temperature
-    #     Tt3       cooling flow temperature
-    #     Tt4       hot gas temperature from burner
-    #     dTstreak  added temperature seen by first IGV
-    #     Trrat     static temperature ratio across each blade row, T4.1 / T4
-    #     
-    #     Output
-    #     ------
-    #     throw(.)  cooling effectiveness for each blade row 1,2,3...nrow
-    #     epsrow(.) cooling mass flow ratio for each blade row, m_c_row/m_core
-    #     BPRc      total cooling mass flow for all rows with cooling
-    #     nrow      number of blade rows which need cooling
-    #     nrowx     dimension of arrays
-    #
-    # =========================
-    #
     for irow = 1:nrowx
         if (irow == 1)
             Tg = Tt4 + dTstreak

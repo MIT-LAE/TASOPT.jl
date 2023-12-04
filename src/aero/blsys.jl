@@ -2,8 +2,8 @@ using Test
 using StaticArrays
 
 """
-    blsys(simi,lami,wake,direct, Mach, uinv,hksep,
-          x,b,rn,th,ds,ue,
+    blsys(simi, lami, wake, direct, Mach, uinv, hksep,
+          x, b, rn, th, ds, ue,
           h , h_th, h_ds,
           hk, hk_th, hk_ds, hk_ue,
           hc, hc_th, hc_ds, hc_ue,
@@ -18,35 +18,38 @@ using StaticArrays
           cfm, cfm_thm, cfm_dsm, cfm_uem,
           dim, dim_thm, dim_dsm, dim_uem)
 
-# Inputs
-- `simi::Integer`: Similarity flag.
-- `lami::Integer`: Laminar flow flag.
-- `wake::Integer`: In wake? Flag.
-- `direct::Integer`: Direct solution flag.
-- `Mach::Float64`: Mach number for compressibility.
-- `uinv::Float64`: Inviscid velocity.
-- `x::Float64`: Arc length.
-- `b::Float64`: Lateral width of BL.
-- `rn::Float64`: ``dr/dn``, ``= 0`` for 2D.
-- `th::Float64`: Momentum thickness.
-- `ds::Float64`: Displacement thickness.
-- `ue::Float64`: Edge velocity.
-- `h::Float64`: Shape parameter.
-- `hk::Float64`: Kinematic shape parameter.
-- `hc::Float64`: 
-- `hs::Float64`:
-- `cf::Float64`: Skin friction factor.
-- `di::Float64`: Dissipation factor.
+Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`blax2`](@ref).
 
-`m` denotes the previous point (minus one) in the upstream.
-`_z` denotes partial derivative with respect to `z` (`z` = `th`, `ds`, `ue`).
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `simi::Integer`: Self-similar BL profile flag.
+      - `lami::Integer`: Laminar flow flag.
+      - `wake::Integer`: In wake? Flag.
+      - `direct::Integer`: Direct solution flag.
+      - `Mach::Float64`: Mach number for compressibility.
+      - `uinv::Float64`: Inviscid velocity.
+      - `x::Float64`: Arc length.
+      - `b::Float64`: Lateral width of BL.
+      - `rn::Float64`: ``dr/dn``, ``= 0`` for 2D.
+      - `th::Float64`: Momentum thickness.
+      - `ds::Float64`: Displacement thickness.
+      - `ue::Float64`: Edge velocity.
+      - `h::Float64`: Shape parameter.
+      - `hk::Float64`: Kinematic shape parameter.
+      - `hc::Float64`: density shape parameter (Whitfield).
+      - `hs::Float64`: kinetic energy shape parameter.
+      - `cf::Float64`: Skin friction factor.
+      - `di::Float64`: Dissipation factor.
 
-# Outputs
-- `aa::Array{Float64, 3, 3}`: Jacobian matrix (wrt current point vars).
-- `bb::Array{Float64, 3, 3}`: Jacobian matrix (wrt previous point vars).
-- `rr::Array{Float64, 3}`: Residual.
+      `m` denotes the previous point (minus one) in the upstream.
+      `_z` denotes partial derivative with respect to `z` (`z` = `th`, `ds`, `ue`).
 
-See Appendix E.4 of TASOPT docs.
+      **Outputs:**
+      - `aa::Array{Float64, 3, 3}`: Jacobian matrix (wrt current point vars).
+      - `bb::Array{Float64, 3, 3}`: Jacobian matrix (wrt previous point vars).
+      - `rr::Array{Float64, 3}`: Residual.
+
+See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
 """
 function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
@@ -298,27 +301,26 @@ end # blsys
 
 
 """
-    blvar(simi,lami,wake, Reyn,Mach, fexcr, x, θ ,δs ,ue )
+    blvar(simi, lami, wake, Reyn, Mach, fexcr, x, θ, δs, ue)
 
-blvar returns the boundary layer variables needed.
+Returns the boundary layer variables needed for solution.
 
-# Inputs
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `simi::Integer`: Self-similar BL profile flag.
+      - `lami::Integer`: Laminar flow flag.
+      - `wake::Integer`: In wake flag.
+      - `Reyn::Float64`: Reynolds number.
+      - `Mach::Float64`: Mach number for compressibility.
+      - `fexcr::Float64`: Excrescence factor.
 
-- `simi::Integer`: Similarity flag
-- `lami::Integer`: Laminar flow flag
-- `wake::Integer`: In wake? Flage
-- `Reyn::Float64`: Reynolds number
-- `Mach::Float64`: Mach number for compressibility
-- `fexcr::Float64`: Excrescence factor
-
-# Outputs
-
-- `h::Float64` : Shape parameter
-- `hk::Float64`: Kinematic shape parameter
-- `hc::Float64`: 
-- `hs::Float64`: 
-- `cf::Float64`: Skin friction factor
-- `cd::Float64`: Dissipation factor and their derivatives
+      **Outputs:**
+      - `h::Float64` : Shape parameter.
+      - `hk::Float64`: Kinematic shape parameter.
+      - `hc::Float64`: Density shape parameter (Whitfield).
+      - `hs::Float64`: Kinetic energy shape parameter.
+      - `cf::Float64`: Skin friction factor.
+      - `cd::Float64`: Dissipation factor and their derivatives.
 
 """
 function blvar(simi,lami,wake, Reyn,Mach, fexcr,
@@ -658,15 +660,14 @@ MSQ: (Mach number)^2
 HK:  Kinematic shape parameter
 RT:  Momentum thickness (theta) Reynolds number 
 
-### Outputs
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
 
-CF:   Skin friction factor
-
-CF\\_HK: Derivative wrt to HK -> ``\\frac{\\partial C_f}{\\partial H_k}``
-
-CF\\_RT: Derivative wrt to RT -> dCf
-
-CF\\_MSQ: Derivative wrt to ``M^2``
+      **Outputs:**
+      - CF:   Skin friction factor
+      - CF\\_HK: Derivative wrt to HK -> ``\\frac{\\partial C_f}{\\partial H_k}``
+      - CF\\_RT: Derivative wrt to RT -> dCf
+      - CF\\_MSQ: Derivative wrt to ``M^2``
 
 """
       function cft( HK, RT, MSQ )

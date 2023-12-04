@@ -1,3 +1,23 @@
+export airfun
+
+"""
+    airfun(cl, τ, Mach, air::airfoil)
+
+Looks up airfoil performance data at specified conditions, as precomputed and found in `./src/air/C.air`.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**      
+      - `cl::Float64`: Airfoil section lift coefficient.
+      - `τ::Float64`: Airfoil section thickness-to-chord ratio.
+      - `Mach::Float64`: Mach number.
+      - `air::TASOPT.aerodynamics.airfoil`: `airfoil` structure with performance data.
+
+      **Outputs:**
+      - `cdf::Float64`: Airfoil section skin friction drag.
+      - `cdp::Float64`: Airfoil section pressure drag.
+      - `cdw::Float64`: Airfoil section wave drag (unused and assumed 0 here; placeholder left for future implementation).
+      - `cm::Float64`: Airfoil section pitching moment.
+"""
 @views function airfun(cl, τ, Mach, air::airfoil)
 
     return airfun(cl, τ, Mach, 

@@ -1,19 +1,22 @@
 """
-     Calculates temperature for a specified enthalpy.
-     The constant-cp equivalent is
+    gas_tset(alpha, n, hspec, tguess)
+    
+Calculates temperature for a specified enthalpy.
+The constant-cp equivalent is
 
               t = (hspec - hf) /cp  
 
      where hf is the heat of formation included in h[t]
 
-  # Input:
-     alpha(.)  mass fractions for gas constituents i = 1..n
-     n         number of constituents present
-     hspec     specified enthalpy
-     tguess    first guess for temperature
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of constituents present
+    - `hspec`: specified enthalpy
+    - `tguess`: first guess for temperature
 
-  # Output:
-     t        temperature
+    **Output:**
+    - `t`: temperature
 """
 function gas_tset(alpha, n, hspec, tguess)
 
@@ -40,9 +43,26 @@ function gas_tset(alpha, n, hspec, tguess)
 
 end # gas_tset
 
+"""
+    gas_tsetd(alpha, n, hspec, tguess) 
+    
+Same as gas_tset, but also returns derivative
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of constituents present
+    - `hspec`: specified enthalpy
+    - `tguess`: first guess for temperature
+
+    **Outputs:**
+    - `t`: temperature
+    - `t_hspec`: ?
+    - `t_al`: ?
+"""
 function gas_tsetd(alpha, n, hspec, tguess)
       #-------------------------------------------------------------------
-      #     Came as gas_tset, but also returns derivative
+      #     Same as gas_tset, but also returns derivative
       #-------------------------------------------------------------------
 
       itmax = 10
@@ -77,24 +97,26 @@ function gas_tsetd(alpha, n, hspec, tguess)
 
 end # gas_tsetd
 
+"""
+    gassum(alpha, n, t)
+    
+Calculates all gas-mixture properties at specified temperature T, and mixing fractions alpha(.)
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of gas constituents
+    - `t`: temperature T,  Kelvin
+
+    **Outputs:**
+    - `s`: entropy-complement function s[T]
+    - `s_t`: ds/dT
+    - `h`: complete enthalpy function h[T]
+    - `h_t`: dh/dT
+    - `cp`: specific heat cp[T]
+    - `r`: ideal-gas constant R
+"""
 function gassum(alpha, n, t)
-      #-----------------------------------------------------------------
-      #     Calculates all gas-mixture properties at specified 
-      #     temperature T, and mixing fractions alpha(.)
-      #
-      #  Input:
-      #     alpha(.)  mass fractions for gas constituents i = 1..n
-      #     n         number of gas constituents
-      #     t         temperature T,  Kelvin
-      #
-      #  Output:
-      #     s      entropy-complement function s[T]
-      #     s_t    ds/dT
-      #     h      complete enthalpy function h[T]
-      #     h_t    dh/dT
-      #     cp     specific heat cp[T]
-      #     r      ideal-gas constant R
-      #-----------------------------------------------------------------
       s = 0.0
       h = 0.0
       cp = 0.0
@@ -113,10 +135,28 @@ function gassum(alpha, n, t)
       return s, s_t, h, h_t, cp, r
 end # gassum
 
+"""
+    gassumd(alpha, n, t)
+    
+Same as gassum, but also returns cp_t
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of gas constituents
+    - `t`: temperature T,  Kelvin
+
+    **Outputs:**
+    - `s`: entropy-complement function s[T]
+    - `s_t`: ds/dT
+    - `h`: complete enthalpy function h[T]
+    - `h_t`: dh/dT
+    - `cp`: specific heat cp[T]
+    - `r`: ideal-gas constant R
+    - `cp_t`: dcp / dT
+"""
 function gassumd(alpha, n, t)
-      #-----------------------------------------------------------------
-      #     Same as gassum, but also returns cp_t
-      #-----------------------------------------------------------------
+
       s = 0.0
       h = 0.0
       cp = 0.0
@@ -146,43 +186,43 @@ function gassumd(alpha, n, t)
       return s, s_t, h, h_t, cp, cp_t, r
 end # gassumd
 
+"""
+    gas_prat(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
+    
+Calculates state change for a specified pressure ratio.
+The constant-cp equivalent is the usual isentropic relations, but with epol included.
+
+    g = cp/(cp-r)
+    gexp = (g-1)/(g*epol)
+    tau = pratio^gexp
+    p = po * pratio
+    t = to * tau
+    (h-hf) = (ho-hf) * tau
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of gas constituents
+    - `po`: starting pressure
+    - `to`: starting temperature
+    - `ho`: starting enthalpy
+    - `so`: starting entropy-complement
+    - `cpo`: starting specific heat
+    - `ro`: starting gas constant
+    - `pratio`: pressure ratio
+    - `epol`: polytropic efficiency of change process  , if compression
+    - `epol`: 1/(polytropic efficiency of change process) , if expansion
+
+    **Outputs:**
+    - `p`: ending pressure
+    - `t`: ending temperature
+    - `h`: ending enthalpy
+    - `s`: ending entropy-complement
+    - `cp`: ending specific heat
+    - `r`: ending gas constant (this will be the same as starting ro)
+"""
 function gas_prat(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
-      #-------------------------------------------------------------------
-      #     Calculates state change for a specified pressure ratio.
-      #     The constant-cp equivalent is the usual isentropic relations,
-      #     but with epol included.
-      #
-      #       g = cp/(cp-r)
-      #       gexp = (g-1)/(g*epol)
-      #       tau = pratio^gexp
-      #       p = po * pratio
-      #       t = to * tau
-      #       (h-hf) = (ho-hf) * tau
-      #
-      #
-      #  Input:
-      #     alpha(.)  mass fractions for gas constituents i = 1..n
-      #     n         number of constituents present
-      #
-      #     po        starting pressure
-      #     to        starting temperature
-      #     ho        starting enthalpy
-      #     so        starting entropy-complement
-      #     cpo       starting specific heat
-      #     ro        starting gas constant
-      #
-      #     pratio        pressure ratio
-      #     epol      polytropic efficiency of change process  , if compression
-      #     epol   1/(polytropic efficiency of change process) , if expansion
-      #
-      #  Output:
-      #     p       ending pressure
-      #     t       ending temperature
-      #     h       ending enthalpy
-      #     s       ending entropy-complement
-      #     cp      ending specific heat
-      #     r       ending gas constant (this will be the same as starting ro)
-      #-------------------------------------------------------------------
+
       itmax = 10
       ttol = 0.000001
 
@@ -213,10 +253,36 @@ function gas_prat(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
 
 end # gas_prat
 
+
+"""
+    gas_pratd(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
+    
+Same as gas_prat, but also returns Jacobians w.r.t. po,to,pratio,epol
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of gas constituents
+    - `po`: starting pressure
+    - `to`: starting temperature
+    - `ho`: starting enthalpy
+    - `so`: starting entropy-complement
+    - `cpo`: starting specific heat
+    - `ro`: starting gas constant
+    - `pratio`: pressure ratio
+    - `epol`: polytropic efficiency of change process  , if compression
+    - `epol`: 1/(polytropic efficiency of change process) , if expansion
+
+    **Outputs:**
+    - `p`: ending pressure
+    - `t`: ending temperature
+    - `h`: ending enthalpy
+    - `s`: ending entropy-complement
+    - `cp`: ending specific heat
+    - `r`: ending gas constant (this will be the same as starting ro)
+"""
 function gas_pratd(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
-      #-------------------------------------------------------------------
-      #     Same as gas_prat, but also returns Jacobians w.r.t. po,to,pratio,epol
-      #-------------------------------------------------------------------
+
 
       itmax = 10
       ttol = 0.000001
@@ -311,46 +377,44 @@ function gas_pratd(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
 
 end # gas_pratd
 
+"""
+    gas_delh(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
+
+Calculates state change for a specified enthalpy change.
+The constant-cp equivalent is the usual isentropic relations, but with epol included.
+      
+      t - to = delh/cp
+      g = cp/(cp-r)
+      gexp = (g-1)/(g*epol)
+      tau = t/to
+      pi = tau^(1/gexp)
+      p = po * pi
+      (h-hf) = (ho-hf) * tau
+      
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of constituents present
+    - `po`: starting pressure
+    - `to`: starting temperature
+    - `ho`: starting enthalpy
+    - `so`: starting entropy-complement
+    - `cpo`: starting specific heat
+    - `ro`: starting gas constant
+    - `delh`: enthalpy change
+    - `epol`: polytropic efficiency of change process, if compression and 1/(polytropic efficiency of change process) , if expansion
+     
+    **Output:**
+    - `p`: ending pressure
+    - `t`: ending temperature
+    - `h`: ending enthalpy
+    - `s`: ending entropy-complement
+    - `cp`: ending specific heat
+    - `r`: ending gas constant (this will be the same as starting ro)
+
+"""
 function gas_delh(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
-      #-------------------------------------------------------------------
-      #     Calculates state change for a specified enthalpy change.
-      #     The constant-cp equivalent is the usual isentropic relations, 
-      #     but with epol included.
-      #
-      #       t - to = delh/cp
-      #       g = cp/(cp-r)
-      #       gexp = (g-1)/(g*epol)
-      #       tau = t/to
-      #       pi = tau^(1/gexp)
-      #       p = po * pi
-      #       (h-hf) = (ho-hf) * tau
-      #
-      #
-      #
-      #  Input:
-      #     alpha(.)  mass fractions for gas constituents i = 1..n
-      #     n         number of constituents present
-      #
-      #     po        starting pressure
-      #     to        starting temperature
-      #     ho        starting enthalpy
-      #     so        starting entropy-complement
-      #     cpo       starting specific heat
-      #     ro        starting gas constant
-      #
-      #     delh      enthalpy change
-      #     epol         polytropic efficiency of change process  , if compression
-      #               1/(polytropic efficiency of change process) , if expansion
-      #
-      #  Output:
-      #     p       ending pressure
-      #     t       ending temperature
-      #     h       ending enthalpy
-      #     s       ending entropy-complement
-      #     cp      ending specific heat
-      #     r       ending gas constant (this will be the same as starting ro)
-      #-------------------------------------------------------------------
-      itmax = 10
+   itmax = 10
       ttol = 0.000001
 
 
@@ -375,11 +439,51 @@ function gas_delh(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
 end # gas_delh
 
-function gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
+"""
+    gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
-      #---------------------------------------------------------------------
-      #     Same as gas_delh, but also returns Jacobians w.r.t. po,to,delh
-      #---------------------------------------------------------------------
+Same as gas_delh, but also returns Jacobians w.r.t. po,to,delh
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of constituents present
+    - `po`: starting pressure
+    - `to`: starting temperature
+    - `ho`: starting enthalpy
+    - `so`: starting entropy-complement
+    - `cpo`: starting specific heat
+    - `ro`: starting gas constant
+    - `delh`: enthalpy change
+    - `epol`: polytropic efficiency of change process, if compression and 1/(polytropic efficiency of change process) , if expansion
+     
+    **Output:**
+    - `p`: ending pressure
+    - `t`: ending temperature
+    - `h`: ending enthalpy
+    - `s`: ending entropy-complement
+    - `cp`: ending specific heat
+    - `r`: ending gas constant (this will be the same as starting ro)
+    - `p_so`: 
+    - `p_po`: 
+    - `p_ep`: 
+    - `p_ho`: 
+    - `t_ho`: 
+    - `h_ho`: 
+    - `s_ho`: 
+    - `p_dh`: 
+    - `t_dh`: 
+    - `h_dh`: 
+    - `s_dh`: 
+    - `p_al`: 
+    - `t_al`: 
+    - `h_al`: 
+    - `s_al`: 
+    - `cp_al`: 
+    - `r_al`: 
+
+"""
+function gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
       itmax = 15
       ttol = 0.000001
@@ -464,27 +568,28 @@ function gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
 end # gas_delhd
 
+"""
+    gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
 
+Calculates fuel/air mass fraction in combustion with specified start and end temperatures to,t .
+Calculates mass fractions of post-combustion constituents
+!!! details "🔃 Inputs and Outputs"   
+    **Input:**
+    `alpha(.)`: mass fractions for air  constituents i = 1..n
+    - `beta(.)`: mass fractions for fuel constituents i = 1..n
+    - `gamma(.)`: mass fraction changes of air constituents due to combustion
+    - `n`: number of constituents present, air is 1..n-1, fuel is n
+    - `ifuel`: index specifying fuel molecule
+    - `to`: starting air temperatur
+    - `tf`: starting fuel temperature
+    - `t`: temperature of combustion products
+      
+    **Output:**
+    `f`: fuel/air mass fraction
+    `lambda(.)`: mass fractions for combustion product constituents
+
+"""
 function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
-      #------------------------------------------------------------------------
-      #     Calculates fuel/air mass fraction in combustion 
-      #     with specified start and end temperatures to,t .
-      #     Calculates mass fractions of post-combustion constituents
-      #
-      #  Input:
-      #     alpha(.)  mass fractions for air  constituents i = 1..n
-      #     beta(.)   mass fractions for fuel constituents i = 1..n
-      #     gamma(.)  mass fraction changes of air constituents due to combustion
-      #     n         number of constituents present, air is 1..n-1, fuel is n
-      #     ifuel     index specifying fuel molecule
-      #     to        starting air temperatur
-      #     tf        starting fuel temperature
-      #     t         temperature of combustion products
-      #
-      #  Output:
-      #     f          fuel/air mass fraction
-      #     lambda(.)  mass fractions for combustion product constituents
-      #------------------------------------------------------------------------
 
       nm = n - 1
       so, s_t, ho, h_t, cpo, ro = gassum(alpha, nm, to)
@@ -508,10 +613,32 @@ function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
       return f, lambda
 end # gas_burn
 
+"""
+    gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
+    
+Same as gas_burn, but also returns derivatives.
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    `alpha(.)`: mass fractions for air  constituents i = 1..n
+    - `beta(.)`: mass fractions for fuel constituents i = 1..n
+    - `gamma(.)`: mass fraction changes of air constituents due to combustion
+    - `n`: number of constituents present, air is 1..n-1, fuel is n
+    - `ifuel`: index specifying fuel molecule
+    - `to`: starting air temperatur
+    - `tf`: starting fuel temperature
+    - `t`: temperature of combustion products
+      
+    **Output:**
+    `f`: fuel/air mass fraction
+    `lambda(.)`: mass fractions for combustion product constituents
+    `f_t`: 
+    `l_to`: 
+    `l_tf`: 
+    `l_t`: 
+
+"""
 function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
-      #------------------------------------------------------------------------
-      #     Same as gas_burn, but also returns derivatives.
-      #------------------------------------------------------------------------
 
       nm = n - 1
       so, s_t, ho, ho_to, cpo, ro = gassum(alpha, nm, to)
@@ -550,45 +677,45 @@ function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
       return f, lambda, f_to, f_tf, f_t, l_to, l_tf, l_t
 end # gas_burnd
 
+"""
+    gas_mach(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
+
+Calculates state change for a specified Mach number change.
+The constant-cp equivalent is the usual isentropic relations, but with epol included.
+      
+    g = cp/(cp-r)
+    gexp = (g-1)/(g*epol)
+    tau = (1 + 0.5*(g-1)*mo^2) / (1 + 0.5*(g-1)*m^2)
+    pi = tau^(1/gexp)
+    p = po * pi
+    t = to * tau
+    (h-hf) = (ho-hf) * tau
+      
+    !!! details "🔃 Inputs and Outputs"     
+    **Input:**
+    `alpha(.)`: mass fractions for gas constituents i = 1..n
+    `n`: number of constituents present
+    `po`: starting pressure
+    `to`: starting temperature
+    `ho`: starting enthalpy
+    `so`: starting entropy-complement
+    `cpo`: starting specific heat
+    `ro`: starting gas constant
+    `mo`: starting Mach number
+    `m`: ending Mach number
+    `epol`: polytropic efficiency of change process  , if compression
+    `epol`: 1/(polytropic efficiency of change process) , if expansion
+      
+    **Output:**
+    `p`: ending pressure
+    `t`: ending temperature
+    `h`: ending enthalpy
+    `s`: ending entropy-complement
+    `cp`: ending specific heat
+    `r`: ending gas constant (this will be the same as starting ro)
+
+"""
 function gas_mach(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
-      #-------------------------------------------------------------------
-      #     Calculates state change for a specified Mach number change.
-      #     The constant-cp equivalent is the usual isentropic relations,
-      #     but with epol included.
-      #
-      #       g = cp/(cp-r)
-      #       gexp = (g-1)/(g*epol)
-      #       tau = (1 + 0.5*(g-1)*mo^2) / (1 + 0.5*(g-1)*m^2)
-      #       pi = tau^(1/gexp)
-      #       p = po * pi
-      #       t = to * tau
-      #       (h-hf) = (ho-hf) * tau
-      #
-      #
-      #  Input:
-      #     alpha(.)  mass fractions for gas constituents i = 1..n
-      #     n         number of constituents present
-      #
-      #     po        starting pressure
-      #     to        starting temperature
-      #     ho        starting enthalpy
-      #     so        starting entropy-complement
-      #     cpo       starting specific heat
-      #     ro        starting gas constant
-      #     mo        starting Mach number
-      #     m         ending Mach number
-      #
-      #     epol      polytropic efficiency of change process  , if compression
-      #     epol   1/(polytropic efficiency of change process) , if expansion
-      #
-      #  Output:
-      #     p       ending pressure
-      #     t       ending temperature
-      #     h       ending enthalpy
-      #     s       ending entropy-complement
-      #     cp      ending specific heat
-      #     r       ending gas constant (this will be the same as starting ro)
-      #-------------------------------------------------------------------
 
       itmax = 10
       ttol = 0.000001
@@ -632,10 +759,13 @@ function gas_mach(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
 
 end # gas_mach
 
+"""
+    gas_machd(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
+
+Same as gas_mach, but also returns derivatives
+
+"""
 function gas_machd(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
-      #-------------------------------------------------------------------
-      #     Same as gas_mach, but also returns derivatives
-      #-------------------------------------------------------------------
 
       itmax = 10
       ttol = 0.000001
@@ -769,34 +899,34 @@ function gas_machd(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
 
 end # gas_machd
 
+"""
+    gas_mass(alpha, n, po, to, ho, so, cpo, ro, mflux, Mguess)
+
+Calculates state a specified mass flux.
+Mguess specifies the initial guess, and also selects either the subsonic or the supersonic branch.
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    `alpha(.)  mass fractions for gas constituents i = 1..n
+    `n         number of constituents present
+    `po        total pressure
+    `to        total temperature
+    `ho        total enthalpy
+    `so        total entropy-complement
+    `cpo       total specific heat
+    `ro        total gas constant
+    `mflux     specified mass flux = rho u = mdot/A
+    `Mguess    specifies the initial guess for the static quantities
+      
+    **Output:**      
+    `p       static pressure
+    `t       static temperature
+    `h       static enthalpy
+    `s       static entropy-complement
+    `cp      static specific heat
+    `r       static gas constant (this will be the same as total ro)
+"""
 function gas_mass(alpha, n, po, to, ho, so, cpo, ro, mflux, Mguess)
-      #-------------------------------------------------------------------
-      #     Calculates state a specified mass flux.
-      #     Mguess specifies the initial guess, and also selects
-      #     either the subsonic or the supersonic branch.
-      #
-      #  Input:
-      #     alpha(.)  mass fractions for gas constituents i = 1..n
-      #     n         number of constituents present
-      #
-      #     po        total pressure
-      #     to        total temperature
-      #     ho        total enthalpy
-      #     so        total entropy-complement
-      #     cpo       total specific heat
-      #     ro        total gas constant
-      #
-      #     mflux     specified mass flux = rho u = mdot/A
-      #     Mguess    specifies the initial guess for the static quantities
-      #
-      #  Output:
-      #     p       static pressure
-      #     t       static temperature
-      #     h       static enthalpy
-      #     s       static entropy-complement
-      #     cp      static specific heat
-      #     r       static gas constant (this will be the same as total ro)
-      #-------------------------------------------------------------------
 
       itmax = 25
       ttol = 0.000001
@@ -835,19 +965,21 @@ function gas_mass(alpha, n, po, to, ho, so, cpo, ro, mflux, Mguess)
 
 end # gas_mass
 
+"""
+    gasfuel(ifuel, n)
+
+Returns mass fraction of constituent changes as a result of combustion with atmospheric oxygen
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `ifuel   index of fuel  (see function gasfun)
+    - `n       number of constituents in reaction
+
+    **Output:**
+    - `gamma(.)  mass fraction changes due to reaction for i = 1..n
+"""
 function gasfuel(ifuel, n)
-      #---------------------------------------------------------------
-      #     Returns mass fraction of constituent changes
-      #     as a result of combustion with atmospheric oxygen
-      #
-      #  Input:
-      #     ifuel   index of fuel  (see function gasfun)
-      #     n       number of constituents in reaction
-      #
-      #  Output:
-      #     gamma(.)  mass fraction changes due to reaction for i = 1..n
-      #
-      #---------------------------------------------------------------
+
       #---- molar weights of C, H, O, N atoms
       wchon = [12.01078, 1.00795, 15.99943, 14.00672]
       in2 = 1
@@ -919,7 +1051,6 @@ viscosity, thermal conductivity, specific heat, and Prandtl number.
     - `μ::Float64`: dynamic viscosity (Pa s)
     - `k::Float64`: thermal conductivity (W/m/K) 
 """
-
 function gasPr(gas, T)
       #TODO: replace with new gas model
       if (gas == "air")
@@ -941,7 +1072,7 @@ function gasPr(gas, T)
             T0 = 273
 
             igas = 3
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "n2")
             μ0 = 1.663e-5
@@ -951,7 +1082,7 @@ function gasPr(gas, T)
             T0 = 273
 
             igas = 1
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
       elseif (gas == "o2")
             μ0 = 1.919e-5
             S_μ = 139
@@ -960,7 +1091,7 @@ function gasPr(gas, T)
             T0 = 273   
 
             igas = 2
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "h2o")
             #parameters obtained by a fit to NIST data
@@ -971,7 +1102,7 @@ function gasPr(gas, T)
             T0 = 350 
             
             igas = 4
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "ch4")
             #parameters obtained by a fit to NIST data
@@ -982,7 +1113,7 @@ function gasPr(gas, T)
             T0 = 273 
             
             igas = 11
-            s, s_t, h, h_t, cp, R = gasfun(igas, t)
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
 
       elseif (gas == "h2")
             #parameters obtained by a fit to NIST data
@@ -992,12 +1123,12 @@ function gasPr(gas, T)
             S_k = 161.1    
             T0 = 273
             
-            R = 8.3144598 / (2.016e-3)
-            cp = 14200 #TODO: replace this with a proper evaluation as a function of T
+            igas = 40
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
       end
       
 
-      # Apply Sutherland's laws for viscosity and thermal conductivity
+      # Apply Sutherland`s laws for viscosity and thermal conductivity
       μ = μ0 * (T / T0)^(3 / 2) * ( (T0 + S_μ) / (T + S_μ) )
       k = K0 * (T / T0)^(3 / 2) * ( (T0 + S_k) / (T + S_k) )
 
@@ -1006,3 +1137,44 @@ function gasPr(gas, T)
 
       return R, Pr, γ, cp, μ, k 
 end
+
+"""
+     Calculates temperature for a specified enthalpy for a single gas species.
+     The constant-cp equivalent is
+
+              t = (hspec - hf) /cp  
+
+     where hf is the heat of formation included in h[t]
+
+  # Input:
+     igas      gas index
+     hspec     specified enthalpy
+     tguess    first guess for temperature
+
+  # Output:
+     t        temperature
+"""
+function gas_tset_single(igas, hspec, tguess)
+
+      itmax = 15
+      ttol = 0.000001
+
+      t = tguess
+
+      dt = 0.0
+      for iter = 1:itmax
+            s, s_t, h, h_t, cp, r = gasfun(igas, t)
+            res = h - hspec
+            res_t = h_t
+
+            dt = -res / res_t
+
+            if (abs(dt) < ttol)
+                  return t
+            end
+
+            t = t + dt
+      end
+      println("gas_tset_single: convergence failed.  dT =", dt)
+
+end # gas_tset
