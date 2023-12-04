@@ -1,9 +1,9 @@
 """
     cdsum!(pari,parg,para,pare,icdfun)
 
-Calculates aircraft `CD` components for operating point ipoint.
+Calculates aircraft `CD` components for operating point, ipoint.
 If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
-otherwise uses default values in para array.
+otherwise uses default values in para array. Called by `mission!`, `wsize`, `takeoff!`, and `odperf!`.
 
 The total drag is computed by
 
@@ -23,8 +23,24 @@ where:
 - ``\\Delta C_{D,BLI,f}`` (`dCDBLIf`) is related to the boundary layer ingestion on the fuselage,
 - and ``\\Delta C_{D,BLI,w}`` (`dCDBLIw`) is related to the boundary layer ingestion on the wing.
 
-See section A 2.13 of TASOPT docs.
-See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref).
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
+      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
+      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `pare::AbstractArray{Float64}`: Vector of `aircraft` model engine parameters.
+      - `icdfun::Integer`: Flag if drag should be computed (=1) or if para values should be used (=0).
+
+      **Outputs:**
+      - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
+
+See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
+See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
+
+!!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
 """
 function cdsum!(pari,parg,para,pare, icdfun)
 
@@ -252,7 +268,22 @@ end # cdsum
 
 
 """
-cditrip calculates the induced drag from the Treftz plane
+      cditrp(pari,parg,para)
+
+Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
+      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
+      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+
+      **Outputs:**
+      - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
+
+!!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
 """
 function cditrp(pari,parg,para)
 
@@ -382,7 +413,7 @@ end # cditrp
 """
       cfturb(Re)
 
-Returns the total ``C_f`` for turbulent flat plate as a function of
+Returns the total ``C_f`` for turbulent flat plate (one side) as a function of
 ``\\mathrm{Re}_l``
 
 ```math

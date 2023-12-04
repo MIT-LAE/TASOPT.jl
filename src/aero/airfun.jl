@@ -1,5 +1,14 @@
 using Dierckx
 
+
+"""
+    airfun(...)
+
+
+!!! compat "Future Changes"
+      Deprecated by faster [`airfun`](@ref) in `airfun2.jl`. Will be removed in a future revision.
+
+"""
 function airfun(cl::Float64, τ::Float64, Ma::Float64, 
         AMa::Vector{Float64}, Acl::Vector{Float64}, Aτ::Vector{Float64}, ARe::Float64,
         A::Array{Float64},

@@ -17,7 +17,7 @@ and the mean aerodynamic chord (normalized by root chord, `co`)
     - `dx::Float64`: Area centroid x-offset due to sweep
     - `macco::Float64`: Mean aerodynamic chord normalized by root chord.
 
-See [here](@ref wingtail) or Section 2.5.1  of TASOPT docs.
+See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Description](@ref dreladocs).
 """
 function surfdx(b,bs,bo,λt,λs,sweep)
 

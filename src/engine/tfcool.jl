@@ -1,26 +1,27 @@
 using ForwardDiff
 """
-      Calculates cooling mass flow requirement.
+    mcool(ncrowx, Tmrow, Tt3, Tt4, dTstreak, Trrat, efilm, tfilm, StA)
 
-      # Input
-      -----
-      ncrowx   dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
-      Tmrow(.) design metal temperature for each blade row
-      Tt3      cooling flow temperature
-      Tt4      hot gas temperature from burner
-      dTstreak hot-streak temperature increase over Tt4, for first blade row 
-      Trrat    static temperature ratio across each blade row, T4.1 / T4
-      efilm    cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
-      tfilm    film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
-            Tco = temperature of cooling air exiting  blade
-            Tci = temperature of cooling air entering blade
-            Tfaw = film adiabatic wall temperature (for insulated-wall case)
-      StA      area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
+Calculates cooling mass flow requirement.
 
-      # Output
-      ------
-      ncrow     number of blade rows which need cooling
-      epsrow(.) cooling mass flow ratio for each blade row, m_c_row/m_air
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ncrowx`:    dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
+    - `Tmrow(.)`:  design metal temperature for each blade row
+    - `Tt3`:       cooling flow temperature
+    - `Tt4`:       hot gas temperature from burner
+    - `dTstreak`:  hot-streak temperature increase over Tt4, for first blade row 
+    - `Trrat`:     static temperature ratio across each blade row, T4.1 / T4
+    - `efilm`:     cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
+    - `tfilm`:     film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
+                   Tco = temperature of cooling air exiting  blade
+                   Tci = temperature of cooling air entering blade
+                   Tfaw = film adiabatic wall temperature (for insulated-wall case)
+      StA`:       area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
+
+    **Output:**
+      - `ncrow`:      number of blade rows which need cooling
+      - `epsrow(.)`:  cooling mass flow ratio for each blade row, m_c_row/m_air
 
 """
 function mcool(ncrowx,
@@ -83,33 +84,33 @@ function mcool(ncrowx,
       return ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr
 end # mcool
 
+"""
+    Tmcalc(ncrowx, ncrow, Tt3, Tt4, dTstreak, Trrat, efilm, tfilm, StA, epsrow)
+
+Calculates metal temperature for blade row
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+    - `ncrowx`:    dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
+    - `ncrow`:     number of blade rows which are cooled
+    - `epsrow(.)`:  cooling mass flow ratio for each blade row, m_c_row/m_air
+    - `Tt3`:       cooling flow temperature
+    - `Tt4`:       hot gas temperature from burner
+    - `dTstreak`:  hot-streak temperature increase over Tt4, for first blade row 
+    - `Trrat`:     static temperature ratio across each blade row, T4.1 / T4
+    - `efilm`:     cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
+    - `tfilm`:     film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
+                   Tco = temperature of cooling air exiting  blade
+                   Tci = temperature of cooling air entering blade
+                   Tfaw = film adiabatic wall temperature (for insulated-wall case)
+    - `StA`:       area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
+       
+      **Output:**
+    - `Tmrow(.)`:  design metal temperature for each blade row
+"""
 function Tmcalc(ncrowx, ncrow,
       Tt3, Tt4, dTstreak, Trrat,
       efilm, tfilm, StA, epsrow)
-      # ==============================================================
-      #     Calculates metal temperature for blade row
-      #
-      #  Input
-      #  -----
-      #  ncrowx   dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
-      #  ncrow    number of blade rows which are cooled
-      #  epsrow(.) cooling mass flow ratio for each blade row, m_c_row/m_air
-      #  Tt3      cooling flow temperature
-      #  Tt4      hot gas temperature from burner
-      #  dTstreak hot-streak temperature increase over Tt4, for first blade row 
-      #  Trrat    static temperature ratio across each blade row, T4.1 / T4
-      #  efilm    cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
-      #  tfilm    film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
-      #            Tco = temperature of cooling air exiting  blade
-      #            Tci = temperature of cooling air entering blade
-      #            Tfaw = film adiabatic wall temperature (for insulated-wall case)
-      #  StA      area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
-      #
-      #  Output
-      #  ------
-      #  Tmrow(.) design metal temperature for each blade row
-      #
-      # ==============================================================
 
       # Zygote
       # Tmrow = zeros(ncrowx)

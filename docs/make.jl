@@ -1,5 +1,7 @@
 using Pkg
-Pkg.activate("..")
+
+Pkg.activate(dirname(@__DIR__))
+
 using TASOPT
 
 push!(LOAD_PATH, "../src")
@@ -16,30 +18,36 @@ makedocs(
     sitename = "TASOPT.jl Documentation",
     pages = [ "Home" => "index.md", 
     "Examples" => Any[
-        "Payload Range Diagram" => "examples/payload_range.md",
-        "Multivariable Optimization"=>"examples/optimization.md"
+        "Loading and running"=>"examples/loadingrunning.md",
+        "Payload-range diagram" => "examples/payload_range.md",
+        "Multivariable optimization"=>"examples/optimization.md"
         ],
-    "Atmospheric properties" => "atmos/atmos.md",
     "Aerodynamics" => Any[
         "aero/geometry.md",
         "aero/lift.md",
         "aero/drag.md",
         "aero/moment.md",
+        "atmos/atmos.md"
         ],
-        "Structures" => Any["structures/wing.md",
-            "structures/fuselage.md",
-            "structures/fueltanks.md"
+    "Structures" => Any["structures/wing.md",
+        "structures/fuselage.md",
+        "structures/fueltanks.md"
         ],
-        "Propulsion systems" => Any[
+    "Propulsion systems" => Any[
             "propulsion/propsys.md",
             "propulsion/hxfun.md",
+            "propulsion/gascalc.md"
         ],
-        "Stability" => "balance/balance.md",
-        "Sizing" => "sizing/sizing.md",
-        "Miscellaneous" => Any[
-            "misc/aircraft.md",
-            "misc/misc.md",
-            "misc/dreladocs.md"
+    "Stability" => "balance/balance.md",
+    "Mission and sizing" => Any[
+        "sizing/sizing.md",
+        "sizing/weightmodels.md"
+        ],
+    "Miscellaneous" => Any[
+        "misc/structs.md",
+        "misc/dreladocs.md",
+        "misc/misc.md",
+        "misc/fordevs.md"
         ]
     ],
     )

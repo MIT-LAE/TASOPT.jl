@@ -118,7 +118,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       Pressurized cabin volume:
       - `cabVol::Float64`: Pressurized cabin volume.
 
-See [here](@ref fuselage) or Section 2.2 of TASOPT docs.
+See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
 function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
                       fstring,fframe,ffadd,deltap,

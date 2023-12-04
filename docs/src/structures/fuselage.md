@@ -285,7 +285,7 @@ x \hspace{-0.45ex} W_{\rm shell} &= x \hspace{-0.45ex} W_{\rm skin}(1\!+\!f_{\rm
  \:+\: x \hspace{-0.45ex} W_{\rm fweb}
 \end{aligned}$$
 
-## Fuselage Bending Loads
+## Fuselage bending loads
 
 In addition to the pressurization and torsion loads, the fuselage also
 sees bending loads from its distributed weight load plus the tail weight
@@ -296,7 +296,7 @@ $A_{\rm hbend}{\scriptstyle (x)}$), and also sides of the shell (total
 of $A_{\rm vbend}{\scriptstyle (x)}$), as shown in figure 2. If the shell
 is sufficiently strong, then these areas will be zero.
 
-## Total Fuselage Weight
+## Total fuselage weight
 
 The total fuselage weight includes the shell with stiffeners, tailcone,
 floor beams, fixed weight, payload-proportional equipment and material,

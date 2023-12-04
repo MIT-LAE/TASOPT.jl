@@ -2,28 +2,29 @@
       tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
       dlcomp, neng, feadd, fpylon)
 
-      Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald model.
+Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald model.
       
-      # Inputs:
-            iengwgt: Engine model index, Drela=0, Fitzgerald=1, and Pantalone>=3, 
-            OPR: Overall pressure ratio.
-            BPR: By-pass ratio.
-            mdotc: Engine core mass flow rate.
-            dfan: Fan diameter.
-            rSnace: 
-            dlcomp:
-            neng: Number of engines.
-            feadd:Fuel system weight ratio.
-            fpylon: Pylon weight fraction.
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `iengwgt`: Engine model index, Drela=0, Fitzgerald=1, and Pantalone>=3, 
+    - `OPR`: Overall pressure ratio.
+    - `BPR`: By-pass ratio.
+    - `mdotc`: Engine core mass flow rate.
+    - `dfan`: Fan diameter.
+    - `rSnace`: 
+    - `dlcomp`:
+    - `neng`: Number of engines.
+    - `feadd`: Fuel system weight ratio.
+    - `fpylon`: Pylon weight fraction.
 
-      # Outputs:
-            Weng: Total engine weight.
-            Wnac: Nacelle weight. 
-            Webare: Bare engine weight.
-            Snace1: Nacelle area.
+    **Output:**
+    - `Weng`: Total engine weight.
+    - `Wnac`: Nacelle weight. 
+    - `Webare`: Bare engine weight.
+    - `Snace1`: Nacelle area.
 """
 function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-    dlcomp, neng, feadd, fpylon)
+    dlcomp, neng, feadd, fpylon, HXs)
 
     # include("constants.inc")
 
@@ -147,6 +148,13 @@ function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
 
     end
 
+    for HX in HXs #For every heat exchanger in the engine
+        W_HX = hxweight(gee, HX.HXgeom, 1.0) * neng #Weight of a heat exchanger times number of engines
+        
+        Webare = Webare + W_HX #Add heat exchanger weight to bare and full engine
+        Weng = Weng + W_HX
+
+    end
 
     return Weng, Wnac, Webare, Snace1
 end
@@ -158,16 +166,17 @@ end
       Calculates engine component weights for Direct-drive turbofan with current technology
       using Pantalone model.
             
-      # Inputs:
-      mdotc: Core mass flow rate.
-      OPR: Overall compression ratio.
-      BPR: By-pass ratio.
-      # Outputs:
-      Wcore: Core weight.
-      Wfan: Fan weight.
-      Wcomb: Combustor weight.
-      Wnozz: Nozzle weight.
-      Wnace: Nacelle weight.
+      !!! details "🔃 Inputs and Outputs"
+      **Input:**
+      - `mdotc:`:  Core mass flow rate.
+      - `OPR:`:  Overall compression ratio.
+      - `BPR:`:  By-pass ratio.
+      **Output:**
+      - `Wcore:`:  Core weight.
+      - `Wfan:`:  Fan weight.
+      - `Wcomb:`:  Combustor weight.
+      - `Wnozz:`:  Nozzle weight.
+      - `Wnace:`:  Nacelle weight.
 """
 function ddct(mdotc, OPR, BPR)
 
@@ -234,16 +243,17 @@ end
       Calculates engine component weights for Direct-drive turbofan with advanced technology 
       using Pantalone's model.
 
-      # Inputs:
-      mdotc: Core mass flow rate.
-      OPR: Overall compression ratio.
-      BPR: By-pass ratio.
-      # Outputs:
-      Wcore: Core weight.
-      Wfan: Fan weight.
-      Wcomb: Combustor weight.
-      Wnozz: Nozzle weight.
-      Wnace: Nacelle weight.
+      !!! details "🔃 Inputs and Outputs"
+      **Input:**
+      - `mdotc:`:  Core mass flow rate.
+      - `OPR:`:  Overall compression ratio.
+      - `BPR:`:  By-pass ratio.
+      **Output:**
+      - `Wcore:`:  Core weight.
+      - `Wfan:`:  Fan weight.
+      - `Wcomb:`:  Combustor weight.
+      - `Wnozz:`:  Nozzle weight.
+      - `Wnace:`:  Nacelle weight.
 """
 function ddat(mdotc, OPR, BPR)
 
@@ -311,16 +321,17 @@ end # ddat
       Calculates engine component weights for geared turbofan with current technology 
       using Pantalone's model.
 
-      # Inputs:
-      mdotc: Core mass flow rate.
-      OPR: Overall compression ratio.
-      BPR: By-pass ratio.
-      # Outputs:
-      Wcore: Core weight.
-      Wfan: Fan weight.
-      Wcomb: Combustor weight.
-      Wnozz: Nozzle weight.
-      Wnace: Nacelle weight.
+      !!! details "🔃 Inputs and Outputs"
+      **Input:**
+      - `mdotc: Core mass flow rate.
+      - `OPR: Overall compression ratio.
+      - `BPR: By-pass ratio.
+      **Output:**
+      - `Wcore: Core weight.
+      - `Wfan: Fan weight.
+      - `Wcomb: Combustor weight.
+      - `Wnozz: Nozzle weight.
+      - `Wnace: Nacelle weight.
 """
 function gct(mdotc, OPR, BPR)
 
@@ -392,16 +403,17 @@ end # gct
       Calculates engine component weights for geared turbofan with advanced technology
       using Pantalone's model.
 
-      # Inputs:
-      mdotc: Core mass flow rate.
-      OPR: Overall compression ratio.
-      BPR: By-pass ratio.
-      # Outputs:
-      Wcore: Core weight.
-      Wfan: Fan weight.
-      Wcomb: Combustor weight.
-      Wnozz: Nozzle weight.
-      Wnace: Nacelle weight.
+      !!! details "🔃 Inputs and Outputs"
+      **Input:**
+      - `mdotc:`:  Core mass flow rate.
+      - `OPR:`:  Overall compression ratio.
+      - `BPR:`:  By-pass ratio.
+      **Output:**
+      - `Wcore:`:  Core weight.
+      - `Wfan:`:  Fan weight.
+      - `Wcomb:`:  Combustor weight.
+      - `Wnozz:`:  Nozzle weight.
+      - `Wnace:`:  Nacelle weight.
 """
 function gat(mdotc, OPR, BPR)
 

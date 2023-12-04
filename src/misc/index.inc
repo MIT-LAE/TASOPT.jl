@@ -836,8 +836,34 @@
       iegsPodMotNmech = 238
       iegsPodFanNmech = 239
 
+#Heat exchanger variables
+      ieDi = 240
+      ieTft = 241
+      iefrecirc = 242
+      ierecircT = 243
+      iehlat = 244
+      iePreCorder = 245
+      iePreCepsilon = 246
+      iePreCMh = 247
+      iePreCDeltah = 248
+      iePreCDeltap = 249
+      ieInterCorder = 250
+      ieInterCepsilon = 251 
+      ieInterCMh = 252
+      ieInterCDeltah = 253
+      ieInterCDeltap = 254
+      ieRegenorder = 255
+      ieRegenepsilon = 256 
+      ieRegenMh = 257
+      ieRegenDeltah = 258
+      ieRegenDeltap = 259
+      ieTurbCorder = 260
+      ieTurbCepsilon = 261 
+      ieTurbCMh = 262
+      ieTurbCDeltah = 263
+      ieTurbCDeltap = 264
 
-      ietotal = 239
+      ietotal = 264
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

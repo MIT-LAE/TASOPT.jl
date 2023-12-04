@@ -1,13 +1,22 @@
 using Printf
 """
+    wsize(pari, parg, parm, para, pare,
+        itermax, wrlx1, wrlx2, wrlx3,
+        initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
 and iterates until the MTOW converges to within a specified tolerance.
-### Inputs:
-- Array of flags that control design choices - fuel types, where to store fuel, etc.
-- Geometric and structural parameters - dimensions primarily
-- Aerodynamic parameters - CL, CD, KE dissipation, etc.
-- Mission-specific parameters - alt, mach, P, T etc.
-- Engine-specific parameters 
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - Array of flags that control design choices - fuel types, where to store fuel, etc.
+    - Geometric and structural parameters - dimensions primarily
+    - Aerodynamic parameters - CL, CD, KE dissipation, etc.
+    - Mission-specific parameters - alt, mach, P, T etc.
+    - Engine-specific parameters 
+
+    **Outputs:**
+    - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
 function wsize(pari, parg, parm, para, pare,
     itermax, wrlx1, wrlx2, wrlx3,
@@ -1293,6 +1302,21 @@ function wsize(pari, parg, parm, para, pare,
         parg[igxvtail] = xvbox + dxv
 
         # -----------------------------
+        # Heat exchanger design and operation
+        # ------------------------------
+        ipdes = ipcruise1 #Design point: start of cruise
+
+        if iterw > 2 #Only include heat exchangers after second iteration
+            HXs = hxdesign!(pare, pari, ipdes, HXs_prev)
+            global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+
+        else
+            HXs = []
+            global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            
+        end
+
+        # -----------------------------
         # Drag and engine calculations
         # ------------------------------
         # Total Drag
@@ -1428,7 +1452,7 @@ function wsize(pari, parg, parm, para, pare,
             # weight of engine and related stuff
             Gearf = parg[igGearf]
             Weng, Wnace, Webare, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-                dlcomp, neng, feadd, fpylon)
+                dlcomp, neng, feadd, fpylon, HXs)
 
             parg[igWeng] = Weng
             parg[igWebare] = Webare
@@ -1795,7 +1819,6 @@ function wsize(pari, parg, parm, para, pare,
             end
         end
 
-
         # BFL calculations/ Noise? / Engine perf 
 
     end
@@ -1895,7 +1918,7 @@ function wsize(pari, parg, parm, para, pare,
         ξpay = 0.0
         itrim = 0
         balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
-
+        
     end
     # println("Propsys time = ", time_propsys)
 end
