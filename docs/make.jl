@@ -47,3 +47,7 @@ makedocs(
         ]
     ],
     )
+
+deploydocs(
+    repo = "github.com/MIT-LAE/TASOPT.jl.git",
+)
