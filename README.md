@@ -1,4 +1,5 @@
 # TASOPT.jl
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://mit-lae.github.io/TASOPT.jl/dev/) [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://mit-lae.github.io/TASOPT.jl/stable/) ![Codecov](https://img.shields.io/codecov/c/github/MIT-LAE/TASOPT.jl) [![CI](https://github.com/MIT-LAE/TASOPT.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/MIT-LAE/TASOPT.jl/actions/workflows/CI.yml)
 
 Transport Aircraft and the Environment System OPTimization (TASOPT) implemented in Julia. Originally based of Mark Drela's [FORTRAN code](https://web.mit.edu/drela/Public/web/tasopt/) of the same name.
 
