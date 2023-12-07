@@ -101,8 +101,3 @@ Once you are in your main branch do:
    git merge upstream/main
 ```
 This brings your fork's `main` branch into sync with the upstream repository, without losing your local changes.
-
-    A regular Julia function cannot do it. 
-    You need to let Julia know it by adding a `!` mark behind the function. 
-    So the new function will be: `f!(x)` in Julia.
-* It gives the same output with the original f77 code. 
