@@ -34,7 +34,14 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          #cache: 'pip' # caching pip dependencies
+      - run: pip install matplotlib
       - uses: julia-actions/julia-buildpkg@v1
+        env:
+         PYTHON: ""
       - uses: julia-actions/julia-runtest@v1
         with:
           depwarn: error
