@@ -8,7 +8,6 @@ structures = TASOPT.structures
 engine = TASOPT.engine
 aircraft = TASOPT.aircraft
 
-using Documenter
 makedocs(
     repo = Documenter.Remotes.GitHub("MIT-LAE", "TASOPT.jl"),
     sitename = "TASOPT.jl",
