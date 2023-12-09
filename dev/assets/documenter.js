@@ -58,7 +58,13 @@ $(document).ready(function() {
       "right": "\\]",
       "display": true
     }
-  ]
+  ],
+  "macros": {
+    "\\Pstd": "P_{\\mathrm{std}}",
+    "\\Ru": "R_{\\mathrm{univ.}}",
+    "\\genfuel": "{\\mathrm{C}_{x_{\\mathrm{C}}}\\mathrm{H}_{x_{\\mathrm{H}}}\\mathrm{O}_{x_{\\mathrm{O}}}\\mathrm{N}_{x_{\\mathrm{N}}}}",
+    "\\Tstd": "T_{\\mathrm{std}}"
+  }
 }
 
   );
