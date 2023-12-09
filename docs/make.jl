@@ -8,10 +8,10 @@ structures = TASOPT.structures
 engine = TASOPT.engine
 aircraft = TASOPT.aircraft
 
-using Documenter
 makedocs(
-    remotes = nothing,
-    sitename = "TASOPT.jl Documentation",
+    repo = Documenter.Remotes.GitHub("MIT-LAE", "TASOPT.jl"),
+    sitename = "TASOPT.jl",
+    
     pages = [ "Home" => "index.md", 
     "Examples" => Any[
         "Loading and running"=>"examples/loadingrunning.md",
@@ -32,7 +32,7 @@ makedocs(
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
             "propulsion/hxfun.md",
-            # "propulsion/gascalc.md"
+            "propulsion/gascalc.md"
         ],
     "Stability" => "balance/balance.md",
     "Mission and sizing" => Any[
@@ -46,7 +46,26 @@ makedocs(
         "misc/fordevs.md"
         ]
     ],
+
+    format = Documenter.HTML(; mathengine=
+        Documenter.KaTeX(
+            Dict(:delimiters => [
+                Dict(:left => raw"$",   :right => raw"$",   display => false),
+                Dict(:left => raw"$$",  :right => raw"$$",  display => true),
+                Dict(:left => raw"\[",  :right => raw"\]",  display => true),
+                ],
+                :macros => 
+                Dict("\\genfuel" =>
+                        raw"{\mathrm{C}_{x_{\mathrm{C}}}\mathrm{H}_{x_{\mathrm{H}}}\mathrm{O}_{x_{\mathrm{O}}}\mathrm{N}_{x_{\mathrm{N}}}}",
+                    raw"\Ru" => raw"R_{\mathrm{univ.}}",
+                    raw"\Pstd" => raw"P_{\mathrm{std}}",
+                    raw"\Tstd" => raw"T_{\mathrm{std}}",
+                ),
+            )
+        )
     )
+
+)
 
 deploydocs(
     repo = "github.com/MIT-LAE/TASOPT.jl.git",
