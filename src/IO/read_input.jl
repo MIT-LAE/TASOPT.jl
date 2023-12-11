@@ -21,7 +21,7 @@ function read_input(k::String, dict::AbstractDict=data,
             default_dict[k]
         else
             error("Requested key/parameter is not supported. Check the default 
-            input file to see all available input options.")
+            input file to see all available input options. Key: "*k)
         end
     end
 end

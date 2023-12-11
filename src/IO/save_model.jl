@@ -22,10 +22,10 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #get parameter arrays from aircraft struct
     ac_i = ac.pari      #options parameters
-    ac_g = ac.parg      #geometry "
-    ac_m = ac.parm      #mission
-    ac_a = ac.para      #aero
-    ac_e = ac.pare      #engine
+    ac_g = ac.parg      #geometry   "
+    ac_m = ac.parm      #mission    "
+    ac_a = ac.para      #aero       "
+    ac_e = ac.pare      #engine     "
 
     #dictionaries to map some selections (e.g., ints) to outputs
     propsysarch = Dict(0 => "te", 1 => "tf")
@@ -228,7 +228,6 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #Aero , for multiple segments
     #TODO: make sure it's fine that we made these a value and not matrix
     d_wing_aero = Dict()
-
         d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g[igfLo]
         d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g[igfLt]
 
@@ -243,8 +242,7 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing_aero["Reynolds_scaling"] = ac_a[iaaRexp, 1,1]
         d_wing_aero["excrescence_drag_factor"] = ac_a[iafexcdw, 1,1]
         d_wing_aero["BLI_frac"] = ac_g[igfBLIw]
-
-
+      
     d_wing_aero_to = Dict()
         d_wing_aero_to["cls_clo"] = ac_a[iarcls, 1,1]
         d_wing_aero_to["clt_clo"] = ac_a[iarclt, 1,1]
@@ -432,10 +430,10 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_prop_turb["low_spool_loss"] = ac_e[ieepsl, 1, 1]
         d_prop_turb["high_spool_loss"] = ac_e[ieepsh, 1, 1]
 
-        d_prop_turb["gear_ratio"] = ac_g[igGearf, 1, 1]
-        d_prop_turb["HTR_fan"] = ac_g[igHTRf, 1, 1]
-        d_prop_turb["HTR_LPC"] = ac_g[igHTRlc, 1, 1]
-        d_prop_turb["HTR_HPC"] = ac_g[igHTRhc, 1, 1]
+        d_prop_turb["gear_ratio"] = ac_g[igGearf]
+        d_prop_turb["HTR_fan"] = ac_g[igHTRf]
+        d_prop_turb["HTR_LPC"] = ac_g[igHTRlc]
+        d_prop_turb["HTR_HPC"] = ac_g[igHTRhc]
     d_prop["Turbomachinery"] = d_prop_turb
 
     #Combustor
@@ -534,23 +532,11 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     end #open()
 end #function
 
-function print_nested_dict(dict, indent = "    ")
-    for (key, value) in dict
-        if isa(value, Dict)
-            println("$indent$key (Type: Dict)")
-            print_nested_dict(value, "$indent  ")
-        else
-            value_type = typeof(value)
-            println("$indent$key (Type: $value_type): $value")
-        end
-    end
-end
 
-# save_model()
+
+
 # Store label names
-
 iglabels = ["igFOpt     ", "igPFEI     ","igRange    ","igWMTO     ","igWpay     ","igWfix     ","igWfuel    ","igWfmax    ","igrWfmax   ","igWshell   ","igWwindow  ","igWinsul   ","igWfloor   ","igWcone    ","igWhbend   ","igWvbend   ","igWfuse    ","igWweb     ","igWcap     ","igWwing    ","igWebare   ","igWnace    ","igWeng     ","igWhtail   ","igWvtail   ","igWstrut   ","igxWfuse   ","igdxWfuel  ","igdxWwing  ","igdxWstrut ","igdxWhtail ","igdxWvtail ","igWinn     ","igWout     ","igdyWinn   ","igdyWout   ","igxCGfwd   ","igxCGaft   ","igfreserve ","igfpadd    ","igfseat    ","igfeadd    ","igfpylon   ","igfnace    ","igfflap    ","igfslat    ","igfaile    ","igflete    ","igfribs    ","igfspoi    ","igfwatt    ","igfhadd    ","igfvadd    ","igfapu     ","igfhpesys  ","igflgnose  ","igflgmain  ","igfstring  ","igfframe   ","igffadd    ","igWpwindow ","igWppinsul ","igWppfloor ","igNlift    ","igNland    ","igVne      ","igneng     ","igGearf    ","igfTt4CL1  ","igfTt4CLn  ","igHTRf     ","igHTRlc    ","igHTRhc    ","igrSnace   ","igrVnace   ","igrVstrut  ","igfSnace   ","igpcabin   ","igdeltap   ","iganose    ","igbtail    ","igxnose    ","igxend     ","igxblend1  ","igxblend2  ","igxshell1  ","igxshell2  ","igxconend  ","igxhbend   ","igxvbend   ","igxhtail   ","igxvtail   ","igxeng     ","igxwing    ","igxwbox    ","igxhbox    ","igxvbox    ","igxfix     ","igxapu     ","igxhpesys  ","igxlgnose  ","igdxlgmain ","igyeng     ","igzwing    ","igzhtail   ","ignfweb    ","igwfb      ","igRfuse    ","igdRfuse   ","ighfloor   ","iglambdac  ","igcabVol   ","igcosLs    ","igSstrut   ","igrpayfwd  ","igrpayaft  ","igxNP      ","igCMVf1    ","igCLMf0    ","igdepsda   ","igdCLnda   ","igdCLhdCL  ","igdCLndCL  ","igCLhspec  ","igCLhCGfwd ","igCLveout  ","igCLhmax   ","igCLvmax   ","igfCDhcen  ","igSMmin    ","igrMh      ","igrMv      ","igXaxis    ","igwbox     ","ighboxo    ","ighboxs    ","igrh       ","igwboxh    ","ighboxh    ","igrhh      ","igwboxv    ","ighboxv    ","igrhv      ","igsigfac   ","igsigskin  ","igsigbend  ","igsigcap   ","igtauweb   ","igsigstrut ","igrEshell  ","igEcap     ","igEstrut   ","igrhoskin  ","igrhobend  ","igrhocap   ","igrhoweb   ","igrhostrut ","igrhofuel  ","igrcls     ","igrclt     ","igCLhNrat  ","igSomax    ","igMomax    ","igSsmax    ","igMsmax    ","igtbcapo   ","igtbwebo   ","igtbcaps   ","igtbwebs   ","igtbcaph   ","igtbwebh   ","igtbcapv   ","igtbwebv   ","igEIco     ","igEIno     ","igGJo      ","igEIcs     ","igEIns     ","igGJs      ","igEIch     ","igEInh     ","igGJh      ","igEIcv     ","igEInv     ","igGJv      ","igtskin    ","igtcone    ","igtfweb    ","igtfloor   ","igEIhshell ","igEIhbend  ","igEIvshell ","igEIvbend  ","igGJshell  ","igGJcone   ","igfLo      ","igfLt      ","igfLn      ","igcma      ","igAR       ","igS        ","igb        ","igbo       ","igbs       ","igetas     ","iglambdat  ","iglambdas  ","igco       ","igsweep    ","igVh       ","igARh      ","igSh       ","igbh       ","igboh      ","iglambdah  ","igcoh      ","igsweeph   ","igVv       ","igARv      ","igSv       ","igbv       ","igbov      ","iglambdav  ","igcov      ","igsweepv   ","ignvtail   ","igzs       ","ighstrut   ","igAstrut   ","igcstrut   ","igfBLIw    ","igfBLIf    ","igdfan     ","igdlcomp   ","igdhcomp   ","iglnace    ","igA5       ","igA7       ","igTmetal   ","igcdefan   ","igCDgear   ","igCDspoil  ","igmuroll   ","igmubrake  ","ighobst    ","iglBFmax   ","igbmax     ","iggtocmin  ","igdBSLmax  ","igdBCBmax  ","igmofWpay  ","igmofWMTO  ","igPofWpay  ","igPofWMTO  ","igWtshaft  ","igWgen     ","igWinv     ","igWmot     ","igWfan     ","igWftank   ","igxtshaft  ","igxgen     ","igxinv     ","igxmot     ","igxfan     ","igxftank   ","igxcables  ","igWcables  ","igxcat     ","igWcat     ","igWtesys   ","igxWtesys  ","iglftank   ","igWinsftank","igxWftank  ","igRftank   ","igWc3des   ", "igdaftfan", "lnaceaft", "igfuseVol", "igneout", "igyeout", "igyeinn", "iglftankin", "igLHVfuel", "igWfburn", "igWaftfan", "igWfanGB", "igWaftfanGB", "igWrect", "igWtms"] 
-
 function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
     open(fname, "w") do io
 
