@@ -19,6 +19,7 @@ using PyPlot
 # pygui(true)
 using Dates
 using ForwardDiff
+using Parameters
 
 const __TASOPTroot__ = @__DIR__
 
@@ -65,6 +66,7 @@ include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 export read_aircraft_model, load_default_model
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
+include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
