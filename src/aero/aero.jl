@@ -36,7 +36,7 @@ jdim::Int = 360
 # Aerofoil calculations
 include("airfoil.jl")
 include("airtable2.jl")
-include("airfun2.jl")
+include("airfun.jl")
 
 __abs_path_prefix__ = dirname(@__DIR__)
 airfoil_data = joinpath(__abs_path_prefix__,"air/C.air")
