@@ -432,6 +432,7 @@ readhtail(x) = read_input(x, htail, dhtail)
     elseif htail_size == "maxforwardcg"
         pari[iiHTsize] = 2
         parg[igCLhCGfwd] = readhtail("CLh_at_max_forward_CG")
+        parg[igVh] = 1.0
     else
         error("Horizontal tail can only be sized via:
             1: specified tail volume coeff \"Vh\";
