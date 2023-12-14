@@ -127,10 +127,12 @@ Additionally returns the interval `dx = xarr[io] - xarr[im]`
 """
 function findsegment(x::Float64, xarr::AbstractArray{Float64})
 
-    io::Int = length(xarr)
     if isnan(x)
         error("Oops, you're searching for a NaN! Go fix your bug!")
     end
+    
+    io::Int = length(xarr)
+
     if x ≤ xarr[1]
         im = 1
         io = 2
