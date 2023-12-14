@@ -1,54 +1,27 @@
 using TASOPT
-using TOML
 include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
+export read_mdl
 
 """
-    read_mdl(filepath::String)
-
-
+    read_mdl(filepath::String, n_flight_pts::Integer=18, n_missions::Integer = 5)
 
 TODO: write docstring lol
 """
-function read_mdl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/A320_L1B.mdl"),
-        max_arraydim_capacity::Int=1000)
+function read_mdl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/B77-300ER_edit.mdl"),
+    n_flight_pts::Integer=18, n_missions::Integer = 5)
+    
+    #generate global par_ arrays
+    init_par_arrays(n_flight_pts=n_flight_pts, n_missions=n_missions)
 
-    mdl_file_lines = readlines(filepath)
+    #execute .mdl file to populate arrays
+    include(filepath)
 
-    pari = Array{Int64, 1}(undef, iitotal)
-    parg = Array{Float64, 1}(undef, igtotal)
-    parm = Array{Float64, 2}(undef, imtotal, max_arraydim_capacity)
-    pare = Array{Float64, 3}(undef, iatotal, max_arraydim_capacity, max_arraydim_capacity)
-    para = Array{Float64, 3}(undef, ietotal, max_arraydim_capacity, max_arraydim_capacity)
+    #TODO: fill out empty parts of arrays? i.e., repeat same aero spec for all missions if only one aero given?
 
-    for line in mdl_file_lines
-        # Extract matches from the string using the regular expression
-        # pattern = r"([a-zA-Z_][a-zA-Z0-9_]*)\[(.*?)\].*?\.=(.*?)\s*"
-        # pattern = r"([a-zA-Z_][a-zA-Z0-9_]*)\[(.*?)\]\s*\.=\s*(\[.*?\])\s*"
-        # match_ = match(pattern, line)
-        # if match_ !== nothing
-        #     variable_name = match_.captures[1]
-        #     index = parse.(Int, split(match_.captures[2], ','))
-        #     value = parse.(Float64, split(match_.captures[3], ','))
-
-        #     # update the variable at index with value
-        #     variable = get!(variables, variable_name, zeros(length(index)...))
-        #     setindex!(variable, value, index...)
-
-        if line[1:5] in ["para[","pare[","parg[","parm[","pari["]
-            eval(Meta.parse(line))
-
-
-        end
-    end
-
+    #generate the aircraft struct and return
     name = basename(filepath)
-    description = "Imported by read_mdl() from: "*filepath
-    sized = [false] #assume unsized. may be sized but won't guess
-
+    description = "Imported using read_mdl() from: "*filepath*". Assumed and marked unsized on import."
+    sized = [false]
     return TASOPT.aircraft(name, description,
         pari, parg, parm, para, pare, sized)
-
 end
-
-a = read_mdl()
-print(a)
