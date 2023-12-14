@@ -1,5 +1,4 @@
 using TOML
-using TASOPT
 export save_model
 
 # include("../misc/index.inc")
@@ -17,7 +16,7 @@ export save_model
 
 """
 function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
-    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
     save_output::Bool=false)
 
     #get parameter arrays from aircraft struct

@@ -40,7 +40,7 @@ function Base.show(io::IO, ac::aircraft)
     print(io, 
     """Name: $(ac.name);
     Wpay = $(round(ac.parm[imWpay]/1e3, sigdigits = 3)) kN
-    Des. Range  = $(round(ac.parm[imRange], sigdigits = 3)) km
+    Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
 
