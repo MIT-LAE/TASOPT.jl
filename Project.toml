@@ -16,6 +16,7 @@ Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Trapz = "592b5752-818d-11e9-1e9a-2b8ca4a44cd1"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
