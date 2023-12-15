@@ -1012,6 +1012,117 @@ function water_balance(α_star, u, p)
 end
 
 """
+    PEMsize(P_des, V_des, u)
+
+Designs the fuel cell stack for the design point conditions.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `P_des::Float64`: design stack output power, ideally maximum power in mission (W)
+    - `V_des::Float64`: design stack voltage (V)
+    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+ 
+    **Outputs:**
+    - `n_cells::Float64`: number of cells in stack
+    - `A_cell::Float64`: cell surface area (m^2)
+    - `Q::Float64`: waste power produced by the fuel cell at design point (W)
+"""
+function PEMsize(P_des, V_des, u)
+    #Extract inputs
+    type = u.type
+    j = u.j
+    
+    #Find heating voltage
+    if type == "LT-PEMFC"
+        V_heat = 1.482
+    elseif type == "HT-PEMFC"
+        V_heat = 1.254
+    end
+    #Calculate power density of a cell
+    P2A = P2Acalc(u, j)
+    V_cell = P2A / j
+
+    #Size stack
+    n_cells = V_des / V_cell #number of cells in series
+
+    A_cell = P_des /(n_cells * P2A) #total area of a cell, including possible cells in parallel
+
+    #Calculate heat to be dissipated
+    Q = n_cells * A_cell * (V_heat - V_cell) * j
+
+    return n_cells, A_cell, Q
+end #PEMsize
+
+"""
+    PEMoper(P_stack, n_cells, A_cell, u)
+
+Evaluates fuel cell stack performance in off-design conditions.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `P_stack::Float64`: stack output power (W)
+    - `n_cells::Float64`: number of cells in stack
+    - `A_cell::Float64`: cell surface area (m^2)
+    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+ 
+    **Outputs:**
+    - `V_stack::Float64`: stack voltage (V)
+    - `Q::Float64`: waste power produced by the fuel cell (W)
+"""
+function PEMoper(P_stack, n_cells, A_cell, u)
+    #Extract inputs
+    type = u.type
+    
+    #Find heating voltage
+    if type == "LT-PEMFC"
+        V_heat = 1.482
+
+    elseif type == "HT-PEMFC"
+        V_heat = 1.254
+    end
+
+    P2A = P_stack / (n_cells * A_cell) #Power density of a cell
+
+    f(x) = P2A - P2Acalc(u, x) #Residual function; it should be 0 if x = j
+    j = find_zero(f, 0.1) #Find root with Roots.jl
+
+    #Find stack voltage
+    V_cell = P2A / j
+    V_stack = V_cell * n_cells
+
+    #Calculate heat to be dissipated
+    Q = n_cells * A_cell * (V_heat - V_cell) * j
+
+    return V_stack, Q
+end #PEMoper
+
+"""
+    P2Acalc(u, j)
+
+Calculates the power density of a fuel cell.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+    - `j::Float64`: current density (A/m^2)
+ 
+    **Outputs:**
+    - `P2A::Float64`: power density (W/m^2)
+"""
+function P2Acalc(u, j)
+    u.j = j
+    if u.type == "LT-PEMFC"
+        V_cell, _ = LT_PEMFC_voltage(u)
+
+    elseif u.type == "HT-PEMFC"
+        V_cell = HT_PEMFC_voltage(u)
+    end
+    
+    P2A = j * V_cell
+    return P2A
+end
+
+"""
     PEMstackweight(gee, u, A, n_cells, fouter)
 
 Calculates the weight of a stack of PEM fuel cells.
@@ -1046,33 +1157,6 @@ function PEMstackweight(gee, u, n_cells, A_cell, fouter)
 
     return W_stack
 end #PEMstackweight
-
-function PEMsize(P_stack, V_stack, u)
-    #Extract inputs
-    type = u.type
-    j = u.j
-    
-    #Calculate cell voltage
-    if type == "LT-PEMFC"
-        V_cell, _ = LT_PEMFC_voltage(u)
-        V_heat = 1.482
-
-    elseif type == "HT-PEMFC"
-        V_cell = HT_PEMFC_voltage(u)
-        V_heat = 1.254
-    end
-
-    #Size stack
-    n_cells = V_stack / V_cell #number of cells in series
-
-    P2A = j * V_cell #power density of a cell
-    A_cell = P_stack /(n_cells * P2A) #total area of a cell, including possible cells in parallel
-
-    #Calculate heat to be dissipated
-    Q = n_cells * A_cell * (V_heat - V_cell) * j
-
-    return n_cells, A_cell, Q
-end #PEMsize
  
 # p0 = 101325
 # # Inputs
