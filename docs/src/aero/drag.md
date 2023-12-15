@@ -43,7 +43,7 @@ aerodynamics.blsys(simi,lami,wake,direct, Mach, uinv,
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
 
-aerodynamics.blax2(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
 aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )

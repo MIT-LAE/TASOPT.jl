@@ -35,11 +35,11 @@ jdim::Int = 360
  
 # Aerofoil calculations
 include("airfoil.jl")
-include("airtable2.jl")
+include("airtable.jl")
 include("airfun.jl")
 
 __abs_path_prefix__ = dirname(@__DIR__)
-airfoil_data = joinpath(__abs_path_prefix__,"air/C.air")
+airfoil_data = joinpath(__abs_path_prefix__,"airfoil_data/C.air")
 
 airsection = airtable(airfoil_data);
 
@@ -53,7 +53,6 @@ include("wingsc.jl")
 include("fusebl.jl")
 include("axisol.jl")
 include("blax.jl")
-include("blax2.jl")
 include("blsys.jl")
 
 # Trefftz plane CDi calcs

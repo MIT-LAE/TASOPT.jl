@@ -242,7 +242,7 @@ end
 
     uei, dsi, thi, tsi,
     dci, cfi, cdi, cti,
-    hki, phi = TASOPT.aerodynamics.blax2(nbldim, nbl, iblte,
+    hki, phi = TASOPT.aerodynamics.blax(nbldim, nbl, iblte,
         sbl, bbl, rnbl, univ,
         Reunit, Mach, fex)
 
