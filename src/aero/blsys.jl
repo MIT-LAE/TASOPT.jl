@@ -18,7 +18,7 @@ using StaticArrays
           cfm, cfm_thm, cfm_dsm, cfm_uem,
           dim, dim_thm, dim_dsm, dim_uem)
 
-Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`blax2`](@ref).
+Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`blax`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

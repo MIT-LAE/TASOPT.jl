@@ -23,7 +23,7 @@ which are defined by the various geometric parameters in `parg`.
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
-See also [`blax2`](@ref) and [`axisol!`](@ref).
+See also [`blax`](@ref) and [`axisol!`](@ref).
 
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
@@ -137,7 +137,7 @@ function fusebl!(pari, parg, para, ip)
       fex = para[iafexcdf, ip]
      
       uebl, dsbl, thbl, tsbl, dcbl,
-      cfbl, cdbl, ctbl, hkbl, phbl  = blax2(nbldim, nbl,iblte, 
+      cfbl, cdbl, ctbl, hkbl, phbl  = blax(nbldim, nbl,iblte, 
 					sbl, bbl, rnbl, uinv, Reunit, Mach, fex)
 
       gam = 1.4 #gamSL

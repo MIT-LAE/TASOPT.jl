@@ -3,7 +3,7 @@ export airfun
 """
     airfun(cl, τ, Mach, air::airfoil)
 
-Looks up airfoil performance data at specified conditions, as precomputed and found in `./src/air/C.air`.
+Looks up airfoil performance data at specified conditions, as precomputed and found in `./src/airfoil_data/`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**      
