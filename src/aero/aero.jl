@@ -53,7 +53,6 @@ include("wingsc.jl")
 include("fusebl.jl")
 include("axisol.jl")
 include("blax.jl")
-include("blax2.jl")
 include("blsys.jl")
 
 # Trefftz plane CDi calcs
