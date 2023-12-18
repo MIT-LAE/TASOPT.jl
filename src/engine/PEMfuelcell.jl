@@ -275,8 +275,8 @@ end
     LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
 
 A 1-D model of the voltage across a low-temperature PEM fuel cell with a Nafion membrane, based on the model
-in Springer et al. (1991), which captures the effect of reactant depletion, multispecies diffusion and water electro-osmotic
-drag in the membrane.
+in Springer et al. (1991), which captures the effect of reactant depletion, multispecies diffusion and water transport
+in the membrane.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -1084,7 +1084,8 @@ function PEMoper(P_stack, n_cells, A_cell, u)
     P2A = P_stack / (n_cells * A_cell) #Power density of a cell
 
     f(x) = P2A - P2Acalc(u, x) #Residual function; it should be 0 if x = j
-    j = find_zero(f, 0.1) #Find root with Roots.jl
+    j_g = 1 #A/m^2, very low current density as a guess
+    j = find_zero(f, j_g) #Find root with Roots.jl. Careful! There are two roots, must use the smallest one
 
     #Find stack voltage
     V_cell = P2A / j
@@ -1157,165 +1158,3 @@ function PEMstackweight(gee, u, n_cells, A_cell, fouter)
 
     return W_stack
 end #PEMstackweight
- 
-# p0 = 101325
-# # Inputs
-# T = 353.15
-# p_A = 3 * p0
-# p_C = 3 * p0
-# x_H2O_A = water_sat_pressure(T) / p_A #fully saturated gas
-# x_H2O_C = water_sat_pressure(T) / p_C #fully saturated gas
-# λ_H2 = 3
-# λ_O2 = 3
-# t_M = 25e-6
-# t_A = 350e-6
-# t_C = 350e-6
-# type = "LT-PEMFC"
-
-# u = PEMFC_inputs(NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
-# u.T = T
-# u.p_A = p_A
-# u.p_C = p_C
-# u.x_H2O_A = x_H2O_A
-# u.x_H2O_C = x_H2O_C
-# u.λ_H2 = λ_H2
-# u.λ_O2 = λ_O2
-# u.t_M = t_M
-# u.t_A = t_A
-# u.t_C = t_C
-# u.type = type
-
-# j = 0.5e4
-
-# j = 900
-# # λ_H2 = 2e4/j
-
-# V, α = LT_PEMFC_voltage(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_H2, λ_O2)
-
-# js = [0.1, 0.2, 0.5, 0.8]*1e4
-# for (ind,j) in enumerate(js)
-#     λ_H2 = 1e4/j
-#     _, _, z_mem, λ = LT_PEMFC_voltage(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_H2, λ_O2)
-#     plot(1 .- z_mem/z_mem[end], λ[1,:])
-# end
-# xlabel("Thickness fraction")
-# ylabel("Water content")
-# grid()
-# xlim([0,1])
-# ylim([0,16])
-# savefig("lambda.png")
-
-# alfas = LinRange(0.1,2,100)
-
-# res = zeros(length(alfas))
-# for (i,alfa) in enumerate(alfas)
-#     res[i] = water_balance(alfa, u, p)
-# end
-# plot(alfas,res)
-# grid()
-# ylim(-20,20)
-# savefig("alfa.png")
-
-# V = LT_PEMFC_voltage(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_H2, λ_O2)
-# res = water_balance(5.147397263199207, u, p)
-
-# res = water_balance(5.147397263199207, u, p)
-
-# js = LinRange(0.01,1.99,100) * 1e4
-# tms = [175, 140, 100, 50] * 1e-6
-# for (k, tm) in enumerate(tms)
-#     Vs = zeros(length(js))
-#     α_g = 0.25
-#     for (i,j) in enumerate(js)
-#         λ_H2 = 2e4/j 
-#         Vs[i], α_g = LT_PEMFC_voltage(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_H2, λ_O2, tm, α_g)
-#         println(i)
-#     end
-#     plot(js/1e4,Vs, label = "\$t_M=\$"*string(round(tm*1e6))*" \$\\mu m\$")
-# end
-
-# xlabel("Current density (A/cm\$^2\$)")
-# ylabel("Cell voltage (V)")
-# xlim([0,2])
-# ylim([0,1])
-# legend()
-# grid()
-# savefig("Vs_for_tm.png")
-
-# js = LinRange(0.01,2,100) * 1e4
-
-# mults = [1,2,3,4]
-# for (k, mult) in enumerate(mults)
-#     Vs = zeros(length(js))
-#     for (i,j) in enumerate(js)
-#         λ_H2 = mult*2e4/j 
-#         Vs[i], α = LT_PEMFC_voltage(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_H2, λ_O2)
-#         println(i)
-#     end
-#     plot(js/1e4,Vs, label = "\$\\nu_H=\$"*string(mult))
-# end
-
-# xlabel("Current density (A/cm\$^2\$)")
-# ylabel("Cell voltage (V)")
-# xlim([0,2])
-# ylim([0,1])
-# legend()
-# grid()
-# savefig("Vs.png")
-
-# js = LinRange(100, 2e4, 200)
-# Vs = zeros(length(js))
-
-# α_g = 0.25
-# for (ind,j) in enumerate(js)
-#     u.j = j
-#     println(ind)
-#     out = LT_PEMFC_voltage(u, α_g)
-#     Vs[ind] = out[1]
-#     global α_g = out[2]
-# end
-
-# js = js/1e4
-# plot(js, Vs, label = "Voltage (V)")
-# eta = (Vs/1.254) #1.482
-# plot(js, eta, label = "Efficiency")
-# Ps = Vs .* js
-# plot(js, Ps/maximum(Ps), label = "\$ P/P_{max} \$")
-# xlabel("Current density (A/cm\$^2\$)")
-# ylabel("Value")
-# grid()
-# legend()
-# xlim([0,2])
-# ylim([0,1.2])
-# savefig("PEM.png")
-
-# js = LinRange(100, 3e4, 200)
-# Vs = zeros(length(js))
-
-# for (ind,j) in enumerate(js)
-#     u.j = j
-#     println(ind)
-#     Vs[ind] = HT_PEMFC_voltage(u)
-# end
-
-# js = js/1e4
-# plot(js, Vs, label = "Voltage (V)")
-# eta = (Vs/1.254)
-# plot(js, eta, label = "Efficiency")
-# Ps = Vs .* js
-# plot(js, Ps/maximum(Ps), label = "\$ P/P_{max} \$")
-
-# xlabel("Current density (A/cm\$^2\$)")
-# ylabel("Value")
-# grid()
-# legend()
-# xlim([0,3])
-# ylim([0,1.2])
-# savefig("HT_PEM.png")
-
-# u.j = 1.4e4
-# P_stack = 1e6
-# V_stack = 300
-
-# n_cells, A_cell, Q = PEMsize(P_stack, V_stack, u)
-# m_FC = PEMstackweight(9.81, u, n_cells, A_cell, 4) / 9.81
