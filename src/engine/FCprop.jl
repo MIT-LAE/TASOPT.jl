@@ -4,17 +4,41 @@ include("gascalc.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
 
+
+function HXheating_residual!(HXgas, HXgeom, Q, C_r)
+
+    _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+    _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+
+    HXgas.mdot_c = 1 / C_r * (HXgas.mdot_p * cp_p) / cp_c
+
+    hxoper!(HXgas, HXgeom)
+
+    Q_HX = HXgas.Δh_p * HXgas.mdot_p
+
+    res = 1 - Q_HX / Q
+    return res
+end
+
 #Parameters that can be optimized
 η_p = 0.7
 type = "HT-PEMFC"
 #Set HX targets
-C_r = 2
 ε = 0.5
 
-#Inputs
-F = 10e3
-P = 170 * 15e3
+#Design conditions: takeoff
+P = 170 * 15e3 #takeoff stack power
 
+Ta = 303.15 #K, corresponding to 30 degrees C
+Mp_in  = 0.1
+mdot_p = 40
+
+
+HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
+
+HXgas = deepcopy(HXgas_NaN)
+HXgeom = deepcopy(HXgeom_NaN)
 #---------------------------------
 # PEMFC calculations
 #---------------------------------
@@ -28,7 +52,6 @@ p_C = 3 * p0
 t_M = 25e-6
 t_A = 350e-6
 t_C = 350e-6
-type = "HT-PEMFC"
 
 u = PEMFC_inputs(NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
 u.p_A = p_A
@@ -59,17 +82,17 @@ end
 #PEMFC calculations
 n_cells, A_cell, Q = PEMsize(P, V_stack, u)
 
-V_od, Q_od = PEMoper(P/2, n_cells, A_cell, u)
+#V_od, Q_od = PEMoper(Pi, n_cells, A_cell, u)
 
 #---------------------------------
 # Design HX for takeoff conditions
 #---------------------------------
+#TODO: ideally want to do multipoint design, where we design for different mission points and choose largest HX
 #Fluid parameters
-Tp_in = 303.15 #K, corresponding to 30 degrees C
+Tp_in = Ta
 Tc_in = u.T
-pp_in = 1e5
-pc_in = 3e5
-Mp_in  = 0.1
+pp_in = p0
+pc_in = p_A
 fluid_p = "air"
 alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 
@@ -83,9 +106,11 @@ end
 _, cp_c, _, _, _, _ = liquid_properties(fluid_c, Tc_in)
 _, _, _, _, cp_p, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
 
+#Calculate minimum heat capacity rate from desired effectiveness and temperature difference
 C_min = abs(Q / (ε * (Tp_in - Tc_in)))
-mdot_p = C_min / cp_p
-mdot_c = C_min * C_r / cp_c
+
+#Design for C_min being C_c
+mdot_c = C_min / cp_c
 
 ρ_p = pp_in / (Rp * Tp_in)
 γ = cp_p / (cp_p - Rp)
@@ -117,3 +142,37 @@ initial_x = [0.1, 6, 4]
 
 hxoptim!(HXgas, HXgeom, initial_x)
 hxsize!(HXgas, HXgeom)
+
+#---------------------------------
+# HX in off-design conditions
+#---------------------------------
+
+HXgas_od = deepcopy(HXgas_NaN)
+
+#Off design conditions: takeoff at lower power
+P_od = P #takeoff stack power
+
+mdot_pod = mdot_p * P_od / P
+
+_, Q_od = PEMoper(P_od, n_cells, A_cell, u)
+
+HXgas_od.fluid_p = fluid_p
+HXgas_od.fluid_c = fluid_c
+HXgas_od.mdot_p = mdot_pod
+HXgas_od.Tp_in = Tp_in
+HXgas_od.Tc_in = Tc_in
+HXgas_od.pp_in = pp_in
+HXgas_od.pc_in = pc_in
+HXgas_od.alpha_p = alpha_p
+
+HXod_res(C_r) = HXheating_residual!(HXgas_od, HXgeom, Q_od, C_r)
+
+Crg = 1.5 #A/m^2, very low current density as a guess
+C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
+
+_, cp_c, _, _, _, _ = liquid_properties(HXgas_od.fluid_c, HXgas_od.Tc_in)
+_, _, _, _, cp_p, _ = gassum(HXgas_od.alpha_p, length(HXgas_od.alpha_p), HXgas_od.Tp_in)
+
+HXgas_od.mdot_c = 1 / C_r * HXgas_od.mdot_p * cp_p / cp_c
+
+hxoper!(HXgas_od, HXgeom)

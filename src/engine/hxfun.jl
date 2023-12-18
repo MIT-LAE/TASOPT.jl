@@ -4,6 +4,7 @@
 # https://www.mathworks.com/help/hydro/ref/entuheattransfer.html
 # Nicolas Gomez Vega, Oct 2023
 using NLopt
+using Roots
 
 """
     HX_gas
@@ -468,7 +469,6 @@ function hxoper!(HXgas, HXgeom)
       igas_c = HXgas.igas_c 
       mdot_p = HXgas.mdot_p
       mdot_c_inf = HXgas.mdot_c 
-      ε = HXgas.ε
       Tp_in = HXgas.Tp_in
       Tc_inf = HXgas.Tc_in 
       pp_in = HXgas.pp_in
