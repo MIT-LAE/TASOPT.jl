@@ -4,6 +4,21 @@ include("gascalc.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
 
+function HXoffDesignCalc!(HXgas, HXgeom, Q)
+
+    _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+    _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+
+    HXod_res(C_r) = HXheating_residual!(HXgas, HXgeom, Q, C_r)
+
+    Crg = 1.5 #A/m^2, very low current density as a guess
+    C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
+
+    HXgas.mdot_c = 1 / C_r * HXgas.mdot_p * cp_p / cp_c
+
+    hxoper!(HXgas, HXgeom)
+
+end
 
 function HXheating_residual!(HXgas, HXgeom, Q, C_r)
 
@@ -150,7 +165,7 @@ hxsize!(HXgas, HXgeom)
 HXgas_od = deepcopy(HXgas_NaN)
 
 #Off design conditions: takeoff at lower power
-P_od = P #takeoff stack power
+P_od = 0.7 * P #takeoff stack power
 
 mdot_pod = mdot_p * P_od / P
 
@@ -165,14 +180,4 @@ HXgas_od.pp_in = pp_in
 HXgas_od.pc_in = pc_in
 HXgas_od.alpha_p = alpha_p
 
-HXod_res(C_r) = HXheating_residual!(HXgas_od, HXgeom, Q_od, C_r)
-
-Crg = 1.5 #A/m^2, very low current density as a guess
-C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
-
-_, cp_c, _, _, _, _ = liquid_properties(HXgas_od.fluid_c, HXgas_od.Tc_in)
-_, _, _, _, cp_p, _ = gassum(HXgas_od.alpha_p, length(HXgas_od.alpha_p), HXgas_od.Tp_in)
-
-HXgas_od.mdot_c = 1 / C_r * HXgas_od.mdot_p * cp_p / cp_c
-
-hxoper!(HXgas_od, HXgeom)
+HXoffDesignCalc!(HXgas_od, HXgeom, Q_od)
