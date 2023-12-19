@@ -4,37 +4,6 @@ include("gascalc.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
 
-function HXoffDesignCalc!(HXgas, HXgeom, Q)
-
-    _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
-    _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
-
-    HXod_res(C_r) = HXheating_residual!(HXgas, HXgeom, Q, C_r)
-
-    Crg = 1.5 #A/m^2, very low current density as a guess
-    C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
-
-    HXgas.mdot_c = 1 / C_r * HXgas.mdot_p * cp_p / cp_c
-
-    hxoper!(HXgas, HXgeom)
-
-end
-
-function HXheating_residual!(HXgas, HXgeom, Q, C_r)
-
-    _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
-    _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
-
-    HXgas.mdot_c = 1 / C_r * (HXgas.mdot_p * cp_p) / cp_c
-
-    hxoper!(HXgas, HXgeom)
-
-    Q_HX = HXgas.Δh_p * HXgas.mdot_p
-
-    res = 1 - Q_HX / Q
-    return res
-end
-
 #Parameters that can be optimized
 η_p = 0.7
 type = "HT-PEMFC"
