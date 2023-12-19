@@ -712,6 +712,78 @@ function hxoper!(HXgas, HXgeom)
 end #hxoper!
 
 """
+      HXoffDesignCalc!(HXgas, HXgeom, Q)
+
+Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
+The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
+meet the heat transfer requirement.    
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::Struct`: structure of type HX_gas with the gas properties
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `Q::Float64`: required heat transfer rate (W)
+    
+    **Outputs:**
+    No direct outputs. Input structures are modified with outlet gas properties.
+"""
+function HXoffDesignCalc!(HXgas, HXgeom, Q)
+
+      #TODO: consider case with recirculation
+      if occursin("liquid", HXgas.fluid_c)
+            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+      else
+            _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
+      end
+      _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+
+      HXod_res(C_r) = HXheating_residual!(HXgas, HXgeom, Q, C_r) #Should be 0 at correct C_r
+
+      Crg = 1.5 #guess for heat capacity rate
+      C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
+
+      HXgas.mdot_c = 1 / C_r * HXgas.mdot_p * cp_p / cp_c
+
+      hxoper!(HXgas, HXgeom)
+
+end
+  
+  """
+      HXheating_residual!(HXgas, HXgeom, Q, C_r)
+
+Calculates the difference between the heat transfer rate of a heat exchanger and its required heat capacity rate for a given
+ratio of heat capacity rates.  
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::Struct`: structure of type HX_gas with the gas properties
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `Q::Float64`: required heat transfer rate (W)
+    - `C_r::Float64`: ratio of heat capacity rate in process-side to heat capacity rate in coolant-side
+    
+    **Outputs:**
+    - `res::Float64`: relative difference between desired heat rate and actual heat rate
+"""
+function HXheating_residual!(HXgas, HXgeom, Q, C_r)
+
+      if occursin("liquid", HXgas.fluid_c)
+            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+      else
+            _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
+      end
+      _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+
+      HXgas.mdot_c = 1 / C_r * (HXgas.mdot_p * cp_p) / cp_c
+
+      hxoper!(HXgas, HXgeom)
+
+      Q_HX = HXgas.Δh_p * HXgas.mdot_p
+
+      res = 1 - Q_HX / Q
+      return res
+end
+
+"""
     hxoptim!(HXgas, HXgeom, initial_x)
 
 Optimizes heat exchanger design parameters for a given set of inputs. Uses the NLopt.jl package. The optimization
