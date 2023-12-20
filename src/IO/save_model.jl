@@ -531,6 +531,27 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     end #open()
 end #function
 
+"""
+    print_nested_dict(dict, indent = "    ")
+
+Prints dictionary contents to console, including any nested `dict`s.
+Useful for debugging.
+
+"""
+function print_nested_dict(dict, indent = "    ")
+    for (key, value) in dict
+        if isa(value, Dict)
+            println("$indent$key (Type: Dict)")
+            print_nested_dict(value, "$indent  ")
+        else
+            value_type = typeof(value)
+            println("$indent$key (Type: $value_type): $value")
+        end
+    end
+end
+
+
+
 
 
 
