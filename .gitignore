@@ -18,3 +18,4 @@ Manifest.toml
 *.DS_Store
 docs/build/*
 .VSCodeCounter/*
+.vscode/*
