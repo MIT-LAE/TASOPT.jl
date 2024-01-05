@@ -426,7 +426,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         end
 
     #Seats
-    pax = 200
+    pax = parg[igWpay]/(215*lbf_to_N)  #200
     seat_pitch = 30.0 * in_to_m
     seat_width = 19.0 * in_to_m
     aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
@@ -437,7 +437,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     yseats = zeros(Int(seats_per_row/2))
     yseats[1] = seat_width/2.0
     yseats[2] = yseats[1] + seat_width
-    yseats[3] = yseats[2] + 2*aisle_halfwidth + seat_width
+    if size(yseats)[1] == 3 
+        yseats[3] = yseats[2] + 2*aisle_halfwidth + seat_width
+    end
        # aisle
        for col = 4:Int(seats_per_row/2)
         yseats[col] = yseats[col-1] + seat_width
