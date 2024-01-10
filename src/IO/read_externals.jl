@@ -1,6 +1,6 @@
 using TASOPT
 include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
-export read_mdl
+export read_mdl, read_jl
 
 """
     read_mdl(filepath::String, n_flight_pts::Integer=18, n_missions::Integer = 5)
@@ -21,6 +21,18 @@ function read_mdl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_sample
     #generate the aircraft struct and return
     name = basename(filepath)
     description = "Imported using read_mdl() from: "*filepath*". Assumed and marked unsized on import."
+    sized = [false]
+    return TASOPT.aircraft(name, description,
+        pari, parg, parm, para, pare, sized)
+end
+
+function read_jl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/777TFinput_edited.jl"))
+    #execute .jl file to populate arrays
+    include(filepath)
+
+    #generate the aircraft struct and return
+    name = basename(filepath)
+    description = "Imported using read_jl() from: "*filepath*". Assumed and marked unsized on import."
     sized = [false]
     return TASOPT.aircraft(name, description,
         pari, parg, parm, para, pare, sized)
