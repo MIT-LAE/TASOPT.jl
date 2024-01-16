@@ -1037,7 +1037,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             HXgas.ε = ε_des[i]
 
             # Heat exchanger materials and wall properties
-            HXgeom.material = "SS304"
+            HXgeom.material = "A2219"
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
 
@@ -1393,6 +1393,10 @@ function tubesize!(Δp, K, HXgeom)
             HXgeom.ρw = 7930 #density of steel, kg/m^3
             HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
             σy = 215e6
+      elseif material == "A2219"
+            HXgeom.ρw = 2840 #density, kg/m^3
+            HXgeom.kw = 116 #thermal conductivity of steel, W/m/K
+            σy = 476e6
       end
 
       tmin = 3e-4 #m, from Brewer 1991. Corresponds to 30 BWG.
