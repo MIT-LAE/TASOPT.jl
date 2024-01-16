@@ -548,7 +548,7 @@ function hxoper!(HXgas, HXgeom)
 
       A_D = N_t * l * tD_o #Total cross-sectional area of tubes in row, for drag calculation
       A_min = A_cs - A_D
-      G = ρ_p_in * Vp_in * A_cs / A_min #mass flow rate per unit area at minimum area
+      G = ρ_p_in * Vp_in * A_cs / A_min #mass flow rate per unit area at minimum area      
 
       N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
       N_L = n_passes * n_stages #total number of rows
@@ -1156,7 +1156,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
 
                   initial_x = [3, 4, 4, linit] #Initial guess
             else 
-                  #x[1]: 100 * Mc_in; x[2]: l; x[3]: n_stages; x[4]: xt_D
+                  #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
                   initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, 
                   HXs_prev[i].HXgeom.n_stages, HXs_prev[i].HXgeom.xt_D, max(HXs_prev[i].HXgeom.l, lmin)] #guess is previous iteration design point
             end
