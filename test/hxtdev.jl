@@ -117,7 +117,7 @@ for (ind,type) in enumerate(types)
         HXgeom.xl_D = 1
         HXgeom.Rfp = 0.0001763
         HXgeom.Rfc = 0.0001763
-        HXgeom.material = "SS304"
+        HXgeom.material = "A2219"
         
         hxoptim!(HXgas, HXgeom, initial_x)
         hxsize!(HXgas, HXgeom)

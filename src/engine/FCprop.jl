@@ -120,7 +120,7 @@ HXgeom.l = l
 HXgeom.xl_D = 1
 HXgeom.Rfp = 0.0001763
 HXgeom.Rfc = 0.0001763
-HXgeom.material = "SS304"
+HXgeom.material = "A2219"
 
 initial_x = [0.1, 6, 4]
 
