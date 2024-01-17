@@ -844,22 +844,22 @@
       iehlat = 244
       iePreCorder = 245
       iePreCepsilon = 246
-      iePreCMh = 247
+      iePreCMp = 247
       iePreCDeltah = 248
       iePreCDeltap = 249
       ieInterCorder = 250
       ieInterCepsilon = 251 
-      ieInterCMh = 252
+      ieInterCMp = 252
       ieInterCDeltah = 253
       ieInterCDeltap = 254
       ieRegenorder = 255
       ieRegenepsilon = 256 
-      ieRegenMh = 257
+      ieRegenMp = 257
       ieRegenDeltah = 258
       ieRegenDeltap = 259
       ieTurbCorder = 260
       ieTurbCepsilon = 261 
-      ieTurbCMh = 262
+      ieTurbCMp = 262
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
 
