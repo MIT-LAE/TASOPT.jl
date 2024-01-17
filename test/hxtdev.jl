@@ -69,7 +69,7 @@ for (ind,type) in enumerate(types)
         ε = 0.5
 
         #Fluid parameters
-        Tp_in = 303.15 #K, corresponding to 30 degrees C
+        Tp_in = 313.15 #K, corresponding to 40 degrees C
         Tc_in = u.T
         pp_in = 1e5
         pc_in = 3e5
@@ -125,6 +125,10 @@ for (ind,type) in enumerate(types)
         W_hx = hxweight(9.81, HXgeom, 1)
         Ws_fc[i] = W_FC
         Ws_hx[i] = W_hx
+
+        println(W_hx / 9.81 / m)
+
+        #println(HXgeom.N_t * HXgeom.n_stages * HXgeom.n_passes * pi * HXgeom.tD_o * HXgeom.l)
         
         initial_x = [HXgas.Mc_in*100, HXgeom.n_stages, HXgeom.xt_D]
         

@@ -851,7 +851,8 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       opt.lower_bounds = lower
       opt.upper_bounds = upper
       opt.ftol_rel = 1e-10
-      
+      opt.maxeval = 1000  # Set the maximum number of function evaluations
+
       opt.min_objective = obj
       
       (minf,xopt,ret) = NLopt.optimize(opt, initial_x)

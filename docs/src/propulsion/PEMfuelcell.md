@@ -164,6 +164,16 @@ engine.HT_PEMFC_voltage
 ```@docs
 engine.conductivity_PBI
 ```
+### Stack and design
+```@docs
+engine.PEMsize
+```
+```@docs
+engine.PEMoper
+```
+```@docs
+engine.PEMstackweight
+```
 
 ### Physics and mathematics
 ```@docs
