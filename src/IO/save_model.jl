@@ -1,8 +1,6 @@
 using TOML
 export save_model
 
-# include("../misc/index.inc")
-
 """
     save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
             datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
@@ -12,8 +10,18 @@ export save_model
     it to a TOML file. Values to be written are explicitly set
     following the default_input.toml. All values are written in SI units.
 
-    TODO: Multi-mission and multi-point performance not yet considered
+    This save operation makes add'l* assumptions about parameter repetition. Namely:
+    The same value is applied for all flight segments/points for:
+        - parm[] parameters
+        - excrescence_drag_factors, wing overspeeds, wing/stabilizer Re_refs
+    The same value is applied for all missions and flight segments for:
+        - parg[], pare[], and pari[] parameters
+        - fuel temperature
 
+    Said value is the first entry in the corresponding array axis, 
+    except for some aero parameters where other points are more relevant (e.g., "Cruise" "Takeoff").
+
+    *and modifiable
 """
 function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
@@ -59,8 +67,9 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuel["fuel_in_wing"] = ac_i[iifwing]
         d_fuel["fuel_in_wingcen"] = ac_i[iifwcen]
         d_fuel["fuel_usability_factor"] = ac_g[igrWfmax]
+
         d_fuel["fuel_temp"] = ac_e[ieTfuel,1,1]             
-        #TODO: check why this^ was a matrix, TOML doesn't like it
+
         d_fuel["fuel_density"] = ac_g[igrhofuel]
     d_out["Fuel"] = d_fuel
     #--end fuel----------------
@@ -90,7 +99,7 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_to["Nland"] = ac_g[igNland]
 
         d_to["takeoff_T"] = ac_m[imT0TO, :]
-        d_to["CL_max_perp"] = ac_a[iaclpmax, ipclimb1, 1]
+        d_to["CL_max_perp"] = ac_a[iaclpmax, iptakeoff, 1]
     d_miss["Takeoff"] = d_to
 
     # mission: Climb
@@ -100,15 +109,15 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     # mission: Cruise
     d_crz = Dict()
-        d_crz["cruise_alt"] = ac_a[iaalt, ipcruise1, 1]
-        d_crz["cruise_mach"] = ac_a[iaMach, ipclimbn, 1]
-        d_crz["cruise_CL"] = ac_a[iaCL, ipclimb1+1, 1]
+        d_crz["cruise_alt"] = ac_a[iaalt, ipcruise1, :]
+        d_crz["cruise_mach"] = ac_a[iaMach, ipclimbn, :]
+        d_crz["cruise_CL"] = ac_a[iaCL, ipclimb1+1, :]
     d_miss["Cruise"] = d_crz
 
     # mission: Descent
     d_desc = Dict()
-        d_desc["descent_angle_top-of-descent"] = ac_m[imgamVDE1,1]
-        d_desc["descent_angle_bottom-of-descent"] = ac_m[imgamVDEn, 1]
+        d_desc["descent_angle_top-of-descent"] = ac_m[imgamVDE1,:]
+        d_desc["descent_angle_bottom-of-descent"] = ac_m[imgamVDEn, :]
     d_miss["Descent"] = d_desc
 
     d_out["Mission"] = d_miss #add to output dictionary
@@ -120,14 +129,12 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #aero 
     d_fuse_aero = Dict()
-    #TODO: downselected to single value for these. 
-    # check if this should change
-        d_fuse_aero["excrescence_drag_factor"] = ac_a[iafexcdf,1,1]
+        d_fuse_aero["excrescence_drag_factor"] = ac_a[iafexcdf,1,:]
         d_fuse_aero["BLI_frac"] = ac_g[igfBLIf]
 
-        d_fuse_aero["wingroot_fuse_overspeed"] = ac_a[iafduo,1,1]
-        d_fuse_aero["wingbreak_fuse_overspeed"] = ac_a[iafdus,1,1]
-        d_fuse_aero["wingtip_fuse_overspeed"] = ac_a[iafdut,1,1]
+        d_fuse_aero["wingroot_fuse_overspeed"] = ac_a[iafduo,1,:]
+        d_fuse_aero["wingbreak_fuse_overspeed"] = ac_a[iafdus,1,:]
+        d_fuse_aero["wingtip_fuse_overspeed"] = ac_a[iafdut,1,:]
 
         d_fuse_aero["fuse_moment_volume_deriv"] = ac_g[igCMVf1]
         d_fuse_aero["CL_zero_fuse_moment"] = ac_g[igCLMf0]
@@ -195,7 +202,6 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Wing ------------------------
     d_wing = Dict()
-    
         d_wing["wing_planform"] = ac_i[iiwplan]
         d_wing["strut_braced_wing"] = ac_i[iiwplan] == 2
 
@@ -225,45 +231,44 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         end
 
     #Aero , for multiple segments
-    #TODO: make sure it's fine that we made these a value and not matrix
     d_wing_aero = Dict()
         d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g[igfLo]
         d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g[igfLt]
 
-        d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,1]
-        d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,1]
-        d_wing_aero["Re_ref"] = ac_a[iaRerefw, 1,1]
+        d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,:]
+        d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,:]
+        d_wing_aero["Re_ref"] = ac_a[iaRerefw, 1,:]
 
-        d_wing_aero["strut_lowspeed_cdf"] = ac_a[iacdfs, 1,1]
-        d_wing_aero["strut_lowspeed_cdp"] = ac_a[iacdps, 1,1]
-        d_wing_aero["strut_Re_ref"] = ac_a[iaRerefs, 1,1]
+        d_wing_aero["strut_lowspeed_cdf"] = ac_a[iacdfs, 1,:]
+        d_wing_aero["strut_lowspeed_cdp"] = ac_a[iacdps, 1,:]
+        d_wing_aero["strut_Re_ref"] = ac_a[iaRerefs, 1,:]
 
-        d_wing_aero["Reynolds_scaling"] = ac_a[iaaRexp, 1,1]
-        d_wing_aero["excrescence_drag_factor"] = ac_a[iafexcdw, 1,1]
+        d_wing_aero["Reynolds_scaling"] = ac_a[iaaRexp, 1,:]
+        d_wing_aero["excrescence_drag_factor"] = ac_a[iafexcdw, 1,:]
         d_wing_aero["BLI_frac"] = ac_g[igfBLIw]
       
     d_wing_aero_to = Dict()
-        d_wing_aero_to["cls_clo"] = ac_a[iarcls, 1,1]
-        d_wing_aero_to["clt_clo"] = ac_a[iarclt, 1,1]
-        d_wing_aero_to["cm_o"] = ac_a[iacmpo, 1,1]
-        d_wing_aero_to["cm_s"] = ac_a[iacmps, 1,1]
-        d_wing_aero_to["cm_t"] = ac_a[iacmpt, 1,1]
+        d_wing_aero_to["cls_clo"] = ac_a[iarcls, 1,:]
+        d_wing_aero_to["clt_clo"] = ac_a[iarclt, 1,:]
+        d_wing_aero_to["cm_o"] = ac_a[iacmpo, 1,:]
+        d_wing_aero_to["cm_s"] = ac_a[iacmps, 1,:]
+        d_wing_aero_to["cm_t"] = ac_a[iacmpt, 1,:]
     d_wing_aero["Takeoff"] = d_wing_aero_to
     
     d_wing_aero_clm = Dict()
-        d_wing_aero_clm["cls_clo"] = ac_a[iarcls, ipclimb1+1,1]
-        d_wing_aero_clm["clt_clo"] = ac_a[iarclt, ipclimb1+1,1]
-        d_wing_aero_clm["cm_o"] = ac_a[iacmpo, ipclimb1+1,1]
-        d_wing_aero_clm["cm_s"] = ac_a[iacmps, ipclimb1+1,1]
-        d_wing_aero_clm["cm_t"] = ac_a[iacmpt, ipclimb1+1,1]
+        d_wing_aero_clm["cls_clo"] = ac_a[iarcls, ipclimb1+1,:]
+        d_wing_aero_clm["clt_clo"] = ac_a[iarclt, ipclimb1+1,:]
+        d_wing_aero_clm["cm_o"] = ac_a[iacmpo, ipclimb1+1,:]
+        d_wing_aero_clm["cm_s"] = ac_a[iacmps, ipclimb1+1,:]
+        d_wing_aero_clm["cm_t"] = ac_a[iacmpt, ipclimb1+1,:]
     d_wing_aero["Climb"] = d_wing_aero_clm
 
     d_wing_aero_la = Dict()
-        d_wing_aero_la["cls_clo"] = ac_a[iarcls, ipclimb1+1, 1]
-        d_wing_aero_la["clt_clo"] = ac_a[iarclt, ipclimb1+1, 1]
-        d_wing_aero_la["cm_o"] = ac_a[iacmpo, ipclimb1+1,1]
-        d_wing_aero_la["cm_s"] = ac_a[iacmps, ipclimb1+1,1]
-        d_wing_aero_la["cm_t"] = ac_a[iacmpt, ipclimb1+1,1]
+        d_wing_aero_la["cls_clo"] = ac_a[iarcls, ipclimb1+1, :]
+        d_wing_aero_la["clt_clo"] = ac_a[iarclt, ipclimb1+1, :]
+        d_wing_aero_la["cm_o"] = ac_a[iacmpo, ipclimb1+1,:]
+        d_wing_aero_la["cm_s"] = ac_a[iacmps, ipclimb1+1,:]
+        d_wing_aero_la["cm_t"] = ac_a[iacmpt, ipclimb1+1,:]
     d_wing_aero["Landing"] = d_wing_aero_la
 
     d_wing["Aero"] = d_wing_aero
@@ -286,11 +291,11 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #Stabilizers------------------------
     d_stab = Dict()
 
-        d_stab["lowspeed_cdf"] = ac_a[iacdft,1,1]
-        d_stab["lowspeed_cdp"] = ac_a[iacdpt,1,1]
-        d_stab["Re_ref"] = ac_a[iaRereft,1,1]
+        d_stab["lowspeed_cdf"] = ac_a[iacdft,1,:]
+        d_stab["lowspeed_cdp"] = ac_a[iacdpt,1,:]
+        d_stab["Re_ref"] = ac_a[iaRereft,1,:]
 
-        d_stab["excrescence_drag_factor"] = ac_a[iafexcdt,1,1]
+        d_stab["excrescence_drag_factor"] = ac_a[iafexcdt,1,:]
 
 
     #Horz tail
@@ -394,16 +399,14 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_prop["Tt4_frac_bottom_of_climb"] = ac_g[igfTt4CL1]
         d_prop["Tt4_frac_top_of_climb"] = ac_g[igfTt4CLn]
         
-        #TODO: check if this is fine as single-value, not matrix
-        d_prop["Tt4_cruise"] = ac_e[ieTt4,ipcruise1,1]
-        d_prop["Tt4_takeoff"] =  ac_e[ieTt4,ipstatic,1]
+        d_prop["Tt4_cruise"] = ac_e[ieTt4,ipcruise1,:]
+        d_prop["Tt4_takeoff"] =  ac_e[ieTt4,ipstatic,:]
 
         d_prop["core_in_clean_flow"] = !Bool(ac_i[iiBLIc])
             #expression negates 0 to 1 and vice versa (), see read_input.jl
         
     #Turbomachinery
     d_prop_turb = Dict()
-
         d_prop_turb["BPR"] = ac_e[ieBPR, 1, 1]
         d_prop_turb["Fan_PR"] = ac_e[iepif, 1, 1]
         d_prop_turb["LPC_PR"] = ac_e[iepilc, 1, 1]
@@ -508,6 +511,9 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #--end Propulsion----------------
 
     #Output to TOML file
+    #pre-proc: replace repetitive vectors with single value
+    d_out = make_dict_singletons(d_out)
+
     #write any preamble to the toml
     #TODO: copy paste template stuff? remember to mention units
 
@@ -548,6 +554,33 @@ function print_nested_dict(dict, indent = "    ")
             println("$indent$key (Type: $value_type): $value")
         end
     end
+end
+
+"""
+    make_dict_singletons(dict::Dict{K, V})
+
+
+replaces Dict values that are vectors with identical elements 
+with a single value ("singleton") for simplicity in processing/readability in output
+
+returns a new Dict. treats nested Dicts recursively
+
+"""
+function make_dict_singletons(dict::Dict{K, V}) where {K, V}
+    new_dict = Dict{K, V}()
+    #iterate over all dict entries
+    for (key, value) in dict 
+        #if element is a dict, call this fxn recursively
+        if isa(value, Dict)  
+            new_dict[key] = make_dict_singletons(value)
+        #if element is a vector and has identical elements, save singleton
+        elseif isa(value, Vector) && all(x -> x == value[1], value) 
+            new_dict[key] = value[1]
+        else
+            new_dict[key] = value
+        end
+    end
+    return new_dict
 end
 
 

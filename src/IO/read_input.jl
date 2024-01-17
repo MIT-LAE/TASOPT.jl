@@ -1,4 +1,12 @@
 using TOML
+import Base.repeat
+
+
+# Overloads repeat fxn to handle single elements 
+# (edge case for some multi-point/multi-mission handling in read_input)
+function repeat(single_elem::Union{AbstractFloat, Int}, counts::Integer...)
+    repeat([single_elem], counts...)
+end
 
 """
     read_input(k::String, dict::AbstractDict=data, 
@@ -172,9 +180,14 @@ parg[igNland]   = readtakeoff("Nland")
 
 T0TO = Temp.(readtakeoff("takeoff_T"))
 parm[imT0TO, :] .= T0TO 
-para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
-para[iaclpmax, ipstatic:ipcutback, :] .= readtakeoff("CL_max_perp")
-para[iaclpmax, ipdescentn, :] .= readtakeoff("CL_max_perp")
+
+#TODO: get this to copy and save as a full thing that /could/ vary with points
+#does this change with mission?
+#for now, single value
+# para[iaclpmax, ipstatic:ipcutback, :] .= readtakeoff("CL_max_perp")
+# para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
+# para[iaclpmax, ipdescentn, :] .= readtakeoff("CL_max_perp")
+para[iaclpmax,:,:] .= readtakeoff("CL_max_perp")
 
 ##Climb parameters
 climb = readmis("Climb")
@@ -187,8 +200,18 @@ cruise = readmis("Cruise")
 dcruise = dmis["Cruise"]
 readcruise(x) = read_input(x, cruise, dcruise)
 para[iaalt, ipcruise1, :] .= Distance.(readcruise("cruise_alt"))
-para[iaMach, ipclimbn:ipdescent1, :] .= readcruise("cruise_mach")
-para[iaCL, ipclimb1+1:ipdescentn-1, :] .= readcruise("cruise_CL")
+
+#Note: the following matrix re-arrangements are a result of 
+#  having to assign both mission and segment indices 
+#  and supporting multi-mission input.
+para[iaMach, ipclimbn:ipdescent1, :] .= repeat(transpose(readcruise("cruise_mach")), 
+                                            (ipdescent1-ipclimbn+1), 
+                                            1 + (nmisx-size(readcruise("cruise_mach"),1)) )
+para[iaCL, ipclimb1+1:ipdescentn-1, :] .= repeat(transpose(readcruise("cruise_CL")), 
+                                            ((ipdescentn-1)-(ipclimb1+1)+1), 
+                                            1 + (nmisx-size(readcruise("cruise_CL"),1)) )
+
+readcruise("cruise_CL")
 
 ##Descent parameters
 des = readmis("Descent")
@@ -221,7 +244,11 @@ parg[igpcabin] = p_cabin
 aero = read_input("Aero", fuse, dfuse)
 daero = dfuse["Aero"]
 readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, 1:iptotal, :] .= readaero("excrescence_drag_factor")
+    # para[iafexcdf, 1:iptotal, :] .= readaero("excrescence_drag_factor")
+
+    para[iafexcdf, 1:iptotal, :] .= repeat(transpose(readaero("excrescence_drag_factor")), 
+                                            (iptotal-1+1), 
+                                            1 + (nmisx-size(readaero("excrescence_drag_factor"),1)) )
 
     para[iafduo, :, :] .= readaero("wingroot_fuse_overspeed")
     para[iafdus, :, :] .= readaero("wingbreak_fuse_overspeed")
