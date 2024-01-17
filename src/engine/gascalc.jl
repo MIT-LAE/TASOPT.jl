@@ -601,8 +601,8 @@ function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
       si, s_t, hi, h_t, cpi, ri = gasfun(ifuel, tf)
       hf = hf + hi * beta[n]
 
-      sb, s_t, hb, h_t, cpb, rb = gasfun(ifuel, t)
-      hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
+      #sb, s_t, hb, h_t, cpb, rb = gasfun(ifuel, t)
+      #hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
 
       f = (ha - ho) / (hf - hc)
 
@@ -654,9 +654,9 @@ function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
       hf = hf + hi * beta[n]
       hf_tf = hf_tf + hi_tf * beta[n]
 
-      sb, s_t, hb, hb_t, cpb, rb = gasfun(ifuel, t)
-      hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
-      hc_t = hc_t + hb_t * gamma[n] 
+      #sb, s_t, hb, hb_t, cpb, rb = gasfun(ifuel, t)
+      #hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
+      #hc_t = hc_t + hb_t * gamma[n] 
 
       f = (ha - ho) / (hf - hc)
       f_ho = -1.0 / (hf - hc)
