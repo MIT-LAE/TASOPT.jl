@@ -1,5 +1,4 @@
 using LinearAlgebra
-using PyPlot
 using Trapz
 using Roots
 
