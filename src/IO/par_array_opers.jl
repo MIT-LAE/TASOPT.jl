@@ -1,4 +1,4 @@
-export init_par_arrays, autofill_across_mission
+export init_par_arrays, fill_par_entry
 include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
 
 """
@@ -20,13 +20,21 @@ function init_par_arrays(;n_flight_pts::Int, n_missions::Int)
 end
 
 """
-    autofill_across_mission()
+    fill_par_entry(value_or_values, n_ip, n_im)
 
-copies the performance specs in pare, para to missions that have none prescribed,
-taking the latest valid performance spec (i.e., performance specs are copied into blanks to their "right").
+repeats given value or vector of values to fill a 2d array of size (n_ip, n_im)
+used for assigning constants across flight segments conveniently.
 
-uses global par arrays
+accounts for multi-mission input (read as array in value_or_values) by reducing repeats if present
 """
-function autofill_across_mission()
-    
+#TODO: make mission repeat assume something when nmisx != size(value_or_values,1)
+function fill_par_entry(value_or_values, n_ip, n_im)
+    return repeat(transpose(value_or_values), n_ip, 1 + (n_im-size(value_or_values,1)))
+end
+
+# Overloads repeat fxn to handle single elements (not default behavior)
+# (edge case for some multi-point/multi-mission handling in read_input)
+import Base.repeat
+function repeat(single_elem::Real, counts::Integer...)
+    repeat([single_elem], counts...)
 end

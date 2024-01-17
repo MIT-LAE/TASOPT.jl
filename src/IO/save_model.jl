@@ -22,6 +22,11 @@ export save_model
     except for some aero parameters where other points are more relevant (e.g., "Cruise" "Takeoff").
 
     *and modifiable
+
+    !!! note "Deviating from default"
+    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+    from the default functionality. Thorough knowledge of the model is required.
+
 """
 function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
