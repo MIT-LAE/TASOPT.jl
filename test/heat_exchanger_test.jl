@@ -16,8 +16,8 @@ include("../src/engine/gasfun.jl")
 #---------------------------------     
 # Test functions individually
 #---------------------------------
-HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
-HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
 
 #---------------------------------     
 # hxsize!()
@@ -25,37 +25,35 @@ HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, 
 HXgas = deepcopy(HXgas_NaN)
 HXgeom = deepcopy(HXgeom_NaN)
 
-HXgas.gas_h = "air"
-HXgas.gas_c = "h2"
-HXgas.mdot_h = 1144/60
+HXgas.fluid_p = "air"
+HXgas.fluid_c = "h2"
+HXgas.mdot_p = 1144/60
 HXgas.mdot_c = 9.95/60
 HXgas.ε = 0.8
-HXgas.Th_in = 778
+HXgas.Tp_in = 778
 HXgas.Tc_in = 264
-HXgas.Mh_in  = 0.19
+HXgas.Mp_in  = 0.19
 HXgas.Mc_in = 0.0285
-HXgas.ph_in = 40e3
+HXgas.pp_in = 40e3
 HXgas.pc_in = 1515e3
 
-HXgas.alpha_h = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
+HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 HXgas.igas_c = 40
 
 HXgeom.fconc = 1
 HXgeom.frecirc = 0
 HXgeom.D_i = 0.564
-HXgeom.t = 0.03e-2 #m, wall thicknesss
 HXgeom.l = 0.6084530646014857 #tube length
 HXgeom.n_stages = 4
 HXgeom.xt_D = 6
 HXgeom.xl_D = 1.25
-HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
-HXgeom.Rfh = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
+HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
 HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
-HXgeom.ρw = 7930
+HXgeom.material = "SS304"
 
 hxsize!(HXgas, HXgeom)
 
-size_out = [HXgas.Th_out, HXgas.Tc_out, HXgas.Δp_h, HXgeom.N_t, HXgeom.n_passes, HXgeom.tD_o, HXgeom.A_cs]
+size_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgeom.N_t, HXgeom.n_passes, HXgeom.tD_o, HXgeom.A_cs]
 
 size_out_check = 
 [ 731.5893294226444, 665.8919656336637, 1432.24788197369, 62.03560518812884,  7.9999971021522125,
@@ -91,19 +89,19 @@ end
 HXgas = deepcopy(HXgas_NaN)
 HXgeom = deepcopy(HXgeom_NaN)
 
-HXgas.gas_h = "air"
-HXgas.gas_c = "h2"
-HXgas.mdot_h = 2*1144/60
+HXgas.fluid_p = "air"
+HXgas.fluid_c = "h2"
+HXgas.mdot_p = 2*1144/60
 HXgas.mdot_c = 2*9.95/60
 HXgas.ε = 0.8
-HXgas.Th_in = 778
+HXgas.Tp_in = 778
 HXgas.Tc_in = 264
-HXgas.Mh_in  = 0.19
+HXgas.Mp_in  = 0.19
 HXgas.Mc_in = 0.0285
-HXgas.ph_in = 3*40e3
+HXgas.pp_in = 3*40e3
 HXgas.pc_in = 3*1515e3
 
-HXgas.alpha_h = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
+HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 HXgas.igas_c = 40
 
 HXgeom.fconc = 1
@@ -119,13 +117,13 @@ HXgeom.N_t = 62
 HXgeom.xt_D = 6
 HXgeom.xl_D = 1.25
 HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
-HXgeom.Rfh = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
+HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
 HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
 HXgeom.ρw = 7930
 
 hxoper!(HXgas, HXgeom)
 
-oper_out = [HXgas.Th_out, HXgas.Tc_out, HXgas.Δp_h, HXgas.ε]
+oper_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgas.ε]
 
 oper_out_check = [740.2023159693746, 592.0560174320444, 1735.5866896218854, 0.6521339168630342]
 
@@ -143,39 +141,37 @@ end
 HXgas = deepcopy(HXgas_NaN)
 HXgeom = deepcopy(HXgeom_NaN)
 
-HXgas.gas_h = "air"
-HXgas.gas_c = "h2"
-HXgas.mdot_h = 1144/60
+HXgas.fluid_p = "air"
+HXgas.fluid_c = "h2"
+HXgas.mdot_p = 1144/60
 HXgas.mdot_c = 9.95/60
 HXgas.ε = 0.8
-HXgas.Th_in = 778
+HXgas.Tp_in = 778
 HXgas.Tc_in = 264
-HXgas.Mh_in  = 0.19
-HXgas.ph_in = 40e3
+HXgas.Mp_in  = 0.19
+HXgas.pp_in = 40e3
 HXgas.pc_in = 1515e3
 
-HXgas.alpha_h = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
+HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 HXgas.igas_c = 40
 
 HXgeom.fconc = 1
 HXgeom.frecirc = 0
 HXgeom.D_i = 0.564
-HXgeom.t = 0.03e-2 #m, wall thicknesss
 HXgeom.l = 0.6084530646014857 #tube length
 HXgeom.xl_D = 1
-HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
-HXgeom.Rfh = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
+HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
 HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
-HXgeom.ρw = 7930
+HXgeom.material = "SS304"
 
 #Calculate starting point
 #First calculate minimum tube length
-_, _, _, _, cp_h_in, Rh = gassum(HXgas.alpha_h, length(HXgas.alpha_h), HXgas.Th_in)
-γ_h_in = cp_h_in / (cp_h_in - Rh)
-ρ_h_in = HXgas.ph_in / (Rh * HXgas.Th_in)
-Vh_in = HXgas.Mh_in * sqrt(γ_h_in * Rh * HXgas.Th_in)
+_, _, _, _, cp_p_in, Rp = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+γ_p_in = cp_p_in / (cp_p_in - Rp)
+ρ_p_in = HXgas.pp_in / (Rp * HXgas.Tp_in)
+Vp_in = HXgas.Mp_in * sqrt(γ_p_in * Rp * HXgas.Tp_in)
 
-A_cs = HXgas.mdot_h / (ρ_h_in * Vh_in) #Cross-sectional area of freestream
+A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
 if HXgeom.fconc #Flow is concentric
     D_i = HXgeom.D_i
@@ -190,20 +186,20 @@ else #square cross-section
 end
 
 #Now set starting point
-initial_x = [3, linit, 4, 4] #Initial guess
+initial_x = [3, 4, 4, linit] #Initial guess
  
 # Optimize heat exchanger design parameters
 hxoptim!(HXgas, HXgeom, initial_x)
 
-optim_out = [HXgas.Mc_in, HXgeom.l, HXgeom.n_stages, HXgeom.xt_D]
+optim_out = [HXgas.Mc_in, HXgeom.n_stages, HXgeom.xt_D, HXgeom.l]
 
 hxsize!(HXgas, HXgeom)
 
-I = HXgas.Pl_h + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I instead of optim outputs
+Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I instead of optim outputs
 
 I_check = 73945.57024509525
 
-if abs(I-I_check) / I_check < 1e-2
+if abs(Iobj-I_check) / I_check < 1e-2
     println("hxoptim!() passes test")
 else
     println("hxoptim!() FAILS test")
@@ -215,39 +211,38 @@ end
 HXgas = deepcopy(HXgas_NaN)
 HXgeom = deepcopy(HXgeom_NaN)
 
-HXgas.gas_h = "air"
-HXgas.gas_c = "h2"
-HXgas.mdot_h = 2 * 49.9/60
+HXgas.fluid_p = "air"
+HXgas.fluid_c = "h2"
+HXgas.mdot_p = 2 * 49.9/60
 HXgas.mdot_c = 9.95/60
 HXgas.ε = 0.825
-HXgas.Th_in = 791
+HXgas.Tp_in = 791
 HXgas.Tc_in = 20
-HXgas.Mh_in  = 0.01
-HXgas.ph_in = 1515e3
+HXgas.Mp_in  = 0.01
+HXgas.pp_in = 1515e3
 HXgas.pc_in = 1515e3
 HXgas.recircT  = 200
 HXgas.h_lat  = 446e3 + 670e3
 
-HXgas.alpha_h = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
+HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 HXgas.igas_c = 40
 
 HXgeom.fconc = 0
 HXgeom.frecirc = 1
 HXgeom.t = 0.03e-2 #m, wall thicknesss
 HXgeom.xl_D = 1
-HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
-HXgeom.Rfh = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
+HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
 HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
-HXgeom.ρw = 7930
+HXgeom.material = "SS304"
 
 #Calculate starting point
 #First calculate minimum tube length
-_, _, _, _, cp_h_in, Rh = gassum(HXgas.alpha_h, length(HXgas.alpha_h), HXgas.Th_in)
-γ_h_in = cp_h_in / (cp_h_in - Rh)
-ρ_h_in = HXgas.ph_in / (Rh * HXgas.Th_in)
-Vh_in = HXgas.Mh_in * sqrt(γ_h_in * Rh * HXgas.Th_in)
+_, _, _, _, cp_p_in, Rh = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+γ_p_in = cp_p_in / (cp_p_in - Rh)
+ρ_p_in = HXgas.pp_in / (Rh * HXgas.Tp_in)
+Vp_in = HXgas.Mp_in * sqrt(γ_p_in * Rh * HXgas.Tp_in)
 
-A_cs = HXgas.mdot_h / (ρ_h_in * Vh_in) #Cross-sectional area of freestream
+A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
 if HXgeom.fconc #Flow is concentric
     D_i = HXgeom.D_i
@@ -258,25 +253,23 @@ if HXgeom.fconc #Flow is concentric
 else #square cross-section
     AR_min = 0.1 #Minimum aspect ratio
     lmin = sqrt(AR_min * A_cs)
-    linit = sqrt(A_cs)
+    linit = 1.1 * lmin
 end
 
 #Now set starting point
-initial_x = [3, linit, 4, 4] #Initial guess
+initial_x = [2, 8, 2, linit] #Initial guess
 
 hxoptim!(HXgas, HXgeom, initial_x)
 
 hxsize!(HXgas, HXgeom)
 
-I = HXgas.Pl_h + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I instead of optim outputs
-
 optimrec_out = [HXgas.Mc_in, HXgas.mdot_r, HXgeom.l, HXgeom.n_stages, HXgeom.xt_D]
 
-I = HXgas.Pl_h + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I instead of optim outputs
+Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I instead of optim outputs
 
-I_check = 2681.660392262237
+I_check = 2681.656613284606
 
-if abs(I-I_check) / I_check < 1e-2
+if abs(Iobj-I_check) / I_check < 1e-2
     println("hxoptim!() with recirculation passes test")
 else
     println("hxoptim!() with recirculation FAILS test")
