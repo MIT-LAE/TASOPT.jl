@@ -4,22 +4,22 @@
 
 !!! details "📖 Theory - Tubular heat exchangers" 
     ### Effectiveness–NTU method
-    There are many different heat exchanger (HX) topologies. The HX currently implemented in TASOPT consists of involute staggered tubes in a cross flow; this geometry was selected because it is simple to integrate into the space between two concentric cylinders. The HX is designed using the effectiveness–NTU method, described below [^1].  
+    There are many different heat exchanger (HX) topologies. The HX currently implemented in TASOPT consists of staggered tubes in a cross flow; this geometry was selected because it is simple to integrate into the space between two concentric cylinders. The HX is designed using the effectiveness–NTU method, described below [^1].  
     
-    Consider a heat exchanger in which a cold gas is used to cool a hot gas. The minimum and maximum heat capacity rates are defined as
+    Consider a heat exchanger in which a coolant gas is used to cool or heat gas. The minimum and maximum heat capacity rates are defined as
     ```math
-    C_{\mathrm{min}} = \mathrm{min} (\dot{m}_c c_{p,c}, \dot{m}_h c_{p,h})
+    C_{\mathrm{min}} = \mathrm{min} (\dot{m}_c c_{p,c}, \dot{m}_p c_{p,p})
     ```
     ```math
-    C_{\mathrm{max}} = \mathrm{max} (\dot{m}_c c_{p,c}, \dot{m}_h c_{p,h}),
+    C_{\mathrm{max}} = \mathrm{max} (\dot{m}_c c_{p,c}, \dot{m}_p c_{p,p}),
     ```
-    where ``\dot{m}`` is the mass flow rate, ``c_p`` is the specific heat at constant pressure, and the subscripts ``h`` and ``c`` refer to the hot and cold streams. The capacity ratio is ``C_r = \frac{C_{\mathrm{min}}}{C_{\mathrm{max}}}``. 
+    where ``\dot{m}`` is the mass flow rate, ``c_p`` is the specific heat at constant pressure, and the subscripts ``p`` and ``c`` refer to the process-side and coolant streams. The capacity ratio is ``C_r = \frac{C_{\mathrm{min}}}{C_{\mathrm{max}}}``. 
     
     A maximum heat transfer rate is defined as
     ```math
-    \dot{Q}_{max} = C_{\mathrm{min}} (T_{i,h} - T_{i,c}),
+    \dot{Q}_{max} = C_{\mathrm{min}} (T_{i,p} - T_{i,c}),
     ```
-    where ``T`` is the absolute temperature. A measure of the HX is the effectiveness, ``\varepsilon``, defined as
+    where ``T`` is the absolute temperature. A measure of the HX performance is the effectiveness, ``\varepsilon``, defined as
     
     ```math
     \varepsilon = \frac{\dot{Q}}{\dot{Q}_{max}},
@@ -30,7 +30,7 @@
     ```
     where ``R_o`` is the overall thermal resistance. For any heat exchanger geometry, it can be shown that the effectiveness is a function of the NTU and the ratio ``\frac{C_{\mathrm{min}}}{C_{\mathrm{max}}}``. 
     
-    In the case of a cross flow heat exchanger, this functional relationship between ``\varepsilon`` and NTU depends on whether there is internal mixing within the stream and on which stream has the minimum capacity rate. In a HX within a jet engine, it is reasonable to assume that the cold stream has the minimum capacity rate as the fuel-air ratio is small. For tubular HX, the hot stream is mixed but the cold stream is unmixed as the tubes are independent. In this case, the relationship between ``\varepsilon`` and NTU is[^1]
+    In the case of a cross flow heat exchanger, this functional relationship between ``\varepsilon`` and NTU depends on whether there is internal mixing within the stream and on which stream has the minimum capacity rate. In a HX within a jet engine, it is reasonable to assume that the coolant stream has the minimum capacity rate as the fuel-air ratio is small. For tubular HX, the process stream is mixed but the coolant stream is unmixed as the tubes are independent. In this case, the relationship between ``\varepsilon`` and NTU is[^1]
     ```math
     \varepsilon = \frac{1}{C_{r}} [1 - \exp(-C_{r} (1 - \exp(-\mathrm{NTU})))],
     ```
@@ -38,7 +38,7 @@
     ```math
     \mathrm{NTU} = -\ln\left(1 + \frac{\ln(1 - C_r\varepsilon)}{C_r}\right).
     ```
-    On the other hand, if the cold stream has the maximum heat capacity rate, the effectiveness is given by
+    On the other hand, if the coolant stream has the maximum heat capacity rate, the effectiveness is given by
     ```math
     \varepsilon = 1 - \exp\left[-\frac{1}{C_{r}} (1 - \exp(-C_r \mathrm{NTU}))\right],
     ```
@@ -50,7 +50,7 @@
 
     Once the effectiveness is known, the outlet specific enthalpies can be computed using
     ```math
-    h_{o,h} = h_{i,h} - \frac{\dot{Q}}{\dot{m}_h}
+    h_{o,p} = h_{i,p} - \frac{\dot{Q}}{\dot{m}_p}
     ```
     ```math
     h_{o,c} = h_{i,c} + \frac{\dot{Q}}{\dot{m}_c},
@@ -68,9 +68,9 @@
     ```math
     h_{o,c} = h_{i,c} + \frac{\dot{Q}}{\dot{m}_{c,\infty}+\dot{m}_{r}}.
     ```
-    As the heat transfer rate is given by ``\dot{Q} = \varepsilon C_{\mathrm{min}} (T_{i,h} - T_{i,c})``, we can distinguish two cases depending on whether the coolant has the minimum or maximum heat capacity rate. If ``C_{\mathrm{min}}=(\dot{m}_{c,\infty}+\dot{m}_{r}) c_{pi,c}``,
+    As the heat transfer rate is given by ``\dot{Q} = \varepsilon C_{\mathrm{min}} (T_{i,p} - T_{i,c})``, we can distinguish two cases depending on whether the coolant has the minimum or maximum heat capacity rate. If ``C_{\mathrm{min}}=(\dot{m}_{c,\infty}+\dot{m}_{r}) c_{pi,c}``,
     ```math
-    \dot{m}_r = \dot{m}_{c,\infty} \frac{h_{i,c} - h_{c,\infty} + h_{lat}}{\varepsilon c_{pi,c}(T_{i,h} - T_{i,c})},
+    \dot{m}_r = \dot{m}_{c,\infty} \frac{h_{i,c} - h_{c,\infty} + h_{lat}}{\varepsilon c_{pi,c}(T_{i,p} - T_{i,c})},
     ```
     and if ``C_{\mathrm{max}}=(\dot{m}_{c,\infty}+\dot{m}_{r}) c_{pi,c}``,
     ```math
@@ -78,7 +78,7 @@
     ```
     where 
     ```math
-    A = \dot{m}_{c,\infty}\frac{h_{i,c} -h_{c,\infty} + h_{lat}}{\varepsilon C_h (T_{i,h} - T_{i,c})}.
+    A = \dot{m}_{c,\infty}\frac{h_{i,c} -h_{c,\infty} + h_{lat}}{\varepsilon C_h (T_{i,p} - T_{i,c})}.
     ```
     A failure case exists if ``A\geq 1``: in this case, the hot stream does not have enough heat capacity to provide the heat needed to get the coolant to the desired ``T_{i,c}``.
 
@@ -89,7 +89,7 @@
     ```math
     N_t = \frac{4 \dot{m}_c}{\rho_{c,i}V_{c,i} \pi D_{t,i}^2 N_\mathrm{stages}} = \frac{b}{\frac{x_t}{D} D_{t,o}},
     ```
-    where ``b`` is length across which the tubes are distributed. If the cross-section is concentric, ``b=\pi D_{c,i}`` with ``D_{c,i}`` being the inner cylinder diameter; if it is rectangular, ``b = \frac{A_{cs}}{l}``. In this expressions, ``A_{cs}=\frac{\dot{m}_h}{\rho_{h,i}V_{h,i}}`` is the freestream cross-sectional area. Since the tube inner diameter can be expressed as ``D_{t,i} = D_{t,o} - 2t``, this equation can be solved for the tube outer diameter
+    where ``b`` is length across which the tubes are distributed. If the cross-section is concentric, ``b=\pi D_{c,i}`` with ``D_{c,i}`` being the inner cylinder diameter; if it is rectangular, ``b = \frac{A_{cs}}{l}``. In this expressions, ``A_{cs}=\frac{\dot{m}_p}{\rho_{p,i}V_{p,i}}`` is the freestream cross-sectional area. Since the tube inner diameter can be expressed as ``D_{t,i} = D_{t,o} - 2t``, this equation can be solved for the tube outer diameter
     ```math
     D_{t,o} = \frac{4  K  t + \sqrt{8  K t + 1} + 1}{2 K},
     ```
@@ -103,7 +103,7 @@
     ```
     where ``l`` is the length of each involute tube. The mass flow rate per unit area at the minimum free flow area is 
     ```math
-    G = \frac{\dot{m}_h}{A_{cs} - N_t l D_{t,o}}.
+    G = \frac{\dot{m}_p}{A_{cs} - N_t l D_{t,o}}.
     ```
     Note that for this expression to be valid, it is sufficient that $x_l/D\geq 1$. If the general geometry and total hot-side heat transfer area are known (e.g., from the NTU), but the number of coolant passes has not been determined yet, this can be calculated as
     ```math
@@ -113,19 +113,19 @@
     ### Heat transfer coefficients
     The above analysis relies on being able to determine the overall thermal resistance. In general, the thermal resistance has five components: hot- and cold-side gas resistances, wall resistance, and hot- and cold-side fouling resistances. The gas resistances are the aerodynamic resistances due to the thermal boundary layers, the wall resistance depends on the material conductivity and thickness, and the fouling resistances account for buildup of dirt layers during operation. The product of thermal resistance and heat transfer area (thermal insulance) is in practice easier to compute
     ```math
-    R_o A_h = \frac{1}{h_h} + \frac{1}{h_c \frac{A_c}{A_h}} + \frac{t}{k_w} + R_{f,h}A_h + R_{f,c}A_c \frac{A_h}{A_c},
+    R_o A_p = \frac{1}{h_p} + \frac{1}{h_c \frac{A_c}{A_p}} + \frac{t}{k_w} + R_{f,p}A_p + R_{f,c}A_c \frac{A_p}{A_c},
     ```
     where ``h`` is the the aerodynamic heat transfer coefficient, ``A`` is the heat transfer area, ``t`` is the wall thickness, ``k`` is the thermal conductivity, ``w`` denotes the wall, and ``R_fA`` is the fouling factor. A list of design fouling factors can be found in [^2] and [^3].
     
     The heat transfer coefficients depend on the gas temperature, which changes as heat is added to the flows. A mean gas temperature, taken as the average between the inlet and outlet temperatures, is used to calculate the gas properties,
     ```math
-    T_{h,m} = \frac{T_{h,o} - T_{h,i}}{2}
+    T_{p,m} = \frac{T_{p,o} - T_{p,i}}{2}
     ```
     ```math
     T_{c,m} = \frac{T_{c,o} - T_{c,i}}{2}.
     ```
     
-    #### Cold-side heat transfer coefficient
+    #### Coolant-side heat transfer coefficient
     The flow inside the tubes can be modeled by assuming that it is fully-developed turbulent flow in a smooth pipe. In this case, the 1913 Blasisus correlation provides a method to calculate the skin-friction coefficient, ``C_f``
     ```math
     C_f = \frac{\tau_w}{\frac{1}{2}\rho_{c,m} V_{c,m}^2} = 0.0791 \mathrm{Re}_{D,c}^{-1/4},
@@ -138,12 +138,12 @@
     ```
     where ``\mathrm{St} = \frac{h}{\rho V c_p}`` is the Stanton number and ``\mathrm{Pr} = \frac{c_p \mu}{k}`` is the Prandtl number. Once ``j`` is determined, the heat transfer coefficient ``h_c`` can be computed from the cold gas properties.
     
-    #### Hot-side heat transfer coefficient
+    #### Process-side heat transfer coefficient
     The flow past a set of staggered tubes is complex. Žkauskas[^4] provides simplified correlations that can be used to model the heat transfer properties of these tubes. Generally, the Nusselt number can be expressed as
     ```math
     \mathrm{Nu} = C_1 C_2 \mathrm{Re}^m \mathrm{Pr}^n,
     ```
-    where the Rynolds number is defined as ``\mathrm{Re}= \frac{G D_{t,o}}{\mu_{h,m}}``, ``D_{t,o}`` is the tube outer diameter, and ``G`` is the hot-side mass flow rate per unit area at the minimum free-flow area. Hence, this Reynolds number accounts for blockage effects due to the presence of the tubes.
+    where the Rynolds number is defined as ``\mathrm{Re}= \frac{G D_{t,o}}{\mu_{p,m}}``, ``D_{t,o}`` is the tube outer diameter, and ``G`` is the hot-side mass flow rate per unit area at the minimum free-flow area. Hence, this Reynolds number accounts for blockage effects due to the presence of the tubes.
     
     The following table shows the value of the parameters ``C_1``, ``m`` and ``n`` as a function of Reynolds number.
     
@@ -166,18 +166,18 @@
     C_2 = 1-\exp(-\sqrt{3 N_L^{1 / \sqrt{2}}}).
     ```
     
-    Once the Nusselt number is known, the hot-side heat transfer coefficient can be computed as ``h_h = \frac{\mathrm{Nu} k_h}{D_{t,o}}``.
+    Once the Nusselt number is known, the hot-side heat transfer coefficient can be computed as ``h_p = \frac{\mathrm{Nu} k_p}{D_{t,o}}``.
     
     ### Pressure drops
     The pressure drop in the hot-side (across the staggered tube bank) can be estimated using the method of Gunter and Shaw[^5]. The first necessary parameter is the volumetric hydraulic diameter, defined as
     ```math
-    D_v = \frac{4(\mathrm{Net\,free\,volume})}{\mathrm{Friction\,surface}} = \frac{4 L \frac{\dot{m}_h}{V_{h,i}\rho_{h,i}}-N_t N_\mathrm{passes} N_\mathrm{stages} \pi D_{t,o}^2 l}{A_h}.
+    D_v = \frac{4(\mathrm{Net\,free\,volume})}{\mathrm{Friction\,surface}} = \frac{4 L \frac{\dot{m}_p}{V_{p,i}\rho_{p,i}}-N_t N_\mathrm{passes} N_\mathrm{stages} \pi D_{t,o}^2 l}{A_p}.
     ```
-    From this, the pressure drop across the hot side can be computed as
+    From this, the pressure drop across the process side can be computed as
     ```math
-    \Delta p_h = \frac{G^2 L }{D_v \rho_{h,m}} \frac{f}{2} \left(\frac{D_v}{x_t}\right)^{0.4}\left(\frac{x_l}{x_t}\right)^{0.6},
+    \Delta p_p = \frac{G^2 L }{D_v \rho_{p,m}} \frac{f}{2} \left(\frac{D_v}{x_t}\right)^{0.4}\left(\frac{x_l}{x_t}\right)^{0.6},
     ```
-    where ``\frac{f}{2}`` is a friction factor that can be related to the Reynolds number, ``Re_{D_v} = \frac{G D_v}{\mu_{h,m}}``, as ``\frac{f}{2}= 90 / Re_{D_v}`` for ``Re_{D_v}<200`` and ``\frac{f}{2}= 0.96  Re_{D_v}^{-0.145}`` otherwise. As in the heat transfer coefficient case, note that the distance ``x_{t}`` used in the calculations is ``x_{t,m}`` since the pitch varies in the radial direction.
+    where ``\frac{f}{2}`` is a friction factor that can be related to the Reynolds number, ``Re_{D_v} = \frac{G D_v}{\mu_{p,m}}``, as ``\frac{f}{2}= 90 / Re_{D_v}`` for ``Re_{D_v}<200`` and ``\frac{f}{2}= 0.96  Re_{D_v}^{-0.145}`` otherwise. As in the heat transfer coefficient case, note that the distance ``x_{t}`` used in the calculations is ``x_{t,m}`` since the pitch varies in the radial direction.
     
     The cold-side pressure drop can be calculated from the skin-friction coefficient, ignoring the minor losses due to flow turning at each pass,
     ```math
