@@ -769,19 +769,19 @@ try #If heat exchanger field exists in the input file
         
         pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
         pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-        pare[iePreCMh, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
 
         pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
         pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
-        pare[ieInterCMh, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+        pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
 
         pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
         pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
-        pare[ieRegenMh, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+        pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
 
         pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
         pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
-        pare[ieTurbCMh, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+        pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 catch #Do nothing if the heat exchanger field does not exist
 end
 
