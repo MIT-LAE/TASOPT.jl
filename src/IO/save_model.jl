@@ -269,11 +269,11 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_wing_aero["Climb"] = d_wing_aero_clm
 
     d_wing_aero_la = Dict()
-        d_wing_aero_la["cls_clo"] = ac_a[iarcls, ipclimb1+1, :]
-        d_wing_aero_la["clt_clo"] = ac_a[iarclt, ipclimb1+1, :]
-        d_wing_aero_la["cm_o"] = ac_a[iacmpo, ipclimb1+1,:]
-        d_wing_aero_la["cm_s"] = ac_a[iacmps, ipclimb1+1,:]
-        d_wing_aero_la["cm_t"] = ac_a[iacmpt, ipclimb1+1,:]
+        d_wing_aero_la["cls_clo"] = ac_a[iarcls, ipdescentn,:]
+        d_wing_aero_la["clt_clo"] = ac_a[iarclt, ipdescentn,:]
+        d_wing_aero_la["cm_o"] = ac_a[iacmpo, ipdescentn,:]
+        d_wing_aero_la["cm_s"] = ac_a[iacmps, ipdescentn,:]
+        d_wing_aero_la["cm_t"] = ac_a[iacmpt, ipdescentn,:]
     d_wing_aero["Landing"] = d_wing_aero_la
 
     d_wing["Aero"] = d_wing_aero
@@ -472,7 +472,7 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_prop_offt["Low_spool_power_offtake_per_max_mass"] = ac_g[igPofWMTO]*gee
 
         d_prop_offt["Tt_offtake_air"] = ac_e[ieTt9,1,1]
-        d_prop_offt["Pt_offtake_air"] = ac_g[iept9,1,1]
+        d_prop_offt["Pt_offtake_air"] = ac_e[iept9,1,1]
     d_prop["Offtakes"] = d_prop_offt
 
     #Nozzles
