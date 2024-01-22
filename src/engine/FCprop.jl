@@ -54,12 +54,14 @@ if type == "LT-PEMFC"
     u.T = 353.15
     u.x_H2O_A = water_sat_pressure(u.T) / p_A #fully saturated gas
     u.x_H2O_C = water_sat_pressure(u.T) / p_C #fully saturated gas
+    fluid_c = "liquid water"
 
 else
     u.j = 2.0e4
     u.T = 453.15
     u.x_H2O_A = 0.2#water_sat_pressure(T) / p_A #fully saturated gas
     u.x_H2O_C = 0.2#water_sat_pressure(T) / p_C #fully saturated gas
+    fluid_c = "liquid ethylene glycol"
 
 end
 
@@ -73,59 +75,28 @@ n_cells, A_cell, Q = PEMsize(P, V_stack, u)
 #---------------------------------
 #TODO: ideally want to do multipoint design, where we design for different mission points and choose largest HX
 #Fluid parameters
-Tp_in = Ta
-Tc_in = u.T
-pp_in = p0
-pc_in = p_A
-fluid_p = "air"
-alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 
-if type == "LT-PEMFC"
-    fluid_c = "liquid water"
-else
-    fluid_c = "liquid ethylene glycol"
-end
-
-#specific heats
-_, cp_c, _, _, _, _ = liquid_properties(fluid_c, Tc_in)
-_, _, _, _, cp_p, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
-
-#Calculate minimum heat capacity rate from desired effectiveness and temperature difference
-C_min = abs(Q / (ε * (Tp_in - Tc_in)))
-
-#Design for C_min being C_c
-mdot_c = C_min / cp_c
-
-ρ_p = pp_in / (Rp * Tp_in)
-γ = cp_p / (cp_p - Rp)
-A_cs = mdot_p / (ρ_p * Mp_in * sqrt(γ * Rp * Tp_in))
-l = sqrt(A_cs)
-
-HXgas.fluid_p = fluid_p
+HXgas.fluid_p = "air"
 HXgas.fluid_c = fluid_c
 HXgas.mdot_p = mdot_p
-HXgas.mdot_c = mdot_c
 HXgas.ε = ε
-HXgas.Tp_in = Tp_in
-HXgas.Tc_in = Tc_in
+HXgas.Tp_in = Ta
+HXgas.Tc_in = u.T
 HXgas.Mp_in  = Mp_in
-HXgas.pp_in = pp_in
-HXgas.pc_in = pc_in
+HXgas.pp_in = p0
+HXgas.pc_in = p_A
 
-HXgas.alpha_p = alpha_p
+HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 
 HXgeom.fconc = 0
 HXgeom.frecirc = 0
-HXgeom.l = l
-HXgeom.xl_D = 1
 HXgeom.Rfp = 0.0001763
 HXgeom.Rfc = 0.0001763
 HXgeom.material = "A2219"
 
 initial_x = [0.1, 6, 4]
 
-hxoptim!(HXgas, HXgeom, initial_x)
-hxsize!(HXgas, HXgeom)
+radiator_design!(HXgas, HXgeom, Q)
 
 #---------------------------------
 # HX in off-design conditions
@@ -140,13 +111,13 @@ mdot_pod = mdot_p * P_od / P
 
 _, Q_od = PEMoper(P_od, n_cells, A_cell, u)
 
-HXgas_od.fluid_p = fluid_p
+HXgas_od.fluid_p = "air"
 HXgas_od.fluid_c = fluid_c
 HXgas_od.mdot_p = mdot_pod
-HXgas_od.Tp_in = Tp_in
-HXgas_od.Tc_in = Tc_in
-HXgas_od.pp_in = pp_in
-HXgas_od.pc_in = pc_in
-HXgas_od.alpha_p = alpha_p
+HXgas_od.Tp_in = Ta
+HXgas_od.Tc_in = u.T
+HXgas_od.pp_in = p0
+HXgas_od.pc_in = p_A
+HXgas_od.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
 
 HXoffDesignCalc!(HXgas_od, HXgeom, Q_od)
