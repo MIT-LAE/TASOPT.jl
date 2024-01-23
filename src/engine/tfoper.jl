@@ -928,6 +928,13 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         fc_Tb = 0.0
                         fc_Mi = fc_fo * fo_Mi
 
+                        # Heat exchanger to cool turbine cooling air
+                        ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
+                        Tt_tc, Tttc_httc, _ = gas_tsetd(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
+
+                        httc_ht3 = 1.0
+                        Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
+
                   else
                         # Heat exchanger to cool turbine cooling air
                         ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
@@ -1150,18 +1157,24 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         lamp_Mi[i] = frac4_Mi * lambda[i] + fracm_Mi * alpha[i]
                   end
 
+                  #derivatives for turbine cooling air when there is a HX
+                  httc_pl = ht3_pl * httc_ht3
+                  httc_ph = ht3_ph * httc_ht3
+                  httc_ml = ht3_ml * httc_ht3
+                  hhttc_mh = ht3_mh * httc_ht3
+
                   #----- mixed total enthalpy from enthalpy equation
-                  ht41 = frac4 * ht4 + fracm * ht3
-                  ht41_pl = frac4_pl * ht4 + frac4 * ht4_pl + fracm_pl * ht3 + fracm * ht3_pl
-                  ht41_ph = frac4_ph * ht4 + frac4 * ht4_ph + fracm_ph * ht3 + fracm * ht3_ph
-                  ht41_mf = frac4_mf * ht4 + fracm_mf * ht3
-                  ht41_ml = frac4_ml * ht4 + frac4 * ht4_ml + fracm_ml * ht3 + fracm * ht3_ml
-                  ht41_mh = frac4_mh * ht4 + frac4 * ht4_mh + fracm_mh * ht3 + fracm * ht3_mh
-                  ht41_Tb = frac4_Tb * ht4 + frac4 * ht4_Tb + fracm_Tb * ht3
-                  ht41_Mi = frac4_mf * ht4 + fracm_Mi * ht3
+                  ht41 = frac4 * ht4 + fracm * ht_tc
+                  ht41_pl = frac4_pl * ht4 + frac4 * ht4_pl + fracm_pl * ht_tc + fracm * httc_pl
+                  ht41_ph = frac4_ph * ht4 + frac4 * ht4_ph + fracm_ph * ht_tc + fracm * httc_ph
+                  ht41_mf = frac4_mf * ht4 + fracm_mf * ht_tc
+                  ht41_ml = frac4_ml * ht4 + frac4 * ht4_ml + fracm_ml * ht_tc + fracm * httc_ml
+                  ht41_mh = frac4_mh * ht4 + frac4 * ht4_mh + fracm_mh * ht_tc + fracm * hhttc_mh
+                  ht41_Tb = frac4_Tb * ht4 + frac4 * ht4_Tb + fracm_Tb * ht_tc
+                  ht41_Mi = frac4_mf * ht4 + fracm_Mi * ht_tc
 
                   #----- total temperature from total enthalpy
-                  Tguess = frac4 * Tt4 + fracm * Tt3
+                  Tguess = frac4 * Tt4 + fracm * Tt_tc
                   Tt41, Tt41_ht41, T_al = gas_tsetd(lambdap, nair, ht41, Tguess)
                   Tt41_pl = Tt41_ht41 * ht41_pl
                   Tt41_ph = Tt41_ht41 * ht41_ph
