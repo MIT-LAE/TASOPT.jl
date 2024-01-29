@@ -54,45 +54,53 @@ function tanksize(gee, rhoFuel, deltap,
                       h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
 
-       Wfuel_init = Wfuel
-       m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
-       thickness_insul = sum(t_cond)
+        Wfuel_init = Wfuel
+        m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
+        thickness_insul = sum(t_cond)
 
-       mdot_boiloff = 0.0
-       Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
-                             fstring, ffadd, deltap,
-                             Rfuse, dRfuse, wfb, nfweb,
-                             sigskin, rho_insul, rhoskin,
-                             Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
-        
-                
-        for n = 1:500 #optimize boil off mass according to threshold
-                m_boiloff, mdot_boiloff = tankWthermal(lshell, Rtank, Shead_insul,
-                                        hconvgas, h_LH2, hconvair,
-                                        t_cond, k,
-                                        Tfuel, Tair,
-                                        h_v, time_flight)
+        residual(Δt) = res_MLI_thick(Δt, gee, rhoFuel, deltap,
+        Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+        h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
 
+        Δt = find_zero(residual, 0.0) #Find root with Roots.jl
 
-                Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
-                        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
-                                        fstring, ffadd, deltap,
-                                        Rfuse, dRfuse, wfb, nfweb,
-                                        sigskin, rho_insul, rhoskin,
-                                        Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
-                # println("l = $lshell, thickness_insul = $(sum(t_cond))")
-                Wfuel = Wfuel_init
-                if(mdot_boiloff*gee*3600/Wfuel *100) < threshold_percent 
-                        # println("iter = $n")
-                        # println("Boil off fraction $(mdot_boiloff*gee*3600/Wfuel *100) %")
-                        break
-                end
-                t_cond[1] = t_cond[1] + 0.01 * t_cond[1]  #increase foam insulation thickness and try again
-                t_cond[3] = t_cond[3] + 0.01 * t_cond[3]
-        #        println(Vfuel)
-        end
+        t_cond[1] = t_cond[1] + Δt  #increase foam insulation thickness of layers 1 and 3
+        t_cond[3] = t_cond[3] + Δt
 
+        mdot_boiloff = threshold_percent
+        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
+                                fstring, ffadd, deltap,
+                                Rfuse, dRfuse, wfb, nfweb,
+                                sigskin, rho_insul, rhoskin,
+                                Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
 
-
-return Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead, Wcyl, Winsul_sum, Winsul, l_tank, Wtank #boiloff rate output
+        return Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead, Wcyl, Winsul_sum, Winsul, l_tank, Wtank #boiloff rate output
 end
+
+function res_MLI_thick(Δt, gee, rhoFuel, deltap,
+        Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+        h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
+
+        t_all = deepcopy(t_cond)
+
+        t_all[1] = t_all[1] + Δt  #increase foam insulation thickness of layers 1 and 3
+        t_all[3] = t_all[3] + Δt
+
+        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
+        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
+                        fstring, ffadd, deltap,
+                        Rfuse, dRfuse, wfb, nfweb,
+                        sigskin, rho_insul, rhoskin,
+                        Wfuel, m_boiloff, t_all, clearance_fuse, AR)
+
+        m_boiloff, mdot_boiloff = tankWthermal(lshell, Rtank, Shead_insul,
+        hconvgas, h_LH2, hconvair,
+        t_all, k,
+        Tfuel, Tair,
+        h_v, time_flight)
+
+        res = mdot_boiloff * gee * 3600 / Wfuel * 100 - threshold_percent #difference between current boiloff and desired
+        return res
+end 

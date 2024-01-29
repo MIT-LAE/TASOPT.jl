@@ -4,8 +4,6 @@ required in the aircraft sizing.
 """
 module engine
 
-using StaticArrays
-
 export tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, gasPr

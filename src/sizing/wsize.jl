@@ -1641,13 +1641,14 @@ function wsize(pari, parg, parm, para, pare,
             parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
             # ----------------------
-            #     LH₂ Tank weight
+            #     Fuselage Fuel Tank weight
             # ----------------------
             if (pari[iifwing] == 0) # Sizing of fuselage fuel tank
                 hconvgas = 0.0
                 Tfuel = pare[ieTfft]
                 Tair = 288.0 #Heated cabin temp
-                h_v = 447000.0
+                h_LH2 = 210.0 #W/m^2/K, heat transfer coefficient of LH2 #TODO: replace by function
+                h_v = 447000.0 #TODO: replace by function
                 t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
                 k = ones(length(t_cond)) .* 5.0e-3 #foam conductivities
 
@@ -1668,11 +1669,11 @@ function wsize(pari, parg, parm, para, pare,
                 sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operation)
                 rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
                 rhoskintank = 2825.0 #Al 2219 / energies
-                max_boiloff = 0.1 #TODO: what units?
+                max_boiloff = 0.1 #%/h, maximum percentage of full fuel tank boiling off per hour 
                 ARtank = 2.0 #TODO: why? doesn't this overconstrain?
                 clearance_fuse = 0.10 #TODO: why?
                 rhofuel = parg[igrhofuel]
-                ptank = 2.0 #atm
+                ptank = 2.0 #atm #TODO: why? maybe write as input
                 ftankstiff = 0.1
                 ftankadd = 0.1
 

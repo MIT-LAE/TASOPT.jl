@@ -56,19 +56,20 @@ function tankWmech(gee::Float64, ρfuel::Float64,
 # Total thickness:
       thickness_insul = sum(t_cond)
 # Input paramters:
-      weld_eff = 0.9
-      ullage_frac = 0.1 # V. thesis says ~3% but Barron recommends 10%
-      β = 2.0
+      weld_eff = 0.9 #lower strength due to welding?
+      ullage_frac = 0.1 # V. thesis says ~3% but Barron recommends 10% #TODO: figure out who these people are
+      β = 2.0 #TODO: what is this? a safety factor?
 # Add an additional pressure factor
-      Δpdes = Δp*β
+      Δpdes = Δp * β
 
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
 
-      tskin = Δpdes * (2 * Rtank_outer) / (2 * sigskin * weld_eff + 0.8 * Δpdes)
+      tskin = Δpdes * (2 * Rtank_outer) / (2 * sigskin * weld_eff + 0.8 * Δpdes) #TODO: this sizes the skin thickness
+                                                                              #based on stress; figure out where it comes from
 
       Rtank = Rtank_outer - tskin
       tfweb = 2.0 * Δpdes * wfb  / sigskin
-      Lhead = Rtank/AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
+      Lhead = Rtank / AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
       
       K = (1/6) * (AR^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
       t_head = Δpdes* (2*Rtank_outer) * K/ (2 * sigskin * weld_eff + 2 * Δpdes * (K-.1)) #Verstraete
@@ -77,7 +78,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       Wfuel_tot = Wfuel + (m_boiloff * gee)
       Vfuel = Wfuel_tot / (gee * ρfuel)
       Vinternal = (1 + ullage_frac)*Vfuel  # required interal volume
-      V_ellipsoid = 2π*(Rtank^3/AR)/3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
+      V_ellipsoid = 2π * (Rtank^3 / AR) / 3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
                                        # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid
       l_cyl = V_cylinder / (π * (Rtank^2)) #required length of cylindrical portion
@@ -86,7 +87,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       wfblim = max( min( wfb , Rtank) , 0.0 )
       thetafb = asin(wfblim / Rtank)
       hfb = sqrt(Rtank^2 - wfb^2)
-      sin2t = 2.0*hfb*wfb/Rtank^2
+      sin2t = 2.0 * hfb * wfb / Rtank^2
 
 #--- areas
       Askin = (2.0*π+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin # Cross-sectional area of the cylindrical part
