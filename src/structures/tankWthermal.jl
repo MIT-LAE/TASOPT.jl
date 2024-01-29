@@ -51,19 +51,19 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
 
       hradair = σ * ε * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel)
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
-      Rair_conv_rad = 1 / (h_air * (2π*r_tank*l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
+      Rair_conv_rad = 1 / (h_air * (2π * r_tank * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
 
       r_inner = r_tank #- thickness
 
       # Not needed for MLI. May add later for purged He etc. Rgas = 1 / (hconvgas * 2 * pi * r_inner * l_cyl)  #thermal resistance of purged gas
 
-      R_LH2 = 1 / (h_LH2 * (2*π*(r_inner - thickness) * l_cyl) + 2*Shead[1]) #thermal resistance of LH2
+      R_LH2 = 1 / (h_LH2 * (2π * (r_inner - thickness) * l_cyl) + 2*Shead[1]) #thermal resistance of LH2
 
       R_mli      = zeros(Float64, N)  #size of MLI resistance array (Based on number of layers)
       R_mli_ends = zeros(Float64, N)
       R_mli_cyl  = zeros(Float64, N)
 
-      for i in 1:N
+      for i in 1:N #TODO: check this carefully
             R_mli_cyl[i]  = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k[i]) #Resistance of each MLI layer
             R_mli_ends[i] = t_cond[i] / (k[i] * 2*Shead[i])
             # Parallel addition of resistance
