@@ -20,6 +20,7 @@ using PyPlot
 using Dates
 using ForwardDiff
 using Parameters
+using CSV, Tables
 
 const __TASOPTroot__ = @__DIR__
 
@@ -68,7 +69,10 @@ include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
+export generate_par_indname
 include(joinpath(__TASOPTroot__,"IO/read_externals.jl"))
+include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
+export output_csv, default_output_indices
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
