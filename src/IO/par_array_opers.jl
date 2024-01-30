@@ -1,5 +1,5 @@
-export init_par_arrays, fill_par_entry
-include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
+export init_par_arrays, fill_par_entry, generate_par_indname
+global par_indname
 
 """
     init_par_arrays(;n_flight_pts::Int, n_missions::Int)
@@ -37,4 +37,58 @@ end
 import Base.repeat
 function repeat(single_elem::Real, counts::Integer...)
     repeat([single_elem], counts...)
+end
+
+
+"""
+
+generates a vector that maps par_array indices to their index name (declared in `index.inc`)
+
+e.g., the call above would result in pari_indname[1] evaluating to "iifuel"
+"""
+function generate_par_indname(par_suffix::String)
+    #ensure index vars are available
+    include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
+    #get all variables in global scope
+    all_vars = names(TASOPT,all=true)
+
+    # Filter for variables that are par array indices
+    # i.e., they start with "i"*par_suffix and evaluate to Integers
+    filtered_variables = filter(var_elem -> length(String(var_elem))>1 
+                                    && (String(var_elem)[1:nextind(String(var_elem),1)] == "i"*par_suffix)  #using nextind instead of 2 because Unicode chars
+                                    && typeof(getfield(TASOPT,var_elem)) <: Int, all_vars)
+
+    #get the indices and the maximum to initialize the output array
+    # while preserving the index position
+    filtered_values = [getfield(TASOPT, sym) for sym in filtered_variables]
+    max_value = maximum(filtered_values)
+
+    #initialize the Vector of Strings that will be output
+    par_indname = fill("",max_value)
+
+    #populate the Vector with variable names of the indices
+    #e.g., if parvar is Symbol("iifuel"), par_indname[1] = "iifuel"
+    for parvar in filtered_variables
+        if String(parvar) == "i"*par_suffix*"total"
+            continue
+        end
+        par_indname[getfield(TASOPT,parvar)] = String(parvar)
+    end
+
+    return par_indname
+
+end
+
+function generate_par_indname(par_suffix::AbstractVector{String}=["i","g","m","a","e"])
+    # generate_par_indname.(par_suffix) 
+    #^ this would be the def'n if we could get the global to work
+
+    #initialize output dictionary
+    output = Dict()
+    #populate from provided suffixes
+    for par_suff in par_suffix
+        #for each suffix, get the par()_indname array
+        output["par"*par_suff] = generate_par_indname(par_suff)
+    end
+    return output
 end

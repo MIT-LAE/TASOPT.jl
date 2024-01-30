@@ -15,7 +15,7 @@
       iiengtype  = 13  # 0 = Turboelectric engine; 1 = Turbofan engine; "prop_sys_arch"
       iiopt      = 14  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
       iiaircraftclass = 15 # 737 = 737 size aircraft; 777 = 777 size aircraft
-      iiengmodel = 15
+      iiengmodel = 16
       iitotal    = 16
 
 #---- indices for missions to be examined 
@@ -825,7 +825,7 @@
       iegsBPR     = 226
       iegsRlinelc = 227
       iegsRlinehc = 228
-      iegsPRhtrb  = 239
+      iegsPRhtrb  = 229
       iegsPRltrb  = 230
       iegsNmechH  = 231
       iegsGBtrq   = 232
