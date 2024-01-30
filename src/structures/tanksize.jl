@@ -63,7 +63,7 @@ function tanksize(gee, rhoFuel, deltap,
         h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
 
-        Δt = find_zero(residual, 0.0) #Find root with Roots.jl
+        Δt = Roots.find_zero(residual, 0.0) #Find root with Roots.jl
 
         t_cond[1] = t_cond[1] + Δt  #increase foam insulation thickness of layers 1 and 3
         t_cond[3] = t_cond[3] + Δt
@@ -87,6 +87,8 @@ function res_MLI_thick(Δt, gee, rhoFuel, deltap,
 
         t_all[1] = t_all[1] + Δt  #increase foam insulation thickness of layers 1 and 3
         t_all[3] = t_all[3] + Δt
+
+        m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
 
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
         Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,

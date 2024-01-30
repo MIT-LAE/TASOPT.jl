@@ -120,7 +120,8 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew(pari,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel, Wftank, ltank, xftankaft,
+function fusew(pari,parg,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
+      Waftfuel, Wftank, ltank, xftankaft,
       fstring,fframe,ffadd,deltap,
       Wpwindow,Wppinsul,Wppfloor,
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
@@ -271,7 +272,8 @@ function fusew(pari,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel, Wftank, ltan
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng 
+      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng #TODO: this does not account for weight penalty when 
+                                                                              #nftanks != 2
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +

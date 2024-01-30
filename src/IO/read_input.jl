@@ -148,6 +148,10 @@ pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
 pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
 parg[igrhofuel] = readfuel("fuel_density")
 
+if pari[iifwing]  == 0 #If fuel is stored in fuselage
+    pari[iinftanks] = readfuel("fuel_tanks_in_fuse")
+end
+
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Len.(ranges)
