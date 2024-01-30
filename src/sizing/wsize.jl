@@ -1410,8 +1410,8 @@ function wsize(pari, parg, parm, para, pare,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            global HXs = hxdesign!(pare, pari, ipdes, HXs_prev)
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            global HXs = hxdesign!(pare, pari, ipdes, HXs)
+            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous for debugging
 
         else
             global HXs = []

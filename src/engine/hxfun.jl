@@ -3,6 +3,7 @@
 # The design method is based on the effectiveness-NTU method, described in many sources such as 
 # https://www.mathworks.com/help/hydro/ref/entuheattransfer.html
 # Nicolas Gomez Vega, Oct 2023
+
 """
     HX_gas
 

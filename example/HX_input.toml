@@ -455,7 +455,7 @@ name = "Default TASOPT Model with HX"
     intercooler_inlet_mach = 0.1
 
     regenerative_order = 4
-    regenerative_effectiveness = 0.8
+    regenerative_effectiveness = 0
     regenerative_inlet_mach = 0.2
 
     turbine_cooler_order = 3
