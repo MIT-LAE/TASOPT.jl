@@ -6,6 +6,7 @@ module engine
 
 using NLopt
 using Roots
+using LinearAlgebra
 
 export tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
