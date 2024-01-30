@@ -1328,18 +1328,7 @@ function wsize(pari, parg, parm, para, pare,
             k = ones(length(t_cond)) .* 5.0e-3 #foam thermal conductivities #TODO: check and maybe replace by input
 
             #Convective cooling
-            cp_air = 1005 #J/(kg K) specific heat at constant pressure for ambient air
-            Pr_t = 0.85 #Prandlt number of turbulent air
-            ρ0 = pare[ierho0, ip]
-            u0 = pare[ieu0, ip]
-            μ0 = pare[iemu0, ip] 
-            xfuel = parg[igxftank]
-            Re_xftank = ρ0 * u0 * xfuel / μ0
-            Cf_xftank = 0.0576 / Re_xftank^0.2 #Turbulent flat plate skin friction coefficient       
-            #Calculate Stanton number using Reynolds analogy
-            St_air = Cf_xftank / (2 * Pr_t^(2/3)) #Chilton-Colburn analogy
-            hconvair = St_air * ρ0 *u0* cp_air #In W/(m^2 K)
-
+            hconvair = 15.0 #W/(m^2 K) #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
             time_flight = para[iatime, ipdescent1]
             sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operation)
             rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
@@ -1421,12 +1410,12 @@ function wsize(pari, parg, parm, para, pare,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs_prev)
-            global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            global HXs = hxdesign!(pare, pari, ipdes, HXs_prev)
+            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
 
         else
-            HXs = []
-            global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            global HXs = []
+            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
             
         end
 
