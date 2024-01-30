@@ -20,7 +20,6 @@ using Dates
 using ForwardDiff
 using Roots
 using LinearAlgebra
-using Trapz
 
 
 const __TASOPTroot__ = @__DIR__
