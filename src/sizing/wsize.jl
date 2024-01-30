@@ -659,11 +659,25 @@ function wsize(pari, parg, parm, para, pare,
                        parg[igWgen] * ngen
         end
 
-        if (pari[iifwing] == 0) # If fuel is not stored in the wings then assume it is stored in fuse @ fuel tank
-            Waftfuel = parg[igWftank] + parg[igWfuel]
+        nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
+        ltank = parg[iglftank] #Fuel tank length
+        #From dsalgado's H2 model
+        if (pari[iifwing] == 0) #If fuel is not stored in the wings
+            Waftfuel = parg[igWfuel] / (2 * (nftanks - 1)) #If only one tank, there's no aft tank; 
+                                                    #if there are 2 tanks, half fuel stored in each one
+            lcabin = parg[igxblend2] - (parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
+            
+            xfuel = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
+            parg[igxftank] = xfuel
+            
+            xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
+            parg[igxftankaft] = xftankaft
         else
+            xftankaft = 0.0 #No aft fuel tank
             Waftfuel = 0.0
+            xfuel = parg[igxftank]
         end
+
 
         Whtail = parg[igWhtail]
         Wvtail = parg[igWvtail]
@@ -671,11 +685,13 @@ function wsize(pari, parg, parm, para, pare,
         xvtail = parg[igxvtail]
         xwbox = parg[igxwbox]
         xwing = parg[igxwing]
-
-        xfuel = parg[igxftank]
+        xblend1 = parg[igxblend1]
+        xblend2 = parg[igxblend2]
 
         Wtesys = parg[igWtesys]
         Wftank = parg[igWftank]
+
+        ifwing = pari[iifwing]
 
         # Call fusew
         Eskin = parg[igEcap]
@@ -685,7 +701,9 @@ function wsize(pari, parg, parm, para, pare,
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
+            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+            ifwing, nftanks, xblend1, xblend2,
+            Waftfuel,  Wftank, ltank, xftankaft,
             fstring, fframe, ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
@@ -763,7 +781,7 @@ function wsize(pari, parg, parm, para, pare,
 
         else
             # Call a better Wupdate function
-            Wupdate0!(parg, rlx, fsum)
+            Wupdate0!(pari, parg, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -1301,18 +1319,108 @@ function wsize(pari, parg, parm, para, pare,
         dxv, _ = surfdx(bv2, bov, bov, λv, λvs, sweepv)
         parg[igxvtail] = xvbox + dxv
 
+        # ----------------------
+        #     Fuselage Fuel Tank weight
+        # ----------------------
+        if (pari[iifwing] == 0) # Sizing of fuselage fuel tank
+            hconvgas = 0.0
+            Tfuel = pare[ieTft]
+            Tair = 288.0 #Heated cabin temp
+            h_LH2 = 210.0 #W/m^2/K, heat transfer coefficient of LH2 #TODO: replace by function
+            h_v = 447000.0 #enthalpy of vaporization TODO: replace by function
+            t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
+            #TODO replace t_cond by input? The first and third thicknesses are designed for later. Is this even needed?
+            k = ones(length(t_cond)) .* 5.0e-3 #foam thermal conductivities #TODO: check and maybe replace by input
+
+            #Convective cooling
+            hconvair = 15.0 #W/(m^2 K) #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
+            time_flight = para[iatime, ipdescent1]
+            sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operation)
+            rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
+            rhoskintank = 2825.0 #Al 2219 / energies
+            max_boiloff = 0.1 #%/h, maximum percentage of full fuel tank boiling off per hour 
+            ARtank = 2.0 #TODO: why? doesn't this overconstrain?
+            clearance_fuse = 0.10 #TODO: why?
+            rhofuel = parg[igrhofuel]
+            ptank = 2.0 #atm #TODO: why? maybe write as input
+            ftankstiff = 0.1
+            ftankadd = 0.1
+
+            cargotank = false #TODO: figure out why this is here
+
+            if cargotank
+                Wfmaintank = parg[igWfuel] * 2 / 3
+                Wfcargotank = parg[igWfuel] * 1 / 3
+            else
+                Wfmaintank = parg[igWfuel] / nftanks #Main tank carries 1/nftanks of the fuel
+                Wfcargotank = 0.0
+            end
+
+            Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+            m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+            Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+                Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+                h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
+                wfb, nfweb, sigskin, rho_insul, rhoskintank,
+                Wfmaintank, max_boiloff, clearance_fuse, ARtank)
+
+            parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
+            parg[igWftank] = Wtank #weight of one tank; there are two
+            parg[igxWftank] = Wtank * (parg[igxftankaft] + parg[igxftank]) 
+            parg[iglftank] = l_tank
+            parg[igRftank] = Rtank
+            parg[igWinsftank] = Winsul_sum
+
+            if cargotank
+                Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+                m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
+                Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+                    Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
+                    h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
+                    wfb, nfweb, sigskin, rho_insul, rhoskintank,
+                    Wfcargotank, max_boiloff, clearance_fuse, ARtank)
+
+                parg[igWfmax] += Vfuel * rhofuel * gee
+                parg[igWftank] += Wtank
+                parg[igxWftank] += Wtank * parg[igxwbox]
+                parg[igWinsftank] += Winsul_sum
+
+            end
+
+            ## Update fuselage according to tank requirements
+            #update_fuse!(parg) #TODO: update fuselage length based on fuel tank size
+            fusebl!(pari, parg, para, ipcruise1)
+
+            #Update fuselage BL properties
+            # Kinetic energy area at T.E.
+            KAfTE = para[iaKAfTE, ipcruise1]
+            # Surface dissapation area 
+            DAfsurf = para[iaDAfsurf, ipcruise1]
+            # Wake dissapation area
+            DAfwake = para[iaDAfwake, ipcruise1]
+            # Momentum area at ∞
+            PAfinf = para[iaPAfinf, ipcruise1]
+
+            # Assume K.E., Disspation and momentum areas are const. for all mission points:
+            para[iaKAfTE, :] .= KAfTE
+            para[iaDAfsurf, :] .= DAfsurf
+            para[iaDAfwake, :] .= DAfwake
+            para[iaPAfinf, :] .= PAfinf
+
+        end
+
         # -----------------------------
         # Heat exchanger design and operation
         # ------------------------------
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs_prev)
-            global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            global HXs = hxdesign!(pare, pari, ipdes, HXs)
+            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous for debugging
 
         else
-            HXs = []
-            global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            global HXs = []
+            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
             
         end
 
@@ -1570,7 +1678,7 @@ function wsize(pari, parg, parm, para, pare,
 
             # Recalculate weight wupdate()
             ip = ipcruise1
-            Wupdate!(parg, rlx, fsum)
+            Wupdate!(pari, parg, rlx, fsum)
 
             parm[imWTO] = parg[igWMTO]
             parm[imWfuel] = parg[igWfuel]
@@ -1632,79 +1740,13 @@ function wsize(pari, parg, parm, para, pare,
             time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)
 
             parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
-
-            # ----------------------
-            #     LH₂ Tank weight
-            # ----------------------
-            if (pari[iifwing] == 0) # if fuel isn't in wings then you need a tank for it!
-                hconvgas = 0.0
-                h_LH2 = 210.0
-                Tfuel = 20.0
-                Tair = 288.0 #Heated cabin temp
-                h_v = 447000.0
-                t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
-                k = ones(length(t_cond)) .* 5.0e-3 #foam conductivities
-                hconvair = 15.0 #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
-                time_flight = para[iatime, ipdescent1]
-                sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
-                rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
-                rhoskintank = 2825.0 #Al 2219 / energies
-                max_boiloff = 0.1
-                ARtank = 2.0
-                clearance_fuse = 0.10
-                rhofuel = parg[igrhofuel]
-                ptank = 2.0 #atm
-                ftankstiff = 0.1
-                ftankadd = 0.1
-
-                cargotank = false
-
-                if cargotank
-                    Wfmaintank = parg[igWfuel] * 2 / 3
-                    Wfcargotank = parg[igWfuel] * 1 / 3
-                else
-                    Wfmaintank = parg[igWfuel]
-                    Wfcargotank = 0.0
-                end
-
-                Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
-                m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-                Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                    Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-                    h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
-                    wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                    Wfmaintank, max_boiloff, clearance_fuse, ARtank)
-
-                parg[igWfmax] = Vfuel * rhofuel * 9.81
-                parg[igWftank] = Wtank
-                parg[igxWftank] = Wtank * parg[igxftank]
-                parg[iglftank] = l_tank
-                parg[igRftank] = Rtank
-                parg[igWinsftank] = Winsul_sum
-
-                if cargotank
-                    Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
-                    m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-                    Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                        Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
-                        h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
-                        wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                        Wfcargotank, max_boiloff, clearance_fuse, ARtank)
-
-                    parg[igWfmax] += Vfuel * rhofuel * 9.81
-                    parg[igWftank] += Wtank
-                    parg[igxWftank] += Wtank * parg[igxwbox]
-                    parg[igWinsftank] += Winsul_sum
-
-                end
-            end
         end
 
         # Get mission fuel burn (check if fuel capacity is sufficent)
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, rlx, fsum)
+        Wupdate!(pari, parg, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1926,8 +1968,9 @@ end
 """
 Wupdate0 updates the weight of the aircraft
 """
-function Wupdate0!(parg, rlx, fsum)
+function Wupdate0!(pari, parg, rlx, fsum)
     WMTO = parg[igWMTO]
+    nftanks = pari[iinftanks]
 
     ftotadd = sum(parg[[igfhpesys, igflgnose, igflgmain]])
     fsum = 0.0
@@ -1941,7 +1984,7 @@ function Wupdate0!(parg, rlx, fsum)
            parg[igWeng] +
            parg[igWfuel] +
            parg[igWtesys] +
-           parg[igWftank]
+           nftanks * parg[igWftank]
 
     WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
     parg[igWMTO] = WMTO
@@ -1952,7 +1995,7 @@ end
 """
 Wupdate
 """
-function Wupdate!(parg, rlx, fsum)
+function Wupdate!(pari, parg, rlx, fsum)
 
     WMTO = parg[igWMTO]
 
@@ -1966,13 +2009,16 @@ function Wupdate!(parg, rlx, fsum)
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
 
-    ftank = parg[igWftank] / WMTO
     ftesys = parg[igWtesys] / WMTO
 
     Wtesys = parg[igWtesys]
     Wftank = parg[igWftank]
     Wpay = parg[igWpay]
     Wfuse = parg[igWfuse]
+
+    nftanks = pari[iinftanks]
+
+    ftank = nftanks * parg[igWftank] / WMTO
 
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys +
            flgnose + flgmain + ftank + ftesys
@@ -1991,7 +2037,13 @@ function Wupdate!(parg, rlx, fsum)
     parg[igWvtail] = WMTO * fvtail
     parg[igWeng] = WMTO * feng
     parg[igWfuel] = WMTO * ffuel
-    parg[igWftank] = WMTO * ftank
+   
+    if (nftanks == 0) #If there are no fuel tanks
+        parg[igWftank] = 0
+    else
+        parg[igWftank] = WMTO * ftank / nftanks #nftanks fuel tanks
+    end
+
     parg[igWtesys] = WMTO * ftesys
 
 

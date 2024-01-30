@@ -18,6 +18,9 @@ using PyPlot
 # pygui(true)
 using Dates
 using ForwardDiff
+using Roots
+using LinearAlgebra
+
 
 const __TASOPTroot__ = @__DIR__
 
