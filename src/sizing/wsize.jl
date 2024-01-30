@@ -1340,8 +1340,7 @@ function wsize(pari, parg, parm, para, pare,
                 ltank = parg[igWfuel] / nftanks / (gee * rhofuel * pi * Rfuse^2) #If ltank does not exist yet, 
                                                                             #intialize it with simple cylinder
             end
-            println(ltank)
-            h_liq, hconvair, h_v, Tair = structures.tank_heat_coeffs(z_alt, M_inf, ifuel, Tfuel, ltank, xfuel)
+            hconvair, Tair = structures.freestream_heat_coeff(z_alt, M_inf, xfuel)
 
             #Fuel tank design
             time_flight = para[iatime, ipdescent1]
@@ -1368,10 +1367,10 @@ function wsize(pari, parg, parm, para, pare,
             Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
             Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                Rfuse, dRfuse, hconvgas, h_liq, Tfuel, Tair,
-                h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
+                Rfuse, dRfuse, hconvgas, Tfuel, Tair,
+                t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                Wfmaintank, max_boiloff, clearance_fuse, ARtank)
+                Wfmaintank, max_boiloff, clearance_fuse, ARtank, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = Wtank #weight of one tank; there are two
