@@ -473,10 +473,10 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   lambdap = copy(buf)
 
                   #----- mixed total enthalpy from enthalpy equation
-                  ht41 = frac4 * ht4 + fracm * ht3
+                  ht41 = frac4 * ht4 + fracm * ht_tc
 
                   #----- total temperature from total enthalpy
-                  Tguess = frac4 * Tt4 + fracm * Tt3
+                  Tguess = frac4 * Tt4 + fracm * Tt_tc
                   Tt41 = gas_tset(lambdap, nair, ht41, Tguess)
 
                   #----- all total quantities (except for total pressure), from total temperature

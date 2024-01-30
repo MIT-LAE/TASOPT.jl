@@ -712,6 +712,65 @@ function hxoper!(HXgas, HXgeom)
 end #hxoper!
 
 """
+      radiator_design!(HXgas, HXgeom, Q)
+
+    Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
+    The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
+    meet the heat transfer requirement. 
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::Struct`: structure of type HX_gas with the gas properties
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `Q::Float64`: required heat transfer rate (W)
+    
+    **Outputs:**
+    No direct outputs. Input structures are modified with outlet gas and HX properties.
+
+"""
+function radiator_design!(HXgas, HXgeom, Q)
+
+      #Fluid parameters
+      Tp_in = HXgas.Tp_in
+      Tc_in = HXgas.Tc_in
+      pp_in = HXgas.pp_in
+      alpha_p = HXgas.alpha_p
+
+      #specific heats
+      if occursin("liquid", HXgas.fluid_c)
+            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+      else
+            _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
+      end
+      _, _, _, _, cp_p, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
+
+      #TODO: this calculation does not work when there is recirculation or if the process side has C_min
+
+      #Calculate minimum heat capacity rate from desired effectiveness and temperature difference
+      C_min = abs(Q / (ε * (Tp_in - Tc_in)))
+
+      #Design for C_min being C_c
+      mdot_c = C_min / cp_c
+
+      #Find tube length, assuming square cross section
+      ρ_p = pp_in / (Rp * Tp_in)
+      γ = cp_p / (cp_p - Rp)
+      A_cs = mdot_p / (ρ_p * Mp_in * sqrt(γ * Rp * Tp_in))
+      l = sqrt(A_cs)
+
+      HXgas.mdot_c = mdot_c
+
+      HXgeom.l = l
+      HXgeom.xl_D = 1
+
+      initial_x = [0.1, 6, 4] #do not optimize tube length for this radiator
+
+      hxoptim!(HXgas, HXgeom, initial_x)
+      hxsize!(HXgas, HXgeom)
+
+end
+
+"""
       HXoffDesignCalc!(HXgas, HXgeom, Q)
 
 Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
