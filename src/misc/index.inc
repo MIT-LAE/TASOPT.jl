@@ -15,8 +15,9 @@
       iiengtype  = 13  # 0 = Turboelectric engine; 1 = Turbofan engine
       iiopt      = 14  # 0 = run sizing loop only; 1 = run optimization procedure
       iiaircraftclass = 15 # 737 = 737 size aircraft; 777 = 777 size aircraft
-      iiengmodel = 15
-      iitotal    = 16
+      iinftanks = 16 # number of fuel tanks in fuselage
+      iiengmodel = 17 #engine model 
+      iitotal    = 17
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
