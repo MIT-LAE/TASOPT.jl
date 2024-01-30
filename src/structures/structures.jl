@@ -5,6 +5,8 @@ required to size an aircraft
 
 module structures
 
+using Roots
+
 export surfw, surfdx, fusew, tailpo, tanksize
 
 include("../misc/index.inc")
