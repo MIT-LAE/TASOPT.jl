@@ -1322,18 +1322,28 @@ function wsize(pari, parg, parm, para, pare,
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
-        if (pari[iifwing] == 0) # Sizing of fuselage fuel tank
-            hconvgas = 0.0
+        if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+            hconvgas = 0.0 #Convective coefficient of insulating purged gas
             Tfuel = pare[ieTft]
-            Tair = 288.0 #Heated cabin temp
-            h_LH2 = 210.0 #W/m^2/K, heat transfer coefficient of LH2 #TODO: replace by function
-            h_v = 447000.0 #enthalpy of vaporization TODO: replace by function
             t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
             #TODO replace t_cond by input? The first and third thicknesses are designed for later. Is this even needed?
             k = ones(length(t_cond)) .* 5.0e-3 #foam thermal conductivities #TODO: check and maybe replace by input
 
             #Convective cooling
-            hconvair = 15.0 #W/(m^2 K) #from sciencedirect.com https://www.sciencedirect.com/topics/engineering/convection-heat-transfer-coefficient
+            xfuel = parg[igxftank]
+            ifuel = pari[iifuel]
+            rhofuel = parg[igrhofuel]
+            M_inf = para[iaMach, ipcruise1]
+            z_alt = para[iaalt, ipcruise1]
+
+            if ltank == 0
+                ltank = parg[igWfuel] / nftanks / (gee * rhofuel * pi * Rfuse^2) #If ltank does not exist yet, 
+                                                                            #intialize it with simple cylinder
+            end
+            println(ltank)
+            h_liq, hconvair, h_v, Tair = structures.tank_heat_coeffs(z_alt, M_inf, ifuel, Tfuel, ltank, xfuel)
+
+            #Fuel tank design
             time_flight = para[iatime, ipdescent1]
             sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operation)
             rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
@@ -1341,7 +1351,6 @@ function wsize(pari, parg, parm, para, pare,
             max_boiloff = 0.1 #%/h, maximum percentage of full fuel tank boiling off per hour 
             ARtank = 2.0 #TODO: why? doesn't this overconstrain?
             clearance_fuse = 0.10 #TODO: why?
-            rhofuel = parg[igrhofuel]
             ptank = 2.0 #atm #TODO: why? maybe write as input
             ftankstiff = 0.1
             ftankadd = 0.1
@@ -1359,7 +1368,7 @@ function wsize(pari, parg, parm, para, pare,
             Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
             Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
+                Rfuse, dRfuse, hconvgas, h_liq, Tfuel, Tair,
                 h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, rho_insul, rhoskintank,
                 Wfmaintank, max_boiloff, clearance_fuse, ARtank)
