@@ -120,7 +120,8 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew(pari,parg,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
+function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
+      ifwing, nftanks, xblend1, xblend2,
       Waftfuel, Wftank, ltank, xftankaft,
       fstring,fframe,ffadd,deltap,
       Wpwindow,Wppinsul,Wppfloor,
@@ -134,8 +135,6 @@ function fusew(pari,parg,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       hfloor,
       sigskin,sigbend, rhoskin,rhobend, 
       Eskin,Ebend,Gskin)
-
-      nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
 #--- cone material properties
 #     (assumed same as skin, but could be different)
@@ -204,9 +203,9 @@ function fusew(pari,parg,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--------------------------------------------------------------------
 #--- window weight
 
-      if pari[iifwing] == 0
-            lcabin =      parg[igxblend2] - (parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
-            xcabin = 0.5*(parg[igxblend2] + parg[igxblend1])
+      if ifwing == 0
+            lcabin =      xblend2 - (xblend1 + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
+            xcabin = 0.5*(xblend2 + xblend1)
             Wwindow = Wpwindow * lcabin
             xWwindow = Wwindow * xcabin
       else

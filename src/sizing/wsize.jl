@@ -685,9 +685,13 @@ function wsize(pari, parg, parm, para, pare,
         xvtail = parg[igxvtail]
         xwbox = parg[igxwbox]
         xwing = parg[igxwing]
+        xblend1 = parg[igxblend1]
+        xblend2 = parg[igxblend2]
 
         Wtesys = parg[igWtesys]
         Wftank = parg[igWftank]
+
+        ifwing = pari[iifwing]
 
         # Call fusew
         Eskin = parg[igEcap]
@@ -697,7 +701,8 @@ function wsize(pari, parg, parm, para, pare,
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew(pari, parg, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+            ifwing, nftanks, xblend1, xblend2,
             Waftfuel,  Wftank, ltank, xftankaft,
             fstring, fframe, ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
