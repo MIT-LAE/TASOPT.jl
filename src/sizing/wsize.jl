@@ -692,7 +692,7 @@ function wsize(pari, parg, parm, para, pare,
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
+            Wfuse, xWfuse, cabVol) = fusew(pari, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,  Wftank, ltank, xftankaft,
             fstring, fframe, ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
@@ -1577,7 +1577,7 @@ function wsize(pari, parg, parm, para, pare,
 
             # Recalculate weight wupdate()
             ip = ipcruise1
-            Wupdate!(parg, rlx, fsum)
+            Wupdate!(pari, parg, rlx, fsum)
 
             parm[imWTO] = parg[igWMTO]
             parm[imWfuel] = parg[igWfuel]
@@ -1648,9 +1648,10 @@ function wsize(pari, parg, parm, para, pare,
                 Tfuel = pare[ieTfft]
                 Tair = 288.0 #Heated cabin temp
                 h_LH2 = 210.0 #W/m^2/K, heat transfer coefficient of LH2 #TODO: replace by function
-                h_v = 447000.0 #TODO: replace by function
+                h_v = 447000.0 #enthalpy of vaporization TODO: replace by function
                 t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
-                k = ones(length(t_cond)) .* 5.0e-3 #foam conductivities
+                #TODO replace t_cond by input? The first and third thicknesses are designed for later. Is this even needed?
+                k = ones(length(t_cond)) .* 5.0e-3 #foam thermal conductivities #TODO: check and maybe replace by input
 
                 #Convective cooling
                 cp_air = 1005 #J/(kg K) specific heat at constant pressure for ambient air
@@ -1745,7 +1746,7 @@ function wsize(pari, parg, parm, para, pare,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, rlx, fsum)
+        Wupdate!(pari, parg, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]

@@ -120,19 +120,21 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
-                      fstring,fframe,ffadd,deltap,
-                      Wpwindow,Wppinsul,Wppfloor,
-                      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
-                      bv,lambdav,nvtail,
-                      Rfuse,dRfuse,wfb,nfweb,lambdac,
-                      xnose,xshell1,xshell2,xconend,
-                      xhtail,xvtail,
-                      xwing,xwbox,cbox,
-                      xfix,xapu,xeng,xfuel,
-                      hfloor,
-                      sigskin,sigbend, rhoskin,rhobend, 
-                      Eskin,Ebend,Gskin)
+function fusew(pari,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel, Wftank, ltank, xftankaft,
+      fstring,fframe,ffadd,deltap,
+      Wpwindow,Wppinsul,Wppfloor,
+      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
+      bv,lambdav,nvtail,
+      Rfuse,dRfuse,wfb,nfweb,lambdac,
+      xnose,xshell1,xshell2,xconend,
+      xhtail,xvtail,
+      xwing,xwbox,cbox,
+      xfix,xapu,xeng,xfuel,
+      hfloor,
+      sigskin,sigbend, rhoskin,rhobend, 
+      Eskin,Ebend,Gskin)
+
+      nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
 #--- cone material properties
 #     (assumed same as skin, but could be different)
@@ -200,8 +202,16 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 
 #--------------------------------------------------------------------
 #--- window weight
-      Wwindow = Wpwindow * lshell
-      xWwindow = Wwindow * 0.5*(xshell1 + xshell2)
+
+      if pari[iifwing] == 0
+            lcabin =      parg[igxblend2] - (parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
+            xcabin = 0.5*(parg[igxblend2] + parg[igxblend1])
+            Wwindow = Wpwindow * lcabin
+            xWwindow = Wwindow * xcabin
+      else
+            Wwindow = Wpwindow * lshell
+            xWwindow = Wwindow * 0.5*(xshell1 + xshell2)
+      end
 #--------------------------------------------------------------------
 #--- insulation weight
       Winsul = Wppinsul*((1.1*pi+2.0*thetafb)*Rfuse*lshell + 0.55*(Snose+Sbulk))
@@ -261,13 +271,13 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + Wcone + Wapu + Weng + Waftfuel
+      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng 
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +
-               xapu*Wapu +
+               xapu*Wapu + 
                xeng*Weng +
-               xfuel*Waftfuel) / Wtail
+               xftankaft*(Waftfuel + Wftank)) / Wtail
 
 #--------------------------------------------------------------------
 #--- shell bending inertias
