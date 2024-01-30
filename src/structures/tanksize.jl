@@ -50,18 +50,18 @@
 See [here](@ref fueltanks).
 """
 function tanksize(gee, rhoFuel, deltap,
-                      Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-                      h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
+                      Rfuse, dRfuse, hconvgas, Tfuel, Tair,
+                      t_cond, k, hconvair, time_flight, fstring,ffadd,
+                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, ifuel)
 
         Wfuel_init = Wfuel
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
         thickness_insul = sum(t_cond)
 
         residual(Δt) = res_MLI_thick(Δt, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-        h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
+        Rfuse, dRfuse, hconvgas, Tfuel, Tair,
+        t_cond, k, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, ifuel)
 
         Δt = Roots.find_zero(residual, 0.0) #Find root with Roots.jl
 
@@ -79,9 +79,9 @@ function tanksize(gee, rhoFuel, deltap,
 end
 
 function res_MLI_thick(Δt, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, h_LH2, Tfuel, Tair,
-        h_v, t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR)
+        Rfuse, dRfuse, hconvgas, Tfuel, Tair,
+        t_cond, k, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, ifuel)
 
         t_all = deepcopy(t_cond)
 
@@ -98,10 +98,10 @@ function res_MLI_thick(Δt, gee, rhoFuel, deltap,
                         Wfuel, m_boiloff, t_all, clearance_fuse, AR)
 
         m_boiloff, mdot_boiloff = tankWthermal(lshell, Rtank, Shead_insul,
-        hconvgas, h_LH2, hconvair,
+        hconvgas,  hconvair, 
         t_all, k,
-        Tfuel, Tair,
-        h_v, time_flight)
+        Tfuel, Tair, 
+        time_flight, ifuel)
 
         res = mdot_boiloff * gee * 3600 / Wfuel * 100 - threshold_percent #difference between current boiloff and desired
         return res

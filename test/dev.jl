@@ -18,4 +18,7 @@ ifuel = 40
 #Convective cooling
 hconvair = 15.0 * (288-20) #In W/(m^2 K)
 
-h_liq, hconvair, h_v, Tair = tank_heat_coeffs(11e3, 0.8, 11, 120, 6, 10)
+m_boiloff, mdot_boiloff = tankWthermal(2.0 , 2.0, [2*pi*2^2, 2*pi*2^2,2*pi*2^2,2*pi*2^2,2*pi*2^2],0.0,60.0,
+                      t_cond, k,
+                      120.0 , 220.0, 
+                      5*3600.0, 11)
