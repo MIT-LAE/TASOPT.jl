@@ -43,19 +43,13 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
-      if pari[iiengtype] == 0
-            Wtesys = parg[igWtesys]
-            xWtesys = parg[igxWtesys]
+      Wtesys = parg[igWtesys]
+      xWtesys = parg[igxWtesys]
 
-            Wftank = parg[igWftank]
-            xWftank = parg[igxWftank]
-      else
-            Wtesys = 0.0
-            xWtesys = 0.0
+      Wftank = parg[igWftank]
+      xWftank = parg[igxWftank]
 
-            Wftank = 0.0
-            xWftank = 0.0
-      end
+      nftanks = pari[iinftanks]
 
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
@@ -69,7 +63,7 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
 
       xwbox = parg[igxwbox]
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(parg)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = parg[igxwing] - parg[igxwbox]
@@ -98,7 +92,7 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
           rfuel * Wfuel +
           Wfuse +
           Wtesys +
-          Wftank +
+          nftanks * Wftank +
           Wwing +
           Wstrut +
           Whtail * Sh / Sh1 +
@@ -301,7 +295,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
       cosL = cos(sweep * π / 180.0)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(parg)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg)
 
       rpayC = 1.0
 
@@ -340,6 +334,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
       Wtesys = parg[igWtesys]
       xWtesys = parg[igxWtesys]
 
+      nftanks = pari[iinftanks]
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
@@ -394,7 +389,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
                rpayC * Wpay -
                Wfuse -
                Wtesys -
-               Wftank -
+               nftanks * Wftank -
                Wwing -
                Wstrut -
                Whtail -
@@ -432,7 +427,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
             We = Wfuse +
                  Wwing +
                  Wtesys +
-                 Wftank +
+                 nftanks * Wftank +
                  Wstrut +
                  Whtail +
                  Wvtail +
@@ -665,7 +660,7 @@ which gives an explicit solution for `rpayF`,`rpayB`.
 The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
-function cglpay(parg)
+function cglpay(pari, parg)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -681,6 +676,7 @@ function cglpay(parg)
       Wtesys = parg[igWtesys]
       #      xWtesys = parg[igxWtesys]
 
+      nftanks = pari[iinftanks]
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]
 
@@ -701,7 +697,7 @@ function cglpay(parg)
       We = rfuel * Wfuel +
            Wfuse +
            Wtesys +
-           Wftank +
+           nftanks * Wftank +
            Wwing +
            Wstrut +
            Whtail +
