@@ -1,6 +1,6 @@
 using Printf
 """
-    wsize(pari, parg, parm, para, pare,
+    wsize(aircraft, imission,
         itermax, wrlx1, wrlx2, wrlx3,
         initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
 
@@ -18,9 +18,16 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(pari, parg, parm, para, pare,
+function wsize(aircraft, imission,
     itermax, wrlx1, wrlx2, wrlx3,
     initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+
+    #Unpack data storage arrays
+    pari = aircraft.pari
+    parg = aircraft.parg
+    parm = view(aircraft.parm, :, imission)
+    para = view(aircraft.para, :, :, imission)
+    pare = view(aircraft.pare, :, :, imission)        
 
     time_propsys = 0.0
 
@@ -1323,11 +1330,12 @@ function wsize(pari, parg, parm, para, pare,
         #     Fuselage Fuel Tank weight
         # ----------------------
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+            fuse_tank = aircraft.fuse_tank #Unpack struct with tank parameters
             hconvgas = 0.0 #Convective coefficient of insulating purged gas
             Tfuel = pare[ieTft]
-            t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #assumed from energies -- Total thickness is 11.6 cm ~ Brewer's Rigid closed cell foam tank type A pg194 
-            #TODO replace t_cond by input? The first and third thicknesses are designed for later. Is this even needed?
-            k = ones(length(t_cond)) .* 5.0e-3 #foam thermal conductivities #TODO: check and maybe replace by input
+            t_cond = fuse_tank.t_insul
+            k = fuse_tank.k_insul
+            rho_insul = fuse_tank.rho_insul
 
             #Convective cooling
             xfuel = parg[igxftank]
@@ -1344,15 +1352,14 @@ function wsize(pari, parg, parm, para, pare,
 
             #Fuel tank design
             time_flight = para[iatime, ipdescent1]
-            sigskin = 172.4e6 #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operation)
-            rho_insul = [35.24, 14764, 35.24, 14764, 83] #energies
-            rhoskintank = 2825.0 #Al 2219 / energies
-            max_boiloff = 0.1 #%/h, maximum percentage of full fuel tank boiling off per hour 
-            ARtank = 2.0 #TODO: why? doesn't this overconstrain?
-            clearance_fuse = 0.10 #TODO: why?
-            ptank = 2.0 #atm #TODO: why? maybe write as input
-            ftankstiff = 0.1
-            ftankadd = 0.1
+            sigskin = fuse_tank.sigskin
+            rhoskintank = fuse_tank.rhoskintank
+            max_boiloff = fuse_tank.max_boiloff
+            ARtank = fuse_tank.ARtank
+            clearance_fuse = fuse_tank.clearance_fuse
+            ptank = fuse_tank.ptank
+            ftankstiff = fuse_tank.ftankstiff
+            ftankadd = fuse_tank.ftankadd
 
             cargotank = false #TODO: figure out why this is here
 

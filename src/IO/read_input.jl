@@ -141,15 +141,36 @@ elseif uppercase(fueltype) == "JET-A"
 else
     error("Check fuel type")
 end
-pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
 pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
 parg[igrhofuel] = readfuel("fuel_density")
 
+#Fuel storage options
+fuse_tank = fuselage_tank() #Initialize struct for fuelage fuel tank params
+
+fuel_stor = readfuel("Storage")
+dfuel_stor = dfuel["Storage"]
+readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
+
+pari[iifwing]  = readfuel_storage("fuel_in_wing")
+
 if pari[iifwing]  == 0 #If fuel is stored in fuselage
-    pari[iinftanks] = readfuel("fuel_tanks_in_fuse")
+    pari[iinftanks] = readfuel_storage("fuel_tanks_in_fuse")
+
+    fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
+    fuse_tank.k_insul= readfuel_storage("insulation_segment_conductivity")
+    fuse_tank.rho_insul = readfuel_storage("insulation_segment_density")
+    fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
+    fuse_tank.sigskin = readfuel_storage("skin_yield_strength")
+    fuse_tank.rhoskintank = readfuel_storage("tank_skin_density")
+    fuse_tank.max_boiloff = readfuel_storage("maximum_boiloff_rate")
+    fuse_tank.ARtank = readfuel_storage("fuel_tanks_in_fuse")
+    fuse_tank.clearance_fuse = readfuel_storage("fuselage_clearance")
+    fuse_tank.ptank = readfuel_storage("tank_pressure")
+    fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
+    fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
 end
 
 # Setup mission variables
@@ -790,7 +811,7 @@ catch #Do nothing if the heat exchanger field does not exist
 end
 
 return TASOPT.aircraft(name, description,
-pari, parg, parm, para, pare)
+pari, parg, parm, para, pare, fuse_tank)
 
 end
 

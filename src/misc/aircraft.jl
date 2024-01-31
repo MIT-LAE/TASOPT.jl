@@ -19,6 +19,23 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 
 For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
+
+mutable struct fuselage_tank
+    t_insul::Array{Float64}
+    k_insul::Array{Float64}
+    rho_insul::Array{Float64}
+    iinsuldes::Array{Float64}
+    sigskin::Float64
+    rhoskintank::Float64
+    max_boiloff::Float64
+    ARtank::Float64
+    clearance_fuse::Float64
+    ptank::Float64
+    ftankstiff::Float64
+    ftankadd::Float64
+    fuselage_tank() = new() 
+end
+
 struct aircraft
     name::String
     description::String
@@ -27,6 +44,7 @@ struct aircraft
     parm::AbstractArray{Float64}
     para::AbstractArray{Float64}
     pare::AbstractArray{Float64}
+    fuse_tank::fuselage_tank
 end
 
 function Base.summary(ac::aircraft)

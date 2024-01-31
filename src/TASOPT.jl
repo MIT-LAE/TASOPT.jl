@@ -95,8 +95,7 @@ function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
         printiter=true, saveOD=false)
 
     Ldebug && println("Max weight iterations = $iter")
-    wsize(ac.pari, ac.parg, view(ac.parm, :, 1), 
-        view(ac.para, :, :, 1), view(ac.pare, :, :, 1),
+    wsize(ac, 1,
         iter, 0.5, 0.9, 0.5, initwgt, 0, 1, Ldebug, printiter, saveOD)
 end
 end
