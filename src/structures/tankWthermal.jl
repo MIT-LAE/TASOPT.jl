@@ -76,8 +76,8 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
       R_eq_ext = R_mli_tot + Rair_conv_rad
 
       #Use Roots.jl to find the liquid-side wall temperature
-      residual_Q(T_w) = res_Q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
-      T_w = Roots.find_zero(residual_Q, Tfuel + 1) #Find root with Roots.jl
+      residual_q(T_w) = res_q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
+      T_w = Roots.find_zero(residual_q, Tfuel + 1) #Find root with Roots.jl
       h_liq, h_v = tank_heat_coeffs(T_w, ifuel, Tfuel, ltank) #Liquid side h and heat of vaporization
 
       R_liq = 1 / (h_liq * S_ratio) #thermal resistance of liquid
@@ -92,7 +92,7 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
 end
 
 """
-      res_Q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
+      res_q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
 
 This function calculates the difference between the wall-side heat transfer and the overall heat transfer for
 a given wall temperature. This residual should be 0 at the correct wall temperature. 
@@ -110,7 +110,7 @@ a given wall temperature. This residual should be 0 at the correct wall temperat
       **Outputs:**
       - `res::Float64`: residual (W/m^2).
 """
-function res_Q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
+function res_q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
 
       h_liq, _ = tank_heat_coeffs(T_w, ifuel, Tfuel, ltank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_ratio) #Liquid-side thermal resistance
@@ -193,7 +193,7 @@ function freestream_heat_coeff(z, M, xftank)
       u = M * a #freestrean velocity
 
       Re_xftank = ρ * u * xftank / μ
-      Cf_xftank = 0.0576 / Re_xftank^0.2 #Turbulent flat plate skin friction coefficient       
+      Cf_xftank = 0.455 / (log10(Re_xftank)^2.58 * (1 + 0.144 * M^2)^0.65) #Turbulent flat plate skin friction coefficient (12.27 in Raymer)
       #Calculate Stanton number using Reynolds analogy
       St_air = Cf_xftank / (2 * Pr_t^(2/3)) #Chilton-Colburn analogy
       hconvair = St_air * ρ *u* cp_air #In W/(m^2 K)
