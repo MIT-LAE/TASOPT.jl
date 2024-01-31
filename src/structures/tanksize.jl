@@ -52,7 +52,8 @@ See [here](@ref fueltanks).
 function tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, Tfuel, Tair,
                       t_cond, k, hconvair, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, ifuel)
+                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+                      iinsuldes, ifuel)
 
         Wfuel_init = Wfuel
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
@@ -61,12 +62,14 @@ function tanksize(gee, rhoFuel, deltap,
         residual(Δt) = res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, ifuel)
+        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+        iinsuldes, ifuel)
 
         Δt = Roots.find_zero(residual, 0.0) #Find root with Roots.jl
 
-        t_cond[1] = t_cond[1] + Δt  #increase foam insulation thickness of layers 1 and 3
-        t_cond[3] = t_cond[3] + Δt
+        for ind in iinsuldes #For every segment whose thickness can be changed
+                t_cond[ind] = t_cond[ind] + Δt  
+        end
 
         mdot_boiloff = threshold_percent
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
@@ -81,12 +84,14 @@ end
 function res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, ifuel)
+        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+        iinsuldes, ifuel)
 
         t_all = deepcopy(t_cond)
 
-        t_all[1] = t_all[1] + Δt  #increase foam insulation thickness of layers 1 and 3
-        t_all[3] = t_all[3] + Δt
+        for ind in iinsuldes #For every segment whose thickness can be changed
+                t_all[ind] = t_all[ind] + Δt  
+        end
 
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
 
