@@ -1336,6 +1336,7 @@ function wsize(aircraft, imission,
             t_cond = fuse_tank.t_insul
             k = fuse_tank.k_insul
             rho_insul = fuse_tank.rho_insul
+            iinsuldes = fuse_tank.iinsuldes #Indices of insulation segments to be designed
 
             #Convective cooling
             xfuel = parg[igxftank]
@@ -1377,7 +1378,7 @@ function wsize(aircraft, imission,
                 Rfuse, dRfuse, hconvgas, Tfuel, Tair,
                 t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                Wfmaintank, max_boiloff, clearance_fuse, ARtank, ifuel)
+                Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = Wtank #weight of one tank; there are two

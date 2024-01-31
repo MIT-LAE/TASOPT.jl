@@ -24,7 +24,7 @@ mutable struct fuselage_tank
     t_insul::Array{Float64}
     k_insul::Array{Float64}
     rho_insul::Array{Float64}
-    iinsuldes::Array{Float64}
+    iinsuldes::Array{Int64}
     sigskin::Float64
     rhoskintank::Float64
     max_boiloff::Float64
