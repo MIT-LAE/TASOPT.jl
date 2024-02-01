@@ -15,7 +15,6 @@ function update_fuse!(pari, parg)
     lhbox2conend = parg[igxconend] - parg[igxhbox ]
     lvbox2conend = parg[igxconend] - parg[igxvbox ]
 
-
     #Update positions and fuselage length
     parg[igxblend2] = parg[igxblend1] + nftanks * (lftank + lftoffset) + lcyl
        
@@ -31,6 +30,7 @@ function update_fuse!(pari, parg)
     
     parg[igxhbox   ] = parg[igxconend ] - lhbox2conend
     parg[igxvbox   ] = parg[igxconend ] - lvbox2conend
+    
     parg[igxeng    ] =  parg[igxwbox] - leng2wbox
 
 
