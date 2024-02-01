@@ -159,7 +159,7 @@ function tank_heat_coeffs(T_w, ifuel, Tfuel, ltank)
             k = 0.10381
       end
 
-      Ra_l = gee * β * (T_w - Tfuel) * ltank^3 * Pr_l / ν_l^2 #Tank-length-based Rayleigh number
+      Ra_l = gee * β * abs(T_w - Tfuel) * ltank^3 * Pr_l / ν_l^2 #Tank-length-based Rayleigh number
 
       Nu_l = 0.0605 * Ra_l^(1/3) #Length-based Nusselt number for liquid side, from https://doi.org/10.2514/6.1986-1253
 
