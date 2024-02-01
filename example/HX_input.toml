@@ -118,7 +118,7 @@ name = "Default TASOPT Model with HX"
     cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
-    radius = "77 in"       # Fuselage radius
+    radius = "100 in"       # Fuselage radius
     dRadius = "15 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "5.0 in" # depth of floor beams
@@ -136,17 +136,17 @@ name = "Default TASOPT Model with HX"
     x_nose_tip           = "0 ft"
     x_pressure_shell_fwd = "17 ft"
     x_start_cylinder     = "20 ft"
-    x_end_cylinder       = "97 ft"
-    x_pressure_shell_aft = "102 ft"
-    x_cone_end           = "117 ft"
-    x_end                = "124 ft"
+    x_end_cylinder       = "80 ft"
+    x_pressure_shell_aft = "85 ft"
+    x_cone_end           = "100 ft"
+    x_end                = "107 ft"
     
 # Power systems and landing gear locations
     x_HPE_sys = "62ft" #Hydraulic, Pneumatic and Electrical systems
     x_nose_landing_gear        = "14ft"
     x_main_landing_gear_offset = "1 ft" # main LG offset behind the wing lift centroid
 
-    x_APU = "120 ft"
+    x_APU = "103 ft"
 
     x_fixed_weight = "7ft" #Cockpit/ pilots etc
 

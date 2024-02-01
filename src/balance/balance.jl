@@ -120,11 +120,11 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       W_Sh = Whtail / Sh1
 
       #Calcualte fuel moment and derivaties wrt to wing box location 
-      if pari[iifwing] == 0 # No fuel in wings - typically for Hydrogen fuel 
-            xWfuel = rfuel * (Wfuel * parg[igxftank])
+      if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+            xWfuel = Wfuel * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) / nftanks
             xWfuel_xwbox = 0.0
       else
-            xWfuel = rfuel * (Wfuel * parg[igxwbox] + parg[igdxWfuel])
+            xWfuel = Wfuel * parg[igxwbox] + parg[igdxWfuel]
             xWfuel_xwbox = rfuel * Wfuel
       end
 
@@ -694,6 +694,12 @@ function cglpay(pari, parg)
 
       # See Eqn 283 in TASOPT documentation
 
+      if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+            xWfuel = Wfuel * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) / nftanks
+      else
+            xWfuel = Wfuel * parg[igxwbox] + parg[igdxWfuel]
+      end
+
       We = rfuel * Wfuel +
            Wfuse +
            Wtesys +
@@ -707,7 +713,7 @@ function cglpay(pari, parg)
            Wlgnose +
            Wlgmain
 
-      xWe = rfuel * (Wfuel * parg[igxwbox] + parg[igdxWfuel]) +
+      xWe = rfuel * xWfuel +
             parg[igxWfuse] + parg[igxWtesys] + parg[igxWftank] +
             Wwing * parg[igxwbox] + parg[igdxWwing] +
             Wstrut * parg[igxwbox] + parg[igdxWstrut] +
@@ -718,7 +724,6 @@ function cglpay(pari, parg)
             Wlgnose * parg[igxlgnose] +
             Wlgmain * (parg[igxwbox] + delxw + parg[igdxlgmain])
 
-      xWfuel = parg[igxftank] * Wfuel
 
       # Some derivation here:        
       #   xpay = xcabin + (ξpay-0.5)*lcabin*(1.0-rpay)  [1]                                   
