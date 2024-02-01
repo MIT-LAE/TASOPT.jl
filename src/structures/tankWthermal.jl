@@ -5,10 +5,10 @@
       Tfuel::Float64 , Tair::Float64, 
       time_flight::Float64, ifuel::Int64)
 
-`tankWthermal` calculates the boil-off rate of LH2 for a given insulation thickness.
+`tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
 
 This subroutine does **not** size the thermal insulation layers
-but rather calculates the boil-off rate of fLH2, 
+but rather calculates the boil-off rate of the fuel, 
 for a given insulation thickness
       
 !!! details "🔃 Inputs and Outputs"
