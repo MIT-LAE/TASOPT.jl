@@ -20,9 +20,6 @@ function update_fuse!(pari, parg)
        
     parg[igxshell2 ] = parg[igxblend2] + dxcyl2shell_aft
 
-    # parg[igxftankfront ]  = parg[igxblend1] + 1.0*ft_to_m + ltank/2 #(buffer)
-    # parg[igxftankaft ]  = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
-
     parg[igxconend ] = parg[igxshell2] + dxshell2conend
     parg[igxapu    ] = parg[igxshell2] + dxshell2apu
     parg[igxend    ] = parg[igxapu] + dxapu2end
@@ -33,6 +30,4 @@ function update_fuse!(pari, parg)
     
     parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox
 
-
-    
 end
