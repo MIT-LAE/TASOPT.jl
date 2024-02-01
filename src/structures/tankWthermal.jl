@@ -1,8 +1,9 @@
 """
-      tankWthermal(l_cyl, r_tank, Shead,
-            hconvgas, h_LH2, hconvair, 
-            t_cond, k, Tfuel, Tair, 
-            h_v:, time_flight)
+      tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1},
+      hconvgas::Float64,  hconvair::Float64, 
+      t_cond::Array{Float64,1}, k::Array{Float64,1},
+      Tfuel::Float64 , Tair::Float64, 
+      time_flight::Float64, ifuel::Int64)
 
 `tankWthermal` calculates the boil-off rate of LH2 for a given insulation thickness.
 
@@ -12,7 +13,8 @@ for a given insulation thickness
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `l_cyl::Float64`: Length of the tank (m).
+      - `l_cyl::Float64`: Length of cylindrical portion of the tank (m).
+      - `l_tank::Float64`: Tank total length (m).
       - `r_tank::Float64`: Tank outer radius (m).
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
       - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
@@ -21,8 +23,8 @@ for a given insulation thickness
       - `k::Array{Float64,1}`: Thermal conductivity array (W/(m*K)) comprising k values for each MLI layer.
       - `Tfuel::Float64`: Fuel temperature (K).
       - `Tair::Float64`: Ambient temperature (K).
-      - `h_v::Float64`: Heat of vaporization of liquid hydrogen (J/kg).
       - `time_flight::Float64`: Time of flight (s).
+      - `ifuel::Int64`: fuel index.
 
       **Outputs:**
       - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
@@ -30,7 +32,7 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1},
+function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1},
                       hconvgas::Float64,  hconvair::Float64, 
                       t_cond::Array{Float64,1}, k::Array{Float64,1},
                       Tfuel::Float64 , Tair::Float64, 
@@ -38,7 +40,6 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
 
       N = length(t_cond)       # Number of layers in insulation
       thickness = sum(t_cond)  # total thickness of insulation
-      ltank = l_cyl + 2 * r_tank
 
 #--- Heat flux and resistances
       ΔT = Tair - Tfuel  # Overall temperature drop between ambient and LH2
@@ -56,7 +57,7 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
       r_inner = r_tank #- thickness
 
       # Not needed for MLI. May add later for purged He etc. Rgas = 1 / (hconvgas * 2 * pi * r_inner * l_cyl)  #thermal resistance of purged gas
-      S_ratio = (2π * (r_inner - thickness) * l_cyl) + 2*Shead[1]
+      S_int = (2π * (r_inner - thickness) * l_cyl) + 2*Shead[1] #liquid side surface area
       
       R_mli      = zeros(Float64, N)  #size of MLI resistance array (Based on number of layers)
       R_mli_ends = zeros(Float64, N)
@@ -76,11 +77,11 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
       R_eq_ext = R_mli_tot + Rair_conv_rad
 
       #Use Roots.jl to find the liquid-side wall temperature
-      residual_q(T_w) = res_q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
+      residual_q(T_w) = res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, l_tank)
       T_w = Roots.find_zero(residual_q, Tfuel + 1) #Find root with Roots.jl
-      h_liq, h_v = tank_heat_coeffs(T_w, ifuel, Tfuel, ltank) #Liquid side h and heat of vaporization
+      h_liq, h_v = tank_heat_coeffs(T_w, ifuel, Tfuel, l_tank) #Liquid side h and heat of vaporization
 
-      R_liq = 1 / (h_liq * S_ratio) #thermal resistance of liquid
+      R_liq = 1 / (h_liq * S_int) #thermal resistance of liquid
 
       Req = R_eq_ext + R_liq  # Total equivalent resistance of thermal circuit
 
@@ -92,7 +93,7 @@ function tankWthermal(l_cyl::Float64  , r_tank::Float64, Shead::Array{Float64,1}
 end
 
 """
-      res_q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
+      res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
 
 This function calculates the difference between the wall-side heat transfer and the overall heat transfer for
 a given wall temperature. This residual should be 0 at the correct wall temperature. 
@@ -101,7 +102,7 @@ a given wall temperature. This residual should be 0 at the correct wall temperat
       **Inputs:**
       - `T_w::Float64`: wall temperature (K).
       - `ΔT::Float64`: difference between liquid in tank and outside air.
-      - `S_ratio::Float64`: ratio of liquid-side heat transfer area to reference area.
+      - `S_int::Float64`: liquid-side surface area (m^2).
       - `R_eq_ext::Float64`: total thermal resistance of wall and outside air (m^2 K / W).
       - `ifuel::Int64`: fuel index.
       - `Tfuel::Float64`: temperature of fuel in fuel tank (K).
@@ -110,10 +111,10 @@ a given wall temperature. This residual should be 0 at the correct wall temperat
       **Outputs:**
       - `res::Float64`: residual (W/m^2).
 """
-function res_q_tank(T_w, ΔT, S_ratio, R_eq_ext, ifuel, Tfuel, ltank)
+function res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
 
       h_liq, _ = tank_heat_coeffs(T_w, ifuel, Tfuel, ltank) #Find liquid-side heat transfer coefficient
-      R_liq = 1 / (h_liq * S_ratio) #Liquid-side thermal resistance
+      R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
       Req = R_eq_ext + R_liq #Total equivalent thermal resistance
 
       q1 =  ΔT / Req #Heat transfer rate from overall resistance
