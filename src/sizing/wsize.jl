@@ -670,8 +670,12 @@ function wsize(aircraft, imission,
         ltank = parg[iglftank] #Fuel tank length
         #From dsalgado's H2 model
         if (pari[iifwing] == 0) #If fuel is not stored in the wings
-            Waftfuel = parg[igWfuel] / (2 * (nftanks - 1)) #If only one tank, there's no aft tank; 
-                                                    #if there are 2 tanks, half fuel stored in each one #TODO; fix this
+            if nftanks == 1
+                Waftfuel = 0
+            else
+                Waftfuel = parg[igWfuel] / 2 #If only one tank, there's no aft tank; 
+                                                    #if there are 2 tanks, half fuel stored in each one 
+            end
             lcabin = parg[igxblend2] - (parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
             
             xfuel = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
@@ -1378,7 +1382,7 @@ function wsize(aircraft, imission,
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = Wtank #weight of one tank; there are two
-            parg[igxWftank] = Wtank * (parg[igxftankaft] + parg[igxftank]) #TODO consider case with only one tank
+            parg[igxWftank] = Wtank * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) #TODO consider case with only one tank
             parg[iglftank] = l_tank
             parg[igRftank] = Rtank
             parg[igWinsftank] = Winsul_sum
