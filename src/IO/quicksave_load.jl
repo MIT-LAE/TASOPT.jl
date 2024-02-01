@@ -1,7 +1,4 @@
-using TASOPT
-using TOML
 export quicksave_aircraft, quickload_aircraft
-
 
 """
     quicksave_aircraft(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
@@ -62,61 +59,6 @@ end
 # function slicematrix(A::AbstractMatrix)
 #     return [A[i, :] for i in 1:size(A,1)]
 # end
-
-"""
-    array2nestedvectors(A::Array)
-
-Converts any n-dimensional array to a nested Vector representation and returns it.
-Used in .toml IO.
-"""
-function array2nestedvectors(A::Array)
-    if ndims(A) == 1
-        # If the array is 1D, return it as is
-        return A
-    else
-        # For higher-dimensional arrays, recursively convert subarrays
-        return [array2nestedvectors(copy(subarr)) for subarr in eachslice(A, dims = 1)]
-    end
-end
-
-"""
-    nestedvectors2array(nested_vectors::AbstractVector)
-
-Converts vectors nested within vectors to a multi-dimensional array.
-Used in .toml IO.
-"""
-function nestedvectors2array(nested_vectors::AbstractVector)
-    #identify how many levels deep it goes, obtaining lengths
-    first_elem = nested_vectors[1]
-    lengths = [length(nested_vectors)]
-        #while the vector's first element is /still/ a vector
-        while typeof(first_elem) <: Vector
-            #save length and
-            #go a level deeper
-            push!(lengths,length(first_elem))
-            first_elem = first_elem[1]
-        end #once the first element isn't a vector (i.e., reached bottom level)
-
-    #recursively generate flat_vector
-    flat_vector = []
-    function flatten_vector(v)
-        for el in v
-            if el isa Vector
-                flatten_vector(el)
-            else
-                push!(flat_vector, el)
-            end
-        end
-    end
-    flatten_vector(nested_vectors)
-
-    #reshape flat vector with length information 
-    #s.t. output is an Array{Float64,n} where n = length(lengths)
-    # result_array = reshape(flat_vector, reverse(lengths)...)
-    result_array = permutedims(reshape(flat_vector, reverse(lengths)...),length(lengths):-1:1)
-
-    return result_array
-end
 
 
 """

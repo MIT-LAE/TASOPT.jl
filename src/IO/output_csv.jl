@@ -1,4 +1,6 @@
-# using CSV, Tables
+export output_csv, default_output_indices
+export output_indices_all, output_indices_wGeom, output_indices_wEngine
+
 """
 
 WIP (see TODO)
@@ -8,9 +10,20 @@ A typical set of values is output by default for the design mission at the first
 Appends to extant `filepath` if headers are compatible, appending integer suffixes to filename when not.
 
 Output is customizable by:
-    - `indices` dictionary mapping par arrays to desired indices: Dict(){String => Union{AbstractVector,Colon(), Integer}}. See `default_output_indices`,
+    - `indices` dictionary mapping par arrays to desired indices,
     - `includeAllMissions` provides add'l columns for all specified missions,
     - `includeAllFlightPoints` provides values for all flight points as an array in a cell.
+
+    !!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::TASOPT.aircraft`: TASOPT aircraft `struct` containing model in any state. 
+    - `filepath::String`: path and name of .csv file to be written.
+    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See `default_output_indices`
+    - `includeAllMissions::Bool`: 
+    - `includeAllFlightPoints::Bool`: 
+    - `overwrite::Bool`: 
+    **Outputs:**
+    - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
 
 TODO:
 - column name lookup with dict 
@@ -22,8 +35,8 @@ TODO:
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
     filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
     indices::Dict = default_output_indices,
-    includeAllMissions = false, includeAllFlightPoints = false,
-    overwrite = false)
+    includeAllMissions::Bool = false, includeAllFlightPoints::Bool = false,
+    overwrite::Bool = false)
 
     #initialize row to write out
     csv_row = []
@@ -53,12 +66,12 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
         append!(csv_row,ac.pari[indices["pari"]],
                         ac.parg[indices["parg"]],
                         ac.parm[indices["parm"],1])
-        #if flight-point variables are requested, append as arrays
-        if !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
-            append!(csv_row,[ac.para[indices["para"],:,1]])   #each csv entry contains array
+        #if flight-point variables are requested, append as arrays (colon case to short-circuit isempty iterable req't)
+        if (indices["para"]==Colon()) || !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
+            append!(csv_row,array2nestedvectors(ac.para[indices["para"],:,1]))   #each csv entry contains array
         end
-        if !isempty(indices["pare"])    # ( " )
-            append!(csv_row,[ac.pare[indices["pare"],:,1]])   # ( " )
+        if (indices["para"]==Colon()) || !isempty(indices["pare"])    # ( " )
+            append!(csv_row,array2nestedvectors(ac.pare[indices["pare"],:,1]))   # ( " )
         end
     else #grab only the first cruise point of flight segments, design (first) mission
         append!(csv_row,ac.pari[indices["pari"]],
@@ -96,6 +109,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     io = open(newfilepath,"a+")
     CSV.write(io, Tables.table(csv_row), header = header, append = bool_append)
     close(io)
+    return newfilepath
 end
 
 """
@@ -158,13 +172,52 @@ Format: Dict(){String => Union{AbstractVector,Colon(), Integer}}
 """
 default_output_indices = 
     Dict("pari" => Colon(),
-        "parg" => [igWMTO, igWfuel, igWpay, igfhpesys, igflgnose,igflgmain,
+        "parg" => [#weights
+                    igWMTO, igWfuel, igWpay, igWpaymax, igfhpesys, igflgnose,igflgmain,
                     igWweb,igWcap, igfflap,igfslat, igfaile, igflete, igfribs, igfspoi, igfwatt,
-                    igWfuse, igWwing, igWvtail, igWhtail, igWtesys, igWftank
+                    igWfuse, igWwing, igWvtail, igWhtail, igWtesys, igWftank, 
+                    
+                    #wing geom
+                    igAR, igS, igb, igbo, igbs, igco, iglambdat, iglambdas, igsweep,
+
+                    #stabilizers geom
+                    igVh, igARh, igSh, igbh, igboh, iglambdah, igcoh, igsweeph, 
+                    igVv, igARv, igSv, igbv, igbov, iglambdav, igcov, igsweepv, 
+
+                    #other
+                    igdfan, igGearf,
+
+                    #performance, different from im?
+                    igPFEI, igRange
                     ],
-        "parm" => [
+        "parm" => [imRange, imWpay, imWTO, imWfuel, imPFEI, 
                     ],
-        "para" => [
+        "para" => [iaalt, iaMach, iaReunit,iagamV,      #flight conditions
+                    iaCL, iaCD, iaCDi, iaCLh,iaspaneff, #performance
+                    iaxCG, iaxCP,                       #balance
                     ],
-        "pare" => [ieTt4])
+        "pare" => [iehfuel, ieTfuel, ieff, ieBPR, iepif, iepilc, iepihc, 
+                ieN1, ieN2,
+                #core flow
+                ieTt0,ieTt19,ieTt3,ieTt4,ieTt45, ieTt49, ieTt5, 
+                iept0,iept19,iept3,iept4,iept45, iept49, iept5, 
+                #bypass flow
+                ieTt2, ieTt21, ieTt9,
+                iept2, iept21, iept9
+        ])
                      
+output_indices_wGeom = deepcopy(default_output_indices)
+#TODO:append geometry params
+
+
+
+output_indices_wEng = deepcopy(default_output_indices)
+#TODO:append engine params
+
+
+
+output_indices_all =  Dict("pari" => Colon(),
+                            "parg" => Colon(),
+                            "parm" => Colon(),
+                            "para" => Colon(),
+                            "pare" => Colon())

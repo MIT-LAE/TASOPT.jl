@@ -64,15 +64,13 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 # Input and output functions
 # include("./IO/read_input.jl")
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
-export read_aircraft_model, load_default_model
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
+
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
-export generate_par_indname
 include(joinpath(__TASOPTroot__,"IO/read_externals.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
-export output_csv, default_output_indices
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
