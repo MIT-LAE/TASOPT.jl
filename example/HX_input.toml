@@ -3,8 +3,8 @@
 name = "Default TASOPT Model with HX"
     description = """737-800
     This file is a slightly modified version of the default TASOPT file. It replaces the fuel
-    with methane (but does not make the corresponding fuel system changes, like fuselage storage and insulation) 
-    to demonstrate the heat exchanger capabilities.
+    with liquid hydrogen and makes the corresponding fuel system changes such as fuselage storage and insulation. It
+    also demonstrates the heat exchanger capabilities in the engine model.
     """
 
 #-------------------------------------------------#
