@@ -121,10 +121,10 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
 
       #Calcualte fuel moment and derivaties wrt to wing box location 
       if (pari[iifwing] == 0) #If fuel is stored in the fuselage
-            xWfuel = Wfuel * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) / nftanks
+            xWfuel = rfuel * Wfuel * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) / nftanks
             xWfuel_xwbox = 0.0
       else
-            xWfuel = Wfuel * parg[igxwbox] + parg[igdxWfuel]
+            xWfuel = rfuel * (Wfuel * parg[igxwbox] + parg[igdxWfuel])
             xWfuel_xwbox = rfuel * Wfuel
       end
 
