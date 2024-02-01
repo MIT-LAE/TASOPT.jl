@@ -283,7 +283,7 @@ name = "Default TASOPT Model with HX"
         taper = 0.25
         sweep = 26.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
-        x_Htail = "114.5 ft"
+        x_Htail = "97.5 ft"
         z_Htail = "0 ft"
 
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
@@ -320,7 +320,7 @@ name = "Default TASOPT Model with HX"
         taper = 0.30
         sweep = 25.0
         center_box_halfspan = 0.0
-        x_Vtail = "110 ft"
+        x_Vtail = "93 ft"
         number_Vtails = 1.0
 
         VTsize = "Vv" # Options are "Vv" or "OEI"
