@@ -646,7 +646,6 @@ function wsize(aircraft, imission,
             # default is no under-relaxation for weight update
             rlx = wrlx2
         end
-
         # Fuselage sizing
 
         # Max tail lifts at maneuver qne
@@ -1279,6 +1278,7 @@ function wsize(aircraft, imission,
         parg[igGJh] = GJoh
 
         # HT centroid x-offset
+        xhbox = parg[igxhbox]
         dxh, macco = surfdx(bh, boh, boh, λh, λhs, sweeph)
         parg[igxhtail] = xhbox + dxh
 
@@ -1327,6 +1327,7 @@ function wsize(aircraft, imission,
         parg[igGJv] = GJov
 
         # VT centroid x-offset
+        xvbox = parg[igxvbox]
         dxv, _ = surfdx(bv2, bov, bov, λv, λvs, sweepv)
         parg[igxvtail] = xvbox + dxv
 

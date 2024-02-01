@@ -319,7 +319,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Len(readgeom("x_engines"))
     parg[igyeng] = Len(readgeom("y_critical_engines"))
 
-    parg[iglblend2blend] = parg[igxblend2] - parg[igxblend1]
+    parg[igdxblend2blend] = parg[igxblend2] - parg[igxblend1]
 
 # ------ End fuse -------
 # ---------------------------------
@@ -351,6 +351,8 @@ readwing(x) = read_input(x, wing, dwing)
 
     parg[igxwbox] = Len(readwing("x_wing_box"))
     parg[igzwing] = Len(readwing("z_wing"))
+
+    parg[igdxeng2wbox] = parg[igxwbox] - parg[igxeng]
 
     ## Strut details only used if strut_braced_wing is true
     parg[igzs]      = Len(readwing("z_strut"))
