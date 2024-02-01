@@ -189,7 +189,7 @@ default_output_indices =
                     iaCL, iaCD, iaCDi, iaCLh,iaspaneff, #performance
                     iaxCG, iaxCP,                       #balance
                     ],
-        "pare" => [iehfuel, ieTfuel, ieff, ieBPR, iepif, iepilc, iepihc, 
+        "pare" => [iehfuel, ieTfuel, ieff, ieTSFC, ieBPR,ieOPR, iepif, iepilc, iepihc
         ])
                      
 output_indices_wGeom = deepcopy(default_output_indices)
@@ -205,13 +205,19 @@ output_indices_wGeom["parg"] = parginds
 output_indices_wEngine = deepcopy(default_output_indices)
 #append engine params
 pareinds = output_indices_wEngine["pare"]
-pare_toadd = [ieN1, ieN2,#spool speeds
+pare_toadd = [
+            ieFe, ieFsp,
+            ieN1, ieN2,#spool speeds
             #core flow
             ieTt0,ieTt19,ieTt3,ieTt4,ieTt45, ieTt49, ieTt5, 
             iept0,iept19,iept3,iept4,iept45, iept49, iept5, 
             #bypass flow
             ieTt2, ieTt21, ieTt9,
-            iept2, iept21, iept9]
+            iept2, iept21, iept9,
+            
+            iedeNOx, iemdotf, ieEINOx1, ieEINOx2,
+            ieFAR, ieOPR
+            ]
 append!(pareinds, pare_toadd)
 output_indices_wEngine["pare"] = pareinds
 
