@@ -1365,7 +1365,7 @@ function wsize(aircraft, imission,
 
             cargotank = false #TODO: figure out why this is here
 
-            if cargotank
+            if cargotank #TODO the cargotank = true case is not currently supported
                 Wfmaintank = parg[igWfuel] * 2 / 3
                 Wfcargotank = parg[igWfuel] * 1 / 3
             else
