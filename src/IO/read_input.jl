@@ -319,6 +319,8 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Len(readgeom("x_engines"))
     parg[igyeng] = Len(readgeom("y_critical_engines"))
 
+    parg[iglblend2blend] = parg[igxblend2] - parg[igxblend1]
+
 # ------ End fuse -------
 # ---------------------------------
 # Wing

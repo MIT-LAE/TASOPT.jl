@@ -1399,8 +1399,8 @@ function wsize(aircraft, imission,
 
             end
 
-            ## Update fuselage according to tank requirements
-            #update_fuse!(parg) #TODO: update fuselage length based on fuel tank size
+            # Update fuselage according to tank requirements
+            update_fuse!(pari, parg) #TODO: update fuselage length based on fuel tank size
             fusebl!(pari, parg, para, ipcruise1)
 
             #Update fuselage BL properties

@@ -9,7 +9,7 @@ using ..atmosphere
 
 using Roots
 
-export surfw, surfdx, fusew, tailpo, tanksize
+export surfw, surfdx, fusew, tailpo, tanksize, update_fuse!
 
 include("../misc/index.inc")
 include("../misc/constants.jl")
@@ -25,5 +25,6 @@ include("tailpo.jl")
 include("tankWmech.jl")
 include("tankWthermal.jl")
 include("tanksize.jl")
+include("update_fuse.jl")
 
 end
