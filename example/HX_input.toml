@@ -45,6 +45,7 @@ name = "Default TASOPT Model with HX"
                          #            TE: Turbo-electric
 [Fuel]
     fuel_type       = "LH2" # Choices are ... [TODO]
+    fuel_in_wing    = false # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
@@ -52,8 +53,6 @@ name = "Default TASOPT Model with HX"
     fuel_density = 70.0 #kg/m3
 
 [Fuel.Storage]
-    fuel_in_wing    = false # Is fuel stored in wings?
-    
     fuel_tanks_in_fuse = 2 #number of fuel tanks in fuselage
     insulation_segment_base_thickness = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] 
     insulation_segment_conductivity = [5e-3, 5e-3, 5e-3, 5e-3, 5e-3]
