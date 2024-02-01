@@ -47,14 +47,12 @@
                          #            TE: Turbo-electric
 [Fuel]
     fuel_type       = "Jet-A" # Choices are ... [TODO]
+    fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
-
-[Fuel.Storage]
-    fuel_in_wing    = true # Is fuel stored in wings?
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)

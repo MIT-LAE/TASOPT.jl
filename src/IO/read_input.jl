@@ -141,6 +141,7 @@ elseif uppercase(fueltype) == "JET-A"
 else
     error("Check fuel type")
 end
+pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
@@ -150,13 +151,10 @@ parg[igrhofuel] = readfuel("fuel_density")
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuelage fuel tank params
 
-fuel_stor = readfuel("Storage")
-dfuel_stor = dfuel["Storage"]
-readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
-
-pari[iifwing]  = readfuel_storage("fuel_in_wing")
-
 if pari[iifwing]  == 0 #If fuel is stored in fuselage
+    fuel_stor = readfuel("Storage")
+    readfuel_storage(x::String) = read_input(x, fuel_stor, Dict())
+
     pari[iinftanks] = readfuel_storage("fuel_tanks_in_fuse")
 
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
