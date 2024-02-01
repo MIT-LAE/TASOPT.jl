@@ -29,7 +29,7 @@ TODO:
 - column name lookup with dict 
     currently column headers are e.g., iifuel, ieA5fac
     desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
-- missions logic (separate columns)
+- missions logic (separate columns - - could swap axes with flight segments)
 - bug: bonus rows of last #? (comes from overwrite)
 """
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
@@ -177,13 +177,6 @@ default_output_indices =
                     igWweb,igWcap, igfflap,igfslat, igfaile, igflete, igfribs, igfspoi, igfwatt,
                     igWfuse, igWwing, igWvtail, igWhtail, igWtesys, igWftank, 
                     
-                    #wing geom
-                    igAR, igS, igb, igbo, igbs, igco, iglambdat, iglambdas, igsweep,
-
-                    #stabilizers geom
-                    igVh, igARh, igSh, igbh, igboh, iglambdah, igcoh, igsweeph, 
-                    igVv, igARv, igSv, igbv, igbov, iglambdav, igcov, igsweepv, 
-
                     #other
                     igdfan, igGearf,
 
@@ -197,24 +190,30 @@ default_output_indices =
                     iaxCG, iaxCP,                       #balance
                     ],
         "pare" => [iehfuel, ieTfuel, ieff, ieBPR, iepif, iepilc, iepihc, 
-                ieN1, ieN2,
-                #core flow
-                ieTt0,ieTt19,ieTt3,ieTt4,ieTt45, ieTt49, ieTt5, 
-                iept0,iept19,iept3,iept4,iept45, iept49, iept5, 
-                #bypass flow
-                ieTt2, ieTt21, ieTt9,
-                iept2, iept21, iept9
         ])
                      
 output_indices_wGeom = deepcopy(default_output_indices)
-#TODO:append geometry params
+#append geometry params
+parginds = output_indices_wGeom["parg"]
+parg_toadd = [igAR, igS, igb, igbo, igbs, igco, iglambdat, iglambdas, igsweep, #wing geom
+                #stabilizers geom
+                igVh, igARh, igSh, igbh, igboh, iglambdah, igcoh, igsweeph, 
+                igVv, igARv, igSv, igbv, igbov, iglambdav, igcov, igsweepv,]
+append!(parginds, parg_toadd)
+output_indices_wGeom["parg"] = parginds
 
-
-
-output_indices_wEng = deepcopy(default_output_indices)
-#TODO:append engine params
-
-
+output_indices_wEngine = deepcopy(default_output_indices)
+#append engine params
+pareinds = output_indices_wEngine["pare"]
+pare_toadd = [ieN1, ieN2,#spool speeds
+            #core flow
+            ieTt0,ieTt19,ieTt3,ieTt4,ieTt45, ieTt49, ieTt5, 
+            iept0,iept19,iept3,iept4,iept45, iept49, iept5, 
+            #bypass flow
+            ieTt2, ieTt21, ieTt9,
+            iept2, iept21, iept9]
+append!(pareinds, pare_toadd)
+output_indices_wEngine["pare"] = pareinds
 
 output_indices_all =  Dict("pari" => Colon(),
                             "parg" => Colon(),
