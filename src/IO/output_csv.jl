@@ -11,31 +11,31 @@ Appends to extant `filepath` if headers are compatible, appending integer suffix
 
 Output is customizable by:
     - `indices` dictionary mapping par arrays to desired indices,
-    - `includeAllMissions` provides add'l columns for all specified missions,
-    - `includeAllFlightPoints` provides values for all flight points as an array in a cell.
+    - `includeMissions` provides add'l columns for all specified missions,
+    - `includeFlightPoints` provides values for all flight points as an array in a cell.
 
     !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac::TASOPT.aircraft`: TASOPT aircraft `struct` containing model in any state. 
     - `filepath::String`: path and name of .csv file to be written.
     - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See `default_output_indices`
-    - `includeAllMissions::Bool`: 
-    - `includeAllFlightPoints::Bool`: 
-    - `overwrite::Bool`: 
+    - `includeMissions::Bool`: _____
+    - `includeFlightPoints::Bool`: saves all flight point entries as an array in a CSV cell when true, default is false
+    - `overwrite::Bool`: deletes existing file at filepath when true, default is false
     **Outputs:**
     - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
 
 TODO:
-- column name lookup with dict 
-    currently column headers are e.g., iifuel, ieA5fac
+- column name lookup with /another/ dict 
+    currently column headers are index vars - e.g., iifuel, ieA5fac
     desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
-- missions logic (separate columns - - could swap axes with flight segments)
+- missions logic (separate columns - could swap axes with flight segments)
 - bug: bonus rows of last #? (comes from overwrite)
 """
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
     filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
     indices::Dict = default_output_indices,
-    includeAllMissions::Bool = false, includeAllFlightPoints::Bool = false,
+    includeMissions::Bool = false, includeFlightPoints::Bool = false,
     overwrite::Bool = false)
 
     #initialize row to write out
@@ -62,7 +62,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     end
 
     #if including all flight points in output, append as arrays where relevant
-    if includeAllFlightPoints
+    if includeFlightPoints
         append!(csv_row,ac.pari[indices["pari"]],
                         ac.parg[indices["parg"]],
                         ac.parm[indices["parm"],1])
@@ -86,7 +86,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
 
     #get column names from variable indices in indices Dict()
     suffixes = ["i","g","m","a","e"]
-    par_indname_dict = generate_par_indname(suffixes)
+    par_indname_dict = generate_par_indname(suffixes) #gets dictionary with all index var names
 
     #get column names in order
     header = ["Model Name","Description","Sized?"]
@@ -189,7 +189,7 @@ default_output_indices =
                     iaCL, iaCD, iaCDi, iaCLh,iaspaneff, #performance
                     iaxCG, iaxCP,                       #balance
                     ],
-        "pare" => [iehfuel, ieTfuel, ieff, ieTSFC, ieBPR,ieOPR, iepif, iepilc, iepihc
+        "pare" => [iehfuel, ieTfuel, ieff, ieTSFC, ieBPR, ieOPR, iepif, iepilc, iepihc
         ])
                      
 output_indices_wGeom = deepcopy(default_output_indices)
