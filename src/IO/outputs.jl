@@ -378,34 +378,45 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         yh[ 5] = yoTEh
         yh[ 6] = ycTEh
   
-
-    # Fuel tank
+        #Initialize seat start x-position
+        xseats0 = parg[igxshell1 ] + 10.0*ft_to_m 
+        # Fuel tank
+        ntank = 8
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
         l = max(parg[iglftankin], parg[iglftank])
+        nftanks = pari[iinftanks] #Number of fuel tanks
         ARtank = 2.0
-        xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
-        xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
-        ntank = 8
-        xt = zeros(ntank*2 )
-        yt = zeros(ntank*2 )
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = cos(0.5*pi*fraci)
 
-            k = i
-            xt[k] = xcyl0 - Rtank/ARtank*fracx
-            yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
-        end
-        # k = k+1
-        # xt[k] = xcyl0 + parg[iglftank]
-        # yt[k] = Rtank
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = sin(0.5*pi*fraci)
+        xtanks = [parg[igxftank], parg[igxftankaft]]
 
-            k = i + ntank
-            xt[k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
-            yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
+        if nftanks != 0
+            xseats0 = xtanks[1] + l/2 #move seats backwards
+            xt = zeros(nftanks, ntank*2 )
+            yt = zeros(nftanks, ntank*2 )
+            for m = 1:nftanks
+                xcyl0 = xtanks[m] - l/2 + Rtank/ARtank
+                xcyl1 = xtanks[m] + l/2 - Rtank/ARtank
+                
+                for i = 1: ntank
+                    fraci = float(i-1)/float(ntank-1)
+                    fracx = cos(0.5*pi*fraci)
+
+                    k = i
+                    xt[m, k] = xcyl0 - Rtank/ARtank*fracx
+                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
+                end
+                # k = k+1
+                # xt[k] = xcyl0 + parg[iglftank]
+                # yt[k] = Rtank
+                for i = 1: ntank
+                    fraci = float(i-1)/float(ntank-1)
+                    fracx = sin(0.5*pi*fraci)
+
+                    k = i + ntank
+                    xt[m, k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
+                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
+                end
+            end
         end
 
         # xt = LinRange(xcyl0 - Rfuse/ARtank , xcyl0, 20 )
@@ -444,7 +455,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
        end
     
     xseats = zeros(rows)'
-    xseats[1] = parg[igxshell1 ] + 10.0*ft_to_m 
+    xseats[1] = xseats0
     for r in 2:rows
         emergency_exit = 0.0
         if (r == 12 || r == 13)
@@ -485,10 +496,18 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             
         # Tank
         if (pari[iifwing] == 0)
-            ax.plot(xt,  yt, "k", lw = 1.5, zorder = 10)
-            ax.plot(xt, -yt, "k", lw = 1.5, zorder = 10)
-            ax.fill_between(xt, -yt, yt, facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
-            ax.text(parg[igxftank], 0.0, "LH\$_2\$", fontsize = label_fs-2.0, zorder = 10, ha="center", va="center")
+            for m = 1:nftanks
+                ax.plot(xt[m,:],  yt[m,:], "k", lw = 1.5, zorder = 10)
+                ax.plot(xt[m,:], -yt[m,:], "k", lw = 1.5, zorder = 10)
+                ax.fill_between(xt[m,:], -yt[m,:], yt[m,:], facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
+
+                if pari[iifuel] == 11
+                    fuelname = "CH\$_4\$"
+                elseif pari[iifuel] == 40
+                    fuelname = "LH\$_2\$"
+                end
+                ax.text(xtanks[m], 0.0, fuelname, fontsize = label_fs-2.0, zorder = 10, ha="center", va="center")
+            end
         end
 
         # Xshell2
