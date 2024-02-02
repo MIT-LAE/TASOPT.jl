@@ -49,7 +49,8 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
-      nftanks = pari[iinftanks]
+      nftanks = pari[iinftanks] #number of fuel tanks in fuselage
+      lftank = parg[iglftank]
 
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
@@ -57,8 +58,13 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       # Calculate x location of cabin centroid  and length of cabin
-      xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-      lcabin = parg[igxshell2] - parg[igxshell1]
+      if nftanks == 1
+            xcabin = 0.5 * (parg[igxshell1] + lftank + parg[igxshell2])
+            
+      else
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+      end
+      lcabin = parg[igxshell2] - parg[igxshell1] - nftanks * lftank #cabin length is smaller if there are fuel tanks
       xpay = xcabin + (ξpay - 0.5) * lcabin * (1.0 - rpay)
 
       xwbox = parg[igxwbox]
@@ -335,6 +341,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
       xWtesys = parg[igxWtesys]
 
       nftanks = pari[iinftanks]
+      lftank = parg[iglftank]
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
@@ -362,8 +369,12 @@ function htsize(pari, parg, paraF, paraB, paraC)
       xftank = parg[igxftank]
 
       # Calculate x location of cabin centroid and length of cabin
-      xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-      lcabin = parg[igxshell2] - parg[igxshell1]
+      if nftanks == 1
+            xcabin = 0.5 * (parg[igxshell1] + lftank + parg[igxshell2])
+      else
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+      end
+      lcabin = parg[igxshell2] - parg[igxshell1] - nftanks * lftank
 
       #---- payload CG locations for forward and aft CG locations
       xpayF = xcabin + (0.0 - 0.5) * lcabin * (1.0 - rpayF)
@@ -677,6 +688,7 @@ function cglpay(pari, parg)
       #      xWtesys = parg[igxWtesys]
 
       nftanks = pari[iinftanks]
+      lftank = parg[iglftank]
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]
 
@@ -684,8 +696,12 @@ function cglpay(pari, parg)
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
-      xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-      lcabin = parg[igxshell2] - parg[igxshell1]
+      if nftanks == 1
+            xcabin = 0.5 * (parg[igxshell1] + lftank + parg[igxshell2])
+      else
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+      end
+      lcabin = parg[igxshell2] - parg[igxshell1] - nftanks * lftank
 
       delxw = parg[igxwing] - parg[igxwbox]
 

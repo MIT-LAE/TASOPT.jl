@@ -697,6 +697,8 @@ function wsize(aircraft, imission,
         xwing = parg[igxwing]
         xblend1 = parg[igxblend1]
         xblend2 = parg[igxblend2]
+        xshell1 = parg[igxshell1]
+        xshell2 = parg[igxshell2]
 
         Wtesys = parg[igWtesys]
         Wftank = parg[igWftank]
