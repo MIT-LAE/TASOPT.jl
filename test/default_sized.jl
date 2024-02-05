@@ -329,6 +329,7 @@ parg[301] = 0.00000000000000000000 # igTfuel
 parg[302] = 0.00000000000000000000 # igxftankaft
 parg[303] = 23.4696 # igdxblend2blend
 parg[304] = 1.52399999999999 # igdxeng2wbox
+parg[305] = 4.0885967681724094e6 #igxWfuel
 
 # --------------------------------
 # Mission  - stored in parm array:
