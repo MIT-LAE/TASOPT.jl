@@ -425,26 +425,17 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
         end
 
-    #Seats
-    pax = parg[igWpay]/(215*lbf_to_N)  #200
+    pax = parg[igWpay]/(215*lbf_to_N)
     seat_pitch = 30.0 * in_to_m
     seat_width = 19.0 * in_to_m
     aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
 
-    seats_per_row = 2*Int(parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
+    seats_per_row = Int(2*parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
     rows = Int(ceil(pax / seats_per_row))
-    
-    yseats = zeros(Int(seats_per_row/2))
-    yseats[1] = seat_width/2.0
-    yseats[2] = yseats[1] + seat_width
-    if size(yseats)[1] == 3 
-        yseats[3] = yseats[2] + 2*aisle_halfwidth + seat_width
-    end
-       # aisle
-       for col = 4:Int(seats_per_row/2)
-        yseats[col] = yseats[col-1] + seat_width
-       end
-    
+
+    println("Seats per row = $seats_per_row, Total rows = $rows")
+    yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
+
     xseats = zeros(rows)'
     xseats[1] = parg[igxshell1 ] + 10.0*ft_to_m 
     for r in 2:rows
@@ -543,9 +534,12 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
 
         # Show seats
+        if symmetric_seats
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).*-yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-     
+        else
+            ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
+        end
      # diagnostic marks
     #  ax.scatter(parg[igxftank] - l/2, 0.0, color = "k", marker="o", zorder = 21)
     #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
@@ -1064,8 +1058,13 @@ end
 
 plots high resolution figure for publications
 """
-function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, save_name = nothing)
+function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = nothing)
 
+    pari = ac.pari
+    parg = ac.parg
+    @views pare = ac.pare[:,:,1]
+    @views para = ac.para[:,:,1]
+    @views parm = ac.parm[:,:,1]
     # Wing
         co = parg[igco]
         cs = parg[igco]*parg[iglambdas]
@@ -1353,27 +1352,20 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
         end
 
     #Seats
-    seats_per_row = 2*Int(parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
+    pax = parg[igWpay]/(215*lbf_to_N)
+    seat_pitch = 30.0 * in_to_m
+    seat_width = 19.0 * in_to_m
+    aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
+
+    seats_per_row = Int(2*parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
     rows = Int(ceil(pax / seats_per_row))
-    yseats = zeros(Int(seats_per_row/2))
     
-    if seats_per_row == 10
-        yseats[1] = seat_width/2.0
-        yseats[2] = yseats[1] + seat_width
-        yseats[3] = yseats[2] + 2*aisle_halfwidth + seat_width
-        # aisle
-        for col = 4:Int(seats_per_row/2)
-            yseats[col] = yseats[col-1] + seat_width
-        end
+    println("Seats per row = $seats_per_row, Total rows = $rows")
+    yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
+    
+    if seats_per_row <= 10
         emergency_rows = [12, 13]
     else
-        yseats[1] = aisle_halfwidth + seat_width/2.0
-        yseats[2] = yseats[1] + seat_width
-        yseats[3] = yseats[2] + seat_width
-        # aisle
-        for col = 4:Int(seats_per_row/2)
-            yseats[col] = yseats[col-1] + seat_width
-        end
         emergency_rows = [19, 20]
     end
     
@@ -1446,6 +1438,8 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
             ax.fill([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8 - 1/4*D, -D/8],
             lw = 1.5, edgecolor = "k", zorder = engz, facecolor = "w")
 
+            ηs = bs/b
+            ηo = bo/b
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
@@ -1457,8 +1451,6 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
             end
             xi = zero(yi)
             ηi = yi/(b/2)
-            ηs = bs/b
-            ηo = bo/b
             ci = zero(yi)
             for (i, η)  in enumerate(ηi)
                 if η <=ηs
@@ -1493,9 +1485,12 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
             ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
 
         # Show seats
+        if symmetric_seats
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).*-yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-     
+        else
+            ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
+        end
      # diagnostic marks
     #  ax.scatter(parg[igxftank] - l/2, 0.0, color = "k", marker="o", zorder = 21)
     #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
@@ -1568,3 +1563,68 @@ function high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, s
 
     return ax
 end
+
+"""
+    arrange_seats(seats_per_row, Rfuse,
+     seat_width = 19.0 * in_to_m, 
+     aisle_halfwidth = 10.0 * in_to_m)
+
+Helper function to arrange seats given a number of `seats_per_row`
+and fuselage radius. Assumes default `seat_width = 19"` and `aisle_halfwidth = 10"`,
+but can be supplied by the user.
+"""
+function arrange_seats(seats_per_row, Rfuse,
+     seat_width = 19.0 * in_to_m, 
+     aisle_halfwidth = 10.0 * in_to_m)
+
+    #Seats
+    # Conditions:
+    # - No more than 2 seats between any seat and the aisle
+    seats_per_row % 2 == 0 ? symmetric_seats = true : symmetric_seats = false
+
+    if symmetric_seats # seating can be symmetric
+        half_seats_per_row = seats_per_row ÷ 2
+        yseats = zeros(half_seats_per_row)
+
+        if half_seats_per_row <= 3 #Single aisle
+            yseats[1] = aisle_halfwidth + seat_width/2 #Aisle in the center
+            for col = 2:half_seats_per_row
+                yseats[col] = yseats[col-1] + seat_width #offset every seat by width
+            end 
+        else # twin aisle 
+            #If symmetric no more than 2 seats next to each other at the 
+            # centerline (I'm not evil enough to create a x-6-x seating arrangement even if "technically" allowed)
+            yseats[1] = seat_width/2.0
+            yseats[2] = yseats[1] + seat_width
+            #Aisle
+            half_seats_remaining = half_seats_per_row - 2
+            if half_seats_remaining > 4
+                @warn "Potentially trying to design a 3 aisle aircraft?
+                Seating arrangement not (yet) automatically handled, so check carefully."
+            end
+            yseats[3] = yseats[2] + aisle_halfwidth*2 + seat_width
+            for col = 4:half_seats_per_row
+                yseats[col] = yseats[col-1] + seat_width
+            end 
+        end
+
+    else
+        @info "Asymmetric seating only deals with 3 or 5 seats at the moment"
+        seating_excess_space = 2*Rfuse - seats_per_row*seat_width - 2*aisle_halfwidth 
+        yseats = zeros(seats_per_row)
+        # Start from edge and give some space based on the excess space available.
+        ind = 1
+        yseats[ind] = -Rfuse + seating_excess_space/2 + seat_width/2 
+        ind+=1
+        if seats_per_row > 3
+            yseats[ind] = yseats[ind-1] + seat_width
+            ind+=1
+        end
+        yseats[ind] = yseats[ind-1] + aisle_halfwidth*2 + seat_width
+        ind+=1
+        for col = ind:seats_per_row
+            yseats[col] = yseats[col-1] + seat_width
+        end 
+    end
+    return yseats, symmetric_seats
+end  # function arrange_seats
