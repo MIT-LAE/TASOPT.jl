@@ -344,7 +344,6 @@ function wsize(aircraft, imission,
     #Fuselage fuel tank placement and moment
     #Initialize parameters
 
-    Waftfuel = 0.0
     xfuel = 0.0
     ltank = 0.0
 
@@ -701,6 +700,26 @@ function wsize(aircraft, imission,
         Wftank = parg[igWftank]
 
         ifwing = pari[iifwing]
+        if ifwing == 0 #fuselage fuel store
+            tank_placement = fuse_tank.placement
+
+            #Calculate the weight of the fuel near the tail depending on the tank location
+            if tank_placement == "rear"
+                Waftfuel = parg[igWfuel]
+                xftank_fuse = parg[igxftankaft] #assumed location of tank for fuselage sizing
+            elseif tank_placement == "both"
+                Waftfuel = parg[igWfuel] / 2.0
+                xftank_fuse = parg[igxftankaft]
+
+            elseif tank_placement == "front" #The case when the fuel is at the front is treated specially
+                #The code assumes that the fuel is located at the back for the purpose of sizing of the symmetric fuselage
+                Waftfuel = parg[igWfuel]
+                xftank_fuse = parg[igxblend2]
+            end
+        else
+            tank_placement = ""
+            xftank_fuse = 0.0
+        end
 
         # Call fusews
         Eskin = parg[igEcap]
@@ -712,7 +731,7 @@ function wsize(aircraft, imission,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
             Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
             ifwing, nftanks, xblend1, xblend2,
-            Waftfuel,  Wftank, ltank, xftankaft,
+            Waftfuel,  Wftank, ltank, xftank_fuse, tank_placement,
             fstring, fframe, ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
@@ -1397,20 +1416,16 @@ function wsize(aircraft, imission,
             if tank_placement == "front"
                 flag_front = 1
                 flag_aft = 0
-                Waftfuel = 0.0
                 xftank = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
                 xftankaft = 0.0
             elseif tank_placement == "rear"
                 flag_front = 0
                 flag_aft = 1
-                Waftfuel = parg[igWfuel]
                 xftank = 0.0
                 xftankaft = parg[igxblend1] + lcabin + 1.0*ft_to_m + ltank/2.0
             elseif tank_placement == "both"
                 flag_front = 1
                 flag_aft = 1
-                Waftfuel = parg[igWfuel] / 2 #If only one tank, there's no aft tank; 
-                                                    #if there are 2 tanks, half fuel stored in each one 
                 xftank = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
                 xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
             end
