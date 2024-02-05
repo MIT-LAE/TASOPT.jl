@@ -343,12 +343,13 @@ function wsize(aircraft, imission,
 
     #Fuselage fuel tank placement and moment
     #Initialize parameters
-    xftankaft = 0.0 
+    xftankaft = parg[igxblend2]
     Waftfuel = 0.0
     xfuel = 0.0
     ltank = 0.0
 
     parg[igxftank] = parg[igxblend1] + 1.0*ft_to_m
+    parg[igxftankaft] = xftankaft
 
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1325,25 +1326,7 @@ function wsize(aircraft, imission,
         #     Fuselage Fuel Tank weight
         # ----------------------
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
-
-            # Thermal design
-            hconvgas = 0.0 #Convective coefficient of insulating purged gas
-            Tfuel = pare[ieTft]
-            t_cond = fuse_tank.t_insul
-            k = fuse_tank.k_insul
-            rho_insul = fuse_tank.rho_insul
-            iinsuldes = fuse_tank.iinsuldes #Indices of insulation segments to be designed
-
-            #Convective cooling
-            xfuel = parg[igxftank]
-            ifuel = pari[iifuel]
-            rhofuel = parg[igrhofuel]
-            M_inf = para[iaMach, ipcruise1]
-            z_alt = para[iaalt, ipcruise1]
-
-            hconvair, Tair = structures.freestream_heat_coeff(z_alt, M_inf, xfuel)
-
-            #Fuel tank design
+            #Unpack parameters
             time_flight = para[iatime, ipdescent1]
             tank_placement = fuse_tank.placement
             sigskin = fuse_tank.sigskin
@@ -1355,6 +1338,28 @@ function wsize(aircraft, imission,
             ftankstiff = fuse_tank.ftankstiff
             ftankadd = fuse_tank.ftankadd
 
+            # Thermal design
+            hconvgas = 0.0 #Convective coefficient of insulating purged gas
+            Tfuel = pare[ieTft]
+            t_cond = fuse_tank.t_insul
+            k = fuse_tank.k_insul
+            rho_insul = fuse_tank.rho_insul
+            iinsuldes = fuse_tank.iinsuldes #Indices of insulation segments to be designed
+
+            #Convective cooling
+            if tank_placement == "rear"
+                xftank_heat = parg[igxftankaft]
+            else
+                xftank_heat = parg[igxftank]
+            end
+            ifuel = pari[iifuel]
+            rhofuel = parg[igrhofuel]
+            M_inf = para[iaMach, ipcruise1]
+            z_alt = para[iaalt, ipcruise1]
+
+            hconvair, Tair = structures.freestream_heat_coeff(z_alt, M_inf, xftank_heat)
+
+            #Fuel tank design
             cargotank = false #TODO: figure out why this is here
 
             if cargotank #TODO the cargotank = true case is not currently supported
@@ -1365,9 +1370,9 @@ function wsize(aircraft, imission,
                 Wfcargotank = 0.0
             end
 
-            Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+            Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-            Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+            Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
                 Rfuse, dRfuse, hconvgas, Tfuel, Tair,
                 t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, rho_insul, rhoskintank,
@@ -1375,39 +1380,49 @@ function wsize(aircraft, imission,
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = Wtank #weight of one tank; there are up to two
-            parg[iglftank] = l_tank
+            parg[iglftank] = ltank
             parg[igRftank] = Rtank
             parg[igWinsftank] = Winsul_sum
 
             #Tank placement and weight moment
+            lcabin = parg[igdxblend2blend]
             if tank_placement == "front"
                 flag_front = 1
                 flag_aft = 0
                 Waftfuel = 0.0
+                xftank = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
+                xftankaft = 0.0
             elseif tank_placement == "rear"
                 flag_front = 0
                 flag_aft = 1
                 Waftfuel = parg[igWfuel]
+                xftank = 0.0
+                xftankaft = parg[igxblend1] + lcabin + 1.0*ft_to_m + ltank/2.0
             elseif tank_placement == "both"
                 flag_front = 1
                 flag_aft = 1
                 Waftfuel = parg[igWfuel] / 2 #If only one tank, there's no aft tank; 
                                                     #if there are 2 tanks, half fuel stored in each one 
+                xftank = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
+                xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
             end
-            lcabin = parg[igxblend2] - parg[igxblend1] - (flag_front + flag_aft) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
             
-            parg[igxftank] = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
-            xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
+            parg[igxftank] = xftank
             parg[igxftankaft] = xftankaft
-            parg[igxWftank] = Wtank * (flag_front * parg[igxftank] + flag_aft * parg[igxftankaft]) 
-            xfuel = (flag_front * parg[igxftank] + flag_aft * parg[igxftankaft]) / (flag_front + flag_aft)
+            parg[igxWftank] = Wtank * (flag_front * xftank + flag_aft * xftankaft) 
+            xfuel = (flag_front * xftank + flag_aft * xftankaft) / (flag_front + flag_aft)
             parg[igxWfuel] = parg[igWfuel] * xfuel
-            
+
+            println(parg[igxblend1])
+            println(parg[igxblend2])
+            println(ltank)
+            println(lcabin)
+            println(xftankaft)
             
             if cargotank
-                Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
+                Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
                 m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-                Winsul_sum, Winsul, l_tank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+                Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
                     Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
                     h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                     wfb, nfweb, sigskin, rho_insul, rhoskintank,

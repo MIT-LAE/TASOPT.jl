@@ -387,10 +387,19 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         nftanks = pari[iinftanks] #Number of fuel tanks
         ARtank = 2.0
 
-        xtanks = [parg[igxftank], parg[igxftankaft]]
-
         if nftanks != 0
-            xseats0 = xtanks[1] + l/2 #move seats backwards
+            tank_placement = ac.fuse_tank.placement
+            if tank_placement == "front"
+                xtanks = [parg[igxftank]]
+                xseats0 = xtanks[1] + l/2 + 5.0 * ft_to_m #move seats backwards
+            elseif tank_placement == "rear"
+                xtanks = [parg[igxftankaft]]
+                xseats0 = parg[igxshell1 ] + 10.0*ft_to_m 
+            elseif tank_placement == "both"
+                xtanks = [parg[igxftank], parg[igxftankaft]]
+                xseats0 = xtanks[1] + l/2 + 5.0 * ft_to_m #move seats backwards
+            end
+            
             xt = zeros(nftanks, ntank*2 )
             yt = zeros(nftanks, ntank*2 )
             for m = 1:nftanks
