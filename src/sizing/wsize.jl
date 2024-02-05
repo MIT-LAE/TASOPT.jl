@@ -1467,7 +1467,7 @@ function wsize(pari, parg, parm, para, pare,
             parg[iglnace] = lnace
 
             ipc1 = 1
-            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug, Nothing, Nothing, ipc1)
+            time_propsys += mission!(pari, parg, parm, para, pare, Ldebug)
             parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         end

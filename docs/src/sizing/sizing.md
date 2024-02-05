@@ -20,7 +20,7 @@ TASOPT.woper(pari, parg, parm, para, pare,
 A sized aircraft's mission performance can be obtained (`mission!`), along with operation constraints via a pitch trim calculation (`balance`) and balanced field length calculation (`takeoff!`).
 
 ```@docs
-TASOPT.mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)
+TASOPT.mission!(pari, parg, parm, para, pare, Ldebug)
 
 TASOPT.takeoff!(pari, parg, parm, para, pare,
     initeng,
