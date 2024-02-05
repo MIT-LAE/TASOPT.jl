@@ -10,7 +10,6 @@ export NPSS_run, startNPSS, endNPSS
 include("../misc/index.inc")
 include("../misc/constants.jl")
 
-include("PMSM.jl")
 include("NPSS_functions.jl")
 
 end
