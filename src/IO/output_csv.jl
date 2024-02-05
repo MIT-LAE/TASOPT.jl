@@ -61,32 +61,33 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
         throw(ArgumentError("indices parameter must be Dict or Colon()"))
     end
 
-    #if including all flight points in output, append as arrays where relevant
-    if includeFlightPoints
-        append!(csv_row,ac.pari[indices["pari"]],
-                        ac.parg[indices["parg"]],
-                        ac.parm[indices["parm"],1])
-        #if flight-point variables are requested, append as arrays (colon case to short-circuit isempty iterable req't)
-        if (indices["para"]==Colon()) || !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
-            append!(csv_row,array2nestedvectors(ac.para[indices["para"],:,1]))   #each csv entry contains array
-        end
-        if (indices["para"]==Colon()) || !isempty(indices["pare"])    # ( " )
-            append!(csv_row,array2nestedvectors(ac.pare[indices["pare"],:,1]))   # ( " )
-        end
-    else #grab only the first cruise point of flight segments, design (first) mission
-        append!(csv_row,ac.pari[indices["pari"]],
-                        ac.parg[indices["parg"]],
-                        ac.parm[indices["parm"],1],
-                        ac.para[indices["para"],ipcruise1,1],
-                        ac.pare[indices["pare"],ipcruise1,1])
+    #append mission- and flight-point-independent arrays
+    append!(csv_row,ac.pari[indices["pari"]],
+                    ac.parg[indices["parg"]])
+
+    #append flight-point-independent arrays
+    #all mission points if includeMissions, else just first mission (design)
+    imiss = includeMissions ? Colon() : 1
+    append!(csv_row,array2nestedvectors(ac.parm[indices["parm"], imiss]))
+
+    #append flight-point- and mission-dependent arrays
+    #TODO: can we make cases where includeMissions = true, includeFlightPoints=false consistent?
+    #generally, to access cell want: [iewhatever, iflightpoint, imiss]
+    #in the case now: [iewhatever, imiss]; can we add logic for that edge case?
+    ipts = includeFlightPoints ? Colon() : 1
+    if (indices["para"]==Colon()) || !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
+        append!(csv_row,array2nestedvectors(ac.para[indices["para"], ipts , imiss]))
+    end
+    if (indices["pare"]==Colon()) || !isempty(indices["pare"])    # ( " )
+        append!(csv_row,array2nestedvectors(ac.pare[indices["pare"], ipts , imiss]))
     end
 
     #jUlIa iS cOluMn MaJoR
     csv_row=reshape(csv_row,1,:) 
 
-    #get column names from variable indices in indices Dict()
+    #get lookup dict for column names from variable indices in indices Dict()
     suffixes = ["i","g","m","a","e"]
-    par_indname_dict = generate_par_indname(suffixes) #gets dictionary with all index var names
+    par_indname_dict = generate_par_indname(suffixes) #gets dictionary with all index var names via global scope
 
     #get column names in order
     header = ["Model Name","Description","Sized?"]
