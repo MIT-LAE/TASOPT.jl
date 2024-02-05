@@ -343,12 +343,20 @@ function wsize(aircraft, imission,
 
     #Fuselage fuel tank placement and moment
     #Initialize parameters
-    xftankaft = parg[igxblend2]
+
     Waftfuel = 0.0
     xfuel = 0.0
     ltank = 0.0
 
-    parg[igxftank] = parg[igxblend1] + 1.0*ft_to_m
+    if (pari[iifwing] == 1) #If fuel is stored in the wings
+        xftank = 0.0
+        xftankaft = 0.0
+    else
+        xftank = parg[igxblend1] + 1.0*ft_to_m
+        xftankaft = parg[igxblend2]
+    end
+        
+    parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
 
     # -------------------------------------------------------    
@@ -1412,12 +1420,6 @@ function wsize(aircraft, imission,
             parg[igxWftank] = Wtank * (flag_front * xftank + flag_aft * xftankaft) 
             xfuel = (flag_front * xftank + flag_aft * xftankaft) / (flag_front + flag_aft)
             parg[igxWfuel] = parg[igWfuel] * xfuel
-
-            println(parg[igxblend1])
-            println(parg[igxblend2])
-            println(ltank)
-            println(lcabin)
-            println(xftankaft)
             
             if cargotank
                 Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
