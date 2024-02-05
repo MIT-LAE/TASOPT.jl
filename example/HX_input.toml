@@ -53,7 +53,7 @@ name = "Default TASOPT Model with HX"
     fuel_density = 70.0 #kg/m3
 
 [Fuel.Storage]
-    tank_placement = "both" #Choices are "front", "rear", or "both"
+    tank_placement = "rear" #Choices are "front", "rear", or "both"
     insulation_segment_base_thickness = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] 
     insulation_segment_conductivity = [5e-3, 5e-3, 5e-3, 5e-3, 5e-3]
     insulation_segment_density = [35.24, 14764, 35.24, 14764, 83]
@@ -136,9 +136,9 @@ name = "Default TASOPT Model with HX"
     x_pressure_shell_fwd = "17 ft"
     x_start_cylinder     = "20 ft"
     x_end_cylinder       = "80 ft"
-    x_pressure_shell_aft = "85 ft"
-    x_cone_end           = "100 ft"
-    x_end                = "107 ft"
+    x_pressure_shell_aft = "82 ft"
+    x_cone_end           = "97 ft"
+    x_end                = "104 ft"
     
 # Power systems and landing gear locations
     x_HPE_sys = "62ft" #Hydraulic, Pneumatic and Electrical systems
