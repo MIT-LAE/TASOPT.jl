@@ -53,7 +53,7 @@ name = "Default TASOPT Model with HX"
     fuel_density = 70.0 #kg/m3
 
 [Fuel.Storage]
-    fuel_tanks_in_fuse = 2 #number of fuel tanks in fuselage
+    tank_placement = "both" #Choices are "front", "rear", or "both"
     insulation_segment_base_thickness = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] 
     insulation_segment_conductivity = [5e-3, 5e-3, 5e-3, 5e-3, 5e-3]
     insulation_segment_density = [35.24, 14764, 35.24, 14764, 83]

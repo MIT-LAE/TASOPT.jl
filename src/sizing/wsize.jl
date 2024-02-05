@@ -27,7 +27,9 @@ function wsize(aircraft, imission,
     parg = aircraft.parg
     parm = view(aircraft.parm, :, imission)
     para = view(aircraft.para, :, :, imission)
-    pare = view(aircraft.pare, :, :, imission)        
+    pare = view(aircraft.pare, :, :, imission)       
+    
+    fuse_tank = aircraft.fuse_tank #Unpack struct with tank parameters
 
     time_propsys = 0.0
 
@@ -337,6 +339,16 @@ function wsize(aircraft, imission,
     pare[ieu0, ip] = Mach * a0
     para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
 
+    nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
+
+    #Fuselage fuel tank placement and moment
+    #Initialize parameters
+    xftankaft = 0.0 
+    Waftfuel = 0.0
+    xfuel = 0.0
+    ltank = 0.0
+
+    parg[igxftank] = parg[igxblend1] + 1.0*ft_to_m
 
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -665,30 +677,6 @@ function wsize(aircraft, imission,
                        parg[igWgen] * ngen
         end
 
-        nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
-        ltank = parg[iglftank] #Fuel tank length
-        #From dsalgado's H2 model
-        if (pari[iifwing] == 0) #If fuel is not stored in the wings
-            if nftanks == 1
-                Waftfuel = 0
-            else
-                Waftfuel = parg[igWfuel] / 2 #If only one tank, there's no aft tank; 
-                                                    #if there are 2 tanks, half fuel stored in each one 
-            end
-            lcabin = parg[igxblend2] - (parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
-            
-            xfuel = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
-            parg[igxftank] = xfuel
-            
-            xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
-            parg[igxftankaft] = xftankaft
-        else
-            xftankaft = 0.0 #No aft fuel tank
-            Waftfuel = 0.0
-            xfuel = parg[igxftank]
-        end
-
-
         Whtail = parg[igWhtail]
         Wvtail = parg[igWvtail]
         xhtail = parg[igxhtail]
@@ -705,7 +693,7 @@ function wsize(aircraft, imission,
 
         ifwing = pari[iifwing]
 
-        # Call fusew
+        # Call fusews
         Eskin = parg[igEcap]
         Ebend = Eskin * rEshell
         Gskin = Eskin * 0.5 / (1.0 + 0.3)
@@ -1337,7 +1325,8 @@ function wsize(aircraft, imission,
         #     Fuselage Fuel Tank weight
         # ----------------------
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
-            fuse_tank = aircraft.fuse_tank #Unpack struct with tank parameters
+
+            # Thermal design
             hconvgas = 0.0 #Convective coefficient of insulating purged gas
             Tfuel = pare[ieTft]
             t_cond = fuse_tank.t_insul
@@ -1356,6 +1345,7 @@ function wsize(aircraft, imission,
 
             #Fuel tank design
             time_flight = para[iatime, ipdescent1]
+            tank_placement = fuse_tank.placement
             sigskin = fuse_tank.sigskin
             rhoskintank = fuse_tank.rhoskintank
             max_boiloff = fuse_tank.max_boiloff
@@ -1384,12 +1374,36 @@ function wsize(aircraft, imission,
                 Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
-            parg[igWftank] = Wtank #weight of one tank; there are two
-            parg[igxWftank] = Wtank * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) #TODO consider case with only one tank
+            parg[igWftank] = Wtank #weight of one tank; there are up to two
             parg[iglftank] = l_tank
             parg[igRftank] = Rtank
             parg[igWinsftank] = Winsul_sum
 
+            #Tank placement and weight moment
+            if tank_placement == "front"
+                flag_front = 1
+                flag_aft = 0
+                Waftfuel = 0.0
+            elseif tank_placement == "rear"
+                flag_front = 0
+                flag_aft = 1
+                Waftfuel = parg[igWfuel]
+            elseif tank_placement == "both"
+                flag_front = 1
+                flag_aft = 1
+                Waftfuel = parg[igWfuel] / 2 #If only one tank, there's no aft tank; 
+                                                    #if there are 2 tanks, half fuel stored in each one 
+            end
+            lcabin = parg[igxblend2] - parg[igxblend1] - (flag_front + flag_aft) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
+            
+            parg[igxftank] = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
+            xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
+            parg[igxftankaft] = xftankaft
+            parg[igxWftank] = Wtank * (flag_front * parg[igxftank] + flag_aft * parg[igxftankaft]) 
+            xfuel = (flag_front * parg[igxftank] + flag_aft * parg[igxftankaft]) / (flag_front + flag_aft)
+            parg[igxWfuel] = parg[igWfuel] * xfuel
+            
+            
             if cargotank
                 Wtank_total, thickness_insul, ltank, mdot_boiloff, Vfuel, Wfuel_tot,
                 m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
@@ -1452,6 +1466,12 @@ function wsize(aircraft, imission,
         #calculate for start-of-cruise point
         # ip = ipclimbn
         ip = ipcruise1
+
+        #Calculate fuel weight moment for balance
+        if (pari[iifwing] == 1) #If fuel is stored in the wings
+            xfuel = parg[igxwbox] + parg[igdxWfuel] / parg[igWfuel]
+            parg[igxWfuel] = parg[igWfuel] * parg[igxwbox] + parg[igdxWfuel] #Store fuel weight moment
+        end
 
         # Pitch trim by adjusting Clh or by moving wing
         Wzero = WMTO - parg[igWfuel] #Zero fuel weight

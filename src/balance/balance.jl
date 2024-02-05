@@ -43,6 +43,8 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
+      xWfuel = parg[igxWfuel]
+
       Wtesys = parg[igWtesys]
       xWtesys = parg[igxWtesys]
 
@@ -127,10 +129,10 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
 
       #Calcualte fuel moment and derivaties wrt to wing box location 
       if (pari[iifwing] == 0) #If fuel is stored in the fuselage
-            xWfuel = rfuel * Wfuel * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) / nftanks
+            xWfuel = rfuel * xWfuel
             xWfuel_xwbox = 0.0
       else
-            xWfuel = rfuel * (Wfuel * parg[igxwbox] + parg[igdxWfuel])
+            xWfuel = rfuel * xWfuel
             xWfuel_xwbox = rfuel * Wfuel
       end
 
@@ -331,6 +333,8 @@ function htsize(pari, parg, paraF, paraB, paraC)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
+      xWfuel = parg[igxWfuel]
+
       # Wtshaft = parg[igWtshaft] 
       # Wgen    = parg[igWgen   ] 
       # Winv    = parg[igWinv   ] 
@@ -351,7 +355,6 @@ function htsize(pari, parg, paraF, paraB, paraC)
 
       xWfuse = parg[igxWfuse]
 
-      dxWfuel = parg[igdxWfuel]
       dxWwing = parg[igdxWwing]
       dxWstrut = parg[igdxWstrut]
       dxWhtail = parg[igdxWhtail]
@@ -477,10 +480,8 @@ function htsize(pari, parg, paraF, paraB, paraC)
 
             #---- total weight moment at forward and aft CG limits
             if pari[iifwing] == 0
-                  xWfuel = Wfuel * xftank
                   xWfuel_xw = 0.0
             else
-                  xWfuel = Wfuel * xwbox + dxWfuel
                   xWfuel_xw = Wfuel
             end
             xWF = xWe + rpayF * Wpay * xpayF + rfuelF * xWfuel
@@ -684,6 +685,8 @@ function cglpay(pari, parg)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
+      xWfuel = parg[igxWfuel]
+
       Wtesys = parg[igWtesys]
       #      xWtesys = parg[igxWtesys]
 
@@ -709,12 +712,6 @@ function cglpay(pari, parg)
       rfuel = 0.0
 
       # See Eqn 283 in TASOPT documentation
-
-      if (pari[iifwing] == 0) #If fuel is stored in the fuselage
-            xWfuel = Wfuel * (parg[igxftank] + (nftanks-1) * parg[igxftankaft]) / nftanks
-      else
-            xWfuel = Wfuel * parg[igxwbox] + parg[igdxWfuel]
-      end
 
       We = rfuel * Wfuel +
            Wfuse +
