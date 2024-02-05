@@ -425,7 +425,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
         end
 
-    pax = parg[igWpay]/(215*lbf_to_N)
+    pax = parg[igWpay]/parm[imWperpax]
     seat_pitch = 30.0 * in_to_m
     seat_width = 19.0 * in_to_m
     aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
@@ -1352,7 +1352,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         end
 
     #Seats
-    pax = parg[igWpay]/(215*lbf_to_N)
+    pax = parg[igWpay]/parm[imWperpax]
     seat_pitch = 30.0 * in_to_m
     seat_width = 19.0 * in_to_m
     aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
