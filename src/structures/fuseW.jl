@@ -122,7 +122,7 @@ See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@
 """
 function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       ifwing, nftanks, xblend1, xblend2,
-      Waftfuel, Wftank, ltank, xftankaft,
+      Waftfuel, Wftank, ltank, xftankaft, tank_placement,
       fstring,fframe,ffadd,deltap,
       Wpwindow,Wppinsul,Wppfloor,
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
@@ -203,15 +203,20 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--------------------------------------------------------------------
 #--- window weight
 
-      if ifwing == 0
-            lcabin =      xblend2 - (xblend1 + 1.0*ft_to_m + ltank + 1.0*ft_to_m) - max(nftanks - 1, 0) * (1.0*ft_to_m + ltank + 1.0*ft_to_m)
-            xcabin = 0.5*(xblend2 + xblend1)
-            Wwindow = Wpwindow * lcabin
-            xWwindow = Wwindow * xcabin
+      if nftanks == 1
+            if tank_placement == "front" #If tank is at the front
+                  xcabin = 0.5 * (xshell1 + ltank + 2.0*ft_to_m + xshell2)
+            else #tank is at rear
+                  xcabin = 0.5 * (xshell1 + xshell2 - (ltank + 2.0*ft_to_m))
+            end
       else
-            Wwindow = Wpwindow * lshell
-            xWwindow = Wwindow * 0.5*(xshell1 + xshell2)
+            xcabin = 0.5 * (xshell1 + xshell2)
       end
+      lcabin = xshell2 - xshell1 - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
+
+      Wwindow = Wpwindow * lcabin
+      xWwindow = Wwindow * xcabin
+      
 #--------------------------------------------------------------------
 #--- insulation weight
       Winsul = Wppinsul*((1.1*pi+2.0*thetafb)*Rfuse*lshell + 0.55*(Snose+Sbulk))
