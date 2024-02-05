@@ -153,7 +153,7 @@ ranges = readmis("range")
 parm[imRange, :] .= Len.(ranges)
 
 Wpax =  Force(readmis("weight_per_pax"))
-parm[imWperpax, :] = Wpax
+parm[imWperpax, :] .= Wpax
 parm[imWpay, :] .= readmis("pax") * Wpax
 parg[igWpaymax] = readmis("max_pax") * Wpax
 parg[igfreserve] = readmis("fuel_reserves")

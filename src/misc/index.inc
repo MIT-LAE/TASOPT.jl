@@ -53,7 +53,7 @@
       imfexcdw   = 31
       imfexcdt   = 32
       imfexcdf   = 33
-      imtotal    = 34 
+      imtotal    = 33
 
 #---- indices for geometry (airframe) variables and other sizing variables
       const igFOpt     =   1
