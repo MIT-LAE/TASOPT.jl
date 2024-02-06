@@ -71,7 +71,7 @@ function tanksize(gee, rhoFuel, deltap,
         wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel) #Residual as a function of Δt
 
-        Δt = Roots.find_zero(residual, 0.0) #Find root with Roots.jl
+        Δt = Roots.find_zero(residual, t_cond[1]*1e-2) #Find root with Roots.jl
 
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_cond[ind] = t_cond[ind] + Δt  
