@@ -31,8 +31,9 @@ makedocs(
         ],
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
+            "propulsion/gascalc.md",
             "propulsion/hxfun.md",
-            "propulsion/gascalc.md"
+            "propulsion/PEMfuelcell.md"
         ],
     "Stability" => "balance/balance.md",
     "Mission and sizing" => Any[

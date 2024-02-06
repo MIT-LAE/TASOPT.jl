@@ -26,5 +26,6 @@ include("tfoper.jl")
 include("tfcalc.jl")
 include("tfweight.jl")
 include("hxfun.jl")
+include("PEMfuelcell.jl")
 
 end
