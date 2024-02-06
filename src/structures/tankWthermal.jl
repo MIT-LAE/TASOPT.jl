@@ -64,7 +64,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       R_mli_cyl  = zeros(Float64, N)
 
       for i in 1:N 
-            R_mli_cyl[i]  = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k[i]) #Resistance of each MLI layer
+            R_mli_cyl[i]  = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k[i]) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
             R_mli_ends[i] = t_cond[i] / (k[i] * 2*Shead[i])
             # Parallel addition of resistance
             R_mli[i]  = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
@@ -91,6 +91,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
 
       return  m_boiloff, mdot_boiloff
 end
+
 
 """
       res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
@@ -120,7 +121,7 @@ function res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
       q1 =  ΔT / Req #Heat transfer rate from overall resistance
 
       q2 = h_liq * (T_w - Tfuel) * S_int #Heat transfer rate from liquid-side resistance
-
+      println(q1)
       res = q1 - q2
       return res 
 end
