@@ -101,10 +101,10 @@ const gee = 9.81
 l_cyl = 2
 l_tank = 4
 r_tank = 1 
-Shead = [1, 1, 1, 1, 1]
+Shead = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 hconvgas= 0 
 hconvair = 15
-t_cond = [0.05, 1.524e-5, 0.05, 1.524e-5, 1.57e-2] #m
+t_cond = ones(1)*5e-3 #m
 k = ones(length(t_cond)) * 5e-3
 material = "polyurethane"
 

@@ -54,10 +54,10 @@ name = "Default TASOPT Model with HX"
 
 [Fuel.Storage]
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
-    insulation_segment_base_thickness = [0.02, 0.02, 0.02, 0.02] #m
+    insulation_segment_base_thickness = [0.01] #m
     insulation_segment_conductivity = [5e-3] #W/(m K)
     insulation_segment_density = [35.24, 35.24, 35.24, 35.24] #kg/m^3
-    insulation_thicknesses_design_indices = [1, 2, 3, 4]
+    insulation_thicknesses_design_indices = [1]
     skin_yield_strength = 172.4e6 #Pa
     tank_skin_density = 2825 #kg/m^3
     maximum_boiloff_rate = 0.1 #%/hour
