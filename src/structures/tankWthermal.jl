@@ -46,11 +46,11 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       
       qfac = 1.3         # Account for heat leak from pipes and valves
       
-      # [TODO] Move constants to constant file
-      σ = 5.67e-8
+      # Radiation
+      σ = 5.6704e-8 #W/(m^2 K^4), Stefan-Boltzmann constant
       ε = 0.95    # white aircraft (Verstraete)
 
-      hradair = σ * ε * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel)
+      hradair = σ * ε * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
       Rair_conv_rad = 1 / (h_air * (2π * r_tank * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
 
@@ -63,7 +63,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       R_mli_ends = zeros(Float64, N)
       R_mli_cyl  = zeros(Float64, N)
 
-      for i in 1:N #TODO: check this carefully
+      for i in 1:N 
             R_mli_cyl[i]  = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k[i]) #Resistance of each MLI layer
             R_mli_ends[i] = t_cond[i] / (k[i] * 2*Shead[i])
             # Parallel addition of resistance
@@ -85,7 +85,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
 
       Req = R_eq_ext + R_liq  # Total equivalent resistance of thermal circuit
 
-      q = qfac * ΔT / Req     # Heat flux from ambient to LH2, including extra heat leak from valves etc as in eq 3.20 by Verstraete
+      q = qfac * ΔT / Req     # Heat flux from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
       mdot_boiloff = q / h_v  # Boil-off rate equals the heat flux divided by heat of vaporization
       m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
 
@@ -95,7 +95,7 @@ end
 """
       res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
 
-This function calculates the difference between the wall-side heat transfer and the overall heat transfer for
+This function calculates the difference between the liquid-side heat transfer and the overall heat transfer for
 a given wall temperature. This residual should be 0 at the correct wall temperature. 
       
 !!! details "🔃 Inputs and Outputs"
@@ -119,11 +119,10 @@ function res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
 
       q1 =  ΔT / Req #Heat transfer rate from overall resistance
 
-      q2 = h_liq * (T_w - Tfuel) #Heat transfer rate from liquid-side resistance
+      q2 = h_liq * (T_w - Tfuel) * S_int #Heat transfer rate from liquid-side resistance
 
       res = q1 - q2
       return res 
-
 end
 
 """
