@@ -53,7 +53,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Tair - Tfuel
-      qfac = 1.3         # Account for heat leak from pipes and valves
+      qfac = 1.3  # Account for heat leak from pipes and valves
       
       fun(x) = residuals_Q(x, p)
       
@@ -139,7 +139,7 @@ function residuals_Q(x, p)
       for i in 1:N
           k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material)
           R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
-          R_mli_ends[i] = t_cond[i] / (k * 2*Shead[i])
+          R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i]))
           # Parallel addition of resistance
           R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
           

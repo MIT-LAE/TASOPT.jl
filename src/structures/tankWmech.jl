@@ -109,24 +109,27 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       N = length(t_cond)
       Vcyl_insul = zeros(N)
       Winsul = zeros(N)
-      Shead_insul = zeros(N)
+      Shead_insul = zeros(N + 1) #add one for first surface 
       Vhead_insul = zeros(N)
       L = Lhead + tskin
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
+      Shead_insul[1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+      
       for n in 1:N
             
             Ro = Ro + t_cond[n]
             L  = L  + t_cond[n]
             # println("AR ≈ $(Ro/L)")
             Vcyl_insul[n]  = (π * ( Ro^2 - Ri^2 ) * l_cyl)
-            Shead_insul[n] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+            Shead_insul[n+1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
             Vhead_insul[n] = Shead_insul[n] * t_cond[n]
             
             Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee
             # println("AR = $(Ro/L)")
             Ri = Ro
       end
+      
       Winsul_sum = sum(Winsul)
       Wtank = (Wtank + Winsul_sum)
 #--- overall tank weight
