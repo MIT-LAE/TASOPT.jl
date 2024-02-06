@@ -2,8 +2,11 @@ export output_csv, default_output_indices
 export output_indices_all, output_indices_wGeom, output_indices_wEngine
 
 """
-
-WIP (see TODO)
+    function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
+                filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
+                overwrite::Bool = false, indices::Dict = default_output_indices,
+                includeMissions::Bool = false, includeFlightPoints::Bool = false,
+                forceMatrices::Bool = false)
 
 writes the values of `ac` to CSV file `filepath` with index variables as headers. 
 A typical set of values is output by default for the design mission at the first cruise point.
@@ -18,25 +21,26 @@ Output is customizable by:
     **Inputs:**
     - `ac::TASOPT.aircraft`: TASOPT aircraft `struct` containing model in any state. 
     - `filepath::String`: path and name of .csv file to be written.
-    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See `default_output_indices`
-    - `includeMissions::Bool`: _____
-    - `includeFlightPoints::Bool`: saves all flight point entries as an array in a CSV cell when true, default is false
     - `overwrite::Bool`: deletes existing file at filepath when true, default is false
+    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See `default_output_indices`
+    - `includeMissions::Bool`: saves all mission entries as an array in a CSV cell when true, default is false, inner nested array when flight points are also output
+    - `includeFlightPoints::Bool`: saves all flight point entries as an array in a CSV cell when true, default is false, outer nested array when missions are also output
+    - `forceMatrices::Bool`: forces all entries that vary with mission and flight point to follow nested array structure
     **Outputs:**
     - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
 
 TODO:
-- column name lookup with /another/ dict 
+- specifiable mission and flight-point indices for output
+- human-readable column names - lookup with /another/ dict
     currently column headers are index vars - e.g., iifuel, ieA5fac
     desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
-- missions logic (separate columns - could swap axes with flight segments)
-- bug: bonus rows of last #? (comes from overwrite)
+- bug: bonus rows of last #? (comes from mismatch of headers and cells)
 """
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
     filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
-    indices::Dict = default_output_indices,
+    overwrite::Bool = false, indices::Dict = default_output_indices,
     includeMissions::Bool = false, includeFlightPoints::Bool = false,
-    overwrite::Bool = false)
+    forceMatrices::Bool = false)
 
     #initialize row to write out
     csv_row = []
@@ -66,15 +70,15 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
                     ac.parg[indices["parg"]])
 
     #append flight-point-independent arrays
-    #all mission points if includeMissions, else just first mission (design)
-    imiss = includeMissions ? Colon() : 1
+    #append all mission points if includeMissions, else just first mission (design)
+    default_imiss = forceMatrices ? (1:1) : 1 #range used to force dimension consistency in output (i.e., avoid row vectors flattening to simple vectors )
+    imiss = includeMissions ? Colon() : default_imiss
     append!(csv_row,array2nestedvectors(ac.parm[indices["parm"], imiss]))
 
     #append flight-point- and mission-dependent arrays
-    #TODO: can we make cases where includeMissions = true, includeFlightPoints=false consistent?
-    #generally, to access cell want: [iewhatever, iflightpoint, imiss]
-    #in the case now: [iewhatever, imiss]; can we add logic for that edge case?
-    ipts = includeFlightPoints ? Colon() : 1
+    #append all points if includePoints, else just first cruise pt
+    default_ipts = forceMatrices ? (ipcruise1:ipcruise1) : ipcruise1 #( " )
+    ipts = includeFlightPoints ? Colon() : default_ipts
     if (indices["para"]==Colon()) || !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
         append!(csv_row,array2nestedvectors(ac.para[indices["para"], ipts , imiss]))
     end
@@ -99,7 +103,10 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     if overwrite
         newfilepath = filepath
         bool_append = false
-        if isfile(filepath); rm(filepath); end
+        if isfile(filepath)
+            rm(filepath)
+            @info "overwriting "*filepath
+        end
 
     # else, assign new filepath, checking header append-compatibility
     # i.e, if can append here, do so. else, add a suffix and warn
@@ -114,10 +121,18 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
 end
 
 """
-
+    check_file_headers(filepath, header)
 
 checks a filepath for existence. returns suffixed filename if extant .csv contains 
-    column headers that conflict with header parameter
+    column headers that conflict with header parameter. recursively called if suffix is needed/added
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `filepath::String`: path and name of .csv file to be checked for header consistency.
+    - `header::Vector{String}: column headers intended for output, will be checked with filepath's header`
+    **Outputs:**
+    - `newfilepath::String`: path and name of .csv file cleared for writing.
+    - `bool_append::Bool`: true if newfilepath is appendable; false if newfilepath is new and needs headers written
 
 """
 function check_file_headers(filepath, header)
