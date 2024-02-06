@@ -431,7 +431,6 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
 
     seats_per_row = Int(2*parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
-    seats_per_row = Int(2*parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
     rows = Int(ceil(pax / seats_per_row))
 
     println("Seats per row = $seats_per_row, Total rows = $rows")
@@ -536,12 +535,8 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
         # Show seats
         if symmetric_seats
-        if symmetric_seats
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).*-yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-        else
-            ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-        end
         else
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
         end
