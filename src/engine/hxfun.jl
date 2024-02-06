@@ -4,58 +4,59 @@
 # https://www.mathworks.com/help/hydro/ref/entuheattransfer.html
 # Nicolas Gomez Vega, Oct 2023
 using NLopt
-
+using Roots
 
 """
     HX_gas
 
-Structure containing the gas properties of the hot and cold streams.
+Structure containing the gas properties of the process and coolant streams.
 
 !!! details "💾 Data fields"
     **Inputs:**
-    - `gas_h::String`: hot gas name
-    - `gas_c::String`: coolant gas name
-    - `alpha_h::Vector{Float64}`: hot gas composition
-    - `igas_c::Float64`: cold gas index
-    - `mdot_h::Float64`: mass flow rate of hot gas (kg/s)
-    - `mdot_c::Float64`: mass flow rate of cold gas (kg/s)
-    - `Th_in::Float64`: hot gas inlet temperature (K)
-    - `Tc_in::Float64`: cold gas inlet temperature (K)
-    - `ph_in::Float64`: hot gas inlet pressure (Pa)
-    - `pc_in::Float64`: cold gas inlet pressure (Pa)
-    - `Mh_in::Float64`: hot gas inlet Mach number
-    - `Mc_in::Float64`: cold gas inlet Mach number
-    - `Th_out::Float64`: hot gas outlet temperature
-    - `Tc_out::Float64`: cold gas outlet temperature
-    - `Δh_h::Float64`: enthalpy change across HX (J/kg)
-    - `Δp_h::Float64`: pressure drop of hot gas across heat exchanger (Pa)
-    - `Δp_c::Float64`: pressure drop of cold gas across tubes (Pa)
-    - `Pl_h::Float64`: power loss due to pressure drop in hot stream (W)
-    - `Pl_c::Float64`: power loss due to pressure drop in cold stream (W)
+    - `fluid_p::String`: process fluid name
+    - `fluid_c::String`: coolant fluid name
+    - `alpha_p::Vector{Float64}`: process gas composition
+    - `igas_c::Float64`: coolant gas index, if coolant is a gas
+    - `mdot_p::Float64`: mass flow rate of process gas (kg/s)
+    - `mdot_c::Float64`: mass flow rate of coolant gas (kg/s)
+    - `Tp_in::Float64`: process gas inlet temperature (K)
+    - `Tc_in::Float64`: coolant gas inlet temperature (K)
+    - `pp_in::Float64`: process gas inlet pressure (Pa)
+    - `pc_in::Float64`: coolant gas inlet pressure (Pa)
+    - `Mp_in::Float64`: process gas inlet Mach number
+    - `Mc_in::Float64`: coolant gas inlet Mach number
+    - `Tp_out::Float64`: process gas outlet temperature
+    - `Tc_out::Float64`: coolant gas outlet temperature
+    - `Δh_p::Float64`: enthalpy change across HX (J/kg)
+    - `Δp_p::Float64`: pressure drop of process gas across heat exchanger (Pa)
+    - `Δp_c::Float64`: pressure drop of coolant gas across tubes (Pa)
+    - `Pl_p::Float64`: power loss due to pressure drop in process stream (W)
+    - `Pl_c::Float64`: power loss due to pressure drop in coolant stream (W)
     - `ε::Float64`: desired heat exchanger effectiveness
     - `recircT::Float64`: temperature of recirculating flow at HX inlet (K)
     - `mdot_r::Float64`: recirculating flow mass flow rate (kg/s)
-    - `h_lat::Float64`: latent heat capacity in freestream cold liquid (J/kg)
+    - `h_lat::Float64`: latent heat capacity in freestream coolant liquid (J/kg)
 """
 mutable struct HX_gas
-      gas_h :: String 
-      gas_c :: String 
-      alpha_h :: Vector{Float64} 
+      fluid_p :: String 
+      fluid_c :: String 
+      alpha_p :: Vector{Float64} 
       igas_c :: Float64 
-      mdot_h :: Float64
+      mdot_p :: Float64
       mdot_c :: Float64
-      Th_in :: Float64
+      Tp_in :: Float64
       Tc_in :: Float64
-      ph_in :: Float64
+      pp_in :: Float64
       pc_in :: Float64
-      Mh_in  :: Float64
+      Mp_in  :: Float64
       Mc_in :: Float64
-      Th_out :: Float64
+      Tp_out :: Float64
       Tc_out :: Float64 
-      Δh_h :: Float64
-      Δp_h :: Float64 
+      Δh_p :: Float64
+      Δh_c :: Float64
+      Δp_p :: Float64 
       Δp_c :: Float64
-      Pl_h :: Float64
+      Pl_p :: Float64
       Pl_c :: Float64
       ε :: Float64 
       recircT :: Float64 
@@ -75,14 +76,14 @@ Structure containing the heat exchanger geometric and material properties.
     - `N_t::Float64`: number of tubes per row
     - `n_stages::Float64`: number of different coolant stages with different coolant flows
     - `n_passes::Float64`: number of coolant passes
-    - `A_cs::Float64`: hot side freestream cross-sectional area (m^2)
+    - `A_cs::Float64`: process side freestream cross-sectional area (m^2)
     - `l::Float64`: length of tubes (m)
     - `t::Float64`: cooling tube wall thickness (m)
     - `tD_o::Float64`: tube outer diameter (m)
     - `xt_D::Float64`: circumferential pitch between tubes at the root over tube outer diameter 
     - `xl_D::Float64`: longitudinal pitch between rows over tube outer diameter
-    - `Rfh::Float64`: hot-side fouling factor (m^2 K/W)
-    - `Rfc::Float64`: cold-side fouling factor (m^2 K/W)
+    - `Rfp::Float64`: process-side fouling factor (m^2 K/W)
+    - `Rfc::Float64`: coolant-side fouling factor (m^2 K/W)
     - `kw::Float64`: thermal conductivity of wall material (W/m/K)
     - `ρw::Float64`: mean density of HE (kg/m^3)
     - `D_i::Float64`: inner diameter of core (m)
@@ -99,11 +100,12 @@ mutable struct HX_tubular
       tD_o :: Float64
       xt_D :: Float64
       xl_D :: Float64
-      Rfh :: Float64
+      Rfp :: Float64
       Rfc :: Float64
       kw :: Float64
       ρw :: Float64
       D_i :: Float64
+      material :: String
 end
 
 """
@@ -127,7 +129,7 @@ end
     hxsize!(HXgas, HXgeom)
 
 Sizes a crossflow heat exchanger and calculates the pressure drop. Uses the ε-NTU method to size the heat exchanger
-from a prescribed ε.  For representative fouling factors see Standards of the Tubular Exchanger Manufacturers Association
+from a prescribed ε. For representative fouling factors see Standards of the Tubular Exchanger Manufacturers Association
 or `https://powderprocess.net/Tools_html/Data_Diagrams/Heat_Exchanger_Fouling_Factor.html`
 
 !!! details "🔃 Inputs and Outputs"
@@ -143,18 +145,18 @@ function hxsize!(HXgas, HXgeom)
       # Extract inputs
       #---------------------------------
       #Gas parameters
-      gas_h = HXgas.gas_h #Hot gas name
-      gas_c = HXgas.gas_c #Cold gas name
-      alpha_h = HXgas.alpha_h #Hot gas composition
-      igas_c = HXgas.igas_c #Cold gas index
-      mdot_h = HXgas.mdot_h #mass flow rate of hot gas (kg/s)
-      mdot_c_inf = HXgas.mdot_c #mass flow rate of cold gas (kg/s)
+      fluid_p = HXgas.fluid_p #Process-side fluid name
+      fluid_c = HXgas.fluid_c #coolant fluid name
+      alpha_p = HXgas.alpha_p #Process-side gas composition
+      igas_c = HXgas.igas_c #Coolant-side gas index
+      mdot_p = HXgas.mdot_p #mass flow rate of process gas (kg/s)
+      mdot_c_inf = HXgas.mdot_c #mass flow rate of coolant gas (kg/s)
       ε = HXgas.ε 
-      Th_in = HXgas.Th_in
+      Tp_in = HXgas.Tp_in
       Tc_inf = HXgas.Tc_in 
-      Mh_in  = HXgas.Mh_in
+      Mp_in  = HXgas.Mp_in
       Mc_in = HXgas.Mc_in
-      ph_in = HXgas.ph_in
+      pp_in = HXgas.pp_in
       pc_in = HXgas.pc_in
 
       #Flags 
@@ -162,12 +164,11 @@ function hxsize!(HXgas, HXgeom)
       frecirc = HXgeom.frecirc
 
       #HX geometry
-      t = HXgeom.t
+      t = HXgeom.t #Initial wall thickness, may be overwritten
       n_stages = HXgeom.n_stages
       xt_D = HXgeom.xt_D
       xl_D = HXgeom.xl_D
-      kw = HXgeom.kw
-      Rfh = HXgeom.Rfh
+      Rfp = HXgeom.Rfp
       Rfc = HXgeom.Rfc 
       l = HXgeom.l
 
@@ -187,14 +188,19 @@ function hxsize!(HXgas, HXgeom)
       #---------------------------------
       # Inlet gas parameters
       #---------------------------------
-      _, _, hh_in, _, cp_h_in, Rh = gassum(alpha_h, length(alpha_h), Th_in)
-      _, _, hc_inf, _, cp_c_inf, Rc = gasfun(igas_c, Tc_inf)
+      _, _, hp_in, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
 
+      if occursin("liquid", fluid_c)
+            _, cp_c_inf, _, _, _, _  = liquid_properties(fluid_c, Tc_inf)
+            hc_inf = cp_c_inf * Tc_inf #TODO: replace with enthalpy calculation for non-constant cp
+      else
+            _, _, hc_inf, _, cp_c_inf, Rc = gasfun(igas_c, Tc_inf)
+      end
       #---------------------------------
       # Thermal calculations
       #---------------------------------
 
-      C_h = mdot_h * cp_h_in #Hot-side heat capacity rate
+      C_p = mdot_p * cp_p_in #Process-side heat capacity rate
       mdot_c = mdot_c_inf
 
       if frecirc #If there is recirculation
@@ -205,17 +211,17 @@ function hxsize!(HXgas, HXgeom)
 
             for j =1:N_iters_rec
                   #Calculate assuming that C_c = C_min
-                  mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Th_in -  recircT) )
+                  mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Tp_in -  recircT) )
             
                   C_check = (mdot_c_inf + mdot_r) * cp_c_in #Coolant heat capacity rate, to check validity of above assumption
 
-                  C_max = max(C_check, C_h)
+                  C_max = max(C_check, C_p)
 
                   if C_check == C_max #If the calculation above is incorrect because C_c = C_max
-                        A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_h * (Th_in -  recircT) )
+                        A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_p * (Tp_in -  recircT) )
                         
                         if A > 1
-                              println("Insufficient heat capacity in hot stream")
+                              println("Insufficient heat capacity in process stream")
                               return
                         end
                         mdot_r = A * mdot_c_inf / (1 - A)
@@ -223,10 +229,10 @@ function hxsize!(HXgas, HXgeom)
 
                   mdot_c = mdot_c_inf + mdot_r
                   C_c = mdot_c * cp_c_in #Coolant heat capacity rate
-                  C_min = min(C_c, C_h)
+                  C_min = min(C_c, C_p)
                   C_r = C_min / C_max
 
-                  if C_h == C_max
+                  if C_p == C_max
                         ε_max = 1 / C_r * (1 - exp(-C_r)) #At ε = ε_max, NTU tends to infinity
                         ε = min(ε, 0.95 * ε_max) #Limit effectiveness to 95% of maximum possible
                   else
@@ -243,8 +249,8 @@ function hxsize!(HXgas, HXgeom)
       
       C_c = mdot_c * cp_c_in #Coolant heat capacity rate
 
-      C_min = min(C_c, C_h)
-      C_max = max(C_c, C_h)
+      C_min = min(C_c, C_p)
+      C_max = max(C_c, C_p)
       C_r = C_min / C_max
 
       if C_c == C_min
@@ -258,31 +264,41 @@ function hxsize!(HXgas, HXgeom)
       end
 
       # Calculate total heat transfer and exit temperatures
-      Qmax = C_min * (Th_in - Tc_in) #Maximum heat transfer rate
+      Qmax = C_min * (Tp_in - Tc_in) #Maximum heat transfer rate
       Q = ε * Qmax #Actual heat transfer rate
 
-      Th_out_guess = Th_in - Q / C_h 
+      Tp_out_guess = Tp_in - Q / C_p
       Tc_out_guess = Tc_in + Q / C_c
 
-      hh_out = hh_in - Q / mdot_h
+      hp_out = hp_in - Q / mdot_p
       hc_out = hc_in + Q / mdot_c
 
-      Δh_h = hh_out - hh_in
+      Δh_p = hp_out - hp_in
+      Δh_c = hc_out - hc_in
 
-      Th_out = gas_tset(alpha_h, length(alpha_h), hh_out, Th_out_guess)
-      Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
+      Tp_out = gas_tset(alpha_p, length(alpha_p), hp_out, Tp_out_guess)
+
+      if occursin("liquid", fluid_c)
+            Tc_out = Tc_out_guess
+      else
+            Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
+      end
 
       #---------------------------------
       # Fluid calculations
       #---------------------------------
-      γ_h_in = cp_h_in / (cp_h_in - Rh)
-      γ_c_in = cp_c_in / (cp_c_in - Rc)
+      γ_p_in = cp_p_in / (cp_p_in - Rp)
+      ρ_p_in = pp_in / (Rp * Tp_in)
+      Vp_in = Mp_in * sqrt(γ_p_in * Rp * Tp_in)
 
-      ρ_h_in = ph_in / (Rh * Th_in)
-      ρ_c_in = pc_in / (Rc * Tc_in)
-
-      Vh_in = Mh_in * sqrt(γ_h_in * Rh * Th_in)
-      Vc_in = Mc_in * sqrt(γ_c_in * Rc * Tc_in)
+      if occursin("liquid", fluid_c)
+            ρ_c_in, _, _, _, _, ac_in = liquid_properties(fluid_c, Tc_inf)
+            Vc_in = Mc_in * ac_in
+      else
+            γ_c_in = cp_c_in / (cp_c_in - Rc)
+            ρ_c_in = pc_in / (Rc * Tc_in)
+            Vc_in = Mc_in * sqrt(γ_c_in * Rc * Tc_in)
+      end
 
       #---------------------------------
       # Mean fluid properties
@@ -290,23 +306,27 @@ function hxsize!(HXgas, HXgeom)
       # Evaluate gas properties at a mean temperature and use these to find heat transfer coefficients 
       # See Kays. Compact Heat Exchangers (1984), p. 106
 
-      Th_m = (Th_out + Th_in) / 2 #Mean temperature of hot stream
-      Tc_m = (Tc_out + Tc_in) / 2 #Mean temperature of cold stream
+      Tp_m = (Tp_out + Tp_in) / 2 #Mean temperature of process stream
+      Tc_m = (Tc_out + Tc_in) / 2 #Mean temperature of coolant stream
 
-      _, Pr_h_m, _, _, μ_h_m, k_h_m = gasPr(gas_h, Th_m)
-      _, Pr_c_m, _, cp_c_m, μ_c_m, _ = gasPr(gas_c, Tc_m)
+      _, Pr_p_m, _, _, μ_p_m, k_p_m = gasPr(fluid_p, Tp_m)
+      ρ_p_m = pp_in / (Rp * Tp_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
 
-      ρ_h_m = ph_in / (Rh * Th_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
-      ρ_c_m = pc_in / (Rc * Tc_m)
+      if occursin("liquid", fluid_c) #if coolant is liquid
+            ρ_c_m, cp_c_m, μ_c_m, _, Pr_c_m, ac_m  = liquid_properties(fluid_c, Tc_inf)
+            Vc_m = ρ_c_in * Vc_in / ρ_c_m
+      else
+            _, Pr_c_m, _, cp_c_m, μ_c_m, _ = gasPr(fluid_c, Tc_m)
 
+            ρ_c_m = pc_in / (Rc * Tc_m)
+            Vc_m = ρ_c_in * Vc_in / ρ_c_m #conservation of mass
+      end
       ν_c_m = μ_c_m / ρ_c_m
-
-      Vc_m = ρ_c_in * Vc_in / ρ_c_m #conservation of mass
 
       #---------------------------------
       # Geometry calculations
       #---------------------------------
-      A_cs = mdot_h / (ρ_h_in * Vh_in) #Cross-sectional area of freestream
+      A_cs = mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
       if fconc #If channel is concentric, e.g., engine core
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
@@ -317,8 +337,15 @@ function hxsize!(HXgas, HXgeom)
 
       A_cc = mdot_c / (ρ_c_in * Vc_in) #total coolant cross-sectional area
 
-      K = pi * b * n_stages / (4 * xt_D * A_cc) #Constant for next equation
-      tD_o = (4 * K * t + sqrt(8 * K *t + 1) + 1) / (2 * K) #Compute tube outer diameter
+      K = pi * b * n_stages / (4 * xt_D * A_cc) #Constant for tubesize!
+      Δp = abs(pp_in - pc_in)
+      tubesize!(Δp, K, HXgeom)
+
+      #Extract outputs from tubesize!
+      tD_o = HXgeom.tD_o
+      t = HXgeom.t
+      kw = HXgeom.kw
+
       tD_i = tD_o - 2 * t #tube inner diameter
 
       N_t = 4 * A_cc / (pi * tD_i^2 * n_stages) #number of different coolant tubes per row
@@ -327,7 +354,7 @@ function hxsize!(HXgas, HXgeom)
 
       A_D = N_t * l * tD_o #Total cross-sectional area of tubes in row, for drag calculation
       A_min = A_cs - A_D
-      G = mdot_h / A_min #mass flow rate per unit area at minimum area
+      G = mdot_p / A_min #mass flow rate per unit area at minimum area
 
       #---------------------------------
       # Calculate thermal resistance 
@@ -348,16 +375,16 @@ function hxsize!(HXgas, HXgeom)
       for i = 1:N_iter
             N_L = n_passes * n_stages #total number of rows
 
-            # Calculate heat transfer coefficient for air
-            Re_D_h = G * tD_o / μ_h_m #Reynolds number based on minimum free flow and tube outer diameter
-            Nu_h = Nu_calc_staggered_cyl(Re_D_h, Pr_h_m, N_L, xtm_D, xl_D) #Nusselt number
-            h_h = Nu_h * k_h_m / tD_o
+            # Calculate heat transfer coefficient for process side
+            Re_D_p = G * tD_o / μ_p_m #Reynolds number based on minimum free flow and tube outer diameter
+            Nu_p = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number
+            h_p = Nu_p * k_p_m / tD_o
 
             #Overall thermal resistance times area (m^2 K / W)
-            RA = 1 / ( h_c * (tD_i/tD_o) ) + Rfh + tD_o / tD_i * Rfc + t / kw + 1 / h_h 
+            RA = 1 / ( h_c * (tD_i/tD_o) ) + Rfp + tD_o / tD_i * Rfc + t / kw + 1 / h_p 
 
             # Size heat exchanger
-            Ah = NTU * C_min * RA   #Find required hot-side cooling area from NTU
+            Ah = NTU * C_min * RA   #Find required process-side cooling area from NTU
             n_passes = Ah / (N_t * n_stages * pi * tD_o * l)
       end
 
@@ -372,15 +399,15 @@ function hxsize!(HXgas, HXgeom)
       NFV = A_cs * L - N_tubes_tot * pi * tD_o^2 * l / 4 #Net free volume
       Dv = 4 * NFV / Ah
 
-      Re_Dv = Dv * G / μ_h_m #Reynolds number based on hydraulic diameter and minimum free area
+      Re_Dv = Dv * G / μ_p_m #Reynolds number based on hydraulic diameter and minimum free area
 
       if Re_Dv < 0 #If whole section is blocked
-            Δp_h = Inf
+            Δp_p = Inf
       else
-            Δp_h = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_h_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
+            Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
       end
 
-      Pl_h = Δp_h * mdot_h / ρ_h_m #Power loss due to pressure drop in hot stream
+      Pl_p = Δp_p * mdot_p / ρ_p_m #Power loss due to pressure drop in process stream
 
       # Compute coolant pressure drop
       τw = ρ_c_m * Vc_m^2 / 2 * Cf
@@ -388,7 +415,7 @@ function hxsize!(HXgas, HXgeom)
       A_cs_c = pi * tD_i^2 / 4 #cross-sectional area of one coolant stream
       Δp_c = τw * A_s_c / A_cs_c
 
-      Pl_c = Δp_c * mdot_c / ρ_c_m #Power loss due to pressure drop in cold stream
+      Pl_c = Δp_c * mdot_c / ρ_c_m #Power loss due to pressure drop in coolant stream
 
       #---------------------------------
       # Output structs
@@ -396,19 +423,19 @@ function hxsize!(HXgas, HXgeom)
       #These lines rewrite the input structs
 
       #Gas parameters
-      HXgas.Th_out = Th_out
+      HXgas.Tp_out = Tp_out
       HXgas.Tc_out = Tc_out
-      HXgas.Δh_h = Δh_h
-      HXgas.Δp_h = Δp_h
+      HXgas.Δh_p = Δh_p
+      HXgas.Δh_c = Δh_c
+      HXgas.Δp_p = Δp_p
       HXgas.Δp_c = Δp_c
-      HXgas.Pl_h = Pl_h
+      HXgas.Pl_p = Pl_p
       HXgas.Pl_c = Pl_c
       HXgas.ε = ε
 
       #Gas parameters
       HXgeom.N_t = N_t
       HXgeom.n_passes = n_passes
-      HXgeom.tD_o = tD_o
       HXgeom.A_cs = A_cs
 
       if frecirc
@@ -436,16 +463,15 @@ function hxoper!(HXgas, HXgeom)
       # Extract inputs
       #---------------------------------
       #Gas parameters
-      gas_h = HXgas.gas_h
-      gas_c = HXgas.gas_c
-      alpha_h = HXgas.alpha_h
+      fluid_p = HXgas.fluid_p
+      fluid_c = HXgas.fluid_c
+      alpha_p = HXgas.alpha_p
       igas_c = HXgas.igas_c 
-      mdot_h = HXgas.mdot_h
+      mdot_p = HXgas.mdot_p
       mdot_c_inf = HXgas.mdot_c 
-      ε = HXgas.ε
-      Th_in = HXgas.Th_in
+      Tp_in = HXgas.Tp_in
       Tc_inf = HXgas.Tc_in 
-      ph_in = HXgas.ph_in
+      pp_in = HXgas.pp_in
       pc_in = HXgas.pc_in
 
       #Flags 
@@ -460,7 +486,7 @@ function hxoper!(HXgas, HXgeom)
       xl_D = HXgeom.xl_D
       tD_o = HXgeom.tD_o 
       kw = HXgeom.kw
-      Rfh = HXgeom.Rfh
+      Rfp = HXgeom.Rfp
       Rfc = HXgeom.Rfc 
       l = HXgeom.l
       A_cs = HXgeom.A_cs
@@ -478,8 +504,14 @@ function hxoper!(HXgas, HXgeom)
       # Inlet gas parameters
       #---------------------------------
 
-      _, _, hh_in, _, cp_h_in, Rh = gassum(alpha_h, length(alpha_h), Th_in)
-      _, _, hc_inf, _, cp_c_inf, Rc = gasfun(igas_c, Tc_inf)
+      _, _, hp_in, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
+
+      if occursin("liquid", fluid_c)
+            _, cp_c_inf, _, _, _, _  = liquid_properties(fluid_c, Tc_inf)
+            hc_inf = cp_c_inf * Tc_inf #TODO: replace with enthalpy calculation for non-constant cp
+      else
+            _, _, hc_inf, _, cp_c_inf, Rc = gasfun(igas_c, Tc_inf)
+      end
 
       #---------------------------------
       # Fluid calculations
@@ -496,11 +528,16 @@ function hxoper!(HXgas, HXgeom)
             cp_c_in = cp_c_inf
       end
 
-      ρ_h_in = ph_in / (Rh * Th_in)
-      ρ_c_in = pc_in / (Rc * Tc_in)
+      ρ_p_in = pp_in / (Rp * Tp_in)
 
-      # Calculate hot-side velocity from geometry
-      Vh_in = mdot_h / (ρ_h_in * A_cs) #hot freestream velocity
+      if occursin("liquid", fluid_c)
+            ρ_c_in, _, _, _, _, _ = liquid_properties(fluid_c, Tc_inf)
+      else
+            ρ_c_in = pc_in / (Rc * Tc_in)
+      end
+      
+      # Calculate process-side velocity from geometry
+      Vp_in = mdot_p / (ρ_p_in * A_cs) #process freestream velocity
       N_hyd_ways = N_t * n_stages #number of different hydraulic pathways
 
       #---------------------------------
@@ -511,7 +548,7 @@ function hxoper!(HXgas, HXgeom)
 
       A_D = N_t * l * tD_o #Total cross-sectional area of tubes in row, for drag calculation
       A_min = A_cs - A_D
-      G = ρ_h_in * Vh_in * A_cs / A_min #mass flow rate per unit area at minimum area
+      G = ρ_p_in * Vp_in * A_cs / A_min #mass flow rate per unit area at minimum area      
 
       N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
       N_L = n_passes * n_stages #total number of rows
@@ -525,13 +562,13 @@ function hxoper!(HXgas, HXgeom)
       # Thermal calculations
       #---------------------------------
 
-      # Compute C_h and guess C_min
-      C_h = mdot_h * cp_h_in #Hot-side heat capacity rate
+      # Compute C_p and guess C_min
+      C_p = mdot_p * cp_p_in #process-side heat capacity rate
       C_c = mdot_c_inf * cp_c_in #Coolant heat capacity rate, guess
 
-      C_min = min(C_c, C_h)
+      C_min = min(C_c, C_p)
 
-      Qmax = C_min * (Th_in - Tc_in) #Maximum possible heat transfer rate, guess
+      Qmax = C_min * (Tp_in - Tc_in) #Maximum possible heat transfer rate, guess
 
       #---------------------------------
       # Iterative loop
@@ -541,29 +578,30 @@ function hxoper!(HXgas, HXgeom)
       Qg = ε * Qmax #Actual heat transfer rate, guess
 
       # Guess outlet temperatures
-      Th_out = Th_in - Qg / C_h 
+      Tp_out = Tp_in - Qg / C_p 
       Tc_out = Tc_in + Qg / C_c
 
       N_iter = 20 #Rapid convergence expected
 
-      ρ_h_m = 0 #Initiliaze because of annoying Julia scope
-      μ_h_m = 0
-      Δh_h = 0
+      ρ_p_m = 0 #Initiliaze because of annoying Julia scope
+      μ_p_m = 0
+      Δh_p = 0
+      Δh_c = 0
 
       for i = 1 : N_iter
             
             if frecirc
                   #Calculate assuming that C_c = C_min
-                  mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Th_in -  recircT) )
+                  mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Tp_in -  recircT) )
                   
                   C_check = (mdot_c_inf + mdot_r) * cp_c_in #Coolant heat capacity rate, to check validity of above assumption
 
-                  C_max = max(C_check, C_h)
+                  C_max = max(C_check, C_p)
 
                   if C_check == C_max #If the calculation above is incorrect because C_c = C_max
-                        A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_h * (Th_in -  recircT) )
+                        A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_p * (Tp_in -  recircT) )
                         if A > 1
-                              println("Insufficient heat capacity in hot stream")
+                              println("Insufficient heat capacity in process stream")
                               return
                         end
                         mdot_r = A * mdot_c_inf / (1 - A)
@@ -574,31 +612,36 @@ function hxoper!(HXgas, HXgeom)
             #Heat capacity rates
             C_c = mdot_c * cp_c_in #Coolant heat capacity rate
 
-            C_min = min(C_c, C_h)
-            C_max = max(C_c, C_h)
+            C_min = min(C_c, C_p)
+            C_max = max(C_c, C_p)
             C_r = C_min / C_max
 
-            Qmax = C_min * (Th_in - Tc_in) #Maximum heat transfer rate
+            Qmax = C_min * (Tp_in - Tc_in) #Maximum heat transfer rate
             
             #Properties at mean temperature
-            Th_m = (Th_out + Th_in) / 2 #Mean temperature of hot stream
-            Tc_m = (Tc_out + Tc_in) / 2 #Mean temperature of cold stream
+            Tp_m = (Tp_out + Tp_in) / 2 #Mean temperature of process stream
+            Tc_m = (Tc_out + Tc_in) / 2 #Mean temperature of coolant stream
 
-            _, Pr_h_m, _, _, μ_h_m, k_h_m = gasPr(gas_h, Th_m)
-            _, Pr_c_m, _, cp_c_m, μ_c_m, _ = gasPr(gas_c, Tc_m)
-
-            ρ_h_m = ph_in / (Rh * Th_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
-            ρ_c_m = pc_in / (Rc * Tc_m)
-
+            _, Pr_p_m, _, _, μ_p_m, k_p_m = gasPr(fluid_p, Tp_m)
+            ρ_p_m = pp_in / (Rp * Tp_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
+            
+            if occursin("liquid", fluid_c)
+                  ρ_c_m, cp_c_m, μ_c_m, _, Pr_c_m, _  = liquid_properties(fluid_c, Tc_inf)
+      
+            else
+                  _, Pr_c_m, _, cp_c_m, μ_c_m, _ = gasPr(fluid_c, Tc_m)
+      
+                  ρ_c_m = pc_in / (Rc * Tc_m)
+            end
             ν_c_m = μ_c_m / ρ_c_m
 
-            Vc_m =  mdot_c / (N_hyd_ways * ρ_c_m * A_cs_tube) #cold velocity at mean temperature
+            Vc_m =  mdot_c / (N_hyd_ways * ρ_c_m * A_cs_tube) #coolant velocity at mean temperature
 
             # Calculate thermal resistance
-            # Calculate heat transfer coefficient for air
-            Re_D_h = G * tD_o / μ_h_m #Reynolds number based on minimum free flow and tube outer diameter
-            Nu_h = Nu_calc_staggered_cyl(Re_D_h, Pr_h_m, N_L, xtm_D, xl_D) #Nusselt number
-            h_h = Nu_h * k_h_m / tD_o
+            # Calculate heat transfer coefficient for process side
+            Re_D_p = G * tD_o / μ_p_m #Reynolds number based on minimum free flow and tube outer diameter
+            Nu_p = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number
+            h_p = Nu_p * k_p_m / tD_o
 
             #Calculate heat transfer coefficient for coolant
             Re_D_c = Vc_m * tD_i / ν_c_m #Reynolds number based on pipe diameter
@@ -606,7 +649,7 @@ function hxoper!(HXgas, HXgeom)
             h_c = ρ_c_m * Vc_m * cp_c_m * jc / Pr_c_m^(2/3)
 
             #Overall thermal resistance times area (m^2 K / W)
-            RA = 1 / ( h_c * (tD_i/tD_o) ) + Rfh + tD_o / tD_i * Rfc + t / kw + 1 / h_h 
+            RA = 1 / ( h_c * (tD_i/tD_o) ) + Rfp + tD_o / tD_i * Rfc + t / kw + 1 / h_p 
 
             # Find NTU and use it to calculate effectiveness
             NTU = Ah / (C_min * RA)
@@ -620,16 +663,22 @@ function hxoper!(HXgas, HXgeom)
             # Calculate total heat transfer and exit temperatures
             Q = ε * Qmax #Actual heat transfer rate
 
-            Th_out_guess = Th_in - Q / C_h 
+            Tp_out_guess = Tp_in - Q / C_p 
             Tc_out_guess = Tc_in + Q / C_c
 
-            hh_out = hh_in - Q / mdot_h
+            hp_out = hp_in - Q / mdot_p
             hc_out = hc_in + Q / mdot_c
 
-            Δh_h = hh_out - hh_in
+            Δh_p = hp_out - hp_in
+            Δh_c = hc_out - hc_in
 
-            Th_out = gas_tset(alpha_h, length(alpha_h), hh_out, Th_out_guess)
-            Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
+            Tp_out = gas_tset(alpha_p, length(alpha_p), hp_out, Tp_out_guess)
+
+            if occursin("liquid", fluid_c) #if coolant is liquid
+                  Tc_out = Tc_out_guess
+            else
+                  Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
+            end
 
       end
 
@@ -641,31 +690,106 @@ function hxoper!(HXgas, HXgeom)
       NFV = A_cs * L - N_tubes_tot * pi * tD_o^2 * l / 4 #Net free volume
       Dv = 4 * NFV / Ah
 
-      Re_Dv = Dv * G / μ_h_m #Reynolds number based on hydraulic diameter and minimum free area
+      Re_Dv = Dv * G / μ_p_m #Reynolds number based on hydraulic diameter and minimum free area
 
       if Re_Dv < 0 #If whole section is blocked
-            Δp_h = Inf
+            Δp_p = Inf
       else
-            Δp_h = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_h_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
+            Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
       end
 
       #---------------------------------
       # Output structs
       #---------------------------------
       #Gas parameters
-      HXgas.Th_out = Th_out
+      HXgas.Tp_out = Tp_out
       HXgas.Tc_out = Tc_out
-      HXgas.Δh_h = Δh_h
-      HXgas.Δp_h = Δp_h
+      HXgas.Δh_p = Δh_p
+      HXgas.Δh_c = Δh_c
+      HXgas.Δp_p = Δp_p
       HXgas.ε = ε
 
 end #hxoper!
 
 """
+      HXoffDesignCalc!(HXgas, HXgeom, Q)
+
+Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
+The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
+meet the heat transfer requirement.    
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::Struct`: structure of type HX_gas with the gas properties
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `Q::Float64`: required heat transfer rate (W)
+    
+    **Outputs:**
+    No direct outputs. Input structures are modified with outlet gas properties.
+"""
+function HXoffDesignCalc!(HXgas, HXgeom, Q)
+
+      #TODO: consider case with recirculation
+      if occursin("liquid", HXgas.fluid_c)
+            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+      else
+            _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
+      end
+      _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+
+      HXod_res(C_r) = HXheating_residual!(HXgas, HXgeom, Q, C_r) #Should be 0 at correct C_r
+
+      Crg = 1.5 #guess for heat capacity rate
+      C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
+
+      HXgas.mdot_c = 1 / C_r * HXgas.mdot_p * cp_p / cp_c
+
+      hxoper!(HXgas, HXgeom)
+
+end
+  
+  """
+      HXheating_residual!(HXgas, HXgeom, Q, C_r)
+
+Calculates the difference between the heat transfer rate of a heat exchanger and its required heat capacity rate for a given
+ratio of heat capacity rates.  
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::Struct`: structure of type HX_gas with the gas properties
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `Q::Float64`: required heat transfer rate (W)
+    - `C_r::Float64`: ratio of heat capacity rate in process-side to heat capacity rate in coolant-side
+    
+    **Outputs:**
+    - `res::Float64`: relative difference between desired heat rate and actual heat rate
+"""
+function HXheating_residual!(HXgas, HXgeom, Q, C_r)
+
+      if occursin("liquid", HXgas.fluid_c)
+            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+      else
+            _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
+      end
+      _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+
+      HXgas.mdot_c = 1 / C_r * (HXgas.mdot_p * cp_p) / cp_c
+
+      hxoper!(HXgas, HXgeom)
+
+      Q_HX = HXgas.Δh_p * HXgas.mdot_p
+
+      res = 1 - Q_HX / Q
+      return res
+end
+
+"""
     hxoptim!(HXgas, HXgeom, initial_x)
 
 Optimizes heat exchanger design parameters for a given set of inputs. Uses the NLopt.jl package. The optimization
-variables are `Mc_in`, `l`, `n_stages` and `xt_D`.
+variables are `Mc_in`, `n_stages`, `xt_D` and `l`. The length of `initial_x` is the flag to determine how many parameters 
+to optimize: if it is 4, all parameters are optimized; if it is 3, the tube length `l` is assumed to be an input and is not 
+optimized.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -677,49 +801,58 @@ variables are `Mc_in`, `l`, `n_stages` and `xt_D`.
     No direct outputs. Input structures are modified with HX design geometry.
 """
 function hxoptim!(HXgas, HXgeom, initial_x)
-      #Parameters to optimize: x[1]: 100 * Mc_in; x[2]: l; x[3]: n_stages; x[4]: xt_D
+      #Parameters to optimize: x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l (optional)
       #Set function to minimize
       obj(x, grad) =  hxobjf(x, HXgas, HXgeom) #Minimize objective function
 
       #Calculate minimum tube length
-      alpha_h = HXgas.alpha_h #Hot gas composition
-      mdot_h = HXgas.mdot_h #mass flow rate of hot gas (kg/s)
-      Th_in = HXgas.Th_in
-      Mh_in  = HXgas.Mh_in
-      ph_in  = HXgas.ph_in
+      alpha_p = HXgas.alpha_p #process gas composition
+      mdot_p = HXgas.mdot_p #mass flow rate of process gas (kg/s)
+      Tp_in = HXgas.Tp_in
+      Mp_in  = HXgas.Mp_in
+      pp_in  = HXgas.pp_in
 
       #Flags 
       fconc = HXgeom.fconc
 
-      _, _, _, _, cp_h_in, Rh = gassum(alpha_h, length(alpha_h), Th_in)
-      γ_h_in = cp_h_in / (cp_h_in - Rh)
-      ρ_h_in = ph_in / (Rh * Th_in)
-      Vh_in = Mh_in * sqrt(γ_h_in * Rh * Th_in)
+      _, _, _, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
+      γ_p_in = cp_p_in / (cp_p_in - Rp)
+      ρ_p_in = pp_in / (Rp * Tp_in)
+      Vp_in = Mp_in * sqrt(γ_p_in * Rp * Tp_in)
 
-      A_cs = mdot_h / (ρ_h_in * Vh_in) #Cross-sectional area of freestream
+      A_cs = mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
       
       if fconc #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
             lmin = (D_o - D_i) / 2 #minimum tube length
+            lmax = Inf
             
       else #square cross-section
-            AR_min = 0.1 #Minimu aspect ratio
-            lmin = sqrt(AR_min * A_cs)
+            AR_max = 10 #Maximum aspect ratio
+            #lmax = sqrt(AR_max * A_cs)
+            lmax = Inf
+            lmin = sqrt(A_cs / AR_max)
 
       end
 
       #Set bounds
-      lower = [0, lmin, 1, 1]
-      upper = [30, Inf, 10, 6]
+      if length(initial_x) == 4
+            lower = [0, 1, 1, lmin]
+            upper = [30, 10, 6, lmax]
+      else #Only 3 optimization variables
+            lower = [0, 1, 1]
+            upper = [30, 20, 6]
+      end
       
       #Use NLopt.jl to minimize function 
       opt = Opt(:LN_NELDERMEAD, length(initial_x))
       opt.lower_bounds = lower
       opt.upper_bounds = upper
       opt.ftol_rel = 1e-10
-      
+      opt.maxeval = 1000  # Set the maximum number of function evaluations
+
       opt.min_objective = obj
       
       (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
@@ -729,9 +862,13 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       #Modify structs with output
       HXgas.Mc_in = xopt[1] / 100 #x[1] has 100*Mc_in
 
-      HXgeom.l = xopt[2]
-      HXgeom.n_stages = xopt[3]
-      HXgeom.xt_D = xopt[4]
+      HXgeom.n_stages = xopt[2]
+      HXgeom.xt_D = xopt[3]
+
+      if length(initial_x) == 4 #only add length if it is being optimized
+            HXgeom.l = xopt[4]
+      end
+      
 
       #Return optimum parameters by modifying input structs
 
@@ -741,7 +878,7 @@ end #hxoptim!
       hxobjf(x, HXgas, HXgeom)
 
 Objective function for HX optimization in hxoptim!(). It returns the sum of the power dissipated due to pressure
-drops in the hot and cold streams, with penalty factors to enforce constraints.
+drops in the process and coolant streams, with penalty factors to enforce constraints.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -750,7 +887,7 @@ drops in the hot and cold streams, with penalty factors to enforce constraints.
     - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
  
     **Outputs:**
-    - `I::Float64`: objective function (W)
+    - `Iobj::Float64`: objective function (W)
 """
 function hxobjf(x, HXgas, HXgeom)
 
@@ -761,30 +898,40 @@ function hxobjf(x, HXgas, HXgeom)
       #Apply states
       HXg.Mc_in = x[1] / 100
 
-      HXgeo.l = x[2]
-      HXgeo.n_stages = x[3]
-      HXgeo.xt_D = x[4]
+      HXgeo.n_stages = x[2]
+      HXgeo.xt_D = x[3]
+
+      if length(x) == 4 #only add length if it is being optimized
+            HXgeo.l = x[4]
+      end
       
       #Size HX
       hxsize!(HXg, HXgeo)
 
       #Extract outputs
-      Pl_h = HXg.Pl_h
+      Pl_p = HXg.Pl_p
       Pl_c = HXg.Pl_c
 
       n_passes = HXgeo.n_passes
       N_t = HXgeo.N_t
+      Δp_p = HXg.Δp_p
+      Δp_c = HXg.Δp_c
       fconc = HXgeo.fconc
 
-      vars = [n_passes, N_t]
-      lower = [1, 1] #desired lower limits
+      #Inlet pressures (pressure drops should not exceed these)
+      pp_in = HXg.pp_in
+      pc_in = HXg.pc_in
+      p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
+
+      vars = [n_passes, N_t, Δp_p, Δp_c]
+      lower = [1, 1, 1, 1] #desired lower limits
 
       if fconc
-            upper = [10, 200] #desired upper limits for concentric case
+            upper = [10, 200, p_thres * pp_in, p_thres * pc_in] #desired upper limits for concentric case
       else
-            upper = [20, 200]  #allow more passes in rectangular case
+            upper = [20, 200, p_thres * pp_in, p_thres * pc_in]  #allow more passes in rectangular case
       end
-      I = (Pl_h + Pl_c) #Initialize objective function
+      Iobj = (Pl_p + Pl_c) #Initialize objective function
 
       # Apply penalty function so that outputs are within desired range
       for (i,var) in enumerate(vars)
@@ -795,10 +942,10 @@ function hxobjf(x, HXgas, HXgeom)
             pmax = ( max(vmax, var) / vmax )^2
             p = max(pmin, pmax)
 
-            I = I * p
+            Iobj = Iobj * p
       end
-
-      return I
+      
+      return Iobj
 end #hxobjf
 
 """
@@ -833,16 +980,16 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       igas = pari[iifuel]
       PreCorder = pare_sl[iePreCorder]
       PreCepsilon = pare_sl[iePreCepsilon]
-      PreCMh = pare_sl[iePreCMh]
+      PreCMp = pare_sl[iePreCMp]
       InterCorder = pare_sl[ieInterCorder]
       InterCepsilon = pare_sl[ieInterCepsilon]
-      InterCMh = pare_sl[ieInterCMh]
+      InterCMp = pare_sl[ieInterCMp]
       Regenorder = pare_sl[ieRegenorder]
       Regenepsilon = pare_sl[ieRegenepsilon]
-      RegenMh = pare_sl[ieRegenMh]
+      RegenMp = pare_sl[ieRegenMp]
       TurbCorder = pare_sl[ieTurbCorder]
       TurbCepsilon = pare_sl[ieTurbCepsilon]
-      TurbCMh = pare_sl[ieTurbCMh]
+      TurbCMp = pare_sl[ieTurbCMp]
 
       if igas == 11 #TODO: add more options
             coolant_name = "ch4"
@@ -853,18 +1000,18 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       # Sort heat exchangers
       all_types = ["PreC", "InterC", "Regen", "TurbC"]
       all_orders = [PreCorder, InterCorder, Regenorder, TurbCorder]
-      all_Mh = [PreCMh, InterCMh, RegenMh, TurbCMh]
+      all_Mp = [PreCMp, InterCMp, RegenMp, TurbCMp]
       all_eps = [PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon]
 
       HXtypes = []
-      Mh_in = []
+      Mp_in = []
       ε_des = []
       sort_i = sortperm(all_orders) #Sort according to order
 
       for ind in sort_i
             if (all_eps[ind] > 0) && (all_eps[ind] <= 1) #If effectiveness is between 0 and 1
                   push!(HXtypes, all_types[ind])
-                  push!(Mh_in, all_Mh[ind])
+                  push!(Mp_in, all_Mp[ind])
                   push!(ε_des, all_eps[ind])
             end
       end
@@ -875,8 +1022,8 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       HeatExchangers = []
 
       #Initiliaze structures with NaNs
-      HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
-      HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+      HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
+      HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
 
       for (i,type) in enumerate(HXtypes) #For every desired type of heat exchanger (skipped if empty)
             
@@ -891,10 +1038,8 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             HXgas.ε = ε_des[i]
 
             # Heat exchanger materials and wall properties
-            HXgeom.t = 0.03e-2 #m, wall thicknesss
+            HXgeom.material = "A2219"
             HXgeom.xl_D = 1
-            HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
-            HXgeom.ρw = 7930
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
 
             mcore = pare_sl[iemcore]
@@ -903,17 +1048,17 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             fo = mofft / mcore
             ff = pare_sl[ieff]
 
-            HXgas.gas_h = "air"
-            HXgas.alpha_h = alpha #Use alpha by default, except for Regen
+            HXgas.fluid_p = "air"
+            HXgas.alpha_p = alpha #Use alpha by default, except for Regen
 
             if type == "PreC" #Compressor Precooler
                   HXgeom.fconc = 1 #Concentric
                   HXgeom.D_i = D_i 
-                  HXgeom.Rfh = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
 
-                  HXgas.mdot_h = mcore   #Core mass flow 
-                  iTh_in = ieTt19
-                  iph_in = iept19
+                  HXgas.mdot_p = mcore   #Core mass flow 
+                  iTp_in = ieTt19
+                  ipp_in = iept19
                   ipc_in = iept3
 
                   Dh_i = iePreCDeltah
@@ -922,11 +1067,11 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             elseif type == "InterC" #Compressor Intercooler
                   HXgeom.fconc = 1 #Concentric
                   HXgeom.D_i = D_i
-                  HXgeom.Rfh = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
 
-                  HXgas.mdot_h = mcore * (1 - fo) #Core mass flow minus offtake
-                  iTh_in = ieTt25
-                  iph_in = iept25
+                  HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
+                  iTp_in = ieTt25
+                  ipp_in = iept25
                   ipc_in = iept3
 
                   Dh_i = ieInterCDeltah
@@ -935,36 +1080,36 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             elseif type == "Regen" #Regenerative cooling
                   HXgeom.fconc = 1 
                   HXgeom.D_i = D_i
-                  HXgeom.Rfh = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W 
+                  HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W 
 
-                  HXgas.mdot_h = mcore * (1 - fo) #Core mass flow minus offtake
-                  iTh_in = ieTt49
-                  iph_in = iept49
+                  HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
+                  iTp_in = ieTt49
+                  ipp_in = iept49
                   ipc_in = iept3
 
                   Dh_i = ieRegenDeltah
                   Dp_i = ieRegenDeltap
 
-                  HXgas.alpha_h = lambdap_calc(pare, alpha, igas, ipdes) #Calculate postcombustion and mixing composition
+                  HXgas.alpha_p = lambdap_calc(pare, alpha, igas, ipdes) #Calculate postcombustion and mixing composition
 
             elseif type =="TurbC" #Cooling of turbine cooling flow
                   HXgeom.fconc = 0 
-                  HXgeom.Rfh = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
 
-                  HXgas.mdot_h = mcore * fc #Only cooling mass flow rate
-                  iTh_in = ieTt3
-                  iph_in = iept3
+                  HXgas.mdot_p = mcore * fc #Only cooling mass flow rate
+                  iTp_in = ieTt3
+                  ipp_in = iept3
                   ipc_in = iept3
 
                   Dh_i = ieTurbCDeltah
                   Dp_i = ieTurbCDeltap
             end
 
-            HXgas.Th_in = pare_sl[iTh_in]
-            HXgas.ph_in = pare_sl[iph_in]
-            HXgas.Mh_in = Mh_in[i]
+            HXgas.Tp_in = pare_sl[iTp_in]
+            HXgas.pp_in = pare_sl[ipp_in]
+            HXgas.Mp_in = Mp_in[i]
 
-            HXgas.gas_c = coolant_name
+            HXgas.fluid_c = coolant_name
             HXgas.igas_c = igas
             HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
             
@@ -987,12 +1132,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
 
             # Guess starting point for optimization
             #First calculate minimum tube length
-            _, _, _, _, cp_h_in, Rh = gassum(HXgas.alpha_h, length(HXgas.alpha_h), HXgas.Th_in)
-            γ_h_in = cp_h_in / (cp_h_in - Rh)
-            ρ_h_in = HXgas.ph_in / (Rh * HXgas.Th_in)
-            Vh_in = HXgas.Mh_in * sqrt(γ_h_in * Rh * HXgas.Th_in)
+            _, _, _, _, cp_p_in, Rp = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+            γ_p_in = cp_p_in / (cp_p_in - Rp)
+            ρ_p_in = HXgas.pp_in / (Rp * HXgas.Tp_in)
+            Vp_in = HXgas.Mp_in * sqrt(γ_p_in * Rp * HXgas.Tp_in)
 
-            A_cs = HXgas.mdot_h / (ρ_h_in * Vh_in) #Cross-sectional area of freestream
+            A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
             
             if HXgeom.fconc #Flow is concentric
                   D_i = HXgeom.D_i
@@ -1010,11 +1155,11 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             if isempty(HXs_prev) #If there is no previous heat exchanger design point
                   #Calculate initial length
 
-                  initial_x = [3, linit, 4, 4] #Initial guess
+                  initial_x = [3, 4, 4, linit] #Initial guess
             else 
-                  #x[1]: 100 * Mc_in; x[2]: l; x[3]: n_stages; x[4]: xt_D
-                  initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, max(HXs_prev[i].HXgeom.l, lmin), 
-                  HXs_prev[i].HXgeom.n_stages, HXs_prev[i].HXgeom.xt_D] #guess is previous iteration design point
+                  #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
+                  initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, 
+                  HXs_prev[i].HXgeom.n_stages, HXs_prev[i].HXgeom.xt_D, max(HXs_prev[i].HXgeom.l, lmin)] #guess is previous iteration design point
             end
 
             hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
@@ -1043,22 +1188,22 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   ff = pare_sl[ieff]
 
                   if (type == "PreC") 
-                        HXgasp.mdot_h = mcore 
+                        HXgasp.mdot_p = mcore 
 
                   elseif (type == "InterC") 
-                        HXgasp.mdot_h = mcore * (1 - fo)
+                        HXgasp.mdot_p = mcore * (1 - fo)
 
                   elseif (type == "Regen")
-                        HXgasp.mdot_h = mcore * (1 - fo)
-                        HXgasp.alpha_h = lambdap_calc(pare, alpha, igas, ip) #Calculate postcombustion and mixing composition
+                        HXgasp.mdot_p = mcore * (1 - fo)
+                        HXgasp.alpha_p = lambdap_calc(pare, alpha, igas, ip) #Calculate postcombustion and mixing composition
                         
                   elseif type =="TurbC"
-                        HXgasp.mdot_h = mcore * fc
+                        HXgasp.mdot_p = mcore * fc
 
                   end        
 
-                  HXgasp.Th_in = pare_sl[iTh_in] #The indices come from the design process above as the HX is the same
-                  HXgasp.ph_in = pare_sl[iph_in]
+                  HXgasp.Tp_in = pare_sl[iTp_in] #The indices come from the design process above as the HX is the same
+                  HXgasp.pp_in = pare_sl[ipp_in]
 
                   HXgasp.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                   HXgasp.pc_in = pare_sl[ipc_in]
@@ -1075,11 +1220,11 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                         HXgasp.Tc_in = all_gas_prev[ip].Tc_out
                   end
 
-                  if HXgasp.mdot_h == 0 #If the mass flow rate in this mission is 0, nothing happens
-                        HXgasp.Th_out = HXgasp.Th_in
+                  if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
+                        HXgasp.Tp_out = HXgasp.Tp_in
                         HXgasp.Tc_out = HXgasp.Tc_in
-                        HXgasp.Δh_h = 0
-                        HXgasp.Δp_h = 0
+                        HXgasp.Δh_p = 0
+                        HXgasp.Δp_p = 0
                         HXgasp.ε = 0
                   else #Otherwise, call HX off-design routine
                         hxoper!(HXgasp, HXgeom)
@@ -1089,8 +1234,8 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgas_mis[ip] = HXgasp
 
                   #Store output in pare
-                  pare[Dh_i, ip] = HXgasp.Δh_h
-                  pare[Dp_i, ip] = HXgasp.Δp_h
+                  pare[Dh_i, ip] = HXgasp.Δh_p
+                  pare[Dp_i, ip] = HXgasp.Δp_p
                   
             end
             push!(HeatExchangers, HX_struct(type, HXgeom, HXgas_mis)) #Store HX struct in overall array
@@ -1227,6 +1372,50 @@ function Δp_calc_staggered_cyl(Re, G, L, ρ, Dv, tD_o, xt_D, xl_D)
 end #Δp_calc_staggered_cyl
 
 """
+      tubesize!(Δp, K, HXgeom)
+
+Calculates the tube diameter and thickness from flow and hoop stress balance.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `Δp::Float64`: pressure difference between inside and outside of tube (Pa)
+    - `K::Float64`: constant in equation for `tD_o`; `K = pi * b * n_stages / (4 * xt_D * A_cc)`
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric and material properties
+    
+    **Outputs:**
+    Modifies `HXgeom`.
+"""
+function tubesize!(Δp, K, HXgeom)
+      material = HXgeom.material
+      
+      safety_factor = 2
+      
+      if material == "SS304"
+            HXgeom.ρw = 7930 #density of steel, kg/m^3
+            HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
+            σy = 215e6
+      elseif material == "A2219"
+            HXgeom.ρw = 2840 #density, kg/m^3
+            HXgeom.kw = 116 #thermal conductivity of steel, W/m/K
+            σy = 476e6
+      end
+
+      tmin = 3e-4 #m, from Brewer 1991. Corresponds to 30 BWG.
+      C = safety_factor * Δp / (2 * σy) #t = C * tD_o, from hoop stress balance
+      
+      thoop = C * K / (K - 2 * K * C)^2
+
+      t = max(thoop, tmin) #Set a minimum thickness
+      
+      tD_o = (4 * K * t + sqrt(8 * K * t + 1) + 1) / (2 * K) #Compute tube outer diameter
+
+      #Store outputs
+      HXgeom.t = t
+      HXgeom.tD_o = tD_o
+
+end #tubesize!
+
+"""
       hxweight(gee, HXgeom, fouter)
 
 Calculates the weight of a heat exchanger with involute tubes.
@@ -1260,20 +1449,21 @@ function hxweight(gee, HXgeom, fouter)
       return W_hx
 end #hxweight
 
-"""
-      lambdap_calc(pare, alpha_in, ifuel, ip, im)
 
-Calculates the weight of a heat exchanger with involute tubes.
+"""
+      lambdap_calc(pare, alpha_in, ifuel, ip)
+
+Calculates the mass fractions of the gases in post-combustion air.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `alpha_in::Vector{Float64}`: vector with hot-side gas composition before combustion and mixing
+    - `alpha_in::Vector{Float64}`: vector with process-side gas composition before combustion and mixing
     - `ifuel::Float64`: fuel gas index
     - `ip::Float64`: index for mission point
     
     **Outputs:**
-    - `lambda_p::Vector{Float64}`: vector with hot-side gas composition after combustion and mixing
+    - `lambda_p::Vector{Float64}`: vector with process-side gas composition after combustion and mixing
 """
 function lambdap_calc(pare, alpha_in, ifuel, ip)
       #Extract inputs
@@ -1341,3 +1531,25 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
 
       return lambdap
 end #lambdap_calc
+
+function liquid_properties(fluid, T)
+      #TODO: account for temperature dependence of properties
+      if (fluid == "liquid water") #properties at 100 degrees Celsius and 3 bar pressure from NIST
+            ρ = 958.44
+            cp = 4215.2
+            μ = 0.00028161
+            k = 0.67733
+            a = 1500 #m/s, speed of sound in water
+
+      elseif (fluid == "liquid ethylene glycol") #data for 180-200 degrees Celsius
+            ρ = 1060.1
+            cp = 2746.5
+            μ = 0.0024
+            k =  0.2362
+            a = 1500 #m/s, speed of sound in water (only used as scaling for coolant speed)
+
+      end
+      Pr = cp * μ / k
+
+      return ρ, cp, μ, k, Pr, a 
+end #liquid_properties

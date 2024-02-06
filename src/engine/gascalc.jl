@@ -597,9 +597,12 @@ function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
       sc, s_t, hc, h_t, cpc, rb = gassum(gamma, nm, t)
       sf, s_t, hf, h_t, cpf, rf = gassum(beta, nm, tf)
 
-      #---- add on fuel contribution to hf, which gassum cannot index via ifuel
+      #---- add on fuel contribution to hf and hc, which gassum cannot index via ifuel
       si, s_t, hi, h_t, cpi, ri = gasfun(ifuel, tf)
       hf = hf + hi * beta[n]
+
+      #sb, s_t, hb, h_t, cpb, rb = gasfun(ifuel, t)
+      #hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
 
       f = (ha - ho) / (hf - hc)
 
@@ -646,10 +649,14 @@ function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
       sc, s_t, hc, hc_t, cpc, rb = gassum(gamma, nm, t)
       sf, s_t, hf, hf_tf, cpf, rf = gassum(beta, nm, tf)
 
-      #---- add on fuel contribution to hf, which gassum cannot index via ifuel
+      #---- add on fuel contribution to hf and hc, which gassum cannot index via ifuel
       si, s_t, hi, hi_tf, cpi, ri = gasfun(ifuel, tf)
       hf = hf + hi * beta[n]
       hf_tf = hf_tf + hi_tf * beta[n]
+
+      #sb, s_t, hb, hb_t, cpb, rb = gasfun(ifuel, t)
+      #hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
+      #hc_t = hc_t + hb_t * gamma[n] 
 
       f = (ha - ho) / (hf - hc)
       f_ho = -1.0 / (hf - hc)
