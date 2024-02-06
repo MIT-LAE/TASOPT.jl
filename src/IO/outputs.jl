@@ -437,10 +437,6 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     println("Seats per row = $seats_per_row, Total rows = $rows")
     yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
 
-
-    println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
-
     xseats = zeros(rows)'
     xseats[1] = parg[igxshell1 ] + 10.0*ft_to_m 
     for r in 2:rows
