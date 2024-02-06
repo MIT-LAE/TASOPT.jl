@@ -8,6 +8,7 @@ module structures
 using ..atmosphere
 
 using Roots
+using NLsolve
 
 export surfw, surfdx, fusew, tailpo, tanksize, update_fuse!
 
