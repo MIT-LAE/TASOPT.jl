@@ -6,4 +6,6 @@ using Test
     include("unit_test_aero.jl")
     include("unit_test_heat_exchanger.jl")
     include("regression_test_wsize.jl")
+    include("unit_test_outputs.jl")
+
 end
