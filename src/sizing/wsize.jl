@@ -72,9 +72,6 @@ function wsize(ac; itermax=35,
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
-    # Atmospheric conditions at sea-level
-    TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
-
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
     time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
     # println("Fuse bl time = $time_fusebl")
