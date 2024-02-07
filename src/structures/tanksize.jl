@@ -1,8 +1,8 @@
 """
         tanksize(gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+        t_cond, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
@@ -18,7 +18,6 @@
         - `Tfuel::Float64`: Fuel temperature (K).
         - `Tair::Float64`: Ambient temperature (K).
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
-        - `k::Array{Float64}`: Conductivity array k (W/(m*K)) for each MLI layer.
         - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
@@ -26,7 +25,7 @@
         - `wfb::Float64`: parameter for multi-bubble configuration.
         - `nfweb::Float64`: Number of bubbles.
         - `sigskin::Float64`: Material property.
-        - `rho_insul::Array{Float64}`: Array of insulation layer densities (kg/m3).
+        - `material_insul::Array{String,1}`: material name for each MLI layer.
         - `rhoskin::Float64`: Material property.
         - `Wfuel::Float64`: Weight of fuel (N).
         - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
@@ -69,16 +68,17 @@ function tanksize(gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel) #Residual as a function of Δt
+        iinsuldes, ifuel) #Residual in boiloff rate as a function of Δt
 
         sol = nlsolve(residual, [0.0], xtol = 1e-7, ftol = 1e-7)
-        Δt = sol.zero[1]
+        Δt = sol.zero[1] #Solve for change in layer thickness with NLsolve.jl
 
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_cond[ind] = t_cond[ind] + Δt  
         end
         thickness_insul = sum(t_cond)
 
+        #Evaluate tank weight
         mdot_boiloff = threshold_percent
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
         Shead_insul, l_tank = tankWmech(gee, rhoFuel,
@@ -95,11 +95,11 @@ end
 """
         res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+        t_cond, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
 
-`tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
+`tanksize` sizes a fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
@@ -113,7 +113,6 @@ end
         - `Tfuel::Float64`: Fuel temperature (K).
         - `Tair::Float64`: Ambient temperature (K).
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
-        - `k::Array{Float64}`: Conductivity array k (W/(m*K)) for each MLI layer.
         - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
@@ -121,7 +120,7 @@ end
         - `wfb::Float64`: parameter for multi-bubble configuration.
         - `nfweb::Float64`: Number of bubbles.
         - `sigskin::Float64`: Material property.
-        - `rho_insul::Array{Float64}`: Array of insulation layer densities (kg/m3).
+        - `material_insul::Array{String,1}`: material name for each MLI layer.
         - `rhoskin::Float64`: Material property.
         - `Wfuel::Float64`: Weight of fuel (N).
         - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
@@ -130,7 +129,6 @@ end
         - `iinsuldes::Array{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
 
-        
         **Outputs:**
         - `res::Float64`: difference between desired boiloff rate and current boiloff rate (%/hour).
 """
@@ -139,7 +137,7 @@ function res_MLI_thick(Δt, gee, rhoFuel, deltap,
         t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
-        println(Δt)
+
         t_all = deepcopy(t_cond) #copy to avoid modifying input
 
         for ind in iinsuldes #For every segment whose thickness can be changed
