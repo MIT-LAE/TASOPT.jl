@@ -1,0 +1,27 @@
+Aerodynamics:
+ -------------- 
+Ref.Area= 139.48268 m²
+L/D     = 17.60833
+CL      = 0.57000
+CD      = 0.03237
+CDfuse  = 0.00681
+CDi     = 0.01116
+CDwing  = 0.00820
+CDhtail = 0.00259
+CDvtail = 0.00175
+CDnace  = 0.00186
+CDBLIf  = -0.00000
+CDBLIw  = -0.00000
+
+Drag Areas = CD × Sref:
+CL     × Sref = 79.50513 m²
+CD     × Sref = 4.51520 m²
+CDfuse × Sref = 0.95001 m²
+CDi    × Sref = 1.55662 m²
+CDwing × Sref = 1.14362 m²
+CDhtail× Sref = 0.36162 m²
+CDvtail× Sref = 0.24445 m²
+CDnace × Sref = 0.25888 m²
+CDBLIf × Sref = -0.00000 m²
+CDBLIw × Sref = -0.00000 m²
+

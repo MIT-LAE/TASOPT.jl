@@ -5,9 +5,6 @@
 #     exchanger in air. It assumes that air in flowing through the exchanger
 #     and heat is absorbed by a coolant fluid.
 
-using TASOPT
-using Test
-
 #---------------------------------     
 # Test functions individually
 #---------------------------------
