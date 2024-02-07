@@ -32,9 +32,9 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1},
+function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
                       hconvgas::Float64,  hconvair::Float64, 
-                      t_cond::Array{Float64,1}, k::Array{Float64,1},
+                      t_cond::Array{Float64,1},
                       Tfuel::Float64 , Tair::Float64, 
                       time_flight::Float64, ifuel::Int64)
 
@@ -46,7 +46,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.hconvgas = hconvgas
       p.hconvair = hconvair
       p.t_cond = t_cond
-      p.material = "rohacell"
+      p.material = material_insul
       p.Tfuel = Tfuel
       p.Tair = Tair
       p.ifuel = ifuel
@@ -64,7 +64,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       for i = 1:length(t_cond)
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
       end
-      sol = nlsolve(fun, guess)
+      sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6)
       
       _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid side h and heat of vaporization
       
@@ -137,7 +137,7 @@ function residuals_Q(x, p)
   
       T_prev = T_w
       for i in 1:N
-          k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material)
+          k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
           R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
           R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i]))
           # Parallel addition of resistance
@@ -167,7 +167,7 @@ end
 
 function insulation_conductivity_calc(T, material)
       if material == "rohacell"
-          k = 0.00235 + 8.824e-5 * T  # W m/(K) Linear fit to Fig. 4.78 in Brewer (1991)
+          k = 0.00235 + 8.824e-5 * T # W m/(K), Linear fit to Fig. 4.78 in Brewer (1991)
       end
       return k
 end
@@ -180,7 +180,7 @@ mutable struct thermal_params
       hconvgas::Float64
       hconvair::Float64
       t_cond::Array{Float64} 
-      material::String
+      material::Array{String}
       Tfuel::Float64
       Tair::Float64
       ifuel::Int64

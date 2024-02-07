@@ -50,11 +50,12 @@ See [here](@ref fueltanks).
 function tankWmech(gee::Float64, ρfuel::Float64,
                   ftankstiff::Float64, ftankadd::Float64, Δp::Float64,
                   Rfuse::Float64, dRfuse::Float64, wfb, nfweb,
-                  sigskin, rho_insul, rhoskin,
+                  sigskin, material_insul, rhoskin,
                   Wfuel, m_boiloff, t_cond::Array{Float64,1}, clearance_fuse, AR)
       
 # Total thickness:
       thickness_insul = sum(t_cond)
+
 # Input paramters:
       weld_eff = 0.9 #lower strength due to welding?
       ullage_frac = 0.1 # V. thesis says ~3% but Barron recommends 10% #TODO: figure out who these people are
@@ -111,7 +112,13 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       Winsul = zeros(N)
       Shead_insul = zeros(N + 1) #add one for first surface 
       Vhead_insul = zeros(N)
+      rho_insul = zeros(N)
       L = Lhead + tskin
+
+      #Assemble array with layer densities
+      for i = 1:N
+            rho_insul[i] = insulation_density_calc(material_insul[i])
+      end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
       Shead_insul[1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
@@ -123,7 +130,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
             # println("AR ≈ $(Ro/L)")
             Vcyl_insul[n]  = (π * ( Ro^2 - Ri^2 ) * l_cyl)
             Shead_insul[n+1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
-            Vhead_insul[n] = Shead_insul[n] * t_cond[n]
+            Vhead_insul[n] = (Shead_insul[n] + Shead_insul[n+1])/2  * t_cond[n]
             
             Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee
             # println("AR = $(Ro/L)")
@@ -137,4 +144,11 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       l_tank = l_cyl + 2*Lhead
 
 return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank
+end
+
+function insulation_density_calc(material)
+      if material == "rohacell"
+          ρ = 35
+      end
+      return ρ
 end

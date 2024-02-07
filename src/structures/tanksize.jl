@@ -58,8 +58,8 @@ See [here](@ref fueltanks).
 """
 function tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-                      t_cond, k, hconvair, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+                      t_cond, hconvair, time_flight, fstring,ffadd,
+                      wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
                       iinsuldes, ifuel)
 
         Wfuel_init = Wfuel
@@ -67,11 +67,11 @@ function tanksize(gee, rhoFuel, deltap,
 
         residual(Δt) = res_MLI_thick(Δt[1], gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+        t_cond, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel) #Residual as a function of Δt
 
-        sol = nlsolve(residual, [0.0])
+        sol = nlsolve(residual, [0.0], xtol = 1e-7, ftol = 1e-7)
         Δt = sol.zero[1]
 
         for ind in iinsuldes #For every segment whose thickness can be changed
@@ -84,7 +84,7 @@ function tanksize(gee, rhoFuel, deltap,
         Shead_insul, l_tank = tankWmech(gee, rhoFuel,
                                 fstring, ffadd, deltap,
                                 Rfuse, dRfuse, wfb, nfweb,
-                                sigskin, rho_insul, rhoskin,
+                                sigskin, material_insul, rhoskin,
                                 Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
 
         return Wtank_total, thickness_insul, lshell, mdot_boiloff, 
@@ -136,17 +136,15 @@ end
 """
 function res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, k, hconvair, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, rho_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
+        t_cond, hconvair, time_flight, fstring,ffadd,
+        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
-
+        println(Δt)
         t_all = deepcopy(t_cond) #copy to avoid modifying input
 
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_all[ind] = t_all[ind] + Δt  
         end
-
-        t_all = max.(t_all, 1e-6) #Avoid 0 or negative thickness
 
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
 
@@ -154,19 +152,15 @@ function res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
                         fstring, ffadd, deltap,
                         Rfuse, dRfuse, wfb, nfweb,
-                        sigskin, rho_insul, rhoskin,
+                        sigskin, material_insul, rhoskin,
                         Wfuel, m_boiloff, t_all, clearance_fuse, AR)
-
-        Rtank = max(Rtank, 1e-6)
-        lshell = max(lshell, 1e-6)
-        l_tank = max(l_tank, 1e-6)
-
-        m_boiloff, mdot_boiloff = tankWthermal(lshell, l_tank, Rtank, Shead_insul,
+                        
+        m_boiloff, mdot_boiloff = tankWthermal(lshell, l_tank, Rtank, Shead_insul, material_insul,
         hconvgas,  hconvair, 
-        t_all, k,
+        t_all,
         Tfuel, Tair, 
         time_flight, ifuel)
 
-        res = mdot_boiloff * gee * 3600 / Wfuel * 100 - threshold_percent #difference between current boiloff and desired
+        res = mdot_boiloff * gee * 3600 / Wfuel - threshold_percent/100 #difference between current boiloff and desired
         return res
 end 
