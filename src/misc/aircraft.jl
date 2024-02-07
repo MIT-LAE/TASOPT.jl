@@ -23,8 +23,7 @@ For devs: the indices for accessing specific data are defined in `/src/misc/inde
 mutable struct fuselage_tank
     placement::String
     t_insul::Array{Float64}
-    k_insul::Array{Float64}
-    rho_insul::Array{Float64}
+    material_insul::Array{String}
     iinsuldes::Array{Int64}
     sigskin::Float64
     rhoskintank::Float64
