@@ -19,7 +19,7 @@
       - `wfb`: Parameters for multiple-bubble configuration.
       - `nfweb`: Number of bubbles.
       - `sigskin::Float64`: Material property.
-      - `rho_insul::Array{Float64}`: Array of insulation layer densities (kg/m3).
+      - `material_insul::Array{String,1}`: material name for each MLI layer.
       - `rhoskin::Float64`: Material property.
       - `Wfuel::Float64`: Weight of fuel (N).
       - `m_boiloff::Float64`: Mass boiled off during the mission flight (kg).
@@ -110,7 +110,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       N = length(t_cond)
       Vcyl_insul = zeros(N)
       Winsul = zeros(N)
-      Shead_insul = zeros(N + 1) #add one for first surface 
+      Shead_insul = zeros(N + 1) #add one for first (tank wall) surface 
       Vhead_insul = zeros(N)
       rho_insul = zeros(N)
       L = Lhead + tskin
@@ -148,9 +148,9 @@ end
 
 function insulation_density_calc(material)
       if material == "rohacell31"
-            ρ = 32.0 #From manufacturer sheet
+            ρ = 32.0 #kg/m^3. From manufacturer sheet
       elseif material == "polyurethane"
-            ρ = 27.0 #From Brewer (1991)
+            ρ = 27.0 #kg/m^3. From Brewer (1991)
       end
       return ρ
 end

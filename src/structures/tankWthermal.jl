@@ -7,7 +7,7 @@
 
 `tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
 
-This subroutine does **not** size the thermal insulation layers
+This function does **not** size the thermal insulation layers
 but rather calculates the boil-off rate of the fuel, 
 for a given insulation thickness
       
@@ -17,10 +17,10 @@ for a given insulation thickness
       - `l_tank::Float64`: Tank total length (m).
       - `r_tank::Float64`: Tank outer radius (m).
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
+      - `material_insul::Array{String,1}`: material name for each MLI layer.
       - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
       - `hconvair::Float64`: Convective coefficient of ambient air (W/m²*K).
       - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
-      - `k::Array{Float64,1}`: Thermal conductivity array (W/(m*K)) comprising k values for each MLI layer.
       - `Tfuel::Float64`: Fuel temperature (K).
       - `Tair::Float64`: Ambient temperature (K).
       - `time_flight::Float64`: Time of flight (s).
@@ -55,21 +55,22 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       ΔT = Tair - Tfuel
       qfac = 1.3  # Account for heat leak from pipes and valves
       
-      fun(x) = residuals_Q(x, p)
+      fun(x) = residuals_Q(x, p) #Create function handle to be zeroed
       
-      guess = zeros(length(t_cond) + 2)
+      #Initial guess for function
+      guess = zeros(length(t_cond) + 2) 
       guess[1] = 100
       guess[2] = Tfuel + 1
       
       for i = 1:length(t_cond)
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
       end
-      sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6)
+      sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
       
-      _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid side h and heat of vaporization
+      _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporization
       
-      Q = qfac * sol.zero[1]    # Heat flux from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
-      mdot_boiloff = Q / h_v  # Boil-off rate equals the heat flux divided by heat of vaporization
+      Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
+      mdot_boiloff = Q / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
       m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
       
       return  m_boiloff, mdot_boiloff
@@ -77,26 +78,21 @@ end
 
 
 """
-      res_q_tank(T_w, ΔT, S_int, R_eq_ext, ifuel, Tfuel, ltank)
+      residuals_Q(x, p)
 
-This function calculates the difference between the liquid-side heat transfer and the overall heat transfer for
-a given wall temperature. This residual should be 0 at the correct wall temperature. 
+This function calculates the residual for a non-linear solver. The states are the heat transfer rate, the tank wall temperature,
+and the temperatures at the interfaces of MLI insulation layers.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `T_w::Float64`: wall temperature (K).
-      - `ΔT::Float64`: difference between liquid in tank and outside air.
-      - `S_int::Float64`: liquid-side surface area (m^2).
-      - `R_eq_ext::Float64`: total thermal resistance of wall and outside air (m^2 K / W).
-      - `ifuel::Int64`: fuel index.
-      - `Tfuel::Float64`: temperature of fuel in fuel tank (K).
-      - `ltank::Float64`: fuel tank length (m).
+      - `x::Array{Float64}`: vector with unknowns.
+      - `p::Struct`: structure of type `thermal_params`.
 
       **Outputs:**
-      - `res::Float64`: residual (W/m^2).
+      - `F::Array{Float64}`: vector with residuals.
 """
 function residuals_Q(x, p)
-
+      #Unpack states
       Q = x[1]
       T_w = x[2]
       T_mli = x[3:end]
@@ -135,6 +131,7 @@ function residuals_Q(x, p)
       R_mli_ends = zeros(Float64, N)
       R_mli_cyl  = zeros(Float64, N)
   
+      #Find resistance of each MLI layer
       T_prev = T_w
       for i in 1:N
           k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
@@ -151,29 +148,61 @@ function residuals_Q(x, p)
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
       Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
   
+      #Assemble array with residuals
       F = zeros(length(x))
-      F[1] = Q - ΔT / Req
+      F[1] = Q - ΔT / Req #Heat transfer rate residual
   
-      T_calc = Tfuel + R_liq * Q
+      T_calc = Tfuel + R_liq * Q #Wall temperature residual
       F[2] = T_w - T_calc
   
       for i = 1:length(T_mli)
-          T_calc = T_calc + R_mli[i] * Q
-          F[i + 2] = T_mli[i] - T_calc
+          T_calc = T_calc + R_mli[i] * Q 
+          F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
           
       end
       return F
 end  
 
+"""
+      insulation_conductivity_calc(T, material)
+
+This function calculates the thermal conductivity of different insulation materials as a function of temperature.
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `T::Float64`: temperature (K).
+      - `material::String`: material name.
+
+      **Outputs:**
+      - `k::Float64`: thermal conductivity (W/(m K)).
+"""
 function insulation_conductivity_calc(T, material)
       if material == "rohacell31"
-            k = 0.00235 + 8.824e-5 * T # W m/(K), Linear fit to Fig. 4.78 in Brewer (1991)
+            k = 0.00235 + 8.824e-5 * T # W/(m K), Linear fit to Fig. 4.78 in Brewer (1991)
       elseif material == "polyurethane"
-            k = 0.001625 + 1.125e-4 * T # W m/(K), Linear fit to Fig. 4.78 in Brewer (1991)
+            k = 0.001625 + 1.125e-4 * T # W/(m K), Linear fit to Fig. 4.78 in Brewer (1991)
       end
       return k
 end
-  
+
+"""
+      thermal_params
+
+This structure stores the material and thermal properties of a cryogenic tank insulation layer.
+      
+!! details "💾 Data fields"
+    **Inputs:**
+    - `l_cyl::Float64`: length of cylindrical portion of tank (m)
+    - `l_tank::Float64`: full tank length (m)
+    - `r_tank::Float64`: tank radius (m)
+    - `Shead::Array{Float64}`: surface area of elliptical caps at different cross-sections (m^2)
+    - `hconvgas::Float64`: convective heat transfer coefficient across purged gas layer (W / (m^2 K))
+    - `hconvair::Float64 `: convective heat transfer coefficient on fuselage (W / (m^2 K))
+    - `material::Array{String} `: array with material names for different insulation layers
+    - `Tfuel::Float64`: fuel temperature (K)
+    - `Tair::Float64`: external air temperature (K)
+    - `ifuel::Int64`: fuel species index
+"""
 mutable struct thermal_params
       l_cyl::Float64
       l_tank::Float64
