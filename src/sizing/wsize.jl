@@ -1,8 +1,8 @@
 using Printf
 """
-    wsize(pari, parg, parm, para, pare,
-        itermax, wrlx1, wrlx2, wrlx3,
-        initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+    wsize(ac; itermax=35,
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
+    iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
 and iterates until the MTOW converges to within a specified tolerance.
@@ -18,10 +18,18 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(pari, parg, parm, para, pare,
-    itermax, wrlx1, wrlx2, wrlx3,
-    initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+function wsize(ac; itermax=35,
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5,
+    initwgt=false, initeng=0, 
+    iairf=1, Ldebug=false,
+     printiter=true, saveODperf=false)
 
+    pari = ac.pari
+    parg = view(ac.parg, :)
+    parm = view(ac.parm, :, 1)
+    para = view(ac.para, :, :, 1)
+    pare = view(ac.pare, :, :, 1)
+    
     time_propsys = 0.0
 
     inite1 = 0
