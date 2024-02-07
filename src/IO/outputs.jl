@@ -1473,7 +1473,6 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             ax.plot( [xi.+lnace/2, xi.+1.0] , -1.0 .* [yi, yi], color = "k", lw = 2, zorder = wingz-2)
       
 
-
         # Plot NP and CG range
             ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
             ax.text(parg[igxNP], -1.0, "NP", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
@@ -1496,7 +1495,6 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
     #  ax.scatter(parg[igxblend2], 0.0, color = "k", marker="o", zorder = 21)
     #  ax.plot([parg[igxftank]-l/2, parg[igxftank]+l/2],[0.0, 0.0], zorder = 21)
-
 
 
     # Annotations
@@ -1558,8 +1556,6 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     end
 
     # Scale bar
-
-
 
     return ax
 end
