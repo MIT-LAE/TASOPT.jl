@@ -147,8 +147,10 @@ return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_
 end
 
 function insulation_density_calc(material)
-      if material == "rohacell"
-          ρ = 35
+      if material == "rohacell31"
+            ρ = 32.0 #From manufacturer sheet
+      elseif material == "polyurethane"
+            ρ = 27.0 #From Brewer (1991)
       end
       return ρ
 end

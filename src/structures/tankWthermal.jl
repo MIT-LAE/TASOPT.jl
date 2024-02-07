@@ -166,8 +166,10 @@ function residuals_Q(x, p)
 end  
 
 function insulation_conductivity_calc(T, material)
-      if material == "rohacell"
-          k = 0.00235 + 8.824e-5 * T # W m/(K), Linear fit to Fig. 4.78 in Brewer (1991)
+      if material == "rohacell31"
+            k = 0.00235 + 8.824e-5 * T # W m/(K), Linear fit to Fig. 4.78 in Brewer (1991)
+      elseif material == "polyurethane"
+            k = 0.001625 + 1.125e-4 * T # W m/(K), Linear fit to Fig. 4.78 in Brewer (1991)
       end
       return k
 end
