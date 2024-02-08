@@ -42,10 +42,26 @@ end
 
 
 """
+    generate_par_indname(par_suffix::String)
 
-generates a vector that maps par_array indices to their index name (declared in `index.inc`)
+generates a vector that contains variable names of par_array indices, "mapping" 
+the index to its name as declared in `index.inc` and found in the global scope
 
-e.g., the call above would result in pari_indname[1] evaluating to "iifuel"
+ex:
+
+```@example par_indname
+    using TASOPT
+    #note that iifuel = 1 (from `index.inc`)
+
+    pari_indname = generate_par_indname("i")
+    pari_indname[1]
+```
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `par_suffix::String`: suffix of a par array (e.g., "i" for "pari"), 
+    **Outputs:**
+    - `par_indname::Vector{String}`: vector of strings with entries corresponding to the index variable names
 """
 function generate_par_indname(par_suffix::String)
     #ensure index vars are available
@@ -79,7 +95,13 @@ function generate_par_indname(par_suffix::String)
     return par_indname
 
 end
+"""
+    generate_par_indname(par_suffix::AbstractVector{String}=["i","g","m","a","e"])
 
+Given a vector of String suffixes, calls `generate_par_indname(par_suffix::String)` for each 
+and saves to a `Dict` with key `"par"*par_suffix` and returns the `Dict`. 
+Defaults to the par_arrays of the default model.
+"""
 function generate_par_indname(par_suffix::AbstractVector{String}=["i","g","m","a","e"])
     # generate_par_indname.(par_suffix) 
     #^ this would be the def'n if we could get the global to work
