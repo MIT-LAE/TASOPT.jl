@@ -274,47 +274,13 @@ function wsize(ac; itermax=35,
     rSnace = parg[igrSnace]
 
     # set cruise-altitude atmospheric conditions
-    ip = ipcruise1
-    altkm = para[iaalt, ip] / 1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = para[iaMach, ip]
-    pare[iep0, ip] = p0
-    pare[ieT0, ip] = T0
-    pare[iea0, ip] = a0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0, ip] = μ0
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach * a0
-    para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
+    set_ambient_conditions!(ac, ipcruise1)
 
     # set takeoff-altitude atmospheric conditions
-    ip = iprotate
-    altkm = para[iaalt, ip] / 1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = 0.25
-    pare[iep0, ip] = p0
-    pare[ieT0, ip] = T0
-    pare[iea0, ip] = a0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0, ip] = μ0
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach * a0
-    para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
+    set_ambient_conditions!(ac, iprotate, 0.25)
 
     # Set atmos conditions for top of climb
-    ip = ipclimbn
-    altkm = para[iaalt, ipcruise1] / 1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = para[iaMach, ip]
-    pare[iep0, ip] = p0
-    pare[ieT0, ip] = T0
-    pare[iea0, ip] = a0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0, ip] = μ0
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach * a0
-    para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
-
+    set_ambient_conditions!(ac, ipclimbn)
 
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1448,3 +1414,26 @@ function Wupdate!(parg, rlx, fsum)
 
 
 end
+
+"""
+    set_ambient_conditions!(ac, mis_point, Mach=NaN)
+
+Sets ambient condition at the given mission point `mis_point`.
+"""
+function set_ambient_conditions!(ac, mis_point, Mach=NaN)
+    mis_point = mis_point
+    altkm = ac.parad[iaalt, mis_point]/1000.0
+    T0, p0, ρ0, a0, μ0 = atmos(altkm)
+    if Mach === NaN
+        Mach = ac.parad[iaMach, mis_point]
+    end
+    ac.pared[iep0, mis_point] = p0
+    ac.pared[ieT0, mis_point] = T0
+    ac.pared[iea0, mis_point] = a0
+    ac.pared[ierho0, mis_point] = ρ0
+    ac.pared[iemu0, mis_point] = μ0
+    ac.pared[ieM0, mis_point] = Mach
+    ac.pared[ieu0, mis_point] = Mach * a0
+    ac.parad[iaReunit, mis_point] = Mach * a0 * ρ0 / μ0
+
+end  # function set_ambient_conditions
