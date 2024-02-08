@@ -29,6 +29,18 @@ struct aircraft
     pare::AbstractArray{Float64}
 end
 
+function Base.getproperty(ac::aircraft, sym::Symbol)
+    if sym === :parad #Design para
+        return view(getfield(ac, :para), :, : , 1) 
+    elseif sym === :pared #Design pare
+        return view(getfield(ac, :pare), :, : , 1) 
+    elseif sym === :parmd #Design parm
+        return view(getfield(ac, :parm), :, 1) 
+    else
+        return getfield(ac, sym)
+    end
+end  # function getproperty
+
 function Base.summary(ac::aircraft)
     println("\n----- TASOPT model summary -----")
     println(ac.name)
