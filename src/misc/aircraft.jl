@@ -1,3 +1,19 @@
+mutable struct fuselage_tank
+    placement::String
+    t_insul::Array{Float64}
+    material_insul::Array{String}
+    iinsuldes::Array{Int64}
+    sigskin::Float64
+    rhoskintank::Float64
+    max_boiloff::Float64
+    ARtank::Float64
+    clearance_fuse::Float64
+    ptank::Float64
+    ftankstiff::Float64
+    ftankadd::Float64
+    fuselage_tank() = new() 
+end
+
 """
     aircraft
 
@@ -19,23 +35,6 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 
 For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
-
-mutable struct fuselage_tank
-    placement::String
-    t_insul::Array{Float64}
-    material_insul::Array{String}
-    iinsuldes::Array{Int64}
-    sigskin::Float64
-    rhoskintank::Float64
-    max_boiloff::Float64
-    ARtank::Float64
-    clearance_fuse::Float64
-    ptank::Float64
-    ftankstiff::Float64
-    ftankadd::Float64
-    fuselage_tank() = new() 
-end
-
 struct aircraft
     name::String
     description::String
