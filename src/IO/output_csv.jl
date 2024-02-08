@@ -2,11 +2,12 @@ export output_csv, default_output_indices
 export output_indices_all, output_indices_wGeom, output_indices_wEngine
 
 """
-    function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
-                filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
-                overwrite::Bool = false, indices::Dict = default_output_indices,
-                includeMissions::Bool = false, includeFlightPoints::Bool = false,
-                forceMatrices::Bool = false)
+    output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
+            filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
+            overwrite::Bool = false, indices::Dict = default_output_indices,
+            includeMissions::Union{AbstractVector,Colon,Bool,Integer} = false, 
+            includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer} = false,
+            forceMatrices::Bool = false)
 
 writes the values of `ac` to CSV file `filepath` with index variables as headers. 
 A typical set of values is output by default for the design mission at the first cruise point.
@@ -14,23 +15,22 @@ Appends to extant `filepath` if headers are compatible, appending integer suffix
 
 Output is customizable by:
     - `indices` dictionary mapping par arrays to desired indices,
-    - `includeMissions` provides add'l columns for all specified missions,
-    - `includeFlightPoints` provides values for all flight points as an array in a cell.
+    - `includeMissions` allows output of all missions (i.e., =true) or specifiable indices (e.g., =[1,2,3]),
+    - `includeFlightPoints` allows output of all flight points (as for `includeMissions`).
 
-    !!! details "🔃 Inputs and Outputs"
+!!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac::TASOPT.aircraft`: TASOPT aircraft `struct` containing model in any state. 
     - `filepath::String`: path and name of .csv file to be written.
-    - `overwrite::Bool`: deletes existing file at filepath when true, default is false
-    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See `default_output_indices`
-    - `includeMissions::Bool`: saves all mission entries as an array in a CSV cell when true, default is false, inner nested array when flight points are also output
-    - `includeFlightPoints::Bool`: saves all flight point entries as an array in a CSV cell when true, default is false, outer nested array when missions are also output
+    - `overwrite::Bool`: deletes existing file at filepath when true, default is false.
+    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See [`default_output_indices`](@ref)
+    - `includeMissions::Union{AbstractVector,Colon,Bool,Integer}`: saves all mission entries as an array in a CSV cell when true, default is false, inner nested array when flight points are also output. specific indices can also be specified as Vectors of Ints.
+    - `includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer}`: saves all flight point entries as an array in a CSV cell when true, default is false, outer nested array when missions are also output. specific indices can also be specified as Vectors of Ints.
     - `forceMatrices::Bool`: forces all entries that vary with mission and flight point to follow nested array structure
     **Outputs:**
     - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
 
 TODO:
-- specifiable mission and flight-point indices for output
 - human-readable column names - lookup with /another/ dict
     currently column headers are index vars - e.g., iifuel, ieA5fac
     desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
@@ -39,7 +39,8 @@ TODO:
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
     filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
     overwrite::Bool = false, indices::Dict = default_output_indices,
-    includeMissions::Bool = false, includeFlightPoints::Bool = false,
+    includeMissions::Union{AbstractVector,Colon,Bool,Integer} = false, 
+    includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer} = false,
     forceMatrices::Bool = false)
 
     #initialize row to write out
@@ -65,25 +66,44 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
         throw(ArgumentError("indices parameter must be Dict or Colon()"))
     end
 
+  #mission and flight point indexing logic
+    #default indices (design mission, cruise point)
+    default_imiss = 1 
+    default_ipts = ipcruise1
+
+    #convert boolean selections into index arrays 
+    # append all mission/flight points (i.e., Colon()) if include is true, 
+    # else just first mission (design)/cruise point
+    if includeMissions isa Bool
+        includeMissions = includeMissions ? Colon() : default_imiss
+    end
+    if includeFlightPoints isa Bool
+        includeFlightPoints = includeFlightPoints ? Colon() : default_ipts
+    end
+    #if desired, force matrix output when value is mission- and flight-point-dependent
+    # (prevent flattening into 1d vector if only 1 index is requested; done by creating a range)
+    if forceMatrices
+        #convert length-1 vectors to integers
+        if (includeMissions isa Vector) && (length(includeMissions) == 1); includeMissions = includeMissions[1]; end
+        if (includeFlightPoints isa Vector) && (length(includeFlightPoints) == 1); includeFlightPoints = includeFlightPoints[1]; end
+
+        #convert integers to ranges to force matrix output
+        if includeMissions isa Integer; includeMissions = (includeMissions:includeMissions); end
+        if includeFlightPoints isa Integer; includeFlightPoints = (includeFlightPoints:includeFlightPoints); end
+    end
+
     #append mission- and flight-point-independent arrays
     append!(csv_row,ac.pari[indices["pari"]],
                     ac.parg[indices["parg"]])
 
-    #append flight-point-independent arrays
-    #append all mission points if includeMissions, else just first mission (design)
-    default_imiss = forceMatrices ? (1:1) : 1 #range used to force dimension consistency in output (i.e., avoid row vectors flattening to simple vectors )
-    imiss = includeMissions ? Colon() : default_imiss
-    append!(csv_row,array2nestedvectors(ac.parm[indices["parm"], imiss]))
+    #append mission-dependent arrays
+    append!(csv_row,array2nestedvectors(ac.parm[indices["parm"], includeMissions]))
 
-    #append flight-point- and mission-dependent arrays
-    #append all points if includePoints, else just first cruise pt
-    default_ipts = forceMatrices ? (ipcruise1:ipcruise1) : ipcruise1 #( " )
-    ipts = includeFlightPoints ? Colon() : default_ipts
     if (indices["para"]==Colon()) || !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
-        append!(csv_row,array2nestedvectors(ac.para[indices["para"], ipts , imiss]))
+        append!(csv_row,array2nestedvectors(ac.para[indices["para"], includeFlightPoints , includeMissions]))
     end
     if (indices["pare"]==Colon()) || !isempty(indices["pare"])    # ( " )
-        append!(csv_row,array2nestedvectors(ac.pare[indices["pare"], ipts , imiss]))
+        append!(csv_row,array2nestedvectors(ac.pare[indices["pare"], includeFlightPoints , includeMissions]))
     end
 
     #jUlIa iS cOluMn MaJoR
@@ -179,11 +199,14 @@ function check_file_headers(filepath, header)
     end
 end
 
+#TODO: include this via ```@docs default_output_indices```
 """
 par arrays and indices output by default by `output_csv()`.
 
 Format: Dict(){String => Union{AbstractVector,Colon(), Integer}}
+
     use ex.1 : default_output_indices["pari"] = [1, 5, iitotal]
+    
     use ex.2 : default_output_indices["para"] = Colon() #NOT [Colon()]
 """
 default_output_indices = 
