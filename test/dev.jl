@@ -6,29 +6,17 @@ using Roots
 using NLsolve
 
 function insulation_conductivity_calc(T, material)
-    if material == "polyurethane"
-        k = 5e-3 + 20e-3/180 * (T - 20) #Linear fit to Fig. 4.78 in Brewer (1991)
+    if material == "rohacell31"
+          k = 0.00235 + 8.824e-5 * T # W/(m K), Linear fit to Fig. 4.78 in Brewer (1991)
+    elseif material == "polyurethane"
+          k = 0.001625 + 1.125e-4 * T # W/(m K), Linear fit to Fig. 4.78 in Brewer (1991)
     end
     return k
 end
 
-mutable struct thermal_params
-    l_cyl::Float64
-    l_tank::Float64
-    r_tank::Float64
-    Shead::Array{Float64}
-    hconvgas::Float64
-    hconvair::Float64
-    t_cond::Array{Float64} 
-    material::String
-    Tfuel::Float64
-    Tair::Float64
-    ifuel::Int64
-    thermal_params() = new() 
-end
 
 function residuals_Q(x, p)
-
+    #Unpack states
     Q = x[1]
     T_w = x[2]
     T_mli = x[3:end]
@@ -67,11 +55,13 @@ function residuals_Q(x, p)
     R_mli_ends = zeros(Float64, N)
     R_mli_cyl  = zeros(Float64, N)
 
+    #Find resistance of each MLI layer
     T_prev = T_w
     for i in 1:N
-        k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material)
+        k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
         R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
-        R_mli_ends[i] = t_cond[i] / (k * 2*Shead[i])
+        Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
+        R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
         # Parallel addition of resistance
         R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
         
@@ -83,30 +73,38 @@ function residuals_Q(x, p)
     R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
     Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
 
+    #Assemble array with residuals
     F = zeros(length(x))
-    F[1] = Q - ΔT / Req
+    F[1] = Q - ΔT / Req #Heat transfer rate residual
 
-    T_calc = Tfuel + R_liq * Q
+    T_calc = Tfuel + R_liq * Q #Wall temperature residual
     F[2] = T_w - T_calc
 
     for i = 1:length(T_mli)
-        T_calc = T_calc + R_mli[i] * Q
-        F[i + 2] = T_mli[i] - T_calc
+        T_calc = T_calc + R_mli[i] * Q 
+        F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
         
     end
+
     return F
-end
+end  
 
 const gee = 9.81
 l_cyl = 2
 l_tank = 4
 r_tank = 1 
-Shead = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 hconvgas= 0 
 hconvair = 15
-t_cond = ones(1)*5e-3 #m
-k = ones(length(t_cond)) * 5e-3
-material = "polyurethane"
+t_cond = ones(1)*5e-1 #m
+material = ["polyurethane","polyurethane","polyurethane","polyurethane","polyurethane"]
+
+Shead = zeros(length(t_cond)+1)
+Ro = r_tank
+Shead[1] = 2*pi*Ro^2
+for i = 1:length(t_cond)
+    global Ro = Ro + t_cond[i]
+    Shead[i+1] = 2*pi*Ro^2
+end
 
 Tfuel = 20
 Tair = 220
@@ -133,7 +131,7 @@ qfac = 1.3         # Account for heat leak from pipes and valves
 fun(x) = residuals_Q(x, p)
 
 guess = zeros(length(t_cond) + 2)
-guess[1] = 100
+guess[1] = 6678.650972640886
 guess[2] = Tfuel + 1
 
 for i = 1:length(t_cond)
