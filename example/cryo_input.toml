@@ -1,6 +1,6 @@
-# This TOML file has the inputs for a sample aircraft using heat exchangers in the engine
+# This TOML file has the inputs for a sample aircraft with a cryogenic fuel using heat exchangers in the engine
 ["Aircraft Description"]
-name = "Default TASOPT Model with HX"
+name = "TASOPT Model with cryo fuel and HX"
     description = """737-800
     This file is a slightly modified version of the default TASOPT file. It replaces the fuel
     with liquid hydrogen and makes the corresponding fuel system changes such as fuselage storage and insulation. It
@@ -54,9 +54,9 @@ name = "Default TASOPT Model with HX"
 
 [Fuel.Storage]
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
-    insulation_segment_base_thickness = [0.1] #m
-    insulation_thicknesses_design_indices = [1]
-    insulation_material = ["rohacell31"] #Options: "rohacell31", "polyurethane"
+    insulation_segment_base_thickness = [0.1,0.1,0.1] #m
+    insulation_thicknesses_design_indices = [1,2,3]
+    insulation_material = ["rohacell31","rohacell31","rohacell31"] #Options: "rohacell31", "polyurethane"
     skin_yield_strength = 172.4e6 #Pa
     tank_skin_density = 2825 #kg/m^3
     maximum_boiloff_rate = 0.1 #%/hour
