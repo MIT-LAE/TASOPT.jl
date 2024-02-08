@@ -6,7 +6,7 @@ aerodynamic, propulsion system parameters.
 It is designed to hold information related to the aircraft's name, description,
 as well as different sets of parameters used for analysis and optimization.
 
-Overloads Base.summary to print a summary of the aircraft model.
+Overloads Base.summary to print a summary of the `aircraft` model.
 
 # Fields:
 - `name::String` : Aircraft name (eg: "Boeing 777")      
@@ -16,6 +16,8 @@ Overloads Base.summary to print a summary of the aircraft model.
 - `parm::AbstractArray{Float64}` : Mission parameters                    
 - `para::AbstractArray{Float64}` : Aero parameters                       
 - `pare::AbstractArray{Float64}` : Engine parameters 
+
+For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
 struct aircraft
     name::String
@@ -27,6 +29,18 @@ struct aircraft
     pare::AbstractArray{Float64}
     sized::MVector{1,Bool}
 end
+
+function Base.getproperty(ac::aircraft, sym::Symbol)
+    if sym === :parad #Design para
+        return view(getfield(ac, :para), :, : , 1) 
+    elseif sym === :pared #Design pare
+        return view(getfield(ac, :pare), :, : , 1) 
+    elseif sym === :parmd #Design parm
+        return view(getfield(ac, :parm), :, 1) 
+    else
+        return getfield(ac, sym)
+    end
+end  # function getproperty
 
 function Base.summary(ac::aircraft)
     println("\n----- TASOPT model summary -----")

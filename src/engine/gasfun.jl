@@ -6,23 +6,25 @@ using Zygote
 Computes properties of a thermally-perfect gas
 with some variable specific heat cp[T].
 
-## Input:
-     igas   index specifying the gas (see if blocks below for list)
-     t      temperature T in Kelvin
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `igas`: index specifying the gas (see if blocks below for list)
+    - `t`: temperature T in Kelvin
 
-## Output:
-     s      entropy-complement function s[T]
-     s_t    ds/dT
-     h      complete enthalpy function h[T]
-     h_t    dh/dT
-     cp     specific heat cp[T]
-     r      ideal-gas constant R
+    **Output:**
+    - `s`: entropy-complement function s[T]
+    - `s_t`: ds/dT
+    - `h`: complete enthalpy function h[T]
+    - `h_t`: dh/dT
+    - `cp`: specific heat cp[T]
+    - `r`: ideal-gas constant R
 
 
-     The adiabatic pressure change over a process 1..2 
-     with some polytropic efficiency epol is 
-       p2  =  p1  exp [   epol   (s2-s1)/R ]    compression
-       p2  =  p1  exp [ (1/epol) (s2-s1)/R ]    expansion
+The adiabatic pressure change over a process 1->2 with some polytropic efficiency epol is:
+
+``\\ p2  = \\ p1  exp [   epol   (s2-s1)/R ] ``   compression
+
+``\\ p2  = \\ p1  exp [ (1/epol) (s2-s1)/R ] ``   expansion
 """
 function gasfun(igas, t)
     
@@ -48,28 +50,31 @@ function gasfun(igas, t)
         s, h, cp, r = gas_C8H18(t)
     elseif (igas == 24)
         s, h, cp, r = gas_C14H30(t)
+    elseif (igas == 40)
+        s, h, cp, r = gas_H2(t)
     else
-        println("GASFUN: undefined gas index: ", igas)
-        exit(code=0)
+        error("GASFUN: undefined gas index: ", igas, " & code=0")
     end
     s_t = cp / t
     h_t = cp
     return s, s_t, h, h_t, cp, r
 end # gasfun
 
+"""
+    gaschem(igas)
 
+Returns number of C,H,O,N atoms in gas molecule, for the gases implemented in function gasfun above.
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `igas`: index specifying the gas (see if blocks below for list)
+
+    **Output:**
+    - `nchon(.)`: number of C,H,O,N atoms in gas molecule
+
+"""
 function gaschem(igas)
-    #--------------------------------------------------------------------
-    #     Returns number of C,H,O,N atoms in gas molecule,
-    #     for the gases implemented in function gasfun above.
-    #
-    #  Input:
-    #     igas   index specifying the gas (see if blocks below for list)
-    #
-    #  Output:
-    #     nchon(.)  number of C,H,O,N atoms in gas molecule
-    #
-    #--------------------------------------------------------------------
+
     kc = 1
     kh = 2
     ko = 3
@@ -111,9 +116,11 @@ function gaschem(igas)
     elseif (igas == 24)  #   C14H30
         buf[kc] = 14
         buf[kh] = 30
+    elseif (igas == 40)  #   H2
+        buf[kc] = 0
+        buf[kh] = 2
     else
-        println("GASFUN: undefined gas index: ", igas)
-        exit(code=0)
+        error("GASFUN: undefined gas index: ", igas, " & code=0")
     end
     nchon = copy(buf)
     return nchon
@@ -1054,4 +1061,87 @@ function gas_C14H30(t1)
     #- - - - - - - - - - -
     return s1, h1, cp1, r1
     # gas_C14H30 
-end           
+end 
+
+function gas_H2(t1)# t, tl, cp, cpt,h, s)
+
+    ndim::Int = 45
+
+    r = 4124.9
+    hform = 0.0000
+    t = [
+        20.369,25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,400,
+        425,450,475,500,525,550,575,600,625,650,675,700,725,750,775,800,825,
+        850,875,900,925,950,975,1000, 1200,1400,1600,1800]
+    tl = [
+        3.014,3.2189,3.912,4.3175,4.6052,4.8283,5.0106,5.1648,5.2983,5.4161,
+        5.5215,5.6168,5.7038,5.7838,5.8579,5.9269,5.9915,6.0521,6.1092,6.1633,
+        6.2146,6.2634,6.3099,6.3544,6.3969,6.4378,6.477,6.5147,6.5511,6.5862,
+        6.6201,6.6529,6.6846,6.7154,6.7452,6.7742,6.8024,6.8298,6.8565,6.8824,6.9078,
+        7.090076835776092, 7.24422751560335, 7.3777589082278725,7.495541943884256]
+    cp = [
+        12037,11141,10484,10646,11229,11948,12605,13134,13538,13838,14054,14207,
+        14313,14384,14431,14460,14479,14492,14500,14507,14513,14520,14528,14538,
+        14549,14563,14578,14595,14614,14635,14658,14683,14710,14739,14769,14802,
+        14836,14873,14911,14950,14992, 15369.26881715749, 15807.323646038674,
+        16236.98103225697, 16637.35988622929]
+    cpt = [
+        -193.4787,-193.4787,-26.28,6.48,23.32,28.76,26.28,21.16,16.16,12,8.64,
+        6.12,4.24,2.84,1.88,1.16,0.76,0.52,0.32,0.28,0.24,0.28,0.32,0.4,0.44,
+        0.56,0.6,0.68,0.76,0.84,0.92,1,1.08,1.16,1.2,1.32,1.36,1.48,1.52,
+        1.56,1.68, 2.13761984623805, 2.197095894011728, 2.0838354647243156,
+        1.9160142553942294]
+    h = [
+        -3483090,-3429880,-3163090,-2900000,-2627200,-2337500,-2030300,-1708300,
+        -1374700,-1032300,-683500,-330100,26500,385200,745500,1106600,1468400,
+        1830500,2192900,2555500,2918300,3281200,3644300,4007600,4371200,4735100,
+        5099300,5464000,5829100,6195200,6561200,6927200,7295200,7663200,8032200,
+        8401200,8772200,9143200,9516200,9889200,10263200, 1.3291581998957554e7,
+        1.640905880390128e7, 1.961387272722963e7, 2.290186861543862e7]
+    s = [
+        -31401,-29044,-21623,-17359,-14223,-11640,-9402,-7418,-5636,-4023,-2554,
+        -1207,34,1183,2251,3248,4181,5060,5888,6672,7417,8125,8801,9447,10066,
+        10660,11231,11782,12313,12826,13322,13803,14270,14723,15164,15592,16010,
+        16417,16814,17202,17581, 2.0361e4, 2.2771e4, 2.4915e4, 2.6854e4]   
+        
+    #- - - - - - - - - - -
+    ilow::Int = 1
+    i::Int = ndim
+    #- - - - - - - - - - -
+
+    while !(i <= ilow + 1)
+
+        imid = (i + ilow) ÷ 2 
+        if (t1 < t[imid])
+            i = imid
+        else
+            ilow = imid
+        end
+
+    end
+
+    dt = t[i] - t[i-1]
+    f = (t1 - t[i-1]) / dt
+
+    dtl = tl[i] - tl[i-1]
+    fl = (log(t1) - tl[i-1]) / dtl
+    #- - - - - - - - - - -
+    s1 = (1.0 - fl) * s[i-1] +
+         fl * s[i] +
+         fl * (1.0 - fl) * ((1.0 - fl) * (dtl * cp[i-1] - s[i] + s[i-1]) -
+                            fl * (dtl * cp[i] - s[i] + s[i-1]))
+
+    h1 = hform + (1.0 - f) * h[i-1] +
+         f * h[i] +
+         f * (1.0 - f) * ((1.0 - f) * (dt * cp[i-1] - h[i] + h[i-1]) -
+                          f * (dt * cp[i] - h[i] + h[i-1]))
+
+    cp1 = (1.0 - f) * cp[i-1] +
+          f * cp[i] +
+          f * (1.0 - f) * ((1.0 - f) * (dt * cpt[i-1] - cp[i] + cp[i-1]) -
+                           f * (dt * cpt[i] - cp[i] + cp[i-1]))
+
+    r1 = r
+    #- - - - - - - - - - -
+    return s1, h1, cp1, r1
+end # gas_H2

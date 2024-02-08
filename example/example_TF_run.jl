@@ -1,3 +1,5 @@
+#!!! compat
+#DELETE ME. I NO LONGER WORK
 
 using Pkg
 Pkg.activate(dirname(@__DIR__))

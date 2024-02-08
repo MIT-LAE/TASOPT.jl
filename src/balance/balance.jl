@@ -1,6 +1,8 @@
 """
+      balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
+
 Makes one of three (or none) changes to achieve pitch trim
-calculates resulting CG, CP, NP locations
+calculates resulting CG, CP, NP locations.
 
 Inputs:
 - `pari[.]`  integer flag array
@@ -24,6 +26,8 @@ Outputs:
 - `para[iaxCP]`  center of pressure ( = xCG if itrim=1,2,3 )
 - `para[iaxNP]`  neutral point location
 
+!!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 """
 function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
 

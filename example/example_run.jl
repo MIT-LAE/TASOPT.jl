@@ -22,7 +22,7 @@ println("Time to size aircraft = $time_wsize s")
 summary(example_ac)
 # Or individually look at certain aspects:
 # Show weight buildup of the aircraft:
-# TASOPT.weight_buildup(example_ac)
+# TASOPT.weight_buildup(example_ac) 
 # # Show aerodynamics:
 # TASOPT.aero(example_ac)
 # # Geometry:
@@ -32,4 +32,3 @@ summary(example_ac)
 using PyPlot
 TASOPT.stickfig(example_ac)
 plt.savefig("Example.png")
-

@@ -1,3 +1,7 @@
+#!!! compat
+#I'm used in benchmark.jl, benchmarking.inpynb, and UnitTester2.jl
+#Delete me?
+
 # Inputs for testing runs
 nmisx = 1
 pari = zeros(Int64, iitotal)
