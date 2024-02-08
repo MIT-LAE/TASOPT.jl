@@ -1383,7 +1383,8 @@ function wsize(aircraft, imission,
             M_inf = para[iaMach, ipcruise1]
             z_alt = para[iaalt, ipcruise1]
 
-            hconvair, Tair = structures.freestream_heat_coeff(z_alt, M_inf, xftank_heat)
+            hconvair, Tair = structures.freestream_heat_coeff(z_alt, M_inf, xftank_heat) #Find air temperature 
+                                                                                        #and convective heat transfer coefficient
 
             #Fuel tank design
             cargotank = false #TODO: figure out why this is here

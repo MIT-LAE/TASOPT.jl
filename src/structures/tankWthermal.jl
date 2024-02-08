@@ -120,9 +120,9 @@ function residuals_Q(x, p)
   
       hradair = σ * ε * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
-      Rair_conv_rad = 1 / (h_air * (2π * r_tank * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
+      Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
   
-      S_int = (2π * (r_inner - thickness) * l_cyl) + 2*Shead[1] #liquid side surface area
+      S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
       h_liq, _ = tank_heat_coeffs(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
   

@@ -144,7 +144,7 @@ function res_MLI_thick(Δt, gee, rhoFuel, deltap,
                 t_all[ind] = t_all[ind] + Δt  
         end
 
-        m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
+        m_boiloff = threshold_percent *  Wfuel / (gee * 100) #value of boil-off mass
 
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
         Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,

@@ -57,23 +57,22 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       thickness_insul = sum(t_cond)
 
 # Input paramters:
-      weld_eff = 0.9 #lower strength due to welding?
-      ullage_frac = 0.1 # V. thesis says ~3% but Barron recommends 10% #TODO: figure out who these people are
+      weld_eff = 0.9 #lower strength due to welding
+      ullage_frac = 0.1 # V. thesis says ~3% but Barron recommends 10%
       β = 2.0 #TODO: what is this? a safety factor?
 # Add an additional pressure factor
       Δpdes = Δp * β
 
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
 
-      tskin = Δpdes * (2 * Rtank_outer) / (2 * sigskin * weld_eff + 0.8 * Δpdes) #TODO: this sizes the skin thickness
-                                                                              #based on stress; figure out where it comes from
+      tskin = Δpdes * (2 * Rtank_outer) / (2 * sigskin * weld_eff + 0.8 * Δpdes) #(7.1) in Barron (1985)
 
       Rtank = Rtank_outer - tskin
       tfweb = 2.0 * Δpdes * wfb  / sigskin
       Lhead = Rtank / AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
       
       K = (1/6) * (AR^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
-      t_head = Δpdes* (2*Rtank_outer) * K/ (2 * sigskin * weld_eff + 2 * Δpdes * (K-.1)) #Verstraete
+      t_head = Δpdes* (2*Rtank_outer) * K/ (2 * sigskin * weld_eff + 2 * Δpdes * (K - 0.1)) #(7.2) in Barron (1985)
 
 #--- Calculate length of cylindrical portion
       Wfuel_tot = Wfuel + (m_boiloff * gee)
@@ -130,7 +129,9 @@ function tankWmech(gee::Float64, ρfuel::Float64,
             # println("AR ≈ $(Ro/L)")
             Vcyl_insul[n]  = (π * ( Ro^2 - Ri^2 ) * l_cyl)
             Shead_insul[n+1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
-            Vhead_insul[n] = (Shead_insul[n] + Shead_insul[n+1])/2  * t_cond[n]
+
+            Area_coeff = Shead_insul[n+1] / Ro^2 #coefficient that relates area and radius squared
+            Vhead_insul[n] = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
             
             Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee
             # println("AR = $(Ro/L)")
@@ -141,11 +142,22 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       Wtank = (Wtank + Winsul_sum)
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
-      l_tank = l_cyl + 2*Lhead
 
 return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank
 end
 
+"""
+      insulation_density_calc(material)
+
+This function calculates the density of different insulation materials.
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `material::String`: material name.
+
+      **Outputs:**
+      - `ρ::Float64`: mass density (kg/m^3).
+"""
 function insulation_density_calc(material)
       if material == "rohacell31"
             ρ = 32.0 #kg/m^3. From manufacturer sheet
