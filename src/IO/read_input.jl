@@ -44,8 +44,8 @@ Temp(x)     = convertTemp(parse_unit(x)...)
     read_aircraft_model(datafile; 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
 
-Reads a specified TOML file that describes a TASOPT aircraft model 
-with a fall back to the default aircraft definition 
+Reads a specified TOML file that describes a TASOPT `aircraft` model 
+with a fall back to the default `aircraft` definition 
 provided in \"src/IO/default_input.toml\""
 
 !!! note "Deviating from default"
@@ -140,7 +140,9 @@ readfuel(x::String) = read_input(x, fuel, dfuel)
 fueltype = readfuel("fuel_type")
 #TODO this needs to be updated once I include Gas.jl into TASOPT
 if uppercase(fueltype) == "LH2"
-    pari[iifuel] = 1
+    pari[iifuel] = 40
+elseif uppercase(fueltype) == "CH4"
+        pari[iifuel] = 11
 elseif uppercase(fueltype) == "JET-A"
     pari[iifuel] = 24
 else
@@ -149,15 +151,18 @@ end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
-pare[ieTfuel, :, :] .= readfuel("fuel_temp")
+pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
+pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
 parg[igrhofuel] = readfuel("fuel_density")
 
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
 
-parg[igWpax, :] .= Force(readmis("weight_per_pax"))
-parm[imWpay, :] .= readmis("pax") .* parg[igWpax]
+Wpax =  Force(readmis("weight_per_pax"))
+parm[imWperpax, :] .= Wpax
+parm[imWpay, :] .= readmis("pax") * Wpax
+parg[igWpaymax] = readmis("max_pax") * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
@@ -202,12 +207,6 @@ para[iaalt, ipcruise1, :] .= Distance.(readcruise("cruise_alt"))
 #Note: the following matrix re-arrangements are a result of 
 #  having to assign both mission and segment indices 
 #  and supporting multi-mission input.
-# para[iaMach, ipclimbn:ipdescent1, :] .= repeat(transpose(readcruise("cruise_mach")), 
-#                                             (ipdescent1-ipclimbn+1), 
-#                                             1 + (nmisx-size(readcruise("cruise_mach"),1)) )
-# para[iaCL, ipclimb1+1:ipdescentn-1, :] .= repeat(transpose(readcruise("cruise_CL")), 
-#                                             ((ipdescentn-1)-(ipclimb1+1)+1), 
-#                                             1 + (nmisx-size(readcruise("cruise_CL"),1)) )
 
 para[iaMach, ipclimbn:ipdescent1, :] .= fill_par_entry(readcruise("cruise_mach"),
                                             (ipdescent1-ipclimbn)+1, 
@@ -470,6 +469,7 @@ readhtail(x) = read_input(x, htail, dhtail)
     elseif htail_size == "maxforwardcg"
         pari[iiHTsize] = 2
         parg[igCLhCGfwd] = readhtail("CLh_at_max_forward_CG")
+        parg[igVh] = 1.0
     else
         error("Horizontal tail can only be sized via:
             1: specified tail volume coeff \"Vh\";
@@ -793,6 +793,34 @@ dweight = dprop["Weight"]
         error("\"$TF_wmodel\" engine weight model was specifed. 
         Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
     end
+
+# Heat exchangers
+
+try #If heat exchanger field exists in the input file
+    HEx = readprop("HeatExchangers")
+    dHEx = dprop["HeatExchangers"]
+        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
+        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
+        pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
+        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+        
+        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
+        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
+        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+
+        pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
+        pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
+        pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+
+        pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
+        pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
+        pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+
+        pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
+        pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
+        pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+catch #Do nothing if the heat exchanger field does not exist
+end
 
 return TASOPT.aircraft(name, description,
         pari, parg, parm, para, pare, sized)

@@ -13,21 +13,112 @@
             sigskin, sigbend, rhoskin, rhobend, 
             Eskin, Ebend, Gskin)
 
-`fusew` sizes the fuselage and calculates the component weights
+`fusew` sizes the fuselage and calculates the component weights and structural properties.
+It takes inputs related to geometry, fixed weights, material properties, and more to compute the fuselage dimensions, weights, and other parameters.
+       
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `Nland::Integer`: Number of landing gear components.
+      Fixed weights of various components:
+      - `Wfix::Float64`: Fixed weight of the structure.
+      - `Wpay::Float64`: Fixed weight of payload.
+      - `Wpadd::Float64`: Fixed weight of additional equipment.
+      - `Wseat::Float64`: Fixed weight of seats.
+      - `Wapu::Float64`: Fixed weight of auxiliary power unit.
+      - `Weng::Float64`: Fixed weight of engines.
+      - `Waftfuel::Float64`: Fixed weight of aft fuel storage.
 
-Inputs: 
+      Factors for stringers, frames, and additional structural components:
+      - `fstring::Float64`: Factor for stringers.
+      - `fframe::Float64`: Factor for frames.
+      - `ffadd::Float64`: Factor for additional structural components.
+      
+      Pressure differential:
+      - `deltap::Float64`: Pressure differential.
 
-- Geometry: `xnose`, `Rfuse`, etc..
-- Fixed weights: `Wfix`, `Wpay`, `Wseat` etc...
-- Material props: `sigskin`, `rhoskin`, `E`, `G`, etc...
+      Weights of window, insulation, and floor:
+      - `Wpwindow::Float64`: Weight of windows.
+      - `Wppinsul::Float64`: Weight of insulation.
+      - `Wppfloor::Float64`: Weight of floor.
 
-Outputs:
+      Vertical tail parameters:
+      - `Whtail::Float64`: Weight of horizontal tail components.
+      - `Wvtail::Float64`: Weight of vertical tail components.
+      - `rMh::Float64`: Horizontal tail moment arm.
+      - `rMv::Float64`: Vertical tail moment arm.
+      - `Lhmax::Float64`: Maximum horizontal tail length.
+      - `Lvmax::Float64`: Maximum vertical tail length.
+      - `bv::Float64`: Vertical tail span.
+      - `lambdav::Float64`: Vertical tail taper ratio.
+      - `nvtail::Integer`: Number of vertical tail units.
 
-- Bending/Torsion inertias: `EI`, `GJ` 
-- Thicknesses: `tskin` etc
-- Weights: `Wfuse`
-- Moments: `xWfuse`
-- Cabin Volume: `cabVol`
+      Fuselage parameters:
+      - `Rfuse::Float64`: Fuselage radius.
+      - `dRfuse::Float64`: Fuselage thickness.
+      - `wfb::Float64`: Fuselage width.
+      - `nfweb::Integer`: Number of fuselage webs.
+      - `lambdac::Float64`: Fuselage taper ratio.
+
+      Geometric parameters and locations:
+      - `xnose::Float64`: X location of the nose.
+      - `xshell1::Float64`: X location of the first shell point.
+      - `xshell2::Float64`: X location of the second shell point.
+      - `xconend::Float64`: X location of the cone end.
+      - `xhtail::Float64`: X location of horizontal tail components.
+      - `xvtail::Float64`: X location of vertical tail components.
+      - `xwing::Float64`: X location of the wing.
+      - `xwbox::Float64`: X location of the wing box.
+      - `cbox::Float64`: Wing box width.
+      - `xfix::Float64`: X location of fixed components.
+      - `xapu::Float64`: X location of auxiliary power unit.
+      - `xeng::Float64`: X location of engines.
+      - `xfuel::Float64`: X location of fuel storage.
+      - `hfloor::Float64`: Height of the floor.
+
+      Material properties:
+      - `sigskin::Float64`: Skin material stress.
+      - `sigbend::Float64`: Bending material stress.
+      - `rhoskin::Float64`: Skin material density.
+      - `rhobend::Float64`: Bending material density.
+      - `Eskin::Float64`: Skin material Young's modulus.
+      - `Ebend::Float64`: Bending material Young's modulus.
+      - `Gskin::Float64`: Skin material shear modulus.
+
+      **Outputs:**
+
+      Thicknesses and locations:
+      - `tskin::Float64`: Fuselage skin thickness.
+      - `tcone::Float64`: Thickness of the tail cone.
+      - `tfweb::Float64`: Thickness of fuselage webs.
+      - `tfloor::Float64`: Floor beam thickness.
+      - `xhbend::Float64`: X location of added material for horizontal-axis bending.
+      - `xvbend::Float64`: X location of added material for vertical-axis bending.
+
+      Bending and torsion inertias:
+      - `EIhshell::Float64`: Bending inertia for horizontal shell.
+      - `EIhbend::Float64`: Bending inertia for horizontal axis bending.
+      - `EIvshell::Float64`: Bending inertia for vertical shell.
+      - `EIvbend::Float64`: Bending inertia for vertical axis bending.
+      - `GJshell::Float64`: Torsional stiffness for horizontal shell.
+      - `GJcone::Float64`: Torsional stiffness for tail cone.
+
+      Weights of components and total fuselage weight:
+      - `Wshell::Float64`: Weight of fuselage shell components.
+      - `Wcone::Float64`: Weight of tail cone.
+      - `Wwindow::Float64`: Weight of windows.
+      - `Winsul::Float64`: Weight of insulation.
+      - `Wfloor::Float64`: Weight of floor.
+      - `Whbend::Float64`: Weight of horizontal-axis bending material.
+      - `Wvbend::Float64`: Weight of vertical-axis bending material.
+      - `Wfuse::Float64`: Total weight of the fuselage.
+
+      Moments
+      - `xWfuse::Float64`: Moments.
+
+      Pressurized cabin volume:
+      - `cabVol::Float64`: Pressurized cabin volume.
+
+See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
 function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
                       fstring,fframe,ffadd,deltap,

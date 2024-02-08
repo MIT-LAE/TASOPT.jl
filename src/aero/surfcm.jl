@@ -3,19 +3,38 @@
 		λt, λs, γt, γs, 
 		AR, fLo, fLt, cmpo, cmps, cmpt)
 
-Calculates components of wing CM about wing root axis:
+Calculates components of wing pitching moment (``C_M``) about wing root axis:
 
-``C_M = C_{M,0} + C_{M,1} (C_L - C_{L,htail})``
+``C_M = C_{M,0} + C_{M,1} (C_L - C_{L,surf})``
 
-``ΔC_{m, wing} = ΔC_{m, 0} + dCₘ/dCL × (C_L - C_{L,h})``
+``ΔC_{m, surf} = ΔC_{m, 0} + dCₘ/dCL × (C_L - C_{L,h})``
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `b::Float64`: Span.
+      - `bs::Float64`: Outer panel break span.
+      - `bo::Float64`: Root (fuselage) span.
+      - `sweep::Float64`: Sweep, degrees.
+	    -	`Xaxis::Float64`: Surface axis position.
+      - `λt::Float64`: Outer-panel chord taper ratio  ct/co.
+      - `λs::Float64`: Inner-panel chord taper ratio  cs/co.
+      - `γt::Float64`: Outer-panel load  taper ratio  pt/po.
+      - `γs::Float64`: Inner-panel load  taper ratio  ps/po.
+      - `AR::Float64`: Surface aspect ratio.
+      - `fLo::Float64`, `fLt::Float64` : Wing root and tip load adjustment factors.
+      - `cmpo::Float64`,`cmps::Float64`,`cmpt::Float64`: Perpendicular sectional lift coefficient at wing root, break ("snag"), and tip.
+
+      **Outputs:**
+      - `CM0::Float64`: Zero-lift surface pitching moment.
+      - `CM1::Float64`: Surface pitching moment including lift contribution.
 
 
-See eqn 172 of TASOPT docs.
+See Section 2.6.3 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`surfcd`](@ref) and [`surfcd2`](@ref).
 """
 function surfcm(b,bs,bo, sweep, Xaxis,
-                       λt,λs,γt,γs,
-                       AR,fLo,fLt,cmpo,cmps,cmpt)
+                       λt, λs, γt, γs,
+                       AR, fLo, fLt, cmpo, cmps, cmpt)
 
       cosL = cos(sweep*pi/180.0)
       tanL = tan(sweep*pi/180.0)

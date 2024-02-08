@@ -56,7 +56,10 @@
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
-
+    pax = [180, 150]            # Number of passengers in each mission
+    max_pax = 230               # Maximum number of passengers for aircarft
+                                # defines the maximum payload carrying capacity of the aircraft
+                                
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
 
     pax = [180, 150]                    # Number of passengers in each mission
@@ -440,6 +443,28 @@
     nacelle_pylon_wetted_area_ratio = 16.0 # = rSnace = wetted area/fan area
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
+[Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
+    recirculation_flag = 0
+    recirculation_temperature = 0
+    latent_heat = 0
+    core_inner_diameter = 0
+
+    precooler_order = 0
+    precooler_effectiveness = 0
+    precooler_inlet_mach = 0
+
+    intercooler_order = 0
+    intercooler_effectiveness = 0
+    intercooler_inlet_mach = 0
+
+    regenerative_order = 0
+    regenerative_effectiveness = 0
+    regenerative_inlet_mach = 0
+
+    turbine_cooler_order = 0
+    turbine_cooler_effectiveness = 0
+    turbine_cooler_inlet_mach = 0
+    
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   

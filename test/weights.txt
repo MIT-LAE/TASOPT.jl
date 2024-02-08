@@ -1,0 +1,52 @@
+Weight build-up:
+ -------------- 
+Wempty  +   466014.1 N (104764.1 lb)
+Wpay    +   172146.2 N ( 38700.0 lb)
+Wfuel   +   233069.6 N ( 52396.1 lb)
+--------------------
+WMTO    =   871229.9 N (195860.3 lb)
+
+Wfuse   +   195735.6 N ( 44003.1 lb)
+Wwing   +   128764.2 N ( 28947.3 lb)
+Wvtail  +     9899.4 N (  2225.5 lb)
+Whtail  +    14759.3 N (  3318.0 lb)
+Wtesys  +        0.0 N (     0.0 lb)
+Wftank  +        0.0 N (     0.0 lb)
+Wadd    +    56629.9 N ( 12730.9 lb)
+--------------------
+Wempty  =   405788.5 N ( 91224.9 lb)
+
+Wcap    +    74931.7 N ( 16845.3 lb)
+Wweb    +     3583.1 N (   805.5 lb)
+Wflap   +    15703.0 N (  3530.2 lb)
+Wslat   +     7851.5 N (  1765.1 lb)
+Waile   +     3140.6 N (   706.0 lb)
+Wlete   +     7851.5 N (  1765.1 lb)
+Wribs   +    11777.2 N (  2647.6 lb)
+Wspoi   +     1570.3 N (   353.0 lb)
+Wwatt   +     2355.4 N (   529.5 lb)
+--------------------
+Wwing  =   128764.2 N ( 28947.3 lb)
+
+Wtshaft +        0.0 N (     0.0 lb) × 2
+Wcat    +        0.0 N (     0.0 lb) × 2
+Waftfan +        0.0 N (     0.0 lb) × 2
+WaftGB  +        0.0 N (     0.0 lb) × 2
+Wgen    +        0.0 N (     0.0 lb) × 4
+Wrect   +        0.0 N (     0.0 lb) × 4
+Wcables +        0.0 N (     0.0 lb) ----
+Winv    +        0.0 N (     0.0 lb) × 6
+Wmot    +        0.0 N (     0.0 lb) × 6
+Wfan    +        0.0 N (     0.0 lb) × 6
+WfanGB  +        0.0 N (     0.0 lb) × 6
+Wtms    +        0.0 N (     0.0 lb) ----
+--------------------
+Wtesys  =        0.0 N (     0.0 lb)
+
+Wftnkins  =        0.0 N (     0.0 lb)
+Wftank    =        0.0 N (     0.0 lb)
+
+lftank    =        0.0 m (     0.0 ft)
+Rftank    =        0.0 m (     0.0 ft)
+ηtank     = 100.0 % 
+

@@ -1,0 +1,14 @@
+Database files implementing cd(Mach,cl,t/c) functions for families of airfoils.
+
+C.air
+C-series modern transonic airfoils, 9.0% to 14.5% thick.
+
+Cl.air
+C-series with laminar flow on the bottom surface, up to about 60% chord.
+
+E.air
+E-series modern transonic airfoils, 9.0% to 14.5% thick.
+Compared to the C-series, the E-series have a deeper aft undercamber.
+This gives them a bit higher Mach capability, at the cost of slightly 
+more drag, more negative cm, larger hinge moment, and a smaller trailing
+edge wedge angle.

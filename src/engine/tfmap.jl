@@ -1,21 +1,23 @@
+"""
+    Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
+Calculates compressor or fan corrected speed as a function of pressure ratio and corrected mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`: pressure ratio 
+    - `mb`:       corrected mass flow
+    - `piD`:      design pressure ratio
+    - `mbD`:      design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `Cmap(.)`:  map constants
+
+    **Outputs:**
+    - `Nb`:     wheel speed
+    - `Nb_?`:   derivatives
+
+"""
 function Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
-    # ==============================================================
-    #     Calculates compressor or fan corrected speed as a function 
-    #     of pressure ratio and corrected mass flow
-    #
-    #     Inputs
-    #       pratio      pressure ratio
-    #       mb      corrected mass flow
-    #       piD     design pressure ratio
-    #       mbD     design corrected mass flow
-    #       NbD     design corrected speed
-    #       Cmap(.) map constants
-    #
-    #     Outputs
-    #       Nb    wheel speed
-    #       Nb_?  derivatives
-    # ==============================================================
 
     eps = 1.0e-11
 
@@ -110,25 +112,28 @@ function Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
 end # Ncmap
 
+"""
+    ecmap(pratio, mb, piD, mbD, Cmap, effo, piK, effK)
+
+Calculates compressor or fan efficiency as a function of pressure ratio and corrected mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:        pressure ratio
+    - `mb`:        corrected mass flow
+    - `piD`:       design pressure ratio
+    - `mbD`:       design corrected mass flow
+    - `Cmap(.)`:   map constants
+    - `effo`:      maximum efficiency
+    - `piK`:       pi-dependence offset  eff = effo + effK*(pi-piK)
+    - `effK`:      pi-dependence slope
+
+    **Outputs:**
+    - `eff`:        efficiency
+    - `eff_?`:      derivatives
+
+"""
 function ecmap(pratio, mb, piD, mbD, Cmap, effo, piK, effK)
-    # ==============================================================
-    #     Calculates compressor or fan efficiency as a function 
-    #     of pressure ratio and corrected mass flow
-    #
-    #     Inputs
-    #       pratio       pressure ratio
-    #       mb       corrected mass flow
-    #       piD      design pressure ratio
-    #       mbD      design corrected mass flow
-    #       Cmap(.)  map constants
-    #       effo     maximum efficiency
-    #       piK      pi-dependence offset  eff = effo + effK*(pi-piK)
-    #       effK     pi-dependence slope
-    #
-    #     Outputs
-    #       eff       efficiency
-    #       eff_?     derivatives
-    # ==============================================================
 
     eps = 1.0e-8
 
@@ -195,26 +200,29 @@ function ecmap(pratio, mb, piD, mbD, Cmap, effo, piK, effK)
     return eff, eff_pi, eff_mb
 end # ecmap
 
+"""
+    Ncmap1(pratio, m, piD, mbD, NbD, ABCDm, iabcd, Tr, pr)
+
+Calculates compressor or fan efficiency as a function of pressure ratio and corrected mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:        pressure ratio
+    - `mb`:        corrected mass flow
+    - `piD`:       design pressure ratio
+    - `mbD`:       design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `ABCDm`:   map constants
+    - `iabcd`:   map exponents
+    - `Tr`:      T/Tref
+    - `pr`:      p/pref
+
+    **Outputs:**
+    - `N`:        wheel speed
+    - `N_?`:      derivatives
+
+"""
 function Ncmap1(pratio, m, piD, mbD, NbD, ABCDm, iabcd, Tr, pr)
-    # ==============================================================
-    #     Calculates compressor or fan speed as a function 
-    #     of pressure ratio and mass flow
-    #
-    #     Inputs
-    #       pratio     pressure ratio
-    #       m      mass flow
-    #       piD    design pressure ratio
-    #       mbD    design corrected mass flow
-    #       NbD     design corrected speed
-    #       ABCDm  map constants
-    #       iabcd  map exponents
-    #       Tr     T/Tref
-    #       pr     p/pref
-    #
-    #     Outputs
-    #       N       wheel speed
-    #       N_?     derivatives
-    # ==============================================================
 
     A = ABCDm[1]
     B = ABCDm[2]
@@ -260,26 +268,29 @@ function Ncmap1(pratio, m, piD, mbD, NbD, ABCDm, iabcd, Tr, pr)
     return N, N_pi, N_m, N_Tr, N_pr
 end # Ncmap1
 
+"""
+    ecmap1(pratio, m, piD, mbD, ABCDm, iabcd, effo, Tr, pr)
+
+Calculates compressor or fan efficiency as a function of pressure ratio and mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:        pressure ratio
+    - `mb`:        corrected mass flow
+    - `piD`:       design pressure ratio
+    - `mbD`:       design corrected mass flow
+    - `ABCDm`:   map constants
+    - `iabcd`:   map exponents
+    - `effo`:     maximum efficiency
+    - `Tr`:      T/Tref
+    - `pr`:      p/pref
+
+    **Outputs:**
+    - `eff`:        efficiency
+    - `eff_?`:      derivatives
+
+"""
 function ecmap1(pratio, m, piD, mbD, ABCDm, iabcd, effo, Tr, pr)
-    # ==============================================================
-    #     Calculates compressor or fan efficiency as a function 
-    #     of pressure ratio and mass flow
-    #
-    #     Inputs
-    #       pratio       pressure ratio
-    #       m        mass flow
-    #       piD      design pressure ratio
-    #       mbD      design corrected mass flow
-    #       ABCDm(.) map constants
-    #       iabcd(.) map exponents
-    #       effo     maximum efficiency
-    #       Tr       T/Tref
-    #       pr       p/pref
-    #
-    #     Outputs
-    #       eff       efficiency
-    #       eff_?     derivatives
-    # ==============================================================
 
     eps = 1.0e-8
 
@@ -331,26 +342,29 @@ function ecmap1(pratio, m, piD, mbD, ABCDm, iabcd, effo, Tr, pr)
     return eff, eff_pi, eff_m, eff_Tr, eff_pr
 end # ecmap1
 
+"""
+    etmap(dh, mb, Nb, piD, mbD, NbD, ept0, Tmap, Tt, cpt, Rt)
+
+Calculates turbine efficiency as a function of work and corrected mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `dh`:        enthalpy change
+    - `mb`:        corrected mass flow
+    - `Nb`:        corrected speed
+    - `piD`:      design pressure ratio
+    - `mbD`:      design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `ept0`:      turbine polytropic efficiency estimate
+    - `Tmap(.)`:   map constants
+
+    **Outputs:**
+    - `eff`:        efficiency
+    - `eff_?`:      derivatives
+
+"""
 function etmap(dh, mb, Nb, piD, mbD, NbD, ept0, Tmap,
     Tt, cpt, Rt)
-    # ==============================================================
-    #     Calculates turbine efficiency as a function 
-    #     of work and corrected mass flow
-    #
-    #     Inputs
-    #       dh       enthalpy change
-    #       mb       corrected mass flow
-    #       Nb       corrected speed
-    #       piD      design pressure ratio
-    #       mbD      design corrected mass flow
-    #       NbD      design corrected speed
-    #       ept0     turbine polytropic efficiency estimate
-    #       Tmap(.)  map constants
-    #
-    #     Outputs
-    #       eff       efficiency
-    #       eff_?     derivatives
-    # ==============================================================
 
     eps = 1.0e-8
 
@@ -398,24 +412,26 @@ function etmap(dh, mb, Nb, piD, mbD, NbD, ept0, Tmap,
     ept_Tt, ept_cpt, ept_Rt
 end # etmap
 
-function Pimap(mb, Nb, piD, mbD, NbD, Cmap)
-    # ==============================================================
-    #     Calculates compressor or fan pressure ratio as a function 
-    #     of pressure ratio and corrected mass flow
-    #
-    #     Inputs
-    #       mb      corrected mass flow
-    #       Nb      corrected wheel speed
-    #       piD     design pressure ratio
-    #       mbD     design corrected mass flow
-    #       NbD     design corrected speed
-    #       Cmap(.) map constants
-    #
-    #     Outputs
-    #       pratio      pressure ratio
-    #       pi_?    derivatives
-    # ==============================================================
+"""
+    Pimap(mb, Nb, piD, mbD, NbD, Cmap)
 
+Calculates compressor or fan pressure ratio as a function of pressure ratio and corrected mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `mb`:        corrected mass flow
+    - `Nb`:        corrected speed
+    - `piD`:      design pressure ratio
+    - `mbD`:      design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `Cmap(.)`:  map constants
+
+    **Outputs:**
+    - `pratio`:      pressure ratio
+    - `pi_?`:    derivatives
+
+"""
+function Pimap(mb, Nb, piD, mbD, NbD, Cmap)
 
     #----              a     b     k     mo     da    c    d     C    D
     #     data Cmapf / 3.50, 0.80, 0.03, 0.75, -0.50, 3.0, 6.0,  2.5, 15.0 /

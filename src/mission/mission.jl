@@ -1,4 +1,6 @@
 """
+    mission!(pari, parg, parm, para, pare, Ldebug)
+
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
 
@@ -23,20 +25,16 @@ NOTE:
  These appear as cos(gamma) factors in the climb equations,
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
+
+ !!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
 """
-function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, iairf, initeng, ipc1)
+function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
       t_prop = 0.0
       calc_ipc1 = true
       ifirst = true
-
-      if pari[iiengmodel] == 0
-            # Drela engine model
-            use_NPSS = false
-      else
-            # NPSS
-            use_NPSS = true
-      end
 
       # HACK TODO add the para back
       # iairf
@@ -52,19 +50,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       iengloc = pari[iiengloc]
       ifclose = pari[iifclose]
       ifuel = pari[iifuel]
-
-      if use_NPSS
-            mofWpay = parg[igmofWpay]
-            mofWMTO = parg[igmofWMTO]
-            PofWpay = parg[igPofWpay]
-            PofWMTO = parg[igPofWMTO]
-
-
-            # BLI
-            fBLIf = parg[igfBLIf]
-            DAfsurf = para[iaDAfsurf, ipcruise1]
-            KAfTE = para[iaKAfTE, ipcruise1]
-      end
 
       # Mission range
       Rangetot = parm[imRange]
@@ -329,16 +314,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       FoW = zeros(Float64, iptotal)
       FFC = zeros(Float64, iptotal)
       Vgi = zeros(Float64, iptotal)
-      if use_NPSS
-            dPdt = zeros(Float64, iptotal)
-            dygdt = zeros(Float64, iptotal)
-
-
-            pare[iePLH2, ipclimb1] = 1.5
-            pare[ieyg, ipclimb1] = 0.1
-      end
-
-
 
       # integrate trajectory over climb
       @inbounds for ip = ipclimb1:ipclimbn
@@ -357,28 +332,17 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
             Wpay = parg[igWpay]
             neng = parg[igneng]
 
-            if use_NPSS
+            dgamV = 1.0
+            Ftotal = 0.0
+            DoL = 0.0
+            mdotf = 0.0
+            V = 0.0
 
-                  if pari[iiengtype] == 1
-                        initfanPCT = 80.0
-                        finalfanPCT = parg[igfanPCT]
-                        frac = float(ip - ipclimb1) / float(ipclimbn - ipclimb1)
-                        fanPCT = initfanPCT * (1.0 - frac) + finalfanPCT * frac
-
-                        mofft = (mofWpay * Wpay + mofWMTO * W) / neng
-                        Pofft = (PofWpay * Wpay + PofWMTO * W) / neng
-                  end
-
-                  dgamV = 1.0
-                  Ftotal = 0.0
-                  DoL = 0.0
-                  mdotf = 0.0
-                  V = 0.0
-                  if (Ldebug)
-                        printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-                                    "iterg", "dgamV", "gamV", "cosg", "BW", "Ftotal", "DoL", "V"); color=:light_green)
-                  end
+            if (Ldebug)
+                  printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
+                              "iterg", "dgamV", "gamV", "cosg", "BW", "Ftotal", "DoL", "V"); color=:light_green)
             end
+
 
             @inbounds for iterg = 1:itergmax
                   V = sqrt(2.0 * BW * cosg / (ρ * S * CL))
@@ -403,52 +367,15 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
+                  icall = 1
+                  icool = 1
 
-                  if use_NPSS
-                        ρ0 = pare[ierho0, ip]
-                        u0 = pare[ieu0, ip]
-                        Φinl = 0.5 * ρ0 * u0^3 * (DAfsurf * fBLIf) / 2.0
-                        Kinl = 0.5 * ρ0 * u0^3 * (KAfTE * fBLIf) / 2.0 # Assume 2 engines
+                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
-                        if pari[iiengtype] == 0
-                              NPSS_success, Ftotal, η, P, Hrej, heatexcess,
-                              mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, 0.0, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+                  Ftotal = pare[ieFe, ip] * parg[igneng]
+                  TSFC = pare[ieTSFC, ip]
+                  DoL = para[iaCD, ip] / para[iaCL, ip]
 
-                              pare[iedeNOx, ip] = deNOx
-                              pare[ieEINOx1, ip] = EINOx1
-                              pare[ieEINOx2, ip] = EINOx2
-                              pare[ieemot:ieethermal, ip] .= η
-                              pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-                              pare[ieHexcess, ip] = heatexcess
-                        else
-                              NPSS_success, Ftotal, heatexcess,
-                              mdotf, EINOx1, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], Mach, 0.0, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, fanPCT, mofft, Pofft)
-
-                              pare[ieEINOx1, ip] = EINOx1
-
-                              pare[ieemot:ieethermal, ip] .= 0.0
-                              pare[ieHrejmot:ieHrejtot, ip] .= 0.0
-                              pare[ieHexcess, ip] = heatexcess
-                        end
-
-                        ifirst = false
-                        pare[ieOPR, ip] = OPR
-                        pare[ieTt3, ip] = Tt3
-                        pare[ieWc3, ip] = Wc3
-                        pare[iemdotf, ip] = mdotf
-
-                        DoL = para[iaCD, ip] / para[iaCL, ip]
-                  else
-                        icall = 1
-                        icool = 1
-
-                        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
-
-                        Ftotal = pare[ieFe, ip] * parg[igneng]
-                        TSFC = pare[ieTSFC, ip]
-                        DoL = para[iaCD, ip] / para[iaCL, ip]
-
-                  end
 
                   # Calculate improved flight angle
                   ϕ = Ftotal / BW
@@ -478,20 +405,9 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
             pare[ieFe, ip] = Ftotal
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
-            if (!use_NPSS)
-                  FFC[ip] = Ftotal * TSFC / (W * V * cosg)
-            else
-                  FFC[ip] = mdotf * gee / (W * V * cosg)
-            end
-            Vgi[ip] = 1.0 / (V * cosg)
+            FFC[ip] = Ftotal * TSFC / (W * V * cosg)
 
-            if (use_NPSS)
-                  ΔT = pare[ieT0, ip] - 20.0
-                  P = pare[iePLH2, ip]
-                  yg = pare[ieyg, ip]
-                  dygdt[ip] = mdotf / ρmix(yg, P)
-                  dPdt[ip] = dPdt_LH2(ΔT, mdotf, P, yg)
-            end
+            Vgi[ip] = 1.0 / (V * cosg)
 
             Mach = para[iaMach, ip]
             CL = para[iaCL, ip]
@@ -507,28 +423,13 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
                   FFCavg = 0.5 * (FFC[ip] + FFC[ip-1])
                   Vgiavg = 0.5 * (Vgi[ip] + Vgi[ip-1])
 
-                  if (use_NPSS)
-                        dPdtavg = 0.5 * (dPdt[ip] + dPdt[ip-1])
-                        dygdtavg = 0.5 * (dygdt[ip] + dygdt[ip-1])
-                  end
-
                   dR = (dh + 0.5 * dVsq / gee) / FoWavg
                   dt = dR * Vgiavg
                   rW = exp(-dR * FFCavg)    #Ratio of weights Wᵢ₊₁/Wᵢ
 
-                  if (use_NPSS)
-                        dP = dPdtavg * Vgiavg * dR
-                        dyg = dygdtavg * Vgiavg * dR
-                  end
-
                   para[iaRange, ip] = para[iaRange, ip-1] + dR
                   para[iatime, ip] = para[iatime, ip-1] + dt
                   para[iafracW, ip] = para[iafracW, ip-1] * rW
-
-                  if (use_NPSS)
-                        pare[iePLH2, ip] = pare[iePLH2, ip-1] + dP
-                        pare[ieyg, ip] = pare[ieyg, ip-1] + dyg
-                  end
 
                   ifirst = false
 
@@ -556,19 +457,11 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
                   dt = dR * Vgi[ip]
                   rW = exp(-dR * FFC[ip])
 
-                  if (use_NPSS)
-                        dP = dPdt[ip] * Vgi[ip] * dR
-                        dyg = dygdt[ip] * Vgi[ip] * dR
-                  end
 
                   para[iaRange, ip+1] = para[iaRange, ip] + dR
                   para[iatime, ip+1] = para[iatime, ip] + dt
                   para[iafracW, ip+1] = para[iafracW, ip] * rW
 
-                  if (use_NPSS)
-                        pare[iePLH2, ip+1] = pare[iePLH2, ip] + dP
-                        pare[ieyg, ip+1] = pare[ieyg, ip] + dyg
-                  end
             end
 
       end # done integrating climb
@@ -603,68 +496,14 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
             BW = W + para[iaWbuoy, ip]
             F = BW * (DoL + para[iagamV, ip])
             Wpay = parg[igWpay]
+            icall = 2
+            icool = 1
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
-            if use_NPSS
-                  if pari[iiengtype] == 1
-                        mofWpay = parg[igmofWpay]
-                        mofWMTO = parg[igmofWMTO]
-                        PofWpay = parg[igPofWpay]
-                        PofWMTO = parg[igPofWMTO]
-                        neng = parg[igneng]
-
-                        mofft = (mofWpay * Wpay + mofWMTO * W) / neng
-                        Pofft = (PofWpay * Wpay + PofWMTO * W) / neng
-                  end
-
-                  Mach = pare[ieM0, ip]
-                  # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-                  ρ0 = pare[ierho0, ip]
-                  u0 = pare[ieu0, ip]
-                  Φinl = 0.5 * ρ0 * u0^3 * (DAfsurf * fBLIf) / 2.0
-                  Kinl = 0.5 * ρ0 * u0^3 * (KAfTE * fBLIf) / 2.0 # Assume 2 engines
-
-                  if pari[iiengtype] == 0
-                        NPSS_success, Ftotal, η, P, Hrej, heatexcess,
-                        mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, 0 * pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
-
-                        pare[ieOPR, ip] = OPR
-                        pare[ieTt3, ip] = Tt3
-                        pare[ieWc3, ip] = Wc3
-                        pare[iedeNOx, ip] = deNOx
-                        pare[ieEINOx1, ip] = EINOx1
-                        pare[ieEINOx2, ip] = EINOx2
-                        pare[iemdotf, ip] = mdotf
-                        pare[ieemot:ieethermal, ip] .= η
-                        pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-                        pare[ieHexcess, ip] = heatexcess
-                        pare[ieFe, ip] = Ftotal
-
-                  else
-                        NPSS_success, Ftotal, heatexcess,
-                        mdotf, EINOx1, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 0.0, mofft, Pofft)
-
-                        ifirst = false
-
-                        pare[ieOPR, ip] = OPR
-                        pare[ieTt3, ip] = Tt3
-                        pare[ieWc3, ip] = Wc3
-                        pare[ieEINOx1, ip] = EINOx1
-                        pare[iemdotf, ip] = mdotf
-                        pare[ieemot:ieethermal, ip] .= 0.0
-                        pare[ieHrejmot:ieHrejtot, ip] .= 0.0
-                        pare[ieHexcess, ip] = heatexcess
-                  end
-            else
-                  icall = 2
-                  icool = 1
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
-            end
       end
 
       # set cruise-climb climb angle, from fuel burn rate and atmospheric dp/dz
-      if (!use_NPSS)
-            TSFC = pare[ieTSFC, ip]
-      end
+      TSFC = pare[ieTSFC, ip]
       V = pare[ieu0, ip]
       p0 = pare[iep0, ip]
       ρ0 = pare[ierho0, ip]
@@ -679,35 +518,18 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       #        ∴γ ≈ ̇mf*p/(ρWV)
       # For conventional aircraft can represent this as function of TSFC: (see TASOPT docs Eq 438)
       # gamVcr1 = DoL*p0*TSFC/(ρ0*gee*V - p0*TSFC)
-      if use_NPSS
-            gamVcr1 = mdotf * p0 / (ρ0 * W * V) # TSFC not the most useful for turbo-electric systems. Buoyancy weight has been neglected.
-      else
-            gamVcr1 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
-      end
+      gamVcr1 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
+
       para[iagamV, ip] = gamVcr1
 
-      if use_NPSS
-            Ftotal = pare[ieFe, ip]
-      else
-            Ftotal = pare[ieFe, ip] * parg[igneng]
-      end
+      Ftotal = pare[ieFe, ip] * parg[igneng]
+
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      if use_NPSS
-            FFC[ip] = mdotf * gee / (W * V * cosg)
-      else
-            FFC[ip] = Ftotal * TSFC / (W * V * cosg)
-      end
-      Vgi[ip] = 1.0 / (V * cosg)
+      FFC[ip] = Ftotal * TSFC / (W * V * cosg)
 
-      if use_NPSS
-            ΔT = pare[ieT0, ip] - 20.0
-            P = pare[iePLH2, ip]
-            yg = pare[ieyg, ip]
-            dygdt[ip] = mdotf / ρmix(yg, P)
-            dPdt[ip] = dPdt_LH2(ΔT, mdotf, P, yg)
-      end
+      Vgi[ip] = 1.0 / (V * cosg)
 
       #---- set end-of-cruise point "d" using cruise and descent angles, 
       #-     and remaining range legs
@@ -753,83 +575,28 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
       Ftotal = BW * (DoL + para[iagamV, ip])
-      if !use_NPSS
-            pare[ieFe, ip] = Ftotal / parg[igneng]
-      end
+      pare[ieFe, ip] = Ftotal / parg[igneng]
 
-      if use_NPSS
-            Mach = pare[ieM0, ip]
-            # Run powertrain [TODO] actually should run this to a required thrust not Tt4
-            ρ0 = pare[ierho0, ip]
-            u0 = pare[ieu0, ip]
-            Φinl = 0.5 * ρ0 * u0^3 * (DAfsurf * fBLIf) / 2.0
-            Kinl = 0.5 * ρ0 * u0^3 * (KAfTE * fBLIf) / 2.0 # Assume 2 engines
+      icall = 2
+      icool = 1
 
-            if pari[iiengtype] == 0
-                  NPSS_success, Ftotal, η, P, Hrej, heatexcess,
-                  mdotf, deNOx, EINOx1, EINOx2, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, ip)
+      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+      TSFC = pare[ieTSFC, ip]
 
-                  pare[ieOPR, ip] = OPR
-                  pare[ieTt3, ip] = Tt3
-                  pare[ieWc3, ip] = Wc3
-                  pare[iedeNOx, ip] = deNOx
-                  pare[ieEINOx1, ip] = EINOx1
-                  pare[ieEINOx2, ip] = EINOx2
-                  pare[iemdotf, ip] = mdotf
-                  pare[ieemot:ieethermal, ip] .= η
-                  pare[ieHrejmot:ieHrejtot, ip] .= Hrej
-                  pare[ieHexcess, ip] = heatexcess
-            else
-                  NPSS_success, Ftotal, heatexcess,
-                  mdotf, EINOx1, FAR, Tt3, OPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, para[iaalt, ip], Mach, F, pare[ieTt4, ip], ifirst, parg, parpt, pare, ip, 0.0, mofft, Pofft)
-
-                  pare[ieOPR, ip] = OPR
-                  pare[ieTt3, ip] = Tt3
-                  pare[ieWc3, ip] = Wc3
-                  pare[ieEINOx1, ip] = EINOx1
-                  pare[iemdotf, ip] = mdotf
-                  pare[ieemot:ieethermal, ip] .= 0.0
-                  pare[ieHrejmot:ieHrejtot, ip] .= 0.0
-                  pare[ieHexcess, ip] = heatexcess
-            end
-      else
-            icall = 2
-            icool = 1
-
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
-
-      end
-
-      if (!use_NPSS)
-            TSFC = pare[ieTSFC, ip]
-      end
       V = pare[ieu0, ip]
       p0 = pare[iep0, ip]
       ρ0 = pare[ierho0, ip]
       DoL = para[iaCD, ip] / para[iaCL, ip]
-      if use_NPSS
-            gamVcr2 = mdotf * p0 / (ρ0 * W * V)
-      else
-            gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
-      end
+
+      gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
       para[iagamV, ip] = gamVcr2
 
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      if (!use_NPSS)
-            FFC[ip] = Ftotal * TSFC / (W * V * cosg)
-      else
-            FFC[ip] = mdotf * gee / (W * V * cosg)
-      end
+      FFC[ip] = Ftotal * TSFC / (W * V * cosg)
       Vgi[ip] = 1.0 / (V * cosg)
 
-      if use_NPSS
-            ΔT = pare[ieT0, ip] - 20.0
-            P = pare[iePLH2, ip]
-            dygdt[ip] = mdotf / ρmix(yg, P)
-            dPdt[ip] = dPdt_LH2(ΔT, mdotf, P, yg)
-      end
 
       ip1 = ipcruise1
       ipn = ipcruisen
@@ -838,12 +605,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       FFCavg = 0.5 * (FFC[ipn] + FFC[ip1])
       Vgiavg = 0.5 * (Vgi[ipn] + Vgi[ip1])
 
-      if use_NPSS
-            dPdtavg = 0.5 * (dPdt[ipn] + dPdt[ip1])
-            dygdtavg = 0.5 * (dygdt[ipn] + dygdt[ip1])
-            dP = dPdtavg * Vgiavg * dRcruise
-            dyg = dygdtavg * Vgiavg * dRcruise
-      end
 
       dtcruise = dRcruise * Vgiavg
       rWcruise = exp(-dRcruise * FFCavg)
@@ -852,10 +613,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       para[iatime, ipn] = para[iatime, ip1] + dtcruise
       para[iafracW, ipn] = para[iafracW, ip1] * rWcruise
 
-      if use_NPSS
-            pare[iePLH2, ipn] = pare[iePLH2, ip1] + dP
-            pare[ieyg, ipn] = pare[ieyg, ip1] + dyg
-      end
 
       # set intermediate points over cruise, if any, just by interpolating
       for ip = ipcruise1+1:ipcruisen-1
@@ -883,8 +640,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       end
 
       # Descent
-      #TODO descent has not been properly implemented yet - below it just performs an approximate scaling based
-      #     on TASOPT to estimate the descent fuel burn
       ip = ipdescent1
       pare[iep0, ip] = pare[iep0, ipcruisen]
       pare[ieT0, ip] = pare[ieT0, ipcruisen]
@@ -903,205 +658,183 @@ function mission!(pari, parg, parm, para, pare, Ldebug, NPSS_PT, NPSS, ipc1)#, i
       para[iafracW, ip] = para[iafracW, ipcruisen]
       para[iaWbuoy, ip] = para[iaWbuoy, ipcruisen]
 
+      Rd = para[iaRange, ipdescent1]
+      Re = para[iaRange, ipdescentn]
+      altd = para[iaalt, ipdescent1]
+      alte = para[iaalt, ipdescentn]
+      para[iagamV, ipdescent1] = gamVde1
+      para[iagamV, ipdescentn] = gamVden
 
-      if use_NPSS
-            # Mission fuel fractions and weights
-            fracWa = para[iafracW, ipclimb1]
-            # fracWe = para[iafracW, ipdescentn] 
-            fracWe = para[iafracW, ipdescent1] * (1 - (1 - 0.993) * ((para[iaalt, ipdescent1] / ft_to_m) / 39858.0))# Pp temp set to 95% of ipdescent1 instead of ipdescentn since descent has not been calculated yet 
-            freserve = parg[igfreserve]
-            fburn = fracWa - fracWe            # Burnt fuel fraction
-            ffuel = fburn * (1.0 + freserve)
-            Wfuel = WMTO * ffuel
-            WTO = Wzero + Wfuel
+      for ip = ipdescent1+1:ipdescentn-1
+            frac = float(ip - ipdescent1) / float(ipdescentn - ipdescent1)
+            R = Rd * (1.0 - frac) + Re * frac
 
-            parm[imWTO] = WTO
-            parm[imWfuel] = Wfuel
-            # printstyled("Wfuel = $Wfuel \n fburn = $fburn \n", color=:red)
+            alt = altd + (Re - Rd) * (gamVde1 * (frac - 0.5 * frac^2) + gamVden * 0.5 * frac^2)
+            gamVde = gamVde1 * (1.0 - frac) + gamVden * frac
+            para[iagamV, ip] = gamVde
 
-            Wburn = WMTO * fburn
-            parg[igWfburn] = Wburn
-            parm[imPFEI] = Wburn / gee * parg[igLHVfuel] * 1e6 / (parm[imWpay] * parm[imRange])
+            altkm = alt / 1000.0
+            T0, p0, ρ0, a0, μ0 = atmos(altkm)
+            pare[iep0, ip] = p0
+            pare[ieT0, ip] = T0
+            pare[iea0, ip] = a0
+            pare[ierho0, ip] = ρ0
+            pare[iemu0, ip] = μ0
+
+            para[iaRange, ip] = R
+            para[iaalt, ip] = alt
+
+            rhocab = max(parg[igpcabin], p0) / (RSL * TSL)
+            para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
       end
+      para[iaWbuoy, ipdescentn] = 0.0
 
-      if (!use_NPSS)
-            Rd = para[iaRange, ipdescent1]
-            Re = para[iaRange, ipdescentn]
-            altd = para[iaalt, ipdescent1]
-            alte = para[iaalt, ipdescentn]
-            para[iagamV, ipdescent1] = gamVde1
-            para[iagamV, ipdescentn] = gamVden
+      # integrate time and weight over descent
+      for ip = ipdescent1:ipdescentn
 
-            for ip = ipdescent1+1:ipdescentn-1
-                  frac = float(ip - ipdescent1) / float(ipdescentn - ipdescent1)
-                  R = Rd * (1.0 - frac) + Re * frac
+            # velocity calculation from CL, Weight, altitude
+            gamVde = para[iagamV, ip]
+            cosg = cos(gamVde)
+            W = para[iafracW, ip] * WMTO
+            BW = W + para[iaWbuoy, ip]
+            CL = para[iaCL, ip]
+            rho = pare[ierho0, ip]
+            V = sqrt(2.0 * BW * cosg / (rho * S * CL))
+            Mach = V / pare[iea0, ip]
 
-                  alt = altd + (Re - Rd) * (gamVde1 * (frac - 0.5 * frac^2) + gamVden * 0.5 * frac^2)
-                  gamVde = gamVde1 * (1.0 - frac) + gamVden * frac
-                  para[iagamV, ip] = gamVde
+            para[iaMach, ip] = Mach
+            para[iaReunit, ip] = V * rho / pare[iemu0, ip]
 
-                  altkm = alt / 1000.0
-                  T0, p0, ρ0, a0, μ0 = atmos(altkm)
-                  pare[iep0, ip] = p0
-                  pare[ieT0, ip] = T0
-                  pare[iea0, ip] = a0
-                  pare[ierho0, ip] = ρ0
-                  pare[iemu0, ip] = μ0
+            pare[ieu0, ip] = V
+            pare[ieM0, ip] = Mach
 
-                  para[iaRange, ip] = R
-                  para[iaalt, ip] = alt
+            # set pitch trim by adjusting CLh
+            Wf = W - Wzero
+            rfuel = Wf / parg[igWfuel]
+            itrim = 1
+            balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
 
-                  rhocab = max(parg[igpcabin], p0) / (RSL * TSL)
-                  para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
+            if (ip == ipdescentn)
+                  # use explicitly specified wing cdf,cdp
+                  icdfun = 0
+            else
+                  # use airfoil database for wing cdf,cdp
+                  icdfun = 1
             end
-            para[iaWbuoy, ipdescentn] = 0.0
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
-            # integrate time and weight over descent
-            for ip = ipdescent1:ipdescentn
+            # set up for engine calculation
+            sing = sin(gamVde)
+            cosg = cos(gamVde)
+            DoL = para[iaCD, ip] / para[iaCL, ip]
+            Fspec = BW * (sing + cosg * DoL)
+            pare[ieFe, ip] = Fspec / parg[igneng]
 
-                  # velocity calculation from CL, Weight, altitude
-                  gamVde = para[iagamV, ip]
-                  cosg = cos(gamVde)
-                  W = para[iafracW, ip] * WMTO
-                  BW = W + para[iaWbuoy, ip]
-                  CL = para[iaCL, ip]
-                  rho = pare[ierho0, ip]
-                  V = sqrt(2.0 * BW * cosg / (rho * S * CL))
-                  Mach = V / pare[iea0, ip]
-
-                  para[iaMach, ip] = Mach
-                  para[iaReunit, ip] = V * rho / pare[iemu0, ip]
-
-                  pare[ieu0, ip] = V
-                  pare[ieM0, ip] = Mach
-
-                  # set pitch trim by adjusting CLh
-                  Wf = W - Wzero
-                  rfuel = Wf / parg[igWfuel]
-                  itrim = 1
-                  balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
-
-                  if (ip == ipdescentn)
-                        # use explicitly specified wing cdf,cdp
-                        icdfun = 0
-                  else
-                        # use airfoil database for wing cdf,cdp
-                        icdfun = 1
-                  end
-                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
-
-                  # set up for engine calculation
-                  sing = sin(gamVde)
-                  cosg = cos(gamVde)
-                  DoL = para[iaCD, ip] / para[iaCL, ip]
-                  Fspec = BW * (sing + cosg * DoL)
-                  pare[ieFe, ip] = Fspec / parg[igneng]
-
-                  if (initeng == 0)
-                        pare[iembf, ip] = pare[iembf, ip-1]
-                        pare[iemblc, ip] = pare[iemblc, ip-1]
-                        pare[iembhc, ip] = pare[iembhc, ip-1]
-                        pare[iepif, ip] = pare[iepif, ip-1]
-                        pare[iepilc, ip] = pare[iepilc, ip-1]
-                        pare[iepihc, ip] = pare[iepihc, ip-1]
-                        inite = 1
+            if (initeng == 0)
+                  pare[iembf, ip] = pare[iembf, ip-1]
+                  pare[iemblc, ip] = pare[iemblc, ip-1]
+                  pare[iembhc, ip] = pare[iembhc, ip-1]
+                  pare[iepif, ip] = pare[iepif, ip-1]
+                  pare[iepilc, ip] = pare[iepilc, ip-1]
+                  pare[iepihc, ip] = pare[iepihc, ip-1]
+                  inite = 1
 
 
-                        # make better estimate for new Tt4, adjusted for new ambient T0
-                        dTburn = pare[ieTt4, ip-1] - pare[ieTt3, ip-1]
-                        OTR = pare[ieTt3, ip-1] / pare[ieTt2, ip-1]
-                        Tt3 = pare[ieT0, ip] * OTR
-                        pare[ieTt4, ip] = Tt3 + dTburn + 50.0
+                  # make better estimate for new Tt4, adjusted for new ambient T0
+                  dTburn = pare[ieTt4, ip-1] - pare[ieTt3, ip-1]
+                  OTR = pare[ieTt3, ip-1] / pare[ieTt2, ip-1]
+                  Tt3 = pare[ieT0, ip] * OTR
+                  pare[ieTt4, ip] = Tt3 + dTburn + 50.0
 
-                        # make better estimate for new pt5, adjusted for new ambient p0
-                        pare[iept5, ip] = pare[iept5, ip-1] * pare[iep0, ip] / pare[iep0, ip-1]
+                  # make better estimate for new pt5, adjusted for new ambient p0
+                  pare[iept5, ip] = pare[iept5, ip-1] * pare[iep0, ip] / pare[iep0, ip-1]
 
-                  else
-                        inite = initeng
-                  end
-
-                  # use fixed engine geometry, specified Fe
-                  icall = 2
-                  # use previously-set turbine cooling mass flow
-                  icool = 1
-
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
-
-                  # store effective thrust, effective TSFC
-                  F = pare[ieFe, ip] * parg[igneng]
-                  TSFC = pare[ieTSFC, ip]
-
-                  # store integrands for Range and Weight integration
-                  FoW[ip] = F / (BW * cosg) - DoL
-                  FFC[ip] = F / (W * V * cosg) * TSFC
-                  Vgi[ip] = 1.0 / (V * cosg)
-
-                  # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
-                  mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
-                  FFC[ip] = gee * mfuel / (W * cosg * V)
-
-
-                  if (ip > ipdescent1)
-                        #  corrector integration step, approximate trapezoidal
-                        dh = para[iaalt, ip] - para[iaalt, ip-1]
-                        dVsq = pare[ieu0, ip]^2 - pare[ieu0, ip-1]^2
-
-                        FoWavg = 0.5 * (FoW[ip] + FoW[ip-1])
-                        FFCavg = 0.5 * (FFC[ip] + FFC[ip-1])
-                        Vgiavg = 0.5 * (Vgi[ip] + Vgi[ip-1])
-
-                        dR = para[iaRange, ip] - para[iaRange, ip-1]
-                        dt = dR * Vgiavg
-                        rW = exp(-dR * FFCavg)
-
-                        para[iatime, ip] = para[iatime, ip-1] + dt
-                        para[iafracW, ip] = para[iafracW, ip-1] * rW
-                  end
-
-                  if (ip < ipdescentn)
-
-                        # predictor integration step, forward Euler
-                        gamVde = para[iagamV, ip+1]
-                        cosg = cos(gamVde)
-                        W = para[iafracW, ip+1] * WMTO
-
-                        BW = W + para[iaWbuoy, ip+1]
-
-                        CL = para[iaCL, ip+1]
-                        rho = pare[ierho0, ip+1]
-                        V = sqrt(2 * BW * cosg / (rho * S * CL))
-                        pare[ieu0, ip+1] = V
-
-                        dh = para[iaalt, ip+1] - para[iaalt, ip]
-                        dVsq = pare[ieu0, ip+1]^2 - pare[ieu0, ip]^2
-
-                        dR = para[iaRange, ip] - para[iaRange, ip-1]
-                        dt = dR * Vgi[ip]
-                        rW = exp(-dR * FFC[ip])
-
-                        para[iatime, ip+1] = para[iatime, ip] + dt
-                        para[iafracW, ip+1] = para[iafracW, ip] * rW
-
-                  end
+            else
+                  inite = initeng
             end
 
-            # mission fuel fractions and weights
-            fracWa = para[iafracW, ipclimb1]
-            fracWe = para[iafracW, ipdescentn]
-            freserve = parg[igfreserve]
-            fburn = fracWa - fracWe
-            ffuel = fburn * (1.0 + freserve)
-            Wfuel = WMTO * ffuel
-            WTO = Wzero + Wfuel
+            # use fixed engine geometry, specified Fe
+            icall = 2
+            # use previously-set turbine cooling mass flow
+            icool = 1
 
-            parm[imWTO] = WTO
-            parm[imWfuel] = Wfuel
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
 
-            # mission PFEI
-            Wburn = WMTO * fburn
-            parm[imPFEI] = Wburn * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
+            # store effective thrust, effective TSFC
+            F = pare[ieFe, ip] * parg[igneng]
+            TSFC = pare[ieTSFC, ip]
 
+            # store integrands for Range and Weight integration
+            FoW[ip] = F / (BW * cosg) - DoL
+            FFC[ip] = F / (W * V * cosg) * TSFC
+            Vgi[ip] = 1.0 / (V * cosg)
+
+            # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
+            mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
+            FFC[ip] = gee * mfuel / (W * cosg * V)
+
+
+            if (ip > ipdescent1)
+                  #  corrector integration step, approximate trapezoidal
+                  dh = para[iaalt, ip] - para[iaalt, ip-1]
+                  dVsq = pare[ieu0, ip]^2 - pare[ieu0, ip-1]^2
+
+                  FoWavg = 0.5 * (FoW[ip] + FoW[ip-1])
+                  FFCavg = 0.5 * (FFC[ip] + FFC[ip-1])
+                  Vgiavg = 0.5 * (Vgi[ip] + Vgi[ip-1])
+
+                  dR = para[iaRange, ip] - para[iaRange, ip-1]
+                  dt = dR * Vgiavg
+                  rW = exp(-dR * FFCavg)
+
+                  para[iatime, ip] = para[iatime, ip-1] + dt
+                  para[iafracW, ip] = para[iafracW, ip-1] * rW
+            end
+
+            if (ip < ipdescentn)
+
+                  # predictor integration step, forward Euler
+                  gamVde = para[iagamV, ip+1]
+                  cosg = cos(gamVde)
+                  W = para[iafracW, ip+1] * WMTO
+
+                  BW = W + para[iaWbuoy, ip+1]
+
+                  CL = para[iaCL, ip+1]
+                  rho = pare[ierho0, ip+1]
+                  V = sqrt(2 * BW * cosg / (rho * S * CL))
+                  pare[ieu0, ip+1] = V
+
+                  dh = para[iaalt, ip+1] - para[iaalt, ip]
+                  dVsq = pare[ieu0, ip+1]^2 - pare[ieu0, ip]^2
+
+                  dR = para[iaRange, ip] - para[iaRange, ip-1]
+                  dt = dR * Vgi[ip]
+                  rW = exp(-dR * FFC[ip])
+
+                  para[iatime, ip+1] = para[iatime, ip] + dt
+                  para[iafracW, ip+1] = para[iafracW, ip] * rW
+
+            end
       end
+
+      # mission fuel fractions and weights
+      fracWa = para[iafracW, ipclimb1]
+      fracWe = para[iafracW, ipdescentn]
+      freserve = parg[igfreserve]
+      fburn = fracWa - fracWe
+      ffuel = fburn * (1.0 + freserve)
+      Wfuel = WMTO * ffuel
+      WTO = Wzero + Wfuel
+
+      parm[imWTO] = WTO
+      parm[imWfuel] = Wfuel
+
+      # mission PFEI
+      Wburn = WMTO * fburn
+      parm[imPFEI] = Wburn/gee * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
+
+
 
       return t_prop
 end

@@ -7,11 +7,16 @@
 *.log
 *.code-workspace
 *.results
+*.dbg
 *.png
 *.perf
 *.PTF
 *.LTO
 **/Models/*
+Manifest.toml
 *.pptx
 *.DS_Store
 docs/build/*
+.VSCodeCounter/*
+.vscode/*
+
