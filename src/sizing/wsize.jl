@@ -1,8 +1,8 @@
 using Printf
 """
-    wsize(pari, parg, parm, para, pare,
-        itermax, wrlx1, wrlx2, wrlx3,
-        initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+    wsize(ac; itermax=35,
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
+    iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
 and iterates until the MTOW converges to within a specified tolerance.
@@ -18,10 +18,18 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(pari, parg, parm, para, pare,
-    itermax, wrlx1, wrlx2, wrlx3,
-    initwgt, initeng, iairf, Ldebug, printiter, saveODperf)
+function wsize(ac; itermax=35,
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5,
+    initwgt=false, initeng=0, 
+    iairf=1, Ldebug=false,
+     printiter=true, saveODperf=false)
 
+    pari = ac.pari
+    parg = view(ac.parg, :)
+    parm = view(ac.parm, :, 1)
+    para = view(ac.para, :, :, 1)
+    pare = view(ac.pare, :, :, 1)
+    
     time_propsys = 0.0
 
     inite1 = 0
@@ -63,9 +71,6 @@ function wsize(pari, parg, parm, para, pare,
     nfan = parpt[ipt_nfan]
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
-
-    # Atmospheric conditions at sea-level
-    TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
 
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
     time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
@@ -269,47 +274,13 @@ function wsize(pari, parg, parm, para, pare,
     rSnace = parg[igrSnace]
 
     # set cruise-altitude atmospheric conditions
-    ip = ipcruise1
-    altkm = para[iaalt, ip] / 1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = para[iaMach, ip]
-    pare[iep0, ip] = p0
-    pare[ieT0, ip] = T0
-    pare[iea0, ip] = a0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0, ip] = μ0
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach * a0
-    para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
+    set_ambient_conditions!(ac, ipcruise1)
 
     # set takeoff-altitude atmospheric conditions
-    ip = iprotate
-    altkm = para[iaalt, ip] / 1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = 0.25
-    pare[iep0, ip] = p0
-    pare[ieT0, ip] = T0
-    pare[iea0, ip] = a0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0, ip] = μ0
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach * a0
-    para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
+    set_ambient_conditions!(ac, iprotate, 0.25)
 
     # Set atmos conditions for top of climb
-    ip = ipclimbn
-    altkm = para[iaalt, ipcruise1] / 1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach = para[iaMach, ip]
-    pare[iep0, ip] = p0
-    pare[ieT0, ip] = T0
-    pare[iea0, ip] = a0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0, ip] = μ0
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach * a0
-    para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
-
+    set_ambient_conditions!(ac, ipclimbn)
 
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1443,3 +1414,26 @@ function Wupdate!(parg, rlx, fsum)
 
 
 end
+
+"""
+    set_ambient_conditions!(ac, mis_point, Mach=NaN)
+
+Sets ambient condition at the given mission point `mis_point`.
+"""
+function set_ambient_conditions!(ac, mis_point, Mach=NaN)
+    mis_point = mis_point
+    altkm = ac.parad[iaalt, mis_point]/1000.0
+    T0, p0, ρ0, a0, μ0 = atmos(altkm)
+    if Mach === NaN
+        Mach = ac.parad[iaMach, mis_point]
+    end
+    ac.pared[iep0, mis_point] = p0
+    ac.pared[ieT0, mis_point] = T0
+    ac.pared[iea0, mis_point] = a0
+    ac.pared[ierho0, mis_point] = ρ0
+    ac.pared[iemu0, mis_point] = μ0
+    ac.pared[ieM0, mis_point] = Mach
+    ac.pared[ieu0, mis_point] = Mach * a0
+    ac.parad[iaReunit, mis_point] = Mach * a0 * ρ0 / μ0
+
+end  # function set_ambient_conditions
