@@ -136,7 +136,9 @@ function residuals_Q(x, p)
       for i in 1:N
           k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
           R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
-          R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i]))
+          
+          Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
+          R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
           # Parallel addition of resistance
           R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
           
@@ -160,6 +162,7 @@ function residuals_Q(x, p)
           F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
           
       end
+
       return F
 end  
 

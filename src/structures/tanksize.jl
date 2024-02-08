@@ -70,7 +70,7 @@ function tanksize(gee, rhoFuel, deltap,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel) #Residual in boiloff rate as a function of Δt
 
-        sol = nlsolve(residual, [0.0], xtol = 1e-7, ftol = 1e-7)
+        sol = nlsolve(residual, [0.0], ftol = 1e-7)
         Δt = sol.zero[1] #Solve for change in layer thickness with NLsolve.jl
 
         for ind in iinsuldes #For every segment whose thickness can be changed
