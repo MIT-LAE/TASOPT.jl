@@ -95,10 +95,6 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Sh1 = Sh
 
       #---- total weight, weight moment, and derivatives
-      if pari[iiengtype] == 1
-            Wtesys = 0
-            Wftank = 0
-      end
       W = rpay * Wpay +
           rfuel * Wfuel +
           Wfuse +
@@ -779,7 +775,7 @@ function cglpay(pari, parg)
       else
             rf = [0.0, 1.0]
       end
-      if parg[igrhofuel] > 200
+      if pari[iifwing] == 1
             rf = [0.0, 0.0]
       end
       rpay = zeros(Float64, 2)

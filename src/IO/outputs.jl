@@ -3,6 +3,7 @@
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
+    pari = ac.pari
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * parg[igfhpesys]
     Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -75,7 +76,7 @@ function weight_buildup(ac::aircraft; io=stdout)
     @printf(io,"lftank    = %10.1f m (%8.1f ft)\n"  , parg[iglftank    ], parg[iglftank    ]/ft_to_m) 
     @printf(io,"Rftank    = %10.1f m (%8.1f ft)\n"  , parg[igRftank    ], parg[igRftank    ]/ft_to_m) 
 
-    @printf(io,"ηtank     = %3.1f %% \n\n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
+    @printf(io,"ηtank     = %3.1f %% \n\n", parg[igWfuel]/(parg[igWfuel] + pari[iinftanks]*parg[igWftank])*100)
 end
 """
     aero(parg, para; io = stdout)
