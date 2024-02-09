@@ -773,7 +773,8 @@ function cglpay(pari, parg)
       ξ = [0.0, 1.0]
       sgn = [-1.0, 1.0]
 
-      if parg[igxftank] < xcabin
+      xftank = parg[igxWftank] / (nftanks * Wftank)
+      if xftank < xcabin
             rf = [1.0, 0.0]
       else
             rf = [0.0, 1.0]

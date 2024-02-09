@@ -134,17 +134,17 @@ name = "TASOPT Model with cryo fuel and HX"
     x_nose_tip           = "0 ft"
     x_pressure_shell_fwd = "17 ft"
     x_start_cylinder     = "20 ft"
-    x_end_cylinder       = "80 ft"
-    x_pressure_shell_aft = "82 ft"
-    x_cone_end           = "97 ft"
-    x_end                = "104 ft"
+    x_end_cylinder       = "85 ft"
+    x_pressure_shell_aft = "87 ft"
+    x_cone_end           = "102 ft"
+    x_end                = "109 ft"
     
 # Power systems and landing gear locations
     x_HPE_sys = "62ft" #Hydraulic, Pneumatic and Electrical systems
     x_nose_landing_gear        = "14ft"
     x_main_landing_gear_offset = "1 ft" # main LG offset behind the wing lift centroid
 
-    x_APU = "103 ft"
+    x_APU = "108 ft"
 
     x_fixed_weight = "7ft" #Cockpit/ pilots etc
 
@@ -282,7 +282,7 @@ name = "TASOPT Model with cryo fuel and HX"
         taper = 0.25
         sweep = 26.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
-        x_Htail = "97.5 ft"
+        x_Htail = "102.5 ft"
         z_Htail = "0 ft"
 
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
@@ -319,7 +319,7 @@ name = "TASOPT Model with cryo fuel and HX"
         taper = 0.30
         sweep = 25.0
         center_box_halfspan = 0.0
-        x_Vtail = "93 ft"
+        x_Vtail = "98 ft"
         number_Vtails = 1.0
 
         VTsize = "Vv" # Options are "Vv" or "OEI"
