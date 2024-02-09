@@ -22,8 +22,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     parm = ac.parm[:,mi:mi]
     para = ac.para[:,:,mi:mi]
     pare = ac.pare[:,:,mi:mi]
-    parad = ac.para[:,:,1:1]
-    pared = ac.pare[:,:,1:1]
+    parad = ac.parad
+    pared = ac.pared
 
     time_propsys = 0.0
 
