@@ -708,9 +708,9 @@ readoff(x) = read_input(x, off, doff)
     pare[ieTt9, :, :] .= Ttdischarge
     pare[iept9, :, :] .= Ptdischarge
 
-    parg[igmofWpay] = mofftpax ./ parg[igWpax]
+    parg[igmofWpay] = mofftpax ./ parm[imWperpax, 1]
     parg[igmofWMTO] = mofftmMTO / gee
-    parg[igPofWpay] = Pofftpax ./ parg[igWpax]
+    parg[igPofWpay] = Pofftpax ./ parm[imWperpax, 1]
     parg[igPofWMTO] = PofftmMTO / gee
 
 ## Nozzle areas

@@ -56,7 +56,6 @@
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
-    pax = [180, 150]            # Number of passengers in each mission
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
