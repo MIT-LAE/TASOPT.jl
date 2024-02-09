@@ -1,23 +1,24 @@
 Fuselage Layout:
  -------------- 
-xnose   =   0.0 m (     0.0 ft)
-xend    =  37.8 m (   124.0 ft)
-xwing   =  18.8 m (    61.7 ft)
-xhtail  =  36.2 m (   118.9 ft)
-xvtail  =  35.1 m (   115.0 ft)
-xblend1 =   6.1 m (    20.0 ft)
-xblend2 =  29.6 m (    97.0 ft)
-xshell1 =   5.2 m (    17.0 ft)
-xshell2 =  31.1 m (   102.0 ft)
-xhbend  =  31.0 m (   101.7 ft)
-xvbend  =  31.2 m (   102.3 ft)
-xwbox   =  16.0 m (    52.6 ft)
-xhbox   =  34.9 m (   114.5 ft)
-xvbox   =  33.5 m (   110.0 ft)
-xtshaft =   0.0 m (     0.0 ft)
-xgen    =   0.0 m (     0.0 ft)
-xcat    =   0.0 m (     0.0 ft)
-xftank  =   0.0 m (     0.0 ft)
+xnose     =   0.0 m (     0.0 ft)
+xend      =  37.8 m (   124.0 ft)
+xwing     =  18.8 m (    61.7 ft)
+xhtail    =  36.2 m (   118.9 ft)
+xvtail    =  35.1 m (   115.0 ft)
+xblend1   =   6.1 m (    20.0 ft)
+xblend2   =  29.6 m (    97.0 ft)
+xshell1   =   5.2 m (    17.0 ft)
+xshell2   =  31.1 m (   102.0 ft)
+xhbend    =  31.0 m (   101.7 ft)
+xvbend    =  31.2 m (   102.3 ft)
+xwbox     =  16.0 m (    52.6 ft)
+xhbox     =  34.9 m (   114.5 ft)
+xvbox     =  33.5 m (   110.0 ft)
+xtshaft   =   0.0 m (     0.0 ft)
+xgen      =   0.0 m (     0.0 ft)
+xcat      =   0.0 m (     0.0 ft)
+xftank    =   0.0 m (     0.0 ft)
+xftankaft =   0.0 m (     0.0 ft)
 
 Rfuse  =   2.0 m (     6.4 ft)
 
@@ -31,10 +32,10 @@ xSMaft  = 0.0637
 
 Wing Layout:
  -------------- 
-AR      = 10.100 
-sweep   = 26.000 
-lambdas = 0.700 
-lambdat = 0.250 
+AR      = 10.100
+sweep   = 26.000
+lambdas = 0.700
+lambdat = 0.250
 co      =   6.2 m (    20.4 ft)
 cs      =   4.4 m (    14.3 ft)
 ct      =   1.6 m (     5.1 ft)
