@@ -9,7 +9,7 @@
 
 """
 function woper(pari, parg, parm, para, pare, 
-              parad, pared, itermax, initeng, NPSS_PT, NPSS)
+              parad, pared, itermax, initeng)
 
     # # Initialze some variables
     # ifirst = true
@@ -139,7 +139,7 @@ function woper(pari, parg, parm, para, pare,
       para[iaReunit,ip] = Re
     end
 
-    if (initeng == 0)
+    if (initeng)
 #----- use design case as initial guess for engine state
           for ip = 1: iptotal
                 for ie = 1: ietotal
@@ -255,7 +255,7 @@ function woper(pari, parg, parm, para, pare,
     para[iaReunit, ip] = Mach*a0 *ρ0/μ0
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, false, NPSS_PT, NPSS,true)
+    time_propsys += mission!(pari, parg, parm, para, pare, false)
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
