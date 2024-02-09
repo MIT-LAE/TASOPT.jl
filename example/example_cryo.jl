@@ -13,7 +13,7 @@ using TASOPT
 example_ac = read_aircraft_model("example/cryo_input.toml") # MODIFY <path> appropriately
 
 # 3) Size aircraft
-time_wsize = @elapsed size_aircraft!(example_ac)
+time_wsize = @elapsed size_aircraft!(example_ac, iter=50)
 println("Time to size aircraft = $time_wsize s")
 
 # 4) Visualize outputs
