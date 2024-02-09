@@ -642,7 +642,7 @@ function wsize(ac; imission = 1, itermax=35,
             elseif tank_placement == "front" #The case when the fuel is at the front is treated specially
                 #The code assumes that the fuel is located at the back for the purpose of sizing of the symmetric fuselage
                 Waftfuel = parg[igWfuel]
-                xftank_fuse = parg[igxblend2]
+                xftank_fuse = parg[igxend] - parg[igxftank]
             end
         else
             tank_placement = ""
