@@ -72,7 +72,7 @@ for Range = RangeArray
         ac.parm[imWpay ] = mWpay
         # Try woper after setting new range and payload
         try
-            @views TASOPT.woper(ac.pari,ac.parg,ac.parm[:,1:1],ac.para[:,:,1:1],ac.pare[:,:,1:1], ac.para[:,:,1:1],ac.pare[:,:,1:1], itermax,0.0)
+            @views TASOPT.woper(ac, itermax, true)
             # woper success: store maxPay, break loop
             WTO = Wempty + mWpay + ac.parm[imWfuel]
             mWfuel = ac.parm[imWfuel]

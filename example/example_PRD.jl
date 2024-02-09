@@ -12,7 +12,7 @@ using TASOPT
 include("../src/misc/index.inc")
 # import indices for calling parameters
 
-function PayloadRange(ac_og, Rpts = 20, Ppts = 20, filename = "./example/PayloadRangeExample.png", OEW = false, itermax = 20.0)
+function PayloadRange(ac_og, Rpts = 20, Ppts = 20, filename = "./example/PayloadRangeExample.png", OEW = false, itermax = 20.0, initeng = true)
     # Copy aircraft structure as we will be changing range and payloads
     ac = deepcopy(ac_og)
     # Make an array of ranges to plot
@@ -35,7 +35,7 @@ function PayloadRange(ac_og, Rpts = 20, Ppts = 20, filename = "./example/Payload
             ac.parm[imWpay ] = mWpay
             # Try woper after setting new range and payload
             try
-                @views TASOPT.woper(ac.pari,ac.parg,ac.parm[:,1:1],ac.para[:,:,1:1],ac.pare[:,:,1:1], ac.para[:,:,1:1],ac.pare[:,:,1:1], itermax,0.0)
+                @views TASOPT.woper(ac, itermax, initeng)
                 # woper success: store maxPay, break loop
                 WTO = Wempty + mWpay + ac.parm[imWfuel]
                 mWfuel = ac.parm[imWfuel]
