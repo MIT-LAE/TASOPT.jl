@@ -1641,7 +1641,7 @@ Function to plot a payload range diagram for an aircraft
     - `initeng::Boolean`: Use design case as initial guess for engine state if true (Optional)
 """
 
-function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false, itermax = 20.0, initeng = true)
+function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false)
     ac = deepcopy(ac_og)
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
     maxPay = 0
@@ -1664,16 +1664,12 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
         for mWpay = Payloads
             println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
             ac.parm[imWpay,2] = mWpay
-            
             try
-                #size_aircraft!(ac,printiter=false)
-                @views TASOPT.woper(ac.pari, ac.parg, ac.parm[:,2:2], ac.para[:,:,2:2], ac.pare[:,:,2:2], 
-                ac.para[:,:,1:1], ac.pare[:,:,1:1], itermax, initeng)
-                #@views TASOPT.woper(ac, itermax, initeng)
+                TASOPT.woper(ac, 2, saveOffDesign = true)
                 # woper success: store maxPay, break loop
-                WTO = Wempty + mWpay + ac.parm[imWfuel,2]
                 mWfuel = ac.parm[imWfuel,2]
-                #println(WTO > Wmax,mWfuel > Fuelmax,WTO < 0.0,mWfuel < 0.0 )
+                WTO = Wempty + mWpay + mWfuel
+
                 if WTO > Wmax || mWfuel > Fuelmax || WTO < 0.0 || mWfuel < 0.0 
                     WTO = 0.0
                     mWfuel = 0.0

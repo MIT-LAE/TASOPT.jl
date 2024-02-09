@@ -4,13 +4,13 @@
 
 ## Choosing a design mission
 
-To plot a payload-range diagram with a fleet of missions you must first load any aircraft model 
+To plot a payload-range diagram with a fleet of missions you must first load any aircraft model and set it to have 2 missions (The off design mission is how we will see if certain payload and ranges work)
 
 Start by choosing a design mission. Your design mission should be what you want the second corner point in your Payload Range plot to be. Once you have a chosen a specific design range and payload weight (For eg: 3500 nmi and 195 pax) you can add it to the input toml file for eg: `default_input.toml`
 
 ```toml
 [Mission]
-    N_missions = 5 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = 195       # Number of passengers in each mission
     range = "3500.0 nmi" # Design Range + second mission range
                             #["3000.0 nmi", "500.0 nmi", "2500.0 nmi", "3550.0 nmi", "3734.0 nmi"] # Design Range + second mission range
@@ -46,8 +46,6 @@ TASOPT.PayloadRange(ac)
 If you want a more customizable diagram, first initialize some variables for mission range and payloads
 
 ```julia
-# Copy aircraft structure as we will be changing range and payloads
-ac = deepcopy(ac_og)
 # Make an array of ranges to plot
 RangeArray = ac.parm[imRange] * LinRange(0.1,1.2,Rpts)
 # Store constant values to compare later
@@ -72,16 +70,19 @@ for Range = RangeArray
         ac.parm[imWpay ] = mWpay
         # Try woper after setting new range and payload
         try
-            @views TASOPT.woper(ac, itermax, true)
+            TASOPT.woper(ac, 2, saveOffDesign = true)
             # woper success: store maxPay, break loop
-            WTO = Wempty + mWpay + ac.parm[imWfuel]
-            mWfuel = ac.parm[imWfuel]
+            mWfuel = ac.parm[imWfuel,2]
+            WTO = Wempty + mWpay + mWfuel
 
-            # Compare with previously stored constants
             if WTO > Wmax || mWfuel > Fuelmax || WTO < 0.0 || mWfuel < 0.0 
                 WTO = 0.0
                 mWfuel = 0.0
                 println("Max out error!")
+                if mWpay == 0
+                    println("Payload 0 and no convergence found")
+                    maxPay = 0
+                end
             else
                 maxPay = mWpay
                 println("Converged - moving to next range...")
