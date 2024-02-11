@@ -1,4 +1,4 @@
-
+using Unicode
 @testset "outputs" verbose=true begin
 
     ac = load_default_model()
@@ -6,15 +6,15 @@
 
     @testset "output summaries" begin
         f = open(io->TASOPT.weight_buildup(ac,io=io), "temp.txt", "w")
-        @test read("weights.txt", String) == read("temp.txt", String)
+        @test Unicode.normalize(read("weights.txt", String),newline2lf=true) == read("temp.txt", String)
         rm("temp.txt")
 
         f = open(io->TASOPT.aero(ac,io=io), "temp.txt", "w")
-        @test read("aero.txt", String) == read("temp.txt", String)
+        @test Unicode.normalize(read("aero.txt", String),newline2lf=true) == read("temp.txt", String)
         rm("temp.txt")
 
         f = open(io->TASOPT.geometry(ac,io=io), "temp.txt", "w")
-        @test read("geom.txt", String) == read("temp.txt", String)
+        @test Unicode.normalize(read("geom.txt", String),newline2lf=true) == read("temp.txt", String)
         rm("temp.txt")
     end
 
