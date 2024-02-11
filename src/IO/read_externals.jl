@@ -4,7 +4,7 @@ export read_mdl, read_jl
 """
     read_mdl(filepath::String, n_flight_pts::Integer=18, n_missions::Integer = 5)
 
-TODO: write docstring lol
+includes old-fashioned `.mdl` files; generates and returns an `aircraft` struct, assumed unsized
 """
 function read_mdl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/B77-300ER_edit.mdl"),
     n_flight_pts::Integer=18, n_missions::Integer = 5)
@@ -25,6 +25,11 @@ function read_mdl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_sample
         pari, parg, parm, para, pare, sized)
 end
 
+"""
+    read_jl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/777TFinput_edited.jl"))
+
+includes `.jl` files; generates and returns an `aircraft` struct, assumed unsized
+"""
 function read_jl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/777TFinput_edited.jl"))
     #execute .jl file to populate arrays
     include(filepath)
