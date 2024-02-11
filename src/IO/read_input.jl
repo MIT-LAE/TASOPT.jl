@@ -184,13 +184,9 @@ parg[igNland]   = readtakeoff("Nland")
 T0TO = Temp.(readtakeoff("takeoff_T"))
 parm[imT0TO, :] .= T0TO 
 
-#TODO: get this to copy and save as a full thing that /could/ vary with points
-#does this change with mission?
-#for now, single value
-# para[iaclpmax, ipstatic:ipcutback, :] .= readtakeoff("CL_max_perp")
-# para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
-# para[iaclpmax, ipdescentn, :] .= readtakeoff("CL_max_perp")
-para[iaclpmax,:,:] .= readtakeoff("CL_max_perp")
+para[iaclpmax, ipstatic:ipcutback, :] .= readtakeoff("CL_max_perp")
+para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
+para[iaclpmax, ipdescentn, :] .= readtakeoff("CL_max_perp")
 
 ##Climb parameters
 climb = readmis("Climb")

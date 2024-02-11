@@ -6,6 +6,7 @@ using Unicode
 
     @testset "output summaries" begin
         f = open(io->TASOPT.weight_buildup(ac,io=io), "temp.txt", "w")
+        #normalize reference .txt since git turns LF into CRLF
         @test Unicode.normalize(read("weights.txt", String),newline2lf=true) == read("temp.txt", String)
         rm("temp.txt")
 
