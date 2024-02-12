@@ -946,7 +946,6 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       if length(initial_x) == 4 #only add length if it is being optimized
             HXgeom.l = xopt[4]
       end
-      println()
 
       #Return optimum parameters by modifying input structs
 
