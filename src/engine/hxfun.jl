@@ -170,6 +170,8 @@ function hxsize!(HXgas, HXgeom)
       Rfc = HXgeom.Rfc 
       l = HXgeom.l
 
+      tol = 1e-10 #convergence tolerance
+
       if fconc #If geometry is concentric
             D_i = HXgeom.D_i
       end
@@ -200,6 +202,7 @@ function hxsize!(HXgas, HXgeom)
 
       C_p = mdot_p * cp_p_in #Process-side heat capacity rate
       mdot_c = mdot_c_inf
+      modot_c_prev = mdot_c
 
       if frecirc #If there is recirculation
             _, _, hc_in, _, cp_c_in, _ = gasfun(igas_c, recircT)
@@ -237,6 +240,11 @@ function hxsize!(HXgas, HXgeom)
                         ε_max = 1 - exp(-1 / C_r) #At ε = ε_max, NTU tends to infinity
                         ε = min(ε, 0.95 * ε_max) #Limit effectiveness to 95% of maximum possible
                   end
+
+                  if (abs(modot_c_prev - mdot_c)/mdot_c < tol)
+                        break #Break for loop if convergence has been reached
+                  end 
+                  modot_c_prev = mdot_c #otherwise store current value for comparison
             end
       
       else #No recirculation
@@ -369,6 +377,7 @@ function hxsize!(HXgas, HXgeom)
       N_iter = 15 #Expect fast convergence
 
       n_passes = 4 #Initialize number of passes
+      n_passes_prev = n_passes
       Ah = 0
       for i = 1:N_iter
             N_L = n_passes * n_stages #total number of rows
@@ -384,6 +393,11 @@ function hxsize!(HXgas, HXgeom)
             # Size heat exchanger
             Ah = NTU * C_min * RA   #Find required process-side cooling area from NTU
             n_passes = Ah / (N_t * n_stages * pi * tD_o * l)
+
+            if (abs(n_passes_prev - n_passes)/n_passes < tol)
+                  break #Break for loop if convergence has been reached
+            end 
+            n_passes_prev = n_passes #otherwise store current value for comparison
       end
 
       #---------------------------------
@@ -489,6 +503,8 @@ function hxoper!(HXgas, HXgeom)
       l = HXgeom.l
       A_cs = HXgeom.A_cs
 
+      tol = 1e-10
+
       if frecirc
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
@@ -574,6 +590,7 @@ function hxoper!(HXgas, HXgeom)
       ε = 0.95 #guess for effectiveness
 
       Qg = ε * Qmax #Actual heat transfer rate, guess
+      Qprev = Qg
 
       # Guess outlet temperatures
       Tp_out = Tp_in - Qg / C_p 
@@ -678,6 +695,10 @@ function hxoper!(HXgas, HXgeom)
                   Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
             end
 
+            if (abs(Q-Qprev)/Q < tol)
+                  break #break loop if convergence has been reached
+            end
+            Qprev = Q #else update previous heat
       end
 
       #---------------------------------
@@ -907,13 +928,13 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       opt = Opt(:LN_NELDERMEAD, length(initial_x))
       opt.lower_bounds = lower
       opt.upper_bounds = upper
-      opt.ftol_rel = 1e-10
-      opt.maxeval = 1000  # Set the maximum number of function evaluations
+      opt.ftol_rel = 1e-9
+      opt.maxeval = 500  # Set the maximum number of function evaluations
 
       opt.min_objective = obj
       
       (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
-      
+      #println(opt.numevals)
       #xopt_round = round.(xopt) #elements 2 and 3 must be integers
 
       #Modify structs with output
@@ -925,7 +946,7 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       if length(initial_x) == 4 #only add length if it is being optimized
             HXgeom.l = xopt[4]
       end
-      
+      println()
 
       #Return optimum parameters by modifying input structs
 
