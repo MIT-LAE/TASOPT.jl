@@ -16,21 +16,21 @@
 
     @testset "output summaries" begin
         f = open(io->TASOPT.weight_buildup(ac,io=io), "temp.txt", "w")
-        content = read("temp.txt", String)
-        content = replace(content, "\n"=> "\r\n") # Convert \n to \r\n
-        @test read(file_weights, String) == content
+        content = read(file_weights, String)
+        content = replace(content, "\r\n"=> "\n") # Convert \r\n to \n
+        @test content == read("temp.txt", String)
         rm("temp.txt")
 
         f = open(io->TASOPT.aero(ac,io=io), "temp.txt", "w")
-        content = read("temp.txt", String)
-        content = replace(content, "\n"=> "\r\n") # Convert \n to \r\n
-        @test read(file_aero, String) == content
+        content = read(file_aero, String)
+        content = replace(content, "\r\n"=> "\n") # Convert \r\n to \n
+        @test content == read("temp.txt", String)
         rm("temp.txt")
 
         f = open(io->TASOPT.geometry(ac,io=io), "temp.txt", "w")
-        content = read("temp.txt", String)
-        content = replace(content, "\n"=> "\r\n") # Convert \n to \r\n
-        @test read(file_geom, String) == content
+        content = read(file_geom, String)
+        content = replace(content, "\r\n"=> "\n") # Convert \r\n to \n
+        @test content == read("temp.txt", String)
         rm("temp.txt")
     end
 
