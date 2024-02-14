@@ -36,7 +36,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
                       hconvgas::Float64,  hconvair::Float64, 
                       t_cond::Array{Float64,1},
                       Tfuel::Float64 , Tair::Float64, 
-                      time_flight::Float64, ifuel::Int64)
+                      time_flight::Float64, ifuel::Int64, qfac::Float64)
 
       p = thermal_params()
       p.l_cyl = l_cyl
@@ -53,7 +53,6 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Tair - Tfuel
-      qfac = 1.3  # Account for heat leak from pipes and valves
       
       fun(x) = residuals_Q(x, p) #Create function handle to be zeroed
       

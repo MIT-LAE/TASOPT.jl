@@ -1175,6 +1175,7 @@ function wsize(ac; imission = 1, itermax=35,
             ptank = fuse_tank.ptank
             ftankstiff = fuse_tank.ftankstiff
             ftankadd = fuse_tank.ftankadd
+            qfac = fuse_tank.qfac
 
             # Thermal design
             hconvgas = 0.0 #Convective coefficient of insulating purged gas
@@ -1214,7 +1215,7 @@ function wsize(ac; imission = 1, itermax=35,
                 Rfuse, dRfuse, hconvgas, Tfuel, Tair,
                 t_cond, hconvair, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, material_insul, rhoskintank,
-                Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel)
+                Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = Wtank #weight of one tank; there are up to two
