@@ -64,13 +64,22 @@ function tanksize(gee, rhoFuel, deltap,
         Wfuel_init = Wfuel
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
 
-        residual(Δt) = res_MLI_thick(Δt[1], gee, rhoFuel, deltap,
+        residual(x) = res_MLI_thick(x, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel) #Residual in boiloff rate as a function of Δt
 
-        sol = nlsolve(residual, [0.0], ftol = 1e-7)
+        ΔT = Tair - Tfuel
+        guess = zeros(length(t_cond) + 3) 
+        guess[1] = 0.0
+        guess[2] = 100.0
+        guess[3] = Tfuel + 1
+        for i = 1:length(t_cond)
+                guess[i + 3] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+        end
+
+        sol = nlsolve(residual, guess, ftol = 1e-7)
         Δt = sol.zero[1] #Solve for change in layer thickness with NLsolve.jl
 
         for ind in iinsuldes #For every segment whose thickness can be changed
@@ -132,12 +141,18 @@ end
         **Outputs:**
         - `res::Float64`: difference between desired boiloff rate and current boiloff rate (%/hour).
 """
-function res_MLI_thick(Δt, gee, rhoFuel, deltap,
+function res_MLI_thick(x, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
 
+        # Extract states
+        Δt = x[1]
+        Q = x[2]
+        x_thermal = x[2:end]
+
+        #Prepare to call residual_Q for thermal-related residuals
         t_all = deepcopy(t_cond) #copy to avoid modifying input
 
         for ind in iinsuldes #For every segment whose thickness can be changed
@@ -146,19 +161,39 @@ function res_MLI_thick(Δt, gee, rhoFuel, deltap,
 
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #value of boil-off mass
 
-        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank = tankWmech(gee, rhoFuel,
+        Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
+        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(gee, rhoFuel,
                         fstring, ffadd, deltap,
                         Rfuse, dRfuse, wfb, nfweb,
                         sigskin, material_insul, rhoskin,
                         Wfuel, m_boiloff, t_all, clearance_fuse, AR)
-                        
-        m_boiloff, mdot_boiloff = tankWthermal(lshell, l_tank, Rtank, Shead_insul, material_insul,
-        hconvgas,  hconvair, 
-        t_all,
-        Tfuel, Tair, 
-        time_flight, ifuel)
 
-        res = mdot_boiloff * gee * 3600 / Wfuel - threshold_percent/100 #difference between current boiloff and desired
+        #Assemble struct with parameters for residual_Q
+        p = thermal_params()
+        p.l_cyl = l_cyl
+        p.l_tank = l_tank
+        p.r_tank = r_tank
+        p.Shead = Shead
+        p.hconvgas = hconvgas
+        p.hconvair = hconvair
+        p.t_cond = t_all
+        p.material = material_insul
+        p.Tfuel = Tfuel
+        p.Tair = Tair
+        p.ifuel = ifuel
+
+        F_thermal = residuals_Q(x_thermal, p) #Find thermal-related residuals
+                        
+        _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporization
+      
+        qfac = 1.3
+        Q_net = qfac * Q    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
+        mdot_boiloff = Q_net / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
+        m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
+
+        #Create array with all residuals
+        res = zeros(length(x))
+        res[1] = mdot_boiloff * gee * 3600 / Wfuel * 100 - threshold_percent #difference between current boiloff and desired
+        res[2:end] .= F_thermal 
         return res
 end 
