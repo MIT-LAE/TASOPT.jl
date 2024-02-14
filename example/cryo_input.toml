@@ -54,9 +54,9 @@ name = "TASOPT Model with cryo fuel and HX"
 
 [Fuel.Storage]
     tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
-    insulation_segment_base_thickness = [0.1,0.1,0.1, 0.1, 0.1] #m
-    insulation_thicknesses_design_indices = [1,2,3,4,5]
-    insulation_material = ["rohacell31","rohacell31","rohacell31","rohacell31","rohacell31"] #Options: "rohacell31", "polyurethane"
+    insulation_segment_base_thickness = [0.1,0.1,0.1] #m
+    insulation_thicknesses_design_indices = [1,2,3]
+    insulation_material = ["rohacell31","rohacell31","rohacell31"] #Options: "rohacell31", "polyurethane"
     skin_yield_strength = 172.4e6 #Pa
     tank_skin_density = 2825 #kg/m^3
     maximum_boiloff_rate = 0.1 #%/hour
@@ -65,6 +65,7 @@ name = "TASOPT Model with cryo fuel and HX"
     tank_pressure = 2 #atm
     stiffener_mass_fraction = 0.1
     additional_mass_fraction = 0.1
+    heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements (qfac > 1)
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)

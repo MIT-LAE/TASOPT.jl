@@ -59,7 +59,7 @@ function tanksize(gee, rhoFuel, deltap,
                       Rfuse, dRfuse, hconvgas, Tfuel, Tair,
                       t_cond, hconvair, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-                      iinsuldes, ifuel)
+                      iinsuldes, ifuel, qfac)
 
         Wfuel_init = Wfuel
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
@@ -68,9 +68,12 @@ function tanksize(gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel) #Residual in boiloff rate as a function of Δt
+        iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
 
         ΔT = Tair - Tfuel
+
+        #Assemble guess for non linear solver
+        #x[1] = Δt; x[2] = Q; x[3] = T_tank; x[4:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
         guess = zeros(length(t_cond) + 3) 
         guess[1] = 0.0
         guess[2] = 100.0
@@ -79,8 +82,8 @@ function tanksize(gee, rhoFuel, deltap,
                 guess[i + 3] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
         end
 
-        sol = nlsolve(residual, guess, ftol = 1e-7)
-        Δt = sol.zero[1] #Solve for change in layer thickness with NLsolve.jl
+        sol = nlsolve(residual, guess, ftol = 1e-7) #Solve non-linear problem with NLsolve.jl
+        Δt = sol.zero[1] 
 
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_cond[ind] = t_cond[ind] + Δt  
@@ -112,7 +115,7 @@ end
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `Δt::Float64`: thickness change to each insulation layer in iinsuldes (m).
+        - `x::Float64`: vector with states
         - `gee::Float64`: Gravitational acceleration (m/s^2).
         - `rhoFuel::Float64`: Density of fuel (kg/m^3).
         - `deltap::Float64`: Allowed pressure difference in vessel (Pa).
@@ -145,7 +148,7 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
         t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel)
+        iinsuldes, ifuel, qfac)
 
         # Extract states
         Δt = x[1]
@@ -186,7 +189,6 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
                         
         _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporization
       
-        qfac = 1.3
         Q_net = qfac * Q    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
         mdot_boiloff = Q_net / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
         m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation

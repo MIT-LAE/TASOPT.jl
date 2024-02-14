@@ -25,6 +25,7 @@ threshold_percent = 0.1
 clearance_fuse = 0.1
 AR = 2.0
 ifuel = 40
+qfac = 1.3
 
 m_boiloff = threshold_percent * Wfuel /(100 * gee)
 
@@ -33,9 +34,9 @@ m_boiloff = threshold_percent * Wfuel /(100 * gee)
                         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
                         t_cond, hconvair, time_flight, fstring,ffadd,
                         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-                        iinsuldes, ifuel)
+                        iinsuldes, ifuel, qfac)
 
-    outputs_size_check = ((183207.07180144673, 0.6982656552257915, 16.58444966535786, 0.1, 145.76962283384302, 100100.0, 10.193679918450561, 0.004382524709694073, 0.0043768887468472436, 1.7017343447742084, 1516.3292033055952, 22690.050286332436, 52239.82136991436, [16001.250923210973, 18476.293116316385, 17762.277330386998], 18.281801485422374, 83107.07180144671))
+    outputs_size_check = (183216.4510868988, 0.6983467946259261, 16.586193153964686, 0.1, 145.76962283384302, 100100.0, 10.193679918450561, 0.00438231574909625, 0.00437668005497447, 1.7016532053740738, 1516.112316029177, 22690.32935349458, 52249.386304235275, [16003.900534151206, 18479.68715987249, 17765.798610211583], 18.283464043589664, 83116.4510868988)
 
     for i in 1:length(outputs_size)
         @test outputs_size[i] == outputs_size_check[i]
@@ -46,7 +47,8 @@ m_boiloff = threshold_percent * Wfuel /(100 * gee)
                   Rfuse, dRfuse, wfb, nfweb,
                   sigskin, material_insul, rhoskin,
                   Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
-    outputs_mech_check = (183207.07180144673, 16.58444966535786, 0.004382524709694073, 1.7017343447742084, 145.76962283384302, 83107.07180144671, 100100.0, 52239.82136991436, 0.0043768887468472436, 1516.3292033055952, 22690.050286332436, [16001.250923210973, 18476.293116316385, 17762.277330386998], [12.578396634683275, 17.04649944176178, 22.201485965411504, 28.0411173527444], 18.281801485422374)
+
+    outputs_mech_check = (183216.4510868988, 16.586193153964686, 0.00438231574909625, 1.7016532053740738, 145.76962283384302, 83116.4510868988, 100100.0, 52249.386304235275, 0.00437668005497447, 1516.112316029177, 22690.32935349458, [16003.900534151206, 18479.68715987249, 17765.798610211583], [12.577197176930863, 17.04566248903523, 22.201170720110152, 28.04148242560481], 18.283464043589664)
     for i in 1:length(outputs_mech)
         @test outputs_mech[i] == outputs_mech_check[i]
     end
@@ -59,9 +61,9 @@ m_boiloff = threshold_percent * Wfuel /(100 * gee)
                       hconvgas,  hconvair, 
                       t_cond,
                       Tfuel, Tair, 
-                      time_flight, ifuel)
+                      time_flight, ifuel, qfac)
 
-    outputs_thermal_check = (71.35951543110049, 0.002831726802821448)
+    outputs_thermal_check = (71.35575943521175, 0.0028315777553655458)
 
     for i in 1:length(outputs_thermal)
         @test outputs_thermal[i] == outputs_thermal_check[i]
