@@ -33,6 +33,7 @@
         - `AR::Float64`: Aspect ratio.
         - `iinsuldes::Array{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
+        - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
         
         **Outputs:**
@@ -140,6 +141,7 @@ end
         - `AR::Float64`: Aspect ratio.
         - `iinsuldes::Array{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
+        - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
         **Outputs:**
         - `res::Float64`: difference between desired boiloff rate and current boiloff rate (%/hour).

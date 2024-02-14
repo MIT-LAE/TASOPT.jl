@@ -25,6 +25,7 @@ for a given insulation thickness
       - `Tair::Float64`: Ambient temperature (K).
       - `time_flight::Float64`: Time of flight (s).
       - `ifuel::Int64`: fuel index.
+      - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
       **Outputs:**
       - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
