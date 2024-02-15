@@ -1,9 +1,9 @@
 """
-      tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1},
-      hconvgas::Float64,  hconvair::Float64, 
-      t_cond::Array{Float64,1}, k::Array{Float64,1},
-      Tfuel::Float64 , Tair::Float64, 
-      time_flight::Float64, ifuel::Int64)
+      tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
+      hconvgas::Float64,
+      t_cond::Array{Float64,1},
+      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
+      time_flight::Float64, ifuel::Int64, qfac::Float64)
 
 `tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
 
@@ -19,10 +19,11 @@ for a given insulation thickness
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
       - `material_insul::Array{String,1}`: material name for each MLI layer.
       - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
-      - `hconvair::Float64`: Convective coefficient of ambient air (W/m²*K).
       - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
       - `Tfuel::Float64`: Fuel temperature (K).
-      - `Tair::Float64`: Ambient temperature (K).
+      - `z::Float64`: flight altitude (m)
+      - `Mair::Float64`: external air Mach number
+      - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
       - `time_flight::Float64`: Time of flight (s).
       - `ifuel::Int64`: fuel index.
       - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
@@ -53,7 +54,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.xftank = xftank
       p.ifuel = ifuel
 
-      _, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+      _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature with dummy wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Tair - Tfuel
@@ -99,6 +100,7 @@ function residuals_Q(x, p)
       Q = x[1]
       T_w = x[2]
       T_mli = x[3:end]
+      Tfuse = x[end] #fuselage wall temperature
   
       #Unpack parameters
       l_cyl = p.l_cyl
@@ -114,7 +116,7 @@ function residuals_Q(x, p)
       xftank = p.xftank
       ifuel = p.ifuel
 
-      hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+      hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, Tfuse)
   
       r_inner = r_tank #- thickness
       ΔT = Tair - Tfuel
@@ -209,7 +211,9 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `hconvair::Float64 `: convective heat transfer coefficient on fuselage (W / (m^2 K))
     - `material::Array{String} `: array with material names for different insulation layers
     - `Tfuel::Float64`: fuel temperature (K)
-    - `Tair::Float64`: external air temperature (K)
+    - `z::Float64`: flight altitude (m)
+    - `Mair::Float64`: external air Mach number
+    - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
     - `ifuel::Int64`: fuel species index
 """
 mutable struct thermal_params
@@ -274,13 +278,15 @@ end
       freestream_heat_coeff(z, M, xftank)
 
 This function calculates the air-side heat transfer coefficient, which is assumed to be that of a freestream 
-in forced convection. The freestream temperature is also returned.
+in forced convection at a given altitude. The freestream temperature is also returned. Heat transfer is modeled via the
+Meador-Smart reference temperature model with the Chilton-Colburn analogy.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `z::Float64`: flight altitude (m).
       - `M::Float64`: freestream Mach number.
       - `xftank::Float64`: longitudinal position of the fuel tank CG (m).
+      - `Tw::Float64`: wall temperature (K).
 
       **Outputs:**
       - `h_convair::Float64`: air-side heat transfer coefficient (W/m^2/K).
@@ -291,20 +297,23 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       Tair, p, _, a, _ = atmos(z / 1e3)
       u = M * a #freestrean velocity
 
+      #Assumed parameters for air
       Pr = 0.71
       γ = 1.4
       cp = 1005
       R = 287
+      
       #Find h for air
       # This code uses the reference temperature model and the Chilton-Colburn analogy
       T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * Pr^(1/3) * (γ - 1)/2 * M^2) #Reference temperature
       
+      #Find viscosity from Sutherland's law
       μ0 = 1.716e-5
       S_μ = 111
       T0 = 273
       μ_s = μ0 * (T_s / T0)^(3 / 2) * ( (T0 + S_μ) / (T_s + S_μ) )
 
-      ρ_s = p / (R * T_s)
+      ρ_s = p / (R * T_s) #density at reference temperature
 
       Re_xftank = ρ_s * u * xftank / μ_s
       cf_xftank = 0.02296 / (Re_xftank)^0.139

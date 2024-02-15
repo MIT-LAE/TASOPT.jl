@@ -36,6 +36,7 @@ m_boiloff = threshold_percent * Wfuel /(100 * gee)
                         t_cond, time_flight, fstring,ffadd,
                         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
                         iinsuldes, ifuel, qfac)
+    println(outputs_size)
 
     outputs_size_check = (183216.4510868988, 0.6983467946259261, 16.586193153964686, 0.1, 145.76962283384302, 100100.0, 10.193679918450561, 0.00438231574909625, 0.00437668005497447, 1.7016532053740738, 1516.112316029177, 22690.32935349458, 52249.386304235275, [16003.900534151206, 18479.68715987249, 17765.798610211583], 18.283464043589664, 83116.4510868988)
 
