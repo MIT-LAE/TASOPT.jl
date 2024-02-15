@@ -190,9 +190,10 @@ This function calculates the thermal conductivity of different insulation materi
 """
 function insulation_conductivity_calc(T, material)
       if material == "rohacell31"
-            k = 0.00235 + 8.824e-5 * T # W/(m K), Linear fit to Fig. 4.78 in Brewer (1991)
+            k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
       elseif material == "polyurethane"
-            k = 0.001625 + 1.125e-4 * T # W/(m K), Linear fit to Fig. 4.78 in Brewer (1991)
+            k = 2.114e-13 * T^5 - 1.639e-10 *T^4 + 4.438e-8 * T^3 - 5.222e-6*T^2 + 3.740e-4*T - 2.192e-3
+            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
       end
       return k
 end
