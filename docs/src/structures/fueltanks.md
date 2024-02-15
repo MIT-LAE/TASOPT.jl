@@ -33,13 +33,23 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ``` 
     where ``σ`` is the Stefan-Boltzmann constant, ``ε`` is the emissivity of the surface, ``T_a`` is the freestream temperature, and ``T_f`` is the temperaure of the fuel. Similarly, the heat transfer coefficient from froced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
     ```math
-        h_{convair} = \frac{C_f}{2 Pr^{2/3}}  ρ u c_p,
+        h_{convair} = \frac{c_f}{2 Pr^{2/3}}  ρ u c_p,
     ``` 
-    where ``C_f`` is the skin-friction coefficient, ``Pr`` is the Prandtl number (``Pr\approx 0.85`` for turbulent air), ``ρ`` is the freestream air density, ``u`` is the freestream velocity, and ``c_p`` is the specific heat of the freestream air at constant pressure. The skin-friction coefficient can be modeled using a flat-plate solution,[^1]
+    where ``c_f`` is the skin-friction coefficient, ``Pr`` is the Prandtl number (``Pr\approx 0.71`` for air), ``ρ`` is the freestream air density, ``u`` is the freestream velocity, and ``c_p`` is the specific heat of the freestream air at constant pressure. The skin-friction coefficient can be modeled using a flat-plate solution,[^1]
     ```math
-        C_f = \frac{0.455}{\log_{10}(\mathrm{Re}_x)^{2.58}  (1 + 0.144 M^2)^{0.65}},
+        c_f = \frac{0.02296}{Re_x^{0.139}},
     ```
-    where ``M`` is the freestream Mach number and ``\mathrm{Re}_x`` is the Reynolds number at the location fo the fuel tank in the fuselage. The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
+    where ``\mathrm{Re}_x`` is the Reynolds number at the location fo the fuel tank in the fuselage. To account for the effect of compressibility, the gas properties (density and viscosity) can be calculated at a reference temperature, ``T^\star``, that can be estimated using [^1]
+    ```math
+        T^\star = T_a\left[0.5\left(1 + \frac{T_w}{T_a}\right)+0.16 r \left(\frac{\gamma-1}{2}\right)M^2\right],
+    ```
+    where ``M`` is the freestream Mach number and ``T_w`` is the wall temperature. The term ``r`` represents a recovery factor and ``r = Pr^{1/3}`` for turbulent air. Due to the high flow velocity, the temperature that the wall reaches in the adiabatic case (``T_{aw}``) is greater than the static air temperature. The adiabatic wall temperature is given by 
+    ```math
+        T_{aw} = T_a \left(1 + r \frac{\gamma -1}{2} M^2\right),
+    ```
+    where ``\gamma`` is the ratio of specific heats for air.
+
+    The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
     ```math
         R_{air} = \frac{1}{h_{air} (2\pi l_{cyl} R_{fuse} +2 S_{he})},
     ```
@@ -59,7 +69,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``k`` is the thermal conductivity of the liquid fuel and ``S_{int}`` is the internal surface area of the tank. 
 
-    The combined thermal resistance is ``R_{eq} = R_{liq} + R_{MLI} + R_{air}``, such that the total heat transfer rate is ``\dot{Q} = \frac{T_a - T_f}{R_{eq}}``. Once the heat transfer rate is known, the boiloff rate is simply ``\dot{m}_{boil}=\frac{\dot{Q}}{h_v}``, where ``h_v`` is the heat of vaporization of the fuel. 
+    The combined thermal resistance is ``R_{eq} = R_{liq} + R_{MLI} + R_{air}``, such that the total heat transfer rate is ``\dot{Q} = \frac{T_{aw} - T_f}{R_{eq}}``. Once the heat transfer rate is known, the boiloff rate is simply ``\dot{m}_{boil}=\frac{\dot{Q}}{h_v}``, where ``h_v`` is the heat of vaporization of the fuel. 
 
     #### Notes on implementation
     In the current version of TASOPT, the desired boiloff rate (in percentage per hour) is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
@@ -71,11 +81,11 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         R_{t,o} = R_{fuse} - d_{fclear} - t_{MLI},
     ```
-    where ``d_{fclear} `` is the fuselage clearance distance and ``t_{MLI}`` is the total thickness of the MLI. The skin thickness of the cylindrical portion of the tank wall is sized using
+    where ``d_{fclear} `` is the fuselage clearance distance and ``t_{MLI}`` is the total thickness of the MLI. The skin thickness of the cylindrical portion of the tank wall is sized using [^3]
     ```math
         t_{s,cyl} = \frac{2 \Delta p_{des} R_{t,o}}{2 \sigma_a f_{weld} + 0.8 \Delta p_{des}},
     ```
-    where ``\sigma_a`` is the maximum allowable stress for the wall material and ``f_{weld}<1`` is a factor that accounts for structural weakening due to welding. The wall thickness of the hemiellipsoidal caps is given by
+    where ``\sigma_a`` is the maximum allowable stress for the wall material and ``f_{weld}<1`` is a factor that accounts for structural weakening due to welding. The wall thickness of the hemiellipsoidal caps is given by [^3]
     ```math
         t_{s,cap} = \frac{2 \Delta p_{des} R_{t,o} K }{2 \sigma_a f_{weld} + 2 \Delta p_{des} (K- 0.1)},
     ```
@@ -97,5 +107,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 structures.tanksize
 structures.tankWmech
 structures.tankWthermal
-
 ```
+[^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
+[^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.
+[^3]: Barron, Randall F. "Cryogenic systems." Monographs on cryogenics (1985).

@@ -73,9 +73,9 @@ function tanksize(gee, rhoFuel, deltap,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
 
-        _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature with dummy wall temperature
+        _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
 
-        ΔT = Tair - Tfuel
+        ΔT = Taw - Tfuel
 
         #Assemble guess for non linear solver
         #x[1] = Δt; x[2] = Q; x[3] = T_tank; x[4:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
