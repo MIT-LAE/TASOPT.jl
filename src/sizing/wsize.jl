@@ -1194,10 +1194,7 @@ function wsize(ac; imission = 1, itermax=35,
             rhofuel = parg[igrhofuel]
             M_inf = para[iaMach, ipcruise1]
             z_alt = para[iaalt, ipcruise1]
-
-            hconvair, Tair = structures.freestream_heat_coeff(z_alt, M_inf, xftank_heat) #Find air temperature 
-                                                                                        #and convective heat transfer coefficient
-
+            
             #Fuel tank design
             cargotank = false #TODO: figure out why this is here
 
@@ -1212,8 +1209,8 @@ function wsize(ac; imission = 1, itermax=35,
             Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
             Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
-                Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-                t_cond, hconvair, time_flight, ftankstiff, ftankadd,
+                Rfuse, dRfuse, hconvgas, Tfuel, z_alt, M_inf, xftank_heat,
+                t_cond, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, material_insul, rhoskintank,
                 Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
 

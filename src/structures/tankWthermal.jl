@@ -19,7 +19,6 @@ for a given insulation thickness
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
       - `material_insul::Array{String,1}`: material name for each MLI layer.
       - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
-      - `hconvair::Float64`: Convective coefficient of ambient air (W/m²*K).
       - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
       - `Tfuel::Float64`: Fuel temperature (K).
       - `Tair::Float64`: Ambient temperature (K).
@@ -34,9 +33,9 @@ for a given insulation thickness
 See [here](@ref fueltanks).
 """
 function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-                      hconvgas::Float64,  hconvair::Float64, 
+                      hconvgas::Float64, 
                       t_cond::Array{Float64,1},
-                      Tfuel::Float64 , Tair::Float64, 
+                      Tfuel::Float64 , z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64, qfac::Float64)
 
       p = thermal_params()
@@ -45,19 +44,22 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.r_tank = r_tank
       p.Shead = Shead
       p.hconvgas = hconvgas
-      p.hconvair = hconvair
       p.t_cond = t_cond
       p.material = material_insul
       p.Tfuel = Tfuel
-      p.Tair = Tair
+      p.z = z
+      p.Mair = Mair
+      p.xftank = xftank
       p.ifuel = ifuel
       
       thickness = sum(t_cond)  # total thickness of insulation
-      ΔT = Tair - Tfuel
       
       fun(x) = residuals_Q(x, p) #Create function handle to be zeroed
       
       #Initial guess for function
+      _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature
+      ΔT = Tair - Tfuel
+
       guess = zeros(length(t_cond) + 2) 
       guess[1] = 100
       guess[2] = Tfuel + 1
@@ -96,6 +98,7 @@ function residuals_Q(x, p)
       Q = x[1]
       T_w = x[2]
       T_mli = x[3:end]
+      Tfuse = T_mli[end]
   
       #Unpack parameters
       l_cyl = p.l_cyl
@@ -103,12 +106,16 @@ function residuals_Q(x, p)
       r_tank = p.r_tank
       Shead = p.Shead
       hconvgas = p.hconvgas
-      hconvair = p.hconvair
       t_cond = p.t_cond
       material = p.material
       Tfuel = p.Tfuel
-      Tair = p.Tair
+      z = p.z
+      Mair = p.Mair
+      xftank = p.xftank
       ifuel = p.ifuel
+
+      hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, Tfuse)
+      hcovair = 100
   
       r_inner = r_tank #- thickness
       ΔT = Tair - Tfuel
@@ -212,11 +219,12 @@ mutable struct thermal_params
       r_tank::Float64
       Shead::Array{Float64}
       hconvgas::Float64
-      hconvair::Float64
       t_cond::Array{Float64} 
       material::Array{String}
       Tfuel::Float64
-      Tair::Float64
+      z::Float64
+      Mair::Float64
+      xftank::Float64
       ifuel::Int64
       thermal_params() = new() 
 end
@@ -279,20 +287,31 @@ in forced convection. The freestream temperature is also returned.
       - `h_convair::Float64`: air-side heat transfer coefficient (W/m^2/K).
       - `Tair::Float64`: air-side temperature (K).
 """
-function freestream_heat_coeff(z, M, xftank)
+function freestream_heat_coeff(z, M, xftank, Tw)
       #Use ISA function to calculate freestream conditions
-      Tair, p, ρ, a, μ = atmos(z / 1e3)
-
-      #Find h for air
-      cp_air = 1004 #J/(kg K) specific heat at constant pressure for ambient air
-      Pr_t = 0.85 #Prandlt number of turbulent air
+      Tair, p, _, a, _ = atmos(z / 1e3)
       u = M * a #freestrean velocity
 
-      Re_xftank = ρ * u * xftank / μ
-      Cf_xftank = 0.455 / (log10(Re_xftank)^2.58 * (1 + 0.144 * M^2)^0.65) #Turbulent flat plate skin friction coefficient (12.27 in Raymer)
+      Pr = 0.71
+      γ = 1.4
+      cp = 1005
+      R = 287
+      #Find h for air
+      # This code uses the reference temperature model and the Chilton-Colburn analogy
+      T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * Pr^(1/3) * (γ - 1)/2 * M^2) #Reference temperature
+      
+      μ0 = 1.716e-5
+      S_μ = 111
+      T0 = 273
+      μ_s = μ0 * (T_s / T0)^(3 / 2) * ( (T0 + S_μ) / (T_s + S_μ) )
+
+      ρ_s = p / (R * T_s)
+
+      Re_xftank = ρ_s * u * xftank / μ_s
+      cf_xftank = 0.02296 / (Re_xftank)^0.139
       #Calculate Stanton number using Reynolds analogy
-      St_air = Cf_xftank / (2 * Pr_t^(2/3)) #Chilton-Colburn analogy
-      hconvair = St_air * ρ *u* cp_air #In W/(m^2 K)
+      St_air = cf_xftank / (2 * Pr^(2/3)) #Chilton-Colburn analogy
+      hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
 
       return hconvair, Tair
 end
