@@ -8,10 +8,7 @@ Rfuse = 2.5
 dRfuse = 0.3
 hconvgas = 0.0
 Tfuel = 20.0
-z = 11000.0
-Mair = 0.8
-xftank = 15.0
-t_cond = [0.175,0.175,0.175]
+t_cond = [0.05,0.05,0.05]
 material_insul = ["rohacell31", "rohacell31", "polyurethane"]
 iinsuldes = [1,2,3]
 time_flight = 7*3600.0
@@ -27,6 +24,9 @@ clearance_fuse = 0.1
 AR = 2.0
 ifuel = 40
 qfac = 1.3
+z = 11e3
+Mair = 0.8
+xftank = 15.0
 
 m_boiloff = threshold_percent * Wfuel /(100 * gee)
 
@@ -61,7 +61,7 @@ m_boiloff = threshold_percent * Wfuel /(100 * gee)
     outputs_thermal = TASOPT.structures.tankWthermal(l_cyl, l_tank, r_tank, Shead, material_insul,
                       hconvgas, 
                       t_cond,
-                      Tfuel, z, Mair, xftank, 
+                      Tfuel, z, Mair, xftank,
                       time_flight, ifuel, qfac)
 
     outputs_thermal_check = (71.35575943521175, 0.0028315777553655458)

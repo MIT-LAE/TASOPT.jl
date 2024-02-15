@@ -18,6 +18,7 @@
         - `Tfuel::Float64`: Fuel temperature (K).
         - `Tair::Float64`: Ambient temperature (K).
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
+        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
@@ -70,7 +71,10 @@ function tanksize(gee, rhoFuel, deltap,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
 
-        _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature
+        Tair = 220.0
+        hconvair = 100.0
+        #_, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+
         ΔT = Tair - Tfuel
 
         #Assemble guess for non linear solver
@@ -108,7 +112,7 @@ end
 """
         res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, time_flight, fstring,ffadd,
+        t_cond, hconvair, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
 
@@ -126,6 +130,7 @@ end
         - `Tfuel::Float64`: Fuel temperature (K).
         - `Tair::Float64`: Ambient temperature (K).
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
+        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
@@ -173,13 +178,16 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
                         Wfuel, m_boiloff, t_all, clearance_fuse, AR)
 
         #Assemble struct with parameters for residual_Q
+        Tair = 220.0
+        hconvair = 100.0
+
         p = thermal_params()
         p.l_cyl = l_cyl
         p.l_tank = l_tank
         p.r_tank = r_tank
         p.Shead = Shead
         p.hconvgas = hconvgas
-        p.t_cond = t_cond
+        p.t_cond = t_all
         p.material = material_insul
         p.Tfuel = Tfuel
         p.z = z
