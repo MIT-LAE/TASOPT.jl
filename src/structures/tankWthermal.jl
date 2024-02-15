@@ -19,6 +19,7 @@ for a given insulation thickness
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
       - `material_insul::Array{String,1}`: material name for each MLI layer.
       - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
+      - `hconvair::Float64`: Convective coefficient of ambient air (W/m²*K).
       - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
       - `Tfuel::Float64`: Fuel temperature (K).
       - `Tair::Float64`: Ambient temperature (K).
@@ -33,10 +34,15 @@ for a given insulation thickness
 See [here](@ref fueltanks).
 """
 function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-                      hconvgas::Float64, 
+                      hconvgas::Float64,
                       t_cond::Array{Float64,1},
-                      Tfuel::Float64 , z::Float64, Mair::Float64, xftank::Float64,
+                      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64, qfac::Float64)
+
+
+      Tair = 220.0
+
+      hconvair = 100.0
 
       p = thermal_params()
       p.l_cyl = l_cyl
@@ -51,15 +57,15 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.Mair = Mair
       p.xftank = xftank
       p.ifuel = ifuel
+
+      #_, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
       
       thickness = sum(t_cond)  # total thickness of insulation
+      ΔT = Tair - Tfuel
       
       fun(x) = residuals_Q(x, p) #Create function handle to be zeroed
       
       #Initial guess for function
-      _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature
-      ΔT = Tair - Tfuel
-
       guess = zeros(length(t_cond) + 2) 
       guess[1] = 100
       guess[2] = Tfuel + 1
@@ -98,7 +104,6 @@ function residuals_Q(x, p)
       Q = x[1]
       T_w = x[2]
       T_mli = x[3:end]
-      Tfuse = T_mli[end]
   
       #Unpack parameters
       l_cyl = p.l_cyl
@@ -114,8 +119,10 @@ function residuals_Q(x, p)
       xftank = p.xftank
       ifuel = p.ifuel
 
-      hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, Tfuse)
-      hcovair = 100
+      Tair = 220.0
+      hconvair = 100.0
+
+      #hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
   
       r_inner = r_tank #- thickness
       ΔT = Tair - Tfuel
