@@ -54,10 +54,10 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.xftank = xftank
       p.ifuel = ifuel
 
-      _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature with dummy wall temperature
+      _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
-      ΔT = Tair - Tfuel
+      ΔT = Taw - Tfuel
       
       fun(x) = residuals_Q(x, p) #Create function handle to be zeroed
       
@@ -116,10 +116,11 @@ function residuals_Q(x, p)
       xftank = p.xftank
       ifuel = p.ifuel
 
-      hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, Tfuse)
+      #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
+      hconvair, Tair, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
   
       r_inner = r_tank #- thickness
-      ΔT = Tair - Tfuel
+      ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
       thickness = sum(t_cond)  # total thickness of insulation
   
       # Radiation
@@ -279,7 +280,8 @@ end
 
 This function calculates the air-side heat transfer coefficient, which is assumed to be that of a freestream 
 in forced convection at a given altitude. The freestream temperature is also returned. Heat transfer is modeled via the
-Meador-Smart reference temperature model with the Chilton-Colburn analogy.
+Meador-Smart reference temperature model with the Chilton-Colburn analogy, described on p. 1056 in Anderson, Fundamentals
+of Aerodynamics.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -291,6 +293,7 @@ Meador-Smart reference temperature model with the Chilton-Colburn analogy.
       **Outputs:**
       - `h_convair::Float64`: air-side heat transfer coefficient (W/m^2/K).
       - `Tair::Float64`: air-side temperature (K).
+      - `Taw::Float64`: adiabatic wall temperature (K).
 """
 function freestream_heat_coeff(z, M, xftank, Tw)
       #Use ISA function to calculate freestream conditions
@@ -303,9 +306,11 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       cp = 1005
       R = 287
       
+      r = Pr^(1/3) #recovery factor for turbulent air
+      Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
       #Find h for air
       # This code uses the reference temperature model and the Chilton-Colburn analogy
-      T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * Pr^(1/3) * (γ - 1)/2 * M^2) #Reference temperature
+      T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * r * (γ - 1)/2 * M^2) #Reference temperature
       
       #Find viscosity from Sutherland's law
       μ0 = 1.716e-5
@@ -321,5 +326,5 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       St_air = cf_xftank / (2 * Pr^(2/3)) #Chilton-Colburn analogy
       hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
 
-      return hconvair, Tair
+      return hconvair, Tair, Taw
 end
