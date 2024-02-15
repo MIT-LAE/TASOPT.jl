@@ -71,9 +71,7 @@ function tanksize(gee, rhoFuel, deltap,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
 
-        Tair = 220.0
-        hconvair = 100.0
-        #_, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+        _, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
 
         ΔT = Tair - Tfuel
 
@@ -178,9 +176,6 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
                         Wfuel, m_boiloff, t_all, clearance_fuse, AR)
 
         #Assemble struct with parameters for residual_Q
-        Tair = 220.0
-        hconvair = 100.0
-
         p = thermal_params()
         p.l_cyl = l_cyl
         p.l_tank = l_tank
