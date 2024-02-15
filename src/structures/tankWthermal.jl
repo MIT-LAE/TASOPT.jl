@@ -39,11 +39,6 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
                       Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64, qfac::Float64)
 
-
-      Tair = 220.0
-
-      hconvair = 100.0
-
       p = thermal_params()
       p.l_cyl = l_cyl
       p.l_tank = l_tank
@@ -58,7 +53,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.xftank = xftank
       p.ifuel = ifuel
 
-      #_, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+      _, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Tair - Tfuel
@@ -119,10 +114,7 @@ function residuals_Q(x, p)
       xftank = p.xftank
       ifuel = p.ifuel
 
-      Tair = 220.0
-      hconvair = 100.0
-
-      #hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+      hconvair, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
   
       r_inner = r_tank #- thickness
       ΔT = Tair - Tfuel
