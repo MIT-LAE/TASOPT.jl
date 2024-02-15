@@ -1,9 +1,9 @@
 """
         tanksize(gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, hconvair, time_flight, fstring,ffadd,
+        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
+        t_cond, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel)
+        iinsuldes, ifuel, qfac)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
@@ -16,9 +16,10 @@
         - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
         - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
         - `Tfuel::Float64`: Fuel temperature (K).
-        - `Tair::Float64`: Ambient temperature (K).
+        - `z::Float64`: flight altitude (m)
+        - `Mair::Float64`: external air Mach number
+        - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
-        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
@@ -65,13 +66,14 @@ function tanksize(gee, rhoFuel, deltap,
         Wfuel_init = Wfuel
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
 
+        #Create inline function with residuals as a function of x
         residual(x) = res_MLI_thick(x, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
         t_cond, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
 
-        _, Tair = freestream_heat_coeff(z, Mair, xftank, 200)
+        _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature with dummy wall temperature
 
         ΔT = Tair - Tfuel
 
@@ -85,7 +87,8 @@ function tanksize(gee, rhoFuel, deltap,
                 guess[i + 3] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
         end
 
-        sol = nlsolve(residual, guess, ftol = 1e-7) #Solve non-linear problem with NLsolve.jl
+        #Solve non-linear problem with NLsolve.jl
+        sol = nlsolve(residual, guess, ftol = 1e-7) 
         Δt = sol.zero[1] 
 
         for ind in iinsuldes #For every segment whose thickness can be changed
@@ -108,13 +111,14 @@ function tanksize(gee, rhoFuel, deltap,
 end
 
 """
-        res_MLI_thick(Δt, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, hconvair, time_flight, fstring,ffadd,
+        res_MLI_thick(x, gee, rhoFuel, deltap,
+        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
+        t_cond, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel)
+        iinsuldes, ifuel, qfac)
 
-`tanksize` sizes a fuel tank for a cryogenic-fuel aircraft
+This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
+insulation interface temperatures.
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
@@ -126,9 +130,10 @@ end
         - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
         - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
         - `Tfuel::Float64`: Fuel temperature (K).
-        - `Tair::Float64`: Ambient temperature (K).
+        - `z::Float64`: flight altitude (m)
+        - `Mair::Float64`: external air Mach number
+        - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
-        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
