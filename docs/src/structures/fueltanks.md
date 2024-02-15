@@ -27,11 +27,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
         R_{MLI} = \sum_i R_l^i.
     ``` 
 
-    In addition to the insulation resistance, the convective (from fuel to tank wall and from exterior wall to freestream) and radiative heat transfers have to be taken into account. The heat transfer to the freestream can be modeled as having two components: radiation and convection. The radiative component has an equivalent heat transfer coefficient
-    ```math
-        h_{rad} = σ ε (T_a^2 + T_f^2) (T_a + T_f),
-    ``` 
-    where ``σ`` is the Stefan-Boltzmann constant, ``ε`` is the emissivity of the surface, ``T_a`` is the freestream temperature, and ``T_f`` is the temperaure of the fuel. Similarly, the heat transfer coefficient from froced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
+    In addition to the insulation resistance, the convective (from fuel to tank wall and from exterior wall to freestream) and radiative heat transfers have to be taken into account. The heat transfer to the freestream can be modeled as having two components: radiation and convection. The heat transfer coefficient from forced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
     ```math
         h_{convair} = \frac{c_f}{2 Pr^{2/3}}  ρ u c_p,
     ``` 
@@ -43,11 +39,17 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         T^\star = T_a\left[0.5\left(1 + \frac{T_w}{T_a}\right)+0.16 r \left(\frac{\gamma-1}{2}\right)M^2\right],
     ```
-    where ``M`` is the freestream Mach number and ``T_w`` is the wall temperature. The term ``r`` represents a recovery factor and ``r = Pr^{1/3}`` for turbulent air. Due to the high flow velocity, the temperature that the wall reaches in the adiabatic case (``T_{aw}``) is greater than the static air temperature. The adiabatic wall temperature is given by 
+    where ``M`` is the freestream Mach number, ``T_a`` is the freestream temperature and ``T_w`` is the external wall temperature. The term ``r`` represents a recovery factor and ``r = Pr^{1/3}`` for turbulent air. Due to the high flow velocity, the temperature that the wall reaches in the adiabatic case (``T_{aw}``) is greater than the static air temperature. The adiabatic wall temperature is given by 
     ```math
         T_{aw} = T_a \left(1 + r \frac{\gamma -1}{2} M^2\right),
     ```
     where ``\gamma`` is the ratio of specific heats for air.
+
+    Similarly, the radiative component has an equivalent heat transfer coefficient
+    ```math
+        h_{rad} = σ ε (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
+    ``` 
+    where ``σ`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
 
     The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
     ```math
@@ -63,7 +65,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         \mathrm{Ra}_l = \frac{g \beta (T_w-T_f) l^3 Pr}{\nu^2},
     ```
-    where ``g`` is the gravitational acceleration, ``\beta`` is the fuel's coefficient of thermal expansion, ``T_w`` is the temperature at the wall, ``l`` is the tank length, ``Pr`` is the Prandlt number of the liquid fuel, and ``\nu`` is the kinematic viscosity of the fuel. The thermal resistance due to natural convection is then
+    where ``g`` is the gravitational acceleration, ``\beta`` is the fuel's coefficient of thermal expansion, ``T_w`` is the temperature at the tank wall, ``l`` is the tank length, ``Pr`` is the Prandlt number of the liquid fuel, ``\nu`` is the kinematic viscosity of the fuel, and ``T_f`` is the temperaure of the fuel. The thermal resistance due to natural convection is then
     ```math
         R_{liq} = \frac{l}{\mathrm{Nu}_l k S_{int}},
     ```

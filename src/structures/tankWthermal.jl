@@ -127,7 +127,7 @@ function residuals_Q(x, p)
       σ = 5.6704e-8 #W/(m^2 K^4), Stefan-Boltzmann constant
       ε = 0.95    # white aircraft (Verstraete)
   
-      hradair = σ * ε * ((Tair^2) + (Tfuel^2)) * (Tair + Tfuel) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
+      hradair = σ * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
       Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
   
