@@ -35,7 +35,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         h_{convair} = \frac{C_f}{2 Pr^{2/3}}  ρ u c_p,
     ``` 
-    where ``C_f`` is the skin-friction coefficient, ``Pr`` is the Prandtl number (``Pr\approx 0.85`` for turbulent air), ``ρ`` is the freestream air density, ``u`` is the freestream velocity, and ``c_p`` is the specific heat of the freestream air at constant pressure. The skin-friction coefficient can be modeled using a flat-plate solution,
+    where ``C_f`` is the skin-friction coefficient, ``Pr`` is the Prandtl number (``Pr\approx 0.85`` for turbulent air), ``ρ`` is the freestream air density, ``u`` is the freestream velocity, and ``c_p`` is the specific heat of the freestream air at constant pressure. The skin-friction coefficient can be modeled using a flat-plate solution,[^1]
     ```math
         C_f = \frac{0.455}{\log_{10}(\mathrm{Re}_x)^{2.58}  (1 + 0.144 M^2)^{0.65}},
     ```
@@ -45,7 +45,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``l_{cyl}`` is the length of the cylindrical portion of the tank, ``R_{fuse}`` is the fuselage radius and ``S_{he}`` is the outer area of the hemiellipsoidal caps. 
 
-    Inside the tank, there is a heat transfer from the bulk of the liquid fluid to the tank via natural convection. The Nusselt number for this heat transfer process can be modeled as
+    Inside the tank, there is a heat transfer from the bulk of the liquid fluid to the tank via natural convection. The Nusselt number for this heat transfer process can be modeled as [^2]
     ```math
         \mathrm{Nu}_l = 0.0605 \mathrm{Ra}_l^{1/3},
     ```

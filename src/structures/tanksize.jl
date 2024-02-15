@@ -18,7 +18,6 @@
         - `Tfuel::Float64`: Fuel temperature (K).
         - `Tair::Float64`: Ambient temperature (K).
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
-        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
@@ -57,8 +56,8 @@
 See [here](@ref fueltanks).
 """
 function tanksize(gee, rhoFuel, deltap,
-                      Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-                      t_cond, hconvair, time_flight, fstring,ffadd,
+                      Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
+                      t_cond, time_flight, fstring,ffadd,
                       wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
                       iinsuldes, ifuel, qfac)
 
@@ -66,11 +65,12 @@ function tanksize(gee, rhoFuel, deltap,
         m_boiloff = threshold_percent *  Wfuel / (gee * 100) #initial value of boil-off mass
 
         residual(x) = res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, hconvair, time_flight, fstring,ffadd,
+        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
+        t_cond, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
 
+        _, Tair = freestream_heat_coeff(z, Mair, xftank, 200) #Find air temperature
         ΔT = Tair - Tfuel
 
         #Assemble guess for non linear solver
@@ -108,7 +108,7 @@ end
 """
         res_MLI_thick(Δt, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, hconvair, time_flight, fstring,ffadd,
+        t_cond, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel)
 
@@ -126,7 +126,6 @@ end
         - `Tfuel::Float64`: Fuel temperature (K).
         - `Tair::Float64`: Ambient temperature (K).
         - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
-        - `hconvair::Float64`: Convective coefficient of ambient air (W/m2*K).
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
@@ -147,8 +146,8 @@ end
         - `res::Float64`: difference between desired boiloff rate and current boiloff rate (%/hour).
 """
 function res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, Tair,
-        t_cond, hconvair, time_flight, fstring,ffadd,
+        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
+        t_cond, time_flight, fstring,ffadd,
         wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
         iinsuldes, ifuel, qfac)
 
@@ -180,11 +179,12 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
         p.r_tank = r_tank
         p.Shead = Shead
         p.hconvgas = hconvgas
-        p.hconvair = hconvair
-        p.t_cond = t_all
+        p.t_cond = t_cond
         p.material = material_insul
         p.Tfuel = Tfuel
-        p.Tair = Tair
+        p.z = z
+        p.Mair = Mair
+        p.xftank = xftank
         p.ifuel = ifuel
 
         F_thermal = residuals_Q(x_thermal, p) #Find thermal-related residuals
