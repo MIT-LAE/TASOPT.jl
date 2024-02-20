@@ -1,6 +1,3 @@
-using TASOPT
-using Test
-
 #Sample parameters
 rhoFuel = 70.0
 deltap = 2e5
