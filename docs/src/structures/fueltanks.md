@@ -1,6 +1,6 @@
 # [Fuel tanks](@id fueltanks)
 
-Liquid hydrocarbon fuel is assumed to be stored in the interior of the wings and no additional tanks are needed. The weight of the fuel is accounted for while sizing the wing structure. See [`structures.surfw`](@ref).
+Liquid long-chain hydrocarbon fuel is assumed to be stored in the interior of the wings and no additional tanks are needed. The weight of the fuel is accounted for while sizing the wing structure. See [`structures.surfw`](@ref).
 
 However, alternate fuels such as cryogenic liquid hydrogen require additional storage tanks that are insulated pressure vessels.
 
@@ -9,6 +9,8 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 !!! details "📖 Theory - Thermal and structural sizing of cryogenic fuel tanks" 
     ### Thermal design
     The fuel tanks in TASOPT are assumed to consist of circular cylinders with two hemiellipsoidal caps. There are two distinct layers: the tank itself, assumed to be made of an isotropic material with high thermal conductivity; and an insulation layer, which does not carry structural loads and has very low thermal conductivity. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
+
+    ![PEMfig](../assets/cryo_tank.svg)
 
     As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's equation that the thermal resistance, ``R_{cyl}``, is given by 
     ```math
@@ -71,7 +73,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``k`` is the thermal conductivity of the liquid fuel and ``S_{int}`` is the internal surface area of the tank. 
 
-    The combined thermal resistance is ``R_{eq} = R_{liq} + R_{MLI} + R_{air}``, such that the total heat transfer rate is ``\dot{Q} = \frac{T_{aw} - T_f}{R_{eq}}``. Once the heat transfer rate is known, the boiloff rate is simply ``\dot{m}_{boil}=\frac{\dot{Q}}{h_v}``, where ``h_v`` is the heat of vaporization of the fuel. 
+    The combined thermal resistance is ``R_{eq} = R_{liq} + R_{MLI} + R_{air}``, such that the total heat transfer rate is ``\dot{Q} = \frac{T_{aw} - T_f}{R_{eq}}``. Once the heat transfer rate is known, the boiloff rate is simply ``\dot{m}_{boil}=\frac{\dot{Q}}{h_v}``, where ``h_v`` is the heat of vaporization of the fuel. A diagram illustrating the different thermal resistances is shown below.
+
+    ![PEMfig](../assets/tank_thermal_diagram.svg)
 
     #### Notes on implementation
     In the current version of TASOPT, the desired boiloff rate (in percentage per hour) is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
