@@ -1,25 +1,120 @@
 """
+      tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
+      hconvgas::Float64,
+      t_cond::Array{Float64,1},
+      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
+      time_flight::Float64, ifuel::Int64, qfac::Float64)
+
+`tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
+
+This function does **not** size the thermal insulation layers
+but rather calculates the boil-off rate of the fuel, 
+for a given insulation thickness
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `l_cyl::Float64`: Length of cylindrical portion of the tank (m).
+      - `l_tank::Float64`: Tank total length (m).
+      - `r_tank::Float64`: Tank outer radius (m).
+      - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
+      - `material_insul::Array{String,1}`: material name for each MLI layer.
+      - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
+      - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
+      - `Tfuel::Float64`: Fuel temperature (K).
+      - `z::Float64`: flight altitude (m)
+      - `Mair::Float64`: external air Mach number
+      - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
+      - `time_flight::Float64`: Time of flight (s).
+      - `ifuel::Int64`: fuel index.
+      - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
+
+      **Outputs:**
+      - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
+      - `mdot_boiloff::Float64`: Boil-off rate of LH2 (kg/s).
+
+See [here](@ref fueltanks).
+"""
+function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
+                      hconvgas::Float64,
+                      t_cond::Array{Float64,1},
+                      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
+                      time_flight::Float64, ifuel::Int64, qfac::Float64)
+
+      p = thermal_params()
+      p.l_cyl = l_cyl
+      p.l_tank = l_tank
+      p.r_tank = r_tank
+      p.Shead = Shead
+      p.hconvgas = hconvgas
+      p.t_cond = t_cond
+      p.material = material_insul
+      p.Tfuel = Tfuel
+      p.z = z
+      p.Mair = Mair
+      p.xftank = xftank
+      p.ifuel = ifuel
+
+      _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
+      
+      thickness = sum(t_cond)  # total thickness of insulation
+      ΔT = Taw - Tfuel
+      
+      fun(x) = residuals_Q(x, p, "Q_unknown") #Create function handle to be zeroed
+      
+      #Initial guess for function
+      guess = zeros(length(t_cond) + 2) 
+      guess[1] = 100
+      guess[2] = Tfuel + 1
+      
+      for i = 1:length(t_cond)
+            guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
+      end
+      sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
+      
+      _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporization
+      
+      Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
+      mdot_boiloff = Q / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
+      m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
+      
+      return  m_boiloff, mdot_boiloff
+end
+
+"""
       residuals_Q(x, p)
 
-This function calculates the residual for a non-linear solver. The states are the heat transfer rate, the tank wall temperature,
-and the temperatures at the interfaces of MLI insulation layers.
+This function calculates the residual for a non-linear solver. The states are the heat transfer rate (optional), 
+the tank wall temperature, and the temperatures at the interfaces of MLI insulation layers.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `x::Array{Float64}`: vector with unknowns.
       - `p::Struct`: structure of type `thermal_params`.
+      - `mode::String`: mode to find residual, options are "Q_known" and "Q_unknown"
 
       **Outputs:**
       - `F::Array{Float64}`: vector with residuals.
 """
-function residuals_Q(x, p)
+function residuals_Q(x, p, mode)
       #Unpack states
-      T_w = x[1]
-      T_mli = x[2:end]
-      Tfuse = x[end] #fuselage wall temperature
-  
+      if mode == "Q_known" #If the heat is known because the max boiloff is an input
+            Q = p.Q
+
+            T_w = x[1]
+            T_mli = x[2:end]
+            Tfuse = x[end] #fuselage wall temperature
+            F = zeros(length(x)+1) #initialize residual vector
+
+      elseif mode == "Q_unknown" #heat is not known and we are solving for it too
+            Q = x[1] #Heat rate is first input
+            
+            T_w = x[2]
+            T_mli = x[3:end]
+            Tfuse = x[end]
+            F = zeros(length(x))
+      end
+      
       #Unpack parameters
-      Q = p.Q
       l_cyl = p.l_cyl
       l_tank = p.l_tank
       r_tank = p.r_tank
@@ -31,8 +126,8 @@ function residuals_Q(x, p)
       z = p.z
       Mair = p.Mair
       xftank = p.xftank
-      ifuel = p.ifuel      
-
+      ifuel = p.ifuel    
+      
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
       hconvair, Tair, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
   
@@ -77,7 +172,6 @@ function residuals_Q(x, p)
       Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
   
       #Assemble array with residuals
-      F = zeros(length(x)+1)
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
       T_calc = Tfuel + R_liq * Q #Wall temperature residual
@@ -85,7 +179,6 @@ function residuals_Q(x, p)
       for i = 1:length(T_mli)
           T_calc = T_calc + R_mli[i] * Q 
           F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
-          
       end
 
       return F
@@ -121,6 +214,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
       
 !! details "💾 Data fields"
     **Inputs:**
+    - `Q::Float64`: heat rate (W)
     - `l_cyl::Float64`: length of cylindrical portion of tank (m)
     - `l_tank::Float64`: full tank length (m)
     - `r_tank::Float64`: tank radius (m)
@@ -221,8 +315,8 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       #Assumed parameters for air
       Pr = 0.71
       γ = 1.4
-      cp = 1005
-      R = 287
+      cp = 1005 #J/(kg K)
+      R = 287 #J/(kg K)
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
@@ -239,7 +333,7 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       ρ_s = p / (R * T_s) #density at reference temperature
 
       Re_xftank = ρ_s * u * xftank / μ_s
-      cf_xftank = 0.02296 / (Re_xftank)^0.139
+      cf_xftank = 0.02296 / (Re_xftank)^0.139 #From Meador-Smart method
       #Calculate Stanton number using Reynolds analogy
       St_air = cf_xftank / (2 * Pr^(2/3)) #Chilton-Colburn analogy
       hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
