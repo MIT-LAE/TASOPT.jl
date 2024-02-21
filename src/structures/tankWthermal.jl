@@ -83,8 +83,8 @@ end
 """
       residuals_Q(x, p)
 
-This function calculates the residual for a non-linear solver. The states are the heat transfer rate, the tank wall temperature,
-and the temperatures at the interfaces of MLI insulation layers.
+This function calculates the residual for a non-linear solver. The states are the heat transfer rate (optional), 
+the tank wall temperature, and the temperatures at the interfaces of MLI insulation layers.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -104,6 +104,7 @@ function residuals_Q(x, p, mode)
             T_mli = x[2:end]
             Tfuse = x[end] #fuselage wall temperature
             F = zeros(length(x)+1) #initialize residual vector
+
       elseif mode == "Q_unknown" #heat is not known and we are solving for it too
             Q = x[1] #Heat rate is first input
             
@@ -178,7 +179,6 @@ function residuals_Q(x, p, mode)
       for i = 1:length(T_mli)
           T_calc = T_calc + R_mli[i] * Q 
           F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
-          
       end
 
       return F
@@ -214,6 +214,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
       
 !! details "💾 Data fields"
     **Inputs:**
+    - `Q::Float64`: heat rate (W)
     - `l_cyl::Float64`: length of cylindrical portion of tank (m)
     - `l_tank::Float64`: full tank length (m)
     - `r_tank::Float64`: tank radius (m)
@@ -314,8 +315,8 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       #Assumed parameters for air
       Pr = 0.71
       γ = 1.4
-      cp = 1005
-      R = 287
+      cp = 1005 #J/(kg K)
+      R = 287 #J/(kg K)
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
@@ -332,7 +333,7 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       ρ_s = p / (R * T_s) #density at reference temperature
 
       Re_xftank = ρ_s * u * xftank / μ_s
-      cf_xftank = 0.02296 / (Re_xftank)^0.139
+      cf_xftank = 0.02296 / (Re_xftank)^0.139 #From Meador-Smart method
       #Calculate Stanton number using Reynolds analogy
       St_air = cf_xftank / (2 * Pr^(2/3)) #Chilton-Colburn analogy
       hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
