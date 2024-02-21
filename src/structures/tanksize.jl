@@ -188,7 +188,7 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
 
         #Assemble struct with parameters for residual_Q
         p = thermal_params()
-        p.Q = Q
+        p.Q = Q #Store heat rate as it is known
         p.l_cyl = l_cyl
         p.l_tank = l_tank
         p.r_tank = r_tank
@@ -202,6 +202,6 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
         p.xftank = xftank
         p.ifuel = ifuel
 
-        res = residuals_Q(x_thermal, p) #Find thermal-related residuals
+        res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res
 end 

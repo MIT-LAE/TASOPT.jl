@@ -108,7 +108,6 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 ```@docs
 structures.tanksize
 structures.tankWmech
-structures.tankWthermal
 ```
 [^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
 [^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.
