@@ -713,7 +713,7 @@ function cglpay(pari, parg)
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       if nftanks == 1
-            if parg[igxftankaft] == 0.0 #If tank is at the front
+            if parg[igxftankaft] == 0.0 #If tank is at the front TODO: find better way to figure out tank placement
                   xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
                   lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
             else #tank is at rear
@@ -784,14 +784,14 @@ function cglpay(pari, parg)
       sgn = [-1.0, 1.0]
 
       xftank = parg[igxWftank] / (nftanks * Wftank)
-      if xftank < xcabin
+      if pari[iifwing] == 1 #Fuel is in wings
+            rf = [0.0, 0.0]
+      elseif xftank < xcabin
             rf = [1.0, 0.0]
       else
             rf = [0.0, 1.0]
       end
-      if pari[iifwing] == 1
-            rf = [0.0, 0.0]
-      end
+      
       rpay = zeros(Float64, 2)
       xcg = zeros(Float64, 2)
 
