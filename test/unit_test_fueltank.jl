@@ -50,4 +50,20 @@ m_boiloff = threshold_percent * Wfuel /(100 * gee) *time_flight/3600
         @test outputs_mech[i] ≈ outputs_mech_check[i]
     end
 
+    l_cyl = outputs_mech_check[2]
+    l_tank = outputs_mech_check[14]
+    r_tank = outputs_mech_check[4]
+    Shead = outputs_mech_check[13]
+    outputs_thermal = TASOPT.structures.tankWthermal(l_cyl, l_tank, r_tank, Shead, material_insul,
+                      hconvgas, 
+                      t_cond,
+                      Tfuel, z, Mair, xftank,
+                      time_flight, ifuel, qfac)
+
+    outputs_thermal_check = (107.0336391563202, 0.00424736663318731)
+
+    for i in 1:length(outputs_thermal)
+        @test outputs_thermal[i] ≈ outputs_thermal_check[i]
+    end
+
 end
