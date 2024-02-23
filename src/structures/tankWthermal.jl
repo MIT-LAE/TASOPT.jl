@@ -63,7 +63,7 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       
       #Initial guess for function
       guess = zeros(length(t_cond) + 2) 
-      guess[1] = 100
+      guess[1] = 1000
       guess[2] = Tfuel + 1
       
       for i = 1:length(t_cond)
@@ -129,7 +129,7 @@ function residuals_Q(x, p, mode)
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
-      hconvair, Tair, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
+      hconvair, _, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
   
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
