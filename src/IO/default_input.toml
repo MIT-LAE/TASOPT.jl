@@ -134,7 +134,7 @@
     HT_load_fuse_bend_relief = 0.4 
     VT_load_fuse_bend_relief = 0.7
 # Overall fuselage layout
-    #Use provided layout (false) or recalculate it (true) for maxpax keeping deltas
+    #Use provided layout (false) or recalculate it (true) for design pax keeping deltas
     calculate_cabin_length = false 
 
     #Provided layout

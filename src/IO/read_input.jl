@@ -184,9 +184,11 @@ ranges = readmis("range")
 parm[imRange, :] .= Len.(ranges)
 
 maxpax = readmis("max_pax")
+pax = readmis("pax")
+despax = pax[1] #Design number of passangers
 Wpax =  Force(readmis("weight_per_pax"))
 parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= readmis("pax") * Wpax
+parm[imWpay, :] .= pax * Wpax
 parg[igWpaymax] = maxpax * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
@@ -553,7 +555,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 # ---------------------------------
 # Recalculate cabin length
 if calculate_cabin #Resize the cabin if desired, keeping deltas
-    @warn "Fuselage and stabilizer layout is being overwritten; deltas will be maintained"
+    @info "Fuselage and stabilizer layout is being overwritten; deltas will be maintained"
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
     dxcyl2shell_aft = parg[igxshell2 ] - parg[igxblend2]  #Distance from blend2 to shell2
@@ -566,7 +568,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
 
     #Find new cabin length
-    lcyl = find_cabin_length(maxpax, parg[igRfuse]) #Size for maximum pax count
+    lcyl = find_cabin_length(despax, parg[igRfuse]) #Size for design pax count
 
     #Update positions and fuselage length
     parg[igxblend2] = parg[igxblend1] + lcyl
