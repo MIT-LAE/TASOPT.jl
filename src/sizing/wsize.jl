@@ -1163,6 +1163,7 @@ function wsize(ac; imission = 1, itermax=35,
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
+        m_boiloff = 0.0 #Total fuel boiloff mass if there is no cryogenic tank
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
             #Unpack parameters
             time_flight = para[iatime, ipdescent1]
@@ -1415,10 +1416,12 @@ function wsize(ac; imission = 1, itermax=35,
 
         ipc1 = 1
         time_propsys += mission!(pari, parg, parm, para, pare, Ldebug)
-        parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         # this calculated fuel is the design-mission fuel 
-        parg[igWfuel] = parm[imWfuel]
+        # When there are cryogenic tanks, a correction is applied to account for fuel boiloff
+        parg[igWfuel] = parm[imWfuel] + m_boiloff * gee #m_boiloff = 0 unless there is a cryogenic tank
+        #TODO: fuel boiloff is not accounted for in mission!, where it would be more accurate (e.g., model effect
+        #of boiloff across different segments). The approximation above introduces a small error.
 
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate
