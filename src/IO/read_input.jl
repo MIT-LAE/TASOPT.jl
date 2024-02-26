@@ -555,7 +555,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 # ---------------------------------
 # Recalculate cabin length
 if calculate_cabin #Resize the cabin if desired, keeping deltas
-    @info "Fuselage and stabilizer layout is being overwritten; deltas will be maintained"
+    @info "Fuselage and stabilizer layout is being overwritten; deltas will be maintained."
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
     dxcyl2shell_aft = parg[igxshell2 ] - parg[igxblend2]  #Distance from blend2 to shell2
@@ -568,7 +568,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
 
     #Find new cabin length
-    lcyl = find_cabin_length(despax, parg[igRfuse]) #Size for design pax count
+    lcyl, _, _ = place_cabin_seats(despax, parg[igRfuse]) #Size for design pax count
 
     #Update positions and fuselage length
     parg[igxblend2] = parg[igxblend1] + lcyl

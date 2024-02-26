@@ -19,20 +19,20 @@
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
+        - `t_cond::Vector{Float64}`: Thickness array t (m) for each MLI layer.
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
         - `wfb::Float64`: parameter for multi-bubble configuration.
         - `nfweb::Float64`: Number of bubbles.
         - `sigskin::Float64`: Material property.
-        - `material_insul::Array{String,1}`: material name for each MLI layer.
+        - `material_insul::Vector{String}`: material name for each MLI layer.
         - `rhoskin::Float64`: Material property.
         - `Wfuel::Float64`: Weight of fuel (N).
         - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
         - `clearance_fuse::Float64`: Clearance for the fuselage (m).
         - `AR::Float64`: Aspect ratio.
-        - `iinsuldes::Array{Int64}`: indices for insulation layers to be sized.
+        - `iinsuldes::Vector{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
         - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
@@ -133,25 +133,25 @@ insulation interface temperatures.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `t_cond::Array{Float64}`: Thickness array t (m) for each MLI layer.
+        - `t_cond::Vector{Float64}`: Thickness array t (m) for each MLI layer.
         - `time_flight::Float64`: total flight time (s)
         - `fstring::Float64`: mass factor to account for stiffening material.
         - `ffadd::Float64`: Additional mass factor for the tank.
         - `wfb::Float64`: parameter for multi-bubble configuration.
         - `nfweb::Float64`: Number of bubbles.
         - `sigskin::Float64`: Material property.
-        - `material_insul::Array{String,1}`: material name for each MLI layer.
+        - `material_insul::Vector{String,1}`: material name for each MLI layer.
         - `rhoskin::Float64`: Material property.
         - `Wfuel::Float64`: Weight of fuel (N).
         - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
         - `clearance_fuse::Float64`: Clearance for the fuselage (m).
         - `AR::Float64`: Aspect ratio.
-        - `iinsuldes::Array{Int64}`: indices for insulation layers to be sized.
+        - `iinsuldes::Vector{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
         - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
         **Outputs:**
-        - `res::Float64`: difference between desired boiloff rate and current boiloff rate (%/hour).
+        - `res::Vector{Float64}`: residuals vector.
 """
 function res_MLI_thick(x, gee, rhoFuel, deltap,
         Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
