@@ -1,5 +1,7 @@
 using TOML
 
+include("size_cabin.jl")
+
 """
     read_input(k::String, dict::AbstractDict=data, 
     default_dict::AbstractDict = default)
@@ -26,7 +28,7 @@ function read_input(k::String, dict::AbstractDict=data,
     end
 end
 
-# Convinence functions to convert to SI units
+# Convinience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
 Len(x)      = convertDist(parse_unit(x)...)
 Force(x)    = convertForce(parse_unit(x)...)
@@ -153,18 +155,19 @@ fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
 
 if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuel_stor = readfuel("Storage")
-    readfuel_storage(x::String) = read_input(x, fuel_stor, Dict())
+    dfuel_stor = dfuel["Storage"]
+    readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
     fuse_tank.material_insul = readfuel_storage("insulation_material")
     fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
-    fuse_tank.sigskin = readfuel_storage("skin_yield_strength")
+    fuse_tank.sigskin = Pressure(readfuel_storage("skin_yield_strength"))
     fuse_tank.rhoskintank = readfuel_storage("tank_skin_density")
     fuse_tank.max_boiloff = readfuel_storage("maximum_boiloff_rate")
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
-    fuse_tank.clearance_fuse = readfuel_storage("fuselage_clearance")
-    fuse_tank.ptank = readfuel_storage("tank_pressure")
+    fuse_tank.clearance_fuse = Len(readfuel_storage("fuselage_clearance"))
+    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
     fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
@@ -180,10 +183,11 @@ end
 ranges = readmis("range")
 parm[imRange, :] .= Len.(ranges)
 
+maxpax = readmis("max_pax")
 Wpax =  Force(readmis("weight_per_pax"))
 parm[imWperpax, :] .= Wpax
 parm[imWpay, :] .= readmis("pax") * Wpax
-parg[igWpaymax] = readmis("max_pax") * Wpax
+parg[igWpaymax] = maxpax * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
@@ -280,6 +284,10 @@ readweight(x) = read_input(x, weight, dweight)
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
 readgeom(x) = read_input(x, geom, dgeom)
+    #Boolean to check if cabin length has to be recalculated; if true, this is done 
+    #after loading the wing and stabilizer positions
+    calculate_cabin = readgeom("calculate_cabin_length") 
+
     parg[igRfuse]  = Len(readgeom("radius"))
     parg[igdRfuse] = Len(readgeom("dRadius"))
     parg[igwfb]    = Len(readgeom("y_offset"))
@@ -541,6 +549,47 @@ readvtail(x) = read_input(x, vtail, dvtail)
     parg[igrhv]   = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----
+
+# ---------------------------------
+# Recalculate cabin length
+if calculate_cabin #Resize the cabin if desired, keeping deltas
+    @warn "Fuselage and stabilizer layout is being overwritten; deltas will be maintained"
+    #Useful relative distances to conserve
+    dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
+    dxcyl2shell_aft = parg[igxshell2 ] - parg[igxblend2]  #Distance from blend2 to shell2
+    dxapu2end = parg[igxend] - parg[igxapu] #Distance from APU to end
+    dxshell2conend = parg[igxconend ] - parg[igxshell2 ] #Distance from shell2 to conend
+    dxshell2apu = parg[igxapu ] - parg[igxshell2 ] #Distance from shell2 to APU
+    dxhbox2conend = parg[igxconend] - parg[igxhbox ] #Distance from conend to xhbox
+    dxvbox2conend = parg[igxconend] - parg[igxvbox ] #Distance from conend to xvbox
+    #Fraction of cabin length at which wing is located
+    wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
+
+    #Find new cabin length
+    lcyl = find_cabin_length(maxpax, parg[igRfuse]) #Size for maximum pax count
+
+    #Update positions and fuselage length
+    parg[igxblend2] = parg[igxblend1] + lcyl
+
+    #Update wingbox position
+    parg[igxwbox] = parg[igxblend1] + wbox_cabin_frac * lcyl
+       
+    #Update other lengths
+    parg[igxshell2 ] = parg[igxblend2] + dxcyl2shell_aft
+
+    parg[igxconend ] = parg[igxshell2] + dxshell2conend
+    parg[igxapu    ] = parg[igxshell2] + dxshell2apu
+    parg[igxend    ] = parg[igxapu] + dxapu2end
+    parg[igxhpesys] = parg[igxconend] * 0.52484 #TODO: address this
+    
+    parg[igxhbox   ] = parg[igxconend ] - dxhbox2conend
+    parg[igxvbox   ] = parg[igxconend ] - dxvbox2conend
+    
+    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
+
+    parg[igdxblend2blend] = lcyl #Store new cabin length
+end
+# ---------------------------------
 
 # ---------------------------------
 # Structures
