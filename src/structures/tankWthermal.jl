@@ -88,12 +88,12 @@ the tank wall temperature, and the temperatures at the interfaces of MLI insulat
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `x::Array{Float64}`: vector with unknowns.
+      - `x::Vector{Float64}`: vector with unknowns.
       - `p::Struct`: structure of type `thermal_params`.
       - `mode::String`: mode to find residual, options are "Q_known" and "Q_unknown"
 
       **Outputs:**
-      - `F::Array{Float64}`: vector with residuals.
+      - `F::Vector{Float64}`: vector with residuals.
 """
 function residuals_Q(x, p, mode)
       #Unpack states
