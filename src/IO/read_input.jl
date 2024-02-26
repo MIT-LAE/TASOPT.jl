@@ -185,7 +185,7 @@ parm[imRange, :] .= Len.(ranges)
 
 maxpax = readmis("max_pax")
 pax = readmis("pax")
-despax = pax[1] #Design number of passangers
+despax = pax[1] #Design number of passengers
 Wpax =  Force(readmis("weight_per_pax"))
 parm[imWperpax, :] .= Wpax
 parm[imWpay, :] .= pax * Wpax
