@@ -1163,6 +1163,7 @@ function wsize(ac; imission = 1, itermax=35,
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
+        m_boiloff = 0.0 #Total fuel boiloff mass if there is no cryogenic tank
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
             #Unpack parameters
             time_flight = para[iatime, ipdescent1]
@@ -1208,7 +1209,7 @@ function wsize(ac; imission = 1, itermax=35,
 
             Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-            Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+            Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank,
                 Rfuse, dRfuse, hconvgas, Tfuel, z_alt, M_inf, xftank_heat,
                 t_cond, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, material_insul, rhoskintank,
@@ -1248,7 +1249,7 @@ function wsize(ac; imission = 1, itermax=35,
             if cargotank
                 Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
                 m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-                Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank * 101325.0,
+                Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank,
                     Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
                     h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
                     wfb, nfweb, sigskin, rho_insul, rhoskintank,
@@ -1415,10 +1416,12 @@ function wsize(ac; imission = 1, itermax=35,
 
         ipc1 = 1
         time_propsys += mission!(pari, parg, parm, para, pare, Ldebug)
-        parg[igWfuel] = parm[imWfuel] # This is the design mission fuel
 
         # this calculated fuel is the design-mission fuel 
-        parg[igWfuel] = parm[imWfuel]
+        # When there are cryogenic tanks, a correction is applied to account for fuel boiloff
+        parg[igWfuel] = parm[imWfuel] + m_boiloff * gee #m_boiloff = 0 unless there is a cryogenic tank
+        #TODO: fuel boiloff is not accounted for in mission!, where it would be more accurate (e.g., model effect
+        #of boiloff across different segments). The approximation above introduces a small error.
 
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate

@@ -60,6 +60,7 @@ mutable struct HX_gas
       recircT :: Float64 
       mdot_r :: Float64 
       h_lat :: Float64 
+      HX_gas() = new() 
 end
 
 """
@@ -104,6 +105,7 @@ mutable struct HX_tubular
       ρw :: Float64
       D_i :: Float64
       material :: String
+      HX_tubular() = new() 
 end
 
 """
@@ -1098,19 +1100,15 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       #Initialize Heat Exchanger vector
       HeatExchangers = []
 
-      #Initiliaze structures with NaNs
-      HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
-      HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
-
       for (i,type) in enumerate(HXtypes) #For every desired type of heat exchanger (skipped if empty)
             
             #---------------------------------
             # Design exchangers
             #---------------------------------
             pare_sl = pare[:, ipdes] #Slice pare at design point
-            #Initiliaze design geometry and gas property as NaNs
-            HXgas = deepcopy(HXgas_NaN)
-            HXgeom = deepcopy(HXgeom_NaN)
+            #Initiliaze design geometry and gas property as empty structs
+            HXgas = HX_gas()
+            HXgeom = HX_tubular()
 
             HXgas.ε = ε_des[i]
 

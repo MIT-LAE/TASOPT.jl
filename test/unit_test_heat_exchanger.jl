@@ -8,15 +8,13 @@
 #---------------------------------     
 # Test functions individually
 #---------------------------------
-HXgas_NaN = TASOPT.engine.HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
-HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
 
 @testset "Heat Exchanging" begin
     #---------------------------------     
     # hxsize!()
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -68,8 +66,8 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
     #---------------------------------     
     # hxoper!()
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -114,8 +112,8 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
     #---------------------------------     
     # hxoptim!()
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -179,8 +177,8 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
     #---------------------------------     
     # hxoptim!() with recirculation and rectangular
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
