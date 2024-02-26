@@ -70,7 +70,7 @@ name = "TASOPT Model with cryo fuel and HX"
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = [180, 150]            # Number of passengers in each mission
-    max_pax = 190               # Maximum number of passengers for aircarft
+    max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
@@ -132,7 +132,7 @@ name = "TASOPT Model with cryo fuel and HX"
     HT_load_fuse_bend_relief = 0.4 
     VT_load_fuse_bend_relief = 0.7
 # Overall fuselage layout
-    #Use provided layout (false) or recalculate it (true) for maxpax keeping deltas
+    #Use provided layout (false) or recalculate it (true) for design pax keeping deltas
     calculate_cabin_length = true 
 
     #Provided layout
