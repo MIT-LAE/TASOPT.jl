@@ -60,6 +60,14 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
         for indexkey in keys(indices)
             if !(indexkey in par_array_names)
                 @warn "indices Dict for csv_output() contains an unparsable key: "*String(indexkey)*". Removing key and continuing."
+                delete!(indices,indexkey)
+            elseif indices[indexkey] != Colon() #if indexkey is okay and not Colon()
+                #remove duplicate indices in array because CSV.jl can't handle them
+                oldlen = length(indices[indexkey])
+                indices[indexkey] = union(indices[indexkey])
+                if length(indices[indexkey]) < oldlen
+                    @warn "duplicate indices identified and removed from indices Dict["*String(indexkey)*"]" 
+                end
             end
         end
     else
