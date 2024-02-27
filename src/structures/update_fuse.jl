@@ -15,7 +15,7 @@ function update_fuse!(pari, parg)
     dxvbox2conend = parg[igxconend] - parg[igxvbox ]
 
     if parg[igxftankaft] == 0.0 #if there is not a rear tank
-        dxcyl2shellaft = parg[igdxcyl2shellaft]
+        dxcyl2shellaft = parg[igxshell2] - parg[igxblend2]
     else #if there is a rear tank
         dxcyl2shellaft = 0.0 #no need for offset between shell2 and blend2 since rear space cannot be used
     end

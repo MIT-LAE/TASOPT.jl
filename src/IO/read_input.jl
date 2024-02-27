@@ -334,7 +334,6 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igyeng] = Len(readgeom("y_critical_engines"))
 
     parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
-    parg[igdxcyl2shellaft] = parg[igxshell2] - parg[igxblend2]
 
 # ------ End fuse -------
 # ---------------------------------
@@ -559,7 +558,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
-    dxcyl2shellaft = parg[igdxcyl2shellaft] #Distance from blend2 to shell2
+    dxcyl2shellaft = parg[igxshell2] - parg[igxblend2] #Distance from blend2 to shell2
     dxapu2end = parg[igxend] - parg[igxapu] #Distance from APU to end
     dxshell2conend = parg[igxconend ] - parg[igxshell2 ] #Distance from shell2 to conend
     dxshell2apu = parg[igxapu ] - parg[igxshell2 ] #Distance from shell2 to APU
