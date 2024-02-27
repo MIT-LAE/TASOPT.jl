@@ -374,12 +374,13 @@
       const igTfuel      = 301
 
       const igxftankaft  = 302
-      const igdxblend2blend  = 303
+      const igdxcabin  = 303
       const igdxeng2wbox = 304
+      const igdxcyl2shellaft = 305
 
-      const igxWfuel = 305
+      const igxWfuel = 306
 
-      const igtotal    = 305
+      const igtotal    = 306
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
