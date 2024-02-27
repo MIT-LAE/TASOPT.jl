@@ -573,7 +573,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back
-    if (fuse_tank.placement == "rear") || (fuse_tank.placement == "both")
+    if (pari[iifwing]  == 0) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
         lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
     end
 
