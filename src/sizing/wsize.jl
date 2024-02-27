@@ -1222,7 +1222,7 @@ function wsize(ac; imission = 1, itermax=35,
             parg[igWinsftank] = Winsul_sum
 
             #Tank placement and weight moment
-            lcabin = parg[igdxblend2blend]
+            lcabin = parg[igdxcabin]
             if tank_placement == "front"
                 flag_front = 1
                 flag_aft = 0

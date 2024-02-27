@@ -333,7 +333,8 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Len(readgeom("x_engines"))
     parg[igyeng] = Len(readgeom("y_critical_engines"))
 
-    parg[igdxblend2blend] = parg[igxblend2] - parg[igxblend1]
+    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
+    parg[igdxcyl2shellaft] = parg[igxshell2] - parg[igxblend2]
 
 # ------ End fuse -------
 # ---------------------------------
@@ -558,7 +559,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
-    dxcyl2shell_aft = parg[igxshell2 ] - parg[igxblend2]  #Distance from blend2 to shell2
+    dxcyl2shellaft = parg[igdxcyl2shellaft] #Distance from blend2 to shell2
     dxapu2end = parg[igxend] - parg[igxapu] #Distance from APU to end
     dxshell2conend = parg[igxconend ] - parg[igxshell2 ] #Distance from shell2 to conend
     dxshell2apu = parg[igxapu ] - parg[igxshell2 ] #Distance from shell2 to APU
@@ -570,6 +571,12 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     #Find new cabin length
     lcyl, _, _ = place_cabin_seats(despax, parg[igRfuse]) #Size for design pax count
 
+    #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
+    #and the start of the tank. For this reason, leave a 5ft offset at back
+    if (pari[iifwing]  == 0) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
+        lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
+    end
+
     #Update positions and fuselage length
     parg[igxblend2] = parg[igxblend1] + lcyl
 
@@ -577,7 +584,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     parg[igxwbox] = parg[igxblend1] + wbox_cabin_frac * lcyl
        
     #Update other lengths
-    parg[igxshell2 ] = parg[igxblend2] + dxcyl2shell_aft
+    parg[igxshell2 ] = parg[igxblend2] + dxcyl2shellaft
 
     parg[igxconend ] = parg[igxshell2] + dxshell2conend
     parg[igxapu    ] = parg[igxshell2] + dxshell2apu
@@ -589,7 +596,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     
     parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
 
-    parg[igdxblend2blend] = lcyl #Store new cabin length
+    parg[igdxcabin] = lcyl #Store new cabin length
 end
 # ---------------------------------
 
