@@ -571,10 +571,10 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     #Find new cabin length
     lcyl, _, _ = place_cabin_seats(despax, parg[igRfuse]) #Size for design pax count
 
-    #When there is a fuel tank at the back of the fuselage, there is no offset between the length of the cabin
-    #and the start of the tank. For this reason, move the offset between blend2 and shell2 to the back of the cabin
+    #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
+    #and the start of the tank. For this reason, leave a 5ft offset at back
     if (fuse_tank.placement == "rear") || (fuse_tank.placement == "both")
-        lcyl = lcyl + dxcyl2shellaft #Make cabin longer to leave room in the back
+        lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
     end
 
     #Update positions and fuselage length
