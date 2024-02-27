@@ -63,14 +63,14 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       if nftanks == 1
             if parg[igxftankaft] == 0.0 #If tank is at the front
                   xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
-                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
+                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             else #tank is at rear
                   xcabin = 0.5 * (parg[igxshell1] + parg[igxblend2] - (lftank + 2.0*ft_to_m))
-                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
+                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             end
       elseif nftanks == 2
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-            lcabin = parg[igdxblend2blend]
+            lcabin = parg[igdxcabin]
       elseif nftanks == 0
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
             lcabin = parg[igxshell2] - parg[igxshell1]
@@ -380,14 +380,14 @@ function htsize(pari, parg, paraF, paraB, paraC)
       if nftanks == 1
             if parg[igxftankaft] == 0.0 #If tank is at the front
                   xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
-                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
+                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             else #tank is at rear
                   xcabin = 0.5 * (parg[igxshell1] + parg[igxblend2] - (lftank + 2.0*ft_to_m))
-                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
+                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             end
       elseif nftanks == 2
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-            lcabin = parg[igdxblend2blend]
+            lcabin = parg[igdxcabin]
       elseif nftanks == 0
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
             lcabin = parg[igxshell2] - parg[igxshell1]
@@ -715,14 +715,14 @@ function cglpay(pari, parg)
       if nftanks == 1
             if parg[igxftankaft] == 0.0 #If tank is at the front TODO: find better way to figure out tank placement
                   xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
-                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
+                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             else #tank is at rear
                   xcabin = 0.5 * (parg[igxshell1] + parg[igxblend2] - (lftank + 2.0*ft_to_m))
-                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxblend2blend] #cabin length is smaller if there are fuel tanks
+                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             end
       elseif nftanks == 2
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-            lcabin = parg[igdxblend2blend]
+            lcabin = parg[igdxcabin]
       elseif nftanks == 0
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
             lcabin = parg[igxshell2] - parg[igxshell1]

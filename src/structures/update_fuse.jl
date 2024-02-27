@@ -6,19 +6,24 @@ function update_fuse!(pari, parg)
     lftoffset = 2.0*ft_to_m #1 ft buffer for front and back of tanks
 
     #Useful relative distances to conserve
-    lcyl = parg[igdxblend2blend]
+    lcyl = parg[igdxcabin]
     dxeng2wbox = parg[igdxeng2wbox]
-    dxcyl2shell_aft = parg[igxshell2 ] - parg[igxblend2]
     dxapu2end = parg[igxend] - parg[igxapu]
     dxshell2conend = parg[igxconend ] - parg[igxshell2 ]
     dxshell2apu = parg[igxapu ] - parg[igxshell2 ]
     dxhbox2conend = parg[igxconend] - parg[igxhbox ]
     dxvbox2conend = parg[igxconend] - parg[igxvbox ]
 
+    if parg[igxftankaft] == 0.0 #if there is not a rear tank
+        dxcyl2shellaft = parg[igdxcyl2shellaft]
+    else #if there is a rear tank
+        dxcyl2shellaft = 0.0 #no need for offset between shell2 and blend2 since rear space cannot be used
+    end
+
     #Update positions and fuselage length
     parg[igxblend2] = parg[igxblend1] + nftanks * (lftank + lftoffset) + lcyl
-       
-    parg[igxshell2 ] = parg[igxblend2] + dxcyl2shell_aft
+    
+    parg[igxshell2 ] = parg[igxblend2] + dxcyl2shellaft
 
     parg[igxconend ] = parg[igxshell2] + dxshell2conend
     parg[igxapu    ] = parg[igxshell2] + dxshell2apu
