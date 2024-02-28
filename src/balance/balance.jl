@@ -69,7 +69,7 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
                   lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
             end
       elseif nftanks == 2
-            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2]) #TODO noticed convergence issues if the average of the blends is used instead
             lcabin = parg[igdxcabin]
       elseif nftanks == 0
             xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])

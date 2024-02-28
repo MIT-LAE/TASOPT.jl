@@ -97,7 +97,7 @@ function tanksize(gee, rhoFuel, deltap,
         thickness_insul = sum(t_cond)
 
         #Evaluate tank weight
-        mdot_boiloff = threshold_percent
+        mdot_boiloff = threshold_percent *  Wfuel / (gee * 100) /3600
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
         Shead_insul, l_tank = tankWmech(gee, rhoFuel,
                                 fstring, ffadd, deltap,

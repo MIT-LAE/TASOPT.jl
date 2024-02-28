@@ -378,8 +378,9 @@
       const igdxeng2wbox = 304
 
       const igxWfuel = 305
+      const igmdotboiloff = 306
 
-      const igtotal    = 305
+      const igtotal    = 306
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
