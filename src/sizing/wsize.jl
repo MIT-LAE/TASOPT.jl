@@ -1418,11 +1418,8 @@ function wsize(ac; imission = 1, itermax=35,
         time_propsys += mission!(pari, parg, parm, para, pare, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
-        # When there are cryogenic tanks, a correction is applied to account for fuel boiloff
-        parg[igWfuel] = parm[imWfuel] #+ m_boiloff * gee #m_boiloff = 0 unless there is a cryogenic tank
-        #TODO: fuel boiloff is not accounted for in mission!, where it would be more accurate (e.g., model effect
-        #of boiloff across different segments). The approximation above introduces a small error.
-
+        parg[igWfuel] = parm[imWfuel]
+        
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate
 
