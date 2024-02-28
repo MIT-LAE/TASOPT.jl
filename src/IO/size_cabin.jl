@@ -19,6 +19,7 @@ function place_cabin_seats(pax, Rfuse)
     seat_width = 19.0 * in_to_m
     aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
     cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
+    #TODO the hardcoded 10 ft is not elegant
 
     seats_per_row = Int(2*Rfuse÷ (seat_width + aisle_halfwidth/3))
     rows = Int(ceil(pax / seats_per_row))
@@ -39,7 +40,7 @@ function place_cabin_seats(pax, Rfuse)
         xseats[r] = xseats[r-1] + seat_pitch + emergency_exit
     end
 
-    lcabin = xseats[end] #TODO figure out whether to leave offset at the back
+    lcabin = xseats[end]
     return lcabin, xseats, seats_per_row
 end # function place_cabin_seats
 

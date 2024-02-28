@@ -574,6 +574,7 @@ if calculate_cabin #Resize the cabin if desired, keeping deltas
     #and the start of the tank. For this reason, leave a 5ft offset at back
     if (pari[iifwing]  == 0) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
         lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
+        #TODO the hardcoded 5 ft is not elegant
     end
 
     #Update positions and fuselage length
