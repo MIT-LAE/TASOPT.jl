@@ -75,7 +75,7 @@ function tankWmech(gee::Float64, ρfuel::Float64,
       t_head = Δpdes* (2*Rtank_outer) * K/ (2 * sigskin * weld_eff + 2 * Δpdes * (K - 0.1)) #(7.2) in Barron (1985)
 
 #--- Calculate length of cylindrical portion
-      Wfuel_tot = Wfuel + (m_boiloff * gee)
+      Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
       Vfuel = Wfuel_tot / (gee * ρfuel)
       Vinternal = (1 + ullage_frac)*Vfuel  # required interal volume
       V_ellipsoid = 2π * (Rtank^3 / AR) / 3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
