@@ -85,8 +85,9 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_miss["N_missions"] = size(ac_m,2)
         
         d_miss["range"] = ac_m[imRange,:]
-        d_miss["weight_per_pax"] = ac_g[igWpax]
-        d_miss["pax"] = ac_m[imWpay,:]./ ac_g[igWpax]
+        d_miss["weight_per_pax"] = ac_m[imWperpax, :]
+        d_miss["pax"] = ac_m[imWpay,:] ./ ac_m[imWperpax, :]
+        d_miss["max_pax"] = ac_g[igWpaymax] ./ ac_m[imWperpax, :]
         d_miss["fuel_reserves"] = ac_g[igfreserve]
         d_miss["Vne"] = ac_g[igVne]
         d_miss["Nlift"] = ac_g[igNlift]
@@ -579,7 +580,8 @@ function make_dict_singletons(dict::Dict{K, V}) where {K, V}
         if isa(value, Dict)  
             new_dict[key] = make_dict_singletons(value)
         #if element is a vector and has identical elements, save singleton
-        elseif isa(value, Vector) && all(x -> x == value[1], value) 
+        #AND not ac.sized (exception needed bc ac.sized needs to be a vector for mutability)
+        elseif isa(value, Vector) && all(x -> x == value[1], value) && key != "sized"
             new_dict[key] = value[1]
         else
             new_dict[key] = value
