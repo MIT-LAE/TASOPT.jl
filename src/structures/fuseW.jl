@@ -210,7 +210,7 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
                   xcabin = 0.5 * (xshell1 + xshell2 - (ltank + 2.0*ft_to_m))
             end
       else
-            xcabin = 0.5 * (xshell1 + xshell2)
+            xcabin = 0.5 * (xshell1 + xshell2) #two or zero tanks
       end
       lcabin = xshell2 - xshell1 - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
 

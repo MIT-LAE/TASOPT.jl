@@ -198,7 +198,8 @@ This function calculates the thermal conductivity of different insulation materi
       - `k::Float64`: thermal conductivity (W/(m K)).
 """
 function insulation_conductivity_calc(T, material)
-      if material == "rohacell31"
+      if material == "rohacell41S"
+            #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
             k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
       elseif material == "polyurethane"
             k = 2.114e-13 * T^5 - 1.639e-10 *T^4 + 4.438e-8 * T^3 - 5.222e-6*T^2 + 3.740e-4*T - 2.192e-3
