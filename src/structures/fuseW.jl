@@ -226,8 +226,8 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--- various weight moments
       xWfix  = Wfix  * xfix
       xWapu  = Wapu  * xapu
-      xWseat = Wseat * 0.5*(xshell1 + xshell2)
-      xWpadd = Wpadd * 0.5*(xshell1 + xshell2)
+      xWseat = Wseat * xcabin
+      xWpadd = Wpadd * xcabin
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
