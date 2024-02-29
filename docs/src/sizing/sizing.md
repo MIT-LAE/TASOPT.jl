@@ -9,8 +9,7 @@ The aircraft is sized via a fixed point iteration for the design mission (`wsize
 ```@docs
 TASOPT.wsize(ac)
 
-TASOPT.woper(pari, parg, parm, para, pare, 
-          parad, pared, itermax, initeng, NPSS_PT, NPSS)
+TASOPT.woper(ac, itermax)
 ```
 ---
 

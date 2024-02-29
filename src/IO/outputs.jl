@@ -1590,11 +1590,12 @@ Function to plot a payload range diagram for an aircraft
     - `filename::String`: filename string for the plot to be stored (Optional).
     - `OEW::Boolean`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
     - `itermax::Int64`: Max Iterations for woper loop (Optional).
+    - `initeng::Boolean`: Use design case as initial guess for engine state if true (Optional)
 """
 
-function PayloadRange(ac_og, Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false, itermax = 20.0)
+function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false)
     ac = deepcopy(ac_og)
-    RangeArray = ac.parm[imRange] * LinRange(0.1,1.2,Rpts)
+    RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
     maxPay = 0
 
     Wmax = ac.parg[igWMTO]
@@ -1603,24 +1604,32 @@ function PayloadRange(ac_og, Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
 
     RangesToPlot = []
     PayloadToPlot = []
-    maxPay = ac.parm[imWpay ]
+    maxPay = ac.parm[imWpay]
 
     for Range = RangeArray
-        Payloads = (maxPay) * LinRange(1, 0.1, Ppts)
-        ac.parm[imRange] = Range
+        if maxPay == 0
+            break
+        else
+            Payloads = (maxPay) * LinRange(1, 0, Ppts)
+        end
+        ac.parm[imRange,2] = Range
         for mWpay = Payloads
             println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
-            ac.parm[imWpay ] = mWpay
+            ac.parm[imWpay,2] = mWpay
             try
-                @views TASOPT.woper(ac.pari,ac.parg,ac.parm[:,1:1],ac.para[:,:,1:1],ac.pare[:,:,1:1], ac.para[:,:,1:1],ac.pare[:,:,1:1], itermax,0.0)
+                TASOPT.woper(ac, 2, saveOffDesign = true)
                 # woper success: store maxPay, break loop
-                WTO = Wempty + mWpay + ac.parm[imWfuel]
-                mWfuel = ac.parm[imWfuel]
+                mWfuel = ac.parm[imWfuel,2]
+                WTO = Wempty + mWpay + mWfuel
 
                 if WTO > Wmax || mWfuel > Fuelmax || WTO < 0.0 || mWfuel < 0.0 
                     WTO = 0.0
                     mWfuel = 0.0
                     println("Max out error!")
+                    if mWpay == 0
+                        println("Payload 0 and no convergence found")
+                        maxPay = 0
+                    end
                 else
                     maxPay = mWpay
                     println("Converged - moving to next range...")
