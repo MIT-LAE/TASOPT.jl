@@ -160,8 +160,8 @@ This function calculates the density of different insulation materials.
       - `ρ::Float64`: mass density (kg/m^3).
 """
 function insulation_density_calc(material)
-      if material == "rohacell31"
-            ρ = 32.0 #kg/m^3. From manufacturer sheet
+      if material == "rohacell41S"
+            ρ = 35.0 #kg/m^3. From Brewer (1991)
       elseif material == "polyurethane"
             ρ = 27.0 #kg/m^3. From Brewer (1991)
       end
