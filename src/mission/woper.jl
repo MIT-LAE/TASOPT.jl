@@ -1,41 +1,37 @@
 """
-    woper(pari, parg, parm, para, pare, 
-          parad, pared, itermax, initeng, NPSS_PT, NPSS)
+    woper(ac, mi, itermax, initeng, saveOffDesign)
 
 `woper` runs the aircraft through input off-design missions
 
-!!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+!!! details "🔃 Inputs and Outputs"
+**Inputs:**
+- `ac::aircraft`: Aircraft with first mission being the design mission
+- `mi::Int4`: Off design mission to run (Default: 1)
+- `itermax::Int64`: Maximum iterations for sizing loop
+- `initeng::Boolean`: Use design case as initial guess for engine state if true
+- `saveOffDesign::Boolean`: Set true if you want computed quanties to be saved in the selected off design par arrays of the aircraft model
+
+**Outputs:**
+- No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function woper(pari, parg, parm, para, pare, 
-              parad, pared, itermax, initeng, NPSS_PT, NPSS)
+function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 
-    # # Initialze some variables
-    # ifirst = true
-    # NPSS = Base.Process
-    # NPSS_TS = Base.Process
-    # NPSS_Fan = Base.Process
-    # NPSS_AftFan = Base.Process
-    # NPSS_PT = true
+    pari = ac.pari
+    parg = ac.parg
+    parm = ac.parm[:,mi:mi]
+    para = ac.para[:,:,mi:mi]
+    pare = ac.pare[:,:,mi:mi]
+    parad = ac.parad
+    pared = ac.pared
 
     time_propsys = 0.0
 
     tolerW = 1.0e-8
     errw   = 1.0
 
-    #iterate through mission points
-    for ip = 1: iptotal
-        #iterate through aero parameters
-          for ia = 1: iatotal
-                #Setting altitude and mach speeds
-                para[ia,ip] = parad[ia,ip]
-          end
-          #iterate through engine parameters
-          for ie = 1: ietotal
-                pare[ie,ip] = pared[ie,ip]
-          end
-    end
+    para .= parad
+    pare .= pared
     
     para[iaalt, ipcruise1] = 10668
     para[iaalt, ipclimbn] = 10668
@@ -139,7 +135,7 @@ function woper(pari, parg, parm, para, pare,
       para[iaReunit,ip] = Re
     end
 
-    if (initeng == 0)
+    if initeng
 #----- use design case as initial guess for engine state
           for ip = 1: iptotal
                 for ie = 1: ietotal
@@ -240,22 +236,10 @@ function woper(pari, parg, parm, para, pare,
           rlx = 0.5
     end
 
-    ip = ipcruise1
-    altkm = para[iaalt, ip]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
-    Mach  = para[iaMach, ip]
-    pare[iep0  , ip] = p0 
-    pare[ieT0  , ip] = T0
-    pare[ierho0, ip] = ρ0
-    pare[iemu0 , ip] = μ0
-    pare[iea0  , ip] = a0
-
-    pare[ieM0, ip] = Mach
-    pare[ieu0, ip] = Mach*a0
-    para[iaReunit, ip] = Mach*a0 *ρ0/μ0
+    set_ambient_conditions!(ac, ipcruise1)
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, false, NPSS_PT, NPSS,true)
+    time_propsys += mission!(pari, parg, parm, para, pare, false)
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
@@ -272,7 +256,11 @@ function woper(pari, parg, parm, para, pare,
     if (errw <= tolerW) 
           Lconv = true
           printstyled("Converged!", "\n"; color=:green)
-        
+          if saveOffDesign
+            ac.parm[:,mi:mi] = parm
+            ac.para[:,:,mi:mi] = para
+            ac.pare[:,:,mi:mi] = pare
+          end
           break
     end
 
@@ -284,5 +272,5 @@ function woper(pari, parg, parm, para, pare,
 
     end
 
-return
+return 
 end
