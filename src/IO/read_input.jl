@@ -28,7 +28,7 @@ function read_input(k::String, dict::AbstractDict=data,
     end
 end
 
-# Convinience functions to convert to SI units
+# Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
 Len(x)      = convertDist(parse_unit(x)...)
 Force(x)    = convertForce(parse_unit(x)...)
