@@ -625,11 +625,12 @@ function wsize(ac; imission = 1, itermax=35,
         xshell2 = parg[igxshell2]
 
         Wtesys = parg[igWtesys]
-        Wftank = parg[igWftank]
+        nftanks = pari[iinftanks]
 
         ifwing = pari[iifwing]
         if ifwing == 0 #fuselage fuel store
             tank_placement = fuse_tank.placement
+            Wftank_single = parg[igWftank] / nftanks #Weight of a single tank
 
             #Calculate the weight of the fuel near the tail depending on the tank location
             if tank_placement == "rear"
@@ -647,6 +648,7 @@ function wsize(ac; imission = 1, itermax=35,
         else
             tank_placement = ""
             xftank_fuse = 0.0
+            Wftank_single = 0.0
         end
 
         # Call fusews
@@ -659,7 +661,7 @@ function wsize(ac; imission = 1, itermax=35,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
             Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
             ifwing, nftanks, xblend1, xblend2,
-            Waftfuel,  Wftank, ltank, xftank_fuse, tank_placement,
+            Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
             fstring, fframe, ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
@@ -724,7 +726,7 @@ function wsize(ac; imission = 1, itermax=35,
 
         else
             # Call a better Wupdate function
-            Wupdate0!(pari, parg, rlx, fsum)
+            Wupdate0!(parg, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -1215,7 +1217,7 @@ function wsize(ac; imission = 1, itermax=35,
                 Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
-            parg[igWftank] = Wtank #weight of one tank; there are up to two
+            parg[igWftank] = nftanks * Wtank #total weight of fuel tanks
             parg[iglftank] = ltank
             parg[igRftank] = Rtank
             parg[igWinsftank] = Winsul_sum
@@ -1444,7 +1446,7 @@ function wsize(ac; imission = 1, itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(pari, parg, rlx, fsum)
+        Wupdate!(parg, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1460,7 +1462,7 @@ function wsize(ac; imission = 1, itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(pari, parg, rlx, fsum)
+        Wupdate!(parg, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1515,9 +1517,9 @@ end
 """
 Wupdate0 updates the weight of the aircraft
 """
-function Wupdate0!(pari, parg, rlx, fsum)
+function Wupdate0!(parg, rlx, fsum)
     WMTO = parg[igWMTO]
-    nftanks = pari[iinftanks]
+    
 
     ftotadd = sum(parg[[igfhpesys, igflgnose, igflgmain]])
     fsum = 0.0
@@ -1531,7 +1533,7 @@ function Wupdate0!(pari, parg, rlx, fsum)
            parg[igWeng] +
            parg[igWfuel] +
            parg[igWtesys] +
-           nftanks * parg[igWftank]
+           parg[igWftank]
 
     WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
     parg[igWMTO] = WMTO
@@ -1542,7 +1544,7 @@ end
 """
 Wupdate
 """
-function Wupdate!(pari, parg, rlx, fsum)
+function Wupdate!(parg, rlx, fsum)
 
     WMTO = parg[igWMTO]
 
@@ -1563,9 +1565,7 @@ function Wupdate!(pari, parg, rlx, fsum)
     Wpay = parg[igWpay]
     Wfuse = parg[igWfuse]
 
-    nftanks = pari[iinftanks]
-
-    ftank = nftanks * parg[igWftank] / WMTO
+    ftank = parg[igWftank] / WMTO
 
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys +
            flgnose + flgmain + ftank + ftesys
@@ -1585,11 +1585,9 @@ function Wupdate!(pari, parg, rlx, fsum)
     parg[igWeng] = WMTO * feng
     parg[igWfuel] = WMTO * ffuel
    
-    if (nftanks == 0) #If there are no fuel tanks
-        parg[igWftank] = 0
-    else
-        parg[igWftank] = WMTO * ftank / nftanks #nftanks fuel tanks
-    end
+    
+    parg[igWftank] = WMTO * ftank 
+
 
     parg[igWtesys] = WMTO * ftesys
 
