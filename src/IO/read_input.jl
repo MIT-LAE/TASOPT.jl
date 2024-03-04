@@ -1,6 +1,7 @@
 using TOML
 
 include("size_cabin.jl")
+#using ..structures
 
 """
     read_input(k::String, dict::AbstractDict=data, 
@@ -556,47 +557,8 @@ readvtail(x) = read_input(x, vtail, dvtail)
 # Recalculate cabin length
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-    #Useful relative distances to conserve
-    dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
-    dxcyl2shellaft = parg[igxshell2] - parg[igxblend2] #Distance from blend2 to shell2
-    dxapu2end = parg[igxend] - parg[igxapu] #Distance from APU to end
-    dxshell2conend = parg[igxconend ] - parg[igxshell2 ] #Distance from shell2 to conend
-    dxshell2apu = parg[igxapu ] - parg[igxshell2 ] #Distance from shell2 to APU
-    dxhbox2conend = parg[igxconend] - parg[igxhbox ] #Distance from conend to xhbox
-    dxvbox2conend = parg[igxconend] - parg[igxvbox ] #Distance from conend to xvbox
-    #Fraction of cabin length at which wing is located
-    wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
 
-    #Find new cabin length
-    lcyl, _, _ = place_cabin_seats(despax, parg[igRfuse]) #Size for design pax count
-
-    #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
-    #and the start of the tank. For this reason, leave a 5ft offset at back
-    if (pari[iifwing]  == 0) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
-        lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
-        #TODO the hardcoded 5 ft is not elegant
-    end
-
-    #Update positions and fuselage length
-    parg[igxblend2] = parg[igxblend1] + lcyl
-
-    #Update wingbox position
-    parg[igxwbox] = parg[igxblend1] + wbox_cabin_frac * lcyl
-       
-    #Update other lengths
-    parg[igxshell2 ] = parg[igxblend2] + dxcyl2shellaft
-
-    parg[igxconend ] = parg[igxshell2] + dxshell2conend
-    parg[igxapu    ] = parg[igxshell2] + dxshell2apu
-    parg[igxend    ] = parg[igxapu] + dxapu2end
-    parg[igxhpesys] = parg[igxconend] * 0.52484 #TODO: address this
-    
-    parg[igxhbox   ] = parg[igxconend ] - dxhbox2conend
-    parg[igxvbox   ] = parg[igxconend ] - dxvbox2conend
-    
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
-
-    parg[igdxcabin] = lcyl #Store new cabin length
+    update_fuse_for_pax!(pari, parg, parm, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 
@@ -850,31 +812,29 @@ dweight = dprop["Weight"]
 
 # Heat exchangers
 
-try #If heat exchanger field exists in the input file
-    HEx = readprop("HeatExchangers")
-    dHEx = dprop["HeatExchangers"]
-        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
-        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-        pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
-        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
-        
-        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
-        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+HEx = readprop("HeatExchangers")
+dHEx = dprop["HeatExchangers"]
+    pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
+    pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
+    pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
+    pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+    
+    pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
+    pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
+    pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
 
-        pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
-        pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
-        pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+    pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
+    pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
+    pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
 
-        pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
-        pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
-        pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+    pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
+    pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
+    pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
 
-        pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
-        pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
-        pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
-catch #Do nothing if the heat exchanger field does not exist
-end
+    pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
+    pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
+    pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+
 
 return TASOPT.aircraft(name, description,
 pari, parg, parm, para, pare, fuse_tank)
