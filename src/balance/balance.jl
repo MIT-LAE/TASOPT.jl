@@ -105,7 +105,7 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
           rfuel * Wfuel +
           Wfuse +
           Wtesys +
-          nftanks * Wftank +
+          Wftank +
           Wwing +
           Wstrut +
           Whtail * Sh / Sh1 +
@@ -416,7 +416,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
                rpayC * Wpay -
                Wfuse -
                Wtesys -
-               nftanks * Wftank -
+               Wftank -
                Wwing -
                Wstrut -
                Whtail -
@@ -454,7 +454,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
             We = Wfuse +
                  Wwing +
                  Wtesys +
-                 nftanks * Wftank +
+                 Wftank +
                  Wstrut +
                  Whtail +
                  Wvtail +
@@ -737,7 +737,7 @@ function cglpay(pari, parg)
       We = rfuel * Wfuel +
            Wfuse +
            Wtesys +
-           nftanks * Wftank +
+           Wftank +
            Wwing +
            Wstrut +
            Whtail +
@@ -783,7 +783,7 @@ function cglpay(pari, parg)
       ξ = [0.0, 1.0]
       sgn = [-1.0, 1.0]
 
-      xftank = parg[igxWftank] / (nftanks * Wftank)
+      xftank = parg[igxWftank] / Wftank
       if pari[iifwing] == 1 #Fuel is in wings
             rf = [0.0, 0.0]
       elseif xftank < xcabin
