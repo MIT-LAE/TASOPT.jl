@@ -162,8 +162,12 @@ This function calculates the density of different insulation materials.
 function insulation_density_calc(material)
       if material == "rohacell41S"
             ρ = 35.0 #kg/m^3. From Brewer (1991)
-      elseif material == "polyurethane"
-            ρ = 27.0 #kg/m^3. From Brewer (1991)
+      elseif material == "polyurethane27"
+            ρ = 27.0 #kg/m^3
+      elseif material == "polyurethane32"
+            ρ = 32.0 #kg/m^3
+      elseif material == "polyurethane35"
+            ρ = 35.0 #kg/m^3
       end
       return ρ
 end
