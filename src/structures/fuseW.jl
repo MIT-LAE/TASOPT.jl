@@ -384,8 +384,13 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #----------------------------------------------------------------
 #--- pressurized cabin volume
-      cabVol = Afuse*(lshell + 0.67*lnose + 0.67*Rfuse)
-      
+
+      if nftanks == 0
+            cabVol = Afuse*(lshell + 0.67*lnose + 0.67*Rfuse)
+      else #If there is a fuel tank in the fuselage, the pressure vessel has a smaller air volume
+            cabVol = Afuse*(lcabin + 0.67*lnose + 0.67*Rfuse)
+      end
+
 
 return  tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                        EIhshell,EIhbend,
