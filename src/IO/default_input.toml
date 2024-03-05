@@ -54,7 +54,7 @@
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
 
-[Fuel.Storage]
+[Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
     tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
     insulation_segment_base_thickness = [0.05,0.05,0.05] #m
     insulation_thicknesses_design_indices = [1,2,3]
