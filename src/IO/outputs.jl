@@ -722,7 +722,7 @@ function plot_details(ac::aircraft; ax = nothing)
         label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000)
         
         Webars = []
-        push!(Webars, a.bar(3, Wengfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac+Wengfrac, width = bar_width, label = "Weng"))
+        push!(Webars, a.bar(3, Wengfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac+Wtotaddfrac, width = bar_width, label = "Weng"))
         push!(Webars, a.bar(3, Wtotaddfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac, width = bar_width, label = "Wadd"))
         push!(Webars, a.bar(3, Wftankfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac, width = bar_width, label = "Wftank"))
         push!(Webars, a.bar(3, Wtesysfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac, width = bar_width, label = "Wtesys"))
