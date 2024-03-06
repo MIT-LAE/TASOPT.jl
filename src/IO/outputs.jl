@@ -678,6 +678,7 @@ function plot_details(ac::aircraft; ax = nothing)
         Wfuse  = parg[igWfuse]
         Wvtail = parg[igWvtail]
         Whtail = parg[igWhtail]
+        Weng = parg[igWeng]
         Wtesys = parg[igWtesys]
         Wftank = parg[igWftank]
 
@@ -688,6 +689,7 @@ function plot_details(ac::aircraft; ax = nothing)
         Wtesysfrac = Wtesys/WMTO
         Wftankfrac = Wftank/WMTO
         Wtotaddfrac = Wtotadd/WMTO
+        Wengfrac = Weng/WMTO
 
         Wemptyfrac = Wempty/WMTO
         Wfuelfrac  = Wfuel /WMTO
@@ -720,6 +722,7 @@ function plot_details(ac::aircraft; ax = nothing)
         label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000)
         
         Webars = []
+        push!(Webars, a.bar(3, Wengfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac+Wengfrac, width = bar_width, label = "Weng"))
         push!(Webars, a.bar(3, Wtotaddfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac, width = bar_width, label = "Wadd"))
         push!(Webars, a.bar(3, Wftankfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac, width = bar_width, label = "Wftank"))
         push!(Webars, a.bar(3, Wtesysfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac, width = bar_width, label = "Wtesys"))
@@ -728,7 +731,7 @@ function plot_details(ac::aircraft; ax = nothing)
         push!(Webars, a.bar(3, Wwingfrac   , bottom = Wfusefrac, width = bar_width, label = "Wwing"))
         push!(Webars, a.bar(3, Wfusefrac   , width = bar_width, label = "Wfuse"))
         
-        Welabels = ["Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"]
+        Welabels = ["Weng" "Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"]
         label_bars(a, Webars, Welabels, val_multiplier = WMTO/9.81/1000)
 
         a.hlines(Wemptyfrac, 1.5+bar_width/2, 3-bar_width/2, lw=0.8, color = "k", ls = "--")

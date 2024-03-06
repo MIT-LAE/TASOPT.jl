@@ -1217,10 +1217,10 @@ function wsize(ac; imission = 1, itermax=35,
                 Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
-            parg[igWftank] = nftanks * Wtank #total weight of fuel tanks
+            parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)
             parg[iglftank] = ltank
             parg[igRftank] = Rtank
-            parg[igWinsftank] = Winsul_sum
+            parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
             parg[igmdotboiloff] = nftanks * mdot_boiloff #store total fuel boiloff rate
 
             #Tank placement and weight moment
