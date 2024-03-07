@@ -1198,23 +1198,16 @@ function wsize(ac; imission = 1, itermax=35,
             z_alt = para[iaalt, ipcruise1]
             
             #Fuel tank design
-            cargotank = false #TODO: figure out why this is here
-
-            if cargotank #TODO the cargotank = true case is not currently supported
-                Wfmaintank = parg[igWfuel] * 2 / 3
-                Wfcargotank = parg[igWfuel] * 1 / 3
-            else
-                Wfmaintank = parg[igWfuel] / nftanks #Main tank carries 1/nftanks of the fuel
-                Wfcargotank = 0.0
-            end
-
+           
+            Wfuel_in_tank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
+            
             Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
             Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank,
                 Rfuse, dRfuse, hconvgas, Tfuel, z_alt, M_inf, xftank_heat,
                 t_cond, time_flight, ftankstiff, ftankadd,
                 wfb, nfweb, sigskin, material_insul, rhoskintank,
-                Wfmaintank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
+                Wfuel_in_tank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)
@@ -1247,22 +1240,6 @@ function wsize(ac; imission = 1, itermax=35,
             parg[igxWftank] = Wtank * (flag_front * xftank + flag_aft * xftankaft) 
             xfuel = (flag_front * xftank + flag_aft * xftankaft) / (flag_front + flag_aft)
             parg[igxWfuel] = parg[igWfuel] * xfuel
-            
-            if cargotank
-                Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
-                m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-                Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank,
-                    Rfuse / 2, 0.0, hconvgas, h_LH2, Tfuel, Tair,
-                    h_v, t_cond, k, hconvair, time_flight, ftankstiff, ftankadd,
-                    wfb, nfweb, sigskin, rho_insul, rhoskintank,
-                    Wfcargotank, max_boiloff, clearance_fuse, ARtank)
-
-                parg[igWfmax] += Vfuel * rhofuel * gee
-                parg[igWftank] += Wtank
-                parg[igxWftank] += Wtank * parg[igxwbox]
-                parg[igWinsftank] += Winsul_sum
-
-            end
 
             # Update fuselage according to tank requirements
             update_fuse!(pari, parg) #update fuselage length to accommodate tank
