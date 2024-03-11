@@ -208,7 +208,7 @@ function insulation_conductivity_calc(T, material)
             k = 2.179E-13 * T^5 - 1.683E-10* T^4 + 4.542E-08* T^3 - 5.341E-06* T^2 + 3.816E-04* T - 2.367E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
       elseif material == "polyurethane35" #polyurethane with density of 35 kg/m^3
-            k = 2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03
+            k = 2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
       end
       return k
