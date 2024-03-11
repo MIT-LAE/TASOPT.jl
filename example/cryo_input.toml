@@ -44,13 +44,10 @@ name = "TASOPT Model with cryo fuel and HX"
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "LH2" # Choices are ... [TODO]
+    fuel_type       = "LH2" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = false # Is fuel stored in wings?
     fuel_in_wingcen = false # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
-
-    fuel_temp = 20.0
-    fuel_density = 70.0 #kg/m3
 
 [Fuel.Storage]
     tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
