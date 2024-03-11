@@ -137,19 +137,22 @@ fueltype = readfuel("fuel_type")
 #TODO this needs to be updated once I include Gas.jl into TASOPT
 if uppercase(fueltype) == "LH2"
     pari[iifuel] = 40
+    
 elseif uppercase(fueltype) == "CH4"
-        pari[iifuel] = 11
+    pari[iifuel] = 11
+    
 elseif uppercase(fueltype) == "JET-A"
     pari[iifuel] = 24
+
+    pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
+    pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
+    parg[igrhofuel] = readfuel("fuel_density")
 else
     error("Check fuel type")
 end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
-pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
-pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
-parg[igrhofuel] = readfuel("fuel_density")
 
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
@@ -178,6 +181,12 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         pari[iinftanks] = 2
     end
+
+    #Calculate fuel temperature and density as a function of pressure
+    Tfuel, ρfuel = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
+    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank
+    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+    parg[igrhofuel] = ρfuel
 end
 
 # Setup mission variables
@@ -844,4 +853,30 @@ end
 function load_default_model()
     println("Loading default aircraft model")
     read_aircraft_model()
+end
+
+"""
+    cryo_fuel_properties(fuel::String, p::Float64)
+
+Calculates the temperature and density of a cryogenic fuel inside a tank, using fits to data from NIST.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `fuel::String`: name of the fuel. 
+    - `p::String`: tank pressure (Pa).
+    **Outputs:**
+    - `Tfuel::Float64`: fuel evaporation temperature (K) 
+    - `ρfuel::String`: density of fuel (kg/m^3).
+"""
+function cryo_fuel_properties(fuel::String, p::Float64)
+    x = p / 101325 #pressure in atm
+
+    #Fits to NIST data at p = [0.5,1,1.5,2,2.5,3,4,5,10] atm
+    if fuel == "LH2" 
+        Tfuel = 20.3839 * x^0.182022 
+        ρfuel = -2.88304E-02*x^3 + 4.93319E-01*x^2 - 4.61334E+00*x + 7.51570E+01
+    elseif fuel == "CH4"
+        Tfuel = 111.69030 * x^0.12093
+        ρfuel = -1.49198E-01*x^3 + 2.85956E+00*x^2 - 2.20464E+01*x + 4.42724E+02
+    end
+    return Tfuel, ρfuel
 end
