@@ -315,6 +315,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
+    pari[iidoubledeck] = readgeom("double_decker") 
 
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
