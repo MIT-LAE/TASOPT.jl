@@ -142,6 +142,11 @@
     #Use provided layout (false) or recalculate it (true) for design pax keeping deltas
     calculate_cabin_length = false 
 
+    double_decker   = false #if true, the fuselage has two passenger decks
+    seat_pitch      = "30 in"
+    seat_width      = "19 in"
+    aisle_halfwidth = "10 in"
+
     #Provided layout
     x_nose_tip           = "0 ft"
     x_pressure_shell_fwd = "17 ft"
