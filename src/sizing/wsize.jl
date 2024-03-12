@@ -167,6 +167,12 @@ function wsize(ac; itermax=35,
     Wppinsul = parg[igWppinsul]
     Wppfloor = parg[igWppfloor]
 
+    if pari[iidoubledeck] == 1
+        ndecks = 2
+    else
+        ndecks = 1
+    end
+
     # fuselage-bending inertial relief factors
     rMh = parg[igrMh]
     rMv = parg[igrMv]
@@ -663,7 +669,7 @@ function wsize(ac; itermax=35,
             ifwing, nftanks, xblend1, xblend2,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
             fstring, fframe, ffadd, Δp,
-            Wpwindow, Wppinsul, Wppfloor,
+            Wpwindow, Wppinsul, Wppfloor, ndecks,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, λv, nvtail,
             Rfuse, dRfuse, wfb, nfweb, λc,
