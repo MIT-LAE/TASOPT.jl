@@ -14,10 +14,9 @@ length.
     - `xseats::Vector{Float64}`: longitudinal coordinate of each row of seats, measured from front of cabin (m).
     - `seats_per_row::Float64`: number of seats per row.
 """
-function place_cabin_seats(pax, Rfuse)
-    seat_pitch = 30.0 * in_to_m 
-    seat_width = 19.0 * in_to_m
-    aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
+function place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m)
+
     cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
     #TODO the hardcoded 10 ft is not elegant
 

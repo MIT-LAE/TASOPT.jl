@@ -300,6 +300,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
 
+    parg[igseatpitch] = Len(readgeom("seat_pitch"))
+    parg[igseatwidth] = Len(readgeom("seat_width"))
+    parg[igaislehalfwidth] = Len(readgeom("aisle_halfwidth"))
+
     parg[igRfuse]  = Len(readgeom("radius"))
     parg[igdRfuse] = Len(readgeom("dRadius"))
     parg[igwfb]    = Len(readgeom("y_offset"))
