@@ -47,12 +47,22 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 
 See [here](@ref fueltanks).
 """
-function tankWmech(gee::Float64, ρfuel::Float64,
-                  ftankstiff::Float64, ftankadd::Float64, Δp::Float64,
-                  Rfuse::Float64, dRfuse::Float64, wfb, nfweb,
-                  sigskin, material_insul, rhoskin,
-                  Wfuel, m_boiloff, t_cond::Array{Float64,1}, clearance_fuse, AR)
-      
+
+function tankWmech(fuse_tank, gee::Float64, ρfuel::Float64,
+                  Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64,
+                  Wfuel::Float64)
+
+      #Unpack parameters in fuse_tank
+      ftankstiff = fuse_tank.ftankstiff
+      ftankadd = fuse_tank.ftankadd
+      Δp = fuse_tank.ptank
+      sigskin = fuse_tank.sigskin
+      material_insul = fuse_tank.material_insul
+      rhoskin = fuse_tank.rhoskintank
+      t_cond = fuse_tank.t_insul
+      clearance_fuse = fuse_tank.clearance_fuse
+      AR = fuse_tank.ARtank
+
 # Total thickness:
       thickness_insul = sum(t_cond)
 

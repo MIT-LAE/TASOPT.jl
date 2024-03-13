@@ -57,21 +57,26 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize(gee, rhoFuel, deltap,
-                      Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-                      t_cond, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-                      iinsuldes, ifuel, qfac)
+function tanksize(fuse_tank, gee, ρfuel, 
+                      Rfuse, dRfuse, Tfuel, z, Mair, xftank,
+                      time_flight,
+                      wfb, nfweb, Wfuel,
+                      ifuel)
+
+        #Unpack variables in fuse_tank
+        boiloff_percent = fuse_tank.max_boiloff
+        t_cond = fuse_tank.t_insul
+        iinsuldes = fuse_tank.iinsuldes
 
         Wfuel_init = Wfuel
-        m_boiloff = threshold_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
+        m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
 
         #Create inline function with residuals as a function of x
-        residual(x) = res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
+        residual(x) = res_MLI_thick(x, fuse_tank, gee, ρfuel,
+        Rfuse, dRfuse, Tfuel, z, Mair, xftank,
+        time_flight,
+        wfb, nfweb, Wfuel,
+        ifuel) #Residual in boiloff rate as a function of Δt
 
         _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
 
@@ -92,18 +97,16 @@ function tanksize(gee, rhoFuel, deltap,
         Δt = sol.zero[1] 
 
         for ind in iinsuldes #For every segment whose thickness can be changed
-                t_cond[ind] = t_cond[ind] + Δt  
+                t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
         end
         thickness_insul = sum(t_cond)
 
         #Evaluate tank weight
-        mdot_boiloff = threshold_percent *  Wfuel / (gee * 100) /3600
+        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
-        Shead_insul, l_tank = tankWmech(gee, rhoFuel,
-                                fstring, ffadd, deltap,
-                                Rfuse, dRfuse, wfb, nfweb,
-                                sigskin, material_insul, rhoskin,
-                                Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
+        Shead_insul, l_tank = tankWmech(fuse_tank, gee, ρfuel,
+                                        Rfuse, dRfuse, wfb, nfweb,
+                                        Wfuel)
 
         return Wtank_total, thickness_insul, lshell, mdot_boiloff, 
         Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead,
@@ -153,11 +156,17 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac)
+function res_MLI_thick(x, fuse_tank, gee, ρfuel,
+        Rfuse, dRfuse, Tfuel, z, Mair, xftank,
+        time_flight,
+        wfb, nfweb, Wfuel,
+        ifuel)
+
+        #Extract parameters from fuse_tank
+        boiloff_percent = fuse_tank.max_boiloff
+        t_cond = fuse_tank.t_insul
+        qfac = fuse_tank.qfac
+        iinsuldes = fuse_tank.iinsuldes
 
         # Extract states
         Δt = x[1]
@@ -170,21 +179,19 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
                 t_all[ind] = t_all[ind] + Δt
         end
 
-        m_boiloff = threshold_percent *  Wfuel / (gee * 100) *time_flight/3600 #value of boil-off mass
-
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(gee, rhoFuel,
-                        fstring, ffadd, deltap,
-                        Rfuse, dRfuse, wfb, nfweb,
-                        sigskin, material_insul, rhoskin,
-                        Wfuel, m_boiloff, t_all, clearance_fuse, AR)
+        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(fuse_tank, gee, ρfuel,
+        Rfuse, dRfuse, wfb, nfweb,
+        Wfuel)
 
         _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporizatio
 
-        mdot_boiloff = threshold_percent *  Wfuel / (gee * 100) / 3600  
+        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization
         Q_net = mdot_boiloff * h_v  # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
         Q = Q_net / qfac
+
+        hconvgas = 0.0
 
         #Assemble struct with parameters for residual_Q
         p = thermal_params()
@@ -195,7 +202,7 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
         p.Shead = Shead
         p.hconvgas = hconvgas
         p.t_cond = t_all
-        p.material = material_insul
+        p.material = fuse_tank.material_insul
         p.Tfuel = Tfuel
         p.z = z
         p.Mair = Mair
