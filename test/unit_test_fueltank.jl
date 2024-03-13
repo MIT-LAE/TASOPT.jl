@@ -1,5 +1,3 @@
-using TASOPT
-using Test
 #Sample parameters
 ρfuel = 70.0
 Rfuse = 2.5
