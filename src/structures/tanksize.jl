@@ -68,7 +68,6 @@ function tanksize(fuse_tank, gee, ρfuel,
         t_cond = fuse_tank.t_insul
         iinsuldes = fuse_tank.iinsuldes
 
-        Wfuel_init = Wfuel
         m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
 
         #Create inline function with residuals as a function of x
