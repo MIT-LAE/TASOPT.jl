@@ -166,7 +166,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
     fuse_tank.material_insul = readfuel_storage("insulation_material")
     fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
-    fuse_tank.sigskin = Pressure(readfuel_storage("skin_yield_strength"))
+    fuse_tank.sigskin = Pressure(readfuel_storage("skin_ultimate_strength"))
     fuse_tank.rhoskintank = readfuel_storage("tank_skin_density")
     fuse_tank.max_boiloff = readfuel_storage("maximum_boiloff_rate")
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
