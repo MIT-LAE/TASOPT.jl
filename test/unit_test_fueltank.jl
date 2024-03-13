@@ -29,10 +29,8 @@ fuse_tank.clearance_fuse = 0.1
 fuse_tank.ARtank = 2.0
 fuse_tank.qfac = 1.3
 
-m_boiloff = fuse_tank.max_boiloff * Wfuel /(100 * gee) *time_flight/3600
-
 @testset "Fuselage tank" begin
-    outputs_size = TASOPT.structures.tanksize(fuse_tank, gee, ρfuel, 
+    outputs_size = TASOPT.structures.tanksize(fuse_tank, ρfuel, 
                                     Rfuse, dRfuse, Tfuel, z, Mair, xftank,
                                     time_flight,
                                     wfb, nfweb, Wfuel,
@@ -42,7 +40,7 @@ m_boiloff = fuse_tank.max_boiloff * Wfuel /(100 * gee) *time_flight/3600
         @test outputs_size[i] ≈ outputs_size_check[i]
     end
 
-    outputs_mech = TASOPT.structures.tankWmech(fuse_tank, gee, ρfuel,
+    outputs_mech = TASOPT.structures.tankWmech(fuse_tank, fuse_tank.t_insul, ρfuel,
                                                 Rfuse, dRfuse, wfb, nfweb,
                                                 Wfuel)
 

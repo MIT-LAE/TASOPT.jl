@@ -1,41 +1,26 @@
 """
-        tanksize(gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac)
+        tanksize(fuse_tank, ρfuel, 
+        Rfuse, dRfuse, Tfuel, z, Mair, xftank,
+        time_flight,
+        wfb, nfweb, Wfuel,
+        ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `gee::Float64`: Gravitational acceleration (m/s^2).
-        - `rhoFuel::Float64`: Density of fuel (kg/m^3).
-        - `deltap::Float64`: Allowed pressure difference in vessel (Pa).
+        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+        - `ρfuel::Float64`: Density of fuel (kg/m^3).
         - `Rfuse::Float64`: Fuselage radius (m).
         - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
-        - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
         - `Tfuel::Float64`: Fuel temperature (K).
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `t_cond::Vector{Float64}`: Thickness array t (m) for each MLI layer.
-        - `time_flight::Float64`: total flight time (s)
-        - `fstring::Float64`: mass factor to account for stiffening material.
-        - `ffadd::Float64`: Additional mass factor for the tank.
         - `wfb::Float64`: parameter for multi-bubble configuration.
         - `nfweb::Float64`: Number of bubbles.
-        - `sigskin::Float64`: Material property.
-        - `material_insul::Vector{String}`: material name for each MLI layer.
-        - `rhoskin::Float64`: Material property.
         - `Wfuel::Float64`: Weight of fuel (N).
-        - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
-        - `clearance_fuse::Float64`: Clearance for the fuselage (m).
-        - `AR::Float64`: Aspect ratio.
-        - `iinsuldes::Vector{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
-        - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
-
         
         **Outputs:**
         - `Wtank_total::Float64`: Total weight of the tank including fuel (N).
@@ -57,7 +42,7 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize(fuse_tank, gee, ρfuel, 
+function tanksize(fuse_tank, ρfuel, 
                       Rfuse, dRfuse, Tfuel, z, Mair, xftank,
                       time_flight,
                       wfb, nfweb, Wfuel,
@@ -71,9 +56,8 @@ function tanksize(fuse_tank, gee, ρfuel,
         m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
 
         #Create inline function with residuals as a function of x
-        residual(x) = res_MLI_thick(x, fuse_tank, gee, ρfuel,
+        residual(x) = res_MLI_thick(x, fuse_tank, ρfuel,
         Rfuse, dRfuse, Tfuel, z, Mair, xftank,
-        time_flight,
         wfb, nfweb, Wfuel,
         ifuel) #Residual in boiloff rate as a function of Δt
 
@@ -103,7 +87,7 @@ function tanksize(fuse_tank, gee, ρfuel,
         #Evaluate tank weight
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
-        Shead_insul, l_tank = tankWmech(fuse_tank, gee, ρfuel,
+        Shead_insul, l_tank = tankWmech(fuse_tank, fuse_tank.t_insul, ρfuel,
                                         Rfuse, dRfuse, wfb, nfweb,
                                         Wfuel)
 
@@ -113,11 +97,10 @@ function tanksize(fuse_tank, gee, ρfuel,
 end
 
 """
-        res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac)
+        res_MLI_thick(x, fuse_tank, ρfuel,
+        Rfuse, dRfuse, Tfuel, z, Mair, xftank,
+        wfb, nfweb, Wfuel,
+        ifuel)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -125,39 +108,24 @@ insulation interface temperatures.
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `x::Float64`: vector with states
-        - `gee::Float64`: Gravitational acceleration (m/s^2).
-        - `rhoFuel::Float64`: Density of fuel (kg/m^3).
-        - `deltap::Float64`: Allowed pressure difference in vessel (Pa).
+        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+        - `ρfuel::Float64`: Density of fuel (kg/m^3).
         - `Rfuse::Float64`: Fuselage radius (m).
         - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
-        - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
         - `Tfuel::Float64`: Fuel temperature (K).
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `t_cond::Vector{Float64}`: Thickness array t (m) for each MLI layer.
-        - `time_flight::Float64`: total flight time (s)
-        - `fstring::Float64`: mass factor to account for stiffening material.
-        - `ffadd::Float64`: Additional mass factor for the tank.
         - `wfb::Float64`: parameter for multi-bubble configuration.
         - `nfweb::Float64`: Number of bubbles.
-        - `sigskin::Float64`: Material property.
-        - `material_insul::Vector{String,1}`: material name for each MLI layer.
-        - `rhoskin::Float64`: Material property.
         - `Wfuel::Float64`: Weight of fuel (N).
-        - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
-        - `clearance_fuse::Float64`: Clearance for the fuselage (m).
-        - `AR::Float64`: Aspect ratio.
-        - `iinsuldes::Vector{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
-        - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x, fuse_tank, gee, ρfuel,
+function res_MLI_thick(x, fuse_tank, ρfuel,
         Rfuse, dRfuse, Tfuel, z, Mair, xftank,
-        time_flight,
         wfb, nfweb, Wfuel,
         ifuel)
 
@@ -179,7 +147,7 @@ function res_MLI_thick(x, fuse_tank, gee, ρfuel,
         end
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(fuse_tank, gee, ρfuel,
+        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(fuse_tank, t_all, ρfuel,
         Rfuse, dRfuse, wfb, nfweb,
         Wfuel)
 

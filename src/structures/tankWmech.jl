@@ -1,31 +1,19 @@
 """
-      tankWmech(gee, ρfuel,
-            ftankstiff, ftankadd, Δp,
-            Rfuse, dRfuse, wfb, nfweb,
-            sigskin, rho_insul, rhoskin,
-            Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
+      tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
+                        Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64,
+                        Wfuel::Float64)
 
 `tankWmech` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `gee::Float64`: Gravitational acceleration (m/s^2).
+      - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
       - `ρfuel::Float64`: Fuel density (kg/m^3).
-      - `ftankstiff::Float64`: Tank stiffness factor.
-      - `ftankadd::Float64`: Additional mass factor for the tank.
-      - `Δp::Float64`: Pressure difference (Pa).
       - `Rfuse::Float64`: Fuselage radius (m).
       - `dRfuse::Float64`: Subtraction factor accounting for fuselage flatness (m).
       - `wfb`: Parameters for multiple-bubble configuration.
       - `nfweb`: Number of bubbles.
-      - `sigskin::Float64`: Ultimate tensile strength of skin material (Pa).
-      - `material_insul::Array{String,1}`: material name for each MLI layer.
-      - `rhoskin::Float64`: Material property.
       - `Wfuel::Float64`: Weight of fuel (N).
-      - `m_boiloff::Float64`: Mass boiled off during the mission flight (kg).
-      - `t_cond::Array{Float64,1}`: Thickness of insulation layers (m).
-      - `clearance_fuse::Float64`: Clearance for the fuselage (m).
-      - `AR::Float64`: Aspect ratio.
 
       **Outputs:**
       - `Wtank_total::Float64`: Total tank weight including fuel (N).
@@ -48,7 +36,7 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 See [here](@ref fueltanks).
 """
 
-function tankWmech(fuse_tank, gee::Float64, ρfuel::Float64,
+function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
                   Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64,
                   Wfuel::Float64)
 
@@ -59,7 +47,6 @@ function tankWmech(fuse_tank, gee::Float64, ρfuel::Float64,
       sigskin = fuse_tank.sigskin
       material_insul = fuse_tank.material_insul
       rhoskin = fuse_tank.rhoskintank
-      t_cond = fuse_tank.t_insul
       clearance_fuse = fuse_tank.clearance_fuse
       AR = fuse_tank.ARtank
 
