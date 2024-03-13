@@ -1,6 +1,6 @@
 using Printf
 """
-    wsize(ac; imission = 1, itermax=35,
+    wsize(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
@@ -25,9 +25,9 @@ function wsize(ac; imission = 1, itermax=35,
     #Unpack data storage arrays
     pari = ac.pari
     parg = ac.parg
-    parm = view(ac.parm, :, imission)
-    para = view(ac.para, :, :, imission)
-    pare = view(ac.pare, :, :, imission)       
+    parm = ac.parmd
+    para = ac.parad
+    pare = ac.pared      
     
     fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
 
