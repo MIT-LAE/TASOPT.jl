@@ -1209,11 +1209,11 @@ function wsize(ac; imission = 1, itermax=35,
             
             Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
             m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-            Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank,
-                Rfuse, dRfuse, hconvgas, Tfuel, z_alt, M_inf, xftank_heat,
-                t_cond, time_flight, ftankstiff, ftankadd,
-                wfb, nfweb, sigskin, material_insul, rhoskintank,
-                Wfuel_in_tank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
+            Winsul_sum, Winsul, ltank, Wtank = tanksize(fuse_tank, rhofuel, 
+            Rfuse, dRfuse, Tfuel, z_alt, M_inf, xftank_heat,
+            time_flight,
+            wfb, nfweb, Wfuel_in_tank,
+            ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)

@@ -25,6 +25,7 @@ fuse_tank.rhoskintank = 2825.0
 fuse_tank.max_boiloff = 0.15
 fuse_tank.clearance_fuse = 0.1
 fuse_tank.ARtank = 2.0
+fuse_tank.ullage_frac = 0.1
 fuse_tank.qfac = 1.3
 
 @testset "Fuselage tank" begin

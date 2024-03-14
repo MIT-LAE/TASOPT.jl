@@ -70,6 +70,7 @@
     tank_pressure = "2 atm"
     stiffener_mass_fraction = 0.1
     additional_mass_fraction = 0.1
+    ullage_fraction = 0.1 
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
 
 [Mission]

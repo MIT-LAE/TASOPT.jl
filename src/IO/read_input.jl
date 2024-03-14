@@ -174,6 +174,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
     fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
+    fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
 
     if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")

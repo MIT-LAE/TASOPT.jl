@@ -11,6 +11,7 @@ mutable struct fuselage_tank
     ptank::Float64
     ftankstiff::Float64
     ftankadd::Float64
+    ullage_frac::Float64
     qfac::Float64
     fuselage_tank() = new() 
 end

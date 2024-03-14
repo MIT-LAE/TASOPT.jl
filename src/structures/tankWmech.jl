@@ -49,6 +49,7 @@ function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
       rhoskin = fuse_tank.rhoskintank
       clearance_fuse = fuse_tank.clearance_fuse
       AR = fuse_tank.ARtank
+      ullage_frac = fuse_tank.ullage_frac
 
 # Total thickness:
       thickness_insul = sum(t_cond)
@@ -56,7 +57,7 @@ function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
 # Input paramters:
 #TODO: these hardcoded parameters are not elegant
       weld_eff = 0.9 #lower strength due to welding
-      ullage_frac = 0.1 # V. thesis says ~3% but Barron recommends 10%
+      
 
       ew = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
       
