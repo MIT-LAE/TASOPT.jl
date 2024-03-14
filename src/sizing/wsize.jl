@@ -18,7 +18,7 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(ac; imission = 1, itermax=35,
+function wsize(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
