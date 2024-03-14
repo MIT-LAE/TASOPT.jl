@@ -1,3 +1,20 @@
+mutable struct fuselage_tank
+    placement::String
+    t_insul::Array{Float64}
+    material_insul::Array{String}
+    iinsuldes::Array{Int64}
+    sigskin::Float64
+    rhoskintank::Float64
+    max_boiloff::Float64
+    ARtank::Float64
+    clearance_fuse::Float64
+    ptank::Float64
+    ftankstiff::Float64
+    ftankadd::Float64
+    qfac::Float64
+    fuselage_tank() = new() 
+end
+
 """
     aircraft
 
@@ -27,6 +44,7 @@ struct aircraft
     parm::AbstractArray{Float64}
     para::AbstractArray{Float64}
     pare::AbstractArray{Float64}
+    fuse_tank::fuselage_tank
 end
 
 function Base.getproperty(ac::aircraft, sym::Symbol)

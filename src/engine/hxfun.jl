@@ -3,8 +3,6 @@
 # The design method is based on the effectiveness-NTU method, described in many sources such as 
 # https://www.mathworks.com/help/hydro/ref/entuheattransfer.html
 # Nicolas Gomez Vega, Oct 2023
-using NLopt
-using Roots
 
 """
     HX_gas
@@ -62,6 +60,7 @@ mutable struct HX_gas
       recircT :: Float64 
       mdot_r :: Float64 
       h_lat :: Float64 
+      HX_gas() = new() 
 end
 
 """
@@ -106,6 +105,7 @@ mutable struct HX_tubular
       ρw :: Float64
       D_i :: Float64
       material :: String
+      HX_tubular() = new() 
 end
 
 """
@@ -172,6 +172,8 @@ function hxsize!(HXgas, HXgeom)
       Rfc = HXgeom.Rfc 
       l = HXgeom.l
 
+      tol = 1e-10 #convergence tolerance
+
       if fconc #If geometry is concentric
             D_i = HXgeom.D_i
       end
@@ -202,6 +204,7 @@ function hxsize!(HXgas, HXgeom)
 
       C_p = mdot_p * cp_p_in #Process-side heat capacity rate
       mdot_c = mdot_c_inf
+      modot_c_prev = mdot_c
 
       if frecirc #If there is recirculation
             _, _, hc_in, _, cp_c_in, _ = gasfun(igas_c, recircT)
@@ -239,6 +242,11 @@ function hxsize!(HXgas, HXgeom)
                         ε_max = 1 - exp(-1 / C_r) #At ε = ε_max, NTU tends to infinity
                         ε = min(ε, 0.95 * ε_max) #Limit effectiveness to 95% of maximum possible
                   end
+
+                  if (abs(modot_c_prev - mdot_c)/mdot_c < tol)
+                        break #Break for loop if convergence has been reached
+                  end 
+                  modot_c_prev = mdot_c #otherwise store current value for comparison
             end
       
       else #No recirculation
@@ -371,6 +379,7 @@ function hxsize!(HXgas, HXgeom)
       N_iter = 15 #Expect fast convergence
 
       n_passes = 4 #Initialize number of passes
+      n_passes_prev = n_passes
       Ah = 0
       for i = 1:N_iter
             N_L = n_passes * n_stages #total number of rows
@@ -386,6 +395,11 @@ function hxsize!(HXgas, HXgeom)
             # Size heat exchanger
             Ah = NTU * C_min * RA   #Find required process-side cooling area from NTU
             n_passes = Ah / (N_t * n_stages * pi * tD_o * l)
+
+            if (abs(n_passes_prev - n_passes)/n_passes < tol)
+                  break #Break for loop if convergence has been reached
+            end 
+            n_passes_prev = n_passes #otherwise store current value for comparison
       end
 
       #---------------------------------
@@ -491,6 +505,8 @@ function hxoper!(HXgas, HXgeom)
       l = HXgeom.l
       A_cs = HXgeom.A_cs
 
+      tol = 1e-10
+
       if frecirc
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
@@ -576,6 +592,7 @@ function hxoper!(HXgas, HXgeom)
       ε = 0.95 #guess for effectiveness
 
       Qg = ε * Qmax #Actual heat transfer rate, guess
+      Qprev = Qg
 
       # Guess outlet temperatures
       Tp_out = Tp_in - Qg / C_p 
@@ -680,6 +697,10 @@ function hxoper!(HXgas, HXgeom)
                   Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
             end
 
+            if (abs(Q-Qprev)/Q < tol)
+                  break #break loop if convergence has been reached
+            end
+            Qprev = Q #else update previous heat
       end
 
       #---------------------------------
@@ -710,6 +731,65 @@ function hxoper!(HXgas, HXgeom)
       HXgas.ε = ε
 
 end #hxoper!
+
+"""
+      radiator_design!(HXgas, HXgeom, Q)
+
+    Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
+    The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
+    meet the heat transfer requirement. 
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::Struct`: structure of type HX_gas with the gas properties
+    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `Q::Float64`: required heat transfer rate (W)
+    
+    **Outputs:**
+    No direct outputs. Input structures are modified with outlet gas and HX properties.
+
+"""
+function radiator_design!(HXgas, HXgeom, Q)
+
+      #Fluid parameters
+      Tp_in = HXgas.Tp_in
+      Tc_in = HXgas.Tc_in
+      pp_in = HXgas.pp_in
+      alpha_p = HXgas.alpha_p
+
+      #specific heats
+      if occursin("liquid", HXgas.fluid_c)
+            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+      else
+            _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
+      end
+      _, _, _, _, cp_p, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
+
+      #TODO: this calculation does not work when there is recirculation or if the process side has C_min
+
+      #Calculate minimum heat capacity rate from desired effectiveness and temperature difference
+      C_min = abs(Q / (ε * (Tp_in - Tc_in)))
+
+      #Design for C_min being C_c
+      mdot_c = C_min / cp_c
+
+      #Find tube length, assuming square cross section
+      ρ_p = pp_in / (Rp * Tp_in)
+      γ = cp_p / (cp_p - Rp)
+      A_cs = mdot_p / (ρ_p * Mp_in * sqrt(γ * Rp * Tp_in))
+      l = sqrt(A_cs)
+
+      HXgas.mdot_c = mdot_c
+
+      HXgeom.l = l
+      HXgeom.xl_D = 1
+
+      initial_x = [0.1, 6, 4] #do not optimize tube length for this radiator
+
+      hxoptim!(HXgas, HXgeom, initial_x)
+      hxsize!(HXgas, HXgeom)
+
+end
 
 """
       HXoffDesignCalc!(HXgas, HXgeom, Q)
@@ -850,13 +930,13 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       opt = Opt(:LN_NELDERMEAD, length(initial_x))
       opt.lower_bounds = lower
       opt.upper_bounds = upper
-      opt.ftol_rel = 1e-10
-      opt.maxeval = 1000  # Set the maximum number of function evaluations
+      opt.ftol_rel = 1e-9
+      opt.maxeval = 500  # Set the maximum number of function evaluations
 
       opt.min_objective = obj
       
       (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
-      
+      #println(opt.numevals)
       #xopt_round = round.(xopt) #elements 2 and 3 must be integers
 
       #Modify structs with output
@@ -868,7 +948,6 @@ function hxoptim!(HXgas, HXgeom, initial_x)
       if length(initial_x) == 4 #only add length if it is being optimized
             HXgeom.l = xopt[4]
       end
-      
 
       #Return optimum parameters by modifying input structs
 
@@ -1021,19 +1100,15 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       #Initialize Heat Exchanger vector
       HeatExchangers = []
 
-      #Initiliaze structures with NaNs
-      HXgas_NaN = HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
-      HXgeom_NaN = HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
-
       for (i,type) in enumerate(HXtypes) #For every desired type of heat exchanger (skipped if empty)
             
             #---------------------------------
             # Design exchangers
             #---------------------------------
             pare_sl = pare[:, ipdes] #Slice pare at design point
-            #Initiliaze design geometry and gas property as NaNs
-            HXgas = deepcopy(HXgas_NaN)
-            HXgeom = deepcopy(HXgeom_NaN)
+            #Initiliaze design geometry and gas property as empty structs
+            HXgas = HX_gas()
+            HXgeom = HX_tubular()
 
             HXgas.ε = ε_des[i]
 

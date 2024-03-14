@@ -3,6 +3,7 @@
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
+    pari = ac.pari
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * parg[igfhpesys]
     Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -121,24 +122,25 @@ end
 function geometry(ac::aircraft; io = stdout)
     parg = ac.parg
     printstyled(io, "Fuselage Layout:\n -------------- \n", color=:bold )
-    @printf(io, "xnose   = %5.1f m (%8.1f ft)\n", parg[igxnose  ] , parg[igxnose   ]/ft_to_m)
-    @printf(io, "xend    = %5.1f m (%8.1f ft)\n", parg[igxend   ] , parg[igxend    ]/ft_to_m)
-    @printf(io, "xwing   = %5.1f m (%8.1f ft)\n", parg[igxwing  ] , parg[igxwing   ]/ft_to_m)
-    @printf(io, "xhtail  = %5.1f m (%8.1f ft)\n", parg[igxhtail ] , parg[igxhtail  ]/ft_to_m)
-    @printf(io, "xvtail  = %5.1f m (%8.1f ft)\n", parg[igxvtail ] , parg[igxvtail  ]/ft_to_m)
-    @printf(io, "xblend1 = %5.1f m (%8.1f ft)\n", parg[igxblend1] , parg[igxblend1 ]/ft_to_m)
-    @printf(io, "xblend2 = %5.1f m (%8.1f ft)\n", parg[igxblend2] , parg[igxblend2 ]/ft_to_m)
-    @printf(io, "xshell1 = %5.1f m (%8.1f ft)\n", parg[igxshell1] , parg[igxshell1 ]/ft_to_m)
-    @printf(io, "xshell2 = %5.1f m (%8.1f ft)\n", parg[igxshell2] , parg[igxshell2 ]/ft_to_m)
-    @printf(io, "xhbend  = %5.1f m (%8.1f ft)\n", parg[igxhbend ] , parg[igxhbend  ]/ft_to_m)
-    @printf(io, "xvbend  = %5.1f m (%8.1f ft)\n", parg[igxvbend ] , parg[igxvbend  ]/ft_to_m)
-    @printf(io, "xwbox   = %5.1f m (%8.1f ft)\n", parg[igxwbox  ] , parg[igxwbox   ]/ft_to_m)
-    @printf(io, "xhbox   = %5.1f m (%8.1f ft)\n", parg[igxhbox  ] , parg[igxhbox   ]/ft_to_m)
-    @printf(io, "xvbox   = %5.1f m (%8.1f ft)\n", parg[igxvbox  ] , parg[igxvbox   ]/ft_to_m)
-    @printf(io, "xtshaft = %5.1f m (%8.1f ft)\n", parg[igxtshaft] , parg[igxtshaft ]/ft_to_m)
-    @printf(io, "xgen    = %5.1f m (%8.1f ft)\n", parg[igxgen   ] , parg[igxgen    ]/ft_to_m)
-    @printf(io, "xcat    = %5.1f m (%8.1f ft)\n", parg[igxcat   ] , parg[igxcat    ]/ft_to_m)
-    @printf(io, "xftank  = %5.1f m (%8.1f ft)\n", parg[igxftank ] , parg[igxftank  ]/ft_to_m)
+    @printf(io, "xnose     = %5.1f m (%8.1f ft)\n", parg[igxnose  ] , parg[igxnose   ]/ft_to_m)
+    @printf(io, "xend      = %5.1f m (%8.1f ft)\n", parg[igxend   ] , parg[igxend    ]/ft_to_m)
+    @printf(io, "xwing     = %5.1f m (%8.1f ft)\n", parg[igxwing  ] , parg[igxwing   ]/ft_to_m)
+    @printf(io, "xhtail    = %5.1f m (%8.1f ft)\n", parg[igxhtail ] , parg[igxhtail  ]/ft_to_m)
+    @printf(io, "xvtail    = %5.1f m (%8.1f ft)\n", parg[igxvtail ] , parg[igxvtail  ]/ft_to_m)
+    @printf(io, "xblend1   = %5.1f m (%8.1f ft)\n", parg[igxblend1] , parg[igxblend1 ]/ft_to_m)
+    @printf(io, "xblend2   = %5.1f m (%8.1f ft)\n", parg[igxblend2] , parg[igxblend2 ]/ft_to_m)
+    @printf(io, "xshell1   = %5.1f m (%8.1f ft)\n", parg[igxshell1] , parg[igxshell1 ]/ft_to_m)
+    @printf(io, "xshell2   = %5.1f m (%8.1f ft)\n", parg[igxshell2] , parg[igxshell2 ]/ft_to_m)
+    @printf(io, "xhbend    = %5.1f m (%8.1f ft)\n", parg[igxhbend ] , parg[igxhbend  ]/ft_to_m)
+    @printf(io, "xvbend    = %5.1f m (%8.1f ft)\n", parg[igxvbend ] , parg[igxvbend  ]/ft_to_m)
+    @printf(io, "xwbox     = %5.1f m (%8.1f ft)\n", parg[igxwbox  ] , parg[igxwbox   ]/ft_to_m)
+    @printf(io, "xhbox     = %5.1f m (%8.1f ft)\n", parg[igxhbox  ] , parg[igxhbox   ]/ft_to_m)
+    @printf(io, "xvbox     = %5.1f m (%8.1f ft)\n", parg[igxvbox  ] , parg[igxvbox   ]/ft_to_m)
+    @printf(io, "xtshaft   = %5.1f m (%8.1f ft)\n", parg[igxtshaft] , parg[igxtshaft ]/ft_to_m)
+    @printf(io, "xgen      = %5.1f m (%8.1f ft)\n", parg[igxgen   ] , parg[igxgen    ]/ft_to_m)
+    @printf(io, "xcat      = %5.1f m (%8.1f ft)\n", parg[igxcat   ] , parg[igxcat    ]/ft_to_m)
+    @printf(io, "xftank    = %5.1f m (%8.1f ft)\n", parg[igxftank ] , parg[igxftank  ]/ft_to_m)
+    @printf(io, "xftankaft = %5.1f m (%8.1f ft)\n", parg[igxftankaft ] , parg[igxftankaft  ]/ft_to_m)
     
     @printf(io, "\nRfuse  = %5.1f m (%8.1f ft)\n", parg[igRfuse ] , parg[igRfuse  ]/ft_to_m)
 
@@ -378,34 +380,54 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         yh[ 5] = yoTEh
         yh[ 6] = ycTEh
   
-
-    # Fuel tank
+        #Initialize seat start x-position
+        xseats0 = parg[igxshell1 ]
+        # Fuel tank
+        ntank = 8
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
         l = max(parg[iglftankin], parg[iglftank])
+        nftanks = pari[iinftanks] #Number of fuel tanks
         ARtank = 2.0
-        xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
-        xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
-        ntank = 8
-        xt = zeros(ntank*2 )
-        yt = zeros(ntank*2 )
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = cos(0.5*pi*fraci)
 
-            k = i
-            xt[k] = xcyl0 - Rtank/ARtank*fracx
-            yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
-        end
-        # k = k+1
-        # xt[k] = xcyl0 + parg[iglftank]
-        # yt[k] = Rtank
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = sin(0.5*pi*fraci)
+        if nftanks != 0
+            tank_placement = ac.fuse_tank.placement
+            if tank_placement == "front"
+                xtanks = [parg[igxftank]]
+                xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
+            elseif tank_placement == "rear"
+                xtanks = [parg[igxftankaft]]
+                xseats0 = parg[igxshell1 ]
+            elseif tank_placement == "both"
+                xtanks = [parg[igxftank], parg[igxftankaft]]
+                xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
+            end
+            
+            xt = zeros(nftanks, ntank*2 )
+            yt = zeros(nftanks, ntank*2 )
+            for m = 1:nftanks
+                xcyl0 = xtanks[m] - l/2 + Rtank/ARtank
+                xcyl1 = xtanks[m] + l/2 - Rtank/ARtank
+                
+                for i = 1: ntank
+                    fraci = float(i-1)/float(ntank-1)
+                    fracx = cos(0.5*pi*fraci)
 
-            k = i + ntank
-            xt[k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
-            yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
+                    k = i
+                    xt[m, k] = xcyl0 - Rtank/ARtank*fracx
+                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
+                end
+                # k = k+1
+                # xt[k] = xcyl0 + parg[iglftank]
+                # yt[k] = Rtank
+                for i = 1: ntank
+                    fraci = float(i-1)/float(ntank-1)
+                    fracx = sin(0.5*pi*fraci)
+
+                    k = i + ntank
+                    xt[m, k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
+                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
+                end
+            end
         end
 
         # xt = LinRange(xcyl0 - Rfuse/ARtank , xcyl0, 20 )
@@ -426,25 +448,13 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         end
 
     pax = parg[igWpay]/parm[imWperpax]
-    seat_pitch = 30.0 * in_to_m
-    seat_width = 19.0 * in_to_m
-    aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
 
-    seats_per_row = Int(2*parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
-    rows = Int(ceil(pax / seats_per_row))
+    _, xseats, seats_per_row = place_cabin_seats(pax, parg[igRfuse])
+    xseats = xseats .+ xseats0
+    rows = length(xseats)
 
     println("Seats per row = $seats_per_row, Total rows = $rows")
     yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
-
-    xseats = zeros(rows)'
-    xseats[1] = parg[igxshell1 ] + 10.0*ft_to_m 
-    for r in 2:rows
-        emergency_exit = 0.0
-        if (r == 12 || r == 13)
-            emergency_exit = seat_pitch/2
-        end
-        xseats[r] = xseats[r-1] + seat_pitch + emergency_exit
-    end
 
     ## Plot
     if ax === nothing
@@ -478,10 +488,18 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             
         # Tank
         if (pari[iifwing] == 0)
-            ax.plot(xt,  yt, "k", lw = 1.5, zorder = 10)
-            ax.plot(xt, -yt, "k", lw = 1.5, zorder = 10)
-            ax.fill_between(xt, -yt, yt, facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
-            ax.text(parg[igxftank], 0.0, "LH\$_2\$", fontsize = label_fs-2.0, zorder = 10, ha="center", va="center")
+            for m = 1:nftanks
+                ax.plot(xt[m,:],  yt[m,:], "k", lw = 1.5, zorder = 10)
+                ax.plot(xt[m,:], -yt[m,:], "k", lw = 1.5, zorder = 10)
+                ax.fill_between(xt[m,:], -yt[m,:], yt[m,:], facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
+
+                if pari[iifuel] == 11
+                    fuelname = "CH\$_4\$"
+                elseif pari[iifuel] == 40
+                    fuelname = "LH\$_2\$"
+                end
+                ax.text(xtanks[m], 0.0, fuelname, fontsize = label_fs-2.0, zorder = 10, ha="center", va="center")
+            end
         end
 
         # Xshell2
@@ -660,6 +678,7 @@ function plot_details(ac::aircraft; ax = nothing)
         Wfuse  = parg[igWfuse]
         Wvtail = parg[igWvtail]
         Whtail = parg[igWhtail]
+        Weng = parg[igWeng]
         Wtesys = parg[igWtesys]
         Wftank = parg[igWftank]
 
@@ -670,6 +689,7 @@ function plot_details(ac::aircraft; ax = nothing)
         Wtesysfrac = Wtesys/WMTO
         Wftankfrac = Wftank/WMTO
         Wtotaddfrac = Wtotadd/WMTO
+        Wengfrac = Weng/WMTO
 
         Wemptyfrac = Wempty/WMTO
         Wfuelfrac  = Wfuel /WMTO
@@ -702,6 +722,7 @@ function plot_details(ac::aircraft; ax = nothing)
         label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000)
         
         Webars = []
+        push!(Webars, a.bar(3, Wengfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac+Wtotaddfrac, width = bar_width, label = "Weng"))
         push!(Webars, a.bar(3, Wtotaddfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac, width = bar_width, label = "Wadd"))
         push!(Webars, a.bar(3, Wftankfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac, width = bar_width, label = "Wftank"))
         push!(Webars, a.bar(3, Wtesysfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac, width = bar_width, label = "Wtesys"))
@@ -710,7 +731,7 @@ function plot_details(ac::aircraft; ax = nothing)
         push!(Webars, a.bar(3, Wwingfrac   , bottom = Wfusefrac, width = bar_width, label = "Wwing"))
         push!(Webars, a.bar(3, Wfusefrac   , width = bar_width, label = "Wfuse"))
         
-        Welabels = ["Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"]
+        Welabels = ["Weng" "Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"]
         label_bars(a, Webars, Welabels, val_multiplier = WMTO/9.81/1000)
 
         a.hlines(Wemptyfrac, 1.5+bar_width/2, 3-bar_width/2, lw=0.8, color = "k", ls = "--")
@@ -1305,10 +1326,28 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     yv[ 5] = yoTEv
     yv[ 6] = ycTEv
 
+    #Initialize seat start x-position
+    xseats0 = parg[igxshell1 ]
     # Fuel tank
-        Rtank = Rfuse - 0.1 # Account for clearance_fuse
-        l = parg[iglftankin]
-        ARtank = 2.0
+    ntank = 8
+    Rtank = Rfuse - 0.1 # Account for clearance_fuse
+    l = max(parg[iglftankin], parg[iglftank])
+    nftanks = pari[iinftanks] #Number of fuel tanks
+    ARtank = 2.0
+
+    if nftanks != 0
+        tank_placement = ac.fuse_tank.placement
+        if tank_placement == "front"
+            xtanks = [parg[igxftank]]
+            xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
+        elseif tank_placement == "rear"
+            xtanks = [parg[igxftankaft]]
+            xseats0 = parg[igxshell1 ]
+        elseif tank_placement == "both"
+            xtanks = [parg[igxftank], parg[igxftankaft]]
+            xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
+        end
+    
         xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
         xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
         ntank = 8
@@ -1333,51 +1372,32 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             xt[k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
             yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
         end
-
+    end
         # xt = LinRange(xcyl0 - Rfuse/ARtank , xcyl0, 20 )
         # yt = zeros(length(xt))
         # @. yt = sqrt(Rfuse^2 * max((1 - ((xt-xcyl0)/(Rfuse/ARtank))^2), 0.0) )
 
-        xshell = zeros(ntank)
-        yshell = zeros(ntank)
-        AR = 3.0
-        xshellcenter = parg[igxshell2] - Rfuse/AR
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = sin(0.5*pi*fraci)
+    xshell = zeros(ntank)
+    yshell = zeros(ntank)
+    AR = 3.0
+    xshellcenter = parg[igxshell2] - Rfuse/AR
+    for i = 1: ntank
+        fraci = float(i-1)/float(ntank-1)
+        fracx = sin(0.5*pi*fraci)
 
-            k = i
-            xshell[k] = xshellcenter + Rfuse/AR *fracx
-            yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
-        end
+        k = i
+        xshell[k] = xshellcenter + Rfuse/AR *fracx
+        yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
+    end
 
     #Seats
     pax = parg[igWpay]/parm[imWperpax]
-    seat_pitch = 30.0 * in_to_m
-    seat_width = 19.0 * in_to_m
-    aisle_halfwidth = 10.0 * in_to_m # per CFR § 25.815 
+    _, xseats, seats_per_row = place_cabin_seats(pax, parg[igRfuse])
+    xseats = xseats .+ xseats0
+    rows = length(xseats)
 
-    seats_per_row = Int(2*parg[igRfuse] ÷ (seat_width + aisle_halfwidth/3))
-    rows = Int(ceil(pax / seats_per_row))
-    
     println("Seats per row = $seats_per_row, Total rows = $rows")
     yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
-    
-    if seats_per_row <= 10
-        emergency_rows = [12, 13]
-    else
-        emergency_rows = [19, 20]
-    end
-    
-    xseats = zeros(rows)'
-    xseats[1] = parg[igxshell1 ] + 10.0*ft_to_m 
-    for r in 2:rows
-        emergency_exit = 0.0
-        if (r in emergency_rows)
-            emergency_exit = seat_pitch/2
-        end
-        xseats[r] = xseats[r-1] + seat_pitch + emergency_exit
-    end
 
     ## Plot
     if ax === nothing
@@ -1559,71 +1579,6 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     return ax
 end
-
-"""
-    arrange_seats(seats_per_row, Rfuse,
-     seat_width = 19.0 * in_to_m, 
-     aisle_halfwidth = 10.0 * in_to_m)
-
-Helper function to arrange seats given a number of `seats_per_row`
-and fuselage radius. Assumes default `seat_width = 19"` and `aisle_halfwidth = 10"`,
-but can be supplied by the user.
-"""
-function arrange_seats(seats_per_row, Rfuse,
-     seat_width = 19.0 * in_to_m, 
-     aisle_halfwidth = 10.0 * in_to_m)
-
-    #Seats
-    # Conditions:
-    # - No more than 2 seats between any seat and the aisle
-    seats_per_row % 2 == 0 ? symmetric_seats = true : symmetric_seats = false
-
-    if symmetric_seats # seating can be symmetric
-        half_seats_per_row = seats_per_row ÷ 2
-        yseats = zeros(half_seats_per_row)
-
-        if half_seats_per_row <= 3 #Single aisle
-            yseats[1] = aisle_halfwidth + seat_width/2 #Aisle in the center
-            for col = 2:half_seats_per_row
-                yseats[col] = yseats[col-1] + seat_width #offset every seat by width
-            end 
-        else # twin aisle 
-            #If symmetric no more than 2 seats next to each other at the 
-            # centerline (I'm not evil enough to create a x-6-x seating arrangement even if "technically" allowed)
-            yseats[1] = seat_width/2.0
-            yseats[2] = yseats[1] + seat_width
-            #Aisle
-            half_seats_remaining = half_seats_per_row - 2
-            if half_seats_remaining > 4
-                @warn "Potentially trying to design a 3 aisle aircraft?
-                Seating arrangement not (yet) automatically handled, so check carefully."
-            end
-            yseats[3] = yseats[2] + aisle_halfwidth*2 + seat_width
-            for col = 4:half_seats_per_row
-                yseats[col] = yseats[col-1] + seat_width
-            end 
-        end
-
-    else
-        @info "Asymmetric seating only deals with 3 or 5 seats at the moment"
-        seating_excess_space = 2*Rfuse - seats_per_row*seat_width - 2*aisle_halfwidth 
-        yseats = zeros(seats_per_row)
-        # Start from edge and give some space based on the excess space available.
-        ind = 1
-        yseats[ind] = -Rfuse + seating_excess_space/2 + seat_width/2 
-        ind+=1
-        if seats_per_row > 3
-            yseats[ind] = yseats[ind-1] + seat_width
-            ind+=1
-        end
-        yseats[ind] = yseats[ind-1] + aisle_halfwidth*2 + seat_width
-        ind+=1
-        for col = ind:seats_per_row
-            yseats[col] = yseats[col-1] + seat_width
-        end 
-    end
-    return yseats, symmetric_seats
-end  # function arrange_seats
 
 """
     PayloadRange(ac_og, Rpts, Ppts, filename, OEW, itermax)
