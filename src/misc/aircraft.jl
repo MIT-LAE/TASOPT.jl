@@ -1,3 +1,26 @@
+#TODO: Fill out docstring @ngomezve
+"""
+
+
+"""
+mutable struct fuselage_tank
+    placement::String
+    t_insul::Array{Float64}
+    material_insul::Array{String}
+    iinsuldes::Array{Int64}
+    sigskin::Float64
+    rhoskintank::Float64
+    max_boiloff::Float64
+    ARtank::Float64
+    clearance_fuse::Float64
+    ptank::Float64
+    ftankstiff::Float64
+    ftankadd::Float64
+    qfac::Float64
+    fuselage_tank() = new() 
+end
+
+
 """
     aircraft
 
@@ -28,13 +51,22 @@ struct aircraft #inner constructor
     parm::AbstractArray{Float64}
     para::AbstractArray{Float64}
     pare::AbstractArray{Float64}
+    
     sized::AbstractVector{Bool}
+    fuse_tank::fuselage_tank
 end
 
-#outer constructor for if `sized` not given
+#TODO: sort out a robust meta-structure such that new individual constructors aren't required
+#outer constructor for if `sized` and fuse_tank not given
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}) 
         return aircraft(name, description, pari, parg, parm, para, pare, [false])
+end
+#constructor for if fuse_tank not given
+function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
+        parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
+        sized::AbstractVector{Bool}) 
+        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank())
 end
 
 
@@ -65,5 +97,3 @@ function Base.show(io::IO, ac::aircraft)
     Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
-
-

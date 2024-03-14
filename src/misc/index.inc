@@ -15,8 +15,9 @@
       iiengtype  = 13  # 0 = Turboelectric engine; 1 = Turbofan engine; "prop_sys_arch"
       iiopt      = 14  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
       iiaircraftclass = 15 # 737 = 737 size aircraft; 777 = 777 size aircraft
-      iiengmodel = 16
-      iitotal    = 16
+      iinftanks = 16 # number of fuel tanks in fuselage
+      iiengmodel = 17 #engine model 
+      iitotal    = 17
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
@@ -373,8 +374,14 @@
       const igTfuel      = 301
       const igWpax = 302
 
-      const igtotal    = 302
+      const igxftankaft  = 302
+      const igdxcabin  = 303
+      const igdxeng2wbox = 304
 
+      const igxWfuel = 305
+      const igmdotboiloff = 306
+
+      const igtotal    = 306
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

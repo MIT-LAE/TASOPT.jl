@@ -43,19 +43,16 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
-      if pari[iiengtype] == 0
-            Wtesys = parg[igWtesys]
-            xWtesys = parg[igxWtesys]
+      xWfuel = parg[igxWfuel]
 
-            Wftank = parg[igWftank]
-            xWftank = parg[igxWftank]
-      else
-            Wtesys = 0.0
-            xWtesys = 0.0
+      Wtesys = parg[igWtesys]
+      xWtesys = parg[igxWtesys]
 
-            Wftank = 0.0
-            xWftank = 0.0
-      end
+      Wftank = parg[igWftank]
+      xWftank = parg[igxWftank]
+
+      nftanks = pari[iinftanks] #number of fuel tanks in fuselage
+      lftank = parg[iglftank]
 
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * parg[igfhpesys]
@@ -63,13 +60,27 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       # Calculate x location of cabin centroid  and length of cabin
-      xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-      lcabin = parg[igxshell2] - parg[igxshell1]
+      if nftanks == 1
+            if parg[igxftankaft] == 0.0 #If tank is at the front
+                  xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
+                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
+            else #tank is at rear
+                  xcabin = 0.5 * (parg[igxshell1] + parg[igxblend2] - (lftank + 2.0*ft_to_m))
+                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
+            end
+      elseif nftanks == 2
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2]) #TODO noticed convergence issues if the average of the blends is used instead
+            lcabin = parg[igdxcabin]
+      elseif nftanks == 0
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+            lcabin = parg[igxshell2] - parg[igxshell1]
+      end
+      
       xpay = xcabin + (ξpay - 0.5) * lcabin * (1.0 - rpay)
 
       xwbox = parg[igxwbox]
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(parg)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = parg[igxwing] - parg[igxwbox]
@@ -90,10 +101,6 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       Sh1 = Sh
 
       #---- total weight, weight moment, and derivatives
-      if pari[iiengtype] == 1
-            Wtesys = 0
-            Wftank = 0
-      end
       W = rpay * Wpay +
           rfuel * Wfuel +
           Wfuse +
@@ -126,11 +133,11 @@ function balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
       W_Sh = Whtail / Sh1
 
       #Calcualte fuel moment and derivaties wrt to wing box location 
-      if pari[iifwing] == 0 # No fuel in wings - typically for Hydrogen fuel 
-            xWfuel = rfuel * (Wfuel * parg[igxftank])
+      if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+            xWfuel = rfuel * xWfuel
             xWfuel_xwbox = 0.0
       else
-            xWfuel = rfuel * (Wfuel * parg[igxwbox] + parg[igdxWfuel])
+            xWfuel = rfuel * xWfuel
             xWfuel_xwbox = rfuel * Wfuel
       end
 
@@ -301,7 +308,7 @@ function htsize(pari, parg, paraF, paraB, paraC)
       cosL = cos(sweep * π / 180.0)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(parg)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg)
 
       rpayC = 1.0
 
@@ -331,6 +338,8 @@ function htsize(pari, parg, paraF, paraB, paraC)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
+      xWfuel = parg[igxWfuel]
+
       # Wtshaft = parg[igWtshaft] 
       # Wgen    = parg[igWgen   ] 
       # Winv    = parg[igWinv   ] 
@@ -340,6 +349,8 @@ function htsize(pari, parg, paraF, paraB, paraC)
       Wtesys = parg[igWtesys]
       xWtesys = parg[igxWtesys]
 
+      nftanks = pari[iinftanks]
+      lftank = parg[iglftank]
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
@@ -349,7 +360,6 @@ function htsize(pari, parg, paraF, paraB, paraC)
 
       xWfuse = parg[igxWfuse]
 
-      dxWfuel = parg[igdxWfuel]
       dxWwing = parg[igdxWwing]
       dxWstrut = parg[igdxWstrut]
       dxWhtail = parg[igdxWhtail]
@@ -367,9 +377,21 @@ function htsize(pari, parg, paraF, paraB, paraC)
       xftank = parg[igxftank]
 
       # Calculate x location of cabin centroid and length of cabin
-      xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-      lcabin = parg[igxshell2] - parg[igxshell1]
-
+      if nftanks == 1
+            if parg[igxftankaft] == 0.0 #If tank is at the front
+                  xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
+                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
+            else #tank is at rear
+                  xcabin = 0.5 * (parg[igxshell1] + parg[igxblend2] - (lftank + 2.0*ft_to_m))
+                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
+            end
+      elseif nftanks == 2
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+            lcabin = parg[igdxcabin]
+      elseif nftanks == 0
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+            lcabin = parg[igxshell2] - parg[igxshell1]
+      end
       #---- payload CG locations for forward and aft CG locations
       xpayF = xcabin + (0.0 - 0.5) * lcabin * (1.0 - rpayF)
       xpayB = xcabin + (1.0 - 0.5) * lcabin * (1.0 - rpayB)
@@ -471,10 +493,8 @@ function htsize(pari, parg, paraF, paraB, paraC)
 
             #---- total weight moment at forward and aft CG limits
             if pari[iifwing] == 0
-                  xWfuel = Wfuel * xftank
                   xWfuel_xw = 0.0
             else
-                  xWfuel = Wfuel * xwbox + dxWfuel
                   xWfuel_xw = Wfuel
             end
             xWF = xWe + rpayF * Wpay * xpayF + rfuelF * xWfuel
@@ -665,7 +685,7 @@ which gives an explicit solution for `rpayF`,`rpayB`.
 The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
-function cglpay(parg)
+function cglpay(pari, parg)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -678,9 +698,13 @@ function cglpay(parg)
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
 
+      xWfuel = parg[igxWfuel]
+
       Wtesys = parg[igWtesys]
       #      xWtesys = parg[igxWtesys]
 
+      nftanks = pari[iinftanks]
+      lftank = parg[iglftank]
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]
 
@@ -688,9 +712,21 @@ function cglpay(parg)
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
-      xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
-      lcabin = parg[igxshell2] - parg[igxshell1]
-
+      if nftanks == 1
+            if parg[igxftankaft] == 0.0 #If tank is at the front TODO: find better way to figure out tank placement
+                  xcabin = 0.5 * (parg[igxblend1] + lftank + 2.0*ft_to_m + parg[igxshell2])
+                  lcabin = parg[igxshell2] - parg[igxblend2] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
+            else #tank is at rear
+                  xcabin = 0.5 * (parg[igxshell1] + parg[igxblend2] - (lftank + 2.0*ft_to_m))
+                  lcabin = parg[igxblend1] - parg[igxshell1] + parg[igdxcabin] #cabin length is smaller if there are fuel tanks
+            end
+      elseif nftanks == 2
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+            lcabin = parg[igdxcabin]
+      elseif nftanks == 0
+            xcabin = 0.5 * (parg[igxshell1] + parg[igxshell2])
+            lcabin = parg[igxshell2] - parg[igxshell1]
+      end
       delxw = parg[igxwing] - parg[igxwbox]
 
       #---- zero fuel is assumed to be worst case forward and full fuel worst case aft
@@ -711,7 +747,7 @@ function cglpay(parg)
            Wlgnose +
            Wlgmain
 
-      xWe = rfuel * (Wfuel * parg[igxwbox] + parg[igdxWfuel]) +
+      xWe = rfuel * xWfuel +
             parg[igxWfuse] + parg[igxWtesys] + parg[igxWftank] +
             Wwing * parg[igxwbox] + parg[igdxWwing] +
             Wstrut * parg[igxwbox] + parg[igdxWstrut] +
@@ -722,7 +758,6 @@ function cglpay(parg)
             Wlgnose * parg[igxlgnose] +
             Wlgmain * (parg[igxwbox] + delxw + parg[igdxlgmain])
 
-      xWfuel = parg[igxftank] * Wfuel
 
       # Some derivation here:        
       #   xpay = xcabin + (ξpay-0.5)*lcabin*(1.0-rpay)  [1]                                   
@@ -748,14 +783,15 @@ function cglpay(parg)
       ξ = [0.0, 1.0]
       sgn = [-1.0, 1.0]
 
-      if parg[igxftank] < xcabin
+      xftank = parg[igxWftank] / Wftank
+      if pari[iifwing] == 1 #Fuel is in wings
+            rf = [0.0, 0.0]
+      elseif xftank < xcabin
             rf = [1.0, 0.0]
       else
             rf = [0.0, 1.0]
       end
-      if parg[igrhofuel] > 200
-            rf = [0.0, 0.0]
-      end
+      
       rpay = zeros(Float64, 2)
       xcg = zeros(Float64, 2)
 
