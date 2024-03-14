@@ -59,18 +59,18 @@ function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
       weld_eff = 0.9 #lower strength due to welding
       
 
-      ew = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
+      sa = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
       
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
 
-      tskin = Δp * (2 * Rtank_outer) / (2 * ew * weld_eff + 0.8 * Δp) #(7.1) in Barron (1985)
+      tskin = Δp * (2 * Rtank_outer) / (2 * sa * weld_eff + 0.8 * Δp) #(7.1) in Barron (1985)
 
       Rtank = Rtank_outer - tskin
       #tfweb = 2.0 * Δp * wfb  / ew
       Lhead = Rtank / AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
       
       K = (1/6) * (AR^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
-      t_head = Δp* (2*Rtank_outer) * K/ (2 * ew * weld_eff + 2 * Δp * (K - 0.1)) #(7.2) in Barron (1985)
+      t_head = Δp* (2*Rtank_outer) * K/ (2 * sa * weld_eff + 2 * Δp * (K - 0.1)) #(7.2) in Barron (1985)
 
 #--- Calculate length of cylindrical portion
       Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
