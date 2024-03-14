@@ -1,45 +1,8 @@
 using TASOPT
 using NLsolve
+using Roots
 
-(Rfuse::Float64, dRfuse::Float64, fuse_clearance::Float64, 
-                    Wfuel::Float64, ρfuel::Float64, ARtank::Float64, Δp::Float64, ullage::Float64,
-                    time_flight::Float64, threshold_percent::Float64,
-                    σa_inner::Float64, ρinner::Float64,ew::Float64,
-                    Tair::Float64, Tfuel::Float64, 
-                    h_LH2::Float64, h_v::Float64, hconvair::Float64, hconvgas::Float64,
-                    p_vaccum_i::Float64, 
-                    σa_outer::Float64, ρouter::Float64, E_outer::Float64,
-                    rho_insul::Array{Float64,1}, t_cond::Array{Float64,1},  k::Array{Float64,1}, 
-                    a_outer::Float64,a_inner::Float64, Nstiff_in::Float64, 
-                    θin_support::Float64, θout_support1::Float64,θout_support2::Float64, poiss::Float64)
 
-ρfuel = 70.0
-Rfuse = 2.5
-dRfuse = 0.3
-Tfuel = 20.0
-time_flight = 7*3600.0
-wfb = 0.0
-nfweb = 1.0
-Wfuel = 1e5
-ifuel = 40
-z = 11e3
-Mair = 0.8
-xftank = 15.0
-hconvgas = 0.0
-
-Δp = 2e5
-fuse_tank.t_insul = [0.15,0.15,0.15]
-fuse_tank.material_insul = ["rohacell41S", "rohacell41S", "polyurethane27"]
-fuse_tank.iinsuldes = [1,2,3]
-fuse_tank.ftankstiff = 0.1
-fuse_tank.ftankadd = 0.1
-fuse_tank.sigskin = 476e6 
-fuse_tank.rhoskintank = 2825.0
-threshold_percent = 0.15
-fuse_tank.clearance_fuse = 0.1
-fuse_tank.ARtank = 2.0
-fuse_tank.ullage_frac = 0.1
-fuse_tank.qfac = 1.3
 
 """
 doublewalled_tank calcualtes the weight and heat transfer of a 
@@ -499,3 +462,76 @@ function tanksizeVac(Rfuse::Float64, dRfuse::Float64, fuse_clearance::Float64,
     m_boiloff, mdot_boiloff ,p_vaccum,Req
 
 end
+
+const pSL = 101325
+
+ρfuel = 70.0
+Rfuse = 2.5
+dRfuse = 0.3
+Tfuel = 20.0
+time_flight = 7*3600.0
+wfb = 0.0
+nfweb = 1.0
+Wfuel = 1e5
+ifuel = 40
+z = 11e3
+Mair = 0.8
+xftank = 15.0
+hconvgas = 0.0
+Tair  = 288.0 #Heated cabin temp
+h_v = 447000.0
+h_LH2 = 210.0
+hconvair = 15.0
+threshold_percent  = 0.1
+
+σa_inner = 172.4e6 ;  ρinner =  2825.0  #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
+
+# println("Using Vacumm tank")
+poiss = 0.33
+
+k_MLI =  0.00015# 
+rho_MLI = 3.35 #kg/m2  Table 9 A139 40 layers 0.94 layer/mm http://etd.fcla.edu/CF/CFE0003419/Johnson_Wesley_L_201012_MS.pdf 
+# rho_MLI = 
+
+σa_outer = 172.4e6  ; E_outer = 73.8e9; ρouter = 2825.0
+# σa_outer = 332.0e6; E_outer = 164.0e9; ρouter = 7870.0
+
+Nstiff_in = 3.0
+θin_support = 80*π/180.0
+θout_support1 = 70*π/180.0 ; θout_support2 = 110*π/180.0
+a_outer=0.29; a_inner=0.59 # accomodation coefficient of Helium/Hydrogen 
+
+p_vaccum_i = 0.01 #Pa #initial vac level
+d_vaccuum=0.065 # vacumm size recommended by brewer (brewer book 191/204)
+
+# closed cell foam, vapor bar, Vac/MLI, vapor barr
+t_cond = [ 0.015, 1.524e-5,     d_vaccuum, 1.524e-5] #brewer modified
+k = [5e-3,      5e-3,            k_MLI,  5e-3,  ] #foam conductivities
+rho_insul = [35.24, 14764,  rho_MLI,14764] #energies
+
+ew = 0.9 #weld efficiency
+ARtank = 2.0
+fuse_clearance = 0.10
+ρfuel = parg[igrhofuel] 
+ptank = 2.0*101325.0 #atm
+ftankstiff = 0.1
+ftankadd   = 0.1
+ullage = 0.1
+
+
+Wtank_total,η, l_cyl1, S_inner,S_outer, 
+Shead2,Scyl2,Shead1,Scyl1,Wtank1,
+Vfuel, Wtank, N_outer_rings, W_stiffners2,Wcyl2,
+Whead2, Winsul_sum ,Wfuel_tot, t_cyl1,t_head1, 
+t_cyl2,t_head2,  L_tank, Rtank2_outer, Rtank2_inner,Rtank1_outer, Rtank1_inner,
+m_boiloff, mdot_boiloff ,p_vaccum,Req = tanksizeVac(Rfuse, dRfuse, fuse_clearance, 
+                                            Wfuel, ρfuel, ARtank, ptank, ullage,
+                                            time_flight, threshold_percent,
+                                            σa_inner, ρinner,ew,
+                                            Tair, Tfuel, 
+                                            h_LH2, h_v, hconvair, hconvgas,
+                                            p_vaccum_i,
+                                            σa_outer, ρouter, E_outer,
+                                            rho_insul, t_cond, k,
+                                            a_outer,a_inner,Nstiff_in, 
+                                            θin_support, θout_support1,θout_support2, poiss)

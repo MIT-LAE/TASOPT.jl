@@ -62,7 +62,7 @@
     #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35"
     insulation_material = ["polyurethane32","polyurethane32","polyurethane32"] 
 
-    skin_yield_strength = "172e6 Pa"
+    skin_ultimate_strength = "476e6 Pa" #Al 2219-T87
     tank_skin_density = 2825 #kg/m^3
     maximum_boiloff_rate = 0.15 #%/hour
     tank_aspect_ratio = 2.0
