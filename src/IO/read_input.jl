@@ -1,6 +1,8 @@
 using TOML
-
 export read_aircraft_model, load_default_model
+
+include("size_cabin.jl")
+#using ..structures
 
 """
     read_input(k::String, dict::AbstractDict=data, 
@@ -155,14 +157,46 @@ pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
 pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
 parg[igrhofuel] = readfuel("fuel_density")
 
+#Fuel storage options
+fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
+
+if pari[iifwing]  == 0 #If fuel is stored in fuselage
+    fuel_stor = readfuel("Storage")
+    dfuel_stor = dfuel["Storage"]
+    readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
+
+    fuse_tank.placement = readfuel_storage("tank_placement")
+    fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
+    fuse_tank.material_insul = readfuel_storage("insulation_material")
+    fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
+    fuse_tank.sigskin = Pressure(readfuel_storage("skin_yield_strength"))
+    fuse_tank.rhoskintank = readfuel_storage("tank_skin_density")
+    fuse_tank.max_boiloff = readfuel_storage("maximum_boiloff_rate")
+    fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
+    fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
+    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
+    fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
+    fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
+    fuse_tank.qfac = readfuel_storage("heat_leak_factor")
+
+    if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")
+        pari[iinftanks] = 1
+    elseif (fuse_tank.placement == "both") 
+        pari[iinftanks] = 2
+    end
+end
+
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
 
+maxpax = readmis("max_pax")
+pax = readmis("pax")
+despax = pax[1] #Design number of passengers
 Wpax =  Force(readmis("weight_per_pax"))
 parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= readmis("pax") * Wpax
-parg[igWpaymax] = readmis("max_pax") * Wpax
+parm[imWpay, :] .= pax * Wpax
+parg[igWpaymax] = maxpax * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
@@ -284,10 +318,14 @@ readweight(x) = read_input(x, weight, dweight)
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
 readgeom(x) = read_input(x, geom, dgeom)
+    #Boolean to check if cabin length has to be recalculated; if true, this is done 
+    #after loading the wing and stabilizer positions
+    calculate_cabin = readgeom("calculate_cabin_length") 
+
     parg[igRfuse]  = Distance(readgeom("radius"))
     parg[igdRfuse] = Distance(readgeom("dRadius"))
     parg[igwfb]    = Distance(readgeom("y_offset"))
-    parg[ighfloor] = Distance(readgeom("floor_depth"))
+    parg[ighfloor] = Distance(readgeom("floor_depth")) 
     parg[ignfweb]  = readgeom("Nwebs")
 
     parg[iganose] = readgeom("a_nose")
@@ -327,6 +365,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
 
+    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
+
+    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
+
 # ------ End fuse -------
 # ---------------------------------
 # Wing
@@ -357,6 +399,9 @@ readwing(x) = read_input(x, wing, dwing)
 
     parg[igxwbox] = Distance(readwing("x_wing_box"))
     parg[igzwing] = Distance(readwing("z_wing"))
+
+    parg[igdxeng2wbox] = parg[igxwbox] - parg[igxeng]
+
 
     ## Strut details only used if strut_braced_wing is true
     parg[igzs]      = Distance(readwing("z_strut"))
@@ -541,6 +586,15 @@ readvtail(x) = read_input(x, vtail, dvtail)
     parg[igrhv]   = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----
+
+# ---------------------------------
+# Recalculate cabin length
+if calculate_cabin #Resize the cabin if desired, keeping deltas
+    @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
+
+    update_fuse_for_pax!(pari, parg, parm, fuse_tank) #update fuselage dimensions
+end
+# ---------------------------------
 
 # ---------------------------------
 # Structures
@@ -792,34 +846,32 @@ dweight = dprop["Weight"]
 
 # Heat exchangers
 
-try #If heat exchanger field exists in the input file
-    HEx = readprop("HeatExchangers")
-    dHEx = dprop["HeatExchangers"]
-        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
-        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-        pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
-        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
-        
-        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
-        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+HEx = readprop("HeatExchangers")
+dHEx = dprop["HeatExchangers"]
+    pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
+    pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
+    pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
+    pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+    
+    pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
+    pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
+    pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
 
-        pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
-        pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
-        pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+    pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
+    pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
+    pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
 
-        pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
-        pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
-        pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+    pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
+    pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
+    pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
 
-        pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
-        pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
-        pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
-catch #Do nothing if the heat exchanger field does not exist
-end
+    pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
+    pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
+    pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+
 
 return TASOPT.aircraft(name, description,
-        pari, parg, parm, para, pare, sized)
+    pari, parg, parm, para, pare, [false], fuse_tank)
 
 end
 
