@@ -3,6 +3,8 @@
 
 # Fuselage weight
   gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail,
+  ifwing, nftanks, xblend1, xblend2,
+  Waftfuel, Wftank, ltank, xftankaft, tank_placement,
   fstring, fframe, ffadd, deltap,
   Wpwindow, Wppinsul, Wppfloor,
   Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
@@ -16,6 +18,15 @@
   sigskin, sigbend, rhoskin, rhobend,
   Eskin, Ebend, Gskin = [9.810,
     6.0, 13350.00, 172215.0, 60275.25, 17221.50, 6027.5250, 0.00,
+    1,
+    0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    "",
     0.34999999999999998,
     0.25000000000000000,
     0.20000000000000001,
@@ -60,7 +71,9 @@
 
   Waftfuel = 0.0
   xfuel = 0.0
-  out = TASOPT.fusew(Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, Waftfuel,
+  out = TASOPT.fusew(Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Wengtail, 
+  ifwing, nftanks, xblend1, xblend2,
+  Waftfuel, Wftank, ltank, xftankaft,tank_placement,
     fstring, fframe, ffadd, deltap,
     Wpwindow, Wppinsul, Wppfloor,
     Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,

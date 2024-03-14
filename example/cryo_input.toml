@@ -1,10 +1,10 @@
-# This TOML file has the inputs for a sample aircraft using heat exchangers in the engine
+# This TOML file has the inputs for a sample aircraft with a cryogenic fuel using heat exchangers in the engine
 ["Aircraft Description"]
-name = "Default TASOPT Model with HX"
+name = "TASOPT Model with cryo fuel and HX"
     description = """737-800
     This file is a slightly modified version of the default TASOPT file. It replaces the fuel
-    with methane (but does not make the corresponding fuel system changes, like fuselage storage and insulation) 
-    to demonstrate the heat exchanger capabilities.
+    with liquid hydrogen and makes the corresponding fuel system changes such as fuselage storage and insulation. It
+    also demonstrates the heat exchanger capabilities in the engine model.
     """
 
 #-------------------------------------------------#
@@ -44,13 +44,31 @@ name = "Default TASOPT Model with HX"
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "CH4" # Choices are ... [TODO]
-    fuel_in_wing    = true # Is fuel stored in wings?
-    fuel_in_wingcen = true # Is fuel stored in wing center box?
+    fuel_type       = "LH2" # Choices are ... [TODO]
+    fuel_in_wing    = false # Is fuel stored in wings?
+    fuel_in_wingcen = false # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
-    fuel_temp = 90.0
-    fuel_density = 817.0 #kg/m3
+    fuel_temp = 20.0
+    fuel_density = 70.0 #kg/m3
+
+[Fuel.Storage]
+    tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
+    insulation_segment_base_thickness = [0.05,0.05,0.05] #m
+    insulation_thicknesses_design_indices = [1,2,3]
+
+    #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35"
+    insulation_material = ["polyurethane32","polyurethane32","polyurethane32"] 
+
+    skin_yield_strength = "172e6 Pa"
+    tank_skin_density = 2825 #kg/m^3
+    maximum_boiloff_rate = 0.15 #%/hour
+    tank_aspect_ratio = 2.0
+    fuselage_clearance = "0.3 ft"
+    tank_pressure = "2 atm"
+    stiffener_mass_fraction = 0.1
+    additional_mass_fraction = 0.1
+    heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
@@ -102,7 +120,7 @@ name = "Default TASOPT Model with HX"
     cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
-    radius = "77 in"       # Fuselage radius
+    radius = "100 in"       # Fuselage radius
     dRadius = "15 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "5.0 in" # depth of floor beams
@@ -117,6 +135,10 @@ name = "Default TASOPT Model with HX"
     HT_load_fuse_bend_relief = 0.4 
     VT_load_fuse_bend_relief = 0.7
 # Overall fuselage layout
+    #Use provided layout (false) or recalculate it (true) for design pax keeping deltas
+    calculate_cabin_length = true 
+
+    #Provided layout
     x_nose_tip           = "0 ft"
     x_pressure_shell_fwd = "17 ft"
     x_start_cylinder     = "20 ft"
@@ -453,11 +475,11 @@ name = "Default TASOPT Model with HX"
     intercooler_inlet_mach = 0.1
 
     regenerative_order = 4
-    regenerative_effectiveness = 0
+    regenerative_effectiveness = 0.8
     regenerative_inlet_mach = 0.2
 
     turbine_cooler_order = 3
-    turbine_cooler_effectiveness = 0.6
+    turbine_cooler_effectiveness = 0
     turbine_cooler_inlet_mach = 0.02
     
 [Propulsion.Weight]
