@@ -466,10 +466,10 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_prop_offt = Dict()
         #TODO: check if htese expressions are correct (Wpax)
         #Also, check matrix slicing thing here too
-        d_prop_offt["LPC_mass_offtake_per_pax"] = ac_g[igmofWpay]*ac_g[igWpax]
+        d_prop_offt["LPC_mass_offtake_per_pax"] = ac_g[igmofWpay]*ac_m[imWperpax, 1]
         d_prop_offt["LPC_mass_offtake_per_max_mass"] = ac_g[igmofWMTO]*gee
 
-        d_prop_offt["Low_spool_power_offtake_per_pax"] = ac_g[igPofWpay]*ac_g[igWpax]
+        d_prop_offt["Low_spool_power_offtake_per_pax"] = ac_g[igPofWpay]*ac_m[imWperpax, 1]
         d_prop_offt["Low_spool_power_offtake_per_max_mass"] = ac_g[igPofWMTO]*gee
 
         d_prop_offt["Tt_offtake_air"] = ac_e[ieTt9,1,1]

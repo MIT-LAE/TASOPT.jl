@@ -372,7 +372,6 @@
       const ig_MW = 299
       const ighfuel      = 300
       const igTfuel      = 301
-      const igWpax = 302
 
       const igxftankaft  = 302
       const igdxcabin  = 303
