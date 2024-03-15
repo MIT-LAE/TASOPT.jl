@@ -7,7 +7,7 @@
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+      - `fuse_tank::Struct`: structure with tank parameters.
       - `ρfuel::Float64`: Fuel density (kg/m^3).
       - `Rfuse::Float64`: Fuselage radius (m).
       - `dRfuse::Float64`: Subtraction factor accounting for fuselage flatness (m).
@@ -58,7 +58,6 @@ function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
 #TODO: these hardcoded parameters are not elegant
       weld_eff = 0.9 #lower strength due to welding
       
-
       sa = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
       
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
@@ -84,19 +83,19 @@ function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
 #--- tank cross-section geometric parameters
       wfblim = max( min( wfb , Rtank) , 0.0 )
       thetafb = asin(wfblim / Rtank)
-      hfb = sqrt(Rtank^2 - wfb^2)
-      sin2t = 2.0 * hfb * wfb / Rtank^2
 
 #--- areas
-      Askin = (2.0*π+4.0*nfweb*thetafb)*Rtank*tskin + 2.0*dRfuse*tskin # Cross-sectional area of the cylindrical part
+      Scyl = (2.0*π+4.0*nfweb*thetafb)*Rtank*l_cyl + 2.0*dRfuse*l_cyl # Surface area of cylindrical part
       #Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
       #Atank = (π + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse #+ 2.0*(Rtank+nfweb*wfb)*dRfuse
       Shead = (2.0*π + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
                                                                                           # but just as a note to reader this comes from  semi- oblate spheroid surf area is ≈ 2π×R²[1/3 + 2/3×(1/AR)^1.6]^(1/1.6)
 #--- component volumes
-      Vcyl  = Askin*l_cyl    # volume of the metal in the cylindrical part
+      Vcyl  = Scyl*tskin    # volume of the metal in the cylindrical part
       #Vhead = Shead*tskin
       Vhead = Shead * t_head # volume of head
+
+      Sinternal = Scyl + Shead
 
 #--- weights and weight moments
       Whead = rhoskin*gee*Vhead
@@ -142,7 +141,7 @@ function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
 
-return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead_insul, l_tank
+return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead_insul, l_tank
 end
 
 """

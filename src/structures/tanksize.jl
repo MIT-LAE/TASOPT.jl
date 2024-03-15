@@ -87,7 +87,7 @@ function tanksize(fuse_tank, ρfuel,
         #Evaluate tank weight
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
-        Shead_insul, l_tank = tankWmech(fuse_tank, fuse_tank.t_insul, ρfuel,
+        Sinternal, Shead_insul, l_tank = tankWmech(fuse_tank, fuse_tank.t_insul, ρfuel,
                                         Rfuse, dRfuse, wfb, nfweb,
                                         Wfuel)
 
@@ -147,7 +147,7 @@ function res_MLI_thick(x, fuse_tank, ρfuel,
         end
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(fuse_tank, t_all, ρfuel,
+        Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead, l_tank = tankWmech(fuse_tank, t_all, ρfuel,
         Rfuse, dRfuse, wfb, nfweb,
         Wfuel)
 

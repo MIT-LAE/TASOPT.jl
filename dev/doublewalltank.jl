@@ -2,7 +2,18 @@ using TASOPT
 using NLsolve
 using Roots
 
-
+mutable struct innertank()
+    ptank::Float64
+    sigskin::Float64
+    rhoskintank::Float64
+    ARtank::Float64
+    clearance_fuse::Float64
+    material_insul::Vector{String}
+    ftankstiff::Float64
+    ftankadd::Float64
+    ullage_frac::Float64
+    innertank() = new()
+end
 
 """
 doublewalled_tank calcualtes the weight and heat transfer of a 
@@ -27,63 +38,39 @@ ullage        : [-]   Ullage fraction - empty space in the tank for vapor
 subscript 1 represent inner tank, 2 is outer tank
 use of inner or outer for R (radius) is the inner and outer Radius of a wall
 """
-function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, fuse_clearance::Float64, 
-            Wfuel::Float64, ρfuel::Float64, ARtank::Float64, Δp::Float64, ullage::Float64,
-            σa_inner::Float64, ρinner::Float64,ew::Float64,
-            rho_insul::Array{Float64,1}, t_cond::Array{Float64,1}, 
+function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, clearance_fuse::Float64, 
+            Wfuel::Float64, ρfuel::Float64, ARtank::Float64, ptank::Float64, ullage_frac::Float64,
+            siginner::Float64, ρinner::Float64,ew::Float64,
+            material_insul::Vector{String}, t_cond::Array{Float64,1}, 
             m_boiloff::Float64,
             σa_outer::Float64, ρouter::Float64, E_outer::Float64,
-            Nstiff_in, θin_support, θout_support1,θout_support2, poiss)
+            Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankstiff, ftankadd, ullage_frac)
   
-    # Input paramters:
-    β = 2.0
-    # Add an additional pressure factor
-    Δpdes = Δp*β
-    
-    Rtank1_outer =  Rfuse - fuse_clearance - sum(t_cond) # Outer Radius of inner vessel
+        
+    inner_tank = innertank() #instantiate tank object
+    inner_tank.ftankstiff = ftankstiff
+    inner_tank.ftankadd = ftankstiff
+    inner_tank.ptank = ptank
+    inner_tank.sigskin = siginner
+    inner_tank.material_insul = material_insul
+    inner_tank.rhoskintank = ρinner
+    inner_tank.clearance_fuse = clearance_fuse
+    inner_tank.ARtank = ARtank
+    inner_tank.ullage_frac = ullage_frac
 
-    t_cyl1 = Δpdes * (2 * Rtank1_outer) / (2 * σa_inner * ew + 0.8 * Δpdes) # Min thickness of (inner) cylindrical vessel ASME pressure vessel
+    _, l_cyl1, t_cyl1, Rtank1_outer, Vfuel, Wtank1, _, Winsul_sum, 
+    t_head1, Whead1, Wcyl1, Winsul, S_inner, Shead_insul, _ =
+                tankWmech(inner_tank, t_cond, ρfuel,
+                Rfuse, dRfuse, wfb, nfweb,
+                Wfuel)
 
-    Rtank1_inner = Rtank1_outer - t_cyl1  # Inner radius of inner vessel (Rtank)
-    # tfweb = 2.0 * Δpdes * wfb  / σa_inner
-    Lhead1 = Rtank1_inner/ARtank       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
-    # println(Rtank1_inner)
-    K = (1/6) * (ARtank^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
-    t_head1 = Δpdes* (2*Rtank1_outer) * K/ (2 * σa_inner * ew + 2 * Δpdes * (K-.1)) #Verstraete
-
-    #--- Calculate length of cylindrical portion
-    Wfuel_tot = Wfuel + (m_boiloff * gee)
-    Vfuel = Wfuel_tot / (gee * ρfuel)
-    Vinternal = (1 + ullage)*Vfuel 
-    V_ellipsoid = 2π*(Rtank1_inner^3/ARtank)/3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/ARtank, b=c=R
-                                    # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
-    V_cylinder_internal = Vinternal - 2*V_ellipsoid
-    l_cyl1 = V_cylinder_internal / (π * (Rtank1_inner^2))
-#--- area, vol, weight metal
-    Scyl1 = 2.0*Rtank1_inner*l_cyl1 + 2.0*dRfuse*l_cyl1 # Cross-sectional area of the cylindrical part
-    #Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-    #Atank = (π + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse #+ 2.0*(Rtank+nfweb*wfb)*dRfuse
-    Shead1 = 2.0*π*Rtank1_inner^2* (1.0/3.0 + 2.0/3.0*(1/ARtank)^1.6) ^ (1/1.6) # This form is better for insul thickness 
-    
-    S_inner = Scyl1 + Shead1
-    
-    #--- component volumes
-    Vcyl1  = Scyl1*t_cyl1    # volume of the metal in the cylindrical part
-    Vhead1 = Shead1 * t_head1 # volume of head
-
-    #--- weights and weight moments
-    Whead1 = ρinner*gee*Vhead1
-    Wcyl1  = ρinner*gee*Vcyl1
-    Wtank1 = (Wcyl1 + 2*Whead1)
-
-    W_inner = Wfuel_tot + Wtank1
     
 ## Stiffening
-    ϕlist, klist, ϕmax, kmax = stiffeners_bendingM(θin_support)
+    ϕlist, klist, ϕmax, kmax = stiffeners_bendingM(θin_support) #TODO check this function
     Mmax = kmax * Rtank1_outer* (W_inner/Nstiff_in) /(2π) #use outer dia for now
     Zmax = Mmax/σa_inner
         
-    #Use standard metric beams to get weights per unit length
+    #Use standard metric beams to get weights per unit length #TODO these discontinuities may cause numerical issues
     if Zmax < 89.9e-6
         # W 100 x 100 x 19.3
         W′ = 19.3 # kg/m
@@ -94,36 +81,10 @@ function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, fuse_clearance::Flo
         W′=27.5 # 13 x 13 x 27.5
     end
        
-    # println("$W′")
     W_stiffners1 = Nstiff_in * 2π*Rtank1_outer * W′ * gee
-    # println("$W_stiffners1, $(Wcyl1 + Whead1) ")
     Wtank1 = W_stiffners1 + (Wcyl1 + Whead1) # update with stiffener weight
 
     W_inner = Wfuel_tot + Wtank1
-
-    ########## Insulation weight : foam + vapor barrier + sheet + "vac" + sheet
-    N = length(t_cond)
-    Vcyl_insul = zeros(N)
-    Winsul = zeros(N)
-    Sheads_insul = zeros(N)
-    Vheads_insul = zeros(N)
-    L = Lhead1 + t_cyl1
-
-    Ro = Ri = Rtank1_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
-    for n in 1:N
-          
-          Ro = Ro + t_cond[n]
-          L  = L  + t_cond[n]
-          # println("ARtank ≈ $(Ro/L)")
-          Vcyl_insul[n]  = (π * ( Ro^2 - Ri^2 ) * l_cyl1)
-          Sheads_insul[n] = (2.0*π )*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
-          Vheads_insul[n] = Sheads_insul[n] * t_cond[n]
-          Winsul[n] = (Vcyl_insul[n] + 2*Vheads_insul[n]) * rho_insul[n] * gee
-          # println("ARtank = $(Ro/L)")
-          Ri = Ro
-    end
-
-    Winsul_sum = sum(Winsul)
 
     ############### Outer vessel ############### 
 
@@ -139,7 +100,7 @@ function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, fuse_clearance::Flo
 
     Rtank2_inner = Rtank2_outer-t_cyl2
 
-    L_tank = l_cyl1+ 2*( (Rfuse-fuse_clearance) /ARtank)
+    l_tank = l_cyl1+ 2*( (Rfuse-fuse_clearance) /ARtank)
 
     Wtank = Wtank1 + Wtank2 + Winsul_sum 
     # println(" Wtank1 $Wtank1 Wtank2 $Wtank2 W_stiffners1 $W_stiffners1 W_stiffners2 $W_stiffners2 ")
@@ -152,12 +113,12 @@ function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, fuse_clearance::Flo
     # println("fadd = ", W_stiffners1/(Wtank_total - W_stiffners1))
     # println((Wtank_total - W_stiffners1)*(1+0.032413))
 
-    return Wtank_total,Wfuel_tot, Wtank, Vfuel, η, 
+    return Wtank_total, Wtank, Vfuel, η, 
             Whead1, Wcyl1, Wtank1, W_stiffners1, 
             Whead2, Wcyl2, Wtank2, W_stiffners2, N_outer_rings, Winsul_sum,
-            l_cyl1, L_tank, t_cyl1, t_head1, t_cyl2,t_head2, 
+            l_cyl1, l_tank, t_cyl1, t_head1, t_cyl2,t_head2, 
             Rtank1_outer, Rtank1_inner,  Rtank2_outer, Rtank2_inner,
-            S_inner,S_outer, Sheads_insul, Shead2,Scyl2,Shead1,Scyl1
+            S_inner,S_outer, Shead_insul, Shead1, Scyl1, Shead2, Scyl2
 
 end
 
@@ -365,6 +326,7 @@ function tank_thermal_vacumm(l_cyl::Float64  , Rtank1_outer::Float64,Rtank2_inne
         R_vac_rad = 1/(hradair * S_inner  )  # radiative resistance 
         R_vac_sum = R_mli[vac_index]*R_vac_conv*R_vac_rad/(R_mli[vac_index]+R_vac_conv+R_vac_rad) # parallel sum of MLI, conv and raditation
         # println("$R_vac_sum  $Rair_conv_rad $( R_vac_conv * R_vac_rad/( R_vac_conv + R_vac_rad )) ")
+
     else
         println("no conv")
         R_vac_conv=0.0
