@@ -46,9 +46,9 @@ function quickload_aircraft(datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samp
 
     @unpack name, description, pari, parg, parm, para, pare, sized = data
 
-    parm = nestedvectors2array(parm) 
-    para = nestedvectors2array(para) 
-    pare = nestedvectors2array(pare)
+    parm = convert(Array{Float64},nestedvectors2array(parm)) #conversion for type-consistency w constructors
+    para = convert(Array{Float64},nestedvectors2array(para))
+    pare = convert(Array{Float64},nestedvectors2array(pare))
 
     return TASOPT.aircraft(name, description,
         pari, parg, parm, para, pare, sized)
@@ -66,16 +66,27 @@ end
 
 Prepares a `dict` for output into .toml by:
     - replacing any multi-dimensional arrays with nested arrays (TOML library compatibility restriction),
-    - and applying this for any nested `dict`s.
+    - and recursively applying this for any nested `dict`s.
+    - Also replaces structs with dictionaries, then recursively applying this function.
 """
 function fix_dict_for_toml(dict::Dict)
     #deep copy of dictionary
     dict = deepcopy(dict)
     for (key, value) in dict
+        #if it's an array, convert to nested vectors
         if isa(value, Array) && ndims(value) >= 2
             dict[key] = array2nestedvectors(value)
+        #if it's another dict, pass it through this fxn
         elseif isa(value, Dict)
             dict[key] = fix_dict_for_toml(value)
+        #if it's a TOML-compatible value, assign directly
+        #TODO: convert structs to dictionaries for output 
+        elseif (value isa TOML.Internals.Printer.TOMLValue)
+            dict[key] = value
+        else #if not TOML-compatible
+            @warn "TOML cannot output the following `aircraft` field and will skip it: "*String(key)
+            # println("Field value: ", value)
+            delete!(dict, key)
         end
     end
     return dict
