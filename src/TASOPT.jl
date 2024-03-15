@@ -18,6 +18,7 @@ using Dates
 using ForwardDiff
 using Parameters
 using CSV, Tables
+using DocStringExtensions
 
 global const __TASOPTroot__ = @__DIR__
 
