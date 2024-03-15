@@ -44,12 +44,13 @@ function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, clearance_fuse::Flo
             material_insul::Vector{String}, t_cond::Array{Float64,1}, 
             m_boiloff::Float64,
             σa_outer::Float64, ρouter::Float64, E_outer::Float64,
-            Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankstiff, ftankadd, ullage_frac)
+            Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankadd, ullage_frac)
   
-        
+    
+    #Create structure with inner tank parameters for tankWmech()
     inner_tank = innertank() #instantiate tank object
-    inner_tank.ftankstiff = ftankstiff
-    inner_tank.ftankadd = ftankstiff
+    inner_tank.ftankstiff = 0.0 #stiffeners are sized explicitly later
+    inner_tank.ftankadd = ftankadd
     inner_tank.ptank = ptank
     inner_tank.sigskin = siginner
     inner_tank.material_insul = material_insul
