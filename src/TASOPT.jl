@@ -3,8 +3,6 @@ TASOPT
 """
 module TASOPT
 
-export atmos, size_aircraft!
-
 # Add basic pacakges required by TASOPT
 using Base: SignedMultiplicativeInverse
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
@@ -21,7 +19,7 @@ using ForwardDiff
 using Parameters
 using CSV, Tables
 
-const __TASOPTroot__ = @__DIR__
+global const __TASOPTroot__ = @__DIR__
 
 # Constants and array indices
 include("./misc/constants.jl")
@@ -39,7 +37,6 @@ export aircraft
 
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
-# export atmos
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
