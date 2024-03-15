@@ -1,7 +1,7 @@
-#TODO: Fill out docstring @ngomezve
 """
-
-
+$TYPEDEF
+Fuselage tank component. Usually for Hydrogen aircraft
+$TYPEDFIELDS
 """
 mutable struct fuselage_tank
     placement::String
@@ -43,26 +43,26 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 
 For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
-struct aircraft #inner constructor
-    name::String
-    description::String
+@kwdef struct aircraft #inner constructor
+    name::String = "Untitled Aircraft"
+    description::String = "Indescribable"
     pari::AbstractVector{Int64}
     parg::AbstractVector{Float64}
     parm::AbstractArray{Float64}
     para::AbstractArray{Float64}
     pare::AbstractArray{Float64}
     
-    sized::AbstractVector{Bool}
-    fuse_tank::fuselage_tank
+    sized::AbstractVector{Bool} = [false]
+    fuse_tank::fuselage_tank = fuselage_tank()
 end
 
-#TODO: sort out a robust meta-structure such that new individual constructors aren't required
-#outer constructor for if `sized` and fuse_tank not given
-function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
-        parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, [false])
-end
-#constructor for if fuse_tank not given
+# #TODO: sort out a robust meta-structure such that new individual constructors aren't required
+# #outer constructor for if `sized` and fuse_tank not given
+# function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
+#         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}) 
+#         return aircraft(name, description, pari, parg, parm, para, pare, [false])
+# end
+# #constructor for if fuse_tank not given
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
