@@ -67,6 +67,32 @@ $TYPEDFIELDS
     Emax::Float64
 end
 
+"""
+    insulator(material::String)
+
+Outer constructor for `insulator` types. 
+Material specified needs to have the following data in the database:
+- ρ (density): Density [kg/m³]
+- Emax (dielectric strength): Dielectric strength [V/m]
+"""
+function insulator(material::String)
+    local MatProp, ρ, Emax
+    try
+        MatProp = MaterialProperties[material]
+    catch
+        error("Cannot find $material in Material Properties database")
+    else
+        try
+            ρ = MatProp["density"]
+            Emax = MatProp["dielectric_strength"]
+        catch 
+            error("Insufficient data in database for $material to build an insulator")
+        else
+            insulator(ρ, Emax)
+        end
+    end
+
+end
 # struct SturctAlloy <: Metals
 #     UTS
 #     E
@@ -92,20 +118,6 @@ function resistivity(cond::conductor, T::Float64=293.15)
     ΔT = T - cond.T0
     return cond.resistivity*(1 + cond.α*ΔT)
 end  # function resistivity
-
-#-------------------------------------------------------------
-# Standard materials taken from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials
-const Al = aluminium = conductor(ρ = 2700.0, resistivity = 2.65e-8, α = 3.90e-3)
-const Cu = copper = conductor(ρ =  8960.0, resistivity = 1.68e-8, α = 4.04e-3)
-const Ag = silver = conductor(ρ = 10490.0, resistivity = 1.59e-8, α = 3.80e-3)
-const Au = gold   = conductor(ρ = 19300.0, resistivity = 2.44e-8, α = 3.40e-3)
-
-# Insulators
-const PTFE = insulator(ρ = 2150.0, Emax = 19.7e6)
-const PEEK = insulator(ρ = 1320.0, Emax = 23e6)
-const polyimide = insulator(ρ = 1700, Emax = 10e6) # Dowdle et al https://doi.org/10.2514/6.2018-5026
-
-
 
 """
     create_dict(material::AbstractMaterials)
