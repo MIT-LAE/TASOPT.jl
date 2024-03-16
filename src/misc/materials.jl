@@ -1,6 +1,9 @@
 abstract type AbstractMaterials end
 
-MaterialProperties = TOML.parsefile("src/material_data/MaterialProperties.toml")
+using TOML, DocStringExtensions
+
+__abs_path_prefix__ = dirname(@__DIR__)
+MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
 
 """
 $TYPEDEF
