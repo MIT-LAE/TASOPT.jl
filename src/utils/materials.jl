@@ -1,8 +1,6 @@
 abstract type AbstractMaterials end
-abstract type Metals <: AbstractMaterials end
-abstract type Dielectrics <: AbstractMaterials end
 
-MatProp = TOML.parsefile("src/material_data/MaterialProperties.toml")
+MaterialProperties = TOML.parsefile("src/material_data/MaterialProperties.toml")
 
 
 """
@@ -12,7 +10,7 @@ Generic conductor.
 
 $TYPEDFIELDS
 """
-@kwdef struct conductor <: Metals
+@kwdef struct conductor <: AbstractMaterials
     """Density [kg/m³]"""
     ρ::Float64
     """Resistivity [Ω⋅m]"""
@@ -35,17 +33,17 @@ Material specified needs to have the following data in the database:
 - T0: Temperature at base resistivity [K]
 """
 function conductor(material::String)
-    local dict, ρ, resistivity, α, T0
+    local MatProp, ρ, resistivity, α, T0
     try
-        dict = MatProp[material]
+        MatProp = MaterialProperties[material]
     catch
         error("Cannot find $material in Material Properties database")
     else
         try
-            ρ = dict["density"]
-            resistivity = dict["resistivity"]
-            α = dict["alpha"]
-            T0 = dict["T0"]
+            ρ = MatProp["density"]
+            resistivity = MatProp["resistivity"]
+            α = MatProp["alpha"]
+            T0 = MatProp["T0"]
         catch 
             error("Insufficient data in database for $material to build a conductor")
         else
@@ -62,7 +60,7 @@ Generic insulator.
 
 $TYPEDFIELDS
 """
-@kwdef struct insulator <: Dielectrics
+@kwdef struct insulator <: AbstractMaterials
     """Density [kg/m³]"""
     ρ::Float64
     """Dielectric strength [V/m]"""
