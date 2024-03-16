@@ -1,0 +1,72 @@
+# Default Material Properties for commonly used materials in TASOPT
+# All units are assumed to be in SI units
+[Al-6061]
+    description = "Aluminium 6061 alloy"
+    #Structural properties taken from here: https://www.matweb.com/search/DataSheet.aspx?MatGUID=626ec8cdca604f1994be4fc2bc6f7f63 
+    density = 2700.0 #kg/m3
+    youngs_modulus = 68.9e9 #Pa
+    shear_modulus = 26.0e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 55.2e6 #Yield tensile strength
+    UTS = 124e6  #Ultimate tensile strength
+    shear_strength = 82.7e6
+
+    #Electrical properties taken from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
+    resistivity = 2.65e-8
+    alpha = 3.90e-3
+    T0 = 293.15
+
+[Ti-6242]
+    description = "Titanium 6242 alloy"
+    #Structural properties: https://www.matweb.com/search/datasheet_print.aspx?matguid=66f20965748441d8916768ed80be0cba
+    density = 4540.0 #kg/m3
+    youngs_modulus = 120e9 #Pa
+    shear_modulus = 45.5e9 #Pa
+    poissons_ratio = 0.32
+    YTS = 990e6 #Yield tensile strength
+    UTS = 1010e6  #Ultimate tensile strength
+    shear_strength = 82.7e6
+
+# -----------------------------------------------------
+# Generic conductors with electrical properties taken 
+# from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
+# -----------------------------------------------------
+[Cu]
+    description = "Generic copper"
+    density = 8960.0
+    resistivity = 1.68e-8
+    alpha = 4.04e-3
+    T0 = 293.15
+
+[Au]
+    description = "Generic gold"
+    density = 19300.0
+    resistivity = 2.44e-8
+    alpha = 3.40e-3
+    T0 = 293.15
+
+[Ag]
+    description = "Generic silver"
+    density = 10490.0
+    resistivity = 1.59e-8
+    alpha = 3.80e-3
+    T0 = 293.15
+
+# -----------------------------------------------------
+# Generic insulators
+# -----------------------------------------------------
+[PTFE]
+    description = ""
+    density = 2150.0
+    dielectric_strength = 19.7e6
+
+[PEEK]
+    description = ""
+    density = 1320.0
+    dielectric_strength = 23e6
+
+[polyamide]
+    description = "Generic polyamide"
+    #Dowdle et al https://doi.org/10.2514/6.2018-5026
+    density = 1700.0
+    dielectric_strength = 10e6
