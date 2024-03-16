@@ -2,7 +2,7 @@
 # All units are assumed to be in SI units
 [Al-6061]
     description = "Aluminium 6061 alloy"
-    #Structural properties taken from here: https://www.matweb.com/search/DataSheet.aspx?MatGUID=626ec8cdca604f1994be4fc2bc6f7f63 
+    source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=626ec8cdca604f1994be4fc2bc6f7f63"
     density = 2700.0 #kg/m3
     youngs_modulus = 68.9e9 #Pa
     shear_modulus = 26.0e9 #Pa
@@ -15,6 +15,19 @@
     resistivity = 2.65e-8
     alpha = 3.90e-3
     T0 = 293.15
+
+[Al-7075]
+    description = """General 7075 characteristics and uses (from Alcoa): Very high strength material used for highly stressed structural parts. The T7351 temper offers improved stress-corrosion cracking resistance.
+                     Uses: Aircraft fittings, gears and shafts, fuse parts, meter shafts and gears, missile parts, regulating valve parts, worm gears, keys, aircraft, aerospace and defense applications."""
+
+    source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=6653b72914864cc0a0ff7adf5b720167"
+    density = 2810.0 #kg/m3
+    youngs_modulus = 72e9 #Pa
+    shear_modulus = 26.9e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 338e6 #Yield tensile strength
+    UTS = 505e6  #Ultimate tensile strength
+    shear_strength = 300e6
 
 [Ti-6242]
     description = "Titanium 6242 alloy"
