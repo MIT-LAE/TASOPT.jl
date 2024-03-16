@@ -5,6 +5,46 @@ abstract type Dielectrics <: AbstractMaterials end
 """
 $TYPEDEF
 
+Material properties covering a wide range of disciplines:
+
+$TYPEDFIELDS
+"""
+@kwdef struct MaterialProperties
+    # ---------------------
+    # Mass Properties
+    # ---------------------
+    """Density [kg/m³]"""
+    ρ::Float64
+    # ---------------------
+    # Structural Properties
+    # ---------------------
+    """Young's Modulus [Pa]"""
+    E::Float64
+    """Shear Modulus [Pa]"""
+    G::Float64
+    """Poisson's Ratio [-]"""
+    ν::Float64
+    """Maximum Stress [Pa] (Yield or Ultimate Strength)"""
+    σmax::Float64
+    """Maximum Shear [Pa]"""
+    τmax::Float64
+    # ---------------------
+    # Electric Properties
+    # ---------------------
+    """Resistivity [Ω⋅m]"""
+    resistivity::Float64
+    """Thermal coefficient of resitivity [K⁻¹]"""
+    α::Float64
+    """Temperature at base resistivity [K]"""
+    T0::Float64 = 293.15 # 20°C
+    """Dielectric strength [V/m]"""
+    Emax::Float64
+
+end
+
+"""
+$TYPEDEF
+
 Generic conductor.
 
 $TYPEDFIELDS
