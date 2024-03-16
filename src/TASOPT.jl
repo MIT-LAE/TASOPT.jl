@@ -31,6 +31,9 @@ include("./misc/units.jl")
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
 
+include("./misc/materials.jl")
+export StructuralAlloy, Conductor, Insulator
+
 include("./misc/index.inc")
 include("./misc/aircraft.jl")
 export aircraft
