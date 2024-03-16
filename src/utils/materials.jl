@@ -2,6 +2,8 @@ abstract type AbstractMaterials end
 abstract type Metals <: AbstractMaterials end
 abstract type Dielectrics <: AbstractMaterials end
 
+MatProp = TOML.parsefile("src/material_data/MaterialProperties.toml")
+
 """
 $TYPEDEF
 
@@ -61,13 +63,22 @@ $TYPEDFIELDS
 end
 
 
+function conductor(material::String)
+    local dict, ρ, resistivity, α, T0
+    try
+        dict = MatProp[material]
+    catch
+        error("Cannot find $material in Material Properties database")
+    end
 
-
-function conductor(dict::AbstractDict)
-    ρ = dict["ρ"]
-    resistivity = dict["resistivity"]
-    α = dict["α"]
-    T0 = dict["T0"]
+    try
+        ρ = dict["density"]
+        resistivity = dict["resistivity"]
+        α = dict["alpha"]
+        T0 = dict["T0"]
+    catch 
+        error("Insufficient data in database for $material to build a conductor")
+    end
     conductor(ρ, resistivity, α, T0)
 end
 
@@ -125,8 +136,29 @@ const polyimide = insulator(ρ = 1700, Emax = 10e6) # Dowdle et al https://doi.o
 
 
 
+"""
+    create_dict(material::AbstractMaterials)
+
+Creates a dictionary from a given AbstractMaterials subtype
+"""
 function create_dict(material::AbstractMaterials)
     fn = fieldnames(typeof(material))
-    dict = Dict(typeof(material) => Dict(fn .=> getproperty.([material], fn)))
+    dict = Dict("Material" => Dict(fn .=> getproperty.([material], fn)))
 end
 
+"""
+    save_material_toml(filename::String, dict::AbstractDict)
+
+Takes a filename and dict and saves a TOML file
+"""
+function save_material_toml(filename::String, dict::AbstractDict)
+    if splitext(filename)[end] == ""
+        filename = filename*".toml"
+    end
+    open(filename, "w") do io
+        TOML.print(io, dict)
+    end
+end  # function save_material_toml
+
+save_material_toml(filename::String, material::AbstractMaterials) = 
+save_material_toml(filename, create_dict(material))
