@@ -149,11 +149,6 @@ function Insulator(material::String)
     end
 
 end
-# struct SturctAlloy <: Metals
-#     UTS
-#     E
-#    < and so on... >
-# end
 
 """
     resxden(cond::conductor)
