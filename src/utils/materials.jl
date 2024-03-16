@@ -25,7 +25,7 @@ struct StructuralAlloy <: AbstractMaterials
 end
 
 """
-    StructuralAlloy(material::String)
+    StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.0)
 
 Outer constructor for `StructuralAlloy` types. 
 Material specified needs to have the following data in the database:
@@ -36,7 +36,7 @@ Material specified needs to have the following data in the database:
 - σmax: Maximum Stress (Yield or Ultimate Strength) [Pa]
 - τmax: Maximum Shear [Pa]
 """
-function StructuralAlloy(material::String)
+function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.5)
     local MatProp, ρ, E, G, ν, σmax, τmax
     try
         MatProp = MaterialProperties[material]
@@ -48,8 +48,8 @@ function StructuralAlloy(material::String)
             E    = MatProp["youngs_modulus"]
             G    = MatProp["shear_modulus"]
             ν    = MatProp["poissons_ratio"]
-            σmax = MatProp["YTS"]
-            τmax = MatProp["shear_strength"]
+            σmax = MatProp["YTS"]/max_avg_stress/safety_factor
+            τmax = MatProp["shear_strength"]/max_avg_stress/safety_factor
         catch 
             error("Insufficient data in database for $material to build a StructuralAlloy")
         else
