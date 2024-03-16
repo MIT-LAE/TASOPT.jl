@@ -4,45 +4,6 @@ abstract type Dielectrics <: AbstractMaterials end
 
 MatProp = TOML.parsefile("src/material_data/MaterialProperties.toml")
 
-"""
-$TYPEDEF
-
-Material properties covering a wide range of disciplines:
-
-$TYPEDFIELDS
-"""
-@kwdef struct MaterialProperties
-    # ---------------------
-    # Mass Properties
-    # ---------------------
-    """Density [kg/m³]"""
-    ρ::Float64
-    # ---------------------
-    # Structural Properties
-    # ---------------------
-    """Young's Modulus [Pa]"""
-    E::Float64
-    """Shear Modulus [Pa]"""
-    G::Float64
-    """Poisson's Ratio [-]"""
-    ν::Float64
-    """Maximum Stress [Pa] (Yield or Ultimate Strength)"""
-    σmax::Float64
-    """Maximum Shear [Pa]"""
-    τmax::Float64
-    # ---------------------
-    # Electric Properties
-    # ---------------------
-    """Resistivity [Ω⋅m]"""
-    resistivity::Float64
-    """Thermal coefficient of resitivity [K⁻¹]"""
-    α::Float64
-    """Temperature at base resistivity [K]"""
-    T0::Float64 = 293.15 # 20°C
-    """Dielectric strength [V/m]"""
-    Emax::Float64
-
-end
 
 """
 $TYPEDEF
@@ -63,23 +24,35 @@ $TYPEDFIELDS
 end
 
 
+"""
+    conductor(material::String)
+
+Outer constructor for `conductor` types. 
+Material specified needs to have the following data in the database:
+- ρ (density): Density [kg/m³]
+- resistivity: Resistivity [Ω⋅m]
+- α (alpha: Thermal coefficient of resisitivity [K⁻¹]
+- T0: Temperature at base resistivity [K]
+"""
 function conductor(material::String)
     local dict, ρ, resistivity, α, T0
     try
         dict = MatProp[material]
     catch
         error("Cannot find $material in Material Properties database")
+    else
+        try
+            ρ = dict["density"]
+            resistivity = dict["resistivity"]
+            α = dict["alpha"]
+            T0 = dict["T0"]
+        catch 
+            error("Insufficient data in database for $material to build a conductor")
+        else
+            conductor(ρ, resistivity, α, T0)
+        end
     end
 
-    try
-        ρ = dict["density"]
-        resistivity = dict["resistivity"]
-        α = dict["alpha"]
-        T0 = dict["T0"]
-    catch 
-        error("Insufficient data in database for $material to build a conductor")
-    end
-    conductor(ρ, resistivity, α, T0)
 end
 
 """
