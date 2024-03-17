@@ -34,7 +34,7 @@ export convertMass, convertForce, convertDist,
 
 include("./misc/index.inc")
 include("./misc/aircraft.jl")
-export aircraft
+export aircraft, fuselage_tank
 
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
