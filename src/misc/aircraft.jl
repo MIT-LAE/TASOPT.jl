@@ -43,7 +43,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 
 For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
-@kwdef struct aircraft #inner constructor
+Base.@kwdef struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
     pari::AbstractVector{Int64}
