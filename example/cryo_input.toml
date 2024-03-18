@@ -67,6 +67,7 @@ name = "TASOPT Model with cryo fuel and HX"
     additional_mass_fraction = 0.1
     ullage_fraction = 0.1 
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
+    weld_efficiency = 0.9 
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)

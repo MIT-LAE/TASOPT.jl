@@ -126,6 +126,7 @@ function res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
         qfac = fuse_tank.qfac
         iinsuldes = fuse_tank.iinsuldes
         Tfuel = fuse_tank.Tfuel
+        Wfuel = fuse_tank.Wfuelintank
 
         # Extract states
         Δt = x[1]

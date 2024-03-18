@@ -54,7 +54,7 @@ fuse_tank.Wfuelintank = 1e5
     outputs_thermal = TASOPT.structures.tankWthermal(l_cyl, l_tank, r_tank, Shead, fuse_tank.material_insul,
                       hconvgas, 
                       fuse_tank.t_insul,
-                      Tfuel, z, Mair, xftank,
+                      fuse_tank.Tfuel, z, Mair, xftank,
                       time_flight, ifuel, fuse_tank.qfac)
 
     outputs_thermal_check = (107.0336391563202, 0.00424736663318731)
