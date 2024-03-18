@@ -33,18 +33,23 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-                      t_cond::Array{Float64,1},
-                      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
-                      time_flight::Float64, ifuel::Int64, qfac::Float64)
+function tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
 
+      t_cond = fuse_tank.t_insul
+      Tfuel = fuse_tank.Tfuel
+      qfac = fuse_tank.qfac
+
+      Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
+      Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
+
+      #Create struct with thermal parameters
       p = thermal_params()
       p.l_cyl = l_cyl
       p.l_tank = l_tank
       p.r_tank = r_tank
       p.Shead = Shead
       p.t_cond = t_cond
-      p.material = material_insul
+      p.material = fuse_tank.material_insul
       p.Tfuel = Tfuel
       p.z = z
       p.Mair = Mair

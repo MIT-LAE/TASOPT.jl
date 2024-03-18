@@ -64,9 +64,9 @@ name = "TASOPT Model with cryo fuel and HX"
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
     
     #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum"
-    insulation_material = ["polyurethane32","polyurethane32","polyurethane32"] 
-    insulation_segment_base_thickness = [0.05,0.05,0.05] #m
-    size_insulation = true #Flag to decide whether to size insulation for boiloff
+    insulation_material = ["vacuum"] 
+    insulation_segment_base_thickness = [0.065] #m
+    size_insulation = false #Flag to decide whether to size insulation for boiloff
 
     cruise_boiloff_rate = 0.15 #%/hour, used if size_insulation == true
     insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if size_insulation == true

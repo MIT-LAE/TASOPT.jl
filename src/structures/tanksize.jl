@@ -36,42 +36,50 @@ function tanksize(fuse_tank, z, Mair, xftank,
                       time_flight, ifuel)
 
         #Unpack variables in fuse_tank
-        boiloff_percent = fuse_tank.boiloff_rate
         t_cond = fuse_tank.t_insul
-        iinsuldes = fuse_tank.iinsuldes
         Wfuel = fuse_tank.Wfuelintank
         Tfuel = fuse_tank.Tfuel
+        flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
 
-        m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
+        if flag_size #If insulation is sized for a given boiloff rate
+                boiloff_percent = fuse_tank.boiloff_rate
+                iinsuldes = fuse_tank.iinsuldes
 
-        #Create inline function with residuals as a function of x
-        residual(x) = res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
+                #Thermal calculations
+                _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
 
-        _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
+                ΔT = Taw - Tfuel
 
-        ΔT = Taw - Tfuel
+                #Create inline function with residuals as a function of x
+                residual(x) = res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
+                #Assemble guess for non linear solver
+                #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
+                guess = zeros(length(t_cond) + 2) 
+                guess[1] = 0.0
+                guess[2] = Tfuel + 1
 
-        #Assemble guess for non linear solver
-        #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
-        guess = zeros(length(t_cond) + 2) 
-        guess[1] = 0.0
-        guess[2] = Tfuel + 1
+                n_layers = length(t_cond)
+                for i = 1:n_layers
+                        guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                end
+                #Solve non-linear problem with NLsolve.jl
+                sol = nlsolve(residual, guess, ftol = 1e-7) 
+                Δt = sol.zero[1] 
 
-        n_layers = length(t_cond)
-        for i = 1:n_layers
-                guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                for ind in iinsuldes #For every segment whose thickness can be changed
+                        t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
+                end
+
+                mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
+                m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
+                
+        else #If insulation does not need to be sized
+                m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
-        #Solve non-linear problem with NLsolve.jl
-        sol = nlsolve(residual, guess, ftol = 1e-7) 
-        Δt = sol.zero[1] 
-
-        for ind in iinsuldes #For every segment whose thickness can be changed
-                t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
-        end
+        
         thickness_insul = sum(t_cond)
-
+        
         #Evaluate tank weight
-        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
         Sinternal, Shead_insul, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 

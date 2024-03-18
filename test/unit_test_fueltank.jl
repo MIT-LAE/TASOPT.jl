@@ -8,6 +8,7 @@ time_flight = 7*3600.0
 fuse_tank = TASOPT.fuselage_tank()
 fuse_tank.ptank = 2e5
 fuse_tank.t_insul = [0.15,0.15,0.15]
+fuse_tank.size_insulation = true
 fuse_tank.material_insul = ["rohacell41S", "rohacell41S", "polyurethane27"]
 fuse_tank.iinsuldes = [1,2,3]
 fuse_tank.ftankstiff = 0.1
@@ -50,10 +51,7 @@ fuse_tank.Wfuelintank = 1e5
     l_tank = outputs_mech_check[15]
     r_tank = outputs_mech_check[4]
     Shead = outputs_mech_check[14]
-    outputs_thermal = TASOPT.structures.tankWthermal(l_cyl, l_tank, r_tank, Shead, fuse_tank.material_insul,
-                      fuse_tank.t_insul,
-                      fuse_tank.Tfuel, z, Mair, xftank,
-                      time_flight, ifuel, fuse_tank.qfac)
+    outputs_thermal = TASOPT.structures.tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
 
     outputs_thermal_check = (107.0336391563202, 0.00424736663318731)
 
