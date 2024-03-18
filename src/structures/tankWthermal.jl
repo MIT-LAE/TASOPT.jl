@@ -18,7 +18,6 @@ for a given insulation thickness
       - `r_tank::Float64`: Tank outer radius (m).
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
       - `material_insul::Array{String,1}`: material name for each MLI layer.
-      - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
       - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
       - `Tfuel::Float64`: Fuel temperature (K).
       - `z::Float64`: flight altitude (m)
@@ -35,7 +34,6 @@ for a given insulation thickness
 See [here](@ref fueltanks).
 """
 function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-                      hconvgas::Float64,
                       t_cond::Array{Float64,1},
                       Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64, qfac::Float64)
@@ -45,7 +43,6 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       p.l_tank = l_tank
       p.r_tank = r_tank
       p.Shead = Shead
-      p.hconvgas = hconvgas
       p.t_cond = t_cond
       p.material = material_insul
       p.Tfuel = Tfuel
@@ -119,7 +116,6 @@ function residuals_Q(x, p, mode)
       l_tank = p.l_tank
       r_tank = p.r_tank
       Shead = p.Shead
-      hconvgas = p.hconvgas
       t_cond = p.t_cond
       material = p.material
       Tfuel = p.Tfuel
@@ -247,7 +243,6 @@ mutable struct thermal_params
       l_tank::Float64
       r_tank::Float64
       Shead::Array{Float64}
-      hconvgas::Float64
       t_cond::Array{Float64} 
       material::Array{String}
       Tfuel::Float64

@@ -1,5 +1,6 @@
 mutable struct fuselage_tank
     placement::String
+    size_insulation::Bool
     Wfuelintank::Float64
     Rfuse::Float64
     dRfuse::Float64

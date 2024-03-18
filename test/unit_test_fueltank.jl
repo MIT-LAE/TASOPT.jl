@@ -3,7 +3,6 @@ ifuel = 40
 z = 11e3
 Mair = 0.8
 xftank = 15.0
-hconvgas = 0.0
 time_flight = 7*3600.0
 
 fuse_tank = TASOPT.fuselage_tank()
@@ -52,7 +51,6 @@ fuse_tank.Wfuelintank = 1e5
     r_tank = outputs_mech_check[4]
     Shead = outputs_mech_check[14]
     outputs_thermal = TASOPT.structures.tankWthermal(l_cyl, l_tank, r_tank, Shead, fuse_tank.material_insul,
-                      hconvgas, 
                       fuse_tank.t_insul,
                       fuse_tank.Tfuel, z, Mair, xftank,
                       time_flight, ifuel, fuse_tank.qfac)

@@ -137,8 +137,6 @@ function res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
         Q_net = mdot_boiloff * h_v  # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
         Q = Q_net / qfac
 
-        hconvgas = 0.0
-
         #Assemble struct with parameters for residual_Q
         p = thermal_params()
         p.Q = Q #Store heat rate as it is known
@@ -146,7 +144,6 @@ function res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
         p.l_tank = l_tank
         p.r_tank = r_tank
         p.Shead = Shead
-        p.hconvgas = hconvgas
         p.t_cond = t_all
         p.material = fuse_tank.material_insul
         p.Tfuel = Tfuel
