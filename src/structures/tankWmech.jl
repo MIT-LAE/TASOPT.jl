@@ -156,12 +156,17 @@ function size_outer_tank(fuse_tank, l_cyl)
 
       pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
 
+      #Assumed parameters
+      L_Do = 0.5 #TODO get rid of this hack and size stiffeners properly
+
       #Calculate outer tank geometry
       Rtank_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse
       Do = 2 * Rtank_outer #outside diameter
 
-      #Find cylinder wall thickness. This applies to a long cylinder.
-      t_cyl = Do * (pc * (1 - poiss^2) / (2 * Eouter ))^(1/3) #cylindrical portion thickness, eq. (7.7) in Barron
+      #Find cylinder wall thickness. This applies to a short cylinder.
+      pressure_res(t_D) = 2.42*Eouter*(t_D)^(5/2) / ( (1 - poiss^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
+      t_Do = find_zero(pressure_res, 1e-3) #Find root with Roots.jl
+      t_cyl = t_Do * Do
 
       #Find head wall thickness
       if ARtank == 2.0
