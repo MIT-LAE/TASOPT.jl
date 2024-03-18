@@ -14,3 +14,4 @@ const cpSL = 1004.0
 const μAir = 1.78e-5
 const pref = 101320.00000000000
 const Tref = 288.19999999999999
+const σ_SB = 5.670374419e-8

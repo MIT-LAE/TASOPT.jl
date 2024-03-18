@@ -2,18 +2,6 @@ using TASOPT
 using NLsolve
 using Roots
 
-mutable struct innertank
-    ptank::Float64
-    sigskin::Float64
-    rhoskintank::Float64
-    ARtank::Float64
-    clearance_fuse::Float64
-    material_insul::Vector{String}
-    ftankstiff::Float64
-    ftankadd::Float64
-    ullage_frac::Float64
-    innertank() = new()
-end
 
 """
 doublewalled_tank calcualtes the weight and heat transfer of a 
@@ -38,52 +26,11 @@ ullage        : [-]   Ullage fraction - empty space in the tank for vapor
 subscript 1 represent inner tank, 2 is outer tank
 use of inner or outer for R (radius) is the inner and outer Radius of a wall
 """
-function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, clearance_fuse::Float64, 
-            Wfuel::Float64, ρfuel::Float64, ARtank::Float64, ptank::Float64, ullage_frac::Float64,
-            siginner::Float64, ρinner::Float64, ew::Float64,
-            material_insul::Vector{String}, t_cond::Array{Float64,1}, 
-            m_boiloff::Float64,
-            σa_outer::Float64, ρouter::Float64, E_outer::Float64,
-            Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankadd)
+function doublewalled_tank(fuse_tank)
   
-    
-    #Create structure with inner tank parameters for tankWmech()
-    inner_tank = innertank() #instantiate tank object
-    inner_tank.ftankstiff = 0.0 #stiffeners are sized explicitly later
-    inner_tank.ftankadd = ftankadd
-    inner_tank.ptank = ptank
-    inner_tank.sigskin = siginner
-    inner_tank.material_insul = material_insul
-    inner_tank.rhoskintank = ρinner
-    inner_tank.clearance_fuse = clearance_fuse
-    inner_tank.ARtank = ARtank
-    inner_tank.ullage_frac = ullage_frac
-
     _, l_cyl1, t_cyl1, Rtank1_outer, Vfuel, Wtank1, _, Winsul_sum, 
     t_head1, Whead1, Wcyl1, Winsul, S_inner, Shead_insul, _ =
-                tankWmech(inner_tank, t_cond, ρfuel,
-                Rfuse, dRfuse, wfb, nfweb,
-                Wfuel)
-
-    
-## Stiffening
-    ϕlist, klist, ϕmax, kmax = stiffeners_bendingM(θin_support) #TODO check this function
-    Mmax = kmax * Rtank1_outer* (W_inner/Nstiff_in) /(2π) #use outer dia for now
-    Zmax = Mmax/σa_inner
-        
-    #Use standard metric beams to get weights per unit length #TODO these discontinuities may cause numerical issues
-    if Zmax < 89.9e-6
-        # W 100 x 100 x 19.3
-        W′ = 19.3 # kg/m
-    elseif Zmax < 139.5e-6
-        # W 130 x 130 x 23.8
-        W′ = 23.8 # kg/m
-    else
-        W′=27.5 # 13 x 13 x 27.5
-    end
-       
-    W_stiffners1 = Nstiff_in * 2π*Rtank1_outer * W′ * gee
-    Wtank1 = W_stiffners1 + (Wcyl1 + Whead1) # update with stiffener weight
+                tankWmech(fuse_tank, fusetank.t_insul)
 
     W_inner = Wfuel_tot + Wtank1
 
@@ -91,13 +38,12 @@ function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, clearance_fuse::Flo
 
     # Collapsing pressure for "long" cylinder
     pc = 4*pSL
-    
-    Rtank2_outer = Rfuse - fuse_clearance 
-    N_outer_rings= optimize_outer(l_cyl1,Rtank2_outer,poiss,ρouter, σa_outer,E_outer,pc,W_inner,θout_support1,θout_support2,ARtank)
 
-    Wtank2,W_stiffners2,Wcyl2,
+    Rtank2_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse 
+    
+    Wtank2, Wcyl2,
     Whead2,S_outer,Shead2,Scyl2,
-    t_cyl2,t_head2 = size_outer_tank(N_outer_rings,l_cyl1,Rtank2_outer,poiss,ρouter,σa_outer, E_outer,pc,W_inner,θout_support1,θout_support2,ARtank)
+    t_cyl2,t_head2 = size_outer_tank(fuse_tank, l_cyl1, Rtank2_outer)
 
     Rtank2_inner = Rtank2_outer-t_cyl2
 
@@ -115,50 +61,26 @@ function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, clearance_fuse::Flo
     # println((Wtank_total - W_stiffners1)*(1+0.032413))
 
     return Wtank_total, Wtank, Vfuel, η, 
-            Whead1, Wcyl1, Wtank1, W_stiffners1, 
-            Whead2, Wcyl2, Wtank2, W_stiffners2, N_outer_rings, Winsul_sum,
+            Whead1, Wcyl1, Wtank1, 
+            Whead2, Wcyl2, Wtank2, Winsul_sum,
             l_cyl1, l_tank, t_cyl1, t_head1, t_cyl2,t_head2, 
             Rtank1_outer, Rtank1_inner,  Rtank2_outer, Rtank2_inner,
             S_inner,S_outer, Shead_insul, Shead1, Scyl1, Shead2, Scyl2
 
 end
 
-""" find min of outer tank
-and return  Number of stiffeners and relevant outer tank params from size_outer_tank
-"""
-function optimize_outer(l_cyl1,Rtank2_outer,poiss,ρouter,σa_outer, E_outer,pc,W_inner,θout_support1,θout_support2,ARtank)
-    N0=round(l_cyl1/2)
-    W0,_ = size_outer_tank(N0,l_cyl1,Rtank2_outer,poiss,ρouter, σa_outer,E_outer,pc,W_inner,θout_support1,θout_support2,ARtank)
-    # println("startin inner", N0)
-    Nopt=N0 # guess
-    for N =2:round(l_cyl1/0.5)
-        Wnew,_=size_outer_tank(N,l_cyl1,Rtank2_outer,poiss,ρouter,σa_outer, E_outer,pc,W_inner,θout_support1,θout_support2,ARtank)
-        # println("W0, $W0, Wnew, $Wnew  $N")
-        if Wnew<W0
-            # minimum found
-            # println("yeeeeeeee  ",N)
-            Nopt=N
-            W0=Wnew
-        end
-    end
-    # if cant find a result
-    return Nopt
-end
+function size_outer_tank(fuse_tank, l_cyl1, Rtank2_outer)
+    #Unpack parameters in fuse_tank
+    poiss = fuse_tank.poissouter
+    E = fuse_tank.Eouter
+    ρouter = fusetank.rhoouter
+    fstiff = fusetank.ftankstiff
+    fadd = fusetank.ftankadd
+    pc = 4 * fuse_tank.ptank
+    
+    Do = 2 * Rtank2_outer #outside diameter
 
-function size_outer_tank(N,l_cyl1,Rtank2_outer,poiss,ρouter,σa_outer, E_outer,pc,W_inner,θout_support1,θout_support2,ARtank)
-    #N number of stiffeners
-    L = l_cyl1/(N-1)
-    Doo=2*Rtank2_outer
-    t_cyl2 = Doo* ( pc*(1-poiss^2)^0.75 *L/Doo/(2.42*E_outer)  )^(2/5)    # guess using long cylinder
-
-    if L/Doo < 1.140*(1-poiss^2)^(1.0/4)*sqrt(Doo/t_cyl2)  # Short cylinder (see barrons pg366 eq7.8)
-        # println("Warning: Outer Cycl isn't really 'long' - using 'short' tank relation instead")
-        t_Dguess=t_cyl2/Doo
-        t_cyl2 = tank_buckling(pc, E_outer, poiss, L, Doo, t_Dguess)
-        # println("t_cyl2 = $t_cyl2")
-    else # Long Cylinder
-        t_cyl2 = Doo*  (  pc*(1-poiss^2)^0.75 *L/Doo/(2.42*E_outer)     )^(2/5)    #
-    end
+    t_cyl2 = pc * (1 - poiss^2) / (2 * E / Do^3 ) #cylindrical portion thickness
 
     if ARtank==2.0
         K1=0.90# See table 7.6 for D/D1=2.0 in Barron p. 367
@@ -174,98 +96,19 @@ function size_outer_tank(N,l_cyl1,Rtank2_outer,poiss,ρouter,σa_outer, E_outer,
     Shead2 = 2π*Rtank2_outer^2 * (1.0/3.0 + 2.0/3.0*(1/ARtank)^1.6) ^ (1/1.6) # Surface area of head
     Scyl2  = 2π*Rtank2_outer*l_cyl1  # Cross-sectional area
 
-    S_outer=Shead2+Scyl2 
+    S_outer=Shead2 + 2 * Scyl2 
 
     ## Volume and Weight
     Vcyl  = Scyl2*t_cyl2
     Vhead = Shead2*t_head2
 
     Wcyl2  = Vcyl *ρouter*gee
-    Whead2 =  2*Vhead*ρouter*gee
+    Whead2 =  Vhead*ρouter*gee
 
+    Wtank2 =(Wcyl2 + 2 * Whead2) * (1.0 + ftankstiff + ftankadd)
 
-    ϕlist, klist, ϕmax, kmax_outer = stiffeners_bendingM_outer(θout_support1,θout_support2)
-    Mmax_outer = kmax_outer * Rtank2_outer* (W_inner/N) /(2π) #use outer dia for now
-    Zmax = Mmax_outer/σa_outer
-    
-    #Use standard metric beams to get weights per unit length
-    if Zmax < 89.9e-6
-        # W 100 x 100 x 19.3
-        W′ = 19.3 # kg/m
-    elseif Zmax < 139.5e-6
-        # W 130 x 130 x 23.8
-        W′ = 23.8 # kg/m
-    else
-        W′=27.5 # 13 x 13 x 27.5
-    end
-    # println("W' $(W′)")
-    
-    W_stiffners2 = N * 2π*Rtank2_outer * W′ * gee
-
-    Wtank2 = Wcyl2 + Whead2 + W_stiffners2
-
-    return Wtank2,W_stiffners2,Wcyl2,Whead2,S_outer,Shead2,Scyl2,t_cyl2,t_head2
+    return Wtank2,Wcyl2,Whead2,S_outer,Shead2,Scyl2,t_cyl2,t_head2
 end
-
-
-
-function tank_buckling(pc, E, poiss, L, Do, t_Dguess)
-    f(t_D) = 2.42*E*(t_D)^(5.0/2) / ( (1-poiss^2)^(3.0/4.0) * ((L/Do) - 0.45*sqrt(t_D)) ) - pc
-    try
-        t_D = find_zero(f, t_Dguess)
-        return t = t_D*Do
-    catch
-        println("fail t find t_cyl2 using short cylinder method")
-        return t_Dguess
-    end
-    
-end
-        
-
-
-
-"""
-## Stiffening rings
-returns 2πM/(WR)
-"""
-function stiffeners_bendingM(θ)
-    ϕlist = LinRange(0.0, π, 1800)
-    k = zeros(length(ϕlist))
-
-    for (i,ϕ) in enumerate(ϕlist)
-        if 0 ≤ ϕ ≤ θ
-            k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
-        elseif θ ≤ ϕ ≤ π
-            k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ  + cos(θ) + cos(ϕ)*(sin(θ)^2)
-        end
-    end
-    kmax, imax = findmax(abs.(k))
-    ϕmax = ϕlist[imax]
-    return ϕlist, k, ϕmax, kmax
-end
-
-function stiffeners_bendingM_outer(θ1,θ2)
-    ϕlist = LinRange(0.0, π, 1800)
-    k = zeros(length(ϕlist))
-
-    for (i,ϕ) in enumerate(ϕlist)
-        if 0 ≤ ϕ ≤ θ1
-            k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) ) 
-                         - (π-θ2)*sin(θ2) +  (π-θ1)*sin(θ1)
-        elseif θ1 ≤ ϕ ≤ θ2
-            k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) ) 
-                         - (π-θ2)*sin(θ2) +  π*sin(ϕ) -θ1*sin(θ1)
-        elseif θ2 ≤ ϕ ≤ π
-            k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) )  +
-                          (θ2*sin(θ2) - θ1*sin(θ1)  )
-        end
-    end
-    kmax, imax = findmax(abs.(k))
-    ϕmax = ϕlist[imax]
-    return ϕlist, k, ϕmax, kmax
-end
-
-
 
 function tank_thermal_vacumm(l_cyl::Float64  , Rtank1_outer::Float64,Rtank2_inner::Float64, 
     hconvgas::Float64, h_LH2::Float64,  hconvair::Float64, h_v::Float64,

@@ -164,10 +164,12 @@ function insulation_density_calc(material::String)
             ρ = 32.0 #kg/m^3
       elseif lowercase(material) == "polyurethane35"
             ρ = 35.0 #kg/m^3
+      elseif lowercase(material) == "vacuum"
+            ρ = 0 #kg/m^3
       else
             error("Insulation materials currently supported are
                   [Rohacell41S, polyurethane27, polyurethane32, polyurethane35],
-                  but you supplied $material!")
+                  but you supplied $material")
       end
       return ρ
 end

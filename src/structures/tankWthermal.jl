@@ -136,10 +136,9 @@ function residuals_Q(x, p, mode)
       thickness = sum(t_cond)  # total thickness of insulation
   
       # Radiation
-      σ = 5.6704e-8 #W/(m^2 K^4), Stefan-Boltzmann constant
       ε = 0.95    # white aircraft (Verstraete)
   
-      hradair = σ * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
+      hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
       Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
   
@@ -155,22 +154,28 @@ function residuals_Q(x, p, mode)
       #Find resistance of each MLI layer
       T_prev = T_w
       for i in 1:N
-          k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
-          R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
-          
-          Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
-          R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
-          # Parallel addition of resistance
-          R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
-          
-          # Update r_inner
-          r_inner = r_inner + t_cond[i]  
-          T_prev = T_mli[i]
+            if lowercase(material[i]) == "vacuum"
+                  S_inner = 2π * l_cyl * r_inner
+                  S_outer = 2π * l_cyl * (r_inner + t_cond[i])
+                  R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
+            else #If insulation layer is not a vacuum
+                  k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
+                  R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
+                  
+                  Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
+                  R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
+                  # Parallel addition of resistance
+                  R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
+                  
+                  # Update r_inner
+                  r_inner = r_inner + t_cond[i]  
+                  T_prev = T_mli[i]
+            end
       end
   
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
       Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
-  
+      println(Req)
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
@@ -346,4 +351,31 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
 
       return hconvair, Tair, Taw
+end
+
+function vacuum_resistance(Tcold, Thot, S_inner, S_outer)
+      #Assumed tank and gas properties
+      a_outer = 0.9 
+      a_inner = 1.0
+      ε = 0.04    # highly polished aluminum
+      p_vacuum = 1e-3 #Assumed vacuum pressure #TODO maybe make this an input?
+
+      Rgas = 287.05  # specific gas constant
+      gamma = 1.4
+      
+      #Emissivity factor
+      Fe = 1 / (1/ε + S_inner/S_outer * (1/ε - 1))
+
+      #Find heat transfer coeff. for radiation and corresponding resistance
+      hrad = σ_SB * Fe * ((Tcold^2) + (Thot^2)) * (Tcold + Thot) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
+      R_rad = 1/(hrad * S_inner)  # radiative resistance
+
+      #Find resistance due to convection by residual air
+      Fa = 1 / (1/a_inner + S_inner/S_outer * (1/a_outer - 1)) #accomodation factor
+      G = (gamma + 1)/(gamma - 1) * sqrt(Rgas / (8*pi * Thot)) * Fa
+      R_conv = 1 / (G * p_vacuum * S_inner)  # convective resistance due to imperfect vacuum
+      
+      #Parallel addition of resistance
+      R_eq = R_conv * R_rad / (R_conv + R_rad) 
+      return R_eq
 end
