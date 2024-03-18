@@ -1,25 +1,15 @@
 """
-        tanksize(fuse_tank, ρfuel, 
-        Rfuse, dRfuse, Tfuel, z, Mair, xftank,
-        time_flight,
-        wfb, nfweb, Wfuel,
-        ifuel)
+        tanksize(fuse_tank, z, Mair, xftank,
+        time_flight, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
-        - `ρfuel::Float64`: Density of fuel (kg/m^3).
-        - `Rfuse::Float64`: Fuselage radius (m).
-        - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
-        - `Tfuel::Float64`: Fuel temperature (K).
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `wfb::Float64`: parameter for multi-bubble configuration.
-        - `nfweb::Float64`: Number of bubbles.
-        - `Wfuel::Float64`: Weight of fuel (N).
         - `ifuel::Int64`: fuel index.
         
         **Outputs:**
@@ -91,10 +81,7 @@ function tanksize(fuse_tank, z, Mair, xftank,
 end
 
 """
-        res_MLI_thick(x, fuse_tank, ρfuel,
-        Rfuse, dRfuse, Tfuel, z, Mair, xftank,
-        wfb, nfweb, Wfuel,
-        ifuel)
+        res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -103,16 +90,9 @@ insulation interface temperatures.
         **Inputs:**
         - `x::Float64`: vector with states
         - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
-        - `ρfuel::Float64`: Density of fuel (kg/m^3).
-        - `Rfuse::Float64`: Fuselage radius (m).
-        - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
-        - `Tfuel::Float64`: Fuel temperature (K).
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `wfb::Float64`: parameter for multi-bubble configuration.
-        - `nfweb::Float64`: Number of bubbles.
-        - `Wfuel::Float64`: Weight of fuel (N).
         - `ifuel::Int64`: fuel index.
 
         **Outputs:**

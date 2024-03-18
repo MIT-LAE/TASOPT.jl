@@ -8,12 +8,8 @@
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `fuse_tank::Struct`: structure with tank parameters.
-      - `ρfuel::Float64`: Fuel density (kg/m^3).
-      - `Rfuse::Float64`: Fuselage radius (m).
-      - `dRfuse::Float64`: Subtraction factor accounting for fuselage flatness (m).
-      - `wfb`: Parameters for multiple-bubble configuration.
-      - `nfweb`: Number of bubbles.
-      - `Wfuel::Float64`: Weight of fuel (N).
+      - `t_cond::Float64`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
+      non-linear solve process.
 
       **Outputs:**
       - `Wtank_total::Float64`: Total tank weight including fuel (N).
