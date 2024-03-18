@@ -350,12 +350,12 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
 
-    # if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
-    #     fuse_tank.UTSouter = Pressure(readfuel_storage("outer_skin_ultimate_strength"))
-    #     fuse_tank.rhoouter = readfuel_storage("outer_skin_density")
-    #     fuse_tank.Eouter = Pressure(readfuel_storage("outer_skin_Youngs_modulus"))
-    #     fuse_tank.poissouter = readfuel_storage("outer_skin_Poisson_ratio")
-    # end
+    if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+        fuse_tank.UTSouter = Pressure(readfuel_storage("outer_skin_ultimate_strength"))
+        fuse_tank.rhoouter = readfuel_storage("outer_skin_density")
+        fuse_tank.Eouter = Pressure(readfuel_storage("outer_skin_Youngs_modulus"))
+        fuse_tank.poissouter = readfuel_storage("outer_skin_Poisson_ratio")
+    end
 
     #Find number of tanks from placement
     if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")

@@ -143,6 +143,58 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead_insul, l_tank
 end
 
+function size_outer_tank(fuse_tank, l_cyl)
+      #Unpack parameters in fuse_tank
+      poiss = fuse_tank.poissouter
+      Eouter = fuse_tank.Eouter
+      ρouter = fuse_tank.rhoouter
+      ftankstiff = fuse_tank.ftankstiff
+      ftankadd = fuse_tank.ftankadd
+      wfb = fuse_tank.wfb
+      nfweb = fuse_tank.nfweb
+      ARtank = fuse_tank.ARtank
+
+      pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
+
+      #Calculate outer tank geometry
+      Rtank_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse
+      Do = 2 * Rtank_outer #outside diameter
+
+      #Find cylinder wall thickness. This applies to a long cylinder.
+      t_cyl = Do * (pc * (1 - poiss^2) / (2 * Eouter ))^(1/3) #cylindrical portion thickness, eq. (7.7) in Barron
+
+      #Find head wall thickness
+      if ARtank == 2.0
+            K1 = 0.90# See table 7.6 for D/D1=2.0 in Barron p. 367
+      elseif ARtank == 1.0
+            K1 = 0.50
+      else  
+            println("ARtank of heads not supported, see size_outer_tank()")
+            K1=1.0
+      end
+      t_head = K1 * Do * sqrt(pc * sqrt(3*(1 - poiss^2))/ (0.5*Eouter))
+
+      ## Areas
+      wfblim = max( min( wfb , Rtank_outer) , 0.0 )
+      thetafb = asin(wfblim / Rtank_outer)
+
+      Shead = (2.0*π + 4.0*nfweb*thetafb)*(Rtank_outer)^2* (0.333 + 0.667*(1/ARtank)^1.6 )^0.625
+      Scyl  = 2π*Rtank_outer*l_cyl  # Cross-sectional area
+
+      S_outer = Shead + 2 * Scyl
+
+      ## Volume and Weight
+      Vcyl  = Scyl*t_cyl
+      Vhead = Shead*t_head
+
+      Wcyl  = Vcyl *ρouter*gee
+      Whead =  Vhead*ρouter*gee
+
+      Wtank =(Wcyl + 2 * Whead) * (1.0 + ftankstiff + ftankadd)
+
+      return Wtank, Wcyl, Whead, S_outer, Shead, Scyl, t_cyl, t_head
+end
+
 """
       insulation_density_calc(material)
 

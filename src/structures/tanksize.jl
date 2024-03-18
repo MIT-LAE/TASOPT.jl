@@ -75,6 +75,14 @@ function tanksize(fuse_tank, z, Mair, xftank,
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
         Sinternal, Shead_insul, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
+        if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+                Wtank2, Wcyl2, Whead2, S_outer, Shead2, Scyl2, 
+                t_cyl2, t_head2 = size_outer_tank(fuse_tank, lshell)
+
+                Wtank_total = Wtank_total + Wtank2
+                Wtank = Wtank + Wtank2
+        end
+
         return Wtank_total, thickness_insul, lshell, mdot_boiloff, 
         Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead,
         Wcyl, Winsul_sum, Winsul, l_tank, Wtank 

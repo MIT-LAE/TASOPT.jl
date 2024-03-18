@@ -155,9 +155,10 @@ function residuals_Q(x, p, mode)
       T_prev = T_w
       for i in 1:N
             if lowercase(material[i]) == "vacuum"
-                  S_inner = 2π * l_cyl * r_inner
-                  S_outer = 2π * l_cyl * (r_inner + t_cond[i])
+                  S_inner = 2π * l_cyl * r_inner + 2*Shead[i]
+                  S_outer = 2π * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
                   R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
+
             else #If insulation layer is not a vacuum
                   k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
                   R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
