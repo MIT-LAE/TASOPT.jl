@@ -1,7 +1,7 @@
 Tcold = 78
 Thot = 300
-S_outer = 13.854423602330987
-S_inner = 7.069
+S_outer = pi*2.1^2
+S_inner = pi*1.5^2
 
 p_vacuum = 1e-3 #Assumed vacuum pressure
 
@@ -18,7 +18,7 @@ Fe = 1 / (1/0.05 + S_inner/S_outer * (1/0.1 - 1))
 
 #Find heat transfer coeff for radiation and corresponding resistance
 hrad = σ_SB * Fe * ((Tcold^2) + (Thot^2)) * (Tcold + Thot) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
-R_rad = 1/(hradair * S_inner)  # radiative resistance
+R_rad = 1/(hrad * S_inner)  # radiative resistance
 
 #Find resistance due to convection by residual air
 Fa = 1 / (1/a_inner + S_inner/S_outer * (1/a_outer - 1)) #accomodation factor

@@ -73,7 +73,7 @@ function tanksize(fuse_tank, z, Mair, xftank,
         #Evaluate tank weight
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
         Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
-        Sinternal, Shead_insul, l_tank = tankWmech(fuse_tank, fuse_tank.t_insul)
+        Sinternal, Shead_insul, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
         return Wtank_total, thickness_insul, lshell, mdot_boiloff, 
         Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead,
@@ -120,7 +120,7 @@ function res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
         end
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead, l_tank = tankWmech(fuse_tank, t_all)
+        Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
 
         _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporizatio
 

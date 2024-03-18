@@ -1,9 +1,9 @@
 """
-      tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
+      size_inner_tank(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
                         Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64,
                         Wfuel::Float64)
 
-`tankWmech` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
+`size_inner_tank` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -32,7 +32,7 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 See [here](@ref fueltanks).
 """
 
-function tankWmech(fuse_tank, t_cond::Vector{Float64})
+function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       #Unpack parameters in fuse_tank
       Rfuse = fuse_tank.Rfuse
@@ -168,7 +168,7 @@ function insulation_density_calc(material::String)
             ρ = 0 #kg/m^3
       else
             error("Insulation materials currently supported are
-                  [Rohacell41S, polyurethane27, polyurethane32, polyurethane35],
+                  [rohacell41S, polyurethane27, polyurethane32, polyurethane35, vacuum],
                   but you supplied $material")
       end
       return ρ

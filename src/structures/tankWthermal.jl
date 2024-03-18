@@ -175,7 +175,7 @@ function residuals_Q(x, p, mode)
   
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
       Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
-      println(Req)
+
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
