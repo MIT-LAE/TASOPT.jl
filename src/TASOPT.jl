@@ -6,7 +6,7 @@ module TASOPT
 export atmos, size_aircraft!
 
 # Add basic pacakges required by TASOPT
-using Base: SignedMultiplicativeInverse
+using Base: SignedMultiplicativeInverse, @kwdef
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
 
 using BenchmarkTools
