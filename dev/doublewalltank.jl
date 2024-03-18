@@ -2,7 +2,7 @@ using TASOPT
 using NLsolve
 using Roots
 
-mutable struct innertank()
+mutable struct innertank
     ptank::Float64
     sigskin::Float64
     rhoskintank::Float64
@@ -40,11 +40,11 @@ use of inner or outer for R (radius) is the inner and outer Radius of a wall
 """
 function doublewalled_tank( Rfuse::Float64, dRfuse::Float64, clearance_fuse::Float64, 
             Wfuel::Float64, ρfuel::Float64, ARtank::Float64, ptank::Float64, ullage_frac::Float64,
-            siginner::Float64, ρinner::Float64,ew::Float64,
+            siginner::Float64, ρinner::Float64, ew::Float64,
             material_insul::Vector{String}, t_cond::Array{Float64,1}, 
             m_boiloff::Float64,
             σa_outer::Float64, ρouter::Float64, E_outer::Float64,
-            Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankadd, ullage_frac)
+            Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankadd)
   
     
     #Create structure with inner tank parameters for tankWmech()
@@ -359,7 +359,7 @@ function tanksizeVac(Rfuse::Float64, dRfuse::Float64, fuse_clearance::Float64,
                     σa_outer::Float64, ρouter::Float64, E_outer::Float64,
                     rho_insul::Array{Float64,1}, t_cond::Array{Float64,1},  k::Array{Float64,1}, 
                     a_outer::Float64,a_inner::Float64, Nstiff_in::Float64, 
-                    θin_support::Float64, θout_support1::Float64,θout_support2::Float64, poiss::Float64)
+                    θin_support::Float64, θout_support1::Float64,θout_support2::Float64, poiss::Float64, ftankadd)
 
     Wfuel_init = Wfuel
     # not accurate
@@ -379,7 +379,7 @@ function tanksizeVac(Rfuse::Float64, dRfuse::Float64, fuse_clearance::Float64,
                                                                 rho_insul, t_cond, 
                                                                 m_boiloff,
                                                                 σa_outer, ρouter, E_outer,
-                                                                Nstiff_in, θin_support, θout_support1,θout_support2, poiss)
+                                                                Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankadd)
     #optimize boil off mass according to threshold
     while p_vaccum >10^-5  # up to Very High Order Vac
         m_boiloff, mdot_boiloff,Req = tank_thermal_vacumm(l_cyl1  ,Rtank1_outer,Rtank2_inner, 
@@ -401,7 +401,7 @@ function tanksizeVac(Rfuse::Float64, dRfuse::Float64, fuse_clearance::Float64,
                                                     rho_insul, t_cond, 
                                                     m_boiloff,
                                                     σa_outer, ρouter, E_outer,
-                                                    Nstiff_in, θin_support, θout_support1,θout_support2, poiss)
+                                                    Nstiff_in, θin_support, θout_support1,θout_support2, poiss, ftankadd)
         Wfuel = Wfuel_init
         if(mdot_boiloff*gee*3600/Wfuel *100) < threshold_percent
             # println("iter = $n")
@@ -446,6 +446,7 @@ h_v = 447000.0
 h_LH2 = 210.0
 hconvair = 15.0
 threshold_percent  = 0.1
+ftankadd = 0.1
 
 σa_inner = 172.4e6 ;  ρinner =  2825.0  #AL 2219 Brewer / energies stress for operating conditions (290e6 ultimate operatoin)
 
@@ -475,7 +476,7 @@ rho_insul = [35.24, 14764,  rho_MLI,14764] #energies
 ew = 0.9 #weld efficiency
 ARtank = 2.0
 fuse_clearance = 0.10
-ρfuel = parg[igrhofuel] 
+ρfuel = 70.0
 ptank = 2.0*101325.0 #atm
 ftankstiff = 0.1
 ftankadd   = 0.1
@@ -497,4 +498,4 @@ m_boiloff, mdot_boiloff ,p_vaccum,Req = tanksizeVac(Rfuse, dRfuse, fuse_clearanc
                                             σa_outer, ρouter, E_outer,
                                             rho_insul, t_cond, k,
                                             a_outer,a_inner,Nstiff_in, 
-                                            θin_support, θout_support1,θout_support2, poiss)
+                                            θin_support, θout_support1,θout_support2, poiss, ftankadd)

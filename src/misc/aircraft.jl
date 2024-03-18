@@ -1,16 +1,32 @@
 mutable struct fuselage_tank
     placement::String
+    Wfuelintank::Float64
+    Rfuse::Float64
+    dRfuse::Float64
+    wfb::Float64
+    nfweb::Float64
+    clearance_fuse::Float64
+
     t_insul::Array{Float64}
     material_insul::Array{String}
     iinsuldes::Array{Int64}
-    sigskin::Float64
-    rhoskintank::Float64
-    max_boiloff::Float64
+
+    UTSinner::Float64
+    rhoinner::Float64
+    UTSouter::Float64
+    rhoouter::Float64
+    Eouter::Float64
+    poissouter::Float64
     ARtank::Float64
-    clearance_fuse::Float64
+    
     ptank::Float64
+    rhofuel::Float64
+    Tfuel::Float64
+    boiloff_rate::Float64
+
     ftankstiff::Float64
     ftankadd::Float64
+    ew::Float64
     ullage_frac::Float64
     qfac::Float64
     fuselage_tank() = new() 

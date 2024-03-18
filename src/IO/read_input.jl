@@ -154,42 +154,6 @@ pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 
-#Fuel storage options
-fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
-
-if pari[iifwing]  == 0 #If fuel is stored in fuselage
-    fuel_stor = readfuel("Storage")
-    dfuel_stor = dfuel["Storage"]
-    readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
-
-    fuse_tank.placement = readfuel_storage("tank_placement")
-    fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
-    fuse_tank.material_insul = readfuel_storage("insulation_material")
-    fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
-    fuse_tank.sigskin = Pressure(readfuel_storage("skin_ultimate_strength"))
-    fuse_tank.rhoskintank = readfuel_storage("tank_skin_density")
-    fuse_tank.max_boiloff = readfuel_storage("maximum_boiloff_rate")
-    fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
-    fuse_tank.clearance_fuse = Len(readfuel_storage("fuselage_clearance"))
-    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
-    fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
-    fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
-    fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
-    fuse_tank.qfac = readfuel_storage("heat_leak_factor")
-
-    if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")
-        pari[iinftanks] = 1
-    elseif (fuse_tank.placement == "both") 
-        pari[iinftanks] = 2
-    end
-
-    #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
-    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank
-    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
-    parg[igrhofuel] = ρfuel
-end
-
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Len.(ranges)
@@ -352,6 +316,62 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
 
 # ------ End fuse -------
+
+
+#Fuel storage options
+fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
+
+if pari[iifwing]  == 0 #If fuel is stored in fuselage
+    fuel_stor = readfuel("Storage")
+    dfuel_stor = dfuel["Storage"]
+    readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
+
+    fuse_tank.placement = readfuel_storage("tank_placement")
+    fuse_tank.Rfuse = parg[igRfuse]
+    fuse_tank.dRfuse = parg[igdRfuse]
+    fuse_tank.wfb = parg[igwfb]
+    fuse_tank.nfweb = parg[ignfweb]
+    fuse_tank.clearance_fuse = Len(readfuel_storage("fuselage_clearance"))
+
+    fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
+    fuse_tank.material_insul = readfuel_storage("insulation_material")
+    fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
+    
+    fuse_tank.UTSinner = Pressure(readfuel_storage("skin_ultimate_strength"))
+    fuse_tank.rhoinner = readfuel_storage("tank_skin_density")
+    fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
+
+    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
+    fuse_tank.boiloff_rate = readfuel_storage("cruise_boiloff_rate")
+    
+    fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
+    fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
+    fuse_tank.ew = readfuel_storage("weld_efficiency")
+    fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
+    fuse_tank.qfac = readfuel_storage("heat_leak_factor")
+
+    if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+        fuse_tank.UTSouter = Pressure(readfuel_storage("outer_skin_ultimate_strength"))
+        fuse_tank.rhoouter = readfuel_storage("outer_skin_density")
+        fuse_tank.Eouter = Pressure(readfuel_storage("outer_skin_Youngs_modulus"))
+        fuse_tank.poissouter = readfuel_storage("outer_skin_Poisson_ratio")
+    end
+
+    #Find number of tanks from placement
+    if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")
+        pari[iinftanks] = 1
+    elseif (fuse_tank.placement == "both") 
+        pari[iinftanks] = 2
+    end
+
+    #Calculate fuel temperature and density as a function of pressure
+    Tfuel, ρfuel = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
+    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
+    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+    parg[igrhofuel] = ρfuel
+    fuse_tank.rhofuel = ρfuel
+    fuse_tank.Tfuel = Tfuel
+end
 # ---------------------------------
 # Wing
 # ---------------------------------

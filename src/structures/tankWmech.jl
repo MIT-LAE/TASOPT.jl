@@ -36,28 +36,31 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 See [here](@ref fueltanks).
 """
 
-function tankWmech(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
-                  Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64,
-                  Wfuel::Float64)
+function tankWmech(fuse_tank, t_cond::Vector{Float64})
 
       #Unpack parameters in fuse_tank
+      Rfuse = fuse_tank.Rfuse
+      dRfuse = fuse_tank.dRfuse
+      wfb = fuse_tank.wfb
+      nfweb = fuse_tank.nfweb
+
+      Wfuel = fuse_tank.Wfuelintank
+
+      ρfuel = fuse_tank.rhofuel
       ftankstiff = fuse_tank.ftankstiff
       ftankadd = fuse_tank.ftankadd
       Δp = fuse_tank.ptank
-      sigskin = fuse_tank.sigskin
+      sigskin = fuse_tank.UTSinner
       material_insul = fuse_tank.material_insul
-      rhoskin = fuse_tank.rhoskintank
+      rhoskin = fuse_tank.rhoinner
       clearance_fuse = fuse_tank.clearance_fuse
       AR = fuse_tank.ARtank
       ullage_frac = fuse_tank.ullage_frac
+      weld_eff = fuse_tank.ew
 
 # Total thickness:
       thickness_insul = sum(t_cond)
 
-# Input paramters:
-#TODO: these hardcoded parameters are not elegant
-      weld_eff = 0.9 #lower strength due to welding
-      
       sa = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
       
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse
