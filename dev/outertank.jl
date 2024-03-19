@@ -42,40 +42,12 @@ function stiffeners_bendingM_outer(θ1,θ2)
     return ϕmax, kmax
 end
 
-function optimize_inner_stiffeners(tanktype, Wtanktotal, Rtank, s_a, ρstiff)
-    obj(x, grad) = stiffener_weight(x, tanktype, Wtanktotal, Rtank, s_a, ρstiff, l_cyl, E) #Opjective function is total stiffener weight
-    
-    if tanktype == "inner"
-        initial_x = [2.0, 1.0]
-        #Set bounds
-        lower = [2.0, 0.0]
-        upper = [50.0, pi/2]
-    elseif tanktype == "outer"
-        initial_x = [2.0, 1.0, 2.0]
-        #Set bounds
-        lower = [2.0, 0.0, pi/2]
-        upper = [50.0, pi/2, pi]
-    end
-    
-    #Use NLopt.jl to minimize function 
-    opt = Opt(:LN_NELDERMEAD, length(initial_x))
-    opt.lower_bounds = lower
-    opt.upper_bounds = upper
-    opt.ftol_rel = 1e-5
-    opt.maxeval = 100  # Set the maximum number of function evaluations
-
-    opt.min_objective = obj
-    println(obj(initial_x, 0))
-
-    (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
-    return xopt
-end
-
-function stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, Nstiff, θ1, θ2 = 0.0, l_cyl = 0, E = 0)
+function stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, θ1, θ2 = 0.0, Nstiff = 2.0, l_cyl = 0, E = 0)
     #Unpack optimization variables
     if tanktype == "inner"
         _, kmax = stiffeners_bendingM(θ1)
         Icollapse = 0
+
     elseif tanktype == "outer"
         _, kmax = stiffeners_bendingM_outer(θ1, θ2)
         pc = 4 * pref
@@ -83,7 +55,6 @@ function stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, Nstiff, θ1, θ2 = 0
 
         L = l_cyl/ (Nstiff - 1)
         Icollapse = pc * Do * L / (24 * E)
-
     end
 
     Mmax = kmax * W * Rtank / (2π)
@@ -117,7 +88,7 @@ function optimize_outer_tank(fuse_tank, Winnertank, l_cyl, θ1, θ2)
     opt = Opt(:LN_NELDERMEAD, length(initial_x))
     opt.lower_bounds = lower
     opt.upper_bounds = upper
-    opt.ftol_rel = 1e-5
+    opt.ftol_rel = 1e-9
     opt.maxeval = 100  # Set the maximum number of function evaluations
 
     opt.min_objective = obj
@@ -219,14 +190,14 @@ function size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm, θ1, θ2)
     Nstiff = Nmain + Ninterm
 
     Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, 
-                                s_a, ρouter, Nstiff, θ1, θ2, l_cyl, Eouter) #Weight of one main stiffener
+                                s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter) #Weight of one main stiffener
     Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer,
-                                s_a, ρouter, Nstiff, θ1, θ2, l_cyl, Eouter) #Weight of one intermediate stiffener
+                                s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter) #Weight of one intermediate stiffener
 
     Wstiff = Nmain * Wmainstiff + Ninterm * Wintermstiff #Total stiffener weight
 
     Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd)
-
+    println(Wtank)
     return Wtank, Wcyl, Whead, Wstiff, S_outer, Shead, Scyl, t_cyl, t_head
 end
 
