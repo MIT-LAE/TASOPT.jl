@@ -71,7 +71,7 @@ function optimize_inner_stiffeners(tanktype, Wtanktotal, Rtank, s_a, ρstiff)
     return xopt
 end
 
-function stiffener_weight(tanktype, Wtanktotal, Rtank, s_a, ρstiff, Nstiff, θ1, θ2 = 0.0, l_cyl = 0, E = 0)
+function stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, Nstiff, θ1, θ2 = 0.0, l_cyl = 0, E = 0)
     #Unpack optimization variables
     if tanktype == "inner"
         _, kmax = stiffeners_bendingM(θ1)
@@ -85,7 +85,7 @@ function stiffener_weight(tanktype, Wtanktotal, Rtank, s_a, ρstiff, Nstiff, θ1
         Icollapse = pc * Do * L / (24 * E)
 
     end
-    W = Wtanktotal / Nstiff
+
     Mmax = kmax * W * Rtank / (2π)
     Z = Mmax / s_a #required section modulus
 
@@ -101,18 +101,17 @@ function stiffener_weight(tanktype, Wtanktotal, Rtank, s_a, ρstiff, Nstiff, θ1
     H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a)
     S = 2 * W * t_f + (H - t_w) * t_f
 
-    Wstiff = gee * Nstiff * ρstiff * S * 2π * Rtank
+    Wstiff = gee * ρstiff * S * 2π * Rtank
     return Wstiff
 end
 
-function optimize_inner_tank(Wtanktotal, Rtank, s_a, ρstiff, l_cyl, E)
-    obj(x, grad) = stiffener_weight("inner", Wtanktotal, Rtank, s_a, ρstiff, x[1], x[2]) #Objective function is total stiffener weight
+function optimize_outer_tank(fuse_tank, Winnertank, l_cyl, θ1, θ2)
+    obj(x, grad) = size_outer_tank(fuse_tank, Winnertank, l_cyl, x[1], θ1, θ2)[1] #Minimize Wtank
     
-    
-    initial_x = [2.0, 1.0]
+    initial_x = [1.0]
     #Set bounds
-    lower = [2.0, 0.0]
-    upper = [50.0, pi/2]
+    lower = [0.0]
+    upper = [50.0]
    
     #Use NLopt.jl to minimize function 
     opt = Opt(:LN_NELDERMEAD, length(initial_x))
@@ -122,7 +121,6 @@ function optimize_inner_tank(Wtanktotal, Rtank, s_a, ρstiff, l_cyl, E)
     opt.maxeval = 100  # Set the maximum number of function evaluations
 
     opt.min_objective = obj
-    println(obj(initial_x, 0))
 
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
     return xopt
@@ -160,9 +158,7 @@ fuse_tank.ARtank = 2.0
 fuse_tank.Rfuse = 2.5
 fuse_tank.clearance_fuse = 0.1
 
-
-
-function size_outer_tank(fuse_tank, l_cyl, Nstiff, θ1, θ2)
+function size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm, θ1, θ2)
     #Unpack parameters in fuse_tank
     poiss = fuse_tank.poissouter
     Eouter = fuse_tank.Eouter
@@ -173,6 +169,7 @@ function size_outer_tank(fuse_tank, l_cyl, Nstiff, θ1, θ2)
     nfweb = fuse_tank.nfweb
     ARtank = fuse_tank.ARtank
 
+    Nmain = 2 #Tanks typically have two main support rings
     pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
     s_a = UTSouter / 4
 
@@ -180,7 +177,7 @@ function size_outer_tank(fuse_tank, l_cyl, Nstiff, θ1, θ2)
     Rtank_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse
     Do = 2 * Rtank_outer #outside diameter
 
-    L = l_cyl / (Nstiff - 1) #There are two stiffeners at the ends, so effective number of sections in skin is Nstiff - 1
+    L = l_cyl / (Nmain + Ninterm - 1) #There are two stiffeners at the ends, so effective number of sections in skin is N - 1
     L_Do = L / Do
 
     #Find cylinder wall thickness. This applies to a short cylinder.
@@ -212,14 +209,21 @@ function size_outer_tank(fuse_tank, l_cyl, Nstiff, θ1, θ2)
     Vcyl  = Scyl*t_cyl
     Vhead = Shead*t_head
 
-    Wcyl  = Vcyl *ρouter*gee
+    Wcyl  = Vcyl*ρouter*gee
     Whead =  Vhead*ρouter*gee
 
     Wtank_no_stiff =(Wcyl + 2 * Whead) 
 
     # Size stiffeners
     tanktype = "outer"
-    Wstiff = stiffener_weight(tanktype, Wtank_no_stiff, Rtank_outer, s_a, ρouter, Nstiff, θ1, θ2, l_cyl, Eouter)
+    Nstiff = Nmain + Ninterm
+
+    Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, 
+                                s_a, ρouter, Nstiff, θ1, θ2, l_cyl, Eouter) #Weight of one main stiffener
+    Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer,
+                                s_a, ρouter, Nstiff, θ1, θ2, l_cyl, Eouter) #Weight of one intermediate stiffener
+
+    Wstiff = Nmain * Wmainstiff + Ninterm * Wintermstiff #Total stiffener weight
 
     Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd)
 
