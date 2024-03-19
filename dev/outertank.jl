@@ -71,15 +71,12 @@ function optimize_inner_stiffeners(tanktype, Wtanktotal, Rtank, s_a, ρstiff)
     return xopt
 end
 
-function inner_stiffener_weight(x, tanktype, Wtanktotal, Rtank, s_a, ρstiff, l_cyl = 0, E = 0)
+function stiffener_weight(tanktype, Wtanktotal, Rtank, s_a, ρstiff, Nstiff, θ1, θ2 = 0.0, l_cyl = 0, E = 0)
     #Unpack optimization variables
-    Nstiff = x[1]
-    θ1 = x[2]
     if tanktype == "inner"
         _, kmax = stiffeners_bendingM(θ1)
         Icollapse = 0
     elseif tanktype == "outer"
-        θ2 = x[3]
         _, kmax = stiffeners_bendingM_outer(θ1, θ2)
         pc = 4 * pref
         Do = 2 * Rtank
@@ -104,26 +101,19 @@ function inner_stiffener_weight(x, tanktype, Wtanktotal, Rtank, s_a, ρstiff, l_
     H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a)
     S = 2 * W * t_f + (H - t_w) * t_f
 
-    Wstiff = Nstiff * ρstiff * S * 2π * Rtank
-    println(Nstiff)
+    Wstiff = gee * Nstiff * ρstiff * S * 2π * Rtank
     return Wstiff
 end
 
-function optimize_outer_tank(tanktype, Wtanktotal, Rtank, s_a, ρstiff, l_cyl, E)
-    obj(x, grad) = stiffener_weight(x, tanktype, Wtanktotal, Rtank, s_a, ρstiff, l_cyl, E) #Opjective function is total stiffener weight
+function optimize_inner_tank(Wtanktotal, Rtank, s_a, ρstiff, l_cyl, E)
+    obj(x, grad) = stiffener_weight("inner", Wtanktotal, Rtank, s_a, ρstiff, x[1], x[2]) #Objective function is total stiffener weight
     
-    if tanktype == "inner"
-        initial_x = [2.0, 1.0]
-        #Set bounds
-        lower = [2.0, 0.0]
-        upper = [50.0, pi/2]
-    elseif tanktype == "outer"
-        initial_x = [2.0, 1.0, 2.0]
-        #Set bounds
-        lower = [2.0, 0.0, pi/2]
-        upper = [50.0, pi/2, pi]
-    end
     
+    initial_x = [2.0, 1.0]
+    #Set bounds
+    lower = [2.0, 0.0]
+    upper = [50.0, pi/2]
+   
     #Use NLopt.jl to minimize function 
     opt = Opt(:LN_NELDERMEAD, length(initial_x))
     opt.lower_bounds = lower
@@ -142,52 +132,56 @@ end
 mutable struct outertank
     poissouter::Float64
     Eouter::Float64
+    UTSouter::Float64
     rhoouter::Float64
     ftankadd::Float64
     wfb::Float64
     nfweb::Float64
     ARtank::Float64
+    Rfuse::Float64
+    clearance_fuse::Float64
     outertank() = new()
 end
-poiss = 0.3
-Eouter = 73e9
-ρouter = 2840
-ftankadd = 0.1
-wfb = 0.0
-nfweb = 1.0
-ARtank = 2.0
-pref = 101325
+ 
+const pref = 101325
+const gee = 9.81
+
 l_cyl = 5
-gee = 9.81
 
-fuse_tank.poissouter
-fuse_tank.Eouter
-fuse_tank.rhoouter
-fuse_tank.ftankadd
-fuse_tank.wfb
-fuse_tank.nfweb
-fuse_tank.ARtank
+fuse_tank = outertank()
+fuse_tank.poissouter = 0.3
+fuse_tank.Eouter = 73e9
+fuse_tank.rhoouter = 2840
+fuse_tank.UTSouter = 470e6
+fuse_tank.ftankadd = 0.1
+fuse_tank.wfb = 0.0
+fuse_tank.nfweb = 1.0
+fuse_tank.ARtank = 2.0
+fuse_tank.Rfuse = 2.5
+fuse_tank.clearance_fuse = 0.1
 
 
 
-function size_outer_tank(fuse_tank, l_cyl)
+function size_outer_tank(fuse_tank, l_cyl, Nstiff, θ1, θ2)
     #Unpack parameters in fuse_tank
     poiss = fuse_tank.poissouter
     Eouter = fuse_tank.Eouter
     ρouter = fuse_tank.rhoouter
+    UTSouter = fuse_tank.UTSouter
     ftankadd = fuse_tank.ftankadd
     wfb = fuse_tank.wfb
     nfweb = fuse_tank.nfweb
     ARtank = fuse_tank.ARtank
 
     pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
-
-    #Assumed parameters
-    L_Do = 0.5 #TODO get rid of this hack and size stiffeners properly
+    s_a = UTSouter / 4
 
     #Calculate outer tank geometry
     Rtank_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse
     Do = 2 * Rtank_outer #outside diameter
+
+    L = l_cyl / (Nstiff - 1) #There are two stiffeners at the ends, so effective number of sections in skin is Nstiff - 1
+    L_Do = L / Do
 
     #Find cylinder wall thickness. This applies to a short cylinder.
     pressure_res(t_D) = 2.42*Eouter*(t_D)^(5/2) / ( (1 - poiss^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
@@ -221,9 +215,15 @@ function size_outer_tank(fuse_tank, l_cyl)
     Wcyl  = Vcyl *ρouter*gee
     Whead =  Vhead*ρouter*gee
 
-    Wtank =(Wcyl + 2 * Whead) * (1.0 + ftankstiff + ftankadd)
+    Wtank_no_stiff =(Wcyl + 2 * Whead) 
 
-    return Wtank, Wcyl, Whead, S_outer, Shead, Scyl, t_cyl, t_head
+    # Size stiffeners
+    tanktype = "outer"
+    Wstiff = stiffener_weight(tanktype, Wtank_no_stiff, Rtank_outer, s_a, ρouter, Nstiff, θ1, θ2, l_cyl, Eouter)
+
+    Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd)
+
+    return Wtank, Wcyl, Whead, Wstiff, S_outer, Shead, Scyl, t_cyl, t_head
 end
 
 
