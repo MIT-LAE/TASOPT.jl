@@ -173,7 +173,7 @@ This function sizes the outer tank and calculates the weights of its components.
     - `t_cyl::Float64`: wall thickness of cylindrical portion of tank (m).
     - `t_head::Float64`: wall thickness of tank head (m). 
 """
-function size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm)
+function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
       #Unpack parameters in fuse_tank
       poiss = fuse_tank.poissouter
       Eouter = fuse_tank.Eouter
@@ -270,7 +270,8 @@ This function calculates the weight of a single stiffener in an inner or outer t
     **Outputs:**
     - `Wstiff::Float64`: weight of a stiffener ring (N).
 """
-function stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, θ1, θ2 = 0.0, Nstiff = 2.0, l_cyl = 0, E = 0)
+function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, s_a::Float64, 
+      ρstiff::Float64, θ1::Float64, θ2::Float64 = 0.0, Nstiff::Float64 = 2.0, l_cyl::Float64 = 0.0, E::Float64 = 0.0)
     
       if tanktype == "inner" 
             _, kmax = stiffeners_bendingM(θ1) #Find k = 2πM/(WR)
@@ -322,7 +323,7 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `ϕmax::Float64`: angular position of maximum bending moment on ring circumference (rad).
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
-function stiffeners_bendingM(θ)
+function stiffeners_bendingM(θ::Float64)
       ϕlist = LinRange(0.0, π, 180)
       k = zeros(length(ϕlist))
 
@@ -353,7 +354,7 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `ϕmax::Float64`: angular position of maximum bending moment on ring circumference (rad).
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
-function stiffeners_bendingM_outer(θ1,θ2)
+function stiffeners_bendingM_outer(θ1::Float64, θ2::Float64)
       ϕlist = LinRange(0.0, π, 180)
       k = zeros(length(ϕlist))
 
@@ -387,7 +388,7 @@ This function optimizes the number of intermediate stiffener rings to minimize t
     **Outputs:**
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
 """
-function optimize_outer_tank(fuse_tank, Winnertank, l_cyl)
+function optimize_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64)
 
       obj(x, grad) = size_outer_tank(fuse_tank, Winnertank, l_cyl, x[1])[1] #Minimize Wtank
 

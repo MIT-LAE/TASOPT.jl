@@ -32,8 +32,8 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize!(fuse_tank, z, Mair, xftank,
-                      time_flight, ifuel)
+function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
+                      time_flight::Float64, ifuel::Int64)
 
         #Unpack variables in fuse_tank
         t_cond = fuse_tank.t_insul
@@ -56,7 +56,7 @@ function tanksize!(fuse_tank, z, Mair, xftank,
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
                 guess = zeros(length(t_cond) + 2) 
                 guess[1] = 0.0
-                guess[2] = Tfuel + 1
+                guess[2] = Tfuel + 1.0
 
                 n_layers = length(t_cond)
                 for i = 1:n_layers
@@ -122,7 +122,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
+function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate

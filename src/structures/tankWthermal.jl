@@ -33,7 +33,7 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
+function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
@@ -56,7 +56,7 @@ function tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
       p.xftank = xftank
       p.ifuel = ifuel
 
-      _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
+      _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200.0) #Find adiabatic wall temperature with dummy wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
@@ -65,8 +65,8 @@ function tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
       
       #Initial guess for function
       guess = zeros(length(t_cond) + 2) 
-      guess[1] = 1000
-      guess[2] = Tfuel + 1
+      guess[1] = 1000.0
+      guess[2] = Tfuel + 1.0
       
       for i = 1:length(t_cond)
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
@@ -97,7 +97,7 @@ the tank wall temperature, and the temperatures at the interfaces of MLI insulat
       **Outputs:**
       - `F::Vector{Float64}`: vector with residuals.
 """
-function residuals_Q(x, p, mode)
+function residuals_Q(x::Vector{Float64}, p, mode::String)
       #Unpack states
       if mode == "Q_known" #If the heat is known because the max boiloff is an input
             Q = p.Q
@@ -204,7 +204,7 @@ This function calculates the thermal conductivity of different insulation materi
       **Outputs:**
       - `k::Float64`: thermal conductivity (W/(m K)).
 """
-function insulation_conductivity_calc(T, material)
+function insulation_conductivity_calc(T::Float64, material::String)
       if material == "rohacell41S"
             #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
             k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
@@ -274,7 +274,7 @@ This function calculates the latent heat of vaporization of a liquid fuel and it
       - `h_liq::Float64`: liquid-side heat tansfer coefficient (W/m^2/K).
       - `h_v::Float64`: liquid's enthalpy of vaporization (J/kg).
 """
-function tank_heat_coeffs(T_w, ifuel, Tfuel, ltank)
+function tank_heat_coeffs(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
       #Get fuel properties
       if ifuel == 11 #CH4
             h_v =  510e3 #J/kg, latent heat of vaporozation
@@ -320,7 +320,7 @@ of Aerodynamics.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z, M, xftank, Tw)
+function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64)
       #Use ISA function to calculate freestream conditions
       Tair, p, _, a, _ = atmos(z / 1e3)
       u = M * a #freestrean velocity
@@ -369,7 +369,7 @@ This function calculates the thermal resistance of a vacuum layer using the meth
       **Outputs:**
       - `R_eq::Float64`: equivalent thermal resistance of vacuum gap (K/W).
 """
-function vacuum_resistance(Tcold, Thot, S_inner, S_outer)
+function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_outer::Float64)
       #Assumed tank and gas properties
       a_outer = 0.9 
       a_inner = 1.0
