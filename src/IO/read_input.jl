@@ -365,6 +365,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
             push!(theta_outer,  Angle(θstr))
         end
         fuse_tank.theta_outer = theta_outer
+        fuse_tank.Ninterm = 1.0 #Initial guess for first iteration
     end
 
     #Find number of tanks from placement

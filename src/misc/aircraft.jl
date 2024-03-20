@@ -21,6 +21,7 @@ mutable struct fuselage_tank
     ARtank::Float64
     theta_inner::Float64
     theta_outer::Vector{Float64}
+    Ninterm::Float64
     
     ptank::Float64
     rhofuel::Float64

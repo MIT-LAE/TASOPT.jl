@@ -85,6 +85,9 @@ function tanksize!(fuse_tank, z, Mair, xftank,
 
         if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
                 Ninterm = optimize_outer_tank(fuse_tank, Winner_tot, lshell1) #Find optimal number of intermediate stiffeners
+                
+                fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
+                
                 Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
                 t_cyl2, t_head2 = size_outer_tank(fuse_tank, Winner_tot, lshell1, Ninterm)
 

@@ -354,6 +354,21 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       return hconvair, Tair, Taw
 end
 
+"""
+      vacuum_resistance(Tcold, Thot, S_inner, S_outer)
+
+This function calculates the thermal resistance of a vacuum layer using the methods of Barron (1985).
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `Tcold::Float64`: cold wall temperature (K).
+      - `Thot::Float64`: hot wall temperature (K).
+      - `S_inner::Float64`: area of tank inner surface (m^2).
+      - `S_outer::Float64`: area of tank outer surface (m^2).
+
+      **Outputs:**
+      - `R_eq::Float64`: equivalent thermal resistance of vacuum gap (K/W).
+"""
 function vacuum_resistance(Tcold, Thot, S_inner, S_outer)
       #Assumed tank and gas properties
       a_outer = 0.9 

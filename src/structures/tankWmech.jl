@@ -391,7 +391,7 @@ function optimize_outer_tank(fuse_tank, Winnertank, l_cyl)
 
       obj(x, grad) = size_outer_tank(fuse_tank, Winnertank, l_cyl, x[1])[1] #Minimize Wtank
 
-      initial_x = [1.0]
+      initial_x = [fuse_tank.Ninterm]
 
       #Set bounds
       lower = [0.0]
