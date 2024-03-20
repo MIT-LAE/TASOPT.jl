@@ -25,8 +25,13 @@
     end
     
     # Test that unreasonable requests throw errors
-    ## Try making something structural with gold
+    ## Try making something structural with silver, a conductor using
+    ## insulator properties or an insulator using conductor properties.
     @testset "Material errors" begin
+        @test_throws ErrorException StructuralAlloy("unobtanium")
+        @test_throws ErrorException Conductor("unobtanium")
+        @test_throws ErrorException Insulator("unobtanium")
+
         @test_throws ErrorException StructuralAlloy("Ag")
         @test_throws ErrorException Conductor("PTFE")
         @test_throws ErrorException Insulator("Cu")
