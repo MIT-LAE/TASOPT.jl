@@ -234,19 +234,8 @@ dcruise = dmis["Cruise"]
 readcruise(x) = read_input(x, cruise, dcruise)
 para[iaalt, ipcruise1, :] .= Distance.(readcruise("cruise_alt"))
 
-#Note: the following matrix re-arrangements are a result of 
-#  having to assign both mission and segment indices 
-#  and supporting multi-mission input.
-
-para[iaMach, ipclimbn:ipdescent1, :] .= fill_par_entry(readcruise("cruise_mach"),
-                                            (ipdescent1-ipclimbn)+1, 
-                                            nmisx )
-para[iaCL, ipclimb1+1:ipdescentn-1, :] .= fill_par_entry(readcruise("cruise_CL"), 
-                                            ((ipdescentn-1)-(ipclimb1+1)) + 1, 
-                                            nmisx )
-
-
-readcruise("cruise_CL")
+para[iaMach, ipclimbn:ipdescent1, :] .= readcruise("cruise_mach")
+para[iaCL, ipclimb1+1:ipdescentn-1, :] .= readcruise("cruise_CL")
 
 ##Descent parameters
 des = readmis("Descent")
@@ -279,15 +268,10 @@ parg[igpcabin] = p_cabin
 aero = read_input("Aero", fuse, dfuse)
 daero = dfuse["Aero"]
 readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, :, :] .= fill_par_entry(readaero("excrescence_drag_factor"),
-                                                    iptotal, nmisx)
-
-    para[iafduo, :, :] .= fill_par_entry(readaero("wingroot_fuse_overspeed"),
-                                            iptotal, nmisx)
-    para[iafdus, :, :] .= fill_par_entry(readaero("wingbreak_fuse_overspeed"),
-                                            iptotal, nmisx)
-    para[iafdut, :, :] .= fill_par_entry(readaero("wingtip_fuse_overspeed"),
-                                            iptotal, nmisx)
+    para[iafexcdf, :, :] .= readaero("excrescence_drag_factor")
+    para[iafduo, :, :] .= readaero("wingroot_fuse_overspeed")
+    para[iafdus, :, :] .= readaero("wingbreak_fuse_overspeed")
+    para[iafdut, :, :] .= readaero("wingtip_fuse_overspeed")
 
     parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
     parg[igCLMf0] = readaero("CL_zero_fuse_moment")
@@ -416,16 +400,16 @@ daero = dwing["Aero"]
     parg[igfLo] = readaero("fuselage_lift_carryover_loss_factor")
     parg[igfLt] = readaero("wing_tip_lift_rolloff_factor")
 
-    para[iacdfw, :, :]   .= fill_par_entry(readaero("lowspeed_cdf"),iptotal,nmisx)  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
-    para[iacdpw, :, :]   .= fill_par_entry(readaero("lowspeed_cdp"),iptotal,nmisx)  #  cdpw    
-    para[iaRerefw, :, :] .= fill_par_entry(readaero("Re_ref"),iptotal,nmisx)  #  Rerefw
+    para[iacdfw, 1:iptotal, :]   .= readaero("lowspeed_cdf")  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
+    para[iacdpw, 1:iptotal, :]   .= readaero("lowspeed_cdp")  #  cdpw    
+    para[iaRerefw, 1:iptotal, :] .= readaero("Re_ref")  #  Rerefw
 
-    para[iacdfs, :, :]   .= fill_par_entry(readaero("strut_lowspeed_cdf"),iptotal,nmisx)  #  cdfs    strut profile cd (not used if there's no strut)
-    para[iacdps, :, :]   .= fill_par_entry(readaero("strut_lowspeed_cdp"),iptotal,nmisx)  #  cdps    
-    para[iaRerefs, :, :] .= fill_par_entry(readaero("strut_Re_ref")  ,iptotal,nmisx)      #  Rerefs  
+    para[iacdfs, 1:iptotal, :]   .= readaero("strut_lowspeed_cdf")  #  cdfs    strut profile cd (not used if there's no strut)
+    para[iacdps, 1:iptotal, :]   .= readaero("strut_lowspeed_cdp")  #  cdps    
+    para[iaRerefs, 1:iptotal, :] .= readaero("strut_Re_ref")        #  Rerefs  
 
-    para[iaaRexp, :, :] .= fill_par_entry(readaero("Reynolds_scaling"),iptotal,nmisx)
-    para[iafexcdw, :, :] .= fill_par_entry(readaero("excrescence_drag_factor"),iptotal,nmisx)
+    para[iaaRexp, 1:iptotal, :] .= readaero("Reynolds_scaling")
+    para[iafexcdw, 1:iptotal, :] .= readaero("excrescence_drag_factor")
     parg[igfBLIw] = readaero("BLI_frac")
 
 #- wing spanwise cl and cm distributions over mission
@@ -433,21 +417,21 @@ daero = dwing["Aero"]
 #- takeoff, initial climb
 takeoff = readaero("Takeoff")
 dtakeoff = daero["Takeoff"]
-    para[iarcls, 1:ipclimb1, :] .= fill_par_entry(readtakeoff("cls_clo"),ipclimb1,nmisx)    #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, 1:ipclimb1, :] .= fill_par_entry(readtakeoff("clt_clo"),ipclimb1,nmisx)    #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, 1:ipclimb1, :] .= fill_par_entry(readtakeoff("cm_o"),ipclimb1,nmisx)      #  cmpo    root  cm
-    para[iacmps, 1:ipclimb1, :] .= fill_par_entry(readtakeoff("cm_s"),ipclimb1,nmisx)      #  cmps    break cm
-    para[iacmpt, 1:ipclimb1, :] .= fill_par_entry(readtakeoff("cm_t"),ipclimb1,nmisx)      #  cmpt    tip   cm
+    para[iarcls, 1:ipclimb1, :] .= readtakeoff("cls_clo")    #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, 1:ipclimb1, :] .= readtakeoff("clt_clo")    #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, 1:ipclimb1, :] .= readtakeoff("cm_o")      #  cmpo    root  cm
+    para[iacmps, 1:ipclimb1, :] .= readtakeoff("cm_s")      #  cmps    break cm
+    para[iacmpt, 1:ipclimb1, :] .= readtakeoff("cm_t")      #  cmpt    tip   cm
 
 # Clean climb cruise descent and for wing structure sizing
 climb = readaero("Climb")
 dclimb = daero["Climb"]
 readclimb(x) = read_input(x, climb, dclimb)
-    para[iarcls, ipclimb1+1:ipdescentn-1, :] .= fill_par_entry(readclimb("cls_clo"),(ipdescentn-1)-(ipclimb1+1)+1,nmisx)   #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, ipclimb1+1:ipdescentn-1, :] .= fill_par_entry(readclimb("clt_clo"),(ipdescentn-1)-(ipclimb1+1)+1,nmisx)   #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, ipclimb1+1:ipdescentn-1, :] .= fill_par_entry(readclimb("cm_o"),(ipdescentn-1)-(ipclimb1+1)+1,nmisx)      #  cmpo    root  cm
-    para[iacmps, ipclimb1+1:ipdescentn-1, :] .= fill_par_entry(readclimb("cm_s"),(ipdescentn-1)-(ipclimb1+1)+1,nmisx)      #  cmps    break cm
-    para[iacmpt, ipclimb1+1:ipdescentn-1, :] .= fill_par_entry(readclimb("cm_t"),(ipdescentn-1)-(ipclimb1+1)+1,nmisx)      #  cmpt    tip   cm
+    para[iarcls, ipclimb1+1:ipdescentn-1, :] .= readclimb("cls_clo")   #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, ipclimb1+1:ipdescentn-1, :] .= readclimb("clt_clo")   #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_o")      #  cmpo    root  cm
+    para[iacmps, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_s")      #  cmps    break cm
+    para[iacmpt, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_t")      #  cmpt    tip   cm
 
 # Landing, forward CG tail sizing case
 land = readaero("Landing")
@@ -483,11 +467,11 @@ dweight = dwing["Weightfracs"]
 tails = read_input("Stabilizers", data, default)
 dtails = default["Stabilizers"]
 readtails(x) = read_input(x, tails, dtails)
-    para[iacdft, :, :]   .= fill_par_entry(readtails("lowspeed_cdf"),iptotal,nmisx)  #  cdft    tail profile cd
-    para[iacdpt, :, :]   .= fill_par_entry(readtails("lowspeed_cdp"),iptotal,nmisx)  #  cdpt    
-    para[iaRereft, :, :] .= fill_par_entry(readtails("Re_ref"),iptotal,nmisx)  #  Rereft  
+    para[iacdft, 1:iptotal, :]   .= readtails("lowspeed_cdf")  #  cdft    tail profile cd
+    para[iacdpt, 1:iptotal, :]   .= readtails("lowspeed_cdp")  #  cdpt    
+    para[iaRereft, 1:iptotal, :] .= readtails("Re_ref")  #  Rereft  
 
-    para[iafexcdt, :, :] .= fill_par_entry(readtails("excrescence_drag_factor"),iptotal,nmisx)
+    para[iafexcdt, 1:iptotal, :] .= readtails("excrescence_drag_factor")
 
     htail = readtails("Htail")
     dhtail = dtails["Htail"]
@@ -639,7 +623,7 @@ readprop(x) = read_input(x, prop, dprop)
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
 
-    pare[ieTt4, :, :] .= fill_par_entry(Temp.(readprop("Tt4_cruise")),iptotal,nmisx)
+    pare[ieTt4, :, :] .= Temp(readprop("Tt4_cruise"))
 
     Tt4TO = Temp.(readprop("Tt4_takeoff"))
     pare[ieTt4, ipstatic, :] .= Tt4TO
