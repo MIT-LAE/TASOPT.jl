@@ -10,7 +10,7 @@ Generic structural alloy.
 
 $TYPEDFIELDS
 """
-struct StructuralAlloy <: AbstractMaterials
+struct StructuralAlloy
     """Density [kg/m³]"""
     ρ::Float64
     """Young's Modulus [Pa]"""
@@ -67,7 +67,7 @@ Generic conductor.
 
 $TYPEDFIELDS
 """
-@kwdef struct Conductor <: AbstractMaterials
+@kwdef struct Conductor 
     """Density [kg/m³]"""
     ρ::Float64
     """Resistivity [Ω⋅m]"""
@@ -117,7 +117,7 @@ Generic insulator.
 
 $TYPEDFIELDS
 """
-@kwdef struct Insulator <: AbstractMaterials
+@kwdef struct Insulator
     """Density [kg/m³]"""
     ρ::Float64
     """Dielectric strength [V/m]"""
@@ -172,13 +172,14 @@ function resistivity(cond::Conductor, T::Float64=293.15)
 end  # function resistivity
 
 """
-    create_dict(material::AbstractMaterials)
+    create_dict(material)
 
-Creates a dictionary from a given AbstractMaterials subtype
+Creates a dictionary from a given material type
 """
-function create_dict(material::AbstractMaterials)
+function create_material_dict(material)
     fn = fieldnames(typeof(material))
-    dict = Dict("Material" => Dict(fn .=> getproperty.([material], fn)))
+    isempty(fn) ? error("Not an appropriate sturct") :
+    Dict("Material" => Dict(fn .=> getproperty.([material], fn)))
 end
 
 """
@@ -195,5 +196,5 @@ function save_material_toml(filename::String, dict::AbstractDict)
     end
 end  # function save_material_toml
 
-save_material_toml(filename::String, material::AbstractMaterials) = 
-save_material_toml(filename, create_dict(material))
+save_material_toml(filename::String, material) = 
+save_material_toml(filename, create_material_dict(material))
