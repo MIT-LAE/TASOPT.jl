@@ -1,5 +1,3 @@
-abstract type AbstractMaterials end
-
 using TOML, DocStringExtensions
 
 __abs_path_prefix__ = dirname(@__DIR__)
