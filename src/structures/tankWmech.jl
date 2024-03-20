@@ -94,12 +94,20 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       #Vhead = Shead*tskin
       Vhead = Shead * t_head # volume of head
 
-      Sinternal = Scyl + Shead
+      Sinternal = Scyl + 2 * Shead
 
 #--- weights and weight moments
       Whead = rhoskin*gee*Vhead
       Wcyl  = rhoskin*gee*Vcyl
-      Wtank = (Wcyl + 2*Whead) *(1.0 + ftankstiff + ftankadd) # What is an appropriate mass addtion from fasteners/ supports
+      Winnertank = Wcyl + 2*Whead + Wfuel #Weight of inner tank without stiffeners and supports, inc. fuel
+
+      #--- stiffeners
+      Nmain = 2 #Tanks typically have two main support rings
+      Wmainstiff = stiffener_weight("inner", Winnertank / Nmain, Rtank_outer, 
+                                s_a, ρouter, θ) #Weight of one main stiffener
+
+      Wstiff = Nmain * Wmainstiff
+      Wtank = (Wcyl + 2*Whead + Wstiff) * (1 + ftankadd)
 
 #--- insulation weight!
       N = length(t_cond)
@@ -140,7 +148,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
 
-return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead_insul, l_tank
+return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead_insul, l_tank
 end
 
 function size_outer_tank(fuse_tank, l_cyl)
