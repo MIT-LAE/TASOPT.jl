@@ -21,27 +21,6 @@ function init_par_arrays(;n_flight_pts::Int, n_missions::Int)
 end
 
 """
-    fill_par_entry(value_or_values, n_ip, n_im)
-
-repeats given value or vector of values to fill a 2d array of size (n_ip, n_im)
-used for assigning constants across flight segments conveniently.
-
-accounts for multi-mission input (read as array in value_or_values) by reducing repeats if present
-"""
-#TODO: make mission repeat assume something when nmisx != size(value_or_values,1)
-function fill_par_entry(value_or_values, n_ip, n_im)
-    return repeat(transpose(value_or_values), n_ip, 1 + (n_im-size(value_or_values,1)))
-end
-
-# Overloads repeat fxn to handle single elements (not default behavior)
-# (edge case for some multi-point/multi-mission handling in read_input)
-import Base.repeat
-function repeat(single_elem::Real, counts::Integer...)
-    repeat([single_elem], counts...)
-end
-
-
-"""
     generate_par_indname(par_suffix::String)
 
 generates a vector that contains variable names of par_array indices, "mapping" 

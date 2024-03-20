@@ -234,8 +234,8 @@ dcruise = dmis["Cruise"]
 readcruise(x) = read_input(x, cruise, dcruise)
 para[iaalt, ipcruise1, :] .= Distance.(readcruise("cruise_alt"))
 
-para[iaMach, ipclimbn:ipdescent1, :] .= readcruise("cruise_mach")
-para[iaCL, ipclimb1+1:ipdescentn-1, :] .= readcruise("cruise_CL")
+para[iaMach, ipclimbn:ipdescent1, :] .= transpose(readcruise("cruise_mach")) #transpose for proper vector broadcasting
+para[iaCL, ipclimb1+1:ipdescentn-1, :] .= transpose(readcruise("cruise_CL")) 
 
 ##Descent parameters
 des = readmis("Descent")
@@ -268,10 +268,10 @@ parg[igpcabin] = p_cabin
 aero = read_input("Aero", fuse, dfuse)
 daero = dfuse["Aero"]
 readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, :, :] .= readaero("excrescence_drag_factor")
-    para[iafduo, :, :] .= readaero("wingroot_fuse_overspeed")
-    para[iafdus, :, :] .= readaero("wingbreak_fuse_overspeed")
-    para[iafdut, :, :] .= readaero("wingtip_fuse_overspeed")
+    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
+    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
+    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
+    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
 
     parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
     parg[igCLMf0] = readaero("CL_zero_fuse_moment")
@@ -417,31 +417,34 @@ daero = dwing["Aero"]
 #- takeoff, initial climb
 takeoff = readaero("Takeoff")
 dtakeoff = daero["Takeoff"]
-    para[iarcls, 1:ipclimb1, :] .= readtakeoff("cls_clo")    #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, 1:ipclimb1, :] .= readtakeoff("clt_clo")    #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, 1:ipclimb1, :] .= readtakeoff("cm_o")      #  cmpo    root  cm
-    para[iacmps, 1:ipclimb1, :] .= readtakeoff("cm_s")      #  cmps    break cm
-    para[iacmpt, 1:ipclimb1, :] .= readtakeoff("cm_t")      #  cmpt    tip   cm
+    #transpose for proper vector broadcasting
+    para[iarcls, 1:ipclimb1, :] .= transpose(readtakeoff("cls_clo"))    #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, 1:ipclimb1, :] .= transpose(readtakeoff("clt_clo"))    #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, 1:ipclimb1, :] .= transpose(readtakeoff("cm_o"))      #  cmpo    root  cm
+    para[iacmps, 1:ipclimb1, :] .= transpose(readtakeoff("cm_s"))      #  cmps    break cm
+    para[iacmpt, 1:ipclimb1, :] .= transpose(readtakeoff("cm_t"))      #  cmpt    tip   cm
 
 # Clean climb cruise descent and for wing structure sizing
 climb = readaero("Climb")
 dclimb = daero["Climb"]
 readclimb(x) = read_input(x, climb, dclimb)
-    para[iarcls, ipclimb1+1:ipdescentn-1, :] .= readclimb("cls_clo")   #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, ipclimb1+1:ipdescentn-1, :] .= readclimb("clt_clo")   #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_o")      #  cmpo    root  cm
-    para[iacmps, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_s")      #  cmps    break cm
-    para[iacmpt, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_t")      #  cmpt    tip   cm
+    #transpose for proper vector broadcasting
+    para[iarcls, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cls_clo"))   #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("clt_clo"))   #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cm_o"))      #  cmpo    root  cm
+    para[iacmps, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cm_s"))      #  cmps    break cm
+    para[iacmpt, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cm_t"))      #  cmpt    tip   cm
 
 # Landing, forward CG tail sizing case
 land = readaero("Landing")
 dland = daero["Landing"]
 readland(x) = read_input(x, land, dland)
-    para[iarcls, ipdescentn, :] .= readland("cls_clo")   #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, ipdescentn, :] .= readland("clt_clo")   #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, ipdescentn, :] .= readland("cm_o")      #  cmpo    root  cm
-    para[iacmps, ipdescentn, :] .= readland("cm_s")      #  cmps    break cm
-    para[iacmpt, ipdescentn, :] .= readland("cm_t")      #  cmpt    tip   cm
+    #transpose for proper vector broadcasting
+    para[iarcls, ipdescentn, :] .= transpose(readland("cls_clo"))   #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, ipdescentn, :] .= transpose(readland("clt_clo"))   #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, ipdescentn, :] .= transpose(readland("cm_o"))      #  cmpo    root  cm
+    para[iacmps, ipdescentn, :] .= transpose(readland("cm_s"))      #  cmps    break cm
+    para[iacmpt, ipdescentn, :] .= transpose(readland("cm_t"))      #  cmpt    tip   cm
     
 # ----------------------------------
 # ---------- Wing Weight -----------
@@ -467,11 +470,12 @@ dweight = dwing["Weightfracs"]
 tails = read_input("Stabilizers", data, default)
 dtails = default["Stabilizers"]
 readtails(x) = read_input(x, tails, dtails)
-    para[iacdft, 1:iptotal, :]   .= readtails("lowspeed_cdf")  #  cdft    tail profile cd
-    para[iacdpt, 1:iptotal, :]   .= readtails("lowspeed_cdp")  #  cdpt    
-    para[iaRereft, 1:iptotal, :] .= readtails("Re_ref")  #  Rereft  
+    #transpose for proper broadcasting
+    para[iacdft, 1:iptotal, :]   .= transpose(readtails("lowspeed_cdf"))  #  cdft    tail profile cd
+    para[iacdpt, 1:iptotal, :]   .= transpose(readtails("lowspeed_cdp"))  #  cdpt    
+    para[iaRereft, 1:iptotal, :] .= transpose(readtails("Re_ref"))  #  Rereft  
 
-    para[iafexcdt, 1:iptotal, :] .= readtails("excrescence_drag_factor")
+    para[iafexcdt, 1:iptotal, :] .= transpose(readtails("excrescence_drag_factor"))
 
     htail = readtails("Htail")
     dhtail = dtails["Htail"]
@@ -623,9 +627,9 @@ readprop(x) = read_input(x, prop, dprop)
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
 
-    pare[ieTt4, :, :] .= Temp(readprop("Tt4_cruise"))
+    pare[ieTt4, :, :] .= transpose(Temp.(readprop("Tt4_cruise"))) #transpose for proper broadcasting
 
-    Tt4TO = Temp.(readprop("Tt4_takeoff"))
+    Tt4TO = transpose(Temp.(readprop("Tt4_takeoff")))
     pare[ieTt4, ipstatic, :] .= Tt4TO
     pare[ieTt4, iprotate, :] .= Tt4TO
     pare[ieTt4, iptakeoff, :] .= Tt4TO
@@ -647,7 +651,7 @@ readturb(x) = read_input(x, turb, dturb)
     OPR = readturb("OPR")
     pif = readturb("Fan_PR")
     pilc = readturb("LPC_PR")
-    pihc = OPR/pilc
+    pihc = OPR./pilc
 
     pid = readturb("diffuser_PR")
     pib = readturb("burner_PR")
