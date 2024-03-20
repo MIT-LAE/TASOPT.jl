@@ -357,7 +357,14 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
         fuse_tank.rhoouter = readfuel_storage("outer_skin_density")
         fuse_tank.Eouter = Pressure(readfuel_storage("outer_skin_Youngs_modulus"))
         fuse_tank.poissouter = readfuel_storage("outer_skin_Poisson_ratio")
-        fuse_tank.theta_inner = Angle(readfuel_storage("outer_tank_support_angles"))
+        fuse_tank.UTSouter = Pressure(readfuel_storage("outer_skin_ultimate_strength"))
+
+        theta_outer_str = readfuel_storage("outer_tank_support_angles")
+        theta_outer = []
+        for θstr in theta_outer_str
+            push!(theta_outer,  Angle(θstr))
+        end
+        fuse_tank.theta_outer = theta_outer
     end
 
     #Find number of tanks from placement
