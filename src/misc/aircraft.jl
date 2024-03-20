@@ -19,13 +19,14 @@ mutable struct fuselage_tank
     Eouter::Float64
     poissouter::Float64
     ARtank::Float64
+    theta_inner::Float64
+    theta_outer::Vector{Float64}
     
     ptank::Float64
     rhofuel::Float64
     Tfuel::Float64
     boiloff_rate::Float64
 
-    ftankstiff::Float64
     ftankadd::Float64
     ew::Float64
     ullage_frac::Float64

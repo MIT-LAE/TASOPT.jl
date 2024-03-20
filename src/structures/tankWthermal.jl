@@ -40,7 +40,7 @@ function tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
       qfac = fuse_tank.qfac
 
       Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-      Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
+      Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
       #Create struct with thermal parameters
       p = thermal_params()

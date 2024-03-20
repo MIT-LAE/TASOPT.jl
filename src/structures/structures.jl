@@ -10,7 +10,7 @@ using ..atmosphere
 using NLsolve
 using Roots
 
-export surfw, surfdx, fusew, tailpo, tanksize, update_fuse!, update_fuse_for_pax!
+export surfw, surfdx, fusew, tailpo, tanksize!, update_fuse!, update_fuse_for_pax!
 
 include("../misc/index.inc")
 include("../misc/constants.jl")

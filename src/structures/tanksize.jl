@@ -1,5 +1,5 @@
 """
-        tanksize(fuse_tank, z, Mair, xftank,
+        tanksize!(fuse_tank, z, Mair, xftank,
         time_flight, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
@@ -32,7 +32,7 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize(fuse_tank, z, Mair, xftank,
+function tanksize!(fuse_tank, z, Mair, xftank,
                       time_flight, ifuel)
 
         #Unpack variables in fuse_tank
@@ -80,20 +80,21 @@ function tanksize(fuse_tank, z, Mair, xftank,
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
+        Wtank_total, lshell1, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
         Sinternal, Shead_insul, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
         if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
-                Wtank2, Wcyl2, Whead2, S_outer, Shead2, Scyl2, 
-                t_cyl2, t_head2 = size_outer_tank(fuse_tank, lshell)
+                Ninterm = optimize_outer_tank(fuse_tank, Winnertank, l_cyl) #Find optimal number of intermediate stiffeners
+                Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
+                t_cyl2, t_head2 = size_outer_tank(fuse_tank, Wtank_total, lshell1, Ninterm)
 
                 Wtank_total = Wtank_total + Wtank2
                 Wtank = Wtank + Wtank2
         end
-
-        return Wtank_total, thickness_insul, lshell, mdot_boiloff, 
+        
+        return Wtank_total, thickness_insul, lshell1, mdot_boiloff, 
         Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead,
-        Wcyl, Winsul_sum, Winsul, l_tank, Wtank 
+        Wcyl, Winsul_sum, Winsul, l_tank, Wtank
 end
 
 """
@@ -136,7 +137,7 @@ function res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
         end
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
+        Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
 
         _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporizatio
 
