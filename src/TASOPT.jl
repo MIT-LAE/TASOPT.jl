@@ -20,7 +20,7 @@ using Parameters
 using CSV, Tables
 using DocStringExtensions
 
-global const __TASOPTroot__ = @__DIR__
+const __TASOPTroot__ = @__DIR__
 
 # Constants and array indices
 include("./misc/constants.jl")
