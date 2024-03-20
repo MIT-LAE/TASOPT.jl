@@ -18,7 +18,7 @@
 
 [Al-7075]
     description = """General 7075 characteristics and uses (from Alcoa): Very high strength material used for highly stressed structural parts. The T7351 temper offers improved stress-corrosion cracking resistance.
-                     Uses: Aircraft fittings, gears and shafts, fuse parts, meter shafts and gears, missile parts, regulating valve parts, worm gears, keys, aircraft, aerospace and defense applications."""
+    Uses: Aircraft fittings, gears and shafts, fuse parts, meter shafts and gears, missile parts, regulating valve parts, worm gears, keys, aircraft, aerospace and defense applications."""
 
     source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=6653b72914864cc0a0ff7adf5b720167"
     density = 2810.0 #kg/m3
