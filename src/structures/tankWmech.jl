@@ -324,7 +324,7 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM(θ::Float64)
-      ϕlist = LinRange(0.0, π, 360)
+      ϕlist = LinRange(0.0, π, 361)
       k = zeros(length(ϕlist))
 
       for (i,ϕ) in enumerate(ϕlist)
@@ -357,7 +357,7 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM_outer(θ1::Float64, θ2::Float64)
-      ϕlist = LinRange(0.0, π, 360)
+      ϕlist = LinRange(0.0, π, 361)
       k = zeros(length(ϕlist))
 
       for (i,ϕ) in enumerate(ϕlist)
