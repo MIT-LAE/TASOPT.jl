@@ -3,10 +3,7 @@
 ["Aircraft Description"]
     name = "Wide Body TASOPT Model"
     description = """
-    This model file describes a basic single-aisle aircraft to 
-    demonstrate how to define a model file. The contents of this file are 
-    also loaded by the `TASOPT.jl` package as default if no other details are 
-    provided by the user.
+    This model file describes a basic twin-aisle aircraft.
     """
 
 #-------------------------------------------------#
