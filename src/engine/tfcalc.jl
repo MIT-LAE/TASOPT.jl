@@ -293,7 +293,7 @@ function tfcalc!(pari, parg, para, pare, ip,
                 NbhtD = Nbht
                 NbltD = Nblt
 
-                #----- but recacalculate turbine pressure ratios using slightly approximate form,
+                #----- but recalculate turbine pressure ratios using slightly approximate form,
                 #-      to be fuly consistent with TFOPER's turbine efficiency function
                 Trh = Tt41 / (Tt41 + (ht45 - ht41) / cpt41)
                 Trl = Tt45 / (Tt45 + (ht49 - ht45) / cpt45)
