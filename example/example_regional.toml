@@ -58,7 +58,7 @@
     max_pax = 122               # Maximum number of passengers for aircarft 
                                 # defines the maximum payload carrying capacity of the aircraft
     
-    range = "2200.0 nmi" #["2200.0 nmi", "1400.0 nmi", "14000.0 nmi",  "1400.0 nmi"] 
+    range = "2200.0 nmi"
     # Design Range + second mission range           
     weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] 
