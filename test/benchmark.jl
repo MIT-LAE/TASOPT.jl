@@ -21,7 +21,6 @@ using BenchmarkTools
 println("Loading TASOPT...")
 
 println("Loading input file...")
-# include("input.jl")
 
 println("\nNotes (from BenchmarkTools Manual):
 - The minimum is a robust estimator for the location parameter of the

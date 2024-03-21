@@ -1,4 +1,5 @@
 using TOML
+export read_aircraft_model, load_default_model
 
 include("size_cabin.jl")
 #using ..structures
@@ -8,9 +9,9 @@ include("size_cabin.jl")
     default_dict::AbstractDict = default)
 
 Reads the input from a given dictonary (typically parsed from a TOML file).
-If requested input does not exist in dictonary, looks for value in default input
-and stores default value into the given dictonary (primarily for later output/
-saving as an `aircraft` model file)
+If requested input does not exist in dictionary, looks for value in default input
+and stores default value into the given dictionary (primarily for later output/
+saving as an aircraft model file)
 """
 function read_input(k::String, dict::AbstractDict=data, 
     default_dict::AbstractDict = default)
@@ -24,14 +25,14 @@ function read_input(k::String, dict::AbstractDict=data,
             default_dict[k]
         else
             error("Requested key/parameter is not supported. Check the default 
-            input file to see all available input options.")
+            input file to see all available input options. Key: "*k)
         end
     end
 end
 
 # Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
-Len(x)      = convertDist(parse_unit(x)...)
+Distance(x)      = convertDist(parse_unit(x)...)
 Force(x)    = convertForce(parse_unit(x)...)
 Pressure(x) = convertPressure(parse_unit(x)...)
 Stress = Pressure
@@ -48,6 +49,10 @@ Temp(x)     = convertTemp(parse_unit(x)...)
 Reads a specified TOML file that describes a TASOPT `aircraft` model 
 with a fall back to the default `aircraft` definition 
 provided in \"src/IO/default_input.toml\""
+
+!!! note "Deviating from default"
+    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+    from the default functionality. Thorough knowledge of the model is required.
 
 # Examples
 ```julia-repl
@@ -81,6 +86,7 @@ default = TOML.parsefile(defaultfile)
 ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
+sized = get(ac_descrip, "sized",[false])
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
 dmis = default["Mission"]
@@ -105,8 +111,8 @@ elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
 else
     error("Propulsion system \"$propsys\" specified. Choose between
-    1: TF - turbo-fan
-    2: TE - turbo-electric" )
+    > TF - turbo-fan
+    > TE - turbo-electric" )
 end
 
 engloc = read_input("engine_location", options, doptions)
@@ -121,8 +127,8 @@ elseif typeof(engloc) <: AbstractString
         pari[iiengloc] = 2
     else
         error("Engine location provided is \"$engloc\". Engine position can only be:
-        1: Engines on \"wing\"
-        2: Engines on \"fuselage\"")
+        > 1: Engines on \"wing\"
+        > 2: Engines on \"fuselage\"")
     end
 else
     error("Check engine position input... something isn't right")
@@ -167,7 +173,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.rhoskintank = readfuel_storage("tank_skin_density")
     fuse_tank.max_boiloff = readfuel_storage("maximum_boiloff_rate")
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
-    fuse_tank.clearance_fuse = Len(readfuel_storage("fuselage_clearance"))
+    fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
     fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
     fuse_tank.ftankstiff = readfuel_storage("stiffener_mass_fraction")
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
@@ -182,7 +188,7 @@ end
 
 # Setup mission variables
 ranges = readmis("range")
-parm[imRange, :] .= Len.(ranges)
+parm[imRange, :] .= Distance.(ranges)
 
 maxpax = readmis("max_pax")
 pax = readmis("pax")
@@ -199,42 +205,44 @@ parg[igNlift] = readmis("Nlift")
 takeoff = readmis("Takeoff")
 dtakeoff = dmis["Takeoff"]
 readtakeoff(x) = read_input(x, takeoff, dtakeoff)
-parm[imaltTO, :] .= Len.(readtakeoff("takeoff_alt"))
+parm[imaltTO, :] .= Distance.(readtakeoff("takeoff_alt"))
 parg[igmubrake] = readtakeoff("braking_resistance_coeff")
 parg[igmuroll]  = readtakeoff("rolling_resistance_coeff")
-parg[ighobst]   = Len(readtakeoff("takeoff_obstacle_height"))
+parg[ighobst]   = Distance(readtakeoff("takeoff_obstacle_height"))
 parg[igcdefan]  = readtakeoff("CD_dead_engine")
 parg[igCDgear]  = readtakeoff("CD_landing_gear")
 parg[igCDspoil] = readtakeoff("CD_spoilers")
-parg[iglBFmax]  = Len(readtakeoff("max_balanced_field_length"))
+parg[iglBFmax]  = Distance(readtakeoff("max_balanced_field_length"))
 parg[igNland]   = readtakeoff("Nland")
 
 T0TO = Temp.(readtakeoff("takeoff_T"))
 parm[imT0TO, :] .= T0TO 
-para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
+
 para[iaclpmax, ipstatic:ipcutback, :] .= readtakeoff("CL_max_perp")
+para[iaclpmax, ipclimb1, :] .= readtakeoff("CL_max_perp")
 para[iaclpmax, ipdescentn, :] .= readtakeoff("CL_max_perp")
 
 ##Climb parameters
 climb = readmis("Climb")
 dclimb = dmis["Climb"]
-parg[iggtocmin] = Angle(read_input("minimum_top-of-climb_gradient",
+parg[iggtocmin] = Angle.(read_input("minimum_top-of-climb_gradient",
                  climb, dclimb))
 
 ##Cruise parameters
 cruise = readmis("Cruise")
 dcruise = dmis["Cruise"]
 readcruise(x) = read_input(x, cruise, dcruise)
-para[iaalt, ipcruise1, :] .= Len.(readcruise("cruise_alt"))
-para[iaMach, ipclimbn:ipdescent1, :] .= readcruise("cruise_mach")
-para[iaCL, ipclimb1+1:ipdescentn-1, :] .= readcruise("cruise_CL")
+para[iaalt, ipcruise1, :] .= Distance.(readcruise("cruise_alt"))
+
+para[iaMach, ipclimbn:ipdescent1, :] .= transpose(readcruise("cruise_mach")) #transpose for proper vector broadcasting
+para[iaCL, ipclimb1+1:ipdescentn-1, :] .= transpose(readcruise("cruise_CL")) 
 
 ##Descent parameters
 des = readmis("Descent")
 ddes = dmis["Descent"]
 readdes(x) = read_input(x, des, ddes)
-parm[imgamVDE1, :] .= Angle(readdes("descent_angle_top-of-descent"))
-parm[imgamVDEn, :] .= Angle(readdes("descent_angle_bottom-of-descent"))
+parm[imgamVDE1, :] .= Angle.(readdes("descent_angle_top-of-descent"))
+parm[imgamVDEn, :] .= Angle.(readdes("descent_angle_bottom-of-descent"))
 
 #---------- End Mission vars --------------
 
@@ -244,19 +252,26 @@ parm[imgamVDEn, :] .= Angle(readdes("descent_angle_bottom-of-descent"))
 # Setup Fuselage 
 fuse = read_input("Fuselage", data, default)
 dfuse = default["Fuselage"]
-cabinPressureAlt_km = convertDist(parse_unit(read_input("cabin_pressure_altitude",
+
+#cabin pressure setting, by explicit pressure value or altitude
+#explicit value takes precedence
+if  "cabin_pressure" in keys(fuse)
+    p_cabin = Pressure.(read_input("cabin_pressure",fuse,dfuse))
+
+else  #if not set explicitly, use altitude (set by default)
+    cabinPressureAlt_km = convertDist(parse_unit(read_input("cabin_pressure_altitude",
                                             fuse, dfuse))..., "km")
-_, p_cabin, _, _, _ = atmos(cabinPressureAlt_km)
+    _, p_cabin, _, _, _ = atmos(cabinPressureAlt_km)
+end
 parg[igpcabin] = p_cabin
 
 aero = read_input("Aero", fuse, dfuse)
 daero = dfuse["Aero"]
 readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, 1:iptotal, :] .= readaero("excrescence_drag_factor")
-
-    para[iafduo, :, :] .= readaero("wingroot_fuse_overspeed")
-    para[iafdus, :, :] .= readaero("wingbreak_fuse_overspeed")
-    para[iafdut, :, :] .= readaero("wingtip_fuse_overspeed")
+    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
+    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
+    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
+    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
 
     parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
     parg[igCLMf0] = readaero("CL_zero_fuse_moment")
@@ -291,10 +306,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
 
-    parg[igRfuse]  = Len(readgeom("radius"))
-    parg[igdRfuse] = Len(readgeom("dRadius"))
-    parg[igwfb]    = Len(readgeom("y_offset"))
-    parg[ighfloor] = Len(readgeom("floor_depth"))
+    parg[igRfuse]  = Distance(readgeom("radius"))
+    parg[igdRfuse] = Distance(readgeom("dRadius"))
+    parg[igwfb]    = Distance(readgeom("y_offset"))
+    parg[ighfloor] = Distance(readgeom("floor_depth")) 
     parg[ignfweb]  = readgeom("Nwebs")
 
     parg[iganose] = readgeom("a_nose")
@@ -316,23 +331,25 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
 
-    parg[igxnose]   = Len(readgeom("x_nose_tip")) 
-    parg[igxshell1] = Len(readgeom("x_pressure_shell_fwd"))
-    parg[igxblend1] = Len(readgeom("x_start_cylinder"))
-    parg[igxblend2] = Len(readgeom("x_end_cylinder"))
-    parg[igxshell2] = Len(readgeom("x_pressure_shell_aft"))
-    parg[igxconend] = Len(readgeom("x_cone_end"))
-    parg[igxend]    = Len(readgeom("x_end")) 
+    parg[igxnose]   = Distance(readgeom("x_nose_tip")) 
+    parg[igxshell1] = Distance(readgeom("x_pressure_shell_fwd"))
+    parg[igxblend1] = Distance(readgeom("x_start_cylinder"))
+    parg[igxblend2] = Distance(readgeom("x_end_cylinder"))
+    parg[igxshell2] = Distance(readgeom("x_pressure_shell_aft"))
+    parg[igxconend] = Distance(readgeom("x_cone_end"))
+    parg[igxend]    = Distance(readgeom("x_end")) 
     
-    parg[igxlgnose]  = Len(readgeom("x_nose_landing_gear"))
-    parg[igdxlgmain] = Len(readgeom("x_main_landing_gear_offset"))
-    parg[igxapu]     = Len(readgeom("x_APU"))
-    parg[igxhpesys]  = Len(readgeom("x_HPE_sys"))
+    parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
+    parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
+    parg[igxapu]     = Distance(readgeom("x_APU"))
+    parg[igxhpesys]  = Distance(readgeom("x_HPE_sys"))
 
-    parg[igxfix] = Len(readgeom("x_fixed_weight"))
+    parg[igxfix] = Distance(readgeom("x_fixed_weight"))
 
-    parg[igxeng] = Len(readgeom("x_engines"))
-    parg[igyeng] = Len(readgeom("y_critical_engines"))
+    parg[igxeng] = Distance(readgeom("x_engines"))
+    parg[igyeng] = Distance(readgeom("y_critical_engines"))
+
+    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
 
     parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
 
@@ -351,26 +368,27 @@ readwing(x) = read_input(x, wing, dwing)
 
     parg[igsweep] = readwing("sweep")
     parg[igAR] = readwing("AR")
-    parg[igbmax] = Len(readwing("maxSpan"))
+    parg[igbmax] = Distance(readwing("maxSpan"))
 
     parg[iglambdas] = readwing("inner_panel_taper_ratio")
     parg[iglambdat] = readwing("outer_panel_taper_ratio")
     parg[igetas]    = readwing("panel_break_location")
 
-    parg[igbo] = 2*Len(readwing("center_box_halfspan"))
+    parg[igbo] = 2*Distance(readwing("center_box_halfspan"))
     parg[igwbox]  = readwing("box_width_chord")
     parg[ighboxo] = readwing("root_thickness_to_chord")
     parg[ighboxs] = readwing("spanbreak_thickness_to_chord")
     parg[igrh]    = readwing("hweb_to_hbox")
     parg[igXaxis] = readwing("spar_box_x_c")
 
-    parg[igxwbox] = Len(readwing("x_wing_box"))
-    parg[igzwing] = Len(readwing("z_wing"))
+    parg[igxwbox] = Distance(readwing("x_wing_box"))
+    parg[igzwing] = Distance(readwing("z_wing"))
 
     parg[igdxeng2wbox] = parg[igxwbox] - parg[igxeng]
 
+
     ## Strut details only used if strut_braced_wing is true
-    parg[igzs]      = Len(readwing("z_strut"))
+    parg[igzs]      = Distance(readwing("z_strut"))
     parg[ighstrut]  = readwing("strut_toc")
     parg[igrVstrut] = readwing("strut_local_velocity_ratio")
 
@@ -399,31 +417,34 @@ daero = dwing["Aero"]
 #- takeoff, initial climb
 takeoff = readaero("Takeoff")
 dtakeoff = daero["Takeoff"]
-    para[iarcls, 1:ipclimb1, :] .= readtakeoff("cls_clo")    #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, 1:ipclimb1, :] .= readtakeoff("clt_clo")    #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, 1:ipclimb1, :] .= readtakeoff("cm_o")      #  cmpo    root  cm
-    para[iacmps, 1:ipclimb1, :] .= readtakeoff("cm_s")      #  cmps    break cm
-    para[iacmpt, 1:ipclimb1, :] .= readtakeoff("cm_t")      #  cmpt    tip   cm
+    #transpose for proper vector broadcasting
+    para[iarcls, 1:ipclimb1, :] .= transpose(readtakeoff("cls_clo"))    #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, 1:ipclimb1, :] .= transpose(readtakeoff("clt_clo"))    #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, 1:ipclimb1, :] .= transpose(readtakeoff("cm_o"))      #  cmpo    root  cm
+    para[iacmps, 1:ipclimb1, :] .= transpose(readtakeoff("cm_s"))      #  cmps    break cm
+    para[iacmpt, 1:ipclimb1, :] .= transpose(readtakeoff("cm_t"))      #  cmpt    tip   cm
 
 # Clean climb cruise descent and for wing structure sizing
 climb = readaero("Climb")
 dclimb = daero["Climb"]
 readclimb(x) = read_input(x, climb, dclimb)
-    para[iarcls, ipclimb1+1:ipdescentn-1, :] .= readclimb("cls_clo")   #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, ipclimb1+1:ipdescentn-1, :] .= readclimb("clt_clo")   #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_o")      #  cmpo    root  cm
-    para[iacmps, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_s")      #  cmps    break cm
-    para[iacmpt, ipclimb1+1:ipdescentn-1, :] .= readclimb("cm_t")      #  cmpt    tip   cm
+    #transpose for proper vector broadcasting
+    para[iarcls, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cls_clo"))   #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("clt_clo"))   #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cm_o"))      #  cmpo    root  cm
+    para[iacmps, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cm_s"))      #  cmps    break cm
+    para[iacmpt, ipclimb1+1:ipdescentn-1, :] .= transpose(readclimb("cm_t"))      #  cmpt    tip   cm
 
 # Landing, forward CG tail sizing case
 land = readaero("Landing")
 dland = daero["Landing"]
 readland(x) = read_input(x, land, dland)
-    para[iarcls, ipdescentn, :] .= readland("cls_clo")   #  rcls    break/root cl ratio = cls/clo
-    para[iarclt, ipdescentn, :] .= readland("clt_clo")   #  rclt    tip  /root cl ratio = clt/clo
-    para[iacmpo, ipdescentn, :] .= readland("cm_o")      #  cmpo    root  cm
-    para[iacmps, ipdescentn, :] .= readland("cm_s")      #  cmps    break cm
-    para[iacmpt, ipdescentn, :] .= readland("cm_t")      #  cmpt    tip   cm
+    #transpose for proper vector broadcasting
+    para[iarcls, ipdescentn, :] .= transpose(readland("cls_clo"))   #  rcls    break/root cl ratio = cls/clo
+    para[iarclt, ipdescentn, :] .= transpose(readland("clt_clo"))   #  rclt    tip  /root cl ratio = clt/clo
+    para[iacmpo, ipdescentn, :] .= transpose(readland("cm_o"))      #  cmpo    root  cm
+    para[iacmps, ipdescentn, :] .= transpose(readland("cm_s"))      #  cmps    break cm
+    para[iacmpt, ipdescentn, :] .= transpose(readland("cm_t"))      #  cmpt    tip   cm
     
 # ----------------------------------
 # ---------- Wing Weight -----------
@@ -449,11 +470,12 @@ dweight = dwing["Weightfracs"]
 tails = read_input("Stabilizers", data, default)
 dtails = default["Stabilizers"]
 readtails(x) = read_input(x, tails, dtails)
-    para[iacdft, 1:iptotal, :]   .= readtails("lowspeed_cdf")  #  cdft    tail profile cd
-    para[iacdpt, 1:iptotal, :]   .= readtails("lowspeed_cdp")  #  cdpt    
-    para[iaRereft, 1:iptotal, :] .= readtails("Re_ref")  #  Rereft  
+    #transpose for proper broadcasting
+    para[iacdft, 1:iptotal, :]   .= transpose(readtails("lowspeed_cdf"))  #  cdft    tail profile cd
+    para[iacdpt, 1:iptotal, :]   .= transpose(readtails("lowspeed_cdp"))  #  cdpt    
+    para[iaRereft, 1:iptotal, :] .= transpose(readtails("Re_ref"))  #  Rereft  
 
-    para[iafexcdt, 1:iptotal, :] .= readtails("excrescence_drag_factor")
+    para[iafexcdt, 1:iptotal, :] .= transpose(readtails("excrescence_drag_factor"))
 
     htail = readtails("Htail")
     dhtail = dtails["Htail"]
@@ -462,10 +484,10 @@ readhtail(x) = read_input(x, htail, dhtail)
     parg[igARh]     = readhtail("AR_Htail")
     parg[iglambdah] = readhtail("taper")
     parg[igsweeph]  = readhtail("sweep")
-    parg[igboh]     = 2*Len(readhtail("center_box_halfspan"))
+    parg[igboh]     = 2*Distance(readhtail("center_box_halfspan"))
 
-    parg[igxhbox]  = Len(readhtail("x_Htail"))
-    parg[igzhtail] = Len(readhtail("z_Htail"))
+    parg[igxhbox]  = Distance(readhtail("x_Htail"))
+    parg[igzhtail] = Distance(readhtail("z_Htail"))
 
     parg[igCLhNrat] = readhtail("max_tail_download")
 
@@ -496,7 +518,7 @@ readhtail(x) = read_input(x, htail, dhtail)
         elseif movewing == "smmin"
             pari[iixwmove] = 2
         else
-            error("Wing position duirng horizontal tail sizing can only be sized via:
+            error("Wing position during horizontal tail sizing can only be sized via:
             0: \"fix\" wing position;
             1: move wing to get CLh=\"CLhspec\" in cruise 
             2: move wing to get min static margin = \"SMmin\"")
@@ -527,8 +549,8 @@ readvtail(x) = read_input(x, vtail, dvtail)
     parg[igARv]     = readvtail("AR_Vtail")
     parg[iglambdav] = readvtail("taper")
     parg[igsweepv]  = readvtail("sweep")
-    parg[igbov]     = Len(readvtail("center_box_halfspan"))
-    parg[igxvbox]  = Len(readvtail("x_Vtail"))
+    parg[igbov]     = Distance(readvtail("center_box_halfspan"))
+    parg[igxvbox]  = Distance(readvtail("x_Vtail"))
     parg[ignvtail]  = readvtail("number_Vtails")
 
     vtail_size = lowercase(readvtail("VTsize"))
@@ -601,13 +623,13 @@ prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
     parg[igneng] = readprop("number_of_engines")
-    parg[igTmetal] = Temp(readprop("T_max_metal"))
+    parg[igTmetal] = Temp.(readprop("T_max_metal"))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
 
-    pare[ieTt4, :, :] .= Temp(readprop("Tt4_cruise"))
+    pare[ieTt4, :, :] .= transpose(Temp.(readprop("Tt4_cruise"))) #transpose for proper broadcasting
 
-    Tt4TO = Temp(readprop("Tt4_takeoff"))
+    Tt4TO = transpose(Temp.(readprop("Tt4_takeoff")))
     pare[ieTt4, ipstatic, :] .= Tt4TO
     pare[ieTt4, iprotate, :] .= Tt4TO
     pare[ieTt4, iptakeoff, :] .= Tt4TO
@@ -629,7 +651,7 @@ readturb(x) = read_input(x, turb, dturb)
     OPR = readturb("OPR")
     pif = readturb("Fan_PR")
     pilc = readturb("LPC_PR")
-    pihc = OPR/pilc
+    pihc = OPR./pilc
 
     pid = readturb("diffuser_PR")
     pib = readturb("burner_PR")
@@ -724,9 +746,9 @@ readoff(x) = read_input(x, off, doff)
     pare[ieTt9, :, :] .= Ttdischarge
     pare[iept9, :, :] .= Ptdischarge
 
-    parg[igmofWpay] = mofftpax / Wpax
+    parg[igmofWpay] = mofftpax ./ parm[imWperpax, 1]
     parg[igmofWMTO] = mofftmMTO / gee
-    parg[igPofWpay] = Pofftpax / Wpax
+    parg[igPofWpay] = Pofftpax ./ parm[imWperpax, 1]
     parg[igPofWMTO] = PofftmMTO / gee
 
 ## Nozzle areas
@@ -837,7 +859,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-pari, parg, parm, para, pare, fuse_tank)
+    pari, parg, parm, para, pare, [false], fuse_tank)
 
 end
 

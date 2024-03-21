@@ -1,19 +1,12 @@
-
 @testset "outputs" verbose=true begin
 
     ac = load_default_model()
     size_aircraft!(ac; printiter=false);
 
-    if Sys.iswindows()
-        file_weights = "test/weights.txt"
-        file_aero = "test/aero.txt"
-        file_geom = "test/geom.txt"
-    else
-        file_weights = "weights.txt"
-        file_aero = "aero.txt"
-        file_geom = "geom.txt"
-    end
-
+    file_weights = joinpath(TASOPT.__TASOPTroot__, "../test/weights.txt")
+    file_aero = joinpath(TASOPT.__TASOPTroot__, "../test/aero.txt")
+    file_geom = joinpath(TASOPT.__TASOPTroot__, "../test/geom.txt")
+    
     @testset "output summaries" begin
         f = open(io->TASOPT.weight_buildup(ac,io=io), "temp.txt", "w")
         content = read(file_weights, String)

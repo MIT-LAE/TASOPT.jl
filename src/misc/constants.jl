@@ -12,5 +12,5 @@ const gee = 9.81
 const gamSL = 1.4
 const cpSL = 1004.0
 const μAir = 1.78e-5
-const pref = 101320.00000000000
-const Tref = 288.19999999999999
+const pref = 101320.0
+const Tref = 288.2

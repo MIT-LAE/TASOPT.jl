@@ -9,4 +9,6 @@ using Test
     include("unit_test_PEMFC.jl")
     include("unit_test_fueltank.jl")
     include("unit_test_outputs.jl")
+    include("unit_test_io.jl")
+
 end
