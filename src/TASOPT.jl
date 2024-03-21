@@ -4,7 +4,7 @@ TASOPT
 module TASOPT
 
 # Add basic pacakges required by TASOPT
-using Base: SignedMultiplicativeInverse
+using Base: SignedMultiplicativeInverse, @kwdef
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
 
 using BenchmarkTools
@@ -30,6 +30,9 @@ export gee, gamSL, cpSL, μAir, pref, Tref
 include("./misc/units.jl")
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
+
+include("./misc/materials.jl")
+export StructuralAlloy, Conductor, Insulator
 
 include("./misc/index.inc")
 include("./misc/aircraft.jl")
