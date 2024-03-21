@@ -16,7 +16,6 @@ using PyPlot
 # pygui(true)
 using Dates
 using ForwardDiff
-using Parameters
 using CSV, Tables
 using DocStringExtensions
 
@@ -59,7 +58,6 @@ include(joinpath(__TASOPTroot__,"fuel/hydrogen.jl"))
 include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions
-# include("./IO/read_input.jl")
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
