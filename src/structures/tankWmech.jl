@@ -324,14 +324,16 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM(θ::Float64)
-      ϕlist = LinRange(0.0, π, 180)
+      ϕlist = LinRange(0.0, π, 360)
       k = zeros(length(ϕlist))
 
       for (i,ϕ) in enumerate(ϕlist)
             if 0 ≤ ϕ ≤ θ
-            k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
+                  k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
             elseif θ ≤ ϕ ≤ π
-            k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ  + cos(θ) + cos(ϕ)*(sin(θ)^2)
+                  k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ  + cos(θ) + cos(ϕ)*(sin(θ)^2)
+                  #TODO this equation is Eq. (7.5) in Barron; however, this equation does not match the curves in Fig. 7.3
+                  #Suspect error in Barron.
             end
       end
       kmax, imax = findmax(abs.(k))
@@ -355,18 +357,18 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM_outer(θ1::Float64, θ2::Float64)
-      ϕlist = LinRange(0.0, π, 180)
+      ϕlist = LinRange(0.0, π, 360)
       k = zeros(length(ϕlist))
 
       for (i,ϕ) in enumerate(ϕlist)
             if 0 ≤ ϕ ≤ θ1
-            k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) ) 
+                  k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) ) +
                               - (π-θ2)*sin(θ2) +  (π-θ1)*sin(θ1)
             elseif θ1 ≤ ϕ ≤ θ2
-            k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) ) 
+                  k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) ) +
                               - (π-θ2)*sin(θ2) +  π*sin(ϕ) -θ1*sin(θ1)
             elseif θ2 ≤ ϕ ≤ π
-            k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) )  +
+                  k[i] = cos(ϕ)*(sin(θ2)^2 - sin(θ1)^2 ) + (cos(θ2) - cos(θ1) )  +
                               (θ2*sin(θ2) - θ1*sin(θ1)  )
             end
       end
