@@ -56,7 +56,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.xftank = xftank
       p.ifuel = ifuel
 
-      _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200.0) #Find adiabatic wall temperature with dummy wall temperature
+      _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
@@ -320,7 +320,7 @@ of Aerodynamics.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64)
+function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
       #Use ISA function to calculate freestream conditions
       Tair, p, _, a, _ = atmos(z / 1e3)
       u = M * a #freestrean velocity

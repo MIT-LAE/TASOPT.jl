@@ -46,7 +46,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 iinsuldes = fuse_tank.iinsuldes
 
                 #Thermal calculations
-                _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
+                _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature 
 
                 ΔT = Taw - Tfuel
 
