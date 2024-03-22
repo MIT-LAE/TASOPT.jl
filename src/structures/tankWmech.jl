@@ -23,6 +23,7 @@
       - `t_head::Float64`: Thickness of the tank's head (m).
       - `Whead::Float64`: Weight of the tank's head (N).
       - `Wcyl::Float64`: Weight of the tank's cylinder (N).
+      - `Wstiff::Float64`: Total stiffener weight (N)
       - `Winsul::Float64`: Weight of insulation (N).
       - `Shead_insul::Float64`: Insulated surface area of the head (m^2).
       - `l_tank::Float64`: Total length of the tank (m).
@@ -294,16 +295,16 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, s_a::Flo
       t_w = 7.1e-3 #Web thickness
       t_f = 8.8e-3 #Flange thickness
 
-      #For an I-beam, I > W * H^2 * t_f / 2
-      #The required second moment of area is I = Icollapse + Z * H/2
-      #Find beam height by solving W * H^2 * t_f / 2 = Icollapse + Z * H/2
+      #For an I-beam, I > W * H^2 * t_f / 2 + t_f^3 * W / 6
+      #The required second moment of area is I = Icollapse + Z * (H/2 + t_f/2)
+      #Find beam height by solving W * H^2 * t_f / 2 + t_f^3 * W / 6 = Icollapse + Z * (H/2 + t_f/2)
 
       a = t_f * W / 2 #Coefficients in quadratic equation
       b = -Z/2
-      c = -1 * Icollapse
+      c = -1 * Icollapse - Z * t_f/2 + t_f^3 * W / 6
 
       H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
-      S = 2 * W * t_f + (H - t_w) * t_f #Beam cross-sectional area
+      S = 2 * W * t_f + (H - t_f) * t_w #Beam cross-sectional area
 
       Wstiff = gee * ρstiff * S * 2π * Rtank #Weight of a single stiffener running along circumference
       return Wstiff
