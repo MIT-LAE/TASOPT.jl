@@ -281,9 +281,9 @@ readgeom(x) = read_input(x, geom, dgeom)
     calculate_cabin = readgeom("calculate_cabin_length") 
     pari[iidoubledeck] = readgeom("double_decker") 
 
-    parg[igseatpitch] = Len(readgeom("seat_pitch"))
-    parg[igseatwidth] = Len(readgeom("seat_width"))
-    parg[igaislehalfwidth] = Len(readgeom("aisle_halfwidth"))
+    parg[igseatpitch] = Distance(readgeom("seat_pitch"))
+    parg[igseatwidth] = Distance(readgeom("seat_width"))
+    parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
 
     parg[igRfuse]  = Distance(readgeom("radius"))
     parg[igdRfuse] = Distance(readgeom("dRadius"))
@@ -348,7 +348,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.dRfuse = parg[igdRfuse]
     fuse_tank.wfb = parg[igwfb]
     fuse_tank.nfweb = parg[ignfweb]
-    fuse_tank.clearance_fuse = Len(readfuel_storage("fuselage_clearance"))
+    fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
