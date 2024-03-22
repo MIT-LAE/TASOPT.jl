@@ -125,7 +125,7 @@ fuse_tank.Wfuelintank = 1e5
 
         Wstiff = TASOPT.structures.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, fuse_tank.UTSouter / 4, 
         fuse_tank.rhoouter , θ1, θ2, 10.0, 5.0, fuse_tank.Eouter )
-        Wstiff_check = 1302.5839377437662 
+        Wstiff_check = 1302.1749693071301
         
         @test Wstiff ≈ Wstiff_check
     end

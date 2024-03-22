@@ -150,7 +150,7 @@
     HT_load_fuse_bend_relief = 0.4 
     VT_load_fuse_bend_relief = 0.7
 # Overall fuselage layout
-    #Use provided layout (false) or recalculate it (true) for design pax keeping deltas
+    #Use provided layout (false) or recalculate it (true) for maximum pax keeping deltas
     calculate_cabin_length = false 
 
     double_decker   = false #if true, the fuselage has two passenger decks
