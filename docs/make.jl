@@ -40,6 +40,8 @@ makedocs(
         "sizing/sizing.md",
         "sizing/weightmodels.md"
         ],
+    "Data and I/O" => "data_io/data_io.md",
+
     "Miscellaneous" => Any[
         "misc/structs.md",
         "misc/dreladocs.md",
