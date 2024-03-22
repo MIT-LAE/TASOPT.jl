@@ -41,8 +41,9 @@ function parse_unit(str::AbstractString)
     end
 end
 
-function parse_unit(input::T) where T<:Real
-    return float(input)
+#handle floats/ints directly, assuming SI input
+function parse_unit(input::Real)
+    return float.(input)
 end
 
 function get_unit_dim(str::AbstractString)

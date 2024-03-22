@@ -3,7 +3,7 @@
       iifuel   =  1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
       iifwcen  =  2  # 0 = no fuel in center box  1 = fuel in center box
       iiwplan  =  3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
-      iiengloc =  4  # 1 = engines on wing 2 = engines on fuselage   
+      iiengloc =  4  # 1 = engines on wing 2 = engines on fuselage "Options.engine_location"  
       iiengwgt =  5  # 1 = basic tech eng. weight 2 = advanced tech eng. weight 
       iiBLIc   =  6  # 0 = core in clean flow 1 = core ingests KE defect   
       iifclose =  7  # 0 = fuse tapers to point 1 = tapers to edge 
@@ -12,8 +12,8 @@
       iixwmove = 10  # 0 = wing centroid fixed 1 = move wing to balance
       iifwing  = 11  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
       iicalcCMVf = 12
-      iiengtype  = 13  # 0 = Turboelectric engine; 1 = Turbofan engine
-      iiopt      = 14  # 0 = run sizing loop only; 1 = run optimization procedure
+      iiengtype  = 13  # 0 = Turboelectric engine; 1 = Turbofan engine; "prop_sys_arch"
+      iiopt      = 14  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
       iiaircraftclass = 15 # 737 = 737 size aircraft; 777 = 777 size aircraft
       iinftanks = 16 # number of fuel tanks in fuselage
       iiengmodel = 17 #engine model 
@@ -838,7 +838,7 @@
       iegsBPR     = 226
       iegsRlinelc = 227
       iegsRlinehc = 228
-      iegsPRhtrb  = 239
+      iegsPRhtrb  = 229
       iegsPRltrb  = 230
       iegsNmechH  = 231
       iegsGBtrq   = 232
