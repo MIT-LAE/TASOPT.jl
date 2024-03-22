@@ -70,7 +70,18 @@ It sizes the cabin for the design number of passengers.
 """
 function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
 
-    despax = parm[imWpay,1]/parm[imWperpax,1] #design number of passengers
+    seat_pitch = parg[igseatpitch]
+    seat_width = parg[igseatwidth]
+    aisle_halfwidth = parg[igaislehalfwidth]
+
+    if pari[iidoubledeck] == 1 #if the aircraft is a double decker
+        #passenger count to size cabin is half of the maximum
+        paxsize = ceil(parg[igWpaymax]/parm[imWperpax,1] / 2) 
+    else
+        paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+    end
+    #TODO this double deck model assumes that both decks have a width equal to the fuselage diameter; 
+    #in reality, at least one deck must be narrower
 
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
@@ -84,7 +95,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
     wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
 
     #Find new cabin length
-    lcyl, _, _ = place_cabin_seats(despax, parg[igRfuse]) #Size for design pax count
+    lcyl, _, _ = place_cabin_seats(paxsize, parg[igRfuse], seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back

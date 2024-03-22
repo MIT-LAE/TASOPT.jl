@@ -167,6 +167,12 @@ function wsize(ac; itermax=35,
     Wppinsul = parg[igWppinsul]
     Wppfloor = parg[igWppfloor]
 
+    if pari[iidoubledeck] == 1
+        ndecks = 2
+    else
+        ndecks = 1
+    end
+
     # fuselage-bending inertial relief factors
     rMh = parg[igrMh]
     rMv = parg[igrMv]
@@ -663,7 +669,7 @@ function wsize(ac; itermax=35,
             ifwing, nftanks, xblend1, xblend2,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
             fstring, fframe, ffadd, Δp,
-            Wpwindow, Wppinsul, Wppfloor,
+            Wpwindow, Wppinsul, Wppfloor, ndecks,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, λv, nvtail,
             Rfuse, dRfuse, wfb, nfweb, λc,
@@ -1169,22 +1175,7 @@ function wsize(ac; itermax=35,
             #Unpack parameters
             time_flight = para[iatime, ipdescent1]
             tank_placement = fuse_tank.placement
-            sigskin = fuse_tank.sigskin
-            rhoskintank = fuse_tank.rhoskintank
-            max_boiloff = fuse_tank.max_boiloff
-            ARtank = fuse_tank.ARtank
-            clearance_fuse = fuse_tank.clearance_fuse
-            ptank = fuse_tank.ptank
-            ftankstiff = fuse_tank.ftankstiff
-            ftankadd = fuse_tank.ftankadd
-            qfac = fuse_tank.qfac
-
-            # Thermal design
-            hconvgas = 0.0 #Convective coefficient of insulating purged gas
             Tfuel = pare[ieTft]
-            t_cond = fuse_tank.t_insul
-            material_insul = fuse_tank.material_insul
-            iinsuldes = fuse_tank.iinsuldes #Indices of insulation segments to be designed
 
             #Convective cooling
             if tank_placement == "rear"
@@ -1193,21 +1184,16 @@ function wsize(ac; itermax=35,
                 xftank_heat = parg[igxftank]
             end
             ifuel = pari[iifuel]
-            rhofuel = parg[igrhofuel]
             M_inf = para[iaMach, ipcruise1]
             z_alt = para[iaalt, ipcruise1]
             
             #Fuel tank design
-           
-            Wfuel_in_tank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
+            fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
             
             Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
-            m_boiloff, tskin, t_head, Rtank, Whead, Wcyl,
-            Winsul_sum, Winsul, ltank, Wtank = tanksize(gee, rhofuel, ptank,
-                Rfuse, dRfuse, hconvgas, Tfuel, z_alt, M_inf, xftank_heat,
-                t_cond, time_flight, ftankstiff, ftankadd,
-                wfb, nfweb, sigskin, material_insul, rhoskintank,
-                Wfuel_in_tank, max_boiloff, clearance_fuse, ARtank, iinsuldes, ifuel, qfac)
+            m_boiloff, t_cyl, t_head, Rtank, Whead, Wcyl,
+            Winsul_sum, Winsul, ltank, Wtank = tanksize!(fuse_tank, z_alt, M_inf, xftank_heat,
+            time_flight, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
             parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)

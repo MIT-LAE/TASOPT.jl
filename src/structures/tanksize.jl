@@ -1,41 +1,16 @@
 """
-        tanksize(gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac)
+        tanksize!(fuse_tank, z, Mair, xftank,
+        time_flight, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `gee::Float64`: Gravitational acceleration (m/s^2).
-        - `rhoFuel::Float64`: Density of fuel (kg/m^3).
-        - `deltap::Float64`: Allowed pressure difference in vessel (Pa).
-        - `Rfuse::Float64`: Fuselage radius (m).
-        - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
-        - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
-        - `Tfuel::Float64`: Fuel temperature (K).
+        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `t_cond::Vector{Float64}`: Thickness array t (m) for each MLI layer.
-        - `time_flight::Float64`: total flight time (s)
-        - `fstring::Float64`: mass factor to account for stiffening material.
-        - `ffadd::Float64`: Additional mass factor for the tank.
-        - `wfb::Float64`: parameter for multi-bubble configuration.
-        - `nfweb::Float64`: Number of bubbles.
-        - `sigskin::Float64`: Material property.
-        - `material_insul::Vector{String}`: material name for each MLI layer.
-        - `rhoskin::Float64`: Material property.
-        - `Wfuel::Float64`: Weight of fuel (N).
-        - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
-        - `clearance_fuse::Float64`: Clearance for the fuselage (m).
-        - `AR::Float64`: Aspect ratio.
-        - `iinsuldes::Vector{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
-        - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
-
         
         **Outputs:**
         - `Wtank_total::Float64`: Total weight of the tank including fuel (N).
@@ -57,65 +32,80 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize(gee, rhoFuel, deltap,
-                      Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-                      t_cond, time_flight, fstring,ffadd,
-                      wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-                      iinsuldes, ifuel, qfac)
+function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
+                      time_flight::Float64, ifuel::Int64)
 
-        Wfuel_init = Wfuel
-        m_boiloff = threshold_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
+        #Unpack variables in fuse_tank
+        t_cond = fuse_tank.t_insul
+        Wfuel = fuse_tank.Wfuelintank
+        Tfuel = fuse_tank.Tfuel
+        flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
 
-        #Create inline function with residuals as a function of x
-        residual(x) = res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac) #Residual in boiloff rate as a function of Δt
+        if flag_size #If insulation is sized for a given boiloff rate
+                boiloff_percent = fuse_tank.boiloff_rate
+                iinsuldes = fuse_tank.iinsuldes
 
-        _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
+                #Thermal calculations
+                _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature 
 
-        ΔT = Taw - Tfuel
+                ΔT = Taw - Tfuel
 
-        #Assemble guess for non linear solver
-        #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
-        guess = zeros(length(t_cond) + 2) 
-        guess[1] = 0.0
-        guess[2] = Tfuel + 1
+                #Create inline function with residuals as a function of x
+                residual(x) = res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
+                #Assemble guess for non linear solver
+                #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
+                guess = zeros(length(t_cond) + 2) 
+                guess[1] = 0.0
+                guess[2] = Tfuel + 1.0
 
-        n_layers = length(t_cond)
-        for i = 1:n_layers
-                guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                n_layers = length(t_cond)
+                for i = 1:n_layers
+                        guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                end
+                #Solve non-linear problem with NLsolve.jl
+                sol = nlsolve(residual, guess, ftol = 1e-7) 
+                Δt = sol.zero[1] 
+
+                for ind in iinsuldes #For every segment whose thickness can be changed
+                        t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
+                end
+
+                mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
+                m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
+                
+        else #If insulation does not need to be sized
+                m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
-        #Solve non-linear problem with NLsolve.jl
-        sol = nlsolve(residual, guess, ftol = 1e-7) 
-        Δt = sol.zero[1] 
-
-        for ind in iinsuldes #For every segment whose thickness can be changed
-                t_cond[ind] = t_cond[ind] + Δt  
-        end
+        
         thickness_insul = sum(t_cond)
-
+        
         #Evaluate tank weight
-        mdot_boiloff = threshold_percent *  Wfuel / (gee * 100) /3600
-        Wtank_total, lshell, tskin, Rtank, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Winsul,
-        Shead_insul, l_tank = tankWmech(gee, rhoFuel,
-                                fstring, ffadd, deltap,
-                                Rfuse, dRfuse, wfb, nfweb,
-                                sigskin, material_insul, rhoskin,
-                                Wfuel, m_boiloff, t_cond, clearance_fuse, AR)
+        Winner_tot, lshell1, tskin, Rtank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
+        Sinternal, Shead_insul, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
-        return Wtank_total, thickness_insul, lshell, mdot_boiloff, 
+        if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+                Ninterm = optimize_outer_tank(fuse_tank, Winner_tot, lshell1) #Find optimal number of intermediate stiffeners
+                
+                fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
+                
+                Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
+                t_cyl2, t_head2 = size_outer_tank(fuse_tank, Winner_tot, lshell1, Ninterm)
+
+                Wtank_total = Winner_tot + Wtank2
+                Wtank = Winnertank + Wtank2
+
+        else
+                Wtank_total = Winner_tot
+                Wtank = Winnertank
+        end
+        
+        return Wtank_total, thickness_insul, lshell1, mdot_boiloff, 
         Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead,
-        Wcyl, Winsul_sum, Winsul, l_tank, Wtank 
+        Wcyl, Winsul_sum, Winsul, l_tank, Wtank
 end
 
 """
-        res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac)
+        res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -123,41 +113,24 @@ insulation interface temperatures.
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `x::Float64`: vector with states
-        - `gee::Float64`: Gravitational acceleration (m/s^2).
-        - `rhoFuel::Float64`: Density of fuel (kg/m^3).
-        - `deltap::Float64`: Allowed pressure difference in vessel (Pa).
-        - `Rfuse::Float64`: Fuselage radius (m).
-        - `dRfuse::Float64`: Accounts for flatness at the bottom of the fuselage (m).
-        - `hconvgas::Float64`: Convective coefficient of insulating purged gas (e.g., N2) (W/m2*K).
-        - `Tfuel::Float64`: Fuel temperature (K).
+        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `t_cond::Vector{Float64}`: Thickness array t (m) for each MLI layer.
-        - `time_flight::Float64`: total flight time (s)
-        - `fstring::Float64`: mass factor to account for stiffening material.
-        - `ffadd::Float64`: Additional mass factor for the tank.
-        - `wfb::Float64`: parameter for multi-bubble configuration.
-        - `nfweb::Float64`: Number of bubbles.
-        - `sigskin::Float64`: Material property.
-        - `material_insul::Vector{String,1}`: material name for each MLI layer.
-        - `rhoskin::Float64`: Material property.
-        - `Wfuel::Float64`: Weight of fuel (N).
-        - `threshold_percent::Float64`: Max allowed percentage of fuel that is allowed to boil off (%/hour).
-        - `clearance_fuse::Float64`: Clearance for the fuselage (m).
-        - `AR::Float64`: Aspect ratio.
-        - `iinsuldes::Vector{Int64}`: indices for insulation layers to be sized.
         - `ifuel::Int64`: fuel index.
-        - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
 
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x, gee, rhoFuel, deltap,
-        Rfuse, dRfuse, hconvgas, Tfuel, z, Mair, xftank,
-        t_cond, time_flight, fstring,ffadd,
-        wfb, nfweb, sigskin, material_insul, rhoskin, Wfuel, threshold_percent, clearance_fuse, AR, 
-        iinsuldes, ifuel, qfac)
+function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+
+        #Extract parameters from fuse_tank
+        boiloff_percent = fuse_tank.boiloff_rate
+        t_cond = fuse_tank.t_insul
+        qfac = fuse_tank.qfac
+        iinsuldes = fuse_tank.iinsuldes
+        Tfuel = fuse_tank.Tfuel
+        Wfuel = fuse_tank.Wfuelintank
 
         # Extract states
         Δt = x[1]
@@ -170,18 +143,12 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
                 t_all[ind] = t_all[ind] + Δt
         end
 
-        m_boiloff = threshold_percent *  Wfuel / (gee * 100) *time_flight/3600 #value of boil-off mass
-
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Winsul, Shead, l_tank = tankWmech(gee, rhoFuel,
-                        fstring, ffadd, deltap,
-                        Rfuse, dRfuse, wfb, nfweb,
-                        sigskin, material_insul, rhoskin,
-                        Wfuel, m_boiloff, t_all, clearance_fuse, AR)
+        Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
 
         _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporizatio
 
-        mdot_boiloff = threshold_percent *  Wfuel / (gee * 100) / 3600  
+        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization
         Q_net = mdot_boiloff * h_v  # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
         Q = Q_net / qfac
@@ -193,9 +160,8 @@ function res_MLI_thick(x, gee, rhoFuel, deltap,
         p.l_tank = l_tank
         p.r_tank = r_tank
         p.Shead = Shead
-        p.hconvgas = hconvgas
         p.t_cond = t_all
-        p.material = material_insul
+        p.material = fuse_tank.material_insul
         p.Tfuel = Tfuel
         p.z = z
         p.Mair = Mair
