@@ -176,11 +176,29 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         I_{collapse} = \frac{p_c D_o^3 L}{24 E}.
     ```
-    
+    In the code, the beams are assumed to be I-beams. The flange thickness (``t_f``) and width (``W``), as well as the web thickness (``t_w``), are taken to be those of a standard 100 x 100 beam. The height of the beam is calculated to match the required second moment of area. For this purpose, the second moment of area of the web is ignored, such that the beam has a second moment of area
+    ```math
+        I > \frac{W H^2 t_f}{2} + \frac{t_f^3 W}{6},
+    ```
+    where ``H`` is the distance between the two flange centroids, such that the total beam height is ``H + t_f``. The second moment of area of the web is significant, so ignoring it provides a conservative approximation. This equation is solved for ``H`` by equating the approximate beam second moment of area to the required one.
 
+    The weight of a stiffening ring can then be found as 
+    ```math
+        W_{stiff} = 2\pi R g [2 W t_f + (H - t_f) t_w ],
+    ```
+    where ``R`` is the vessel radius and ``g`` is the gravitational acceleration.
+    #### Notes on implementation
+    In the case of the outer vessel (when there is a vacuum layer), there is a tradeoff between stiffener mass and skin thickness, as adding more stiffeners results in a thinner skin. The optimal number of stiffeners that minizimizes the overall outer vessel mass is found using NLopt.jl with a Nelder-Mead algorithm.  
+    
 ```@docs
 structures.tanksize!
+structures.res_MLI_thick
 structures.size_inner_tank
+structures.size_outer_tank
+structures.stiffener_weight
+structures.optimize_outer_tank
+structures.tankWthermal
+structures.residuals_Q
 ```
 [^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
 [^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.
