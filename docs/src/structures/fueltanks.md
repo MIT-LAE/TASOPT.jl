@@ -12,9 +12,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     
     The thermal design and analysis method is similar for both insulation architectures. The tank walls are assumed to be made of an isotropic material with high thermal conductivity. The insulation layer, which does not carry structural loads and has a high thermal resistance. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
 
-    ![PEMfig](../assets/cryo_tank.svg)
+    ![SWfig](../assets/cryo_tank.svg)
 
-    As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. We will first consider heat transfer across a material layer; the vacuum case will be considered later. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's equation that the thermal resistance, ``R_{cyl}``, is given by 
+    As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. We will first consider heat transfer across a material layer; the vacuum case will be considered later. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's law that the thermal resistance, ``R_{cyl}``, is given by 
     ```math
         R_{cyl} = \frac{\ln\left( \frac{R_f}{R_0}\right)} {2\pi l_{cyl} k},
     ``` 
@@ -159,9 +159,11 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``K_1`` is a geometric factor that depends on the ellipsoid aspect ratio; some factors can be found in Table 7.6 in Barron[^3].
 
-    Once the wall thicknesses have been determined, the weight of the outer vessel components can be found from their volumes and densities. In addition to the walls, the outer vessel requires stiffener rings to prevent collapse. The vessel is assumed to be supported by two main stiffener rings, ``N_{stiff,m}=2``, that carry the weight and prevent collapse, and a number ``N_{stiff,a}`` of additional rings that only prevent collapse, such that ``N_{stiff}=N_{stiff,m}+N_{stiff,a}``.
+    Once the wall thicknesses have been determined, the weight of the outer vessel components can be found from their volumes and densities. In addition to the walls, the outer vessel requires stiffener rings to prevent collapse. The vessel is assumed to be supported by two main stiffener rings, ``N_{stiff,m}=2``, that carry the weight and prevent collapse, and a number ``N_{stiff,a}`` of additional rings that only prevent collapse, such that ``N_{stiff}=N_{stiff,m}+N_{stiff,a}``. The general layout in a double-walled tank is shown in the figure below.
 
-    #### Stiffener rings
+    ![DWfig](../assets/doublewalled_tank.svg)
+
+    #### Stiffening rings
     
 
 ```@docs
