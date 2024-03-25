@@ -13,20 +13,10 @@
         - `ifuel::Int64`: fuel index.
         
         **Outputs:**
-        - `Wtank_total::Float64`: Total weight of the tank including fuel (N).
-        - `thickness_insul::Float64`: Total thickness of the insulation (m).
-        - `lshell::Float64`: Length of the tank (m).
         - `mdot_boiloff::Float64`: Mass boiled off during the mission flight (kg).
         - `Vfuel::Float64`: Volume of fuel (m^3).
-        - `Wfuel_tot::Float64`: Weight of fuel (N).
-        - `m_boiloff::Float64`: Mass boiled off (kg).
-        - `tskin::Float64`: Thickness of the tank's skin (m).
-        - `t_head::Float64`: Thickness of the tank's head (m).
         - `Rtank::Float64`: Radius of the tank (m).
-        - `Whead::Float64`: Weight of the tank's head (N).
-        - `Wcyl::Float64`: Weight of the tank's cylinder (N).
         - `Winsul_sum::Float64`: Sum of the insulation weight (N).
-        - `Winsul::Float64`: Weight of insulation (N).
         - `l_tank::Float64`: Length of the tank (m).
         - `Wtank::Float64`: Weight of the tank structure (N).
 
@@ -80,28 +70,33 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winner_tot, lshell1, tskin, Rtank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
-        Sinternal, Shead_insul, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
+        Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
+        Sinternal, Shead_insul, l_inner = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
         if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
-                Ninterm = optimize_outer_tank(fuse_tank, Winner_tot, lshell1) #Find optimal number of intermediate stiffeners
+                Routertank = fuse_tank.Rfuse - fuse_tank.clearance_fuse
+                lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
+                
+                Ninterm = optimize_outer_tank(fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
-                
+
                 Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
-                t_cyl2, t_head2 = size_outer_tank(fuse_tank, Winner_tot, lshell1, Ninterm)
+                t_cyl2, t_head2, l_outer = size_outer_tank(fuse_tank, Winner_tot, lcyl2, Ninterm)
 
                 Wtank_total = Winner_tot + Wtank2
                 Wtank = Winnertank + Wtank2
+                l_tank = l_outer #If there is an outer vessel, the total length is the length of this tank
+                Rtank = Routertank
 
         else
                 Wtank_total = Winner_tot
                 Wtank = Winnertank
+                l_tank = l_inner #Tank length when there is only an inner vessel
+                Rtank = Rinnertank
         end
         
-        return Wtank_total, thickness_insul, lshell1, mdot_boiloff, 
-        Vfuel, Wfuel_tot, m_boiloff, tskin, t_head, Rtank, Whead,
-        Wcyl, Winsul_sum, Winsul, l_tank, Wtank
+        return mdot_boiloff, Vfuel, Rtank, Winsul_sum, l_tank, Wtank
 end
 
 """

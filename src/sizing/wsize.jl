@@ -1190,9 +1190,7 @@ function wsize(ac; itermax=35,
             #Fuel tank design
             fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
             
-            Wtank_total, thickness_insul, lshell, mdot_boiloff, Vfuel, Wfuel_tot,
-            m_boiloff, t_cyl, t_head, Rtank, Whead, Wcyl,
-            Winsul_sum, Winsul, ltank, Wtank = tanksize!(fuse_tank, z_alt, M_inf, xftank_heat,
+            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse_tank, z_alt, M_inf, xftank_heat,
             time_flight, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
