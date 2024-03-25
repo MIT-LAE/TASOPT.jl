@@ -8,15 +8,19 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
 !!! details "📖 Theory - Thermal and structural sizing of cryogenic fuel tanks" 
     ### Thermal design
-    The fuel tanks in TASOPT are assumed to consist of circular cylinders with two hemiellipsoidal caps. There are two distinct layers: the tank itself, assumed to be made of an isotropic material with high thermal conductivity; and an insulation layer, which does not carry structural loads and has very low thermal conductivity. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
+    The fuel tanks in TASOPT are assumed to consist of cylinders with two hemiellipsoidal caps. In general, the cylinders can have a double-bubble shape like the fuselage. To reduce fuel loss during flight as a result of boiling due to heat leakage into the tank (boiloff), the tank requires thermal insulation. Two different insulation architectures are currently supported in TASOPT.jl: an inner tank covered in foam-based insulation and a double-walled tank with a vacuum layer between the layers. 
+    
+    The thermal design and analysis method is similar for both insulation architectures. The tank walls are assumed to be made of an isotropic material with high thermal conductivity. The insulation layer, which does not carry structural loads and has a high thermal resistance. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
 
     ![PEMfig](../assets/cryo_tank.svg)
 
-    As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's equation that the thermal resistance, ``R_{cyl}``, is given by 
+    As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. We will first consider heat transfer across a material layer; the vacuum case will be considered later. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's equation that the thermal resistance, ``R_{cyl}``, is given by 
     ```math
         R_{cyl} = \frac{\ln\left( \frac{R_f}{R_0}\right)} {2\pi l_{cyl} k},
     ``` 
-    where ``R_0`` is the layer's inner radius, ``R_f = R_0 + t`` is the outer radius (with ``t`` being the layer thickness), ``l_{cyl}`` is the cylinder length, and ``k`` is the thermal conductivity of the layer. For the hemiellipsoids, an approximate solution can be used, given by 
+    where ``R_0`` is the layer's inner radius, ``R_f = R_0 + t`` is the outer radius (with ``t`` being the layer thickness), ``l_{cyl}`` is the cylinder length, and ``k`` is the thermal conductivity of the layer. In many real materials including insulation foams, the thermal conductivity is a function of temperature. In TASOPT.jl, the mean of the conductivities across the layer is used; it can be shown analytically that this is exact if the conductivity is linear in temperature.
+    
+    For the hemiellipsoids, an approximate solution can be used, given by 
     ```math
         R_{ell} = \frac{t} {k \left(S_f + S_0 - \frac{S_{he}}{R^2} t^2\right)},
     ``` 
@@ -49,9 +53,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
     Similarly, the radiative component has an equivalent heat transfer coefficient
     ```math
-        h_{rad} = σ ε (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
+        h_{rad} = \sigma \varepsilon (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
     ``` 
-    where ``σ`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
+    where ``\sigma`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
 
     The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
     ```math
@@ -77,10 +81,37 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
     ![PEMfig](../assets/tank_thermal_diagram.svg)
 
-    #### Notes on implementation
-    In the current version of TASOPT, the desired boiloff rate (in percentage per hour) is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
+    #### Vacuum insulation
+    The case when the insulation layer consists of a vacuum has to be modeled separately as a vacuum has zero thermal conductivity. In a vacuum, heat transfer is through a combination of radiation and convection due to residual gas if the vacuum is imperfect. The heat transfer rate due to radiation can be modeled as[^3]
+    ```math
+        \dot{Q}_{rad} = F_e S_{i} \sigma (T_o^4 - T_i^4),
+    ``` 
+    where ``S`` is the surface area, ``T`` is the temperature, and the subscript ``i`` refers to the inner surface and ``o`` to the outer surface. The coefficient ``F_e`` is an emissivity factor that acts as an ``average'' of the emissivities of the two surfaces and can be modeled as[^3]
+    ```math
+        F_e = \frac{1}{\varepsilon_i} + \frac{S_i}{S_o}\left(\frac{1}{\varepsilon_o}-1\right).
+    ``` 
+    The thermal resistance due to radiation is simply ``R_{rad} = \frac{T_o - T_i}{\dot{Q}_{rad}}``. 
 
-    In general, the thermal conductivity of insulation materials is a function of temperature. In the code, the average of the conductivities at the interface of each layer is used to find the resistance of the layer; if the conductivity changes linearly with temperature, this method is exact. However, this calculation requires knowing the temperatures at every interface in the MLI layer. The nonlinear solver in NLsolve is used to find these temperatures and the overall heat transfer rate.
+    In addition, the thermal resistance due to the residual gas can be shown to be given by[^3]
+    ```math
+        R_{conv} = \frac{1}{G p_{res} S_i},
+    ```
+    where ``p_{res}`` is the pressure of the residual air and ``G`` is a factor that accounts for the thermodynamic properties of the residual gas,
+    ```math
+        G = F_a \frac{\gamma + 1}{\gamma -1}\sqrt{\frac{R}{8\pi T}},
+    ```
+    where ``\gamma`` is the gas' ratio of specific heats, ``R`` is the mass-specific gas constant and ``T`` is the temperature of the gauge used to measure the residual pressure (in the code, this is assumed to be the outer-layer temperature). The accommodation coefficient factor, ``F_a`` is given by
+    ```math
+        F_a = \frac{1}{a_i} + \frac{S_i}{S_o}\left(\frac{1}{a_o}-1\right),
+    ```
+    where ``a`` denotes the accommodation coefficient, which is a function of temperature and the residual gas composition. Table 7.14 in Barron[^3] provides a set of accommodation coefficients.
+
+    The total thermal resistance of the vacuum layer is ``R_l = \frac{R_{rad} R_{conv}}{R_{rad} + R_{conv}}`` and this can then be used to calculate the equivalent thermal resistance as described above.
+
+    #### Notes on implementation
+    The thermal resistance for any insulation layer is, in general, a function of the temperature at the edges of the layer. Because of this, determining the heat transfer and the temperature distribution requires solving a non-linear problem. The current implementation of TASOPT uses the non-linear solver in NLsolve.jl to find the temperature at the edge of each insulation layer. The nonlinear solver in NLsolve is used to find these temperatures and the overall heat transfer rate.
+
+    In the current version of TASOPT, the user can specify whether to use a given thickness and material distribution for the MLI or to size the MLI to achieve a desired boiloff rate. In the latter case, the boiloff rate is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
 
     ### Structural design
     The structural part of the tank is sized for a given pressure difference between the high-pressure interior and the exterior. As the boiling temperature of a liquid is a function of temperature, it is preferable to keep the interior pressure constant. If the desired pressure difference is ``\Delta p``, the tank is actually designed for a pressure difference ``\Delta p_{des} = \alpha \Delta p``, where ``\alpha>1`` is a safety factor. The outer radius of the strcutrual portion of the tank is
@@ -110,8 +141,8 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities.
 
 ```@docs
-structures.tanksize
-structures.tankWmech
+structures.tanksize!
+structures.size_inner_tank
 ```
 [^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
 [^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.

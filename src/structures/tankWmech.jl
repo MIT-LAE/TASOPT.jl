@@ -144,7 +144,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       Winsul_sum = sum(Winsul)
       Wtank = (Wtank + Winsul_sum)
-      l_tank = l_cyl + 2*Lhead
+      l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
 #--- overall tank weight
       Wtank_total = Wtank + Wfuel_tot
 
@@ -160,7 +160,7 @@ This function sizes the outer tank and calculates the weights of its components.
     **Inputs:**
     - `fuse_tank::Struct`: structure with tank parameters.
     - `Winnertank::Float64`: weight of inner tank and contents (N).
-    - `l_cyl::Float64`: length of cylindrical portion of tank (m).
+    - `l_cyl::Float64`: length of cylindrical portion of outer tank (m).
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
 
     **Outputs:**
@@ -173,6 +173,7 @@ This function sizes the outer tank and calculates the weights of its components.
     - `Scyl::Float64`: surface area of cylindrical portion of tank (m^2).
     - `t_cyl::Float64`: wall thickness of cylindrical portion of tank (m).
     - `t_head::Float64`: wall thickness of tank head (m). 
+    - `l_tank::Float64`: Total length of the tank (m).
 """
 function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
       #Unpack parameters in fuse_tank
@@ -248,7 +249,9 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
 
       Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd) #Find total tank weight, including additional mass factor
 
-      return Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head
+      l_outer = l_cyl + Do / ARtank + 2*t_head #Total length of outer tank
+
+      return Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer
 end
 
 """
@@ -386,7 +389,7 @@ This function optimizes the number of intermediate stiffener rings to minimize t
     **Inputs:**
     - `fuse_tank::Struct`: structure with tank parameters.
     - `Winnertank::Float64`: weight of inner tank and contents (N).
-    - `l_cyl::Float64`: length of cylindrical portion of tank (m).
+    - `l_cyl::Float64`: length of cylindrical portion of outer tank (m).
 
     **Outputs:**
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
