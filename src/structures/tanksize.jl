@@ -75,7 +75,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
 
         if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
                 Routertank = fuse_tank.Rfuse - fuse_tank.clearance_fuse
-                lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer tank length for geometric similarity
+                lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 
                 Ninterm = optimize_outer_tank(fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
@@ -86,13 +86,13 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
 
                 Wtank_total = Winner_tot + Wtank2
                 Wtank = Winnertank + Wtank2
-                l_tank = l_outer #If there is an outer tank, the total length is the length of this tank
+                l_tank = l_outer #If there is an outer vessel, the total length is the length of this tank
                 Rtank = Routertank
 
         else
                 Wtank_total = Winner_tot
                 Wtank = Winnertank
-                l_tank = l_inner #Tank length when there is only an inner tank
+                l_tank = l_inner #Tank length when there is only an inner vessel
                 Rtank = Rinnertank
         end
         

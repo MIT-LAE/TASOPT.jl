@@ -99,7 +99,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 #--- weights and weight moments
       Whead = rhoskin*gee*Vhead
       Wcyl  = rhoskin*gee*Vcyl
-      Winnertank = Wcyl + 2*Whead + Wfuel #Weight of inner tank without stiffeners and supports, inc. fuel
+      Winnertank = Wcyl + 2*Whead + Wfuel #Weight of inner vessel without stiffeners and supports, inc. fuel
 
       #stiffeners
       Nmain = 2 #Tanks typically have two main support rings
@@ -154,22 +154,22 @@ end
 
 """
     size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm)
-This function sizes the outer tank and calculates the weights of its components.
+This function sizes the outer vessel and calculates the weights of its components.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `fuse_tank::Struct`: structure with tank parameters.
-    - `Winnertank::Float64`: weight of inner tank and contents (N).
-    - `l_cyl::Float64`: length of cylindrical portion of outer tank (m).
+    - `Winnertank::Float64`: weight of inner vessel and contents (N).
+    - `l_cyl::Float64`: length of cylindrical portion of outer vessel (m).
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
 
     **Outputs:**
-    - `Wtank::Float64`: total weight of outer tank (N).
-    - `Wcyl::Float64`: weight of cylindrical portion of outer tank (N).
+    - `Wtank::Float64`: total weight of outer vessel (N).
+    - `Wcyl::Float64`: weight of cylindrical portion of outer vessel (N).
     - `Whead::Float64`: weight of one elliptical outer-tank head (N).
     - `Wstiff::Float64`: total weight of stiffener material (N).
-    - `S_outer::Float64`: surface area of outer tank (m^2).
-    - `Shead::Float64`: surface area of one outer tank head (m^2).
+    - `S_outer::Float64`: surface area of outer vessel (m^2).
+    - `Shead::Float64`: surface area of one outer vessel head (m^2).
     - `Scyl::Float64`: surface area of cylindrical portion of tank (m^2).
     - `t_cyl::Float64`: wall thickness of cylindrical portion of tank (m).
     - `t_head::Float64`: wall thickness of tank head (m). 
@@ -194,7 +194,7 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
       s_a = UTSouter / 4
 
-      #Calculate outer tank geometry
+      #Calculate outer vessel geometry
       Rtank_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse
       Do = 2 * Rtank_outer #outside diameter
 
@@ -240,7 +240,7 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       tanktype = "outer"
 
       Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, #Weight of one main stiffener, each one 
-                                    s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter)  #carries half the inner tank load
+                                    s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter)  #carries half the inner vessel load
                                                                               
       Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer, 
                                     s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter) #Weight of one intermediate stiffener, which carries no load
@@ -249,14 +249,14 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
 
       Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd) #Find total tank weight, including additional mass factor
 
-      l_outer = l_cyl + Do / ARtank + 2*t_head #Total length of outer tank
+      l_outer = l_cyl + Do / ARtank + 2*t_head #Total length of outer vessel
 
       return Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer
 end
 
 """
     stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, θ1, θ2 = 0.0, Nstiff = 2.0, l_cyl = 0, E = 0)
-This function calculates the weight of a single stiffener in an inner or outer tank for a given inner tank weight.
+This function calculates the weight of a single stiffener in an inner or outer vessel for a given inner vessel weight.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -267,7 +267,7 @@ This function calculates the weight of a single stiffener in an inner or outer t
     - `ρstiff::Float64`: stiffener density (kg/m^3).
     - `θ1::Float64`: angular position of bottom tank supports, measured from the bottom of the tank (rad).
     - `θ2::Float64`: angular position of top tank supports, measured from the bottom of the tank (rad). Only used with "outer" tank.
-    - `Nstiff::Float64`: total number of stiffeners on outer tank. Only used with "outer" tank.
+    - `Nstiff::Float64`: total number of stiffeners on outer vessel. Only used with "outer" tank.
     - `l_cyl::Float64`: length of cylindrical portion of tank (m). Only used with "outer" tank.
     - `E::Float64`: Young's modulus of stiffener material (Pa). Only used with "outer" tank.
 
@@ -279,7 +279,7 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, s_a::Flo
     
       if tanktype == "inner" 
             _, kmax = stiffeners_bendingM(θ1) #Find k = 2πM/(WR)
-            Icollapse = 0 #Inner tank cannot collapse as it is pressurized
+            Icollapse = 0 #inner vessel cannot collapse as it is pressurized
 
       elseif tanktype == "outer"
             _, kmax = stiffeners_bendingM_outer(θ1, θ2) #Find k = 2πM/(WR)
@@ -383,13 +383,13 @@ end
 
 """
     optimize_outer_tank(fuse_tank, Winnertank, l_cyl, θ1, θ2)
-This function optimizes the number of intermediate stiffener rings to minimize the weight of an outer tank.
+This function optimizes the number of intermediate stiffener rings to minimize the weight of an outer vessel.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `fuse_tank::Struct`: structure with tank parameters.
-    - `Winnertank::Float64`: weight of inner tank and contents (N).
-    - `l_cyl::Float64`: length of cylindrical portion of outer tank (m).
+    - `Winnertank::Float64`: weight of inner vessel and contents (N).
+    - `l_cyl::Float64`: length of cylindrical portion of outer vessel (m).
 
     **Outputs:**
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.

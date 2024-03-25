@@ -8,7 +8,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
 !!! details "📖 Theory - Thermal and structural sizing of cryogenic fuel tanks" 
     ### Thermal design
-    The fuel tanks in TASOPT are assumed to consist of cylinders with two hemiellipsoidal caps. In general, the cylinders can have a double-bubble shape like the fuselage. To reduce fuel loss during flight as a result of boiling due to heat leakage into the tank (boiloff), the tank requires thermal insulation. Two different insulation architectures are currently supported in TASOPT.jl: an inner tank covered in foam-based insulation and a double-walled tank with a vacuum layer between the layers. 
+    The fuel tanks in TASOPT are assumed to consist of cylinders with two hemiellipsoidal caps. In general, the cylinders can have a double-bubble shape like the fuselage. To reduce fuel loss during flight as a result of boiling due to heat leakage into the tank (boiloff), the tank requires thermal insulation. Two different insulation architectures are currently supported in TASOPT.jl: an inner vessel covered in foam-based insulation and a double-walled tank with a vacuum layer between the layers. 
     
     The thermal design and analysis method is similar for both insulation architectures. The tank walls are assumed to be made of an isotropic material with high thermal conductivity. The insulation layer, which does not carry structural loads and has a high thermal resistance. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
 
@@ -114,7 +114,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     In the current version of TASOPT, the user can specify whether to use a given thickness and material distribution for the MLI or to size the MLI to achieve a desired boiloff rate. In the latter case, the boiloff rate is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
 
     ### Structural design
-    The structural part of the tank is sized for a given pressure difference between the high-pressure interior and the exterior. As the boiling temperature of a liquid is a function of temperature, it is preferable to keep the interior pressure constant. If the desired pressure difference is ``\Delta p``, the tank is actually designed for a pressure difference ``\Delta p_{des} = \alpha \Delta p``, where ``\alpha>1`` is a safety factor. The outer radius of the strcutrual portion of the tank is
+
+    #### Inner vessel
+    The cryogenic fuel is contained within an inner vessel, which is sized for a given pressure difference between the high-pressure interior and the exterior. As the boiling temperature of a liquid is a function of temperature, it is preferable to keep the interior pressure constant. The outer radius of the inner vessel is
     ```math
         R_{t,o} = R_{fuse} - d_{fclear} - t_{MLI},
     ```
@@ -122,15 +124,15 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         t_{s,cyl} = \frac{2 \Delta p_{des} R_{t,o}}{2 \sigma_a f_{weld} + 0.8 \Delta p_{des}},
     ```
-    where ``\sigma_a`` is the maximum allowable stress for the wall material and ``f_{weld}<1`` is a factor that accounts for structural weakening due to welding. The wall thickness of the hemiellipsoidal caps is given by [^3]
+    where ``\sigma_a`` is the maximum allowable stress for the wall material, ``f_{weld}<1`` is a factor that accounts for structural weakening due to welding, and ``\Delta p_{des}`` is the design tank pressure difference. In the code, the tank is sized for a pressure difference equal to the internal tank pressure, ``\Delta p_{des} = p_{tank}``. The maximum allowable stress is taken to be one fourth of the ultimate tensile strength of the wall material[^3]. The wall thickness of the hemiellipsoidal caps is given by [^3]
     ```math
         t_{s,cap} = \frac{2 \Delta p_{des} R_{t,o} K }{2 \sigma_a f_{weld} + 2 \Delta p_{des} (K- 0.1)},
     ```
     where ``K=\frac{1}{6}(AR^2+2)`` is a factor that accounts for the ellipsoidal aspect ratio (``AR``). Once the wall thicknesses have been determined, the internal tank radius is given by ``R_{t,i}=R_{t,o}-t_{s,cyl} ``. The volume required for the fuel is 
     ```math
-        V_{fuel} = (1+f_{ull})\frac{m_{fuel} + m_{boil}}{\rho},
+        V_{fuel} = (1+f_{ull})\frac{m_{fuel}}{\rho},
     ```
-    where ``m_{boil}`` is the total fuel mass that boils off during flight and ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some empty volume to account for ullage. The internal volume of a hemiellipsoidal cap is given by 
+    where ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some empty volume to account for ullage. The internal volume of a hemiellipsoidal cap is given by 
     ```math
         V_{cap} =  \frac{2πR_{t,i}^3}{3AR}.
     ```
@@ -138,7 +140,29 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         l_{cyl} =  \frac{V_{cyl}}{\pi R_{t,i}^2}.
     ```
-    Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities.
+    Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities. To support the tank, stiffener rings that go around the tank circumference are needed. It is assumed that the inner vessel contains two of these stiffeners, which are sized following the process below.
+
+    #### Outer vessel
+    If the insulation layer contains a vacuum layer, an additional tank wall is needed to contain the vacuum. Unlike the inner vessel, this outer wall does not fail due to excessive stress, instead, it fails by buckling or collapse[^3]. To prevent buckling, stiffener rings can be used to reduce the effective cylindrical lenght that can collapse. The unsupported cylinder length is
+    ```math
+        L =  \frac{l_{cyl}}{N_{stiff} -1},
+    ```
+    where ``N_{stiff}`` is the total number of stiffener rings and ``l_{cyl}`` is the length of the cylindrical portion of the outer vessel (note that for geometric similarity, this is larger than that of the inner vessel). The collapsing pressure[^3] is taken to be four times the atmospheric pressure, ``p_c = 4p_a``. The thickness for the cylindrical portion of the vessel, ``t`` can then be determined by solving[^3]
+    ```math
+        p_c = \frac{2.42 E (t/D_o)^{5/2}}{ (1 - \nu^2)^{3/4}  (L/D_o - 0.45\sqrt{t/D_o}) },
+    ```
+    where ``E`` is the Young's modulus of the wall material, ``\nu`` is its Poisson's ratio, and ``D_o`` is the vessel outer diameter. 
+
+    The wall thickness for the hemiellipsoidal heads can be determined using[^3]
+    ```math
+        t = K_1 D_o \sqrt{\frac{p_c \sqrt{3 (1 - \nu^2)}}{0.5 E}},
+    ```
+    where ``K_1`` is a geometric factor that depends on the ellipsoid aspect ratio; some factors can be found in Table 7.6 in Barron[^3].
+
+    Once the wall thicknesses have been determined, the weight of the outer vessel components can be found from their volumes and densities. In addition to the walls, the outer vessel requires stiffener rings to prevent collapse. The vessel is assumed to be supported by two main stiffener rings, ``N_{stiff,m}=2``, that carry the weight and prevent collapse, and a number ``N_{stiff,a}`` of additional rings that only prevent collapse, such that ``N_{stiff}=N_{stiff,m}+N_{stiff,a}``.
+
+    #### Stiffener rings
+    
 
 ```@docs
 structures.tanksize!
