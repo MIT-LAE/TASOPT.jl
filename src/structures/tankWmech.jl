@@ -287,7 +287,7 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, s_a::Flo
             Do = 2 * Rtank #outer diameter
 
             L = l_cyl/ (Nstiff - 1) #Length of portion between supports
-            Icollapse = pc * Do * L / (24 * E) #Second moment of area needed to avoid collapse
+            Icollapse = pc * Do^3 * L / (24 * E) #Second moment of area needed to avoid collapse
       end
 
       Mmax = kmax * W * Rtank / (2π) #Maximum bending moment due to loads

@@ -164,6 +164,18 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ![DWfig](../assets/doublewalled_tank.svg)
 
     #### Stiffening rings
+    The stiffening rings act as contact points for the tank supports. In the case of the outer vessel in a double-walled tank, they also prevent collapse of the skin. The main stiffening rings carry the weight of the tank, whereas the outer-vessel additional rings simply serve to prevent skin collapse. In general, the required second moment of area for a ring is given by 
+    ```math
+        I = I_{load} + I_{collapse},
+    ```
+    where `` I_{load}`` is the second moment of area needed to withstand the weight loads (only applicable to main rings), and ``I_{collapse}`` is needed to prevent skin collapse (only for outer vessel rings). The second moment of area needed to withstand the loads is
+    ```math
+        I_{load} = y_{max} \frac{M_{max}}{\sigma_a},
+    ```
+    where ``y_{max}`` is the maximum distance from the neutral axis in the beam cross-section, ``\sigma_a`` is the maximum allowable beam stress, and ``M_{max}`` is the maximum bending moment in the ring circumference, which can be found using Eqs. (7.4)--(7.5) in Barron[^3] for the inner vessel and Eqs. (7.13)--(7.15) for the outer vessel. The second moment of area to withstand collapse is 
+    ```math
+        I_{collapse} = \frac{p_c D_o^3 L}{24 E}.
+    ```
     
 
 ```@docs
