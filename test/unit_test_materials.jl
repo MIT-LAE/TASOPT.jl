@@ -9,6 +9,9 @@
         Al = StructuralAlloy("Al-7075"; max_avg_stress = 1.0, safety_factor = 2.0)
         @test Al.σmax == database["Al-7075"]["YTS"]/1.0/2.0
         @test Al.τmax == database["Al-7075"]["shear_strength"]/1.0/2.0
+        @test Al.YTS == database["Al-7075"]["YTS"]
+        @test Al.UTS == database["Al-7075"]["UTS"]
+        @test Al.USS == database["Al-7075"]["shear_strength"]
     end
 
     @testset "Conductors" begin

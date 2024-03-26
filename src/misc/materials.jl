@@ -10,7 +10,7 @@ Generic structural alloy.
 
 $TYPEDFIELDS
 """
-struct StructuralAlloy
+@kwdef struct StructuralAlloy
     """Density [kg/m³]"""
     ρ::Float64
     """Young's Modulus [Pa]"""
@@ -23,6 +23,12 @@ struct StructuralAlloy
     σmax::Float64
     """Maximum Shear [Pa]"""
     τmax::Float64
+    """Yield tensile strength [Pa]"""
+    YTS::Float64
+    """Ultimate tensile strength [Pa]"""
+    UTS::Float64
+    """Ultimate shear strength [Pa]"""
+    USS::Float64
 end
 
 """
@@ -38,7 +44,7 @@ Material specified needs to have the following data in the database:
 - τmax: Maximum Shear [Pa]
 """
 function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.5)
-    local MatProp, ρ, E, G, ν, σmax, τmax
+    local MatProp, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS
     try
         MatProp = MaterialProperties[material]
     catch
@@ -49,12 +55,15 @@ function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor =
             E    = MatProp["youngs_modulus"]
             G    = MatProp["shear_modulus"]
             ν    = MatProp["poissons_ratio"]
-            σmax = MatProp["YTS"]/max_avg_stress/safety_factor
-            τmax = MatProp["shear_strength"]/max_avg_stress/safety_factor
+            YTS  = MatProp["YTS"]
+            UTS  = MatProp["UTS"]
+            USS  = MatProp["shear_strength"]
+            σmax = YTS/max_avg_stress/safety_factor
+            τmax = USS/max_avg_stress/safety_factor
         catch 
             error("Insufficient data in database for $material to build a StructuralAlloy")
         else
-            StructuralAlloy(ρ, E, G, ν, σmax, τmax)
+            StructuralAlloy(ρ, E, G, ν, σmax, τmax, YTS, UTS, USS)
         end
     end
 
