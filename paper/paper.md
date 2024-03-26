@@ -17,6 +17,10 @@ authors:
     affiliation: 1
   - name: Kanghyun Lee
     affiliation: 1
+  - name: Nicolas Gomez Vega
+    affiliation: 1
+  - name: Aditeya Shukla
+    affiliation: 1
   - name: Prateek Ranjan
     affiliation: 1
   - name: Jonas J Gonzalez
