@@ -44,7 +44,7 @@ Material specified needs to have the following data in the database:
 - τmax: Maximum Shear [Pa]
 """
 function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.5)
-    local MatProp, ρ, E, G, ν, σmax, τmax
+    local MatProp, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS
     try
         MatProp = MaterialProperties[material]
     catch
