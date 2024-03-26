@@ -29,6 +29,19 @@
     UTS = 505e6  #Ultimate tensile strength
     shear_strength = 300e6
 
+[Al-2219-T87]
+    description = """Aluminum-copper alloy with high strength, resistance to corrosion cracking and enhanced cryogenic properties.
+    Uses: Low-temperature structures, cryogenic fuel storage
+
+    source = "https://www.matweb.com/search/datasheet_print.aspx?matguid=86215ca4233a49fdb6b556235fc726b7"
+    density = 2840.0 #kg/m3
+    youngs_modulus = 73.1e9 #Pa
+    shear_modulus = 27e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 393e6 #Yield tensile strength
+    UTS = 476e6  #Ultimate tensile strength
+    shear_strength = 280e6
+
 [Ti-6242]
     description = "Titanium 6242 alloy"
     #Structural properties: https://www.matweb.com/search/datasheet_print.aspx?matguid=66f20965748441d8916768ed80be0cba
