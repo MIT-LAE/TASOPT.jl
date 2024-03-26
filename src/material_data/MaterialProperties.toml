@@ -31,7 +31,7 @@
 
 [Al-2219-T87]
     description = """Aluminum-copper alloy with high strength, resistance to corrosion cracking and enhanced cryogenic properties.
-    Uses: Low-temperature structures, cryogenic fuel storage
+    Uses: Low-temperature structures, cryogenic fuel storage"""
 
     source = "https://www.matweb.com/search/datasheet_print.aspx?matguid=86215ca4233a49fdb6b556235fc726b7"
     density = 2840.0 #kg/m3
