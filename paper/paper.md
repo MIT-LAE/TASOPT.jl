@@ -19,6 +19,7 @@ authors:
     affiliation: 1
   - name: Nicolas Gomez Vega
     affiliation: 1
+    orcid: https://orcid.org/0000-0002-7921-2158
   - name: Aditeya Shukla
     affiliation: 1
   - name: Prateek Ranjan
