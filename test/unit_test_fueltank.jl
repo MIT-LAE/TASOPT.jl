@@ -35,7 +35,6 @@ fuse_tank.Ninterm = 1.0
 fuse_tank.rhofuel = 70.0
 fuse_tank.Tfuel = 20.0
 fuse_tank.Wfuelintank = 1e5
-println(fuse_tank.outer_material.E)
 
 @testset "Fuselage tank" begin
     @testset "Foam insulation" begin
