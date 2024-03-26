@@ -17,12 +17,8 @@ mutable struct fuselage_tank
     material_insul::Array{String}
     iinsuldes::Array{Int64}
 
-    UTSinner::Float64
-    rhoinner::Float64
-    UTSouter::Float64
-    rhoouter::Float64
-    Eouter::Float64
-    poissouter::Float64
+    inner_material::StructuralAlloy
+    outer_material::StructuralAlloy
     ARtank::Float64
     theta_inner::Float64
     theta_outer::Vector{Float64}

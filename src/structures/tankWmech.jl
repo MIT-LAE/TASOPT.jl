@@ -45,9 +45,9 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       ρfuel = fuse_tank.rhofuel
       ftankadd = fuse_tank.ftankadd
       Δp = fuse_tank.ptank
-      sigskin = fuse_tank.UTSinner
+      sigskin = fuse_tank.inner_material.UTS
       material_insul = fuse_tank.material_insul
-      rhoskin = fuse_tank.rhoinner
+      rhoskin = fuse_tank.inner_material.ρ
       clearance_fuse = fuse_tank.clearance_fuse
       AR = fuse_tank.ARtank
       ullage_frac = fuse_tank.ullage_frac
@@ -177,10 +177,10 @@ This function sizes the outer vessel and calculates the weights of its component
 """
 function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
       #Unpack parameters in fuse_tank
-      poiss = fuse_tank.poissouter
-      Eouter = fuse_tank.Eouter
-      ρouter = fuse_tank.rhoouter
-      UTSouter = fuse_tank.UTSouter
+      poiss = fuse_tank.inner_material.ν
+      Eouter = fuse_tank.inner_material.E
+      ρouter = fuse_tank.inner_material.ρ
+      UTSouter = fuse_tank.inner_material.UTS
       ftankadd = fuse_tank.ftankadd
       wfb = fuse_tank.wfb
       nfweb = fuse_tank.nfweb

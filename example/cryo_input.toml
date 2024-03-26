@@ -55,13 +55,13 @@ name = "TASOPT Model with cryo fuel and HX"
     tank_aspect_ratio = 2.0
     fuselage_clearance = "0.3 ft"
     tank_pressure = "2 atm"
-    skin_ultimate_strength = "476e6 Pa" #Al 2219-T87
-    tank_skin_density = 2840 #kg/m^3
     additional_mass_fraction = 0.1
     weld_efficiency = 0.9 
-    inner_tank_support_angle = "80 deg"
     ullage_fraction = 0.1 
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
+
+    inner_vessel_material = "Al-2219-T87"
+    inner_vessel_support_angle = "80 deg"
     
     #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum"
     size_insulation = true #Flag to decide whether to size insulation for boiloff
@@ -72,11 +72,8 @@ name = "TASOPT Model with cryo fuel and HX"
     insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if size_insulation == true
 
     #Parameters for double-walled tank, if "vacuum" is in insulation_material
-    outer_skin_density = 2840 #kg/m^3
-    outer_skin_Youngs_modulus = "73e9 Pa"
-    outer_skin_Poisson_ratio = 0.3
-    outer_skin_ultimate_strength = "476e6 Pa" #Al 2219-T87
-    outer_tank_support_angles = ["45 deg", "135 deg"]
+    outer_vessel_material = "Al-2219-T87"
+    outer_vessel_support_angles = ["45 deg", "135 deg"]
 
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)

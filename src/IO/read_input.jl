@@ -358,10 +358,11 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
         fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
     end
     
-    fuse_tank.UTSinner = Pressure(readfuel_storage("skin_ultimate_strength"))
-    fuse_tank.rhoinner = readfuel_storage("tank_skin_density")
+    inner_mat_name = readfuel_storage("inner_vessel_material")
+    fuse_tank.inner_material = StructuralAlloy(inner_mat_name)
+    
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
-    fuse_tank.theta_inner = Angle(readfuel_storage("inner_tank_support_angle"))
+    fuse_tank.theta_inner = Angle(readfuel_storage("inner_vessel_support_angle"))
 
     fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
     
@@ -371,12 +372,10 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
 
     if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
-        fuse_tank.rhoouter = readfuel_storage("outer_skin_density")
-        fuse_tank.Eouter = Pressure(readfuel_storage("outer_skin_Youngs_modulus"))
-        fuse_tank.poissouter = readfuel_storage("outer_skin_Poisson_ratio")
-        fuse_tank.UTSouter = Pressure(readfuel_storage("outer_skin_ultimate_strength"))
+        outer_mat_name = readfuel_storage("outer_vessel_material")
+        fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
 
-        theta_outer_str = readfuel_storage("outer_tank_support_angles")
+        theta_outer_str = readfuel_storage("outer_vessel_support_angles")
         theta_outer = []
         for θstr in theta_outer_str
             push!(theta_outer,  Angle(θstr))
