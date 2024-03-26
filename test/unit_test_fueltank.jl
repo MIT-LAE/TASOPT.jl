@@ -14,8 +14,7 @@ fuse_tank.clearance_fuse = 0.1
 
 fuse_tank.ptank = 2e5
 fuse_tank.ARtank = 2.0
-fuse_tank.UTSinner = 476e6 
-fuse_tank.rhoinner = 2840.0
+fuse_tank.inner_material = TASOPT.StructuralAlloy("Al-2219-T87")
 
 fuse_tank.t_insul = [0.15,0.15,0.15]
 fuse_tank.material_insul = ["rohacell41S", "rohacell41S", "polyurethane27"]
@@ -29,16 +28,14 @@ fuse_tank.theta_inner = 1.0
 fuse_tank.ftankadd = 0.1
 fuse_tank.ew = 0.9
 
-fuse_tank.UTSouter = 476e6 
-fuse_tank.rhoouter = 2840.0
-fuse_tank.Eouter = 73e9
-fuse_tank.poissouter = 0.3
+fuse_tank.outer_material = TASOPT.StructuralAlloy("Al-2219-T87")
 fuse_tank.theta_outer = [1.0, 2.0]
 fuse_tank.Ninterm = 1.0
 
 fuse_tank.rhofuel = 70.0
 fuse_tank.Tfuel = 20.0
 fuse_tank.Wfuelintank = 1e5
+println(fuse_tank.outer_material.E)
 
 @testset "Fuselage tank" begin
     @testset "Foam insulation" begin
@@ -80,7 +77,7 @@ fuse_tank.Wfuelintank = 1e5
         outputs_vac_size = TASOPT.structures.tanksize!(fuse_tank, z, Mair, xftank,
                                             time_flight,
                                             ifuel)
-        outputs_vac_size_check = (0.0020612680724211444, 145.623998835008, 2.4, 0.0, 10.488245490257402, 111701.59691385616) 
+        outputs_vac_size_check = (0.0020612680724211444, 145.623998835008, 2.4, 0.0, 10.488026633984164, 111294.54283358467) 
         
         for i in 1:length(outputs_vac_size)
             @test outputs_vac_size[i] ≈ outputs_vac_size_check[i]
@@ -97,11 +94,11 @@ fuse_tank.Wfuelintank = 1e5
 
         fuse_tank.Ninterm = 1.0
         Ninterm = TASOPT.structures.optimize_outer_tank(fuse_tank, Winnertank, l_cyl)
-        Ninterm_check = 14.71826171875 
+        Ninterm_check = 14.63037109375
         @test Ninterm ≈ Ninterm_check
 
         outputs_vac_outer = TASOPT.structures.size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm_check)
-        outputs_vac_outer_check = (85811.33453821401, 31593.87142723417, 12884.34023240256, 20647.75223360981, 168.1077334143945, 24.993050952321795, 118.12163150975091, 0.009600327800262659, 0.018503571497814696, 10.270191118352395)
+        outputs_vac_outer_check = (85410.79548689285 ,  31471.569231536196, 12808.143626608879, 20558.32123060317, 168.1077334143945, 24.993050952321795, 118.12163150975091, 0.009563164226558287 , 0.018394143361195915, 10.269972262079158)
         for i in 1:length(outputs_vac_outer)
             @test outputs_vac_outer[i] ≈ outputs_vac_outer_check[i]
         end
@@ -124,9 +121,9 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_bendM_outer[i] ≈ outputs_bendM_outer_check[i]
         end
 
-        Wstiff = TASOPT.structures.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, fuse_tank.UTSouter / 4, 
-        fuse_tank.rhoouter , θ1, θ2, 10.0, 5.0, fuse_tank.Eouter )
-        Wstiff_check = 1654.2681541845684
+        Wstiff = TASOPT.structures.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, fuse_tank.outer_material.UTS / 4, 
+        fuse_tank.outer_material.ρ, θ1, θ2, 10.0, 5.0, fuse_tank.outer_material.E)
+        Wstiff_check = 1653.9008501855653
         
         @test Wstiff ≈ Wstiff_check
     end
