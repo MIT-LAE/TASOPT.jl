@@ -1175,7 +1175,7 @@ function wsize(ac; itermax=35,
             #Unpack parameters
             time_flight = para[iatime, ipdescent1]
             tank_placement = fuse_tank.placement
-            Tfuel = pare[ieTft]
+            rhofuel = fuse_tank.rhofuel
 
             #Convective cooling
             if tank_placement == "rear"
