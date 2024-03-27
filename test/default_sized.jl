@@ -330,6 +330,9 @@ parg[302] = 0.00000000000000000000 # igxftankaft
 parg[303] = 23.4696 # igdxcabin
 parg[304] = 1.52399999999999 # igdxeng2wbox
 parg[305] = 4.0885967681724094e6 #igxWfuel
+parg[306] = 0.762 #igseatpitch
+parg[307] = 0.4826 #igseatwidth
+parg[308] = 0.254 #igaislehalfwidth
 
 # --------------------------------
 # Mission  - stored in parm array:

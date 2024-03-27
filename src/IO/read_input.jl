@@ -2,6 +2,7 @@ using TOML
 export read_aircraft_model, load_default_model
 
 include("size_cabin.jl")
+include("../fuel/fuel_properties.jl")
 #using ..structures
 
 """
@@ -143,19 +144,22 @@ fueltype = readfuel("fuel_type")
 #TODO this needs to be updated once I include Gas.jl into TASOPT
 if uppercase(fueltype) == "LH2"
     pari[iifuel] = 40
+    
 elseif uppercase(fueltype) == "CH4"
-        pari[iifuel] = 11
+    pari[iifuel] = 11
+    
 elseif uppercase(fueltype) == "JET-A"
     pari[iifuel] = 24
+
+    pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
+    pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
+    parg[igrhofuel] = readfuel("fuel_density")
 else
     error("Check fuel type")
 end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
-pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
-pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
-parg[igrhofuel] = readfuel("fuel_density")
 
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
@@ -184,6 +188,12 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         pari[iinftanks] = 2
     end
+
+    #Calculate fuel temperature and density as a function of pressure
+    Tfuel, ρfuel = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
+    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank
+    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+    parg[igrhofuel] = ρfuel
 end
 
 # Setup mission variables
@@ -306,10 +316,14 @@ readgeom(x) = read_input(x, geom, dgeom)
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
 
+    parg[igseatpitch] = Distance(readgeom("seat_pitch"))
+    parg[igseatwidth] = Distance(readgeom("seat_width"))
+    parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
+
     parg[igRfuse]  = Distance(readgeom("radius"))
     parg[igdRfuse] = Distance(readgeom("dRadius"))
     parg[igwfb]    = Distance(readgeom("y_offset"))
-    parg[ighfloor] = Distance(readgeom("floor_depth")) 
+    parg[ighfloor] = Distance(readgeom("floor_depth"))
     parg[ignfweb]  = readgeom("Nwebs")
 
     parg[iganose] = readgeom("a_nose")

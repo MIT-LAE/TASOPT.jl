@@ -46,7 +46,7 @@
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "Jet-A" # Choices are ... [TODO]
+    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
@@ -141,6 +141,11 @@
 # Overall fuselage layout
     #Use provided layout (false) or recalculate it (true) for design pax keeping deltas
     calculate_cabin_length = false 
+
+    double_decker   = false #if true, the fuselage has two passenger decks
+    seat_pitch      = "30 in"
+    seat_width      = "19 in"
+    aisle_halfwidth = "10 in"
 
     #Provided layout
     x_nose_tip           = "0 ft"
