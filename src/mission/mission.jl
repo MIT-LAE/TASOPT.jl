@@ -605,7 +605,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       FoW[ip] = Ftotal / (BW * cosg) - DoL
 
       mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - Ftotal * TSFC / gee * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-      println(mdot_vent)
       FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_vent / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
       Vgi[ip] = 1.0 / (V * cosg)
 
