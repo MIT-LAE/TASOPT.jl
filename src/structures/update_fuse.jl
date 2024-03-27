@@ -83,6 +83,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
     #TODO this double deck model assumes that both decks have a width equal to the fuselage diameter; 
     #in reality, at least one deck must be narrower
 
+    maxpax = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
     dxcyl2shellaft = parg[igxshell2] - parg[igxblend2] #Distance from blend2 to shell2
