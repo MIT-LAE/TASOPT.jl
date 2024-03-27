@@ -18,7 +18,6 @@ for a given insulation thickness
       - `r_tank::Float64`: Tank outer radius (m).
       - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
       - `material_insul::Array{String,1}`: material name for each MLI layer.
-      - `hconvgas::Float64`: Convective coefficient of insulating purged gas (W/m²*K).
       - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
       - `Tfuel::Float64`: Fuel temperature (K).
       - `z::Float64`: flight altitude (m)
@@ -34,27 +33,30 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-                      hconvgas::Float64,
-                      t_cond::Array{Float64,1},
-                      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
-                      time_flight::Float64, ifuel::Int64, qfac::Float64)
+function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
+      t_cond = fuse_tank.t_insul
+      Tfuel = fuse_tank.Tfuel
+      qfac = fuse_tank.qfac
+
+      Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
+      Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
+
+      #Create struct with thermal parameters
       p = thermal_params()
       p.l_cyl = l_cyl
       p.l_tank = l_tank
       p.r_tank = r_tank
       p.Shead = Shead
-      p.hconvgas = hconvgas
       p.t_cond = t_cond
-      p.material = material_insul
+      p.material = fuse_tank.material_insul
       p.Tfuel = Tfuel
       p.z = z
       p.Mair = Mair
       p.xftank = xftank
       p.ifuel = ifuel
 
-      _, _, Taw = freestream_heat_coeff(z, Mair, xftank, 200) #Find adiabatic wall temperature with dummy wall temperature
+      _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
@@ -63,8 +65,8 @@ function tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::A
       
       #Initial guess for function
       guess = zeros(length(t_cond) + 2) 
-      guess[1] = 1000
-      guess[2] = Tfuel + 1
+      guess[1] = 1000.0
+      guess[2] = Tfuel + 1.0
       
       for i = 1:length(t_cond)
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
@@ -95,7 +97,7 @@ the tank wall temperature, and the temperatures at the interfaces of MLI insulat
       **Outputs:**
       - `F::Vector{Float64}`: vector with residuals.
 """
-function residuals_Q(x, p, mode)
+function residuals_Q(x::Vector{Float64}, p, mode::String)
       #Unpack states
       if mode == "Q_known" #If the heat is known because the max boiloff is an input
             Q = p.Q
@@ -119,7 +121,6 @@ function residuals_Q(x, p, mode)
       l_tank = p.l_tank
       r_tank = p.r_tank
       Shead = p.Shead
-      hconvgas = p.hconvgas
       t_cond = p.t_cond
       material = p.material
       Tfuel = p.Tfuel
@@ -136,10 +137,9 @@ function residuals_Q(x, p, mode)
       thickness = sum(t_cond)  # total thickness of insulation
   
       # Radiation
-      σ = 5.6704e-8 #W/(m^2 K^4), Stefan-Boltzmann constant
       ε = 0.95    # white aircraft (Verstraete)
   
-      hradair = σ * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
+      hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
       Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
   
@@ -155,22 +155,29 @@ function residuals_Q(x, p, mode)
       #Find resistance of each MLI layer
       T_prev = T_w
       for i in 1:N
-          k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
-          R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
-          
-          Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
-          R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
-          # Parallel addition of resistance
-          R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
-          
-          # Update r_inner
-          r_inner = r_inner + t_cond[i]  
-          T_prev = T_mli[i]
+            if lowercase(material[i]) == "vacuum"
+                  S_inner = 2π * l_cyl * r_inner + 2*Shead[i]
+                  S_outer = 2π * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
+                  R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
+
+            else #If insulation layer is not a vacuum
+                  k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
+                  R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
+                  
+                  Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
+                  R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
+                  # Parallel addition of resistance
+                  R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
+                  
+                  # Update r_inner
+                  r_inner = r_inner + t_cond[i]  
+                  T_prev = T_mli[i]
+            end
       end
   
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
       Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
-  
+
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
@@ -197,7 +204,7 @@ This function calculates the thermal conductivity of different insulation materi
       **Outputs:**
       - `k::Float64`: thermal conductivity (W/(m K)).
 """
-function insulation_conductivity_calc(T, material)
+function insulation_conductivity_calc(T::Float64, material::String)
       if material == "rohacell41S"
             #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
             k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
@@ -241,7 +248,6 @@ mutable struct thermal_params
       l_tank::Float64
       r_tank::Float64
       Shead::Array{Float64}
-      hconvgas::Float64
       t_cond::Array{Float64} 
       material::Array{String}
       Tfuel::Float64
@@ -268,7 +274,7 @@ This function calculates the latent heat of vaporization of a liquid fuel and it
       - `h_liq::Float64`: liquid-side heat tansfer coefficient (W/m^2/K).
       - `h_v::Float64`: liquid's enthalpy of vaporization (J/kg).
 """
-function tank_heat_coeffs(T_w, ifuel, Tfuel, ltank)
+function tank_heat_coeffs(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
       #Get fuel properties
       if ifuel == 11 #CH4
             h_v =  510e3 #J/kg, latent heat of vaporozation
@@ -314,7 +320,7 @@ of Aerodynamics.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z, M, xftank, Tw)
+function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
       #Use ISA function to calculate freestream conditions
       Tair, p, _, a, _ = atmos(z / 1e3)
       u = M * a #freestrean velocity
@@ -346,4 +352,46 @@ function freestream_heat_coeff(z, M, xftank, Tw)
       hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
 
       return hconvair, Tair, Taw
+end
+
+"""
+      vacuum_resistance(Tcold, Thot, S_inner, S_outer)
+
+This function calculates the thermal resistance of a vacuum layer using the methods of Barron (1985).
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `Tcold::Float64`: cold wall temperature (K).
+      - `Thot::Float64`: hot wall temperature (K).
+      - `S_inner::Float64`: area of tank inner surface (m^2).
+      - `S_outer::Float64`: area of tank outer surface (m^2).
+
+      **Outputs:**
+      - `R_eq::Float64`: equivalent thermal resistance of vacuum gap (K/W).
+"""
+function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_outer::Float64)
+      #Assumed tank and gas properties
+      a_outer = 0.9 
+      a_inner = 1.0
+      ε = 0.04    # highly polished aluminum
+      p_vacuum = 1e-3 #Assumed vacuum pressure #TODO maybe make this an input?
+
+      Rgas = 287.05  # specific gas constant
+      gamma = 1.4
+      
+      #Emissivity factor
+      Fe = 1 / (1/ε + S_inner/S_outer * (1/ε - 1))
+
+      #Find heat transfer coeff. for radiation and corresponding resistance
+      hrad = σ_SB * Fe * ((Tcold^2) + (Thot^2)) * (Tcold + Thot) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
+      R_rad = 1/(hrad * S_inner)  # radiative resistance
+
+      #Find resistance due to convection by residual air
+      Fa = 1 / (1/a_inner + S_inner/S_outer * (1/a_outer - 1)) #accomodation factor
+      G = (gamma + 1)/(gamma - 1) * sqrt(Rgas / (8*pi * Thot)) * Fa
+      R_conv = 1 / (G * p_vacuum * S_inner)  # convective resistance due to imperfect vacuum
+      
+      #Parallel addition of resistance
+      R_eq = R_conv * R_rad / (R_conv + R_rad) 
+      return R_eq
 end

@@ -1,7 +1,7 @@
 """
       fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, Waftfuel,
             fstring, fframe, ffadd, deltap,
-            Wpwindow, Wppinsul, Wppfloor,
+            Wpwindow, Wppinsul, Wppfloor, ndecks,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, lambdav, nvtail,
             Rfuse, dRfuse, wfb, nfweb, lambdac,
@@ -18,7 +18,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
        
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `Nland::Integer`: Number of landing gear components.
+      - `Nland::Float64`: load factor for floor beam structural sizing.
       Fixed weights of various components:
       - `Wfix::Float64`: Fixed weight of the structure.
       - `Wpay::Float64`: Fixed weight of payload.
@@ -39,7 +39,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       Weights of window, insulation, and floor:
       - `Wpwindow::Float64`: Weight of windows.
       - `Wppinsul::Float64`: Weight of insulation.
-      - `Wppfloor::Float64`: Weight of floor.
+      - `Wppfloor::Float64`: Weight of floor per unit area.
 
       Vertical tail parameters:
       - `Whtail::Float64`: Weight of horizontal tail components.
@@ -124,7 +124,7 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       ifwing, nftanks, xblend1, xblend2,
       Waftfuel, Wftank, ltank, xftankaft, tank_placement,
       fstring,fframe,ffadd,deltap,
-      Wpwindow,Wppinsul,Wppfloor,
+      Wpwindow,Wppinsul,Wppfloor, ndecks,
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
       bv,lambdav,nvtail,
       Rfuse,dRfuse,wfb,nfweb,lambdac,
@@ -214,7 +214,7 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       end
       lcabin = xshell2 - xshell1 - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
 
-      Wwindow = Wpwindow * lcabin
+      Wwindow = ndecks * Wpwindow * lcabin
       xWwindow = Wwindow * xcabin
       
 #--------------------------------------------------------------------
@@ -231,7 +231,7 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
-      P = (Wpay+Wseat) * Nland
+      P = (Wpay+Wseat) * Nland / ndecks #Total load is distributed across all decks
       wfloor1 = wfb + Rfuse
 
       if (wfb == 0.0) 
@@ -248,7 +248,7 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Afcap = 2.0*Mmax/(sigfloor*hfloor)
 
       Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      Wfloor = rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor
+      Wfloor = ndecks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
       xWfloor = Wfloor * 0.5*(xshell1 + xshell2)
 
 #--- average floor-beam cap thickness ("smeared" over entire floor)
@@ -276,8 +276,8 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng #TODO: this does not account for weight penalty when 
-                                                                              #nftanks != 2
+      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng
+
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +
