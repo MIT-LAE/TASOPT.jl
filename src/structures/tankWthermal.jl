@@ -205,18 +205,20 @@ This function calculates the thermal conductivity of different insulation materi
       - `k::Float64`: thermal conductivity (W/(m K)).
 """
 function insulation_conductivity_calc(T::Float64, material::String)
-      if material == "rohacell41S"
+      if lowercase(material) == "rohacell41s"
             #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
             k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif material == "polyurethane27" #polyurethane with density of 27 kg/m^3
+      elseif lowercase(material) == "polyurethane27" #polyurethane with density of 27 kg/m^3
             k = 2.114e-13 * T^5 - 1.639e-10 *T^4 + 4.438e-8 * T^3 - 5.222e-6*T^2 + 3.740e-4*T - 2.192e-3
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif material == "polyurethane32" #polyurethane with density of 32 kg/m^3
+      elseif lowercase(material) == "polyurethane32" #polyurethane with density of 32 kg/m^3
             k = 2.179E-13 * T^5 - 1.683E-10* T^4 + 4.542E-08* T^3 - 5.341E-06* T^2 + 3.816E-04* T - 2.367E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif material == "polyurethane35" #polyurethane with density of 35 kg/m^3
+      elseif lowercase(material) == "polyurethane35" #polyurethane with density of 35 kg/m^3
             k = 2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
+      elseif lowercase(material) == "mylar"
+            k = 0.155# W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
       end
       return k
 end
