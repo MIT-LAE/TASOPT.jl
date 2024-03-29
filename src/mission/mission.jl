@@ -413,7 +413,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
             mfuel = Ftotal * TSFC / gee
             mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-            FFC[ip] = mfuel * gee / (W * V * cosg) + gee * mdot_vent / (W * cosg * V) #second term accounts for fuel venting in cryo tanks
+            FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
 
             Vgi[ip] = 1.0 / (V * cosg)
 
@@ -537,8 +537,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       FoW[ip] = Ftotal / (BW * cosg) - DoL
       mfuel = Ftotal * TSFC / gee
       mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-      FFC[ip] = mfuel * gee / (W * V * cosg) + gee * mdot_vent / (W * cosg * V) #second term accounts for fuel venting in cryo tanks
-
+      FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
       Vgi[ip] = 1.0 / (V * cosg)
 
       #---- set end-of-cruise point "d" using cruise and descent angles, 
@@ -607,7 +606,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
       mfuel = Ftotal * TSFC / gee
       mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-      FFC[ip] = mfuel * gee / (W * V * cosg) + gee * mdot_vent / (W * cosg * V) #second term accounts for fuel venting in cryo tanks
+      FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
 
       Vgi[ip] = 1.0 / (V * cosg)
 
@@ -785,7 +784,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
             # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
             mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
             mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-            FFC[ip] = mfuel * gee / (W * V * cosg) + gee * mdot_vent / (W * cosg * V) #second term accounts for fuel venting in cryo tanks
+            FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
 
             if (ip > ipdescent1)
                   #  corrector integration step, approximate trapezoidal
