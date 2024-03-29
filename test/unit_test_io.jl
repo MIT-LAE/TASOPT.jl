@@ -49,7 +49,7 @@
     ac_quick_nopay_reread = quickload_aircraft(filepath_quick_nopay)
     size_aircraft!(ac_quick_nopay_reread, Ldebug=false, printiter=false, saveOD=false)
     @test ac_quick_nopay_reread.parg[igWMTO] ≈ ac_nopay.parg[igWMTO]
-
+    rm(filepath_quick_nopay)
 
 #C: outputs to .csv
     using CSV
@@ -85,8 +85,8 @@
     @test size(csv1,1) == 4 #4 rows w default indices
     @test size(csv2,1) == 1 #1 row with addl indices
 
-    @test length(csv1[1]) == 71 # = indices in default_output_indices
-    @test length(csv2[1]) == 96 # = indices in output_indices_wGeom
+    @test length(csv1[1]) == 72 # = indices in default_output_indices
+    @test length(csv2[1]) == 97 # = indices in output_indices_wGeom
 
     #test the nested vector Structures
     #a: row 1 in both csvs matches the design cruise point/mission 
