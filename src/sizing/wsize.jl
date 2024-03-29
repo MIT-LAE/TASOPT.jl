@@ -319,6 +319,7 @@ function wsize(ac; itermax=35,
         Wvtail = Whtail
         Wwing = 0.5 * Wpay / parg[igsigfac]
         Wstrut = 0.0
+        Wftank = 0.0
         Weng = 0.0 * Wpay
         feng = 0.0
 
@@ -343,6 +344,7 @@ function wsize(ac; itermax=35,
         parg[igWeng] = Weng
         parg[igWinn] = Winn
         parg[igWout] = Wout
+        parg[igWftank] = Wftank
         parg[igdxWhtail] = dxWhtail
         parg[igdxWvtail] = dxWvtail
         parg[igdyWinn] = dyWinn
@@ -545,6 +547,8 @@ function wsize(ac; itermax=35,
         xhbox = parg[igxhbox]
         xvbox = parg[igxvbox]
 
+        Wftank = parg[igWftank]
+
         fSnace = parg[igfSnace]
 
         Sh = parg[igSh]
@@ -629,6 +633,9 @@ function wsize(ac; itermax=35,
         xblend2 = parg[igxblend2]
         xshell1 = parg[igxshell1]
         xshell2 = parg[igxshell2]
+        xconend = parg[igxconend]
+        xapu = parg[igxapu]
+        xeng = parg[igxeng]
 
         Wtesys = parg[igWtesys]
         nftanks = pari[iinftanks]
