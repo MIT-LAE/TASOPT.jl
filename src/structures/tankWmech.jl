@@ -439,6 +439,8 @@ function insulation_density_calc(material::String)
             ρ = 32.0 #kg/m^3
       elseif lowercase(material) == "polyurethane35"
             ρ = 35.0 #kg/m^3
+      elseif lowercase(material) == "mylar"
+            ρ = 1390 #kg/m^3, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
       elseif lowercase(material) == "vacuum"
             ρ = 0 #kg/m^3
       else

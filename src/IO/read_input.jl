@@ -393,12 +393,14 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     end
 
     #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
+    Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
     pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
     pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
     parg[igrhofuel] = ρfuel
     fuse_tank.rhofuel = ρfuel
     fuse_tank.Tfuel = Tfuel
+    fuse_tank.hvap = hvap
+    parg[igrhofuelgas] = ρgas
 end
 # ---------------------------------
 # Wing

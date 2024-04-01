@@ -126,6 +126,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         iinsuldes = fuse_tank.iinsuldes
         Tfuel = fuse_tank.Tfuel
         Wfuel = fuse_tank.Wfuelintank
+        h_v = fuse_tank.hvap #heat of vaporization
 
         # Extract states
         Δt = x[1]
@@ -140,8 +141,6 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
         Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
-
-        _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporizatio
 
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization
