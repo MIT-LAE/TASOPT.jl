@@ -12,17 +12,19 @@ include("../src/misc/index.inc")
 #  load default model
 # example_ac = load_default_model() # simply a synonym to read_aircraft_model()
 # Alternatively you can load your desired input file 
-example_ac = read_aircraft_model("../src/IO/default_input.toml") # MODIFY <path> appropriately
+ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appropriately
 
 # 3) Size aircraft
-time_wsize = @elapsed size_aircraft!(example_ac)
+# time_wsize = @elapsed size_aircraft!(ac)
 #println("Time to size aircraft = $time_wsize s")
 
 # 3.5) Modify the aircraft model
-display(example_ac.parm[imRange,1])
-display(example_ac.parm[imRange,2])
-display(example_ac.parg[igRange,1])
-# display(example_ac.parg[igRange,2])
+display(size(ac.pari))
+display(size(ac.parg))
+display(size(ac.parm))
+display(size(ac.para))
+display(size(ac.pare))
+
 
 # 4) Visualize outputs
 # Output resulting geometry of aircraft
