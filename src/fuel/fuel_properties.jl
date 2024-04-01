@@ -10,19 +10,24 @@ Calculates the saturation temperature and density of a cryogenic fuel inside a t
     - `Tsat::Float64`: saturation temperature (K) 
     - `ρl::Float64`: liquid density (kg/m^3).
     - `ρg::Float64`: gas density (kg/m^3).
-    - `hv::Float64`: gas density (J/kg).
+    - `hv::Float64`: enthalpy of vaporization (J/kg).
 """
 function cryo_fuel_properties(fuel::String, p::Float64)
     x = p / 101325 #pressure in atm
 
     #Fits to NIST data at p increments of 0.1 atm from 0.1 to 10 atm
     if fuel == "LH2" 
+        #Saturation temperature (K)
         Tsat = 3.35772E-04*x^6 + 1.14637E-02*x^5 - 1.54871E-01*x^4 + 1.05803E+00*x^3 - 3.93770E+00*x^2 + 9.09205E+00*x + 1.42913E+01
         
+        #Liquid density (kg/m^3)
         ρl = 2.58354E-04*x^6 - 8.90930E-03*x^5 + 1.21248E-01*x^4 - 8.37637E-01*x^3 + 3.14780E+00*x^2 - 8.42843E+00*x + 7.68629E+01
+        #Liquid enthalpy (kJ/kg)
         hl = -2.258517E-03*x^6 + 7.767483E-02*x^5 - 1.055739E+00*x^4 + 7.280899E+00*x^3 - 2.739412E+01*x^2 + 7.379258E+01*x - 5.277765E+01
     
+        #Gas density (kg/m^3)
         ρg = 5.61446E-03*x^3 - 4.19141E-02*x^2 + 1.28761E+00*x + 6.91405E-02
+        #Gas enthalpy (kJ/kg)
         hg = -3.31730E-03*x^6 + 1.12617E-01*x^5 - 1.51499E+00*x^4 + 1.02766E+01*x^3 - 3.79360E+01*x^2 + 7.33546E+01*x + 4.04343E+02
     elseif fuel == "CH4"
         Tsat = -9.38765E-04*x^6 + 3.25637E-02*x^5 - 4.49376E-01*x^4 + 3.16285E+00*x^3 - 1.22945E+01*x^2 + 3.00925E+01*x + 9.09645E+01
