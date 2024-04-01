@@ -38,6 +38,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
       qfac = fuse_tank.qfac
+      h_v = fuse_tank.hvap #heat of vaporization
 
       Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
       Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
@@ -72,8 +73,6 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
       end
       sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
-      
-      _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporization
       
       Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
       mdot_boiloff = Q / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
@@ -144,7 +143,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
   
       S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
-      h_liq, _ = tank_heat_coeffs(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
+      h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
       N = length(t_cond)       # Number of layers in insulation
@@ -261,9 +260,9 @@ mutable struct thermal_params
 end
 
 """
-      tank_heat_coeffs(T_w, ifuel, Tfuel, ltank)
+      tank_heat_coeff(T_w, ifuel, Tfuel, ltank)
 
-This function calculates the latent heat of vaporization of a liquid fuel and its liquid-side heat transfer coefficient. 
+This function calculates the liquid-side heat transfer coefficient of a cryogenic fuel in a tank. 
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -274,19 +273,16 @@ This function calculates the latent heat of vaporization of a liquid fuel and it
 
       **Outputs:**
       - `h_liq::Float64`: liquid-side heat tansfer coefficient (W/m^2/K).
-      - `h_v::Float64`: liquid's enthalpy of vaporization (J/kg).
 """
-function tank_heat_coeffs(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
+function tank_heat_coeff(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
       #Get fuel properties
       if ifuel == 11 #CH4
-            h_v =  510e3 #J/kg, latent heat of vaporozation
             Pr_l = 2.0 #Prandtl number, from NIST at 2atm and 120 K
             β = 3.5e-3 #K^(-1), thermal expansion coefficient https://aiche.onlinelibrary.wiley.com/doi/10.1002/aic.14254
             ν_l = 2.4e-7 #m^2/s, kinematic viscosity from NIST at 2atm and 120K 
             k = 0.17185	#W/m/K, thermal conductivity from NIST at 2atm and 120K 
         
       elseif ifuel == 40 #LH2
-            h_v =  447e3
             Pr_l = 1.3 #from NIST at 2atm and 20K
             β = 15e-3 #https://nvlpubs.nist.gov/nistpubs/jres/089/jresv89n4p317_A1b.pdf
             ν_l = 2.0e-7 #m^2/s, from NIST at 2atm and 20K 
@@ -299,7 +295,7 @@ function tank_heat_coeffs(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Flo
 
       h_liq = Nu_l * k / ltank #heat transfer coefficient for liquid
 
-      return h_liq, h_v
+      return h_liq
 end
 
 """

@@ -34,6 +34,7 @@ fuse_tank.Ninterm = 1.0
 
 fuse_tank.rhofuel = 70.0
 fuse_tank.Tfuel = 20.0
+fuse_tank.hvap = 447e3
 fuse_tank.Wfuelintank = 1e5
 
 @testset "Fuselage tank" begin
@@ -128,8 +129,8 @@ fuse_tank.Wfuelintank = 1e5
     end
 
     @testset "Thermal models" begin
-        outputs_h = TASOPT.structures.tank_heat_coeffs(21.0, ifuel, fuse_tank.Tfuel, 5.0)
-        outputs_h_check = (105.81383176854604, 447000.0)
+        outputs_h = TASOPT.structures.tank_heat_coeff(21.0, ifuel, fuse_tank.Tfuel, 5.0)
+        outputs_h_check = (105.81383176854604)
         for i in 1:length(outputs_h)
             @test outputs_h[i] ≈ outputs_h_check[i]
         end
