@@ -15,16 +15,19 @@ include("../src/misc/index.inc")
 ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appropriately
 
 # 3) Size aircraft
-# time_wsize = @elapsed size_aircraft!(ac)
+time_wsize = @elapsed size_aircraft!(ac)
 #println("Time to size aircraft = $time_wsize s")
 
-# 3.5) Modify the aircraft model
+# 3.5) Read out the size of each variable
 display(size(ac.pari))
 display(size(ac.parg))
 display(size(ac.parm))
 display(size(ac.para))
 display(size(ac.pare))
 
+# 3.75) Read out the total weight and flight range
+println("flight range (nmi): " , ac.parg[igRange]./1852.0)
+println("WMTO (1000 kg):" , ac.parg[igWMTO]./(9.8*1000))
 
 # 4) Visualize outputs
 # Output resulting geometry of aircraft
