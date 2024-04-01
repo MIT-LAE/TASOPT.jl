@@ -14,6 +14,9 @@ include("../src/misc/index.inc")
 # Alternatively you can load your desired input file 
 ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appropriately
 
+# 2.5) Change fuel type
+# ac.pari[iifuel] = 1
+
 # 3) Size aircraft
 time_wsize = @elapsed size_aircraft!(ac)
 #println("Time to size aircraft = $time_wsize s")
