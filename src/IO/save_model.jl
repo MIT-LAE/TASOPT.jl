@@ -184,6 +184,17 @@ function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["HT_load_fuse_bend_relief"] = ac_g[igrMh]
         d_fuse_geom["VT_load_fuse_bend_relief"] = ac_g[igrMv]
 
+        d_fuse_geom["calculate_cabin_length"] = false #Use final fuselage parameters by default
+        if ac_i[iidoubledeck] == 1
+            d_fuse_geom["double_decker"] = true
+        else
+            d_fuse_geom["double_decker"] = false
+        end
+      
+        d_fuse_geom["seat_pitch"] = ac_g[igseatpitch]
+        d_fuse_geom["seat_width"] = ac_g[igseatwidth]
+        d_fuse_geom["aisle_halfwidth"] = ac_g[igaislehalfwidth]  
+
         d_fuse_geom["x_nose_tip"] = ac_g[igxnose]
         d_fuse_geom["x_pressure_shell_fwd"] = ac_g[igxshell1]
         d_fuse_geom["x_start_cylinder"] = ac_g[igxblend1]
