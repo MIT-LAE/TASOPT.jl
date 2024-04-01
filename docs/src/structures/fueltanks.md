@@ -8,15 +8,19 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
 !!! details "📖 Theory - Thermal and structural sizing of cryogenic fuel tanks" 
     ### Thermal design
-    The fuel tanks in TASOPT are assumed to consist of circular cylinders with two hemiellipsoidal caps. There are two distinct layers: the tank itself, assumed to be made of an isotropic material with high thermal conductivity; and an insulation layer, which does not carry structural loads and has very low thermal conductivity. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
+    The fuel tanks in TASOPT are assumed to consist of cylinders with two hemiellipsoidal caps. In general, the cylinders can have a double-bubble shape like the fuselage. To reduce fuel loss during flight as a result of boiling due to heat leakage into the tank (boiloff), the tank requires thermal insulation. Two different insulation architectures are currently supported in TASOPT.jl: an inner vessel covered in foam-based insulation and a double-walled tank with a vacuum layer between the layers. 
+    
+    The thermal design and analysis method is similar for both insulation architectures. The tank walls are assumed to be made of an isotropic material with high thermal conductivity. The insulation layer, which does not carry structural loads and has a high thermal resistance. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
 
-    ![PEMfig](../assets/cryo_tank.svg)
+    ![SWfig](../assets/cryo_tank.svg)
 
-    As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's equation that the thermal resistance, ``R_{cyl}``, is given by 
+    As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. We will first consider heat transfer across a material layer; the vacuum case will be considered later. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's law that the thermal resistance, ``R_{cyl}``, is given by 
     ```math
         R_{cyl} = \frac{\ln\left( \frac{R_f}{R_0}\right)} {2\pi l_{cyl} k},
     ``` 
-    where ``R_0`` is the layer's inner radius, ``R_f = R_0 + t`` is the outer radius (with ``t`` being the layer thickness), ``l_{cyl}`` is the cylinder length, and ``k`` is the thermal conductivity of the layer. For the hemiellipsoids, an approximate solution can be used, given by 
+    where ``R_0`` is the layer's inner radius, ``R_f = R_0 + t`` is the outer radius (with ``t`` being the layer thickness), ``l_{cyl}`` is the cylinder length, and ``k`` is the thermal conductivity of the layer. In many real materials including insulation foams, the thermal conductivity is a function of temperature. In TASOPT.jl, the mean of the conductivities across the layer is used; it can be shown analytically that this is exact if the conductivity is linear in temperature.
+    
+    For the hemiellipsoids, an approximate solution can be used, given by 
     ```math
         R_{ell} = \frac{t} {k \left(S_f + S_0 - \frac{S_{he}}{R^2} t^2\right)},
     ``` 
@@ -49,9 +53,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
     Similarly, the radiative component has an equivalent heat transfer coefficient
     ```math
-        h_{rad} = σ ε (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
+        h_{rad} = \sigma \varepsilon (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
     ``` 
-    where ``σ`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
+    where ``\sigma`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
 
     The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
     ```math
@@ -77,13 +81,42 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
 
     ![PEMfig](../assets/tank_thermal_diagram.svg)
 
-    #### Notes on implementation
-    In the current version of TASOPT, the desired boiloff rate (in percentage per hour) is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
+    #### Vacuum insulation
+    The case when the insulation layer consists of a vacuum has to be modeled separately as a vacuum has zero thermal conductivity. In a vacuum, heat transfer is through a combination of radiation and convection due to residual gas if the vacuum is imperfect. The heat transfer rate due to radiation can be modeled as[^3]
+    ```math
+        \dot{Q}_{rad} = F_e S_{i} \sigma (T_o^4 - T_i^4),
+    ``` 
+    where ``S`` is the surface area, ``T`` is the temperature, and the subscript ``i`` refers to the inner surface and ``o`` to the outer surface. The coefficient ``F_e`` is an emissivity factor that acts as an ``average'' of the emissivities of the two surfaces and can be modeled as[^3]
+    ```math
+        F_e = \frac{1}{\varepsilon_i} + \frac{S_i}{S_o}\left(\frac{1}{\varepsilon_o}-1\right).
+    ``` 
+    The thermal resistance due to radiation is simply ``R_{rad} = \frac{T_o - T_i}{\dot{Q}_{rad}}``. 
 
-    In general, the thermal conductivity of insulation materials is a function of temperature. In the code, the average of the conductivities at the interface of each layer is used to find the resistance of the layer; if the conductivity changes linearly with temperature, this method is exact. However, this calculation requires knowing the temperatures at every interface in the MLI layer. The nonlinear solver in NLsolve is used to find these temperatures and the overall heat transfer rate.
+    In addition, the thermal resistance due to the residual gas can be shown to be given by[^3]
+    ```math
+        R_{conv} = \frac{1}{G p_{res} S_i},
+    ```
+    where ``p_{res}`` is the pressure of the residual air and ``G`` is a factor that accounts for the thermodynamic properties of the residual gas,
+    ```math
+        G = F_a \frac{\gamma + 1}{\gamma -1}\sqrt{\frac{R}{8\pi T}},
+    ```
+    where ``\gamma`` is the gas' ratio of specific heats, ``R`` is the mass-specific gas constant and ``T`` is the temperature of the gauge used to measure the residual pressure (in the code, this is assumed to be the outer-layer temperature). The accommodation coefficient factor, ``F_a`` is given by
+    ```math
+        F_a = \frac{1}{a_i} + \frac{S_i}{S_o}\left(\frac{1}{a_o}-1\right),
+    ```
+    where ``a`` denotes the accommodation coefficient, which is a function of temperature and the residual gas composition. Table 7.14 in Barron[^3] provides a set of accommodation coefficients.
+
+    The total thermal resistance of the vacuum layer is ``R_l = \frac{R_{rad} R_{conv}}{R_{rad} + R_{conv}}`` and this can then be used to calculate the equivalent thermal resistance as described above.
+
+    #### Notes on implementation
+    The thermal resistance for any insulation layer is, in general, a function of the temperature at the edges of the layer. Because of this, determining the heat transfer and the temperature distribution requires solving a non-linear problem. The current implementation of TASOPT uses the non-linear solver in NLsolve.jl to find the temperature at the edge of each insulation layer. The nonlinear solver in NLsolve is used to find these temperatures and the overall heat transfer rate.
+
+    In the current version of TASOPT, the user can specify whether to use a given thickness and material distribution for the MLI or to size the MLI to achieve a desired boiloff rate. In the latter case, the boiloff rate is an input and the thicknesses of some desired layers of the MLI insulation are changed until the desired boiloff rate is met. The non-linear solver in NLsolve.jl is used to find the change in layer thickness needed to meet this requirement. 
 
     ### Structural design
-    The structural part of the tank is sized for a given pressure difference between the high-pressure interior and the exterior. As the boiling temperature of a liquid is a function of temperature, it is preferable to keep the interior pressure constant. If the desired pressure difference is ``\Delta p``, the tank is actually designed for a pressure difference ``\Delta p_{des} = \alpha \Delta p``, where ``\alpha>1`` is a safety factor. The outer radius of the strcutrual portion of the tank is
+
+    #### Inner vessel
+    The cryogenic fuel is contained within an inner vessel, which is sized for a given pressure difference between the high-pressure interior and the exterior. As the boiling temperature of a liquid is a function of temperature, it is preferable to keep the interior pressure constant. The outer radius of the inner vessel is
     ```math
         R_{t,o} = R_{fuse} - d_{fclear} - t_{MLI},
     ```
@@ -91,15 +124,15 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         t_{s,cyl} = \frac{2 \Delta p_{des} R_{t,o}}{2 \sigma_a f_{weld} + 0.8 \Delta p_{des}},
     ```
-    where ``\sigma_a`` is the maximum allowable stress for the wall material and ``f_{weld}<1`` is a factor that accounts for structural weakening due to welding. The wall thickness of the hemiellipsoidal caps is given by [^3]
+    where ``\sigma_a`` is the maximum allowable stress for the wall material, ``f_{weld}<1`` is a factor that accounts for structural weakening due to welding, and ``\Delta p_{des}`` is the design tank pressure difference. In the code, the tank is sized for a pressure difference equal to the internal tank pressure, ``\Delta p_{des} = p_{tank}``. The maximum allowable stress is taken to be one fourth of the ultimate tensile strength of the wall material[^3]. The wall thickness of the hemiellipsoidal caps is given by [^3]
     ```math
         t_{s,cap} = \frac{2 \Delta p_{des} R_{t,o} K }{2 \sigma_a f_{weld} + 2 \Delta p_{des} (K- 0.1)},
     ```
     where ``K=\frac{1}{6}(AR^2+2)`` is a factor that accounts for the ellipsoidal aspect ratio (``AR``). Once the wall thicknesses have been determined, the internal tank radius is given by ``R_{t,i}=R_{t,o}-t_{s,cyl} ``. The volume required for the fuel is 
     ```math
-        V_{fuel} = (1+f_{ull})\frac{m_{fuel} + m_{boil}}{\rho},
+        V_{fuel} = (1+f_{ull})\frac{m_{fuel}}{\rho},
     ```
-    where ``m_{boil}`` is the total fuel mass that boils off during flight and ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some empty volume to account for ullage. The internal volume of a hemiellipsoidal cap is given by 
+    where ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some empty volume to account for ullage. The internal volume of a hemiellipsoidal cap is given by 
     ```math
         V_{cap} =  \frac{2πR_{t,i}^3}{3AR}.
     ```
@@ -107,11 +140,65 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```math
         l_{cyl} =  \frac{V_{cyl}}{\pi R_{t,i}^2}.
     ```
-    Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities.
+    Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities. To support the tank, stiffener rings that go around the tank circumference are needed. It is assumed that the inner vessel contains two of these stiffeners, which are sized following the process below.
 
+    #### Outer vessel
+    If the insulation layer contains a vacuum layer, an additional tank wall is needed to contain the vacuum. Unlike the inner vessel, this outer wall does not fail due to excessive stress, instead, it fails by buckling or collapse[^3]. To prevent buckling, stiffener rings can be used to reduce the effective cylindrical lenght that can collapse. The unsupported cylinder length is
+    ```math
+        L =  \frac{l_{cyl}}{N_{stiff} -1},
+    ```
+    where ``N_{stiff}`` is the total number of stiffener rings and ``l_{cyl}`` is the length of the cylindrical portion of the outer vessel (note that for geometric similarity, this is larger than that of the inner vessel). The collapsing pressure[^3] is taken to be four times the atmospheric pressure, ``p_c = 4p_a``. The thickness for the cylindrical portion of the vessel, ``t`` can then be determined by solving[^3]
+    ```math
+        p_c = \frac{2.42 E (t/D_o)^{5/2}}{ (1 - \nu^2)^{3/4}  (L/D_o - 0.45\sqrt{t/D_o}) },
+    ```
+    where ``E`` is the Young's modulus of the wall material, ``\nu`` is its Poisson's ratio, and ``D_o`` is the vessel outer diameter. 
+
+    The wall thickness for the hemiellipsoidal heads can be determined using[^3]
+    ```math
+        t = K_1 D_o \sqrt{\frac{p_c \sqrt{3 (1 - \nu^2)}}{0.5 E}},
+    ```
+    where ``K_1`` is a geometric factor that depends on the ellipsoid aspect ratio; some factors can be found in Table 7.6 in Barron[^3].
+
+    Once the wall thicknesses have been determined, the weight of the outer vessel components can be found from their volumes and densities. In addition to the walls, the outer vessel requires stiffener rings to prevent collapse. The vessel is assumed to be supported by two main stiffener rings, ``N_{stiff,m}=2``, that carry the weight and prevent collapse, and a number ``N_{stiff,a}`` of additional rings that only prevent collapse, such that ``N_{stiff}=N_{stiff,m}+N_{stiff,a}``. The general layout in a double-walled tank is shown in the figure below.
+
+    ![DWfig](../assets/doublewalled_tank.svg)
+
+    #### Stiffening rings
+    The stiffening rings act as contact points for the tank supports. In the case of the outer vessel in a double-walled tank, they also prevent collapse of the skin. The main stiffening rings carry the weight of the tank, whereas the outer-vessel additional rings simply serve to prevent skin collapse. In general, the required second moment of area for a ring is given by 
+    ```math
+        I = I_{load} + I_{collapse},
+    ```
+    where `` I_{load}`` is the second moment of area needed to withstand the weight loads (only applicable to main rings), and ``I_{collapse}`` is needed to prevent skin collapse (only for outer vessel rings). The second moment of area needed to withstand the loads is
+    ```math
+        I_{load} = y_{max} \frac{M_{max}}{\sigma_a},
+    ```
+    where ``y_{max}`` is the maximum distance from the neutral axis in the beam cross-section, ``\sigma_a`` is the maximum allowable beam stress, and ``M_{max}`` is the maximum bending moment in the ring circumference, which can be found using Eqs. (7.4)--(7.5) in Barron[^3] for the inner vessel and Eqs. (7.13)--(7.15) for the outer vessel. The second moment of area to withstand collapse is 
+    ```math
+        I_{collapse} = \frac{p_c D_o^3 L}{24 E}.
+    ```
+    In the code, the beams are assumed to be I-beams. The flange thickness (``t_f``) and width (``W``), as well as the web thickness (``t_w``), are taken to be those of a standard 100 x 100 beam. The height of the beam is calculated to match the required second moment of area. For this purpose, the second moment of area of the web is ignored, such that the beam has a second moment of area
+    ```math
+        I > \frac{W H^2 t_f}{2} + \frac{t_f^3 W}{6},
+    ```
+    where ``H`` is the distance between the two flange centroids, such that the total beam height is ``H + t_f``. The second moment of area of the web is significant, so ignoring it provides a conservative approximation. This equation is solved for ``H`` by equating the approximate beam second moment of area to the required one.
+
+    The weight of a stiffening ring can then be found as 
+    ```math
+        W_{stiff} = 2\pi R g [2 W t_f + (H - t_f) t_w ],
+    ```
+    where ``R`` is the vessel radius and ``g`` is the gravitational acceleration.
+    #### Notes on implementation
+    In the case of the outer vessel (when there is a vacuum layer), there is a tradeoff between stiffener mass and skin thickness, as adding more stiffeners results in a thinner skin. The optimal number of stiffeners that minizimizes the overall outer vessel mass is found using NLopt.jl with a Nelder-Mead algorithm.  
+    
 ```@docs
-structures.tanksize
-structures.tankWmech
+structures.tanksize!
+structures.res_MLI_thick
+structures.size_inner_tank
+structures.size_outer_tank
+structures.stiffener_weight
+structures.optimize_outer_tank
+structures.tankWthermal
+structures.residuals_Q
 ```
 [^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
 [^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.
