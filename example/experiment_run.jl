@@ -20,7 +20,7 @@ ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appr
 
 # 3) Size aircraft
 ac.para[iaalt, ipcruise1, 1] =  3.5e4 * ft_to_m # Cruise Altitude
-time_wsize = @elapsed size_aircraft!(ac,iter=135)
+time_wsize = @elapsed size_aircraft!(ac,iter=500)
 #println("Time to size aircraft = $time_wsize s")
 
 # 3.5) Read out the size of each variable

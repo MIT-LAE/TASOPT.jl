@@ -46,13 +46,13 @@
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "Ethanol" # Choices are "Jet-A", "LH2" ,"CH4", and "Ethanol"
+    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" ,"CH4", and "Ethanol"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
     fuel_temp = 280.0
-    fuel_density = 789.0 #JetA: 817.0 #kg/m3 Etanol: 789.0
+    fuel_density = 817.0 #JetA: 817.0 #kg/m3 Etanol: 789.0
 
 [Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
     tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
@@ -85,7 +85,7 @@
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
-    range = "3000.0 nmi" # Design Range + second mission range
+    range = "1500.0 nmi" # Design Range + second mission range
 
     pax = 180                    # Number of passengers in each mission
                                         # weight per pax also specified (215 lbf/pax is std)
