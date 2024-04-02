@@ -10,10 +10,10 @@ using TASOPT
 # 2) Include input file for desired aircraft/
 #  load default model
 
-example_ac = read_aircraft_model("example/HX_input.toml") # MODIFY <path> appropriately
+example_ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml")) # MODIFY <path> appropriately
 
 # 3) Size aircraft
-time_wsize = @elapsed size_aircraft!(example_ac)
+time_wsize = @elapsed size_aircraft!(example_ac, iter=50)
 println("Time to size aircraft = $time_wsize s")
 
 # 4) Visualize outputs
