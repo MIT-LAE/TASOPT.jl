@@ -19,6 +19,7 @@ ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appr
 # ac.pari[iifuel] = 1
 
 # 3) Size aircraft
+ac.para[iaalt, ipcruise1, 1] =  3.5e4 * ft_to_m # Cruise Altitude
 time_wsize = @elapsed size_aircraft!(ac,iter=135)
 #println("Time to size aircraft = $time_wsize s")
 
@@ -30,9 +31,13 @@ time_wsize = @elapsed size_aircraft!(ac,iter=135)
 # display(size(ac.pare))
 
 # 3.75) Read out the total weight and flight range
-# ac.para[iaalt, ipcruise1, :] .=  x[2] * ft_to_m # Cruise Altitude
 println("flight range (nmi): " , ac.parg[igRange]./1852.0)
 println("WMTO (1000 kg):" , ac.parg[igWMTO]./(9.8*1000))
+println("PFEI:",ac.parm[imPFEI])
+println("OPR:",ac.pare[iept3]/ac.pare[iept2])
+println("LPCPR:",maximum(ac.pare[iepilc, :, 1]))
+println("WTO/WTOmax:",ac.parm[imWTO,1]/ac.parg[igWMTO])
+println("Wf/Wfmax:",ac.parg[igWfuel]/ac.parg[igWfmax])
 
 # 4) Visualize outputs
 # Output resulting geometry of aircraft
