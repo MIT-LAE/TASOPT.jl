@@ -4,6 +4,7 @@
 # 1) Load TASOPT
 using TASOPT
 include("../src/misc/index.inc")
+ft_to_m = 0.3048
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
@@ -29,6 +30,7 @@ time_wsize = @elapsed size_aircraft!(ac,iter=135)
 # display(size(ac.pare))
 
 # 3.75) Read out the total weight and flight range
+# ac.para[iaalt, ipcruise1, :] .=  x[2] * ft_to_m # Cruise Altitude
 println("flight range (nmi): " , ac.parg[igRange]./1852.0)
 println("WMTO (1000 kg):" , ac.parg[igWMTO]./(9.8*1000))
 

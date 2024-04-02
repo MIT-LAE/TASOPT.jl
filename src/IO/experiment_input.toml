@@ -81,13 +81,13 @@
     outer_vessel_support_angles = ["45 deg", "135 deg"]
     
 [Mission]
-    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
-    range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
+    range = "3000.0 nmi" # Design Range + second mission range
 
-    pax = [180, 150]                    # Number of passengers in each mission
+    pax = 180                    # Number of passengers in each mission
                                         # weight per pax also specified (215 lbf/pax is std)
 
     weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
@@ -100,8 +100,8 @@
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = ["0.0 ft", "500 ft"] 
-    takeoff_T = [288.0, 298.0]
+    takeoff_alt = "0.0 ft" 
+    takeoff_T = 298.0
 
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
@@ -120,7 +120,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = ["35000.0 ft", "30e3 ft"]
+    cruise_alt  = "35000.0 ft"
     cruise_mach = 0.80
     cruise_CL   = 0.57
 
