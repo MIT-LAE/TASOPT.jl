@@ -148,4 +148,32 @@ fuse_tank.Wfuelintank = 1e5
         @test Rvac ≈ Rvac_check
     end
 
+    @testset "Fuel properties" begin
+        ps = [1, 2, 5] * 101325.0 #pressures to test at
+
+        fuel = "LH2"
+        outputs_lh2_check = [20.369 70.848 1.3322 448.71e3; 22.965 67.639 2.5133 431.474e3; 27.314 60.711 6.1715 371.36e3]
+    
+        for (i, p) in enumerate(ps)
+            outputs_lh2 = TASOPT.cryo_fuel_properties(fuel, p)
+    
+            outputs_check = outputs_lh2_check[i, :]
+            for j in 1:length(outputs_check)
+                @test outputs_lh2[j] ≈ outputs_check[j] rtol = 1e-2 #Only require 1% diff as function uses fits
+            end
+        end
+
+        fuel = "CH4"
+        outputs_ch4_check = [111.67 422.36 1.8164 510.83e3; 120.81 409.78 3.4382 492.921e3; 135.59 384.63 8.1024 457.614e3]
+    
+        for (i, p) in enumerate(ps)
+            outputs_ch4 = TASOPT.cryo_fuel_properties(fuel, p)
+    
+            outputs_check = outputs_ch4_check[i, :]
+            for j in 1:length(outputs_check)
+                @test outputs_ch4[j] ≈ outputs_check[j] rtol = 1e-2 #Only require 1% diff as function uses fits
+            end
+        end
+    
+    end
 end
