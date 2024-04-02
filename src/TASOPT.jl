@@ -17,10 +17,11 @@ using PyPlot
 using Dates
 using ForwardDiff
 using CSV, Tables
-using DocStringExtensions
+using DocStringExtensions, TOML
 
 #convenient directories
-const __TASOPTroot__ = @__DIR__
+const __version__ = TOML.parsefile(joinpath(pkgdir(TASOPT), "Project.toml"))["version"]
+const __TASOPTroot__ = @__DIR__ #points to TASOPT/src for relative imports
 const __TASOPTindices__ = joinpath(__TASOPTroot__,"misc/index.inc") #include(__TASOPTindices__) in REPL
 export __TASOPTroot__, __TASOPTindices__
 
