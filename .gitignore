@@ -12,6 +12,7 @@
 *.perf
 *.PTF
 *.LTO
+*.csv
 **/Models/*
 Manifest.toml
 *.pptx

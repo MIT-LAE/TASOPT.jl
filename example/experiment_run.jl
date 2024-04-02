@@ -4,6 +4,8 @@
 # 1) Load TASOPT
 using TASOPT
 using PyPlot
+using CSV
+# using Tables
 include("../src/misc/index.inc")
 ft_to_m = 0.3048
 # you can optionally define
@@ -21,13 +23,18 @@ ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appr
 # ac.parg[igrhofuel] = 817.0 (JetA:817.0 Ethanol:789.0)
 
 # 3) Find Optimal Flight Altitude
-AltList = LinRange(2e4,5e4,10) #ft
-AltRec = []
+AltList = LinRange(2e4,5e4,5) #ft
+AltRec = [] #ft
 RanRec = [] #nmi
 WMTORec = [] #Ton (metric)
+WFuelRec = [] #Ton (metric)
+WPayRec = [] #Ton (metric)
 PFEIRec = [] #(J/J)
 WTO_WTOmaxRec = [] #N/N
 Wf_WfmaxRec = [] #N/N
+areaWingRec = [] #m2
+ARWingRec = [] #Aspect ratio
+spanWingRec = [] #m
 for Alt = AltList
     ac.para[iaalt, ipcruise1, 1] =  Alt * ft_to_m # Cruise Altitude
     try
@@ -35,14 +42,26 @@ for Alt = AltList
         append!(AltRec,Alt)
         append!(RanRec,ac.parg[igRange]./1852.0)
         append!(WMTORec,ac.parg[igWMTO]./(9.8*1000))
-        append!(PFEIRec,ac.parm[imPFEI])
+        append!(WFuelRec,ac.parg[igWfuel]./(9.8*1000))
+        append!(WPayRec,ac.parg[igWpay]./(9.8*1000))
+        append!(PFEIRec,ac.parm[imPFEI,1])
         append!(WTO_WTOmaxRec,ac.parm[imWTO,1]/ac.parg[igWMTO])
         append!(Wf_WfmaxRec,ac.parg[igWfuel]/ac.parg[igWfmax])
+        append!(areaWingRec,ac.parg[igS])
+        append!(ARWingRec,ac.parg[igAR])
+        append!(spanWingRec,ac.parg[igb])
     catch
         println("Failed at :",Alt)
     end
 end
-maskFeasi = isless.(Wf_WfmaxRec,1)
+#Post Process
+WEmpRec = WMTORec - WFuelRec - WPayRec # Ton Metric
+#Collect output Data
+outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
+             ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
+             ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
+             ,spanWingRec=spanWingRec,WEmpRec=WEmpRec)
+CSV.write("output.csv",  outputTup, writeheader=true)
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
 #println("Time to size aircraft = $time_wsize s")
 
@@ -77,17 +96,17 @@ maskFeasi = isless.(Wf_WfmaxRec,1)
 # using PyPlot
 # TASOPT.stickfig(example_ac)
 # plt.savefig("Example.png")
-println(isless.(Wf_WfmaxRec,1))
+# println(isless.(Wf_WfmaxRec,1))
 
-fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-ax2 = ax.twiny()
-ax.plot(PFEIRec , AltRec, linestyle="-",  color="b", label="PFEI")
-ax2.plot(Wf_WfmaxRec , AltRec , linestyle="--",  color="r", label="Wf/Wfmax")
-ax.set_xlabel("Passenger Fuel Emission Index [J/J]")
-ax2.set_xlabel("Fuel Weight over Maximum Fuel Tank Capacity [N/N]")
-ax.set_ylabel("Cruise Altitude [ft]")
-ax.legend()
-ax2.legend()
-ax.set_title("PFEI")
-ax.grid()
-fig.savefig("PFEI.png")
+# fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
+# ax2 = ax.twiny()
+# ax.plot(PFEIRec , AltRec, linestyle="-",  color="b", label="PFEI")
+# ax2.plot(Wf_WfmaxRec , AltRec , linestyle="--",  color="r", label="Wf/Wfmax")
+# ax.set_xlabel("Passenger Fuel Emission Index [J/J]")
+# ax2.set_xlabel("Fuel Weight over Maximum Fuel Tank Capacity [N/N]")
+# ax.set_ylabel("Cruise Altitude [ft]")
+# ax.legend()
+# ax2.legend()
+# ax.set_title("PFEI")
+# ax.grid()
+# fig.savefig("PFEI.png")
