@@ -43,6 +43,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       Wfuel = fuse_tank.Wfuelintank
 
       ρfuel = fuse_tank.rhofuel
+      ρfgas = fuse_tank.rhofuelgas
       ftankadd = fuse_tank.ftankadd
       Δp = fuse_tank.ptank
       sigskin = fuse_tank.inner_material.UTS
@@ -72,8 +73,9 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
 #--- Calculate length of cylindrical portion
       Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
-      Vfuel = Wfuel_tot / (gee * ρfuel)
-      Vinternal = (1 + ullage_frac)*Vfuel  # required interal volume
+      ρfmix = (1 - ullage_frac) * ρfuel + ullage_frac * ρfgas #Density of saturated mixture in tank
+      Vfuel = Wfuel_tot / (gee * ρfmix) #Total tank volume taken by saturated mixture
+      Vinternal = Vfuel  # required internal volume
       V_ellipsoid = 2π * (Rtank^3 / AR) / 3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
                                        # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid

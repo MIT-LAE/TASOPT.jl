@@ -401,6 +401,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.Tfuel = Tfuel
     fuse_tank.hvap = hvap
     parg[igrhofuelgas] = ρgas
+    fuse_tank.rhofuelgas = ρgas
 end
 # ---------------------------------
 # Wing
