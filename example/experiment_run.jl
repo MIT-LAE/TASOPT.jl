@@ -17,7 +17,7 @@ ft_to_m = 0.3048
 # example_ac = load_default_model() # simply a synonym to read_aircraft_model()
 # Alternatively you can load your desired input file 
 ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appropriately
-
+saveName = "output.csv"
 # 2.5) Change fuel type
 # ac.pari[iifuel] = 1 (JetA:24 Ethanol:32)
 # ac.parg[igrhofuel] = 817.0 (JetA:817.0 Ethanol:789.0)
@@ -35,6 +35,7 @@ Wf_WfmaxRec = [] #N/N
 areaWingRec = [] #m2
 ARWingRec = [] #Aspect ratio
 spanWingRec = [] #m
+diaFanRec = [] #m
 for Alt = AltList
     ac.para[iaalt, ipcruise1, 1] =  Alt * ft_to_m # Cruise Altitude
     try
@@ -50,6 +51,7 @@ for Alt = AltList
         append!(areaWingRec,ac.parg[igS])
         append!(ARWingRec,ac.parg[igAR])
         append!(spanWingRec,ac.parg[igb])
+        append!(diaFanRec,ac.parg[igdfan])
     catch
         println("Failed at :",Alt)
     end
@@ -60,8 +62,8 @@ WEmpRec = WMTORec - WFuelRec - WPayRec # Ton Metric
 outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
-             ,spanWingRec=spanWingRec,WEmpRec=WEmpRec)
-CSV.write("output.csv",  outputTup, writeheader=true)
+             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,WEmpRec=WEmpRec)
+CSV.write(saveName,  outputTup, writeheader=true)
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
 #println("Time to size aircraft = $time_wsize s")
 
