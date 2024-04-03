@@ -130,9 +130,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``K=\frac{1}{6}(AR^2+2)`` is a factor that accounts for the ellipsoidal aspect ratio (``AR``). Once the wall thicknesses have been determined, the internal tank radius is given by ``R_{t,i}=R_{t,o}-t_{s,cyl} ``. The volume required for the fuel is 
     ```math
-        V_{fuel} = (1+f_{ull})\frac{m_{fuel}}{\rho},
+        V_{fuel} = \frac{m_{fuel}}{\rho_{mix}},
     ```
-    where ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some empty volume to account for ullage. The internal volume of a hemiellipsoidal cap is given by 
+    where ``\rho_{mix} = f_{ull}\rho_g + (1-f_{ull})\rho_l`` is the density of the saturated mixture inside the tank, ``\rho_g`` and ``\rho_l`` are the densities of the fuel in saturated gas and liquid phases, and ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some gas volume for ullage. The internal volume of a hemiellipsoidal cap is given by 
     ```math
         V_{cap} =  \frac{2πR_{t,i}^3}{3AR}.
     ```
@@ -143,7 +143,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities. To support the tank, stiffener rings that go around the tank circumference are needed. It is assumed that the inner vessel contains two of these stiffeners, which are sized following the process below.
 
     #### Outer vessel
-    If the insulation layer contains a vacuum layer, an additional tank wall is needed to contain the vacuum. Unlike the inner vessel, this outer wall does not fail due to excessive stress, instead, it fails by buckling or collapse[^3]. To prevent buckling, stiffener rings can be used to reduce the effective cylindrical lenght that can collapse. The unsupported cylinder length is
+    If the insulation layer contains a vacuum layer, an additional tank wall is needed to contain the vacuum. Unlike the inner vessel, this outer wall does not fail due to excessive stress, instead, it fails by buckling or collapse[^3]. To prevent buckling, stiffener rings can be used to reduce the effective cylindrical length that can collapse. The unsupported cylinder length is
     ```math
         L =  \frac{l_{cyl}}{N_{stiff} -1},
     ```
