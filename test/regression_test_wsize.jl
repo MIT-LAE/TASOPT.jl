@@ -30,6 +30,16 @@
     
     @test ac.parm[imPFEI] ≈  0.919121257897844
 
+    @testset "LTO" begin
+        EIs, mfs = TASOPT.LTO("Default A/C + Engine", ac)
+        test_EIs = [35.727087484447225, 26.674239512749597, 10.228895832877859, 6.473190938712144]
+        test_mfs = [1.4031641016757275, 1.2552506710045581, 0.7022981161085624, 0.4126470600128394]
+        for i in eachindex(test_EIs)
+            @test test_EIs[i] ≈ EIs[i]
+            @test test_mfs[i] ≈ mfs[i]
+        end
+    end
+
 end
 
 @testset "Wide sizing" verbose=true begin
