@@ -23,7 +23,7 @@ ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32)
 ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0)
 
 # 3) Find Optimal Flight Altitude
-AltList = LinRange(2e4,5e4,100) #ft
+AltList = LinRange(2e4,5e4,200) #ft
 AltRec = [] #ft
 RanRec = [] #nmi
 WMTORec = [] #Ton (metric)
@@ -36,6 +36,7 @@ areaWingRec = [] #m2
 ARWingRec = [] #Aspect ratio
 spanWingRec = [] #m
 diaFanRec = [] #m
+FnTotCRRec = [] #N
 for Alt = AltList
     ac.para[iaalt, ipcruise1, 1] =  Alt * ft_to_m # Cruise Altitude
     try
@@ -52,6 +53,7 @@ for Alt = AltList
         append!(ARWingRec,ac.parg[igAR])
         append!(spanWingRec,ac.parg[igb])
         append!(diaFanRec,ac.parg[igdfan])
+        append!(FnTotCRRec,ac.pare[ieFe,ipcruise1,1])
     catch
         println("Failed at :",Alt)
     end
@@ -62,7 +64,7 @@ WEmpRec = WMTORec - WFuelRec - WPayRec # Ton Metric
 outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
-             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,WEmpRec=WEmpRec)
+             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec)
 CSV.write(saveName,  outputTup, writeheader=true)
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
 #println("Time to size aircraft = $time_wsize s")
