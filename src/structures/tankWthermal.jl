@@ -55,6 +55,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.z = z
       p.Mair = Mair
       p.xftank = xftank
+      p.Rfuse = fuse_tank.Rfuse
       p.ifuel = ifuel
 
       _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature
@@ -126,6 +127,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       z = p.z
       Mair = p.Mair
       xftank = p.xftank
+      Rfuse = p.Rfuse
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
@@ -140,8 +142,8 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
   
       hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
-      Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
-  
+      Rair_conv_rad = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
+
       S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
       h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
@@ -255,6 +257,7 @@ mutable struct thermal_params
       z::Float64
       Mair::Float64
       xftank::Float64
+      Rfuse::Float64
       ifuel::Int64
       thermal_params() = new() 
 end
