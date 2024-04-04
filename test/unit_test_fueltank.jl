@@ -45,7 +45,7 @@ fuse_tank.Wfuelintank = 1e5
         outputs_size = TASOPT.structures.tanksize!(fuse_tank, z, Mair, xftank,
                                         time_flight,
                                         ifuel)
-        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.858203562046298, 39458.457896598, 17.140414957822724, 62696.511534163976)
+        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.8560115697526485, 39681.4881770504, 17.18053325519887, 62912.821723497895)
         
         for i in 1:length(outputs_size)
             @test outputs_size[i] ≈ outputs_size_check[i]
@@ -53,7 +53,7 @@ fuse_tank.Wfuelintank = 1e5
 
         outputs_mech = TASOPT.structures.size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
-        outputs_mech_check = (162696.51153416396, 14.195157539556298, 0.0034674446016911696, 1.858203562046298, 166.77327116515787, 62696.511534163976, 100000.0, 39458.457896598, 0.0034642124572078635, 1440.631530797893, 16803.60996529881, 1440.6302799835605, [12862.293091487018, 14345.650779719572, 12250.514025391418], 203.79571305240748, [14.993595268294335, 18.69431145219083, 22.809094964632, 27.336719946981233], 17.140414957822724)
+        outputs_mech_check = (162912.82172349788, 14.233087927314303, 0.0034633543007140293, 1.8560115697526485, 166.77327116515787, 62912.821723497895, 100000.0, 39681.4881770504, 0.003460125968964669, 1435.539306816222, 16809.755775358066, 1438.5597441435732, [12929.372061423137, 14427.140430195976, 12324.97568543129], 203.99444667419192, [14.95824234874573, 18.670635236161818, 22.800445249066772, 27.346434182678916], 17.18053325519887)
         for i in 1:length(outputs_mech)
             @test outputs_mech[i] ≈ outputs_mech_check[i]
         end
@@ -64,12 +64,11 @@ fuse_tank.Wfuelintank = 1e5
         Shead = outputs_mech_check[15]
         outputs_thermal = TASOPT.structures.tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
 
-        outputs_thermal_check = (1835.8608916060803, 107.03363914395652, 0.004247366632696687)
+        outputs_thermal_check = (1835.8608916060898, 107.03363914395707, 0.004247366632696709)
 
         for i in 1:length(outputs_thermal)
             @test outputs_thermal[i] ≈ outputs_thermal_check[i]
         end
-        println(outputs_mech)
     end
     
     fuse_tank.t_insul = [0.065]
@@ -81,7 +80,7 @@ fuse_tank.Wfuelintank = 1e5
         outputs_vac_size = TASOPT.structures.tanksize!(fuse_tank, z, Mair, xftank,
                                             time_flight,
                                             ifuel)
-        outputs_vac_size_check = (0.0022037737516798135, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
+        outputs_vac_size_check = (0.0022166022747804252, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
         
         for i in 1:length(outputs_vac_size)
             @test outputs_vac_size[i] ≈ outputs_vac_size_check[i]
@@ -140,14 +139,20 @@ fuse_tank.Wfuelintank = 1e5
         end
 
         outputs_free = TASOPT.structures.freestream_heat_coeff(z, Mair, xftank, 240.0)
-        outputs_free_check = (93.08029151543289, 218.06145060705106, 242.96196484061733)
+        outputs_free_check = (91.1765275792035, 218.06145060705106, 243.3345022554043)
         for i in 1:length(outputs_free)
             @test outputs_free[i] ≈ outputs_free_check[i]
         end
 
+        outputs_natural = TASOPT.structures.freestream_heat_coeff(0.0, 0.0, xftank, 287.0, fuse_tank.Rfuse)
+        outputs_natural_check = (1.6786556204397758, 288.2, 288.2)
+        for i in 1:length(outputs_natural)
+            @test outputs_natural[i] ≈ outputs_natural_check[i]
+        end
+
         Taw = outputs_free_check[3]
         Rvac = TASOPT.structures.vacuum_resistance(fuse_tank.Tfuel, Taw, 90.0, 100.0)
-        Rvac_check = 0.543113131740449
+        Rvac_check = 0.5408710346147904
 
         @test Rvac ≈ Rvac_check
     end

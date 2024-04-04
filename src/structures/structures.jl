@@ -6,6 +6,7 @@ required to size an aircraft
 module structures
 
 using ..atmosphere
+using ..engine
 
 using NLsolve
 using Roots

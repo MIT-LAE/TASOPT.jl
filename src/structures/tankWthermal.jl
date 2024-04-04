@@ -131,7 +131,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
-      hconvair, _, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
+      hconvair, _, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse, Rfuse)
   
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
@@ -305,9 +305,11 @@ end
       freestream_heat_coeff(z, M, xftank)
 
 This function calculates the air-side heat transfer coefficient, which is assumed to be that of a freestream 
-in forced convection at a given altitude. The freestream temperature is also returned. Heat transfer is modeled via the
-Meador-Smart reference temperature model with the Chilton-Colburn analogy, described on p. 1056 in Anderson, Fundamentals
-of Aerodynamics.
+at a given altitude. Depending on the Mach number, either a natural or forced convection model is used.
+The freestream temperature is also returned. In the forced convection case, heat transfer is modeled via the Meador-Smart 
+reference temperature model with the Chilton-Colburn analogy, described on p. 1056 in Anderson, Fundamentals
+of Aerodynamics. For the free convection case, the heat transfer is modeled as that on a horizontal cylinder, described on 
+p. 334 in Holman.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -321,16 +323,13 @@ of Aerodynamics.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
+function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref, Rfuse::Float64 = 1.0)
       #Use ISA function to calculate freestream conditions
       Tair, p, _, a, _ = atmos(z / 1e3)
       u = M * a #freestrean velocity
 
-      #Assumed parameters for air
-      Pr = 0.71
-      γ = 1.4
-      cp = 1005 #J/(kg K)
-      R = 287 #J/(kg K)
+      #Parameters for air
+      R, Pr, γ, cp, _, _ = gasPr("air", Tair)
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
@@ -338,19 +337,32 @@ function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Floa
       # This code uses the reference temperature model and the Chilton-Colburn analogy
       T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * r * (γ - 1)/2 * M^2) #Reference temperature
       
-      #Find viscosity from Sutherland's law
-      μ0 = 1.716e-5
-      S_μ = 111
-      T0 = 273
-      μ_s = μ0 * (T_s / T0)^(3 / 2) * ( (T0 + S_μ) / (T_s + S_μ) )
+      #Find properties at reference temperature
+      _, Pr_s, _, cp, μ_s, k_s = gasPr("air", T_s)
 
       ρ_s = p / (R * T_s) #density at reference temperature
 
-      Re_xftank = ρ_s * u * xftank / μ_s
-      cf_xftank = 0.02296 / (Re_xftank)^0.139 #From Meador-Smart method
-      #Calculate Stanton number using Reynolds analogy
-      St_air = cf_xftank / (2 * Pr^(2/3)) #Chilton-Colburn analogy
-      hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
+      if M ≈ 0 #Natural convection
+            L = 2 * Rfuse #reference length
+            β = 1 / Tair #thermal expansion coefficient
+            ν = μ_s / ρ_s
+
+            Gr = gee * β * abs(Tair - Tw) * L^3 / ν^2 #Grasshoff number
+            Ra = Gr * Pr_s #Rayleigh number
+
+            # Parameters from Table 7-1 in Holton (2010)
+            C = 0.13
+            m = 0.333
+            Nu = C * Ra^m #Nusselt number for 1e9 < Ra < 12
+            hconvair = Nu * k_s / L
+
+      else #Forced convection
+            Re_xftank = ρ_s * u * xftank / μ_s
+            cf_xftank = 0.02296 / (Re_xftank)^0.139 #From Meador-Smart method
+            #Calculate Stanton number using Reynolds analogy
+            St_air = cf_xftank / (2 * Pr_s^(2/3)) #Chilton-Colburn analogy
+            hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
+      end
 
       return hconvair, Tair, Taw
 end
