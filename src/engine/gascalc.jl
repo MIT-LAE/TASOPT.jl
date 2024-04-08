@@ -1132,6 +1132,16 @@ function gasPr(gas, T)
             
             igas = 40
             s, s_t, h, h_t, cp, R = gasfun(igas, T)
+      elseif (gas == "c2h5oh")
+            #parameters from CRECK butanol reac mech retrofitting using cantera standard deviation 1% for mu and 400% for k
+            μ0 = 2.9695883616251595e-05
+            S_μ = 511.663010893506
+            K0 = 0.13116847332218173
+            S_k = 2815.4154552730597
+            T0 = 1200.0
+
+            igas = 32
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
       end
       
 
