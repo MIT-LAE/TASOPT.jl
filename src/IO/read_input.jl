@@ -160,6 +160,12 @@ elseif uppercase(fueltype) == "ETHANOL"
     pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
     pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
     parg[igrhofuel] = readfuel("fuel_density")
+elseif uppercase(fueltype) == "ETHANOL_JETA_31Blend"
+    pari[iifuel] = 322431
+
+    pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
+    pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
+    parg[igrhofuel] = readfuel("fuel_density")
 else
     error("Check fuel type")
 end
