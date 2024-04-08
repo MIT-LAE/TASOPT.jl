@@ -126,10 +126,10 @@ function gaschem(igas)
         buf[ko] = 1
         buf[kn] = 0
     elseif (igas == 322431)   #   Fuel 32 blend with fuel 24 with 31% blend of the first fuel
-        buf[kc] = 9.3410743
-        buf[kh] = 20.25300988
-        buf[ko] = 1
-        buf[kn] = 0
+        buf[kc] = 9  #9.3410743
+        buf[kh] = 20 #20.25300988
+        buf[ko] = 1  #1
+        buf[kn] = 0  #0
     elseif (igas == 40)  #   H2
         buf[kc] = 0
         buf[kh] = 2
