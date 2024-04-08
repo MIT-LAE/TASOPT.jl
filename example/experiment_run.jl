@@ -16,14 +16,15 @@ ft_to_m = 0.3048
 #  load default model
 # example_ac = load_default_model() # simply a synonym to read_aircraft_model()
 # Alternatively you can load your desired input file 
-ac = read_aircraft_model("../src/IO/experiment_input.toml") # MODIFY <path> appropriately
+nameAircraftModel = "../src/IO/experiment_input.toml"
+ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
 saveName = "EthaJetA31PerBlend1500nmi.csv"
 # 2.5) Change fuel type
 ac.pari[iifuel] = 322431 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
 ac.parg[igrhofuel] = 808.1 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 808.1)
 
 # 3) Find Optimal Flight Altitude
-AltList = LinRange(2e4,5e4,200) #ft
+AltList = LinRange(2e4,5e4,10) #ft
 AltRec = [] #ft
 RanRec = [] #nmi
 WMTORec = [] #Ton (metric)
@@ -66,6 +67,21 @@ outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
              ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec)
 CSV.write(saveName,  outputTup, writeheader=true)
+#Plot out the operating conditions for the optimal point
+maskFeasi = (WTO_WTOmaxRec.<=1) .& (Wf_WfmaxRec.<=1) #These are the feasible solution
+idxPFEIBest = findmin(PFEIRec[maskFeasi])[2] #Find the location of the best PFEI in the feasible PFEI Range
+AltFeasi = AltRec[maskFeasi]
+AltBest = AltFeasi[idxPFEIBest]
+println("Best Altitude at [ft]: ",AltBest)
+#Resize at the best altitude for detailed data extraction
+ac2 = read_aircraft_model(nameAircraftModel)
+ac2.pari[iifuel] = ac.pari[iifuel]
+ac2.parg[igrhofuel] = ac.parg[igrhofuel]
+ac2.para[iaalt, ipcruise1, 1] =  AltBest * ft_to_m # Cruise Altitude
+size_aircraft!(ac2,iter=500)
+PFEIBest = ac2.parm[imPFEI,1]
+println("PFEI Numerical Error Check: ",100*(minimum(PFEIRec[maskFeasi])-PFEIBest)/PFEIBest," %")
+#Backup Code Below
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
 #println("Time to size aircraft = $time_wsize s")
 
@@ -84,6 +100,9 @@ CSV.write(saveName,  outputTup, writeheader=true)
 # println("LPCPR:",maximum(ac.pare[iepilc, :, 1]))
 # println("WTO/WTOmax:",ac.parm[imWTO,1]/ac.parg[igWMTO])
 # println("Wf/Wfmax:",ac.parg[igWfuel]/ac.parg[igWfmax])
+
+#Indexing
+#A[(A .>2) .& .!(A.>3)]
 
 # 4) Visualize outputs
 # Output resulting geometry of aircraft
