@@ -12,6 +12,7 @@
     x_end_cylinder::Float64 = 29.5656# = ac.parg[igxblend2] #xblend2
     x_cone_end::Float64 = 35.6616# = ac.parg[igxend] #xconeend
     tailcone_taper_ratio::Float64 = 0.3# lambdac
+    floor_height::Float64 = 0.127
     nose_radius::Float64 = 1.65
     tail_radius::Float64 = 2.0
     taper_fuse::Int64 = 1 # 0 = point ; 1 = edge
