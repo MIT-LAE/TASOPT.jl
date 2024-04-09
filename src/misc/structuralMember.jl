@@ -6,6 +6,7 @@
     GJ::Float64 = 0
     thickness::Float64 = 0
     ρ::Float64 = 0
-    xh::Float64 = 0
-    xv::Float64 = 0
+    x::Float64 = 0
+    # xv::Float64 = 0
+    #Material = StructuralAlloy
 end
