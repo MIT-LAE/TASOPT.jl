@@ -11,14 +11,14 @@
     # Structures
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
     #to do: Add material-> Structural members
-    skin::StructuralMember = StructuralMember(σ=1.0342136834273669e8, ρ=2700)
-    shell::StructuralMember = StructuralMember(σ=2.0684273668547338e8, ρ=2700) # IS just Skin + Additional
+    skin::StructuralMember = StructuralMember(material=material, σ=1.0342136834273669e8)
+    shell::StructuralMember = StructuralMember(material=material) # IS just Skin + Additional
     cone::StructuralMember = StructuralMember()
     floor::StructuralMember = StructuralMember(thickness=0.127)
     insulation::StructuralMember = StructuralMember()
     window::StructuralMember = StructuralMember()
-    bending_h::StructuralMember = StructuralMember(σ=2.0684273668547338e8, ρ=2700)
-    bending_v::StructuralMember = StructuralMember(σ=2.0684273668547338e8, ρ=2700)
+    bending_h::StructuralMember = StructuralMember(material=material)
+    bending_v::StructuralMember = StructuralMember(material=material)
 
     # Loads
     
