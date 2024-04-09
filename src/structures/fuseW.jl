@@ -127,9 +127,11 @@ function fusew!(fuselage,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
       bv,lambdav,nvtail,xhtail,xvtail,
       xwing,xwbox,cbox,
-      xfix,xapu,xeng,xfuel,
-      Eskin,Ebend,Gskin)
+      xfix,xapu,xeng,xfuel)
 
+      Eskin = fuselage.material.E #parg[igEcap]
+      Ebend = Eskin * fuselage.rEshell
+      Gskin = Eskin * 0.5 / (1.0 + 0.3)
 #--- cone material properties
 #     (assumed same as skin, but could be different)
 #FIX WHY IS THIS SAME AS SKIN
@@ -240,14 +242,14 @@ function fusew!(fuselage,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       end
 
       Afweb = 1.5*Smax/ taufloor
-      Afcap = 2.0*Mmax/(sigfloor*fuselage.floor.thickness)
+      Afcap = 2.0*Mmax/(sigfloor*fuselage.layout.floor_height)
 
       Vfloor = (Afcap + Afweb) * 2.0*wfloor1
       fuselage.floor.weight = fuselage.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
       xWfloor = fuselage.floor.weight * 0.5*(fuselage.layout.x_pressure_shell_fwd + fuselage.layout.x_pressure_shell_aft)
 
 #--- average floor-beam cap thickness ("smeared" over entire floor)
-      tfloor = 0.5*Afcap/lfloor
+      fuselage.floor.thickness = 0.5*Afcap/lfloor
       
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
@@ -387,5 +389,5 @@ function fusew!(fuselage,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       end
 
 
-return   tfweb, tfloor, cabVol
+return   tfweb, cabVol
 end # fusew
