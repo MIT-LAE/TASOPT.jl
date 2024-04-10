@@ -6,13 +6,14 @@ xftank = 15.0
 time_flight = 7*3600.0
 
 fuse_tank = TASOPT.fuselage_tank()
+fuse_tank.fueltype = "LH2"
 fuse_tank.Rfuse = 2.5
 fuse_tank.dRfuse = 0.3
 fuse_tank.wfb = 0.0
 fuse_tank.nfweb = 1.0
 fuse_tank.clearance_fuse = 0.1
 
-fuse_tank.ptank = 2e5
+fuse_tank.pvent = 2e5
 fuse_tank.ARtank = 2.0
 fuse_tank.inner_material = TASOPT.StructuralAlloy("Al-2219-T87")
 
@@ -32,12 +33,19 @@ fuse_tank.outer_material = TASOPT.StructuralAlloy("Al-2219-T87")
 fuse_tank.theta_outer = [1.0, 2.0]
 fuse_tank.Ninterm = 1.0
 
-Tsat, ρl, ρg, hv = TASOPT.cryo_fuel_properties("LH2", fuse_tank.ptank)
+#Calculate fuel temperature and density as a function of pressure
+β0 = 1 - fuse_tank.ullage_frac
+fuel_mix = TASOPT.SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
+
+Tsat = fuel_mix.liquid.T
+ρl = fuel_mix.liquid.ρ
+ρg = fuel_mix.gas.ρ
+hvap = fuel_mix.hvap
 
 fuse_tank.rhofuel = ρl
 fuse_tank.rhofuelgas = ρg
 fuse_tank.Tfuel = Tsat
-fuse_tank.hvap = hv
+fuse_tank.hvap = hvap
 fuse_tank.Wfuelintank = 1e5
 
 @testset "Fuselage tank" begin
@@ -155,34 +163,5 @@ fuse_tank.Wfuelintank = 1e5
         Rvac_check = 0.5408710346147904
 
         @test Rvac ≈ Rvac_check
-    end
-
-    @testset "Fuel properties" begin
-        ps = [1, 2, 5] * 101325.0 #pressures to test at
-
-        fuel = "LH2"
-        outputs_lh2_check = [20.369 70.848 1.3322 448.71e3; 22.965 67.639 2.5133 431.474e3; 27.314 60.711 6.1715 371.36e3]
-    
-        for (i, p) in enumerate(ps)
-            outputs_lh2 = TASOPT.cryo_fuel_properties(fuel, p)
-    
-            outputs_check = outputs_lh2_check[i, :]
-            for j in 1:length(outputs_check)
-                @test outputs_lh2[j] ≈ outputs_check[j] rtol = 1e-2 #Only require 1% diff as function uses fits
-            end
-        end
-
-        fuel = "CH4"
-        outputs_ch4_check = [111.67 422.36 1.8164 510.83e3; 120.81 409.78 3.4382 492.921e3; 135.59 384.63 8.1024 457.614e3]
-    
-        for (i, p) in enumerate(ps)
-            outputs_ch4 = TASOPT.cryo_fuel_properties(fuel, p)
-    
-            outputs_check = outputs_ch4_check[i, :]
-            for j in 1:length(outputs_check)
-                @test outputs_ch4[j] ≈ outputs_check[j] rtol = 1e-2 #Only require 1% diff as function uses fits
-            end
-        end
-    
     end
 end

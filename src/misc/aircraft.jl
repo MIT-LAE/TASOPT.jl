@@ -25,7 +25,8 @@ mutable struct fuselage_tank
     theta_outer::Vector{Float64}
     Ninterm::Float64
     
-    ptank::Float64
+    pvent::Float64
+    pinitial::Float64
     rhofuel::Float64
     Tfuel::Float64
     rhofuelgas::Float64
@@ -36,6 +37,7 @@ mutable struct fuselage_tank
     ew::Float64
     ullage_frac::Float64
     qfac::Float64
+    pfac::Float64
     fuselage_tank() = new() 
 end
 

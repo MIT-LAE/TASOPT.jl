@@ -306,20 +306,19 @@ function wsize(ac; itermax=35,
 
         #Calculate fuel temperature and density as a function of pressure
         β0 = 1 - fuse_tank.ullage_frac
-        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.ptank, β0)
+        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
 
         Tfuel = fuel_mix.liquid.T
-        ρfuel = fuel_mix.liquid.ρ
+        ρliq = fuel_mix.liquid.ρ
         ρgas = fuel_mix.gas.ρ
         hvap = fuel_mix.hvap
 
         pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
         pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
-        parg[igrhofuel] = ρfuel
-        fuse_tank.rhofuel = ρfuel
+        parg[igrhofuel] = fuel_mix.ρ
+        fuse_tank.rhofuel = ρliq
         fuse_tank.Tfuel = Tfuel
         fuse_tank.hvap = hvap
-        parg[igrhofuelgas] = ρgas
         fuse_tank.rhofuelgas = ρgas
     end
         
@@ -1222,7 +1221,6 @@ function wsize(ac; itermax=35,
             parg[iglftank] = ltank
             parg[igRftank] = Rtank
             parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
-            parg[igmdotboiloff] = nftanks * mdot_boiloff #store total fuel boiloff rate
 
             #Tank placement and weight moment
             lcabin = parg[igdxcabin]
@@ -1270,9 +1268,9 @@ function wsize(ac; itermax=35,
             para[iaPAfinf, :] .= PAfinf
 
             #Use homogeneous tank model to calculate required venting
-            p0 = 1.2 * p_atm
-            ts, ps, βs, Ms, Mburns, Mboils, mdot_boils, Mvents, mdots, Qs = CryoTank.analyze_TASOPT_tank(ac, p0)
-            println(Mvents[end])
+            α_p = fuse_tank.pfac
+            ts, ps, βs, Ms, Mburns, Mboils, mdot_boils, Mvents, mdots, Qs = CryoTank.analyze_TASOPT_tank(ac, 0.0, 0.0, α_p)
+            parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
         end
 
         # -----------------------------

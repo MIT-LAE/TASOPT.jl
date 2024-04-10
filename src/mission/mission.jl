@@ -71,11 +71,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       # mission TO fuel weight
       WfTO = WTO - Wzero
 
-      #Boiloff rate for cryogenic fuels
-      mdot_boiloff = parg[igmdotboiloff]
-      ρfgas = parg[igrhofuelgas]
-      ρf = parg[igrhofuel]
-
       # set known operating conditions
 
       # takeoff altitude conditions
@@ -411,8 +406,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
             FoW[ip] = Ftotal / (BW * cosg) - DoL
 
             mfuel = Ftotal * TSFC / gee
-            mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-            FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
+            FFC[ip] = mfuel * gee / (W * V * cosg)
 
             Vgi[ip] = 1.0 / (V * cosg)
 
@@ -535,8 +529,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
       mfuel = Ftotal * TSFC / gee
-      mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-      FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
+      FFC[ip] = mfuel * gee / (W * V * cosg)
       Vgi[ip] = 1.0 / (V * cosg)
 
       #---- set end-of-cruise point "d" using cruise and descent angles, 
@@ -604,8 +597,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       FoW[ip] = Ftotal / (BW * cosg) - DoL
 
       mfuel = Ftotal * TSFC / gee
-      mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-      FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
+      FFC[ip] = mfuel * gee / (W * V * cosg) 
 
       Vgi[ip] = 1.0 / (V * cosg)
 
@@ -782,8 +774,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
             # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
             mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
-            mdot_vent = max(mdot_boiloff * (1 - ρfgas/ρf) - mfuel * ρfgas/ρf, 0) #Vent boiloff gas if excessive
-            FFC[ip] = (mfuel + mdot_vent) * gee / (W * V * cosg)  #second term accounts for fuel venting in cryo tanks
+            FFC[ip] = mfuel * gee / (W * V * cosg)
 
             if (ip > ipdescent1)
                   #  corrector integration step, approximate trapezoidal
@@ -838,8 +829,10 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       Wfuel = WMTO * ffuel
       WTO = Wzero + Wfuel
 
+      Wfvent = parg[igWfvent] #Weight of fuel that is vented from tank
       parm[imWTO] = WTO
-      parm[imWfuel] = Wfuel
+      parm[imWfuel] = Wfuel + Wfvent
+      #TODO the above calculation does not account for the effect of venting on the flight profile
 
       # mission PFEI
       Wburn = WMTO * fburn

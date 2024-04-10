@@ -365,12 +365,14 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
     fuse_tank.theta_inner = Angle(readfuel_storage("inner_vessel_support_angle"))
 
-    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
+    fuse_tank.pvent = Pressure(readfuel_storage("pressure_venting"))
+    fuse_tank.pinitial = Pressure(readfuel_storage("pressure_initial"))
     
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
+    fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
     if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")

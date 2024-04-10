@@ -149,7 +149,7 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
     return Q
 end
 
-function analyze_TASOPT_tank(ac_orig, p0::Float64, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, α::Float64 = 1.0, N::Int64 = 1000)
+function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, α::Float64 = 1.0, N::Int64 = 1000)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times
@@ -190,7 +190,8 @@ function analyze_TASOPT_tank(ac_orig, p0::Float64, t_hold_orig::Float64 = 0.0, t
     ρfmix = (1 - ullage_frac) * ρfuel + ullage_frac * ρfgas #Density of saturated mixture in tank
     V = Wfuel / (gee * ρfmix) #Total tank volume taken by saturated mixture
 
-    pmax = ac.fuse_tank.ptank
+    pmax = ac.fuse_tank.pvent
+    p0 = ac.fuse_tank.pinitial
     βmaxp = (1.0 - ullage_frac) #beta at maximum allowable pressure
     β0 = convert_β_same_ρ(species, p0, pmax, βmaxp)
 

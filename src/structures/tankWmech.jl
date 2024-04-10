@@ -45,7 +45,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       ρfuel = fuse_tank.rhofuel
       ρfgas = fuse_tank.rhofuelgas
       ftankadd = fuse_tank.ftankadd
-      Δp = fuse_tank.ptank
+      Δp = fuse_tank.pvent
       sigskin = fuse_tank.inner_material.UTS
       material_insul = fuse_tank.material_insul
       rhoskin = fuse_tank.inner_material.ρ
