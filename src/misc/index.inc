@@ -817,9 +817,9 @@
 
       ieEINOx1     = 210
       ieEINOx2     = 211
-      ieFAR        = 212
+      ieFAR        = 212 #Not Active Currently
       ieOPR        = 213
-      ieWc3        = 214
+      ieWc3        = 214 #Not Active Currently
       
       # Heat rejection:
       ieHrejmot   = 215

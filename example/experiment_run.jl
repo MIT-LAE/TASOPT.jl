@@ -18,7 +18,7 @@ ft_to_m = 0.3048
 # Alternatively you can load your desired input file 
 nameAircraftModel = "../src/IO/experiment_input.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = "EthaJetA31PerBlend1500nmi.csv"
+saveName = "EthaJetA31PerBlend1500nmi"
 # 2.5) Change fuel type
 ac.pari[iifuel] = 322431 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
 ac.parg[igrhofuel] = 808.1 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 808.1)
@@ -66,7 +66,7 @@ outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
              ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec)
-CSV.write(saveName,  outputTup, writeheader=true)
+CSV.write(saveName*".csv",  outputTup, writeheader=true)
 #Plot out the operating conditions for the optimal point
 maskFeasi = (WTO_WTOmaxRec.<=1) .& (Wf_WfmaxRec.<=1) #These are the feasible solution
 idxPFEIBest = findmin(PFEIRec[maskFeasi])[2] #Find the location of the best PFEI in the feasible PFEI Range
@@ -81,6 +81,35 @@ ac2.para[iaalt, ipcruise1, 1] =  AltBest * ft_to_m # Cruise Altitude
 size_aircraft!(ac2,iter=500)
 PFEIBest = ac2.parm[imPFEI,1]
 println("PFEI Numerical Error Check: ",100*(minimum(PFEIRec[maskFeasi])-PFEIBest)/PFEIBest," %")
+#Read out the data at the optimal conditions
+##Create a mask to mask out unreported phases
+maskRep = ac2.pare[ieFe,:,1].>0 #Reported Phase has non zero thrust
+phases = ["ST","RO","TO","CB","B1","B2","B3","B4","B5","C1","C2","D1","D2","D3","D4","D5","Test"]
+phases = phases[maskRep]
+print("Reported Phases Are:", phases,"\n")
+##Read out other parameters
+###Aero Parameters
+timeOptMiss = ac2.para[iatime,maskRep,1] #second
+ranOptMiss = ac2.para[iaRange,maskRep,1] #meter
+altOptMiss = ac2.para[iaalt,maskRep,1] #meter
+machOptMiss = ac2.para[iaMach,maskRep,1]
+weiOptMiss = ac2.para[iafracW,maskRep,1]*(ac.parm[imWTO,1]/9.8) #kg
+gamOptMiss = ac2.para[iagamV,maskRep,1] #rad
+LDROptMiss = ac2.para[iaCL,maskRep,1]./ac2.para[iaCD,maskRep,1] #Lift to drag ratio
+###Engine Parameters
+hfOptMiss = ac2.pare[iehfuel,maskRep,1] #J/kg equivalent heating value
+TfuelOptMiss = ac2.pare[ieTfuel,maskRep,1] #K fuel temperature
+Tt3OptMiss = ac2.pare[ieTt3,maskRep,1] #K
+Pt3OptMiss = ac2.pare[iept3,maskRep,1] #Pa 
+Tt4OptMiss = ac2.pare[ieTt4,maskRep,1] #K
+Pt4OptMiss = ac2.pare[iept4,maskRep,1] #Pa
+FnOptMiss = ac2.pare[ieFe,maskRep,1] #N Total Thrust for all engines
+mdotfOptMiss = FnOptMiss.*ac2.pare[ieTSFC,maskRep,1]/9.81 #kg/s for all engines
+#Output Additional Data at the optimal mission
+outputTup = (Phase=phases,Time=timeOptMiss,Range=ranOptMiss,Altitude=altOptMiss,MachNumber=machOptMiss,Weight=weiOptMiss
+            ,ClimbAngle=gamOptMiss,LiftDragRatio=LDROptMiss,HeatingValue=hfOptMiss,FuelTemp=TfuelOptMiss
+            ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss)
+CSV.write(saveName*"OptimalMission.csv",  outputTup, writeheader=true)
 #Backup Code Below
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
 #println("Time to size aircraft = $time_wsize s")
