@@ -15,3 +15,5 @@ const μAir = 1.78e-5
 const pref = 101320.0
 const Tref = 288.2
 const σ_SB = 5.670374419e-8
+const p_atm = 101325.0 #Pa in one atm
+const t_h = 3600.0 #s in one hour

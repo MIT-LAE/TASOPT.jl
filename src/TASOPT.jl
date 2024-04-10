@@ -48,6 +48,7 @@ include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
+include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
 
 
 # Off-design performance via BADA file like output
