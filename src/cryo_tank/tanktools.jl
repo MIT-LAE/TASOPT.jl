@@ -149,7 +149,7 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
     return Q
 end
 
-function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, α::Float64 = 1.0, N::Int64 = 1000)
+function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 1000)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times
@@ -201,6 +201,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
 
     xout = 0.0 #Only liquid is being drawn from the tank
     xvent = 1.0 #Only vent gas
+    α = ac.fuse_tank.pfac
     #Store tank parameters in struct 
     params = pressure_params(mixture_init, V, pmax, xout, xvent, α)
 

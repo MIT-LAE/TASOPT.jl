@@ -1269,7 +1269,7 @@ function wsize(ac; itermax=35,
 
             #Use homogeneous tank model to calculate required venting
             α_p = fuse_tank.pfac
-            ts, ps, βs, Ms, Mburns, Mboils, mdot_boils, Mvents, mdots, Qs = CryoTank.analyze_TASOPT_tank(ac, 0.0, 0.0, α_p)
+            _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac)
             parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
         end
 
