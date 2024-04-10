@@ -66,7 +66,7 @@ EFuelRec  = PFEIRec.*WPayRec*1000*9.81.*RanRec*1852.0 #Joul
 outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
-             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec)
+             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec,EFuelRec=EFuelRec)
 CSV.write(saveName*".csv",  outputTup, writeheader=true)
 #Plot out the operating conditions for the optimal point
 maskFeasi = (WTO_WTOmaxRec.<=1) .& (Wf_WfmaxRec.<=1) #These are the feasible solution
