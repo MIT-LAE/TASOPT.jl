@@ -19,7 +19,7 @@ function gas_properties(species::String, p::Float64)
     x = p / p_atm #pressure in atm
 
     #Fits to NIST data at p increments of 0.1 atm from 0.1 to 10 atm
-    if uppercase(species) == "H2"
+    if uppercase(species) == "H2" || uppercase(species) == "LH2"
         #Saturation temperature (K)
         Tsat = -3.35772E-04*x^6 + 1.14637E-02*x^5 - 1.54871E-01*x^4 + 1.05803E+00*x^3 - 3.93770E+00*x^2 + 9.09205E+00*x + 1.42913E+01
         
@@ -72,7 +72,7 @@ function liquid_properties(species::String, p::Float64)
     x = p / p_atm #pressure in atm
 
     #Fits to NIST data at p increments of 0.1 atm from 0.1 to 10 atm
-    if uppercase(species) == "H2"
+    if uppercase(species) == "H2" || uppercase(species) == "LH2"
         #Saturation temperature (K)
         Tsat = -3.35772E-04*x^6 + 1.14637E-02*x^5 - 1.54871E-01*x^4 + 1.05803E+00*x^3 - 3.93770E+00*x^2 + 9.09205E+00*x + 1.42913E+01
         

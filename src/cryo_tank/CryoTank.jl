@@ -3,7 +3,13 @@
 """
 module CryoTank
 
+export SaturatedMixture
+
+include("../misc/index.inc")
+include("../misc/constants.jl")
 include("mixture.jl")
 include("fuel_thermo.jl")
 include("pressure.jl")
 include("tanktools.jl")
+
+end

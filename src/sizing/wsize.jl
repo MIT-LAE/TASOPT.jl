@@ -305,7 +305,14 @@ function wsize(ac; itermax=35,
         xftankaft = parg[igxblend2]
 
         #Calculate fuel temperature and density as a function of pressure
-        Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fuse_tank.fueltype), fuse_tank.ptank)
+        β0 = 1 - fuse_tank.ullage_frac
+        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.ptank, β0)
+
+        Tfuel = fuel_mix.liquid.T
+        ρfuel = fuel_mix.liquid.ρ
+        ρgas = fuel_mix.gas.ρ
+        hvap = fuel_mix.hvap
+        
         pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
         pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
         parg[igrhofuel] = ρfuel
