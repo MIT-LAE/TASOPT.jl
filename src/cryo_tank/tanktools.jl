@@ -51,7 +51,7 @@ This function calculates the heat transfer rate into the tank at the design miss
 """
 function calc_Q_points(fuse_tank, pari, parg, para)
     #Extract tank parameters
-    if ac.fuse_tank.placement == "rear"
+    if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
     else
         xftank = parg[igxftank]
@@ -66,7 +66,7 @@ function calc_Q_points(fuse_tank, pari, parg, para)
         t = para[iatime, ip, 1]
 
         #Calculate heat rate at this point
-        Qs[ip], _, _ = TASOPT.structures.tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
+        Qs[ip], _, _ = structures.tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
        
     end
     return Qs
@@ -143,7 +143,7 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
             z = z0 + (zf - z0)/(tf-t0) * (t - t0)
 
             #Calculate heat rate at this point
-            Q, _, _ = TASOPT.structures.tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
+            Q, _, _ = structures.tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
         end
     end
     return Q
@@ -204,7 +204,7 @@ function analyze_TASOPT_tank(ac_orig, p0::Float64, t_hold_orig::Float64 = 0.0, t
     params = pressure_params(mixture_init, V, pmax, xout, xvent, α)
 
     #Integrate profiles across mission
-    y0 = [p0, β0, M0, 0.0, 0.0] #Initial states
+    y0 = [p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
     ts = LinRange(0,maximum(para_alt[iatime,:,1]) - 1.0, N) #Vector with mission times, subtract one second in the end
 
     dy_dx(t, y, u, p) = TankDerivatives(t, y, u, p) #State derivatives
@@ -215,10 +215,10 @@ function analyze_TASOPT_tank(ac_orig, p0::Float64, t_hold_orig::Float64 = 0.0, t
     βs = y[2, :] #Tank fill evolution
     Ms = y[3, :] #Total fluid mass in tank evolution
     Mburns = y[4, :] #Cumulative mass that has been burnt evolution
-    Mboils = y[5, :] #Cumulative mass that has been boiled off evolution
+    Mvents = y[5, :] #Cumulative mass that has been vented
+    Mboils = y[6, :] #Cumulative mass that has been boiled off evolution
     mdot_boils = calculate_boiloff_rate(ts, Mboils) #Calculate boiloff rate
-    Mvents,_ = calculate_venting_mass(Ms, Mburns) #Calculate cumulative mass that needs to be vented
-
+    
     mdots = zeros(N)
     Qs = zeros(N)
     for (i,t) in enumerate(ts)

@@ -68,7 +68,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       #Initial guess for function
       guess = zeros(length(t_cond) + 2) 
 
-      Rguess = 0.025
+      Rguess = 0.01
       guess[1] = ΔT / Rguess
       guess[2] = Tfuel + 1.0
       

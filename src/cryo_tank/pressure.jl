@@ -130,7 +130,7 @@ This function returns the time derivatives for pressure and liquid volume fill f
     **Inputs:**
     - `t::Float64`: time (s)
     - `y::Vector{Float64}`: vector with the states; `y[1]` is pressure, `y[2]` is fill fraction, y[3] is tank mass, 
-    y[4] is total liquid mass extracted, and y[5] is the total mass that is boiled off.
+    y[4] is total liquid mass extracted, y[5] is the total mass that is vented and y[6] is the total mass that is boiled off.
     - `u::Struct`: structure with inputs; functions for heat rate, work rate and mass flow rate 
     - `params::Struct`: structure with parameters; including initial tank mixture, tank max pressure and tank volume 
     
@@ -165,7 +165,7 @@ function TankDerivatives(t, y, u, params)
     end
 
     #Calculate derivatives
-    dydt = zeros(5)
+    dydt = zeros(6)
     if p < pmax
         mdot_vent = 0.0
     else
@@ -183,7 +183,8 @@ function TankDerivatives(t, y, u, params)
     dydt[2] = dβdt(mix_current, dydt[1], mdot_tot, V) #dβ/dt
     dydt[3] = -mdot_tot #dM_tank/dt
     dydt[4] = mdot #dMburn/dt
-    dydt[5] = mdot_boiloff(mix_current, dydt[2], dydt[1], mdot_liq, V) #dMboiloff/dt
+    dydt[5] = mdot_vent #dMvent/dt
+    dydt[6] = mdot_boiloff(mix_current, dydt[2], dydt[1], mdot_liq, V) #dMboiloff/dt
     return dydt
 end
 

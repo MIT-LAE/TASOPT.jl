@@ -312,7 +312,7 @@ function wsize(ac; itermax=35,
         ρfuel = fuel_mix.liquid.ρ
         ρgas = fuel_mix.gas.ρ
         hvap = fuel_mix.hvap
-        
+
         pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
         pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
         parg[igrhofuel] = ρfuel
@@ -1269,6 +1269,10 @@ function wsize(ac; itermax=35,
             para[iaDAfwake, :] .= DAfwake
             para[iaPAfinf, :] .= PAfinf
 
+            #Use homogeneous tank model to calculate required venting
+            p0 = 1.2 * p_atm
+            ts, ps, βs, Ms, Mburns, Mboils, mdot_boils, Mvents, mdots, Qs = CryoTank.analyze_TASOPT_tank(ac, p0)
+            println(Mvents[end])
         end
 
         # -----------------------------

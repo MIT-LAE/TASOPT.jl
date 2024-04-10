@@ -3,6 +3,8 @@
 """
 module CryoTank
 
+using ..structures
+
 export SaturatedMixture
 
 include("../misc/index.inc")
