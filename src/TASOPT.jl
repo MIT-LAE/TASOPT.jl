@@ -58,6 +58,7 @@ include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
 include(joinpath(__TASOPTroot__,"fuel/hydrogen.jl"))
+include(joinpath(__TASOPTroot__,"fuel/fuel_properties.jl"))
 include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions

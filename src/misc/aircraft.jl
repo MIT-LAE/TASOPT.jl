@@ -4,6 +4,7 @@ Fuselage tank component. Usually for Hydrogen aircraft
 $TYPEDFIELDS
 """
 mutable struct fuselage_tank
+    fueltype::String
     placement::String
     size_insulation::Bool
     Wfuelintank::Float64

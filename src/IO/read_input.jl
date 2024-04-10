@@ -2,7 +2,6 @@ using TOML
 export read_aircraft_model, load_default_model
 
 include("size_cabin.jl")
-include("../fuel/fuel_properties.jl")
 #using ..structures
 
 """
@@ -345,6 +344,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
+    fuse_tank.fueltype = fueltype
     fuse_tank.Rfuse = parg[igRfuse]
     fuse_tank.dRfuse = parg[igdRfuse]
     fuse_tank.wfb = parg[igwfb]
@@ -391,17 +391,6 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         pari[iinftanks] = 2
     end
-
-    #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
-    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
-    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
-    parg[igrhofuel] = ρfuel
-    fuse_tank.rhofuel = ρfuel
-    fuse_tank.Tfuel = Tfuel
-    fuse_tank.hvap = hvap
-    parg[igrhofuelgas] = ρgas
-    fuse_tank.rhofuelgas = ρgas
 end
 # ---------------------------------
 # Wing

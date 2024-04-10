@@ -303,12 +303,22 @@ function wsize(ac; itermax=35,
     else
         xftank = parg[igxblend1] + 1.0*ft_to_m
         xftankaft = parg[igxblend2]
+
+        #Calculate fuel temperature and density as a function of pressure
+        Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fuse_tank.fueltype), fuse_tank.ptank)
+        pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
+        pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+        parg[igrhofuel] = ρfuel
+        fuse_tank.rhofuel = ρfuel
+        fuse_tank.Tfuel = Tfuel
+        fuse_tank.hvap = hvap
+        parg[igrhofuelgas] = ρgas
+        fuse_tank.rhofuelgas = ρgas
     end
         
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
    
-
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------
