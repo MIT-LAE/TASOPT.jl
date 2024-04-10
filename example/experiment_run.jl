@@ -44,9 +44,9 @@ for Alt = AltList
         size_aircraft!(ac,iter=500)
         append!(AltRec,Alt)
         append!(RanRec,ac.parg[igRange]./1852.0)
-        append!(WMTORec,ac.parg[igWMTO]./(9.8*1000))
-        append!(WFuelRec,ac.parg[igWfuel]./(9.8*1000))
-        append!(WPayRec,ac.parg[igWpay]./(9.8*1000))
+        append!(WMTORec,ac.parg[igWMTO]./(9.81*1000))
+        append!(WFuelRec,ac.parg[igWfuel]./(9.81*1000))
+        append!(WPayRec,ac.parg[igWpay]./(9.81*1000))
         append!(PFEIRec,ac.parm[imPFEI,1])
         append!(WTO_WTOmaxRec,ac.parm[imWTO,1]/ac.parg[igWMTO])
         append!(Wf_WfmaxRec,ac.parg[igWfuel]/ac.parg[igWfmax])
@@ -61,6 +61,7 @@ for Alt = AltList
 end
 #Post Process
 WEmpRec = WMTORec - WFuelRec - WPayRec # Ton Metric
+EFuelRec  = PFEIRec.*WPayRec*1000*9.81.*RanRec*1852.0 #Joul
 #Collect output Data
 outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
@@ -93,7 +94,7 @@ timeOptMiss = ac2.para[iatime,maskRep,1] #second
 ranOptMiss = ac2.para[iaRange,maskRep,1] #meter
 altOptMiss = ac2.para[iaalt,maskRep,1] #meter
 machOptMiss = ac2.para[iaMach,maskRep,1]
-weiOptMiss = ac2.para[iafracW,maskRep,1]*(ac.parm[imWTO,1]/9.8) #kg
+weiOptMiss = ac2.para[iafracW,maskRep,1]*(ac.parm[imWTO,1]/9.81) #kg
 gamOptMiss = ac2.para[iagamV,maskRep,1] #rad
 LDROptMiss = ac2.para[iaCL,maskRep,1]./ac2.para[iaCD,maskRep,1] #Lift to drag ratio
 ###Engine Parameters
@@ -123,7 +124,7 @@ CSV.write(saveName*"OptimalMission.csv",  outputTup, writeheader=true)
 
 # 3.75) Read out the total weight and flight range
 # println("flight range (nmi): " , ac.parg[igRange]./1852.0)
-# println("WMTO (1000 kg):" , ac.parg[igWMTO]./(9.8*1000))
+# println("WMTO (1000 kg):" , ac.parg[igWMTO]./(9.81*1000))
 # println("PFEI:",ac.parm[imPFEI])
 # println("OPR:",ac.pare[iept3]/ac.pare[iept2])
 # println("LPCPR:",maximum(ac.pare[iepilc, :, 1]))
