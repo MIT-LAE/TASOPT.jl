@@ -100,7 +100,7 @@ function EINOx4(P3_kPa, T3_K, sp_humidity = 0.00634)
 
     H = -19.0*(sp_humidity - 0.00634)
 
-    EI_NOx = exp(H)*P3_kPa^0.4 * (a*T3_K^4 + b*T3_K^4 + c*T3_K^2 + d*T3_K + e)
+    EI_NOx = exp(H)*P3_kPa^0.4 * (a*T3_K^4 + b*T3_K^3 + c*T3_K^2 + d*T3_K + e)
     return EI_NOx
 end  # function EINOx4
 
