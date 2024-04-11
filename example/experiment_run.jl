@@ -18,13 +18,13 @@ ft_to_m = 0.3048
 # Alternatively you can load your desired input file 
 nameAircraftModel = "../src/IO/experiment_input.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = "EthaJetA31PerBlend1500nmi"
+saveName = "TestApr11Ver2"
 # 2.5) Change fuel type
 ac.pari[iifuel] = 322431 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
 ac.parg[igrhofuel] = 808.1 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 808.1)
 
 # 3) Find Optimal Flight Altitude
-AltList = LinRange(2e4,5e4,10) #ft
+AltList = LinRange(2e4,5e4,100) #ft
 AltRec = [] #ft
 RanRec = [] #nmi
 WMTORec = [] #Ton (metric)
@@ -106,10 +106,12 @@ Tt4OptMiss = ac2.pare[ieTt4,maskRep,1] #K
 Pt4OptMiss = ac2.pare[iept4,maskRep,1] #Pa
 FnOptMiss = ac2.pare[ieFe,maskRep,1] #N Total Thrust for all engines
 mdotfOptMiss = FnOptMiss.*ac2.pare[ieTSFC,maskRep,1]/9.81 #kg/s for all engines
+Cpa = 0.5.*(ac2.pare[iecpt3,maskRep,1].+ac2.pare[iecpt4,maskRep,1])
+ffbMiss   = (Cpa.*(Tt4OptMiss.-Tt3OptMiss))./(hfOptMiss.*ac2.pare[ieetab,maskRep,1].-Cpa.*(Tt4OptMiss.-TfuelOptMiss))
 #Output Additional Data at the optimal mission
 outputTup = (Phase=phases,Time=timeOptMiss,Range=ranOptMiss,Altitude=altOptMiss,MachNumber=machOptMiss,Weight=weiOptMiss
             ,ClimbAngle=gamOptMiss,LiftDragRatio=LDROptMiss,HeatingValue=hfOptMiss,FuelTemp=TfuelOptMiss
-            ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss)
+            ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss,FuelMassFraction=ffbMiss)
 CSV.write(saveName*"OptimalMission.csv",  outputTup, writeheader=true)
 #Backup Code Below
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
