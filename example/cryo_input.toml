@@ -55,10 +55,10 @@ name = "TASOPT Model with cryo fuel and HX"
     tank_aspect_ratio = 2.0
     fuselage_clearance = "0.3 ft"
     pressure_venting = "2 atm"
-    pressure_initial = "1.6 atm"
+    pressure_initial = "1.2 atm"
     additional_mass_fraction = 0.25
     weld_efficiency = 0.9 
-    ullage_fraction = 0.05 #minimum ullage fraction at tank venting pressure
+    ullage_fraction = 0.1 #minimum ullage fraction at tank venting pressure
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
     pressure_rise_factor = 2.0 #Factor to account for stratification in homogenous tank model (pfac >= 1)
 
@@ -68,10 +68,10 @@ name = "TASOPT Model with cryo fuel and HX"
     #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum"
     size_insulation = true #Flag to decide whether to size insulation for boiloff
     insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
-    insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
+    insulation_segment_base_thickness = [0.05, 0.05, 0.05,0.05,0.05] #m
     
     cruise_boiloff_rate = 0.4 #%/hour, used if size_insulation == true
-    insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if size_insulation == true
+    insulation_thicknesses_design_indices = [1,2,3,4,5] #insulation segments to size if size_insulation == true
 
     #Parameters for double-walled tank, if "vacuum" is in insulation_material
     outer_vessel_material = "Al-2219-T87"
@@ -80,7 +80,7 @@ name = "TASOPT Model with cryo fuel and HX"
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = [180, 150]            # Number of passengers in each mission
-    max_pax = 230               # Maximum number of passengers for aircarft
+    max_pax = 230               # Maximum number of passengers for aircraft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
