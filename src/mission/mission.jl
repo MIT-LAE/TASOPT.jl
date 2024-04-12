@@ -407,7 +407,6 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
                   println("Climb gamV not converged")
             end
 
-            pare[ieFe, ip] = Ftotal
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
 
