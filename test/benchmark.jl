@@ -1,10 +1,12 @@
 
 using Pkg, Dates
+import ..TASOPT: __TASOPTindices__
+
 println(today())
 println("Current location $(pwd())")
 using TASOPT
 const aerodynamics = TASOPT.aerodynamics
-include("../src/misc/index.inc")
+include(__TASOPTindices__)
 nmisx = 1
 pari = zeros(Int64, iitotal)
 parg = zeros(Float64, igtotal)
