@@ -72,6 +72,7 @@ include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
 include(joinpath(__TASOPTroot__,"IO/read_externals.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
+include(joinpath(__TASOPTroot__,"IO/output_pyna.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
