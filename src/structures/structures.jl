@@ -10,11 +10,12 @@ using ..atmosphere
 using NLsolve
 using Roots
 using NLopt
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
 export surfw, surfdx, fusew, tailpo, tanksize!, update_fuse!, update_fuse_for_pax!
 
-include("../misc/index.inc")
-include("../misc/constants.jl")
+include(__TASOPTindices__)
+include(joinpath(__TASOPTroot__,"misc/constants.jl"))
 #include fuselage sizing
 include("fuseW.jl")
 
