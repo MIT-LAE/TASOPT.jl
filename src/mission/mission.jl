@@ -71,6 +71,9 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       # mission TO fuel weight
       WfTO = WTO - Wzero
 
+      #Boiloff rate for cryogenic fuels
+      mdot_boiloff = parg[igmdotboiloff]
+
       # set known operating conditions
 
       # takeoff altitude conditions
@@ -405,7 +408,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
             pare[ieFe, ip] = Ftotal
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
-            FFC[ip] = Ftotal * TSFC / (W * V * cosg)
+            FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
 
             Vgi[ip] = 1.0 / (V * cosg)
 
@@ -527,7 +530,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      FFC[ip] = Ftotal * TSFC / (W * V * cosg)
+      FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
 
       Vgi[ip] = 1.0 / (V * cosg)
 
@@ -594,7 +597,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      FFC[ip] = Ftotal * TSFC / (W * V * cosg)
+      FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
       Vgi[ip] = 1.0 / (V * cosg)
 
 
@@ -766,12 +769,12 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
             # store integrands for Range and Weight integration
             FoW[ip] = F / (BW * cosg) - DoL
-            FFC[ip] = F / (W * V * cosg) * TSFC
+            FFC[ip] = F / (W * V * cosg) * TSFC + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
             Vgi[ip] = 1.0 / (V * cosg)
 
             # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
             mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
-            FFC[ip] = gee * mfuel / (W * cosg * V)
+            FFC[ip] = gee * mfuel / (W * cosg * V) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
 
 
             if (ip > ipdescent1)

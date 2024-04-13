@@ -1,7 +1,7 @@
 """
       fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, Waftfuel,
             fstring, fframe, ffadd, deltap,
-            Wpwindow, Wppinsul, Wppfloor,
+            Wpwindow, Wppinsul, Wppfloor, ndecks,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, lambdav, nvtail,
             Rfuse, dRfuse, wfb, nfweb, lambdac,
@@ -18,7 +18,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
        
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `Nland::Integer`: Number of landing gear components.
+      - `Nland::Float64`: load factor for floor beam structural sizing.
       Fixed weights of various components:
       - `Wfix::Float64`: Fixed weight of the structure.
       - `Wpay::Float64`: Fixed weight of payload.
@@ -39,7 +39,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       Weights of window, insulation, and floor:
       - `Wpwindow::Float64`: Weight of windows.
       - `Wppinsul::Float64`: Weight of insulation.
-      - `Wppfloor::Float64`: Weight of floor.
+      - `Wppfloor::Float64`: Weight of floor per unit area.
 
       Vertical tail parameters:
       - `Whtail::Float64`: Weight of horizontal tail components.
@@ -120,19 +120,21 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
-                      fstring,fframe,ffadd,deltap,
-                      Wpwindow,Wppinsul,Wppfloor,
-                      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
-                      bv,lambdav,nvtail,
-                      Rfuse,dRfuse,wfb,nfweb,lambdac,
-                      xnose,xshell1,xshell2,xconend,
-                      xhtail,xvtail,
-                      xwing,xwbox,cbox,
-                      xfix,xapu,xeng,xfuel,
-                      hfloor,
-                      sigskin,sigbend, rhoskin,rhobend, 
-                      Eskin,Ebend,Gskin)
+function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
+      ifwing, nftanks, xblend1, xblend2,
+      Waftfuel, Wftank, ltank, xftankaft, tank_placement,
+      fstring,fframe,ffadd,deltap,
+      Wpwindow,Wppinsul,Wppfloor, ndecks,
+      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
+      bv,lambdav,nvtail,
+      Rfuse,dRfuse,wfb,nfweb,lambdac,
+      xnose,xshell1,xshell2,xconend,
+      xhtail,xvtail,
+      xwing,xwbox,cbox,
+      xfix,xapu,xeng,xfuel,
+      hfloor,
+      sigskin,sigbend, rhoskin,rhobend, 
+      Eskin,Ebend,Gskin)
 
 #--- cone material properties
 #     (assumed same as skin, but could be different)
@@ -200,8 +202,21 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 
 #--------------------------------------------------------------------
 #--- window weight
-      Wwindow = Wpwindow * lshell
-      xWwindow = Wwindow * 0.5*(xshell1 + xshell2)
+
+      if nftanks == 1
+            if tank_placement == "front" #If tank is at the front
+                  xcabin = 0.5 * (xshell1 + ltank + 2.0*ft_to_m + xshell2)
+            else #tank is at rear
+                  xcabin = 0.5 * (xshell1 + xshell2 - (ltank + 2.0*ft_to_m))
+            end
+      else
+            xcabin = 0.5 * (xshell1 + xshell2) #two or zero tanks
+      end
+      lcabin = xshell2 - xshell1 - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
+
+      Wwindow = ndecks * Wpwindow * lcabin
+      xWwindow = Wwindow * xcabin
+      
 #--------------------------------------------------------------------
 #--- insulation weight
       Winsul = Wppinsul*((1.1*pi+2.0*thetafb)*Rfuse*lshell + 0.55*(Snose+Sbulk))
@@ -211,12 +226,12 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 #--- various weight moments
       xWfix  = Wfix  * xfix
       xWapu  = Wapu  * xapu
-      xWseat = Wseat * 0.5*(xshell1 + xshell2)
-      xWpadd = Wpadd * 0.5*(xshell1 + xshell2)
+      xWseat = Wseat * xcabin
+      xWpadd = Wpadd * xcabin
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
-      P = (Wpay+Wseat) * Nland
+      P = (Wpay+Wseat) * Nland / ndecks #Total load is distributed across all decks
       wfloor1 = wfb + Rfuse
 
       if (wfb == 0.0) 
@@ -233,7 +248,7 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
       Afcap = 2.0*Mmax/(sigfloor*hfloor)
 
       Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      Wfloor = rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor
+      Wfloor = ndecks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
       xWfloor = Wfloor * 0.5*(xshell1 + xshell2)
 
 #--- average floor-beam cap thickness ("smeared" over entire floor)
@@ -261,13 +276,14 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + Wcone + Wapu + Weng + Waftfuel
+      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng
+
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +
-               xapu*Wapu +
+               xapu*Wapu + 
                xeng*Weng +
-               xfuel*Waftfuel) / Wtail
+               xftankaft*(Waftfuel + Wftank)) / Wtail
 
 #--------------------------------------------------------------------
 #--- shell bending inertias
@@ -368,8 +384,13 @@ function fusew(Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,Waftfuel,
 
 #----------------------------------------------------------------
 #--- pressurized cabin volume
-      cabVol = Afuse*(lshell + 0.67*lnose + 0.67*Rfuse)
-      
+
+      if nftanks == 0
+            cabVol = Afuse*(lshell + 0.67*lnose + 0.67*Rfuse)
+      else #If there is a fuel tank in the fuselage, the pressure vessel has a smaller air volume
+            cabVol = Afuse*(lcabin + 0.67*lnose + 0.67*Rfuse)
+      end
+
 
 return  tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                        EIhshell,EIhbend,

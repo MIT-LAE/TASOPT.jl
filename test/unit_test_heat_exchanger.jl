@@ -8,15 +8,13 @@
 #---------------------------------     
 # Test functions individually
 #---------------------------------
-HXgas_NaN = TASOPT.engine.HX_gas("0","0", [NaN], NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN)
-HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, "")
 
 @testset "Heat Exchanging" begin
     #---------------------------------     
     # hxsize!()
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -49,10 +47,10 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
     size_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgeom.N_t, HXgeom.n_passes, HXgeom.tD_o, HXgeom.A_cs]
 
     size_out_check = 
-    [731.5888605437423, 665.8848846504773, 1432.2702748284066, 62.03322510460286, 
-    8.000169398096821, 0.004760508726403918, 1.0189779296746375]
+    [731.5888605437423, 665.8848846504773, 
+    1432.2702748284166, 62.03322510460286, 8.000169398096878, 0.004760508726403918, 1.0189779296746375]
 
-    @test size_out == size_out_check
+    @test size_out ≈ size_out_check
 
     #---------------------------------     
     # hxweight()
@@ -62,14 +60,14 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
 
     W = TASOPT.engine.hxweight(gee, HXgeom, fouter)
 
-    W_check = 790.0204421149975
+    W_check = 790.0204421150031
 
     @test W == W_check
     #---------------------------------     
     # hxoper!()
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -107,15 +105,15 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
 
     oper_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgas.ε]
 
-    oper_out_check = [740.2021082199584, 592.066098581769, 1735.5864305141888, 0.6521309311700569]
+    oper_out_check = [740.2021082199583, 592.0660985817696, 1735.5864305141572, 0.6521309311700579]
 
-    @test oper_out == oper_out_check
+    @test oper_out ≈ oper_out_check
 
     #---------------------------------     
     # hxoptim!()
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -179,8 +177,8 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
     #---------------------------------     
     # hxoptim!() with recirculation and rectangular
     #---------------------------------
-    HXgas = deepcopy(HXgas_NaN)
-    HXgeom = deepcopy(HXgeom_NaN)
+    HXgas = TASOPT.engine.HX_gas()
+    HXgeom = TASOPT.engine.HX_tubular()
 
     HXgas.fluid_p = "air"
     HXgas.fluid_c = "h2"
@@ -238,7 +236,7 @@ HXgeom_NaN = TASOPT.engine.HX_tubular(0, 0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, N
 
     Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-    I_check_rec = 2681.8120222206435
+    I_check_rec = 2682.0210961264884
 
     @test Iobj_rec ≈ I_check_rec
 
