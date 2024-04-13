@@ -105,7 +105,7 @@ Pt3OptMiss = ac2.pare[iept3,maskRep,1] #Pa
 Tt4OptMiss = ac2.pare[ieTt4,maskRep,1] #K
 Pt4OptMiss = ac2.pare[iept4,maskRep,1] #Pa
 FnOptMiss = ac2.pare[ieFe,maskRep,1] #N Total Thrust for all engines
-mdotfOptMiss = FnOptMiss.*ac2.pare[ieTSFC,maskRep,1]/9.81 #kg/s for all engines
+mdotfOptMiss = ac2.pare[iemcore,maskRep,1].*ac2.pare[ieff,maskRep,1] #kg/s for all engines
 Cpa = 0.5.*(ac2.pare[iecpt3,maskRep,1].+ac2.pare[iecpt4,maskRep,1])
 ffbMiss   = (Cpa.*(Tt4OptMiss.-Tt3OptMiss))./(hfOptMiss.*ac2.pare[ieetab,maskRep,1].-Cpa.*(Tt4OptMiss.-TfuelOptMiss))
 #Output Additional Data at the optimal mission
