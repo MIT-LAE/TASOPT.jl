@@ -18,7 +18,7 @@ ft_to_m = 0.3048
 # Alternatively you can load your desired input file 
 nameAircraftModel = "../src/IO/experiment_input.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = "TestApr11Ver2"
+saveName = "TestApr14"
 # 2.5) Change fuel type
 ac.pari[iifuel] = 322431 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
 ac.parg[igrhofuel] = 808.1 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 808.1)
@@ -108,10 +108,11 @@ FnOptMiss = ac2.pare[ieFe,maskRep,1] #N Total Thrust for all engines
 mdotfOptMiss = ac2.pare[iemcore,maskRep,1].*ac2.pare[ieff,maskRep,1] #kg/s for all engines
 Cpa = 0.5.*(ac2.pare[iecpt3,maskRep,1].+ac2.pare[iecpt4,maskRep,1])
 ffbMiss   = (Cpa.*(Tt4OptMiss.-Tt3OptMiss))./(hfOptMiss.*ac2.pare[ieetab,maskRep,1].-Cpa.*(Tt4OptMiss.-TfuelOptMiss))
+mdot3OptMiss = mdotfOptMiss./ffbMiss #kg/s for all engines air flow into the combustor (exclude bypass cooling flow)
 #Output Additional Data at the optimal mission
 outputTup = (Phase=phases,Time=timeOptMiss,Range=ranOptMiss,Altitude=altOptMiss,MachNumber=machOptMiss,Weight=weiOptMiss
             ,ClimbAngle=gamOptMiss,LiftDragRatio=LDROptMiss,HeatingValue=hfOptMiss,FuelTemp=TfuelOptMiss
-            ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss,FuelMassFraction=ffbMiss)
+            ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss,mdot3=mdot3OptMiss)
 CSV.write(saveName*"OptimalMission.csv",  outputTup, writeheader=true)
 #Backup Code Below
 # time_wsize = @elapsed size_aircraft!(ac,iter=500)
