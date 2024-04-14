@@ -643,6 +643,15 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       end
 
       # Descent
+      ## Dual Fuel Injection Modification #1
+      flagDualFuel = false
+      if (flagDualFuel)
+            baseFuel = pari[iifuel]*1
+            baseRhoFuel = parg[igrhofuel]*1.0
+            pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
+            parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 808.1)
+      end
+      ## Dual Fuel Injection Modification Over #1
       ip = ipdescent1
       pare[iep0, ip] = pare[iep0, ipcruisen]
       pare[ieT0, ip] = pare[ieT0, ipcruisen]
@@ -820,6 +829,13 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
             end
       end
+
+      ## Dual Fuel Injection Modification #2
+      if (flagDualFuel)
+            pari[iifuel] = baseFuel
+            parg[igrhofuel] = baseRhoFuel
+      end
+      ## Dual Fuel Injection Modification Over #2
 
       # mission fuel fractions and weights
       fracWa = para[iafracW, ipclimb1]
