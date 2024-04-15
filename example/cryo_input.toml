@@ -68,10 +68,10 @@ name = "TASOPT Model with cryo fuel and HX"
     #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum"
     size_insulation = true #Flag to decide whether to size insulation for boiloff
     insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
-    insulation_segment_base_thickness = [0.05, 0.05, 0.05,0.05,0.05] #m
+    insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
     
     cruise_boiloff_rate = 0.4 #%/hour, used if size_insulation == true
-    insulation_thicknesses_design_indices = [1,2,3,4,5] #insulation segments to size if size_insulation == true
+    insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if size_insulation == true
 
     #Parameters for double-walled tank, if "vacuum" is in insulation_material
     outer_vessel_material = "Al-2219-T87"
