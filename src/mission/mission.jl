@@ -821,22 +821,24 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       end
 
       # mission fuel fractions and weights
+      Wfvent = parg[igWfvent] #Weight of fuel that is vented from tank
+      ffvent = Wfvent/WMTO #weight fraction of vented fuel
+      
       fracWa = para[iafracW, ipclimb1]
       fracWe = para[iafracW, ipdescentn]
       freserve = parg[igfreserve]
-      fburn = fracWa - fracWe
+      fburn = fracWa - fracWe + ffvent #include vented fuel, if any
       ffuel = fburn * (1.0 + freserve)
       Wfuel = WMTO * ffuel
       WTO = Wzero + Wfuel
 
-      Wfvent = parg[igWfvent] #Weight of fuel that is vented from tank
       parm[imWTO] = WTO
-      parm[imWfuel] = Wfuel + Wfvent
+      parm[imWfuel] = Wfuel
       #TODO the above calculation does not account for the effect of venting on the flight profile
 
       # mission PFEI
       Wburn = WMTO * fburn
-      parm[imPFEI] = (Wburn + Wfvent)/gee * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
+      parm[imPFEI] = Wburn /gee * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
 
 
 
