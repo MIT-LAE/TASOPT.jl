@@ -18,10 +18,10 @@ ft_to_m = 0.3048
 # Alternatively you can load your desired input file 
 nameAircraftModel = "../src/IO/experiment_input.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = "EthaJetA31PerDual1500nmi"
+saveName = "EthaJetA31PerIncDes1500nmi"
 # 2.5) Change fuel type
 ac.pari[iifuel] = 322431 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
-ac.parg[igrhofuel] = 808.1 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 808.1)
+ac.parg[igrhofuel] = 805 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
 
 # 3) Find Optimal Flight Altitude
 AltList = LinRange(2e4,5e4,200) #ft
