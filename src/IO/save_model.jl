@@ -652,7 +652,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "pare[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%f, ", pare[i, j])
+                @printf(io, "%20f, ", pare[i, j])
             end
             @printf(io, "]\n")
         end
