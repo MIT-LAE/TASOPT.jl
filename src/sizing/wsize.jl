@@ -1390,6 +1390,8 @@ function wsize(ac; itermax=35,
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
         
+        # Store all OPRs for diagnostics
+        pare[ieOPR, :] .= pare[iepilc, :] .* pare[iepihc, :]
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate
 
