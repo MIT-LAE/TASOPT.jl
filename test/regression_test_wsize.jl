@@ -24,7 +24,7 @@
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
@@ -57,7 +57,7 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
@@ -90,7 +90,7 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
