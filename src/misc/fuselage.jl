@@ -1,3 +1,4 @@
+using Zygote
 #Fuselage class
 @kwdef mutable struct Fuselage
     # General Fuselage Properties
