@@ -1,12 +1,8 @@
 """
-      takeoff(pari, parg, parm, para, pare,
-            initeng, ichoke5, ichoke7)
+      takeoff(ac, initeng, ichoke5, ichoke7)
 
       Calculates takeoff parameters and balanced field length.
       The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
-
-      !!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
 function takeoff!(ac, initeng, ichoke5, ichoke7)
