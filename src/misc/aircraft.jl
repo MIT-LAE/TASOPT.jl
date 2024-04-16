@@ -27,6 +27,8 @@ mutable struct fuselage_tank
     ptank::Float64
     rhofuel::Float64
     Tfuel::Float64
+    rhofuelgas::Float64
+    hvap::Float64
     boiloff_rate::Float64
 
     ftankadd::Float64
