@@ -50,7 +50,7 @@ name = "TASOPT Model with cryo fuel and HX"
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
 [Fuel.Storage]
-    tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
+    tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
 
     tank_aspect_ratio = 2.0
     fuselage_clearance = "0.3 ft"
@@ -80,7 +80,7 @@ name = "TASOPT Model with cryo fuel and HX"
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = [180, 150]            # Number of passengers in each mission
-    max_pax = 230               # Maximum number of passengers for aircraft
+    max_pax = 189               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
