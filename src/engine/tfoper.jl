@@ -3030,17 +3030,17 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   ru2 = rho2 * u2
                   ru19 = rho19 * u19
 
-                  println(iter, vrlx, rlx, iTFspec)
-                  println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
-                  println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
-                  println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
-                  println("mf dmf R4   ", mf / mbfD, dmf / mbfD, rrel[4])
-                  println("ml dml R5   ", ml / mblcD, dml / mblcD, rrel[5])
-                  println("mh dmh R6   ", mh / mbhcD, dmh / mbhcD, rrel[6])
-                  println("Tb dTb R7 F ", Tb, dTb, rrel[7], F, Fspec, Tt4)
-                  println("Pc dPc R8 pt", Pc, dPc, rrel[8], pt5, pitn * pt5h)
-                  println("M2 dM2 R9   ", Mi, dMi, rrel[9], ru2, ru19)
-                  println("u0 u5 u7 del", u0, u5, u7, dmax - toler)
+                  println(iter," ",vrlx," ", rlx," ", iTFspec)
+                  println("pf dpf R1 ef ", pf," ", dpf," ", rrel[1]," ", epf)
+                  println("pl dpl R2 el ", pl," ", dpl," ", rrel[2]," ", eplc," ", eplt)
+                  println("ph dph R3 eh ", ph," ", dph," ", rrel[3]," ", ephc," ", epht)
+                  println("mf dmf R4   ", mf / mbfD," ", dmf / mbfD," ", rrel[4])
+                  println("ml dml R5   ", ml / mblcD," ", dml / mblcD," ", rrel[5])
+                  println("mh dmh R6   ", mh / mbhcD," ", dmh / mbhcD," ", rrel[6])
+                  println("Tb dTb R7 F ", Tb," ", dTb," ", rrel[7]," ", F," ", Fspec," ", Tt4)
+                  println("Pc dPc R8 pt ", Pc," ", dPc," ", rrel[8]," ", pt5," ", pitn * pt5h)
+                  println("M2 dM2 R9   ", Mi," ", dMi," ", rrel[9]," ", ru2," ", ru19)
+                  println("u0 u5 u7 del ", u0," ", u5," ", u7," ", dmax - toler)
             end
 
             #---- exit if convergence test is met
@@ -3275,6 +3275,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       end # with next Newton iteration
 
+      println("tfoper uncoverged: lol, idiot")
+      return falses(142) #return an array of falses when unconverged
+                        #you may be wondering, why 142? that's the number of outputs
 end # tfoper
 
 

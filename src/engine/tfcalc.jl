@@ -1,3 +1,5 @@
+import ..TASOPT: aircraft
+
 """ 
     tfcalc(pari,parg,para,pare, ip, icall,icool,initeng)
 
@@ -721,3 +723,22 @@ function tfcalc!(pari, parg, para, pare, ip,
         
         return ichoke5, ichoke7
 end # tfcalc
+
+
+"""
+
+
+convenience function to pass tfcalc! an `aircraft` struct
+"""
+function tfcalc!(ac::aircraft, ip::Integer,
+        icall, icool, initeng; im::Integer = 1)
+
+        pari = ac.pari
+        parg = ac.parg
+        para = ac.para[:,ip,im]
+        pare = ac.pare[:,ip,im]
+
+        tfcalc!(pari, parg, para, pare, ip, icall, icool, initeng)
+end
+
+

@@ -1059,7 +1059,7 @@ function wsize(ac; itermax=35,
         De = qstall * CDAe
         Fe = pare[ieFe, ip]
 
-        # Calcualte max eng out moment
+        # Calculate max eng out moment
         Me = (Fe + De) * yeng
 
         if (iVTsize == 1)
