@@ -94,7 +94,7 @@ timeOptMiss = ac2.para[iatime,maskRep,1] #second
 ranOptMiss = ac2.para[iaRange,maskRep,1] #meter
 altOptMiss = ac2.para[iaalt,maskRep,1] #meter
 machOptMiss = ac2.para[iaMach,maskRep,1]
-weiOptMiss = ac2.para[iafracW,maskRep,1]*(ac.parm[imWTO,1]/9.81) #kg
+weiOptMiss = ac2.para[iafracW,maskRep,1]*(ac2.parm[imWTO,1]/9.81) #kg
 gamOptMiss = ac2.para[iagamV,maskRep,1] #rad
 LDROptMiss = ac2.para[iaCL,maskRep,1]./ac2.para[iaCD,maskRep,1] #Lift to drag ratio
 ###Engine Parameters
