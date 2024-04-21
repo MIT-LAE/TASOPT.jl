@@ -1,9 +1,8 @@
 using TOML
 export read_aircraft_model, load_default_model
 
-include("size_cabin.jl")
-include("../fuel/fuel_properties.jl")
-#using ..structures
+include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
+include(joinpath(__TASOPTroot__,"fuel/fuel_properties.jl"))
 
 """
     read_input(k::String, dict::AbstractDict=data, 
