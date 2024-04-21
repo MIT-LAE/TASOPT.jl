@@ -61,6 +61,7 @@ include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
 include(joinpath(__TASOPTroot__,"fuel/hydrogen.jl"))
+include(joinpath(__TASOPTroot__,"fuel/fuel_properties.jl"))
 include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions
@@ -76,6 +77,10 @@ include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
+
+#functionalities to be categorized: #TODO
+include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
+
 
 export size_aircraft!
 
