@@ -1,3 +1,5 @@
+export cryo_fuel_properties
+
 """
     cryo_fuel_properties(fuel::String, p::Float64)
 
