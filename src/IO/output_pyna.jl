@@ -90,10 +90,28 @@ function generate_pyna_aero_inputs(pyna_path::String, ac::TASOPT.aircraft; case_
     #need 3D output for pyna consistency
     #currently, only taking the default CL-CDpoint (no "alpha" variation)
 
-    cl_array = reshape([ac.para[iaCL,iptakeoff,1]],1,1,1)
-    clmax_array = cl_array #TODO: consider if this is needed at all
-    cd_array = reshape([ac.para[iaCD,iprotate,1]],1,1,1)
+    clval = ac.para[iaCL,iptakeoff,1]
+    cdval = ac.para[iaCD,iprotate,1]
 
+    #generate a longer array s.t. pyna accepts it as multiple alpha (angle of attack)
+    #will be offset a little bit (eps) s.t. optimization lands somewhere
+    #TODO: consider alternative: multiple cdsum! calls and tying to an alpha (how?)
+    n_entries = 12
+    eps = 1e-3
+    cl_array = fill(clval,n_entries)
+    cd_array = fill(cdval,n_entries)
+    for ientry in 1:n_entries #add small penalties to ensure optimizable
+        cl_array[ientry] -= (ientry-1) * eps
+        cd_array[ientry] += (ientry-1) * eps
+    end
+
+    cl_array = reshape(cl_array,length(cl_array),1,1)
+    clmax_array = cl_array  #TODO: Clmax used in stallspeed constraint for groundroll calcs; 
+                            #currently not supported, so be sure krot in pyna is large to avoid trouble
+    cd_array = reshape(cd_array,length(cd_array),1,1)
+
+
+    #output .npy files to pyna dir
     cl_filepath = joinpath(pyna_path, "cases", case_name, "aircraft",
                             "c_l_"*case_name*".npy")
     clmax_filepath = joinpath(pyna_path, "cases", case_name, "aircraft",
@@ -116,40 +134,40 @@ function generate_pyna_json(pyna_path::String, ac::TASOPT.aircraft; case_name::S
     #initialize output dict and populate with TASOPT-sourced values, 
     #marking `nothing` if unavail (`nothing`s will be substituted with default values below)
     ac_dict = Dict( #TODO: update these. for now, test
-        "mtow" => 55000.0,
-        "n_eng" => nothing,
-        "comp_lst" => ["wing", "tail_h", "les", "tef", "lg"],
-        "af_S_h" => 20.16,
-        "af_S_v" => 21.3677,
-        "af_S_w" => 150.41,
-        "af_b_f" => 6.096,
-        "af_b_h" => 5.6388,
-        "af_b_v" => 4.7244,
-        "af_b_w" => 20.51304,
-        "af_S_f" => 11.1484,
-        "af_s" => 1.0,
-        "af_d_mg" => 0.9144,
-        "af_d_ng" => 0.82296,
-        "af_l_mg" => 2.286,
-        "af_l_ng" => 1.8288,
-        "af_n_mg" => 4.0,
-        "af_n_ng" => 2.0,
-        "af_N_mg" => 2.0,
-        "af_N_ng" => 1.0,
-        "c_d_g" => 0.0240,
-        "mu_r" => 0.0175,
-        "B_fan" => 25,
-        "V_fan" => 48,
-        "RSS_fan" => 300.0,
-        "M_d_fan" => 1.68,
-        "inc_F_n" => 0.25,
-        "TS_lower" => 0.65,
-        "TS_upper" => 1.0,
-        "af_clean_w" => true,
-        "af_clean_h" => false,
-        "af_clean_v" => true,
-        "af_delta_wing" => true,
-        "alpha_0" => 0
+        "mtow" => ac.parg[igWMTO]/gee,   #Max. take-off weight [kg]
+        "n_eng" => ac.parg[igneng], #Number of engines installed on the aircraft [-]
+        "comp_lst" => ["wing", "tail_h", "les", "tef", "lg"], #List of airframe components to include in noise analysis[-]
+        "af_S_h" => ac.parg[igSh],      #Horizontal tail area [m2]
+        "af_S_v" => ac.parg[igSv],        #Vertical tail area [m2]
+        "af_S_w" => ac.parg[igS],     #Wing area [m2]
+        "af_b_f" => 0.33*ac.parg[igb],      #Flap span [m]
+        "af_b_h" => ac.parg[igbh],     #Horizontal tail span [m]
+        "af_b_v" => ac.parg[igbv],     #Vertical tail span [m]
+        "af_b_w" => ac.parg[igb],       #Wing span [m]
+        "af_S_f" => 2*0.33*ac.parg[igb],#Flap area [m2]
+        "af_s" => 1.0,      #Number of slots for trailing-edge flaps (min. is 1) [-]
+        "af_d_mg" => nothing,        #Tire diameter of main landing gear [m]
+        "af_d_ng" => nothing,       #Tire diameter of nose landing gear [m]
+        "af_l_mg" => nothing,     #Main landing-gear strut length [m]
+        "af_l_ng" => nothing,        #Nose landing-gear strut length [m]
+        "af_n_mg" => nothing,       #Number of wheels per main landing gear [-]
+        "af_n_ng" => nothing,       #Number of wheels per nose landing gear [-]
+        "af_N_mg" => nothing,       #Number of main landing gear [-]
+        "af_N_ng" => nothing,       #Number of nose landing gear [-]
+        "c_d_g" => nothing,      #Landing gear drag coefficient [-]
+        "mu_r" => nothing,       #Rolling resistance coefficient [-]
+        "B_fan" => nothing,      #Number of fan blades [-]
+        "V_fan" => nothing,      #Number of fan vanes [-]
+        "RSS_fan" => nothing,     #Rotor-stator spacing [%]
+        "M_d_fan" => nothing,      #Relative tip Mach number of fan at design [-]
+        "inc_F_n" => nothing,      #Thrust inclination angle [deg]
+        "TS_lower" => 0.65,     # Min. power setting [-]
+        "TS_upper" => 1.0,      # Max. power setting [-]
+        "af_clean_w" => true,       #Flag for clean wing configuration [-]
+        "af_clean_h" => false,      #Flag for clean horizontal tail configuration [-]
+        "af_clean_v" => true,       #Flag for clean vertical tail configuration [-]
+        "af_delta_wing" => false,    #Flag for delta wing configuration [-]
+        "alpha_0" => 0              #Wing mounting angle [deg]
     )
 
     #pull sample file for defaults
@@ -179,9 +197,9 @@ pulls engine data from sized `aircraft` model, outputs for pyna consumption
 function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; case_name::String="tasopt_default")
 
     #determine range of parameters
-    alt_sample = collect(0:2000:4500) #in meters
+    alt_sample = collect(0:500:4500) #in meters
     M_sample = collect(0:0.25:0.5)   #[-]
-    TS_sample = collect(0.7:0.05:1.0)#T/Tmax (can't do past 1.0)
+    TS_sample = collect(0.6:0.05:1.0)#T/Tmax (can't do past 1.0)
     # Tt4_sample = collect(1500:100:2000) #in K, proxy for thrust setting (TS) bc tasopt doesn't size that way
     # Tt4_sample = [1800, 1800]
 
@@ -252,12 +270,6 @@ function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; cas
 
             #find maximum Fe at these conditions (for TS normalization)
 
-            
-
-
-
-
-
             #Set function to minimize, 
             #x will be Tt4, output will be Fe
             obj(x, grad) =  Fe_tcalc_eval(x, pari, parg, para, pare, ip, 1, icool, 0) #Minimize objective function
@@ -303,7 +315,7 @@ function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; cas
                 N1des = pare[ieNbfD]        #design condition, fan speed, corrected + dimensional 
                 # TS = N1c2/N1des #THIS IS NOT RIGHT. TEMP. TODO: find best way to ID the max thrust condition and speed
                 
-                #calculate relevant outputs
+            #calculate relevant outputs
                 rho8 = pare[iep8]/pare[ieR8]/pare[ieT8]
                 gam8 = 1/(1-pare[ieR8]/pare[iecp8])
                 M8 = pare[ieu8]/sqrt(gam8*pare[ieR8]*pare[ieT8])
