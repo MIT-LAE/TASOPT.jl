@@ -1,11 +1,12 @@
 """
-    find_mdot_time(t, parg, para, pare)
+    find_mdot_time(t, pari, parg, para, pare)
 
 This function outputs the fuel mass flow rate to the engines as a function of time for a TASOPT aircraft 
 model.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `t::Float64`: time in mission (s)
+    - `parg::Vector{Float64}`: vector with aircraft integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Array{Float64}`: array with aircraft aerodynamic parameters
     - `pare::Array{Float64}`: array with aircraft engine parameters
@@ -13,8 +14,11 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t, parg, para, pare)
-    mdots = pare[ieff, :,1] .* pare[iemcore, :,1] .* parg[igneng]
+function find_mdot_time(t, pari, parg, para, pare)
+    nftanks = pari[iinftanks]
+
+    #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
+    mdots = pare[ieff, :,1] .* pare[iemcore, :,1] .* parg[igneng] / nftanks
 
     times = para[iatime,:,1]
 
@@ -149,6 +153,30 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
     return Q
 end
 
+"""
+    analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 1000)
+
+This function analyses the evolution in time of a cryogenic tank inside a TASOPT aircraft model.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac_orig::aicraft`: TASOPT aircraft model
+    - `t_hold_orig::Float64`: hold at origin (s)
+    - `t_hold_dest::Float64`: hold at destination (s)
+    - `N::Int64`: number of points in integration
+    
+    **Outputs:**
+    - `ts::Vector{Float64}`: vector with times (s)
+    - `ps::Vector{Float64}`: vector with pressure evolution in time (Pa)
+    - `βs::Vector{Float64}`: vector with tank fill fraction evolution in time
+    - `Ms::Vector{Float64}`: vector with tank fuel mass evolution in time (kg)
+    - `Mburns::Vector{Float64}`: vector with cumulative mass burnt in engine (kg)
+    - `Mboils::Vector{Float64}`: vector with cumulative mass that has boiled off (kg)
+    - `mdot_boils::Vector{Float64}`: vector with evolution of boiloff mass flow rate in time (kg/s)
+    - `Mvents::Vector{Float64}`: vector with cumulative mass that has been vented (kg)
+    - `mdots::Vector{Float64}`: vector with fuel mass flow rate to engines (kg/s)
+    - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
+    
+"""
 function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 1000)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
@@ -171,7 +199,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     #Define functions for heat and fuel burn profiles through mission 
     Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)
     W_calc(t) = 0.0
-    mdot_calc(t) = find_mdot_time(t, ac.parg, para_alt, pare_alt)
+    mdot_calc(t) = find_mdot_time(t, ac.pari, ac.parg, para_alt, pare_alt)
 
     #Store profiles in input struct
     u = pressure_inputs(Q_calc, W_calc, mdot_calc)
