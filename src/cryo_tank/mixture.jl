@@ -1,7 +1,7 @@
 """
 Structure with thermodynamic parameters for the vapor portion of a saturated mixture.
 """
-@kwdef mutable struct SaturatedGas
+mutable struct SaturatedGas
     """Species name"""
     species::String
     """Saturated mixture temperature (K)"""
@@ -23,7 +23,7 @@ end
 """
 Structure with thermodynamic parameters for the liquid portion of a saturated mixture.
 """
-@kwdef mutable struct SaturatedLiquid
+mutable struct SaturatedLiquid
     """Species name"""
     species::String
     """Saturated mixture temperature (K)"""
@@ -45,7 +45,7 @@ end
 """
 Structure with thermodynamic properties of a saturated mixture.
 """
-@kwdef mutable struct SaturatedMixture
+mutable struct SaturatedMixture
     """Saturated vapor properties"""
     gas::SaturatedGas
     """Saturated liquid properties"""

@@ -1,7 +1,7 @@
 """
 Structure with parameters for tank pressure calculation.
 """
-@kwdef struct pressure_params
+struct pressure_params
     """Initial mixture in the tank"""
     mixture_init::SaturatedMixture
     """Tank volume (m^3)"""
@@ -19,7 +19,7 @@ end
 """
 Structure with inputs for tank pressure calculation.
 """
-@kwdef struct pressure_inputs
+struct pressure_inputs
     """Heat rate as a function of time (W)"""
     Q_calc::Function
     """Work rate as a function of time (W)"""
