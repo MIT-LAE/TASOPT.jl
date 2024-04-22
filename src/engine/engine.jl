@@ -16,6 +16,7 @@ export hxdesign!, hxweight
 
 include("../misc/index.inc")
 include("../misc/constants.jl")
+include("../utils/integration.jl")
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")
