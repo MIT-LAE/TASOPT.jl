@@ -1,7 +1,7 @@
 using TOML, DocStringExtensions
 
-__abs_path_prefix__ = dirname(@__DIR__)
-MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
+filepath = joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml")
+MaterialProperties = TOML.parsefile(filepath)
 
 """
 $TYPEDEF

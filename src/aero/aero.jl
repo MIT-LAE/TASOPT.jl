@@ -38,11 +38,8 @@ include("airfoil.jl")
 include("airtable.jl")
 include("airfun.jl")
 
-__abs_path_prefix__ = dirname(@__DIR__)
-airfoil_data = joinpath(__abs_path_prefix__,"airfoil_data/C.air")
-
+airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 airsection = airtable(airfoil_data);
-
 
 include("surfcd.jl")
 include("surfcm.jl")
