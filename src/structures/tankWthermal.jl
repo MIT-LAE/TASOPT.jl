@@ -1,9 +1,5 @@
 """
-      tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-      hconvgas::Float64,
-      t_cond::Array{Float64,1},
-      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
-      time_flight::Float64, ifuel::Int64, qfac::Float64)
+      tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
 `tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
 
@@ -13,21 +9,15 @@ for a given insulation thickness
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `l_cyl::Float64`: Length of cylindrical portion of the tank (m).
-      - `l_tank::Float64`: Tank total length (m).
-      - `r_tank::Float64`: Tank outer radius (m).
-      - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
-      - `material_insul::Array{String,1}`: material name for each MLI layer.
-      - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
-      - `Tfuel::Float64`: Fuel temperature (K).
+      - `fuse_tank::Struct`: structure with tank parameters.
       - `z::Float64`: flight altitude (m)
       - `Mair::Float64`: external air Mach number
       - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
       - `time_flight::Float64`: Time of flight (s).
       - `ifuel::Int64`: fuel index.
-      - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
-
+      
       **Outputs:**
+      - `Q::Float64`: Heat transfer rate into the tank (W).
       - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
       - `mdot_boiloff::Float64`: Boil-off rate of LH2 (kg/s).
 
@@ -81,7 +71,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       mdot_boiloff = Q / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
       m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
       
-      return  m_boiloff, mdot_boiloff
+      return  Q, m_boiloff, mdot_boiloff
 end
 
 """
