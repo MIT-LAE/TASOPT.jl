@@ -1,9 +1,6 @@
 using TOML
 export read_aircraft_model, load_default_model
 
-include("size_cabin.jl")
-#using ..structures
-
 """
     read_input(k::String, dict::AbstractDict=data, 
     default_dict::AbstractDict = default)
