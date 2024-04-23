@@ -11,7 +11,7 @@ using ..engine
 using NLsolve
 using Roots
 using NLopt
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, place_cabin_seats
 
 export surfw, surfdx, fusew, tailpo, tanksize!, update_fuse!, update_fuse_for_pax!
 
