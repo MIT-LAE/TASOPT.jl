@@ -11,11 +11,11 @@ using TASOPT
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
-include(joinpath(TASOPT.__TASOPTroot__, &quot;./src/misc/index.inc&quot;))
+include(__TASOPTindices__)
 # import indices for calling parameters
 
 # Load aircraft using default module
-ac = TASOPT.read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, &quot;../example/PRD_input.toml&quot;))
+ac = TASOPT.read_aircraft_model(joinpath(__TASOPTroot__, &quot;../example/PRD_input.toml&quot;))
 time_wsize = @elapsed size_aircraft!(ac)</code></pre><p>One way is to call the <code>PayloadRange</code> function:</p><pre><code class="language-julia hljs">TASOPT.PayloadRange(ac)</code></pre><p>If you want a more customizable diagram, first initialize some variables for mission range and payloads</p><pre><code class="language-julia hljs"># Make an array of ranges to plot
 RangeArray = ac.parm[imRange] * LinRange(0.1,1.2,Rpts)
 # Store constant values to compare later
@@ -71,4 +71,4 @@ ax.legend()
 ax.set_title(&quot;Payload Range Plot&quot;)
 ax.grid()
 
-fig.savefig(&quot;./PayloadRangeExample.png&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../loadingrunning/">« Loading and running</a><a class="docs-footer-nextpage" href="../optimization/">Multivariable optimization »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.0 on <span class="colophon-date" title="Tuesday 16 April 2024 22:04">Tuesday 16 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+fig.savefig(&quot;./PayloadRangeExample.png&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../loadingrunning/">« Loading and running</a><a class="docs-footer-nextpage" href="../optimization/">Multivariable optimization »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.0 on <span class="colophon-date" title="Tuesday 23 April 2024 16:04">Tuesday 23 April 2024</span>. Using Julia version 1.10.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
