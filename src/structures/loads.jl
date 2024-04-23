@@ -8,7 +8,7 @@ const ĵ = SA[0.0, 1.0, 0.0]
 const k̂ = SA[0.0, 0.0, 1.0]
 
 next_id = Ref(0)
-struct frame
+struct Frame
     """some way of id'ing this frame"""
     id::Int64
     """name of frame"""
@@ -16,7 +16,7 @@ struct frame
     """Origin of this frame"""
     origin::SVector{3, Float64}
 
-    function frame(name::String, origin::AbstractVector)
+    function Frame(name::String, origin::AbstractVector)
         instance = new(next_id.x, name, origin)
         next_id.x = next_id.x + 1
         return instance
@@ -27,14 +27,14 @@ struct frame
 
     Creates a frame with default origin at global origin.
     """
-    function frame(name::String)
+    function Frame(name::String)
         instance = new(next_id.x, name, SA[0.0, 0.0, 0.0])
         next_id.x += 1
         return instance
     end
 end
 
-const WORLD = frame("World Frame")
+const WORLD = Frame("World Frame")
 
 """
 $TYPEDEF
