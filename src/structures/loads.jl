@@ -3,6 +3,10 @@ using LinearAlgebra
 abstract type AbstractLoad end
 
 # Direction Vectors
+const î = SA[1.0, 0.0, 0.0]
+const ĵ = SA[0.0, 1.0, 0.0]
+const k̂ = SA[0.0, 0.0, 1.0]
+
 next_id = Ref(0)
 struct frame
     """some way of id'ing this frame"""
