@@ -29,6 +29,8 @@ makedocs(
         "structures/fuselage.md",
         "structures/fueltanks.md"
         ],
+    "Cryogenic tanks" => Any["cryo_tank/cryotank.md"
+        ],
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
             "propulsion/gascalc.md",
