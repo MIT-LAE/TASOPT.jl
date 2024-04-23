@@ -7,6 +7,7 @@ aerodynamics = TASOPT.aerodynamics
 structures = TASOPT.structures
 engine = TASOPT.engine
 aircraft = TASOPT.aircraft
+CryoTank = TASOPT.CryoTank
 
 makedocs(
     repo = Documenter.Remotes.GitHub("MIT-LAE", "TASOPT.jl"),
