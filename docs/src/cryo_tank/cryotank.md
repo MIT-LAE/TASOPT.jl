@@ -1,4 +1,4 @@
-# [Homogeneous model of a cryogenic tank](@id CryoTank)
+# [Homogeneous model](@id CryoTank)
 
 In a tank containing a boiling liquid, such as a cryogenic liquid that has reached its saturation point, two fluid states exist: a liquid phase and a gas phase (or vapor). In a real tank, there would be some level of stratification leading to temperature differences between the two phases, which exist at the same pressure. This section describes the models used to simulate the evolution in time of the conditions inside a cryogenic tank. It is based on the homogeneous tank model[^1][^2][^3], which treats the fluid inside the tank as a well-mixed saturated mixture at homogeneous temperature and pressure.
 

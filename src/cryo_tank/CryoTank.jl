@@ -1,18 +1,31 @@
 """
-`CryoTank` is a module that contains a homogeneous pressure model of a cryogenic tank.
+`CryoTank` is a module that contains the structural, thermal and energy models of a cryogenic tank.
 """
 module CryoTank
 
-using ..structures
+using ..engine
+using ..atmosphere
+using NLsolve
+using Roots
+using NLopt
 
-export SaturatedMixture
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-include("../misc/index.inc")
+export SaturatedMixture, tanksize!
+
+include(__TASOPTindices__)
 include("../misc/constants.jl")
 include("../utils/integration.jl")
+
+include("tankWmech.jl")
+include("tankWthermal.jl")
+include("tanksize.jl")
+
 include("mixture.jl")
 include("fuel_thermo.jl")
 include("pressure.jl")
 include("tanktools.jl")
+
+
 
 end

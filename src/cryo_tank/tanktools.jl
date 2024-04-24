@@ -72,7 +72,7 @@ function calc_Q_points(fuse_tank, pari, parg, para)
         t = para[iatime, ip, 1]
 
         #Calculate heat rate at this point
-        Qs[ip], _, _ = structures.tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
+        Qs[ip], _, _ = tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
        
     end
     return Qs
@@ -142,7 +142,7 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
             M0 = para[iaMach, ip, 1]
             z0 = para[iaalt, ip, 1]
 
-            Q, _, _ = structures.tankWthermal(fuse_tank, z0, M0, xftank, t, ifuel)
+            Q, _, _ = tankWthermal(fuse_tank, z0, M0, xftank, t, ifuel)
         elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
@@ -156,7 +156,7 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
             z = z0 + (zf - z0)/(tf-t0) * (t - t0)
 
             #Calculate heat rate at this point
-            Q, _, _ = structures.tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
+            Q, _, _ = tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
         end
     end
     return Q
