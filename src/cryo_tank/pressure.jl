@@ -225,6 +225,8 @@ vented out in time and the total vented mass at the end.
 function calculate_boiloff_rate(times, Mboil_vec)
     mdot_boil = zeros(length(times))
     mdot_boil[1:(end - 1)] = diff(Mboil_vec) ./ diff(times)
-    mdot_boil[end] = mdot_boil[end - 1]
+    if length(mdot_boil) > 1 #Only do this if the vector has more than one element
+        mdot_boil[end] = mdot_boil[end - 1]
+    end
     return mdot_boil
 end

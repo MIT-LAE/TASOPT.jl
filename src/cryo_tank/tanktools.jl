@@ -24,7 +24,9 @@ function find_mdot_time(t, pari, parg, para, pare)
 
     mdot = 0.0
     for ip = 1:(length(times)-1) 
-        if (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
+        if t ≈ times[ip]
+            mdot = mdots[ip]
+        elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip] #Time at start of segment
             tf = times[ip+1] #Time at end of segment	
 
@@ -95,7 +97,9 @@ function find_Q_time_interp(t, para, Qs)
 
     Q = 0.0
     for ip = 1:(length(times)-1)
-        if (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
+        if t ≈ times[ip]
+            Q = Qs[ip]
+        elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
             Q0 = Qs[ip]
@@ -134,7 +138,12 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
 
     Q = 0.0
     for ip = 1:(length(times)-1)
-        if (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
+        if t ≈ times[ip]
+            M0 = para[iaMach, ip, 1]
+            z0 = para[iaalt, ip, 1]
+
+            Q, _, _ = structures.tankWthermal(fuse_tank, z0, M0, xftank, t, ifuel)
+        elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
             M0 = para[iaMach, ip, 1]
@@ -154,7 +163,30 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
 end
 
 """
-    analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 1000)
+    generate_time_vector(time_p, N)
+
+This function produces the vector that is used in the time integration of the tank properties.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `time_p::Vector{Float64}`: time in missio points (s)
+    - `N::Int64`: number of points per mission segment
+
+    **Outputs:**
+    - `ts::Vector{Float64}`: time vector (s)
+"""
+function generate_time_vector(time_p, N)
+    Ntpoints = (length(time_p) - 2) * N #number of points in vector
+    ts = zeros(Ntpoints) #initialize vector with times
+
+    for ip = 1:(length(time_p) - 2) #fore every mission point except iptest
+        ts[((ip-1)*N + 1):(ip*N)] .= LinRange(time_p[ip], time_p[ip+1], N)
+    end
+    ts = unique(ts) #remove repeated points
+    return ts
+end
+
+"""
+    analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
 
 This function analyses the evolution in time of a cryogenic tank inside a TASOPT aircraft model.
 !!! details "🔃 Inputs and Outputs"
@@ -162,7 +194,7 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `ac_orig::aicraft`: TASOPT aircraft model
     - `t_hold_orig::Float64`: hold at origin (s)
     - `t_hold_dest::Float64`: hold at destination (s)
-    - `N::Int64`: number of points in integration
+    - `N::Int64`: number of points in integration per mission segment
     
     **Outputs:**
     - `ts::Vector{Float64}`: vector with times (s)
@@ -177,7 +209,7 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
     
 """
-function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 1000)
+function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times
@@ -235,7 +267,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
 
     #Integrate profiles across mission
     y0 = [p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
-    ts = LinRange(0,maximum(para_alt[iatime,:,1]) - 1.0, N) #Vector with mission times, subtract one second in the end
+    ts = generate_time_vector(para_alt[iatime,:,1], N) #produce vector with times
 
     dy_dx(t, y, u, p) = TankDerivatives(t, y, u, p) #State derivatives
     y, _ = RK4(dy_dx, ts, y0, u, params) #Find the state evolution in time by integration
@@ -249,8 +281,8 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     Mboils = y[6, :] #Cumulative mass that has been boiled off evolution
     mdot_boils = calculate_boiloff_rate(ts, Mboils) #Calculate boiloff rate
     
-    mdots = zeros(N)
-    Qs = zeros(N)
+    mdots = zeros(length(ts))
+    Qs = zeros(length(ts))
     for (i,t) in enumerate(ts)
         mdots[i] = mdot_calc(t) #Fuel burn mass flow rate
         Qs[i] = Q_calc(t) #Heat transfer rate into tank
