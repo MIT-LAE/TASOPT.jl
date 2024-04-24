@@ -379,7 +379,7 @@ function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_ou
       a_outer = 0.9 
       a_inner = 1.0
       ε = 0.04    # highly polished aluminum
-      p_vacuum = 1e-3 #Assumed vacuum pressure #TODO maybe make this an input?
+      p_vacuum = 1e-2 #Assumed vacuum pressure, approximately 1e-4 Torr as in Brewer (1991) #TODO maybe make this an input?
 
       Rgas = 287.05  # specific gas constant
       gamma = 1.4

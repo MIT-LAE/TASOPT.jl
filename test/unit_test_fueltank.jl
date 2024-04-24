@@ -88,7 +88,7 @@ fuse_tank.Wfuelintank = 1e5
         outputs_vac_size = TASOPT.structures.tanksize!(fuse_tank, z, Mair, xftank,
                                             time_flight,
                                             ifuel)
-        outputs_vac_size_check = (0.0022166022747804252, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
+        outputs_vac_size_check = (0.0033910091045382226, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
         
         for i in 1:length(outputs_vac_size)
             @test outputs_vac_size[i] ≈ outputs_vac_size_check[i]
@@ -160,7 +160,7 @@ fuse_tank.Wfuelintank = 1e5
 
         Taw = outputs_free_check[3]
         Rvac = TASOPT.structures.vacuum_resistance(fuse_tank.Tfuel, Taw, 90.0, 100.0)
-        Rvac_check = 0.5408710346147904
+        Rvac_check = 0.35637094066735286
 
         @test Rvac ≈ Rvac_check
     end
