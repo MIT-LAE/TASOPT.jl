@@ -11,13 +11,11 @@ next_id = Ref(0)
 struct Frame
     """some way of id'ing this frame"""
     id::Int64
-    """name of frame"""
-    Name::String
     """Origin of this frame"""
     origin::SVector{3, Float64}
 
-    function Frame(name::String, origin::AbstractVector)
-        instance = new(next_id.x, name, origin)
+    function Frame(origin::AbstractVector)
+        instance = new(next_id.x, origin)
         next_id.x = next_id.x + 1
         return instance
     end
@@ -27,14 +25,15 @@ struct Frame
 
     Creates a frame with default origin at global origin.
     """
-    function Frame(name::String)
-        instance = new(next_id.x, name, SA[0.0, 0.0, 0.0])
+    function Frame()
+        instance = new(next_id.x, SA[0.0, 0.0, 0.0])
         next_id.x += 1
         return instance
     end
 end
 
-const WORLD = Frame("World Frame")
+const WORLD = Frame()
+
 
 """
 $TYPEDEF
