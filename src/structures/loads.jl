@@ -34,6 +34,68 @@ end
 
 const WORLD = Frame()
 
+@kwdef struct Weight <: AbstractLoad
+    """Weight [N]"""
+    W::Float64
+    """Location {x,y,z} [m]"""
+    r::SVector{3, Float64} = SA[0.0,0.0,0.0]
+    """Coordinate Frame"""
+    frame::Frame = WORLD
+end
+function Weight(W::Float64, r::AbstractVector)
+    Weight(W, r, WORLD)
+end  # function Weight
+
+function Weight(W::Float64; x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+    Weight(W, SA[x,y,z], frame)
+end
+
+import Base.+
+
+function +(W1::T, W2::T) where T<:Weight
+    W1.frame == W2.frame || error("Cannot add weights in different frames")
+    total_W = W1.W + W2.W
+    Weight(total_W, (W1.r*W1.W + W2.r*W2.W)/total_W)
+end  # function +
+
+"""
+    center_of_weight(W_array::AbstractArray{Weight})
+
+Calculates the coordinates of the center of mass/weight and returns a `Weight`
+type of the equivalent weight and at the center of mass.
+
+Note: This is notably faster than doing `sum(W_array)`.
+"""
+function center_of_weight(W_array::AbstractArray{Weight}, frame::Frame = WORLD)
+    total_weight = 0.0
+
+    ## The following three SVector definitions are all aliases:
+    # r̄ = SA[0.0, 0.0, 0.0]
+    # r̄ = SVector{3}(0.0, 0.0, 0.0)
+    r̄ = SArray{Tuple{3}}(0.0, 0.0, 0.0)
+
+    for weight in W_array
+        weight.frame == frame || error("Weights not in same frame $weight")
+        total_weight += weight.W
+        r̄ = r̄ + weight.W * weight.r
+    end
+    return Weight(W = total_weight, r = r̄./total_weight)
+end
+
+
+"""
+    moment(weight::Weight)
+
+Specialized `moment` function for `Weight`s
+"""
+function moment(weight::Weight)
+    #Weight always points in -z direction
+    SA[x_moment(weight), y_moment(weight), z_moment(weight)]
+end  # function moment
+
+x_moment(weight::Weight) = - weight.W * weight.r[2]
+y_moment(weight::Weight) = + weight.W * weight.r[1] # + comes from - * -
+z_moment(weight::Weight) = 0.0
 
 """
 $TYPEDEF
