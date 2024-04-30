@@ -2,7 +2,7 @@ module atmosphere
 export atmos
 
 """
-    atmos(h)
+    atmos(h, Tground)
     
 Atmospheric functions ` T(h)`, `ρ(h)` etc
 valid to `h`=20km, `p(h)` valid to `h`=70km.
@@ -17,7 +17,7 @@ Units:
 - [a]   = m/s
 - [μ]   = kg/m-s 
 """
-function atmos(h)
+function atmos(h::Float64, Tground::Float64 = 288.2)
 
  pSL = 1.0132e5 # Pa
  TSL    = 288.2    # K
@@ -31,7 +31,10 @@ function atmos(h)
  cp  = 1004.0   # J/kg-K
  ɣ = 1.4 
  
- T = log(1.0+exp((TSL+Tlapse*h-Tpause)/Tblend))*Tblend + Tpause
+ ΔT = Tground - TSL
+ Tstd = log(1.0+exp((TSL+Tlapse*h-Tpause)/Tblend))*Tblend + Tpause
+ T = Tstd + ΔT
+ 
  p = pSL*exp( - 0.11800*h /(1.0 + 0.0020*h) - 0.00198*h^2/(1.0 + 0.0006*h^2) )
  ρ = ɣ*p/((ɣ-1.0)*cp*T)
  a = sqrt(ɣ*p/ρ)
