@@ -280,6 +280,11 @@ function wsize(ac; itermax=35,
     # nacelle wetted area / fan area ratio
     rSnace = parg[igrSnace]
 
+    #Calculate sea level temperature corresponding to TO conditions
+    altTO = parm[imaltTO] 
+    T_std,_,_,_,_ = atmos(altTO/1e3)
+    parm[imTSL] = Tref + (parm[imT0TO] - T_std) #sea level temperature such that T(altTO) = T0TO
+
     # set cruise-altitude atmospheric conditions
     set_ambient_conditions!(ac, ipcruise1)
 
@@ -1571,8 +1576,9 @@ Sets ambient condition at the given mission point `mis_point`.
 """
 function set_ambient_conditions!(ac, mis_point, Mach=NaN)
     mis_point = mis_point
+    TSL = ac.parmd[imTSL]
     altkm = ac.parad[iaalt, mis_point]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
+    T0, p0, ρ0, a0, μ0 = atmos(altkm, TSL)
     if Mach === NaN
         Mach = ac.parad[iaMach, mis_point]
     end
