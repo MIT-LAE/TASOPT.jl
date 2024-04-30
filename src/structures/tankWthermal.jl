@@ -241,6 +241,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `material::Array{String} `: array with material names for different insulation layers
     - `Tfuel::Float64`: fuel temperature (K)
     - `z::Float64`: flight altitude (m)
+    - `TSL::Float64`: sea-level temperature (K)
     - `Mair::Float64`: external air Mach number
     - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
     - `ifuel::Int64`: fuel species index
@@ -302,7 +303,7 @@ function tank_heat_coeff(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Floa
 end
 
 """
-      freestream_heat_coeff(z, M, xftank)
+      freestream_heat_coeff(z, TSL, M, xftank, Tw)
 
 This function calculates the air-side heat transfer coefficient, which is assumed to be that of a freestream 
 in forced convection at a given altitude. The freestream temperature is also returned. Heat transfer is modeled via the
@@ -312,6 +313,7 @@ of Aerodynamics.
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `z::Float64`: flight altitude (m).
+      - `TSL::Float64`: sea-level temperature (K)
       - `M::Float64`: freestream Mach number.
       - `xftank::Float64`: longitudinal position of the fuel tank CG (m).
       - `Tw::Float64`: wall temperature (K).

@@ -7,7 +7,8 @@ export atmos
 Atmospheric functions ` T(h)`, `ρ(h)` etc
 valid to `h`=20km, `p(h)` valid to `h`=70km.
 
-Also calculates viscosity using Sutherland's law.
+Also calculates viscosity using Sutherland's law. Non-standard sea-level temperatures are allowed
+with an ISA + ΔT like model.
 
 Units:
 - [h]   = km ASL
@@ -20,7 +21,7 @@ Units:
 function atmos(h::Float64, TSL::Float64 = 288.2)
 
  pSL = 1.0132e5 # Pa
- TSL_std    = 288.2    # K
+ TSL_std    = 288.2    # K, standard sea level temperature
  Tpause = 216.65   # K
  Tblend = 2.0      # K (tropopause blending T range)
  Tlapse = -6.5     # K/km
