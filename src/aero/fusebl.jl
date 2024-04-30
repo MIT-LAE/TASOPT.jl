@@ -17,6 +17,7 @@ which are defined by the various geometric parameters in `parg`.
       - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
       - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
       - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `parm::AbstractArray{Float64}`: Vector of `aircraft` model mission parameters.
       - `ip::Integer`: Index of flight point in `par` arrays.
       
       **Outputs:**
