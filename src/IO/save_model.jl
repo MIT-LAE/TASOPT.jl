@@ -622,7 +622,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         @printf(io, "# Geometry - stored in parg array:\n")
         @printf(io, "# --------------------------------\n")
         for (i,val) in enumerate(parg)
-            @printf(io, "parg[%d] = %20f # %s\n", i, val, iglabels[i] )
+            @printf(io, "parg[%d] = %20f # %s\n", i, val, i<291 ? iglabels[i] : "" )
         end
 
         @printf(io, "# --------------------------------\n")
@@ -652,7 +652,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "pare[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%f, ", pare[i, j])
+                @printf(io, "%20f, ", pare[i, j])
             end
             @printf(io, "]\n")
         end

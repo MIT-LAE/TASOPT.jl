@@ -19,9 +19,7 @@ A sized aircraft's mission performance can be obtained (`mission!`), along with 
 ```@docs
 TASOPT.mission!(pari, parg, parm, para, pare, Ldebug)
 
-TASOPT.takeoff!(pari, parg, parm, para, pare,
-    initeng,
-    ichoke5, ichoke7)
+TASOPT.takeoff!(ac, initeng, ichoke5, ichoke7)
 
 TASOPT.balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
 
