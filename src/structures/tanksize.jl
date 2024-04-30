@@ -1,5 +1,5 @@
 """
-        tanksize!(fuse_tank, z, Mair, xftank,
+        tanksize!(fuse_tank, z, TSL, Mair, xftank,
         time_flight, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
@@ -8,6 +8,7 @@
         **Inputs:**
         - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
         - `z::Float64`: flight altitude (m)
+        - `TSL::Float64`: sea-level temperature (K)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `ifuel::Int64`: fuel index.
@@ -100,7 +101,7 @@ function tanksize!(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::F
 end
 
 """
-        res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
+        res_MLI_thick(x, fuse_tank, z, TSL, Mair, xftank, ifuel)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -110,6 +111,7 @@ insulation interface temperatures.
         - `x::Float64`: vector with states
         - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
         - `z::Float64`: flight altitude (m)
+        - `TSL::Float64`: sea-level temperature (K)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `ifuel::Int64`: fuel index.
