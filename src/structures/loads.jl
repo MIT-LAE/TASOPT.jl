@@ -8,6 +8,13 @@ const ĵ = SA[0.0, 1.0, 0.0]
 const k̂ = SA[0.0, 0.0, 1.0]
 
 next_id = Ref(0)
+"""
+$(TYPEDEF)
+
+Represents a coordinate frame at `origin` w.r.t. the WORLD frame.
+
+$(TYPEDFIELDS)
+"""
 struct Frame
     """some way of id'ing this frame"""
     id::Int64
@@ -32,8 +39,17 @@ struct Frame
     end
 end
 
+#WORLD is a privileged global frame.
 const WORLD = Frame()
 
+"""
+$(TYPEDEF) 
+
+Represents a weight at a given location `r` with respect to a 
+specified coordinagte `frame`
+
+$(TYPEDFIELDS)
+"""
 @kwdef struct Weight <: AbstractLoad
     """Weight [N]"""
     W::Float64
@@ -42,11 +58,21 @@ const WORLD = Frame()
     """Coordinate Frame"""
     frame::Frame = WORLD
 end
+
+"""
+$(TYPEDSIGNATURES)
+"""
 function Weight(W::Float64, r::AbstractVector)
     Weight(W, r, WORLD)
 end  # function Weight
 
-function Weight(W::Float64; x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+"""
+    Weight(W::Float64; x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+
+$(TYPEDSIGNATURES)
+
+"""
+function Weight(;W::Float64, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
     Weight(W, SA[x,y,z], frame)
 end
 
@@ -87,12 +113,19 @@ end
     moment(weight::Weight)
 
 Specialized `moment` function for `Weight`s
+    ┌─  ─┐   ┌─  ─┐ ┌─  ─┐   ┌─  ─┐ ┌─  ─┐   ┌─     ─┐   ┌─      ─┐  
+    │ Mx │   │ rx │ │ Fx │   │ rx │ │ 0. │   │ ry*Fz │   │ -ry|W| │  
+    │ My │ = │ ry │x│ Fy │ = │ ry │x│ 0. │ = │-rx*Fz │ = │ +rx|W| │   
+    │ Mz │   │ rz │ │ Fz │   │ rz │ │ Fz │   │  0.0  │   │   0.0  │  
+    └─  ─┘   └─  ─┘ └─  ─┘   └─  ─┘ └─  ─┘   └─     ─┘   └─      ─┘                            
+
 """
 function moment(weight::Weight)
     #Weight always points in -z direction
     SA[x_moment(weight), y_moment(weight), z_moment(weight)]
 end  # function moment
 
+# Key assumption here is that weights are always forces in the -z direction.
 x_moment(weight::Weight) = - weight.W * weight.r[2]
 y_moment(weight::Weight) = + weight.W * weight.r[1] # + comes from - * -
 z_moment(weight::Weight) = 0.0
@@ -107,8 +140,8 @@ $TYPEDFIELDS
 @kwdef struct PointLoad <: AbstractLoad
     """Point force F̲ = {Fx, Fy, Fz} [N]"""
     force::AbstractVector{Float64} = [0, 0, 0]
-    """Origin of reference frame where load is applied [m]"""
-    origin::AbstractVector{Float64} = [0,0,0]
+    """Reference frame"""
+    frame::Frame = WORLD
     """Centroid (position) of applied force {x, y, z} [m]"""
     r::AbstractVector{Float64}
 end
@@ -127,8 +160,8 @@ $TYPEDFIELDS
     x1::AbstractVector{Float64} = [0,0,0]
     """End location of load [m]"""
     x2::AbstractVector{Float64} = [1,0,0]
-    """Origin of reference frame where load is applied [m]"""
-    origin::AbstractVector{Float64} = [0,0,0]
+    """Reference frame"""
+    frame::Frame = WORLD
 end
 
 function Base.getproperty(L::UniformLoad, sym::Symbol)
@@ -145,7 +178,9 @@ end
 function Base.show(io::IO, L::AbstractLoad)
     fx,fy,fz = L.force
     x,y,z = L.r
+    xo,yo,zo = L.frame.origin
     println(typeof(L))
+    print("o̲ = ", xo, "î + ",yo, "ĵ + ", zo,"k̂ m\n")
     print("F̲ = ", fx, "î + ",fy, "ĵ + ", fz,"k̂ N\n")
     print("r̲ = ", x, "î + ",y, "ĵ + ", z,"k̂ m")
 end 
@@ -165,7 +200,7 @@ end  # function moment
 Calculates the moment arm of a given load `L` about the `origin` of that load.
 """
 function moment_arm(L::AbstractLoad)
-    return L.r - L.origin
+    return L.r - L.frame.origin
 end  # function moment_arm
 
 """
