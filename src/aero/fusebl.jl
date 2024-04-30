@@ -29,7 +29,7 @@ See also [`blax`](@ref) and [`axisol!`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function fusebl!(pari, parg, para, ip)
+function fusebl!(pari, parg, para, parm, ip)
       
 #     nc,     # number of control points for fuselage potential-flow problem
 #     nbl,    # number of BL+wake points
@@ -70,7 +70,8 @@ function fusebl!(pari, parg, para, ip)
 
       Mach  = para[iaMach, ip]
       altkm = para[iaalt, ip]/1000.0
-      T0,p0,rho0,a0,mu0 = atmos(altkm) #get atmospheric parameters
+      TSL = parm[imTSL] #sea-level temperature
+      T0,p0,rho0,a0,mu0 = atmos(altkm, TSL) #get atmospheric parameters
     
       Reunit = Mach*a0 * rho0/mu0
 

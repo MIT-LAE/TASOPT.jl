@@ -73,8 +73,23 @@ function wsize(ac; itermax=35,
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
+    #Calculate sea level temperature corresponding to TO conditions
+    altTO = parm[imaltTO] 
+    T_std,_,_,_,_ = atmos(altTO/1e3)
+    TSL = Tref + (parm[imT0TO] - T_std) #sea level temperature such that T(altTO) = T0TO
+    parm[imTSL] = TSL
+
+    # set cruise-altitude atmospheric conditions
+    set_ambient_conditions!(ac, ipcruise1)
+
+    # set takeoff-altitude atmospheric conditions
+    set_ambient_conditions!(ac, iprotate, 0.25)
+
+    # Set atmos conditions for top of climb
+    set_ambient_conditions!(ac, ipclimbn)
+
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
+    time_fusebl = @elapsed fusebl!(pari, parg, para, parm, ipcruise1)
     # println("Fuse bl time = $time_fusebl")
     # Kinetic energy area at T.E.
     KAfTE = para[iaKAfTE, ipcruise1]
@@ -279,21 +294,6 @@ function wsize(ac; itermax=35,
 
     # nacelle wetted area / fan area ratio
     rSnace = parg[igrSnace]
-
-    #Calculate sea level temperature corresponding to TO conditions
-    altTO = parm[imaltTO] 
-    T_std,_,_,_,_ = atmos(altTO/1e3)
-    TSL = Tref + (parm[imT0TO] - T_std) #sea level temperature such that T(altTO) = T0TO
-    parm[imTSL] = TSL
-
-    # set cruise-altitude atmospheric conditions
-    set_ambient_conditions!(ac, ipcruise1)
-
-    # set takeoff-altitude atmospheric conditions
-    set_ambient_conditions!(ac, iprotate, 0.25)
-
-    # Set atmos conditions for top of climb
-    set_ambient_conditions!(ac, ipclimbn)
 
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
@@ -1241,7 +1241,7 @@ function wsize(ac; itermax=35,
 
             # Update fuselage according to tank requirements
             update_fuse!(pari, parg) #update fuselage length to accommodate tank
-            fusebl!(pari, parg, para, ipcruise1) #Recalculate fuselage bl properties
+            fusebl!(pari, parg, para, parm, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
             # Kinetic energy area at T.E.
