@@ -283,7 +283,8 @@ function wsize(ac; itermax=35,
     #Calculate sea level temperature corresponding to TO conditions
     altTO = parm[imaltTO] 
     T_std,_,_,_,_ = atmos(altTO/1e3)
-    parm[imTSL] = Tref + (parm[imT0TO] - T_std) #sea level temperature such that T(altTO) = T0TO
+    TSL = Tref + (parm[imT0TO] - T_std) #sea level temperature such that T(altTO) = T0TO
+    parm[imTSL] = TSL
 
     # set cruise-altitude atmospheric conditions
     set_ambient_conditions!(ac, ipcruise1)
@@ -722,7 +723,7 @@ function wsize(ac; itermax=35,
         parg[igcabVol] = cabVol
 
         # Use cabin volume to get actual buoyancy weight
-        ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
+        ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * Tref)
         WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * cabVol
         # Total max Takeoff weight (MTOW)
 
@@ -1198,11 +1199,12 @@ function wsize(ac; itermax=35,
             ifuel = pari[iifuel]
             M_inf = para[iaMach, ipcruise1]
             z_alt = para[iaalt, ipcruise1]
+            TSL = parm[imTSL]
             
             #Fuel tank design
             fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
             
-            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse_tank, z_alt, M_inf, xftank_heat,
+            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse_tank, z_alt, TSL, M_inf, xftank_heat,
             time_flight, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank

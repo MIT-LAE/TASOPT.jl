@@ -33,7 +33,7 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+function tankWthermal(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
@@ -53,11 +53,12 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.material = fuse_tank.material_insul
       p.Tfuel = Tfuel
       p.z = z
+      p.TSL = TSL
       p.Mair = Mair
       p.xftank = xftank
       p.ifuel = ifuel
 
-      _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature
+      _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
@@ -124,12 +125,13 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       material = p.material
       Tfuel = p.Tfuel
       z = p.z
+      TSL = p.TSL
       Mair = p.Mair
       xftank = p.xftank
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
-      hconvair, _, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
+      hconvair, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank, Tfuse)
   
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
@@ -253,6 +255,7 @@ mutable struct thermal_params
       material::Array{String}
       Tfuel::Float64
       z::Float64
+      TSL::Float64
       Mair::Float64
       xftank::Float64
       ifuel::Int64
@@ -318,9 +321,9 @@ of Aerodynamics.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
+function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
       #Use ISA function to calculate freestream conditions
-      Tair, p, _, a, _ = atmos(z / 1e3)
+      Tair, p, _, a, _ = atmos(z / 1e3, TSL)
       u = M * a #freestrean velocity
 
       #Assumed parameters for air
