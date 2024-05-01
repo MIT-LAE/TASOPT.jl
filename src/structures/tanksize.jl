@@ -8,7 +8,6 @@
         **Inputs:**
         - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
         - `z::Float64`: flight altitude (m)
-        - `TSL::Float64`: sea-level temperature (K)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `ifuel::Int64`: fuel index.
@@ -23,7 +22,7 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize!(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64,
+function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64)
 
         #Unpack variables in fuse_tank
@@ -31,6 +30,7 @@ function tanksize!(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::F
         Wfuel = fuse_tank.Wfuelintank
         Tfuel = fuse_tank.Tfuel
         flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
+        TSL = fuse_tank.TSLtank
 
         if flag_size #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
@@ -42,7 +42,7 @@ function tanksize!(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::F
                 ΔT = Taw - Tfuel
 
                 #Create inline function with residuals as a function of x
-                residual(x) = res_MLI_thick(x, fuse_tank, z, TSL, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
+                residual(x) = res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
                 guess = zeros(length(t_cond) + 2) 
@@ -65,7 +65,7 @@ function tanksize!(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::F
                 m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
                 
         else #If insulation does not need to be sized
-                m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, TSL, Mair, xftank, time_flight, ifuel)
+                m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
         
         thickness_insul = sum(t_cond)
@@ -111,7 +111,6 @@ insulation interface temperatures.
         - `x::Float64`: vector with states
         - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
         - `z::Float64`: flight altitude (m)
-        - `TSL::Float64`: sea-level temperature (K)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `ifuel::Int64`: fuel index.
@@ -119,7 +118,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate
@@ -129,6 +128,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, TSL::Float64, 
         Tfuel = fuse_tank.Tfuel
         Wfuel = fuse_tank.Wfuelintank
         h_v = fuse_tank.hvap #heat of vaporization
+        TSL = fuse_tank.TSLtank
 
         # Extract states
         Δt = x[1]
