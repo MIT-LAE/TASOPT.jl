@@ -48,7 +48,7 @@ with a fall back to the default `aircraft` definition
 provided in \"src/IO/default_input.toml\""
 
 !!! note "Deviating from default"
-    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+    Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
     from the default functionality. Thorough knowledge of the model is required.
 
 # Examples
