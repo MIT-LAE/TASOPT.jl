@@ -1,7 +1,6 @@
 #Sample parameters
 ifuel = 40
 z = 11e3
-TSL = 288.2
 Mair = 0.8
 xftank = 15.0
 time_flight = 7*3600.0
@@ -12,6 +11,7 @@ fuse_tank.dRfuse = 0.3
 fuse_tank.wfb = 0.0
 fuse_tank.nfweb = 1.0
 fuse_tank.clearance_fuse = 0.1
+fuse_tank.TSLtank = 288.2
 
 fuse_tank.ptank = 2e5
 fuse_tank.ARtank = 2.0
@@ -43,7 +43,7 @@ fuse_tank.Wfuelintank = 1e5
 
 @testset "Fuselage tank" begin
     @testset "Foam insulation" begin
-        outputs_size = TASOPT.structures.tanksize!(fuse_tank, z, TSL, Mair, xftank,
+        outputs_size = TASOPT.structures.tanksize!(fuse_tank, z, Mair, xftank,
                                         time_flight,
                                         ifuel)
         outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.8582041735501131, 39458.39577725139, 17.14040378395799, 62696.45129193434)
@@ -63,7 +63,7 @@ fuse_tank.Wfuelintank = 1e5
         l_tank = outputs_mech_check[16]
         r_tank = outputs_mech_check[4]
         Shead = outputs_mech_check[15]
-        outputs_thermal = TASOPT.structures.tankWthermal(fuse_tank, z, TSL, Mair, xftank, time_flight, ifuel)
+        outputs_thermal = TASOPT.structures.tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
 
         outputs_thermal_check = (107.0336391439565, 0.0042473666326966865)
 
@@ -78,7 +78,7 @@ fuse_tank.Wfuelintank = 1e5
 
     @testset "Vacuum insulation" begin
 
-        outputs_vac_size = TASOPT.structures.tanksize!(fuse_tank, z, TSL, Mair, xftank,
+        outputs_vac_size = TASOPT.structures.tanksize!(fuse_tank, z, Mair, xftank,
                                             time_flight,
                                             ifuel)
         outputs_vac_size_check = (0.0022038332318087754, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
@@ -139,7 +139,7 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_h[i] ≈ outputs_h_check[i]
         end
 
-        outputs_free = TASOPT.structures.freestream_heat_coeff(z, TSL, Mair, xftank, 240.0)
+        outputs_free = TASOPT.structures.freestream_heat_coeff(z, fuse_tank.TSLtank, Mair, xftank, 240.0)
         outputs_free_check = (93.08029151543289, 218.06145060705106, 242.96196484061733)
         for i in 1:length(outputs_free)
             @test outputs_free[i] ≈ outputs_free_check[i]

@@ -35,6 +35,7 @@ mutable struct fuselage_tank
     ew::Float64
     ullage_frac::Float64
     qfac::Float64
+    TSLtank::Float64
     fuselage_tank() = new() 
 end
 

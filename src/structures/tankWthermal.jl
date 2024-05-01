@@ -33,12 +33,13 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
       qfac = fuse_tank.qfac
       h_v = fuse_tank.hvap #heat of vaporization
+      TSL = fuse_tank.TSLtank
 
       Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
       Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
