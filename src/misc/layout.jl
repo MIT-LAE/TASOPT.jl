@@ -40,6 +40,38 @@ $TYPEDFIELDS
     taper_fuse::Int64 = 1 # 0 = point ; 1 = edge
 end
 
+
+"""
+$TYPEDEF
+
+Wing Layout Structure:
+Contains dimensions, heights, etc. to design a Wing
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct WingLayout
+    """Aspect Ratio [m]"""
+    AR::Float64 = 0
+    """Sweep [degrees]"""
+    sweep::Float64 = 0
+    """Wing Span [m]"""
+    b::Float64 = 0
+    """Span of inner wing (break/"snag") [m]"""
+    b_inner::Float64 = 0
+    """Max Wing Span [m]"""
+    b_max::Float64 = 0
+    """Outer or "tip" taper ratio of chord"""
+    λt::Float64 = 0
+    """Inner or break/"snag" taper ratio of chord"""
+    λs::Float64 = 0
+    """Span fraction of inner wing break ("snag")"""
+    ηs::Float64 = 0
+    """Wing center box width [m]"""
+    box_width::Float64 = 0
+    """Wing planform area (including fuselage carryover) [m^2]"""
+    S::Float64 = 0
+end
+
 # function FuselageLayout(;default = true)
 #     #TODO add read input
 #     # if default
