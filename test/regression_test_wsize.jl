@@ -32,12 +32,19 @@
 
     @testset "LTO" begin
         EIs, mfs = TASOPT.LTO("Default A/C + Engine", ac)
-        test_EIs = [35.727087484447225, 26.674239512749597, 10.228895832877859, 6.473190938712144]
-        test_mfs = [1.4031641016757275, 1.2552506710045581, 0.7022981161085624, 0.4126470600128394]
+        test_EIs = [35.76509639768726, 26.70084308861548, 10.22948188721507, 6.480767538587702]
+        test_mfs = [1.401100172004722, 1.2535426491385873, 0.7015473738995113, 0.4123593208289815]
         for i in eachindex(test_EIs)
             @test test_EIs[i] ≈ EIs[i]
             @test test_mfs[i] ≈ mfs[i]
         end
+
+        EIs, mfs = TASOPT.LTO("Default A/C + Engine", ac, method = "quartic")
+        test_EIs = [35.72641687463056, 26.27891743413049, 10.095612208446196, 6.180472562714481]
+        for i in eachindex(test_EIs)
+            @test test_EIs[i] ≈ EIs[i]
+        end
+
     end
 
 end
