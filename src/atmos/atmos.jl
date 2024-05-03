@@ -2,7 +2,7 @@ module atmosphere
 export atmos
 
 """
-    atmos(h, TSL)
+    atmos(h, ΔT)
     
 Atmospheric functions ` T(h)`, `ρ(h)` etc
 valid to `h`=20km, `p(h)` valid to `h`=70km.
