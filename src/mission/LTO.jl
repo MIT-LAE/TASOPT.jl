@@ -46,13 +46,13 @@ function LTO(name, ac; fileout = stdout)
             mdotf = ac.pared[ieff, iptest] * ac.pared[iemcore]
             P3_kPa = ac.pared[iept3, iptest]/1000.0
             T3_K   = ac.pared[ieTt3, iptest]
-            EINOx = EINOx3(ac, iptest)
-            EIs[i] = EINOx
+            EI = EINOx(ac, iptest; method="cubic")
+            EIs[i] = EI
             mfs[i] = mdotf
         
             println(fileout, 
             @sprintf("%2d) %4.2f %15.5f %15.5f %15.5f %15.5f",
-            i, TS, F_total/1000, mdotf, EINOx, EINOx*mdotf))
+            i, TS, F_total/1000, mdotf, EI, EI*mdotf))
 
         end
 
@@ -108,8 +108,13 @@ function EINOx4(P3_kPa, T3_K, sp_humidity = 0.00634)
     return EI_NOx
 end  # function EINOx4
 
-function EINOx3(ac::aircraft, ip::Int, sp_humidity = 0.00634)
+function EINOx(ac::aircraft, ip::Int; sp_humidity = 0.00634, method="cubic")
        P3_kPa = ac.pared[iept3, ip]/1000.0
        T3_K   = ac.pared[ieTt3, ip]
-       EINOx3(P3_kPa, T3_K, sp_humidity)
+       if lowercase(method) == "cubic"
+            EI = EINOx3(P3_kPa, T3_K, sp_humidity)
+       elseif lowercase(method) == "quartic"
+            EI = EINOx4(P3_kPa, T3_K, sp_humidity)
+       end
+       return EI
 end
