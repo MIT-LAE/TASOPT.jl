@@ -3,7 +3,7 @@
 
 Prints out LTO EI(NOₓ) values
 """
-function LTO(name, ac; fileout = stdout)
+function LTO(name, ac; fileout = stdout, method = "cubic")
 
     #LTO values
     LTOpoints = [1.0, 0.85, 0.3, 0.07]
@@ -46,7 +46,7 @@ function LTO(name, ac; fileout = stdout)
             mdotf = ac.pared[ieff, iptest] * ac.pared[iemcore]
             P3_kPa = ac.pared[iept3, iptest]/1000.0
             T3_K   = ac.pared[ieTt3, iptest]
-            EI = EINOx(ac, iptest; method="cubic")
+            EI = EINOx(ac, iptest; method=method)
             EIs[i] = EI
             mfs[i] = mdotf
         
