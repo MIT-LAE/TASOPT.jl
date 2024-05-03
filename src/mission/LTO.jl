@@ -71,6 +71,8 @@ end
 
 Returns the EI(NOₓ) for a CFM56 level engine.
 Uses a third order polynomial in T₃ 
+Assumes a default specific humidity of 0.00634 kg water/kg dry air per 
+ICAO Annex 16 Vol. II (part 2.1.4.1)
 """
 function EINOx3(P3_kPa, T3_K, sp_humidity = 0.00634)
     # Constants derived using a CRN model for a CFM56 tech level engine
