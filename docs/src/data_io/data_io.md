@@ -31,11 +31,9 @@ using TASOPT
 ac2 = load_default_model()
 size_aircraft!(ac2)
 
-#quicksave aircraft at 4.55pm on a Friday
+#quicksave aircraft
 filepath2 = "/path/to/your/new/quicksave.toml"
 quicksave_aircraft(ac2, filepath2)
-
-# - w e e k s - p a s s -
 
 #quickload aircraft, ready to pull results
 ac2 = quickload_aircraft(filepath2)
