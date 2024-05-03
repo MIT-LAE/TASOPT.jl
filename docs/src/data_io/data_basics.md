@@ -25,7 +25,7 @@ include(__TASOPTindices__)
 
 The variable names of these indices indicate which `par` array they should access and hint at the quantity in question. For example, `ieTfuel` evaluates to `2` and retrieves the model's fuel temperature via `pare[ieTfuel]`. 
 
-Note that for the multi-dimensional `par` arrays, indexing with a single Integer only retrieves the value for the first flight point of the first mission (namely, the design mission). Add'l indexing is required to access data from different flight points or missions. Indices for specific flight points are defined in `index.inc` and should be used when indexing `pare` or `para`, e.g., `ipstatic` for static ground condition or `ipcruise1` for the start of cruise.
+Note that for the multi-dimensional `par` arrays, indexing with a single Integer only retrieves the value for the first flight point of the first mission (namely, the design mission). Additional indexing is required to access data from different flight points or missions. Indices for specific flight points are defined in `index.inc` and should be used when indexing `pare` or `para`, e.g., `ipstatic` for static ground condition or `ipcruise1` for the start of cruise.
 
 
 ```@example dataaccess
