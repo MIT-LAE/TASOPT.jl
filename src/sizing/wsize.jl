@@ -76,8 +76,8 @@ function wsize(ac; itermax=35,
     #Calculate sea level temperature corresponding to TO conditions
     altTO = parm[imaltTO] 
     T_std,_,_,_,_ = atmos(altTO/1e3)
-    TSL = Tref + (parm[imT0TO] - T_std) #sea level temperature such that T(altTO) = T0TO
-    parm[imTSL] = TSL
+    ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
+    parm[imDeltaTatm] = ΔTatmos
 
     # set cruise-altitude atmospheric conditions
     set_ambient_conditions!(ac, ipcruise1)
@@ -1199,7 +1199,6 @@ function wsize(ac; itermax=35,
             ifuel = pari[iifuel]
             M_inf = para[iaMach, ipcruise1]
             z_alt = para[iaalt, ipcruise1]
-            TSL = parm[imTSL]
             
             #Fuel tank design
             fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
@@ -1578,9 +1577,9 @@ Sets ambient condition at the given mission point `mis_point`.
 """
 function set_ambient_conditions!(ac, mis_point, Mach=NaN)
     mis_point = mis_point
-    TSL = ac.parmd[imTSL]
+    ΔTatmos = ac.parmd[imDeltaTatm]
     altkm = ac.parad[iaalt, mis_point]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm, TSL)
+    T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
     if Mach === NaN
         Mach = ac.parad[iaMach, mis_point]
     end

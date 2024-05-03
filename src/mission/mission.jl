@@ -79,10 +79,10 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       # set known operating conditions
 
       # takeoff altitude conditions
-      TSL = parm[imTSL]
+      ΔTatmos = parm[imDeltaTatm]
       ip = ipstatic
       altkm = para[iaalt, ip] / 1000.0
-      T0, p0, ρ0, a0, μ0 = atmos(altkm, TSL)
+      T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
 
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
@@ -111,7 +111,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       Mach = para[iaMach, ip]
       altkm = para[iaalt, ip] / 1000.0
 
-      T0, p0, rho0, a0, mu0 = atmos(altkm, TSL)
+      T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -124,7 +124,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       # End-of-descent altitude conditions
       ip = ipdescentn
       altkm = para[iaalt, ip] / 1000.0
-      T0, p0, rho0, a0, mu0 = atmos(altkm, TSL)
+      T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
 
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
@@ -278,7 +278,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
             altkm = para[iaalt, ip] / 1000.0
 
-            T0, p0, rho0, a0, mu0 = atmos(altkm, TSL)
+            T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
@@ -548,7 +548,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
       Mach = para[iaMach, ip]
       altkm = altd / 1000.0
 
-      T0, p0, ρ0, a0, μ0 = atmos(altkm, TSL)
+      T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -623,7 +623,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
             Mach = para[iaMach, ip]
             para[iaalt, ip] = altc * (1.0 - frac) + altd * frac
             altkm = para[iaalt, ip] / 1000.0
-            T0, p0, rho0, a0, mu0 = atmos(altkm, TSL)
+            T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
@@ -677,7 +677,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
             para[iagamV, ip] = gamVde
 
             altkm = alt / 1000.0
-            T0, p0, ρ0, a0, μ0 = atmos(altkm, TSL)
+            T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0

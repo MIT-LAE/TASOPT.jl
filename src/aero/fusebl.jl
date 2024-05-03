@@ -71,8 +71,8 @@ function fusebl!(pari, parg, para, parm, ip)
 
       Mach  = para[iaMach, ip]
       altkm = para[iaalt, ip]/1000.0
-      TSL = parm[imTSL] #sea-level temperature
-      T0,p0,rho0,a0,mu0 = atmos(altkm, TSL) #get atmospheric parameters
+      ΔTatmos = parm[imDeltaTatm] #atmosphere temperature difference
+      T0,p0,rho0,a0,mu0 = atmos(altkm, ΔTatmos) #get atmospheric parameters
     
       Reunit = Mach*a0 * rho0/mu0
 
