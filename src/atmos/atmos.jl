@@ -18,7 +18,7 @@ Units:
 - [a]   = m/s
 - [μ]   = kg/m-s 
 """
-function atmos(h::Float64, TSL::Float64 = 288.2)
+function atmos(h::Float64, ΔT::Float64 = 0.0)
 
  pSL = 1.0132e5 # Pa
  TSL_std    = 288.2    # K, standard sea level temperature
@@ -32,7 +32,6 @@ function atmos(h::Float64, TSL::Float64 = 288.2)
  cp  = 1004.0   # J/kg-K
  ɣ = 1.4 
  
- ΔT = TSL - TSL_std
  Tstd = log(1.0+exp((TSL_std+Tlapse*h-Tpause)/Tblend))*Tblend + Tpause
  T = Tstd + ΔT
  

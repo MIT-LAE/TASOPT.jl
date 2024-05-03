@@ -55,7 +55,7 @@
       imfexcdw   = 31
       imfexcdt   = 32
       imfexcdf   = 33
-      imTSL      = 34
+      imDeltaTatm= 34
       imtotal    = 34
 
 #---- indices for geometry (airframe) variables and other sizing variables

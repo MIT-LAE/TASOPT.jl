@@ -326,7 +326,7 @@ of Aerodynamics.
 """
 function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
       #Use ISA function to calculate freestream conditions
-      Tair, p, _, a, _ = atmos(z / 1e3, TSL)
+      Tair, p, _, a, _ = atmos(z / 1e3, TSL - Tref)
       u = M * a #freestrean velocity
 
       #Assumed parameters for air
