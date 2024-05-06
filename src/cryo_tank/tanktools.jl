@@ -23,18 +23,20 @@ function find_mdot_time(t, pari, parg, para, pare)
     times = para[iatime,:,1]
 
     mdot = 0.0
-    for ip = 1:(length(times)-1) 
+    for ip = 1:length(times)
         if t ≈ times[ip]
             mdot = mdots[ip]
-        elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
-            t0 = times[ip] #Time at start of segment
-            tf = times[ip+1] #Time at end of segment	
+        elseif (t >= times[ip]) && (ip < length(times))
+            if (t< times[ip+1]) #If the point is the correct one
+                t0 = times[ip] #Time at start of segment
+                tf = times[ip+1] #Time at end of segment	
 
-            if mdots[ip] > 0
-                k = log(mdots[ip+1]/mdots[ip])/( t0 - tf)
-                mdot = mdots[ip] * exp( - k * (t - times[ip])) #Assume fuel burn varies exponentially in mission
-            else
-                mdot = 0.0
+                if mdots[ip] > 0
+                    k = log(mdots[ip+1]/mdots[ip])/( t0 - tf)
+                    mdot = mdots[ip] * exp( - k * (t - times[ip])) #Assume fuel burn varies exponentially in mission
+                else
+                    mdot = 0.0
+                end
             end
         end
     end
@@ -96,16 +98,18 @@ function find_Q_time_interp(t, para, Qs)
     times = para[iatime,:,1]
 
     Q = 0.0
-    for ip = 1:(length(times)-1)
+    for ip = 1:length(times)
         if t ≈ times[ip]
             Q = Qs[ip]
-        elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
-            t0 = times[ip]
-            tf = times[ip+1]
-            Q0 = Qs[ip]
-            Qf = Qs[ip+1]
+        elseif (t >= times[ip]) && (ip < length(times))
+            if (t< times[ip+1]) #If the point is the correct one
+                t0 = times[ip]
+                tf = times[ip+1]
+                Q0 = Qs[ip]
+                Qf = Qs[ip+1]
 
-            Q = Q0 + (Qf - Q0)/(tf-t0) * (t - t0) #Interpolate linearly between points
+                Q = Q0 + (Qf - Q0)/(tf-t0) * (t - t0) #Interpolate linearly between points
+            end
         end
     end
     return Q
@@ -175,10 +179,10 @@ This function produces the vector that is used in the time integration of the ta
     - `ts::Vector{Float64}`: time vector (s)
 """
 function generate_time_vector(time_p, N)
-    Ntpoints = (length(time_p) - 2) * N #number of points in vector
+    Ntpoints = (length(time_p) - 1) * N #number of points in vector
     ts = zeros(Ntpoints) #initialize vector with times
 
-    for ip = 1:(length(time_p) - 2) #fore every mission point except iptest
+    for ip = 1:(length(time_p) - 1) #for every mission point except iptest
         ts[((ip-1)*N + 1):(ip*N)] .= LinRange(time_p[ip], time_p[ip+1], N)
     end
     ts = unique(ts) #remove repeated points
@@ -215,8 +219,8 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     #Modify aircraft with holding times
     para_alt = zeros(size(ac.para)[1], size(ac.para)[2] + 3, size(ac.para)[3])
     ac.para[iatime, :, 1] .= ac.para[iatime, :, 1] .- minimum(ac.para[iatime, :, 1])
-    para_alt[:, 3:(iptotal + 2), :] .= ac.para[:,:,:]
-    para_alt[iatime, 2:(iptotal + 2), :] .= para_alt[iatime, 2:(iptotal + 2), :] .+ t_hold_orig #Apply hold at origin
+    para_alt[:, 3:(iptotal + 1), :] .= ac.para[:,1:(size(ac.para)[2] - 1),:] #Do not copy iptest
+    para_alt[iatime, 2:(iptotal + 1), :] .= para_alt[iatime, 2:(iptotal + 1), :] .+ t_hold_orig #Apply hold at origin
     para_alt[iatime, 1, 1] = 0.0
     Np = size(para_alt)[2]
     para_alt[iatime, Np-1, 1] = maximum(para_alt[iatime, :, 1])
