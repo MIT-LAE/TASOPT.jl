@@ -1,5 +1,5 @@
 """
-        tanksize!(fuse_tank, z, Mair, xftank,
+        tanksize!(fuse_tank, z, TSL, Mair, xftank,
         time_flight, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
@@ -30,13 +30,14 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
         Wfuel = fuse_tank.Wfuelintank
         Tfuel = fuse_tank.Tfuel
         flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
+        TSL = fuse_tank.TSLtank
 
         if flag_size #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
                 iinsuldes = fuse_tank.iinsuldes
 
                 #Thermal calculations
-                _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature 
+                _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature 
 
                 ΔT = Taw - Tfuel
 
@@ -100,7 +101,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
 end
 
 """
-        res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
+        res_MLI_thick(x, fuse_tank, z, TSL, Mair, xftank, ifuel)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -127,6 +128,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         Tfuel = fuse_tank.Tfuel
         Wfuel = fuse_tank.Wfuelintank
         h_v = fuse_tank.hvap #heat of vaporization
+        TSL = fuse_tank.TSLtank
 
         # Extract states
         Δt = x[1]
@@ -158,6 +160,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         p.material = fuse_tank.material_insul
         p.Tfuel = Tfuel
         p.z = z
+        p.TSL = TSL
         p.Mair = Mair
         p.xftank = xftank
         p.Rfuse = fuse_tank.Rfuse

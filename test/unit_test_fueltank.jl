@@ -12,6 +12,7 @@ fuse_tank.dRfuse = 0.3
 fuse_tank.wfb = 0.0
 fuse_tank.nfweb = 1.0
 fuse_tank.clearance_fuse = 0.1
+fuse_tank.TSLtank = 288.2
 
 fuse_tank.pvent = 2e5
 fuse_tank.ARtank = 2.0
@@ -146,13 +147,13 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_h[i] ≈ outputs_h_check[i]
         end
 
-        outputs_free = TASOPT.CryoTank.freestream_heat_coeff(z, Mair, xftank, 240.0)
+        outputs_free = TASOPT.CryoTank.freestream_heat_coeff(z, fuse_tank.TSLtank, Mair, xftank, 240.0)
         outputs_free_check = (91.1765275792035, 218.06145060705106, 243.3345022554043)
         for i in 1:length(outputs_free)
             @test outputs_free[i] ≈ outputs_free_check[i]
         end
 
-        outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, 0.0, xftank, 287.0, fuse_tank.Rfuse)
+        outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, fuse_tank.TSLtank, 0.0, xftank, 287.0, fuse_tank.Rfuse)
         outputs_natural_check = (1.6786556204397758, 288.2, 288.2)
         for i in 1:length(outputs_natural)
             @test outputs_natural[i] ≈ outputs_natural_check[i]

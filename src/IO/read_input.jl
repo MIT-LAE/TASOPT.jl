@@ -48,7 +48,7 @@ with a fall back to the default `aircraft` definition
 provided in \"src/IO/default_input.toml\""
 
 !!! note "Deviating from default"
-    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+    Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
     from the default functionality. Thorough knowledge of the model is required.
 
 # Examples
@@ -369,6 +369,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
+    fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
     if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled

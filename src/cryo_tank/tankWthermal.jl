@@ -29,6 +29,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       Tfuel = fuse_tank.Tfuel
       qfac = fuse_tank.qfac
       h_v = fuse_tank.hvap #heat of vaporization
+      TSL = fuse_tank.TSLtank
 
       Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
       Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
@@ -43,12 +44,13 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.material = fuse_tank.material_insul
       p.Tfuel = Tfuel
       p.z = z
+      p.TSL = TSL
       p.Mair = Mair
       p.xftank = xftank
       p.Rfuse = fuse_tank.Rfuse
       p.ifuel = ifuel
 
-      _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature
+      _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
@@ -117,13 +119,14 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       material = p.material
       Tfuel = p.Tfuel
       z = p.z
+      TSL = p.TSL
       Mair = p.Mair
       xftank = p.xftank
       Rfuse = p.Rfuse
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
-      hconvair, _, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse, Rfuse)
+      hconvair, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank, Tfuse, Rfuse)
   
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
@@ -233,6 +236,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `material::Array{String} `: array with material names for different insulation layers
     - `Tfuel::Float64`: fuel temperature (K)
     - `z::Float64`: flight altitude (m)
+    - `TSL::Float64`: sea-level temperature (K)
     - `Mair::Float64`: external air Mach number
     - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
     - `ifuel::Int64`: fuel species index
@@ -247,6 +251,7 @@ mutable struct thermal_params
       material::Array{String}
       Tfuel::Float64
       z::Float64
+      TSL::Float64
       Mair::Float64
       xftank::Float64
       Rfuse::Float64
@@ -294,7 +299,7 @@ function tank_heat_coeff(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Floa
 end
 
 """
-      freestream_heat_coeff(z, M, xftank)
+      freestream_heat_coeff(z, TSL, M, xftank, Tw)
 
 This function calculates the air-side heat transfer coefficient, which is assumed to be that of a freestream 
 at a given altitude. Depending on the Mach number, either a natural or forced convection model is used.
@@ -306,6 +311,7 @@ p. 334 in Holman.
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `z::Float64`: flight altitude (m).
+      - `TSL::Float64`: sea-level temperature (K)
       - `M::Float64`: freestream Mach number.
       - `xftank::Float64`: longitudinal position of the fuel tank CG (m).
       - `Tw::Float64`: wall temperature (K).
@@ -315,9 +321,9 @@ p. 334 in Holman.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref, Rfuse::Float64 = 1.0)
+function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref, Rfuse::Float64 = 1.0)
       #Use ISA function to calculate freestream conditions
-      Tair, p, _, a, _ = atmos(z / 1e3)
+      Tair, p, _, a, _ = atmos(z / 1e3, TSL - Tref)
       u = M * a #freestrean velocity
 
       #Parameters for air
