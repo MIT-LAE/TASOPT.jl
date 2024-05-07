@@ -27,12 +27,15 @@ mutable struct fuselage_tank
     ptank::Float64
     rhofuel::Float64
     Tfuel::Float64
+    rhofuelgas::Float64
+    hvap::Float64
     boiloff_rate::Float64
 
     ftankadd::Float64
     ew::Float64
     ullage_frac::Float64
     qfac::Float64
+    TSLtank::Float64
     fuselage_tank() = new() 
 end
 

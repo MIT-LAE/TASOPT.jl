@@ -7,13 +7,13 @@ module aerodynamics
 
 using StaticArrays
 using ..atmosphere
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
 export airfoil, cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
 
 #include index to access arrays
-include("../misc/index.inc")
-
-include("../utils/spline.jl")
+include(__TASOPTindices__)
+include(joinpath(__TASOPTroot__,"utils/spline.jl"))
 
 idim::Int = 360
 jdim::Int = 360
@@ -38,11 +38,8 @@ include("airfoil.jl")
 include("airtable.jl")
 include("airfun.jl")
 
-__abs_path_prefix__ = dirname(@__DIR__)
-airfoil_data = joinpath(__abs_path_prefix__,"airfoil_data/C.air")
-
+airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 airsection = airtable(airfoil_data);
-
 
 include("surfcd.jl")
 include("surfcm.jl")

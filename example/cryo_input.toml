@@ -59,6 +59,7 @@ name = "TASOPT Model with cryo fuel and HX"
     weld_efficiency = 0.9 
     ullage_fraction = 0.1 
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
+    SL_temperature_for_tank = "288.2 K"
 
     inner_vessel_material = "Al-2219-T87"
     inner_vessel_support_angle = "80 deg"

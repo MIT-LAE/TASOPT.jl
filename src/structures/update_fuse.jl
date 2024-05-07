@@ -1,5 +1,4 @@
-include("../IO/size_cabin.jl")
-
+export update_fuse!, update_fuse_for_pax!
 """
     update_fuse!(pari, parg)
 

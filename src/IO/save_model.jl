@@ -1,34 +1,33 @@
 using TOML
-export save_model
+export save_aircraft_model
 
 """
-    save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
-            datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
-            save_output::Bool=false)
+    save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
+    save_output::Bool=false)
 
-    Converts an aircraft model into a dictionary and writes 
-    it to a TOML file. Values to be written are explicitly set
-    following the default_input.toml. All values are written in SI units.
+Converts an aircraft model into a dictionary and writes 
+it to a TOML file. Values to be written are explicitly set
+following the default_input.toml. All values are written in SI units.
 
-    This save operation makes add'l* assumptions about parameter repetition. Namely:
-    The same value is applied for all flight segments/points for:
-        - parm[] parameters
-        - excrescence_drag_factors, wing overspeeds, wing/stabilizer Re_refs
-    The same value is applied for all missions and flight segments for:
-        - parg[], pare[], and pari[] parameters
-        - fuel temperature
+This save operation makes add'l* assumptions about parameter repetition. Namely:
+The same value is applied for all flight segments/points for:
+    - parm[] parameters
+    - excrescence_drag_factors, wing overspeeds, wing/stabilizer Re_refs
+The same value is applied for all missions and flight segments for:
+    - parg[], pare[], and pari[] parameters
+    - fuel temperature
 
-    Said value is the first entry in the corresponding array axis, 
-    except for some aero parameters where other points are more relevant (e.g., "Cruise" "Takeoff").
+Said value is the first entry in the corresponding array axis, 
+except for some aero parameters where other points are more relevant (e.g., "Cruise" "Takeoff").
 
-    *and modifiable
+*and modifiable
 
-    !!! note "Deviating from default"
-    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+!!! note "Deviating from default"
+    Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
     from the default functionality. Thorough knowledge of the model is required.
-
 """
-function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
+function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
     save_output::Bool=false)
 
@@ -622,7 +621,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         @printf(io, "# Geometry - stored in parg array:\n")
         @printf(io, "# --------------------------------\n")
         for (i,val) in enumerate(parg)
-            @printf(io, "parg[%d] = %20f # %s\n", i, val, iglabels[i] )
+            @printf(io, "parg[%d] = %20f # %s\n", i, val, i<291 ? iglabels[i] : "" )
         end
 
         @printf(io, "# --------------------------------\n")
@@ -652,7 +651,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "pare[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%f, ", pare[i, j])
+                @printf(io, "%20f, ", pare[i, j])
             end
             @printf(io, "]\n")
         end
