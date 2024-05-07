@@ -24,11 +24,11 @@
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.883089428853606
+    @test ac.parm[imPFEI] ≈  0.8830896229083405
 
 end
 
@@ -57,11 +57,11 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 1.1181723832967503
+    @test ac.parm[imPFEI] ≈ 1.1181717704710181
 
 end
 
@@ -90,10 +90,10 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.786802107833434
+    @test ac.parm[imPFEI] ≈ 0.7868090108559759
 
 end

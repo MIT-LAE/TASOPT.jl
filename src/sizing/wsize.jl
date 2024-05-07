@@ -73,8 +73,23 @@ function wsize(ac; itermax=35,
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
+    #Calculate sea level temperature corresponding to TO conditions
+    altTO = parm[imaltTO] 
+    T_std,_,_,_,_ = atmos(altTO/1e3)
+    ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
+    parm[imDeltaTatm] = ΔTatmos
+
+    # set cruise-altitude atmospheric conditions
+    set_ambient_conditions!(ac, ipcruise1)
+
+    # set takeoff-altitude atmospheric conditions
+    set_ambient_conditions!(ac, iprotate, 0.25)
+
+    # Set atmos conditions for top of climb
+    set_ambient_conditions!(ac, ipclimbn)
+
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
+    time_fusebl = @elapsed fusebl!(pari, parg, para, parm, ipcruise1)
     # println("Fuse bl time = $time_fusebl")
     # Kinetic energy area at T.E.
     KAfTE = para[iaKAfTE, ipcruise1]
@@ -279,15 +294,6 @@ function wsize(ac; itermax=35,
 
     # nacelle wetted area / fan area ratio
     rSnace = parg[igrSnace]
-
-    # set cruise-altitude atmospheric conditions
-    set_ambient_conditions!(ac, ipcruise1)
-
-    # set takeoff-altitude atmospheric conditions
-    set_ambient_conditions!(ac, iprotate, 0.25)
-
-    # Set atmos conditions for top of climb
-    set_ambient_conditions!(ac, ipclimbn)
 
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
@@ -717,7 +723,7 @@ function wsize(ac; itermax=35,
         parg[igcabVol] = cabVol
 
         # Use cabin volume to get actual buoyancy weight
-        ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
+        ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * Tref)
         WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * cabVol
         # Total max Takeoff weight (MTOW)
 
@@ -1234,7 +1240,7 @@ function wsize(ac; itermax=35,
 
             # Update fuselage according to tank requirements
             update_fuse!(pari, parg) #update fuselage length to accommodate tank
-            fusebl!(pari, parg, para, ipcruise1) #Recalculate fuselage bl properties
+            fusebl!(pari, parg, para, parm, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
             # Kinetic energy area at T.E.
@@ -1390,6 +1396,8 @@ function wsize(ac; itermax=35,
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
         
+        # Store all OPRs for diagnostics
+        pare[ieOPR, :] .= pare[iepilc, :] .* pare[iepihc, :]
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate
 
@@ -1461,7 +1469,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
+    takeoff!(ac, initeng, ichoke5, ichoke7)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg)
@@ -1569,8 +1577,9 @@ Sets ambient condition at the given mission point `mis_point`.
 """
 function set_ambient_conditions!(ac, mis_point, Mach=NaN)
     mis_point = mis_point
+    ΔTatmos = ac.parmd[imDeltaTatm]
     altkm = ac.parad[iaalt, mis_point]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
+    T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
     if Mach === NaN
         Mach = ac.parad[iaMach, mis_point]
     end

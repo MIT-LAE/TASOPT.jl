@@ -1156,9 +1156,6 @@ end
 
 @testset "tfcalc.jl" begin
 
-    # include("../index.inc")
-    # include("../constants.inc")
-
     pari = [24, 1, 1, 1, 1, 0, 0, 1, 1, 2]
     parg = readdlm("../data/parg.txt")
     pare = readdlm("../data/pare.txt")

@@ -6,9 +6,10 @@ Will cover alternate engine models - NPSS vs Drela's orig. model vs pyCycle
 module propsys
 
 export NPSS_run, startNPSS, endNPSS
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-include("../misc/index.inc")
-include("../misc/constants.jl")
+include(__TASOPTindices__)
+include(joinpath(__TASOPTroot__,"misc/constants.jl"))
 
 include("NPSS_functions.jl")
 

@@ -55,7 +55,8 @@
       imfexcdw   = 31
       imfexcdt   = 32
       imfexcdf   = 33
-      imtotal    = 33
+      imDeltaTatm= 34
+      imtotal    = 34
 
 #---- indices for geometry (airframe) variables and other sizing variables
       const igFOpt     =   1
@@ -385,8 +386,9 @@
       const igaislehalfwidth = 308
 
       const igmdotboiloff = 309
+      const igrhofuelgas = 310
 
-      const igtotal    = 309
+      const igtotal    = 310
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -775,7 +777,7 @@
       ieKinl  = 172
       ieepsl  = 173
       ieepsh  = 174
-      ieFe    = 175 # now stores total thrust & NOT thrust per engine
+      ieFe    = 175 
       ieFsp   = 176
       ieTSFC  = 177
       ieA5fac = 178
