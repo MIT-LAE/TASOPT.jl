@@ -141,16 +141,16 @@ function wsize(ac; itermax=35,
     fLt = parg[igfLt]
 
     # fuselage dimensions and coordinates
-    Rfuse = parg[igRfuse]
-    dRfuse = parg[igdRfuse]
-    wfb = parg[igwfb]
-    nfweb = parg[ignfweb]
-    hfloor = parg[ighfloor]
-    xnose = parg[igxnose]
-    xend = parg[igxend]
-    xshell1 = parg[igxshell1]
-    xshell2 = parg[igxshell2]
-    xconend = parg[igxconend]
+    # Rfuse = parg[igRfuse]
+    # dRfuse = parg[igdRfuse]
+    # wfb = parg[igwfb]
+    # nfweb = parg[ignfweb]
+    # hfloor = parg[ighfloor]
+    # xnose = parg[igxnose]
+    # xend = parg[igxend]
+    # xshell1 = parg[igxshell1]
+    # xshell2 = parg[igxshell2]
+    # xconend = parg[igxconend]
     xwbox = parg[igxwbox]
     xhbox = parg[igxhbox]
     xvbox = parg[igxvbox]
@@ -629,11 +629,11 @@ function wsize(ac; itermax=35,
         xvtail = parg[igxvtail]
         xwbox = parg[igxwbox]
         xwing = parg[igxwing]
-        xblend1 = parg[igxblend1]
-        xblend2 = parg[igxblend2]
-        xshell1 = parg[igxshell1]
-        xshell2 = parg[igxshell2]
-        xconend = parg[igxconend]
+        # xblend1 = parg[igxblend1]
+        # xblend2 = parg[igxblend2]
+        # xshell1 = parg[igxshell1]
+        # xshell2 = parg[igxshell2]
+        # xconend = parg[igxconend]
         xapu = parg[igxapu]
         xeng = parg[igxeng]
 
@@ -665,28 +665,33 @@ function wsize(ac; itermax=35,
         end
 
         # Call fusews
-        Eskin = parg[igEcap]
-        Ebend = Eskin * rEshell
-        Gskin = Eskin * 0.5 / (1.0 + 0.3)
+        # Eskin = parg[igEcap]
+        # Ebend = Eskin * rEshell
+        # Gskin = Eskin * 0.5 / (1.0 + 0.3)
+        
 
+        # fuse = ac.fuselage
+        # lay = fuse.layout
+
+        # Eskin_F = fuse.material.E #parg[igEcap]
+        # Ebend_F = Eskin_F * fuse.rEshell
+        # Gskin_F = Eskin_F * 0.5 / (1.0 + 0.3)
+
+        # (0.0010595922635980273, 0.0012557869494739108, 0.0, 0.0009061817802385006, 30.99307223745552, 31.178627149279325, 2.936934051684777e9, 2.2843138631792213e10, 2.318007120748435e9, 1.6792688546441204e10, 1.5712862857814715e9, 1.8622265180300238e9, 20953.297287912694, 5816.895136874598, 11269.980000000001, 4779.851416025711, 13143.23579857935, 12504.912488532287, 7239.959565006861, 195735.61797443152, 3.585753833133235e6, 414.54271063740043)
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
-            ifwing, nftanks, xblend1, xblend2,
+            Wfuse, xWfuse, cabVol) = fusew!(ac.fuselage, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+            ifwing, nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
-            fstring, fframe, ffadd, Δp,
-            Wpwindow, Wppinsul, Wppfloor, ndecks,
+            ffadd, Δp,
+            Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, λv, nvtail,
-            Rfuse, dRfuse, wfb, nfweb, λc,
-            xnose, xshell1, xshell2, xconend,
+            
             xhtail, xvtail,
             xwing, xwbox, cbox,
-            xfix, xapu, xeng, xfuel,
-            hfloor,
-            σskin, σbend, rhoskin, rhobend,
-            Eskin, Ebend, Gskin)
+            xfix, xapu, xeng, xfuel)
 
         parg[igtskin] = tskin
         parg[igtcone] = tcone
