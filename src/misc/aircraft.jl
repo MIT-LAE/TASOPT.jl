@@ -70,6 +70,7 @@ Base.@kwdef struct aircraft #inner constructor
     
     sized::AbstractVector{Bool} = [false]
     fuse_tank::fuselage_tank = fuselage_tank()
+    fuselage::Fuselage = Fuselage()
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required
@@ -82,7 +83,7 @@ end
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank())
+        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
 end
 
 

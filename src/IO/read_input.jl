@@ -1,10 +1,6 @@
 using TOML
 export read_aircraft_model, load_default_model
 
-include("size_cabin.jl")
-include("../fuel/fuel_properties.jl")
-#using ..structures
-
 """
     read_input(k::String, dict::AbstractDict=data, 
     default_dict::AbstractDict = default)
@@ -52,7 +48,7 @@ with a fall back to the default `aircraft` definition
 provided in \"src/IO/default_input.toml\""
 
 !!! note "Deviating from default"
-    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+    Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
     from the default functionality. Thorough knowledge of the model is required.
 
 # Examples
@@ -98,6 +94,8 @@ parg = zeros(Float64, igtotal)
 parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
+
+fuselage = Fuselage()
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -258,6 +256,9 @@ dweight = dfuse["Weights"]
 readweight(x) = read_input(x, weight, dweight)
     parg[igfframe]  = readweight("frame")
     parg[igfstring] = readweight("stringer")
+    #TODO remove above
+    fuselage.weight_frac_frame = readweight("frame")
+    fuselage.weight_frac_string = readweight("stringer")
     parg[igffadd]   = readweight("additional")
 
     parg[igWfix] = Force(readweight("fixed_weight"))
@@ -333,6 +334,39 @@ readgeom(x) = read_input(x, geom, dgeom)
 
     parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
 
+    #TODO remove above
+    if readgeom("double_decker")
+        fuselage.n_decks =  2
+    else
+        fuselage.n_decks =  1
+    end
+    fuselage.layout.radius = Distance(readgeom("radius"))
+    fuselage.layout.bubble_lower_downward_shift = Distance(readgeom("dRadius"))
+    fuselage.layout.bubble_center_y_offset = Distance(readgeom("y_offset"))
+    fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
+    fuselage.layout.n_webs = readgeom("Nwebs")
+    fuselage.layout.nose_radius = readgeom("a_nose")
+    fuselage.layout.tail_radius = readgeom("b_tail")
+    fuselage.layout.tailcone_taper_ratio = readgeom("tailcone_taper")
+    fuse_end = lowercase(readgeom("taper_fuse_to")) 
+    if fuse_end == "point"
+        fuselage.layout.taper_fuse = 0
+    elseif fuse_end == "edge"
+        fuselage.layout.taper_fuse = 1
+    else
+        fuselage.layout.taper_fuse = 0
+        @warn "Fuselage can only be closed to a 'point' or an 'edge'"*
+                " but '$fuse_end' was provided."*
+                " Setting fuselage to end at a point."
+    end
+    fuselage.layout.x_nose = Distance(readgeom("x_nose_tip")) 
+    fuselage.layout.x_pressure_shell_fwd = Distance(readgeom("x_pressure_shell_fwd"))
+    fuselage.layout.x_pressure_shell_aft = Distance(readgeom("x_pressure_shell_aft"))
+    fuselage.layout.x_start_cylinder = Distance(readgeom("x_start_cylinder"))
+    fuselage.layout.x_end_cylinder = Distance(readgeom("x_end_cylinder"))
+    fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
+    fuselage.layout.x_end = Distance(readgeom("x_end")) 
+
 # ------ End fuse -------
 
 
@@ -371,6 +405,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
+    fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
 
     if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
@@ -393,12 +428,15 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     end
 
     #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
+    Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
     pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
     pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
     parg[igrhofuel] = ρfuel
     fuse_tank.rhofuel = ρfuel
     fuse_tank.Tfuel = Tfuel
+    fuse_tank.hvap = hvap
+    parg[igrhofuelgas] = ρgas
+    fuse_tank.rhofuelgas = ρgas
 end
 # ---------------------------------
 # Wing
@@ -649,6 +687,8 @@ readstruct(x) = read_input(x, structures, dstructures)
 
     #- fuselage shell modulus ratio, for bending material sizing
     parg[igrEshell] = readstruct("fuse_shell_modulus_ratio")
+    #TODO remove above
+    fuselage.rEshell = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
     parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
@@ -661,6 +701,12 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
 
+    fuselage.skin.ρ = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
+    fuselage.bending_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
+    fuselage.bending_v.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
+    fuselage.skin.σ = Stress(readstruct("sigma_fuse_skin"))
+    fuselage.bending_h.σ = Stress(readstruct("sigma_fuse_bending"))
+    fuselage.bending_v.σ = Stress(readstruct("sigma_fuse_bending"))
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
@@ -905,7 +951,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage)
 
 end
 

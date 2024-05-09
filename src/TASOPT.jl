@@ -34,6 +34,15 @@ export convertMass, convertForce, convertDist,
 include("./misc/materials.jl")
 export StructuralAlloy, Conductor, Insulator
 
+include("./misc/layout.jl")
+export FuselageLayout,WingLayout
+
+include("./misc/structuralMember.jl")
+export StructuralMember
+
+include("./misc/fuselage.jl")
+export Fuselage
+
 include("./misc/index.inc")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank

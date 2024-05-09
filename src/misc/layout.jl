@@ -9,13 +9,15 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct FuselageLayout
     """Fuselage Radius [m]"""
-    fuse_radius::Float64 = 1.9558 # = ac.parg[igRfuse] #Rfuse
+    radius::Float64 = 1.9558 # = ac.parg[igRfuse] #Rfuse
     """Downward shift of lower bubbles (dRfuse) [m] """
     bubble_lower_downward_shift::Float64 = 0.381#dRfuse 
     """Y offset of bubble center [m]"""
     bubble_center_y_offset::Float64 = 0 #wfb
     """Number of webs (for double bubble designs)"""
     n_webs::Float64 = 1 #nfwebs
+    """Thickness of webs """
+    thickness_webs::Float64 = 0 #nfwebs
     """X position of nose [m]"""
     x_nose::Float64  = 0# = ac.parg[igxnose] #xnose
     """X position of pressure shell forward [m]"""
@@ -26,12 +28,14 @@ $TYPEDFIELDS
     x_start_cylinder::Float64 = 6.096# = ac.parg[igxblend1] #xblend1
     """X position of cylinder end [m]"""
     x_end_cylinder::Float64 = 29.5656# = ac.parg[igxblend2] #xblend2
-    """X position of fuselage end [m]"""
+    """X position of fuselage cone end [m]"""
     x_cone_end::Float64 = 35.6616# = ac.parg[igxend] #xconeend
+    """X position of fuselage end [m]"""
+    x_end::Float64 = 35.6616# = ac.parg[igxend] #xend
     """Tailcone taper (lambdac) [m]"""
     tailcone_taper_ratio::Float64 = 0.3# lambdac
     """Floor depth (depth of floor beams) [m]"""
-    floor_height::Float64 = 0.127
+    floor_depth::Float64 = 0.127
     """Nose Radius [m]"""
     nose_radius::Float64 = 1.65
     """Tail Radius [m]"""
