@@ -30,6 +30,8 @@ function wsize(ac; itermax=35,
     pare = ac.pared      
     
     fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
+    
+    fuse = ac.fuselage 
 
     time_propsys = 0.0
 
@@ -57,24 +59,24 @@ function wsize(ac; itermax=35,
     # Flags
     # Fuel type 24 == kerosene #TODO need to update this for LH2
     ifuel = pari[iifuel]
-    ifwcen = pari[iifwcen]
+    # ifwcen = pari[iifwcen]
     iwplan = pari[iiwplan]
     iengloc = pari[iiengloc]
     iengwgt = pari[iiengwgt]
-    iBLIc = pari[iiBLIc]
-    ifclose = pari[iifclose]
-    iHTsize = pari[iiHTsize]
+    # iBLIc = pari[iiBLIc]
+    # ifclose = pari[iifclose]
+    # iHTsize = pari[iiHTsize]
     iVTsize = pari[iiVTsize]
-    ixwmove = pari[iixwmove]
+    # ixwmove = pari[iixwmove]
     ifwing = pari[iifwing]
 
     # Unpack number of powertrain elements
-    nfan = parpt[ipt_nfan]
+    # nfan = parpt[ipt_nfan]
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    time_fusebl = @elapsed fusebl!(pari, parg, para, ipcruise1)
+    time_fusebl = @elapsed fusebl!(fuse,pari, parg, para, ipcruise1)
     # println("Fuse bl time = $time_fusebl")
     # Kinetic energy area at T.E.
     KAfTE = para[iaKAfTE, ipcruise1]
@@ -123,9 +125,6 @@ function wsize(ac; itermax=35,
     fvadd = parg[igfvadd]
     fwadd = parg[igfflap] + parg[igfslat] +
             parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
-
-    fstring = parg[igfstring]
-    fframe = parg[igfframe]
     ffadd = parg[igffadd]
 
     fpylon = parg[igfpylon]
@@ -167,11 +166,11 @@ function wsize(ac; itermax=35,
     Wppinsul = parg[igWppinsul]
     Wppfloor = parg[igWppfloor]
 
-    if pari[iidoubledeck] == 1
-        ndecks = 2
-    else
-        ndecks = 1
-    end
+    # if pari[iidoubledeck] == 1
+    #     ndecks = 2
+    # else
+    #     ndecks = 1
+    # end
 
     # fuselage-bending inertial relief factors
     rMh = parg[igrMh]
@@ -192,7 +191,7 @@ function wsize(ac; itermax=35,
     λv = parg[iglambdav]
 
     # tailcone taper ratio
-    λc = parg[iglambdac]
+    # λc = parg[iglambdac]
 
     # wing geometry parameters
     sweep = parg[igsweep]
@@ -246,14 +245,14 @@ function wsize(ac; itermax=35,
     rhoweb = parg[igrhoweb]
     rhocap = parg[igrhocap]
 
-    # fuselage stresses and densities
-    σskin = parg[igsigskin] * parg[igsigfac]
-    σbend = parg[igsigbend] * parg[igsigfac]
-    rhoskin = parg[igrhoskin]
-    rhobend = parg[igrhobend]
+    # # fuselage stresses and densities
+    # σskin = parg[igsigskin] * parg[igsigfac]
+    # σbend = parg[igsigbend] * parg[igsigfac]
+    # rhoskin = parg[igrhoskin]
+    # rhobend = parg[igrhobend]
 
-    # fuselage shell bending/skin modulus ratio
-    rEshell = parg[igrEshell]
+    # # fuselage shell bending/skin modulus ratio
+    # rEshell = parg[igrEshell]
 
     # strut stress and density
     σstrut = parg[igsigstrut] * parg[igsigfac]
@@ -301,8 +300,8 @@ function wsize(ac; itermax=35,
         xftank = 0.0
         xftankaft = 0.0
     else
-        xftank = parg[igxblend1] + 1.0*ft_to_m
-        xftankaft = parg[igxblend2]
+        xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m
+        xftankaft = fuse.layout.x_end_cylinder
     end
         
     parg[igxftank] = xftank
@@ -656,7 +655,7 @@ function wsize(ac; itermax=35,
             elseif tank_placement == "front" #The case when the fuel is at the front is treated specially
                 #The code assumes that the fuel is located at the back for the purpose of sizing of the symmetric fuselage
                 Waftfuel = parg[igWfuel]
-                xftank_fuse = parg[igxend] - parg[igxftank]
+                xftank_fuse = fuse.layout.x_end - parg[igxftank]
             end
         else
             tank_placement = ""
@@ -670,7 +669,7 @@ function wsize(ac; itermax=35,
         # Gskin = Eskin * 0.5 / (1.0 + 0.3)
         
 
-        # fuse = ac.fuselage
+        # fuse = fuse
         # lay = fuse.layout
 
         # Eskin_F = fuse.material.E #parg[igEcap]
@@ -681,7 +680,7 @@ function wsize(ac; itermax=35,
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew!(ac.fuselage, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+            Wfuse, xWfuse, cabVol) = fusew!(fuse, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
             ifwing, nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
             ffadd, Δp,
@@ -1039,7 +1038,7 @@ function wsize(ac; itermax=35,
             parg[igSh] = Sh
         else
             # for subsequent iterations:
-            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
+            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse)
 
             xwbox, xwing = parg[igxwbox], parg[igxwing]
 
@@ -1213,22 +1212,22 @@ function wsize(ac; itermax=35,
             parg[igmdotboiloff] = nftanks * mdot_boiloff #store total fuel boiloff rate
 
             #Tank placement and weight moment
-            lcabin = parg[igdxcabin]
+            lcabin = dx_cabin(fuse)
             if tank_placement == "front"
                 flag_front = 1
                 flag_aft = 0
-                xftank = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
+                xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
                 xftankaft = 0.0
             elseif tank_placement == "rear"
                 flag_front = 0
                 flag_aft = 1
                 xftank = 0.0
-                xftankaft = parg[igxblend1] + lcabin + 1.0*ft_to_m + ltank/2.0
+                xftankaft = fuse.layout.x_start_cylinder + lcabin + 1.0*ft_to_m + ltank/2.0
             elseif tank_placement == "both"
                 flag_front = 1
                 flag_aft = 1
-                xftank = parg[igxblend1] + 1.0*ft_to_m + ltank/2.0
-                xftankaft = parg[igxblend1] + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
+                xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
+                xftankaft = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
             end
             
             parg[igxftank] = xftank
@@ -1239,7 +1238,7 @@ function wsize(ac; itermax=35,
 
             # Update fuselage according to tank requirements
             update_fuse!(pari, parg) #update fuselage length to accommodate tank
-            fusebl!(pari, parg, para, ipcruise1) #Recalculate fuselage bl properties
+            fusebl!(fuse,pari, parg, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
             # Kinetic energy area at T.E.
@@ -1297,7 +1296,7 @@ function wsize(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+        balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -1390,7 +1389,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, Ldebug)
+        time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1469,7 +1468,7 @@ function wsize(ac; itermax=35,
     takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -1483,7 +1482,7 @@ function wsize(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     itrim = 0
-    balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+    balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
     
 end
 
