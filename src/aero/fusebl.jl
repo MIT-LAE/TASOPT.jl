@@ -61,13 +61,7 @@ function fusebl!(fuse,pari, parg, para, ip)
 
       Vol = 0.0
 
-      # ifclose = pari[iifclose]
       ifclose = fuse.layout.taper_fuse
-      # xnose   = parg[igxnose]
-      # xend    = parg[igxend ]
-      # xblend1 = parg[igxblend1]
-      # xblend2 = parg[igxblend2]
-      #TODO Remove above
       xnose = fuse.layout.x_nose
       xend = fuse.layout.x_end
       xblend1 = fuse.layout.x_start_cylinder
@@ -79,10 +73,6 @@ function fusebl!(fuse,pari, parg, para, ip)
     
       Reunit = Mach*a0 * rho0/mu0
 
-      # wfb    = parg[igwfb]
-      # Rfuse  = parg[igRfuse]
-      # dRfuse = parg[igdRfuse]
-      #TODO Remove above
       wfb = fuse.layout.bubble_center_y_offset
       Rfuse = fuse.layout.radius
       dRfuse = fuse.layout.bubble_lower_downward_shift
@@ -94,9 +84,6 @@ function fusebl!(fuse,pari, parg, para, ip)
       sin2t = 2.0*hfb*wfb/Rfuse^2
       Sfuse = (pi + 2.0*thetafb + sin2t)*Rfuse^2 + 2.0*Rfuse*dRfuse
 
-      # anose = parg[iganose]
-      # btail = parg[igbtail]
-      #TODO Remove above
       anose = fuse.layout.nose_radius
       btail = fuse.layout.tail_radius
 
@@ -106,7 +93,6 @@ function fusebl!(fuse,pari, parg, para, ip)
       nbl, iblte =  axisol!(xnose,xend,xblend1,xblend2,Sfuse, 
                             anose,btail,ifclose,
                             Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
-                            #TODO Remove above
      
 #---- fuselage volume and perimeter
       @inbounds for i = 1:iblte-1
@@ -197,12 +183,6 @@ function fusebl!(fuse,pari, parg, para, ip)
       para[iaKAfTE  , ip] = KTE/(qinf*Vinf)
       para[iaPAfinf , ip] = Pinf/qinf
     
-      # println(para[iaDAfsurf])
-      # println(para[iaDAfwake])
-      # println(para[iaKAfTE]  )
-      # println(para[iaPAfinf] )
-
-      # return
       end # fusebl
 
 

@@ -36,7 +36,7 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
       # Unpack weights
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
-      Wfuse = parg[igWfuse]
+      Wfuse = fuse.weight
       Wwing = parg[igWwing]
       Wstrut = parg[igWstrut]
       Whtail = parg[igWhtail]
@@ -128,7 +128,7 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
 
       xW = rpay * Wpay * xpay +
            xWfuel +
-           parg[igxWfuse] + xWtesys + xWftank +
+           fuse.moment + xWtesys + xWftank +
            Wwing * parg[igxwbox] + parg[igdxWwing] +
            Wstrut * parg[igxwbox] + parg[igdxWstrut] +
            (Whtail * parg[igxhbox] + parg[igdxWhtail]) * Sh / Sh1 +
@@ -316,7 +316,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       # Unpack Weights
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
-      Wfuse = parg[igWfuse]
+      Wfuse = fuse.weight
       Wwing = parg[igWwing]
       Wstrut = parg[igWstrut]
       Whtail = parg[igWhtail]
@@ -343,7 +343,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
-      xWfuse = parg[igxWfuse]
+      xWfuse = fuse.moment
 
       dxWwing = parg[igdxWwing]
       dxWstrut = parg[igdxWstrut]
@@ -663,7 +663,7 @@ function cglpay(pari, parg, fuse)
       Wfuel = parg[igWfuel]
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
-      Wfuse = parg[igWfuse]
+      Wfuse = fuse.weight
       Wwing = parg[igWwing]
       Wstrut = parg[igWstrut]
       Whtail = parg[igWhtail]
@@ -706,7 +706,7 @@ function cglpay(pari, parg, fuse)
            Wlgmain
 
       xWe = rfuel * xWfuel +
-            parg[igxWfuse] + parg[igxWtesys] + parg[igxWftank] +
+            fuse.moment + parg[igxWtesys] + parg[igxWftank] +
             Wwing * parg[igxwbox] + parg[igdxWwing] +
             Wstrut * parg[igxwbox] + parg[igdxWstrut] +
             Whtail * parg[igxhbox] + parg[igdxWhtail] +

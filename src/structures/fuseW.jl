@@ -166,12 +166,12 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #--------------------------------------------------------------------
 #--- fuselage skin and center web thicknesses to withstand pressure load
-      tskin =     deltap*fuse.layout.radius/fuse.skin.σ
-      tfweb = 2.0*deltap*fuse.layout.bubble_center_y_offset  /fuse.skin.σ
+      fuse.skin.thickness =     deltap*fuse.layout.radius/fuse.skin.σ
+      fuse.layout.thickness_webs = 2.0*deltap*fuse.layout.bubble_center_y_offset  /fuse.skin.σ
 
 #--- cross-sectional areas
-      Askin = (2.0*pi+4.0*fuse.layout.n_webs*thetafb)*fuse.layout.radius*tskin + 2.0*fuse.layout.bubble_lower_downward_shift*tskin
-      Afweb = fuse.layout.n_webs*(2.0*hfb+fuse.layout.bubble_lower_downward_shift)*tfweb
+      Askin = (2.0*pi+4.0*fuse.layout.n_webs*thetafb)*fuse.layout.radius*fuse.skin.thickness + 2.0*fuse.layout.bubble_lower_downward_shift*fuse.skin.thickness
+      Afweb = fuse.layout.n_webs*(2.0*hfb+fuse.layout.bubble_lower_downward_shift)*fuse.layout.thickness_webs
       Afuse = (pi + fuse.layout.n_webs*(2.0*thetafb + sin2t))*fuse.layout.radius^2 + 2.0*fuse.layout.radius*fuse.layout.bubble_lower_downward_shift        #####
 #          + 2.0*(fuse.layout.radius+fuse.layout.n_webs*fuse.layout.bubble_center_y_offset)*fuse.layout.bubble_lower_downward_shift        #####
 
@@ -181,8 +181,8 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #--- component volumes and volume moments
       Vcyl  = Askin*lshell
-      Vnose = Snose*tskin
-      Vbulk = Sbulk*tskin
+      Vnose = Snose*fuse.skin.thickness
+      Vbulk = Sbulk*fuse.skin.thickness
       Vfweb = Afweb*lshell
 
       xVcyl  = Vcyl  * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
@@ -196,7 +196,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       xWskin = fuse.skin.ρ*gee*(xVcyl + xVnose + xVbulk)
       xWfweb = fuse.skin.ρ*gee* xVfweb
 
-      Wshell = Wskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + Wfweb
+      fuse.shell.weight = Wskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + Wfweb
       xWshell = xWskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + xWfweb
 
 #--------------------------------------------------------------------
@@ -213,13 +213,13 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       end
       lcabin = fuse.layout.x_pressure_shell_aft - fuse.layout.x_pressure_shell_fwd - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
 
-      Wwindow = fuse.n_decks * Wpwindow * lcabin
-      xWwindow = Wwindow * xcabin
+      fuse.window.weight = fuse.n_decks * Wpwindow * lcabin
+      xWwindow = fuse.window.weight * xcabin
       
 #--------------------------------------------------------------------
 #--- insulation weight
-      Winsul = Wppinsul*((1.1*pi+2.0*thetafb)*fuse.layout.radius*lshell + 0.55*(Snose+Sbulk))
-      xWinsul = Winsul * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
+      fuse.insulation.weight = Wppinsul*((1.1*pi+2.0*thetafb)*fuse.layout.radius*lshell + 0.55*(Snose+Sbulk))
+      xWinsul = fuse.insulation.weight * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
 
 #--------------------------------------------------------------------
 #--- various weight moments
@@ -247,11 +247,11 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Afcap = 2.0*Mmax/(sigfloor*fuse.layout.floor_depth)
 
       Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      Wfloor = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
-      xWfloor = Wfloor * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
+      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
+      xWfloor = fuse.floor.weight * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
 
 #--- average floor-beam cap thickness ("smeared" over entire floor)
-      tfloor = 0.5*Afcap/lfloor
+      fuse.floor.thickness = 0.5*Afcap/lfloor
       
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
@@ -262,20 +262,20 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
             (fuse.layout.x_cone_end-fuse.layout.x_pressure_shell_aft)/fuse.layout.radius *
             2.0/(1.0+fuse.layout.tailcone_taper_ratio)
 
-      Wcone = rhocone*gee*Vcone*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd)
-      xWcone = Wcone * 0.5*(fuse.layout.x_pressure_shell_aft + fuse.layout.x_cone_end)
+      fuse.cone.weight = rhocone*gee*Vcone*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd)
+      xWcone = fuse.cone.weight * 0.5*(fuse.layout.x_pressure_shell_aft + fuse.layout.x_cone_end)
 
-      tcone = Qv / (2.0*taucone*Afuse)
+      fuse.cone.thickness = Qv / (2.0*taucone*Afuse)
 
 #--------------------------------------------------------------------
 #--- torsional stiffnesses
-      GJshell = Gskin*4.0*Afuse^2 * tskin / perim
-      GJcone  = Gskin*4.0*Afuse^2 * tcone / perim
+      fuse.shell.GJ = Gskin*4.0*Afuse^2 * fuse.skin.thickness / perim
+      fuse.cone.GJ  = Gskin*4.0*Afuse^2 * fuse.cone.thickness / perim
 
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + Wcone + Wapu + Waftfuel + Wftank + Weng
+      Wtail = Whtail + Wvtail + fuse.cone.weight + Wapu + Waftfuel + Wftank + Weng
 
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
@@ -286,7 +286,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #--------------------------------------------------------------------
 #--- shell bending inertias
-      tshell = tskin*(1.0 + rE*fuse.weight_frac_string*fuse.skin.ρ/fuse.bending_h.ρ)
+      tshell = fuse.skin.thickness*(1.0 + rE*fuse.weight_frac_string*fuse.skin.ρ/fuse.bending_h.ρ)
 
 #--- bending stress to be matched
       sigMh = fuse.bending_h.σ - rE*0.5*deltap*fuse.layout.radius/tshell
@@ -300,11 +300,11 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Ihshell = ( (pi + fuse.layout.n_webs*(2.0*thetafb+sin2t))*fuse.layout.radius^2 +
                  8.0*fuse.layout.n_webs*cost*0.5*fuse.layout.bubble_lower_downward_shift*fuse.layout.radius +
                  (2.0*pi + 4.0*fuse.layout.n_webs*thetafb)*(0.5*fuse.layout.bubble_lower_downward_shift)^2)*fuse.layout.radius*tshell+
-              0.66667*fuse.layout.n_webs*(hfb+0.5*fuse.layout.bubble_lower_downward_shift)^3*tfweb
+              0.66667*fuse.layout.n_webs*(hfb+0.5*fuse.layout.bubble_lower_downward_shift)^3*fuse.layout.thickness_webs
 
       hfuse = fuse.layout.radius + 0.5*fuse.layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*
-          Nland*(Wpay+Wpadd+Wshell+Wwindow+Winsul+Wfloor+Wseat)*
+          Nland*(Wpay+Wpadd+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+Wseat)*
           0.5/lshell
       A1 = 1.0/(hfuse*sigMh)*
           (Nland*Wtail + rMh*Lhmax)
@@ -313,7 +313,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Abar1 = 2.0*A2*xbulk + A1
       Abar0 = A2*xbulk^2 + A1*xtail + A0
       desc = max( 0.0 , Abar1^2 - 4.0*Abar0*Abar2 )
-      xhbend = (Abar1 - sqrt(desc))*0.5/Abar2
+      fuse.bending_h.x = (Abar1 - sqrt(desc))*0.5/Abar2
 
       dxwing = xwing - xwbox
       xf = xwing + dxwing + 0.5*cbox
@@ -322,21 +322,22 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Ahbendf = max(Abar2*xf^2 - Abar1*xf + Abar0, 0)
       Ahbendb = max(Abar2*xb^2 - Abar1*xb + Abar0, 0)
 
-      Vhbendf = A2*((xbulk-xf)^3 - (xbulk-xhbend)^3)/3.0 +
-               A1*((xtail-xf)^2 - (xtail-xhbend)^2)/2.0 +
-               A0*(xhbend-xf)
-      Vhbendb = A2*((xbulk-xb)^3 - (xbulk-xhbend)^3)/3.0 +
-               A1*((xtail-xb)^2 - (xtail-xhbend)^2)/2.0 +
-              A0*(xhbend-xb)
+      Vhbendf = A2*((xbulk-xf)^3 - (xbulk-fuse.bending_h.x)^3)/3.0 +
+               A1*((xtail-xf)^2 - (xtail-fuse.bending_h.x)^2)/2.0 +
+               A0*(fuse.bending_h.x-xf)
+      Vhbendb = A2*((xbulk-xb)^3 - (xbulk-fuse.bending_h.x)^3)/3.0 +
+               A1*((xtail-xb)^2 - (xtail-fuse.bending_h.x)^2)/2.0 +
+              A0*(fuse.bending_h.x-xb)
       Vhbendc = 0.5*(Ahbendf+Ahbendb)*cbox
 
 
-      Whbend = fuse.bending_h.ρ*gee*(Vhbendf + Vhbendb + Vhbendc)
+      fuse.bending_h.weight = fuse.bending_h.ρ*gee*(Vhbendf + Vhbendb + Vhbendc)
 
-      xWhbend = Whbend *      xwing
+      xWhbend = fuse.bending_h.weight *      xwing
 
-      EIhshell = Eskin * Ihshell
-      EIhbend  = Ebend * 0.5*(Ahbendf+Ahbendb) * 2.0*hfuse^2
+      fuse.shell.EIh = Eskin * Ihshell
+      fuse.bending_h.EIh  = Ebend * 0.5*(Ahbendf+Ahbendb) * 2.0*hfuse^2
+      fuse.bending_v.EIh = fuse.bending_h.EIh
 
 #----------------------------------------------------------------
 #--- vertical-axis bending moment added material
@@ -356,28 +357,29 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       widf = fuse.layout.radius + fuse.layout.n_webs*fuse.layout.bubble_center_y_offset
       B1 = 1.0/(widf*sigMv) * (rMv*Lvmax*nvtail)
       B0 = -Ivshell/(rE*widf^2)
-      xvbend = xvtail + B0/B1 # point where Avbend = 0 
+      fuse.bending_v.x = xvtail + B0/B1 # point where Avbend = 0 
 
       Avbendb = max(B1*(xtail-xb) + B0, 0)
-      Vvbendb = max(B1*((xtail-xb)^2 - (xtail-xvbend)^2)/2.0+
-               B0*(xvbend-xb), 0)
+      Vvbendb = max(B1*((xtail-xb)^2 - (xtail-fuse.bending_v.x)^2)/2.0+
+               B0*(fuse.bending_v.x-xb), 0)
       Vvbendc = 0.5*Avbendb*cbox
-      Wvbend = fuse.bending_h.ρ*gee*(Vvbendb + Vvbendc)
+      fuse.bending_v.weight = fuse.bending_h.ρ*gee*(Vvbendb + Vvbendc)
       # println("W, Vvb, Vvc Avbend = $Wvbend, $Vvbendb, $Vvbendc, $Avbendb")
 
-      xWvbend = Wvbend * (2.0*xwing + xvbend)/3.0
+      xWvbend = fuse.bending_v.weight * (2.0*xwing + fuse.bending_v.x)/3.0
 
 
-      EIvshell = Eskin * Ivshell
-      EIvbend  = Ebend * Avbendb * 2.0*widf^2
+      fuse.shell.EIv = Eskin * Ivshell
+      fuse.bending_h.EIv  = Ebend * Avbendb * 2.0*widf^2
+      fuse.bending_v.EIv = fuse.bending_h.EIv
 
 #----------------------------------------------------------------
 #--- overall fuse weight and moment
-      Wfuse = Wfix + Wapu + Wpadd + Wseat +
-             Wshell + Wcone + Wwindow + Winsul + Wfloor+
-             Whbend + Wvbend
+      fuse.weight = Wfix + Wapu + Wpadd + Wseat +
+             fuse.shell.weight + fuse.cone.weight + fuse.window.weight + fuse.insulation.weight + fuse.floor.weight+
+             fuse.bending_h.weight + fuse.bending_v.weight
 
-      xWfuse = xWfix + xWapu + xWpadd + xWseat+
+      fuse.moment = xWfix + xWapu + xWpadd + xWseat+
              xWshell + xWcone + xWwindow + xWinsul + xWfloor+
              xWhbend + xWvbend 
 
@@ -390,37 +392,5 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
             cabVol = Afuse*(lcabin + 0.67*lnose + 0.67*fuse.layout.radius)
       end
 
-# TODO change this inline
-fuse.skin.thickness = tskin
-fuse.cone.thickness = tcone
-fuse.layout.thickness_webs = tfweb
-fuse.floor.thickness = tfloor
-fuse.bending_h.x = xhbend
-fuse.bending_v.x = xvbend
-fuse.shell.EIh = EIhshell
-fuse.shell.EIv = EIvshell
-fuse.bending_h.EIh = EIhbend
-fuse.bending_h.EIv = EIvbend
-fuse.bending_v.EIh = EIhbend
-fuse.bending_v.EIv = EIvbend
-fuse.shell.GJ = GJshell
-fuse.cone.GJ = GJcone
-fuse.shell.weight = Wshell
-fuse.cone.weight = Wcone
-fuse.window.weight = Wwindow
-fuse.insulation.weight = Winsul
-fuse.floor.weight = Wfloor
-fuse.bending_h.weight = Whbend
-fuse.bending_v.weight = Wvbend
-fuse.weight = Wfuse
-fuse.moment = xWfuse
-return  tskin, tcone, tfweb, tfloor, xhbend, xvbend,
-                       EIhshell,EIhbend,
-                       EIvshell,EIvbend,
-                       GJshell ,GJcone,
-                       Wshell, Wcone, Wwindow, Winsul, Wfloor,
-                       Whbend, Wvbend,
-                       Wfuse,
-                      xWfuse,
-                       cabVol
+return  cabVol
 end # fusew
