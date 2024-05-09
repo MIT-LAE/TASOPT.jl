@@ -254,9 +254,6 @@ readaero(x) = read_input(x, aero, daero)
 weight = read_input("Weights", fuse, dfuse)
 dweight = dfuse["Weights"]
 readweight(x) = read_input(x, weight, dweight)
-    parg[igfframe]  = readweight("frame")
-    parg[igfstring] = readweight("stringer")
-    #TODO remove above
     fuselage.weight_frac_frame = readweight("frame")
     fuselage.weight_frac_string = readweight("stringer")
     parg[igffadd]   = readweight("additional")
@@ -281,45 +278,11 @@ readgeom(x) = read_input(x, geom, dgeom)
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
-    pari[iidoubledeck] = readgeom("double_decker") 
-
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
     parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
-
-    parg[igRfuse]  = Distance(readgeom("radius"))
-    parg[igdRfuse] = Distance(readgeom("dRadius"))
-    parg[igwfb]    = Distance(readgeom("y_offset"))
-    parg[ighfloor] = Distance(readgeom("floor_depth"))
-    parg[ignfweb]  = readgeom("Nwebs")
-
-    parg[iganose] = readgeom("a_nose")
-    parg[igbtail] = readgeom("b_tail")
-
-    fuse_end = lowercase(readgeom("taper_fuse_to")) 
-    if fuse_end == "point"
-        pari[iifclose] = 0
-    elseif fuse_end == "edge"
-        pari[iifclose] = 1
-    else
-        pari[iifclose] = 0
-        @warn "Fuselage can only be closed to a 'point' or an 'edge'"*
-                " but '$fuse_end' was provided."*
-                " Setting fuselage to end at a point."
-    end
-
-    parg[iglambdac] = readgeom("tailcone_taper")
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
-
-    parg[igxnose]   = Distance(readgeom("x_nose_tip")) 
-    parg[igxshell1] = Distance(readgeom("x_pressure_shell_fwd"))
-    parg[igxblend1] = Distance(readgeom("x_start_cylinder"))
-    parg[igxblend2] = Distance(readgeom("x_end_cylinder"))
-    parg[igxshell2] = Distance(readgeom("x_pressure_shell_aft"))
-    parg[igxconend] = Distance(readgeom("x_cone_end"))
-    parg[igxend]    = Distance(readgeom("x_end")) 
-    
     parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
     parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
     parg[igxapu]     = Distance(readgeom("x_APU"))
@@ -329,12 +292,7 @@ readgeom(x) = read_input(x, geom, dgeom)
 
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
-
-    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
-
-    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
-
-    #TODO remove above
+    
     if readgeom("double_decker")
         fuselage.n_decks =  2
     else
@@ -379,10 +337,10 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
-    fuse_tank.Rfuse = parg[igRfuse]
-    fuse_tank.dRfuse = parg[igdRfuse]
-    fuse_tank.wfb = parg[igwfb]
-    fuse_tank.nfweb = parg[ignfweb]
+    fuse_tank.Rfuse = fuse.layout.radius
+    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
+    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
+    fuse_tank.nfweb = fuselage.layout.n_webs
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
@@ -664,7 +622,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
 
-    update_fuse_for_pax!(pari, parg, parm, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 
@@ -677,17 +635,12 @@ dstructures = default["Structures"]
 readstruct(x) = read_input(x, structures, dstructures)
     parg[igsigfac] = readstruct("stress_factor")
     #- allowable stresses at sizing cases
-    parg[igsigskin] = Stress(readstruct("sigma_fuse_skin"))
-    parg[igsigbend] = Stress(readstruct("sigma_fuse_bending"))
-
     parg[igsigcap] = Stress(readstruct("sigma_caps"))
     parg[igtauweb] = Stress(readstruct("tau_webs"))
 
     parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
-    parg[igrEshell] = readstruct("fuse_shell_modulus_ratio")
-    #TODO remove above
     fuselage.rEshell = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
@@ -695,8 +648,6 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igEstrut] = Stress(readstruct("E_struts"))
 
     #- structural material densities
-    parg[igrhoskin] = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
-    parg[igrhobend] = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
     parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
     parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   

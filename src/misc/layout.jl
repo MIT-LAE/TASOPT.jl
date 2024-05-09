@@ -9,39 +9,39 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct FuselageLayout
     """Fuselage Radius [m]"""
-    radius::Float64 = 1.9558 # = ac.parg[igRfuse] #Rfuse
+    radius::Float64 = 0 # = ac.parg[igRfuse] #Rfuse
     """Downward shift of lower bubbles (dRfuse) [m] """
-    bubble_lower_downward_shift::Float64 = 0.381#dRfuse 
+    bubble_lower_downward_shift::Float64 = 0#dRfuse 
     """Y offset of bubble center [m]"""
     bubble_center_y_offset::Float64 = 0 #wfb
     """Number of webs (for double bubble designs)"""
-    n_webs::Float64 = 1 #nfwebs
+    n_webs::Float64 = 0 #nfwebs
     """Thickness of webs """
     thickness_webs::Float64 = 0 #nfwebs
     """X position of nose [m]"""
     x_nose::Float64  = 0# = ac.parg[igxnose] #xnose
     """X position of pressure shell forward [m]"""
-    x_pressure_shell_fwd::Float64 = 5.1816# = ac.parg[igxshell1] #xshell1
+    x_pressure_shell_fwd::Float64 = 0# = ac.parg[igxshell1] #xshell1
     """X position of pressure shell aft [m]"""
-    x_pressure_shell_aft::Float64 = 31.0896# = ac.parg[igxshell2] #xshell2
+    x_pressure_shell_aft::Float64 = 0# = ac.parg[igxshell2] #xshell2
     """X position of cylinder start [m]"""
-    x_start_cylinder::Float64 = 6.096# = ac.parg[igxblend1] #xblend1
+    x_start_cylinder::Float64 = 0# = ac.parg[igxblend1] #xblend1
     """X position of cylinder end [m]"""
-    x_end_cylinder::Float64 = 29.5656# = ac.parg[igxblend2] #xblend2
+    x_end_cylinder::Float64 = 0# = ac.parg[igxblend2] #xblend2
     """X position of fuselage cone end [m]"""
-    x_cone_end::Float64 = 35.6616# = ac.parg[igxend] #xconeend
+    x_cone_end::Float64 = 0# = ac.parg[igxend] #xconeend
     """X position of fuselage end [m]"""
-    x_end::Float64 = 35.6616# = ac.parg[igxend] #xend
+    x_end::Float64 = 0# = ac.parg[igxend] #xend
     """Tailcone taper (lambdac) [m]"""
-    tailcone_taper_ratio::Float64 = 0.3# lambdac
+    tailcone_taper_ratio::Float64 = 0# lambdac
     """Floor depth (depth of floor beams) [m]"""
-    floor_depth::Float64 = 0.127
+    floor_depth::Float64 = 0
     """Nose Radius [m]"""
-    nose_radius::Float64 = 1.65
+    nose_radius::Float64 = 0
     """Tail Radius [m]"""
-    tail_radius::Float64 = 2.0
+    tail_radius::Float64 = 0
     """Taper fuselage to Point (0) or Edge (1)"""
-    taper_fuse::Int64 = 1 # 0 = point ; 1 = edge
+    taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
 end
 
 

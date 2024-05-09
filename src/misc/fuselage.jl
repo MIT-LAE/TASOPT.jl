@@ -12,7 +12,7 @@
     # Structures
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
     #to do: Add material-> Structural members
-    skin::StructuralMember = StructuralMember(material=material, σ=1.0342136834273669e8)
+    skin::StructuralMember = StructuralMember(material=material)
     shell::StructuralMember = StructuralMember(material=material) # IS just Skin + Additional
     cone::StructuralMember = StructuralMember()
     floor::StructuralMember = StructuralMember()
@@ -25,12 +25,12 @@
     
     # Misc properties
     # Nland::Float64 = 6.0
-    n_decks::Float64 = 1
-    weight_frac_string::Float64 = 0.35
-    weight_frac_frame::Float64 = 0.25
+    n_decks::Float64 = 0
+    weight_frac_string::Float64 = 0
+    weight_frac_frame::Float64 = 0
     # ffadd::Float64 = 0.2
     # nftanks::Int64 = 1
-    rEshell::Float64 = 1.0
+    rEshell::Float64 = 0
     # tank_placement
 end
 

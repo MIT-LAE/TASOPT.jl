@@ -234,11 +234,12 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         yw[5] = bs/2.0
         yw[6] = bo/2.0
     # Fuse
-        Rfuse = parg[igRfuse]
-        wfb   = parg[igwfb]
+        fuse = ac.fuselage
+        Rfuse = fuse.layout.radius
+        wfb   = fuse.layout.bubble_center_y_offset
 
-        anose    = parg[iganose]
-        btail    = parg[igbtail]
+        anose    = fuse.layout.nose_radius
+        btail    = fuse.layout.tail_radius
 
         xnose    = parg[igxnose   ]
         xend     = parg[igxend    ]
@@ -263,7 +264,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xf = zeros(nnose + ntail + 1)
         yf = zeros(nnose + ntail + 1)
 
-        if pari[iifclose] == 0
+        if fuse.layout.taper_fuse == 0
             dytail = -hwidth 
         else
             dytail = -0.2*hwidth
@@ -323,7 +324,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         ytTEh = 0.5*bh
 
 
-        if (pari[iifclose] == 0)
+        if (fuse.layout.taper_fuse == 0)
             xcLEh = xoLEh
             xcTEh = xoTEh
             ycLEh = yoLEh
@@ -449,12 +450,12 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
     pax = parg[igWpay]/parm[imWperpax]
 
-    _, xseats, seats_per_row = place_cabin_seats(pax, parg[igRfuse])
+    _, xseats, seats_per_row = place_cabin_seats(pax, fuse.layout.radius)
     xseats = xseats .+ xseats0
     rows = length(xseats)
 
     println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
+    yseats, symmetric_seats = arrange_seats(seats_per_row, fuse.layout.radius)
 
     ## Plot
     if ax === nothing
@@ -568,7 +569,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], fuse.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
@@ -1083,6 +1084,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     pari = ac.pari
     parg = ac.parg
+    fuse = ac.fuselage
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
@@ -1131,11 +1133,11 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         yw[5] = bs/2.0
         yw[6] = bo/2.0
     # Fuse
-        Rfuse = parg[igRfuse]
-        wfb   = parg[igwfb]
+        Rfuse = fuse.layout.radius
+        wfb   = fuse.layout.bubble_center_y_offset
 
-        anose    = parg[iganose]
-        btail    = parg[igbtail]
+        anose    = fuse.layout.nose_radius
+        btail    = fuse.layout.tail_radius
 
         xnose    = parg[igxnose   ]
         xend     = parg[igxend    ]
@@ -1160,7 +1162,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         xf = zeros(nnose + ntail + 1)
         yf = zeros(nnose + ntail + 1)
 
-        if pari[iifclose] == 0
+        if fuse.layout.taper_fuse == 0
             dytail = -hwidth 
         else
             dytail = -0.2*hwidth
@@ -1220,7 +1222,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         ytTEh = 0.5*bh
 
 
-        if (pari[iifclose] == 0)
+        if (fuse.layout.taper_fuse == 0)
             xcLEh = xoLEh
             xcTEh = xoTEh
             ycLEh = yoLEh
@@ -1392,12 +1394,12 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     #Seats
     pax = parg[igWpay]/parm[imWperpax]
-    _, xseats, seats_per_row = place_cabin_seats(pax, parg[igRfuse])
+    _, xseats, seats_per_row = place_cabin_seats(pax, fuse.layout.radius)
     xseats = xseats .+ xseats0
     rows = length(xseats)
 
     println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats, symmetric_seats = arrange_seats(seats_per_row, parg[igRfuse])
+    yseats, symmetric_seats = arrange_seats(seats_per_row, fuse.layout.radius)
 
     ## Plot
     if ax === nothing
@@ -1519,7 +1521,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], fuse.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20

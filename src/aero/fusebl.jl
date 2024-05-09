@@ -29,7 +29,7 @@ See also [`blax`](@ref) and [`axisol!`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function fusebl!(pari, parg, para, ip)
+function fusebl!(fuse,pari, parg, para, ip)
       
 #     nc,     # number of control points for fuselage potential-flow problem
 #     nbl,    # number of BL+wake points
@@ -61,12 +61,17 @@ function fusebl!(pari, parg, para, ip)
 
       Vol = 0.0
 
-      ifclose = pari[iifclose]
-
-      xnose   = parg[igxnose]
-      xend    = parg[igxend ]
-      xblend1 = parg[igxblend1]
-      xblend2 = parg[igxblend2]
+      # ifclose = pari[iifclose]
+      ifclose = fuse.layout.taper_fuse
+      # xnose   = parg[igxnose]
+      # xend    = parg[igxend ]
+      # xblend1 = parg[igxblend1]
+      # xblend2 = parg[igxblend2]
+      #TODO Remove above
+      xnose = fuse.layout.x_nose
+      xend = fuse.layout.x_end
+      xblend1 = fuse.layout.x_start_cylinder
+      xblend2 = fuse.layout.x_end_cylinder
 
       Mach  = para[iaMach, ip]
       altkm = para[iaalt, ip]/1000.0
@@ -74,9 +79,13 @@ function fusebl!(pari, parg, para, ip)
     
       Reunit = Mach*a0 * rho0/mu0
 
-      wfb    = parg[igwfb]
-      Rfuse  = parg[igRfuse]
-      dRfuse = parg[igdRfuse]
+      # wfb    = parg[igwfb]
+      # Rfuse  = parg[igRfuse]
+      # dRfuse = parg[igdRfuse]
+      #TODO Remove above
+      wfb = fuse.layout.bubble_center_y_offset
+      Rfuse = fuse.layout.radius
+      dRfuse = fuse.layout.bubble_lower_downward_shift
 
 #---- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
@@ -85,8 +94,11 @@ function fusebl!(pari, parg, para, ip)
       sin2t = 2.0*hfb*wfb/Rfuse^2
       Sfuse = (pi + 2.0*thetafb + sin2t)*Rfuse^2 + 2.0*Rfuse*dRfuse
 
-      anose = parg[iganose]
-      btail = parg[igbtail]
+      # anose = parg[iganose]
+      # btail = parg[igbtail]
+      #TODO Remove above
+      anose = fuse.layout.nose_radius
+      btail = fuse.layout.tail_radius
 
 #---- calculate potential-flow surface velocity uinv(.) using PG source line
       nc = 30
@@ -94,6 +106,7 @@ function fusebl!(pari, parg, para, ip)
       nbl, iblte =  axisol!(xnose,xend,xblend1,xblend2,Sfuse, 
                             anose,btail,ifclose,
                             Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
+                            #TODO Remove above
      
 #---- fuselage volume and perimeter
       @inbounds for i = 1:iblte-1
