@@ -139,17 +139,6 @@ function wsize(ac; itermax=35,
     fLo = parg[igfLo]
     fLt = parg[igfLt]
 
-    # fuselage dimensions and coordinates
-    # Rfuse = parg[igRfuse]
-    # dRfuse = parg[igdRfuse]
-    # wfb = parg[igwfb]
-    # nfweb = parg[ignfweb]
-    # hfloor = parg[ighfloor]
-    # xnose = parg[igxnose]
-    # xend = parg[igxend]
-    # xshell1 = parg[igxshell1]
-    # xshell2 = parg[igxshell2]
-    # xconend = parg[igxconend]
     xwbox = parg[igxwbox]
     xhbox = parg[igxhbox]
     xvbox = parg[igxvbox]
@@ -165,12 +154,6 @@ function wsize(ac; itermax=35,
     Wpwindow = parg[igWpwindow]
     Wppinsul = parg[igWppinsul]
     Wppfloor = parg[igWppfloor]
-
-    # if pari[iidoubledeck] == 1
-    #     ndecks = 2
-    # else
-    #     ndecks = 1
-    # end
 
     # fuselage-bending inertial relief factors
     rMh = parg[igrMh]
@@ -189,9 +172,6 @@ function wsize(ac; itermax=35,
     λh = parg[iglambdah]
     λvs = 1.0
     λv = parg[iglambdav]
-
-    # tailcone taper ratio
-    # λc = parg[iglambdac]
 
     # wing geometry parameters
     sweep = parg[igsweep]
@@ -244,15 +224,6 @@ function wsize(ac; itermax=35,
     tauweb = parg[igtauweb] * parg[igsigfac]
     rhoweb = parg[igrhoweb]
     rhocap = parg[igrhocap]
-
-    # # fuselage stresses and densities
-    # σskin = parg[igsigskin] * parg[igsigfac]
-    # σbend = parg[igsigbend] * parg[igsigfac]
-    # rhoskin = parg[igrhoskin]
-    # rhobend = parg[igrhobend]
-
-    # # fuselage shell bending/skin modulus ratio
-    # rEshell = parg[igrEshell]
 
     # strut stress and density
     σstrut = parg[igsigstrut] * parg[igsigfac]
@@ -628,11 +599,6 @@ function wsize(ac; itermax=35,
         xvtail = parg[igxvtail]
         xwbox = parg[igxwbox]
         xwing = parg[igxwing]
-        # xblend1 = parg[igxblend1]
-        # xblend2 = parg[igxblend2]
-        # xshell1 = parg[igxshell1]
-        # xshell2 = parg[igxshell2]
-        # xconend = parg[igxconend]
         xapu = parg[igxapu]
         xeng = parg[igxeng]
 
@@ -662,25 +628,8 @@ function wsize(ac; itermax=35,
             xftank_fuse = 0.0
             Wftank_single = 0.0
         end
-
-        # Call fusews
-        # Eskin = parg[igEcap]
-        # Ebend = Eskin * rEshell
-        # Gskin = Eskin * 0.5 / (1.0 + 0.3)
         
-
-        # fuse = fuse
-        # lay = fuse.layout
-
-        # Eskin_F = fuse.material.E #parg[igEcap]
-        # Ebend_F = Eskin_F * fuse.rEshell
-        # Gskin_F = Eskin_F * 0.5 / (1.0 + 0.3)
-
-        # (0.0010595922635980273, 0.0012557869494739108, 0.0, 0.0009061817802385006, 30.99307223745552, 31.178627149279325, 2.936934051684777e9, 2.2843138631792213e10, 2.318007120748435e9, 1.6792688546441204e10, 1.5712862857814715e9, 1.8622265180300238e9, 20953.297287912694, 5816.895136874598, 11269.980000000001, 4779.851416025711, 13143.23579857935, 12504.912488532287, 7239.959565006861, 195735.61797443152, 3.585753833133235e6, 414.54271063740043)
-        (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
-            EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
-            Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew!(fuse, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+        (cabVol) = fusew!(fuse, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
             ifwing, nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
             ffadd, Δp,
@@ -692,48 +641,17 @@ function wsize(ac; itermax=35,
             xwing, xwbox, cbox,
             xfix, xapu, xeng, xfuel)
 
-        parg[igtskin] = tskin
-        parg[igtcone] = tcone
-        parg[igtfweb] = tfweb
-        parg[igtfloor] = tfloor
-        parg[igxhbend] = xhbend
-        parg[igxvbend] = xvbend
-
-        parg[igEIhshell] = EIhshell
-        parg[igEIhbend] = EIhbend
-        parg[igEIvshell] = EIvshell
-        parg[igEIvbend] = EIvbend
-        parg[igGJshell] = GJshell
-        parg[igGJcone] = GJcone
-
-        parg[igWshell] = Wshell
-        parg[igWcone] = Wcone
-        parg[igWwindow] = Wwindow
-        parg[igWinsul] = Winsul
-        parg[igWfloor] = Wfloor
-
-        parg[igWhbend] = Whbend
-        parg[igWvbend] = Wvbend
-
-        parg[igWfuse] = Wfuse
-        parg[igxWfuse] = xWfuse
-
         parg[igcabVol] = cabVol
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
         WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * cabVol
-        # Total max Takeoff weight (MTOW)
 
-        # WMTO = Wpay + Wfuse + Wwing + Wstrut + Wtesys + Wftank
-        #        Whtail + Wvtail +
-        #        Weng + Wfuel + 
-        #        Whpesys + Wlgnose + Wlgmain
         if (iterw == 1 && initwgt == 0)
 
             feng = 0.08
             fsum = feng + ffuel + fhpesys + flgnose + flgmain
-            WMTO = (Wpay + Wfuse + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
+            WMTO = (Wpay + fuse.weight + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
 
             Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain]
             parg[igWMTO] = WMTO
@@ -743,7 +661,7 @@ function wsize(ac; itermax=35,
 
         else
             # Call a better Wupdate function
-            Wupdate0!(parg, rlx, fsum)
+            Wupdate0!(parg, fuse, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -771,7 +689,7 @@ function wsize(ac; itermax=35,
         if printiter
             @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
                 iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
-                parg[igWfuse], parg[igWwing], parg[igb], parg[igS],
+                fuse.weight, parg[igWwing], parg[igb], parg[igS],
                 parg[igSh], parg[igxwbox])
         end
         if (errw <= tolerW)
@@ -1418,7 +1336,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, rlx, fsum)
+        Wupdate!(parg, fuse, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1434,7 +1352,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, rlx, fsum)
+        Wupdate!(parg, fuse, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1489,7 +1407,7 @@ end
 """
 Wupdate0 updates the weight of the aircraft
 """
-function Wupdate0!(parg, rlx, fsum)
+function Wupdate0!(parg, fuse, rlx, fsum)
     WMTO = parg[igWMTO]
     
 
@@ -1497,7 +1415,7 @@ function Wupdate0!(parg, rlx, fsum)
     fsum = 0.0
 
     Wsum = parg[igWpay] +
-           parg[igWfuse] +
+           fuse.weight +
            parg[igWwing] +
            parg[igWstrut] +
            parg[igWhtail] +
@@ -1516,7 +1434,7 @@ end
 """
 Wupdate
 """
-function Wupdate!(parg, rlx, fsum)
+function Wupdate!(parg, fuse, rlx, fsum)
 
     WMTO = parg[igWMTO]
 
@@ -1535,7 +1453,7 @@ function Wupdate!(parg, rlx, fsum)
     Wtesys = parg[igWtesys]
     Wftank = parg[igWftank]
     Wpay = parg[igWpay]
-    Wfuse = parg[igWfuse]
+    Wfuse = fuse.weight
 
     ftank = parg[igWftank] / WMTO
 
@@ -1547,7 +1465,7 @@ function Wupdate!(parg, rlx, fsum)
     end
 
     # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
-    WMTO = rlx * (Wpay + Wfuse) / (1.0 - fsum) + (1.0 - rlx) * WMTO
+    WMTO = rlx * (Wpay + fuse.weight) / (1.0 - fsum) + (1.0 - rlx) * WMTO
 
     parg[igWMTO] = WMTO
     parg[igWwing] = WMTO * fwing
