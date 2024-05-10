@@ -18,6 +18,7 @@ function check_struct_equivalence(s1, s2)
                     return false
                 end
             elseif !(val1 ≈ val2)
+                println("Error in ", val1, " ", val2, field)
                 return false
             end
         else
