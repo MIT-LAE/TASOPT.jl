@@ -51,7 +51,7 @@ function obj(x, grad)
         f = ac.parm[imPFEI]
     catch
         println("sizing fails")
-        f = 100.
+        f = 1000.
     end
     
 
