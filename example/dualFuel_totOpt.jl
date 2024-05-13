@@ -56,11 +56,11 @@ function obj(x, grad)
     
 
     # Max span constriant
-    bmax = ac.parg[igbmax]
-    b    = ac.parg[igb]
-    constraint  = b/bmax - 1.0
-    penfac  = 0.01* ac.parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # bmax = ac.parg[igbmax]
+    # b    = ac.parg[igb]
+    # constraint  = b/bmax - 1.0
+    # penfac  = 0.01* ac.parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
     
     # Ensure aircraft weight makes sense
     WTOmax = ac.parg[igWMTO]
@@ -122,7 +122,7 @@ numevals = opt.numevals # the number of function evaluations
 println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
 
 figure()
-savedir = "./example/optimization/"
+savedir = "optimization"
 if !isdir(savedir)
     # If it doesn't exist, create the "optimization" directory
     mkdir(savedir)
