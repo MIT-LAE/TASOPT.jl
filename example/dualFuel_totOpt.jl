@@ -46,28 +46,34 @@ function obj(x, grad)
     ac.pare[iepilc, :, :] .= 3 # Low Pressure Compressure Pressure Ratio set to 3
 
     # Sizing aircraft with new ac.parameters
-    TASOPT.size_aircraft!(ac, iter =50, printiter=false)
-    f = ac.parm[imPFEI]
+    try
+        TASOPT.size_aircraft!(ac, iter =500, printiter=false)
+        f = ac.parm[imPFEI]
+    catch
+        println("sizing fails")
+        f = 100.
+    end
+    
 
     # Max span constriant
     bmax = ac.parg[igbmax]
     b    = ac.parg[igb]
     constraint  = b/bmax - 1.0
-    penfac  = 25.0* ac.parg[igWpay]
+    penfac  = 0.01* ac.parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
     
     # Ensure aircraft weight makes sense
     WTOmax = ac.parg[igWMTO]
     WTO = ac.parm[imWTO,1]
     constraint = WTO/WTOmax - 1.0
-    penfac = 10*ac.parg[igWpay]
+    penfac = 0.01*ac.parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
 
     # Ensure fuel volume makes sense
     Wfmax = ac.parg[igWfmax]
     Wf    = ac.parg[igWfuel]
     constraint = Wf/Wfmax - 1.0
-    penfac = 10*ac.parg[igWpay]
+    penfac = 0.01*ac.parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
     
     println("X̄ = $x  ⇨  PFEI = $(ac.parm[imPFEI]) f = $f, OPR = $(ac.pare[iept3]/ac.pare[iept2]),")
