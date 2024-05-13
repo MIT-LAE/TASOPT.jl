@@ -1,13 +1,14 @@
-# This is an example file to load an aircraft model/ input file and 
-# size an aircraft using TASOPT. 
+# This scipt optimize an aircraft model for dual fuel injection for the same payload (All fuel in the wing)[Modified from Aditeya]
 
 # 1) Load TASOPT
 using TASOPT
+using NLopt
 using PyPlot
-using CSV
+
 # using Tables
 include("../src/misc/index.inc")
 ft_to_m = 0.3048
+track_fig = nothing
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
@@ -16,101 +17,128 @@ ft_to_m = 0.3048
 #  load default model
 # example_ac = load_default_model() # simply a synonym to read_aircraft_model()
 # Alternatively you can load your desired input file 
-nameAircraftModel = "../src/IO/experiment_input.toml"
+nameAircraftModel = "../src/IO/experiment_input_3000.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = "EthaJetA31PerIncDes1500nmi"
+saveName = "Etha3000nmi"
 # 2.5) Change fuel type
-ac.pari[iifuel] = 322431 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
-ac.parg[igrhofuel] = 805 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
+ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
+ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
+# Objective function
+xarray = []
+farray = []
+PFEIarray = []
+CDarray = []
+OPRarray = []
+function obj(x, grad)
+	ac.parg[igAR] = x[1] # Aspect Ratio 
+    ac.para[iaalt, ipcruise1, :] .=  x[2] * ft_to_m # Cruise Altitude
+    ac.para[iaCL, ipclimb1+1:ipdescentn-1, :] .= x[3] # CL
+    ac.parg[igsweep] = x[4] # Wing sweep 
+    ac.parg[iglambdas] = x[5] #inner_panel_taper_ratio
+    ac.parg[iglambdat] = x[6] #outer_panel_taper_ratio
+    ac.parg[ighboxo] = x[7] #root_thickness_to_chord
+    ac.parg[ighboxs] = x[8] #spanbreak_thickness_to_chord
+    ac.para[iarcls, ipclimb1+1 : ipdescentn-1, :] .= x[9]   #  rcls    break/root cl ratio = cls/clo
+    ac.para[iarclt, ipclimb1+1 : ipdescentn-1, :] .= x[10]   #  rclt    tip  /root cl ratio = clt/clo
+    ac.pare[ieTt4, ipcruise1:ipcruise2, :] .= x[11] # Tt4
+    ac.pare[iepihc, ipclimb1+1 : ipdescentn-1, :] .= x[12] # High Pressure Compressor Pressure Ratio
+    ac.pare[iepif, ipclimbn, :] .= x[13] #Fan PR 
+    ac.pare[iepilc, :, :] .= 3 # Low Pressure Compressure Pressure Ratio set to 3
 
-# 3) Find Optimal Flight Altitude
-AltList = LinRange(2e4,5e4,200) #ft
-AltRec = [] #ft
-RanRec = [] #nmi
-WMTORec = [] #Ton (metric)
-WFuelRec = [] #Ton (metric)
-WPayRec = [] #Ton (metric)
-PFEIRec = [] #(J/J)
-WTO_WTOmaxRec = [] #N/N
-Wf_WfmaxRec = [] #N/N
-areaWingRec = [] #m2
-ARWingRec = [] #Aspect ratio
-spanWingRec = [] #m
-diaFanRec = [] #m
-FnTotCRRec = [] #N
-for Alt = AltList
-    ac.para[iaalt, ipcruise1, 1] =  Alt * ft_to_m # Cruise Altitude
-    try
-        size_aircraft!(ac,iter=500)
-        append!(AltRec,Alt)
-        append!(RanRec,ac.parg[igRange]./1852.0)
-        append!(WMTORec,ac.parg[igWMTO]./(9.81*1000))
-        append!(WFuelRec,ac.parg[igWfuel]./(9.81*1000))
-        append!(WPayRec,ac.parg[igWpay]./(9.81*1000))
-        append!(PFEIRec,ac.parm[imPFEI,1])
-        append!(WTO_WTOmaxRec,ac.parm[imWTO,1]/ac.parg[igWMTO])
-        append!(Wf_WfmaxRec,ac.parg[igWfuel]/ac.parg[igWfmax])
-        append!(areaWingRec,ac.parg[igS])
-        append!(ARWingRec,ac.parg[igAR])
-        append!(spanWingRec,ac.parg[igb])
-        append!(diaFanRec,ac.parg[igdfan])
-        append!(FnTotCRRec,ac.pare[ieFe,ipcruise1,1])
-    catch
-        println("Failed at :",Alt)
-    end
+    # Sizing aircraft with new ac.parameters
+    TASOPT.size_aircraft!(ac, iter =50, printiter=false)
+    f = ac.parm[imPFEI]
+
+    # Max span constriant
+    bmax = ac.parg[igbmax]
+    b    = ac.parg[igb]
+    constraint  = b/bmax - 1.0
+    penfac  = 25.0* ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+    
+    # Ensure aircraft weight makes sense
+    WTOmax = ac.parg[igWMTO]
+    WTO = ac.parm[imWTO,1]
+    constraint = WTO/WTOmax - 1.0
+    penfac = 10*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+
+    # Ensure fuel volume makes sense
+    Wfmax = ac.parg[igWfmax]
+    Wf    = ac.parg[igWfuel]
+    constraint = Wf/Wfmax - 1.0
+    penfac = 10*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+    
+    println("X̄ = $x  ⇨  PFEI = $(ac.parm[imPFEI]) f = $f, OPR = $(ac.pare[iept3]/ac.pare[iept2]),")
+    push!(xarray, x)
+    push!(farray, f)
+    push!(PFEIarray, ac.parm[imPFEI])
+    push!(CDarray, ac.para[iaCD, ipcruise1, 1])
+    push!(OPRarray, ac.pare[iept3]/ac.pare[iept2])
+    return f
 end
-#Post Process
-WEmpRec = WMTORec - WFuelRec - WPayRec # Ton Metric
-EFuelRec  = PFEIRec.*WPayRec*1000*9.81.*RanRec*1852.0 #Joul
-#Collect output Data
-outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
-             ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
-             ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
-             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec,EFuelRec=EFuelRec)
-CSV.write(saveName*".csv",  outputTup, writeheader=true)
-#Plot out the operating conditions for the optimal point
-maskFeasi = (WTO_WTOmaxRec.<=1) .& (Wf_WfmaxRec.<=1) #These are the feasible solution
-idxPFEIBest = findmin(PFEIRec[maskFeasi])[2] #Find the location of the best PFEI in the feasible PFEI Range
-AltFeasi = AltRec[maskFeasi]
-AltBest = AltFeasi[idxPFEIBest]
-println("Best Altitude at [ft]: ",AltBest)
-#Resize at the best altitude for detailed data extraction
-ac2 = read_aircraft_model(nameAircraftModel)
-ac2.pari[iifuel] = ac.pari[iifuel]
-ac2.parg[igrhofuel] = ac.parg[igrhofuel]
-ac2.para[iaalt, ipcruise1, 1] =  AltBest * ft_to_m # Cruise Altitude
-size_aircraft!(ac2,iter=500)
-PFEIBest = ac2.parm[imPFEI,1]
-println("PFEI Numerical Error Check: ",100*(minimum(PFEIRec[maskFeasi])-PFEIBest)/PFEIBest," %")
-#Read out the data at the optimal conditions
-##Create a mask to mask out unreported phases
-maskRep = ac2.pare[ieFe,:,1].>0 #Reported Phase has non zero thrust
-phases = ["ST","RO","TO","CB","B1","B2","B3","B4","B5","C1","C2","D1","D2","D3","D4","D5","Test"]
-phases = phases[maskRep]
-print("Reported Phases Are:", phases,"\n")
-##Read out other parameters
-###Aero Parameters
-timeOptMiss = ac2.para[iatime,maskRep,1] #second
-ranOptMiss = ac2.para[iaRange,maskRep,1] #meter
-altOptMiss = ac2.para[iaalt,maskRep,1] #meter
-machOptMiss = ac2.para[iaMach,maskRep,1]
-weiOptMiss = ac2.para[iafracW,maskRep,1]*(ac2.parm[imWTO,1]/9.81) #kg
-gamOptMiss = ac2.para[iagamV,maskRep,1] #rad
-LDROptMiss = ac2.para[iaCL,maskRep,1]./ac2.para[iaCD,maskRep,1] #Lift to drag ratio
-###Engine Parameters
-hfOptMiss = ac2.pare[iehfuel,maskRep,1] #J/kg equivalent heating value
-TfuelOptMiss = ac2.pare[ieTfuel,maskRep,1] #K fuel temperature
-Tt3OptMiss = ac2.pare[ieTt3,maskRep,1] #K
-Pt3OptMiss = ac2.pare[iept3,maskRep,1] #Pa 
-Tt4OptMiss = ac2.pare[ieTt4,maskRep,1] #K
-Pt4OptMiss = ac2.pare[iept4,maskRep,1] #Pa
-FnOptMiss = ac2.pare[ieFe,maskRep,1] #N Total Thrust for all engines
-mdotfOptMiss = ac2.pare[iemcore,maskRep,1].*ac2.pare[ieff,maskRep,1] #kg/s for all engines
-Cpa = 0.5.*(ac2.pare[iecpt3,maskRep,1].+ac2.pare[iecpt4,maskRep,1])
-ffbMiss   = (Cpa.*(Tt4OptMiss.-Tt3OptMiss))./(hfOptMiss.*ac2.pare[ieetab,maskRep,1].-Cpa.*(Tt4OptMiss.-TfuelOptMiss))
-mdot3OptMiss = mdotfOptMiss./ffbMiss #kg/s for all engines air flow into the combustor (exclude bypass cooling flow)
-#Output Additional Data at the optimal mission
-outputTup = (Phase=phases,Time=timeOptMiss,Range=ranOptMiss,Altitude=altOptMiss,MachNumber=machOptMiss,Weight=weiOptMiss
-            ,ClimbAngle=gamOptMiss,LiftDragRatio=LDROptMiss,HeatingValue=hfOptMiss,FuelTemp=TfuelOptMiss
-            ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss,mdot3=mdot3OptMiss)
-CSV.write(saveName*"OptimalMission.csv",  outputTup, writeheader=true)
+
+# Set lower and upper limits
+#             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
+lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6.,      0.]
+upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15.,     10.] 
+
+# Set initial changes
+initial_dx = [0.5,  1000.0,  0.05, 0.1, 0.01, 0.01,0.01,   0.01,   0.01,   0.01,     100.0, 0.5,     0.2]
+
+# Set initial values
+initial =[
+        ac.parg[igAR], 33000.0, 0.57, ac.parg[igsweep], 
+        ac.parg[iglambdas], ac.parg[iglambdat], ac.parg[ighboxo], 
+        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
+]
+
+# Set FTOL
+f_tol_rel = 1e-5
+
+# Set Optimization module
+opt = NLopt.Opt(:LN_NELDERMEAD, length(initial))
+# Other Optimization algorithms are also possible:
+# # opt = NLopt.Opt(:LN_BOBYQA, length(initial))
+# # opt = NLopt.Opt(:LN_COBYLA, length(initial))
+
+# Set Optimization ac.parameters
+opt.lower_bounds = lower
+opt.upper_bounds = upper
+opt.min_objective = obj
+opt.initial_step = initial_dx
+opt.ftol_rel = f_tol_rel
+
+opt_time = @elapsed (optf, optx, ret) = NLopt.optimize(opt, initial)
+numevals = opt.numevals # the number of function evaluations
+
+println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
+
+figure()
+savedir = "./example/optimization/"
+if !isdir(savedir)
+    # If it doesn't exist, create the "optimization" directory
+    mkdir(savedir)
+    println("The 'optimization' directory has been created.")
+end
+figname = saveName*"_Opt_details"
+global track_fig = TASOPT.plot_details(ac; ax = track_fig)
+plt.savefig(savedir*figname*".png")
+
+fig, ax = plt.subplots(2,2, figsize = (12,8))
+ax[1].plot(PFEIarray)
+ax[1].set_xlabel("Iterations")
+ax[1].set_ylabel("PFEI (J/Nm)")
+ax[2].semilogy(farray)
+ax[2].set_xlabel("Iterations")
+ax[2].set_ylabel("Objective f")
+ax[3].plot(CDarray)
+ax[3].set_xlabel("Iterations")
+ax[3].set_ylabel("CD")
+ax[4].plot(OPRarray)
+ax[4].set_xlabel("Iterations")
+ax[4].set_ylabel("OPR")
+plt.suptitle("Optimization outputs")
+figname2 = saveName*"_Opt_iterations"
+fig.savefig(savedir*figname2*".png")

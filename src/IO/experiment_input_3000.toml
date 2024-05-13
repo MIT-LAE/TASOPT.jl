@@ -81,7 +81,7 @@
     outer_vessel_support_angles = ["45 deg", "135 deg"]
     
 [Mission]
-    N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
@@ -216,7 +216,7 @@
 
     sweep = 26.0 # wing sweep in degrees
     AR    = 10.1
-    maxSpan = "117.5 ft"
+    maxSpan = "118.0 ft"
 
     inner_panel_taper_ratio = 0.7  #cs/co
     outer_panel_taper_ratio = 0.25 #ct/co
