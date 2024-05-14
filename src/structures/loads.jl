@@ -46,17 +46,17 @@ const WORLD = Frame()
 $(TYPEDEF) 
 
 Represents a weight at a given location `r` with respect to a 
-specified coordinagte `frame`
+specified coordinate `frame`
 
 $(TYPEDFIELDS)
 """
-@kwdef struct Weight <: AbstractLoad
+struct Weight <: AbstractLoad
     """Weight [N]"""
     W::Float64
     """Location {x,y,z} [m]"""
-    r::SVector{3, Float64} = SA[0.0,0.0,0.0]
+    r::SVector{3, Float64}
     """Coordinate Frame"""
-    frame::Frame = WORLD
+    frame::Frame
 end
 
 """
@@ -67,7 +67,7 @@ function Weight(W::Float64, r::AbstractVector)
 end  # function Weight
 
 """
-    Weight(W::Float64; x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+    Weight(;W::Float64, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
 
 $(TYPEDSIGNATURES)
 
