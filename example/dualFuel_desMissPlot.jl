@@ -22,8 +22,8 @@ JetAEtha3000: [11.613463065609654, 34769.903770435114, 0.5545477127074685, 27.14
 # 2) Include input file for desired aircraft/
 nameAircraftModel = "../src/IO/experiment_input_1500.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = "Etha1500nmi"
-x = [11.999856667089247, 34443.14280029319 , 0.5754043145206887, 27.08567980701492,  0.9380520909882628, 0.10017099443433408, 0.14950245863108022, 0.12845986215006178, 1.0781134610041747, 0.9975636667912358, 1707.5445791618208, 15.0,               0.5097104925337879]
+saveName = "JetA1500nmi"
+x = [11.967887176329073, 32479.866286551907, 0.5956532812392801, 27.382147149331143, 0.9447567896238773, 0.10644959191186304, 0.14694888676914802, 0.12003039648977087, 1.0596807683444869, 0.9905991041425743, 1749.8757464045927, 14.988409779779435, 2.6302018540124124]
 # 2.5) Change fuel type
 ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
 ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
@@ -96,3 +96,6 @@ outputTup = (Phase=phases,Time=timeOptMiss,Range=ranOptMiss,Altitude=altOptMiss,
             ,ClimbAngle=gamOptMiss,LiftDragRatio=LDROptMiss,HeatingValue=hfOptMiss,FuelTemp=TfuelOptMiss
             ,Tt3=Tt3OptMiss,Pt3=Pt3OptMiss,Tt4=Tt4OptMiss,Pt4=Pt4OptMiss,Thrust=FnOptMiss,mdotFuel=mdotfOptMiss,mdot3=mdot3OptMiss)
 CSV.write(saveName*"MissDetail2.csv",  outputTup, writeheader=true)
+#Plot Plane
+TASOPT.stickfig(ac, label_fs = 8)
+plt.savefig(saveName*"MissDetail3.png")
