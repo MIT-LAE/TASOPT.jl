@@ -130,6 +130,15 @@ x_moment(weight::Weight) = - weight.W * weight.r[2]
 y_moment(weight::Weight) = + weight.W * weight.r[1] # + comes from - * -
 z_moment(weight::Weight) = 0.0
 
+function Base.show(io::IO, W::Weight)
+    x,y,z = W.r
+    xo,yo,zo = W.frame.origin
+    println(typeof(W))
+    print("F̲ = ", -W.W,"k̂ N; ")
+    print("r̲ = [", x, "î, ",y, "ĵ, ", z,"k̂] m; ")
+    print("in Frame[",W.frame.id,"], o̲ = ", xo, "î + ",yo, "ĵ + ", zo,"k̂ m\n")
+end 
+
 """
 $TYPEDEF
 
