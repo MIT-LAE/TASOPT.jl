@@ -60,10 +60,11 @@ diaFanRec     = [ac.parg[igdfan]] #m
 FnTotCRRec    = [ac.pare[ieFe,ipcruise1,1]] #N
 WEmpRec       = [WMTORec - WFuelRec - WPayRec] # Ton Metric
 EFuelRec      = [PFEIRec.*WPayRec*1000*9.81.*RanRec*1852.0] #Joul
+SweepRec      = [ac.parg[igsweep]] #deg
 outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
-             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec,EFuelRec=EFuelRec)
+             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec,EFuelRec=EFuelRec,SweepRec=SweepRec)
 CSV.write(saveName*"MissDetail.csv",  outputTup, writeheader=true)
 ##Create a mask to mask out unreported phases
 maskRep = ac.pare[ieFe,:,1].>0 #Reported Phase has non zero thrust
