@@ -30,7 +30,7 @@ NOTE:
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, ipc1)
+function mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)#, iairf, initeng, ipc1)
 
       t_prop = 0.0
       calc_ipc1 = true
@@ -168,7 +168,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
 
 
       #---- estimate takeoff speed and set V,Re over climb and descent
-      cosL = cos(parg[igsweep] * π / 180.0)
+      cosL = cos(wing.layout.sweep * π / 180.0)
       CLTO = para[iaclpmax, iptakeoff] * cosL^2
       # [prash] I think the assumption here is that Wcruise/WTO~1 and
       # just scaling it with rho and CL to get an initial estimate for V
@@ -198,7 +198,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       #---- takeoff CLmax via section clmax and sweep correction
       ip = iprotate
       clpmax = para[iaclpmax, ip]
-      sweep = parg[igsweep]
+      sweep = wing.layout.sweep
       cosL = cos(sweep * π / 180.0)
       CLmax = clpmax * cosL^2
 
@@ -368,7 +368,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
                   else
                         icdfun = 1 #use airfoil database
                   end
-                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
 
                   icall = 1
                   icool = 1
@@ -493,7 +493,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -573,7 +573,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
 
       # Calc Drag
       icdfun = 1
-      cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+      cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -724,7 +724,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
                   # use airfoil database for wing cdf,cdp
                   icdfun = 1
             end
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
 
             # set up for engine calculation
             sing = sin(gamVde)

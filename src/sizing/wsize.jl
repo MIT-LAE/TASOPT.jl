@@ -32,6 +32,7 @@ function wsize(ac; itermax=35,
     fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
     
     fuse = ac.fuselage 
+    wing = ac.wing
 
     time_propsys = 0.0
 
@@ -60,7 +61,7 @@ function wsize(ac; itermax=35,
     # Fuel type 24 == kerosene #TODO need to update this for LH2
     ifuel = pari[iifuel]
     # ifwcen = pari[iifwcen]
-    iwplan = pari[iiwplan]
+    # iwplan = pari[iiwplan]
     iengloc = pari[iiengloc]
     iengwgt = pari[iiengwgt]
     # iBLIc = pari[iiBLIc]
@@ -174,12 +175,12 @@ function wsize(ac; itermax=35,
     λv = parg[iglambdav]
 
     # wing geometry parameters
-    sweep = parg[igsweep]
+    # sweep = parg[igsweep]
     wbox = parg[igwbox]
     hboxo = parg[ighboxo]
     hboxs = parg[ighboxs]
     rh = parg[igrh]
-    AR = parg[igAR]
+    # AR = parg[igAR]
     bo = parg[igbo]
     ηs = parg[igetas]
     Xaxis = parg[igXaxis]
@@ -300,7 +301,7 @@ function wsize(ac; itermax=35,
         ip = ipcruise1
         W = 5.0 * Wpay
         S = W / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
-        b = sqrt(S * parg[igAR])
+        b = sqrt(S * wing.layout.AR)
         bs = b * ηs
         Winn = 0.15 * Wpay / parg[igsigfac]
         Wout = 0.05 * Wpay / parg[igsigfac]
@@ -322,7 +323,7 @@ function wsize(ac; itermax=35,
 
 
         # wing centroid x-offset form wingbox
-        dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
+        dxwing, macco = surfdx(b, bs, bo, λt, λs, wing.layout.sweep)
         xwing = xwbox + dxwing
         parg[igxwing] = xwing
 
@@ -712,14 +713,14 @@ function wsize(ac; itermax=35,
         BW = W + WbuoyCR #Weight including buoyancy
 
         # Initial size of the wing area and chords
-        S, b, bs, co = wingsc(BW, CL, qinf, AR, ηs, bo, λt, λs)
+        S, b, bs, co = wingsc(BW, CL, qinf, wing.layout.AR, ηs, bo, λt, λs)
         parg[[igS, igb, igbs, igco]] = [S, b, bs, co]
 
         #Updating wing box chord for fuseW in next iteration
         cbox = co * wbox
 
         # x-offset of the wing centroid from wingbox
-        dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
+        dxwing, macco = surfdx(b, bs, bo, λt, λs, wing.layout.sweep)
         xwing = xwbox + dxwing
         cma = macco * co
         parg[igxwing] = xwing
@@ -733,9 +734,9 @@ function wsize(ac; itermax=35,
         γt = parg[iglambdat] * para[iarclt, ip]
         γs = parg[iglambdas] * para[iarcls, ip]
 
-        CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
             λt, λs, γt, γs,
-            AR, fLo, fLt, cmpo, cmps, cmpt)
+            wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
 
         para[iaCMw0, ipstatic:ipclimb1] .= CMw0
         para[iaCMw1, ipstatic:ipclimb1] .= CMw1
@@ -746,9 +747,9 @@ function wsize(ac; itermax=35,
         γt = parg[iglambdat] * para[iarclt, ip]
         γs = parg[iglambdas] * para[iarcls, ip]
 
-        CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
             λt, λs, γt, γs,
-            AR, fLo, fLt, cmpo, cmps, cmpt)
+            wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
 
         para[iaCMw0, ipclimb1+1:ipdescentn-1] .= CMw0
         para[iaCMw1, ipclimb1+1:ipdescentn-1] .= CMw1
@@ -759,9 +760,9 @@ function wsize(ac; itermax=35,
         γt = parg[iglambdat] * para[iarclt, ip]
         γs = parg[iglambdas] * para[iarcls, ip]
 
-        CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
             λt, λs, γt, γs,
-            AR, fLo, fLt, cmpo, cmps, cmpt)
+            wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
 
         para[iaCMw0, ipdescentn] = CMw0
         para[iaCMw1, ipdescentn] = CMw1
@@ -775,9 +776,9 @@ function wsize(ac; itermax=35,
 
         po = wingpo(b, bs, bo,
             λt, λs, γt, γs,
-            AR, Nlift, BW, Lhtail, fLo, fLt)
+            wing.layout.AR, Nlift, BW, Lhtail, fLo, fLt)
 
-        if (iwplan == 1)
+        if (wing.planform == 1)
             # engines on wing, at ys=bs/2
             Weng1 = parg[igWeng] / neng
         else
@@ -791,7 +792,7 @@ function wsize(ac; itermax=35,
         nin = 0
         yinn = 0.0
 
-        if (iwplan == 1)
+        if (wing.planform == 1)
             if pari[iiengtype] == 0
                 Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB]
             else
@@ -825,10 +826,10 @@ function wsize(ac; itermax=35,
         Wweb, Wcap, Wstrut,
         dxWweb, dxWcap, dxWstrut = surfw(po, b, bs, bo, co, zs,
             λt, λs, γt, γs,
-            Nlift, iwplan, Weng1,
+            Nlift, wing.planform, Weng1,
             nout, yout, nin, yinn,
             Winn, Wout, dyWinn, dyWout,
-            sweep, wbox, hboxo, hboxs, rh, fLt,
+            wing.layout.sweep, wbox, hboxo, hboxs, rh, fLt,
             tauweb, σcap, σstrut, Ecap, Eweb, Gcap, Gweb,
             rhoweb, rhocap, rhostrut, rhofuel)
         # println([Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
@@ -917,19 +918,19 @@ function wsize(ac; itermax=35,
         # Set tail CL derivative 
         dϵdα = parg[igdepsda]
         sweeph = parg[igsweeph]
-        tanL = tan(sweep * π / 180.0)
+        tanL = tan(wing.layout.sweep * π / 180.0)
         tanLh = tan(sweeph * π / 180.0)
 
         ip = ipcruise1
         Mach = para[iaMach, ip]
         β = sqrt(1.0 - Mach^2) #Prandtl-Glauert factor √(1-M²)
         # Calculate the tail lift-curve slope
-        dCLhdCL = (β + 2.0 / AR) / (β + 2.0 / ARh) * sqrt(β^2 + tanL^2) / sqrt(β^2 + tanLh^2) * (1.0 - dϵdα)
+        dCLhdCL = (β + 2.0 / wing.layout.AR) / (β + 2.0 / ARh) * sqrt(β^2 + tanL^2) / sqrt(β^2 + tanLh^2) * (1.0 - dϵdα)
         parg[igdCLhdCL] = dCLhdCL
 
         # Set Nacelle CL derivative fraction
         dCLnda = parg[igdCLnda]
-        dCLndCL = dCLnda * (β + 2.0 / AR) * sqrt(β^2 + tanL^2) / (2.0 * π * (1.0 + 0.5 * hboxo))
+        dCLndCL = dCLnda * (β + 2.0 / wing.layout.AR) * sqrt(β^2 + tanL^2) / (2.0 * π * (1.0 + 0.5 * hboxo))
         parg[igdCLndCL] = dCLndCL
 
         # Fuselage pitching moment
@@ -938,12 +939,12 @@ function wsize(ac; itermax=35,
         #       Drela used a 3D panel method to actually calculate the CMVf1 and CMV0  for the aircraft studied in the N+3 work
         #       If sizes are roughly that of the 737/ 777 or D8 perhaps best to use those values and comment out the following bits of code
         #TODO: Add switch to either calculate fuse pitching moment online or use offline specified values
-        cosL = cos(sweep * π / 180.0)
+        cosL = cos(wing.layout.sweep * π / 180.0)
         Mperp = Mach * cosL
         βn = sqrt(1 - Mperp^2) # PG correction factor with M⟂ 
         # Estimate finite wing ∂CL/∂α from thin airfoil lift-slope 2π and 
         #  corrections for sweep and compressibility:
-        CLα = 2π * cosL / (sqrt(βn^2 + (2 * cosL / AR)^2) + 2 * cosL / AR)
+        CLα = 2π * cosL / (sqrt(βn^2 + (2 * cosL / wing.layout.AR)^2) + 2 * cosL / wing.layout.AR)
         # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
         # parg[igCMVf1] = parg[igfuseVol]/CLα
 
@@ -956,7 +957,7 @@ function wsize(ac; itermax=35,
             parg[igSh] = Sh
         else
             # for subsequent iterations:
-            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse)
+            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing)
 
             xwbox, xwing = parg[igxwbox], parg[igxwing]
 
@@ -1222,7 +1223,7 @@ function wsize(ac; itermax=35,
         para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
 
         # Drag buildup cdsum()
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), 1)
+        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing,  1)
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])
@@ -1307,7 +1308,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
+        time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1318,7 +1319,7 @@ function wsize(ac; itermax=35,
         # must define CDwing for this point in case there's wing BLI
         cdfw = para[iacdfw, ip] * para[iafexcdw, ip]
         cdpw = para[iacdpw, ip] * para[iafexcdw, ip]
-        cosL = cos(parg[igsweep] * pi / 180.0)
+        cosL = cos(wing.layout.sweep * pi / 180.0)
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
         icall = 1
@@ -1383,7 +1384,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
+    takeoff!(pari, parg, parm, para, pare, wing, initeng, ichoke5, ichoke7)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)

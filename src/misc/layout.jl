@@ -55,25 +55,40 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct WingLayout
     """Aspect Ratio [m]"""
-    AR::Float64 = 0
+    AR::Float64 = 0 # igAr
     """Sweep [degrees]"""
-    sweep::Float64 = 0
+    sweep::Float64 = 0 # igsweep
     """Wing Span [m]"""
-    b::Float64 = 0
+    b::Float64 = 0 # igb
     """Span of inner wing (break/"snag") [m]"""
-    b_inner::Float64 = 0
+    b_inner::Float64 = 0 # igbs
     """Max Wing Span [m]"""
-    b_max::Float64 = 0
+    b_max::Float64 = 0 # igbmax
     """Outer or "tip" taper ratio of chord"""
-    λt::Float64 = 0
+    λt::Float64 = 0 # iglambdat
     """Inner or break/"snag" taper ratio of chord"""
-    λs::Float64 = 0
+    λs::Float64 = 0 # iglambdas
     """Span fraction of inner wing break ("snag")"""
-    ηs::Float64 = 0
+    ηs::Float64 = 0 # igetas
     """Wing center box width [m]"""
-    box_width::Float64 = 0
+    box_width::Float64 = 0 # igbo
     """Wing planform area (including fuselage carryover) [m^2]"""
-    S::Float64 = 0
+    S::Float64 = 0 # igS
+
+    root_chord_thickness::Float64 = 0
+
+    spanbreak_chord_thickness::Float64 = 0
+
+    hweb_to_hbox::Float64 = 0
+
+    spar_box_x_c::Float64 = 0
+
+    x_wing_box::Float64 = 0
+
+    z_wing_box::Float64 = 0
+
+
+
 end
 
 # function FuselageLayout(;default = true)

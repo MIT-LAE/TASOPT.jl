@@ -281,7 +281,7 @@ Outputs:
 - `parg[igxwing]` wing centroid location
 
 """
-function htsize(pari, parg, paraF, paraB, paraC,fuse)
+function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
 
       itmax = 10
       toler = 1.0e-7
@@ -289,7 +289,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       r = zeros(Float64, 2)
       a = zeros(Float64, (2, 2))
 
-      sweep = parg[igsweep]
+      sweep = wing.layout.sweep
       cosL = cos(sweep * π / 180.0)
 
       #---- set CG limits with worst-case payload arrangements

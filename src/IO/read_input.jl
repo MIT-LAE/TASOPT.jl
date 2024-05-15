@@ -96,6 +96,7 @@ para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
 fuselage = Fuselage()
+wing = Wing()
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -400,21 +401,53 @@ end
 # Wing
 # ---------------------------------
 # Setup wing
-wing = read_input("Wing", data, default)
+wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
-readwing(x) = read_input(x, wing, dwing)
-    pari[iiwplan] = readwing("wing_planform")
-    if readwing("strut_braced_wing")
-        pari[iiwplan] = 2
-    end
+readwing(x) = read_input(x, wing_i, dwing)
+    # pari[iiwplan] = readwing("wing_planform")
+    # if readwing("strut_braced_wing")
+    #     pari[iiwplan] = 2
+    # end
 
-    parg[igsweep] = readwing("sweep")
-    parg[igAR] = readwing("AR")
+    # parg[igsweep] = readwing("sweep")
+    # parg[igAR] = readwing("AR")
     parg[igbmax] = Distance(readwing("maxSpan"))
 
     parg[iglambdas] = readwing("inner_panel_taper_ratio")
     parg[iglambdat] = readwing("outer_panel_taper_ratio")
     parg[igetas]    = readwing("panel_break_location")
+
+    parg[igbo] = 2*Distance(readwing("center_box_halfspan"))
+    parg[igwbox]  = readwing("box_width_chord")
+    parg[ighboxo] = readwing("root_thickness_to_chord")
+    parg[ighboxs] = readwing("spanbreak_thickness_to_chord")
+    parg[igrh]    = readwing("hweb_to_hbox")
+    parg[igXaxis] = readwing("spar_box_x_c")
+
+    parg[igxwbox] = Distance(readwing("x_wing_box"))
+    parg[igzwing] = Distance(readwing("z_wing"))
+
+    parg[igdxeng2wbox] = parg[igxwbox] - parg[igxeng]
+
+
+    ## Strut details only used if strut_braced_wing is true
+    parg[igzs]      = Distance(readwing("z_strut"))
+    parg[ighstrut]  = readwing("strut_toc")
+    parg[igrVstrut] = readwing("strut_local_velocity_ratio")
+
+    #TODO remove above
+    wing.planform = readwing("wing_planform")
+    if readwing("strut_braced_wing")
+        wing.planform = 2
+    end
+
+    wing.layout.sweep = readwing("sweep")
+    wing.layout.AR = readwing("AR")
+    wing.layout.b_max = Distance(readwing("maxSpan"))
+
+    wing.layout.λs = readwing("inner_panel_taper_ratio")
+    wing.layout.λt = readwing("outer_panel_taper_ratio")
+    wing.layout.ηs    = readwing("panel_break_location")
 
     parg[igbo] = 2*Distance(readwing("center_box_halfspan"))
     parg[igwbox]  = readwing("box_width_chord")
@@ -902,7 +935,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing)
 
 end
 
