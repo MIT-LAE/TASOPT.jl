@@ -25,5 +25,8 @@ end
     strut::StructuralMember = StructuralMember(material=material)
     strut_area::Float64 = 0
     strut_length::Float64 = 0
+    strut_z::Float64 = 0
+    strut_toc::Float64 = 0
+    strut_local_velocity_ratio::Float64 = 0
 end
 

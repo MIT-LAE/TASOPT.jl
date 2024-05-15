@@ -140,7 +140,7 @@ function wsize(ac; itermax=35,
     fLo = parg[igfLo]
     fLt = parg[igfLt]
 
-    xwbox = parg[igxwbox]
+    xwbox = wing.layout.x_wing_box
     xhbox = parg[igxhbox]
     xvbox = parg[igxvbox]
     xapu = parg[igxapu]
@@ -179,11 +179,11 @@ function wsize(ac; itermax=35,
     # wbox = parg[igwbox]
     # hboxo = parg[ighboxo]
     # hboxs = parg[ighboxs]
-    rh = parg[igrh]
+    rh = wing.layout.hweb_to_hbox
     # AR = parg[igAR]
     bo = wing.layout.box_halfspan
     # ηs = parg[igetas]
-    Xaxis = parg[igXaxis]
+    # Xaxis = parg[igXaxis]
 
     # tail geometry parameters
     sweeph = parg[igsweeph]
@@ -204,8 +204,8 @@ function wsize(ac; itermax=35,
     nvtail = parg[ignvtail]
 
     # strut vertical base height, h/c, strut shell t/h
-    zs = parg[igzs]
-    hstrut = parg[ighstrut]
+    # zs = parg[igzs]
+    # hstrut = parg[ighstrut]
     tohstrut = 0.05
 
     # assume no struts on tails
@@ -510,7 +510,7 @@ function wsize(ac; itermax=35,
         ffuel = parg[igWfuel] / WMTO
 
         xwing = parg[igxwing]
-        dxwing = parg[igxwing] - parg[igxwbox]
+        dxwing = parg[igxwing] - wing.layout.x_wing_box
 
         xhtail = parg[igxhtail]
         xvtail = parg[igxvtail]
@@ -598,7 +598,7 @@ function wsize(ac; itermax=35,
         Wvtail = parg[igWvtail]
         xhtail = parg[igxhtail]
         xvtail = parg[igxvtail]
-        xwbox = parg[igxwbox]
+        xwbox = wing.layout.x_wing_box
         xwing = parg[igxwing]
         xapu = parg[igxapu]
         xeng = parg[igxeng]
@@ -691,7 +691,7 @@ function wsize(ac; itermax=35,
             @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
                 iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
                 fuse.weight, parg[igWwing], parg[igb], parg[igS],
-                parg[igSh], parg[igxwbox])
+                parg[igSh], wing.layout.x_wing_box)
         end
         if (errw <= tolerW)
             Lconv = true
@@ -734,7 +734,7 @@ function wsize(ac; itermax=35,
         γt = wing.layout.λt * para[iarclt, ip]
         γs = wing.layout.λs * para[iarcls, ip]
 
-        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
+        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, wing.layout.spar_box_x_c,
             λt, λs, γt, γs,
             wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
 
@@ -747,7 +747,7 @@ function wsize(ac; itermax=35,
         γt = wing.layout.λt * para[iarclt, ip]
         γs = wing.layout.λs * para[iarcls, ip]
 
-        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
+        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, wing.layout.spar_box_x_c,
             λt, λs, γt, γs,
             wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
 
@@ -760,7 +760,7 @@ function wsize(ac; itermax=35,
         γt = wing.layout.λt * para[iarclt, ip]
         γs = wing.layout.λs * para[iarcls, ip]
 
-        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
+        CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, wing.layout.spar_box_x_c,
             λt, λs, γt, γs,
             wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
 
@@ -824,7 +824,7 @@ function wsize(ac; itermax=35,
         Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
         Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
         Wweb, Wcap, Wstrut,
-        dxWweb, dxWcap, dxWstrut = surfw(po, b, bs, bo, co, zs,
+        dxWweb, dxWcap, dxWstrut = surfw(po, b, bs, bo, co, wing.strut_z,
             λt, λs, γt, γs,
             Nlift, wing.planform, Weng1,
             nout, yout, nin, yinn,
@@ -894,7 +894,7 @@ function wsize(ac; itermax=35,
         parg[igdxWstrut] = dxWstrut
 
         # Strut chord (perpendicular to strut)
-        cstrut = sqrt(0.5 * Astrut / (tohstrut * hstrut))
+        cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut_toc))
         Ssturt = 2.0 * cstrut * lstrutp
         parg[igcstrut] = cstrut
         parg[igSstrut] = Ssturt
@@ -959,7 +959,7 @@ function wsize(ac; itermax=35,
             # for subsequent iterations:
             htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing)
 
-            xwbox, xwing = parg[igxwbox], parg[igxwing]
+            xwbox, xwing = wing.layout.x_wing_box, parg[igxwing]
 
             lhtail = xhtail - xwing
             Sh = parg[igSh]
@@ -1053,7 +1053,7 @@ function wsize(ac; itermax=35,
         fLoh = 0.0
         fLth = fLt
         cmph = 0.0
-        CMh0, CMh1 = surfcm(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
+        CMh0, CMh1 = surfcm(bh, boh, boh, sweeph, wing.layout.spar_box_x_c, λh, 1.0, λh, 1.0,
             ARh, fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
@@ -1204,8 +1204,8 @@ function wsize(ac; itermax=35,
 
         #Calculate fuel weight moment for balance
         if (pari[iifwing] == 1) #If fuel is stored in the wings
-            xfuel = parg[igxwbox] + parg[igdxWfuel] / parg[igWfuel]
-            parg[igxWfuel] = parg[igWfuel] * parg[igxwbox] + parg[igdxWfuel] #Store fuel weight moment
+            xfuel = wing.layout.x_wing_box + parg[igdxWfuel] / parg[igWfuel]
+            parg[igxWfuel] = parg[igWfuel] * wing.layout.x_wing_box + parg[igdxWfuel] #Store fuel weight moment
         end
 
         # Pitch trim by adjusting Clh or by moving wing
@@ -1215,7 +1215,7 @@ function wsize(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         itrim = 1
-        balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+        balance(pari, parg, view(para, :, ip), fuse, wing, rfuel, rpay, ξpay, itrim)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -1387,7 +1387,7 @@ function wsize(ac; itermax=35,
     takeoff!(pari, parg, parm, para, pare, wing, initeng, ichoke5, ichoke7)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse, wing)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -1401,7 +1401,7 @@ function wsize(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     itrim = 0
-    balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+    balance(pari, parg, view(para, :, ip), fuse, wing, rfuel, rpay, ξpay, itrim)
     
 end
 
