@@ -1109,7 +1109,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             HXgas.ε = ε_des[i]
 
             # Heat exchanger materials and wall properties
-            HXgeom.material = StructuralAlloy("Al-2219-T87")
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
 
@@ -1126,6 +1125,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgeom.fconc = 1 #Concentric
                   HXgeom.D_i = D_i 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.material = StructuralAlloy("Al-2219-T87")
 
                   HXgas.mdot_p = mcore   #Core mass flow 
                   iTp_in = ieTt19
@@ -1139,6 +1139,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgeom.fconc = 1 #Concentric
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.material = StructuralAlloy("Al-2219-T87")
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
                   iTp_in = ieTt25
@@ -1152,6 +1153,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgeom.fconc = 1 
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W 
+                  HXgeom.material = StructuralAlloy("Al-2219-T87")
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
                   iTp_in = ieTt49
@@ -1166,6 +1168,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             elseif type =="TurbC" #Cooling of turbine cooling flow
                   HXgeom.fconc = 0 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.material = StructuralAlloy("SS-304") #use stainless steel for regenerative cooler as temp is above melting for Al
 
                   HXgas.mdot_p = mcore * fc #Only cooling mass flow rate
                   iTp_in = ieTt3
