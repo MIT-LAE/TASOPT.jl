@@ -49,19 +49,19 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
 
       AR       = wing.layout.AR
       sweep    = wing.layout.sweep
-      hboxo    = parg[ighboxo  ]
-      hboxs    = parg[ighboxs  ]
+      hboxo    = wing.layout.root_chord_thickness
+      hboxs    = wing.layout.spanbreak_chord_thickness
       hboxt    = hboxs
       fSnace   = parg[igfSnace ]
-      bo       = parg[igbo     ]
+      bo       = wing.layout.box_halfspan
       bs       = parg[igbs     ]
       boh      = parg[igboh    ]
       bov      = parg[igbov    ]
 
-      lambdat  = parg[iglambdat]
-      lambdas  = parg[iglambdas]
-      gammat   = parg[iglambdat]*para[iarclt]
-      gammas   = parg[iglambdas]*para[iarcls]
+      lambdat  = wing.layout.λt
+      lambdas  = wing.layout.λs
+      gammat   = wing.layout.λt*para[iarclt]
+      gammas   = wing.layout.λs*para[iarcls]
 
       lambdah  = parg[iglambdah]
       lambdav  = parg[iglambdav]
@@ -236,7 +236,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
 #---- induced CD
 #      if(Ldebug) write(*,*) '...calling CDITRP...'
 
-      cditrp(pari,parg,para)
+      cditrp(pari,parg,para, wing)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -268,7 +268,7 @@ end # cdsum
 
 
 """
-      cditrp(pari,parg,para)
+      cditrp(pari,parg,para, wing)
 
 Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
 
@@ -285,7 +285,7 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cditrp(pari,parg,para)
+function cditrp(pari,parg,para, wing)
 
       CL = para[iaCL]
 
@@ -326,14 +326,14 @@ function cditrp(pari,parg,para)
 #---- span, wing-break span, wing-root span
       b[1]  = parg[igb]
       bs[1] = parg[igbs]
-      bo[1] = parg[igbo]
+      bo[1] = wing.layout.box_halfspan
 
 #---- span of wing-root streamline in Trefftz Plane
-      bop[1] = parg[igbo] * 0.2
+      bop[1] = wing.layout.box_halfspan * 0.2
 
       zcent[1]  = parg[igzwing]
-      gammas[1] = parg[iglambdas]*para[iarcls]
-      gammat[1] = parg[iglambdat]*para[iarclt]
+      gammas[1] = wing.layout.λs*para[iarcls]
+      gammat[1] = wing.layout.λt*para[iarclt]
       po[1]     = 1.0
       CLsurfsp[1] = CL - CLhtail
 

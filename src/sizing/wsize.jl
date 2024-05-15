@@ -165,8 +165,8 @@ function wsize(ac; itermax=35,
     CLvmax = parg[igCLvmax]
 
     # wing break, wing tip taper ratios
-    λs = parg[iglambdas]
-    λt = parg[iglambdat]
+    λs = wing.layout.λs
+    λt = wing.layout.λt
 
     # tail surface taper ratios (no inner panel, so λs=1)
     λhs = 1.0
@@ -176,13 +176,13 @@ function wsize(ac; itermax=35,
 
     # wing geometry parameters
     # sweep = parg[igsweep]
-    wbox = parg[igwbox]
-    hboxo = parg[ighboxo]
-    hboxs = parg[ighboxs]
+    # wbox = parg[igwbox]
+    # hboxo = parg[ighboxo]
+    # hboxs = parg[ighboxs]
     rh = parg[igrh]
     # AR = parg[igAR]
-    bo = parg[igbo]
-    ηs = parg[igetas]
+    bo = wing.layout.box_halfspan
+    # ηs = parg[igetas]
     Xaxis = parg[igXaxis]
 
     # tail geometry parameters
@@ -302,7 +302,7 @@ function wsize(ac; itermax=35,
         W = 5.0 * Wpay
         S = W / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
         b = sqrt(S * wing.layout.AR)
-        bs = b * ηs
+        bs = b * wing.layout.ηs
         Winn = 0.15 * Wpay / parg[igsigfac]
         Wout = 0.05 * Wpay / parg[igsigfac]
         dyWinn = Winn * 0.30 * (0.5 * (bs - bo))
@@ -482,7 +482,7 @@ function wsize(ac; itermax=35,
         S = parg[igS]
         b = parg[igb]
         bs = parg[igbs]
-        bo = parg[igbo]
+        bo = wing.layout.box_halfspan
 
         bh = parg[igbh]
         bv = parg[igbv]
@@ -490,7 +490,7 @@ function wsize(ac; itermax=35,
         coh = parg[igcoh]
         cov = parg[igcov]
 
-        cbox = parg[igco] * parg[igwbox]
+        cbox = parg[igco] * wing.layout.box_width_chord
 
 
         Whtail = parg[igWhtail]
@@ -713,11 +713,11 @@ function wsize(ac; itermax=35,
         BW = W + WbuoyCR #Weight including buoyancy
 
         # Initial size of the wing area and chords
-        S, b, bs, co = wingsc(BW, CL, qinf, wing.layout.AR, ηs, bo, λt, λs)
+        S, b, bs, co = wingsc(BW, CL, qinf, wing.layout.AR, wing.layout.ηs, bo, λt, λs)
         parg[[igS, igb, igbs, igco]] = [S, b, bs, co]
 
         #Updating wing box chord for fuseW in next iteration
-        cbox = co * wbox
+        cbox = co * wing.layout.box_width_chord
 
         # x-offset of the wing centroid from wingbox
         dxwing, macco = surfdx(b, bs, bo, λt, λs, wing.layout.sweep)
@@ -731,8 +731,8 @@ function wsize(ac; itermax=35,
         ## Takeoff
         ip = iptakeoff
         cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = parg[iglambdat] * para[iarclt, ip]
-        γs = parg[iglambdas] * para[iarcls, ip]
+        γt = wing.layout.λt * para[iarclt, ip]
+        γs = wing.layout.λs * para[iarcls, ip]
 
         CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
             λt, λs, γt, γs,
@@ -744,8 +744,8 @@ function wsize(ac; itermax=35,
         ## Cruise
         ip = ipcruise1
         cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = parg[iglambdat] * para[iarclt, ip]
-        γs = parg[iglambdas] * para[iarcls, ip]
+        γt = wing.layout.λt * para[iarclt, ip]
+        γs = wing.layout.λs * para[iarcls, ip]
 
         CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
             λt, λs, γt, γs,
@@ -757,8 +757,8 @@ function wsize(ac; itermax=35,
         ## Descent
         ip = ipdescentn
         cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = parg[iglambdat] * para[iarclt, ip]
-        γs = parg[iglambdas] * para[iarcls, ip]
+        γt = wing.layout.λt * para[iarclt, ip]
+        γs = wing.layout.λs * para[iarcls, ip]
 
         CMw0, CMw1 = surfcm(b, bs, bo, wing.layout.sweep, Xaxis,
             λt, λs, γt, γs,
@@ -771,7 +771,7 @@ function wsize(ac; itermax=35,
         # Wing center load po calculation using cruise spanload cl(y)
         # -----------------------------------------
         ip = ipcruise1
-        γt, γs = parg[iglambdat] * para[iarclt, ip], parg[iglambdas] * para[iarcls, ip] # Lift "taper ratios"
+        γt, γs = wing.layout.λt * para[iarclt, ip], wing.layout.λs * para[iarcls, ip] # Lift "taper ratios"
         Lhtail = WMTO * parg[igCLhNrat] * parg[igSh] / parg[igS]
 
         po = wingpo(b, bs, bo,
@@ -829,7 +829,7 @@ function wsize(ac; itermax=35,
             Nlift, wing.planform, Weng1,
             nout, yout, nin, yinn,
             Winn, Wout, dyWinn, dyWout,
-            wing.layout.sweep, wbox, hboxo, hboxs, rh, fLt,
+            wing.layout.sweep, wing.layout.box_width_chord, wing.layout.root_chord_thickness, wing.layout.spanbreak_chord_thickness, rh, fLt,
             tauweb, σcap, σstrut, Ecap, Eweb, Gcap, Gweb,
             rhoweb, rhocap, rhostrut, rhofuel)
         # println([Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
@@ -930,7 +930,7 @@ function wsize(ac; itermax=35,
 
         # Set Nacelle CL derivative fraction
         dCLnda = parg[igdCLnda]
-        dCLndCL = dCLnda * (β + 2.0 / wing.layout.AR) * sqrt(β^2 + tanL^2) / (2.0 * π * (1.0 + 0.5 * hboxo))
+        dCLndCL = dCLnda * (β + 2.0 / wing.layout.AR) * sqrt(β^2 + tanL^2) / (2.0 * π * (1.0 + 0.5 * wing.layout.root_chord_thickness))
         parg[igdCLndCL] = dCLndCL
 
         # Fuselage pitching moment

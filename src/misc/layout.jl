@@ -71,15 +71,17 @@ $TYPEDFIELDS
     """Span fraction of inner wing break ("snag")"""
     ηs::Float64 = 0 # igetas
     """Wing center box width [m]"""
-    box_width::Float64 = 0 # igbo
+    box_halfspan::Float64 = 0 # igbo
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0 # igS
 
-    root_chord_thickness::Float64 = 0
+    box_width_chord::Float64 = 0
 
-    spanbreak_chord_thickness::Float64 = 0
+    root_chord_thickness::Float64 = 0 # hboxo
 
-    hweb_to_hbox::Float64 = 0
+    spanbreak_chord_thickness::Float64 = 0 # hboxs
+
+    hweb_to_hbox::Float64 = 0 #igrh
 
     spar_box_x_c::Float64 = 0
 
