@@ -29,7 +29,7 @@ Outputs:
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 """
-function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
+function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
 
       iengloc = pari[iiengloc]
 
@@ -63,15 +63,15 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
       
       xpay = xcabin + (ξpay - 0.5) * lcabin * (1.0 - rpay)
 
-      xwbox = parg[igxwbox]
+      xwbox = wing.layout.x_wing_box
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwing = parg[igxwing] - parg[igxwbox]
+      dxwing = parg[igxwing] - wing.layout.x_wing_box
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = xcgB + parg[igdxlgmain] - parg[igxwbox]
+      dxlg = xcgB + parg[igdxlgmain] - wing.layout.x_wing_box
 
       S = parg[igS]
       Sh = parg[igSh]
@@ -129,14 +129,14 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
       xW = rpay * Wpay * xpay +
            xWfuel +
            fuse.moment + xWtesys + xWftank +
-           Wwing * parg[igxwbox] + parg[igdxWwing] +
-           Wstrut * parg[igxwbox] + parg[igdxWstrut] +
+           Wwing * wing.layout.x_wing_box + parg[igdxWwing] +
+           Wstrut * wing.layout.x_wing_box + parg[igdxWstrut] +
            (Whtail * parg[igxhbox] + parg[igdxWhtail]) * Sh / Sh1 +
            Wvtail * parg[igxvbox] + parg[igdxWvtail] +
            Weng * parg[igxeng] +
            Whpesys * parg[igxhpesys] +
            Wlgnose * parg[igxlgnose] +
-           Wlgmain * (parg[igxwbox] + dxlg)
+           Wlgmain * (wing.layout.x_wing_box + dxlg)
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
@@ -204,7 +204,7 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
             cCM = cCM + cCM_xwbox * delxwbox
             xW = xW + xW_xwbox * delxwbox
 
-            parg[igxwbox] = xwbox
+            wing.layout.x_wing_box = xwbox
             parg[igxwing] = xwbox + dxwing
 
       end
@@ -293,7 +293,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       cosL = cos(sweep * π / 180.0)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse, wing)
 
       rpayC = 1.0
 
@@ -369,13 +369,13 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       xpayB = xcabin + (1.0 - 0.5) * lcabin * (1.0 - rpayB)
       xpayC = xcabin
 
-      xwbox = parg[igxwbox]
+      xwbox = wing.layout.x_wing_box
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwing = parg[igxwing] - parg[igxwbox]
+      dxwing = parg[igxwing] - wing.layout.x_wing_box
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = parg[igxCGaft] + parg[igdxlgmain] - parg[igxwbox]
+      dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.x_wing_box
 
       S = parg[igS]
       Sh = parg[igSh]
@@ -613,7 +613,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       #---- set converged results
       parg[igSh] = Sh
       #c    parg[igWhtail] = (Whtail_o/Sh_o) * Sh
-      parg[igxwbox] = xwbox
+      wing.layout.x_wing_box = xwbox
       parg[igxwing] = xwbox + dxwing
 
       if (iHTsize == 1)
@@ -657,7 +657,7 @@ which gives an explicit solution for `rpayF`,`rpayB`.
 The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
-function cglpay(pari, parg, fuse)
+function cglpay(pari, parg, fuse, wing)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -685,7 +685,7 @@ function cglpay(pari, parg, fuse)
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
-      delxw = parg[igxwing] - parg[igxwbox]
+      delxw = parg[igxwing] - wing.layout.x_wing_box
 
       #---- zero fuel is assumed to be worst case forward and full fuel worst case aft
       rfuel = 0.0
@@ -707,14 +707,14 @@ function cglpay(pari, parg, fuse)
 
       xWe = rfuel * xWfuel +
             fuse.moment + parg[igxWtesys] + parg[igxWftank] +
-            Wwing * parg[igxwbox] + parg[igdxWwing] +
-            Wstrut * parg[igxwbox] + parg[igdxWstrut] +
+            Wwing * wing.layout.x_wing_box + parg[igdxWwing] +
+            Wstrut * wing.layout.x_wing_box + parg[igdxWstrut] +
             Whtail * parg[igxhbox] + parg[igdxWhtail] +
             Wvtail * parg[igxvbox] + parg[igdxWvtail] +
             Weng * parg[igxeng] +
             Whpesys * parg[igxhpesys] +
             Wlgnose * parg[igxlgnose] +
-            Wlgmain * (parg[igxwbox] + delxw + parg[igdxlgmain])
+            Wlgmain * (wing.layout.x_wing_box + delxw + parg[igdxlgmain])
 
 
       # Some derivation here:        

@@ -83,11 +83,11 @@ $TYPEDFIELDS
 
     hweb_to_hbox::Float64 = 0 #igrh
 
-    spar_box_x_c::Float64 = 0
+    spar_box_x_c::Float64 = 0 #igXaxis
 
-    x_wing_box::Float64 = 0
+    x_wing_box::Float64 = 0 # igxwbox
 
-    z_wing_box::Float64 = 0
+    z_wing::Float64 = 0
 
 
 
