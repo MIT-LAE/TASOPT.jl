@@ -83,8 +83,6 @@ Structure containing the heat exchanger geometric and material properties.
     - `xl_D::Float64`: longitudinal pitch between rows over tube outer diameter
     - `Rfp::Float64`: process-side fouling factor (m^2 K/W)
     - `Rfc::Float64`: coolant-side fouling factor (m^2 K/W)
-    - `kw::Float64`: thermal conductivity of wall material (W/m/K)
-    - `ρw::Float64`: mean density of HE (kg/m^3)
     - `D_i::Float64`: inner diameter of core (m)
 """
 mutable struct HX_tubular
@@ -101,10 +99,8 @@ mutable struct HX_tubular
       xl_D :: Float64
       Rfp :: Float64
       Rfc :: Float64
-      kw :: Float64
-      ρw :: Float64
       D_i :: Float64
-      material :: String
+      material :: StructuralAlloy
       HX_tubular() = new() 
 end
 
@@ -352,7 +348,7 @@ function hxsize!(HXgas, HXgeom)
       #Extract outputs from tubesize!
       tD_o = HXgeom.tD_o
       t = HXgeom.t
-      kw = HXgeom.kw
+      kw = HXgeom.material.k
 
       tD_i = tD_o - 2 * t #tube inner diameter
 
@@ -499,7 +495,7 @@ function hxoper!(HXgas, HXgeom)
       n_passes = HXgeom.n_passes
       xl_D = HXgeom.xl_D
       tD_o = HXgeom.tD_o 
-      kw = HXgeom.kw
+      kw = HXgeom.material.k
       Rfp = HXgeom.Rfp
       Rfc = HXgeom.Rfc 
       l = HXgeom.l
@@ -1113,7 +1109,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             HXgas.ε = ε_des[i]
 
             # Heat exchanger materials and wall properties
-            HXgeom.material = "A2219"
+            HXgeom.material = StructuralAlloy("Al-2219-T87")
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
 
@@ -1461,19 +1457,8 @@ Calculates the tube diameter and thickness from flow and hoop stress balance.
     Modifies `HXgeom`.
 """
 function tubesize!(Δp, K, HXgeom)
-      material = HXgeom.material
-      
       safety_factor = 2
-      
-      if material == "SS304"
-            HXgeom.ρw = 7930 #density of steel, kg/m^3
-            HXgeom.kw = 45 #thermal conductivity of steel, W/m/K
-            σy = 215e6
-      elseif material == "A2219"
-            HXgeom.ρw = 2840 #density, kg/m^3
-            HXgeom.kw = 116 #thermal conductivity of steel, W/m/K
-            σy = 476e6
-      end
+      σy = HXgeom.material.YTS
 
       tmin = 3e-4 #m, from Brewer 1991. Corresponds to 30 BWG.
       C = safety_factor * Δp / (2 * σy) #t = C * tD_o, from hoop stress balance
@@ -1510,7 +1495,7 @@ function hxweight(gee, HXgeom, fouter)
       n_stages = HXgeom.n_stages
       n_passes = HXgeom.n_passes
       tD_o = HXgeom.tD_o 
-      ρ = HXgeom.ρw
+      ρ = HXgeom.material.ρ
       l = HXgeom.l
       t = HXgeom.t
 
