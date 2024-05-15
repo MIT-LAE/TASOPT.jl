@@ -25,6 +25,9 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     parad = ac.parad
     pared = ac.pared
 
+    fuse = ac.fuse
+    wing = ac.wing
+
     time_propsys = 0.0
 
     tolerW = 1.0e-8
@@ -153,11 +156,11 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     b  = parg[igb]
     bs = parg[igbs]
     bo = parg[igbo]
-    sweep = parg[igsweep]
+    sweep = wing.layout.sweep
     Xaxis = parg[igXaxis]
     λs = parg[iglambdas]
     λt = parg[iglambdat]
-    AR = parg[igAR]
+    AR = wing.layout.AR
     fLo = parg[igfLo]
     fLt = parg[igfLt]
 
@@ -239,7 +242,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     set_ambient_conditions!(ac, ipcruise1)
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, false)
+    time_propsys += mission!(pari, parg, parm, para, pare,fuse, wing, false)
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------

@@ -59,7 +59,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 
 For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
-Base.@kwdef struct aircraft #inner constructor
+Base.@kwdef mutable struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
     pari::AbstractVector{Int64}
@@ -71,6 +71,7 @@ Base.@kwdef struct aircraft #inner constructor
     sized::AbstractVector{Bool} = [false]
     fuse_tank::fuselage_tank = fuselage_tank()
     fuselage::Fuselage = Fuselage()
+    wing::Wing = Wing()
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required
@@ -83,7 +84,7 @@ end
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
+        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage(), Wing())
 end
 
 

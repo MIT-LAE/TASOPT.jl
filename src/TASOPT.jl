@@ -43,6 +43,9 @@ export StructuralMember
 include("./misc/fuselage.jl")
 export Fuselage
 
+include("./misc/Wing.jl")
+export WingSection,Wing
+
 include("./misc/index.inc")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank

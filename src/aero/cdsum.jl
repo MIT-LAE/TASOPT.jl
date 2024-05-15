@@ -42,13 +42,13 @@ See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@r
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cdsum!(pari,parg,para,pare, icdfun)
+function cdsum!(pari,parg,para,pare, wing, icdfun)
 
       Ldebug = false
 #      Ldebug = true
 
-      AR       = parg[igAR     ]
-      sweep    = parg[igsweep  ]
+      AR       = wing.layout.AR
+      sweep    = wing.layout.sweep
       hboxo    = parg[ighboxo  ]
       hboxs    = parg[ighboxs  ]
       hboxt    = hboxs
