@@ -220,7 +220,7 @@ function hxsize!(HXgas, HXgeom)
                         A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_p * (Tp_in -  recircT) )
                         
                         if A > 1
-                              println("Insufficient heat capacity in process stream")
+                              error("Insufficient heat capacity in process stream")
                               return
                         end
                         mdot_r = A * mdot_c_inf / (1 - A)
@@ -623,7 +623,7 @@ function hxoper!(HXgas, HXgeom)
                   if C_check == C_max #If the calculation above is incorrect because C_c = C_max
                         A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_p * (Tp_in -  recircT) )
                         if A > 1
-                              println("Insufficient heat capacity in process stream")
+                              error("Insufficient heat capacity in process stream")
                               return
                         end
                         mdot_r = A * mdot_c_inf / (1 - A)
