@@ -47,7 +47,7 @@
     size_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgeom.N_t, HXgeom.n_passes, HXgeom.tD_o, HXgeom.A_cs]
 
     size_out_check = 
-    [731.5888605437423, 665.8848846504773, 1436.2813211812131, 62.03322510460286, 8.022573724186682, 0.004760508726403918, 1.0189779296746375]
+    [731.5888605437423, 665.8848846504773, 1440.4023594662074, 62.03322510460286, 8.04559242739893, 0.004760508726403918, 1.0189779296746375]
 
     @test size_out ≈ size_out_check
 
@@ -59,7 +59,7 @@
 
     W = TASOPT.engine.hxweight(gee, HXgeom, fouter)
 
-    W_check = 799.226108163942
+    W_check = 801.5192810553101
 
     @test W == W_check
     #---------------------------------     
@@ -104,7 +104,7 @@
 
     oper_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgas.ε]
 
-    oper_out_check = [740.270655414082, 591.4772876790266, 1735.6719235975343, 0.6509530316668086]
+    oper_out_check = [740.3160720471974, 591.0871550274949, 1723.4067701087083, 0.6501725929032108]
 
     @test oper_out ≈ oper_out_check
 
@@ -169,7 +169,7 @@
     TASOPT.engine.hxsize!(HXgas, HXgeom)
 
     Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I too
-    I_check = 74155.57345199275
+    I_check = 74506.40327136323
 
     @test Iobj ≈ I_check
 
@@ -235,7 +235,7 @@
 
     Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-    I_check_rec = 2706.6055075321824
+    I_check_rec = 2828.8479203647735
 
     @test Iobj_rec ≈ I_check_rec
 

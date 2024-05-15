@@ -317,10 +317,10 @@ function hxsize!(HXgas, HXgeom)
       ρ_p_m = pp_in / (Rp * Tp_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
 
       if occursin("liquid", fluid_c) #if coolant is liquid
-            ρ_c_m, cp_c_m, μ_c_m, _, Pr_c_m, ac_m  = liquid_properties(fluid_c, Tc_inf)
+            ρ_c_m, cp_c_m, μ_c_m, k_c_m, Pr_c_m, ac_m  = liquid_properties(fluid_c, Tc_inf)
             Vc_m = ρ_c_in * Vc_in / ρ_c_m
       else
-            _, Pr_c_m, _, cp_c_m, μ_c_m, _ = gasPr(fluid_c, Tc_m)
+            _, Pr_c_m, _, cp_c_m, μ_c_m, k_c_m = gasPr(fluid_c, Tc_m)
 
             ρ_c_m = pc_in / (Rc * Tc_m)
             Vc_m = ρ_c_in * Vc_in / ρ_c_m #conservation of mass
@@ -361,28 +361,31 @@ function hxsize!(HXgas, HXgeom)
       G = mdot_p / A_min #mass flow rate per unit area at minimum area
 
       #---------------------------------
-      # Calculate thermal resistance 
-      #---------------------------------
-
-      #Calculate heat transfer coefficient for coolant
-      Re_D_c = Vc_m * tD_i / ν_c_m #Reynolds number based on pipe diameter
-      jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor and skin-friction coefficient
-      h_c = ρ_c_m * Vc_m * cp_c_m * jc / Pr_c_m^(2/3)
-
-      #---------------------------------
       # Iterative loop
       #---------------------------------
       N_iter = 15 #Expect fast convergence
 
       n_passes = 4 #Initialize number of passes
       n_passes_prev = n_passes
-      Ah = 0
+      Ah = 0.0
+      Cf = 0.0
+      Tw = (Tp_out + Tp_in + Tc_out + Tc_in) / 4 #guess wall temperature
       for i = 1:N_iter
             N_L = n_passes * n_stages #total number of rows
 
+            #Calculate heat transfer coefficient for coolant
+            Re_D_c = Vc_m * tD_i / ν_c_m #Reynolds number based on pipe diameter
+            jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor and skin-friction coefficient
+            Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
+            if ~occursin("liquid", fluid_c) #if fluid is a gas
+                  Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+            end
+            h_c = Nu_c * k_c_m / tD_i
+
             # Calculate heat transfer coefficient for process side
             Re_D_p = G * tD_o / μ_p_m #Reynolds number based on minimum free flow and tube outer diameter
-            Nu_p = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number
+            Nu_pm = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number based on mean flow
+            Nu_p = Nu_pm * (Tw/Tc_m)^0.0 #Eq.(4.1) in Kays and London (1998)
             h_p = Nu_p * k_p_m / tD_o
 
             #Overall thermal resistance times area (m^2 K / W)
@@ -391,6 +394,9 @@ function hxsize!(HXgas, HXgeom)
             # Size heat exchanger
             Ah = NTU * C_min * RA   #Find required process-side cooling area from NTU
             n_passes = Ah / (N_t * n_stages * pi * tD_o * l)
+
+            #Wall temperature (neglect change across wall)
+            Tw = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc)
 
             if (abs(n_passes_prev - n_passes)/n_passes < tol)
                   break #Break for loop if convergence has been reached
@@ -415,6 +421,7 @@ function hxsize!(HXgas, HXgeom)
             Δp_p = Inf
       else
             Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
+            Δp_p = Δp_p * (Tw/Tc_m)^0.0 #Eq.(4.2) in Kays and London (1998)
       end
 
       Pl_p = Δp_p * mdot_p / ρ_p_m #Power loss due to pressure drop in process stream
@@ -424,6 +431,7 @@ function hxsize!(HXgas, HXgeom)
       A_s_c = pi * tD_i * l * n_passes #Surface area on one coolant stream
       A_cs_c = pi * tD_i^2 / 4 #cross-sectional area of one coolant stream
       Δp_c = τw * A_s_c / A_cs_c
+      Δp_c = Δp_c * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
 
       Pl_c = Δp_c * mdot_c / ρ_c_m #Power loss due to pressure drop in coolant stream
 
@@ -590,13 +598,14 @@ function hxoper!(HXgas, HXgeom)
       Qg = ε * Qmax #Actual heat transfer rate, guess
       Qprev = Qg
 
-      # Guess outlet temperatures
+      # Guess outlet and wall temperatures
       Tp_out = Tp_in - Qg / C_p 
       Tc_out = Tc_in + Qg / C_c
+      Tw = (Tp_out + Tp_in + Tc_out + Tc_in) / 4
 
       N_iter = 20 #Rapid convergence expected
 
-      ρ_p_m = 0 #Initiliaze because of annoying Julia scope
+      ρ_p_m = 0 #Initiliaze because of Julia scope
       μ_p_m = 0
       Δh_p = 0
       Δh_c = 0
@@ -639,10 +648,10 @@ function hxoper!(HXgas, HXgeom)
             ρ_p_m = pp_in / (Rp * Tp_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
             
             if occursin("liquid", fluid_c)
-                  ρ_c_m, cp_c_m, μ_c_m, _, Pr_c_m, _  = liquid_properties(fluid_c, Tc_inf)
+                  ρ_c_m, cp_c_m, μ_c_m, k_c_m, Pr_c_m, _  = liquid_properties(fluid_c, Tc_inf)
       
             else
-                  _, Pr_c_m, _, cp_c_m, μ_c_m, _ = gasPr(fluid_c, Tc_m)
+                  _, Pr_c_m, _, cp_c_m, μ_c_m, k_c_m = gasPr(fluid_c, Tc_m)
       
                   ρ_c_m = pc_in / (Rc * Tc_m)
             end
@@ -653,13 +662,18 @@ function hxoper!(HXgas, HXgeom)
             # Calculate thermal resistance
             # Calculate heat transfer coefficient for process side
             Re_D_p = G * tD_o / μ_p_m #Reynolds number based on minimum free flow and tube outer diameter
-            Nu_p = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number
+            Nu_pm = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number
+            Nu_p = Nu_pm * (Tw/Tc_m)^0.0 #Eq.(4.1) in Kays and London (1998)
             h_p = Nu_p * k_p_m / tD_o
 
             #Calculate heat transfer coefficient for coolant
             Re_D_c = Vc_m * tD_i / ν_c_m #Reynolds number based on pipe diameter
             jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor
-            h_c = ρ_c_m * Vc_m * cp_c_m * jc / Pr_c_m^(2/3)
+            Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
+            if ~occursin("liquid", fluid_c) #if fluid is a gas
+                  Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+            end
+            h_c = Nu_c * k_c_m / tD_i
 
             #Overall thermal resistance times area (m^2 K / W)
             RA = 1 / ( h_c * (tD_i/tD_o) ) + Rfp + tD_o / tD_i * Rfc + t / kw + 1 / h_p 
@@ -676,6 +690,10 @@ function hxoper!(HXgas, HXgeom)
             # Calculate total heat transfer and exit temperatures
             Q = ε * Qmax #Actual heat transfer rate
 
+            #Wall temperature (neglect change across wall)
+            Tw = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc)
+
+            #Outlet properties
             Tp_out_guess = Tp_in - Q / C_p 
             Tc_out_guess = Tc_in + Q / C_c
 
@@ -698,7 +716,7 @@ function hxoper!(HXgas, HXgeom)
             end
             Qprev = Q #else update previous heat
       end
-
+      Tc_m = (Tc_out + Tc_in) / 2 #Mean temperature of coolant stream
       #---------------------------------
       # Compute pressure drop
       #---------------------------------
@@ -713,6 +731,7 @@ function hxoper!(HXgas, HXgeom)
             Δp_p = Inf
       else
             Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
+            Δp_p = Δp_p * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
       end
 
       #---------------------------------
