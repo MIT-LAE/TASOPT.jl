@@ -175,7 +175,7 @@
     ```
     From this, the pressure drop across the process side can be computed as
     ```math
-    \Delta p_p = \frac{G^2 L }{D_v \rho_{p,m}} \frac{f}{2} \left(\frac{D_v}{x_t}\right)^{0.4}\left(\frac{x_l}{x_t}\right)^{0.6},
+    \Delta p_p = \frac{G^2 L }{D_v \rho_{p,m}} \frac{f}{2} \left(\frac{D_v}{x_t}\right)^{0.4}\left(\frac{x_l}{x_t}\right)^{0.6} \left(\frac{\mu}{\mu_w}\right)^{-0.14},
     ```
     where ``\frac{f}{2}`` is a friction factor that can be related to the Reynolds number, ``Re_{D_v} = \frac{G D_v}{\mu_{p,m}}``, as ``\frac{f}{2}= 90 / Re_{D_v}`` for ``Re_{D_v}<200`` and ``\frac{f}{2}= 0.96  Re_{D_v}^{-0.145}`` otherwise. As in the heat transfer coefficient case, note that the distance ``x_{t}`` used in the calculations is ``x_{t,m}`` since the pitch varies in the radial direction.
     

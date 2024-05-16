@@ -400,6 +400,9 @@ function hxsize!(HXgas, HXgeom)
       #---------------------------------
       # Compute pressure drops
       #---------------------------------
+      _, _, _, _, μ_p_w, _ = gasPr(fluid_p, Tw)
+      μ_μw = μ_p_m / μ_p_w #Ratio of free flow viscosity to wall viscosity
+
       N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
       N_L = n_passes * n_stages #total number of rows
       L = N_L * xl_D * tD_o #total axial length
@@ -413,7 +416,7 @@ function hxsize!(HXgas, HXgeom)
       if Re_Dv < 0 #If whole section is blocked
             Δp_p = Inf
       else
-            Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
+            Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D, μ_μw) #Calculate using the method of Gunter and Shaw (1945)
             Δp_p = Δp_p * (Tw/Tc_m)^0.0 #Eq.(4.2) in Kays and London (1998)
       end
 
@@ -598,10 +601,11 @@ function hxoper!(HXgas, HXgeom)
 
       N_iter = 20 #Rapid convergence expected
 
-      ρ_p_m = 0 #Initiliaze because of Julia scope
-      μ_p_m = 0
-      Δh_p = 0
-      Δh_c = 0
+      ρ_p_m = 0.0 #Initiliaze because of Julia scope
+      μ_p_m = 0.0
+      Δh_p = 0.0
+      Δh_c = 0.0
+      Tp_m = 0.0
 
       for i = 1 : N_iter
             
@@ -712,6 +716,9 @@ function hxoper!(HXgas, HXgeom)
       #---------------------------------
       # Compute pressure drop
       #---------------------------------
+      _, _, _, _, μ_p_w, _ = gasPr(fluid_p, Tw)
+      _, _, _, _, μ_p_m, _ = gasPr(fluid_p, Tp_m)
+      μ_μw = μ_p_m / μ_p_w #Ratio of free flow viscosity to wall viscosity
 
       #Volumetric hydraulic diameter; Dv = 4 * (Net free volume) / (Friction surface)
       NFV = A_cs * L - N_tubes_tot * pi * tD_o^2 * l / 4 #Net free volume
@@ -722,7 +729,7 @@ function hxoper!(HXgas, HXgeom)
       if Re_Dv < 0 #If whole section is blocked
             Δp_p = Inf
       else
-            Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D) #Calculate using the method of Gunter and Shaw (1945)
+            Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D, μ_μw) #Calculate using the method of Gunter and Shaw (1945)
             Δp_p = Δp_p * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
       end
 
@@ -926,11 +933,11 @@ function hxoptim!(HXgas, HXgeom, initial_x)
 
       #Set bounds
       if length(initial_x) == 4
-            lower = [0, 1, 1, lmin]
-            upper = [30, 10, 6, lmax]
+            lower = [0.0, 1.0, 1.0, lmin]
+            upper = [30.0, 10.0, 6.0, lmax]
       else #Only 3 optimization variables
-            lower = [0, 1, 1]
-            upper = [30, 20, 6]
+            lower = [0.0, 1.0, 1.0]
+            upper = [30.0, 20.0, 6.0]
       end
       
       #Use NLopt.jl to minimize function 
@@ -1360,7 +1367,7 @@ assuming flow is fully developed and turbulent. Uses the 1913 Blasius correlatio
     - `Cf::Float64`: skin-friction coefficient
 
 """
-function jcalc_pipe(Re_D)
+function jcalc_pipe(Re_D::Float64)
       #turbulent flow
       Cf = 0.0791 * Re_D^(-0.25) #Blasius solution for smooth pipes 
       
@@ -1386,7 +1393,7 @@ the model in A. Žkauskas. Heat Transfer from Tubes in Crossflow. Advances in He
     **Outputs:**
     - `Nu::Float64`: Nusselt number based on cylinder diameter 
 """
-function Nu_calc_staggered_cyl(Re_D, Pr, N_L, xt_D, xl_D)
+function Nu_calc_staggered_cyl(Re_D::Float64, Pr::Float64, N_L::Float64, xt_D::Float64, xl_D::Float64)
 
       #First calculate C_2
       if (Re_D > 1000)
@@ -1422,7 +1429,7 @@ function Nu_calc_staggered_cyl(Re_D, Pr, N_L, xt_D, xl_D)
 end #Nu_calc_staggered_cyl
 
 """
-    Δp_calc_staggered_cyl(Re, G, L, ρ, Dv, tD_o, xt_D, xl_D)
+    Δp_calc_staggered_cyl(Re, G, L, ρ, Dv, tD_o, xt_D, xl_D, μ_μw)
 
 Calculates the pressure drop across a set of staggered cylinders in cross flow. Uses the method of Gunter and Shaw. 
 A General Correlation of Friction Factors for Various Types of Surfaces in Crossflow. Journal of Fluids Engineering, 1945.
@@ -1437,11 +1444,12 @@ A General Correlation of Friction Factors for Various Types of Surfaces in Cross
     - `tD_o::Float64`: cylinder outer diameter (m)
     - `xt_D::Float64`: circumferential pitch between tubes over tube outer diameter
     - `xl_D::Float64`: longitudinal pitch between rows over tube outer diameter
+    - `μ_μw::Float64`: ratio of free flow viscosity to wall viscosity
  
     **Outputs:**
     - `Δp::Float64`: pressure drop across staggered cylinders (Pa)
 """
-function Δp_calc_staggered_cyl(Re, G, L, ρ, Dv, tD_o, xt_D, xl_D)
+function Δp_calc_staggered_cyl(Re::Float64, G::Float64, L::Float64, ρ::Float64, Dv::Float64, tD_o::Float64, xt_D::Float64, xl_D::Float64, μ_μw::Float64)
 
       #Compute friction factor, f_2 = f/2
       if (Re <= 200)
@@ -1451,7 +1459,7 @@ function Δp_calc_staggered_cyl(Re, G, L, ρ, Dv, tD_o, xt_D, xl_D)
       end
 
       #Calculate pressure drop
-      Δp = G^2 * L / (Dv * ρ) * f_2 * (Dv / (xt_D * tD_o) )^0.4 * (xl_D / xt_D)^0.6
+      Δp = G^2 * L / (Dv * ρ) * f_2 * (Dv / (xt_D * tD_o) )^0.4 * (xl_D / xt_D)^0.6 * μ_μw^(-0.14)
       
       return Δp
 end #Δp_calc_staggered_cyl
