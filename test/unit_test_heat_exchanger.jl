@@ -42,6 +42,7 @@
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
+        HXgeom.Δpdes = 3e6
 
         TASOPT.engine.hxsize!(HXgas, HXgeom)
 
@@ -101,7 +102,6 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
 
-
         TASOPT.engine.hxoper!(HXgas, HXgeom)
 
         oper_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgas.ε]
@@ -140,6 +140,7 @@
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
+        HXgeom.Δpdes = 3e6
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -206,6 +207,7 @@
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
+        HXgeom.Δpdes = 3e6
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -254,6 +256,7 @@
         @test Cf ≈ Cf_check
         @test j ≈ j_check
 
+        #Nu past tubes
         Res = [20, 500, 1e4, 3e5]
         Pr = 0.7
         N_L = 10.0
@@ -266,28 +269,52 @@
             @test Nu ≈ Nu_check[i]
         end
 
+        #Δp past tubes
         Re = 25e3
-
         Acs = pi * (1.265^2 - 0.564^2)/4
         l = 0.6
         tD_o = 4.78e-3
         L = 0.19
         N_tubes_tot = 1984
+        xt_D = 6.0
+        xl_D = 1.25
+        μ_μw = 1.3
 
         G = 1144/60 / (Acs - 62*tD_o*l) #From Brewer
-        
         NFV = Acs * L - N_tubes_tot * pi * tD_o^2 * l / 4 #Net free volume
         Ah = N_tubes_tot * tD_o * pi * l
         Dv = 4 * NFV / Ah
         ρ = 40e3 / (287 * 750)
         
-        xt_D = 6.0
-        xl_D = 1.25
-        μ_μw = 0.9
         Δp = TASOPT.engine.Δp_calc_staggered_cyl(Re, G, L, ρ, Dv, tD_o, xt_D, xl_D, μ_μw)
-        Δp_check = 1393.2028596576026
+        Δp_check = 1323.2936826807222
 
         @test Δp ≈ Δp_check
+
+        #Tube sizing
+        HXgeom = TASOPT.engine.HX_tubular()
+        HXgeom.material = TASOPT.StructuralAlloy("SS-304")
+
+        Acc = 1.372e-5 * 4 * 62
+        b = pi *  0.564
+        n_stages = 4
+        K = pi * b * n_stages / (4 * xt_D * Acc)
+        HXgeom.Δpdes = 3e6
+        TASOPT.engine.tubesize!(K, HXgeom)
+
+        t_check = 300e-6
+        tDo_check = 0.004792450000885403
+        @test HXgeom.t ≈ t_check
+        @test HXgeom.tD_o ≈ tDo_check
+
+        K = 10 #different case with wall thickness above minimum
+        t_check = 0.0014766145463702754
+        tDo_check = 0.10582404248986974
+
+        TASOPT.engine.tubesize!(K, HXgeom)
+        @test HXgeom.t ≈ t_check
+        @test HXgeom.tD_o ≈ tDo_check
+
     end
 
 end
