@@ -617,7 +617,6 @@ function hxoper!(HXgas, HXgeom)
                         A = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * C_p * (Tp_in -  recircT) )
                         if A > 1
                               error("Insufficient heat capacity in process stream")
-                              return
                         end
                         mdot_r = A * mdot_c_inf / (1 - A)
                   end
