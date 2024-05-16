@@ -1267,11 +1267,9 @@ function wsize(ac; itermax=35,
 
         if iterw > 2 #Only include heat exchangers after second iteration
             global HXs = hxdesign!(pare, pari, ipdes, HXs)
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous for debugging
 
         else
             global HXs = []
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
             
         end
 
