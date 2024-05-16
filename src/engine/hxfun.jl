@@ -138,7 +138,7 @@ or `https://powderprocess.net/Tools_html/Data_Diagrams/Heat_Exchanger_Fouling_Fa
     **Outputs:**
     No direct outputs. Input structures are modified with outlet gas properties and HX design geometry.
 """
-function hxsize!(HXgas, HXgeom)
+function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       # Extract inputs
       #---------------------------------
@@ -472,7 +472,7 @@ method to calculate effectiveness from prescribed geometry.
     **Outputs:**
     No direct outputs. Input structures are modified with outlet gas properties.
 """
-function hxoper!(HXgas, HXgeom)
+function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       # Extract inputs
       #---------------------------------
@@ -762,7 +762,7 @@ end #hxoper!
     No direct outputs. Input structures are modified with outlet gas and HX properties.
 
 """
-function radiator_design!(HXgas, HXgeom, Q)
+function radiator_design!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 
       #Fluid parameters
       Tp_in = HXgas.Tp_in
@@ -820,7 +820,7 @@ meet the heat transfer requirement.
     **Outputs:**
     No direct outputs. Input structures are modified with outlet gas properties.
 """
-function HXoffDesignCalc!(HXgas, HXgeom, Q)
+function HXoffDesignCalc!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 
       #TODO: consider case with recirculation
       if occursin("liquid", HXgas.fluid_c)
@@ -857,7 +857,7 @@ ratio of heat capacity rates.
     **Outputs:**
     - `res::Float64`: relative difference between desired heat rate and actual heat rate
 """
-function HXheating_residual!(HXgas, HXgeom, Q, C_r)
+function HXheating_residual!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64, C_r::Float64)
 
       if occursin("liquid", HXgas.fluid_c)
             _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
@@ -893,7 +893,7 @@ optimized.
     **Outputs:**
     No direct outputs. Input structures are modified with HX design geometry.
 """
-function hxoptim!(HXgas, HXgeom, initial_x)
+function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       #Parameters to optimize: x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l (optional)
       #Set function to minimize
       obj(x, grad) =  hxobjf(x, HXgas, HXgeom) #Minimize objective function
@@ -981,7 +981,7 @@ drops in the process and coolant streams, with penalty factors to enforce constr
     **Outputs:**
     - `Iobj::Float64`: objective function (W)
 """
-function hxobjf(x, HXgas, HXgeom)
+function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
       # Create local copy of structs
       HXg = deepcopy(HXgas)
