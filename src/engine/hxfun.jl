@@ -84,6 +84,7 @@ Structure containing the heat exchanger geometric and material properties.
     - `Rfp::Float64`: process-side fouling factor (m^2 K/W)
     - `Rfc::Float64`: coolant-side fouling factor (m^2 K/W)
     - `D_i::Float64`: inner diameter of core (m)
+    - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
 """
 mutable struct HX_tubular
       fconc :: Bool
@@ -101,6 +102,7 @@ mutable struct HX_tubular
       Rfc :: Float64
       D_i :: Float64
       material :: StructuralAlloy
+      Δpdes::Float64
       HX_tubular() = new() 
 end
 
@@ -335,8 +337,7 @@ function hxsize!(HXgas, HXgeom)
       A_cc = mdot_c / (ρ_c_in * Vc_in) #total coolant cross-sectional area
 
       K = pi * b * n_stages / (4 * xt_D * A_cc) #Constant for tubesize!
-      Δp = abs(pp_in - pc_in)
-      tubesize!(Δp, K, HXgeom)
+      tubesize!(K, HXgeom) #size for design pressure difference
 
       #Extract outputs from tubesize!
       tD_o = HXgeom.tD_o
@@ -604,7 +605,6 @@ function hxoper!(HXgas, HXgeom)
       μ_p_m = 0.0
       Δh_p = 0.0
       Δh_c = 0.0
-      Tp_m = 0.0
 
       for i = 1 : N_iter
             
@@ -712,6 +712,7 @@ function hxoper!(HXgas, HXgeom)
             Qprev = Q #else update previous heat
       end
       Tc_m = (Tc_out + Tc_in) / 2 #Mean temperature of coolant stream
+      Tp_m = (Tp_out + Tp_in) / 2 #Mean temperature of process stream
       #---------------------------------
       # Compute pressure drop
       #---------------------------------
@@ -1127,6 +1128,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             # Heat exchanger materials and wall properties
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
+            HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1463,20 +1465,20 @@ function Δp_calc_staggered_cyl(Re::Float64, G::Float64, L::Float64, ρ::Float64
 end #Δp_calc_staggered_cyl
 
 """
-      tubesize!(Δp, K, HXgeom)
+      tubesize!(K, HXgeom)
 
 Calculates the tube diameter and thickness from flow and hoop stress balance.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `Δp::Float64`: pressure difference between inside and outside of tube (Pa)
     - `K::Float64`: constant in equation for `tD_o`; `K = pi * b * n_stages / (4 * xt_D * A_cc)`
     - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric and material properties
     
     **Outputs:**
     Modifies `HXgeom`.
 """
-function tubesize!(Δp, K, HXgeom)
+function tubesize!(K, HXgeom)
+      Δp = HXgeom.Δpdes #design pressure difference
       safety_factor = 2
       σy = HXgeom.material.YTS
 
