@@ -226,22 +226,7 @@ function hxsize!(HXgas, HXgeom)
                         mdot_r = A * mdot_c_inf / (1 - A)
                   end
 
-                  mdot_c = mdot_c_inf + mdot_r
-                  C_c = mdot_c * cp_c_in #Coolant heat capacity rate
-                  C_min = min(C_c, C_p)
-                  C_r = C_min / C_max
-
-                  if C_p == C_max
-                        ε_max = 1 / C_r * (1 - exp(-C_r)) #At ε = ε_max, NTU tends to infinity
-                        if ε > ε_max
-                              error("Effectiveness in recirculation exceeds maximum possible one")
-                        end
-                  else
-                        ε_max = 1 - exp(-1 / C_r) #At ε = ε_max, NTU tends to infinity
-                        if ε > ε_max
-                              error("Effectiveness in recirculation exceeds maximum possible one")
-                        end
-                  end
+                  mdot_c = mdot_c_inf + mdot_r #update coolant mass flow rate
 
                   if (abs(modot_c_prev - mdot_c)/mdot_c < tol)
                         break #Break for loop if convergence has been reached
