@@ -417,7 +417,6 @@ function hxsize!(HXgas, HXgeom)
             Δp_p = Inf
       else
             Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D, μ_μw) #Calculate using the method of Gunter and Shaw (1945)
-            Δp_p = Δp_p * (Tw/Tc_m)^0.0 #Eq.(4.2) in Kays and London (1998)
       end
 
       Pl_p = Δp_p * mdot_p / ρ_p_m #Power loss due to pressure drop in process stream
@@ -730,7 +729,6 @@ function hxoper!(HXgas, HXgeom)
             Δp_p = Inf
       else
             Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D, μ_μw) #Calculate using the method of Gunter and Shaw (1945)
-            Δp_p = Δp_p * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
       end
 
       #---------------------------------

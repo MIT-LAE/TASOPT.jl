@@ -106,7 +106,7 @@
 
         oper_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgas.ε]
 
-        oper_out_check = [740.3160720471974, 591.0871550274949, 1645.2445035647552, 0.6501725929032108]
+        oper_out_check = [740.3160720471974, 591.0871550274949, 1657.0074667280992, 0.6501725929032108]
 
         for i = 1: length(oper_out)
             @test oper_out[i] ≈ oper_out_check[i]
