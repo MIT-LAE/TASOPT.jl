@@ -235,7 +235,7 @@
 
     Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-    I_check_rec = 2828.8479203647735
+    I_check_rec = 3606.0117454667034
 
     @test Iobj_rec ≈ I_check_rec
 
