@@ -121,6 +121,8 @@ end
 """
 function geometry(ac::aircraft; io = stdout)
     parg = ac.parg
+    fuse = ac.fuselage
+    lay = fuse.layout
     printstyled(io, "Fuselage Layout:\n -------------- \n", color=:bold )
     @printf(io, "xnose     = %5.1f m (%8.1f ft)\n", parg[igxnose  ] , parg[igxnose   ]/ft_to_m)
     @printf(io, "xend      = %5.1f m (%8.1f ft)\n", parg[igxend   ] , parg[igxend    ]/ft_to_m)

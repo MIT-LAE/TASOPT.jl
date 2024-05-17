@@ -228,7 +228,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
 #---- strut profile CD
       cdfs = para[iacdfs]
       cdps = para[iacdps]
-      rVstrut = wing.strut_local_velocity_ratio
+      rVstrut = wing.strut.local_velocity_ratio
       CDstrut = (Sstrut/S)*(cdfs + cdps*cosLs^3) * rVstrut^3
       para[iaCDstrut] = CDstrut
 
@@ -331,7 +331,7 @@ function cditrp(pari,parg,para, wing)
 #---- span of wing-root streamline in Trefftz Plane
       bop[1] = wing.layout.box_halfspan * 0.2
 
-      zcent[1]  = wing.layout.z_wing
+      zcent[1]  = wing.layout.z
       gammas[1] = wing.layout.λs*para[iarcls]
       gammat[1] = wing.layout.λt*para[iarclt]
       po[1]     = 1.0

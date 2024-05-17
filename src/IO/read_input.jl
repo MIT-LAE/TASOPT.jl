@@ -425,14 +425,14 @@ readwing(x) = read_input(x, wing_i, dwing)
     wing.layout.spar_box_x_c = readwing("spar_box_x_c")
 
     wing.layout.x_wing_box = Distance(readwing("x_wing_box"))
-    wing.layout.z_wing = Distance(readwing("z_wing"))
+    wing.layout.z = Distance(readwing("z_wing"))
 
-    parg[igdxeng2wbox] = parg[igxwbox] - parg[igxeng] #TODO add this as a function of wing
+    parg[igdxeng2wbox] = wing.layout.x_wing_box - parg[igxeng] #TODO add this as a function of wing
 
     ## Strut details only used if strut_braced_wing is true
-    wing.strut_z  = Distance(readwing("z_strut"))
-    wing.strut_toc  = readwing("strut_toc")
-    wing.strut_local_velocity_ratio = readwing("strut_local_velocity_ratio")
+    wing.strut.z  = Distance(readwing("z_strut"))
+    wing.strut.toc  = readwing("strut_toc")
+    wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
 
 # ----------------------------------
 # ------- Wing Aerodynamics --------

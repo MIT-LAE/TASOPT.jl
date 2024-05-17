@@ -824,7 +824,7 @@ function wsize(ac; itermax=35,
         Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
         Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
         Wweb, Wcap, Wstrut,
-        dxWweb, dxWcap, dxWstrut = surfw(po, b, bs, bo, co, wing.strut_z,
+        dxWweb, dxWcap, dxWstrut = surfw(po, b, bs, bo, co, wing.strut.z,
             λt, λs, γt, γs,
             Nlift, wing.planform, Weng1,
             nout, yout, nin, yinn,
@@ -894,7 +894,7 @@ function wsize(ac; itermax=35,
         parg[igdxWstrut] = dxWstrut
 
         # Strut chord (perpendicular to strut)
-        cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut_toc))
+        cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut.toc))
         Ssturt = 2.0 * cstrut * lstrutp
         parg[igcstrut] = cstrut
         parg[igSstrut] = Ssturt
