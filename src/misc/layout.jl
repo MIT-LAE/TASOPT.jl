@@ -87,18 +87,8 @@ $TYPEDFIELDS
 
     x_wing_box::Float64 = 0 # igxwbox
 
-    z_wing::Float64 = 0
+    x::Float64 = 0
 
-
+    z::Float64 = 0
 
 end
-
-# function FuselageLayout(;default = true)
-#     #TODO add read input
-#     # if default
-
-#     # else
-
-#     # end
-#     return FuselageLayout(fuse_radius = 3, )
-# end
