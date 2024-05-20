@@ -446,6 +446,31 @@ include(TASOPT.__TASOPTindices__)
 
         pare[ieRegenepsilon,:] .= 0.0
 
+        #Test regenerative cooler with recirculation
+        pare[ieTfuel, :] .= 20
+        pare[ieRegenepsilon,:] .= 0.8
+        pare[iefrecirc, :] .= 1
+        pare[ierecircT, :] .= 200.0
+        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+
+        HX = HXs[1]
+
+        @test HX.HXgeom.n_stages ≈ 10.0
+        @test HX.HXgeom.n_passes ≈ 9.9999999939207
+        @test HX.HXgeom.l ≈ 0.2982736983978105
+        @test HX.HXgeom.N_t ≈ 76.41338486200465
+
+        @test HX.HXgas_mission[ipdes].ε ≈ 0.7999999999981817
+        @test HX.HXgas_mission[ipdes].Δh_p ≈ -87846.51831616473
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2262.002143370729
+
+        for ip =1:iptotal
+            @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
+            @test pare[ieRegenDeltap, ip] ≈ HX.HXgas_mission[ip].Δp_p
+        end
+
+        pare[ieRegenepsilon,:] .= 0.0
+
     end
 
 end
