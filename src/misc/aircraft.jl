@@ -39,7 +39,7 @@ mutable struct fuselage_tank
     qfac::Float64
     pfac::Float64
     TSLtank::Float64
-    fuselage_tank() = new() 
+    fuselage_tank() = new("", "", false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, [], [], [], StructuralAlloy("Al-2219-T87"), StructuralAlloy("Al-2219-T87"), 0.0, 0.0, [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
 end
 
 
