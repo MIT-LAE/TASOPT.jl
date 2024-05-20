@@ -60,7 +60,7 @@ mutable struct HX_gas
       recircT :: Float64 
       mdot_r :: Float64 
       h_lat :: Float64 
-      HX_gas() = new() 
+      HX_gas() = new("", "", [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 end
 
 """
@@ -103,7 +103,7 @@ mutable struct HX_tubular
       D_i :: Float64
       material :: StructuralAlloy
       Δpdes::Float64
-      HX_tubular() = new() 
+      HX_tubular() = new(false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, StructuralAlloy("Al-2219-T87"), 0.0)
 end
 
 """
@@ -996,7 +996,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       if length(x) == 4 #only add length if it is being optimized
             HXgeo.l = x[4]
       end
-      
+
       #Size HX
       hxsize!(HXg, HXgeo)
 
@@ -1036,7 +1036,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
             Iobj = Iobj * p
       end
-      
+
       return Iobj
 end #hxobjf
 
@@ -1114,7 +1114,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       HeatExchangers = []
 
       for (i,type) in enumerate(HXtypes) #For every desired type of heat exchanger (skipped if empty)
-            
             #---------------------------------
             # Design exchangers
             #---------------------------------
@@ -1140,7 +1139,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             HXgas.alpha_p = alpha #Use alpha by default, except for Regen
 
             if type == "PreC" #Compressor Precooler
-                  HXgeom.fconc = 1 #Concentric
+                  HXgeom.fconc = true #Concentric
                   HXgeom.D_i = D_i 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
@@ -1154,7 +1153,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   Dp_i = iePreCDeltap
 
             elseif type == "InterC" #Compressor Intercooler
-                  HXgeom.fconc = 1 #Concentric
+                  HXgeom.fconc = true #Concentric
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
@@ -1168,10 +1167,10 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   Dp_i = ieInterCDeltap
 
             elseif type == "Regen" #Regenerative cooling
-                  HXgeom.fconc = 1 
+                  HXgeom.fconc = true 
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W 
-                  HXgeom.material = StructuralAlloy("Al-2219-T87")
+                  HXgeom.material = StructuralAlloy("SS-304") #use stainless steel for regenerative cooler as temp is above melting for Al
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
                   iTp_in = ieTt49
@@ -1184,9 +1183,9 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgas.alpha_p = lambdap_calc(pare, alpha, igas, ipdes) #Calculate postcombustion and mixing composition
 
             elseif type =="TurbC" #Cooling of turbine cooling flow
-                  HXgeom.fconc = 0 
+                  HXgeom.fconc = false 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
-                  HXgeom.material = StructuralAlloy("SS-304") #use stainless steel for regenerative cooler as temp is above melting for Al
+                  HXgeom.material = StructuralAlloy("Al-2219-T87")
 
                   HXgas.mdot_p = mcore * fc #Only cooling mass flow rate
                   iTp_in = ieTt3
@@ -1210,9 +1209,11 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
             if i == 1 #At first heat exchanger
                   HXgas.Tc_in = Tc_ft #Coolant temperature is the tank temperature
                   if frecirc #There can only be recirculation in the first heat exchanger
-                        HXgeom.frecirc = 1 
+                        HXgeom.frecirc = true 
                         HXgas.recircT = recircT
                         HXgas.h_lat = h_lat
+                  else
+                        HXgeom.frecirc = false 
                   end
                         
             else # For subsequent exchangers
