@@ -170,9 +170,6 @@ function wsize(ac; itermax=35,
     λvs = 1.0
     λv = parg[iglambdav]
 
-    # wing geometry parameters
-    rh = wing.layout.hweb_to_hbox
-
 
     # tail geometry parameters
     sweeph = parg[igsweeph]
@@ -470,11 +467,6 @@ function wsize(ac; itermax=35,
 
     else #Second iteration onwards use previously calculated values
 
-        # Wing parameters
-        S = wing.layout.S
-        b = wing.layout.b
-        bs = wing.layout.b_inner
-
         bh = parg[igbh]
         bv = parg[igbv]
 
@@ -482,7 +474,6 @@ function wsize(ac; itermax=35,
         cov = parg[igcov]
 
         cbox = wing.layout.chord * wing.layout.box_width_chord
-
 
         Whtail = parg[igWhtail]
         Wvtail = parg[igWvtail]
@@ -822,7 +813,7 @@ function wsize(ac; itermax=35,
             Nlift, wing.planform, Weng1,
             nout, yout, nin, yinn,
             Winn, Wout, dyWinn, dyWout,
-            wing.layout.sweep, wing.layout.box_width_chord, wing.layout.root_chord_thickness, wing.layout.spanbreak_chord_thickness, rh, fLt,
+            wing.layout.sweep, wing.layout.box_width_chord, wing.layout.root_chord_thickness, wing.layout.spanbreak_chord_thickness, wing.layout.hweb_to_hbox, fLt,
             tauweb, σcap, σstrut, Ecap, Eweb, Gcap, Gweb,
             rhoweb, rhocap, rhostrut, rhofuel)
         # println([Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
