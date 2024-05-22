@@ -68,9 +68,9 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
       sweeph   = parg[igsweeph ]
       sweepv   = parg[igsweepv ]
       cosLs    = parg[igcosLs  ]
-      Sstrut   = parg[igSstrut ]
+      Sstrut   = wing.strut.area
 
-      co   = parg[igco ]
+      co   = wing.layout.chord
       coh  = parg[igcoh]
       cov  = parg[igcov]
 
@@ -78,7 +78,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
       bh   = parg[igbh ]
       bv   = parg[igbv ]
 
-      S    = parg[igS  ]
+      S    = wing.layout.S
       Sh   = parg[igSh ]
       Sv   = parg[igSv ]
 
@@ -295,10 +295,10 @@ function cditrp(pari,parg,para, wing)
        return
       end
 
-      CLhtail = para[iaCLh]*parg[igSh]/parg[igS]
+      CLhtail = para[iaCLh]*parg[igSh]/wing.layout.S
       # println("CLhtail: $(para[iaCLh]) $(parg[igSh]) $(parg[igS])")
       bref = wing.layout.b
-      Sref = parg[igS]
+      Sref = wing.layout.S
 
       Mach = para[iaMach]
 

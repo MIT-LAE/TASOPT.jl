@@ -27,7 +27,7 @@ function takeoff!(pari, parg, parm, para, pare, wing,
 
     #---- unpack parameters passed in via global data arrays parg,pare
     W = parm[imWTO]    # total takeoff weight
-    S = parg[igS]      # reference (wing) area
+    S = wing.layout.S   # reference (wing) area
     sweep = wing.layout.sweep # sweep angle, degrees
     dfan = parg[igdfan]   # fan diameter , for engine-out CD_eng estimate
     HTRf = parg[igHTRf]   # hub/tip ratio, for engine-out CD_eng estimate
