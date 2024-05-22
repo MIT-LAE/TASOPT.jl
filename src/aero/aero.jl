@@ -8,7 +8,7 @@ module aerodynamics
 using StaticArrays
 using ..atmosphere
 
-export airfoil, cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
+export airfoil, cdsum!, surfcm, wingsc!, wingpo, wingcl, fusebl!
 
 #include index to access arrays
 include("../misc/index.inc")
