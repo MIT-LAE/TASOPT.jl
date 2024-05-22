@@ -1343,15 +1343,42 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   lastHX = HeatExchangers[end]
                   HXgas = lastHX.HXgas_mission[ip]
                   Tf = HXgas.Tc_out
-                  _, _, hf, _, _, _ = gasfun(igas, Tf)
 
                   pare[ieTfuel, ip] = Tf
-                  pare[iehfuel, ip] = hf
             end
       end
      
       return HeatExchangers
 end #hxdesign!
+
+"""
+      resetHXs(pare)
+
+This function sets the fuel temperature to the temperature in the tank and sets the enthalpy and pressure changes
+across the HXs to zero.      
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pare::Array{Float64 , 3}`: array with engine parameters
+
+    **Outputs:**
+    Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
+"""
+function resetHXs(pare)
+      #Reset fuel temperature
+      pare[ieTfuel, :] = pare[ieTft, :] #Fuel tank temperature
+
+      #Reset enthalpy differences and pressure differences in engine
+      pare[iePreCDeltah, :] .= 0.0
+      pare[iePreCDeltap, :] .= 0.0
+      pare[ieInterCDeltah, :] .= 0.0
+      pare[ieInterCDeltap, :] .= 0.0
+      pare[ieTurbCDeltah, :] .= 0.0
+      pare[ieTurbCDeltap, :] .= 0.0
+      pare[ieRegenDeltah, :] .= 0.0
+      pare[ieRegenDeltap, :] .= 0.0
+
+end
 
 """
     jcalc_pipe(Re_D)
