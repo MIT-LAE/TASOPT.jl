@@ -302,13 +302,13 @@ function wsize(ac; itermax=35,
         wing.weight = Wwing
         wing.strut.weight = Wstrut
         parg[igWeng] = Weng
-        parg[igWinn] = Winn
-        parg[igWout] = Wout
+        wing.inboard.weight = Winn
+        wing.outboard.weight = Wout
         parg[igWftank] = Wftank
         parg[igdxWhtail] = dxWhtail
         parg[igdxWvtail] = dxWvtail
-        parg[igdyWinn] = dyWinn
-        parg[igdyWout] = dyWout
+        wing.inboard.dyW = dyWinn
+        wing.outboard.dyW = dyWout
 
 
         # wing centroid x-offset form wingbox
@@ -480,12 +480,12 @@ function wsize(ac; itermax=35,
         Wwing = wing.weight
         Wstrut = wing.strut.weight
         Weng = parg[igWeng]
-        Winn = parg[igWinn]
-        Wout = parg[igWout]
+        Winn = wing.inboard.weight
+        Wout = wing.outboard.weight
         dxWhtail = parg[igdxWhtail]
         dxWvtail = parg[igdxWvtail]
-        dyWinn = parg[igdyWinn]
-        dyWout = parg[igdyWout]
+        dyWinn = wing.inboard.dyW
+        dyWout = wing.outboard.dyW
 
         WMTO = parg[igWMTO]
         feng = parg[igWeng] / WMTO
@@ -712,6 +712,7 @@ function wsize(ac; itermax=35,
 
         # Calculate wing pitching moment constants
         #------------------------------------------
+        #TODO: put all this inside one function
         ## Takeoff
         ip = iptakeoff
         cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
@@ -787,20 +788,21 @@ function wsize(ac; itermax=35,
             Weng1 = 0.0
         end
 
-        Winn = parg[igWinn]
-        Wout = parg[igWout]
-        dyWinn = parg[igdyWinn]
-        dyWout = parg[igdyWout]
+        Winn = wing.inboard.weight
+        Wout = wing.outboard.weight
+        dyWinn = wing.inboard.dyW
+        dyWout = wing.outboard.dyW
         if (pari[iifwing] == 0)
             rhofuel = 0.0 # tell surfw that there is no fuel in wings
         else
             rhofuel = parg[igrhofuel]
         end
-        Ecap = parg[igEcap]
+
+        Ecap = ac.wing.inboard.caps.material.E
         Eweb = Ecap
         Gcap = Ecap * 0.5 / (1.0 + 0.3)
         Gweb = Ecap * 0.5 / (1.0 + 0.3)
-
+        #TODO: No reason why above lines shouldnt be inside surfw
 
         Ss, Ms, tbwebs, tbcaps, EIcs, EIns, GJs,
         So, Mo, tbwebo, tbcapo, EIco, EIno, GJo,
@@ -855,33 +857,34 @@ function wsize(ac; itermax=35,
         parg[igdxWwing] = dxWwing
         parg[igdxWfuel] = dxWfmax * rfmax
 
-        parg[igtbwebs] = tbwebs
-        parg[igtbcaps] = tbcaps
-        parg[igtbwebo] = tbwebo
-        parg[igtbcapo] = tbcapo
-        parg[igAstrut] = Astrut
-        parg[igcosLs] = cosLs
-        parg[igWweb] = Wweb
-        parg[igWcap] = Wcap
+        wing.outboard.webs.thickness = tbwebs
+        wing.outboard.caps.thickness = tbcaps
+        wing.inboard.webs.thickness = tbwebo
+        wing.inboard.caps.thickness = tbcapo
+        wing.strut.axial_force = Astrut
+        wing.outboard.cos_sweep = cosLs
+        wing.inboard.webs.weight = Wweb
+        wing.outboard.webs.weight = Wweb
+        wing.inboard.caps.weight = Wcap
+        wing.outboard.caps.weight = Wcap
         wing.strut.weight = Wstrut
-        parg[igSomax] = So
-        parg[igMomax] = Mo
-        parg[igSsmax] = Ss
-        parg[igMsmax] = Ms
-        parg[igEIco] = EIco
-        parg[igEIcs] = EIcs
-        parg[igEIno] = EIno
-        parg[igEIns] = EIns
-        parg[igGJo] = GJo
-        parg[igGJs] = GJs
-
+        wing.inboard.shear_load = So
+        wing.outboard.shear_load = Ss
+        wing.inboard.moment = Mo
+        wing.outboard.moment = Ms
+        wing.inboard.web_cap.EI_bending = EIco
+        wing.outboard.web_cap.EI_bending = EIcs
+        wing.inboard.web_cap.EI_normal = EIno
+        wing.outboard.web_cap.EI_normal = EIns
+        wing.inboard.web_cap.GJ = GJo
+        wing.outboard.web_cap.GJ = GJs
         wing.strut.weight = Wstrut
-        parg[igdxWstrut] = dxWstrut
+        wing.strut.dxW = dxWstrut
 
         # Strut chord (perpendicular to strut)
         cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut.toc))
         Ssturt = 2.0 * cstrut * lstrutp
-        parg[igcstrut] = cstrut
+        wing.strut.chord = cstrut
         wing.strut.area = Ssturt
 
         # Individual panel weights
@@ -891,11 +894,12 @@ function wsize(ac; itermax=35,
         dyWinn = dyWsinn * (1.0 + fwadd) + rfmax * dyWfinn
         dyWout = dyWsout * (1.0 + fwadd) + rfmax * dyWfout
 
-        parg[igWinn] = Winn
-        parg[igWout] = Wout
-        parg[igdyWinn] = dyWinn
-        parg[igdyWout] = dyWout
+        wing.inboard.weight = Winn
+        wing.outboard.weight = Wout
+        wing.inboard.dyW = dyWinn
+        wing.outboard.dyW = dyWout
 
+        #TODO: No reason why above lines shouldnt be inside surfw
         # -------------------------------
         #      Tail sizing section
         # -------------------------------
