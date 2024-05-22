@@ -22,23 +22,25 @@ Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (take
 
 See Sections 2.5 and 3.4.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function wingsc(W,CL,qinf,AR,ηsi,bo,λt,λs)
+function wingsc!(W,CL,qinf,wing)
+    AR = wing.layout.AR
+    ηsi = wing.layout.ηs
+    bo = wing.layout.box_halfspan 
+    λt = wing.layout.λt
+    λs = wing.layout.λs
+    wing.layout.S = W/(qinf*CL)
+    wing.layout.b = sqrt(wing.layout.S*AR)
 
-      S = W/(qinf*CL)
-      b = sqrt(S*AR)
+    wing.layout.b_inner = max( wing.layout.b*ηsi , bo )
 
-      bs = max( b*ηsi , bo )
+    ηo = bo/wing.layout.b
+    ηs = wing.layout.b_inner/wing.layout.b
 
-      ηo = bo/b
-      ηs = bs/b
+    Kc = ηo +
+    0.5*(1.0    +λs)*(ηs-ηo) +
+    0.5*(λs+λt)*(1.0 -ηs)
 
-      Kc = ηo +
-	 0.5*(1.0    +λs)*(ηs-ηo) +
-	 0.5*(λs+λt)*(1.0 -ηs)
-
-      co = S/(Kc*b)
-
-      return  S,b,bs,co
+    wing.layout.chord = wing.layout.S/(Kc*wing.layout.b)
 end # wingsc
 
 
