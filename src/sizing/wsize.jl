@@ -313,6 +313,10 @@ function wsize(ac; itermax=35,
         
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
+
+    #Initialize HX storage array and reset previous HX engine values
+    HXs = []
+    resetHXs(pare)
    
 
     # -------------------------------------------------------    
@@ -1266,10 +1270,7 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            global HXs = hxdesign!(pare, pari, ipdes, HXs)
-
-        else
-            global HXs = []
+            HXs = hxdesign!(pare, pari, ipdes, HXs)
             
         end
 
