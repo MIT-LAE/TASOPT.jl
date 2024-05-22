@@ -31,7 +31,7 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
         Gearf = parg[igGearf]
         Tmetal = parg[igTmetal]
         neng = parg[igneng]
-        S = parg[igS]
+        S = wing.layout.S
 
         mofWpay = parg[igmofWpay]
         mofWMTO = parg[igmofWMTO]

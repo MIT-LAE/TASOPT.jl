@@ -482,7 +482,7 @@ function wsize(ac; itermax=35,
     else #Second iteration onwards use previously calculated values
 
         # Wing parameters
-        S = parg[igS]
+        S = wing.layout.S
         b = wing.layout.b
         bs = wing.layout.b_inner
         bo = wing.layout.box_halfspan
@@ -493,7 +493,7 @@ function wsize(ac; itermax=35,
         coh = parg[igcoh]
         cov = parg[igcov]
 
-        cbox = parg[igco] * wing.layout.box_width_chord
+        cbox = wing.layout.chord * wing.layout.box_width_chord
 
 
         Whtail = parg[igWhtail]
@@ -544,7 +544,7 @@ function wsize(ac; itermax=35,
 
     # set these to zero for first-iteration info printout
     wing.layout.b = 0.0
-    parg[igS] = 0.0
+    wing.layout.S = 0.0
 
     for ip = 1:iptotal
         ichoke5[ip] = 0
@@ -693,7 +693,7 @@ function wsize(ac; itermax=35,
         if printiter
             @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
                 iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
-                fuse.weight, wing.weight, wing.layout.b, parg[igS],
+                fuse.weight, wing.weight, wing.layout.b, wing.layout.S,
                 parg[igSh], wing.layout.x_wing_box)
         end
         if (errw <= tolerW)
@@ -717,7 +717,8 @@ function wsize(ac; itermax=35,
 
         # Initial size of the wing area and chords
         S, b, bs, co = wingsc(BW, CL, qinf, wing.layout.AR, wing.layout.ηs, bo, λt, λs)
-        parg[[igS,  igco]] = [S,  co]
+        wing.layout.chord = co
+        wing.layout.S = S
         wing.layout.b = b
         wing.layout.b_inner = bs
 
@@ -777,7 +778,7 @@ function wsize(ac; itermax=35,
         # -----------------------------------------
         ip = ipcruise1
         γt, γs = wing.layout.λt * para[iarclt, ip], wing.layout.λs * para[iarcls, ip] # Lift "taper ratios"
-        Lhtail = WMTO * parg[igCLhNrat] * parg[igSh] / parg[igS]
+        Lhtail = WMTO * parg[igCLhNrat] * parg[igSh] / wing.layout.S
 
         po = wingpo(b, bs, bo,
             λt, λs, γt, γs,
@@ -903,7 +904,7 @@ function wsize(ac; itermax=35,
         cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut.toc))
         Ssturt = 2.0 * cstrut * lstrutp
         parg[igcstrut] = cstrut
-        parg[igSstrut] = Ssturt
+        wing.strut.area = Ssturt
 
         # Individual panel weights
         Winn = Wsinn * (1.0 + fwadd) + rfmax * Wfinn

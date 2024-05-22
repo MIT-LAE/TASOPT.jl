@@ -73,9 +73,9 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
       #---- main LG offset from wingbox, assumed fixed in CG calculations
       dxlg = xcgB + parg[igdxlgmain] - wing.layout.x_wing_box
 
-      S = parg[igS]
+      S = wing.layout.S
       Sh = parg[igSh]
-      co = parg[igco]
+      co = wing.layout.chord
       coh = parg[igcoh]
       xhbox = parg[igxhbox]
 
@@ -378,9 +378,9 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       #---- main LG offset from wingbox, assumed fixed in CG calculations
       dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.x_wing_box
 
-      S = parg[igS]
+      S = wing.layout.S
       Sh = parg[igSh]
-      co = parg[igco]
+      co = wing.layout.chord
       coh = parg[igcoh]
       xhbox = parg[igxhbox]
       xvbox = parg[igxvbox]

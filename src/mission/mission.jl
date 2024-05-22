@@ -205,7 +205,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)#, iairf, ini
       #---- Vs stall speed (takeoff condition)
       rho0 = pare[ierho0, ip]
       a0 = pare[iea0, ip]
-      S = parg[igS]
+      S = wing.layout.S
       Vstall = sqrt(2.0 * WTO / (rho0 * S * CLmax))
       Mstall = Vstall / a0
       pare[ieu0, ip] = Vstall
