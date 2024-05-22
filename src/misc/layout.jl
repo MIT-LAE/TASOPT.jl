@@ -64,6 +64,9 @@ $TYPEDFIELDS
     b_inner::Float64 = 0 # igbs
     """Max Wing Span [m]"""
     b_max::Float64 = 0 # igbmax
+
+    """Wing chord at root """
+    chord::Float64 = 0
     """Outer or "tip" taper ratio of chord"""
     λt::Float64 = 0 # iglambdat
     """Inner or break/"snag" taper ratio of chord"""

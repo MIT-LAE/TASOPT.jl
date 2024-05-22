@@ -495,14 +495,13 @@ readland(x) = read_input(x, land, dland)
 # and secondary wing components, 
 weight = readwing("Weightfracs")
 dweight = dwing["Weightfracs"]
-
-    parg[igfflap] = readweight("flap")
-    parg[igfslat] = readweight("slat")
-    parg[igfaile] = readweight("aileron")
-    parg[igflete] = readweight("leading_trailing_edge")
-    parg[igfribs] = readweight("ribs")
-    parg[igfspoi] = readweight("spoilers")
-    parg[igfwatt] = readweight("attachments")
+    wing.flap_weight_frac  = readweight("flap")
+    wing.slat_weight_frac = readweight("slat")
+    wing.aileron_weight_frac = readweight("aileron")
+    wing.leading_trailing_edge_weight_frac = readweight("leading_trailing_edge")
+    wing.ribs_weight_frac = readweight("ribs")
+    wing.spoilers_weight_frac = readweight("spoilers")
+    wing.attachments_weight_frac = readweight("attachments")
 
 # ---- End Wing -----
 
@@ -635,10 +634,10 @@ dstructures = default["Structures"]
 readstruct(x) = read_input(x, structures, dstructures)
     parg[igsigfac] = readstruct("stress_factor")
     #- allowable stresses at sizing cases
-    parg[igsigcap] = Stress(readstruct("sigma_caps"))
-    parg[igtauweb] = Stress(readstruct("tau_webs"))
+    # parg[igsigcap] = Stress(readstruct("sigma_caps"))
+    # parg[igtauweb] = Stress(readstruct("tau_webs"))
 
-    parg[igsigstrut] = Stress(readstruct("sigma_struts"))
+    # parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
     fuselage.rEshell = readstruct("fuse_shell_modulus_ratio")
@@ -648,9 +647,9 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igEstrut] = Stress(readstruct("E_struts"))
 
     #- structural material densities
-    parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
-    parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
-    parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
+    # parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
+    # parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
+    # parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
 
     fuselage.skin.ρ = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
     fuselage.bending_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 

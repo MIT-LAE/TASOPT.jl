@@ -37,8 +37,8 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
       Wfuse = fuse.weight
-      Wwing = parg[igWwing]
-      Wstrut = parg[igWstrut]
+      Wwing = wing.weight
+      Wstrut = wing.strut.weight
       Whtail = parg[igWhtail]
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
@@ -68,7 +68,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
       rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwing = parg[igxwing] - wing.layout.x_wing_box
+      dxwing = wing.layout.x - wing.layout.x_wing_box
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
       dxlg = xcgB + parg[igdxlgmain] - wing.layout.x_wing_box
@@ -86,6 +86,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
       Sh1 = Sh
 
       #---- total weight, weight moment, and derivatives
+
       W = rpay * Wpay +
           rfuel * Wfuel +
           Wfuse +
@@ -205,7 +206,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
             xW = xW + xW_xwbox * delxwbox
 
             wing.layout.x_wing_box = xwbox
-            parg[igxwing] = xwbox + dxwing
+            wing.layout.x = xwbox + dxwing
 
       end
 
@@ -317,8 +318,8 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
       Wfuse = fuse.weight
-      Wwing = parg[igWwing]
-      Wstrut = parg[igWstrut]
+      Wwing = wing.weight
+      Wstrut = wing.strut.weight
       Whtail = parg[igWhtail]
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
@@ -372,7 +373,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       xwbox = wing.layout.x_wing_box
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwing = parg[igxwing] - wing.layout.x_wing_box
+      dxwing = wing.layout.x - wing.layout.x_wing_box
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
       dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.x_wing_box
@@ -614,7 +615,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       parg[igSh] = Sh
       #c    parg[igWhtail] = (Whtail_o/Sh_o) * Sh
       wing.layout.x_wing_box = xwbox
-      parg[igxwing] = xwbox + dxwing
+      wing.layout.x = xwbox + dxwing
 
       if (iHTsize == 1)
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
@@ -664,8 +665,8 @@ function cglpay(pari, parg, fuse, wing)
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
       Wfuse = fuse.weight
-      Wwing = parg[igWwing]
-      Wstrut = parg[igWstrut]
+      Wwing = wing.weight
+      Wstrut = wing.strut.weight
       Whtail = parg[igWhtail]
       Wvtail = parg[igWvtail]
       Weng = parg[igWeng]
@@ -685,7 +686,7 @@ function cglpay(pari, parg, fuse, wing)
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
-      delxw = parg[igxwing] - wing.layout.x_wing_box
+      delxw = wing.layout.x - wing.layout.x_wing_box
 
       #---- zero fuel is assumed to be worst case forward and full fuel worst case aft
       rfuel = 0.0

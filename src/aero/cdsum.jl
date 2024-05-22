@@ -54,7 +54,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
       hboxt    = hboxs
       fSnace   = parg[igfSnace ]
       bo       = wing.layout.box_halfspan
-      bs       = parg[igbs     ]
+      bs       = wing.layout.b_inner
       boh      = parg[igboh    ]
       bov      = parg[igbov    ]
 
@@ -74,7 +74,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
       coh  = parg[igcoh]
       cov  = parg[igcov]
 
-      b    = parg[igb  ]
+      b    = wing.layout.b
       bh   = parg[igbh ]
       bv   = parg[igbv ]
 
@@ -297,7 +297,7 @@ function cditrp(pari,parg,para, wing)
 
       CLhtail = para[iaCLh]*parg[igSh]/parg[igS]
       # println("CLhtail: $(para[iaCLh]) $(parg[igSh]) $(parg[igS])")
-      bref = parg[igb]
+      bref = wing.layout.b
       Sref = parg[igS]
 
       Mach = para[iaMach]
@@ -324,8 +324,8 @@ function cditrp(pari,parg,para, wing)
 #      fLo = 0.0
 
 #---- span, wing-break span, wing-root span
-      b[1]  = parg[igb]
-      bs[1] = parg[igbs]
+      b[1]  = wing.layout.b
+      bs[1] = wing.layout.b_inner
       bo[1] = wing.layout.box_halfspan
 
 #---- span of wing-root streamline in Trefftz Plane

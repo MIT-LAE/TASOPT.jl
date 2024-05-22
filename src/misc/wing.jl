@@ -17,6 +17,7 @@ end
     z::Float64 = 0
     toc::Float64 = 0
     local_velocity_ratio::Float64 = 0
+    weight::Float64 = 0
 end
 
 @kwdef mutable struct Wing
@@ -34,5 +35,20 @@ end
 
     # Strut
     strut::Strut = Strut()
+
+    # Weight fractions
+    flap_weight_frac::Float64 = 0
+    slat_weight_frac::Float64 = 0
+    aileron_weight_frac::Float64 = 0
+    leading_trailing_edge_weight_frac::Float64 = 0
+    ribs_weight_frac::Float64 = 0
+    spoilers_weight_frac::Float64 = 0
+    attachments_weight_frac::Float64 = 0
+
 end
 
+function wing_additional_weight(wing::Wing)
+    return wing.flap_weight_frac + wing.slat_weight_frac + wing.aileron_weight_frac + 
+            wing.leading_trailing_edge_weight_frac + wing.ribs_weight_frac +
+            wing.spoilers_weight_frac + wing.attachments_weight_frac
+end

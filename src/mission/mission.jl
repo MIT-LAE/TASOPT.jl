@@ -373,7 +373,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)#, iairf, ini
                   icall = 1
                   icool = 1
 
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
 
                   Ftotal = pare[ieFe, ip] * parg[igneng]
                   TSFC = pare[ieTSFC, ip]
@@ -501,7 +501,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)#, iairf, ini
             Wpay = parg[igWpay]
             icall = 2
             icool = 1
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
 
       end
 
@@ -583,7 +583,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)#, iairf, ini
       icall = 2
       icool = 1
 
-      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -761,7 +761,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)#, iairf, ini
             # use previously-set turbine cooling mass flow
             icool = 1
 
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]
