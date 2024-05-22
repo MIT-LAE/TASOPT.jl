@@ -1,12 +1,28 @@
-#Wing class
-mutable struct WingSection
-    webs::StructuralMember
-    caps::StructuralMember
-    web_cap::StructuralMember
+# using DocStringExtensions
+# """
+# $TYPEDEF
+
+
+
+# $TYPEDFIELDS
+# """
+@kwdef mutable struct Web_Cap_Strut
+    EI_bending::Float64 = 0
+    EI_normal::Float64 = 0
+    GJ::Float64 = 0
 end
 
-function WingSection(material)
-    return WingSection(StructuralMember(material=material), StructuralMember(material=material), StructuralMember(material=material))
+@kwdef mutable struct WingSection
+    material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
+    webs::StructuralMember = StructuralMember(material=material)
+    caps::StructuralMember = StructuralMember(material=material)
+    web_cap::Web_Cap_Strut = Web_Cap_Strut()
+    shear_load::Float64 = 0
+    moment::Float64 = 0
+    cos_sweep::Float64 = 0
+    weight::Float64 = 0
+    dxW::Float64 = 0
+    dyW::Float64 = 0
 end
 
 @kwdef mutable struct Strut
@@ -18,6 +34,9 @@ end
     toc::Float64 = 0
     local_velocity_ratio::Float64 = 0
     weight::Float64 = 0
+    axial_force::Float64 = 0
+    chord::Float64 = 0
+    dxW::Float64 = 0
 end
 
 @kwdef mutable struct Wing
@@ -30,8 +49,9 @@ end
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 
     # Wing Sections
-    inboard::WingSection = WingSection(material) # at wing root 
-    outboard::WingSection = WingSection(material) # at strut attachment point
+    inboard::WingSection = WingSection(material=material) # at wing root 
+    outboard::WingSection = WingSection(material=material) # at strut attachment point
+    weight_center::Float64 = 0
 
     # Strut
     strut::Strut = Strut()
