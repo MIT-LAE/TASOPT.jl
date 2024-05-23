@@ -72,6 +72,9 @@ Base.@kwdef mutable struct aircraft #inner constructor
     fuse_tank::fuselage_tank = fuselage_tank()
     fuselage::Fuselage = Fuselage()
     wing::Wing = Wing()
+    h_tail::Tail = Tail()
+    n_vtail::Int64 = 1
+    v_tail::Tail = Tail()
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required

@@ -95,3 +95,26 @@ $TYPEDFIELDS
     z::Float64 = 0
 
 end
+
+"""
+$TYPEDEF
+
+Tail Layout Structure:
+Contains dimensions, heights, etc. to design a Tail
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct TailLayout
+    tail_volume::Float64 = 0 #igV
+    AR::Float64 = 0
+    S::Float64 = 0
+    b::Float64 = 0
+    box_halfspan::Float64 = 0 # igboh or igbov
+    λ::Float64 = 0 # iglambdah or iglambdav
+    chord::Float64 = 0 # igcoh or igcov
+    sweep::Float64 = 0 # igsweeph or igsweepv
+    box_width::Float64 = 0 # igwboxh or igwboxv
+    box_height::Float64 = 0 # ighboxh or ighboxv
+    box_x::Float64 = 0 # igxhbox or igxvbox
+    hweb_to_hbox::Float64 = 0 # igrhh or igrhv
+end

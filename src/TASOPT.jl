@@ -46,6 +46,9 @@ export Fuselage
 include("./misc/Wing.jl")
 export WingSection,Wing
 
+include("./misc/tail.jl")
+export Tail
+
 include("./misc/index.inc")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
