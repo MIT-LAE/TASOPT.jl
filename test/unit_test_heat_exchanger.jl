@@ -176,7 +176,7 @@ include(TASOPT.__TASOPTindices__)
         TASOPT.engine.hxsize!(HXgas, HXgeom)
 
         Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I too
-        I_check = 71956.07072651063
+        I_check = 71367.14805730626
 
         @test Iobj ≈ I_check
 
@@ -243,7 +243,7 @@ include(TASOPT.__TASOPTindices__)
 
         Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-        I_check_rec = 3489.323299331222 
+        I_check_rec = 1216.4160156746989
 
         @test Iobj_rec ≈ I_check_rec
     end
@@ -364,14 +364,14 @@ include(TASOPT.__TASOPTindices__)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 10.0
-        @test HX.HXgeom.n_passes ≈ 1.8802314483067089
+        @test HX.HXgeom.n_stages ≈ 17.32380053386379
+        @test HX.HXgeom.n_passes ≈ 1.0000000035523804
         @test HX.HXgeom.l ≈ 0.44330987861529786
-        @test HX.HXgeom.N_t ≈ 98.7597231662519 
+        @test HX.HXgeom.N_t ≈ 135.8813138946821
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.500000000011525
         @test HX.HXgas_mission[ipdes].Δh_p ≈  -13469.833152449006
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 42.92231305626366
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.642387389746276
 
         for ip =1:iptotal
             @test pare[iePreCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -385,14 +385,14 @@ include(TASOPT.__TASOPTindices__)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 9.999999149556487
-        @test HX.HXgeom.n_passes ≈ 2.01304625500134
+        @test HX.HXgeom.n_stages ≈ 18.866575421478302
+        @test HX.HXgeom.n_passes ≈ 1.0000001159918273
         @test HX.HXgeom.l ≈ 0.24880364903969382 
-        @test HX.HXgeom.N_t ≈ 118.40465437116727
+        @test HX.HXgeom.N_t ≈ 167.5184436875763
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -19023.600308918238
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 170.81226424334508
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.45320265984466
 
         for ip =1:iptotal
             @test pare[ieInterCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -407,14 +407,14 @@ include(TASOPT.__TASOPTindices__)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 10.0
-        @test HX.HXgeom.n_passes ≈ 15.886395053251864
+        @test HX.HXgeom.n_stages ≈ 20.0
+        @test HX.HXgeom.n_passes ≈ 6.975442349479178
         @test HX.HXgeom.l ≈  0.08973681556581393
-        @test HX.HXgeom.N_t ≈ 17.982434206832604
+        @test HX.HXgeom.N_t ≈ 31.4288166247464
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -215422.60328655195 
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1056.1627602378758
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1009.7385582921972
 
         for ip =1:iptotal
             @test pare[ieTurbCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -430,14 +430,14 @@ include(TASOPT.__TASOPTindices__)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 7.73037567689823
-        @test HX.HXgeom.n_passes ≈ 3.308854371652063
+        @test HX.HXgeom.n_stages ≈ 7.729054099473438 
+        @test HX.HXgeom.n_passes ≈ 3.30951354108277
         @test HX.HXgeom.l ≈ 0.2982717368848314
-        @test HX.HXgeom.N_t ≈ 96.21697827927
+        @test HX.HXgeom.N_t ≈ 96.20214505147125
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -48190.134937808325
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.7819206268329
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.7854675373491
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -455,14 +455,14 @@ include(TASOPT.__TASOPTindices__)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 10.0
-        @test HX.HXgeom.n_passes ≈ 9.9999999939207
-        @test HX.HXgeom.l ≈ 0.2982736983978105
-        @test HX.HXgeom.N_t ≈ 76.41338486200465
+        @test HX.HXgeom.n_stages ≈ 19.998437369754882
+        @test HX.HXgeom.n_passes ≈ 4.925505339073139
+        @test HX.HXgeom.l ≈ 0.29827174474004187
+        @test HX.HXgeom.N_t ≈ 100.40843881037168 
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.7999999999981817
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -87846.51831616473
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2262.002143370729
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2322.784405245745
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
