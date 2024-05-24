@@ -933,7 +933,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       #Set bounds
       if length(initial_x) == 4
             lower = [0.0, 1.0, 1.0, lmin]
-            upper = [30.0, 10.0, 6.0, lmax]
+            upper = [30.0, 20.0, 6.0, lmax]
       else #Only 3 optimization variables
             lower = [0.0, 1.0, 1.0]
             upper = [30.0, 20.0, 6.0]
@@ -1019,7 +1019,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       lower = [1, 1, 1, 1] #desired lower limits
 
       if fconc
-            upper = [10, 200, p_thres * pp_in, p_thres * pc_in] #desired upper limits for concentric case
+            upper = [20, 200, p_thres * pp_in, p_thres * pc_in] #desired upper limits for concentric case
       else
             upper = [20, 200, p_thres * pp_in, p_thres * pc_in]  #allow more passes in rectangular case
       end
