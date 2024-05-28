@@ -33,6 +33,8 @@ function wsize(ac; itermax=35,
     
     fuse = ac.fuselage 
     wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
 
     time_propsys = 0.0
 
@@ -141,7 +143,7 @@ function wsize(ac; itermax=35,
     fLt = parg[igfLt]
 
     xwbox = wing.layout.x_wing_box
-    xhbox = parg[igxhbox]
+    xhbox = htail.layout.box_x
     xvbox = parg[igxvbox]
     xapu = parg[igxapu]
     xeng = parg[igxeng]
@@ -497,7 +499,7 @@ function wsize(ac; itermax=35,
         xhtail = parg[igxhtail]
         xvtail = parg[igxvtail]
 
-        xhbox = parg[igxhbox]
+        xhbox = htail.layout.box_x
         xvbox = parg[igxvbox]
 
         Wftank = parg[igWftank]
@@ -946,7 +948,7 @@ function wsize(ac; itermax=35,
             parg[igSh] = Sh
         else
             # for subsequent iterations:
-            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing)
+            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing, htail, vtail)
 
             xwbox, xwing = wing.layout.x_wing_box, wing.layout.x
 
@@ -1034,7 +1036,7 @@ function wsize(ac; itermax=35,
         parg[igGJh] = GJoh
 
         # HT centroid x-offset
-        xhbox = parg[igxhbox]
+        xhbox = htail.layout.box_x
         dxh, macco = surfdx(bh, boh, boh, λh, λhs, sweeph)
         parg[igxhtail] = xhbox + dxh
 
@@ -1204,7 +1206,7 @@ function wsize(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         itrim = 1
-        balance(pari, parg, view(para, :, ip), fuse, wing, rfuel, rpay, ξpay, itrim)
+        balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -1297,7 +1299,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, Ldebug)
+        time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1376,7 +1378,7 @@ function wsize(ac; itermax=35,
     takeoff!(pari, parg, parm, para, pare, wing, initeng, ichoke5, ichoke7)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse, wing)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse, wing, htail, vtail)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -1390,7 +1392,7 @@ function wsize(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     itrim = 0
-    balance(pari, parg, view(para, :, ip), fuse, wing, rfuel, rpay, ξpay, itrim)
+    balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
     
 end
 

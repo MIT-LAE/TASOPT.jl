@@ -97,6 +97,8 @@ pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
 fuselage = Fuselage()
 wing = Wing()
+htail = Tail()
+vtail = Tail()
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -518,16 +520,16 @@ readtails(x) = read_input(x, tails, dtails)
 
     para[iafexcdt, 1:iptotal, :] .= transpose(readtails("excrescence_drag_factor"))
 
-    htail = readtails("Htail")
+    htail_input = readtails("Htail")
     dhtail = dtails["Htail"]
 
-readhtail(x) = read_input(x, htail, dhtail)
+readhtail(x) = read_input(x, htail_input, dhtail)
     parg[igARh]     = readhtail("AR_Htail")
     parg[iglambdah] = readhtail("taper")
     parg[igsweeph]  = readhtail("sweep")
     parg[igboh]     = 2*Distance(readhtail("center_box_halfspan"))
 
-    parg[igxhbox]  = Distance(readhtail("x_Htail"))
+    htail.layout.box_x  = Distance(readhtail("x_Htail"))
     parg[igzhtail] = Distance(readhtail("z_Htail"))
 
     parg[igCLhNrat] = readhtail("max_tail_download")
@@ -584,9 +586,9 @@ readhtail(x) = read_input(x, htail, dhtail)
     parg[igrhh]   = readhtail("web_height_hbox")
 
 
-vtail = readtails("Vtail")
+vtail_input = readtails("Vtail")
 dvtail = dtails["Vtail"]
-readvtail(x) = read_input(x, vtail, dvtail)
+readvtail(x) = read_input(x, vtail_input, dvtail)
     parg[igARv]     = readvtail("AR_Vtail")
     parg[iglambdav] = readvtail("taper")
     parg[igsweepv]  = readvtail("sweep")
@@ -901,7 +903,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, 1, vtail)
 
 end
 
