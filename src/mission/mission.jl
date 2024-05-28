@@ -835,9 +835,7 @@ function mission!(pari, parg, parm, para, pare, Ldebug)#, iairf, initeng, ipc1)
 
       # mission PFEI
       Wburn = WMTO * fburn
-      parm[imPFEI] = Wburn/gee * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
-
-
+      parm[imPFEI] = Wburn/gee * parm[imLHVfuel] / (parm[imWpay] * parm[imRange])
 
       return t_prop
 end
