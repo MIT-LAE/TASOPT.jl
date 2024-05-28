@@ -1040,6 +1040,54 @@ function gasfuel(ifuel, n)
 end # gasfuel
 
 """
+      fuelLHV(ifuel)
+
+Calculates the lower heating value of a fuel.
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `ifuel::Int64`: index of fuel  (see function gasfun)
+
+    **Output:**
+    - `LHV::Float64``: lower heating value (J/kg)
+"""
+function fuelLHV(ifuel)
+      # air fractions  
+      #        N2      O2      CO2    H2O      Ar       fuel
+      alpha = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0] #Air composition does not affect LHV
+
+      # fuel fractions
+      beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+
+      n = 6
+
+      #Reactant and product temperatures
+      to = 298.15
+      tf = 298.15
+      t = 298.15
+
+      gamma = gasfuel(ifuel, n) #Change in mass fractions after combustion
+
+      #Complete combustion
+      f = -alpha[2]/gamma[2]
+      lambda = (alpha + f * gamma) / (1.0 + f) #Product mass fractions after combustion
+
+      nm = n - 1
+      _, _, ho, _, _, ro = gassum(alpha, nm, to) #Enthalpy of oxidizer before combustion
+      _, _, hp, _, _, rp = gassum(lambda, nm, t) #Enthalpy of products
+      _, _, hf, _, _, rf = gassum(beta, nm, tf)
+
+      #---- add on fuel contribution to hf, which gassum cannot index via ifuel
+      si, s_t, hi, h_t, cpi, ri = gasfun(ifuel, tf)
+      hf = hf + hi * beta[n] #Enthalpy of fuel reactant
+
+      Δh = ho + f*hf - (1 + f) * hp #Heat released in cooling products back to reference temperature
+      LHV = Δh / f
+
+      return LHV
+end
+
+"""
     gasPr(gas, T)
 
 This function calculates some gas thermodynamic properties of different species, including
