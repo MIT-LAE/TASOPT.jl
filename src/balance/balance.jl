@@ -29,7 +29,7 @@ Outputs:
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 """
-function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
+function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
       iengloc = pari[iiengloc]
 
@@ -65,7 +65,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
 
       xwbox = wing.layout.x_wing_box
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing, htail, vtail)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = wing.layout.x - wing.layout.x_wing_box
@@ -77,7 +77,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
       Sh = parg[igSh]
       co = wing.layout.chord
       coh = parg[igcoh]
-      xhbox = parg[igxhbox]
+      xhbox = htail.layout.box_x
 
       cma = parg[igcma]
 
@@ -132,7 +132,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
            fuse.moment + xWtesys + xWftank +
            Wwing * wing.layout.x_wing_box + parg[igdxWwing] +
            Wstrut * wing.layout.x_wing_box + parg[igdxWstrut] +
-           (Whtail * parg[igxhbox] + parg[igdxWhtail]) * Sh / Sh1 +
+           (Whtail * htail.layout.box_x + parg[igdxWhtail]) * Sh / Sh1 +
            Wvtail * parg[igxvbox] + parg[igdxWvtail] +
            Weng * parg[igxeng] +
            Whpesys * parg[igxhpesys] +
@@ -141,7 +141,7 @@ function balance(pari, parg, para, fuse, wing, rfuel, rpay, ξpay, itrim)
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
-      xW_Sh = (Whtail * parg[igxhbox] + parg[igdxWhtail]) / Sh1
+      xW_Sh = (Whtail * htail.layout.box_x + parg[igdxWhtail]) / Sh1
 
       #---- total aero moment and derivatives
       CMw0 = para[iaCMw0]
@@ -282,7 +282,7 @@ Outputs:
 - `parg[igxwing]` wing centroid location
 
 """
-function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
+function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
       itmax = 10
       toler = 1.0e-7
@@ -294,7 +294,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       cosL = cos(sweep * π / 180.0)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse, wing)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse, wing, htail, vtail)
 
       rpayC = 1.0
 
@@ -382,7 +382,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing)
       Sh = parg[igSh]
       co = wing.layout.chord
       coh = parg[igcoh]
-      xhbox = parg[igxhbox]
+      xhbox = htail.layout.box_x
       xvbox = parg[igxvbox]
 
       WfuelC = paraC[iafracW] * parg[igWMTO] -
@@ -658,7 +658,7 @@ which gives an explicit solution for `rpayF`,`rpayB`.
 The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
-function cglpay(pari, parg, fuse, wing)
+function cglpay(pari, parg, fuse, wing, htail, vtail)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -710,7 +710,7 @@ function cglpay(pari, parg, fuse, wing)
             fuse.moment + parg[igxWtesys] + parg[igxWftank] +
             Wwing * wing.layout.x_wing_box + parg[igdxWwing] +
             Wstrut * wing.layout.x_wing_box + parg[igdxWstrut] +
-            Whtail * parg[igxhbox] + parg[igdxWhtail] +
+            Whtail * htail.layout.box_x + parg[igdxWhtail] +
             Wvtail * parg[igxvbox] + parg[igdxWvtail] +
             Weng * parg[igxeng] +
             Whpesys * parg[igxhpesys] +

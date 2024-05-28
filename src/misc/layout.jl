@@ -117,4 +117,5 @@ $TYPEDFIELDS
     box_height::Float64 = 0 # ighboxh or ighboxv
     box_x::Float64 = 0 # igxhbox or igxvbox
     hweb_to_hbox::Float64 = 0 # igrhh or igrhv
+    z::Float64 = 0
 end
