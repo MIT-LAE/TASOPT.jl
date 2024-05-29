@@ -106,6 +106,9 @@ function wsize(ac; itermax=35,
     para[iaDAfwake, :] .= DAfwake
     para[iaPAfinf, :] .= PAfinf
 
+    #Calculate fuel lower heating value for PFEI
+    parm[imLHVfuel] = fuelLHV(ifuel)
+
     # Set quantities that are fixed during weight iteration
 
     # Unpack payload and range for design mission - this is the mission that the structures are sized for
