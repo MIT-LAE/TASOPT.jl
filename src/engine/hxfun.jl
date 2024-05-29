@@ -934,9 +934,11 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       if length(initial_x) == 4
             lower = [0.0, 1.0, 1.0, lmin]
             upper = [30.0, 20.0, 6.0, lmax]
+            initial_dx = [0.1, -0.1, -0.1, 0.1]
       else #Only 3 optimization variables
             lower = [0.0, 1.0, 1.0]
             upper = [30.0, 20.0, 6.0]
+            initial_dx = [0.1, -0.1, -0.1]
       end
       
       #Use NLopt.jl to minimize function 
@@ -944,6 +946,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       opt.lower_bounds = lower
       opt.upper_bounds = upper
       opt.ftol_rel = 1e-9
+      opt.initial_step = initial_dx
       opt.maxeval = 500  # Set the maximum number of function evaluations
 
       opt.min_objective = obj
