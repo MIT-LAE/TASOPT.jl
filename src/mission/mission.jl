@@ -368,7 +368,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   else
                         icdfun = 1 #use airfoil database
                   end
-                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
+                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
 
                   icall = 1
                   icool = 1
@@ -493,7 +493,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -573,7 +573,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
 
       # Calc Drag
       icdfun = 1
-      cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
+      cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  icdfun)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -724,7 +724,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   # use airfoil database for wing cdf,cdp
                   icdfun = 1
             end
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, icdfun)
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
 
             # set up for engine calculation
             sing = sin(gamVde)

@@ -42,7 +42,7 @@ See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@r
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cdsum!(pari,parg,para,pare, wing, icdfun)
+function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
 
       Ldebug = false
 #      Ldebug = true
@@ -55,7 +55,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
       fSnace   = parg[igfSnace ]
       bo       = wing.layout.box_halfspan
       bs       = wing.layout.b_inner
-      boh      = parg[igboh    ]
+      boh      = htail.layout.box_halfspan
       bov      = parg[igbov    ]
 
       lambdat  = wing.layout.λt
@@ -63,9 +63,9 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
       gammat   = wing.layout.λt*para[iarclt]
       gammas   = wing.layout.λs*para[iarcls]
 
-      lambdah  = parg[iglambdah]
+      lambdah  = htail.layout.λ
       lambdav  = parg[iglambdav]
-      sweeph   = parg[igsweeph ]
+      sweeph   = htail.layout.sweep
       sweepv   = parg[igsweepv ]
       cosLs    = parg[igcosLs  ]
       Sstrut   = wing.strut.area
@@ -236,7 +236,7 @@ function cdsum!(pari,parg,para,pare, wing, icdfun)
 #---- induced CD
 #      if(Ldebug) write(*,*) '...calling CDITRP...'
 
-      cditrp(pari,parg,para, wing)
+      cditrp(pari,parg,para, wing, htail, vtail)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -285,7 +285,7 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cditrp(pari,parg,para, wing)
+function cditrp(pari,parg,para, wing, htail, vtail)
 
       CL = para[iaCL]
 
@@ -344,13 +344,13 @@ function cditrp(pari,parg,para, wing)
 
 #---- horizontal tail wake parameters
       b[2]   = parg[igbh]
-      bs[2]  = parg[igboh]
-      bo[2]  = parg[igboh]
-      bop[2] = parg[igboh]
+      bs[2]  = htail.layout.box_halfspan
+      bo[2]  = htail.layout.box_halfspan
+      bop[2] = htail.layout.box_halfspan
 
-      zcent[2] = parg[igzhtail]
+      zcent[2] = htail.layout.z
       gammas[2] = 1.0
-      gammat[2] = parg[iglambdah]
+      gammat[2] = htail.layout.λ
       po[2]     = 1.0
       CLsurfsp[2] = CLhtail
 

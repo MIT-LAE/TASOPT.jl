@@ -168,18 +168,18 @@ function wsize(ac; itermax=35,
 
     # tail surface taper ratios (no inner panel, so λs=1)
     λhs = 1.0
-    λh = parg[iglambdah]
+    λh = htail.layout.λ
     λvs = 1.0
     λv = parg[iglambdav]
 
 
     # tail geometry parameters
-    sweeph = parg[igsweeph]
-    wboxh = parg[igwboxh]
-    hboxh = parg[ighboxh]
-    rhh = parg[igrhh]
-    ARh = parg[igARh]
-    boh = parg[igboh]
+    sweeph = htail.layout.sweep
+    wboxh = htail.layout.box_width
+    hboxh = htail.layout.box_height
+    rhh = htail.layout.hweb_to_hbox
+    ARh = htail.layout.AR 
+    boh = htail.layout.box_halfspan
 
     sweepv = parg[igsweepv]
     wboxv = parg[igwboxv]
@@ -508,7 +508,7 @@ function wsize(ac; itermax=35,
 
         Sh = parg[igSh]
         Sv = parg[igSv]
-        ARh = parg[igARh]
+        ARh = htail.layout.AR
         ARv = parg[igARv]
 
         # Turbo-electric system
@@ -908,7 +908,7 @@ function wsize(ac; itermax=35,
 
         # Set tail CL derivative 
         dϵdα = parg[igdepsda]
-        sweeph = parg[igsweeph]
+        sweeph = htail.layout.sweep
         tanL = tan(wing.layout.sweep * π / 180.0)
         tanLh = tan(sweeph * π / 180.0)
 
@@ -1214,7 +1214,7 @@ function wsize(ac; itermax=35,
         para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
 
         # Drag buildup cdsum()
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing,  1)
+        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  1)
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])
@@ -1375,7 +1375,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(pari, parg, parm, para, pare, wing, initeng, ichoke5, ichoke7)
+    takeoff!(pari, parg, parm, para, pare, wing, htail, vtail, initeng, ichoke5, ichoke7)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse, wing, htail, vtail)
