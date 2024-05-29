@@ -250,8 +250,8 @@
         W_calc(t) = W
         mdot_calc(t) = mdot
 
-        u = TASOPT.CryoTank.pressure_inputs(Q_calc, W_calc, mdot_calc)
-        params = TASOPT.CryoTank.pressure_params(mix, V, pmax, xout, xvent, α)
+        u = TASOPT.CryoTank.tank_inputs(Q_calc, W_calc, mdot_calc)
+        params = TASOPT.CryoTank.tank_params(mix, V, pmax, xout, xvent, α)
 
         y = [p, β, V * mix.ρ, 0.0, 0.0, 0.0]
         t = 0.0

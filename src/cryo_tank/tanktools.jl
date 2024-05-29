@@ -214,7 +214,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     mdot_calc(t) = find_mdot_time(t, ac.pari, ac.parg, para_alt, pare_alt)
 
     #Store profiles in input struct
-    u = pressure_inputs(Q_calc, W_calc, mdot_calc)
+    u = tank_inputs(Q_calc, W_calc, mdot_calc)
 
     # Original tank state in TASOPT
     if ac.pari[iifuel] == 11
@@ -243,7 +243,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     xvent = 1.0 #Only vent gas
     α = ac.fuse_tank.pfac
     #Store tank parameters in struct 
-    params = pressure_params(mixture_init, V, pmax, xout, xvent, α)
+    params = tank_params(mixture_init, V, pmax, xout, xvent, α)
 
     ODEparams = (u, params)
 
