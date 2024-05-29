@@ -524,13 +524,13 @@ readtails(x) = read_input(x, tails, dtails)
     dhtail = dtails["Htail"]
 
 readhtail(x) = read_input(x, htail_input, dhtail)
-    parg[igARh]     = readhtail("AR_Htail")
-    parg[iglambdah] = readhtail("taper")
-    parg[igsweeph]  = readhtail("sweep")
-    parg[igboh]     = 2*Distance(readhtail("center_box_halfspan"))
+    htail.layout.AR = readhtail("AR_Htail")
+    htail.layout.λ = readhtail("taper")
+    htail.layout.sweep = readhtail("sweep")
+    htail.layout.box_halfspan = 2*Distance(readhtail("center_box_halfspan"))
 
     htail.layout.box_x  = Distance(readhtail("x_Htail"))
-    parg[igzhtail] = Distance(readhtail("z_Htail"))
+    htail.layout.z = Distance(readhtail("z_Htail"))
 
     parg[igCLhNrat] = readhtail("max_tail_download")
 
@@ -581,9 +581,9 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     parg[igfhadd] = readhtail("added_weight_fraction")
 
-    parg[igwboxh] = readhtail("box_width_chord")
-    parg[ighboxh] = readhtail("box_height_chord")
-    parg[igrhh]   = readhtail("web_height_hbox")
+    htail.layout.box_width = readhtail("box_width_chord")
+    htail.layout.box_height = readhtail("box_height_chord")
+    htail.layout.hweb_to_hbox  = readhtail("web_height_hbox")
 
 
 vtail_input = readtails("Vtail")
