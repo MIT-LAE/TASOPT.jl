@@ -167,29 +167,6 @@ function find_Q_time(t, fuse_tank, pari, parg, para)
 end
 
 """
-    generate_time_vector(time_p, N)
-
-This function produces the vector that is used in the time integration of the tank properties.
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `time_p::Vector{Float64}`: time in missio points (s)
-    - `N::Int64`: number of points per mission segment
-
-    **Outputs:**
-    - `ts::Vector{Float64}`: time vector (s)
-"""
-function generate_time_vector(time_p, N)
-    Ntpoints = (length(time_p) - 1) * N #number of points in vector
-    ts = zeros(Ntpoints) #initialize vector with times
-
-    for ip = 1:(length(time_p) - 1) #for every mission point except iptest
-        ts[((ip-1)*N + 1):(ip*N)] .= LinRange(time_p[ip], time_p[ip+1], N)
-    end
-    ts = unique(ts) #remove repeated points
-    return ts
-end
-
-"""
     analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
 
 This function analyses the evolution in time of a cryogenic tank inside a TASOPT aircraft model.
@@ -198,7 +175,6 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `ac_orig::aicraft`: TASOPT aircraft model
     - `t_hold_orig::Float64`: hold at origin (s)
     - `t_hold_dest::Float64`: hold at destination (s)
-    - `N::Int64`: number of points in integration per mission segment
     
     **Outputs:**
     - `ts::Vector{Float64}`: vector with times (s)
@@ -213,21 +189,21 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
     
 """
-function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
+function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times
     para_alt = zeros(size(ac.para)[1], size(ac.para)[2] + 3, size(ac.para)[3])
-    ac.para[iatime, :, 1] .= ac.para[iatime, :, 1] .- minimum(ac.para[iatime, :, 1])
-    para_alt[:, 3:(iptotal + 1), :] .= ac.para[:,1:(size(ac.para)[2] - 1),:] #Do not copy iptest
-    para_alt[iatime, 2:(iptotal + 1), :] .= para_alt[iatime, 2:(iptotal + 1), :] .+ t_hold_orig #Apply hold at origin
-    para_alt[iatime, 1, 1] = 0.0
+    ac.para[iatime, :] .= ac.para[iatime, :] .- minimum(ac.para[iatime, :, 1])
+    para_alt[:, 3:(iptotal + 1)] .= ac.para[:,1:(size(ac.para)[2] - 1)] #Do not copy iptest
+    para_alt[iatime, 2:(iptotal + 1)] .= para_alt[iatime, 2:(iptotal + 1)] .+ t_hold_orig #Apply hold at origin
+    para_alt[iatime, 1] = 0.0
     Np = size(para_alt)[2]
-    para_alt[iatime, Np-1, 1] = maximum(para_alt[iatime, :, 1])
-    para_alt[iatime, Np, 1] = para_alt[iatime, Np-1, 1] + t_hold_dest #Apply hold at destination
+    para_alt[iatime, Np-1] = maximum(para_alt[iatime, :])
+    para_alt[iatime, Np] = para_alt[iatime, Np-1] + t_hold_dest #Apply hold at destination
 
     pare_alt = zeros(size(ac.pare)[1], size(ac.pare)[2] + 3, size(ac.pare)[3])
-    pare_alt[:, 3:(iptotal + 2), :] .= ac.pare[:,:,:]
+    pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:]
     
     #Precompute heat transfer rate at each mission point for speed
     Qs_points = calc_Q_points(ac.fuse_tank, ac.pari, ac.parg, para_alt)
@@ -269,12 +245,22 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     #Store tank parameters in struct 
     params = pressure_params(mixture_init, V, pmax, xout, xvent, α)
 
+    ODEparams = (u, params)
+
     #Integrate profiles across mission
     y0 = [p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
-    ts = generate_time_vector(para_alt[iatime,:,1], N) #produce vector with times
 
-    dy_dx(t, y, u, p) = TankDerivatives(t, y, u, p) #State derivatives
-    y, _ = RK4(dy_dx, ts, y0, u, params) #Find the state evolution in time by integration
+    tspan = (0.0, para_alt[iatime,end]) #start and end times
+
+    dy_dt(y, p, t) = TankDerivatives(t, y, p[1], p[2]) #State derivatives
+    #ODE problem; specify changes in mission segments for better speed
+    prob = ODEProblem(dy_dt, y0, tspan, ODEparams, tstops = para_alt[iatime,:], reltol = 1e-6)
+    sol = solve(prob, Tsit5()) #Solve ODE problem using recommended solver
+
+    #Extract solution vector
+    ts = sol.t 
+    y = sol.u
+    y = hcat(y...) #Concatenate into array
 
     #Produce outputs
     ps = y[1, :] #Pressure evolution
@@ -284,7 +270,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     Mvents = y[5, :] #Cumulative mass that has been vented
     Mboils = y[6, :] #Cumulative mass that has been boiled off evolution
     mdot_boils = calculate_boiloff_rate(ts, Mboils) #Calculate boiloff rate
-    
+
     mdots = zeros(length(ts))
     Qs = zeros(length(ts))
     for (i,t) in enumerate(ts)

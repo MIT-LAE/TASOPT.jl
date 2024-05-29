@@ -8,6 +8,7 @@ using ..atmosphere
 using NLsolve
 using Roots
 using NLopt
+using DifferentialEquations
 
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
