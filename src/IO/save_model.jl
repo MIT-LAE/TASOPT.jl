@@ -621,14 +621,14 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         @printf(io, "# Geometry - stored in parg array:\n")
         @printf(io, "# --------------------------------\n")
         for (i,val) in enumerate(parg)
-            @printf(io, "parg[%d] = %20f # %s\n", i, val, i<291 ? iglabels[i] : "" )
+            @printf(io, "parg[%d] = %20.20f # %s\n", i, val, i<291 ? iglabels[i] : "" )
         end
 
         @printf(io, "# --------------------------------\n")
         @printf(io, "# Mission  - stored in parm array:\n")
         @printf(io, "# --------------------------------\n")
         for (i,val) in enumerate(parm)
-            @printf(io, "parm[%d] = %20f \n", i, val)
+            @printf(io, "parm[%d] = %20.20f \n", i, val)
         end
 
         @printf(io, "# --------------------------------\n")
@@ -639,7 +639,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "para[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%f, ", para[i, j])
+                @printf(io, "%20.20f, ", para[i, j])
             end
             @printf(io, "]\n")
         end
@@ -651,7 +651,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "pare[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%20f, ", pare[i, j])
+                @printf(io, "%20.20f, ", pare[i, j])
             end
             @printf(io, "]\n")
         end
@@ -660,20 +660,20 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         @printf(io, "# Powertrain-stored in parpt array:\n")
         @printf(io, "# ---------------------------------\n")
         for (i,val) in enumerate(parpt)
-            @printf(io, "parpt[%d] = %20f \n", i, val)
+            @printf(io, "parpt[%d] = %20.20f \n", i, val)
         end
 
         @printf(io, "# ---------------------------------\n")
         @printf(io, "# Motor   - stored in parmot array:\n")
         @printf(io, "# ---------------------------------\n")
         for (i,val) in enumerate(parmot)
-            @printf(io, "parmot[%d] = %20f \n", i, val)
+            @printf(io, "parmot[%d] = %20.20f \n", i, val)
         end
         @printf(io, "# ---------------------------------\n")
         @printf(io, "# Generator-stored in pargen array:\n")
         @printf(io, "# ---------------------------------\n")
         for (i,val) in enumerate(pargen)
-            @printf(io, "pargen[%d] = %20f \n", i, val)
+            @printf(io, "pargen[%d] = %20.20f \n", i, val)
         end
     end
 
