@@ -17,7 +17,7 @@ $TYPEDFIELDS
     """Number of webs (for double bubble designs)"""
     n_webs::Float64 = 0 #nfwebs
     """Thickness of webs """
-    thickness_webs::Float64 = 0 #nfwebs
+    thickness_webs::Float64 = 0 #tfwebs
     """X position of nose [m]"""
     x_nose::Float64  = 0# = ac.parg[igxnose] #xnose
     """X position of pressure shell forward [m]"""
@@ -78,7 +78,7 @@ $TYPEDFIELDS
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0 # igS
 
-    box_width_chord::Float64 = 0
+    box_width_chord::Float64 = 0 #igwbox
 
     root_chord_thickness::Float64 = 0 # hboxo
 
@@ -118,4 +118,5 @@ $TYPEDFIELDS
     box_x::Float64 = 0 # igxhbox or igxvbox
     hweb_to_hbox::Float64 = 0 # igrhh or igrhv
     z::Float64 = 0
+    x::Float64 = 0
 end

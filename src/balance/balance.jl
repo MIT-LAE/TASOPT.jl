@@ -39,8 +39,8 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       Wfuse = fuse.weight
       Wwing = wing.weight
       Wstrut = wing.strut.weight
-      Whtail = parg[igWhtail]
-      Wvtail = parg[igWvtail]
+      Whtail = htail.weight
+      Wvtail = vtail.weight
       Weng = parg[igWeng]
 
       xWfuel = parg[igxWfuel]
@@ -74,9 +74,9 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       dxlg = xcgB + parg[igdxlgmain] - wing.layout.x_wing_box
 
       S = wing.layout.S
-      Sh = parg[igSh]
+      Sh = htail.layout.S
       co = wing.layout.chord
-      coh = parg[igcoh]
+      coh = htail.layout.chord
       xhbox = htail.layout.box_x
 
       cma = parg[igcma]
@@ -130,10 +130,10 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       xW = rpay * Wpay * xpay +
            xWfuel +
            fuse.moment + xWtesys + xWftank +
-           Wwing * wing.layout.x_wing_box + parg[igdxWwing] +
-           Wstrut * wing.layout.x_wing_box + parg[igdxWstrut] +
-           (Whtail * htail.layout.box_x + parg[igdxWhtail]) * Sh / Sh1 +
-           Wvtail * parg[igxvbox] + parg[igdxWvtail] +
+           Wwing * wing.layout.x_wing_box + wing.dxW +
+           Wstrut * wing.layout.x_wing_box + wing.strut.dxW +
+           (Whtail * htail.layout.box_x + htail.dxW) * Sh / Sh1 +
+           Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
            Whpesys * parg[igxhpesys] +
            Wlgnose * parg[igxlgnose] +
@@ -141,7 +141,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
-      xW_Sh = (Whtail * htail.layout.box_x + parg[igdxWhtail]) / Sh1
+      xW_Sh = (Whtail * htail.layout.box_x + htail.dxW) / Sh1
 
       #---- total aero moment and derivatives
       CMw0 = para[iaCMw0]
@@ -196,7 +196,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
             cCM = cCM + cCM_Sh * delSh
             xW = xW + xW_Sh * delSh
 
-            parg[igSh] = Sh
+            htail.layout.S = Sh
 
       elseif (itrim == 3)
             #----- ... adjust wing box location
@@ -302,26 +302,26 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       parg[igxCGaft] = xcgB
 
       CLF = paraF[iaclpmax] * cosL^2
-      CLhF = parg[igCLhCGfwd]
+      CLhF = htail.CL_max_fwd_CG
 
       CLC = paraC[iaCL]
       CLhC = parg[igCLhspec]
 
-      SM = parg[igSMmin]
+      SM = htail.SM_min
       cma = parg[igcma]
 
       # Unpack flags
       iengloc = pari[iiengloc]  # Engine location 
-      iHTsize = pari[iiHTsize]
-      ixwmove = pari[iixwmove]
+      iHTsize = htail.size
+      ixwmove = htail.move_wingbox
       # Unpack Weights
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
       Wfuse = fuse.weight
       Wwing = wing.weight
       Wstrut = wing.strut.weight
-      Whtail = parg[igWhtail]
-      Wvtail = parg[igWvtail]
+      Whtail = htail.weight
+      Wvtail = vtail.weight
       Weng = parg[igWeng]
 
       xWfuel = parg[igxWfuel]
@@ -346,10 +346,10 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
       xWfuse = fuse.moment
 
-      dxWwing = parg[igdxWwing]
-      dxWstrut = parg[igdxWstrut]
-      dxWhtail = parg[igdxWhtail]
-      dxWvtail = parg[igdxWvtail]
+      dxWwing = wing.dxW
+      dxWstrut = wing.strut.dxW
+      dxWhtail = htail.dxW
+      dxWvtail = vtail.dxW
 
       xeng = parg[igxeng]
       xhpesys = parg[igxhpesys]
@@ -379,11 +379,11 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.x_wing_box
 
       S = wing.layout.S
-      Sh = parg[igSh]
+      Sh = htail.layout.S
       co = wing.layout.chord
-      coh = parg[igcoh]
+      coh = htail.layout.chord
       xhbox = htail.layout.box_x
-      xvbox = parg[igxvbox]
+      xvbox = vtail.layout.box_x
 
       WfuelC = paraC[iafracW] * parg[igWMTO] -
                rpayC * Wpay -
@@ -484,10 +484,10 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
             if (iHTsize == 1)
                   #----- fix HT volume (Section 2.12.1 of TASOPT docs)
-                  lhtail = parg[igxhtail] - (xwbox + dxwing)
+                  lhtail = htail.layout.x - (xwbox + dxwing)
                   lhtail_xw = -1.0
 
-                  Vh = parg[igVh]      # Tail volume is specified here!
+                  Vh = htail.volume      # Tail volume is specified here!
                   Sh = Vh * S * cma / lhtail # Corresponding tail surf area
 
                   r[1] = Sh * lhtail - Vh * S * cma  # This is 0 (residual is 0 ∵ Vh = Sh*lh/(S*cma))
@@ -612,7 +612,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
 
       #---- set converged results
-      parg[igSh] = Sh
+      htail.layout.S = Sh
       #c    parg[igWhtail] = (Whtail_o/Sh_o) * Sh
       wing.layout.x_wing_box = xwbox
       wing.layout.x = xwbox + dxwing
@@ -637,7 +637,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
             res_CLh = cCM_CLh / CL
             dCLh = -res / res_CLh
             CLh = CLh + dCLh
-            parg[igCLhCGfwd] = CLh
+            htail.CL_max_fwd_CG = CLh
       end
 
 
@@ -667,8 +667,8 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
       Wfuse = fuse.weight
       Wwing = wing.weight
       Wstrut = wing.strut.weight
-      Whtail = parg[igWhtail]
-      Wvtail = parg[igWvtail]
+      Whtail = htail.weight
+      Wvtail = vtail.weight
       Weng = parg[igWeng]
 
       xWfuel = parg[igxWfuel]
@@ -708,10 +708,10 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
 
       xWe = rfuel * xWfuel +
             fuse.moment + parg[igxWtesys] + parg[igxWftank] +
-            Wwing * wing.layout.x_wing_box + parg[igdxWwing] +
-            Wstrut * wing.layout.x_wing_box + parg[igdxWstrut] +
-            Whtail * htail.layout.box_x + parg[igdxWhtail] +
-            Wvtail * parg[igxvbox] + parg[igdxWvtail] +
+            Wwing * wing.layout.x_wing_box + wing.dxW +
+            Wstrut * wing.layout.x_wing_box + wing.strut.dxW +
+            Whtail * htail.layout.box_x + htail.dxW +
+            Wvtail * vtail.layout.box_x + vtail.dxW +
             Weng * parg[igxeng] +
             Whpesys * parg[igxhpesys] +
             Wlgnose * parg[igxlgnose] +
