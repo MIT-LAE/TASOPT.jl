@@ -532,16 +532,16 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     htail.layout.box_x  = Distance(readhtail("x_Htail"))
     htail.layout.z = Distance(readhtail("z_Htail"))
 
-    parg[igCLhNrat] = readhtail("max_tail_download")
+    htail.CL_CLmax = readhtail("max_tail_download")
 
     htail_size = lowercase(readhtail("HTsize"))
     if htail_size == "vh"
-        pari[iiHTsize] = 1
-        parg[igVh] = readhtail("Vh")
+        htail.size = 1
+        htail.volume = readhtail("Vh")
     elseif htail_size == "maxforwardcg"
-        pari[iiHTsize] = 2
-        parg[igCLhCGfwd] = readhtail("CLh_at_max_forward_CG")
-        parg[igVh] = 1.0
+        htail.size = 2
+        htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
+        htail.volume = 1.0
     else
         error("Horizontal tail can only be sized via:
             1: specified tail volume coeff \"Vh\";
@@ -551,15 +551,15 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     movewing = readhtail("move_wingbox")
     if typeof(movewing) == Int
-        pari[iixwmove] = movewing
+        htail.move_wingbox = movewing
     elseif typeof(movewing) <: AbstractString
         movewing = lowercase(movewing)
         if movewing =="fix"
-            pari[iixwmove] = 0
+            htail.move_wingbox = 0
         elseif movewing == "clhspec"
-            pari[iixwmove] = 1
+            htail.move_wingbox = 1
         elseif movewing == "smmin"
-            pari[iixwmove] = 2
+            htail.move_wingbox = 2
         else
             error("Wing position during horizontal tail sizing can only be sized via:
             0: \"fix\" wing position;
@@ -569,17 +569,17 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     else
         error("Check wing position input during htail sizing... something isn't right")
     end
-    parg[igSMmin] = readhtail("SM_min")
+    htail.SM_min = readhtail("SM_min")
 
     parg[igCLhspec] = readhtail("CLh_spec")
 
-    parg[igdepsda] = readhtail("downwash_factor")
+    htail.downwash_factor = readhtail("downwash_factor")
     parg[igdCLnda] = readhtail("nacelle_lift_curve_slope")
 
     parg[igfCDhcen] = readhtail("CD_Htail_from_center")
-    parg[igCLhmax]  = readhtail("CLh_max")
+    htail.CL_max  = readhtail("CLh_max")
 
-    parg[igfhadd] = readhtail("added_weight_fraction")
+    htail.added_weight_fraction = readhtail("added_weight_fraction")
 
     htail.layout.box_width = readhtail("box_width_chord")
     htail.layout.box_height = readhtail("box_height_chord")
@@ -589,19 +589,19 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 vtail_input = readtails("Vtail")
 dvtail = dtails["Vtail"]
 readvtail(x) = read_input(x, vtail_input, dvtail)
-    parg[igARv]     = readvtail("AR_Vtail")
-    parg[iglambdav] = readvtail("taper")
-    parg[igsweepv]  = readvtail("sweep")
-    parg[igbov]     = Distance(readvtail("center_box_halfspan"))
-    parg[igxvbox]  = Distance(readvtail("x_Vtail"))
-    parg[ignvtail]  = readvtail("number_Vtails")
+    vtail.layout.AR = readvtail("AR_Vtail")
+    vtail.layout.λ = readvtail("taper")
+    vtail.layout.sweep  = readvtail("sweep")
+    vtail.layout.box_halfspan = Distance(readvtail("center_box_halfspan"))
+    vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
+    vtail.ntails  = readvtail("number_Vtails")
 
     vtail_size = lowercase(readvtail("VTsize"))
     if vtail_size == "vv"
-        pari[iiVTsize] = 1
-        parg[igVv] = readvtail("Vv")
+        vtail.size = 1
+        vtail.volume = readvtail("Vv")
     elseif vtail_size == "oei"
-        pari[iiVTsize] = 2
+        vtail.size = 2
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
         error("Vertical tail can only be sized via:
@@ -609,12 +609,12 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
             2: specified CL at one engine out trim (\"OEI\")")
     end
 
-    parg[igCLvmax] = readvtail("CLv_max")
+    vtail.CL_max = readvtail("CLv_max")
 
-    parg[igfvadd] = readvtail("added_weight_fraction")
-    parg[igwboxv] = readvtail("box_width_chord")
-    parg[ighboxv] = readvtail("box_height_chord")
-    parg[igrhv]   = readvtail("web_height_hbox")
+    vtail.added_weight_fraction = readvtail("added_weight_fraction")
+    vtail.layout.box_width = readvtail("box_width_chord")
+    vtail.layout.box_height = readvtail("box_height_chord")
+    vtail.layout.hweb_to_hbox  = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----
 
@@ -645,8 +645,8 @@ readstruct(x) = read_input(x, structures, dstructures)
     fuselage.rEshell = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
-    parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
-    parg[igEstrut] = Stress(readstruct("E_struts"))
+    # parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
+    # parg[igEstrut] = Stress(readstruct("E_struts"))
 
     #- structural material densities
     # parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 

@@ -69,7 +69,7 @@ function wsize(ac; itermax=35,
     # iBLIc = pari[iiBLIc]
     # ifclose = pari[iifclose]
     # iHTsize = pari[iiHTsize]
-    iVTsize = pari[iiVTsize]
+    iVTsize = vtail.size
     # ixwmove = pari[iixwmove]
     ifwing = pari[iifwing]
 
@@ -124,8 +124,8 @@ function wsize(ac; itermax=35,
     fseat = parg[igfseat]
     feadd = parg[igfeadd]
     fnace = parg[igfnace]
-    fhadd = parg[igfhadd]
-    fvadd = parg[igfvadd]
+    fhadd = htail.added_weight_fraction
+    fvadd = vtail.added_weight_fraction
     fwadd = wing_additional_weight(wing)
             
     ffadd = parg[igffadd]
@@ -144,7 +144,7 @@ function wsize(ac; itermax=35,
 
     xwbox = wing.layout.x_wing_box
     xhbox = htail.layout.box_x
-    xvbox = parg[igxvbox]
+    xvbox = vtail.layout.box_x
     xapu = parg[igxapu]
     xeng = parg[igxeng]
 
@@ -163,14 +163,14 @@ function wsize(ac; itermax=35,
     rMv = parg[igrMv]
 
     # tail CL's at structural sizing cases
-    CLhmax = parg[igCLhmax]
-    CLvmax = parg[igCLvmax]
+    CLhmax = htail.CL_max
+    CLvmax = vtail.CL_max
 
     # tail surface taper ratios (no inner panel, so λs=1)
     λhs = 1.0
     λh = htail.layout.λ
     λvs = 1.0
-    λv = parg[iglambdav]
+    λv = vtail.layout.λ
 
 
     # tail geometry parameters
@@ -181,15 +181,15 @@ function wsize(ac; itermax=35,
     ARh = htail.layout.AR 
     boh = htail.layout.box_halfspan
 
-    sweepv = parg[igsweepv]
-    wboxv = parg[igwboxv]
-    hboxv = parg[ighboxv]
-    rhv = parg[igrhv]
-    ARv = parg[igARv]
-    bov = parg[igbov]
+    sweepv = vtail.layout.sweep
+    wboxv = vtail.layout.box_width
+    hboxv = vtail.layout.box_height
+    rhv = vtail.layout.hweb_to_hbox
+    ARv = vtail.layout.AR
+    bov = vtail.layout.box_halfspan
 
     # number of vertical tails
-    nvtail = parg[ignvtail]
+    nvtail = vtail.ntails
 
     # strut vertical base height, h/c, strut shell t/h
     # zs = parg[igzs]
@@ -299,16 +299,16 @@ function wsize(ac; itermax=35,
         dyWinn = Winn * 0.30 * (0.5 * (bs - wing.layout.box_halfspan))
         dyWout = Wout * 0.25 * (0.5 * (b - bs))
 
-        parg[igWhtail] = Whtail
-        parg[igWvtail] = Wvtail
+        htail.weight = Whtail
+        vtail.weight = Wvtail
         wing.weight = Wwing
         wing.strut.weight = Wstrut
         parg[igWeng] = Weng
         wing.inboard.weight = Winn
         wing.outboard.weight = Wout
         parg[igWftank] = Wftank
-        parg[igdxWhtail] = dxWhtail
-        parg[igdxWvtail] = dxWvtail
+        htail.dxW = dxWhtail
+        vtail.dxW = dxWvtail
         wing.inboard.dyW = dyWinn
         wing.outboard.dyW = dyWout
 
@@ -319,7 +319,7 @@ function wsize(ac; itermax=35,
         wing.layout.x = xwing
 
         # tail area centroid locations (assume no offset from sweep initially)
-        parg[igxhtail], parg[igxvtail] = xhbox, xvbox
+        htail.layout.x, vtail.layout.x = xhbox, xvbox
         # center wingbox chord extent for fuse weight calcs (small effect)
         cbox = 0.0
         # nacelle, fan duct, core, cowl lengths ℛℯ calcs
@@ -388,8 +388,8 @@ function wsize(ac; itermax=35,
         Sv = (2.0 * Wpaymax) / (qne * CLvmax)
         bv = sqrt(Sv * ARv)
 
-        parg[igSh] = Sh
-        parg[igSv] = Sv
+        htail.layout.S = Sh
+        vtail.layout.S = Sv
 
         # Initial wing and tail pitching moments (including sweep)
         para[iaCMw0, :] .= 0.0
@@ -469,23 +469,23 @@ function wsize(ac; itermax=35,
 
     else #Second iteration onwards use previously calculated values
 
-        bh = parg[igbh]
-        bv = parg[igbv]
+        bh = htail.layout.b
+        bv = vtail.layout.b
 
-        coh = parg[igcoh]
-        cov = parg[igcov]
+        coh = htail.layout.chord
+        cov = vtail.layout.chord
 
         cbox = wing.layout.chord * wing.layout.box_width_chord
 
-        Whtail = parg[igWhtail]
-        Wvtail = parg[igWvtail]
+        Whtail = htail.weight
+        Wvtail = vtail.weight
         Wwing = wing.weight
         Wstrut = wing.strut.weight
         Weng = parg[igWeng]
         Winn = wing.inboard.weight
         Wout = wing.outboard.weight
-        dxWhtail = parg[igdxWhtail]
-        dxWvtail = parg[igdxWvtail]
+        dxWhtail = htail.dxW
+        dxWvtail = vtail.dxW
         dyWinn = wing.inboard.dyW
         dyWout = wing.outboard.dyW
 
@@ -496,20 +496,20 @@ function wsize(ac; itermax=35,
         xwing = wing.layout.x
         dxwing = wing.layout.x - wing.layout.x_wing_box
 
-        xhtail = parg[igxhtail]
-        xvtail = parg[igxvtail]
+        xhtail =  htail.layout.x
+        xvtail = vtail.layout.x
 
         xhbox = htail.layout.box_x
-        xvbox = parg[igxvbox]
+        xvbox = vtail.layout.box_x
 
         Wftank = parg[igWftank]
 
         fSnace = parg[igfSnace]
 
-        Sh = parg[igSh]
-        Sv = parg[igSv]
+        Sh = htail.layout.S
+        Sv = vtail.layout.S
         ARh = htail.layout.AR
-        ARv = parg[igARv]
+        ARv = vtail.layout.AR
 
         # Turbo-electric system
         Wtesys = parg[igWtesys]
@@ -578,10 +578,10 @@ function wsize(ac; itermax=35,
                        parg[igWgen] * ngen
         end
 
-        Whtail = parg[igWhtail]
-        Wvtail = parg[igWvtail]
-        xhtail = parg[igxhtail]
-        xvtail = parg[igxvtail]
+        Whtail = htail.weight
+        Wvtail = vtail.weight
+        xhtail =  htail.layout.x
+        xvtail = vtail.layout.x
         xwbox = wing.layout.x_wing_box
         xwing = wing.layout.x
         xapu = parg[igxapu]
@@ -646,7 +646,7 @@ function wsize(ac; itermax=35,
 
         else
             # Call a better Wupdate function
-            Wupdate0!(parg, fuse, wing, rlx, fsum)
+            Wupdate0!(parg, fuse, wing, htail, vtail, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -675,7 +675,7 @@ function wsize(ac; itermax=35,
             @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
                 iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
                 fuse.weight, wing.weight, wing.layout.b, wing.layout.S,
-                parg[igSh], wing.layout.x_wing_box)
+                htail.layout.S, wing.layout.x_wing_box)
         end
         if (errw <= tolerW)
             Lconv = true
@@ -759,7 +759,7 @@ function wsize(ac; itermax=35,
         # -----------------------------------------
         ip = ipcruise1
         γt, γs = wing.layout.λt * para[iarclt, ip], wing.layout.λs * para[iarcls, ip] # Lift "taper ratios"
-        Lhtail = WMTO * parg[igCLhNrat] * parg[igSh] / wing.layout.S
+        Lhtail = WMTO * htail.CL_CLmax  * htail.layout.S / wing.layout.S
 
         po = wingpo(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan,
         wing.layout.λt, wing.layout.λs, γt, γs,
@@ -856,7 +856,7 @@ function wsize(ac; itermax=35,
         wing.weight = Wwing * rlx + wing.weight * (1.0 - rlx)
         
         parg[igWfmax] = Wfmax
-        parg[igdxWwing] = dxWwing
+        wing.dxW = dxWwing
         parg[igdxWfuel] = dxWfmax * rfmax
 
         wing.outboard.webs.thickness = tbwebs
@@ -887,7 +887,7 @@ function wsize(ac; itermax=35,
         cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut.toc))
         Ssturt = 2.0 * cstrut * lstrutp
         wing.strut.chord = cstrut
-        wing.strut.area = Ssturt
+        wing.strut.S = Ssturt
 
         # Individual panel weights
         Winn = Wsinn * (1.0 + fwadd) + rfmax * Wfinn
@@ -907,7 +907,7 @@ function wsize(ac; itermax=35,
         # -------------------------------
 
         # Set tail CL derivative 
-        dϵdα = parg[igdepsda]
+        dϵdα = htail.downwash_factor
         sweeph = htail.layout.sweep
         tanL = tan(wing.layout.sweep * π / 180.0)
         tanLh = tan(sweeph * π / 180.0)
@@ -943,9 +943,9 @@ function wsize(ac; itermax=35,
         if (iterw <= 2 && initwgt == 0)
             #if initial iterations or intiial weight =0 then just get tail volume coeff Vh
             lhtail = xhtail - xwing
-            Vh = parg[igVh]
+            Vh = htail.volume
             Sh = Vh * wing.layout.S * cma / lhtail
-            parg[igSh] = Sh
+            htail.layout.S = Sh
         else
             # for subsequent iterations:
             htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing, htail, vtail)
@@ -953,9 +953,9 @@ function wsize(ac; itermax=35,
             xwbox, xwing = wing.layout.x_wing_box, wing.layout.x
 
             lhtail = xhtail - xwing
-            Sh = parg[igSh]
+            Sh = htail.layout.S
 
-            parg[igVh] = Sh * lhtail / (wing.layout.S * cma)
+            htail.volume = Sh * lhtail / (wing.layout.S * cma)
         end
 
         # Vertical tail sizing 
@@ -978,35 +978,35 @@ function wsize(ac; itermax=35,
 
         if (iVTsize == 1)
             lvtail = xvtail - xwing
-            Vv = parg[igVv]
+            Vv = vtail.volume
             Sv = Vv * wing.layout.S * wing.layout.b / lvtail
-            parg[igSv] = Sv
+            vtail.layout.S = Sv
             parg[igCLveout] = Me / (qstall * Sv * lvtail) # Max lift coeff oc vertical tail with some yaw control when OEI [Eqn. 312 of TASOPT docs]
         else
             lvtail = xvtail - xwing
             CLveout = parg[igCLveout]
             Sv = Me / (qstall * CLveout * lvtail)
-            parg[igSv] = Sv
-            parg[igVv] = Sv * lvtail / (wing.layout.S * wing.layout.b)
+            vtail.layout.S = Sv
+            vtail.volume = Sv * lvtail / (wing.layout.S * wing.layout.b)
         end
 
         # set HT max loading magnitude
         bh, coh, poh = tailpo(Sh, ARh, λh, qne, CLhmax)
-        parg[igbh] = bh
-        parg[igcoh] = coh
+        htail.layout.b = bh
+        htail.layout.chord = coh
 
         # set VT max loading magnitude, based on single tail + its bottom image
         bv2, cov, pov = tailpo(2.0 * Sv / nvtail, 2.0 * ARv, λv, qne, CLvmax)
         bv = bv2/2
-        parg[igbv] = bv
-        parg[igcov] = cov
+        vtail.layout.b = bv
+        vtail.layout.chord = cov
 
         # HT weight
         γh = λh
         γhs = λhs
         ihplan = 0
         Wengh = 0.0
-        Ecap = parg[igEcap]
+        Ecap = ac.wing.inboard.caps.material.E
         Eweb = Ecap
         Gcap = Ecap * 0.5 / (1.0 + 0.3)
         Gweb = Ecap * 0.5 / (1.0 + 0.3)
@@ -1026,19 +1026,19 @@ function wsize(ac; itermax=35,
 
         Whtail = 2.0 * (Wscenh + Wsinnh + Wsouth) * (1.0 + fhadd)
         dxWhtail = 2.0 * (dxWsinnh + dxWsouth) * (1.0 + fhadd)
-        parg[igWhtail] = Whtail
-        parg[igdxWhtail] = dxWhtail
+        htail.weight = Whtail
+        htail.dxW = dxWhtail
 
-        parg[igtbwebh] = tbweboh
-        parg[igtbcaph] = tbcapoh
-        parg[igEIch] = EIcoh
-        parg[igEInh] = EInoh
-        parg[igGJh] = GJoh
+        htail.thickness_web = tbweboh
+        htail.thickness_cap = tbcapoh
+        htail.EI_bending = EIcoh
+        htail.EI_normal = EInoh
+        htail.GJ = GJoh
 
         # HT centroid x-offset
         xhbox = htail.layout.box_x
         dxh, macco = surfdx(bh, boh, boh, λh, λhs, sweeph)
-        parg[igxhtail] = xhbox + dxh
+        htail.layout.x = xhbox + dxh
 
         # HT pitching moment coeff
         fLoh = 0.0
@@ -1055,7 +1055,7 @@ function wsize(ac; itermax=35,
         γvs = λvs
         ivplan = 0
         Wengv = 0.0
-        Ecap = parg[igEcap]
+        Ecap = ac.wing.inboard.caps.material.E
         Eweb = Ecap
         Gcap = Ecap * 0.5 / (1.0 + 0.3)
         Gweb = Ecap * 0.5 / (1.0 + 0.3)
@@ -1075,19 +1075,19 @@ function wsize(ac; itermax=35,
 
         Wvtail = (Wscenv + Wsinnv + Wsoutv) * (1.0 + fvadd) * nvtail
         dxWvtail = (dxWsinnv + dxWsoutv) * (1.0 + fvadd) * nvtail
-        parg[igWvtail] = Wvtail
-        parg[igdxWvtail] = dxWvtail
+        vtail.weight = Wvtail
+        vtail.dxW = dxWvtail
 
-        parg[igtbwebv] = tbwebov
-        parg[igtbcapv] = tbcapov
-        parg[igEIcv] = EIcov
-        parg[igEInv] = EInov
-        parg[igGJv] = GJov
+        vtail.thickness_web = tbwebov
+        vtail.thickness_cap = tbcapov
+        vtail.EI_bending = EIcov
+        vtail.EI_normal = EInov
+        vtail.GJ = GJov
 
         # VT centroid x-offset
-        xvbox = parg[igxvbox]
+        xvbox = vtail.layout.box_x
         dxv, _ = surfdx(bv2, bov, bov, λv, λvs, sweepv)
-        parg[igxvtail] = xvbox + dxv
+        vtail.layout.x = xvbox + dxv
 
         # ----------------------
         #     Fuselage Fuel Tank weight
@@ -1328,7 +1328,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, fuse, wing,rlx, fsum)
+        Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1344,7 +1344,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, fuse, wing, rlx, fsum)
+        Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1399,7 +1399,7 @@ end
 """
 Wupdate0 updates the weight of the aircraft
 """
-function Wupdate0!(parg, fuse, wing, rlx, fsum)
+function Wupdate0!(parg, fuse, wing, htail, vtail, rlx, fsum)
     WMTO = parg[igWMTO]
     
 
@@ -1410,8 +1410,8 @@ function Wupdate0!(parg, fuse, wing, rlx, fsum)
            fuse.weight +
            wing.weight +
            wing.strut.weight +
-           parg[igWhtail] +
-           parg[igWvtail] +
+           htail.weight +
+           vtail.weight +
            parg[igWeng] +
            parg[igWfuel] +
            parg[igWtesys] +
@@ -1426,14 +1426,14 @@ end
 """
 Wupdate
 """
-function Wupdate!(parg, fuse, wing, rlx, fsum)
+function Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
 
     WMTO = parg[igWMTO]
 
     fwing = wing.weight / WMTO
     fstrut = wing.strut.weight / WMTO
-    fhtail = parg[igWhtail] / WMTO
-    fvtail = parg[igWvtail] / WMTO
+    fhtail = htail.weight / WMTO
+    fvtail = vtail.weight / WMTO
     feng = parg[igWeng] / WMTO
     ffuel = parg[igWfuel] / WMTO
     fhpesys = parg[igfhpesys]
@@ -1462,8 +1462,8 @@ function Wupdate!(parg, fuse, wing, rlx, fsum)
     parg[igWMTO] = WMTO
     wing.weight = WMTO * fwing
     wing.strut.weight = WMTO * fstrut
-    parg[igWhtail] = WMTO * fhtail
-    parg[igWvtail] = WMTO * fvtail
+    htail.weight = WMTO * fhtail
+    vtail.weight = WMTO * fvtail
     parg[igWeng] = WMTO * feng
     parg[igWfuel] = WMTO * ffuel
    

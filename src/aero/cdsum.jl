@@ -56,7 +56,7 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       bo       = wing.layout.box_halfspan
       bs       = wing.layout.b_inner
       boh      = htail.layout.box_halfspan
-      bov      = parg[igbov    ]
+      bov      = vtail.layout.box_halfspan
 
       lambdat  = wing.layout.λt
       lambdas  = wing.layout.λs
@@ -64,23 +64,23 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       gammas   = wing.layout.λs*para[iarcls]
 
       lambdah  = htail.layout.λ
-      lambdav  = parg[iglambdav]
+      lambdav  = vtail.layout.λ
       sweeph   = htail.layout.sweep
-      sweepv   = parg[igsweepv ]
+      sweepv   = vtail.layout.sweep
       cosLs    = parg[igcosLs  ]
-      Sstrut   = wing.strut.area
+      Sstrut   = wing.strut.S
 
       co   = wing.layout.chord
-      coh  = parg[igcoh]
-      cov  = parg[igcov]
+      coh  = htail.layout.chord
+      cov  = vtail.layout.chord
 
       b    = wing.layout.b
-      bh   = parg[igbh ]
-      bv   = parg[igbv ]
+      bh   = htail.layout.b
+      bv   = vtail.layout.b
 
       S    = wing.layout.S
-      Sh   = parg[igSh ]
-      Sv   = parg[igSv ]
+      Sh   = htail.layout.S
+      Sv   = vtail.layout.S
 
       fLo  = parg[igfLo]
       fLt  = parg[igfLt]
@@ -91,7 +91,7 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
 
       Astrut   = parg[igAstrut ]
       cstrut   = parg[igcstrut ]
-      nvtail   = parg[ignvtail ]
+      nvtail   = vtail.ntails
 
       rVnace = parg[igrVnace]
 
@@ -295,8 +295,8 @@ function cditrp(pari,parg,para, wing, htail, vtail)
        return
       end
 
-      CLhtail = para[iaCLh]*parg[igSh]/wing.layout.S
-      # println("CLhtail: $(para[iaCLh]) $(parg[igSh]) $(parg[igS])")
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
+      # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
       bref = wing.layout.b
       Sref = wing.layout.S
 
@@ -343,7 +343,7 @@ function cditrp(pari,parg,para, wing, htail, vtail)
       fdut = para[iafdut]
 
 #---- horizontal tail wake parameters
-      b[2]   = parg[igbh]
+      b[2]   = htail.layout.b
       bs[2]  = htail.layout.box_halfspan
       bo[2]  = htail.layout.box_halfspan
       bop[2] = htail.layout.box_halfspan

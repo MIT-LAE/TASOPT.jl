@@ -28,7 +28,7 @@ end
 @kwdef mutable struct Strut
     # Strut
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
-    area::Float64 = 0
+    S::Float64 = 0
     length::Float64 = 0
     z::Float64 = 0
     toc::Float64 = 0
@@ -41,6 +41,7 @@ end
 
 @kwdef mutable struct Wing
     weight::Float64 = 0
+    dxW::Float64 = 0
     # Layout
     layout::WingLayout = WingLayout()
     planform::Int64 = 0 # 0: Wing cantilever, plain
