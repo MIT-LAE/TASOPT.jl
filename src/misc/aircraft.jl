@@ -27,6 +27,10 @@ mutable struct fuselage_tank
     
     pvent::Float64
     pinitial::Float64
+    t_hold_orig::Float64
+    t_hold_dest::Float64
+    TSLtank::Float64
+
     rhofuel::Float64
     Tfuel::Float64
     rhofuelgas::Float64
@@ -38,7 +42,7 @@ mutable struct fuselage_tank
     ullage_frac::Float64
     qfac::Float64
     pfac::Float64
-    TSLtank::Float64
+
     fuselage_tank() = new("", "", false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, [], [], [], StructuralAlloy("Al-2219-T87"), StructuralAlloy("Al-2219-T87"), 0.0, 0.0, [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
 end
 
