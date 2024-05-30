@@ -3224,6 +3224,10 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         u25c = sqrt(2.0 * (ht25c - h25c))
                         M25c = u25c / sqrt(T25c * R25c * cp25c / (cp25c - R25c))
                   end
+
+                  if (ht5 < h5) #error if total enthalpy at nozzle inlet is lower than static enthalpy
+                        error("ht5 < h5 : ", ht5, h5)
+                  end
                   
                   Lconv = true
                   return TSFC, Fsp, hfuel, ff,
