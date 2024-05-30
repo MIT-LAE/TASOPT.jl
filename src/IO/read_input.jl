@@ -37,6 +37,7 @@ Density(x)  = convertDensity(parse_unit(x)...)
 Area(x)     = convertArea(parse_unit(x)...)
 Vol(x)      = convertVolume(parse_unit(x)...)
 Angle(x)    = convertAngle(parse_unit(x)...)
+Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
 """
@@ -364,6 +365,8 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.pvent = Pressure(readfuel_storage("pressure_venting"))
     fuse_tank.pinitial = Pressure(readfuel_storage("pressure_initial"))
+    fuse_tank.t_hold_orig = Time(readfuel_storage("hold_departure"))
+    fuse_tank.t_hold_dest = Time(readfuel_storage("hold_arrival"))
     
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.ew = readfuel_storage("weld_efficiency")
