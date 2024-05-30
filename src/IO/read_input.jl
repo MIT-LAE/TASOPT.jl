@@ -341,6 +341,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
+    fuse_tank.fueltype = fueltype
     fuse_tank.Rfuse = parg[igRfuse]
     fuse_tank.dRfuse = parg[igdRfuse]
     fuse_tank.wfb = parg[igwfb]
@@ -361,13 +362,15 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
     fuse_tank.theta_inner = Angle(readfuel_storage("inner_vessel_support_angle"))
 
-    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
+    fuse_tank.pvent = Pressure(readfuel_storage("pressure_venting"))
+    fuse_tank.pinitial = Pressure(readfuel_storage("pressure_initial"))
     
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
     fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
+    fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
     if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
@@ -388,17 +391,6 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         pari[iinftanks] = 2
     end
-
-    #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
-    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
-    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
-    parg[igrhofuel] = ρfuel
-    fuse_tank.rhofuel = ρfuel
-    fuse_tank.Tfuel = Tfuel
-    fuse_tank.hvap = hvap
-    parg[igrhofuelgas] = ρgas
-    fuse_tank.rhofuelgas = ρgas
 end
 # ---------------------------------
 # Wing

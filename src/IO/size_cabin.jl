@@ -1,4 +1,3 @@
-export place_cabin_seats, arrange_seats
 """
     place_cabin_seats(pax, Rfuse)
 
