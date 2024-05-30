@@ -333,6 +333,10 @@ function wsize(ac; itermax=35,
         
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
+
+    #Initialize HX storage array and reset previous HX engine values
+    HXs = []
+    resetHXs(pare)
    
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1287,12 +1291,7 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            global HXs = hxdesign!(pare, pari, ipdes, HXs)
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous for debugging
-
-        else
-            global HXs = []
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
+            HXs = hxdesign!(pare, pari, ipdes, HXs)
             
         end
 

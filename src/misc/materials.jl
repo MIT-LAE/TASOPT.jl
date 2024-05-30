@@ -29,6 +29,8 @@ $TYPEDFIELDS
     UTS::Float64
     """Ultimate shear strength [Pa]"""
     USS::Float64
+    """Thermal conductivity [W/(m K)]"""
+    k::Float64
 end
 
 """
@@ -44,7 +46,7 @@ Material specified needs to have the following data in the database:
 - τmax: Maximum Shear [Pa]
 """
 function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.5)
-    local MatProp, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS
+    local MatProp, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS, k
     try
         MatProp = MaterialProperties[material]
     catch
@@ -60,10 +62,11 @@ function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor =
             USS  = MatProp["shear_strength"]
             σmax = YTS/max_avg_stress/safety_factor
             τmax = USS/max_avg_stress/safety_factor
+            k = MatProp["thermal_conductivity"]
         catch 
             error("Insufficient data in database for $material to build a StructuralAlloy")
         else
-            StructuralAlloy(ρ, E, G, ν, σmax, τmax, YTS, UTS, USS)
+            StructuralAlloy(ρ, E, G, ν, σmax, τmax, YTS, UTS, USS, k)
         end
     end
 
