@@ -4,6 +4,7 @@ Fuselage tank component. Usually for Hydrogen aircraft
 $TYPEDFIELDS
 """
 mutable struct fuselage_tank
+    fueltype::String
     placement::String
     size_insulation::Bool
     Wfuelintank::Float64
@@ -24,7 +25,8 @@ mutable struct fuselage_tank
     theta_outer::Vector{Float64}
     Ninterm::Float64
     
-    ptank::Float64
+    pvent::Float64
+    pinitial::Float64
     rhofuel::Float64
     Tfuel::Float64
     rhofuelgas::Float64
@@ -35,8 +37,9 @@ mutable struct fuselage_tank
     ew::Float64
     ullage_frac::Float64
     qfac::Float64
+    pfac::Float64
     TSLtank::Float64
-    fuselage_tank() = new() 
+    fuselage_tank() = new("", "", false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, [], [], [], StructuralAlloy("Al-2219-T87"), StructuralAlloy("Al-2219-T87"), 0.0, 0.0, [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
 end
 
 

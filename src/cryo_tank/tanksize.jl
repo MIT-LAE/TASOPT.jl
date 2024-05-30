@@ -65,7 +65,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
                 
         else #If insulation does not need to be sized
-                m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
+                _, m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
         
         thickness_insul = sum(t_cond)
@@ -163,6 +163,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         p.TSL = TSL
         p.Mair = Mair
         p.xftank = xftank
+        p.Rfuse = fuse_tank.Rfuse
         p.ifuel = ifuel
 
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals

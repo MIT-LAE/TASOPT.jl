@@ -312,12 +312,28 @@ function wsize(ac; itermax=35,
     else
         xftank = parg[igxblend1] + 1.0*ft_to_m
         xftankaft = parg[igxblend2]
+
+        #Calculate fuel temperature and density as a function of pressure
+        β0 = 1 - fuse_tank.ullage_frac
+        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
+
+        Tfuel = fuel_mix.liquid.T
+        ρliq = fuel_mix.liquid.ρ
+        ρgas = fuel_mix.gas.ρ
+        hvap = fuel_mix.hvap
+
+        pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
+        pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+        parg[igrhofuel] = fuel_mix.ρ
+        fuse_tank.rhofuel = ρliq
+        fuse_tank.Tfuel = Tfuel
+        fuse_tank.hvap = hvap
+        fuse_tank.rhofuelgas = ρgas
     end
         
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
    
-
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------
@@ -1214,7 +1230,6 @@ function wsize(ac; itermax=35,
             parg[iglftank] = ltank
             parg[igRftank] = Rtank
             parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
-            parg[igmdotboiloff] = nftanks * mdot_boiloff #store total fuel boiloff rate
 
             #Tank placement and weight moment
             lcabin = parg[igdxcabin]
@@ -1261,6 +1276,9 @@ function wsize(ac; itermax=35,
             para[iaDAfwake, :] .= DAfwake
             para[iaPAfinf, :] .= PAfinf
 
+            #Use homogeneous tank model to calculate required venting
+            _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac)
+            parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
         end
 
         # -----------------------------

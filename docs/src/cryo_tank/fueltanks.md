@@ -1,4 +1,4 @@
-# [Fuel tanks](@id fueltanks)
+# [Thermal and structural models](@id fueltanks)
 
 Liquid long-chain hydrocarbon fuel is assumed to be stored in the interior of the wings and no additional tanks are needed. The weight of the fuel is accounted for while sizing the wing structure. See [`structures.surfw`](@ref).
 
@@ -191,14 +191,14 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     In the case of the outer vessel (when there is a vacuum layer), there is a tradeoff between stiffener mass and skin thickness, as adding more stiffeners results in a thinner skin. The optimal number of stiffeners that minizimizes the overall outer vessel mass is found using NLopt.jl with a Nelder-Mead algorithm.  
     
 ```@docs
-structures.tanksize!
-structures.res_MLI_thick
-structures.size_inner_tank
-structures.size_outer_tank
-structures.stiffener_weight
-structures.optimize_outer_tank
-structures.tankWthermal
-structures.residuals_Q
+CryoTank.tanksize!
+CryoTank.res_MLI_thick
+CryoTank.size_inner_tank
+CryoTank.size_outer_tank
+CryoTank.stiffener_weight
+CryoTank.optimize_outer_tank
+CryoTank.tankWthermal
+CryoTank.residuals_Q
 ```
 [^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
 [^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.
