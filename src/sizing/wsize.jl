@@ -1292,7 +1292,24 @@ function wsize(ac; itermax=35,
 
         if iterw > 2 #Only include heat exchangers after second iteration
             HXs = hxdesign!(pare, pari, ipdes, HXs)
-            
+
+            #If there are heat exchangers, calculate engine state at TO for balanced-field calculation
+            if length(HXs) > 0
+                # normal takeoff and balanced-field takeoff calculations
+                # set static thrust for takeoff routine
+                ip = ipstatic
+                icall = 1
+                icool = 1
+
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+
+                # set rotation thrust for takeoff routine
+                # (already available from cooling calculations)
+                ip = iprotate
+                icall = 1
+                icool = 1
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+            end
         end
 
         # -----------------------------
