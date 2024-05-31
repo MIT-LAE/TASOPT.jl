@@ -30,3 +30,7 @@ $TYPEDFIELDS
     dxW::Float64 = 0
     #Material = StructuralAlloy
 end
+
+function Base.show(io::IO, x::StructuralMember)
+    print(io, "StructuralMember(", x.material,", ", x.weight, ", ", x.x, ")")
+end
