@@ -11,6 +11,8 @@ Generic structural alloy.
 $TYPEDFIELDS
 """
 @kwdef struct StructuralAlloy
+    """Name"""
+    name::String = ""
     """Density [kg/m³]"""
     ρ::Float64
     """Young's Modulus [Pa]"""
@@ -63,7 +65,7 @@ function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor =
         catch 
             error("Insufficient data in database for $material to build a StructuralAlloy")
         else
-            StructuralAlloy(ρ, E, G, ν, σmax, τmax, YTS, UTS, USS)
+            StructuralAlloy(material, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS)
         end
     end
 
@@ -77,6 +79,8 @@ Generic conductor.
 $TYPEDFIELDS
 """
 @kwdef struct Conductor 
+    """Name"""
+    name::String = ""
     """Density [kg/m³]"""
     ρ::Float64
     """Resistivity [Ω⋅m]"""
@@ -113,7 +117,7 @@ function Conductor(material::String)
         catch 
             error("Insufficient data in database for $material to build a Conductor")
         else
-            Conductor(ρ, resistivity, α, T0)
+            Conductor(material, ρ, resistivity, α, T0)
         end
     end
 
@@ -127,6 +131,8 @@ Generic insulator.
 $TYPEDFIELDS
 """
 @kwdef struct Insulator
+    """Name"""
+    name::String = ""
     """Density [kg/m³]"""
     ρ::Float64
     """Dielectric strength [V/m]"""
@@ -154,7 +160,7 @@ function Insulator(material::String)
         catch 
             error("Insufficient data in database for $material to build an Insulator")
         else
-            Insulator(ρ, Emax)
+            Insulator(material, ρ, Emax)
         end
     end
 
