@@ -14,7 +14,7 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t, pari, parg, para, pare)
+function find_mdot_time(t, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
     nftanks = pari[iinftanks]
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
@@ -57,7 +57,7 @@ This function calculates the heat transfer rate into the tank at the design miss
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
 """
-function calc_Q_points(fuse_tank, pari, parg, para)
+function calc_Q_points(fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -94,7 +94,7 @@ at each mission point for speed.
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time_interp(t, para, Qs)
+function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64})
     times = para[iatime,:,1]
 
     Q = 0.0
@@ -130,7 +130,7 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time(t, fuse_tank, pari, parg, para)
+function find_Q_time(t, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if ac.fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]

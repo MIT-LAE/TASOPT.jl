@@ -359,7 +359,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       N_iter = 15 #Expect fast convergence
 
-      n_passes = 4 #Initialize number of passes
+      n_passes = 4.0 #Initialize number of passes
       n_passes_prev = n_passes
       Ah = 0.0
       Cf = 0.0
