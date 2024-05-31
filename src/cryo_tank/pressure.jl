@@ -68,7 +68,7 @@ This function returns the time derivatives for the liquid fill volume fraction i
     **Outputs:**
     - `dβ_dt::Float64`: fill fraction derivative in time (1/s)
 """
-function dβdt(mixture, dp_dt, mdot_tot, V)
+function dβdt(mixture::SaturatedMixture, dp_dt::Float64, mdot_tot::Float64, V::Float64)
     dρ_dt = -mdot_tot / V #Density derivative in tank
 
     gas = mixture.gas
@@ -93,7 +93,7 @@ This function returns the mass flow rate that needs to be vented to keep the tan
     **Outputs:**
     - `mdot_vent::Float64`: venting mass flow rate (kg/s)
 """
-function venting_mass_flow(mixture, Q, W, mdot, xout, xvent)
+function venting_mass_flow(mixture::SaturatedMixture, Q::Float64, W::Float64, mdot::Float64, xout::Float64, xvent::Float64)
     mdot_vent = (Q + W - mdot * mixture.hvap * (xout + mixture.ρ_star)) / (mixture.hvap * (xvent + mixture.ρ_star))
     return max(mdot_vent, 0.0)
 end
@@ -113,7 +113,7 @@ This function returns the rate of mass boiloff in the tank.
     **Outputs:**
     - `mdot_boiloff::Float64`: rate of liquid mass boiloff (kg/s)
 """
-function mdot_boiloff(mixture, dβ_dt, dp_dt, mdot_liq, V)
+function mdot_boiloff(mixture::SaturatedMixture, dβ_dt::Float64, dp_dt::Float64, mdot_liq::Float64, V::Float64)
     β = mixture.β
     ρl = mixture.liquid.ρ
     ρl_p = mixture.liquid.ρ_p
@@ -137,7 +137,7 @@ This function returns the time derivatives for pressure and liquid volume fill f
     **Outputs:**
     - `dydt::Vector{Float64}`: vector with the state derivatives in time
 """
-function TankDerivatives(t, y, u, params)
+function TankDerivatives(t::Float64, y::Vector{Float64}, u::tank_inputs, params::tank_params)
     #Extract states 
     p = y[1]
     β = y[2]
@@ -202,25 +202,23 @@ vented out in time and the total vented mass at the end.
     - `vented_mass_vec::Vector{Float64}`: vector with the cumulative mass that has been vented at different points in time (kg)
     - `vented_mass_tot:Float64`: total mass vented out of the tank (kg)
 """
-function calculate_venting_mass(tank_mass_vec, liquid_out_vec)
+function calculate_venting_mass(tank_mass_vec::Vector{Float64}, liquid_out_vec::Vector{Float64})
     vented_mass_vec =  tank_mass_vec[1] .- tank_mass_vec .- liquid_out_vec #vented mass is total mass out of tank minus liquid mass
     vented_mass_tot = vented_mass_vec[end]
     return vented_mass_vec, vented_mass_tot
 end
 
 """
-    calculate_venting_mass(tank_mass_vec, liquid_out_vec)
+    calculate_boiloff_rate(times, Mboil_vec)
 
-This function calculates how much mass is being vented out of a cryogenic tank. It returns both the cumulative mass 
-vented out in time and the total vented mass at the end.
+This function uses finite differences to calculate the boiloff rate from the vector with boil mass.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `tank_mass_vec::Vector{Float64}`: vector with the mass inside of the tank at different points in time (kg).
-    - `liquid_out_vec::Vector{Float64}`: vector with the cumulative liquid mass that has been taken out of the tank (kg).
+    - `times::Vector{Float64}`: vector with time (s)
+    - `Mboil_vec::Vector{Float64}`: vector with the cumulative liquid mass that has boiled off (kg).
 
     **Outputs:**
-    - `vented_mass_vec::Vector{Float64}`: vector with the cumulative mass that has been vented at different points in time (kg)
-    - `vented_mass_tot:Float64`: total mass vented out of the tank (kg)
+    - `mdot_boil::Vector{Float64}`: vector with the boiloff rate (kg/s)
 """
 function calculate_boiloff_rate(times, Mboil_vec)
     mdot_boil = zeros(length(times))

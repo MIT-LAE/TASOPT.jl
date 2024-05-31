@@ -136,7 +136,7 @@ This function calculates the thermodynamic properties of a saturated mixture fro
     - `ρ_star::Float64`: density ratio, `ρl/(ρl-ρg)`
     - `hvap::Float64`: enthalpy of vaporization (J/kg)
 """
-function calculate_mixture(gas, liquid, β)
+function calculate_mixture(gas::SaturatedGas, liquid::SaturatedLiquid, β::Float64)
     x = 1 / (1 + (liquid.ρ / gas.ρ) * (β / (1 - β)))
     ρ = 1 / (x/gas.ρ + (1 - x)/liquid.ρ)
     h = x * gas.h + (1 - x) * liquid.h
@@ -196,7 +196,7 @@ This function updates a saturated mixture when there is a change in pressure or 
     **Outputs:**
     No direct outputs. The `mixture` input is modified.
 """
-function update_pβ!(mixture, p, β)
+function update_pβ!(mixture::SaturatedMixture, p::Float64, β::Float64)
 
     gas = SaturatedGas(mixture.species, p)
     liquid = SaturatedLiquid(mixture.species, p)
