@@ -11,7 +11,7 @@ $TYPEDFIELDS
     """Material: Automatically sets stress and density of StructuralMember [StructuralAlloy]"""
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
     """Weight [N]"""
-    weight::Float64 = 0 #OR Union{Float64, Nothing}
+    weight::Float64 = 0 #OR Union{Float64, Nothing} ::Weight
     """Stress [Pa]"""
     σ::Float64 = material.σmax
     """Horizontal/Bending Stiffness [N m^2]""" 
