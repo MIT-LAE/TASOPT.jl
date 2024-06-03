@@ -156,8 +156,7 @@ function TankDerivatives(t::Float64, y::Vector{Float64}, u::tank_inputs, params:
     α = params.α #homogenous pressure fudge factor
 
     #Update mixture with current state
-    mix_current = deepcopy(mixture_init)
-    update_pβ!(mix_current, p, β)
+    mix_current = SaturatedMixture(mixture_init.species, p, β)
 
     #Make sure tank has liquid mass inside before taking mass out
     if β <= 0
