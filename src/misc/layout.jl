@@ -28,15 +28,9 @@ Contains dimensions, heights, etc. to design a fuselage
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct FuselageLayout
-    """Fuselage Radius [m]"""
-    radius::Float64 = 0 # = ac.parg[igRfuse] #Rfuse
-    """Downward shift of lower bubbles (dRfuse) [m] """
-    bubble_lower_downward_shift::Float64 = 0#dRfuse 
-    """Y offset of bubble center [m]"""
-    bubble_center_y_offset::Float64 = 0 #wfb
-    """Number of webs (for double bubble designs)"""
-    n_webs::Float64 = 0 #nfwebs
+@kwdef mutable struct FuselageLayout <: AbstractLayout
+    """Cross section definition"""
+    cross_section::AbstractCrossSection = SingleBubble()
     """Thickness of webs """
     thickness_webs::Float64 = 0 #nfwebs
     """X position of nose [m]"""
