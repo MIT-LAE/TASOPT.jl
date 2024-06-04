@@ -103,7 +103,7 @@ function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
       dδᵢ     = zeros(idim)
 
       kdim=3*n #idim
-      asys = zeros(kdim,kdim)
+      asys = spzeros(kdim, kdim)
       rsys = zeros(kdim)
 
       simi, lami, wake, direct = true, true, true, true
@@ -355,12 +355,8 @@ end # BL march loop
       for ipass = 1: npass #Newton iteration
 
 #---- clear system matrix and righthand side
-      for k = 1: nsys
-        rsys[k] = 0.
-        for l = 1: nsys
-          asys[k,l] = 0.
-        end
-      end
+      asys = spzeros(nsys, nsys)
+      rsys = zeros(nsys)
 
 #---- first point variables are held frozen... put 1's on diagonal
       asys[1,1] = 1.0
@@ -567,17 +563,8 @@ end # BL march loop
 
 #---- solve Newton system
 #      call gaussn(kdim,nsys,asys,rsys,1)
-x = gmres(asys, rsys, reltol = 1e-6)
 
 rsys = asys\rsys
-
-println(maximum(abs.(x.-rsys)))
-
-# open("matrix.txt", "w") do f
-#   for i = 1: length(rsys)
-#     println(f, asys[i,:])
-#   end
-# end
 
 #---- set Newton changes, set max change dmax, and set limiter rlx
         dmax = 0.

@@ -6,7 +6,8 @@ are exported other functions are kept within the `aerodynamics` namespace.
 module aerodynamics
 
 using StaticArrays
-using IterativeSolvers
+using LinearAlgebra
+using SparseArrays
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
