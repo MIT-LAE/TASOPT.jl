@@ -1,4 +1,25 @@
 using DocStringExtensions
+abstract type AbstractLayout end
+abstract type AbstractCrossSection end
+
+@kwdef mutable struct SingleBubble <: AbstractCrossSection
+    """Fuselage Radius [m]"""
+    radius::Float64 = 1.0
+    """Downward shift of lower bubbles (dRfuse) [m] """
+    bubble_lower_downward_shift::Float64 = 0.0
+end
+
+@kwdef mutable struct MultiBubble <: AbstractCrossSection
+    """Fuselage Radius [m]"""
+    radius::Float64 = 1.0
+    """Downward shift of lower bubbles (dRfuse) [m] """
+    bubble_lower_downward_shift::Float64 = 0.2
+    """Y offset of bubble center [m]"""
+    bubble_center_y_offset::Float64 = 0.2
+    """Number of webs [-]"""
+    n_webs::Int64 = 1
+end
+
 """
 $TYPEDEF
 
