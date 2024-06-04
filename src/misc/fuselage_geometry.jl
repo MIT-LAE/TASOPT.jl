@@ -1,24 +1,44 @@
 
 """
-    calculate_shell_geometry(fuse::Fuselage)
+    calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
+
+Calculates the geometry (distances, angles, areas and volumes)
+of the primary fuselage shell structure. The shell consists of the fuselage
+skin and the "smeared" out stringers. For multi-bubble fuselages,
+e.g., the D8 like designs, this also calculates the geometry of the webs between
+the bubbles.
 
 """
 function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
       
       layout = fuse.layout
-      R = layout.radius
-      ΔR = layout.bubble_lower_downward_shift
+    R = layout.cross_section.radius
+    ΔR = layout.cross_section.bubble_lower_downward_shift
 
-      θ_web, h_web, sin2θ = web_geometry(layout.cross_section)
-
-      perimeter = (2π + 4.0*θ_web*layout.n_webs)*R + 2ΔR
+    θ_web, h_web, sin2θ, web_length = web_geometry(layout.cross_section)
+    perimeter = get_perimeter(layout.cross_section)
 
       fuse.skin.thickness = Δp*R/fuse.skin.σ
       fuse.web.thickness = 2.0*Δp*layout.bubble_center_y_offset/fuse.skin.σ
 
-      # Cross sectional areas
-      A_skin = perimeter*fuse.skin.thickness
+    # Effective nose length and pressure-vessel length
+    l_nose  = layout.x_pressure_shell_fwd - layout.x_nose
+    l_shell = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd
 
+      # Cross sectional areas
+    A_skin = perimeter * fuse.skin.thickness
+    A_web = web_length * fuse.web.thickness
+    A_fuse = (π + layout.n_webs*(2θ_web + sin2θ))*R^2 + 2R*ΔR
+
+    # Surface areas
+    S_bulk = (2π + 4.0*layout.n_webs*θ_web)*R^2
+    S_nose = S_bulk * (0.333 + 0.667*(l_nose/R)^1.6 )^0.625 
+
+    # Shell volumes
+    V_cylinder = A_skin*l_shell
+    V_nose = S_nose * fuse.skin.thickness
+    V_bulk = S_bulk * fuse.skin.thickness
+    V_web = A_web*l_shell
       
 end  # function calculate_shell_geometry
 
