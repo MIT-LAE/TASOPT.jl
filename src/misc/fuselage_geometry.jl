@@ -11,21 +11,21 @@ the bubbles.
 """
 function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
       
-      layout = fuse.layout
+    layout = fuse.layout
     R = layout.cross_section.radius
     ΔR = layout.cross_section.bubble_lower_downward_shift
 
     θ_web, h_web, sin2θ, web_length = web_geometry(layout.cross_section)
     perimeter = get_perimeter(layout.cross_section)
 
-      fuse.skin.thickness = Δp*R/fuse.skin.σ
-      fuse.web.thickness = 2.0*Δp*layout.bubble_center_y_offset/fuse.skin.σ
+    fuse.skin.thickness = Δp*R/fuse.skin.σ
+    fuse.web.thickness = 2.0*Δp*layout.bubble_center_y_offset/fuse.skin.σ
 
     # Effective nose length and pressure-vessel length
     l_nose  = layout.x_pressure_shell_fwd - layout.x_nose
     l_shell = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd
 
-      # Cross sectional areas
+    # Cross sectional areas
     A_skin = perimeter * fuse.skin.thickness
     A_web = web_length * fuse.web.thickness
     A_fuse = (π + layout.n_webs*(2θ_web + sin2θ))*R^2 + 2R*ΔR
@@ -65,20 +65,17 @@ function web_geometry(x::SingleBubble)
 end
 
 
+"""
+"""
+function get_perimeter(x::SingleBubble)
+    return (2π*x.radius) + (2*x.bubble_lower_downward_shift)
+end  # function perimeter
 
 """
 """
-function calculate_bubble_web_geometry(layout::FuselageLayout)
-    R = layout.radius
-    ΔR = layout.bubble_lower_downward_shift
-
-    #[TODO] the following few lines can be cleaner if we knew whether this was a double bubble design or standard fuse
-    center_to_web_distance = max(min(layout.bubble_center_y_offset, R), 0.0)
-    # fuselage bubble subtended half-angle
-    θ_web = asin(center_to_web_distance/R)
-    h_web = sqrt(R^2 - layout.bubble_center_y_offset^2)
-    
-    cosθ = h_web/R
-    sinθ = layout.bubble_center_y_offset/R
-    sin2θ = 2.0*sinθ*cosθ 
-end  # function calculate_web_geometry
+function get_perimeter(x::MultiBubble)
+    θ_web, _, _, _ = web_geometry(x)
+    perimeter = (2π + 4.0*θ_web*x.n_webs)*x.radius + 
+                (2*x.bubble_lower_downward_shift)
+    return perimeter
+end  # function perimeter
