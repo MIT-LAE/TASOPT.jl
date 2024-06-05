@@ -132,7 +132,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       xfix,xapu,xeng,xfuel)
 
       Eskin = fuse.material.E #parg[igEcap]
-      Ebend = Eskin * fuse.rEshell
+      Ebend = Eskin * fuse.fuse_shell_modulus_ratio
       Gskin = Eskin * 0.5 / (1.0 + 0.3)
 
 #--- cone material properties

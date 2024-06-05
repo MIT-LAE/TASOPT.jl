@@ -1,17 +1,32 @@
-#Fuselage class
+using DocStringExtensions
+"""
+$TYPEDEF
+
+Fuselage Structure:
+    Divided into 5 modules
+    1. General Properties
+    2. Internal Structure
+    3. External Loads
+    4. Fuselage Layout
+    5. Misc Properties
+
+$TYPEDFIELDS
+"""
 @kwdef mutable struct Fuselage
-    # General Fuselage Properties
+    # General Properties
+    """Fuselage Weight [N] """
     weight::Float64 = 0.0
+    """Fuselage Volume [m^3] """
     volume::Float64 = 0.0
-    # sigma_factor::Float64 = 1.0
+    """Fuselage Weight [Nm^3] """
     moment::Float64 = 0.0
 
-    # Layout
+    # Fuselage Layout
     layout::FuselageLayout = FuselageLayout()
 
-    # Structures
+    # Internal Structure
+    """Fuselage Material"""
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
-    #to do: Add material-> Structural members
     skin::StructuralMember = StructuralMember(material=material)
     shell::StructuralMember = StructuralMember(material=material) # IS just Skin + Additional
     cone::StructuralMember = StructuralMember()
@@ -24,14 +39,14 @@
     # Loads
     
     # Misc properties
-    # Nland::Float64 = 6.0
+    """Number of decks in fuselage"""
     n_decks::Float64 = 0
+    """Fuselage Weight fraction of stringers """
     weight_frac_string::Float64 = 0
+    """Fuselage Weight fraction of frame """
     weight_frac_frame::Float64 = 0
-    # ffadd::Float64 = 0.2
-    # nftanks::Int64 = 1
-    rEshell::Float64 = 0
-    # tank_placement
+    """Fuselage Shell Modulus Ratio Ebend/Eskin"""
+    fuse_shell_modulus_ratio::Float64 = 0
 end
 
 function dx_cabin(fuse::Fuselage)

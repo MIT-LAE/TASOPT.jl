@@ -642,7 +642,7 @@ readstruct(x) = read_input(x, structures, dstructures)
     # parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
-    fuselage.rEshell = readstruct("fuse_shell_modulus_ratio")
+    fuselage.fuse_shell_modulus_ratio = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
     # parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
