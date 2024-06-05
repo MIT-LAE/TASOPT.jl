@@ -1283,6 +1283,25 @@ function wsize(ac; itermax=35,
             #Use homogeneous tank model to calculate required venting
             _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
             parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
+
+            if iterw > 2 #Calculate takeoff engine state and time
+                #This is needed to know the TO duration to integrate the tank state
+                # set static thrust for takeoff routine
+                ip = ipstatic
+                icall = 1
+                icool = 1
+    
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                # set rotation thrust for takeoff routine
+                # (already available from cooling calculations)
+                ip = iprotate
+                icall = 1
+                icool = 1
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                takeoff!(ac; printTO = false)
+            end
         end
 
         # -----------------------------
@@ -1292,24 +1311,8 @@ function wsize(ac; itermax=35,
 
         if iterw > 2 #Only include heat exchangers after second iteration
             HXs = hxdesign!(pare, pari, ipdes, HXs)
-
-            #If there are heat exchangers, calculate engine state at TO for balanced-field calculation
-            if length(HXs) > 0
-                # normal takeoff and balanced-field takeoff calculations
-                # set static thrust for takeoff routine
-                ip = ipstatic
-                icall = 1
-                icool = 1
-
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
-
-                # set rotation thrust for takeoff routine
-                # (already available from cooling calculations)
-                ip = iprotate
-                icall = 1
-                icool = 1
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
-            end
+            #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
+            #With fuel storage in tanks, this is done in the block above.
         end
 
         # -----------------------------
@@ -1506,7 +1509,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(ac, initeng, ichoke5, ichoke7)
+    takeoff!(ac)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg)
