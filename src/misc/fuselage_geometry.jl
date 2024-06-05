@@ -66,12 +66,22 @@ end
 
 
 """
+    get_perimeter(x::SingleBubble)
+
+$(TYPEDSIGNATURES)
+
+Returns the perimeter of a given cross-section
 """
 function get_perimeter(x::SingleBubble)
     return (2π*x.radius) + (2*x.bubble_lower_downward_shift)
 end  # function perimeter
 
 """
+    get_perimeter(x::MultiBubble)
+
+$(TYPEDSIGNATURES)
+
+Returns the perimeter of a given cross-section
 """
 function get_perimeter(x::MultiBubble)
     θ_web, _, _, _ = web_geometry(x)
