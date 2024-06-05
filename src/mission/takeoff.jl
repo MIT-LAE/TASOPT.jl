@@ -1,11 +1,11 @@
 """
-      takeoff(ac, initeng, ichoke5, ichoke7)
+      takeoff(ac)
 
       Calculates takeoff parameters and balanced field length.
       The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
 
 """
-function takeoff!(ac, initeng, ichoke5, ichoke7)
+function takeoff!(ac; printTO = true)
     pari = ac.pari
     parg = ac.parg
     parm = ac.parmd
@@ -158,8 +158,10 @@ function takeoff!(ac, initeng, ichoke5, ichoke7)
     lBF = 1.3 * lTO
     V2sq = V2^2
 
-    @printf("\nTakeoff:\n%2s %10s %10s %10s %10s\n", 
-    "#", "lTO", "l1", "lBF", "dmax")
+    if printTO
+        @printf("\nTakeoff:\n%2s %10s %10s %10s %10s\n", 
+        "#", "lTO", "l1", "lBF", "dmax")
+    end
     
     #---- Newton iteration loop
     for iter = 1:15
@@ -188,8 +190,10 @@ function takeoff!(ac, initeng, ichoke5, ichoke7)
         dmax = max(abs(dl1), abs(dlBF))
 
         #  print convergence history for debugging
-        @printf("%2d %10.3f %10.3f %10.3f %10.3f\n", 
-        iter, lTO * 3.28, l1 * 3.28, lBF * 3.28, dmax * 3.28)
+        if printTO
+            @printf("%2d %10.3f %10.3f %10.3f %10.3f\n", 
+            iter, lTO * 3.28, l1 * 3.28, lBF * 3.28, dmax * 3.28)
+        end
 
         l1 = l1 + dl1
         lBF = lBF + dlBF
