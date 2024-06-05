@@ -1,5 +1,6 @@
 """
-    place_cabin_seats(pax, Rfuse)
+    place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
 Function to calculate the seat arrangement in the cabin and, therefore, the required cabin
 length.
@@ -8,6 +9,9 @@ length.
     **Inputs:**
     - `pax::Float64`: design number of passengers
     - `Rfuse::Float64`: fuselage radius (m).
+    - `seat_width::Float64`: width of one seat (m).
+    - `aisle_halfwidth::Float64`: half the width of an aisle (m).
+    - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
 
     **Outputs:**
     - `lcabin::Float64`: cabin length (m).
@@ -15,12 +19,22 @@ length.
     - `seats_per_row::Float64`: number of seats per row.
 """
 function place_cabin_seats(pax, Rfuse, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m)
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
     cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
     #TODO the hardcoded 10 ft is not elegant
 
-    seats_per_row = Int(2*Rfuse÷ (seat_width + aisle_halfwidth/3))
+    #Calculate the maximum number of seats per row
+    seats_per_row = 1
+    Dmin = seats_per_row*seat_width + 2*aisle_halfwidth + 2*fuse_offset #Minimum diameter for one passenger
+    while (2*Rfuse > Dmin) || (2*Rfuse ≈ Dmin) #While the required diameter is smaller than the fuselage diameter
+        seats_per_row = seats_per_row + 1 #Add one more seat
+        layout = seat_layouts[seats_per_row] #Find corresponding seat layour from seat dict
+        Dmin = seats_per_row*seat_width + (length(layout) - 1)*2*aisle_halfwidth + 2*fuse_offset #New minimum diameter
+    end
+    
+    seats_per_row = seats_per_row - 1 #Subtract 1 seat to find maximum number of seats per row such that 2*Rfuse > Dmin
+
     rows = Int(ceil(pax / seats_per_row))
 
     if seats_per_row <= 10
@@ -46,7 +60,8 @@ end # function place_cabin_seats
 """
     arrange_seats(seats_per_row, Rfuse,
      seat_width = 19.0 * in_to_m, 
-     aisle_halfwidth = 10.0 * in_to_m)
+     aisle_halfwidth = 10.0 * in_to_m,
+     fuse_offset = 6.0*in_to_m)
 
 Helper function to arrange seats given a number of `seats_per_row`
 and fuselage radius. Assumes default `seat_width = 19"` and `aisle_halfwidth = 10"`,
@@ -57,63 +72,58 @@ but can be supplied by the user.
     - `Rfuse::Float64`: fuselage radius (m).
     - `seat_width::Float64`: width of one seat (m).
     - `aisle_halfwidth::Float64`: half the width of an aisle (m).
+    - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
 
     **Outputs:**
     - `yseats::Vector{Float64}`: transverse coordinate of each column of seats, measured from centerline (m).
-    - `symmetric_seats::Boolean`: flag for symmetry of seat arrangement
 """
 function arrange_seats(seats_per_row, Rfuse,
      seat_width = 19.0 * in_to_m, 
-     aisle_halfwidth = 10.0 * in_to_m)
+     aisle_halfwidth = 10.0 * in_to_m, 
+     fuse_offset = 6.0*in_to_m)
 
     #Seats
     # Conditions:
     # - No more than 2 seats between any seat and the aisle
-    seats_per_row % 2 == 0 ? symmetric_seats = true : symmetric_seats = false
 
-    if symmetric_seats # seating can be symmetric
-        half_seats_per_row = seats_per_row ÷ 2
-        yseats = zeros(half_seats_per_row)
+    layout = seat_layouts[seats_per_row] #find seat layout from dictionary
+    n_aisles = length(layout) - 1 #Number of aisles
+    Dmin = seats_per_row*seat_width + n_aisles*2*aisle_halfwidth + 2*fuse_offset #Minimum required diameter
 
-        if half_seats_per_row <= 3 #Single aisle
-            yseats[1] = aisle_halfwidth + seat_width/2 #Aisle in the center
-            for col = 2:half_seats_per_row
-                yseats[col] = yseats[col-1] + seat_width #offset every seat by width
-            end 
-        else # twin aisle 
-            #If symmetric no more than 2 seats next to each other at the 
-            # centerline (I'm not evil enough to create a x-6-x seating arrangement even if "technically" allowed)
-            yseats[1] = seat_width/2.0
-            yseats[2] = yseats[1] + seat_width
-            #Aisle
-            half_seats_remaining = half_seats_per_row - 2
-            if half_seats_remaining > 4
-                @warn "Potentially trying to design a 3 aisle aircraft?
-                Seating arrangement not (yet) automatically handled, so check carefully."
-            end
-            yseats[3] = yseats[2] + aisle_halfwidth*2 + seat_width
-            for col = 4:half_seats_per_row
-                yseats[col] = yseats[col-1] + seat_width
-            end 
-        end
+    exp_aisle_halfwidth = aisle_halfwidth + (2*Rfuse - Dmin)/(2*n_aisles) #Expanded aisle to take up all available space
 
-    else
-        @info "Asymmetric seating only deals with 3 or 5 seats at the moment"
-        seating_excess_space = 2*Rfuse - seats_per_row*seat_width - 2*aisle_halfwidth 
-        yseats = zeros(seats_per_row)
-        # Start from edge and give some space based on the excess space available.
-        ind = 1
-        yseats[ind] = -Rfuse + seating_excess_space/2 + seat_width/2 
-        ind+=1
-        if seats_per_row > 3
-            yseats[ind] = yseats[ind-1] + seat_width
-            ind+=1
-        end
-        yseats[ind] = yseats[ind-1] + aisle_halfwidth*2 + seat_width
-        ind+=1
-        for col = ind:seats_per_row
-            yseats[col] = yseats[col-1] + seat_width
-        end 
+    yseats = zeros(seats_per_row)
+    yseats[1] = fuse_offset + seat_width/2 #First seat is window seat
+    for i = 2:seats_per_row
+        flag_aisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
+        yseats[i] = yseats[i - 1] + seat_width + flag_aisle*2*exp_aisle_halfwidth
     end
-    return yseats, symmetric_seats
+
+    #Shift seat coordinates to start in centerline
+    yseats = yseats .- Rfuse
+
+    return yseats
 end  # function arrange_seats
+
+"""
+    aisle_flag(idx, layout)
+
+Helper function to find if there is an aisle to the left of a given seat.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `idx::Int64`:  seat index.
+    - `layout::Vector{Int64}`: seat layout map.
+
+    **Outputs:**
+    - `flag::Float64`: 1.0 if there is an aise to the left of seat, 0.0 if not.
+"""
+function aisle_flag(idx, layout)
+    #Use cumulative sum to find total number of seats to the left of a given aisle.
+    #If the difference between the cumsum and the index is exactly 1, the seat has an aisle to the left.
+    if 1 in (idx .- cumsum(layout))
+        flag = 1.0
+    else
+        flag = 0.0
+    end
+    return flag
+end
