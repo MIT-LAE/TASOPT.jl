@@ -38,9 +38,11 @@ end
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_sized.jl"))
 
     size_aircraft!(ac; printiter=false);
+    
     @testset "Fuselage" begin
         @test  check_struct_equivalence(fuse, ac.fuselage)
     end
+
     @testset "Geometry" begin
         for i in eachindex(parg)
             @test parg[i] ≈ ac.parg[i]
@@ -62,12 +64,6 @@ end
     @test ac.parm[imPFEI] ≈ 0.883089428853606
 
 end
-
-# Test Summary:  | Pass  Fail  Total   Time
-# Default sizing | 3518  2369   5887  24.5s
-#   Geometry     |  194   115    309   0.4s
-#   Aero         |  725   363   1088   1.4s
-#   Propulsion   | 2599  1889   4488   6.4s
 
 @testset "Wide sizing" verbose=true begin
     ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/example_widebody.toml"))
