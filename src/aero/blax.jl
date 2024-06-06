@@ -355,9 +355,9 @@ end # BL march loop
       for ipass = 1: npass #Newton iteration
 
 #---- clear system matrix and righthand side
-      asys = spzeros(nsys, nsys)
-      rsys = zeros(nsys)
-
+      rsys[:] .= 0.0
+      nonzeros(asys) .= 0.0
+      
 #---- first point variables are held frozen... put 1's on diagonal
       asys[1,1] = 1.0
       asys[n+1,n+1] = 1.0
