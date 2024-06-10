@@ -36,6 +36,18 @@ $TYPEDFIELDS
     n_webs::Int64 = 1
 end
 
+# Trying to access these properties form a SingleBubble just gives
+# constants
+function Base.getproperty(obj::SingleBubble, sym::Symbol)
+    if sym === :n_webs
+        return 0
+    elseif sym === :bubble_center_y_offset
+        return 0.0
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
 """
 $TYPEDEF
 
@@ -75,6 +87,15 @@ $TYPEDFIELDS
     taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
 end
 
+# Helper function to be able to simplify 
+function Base.getproperty(layout::FuselageLayout, sym::Symbol)
+    cross_section = getfield(layout, :cross_section)
+    if sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
+        return getproperty(cross_section, sym)
+    else
+        return getfield(layout, sym)
+    end
+end
 
 """
 $TYPEDEF
