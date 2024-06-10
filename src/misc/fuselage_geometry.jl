@@ -51,7 +51,7 @@ function web_geometry(x::MultiBubble)
     sinθ = x.bubble_center_y_offset/x.radius
     sin2θ = 2 * sinθ * cosθ
 
-    effective_web_length = x.n_webs*(2*h_web + x.bubble_center_y_offset)
+    effective_web_length = x.n_webs*(2*h_web + x.bubble_lower_downward_shift)
 
     return θ_web, h_web, sin2θ, effective_web_length
 end
