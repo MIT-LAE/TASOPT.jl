@@ -337,6 +337,12 @@ function wsize(ac; itermax=35,
     #Initialize HX storage array and reset previous HX engine values
     HXs = []
     resetHXs(pare)
+
+    #Store fuselage parameters in fuse_tank for ease of access 
+    fuse_tank.Rfuse = parg[igRfuse]
+    fuse_tank.dRfuse = parg[igdRfuse]
+    fuse_tank.wfb = parg[igwfb]
+    fuse_tank.nfweb = parg[ignfweb]
    
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
