@@ -343,10 +343,6 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.placement = readfuel_storage("tank_placement")
     fuse_tank.fueltype = fueltype
-    fuse_tank.Rfuse = parg[igRfuse]
-    fuse_tank.dRfuse = parg[igdRfuse]
-    fuse_tank.wfb = parg[igwfb]
-    fuse_tank.nfweb = parg[ignfweb]
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
