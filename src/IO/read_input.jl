@@ -168,6 +168,7 @@ Wpax =  Force(readmis("weight_per_pax"))
 parm[imWperpax, :] .= Wpax
 parm[imWpay, :] .= pax * Wpax
 parg[igWpaymax] = maxpax * Wpax
+parg[igexitlimit] = readmis("exit_limit")
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")

@@ -75,9 +75,9 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
 
     if pari[iidoubledeck] == 1 #if the aircraft is a double decker
         #passenger count to size cabin is half of the maximum
-        paxsize = ceil(parg[igWpaymax]/parm[imWperpax,1] / 2) 
+        paxsize = ceil(parg[igexitlimit] / 2) 
     else
-        paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+        paxsize = parg[igexitlimit] #maximum number of passengers from exit limit
     end
     #TODO this double deck model assumes that both decks have a width equal to the fuselage diameter; 
     #in reality, at least one deck must be narrower

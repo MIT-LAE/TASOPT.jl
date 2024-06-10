@@ -63,6 +63,12 @@
                             # includes luggage [lbm or lbf or kg or N] 
                             # judging you if you use imperial units but wtvs
 
+    exit_limit = 450            # Maximum number of passengers that can sit in the cabin
+
+    max_pax = 450               # Defines the maximum payload carrying capacity of the aircraft
+                                # It is the maximum payload that the aircraft can carry (including cargo),
+                                # as an equivalent number of passengers
+
     fuel_reserves = 0.07 # W_reserveFuel / W_fuelburned
 
     Nlift = 3.0 # Max vertical load factor for wing bending loads
