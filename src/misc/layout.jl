@@ -2,6 +2,14 @@ using DocStringExtensions
 abstract type AbstractLayout end
 abstract type AbstractCrossSection end
 
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for a conventional
+single-bubble type fuselage.
+
+$TYPEDFIELDS
+"""
 @kwdef mutable struct SingleBubble <: AbstractCrossSection
     """Fuselage Radius [m]"""
     radius::Float64 = 1.0
@@ -9,6 +17,14 @@ abstract type AbstractCrossSection end
     bubble_lower_downward_shift::Float64 = 0.0
 end
 
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for a multi-bubble type 
+fuselage
+
+$TYPEDFIELDS
+"""
 @kwdef mutable struct MultiBubble <: AbstractCrossSection
     """Fuselage Radius [m]"""
     radius::Float64 = 1.0
