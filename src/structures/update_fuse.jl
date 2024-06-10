@@ -52,7 +52,7 @@ function update_fuse!(pari, parg)
 end
 
 """
-    update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+    update_fuse_for_pax!(pari, parg, fuse_tank)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
@@ -61,13 +61,12 @@ It sizes the cabin for the design number of passengers.
     **Inputs:**
     - `pari::Vector{Int64}`: vector with aircraft integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
-    - `parm::Array{Float64}`: array with mission parameters
     - `fuse_tank::struct`: structure of type `fuselage_tank` with cryogenic fuel tank parameters
 
     **Outputs:**
     No direct outputs; parameters in `parg` are modified.
 """
-function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+function update_fuse_for_pax!(pari, parg, fuse_tank)
 
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
