@@ -106,6 +106,22 @@ mutable struct HX_tubular
       HX_tubular() = new(false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, StructuralAlloy("Al-2219-T87"), 0.0)
 end
 
+# Overload Base.getproperty for convenience
+function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
+      if (sym === :D_o) && getfield(HXgeom, :fconc)
+            A_cs = getfield(HXgeom, :A_cs)
+            D_i = getfield(HXgeom, :D_i)
+            D_o = sqrt(4 * A_cs / pi +D_i^2)
+         return D_o
+      elseif sym === :N_tubes_tot
+            return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :N_t)
+      elseif sym === :tD_i
+            return getfield(HXgeom, :tD_o) -2* getfield(HXgeom, :t) 
+      else
+         return getfield(HXgeom, sym)
+      end
+   end
+
 """
     HX_struct
 

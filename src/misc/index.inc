@@ -387,8 +387,9 @@
       const igaislehalfwidth = 308
 
       const igWfvent = 309
+      const igdHXmax = 310
 
-      const igtotal    = 309
+      const igtotal    = 310
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

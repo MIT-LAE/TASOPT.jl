@@ -1291,7 +1291,14 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs)
+            HXs = hxdesign!(pare, pari, ipdes, HXs) #design and off-design HX performance
+
+            #Find and store maximum HX outer diameter to check fit in engine 
+            for HX in HXs
+                if HX.HXgeom.fconc #If HX is in the core
+                    parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
+                end
+            end
             
         end
 
