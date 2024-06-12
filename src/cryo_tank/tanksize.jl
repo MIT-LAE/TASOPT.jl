@@ -164,6 +164,9 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         p.Mair = Mair
         p.xftank = xftank
         p.Rfuse = fuse_tank.Rfuse
+        p.dRfuse = fuse_tank.dRfuse
+        p.wfb = fuse_tank.wfb
+        p.nfweb = fuse_tank.nfweb
         p.ifuel = ifuel
 
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals

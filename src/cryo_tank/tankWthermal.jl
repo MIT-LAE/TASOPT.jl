@@ -48,6 +48,9 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.Mair = Mair
       p.xftank = xftank
       p.Rfuse = fuse_tank.Rfuse
+      p.dRfuse = fuse_tank.dRfuse
+      p.wfb = fuse_tank.wfb
+      p.nfweb = fuse_tank.nfweb
       p.ifuel = ifuel
 
       _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature
@@ -123,6 +126,9 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       Mair = p.Mair
       xftank = p.xftank
       Rfuse = p.Rfuse
+      dRfuse = p.dRfuse
+      wfb = p.wfb
+      nfweb = p.nfweb
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
@@ -139,7 +145,13 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
       Rair_conv_rad = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
 
-      S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
+      #Geometry
+      perim_inner, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, r_inner) #Tank perimeter and cross-sectional area
+      S_cyl = perim_inner*l_cyl #Surface area of cylindrical portion
+      S_int = S_cyl + 2*Shead[1] #liquid side surface area
+      perim_R = perim_inner/r_inner #ratio of geometric shape perimeter to radius; if a circle this is 2π
+
+      #Liquid-side resistance
       h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
@@ -152,13 +164,13 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       T_prev = T_w
       for i in 1:N
             if lowercase(material[i]) == "vacuum"
-                  S_inner = 2π * l_cyl * r_inner + 2*Shead[i]
-                  S_outer = 2π * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
+                  S_inner = perim_R * l_cyl * r_inner + 2*Shead[i]
+                  S_outer = perim_R * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
                   R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
                   k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
-                  R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
+                  R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (perim_R*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
                   R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
@@ -255,6 +267,9 @@ mutable struct thermal_params
       Mair::Float64
       xftank::Float64
       Rfuse::Float64
+      dRfuse::Float64
+      wfb::Float64
+      nfweb::Float64
       ifuel::Int64
       thermal_params() = new() 
 end
