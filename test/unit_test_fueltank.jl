@@ -1,3 +1,4 @@
+include("../src/utils/bubble_geom.jl")
 #Sample parameters
 ifuel = 40
 z = 11e3
@@ -133,7 +134,9 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_bendM_outer[i] ≈ outputs_bendM_outer_check[i]
         end
 
-        Wstiff = TASOPT.CryoTank.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, fuse_tank.outer_material.UTS / 4, 
+        perim_vessel, _, _ = double_bubble_geom(fuse_tank.Rfuse, fuse_tank.dRfuse, fuse_tank.wfb, fuse_tank.nfweb) #Tank perimeter and cross-sectional area
+
+        Wstiff = TASOPT.CryoTank.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, perim_vessel, fuse_tank.outer_material.UTS / 4, 
         fuse_tank.outer_material.ρ, θ1, θ2, 10.0, 5.0, fuse_tank.outer_material.E)
         Wstiff_check = 1653.9008501855653
         

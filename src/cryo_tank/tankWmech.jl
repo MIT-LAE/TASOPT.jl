@@ -104,7 +104,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       #stiffeners
       Nmain = 2 #Tanks typically have two main support rings
-      Wmainstiff = stiffener_weight("inner", Winnertank / Nmain, Rtank_outer, 
+      Wmainstiff = stiffener_weight("inner", Winnertank / Nmain, Rtank, perim_tank, 
                                 s_a, rhoskin, θ) #Weight of one main stiffener
 
       Wstiff = Nmain * Wmainstiff
@@ -186,10 +186,12 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       ρouter = fuse_tank.inner_material.ρ
       UTSouter = fuse_tank.inner_material.UTS
       ftankadd = fuse_tank.ftankadd
-      wfb = fuse_tank.wfb
-      nfweb = fuse_tank.nfweb
       ARtank = fuse_tank.ARtank
       θ_outer = fuse_tank.theta_outer
+      Rfuse = fuse_tank.Rfuse 
+      dRfuse = fuse_tank.dRfuse
+      wfb = fuse_tank.wfb
+      nfweb = fuse_tank.nfweb
 
       θ1 = θ_outer[1]
       θ2 = θ_outer[2]
@@ -199,7 +201,7 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       s_a = UTSouter / 4
 
       #Calculate outer vessel geometry
-      Rtank_outer = fuse_tank.Rfuse - fuse_tank.clearance_fuse
+      Rtank_outer = Rfuse - fuse_tank.clearance_fuse
       Do = 2 * Rtank_outer #outside diameter
 
       Nstiff = Nmain + Ninterm #Total number of stiffeners
@@ -223,11 +225,10 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       t_head = K1 * Do * sqrt(pc * sqrt(3*(1 - poiss^2))/ (0.5*Eouter))
 
       ## Areas
-      wfblim = max( min( wfb , Rtank_outer) , 0.0 )
-      thetafb = asin(wfblim / Rtank_outer)
+      perim_vessel, Avessel, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Rtank_outer) #Tank perimeter and cross-sectional area
 
-      Shead = (2.0*π + 4.0*nfweb*thetafb)*(Rtank_outer)^2* (0.333 + 0.667*(1/ARtank)^1.6 )^0.625
-      Scyl  = 2π*Rtank_outer*l_cyl  # Cross-sectional area
+      Shead = 2*Avessel*(0.333 + 0.667*(1/ARtank)^1.6 )^0.625 #ellipsoid surface area
+      Scyl  = perim_vessel*l_cyl  # surface area
 
       Souter = Scyl + 2*Shead
 
@@ -243,10 +244,10 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       # Size stiffeners
       tanktype = "outer"
 
-      Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, #Weight of one main stiffener, each one 
+      Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, perim_vessel, #Weight of one main stiffener, each one 
                                     s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter)  #carries half the inner vessel load
                                                                               
-      Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer, 
+      Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer, perim_vessel, 
                                     s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter) #Weight of one intermediate stiffener, which carries no load
 
       Wstiff = Nmain * Wmainstiff + Ninterm * Wintermstiff #Total stiffener weight
@@ -259,7 +260,8 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
 end
 
 """
-    stiffener_weight(tanktype, W, Rtank, s_a, ρstiff, θ1, θ2 = 0.0, Nstiff = 2.0, l_cyl = 0, E = 0)
+      stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::Float64, s_a::Float64, 
+      ρstiff::Float64, θ1::Float64, θ2::Float64 = 0.0, Nstiff::Float64 = 2.0, l_cyl::F
 This function calculates the weight of a single stiffener in an inner or outer vessel for a given inner vessel weight.
 
 !!! details "🔃 Inputs and Outputs"
@@ -267,6 +269,7 @@ This function calculates the weight of a single stiffener in an inner or outer v
     - `tanktype::String`: type of tank, options are "inner" or "outer".
     - `W::Float64`: load carried by a stiffener ring (N).
     - `Rtank::Float64`: tank radius (m).
+    - `perim::Float64`: tank perimeter (m).
     - `s_a::Float64`: maximum allowable stress in stiffener material (Pa).
     - `ρstiff::Float64`: stiffener density (kg/m^3).
     - `θ1::Float64`: angular position of bottom tank supports, measured from the bottom of the tank (rad).
@@ -278,12 +281,12 @@ This function calculates the weight of a single stiffener in an inner or outer v
     **Outputs:**
     - `Wstiff::Float64`: weight of a stiffener ring (N).
 """
-function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, s_a::Float64, 
+function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::Float64, s_a::Float64, 
       ρstiff::Float64, θ1::Float64, θ2::Float64 = 0.0, Nstiff::Float64 = 2.0, l_cyl::Float64 = 0.0, E::Float64 = 0.0)
     
       if tanktype == "inner" 
             _, kmax = stiffeners_bendingM(θ1) #Find k = 2πM/(WR)
-            Icollapse = 0 #inner vessel cannot collapse as it is pressurized
+            Icollapse = 0.0 #inner vessel cannot collapse as it is pressurized
 
       elseif tanktype == "outer"
             _, kmax = stiffeners_bendingM_outer(θ1, θ2) #Find k = 2πM/(WR)
@@ -313,7 +316,7 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, s_a::Flo
       H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
       S = 2 * W * t_f + (H - t_f) * t_w #Beam cross-sectional area
 
-      Wstiff = gee * ρstiff * S * 2π * Rtank #Weight of a single stiffener running along circumference
+      Wstiff = gee * ρstiff * S * perim #Weight of a single stiffener running along perimeter
       return Wstiff
 end
 
