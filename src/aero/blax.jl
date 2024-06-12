@@ -103,7 +103,7 @@ function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
       dδᵢ     = zeros(idim)
 
       kdim=3*n #idim
-      asys = spzeros(kdim, kdim)
+      asys = zeros(kdim, kdim)
       rsys = zeros(kdim)
 
       simi, lami, wake, direct = true, true, true, true
@@ -356,7 +356,7 @@ end # BL march loop
 
 #---- clear system matrix and righthand side
       rsys[:] .= 0.0
-      nonzeros(asys) .= 0.0
+      asys[:,:] .= 0.0
       
 #---- first point variables are held frozen... put 1's on diagonal
       asys[1,1] = 1.0

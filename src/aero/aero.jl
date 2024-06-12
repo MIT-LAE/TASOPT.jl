@@ -7,7 +7,6 @@ module aerodynamics
 
 using StaticArrays
 using LinearAlgebra
-using SparseArrays
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
@@ -16,6 +15,11 @@ export airfoil, cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
 #include index to access arrays
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"utils/spline.jl"))
+
+## LinearAlgebra settings
+BLAS.set_num_threads(1) #This sets the number of threads in BLAS to be equal to 1. 
+#It prevents multithreading but ensures consistent speed across CPU families. Without it,
+#the LU calculation in blax() can take up to 1000x longer.
 
 idim::Int = 360
 jdim::Int = 360
