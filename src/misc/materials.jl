@@ -1,4 +1,12 @@
+"""
+`materials` is a module that provides basic functionality to represent
+various materials such as `StructuralAlloy`s,`Conductor`s, and `Insulator`s. 
+"""
+module materials
+
 using TOML, DocStringExtensions
+
+export StructuralAlloy, Conductor, Insulator
 
 __abs_path_prefix__ = dirname(@__DIR__)
 MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
@@ -229,4 +237,6 @@ function Base.show(io::IO, ::MIME"text/plain", alloy::StructuralAlloy)
     print("\n USS  = ",alloy.USS ," Pa")
     print("\n σmax = ",round(alloy.σmax,sigdigits=3)," Pa")
     print("\n τmax = ",round(alloy.τmax,sigdigits=3)," Pa")
+end
+
 end
