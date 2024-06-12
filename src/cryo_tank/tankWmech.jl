@@ -71,29 +71,28 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       K = (1/6) * (AR^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
       t_head = Δp* (2*Rtank_outer) * K/ (2 * s_a * weld_eff + 2 * Δp * (K - 0.1)) #(7.2) in Barron (1985)
 
+#--- Calculate double-bubble geometry
+      perim_tank, Atank, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Rtank) #Tank perimeter and cross-sectional area
+
 #--- Calculate length of cylindrical portion
       Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
       ρfmix = (1 - ullage_frac) * ρfuel + ullage_frac * ρfgas #Density of saturated mixture in tank
       Vfuel = Wfuel_tot / (gee * ρfmix) #Total tank volume taken by saturated mixture
       Vinternal = Vfuel  # required internal volume
-      V_ellipsoid = 2π * (Rtank^3 / AR) / 3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
+
+      V_ellipsoid = 2 * (Atank*Rtank / AR) /3 # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
                                        # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid
-      l_cyl = V_cylinder / (π * (Rtank^2)) #required length of cylindrical portion
-
-#--- tank cross-section geometric parameters
-      wfblim = max( min( wfb , Rtank) , 0.0 )
-      thetafb = asin(wfblim / Rtank)
+      l_cyl = V_cylinder / Atank #required length of cylindrical portion
 
 #--- areas
-      Scyl = (2.0*π+4.0*nfweb*thetafb)*Rtank*l_cyl + 2.0*dRfuse*l_cyl # Surface area of cylindrical part
-      #Afweb = nfweb*(2.0*hfb+dRfuse)*tfweb
-      #Atank = (π + nfweb*(2.0*thetafb + sin2t))*Rtank^2 + 2.0*Rtank*dRfuse #+ 2.0*(Rtank+nfweb*wfb)*dRfuse
-      Shead = (2.0*π + 4.0*nfweb*thetafb)*Rtank^2* ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
+      Scyl = perim_tank*l_cyl # Surface area of cylindrical part
+
+      Shead = Atank * ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
                                                                                           # but just as a note to reader this comes from  semi- oblate spheroid surf area is ≈ 2π×R²[1/3 + 2/3×(1/AR)^1.6]^(1/1.6)
-#--- component volumes
+#--- component volumes    
       Vcyl  = Scyl*tskin    # volume of the metal in the cylindrical part
-      #Vhead = Shead*tskin
+
       Vhead = Shead * t_head # volume of head
 
       Sinternal = Scyl + 2 * Shead
@@ -126,15 +125,18 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
-      Shead_insul[1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+      _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro)
+      Shead_insul[1] = Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
       
       for n in 1:N
             
             Ro = Ro + t_cond[n]
             L  = L  + t_cond[n]
             # println("AR ≈ $(Ro/L)")
-            Vcyl_insul[n]  = (π * ( Ro^2 - Ri^2 ) * l_cyl)
-            Shead_insul[n+1] = (2.0*π + 4.0*nfweb*thetafb)*(Ro)^2* ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+            _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro)
+            _, Ai, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ri)
+            Vcyl_insul[n]  = l_cyl * (Ao - Ai)
+            Shead_insul[n+1] = Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
 
             Area_coeff = Shead_insul[n+1] / Ro^2 #coefficient that relates area and radius squared
             Vhead_insul[n] = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
