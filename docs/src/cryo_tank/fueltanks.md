@@ -10,25 +10,25 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ### Thermal design
     The fuel tanks in TASOPT are assumed to consist of cylinders with two hemiellipsoidal caps. In general, the cylinders can have a double-bubble shape like the fuselage. To reduce fuel loss during flight as a result of boiling due to heat leakage into the tank (boiloff), the tank requires thermal insulation. Two different insulation architectures are currently supported in TASOPT.jl: an inner vessel covered in foam-based insulation and a double-walled tank with a vacuum layer between the layers. 
     
-    The thermal design and analysis method is similar for both insulation architectures. The tank walls are assumed to be made of an isotropic material with high thermal conductivity. The insulation layer, which does not carry structural loads and has a high thermal resistance. The insulation layer itself may consist of additional sublayers of different materials, forming a multi-layer insulation (MLI).
+    The thermal design and analysis method is similar for both insulation architectures. The tank walls are assumed to be made of an isotropic material with high thermal conductivity. The insulation layer, which does not carry structural loads and has a high thermal resistance. The insulation layer itself may consist of additional sublayers of different materials.
 
     ![SWfig](../assets/cryo_tank.svg)
 
     As the insulation layer consists of two different geometries across which heat can be transferred (the cylinder and the hemiellipsoids), two slightly different models for thermal resistance must be used. We will first consider heat transfer across a material layer; the vacuum case will be considered later. In the case of heat transfer across a layer between two concentric cylinders, it can be shown from Fourier's law that the thermal resistance, ``R_{cyl}``, is given by 
     ```math
-        R_{cyl} = \frac{\ln\left( \frac{R_f}{R_0}\right)} {2\pi l_{cyl} k},
+        R_{cyl} = \frac{\ln\left( \frac{R_f}{R_0}\right)} {p_r l_{cyl} k},
     ``` 
-    where ``R_0`` is the layer's inner radius, ``R_f = R_0 + t`` is the outer radius (with ``t`` being the layer thickness), ``l_{cyl}`` is the cylinder length, and ``k`` is the thermal conductivity of the layer. In many real materials including insulation foams, the thermal conductivity is a function of temperature. In TASOPT.jl, the mean of the conductivities across the layer is used; it can be shown analytically that this is exact if the conductivity is linear in temperature.
+    where ``R_0`` is the layer's inner radius, ``R_f = R_0 + t`` is the outer radius (with ``t`` being the layer thickness), ``l_{cyl}`` is the cylinder length, and ``k`` is the thermal conductivity of the layer. The parameter ``p_r`` is the ratio of the cross-section perimeter to the double-bubble radius; for a circular section, ``p_r=2\pi``. In many real materials including insulation foams, the thermal conductivity is a function of temperature. In TASOPT.jl, the mean of the conductivities across the layer is used; it can be shown analytically that this is exact if the conductivity is linear in temperature.
     
     For the hemiellipsoids, an approximate solution can be used, given by 
     ```math
         R_{ell} = \frac{t} {k \left(S_f + S_0 - \frac{S_{he}}{R^2} t^2\right)},
     ``` 
-    where ``S_f`` is the surface area of the hemiellipsoid at the final radius, ``S_0`` is the surface area at the initial radius, and ``\frac{S_{he}}{R^2}`` is the ratio of hemiellipsoid surface area to radius squared; for example, this ratio is ``\frac{S_{he}}{R^2}=2\pi`` for a hemisphere. The equation above makes use of the fact that there are two hemiellipsoids at both ends of the tank and represents their total resistance. By combining these resistances, the total resistance of a layer of MLI can be found using parallel resistance addition,
+    where ``S_f`` is the surface area of the hemiellipsoid at the final radius, ``S_0`` is the surface area at the initial radius, and ``\frac{S_{he}}{R^2}`` is the ratio of hemiellipsoid surface area to radius squared; for example, this ratio is ``\frac{S_{he}}{R^2}=2\pi`` for a hemisphere. The equation above makes use of the fact that there are two hemiellipsoids at both ends of the tank and represents their total resistance. By combining these resistances, the total resistance of an insulation layer can be found using parallel resistance addition,
     ```math
         R_{l} = \frac{R_{cyl}R_{ell}} {R_{cyl} + R_{ell}}.
     ``` 
-    In an MLI, the total resitance across the insulation is the serial addition of the resitances across each layer,
+    The total resistance across the insulation is the serial addition of the resistances across each layer,
     ```math
         R_{MLI} = \sum_i R_l^i.
     ``` 
@@ -134,11 +134,13 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``\rho_{mix} = f_{ull}\rho_g + (1-f_{ull})\rho_l`` is the density of the saturated mixture inside the tank, ``\rho_g`` and ``\rho_l`` are the densities of the fuel in saturated gas and liquid phases, and ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some gas volume for ullage. The internal volume of a hemiellipsoidal cap is given by 
     ```math
-        V_{cap} =  \frac{2πR_{t,i}^3}{3AR}.
+        V_{cap} =  \frac{A_{cs}}{R^2}\frac{2 R_{t,i}^3}{3AR},
     ```
+    where ``\frac{A_{cs}}{R^2}`` is the ratio of the cross-sectional area to the double bubble radius squared; for a circular section, ``\frac{A_{cs}}{R^2}=\pi``.
+
     Therefore, the internal volume of the cylindrical portion of the tank is ``V_{cyl}=V_{fuel}-2V_{cap}``, and the length of the cylindrical portion can then be found to be
     ```math
-        l_{cyl} =  \frac{V_{cyl}}{\pi R_{t,i}^2}.
+        l_{cyl} =  \frac{V_{cyl}}{\frac{A_{cs}}{R^2} R_{t,i}^2}.
     ```
     Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities. To support the tank, stiffener rings that go around the tank circumference are needed. It is assumed that the inner vessel contains two of these stiffeners, which are sized following the process below.
 

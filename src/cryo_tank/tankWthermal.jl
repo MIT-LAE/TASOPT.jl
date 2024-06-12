@@ -156,11 +156,11 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
       N = length(t_cond)       # Number of layers in insulation
-      R_mli      = zeros(Float64, N)  #size of MLI resistance array (Based on number of layers)
+      R_mli      = zeros(Float64, N)  #size of resistance vector (Based on number of layers)
       R_mli_ends = zeros(Float64, N)
       R_mli_cyl  = zeros(Float64, N)
   
-      #Find resistance of each MLI layer
+      #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
             if lowercase(material[i]) == "vacuum"
@@ -251,6 +251,10 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `TSL::Float64`: sea-level temperature (K)
     - `Mair::Float64`: external air Mach number
     - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
+    - `Rfuse::Float64`: fuselage exterior radius (m)
+    - `dRfuse::Float64`: downward shift of double bubble (m)
+    - `wfb::Float64`: lateral shift of double bubble (m)
+    - `nfweb::Float64`: number of vertical webs in fuselage
     - `ifuel::Int64`: fuel species index
 """
 mutable struct thermal_params

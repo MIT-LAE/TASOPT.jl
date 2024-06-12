@@ -33,8 +33,9 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 See [here](@ref fueltanks).
 """
 function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
-
-      #Unpack parameters in fuse_tank
+      #---------------------------------
+      # Unpack parameters in fuse_tank
+      #---------------------------------
       Rfuse = fuse_tank.Rfuse
       dRfuse = fuse_tank.dRfuse
       wfb = fuse_tank.wfb
@@ -55,51 +56,59 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       weld_eff = fuse_tank.ew
       θ = fuse_tank.theta_inner
 
-# Total thickness:
-      thickness_insul = sum(t_cond)
+      #---------------------------------
+      # Wall thickness sizing
+      #---------------------------------
+      thickness_insul = sum(t_cond) #Total insulation thickness
+      Rtank_outer = Rfuse - thickness_insul - clearance_fuse #Inner vessel outer radius
 
+      #Cylindrical portion wall thickness
       s_a = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
-      
-      Rtank_outer = Rfuse - thickness_insul - clearance_fuse
-
       tskin = Δp * (2 * Rtank_outer) / (2 * s_a * weld_eff + 0.8 * Δp) #(7.1) in Barron (1985)
+      Rtank = Rtank_outer - tskin #Inner vessel inner radius
 
-      Rtank = Rtank_outer - tskin
-      #tfweb = 2.0 * Δp * wfb  / ew
+      #Ellipsoid wall thickness
       Lhead = Rtank / AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
-      
       K = (1/6) * (AR^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
       t_head = Δp* (2*Rtank_outer) * K/ (2 * s_a * weld_eff + 2 * Δp * (K - 0.1)) #(7.2) in Barron (1985)
 
-#--- Calculate double-bubble geometry
+      #---------------------------------
+      # Vessel geometry
+      #---------------------------------
       perim_tank, Atank, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Rtank) #Tank perimeter and cross-sectional area
 
-#--- Calculate length of cylindrical portion
+      # Calculate length of cylindrical portion
       Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
       ρfmix = (1 - ullage_frac) * ρfuel + ullage_frac * ρfgas #Density of saturated mixture in tank
       Vfuel = Wfuel_tot / (gee * ρfmix) #Total tank volume taken by saturated mixture
       Vinternal = Vfuel  # required internal volume
 
-      V_ellipsoid = 2 * (Atank*Rtank / AR) /3 # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
-                                       # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
+      V_ellipsoid = 2 * (Atank*Rtank / AR) /3 # Approximate half the vol of ellipsoid with double-bubble base
+      #For a standard ellipsoid V = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. If base is circular,
+      #a = R/AR, b=c=R. Since Abase = πR^2, this can also be written as V = 2 * (Abase * R/AR)/3.
+      # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid
       l_cyl = V_cylinder / Atank #required length of cylindrical portion
 
-#--- areas
+      # areas
       Scyl = perim_tank*l_cyl # Surface area of cylindrical part
 
-      Shead = 2*Atank * ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
-                                                                                          # but just as a note to reader this comes from  semi- oblate spheroid surf area is ≈ 2π×R²[1/3 + 2/3×(1/AR)^1.6]^(1/1.6)
-#--- component volumes    
+      Shead = 2*Atank * ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # Surface area of ellipsoidal caps
+            #This form is better for insul thickness
+            # but just as a note to reader this comes from  semi- oblate spheroid surf area is ≈ 2π×R²[1/3 + 2/3×(1/AR)^1.6]^(1/1.6)
+      
+            # component volumes    
       Vcyl  = Scyl*tskin    # volume of the metal in the cylindrical part
 
       Vhead = Shead * t_head # volume of head
 
       Sinternal = Scyl + 2 * Shead
 
-#--- weights and weight moments
-      Whead = rhoskin*gee*Vhead
-      Wcyl  = rhoskin*gee*Vcyl
+      #---------------------------------
+      # Weight calculation
+      #---------------------------------
+      Whead = rhoskin*gee*Vhead #Head weight
+      Wcyl  = rhoskin*gee*Vcyl #Cylinder weight
       Winnertank = Wcyl + 2*Whead + Wfuel #Weight of inner vessel without stiffeners and supports, inc. fuel
 
       #stiffeners
@@ -110,47 +119,48 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       Wstiff = Nmain * Wmainstiff
       Wtank = (Wcyl + 2*Whead + Wstiff) * (1 + ftankadd)
 
-#--- insulation weight!
-      N = length(t_cond)
+      # Insulation weight
+      N = length(t_cond) #Number of insulation layers
+      #Initialize storage vectors
       Vcyl_insul = zeros(N)
       Winsul = zeros(N)
       Shead_insul = zeros(N + 1) #add one for first (tank wall) surface 
       Vhead_insul = zeros(N)
       rho_insul = zeros(N)
-      L = Lhead + tskin
+      L = Lhead + tskin #Length of ellipsoid semi-minor axis
 
-      #Assemble array with layer densities
+      #Assemble vector with layer densities
       for i = 1:N
             rho_insul[i] = insulation_density_calc(material_insul[i])
       end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
-      _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro)
-      Shead_insul[1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+      _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro) #Cross-sectional area of double bubble
+      Shead_insul[1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625 #Surface area of vessel head
       
       for n in 1:N
-            
+            #Update radius and semi-minor axis
             Ro = Ro + t_cond[n]
             L  = L  + t_cond[n]
-            # println("AR ≈ $(Ro/L)")
-            _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro)
+
+            _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro) 
             _, Ai, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ri)
-            Vcyl_insul[n]  = l_cyl * (Ao - Ai)
-            Shead_insul[n+1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+            Vcyl_insul[n]  = l_cyl * (Ao - Ai) #Volume of cylindrical layer
+            Shead_insul[n+1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625 #Surface area of ellipsodal cap
 
             Area_coeff = Shead_insul[n+1] / Ro^2 #coefficient that relates area and radius squared
             Vhead_insul[n] = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
             
-            Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee
-            # println("AR = $(Ro/L)")
-            Ri = Ro
+            Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee #Weight of insulation layer
+
+            Ri = Ro #Update inner radius for next point
       end
 
       Winsul_sum = sum(Winsul)
       Wtank = (Wtank + Winsul_sum)
       l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
-#--- overall tank weight
-      Wtank_total = Wtank + Wfuel_tot
+      # overall tank weight
+      Wtank_total = Wtank + Wfuel_tot 
 
 return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead_insul, l_tank
 end
@@ -180,7 +190,9 @@ This function sizes the outer vessel and calculates the weights of its component
     - `l_tank::Float64`: Total length of the tank (m).
 """
 function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
-      #Unpack parameters in fuse_tank
+      #---------------------------------
+      # Unpack parameters in fuse_tank
+      #---------------------------------
       poiss = fuse_tank.inner_material.ν
       Eouter = fuse_tank.inner_material.E
       ρouter = fuse_tank.inner_material.ρ
@@ -193,6 +205,9 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       wfb = fuse_tank.wfb
       nfweb = fuse_tank.nfweb
 
+      #---------------------------------
+      # Size outer vessel
+      #---------------------------------
       θ1 = θ_outer[1]
       θ2 = θ_outer[2]
 
@@ -207,6 +222,10 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       Nstiff = Nmain + Ninterm #Total number of stiffeners
       L = l_cyl / (Nstiff - 1) #There are two stiffeners at the ends, so effective number of sections in skin is N - 1
       L_Do = L / Do
+
+      #---------------------------------
+      # Wall thicknesses
+      #---------------------------------
 
       #Find cylinder wall thickness. This applies to a short cylinder.
       pressure_res(t_D) = 2.42*Eouter*(t_D)^(5/2) / ( (1 - poiss^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
@@ -224,7 +243,9 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       end
       t_head = K1 * Do * sqrt(pc * sqrt(3*(1 - poiss^2))/ (0.5*Eouter))
 
-      ## Areas
+      #---------------------------------
+      # Vessel geometry
+      #---------------------------------
       perim_vessel, Avessel, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Rtank_outer) #Tank perimeter and cross-sectional area
 
       Shead = 2*Avessel*(0.333 + 0.667*(1/ARtank)^1.6 )^0.625 #ellipsoid surface area
@@ -241,7 +262,9 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
 
       Wtank_no_stiff = Wcyl + 2 * Whead
 
+      #---------------------------------
       # Size stiffeners
+      #---------------------------------
       tanktype = "outer"
 
       Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, perim_vessel, #Weight of one main stiffener, each one 
@@ -250,6 +273,9 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer, perim_vessel, 
                                     s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter) #Weight of one intermediate stiffener, which carries no load
 
+      #---------------------------------
+      # Weight estimation
+      #---------------------------------
       Wstiff = Nmain * Wmainstiff + Ninterm * Wintermstiff #Total stiffener weight
 
       Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd) #Find total tank weight, including additional mass factor
