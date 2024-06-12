@@ -88,7 +88,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 #--- areas
       Scyl = perim_tank*l_cyl # Surface area of cylindrical part
 
-      Shead = Atank * ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
+      Shead = 2*Atank * ( 0.333 + 0.667*(Lhead/Rtank)^1.6 )^0.625 # This form is better for insul thickness 
                                                                                           # but just as a note to reader this comes from  semi- oblate spheroid surf area is ≈ 2π×R²[1/3 + 2/3×(1/AR)^1.6]^(1/1.6)
 #--- component volumes    
       Vcyl  = Scyl*tskin    # volume of the metal in the cylindrical part
@@ -126,7 +126,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
       _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro)
-      Shead_insul[1] = Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+      Shead_insul[1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
       
       for n in 1:N
             
@@ -136,7 +136,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
             _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro)
             _, Ai, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ri)
             Vcyl_insul[n]  = l_cyl * (Ao - Ai)
-            Shead_insul[n+1] = Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
+            Shead_insul[n+1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625
 
             Area_coeff = Shead_insul[n+1] / Ro^2 #coefficient that relates area and radius squared
             Vhead_insul[n] = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
