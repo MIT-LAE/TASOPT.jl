@@ -1,3 +1,4 @@
+using DocStringExtensions
 
 """
     calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
@@ -42,23 +43,22 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
       
 end  # function calculate_shell_geometry
 
-
-function web_geometry(x::MultiBubble)
+function web_geometry(cs::MultiBubble)
     # fuselage bubble subtended half-angle
-    θ_web = asin(x.bubble_center_y_offset/x.radius)
-    h_web = sqrt(x.radius^2 - x.bubble_center_y_offset^2)
-    cosθ = h_web/x.radius
-    sinθ = x.bubble_center_y_offset/x.radius
+    θ_web = asin(cs.bubble_center_y_offset/cs.radius)
+    h_web = sqrt(cs.radius^2 - cs.bubble_center_y_offset^2)
+    cosθ = h_web/cs.radius
+    sinθ = cs.bubble_center_y_offset/cs.radius
     sin2θ = 2 * sinθ * cosθ
 
-    effective_web_length = x.n_webs*(2*h_web + x.bubble_lower_downward_shift)
+    effective_web_length = cs.n_webs*(2*h_web + cs.bubble_lower_downward_shift)
 
     return θ_web, h_web, sin2θ, effective_web_length
 end
 
-function web_geometry(x::SingleBubble)
+function web_geometry(cs::SingleBubble)
     θ_web = 0.0
-    h_web = x.radius
+    h_web = cs.radius
     sin2θ = 0.0
     effective_web_length = 0.0
     return θ_web, h_web, sin2θ, effective_web_length
@@ -72,8 +72,8 @@ $(TYPEDSIGNATURES)
 
 Returns the perimeter of a given cross-section
 """
-function get_perimeter(x::SingleBubble)
-    return (2π*x.radius) + (2*x.bubble_lower_downward_shift)
+function get_perimeter(cs::SingleBubble)
+    return (2π*cs.radius) + (2*cs.bubble_lower_downward_shift)
 end  # function perimeter
 
 """
@@ -83,9 +83,9 @@ $(TYPEDSIGNATURES)
 
 Returns the perimeter of a given cross-section
 """
-function get_perimeter(x::MultiBubble)
-    θ_web, _, _, _ = web_geometry(x)
-    perimeter = (2π + 4.0*θ_web*x.n_webs)*x.radius + 
-                (2*x.bubble_lower_downward_shift)
+function get_perimeter(cs::MultiBubble)
+    θ_web, _, _, _ = web_geometry(cs)
+    perimeter = (2π + 4.0*θ_web*cs.n_webs)*cs.radius + 
+                (2*cs.bubble_lower_downward_shift)
     return perimeter
 end  # function perimeter
