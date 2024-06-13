@@ -281,5 +281,90 @@ bh, coh, poh = TASOPT.structures.tailpo(Sh, ARh, lambdah, qne, CLhmax)
 @test fort_poh ≈ poh
 #end tailpo:
 
-#TODO write tests for H2 tanks 
+#Test fuselage layout updating for tank
+
+parg = zeros(igtotal)
+parg[igxblend1] = 6.096
+parg[igxblend2] = 29.5656
+parg[igxshell2] = 31.0896
+parg[igdxcabin] = 23.4696
+parg[igdxcabin] = 23.4696
+parg[igdxeng2wbox] = 1.5239999999999991
+parg[igxapu] = 36.576
+parg[igxend] = 37.7952
+parg[igxconend ] = 35.6616
+parg[igxhbox ] = 34.8996
+parg[igxvbox ] = 33.528
+parg[igxwbox] = 16.04432532088372
+parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+parg[igxhpesys] = parg[igxconend] * 0.52484 
+
+pari = zeros(iitotal)
+pari[iinftanks] = 1
+
+parg_orig = deepcopy(parg)
+deleteat!(parg_orig, parg_orig .== 0)
+
+#Update fuel tank length and check changes
+parg[iglftank] = 5.0
+TASOPT.update_fuse!(pari, parg)
+
+parg_check = [43.40480000000001, 6.096, 35.175200000000004, 36.699200000000005, 41.27120000000001, 14.52032532088372, 16.04432532088372, 40.50920000000001, 39.137600000000006, 42.18560000000001, 21.660776608000003, 5.0, 23.4696, 1.5239999999999991, 18.716634144] 
+
+parg_nz = deepcopy(parg)
+deleteat!(parg_nz, parg_nz .== 0)
+for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
+  @test parg_nz[i] ≈ parg_check[i]
+end
+
+#Return to original points?
+pari[iinftanks] = 0.0
+parg[iglftank] = 0.0
+TASOPT.update_fuse!(pari, parg)
+
+parg_nz = deepcopy(parg)
+deleteat!(parg_nz, parg_nz .== 0.0)
+for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
+  @test parg_nz[i] ≈ parg_orig[i]
+end
+
+#Test cabin resizing
+parg = zeros(igtotal)
+parg[igxblend1] = 6.096
+parg[igxblend2] = 29.5656
+parg[igxshell2] = 31.0896
+parg[igdxcabin] = 23.4696
+parg[igdxcabin] = 23.4696
+parg[igdxeng2wbox] = 1.5239999999999991
+parg[igxapu] = 36.576
+parg[igxend] = 37.7952
+parg[igxconend ] = 35.6616
+parg[igxhbox ] = 34.8996
+parg[igxvbox ] = 33.528
+parg[igxwbox] = 16.04432532088372
+parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+parg[igxhpesys] = parg[igxconend] * 0.52484 
+
+parg[igseatpitch] = 0.762
+parg[igseatwidth] = 0.4826
+parg[igaislehalfwidth] = 0.254
+parg[igWpaymax] = 219964.5779
+parg[igRfuse] = 1.9558
+
+pari = zeros(iitotal)
+pari[iidoubledeck] = 0
+
+parm = zeros(imtotal)
+parm[imWperpax,1] = 956.36773
+
+fuse_tank = TASOPT.fuselage_tank()
+
+TASOPT.update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+
+parg_check = [47.091600000000014, 6.096, 38.86200000000001, 40.38600000000001, 44.95800000000001, 18.460895740194808, 19.98489574019481, 44.19600000000001, 42.82440000000001, 45.87240000000001, 23.595756720000004, 1.9558, 219964.5779, 32.76600000000001, 1.5239999999999991, 0.762, 0.4826, 0.254]
+parg_nz = deepcopy(parg)
+deleteat!(parg_nz, parg_nz .== 0)
+for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
+  @test parg_nz[i] ≈ parg_check[i]
+end
 end
