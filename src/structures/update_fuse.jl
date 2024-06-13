@@ -52,7 +52,7 @@ function update_fuse!(pari, parg)
 end
 
 """
-    update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+    update_fuse_for_pax!(pari, parg, fuse_tank)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
@@ -61,13 +61,12 @@ It sizes the cabin for the design number of passengers.
     **Inputs:**
     - `pari::Vector{Int64}`: vector with aircraft integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
-    - `parm::Array{Float64}`: array with mission parameters
     - `fuse_tank::struct`: structure of type `fuselage_tank` with cryogenic fuel tank parameters
 
     **Outputs:**
     No direct outputs; parameters in `parg` are modified.
 """
-function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
+function update_fuse_for_pax!(pari, parg, fuse_tank)
 
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
@@ -75,9 +74,9 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
 
     if pari[iidoubledeck] == 1 #if the aircraft is a double decker
         #passenger count to size cabin is half of the maximum
-        paxsize = ceil(parg[igWpaymax]/parm[imWperpax,1] / 2) 
+        paxsize = ceil(parg[igexitlimit] / 2) 
     else
-        paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+        paxsize = parg[igexitlimit] #maximum number of passengers from exit limit
     end
     #TODO this double deck model assumes that both decks have a width equal to the fuselage diameter; 
     #in reality, at least one deck must be narrower

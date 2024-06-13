@@ -1,4 +1,3 @@
-
 @testset "structural components" begin
 
 # Fuselage weight
