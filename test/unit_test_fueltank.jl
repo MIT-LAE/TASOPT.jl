@@ -115,7 +115,6 @@ fuse_tank.Wfuelintank = 1e5
         for i in 1:length(outputs_vac_outer)
             @test outputs_vac_outer[i] ≈ outputs_vac_outer_check[i]
         end
-        println(outputs_vac_outer)
 
     end
     

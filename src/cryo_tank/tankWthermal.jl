@@ -83,7 +83,7 @@ end
       residuals_Q(x, p)
 
 This function calculates the residual for a non-linear solver. The states are the heat transfer rate (optional), 
-the tank wall temperature, and the temperatures at the interfaces of MLI insulation layers.
+the tank wall temperature, and the temperatures at the interfaces of each insulation layers.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -100,7 +100,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             Q = p.Q
 
             T_w = x[1]
-            T_mli = x[2:end]
+            T_ins = x[2:end]
             Tfuse = x[end] #fuselage wall temperature
             F = zeros(length(x)+1) #initialize residual vector
 
@@ -108,7 +108,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             Q = x[1] #Heat rate is first input
             
             T_w = x[2]
-            T_mli = x[3:end]
+            T_ins = x[3:end]
             Tfuse = x[end]
             F = zeros(length(x))
       end
@@ -156,9 +156,9 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
       N = length(t_cond)       # Number of layers in insulation
-      R_mli      = zeros(Float64, N)  #size of resistance vector (Based on number of layers)
-      R_mli_ends = zeros(Float64, N)
-      R_mli_cyl  = zeros(Float64, N)
+      R_ins      = zeros(Float64, N)  #size of resistance vector (Based on number of layers)
+      R_ins_ends = zeros(Float64, N)
+      R_ins_cyl  = zeros(Float64, N)
   
       #Find resistance of each insulation layer
       T_prev = T_w
@@ -166,34 +166,34 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             if lowercase(material[i]) == "vacuum"
                   S_inner = perim_R * l_cyl * r_inner + 2*Shead[i]
                   S_outer = perim_R * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
-                  R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
+                  R_ins[i] = vacuum_resistance(T_prev, T_ins[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
-                  k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
-                  R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (perim_R*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
+                  k = insulation_conductivity_calc((T_ins[i] + T_prev)/2, material[i])
+                  R_ins_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (perim_R*l_cyl * k) #Resistance of each layer; from integration of Fourier's law in cylindrical coordinates
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
-                  R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
+                  R_ins_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
                   # Parallel addition of resistance
-                  R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
+                  R_ins[i] = (R_ins_ends[i] * R_ins_cyl[i]/(R_ins_ends[i] + R_ins_cyl[i])) 
                   
                   # Update r_inner
                   r_inner = r_inner + t_cond[i]  
-                  T_prev = T_mli[i]
+                  T_prev = T_ins[i]
             end
       end
   
-      R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
-      Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
+      R_ins_tot = sum(R_ins)  #Total thermal resistance of insulation
+      Req = R_ins_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
 
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
       T_calc = Tfuel + R_liq * Q #Wall temperature residual
       F[2] = T_w - T_calc
-      for i = 1:length(T_mli)
-          T_calc = T_calc + R_mli[i] * Q 
-          F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
+      for i = 1:length(T_ins)
+          T_calc = T_calc + R_ins[i] * Q 
+          F[i + 2] = T_ins[i] - T_calc #Residual at the edge of each layer
       end
 
       return F
