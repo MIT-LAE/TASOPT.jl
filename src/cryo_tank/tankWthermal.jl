@@ -137,19 +137,19 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
       thickness = sum(t_cond)  # total thickness of insulation
-  
-      # Radiation
-      ε = 0.95    # white aircraft (Verstraete)
-  
-      hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
-      h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
-      Rair_conv_rad = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
 
       #Geometry
       perim_inner, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, r_inner) #Tank perimeter and cross-sectional area
       S_cyl = perim_inner*l_cyl #Surface area of cylindrical portion
       S_int = S_cyl + 2*Shead[1] #liquid side surface area
       perim_R = perim_inner/r_inner #ratio of geometric shape perimeter to radius; if a circle this is 2π
+  
+      # Radiation
+      ε = 0.95    # white aircraft (Verstraete)
+  
+      hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
+      h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
+      Rair_conv_rad = 1 / (h_air * (perim_R * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
 
       #Liquid-side resistance
       h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
