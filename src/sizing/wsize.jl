@@ -1402,13 +1402,15 @@ function wsize(ac; itermax=35,
 
         # weight of engine and related stuff
         Gearf = parg[igGearf]
-        Weng, Wnace, Webare, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-            dlcomp, neng, feadd, fpylon, HXs)
+        HX_add_mass_frac = parg[igHXaddmassfrac] #Added mass fraction to HX
+        Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
+            dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
 
         parg[igWeng] = Weng
         parg[igWebare] = Webare
         parg[igWnace] = Wnace
         parg[igWeng] = Weng
+        parg[igWHXs] = W_HXs #Store total weight of heat exchangers
 
         # set new nacelle area / reference area  fraction fSnace
         Snace = Snace1 * neng
