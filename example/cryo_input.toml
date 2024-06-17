@@ -480,6 +480,7 @@ name = "TASOPT Model with cryo fuel and HX"
     recirculation_temperature = 200
     latent_heat = 0
     core_inner_diameter = 0.564
+    added_mass_frac = 1.0
 
     precooler_order = 1
     precooler_effectiveness = 0

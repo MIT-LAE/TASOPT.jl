@@ -874,6 +874,8 @@ dweight = dprop["Weight"]
 
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
+    parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
+
     pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
     pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
     pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)

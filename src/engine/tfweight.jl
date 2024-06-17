@@ -1,6 +1,6 @@
 """
       tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-      dlcomp, neng, feadd, fpylon)
+      dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
 
 Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald model.
       
@@ -16,6 +16,8 @@ Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald m
     - `neng`: Number of engines.
     - `feadd`: Fuel system weight ratio.
     - `fpylon`: Pylon weight fraction.
+    - `HXs`: vector with heat exchanger performance data
+    - `HX_add_mass_frac`: added mass fraction to heat exchangers
 
     **Output:**
     - `Weng`: Total engine weight.
@@ -24,7 +26,7 @@ Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald m
     - `Snace1`: Nacelle area.
 """
 function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-    dlcomp, neng, feadd, fpylon, HXs)
+    dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
 
     # include("constants.inc")
 
@@ -148,15 +150,14 @@ function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
 
     end
 
+    W_HXs = 0.0 #Store total weight of HXs
     for HX in HXs #For every heat exchanger in the engine
-        W_HX = hxweight(gee, HX.HXgeom, 1.0) * neng #Weight of a heat exchanger times number of engines
-        
-        Webare = Webare + W_HX #Add heat exchanger weight to bare and full engine
-        Weng = Weng + W_HX
-
+        W_HXs += hxweight(gee, HX.HXgeom, HX_add_mass_frac) * neng #Weight of a heat exchanger times number of engines
     end
+    Webare = Webare + W_HXs #Add heat exchanger weight to bare and full engine
+    Weng = Weng + W_HXs
 
-    return Weng, Wnac, Webare, Snace1
+    return Weng, Wnac, Webare, W_HXs, Snace1
 end
 
 
