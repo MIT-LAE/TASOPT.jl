@@ -233,14 +233,7 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       t_cyl = t_Do * Do
 
       #Find head wall thickness
-      if ARtank == 2.0
-            K1 = 0.90# See table 7.6 for D/D1=2.0 in Barron p. 367
-      elseif ARtank == 1.0
-            K1 = 0.50
-      else  
-            println("ARtank of heads not supported, see size_outer_tank()")
-            K1=1.0
-      end
+      K1 = find_K1_head(ARtank) #Find coefficient K1
       t_head = K1 * Do * sqrt(pc * sqrt(3*(1 - poiss^2))/ (0.5*Eouter))
 
       #---------------------------------
@@ -482,4 +475,38 @@ function insulation_density_calc(material::String)
                   but you supplied $material")
       end
       return ρ
+end
+
+"""
+      find_K1_head(AR)
+
+This function calculates the equivalent radius for hemi-ellipsoidal heads under pressure.
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `AR::Float64`: head aspect ratio.
+
+      **Outputs:**
+      - `K1::Float64`: equivalent radius parameter, such that `R = K1 * D``, where `R` is 
+      the equivalent radius and `D` is the ellipse major diameter.
+"""
+function find_K1_head(AR)
+      # See table 7.6 for data in Barron (1985) p. 367
+      ARs = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
+      K1s = [0.50,0.57,0.65,0.73,0.81,0.9,0.99,1.08,1.18,1.27,1.36]
+      if (AR > maximum(ARs)) || (AR < minimum(ARs)) #If case is outside of range
+            println("ARtank of heads not supported, see size_outer_tank()")
+            K1 = 1.0
+      else
+            i = 1
+            while AR > ARs[i] #Find index of entry that is not smaller than AR
+                  i += 1
+            end
+            if AR ≈ ARs[i] #If it is exactly that entry
+                  K1 = K1s[i]
+            else #Otherwise interpolate linearly
+                  K1 = K1s[i-1] + (K1s[i] - K1s[i-1]) / (ARs[i] - ARs[i-1]) * (AR - ARs[i-1])
+            end
+      end
+      return K1
 end
