@@ -123,9 +123,6 @@ function wsize(ac; itermax=35,
     fpadd = parg[igfpadd]
     fseat = parg[igfseat]
     feadd = parg[igfeadd]
-    fnace = parg[igfnace]
-    fhadd = htail.added_weight_fraction
-    fvadd = vtail.added_weight_fraction
     fwadd = wing_additional_weight(wing)
             
     ffadd = parg[igffadd]
@@ -142,7 +139,7 @@ function wsize(ac; itermax=35,
     fLo = parg[igfLo]
     fLt = parg[igfLt]
 
-    xwbox = wing.layout.x_wing_box
+    # xwbox = wing.layout.x_wing_box
     xhbox = htail.layout.box_x
     xvbox = vtail.layout.box_x
     xapu = parg[igxapu]
@@ -162,38 +159,10 @@ function wsize(ac; itermax=35,
     rMh = parg[igrMh]
     rMv = parg[igrMv]
 
-    # tail CL's at structural sizing cases
-    CLhmax = htail.CL_max
-    CLvmax = vtail.CL_max
-
     # tail surface taper ratios (no inner panel, so λs=1)
     λhs = 1.0
-    λh = htail.layout.λ
     λvs = 1.0
-    λv = vtail.layout.λ
 
-
-    # tail geometry parameters
-    sweeph = htail.layout.sweep
-    wboxh = htail.layout.box_width
-    hboxh = htail.layout.box_height
-    rhh = htail.layout.hweb_to_hbox
-    ARh = htail.layout.AR 
-    boh = htail.layout.box_halfspan
-
-    sweepv = vtail.layout.sweep
-    wboxv = vtail.layout.box_width
-    hboxv = vtail.layout.box_height
-    rhv = vtail.layout.hweb_to_hbox
-    ARv = vtail.layout.AR
-    bov = vtail.layout.box_halfspan
-
-    # number of vertical tails
-    nvtail = vtail.ntails
-
-    # strut vertical base height, h/c, strut shell t/h
-    # zs = parg[igzs]
-    # hstrut = parg[ighstrut]
     tohstrut = 0.05
 
     # assume no struts on tails
@@ -211,23 +180,16 @@ function wsize(ac; itermax=35,
     # wingbox stresses and densities [section 3.1.9 taspot.pdf [prash]] #reference
     σcap = wing.inboard.caps.σ * parg[igsigfac]
     tauweb =  wing.inboard.webs.material.τmax * parg[igsigfac]
-    rhoweb = wing.inboard.webs.ρ
-    rhocap = wing.inboard.caps.ρ
 
-    # strut stress and density
-    σstrut = ac.wing.strut.material.σmax * parg[igsigfac]
-    rhostrut = ac.wing.strut.material.ρ
+    # strut stress 
+    σstrut = wing.strut.material.σmax * parg[igsigfac]
 
     # assume tail stresses and densities are same as wing's (keeps it simpler)
     σcaph = σcap
     tauwebh = tauweb
-    rhowebh = rhoweb
-    rhocaph = rhocap
 
     σcapv = σcap
     tauwebv = tauweb
-    rhowebv = rhoweb
-    rhocapv = rhocap
 
     # number of engines, y-position of outermost engine
     neng = parg[igneng]
@@ -291,9 +253,6 @@ function wsize(ac; itermax=35,
         S = W / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
         b = sqrt(S * wing.layout.AR)
         bs = b * wing.layout.ηs
-        # TODO: remove above
-        # wing.layout.b = sqrt(S * wing.layout.AR)
-        # wing.layout.b_inner = wing.layout.b * wing.layout.ηs
         Winn = 0.15 * Wpay / parg[igsigfac]
         Wout = 0.05 * Wpay / parg[igsigfac]
         dyWinn = Winn * 0.30 * (0.5 * (bs - wing.layout.box_halfspan))
@@ -315,7 +274,7 @@ function wsize(ac; itermax=35,
 
         # wing centroid x-offset form wingbox
         dxwing, macco = surfdx(b, bs, wing.layout.box_halfspan, wing.layout.λt, wing.layout.λs, wing.layout.sweep)
-        xwing = xwbox + dxwing
+        xwing = wing.layout.x_wing_box + dxwing
         wing.layout.x = xwing
 
         # tail area centroid locations (assume no offset from sweep initially)
@@ -363,30 +322,18 @@ function wsize(ac; itermax=35,
         #     x-x1   x2-x1
         #-----------------------------------------------
         # Climb
-        @inbounds for ip = ipclimb1:ipclimbn
-            frac = float(ip - ipclimb1) / float(ipclimbn - ipclimb1)
-            ffp = ffuelb * (1.0 - frac) + ffuelc * frac
-            para[iafracW, ip] = 1.0 - ffuel + ffp
-        end
+        interp_Wfrac!(para, ipclimb1, ipclimbn, ffuelb, ffuelc, iafracW, ffuel)
 
         # Cruise
-        @inbounds for ip = ipcruise1:ipcruisen
-            frac = float(ip - ipcruise1) / float(ipcruisen - ipcruise1)
-            ffp = ffuelc * (1.0 - frac) + ffueld * frac
-            para[iafracW, ip] = 1.0 - ffuel + ffp
-        end
+        interp_Wfrac!(para, ipcruise1, ipcruisen, ffuelc, ffueld, iafracW, ffuel)
 
         # Descent
-        @inbounds for ip = ipdescent1:ipdescentn
-            frac = float(ip - ipdescent1) / float(ipdescentn - ipdescent1)
-            ffp = ffueld * (1.0 - frac) + ffuele * frac
-            para[iafracW, ip] = 1.0 - ffuel + ffp
-        end
+        interp_Wfrac!(para, ipdescent1, ipdescentn, ffueld, ffuele, iafracW, ffuel)
 
         # Initial tail info for sizing of fuselage bending and torsion added material 
-        Sh = (2.0 * Wpaymax) / (qne * CLhmax)
-        Sv = (2.0 * Wpaymax) / (qne * CLvmax)
-        bv = sqrt(Sv * ARv)
+        Sh = (2.0 * Wpaymax) / (qne * htail.CL_max)
+        Sv = (2.0 * Wpaymax) / (qne * vtail.CL_max)
+        bv = sqrt(Sv * vtail.layout.AR)
 
         htail.layout.S = Sh
         vtail.layout.S = Sv
@@ -469,7 +416,7 @@ function wsize(ac; itermax=35,
 
     else #Second iteration onwards use previously calculated values
 
-        bh = htail.layout.b
+        # bh = htail.layout.b
         bv = vtail.layout.b
 
         coh = htail.layout.chord
@@ -508,8 +455,8 @@ function wsize(ac; itermax=35,
 
         Sh = htail.layout.S
         Sv = vtail.layout.S
-        ARh = htail.layout.AR
-        ARv = vtail.layout.AR
+        # ARh = htail.layout.AR
+        # ARv = vtail.layout.AR
 
         # Turbo-electric system
         Wtesys = parg[igWtesys]
@@ -562,8 +509,8 @@ function wsize(ac; itermax=35,
         # Fuselage sizing
 
         # Max tail lifts at maneuver qne
-        Lhmax = qne * Sh * CLhmax
-        Lvmax = qne * Sv * CLvmax / nvtail
+        Lhmax = qne * Sh * htail.CL_max
+        Lvmax = qne * Sv * vtail.CL_max / vtail.ntails
         # Max Δp (fuselage pressure) at end of cruise-climb, assumes p ~ W/S
         wcd = para[iafracW, ipcruisen] / para[iafracW, ipcruise1]
         Δp = parg[igpcabin] - pare[iep0, ipcruise1] * wcd
@@ -582,7 +529,6 @@ function wsize(ac; itermax=35,
         Wvtail = vtail.weight
         xhtail =  htail.layout.x
         xvtail = vtail.layout.x
-        xwbox = wing.layout.x_wing_box
         xwing = wing.layout.x
         xapu = parg[igxapu]
         xeng = parg[igxeng]
@@ -620,10 +566,10 @@ function wsize(ac; itermax=35,
             ffadd, Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-            bv, λv, nvtail,
+            bv, vtail.layout.λ, vtail.ntails,
             
             xhtail, xvtail,
-            xwing, xwbox, cbox,
+            xwing, wing.layout.x_wing_box, cbox,
             xfix, xapu, xeng, xfuel)
 
         parg[igcabVol] = cabVol
@@ -698,61 +644,27 @@ function wsize(ac; itermax=35,
 
         # Initial size of the wing area and chords
         wingsc!(BW, CL, qinf, wing)
-        # wing.layout.S = S
-        # wing.layout.b = b
-        # wing.layout.b_inner = bs
 
         #Updating wing box chord for fuseW in next iteration
         cbox = wing.layout.chord * wing.layout.box_width_chord
 
         # x-offset of the wing centroid from wingbox
         dxwing, macco = surfdx(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.λt, wing.layout.λs, wing.layout.sweep)
-        xwing = xwbox + dxwing
+        xwing = wing.layout.x_wing_box + dxwing
         cma = macco * wing.layout.chord
         wing.layout.x = xwing
         parg[igcma] = cma
 
         # Calculate wing pitching moment constants
         #------------------------------------------
-        #TODO: put all this inside one function
-        ## Takeoff
-        ip = iptakeoff
-        cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = wing.layout.λt * para[iarclt, ip]
-        γs = wing.layout.λs * para[iarcls, ip]
+        # Takeoff
+        update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
 
-        CMw0, CMw1 = surfcm(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.sweep, wing.layout.spar_box_x_c,
-        wing.layout.λt, wing.layout.λs, γt, γs,
-            wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
+        # Cruise
+        update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
 
-        para[iaCMw0, ipstatic:ipclimb1] .= CMw0
-        para[iaCMw1, ipstatic:ipclimb1] .= CMw1
-
-        ## Cruise
-        ip = ipcruise1
-        cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = wing.layout.λt * para[iarclt, ip]
-        γs = wing.layout.λs * para[iarcls, ip]
-
-        CMw0, CMw1 = surfcm(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.sweep, wing.layout.spar_box_x_c,
-        wing.layout.λt, wing.layout.λs, γt, γs,
-            wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
-
-        para[iaCMw0, ipclimb1+1:ipdescentn-1] .= CMw0
-        para[iaCMw1, ipclimb1+1:ipdescentn-1] .= CMw1
-
-        ## Descent
-        ip = ipdescentn
-        cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = wing.layout.λt * para[iarclt, ip]
-        γs = wing.layout.λs * para[iarcls, ip]
-
-        CMw0, CMw1 = surfcm(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.sweep, wing.layout.spar_box_x_c,
-        wing.layout.λt, wing.layout.λs, γt, γs,
-            wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt)
-
-        para[iaCMw0, ipdescentn] = CMw0
-        para[iaCMw1, ipdescentn] = CMw1
+        # Descent
+        update_wing_pitching_moments!(para, ipdescentn:ipdescentn, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
         #------------------------------------------
 
         # Wing center load po calculation using cruise spanload cl(y)
@@ -800,33 +712,21 @@ function wsize(ac; itermax=35,
             rhofuel = parg[igrhofuel]
         end
 
-        Ecap = ac.wing.inboard.caps.material.E
-        Eweb = Ecap
-        Gcap = Ecap * 0.5 / (1.0 + 0.3)
-        Gweb = Ecap * 0.5 / (1.0 + 0.3)
-        #TODO: No reason why above lines shouldnt be inside surfw
-
-        Ss, Ms, tbwebs, tbcaps, EIcs, EIns, GJs,
-        So, Mo, tbwebo, tbcapo, EIco, EIno, GJo,
-        Astrut, lstrutp, cosLs,
+        wing.outboard.shear_load, wing.outboard.moment, wing.outboard.webs.thickness, wing.outboard.caps.thickness, wing.outboard.web_cap.EI_bending, wing.outboard.web_cap.EI_normal, wing.outboard.web_cap.GJ,
+        wing.inboard.shear_load, wing.inboard.moment, wing.inboard.webs.thickness, wing.inboard.caps.thickness, wing.inboard.web_cap.EI_bending, wing.inboard.web_cap.EI_normal, wing.inboard.web_cap.GJ,
+        wing.strut.axial_force, lstrutp, wing.outboard.cos_sweep,
         Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
         Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
-        Wweb, Wcap, Wstrut,
-        dxWweb, dxWcap, dxWstrut = surfw(po, wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.chord, wing.strut.z,
+        wing.inboard.webs.weight, wing.inboard.caps.weight, wing.strut.weight,
+        dxWweb, dxWcap, wing.strut.dxW = surfw(po, wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.chord, wing.strut.z,
         wing.layout.λt, wing.layout.λs, γt, γs,
             Nlift, wing.planform, Weng1,
             nout, yout, nin, yinn,
             Winn, Wout, dyWinn, dyWout,
             wing.layout.sweep, wing.layout.box_width_chord, wing.layout.root_chord_thickness, wing.layout.spanbreak_chord_thickness, wing.layout.hweb_to_hbox, fLt,
-            tauweb, σcap, σstrut, Ecap, Eweb, Gcap, Gweb,
-            rhoweb, rhocap, rhostrut, rhofuel)
-        # println([Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
-        # So,Mo,tbwebo,tbcapo,EIco,EIno,GJo,
-        # Astrut,lstrutp,cosLs,
-        # Wscen,Wsinn,Wsout,dxWsinn,dxWsout,dyWsinn,dyWsout,
-        # Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,
-        # Wweb,  Wcap,  Wstrut,
-        # dxWweb,dxWcap,dxWstrut])
+            tauweb, σcap, σstrut, wing.inboard.caps.material.E,
+            wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
+
         # Wsinn is the in-board skin weight, Wsout is the outboard skin weight. 
         # Multiply by 2 to account for the two wing-halves: 
         Wwing = 2.0 * (Wscen + Wsinn + Wsout) * (1.0 + fwadd)
@@ -859,32 +759,11 @@ function wsize(ac; itermax=35,
         wing.dxW = dxWwing
         parg[igdxWfuel] = dxWfmax * rfmax
 
-        wing.outboard.webs.thickness = tbwebs
-        wing.outboard.caps.thickness = tbcaps
-        wing.inboard.webs.thickness = tbwebo
-        wing.inboard.caps.thickness = tbcapo
-        wing.strut.axial_force = Astrut
-        wing.outboard.cos_sweep = cosLs
-        wing.inboard.webs.weight = Wweb
-        wing.outboard.webs.weight = Wweb
-        wing.inboard.caps.weight = Wcap
-        wing.outboard.caps.weight = Wcap
-        wing.strut.weight = Wstrut
-        wing.inboard.shear_load = So
-        wing.outboard.shear_load = Ss
-        wing.inboard.moment = Mo
-        wing.outboard.moment = Ms
-        wing.inboard.web_cap.EI_bending = EIco
-        wing.outboard.web_cap.EI_bending = EIcs
-        wing.inboard.web_cap.EI_normal = EIno
-        wing.outboard.web_cap.EI_normal = EIns
-        wing.inboard.web_cap.GJ = GJo
-        wing.outboard.web_cap.GJ = GJs
-        wing.strut.weight = Wstrut
-        wing.strut.dxW = dxWstrut
+        wing.outboard.webs.weight = wing.inboard.webs.weight
+        wing.outboard.caps.weight = wing.inboard.caps.weight
 
         # Strut chord (perpendicular to strut)
-        cstrut = sqrt(0.5 * Astrut / (tohstrut * wing.strut.toc))
+        cstrut = sqrt(0.5 * wing.strut.axial_force / (tohstrut * wing.strut.toc))
         Ssturt = 2.0 * cstrut * lstrutp
         wing.strut.chord = cstrut
         wing.strut.S = Ssturt
@@ -908,15 +787,15 @@ function wsize(ac; itermax=35,
 
         # Set tail CL derivative 
         dϵdα = htail.downwash_factor
-        sweeph = htail.layout.sweep
+        # sweeph = htail.layout.sweep
         tanL = tan(wing.layout.sweep * π / 180.0)
-        tanLh = tan(sweeph * π / 180.0)
+        tanLh = tan(htail.layout.sweep * π / 180.0)
 
         ip = ipcruise1
         Mach = para[iaMach, ip]
         β = sqrt(1.0 - Mach^2) #Prandtl-Glauert factor √(1-M²)
         # Calculate the tail lift-curve slope
-        dCLhdCL = (β + 2.0 / wing.layout.AR) / (β + 2.0 / ARh) * sqrt(β^2 + tanL^2) / sqrt(β^2 + tanLh^2) * (1.0 - dϵdα)
+        dCLhdCL = (β + 2.0 / wing.layout.AR) / (β + 2.0 / htail.layout.AR ) * sqrt(β^2 + tanL^2) / sqrt(β^2 + tanLh^2) * (1.0 - dϵdα)
         parg[igdCLhdCL] = dCLhdCL
 
         # Set Nacelle CL derivative fraction
@@ -950,7 +829,7 @@ function wsize(ac; itermax=35,
             # for subsequent iterations:
             htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing, htail, vtail)
 
-            xwbox, xwing = wing.layout.x_wing_box, wing.layout.x
+            wing.layout.x_wing_box, xwing = wing.layout.x_wing_box, wing.layout.x
 
             lhtail = xhtail - xwing
             Sh = htail.layout.S
@@ -991,102 +870,84 @@ function wsize(ac; itermax=35,
         end
 
         # set HT max loading magnitude
-        bh, coh, poh = tailpo(Sh, ARh, λh, qne, CLhmax)
-        htail.layout.b = bh
-        htail.layout.chord = coh
+        htail.layout.b, htail.layout.chord, poh = tailpo(Sh, htail.layout.AR , htail.layout.λ, qne, htail.CL_max)
 
         # set VT max loading magnitude, based on single tail + its bottom image
-        bv2, cov, pov = tailpo(2.0 * Sv / nvtail, 2.0 * ARv, λv, qne, CLvmax)
+        bv2, vtail.layout.chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.layout.λ, qne, vtail.CL_max)
         bv = bv2/2
         vtail.layout.b = bv
-        vtail.layout.chord = cov
+
 
         # HT weight
-        γh = λh
+        γh = htail.layout.λ
         γhs = λhs
         ihplan = 0
         Wengh = 0.0
-        Ecap = ac.wing.inboard.caps.material.E
-        Eweb = Ecap
-        Gcap = Ecap * 0.5 / (1.0 + 0.3)
-        Gweb = Ecap * 0.5 / (1.0 + 0.3)
-        Ssh, Msh, tbwebsh, tbcapsh, EIcsh, EInsh, GJsh,
-        Soh, Moh, tbweboh, tbcapoh, EIcoh, EInoh, GJoh,
+
+        _, _, _, _, _, _, _,
+        _, _, htail.thickness_web, htail.thickness_cap, 
+        htail.EI_bending, htail.EI_normal, htail.GJ,
         _, _, _,
-        Wscenh, Wsinnh, Wsouth, dxWsinnh, dxWsouth, dyWsinnh, dyWsouth,
-        Wfcenh, Wfinnh, Wfouth, dxWfinnh, dxWfouth, dyWfinnh, dyWfouth,
-        Wwebh, Wcaph, Wstruth,
-        dxWwebh, dxWcaph, dxWstruth = surfw(poh, bh, boh, boh, coh, zsh,
-            λh, λhs, γh, γhs,
+        Wscenh, Wsinnh, Wsouth, dxWsinnh, dxWsouth, _, _,
+        _, _, _, _, _, _, _,
+        _, _, _,
+        _, _, _ = surfw(poh, htail.layout.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.chord, zsh,
+            htail.layout.λ, λhs, γh, γhs,
             1, ihplan, Wengh, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0,
-            sweeph, wboxh, hboxh, hboxh, rhh, fLt,
-            tauwebh, σcaph, σstrut, Ecap, Eweb, Gcap, Gweb,
-            rhowebh, rhocaph, rhostrut, rhofuel)
+            htail.layout.sweep, htail.layout.box_width, htail.layout.box_height, htail.layout.box_height, htail.layout.hweb_to_hbox, fLt,
+            tauwebh, σcaph, σstrut, wing.inboard.caps.material.E, 
+            wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
-        Whtail = 2.0 * (Wscenh + Wsinnh + Wsouth) * (1.0 + fhadd)
-        dxWhtail = 2.0 * (dxWsinnh + dxWsouth) * (1.0 + fhadd)
+        Whtail = 2.0 * (Wscenh + Wsinnh + Wsouth) * (1.0 + htail.added_weight_fraction)
+        dxWhtail = 2.0 * (dxWsinnh + dxWsouth) * (1.0 + htail.added_weight_fraction)
         htail.weight = Whtail
         htail.dxW = dxWhtail
 
-        htail.thickness_web = tbweboh
-        htail.thickness_cap = tbcapoh
-        htail.EI_bending = EIcoh
-        htail.EI_normal = EInoh
-        htail.GJ = GJoh
-
         # HT centroid x-offset
         xhbox = htail.layout.box_x
-        dxh, macco = surfdx(bh, boh, boh, λh, λhs, sweeph)
+        dxh, macco = surfdx(htail.layout.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.λ, λhs, htail.layout.sweep)
         htail.layout.x = xhbox + dxh
 
         # HT pitching moment coeff
         fLoh = 0.0
         fLth = fLt
         cmph = 0.0
-        CMh0, CMh1 = surfcm(bh, boh, boh, sweeph, wing.layout.spar_box_x_c, λh, 1.0, λh, 1.0,
-            ARh, fLoh, fLth, 0.0, 0.0, 0.0)
+        CMh0, CMh1 = surfcm(htail.layout.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.sweep, wing.layout.spar_box_x_c, htail.layout.λ, 1.0, htail.layout.λ, 1.0,
+            htail.layout.AR , fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
 
         # VT weight
 
-        γv = λv
+        γv = vtail.layout.λ
         γvs = λvs
         ivplan = 0
         Wengv = 0.0
-        Ecap = ac.wing.inboard.caps.material.E
-        Eweb = Ecap
-        Gcap = Ecap * 0.5 / (1.0 + 0.3)
-        Gweb = Ecap * 0.5 / (1.0 + 0.3)
-        Ssv, Msv, tbwebsv, tbcapsv, EIcsv, EInsv, GJsv,
-        Sov, Mov, tbwebov, tbcapov, EIcov, EInov, GJov,
+
+        _, _, _, _, _, _, _,
+        _, _, vtail.thickness_web, vtail.thickness_cap, vtail.EI_bending, 
+        vtail.EI_normal, vtail.GJ,
         _, _, _,
         Wscenv, Wsinnv, Wsoutv, dxWsinnv, dxWsoutv, dyWsinnv, dyWsoutv,
-        Wfcenv, Wfinnv, Wfoutv, dxWfinnv, dxWfoutv, dyWfinnv, dyWfoutv,
-        Wwebv2, Wcapv2, Wstrutv,
-        dxWwebv2, dxWcapv2, dxWstrutv = surfw(pov, bv2, bov, bov, cov, zsv,
-            λv, λvs, γv, γvs,
+        _, _, _, _, _, _, _,
+        _, _, _,
+        _, _, _ = surfw(pov, bv2, vtail.layout.box_halfspan, vtail.layout.box_halfspan, vtail.layout.chord, zsv,
+            vtail.layout.λ, λvs, γv, γvs,
             1.0, ivplan, Wengv, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0,
-            sweepv, wboxv, hboxv, hboxv, rhv, fLt,
-            tauwebv, σcapv, σstrut, Ecap, Eweb, Gcap, Gweb,
-            rhowebv, rhocapv, rhostrut, rhofuel)
+            vtail.layout.sweep, vtail.layout.box_width, vtail.layout.box_height, vtail.layout.box_height, vtail.layout.hweb_to_hbox, fLt,
+            tauwebv, σcapv, σstrut, wing.inboard.caps.material.E,
+            wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
-        Wvtail = (Wscenv + Wsinnv + Wsoutv) * (1.0 + fvadd) * nvtail
-        dxWvtail = (dxWsinnv + dxWsoutv) * (1.0 + fvadd) * nvtail
+        Wvtail = (Wscenv + Wsinnv + Wsoutv) * (1.0 + vtail.added_weight_fraction) * vtail.ntails
+        dxWvtail = (dxWsinnv + dxWsoutv) * (1.0 + vtail.added_weight_fraction) * vtail.ntails
         vtail.weight = Wvtail
         vtail.dxW = dxWvtail
 
-        vtail.thickness_web = tbwebov
-        vtail.thickness_cap = tbcapov
-        vtail.EI_bending = EIcov
-        vtail.EI_normal = EInov
-        vtail.GJ = GJov
-
         # VT centroid x-offset
         xvbox = vtail.layout.box_x
-        dxv, _ = surfdx(bv2, bov, bov, λv, λvs, sweepv)
+        dxv, _ = surfdx(bv2, vtail.layout.box_halfspan, vtail.layout.box_halfspan, vtail.layout.λ, λvs, vtail.layout.sweep)
         vtail.layout.x = xvbox + dxv
 
         # ----------------------
@@ -1498,3 +1359,38 @@ function set_ambient_conditions!(ac, mis_point, Mach=NaN)
     ac.parad[iaReunit, mis_point] = Mach * a0 * ρ0 / μ0
 
 end  # function set_ambient_conditions
+
+"""
+    interp_Wfrac!(para, ip_start, ip_end, ffuel1, ffuel2, iafracW, ffuel)
+
+Interpolates iafracW from two mission points
+"""
+function interp_Wfrac!(para, ip_start, ip_end, ffuel1, ffuel2, iafracW, ffuel)
+    @inbounds for ip in ip_start:ip_end
+        frac = float(ip - ip_start) / float(ip_end - ip_start)
+        ffp = ffuel1 * (1.0 - frac) + ffuel2 * frac
+        para[iafracW, ip] = 1.0 - ffuel + ffp
+    end
+end
+
+"""
+update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+
+Updates wing pitching moments and calls surfcm for mission points
+"""
+function update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+    for ip in ip_range
+        cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
+        γt = wing.layout.λt * para[iarclt, ip]
+        γs = wing.layout.λs * para[iarcls, ip]
+        
+        CMw0, CMw1 = surfcm(
+            wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, 
+            wing.layout.sweep, wing.layout.spar_box_x_c, wing.layout.λt, wing.layout.λs, 
+            γt, γs, wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt
+        )
+
+        para[iaCMw0, ip] = CMw0
+        para[iaCMw1, ip] = CMw1
+    end
+end

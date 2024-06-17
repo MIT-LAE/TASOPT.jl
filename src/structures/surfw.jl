@@ -97,11 +97,15 @@ function surfw(po,b,bs,bo,co,zs,
 	Nload,iwplan,We,neout, dyeout, neinn, dyeinn,
 	Winn,Wout,dyWinn,dyWout,
 	sweep,wbox,hboxo,hboxs,rh, fLt,
-	tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
+	tauweb,sigcap,sigstrut,Ecap,
 	rhoweb,rhocap,rhostrut,rhofuel)
 
-      cosL = cos(sweep*pi/180)
-      sinL = sin(sweep*pi/180)
+       Eweb = Ecap
+       Gcap = Ecap * 0.5 / (1.0 + 0.3)
+       Gweb = Ecap * 0.5 / (1.0 + 0.3)
+
+       cosL = cos(sweep*pi/180)
+       sinL = sin(sweep*pi/180)
 
       # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
       etao = bo/b
