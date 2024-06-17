@@ -69,7 +69,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       #Ellipsoid wall thickness
       Lhead = Rtank / AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
-      K = (1/6) * (AR^2 + 2) # Aspect ratio of 2:1 for the head (# Barron pg 359) 
+      K = (1/6) * (AR^2 + 2) # Barron pg 359
       t_head = Δp* (2*Rtank_outer) * K/ (2 * s_a * weld_eff + 2 * Δp * (K - 0.1)) #(7.2) in Barron (1985)
 
       #---------------------------------
