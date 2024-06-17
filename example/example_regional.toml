@@ -448,6 +448,7 @@
     recirculation_temperature = 0
     latent_heat = 0
     core_inner_diameter = 0
+    added_mass_frac = 0.0
 
     precooler_order = 0
     precooler_effectiveness = 0
