@@ -279,6 +279,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     calculate_cabin = readgeom("calculate_cabin_length") 
     pari[iidoubledeck] = readgeom("double_decker") 
 
+    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+        parg[igfloordist] = Distance(readgeom("floor_distance")) #read vertical distance between floors
+    end
+
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
     parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
