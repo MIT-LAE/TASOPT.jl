@@ -14,6 +14,7 @@ fuse_tank.wfb = 0.0
 fuse_tank.nfweb = 1.0
 fuse_tank.clearance_fuse = 0.1
 fuse_tank.TSLtank = 288.2
+fuse_tank.TSLtank = 288.2
 
 fuse_tank.pvent = 2e5
 fuse_tank.ARtank = 2.0
@@ -55,7 +56,7 @@ fuse_tank.Wfuelintank = 1e5
         outputs_size = TASOPT.CryoTank.tanksize!(fuse_tank, z, Mair, xftank,
                                         time_flight,
                                         ifuel)
-        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.874000928629738, 38186.17708101044, 15.778226488935337, 60141.62075857702)
+        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.8560228485807642, 39680.33874822331, 17.180326496942726, 62911.70682863779)
         
         for i in 1:length(outputs_size)
             @test outputs_size[i] ≈ outputs_size_check[i]
@@ -63,7 +64,7 @@ fuse_tank.Wfuelintank = 1e5
 
         outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
-        outputs_mech_check = (160141.62075857702, 12.848737014009464, 0.0034969228002047735, 1.874000928629738, 166.77327116515787, 60141.62075857702, 100000.0, 38186.17708101044, 0.003493663177907789, 1590.5739851403653, 15273.979057343122, 1504.367224709392, [12469.793948746374, 13880.828395068622, 11835.554737195444], 189.458234696377, [16.41459716755075, 20.306600286258302, 24.6187451896291, 29.349806203891234], 15.778226488935337)
+        outputs_mech_check = (162911.7068286378, 14.232892426878994, 0.0034633753472303867, 1.8560228485807642, 166.77327116515787, 62911.70682863779, 100000.0, 39680.33874822331, 0.0034601469958627225, 1435.565477934579, 16809.72417613172, 1438.5703956486466, [12929.026476470144, 14426.720449466233, 12324.591822286933], 203.99342250401241, [14.958424149290229, 18.67075702260973, 22.80048975074802, 27.34638419260493], 17.180326496942726)
         for i in 1:length(outputs_mech)
             @test outputs_mech[i] ≈ outputs_mech_check[i]
         end
@@ -74,7 +75,7 @@ fuse_tank.Wfuelintank = 1e5
         Shead = outputs_mech_check[15]
         outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
 
-        outputs_thermal_check = (1835.860891601144, 107.03363914366872, 0.004247366632685267)
+        outputs_thermal_check = (1835.8608916010598, 107.03363914366383, 0.0042473666326850726)
 
         for i in 1:length(outputs_thermal)
             @test outputs_thermal[i] ≈ outputs_thermal_check[i]
@@ -90,7 +91,7 @@ fuse_tank.Wfuelintank = 1e5
         outputs_vac_size = TASOPT.CryoTank.tanksize!(fuse_tank, z, Mair, xftank,
                                             time_flight,
                                             ifuel)
-        outputs_vac_size_check = (0.0033447921639855015, 166.77327116515787, 2.4, 0.0, 10.17184549721119, 113248.97600936973)
+        outputs_vac_size_check = (0.0033909173806944666, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
         
         for i in 1:length(outputs_vac_size)
             @test outputs_vac_size[i] ≈ outputs_vac_size_check[i]

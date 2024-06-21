@@ -144,6 +144,16 @@ function convertPower(value::Float64, units_in::AbstractString="W", units_out="W
     return value * dict[units_in]/dict[units_out]
 end
 
+#Time
+const _convSItime = Dict("s"=>1.0,
+                        "h"=>3600.0,
+                        "days"=>86400.0)
+
+function convertTime(value::Float64, units_in::AbstractString="s", units_out="s")
+    dict = _convSItime
+    return value * dict[units_in]/dict[units_out]
+end
+
 #Angle
 const _convSIangle = Dict("rad" => 1.0, "deg"=> deg_to_rad)
 
@@ -187,6 +197,7 @@ _allowed_units = vcat(([keys(x) for x in [_convSIdist,
                                           _convSIforce,
                                           _convSIspeed,
                                           _convSIpower,
+                                          _convSItime,
                                           _convSIangle]]...)...)
 
 

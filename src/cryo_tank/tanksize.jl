@@ -53,6 +53,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 for i = 1:n_layers
                         guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
                 end
+                guess[end] = guess[end] - 1.0 #fuselage wall temperature
                 #Solve non-linear problem with NLsolve.jl
                 sol = nlsolve(residual, guess, ftol = 1e-7) 
                 Δt = sol.zero[1] 
@@ -74,7 +75,9 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
         Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
         Sinternal, Shead_insul, l_inner = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
-        if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+        flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
+
+        if flag_vacuum #If tank is double-walled
                 Routertank = fuse_tank.Rfuse - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 
@@ -172,3 +175,28 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res
 end 
+
+"""
+        check_vacuum(material_insul::Vector{String})
+
+This function checks if any of the insulation layers requires a vacuum.
+
+!!! details "🔃 Inputs and Outputs"
+        **Inputs:**
+        - `material_insul::Vector{String}`: vector with layer materials
+
+        **Outputs:**
+        - `flag_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
+"""
+function check_vacuum(material_insul::Vector{String})
+        vacuum_materials = ["vacuum", "microspheres"] #currently supported options are vacuum and microspheres
+
+        flag_vacuum = false
+        for material in material_insul
+                if lowercase(material) in vacuum_materials
+                        flag_vacuum = true
+                end
+        end
+
+        return flag_vacuum
+end

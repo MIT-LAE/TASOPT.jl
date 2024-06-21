@@ -14,7 +14,7 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t, pari, parg, para, pare)
+function find_mdot_time(t, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
     nftanks = pari[iinftanks]
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
@@ -22,25 +22,26 @@ function find_mdot_time(t, pari, parg, para, pare)
 
     times = para[iatime,:,1]
 
-    mdot = 0.0
-    for ip = 1:length(times)
-        if t ≈ times[ip]
-            mdot = mdots[ip]
-        elseif (t >= times[ip]) && (ip < length(times))
-            if (t< times[ip+1]) #If the point is the correct one
-                t0 = times[ip] #Time at start of segment
-                tf = times[ip+1] #Time at end of segment	
+    # Handle cases where t is exactly one of the sample points
+    if t in times
+        return mdots[findfirst(isequal(t), times)]
+    end
 
-                if mdots[ip] > 0
-                    k = log(mdots[ip+1]/mdots[ip])/( t0 - tf)
-                    mdot = mdots[ip] * exp( - k * (t - times[ip])) #Assume fuel burn varies exponentially in mission
-                else
-                    mdot = 0.0
-                end
+    #Otherwise interpolate exponentially
+    for i in 1:(length(times)-1)
+        if times[i] <= t < times[i+1]
+            t0, tf = times[i], times[i+1]
+            m0, mf = mdots[i], mdots[i+1]
+
+            if m0 > 0
+                k = log(mf / m0) / (tf - t0)
+                return m0 * exp(k * (t - t0))
+            else
+                return 0.0
             end
         end
     end
-    return mdot
+
 end
 
 """
@@ -57,7 +58,7 @@ This function calculates the heat transfer rate into the tank at the design miss
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
 """
-function calc_Q_points(fuse_tank, pari, parg, para)
+function calc_Q_points(fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -94,25 +95,24 @@ at each mission point for speed.
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time_interp(t, para, Qs)
+function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64})
     times = para[iatime,:,1]
 
-    Q = 0.0
-    for ip = 1:length(times)
-        if t ≈ times[ip]
-            Q = Qs[ip]
-        elseif (t >= times[ip]) && (ip < length(times))
-            if (t< times[ip+1]) #If the point is the correct one
-                t0 = times[ip]
-                tf = times[ip+1]
-                Q0 = Qs[ip]
-                Qf = Qs[ip+1]
+    # Handle cases where t is exactly one of the sample points
+    if t in times
+        return Qs[findfirst(isequal(t), times)]
+    end
 
-                Q = Q0 + (Qf - Q0)/(tf-t0) * (t - t0) #Interpolate linearly between points
-            end
+    # Find the interval where t belongs
+    for i in 1:(length(times)-1)
+        if times[i] <= t < times[i+1]
+            t0, tf = times[i], times[i+1]
+            Q0, Qf = Qs[i], Qs[i+1]
+
+            # Linear interpolation formula
+            return Q0 + (Qf - Q0) / (tf - t0) * (t - t0)
         end
     end
-    return Q
 end
 
 """
@@ -130,7 +130,7 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time(t, fuse_tank, pari, parg, para)
+function find_Q_time(t, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if ac.fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -254,7 +254,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
 
     dy_dt(y, p, t) = TankDerivatives(t, y, p[1], p[2]) #State derivatives
     #ODE problem; specify changes in mission segments for better speed
-    prob = ODEProblem(dy_dt, y0, tspan, ODEparams, tstops = para_alt[iatime,:], reltol = 1e-6)
+    prob = ODEProblem(dy_dt, y0, tspan, ODEparams, tstops = para_alt[iatime,:], reltol = 1e-8)
     sol = solve(prob, Tsit5()) #Solve ODE problem using recommended solver
 
     #Extract solution vector

@@ -33,9 +33,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
         R_{MLI} = \sum_i R_l^i.
     ``` 
 
-    In addition to the insulation resistance, the convective (from fuel to tank wall and from exterior wall to freestream) and radiative heat transfers have to be taken into account. The heat transfer to the freestream can be modeled as having two components: radiation and convection. The heat transfer coefficient from forced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
+    In addition to the insulation resistance, the convective heat transfers from fuel to tank wall and from exterior wall to freestream have to be taken into account. The heat transfer to the freestream can be modeled as having two components: radiation and convection. The heat transfer coefficient from forced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
     ```math
-        h_{convair} = \frac{c_f}{2 Pr^{2/3}}  ρ u c_p,
+        h_{air} = \frac{c_f}{2 Pr^{2/3}}  ρ u c_p,
     ``` 
     where ``c_f`` is the skin-friction coefficient, ``Pr`` is the Prandtl number (``Pr\approx 0.71`` for air), ``ρ`` is the freestream air density, ``u`` is the freestream velocity, and ``c_p`` is the specific heat of the freestream air at constant pressure. The skin-friction coefficient can be modeled using a flat-plate solution,[^1]
     ```math
@@ -51,17 +51,11 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``\gamma`` is the ratio of specific heats for air.
 
-    Similarly, the radiative component has an equivalent heat transfer coefficient
+    The equivalent resistance due to the freestream is
     ```math
-        h_{rad} = \sigma \varepsilon (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
-    ``` 
-    where ``\sigma`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
-
-    The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
-    ```math
-        R_{air} = \frac{1}{h_{air} (2\pi l_{cyl} R_{fuse} +2 S_{he})},
+        R_{air} = \frac{1}{ 2\pi h_{air} l_{cyl} R_{fuse}},
     ```
-    where ``l_{cyl}`` is the length of the cylindrical portion of the tank, ``R_{fuse}`` is the fuselage radius and ``S_{he}`` is the outer area of the hemiellipsoidal caps. 
+    where ``l_{cyl}`` is the length of the cylindrical portion of the tank and ``R_{fuse}`` is the fuselage radius. 
 
     Inside the tank, there is a heat transfer from the bulk of the liquid fluid to the tank via natural convection. The Nusselt number for this heat transfer process can be modeled as [^2]
     ```math
