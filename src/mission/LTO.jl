@@ -2,15 +2,15 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
 
     #LTO values
     LTOpoints = [1.0, 0.85, 0.3, 0.07]
-    LTOEINOx = zero(4)
-    LTOmdotf = zero(4)
-    LHV = parg[igLHVfuel]
+    # LTOEINOx = zero(4)
+    # LTOmdotf = zero(4)
+    # LHV = parg[igLHVfuel]
     # Get Foo based on Tt41 or T/O thrust
-    Tt41 = pare[ieTt41, ipstatic]
+    # Tt41 = pare[ieTt41, ipstatic]
     Foo = pare[ieFe , ipstatic] # This is for aircraft!
     ip = iptest
     
-    if Fn == 0.0
+    if Foo == 0.0
         icall = 1 #Tt41 specified
         # println("Tt41 specified mode")
     else
@@ -19,10 +19,10 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
     end
 
     
-    icool = 0
-    inite1 = 1
+    icool = 1
+    inite1 = 0
 
-    _, _ = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    _, _ = TASOPT.tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
     Ftotal = pare[ieFe, ip]
     mdotf = pare[iemdotf, ip]
     EINOx1  = pare[ieEINOx1, ip]
@@ -41,7 +41,7 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
         for (i,TS) in enumerate(LTOpoints)
             # NPSS_success, Ftotal, heatexcess, 
             #mdotf, EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, 0.0, 0.0, Foo*TS, 0.0, mofft, Pofft, ifirst, parg, parpt, pare, ip)
-            _, _ = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+            _, _ = TASOPT.tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
             
             Ftotal = pare[ieFe, ip]
             mdotf = pare[iemdotf, ip]
