@@ -6,9 +6,9 @@ required to size an aircraft
 module structures
 using NLopt
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__, place_cabin_seats, find_cabin_width, find_floor_angles, optimize_double_decker_cabin, find_double_decker_cabin_length
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-export surfw, surfdx, fusew, tailpo, update_fuse!, update_fuse_for_pax!
+export surfw, surfdx, fusew, tailpo, update_fuse!, update_fuse_for_pax!, place_cabin_seats, find_cabin_width
 
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"misc/constants.jl"))
@@ -20,7 +20,10 @@ include("surfdx.jl")
 include("surfw.jl")
 include("tailpo.jl")
 
+include("size_cabin.jl") #Seat layouts and cabin length
+
 #Hydrogen tank related code
 include("update_fuse.jl")
+
 
 end
