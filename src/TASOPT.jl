@@ -41,9 +41,6 @@ include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
 export aircraft, fuselage_tank
 
-#functionalities to be categorized: #TODO
-include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
-
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
