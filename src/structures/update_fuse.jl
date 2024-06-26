@@ -72,15 +72,25 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
     aisle_halfwidth = parg[igaislehalfwidth]
+    h_seat = parg[igseatheight]
 
+    Rfuse = parg[igRfuse]
+    dRfuse = parg[igdRfuse]
+    wfb = parg[igwfb]
+    nfweb = parg[ignfweb]
+
+    #Find cabin length by placing seats
     if pari[iidoubledeck] == 1 #if the aircraft is a double decker
-        #passenger count to size cabin is half of the maximum
-        paxsize = ceil(parg[igWpaymax]/parm[imWperpax,1] / 2) 
+        xopt = optimize_double_decker_cabin(parg, parm) #Optimize the floor layout and passenger distributions
+
+        lcyl = find_double_decker_cabin_length(xopt, parg, parm) #Total length is maximum of the two
+
     else
+        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+        w = find_cabin_width(Rfuse, wfb, nfweb, θ) #Cabin width
+        lcyl, _, _ = place_cabin_seats(paxsize, w, seat_pitch, seat_width, aisle_halfwidth) #Cabin length
     end
-    #TODO this double deck model assumes that both decks have a width equal to the fuselage diameter; 
-    #in reality, at least one deck must be narrower
 
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
@@ -92,10 +102,6 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
     dxvbox2conend = parg[igxconend] - parg[igxvbox ] #Distance from conend to xvbox
     #Fraction of cabin length at which wing is located
     wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
-
-    #Find new cabin length
-    wcabin = find_cabin_width(parg[igRfuse], parg[igdRfuse], parg[igwfb], parg[ignfweb], parg[igfloordist]) #Find cabin width
-    lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back
