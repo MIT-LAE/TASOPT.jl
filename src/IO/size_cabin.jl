@@ -129,25 +129,162 @@ function aisle_flag(idx, layout)
 end
 
 """
-    find_cabin_width(Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb, ΔH::Float64 = 0.0)
+    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64)
 
-This function can be used to calculate the width of the passenger cabin from the double-bubble parameters.
-It has an optional parameter `ΔH`, which represents the distance between two floors if the aircraft is a double decker.
-If the aircraft is a double decker, the floors are assumed to be symmetric.
+This function can be used to calculate the width of the passenger cabin from the double-bubble parameters
+and the floor angular position.
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `Rfuse::Float64`: fuselage exterior radius (m)
-    - `dRfuse::Float64`: downward shift of double bubble (m)
     - `wfb::Float64`: lateral shift of double bubble (m)
     - `nfweb::Float64`: number of vertical webs in fuselage
-    - `ΔH::Float64`: distance between floors (m)
+    - `θ::Float64`: angle of floor wrt upper bubble center (rad)
 
     **Outputs:**
     - `w::Float64`: width of cabin (m).
 """
-function find_cabin_width(Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64, ΔH::Float64 = 0.0)
-    #Subtract dRfuse from ΔH when there is a lower bubble; fuselage is taller
-    θ = max(asin((ΔH - dRfuse)/(2*Rfuse)), 0.0) #This assumes that floors are symmetrically distributed in fuselage
+function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64)
+    #Use trigonometry to find cabin width
     w = nfweb*2*wfb + 2*Rfuse*cos(θ)
     return w
+end
+
+"""
+    find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
+
+This function can be used to place the passenger decks inside the fuselage. It works for single deck or double decker
+cabins. It returns the angular position of each deck with respect to the center of the upper bubble.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `Rfuse::Bool`: flag to indicate whether aircraft is a double decker
+    - `Rfuse::Float64`: fuselage exterior radius (m)
+    - `dRfuse::Float64`: vertical shift of downward bubble (m)
+    - `θ1::Float64`: required in some cases; angle of main floor wrt upper bubble center (rad)
+    - `h_seat::Float64`: required in some cases; seat height (m)
+    - `d_floor::Float64`: required in some cases; distance between double decks (m)
+
+    **Outputs:**
+    - `θ1::Float64`: angle of main floor wrt upper bubble center (rad)
+    - `θ2::Float64`: returned when double decker; angle of upper floor wrt upper bubble center (rad)
+"""
+function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
+    #If there is a lower bubble, the floor must be placed at the intersection of the two
+    if dRfuse > 0.0
+        θ1 = -asin(dRfuse / (2*Rfuse))
+        if fdoubledecker
+            θ2 = asin((h_seat + d_floor - dRfuse/2) / Rfuse)
+            return θ1, θ2
+        else
+            return θ1
+        end  
+    else #If there is not a lower bubble
+        if ~fdoubledecker #If it has a single deck
+            θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
+            return θ1
+        else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
+            θ2 = asin((h_seat + d_floor + Rfuse * sin(θ1)) / Rfuse)  
+            return θ1, θ2
+        end
+    end
+
+end
+
+"""
+    find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+
+This function can be used to calculate the length of a double decker cabin with different number of 
+passengers on each deck.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `x::Vector{Float64}`: vector with optimization variables
+    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `parm::Array{Float64}`: array with mission parameters
+
+    **Outputs:**
+    - `maxl::Float64`: required cabin length (m)
+"""
+function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+    
+    seat_pitch = parg[igseatpitch]
+    seat_width = parg[igseatwidth]
+    aisle_halfwidth = parg[igaislehalfwidth]
+    h_seat = parg[igseatheight]
+
+    Rfuse = parg[igRfuse]
+    dRfuse = parg[igdRfuse]
+    wfb = parg[igwfb]
+    nfweb = parg[ignfweb]
+    d_floor = parg[igfloordist]
+
+    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+
+    paxmain = x[1]
+    paxtop = paxsize - paxmain
+    if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere
+
+        θ1 = x[2] #Main deck angle
+        _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= h_seat, d_floor = d_floor)
+    else #Main deck angle depends on double bubble params
+        θ1, θ2 = find_floor_angles(true, Rfuse, dRfuse, h_seat = h_seat, d_floor = d_floor)
+    end
+
+    #Find width of each cabin
+    w1 = TASOPT.find_cabin_width(Rfuse, wfb, nfweb, θ1)
+    w2 = TASOPT.find_cabin_width(Rfuse, wfb, nfweb, θ2)
+
+    #Find length of each cabin
+    l1, _, _ = TASOPT.place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
+    l2, _, _ = TASOPT.place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
+
+    maxl = max(l1, l2) #Required length
+    println(maxl)
+    
+    return maxl 
+end
+
+"""
+    find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+
+This function can be used to optimize the passenger distribution across two decks in a double decker aircraft. 
+If the cross-section is circular, it also optimizes the deck layouts.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `parm::Array{Float64}`: array with mission parameters
+
+    **Outputs:**
+    - `xopt::Vector{Float64}`: vector with optimization results
+"""
+function optimize_double_decker_cabin(parg, parm)
+    dRfuse = parg[igdRfuse]
+
+    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+
+    if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere so optimize it
+        initial_x = [paxsize/2, -pi/4]
+        lower = [1.0, -pi/2]
+        upper = [paxsize - 1.0, pi/2]
+        initial_dx = [paxsize/4, 1e-1]
+    else #Only optimize PAX distribution
+        initial_x = [paxsize/2]
+        lower = [1.0]
+        upper = [paxsize - 1.0]
+        initial_dx = [paxsize/4]
+    end
+
+    obj(x, grad) = find_double_decker_cabin_length(x, parg, parm) #Objective function is cabin length
+
+    opt = Opt(:LN_NELDERMEAD, length(initial_x))
+    opt.lower_bounds = lower
+    opt.upper_bounds = upper
+    opt.ftol_rel = 1e-5
+    opt.initial_step = initial_dx
+    opt.maxeval = 500  # Set the maximum number of function evaluations
+
+    opt.min_objective = obj
+    
+    (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
+
+    return xopt
 end
