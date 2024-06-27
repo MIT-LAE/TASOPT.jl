@@ -221,26 +221,30 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
 
     paxmain = x[1]
     paxtop = paxsize - paxmain
-    if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere
 
-        θ1 = x[2] #Main deck angle
-        _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= h_seat, d_floor = d_floor)
-    else #Main deck angle depends on double bubble params
-        θ1, θ2 = find_floor_angles(true, Rfuse, dRfuse, h_seat = h_seat, d_floor = d_floor)
+    try #The calculation could fail for some inputs if an asin returns an error
+        if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere
+
+            θ1 = x[2] #Main deck angle
+            _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= h_seat, d_floor = d_floor)
+        else #Main deck angle depends on double bubble params
+            θ1, θ2 = find_floor_angles(true, Rfuse, dRfuse, h_seat = h_seat, d_floor = d_floor)
+        end
+
+        #Find width of each cabin
+        w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1)
+        w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2)
+
+        #Find length of each cabin
+        l1, _, _ = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
+        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
+
+        maxl = max(l1, l2) #Required length
+        
+        return maxl 
+    catch
+        return 1e6
     end
-
-    #Find width of each cabin
-    w1 = TASOPT.find_cabin_width(Rfuse, wfb, nfweb, θ1)
-    w2 = TASOPT.find_cabin_width(Rfuse, wfb, nfweb, θ2)
-
-    #Find length of each cabin
-    l1, _, _ = TASOPT.place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
-    l2, _, _ = TASOPT.place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
-
-    maxl = max(l1, l2) #Required length
-    println(maxl)
-    
-    return maxl 
 end
 
 """
@@ -265,22 +269,19 @@ function optimize_double_decker_cabin(parg, parm)
         initial_x = [paxsize/2, -pi/4]
         lower = [1.0, -pi/2]
         upper = [paxsize - 1.0, pi/2]
-        initial_dx = [paxsize/4, 1e-1]
+        
     else #Only optimize PAX distribution
         initial_x = [paxsize/2]
         lower = [1.0]
         upper = [paxsize - 1.0]
-        initial_dx = [paxsize/4]
     end
 
     obj(x, grad) = find_double_decker_cabin_length(x, parg, parm) #Objective function is cabin length
 
-    opt = Opt(:LN_NELDERMEAD, length(initial_x))
+    opt = Opt(:GN_DIRECT_L, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
     opt.upper_bounds = upper
-    opt.ftol_rel = 1e-5
-    opt.initial_step = initial_dx
-    opt.maxeval = 500  # Set the maximum number of function evaluations
+    opt.maxeval = 10000  # Set the maximum number of function evaluations
 
     opt.min_objective = obj
     
