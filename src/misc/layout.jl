@@ -1,4 +1,53 @@
 using DocStringExtensions
+abstract type AbstractLayout end
+abstract type AbstractCrossSection end
+
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for a conventional
+single-bubble type fuselage.
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct SingleBubble <: AbstractCrossSection
+    """Fuselage Radius [m]"""
+    radius::Float64 = 1.0
+    """Downward shift of lower bubbles (dRfuse) [m] """
+    bubble_lower_downward_shift::Float64 = 0.0
+end
+
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for a multi-bubble type 
+fuselage
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct MultiBubble <: AbstractCrossSection
+    """Fuselage Radius [m]"""
+    radius::Float64 = 1.0
+    """Downward shift of lower bubbles (dRfuse) [m] """
+    bubble_lower_downward_shift::Float64 = 0.2
+    """Y offset of bubble center [m]"""
+    bubble_center_y_offset::Float64 = 0.2
+    """Number of webs [-]"""
+    n_webs::Int64 = 1
+end
+
+# Trying to access these properties form a SingleBubble just gives
+# constants
+function Base.getproperty(obj::SingleBubble, sym::Symbol)
+    if sym === :n_webs
+        return 0
+    elseif sym === :bubble_center_y_offset
+        return 0.0
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
 """
 $TYPEDEF
 
@@ -7,15 +56,9 @@ Contains dimensions, heights, etc. to design a fuselage
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct FuselageLayout
-    """Fuselage Radius [m]"""
-    radius::Float64 = 0 # = ac.parg[igRfuse] #Rfuse
-    """Downward shift of lower bubbles (dRfuse) [m] """
-    bubble_lower_downward_shift::Float64 = 0#dRfuse 
-    """Y offset of bubble center [m]"""
-    bubble_center_y_offset::Float64 = 0 #wfb
-    """Number of webs (for double bubble designs)"""
-    n_webs::Float64 = 0 #nfwebs
+@kwdef mutable struct FuselageLayout <: AbstractLayout
+    """Cross section definition"""
+    cross_section::AbstractCrossSection = SingleBubble()
     """Thickness of webs """
     thickness_webs::Float64 = 0 #nfwebs
     """X position of nose [m]"""
@@ -44,6 +87,15 @@ $TYPEDFIELDS
     taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
 end
 
+# Helper function to be able to simplify 
+function Base.getproperty(layout::FuselageLayout, sym::Symbol)
+    cross_section = getfield(layout, :cross_section)
+    if sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
+        return getproperty(cross_section, sym)
+    else
+        return getfield(layout, sym)
+    end
+end
 
 """
 $TYPEDEF
