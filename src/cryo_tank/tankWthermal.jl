@@ -145,7 +145,8 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       S_int = S_cyl + 2*Shead[1] #liquid side surface area
       perim_R = perim_inner/r_inner #ratio of geometric shape perimeter to radius; if a circle this is 2π
   
-      Rair = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
+      perim_fuse, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb) #Fuselage outer perimeter
+      Rair = 1 / (h_air * (perim_fuse * l_tank ))  # thermal resistance of ambient air
 
       #Liquid-side resistance
       h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
