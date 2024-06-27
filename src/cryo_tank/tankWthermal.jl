@@ -48,6 +48,9 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.Mair = Mair
       p.xftank = xftank
       p.Rfuse = fuse_tank.Rfuse
+      p.dRfuse = fuse_tank.dRfuse
+      p.wfb = fuse_tank.wfb
+      p.nfweb = fuse_tank.nfweb
       p.ifuel = ifuel
 
       _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature
@@ -81,7 +84,7 @@ end
       residuals_Q(x, p)
 
 This function calculates the residual for a non-linear solver. The states are the heat transfer rate (optional), 
-the tank wall temperature, and the temperatures at the interfaces of MLI insulation layers.
+the tank wall temperature, and the temperatures at the interfaces of each insulation layers.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -98,7 +101,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             Q = p.Q
 
             T_w = x[1]
-            T_mli = x[2:end]
+            T_ins = x[2:end]
             Tfuse = x[end] #fuselage wall temperature
             F = zeros(length(x)+1) #initialize residual vector
 
@@ -106,7 +109,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             Q = x[1] #Heat rate is first input
             
             T_w = x[2]
-            T_mli = x[3:end]
+            T_ins = x[3:end]
             Tfuse = x[end]
             F = zeros(length(x))
       end
@@ -124,6 +127,9 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       Mair = p.Mair
       xftank = p.xftank
       Rfuse = p.Rfuse
+      dRfuse = p.dRfuse
+      wfb = p.wfb
+      nfweb = p.nfweb
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
@@ -132,52 +138,59 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
       thickness = sum(t_cond)  # total thickness of insulation
-  
-      Rair = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
 
-      S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
+      #Geometry
+      perim_inner, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, r_inner) #Tank perimeter and cross-sectional area
+      S_cyl = perim_inner*l_cyl #Surface area of cylindrical portion
+      S_int = S_cyl + 2*Shead[1] #liquid side surface area
+      perim_R = perim_inner/r_inner #ratio of geometric shape perimeter to radius; if a circle this is 2π
+  
+      perim_fuse, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb) #Fuselage outer perimeter
+      Rair = 1 / (h_air * (perim_fuse * l_tank ))  # thermal resistance of ambient air
+
+      #Liquid-side resistance
       h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
       N = length(t_cond)       # Number of layers in insulation
-      R_mli      = zeros(Float64, N)  #size of MLI resistance array (Based on number of layers)
-      R_mli_ends = zeros(Float64, N)
-      R_mli_cyl  = zeros(Float64, N)
+      R_ins      = zeros(Float64, N)  #size of resistance vector (Based on number of layers)
+      R_ins_ends = zeros(Float64, N)
+      R_ins_cyl  = zeros(Float64, N)
   
       #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
             if lowercase(material[i]) == "vacuum"
-                  S_inner = 2π * l_cyl * r_inner + 2*Shead[i]
-                  S_outer = 2π * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
-                  R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
+                  S_inner = perim_R * l_cyl * r_inner + 2*Shead[i]
+                  S_outer = perim_R * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
+                  R_ins[i] = vacuum_resistance(T_prev, T_ins[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
-                  k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
-                  R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
+                  k = insulation_conductivity_calc((T_ins[i] + T_prev)/2, material[i])
+                  R_ins_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (perim_R*l_cyl * k) #Resistance of each layer; from integration of Fourier's law in cylindrical coordinates
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
-                  R_mli_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
+                  R_ins_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
                   # Parallel addition of resistance
-                  R_mli[i] = (R_mli_ends[i] * R_mli_cyl[i]/(R_mli_ends[i] + R_mli_cyl[i])) 
+                  R_ins[i] = (R_ins_ends[i] * R_ins_cyl[i]/(R_ins_ends[i] + R_ins_cyl[i])) 
                   
                   # Update r_inner
                   r_inner = r_inner + t_cond[i]  
-                  T_prev = T_mli[i]
+                  T_prev = T_ins[i]
             end
       end
   
-      R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
-      Req = R_mli_tot + R_liq + Rair # Total equivalent resistance of thermal circuit
+      R_ins_tot = sum(R_ins)  #Total thermal resistance of insulation
+      Req = R_ins_tot + R_liq + Rair # Total equivalent resistance of thermal circuit
 
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
       T_calc = Tfuel + R_liq * Q #Wall temperature residual
       F[2] = T_w - T_calc
-      for i = 1:length(T_mli)
-          T_calc = T_calc + R_mli[i] * Q 
-          F[i + 2] = T_mli[i] - T_calc #Residual at the edge of each MLI layer
+      for i = 1:length(T_ins)
+          T_calc = T_calc + R_ins[i] * Q 
+          F[i + 2] = T_ins[i] - T_calc #Residual at the edge of each layer
       end
 
       return F
@@ -238,6 +251,10 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `TSL::Float64`: sea-level temperature (K)
     - `Mair::Float64`: external air Mach number
     - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
+    - `Rfuse::Float64`: fuselage exterior radius (m)
+    - `dRfuse::Float64`: downward shift of double bubble (m)
+    - `wfb::Float64`: lateral shift of double bubble (m)
+    - `nfweb::Float64`: number of vertical webs in fuselage
     - `ifuel::Int64`: fuel species index
 """
 mutable struct thermal_params
@@ -254,6 +271,9 @@ mutable struct thermal_params
       Mair::Float64
       xftank::Float64
       Rfuse::Float64
+      dRfuse::Float64
+      wfb::Float64
+      nfweb::Float64
       ifuel::Int64
       thermal_params() = new() 
 end

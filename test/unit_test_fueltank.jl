@@ -1,3 +1,4 @@
+include("../src/utils/bubble_geom.jl")
 #Sample parameters
 ifuel = 40
 z = 11e3
@@ -97,7 +98,7 @@ fuse_tank.Wfuelintank = 1e5
         end
 
         outputs_vac_mech = TASOPT.CryoTank.size_inner_tank(fuse_tank, fuse_tank.t_insul)
-        outputs_vac_mech_check = (125124.15434149424, 8.219175642639724, 0.00435715618585557, 2.335, 166.77327116515787, 25124.15434149424, 100000.0, 0.0, 0.004353094705443698, 2858.4704423225353, 15209.457128611886, 1913.7422971923515, [0.0], 172.43073912598143, [23.675162947566548, 25.28189535258484], 10.688524675864757)
+        outputs_vac_mech_check = (124223.11547325406, 7.525566077704729, 0.00435715618585557, 2.335, 166.77327116515787, 24223.115473254056, 100000.0, 0.0, 0.004353094705443698, 3076.8414985998347, 13888.811713075278, 1978.5193563196497, [0.0], 165.15270608329905, [25.483812169139977, 27.21328988831087], 9.994915110929762)
 
         for i in 1:length(outputs_vac_mech)
             @test outputs_vac_mech[i] ≈ outputs_vac_mech_check[i]
@@ -107,11 +108,11 @@ fuse_tank.Wfuelintank = 1e5
 
         fuse_tank.Ninterm = 1.0
         Ninterm = TASOPT.CryoTank.optimize_outer_tank(fuse_tank, Winnertank, l_cyl)
-        Ninterm_check = 15.38916015625
+        Ninterm_check = 14.025390625
         @test Ninterm ≈ Ninterm_check
 
         outputs_vac_outer = TASOPT.CryoTank.size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm_check)
-        outputs_vac_outer_check = (88153.61722490133, 33033.25329386777, 12808.143626608879, 21490.11147555205, 173.928350628553, 24.993050952321795, 123.9422487239094, 0.009566313929022768, 0.018394143361195915, 10.655963929362116)
+        outputs_vac_outer_check = (87481.39236647873, 31381.827647692957, 13786.613724211644, 20573.48341886441, 171.6223477616751, 26.90237940128641, 117.81758895910225, 0.009560503271690743, 0.018394143361195915, 9.96235436442712)
         for i in 1:length(outputs_vac_outer)
             @test outputs_vac_outer[i] ≈ outputs_vac_outer_check[i]
         end
@@ -134,9 +135,11 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_bendM_outer[i] ≈ outputs_bendM_outer_check[i]
         end
 
-        Wstiff = TASOPT.CryoTank.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, fuse_tank.outer_material.UTS / 4, 
+        perim_vessel, _, _ = double_bubble_geom(fuse_tank.Rfuse, fuse_tank.dRfuse, fuse_tank.wfb, fuse_tank.nfweb) #Tank perimeter and cross-sectional area
+
+        Wstiff = TASOPT.CryoTank.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, perim_vessel, fuse_tank.outer_material.UTS / 4, 
         fuse_tank.outer_material.ρ, θ1, θ2, 10.0, 5.0, fuse_tank.outer_material.E)
-        Wstiff_check = 1653.9008501855653
+        Wstiff_check = 1717.0752091513864
         
         @test Wstiff ≈ Wstiff_check
     end
