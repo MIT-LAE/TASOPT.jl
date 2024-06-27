@@ -298,11 +298,11 @@ readgeom(x) = read_input(x, geom, dgeom)
     else
         fuselage.n_decks =  1
     end
-    fuselage.layout.radius = Distance(readgeom("radius"))
-    fuselage.layout.bubble_lower_downward_shift = Distance(readgeom("dRadius"))
-    fuselage.layout.bubble_center_y_offset = Distance(readgeom("y_offset"))
+    fuselage.layout.cross_section.radius = Distance(readgeom("radius"))
+    fuselage.layout.cross_section.bubble_lower_downward_shift = Distance(readgeom("dRadius"))
+    # fuselage.layout.cross_section.bubble_center_y_offset = Distance(readgeom("y_offset"))
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
-    fuselage.layout.n_webs = readgeom("Nwebs")
+    # fuselage.layout.cross_section.n_webs = readgeom("Nwebs")
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
     fuselage.layout.tailcone_taper_ratio = readgeom("tailcone_taper")
