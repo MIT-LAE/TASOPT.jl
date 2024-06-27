@@ -40,7 +40,7 @@ end
 # constants
 function Base.getproperty(obj::SingleBubble, sym::Symbol)
     if sym === :n_webs
-        return 0
+        return 1
     elseif sym === :bubble_center_y_offset
         return 0.0
     else
