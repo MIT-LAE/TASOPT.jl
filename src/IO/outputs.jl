@@ -447,15 +447,18 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
         end
 
-    pax = parg[igWpay]/parm[imWperpax]
+    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+        pax = parg[igWpay]/parm[imWperpax]
+        θ = find_floor_angles(false, parg[igRfuse], parg[igdRfuse], h_seat = parg[igseatheight]) #Find the floor angle
+        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ) #Cabin width
+        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
 
-    wcabin = find_cabin_width(parg[igRfuse], parg[igdRfuse], parg[igwfb], parg[ignfweb], parg[igfloordist]) #Find cabin width
-    _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
-    xseats = xseats .+ xseats0
-    rows = length(xseats)
+        xseats = xseats .+ xseats0
+        rows = length(xseats)
 
-    println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats = arrange_seats(seats_per_row, wcabin)
+        println("Seats per row = $seats_per_row, Total rows = $rows")
+        yseats = arrange_seats(seats_per_row, wcabin)
+    end
 
     ## Plot
     if ax === nothing
@@ -554,8 +557,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
         # Show seats
 
+        if pari[iidoubledeck] == 0 #Show seats in single deck case
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-
+        end
      # diagnostic marks
     #  ax.scatter(parg[igxftank] - l/2, 0.0, color = "k", marker="o", zorder = 21)
     #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
@@ -1389,14 +1393,18 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     end
 
     #Seats
-    pax = parg[igWpay]/parm[imWperpax]
-    wcabin = find_cabin_width(parg[igRfuse], parg[igdRfuse], parg[igwfb], parg[ignfweb], parg[igfloordist]) #Find cabin width
-    _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
-    xseats = xseats .+ xseats0
-    rows = length(xseats)
+    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+        pax = parg[igWpay]/parm[imWperpax]
+        θ = find_floor_angles(false, parg[igRfuse], parg[igdRfuse], h_seat = parg[igseatheight]) #Find the floor angle
+        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ) #Cabin width
+        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
 
-    println("Seats per row = $seats_per_row, Total rows = $rows")
-    yseats = arrange_seats(seats_per_row, wcabin)
+        xseats = xseats .+ xseats0
+        rows = length(xseats)
+
+        println("Seats per row = $seats_per_row, Total rows = $rows")
+        yseats = arrange_seats(seats_per_row, wcabin)
+    end
 
     ## Plot
     if ax === nothing
@@ -1503,8 +1511,9 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
 
         # Show seats
+        if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
             ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-
+        end
      # diagnostic marks
     #  ax.scatter(parg[igxftank] - l/2, 0.0, color = "k", marker="o", zorder = 21)
     #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
