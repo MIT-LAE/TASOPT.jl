@@ -8,7 +8,7 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
     # Get Foo based on Tt41 or T/O thrust
     # Tt41 = pare[ieTt41, ipstatic]
     Foo = pare[ieFe , ipstatic] # This is for aircraft!
-    ip = iptest
+    ip = 1#iptest
     
     if Foo == 0.0
         icall = 1 #Tt41 specified
@@ -17,15 +17,17 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
         icall = 2 #Fn specified
         # println("Fn specified mode")
     end
-
+    
     
     icool = 1
     inite1 = 0
 
     _, _ = TASOPT.tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
-    Ftotal = pare[ieFe, ip]
-    mdotf = pare[iemdotf, ip]
-    EINOx1  = pare[ieEINOx1, ip]
+    Foo = pare[ieFe, ip]
+    mdotf = pare[iemcore, ip]#/1e2
+    Pt3 = pare[iept3]
+    Tt3 = pare[ieTt3]
+    EINOx1  = get_EINOx_4(Pt3/1e3, Tt3, 0)
 
     # NPSS_success, Foo, heatexcess, 
     # mdotf, EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR,
@@ -41,11 +43,15 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
         for (i,TS) in enumerate(LTOpoints)
             # NPSS_success, Ftotal, heatexcess, 
             #mdotf, EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR, Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, 0.0, 0.0, Foo*TS, 0.0, mofft, Pofft, ifirst, parg, parpt, pare, ip)
+            pare[ieFe, ip] = Foo*TS
             _, _ = TASOPT.tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
             
             Ftotal = pare[ieFe, ip]
-            mdotf = pare[iemdotf, ip]
-            EINOx1  = pare[ieEINOx1, ip]
+            mdotf = pare[iemcore, ip]#/1e2
+            Pt3 = pare[iept3]
+            Tt3 = pare[ieTt3]
+            EINOx1  = get_EINOx_4(Pt3/1e3, Tt3, 0)
+            # pare[ieEINOx1, ip]
 
             ifirst  = false
     
@@ -57,3 +63,19 @@ function LTO(name, pari,parg,para,pare; fileout = stdout)
     
     
     end
+
+function get_EINOx_4(Pt3, Tt3, sp_humidity)
+    # Pt3 in kPa and Tt3 in K
+    # Coefficients
+    a4 = 4.85354237e-11
+    b4 = -6.51089333e-08
+    c4 =  7.19366066e-06
+    d4 = 2.06850617e-02
+    e4 =  -6.69412110e+00
+    H4 = -19.0 * (sp_humidity - 0.00634)
+
+    EINOx = exp(H4) * Pt3^0.4 * (a4 * Tt3^4 + b4 * Tt3^3 + c4 * Tt3^2 + d4 * Tt3 + e4)
+
+    return EINOx
+end
+    
