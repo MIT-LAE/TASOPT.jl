@@ -1,62 +1,3 @@
-pari = zeros(Int64, iitotal)
-parg = zeros(Float64, igtotal)
-parm = zeros(Float64, imtotal)
-para = zeros(Float64, (iatotal, iptotal))
-pare = zeros(Float64, (ietotal, iptotal))
-
-
-# ------------------------------
-# Fuselage
-# ------------------------------
-fuse = Fuselage() 
-
-fuse.n_decks = 1.00000000000000000000
-fuse.shell.weight = 20951.741832783293 # igWshell   
-fuse.window.weight = 11269.98000000000138243195 # igWwindow   
-fuse.insulation.weight = 4779.85141602571093244478 # igWinsul   
-fuse.floor.weight = 13143.23579857934964820743 # igWfloor  
-fuse.cone.weight = 5866.861946749262 # igWcone  
-fuse.bending_h.weight = 13824.400690572249 # igWhbend   
-fuse.bending_v.weight = 7315.509061624873 # igWvbend   
-fuse.weight = 197179.06702783477 # igWfuse 
-fuse.moment = 3613923.907245339 # igxWfuse   
-fuse.weight_frac_string = 0.34999999999999997780 # igfstring   
-fuse.weight_frac_frame = 0.25000000000000000000 # igfframe   
-fuse.layout.nose_radius = 1.64999999999999991118 # iganose    
-fuse.layout.tail_radius = 2.00000000000000000000 # igbtail    
-fuse.layout.x_nose = 0.00000000000000000000 # igxnose    
-fuse.layout.x_end = 37.79520000000000123919 # igxend     
-fuse.layout.x_start_cylinder = 6.09600000000000008527 # igxblend1  
-fuse.layout.x_end_cylinder = 29.56559999999999988063 # igxblend2  
-fuse.layout.x_pressure_shell_fwd = 5.18160000000000042775 # igxshell1  
-fuse.layout.x_pressure_shell_aft = 31.08960000000000079012 # igxshell2  
-fuse.layout.x_cone_end = 35.66159999999999996589 # igxconend  
-fuse.bending_h.x = 31.95392982204161 # igxhbend   
-fuse.bending_v.x = 31.205389941066116 # igxvbend   
-fuse.layout.cross_section.radius = 1.95579999999999998295 # igRfuse    
-fuse.layout.cross_section.bubble_lower_downward_shift = 0.38100000000000000533 # igdRfuse   
-fuse.layout.floor_depth = 0.12700000000000000178 # ighfloor    
-fuse.layout.tailcone_taper_ratio  = 0.29999999999999998890 # iglambdac   
-fuse.skin.σ = 103421368.34273669123649597168 # igsigskin  
-fuse.bending_h.σ = 206842736.68547338247299194336 # igsigbend  
-fuse.bending_v.σ = 206842736.68547338247299194336 # igsigcap  
-fuse.fuse_shell_modulus_ratio  = 1.00000000000000000000 # igrEshell  
-fuse.skin.ρ = 2700.00000000000000000000 # igrhoskin 
-fuse.bending_h.ρ = 2700.00000000000000000000 # igrhobend
-fuse.bending_v.ρ = 2700.00000000000000000000 # igrhobend
-fuse.skin.thickness = 0.0010595136054184176 # igtskin    
-fuse.cone.thickness = 0.0012665740904264223 # igtcone    
-fuse.layout.thickness_webs = 0.00000000000000000000 # igtfweb    
-fuse.floor.thickness = 0.00090618178023850059 # igtfloor   
-fuse.shell.EIh = 2361814880.057694 # igEIhshell 
-fuse.bending_h.EIh = 24122698769.68933 # igEIhbend  
-fuse.bending_v.EIh = 24122698769.68933 # igEIhbend  
-fuse.shell.EIv = 2317835044.9163404 # igEIvshell 
-fuse.bending_h.EIv = 16928429060.563381 # igEIvbend
-fuse.bending_v.EIv = 16928429060.563381 # igEIvbend  
-fuse.shell.GJ = 1571169642.3110242 # igGJshell  
-fuse.cone.GJ = 1878222941.5825303 # igGJcone   
-
 # ------------------------------
 # Flags  - stored in pari array:
 # ------------------------------
@@ -426,6 +367,39 @@ parm[30] = 0.00000000000000000000
 parm[31] = 0.00000000000000000000 
 parm[32] = 0.00000000000000000000 
 parm[33] = 0.00000000000000000000 
+parm[34] = 0.00000000000000000000 
+parm[35] = 3704000.00000000000000000000 
+parm[36] = 143455.15950000000884756446 
+parm[37] = 956.36773000000005140464 
+parm[38] = 152.40000000000000568434 
+parm[39] = 298.00000000000000000000 
+parm[40] = 0.00000000000000000000 
+parm[41] = 0.00000000000000000000 
+parm[42] = 0.00000000000000000000 
+parm[43] = 0.00000000000000000000 
+parm[44] = 0.00000000000000000000 
+parm[45] = 0.00000000000000000000 
+parm[46] = 0.00000000000000000000 
+parm[47] = 0.00000000000000000000 
+parm[48] = 0.00000000000000000000 
+parm[49] = 0.00000000000000000000 
+parm[50] = 0.00000000000000000000 
+parm[51] = 0.00000000000000000000 
+parm[52] = 0.00000000000000000000 
+parm[53] = 0.00000000000000000000 
+parm[54] = -0.05235987755982988989 
+parm[55] = -0.05235987755982988989 
+parm[56] = 0.00000000000000000000 
+parm[57] = 0.00000000000000000000 
+parm[58] = 0.00000000000000000000 
+parm[59] = 0.00000000000000000000 
+parm[60] = 0.00000000000000000000 
+parm[61] = 0.00000000000000000000 
+parm[62] = 0.00000000000000000000 
+parm[63] = 0.00000000000000000000 
+parm[64] = 0.00000000000000000000 
+parm[65] = 0.00000000000000000000 
+parm[66] = 0.00000000000000000000 
 # --------------------------------
 # Aero     - stored in para array:
 # --------------------------------
