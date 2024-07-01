@@ -236,12 +236,12 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
         w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2)
 
         #Find length of each cabin
-        l1, _, _ = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
+        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
         l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
 
         maxl = max(l1, l2) #Required length
         
-        return maxl 
+        return maxl, pax_per_row_main 
     catch
         return 1e6
     end
@@ -276,7 +276,7 @@ function optimize_double_decker_cabin(parg, parm)
         upper = [paxsize - 1.0]
     end
 
-    obj(x, grad) = find_double_decker_cabin_length(x, parg, parm) #Objective function is cabin length
+    obj(x, grad) = find_double_decker_cabin_length(x, parg, parm)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
@@ -292,7 +292,10 @@ function optimize_double_decker_cabin(parg, parm)
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
-    return xopt
+    #Evaluate number of passengers per row in main cabin
+    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, parm)
+
+    return xopt, seats_per_row_main
 end
 
 """
