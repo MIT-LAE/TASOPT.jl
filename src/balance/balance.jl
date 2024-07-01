@@ -55,7 +55,7 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
       lftank = parg[iglftank]
 
       # Use weight fractions to calcualte weights of subsystems
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
+      Whpesys = parg[igWMTO] * TASOPT.structures.W(fuse.HPE_sys)
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
@@ -134,7 +134,7 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
            (Whtail * parg[igxhbox] + parg[igdxWhtail]) * Sh / Sh1 +
            Wvtail * parg[igxvbox] + parg[igdxWvtail] +
            Weng * parg[igxeng] +
-           Whpesys * parg[igxhpesys] +
+           Whpesys * fuse.HPE_sys.r[1] +
            Wlgnose * parg[igxlgnose] +
            Wlgmain * (parg[igxwbox] + dxlg)
 
@@ -339,7 +339,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
+      Whpesys = parg[igWMTO] * TASOPT.structures.W(fuse.HPE_sys)
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
@@ -351,7 +351,6 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       dxWvtail = parg[igdxWvtail]
 
       xeng = parg[igxeng]
-      xhpesys = parg[igxhpesys]
       xlgnose = parg[igxlgnose]
 
       # xtshaft = parg[igxtshaft ]
@@ -444,7 +443,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
                   Whtail * xhbox + dxWhtail +
                   Wvtail * xvbox + dxWvtail +
                   Weng * xeng +
-                  Whpesys * xhpesys +
+                  Whpesys * fuse.HPE_sys.r[1] +
                   Wlgnose * xlgnose +
                   Wlgmain * (xwbox + dxlg)
 
@@ -680,7 +679,7 @@ function cglpay(pari, parg, fuse)
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]
 
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
+      Whpesys = parg[igWMTO] * TASOPT.structures.W(fuse.HPE_sys)
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
@@ -712,7 +711,7 @@ function cglpay(pari, parg, fuse)
             Whtail * parg[igxhbox] + parg[igdxWhtail] +
             Wvtail * parg[igxvbox] + parg[igdxWvtail] +
             Weng * parg[igxeng] +
-            Whpesys * parg[igxhpesys] +
+            Whpesys * fuse.HPE_sys.r[1] +
             Wlgnose * parg[igxlgnose] +
             Wlgmain * (parg[igxwbox] + delxw + parg[igdxlgmain])
 

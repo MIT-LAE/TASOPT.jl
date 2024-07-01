@@ -62,7 +62,6 @@ export FuselageLayout
 include("./misc/fuselage.jl")
 export Fuselage
 
-
 #Load other functions
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
