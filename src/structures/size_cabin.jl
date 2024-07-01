@@ -278,14 +278,79 @@ function optimize_double_decker_cabin(parg, parm)
 
     obj(x, grad) = find_double_decker_cabin_length(x, parg, parm) #Objective function is cabin length
 
-    opt = Opt(:GN_DIRECT_L, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
+    opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
     opt.upper_bounds = upper
     opt.maxeval = 10000  # Set the maximum number of function evaluations
 
     opt.min_objective = obj
+
+    if dRfuse ≈ 0.0 #Apply constraints on lower floor if it can be moved around
+        inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, parg), 1e-5) #Minimum height of cargo hold
+        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, parg), 1e-5) #Minimum height of upper cabin
+    end
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     return xopt
+end
+
+"""
+    MinCargoHeightConst(x, parg, minheight = 1.626)
+
+This function evaluates a minimum height constraint on the cargo hold. It returns a number less than or equal 0 if
+the constraint is met and a value greater than 0 if it is not.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `x::Vector{Float64}`: vector with optimization variables
+    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `minheight::Float64`:minimum height of cargo hold
+
+    **Outputs:**
+    - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
+"""
+function MinCargoHeightConst(x, parg, minheight = 1.626)
+    #Extract parameters
+    θ1 = x[2]
+    Rfuse = parg[igRfuse]
+
+    hcargo = Rfuse * (1 + sin(θ1)) #Height left for cargo containers under floor
+
+    constraint = minheight/hcargo - 1.0 #Constraint has to be negative if hcargo > minheight
+    return constraint
+end
+
+"""
+    MinCabinHeightConst(x, parg, minheight = 2.0)
+
+This function evaluates a minimum height constraint on the upper cabin. It returns a number less than or equal 0 if
+the constraint is met and a value greater than 0 if it is not.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `x::Vector{Float64}`: vector with optimization variables
+    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `minheight::Float64`:minimum height of upper cabin
+
+    **Outputs:**
+    - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
+"""
+function MinCabinHeightConst(x, parg, minheight = 2.0)
+    #Extract parameters
+    θ1 = x[2] #Main deck angle
+    Rfuse = parg[igRfuse]
+    dRfuse = parg[igdRfuse]
+    d_floor = parg[igfloordist]
+
+    try #The calculation could fail for some inputs if an asin returns an error
+
+        _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= 0.0, d_floor = d_floor) #The seat height does not need to be included
+
+        hcabin = Rfuse * (1 - sin(θ2))
+
+        constraint = minheight/hcabin - 1.0 #Constraint has to be negative if hcabin > minheight
+
+        return constraint
+    catch
+        return 1.0
+    end
 end
