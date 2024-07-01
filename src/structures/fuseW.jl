@@ -120,16 +120,14 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
-      ifwing, nftanks, 
-      Waftfuel, Wftank, ltank, xftankaft, tank_placement,
-      ffadd,deltap,
+function fusew!(fuse,Nland,Wpay,Wpadd,Weng, nftanks, 
+      Waftfuel, Wftank, ltank, xftankaft, tank_placement,deltap,
       Wpwindow,Wppinsul,Wppfloor, 
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
       bv,lambdav,nvtail,
       xhtail,xvtail,
       xwing,xwbox,cbox,
-      xfix,xapu,xeng,xfuel)
+      xeng)
 
       layout = fuse.layout
 
@@ -198,8 +196,8 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       xWskin = fuse.skin.ρ*gee*(xVcyl + xVnose + xVbulk)
       xWfweb = fuse.skin.ρ*gee* xVfweb
 
-      fuse.shell.weight = Wskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + Wfweb
-      xWshell = xWskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + xWfweb
+      fuse.shell.weight = Wskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+fuse.weight_frac_additional) + Wfweb
+      xWshell = xWskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+fuse.weight_frac_additional) + xWfweb
 
 #--------------------------------------------------------------------
 #--- window weight
@@ -225,14 +223,14 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #--------------------------------------------------------------------
 #--- various weight moments
-      xWfix  = Wfix  * xfix
-      xWapu  = Wapu  * xapu
-      xWseat = Wseat * xcabin
+      xWfix  = moment(fuse.fixed)
+      xWapu  = moment(fuse.apu)
+      xWseat = W(fuse.seat) * xcabin
       xWpadd = Wpadd * xcabin
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
-      P = (Wpay+Wseat) * Nland / fuse.n_decks #Total load is distributed across all decks
+      P = (Wpay+W(fuse.seat)) * Nland / fuse.n_decks #Total load is distributed across all decks
       wfloor1 = layout.bubble_center_y_offset + layout.radius
 
       if (layout.bubble_center_y_offset == 0.0) 
@@ -264,7 +262,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
             (layout.x_cone_end-layout.x_pressure_shell_aft)/layout.radius *
             2.0/(1.0+layout.tailcone_taper_ratio)
 
-      fuse.cone.weight = rhocone*gee*Vcone*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd)
+      fuse.cone.weight = rhocone*gee*Vcone*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+fuse.weight_frac_additional)
       xWcone = fuse.cone.weight * 0.5*(layout.x_pressure_shell_aft + layout.x_cone_end)
 
       fuse.cone.thickness = Qv / (2.0*taucone*Afuse)
@@ -277,12 +275,12 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + fuse.cone.weight + Wapu + Waftfuel + Wftank + Weng
+      Wtail = Whtail + Wvtail + fuse.cone.weight + W(fuse.apu) + Waftfuel + Wftank + Weng
 
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +
-               xapu*Wapu + 
+               xWapu + 
                xeng*Weng +
                xftankaft*(Waftfuel + Wftank)) / Wtail
 
@@ -306,7 +304,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
       hfuse = layout.radius + 0.5*layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*
-          Nland*(Wpay+Wpadd+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+Wseat)*
+          Nland*(Wpay+Wpadd+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+W(fuse.seat))*
           0.5/lshell
       A1 = 1.0/(hfuse*sigMh)*
           (Nland*Wtail + rMh*Lhmax)
@@ -377,7 +375,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #----------------------------------------------------------------
 #--- overall fuse weight and moment
-      fuse.weight = Wfix + Wapu + Wpadd + Wseat +
+      fuse.weight = W(fuse.fixed) + W(fuse.apu) + Wpadd + W(fuse.seat) +
              fuse.shell.weight + fuse.cone.weight + fuse.window.weight + fuse.insulation.weight + fuse.floor.weight+
              fuse.bending_h.weight + fuse.bending_v.weight
 

@@ -111,27 +111,22 @@ function wsize(ac; itermax=35,
     parg[igRange] = Rangetot
     parg[igWpay] = Wpay
 
-    # Fixed weight and location of fixed weight
-    Wfix = parg[igWfix]
-    xfix = parg[igxfix]
-
     # Weight fractions
-    fapu = parg[igfapu]
+    # fapu = parg[igfapu]
     fpadd = parg[igfpadd]
-    fseat = parg[igfseat]
+    # fseat = parg[igfseat]
     feadd = parg[igfeadd]
     fnace = parg[igfnace]
     fhadd = parg[igfhadd]
     fvadd = parg[igfvadd]
     fwadd = parg[igfflap] + parg[igfslat] +
             parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
-    ffadd = parg[igffadd]
 
     fpylon = parg[igfpylon]
 
-    fhpesys = parg[igfhpesys]
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
+
 
     freserve = parg[igfreserve]
 
@@ -146,9 +141,9 @@ function wsize(ac; itermax=35,
     xeng = parg[igxeng]
 
     # calculate payload proportional weights from weight fractions
-    Wapu = Wpaymax * fapu
+    # Wapu = Wpaymax * fapu
     Wpadd = Wpaymax * fpadd
-    Wseat = Wpaymax * fseat
+    # Wseat = Wpaymax * fseat
 
     # window and insulation densities per length and per area
     Wpwindow = parg[igWpwindow]
@@ -298,8 +293,8 @@ function wsize(ac; itermax=35,
 
         # Wing panel weights and moments (after estimating span first)
         ip = ipcruise1
-        W = 5.0 * Wpay
-        S = W / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
+        We = 5.0 * Wpay
+        S = We / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
         b = sqrt(S * parg[igAR])
         bs = b * ηs
         Winn = 0.15 * Wpay / parg[igsigfac]
@@ -629,17 +624,16 @@ function wsize(ac; itermax=35,
             Wftank_single = 0.0
         end
         
-        (cabVol) = fusew!(fuse, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
-            ifwing, nftanks,
+        (cabVol) = fusew!(fuse, Nland, Wpaymax, Wpadd, Wengtail, 
+             nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
-            ffadd, Δp,
+             Δp,
             Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, λv, nvtail,
-            
             xhtail, xvtail,
             xwing, xwbox, cbox,
-            xfix, xapu, xeng, xfuel)
+            xeng)
 
         parg[igcabVol] = cabVol
 
@@ -650,10 +644,10 @@ function wsize(ac; itermax=35,
         if (iterw == 1 && initwgt == 0)
 
             feng = 0.08
-            fsum = feng + ffuel + fhpesys + flgnose + flgmain
+            fsum = feng + ffuel + TASOPT.structures.W(fuse.HPE_sys) + flgnose + flgmain
             WMTO = (Wpay + fuse.weight + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
 
-            Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain]
+            Weng, Wfuel = WMTO .* [feng, ffuel]
             parg[igWMTO] = WMTO
             parg[igWeng] = Weng
             parg[igWfuel] = Wfuel
@@ -704,12 +698,12 @@ function wsize(ac; itermax=35,
 
         # Size wing area and chords at start-of-cruise
         ip = ipcruise1
-        W = WMTO * para[iafracW, ip]
+        We = WMTO * para[iafracW, ip]
         CL = para[iaCL, ip]
         ρ0 = pare[ierho0, ip]
         u0 = pare[ieu0, ip]
         qinf = 0.5 * ρ0 * u0^2
-        BW = W + WbuoyCR #Weight including buoyancy
+        BW = We + WbuoyCR #Weight including buoyancy
 
         # Initial size of the wing area and chords
         S, b, bs, co = wingsc(BW, CL, qinf, AR, ηs, bo, λt, λs)
@@ -1228,8 +1222,8 @@ function wsize(ac; itermax=35,
         # println("CD = ", para[iaCD,ip])
         LoD = para[iaCL, ip] / para[iaCD, ip]
         gamV = para[iagamV, ip]
-        W = para[iafracW, ip] * WMTO
-        BW = W + WbuoyCR
+        We = para[iafracW, ip] * WMTO
+        BW = We + WbuoyCR
         # Fdes = BW * (1 / LoD + gamV) * 1.05 #Ad-hoc 5% addition for OEI
         Fdes = BW * (1 / LoD + gamV)
 
@@ -1411,7 +1405,7 @@ function Wupdate0!(parg, fuse, rlx, fsum)
     WMTO = parg[igWMTO]
     
 
-    ftotadd = sum(parg[[igfhpesys, igflgnose, igflgmain]])
+    ftotadd = TASOPT.structures.W(fuse.HPE_sys) + parg[igflgnose] + parg[igflgmain]
     fsum = 0.0
 
     Wsum = parg[igWpay] +
@@ -1444,7 +1438,6 @@ function Wupdate!(parg, fuse, rlx, fsum)
     fvtail = parg[igWvtail] / WMTO
     feng = parg[igWeng] / WMTO
     ffuel = parg[igWfuel] / WMTO
-    fhpesys = parg[igfhpesys]
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
 
@@ -1457,7 +1450,7 @@ function Wupdate!(parg, fuse, rlx, fsum)
 
     ftank = parg[igWftank] / WMTO
 
-    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys +
+    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + TASOPT.structures.W(fuse.HPE_sys) +
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)

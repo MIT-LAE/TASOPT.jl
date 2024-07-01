@@ -256,20 +256,20 @@ dweight = dfuse["Weights"]
 readweight(x) = read_input(x, weight, dweight)
     fuselage.weight_frac_frame = readweight("frame")
     fuselage.weight_frac_string = readweight("stringer")
-    parg[igffadd]   = readweight("additional")
+    fuselage.weight_frac_additional   = readweight("additional")
 
-    parg[igWfix] = Force(readweight("fixed_weight"))
+    fuselage.fixed.force = [0.0,0.0,Force(readweight("fixed_weight"))]
 
     parg[igWpwindow] = readweight("window_per_length")
     parg[igWppinsul] = readweight("window_insul_per_area")
     parg[igWppfloor] = readweight("floor_weight_per_area")
 
-    parg[igfhpesys] = readweight("HPE_sys_weight_fraction")
+    fuselage.HPE_sys.force = [0.0,0.0,readweight("HPE_sys_weight_fraction")]
     parg[igflgnose] = readweight("LG_nose_weight_fraction")
     parg[igflgmain] = readweight("LG_main_weight_fraction")
 
-    parg[igfapu] = readweight("APU_weight_fraction")
-    parg[igfseat] = readweight("seat_weight_fraction")
+    fuselage.apu.force = [0.0,0.0,readweight("APU_weight_fraction")*maxpax*Wpax]
+    fuselage.seat.force = [0.0,0.0,readweight("seat_weight_fraction")*maxpax*Wpax]
     parg[igfpadd] = readweight("add_payload_weight_fraction")
 
 geom = read_input("Geometry", fuse, dfuse)
@@ -285,10 +285,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
     parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
     parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
-    parg[igxapu]     = Distance(readgeom("x_APU"))
-    parg[igxhpesys]  = Distance(readgeom("x_HPE_sys"))
+    fuselage.apu.r = [Distance(readgeom("x_APU")),0.0,0.0]
+    fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
-    parg[igxfix] = Distance(readgeom("x_fixed_weight"))
+    fuselage.fixed.r = [Distance(readgeom("x_fixed_weight")),0.0,0.0]
 
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
@@ -337,9 +337,9 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
-    fuse_tank.Rfuse = fuse.layout.radius
-    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
-    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
+    fuse_tank.Rfuse = fuselage.layout.radius
+    fuse_tank.dRfuse = fuselage.layout.bubble_lower_downward_shift
+    fuse_tank.wfb = fuselage.layout.bubble_center_y_offset
     fuse_tank.nfweb = fuselage.layout.n_webs
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 

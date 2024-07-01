@@ -146,13 +146,13 @@ Point load.
 
 $TYPEDFIELDS
 """
-@kwdef struct PointLoad <: AbstractLoad
+@kwdef mutable struct PointLoad <: AbstractLoad
     """Point force F̲ = {Fx, Fy, Fz} [N]"""
     force::AbstractVector{Float64} = [0, 0, 0]
     """Reference frame"""
     frame::Frame = WORLD
     """Centroid (position) of applied force {x, y, z} [m]"""
-    r::AbstractVector{Float64}
+    r::AbstractVector{Float64} = [0,0,0]
 end
 
 """
@@ -203,6 +203,19 @@ function moment(L::AbstractLoad)
     return L.r × L.force #Cross product to get moment
 end  # function moment
 
+function moment(L::PointLoad)
+    m = L.r × L.force
+    return abs(m[2]) #Cross product to get moment
+end  # function moment
+
+"""
+    W(L::PointLoad)
+
+Calculates the k̂ weight of a given load `L` .
+"""
+function W(L::AbstractLoad)
+    return L.force[3]
+end
 """
     moment_arm(L::AbstractLoad)
     
