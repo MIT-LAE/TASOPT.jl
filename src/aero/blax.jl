@@ -103,7 +103,7 @@ function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
       dδᵢ     = zeros(idim)
 
       kdim=3*n #idim
-      asys = zeros(kdim,kdim)
+      asys = zeros(kdim, kdim)
       rsys = zeros(kdim)
 
       simi, lami, wake, direct = true, true, true, true
@@ -355,17 +355,13 @@ end # BL march loop
       for ipass = 1: npass #Newton iteration
 
 #---- clear system matrix and righthand side
-      for k = 1: nsys
-        rsys[k] = 0.
-        for l = 1: nsys
-          asys[k,l] = 0.
-        end
-      end
-
+      rsys[:] .= 0.0
+      asys[:,:] .= 0.0
+      
 #---- first point variables are held frozen... put 1's on diagonal
       asys[1,1] = 1.0
-      asys[2,2] = 1.0
-      asys[3,3] = 1.0
+      asys[n+1,n+1] = 1.0
+      asys[2*n+1,2*n+1] = 1.0
 
 
 #---- set current uvis corresponding to current mdi
@@ -472,7 +468,7 @@ end # BL march loop
 
 #------ put BL equations of small 3x3 system into big system
         for k = 1: 2
-          ksys = 3*(i-1)+ k
+          ksys = (k-1)*n + i
           rsys[ksys] = rr[k]
 
           r_th = aa[k,1]
@@ -483,30 +479,30 @@ end # BL march loop
           r_dsm = bb[k,2]
           r_uem = bb[k,3]
 
-          lsys = 3*(i-1) + 1
+          lsys = i
           asys[ksys,lsys  ] = r_th
-          asys[ksys,lsys-3] = r_thm
+          asys[ksys,lsys-1] = r_thm
 
-          lsys = 3*(i-1) + 2
+          lsys = n + i
           asys[ksys,lsys  ] = r_ds *ds_md
-          asys[ksys,lsys-3] = r_dsm*dsm_mdm
+          asys[ksys,lsys-1] = r_dsm*dsm_mdm
 
-          lsys = 3*(i-1) + 3
+          lsys = 2 * n + i
           asys[ksys,lsys  ] = r_ds *ds_ue   + r_ue
-          asys[ksys,lsys-3] = r_dsm*dsm_uem + r_uem
+          asys[ksys,lsys-1] = r_dsm*dsm_uem + r_uem
         end
 
 #------ set up 3rd ue equation, ue = uvis
         k = 3
-        ksys = 3*(i-1) + k
+        ksys = (k-1)*n + i
         rsys[ksys] = ue - uvis[i]
 
         for j = 1: n
-          lsys = 3*(j-1) + 2
+          lsys = n + j
           asys[ksys,lsys] = -uvis_mdi[i,j]
         end
 
-        lsys = 3*(i-1) + 3
+        lsys = 2*n + i
         asys[ksys,lsys] = asys[ksys,lsys] + 1.0
 
 #------ also store dependent variables for returning
@@ -579,9 +575,9 @@ rsys = asys\rsys
           md = mdi[i]
           ue = uₑᵢ[i]
 
-          kth = 3*(i-1) + 1
-          kmd = 3*(i-1) + 2
-          kue = 3*(i-1) + 3 
+          kth = i
+          kmd = n + i
+          kue = 2*n + i
           dθᵢ[i] = -rsys[kth]
           dmdi[i] = -rsys[kmd]
           duₑᵢ[i] = -rsys[kue]
