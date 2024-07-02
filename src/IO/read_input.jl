@@ -37,6 +37,7 @@ Density(x)  = convertDensity(parse_unit(x)...)
 Area(x)     = convertArea(parse_unit(x)...)
 Vol(x)      = convertVolume(parse_unit(x)...)
 Angle(x)    = convertAngle(parse_unit(x)...)
+Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
 """
@@ -278,6 +279,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     calculate_cabin = readgeom("calculate_cabin_length") 
     pari[iidoubledeck] = readgeom("double_decker") 
 
+    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+        parg[igfloordist] = Distance(readgeom("floor_distance")) #read vertical distance between floors
+    end
+
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
     parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
@@ -342,10 +347,6 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.placement = readfuel_storage("tank_placement")
     fuse_tank.fueltype = fueltype
-    fuse_tank.Rfuse = parg[igRfuse]
-    fuse_tank.dRfuse = parg[igdRfuse]
-    fuse_tank.wfb = parg[igwfb]
-    fuse_tank.nfweb = parg[ignfweb]
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
@@ -364,6 +365,8 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.pvent = Pressure(readfuel_storage("pressure_venting"))
     fuse_tank.pinitial = Pressure(readfuel_storage("pressure_initial"))
+    fuse_tank.t_hold_orig = Time(readfuel_storage("hold_departure"))
+    fuse_tank.t_hold_dest = Time(readfuel_storage("hold_arrival"))
     
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.ew = readfuel_storage("weld_efficiency")
@@ -372,7 +375,9 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
-    if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+    flag_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
+
+    if flag_vacuum #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
         fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
 

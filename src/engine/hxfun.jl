@@ -375,7 +375,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       N_iter = 15 #Expect fast convergence
 
-      n_passes = 4 #Initialize number of passes
+      n_passes = 4.0 #Initialize number of passes
       n_passes_prev = n_passes
       Ah = 0.0
       Cf = 0.0
@@ -1002,36 +1002,32 @@ drops in the process and coolant streams, with penalty factors to enforce constr
 """
 function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
-      # Create local copy of structs
-      HXg = deepcopy(HXgas)
-      HXgeo = deepcopy(HXgeom)
-
       #Apply states
-      HXg.Mc_in = x[1] / 100
+      HXgas.Mc_in = x[1] / 100
 
-      HXgeo.n_stages = x[2]
-      HXgeo.xt_D = x[3]
+      HXgeom.n_stages = x[2]
+      HXgeom.xt_D = x[3]
 
       if length(x) == 4 #only add length if it is being optimized
-            HXgeo.l = x[4]
+            HXgeom.l = x[4]
       end
 
       #Size HX
-      hxsize!(HXg, HXgeo)
+      hxsize!(HXgas, HXgeom)
 
       #Extract outputs
-      Pl_p = HXg.Pl_p
-      Pl_c = HXg.Pl_c
+      Pl_p = HXgas.Pl_p
+      Pl_c = HXgas.Pl_c
 
-      n_passes = HXgeo.n_passes
-      N_t = HXgeo.N_t
-      Δp_p = HXg.Δp_p
-      Δp_c = HXg.Δp_c
-      fconc = HXgeo.fconc
+      n_passes = HXgeom.n_passes
+      N_t = HXgeom.N_t
+      Δp_p = HXgas.Δp_p
+      Δp_c = HXgas.Δp_c
+      fconc = HXgeom.fconc
 
       #Inlet pressures (pressure drops should not exceed these)
-      pp_in = HXg.pp_in
-      pc_in = HXg.pc_in
+      pp_in = HXgas.pp_in
+      pc_in = HXgas.pc_in
       p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
 
       vars = [n_passes, N_t, Δp_p, Δp_c]
