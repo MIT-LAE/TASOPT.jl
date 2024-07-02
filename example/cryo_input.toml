@@ -48,8 +48,8 @@ name = "TASOPT Model with cryo fuel and HX"
     fuel_in_wing    = false # Is fuel stored in wings?
     fuel_in_wingcen = false # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
-    
-    fuel_enthalpy_vaporization = 0.0 #J/(kg K), latent heat of vaporization of fuel
+
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Fuel.Storage]
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".

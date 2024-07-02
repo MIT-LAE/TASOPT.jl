@@ -48,7 +48,7 @@
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
-    fuel_enthalpy_vaporization = 0.0 #J/(kg K), latent heat of vaporization of fuel
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
