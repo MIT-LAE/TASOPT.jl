@@ -1,6 +1,8 @@
 using TASOPT
 using Test
 
+include(TASOPT.__TASOPTindices__)
+
 @testset verbose=true "TASOPT" begin
     include("unit_test_structures.jl")
     include("unit_test_aero.jl")

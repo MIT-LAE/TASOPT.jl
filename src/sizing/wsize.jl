@@ -337,6 +337,12 @@ function wsize(ac; itermax=35,
     #Initialize HX storage array and reset previous HX engine values
     HXs = []
     resetHXs(pare)
+
+    #Store fuselage parameters in fuse_tank for ease of access 
+    fuse_tank.Rfuse = parg[igRfuse]
+    fuse_tank.dRfuse = parg[igdRfuse]
+    fuse_tank.wfb = parg[igwfb]
+    fuse_tank.nfweb = parg[ignfweb]
    
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1281,8 +1287,28 @@ function wsize(ac; itermax=35,
             para[iaPAfinf, :] .= PAfinf
 
             #Use homogeneous tank model to calculate required venting
-            _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac)
+            _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
             parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
+            fuse_tank.pmin = minimum(ps) #Store minimum tank pressure across mission
+
+            if iterw > 2 #Calculate takeoff engine state and time
+                #This is needed to know the TO duration to integrate the tank state
+                # set static thrust for takeoff routine
+                ip = ipstatic
+                icall = 1
+                icool = 1
+    
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                # set rotation thrust for takeoff routine
+                # (already available from cooling calculations)
+                ip = iprotate
+                icall = 1
+                icool = 1
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                takeoff!(ac; printTO = false)
+            end
         end
 
         # -----------------------------
@@ -1299,7 +1325,8 @@ function wsize(ac; itermax=35,
                     parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
                 end
             end
-            
+            #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
+            #With fuel storage in tanks, this is done in the block above.
         end
 
         # -----------------------------
@@ -1498,7 +1525,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(ac, initeng, ichoke5, ichoke7)
+    takeoff!(ac)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg)

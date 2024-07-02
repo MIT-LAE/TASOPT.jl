@@ -385,13 +385,14 @@
       const igseatpitch = 306
       const igseatwidth = 307
       const igaislehalfwidth = 308
+      const igfloordist = 309
 
-      const igWfvent = 309
-      const igdHXmax = 310
-      const igHXaddmassfrac = 311
-      const igWHXs = 312
+      const igWfvent = 310
+      const igdHXmax = 311
+      const igHXaddmassfrac = 312
+      const igWHXs = 313
 
-      const igtotal    = 312
+      const igtotal    = 313
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

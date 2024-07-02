@@ -55,21 +55,27 @@
     fuel_density = 817.0 #kg/m3
 
 [Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
-    tank_placement = "front" #Location of tank in fuselage. Choices are "front", "rear", or "both".
+    tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
 
     tank_aspect_ratio = 2.0
     fuselage_clearance = "0.3 ft"
-    tank_pressure = "2 atm"
-    additional_mass_fraction = 0.1
+    additional_mass_fraction = 0.25
     weld_efficiency = 0.9 
-    ullage_fraction = 0.1 
+    ullage_fraction = 0.05 #minimum ullage fraction at tank venting pressure
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
     SL_temperature_for_tank = "288.2 K"
+
+    #Tank pressure design parameters
+    pressure_rise_factor = 2.0 #Factor to account for stratification in homogenous tank model (pfac >= 1)
+    pressure_venting = "2 atm"
+    pressure_initial = "1.2 atm"
+    hold_departure = "0 h"
+    hold_arrival = "0 h"
 
     inner_vessel_material = "Al-2219-T87"
     inner_vessel_support_angle = "80 deg"
     
-    #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum"
+    #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum", "mylar", "microspheres"
     size_insulation = true #Flag to decide whether to size insulation for boiloff
     insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
     insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
@@ -152,6 +158,7 @@
     calculate_cabin_length = false 
 
     double_decker   = false #if true, the fuselage has two passenger decks
+    floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
     aisle_halfwidth = "10 in"
