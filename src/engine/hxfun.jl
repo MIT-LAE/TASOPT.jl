@@ -196,9 +196,6 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
 
-            if isnan(h_lat) #If the latent heat was not specified, assume it is 0
-                  h_lat = 0
-            end
       end
 
       #---------------------------------
@@ -526,10 +523,6 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       if frecirc
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
-
-            if isnan(h_lat) #If the latent heat was not specified, assume it is 0
-                  h_lat = 0
-            end
       end
 
       #---------------------------------
@@ -1083,7 +1076,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       Tc_ft = pare_sl[ieTft]
       frecirc = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
-      h_lat = pare_sl[iehlat]
+      h_lat = pare_sl[iehvap]
       igas = pari[iifuel]
       PreCorder = pare_sl[iePreCorder]
       PreCepsilon = pare_sl[iePreCepsilon]
@@ -1350,7 +1343,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       end
 
       #---------------------------------
-      # Update fuel temperature
+      # Update fuel temperature and heat of vaporization
       #---------------------------------
 
       for ip = 1:size(pare)[2] #For every mission point
@@ -1361,6 +1354,10 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
 
                   pare[ieTfuel, ip] = Tf
             end
+      end
+
+      if frecirc #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+            pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
      
       return HeatExchangers
@@ -1392,6 +1389,9 @@ function resetHXs(pare)
       pare[ieTurbCDeltap, :] .= 0.0
       pare[ieRegenDeltah, :] .= 0.0
       pare[ieRegenDeltap, :] .= 0.0
+
+      #Reset heat of vaporization in combustor
+      pare[iehvapcombustor, :, :] = pare[iehvap, :, :]
 
 end
 

@@ -157,6 +157,8 @@ end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
+pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
+pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
 
 # Setup mission variables
 ranges = readmis("range")
@@ -883,7 +885,6 @@ dHEx = dprop["HeatExchangers"]
 
     pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
     pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-    pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
     pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
     
     pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
