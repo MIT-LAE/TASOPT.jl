@@ -12,7 +12,8 @@ using Printf
 
 using StaticArrays
 # using PyCall
-using PyPlot
+using PythonPlot
+plt = pyplot #Aliasing just for convenience
 # pygui(true)
 using Dates
 using ForwardDiff
