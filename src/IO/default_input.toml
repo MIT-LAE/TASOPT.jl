@@ -53,7 +53,7 @@
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
-    fuel_enthalpy_vaporization = 0.0 #J/(kg K), latent heat of vaporization of fuel
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".

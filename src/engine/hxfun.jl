@@ -1597,6 +1597,7 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
       Tt3 = pare_sl[ieTt3]
       Ttf = pare_sl[ieTfuel]
       Tt4 = pare_sl[ieTt4]
+      hvap = pare_sl[iehvapcombustor]
 
       etab = pare[ieetab]
       beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
@@ -1622,7 +1623,7 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
       gamma = copy(buf)
       #
 
-      ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4)
+      ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4, hvap)
 
       lambdap = zeros(nair)
 
