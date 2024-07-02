@@ -1,32 +1,29 @@
-"""
-`odperf!` runs the aircraft in off-design mode to generate a `BADA`-like 
-`PTF` file for use in `AEIC`.
-"""
-function odperf!(pari, parg, parm, para, pare, Wfrac, FL, 
-    NPSS_TS::Base.Process, 
-    NPSS_Fan::Base.Process, 
-    NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process)
+# function odperf!(ac.pari, ac.parg, ac.parm, ac.para, ac.pare, W, FL, 
+#     NPSS_TS::Base.Process, 
+#     NPSS_Fan::Base.Process, 
+#     NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process, mofft, Pofft)
 
+function odperf!(ac, W, FL, Ldebug, ifirst, mofft, Pofft)
 calc_ipc1 = true
 # ifirst = true
 # Ldebug = true
 
-itergmax::Int64 = 20
+itergmax::Int64 = 50
 gamVtol  = 1.0e-12
 
 # BLI
-    fBLIf   = parg[igfBLIf]
-    DAfsurf = para[iaDAfsurf, ipcruise1]
-    KAfTE   = para[iaKAfTE, ipcruise1]
+    fBLIf   = ac.parg[igfBLIf]
+    DAfsurf = ac.para[iaDAfsurf, ipcruise1]
+    KAfTE   = ac.para[iaKAfTE, ipcruise1]
 
 # Zero-fuel weight for this mission
-    Wzero   = parg[igWMTO] - parg[igWfuel] - parg[igWpay] + parm[imWpay]  #This ensures that this will work for multi-mission in the future
-    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+    Wzero   = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay] + ac.parm[imWpay]  #This ensures that this will work for multi-mission in the future
+    Wempty  = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
 # Payload fraction for this mission
-    rpay = parm[imWpay]/parg[igWpay]
+    rpay = ac.parm[imWpay]/ac.parg[igWpay]
     ξpay = 0.
 
-S    = parg[igS]
+S    = ac.parg[igS]
 # Convert FLs to altitude in m
 alts = FL*100*ft_to_m
 
@@ -43,7 +40,7 @@ M0s = zeros(Float64, N)
 Wbouys = zeros(Float64, N)
 Ws = zeros(Float64, N)
 γs = ones(Float64, N)*0.015
-Tt4s = zeros(Float64, N)
+Tt41s = zeros(Float64, N)
 
 deNOx = zeros(Float64, N)
 mdotf = zeros(Float64, N)
@@ -59,41 +56,43 @@ crzFAR   = zeros(Float64, N)
 clmbEINOx = zeros(Float64, N)
 crzTAS   = zeros(Float64, N)
 desTAS   = zeros(Float64, N)
-Tt4crz   = zeros(Float64, N)
-Tt4crzmax   = zeros(Float64, N)
+Tt41crz   = zeros(Float64, N)
+Tt41crzmax   = zeros(Float64, N)
 
 @inbounds for i =1:N
     T0s[i], p0s[i], ρ0s[i], a0s[i], μ0s[i] = atmos(alts[i]/1000)
-    rhocab = max( parg[igpcabin] , p0s[i] ) / (RSL*TSL) #Should be T0s to be more accurate?
-    Wbouys[i] = (rhocab-ρ0s[i])*gee*parg[igcabVol]
+    rhocab = max( ac.parg[igpcabin] , p0s[i] ) / (RSL*TSL) #Should be T0s to be more accurate?
+    Wbouys[i] = (rhocab-ρ0s[i])*gee*ac.parg[igcabVol]
 end
 
-MNcr = para[iaMach, ipcruise1]
-Tt4max = maximum(pare[ieTt4, :])
+MNcr = ac.para[iaMach, ipcruise1]
+Tt41max = maximum(ac.pare[ieTt41, :])
+Tt41CR = ac.pare[ieTt41,ipcruise1]
 println(@sprintf("%12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s %12s", 
 "FL", "TAS", "CAS", "Mach", "Fn", "L/D", "Tt4max", "Tmetmax", "FFmax", "Tt4cruise", "Tmetcruise", "FFcruise", "CL", "CLh"))
 # integrate trajectory over climb
 for   i = 1:N
     
     # velocity calculation from CL, Weight, altitude
-    W  = Wfrac*parg[igWMTO]
-
     #Get flight speed from climb schedule
     CAScl, TAScl, Mcl = get_climbspeed(alts[i], MNcr)
-    # println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
+    #Get flight speed from descent schedule
     CASdes, TASdes, Mdes = get_descentspeed(alts[i], MNcr)
 
-    if i == 1 #assume climb CL below 
+    # println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
+    # println(@sprintf("%.2f, %.2f, %.2f",CASdes, TASdes, Mdes))
+
+    if alts[i] <= 2000/3.28084 #assume climbout CL as below 
         ip = iptest # dummy location to store values
-        CL = para[iaCL, ipclimb1]
-        para[:, ip] .= para[:, ipclimb1] #initialize iptest location
-        pare[:, ip] .= pare[:, ipclimb1] #initialize iptest location
+        CL = ac.para[iaCL, ipclimb1]
+        ac.para[:, ip] .= ac.para[:, ipclimb1] #initialize iptest location
+        ac.pare[:, ip] .= ac.pare[:, ipclimb1] #initialize iptest location
 
     else
         ip = iptest # dummy location to store values
-        CL = para[iaCL, ipcruise1]
-        para[:, ip] .= para[:, ipcruise1]
-        pare[:, ip] .= pare[:, ipcruise1]
+        CL = ac.para[iaCL, ipcruise1] # To be used by cruise values (Climb CL will be recalc. and override this)
+        ac.para[:, ip] .= ac.para[:, ipcruise1] #initialize iptest location
+        ac.pare[:, ip] .= ac.pare[:, ipclimb1] #initialize iptest location
     end
 
     ρ  = ρ0s[i]
@@ -110,35 +109,35 @@ for   i = 1:N
     V      = 0.0
 
     if (Ldebug)
-        printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
-                        "iterg", "dgamV", "gamV", "cosg", "CL", "BW", "Tt4", "Ftotal", "DoL", "V", "Alt", "M", "Tt4"); color = :light_green)
+        printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s  %10s\n",
+                        "iterg", "dgamV", "gamV", "cosg", "CL", "BW", "Ftotal", "DoL", "V", "Alt", "M", "Tt41"); color = :light_green)
     end
     for  iterg = 1:itergmax
-
+        
         q = 0.5*ρ*TAScl^2
         CL = BW*cosg/(q*S)
-        para[iaCL, ip] = CL
+
+        ac.para[iaCL, ip] = CL
 
         V = TAScl
         Mach = V/Vsound
-        para[iaMach, ip] = Mach
+        ac.para[iaMach, ip] = Mach
 
-        V0s[i] = V # Save climb TAS (m/s) to V0s
-        desTAS[i] = TASdes/kts_to_mps # Save descent TAS separately, convert to knots
+        V0s[i] = V
+        desTAS[i] = TASdes/kts_to_mps
         M0s[i] = Mach
         Reunits[i] = V*ρ/μ
         
-        para[iaMach, ip] = Mach
-        para[iaReunit, ip] = V*ρ/μ
-        pare[ieu0, ip] = V
-        pare[ieM0, ip] = Mach
+        ac.para[iaMach, ip] = Mach
+        ac.para[iaReunit, ip] = V*ρ/μ
+        ac.pare[ieu0, ip] = V
+        ac.pare[ieM0, ip] = Mach
 
         # Set pitch trim by adjusting CLh
         Wf = W - Wzero
-        rfuel = Wf/parg[igWfuel]*0
+        rfuel = Wf/ac.parg[igWfuel]*0
         itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
-
+        balance(ac.pari, ac.parg, view(ac.para, :, ip), rfuel, rpay, ξpay, itrim)
         
         # Calculate Drag
         if (i == 1)
@@ -146,35 +145,75 @@ for   i = 1:N
         else 
             icdfun = 1
         end
-        if CL > 0.9
+        if alts[i] < 5000/3.28084 # Under 5000ft climb case
+            # Transient/unsteady with flap etc roattion phase (takeoff/ rotation/ don't try to calulate CD and just use what you have)
+            # Maybe in the future we want to incorporate different CL depending on load and flap schedule, altitude etc.
+            # HILOAD case obviously flap is extended until 4~5000 ft climb
             icdfun = 0
+            if  CL < 0.875 # if it is a low enough load case with low enough CL, if only impose this, it oscillates if one iter gives CL = 0.9 and other give 0.85 for example. 
+                icdfun = 1 
+            end
         end
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+        cdsum!(ac.pari, ac.parg, view(ac.para, :, ip), view(ac.pare, :, ip), icdfun)
 
-        #BLI parameters
-        ρ0 = pare[ierho0, ip]
-        u0 = pare[ieu0  , ip] 
+        #BLI ac.parameters
+        ρ0 = ac.pare[ierho0, ip]
+        u0 = ac.pare[ieu0  , ip] 
         Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
         Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
 
         # ifirst = false
         #Run propsys to MAX THRUST
         TR = 11.5
-        Tt4s[i] =  max(2850, min(Tt4max, T0s[i]*TR*18/10)) # convert to [R]
-        if NPSS_PT
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            mdotf[i], deNOx_, EINOx1, EINOx2, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4max, 
-                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
-        else
-            Ftotal, η, P, Hrej, heatexcess,
-            mdotf[i], BSFC,
-            deNOx[i], EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4s[i],
-                                        Kinl, Φinl, parpt, parmot, pargen, ifirst, false)
+        OEW = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
+
+        # Climb Tt41 schedule
+        if W > 0.95 * ac.parg[igWMTO]
+            Tt41frac = LinRange(0.976,0.976, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
+        elseif W < 1.05*(1.2*OEW) # Low weight
+            Tt41frac = LinRange(0.92,0.963, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft        
+        else # mid-weight (reference mass)
+            Tt41frac = LinRange(0.94,0.975, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
         end
+
+        if alts[i] <= (2000/3.28084) * 1.1 # At or under 2000 [ft]
+            Tt41s[i] = Tt41frac[1]*Tt41max # convert to [R]
+
+        else # climb thrust
+            Tt41s[i] = Tt41frac[i-5]*Tt41max # convert to [R], Tt41frac[i-5] for same reason as above
+        end
+
+        # if NPSS_PT
+        #     NPSS_success, Ftotal, heatexcess, 
+        #     mdotf[i], EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR,
+        #     Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt41s[i], mofft, Pofft, 
+        #         ifirst, ac.parg, parpt, ac.pare, iptest)
+        # else
+        #     Ftotal, η, P, Hrej, heatexcess,
+        #     mdotf[i], BSFC,
+        #     deNOx[i], EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt41s[i],
+        #                                 Kinl, Φinl, parpt, ac.parmot, ac.pargen, ifirst, false)
+        # end
+
+        # NON NPSS
+        ip = iptest
+
+        ac.pared[:, ip] = ac.pared[:, ipstatic]
+        ac.parad[:, ip] = ac.parad[:, ipstatic]
+
+        icall = 2
+        icool = 1
+        initeng = 0
+
+        TASOPT.tfcalc!(ac.ac.pari, ac.parg, view(ac.parad, :, ip), 
+                                    view(ac.pared, :, ip), ip, icall, icool, initeng)
+
+        mdotf[i] = ac.pared[ieff, iptest] * ac.pared[iemcore]     
+        EINOx1 = EINOx(ac, iptest; method=method)
+
         ifirst = false
-        clmbEINOx[i] = EINOx2
-        DoL = para[iaCD, ip]/ para[iaCL, ip]
+        clmbEINOx[i] = EINOx1
+        DoL = ac.para[iaCD, ip]/ ac.para[iaCL, ip]
 
         # Calculate improved flight angle
         ϕ = Ftotal/BW
@@ -186,11 +225,11 @@ for   i = 1:N
         dgamV = gamV - γs[i]
         γs[i] = gamV
         
-        para[iagamV, ip] = gamV
+        ac.para[iagamV, ip] = gamV
 
         if (Ldebug)
             printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4f  %9.4f  %9.4f\n",
-                        iterg, abs(dgamV), gamV*180/π, cosg, CL, BW, Tt4max, Ftotal, DoL, V, alts[i], Mach, Tt4s[i]); color =:light_green)
+                        iterg, abs(dgamV), gamV*180/π, cosg, CL, BW, Tt41max, Ftotal, DoL, V, alts[i], Mach, Tt41s[i]); color =:light_green)
         end
         
         if(abs(dgamV) < gamVtol) 
@@ -201,21 +240,22 @@ for   i = 1:N
     if ROC[i] <= 00
         iceil = i
         println("Climb ceiling reached at FL",FL[i])
-        println("ROC = $(ROC[i]), Tt4 = $(Tt4s[i]), M = $Mach, W = $BW , CL = $CL, Ftotal = $Ftotal")
+        println("ROC = $(ROC[i]), Tt41 = $(Tt41s[i]), M = $Mach, W = $BW , CL = $CL, Ftotal = $Ftotal")
         ROC[i:end] .= 0.0
         break
     end
     if (abs(dgamV) > gamVtol) 
-            println("Climb gamV not converged. dgamV = $dgamV")
+        println("Climb gamV not converged. dgamV = $dgamV")
+        # break
     end
-    pare[ieFe, ip] = Ftotal
+    ac.pare[ieFe, ip] = Ftotal
   
     # Cruise Section
-    if FL[i]≥ 30 && FL[i]≤431
+    if FL[i]≥ 60 && FL[i]≤410
         ip = iptest
         #Get flight speed from climb schedule
         CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
-        # Mcr = para[iaMach, ipcruise1]
+        # Mcr = ac.para[iaMach, ipcruise1]
         # TAScr = Mcr*a0s[i]
         # CAScr = TAS_CAS(TAScr, alts[i])
         crzTAS[i] = TAScr/kts_to_mps
@@ -223,32 +263,41 @@ for   i = 1:N
         BW = W + Wbouys[i]
         q = 0.5*ρ0s[i]*TAScr^2
         CL = BW/(q*S)
-        para[iaCL, ip] = CL
+        ac.para[iaCL, ip] = CL
 
         V = TAScr
         # Commented out: 
         # Because climb/descent TAS has been overwritten by cruise TAS if run for same altitude. "crzTAS" is separately saved and sent to printBADA
         # V0s[i] = TAScr 
         Mach = Mcr
-        para[iaMach, ip] = Mach
-        para[iaReunit, ip] = V*ρ/μ
-        pare[ieu0, ip] = V
-        pare[ieM0, ip] = Mach
+        ac.para[iaMach, ip] = Mach
+        ac.para[iaReunit, ip] = V*ρ/μ
+        ac.pare[ieu0, ip] = V
+        ac.pare[ieM0, ip] = Mach
 
         Wf = W - Wzero
-        rfuel = Wf/parg[igWfuel]*0
+        rfuel = Wf/ac.parg[igWfuel]*0
 
         #Trim aircraft
         itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+        balance(ac.pari, ac.parg, view(ac.para, :, ip), rfuel, rpay, ξpay, itrim)
         icdfun = 1
-        if CL > 1.0
+
+        # printstyled(@sprintf("%9.4e  %9.4e n", FL[i], crzTAS[i]); color =:light_red)
+
+        if (FL[i] < 50 && CL > 0.8)
+            # NEED SIMILAR THING AS CLIMB FOR HIGH LOAD CASE CRUISE, ex 3000ft CRZ at 230 kts cannot be flown clean wing
+            # FOR NOW, REVERT TO WHAT YOU HAVE
+
+            printstyled(@sprintf("%9.4e  %9.4e \n", CL, BW); color =:light_red)
             println("CL during cruise is $CL")
+
             icdfun = 0
         end
         #Get Drag
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
-        DoL = para[iaCD, ip]/ para[iaCL, ip]
+        cdsum!(ac.pari, ac.parg, view(ac.para, :, ip), view(ac.pare, :, ip), icdfun)
+        
+        DoL = ac.para[iaCD, ip]/ ac.para[iaCL, ip]
 
         F  = BW*(DoL) #zero climb angle for cruise
         # println("F = $F, BW = $BW, W = $W, Wb = $(Wbouys[i]), Wf = $(Wf)")
@@ -258,95 +307,133 @@ for   i = 1:N
         u0 = Mach*a0s[i]
         Φinl = 0.5*ρ0*u0^3 * (DAfsurf*fBLIf)/2.0 
         Kinl = 0.5*ρ0*u0^3 * (KAfTE  *fBLIf)/2.0 # Assume 2 engines
-        TR = 11.0 # Tt4/ Tamb
-        Tt4 = max(2850, min(Tt4max, T0s[i]*TR*18/10)) # convert to [R]
+
+        TR = 11.0 # Tt41/ Tamb
+        Tt41 = max(Tt41CR, min(Tt41max, T0s[i]*TR*18/10)) # convert to [R]
 
         # Calculate max possible thrust at this Tt4, alt and Mach
         # Tt4 = Tt4s[i]
-        Tt4crzmax[i] = Tt4
-        if NPSS_PT
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            FFmaxcrz[i], deNOx, EINOx1, EINOx2, FAR, Tt3, OPR,
-            Wc3, Tt41, EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, 0.0, Tt4, 
-                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
-            Tmetmax = pare[ieTmet1, iptest]
-        else
-            Ftotal, η, P, Hrej, heatexcess,
-            FFmaxcrz[i], BSFC,
-            deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
-                                            Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
-        end
+        Tt41crzmax[i] = Tt41
+        # if NPSS_PT
+        #     NPSS_success, Ftotal, heatexcess, 
+        #     FFmaxcrz[i], EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR,
+        #     Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt41s[i], mofft, Pofft, 
+        #         ifirst, ac.parg, parpt, ac.pare, iptest)
+        #     Tmetmax = ac.pare[ieTmet1, iptest]
+
+        # else
+        #     Ftotal, η, P, Hrej, heatexcess,
+        #     FFmaxcrz[i], BSFC,
+        #     deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt41 ,
+        #                                     Kinl, Φinl, parpt, ac.parmot, ac.pargen, ifirst, Ldebug)
+        # end
+
+        icall = 2
+        icool = 1
+        initeng = 0
+
+        TASOPT.tfcalc!(ac.ac.pari, ac.parg, view(ac.parad, :, ip), 
+                                    view(ac.pared, :, ip), ip, icall, icool, initeng)
+        
+        Ftotal = ac.pared[ieFe, iptest]
+        FFmaxcrz[i] = ac.pared[ieff, iptest] * ac.pared[iemcore]     
+        EINOx1 = EINOx(ac, iptest; method=method)
+        Tmetmax = ac.pare[ieTmet1, iptest]
+        Tt41 = ac.pared[ieTt41, iptest]
 
         gam = Ftotal/BW - DoL
-        Tt4crzmax[i] = Tt4
+        Tt41crzmax[i] = Tt41
         ROCmaxcrz[i] = sin(gam)*V*60/0.3048 # this is the max possible ROC at this weight, alt and cruise speed etc.
         if Ftotal <F
             println("Ehhhhh Ftotal = ", Ftotal, "Freq = ",F)
             break
         end
 
-        if NPSS_PT
-            NPSS_success, Ftotal, η, P, Hrej, heatexcess, 
-            crzmdotf[i], deNOx, EINOx1, crzEINOx[i], crzFAR[i], Tt3, OPR,
-            Wc3, Tt4crz[i], EGT = NPSS_TEsysOD(NPSS, alts[i], Mach, F, 0.0, 
-                Kinl, Φinl, 0.0, 0.0, ifirst, parg, parpt, pare, iptest)
-            Tmetcrz= pare[ieTmet1, iptest]
-        else
-            iter = 1
-            itermax = 20
-            for iter = 1:itermax
-                if abs(Ftotal - F)<1
-                    break
-                end
-                ΔF = F - Ftotal
-                Tt4 = Tt4*(1 + ΔF/Ftotal/5) # 5 is just a scale factor so you don't get random oscillations
-                # println(Tt4)
-                Tt4 = max(2850, min(Tt4, Tt4s[i]))
-                Tt4crz[i] = Tt4
-                # println("Adjusted --> ",Tt4)
-                # TR = TR*0.99
-                # Tt4 = max(2850, min(Tt4s[i], T0s[i]*TR*18/10)) # convert to [R]
-                # println(alts[i], " ", Tt4)
-                Ftotal, η, P, Hrej, heatexcess,
-                crzmdotf[i], BSFC,
-                deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt4 ,
-                Kinl, Φinl, parpt, parmot, pargen, ifirst, Ldebug)
 
-                crzEINOx[i] = EINOx2
-                crzFAR[i]   = FAR
+        icall = 2
+        icool = 1
+        initeng = 0
 
-                gam = Ftotal/BW - DoL
-                # println(Wfrac, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
-                if Tt4 ≤ 2850 && Ftotal>F    
-                    println("gam = ", gam, "ROC = ", sin(gam)*V*60/0.3048)
-                    gam = 0.0
-                    println("Min Temp reached")
-                end
-            end
-            if iter == itermax && abs(Ftotal - F)>1
-                println("Steady level cruise not converged - increase itermax?")
-            end
-        end
-
+        TASOPT.tfcalc!(ac.ac.pari, ac.parg, view(ac.parad, :, ip), 
+                                    view(ac.pared, :, ip), ip, icall, icool, initeng)
+        
+        Ftotal = ac.pared[ieFe, iptest]
+        crzmdotf[i] = ac.pared[ieff, iptest] * ac.pared[iemcore]     
+        EINOx1 = EINOx(ac, iptest; method=method)
+        #TODO FAR = ???
+        Tt3   = ac.pared[ieTt3, iptest]
+        Tt41 = ac.pared[ieTt41, iptest]
+        Tmetcrz= ac.pare[ieTmet1, iptest]
+        crzEINOx[i] = EINOx1
+        crzFAR[i]   = FAR
+        #TODO EGT = ???
         EGTcrz[i] = EGT
+        # if NPSS_PT
+        #     NPSS_success, Ftotal, heatexcess, 
+        #     crzmdotf[i], EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR,
+        #     Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, F, Tt41s[i], mofft, Pofft, 
+        #         ifirst, ac.parg, parpt, ac.pare, iptest)
+        #     Tmetcrz= ac.pare[ieTmet1, iptest]
+        #     crzEINOx[i] = EINOx1
+        #     crzFAR[i]   = FAR
+        # else
+        #     iter = 1
+        #     itermax = 100
+        #     for iter = 1:itermax
+        #         if abs(Ftotal - F)<1
+        #             break
+        #         end
+        #         ΔF = F - Ftotal
+        #         Tt41 = Tt41*(1 + ΔF/Ftotal/5) # 5 is just a scale factor so you don't get random oscillations
+        #         # println(Tt4)
+        #         Tt41 = max(Tt41CR, min(Tt41, Tt41s[i]))
+        #         Tt41crz[i] = Tt41
+        #         # println("Adjusted --> ",Tt41)
+        #         # TR = TR*0.99
+        #         # Tt41 = max(Tt41CR, min(Tt41s[i], T0s[i]*TR*18/10)) # convert to [R]
+        #         # println(alts[i], " ", Tt41)
+        #         Ftotal, η, P, Hrej, heatexcess,
+        #         crzmdotf[i], BSFC,
+        #         deNOxcrz, EGT, Tt3, W3, EINOx1, EINOx2, FAR = PowerTrainOD(NPSS_TS, NPSS_Fan, NPSS_AftFan, alts[i], Mach, Tt41 ,
+        #         Kinl, Φinl, parpt, ac.parmot, ac.pargen, ifirst, Ldebug)
+
+        #         crzEINOx[i] = EINOx2
+        #         crzFAR[i]   = FAR
+
+        #         gam = Ftotal/BW - DoL
+        #         # println(Wfrac, "--> gam = ", gam, " ROC = ", sin(gam)*V*60/0.3048, " FFsteadylevel = ", crzmdotf[i])
+        #         if Tt41 ≤ Tt41CR && Ftotal>F    
+        #             println("gam = ", gam, "ROC = ", sin(gam)*V*60/0.3048)
+        #             gam = 0.0
+        #             println("Min Temp reached")
+        #         end
+        #     end
+        #     if iter == itermax && abs(Ftotal - F)>1
+        #         println("Steady level cruise not converged - increase itermax?")
+        #     end
+        # end
+
+        
 
         if ROCmaxcrz[i]<=0
             ROCmaxcrz[i] = 0.0
+            println("Setting ROC maxcrz to 0.0")
         end
-
         println(@sprintf("%12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f %12.3f", 
-        FL[i], TAScr/kts_to_mps, CAScr/kts_to_mps, Mcr, F, 1/DoL, Tt4crzmax[i], Tmetmax, FFmaxcrz[i], Tt4crz[i], Tmetcrz, crzmdotf[i], CL, para[iaCLh, ip]))
+        FL[i], TAScr/kts_to_mps, CAScr/kts_to_mps, Mcr, F, 1/DoL, Tt41crzmax[i], Tmetmax, FFmaxcrz[i], Tt41crz[i], Tmetcrz, crzmdotf[i], CL, ac.para[iaCLh, ip]))
     end #cruise section done
 
 end #outer loop
 
-return Wfrac*parg[igWMTO], alts[iceil], V0s, desTAS, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt4crz, Tt4crzmax, crzEINOx, clmbEINOx, crzFAR
+maxcruisealt = alts[maximum(findall(crzmdotf -> crzmdotf != 0, crzmdotf))]
+
+return W, alts[iceil], V0s, desTAS, ROC, mdotf, crzmdotf, crzTAS, EGTcrz, FFmaxcrz, ROCmaxcrz, Tt41crz, Tt41crzmax, crzEINOx, clmbEINOx, crzFAR, maxcruisealt
 end
 
 function get_cruisespeed(h, MNcr)
-    h_ft = h/0.3048
-    Vcr2 = 280/1.944 # From BADA 737__.APF
-    htrans_ft = Hptrans(Vcr2, 0.8)
+    h_ft = round(h/0.3048/1000)*1000
+    Vcr2 = 280/1.944
+    htrans_ft = Hptrans(Vcr2, 0.78)
     T, P, ρ,  a = atmos(h/1000)
     TAS = MNcr*a
     if h_ft<3000
@@ -376,8 +463,7 @@ function get_climbspeed(h,MNcr)
     TAS = a*MNcr
     Vcl1 = 300/1.944 # From BADA 737__.APF
     Vcl2 = 300/1.944 # From BADA 737__.APF
-    htrans_ft = Hptrans(Vcl2/1.944, 0.8)
-
+    htrans_ft = Hptrans(Vcl2/1.944, 0.78)
     VstallTO = 117/1.944 # From 738__.PTF file BADA, flap 5 (Standard Takeoff Setting for B738)
     
     CVmin = 1.3 # From BADA manual
@@ -418,14 +504,14 @@ function get_climbspeed(h,MNcr)
 
     return CAS, TAS, MN
 end
-
+    
 function get_descentspeed(h,MNcr)
     h_ft = h/0.3048
     T, P, ρ,  a = atmos(h/1000)
     TAS = a*MNcr
     Vdes1 = 290/1.944 # From BADA 737__.APF
     Vdes2 = 290/1.944 # From BADA 737__.APF
-    htrans_ft = Hptrans(Vdes2/1.944, 0.8)
+    htrans_ft = Hptrans(Vdes2/1.944, 0.78)
 
     VstallLD = 107/1.944 # From 738__.PTF file BADA, flap 30 (Standard Landing Setting for B738)
     
