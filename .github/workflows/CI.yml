@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: '3.9'
           #cache: 'pip' # caching pip dependencies
-      - run: pip install matplotlib
+      - run: pip install matplotlib==3.8.4
       - uses: julia-actions/julia-buildpkg@v1
         env:
          PYTHON: ""
