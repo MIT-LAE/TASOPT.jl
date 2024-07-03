@@ -59,15 +59,10 @@ function wsize(ac; itermax=35,
     # Flags
     # Fuel type 24 == kerosene #TODO need to update this for LH2
     ifuel = pari[iifuel]
-    # ifwcen = pari[iifwcen]
     iwplan = pari[iiwplan]
     iengloc = pari[iiengloc]
     iengwgt = pari[iiengwgt]
-    # iBLIc = pari[iiBLIc]
-    # ifclose = pari[iifclose]
-    # iHTsize = pari[iiHTsize]
     iVTsize = pari[iiVTsize]
-    # ixwmove = pari[iixwmove]
     ifwing = pari[iifwing]
 
     # Unpack number of powertrain elements
@@ -112,11 +107,7 @@ function wsize(ac; itermax=35,
     parg[igWpay] = Wpay
 
     # Weight fractions
-    # fapu = parg[igfapu]
-    # fpadd = parg[igfpadd]
-    # fseat = parg[igfseat]
     feadd = parg[igfeadd]
-    fnace = parg[igfnace]
     fhadd = parg[igfhadd]
     fvadd = parg[igfvadd]
     fwadd = parg[igfflap] + parg[igfslat] +
@@ -137,18 +128,7 @@ function wsize(ac; itermax=35,
     xwbox = parg[igxwbox]
     xhbox = parg[igxhbox]
     xvbox = parg[igxvbox]
-    xapu = parg[igxapu]
     xeng = parg[igxeng]
-
-    # calculate payload proportional weights from weight fractions
-    # Wapu = Wpaymax * fapu
-    # Wpadd = Wpaymax * fpadd
-    # Wseat = Wpaymax * fseat
-
-    # window and insulation densities per length and per area
-    Wpwindow = parg[igWpwindow]
-    Wppinsul = parg[igWppinsul]
-    Wppfloor = parg[igWppfloor]
 
     # fuselage-bending inertial relief factors
     rMh = parg[igrMh]
@@ -594,7 +574,6 @@ function wsize(ac; itermax=35,
         xvtail = parg[igxvtail]
         xwbox = parg[igxwbox]
         xwing = parg[igxwing]
-        xapu = parg[igxapu]
         xeng = parg[igxeng]
 
         Wtesys = parg[igWtesys]
@@ -628,7 +607,6 @@ function wsize(ac; itermax=35,
              nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
              Δp,
-            Wpwindow, Wppinsul, Wppfloor,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, λv, nvtail,
             xhtail, xvtail,
