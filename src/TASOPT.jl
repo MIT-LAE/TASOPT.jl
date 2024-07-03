@@ -61,6 +61,7 @@ include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
 include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
 include(joinpath(__TASOPTroot__,"mission/woper.jl"))
 include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
+include(joinpath(__TASOPTroot__,"mission/printBADA.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
 include(joinpath(__TASOPTroot__,"engine/PT.inc"))

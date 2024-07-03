@@ -3,14 +3,14 @@
 #     NPSS_Fan::Base.Process, 
 #     NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process, mofft, Pofft)
 
-function odperf!(ac, W, FL, Ldebug, ifirst, mofft, Pofft)
+function odperf!(ac, W, FL, Ldebug)
 calc_ipc1 = true
 # ifirst = true
 # Ldebug = true
 
 itergmax::Int64 = 50
 gamVtol  = 1.0e-12
-
+method = "cubic"
 # BLI
     fBLIf   = ac.parg[igfBLIf]
     DAfsurf = ac.para[iaDAfsurf, ipcruise1]
@@ -85,14 +85,18 @@ for   i = 1:N
     if alts[i] <= 2000/3.28084 #assume climbout CL as below 
         ip = iptest # dummy location to store values
         CL = ac.para[iaCL, ipclimb1]
-        ac.para[:, ip] .= ac.para[:, ipclimb1] #initialize iptest location
-        ac.pare[:, ip] .= ac.pare[:, ipclimb1] #initialize iptest location
+        ac.pared[:, ip] .= ac.pare[:, ipclimb1]
+        ac.parad[:, ip] .= ac.para[:, ipclimb1]
+        # ac.para[:, ip] .= ac.para[:, ipclimb1] #initialize iptest location
+        # ac.pare[:, ip] .= ac.pare[:, ipclimb1] #initialize iptest location
 
     else
         ip = iptest # dummy location to store values
         CL = ac.para[iaCL, ipcruise1] # To be used by cruise values (Climb CL will be recalc. and override this)
-        ac.para[:, ip] .= ac.para[:, ipcruise1] #initialize iptest location
-        ac.pare[:, ip] .= ac.pare[:, ipclimb1] #initialize iptest location
+        # ac.para[:, ip] .= ac.para[:, ipcruise1] #initialize iptest location
+        # ac.pare[:, ip] .= ac.pare[:, ipclimb1] #initialize iptest location
+        ac.pared[:, ip] .= ac.pare[:, ipclimb1]
+        ac.parad[:, ip] .= ac.para[:, ipcruise1]
     end
 
     ρ  = ρ0s[i]
@@ -137,7 +141,7 @@ for   i = 1:N
         Wf = W - Wzero
         rfuel = Wf/ac.parg[igWfuel]*0
         itrim = 1
-        balance(ac.pari, ac.parg, view(ac.para, :, ip), rfuel, rpay, ξpay, itrim)
+        balance(ac.pari, ac.parg, view(ac.parad, :, ip), rfuel, rpay, ξpay, itrim)
         
         # Calculate Drag
         if (i == 1)
@@ -154,7 +158,7 @@ for   i = 1:N
                 icdfun = 1 
             end
         end
-        cdsum!(ac.pari, ac.parg, view(ac.para, :, ip), view(ac.pare, :, ip), icdfun)
+        cdsum!(ac.pari, ac.parg, view(ac.parad, :, ip), view(ac.pared, :, ip), icdfun)
 
         #BLI ac.parameters
         ρ0 = ac.pare[ierho0, ip]
@@ -198,19 +202,19 @@ for   i = 1:N
         # NON NPSS
         ip = iptest
 
-        ac.pared[:, ip] = ac.pared[:, ipstatic]
-        ac.parad[:, ip] = ac.parad[:, ipstatic]
+        # ac.pared[:, ip] = ac.pared[:, ipstatic]
+        # ac.parad[:, ip] = ac.parad[:, ipstatic]
 
         icall = 2
         icool = 1
         initeng = 0
 
-        TASOPT.tfcalc!(ac.ac.pari, ac.parg, view(ac.parad, :, ip), 
+        TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                     view(ac.pared, :, ip), ip, icall, icool, initeng)
 
         mdotf[i] = ac.pared[ieff, iptest] * ac.pared[iemcore]     
         EINOx1 = EINOx(ac, iptest; method=method)
-
+        Ftotal =  ac.pared[ieFe, iptest]
         ifirst = false
         clmbEINOx[i] = EINOx1
         DoL = ac.para[iaCD, ip]/ ac.para[iaCL, ip]
@@ -280,7 +284,7 @@ for   i = 1:N
 
         #Trim aircraft
         itrim = 1
-        balance(ac.pari, ac.parg, view(ac.para, :, ip), rfuel, rpay, ξpay, itrim)
+        balance(ac.pari, ac.parg, view(ac.parad, :, ip), rfuel, rpay, ξpay, itrim)
         icdfun = 1
 
         # printstyled(@sprintf("%9.4e  %9.4e n", FL[i], crzTAS[i]); color =:light_red)
@@ -295,7 +299,7 @@ for   i = 1:N
             icdfun = 0
         end
         #Get Drag
-        cdsum!(ac.pari, ac.parg, view(ac.para, :, ip), view(ac.pare, :, ip), icdfun)
+        cdsum!(ac.pari, ac.parg, view(ac.parad, :, ip), view(ac.pared, :, ip), icdfun)
         
         DoL = ac.para[iaCD, ip]/ ac.para[iaCL, ip]
 
@@ -332,7 +336,7 @@ for   i = 1:N
         icool = 1
         initeng = 0
 
-        TASOPT.tfcalc!(ac.ac.pari, ac.parg, view(ac.parad, :, ip), 
+        TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                     view(ac.pared, :, ip), ip, icall, icool, initeng)
         
         Ftotal = ac.pared[ieFe, iptest]
@@ -354,19 +358,25 @@ for   i = 1:N
         icool = 1
         initeng = 0
 
-        TASOPT.tfcalc!(ac.ac.pari, ac.parg, view(ac.parad, :, ip), 
+        TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                     view(ac.pared, :, ip), ip, icall, icool, initeng)
         
         Ftotal = ac.pared[ieFe, iptest]
         crzmdotf[i] = ac.pared[ieff, iptest] * ac.pared[iemcore]     
         EINOx1 = EINOx(ac, iptest; method=method)
-        #TODO FAR = ???
+        FAR = ac.pared[ieff, iptest]
         Tt3   = ac.pared[ieTt3, iptest]
         Tt41 = ac.pared[ieTt41, iptest]
         Tmetcrz= ac.pare[ieTmet1, iptest]
         crzEINOx[i] = EINOx1
         crzFAR[i]   = FAR
-        #TODO EGT = ???
+        # Velocity to mach
+        _, _, _, a = atmos(alts[i]/1000)
+        mach_num = ac.pared[ieu9, iptest]/a
+        # Tt9 to T9 
+        Tt9oT9 = 1 + (((1.4-1)/2)*mach_num^2)
+        T9 = Tt9oT9/ac.pared[ieTt9, iptest]
+        EGT = T9
         EGTcrz[i] = EGT
         # if NPSS_PT
         #     NPSS_success, Ftotal, heatexcess, 

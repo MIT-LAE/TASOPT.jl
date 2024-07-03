@@ -2,7 +2,7 @@
 # be used by TASOPT
 ["Aircraft Description"]
     name = "Default TASOPT Model"
-    description = """737-800
+    description = """
     This model file describes a basic single-aisle aircraft to 
     demonstrate how to define a model file. The contents of this file are 
     also loaded by the `TASOPT.jl` package as default if no other details are 
@@ -46,7 +46,7 @@
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "Jet-A" # Choices are ... [TODO]
+    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
@@ -54,16 +54,52 @@
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
 
+[Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
+    tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
+
+    tank_aspect_ratio = 2.0
+    fuselage_clearance = "0.3 ft"
+    additional_mass_fraction = 0.25
+    weld_efficiency = 0.9 
+    ullage_fraction = 0.05 #minimum ullage fraction at tank venting pressure
+    heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
+    SL_temperature_for_tank = "288.2 K"
+
+    #Tank pressure design parameters
+    pressure_rise_factor = 2.0 #Factor to account for stratification in homogenous tank model (pfac >= 1)
+    pressure_venting = "2 atm"
+    pressure_initial = "1.2 atm"
+    hold_departure = "0 h"
+    hold_arrival = "0 h"
+
+    inner_vessel_material = "Al-2219-T87"
+    inner_vessel_support_angle = "80 deg"
+    
+    #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum", "mylar", "microspheres"
+    size_insulation = true #Flag to decide whether to size insulation for boiloff
+    insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
+    insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
+    
+    cruise_boiloff_rate = 0.4 #%/hour, used if size_insulation == true
+    insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if size_insulation == true
+
+    #Parameters for double-walled tank, if "vacuum" is in insulation_material
+    outer_vessel_material = "Al-2219-T87"
+    outer_vessel_support_angles = ["45 deg", "135 deg"]
+    
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
-    pax = 180       # Number of passengers in each mission
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
-    
-    range = "3000.0 nmi" # Design Range + second mission range           
-    weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
-                            # includes luggage [lbm or lbf or kg or N] 
-                            # judging you if you use imperial units but wtvs
+                                
+    range = "3000.0 nmi" # Design Range + second mission range
+
+    pax = 180                    # Number of passengers in each mission
+                                        # weight per pax also specified (215 lbf/pax is std)
+
+    weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
+                                    # includes luggage [lbm or lbf or kg or N] 
+                                    # judging you if you use imperial units but wtvs
 
     fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
 
@@ -71,8 +107,8 @@
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = "0 ft"
-    takeoff_T = 298.0
+    takeoff_alt = "0.0 ft"
+    takeoff_T = 288.2
 
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
@@ -91,7 +127,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = "35e3 ft"
+    cruise_alt  = "35000.0 ft"
     cruise_mach = 0.80
     cruise_CL   = 0.57
 
@@ -118,6 +154,15 @@
     HT_load_fuse_bend_relief = 0.4 
     VT_load_fuse_bend_relief = 0.7
 # Overall fuselage layout
+    #Use provided layout (false) or recalculate it (true) for maximum pax keeping deltas
+    calculate_cabin_length = false 
+
+    double_decker   = false #if true, the fuselage has two passenger decks
+    seat_pitch      = "30 in"
+    seat_width      = "19 in"
+    aisle_halfwidth = "10 in"
+
+    #Provided layout
     x_nose_tip           = "0 ft"
     x_pressure_shell_fwd = "17 ft"
     x_start_cylinder     = "20 ft"
@@ -439,6 +484,28 @@
     nacelle_pylon_wetted_area_ratio = 16.0 # = rSnace = wetted area/fan area
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
+[Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
+    recirculation_flag = 0
+    recirculation_temperature = 0
+    latent_heat = 0
+    core_inner_diameter = 0
+
+    precooler_order = 0
+    precooler_effectiveness = 0
+    precooler_inlet_mach = 0
+
+    intercooler_order = 0
+    intercooler_effectiveness = 0
+    intercooler_inlet_mach = 0
+
+    regenerative_order = 0
+    regenerative_effectiveness = 0
+    regenerative_inlet_mach = 0
+
+    turbine_cooler_order = 0
+    turbine_cooler_effectiveness = 0
+    turbine_cooler_inlet_mach = 0
+    
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   
