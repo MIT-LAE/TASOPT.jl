@@ -1,3 +1,4 @@
+using PythonCall
 """
 `weight_buildup` prints out the weight build up for the aircraft
 """
@@ -789,9 +790,9 @@ Simple utility function to label bars in a stacked bar chart
 """
 function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
     for (i,bar) in enumerate(Bararray)
-        w, h = bar[1].get_width(), bar[1].get_height()
-        x, y = bar[1].get_x(), bar[1].get_y()
-        a.text(x+w, y+h/2, @sprintf("%7.3f", h*val_multiplier), ha = "left", va = "center", fontsize = fontsize)
+        w, h = bar[0].get_width(), bar[0].get_height()
+        x, y = bar[0].get_x(), bar[0].get_y()
+        a.text(x+w, y+h/2, @sprintf("%7.3f", pyconvert(Float64, h)*val_multiplier), ha = "left", va = "center", fontsize = fontsize)
         a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = fontsize)
     end
 end
