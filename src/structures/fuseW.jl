@@ -120,7 +120,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew!(fuse,Nland,Wpay,Wpadd,Weng, nftanks, 
+function fusew!(fuse,Nland,Wpay,Weng, nftanks, 
       Waftfuel, Wftank, ltank, xftankaft, tank_placement,deltap,
       Wpwindow,Wppinsul,Wppfloor, 
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
@@ -223,14 +223,14 @@ function fusew!(fuse,Nland,Wpay,Wpadd,Weng, nftanks,
 
 #--------------------------------------------------------------------
 #--- various weight moments
-      xWfix  = moment(fuse.fixed)
-      xWapu  = moment(fuse.apu)
-      xWseat = W(fuse.seat) * xcabin
-      xWpadd = Wpadd * xcabin
+      xWfix  = y_moment(fuse.fixed)
+      xWapu  = y_moment(fuse.apu)
+      xWseat = fuse.seat.W * xcabin
+      xWpadd = fuse.added_payload.W * xcabin
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
-      P = (Wpay+W(fuse.seat)) * Nland / fuse.n_decks #Total load is distributed across all decks
+      P = (Wpay+fuse.seat.W) * Nland / fuse.n_decks #Total load is distributed across all decks
       wfloor1 = layout.bubble_center_y_offset + layout.radius
 
       if (layout.bubble_center_y_offset == 0.0) 
@@ -275,7 +275,7 @@ function fusew!(fuse,Nland,Wpay,Wpadd,Weng, nftanks,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + fuse.cone.weight + W(fuse.apu) + Waftfuel + Wftank + Weng
+      Wtail = Whtail + Wvtail + fuse.cone.weight + fuse.apu.W + Waftfuel + Wftank + Weng
 
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
@@ -304,7 +304,7 @@ function fusew!(fuse,Nland,Wpay,Wpadd,Weng, nftanks,
 
       hfuse = layout.radius + 0.5*layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*
-          Nland*(Wpay+Wpadd+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+W(fuse.seat))*
+          Nland*(Wpay+fuse.added_payload.W+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+fuse.seat.W)*
           0.5/lshell
       A1 = 1.0/(hfuse*sigMh)*
           (Nland*Wtail + rMh*Lhmax)
@@ -375,7 +375,7 @@ function fusew!(fuse,Nland,Wpay,Wpadd,Weng, nftanks,
 
 #----------------------------------------------------------------
 #--- overall fuse weight and moment
-      fuse.weight = W(fuse.fixed) + W(fuse.apu) + Wpadd + W(fuse.seat) +
+      fuse.weight = fuse.fixed.W + fuse.apu.W + fuse.added_payload.W + fuse.seat.W +
              fuse.shell.weight + fuse.cone.weight + fuse.window.weight + fuse.insulation.weight + fuse.floor.weight+
              fuse.bending_h.weight + fuse.bending_v.weight
 

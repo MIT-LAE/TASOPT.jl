@@ -50,7 +50,7 @@ specified coordinate `frame`
 
 $(TYPEDFIELDS)
 """
-struct Weight <: AbstractLoad
+mutable struct Weight <: AbstractLoad
     """Weight [N]"""
     W::Float64
     """Location {x,y,z} [m]"""
@@ -72,7 +72,7 @@ end  # function Weight
 $(TYPEDSIGNATURES)
 
 """
-function Weight(;W::Float64, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+function Weight(;W::Float64=0.0, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
     Weight(W, SA[x,y,z], frame)
 end
 
@@ -203,19 +203,6 @@ function moment(L::AbstractLoad)
     return L.r × L.force #Cross product to get moment
 end  # function moment
 
-function moment(L::PointLoad)
-    m = L.r × L.force
-    return abs(m[2]) #Cross product to get moment
-end  # function moment
-
-"""
-    W(L::PointLoad)
-
-Calculates the k̂ weight of a given load `L` .
-"""
-function W(L::AbstractLoad)
-    return L.force[3]
-end
 """
     moment_arm(L::AbstractLoad)
     

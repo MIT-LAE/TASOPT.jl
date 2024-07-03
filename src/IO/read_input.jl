@@ -258,19 +258,19 @@ readweight(x) = read_input(x, weight, dweight)
     fuselage.weight_frac_string = readweight("stringer")
     fuselage.weight_frac_additional   = readweight("additional")
 
-    fuselage.fixed.force = [0.0,0.0,Force(readweight("fixed_weight"))]
+    fuselage.fixed.W = Force(readweight("fixed_weight"))
 
     parg[igWpwindow] = readweight("window_per_length")
     parg[igWppinsul] = readweight("window_insul_per_area")
     parg[igWppfloor] = readweight("floor_weight_per_area")
 
-    fuselage.HPE_sys.force = [0.0,0.0,readweight("HPE_sys_weight_fraction")]
+    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
     parg[igflgnose] = readweight("LG_nose_weight_fraction")
     parg[igflgmain] = readweight("LG_main_weight_fraction")
 
-    fuselage.apu.force = [0.0,0.0,readweight("APU_weight_fraction")*maxpax*Wpax]
-    fuselage.seat.force = [0.0,0.0,readweight("seat_weight_fraction")*maxpax*Wpax]
-    parg[igfpadd] = readweight("add_payload_weight_fraction")
+    fuselage.apu.W = readweight("APU_weight_fraction")*maxpax*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
 
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
