@@ -113,7 +113,7 @@ function wsize(ac; itermax=35,
 
     # Weight fractions
     # fapu = parg[igfapu]
-    fpadd = parg[igfpadd]
+    # fpadd = parg[igfpadd]
     # fseat = parg[igfseat]
     feadd = parg[igfeadd]
     fnace = parg[igfnace]
@@ -142,7 +142,7 @@ function wsize(ac; itermax=35,
 
     # calculate payload proportional weights from weight fractions
     # Wapu = Wpaymax * fapu
-    Wpadd = Wpaymax * fpadd
+    # Wpadd = Wpaymax * fpadd
     # Wseat = Wpaymax * fseat
 
     # window and insulation densities per length and per area
@@ -624,7 +624,7 @@ function wsize(ac; itermax=35,
             Wftank_single = 0.0
         end
         
-        (cabVol) = fusew!(fuse, Nland, Wpaymax, Wpadd, Wengtail, 
+        (cabVol) = fusew!(fuse, Nland, Wpaymax, Wengtail, 
              nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
              Δp,
@@ -644,7 +644,7 @@ function wsize(ac; itermax=35,
         if (iterw == 1 && initwgt == 0)
 
             feng = 0.08
-            fsum = feng + ffuel + TASOPT.structures.W(fuse.HPE_sys) + flgnose + flgmain
+            fsum = feng + ffuel + fuse.HPE_sys.W + flgnose + flgmain
             WMTO = (Wpay + fuse.weight + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
 
             Weng, Wfuel = WMTO .* [feng, ffuel]
@@ -1405,7 +1405,7 @@ function Wupdate0!(parg, fuse, rlx, fsum)
     WMTO = parg[igWMTO]
     
 
-    ftotadd = TASOPT.structures.W(fuse.HPE_sys) + parg[igflgnose] + parg[igflgmain]
+    ftotadd = fuse.HPE_sys.W + parg[igflgnose] + parg[igflgmain]
     fsum = 0.0
 
     Wsum = parg[igWpay] +
@@ -1450,7 +1450,7 @@ function Wupdate!(parg, fuse, rlx, fsum)
 
     ftank = parg[igWftank] / WMTO
 
-    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + TASOPT.structures.W(fuse.HPE_sys) +
+    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)

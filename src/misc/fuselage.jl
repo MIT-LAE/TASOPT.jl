@@ -37,14 +37,11 @@ $TYPEDFIELDS
     bending_v::StructuralMember = StructuralMember(material=material)
 
     # Loads
-    apu::structures.PointLoad = structures.PointLoad()
-    seat::structures.PointLoad = structures.PointLoad()
-    added_payload::structures.PointLoad = structures.PointLoad()
-    HPE_sys::structures.PointLoad = structures.PointLoad()
-    fixed::structures.PointLoad = structures.PointLoad()
-    LG_nose::structures.PointLoad = structures.PointLoad()
-    LG_main::structures.PointLoad = structures.PointLoad()
-    engine::structures.PointLoad = structures.PointLoad()
+    apu::structures.Weight = structures.Weight()
+    seat::structures.Weight = structures.Weight()
+    added_payload::structures.Weight = structures.Weight()
+    HPE_sys::structures.Weight = structures.Weight()
+    fixed::structures.Weight = structures.Weight()
 
     # Misc properties
     """Number of decks in fuselage"""
