@@ -52,7 +52,7 @@ function Base.show(io::IO, airf::airfoil)
     )
 end
 
-using PyPlot
+using PythonPlot
 function plot(airf::airfoil)
     fig, ax = plt.subplots(2,1, sharex = true)
     ax[1].plot(airf.cl, airf.A[end, :, :, 1] + airf.A[end, :, :, 2], label = airf.τ)

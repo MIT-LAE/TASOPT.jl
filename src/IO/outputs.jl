@@ -1,3 +1,4 @@
+using PythonCall
 """
 `weight_buildup` prints out the weight build up for the aircraft
 """
@@ -540,7 +541,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
             tanL = tan(parg[igsweep]*π/180.0)
             @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
-            ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ], color = "r", lw = 1.5)
+            xlocations = hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...) #hcat is to avoid this being an array of arrays
+            ylocations = hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...)
+            ax.plot(xlocations, ylocations, color = "r", linewidth = 1.5)
 
         # Plot NP and CG range
             ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
@@ -629,14 +632,17 @@ function plot_details(ac::aircraft; ax = nothing)
     @views parm = ac.parm[:,:,1]
         ## Create empty plot
         if ax === nothing
-            # plt.style.use(["../miscellaneous/prash.mplstyle", "seaborn-colorblind"]) # HACK
-            fig, atemp = plt.subplots(2, 2, figsize=(8,5), dpi = 300, gridspec_kw=Dict("height_ratios"=>[1, 3], "width_ratios"=>[1,3]))
-            gs = atemp[1,2].get_gridspec()
-            gssub = matplotlib.gridspec.SubplotSpec(gs, 0,1)
-            atemp[1,1].remove()
-            atemp[1,2].remove()
-            axbig = fig.add_subplot(gssub)
-            ax = [axbig, atemp[2,1], atemp[2,2]]
+            axd = plt.figure(figsize=(8,5), dpi = 300, layout="constrained").subplot_mosaic(
+                    """
+                    AA
+                    BC
+                    """,
+                    # set the height ratios between the rows
+                    height_ratios=[1, 3],
+                    # set the width ratios between the columns
+                    width_ratios=[1, 3],
+                    )
+            ax = [axd["A"], axd["B"], axd["C"]]
         else
             for a in ax
                 a.cla()
@@ -784,9 +790,9 @@ Simple utility function to label bars in a stacked bar chart
 """
 function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
     for (i,bar) in enumerate(Bararray)
-        w, h = bar[1].get_width(), bar[1].get_height()
-        x, y = bar[1].get_x(), bar[1].get_y()
-        a.text(x+w, y+h/2, @sprintf("%7.3f", h*val_multiplier), ha = "left", va = "center", fontsize = fontsize)
+        w, h = bar[0].get_width(), bar[0].get_height()
+        x, y = bar[0].get_x(), bar[0].get_y()
+        a.text(x+w, y+h/2, @sprintf("%7.3f", pyconvert(Float64, h)*val_multiplier), ha = "left", va = "center", fontsize = fontsize)
         a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = fontsize)
     end
 end
@@ -1452,9 +1458,11 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             
             lnace = parg[iglnaceaft]
             x = parg[igxtshaft] - 0.5
-            ax.fill([x,x, x+lnace, x+lnace, x], [ D/8,  D/8 + D,  D/8 + D*3/4,  D/8 + 1/4*D,  D/8],
+            xlocs = hcat([x,x, x+lnace, x+lnace, x]...)
+            ylocs = hcat([ D/8,  D/8 + D,  D/8 + D*3/4,  D/8 + 1/4*D,  D/8]...)
+            ax.fill(xlocs, ylocs,
             lw = 1.5, edgecolor = "k", zorder = engz, facecolor = "w")
-            ax.fill([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8 - 1/4*D, -D/8],
+            ax.fill(xlocs, -1 .* ylocs,
             lw = 1.5, edgecolor = "k", zorder = engz, facecolor = "w")
 
             ηs = bs/b
@@ -1481,15 +1489,17 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
             tanL = tan(parg[igsweep]*π/180.0)
             @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
-
-            ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] ,      [yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ],
-             color = "k", lw = 1.5, zorder = wingz-1)
-            ax.plot( [xi, xi, xi.+lnace, xi.+lnace, xi] , -1 .*[yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ],
-             color = "k", lw = 1.5, zorder = wingz-1)
-            #Pylons
             
-            ax.plot( [xi.+lnace/2, xi.+1.0] ,         [yi, yi], color = "k", lw = 2, zorder = wingz-2)
-            ax.plot( [xi.+lnace/2, xi.+1.0] , -1.0 .* [yi, yi], color = "k", lw = 2, zorder = wingz-2)
+            xlocs = hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)
+            ylocs = hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ]...)
+            ax.plot(xlocs, ylocs, color = "k", lw = 1.5, zorder = wingz-1)
+            ax.plot(xlocs , -1 .* ylocs, color = "k", lw = 1.5, zorder = wingz-1)
+            
+             #Pylons
+             xlocs = hcat([xi.+lnace/2, xi.+1.0]...)
+             ylocs = hcat([yi, yi]...)
+            ax.plot(xlocs , ylocs, color = "k", lw = 2, zorder = wingz-2)
+            ax.plot(xlocs , -1.0 .* ylocs, color = "k", lw = 2, zorder = wingz-2)
       
 
         # Plot NP and CG range

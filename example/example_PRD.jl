@@ -4,7 +4,7 @@ fleet of missions
 """
 
 # 1. Import modules
-using PyPlot
+using PythonPlot
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
