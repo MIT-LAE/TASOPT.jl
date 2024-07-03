@@ -1,5 +1,5 @@
 # 1. Import modules
-using PyPlot
+using PythonPlot
 using TASOPT
 using Printf
 # you can optionally define
