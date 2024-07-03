@@ -122,7 +122,6 @@ See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@
 """
 function fusew!(fuse,Nland,Wpay,Weng, nftanks, 
       Waftfuel, Wftank, ltank, xftankaft, tank_placement,deltap,
-      Wpwindow,Wppinsul,Wppfloor, 
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
       bv,lambdav,nvtail,
       xhtail,xvtail,
@@ -213,12 +212,12 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       end
       lcabin = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
 
-      fuse.window.weight = fuse.n_decks * Wpwindow * lcabin
+      fuse.window.weight = fuse.n_decks * fuse.window.W_per_length * lcabin
       xWwindow = fuse.window.weight * xcabin
       
 #--------------------------------------------------------------------
 #--- insulation weight
-      fuse.insulation.weight = Wppinsul*((1.1*pi+2.0*thetafb)*layout.radius*lshell + 0.55*(Snose+Sbulk))
+      fuse.insulation.weight = fuse.insulation.W_per_area*((1.1*pi+2.0*thetafb)*layout.radius*lshell + 0.55*(Snose+Sbulk))
       xWinsul = fuse.insulation.weight * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
 #--------------------------------------------------------------------
@@ -247,7 +246,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       Afcap = 2.0*Mmax/(sigfloor*layout.floor_depth)
 
       Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
+      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*fuse.floor.W_per_area)
       xWfloor = fuse.floor.weight * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
 #--- average floor-beam cap thickness ("smeared" over entire floor)

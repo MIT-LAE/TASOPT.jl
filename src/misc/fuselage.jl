@@ -27,12 +27,18 @@ $TYPEDFIELDS
     # Internal Structure
     """Fuselage Material"""
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
+
+    """Structural Members"""
     skin::StructuralMember = StructuralMember(material=material)
     shell::StructuralMember = StructuralMember(material=material) # IS just Skin + Additional
     cone::StructuralMember = StructuralMember()
-    floor::StructuralMember = StructuralMember()
-    insulation::StructuralMember = StructuralMember()
-    window::StructuralMember = StructuralMember()
+
+    """Internal Members"""
+    floor::InternalMember = InternalMember()
+    insulation::InternalMember = InternalMember()
+    window::InternalMember = InternalMember()
+
+    """Bending Material"""
     bending_h::StructuralMember = StructuralMember(material=material)
     bending_v::StructuralMember = StructuralMember(material=material)
 
