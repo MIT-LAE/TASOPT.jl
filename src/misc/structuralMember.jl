@@ -58,5 +58,5 @@ $TYPEDFIELDS
 end
 
 function Base.show(io::IO, x::InternalMember)
-    print(io, "InternalMember(", x.material,", ", x.weight, ", ", x.x, ")")
+    print(io, "InternalMember(", x.material,", ", x.weight,")")
 end
