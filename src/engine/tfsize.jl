@@ -249,11 +249,13 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       eplt = eplt0
 
 
-      #---- initial guesses for station 2 and 1.9
+      #---- initial guesses for station 2, 1.9 and 1.9c
       pt2 = pt18
       Tt2 = Tt18
       pt19 = pt18
       Tt19 = Tt18
+      pt19c = pt19
+      Tt19c = Tt19
 
 
       if (Kinl == 0.0 && mofft == 0.0 && Pofft == 0.0)
@@ -294,7 +296,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   else
                         #------ BL mixes with fan + core flow
                         mmix = BPR * mcore * sqrt(Tt2 / Tt0) * pt0 / pt2 +
-                               mcore * sqrt(Tt19 / Tt0) * pt0 / pt19
+                               mcore * sqrt(Tt19c / Tt0) * pt0 / pt19c
                         sbfan2 = Kinl * gam0 / (mmix * a2sq)
                         sbcore2 = sbfan
                   end
