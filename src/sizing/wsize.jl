@@ -603,7 +603,7 @@ function wsize(ac; itermax=35,
             Wftank_single = 0.0
         end
         
-        (cabVol) = fusew!(fuse, Nland, Wpaymax, Wengtail, 
+        parg[igcabVol] = fusew!(fuse, Nland, Wpaymax, Wengtail, 
              nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
              Δp,
@@ -613,11 +613,10 @@ function wsize(ac; itermax=35,
             xwing, xwbox, cbox,
             xeng)
 
-        parg[igcabVol] = cabVol
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
-        WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * cabVol
+        WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * parg[igcabVol]
 
         if (iterw == 1 && initwgt == 0)
 

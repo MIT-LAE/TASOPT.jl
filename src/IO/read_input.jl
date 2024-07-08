@@ -255,8 +255,8 @@ weight = read_input("Weights", fuse, dfuse)
 dweight = dfuse["Weights"]
 readweight(x) = read_input(x, weight, dweight)
     fuselage.weight_frac_frame = readweight("frame")
-    fuselage.weight_frac_string = readweight("stringer")
-    fuselage.weight_frac_additional   = readweight("additional")
+    fuselage.weight_frac_stringers = readweight("stringer")
+    fuselage.weight_frac_skin_addl   = readweight("additional")
 
     fuselage.fixed.W = Force(readweight("fixed_weight"))
 
@@ -268,7 +268,7 @@ readweight(x) = read_input(x, weight, dweight)
     parg[igflgnose] = readweight("LG_nose_weight_fraction")
     parg[igflgmain] = readweight("LG_main_weight_fraction")
 
-    fuselage.apu.W = readweight("APU_weight_fraction")*maxpax*Wpax
+    fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
     fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
     fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
 
@@ -285,7 +285,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
     parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
     parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
-    fuselage.apu.r = [Distance(readgeom("x_APU")),0.0,0.0]
+    fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
     fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
     fuselage.fixed.r = [Distance(readgeom("x_fixed_weight")),0.0,0.0]
@@ -305,7 +305,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     # fuselage.layout.cross_section.n_webs = readgeom("Nwebs")
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
-    fuselage.layout.tailcone_taper_ratio = readgeom("tailcone_taper")
+    fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
     fuse_end = lowercase(readgeom("taper_fuse_to")) 
     if fuse_end == "point"
         fuselage.layout.taper_fuse = 0
@@ -641,7 +641,7 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
-    fuselage.fuse_shell_modulus_ratio = readstruct("fuse_shell_modulus_ratio")
+    fuselage.ratio_young_mod_fuse_bending = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
     parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
@@ -653,11 +653,11 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
 
     fuselage.skin.ρ = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
-    fuselage.bending_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.bending_v.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
+    fuselage.bendingmaterial_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
+    fuselage.bendingmaterial_v.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
     fuselage.skin.σ = Stress(readstruct("sigma_fuse_skin"))
-    fuselage.bending_h.σ = Stress(readstruct("sigma_fuse_bending"))
-    fuselage.bending_v.σ = Stress(readstruct("sigma_fuse_bending"))
+    fuselage.bendingmaterial_h.σ = Stress(readstruct("sigma_fuse_bending"))
+    fuselage.bendingmaterial_v.σ = Stress(readstruct("sigma_fuse_bending"))
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------

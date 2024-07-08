@@ -76,7 +76,7 @@ $TYPEDFIELDS
     """X position of fuselage end [m]"""
     x_end::Float64 = 0# = ac.parg[igxend] #xend
     """Tailcone taper (lambdac) [m]"""
-    tailcone_taper_ratio::Float64 = 0# lambdac
+    taper_tailcone::Float64 = 0# lambdac
     """Floor depth (depth of floor beams) [m]"""
     floor_depth::Float64 = 0
     """Nose Radius [m]"""
@@ -127,13 +127,3 @@ $TYPEDFIELDS
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0
 end
-
-# function FuselageLayout(;default = true)
-#     #TODO add read input
-#     # if default
-
-#     # else
-
-#     # end
-#     return FuselageLayout(fuse_radius = 3, )
-# end
