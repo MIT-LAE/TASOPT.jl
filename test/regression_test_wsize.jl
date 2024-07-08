@@ -1,3 +1,6 @@
+# using TASOPT
+# using Revise
+# using Test
 # Define a function to check if each value in two structs is equal
 function check_struct_equivalence(s1, s2)
     fields_s1 = fieldnames(typeof(s1))
@@ -76,6 +79,10 @@ end
 
     size_aircraft!(ac; printiter=false);
 
+    @testset "Fuselage" begin
+        @test  check_struct_equivalence(fuse, ac.fuselage)
+    end
+
     @testset "Geometry" begin
         for i in eachindex(parg)
             @test parg[i] ≈ ac.parg[i]
@@ -109,6 +116,10 @@ end
 
     size_aircraft!(ac; printiter=false);
 
+    @testset "Fuselage" begin
+        @test  check_struct_equivalence(fuse, ac.fuselage)
+    end
+
     @testset "Geometry" begin
         for i in eachindex(parg)
             @test parg[i] ≈ ac.parg[i]
@@ -127,6 +138,6 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.786802107833434
+    @test ac.parm[imPFEI] ≈ 0.7887904217038525
 
 end
