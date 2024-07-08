@@ -21,7 +21,7 @@ $TYPEDFIELDS
     """Fuselage Weight [Nm^3] """
     moment::Float64 = 0.0
 
-    # Fuselage Layout
+    """Fuselage Layout"""
     layout::FuselageLayout = FuselageLayout()
 
     # Internal Structure
@@ -39,11 +39,11 @@ $TYPEDFIELDS
     window::InternalMember = InternalMember()
 
     """Bending Material"""
-    bending_h::StructuralMember = StructuralMember(material=material)
-    bending_v::StructuralMember = StructuralMember(material=material)
+    bendingmaterial_h::StructuralMember = StructuralMember(material=material)
+    bendingmaterial_v::StructuralMember = StructuralMember(material=material)
 
-    # Loads
-    apu::structures.Weight = structures.Weight()
+    """External Weights"""
+    APU::structures.Weight = structures.Weight()
     seat::structures.Weight = structures.Weight()
     added_payload::structures.Weight = structures.Weight()
     HPE_sys::structures.Weight = structures.Weight()
@@ -53,13 +53,13 @@ $TYPEDFIELDS
     """Number of decks in fuselage"""
     n_decks::Float64 = 0
     """Fuselage Weight fraction of stringers """
-    weight_frac_string::Float64 = 0
+    weight_frac_stringers::Float64 = 0
     """Fuselage Weight fraction of frame """
     weight_frac_frame::Float64 = 0
-    """Fuselage Weight fraction of additional weights """
-    weight_frac_additional::Float64 = 0
+    """Fuselage Weight fraction of additional weights on skin """
+    weight_frac_skin_addl::Float64 = 0
     """Fuselage Shell Modulus Ratio Ebend/Eskin"""
-    fuse_shell_modulus_ratio::Float64 = 0
+    ratio_young_mod_fuse_bending::Float64 = 0
 end
 
 function dx_cabin(fuse::Fuselage)
