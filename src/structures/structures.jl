@@ -5,7 +5,7 @@ required to size an aircraft
 
 module structures
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__, place_cabin_seats
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, place_cabin_seats, find_cabin_width
 
 export surfw, surfdx, fusew, tailpo, update_fuse!, update_fuse_for_pax!
 

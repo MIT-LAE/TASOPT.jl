@@ -8,9 +8,6 @@
 #---------------------------------     
 # Test functions individually
 #---------------------------------
-using TASOPT
-using Test
-include(TASOPT.__TASOPTindices__)
 @testset "Heat Exchanging" begin
     @testset "HEX functions" begin
         #---------------------------------     

@@ -93,7 +93,8 @@ function update_fuse_for_pax!(pari, parg, fuse_tank)
     wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
 
     #Find new cabin length
-    lcyl, _, _ = place_cabin_seats(paxsize, parg[igRfuse], seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
+    wcabin = find_cabin_width(parg[igRfuse], parg[igdRfuse], parg[igwfb], parg[ignfweb], parg[igfloordist]) #Find cabin width
+    lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back

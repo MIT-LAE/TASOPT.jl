@@ -67,6 +67,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       for i = 1:length(t_cond)
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
       end
+      guess[end] = guess[end] - 1.0 #fuselage wall temperature
       sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
       
       Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
@@ -126,18 +127,13 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
-      hconvair, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank, Tfuse, Rfuse)
-  
+      h_air, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank, Tfuse, Rfuse)
+
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
       thickness = sum(t_cond)  # total thickness of insulation
   
-      # Radiation
-      ε = 0.95    # white aircraft (Verstraete)
-  
-      hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
-      h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
-      Rair_conv_rad = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
+      Rair = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
 
       S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
       h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
@@ -148,7 +144,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       R_mli_ends = zeros(Float64, N)
       R_mli_cyl  = zeros(Float64, N)
   
-      #Find resistance of each MLI layer
+      #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
             if lowercase(material[i]) == "vacuum"
@@ -172,7 +168,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       end
   
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
-      Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
+      Req = R_mli_tot + R_liq + Rair # Total equivalent resistance of thermal circuit
 
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
@@ -213,6 +209,9 @@ function insulation_conductivity_calc(T::Float64, material::String)
       elseif lowercase(material) == "polyurethane35" #polyurethane with density of 35 kg/m^3
             k = 2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
+      elseif lowercase(material) == "microspheres" #microspheres with density 69 kg/m^3
+            k = 1.4632E-10*T^3 - 9.6487E-08*T^2 + 5.1956E-05*T - 3.7191E-05
+            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 15 and 400 K
       elseif lowercase(material) == "mylar"
             k = 0.155# W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
       end

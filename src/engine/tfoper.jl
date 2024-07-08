@@ -906,10 +906,17 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Trr_mh = Trr_gmi4 * (gmi4_Rt4 * Rt4_mh + gmi4_cpt4 * cpt4_mh)
                   Trr_Tb = Trr_gmi4 * (gmi4_Rt4 * Rt4_Tb + gmi4_cpt4 * cpt4_Tb)
 
+                  # Heat exchanger to cool turbine cooling air
+                  ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
+                  Tt_tc, Tttc_httc, _ = gas_tsetd(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
+
+                  httc_ht3 = 1.0
+                  Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
+
                   if (icool == 1)
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
                         Tmrow_copy = Tmcalc(ncrowx, ncrow,
-                              Tt3, Tb, dTstrk, Trrat,
+                              Tt_tc, Tb, dTstrk, Trrat,
                               efilm, tfilm, StA, epsrow)
                         Tmrow[:] = Tmrow_copy[:]
 
@@ -928,21 +935,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         fc_Tb = 0.0
                         fc_Mi = fc_fo * fo_Mi
 
-                        # Heat exchanger to cool turbine cooling air
-                        ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
-                        Tt_tc, Tttc_httc, _ = gas_tsetd(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
-
-                        httc_ht3 = 1.0
-                        Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
-
                   else
-                        # Heat exchanger to cool turbine cooling air
-                        ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
-                        Tt_tc, Tttc_httc, _ = gas_tsetd(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
-
-                        httc_ht3 = 1.0
-                        Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
-
                         #------ calculate cooling mass flow ratios epsrow(.) to get specified Tmrow(.)
                         ncrow, epsrow_copy, epsrow_Tttc, epsrow_Tb, epsrow_Trr = mcool(ncrowx,
                               Tmrow, Tt_tc, Tb, dTstrk, Trrat,
