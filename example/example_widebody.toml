@@ -105,7 +105,7 @@
     dRadius = "0 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "8.0 in" # depth of floor beams
-    Nwebs = 1              # number of webs (for double bubble designs)
+    Nwebs = 0              # number of webs (for double bubble designs)
 
     a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 2.0 # Tail radius = Rfuse*(1 - xi^b_tail)
