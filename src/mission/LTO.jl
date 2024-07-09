@@ -3,10 +3,14 @@
 
 Prints out LTO EI(NOₓ) values
 """
-function LTO(name, ac; fileout = stdout, method = "cubic")
+function LTO(name, ac; fileout = stdout, method = "cubic", extra_points = false)
 
     #LTO values
-    LTOpoints = [1.0, 0.85, 0.3, 0.07]
+    if extra_points
+        LTOpoints = [1.0, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.07]
+    else
+        LTOpoints = [1.0, 0.85, 0.3, 0.07]
+    end
 
     LHV = ac.parg[igLHVfuel]
     # Get Foo based on Tt4 or T/O thrust
@@ -18,8 +22,9 @@ function LTO(name, ac; fileout = stdout, method = "cubic")
     ac.pared[:, ip] = ac.pared[:, ipstatic]
     ac.parad[:, ip] = ac.parad[:, ipstatic]
 
-    EIs = zeros(4)
-    mfs = zeros(4)
+    ltopts = size(LTOpoints)[1]
+    EIs = zeros(ltopts)
+    mfs = zeros(ltopts)
 
     icall = 2
     icool = 1
