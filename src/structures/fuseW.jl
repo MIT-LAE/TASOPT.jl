@@ -226,10 +226,16 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
 #----------------------------------------------------------------
 #--- horizontal-axis bending moment added material
+# # layout.cross_section.n_webs = 0
+# A = ((pi + layout.n_webs*(2.0*thetafb+sin2t))*layout.radius^2 +
+# (2.0*pi + 4.0*layout.n_webs*thetafb)*(0.5*layout.bubble_lower_downward_shift)^2)*layout.radius*tshell
+# B = 8.0*layout.n_webs*cost*0.5*layout.bubble_lower_downward_shift*layout.radius *layout.radius*tshell
+
       Ihshell = ( (pi + layout.n_webs*(2.0*thetafb+sin2t))*layout.radius^2 +
                  8.0*layout.n_webs*cost*0.5*layout.bubble_lower_downward_shift*layout.radius +
                  (2.0*pi + 4.0*layout.n_webs*thetafb)*(0.5*layout.bubble_lower_downward_shift)^2)*layout.radius*tshell+
               0.66667*layout.n_webs*(hfb+0.5*layout.bubble_lower_downward_shift)^3*layout.thickness_webs
+      # println("Ihshell = $Ihshell, $A, $B, $(A+B)")
 
       hfuse = layout.radius + 0.5*layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*

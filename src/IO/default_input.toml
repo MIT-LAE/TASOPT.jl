@@ -132,6 +132,7 @@
     cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
+    number_of_bubbles = 1  # SingleBubble or MultiBubble Designs
     radius = "77 in"       # Fuselage radius
     dRadius = "15 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
