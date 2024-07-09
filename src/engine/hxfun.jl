@@ -1117,7 +1117,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       end
 
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
-
+      rlx = 0.5 #Relaxation factor to smooth convergence
       #Initialize Heat Exchanger vector
       HeatExchangers = []
 
@@ -1335,8 +1335,8 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgas_mis[ip] = HXgasp
 
                   #Store output in pare
-                  pare[Dh_i, ip] = HXgasp.Δh_p
-                  pare[Dp_i, ip] = HXgasp.Δp_p
+                  pare[Dh_i, ip] =  (1 - rlx) * pare[Dh_i, ip] + rlx * HXgasp.Δh_p
+                  pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
                   
             end
             push!(HeatExchangers, HX_struct(type, HXgeom, HXgas_mis)) #Store HX struct in overall array
@@ -1352,7 +1352,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgas = lastHX.HXgas_mission[ip]
                   Tf = HXgas.Tc_out
 
-                  pare[ieTfuel, ip] = Tf
+                  pare[ieTfuel, ip] = (1 - rlx) * pare[ieTfuel, ip] + rlx * Tf
             end
       end
 
