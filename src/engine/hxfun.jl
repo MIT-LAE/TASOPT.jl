@@ -117,6 +117,8 @@ function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
             return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :N_t)
       elseif sym === :tD_i
             return getfield(HXgeom, :tD_o) -2* getfield(HXgeom, :t) 
+      elseif sym === :L
+            return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :xl_D) * getfield(HXgeom, :tD_o)
       else
          return getfield(HXgeom, sym)
       end
@@ -1016,21 +1018,18 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       N_t = HXgeom.N_t
       Δp_p = HXgas.Δp_p
       Δp_c = HXgas.Δp_c
-      fconc = HXgeom.fconc
+      L = HXgeom.L #HX length
 
       #Inlet pressures (pressure drops should not exceed these)
       pp_in = HXgas.pp_in
       pc_in = HXgas.pc_in
       p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
 
-      vars = [n_passes, N_t, Δp_p, Δp_c]
-      lower = [1, 1, 1, 1] #desired lower limits
+      vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
-      if fconc
-            upper = [20, 200, p_thres * pp_in, p_thres * pc_in] #desired upper limits for concentric case
-      else
-            upper = [20, 200, p_thres * pp_in, p_thres * pc_in]  #allow more passes in rectangular case
-      end
+      lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
+      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.5]
+
       Iobj = (Pl_p + Pl_c) #Initialize objective function
 
       # Apply penalty function so that outputs are within desired range
@@ -1060,12 +1059,12 @@ then evaluates performance for all missions and points with hxoper!().
     - `pari::Vector{Int}`: vector with integer parameters
     - `ipdes::Float64`: index for design mission segment
     - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HX_struct` structures
- 
+    - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
     - Also modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
-function hxdesign!(pare, pari, ipdes, HXs_prev)
+function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       
       #---------------------------------
       # Extract inputs
@@ -1117,7 +1116,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       end
 
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
-      rlx = 0.5 #Relaxation factor to smooth convergence
       #Initialize Heat Exchanger vector
       HeatExchangers = []
 
