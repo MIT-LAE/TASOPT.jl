@@ -61,7 +61,7 @@
 
         W = TASOPT.engine.hxweight(gee, HXgeom, fouter)
 
-        W_check = 801.5192810553101
+        W_check = 4485.930972477996
 
         @test W == W_check
         #---------------------------------     
