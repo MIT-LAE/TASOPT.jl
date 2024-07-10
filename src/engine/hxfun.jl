@@ -1569,6 +1569,11 @@ function hxweight(gee, HXgeom, fouter)
 
       W_hx = gee * m_t * (1 + fouter)
 
+      if HXgeom.fconc #If the HEX is in the core, add additional mass for the shaft
+            shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
+            W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
+            W_hx = W_hx + W_shaft
+      end
       return W_hx
 end #hxweight
 
