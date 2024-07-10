@@ -116,7 +116,7 @@ function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
       elseif sym === :N_tubes_tot
             return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :N_t)
       elseif sym === :tD_i
-            return getfield(HXgeom, :tD_o) -2* getfield(HXgeom, :t) 
+            return getfield(HXgeom, :tD_o) - 2* getfield(HXgeom, :t) 
       elseif sym === :L
             return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :xl_D) * getfield(HXgeom, :tD_o)
       else
@@ -577,9 +577,9 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       A_min = A_cs - A_D
       G = ρ_p_in * Vp_in * A_cs / A_min #mass flow rate per unit area at minimum area      
 
-      N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
+      N_tubes_tot = HXgeom.N_tubes_tot #total number of tubes across all rows
       N_L = n_passes * n_stages #total number of rows
-      L = N_L * xl_D * tD_o #total axial length
+      L =  HXgeom.L #total axial length
 
       Ah = N_tubes_tot * pi * tD_o * l #Total external surface area of cooling tubes
 
