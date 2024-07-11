@@ -101,7 +101,7 @@
                                     # includes luggage [lbm or lbf or kg or N] 
                                     # judging you if you use imperial units but wtvs
 
-    fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
+    fuel_reserves = 0.15 # W_reserveFuel / W_fuelburned
 
     Nlift = 3.0 # Max vertical load factor for wing bending loads
     Vne = "280 kts" # Never exceed IAS for tail loads
@@ -186,23 +186,23 @@
 
 
 [Fuselage.Weights]
-    stringer = 0.35   # (Weight of stringers)/ Wskin
-    frame    = 0.25   # (Weight of frame)/ Wskin
+    stringer = 0.36   # (Weight of stringers)/ Wskin
+    frame    = 0.28   # (Weight of frame)/ Wskin
     additional = 0.20 # (Additional weight)/ Wskin
 
     fixed_weight = "3000 lbf" #cockpit, pilots etc
 
     window_per_length     = 435.0 #[N/m]
-    window_insul_per_area =  22.0 #[N/m2]
+    window_insul_per_area =  40.00000 #[N/m2]
     floor_weight_per_area =  60.0 #[N/m2]
 
-    HPE_sys_weight_fraction = 0.010 # W_HPEsys/WMTO
-    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
-    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
+    HPE_sys_weight_fraction = 0.013 # W_HPEsys/WMTO
+    LG_nose_weight_fraction = 0.012 # Wlgnose/WMTO
+    LG_main_weight_fraction = 0.045 # Wlgmain/WMTO
 
-    APU_weight_fraction = 0.035 # W_APU/W_payload
-    seat_weight_fraction = 0.10 # Wseats/W_payload
-    add_payload_weight_fraction = 0.35 # Additional payload proportional Wfrac
+    APU_weight_fraction = 0.05 # W_APU/W_payload
+    seat_weight_fraction = 0.13 # Wseats/W_payload
+    add_payload_weight_fraction = 0.38 # Additional payload proportional Wfrac
 
 [Fuselage.Aero]
     fuse_moment_volume_deriv = "2390.0 ft3" # d(Mfuse/q)/dCL
@@ -221,24 +221,24 @@
                       # 1: Wing cantilever with engine
     strut_braced_wing = false
 
-    sweep = 26.0 # wing sweep in degrees
-    AR    = 10.1
+    sweep = 25.016320 # wing sweep in degrees
+    AR    = 9.45
     maxSpan = "117.5 ft"
 
-    inner_panel_taper_ratio = 0.7  #cs/co
-    outer_panel_taper_ratio = 0.25 #ct/co
+    inner_panel_taper_ratio = 0.688141  #cs/co
+    outer_panel_taper_ratio = 0.190000 #ct/co
 
     panel_break_location = 0.285 # eta_s panel break eta location. eta = y/b
     
     center_box_halfspan = "71.0 in"
     box_width_chord = 0.50
-    root_thickness_to_chord = 0.1268
-    spanbreak_thickness_to_chord = 0.1266
+    root_thickness_to_chord = 0.150363
+    spanbreak_thickness_to_chord = 0.134446
 
     hweb_to_hbox = 0.75 #web-height/hbox ratio
     spar_box_x_c = 0.40 # spar box axis x/c location
 
-    x_wing_box = "57 ft"
+    x_wing_box = 16.510380
     z_wing  = "-5.5 ft"
     z_strut = "154 in" #Note only used if `strut_braced_wing = true`
 
@@ -294,7 +294,7 @@
     slat = 0.1 #slats, slat mounts and actuators weight fraction
     aileron = 0.04 #ailerons, aileron mounts and actuators weight fraction
     leading_trailing_edge = 0.1
-    ribs = 0.15        # Ribs, local stiffeners, reinforcements
+    ribs = 0.16        # Ribs, local stiffeners, reinforcements
     spoilers = 0.020   # Spoilers, spolier mounts and attachements
     attachments = 0.03 # Wing attachment hardware
 
@@ -312,7 +312,7 @@
     [Stabilizers.Htail]
         AR_Htail = 6.0
         taper = 0.25
-        sweep = 26.0 #typically can be set to be the same as the wings
+        sweep = 25.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
         x_Htail = "114.5 ft"
         z_Htail = "0 ft"
@@ -394,7 +394,7 @@
 [Propulsion]
 
     number_of_engines = 2
-    T_max_metal = 1280.0
+    T_max_metal = 1762.737516
 
     Tt4_takeoff = 1833.0
     Tt4_frac_bottom_of_climb = 0.2
