@@ -300,23 +300,23 @@ readgeom(x) = read_input(x, geom, dgeom)
     end
 
     # Number of webs = number of bubbles - 1
-    n_webs = Int(readgeom("number_of_bubbles")) - 1 
-    println(n_webs)
+    n_bubbles = Int(readgeom("number_of_bubbles"))
 
     radius = Distance(readgeom("radius"))
     dz = Distance(readgeom("dRadius"))
     dy = Distance(readgeom("y_offset"))
 
-    if n_webs > 0 && dy == 0.0
+    if n_bubbles > 1 && dy == 0.0
         @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
         "y-offset of bubble set to 0.0. "*
         "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
-        n_webs = 0
+        n_bubbles = 1
     end
-    n_webs = 1
-    if n_webs == 0
+
+    if n_bubbles == 1
         cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
     else
+        n_webs = n_bubbles - 1
         cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
         bubble_center_y_offset = dy, n_webs = n_webs)
     end
