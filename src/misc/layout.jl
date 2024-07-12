@@ -114,7 +114,16 @@ end
 # Helper function to be able to simplify 
 function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     cross_section = getfield(layout, :cross_section)
-    if sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
+    
+    if sym === :l_nose
+        return getfield(layout, :x_pressure_shell_fwd) - getfield(layout, :x_nose)
+    elseif sym === :l_shell
+        return getfield(layout, :x_pressure_shell_aft) - 
+               getfield(layout, :x_pressure_shell_fwd)
+    elseif sym === :l_floor
+        return getproperty(layout, :l_shell) + 2.0*getproperty(layout, :radius)
+    
+    elseif sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
         return getproperty(cross_section, sym)
     else
         return getfield(layout, sym)

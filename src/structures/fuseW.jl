@@ -77,11 +77,6 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
       rE = Ebend/Eskin
 
-#--- effective nose length and pressure-vessel length
-      lnose  = layout.x_pressure_shell_fwd - layout.x_nose
-      lshell = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd
-      lfloor = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd + 2.0*layout.radius
-
       xshell = 0.5*(layout.x_pressure_shell_fwd+layout.x_pressure_shell_aft)
 
 #--- fuselage cross-section geometric parameters
@@ -106,13 +101,13 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
 #--- nose + rear bulkhead surface areas
       Sbulk = (2.0*pi + 4.0*layout.n_webs*thetafb)*layout.radius^2
-      Snose = (2.0*pi + 4.0*layout.n_webs*thetafb)*layout.radius^2* ( 0.333 + 0.667*(lnose/layout.radius)^1.6 )^0.625
+      Snose = (2.0*pi + 4.0*layout.n_webs*thetafb)*layout.radius^2* ( 0.333 + 0.667*(layout.l_nose/layout.radius)^1.6 )^0.625
 
 #--- component volumes and volume moments
-      Vcyl  = Askin*lshell
+      Vcyl  = Askin*layout.l_shell
       Vnose = Snose*fuse.skin.thickness
       Vbulk = Sbulk*fuse.skin.thickness
-      Vfweb = Afweb*lshell
+      Vfweb = Afweb*layout.l_shell
 
       xVcyl  = Vcyl  * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
       xVnose = Vnose * 0.5*(layout.x_nose   + layout.x_pressure_shell_fwd)
@@ -147,7 +142,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       
 #--------------------------------------------------------------------
 #--- insulation weight
-      fuse.insulation.weight = fuse.insulation.W_per_area*((1.1*pi+2.0*thetafb)*layout.radius*lshell + 0.55*(Snose+Sbulk))
+      fuse.insulation.weight = fuse.insulation.W_per_area*((1.1*pi+2.0*thetafb)*layout.radius*layout.l_shell + 0.55*(Snose+Sbulk))
       xWinsul = fuse.insulation.weight * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
 #--------------------------------------------------------------------
@@ -176,11 +171,11 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       Afcap = 2.0*Mmax/(sigfloor*layout.floor_depth)
 
       Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*fuse.floor.W_per_area)
+      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*layout.l_floor*fuse.floor.W_per_area)
       xWfloor = fuse.floor.weight * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
 #--- average floor-beam cap thickness ("smeared" over entire floor)
-      fuse.floor.thickness = 0.5*Afcap/lfloor
+      fuse.floor.thickness = 0.5*Afcap/layout.l_floor
       
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
@@ -239,8 +234,8 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
       hfuse = layout.radius + 0.5*layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*
-          Nland*(Wpay+fuse.added_payload.W+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+fuse.seat.W)*
-          0.5/lshell
+          Nland*(Wpay+fuse.added_payload.W+fuse.shell.weight.W+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+fuse.seat.W)*
+          0.5/layout.l_shell
       A1 = 1.0/(hfuse*sigMh)*
           (Nland*Wtail + rMh*Lhmax)
       A0 = -Ihshell/(rE*hfuse^2)
@@ -322,9 +317,9 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--- pressurized cabin volume
 
       if nftanks == 0
-            cabVol = Afuse*(lshell + 0.67*lnose + 0.67*layout.radius)
+            cabVol = Afuse*(layout.l_shell + 0.67*layout.l_nose + 0.67*layout.radius)
       else #If there is a fuel tank in the fuselage, the pressure vessel has a smaller air volume
-            cabVol = Afuse*(lcabin + 0.67*lnose + 0.67*layout.radius)
+            cabVol = Afuse*(lcabin + 0.67*l_nose + 0.67*layout.radius)
       end
 
 return  cabVol
