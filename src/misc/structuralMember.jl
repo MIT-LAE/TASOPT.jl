@@ -35,7 +35,7 @@ function Base.getproperty(obj::StructuralMember, sym::Symbol)
 end
 
 function Base.show(io::IO, x::StructuralMember)
-    print(io, "StructuralMember(", x.material,", ", x.weight, ", ", x.x, ")")
+    print(io, "StructuralMember(", x.material,", ", x.weight, ")")
 end
 
 """
