@@ -8,21 +8,22 @@ pare = zeros(Float64, (ietotal, iptotal))
 # ------------------------------
 # Fuselage
 # ------------------------------
-fuse = Fuselage() 
-
+ac = load_default_model()
+fuse = ac.fuselage
+Weight = TASOPT.structures.Weight
 fuse.n_decks = 1.00000000000000000000
-fuse.shell.weight = 20951.741832783293 # igWshell   
+fuse.shell.weight = Weight(W = 20951.16147655025) # igWshell   
 fuse.window.weight = 11269.98000000000138243195 # igWwindow  
 fuse.window.W_per_length = 435.00000000000000000000
 fuse.insulation.weight = 4779.85141602571093244478 # igWinsul   
 fuse.insulation.W_per_area = 22.00000000000000000000
-fuse.floor.weight = 13143.23579857934964820743 # igWfloor  
+fuse.floor.weight = 13143.065042152035 # igWfloor  
 fuse.floor.W_per_area = 60.00000000000000000000
-fuse.cone.weight = 5866.861946749262 # igWcone  
-fuse.bendingmaterial_h.weight = 13824.400690572249 # igWhbend   
-fuse.bendingmaterial_v.weight = 7315.509061624873 # igWvbend   
-fuse.weight = 197179.06702783477 # igWfuse 
-fuse.moment = 3613923.907245339 # igxWfuse   
+fuse.cone.weight = Weight(W = 5866.632268704074) # igWcone  
+fuse.bendingmaterial_h.weight = Weight(W = 13823.873663736284,x = 31.95392982204161) # igWhbend   
+fuse.bendingmaterial_v.weight = Weight(W = 7315.22017818717, x = 31.20535450983195)# igWvbend   
+fuse.weight = 197177.27032685553 # igWfuse 
+fuse.moment = 3.6138866760412017e6 # igxWfuse   
 fuse.weight_frac_stringers = 0.34999999999999997780 # igfstring   
 fuse.weight_frac_frame = 0.25000000000000000000 # igfframe   
 fuse.weight_frac_skin_addl = 0.20000000000000000000
@@ -35,31 +36,30 @@ fuse.layout.x_end_cylinder = 29.56559999999999988063 # igxblend2
 fuse.layout.x_pressure_shell_fwd = 5.18160000000000042775 # igxshell1  
 fuse.layout.x_pressure_shell_aft = 31.08960000000000079012 # igxshell2  
 fuse.layout.x_cone_end = 35.66159999999999996589 # igxconend  
-fuse.bendingmaterial_h.x = 31.95392982204161 # igxhbend   
-fuse.bendingmaterial_v.x = 31.205389941066116 # igxvbend   
+
 fuse.layout.cross_section.radius = 1.95579999999999998295 # igRfuse    
 fuse.layout.cross_section.bubble_lower_downward_shift = 0.38100000000000000533 # igdRfuse   
 fuse.layout.floor_depth = 0.12700000000000000178 # ighfloor    
 fuse.layout.taper_tailcone  = 0.29999999999999998890 # iglambdac   
-fuse.skin.σ = 103421368.34273669123649597168 # igsigskin  
-fuse.bendingmaterial_h.σ = 206842736.68547338247299194336 # igsigbend  
-fuse.bendingmaterial_v.σ = 206842736.68547338247299194336 # igsigcap  
+# fuse.skin.σ = 103421368.34273669123649597168 # igsigskin  
+# fuse.bendingmaterial_h.σ = 206842736.68547338247299194336 # igsigbend  
+# fuse.bendingmaterial_v.σ = 206842736.68547338247299194336 # igsigcap  
 fuse.ratio_young_mod_fuse_bending  = 1.00000000000000000000 # igrEshell  
-fuse.skin.ρ = 2700.00000000000000000000 # igrhoskin 
-fuse.bendingmaterial_h.ρ = 2700.00000000000000000000 # igrhobend
-fuse.bendingmaterial_v.ρ = 2700.00000000000000000000 # igrhobend
-fuse.skin.thickness = 0.0010595136054184176 # igtskin    
-fuse.cone.thickness = 0.0012665740904264223 # igtcone    
+# fuse.skin.ρ = 2700.00000000000000000000 # igrhoskin 
+# fuse.bendingmaterial_h.ρ = 2700.00000000000000000000 # igrhobend
+# fuse.bendingmaterial_v.ρ = 2700.00000000000000000000 # igrhobend
+fuse.skin.thickness = 0.0010594842572463274 # igtskin    
+fuse.cone.thickness = 0.0012665245061232952 # igtcone    
 fuse.layout.thickness_webs = 0.00000000000000000000 # igtfweb    
-fuse.floor.thickness = 0.00090618178023850059 # igtfloor   
-fuse.shell.EIh = 2361814880.057694 # igEIhshell 
-fuse.bendingmaterial_h.EIh = 24122698769.68933 # igEIhbend  
-fuse.bendingmaterial_v.EIh = 24122698769.68933 # igEIhbend  
-fuse.shell.EIv = 2317835044.9163404 # igEIvshell 
-fuse.bendingmaterial_h.EIv = 16928429060.563381 # igEIvbend
-fuse.bendingmaterial_v.EIv = 16928429060.563381 # igEIvbend  
-fuse.shell.GJ = 1571169642.3110242 # igGJshell  
-fuse.cone.GJ = 1878222941.5825303 # igGJcone  
+fuse.floor.thickness = 0.0009061565981319232 # igtfloor   
+fuse.shell.EIh = 2.3617494585763736e9 # igEIhshell 
+fuse.bendingmaterial_h.EIh = 2.4121841819808567e10 # igEIhbend  
+fuse.bendingmaterial_v.EIh = 2.4121841819808567e10  # igEIhbend  
+fuse.shell.EIv = 2.3177708416617265e9 # igEIvshell 
+fuse.bendingmaterial_h.EIv = 1.6927797145160927e10 # igEIvbend
+fuse.bendingmaterial_v.EIv = 1.6927797145160927e10 # igEIvbend  
+fuse.shell.GJ = 1.5711261214380407e9 # igGJshell  
+fuse.cone.GJ = 1.87814941222773e9 # igGJcone  
 fuse.APU.W = 7698.7602265
 fuse.APU.r = [36.576, 0.0 , 0.0]
 fuse.seat.W = 21996.45779
