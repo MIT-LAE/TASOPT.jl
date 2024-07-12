@@ -364,8 +364,16 @@
 
     # Allowable stresses at sizing cases:
     ## Fuselage pressurization skin stress and bending skin+stringer stress
-    sigma_fuse_skin = "15e3 lbf/in2" 
-    sigma_fuse_bending = "30e3 lbf/in2"
+    skin_material = "TASOPT-Al"
+    skin_max_avg_stress = 1.1
+    skin_safety_factor = 3.0
+    # the sigma_max works out to be roughly 15e3 lbf/in2
+    
+    bending_material = "TASOPT-Al"
+    bending_max_avg_stress = 1.1
+    bending_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+
     ## Wing and tail bending and shear stresses
     sigma_caps    = "30e3 lbf/in2"
     sigma_struts  = "30e3 lbf/in2"
@@ -377,8 +385,6 @@
     E_struts        = "10e6 lbf/in2"
 
     # Material densities (Aluminium)
-    skin_density = 2700.0
-    fuse_stringer_density = 2700.0
     wing_tail_cap_density = 2700.0
     wing_tail_web_density = 2700.0
     strut_density = 2700.0

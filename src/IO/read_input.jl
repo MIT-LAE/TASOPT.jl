@@ -672,12 +672,21 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
 
-    fuselage.skin.ρ = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
-    fuselage.bendingmaterial_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.bendingmaterial_v.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.skin.σ = Stress(readstruct("sigma_fuse_skin"))
-    fuselage.bendingmaterial_h.σ = Stress(readstruct("sigma_fuse_bending"))
-    fuselage.bendingmaterial_v.σ = Stress(readstruct("sigma_fuse_bending"))
+
+    skin_max_avg = readstruct("skin_max_avg_stress")
+    skin_safety_fac = readstruct("skin_safety_factor")
+    fuselage.skin.material =  StructuralAlloy(readstruct("skin_material"), 
+                                    max_avg_stress = skin_max_avg,
+                                    safety_factor = skin_safety_fac)
+
+    bend_max_avg = readstruct("bending_max_avg_stress")
+    bend_safety_fac = readstruct("bending_safety_factor")
+    fuselage.bendingmaterial_h.material = StructuralAlloy(readstruct("bending_material"),
+                                max_avg_stress = bend_max_avg,
+                                safety_factor = bend_safety_fac)
+
+    fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
+
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
