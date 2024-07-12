@@ -1579,7 +1579,7 @@ function wsize(ac; itermax=35,
             if parg[8] < parg[7]
                 println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
             else
-                open("../AEIC/Model_Files/BADA/B738__.PTF", "w") do f
+                open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B738__.PTF", "w") do f
                 printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
                 V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
                 hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)

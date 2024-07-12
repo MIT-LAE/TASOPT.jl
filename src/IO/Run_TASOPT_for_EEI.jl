@@ -121,6 +121,8 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
     # parpt[ipt_calls_NPSS] = 0
 
     kmdes = 1
+    initwgt = 1
+    initeng = 1
     # println(parg[igWwing])
     # Ldebug && println("Max weight iterations = $iter")
     # NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS = wsize(pari, parg, view(parm,:,kmdes), view(para,:,:,kmdes), view(pare, :,:,kmdes),
@@ -130,7 +132,10 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
     # println("Time writing       = $time_writing")
     # println("Time runnning NPSS = $time_run_NPSS")
-    size_aircraft!(ac)
+    Ldebug && println("Max weight iterations = $iter")
+    TASOPT.wsize(ac, itermax = iter, initwgt = initwgt,
+        Ldebug = Ldebug, printiter = printiter,
+        saveODperf = saveOD)
 
     local RMS_error
     
@@ -145,8 +150,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
             end
         end
         
-        initwgt = 1
-        initeng = 1
+        
 
         # if km == nmisx
         #     endNPSS_flag = true

@@ -188,10 +188,10 @@ function odperf!(ac, W, FL, Ldebug)
             end
 
             # if NPSS_PT
-            #     NPSS_success, Ftotal, heatexcess, 
-            #     mdotf[i], EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR,
-            #     Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt41s[i], mofft, Pofft, 
-            #         ifirst, ac.parg, parpt, ac.pare, iptest)
+                # NPSS_success, Ftotal, heatexcess, 
+                # mdotf[i], EINOx1, FAR, Mtip, Tblade, Tt3, OPR, BPR,
+                # Wc3, Tt41, EGT = NPSS_TFsysOD(NPSS, alts[i], Mach, 0.0, Tt41s[i], mofft, Pofft, 
+                #     ifirst, ac.parg, parpt, ac.pare, iptest)
             # else
             #     Ftotal, η, P, Hrej, heatexcess,
             #     mdotf[i], BSFC,
@@ -204,10 +204,14 @@ function odperf!(ac, W, FL, Ldebug)
 
             # ac.pared[:, ip] = ac.pared[:, ipstatic]
             # ac.parad[:, ip] = ac.parad[:, ipstatic]
+            # alts[i]
+            # Tt41s[i]
 
-            icall = 2
+            icall = 1
             icool = 1
             initeng = 0
+            ac.pared[ieTt41,ip] = Tt41s[i]
+            ac.parad[iaalt,ip] = alts[i]
 
             TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                         view(ac.pared, :, ip), ip, icall, icool, initeng)
@@ -332,9 +336,11 @@ function odperf!(ac, W, FL, Ldebug)
             #                                     Kinl, Φinl, parpt, ac.parmot, ac.pargen, ifirst, Ldebug)
             # end
 
-            icall = 2
+            icall = 1
             icool = 1
             initeng = 0
+            ac.pared[ieTt41,ip] = Tt41s[i]
+            ac.parad[iaalt,ip] = alts[i]
 
             TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                         view(ac.pared, :, ip), ip, icall, icool, initeng)
@@ -353,11 +359,12 @@ function odperf!(ac, W, FL, Ldebug)
                 break
             end
 
+            
 
             icall = 2
             icool = 1
             initeng = 0
-
+            ac.pared[ieFe, ip] = F
             TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                         view(ac.pared, :, ip), ip, icall, icool, initeng)
             
