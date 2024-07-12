@@ -82,7 +82,7 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct FuselageLayout <: AbstractLayout
     """Cross section definition"""
-    cross_section::AbstractCrossSection = MultiBubble()
+    cross_section::AbstractCrossSection = SingleBubble()
     """Thickness of webs """
     thickness_webs::Float64 = 0 #nfwebs
     """X position of nose [m]"""
