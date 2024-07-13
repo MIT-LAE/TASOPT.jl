@@ -155,28 +155,9 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--------------------------------------------------------------------
 #--- floor structural sizing
       P = (Wpay+fuse.seat.W) * Nland / fuse.n_decks #Total load is distributed across all decks
-      wfloor1 = layout.bubble_center_y_offset + layout.radius
+      floor_half_width = layout.bubble_center_y_offset + layout.radius
+      xWfloor = size_floor!(fuse, P, layout.l_floor, floor_half_width, mid_span_support = false)
 
-      if (layout.bubble_center_y_offset == 0.0) 
-#---- full-width floor
-       Smax = 0.50 * P
-       Mmax = 0.25 * P*wfloor1
-      else
-#---- floor with center support
-       Smax = (5.0/16.0 ) * P
-       Mmax = (9.0/256.0) * P*wfloor1
-      end
-
-      Afweb = 1.5*Smax/ taufloor
-      Afcap = 2.0*Mmax/(sigfloor*layout.floor_depth)
-
-      Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*layout.l_floor*fuse.floor.W_per_area)
-      xWfloor = fuse.floor.weight * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
-
-#--- average floor-beam cap thickness ("smeared" over entire floor)
-      fuse.floor.thickness = 0.5*Afcap/layout.l_floor
-      
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
       Qv = (nvtail*Lvmax*bv/3.0)*(1.0+2.0*lambdav)/(1.0+lambdav)
@@ -326,3 +307,50 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
 return  cabVol
 end # fusew
+
+
+"""
+    size_floor(floor::StructuralMember, load, floor_depth, floor_half_width;
+      mid_span_support::Bool)
+
+"""
+function size_floor!(fuse::Fuselage, load, floor_length, floor_half_width;
+      mid_span_support::Bool)
+
+      floor = fuse.floor
+      layout = fuse.layout
+      # P = (Wpay + fuse.seat.W) * Nland / fuse.n_decks #Total load is distributed across all decks
+
+      # Assume pinned ends (statically indeterminate problem)
+      if mid_span_support # floor with center support
+            Smax = (5.0 / 16.0) * load
+            Mmax = (9.0 / 256.0) * load * floor_half_width
+      else
+            # full-width floor
+            Smax = 0.50 * load
+            Mmax = 0.25 * load * floor_half_width
+      end
+
+      # Parabolic loading of the web gives us the 1.5 coeff
+      Afweb = 1.5 * Smax / floor.material.σmax
+      # σ = Mmax*y/I = Mmax*h/2/I
+      # I ≈ Acap*h²/4
+      # σ ≈ 2*Mmax/Acap/h
+      Afcap = 2.0 * Mmax / (floor.material.σmax * layout.floor_depth)
+
+      Vfloor = (Afcap + Afweb) * 2.0 * floor_half_width
+      W_floor_beam = floor.material.ρ * gee * Vfloor
+      W_floor_panels = 2 * floor_half_width * floor_length * floor.W_per_area
+
+      floor_weight = fuse.n_decks * (W_floor_beam + W_floor_panels)
+      xWfloor = fuse.floor.weight * 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
+
+      # average floor-beam cap thickness ("smeared" over entire floor)
+      fuse.floor.thickness = 0.5*Afcap/layout.l_floor # half since two flanges in an I beam
+      fuse.floor.weight = floor_weight
+
+      return xWfloor
+end  # function size_floor!
+
+# size_floor(cs::SingleBubble) = size_floor( mid_span_support = false)
+
