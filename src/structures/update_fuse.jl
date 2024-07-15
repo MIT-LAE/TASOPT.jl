@@ -89,7 +89,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse_tank)
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
-        w = find_cabin_width(Rfuse, wfb, nfweb, θ) #Cabin width
+        w = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
         lcyl, _, seats_per_row = place_cabin_seats(paxsize, w, seat_pitch, seat_width, aisle_halfwidth) #Cabin length
     end
 

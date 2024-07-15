@@ -129,7 +129,7 @@ function aisle_flag(idx, layout)
 end
 
 """
-    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64)
+    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64, h_seat::Float64)
 
 This function can be used to calculate the width of the passenger cabin from the double-bubble parameters
 and the floor angular position.
@@ -140,13 +140,16 @@ and the floor angular position.
     - `wfb::Float64`: lateral shift of double bubble (m)
     - `nfweb::Float64`: number of vertical webs in fuselage
     - `θ::Float64`: angle of floor wrt upper bubble center (rad)
+    - `h_seat::Float64`: seat height (m)
 
     **Outputs:**
     - `w::Float64`: width of cabin (m).
 """
-function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64)
+function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64, h_seat::Float64)
     #Use trigonometry to find cabin width
-    w = nfweb*2*wfb + 2*Rfuse*cos(θ)
+    θseat = asin((h_seat + Rfuse * sin(θ)) / Rfuse)  
+    cosθ = min(cos(θ), cos(θseat)) #For the effective cabin width, take the minimum of the widths at the floor and at the seat height
+    w = nfweb*2*wfb + 2*Rfuse*cosθ
     return w
 end
 
@@ -183,7 +186,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
             θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
             return θ1
         else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
-            θ2 = asin((h_seat + d_floor + Rfuse * sin(θ1)) / Rfuse)  
+            θ2 = asin((h_seat + d_floor) / Rfuse)  
             return θ1, θ2
         end
     end
@@ -232,8 +235,8 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
         end
 
         #Find width of each cabin
-        w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1)
-        w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2)
+        w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1, h_seat)
+        w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2, h_seat)
 
         #Find length of each cabin
         l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
