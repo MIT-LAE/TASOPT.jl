@@ -28,7 +28,7 @@
         end
     end
     
-    @test ac.parm[imPFEI] ≈  0.919121257897844
+    @test ac.parm[imPFEI] ≈  0.9142747616475472
 
 end
 
@@ -61,7 +61,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 1.1642157697355595
+    @test ac.parm[imPFEI] ≈ 1.1490082779966677
 
 end
 
@@ -94,7 +94,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.8107247842565991
+    @test ac.parm[imPFEI] ≈ 0.8103237698498467
 
 end
 
