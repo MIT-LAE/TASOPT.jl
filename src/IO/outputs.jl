@@ -449,9 +449,10 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         end
 
     if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+        h_seat = parg[igseatheight]
         pax = parg[igWpay]/parm[imWperpax]
         θ = find_floor_angles(false, parg[igRfuse], parg[igdRfuse], h_seat = parg[igseatheight]) #Find the floor angle
-        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ) #Cabin width
+        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ, h_seat) #Cabin width
         _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
 
         xseats = xseats .+ xseats0
@@ -1400,9 +1401,10 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     #Seats
     if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+        h_seat = parg[igseatheight]
         pax = parg[igWpay]/parm[imWperpax]
         θ = find_floor_angles(false, parg[igRfuse], parg[igdRfuse], h_seat = parg[igseatheight]) #Find the floor angle
-        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ) #Cabin width
+        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ, h_seat) #Cabin width
         _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
 
         xseats = xseats .+ xseats0
