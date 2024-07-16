@@ -2,9 +2,7 @@
 # be used by TASOPT
 ["Aircraft Description"]
     name = "Wide Body TASOPT Model"
-    description = """
-    This model file describes a basic twin-aisle aircraft.
-    """
+    description = """77W"""
 
 #-------------------------------------------------#
 ##               Note on units                   ##
@@ -52,7 +50,7 @@
     fuel_density = 810.0 #kg/m3
 
 [Mission]
-    N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = 370            # Number of passengers in each mission
     max_pax = 450               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft

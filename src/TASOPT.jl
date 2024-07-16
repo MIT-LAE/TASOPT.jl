@@ -78,7 +78,6 @@ include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
-include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
 
 
 export size_aircraft!

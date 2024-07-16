@@ -132,10 +132,11 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
     # println("Time netNPSS       = $(parpt[ipt_time_NPSS])")
     # println("Time writing       = $time_writing")
     # println("Time runnning NPSS = $time_run_NPSS")
-    Ldebug && println("Max weight iterations = $iter")
-    TASOPT.wsize(ac, itermax = iter, initwgt = initwgt,
-        Ldebug = Ldebug, printiter = printiter,
-        saveODperf = saveOD)
+    # Ldebug && println("Max weight iterations = $iter")
+    # TASOPT.wsize(ac, itermax = iter, initwgt = 0,
+    #     Ldebug = Ldebug, printiter = printiter,
+    #     saveODperf = false)
+    size_aircraft!(ac)
 
     local RMS_error
     
@@ -161,7 +162,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
         # NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS, RMS_error = woper(pari, parg,view(parm, :,km),view(para,:,:,km),view(pare, :,:,km), view(para,:,:,kmdes),view(pare, :,:,kmdes),
         #     iter, initeng,  NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS, endNPSS_flag)
 
-        TASOPT.woper(ac, kmdes, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
+        TASOPT.woper(ac, km, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
 
     end
 
@@ -192,7 +193,9 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
         println("Verified that Wfmax is enough to hold Wfuel, RUNNIGN ONCE MORE FOR saveOD")
         # NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS = wsize(pari, parg, view(parm, :,kmdes), view(para,:,:,kmdes), view(pare, :,:,kmdes),
         # iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, true, modify_thrustreq, false)
-        TASOPT.woper(ac, kmdes, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
+        TASOPT.wsize(ac, itermax = iter, initwgt = initwgt,
+        Ldebug = Ldebug, printiter = printiter,
+        saveODperf = true)
         for km = 2 : nmisx 
 
             for ip = 1: iptotal
@@ -215,7 +218,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
     
             # NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS = woper(pari, parg,view(parm, :,km),view(para,:,:,km),view(pare, :,:,km), view(para,:,:,kmdes),view(pare, :,:,kmdes),
             #     iter, initeng,  NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS, endNPSS_flag)
-            TASOPT.woper(ac, kmdes, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
+            TASOPT.woper(ac, km, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
     
         end
 
@@ -236,7 +239,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
         #                 iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, saveOD, modify_thrustreq, false)
         TASOPT.wsize(ac, itermax = iter, initwgt = initwgt,
         Ldebug = Ldebug, printiter = printiter,
-        saveODperf = saveOD)
+        saveODperf = false)
         for km = 2 : nmisx 
 
             for ip = 1: iptotal
@@ -259,7 +262,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
     
             # NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS = woper(pari, parg,view(parm, :,km),view(para,:,:,km),view(pare, :,:,km), view(para,:,:,kmdes),view(pare, :,:,kmdes),
             #     iter, initeng,  NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS, endNPSS_flag)
-            TASOPT.woper(ac, kmdes, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
+            TASOPT.woper(ac, km, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
     
         end
 
@@ -269,7 +272,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
             # iter, 0.5, 0.9, 0.5, initwgt, 1, 1, Ldebug, printiter, true, modify_thrustreq, false)
             TASOPT.wsize(ac, itermax = iter, initwgt = initwgt,
             Ldebug = Ldebug, printiter = printiter,
-            saveODperf = saveOD)
+            saveODperf = true)
         
             for km = 2 : nmisx 
 
@@ -293,7 +296,7 @@ function run_wsize(ac, iter, initwgt, Ldebug, printiter, saveOD, optimize, nmisx
         
                 # NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS = woper(pari, parg,view(parm, :,km),view(para,:,:,km),view(pare, :,:,km), view(para,:,:,kmdes),view(pare, :,:,kmdes),
                 #     iter, initeng,  NPSS_TS, NPSS_Fan, NPSS_AftFan, NPSS_PT, NPSS, endNPSS_flag)
-                TASOPT.woper(ac, kmdes, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
+                TASOPT.woper(ac, km, itermax = iter, initeng = initeng, saveOffDesign = saveOD)
         
             end
 
@@ -347,13 +350,20 @@ end
 # global track_fig = plot_details(parg, pari, para[:,:,1], pare[:,:,1], parm[:,1]; ax = track_fig)
 
 # plt.savefig(savedir * figname * ".jpg", dpi = 300)
-ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/EEI_input.toml"))
-size_aircraft!(ac)
+ac = load_default_model() #read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/example_widebody.toml"))
+# size_aircraft!(ac)
 
-mofftpax = 0.00633
-mofftmMTO = 0.0 * 0.001
-Pofftpax  = 200.0
-PofftmMTO = 1.8
+if ac.description == "77W"
+    mofftpax = 0.008
+    mofftmMTO = 0.0085 * 0.001
+    Pofftpax  = 200.0
+    PofftmMTO = 0.5
+else
+    mofftpax = 0.00633
+    mofftmMTO = 0.0 * 0.001
+    Pofftpax  = 200.0
+    PofftmMTO = 1.8
+end
 
 ac.parg[igmofWpay] = mofftpax / (230.0 * lbf_to_N)  #This later gets multiplied by Wpay, resulting in mofftpax*pax
 ac.parg[igmofWMTO] = mofftmMTO  / 9.81
@@ -361,8 +371,8 @@ ac.parg[igmofWMTO] = mofftmMTO  / 9.81
 ac.parg[igPofWpay] = Pofftpax / (230.0 * lbf_to_N)
 ac.parg[igPofWMTO] = PofftmMTO / 9.81
 
-saveOD = true
-nmisx = 5
+saveOD = false
+nmisx = 2
 
 run_wsize(ac, 200, 1, false, true, saveOD, false, nmisx)
 

@@ -75,10 +75,16 @@ function odperf!(ac, W, FL, Ldebug)
         
         # velocity calculation from CL, Weight, altitude
         #Get flight speed from climb schedule
-        CAScl, TAScl, Mcl = get_climbspeed(alts[i], MNcr)
-        #Get flight speed from descent schedule
-        CASdes, TASdes, Mdes = get_descentspeed(alts[i], MNcr)
+        if ac.description == "77W"
 
+            CAScl, TAScl, Mcl = get_climbspeed_77W(alts[i], MNcr)
+            #Get flight speed from descent schedule
+            CASdes, TASdes, Mdes = get_descentspeed_77W(alts[i], MNcr)
+        else
+            CAScl, TAScl, Mcl = get_climbspeed(alts[i], MNcr)
+            #Get flight speed from descent schedule
+            CASdes, TASdes, Mdes = get_descentspeed(alts[i], MNcr)
+        end
         # println(@sprintf("%.2f, %.2f, %.2f",CAScl, TAScl, Mcl))
         # println(@sprintf("%.2f, %.2f, %.2f",CASdes, TASdes, Mdes))
 
@@ -172,12 +178,22 @@ function odperf!(ac, W, FL, Ldebug)
             OEW = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
 
             # Climb Tt41 schedule
-            if W > 0.95 * ac.parg[igWMTO]
-                Tt41frac = LinRange(0.976,0.976, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
-            elseif W < 1.05*(1.2*OEW) # Low weight
-                Tt41frac = LinRange(0.92,0.963, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft        
-            else # mid-weight (reference mass)
-                Tt41frac = LinRange(0.94,0.975, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
+            if ac.description == "77W"
+                if W > 0.95 * ac.parg[igWMTO]
+                    Tt41frac = LinRange(0.965, 0.97, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
+                elseif W < 1.05*(1.2*OEW) # Low weight
+                    Tt41frac = LinRange(0.86, 0.955, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft        
+                else # mid-weight (reference mass)
+                    Tt41frac = LinRange(0.925, 0.965, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
+                end
+            else
+                if W > 0.95 * ac.parg[igWMTO]
+                    Tt41frac = LinRange(0.976,0.976, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
+                elseif W < 1.05*(1.2*OEW) # Low weight
+                    Tt41frac = LinRange(0.92,0.963, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft        
+                else # mid-weight (reference mass)
+                    Tt41frac = LinRange(0.94,0.975, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
+                end
             end
 
             if alts[i] <= (2000/3.28084) * 1.1 # At or under 2000 [ft]
@@ -259,10 +275,18 @@ function odperf!(ac, W, FL, Ldebug)
         ac.pared[ieFe, ip] = Ftotal
     
         # Cruise Section
-        if FL[i]≥ 60 && FL[i]≤410
+        FLcrzmax = 410
+        if ac.description == "77W"
+            FLcrzmax = 431
+        end
+        if FL[i]≥ 60 && FL[i]≤FLcrzmax
             ip = iptest
             #Get flight speed from climb schedule
-            CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
+            if ac.description == "77W"
+                CAScr, TAScr, Mcr = get_cruisespeed_77W(alts[i], MNcr)
+            else
+                CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
+            end
             # Mcr = ac.parad[iaMach, ipcruise1]
             # TAScr = Mcr*a0s[i]
             # CAScr = TAS_CAS(TAScr, alts[i])
@@ -619,4 +643,130 @@ function show_ff_sens(ff, H; ax = nothing)
 
     ax.plot(ffnorm', H)
 
+end
+
+
+## FOR 77W__
+function get_cruisespeed_77W(h, MNcr)
+    h_ft = round(h/0.3048/1000)*1000
+    Vcr2 = 310/1.944
+    htrans_ft = Hptrans(Vcr2, 0.84)
+    T, P, ρ,  a = atmos(h/1000)
+    TAS = MNcr*a
+    if h_ft<3000
+        CAS = 170/1.944
+        TAS = CAS_TAS(CAS, h)
+    elseif 3000<=h_ft<6000
+        CAS = 220/1.944
+        TAS = CAS_TAS(CAS, h)
+    elseif 6000<=h_ft<14000
+        CAS = 250/1.944 #Assume 250 kts CAS cruise consistent with BADA
+        TAS =  CAS_TAS(CAS, h)
+    elseif 14000<=h_ft< htrans_ft
+        CAS = Vcr2  #Assume CAS cruise similar to BADA
+        TAS =  CAS_TAS(CAS, h)
+    elseif h_ft>= htrans_ft
+        TAS =  MNcr * a
+        CAS =  TAS_CAS(TAS, h)
+    end
+    
+    MN =  TAS/ a
+    return CAS, TAS, MN
+end
+
+function get_climbspeed_77W(h,MNcr)
+    h_ft = h/0.3048
+    T, P, ρ,  a = atmos(h/1000)
+    TAS = a*MNcr
+    Vcl1 = 310/1.944 # From BADA 77W__.APF
+    Vcl2 = 310/1.944 # From BADA 77W__.APF
+    htrans_ft = Hptrans(Vcl2/1.944, 0.84)
+    VstallTO = 139/1.944 # From 77W__.PTF file BADA, flap 5 (Standard Takeoff Setting for B77W)
+    
+    CVmin = 1.3 # From BADA manual
+    VdCL1, VdCL2, VdCL3, VdCL4, VdCL5 = [5, 10, 30, 60, 80]/1.944
+
+    if 0<=h_ft<1500
+        CAS = CVmin*VstallTO + VdCL1
+        TAS = CAS_TAS(CAS, h)
+    elseif 1500<=h_ft<3000
+        CAS = CVmin*VstallTO + VdCL2
+        TAS = CAS_TAS(CAS, h)
+    elseif 3000<=h_ft<4000
+        CAS = CVmin*VstallTO + VdCL3
+        TAS = CAS_TAS(CAS, h)
+    elseif 4000<=h_ft<5000
+        CAS = CVmin*VstallTO + VdCL4
+        TAS = CAS_TAS(CAS, h)
+    elseif 5000<=h_ft<6000
+        CAS = CVmin*VstallTO + VdCL5
+        TAS = CAS_TAS(CAS, h)
+    elseif 6000<=h_ft<10000 
+        CAS = min(Vcl1, 250/1.944)
+        TAS = CAS_TAS(CAS, h)
+    elseif 10000<=h_ft<htrans_ft
+        CAS = Vcl2
+        TAS = CAS_TAS(CAS, h)
+    elseif h_ft>=htrans_ft
+        TAS = MNcr*a
+        CAS = TAS_CAS(TAS, h)
+    end
+
+    MN = TAS/a
+    #Limit MN to be less than MNcr at design
+    if MN>MNcr
+        MN = MNcr
+        TAS = MN*a
+    end
+
+    return CAS, TAS, MN
+end
+    
+function get_descentspeed_77W(h,MNcr)
+    h_ft = h/0.3048
+    T, P, ρ,  a = atmos(h/1000)
+    TAS = a*MNcr
+    Vdes1 = 310/1.944 # From BADA 77W__.APF
+    Vdes2 = 310/1.944 # From BADA 77W__.APF
+    htrans_ft = Hptrans(Vdes2/1.944, 0.84)
+
+    VstallLD = 122/1.944 # From 77W__.PTF file BADA, flap 30 (Standard Landing Setting for B77W)
+    
+    CVmin = 1.3 # From BADA manual
+    VdCL1, VdCL2, VdCL3, VdCL4 = [5, 10, 20, 50]/1.944
+
+    if 0<=h_ft<1000
+        CAS = CVmin*VstallLD + VdCL1
+        TAS = CAS_TAS(CAS, h)
+    elseif 1000<=h_ft<1500
+        CAS = CVmin*VstallLD + VdCL2
+        TAS = CAS_TAS(CAS, h)
+    elseif 1500<=h_ft<2000
+        CAS = CVmin*VstallLD + VdCL3
+        TAS = CAS_TAS(CAS, h)
+    elseif 2000<=h_ft<3000
+        CAS = CVmin*VstallLD + VdCL4
+        TAS = CAS_TAS(CAS, h)
+    elseif 3000<=h_ft<6000
+        CAS = min(Vdes1, 220/1.944)
+        TAS = CAS_TAS(CAS, h)
+    elseif 6000<=h_ft<10000 
+        CAS = min(Vdes1, 250/1.944)
+        TAS = CAS_TAS(CAS, h)
+    elseif 10000<=h_ft<htrans_ft
+        CAS = Vdes2
+        TAS = CAS_TAS(CAS, h)
+    elseif h_ft>=htrans_ft
+        TAS = MNcr*a
+        CAS = TAS_CAS(TAS, h)
+    end
+
+    MN = TAS/a
+    #Limit MN to be less than MNcr at design
+    if MN>MNcr
+        MN = MNcr
+        TAS = MN*a
+    end
+
+    return CAS, TAS, MN
 end

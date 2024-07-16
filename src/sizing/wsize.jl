@@ -22,7 +22,7 @@ function wsize(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
-    #Unpack data storage arrays
+    #Unpack data storage a rrays
     pari = ac.pari
     parg = ac.parg
     parm = ac.parmd
@@ -1535,58 +1535,107 @@ function wsize(ac; itermax=35,
     itrim = 0
     balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
     
-    if (saveODperf)
-        open("B738__.LTO", "w") do f
-            LTO("B738__", ac; fileout = f)
-        end
-    end
-    
-    if (saveODperf)
-        open("B738__extra_pts.LTO", "w") do f
-            LTO("B738__extra_pts", ac; fileout = f, extra_points = true)
-        end
-    end
-
     if saveODperf
-    
-        FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
-            30 ,   40 ,   60 ,   80 ,  100 , 
-            120 ,  140 ,  160 ,  180 ,  200 ,
-            220 ,  240 ,  260 ,  280 ,  290 , 
-            310 ,  330 ,  350 ,  370 ,  390 ,
-            410])
-    
-        ZFW = parg[igWMTO] - parg[igWfuel]
-        OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-    
-        M_high = 0.92 * parg[igWMTO]
-        M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
-        W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
-        #W = [M_high, 1/2*(M_high + M_low), M_low]
-        Ldebug = false
-    
-        W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
-        W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug) 
-        W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
-        open("B738__.PTF", "w") do f
-            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
-            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
-        end
-        
-        # If initwgt == 1 (no optimization) also export to BADA
-        if (initwgt == 1)
-            if parg[8] < parg[7]
-                println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
-            else
-                open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B738__.PTF", "w") do f
-                printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+        if ac.description == "77W"
+                
+            open("B77W.LTO", "w") do f
+                LTO("B77W__", ac; fileout = f)
+            end
+
+            open("B77W__extra_pts.LTO", "w") do f
+                LTO("B77W__extra_pts", ac; fileout = f, extra_points = true)
+            end
+            
+
+            FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+                30 ,   40 ,   60 ,   80 ,  100 , 
+                120 ,  140 ,  160 ,  180 ,  200 ,
+                220 ,  240 ,  260 ,  280 ,  290 , 
+                310 ,  330 ,  350 ,  370 ,  390 ,
+                410, 430, 431])
+
+            ZFW = parg[igWMTO] - parg[igWfuel]
+            OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+            
+            M_high = 0.92 * parg[igWMTO]
+            M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
+            W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
+
+            println("WEIGHTS  = $W")
+            
+            W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
+            W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug)
+            W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug)
+            
+            open("B77W__.PTF", "w") do f
+                printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
                 V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-                hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; wide = true)
+            end
+            
+            # If initwgt == 1 (no optimization) also export to BADA
+            if (initwgt == 1)
+                if parg[8] < parg[7]
+                    println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
+                else
+                    open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B77W__.PTF", "w") do f
+                    printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; wide = true)
+                    end
                 end
             end
+        else
+            
+                open("B738__.LTO", "w") do f
+                    LTO("B738__", ac; fileout = f)
+                end
+
+                open("B738__extra_pts.LTO", "w") do f
+                    LTO("B738__extra_pts", ac; fileout = f, extra_points = true)
+                end
+            
+                FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+                    30 ,   40 ,   60 ,   80 ,  100 , 
+                    120 ,  140 ,  160 ,  180 ,  200 ,
+                    220 ,  240 ,  260 ,  280 ,  290 , 
+                    310 ,  330 ,  350 ,  370 ,  390 ,
+                    410])
+            
+                ZFW = parg[igWMTO] - parg[igWfuel]
+                OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+            
+                M_high = 0.92 * parg[igWMTO]
+                M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
+                W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
+                #W = [M_high, 1/2*(M_high + M_low), M_low]
+                Ldebug = false
+                
+            
+                W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
+                W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug) 
+                W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
+                open("B738__.PTF", "w") do f
+                    printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                end
+                
+                # If initwgt == 1 (no optimization) also export to BADA
+                if (initwgt == 1)
+                    if parg[8] < parg[7]
+                        println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
+                    else
+                        open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B738__.PTF", "w") do f
+                        printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                        end
+                    end
+                end
+            
         end
-    
+    end
         # open("B738__NOx.PTF", "w") do f
         #     printBADA(f, "B738__NOx", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
         #     V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom.*60.0.*clmbEINOxnom,
@@ -1603,7 +1652,7 @@ function wsize(ac; itermax=35,
         #      hcat(Tt4crzmaxhigh, Tt4crzmaxnom, Tt4crzmaxlo)',
         #      hcat(crzFARhigh, crzFARnom, crzFARlo)')
         # end
-    end
+    # end
 end
 
 """

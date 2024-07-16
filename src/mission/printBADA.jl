@@ -1,15 +1,24 @@
-function printBADA(io, name, W0, maxalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS, FLin, Wpaymax; NOx = false )
+function printBADA(io, name, W0, maxalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS, FLin, Wpaymax; NOx = false, wide = false )
 
     γdes = 3.0 * π/180.0
     sing = sin(γdes)
     kts_to_ft = 1.68781
 # Flight levels to output in BADA file:
-    FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+    if wide
+        FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
         30 ,   40 ,   60 ,   80 ,  100 , 
         120 ,  140 ,  160 ,  180 ,  200 ,
         220 ,  240 ,  260 ,  280 ,  290 , 
         310 ,  330 ,  350 ,  370 ,  390 ,
-        410])
+        410, 430, 431])
+    else
+        FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+            30 ,   40 ,   60 ,   80 ,  100 , 
+            120 ,  140 ,  160 ,  180 ,  200 ,
+            220 ,  240 ,  260 ,  280 ,  290 , 
+            310 ,  330 ,  350 ,  370 ,  390 ,
+            410])
+    end
 
     maxalt = maxalt/ft_to_m  #idk why but AEIC subtracts 7000 ft
 
