@@ -150,20 +150,21 @@ This function calculates the minimum radius required to have a desired number of
 """
 function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     ac = deepcopy(ac_base) #Copy input ac to avoid modifying it
-    obj(x, grad) = x[1] #Objective function is just the radius itself
+    obj(x, grad) = x[1] + 1e3 * abs(check_seats_per_row_diff(seats_per_row, x, ac))  #Objective function is the radius plus a big penalty if constraint is not met
 
     initial_x = [4.0]
-    initial_dx = [0.5]
-    opt = Opt(:LN_COBYLA, length(initial_x)) #Use a local optimizer that can handle equality constraints
+    opt = Opt(:GN_DIRECT, length(initial_x)) #Use a global optimizer that can handle equality constraints
     opt.lower_bounds = [0.0]
     opt.upper_bounds = [5.0]
-    opt.ftol_rel = 1e-4  # Set the tolerance
-    opt.maxeval = 100  # Set the max number of evaluations
+
+    # opt_local = Opt(:GN_DIRECT, length(initial_x))
+    opt.maxeval = 500  # Set the max number of evaluations
+    # opt.local_optimizer = opt_local
 
     opt.min_objective = obj
 
     #Apply the equality constraint that ensures that the number of seats per row is the desired one
-    equality_constraint!(opt, (x, grad) -> check_seats_per_row_diff(seats_per_row, x, ac), 1e-5) 
+    #equality_constraint!(opt, (x, grad) -> check_seats_per_row_diff(seats_per_row, x, ac), 1e-5) 
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
     R = xopt[1]

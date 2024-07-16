@@ -176,7 +176,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
     if dRfuse > 0.0
         θ1 = -asin(dRfuse / (2*Rfuse))
         if fdoubledecker
-            θ2 = asin((h_seat + d_floor - dRfuse/2) / Rfuse)
+            θ2 = asin((d_floor - dRfuse/2) / Rfuse)
             return θ1, θ2
         else
             return θ1
@@ -186,7 +186,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
             θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
             return θ1
         else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
-            θ2 = asin((h_seat + d_floor) / Rfuse)  
+            θ2 = asin((Rfuse * sin(θ1) + d_floor) / Rfuse)  
             return θ1, θ2
         end
     end
@@ -208,7 +208,6 @@ passengers on each deck.
     - `maxl::Float64`: required cabin length (m)
 """
 function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
-    
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
     aisle_halfwidth = parg[igaislehalfwidth]
@@ -243,10 +242,9 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
         l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
 
         maxl = max(l1, l2) #Required length
-        
         return maxl, pax_per_row_main 
     catch
-        return 1e6
+        return 1e6, 1e6
     end
 end
 
@@ -351,7 +349,7 @@ function MinCabinHeightConst(x, parg, minheight = 2.0)
 
         _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= 0.0, d_floor = d_floor) #The seat height does not need to be included
 
-        hcabin = Rfuse * (1 - sin(θ2))
+        hcabin = Rfuse * (1 - sin(θ2)) + dRfuse #Add dRfuse as it shifts the lower bubble down
 
         constraint = minheight/hcabin - 1.0 #Constraint has to be negative if hcabin > minheight
 
