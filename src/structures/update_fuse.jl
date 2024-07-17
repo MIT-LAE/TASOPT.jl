@@ -158,7 +158,7 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     opt.upper_bounds = [5.0]
 
     # opt_local = Opt(:GN_DIRECT, length(initial_x))
-    opt.maxeval = 500  # Set the max number of evaluations
+    opt.maxeval = 5000  # Set the max number of evaluations
     # opt.local_optimizer = opt_local
 
     opt.min_objective = obj
