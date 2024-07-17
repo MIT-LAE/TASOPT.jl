@@ -172,25 +172,13 @@ cabins. It returns the angular position of each deck with respect to the center 
     - `θ2::Float64`: returned when double decker; angle of upper floor wrt upper bubble center (rad)
 """
 function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
-    #If there is a lower bubble, the floor must be placed at the intersection of the two
-    if dRfuse > 0.0
-        θ1 = -asin(dRfuse / (2*Rfuse))
-        if fdoubledecker
-            θ2 = asin((d_floor - dRfuse/2) / Rfuse)
-            return θ1, θ2
-        else
-            return θ1
-        end  
-    else #If there is not a lower bubble
-        if ~fdoubledecker #If it has a single deck
-            θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
-            return θ1
-        else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
-            θ2 = asin((Rfuse * sin(θ1) + d_floor) / Rfuse)  
-            return θ1, θ2
-        end
+    if ~fdoubledecker #If it has a single deck
+        θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
+        return θ1
+    else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
+        θ2 = asin((Rfuse * sin(θ1) + d_floor) / Rfuse)  
+        return θ1, θ2
     end
-
 end
 
 """
@@ -225,13 +213,9 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
     paxtop = paxsize - paxmain
 
     try #The calculation could fail for some inputs if an asin returns an error
-        if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere
 
-            θ1 = x[2] #Main deck angle
-            _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= h_seat, d_floor = d_floor)
-        else #Main deck angle depends on double bubble params
-            θ1, θ2 = find_floor_angles(true, Rfuse, dRfuse, h_seat = h_seat, d_floor = d_floor)
-        end
+        θ1 = x[2] #Main deck angle
+        _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= h_seat, d_floor = d_floor)
 
         #Find width of each cabin
         w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1, h_seat)
@@ -266,17 +250,10 @@ function optimize_double_decker_cabin(parg, parm)
 
     paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
 
-    if dRfuse ≈ 0.0 #If the cross-section is circular, the main deck could be anywhere so optimize it
-        initial_x = [paxsize/2, -pi/4]
-        lower = [1.0, -pi/2]
-        upper = [paxsize - 1.0, pi/2]
+    initial_x = [paxsize/2, -pi/4]
+    lower = [1.0, -pi/2]
+    upper = [paxsize - 1.0, pi/2]
         
-    else #Only optimize PAX distribution
-        initial_x = [paxsize/2]
-        lower = [1.0]
-        upper = [paxsize - 1.0]
-    end
-
     obj(x, grad) = find_double_decker_cabin_length(x, parg, parm)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
@@ -317,8 +294,9 @@ function MinCargoHeightConst(x, parg, minheight = 1.626)
     #Extract parameters
     θ1 = x[2]
     Rfuse = parg[igRfuse]
+    dRfuse = parg[igdRfuse]
 
-    hcargo = Rfuse * (1 + sin(θ1)) #Height left for cargo containers under floor
+    hcargo = Rfuse * (1 + sin(θ1)) + dRfuse #Height left for cargo containers under floor; need to add dRfuse
 
     constraint = minheight/hcargo - 1.0 #Constraint has to be negative if hcargo > minheight
     return constraint
@@ -349,7 +327,7 @@ function MinCabinHeightConst(x, parg, minheight = 2.0)
 
         _, θ2 = find_floor_angles(true, Rfuse, dRfuse, θ1 = θ1, h_seat= 0.0, d_floor = d_floor) #The seat height does not need to be included
 
-        hcabin = Rfuse * (1 - sin(θ2)) + dRfuse #Add dRfuse as it shifts the lower bubble down
+        hcabin = Rfuse * (1 - sin(θ2)) #Upper cabin height
 
         constraint = minheight/hcabin - 1.0 #Constraint has to be negative if hcabin > minheight
 
