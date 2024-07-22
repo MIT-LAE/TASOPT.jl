@@ -298,17 +298,31 @@ readgeom(x) = read_input(x, geom, dgeom)
     else
         fuselage.n_decks =  1
     end
-    
-    nwebs = readgeom("Nwebs")
-    if nwebs != 0
-        fuselage.layout.cross_section = TASOPT.MultiBubble()
-        fuselage.layout.cross_section.n_webs = readgeom("Nwebs")
-        fuselage.layout.cross_section.bubble_center_y_offset = Distance(readgeom("y_offset"))
+
+    # Number of webs = number of bubbles - 1
+    n_bubbles = Int(readgeom("number_of_bubbles"))
+
+    radius = Distance(readgeom("radius"))
+    dz = Distance(readgeom("dRadius"))
+    dy = Distance(readgeom("y_offset"))
+
+    if n_bubbles > 1 && dy == 0.0
+        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        "y-offset of bubble set to 0.0. "*
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        n_bubbles = 1
     end
-    fuselage.layout.cross_section.radius = Distance(readgeom("radius"))
-    fuselage.layout.cross_section.bubble_lower_downward_shift = Distance(readgeom("dRadius"))
+
+    if n_bubbles == 1
+        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
+    else
+        n_webs = n_bubbles - 1
+        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
+        bubble_center_y_offset = dy, n_webs = n_webs)
+    end
+    println(cross_section)
+    fuselage.layout.cross_section = cross_section
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
-    
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
     fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
@@ -658,12 +672,21 @@ readstruct(x) = read_input(x, structures, dstructures)
     parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
 
-    fuselage.skin.ρ = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
-    fuselage.bendingmaterial_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.bendingmaterial_v.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.skin.σ = Stress(readstruct("sigma_fuse_skin"))
-    fuselage.bendingmaterial_h.σ = Stress(readstruct("sigma_fuse_bending"))
-    fuselage.bendingmaterial_v.σ = Stress(readstruct("sigma_fuse_bending"))
+
+    skin_max_avg = readstruct("skin_max_avg_stress")
+    skin_safety_fac = readstruct("skin_safety_factor")
+    fuselage.skin.material =  StructuralAlloy(readstruct("skin_material"), 
+                                    max_avg_stress = skin_max_avg,
+                                    safety_factor = skin_safety_fac)
+
+    bend_max_avg = readstruct("bending_max_avg_stress")
+    bend_safety_fac = readstruct("bending_safety_factor")
+    fuselage.bendingmaterial_h.material = StructuralAlloy(readstruct("bending_material"),
+                                max_avg_stress = bend_max_avg,
+                                safety_factor = bend_safety_fac)
+
+    fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
+
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------

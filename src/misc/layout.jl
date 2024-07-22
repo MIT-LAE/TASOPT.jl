@@ -15,7 +15,25 @@ $TYPEDFIELDS
     radius::Float64 = 1.0
     """Downward shift of lower bubbles (dRfuse) [m] """
     bubble_lower_downward_shift::Float64 = 0.0
+    """Skin thickness [m]"""
+    skin_thickness::Float64 = 0.0
+
+    # SingleBubble(radius, bubble_lower_downward_shift, Δp, σ) = 
+    # calc_skin_thickness(new(radius, bubble_lower_downward_shift), Δp, σ)
+
 end
+
+"""
+"""
+function calc_skin_thickness(cs::AbstractCrossSection, Δp, σ)
+    cs.skin_thickness = Δp*cs.radius/100.0
+    return cs
+end  # function calc_skin_thickness
+
+
+# function SingleBubble(radius, dz, Δp)
+
+# end
 
 """
 $TYPEDEF
@@ -34,6 +52,10 @@ $TYPEDFIELDS
     bubble_center_y_offset::Float64 = 0.2
     """Number of webs [-]"""
     n_webs::Int64 = 1
+    """Skin thickness [m]"""
+    skin_thickness::Float64 = 0.0
+    """Web thickness [m]"""
+    web_thickness::Float64 = 0.0
 end
 
 # Trying to access these properties form a SingleBubble just gives
@@ -42,6 +64,8 @@ function Base.getproperty(obj::SingleBubble, sym::Symbol)
     if sym === :n_webs
         return 0
     elseif sym === :bubble_center_y_offset
+        return 0.0
+    elseif sym === :web_thickness
         return 0.0
     else
         return getfield(obj, sym)
@@ -90,7 +114,16 @@ end
 # Helper function to be able to simplify 
 function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     cross_section = getfield(layout, :cross_section)
-    if sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
+    
+    if sym === :l_nose
+        return getfield(layout, :x_pressure_shell_fwd) - getfield(layout, :x_nose)
+    elseif sym === :l_shell
+        return getfield(layout, :x_pressure_shell_aft) - 
+               getfield(layout, :x_pressure_shell_fwd)
+    elseif sym === :l_floor
+        return getproperty(layout, :l_shell) + 2.0*getproperty(layout, :radius)
+    
+    elseif sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
         return getproperty(cross_section, sym)
     else
         return getfield(layout, sym)
