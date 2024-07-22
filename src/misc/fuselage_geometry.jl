@@ -22,10 +22,6 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
     fuse.skin.thickness = Δp*R/fuse.skin.σ
     fuse.web.thickness = 2.0*Δp*layout.bubble_center_y_offset/fuse.skin.σ
 
-    # Effective nose length and pressure-vessel length
-    l_nose  = layout.x_pressure_shell_fwd - layout.x_nose
-    l_shell = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd
-
     # Cross sectional areas
     A_skin = perimeter * fuse.skin.thickness
     A_web = web_length * fuse.web.thickness
@@ -35,6 +31,7 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
     S_bulk = (2π + 4.0*layout.n_webs*θ_web)*R^2
     S_nose = S_bulk * (0.333 + 0.667*(l_nose/R)^1.6 )^0.625 
 
+    l_nose, l_shell, l_floor = calculate_shell_lengths(layout)
     # Shell volumes
     V_cylinder = A_skin*l_shell
     V_nose = S_nose * fuse.skin.thickness
@@ -42,6 +39,22 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
     V_web = A_web*l_shell
       
 end  # function calculate_shell_geometry
+
+function calculate_shell_lengths(layout::FuselageLayout)
+    l_nose  = layout.x_pressure_shell_fwd - layout.x_nose
+    l_shell = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd
+    l_floor = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd + 2.0 * layout.radius
+    return l_nose, l_shell, l_floor
+end
+
+
+function skin_thickness(xSection::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    return Δp * xSection.radius / σ
+end
+
+function web_thickness(xSection::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    return 2 * Δp * xSection.bubble_center_y_offset / σ
+end
 
 function web_geometry(cs::MultiBubble)
     # fuselage bubble subtended half-angle
@@ -64,6 +77,29 @@ function web_geometry(cs::SingleBubble)
     return θ_web, h_web, sin2θ, effective_web_length
 end
 
+"""
+    Iy(cs::AbstractCrossSection)
+Calculates the second moment of area about the y-axis (i.e., the horizontal 
+axis w.r.t the cross-section)
+
+"""
+function Iy(cs::AbstractCrossSection)
+    θ_web, h_web, sin2θ, _ = web_geometry(cs)
+    n_webs = cs.n_webs
+    R = cs.radius
+    skin = ((π + n_webs*(2θ_web + sin2θ))*R^2 + 8*n_webs*cosθ*ΔR/2*R +
+            (2π + 4n_webs*θ_web)*(ΔR/2)^2)*R*t_shell
+
+    web = 2//3 * n_webs*(h_web + ΔR/2)^3 * t_web
+
+    return skin + web
+
+end  # function Iy
+# """
+# """
+# function Iz(cs::AbstractCrossSection)
+    
+# end  # function Iz
 
 """
     get_perimeter(x::SingleBubble)

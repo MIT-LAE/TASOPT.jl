@@ -13,8 +13,8 @@ function check_struct_equivalence(s1, s2)
     
     # Check if each field has the same value in both structs
     for field in fields_s1
-        val1 = getfield(s1, field)
-        val2 = getfield(s2, field)
+        val1 = getproperty(s1, field)
+        val2 = getproperty(s2, field)
         if typeof(val1) == typeof(val2)
             if typeof(val1) != Float64
                 if !check_struct_equivalence(val1, val2)

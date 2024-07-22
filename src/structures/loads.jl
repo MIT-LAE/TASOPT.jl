@@ -108,6 +108,17 @@ function center_of_weight(W_array::AbstractArray{Weight}, frame::Frame = WORLD)
     return Weight(W = total_weight, r = r̄./total_weight)
 end
 
+function Base.getproperty(obj::Weight, sym::Symbol)
+    if sym === :x
+        return obj.r[1]
+    elseif sym === :y
+        return obj.r[2]
+    elseif sym === :z
+        return obj.r[3]
+    else
+        return getfield(obj, sym)
+    end
+end
 
 """
     moment(weight::Weight)
