@@ -1617,8 +1617,8 @@ function wsize(ac; itermax=35,
                 W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
                 open("B738__.PTF", "w") do f
                     printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
-                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
                 end
                 
                 # If initwgt == 1 (no optimization) also export to BADA
@@ -1627,9 +1627,15 @@ function wsize(ac; itermax=35,
                         println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
                     else
                         open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B738__.PTF", "w") do f
-                        printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
-                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = false, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                        end
+                        
+                        open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA_modified/B738__.PTF", "w") do f
+                            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
                         end
                     end
                 end
