@@ -314,7 +314,7 @@ end # fusew
       mid_span_support::Bool)
 
 """
-function size_floor!(fuse::Fuselage, load, floor_length, floor_half_width;
+function size_floor!(fuse, load, floor_length, floor_half_width;
       mid_span_support::Bool)
 
       floor = fuse.floor

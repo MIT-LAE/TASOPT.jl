@@ -916,7 +916,7 @@ function wsize(ac; itermax=35,
         #  corrections for sweep and compressibility:
         CLα = 2π * cosL / (sqrt(βn^2 + (2 * cosL / AR)^2) + 2 * cosL / AR)
         # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
-        # parg[igCMVf1] = parg[igfuseVol]/CLα
+        # parg[igCMVf1] = fuse.volume/CLα
 
         # Size HT
         if (iterw <= 2 && initwgt == 0)

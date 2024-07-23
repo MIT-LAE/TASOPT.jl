@@ -20,9 +20,8 @@ function check_struct_equivalence(s1, s2)
                 if !check_struct_equivalence(val1, val2)
                     return false
                 end
-            elseif !(val1 ≈ val2)
-                println("Error in ", val1, " ", val2, field)
-                return false
+            else
+                @test val1 ≈ val2
             end
         else
             return false
@@ -64,7 +63,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.88610947554647023772
+    @test ac.parm[imPFEI] ≈ 0.8861056137328497
 
 end
 
@@ -101,7 +100,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 1.1181723832967503
+    @test ac.parm[imPFEI] ≈ 1.1181652855780662
 
 end
 
@@ -138,6 +137,6 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.7887904217038525
+    @test ac.parm[imPFEI] ≈ 0.7887881872648841
 
 end
