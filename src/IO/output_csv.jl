@@ -220,9 +220,9 @@ Format: Dict(){String => Union{AbstractVector,Colon(), Integer}}
 default_output_indices = 
     Dict("pari" => Colon(),
         "parg" => [#weights
-                    igWMTO, igWfuel, igWpay, igWpaymax, igfhpesys, igflgnose,igflgmain,
+                    igWMTO, igWfuel, igWpay, igWpaymax, igflgnose,igflgmain,
                     igWweb,igWcap, igfflap,igfslat, igfaile, igflete, igfribs, igfspoi, igfwatt,
-                    igWfuse, igWwing, igWvtail, igWhtail, igWtesys, igWftank, 
+                 igWwing, igWvtail, igWhtail, igWtesys, igWftank, 
                     
                     #other
                     igdfan, igGearf,
