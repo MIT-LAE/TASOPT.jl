@@ -462,7 +462,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgas.Pl_c = Pl_c
       HXgas.ε = ε
 
-      #Gas parameters
+      #Geometry parameters
       HXgeom.N_t = N_t
       HXgeom.n_passes = n_passes
       HXgeom.A_cs = A_cs
@@ -1554,16 +1554,13 @@ Calculates the weight of a heat exchanger with involute tubes.
 """
 function hxweight(gee, HXgeom, fouter)
       #Extract inputs
-      N_t = HXgeom.N_t
-      n_stages = HXgeom.n_stages
-      n_passes = HXgeom.n_passes
       tD_o = HXgeom.tD_o 
       ρ = HXgeom.material.ρ
       l = HXgeom.l
       t = HXgeom.t
+      N_tubes_tot = HXgeom.N_tubes_tot #total number of tubes across all rows
+      tD_i = HXgeom.tD_i
 
-      N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
-      tD_i = tD_o - 2 * t
       V_t = N_tubes_tot * pi * (tD_o^2 - tD_i^2) / 4 * l #total tube volume
       m_t = ρ * V_t #total tube mass
 
