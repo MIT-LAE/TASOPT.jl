@@ -99,7 +99,7 @@ function fusebl!(fuse,pari, parg, para, ip)
             ra = 0.5*(zbl[i+1]+zbl[i])
             Vol += π*ra^2*(xbl[i+1] - xbl[i])
       end
-      parg[igfuseVol] = Vol
+      fuse.volume = Vol
       
       if(ifclose==0) 
        @inbounds for  ibl = 1: nbl
