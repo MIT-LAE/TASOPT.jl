@@ -332,7 +332,7 @@ function size_floor!(fuse, load, floor_length, floor_half_width;
       end
 
       # Parabolic loading of the web gives us the 1.5 coeff
-      Afweb = 1.5 * Smax / floor.material.σmax
+      Afweb = 1.5 * Smax / floor.material.τmax
       # σ = Mmax*y/I = Mmax*h/2/I
       # I ≈ Acap*h²/4
       # σ ≈ 2*Mmax/Acap/h
