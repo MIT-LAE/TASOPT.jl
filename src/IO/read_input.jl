@@ -285,6 +285,7 @@ readgeom(x) = read_input(x, geom, dgeom)
 
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
+    parg[igseatheight] = Distance(readgeom("seat_height"))
     parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
 
     parg[igRfuse]  = Distance(readgeom("radius"))
