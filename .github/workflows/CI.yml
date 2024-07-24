@@ -4,6 +4,12 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened]
+
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
+  
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
