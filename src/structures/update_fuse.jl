@@ -152,13 +152,14 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     ac = deepcopy(ac_base) #Copy input ac to avoid modifying it
     obj(x, grad) = x[1] + 1e3 * abs(check_seats_per_row_diff(seats_per_row, x, ac))  #Objective function is the radius plus a big penalty if constraint is not met
 
+    #First, use global optimizer to find region of global optimum
     initial_x = [4.0]
-    opt = Opt(:GN_DIRECT, length(initial_x)) #Use a global optimizer that can handle equality constraints
+    opt = Opt(:GN_DIRECT, length(initial_x)) #Use a global optimizer
     opt.lower_bounds = [0.0]
     opt.upper_bounds = [5.0]
 
     # opt_local = Opt(:GN_DIRECT, length(initial_x))
-    opt.maxeval = 5000  # Set the max number of evaluations
+    opt.maxeval = 500  # Set the max number of evaluations
     # opt.local_optimizer = opt_local
 
     opt.min_objective = obj
@@ -167,6 +168,16 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     #equality_constraint!(opt, (x, grad) -> check_seats_per_row_diff(seats_per_row, x, ac), 1e-5) 
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
+
+    #Next, use local optimizer to polish off optimum
+    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a 
+    opt.lower_bounds = [0.0]
+    opt.upper_bounds = [5.0]
+    opt.min_objective = obj
+    opt.ftol_rel = 1e-4
+
+    (minf,xopt,ret) = NLopt.optimize(opt, xopt) #Solve optimization problem starting from global solution
+
     R = xopt[1]
     return R
 end
