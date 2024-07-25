@@ -14,27 +14,21 @@ A typical set of values is output by default for the design mission at the first
 Appends to extant `filepath` if headers are compatible, appending integer suffixes to filename when not.
 
 Output is customizable by:
-    - `indices` dictionary mapping par arrays to desired indices,
-    - `includeMissions` allows output of all missions (i.e., =true) or specifiable indices (e.g., =[1,2,3]),
-    - `includeFlightPoints` allows output of all flight points (as for `includeMissions`).
+  - `indices`: specifies the desired indices of each par array,
+  - `includeMissions`: allows output of all missions (i.e., =true) or specifiable indices (e.g., =[1,2,3]),
+  - `includeFlightPoints`: allows output of all flight points (as for `includeMissions`).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac::TASOPT.aircraft`: TASOPT aircraft `struct` containing model in any state. 
     - `filepath::String`: path and name of .csv file to be written.
     - `overwrite::Bool`: deletes existing file at filepath when true, default is false.
-    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: See [`default_output_indices`](@ref)
+    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: specifies desired indices of par arrays given as keys. Customizable; built-in options: [`default_output_indices`](@ref), `output_indices_all`, `output_indices_wGeom`, and `output_indices_wGeom`.
     - `includeMissions::Union{AbstractVector,Colon,Bool,Integer}`: saves all mission entries as an array in a CSV cell when true, default is false, inner nested array when flight points are also output. specific indices can also be specified as Vectors of Ints.
     - `includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer}`: saves all flight point entries as an array in a CSV cell when true, default is false, outer nested array when missions are also output. specific indices can also be specified as Vectors of Ints.
     - `forceMatrices::Bool`: forces all entries that vary with mission and flight point to follow nested array structure
     **Outputs:**
     - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
-
-TODO:
-- human-readable column names - lookup with /another/ dict
-    currently column headers are index vars - e.g., iifuel, ieA5fac
-    desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
-- bug: bonus rows of last #? (comes from mismatch of headers and cells)
 """
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
     filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
@@ -42,6 +36,14 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     includeMissions::Union{AbstractVector,Colon,Bool,Integer} = false, 
     includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer} = false,
     forceMatrices::Bool = false)
+
+    """
+    #TODO:
+    - human-readable column names - lookup with /another/ dict
+        currently column headers are index vars - e.g., iifuel, ieA5fac
+        desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
+    - bug: bonus rows of last #? (comes from mismatch of headers and cells)
+    """
 
     #initialize row to write out
     csv_row = []
@@ -207,15 +209,18 @@ function check_file_headers(filepath, header)
     end
 end
 
-#TODO: include this via ```@docs default_output_indices```
 """
-par arrays and indices output by default by `output_csv()`.
+Indices of quantities of par arrays selected to be output by default by [`output_csv()`](@ref).
+Formatted as a Dict() where keys are par array names and values are arrays of indices.
+Note that this selection is only along the first dimension of par arrays (i.e., selecting quantities, not missions or flight points).
 
-Format: Dict(){String => Union{AbstractVector,Colon(), Integer}}
+Custom Dicts() can be passed to [`output_csv()`](@ref) following the format: `Dict(){String => Union{AbstractVector,Colon(), Integer}}`. 
 
-    use ex.1 : default_output_indices["pari"] = [1, 5, iitotal]
+Example usage:
+
+1 : `default_output_indices["pari"] = [1, 5, iitotal]`
     
-    use ex.2 : default_output_indices["para"] = Colon() #NOT [Colon()]
+2 : `default_output_indices["para"] = Colon() #NOT [Colon()]`
 """
 default_output_indices = 
     Dict("pari" => Colon(),

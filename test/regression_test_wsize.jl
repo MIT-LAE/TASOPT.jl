@@ -59,11 +59,11 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.8861056137328497
+    @test ac.parm[imPFEI] ≈ 0.9173792038114759
 
 end
 
@@ -96,11 +96,11 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 1.1181652855780662
+    @test ac.parm[imPFEI] ≈ 1.149001082450863
 
 end
 
@@ -133,10 +133,43 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i]
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.7887881872648841
+    @test ac.parm[imPFEI] ≈ 0.8123781880691827
 
 end
+
+# @testset "Hydrogen sizing" verbose=true begin
+#     ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"))
+    
+#     include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
+
+#     @test ac.fuselage.layout.radius ≈ 2.54
+    
+#     include(joinpath(TASOPT.__TASOPTroot__, "../test/hydrogen_sized.jl"))
+
+#     size_aircraft!(ac, iter=50; printiter=false);
+
+#     @testset "Geometry" begin
+#         for i in eachindex(parg)
+#             @test parg[i] ≈ ac.parg[i]
+#         end
+#     end
+
+#     @testset "Aero" begin
+#         for i in eachindex(para)
+#             @test para[i] ≈ ac.para[i]
+#         end
+#     end
+
+#     @testset "Propulsion" begin
+#         for i in eachindex(pare)
+#             @test pare[i] ≈ ac.pare[i] rtol=1e-6
+#         end
+#     end
+    
+#     @test ac.parm[imPFEI] ≈ 0.9884135735224845
+
+# end

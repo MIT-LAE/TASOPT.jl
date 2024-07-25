@@ -37,6 +37,7 @@ Density(x)  = convertDensity(parse_unit(x)...)
 Area(x)     = convertArea(parse_unit(x)...)
 Vol(x)      = convertVolume(parse_unit(x)...)
 Angle(x)    = convertAngle(parse_unit(x)...)
+Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
 """
@@ -278,6 +279,12 @@ readgeom(x) = read_input(x, geom, dgeom)
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
+    pari[iidoubledeck] = readgeom("double_decker") 
+
+    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+        parg[igfloordist] = Distance(readgeom("floor_distance")) #read vertical distance between floors
+    end
+
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
     parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
@@ -357,10 +364,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
-    fuse_tank.Rfuse = fuselage.layout.radius
-    fuse_tank.dRfuse = fuselage.layout.bubble_lower_downward_shift
-    fuse_tank.wfb = fuselage.layout.bubble_center_y_offset
-    fuse_tank.nfweb = fuselage.layout.n_webs
+    fuse_tank.fueltype = fueltype
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
@@ -377,15 +381,21 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
     fuse_tank.theta_inner = Angle(readfuel_storage("inner_vessel_support_angle"))
 
-    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
+    fuse_tank.pvent = Pressure(readfuel_storage("pressure_venting"))
+    fuse_tank.pinitial = Pressure(readfuel_storage("pressure_initial"))
+    fuse_tank.t_hold_orig = Time(readfuel_storage("hold_departure"))
+    fuse_tank.t_hold_dest = Time(readfuel_storage("hold_arrival"))
     
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
     fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
+    fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
-    if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+    flag_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
+
+    if flag_vacuum #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
         fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
 
@@ -404,17 +414,6 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         pari[iinftanks] = 2
     end
-
-    #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
-    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
-    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
-    parg[igrhofuel] = ρfuel
-    fuse_tank.rhofuel = ρfuel
-    fuse_tank.Tfuel = Tfuel
-    fuse_tank.hvap = hvap
-    parg[igrhofuelgas] = ρgas
-    fuse_tank.rhofuelgas = ρgas
 end
 # ---------------------------------
 # Wing
@@ -642,7 +641,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
 
-    update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, parm, fuselage, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 

@@ -36,9 +36,6 @@ include("surfw.jl")
 include("tailpo.jl")
 
 #Hydrogen tank related code
-include("tankWmech.jl")
-include("tankWthermal.jl")
-include("tanksize.jl")
 include("update_fuse.jl")
 
 end

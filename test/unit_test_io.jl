@@ -6,7 +6,7 @@
     ac_def = load_default_model()
 
     filepath_rewrite = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_rewrite.toml")
-    save_model(ac_def, filepath_rewrite)
+    save_aircraft_model(ac_def, filepath_rewrite)
     ac_reread = read_aircraft_model(filepath_rewrite)
 
     size_aircraft!(ac_def, Ldebug=false, printiter=false, saveOD=false)
@@ -20,7 +20,7 @@
     ac_nopay = load_default_model()
     ac_nopay.parm[imWpay] = 1 #N
     filepath_nopay = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_nopay.toml")
-    save_model(ac_nopay, filepath_nopay)
+    save_aircraft_model(ac_nopay, filepath_nopay)
 
     ac_nopay_reread = read_aircraft_model(filepath_nopay)
     size_aircraft!(ac_nopay, Ldebug=false, printiter=false, saveOD=false)

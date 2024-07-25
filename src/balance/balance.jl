@@ -615,6 +615,10 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       parg[igxwbox] = xwbox
       parg[igxwing] = xwbox + dxwing
 
+      #Move engine as well to maintain the input offset distance from engine to wing box
+      dxeng2wbox = parg[igdxeng2wbox]
+      parg[igxeng] = xwbox - dxeng2wbox
+
       if (iHTsize == 1)
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
             CMw0 = paraF[iaCMw0]

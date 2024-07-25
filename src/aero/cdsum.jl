@@ -275,8 +275,8 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
-      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
-      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `parg::AbstractVector{Float64}`: Vector of `aircraft` model geometry parameters.
+      - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
 
       **Outputs:**
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
