@@ -1,5 +1,5 @@
 """
-        tanksize!(fuse_tank, z, Mair, xftank,
+        tanksize!(fuse_tank, z, TSL, Mair, xftank,
         time_flight, ifuel)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
@@ -30,13 +30,14 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
         Wfuel = fuse_tank.Wfuelintank
         Tfuel = fuse_tank.Tfuel
         flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
+        TSL = fuse_tank.TSLtank
 
         if flag_size #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
                 iinsuldes = fuse_tank.iinsuldes
 
                 #Thermal calculations
-                _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature 
+                _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature 
 
                 ΔT = Taw - Tfuel
 
@@ -52,6 +53,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 for i = 1:n_layers
                         guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
                 end
+                guess[end] = guess[end] - 1.0 #fuselage wall temperature
                 #Solve non-linear problem with NLsolve.jl
                 sol = nlsolve(residual, guess, ftol = 1e-7) 
                 Δt = sol.zero[1] 
@@ -64,7 +66,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
                 
         else #If insulation does not need to be sized
-                m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
+                _, m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
         
         thickness_insul = sum(t_cond)
@@ -73,7 +75,9 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
         Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
         Sinternal, Shead_insul, l_inner = size_inner_tank(fuse_tank, fuse_tank.t_insul)
 
-        if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+        flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
+
+        if flag_vacuum #If tank is double-walled
                 Routertank = fuse_tank.Rfuse - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 
@@ -100,7 +104,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
 end
 
 """
-        res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel)
+        res_MLI_thick(x, fuse_tank, z, TSL, Mair, xftank, ifuel)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -126,6 +130,8 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         iinsuldes = fuse_tank.iinsuldes
         Tfuel = fuse_tank.Tfuel
         Wfuel = fuse_tank.Wfuelintank
+        h_v = fuse_tank.hvap #heat of vaporization
+        TSL = fuse_tank.TSLtank
 
         # Extract states
         Δt = x[1]
@@ -140,8 +146,6 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
         Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
-
-        _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporizatio
 
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization
@@ -159,10 +163,37 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         p.material = fuse_tank.material_insul
         p.Tfuel = Tfuel
         p.z = z
+        p.TSL = TSL
         p.Mair = Mair
         p.xftank = xftank
+        p.Rfuse = fuse_tank.Rfuse
         p.ifuel = ifuel
 
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res
 end 
+
+"""
+        check_vacuum(material_insul::Vector{String})
+
+This function checks if any of the insulation layers requires a vacuum.
+
+!!! details "🔃 Inputs and Outputs"
+        **Inputs:**
+        - `material_insul::Vector{String}`: vector with layer materials
+
+        **Outputs:**
+        - `flag_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
+"""
+function check_vacuum(material_insul::Vector{String})
+        vacuum_materials = ["vacuum", "microspheres"] #currently supported options are vacuum and microspheres
+
+        flag_vacuum = false
+        for material in material_insul
+                if lowercase(material) in vacuum_materials
+                        flag_vacuum = true
+                end
+        end
+
+        return flag_vacuum
+end

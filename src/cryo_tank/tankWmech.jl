@@ -43,8 +43,9 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       Wfuel = fuse_tank.Wfuelintank
 
       ρfuel = fuse_tank.rhofuel
+      ρfgas = fuse_tank.rhofuelgas
       ftankadd = fuse_tank.ftankadd
-      Δp = fuse_tank.ptank
+      Δp = fuse_tank.pvent
       sigskin = fuse_tank.inner_material.UTS
       material_insul = fuse_tank.material_insul
       rhoskin = fuse_tank.inner_material.ρ
@@ -72,8 +73,9 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
 #--- Calculate length of cylindrical portion
       Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
-      Vfuel = Wfuel_tot / (gee * ρfuel)
-      Vinternal = (1 + ullage_frac)*Vfuel  # required interal volume
+      ρfmix = (1 - ullage_frac) * ρfuel + ullage_frac * ρfgas #Density of saturated mixture in tank
+      Vfuel = Wfuel_tot / (gee * ρfmix) #Total tank volume taken by saturated mixture
+      Vinternal = Vfuel  # required internal volume
       V_ellipsoid = 2π * (Rtank^3 / AR) / 3  # Half the vol of std ellipsoid = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. Here a = R/AR, b=c=R
                                        # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid
@@ -439,11 +441,15 @@ function insulation_density_calc(material::String)
             ρ = 32.0 #kg/m^3
       elseif lowercase(material) == "polyurethane35"
             ρ = 35.0 #kg/m^3
+      elseif lowercase(material) == "mylar"
+            ρ = 1390 #kg/m^3, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
       elseif lowercase(material) == "vacuum"
             ρ = 0 #kg/m^3
+      elseif lowercase(material) == "microspheres" 
+            ρ = 69.0 #kg/m^3. From Brewer (1991)
       else
             error("Insulation materials currently supported are
-                  [rohacell41S, polyurethane27, polyurethane32, polyurethane35, vacuum],
+                  [rohacell41S, polyurethane27, polyurethane32, polyurethane35, microspheres, vacuum],
                   but you supplied $material")
       end
       return ρ

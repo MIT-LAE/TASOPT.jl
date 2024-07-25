@@ -70,8 +70,23 @@ function wsize(ac; itermax=35,
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
+    #Calculate sea level temperature corresponding to TO conditions
+    altTO = parm[imaltTO] 
+    T_std,_,_,_,_ = atmos(altTO/1e3)
+    ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
+    parm[imDeltaTatm] = ΔTatmos
+
+    # set cruise-altitude atmospheric conditions
+    set_ambient_conditions!(ac, ipcruise1)
+
+    # set takeoff-altitude atmospheric conditions
+    set_ambient_conditions!(ac, iprotate, 0.25)
+
+    # Set atmos conditions for top of climb
+    set_ambient_conditions!(ac, ipclimbn)
+
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    time_fusebl = @elapsed fusebl!(fuse,pari, parg, para, ipcruise1)
+    time_fusebl = @elapsed fusebl!(fuse, parm, para, ipcruise1)
     # println("Fuse bl time = $time_fusebl")
     # Kinetic energy area at T.E.
     KAfTE = para[iaKAfTE, ipcruise1]
@@ -87,6 +102,9 @@ function wsize(ac; itermax=35,
     para[iaDAfsurf, :] .= DAfsurf
     para[iaDAfwake, :] .= DAfwake
     para[iaPAfinf, :] .= PAfinf
+
+    #Calculate fuel lower heating value for PFEI
+    parm[imLHVfuel] = fuelLHV(ifuel)
 
     # Set quantities that are fixed during weight iteration
 
@@ -225,15 +243,6 @@ function wsize(ac; itermax=35,
     # nacelle wetted area / fan area ratio
     rSnace = parg[igrSnace]
 
-    # set cruise-altitude atmospheric conditions
-    set_ambient_conditions!(ac, ipcruise1)
-
-    # set takeoff-altitude atmospheric conditions
-    set_ambient_conditions!(ac, iprotate, 0.25)
-
-    # Set atmos conditions for top of climb
-    set_ambient_conditions!(ac, ipclimbn)
-
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
     #Fuselage fuel tank placement and moment
@@ -248,12 +257,38 @@ function wsize(ac; itermax=35,
     else
         xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m
         xftankaft = fuse.layout.x_end_cylinder
+
+        #Calculate fuel temperature and density as a function of pressure
+        β0 = 1 - fuse_tank.ullage_frac
+        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
+
+        Tfuel = fuel_mix.liquid.T
+        ρliq = fuel_mix.liquid.ρ
+        ρgas = fuel_mix.gas.ρ
+        hvap = fuel_mix.hvap
+
+        pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
+        pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+        parg[igrhofuel] = fuel_mix.ρ
+        fuse_tank.rhofuel = ρliq
+        fuse_tank.Tfuel = Tfuel
+        fuse_tank.hvap = hvap
+        fuse_tank.rhofuelgas = ρgas
     end
         
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
-   
 
+    #Initialize HX storage array and reset previous HX engine values
+    HXs = []
+    resetHXs(pare)
+
+    #Store fuselage parameters in fuse_tank for ease of access 
+    fuse_tank.Rfuse = fuse.layout.radius
+    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
+    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
+    fuse_tank.nfweb = fuse.layout.n_webs
+   
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------
@@ -1098,7 +1133,6 @@ function wsize(ac; itermax=35,
             parg[iglftank] = ltank
             parg[igRftank] = Rtank
             parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
-            parg[igmdotboiloff] = nftanks * mdot_boiloff #store total fuel boiloff rate
 
             #Tank placement and weight moment
             lcabin = dx_cabin(fuse)
@@ -1127,7 +1161,7 @@ function wsize(ac; itermax=35,
 
             # Update fuselage according to tank requirements
             update_fuse!(pari, parg) #update fuselage length to accommodate tank
-            fusebl!(fuse,pari, parg, para, ipcruise1) #Recalculate fuselage bl properties
+            fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
             # Kinetic energy area at T.E.
@@ -1145,6 +1179,29 @@ function wsize(ac; itermax=35,
             para[iaDAfwake, :] .= DAfwake
             para[iaPAfinf, :] .= PAfinf
 
+            #Use homogeneous tank model to calculate required venting
+            _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
+            parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
+            fuse_tank.pmin = minimum(ps) #Store minimum tank pressure across mission
+
+            if iterw > 2 #Calculate takeoff engine state and time
+                #This is needed to know the TO duration to integrate the tank state
+                # set static thrust for takeoff routine
+                ip = ipstatic
+                icall = 1
+                icool = 1
+    
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                # set rotation thrust for takeoff routine
+                # (already available from cooling calculations)
+                ip = iprotate
+                icall = 1
+                icool = 1
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                takeoff!(ac; printTO = false)
+            end
         end
 
         # -----------------------------
@@ -1153,13 +1210,9 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            global HXs = hxdesign!(pare, pari, ipdes, HXs)
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous for debugging
-
-        else
-            global HXs = []
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
-            
+            HXs = hxdesign!(pare, pari, ipdes, HXs)
+            #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
+            #With fuel storage in tanks, this is done in the block above.
         end
 
         # -----------------------------
@@ -1283,6 +1336,8 @@ function wsize(ac; itermax=35,
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
         
+        # Store all OPRs for diagnostics
+        pare[ieOPR, :] .= pare[iepilc, :] .* pare[iepihc, :]
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate
 
@@ -1354,7 +1409,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(pari, parg, parm, para, pare, initeng, ichoke5, ichoke7)
+    takeoff!(ac)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
@@ -1461,8 +1516,9 @@ Sets ambient condition at the given mission point `mis_point`.
 """
 function set_ambient_conditions!(ac, mis_point, Mach=NaN)
     mis_point = mis_point
+    ΔTatmos = ac.parmd[imDeltaTatm]
     altkm = ac.parad[iaalt, mis_point]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
+    T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
     if Mach === NaN
         Mach = ac.parad[iaMach, mis_point]
     end

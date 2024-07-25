@@ -1,4 +1,4 @@
-# [Fuel tanks](@id fueltanks)
+# [Thermal and structural models](@id fueltanks)
 
 Liquid long-chain hydrocarbon fuel is assumed to be stored in the interior of the wings and no additional tanks are needed. The weight of the fuel is accounted for while sizing the wing structure. See [`structures.surfw`](@ref).
 
@@ -33,9 +33,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
         R_{MLI} = \sum_i R_l^i.
     ``` 
 
-    In addition to the insulation resistance, the convective (from fuel to tank wall and from exterior wall to freestream) and radiative heat transfers have to be taken into account. The heat transfer to the freestream can be modeled as having two components: radiation and convection. The heat transfer coefficient from forced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
+    In addition to the insulation resistance, the convective heat transfers from fuel to tank wall and from exterior wall to freestream have to be taken into account. The heat transfer to the freestream can be modeled as having two components: radiation and convection. The heat transfer coefficient from forced convection from the external wall to the freestream can be modeled using the Chilton-Colburn analogy,
     ```math
-        h_{convair} = \frac{c_f}{2 Pr^{2/3}}  ρ u c_p,
+        h_{air} = \frac{c_f}{2 Pr^{2/3}}  ρ u c_p,
     ``` 
     where ``c_f`` is the skin-friction coefficient, ``Pr`` is the Prandtl number (``Pr\approx 0.71`` for air), ``ρ`` is the freestream air density, ``u`` is the freestream velocity, and ``c_p`` is the specific heat of the freestream air at constant pressure. The skin-friction coefficient can be modeled using a flat-plate solution,[^1]
     ```math
@@ -51,17 +51,11 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``\gamma`` is the ratio of specific heats for air.
 
-    Similarly, the radiative component has an equivalent heat transfer coefficient
+    The equivalent resistance due to the freestream is
     ```math
-        h_{rad} = \sigma \varepsilon (T_{aw}^2 + T_{w}^2) (T_{aw} + T_w),
-    ``` 
-    where ``\sigma`` is the Stefan-Boltzmann constant and ``ε`` is the emissivity of the surface.
-
-    The equivalent heat transfer coefficient to the freestream air is ``h_{air} = h_{convair}+h_{rad} ``, such that the equivalent resistance is
-    ```math
-        R_{air} = \frac{1}{h_{air} (2\pi l_{cyl} R_{fuse} +2 S_{he})},
+        R_{air} = \frac{1}{ 2\pi h_{air} l_{cyl} R_{fuse}},
     ```
-    where ``l_{cyl}`` is the length of the cylindrical portion of the tank, ``R_{fuse}`` is the fuselage radius and ``S_{he}`` is the outer area of the hemiellipsoidal caps. 
+    where ``l_{cyl}`` is the length of the cylindrical portion of the tank and ``R_{fuse}`` is the fuselage radius. 
 
     Inside the tank, there is a heat transfer from the bulk of the liquid fluid to the tank via natural convection. The Nusselt number for this heat transfer process can be modeled as [^2]
     ```math
@@ -130,9 +124,9 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     ```
     where ``K=\frac{1}{6}(AR^2+2)`` is a factor that accounts for the ellipsoidal aspect ratio (``AR``). Once the wall thicknesses have been determined, the internal tank radius is given by ``R_{t,i}=R_{t,o}-t_{s,cyl} ``. The volume required for the fuel is 
     ```math
-        V_{fuel} = (1+f_{ull})\frac{m_{fuel}}{\rho},
+        V_{fuel} = \frac{m_{fuel}}{\rho_{mix}},
     ```
-    where ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some empty volume to account for ullage. The internal volume of a hemiellipsoidal cap is given by 
+    where ``\rho_{mix} = f_{ull}\rho_g + (1-f_{ull})\rho_l`` is the density of the saturated mixture inside the tank, ``\rho_g`` and ``\rho_l`` are the densities of the fuel in saturated gas and liquid phases, and ``f_{ull}>0`` is a factor to account for the fact that the tank must contain some gas volume for ullage. The internal volume of a hemiellipsoidal cap is given by 
     ```math
         V_{cap} =  \frac{2πR_{t,i}^3}{3AR}.
     ```
@@ -143,7 +137,7 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     Once this length is known, the masses of the tank and insulation layers can be found from their respective volumes and densities. To support the tank, stiffener rings that go around the tank circumference are needed. It is assumed that the inner vessel contains two of these stiffeners, which are sized following the process below.
 
     #### Outer vessel
-    If the insulation layer contains a vacuum layer, an additional tank wall is needed to contain the vacuum. Unlike the inner vessel, this outer wall does not fail due to excessive stress, instead, it fails by buckling or collapse[^3]. To prevent buckling, stiffener rings can be used to reduce the effective cylindrical lenght that can collapse. The unsupported cylinder length is
+    If the insulation layer contains a vacuum layer, an additional tank wall is needed to contain the vacuum. Unlike the inner vessel, this outer wall does not fail due to excessive stress, instead, it fails by buckling or collapse[^3]. To prevent buckling, stiffener rings can be used to reduce the effective cylindrical length that can collapse. The unsupported cylinder length is
     ```math
         L =  \frac{l_{cyl}}{N_{stiff} -1},
     ```
@@ -191,14 +185,14 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     In the case of the outer vessel (when there is a vacuum layer), there is a tradeoff between stiffener mass and skin thickness, as adding more stiffeners results in a thinner skin. The optimal number of stiffeners that minizimizes the overall outer vessel mass is found using NLopt.jl with a Nelder-Mead algorithm.  
     
 ```@docs
-structures.tanksize!
-structures.res_MLI_thick
-structures.size_inner_tank
-structures.size_outer_tank
-structures.stiffener_weight
-structures.optimize_outer_tank
-structures.tankWthermal
-structures.residuals_Q
+CryoTank.tanksize!
+CryoTank.res_MLI_thick
+CryoTank.size_inner_tank
+CryoTank.size_outer_tank
+CryoTank.stiffener_weight
+CryoTank.optimize_outer_tank
+CryoTank.tankWthermal
+CryoTank.residuals_Q
 ```
 [^1]: Anderson, John. Fundamentals of Aerodynamics (SI units). McGraw Hill, 2011.
 [^2]: Hochstein, J., H-C. Ji, and J. Aydelott. "Effect of subcooling on the on-orbit pressurization rate of cryogenic propellant tankage." 4th Thermophysics and Heat Transfer Conference. 1986.

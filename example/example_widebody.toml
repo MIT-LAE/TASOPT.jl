@@ -70,7 +70,7 @@
 
 [Mission.Takeoff]
     takeoff_alt = "0.0 ft"
-    takeoff_T = 288.0
+    takeoff_T = 288.2
 
     max_balanced_field_length = "8800.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
