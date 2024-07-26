@@ -146,3 +146,29 @@ function get_perimeter(cs::MultiBubble)
                 (2*cs.bubble_lower_downward_shift)
     return perimeter
 end  # function perimeter
+"""
+    size_insulation(cs::AbstractCrossSection,
+     insulated_fraction::Float64=0.55)
+
+Calculates the insulation weight. Assumes, by default, that 55% of the fuselage 
+cross-sectional perimeter is the cabin which is insulated and 45% is the cargo 
+hold that is not insulated.
+"""
+function size_insulation(
+    layout::FuselageLayout,
+    S_nose::Float64,
+    S_bulk::Float64,
+    weight_per_area::Float64,
+    insulated_fraction::Float64 = 0.55,
+)
+
+    p = get_perimeter(layout.cross_section)
+    A = p * layout.l_shell + S_nose + S_bulk
+    W = weight_per_area * insulated_fraction * A
+
+    shell_centroid = 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
+    insulation = Weight(W = W, x = shell_centroid)
+
+    return insulation
+
+end  # function size_insulation
