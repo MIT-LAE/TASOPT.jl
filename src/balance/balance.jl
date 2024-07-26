@@ -55,7 +55,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       lftank = parg[iglftank]
 
       # Use weight fractions to calcualte weights of subsystems
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
+      Whpesys = parg[igWMTO] * fuse.HPE_sys.W
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
@@ -135,7 +135,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
            (Whtail * htail.layout.box_x + htail.dxW) * Sh / Sh1 +
            Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
-           Whpesys * parg[igxhpesys] +
+           Whpesys * fuse.HPE_sys.r.x +
            Wlgnose * parg[igxlgnose] +
            Wlgmain * (wing.layout.x_wing_box + dxlg)
 
@@ -340,7 +340,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
+      Whpesys = parg[igWMTO] * fuse.HPE_sys.W
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
@@ -352,7 +352,6 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       dxWvtail = vtail.dxW
 
       xeng = parg[igxeng]
-      xhpesys = parg[igxhpesys]
       xlgnose = parg[igxlgnose]
 
       # xtshaft = parg[igxtshaft ]
@@ -445,7 +444,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
                   Whtail * xhbox + dxWhtail +
                   Wvtail * xvbox + dxWvtail +
                   Weng * xeng +
-                  Whpesys * xhpesys +
+                  Whpesys * fuse.HPE_sys.r.x +
                   Wlgnose * xlgnose +
                   Wlgmain * (xwbox + dxlg)
 
@@ -617,6 +616,10 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       wing.layout.x_wing_box = xwbox
       wing.layout.x = xwbox + dxwing
 
+      #Move engine as well to maintain the input offset distance from engine to wing box
+      dxeng2wbox = parg[igdxeng2wbox]
+      parg[igxeng] = xwbox - dxeng2wbox
+
       if (iHTsize == 1)
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
             CMw0 = paraF[iaCMw0]
@@ -681,7 +684,7 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]
 
-      Whpesys = parg[igWMTO] * parg[igfhpesys]
+      Whpesys = parg[igWMTO] * fuse.HPE_sys.W
       Wlgnose = parg[igWMTO] * parg[igflgnose]
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
@@ -713,7 +716,7 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
             Whtail * htail.layout.box_x + htail.dxW +
             Wvtail * vtail.layout.box_x + vtail.dxW +
             Weng * parg[igxeng] +
-            Whpesys * parg[igxhpesys] +
+            Whpesys * fuse.HPE_sys.r.x +
             Wlgnose * parg[igxlgnose] +
             Wlgmain * (wing.layout.x_wing_box + delxw + parg[igdxlgmain])
 

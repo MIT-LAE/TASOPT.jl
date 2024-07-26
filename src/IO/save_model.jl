@@ -1,34 +1,33 @@
 using TOML
-export save_model
+export save_aircraft_model
 
 """
-    save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
-            datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
-            save_output::Bool=false)
+    save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
+    save_output::Bool=false)
 
-    Converts an aircraft model into a dictionary and writes 
-    it to a TOML file. Values to be written are explicitly set
-    following the default_input.toml. All values are written in SI units.
+Converts an aircraft model into a dictionary and writes 
+it to a TOML file. Values to be written are explicitly set
+following the default_input.toml. All values are written in SI units.
 
-    This save operation makes add'l* assumptions about parameter repetition. Namely:
-    The same value is applied for all flight segments/points for:
-        - parm[] parameters
-        - excrescence_drag_factors, wing overspeeds, wing/stabilizer Re_refs
-    The same value is applied for all missions and flight segments for:
-        - parg[], pare[], and pari[] parameters
-        - fuel temperature
+This save operation makes add'l* assumptions about parameter repetition. Namely:
+The same value is applied for all flight segments/points for:
+    - parm[] parameters
+    - excrescence_drag_factors, wing overspeeds, wing/stabilizer Re_refs
+The same value is applied for all missions and flight segments for:
+    - parg[], pare[], and pari[] parameters
+    - fuel temperature
 
-    Said value is the first entry in the corresponding array axis, 
-    except for some aero parameters where other points are more relevant (e.g., "Cruise" "Takeoff").
+Said value is the first entry in the corresponding array axis, 
+except for some aero parameters where other points are more relevant (e.g., "Cruise" "Takeoff").
 
-    *and modifiable
+*and modifiable
 
-    !!! note "Deviating from default"
-    Extending `read_input` and `save_model` is recommended for models deviating appreciably 
+!!! note "Deviating from default"
+    Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
     from the default functionality. Thorough knowledge of the model is required.
-
 """
-function save_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
+function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
     save_output::Bool=false)
 
@@ -622,14 +621,14 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         @printf(io, "# Geometry - stored in parg array:\n")
         @printf(io, "# --------------------------------\n")
         for (i,val) in enumerate(parg)
-            @printf(io, "parg[%d] = %20f # %s\n", i, val, iglabels[i] )
+            @printf(io, "parg[%d] = %20.20f # %s\n", i, val, i<291 ? iglabels[i] : "" )
         end
 
         @printf(io, "# --------------------------------\n")
         @printf(io, "# Mission  - stored in parm array:\n")
         @printf(io, "# --------------------------------\n")
         for (i,val) in enumerate(parm)
-            @printf(io, "parm[%d] = %20f \n", i, val)
+            @printf(io, "parm[%d] = %20.20f \n", i, val)
         end
 
         @printf(io, "# --------------------------------\n")
@@ -640,7 +639,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "para[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%f, ", para[i, j])
+                @printf(io, "%20.20f, ", para[i, j])
             end
             @printf(io, "]\n")
         end
@@ -652,7 +651,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         for i = 1:l
             @printf(io, "pare[%d, :] .= [", i)
             for j = 1:m
-                @printf(io, "%f, ", pare[i, j])
+                @printf(io, "%20.20f, ", pare[i, j])
             end
             @printf(io, "]\n")
         end
@@ -661,21 +660,136 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
         @printf(io, "# Powertrain-stored in parpt array:\n")
         @printf(io, "# ---------------------------------\n")
         for (i,val) in enumerate(parpt)
-            @printf(io, "parpt[%d] = %20f \n", i, val)
+            @printf(io, "parpt[%d] = %20.20f \n", i, val)
         end
 
         @printf(io, "# ---------------------------------\n")
         @printf(io, "# Motor   - stored in parmot array:\n")
         @printf(io, "# ---------------------------------\n")
         for (i,val) in enumerate(parmot)
-            @printf(io, "parmot[%d] = %20f \n", i, val)
+            @printf(io, "parmot[%d] = %20.20f \n", i, val)
         end
         @printf(io, "# ---------------------------------\n")
         @printf(io, "# Generator-stored in pargen array:\n")
         @printf(io, "# ---------------------------------\n")
         for (i,val) in enumerate(pargen)
-            @printf(io, "pargen[%d] = %20f \n", i, val)
+            @printf(io, "pargen[%d] = %20.20f \n", i, val)
         end
     end
 
+end
+
+function reset_regression_test(fname, ac)
+    open(fname, "w") do io
+        @printf(io, "pari = zeros(Int64, iitotal)\n")
+        @printf(io, "parg = zeros(Float64, igtotal)\n")
+        @printf(io, "parm = zeros(Float64, imtotal)\n")
+        @printf(io, "para = zeros(Float64, (iatotal, iptotal))\n")
+        @printf(io, "pare = zeros(Float64, (ietotal, iptotal))\n \n")
+        @printf(io,"ac = load_default_model()\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io,"# Fuselage\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io,"fuse = ac.fuselage\n")
+        @printf(io,"Weight = TASOPT.structures.Weight\n")
+        @printf(io, "fuse.n_decks = %20.20f \n", ac.fuselage.n_decks)
+        @printf(io, "fuse.shell.weight = Weight(W = %20.20f ) \n", ac.fuselage.shell.weight.W)
+        @printf(io, "fuse.window.weight = %20.20f \n", ac.fuselage.window.weight)
+        @printf(io,"fuse.window.W_per_length = %20.20f \n", ac.fuselage.window.W_per_length)
+        @printf(io,"fuse.insulation.weight = %20.20f \n", ac.fuselage.insulation.weight)
+        @printf(io,"fuse.insulation.W_per_area = %20.20f \n", ac.fuselage.insulation.W_per_area)
+        @printf(io,"fuse.floor.weight = %20.20f \n", ac.fuselage.floor.weight)
+        @printf(io,"fuse.floor.W_per_area = %20.20f \n", ac.fuselage.floor.W_per_area)
+        @printf(io,"fuse.cone.weight = Weight(W = %20.20f ) \n", ac.fuselage.cone.weight.W)
+        @printf(io,"fuse.bendingmaterial_h.weight = Weight(W = %20.20f ) \n", ac.fuselage.bendingmaterial_h.weight.W)
+        @printf(io,"fuse.bendingmaterial_v.weight = Weight(W = %20.20f \n )", ac.fuselage.bendingmaterial_v.weight.W)
+        @printf(io,"fuse.weight = %20.20f \n", ac.fuselage.weight)
+        @printf(io,"fuse.moment = %20.20f \n", ac.fuselage.moment)
+        @printf(io,"fuse.volume = %20.20f \n", ac.fuselage.volume)
+        @printf(io,"fuse.weight_frac_stringers = %20.20f \n", ac.fuselage.weight_frac_stringers)
+        @printf(io,"fuse.weight_frac_frame = %20.20f \n", ac.fuselage.weight_frac_frame)
+        @printf(io,"fuse.weight_frac_skin_addl = %20.20f \n", ac.fuselage.weight_frac_skin_addl)
+        @printf(io,"fuse.layout.nose_radius = %20.20f \n", ac.fuselage.layout.nose_radius)
+        @printf(io,"fuse.layout.tail_radius %20.20f \n= ", ac.fuselage.layout.tail_radius)
+        @printf(io,"fuse.layout.x_nose = %20.20f \n", ac.fuselage.layout.x_nose)
+        @printf(io,"fuse.layout.x_end = %20.20f \n", ac.fuselage.layout.x_end)
+        @printf(io,"fuse.layout.x_start_cylinder = %20.20f \n", ac.fuselage.layout.x_start_cylinder)
+        @printf(io,"fuse.layout.x_end_cylinder = %20.20f \n", ac.fuselage.layout.x_end_cylinder)
+        @printf(io,"fuse.layout.x_pressure_shell_fwd = %20.20f \n", ac.fuselage.layout.x_pressure_shell_fwd)
+        @printf(io,"fuse.layout.x_pressure_shell_aft = %20.20f \n", ac.fuselage.layout.x_pressure_shell_aft)
+        @printf(io,"fuse.layout.x_cone_end = %20.20f \n", ac.fuselage.layout.x_cone_end)
+        @printf(io,"fuse.bendingmaterial_h.weight.r = [ %20.20f ,0.0,0.0] \n", ac.fuselage.bendingmaterial_h.weight.x)
+        @printf(io,"fuse.bendingmaterial_v.weight.r = [ %20.20f ,0.0,0.0] \n", ac.fuselage.bendingmaterial_v.weight.x)
+        @printf(io,"fuse.layout.cross_section.radius = %20.20f \n", ac.fuselage.layout.cross_section.radius)
+        @printf(io,"fuse.layout.cross_section.bubble_lower_downward_shift = %20.20f \n", ac.fuselage.layout.cross_section.bubble_lower_downward_shift)
+        @printf(io,"fuse.layout.floor_depth = %20.20f \n", ac.fuselage.layout.floor_depth)
+        @printf(io,"fuse.layout.taper_tailcone = %20.20f \n", ac.fuselage.layout.taper_tailcone)
+        @printf(io,"fuse.ratio_young_mod_fuse_bending = %20.20f \n", ac.fuselage.ratio_young_mod_fuse_bending)
+        @printf(io,"fuse.skin.thickness = %20.20f \n", ac.fuselage.skin.thickness)
+        @printf(io,"fuse.cone.thickness = %20.20f \n", ac.fuselage.cone.thickness)
+        @printf(io,"fuse.layout.thickness_webs = %20.20f \n", ac.fuselage.layout.thickness_webs)
+        @printf(io,"fuse.floor.thickness = %20.20f \n", ac.fuselage.floor.thickness)
+        @printf(io,"fuse.shell.EIh = %20.20f \n", ac.fuselage.shell.EIh)
+        @printf(io,"fuse.bendingmaterial_h.EIh = %20.20f \n", ac.fuselage.bendingmaterial_h.EIh)
+        @printf(io,"fuse.bendingmaterial_v.EIh = %20.20f \n", ac.fuselage.bendingmaterial_v.EIh)
+        @printf(io,"fuse.shell.EIv = %20.20f \n", ac.fuselage.shell.EIv)
+        @printf(io,"fuse.bendingmaterial_h.EIv = %20.20f \n", ac.fuselage.bendingmaterial_h.EIv)
+        @printf(io,"fuse.bendingmaterial_v.EIv = %20.20f \n", ac.fuselage.bendingmaterial_v.EIv)
+        @printf(io,"fuse.shell.GJ = %20.20f \n", ac.fuselage.shell.GJ)
+        @printf(io,"fuse.cone.GJ = %20.20f \n", ac.fuselage.cone.GJ)
+        @printf(io,"fuse.APU.W = %20.20f \n", ac.fuselage.APU.W)
+        @printf(io,"fuse.APU.r = [%20.20f,0.0,0.0] \n", ac.fuselage.APU.x)
+        @printf(io,"fuse.seat.W = %20.20f \n", ac.fuselage.seat.W)
+        @printf(io,"fuse.fixed.W = %20.20f \n", ac.fuselage.fixed.W)
+        @printf(io,"fuse.fixed.r = [%20.20f,0.0,0.0] \n", ac.fuselage.fixed.x)
+        @printf(io,"fuse.HPE_sys.r = [%20.20f,0.0,0.0] \n", ac.fuselage.HPE_sys.x)
+        @printf(io,"fuse.HPE_sys.W = %20.20f \n", ac.fuselage.HPE_sys.W)
+        @printf(io,"fuse.added_payload.W = %20.20f \n", ac.fuselage.added_payload.W)
+
+        @printf(io, "# ------------------------------\n")
+        @printf(io, "# Flags  - stored in pari array:\n")
+        @printf(io, "# ------------------------------\n")
+        for (i,val) in enumerate(ac.pari)
+            @printf(io, "pari[%d] = %d \n", i, val )
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Geometry - stored in parg array:\n")
+        @printf(io, "# --------------------------------\n")
+        for (i,val) in enumerate(ac.parg)
+            @printf(io, "parg[%d] = %20.20f\n", i, val )
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Mission  - stored in parm array:\n")
+        @printf(io, "# --------------------------------\n")
+        for (i,val) in enumerate(ac.parm)
+            @printf(io, "parm[%d] = %20.20f \n", i, val)
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Aero     - stored in para array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.para)[1]
+        m = size(ac.para)[2]
+        for i = 1:l
+            @printf(io, "para[%d, :] .= [", i)
+            for j = 1:m
+                @printf(io, "%20.20f, ", ac.para[i, j,1])
+            end
+            @printf(io, "]\n")
+        end
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Engine   - stored in pare array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.pare)[1]
+        m = size(ac.pare)[2]
+        for i = 1:l
+            @printf(io, "pare[%d, :] .= [", i)
+            for j = 1:m
+                @printf(io, "%20.20f, ", ac.pare[i, j,1])
+            end
+            @printf(io, "]\n")
+        end
+    end
 end

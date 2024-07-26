@@ -21,32 +21,45 @@ $TYPEDFIELDS
     """Fuselage Weight [Nm^3] """
     moment::Float64 = 0.0
 
-    # Fuselage Layout
+    """Fuselage Layout"""
     layout::FuselageLayout = FuselageLayout()
 
     # Internal Structure
     """Fuselage Material"""
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
+
+    """Structural Members"""
     skin::StructuralMember = StructuralMember(material=material)
     shell::StructuralMember = StructuralMember(material=material) # IS just Skin + Additional
     cone::StructuralMember = StructuralMember()
-    floor::StructuralMember = StructuralMember()
-    insulation::StructuralMember = StructuralMember()
-    window::StructuralMember = StructuralMember()
-    bending_h::StructuralMember = StructuralMember(material=material)
-    bending_v::StructuralMember = StructuralMember(material=material)
 
-    # Loads
-    
+    """Internal Members"""
+    floor::InternalMember = InternalMember()
+    insulation::InternalMember = InternalMember()
+    window::InternalMember = InternalMember()
+
+    """Bending Material"""
+    bendingmaterial_h::StructuralMember = StructuralMember(material=material)
+    bendingmaterial_v::StructuralMember = StructuralMember(material=material)
+
+    """External Weights"""
+    APU::structures.Weight = structures.Weight()
+    seat::structures.Weight = structures.Weight()
+    added_payload::structures.Weight = structures.Weight()
+    HPE_sys::structures.Weight = structures.Weight()
+    fixed::structures.Weight = structures.Weight()
+
     # Misc properties
     """Number of decks in fuselage"""
     n_decks::Float64 = 0
     """Fuselage Weight fraction of stringers """
-    weight_frac_string::Float64 = 0
+    weight_frac_stringers::Float64 = 0
     """Fuselage Weight fraction of frame """
     weight_frac_frame::Float64 = 0
+    """Fuselage Weight fraction of additional weights on skin """
+    weight_frac_skin_addl::Float64 = 0
     """Fuselage Shell Modulus Ratio Ebend/Eskin"""
-    fuse_shell_modulus_ratio::Float64 = 0
+    ratio_young_mod_fuse_bending::Float64 = 0
 end
 
 function dx_cabin(fuse::Fuselage)
@@ -85,4 +98,6 @@ end
 # size_aircraft!(ac)
 # fuselage_autodiff(ac)
 
-    
+# ac = load_default_model()
+# size_aircraft!(ac)
+# fuselage_autodiff(ac)
