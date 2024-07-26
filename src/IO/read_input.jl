@@ -686,6 +686,12 @@ readstruct(x) = read_input(x, structures, dstructures)
 
     fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
 
+    floor_max_avg = readstruct("floor_max_avg_stress")
+    floor_safety_fac = readstruct("floor_safety_factor")
+    fuselage.floor.material = StructuralAlloy(readstruct("floor_material"),
+        max_avg_stress=floor_max_avg,
+        safety_factor=floor_safety_fac)
+
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
