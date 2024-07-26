@@ -66,15 +66,6 @@ using .propsys
 using .engine
 using .CryoTank
 
-include("./misc/structuralMember.jl")
-export StructuralMember
-
-include("./misc/layout.jl")
-export FuselageLayout
-
-include("./misc/fuselage.jl")
-export Fuselage
-
 #Load other functions
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
