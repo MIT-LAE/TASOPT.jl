@@ -67,7 +67,7 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       lambdav  = vtail.layout.λ
       sweeph   = htail.layout.sweep
       sweepv   = vtail.layout.sweep
-      cosLs    = parg[igcosLs  ]
+      cosLs    = wing.outboard.cos_sweep
       Sstrut   = wing.strut.S
 
       co   = wing.layout.chord
@@ -89,8 +89,6 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       fCDhcen = parg[igfCDhcen]
       fCDvcen = 0.0
 
-      Astrut   = parg[igAstrut ]
-      cstrut   = parg[igcstrut ]
       nvtail   = vtail.ntails
 
       rVnace = parg[igrVnace]
@@ -275,8 +273,8 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
-      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
-      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `parg::AbstractVector{Float64}`: Vector of `aircraft` model geometry parameters.
+      - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
 
       **Outputs:**
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.

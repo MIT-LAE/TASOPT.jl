@@ -1,4 +1,4 @@
-using Trapz
+using DifferentialEquations
 
 """
     LT_PEMFC_voltage_simple(j, T, p_H2, p_air)
@@ -214,7 +214,6 @@ Structure containing the LT-PEMFC problem parameters.
     - `t_C::Float64`: cathode thickness (m)
     - `α_star::Float64`: ratio of water flux to proton flux
     - `Iflux::Float64`: proton flux through membrane (mol/m^2/s)
-    - `N_int::Int`: number of points for numerical integration
 """
 mutable struct PEMFC_params
     R :: Float64 
@@ -230,7 +229,7 @@ mutable struct PEMFC_params
     τ :: Float64
     α_star :: Float64
     Iflux :: Float64
-    N_int :: Int
+    PEMFC_params() = new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 end
 
 """
@@ -266,6 +265,7 @@ mutable struct PEMFC_inputs
     t_A :: Float64
     t_C :: Float64
     type :: String
+    PEMFC_inputs() = new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "")
 end
 
 """
@@ -306,8 +306,6 @@ function LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
     τ = 1.5 #diffusion tortuosity
     Aeff_Ratio = 1000 #ratio of effective catalyst area to geometry area
     
-    N_int = 20 #number of grid points in ODE integral
-    
     #---------------------------------
     # Extract inputs
     #---------------------------------
@@ -327,7 +325,7 @@ function LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
     p_SAT = water_sat_pressure(T) #Pa, water saturation pressure
 
     # Store parameters in stuct
-    p = PEMFC_params(NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, 0)
+    p = PEMFC_params()
 
     p.R = R
     p.F = F
@@ -341,7 +339,6 @@ function LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
     p.ε = ε
     p.τ = τ
     p.Iflux = Iflux
-    p.N_int = N_int
 
     #---------------------------------
     # Use Roots.jl solver to find α_star
@@ -415,14 +412,20 @@ function LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
     λ2 = λ_calc(aw2) #water content at 2, for boundary condition for ODE
 
     #Integrate ODE for λ
-    dλ_dz_mem_fun(z, λ, u, p) = dλ_dz_membrane(λ, u, p)
-    λ_A2 = [λ2]
-    z_mem = LinRange(0, t_M, N_int)
-    λ, _ = RK4(dλ_dz_mem_fun, z_mem, λ_A2, u, p) #integrate with RK solver
+    dy_dx(y, p, x) = [dλ_dz_membrane(y[1], p[1], p[2]), 1/conductivity_Nafion(T, y[1])] #Vector with dλ/dz and dASR/dz
+    
+    y0 = [λ2, 0.0]
+    xspan = (0.0, t_M)
+    ODEparams = (u, p)
+    
+    prob = ODEProblem(dy_dx, y0, xspan, ODEparams, reltol = 1e-6)
+    sol = solve(prob, Tsit5()) #Solve ODE problem using recommended solver
 
-    σ = conductivity_Nafion(T, λ[1,:]) #1/(Ohm m)
-    ASR = trapz(z_mem, 1 ./ σ) #Ohm m^2, area-specific resistance
+    #Extract solution vector
+    y = sol.u
+    y = hcat(y...) #Concatenate into array
 
+    ASR = y[2,end] #Extract final resistance
     η_ohm = j * ASR # Ohmic overvoltage
 
     #---------------------------------
@@ -816,38 +819,6 @@ function λ_calc(a)
 end
 
 """
-    RK4(dy_dx, x, y0, u, p) 
-
-This function uses a 4th-order Runge-Kutta method to integrate a vector ODE in space or time.
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `dy_dx::Function`: function of the form dy_dx(x, y, u, p) for derivative
-    - `x::Vector{Float64}`: vector with the spatial coordinates for integration
-    - `y0::Vector{Float64}`: vector with the initial conditions
-    - `u::Struct`: structure of type PEMFC_inputs with inputs 
-    - `p::Struct`: structure of type PEMFC_params with parameters 
-    
-    **Outputs:**
-    - `y::Matrix{Float64}`: matrix with values of y for every point in x 
-    - `yend::Vector{Float64}`: vector with final conditions at x[end]
-"""
-function RK4(dy_dx, x, y0, u, p)
-    y = zeros(Float64, length(y0), length(x))
-    y[:, 1] .= y0
-    for i = 1:(length(x) - 1)
-        Δx = x[i+1] - x[i]
-        k_1 = dy_dx(x[i], y[:, i], u, p)
-        k_2 = dy_dx(x[i] + Δx/2, y[:, i] + Δx/2 * k_1, u, p)
-        k_3 = dy_dx(x[i] + Δx/2, y[:, i] + Δx/2 * k_2, u, p)
-        k_4 = dy_dx(x[i] + Δx, y[:, i] + Δx * k_3, u, p)
-
-        y[:, i+1] = y[:, i] + 1/6 * Δx * (k_1 + 2*k_2 + 2*k_3 + k_4)
-    end
-    yend = y[:,end]
-    return y, yend
-end
-
-"""
     dλ_dz_membrane(λ, u, p)
 
 This function evaluates the derivative in space of the water content in the membrane.
@@ -858,7 +829,7 @@ This function evaluates the derivative in space of the water content in the memb
     - `p::Struct`: structure of type PEMFC_params with parameters 
     
     **Outputs:**
-    - `dλ_dz::Vector{Float64}`: vector with derivative of λ in space
+    - `dλ_dz::Float64`: derivative of λ in space
 """
 function dλ_dz_membrane(λ, u, p)
     #Extract inputs
@@ -876,10 +847,8 @@ function dλ_dz_membrane(λ, u, p)
     #Diffusion coefficient
     D_λ = Nafion_diffusion(T, λ)
 
-    dλ_dz = zeros(1)
-
     #Oxygen concentration rate of change
-    dλ_dz[1] = (n_drag * λ / 11 - α_star) * Iflux * M_m / (ρ_dry * D_λ)
+    dλ_dz = (n_drag * λ / 11 - α_star) * Iflux * M_m / (ρ_dry * D_λ)
 
     return dλ_dz
 end
@@ -953,7 +922,6 @@ function water_balance(α_star, u, p)
     ε = p.ε
     τ = p.τ
     Iflux = p.Iflux
-    N_int = p.N_int
 
     p_SAT = water_sat_pressure(T)
 
@@ -996,12 +964,20 @@ function water_balance(α_star, u, p)
     aw2 = x_H2O_2 * p_A / p_SAT
     λ2 = λ_calc(aw2)
    
-    dλ_dz_mem_fun(z, λ, u, p) = dλ_dz_membrane(λ, u, p)
-    λ_A2 = [λ2]
-    z_mem = LinRange(0, t_M, N_int)
-    λ, λ3 = RK4(dλ_dz_mem_fun, z_mem, λ_A2, u, p) #Use RK solver to find water content at 3
+    dy_dx(y, p, x) = [dλ_dz_membrane(y[1], p[1], p[2])]
+    
+    y0 = [λ2]
+    xspan = (0.0, t_M)
+    ODEparams = (u, p)
+    
+    prob = ODEProblem(dy_dx, y0, xspan, ODEparams, reltol = 1e-6)
+    sol = solve(prob, Tsit5()) #Solve ODE problem using recommended solver
 
-    λ3 = λ3[1]
+    #Extract solution vector
+    y = sol.u
+    y = hcat(y...) #Concatenate into array
+
+    λ3 = y[1,end]
 
     res = λ3 - λ3_prime #difference between the two methods
 

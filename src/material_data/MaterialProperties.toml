@@ -8,7 +8,8 @@
     poissons_ratio = 0.33
     YTS = 3.4129051553103113e8 #Yield tensile strength
     UTS = 90e6 #Ultimate tensile strength
-    shear_strength = 2.2752701035402077e8
+    shear_strength = 227.53e6
+    thermal_conductivity = 180 #W/(m K)
 
 [Al-6061]
     description = "Aluminium 6061 alloy"
@@ -20,6 +21,7 @@
     YTS = 55.2e6 #Yield tensile strength
     UTS = 124e6  #Ultimate tensile strength
     shear_strength = 82.7e6
+    thermal_conductivity = 180 #W/(m K)
 
     #Electrical properties taken from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
     resistivity = 2.65e-8
@@ -38,6 +40,7 @@
     YTS = 338e6 #Yield tensile strength
     UTS = 505e6  #Ultimate tensile strength
     shear_strength = 300e6
+    thermal_conductivity = 155 #W/(m K)
 
 [Al-2219-T87]
     description = """Aluminum-copper alloy with high strength, resistance to corrosion cracking and enhanced cryogenic properties.
@@ -51,6 +54,7 @@
     YTS = 393e6 #Yield tensile strength
     UTS = 476e6  #Ultimate tensile strength
     shear_strength = 280e6
+    thermal_conductivity = 121 #W/(m K)
 
 [Ti-6242]
     description = "Titanium 6242 alloy"
@@ -62,7 +66,20 @@
     YTS = 990e6 #Yield tensile strength
     UTS = 1010e6  #Ultimate tensile strength
     shear_strength = 82.7e6
+    thermal_conductivity = 7.10 #W/(m K)
 
+[SS-304]
+    description = """304 Stainless Steel
+    Uses: Pressure vessels, piping, cryogenic vessels"""
+    #Structural properties: https://www.matweb.com/search/datasheet.aspx?MatGUID=abc4415b0f8b490387e3c922237098da
+    density = 8000.0 #kg/m3
+    youngs_modulus = 193e9 #Pa
+    shear_modulus = 77.0e9 #Pa
+    poissons_ratio = 0.29
+    YTS = 215e6 #Yield tensile strength
+    UTS = 505e6  #Ultimate tensile strength
+    shear_strength = 386.0e6 #From https://protoxyz.com/materials/metal/Stainless_Steel_304
+    thermal_conductivity = 16.2 #W/(m K)
 # -----------------------------------------------------
 # Generic conductors with electrical properties taken 
 # from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
