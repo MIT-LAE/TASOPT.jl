@@ -25,7 +25,7 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
     # Cross sectional areas
     A_skin = perimeter * fuse.skin.thickness
     A_web = web_length * fuse.web.thickness
-    A_fuse = (π + layout.n_webs*(2θ_web + sin2θ))*R^2 + 2R*ΔR
+    A_fuse = area(layout.cross_section)
 
     # Surface areas
     S_bulk = (2π + 4.0*layout.n_webs*θ_web)*R^2
@@ -100,6 +100,27 @@ end  # function Iy
 # function Iz(cs::AbstractCrossSection)
     
 # end  # function Iz
+
+"""
+    $(TYPEDSIGNATURES)
+"""
+function area(cs::SingleBubble)
+    R = cs.radius
+    ΔR = cs.bubble_lower_downward_shift
+    enclosed_area = π * R^2 + 2 * R * ΔR
+    return enclosed_area
+end  # function area
+
+"""
+$(TYPEDSIGNATURES)
+"""
+function area(cs::MultiBubble)
+    R = cs.radius
+    ΔR = cs.bubble_lower_downward_shift
+    θ_web, h_web, sin2θ, web_length = web_geometry(cs)
+    enclosed_area = (π + cs.n_webs * (2θ_web + sin2θ)) * R^2 + 2R * ΔR
+    return enclosed_area
+end # function area
 
 """
     get_perimeter(x::SingleBubble)
