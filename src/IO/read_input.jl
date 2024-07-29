@@ -452,7 +452,7 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     ## Strut details only used if strut_braced_wing is true
     wing.strut.z  = Distance(readwing("z_strut"))
-    wing.strut.toc  = readwing("strut_toc")
+    wing.strut.thickness_to_chord  = readwing("strut_toc")
     wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
 
 # ----------------------------------
@@ -671,7 +671,23 @@ readstruct(x) = read_input(x, structures, dstructures)
     # parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
     # parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     # parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
+    caps_max_avg = readstruct("caps_max_avg_stress")
+    caps_safety_fac = readstruct("caps_safety_factor")
+    wing.inboard.caps.material = StructuralAlloy(readstruct("caps_material"),
+                                max_avg_stress = caps_max_avg,
+                                safety_factor = caps_safety_fac)
+    wing.outboard.caps.material = StructuralAlloy(readstruct("caps_material"),
+                                max_avg_stress = caps_max_avg,
+                                safety_factor = caps_safety_fac)
 
+    webs_max_avg = readstruct("webs_max_avg_stress")
+    webs_safety_fac = readstruct("webs_safety_factor")
+    wing.inboard.webs.material = StructuralAlloy(readstruct("webs_material"),
+                                max_avg_stress = webs_max_avg,
+                                safety_factor = webs_safety_fac)
+    wing.outboard.webs.material = StructuralAlloy(readstruct("webs_material"),
+                                max_avg_stress = webs_max_avg,
+                                safety_factor = webs_safety_fac)
 
     skin_max_avg = readstruct("skin_max_avg_stress")
     skin_safety_fac = readstruct("skin_safety_factor")
@@ -686,7 +702,6 @@ readstruct(x) = read_input(x, structures, dstructures)
                                 safety_factor = bend_safety_fac)
 
     fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
-
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
@@ -931,7 +946,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, 1, vtail)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
 
 end
 

@@ -718,9 +718,9 @@ function wsize(ac; itermax=35,
             rhofuel = parg[igrhofuel]
         end
 
-        wing.outboard.shear_load, wing.outboard.moment, wing.outboard.webs.thickness, wing.outboard.caps.thickness, wing.outboard.web_cap.EI_bending, wing.outboard.web_cap.EI_normal, wing.outboard.web_cap.GJ,
-        wing.inboard.shear_load, wing.inboard.moment, wing.inboard.webs.thickness, wing.inboard.caps.thickness, wing.inboard.web_cap.EI_bending, wing.inboard.web_cap.EI_normal, wing.inboard.web_cap.GJ,
-        wing.strut.axial_force, lstrutp, wing.outboard.cos_sweep,
+        wing.outboard.max_shear_load, wing.outboard.moment, wing.outboard.webs.thickness, wing.outboard.caps.thickness, wing.outboard.web_cap.EI_bending, wing.outboard.web_cap.EI_normal, wing.outboard.web_cap.GJ,
+        wing.inboard.max_shear_load, wing.inboard.moment, wing.inboard.webs.thickness, wing.inboard.caps.thickness, wing.inboard.web_cap.EI_bending, wing.inboard.web_cap.EI_normal, wing.inboard.web_cap.GJ,
+        wing.strut.axial_force, lstrutp, wing.outboard.cos_lambda_strut,
         Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
         Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
         wing.inboard.webs.weight.W, wing.inboard.caps.weight.W, wing.strut.weight,
@@ -769,7 +769,7 @@ function wsize(ac; itermax=35,
         wing.outboard.caps.weight = wing.inboard.caps.weight
 
         # Strut chord (perpendicular to strut)
-        cstrut = sqrt(0.5 * wing.strut.axial_force / (tohstrut * wing.strut.toc))
+        cstrut = sqrt(0.5 * wing.strut.axial_force / (tohstrut * wing.strut.thickness_to_chord))
         Ssturt = 2.0 * cstrut * lstrutp
         wing.strut.chord = cstrut
         wing.strut.S = Ssturt

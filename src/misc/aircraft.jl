@@ -84,7 +84,6 @@ Base.@kwdef mutable struct aircraft #inner constructor
     fuselage::Fuselage = Fuselage()
     wing::Wing = Wing()
     htail::Tail = Tail()
-    n_vtail::Int64 = 1
     vtail::Tail = Tail()
 end
 
@@ -98,7 +97,7 @@ end
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage(), Wing(), Tail(), 1, Tail())
+        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage(), Wing(), Tail(), Tail())
 end
 
 

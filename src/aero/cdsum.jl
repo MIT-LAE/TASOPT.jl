@@ -67,7 +67,7 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       lambdav  = vtail.layout.λ
       sweeph   = htail.layout.sweep
       sweepv   = vtail.layout.sweep
-      cosLs    = wing.outboard.cos_sweep
+      cosLs    = wing.outboard.cos_lambda_strut
       Sstrut   = wing.strut.S
 
       co   = wing.layout.chord

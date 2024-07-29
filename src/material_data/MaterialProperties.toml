@@ -6,9 +6,9 @@
     youngs_modulus =  6.894757889515779e10 #Pa
     shear_modulus = 24.0e9 #Pa
     poissons_ratio = 0.33
-    YTS = 3.4129051553103113e8 #Yield tensile strength
+    YTS = 34.13e7 #Yield tensile strength
     UTS = 90e6 #Ultimate tensile strength
-    shear_strength = 227.53e6
+    shear_strength = 2.2752068755041897e8
     thermal_conductivity = 180 #W/(m K)
 
 [Al-6061]
