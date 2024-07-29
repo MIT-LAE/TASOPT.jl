@@ -25,7 +25,7 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
     # Cross sectional areas
     A_skin = perimeter * fuse.skin.thickness
     A_web = web_length * fuse.web.thickness
-    A_fuse = (π + layout.n_webs*(2θ_web + sin2θ))*R^2 + 2R*ΔR
+    A_fuse = area(layout.cross_section)
 
     # Surface areas
     S_bulk = (2π + 4.0*layout.n_webs*θ_web)*R^2
@@ -102,6 +102,27 @@ end  # function Iy
 # end  # function Iz
 
 """
+    $(TYPEDSIGNATURES)
+"""
+function area(cs::SingleBubble)
+    R = cs.radius
+    ΔR = cs.bubble_lower_downward_shift
+    enclosed_area = π * R^2 + 2 * R * ΔR
+    return enclosed_area
+end  # function area
+
+"""
+$(TYPEDSIGNATURES)
+"""
+function area(cs::MultiBubble)
+    R = cs.radius
+    ΔR = cs.bubble_lower_downward_shift
+    θ_web, h_web, sin2θ, web_length = web_geometry(cs)
+    enclosed_area = (π + cs.n_webs * (2θ_web + sin2θ)) * R^2 + 2R * ΔR
+    return enclosed_area
+end # function area
+
+"""
     get_perimeter(x::SingleBubble)
 
 $(TYPEDSIGNATURES)
@@ -125,3 +146,29 @@ function get_perimeter(cs::MultiBubble)
                 (2*cs.bubble_lower_downward_shift)
     return perimeter
 end  # function perimeter
+"""
+    size_insulation(cs::AbstractCrossSection,
+     insulated_fraction::Float64=0.55)
+
+Calculates the insulation weight. Assumes, by default, that 55% of the fuselage 
+cross-sectional perimeter is the cabin which is insulated and 45% is the cargo 
+hold that is not insulated.
+"""
+function size_insulation(
+    layout::FuselageLayout,
+    S_nose::Float64,
+    S_bulk::Float64,
+    weight_per_area::Float64,
+    insulated_fraction::Float64 = 0.55,
+)
+
+    p = get_perimeter(layout.cross_section)
+    A = p * layout.l_shell + S_nose + S_bulk
+    W = weight_per_area * insulated_fraction * A
+
+    shell_centroid = 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
+    insulation = Weight(W = W, x = shell_centroid)
+
+    return insulation
+
+end  # function size_insulation

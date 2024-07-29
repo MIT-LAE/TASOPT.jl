@@ -29,13 +29,15 @@ function Base.getproperty(obj::StructuralMember, sym::Symbol)
         return getfield(obj, :material).ρ
     elseif sym === :σ
         return getfield(obj, :material).σmax
+    elseif sym === :τ
+        return getfield(obj, :material).τmax
     else
         return getfield(obj, sym)
     end
 end
 
 function Base.show(io::IO, x::StructuralMember)
-    print(io, "StructuralMember(", x.material,", ", x.weight, ")")
+    print(io, "StructuralMember(", x.material.name,", ", x.weight, ")")
 end
 
 """
