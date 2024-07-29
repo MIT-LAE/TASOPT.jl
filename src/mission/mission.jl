@@ -71,20 +71,13 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       # mission TO fuel weight
       WfTO = WTO - Wzero
 
-      #Boiloff rate for cryogenic fuels
-      mdot_boiloff = parg[igmdotboiloff]
-
       # set known operating conditions
 
       # takeoff altitude conditions
+      ΔTatmos = parm[imDeltaTatm]
       ip = ipstatic
       altkm = para[iaalt, ip] / 1000.0
-      T_std, p_std, ρ_std, a_std, μ_std = atmos(altkm)
-      T0 = parm[imT0TO]
-      p0 = p_std
-      ρ0 = ρ_std * (T_std / T0)
-      a0 = a_std * sqrt(T0 / T_std)
-      μ0 = μ_std * (T0 / T_std)^0.8
+      T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
 
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
@@ -113,7 +106,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       Mach = para[iaMach, ip]
       altkm = para[iaalt, ip] / 1000.0
 
-      T0, p0, rho0, a0, mu0 = atmos(altkm)
+      T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -126,12 +119,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       # End-of-descent altitude conditions
       ip = ipdescentn
       altkm = para[iaalt, ip] / 1000.0
-      T_std, p_std, rho_std, a_std, mu_std = atmos(altkm)
-      T0 = parm[imT0TO]
-      p0 = p_std
-      rho0 = rho_std * (T_std / T0)
-      a0 = a_std * sqrt(T0 / T_std)
-      mu0 = mu_std * (T0 / T_std)^0.8
+      T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
+
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -284,14 +273,14 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
 
             altkm = para[iaalt, ip] / 1000.0
 
-            T0, p0, rho0, a0, mu0 = atmos(altkm)
+            T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
             pare[ierho0, ip] = rho0
             pare[iemu0, ip] = mu0
 
-            rhocab = max(parg[igpcabin], p0) / (RSL * TSL)
+            rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
             para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
       end
 
@@ -405,10 +394,11 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   println("Climb gamV not converged")
             end
 
-            pare[ieFe, ip] = Ftotal
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
-            FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
+
+            mfuel = Ftotal * TSFC / gee
+            FFC[ip] = mfuel * gee / (W * V * cosg)
 
             Vgi[ip] = 1.0 / (V * cosg)
 
@@ -530,8 +520,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
-
+      mfuel = Ftotal * TSFC / gee
+      FFC[ip] = mfuel * gee / (W * V * cosg)
       Vgi[ip] = 1.0 / (V * cosg)
 
       #---- set end-of-cruise point "d" using cruise and descent angles, 
@@ -551,7 +541,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       Mach = para[iaMach, ip]
       altkm = altd / 1000.0
 
-      T0, p0, ρ0, a0, μ0 = atmos(altkm)
+      T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -562,7 +552,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
       para[iaalt, ip] = altd
 
-      ρcab = max(parg[igpcabin], p0) / (RSL * TSL)
+      ρcab = max(parg[igpcabin], p0) / (RSL * Tref)
       para[iaWbuoy, ip] = (ρcab - ρ0) * gee * parg[igcabVol]
 
       # Set pitch trim by adjusting CLh
@@ -597,9 +587,11 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      FFC[ip] = Ftotal * TSFC / (W * V * cosg) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
-      Vgi[ip] = 1.0 / (V * cosg)
 
+      mfuel = Ftotal * TSFC / gee
+      FFC[ip] = mfuel * gee / (W * V * cosg) 
+
+      Vgi[ip] = 1.0 / (V * cosg)
 
       ip1 = ipcruise1
       ipn = ipcruisen
@@ -623,7 +615,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             Mach = para[iaMach, ip]
             para[iaalt, ip] = altc * (1.0 - frac) + altd * frac
             altkm = para[iaalt, ip] / 1000.0
-            T0, p0, rho0, a0, mu0 = atmos(altkm)
+            T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
@@ -633,7 +625,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             pare[ieu0, ip] = Mach * a0
             para[iaReunit, ip] = Mach * a0 * rho0 / mu0
 
-            rhocab = max(parg[igpcabin], p0) / (RSL * TSL)
+            rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
             para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
 
             para[iaRange, ip] = para[iaRange, ipcruise1] + dRcruise * frac
@@ -677,7 +669,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             para[iagamV, ip] = gamVde
 
             altkm = alt / 1000.0
-            T0, p0, ρ0, a0, μ0 = atmos(altkm)
+            T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
@@ -687,7 +679,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             para[iaRange, ip] = R
             para[iaalt, ip] = alt
 
-            rhocab = max(parg[igpcabin], p0) / (RSL * TSL)
+            rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
             para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
       end
       para[iaWbuoy, ipdescentn] = 0.0
@@ -769,13 +761,12 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
 
             # store integrands for Range and Weight integration
             FoW[ip] = F / (BW * cosg) - DoL
-            FFC[ip] = F / (W * V * cosg) * TSFC + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
+
             Vgi[ip] = 1.0 / (V * cosg)
 
             # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
             mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
-            FFC[ip] = gee * mfuel / (W * cosg * V) + gee * mdot_boiloff / (W * cosg * V) #second term accounts for fuel boiloff in cryo tanks
-
+            FFC[ip] = mfuel * gee / (W * V * cosg)
 
             if (ip > ipdescent1)
                   #  corrector integration step, approximate trapezoidal
@@ -822,22 +813,24 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       end
 
       # mission fuel fractions and weights
+      Wfvent = parg[igWfvent] #Weight of fuel that is vented from tank
+      ffvent = Wfvent/WMTO #weight fraction of vented fuel
+      
       fracWa = para[iafracW, ipclimb1]
       fracWe = para[iafracW, ipdescentn]
       freserve = parg[igfreserve]
-      fburn = fracWa - fracWe
+      fburn = fracWa - fracWe + ffvent #include vented fuel, if any
       ffuel = fburn * (1.0 + freserve)
       Wfuel = WMTO * ffuel
       WTO = Wzero + Wfuel
 
       parm[imWTO] = WTO
       parm[imWfuel] = Wfuel
+      #TODO the above calculation does not account for the effect of venting on the flight profile
 
       # mission PFEI
       Wburn = WMTO * fburn
-      parm[imPFEI] = Wburn/gee * pare[iehfuel, ipcruise1] / (parm[imWpay] * parm[imRange])
-
-
+      parm[imPFEI] = Wburn/gee * parm[imLHVfuel] / (parm[imWpay] * parm[imRange])
 
       return t_prop
 end

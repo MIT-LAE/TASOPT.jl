@@ -1,4 +1,77 @@
 using DocStringExtensions
+abstract type AbstractLayout end
+abstract type AbstractCrossSection end
+
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for a conventional
+single-bubble type fuselage.
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct SingleBubble <: AbstractCrossSection
+    """Fuselage Radius [m]"""
+    radius::Float64 = 1.0
+    """Downward shift of lower bubbles (dRfuse) [m] """
+    bubble_lower_downward_shift::Float64 = 0.0
+    """Skin thickness [m]"""
+    skin_thickness::Float64 = 0.0
+
+    # SingleBubble(radius, bubble_lower_downward_shift, Δp, σ) = 
+    # calc_skin_thickness(new(radius, bubble_lower_downward_shift), Δp, σ)
+
+end
+
+"""
+"""
+function calc_skin_thickness(cs::AbstractCrossSection, Δp, σ)
+    cs.skin_thickness = Δp*cs.radius/100.0
+    return cs
+end  # function calc_skin_thickness
+
+
+# function SingleBubble(radius, dz, Δp)
+
+# end
+
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for a multi-bubble type 
+fuselage
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct MultiBubble <: AbstractCrossSection
+    """Fuselage Radius [m]"""
+    radius::Float64 = 1.0
+    """Downward shift of lower bubbles (dRfuse) [m] """
+    bubble_lower_downward_shift::Float64 = 0.2
+    """Y offset of bubble center [m]"""
+    bubble_center_y_offset::Float64 = 0.2
+    """Number of webs [-]"""
+    n_webs::Int64 = 1
+    """Skin thickness [m]"""
+    skin_thickness::Float64 = 0.0
+    """Web thickness [m]"""
+    web_thickness::Float64 = 0.0
+end
+
+# Trying to access these properties form a SingleBubble just gives
+# constants
+function Base.getproperty(obj::SingleBubble, sym::Symbol)
+    if sym === :n_webs
+        return 0
+    elseif sym === :bubble_center_y_offset
+        return 0.0
+    elseif sym === :web_thickness
+        return 0.0
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
 """
 $TYPEDEF
 
@@ -7,15 +80,9 @@ Contains dimensions, heights, etc. to design a fuselage
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct FuselageLayout
-    """Fuselage Radius [m]"""
-    radius::Float64 = 0 
-    """Downward shift of lower bubbles (dRfuse) [m]"""
-    bubble_lower_downward_shift::Float64 = 0
-    """Y offset of bubble center [m]"""
-    bubble_center_y_offset::Float64 = 0
-    """Number of webs (for double bubble designs)"""
-    n_webs::Float64 = 0
+@kwdef mutable struct FuselageLayout <: AbstractLayout
+    """Cross section definition"""
+    cross_section::AbstractCrossSection = SingleBubble()
     """Thickness of webs """
     thickness_webs::Float64 = 0
     """X position of nose [m]"""
@@ -33,7 +100,7 @@ $TYPEDFIELDS
     """X position of fuselage end [m]"""
     x_end::Float64 = 0
     """Tailcone taper (lambdac) [m]"""
-    tailcone_taper_ratio::Float64 = 0
+    taper_tailcone::Float64 = 0# lambdac
     """Floor depth (depth of floor beams) [m]"""
     floor_depth::Float64 = 0
     """Nose Radius [m]"""
@@ -44,6 +111,24 @@ $TYPEDFIELDS
     taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
 end
 
+# Helper function to be able to simplify 
+function Base.getproperty(layout::FuselageLayout, sym::Symbol)
+    cross_section = getfield(layout, :cross_section)
+    
+    if sym === :l_nose
+        return getfield(layout, :x_pressure_shell_fwd) - getfield(layout, :x_nose)
+    elseif sym === :l_shell
+        return getfield(layout, :x_pressure_shell_aft) - 
+               getfield(layout, :x_pressure_shell_fwd)
+    elseif sym === :l_floor
+        return getproperty(layout, :l_shell) + 2.0*getproperty(layout, :radius)
+    
+    elseif sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
+        return getproperty(cross_section, sym)
+    else
+        return getfield(layout, sym)
+    end
+end
 
 """
 $TYPEDEF

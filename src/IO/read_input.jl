@@ -37,6 +37,7 @@ Density(x)  = convertDensity(parse_unit(x)...)
 Area(x)     = convertArea(parse_unit(x)...)
 Vol(x)      = convertVolume(parse_unit(x)...)
 Angle(x)    = convertAngle(parse_unit(x)...)
+Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
 """
@@ -258,22 +259,22 @@ weight = read_input("Weights", fuse, dfuse)
 dweight = dfuse["Weights"]
 readweight(x) = read_input(x, weight, dweight)
     fuselage.weight_frac_frame = readweight("frame")
-    fuselage.weight_frac_string = readweight("stringer")
-    parg[igffadd]   = readweight("additional")
+    fuselage.weight_frac_stringers = readweight("stringer")
+    fuselage.weight_frac_skin_addl   = readweight("additional")
 
-    parg[igWfix] = Force(readweight("fixed_weight"))
+    fuselage.fixed.W = Force(readweight("fixed_weight"))
 
-    parg[igWpwindow] = readweight("window_per_length")
-    parg[igWppinsul] = readweight("window_insul_per_area")
-    parg[igWppfloor] = readweight("floor_weight_per_area")
+    fuselage.window.W_per_length = readweight("window_per_length")
+    fuselage.insulation.W_per_area = readweight("window_insul_per_area")
+    fuselage.floor.W_per_area = readweight("floor_weight_per_area")
 
-    parg[igfhpesys] = readweight("HPE_sys_weight_fraction")
+    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
     parg[igflgnose] = readweight("LG_nose_weight_fraction")
     parg[igflgmain] = readweight("LG_main_weight_fraction")
 
-    parg[igfapu] = readweight("APU_weight_fraction")
-    parg[igfseat] = readweight("seat_weight_fraction")
-    parg[igfpadd] = readweight("add_payload_weight_fraction")
+    fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
 
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
@@ -281,6 +282,12 @@ readgeom(x) = read_input(x, geom, dgeom)
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
+    pari[iidoubledeck] = readgeom("double_decker") 
+
+    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+        parg[igfloordist] = Distance(readgeom("floor_distance")) #read vertical distance between floors
+    end
+
     parg[igseatpitch] = Distance(readgeom("seat_pitch"))
     parg[igseatwidth] = Distance(readgeom("seat_width"))
     parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
@@ -288,10 +295,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
     parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
     parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
-    parg[igxapu]     = Distance(readgeom("x_APU"))
-    parg[igxhpesys]  = Distance(readgeom("x_HPE_sys"))
+    fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
+    fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
-    parg[igxfix] = Distance(readgeom("x_fixed_weight"))
+    fuselage.fixed.r = [Distance(readgeom("x_fixed_weight")),0.0,0.0]
 
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
@@ -301,14 +308,34 @@ readgeom(x) = read_input(x, geom, dgeom)
     else
         fuselage.n_decks =  1
     end
-    fuselage.layout.radius = Distance(readgeom("radius"))
-    fuselage.layout.bubble_lower_downward_shift = Distance(readgeom("dRadius"))
-    fuselage.layout.bubble_center_y_offset = Distance(readgeom("y_offset"))
+
+    # Number of webs = number of bubbles - 1
+    n_bubbles = Int(readgeom("number_of_bubbles"))
+
+    radius = Distance(readgeom("radius"))
+    dz = Distance(readgeom("dRadius"))
+    dy = Distance(readgeom("y_offset"))
+
+    if n_bubbles > 1 && dy == 0.0
+        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        "y-offset of bubble set to 0.0. "*
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        n_bubbles = 1
+    end
+
+    if n_bubbles == 1
+        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
+    else
+        n_webs = n_bubbles - 1
+        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
+        bubble_center_y_offset = dy, n_webs = n_webs)
+    end
+    println(cross_section)
+    fuselage.layout.cross_section = cross_section
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
-    fuselage.layout.n_webs = readgeom("Nwebs")
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
-    fuselage.layout.tailcone_taper_ratio = readgeom("tailcone_taper")
+    fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
     fuse_end = lowercase(readgeom("taper_fuse_to")) 
     if fuse_end == "point"
         fuselage.layout.taper_fuse = 0
@@ -340,10 +367,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
-    fuse_tank.Rfuse = fuse.layout.radius
-    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
-    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
-    fuse_tank.nfweb = fuselage.layout.n_webs
+    fuse_tank.fueltype = fueltype
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
@@ -360,15 +384,21 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
     fuse_tank.theta_inner = Angle(readfuel_storage("inner_vessel_support_angle"))
 
-    fuse_tank.ptank = Pressure(readfuel_storage("tank_pressure"))
+    fuse_tank.pvent = Pressure(readfuel_storage("pressure_venting"))
+    fuse_tank.pinitial = Pressure(readfuel_storage("pressure_initial"))
+    fuse_tank.t_hold_orig = Time(readfuel_storage("hold_departure"))
+    fuse_tank.t_hold_dest = Time(readfuel_storage("hold_arrival"))
     
     fuse_tank.ftankadd = readfuel_storage("additional_mass_fraction")
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
     fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
+    fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
-    if ("vacuum" in fuse_tank.material_insul) || ("Vacuum" in fuse_tank.material_insul) #If tank is double-walled
+    flag_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
+
+    if flag_vacuum #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
         fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
 
@@ -387,17 +417,6 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         pari[iinftanks] = 2
     end
-
-    #Calculate fuel temperature and density as a function of pressure
-    Tfuel, ρfuel, ρgas, hvap = cryo_fuel_properties(uppercase(fueltype), fuse_tank.ptank)
-    pare[ieTft, :, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
-    pare[ieTfuel, :, :] .= Tfuel #Initialize fuel temperature as temperature in tank
-    parg[igrhofuel] = ρfuel
-    fuse_tank.rhofuel = ρfuel
-    fuse_tank.Tfuel = Tfuel
-    fuse_tank.hvap = hvap
-    parg[igrhofuelgas] = ρgas
-    fuse_tank.rhofuelgas = ρgas
 end
 # ---------------------------------
 # Wing
@@ -497,13 +516,13 @@ readland(x) = read_input(x, land, dland)
 # and secondary wing components, 
 weight = readwing("Weightfracs")
 dweight = dwing["Weightfracs"]
-    wing.flap_weight_frac  = readweight("flap")
-    wing.slat_weight_frac = readweight("slat")
-    wing.aileron_weight_frac = readweight("aileron")
-    wing.leading_trailing_edge_weight_frac = readweight("leading_trailing_edge")
-    wing.ribs_weight_frac = readweight("ribs")
-    wing.spoilers_weight_frac = readweight("spoilers")
-    wing.attachments_weight_frac = readweight("attachments")
+    wing.weight_frac_flap  = readweight("flap")
+    wing.weight_frac_slat = readweight("slat")
+    wing.weight_frac_ailerons = readweight("aileron")
+    wing.weight_frac_leading_trailing_edge = readweight("leading_trailing_edge")
+    wing.weight_frac_ribs = readweight("ribs")
+    wing.weight_frac_spoilers = readweight("spoilers")
+    wing.weight_frac_attachments = readweight("attachments")
 
 # ---- End Wing -----
 
@@ -579,7 +598,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     parg[igfCDhcen] = readhtail("CD_Htail_from_center")
     htail.CL_max  = readhtail("CLh_max")
 
-    htail.added_weight_fraction = readhtail("added_weight_fraction")
+    htail.weight_fraction_added = readhtail("added_weight_fraction")
 
     htail.layout.box_width = readhtail("box_width_chord")
     htail.layout.box_height = readhtail("box_height_chord")
@@ -611,7 +630,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
     vtail.CL_max = readvtail("CLv_max")
 
-    vtail.added_weight_fraction = readvtail("added_weight_fraction")
+    vtail.weight_fraction_added = readvtail("added_weight_fraction")
     vtail.layout.box_width = readvtail("box_width_chord")
     vtail.layout.box_height = readvtail("box_height_chord")
     vtail.layout.hweb_to_hbox  = readvtail("web_height_hbox")
@@ -623,7 +642,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
 
-    update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, parm, fuselage, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 
@@ -642,7 +661,7 @@ readstruct(x) = read_input(x, structures, dstructures)
     # parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
-    fuselage.fuse_shell_modulus_ratio = readstruct("fuse_shell_modulus_ratio")
+    fuselage.ratio_young_mod_fuse_bending = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
     # parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
@@ -653,12 +672,21 @@ readstruct(x) = read_input(x, structures, dstructures)
     # parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     # parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
 
-    fuselage.skin.ρ = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
-    fuselage.bending_h.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.bending_v.ρ = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
-    fuselage.skin.σ = Stress(readstruct("sigma_fuse_skin"))
-    fuselage.bending_h.σ = Stress(readstruct("sigma_fuse_bending"))
-    fuselage.bending_v.σ = Stress(readstruct("sigma_fuse_bending"))
+
+    skin_max_avg = readstruct("skin_max_avg_stress")
+    skin_safety_fac = readstruct("skin_safety_factor")
+    fuselage.skin.material =  StructuralAlloy(readstruct("skin_material"), 
+                                    max_avg_stress = skin_max_avg,
+                                    safety_factor = skin_safety_fac)
+
+    bend_max_avg = readstruct("bending_max_avg_stress")
+    bend_safety_fac = readstruct("bending_safety_factor")
+    fuselage.bendingmaterial_h.material = StructuralAlloy(readstruct("bending_material"),
+                                max_avg_stress = bend_max_avg,
+                                safety_factor = bend_safety_fac)
+
+    fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
+
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------

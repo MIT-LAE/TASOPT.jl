@@ -1,9 +1,5 @@
 """
-      tankWthermal(l_cyl::Float64, l_tank::Float64, r_tank::Float64, Shead::Array{Float64,1}, material_insul::Array{String,1},
-      hconvgas::Float64,
-      t_cond::Array{Float64,1},
-      Tfuel::Float64, z::Float64, Mair::Float64, xftank::Float64,
-      time_flight::Float64, ifuel::Int64, qfac::Float64)
+      tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
 `tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
 
@@ -13,21 +9,15 @@ for a given insulation thickness
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `l_cyl::Float64`: Length of cylindrical portion of the tank (m).
-      - `l_tank::Float64`: Tank total length (m).
-      - `r_tank::Float64`: Tank outer radius (m).
-      - `Shead::Array{Float64,1}`: Array of surface areas of each layer of the end/head of the tank [m²].
-      - `material_insul::Array{String,1}`: material name for each MLI layer.
-      - `t_cond::Array{Float64,1}`: Array of thickness of each layer in MLI (m).
-      - `Tfuel::Float64`: Fuel temperature (K).
+      - `fuse_tank::Struct`: structure with tank parameters.
       - `z::Float64`: flight altitude (m)
       - `Mair::Float64`: external air Mach number
       - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
       - `time_flight::Float64`: Time of flight (s).
       - `ifuel::Int64`: fuel index.
-      - `qfac::Float64`: Factor to multiply heat tranfer rate by to account for heat leakae through structure, piping, etc
-
+      
       **Outputs:**
+      - `Q::Float64`: Heat transfer rate into the tank (W).
       - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
       - `mdot_boiloff::Float64`: Boil-off rate of LH2 (kg/s).
 
@@ -38,6 +28,8 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
       qfac = fuse_tank.qfac
+      h_v = fuse_tank.hvap #heat of vaporization
+      TSL = fuse_tank.TSLtank
 
       Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
       Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
@@ -52,11 +44,13 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.material = fuse_tank.material_insul
       p.Tfuel = Tfuel
       p.z = z
+      p.TSL = TSL
       p.Mair = Mair
       p.xftank = xftank
+      p.Rfuse = fuse_tank.Rfuse
       p.ifuel = ifuel
 
-      _, _, Taw = freestream_heat_coeff(z, Mair, xftank) #Find adiabatic wall temperature
+      _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature
       
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
@@ -65,21 +59,22 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       
       #Initial guess for function
       guess = zeros(length(t_cond) + 2) 
-      guess[1] = 1000.0
+
+      Rguess = 0.01
+      guess[1] = ΔT / Rguess
       guess[2] = Tfuel + 1.0
       
       for i = 1:length(t_cond)
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
       end
+      guess[end] = guess[end] - 1.0 #fuselage wall temperature
       sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
-      
-      _, h_v = tank_heat_coeffs(Tfuel, ifuel, Tfuel, l_tank) #Liquid heat of vaporization
       
       Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
       mdot_boiloff = Q / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
       m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
       
-      return  m_boiloff, mdot_boiloff
+      return  Q, m_boiloff, mdot_boiloff
 end
 
 """
@@ -125,26 +120,23 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       material = p.material
       Tfuel = p.Tfuel
       z = p.z
+      TSL = p.TSL
       Mair = p.Mair
       xftank = p.xftank
+      Rfuse = p.Rfuse
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
-      hconvair, _, Taw = freestream_heat_coeff(z, Mair, xftank, Tfuse)
-  
+      h_air, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank, Tfuse, Rfuse)
+
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
       thickness = sum(t_cond)  # total thickness of insulation
   
-      # Radiation
-      ε = 0.95    # white aircraft (Verstraete)
-  
-      hradair = σ_SB * ε * ((Taw^2) + (Tfuse^2)) * (Taw + Tfuse) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
-      h_air = hconvair + hradair # Combines radiative and convective heat transfer at outer end
-      Rair_conv_rad = 1 / (h_air * (2π * (r_tank + thickness) * l_cyl + 2*Shead[end]))  # thermal resistance of ambient air (incl. conv and rad)
-  
+      Rair = 1 / (h_air * (2π * Rfuse * l_tank ))  # thermal resistance of ambient air (incl. conv and rad)
+
       S_int = (2π * (r_inner) * l_cyl) + 2*Shead[1] #liquid side surface area
-      h_liq, _ = tank_heat_coeffs(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
+      h_liq = tank_heat_coeff(T_w, ifuel, Tfuel, l_tank) #Find liquid-side heat transfer coefficient
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
       N = length(t_cond)       # Number of layers in insulation
@@ -152,7 +144,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       R_mli_ends = zeros(Float64, N)
       R_mli_cyl  = zeros(Float64, N)
   
-      #Find resistance of each MLI layer
+      #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
             if lowercase(material[i]) == "vacuum"
@@ -176,7 +168,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       end
   
       R_mli_tot = sum(R_mli)  #Total thermal resistance of MLI
-      Req = R_mli_tot + R_liq + Rair_conv_rad # Total equivalent resistance of thermal circuit
+      Req = R_mli_tot + R_liq + Rair # Total equivalent resistance of thermal circuit
 
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
@@ -205,18 +197,23 @@ This function calculates the thermal conductivity of different insulation materi
       - `k::Float64`: thermal conductivity (W/(m K)).
 """
 function insulation_conductivity_calc(T::Float64, material::String)
-      if material == "rohacell41S"
+      if lowercase(material) == "rohacell41s"
             #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
             k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif material == "polyurethane27" #polyurethane with density of 27 kg/m^3
+      elseif lowercase(material) == "polyurethane27" #polyurethane with density of 27 kg/m^3
             k = 2.114e-13 * T^5 - 1.639e-10 *T^4 + 4.438e-8 * T^3 - 5.222e-6*T^2 + 3.740e-4*T - 2.192e-3
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif material == "polyurethane32" #polyurethane with density of 32 kg/m^3
+      elseif lowercase(material) == "polyurethane32" #polyurethane with density of 32 kg/m^3
             k = 2.179E-13 * T^5 - 1.683E-10* T^4 + 4.542E-08* T^3 - 5.341E-06* T^2 + 3.816E-04* T - 2.367E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif material == "polyurethane35" #polyurethane with density of 35 kg/m^3
+      elseif lowercase(material) == "polyurethane35" #polyurethane with density of 35 kg/m^3
             k = 2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03
             # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
+      elseif lowercase(material) == "microspheres" #microspheres with density 69 kg/m^3
+            k = 1.4632E-10*T^3 - 9.6487E-08*T^2 + 5.1956E-05*T - 3.7191E-05
+            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 15 and 400 K
+      elseif lowercase(material) == "mylar"
+            k = 0.155# W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
       end
       return k
 end
@@ -238,6 +235,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `material::Array{String} `: array with material names for different insulation layers
     - `Tfuel::Float64`: fuel temperature (K)
     - `z::Float64`: flight altitude (m)
+    - `TSL::Float64`: sea-level temperature (K)
     - `Mair::Float64`: external air Mach number
     - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
     - `ifuel::Int64`: fuel species index
@@ -252,16 +250,18 @@ mutable struct thermal_params
       material::Array{String}
       Tfuel::Float64
       z::Float64
+      TSL::Float64
       Mair::Float64
       xftank::Float64
+      Rfuse::Float64
       ifuel::Int64
       thermal_params() = new() 
 end
 
 """
-      tank_heat_coeffs(T_w, ifuel, Tfuel, ltank)
+      tank_heat_coeff(T_w, ifuel, Tfuel, ltank)
 
-This function calculates the latent heat of vaporization of a liquid fuel and its liquid-side heat transfer coefficient. 
+This function calculates the liquid-side heat transfer coefficient of a cryogenic fuel in a tank. 
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -272,19 +272,16 @@ This function calculates the latent heat of vaporization of a liquid fuel and it
 
       **Outputs:**
       - `h_liq::Float64`: liquid-side heat tansfer coefficient (W/m^2/K).
-      - `h_v::Float64`: liquid's enthalpy of vaporization (J/kg).
 """
-function tank_heat_coeffs(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
+function tank_heat_coeff(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
       #Get fuel properties
       if ifuel == 11 #CH4
-            h_v =  510e3 #J/kg, latent heat of vaporozation
             Pr_l = 2.0 #Prandtl number, from NIST at 2atm and 120 K
             β = 3.5e-3 #K^(-1), thermal expansion coefficient https://aiche.onlinelibrary.wiley.com/doi/10.1002/aic.14254
             ν_l = 2.4e-7 #m^2/s, kinematic viscosity from NIST at 2atm and 120K 
             k = 0.17185	#W/m/K, thermal conductivity from NIST at 2atm and 120K 
         
       elseif ifuel == 40 #LH2
-            h_v =  447e3
             Pr_l = 1.3 #from NIST at 2atm and 20K
             β = 15e-3 #https://nvlpubs.nist.gov/nistpubs/jres/089/jresv89n4p317_A1b.pdf
             ν_l = 2.0e-7 #m^2/s, from NIST at 2atm and 20K 
@@ -297,20 +294,23 @@ function tank_heat_coeffs(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Flo
 
       h_liq = Nu_l * k / ltank #heat transfer coefficient for liquid
 
-      return h_liq, h_v
+      return h_liq
 end
 
 """
-      freestream_heat_coeff(z, M, xftank)
+      freestream_heat_coeff(z, TSL, M, xftank, Tw)
 
 This function calculates the air-side heat transfer coefficient, which is assumed to be that of a freestream 
-in forced convection at a given altitude. The freestream temperature is also returned. Heat transfer is modeled via the
-Meador-Smart reference temperature model with the Chilton-Colburn analogy, described on p. 1056 in Anderson, Fundamentals
-of Aerodynamics.
+at a given altitude. Depending on the Mach number, either a natural or forced convection model is used.
+The freestream temperature is also returned. In the forced convection case, heat transfer is modeled via the Meador-Smart 
+reference temperature model with the Chilton-Colburn analogy, described on p. 1056 in Anderson, Fundamentals
+of Aerodynamics. For the free convection case, the heat transfer is modeled as that on a horizontal cylinder, described on 
+p. 334 in Holman.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `z::Float64`: flight altitude (m).
+      - `TSL::Float64`: sea-level temperature (K)
       - `M::Float64`: freestream Mach number.
       - `xftank::Float64`: longitudinal position of the fuel tank CG (m).
       - `Tw::Float64`: wall temperature (K).
@@ -320,16 +320,13 @@ of Aerodynamics.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref)
+function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref, Rfuse::Float64 = 1.0)
       #Use ISA function to calculate freestream conditions
-      Tair, p, _, a, _ = atmos(z / 1e3)
+      Tair, p, _, a, _ = atmos(z / 1e3, TSL - Tref)
       u = M * a #freestrean velocity
 
-      #Assumed parameters for air
-      Pr = 0.71
-      γ = 1.4
-      cp = 1005 #J/(kg K)
-      R = 287 #J/(kg K)
+      #Parameters for air
+      R, Pr, γ, cp, _, _ = gasPr("air", Tair)
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
@@ -337,19 +334,32 @@ function freestream_heat_coeff(z::Float64, M::Float64, xftank::Float64, Tw::Floa
       # This code uses the reference temperature model and the Chilton-Colburn analogy
       T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * r * (γ - 1)/2 * M^2) #Reference temperature
       
-      #Find viscosity from Sutherland's law
-      μ0 = 1.716e-5
-      S_μ = 111
-      T0 = 273
-      μ_s = μ0 * (T_s / T0)^(3 / 2) * ( (T0 + S_μ) / (T_s + S_μ) )
+      #Find properties at reference temperature
+      _, Pr_s, _, cp, μ_s, k_s = gasPr("air", T_s)
 
       ρ_s = p / (R * T_s) #density at reference temperature
 
-      Re_xftank = ρ_s * u * xftank / μ_s
-      cf_xftank = 0.02296 / (Re_xftank)^0.139 #From Meador-Smart method
-      #Calculate Stanton number using Reynolds analogy
-      St_air = cf_xftank / (2 * Pr^(2/3)) #Chilton-Colburn analogy
-      hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
+      if M ≈ 0 #Natural convection
+            L = 2 * Rfuse #reference length
+            β = 1 / Tair #thermal expansion coefficient
+            ν = μ_s / ρ_s
+
+            Gr = gee * β * abs(Tair - Tw) * L^3 / ν^2 #Grasshoff number
+            Ra = Gr * Pr_s #Rayleigh number
+
+            # Parameters from Table 7-1 in Holton (2010)
+            C = 0.13
+            m = 0.333
+            Nu = C * Ra^m #Nusselt number for 1e9 < Ra < 12
+            hconvair = Nu * k_s / L
+
+      else #Forced convection
+            Re_xftank = ρ_s * u * xftank / μ_s
+            cf_xftank = 0.02296 / (Re_xftank)^0.139 #From Meador-Smart method
+            #Calculate Stanton number using Reynolds analogy
+            St_air = cf_xftank / (2 * Pr_s^(2/3)) #Chilton-Colburn analogy
+            hconvair = St_air * ρ_s *u* cp #In W/(m^2 K)
+      end
 
       return hconvair, Tair, Taw
 end
@@ -374,7 +384,7 @@ function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_ou
       a_outer = 0.9 
       a_inner = 1.0
       ε = 0.04    # highly polished aluminum
-      p_vacuum = 1e-3 #Assumed vacuum pressure #TODO maybe make this an input?
+      p_vacuum = 1e-2 #Assumed vacuum pressure, approximately 1e-4 Torr as in Brewer (1991) #TODO maybe make this an input?
 
       Rgas = 287.05  # specific gas constant
       gamma = 1.4

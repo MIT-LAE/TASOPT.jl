@@ -62,15 +62,10 @@ function wsize(ac; itermax=35,
     # Flags
     # Fuel type 24 == kerosene #TODO need to update this for LH2
     ifuel = pari[iifuel]
-    # ifwcen = pari[iifwcen]
-    # iwplan = pari[iiwplan]
+    iwplan = pari[iiwplan]
     iengloc = pari[iiengloc]
     iengwgt = pari[iiengwgt]
-    # iBLIc = pari[iiBLIc]
-    # ifclose = pari[iifclose]
-    # iHTsize = pari[iiHTsize]
     iVTsize = vtail.size
-    # ixwmove = pari[iixwmove]
     ifwing = pari[iifwing]
 
     # Unpack number of powertrain elements
@@ -78,8 +73,23 @@ function wsize(ac; itermax=35,
     ngen = parpt[ipt_ngen]
     nTshaft = parpt[ipt_nTshaft]
 
+    #Calculate sea level temperature corresponding to TO conditions
+    altTO = parm[imaltTO] 
+    T_std,_,_,_,_ = atmos(altTO/1e3)
+    ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
+    parm[imDeltaTatm] = ΔTatmos
+
+    # set cruise-altitude atmospheric conditions
+    set_ambient_conditions!(ac, ipcruise1)
+
+    # set takeoff-altitude atmospheric conditions
+    set_ambient_conditions!(ac, iprotate, 0.25)
+
+    # Set atmos conditions for top of climb
+    set_ambient_conditions!(ac, ipclimbn)
+
     # Calculate fuselage B.L. development at start of cruise: ipcruise1
-    time_fusebl = @elapsed fusebl!(fuse,pari, parg, para, ipcruise1)
+    time_fusebl = @elapsed fusebl!(fuse, parm, para, ipcruise1)
     # println("Fuse bl time = $time_fusebl")
     # Kinetic energy area at T.E.
     KAfTE = para[iaKAfTE, ipcruise1]
@@ -95,6 +105,9 @@ function wsize(ac; itermax=35,
     para[iaDAfsurf, :] .= DAfsurf
     para[iaDAfwake, :] .= DAfwake
     para[iaPAfinf, :] .= PAfinf
+
+    #Calculate fuel lower heating value for PFEI
+    parm[imLHVfuel] = fuelLHV(ifuel)
 
     # Set quantities that are fixed during weight iteration
 
@@ -114,24 +127,15 @@ function wsize(ac; itermax=35,
     parg[igRange] = Rangetot
     parg[igWpay] = Wpay
 
-    # Fixed weight and location of fixed weight
-    Wfix = parg[igWfix]
-    xfix = parg[igxfix]
-
     # Weight fractions
-    fapu = parg[igfapu]
-    fpadd = parg[igfpadd]
-    fseat = parg[igfseat]
     feadd = parg[igfeadd]
     fwadd = wing_additional_weight(wing)
-            
-    ffadd = parg[igffadd]
 
     fpylon = parg[igfpylon]
 
-    fhpesys = parg[igfhpesys]
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
+
 
     freserve = parg[igfreserve]
 
@@ -139,21 +143,9 @@ function wsize(ac; itermax=35,
     fLo = parg[igfLo]
     fLt = parg[igfLt]
 
-    # xwbox = wing.layout.x_wing_box
     xhbox = htail.layout.box_x
     xvbox = vtail.layout.box_x
-    xapu = parg[igxapu]
     xeng = parg[igxeng]
-
-    # calculate payload proportional weights from weight fractions
-    Wapu = Wpaymax * fapu
-    Wpadd = Wpaymax * fpadd
-    Wseat = Wpaymax * fseat
-
-    # window and insulation densities per length and per area
-    Wpwindow = parg[igWpwindow]
-    Wppinsul = parg[igWppinsul]
-    Wppfloor = parg[igWppfloor]
 
     # fuselage-bending inertial relief factors
     rMh = parg[igrMh]
@@ -201,15 +193,6 @@ function wsize(ac; itermax=35,
     # nacelle wetted area / fan area ratio
     rSnace = parg[igrSnace]
 
-    # set cruise-altitude atmospheric conditions
-    set_ambient_conditions!(ac, ipcruise1)
-
-    # set takeoff-altitude atmospheric conditions
-    set_ambient_conditions!(ac, iprotate, 0.25)
-
-    # Set atmos conditions for top of climb
-    set_ambient_conditions!(ac, ipclimbn)
-
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
     #Fuselage fuel tank placement and moment
@@ -224,12 +207,38 @@ function wsize(ac; itermax=35,
     else
         xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m
         xftankaft = fuse.layout.x_end_cylinder
+
+        #Calculate fuel temperature and density as a function of pressure
+        β0 = 1 - fuse_tank.ullage_frac
+        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
+
+        Tfuel = fuel_mix.liquid.T
+        ρliq = fuel_mix.liquid.ρ
+        ρgas = fuel_mix.gas.ρ
+        hvap = fuel_mix.hvap
+
+        pare[ieTft, :] .= Tfuel #Temperature of fuel in fuel tank #TODO remove this and replace with the one in struct
+        pare[ieTfuel, :] .= Tfuel #Initialize fuel temperature as temperature in tank
+        parg[igrhofuel] = fuel_mix.ρ
+        fuse_tank.rhofuel = ρliq
+        fuse_tank.Tfuel = Tfuel
+        fuse_tank.hvap = hvap
+        fuse_tank.rhofuelgas = ρgas
     end
         
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
-   
 
+    #Initialize HX storage array and reset previous HX engine values
+    HXs = []
+    resetHXs(pare)
+
+    #Store fuselage parameters in fuse_tank for ease of access 
+    fuse_tank.Rfuse = fuse.layout.radius
+    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
+    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
+    fuse_tank.nfweb = fuse.layout.n_webs
+   
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------
@@ -530,7 +539,6 @@ function wsize(ac; itermax=35,
         xhtail =  htail.layout.x
         xvtail = vtail.layout.x
         xwing = wing.layout.x
-        xapu = parg[igxapu]
         xeng = parg[igxeng]
 
         Wtesys = parg[igWtesys]
@@ -560,31 +568,29 @@ function wsize(ac; itermax=35,
             Wftank_single = 0.0
         end
         
-        (cabVol) = fusew!(fuse, Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
-            ifwing, nftanks,
+        parg[igcabVol] = fusew!(fuse, Nland, Wpaymax, Wengtail, 
+             nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
-            ffadd, Δp,
-            Wpwindow, Wppinsul, Wppfloor,
+             Δp,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, vtail.layout.λ, vtail.ntails,
             
             xhtail, xvtail,
             xwing, wing.layout.x_wing_box, cbox,
-            xfix, xapu, xeng, xfuel)
+            xeng)
 
-        parg[igcabVol] = cabVol
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
-        WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * cabVol
+        WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * parg[igcabVol]
 
         if (iterw == 1 && initwgt == 0)
 
             feng = 0.08
-            fsum = feng + ffuel + fhpesys + flgnose + flgmain
+            fsum = feng + ffuel + fuse.HPE_sys.W + flgnose + flgmain
             WMTO = (Wpay + fuse.weight + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
 
-            Weng, Wfuel, Whpesys, Wlgnose, Wlgmain = WMTO .* [feng, ffuel, fhpesys, flgnose, flgmain]
+            Weng, Wfuel = WMTO .* [feng, ffuel]
             parg[igWMTO] = WMTO
             parg[igWeng] = Weng
             parg[igWfuel] = Wfuel
@@ -635,12 +641,12 @@ function wsize(ac; itermax=35,
 
         # Size wing area and chords at start-of-cruise
         ip = ipcruise1
-        W = WMTO * para[iafracW, ip]
+        We = WMTO * para[iafracW, ip]
         CL = para[iaCL, ip]
         ρ0 = pare[ierho0, ip]
         u0 = pare[ieu0, ip]
         qinf = 0.5 * ρ0 * u0^2
-        BW = W + WbuoyCR #Weight including buoyancy
+        BW = We + WbuoyCR #Weight including buoyancy
 
         # Initial size of the wing area and chords
         wingsc!(BW, CL, qinf, wing)
@@ -717,7 +723,7 @@ function wsize(ac; itermax=35,
         wing.strut.axial_force, lstrutp, wing.outboard.cos_sweep,
         Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
         Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
-        wing.inboard.webs.weight, wing.inboard.caps.weight, wing.strut.weight,
+        wing.inboard.webs.weight.W, wing.inboard.caps.weight.W, wing.strut.weight,
         dxWweb, dxWcap, wing.strut.dxW = surfw(po, wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.chord, wing.strut.z,
         wing.layout.λt, wing.layout.λs, γt, γs,
             Nlift, wing.planform, Weng1,
@@ -816,7 +822,7 @@ function wsize(ac; itermax=35,
         #  corrections for sweep and compressibility:
         CLα = 2π * cosL / (sqrt(βn^2 + (2 * cosL / wing.layout.AR)^2) + 2 * cosL / wing.layout.AR)
         # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
-        # parg[igCMVf1] = parg[igfuseVol]/CLα
+        # parg[igCMVf1] = fuse.volume/CLα
 
         # Size HT
         if (iterw <= 2 && initwgt == 0)
@@ -899,8 +905,8 @@ function wsize(ac; itermax=35,
             tauwebh, σcaph, σstrut, wing.inboard.caps.material.E, 
             wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
-        Whtail = 2.0 * (Wscenh + Wsinnh + Wsouth) * (1.0 + htail.added_weight_fraction)
-        dxWhtail = 2.0 * (dxWsinnh + dxWsouth) * (1.0 + htail.added_weight_fraction)
+        Whtail = 2.0 * (Wscenh + Wsinnh + Wsouth) * (1.0 + htail.weight_fraction_added)
+        dxWhtail = 2.0 * (dxWsinnh + dxWsouth) * (1.0 + htail.weight_fraction_added)
         htail.weight = Whtail
         htail.dxW = dxWhtail
 
@@ -940,8 +946,8 @@ function wsize(ac; itermax=35,
             tauwebv, σcapv, σstrut, wing.inboard.caps.material.E,
             wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
-        Wvtail = (Wscenv + Wsinnv + Wsoutv) * (1.0 + vtail.added_weight_fraction) * vtail.ntails
-        dxWvtail = (dxWsinnv + dxWsoutv) * (1.0 + vtail.added_weight_fraction) * vtail.ntails
+        Wvtail = (Wscenv + Wsinnv + Wsoutv) * (1.0 + vtail.weight_fraction_added) * vtail.ntails
+        dxWvtail = (dxWsinnv + dxWsoutv) * (1.0 + vtail.weight_fraction_added) * vtail.ntails
         vtail.weight = Wvtail
         vtail.dxW = dxWvtail
 
@@ -980,7 +986,6 @@ function wsize(ac; itermax=35,
             parg[iglftank] = ltank
             parg[igRftank] = Rtank
             parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
-            parg[igmdotboiloff] = nftanks * mdot_boiloff #store total fuel boiloff rate
 
             #Tank placement and weight moment
             lcabin = dx_cabin(fuse)
@@ -1009,7 +1014,7 @@ function wsize(ac; itermax=35,
 
             # Update fuselage according to tank requirements
             update_fuse!(pari, parg) #update fuselage length to accommodate tank
-            fusebl!(fuse,pari, parg, para, ipcruise1) #Recalculate fuselage bl properties
+            fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
             # Kinetic energy area at T.E.
@@ -1027,6 +1032,29 @@ function wsize(ac; itermax=35,
             para[iaDAfwake, :] .= DAfwake
             para[iaPAfinf, :] .= PAfinf
 
+            #Use homogeneous tank model to calculate required venting
+            _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
+            parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
+            fuse_tank.pmin = minimum(ps) #Store minimum tank pressure across mission
+
+            if iterw > 2 #Calculate takeoff engine state and time
+                #This is needed to know the TO duration to integrate the tank state
+                # set static thrust for takeoff routine
+                ip = ipstatic
+                icall = 1
+                icool = 1
+    
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                # set rotation thrust for takeoff routine
+                # (already available from cooling calculations)
+                ip = iprotate
+                icall = 1
+                icool = 1
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    
+                takeoff!(ac; printTO = false)
+            end
         end
 
         # -----------------------------
@@ -1035,13 +1063,9 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            global HXs = hxdesign!(pare, pari, ipdes, HXs)
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous for debugging
-
-        else
-            global HXs = []
-            #global HXs_prev = deepcopy(HXs) #Store current heat exchange vector as previous
-            
+            HXs = hxdesign!(pare, pari, ipdes, HXs)
+            #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
+            #With fuel storage in tanks, this is done in the block above.
         end
 
         # -----------------------------
@@ -1081,8 +1105,8 @@ function wsize(ac; itermax=35,
         # println("CD = ", para[iaCD,ip])
         LoD = para[iaCL, ip] / para[iaCD, ip]
         gamV = para[iagamV, ip]
-        W = para[iafracW, ip] * WMTO
-        BW = W + WbuoyCR
+        We = para[iafracW, ip] * WMTO
+        BW = We + WbuoyCR
         # Fdes = BW * (1 / LoD + gamV) * 1.05 #Ad-hoc 5% addition for OEI
         Fdes = BW * (1 / LoD + gamV)
 
@@ -1165,6 +1189,8 @@ function wsize(ac; itermax=35,
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
         
+        # Store all OPRs for diagnostics
+        pare[ieOPR, :] .= pare[iepilc, :] .* pare[iepihc, :]
         # size cooling mass flow at takeoff rotation condition (at Vstall)
         ip = iprotate
 
@@ -1236,7 +1262,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(pari, parg, parm, para, pare, wing, htail, vtail, initeng, ichoke5, ichoke7)
+    takeoff!(ac)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse, wing, htail, vtail)
@@ -1264,7 +1290,7 @@ function Wupdate0!(parg, fuse, wing, htail, vtail, rlx, fsum)
     WMTO = parg[igWMTO]
     
 
-    ftotadd = sum(parg[[igfhpesys, igflgnose, igflgmain]])
+    ftotadd = fuse.HPE_sys.W + parg[igflgnose] + parg[igflgmain]
     fsum = 0.0
 
     Wsum = parg[igWpay] +
@@ -1297,7 +1323,6 @@ function Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
     fvtail = vtail.weight / WMTO
     feng = parg[igWeng] / WMTO
     ffuel = parg[igWfuel] / WMTO
-    fhpesys = parg[igfhpesys]
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
 
@@ -1310,7 +1335,7 @@ function Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
 
     ftank = parg[igWftank] / WMTO
 
-    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fhpesys +
+    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)
@@ -1344,8 +1369,9 @@ Sets ambient condition at the given mission point `mis_point`.
 """
 function set_ambient_conditions!(ac, mis_point, Mach=NaN)
     mis_point = mis_point
+    ΔTatmos = ac.parmd[imDeltaTatm]
     altkm = ac.parad[iaalt, mis_point]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm)
+    T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
     if Mach === NaN
         Mach = ac.parad[iaMach, mis_point]
     end

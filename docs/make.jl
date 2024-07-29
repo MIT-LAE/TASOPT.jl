@@ -7,6 +7,7 @@ aerodynamics = TASOPT.aerodynamics
 structures = TASOPT.structures
 engine = TASOPT.engine
 aircraft = TASOPT.aircraft
+CryoTank = TASOPT.CryoTank
 
 makedocs(
     repo = Documenter.Remotes.GitHub("MIT-LAE", "TASOPT.jl"),
@@ -26,8 +27,10 @@ makedocs(
         "atmos/atmos.md"
         ],
     "Structures" => Any["structures/wing.md",
-        "structures/fuselage.md",
-        "structures/fueltanks.md"
+        "structures/fuselage.md"
+        ],
+    "Cryogenic tanks" => Any["cryo_tank/cryotank.md",
+    "cryo_tank/fueltanks.md"
         ],
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
@@ -40,7 +43,10 @@ makedocs(
         "sizing/sizing.md",
         "sizing/weightmodels.md"
         ],
-    "Data and I/O" => "data_io/data_io.md",
+    "Data and I/O" => Any[
+        "data_io/data_basics.md",
+        "data_io/data_io.md"
+        ],
 
     "Miscellaneous" => Any[
         "misc/structs.md",

@@ -58,18 +58,18 @@ end
     strut::Strut = Strut()
 
     # Weight fractions
-    flap_weight_frac::Float64 = 0
-    slat_weight_frac::Float64 = 0
-    aileron_weight_frac::Float64 = 0
-    leading_trailing_edge_weight_frac::Float64 = 0
-    ribs_weight_frac::Float64 = 0
-    spoilers_weight_frac::Float64 = 0
-    attachments_weight_frac::Float64 = 0
+    weight_frac_flap::Float64 = 0
+    weight_frac_slat::Float64 = 0
+    weight_frac_ailerons::Float64 = 0
+    weight_frac_leading_trailing_edge::Float64 = 0
+    weight_frac_ribs::Float64 = 0
+    weight_frac_spoilers::Float64 = 0
+    weight_frac_attachments::Float64 = 0
 
 end
 
 function wing_additional_weight(wing::Wing)
-    return wing.flap_weight_frac + wing.slat_weight_frac + wing.aileron_weight_frac + 
-            wing.leading_trailing_edge_weight_frac + wing.ribs_weight_frac +
-            wing.spoilers_weight_frac + wing.attachments_weight_frac
+    return wing.weight_frac_flap + wing.weight_frac_slat + wing.weight_frac_ailerons + 
+            wing.weight_frac_leading_trailing_edge + wing.weight_frac_ribs +
+            wing.weight_frac_spoilers + wing.weight_frac_attachments
 end
