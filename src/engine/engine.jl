@@ -31,5 +31,6 @@ include("tfcalc.jl")
 include("tfweight.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
+include("ductedfansize.jl")
 
 end

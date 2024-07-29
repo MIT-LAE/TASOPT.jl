@@ -130,57 +130,32 @@ The gas routines reside in the following source files:
       7  fan nozzle
       8  fan flow downstream
 """
-function ductedfansize!(gee, M0, T0, p0, a0, M2, M25,
+function ductedfansize!(gee, M0, T0, p0, a0, M2,
       Feng, Phiinl, Kinl, iBLIc,
-      BPR, pif, pilc, pihc,
-      pid, pib, pifn, pitn,
-      Ttf, ifuel, etab,
-      epf0, eplc0, ephc0, epht0, eplt0,
+      pif,
+      pid, pifn, 
+      epf0,
       pifK, epfK,
-      mofft, Pofft,
-      Tt9, pt9, Tt4,
-      epsl, epsh,
-      icool,
-      Mtexit, dTstrk, StA, efilm, tfilm,
-      M4a, ruc,
-      ncrowx, ncrow,
-      epsrow, Tmrow,
-      Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
-      Δp_PreC, Δp_InterC, Δp_Regen)
+      )
 
       n = 6
 
       # from 'tfmap.inc'
       #        a     b     k     mo     da    c    d     C    D
       Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
-      Cmapl = [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 0.0, 0.0]
-      Cmaph = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 0.0, 0.0]
-
-      #       Pcon   Ncon
-      Tmapl = [0.15, 0.15]
-      Tmaph = [0.15, 0.15]
 
       # from 'airfrac.inc'
       # air fractions  
       #        N2      O2      CO2    H2O      Ar       fuel
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
 
-      # fuel fractions
-      beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
-
       #---- fractional core mass flow convergence tolerance
       toler = 1.0e-12
 
-      #---- mass offtake fraction update under-relaxation factor
-      mcore = 0.0
-      fo = 0.0
-      Pom = 0.0
-
-      #---- overall pressure ratio
-      pic = pilc * pihc
-
       #---- number of air constitutents (all but fuel)
       nair = n - 1
+
+      mfan = 0.0 #Initialize
 
       # ===============================================================
       #---- freestream static quantities
@@ -206,22 +181,12 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2, M25,
       cpt18 = cpt0
       Rt18 = Rt0
       pt18 = pt0 * pid
-      epht = epht0
-      eplt = eplt0
-
 
       #---- initial guesses for station 2 and 1.9
       pt2 = pt18
       Tt2 = Tt18
 
-      if (Kinl == 0.0 && mofft == 0.0 && Pofft == 0.0)
-            #----- single design pass will be sufficient
-            npass = 1
-      else
-            #----- must use multiple passes to converge pt2,pt19 from inlet defect Kinl,
-            #-     and to converge on offtake fractions fo, Pom
-            npass = 60
-      end
+      npass = 60
 
       sbfan = 0.0
       for ipass = 1:npass
@@ -328,6 +293,8 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2, M25,
 
             #---- overall Fsp and TSFC
             Fsp = Feng / (u0 * mfan)
+            #---- Fan power 
+            Pfan = mfan * (ht21 - ht2)
 
             # ===============================================================
 
@@ -356,7 +323,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2, M25,
 
 
             # ===============================================================
-            #---- size fan and compressor areas
+            #---- size fan areas
             p2, T2, h2, s2, cp2, R2 = gas_mach(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, 0.0, M2, 1.0)
             u2 = sqrt(2.0 * (ht2 - h2))
@@ -379,38 +346,22 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2, M25,
                         etaf = (ht21i - ht2) / (ht21 - ht2)
                         
                         Lconv = true
-                        return epsrow, Tmrow,
-                        TSFC, Fsp, hfuel, ff, mcore,
+                        return Fsp, Pfan,
                         Tt0, ht0, pt0, cpt0, Rt0,
                         Tt18, ht18, pt18, cpt18, Rt18,
-                        Tt19, ht19, pt19, cpt19, Rt19,
-                        Tt19c, ht19c, pt19c, cpt19c, Rt19c,
                         Tt2, ht2, pt2, cpt2, Rt2,
                         Tt21, ht21, pt21, cpt21, Rt21,
-                        Tt25, ht25, pt25, cpt25, Rt25,
-                        Tt25c, ht25c, pt25c, cpt25c, Rt25c,
-                        Tt3, ht3, pt3, cpt3, Rt3,
-                        ht4, pt4, cpt4, Rt4,
-                        Tt41, ht41, pt41, cpt41, Rt41,
-                        Tt45, ht45, pt45, cpt45, Rt45,
-                        Tt49, ht49, pt49, cpt49, Rt49,
-                        Tt5, ht5, pt5, cpt5, Rt5,
                         Tt7, ht7, pt7, cpt7, Rt7,
                         u0,
                         T2, u2, p2, cp2, R2, A2,
-                        T25c, u25c, p25c, cp25c, R25c, A25,
-                        T5, u5, p5, cp5, R5, A5,
-                        T6, u6, p6, cp6, R6, A6,
                         T7, u7, p7, cp7, R7, A7,
                         T8, u8, p8, cp8, R8, A8,
-                        u9, A9,
-                        epf, eplc, ephc, epht, eplt,
-                        etaf, etalc, etahc, etaht, etalt,
+                        epf,
+                        etaf,
                         Lconv
                   end
 
             end
-
 
       end
 

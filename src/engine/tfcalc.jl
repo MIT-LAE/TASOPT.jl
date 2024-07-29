@@ -326,6 +326,18 @@ function tfcalc!(pari, parg, para, pare, ip,
                 pare[iepihtD] = pihtD
                 pare[iepiltD] = piltD
 
+                in = (gee, M0, T0, p0, a0, M2,
+                Fe, Phiinl, Kinl, iBLIc,
+                pif,
+                pid, pifn, 
+                epolf,
+                pifK, epfK)
+
+                out = ductedfansize!(in...)
+                println(in)
+                println(out)
+
+
                 #--------------------------------------------------------------------------
         else
                 #----- off-design operation case
