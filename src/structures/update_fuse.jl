@@ -1,5 +1,4 @@
-include("../IO/size_cabin.jl")
-
+export update_fuse!, update_fuse_for_pax!
 """
     update_fuse!(pari, parg)
 
@@ -48,7 +47,7 @@ function update_fuse!(pari, parg)
     parg[igxhbox   ] = parg[igxconend ] - dxhbox2conend
     parg[igxvbox   ] = parg[igxconend ] - dxvbox2conend
     
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox
+    parg[igxeng    ] =  wing.layout.x_wing_box - dxeng2wbox
 
 end
 
@@ -85,17 +84,18 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
 
     #Useful relative distances to conserve
     dxeng2wbox = parg[igdxeng2wbox] #Distance from engine to wingbox
-    dxcyl2shellaft = parg[igxshell2] - parg[igxblend2] #Distance from blend2 to shell2
-    dxapu2end = parg[igxend] - parg[igxapu] #Distance from APU to end
-    dxshell2conend = parg[igxconend ] - parg[igxshell2 ] #Distance from shell2 to conend
-    dxshell2apu = parg[igxapu ] - parg[igxshell2 ] #Distance from shell2 to APU
-    dxhbox2conend = parg[igxconend] - parg[igxhbox ] #Distance from conend to xhbox
-    dxvbox2conend = parg[igxconend] - parg[igxvbox ] #Distance from conend to xvbox
+    dxcyl2shellaft = fuse.layout.x_pressure_shell_aft - fuse.layout.x_end_cylinder #Distance from blend2 to shell2
+    dxapu2end = fuse.layout.x_end - fuse.APU.x #Distance from APU to end
+    dxshell2conend = fuse.layout.x_cone_end - fuse.layout.x_pressure_shell_aft #Distance from shell2 to conend
+    dxshell2apu = fuse.APU.x - fuse.layout.x_pressure_shell_aft #Distance from shell2 to APU
+    dxhbox2conend = fuse.layout.x_cone_end - parg[igxhbox ] #Distance from conend to xhbox
+    dxvbox2conend = fuse.layout.x_cone_end - parg[igxvbox ] #Distance from conend to xvbox
     #Fraction of cabin length at which wing is located
-    wbox_cabin_frac =  (parg[igxwbox]- parg[igxblend1] )/(parg[igxblend2] - parg[igxblend1]) 
+    wbox_cabin_frac =  (wing.layout.x_wing_box- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
 
     #Find new cabin length
-    lcyl, _, _ = place_cabin_seats(paxsize, fuse.layout.radius, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
+    wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_lower_downward_shift, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, parg[igfloordist]) #Find cabin width
+    lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back
@@ -108,7 +108,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     parg[igxblend2] = parg[igxblend1] + lcyl
 
     #Update wingbox position
-    parg[igxwbox] = parg[igxblend1] + wbox_cabin_frac * lcyl
+    wing.layout.x_wing_box = parg[igxblend1] + wbox_cabin_frac * lcyl
        
     #Update other lengths
     parg[igxshell2 ] = parg[igxblend2] + dxcyl2shellaft
@@ -121,7 +121,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     parg[igxhbox   ] = parg[igxconend ] - dxhbox2conend
     parg[igxvbox   ] = parg[igxconend ] - dxvbox2conend
     
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
+    parg[igxeng    ] =  wing.layout.x_wing_box - dxeng2wbox #Move engine
 
     parg[igdxcabin] = lcyl #Store new cabin length
 end

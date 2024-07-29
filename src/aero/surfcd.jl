@@ -81,7 +81,7 @@ function surfcd2(
 
       Ko = 1.0 / (Kc * AR)
       Kp = Kp0 + fLo * ηo + 2.0 * fLt * Ko * γt * λt
-
+      
       clp1 = (CL - CLhtail) / cosL^2 * S / (Kp * b * co)
 
       #---- set break and tip clp for passing back

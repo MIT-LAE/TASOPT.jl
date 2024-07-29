@@ -17,6 +17,7 @@ which are defined by the various geometric parameters in `parg`.
       - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
       - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
       - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `parm::AbstractArray{Float64}`: Vector of `aircraft` model mission parameters.
       - `ip::Integer`: Index of flight point in `par` arrays.
       
       **Outputs:**
@@ -29,7 +30,7 @@ See also [`blax`](@ref) and [`axisol!`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function fusebl!(fuse,pari, parg, para, ip)
+function fusebl!(fuse, parm, para, ip)
       
 #     nc,     # number of control points for fuselage potential-flow problem
 #     nbl,    # number of BL+wake points
@@ -69,7 +70,8 @@ function fusebl!(fuse,pari, parg, para, ip)
 
       Mach  = para[iaMach, ip]
       altkm = para[iaalt, ip]/1000.0
-      T0,p0,rho0,a0,mu0 = atmos(altkm) #get atmospheric parameters
+      ΔTatmos = parm[imDeltaTatm] #atmosphere temperature difference
+      T0,p0,rho0,a0,mu0 = atmos(altkm, ΔTatmos) #get atmospheric parameters
     
       Reunit = Mach*a0 * rho0/mu0
 
@@ -99,7 +101,7 @@ function fusebl!(fuse,pari, parg, para, ip)
             ra = 0.5*(zbl[i+1]+zbl[i])
             Vol += π*ra^2*(xbl[i+1] - xbl[i])
       end
-      parg[igfuseVol] = Vol
+      fuse.volume = Vol
       
       if(ifclose==0) 
        @inbounds for  ibl = 1: nbl

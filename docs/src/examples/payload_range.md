@@ -29,11 +29,11 @@ using TASOPT
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
-include(joinpath(TASOPT.__TASOPTroot__, "./src/misc/index.inc"))
+include(__TASOPTindices__)
 # import indices for calling parameters
 
 # Load aircraft using default module
-ac = TASOPT.read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/PRD_input.toml"))
+ac = TASOPT.read_aircraft_model(joinpath(__TASOPTroot__, "../example/PRD_input.toml"))
 time_wsize = @elapsed size_aircraft!(ac)
 ```
 

@@ -1,47 +1,33 @@
 """
-      fusew(gee, Nland, Wfix, Wpay, Wpadd, Wseat, Wapu, Weng, Waftfuel,
-            fuse.weight_frac_string, fuse.weight_frac_frame, ffadd, deltap,
-            Wpwindow, Wppinsul, Wppfloor, fuse.n_decks,
-            Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-            bv, lambdav, nvtail,
-            fuse.layout.radius, fuse.layout.bubble_lower_downward_shift, wfb, fuse.layout.n_webs, fuse.layout.tailcone_taper_ratio,
-            fuse.layout.x_nose, fuse.layout.x_pressure_shell_fwd, fuse.layout.x_pressure_shell_aft, fuse.layout.x_cone_end,
-            xhtail, xvtail,
-            xwing, xwbox, cbox,
-            xfix, xapu, xeng, xfuel,
-            fuse.floor.thickness,
-            fuse.skin.σ, fuse.bending_h.σ, fuse.skin.ρ, fuse.bending_h.ρ, 
-            Eskin, Ebend, Gskin)
+      fusew!(fuse,Nland,Wpay,Weng, nftanks, 
+      Waftfuel, Wftank, ltank, xftankaft, tank_placement,deltap,
+      Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
+      bv,lambdav,nvtail,
+      xhtail,xvtail,
+      xwing,xwbox,cbox,
+      xeng)
 
 `fusew` sizes the fuselage and calculates the component weights and structural properties.
 It takes inputs related to geometry, fixed weights, material properties, and more to compute the fuselage dimensions, weights, and other parameters.
        
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
+      - `fuselage::struct`: TASOPT.fuselage structure containing layout, internal and external load information
       - `Nland::Float64`: load factor for floor beam structural sizing.
-      Fixed weights of various components:
-      - `Wfix::Float64`: Fixed weight of the structure.
+      Cabin and Payload Information:
       - `Wpay::Float64`: Fixed weight of payload.
-      - `Wpadd::Float64`: Fixed weight of additional equipment.
-      - `Wseat::Float64`: Fixed weight of seats.
-      - `Wapu::Float64`: Fixed weight of auxiliary power unit.
-      - `Weng::Float64`: Fixed weight of engines.
-      - `Waftfuel::Float64`: Fixed weight of aft fuel storage.
-
-      Factors for stringers, frames, and additional structural components:
-      - `fuse.weight_frac_string::Float64`: Factor for stringers.
-      - `fuse.weight_frac_frame::Float64`: Factor for frames.
-      - `ffadd::Float64`: Factor for additional structural components.
-      
-      Pressure differential:
       - `deltap::Float64`: Pressure differential.
-
-      Weights of window, insulation, and floor:
-      - `Wpwindow::Float64`: Weight of windows.
-      - `Wppinsul::Float64`: Weight of insulation.
-      - `Wppfloor::Float64`: Weight of floor per unit area.
-
-      Vertical tail parameters:
+      Engine Parameters:
+      - `Weng::Float64`: Fixed weight of engines.
+      - `xeng::Float64`: X location of engines.
+      Fuel Tank Parameters
+      - `nftanks::Int64`: Number of fuel tanks
+      - `Waftfuel::Float64`: Fixed weight of aft fuel storage.
+      - `Wftank::Float64`: Fixed weight of fuel tank.
+      - `ltank::Float64`: Length of fuel tank.
+      - `xtankaft::Float64`: X location of aft fuel storage.
+      - `tank_placement::String`: Location of tank in fuselage
+      Tail parameters:
       - `Whtail::Float64`: Weight of horizontal tail components.
       - `Wvtail::Float64`: Weight of vertical tail components.
       - `rMh::Float64`: Horizontal tail moment arm.
@@ -51,88 +37,31 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       - `bv::Float64`: Vertical tail span.
       - `lambdav::Float64`: Vertical tail taper ratio.
       - `nvtail::Integer`: Number of vertical tail units.
-
-      Fuselage parameters:
-      - `fuse.layout.radius::Float64`: Fuselage radius.
-      - `fuse.layout.bubble_lower_downward_shift::Float64`: Fuselage thickness.
-      - `wfb::Float64`: Fuselage width.
-      - `fuse.layout.n_webs::Integer`: Number of fuselage webs.
-      - `fuse.layout.tailcone_taper_ratio::Float64`: Fuselage taper ratio.
-
-      Geometric parameters and locations:
-      - `fuse.layout.x_nose::Float64`: X location of the nose.
-      - `fuse.layout.x_pressure_shell_fwd::Float64`: X location of the first shell point.
-      - `fuse.layout.x_pressure_shell_aft::Float64`: X location of the second shell point.
-      - `fuse.layout.x_cone_end::Float64`: X location of the cone end.
       - `xhtail::Float64`: X location of horizontal tail components.
       - `xvtail::Float64`: X location of vertical tail components.
+      Wing Parameters
       - `xwing::Float64`: X location of the wing.
       - `xwbox::Float64`: X location of the wing box.
       - `cbox::Float64`: Wing box width.
-      - `xfix::Float64`: X location of fixed components.
-      - `xapu::Float64`: X location of auxiliary power unit.
-      - `xeng::Float64`: X location of engines.
-      - `xfuel::Float64`: X location of fuel storage.
-      - `fuse.floor.thickness::Float64`: Height of the floor.
-
-      Material properties:
-      - `fuse.skin.σ::Float64`: Skin material stress.
-      - `fuse.bending_h.σ::Float64`: Bending material stress.
-      - `fuse.skin.ρ::Float64`: Skin material density.
-      - `fuse.bending_h.ρ::Float64`: Bending material density.
-      - `Eskin::Float64`: Skin material Young's modulus.
-      - `Ebend::Float64`: Bending material Young's modulus.
-      - `Gskin::Float64`: Skin material shear modulus.
 
       **Outputs:**
-
-      Thicknesses and locations:
-      - `tskin::Float64`: Fuselage skin thickness.
-      - `tcone::Float64`: Thickness of the tail cone.
-      - `tfweb::Float64`: Thickness of fuselage webs.
-      - `tfloor::Float64`: Floor beam thickness.
-      - `xhbend::Float64`: X location of added material for horizontal-axis bending.
-      - `xvbend::Float64`: X location of added material for vertical-axis bending.
-
-      Bending and torsion inertias:
-      - `EIhshell::Float64`: Bending inertia for horizontal shell.
-      - `EIhbend::Float64`: Bending inertia for horizontal axis bending.
-      - `EIvshell::Float64`: Bending inertia for vertical shell.
-      - `EIvbend::Float64`: Bending inertia for vertical axis bending.
-      - `GJshell::Float64`: Torsional stiffness for horizontal shell.
-      - `GJcone::Float64`: Torsional stiffness for tail cone.
-
-      Weights of components and total fuselage weight:
-      - `Wshell::Float64`: Weight of fuselage shell components.
-      - `Wcone::Float64`: Weight of tail cone.
-      - `Wwindow::Float64`: Weight of windows.
-      - `Winsul::Float64`: Weight of insulation.
-      - `Wfloor::Float64`: Weight of floor.
-      - `Whbend::Float64`: Weight of horizontal-axis bending material.
-      - `Wvbend::Float64`: Weight of vertical-axis bending material.
-      - `Wfuse::Float64`: Total weight of the fuselage.
-
-      Moments
-      - `xWfuse::Float64`: Moments.
-
       Pressurized cabin volume:
       - `cabVol::Float64`: Pressurized cabin volume.
 
 See [here](@ref fuselage) or Section 2.2 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
-      ifwing, nftanks, 
-      Waftfuel, Wftank, ltank, xftankaft, tank_placement,
-      ffadd,deltap,
-      Wpwindow,Wppinsul,Wppfloor, 
+function fusew!(fuse,Nland,Wpay,Weng, nftanks, 
+      Waftfuel, Wftank, ltank, xftankaft, tank_placement,deltap,
       Whtail,Wvtail,rMh,rMv,Lhmax,Lvmax,
       bv,lambdav,nvtail,
       xhtail,xvtail,
       xwing,xwbox,cbox,
-      xfix,xapu,xeng,xfuel)
+      xeng)
+
+      layout = fuse.layout
 
       Eskin = fuse.material.E #parg[igEcap]
-      Ebend = Eskin * fuse.fuse_shell_modulus_ratio
+      Ebend = Eskin * fuse.ratio_young_mod_fuse_bending
       Gskin = Eskin * 0.5 / (1.0 + 0.3)
 
 #--- cone material properties
@@ -142,53 +71,48 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 
 #--- floor beam material properties 
 #     (assumed same as stringers, but could be different)
-      sigfloor = fuse.bending_h.σ
-      taufloor = fuse.bending_h.σ
-      rhofloor = fuse.bending_h.ρ
+      sigfloor = fuse.bendingmaterial_h.σ
+      taufloor = fuse.bendingmaterial_h.σ
+      rhofloor = fuse.bendingmaterial_h.ρ
 
       rE = Ebend/Eskin
 
-#--- effective nose length and pressure-vessel length
-      lnose  = fuse.layout.x_pressure_shell_fwd - fuse.layout.x_nose
-      lshell = fuse.layout.x_pressure_shell_aft - fuse.layout.x_pressure_shell_fwd
-      lfloor = fuse.layout.x_pressure_shell_aft - fuse.layout.x_pressure_shell_fwd + 2.0*fuse.layout.radius
-
-      xshell = 0.5*(fuse.layout.x_pressure_shell_fwd+fuse.layout.x_pressure_shell_aft)
+      xshell = 0.5*(layout.x_pressure_shell_fwd+layout.x_pressure_shell_aft)
 
 #--- fuselage cross-section geometric parameters
-      wfblim = max( min( fuse.layout.bubble_center_y_offset , fuse.layout.radius ) , 0.0 )
-      thetafb = asin(wfblim/fuse.layout.radius) #θfb fuselage bubble subtended half-angle
-      hfb = sqrt(fuse.layout.radius^2 - fuse.layout.bubble_center_y_offset^2)
-      sin2t = 2.0*hfb*fuse.layout.bubble_center_y_offset/fuse.layout.radius^2 #sin(2θ) = 2sinθcosθ
-      cost  = hfb/fuse.layout.radius
+      wfblim = max( min( layout.bubble_center_y_offset , layout.radius ) , 0.0 )
+      thetafb = asin(wfblim/layout.radius) #θfb fuselage bubble subtended half-angle
+      hfb = sqrt(layout.radius^2 - layout.bubble_center_y_offset^2)
+      sin2t = 2.0*hfb*layout.bubble_center_y_offset/layout.radius^2 #sin(2θ) = 2sinθcosθ
+      cost  = hfb/layout.radius
 
-      perim = (2.0*pi + 4.0*thetafb)*fuse.layout.radius + 2.0*fuse.layout.bubble_lower_downward_shift
+      perim = (2.0*pi + 4.0*thetafb)*layout.radius + 2.0*layout.bubble_lower_downward_shift
 
 #--------------------------------------------------------------------
 #--- fuselage skin and center web thicknesses to withstand pressure load
-      fuse.skin.thickness =     deltap*fuse.layout.radius/fuse.skin.σ
-      fuse.layout.thickness_webs = 2.0*deltap*fuse.layout.bubble_center_y_offset  /fuse.skin.σ
+      fuse.skin.thickness =     deltap*layout.radius/fuse.skin.σ
+      layout.thickness_webs = 2.0*deltap*layout.bubble_center_y_offset  /fuse.skin.σ
 
 #--- cross-sectional areas
-      Askin = (2.0*pi+4.0*fuse.layout.n_webs*thetafb)*fuse.layout.radius*fuse.skin.thickness + 2.0*fuse.layout.bubble_lower_downward_shift*fuse.skin.thickness
-      Afweb = fuse.layout.n_webs*(2.0*hfb+fuse.layout.bubble_lower_downward_shift)*fuse.layout.thickness_webs
-      Afuse = (pi + fuse.layout.n_webs*(2.0*thetafb + sin2t))*fuse.layout.radius^2 + 2.0*fuse.layout.radius*fuse.layout.bubble_lower_downward_shift        #####
-#          + 2.0*(fuse.layout.radius+fuse.layout.n_webs*fuse.layout.bubble_center_y_offset)*fuse.layout.bubble_lower_downward_shift        #####
+      Askin = (2.0*pi+4.0*layout.n_webs*thetafb)*layout.radius*fuse.skin.thickness + 2.0*layout.bubble_lower_downward_shift*fuse.skin.thickness
+      Afweb = layout.n_webs*(2.0*hfb+layout.bubble_lower_downward_shift)*layout.thickness_webs
+      Afuse = (pi + layout.n_webs*(2.0*thetafb + sin2t))*layout.radius^2 + 2.0*layout.radius*layout.bubble_lower_downward_shift        #####
+#          + 2.0*(layout.radius+layout.n_webs*layout.bubble_center_y_offset)*layout.bubble_lower_downward_shift        #####
 
 #--- nose + rear bulkhead surface areas
-      Sbulk = (2.0*pi + 4.0*fuse.layout.n_webs*thetafb)*fuse.layout.radius^2
-      Snose = (2.0*pi + 4.0*fuse.layout.n_webs*thetafb)*fuse.layout.radius^2* ( 0.333 + 0.667*(lnose/fuse.layout.radius)^1.6 )^0.625
+      Sbulk = (2.0*pi + 4.0*layout.n_webs*thetafb)*layout.radius^2
+      Snose = (2.0*pi + 4.0*layout.n_webs*thetafb)*layout.radius^2* ( 0.333 + 0.667*(layout.l_nose/layout.radius)^1.6 )^0.625
 
 #--- component volumes and volume moments
-      Vcyl  = Askin*lshell
+      Vcyl  = Askin*layout.l_shell
       Vnose = Snose*fuse.skin.thickness
       Vbulk = Sbulk*fuse.skin.thickness
-      Vfweb = Afweb*lshell
+      Vfweb = Afweb*layout.l_shell
 
-      xVcyl  = Vcyl  * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
-      xVnose = Vnose * 0.5*(fuse.layout.x_nose   + fuse.layout.x_pressure_shell_fwd)
-      xVbulk = Vbulk *     (fuse.layout.x_pressure_shell_aft + 0.5*fuse.layout.radius)
-      xVfweb = Vfweb * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
+      xVcyl  = Vcyl  * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
+      xVnose = Vnose * 0.5*(layout.x_nose   + layout.x_pressure_shell_fwd)
+      xVbulk = Vbulk *     (layout.x_pressure_shell_aft + 0.5*layout.radius)
+      xVfweb = Vfweb * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
 #--- weights and weight moments
       Wskin = fuse.skin.ρ*gee*(Vcyl + Vnose + Vbulk)
@@ -196,74 +120,55 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       xWskin = fuse.skin.ρ*gee*(xVcyl + xVnose + xVbulk)
       xWfweb = fuse.skin.ρ*gee* xVfweb
 
-      fuse.shell.weight = Wskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + Wfweb
-      xWshell = xWskin*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd) + xWfweb
+      fuse.shell.weight = Weight(W = Wskin*(1.0+fuse.weight_frac_stringers+fuse.weight_frac_frame+fuse.weight_frac_skin_addl) + Wfweb)
+      xWshell = xWskin*(1.0+fuse.weight_frac_stringers+fuse.weight_frac_frame+fuse.weight_frac_skin_addl) + xWfweb
 
 #--------------------------------------------------------------------
 #--- window weight
 
       if nftanks == 1
             if tank_placement == "front" #If tank is at the front
-                  xcabin = 0.5 * (fuse.layout.x_pressure_shell_fwd + ltank + 2.0*ft_to_m + fuse.layout.x_pressure_shell_aft)
+                  xcabin = 0.5 * (layout.x_pressure_shell_fwd + ltank + 2.0*ft_to_m + layout.x_pressure_shell_aft)
             else #tank is at rear
-                  xcabin = 0.5 * (fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft - (ltank + 2.0*ft_to_m))
+                  xcabin = 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft - (ltank + 2.0*ft_to_m))
             end
       else
-            xcabin = 0.5 * (fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft) #two or zero tanks
+            xcabin = 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft) #two or zero tanks
       end
-      lcabin = fuse.layout.x_pressure_shell_aft - fuse.layout.x_pressure_shell_fwd - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
+      lcabin = layout.x_pressure_shell_aft - layout.x_pressure_shell_fwd - nftanks * (ltank + 2.0*ft_to_m) #cabin length is smaller if there are fuel tanks
 
-      fuse.window.weight = fuse.n_decks * Wpwindow * lcabin
+      fuse.window.weight = fuse.n_decks * fuse.window.W_per_length * lcabin
       xWwindow = fuse.window.weight * xcabin
       
 #--------------------------------------------------------------------
 #--- insulation weight
-      fuse.insulation.weight = Wppinsul*((1.1*pi+2.0*thetafb)*fuse.layout.radius*lshell + 0.55*(Snose+Sbulk))
-      xWinsul = fuse.insulation.weight * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
+      fuse.insulation.weight = fuse.insulation.W_per_area*((1.1*pi+2.0*thetafb)*layout.radius*layout.l_shell + 0.55*(Snose+Sbulk))
+      xWinsul = fuse.insulation.weight * 0.5*(layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
 #--------------------------------------------------------------------
 #--- various weight moments
-      xWfix  = Wfix  * xfix
-      xWapu  = Wapu  * xapu
-      xWseat = Wseat * xcabin
-      xWpadd = Wpadd * xcabin
+      xWfix  = y_moment(fuse.fixed)
+      xWapu  = y_moment(fuse.APU)
+      xWseat = fuse.seat.W * xcabin
+      xWpadd = fuse.added_payload.W * xcabin
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
-      P = (Wpay+Wseat) * Nland / fuse.n_decks #Total load is distributed across all decks
-      wfloor1 = fuse.layout.bubble_center_y_offset + fuse.layout.radius
+      P = (Wpay+fuse.seat.W) * Nland / fuse.n_decks #Total load is distributed across all decks
+      floor_half_width = layout.bubble_center_y_offset + layout.radius
+      xWfloor = size_floor!(fuse, P, layout.l_floor, floor_half_width, mid_span_support = false)
 
-      if (fuse.layout.bubble_center_y_offset == 0.0) 
-#---- full-width floor
-       Smax = 0.50 * P
-       Mmax = 0.25 * P*wfloor1
-      else
-#---- floor with center support
-       Smax = (5.0/16.0 ) * P
-       Mmax = (9.0/256.0) * P*wfloor1
-      end
-
-      Afweb = 1.5*Smax/ taufloor
-      Afcap = 2.0*Mmax/(sigfloor*fuse.layout.floor_depth)
-
-      Vfloor = (Afcap + Afweb) * 2.0*wfloor1
-      fuse.floor.weight = fuse.n_decks * (rhofloor*gee*Vfloor + 2.0*wfloor1*lfloor*Wppfloor)
-      xWfloor = fuse.floor.weight * 0.5*(fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
-
-#--- average floor-beam cap thickness ("smeared" over entire floor)
-      fuse.floor.thickness = 0.5*Afcap/lfloor
-      
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
       Qv = (nvtail*Lvmax*bv/3.0)*(1.0+2.0*lambdav)/(1.0+lambdav)
       Vcone = (Qv/taucone)* 
-             (pi + fuse.layout.n_webs* 2.0*thetafb)/
-            (pi + fuse.layout.n_webs*(2.0*thetafb+sin2t))*
-            (fuse.layout.x_cone_end-fuse.layout.x_pressure_shell_aft)/fuse.layout.radius *
-            2.0/(1.0+fuse.layout.tailcone_taper_ratio)
+             (pi + layout.n_webs* 2.0*thetafb)/
+            (pi + layout.n_webs*(2.0*thetafb+sin2t))*
+            (layout.x_cone_end-layout.x_pressure_shell_aft)/layout.radius *
+            2.0/(1.0+layout.taper_tailcone)
 
-      fuse.cone.weight = rhocone*gee*Vcone*(1.0+fuse.weight_frac_string+fuse.weight_frac_frame+ffadd)
-      xWcone = fuse.cone.weight * 0.5*(fuse.layout.x_pressure_shell_aft + fuse.layout.x_cone_end)
+      fuse.cone.weight = Weight(W = rhocone*gee*Vcone*(1.0+fuse.weight_frac_stringers+fuse.weight_frac_frame+fuse.weight_frac_skin_addl))
+      xWcone = fuse.cone.weight.W * 0.5*(layout.x_pressure_shell_aft + layout.x_cone_end)
 
       fuse.cone.thickness = Qv / (2.0*taucone*Afuse)
 
@@ -275,37 +180,43 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
-      Wtail = Whtail + Wvtail + fuse.cone.weight + Wapu + Waftfuel + Wftank + Weng
+      Wtail = Whtail + Wvtail + fuse.cone.weight.W + fuse.APU.W + Waftfuel + Wftank + Weng
 
       xtail = (  xhtail*Whtail +
                xvtail*Wvtail +
                xWcone +
-               xapu*Wapu + 
+               xWapu + 
                xeng*Weng +
                xftankaft*(Waftfuel + Wftank)) / Wtail
 
 #--------------------------------------------------------------------
 #--- shell bending inertias
-      tshell = fuse.skin.thickness*(1.0 + rE*fuse.weight_frac_string*fuse.skin.ρ/fuse.bending_h.ρ)
+      tshell = fuse.skin.thickness*(1.0 + rE*fuse.weight_frac_stringers*fuse.skin.ρ/fuse.bendingmaterial_h.ρ)
 
 #--- bending stress to be matched
-      sigMh = fuse.bending_h.σ - rE*0.5*deltap*fuse.layout.radius/tshell
-      sigMv = fuse.bending_h.σ - rE*0.5*deltap*fuse.layout.radius/tshell
+      sigMh = fuse.bendingmaterial_h.σ - rE*0.5*deltap*layout.radius/tshell
+      sigMv = fuse.bendingmaterial_h.σ - rE*0.5*deltap*layout.radius/tshell
 
 #--- rear bulkhead where tail structure attaches
-      xbulk = fuse.layout.x_pressure_shell_aft
+      xbulk = layout.x_pressure_shell_aft
 
 #----------------------------------------------------------------
 #--- horizontal-axis bending moment added material
-      Ihshell = ( (pi + fuse.layout.n_webs*(2.0*thetafb+sin2t))*fuse.layout.radius^2 +
-                 8.0*fuse.layout.n_webs*cost*0.5*fuse.layout.bubble_lower_downward_shift*fuse.layout.radius +
-                 (2.0*pi + 4.0*fuse.layout.n_webs*thetafb)*(0.5*fuse.layout.bubble_lower_downward_shift)^2)*fuse.layout.radius*tshell+
-              0.66667*fuse.layout.n_webs*(hfb+0.5*fuse.layout.bubble_lower_downward_shift)^3*fuse.layout.thickness_webs
+# # layout.cross_section.n_webs = 0
+# A = ((pi + layout.n_webs*(2.0*thetafb+sin2t))*layout.radius^2 +
+# (2.0*pi + 4.0*layout.n_webs*thetafb)*(0.5*layout.bubble_lower_downward_shift)^2)*layout.radius*tshell
+# B = 8.0*layout.n_webs*cost*0.5*layout.bubble_lower_downward_shift*layout.radius *layout.radius*tshell
 
-      hfuse = fuse.layout.radius + 0.5*fuse.layout.bubble_lower_downward_shift
+      Ihshell = ( (pi + layout.n_webs*(2.0*thetafb+sin2t))*layout.radius^2 +
+                 8.0*layout.n_webs*cost*0.5*layout.bubble_lower_downward_shift*layout.radius +
+                 (2.0*pi + 4.0*layout.n_webs*thetafb)*(0.5*layout.bubble_lower_downward_shift)^2)*layout.radius*tshell+
+              0.66667*layout.n_webs*(hfb+0.5*layout.bubble_lower_downward_shift)^3*layout.thickness_webs
+      # println("Ihshell = $Ihshell, $A, $B, $(A+B)")
+
+      hfuse = layout.radius + 0.5*layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*
-          Nland*(Wpay+Wpadd+fuse.shell.weight+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+Wseat)*
-          0.5/lshell
+          Nland*(Wpay+fuse.added_payload.W+fuse.shell.weight.W+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+fuse.seat.W)*
+          0.5/layout.l_shell
       A1 = 1.0/(hfuse*sigMh)*
           (Nland*Wtail + rMh*Lhmax)
       A0 = -Ihshell/(rE*hfuse^2)
@@ -313,7 +224,7 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Abar1 = 2.0*A2*xbulk + A1
       Abar0 = A2*xbulk^2 + A1*xtail + A0
       desc = max( 0.0 , Abar1^2 - 4.0*Abar0*Abar2 )
-      fuse.bending_h.x = (Abar1 - sqrt(desc))*0.5/Abar2
+      bending_h_x = (Abar1 - sqrt(desc))*0.5/Abar2
 
       dxwing = xwing - xwbox
       xf = xwing + dxwing + 0.5*cbox
@@ -322,62 +233,64 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
       Ahbendf = max(Abar2*xf^2 - Abar1*xf + Abar0, 0)
       Ahbendb = max(Abar2*xb^2 - Abar1*xb + Abar0, 0)
 
-      Vhbendf = A2*((xbulk-xf)^3 - (xbulk-fuse.bending_h.x)^3)/3.0 +
-               A1*((xtail-xf)^2 - (xtail-fuse.bending_h.x)^2)/2.0 +
-               A0*(fuse.bending_h.x-xf)
-      Vhbendb = A2*((xbulk-xb)^3 - (xbulk-fuse.bending_h.x)^3)/3.0 +
-               A1*((xtail-xb)^2 - (xtail-fuse.bending_h.x)^2)/2.0 +
-              A0*(fuse.bending_h.x-xb)
+      Vhbendf = A2*((xbulk-xf)^3 - (xbulk-fuse.bendingmaterial_h.weight.x)^3)/3.0 +
+               A1*((xtail-xf)^2 - (xtail-fuse.bendingmaterial_h.weight.x)^2)/2.0 +
+               A0*(fuse.bendingmaterial_h.weight.x-xf)
+      Vhbendb = A2*((xbulk-xb)^3 - (xbulk-fuse.bendingmaterial_h.weight.x)^3)/3.0 +
+               A1*((xtail-xb)^2 - (xtail-fuse.bendingmaterial_h.weight.x)^2)/2.0 +
+              A0*(fuse.bendingmaterial_h.weight.x-xb)
       Vhbendc = 0.5*(Ahbendf+Ahbendb)*cbox
 
 
-      fuse.bending_h.weight = fuse.bending_h.ρ*gee*(Vhbendf + Vhbendb + Vhbendc)
+      fuse.bendingmaterial_h.weight = Weight(W = fuse.bendingmaterial_h.ρ*gee*(Vhbendf + Vhbendb + Vhbendc), 
+                                                x = bending_h_x)
 
-      xWhbend = fuse.bending_h.weight *      xwing
+      xWhbend = fuse.bendingmaterial_h.weight.W *      xwing
 
       fuse.shell.EIh = Eskin * Ihshell
-      fuse.bending_h.EIh  = Ebend * 0.5*(Ahbendf+Ahbendb) * 2.0*hfuse^2
-      fuse.bending_v.EIh = fuse.bending_h.EIh
+      fuse.bendingmaterial_h.EIh  = Ebend * 0.5*(Ahbendf+Ahbendb) * 2.0*hfuse^2
+      fuse.bendingmaterial_v.EIh = fuse.bendingmaterial_h.EIh
 
 #----------------------------------------------------------------
 #--- vertical-axis bending moment added material
-      nk = Int(round(fuse.layout.n_webs/2.0+0.001))
-      ik = mod(Int(round(fuse.layout.n_webs+0.001))+1,2)
+      nk = Int(round(layout.n_webs/2.0+0.001))
+      ik = mod(Int(round(layout.n_webs+0.001))+1,2)
       ksum = 0.
       for k = 1: nk
         ksum = ksum + float(2*k-ik)^2
       end
-      Ivshell = ( (pi + fuse.layout.n_webs*(2.0*thetafb - sin2t))*fuse.layout.radius^2+
-                 8.0*cost*fuse.layout.n_webs*fuse.layout.bubble_center_y_offset*fuse.layout.radius +
-                 (2.0*pi + 4.0*thetafb)*(fuse.layout.n_webs*fuse.layout.bubble_center_y_offset)^2+
-                 4.0*thetafb*fuse.layout.bubble_center_y_offset^2 * ksum )*fuse.layout.radius*tshell
-                 # ^This simplifies to π×fuse.layout.radius³×tshell 
+      Ivshell = ( (pi + layout.n_webs*(2.0*thetafb - sin2t))*layout.radius^2+
+                 8.0*cost*layout.n_webs*layout.bubble_center_y_offset*layout.radius +
+                 (2.0*pi + 4.0*thetafb)*(layout.n_webs*layout.bubble_center_y_offset)^2+
+                 4.0*thetafb*layout.bubble_center_y_offset^2 * ksum )*layout.radius*tshell
+                 # ^This simplifies to π×layout.radius³×tshell 
                  # which is the area moment of inertia for a thin walled tube
 
-      widf = fuse.layout.radius + fuse.layout.n_webs*fuse.layout.bubble_center_y_offset
+      widf = layout.radius + layout.n_webs*layout.bubble_center_y_offset
       B1 = 1.0/(widf*sigMv) * (rMv*Lvmax*nvtail)
       B0 = -Ivshell/(rE*widf^2)
-      fuse.bending_v.x = xvtail + B0/B1 # point where Avbend = 0 
+      bending_v_x = xvtail + B0/B1 # point where Avbend = 0 
 
       Avbendb = max(B1*(xtail-xb) + B0, 0)
-      Vvbendb = max(B1*((xtail-xb)^2 - (xtail-fuse.bending_v.x)^2)/2.0+
-               B0*(fuse.bending_v.x-xb), 0)
+      Vvbendb = max(B1*((xtail-xb)^2 - (xtail-fuse.bendingmaterial_v.weight.x)^2)/2.0+
+               B0*(fuse.bendingmaterial_v.weight.x-xb), 0)
       Vvbendc = 0.5*Avbendb*cbox
-      fuse.bending_v.weight = fuse.bending_h.ρ*gee*(Vvbendb + Vvbendc)
+      fuse.bendingmaterial_v.weight = Weight(W = fuse.bendingmaterial_h.ρ*gee*(Vvbendb + Vvbendc), 
+      x = bending_v_x)
       # println("W, Vvb, Vvc Avbend = $Wvbend, $Vvbendb, $Vvbendc, $Avbendb")
 
-      xWvbend = fuse.bending_v.weight * (2.0*xwing + fuse.bending_v.x)/3.0
+      xWvbend = fuse.bendingmaterial_v.weight.W * (2.0*xwing + fuse.bendingmaterial_v.weight.x)/3.0
 
 
       fuse.shell.EIv = Eskin * Ivshell
-      fuse.bending_h.EIv  = Ebend * Avbendb * 2.0*widf^2
-      fuse.bending_v.EIv = fuse.bending_h.EIv
+      fuse.bendingmaterial_h.EIv  = Ebend * Avbendb * 2.0*widf^2
+      fuse.bendingmaterial_v.EIv = fuse.bendingmaterial_h.EIv
 
 #----------------------------------------------------------------
 #--- overall fuse weight and moment
-      fuse.weight = Wfix + Wapu + Wpadd + Wseat +
-             fuse.shell.weight + fuse.cone.weight + fuse.window.weight + fuse.insulation.weight + fuse.floor.weight+
-             fuse.bending_h.weight + fuse.bending_v.weight
+      fuse.weight = fuse.fixed.W + fuse.APU.W + fuse.added_payload.W + fuse.seat.W +
+             fuse.shell.weight.W + fuse.cone.weight.W + fuse.window.weight + fuse.insulation.weight + fuse.floor.weight+
+             fuse.bendingmaterial_h.weight.W + fuse.bendingmaterial_v.weight.W
 
       fuse.moment = xWfix + xWapu + xWpadd + xWseat+
              xWshell + xWcone + xWwindow + xWinsul + xWfloor+
@@ -387,10 +300,57 @@ function fusew!(fuse,Nland,Wfix,Wpay,Wpadd,Wseat,Wapu,Weng,
 #--- pressurized cabin volume
 
       if nftanks == 0
-            cabVol = Afuse*(lshell + 0.67*lnose + 0.67*fuse.layout.radius)
+            cabVol = Afuse*(layout.l_shell + 0.67*layout.l_nose + 0.67*layout.radius)
       else #If there is a fuel tank in the fuselage, the pressure vessel has a smaller air volume
-            cabVol = Afuse*(lcabin + 0.67*lnose + 0.67*fuse.layout.radius)
+            cabVol = Afuse*(lcabin + 0.67*l_nose + 0.67*layout.radius)
       end
 
 return  cabVol
 end # fusew
+
+
+"""
+    size_floor(floor::StructuralMember, load, floor_depth, floor_half_width;
+      mid_span_support::Bool)
+
+"""
+function size_floor!(fuse, load, floor_length, floor_half_width;
+      mid_span_support::Bool)
+
+      floor = fuse.floor
+      layout = fuse.layout
+      # P = (Wpay + fuse.seat.W) * Nland / fuse.n_decks #Total load is distributed across all decks
+
+      # Assume pinned ends (statically indeterminate problem)
+      if mid_span_support # floor with center support
+            Smax = (5.0 / 16.0) * load
+            Mmax = (9.0 / 256.0) * load * floor_half_width
+      else
+            # full-width floor
+            Smax = 0.50 * load
+            Mmax = 0.25 * load * floor_half_width
+      end
+
+      # Parabolic loading of the web gives us the 1.5 coeff
+      Afweb = 1.5 * Smax / floor.material.σmax
+      # σ = Mmax*y/I = Mmax*h/2/I
+      # I ≈ Acap*h²/4
+      # σ ≈ 2*Mmax/Acap/h
+      Afcap = 2.0 * Mmax / (floor.material.σmax * layout.floor_depth)
+
+      Vfloor = (Afcap + Afweb) * 2.0 * floor_half_width
+      W_floor_beam = floor.material.ρ * gee * Vfloor
+      W_floor_panels = 2 * floor_half_width * floor_length * floor.W_per_area
+
+      floor_weight = fuse.n_decks * (W_floor_beam + W_floor_panels)
+      xWfloor = fuse.floor.weight * 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
+
+      # average floor-beam cap thickness ("smeared" over entire floor)
+      fuse.floor.thickness = 0.5*Afcap/layout.l_floor # half since two flanges in an I beam
+      fuse.floor.weight = floor_weight
+
+      return xWfloor
+end  # function size_floor!
+
+# size_floor(cs::SingleBubble) = size_floor( mid_span_support = false)
+
