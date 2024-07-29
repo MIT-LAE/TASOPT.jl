@@ -371,6 +371,16 @@
     stress_factor = 1.0 # convenient factor to multiply all stress below
 
     # Allowable stresses at sizing cases:
+    caps_material = "TASOPT-Al"
+    caps_max_avg_stress = 1.1000305690178631
+    caps_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
+    webs_material = "TASOPT-Al"
+    webs_max_avg_stress = 1.1
+    webs_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
     ## Fuselage pressurization skin stress and bending skin+stringer stress
     skin_material = "TASOPT-Al"
     skin_max_avg_stress = 1.1
