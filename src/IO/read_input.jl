@@ -445,10 +445,10 @@ readwing(x) = read_input(x, wing_i, dwing)
     wing.layout.hweb_to_hbox    = readwing("hweb_to_hbox")
     wing.layout.spar_box_x_c = readwing("spar_box_x_c")
 
-    wing.layout.x_wing_box = Distance(readwing("x_wing_box"))
+    wing.layout.box_x = Distance(readwing("x_wing_box"))
     wing.layout.z = Distance(readwing("z_wing"))
 
-    parg[igdxeng2wbox] = wing.layout.x_wing_box - parg[igxeng] #TODO add this as a function of wing
+    parg[igdxeng2wbox] = wing.layout.box_x - parg[igxeng] #TODO add this as a function of wing
 
     ## Strut details only used if strut_braced_wing is true
     wing.strut.z  = Distance(readwing("z_strut"))

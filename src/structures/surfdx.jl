@@ -19,11 +19,18 @@ and the mean aerodynamic chord (normalized by root chord, `co`)
 
 See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Description](@ref dreladocs).
 """
-function surfdx(b,bs,bo,λt,λs,sweep)
+# function surfdx(b,bs,bo,λt,λs,sweep)
+function surfdx!(wing,parg,bs; b=wing.layout.b,λs = wing.layout.λs, cma=false)
 
-      tanL = tan(sweep * π/180.0)
+      if hasproperty(wing.layout, :λt)
+            λt = wing.layout.λt
+      else
+            λt = wing.layout.λ
+      end
 
-      ηo = bo/b
+      tanL = tan(deg2rad(wing.layout.sweep))
+
+      ηo = wing.layout.box_halfspan/b
       ηs = bs/b
 
 #---- 2 Int c dy /(co b)  =  S/(co b)  =  Kc
@@ -43,7 +50,12 @@ function surfdx(b,bs,bo,λt,λs,sweep)
 
       dx    = Kcx/Kc * b*tanL
       macco = Kcc/Kc
-   
-      return dx, macco
+
+      wing.layout.x = wing.layout.box_x + dx
+
+      if cma
+            parg[igcma] = macco * wing.layout.chord
+      end
+
 end # surfdx
 

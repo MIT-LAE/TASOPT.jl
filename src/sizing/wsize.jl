@@ -220,9 +220,7 @@ function wsize(ac; itermax=35,
         wing.outboard.dyW = dyWout
 
         # Wing centroid x-offset from wingbox
-        dxwing, macco = surfdx(b, bs, wing.layout.box_halfspan, wing.layout.λt, wing.layout.λs, wing.layout.sweep)
-        xwing = wing.layout.x_wing_box + dxwing
-        wing.layout.x = xwing
+        surfdx!(wing,parg,bs; b=b)
 
         # Tail area centroid locations
         htail.layout.x, vtail.layout.x = xhbox, xvbox
@@ -338,7 +336,7 @@ function wsize(ac; itermax=35,
         cbox = wing.layout.chord * wing.layout.box_width_chord
         xwing, xhtail, xvtail = wing.layout.x, htail.layout.x, vtail.layout.x
         xhbox, xvbox = htail.layout.box_x, vtail.layout.box_x
-        dxwing = xwing - wing.layout.x_wing_box
+        dxwing = xwing - wing.layout.box_x
 
         # Extract weights
         Whtail, Wvtail = htail.weight, vtail.weight
@@ -450,7 +448,7 @@ function wsize(ac; itermax=35,
             bv, vtail.layout.λ, vtail.ntails,
             
             xhtail, xvtail,
-            xwing, wing.layout.x_wing_box, cbox,
+            xwing, wing.layout.box_x, cbox,
             xeng)
 
 
@@ -501,7 +499,7 @@ function wsize(ac; itermax=35,
             @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
                 iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
                 fuse.weight, wing.weight, wing.layout.b, wing.layout.S,
-                htail.layout.S, wing.layout.x_wing_box)
+                htail.layout.S, wing.layout.box_x)
         end
         if (errw <= tolerW)
             Lconv = true
@@ -529,12 +527,10 @@ function wsize(ac; itermax=35,
         cbox = wing.layout.chord * wing.layout.box_width_chord
 
         # Calculate wing centroid and mean aerodynamic chord
-        dxwing, macco = surfdx(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.λt, wing.layout.λs, wing.layout.sweep)
-        xwing = wing.layout.x_wing_box + dxwing
-        cma = macco * wing.layout.chord
-        wing.layout.x = xwing
-        parg[igcma] = cma
-
+        surfdx!(wing, parg, wing.layout.b_inner; cma=true)
+        cma = parg[igcma]
+        xwing = wing.layout.x
+        
         # Update wing pitching moment constants
         update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
         update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
@@ -645,7 +641,7 @@ function wsize(ac; itermax=35,
             htail.layout.S = Sh
         else
             htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing, htail, vtail)
-            wing.layout.x_wing_box, xwing = wing.layout.x_wing_box, wing.layout.x
+            wing.layout.box_x, xwing = wing.layout.box_x, wing.layout.x
             lhtail = xhtail - xwing
             Sh = htail.layout.S
             htail.volume = Sh * lhtail / (wing.layout.S * cma)
@@ -709,9 +705,7 @@ function wsize(ac; itermax=35,
         htail.dxW = dxWhtail
 
         # HT centroid x-offset
-        xhbox = htail.layout.box_x
-        dxh, _ = surfdx(htail.layout.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.λ, λhs, htail.layout.sweep)
-        htail.layout.x = xhbox + dxh
+        surfdx!(htail,parg, htail.layout.box_halfspan; λs = λhs)
 
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
@@ -745,9 +739,7 @@ function wsize(ac; itermax=35,
         vtail.dxW = dxWvtail
 
         # VT centroid x-offset
-        xvbox = vtail.layout.box_x
-        dxv, _ = surfdx(bv2, vtail.layout.box_halfspan, vtail.layout.box_halfspan, vtail.layout.λ, λvs, vtail.layout.sweep)
-        vtail.layout.x = xvbox + dxv
+        surfdx!(vtail,parg,vtail.layout.box_halfspan; b=bv2, λs = λvs )
 
         # ----------------------
         #     Fuselage Fuel Tank weight
@@ -873,8 +865,8 @@ function wsize(ac; itermax=35,
 
         #Calculate fuel weight moment for balance
         if (pari[iifwing] == 1) #If fuel is stored in the wings
-            xfuel = wing.layout.x_wing_box + parg[igdxWfuel] / parg[igWfuel]
-            parg[igxWfuel] = parg[igWfuel] * wing.layout.x_wing_box + parg[igdxWfuel] #Store fuel weight moment
+            xfuel = wing.layout.box_x + parg[igdxWfuel] / parg[igWfuel]
+            parg[igxWfuel] = parg[igWfuel] * wing.layout.box_x + parg[igdxWfuel] #Store fuel weight moment
         end
 
         # Pitch trim by adjusting Clh or by moving wing
