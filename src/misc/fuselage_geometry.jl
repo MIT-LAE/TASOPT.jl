@@ -10,7 +10,7 @@ e.g., the D8 like designs, this also calculates the geometry of the webs between
 the bubbles.
 
 """
-function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
+function calculate_shell_geometry!(fuse::Fuselage, Δp::AbstractFloat)
 
     layout = fuse.layout
     R = layout.cross_section.radius
@@ -60,7 +60,7 @@ function calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
             fuse.weight_frac_skin_addl
         ) + W_web
 
-    insulation = size_insulation(layout, S_nose, S_bulk, fuse.insulation.W_per_area)
+    insulation = size_insulation(layout, S_nose, S_bulk, fuse.insulation_W_per_area)
 
     return A_fuse, insulation
 
@@ -103,15 +103,16 @@ function web_geometry(cs::MultiBubble)
 
     effective_web_length = cs.n_webs * (2 * h_web + cs.bubble_lower_downward_shift)
 
-    return θ_web, h_web, sin2θ, effective_web_length
+    return θ_web, h_web, sin2θ, cosθ, effective_web_length
 end
 
 function web_geometry(cs::SingleBubble)
     θ_web = 0.0
     h_web = cs.radius
     sin2θ = 0.0
+    cosθ = 1.0
     effective_web_length = 0.0
-    return θ_web, h_web, sin2θ, effective_web_length
+    return θ_web, h_web, sin2θ, cosθ, effective_web_length
 end
 
 """
