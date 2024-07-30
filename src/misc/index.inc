@@ -304,90 +304,90 @@
       const igmubrake  = 72
       const ighobst    = 73
       const iglBFmax   = 74
-      const igbmax     = 75
-      const iggtocmin  = 76
-      const igdBSLmax  = 77
-      const igdBCBmax  = 78
-      const igmofWpay  = 79
-      const igmofWMTO  = 80
-      const igPofWpay  = 81
-      const igPofWMTO  = 82
+### Good Riddance ###
+      const iggtocmin  = 75
+      const igdBSLmax  = 76
+      const igdBCBmax  = 77
+      const igmofWpay  = 78
+      const igmofWMTO  = 79
+      const igPofWpay  = 80
+      const igPofWMTO  = 81
 
       # Adding indices to store TE weights and locations
-      const igWtshaft  = 83
-      const igWgen     = 84
-      const igWinv     = 85
-      const igWmot     = 86
-      const igWfan     = 87
-      const igWftank   = 88
+      const igWtshaft  = 82
+      const igWgen     = 83
+      const igWinv     = 84
+      const igWmot     = 85
+      const igWfan     = 86
+      const igWftank   = 87
 
-      const igxtshaft  = 89
-      const igxgen     = 90
-      const igxinv     = 91
-      const igxmot     = 92
-      const igxfan     = 93
-      const igxftank   = 94
+      const igxtshaft  = 88
+      const igxgen     = 89
+      const igxinv     = 90
+      const igxmot     = 91
+      const igxfan     = 92
+      const igxftank   = 93
       
-      const igxcables  = 95
-      const igWcables  = 96
+      const igxcables  = 94
+      const igWcables  = 95
 
-      const igxcat     = 97
-      const igWcat     = 98
+      const igxcat     = 96
+      const igWcat     = 97
 
-      const igWtesys   = 99
-      const igxWtesys  = 100
+      const igWtesys   = 98
+      const igxWtesys  = 99
 
-      const iglftank   = 101
-      const igWinsftank= 102
-      const igxWftank  = 103
+      const iglftank   = 100
+      const igWinsftank= 101
+      const igxWftank  = 102
       
-      const igRftank   = 104
-      const igWc3des   = 105
+      const igRftank   = 103
+      const igWc3des   = 104
 
-      const igdaftfan  = 106
-      const iglnaceaft = 107
+      const igdaftfan  = 105
+      const iglnaceaft = 106
 ### Good Riddance ###
-      const igneout    = 108
-      const igyeout    = 109
-      const igyeinn    = 110
-      const iglftankin = 111 #lftank input
-      const igLHVfuel  = 112
-      const igWfburn   = 113
+      const igneout    = 107
+      const igyeout    = 108
+      const igyeinn    = 109
+      const iglftankin = 110 #lftank input
+      const igLHVfuel  = 111
+      const igWfburn   = 112
 
-      const igWaftfan  = 114
-      const igWfanGB   = 115
-      const igWaftfanGB   = 116
-      const igWrect    = 117
-      const igWtms     = 118
+      const igWaftfan  = 113
+      const igWfanGB   = 114
+      const igWaftfanGB   = 115
+      const igWrect    = 116
+      const igWtms     = 117
 
-      const igfanPCT   = 119
+      const igfanPCT   = 118
 
-      const iggamVtarget = 120
+      const iggamVtarget = 119
 
-      const igWpaymax    = 121
+      const igWpaymax    = 120
 
-      const ig_YC = 122
-      const ig_YH = 123
-      const ig_YO = 124
-      const ig_YN = 125
-      const ig_MW = 126
-      const ighfuel      = 127
-      const igTfuel      = 128
+      const ig_YC = 121
+      const ig_YH = 122
+      const ig_YO = 123
+      const ig_YN = 124
+      const ig_MW = 125
+      const ighfuel      = 126
+      const igTfuel      = 127
 
-      const igxftankaft  = 129
-      const igdxcabin    = 130
-      const igdxeng2wbox = 131
+      const igxftankaft  = 128
+      const igdxcabin    = 129
+      const igdxeng2wbox = 130
 
-      const igxWfuel = 132
+      const igxWfuel = 131
 
-      const igseatpitch = 133
-      const igseatwidth = 134
-      const igaislehalfwidth = 135
-      const igfloordist = 136
+      const igseatpitch = 132
+      const igseatwidth = 133
+      const igaislehalfwidth = 134
+      const igfloordist = 135
 
-      const igWfvent = 137
+      const igWfvent = 136
 
-      const igtotal    = 137
+      const igtotal    = 136
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

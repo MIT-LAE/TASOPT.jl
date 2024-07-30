@@ -372,7 +372,7 @@
 
     # Allowable stresses at sizing cases:
     caps_material = "TASOPT-Al"
-    caps_max_avg_stress = 1.1000305690178631
+    caps_max_avg_stress = 1.1
     caps_safety_factor = 1.5
     # the sigma_max works out to be roughly 30e3 lbf/in2
     
