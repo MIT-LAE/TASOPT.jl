@@ -76,13 +76,18 @@ function Weight(;W::Float64=0.0, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0,
     Weight(W, SA[x,y,z], frame)
 end
 
-import Base.+
+import Base.+, Base.*
 
 function +(W1::T, W2::T) where T<:Weight
     W1.frame == W2.frame || error("Cannot add weights in different frames")
     total_W = W1.W + W2.W
     Weight(total_W, (W1.r*W1.W + W2.r*W2.W)/total_W)
 end  # function +
+
+function *(W::Weight, fac::Float64)
+    W.W = W.W*fac
+    return W
+end
 
 """
     center_of_weight(W_array::AbstractArray{Weight})
