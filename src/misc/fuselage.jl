@@ -34,9 +34,12 @@ $TYPEDFIELDS
     cone::StructuralMember = StructuralMember()
 
     """Internal Members"""
-    floor::InternalMember = InternalMember()
-    insulation::InternalMember = InternalMember()
-    window::InternalMember = InternalMember()
+    floor::StructuralMember = StructuralMember()
+    insulation::structures.Weight = structures.Weight()
+    window::structures.Weight = structures.Weight()
+    floor_W_per_area::Float64 = 0.0
+    insulation_W_per_area::Float64 = 0.0
+    window_W_per_length::Float64 = 0.0
 
     """Bending Material"""
     bendingmaterial_h::StructuralMember = StructuralMember(material=material)
