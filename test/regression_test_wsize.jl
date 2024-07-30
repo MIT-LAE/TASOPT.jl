@@ -1,7 +1,3 @@
-using TASOPT
-using Revise
-using Test
-
 # Define a function to check if each value in two structs is equal
 function check_struct_equivalence(s1, s2)
     fields_s1 = fieldnames(typeof(s1))
