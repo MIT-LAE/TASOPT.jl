@@ -21,7 +21,7 @@ $TYPEDFIELDS
     """Thickness [m]"""
     thickness::Float64 = 0
     """Weight Lateral Distribution"""
-    dxW::Float64 = 0
+    dxW::Float64 = 0 #TODO: remove
 end
 
 function Base.getproperty(obj::StructuralMember, sym::Symbol)
@@ -38,30 +38,4 @@ end
 
 function Base.show(io::IO, x::StructuralMember)
     print(io, "StructuralMember(", x.material.name,", ", x.weight, ")")
-end
-
-"""
-$TYPEDEF
-
-InternalMember:
-Contains structural and material properties of internal members 
-
-$TYPEDFIELDS
-"""
-@kwdef mutable struct InternalMember
-    """Material: Automatically sets stress and density of StructuralMember [StructuralAlloy]"""
-    material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
-    """Weight [N]"""
-    weight::Float64 = 0 #OR Union{Float64, Nothing} ::Weight
-    """Thickness [m]"""
-    thickness::Float64 = 0
-    """Weight per length [N/m]"""
-    W_per_length::Float64 = 0
-    """Weight per area [N/m^2]"""
-    W_per_area::Float64 = 0
-   
-end
-
-function Base.show(io::IO, x::InternalMember)
-    print(io, "InternalMember(", x.material,", ", x.weight,")")
 end
