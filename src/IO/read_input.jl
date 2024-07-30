@@ -678,6 +678,12 @@ readstruct(x) = read_input(x, structures, dstructures)
                                     max_avg_stress = skin_max_avg,
                                     safety_factor = skin_safety_fac)
 
+    cone_max_avg = readstruct("cone_max_avg_stress")
+    cone_safety_fac = readstruct("cone_safety_factor")
+    fuselage.cone.material =  StructuralAlloy(readstruct("cone_material"), 
+                                    max_avg_stress = cone_max_avg,
+                                    safety_factor = cone_safety_fac)
+
     bend_max_avg = readstruct("bending_max_avg_stress")
     bend_safety_fac = readstruct("bending_safety_factor")
     fuselage.bendingmaterial_h.material = StructuralAlloy(readstruct("bending_material"),
