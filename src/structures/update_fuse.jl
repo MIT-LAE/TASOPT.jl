@@ -47,7 +47,7 @@ function update_fuse!(pari, parg)
     parg[igxhbox   ] = parg[igxconend ] - dxhbox2conend
     parg[igxvbox   ] = parg[igxconend ] - dxvbox2conend
     
-    parg[igxeng    ] =  wing.layout.x_wing_box - dxeng2wbox
+    parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox
 
 end
 
@@ -91,7 +91,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     dxhbox2conend = fuse.layout.x_cone_end - parg[igxhbox ] #Distance from conend to xhbox
     dxvbox2conend = fuse.layout.x_cone_end - parg[igxvbox ] #Distance from conend to xvbox
     #Fraction of cabin length at which wing is located
-    wbox_cabin_frac =  (wing.layout.x_wing_box- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
+    wbox_cabin_frac =  (wing.layout.box_x- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
 
     #Find new cabin length
     wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_lower_downward_shift, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, parg[igfloordist]) #Find cabin width
@@ -108,7 +108,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     parg[igxblend2] = parg[igxblend1] + lcyl
 
     #Update wingbox position
-    wing.layout.x_wing_box = parg[igxblend1] + wbox_cabin_frac * lcyl
+    wing.layout.box_x = parg[igxblend1] + wbox_cabin_frac * lcyl
        
     #Update other lengths
     parg[igxshell2 ] = parg[igxblend2] + dxcyl2shellaft
@@ -121,7 +121,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     parg[igxhbox   ] = parg[igxconend ] - dxhbox2conend
     parg[igxvbox   ] = parg[igxconend ] - dxvbox2conend
     
-    parg[igxeng    ] =  wing.layout.x_wing_box - dxeng2wbox #Move engine
+    parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox #Move engine
 
     parg[igdxcabin] = lcyl #Store new cabin length
 end

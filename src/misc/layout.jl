@@ -172,7 +172,7 @@ $TYPEDFIELDS
     """Spar box axis x/c location """
     spar_box_x_c::Float64 = 0
     """X position of wing box"""
-    x_wing_box::Float64 = 0 
+    box_x::Float64 = 0 
     """X location of wing"""
     x::Float64 = 0
     """Z location of wing"""

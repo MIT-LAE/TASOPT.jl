@@ -63,15 +63,15 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       
       xpay = xcabin + (ξpay - 0.5) * lcabin * (1.0 - rpay)
 
-      xwbox = wing.layout.x_wing_box
+      xwbox = wing.layout.box_x
 
       rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing, htail, vtail)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwing = wing.layout.x - wing.layout.x_wing_box
+      dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = xcgB + parg[igdxlgmain] - wing.layout.x_wing_box
+      dxlg = xcgB + parg[igdxlgmain] - wing.layout.box_x
 
       S = wing.layout.S
       Sh = htail.layout.S
@@ -130,14 +130,14 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       xW = rpay * Wpay * xpay +
            xWfuel +
            fuse.moment + xWtesys + xWftank +
-           Wwing * wing.layout.x_wing_box + wing.dxW +
-           Wstrut * wing.layout.x_wing_box + wing.strut.dxW +
+           Wwing * wing.layout.box_x + wing.dxW +
+           Wstrut * wing.layout.box_x + wing.strut.dxW +
            (Whtail * htail.layout.box_x + htail.dxW) * Sh / Sh1 +
            Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
            Wlgnose * parg[igxlgnose] +
-           Wlgmain * (wing.layout.x_wing_box + dxlg)
+           Wlgmain * (wing.layout.box_x + dxlg)
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
@@ -205,7 +205,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
             cCM = cCM + cCM_xwbox * delxwbox
             xW = xW + xW_xwbox * delxwbox
 
-            wing.layout.x_wing_box = xwbox
+            wing.layout.box_x = xwbox
             wing.layout.x = xwbox + dxwing
 
       end
@@ -369,13 +369,13 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       xpayB = xcabin + (1.0 - 0.5) * lcabin * (1.0 - rpayB)
       xpayC = xcabin
 
-      xwbox = wing.layout.x_wing_box
+      xwbox = wing.layout.box_x
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwing = wing.layout.x - wing.layout.x_wing_box
+      dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.x_wing_box
+      dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.box_x
 
       S = wing.layout.S
       Sh = htail.layout.S
@@ -613,7 +613,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       #---- set converged results
       htail.layout.S = Sh
       #c    parg[igWhtail] = (Whtail_o/Sh_o) * Sh
-      wing.layout.x_wing_box = xwbox
+      wing.layout.box_x = xwbox
       wing.layout.x = xwbox + dxwing
 
       #Move engine as well to maintain the input offset distance from engine to wing box
@@ -689,7 +689,7 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
       Wlgmain = parg[igWMTO] * parg[igflgmain]
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
-      delxw = wing.layout.x - wing.layout.x_wing_box
+      delxw = wing.layout.x - wing.layout.box_x
 
       #---- zero fuel is assumed to be worst case forward and full fuel worst case aft
       rfuel = 0.0
@@ -711,14 +711,14 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
 
       xWe = rfuel * xWfuel +
             fuse.moment + parg[igxWtesys] + parg[igxWftank] +
-            Wwing * wing.layout.x_wing_box + wing.dxW +
-            Wstrut * wing.layout.x_wing_box + wing.strut.dxW +
+            Wwing * wing.layout.box_x + wing.dxW +
+            Wstrut * wing.layout.box_x + wing.strut.dxW +
             Whtail * htail.layout.box_x + htail.dxW +
             Wvtail * vtail.layout.box_x + vtail.dxW +
             Weng * parg[igxeng] +
             Whpesys * fuse.HPE_sys.r.x +
             Wlgnose * parg[igxlgnose] +
-            Wlgmain * (wing.layout.x_wing_box + delxw + parg[igdxlgmain])
+            Wlgmain * (wing.layout.box_x + delxw + parg[igdxlgmain])
 
 
       # Some derivation here:        
