@@ -43,9 +43,6 @@ include(__TASOPTindices__)
 # include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
 # export aircraft, fuselage_tank
 
-#functionalities to be categorized: #TODO
-include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
-
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
@@ -83,6 +80,8 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
+#functionalities to be categorized: #TODO
+include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
@@ -92,7 +91,6 @@ include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
-
 
 export size_aircraft!
 
