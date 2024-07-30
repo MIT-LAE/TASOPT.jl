@@ -261,9 +261,9 @@ readweight(x) = read_input(x, weight, dweight)
 
     fuselage.fixed.W = Force(readweight("fixed_weight"))
 
-    fuselage.window.W_per_length = readweight("window_per_length")
-    fuselage.insulation.W_per_area = readweight("window_insul_per_area")
-    fuselage.floor.W_per_area = readweight("floor_weight_per_area")
+    fuselage.window_W_per_length= readweight("window_per_length")
+    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
+    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
     parg[igflgnose] = readweight("LG_nose_weight_fraction")

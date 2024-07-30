@@ -67,15 +67,14 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--- cone material properties
 #     (assumed same as skin, but could be different)
       taucone = fuse.skin.σ
-      rhocone = fuse.skin.ρ
-      println("$taucone, $rhocone")
+      rhocone = fuse.skin.ρ      
 
       rE = Ebend/Eskin
 
       ## Size primary shell
-      A_fuse, insulation =  calculate_shell_geometry(fuse, deltap)
+      A_fuse, fuse.insulation =  calculate_shell_geometry!(fuse, deltap)
       x_cabin, l_cabin = get_cabin_dimensions(layout,tank_placement, nftanks, ltank)
-      windows = size_windows(x_cabin, l_cabin, fuse.window.W_per_length, fuse.n_decks)
+      fuse.window = size_windows(x_cabin, l_cabin, fuse.window_W_per_length, fuse.n_decks)
 
 #--------------------------------------------------------------------
 #--- various weight moments
@@ -93,7 +92,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
       size_tailcone(fuse, nvtail, Lvmax, bv, λv)
-      thetafb, h_web, sin2t, web_length = web_geometry(layout.cross_section)
+      thetafb, hfb, sin2t, cost, web_length = web_geometry(layout.cross_section)
       Afuse = area(layout.cross_section)
       Qv = (nvtail*Lvmax*bv/3.0)*(1.0+2.0* λv)/(1.0+ λv)
       Vcone = (Qv/taucone)* 
@@ -106,12 +105,11 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xWcone = fuse.cone.weight.W * 0.5*(layout.x_pressure_shell_aft + layout.x_cone_end)
 
       fuse.cone.thickness = Qv / (2.0*taucone*Afuse)
-      println(fuse.cone.thickness)
-      println(fuse.cone.weight)
+
 #--------------------------------------------------------------------
 #--- torsional stiffnesses
-      fuse.shell.GJ = Gskin*4.0*Afuse^2 * fuse.skin.thickness / perim
-      fuse.cone.GJ  = Gskin*4.0*Afuse^2 * fuse.cone.thickness / perim
+      fuse.shell.GJ = Gskin*4.0*Afuse^2 * fuse.skin.thickness / get_perimeter(layout.cross_section)
+      fuse.cone.GJ  = Gskin*4.0*Afuse^2 * fuse.cone.thickness / get_perimeter(layout.cross_section)
 
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
@@ -151,7 +149,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
       hfuse = layout.radius + 0.5*layout.bubble_lower_downward_shift
       A2 = 1.0/(hfuse*sigMh)*
-          Nland*(Wpay+fuse.added_payload.W+fuse.shell.weight.W+fuse.window.weight+fuse.insulation.weight+fuse.floor.weight+fuse.seat.W)*
+          Nland*(Wpay+fuse.added_payload.W+fuse.shell.weight.W+fuse.window.W+fuse.insulation.W+fuse.floor.weight.W+fuse.seat.W)*
           0.5/layout.l_shell
       A1 = 1.0/(hfuse*sigMh)*
           (Nland*Wtail + rMh*Lhmax)
@@ -225,11 +223,11 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #----------------------------------------------------------------
 #--- overall fuse weight and moment
       fuse.weight = fuse.fixed.W + fuse.APU.W + fuse.added_payload.W + fuse.seat.W +
-             fuse.shell.weight.W + fuse.cone.weight.W + fuse.window.weight + fuse.insulation.weight + fuse.floor.weight+
+             fuse.shell.weight.W + fuse.cone.weight.W + fuse.window.W + fuse.insulation.W + fuse.floor.weight.W+
              fuse.bendingmaterial_h.weight.W + fuse.bendingmaterial_v.weight.W
 
       fuse.moment = xWfix + xWapu + xWpadd + xWseat+
-             xWshell + xWcone + xWwindow + xWinsul + xWfloor+
+      y_moment(fuse.shell.weight) + xWcone + y_moment(fuse.window) + y_moment(fuse.insulation) + xWfloor+
              xWhbend + xWvbend 
 
 #----------------------------------------------------------------
@@ -276,14 +274,14 @@ function size_floor!(fuse, load, floor_length, floor_half_width;
 
       Vfloor = (Afcap + Afweb) * 2.0 * floor_half_width
       W_floor_beam = floor.material.ρ * gee * Vfloor
-      W_floor_panels = 2 * floor_half_width * floor_length * floor.W_per_area
+      W_floor_panels = 2 * floor_half_width * floor_length * fuse.floor_W_per_area
 
       floor_weight = fuse.n_decks * (W_floor_beam + W_floor_panels)
-      xWfloor = fuse.floor.weight * 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
+      xWfloor = fuse.floor.weight.W * 0.5 * (layout.x_pressure_shell_fwd + layout.x_pressure_shell_aft)
 
       # average floor-beam cap thickness ("smeared" over entire floor)
       fuse.floor.thickness = 0.5*Afcap/layout.l_floor # half since two flanges in an I beam
-      fuse.floor.weight = floor_weight
+      fuse.floor.weight.W = floor_weight
 
       return xWfloor
 end  # function size_floor!
@@ -323,8 +321,8 @@ function size_tailcone(fuse::Fuselage, n_vertical_tails, L_vmax, b_v, λv)
   
       cone.thickness = Qv / (2.0 * cone.τ * A_fuse)
       cone.GJ = cone.material.G * 4.0 * A_fuse^2 * cone.thickness / perimeter
-      println("In size_tailcone: $(cone.τ), $(cone.ρ)")
-      println(cone)
-      println(cone.thickness)
+      # println("In size_tailcone: $(cone.τ), $(cone.ρ)")
+      # println(cone)
+      # println(cone.thickness)
   
   end  # function size_tailcone
