@@ -40,11 +40,13 @@ end
     @test ac.fuselage.layout.radius == 1.9558
     
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_sized.jl"))
+    # Fuselage
+    include(joinpath(TASOPT.__TASOPTroot__, "../test/default_fuselage.jl"))
 
     size_aircraft!(ac; printiter=false);
 
     @testset "Fuselage" begin
-        @test  check_struct_equivalence(fuse, ac.fuselage)
+        @test  check_struct_equivalence(ac_test.fuselage, ac.fuselage)
     end
 
     @testset "Geometry" begin
@@ -79,6 +81,10 @@ end
 
     size_aircraft!(ac; printiter=false);
 
+    @testset "Fuselage" begin
+        @test  check_struct_equivalence(fuse, ac.fuselage)
+    end
+
     @testset "Geometry" begin
         for i in eachindex(parg)
             @test parg[i] ≈ ac.parg[i] rtol=1e-5
@@ -112,6 +118,10 @@ end
 
     size_aircraft!(ac; printiter=false);
 
+    @testset "Fuselage" begin
+        @test  check_struct_equivalence(fuse, ac.fuselage)
+    end
+    
     @testset "Geometry" begin
         for i in eachindex(parg)
             @test parg[i] ≈ ac.parg[i]
