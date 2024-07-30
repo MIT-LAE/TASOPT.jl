@@ -382,6 +382,10 @@
     bending_safety_factor = 1.5
     # the sigma_max works out to be roughly 30e3 lbf/in2
 
+    cone_material = "TASOPT-Al"
+    cone_max_avg_stress = 1.1
+    cone_safety_factor = 3.0
+
     floor_material = "TASOPT-Al"
     floor_max_avg_stress = 1.1
     floor_safety_factor = 1.5
