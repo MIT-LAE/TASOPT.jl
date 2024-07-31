@@ -58,6 +58,21 @@ include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
 include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
 
+# include("./misc/structuralMember.jl")
+# export StructuralMember
+
+# include("./misc/layout.jl")
+# export FuselageLayout
+
+# include("./misc/fuselage.jl")
+# export Fuselage
+
+# include("./misc/Wing.jl")
+# export WingSection,Wing
+
+# include("./misc/tail.jl")
+# export Tail
+
 #Use above modules
 using .atmosphere
 using .aerodynamics
@@ -66,24 +81,13 @@ using .propsys
 using .engine
 using .CryoTank
 
-include("./misc/structuralMember.jl")
-export StructuralMember
-
-include("./misc/layout.jl")
-export FuselageLayout
-
-include("./misc/fuselage.jl")
-export Fuselage
-
-include("./misc/Wing.jl")
-export WingSection,Wing
-
-include("./misc/tail.jl")
-export Tail
 
 #Load other functions
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
+
+
+
 
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC

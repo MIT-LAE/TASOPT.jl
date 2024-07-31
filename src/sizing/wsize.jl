@@ -220,7 +220,7 @@ function wsize(ac; itermax=35,
         wing.outboard.dyW = dyWout
 
         # Wing centroid x-offset from wingbox
-        surfdx!(wing,parg,bs,b)
+        surfdx!(wing, b=b, bs=bs)
 
         # Tail area centroid locations
         htail.layout.x, vtail.layout.x = xhbox, xvbox
@@ -527,7 +527,8 @@ function wsize(ac; itermax=35,
         cbox = wing.layout.chord * wing.layout.box_width
 
         # Calculate wing centroid and mean aerodynamic chord
-        surfdx!(wing, parg, wing.inboard.layout.b, wing.outboard.layout.b; cma=true)
+        surfdx!(wing, parg=parg)
+
         cma = parg[igcma]
         xwing = wing.layout.x
         
@@ -705,8 +706,7 @@ function wsize(ac; itermax=35,
         htail.dxW = dxWhtail
 
         # HT centroid x-offset
-        surfdx!(htail,parg, htail.layout.box_halfspan, htail.outboard.b; λs = λhs)
-
+        surfdx!(htail, htail.outboard.b, λhs)
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
         CMh0, CMh1 = surfcm(htail.outboard.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
@@ -739,8 +739,7 @@ function wsize(ac; itermax=35,
         vtail.dxW = dxWvtail
 
         # VT centroid x-offset
-        surfdx!(vtail,parg,vtail.layout.box_halfspan, bv2 ;λs = λvs )
-
+        surfdx!(vtail, bv2, λhs)
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
