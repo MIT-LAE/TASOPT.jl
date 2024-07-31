@@ -24,13 +24,13 @@ if !isdir(savedir)
     mkdir(savedir)
 end
 # 2) Include input file for desired aircraft/
-nameAircraftModel = "../src/IO/experiment_input_1500.toml"
+nameAircraftModel = "../src/IO/experiment_input_3000.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
-saveName = savedir*"JetA1500nmi"
-x = [11.967887176329073, 32479.866286551907, 0.5956532812392801, 27.382147149331143, 0.9447567896238773, 0.10644959191186304, 0.14694888676914802, 0.12003039648977087, 1.0596807683444869, 0.9905991041425743, 1749.8757464045927, 14.988409779779435, 2.6302018540124124]
+saveName = savedir*"JetA3000nmi"
+x = [11.380434406953572, 33198.13022096391,  0.5410047569882184, 26.66666248716794,  0.9378606924235586, 0.10281538084027678, 0.14977259425119216, 0.13296003568212714, 1.0627223742965342, 0.996592019369539,  1737.0012718430448, 14.997879755556585, 0.30657837795564297]
 # 2.5) Change fuel type
-ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
-ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
+ac.pari[iifuel] = 24 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
+ac.parg[igrhofuel] = 817.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
 # 3) Set the parameters based on optimization result
 ac.parg[igAR] = x[1] # Aspect Ratio 
 ac.para[iaalt, ipcruise1, :] .=  x[2] * ft_to_m # Cruise Altitude
@@ -91,11 +91,11 @@ Tt3OptMiss = ac.pare[ieTt3,maskRep,1] #K
 Pt3OptMiss = ac.pare[iept3,maskRep,1] #Pa 
 Tt4OptMiss = ac.pare[ieTt4,maskRep,1] #K
 Pt4OptMiss = ac.pare[iept4,maskRep,1] #Pa
-FnOptMiss = ac.pare[ieFe,maskRep,1] #N Total Thrust for all engines
-mdotfOptMiss = ac.pare[iemcore,maskRep,1].*ac.pare[ieff,maskRep,1] #kg/s for all engines
+FnOptMiss = ac.pare[ieFe,maskRep,1] #N Total Thrust for each engines
+mdotfOptMiss = ac.pare[iemcore,maskRep,1].*ac.pare[ieff,maskRep,1] #kg/s for eacg engines
 Cpa = 0.5.*(ac.pare[iecpt3,maskRep,1].+ac.pare[iecpt4,maskRep,1])
 ffbMiss   = (Cpa.*(Tt4OptMiss.-Tt3OptMiss))./(hfOptMiss.*ac.pare[ieetab,maskRep,1].-Cpa.*(Tt4OptMiss.-TfuelOptMiss))
-mdot3OptMiss = mdotfOptMiss./ffbMiss #kg/s for all engines air flow into the combustor (exclude bypass cooling flow)
+mdot3OptMiss = mdotfOptMiss./ffbMiss #kg/s for each engines air flow into the combustor (exclude bypass cooling flow)
 #Output Additional Data at the optimal mission
 outputTup = (Phase=phases,Time=timeOptMiss,Range=ranOptMiss,Altitude=altOptMiss,MachNumber=machOptMiss,Weight=weiOptMiss
             ,ClimbAngle=gamOptMiss,LiftDragRatio=LDROptMiss,HeatingValue=hfOptMiss,FuelTemp=TfuelOptMiss
