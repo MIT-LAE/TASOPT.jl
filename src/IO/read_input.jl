@@ -434,14 +434,14 @@ readwing(x) = read_input(x, wing_i, dwing)
     wing.layout.AR = readwing("AR")
     wing.layout.b_max = Distance(readwing("maxSpan"))
 
-    wing.layout.λs = readwing("inner_panel_taper_ratio")
-    wing.layout.λt = readwing("outer_panel_taper_ratio")
-    wing.layout.ηs    = readwing("panel_break_location")
+    wing.inboard.layout.λ = readwing("inner_panel_taper_ratio")
+    wing.outboard.layout.λ = readwing("outer_panel_taper_ratio")
+    wing.ηs    = readwing("panel_break_location")
 
     wing.layout.box_halfspan = 2*Distance(readwing("center_box_halfspan"))
-    wing.layout.box_width_chord  = readwing("box_width_chord")
-    wing.layout.root_chord_thickness = readwing("root_thickness_to_chord")
-    wing.layout.spanbreak_chord_thickness = readwing("spanbreak_thickness_to_chord")
+    wing.layout.box_width  = readwing("box_width_chord")
+    wing.inboard.layout.chord_thickness = readwing("root_thickness_to_chord")
+    wing.outboard.layout.chord_thickness = readwing("spanbreak_thickness_to_chord")
     wing.layout.hweb_to_hbox    = readwing("hweb_to_hbox")
     wing.layout.spar_box_x_c = readwing("spar_box_x_c")
 
@@ -544,7 +544,7 @@ readtails(x) = read_input(x, tails, dtails)
 
 readhtail(x) = read_input(x, htail_input, dhtail)
     htail.layout.AR = readhtail("AR_Htail")
-    htail.layout.λ = readhtail("taper")
+    htail.outboard.λ = readhtail("taper")
     htail.layout.sweep = readhtail("sweep")
     htail.layout.box_halfspan = 2*Distance(readhtail("center_box_halfspan"))
 
@@ -601,7 +601,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     htail.weight_fraction_added = readhtail("added_weight_fraction")
 
     htail.layout.box_width = readhtail("box_width_chord")
-    htail.layout.box_height = readhtail("box_height_chord")
+    htail.outboard.chord_thickness = readhtail("box_height_chord")
     htail.layout.hweb_to_hbox  = readhtail("web_height_hbox")
 
 
@@ -609,7 +609,7 @@ vtail_input = readtails("Vtail")
 dvtail = dtails["Vtail"]
 readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.layout.AR = readvtail("AR_Vtail")
-    vtail.layout.λ = readvtail("taper")
+    vtail.outboard.λ = readvtail("taper")
     vtail.layout.sweep  = readvtail("sweep")
     vtail.layout.box_halfspan = Distance(readvtail("center_box_halfspan"))
     vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
@@ -632,7 +632,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
     vtail.weight_fraction_added = readvtail("added_weight_fraction")
     vtail.layout.box_width = readvtail("box_width_chord")
-    vtail.layout.box_height = readvtail("box_height_chord")
+    vtail.outboard.chord_thickness = readvtail("box_height_chord")
     vtail.layout.hweb_to_hbox  = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----

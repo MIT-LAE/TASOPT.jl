@@ -130,43 +130,21 @@ function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     end
 end
 
-"""
-$TYPEDEF
-
-Wing Layout Structure:
-Contains dimensions, heights, etc. to design a Wing
-
-$TYPEDFIELDS
-"""
 @kwdef mutable struct WingLayout
     """Aspect Ratio [m]"""
     AR::Float64 = 0 
     """Sweep [degrees]"""
     sweep::Float64 = 0
-    """Wing Span [m]"""
-    b::Float64 = 0
-    """Span of inner wing (break/"snag") [m]"""
-    b_inner::Float64 = 0 
     """Max Wing Span [m]"""
     b_max::Float64 = 0 
     """Wing chord at root """
     chord::Float64 = 0
-    """Outer or "tip" taper ratio of chord"""
-    λt::Float64 = 0 
-    """Inner or break/"snag" taper ratio of chord"""
-    λs::Float64 = 0 
-    """Span fraction of inner wing break ("snag")"""
-    ηs::Float64 = 0 
     """Wing center box width [m]"""
     box_halfspan::Float64 = 0 
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0 
     """Wing Box wing x to chord"""
-    box_width_chord::Float64 = 0 
-    """Wing Root thickness to chord"""
-    root_chord_thickness::Float64 = 0 
-    """Spanbreak thickness to chord"""
-    spanbreak_chord_thickness::Float64 = 0 
+    box_width::Float64 = 0 
     """web-height/hbox ratio"""
     hweb_to_hbox::Float64 = 0 #igrh
     """Spar box axis x/c location """
@@ -182,36 +160,16 @@ end
 """
 $TYPEDEF
 
-Tail Layout Structure:
-Contains dimensions, heights, etc. to design a Tail
+Wing Layout Structure:
+Contains dimensions, heights, etc. to design a Wing
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct TailLayout
-    """Tail planform area (including fuselage carryover) [m^2]"""
-    S::Float64 = 0 
-    """Aspect Ratio [m]"""
-    AR::Float64 = 0 
-    """Tail Span [m]"""
+@kwdef mutable struct WingSectionLayout
+    """Wing Section Span [m]"""
     b::Float64 = 0
-    """Wing center box width [m]"""
-    box_halfspan::Float64 = 0 
-    """Taper [degrees]"""
+    """Wing Section taper"""
     λ::Float64 = 0 
-    """Wing chord at root """
-    chord::Float64 = 0
-    """Sweep [degrees]"""
-    sweep::Float64 = 0
-    """Tail box width"""
-    box_width::Float64 = 0 
-    """Tail box height"""
-    box_height::Float64 = 0 
-    """Tail box x position"""
-    box_x::Float64 = 0 
-    """web-height/hbox ratio"""
-    hweb_to_hbox::Float64 = 0 
-    """Tail Z position"""
-    z::Float64 = 0
-    """Tail X position"""
-    x::Float64 = 0
+    """Chord Thickness"""
+    chord_thickness::Float64 = 0 
 end

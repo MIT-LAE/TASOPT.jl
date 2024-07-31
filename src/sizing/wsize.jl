@@ -199,7 +199,7 @@ function wsize(ac; itermax=35,
         W = 5.0 * Wpay
         S = W / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
         b = sqrt(S * wing.layout.AR)
-        bs = b * wing.layout.ηs
+        bs = b * wing.ηs
         Winn = 0.15 * Wpay / parg[igsigfac]
         Wout = 0.05 * Wpay / parg[igsigfac]
         dyWinn = Winn * 0.30 * (0.5 * (bs - wing.layout.box_halfspan))
@@ -220,7 +220,7 @@ function wsize(ac; itermax=35,
         wing.outboard.dyW = dyWout
 
         # Wing centroid x-offset from wingbox
-        surfdx!(wing,parg,bs; b=b)
+        surfdx!(wing,parg,bs,b)
 
         # Tail area centroid locations
         htail.layout.x, vtail.layout.x = xhbox, xvbox
@@ -333,7 +333,7 @@ function wsize(ac; itermax=35,
         # Extract layout parameters
         bv = vtail.layout.b
         coh, cov = htail.layout.chord, vtail.layout.chord
-        cbox = wing.layout.chord * wing.layout.box_width_chord
+        cbox = wing.layout.chord * wing.layout.box_width
         xwing, xhtail, xvtail = wing.layout.x, htail.layout.x, vtail.layout.x
         xhbox, xvbox = htail.layout.box_x, vtail.layout.box_x
         dxwing = xwing - wing.layout.box_x
@@ -367,7 +367,7 @@ function wsize(ac; itermax=35,
     Lconv = false
 
     # Initialize wing layout parameters for first iteration
-    wing.layout.b = wing.layout.S = 0.0
+    wing.outboard.layout.b= wing.layout.S = 0.0
 
     # Initialize choke flags for all mission points
     ichoke5 = ichoke7 = zeros(Int, iptotal)
@@ -445,7 +445,7 @@ function wsize(ac; itermax=35,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
              Δp,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-            bv, vtail.layout.λ, vtail.ntails,
+            bv, vtail.outboard.λ, vtail.ntails,
             
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
@@ -498,7 +498,7 @@ function wsize(ac; itermax=35,
         if printiter
             @printf("%5d %+13.8e %+13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e %13.8e\n",
                 iterw, errw, errw1, parm[imWTO], parg[igWpaymax], parg[igWfuel], parg[igWeng],
-                fuse.weight, wing.weight, wing.layout.b, wing.layout.S,
+                fuse.weight, wing.weight, wing.outboard.layout.b, wing.layout.S,
                 htail.layout.S, wing.layout.box_x)
         end
         if (errw <= tolerW)
@@ -524,10 +524,10 @@ function wsize(ac; itermax=35,
         wingsc!(BW, CL, qinf, wing)
 
         # Update wing box chord for fuseW in next iteration
-        cbox = wing.layout.chord * wing.layout.box_width_chord
+        cbox = wing.layout.chord * wing.layout.box_width
 
         # Calculate wing centroid and mean aerodynamic chord
-        surfdx!(wing, parg, wing.layout.b_inner; cma=true)
+        surfdx!(wing, parg, wing.inboard.layout.b, wing.outboard.layout.b; cma=true)
         cma = parg[igcma]
         xwing = wing.layout.x
         
@@ -538,11 +538,11 @@ function wsize(ac; itermax=35,
 
         # Calculate wing center load
         ip = ipcruise1
-        γt, γs = wing.layout.λt * para[iarclt, ip], wing.layout.λs * para[iarcls, ip]
+        γt, γs = wing.outboard.layout.λ * para[iarclt, ip], wing.inboard.layout.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wingpo(wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan,
-                    wing.layout.λt, wing.layout.λs, γt, γs,
+        po = wingpo(wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan,
+                    wing.outboard.layout.λ, wing.inboard.layout.λ, γt, γs,
                     wing.layout.AR, Nlift, BW, Lhtail, fLo, fLt)
 
         # Calculate engine weight
@@ -554,19 +554,19 @@ function wsize(ac; itermax=35,
         rhofuel = (pari[iifwing] == 0) ? 0.0 : parg[igrhofuel]
 
         # Call surfw function
-        wing_out = surfw(po, wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, wing.layout.chord, wing.strut.z,
-                         wing.layout.λt, wing.layout.λs, γt, γs,
+        wing_out = surfw(po, wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan, wing.layout.chord, wing.strut.z,
+                         wing.outboard.layout.λ, wing.inboard.layout.λ, γt, γs,
                          Nlift, wing.planform, Weng1,
                          0, 0.0, 0, 0.0,
                          Winn, Wout, dyWinn, dyWout,
-                         wing.layout.sweep, wing.layout.box_width_chord, wing.layout.root_chord_thickness, wing.layout.spanbreak_chord_thickness, wing.layout.hweb_to_hbox, fLt,
+                         wing.layout.sweep, wing.layout.box_width, wing.inboard.layout.chord_thickness, wing.outboard.layout.chord_thickness, wing.layout.hweb_to_hbox, fLt,
                          tauweb, σcap, σstrut, wing.inboard.caps.material.E,
                          wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
         # Unpack results from surfw
         wing.outboard.max_shear_load, wing.outboard.moment, wing.outboard.webs.thickness, wing.outboard.caps.thickness, wing.outboard.web_cap.EI_bending, wing.outboard.web_cap.EI_normal, wing.outboard.web_cap.GJ,
         wing.inboard.max_shear_load, wing.inboard.moment, wing.inboard.webs.thickness, wing.inboard.caps.thickness, wing.inboard.web_cap.EI_bending, wing.inboard.web_cap.EI_normal, wing.inboard.web_cap.GJ,
-        wing.strut.axial_force, lstrutp, wing.outboard.cos_lambda_strut,
+        wing.strut.axial_force, lstrutp, wing.strut.cos_lambda,
         Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
         Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
         wing.inboard.webs.weight.W, wing.inboard.caps.weight.W, wing.strut.weight,
@@ -627,7 +627,7 @@ function wsize(ac; itermax=35,
         # Set Nacelle CL derivative fraction
         dCLnda = parg[igdCLnda]
         dCLndCL = dCLnda * (β + 2.0 / wing.layout.AR) * sqrt(β^2 + tanL^2) / 
-                  (2.0 * π * (1.0 + 0.5 * wing.layout.root_chord_thickness))
+                  (2.0 * π * (1.0 + 0.5 * wing.inboard.layout.chord_thickness))
         parg[igdCLndCL] = dCLndCL
 
         # Fuselage pitching moment calculation omitted for now
@@ -661,7 +661,7 @@ function wsize(ac; itermax=35,
         if (iVTsize == 1)
             lvtail = xvtail - xwing
             Vv = vtail.volume
-            Sv = Vv * wing.layout.S * wing.layout.b / lvtail
+            Sv = Vv * wing.layout.S * wing.outboard.layout.b/ lvtail
             vtail.layout.S = Sv
             parg[igCLveout] = Me / (qstall * Sv * lvtail)
         else
@@ -669,19 +669,19 @@ function wsize(ac; itermax=35,
             CLveout = parg[igCLveout]
             Sv = Me / (qstall * CLveout * lvtail)
             vtail.layout.S = Sv
-            vtail.volume = Sv * lvtail / (wing.layout.S * wing.layout.b)
+            vtail.volume = Sv * lvtail / (wing.layout.S * wing.outboard.layout.b)
         end
 
         # Set HT max loading magnitude
-        htail.layout.b, htail.layout.chord, poh = tailpo(Sh, htail.layout.AR, htail.layout.λ, qne, htail.CL_max)
+        htail.outboard.b, htail.layout.chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.λ, qne, htail.CL_max)
 
         # Set VT max loading magnitude, based on single tail + its bottom image
-        bv2, vtail.layout.chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.layout.λ, qne, vtail.CL_max)
+        bv2, vtail.layout.chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.λ, qne, vtail.CL_max)
         bv = bv2 / 2
-        vtail.layout.b = bv
+        vtail.outboard.b = bv
 
         # HT weight
-        γh, γhs = htail.layout.λ, λhs
+        γh, γhs = htail.outboard.λ, λhs
         ihplan, Wengh = 0, 0.0
 
         _, _, _, _, _, _, _,
@@ -691,11 +691,11 @@ function wsize(ac; itermax=35,
         Wscenh, Wsinnh, Wsouth, dxWsinnh, dxWsouth, _, _,
         _, _, _, _, _, _, _,
         _, _, _,
-        _, _, _ = surfw(poh, htail.layout.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.chord, zsh,
-            htail.layout.λ, λhs, γh, γhs,
+        _, _, _ = surfw(poh, htail.outboard.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.chord, zsh,
+            htail.outboard.λ, λhs, γh, γhs,
             1, ihplan, Wengh, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0,
-            htail.layout.sweep, htail.layout.box_width, htail.layout.box_height, htail.layout.box_height, htail.layout.hweb_to_hbox, fLt,
+            htail.layout.sweep, htail.layout.box_width, htail.outboard.chord_thickness, htail.outboard.chord_thickness, htail.layout.hweb_to_hbox, fLt,
             tauwebh, σcaph, σstrut, wing.inboard.caps.material.E, 
             wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
@@ -705,17 +705,17 @@ function wsize(ac; itermax=35,
         htail.dxW = dxWhtail
 
         # HT centroid x-offset
-        surfdx!(htail,parg, htail.layout.box_halfspan; λs = λhs)
+        surfdx!(htail,parg, htail.layout.box_halfspan, htail.outboard.b; λs = λhs)
 
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
-        CMh0, CMh1 = surfcm(htail.layout.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.sweep, wing.layout.spar_box_x_c, htail.layout.λ, 1.0, htail.layout.λ, 1.0,
+        CMh0, CMh1 = surfcm(htail.outboard.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
             htail.layout.AR, fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        γv, γvs = vtail.layout.λ, λvs
+        γv, γvs = vtail.outboard.λ, λvs
         ivplan, Wengv = 0, 0.0
 
         _, _, _, _, _, _, _,
@@ -726,10 +726,10 @@ function wsize(ac; itermax=35,
         _, _, _, _, _, _, _,
         _, _, _,
         _, _, _ = surfw(pov, bv2, vtail.layout.box_halfspan, vtail.layout.box_halfspan, vtail.layout.chord, zsv,
-            vtail.layout.λ, λvs, γv, γvs,
+            vtail.outboard.λ, λvs, γv, γvs,
             1.0, ivplan, Wengv, 0.0, 0.0, 0.0, 0.0,
             0.0, 0.0, 0.0, 0.0,
-            vtail.layout.sweep, vtail.layout.box_width, vtail.layout.box_height, vtail.layout.box_height, vtail.layout.hweb_to_hbox, fLt,
+            vtail.layout.sweep, vtail.layout.box_width, vtail.outboard.chord_thickness, vtail.outboard.chord_thickness, vtail.layout.hweb_to_hbox, fLt,
             tauwebv, σcapv, σstrut, wing.inboard.caps.material.E,
             wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
 
@@ -739,7 +739,7 @@ function wsize(ac; itermax=35,
         vtail.dxW = dxWvtail
 
         # VT centroid x-offset
-        surfdx!(vtail,parg,vtail.layout.box_halfspan; b=bv2, λs = λvs )
+        surfdx!(vtail,parg,vtail.layout.box_halfspan, bv2 ;λs = λvs )
 
         # ----------------------
         #     Fuselage Fuel Tank weight
@@ -1192,12 +1192,12 @@ Updates wing pitching moments and calls surfcm for mission points
 function update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
     for ip in ip_range
         cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = wing.layout.λt * para[iarclt, ip]
-        γs = wing.layout.λs * para[iarcls, ip]
+        γt = wing.outboard.layout.λ * para[iarclt, ip]
+        γs = wing.inboard.layout.λ * para[iarcls, ip]
         
         CMw0, CMw1 = surfcm(
-            wing.layout.b, wing.layout.b_inner, wing.layout.box_halfspan, 
-            wing.layout.sweep, wing.layout.spar_box_x_c, wing.layout.λt, wing.layout.λs, 
+            wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan, 
+            wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.layout.λ, wing.inboard.layout.λ, 
             γt, γs, wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt
         )
 
