@@ -158,8 +158,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     bo = parg[igbo]
     sweep = wing.layout.sweep
     Xaxis = parg[igXaxis]
-    λs = wing.layout.λs
-    λt = wing.layout.λt
+    λs = wing.inboard.layout.λ
+    λt = wing.outboard.layout.λ
     AR = wing.layout.AR
     fLo = parg[igfLo]
     fLt = parg[igfLt]
@@ -168,8 +168,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     cmpo = para[iacmpo,ip]
     cmps = para[iacmps,ip]
     cmpt = para[iacmpt,ip]
-    γt = wing.layout.λt*para[iarclt,ip]
-    γs = wing.layout.λs*para[iarcls,ip]
+    γt = wing.outboard.layout.λ*para[iarclt,ip]
+    γs = wing.inboard.layout.λ*para[iarcls,ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
@@ -181,8 +181,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     ip = ipcruise1
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
 
-    γt = wing.layout.λt*para[iarclt, ip]
-    γs = wing.layout.λs*para[iarcls, ip]
+    γt = wing.outboard.layout.λ*para[iarclt, ip]
+    γs = wing.inboard.layout.λ*para[iarcls, ip]
     
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -193,8 +193,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     
     ip = ipdescentn
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-    γt = wing.layout.λt*para[iarclt, ip]
-    γs = wing.layout.λs*para[iarcls, ip]
+    γt = wing.outboard.layout.λ*para[iarclt, ip]
+    γs = wing.inboard.layout.λ*para[iarcls, ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 

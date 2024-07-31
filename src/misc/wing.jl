@@ -25,18 +25,18 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct WingSection
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
+    """Wing Section layout"""
+    layout::WingSectionLayout = WingSectionLayout()
     """Wing Section webs"""
     webs::StructuralMember = StructuralMember(material=material)
     """Wing Section caps"""
     caps::StructuralMember = StructuralMember(material=material)
     """Wing Strut web and caps"""
-    web_cap::Web_Cap_Strut = Web_Cap_Strut()
+    web_cap::Web_Cap_Strut = Web_Cap_Strut() # TODO REMOVE THIS somehow
     """Max shear load [N]"""
     max_shear_load::Float64 = 0
     """Moment [N m]"""
     moment::Float64 = 0
-    """Cosine of strut sweep angle"""
-    cos_lambda_strut::Float64 = 0
     """Weight [N]"""
     weight::Float64 = 0
     """Wing root moment contribution from wing weight section of engine [N m]"""
@@ -63,6 +63,8 @@ $TYPEDFIELDS
     thickness_to_chord::Float64 = 0
     """Strut local velocity ratio"""
     local_velocity_ratio::Float64 = 0
+    """Cosine of strut sweep angle"""
+    cos_lambda::Float64 = 0 
     """Strut weight [N]"""
     weight::Float64 = 0
     """Strut axial force [N]"""
@@ -104,6 +106,8 @@ $TYPEDFIELDS
     inboard::WingSection = WingSection(material=material) # at wing root 
     """Outboard Wing Section (at strut attachment point)"""
     outboard::WingSection = WingSection(material=material) # at strut attachment point
+    """Span fraction of inner wing break ("snag")"""
+    ηs::Float64 = 0 
 
     """Wing Strut""" #TODO: similar to single vs multibubble, add way to do strut and no strut
     strut::Strut = Strut()

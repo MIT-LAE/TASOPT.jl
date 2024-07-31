@@ -1,6 +1,6 @@
 @kwdef mutable struct Tail
-    layout::TailLayout = TailLayout()
-
+    layout::WingLayout = WingLayout()
+    outboard::WingSectionLayout = WingSectionLayout()
     weight::Float64 = 0
     dxW::Float64 = 0
     EI_bending::Float64 = 0 #igEIch or igEIcv
