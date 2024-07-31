@@ -1,8 +1,8 @@
-const structures = TASOPT.structures
-const Weight = TASOPT.Weight
+# const structures = TASOPT.structures
+# const Weight = TASOPT.Weight
 @testset "Weights" begin
     #Test frame
-    frame = structures.Frame()
+    frame = TASOPT.structures.Frame()
     @test frame.origin == [0.0, 0.0, 0.0]
 
     #Test Weight constructors
@@ -38,19 +38,19 @@ const Weight = TASOPT.Weight
     # Test that * is non-mutating
     @test W2.W == 2.0
     # Test scale! is mutating
-    structures.scale!(W2, 3.0)
+    TASOPT.structures.scale!(W2, 3.0)
     @test W2.W == 6.0
 
-    structures.scale!(W2, 1 / 3.0)
+    TASOPT.structures.scale!(W2, 1 / 3.0)
     @test W2.W == 2.0
 
     W_sum = sum([W2, W3])
-    W_CoW = structures.center_of_weight([W3, W2])
+    W_CoW = TASOPT.structures.center_of_weight([W3, W2])
     @test W_sum.W == W_CoW.W
     @test W_sum.r == W_CoW.r
 
-    M2 = structures.moment(W2)
+    M2 = TASOPT.structures.moment(W2)
     @test M2 == [0.0, 0.0, 0.0]
-    M3 = structures.moment(W3)
+    M3 = TASOPT.structures.moment(W3)
     @test M3 == [-20.0, 20.0, 0.0]
 end
