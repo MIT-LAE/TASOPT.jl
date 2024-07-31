@@ -678,7 +678,7 @@ function wsize(ac; itermax=35,
         (tskin, tcone, tfweb, tfloor, xhbend, xvbend,
             EIhshell, EIhbend, EIvshell, EIvbend, GJshell, GJcone,
             Wshell, Wcone, Wwindow, Winsul, Wfloor, Whbend, Wvbend,
-            Wfuse, xWfuse, cabVol) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
+            Wfuse, xWfuse, cabVol, Afuse) = fusew(Nland, Wfix, Wpaymax, Wpadd, Wseat, Wapu, Wengtail, 
             ifwing, nftanks, xblend1, xblend2,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
             fstring, fframe, ffadd, Δp,
@@ -719,6 +719,8 @@ function wsize(ac; itermax=35,
 
         parg[igWfuse] = Wfuse
         parg[igxWfuse] = xWfuse
+
+        parg[igAfuse] = Afuse
 
         parg[igcabVol] = cabVol
 

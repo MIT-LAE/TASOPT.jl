@@ -389,6 +389,7 @@
       const igrhofuelgas = 310
 
       const igtotal    = 310
+      const igAfuse    = 311
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

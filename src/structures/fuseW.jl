@@ -400,5 +400,5 @@ return  tskin, tcone, tfweb, tfloor, xhbend, xvbend,
                        Whbend, Wvbend,
                        Wfuse,
                       xWfuse,
-                       cabVol
+                       cabVol, Afuse
 end # fusew
