@@ -1,3 +1,79 @@
+mutable struct DuctedFanData
+    Fsp::Float64
+    Pfan::Float64
+    Feng::Float64
+    Peng::Float64
+    mfan::Float64
+    pif::Float64
+    mbf::Float64
+    Nbf::Float64
+    Tt0::Float64
+    ht0::Float64
+    pt0::Float64
+    cpt0::Float64
+    Rt0::Float64
+    Tt18::Float64
+    ht18::Float64
+    pt18::Float64
+    cpt18::Float64
+    Rt18::Float64
+    Tt2::Float64
+    ht2::Float64
+    pt2::Float64
+    cpt2::Float64
+    Rt2::Float64
+    Tt21::Float64
+    ht21::Float64
+    pt21::Float64
+    cpt21::Float64
+    Rt21::Float64
+    Tt7::Float64
+    ht7::Float64
+    pt7::Float64
+    cpt7::Float64
+    Rt7::Float64
+    u0::Float64
+    T2::Float64
+    u2::Float64
+    p2::Float64
+    cp2::Float64
+    R2::Float64
+    M2::Float64
+    T7::Float64
+    u7::Float64
+    p7::Float64
+    cp7::Float64
+    R7::Float64
+    M7::Float64
+    T8::Float64
+    u8::Float64
+    p8::Float64
+    cp8::Float64
+    R8::Float64
+    M8::Float64
+    A8::Float64
+    epf::Float64
+    etaf::Float64
+    M0::Float64
+    T0::Float64
+    p0::Float64
+    a0::Float64
+    Tref::Float64
+    pref::Float64
+    Phiinl::Float64
+    Kinl::Float64
+    iBLIc::Float64
+    pid::Float64
+    pifn::Float64
+    pifD::Float64
+    mbfD::Float64
+    A2::Float64
+    A7::Float64
+    epf0::Float64
+    pifK::Float64
+    epfK::Float64
+    DuctedFanData() = new() 
+end
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, iBLIc,
@@ -152,61 +228,122 @@ Turbofan operation routine
       7   fan nozzle
       8   fan flow downstream
 """
-function ductedfanoper!(gee, M0, T0, p0, a0, Tref, pref,
+function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, iBLIc,
       pid, pifn, 
       pifD, 
       mbfD, 
-      NbfD,
       A2, A7,
       epf0,
-      pifK,
-      Feng,
+      pifK, epfK,
+      Feng, Peng,
       M2, pif, mbf)
+    
+    pf = pif
+    mf = mbf
+    Mi = M2
+    if (pf == 0.0)
+        pf = pifD
+    end
+    if (mf == 0.0)
+        mf = mbfD
+    end
+    if (Mi == 0.0)
+        Mi = 0.6
+    end
+    if (Mi == 1.0)
+        Mi = 0.6
+    end
+    engdata = DuctedFanData()
+    inputs = (
+        M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
+        pifD, mbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
+    ) 
+    update_engine_data!(engdata, inputs)
 
-      sol = nlsolve(residual, guess, ftol = 1e-7) 
+    guess = zeros(3)
+    guess[1] = pf
+    guess[2] = mf
+    guess[3] = Mi
 
+    residual(x) = res_df(x, engdata)
+    sol = nlsolve(residual, guess, ftol = 1e-8) 
 
-        return TSFC, Fsp, hfuel, ff,
-        Feng, mcore,
-        pif, pilc, pihc,
-        mbf, mblc, mbhc,
-        Nbf, Nblc, Nbhc,
-        Tt0, ht0, pt0, cpt0, Rt0,
-        Tt18, ht18, pt18, cpt18, Rt18,
-        Tt19, ht19, pt19, cpt19, Rt19,
-        Tt19c, ht19c, pt19c, cpt19c, Rt19c,
-        Tt2, ht2, pt2, cpt2, Rt2,
-        Tt21, ht21, pt21, cpt21, Rt21,
-        Tt25, ht25, pt25, cpt25, Rt25,
-        Tt25c, ht25c, pt25c, cpt25c, Rt25c,
-        Tt3, ht3, pt3, cpt3, Rt3,
-        Tt4, ht4, pt4, cpt4, Rt4,
-        Tt41, ht41, pt41, cpt41, Rt41,
-        Tt45, ht45, pt45, cpt45, Rt45,
-        Tt49, ht49, pt49, cpt49, Rt49,
-        Tt5, ht5, pt5, cpt5, Rt5,
-        Tt7, ht7, pt7, cpt7, Rt7,
-        u0,
-        T2, u2, p2, cp2, R2, M2,
-        T25c, u25c, p25c, cp25c, R25c, M25c,
-        T5, u5, p5, cp5, R5, M5,
-        T6, u6, p6, cp6, R6, M6, A6,
-        T7, u7, p7, cp7, R7, M7,
-        T8, u8, p8, cp8, R8, M8, A8,
-        u9, A9,
-        epf, eplc, ephc, epht, eplt,
-        etaf, etalc, etahc, etaht, etalt,
-        Lconv
+    return sol.zero
+end
 
+function unpack_input_data(data::DuctedFanData)
+    M0 = data.M0
+    T0 = data.T0
+    p0 = data.p0
+    a0 = data.a0
+    Tref = data.Tref
+    pref = data.pref
+    Phiinl = data.Phiinl
+    Kinl = data.Kinl
+    iBLIc = data.Phiinl
+    pid = data.pid
+    pifn = data.pifn
+    pifD = data.pifD
+    mbfD = data.mbfD
+    A2 = data.A2
+    A7 = data.A7
+    epf0 = data.epf0
+    pifK = data.pifK
+    epfK = data.epfK
+    Feng = data.Feng
+    Peng = data.Peng
+    
+    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, A2, A7, epf0, pifK, epfK, Feng, Peng)
+end
+
+function update_engine_data!(data::DuctedFanData, inputs)
+    (
+        M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
+        pifD, mbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
+    ) = inputs
+
+    data.M0 = M0
+    data.T0 = T0
+    data.p0 = p0
+    data.a0 = a0
+    data.Tref = Tref
+    data.pref = pref
+    data.Phiinl = Phiinl
+    data.Kinl = Kinl
+    data.iBLIc = iBLIc
+    data.pid = pid
+    data.pifn = pifn
+    data.pifD = pifD
+    data.mbfD = mbfD
+    data.A2 = A2
+    data.A7 = A7
+    data.epf0 = epf0
+    data.pifK = pifK
+    data.epfK = epfK
+    data.Feng = Feng
+    data.Peng = Peng
 end
 
 
+function res_df(x, engdata, iPspec = false, store_data = false)
+    #Extract unknowns
+    pf = x[1]
+    mf = x[2]
+    Mi = x[3]
 
+    #Extract Inputs
+    (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, A2, A7, epf0, pifK, epfK, Fspec, Pspec) =
+        unpack_input_data(engdata)
 
-end # tfoper
+    # Constants
+    alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
+    nair = 5
+    #        a     b     k     mo     da    c    d     C    D
+    Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
+    #---- minimum allowable fan efficiency
+    epfmin = 0.60
 
-function res_df(x)
     # ===============================================================
     #---- freestream static quantities
     s0, dsdt, h0, dhdt, cp0, R0 = gassum(alpha, nair, T0)
@@ -222,6 +359,16 @@ function res_df(x)
     st0, dsdt, ht0, dhdt, cpt0, Rt0 = gassum(alpha, nair, Tt0)
     pt0 = p0 * exp((st0 - s0) / Rt0)
     at0 = sqrt(Tt0 * Rt0 * cpt0 / (cpt0 - Rt0))
+
+    # ===============================================================
+    #---- diffuser flow 0-2
+    Tt18 = Tt0
+    st18 = st0
+    ht18 = ht0
+    cpt18 = cpt0
+    Rt18 = Rt0
+    pt18 = pt0 * pid
+
     if (u0 == 0.0)
         #----- static case... no BL defect
         sbfan = 0.0
@@ -262,17 +409,22 @@ function res_df(x)
     u2 = sqrt(2.0 * (ht2 - h2))
 
     rho2 = p2 / (R2 * T2)
+    # ===============================================================
+    #---- Fan flow flow 2-21
+    Tt18 = Tt0
+    st18 = st0
+    ht18 = ht0
+    cpt18 = cpt0
+    Rt18 = Rt0
+    pt18 = pt0 * pid
 
-    epf, epf_pf, epf_mf = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
+    epf, _, _ = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
 
     if (epf < epfmin)
             epf = epfmin
-            epf_pf = 0.0
-            epf_mf = 0.0
+
     end
     if (pf < 1.0)
-            epf_pf = (-1.0 / epf^2) * epf_pf
-            epf_mf = (-1.0 / epf^2) * epf_mf
             epf = 1.0 / epf
     end
 
@@ -320,7 +472,8 @@ function res_df(x)
     #---- #Set up residuals
     res = zeros(3)
 
-    mfan = mf * sqrt(Tref / Tt2) * pt2 / pref
+    mfan = mf * sqrt(Tref / Tt2) * pt2 / pref #Fan mass flow ref
+    P = mfan * (ht21 - ht2) #Fan power
     #Fan nozzle mass flow, choked or unchoked
     res[1] = mfan - rho7 * A7 * u7
 
@@ -328,8 +481,8 @@ function res_df(x)
     mfA = mf * sqrt(Tref / Tt2) * pt2 / pref / (rho2 * u2)
     res[2] = mfA - A2
 
-    if (iPspec == 0) #Specified power constraint
-        P = mfan * (ht21 - ht2)
+    if iPspec #Specified power constraint
+       
         res[3] = P - Pspec
 
     else #Specified thrust constraint

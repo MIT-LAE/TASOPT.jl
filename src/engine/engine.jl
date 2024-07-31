@@ -6,6 +6,7 @@ module engine
 
 using NLopt
 using Roots
+using NLsolve
 using LinearAlgebra
 
 export tfcalc!, mcool, Tmcalc, gas_tset, gaschem
@@ -32,5 +33,6 @@ include("tfweight.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
 include("ductedfansize.jl")
+include("ductedfanoper.jl")
 
 end
