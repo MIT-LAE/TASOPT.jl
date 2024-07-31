@@ -19,19 +19,12 @@ and the mean aerodynamic chord (normalized by root chord, `co`)
 
 See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Description](@ref dreladocs).
 """
-# function surfdx(b,bs,bo,λt,λs,sweep)
-function surfdx!(wing,parg,bs,b; λs = wing.inboard.layout.λ, cma=false)
-      if hasproperty(wing.outboard, :layout)
-            λt = wing.outboard.layout.λ
-            #b=wing.outboard.layout.b
-      else
-            λt = wing.outboard.λ
-            #b=wing.outboard.b
-      end
 
-      tanL = tan(deg2rad(wing.layout.sweep))
+function surfdx(b,bs,bo,λt,λs,sweep)
 
-      ηo = wing.layout.box_halfspan/b
+      tanL = tan(deg2rad(sweep))
+
+      ηo = bo/b
       ηs = bs/b
 
 #---- 2 Int c dy /(co b)  =  S/(co b)  =  Kc
@@ -52,11 +45,37 @@ function surfdx!(wing,parg,bs,b; λs = wing.inboard.layout.λ, cma=false)
       dx    = Kcx/Kc * b*tanL
       macco = Kcc/Kc
 
-      wing.layout.x = wing.layout.box_x + dx
-
-      if cma
-            parg[igcma] = macco * wing.layout.chord
-      end
+      return dx,macco
 
 end # surfdx
 
+
+function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{Float64} = Float64[])
+      if isempty(parg)
+          dx, _ = surfdx(b, bs,
+                      wing.layout.box_halfspan,
+                      wing.outboard.layout.λ,
+                      wing.inboard.layout.λ,
+                      wing.layout.sweep)
+      else
+          dx, macco = surfdx(wing.outboard.layout.b,
+                          wing.inboard.layout.b,
+                          wing.layout.box_halfspan,
+                          wing.outboard.layout.λ,
+                          wing.inboard.layout.λ,
+                          wing.layout.sweep)
+          parg[igcma] = macco * wing.layout.chord
+      end
+      wing.layout.x = wing.layout.box_x + dx
+end
+
+
+function surfdx!(tail::Tail, b::Float64, λs::Float64)
+      dx, _ = surfdx(b,
+                  tail.layout.box_halfspan,
+                  tail.layout.box_halfspan,
+                  tail.outboard.λ,
+                  λs,
+                  tail.layout.sweep)
+      tail.layout.x = tail.layout.box_x + dx         
+end

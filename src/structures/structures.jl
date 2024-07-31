@@ -25,11 +25,16 @@ export î, ĵ, k̂, WORLD, Weight
 include("../misc/layout.jl")
 export SingleBubble, MultiBubble
 include("../misc/structuralMember.jl")
+export StructuralMember
 include("../misc/fuselage.jl")
 export Fuselage
 include("fuseW.jl")
 include("../misc/fuselage_geometry.jl")
 
+include("../misc/wing.jl")
+export WingSection,Wing,wing_additional_weight 
+include("../misc/tail.jl")
+export Tail
 #include sizing of surfaces
 include("surfdx.jl")
 include("surfw.jl")
