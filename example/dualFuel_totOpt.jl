@@ -21,8 +21,8 @@ nameAircraftModel = "../src/IO/experiment_input_3000.toml"
 ac = read_aircraft_model(nameAircraftModel) # MODIFY <path> appropriately
 saveName = "Etha3000nmi"
 # 2.5) Change fuel type
-ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431 JetAEtha29%Blend: 322429)
-ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805 JetAEtha29%Blend: 805.649)
+ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431 JetAEtha29%Blend: 322429 JetAEtha71%Blend: 322471)
+ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805 JetAEtha29%Blend: 805.649 JetAEtha71%Blend: 794.504)
 rhoFuelShell = 789.0 #Fuel density inside the cargo space [kg/m3]
 bmax = 36 #Maximum Span of Wing [m]
 bvmax = 13.7 #Maximum Vertical Tail Height [m]
