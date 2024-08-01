@@ -66,8 +66,6 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
 #--- cone material properties
 #     (assumed same as skin, but could be different)
-      taucone = fuse.skin.σ
-      rhocone = fuse.skin.ρ      
 
       rE = Ebend/Eskin
 
