@@ -77,10 +77,6 @@ function obj(x, grad)
     AFuse = ac.parg[igAfuse] #fuselage crosssection area [m2]
     lShell = ac.parg[igxshell2]-ac.parg[igxshell1] #length of the cylindrical sector [m]
     WCargo = AFuse*0.45*lShell*rhoFuelShell*gee #[N]
-    # print("gee = $(gee)")
-    # println("Wfmax = $(Wfmax)")
-    # println("WCargo = $(WCargo)")
-    # println("Wf = $(Wf)")
     ## Finish additional fuel tank calculation
     constraint = Wf/(Wfmax+WCargo) - 1.0
     println("Fuel Weight = $(Wf) N")
