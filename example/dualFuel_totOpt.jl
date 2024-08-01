@@ -23,6 +23,7 @@ saveName = "Etha3000nmi"
 # 2.5) Change fuel type
 ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431)
 ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805)
+rhoFuelShell = 789.0 #Fuel density inside the cargo space [kg/m3]
 # Objective function
 xarray = []
 farray = []
@@ -72,7 +73,19 @@ function obj(x, grad)
     # Ensure fuel volume makes sense
     Wfmax = ac.parg[igWfmax]
     Wf    = ac.parg[igWfuel]
-    constraint = Wf/Wfmax - 1.0
+    ## Compute the additional fuel tank volume available from the cargo bay
+    AFuse = ac.parg[igAfuse] #fuselage crosssection area [m2]
+    lShell = ac.parg[igxshell2]-ac.parg[igxshell1] #length of the cylindrical sector [m]
+    WCargo = AFuse*0.45*lShell*rhoFuelShell*gee #[N]
+    # print("gee = $(gee)")
+    # println("Wfmax = $(Wfmax)")
+    # println("WCargo = $(WCargo)")
+    # println("Wf = $(Wf)")
+    ## Finish additional fuel tank calculation
+    constraint = Wf/(Wfmax+WCargo) - 1.0
+    println("Fuel Weight = $(Wf) N")
+    println("Wing Tank Weight = $(Wfmax) N")
+    println("Cargo Tank Max Weight = $(WCargo) N")
     penfac = 0.01*ac.parg[igWpay]
     f = f + penfac*max(0.0, constraint)^2
     
