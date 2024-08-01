@@ -145,7 +145,7 @@ If the aircraft is a double decker, the floors are assumed to be symmetric.
     **Outputs:**
     - `w::Float64`: width of cabin (m).
 """
-function find_cabin_width(Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64, ΔH::Float64 = 0.0)
+function find_cabin_width(Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Int64, ΔH::Float64 = 0.0)
     #Subtract dRfuse from ΔH when there is a lower bubble; fuselage is taller
     θ = max(asin((ΔH - dRfuse)/(2*Rfuse)), 0.0) #This assumes that floors are symmetrically distributed in fuselage
     w = nfweb*2*wfb + 2*Rfuse*cos(θ)

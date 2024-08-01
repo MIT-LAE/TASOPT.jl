@@ -37,6 +37,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     ac_m = ac.parm      #mission    "
     ac_a = ac.para      #aero       "
     ac_e = ac.pare      #engine     "
+    fuselage = ac.fuselage  #fuselage     "
 
     #dictionaries to map some selections (e.g., ints) to outputs
     propsysarch = Dict(0 => "te", 1 => "tf")
@@ -147,39 +148,39 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #weight
     d_fuse_weights = Dict()
-        d_fuse_weights["frame"] = ac_g[igfframe]
-        d_fuse_weights["stringer"] = ac_g[igfstring]
-        d_fuse_weights["additional"] = ac_g[igffadd]
-        d_fuse_weights["fixed_weight"] = ac_g[igWfix]
+        d_fuse_weights["frame"] = fuselage.weight_frac_frame
+        d_fuse_weights["stringer"] = fuselage.weight_frac_stringers
+        d_fuse_weights["additional"] = fuselage.weight_frac_skin_addl
+        d_fuse_weights["fixed_weight"] = fuselage.fixed.W
 
-        d_fuse_weights["window_per_length"] = ac_g[igWpwindow]
-        d_fuse_weights["window_insul_per_area"] = ac_g[igWppinsul]
-        d_fuse_weights["floor_weight_per_area"] = ac_g[igWppfloor]
+        d_fuse_weights["window_per_length"] = fuselage.window_W_per_length
+        d_fuse_weights["window_insul_per_area"] = fuselage.insulation_W_per_area
+        d_fuse_weights["floor_weight_per_area"] =fuselage.floor_W_per_area
 
-        d_fuse_weights["HPE_sys_weight_fraction"] = ac_g[igfhpesys]
+        d_fuse_weights["HPE_sys_weight_fraction"] = fuselage.HPE_sys.W
         d_fuse_weights["LG_nose_weight_fraction"] = ac_g[igflgnose]
         d_fuse_weights["LG_main_weight_fraction"] = ac_g[igflgmain]
 
-        d_fuse_weights["APU_weight_fraction"] = ac_g[igfapu]
-        d_fuse_weights["seat_weight_fraction"] = ac_g[igfseat]
-        d_fuse_weights["add_payload_weight_fraction"] = ac_g[igfpadd]
+        d_fuse_weights["APU_weight_fraction"] = fuselage.APU.W/ac_g[igWpaymax] 
+        d_fuse_weights["seat_weight_fraction"] = fuselage.seat.W/ac_g[igWpaymax] 
+        d_fuse_weights["add_payload_weight_fraction"] = fuselage.added_payload.W/ac_g[igWpaymax] 
     d_fuse["Weights"] = d_fuse_weights
 
 
     #geometry
     d_fuse_geom = Dict()
-        d_fuse_geom["radius"] = ac_g[igRfuse]
-        d_fuse_geom["dRadius"] = ac_g[igdRfuse]
-        d_fuse_geom["y_offset"] = ac_g[igwfb]
-        d_fuse_geom["floor_depth"] = ac_g[ighfloor]
-        d_fuse_geom["Nwebs"] = ac_g[ignfweb]
+        d_fuse_geom["radius"] = fuselage.layout.cross_section.radius
+        d_fuse_geom["dRadius"] = fuselage.layout.cross_section.bubble_lower_downward_shift
+        d_fuse_geom["y_offset"] = fuselage.layout.bubble_center_y_offset
+        d_fuse_geom["floor_depth"] = fuselage.layout.floor_depth
+        d_fuse_geom["Nwebs"] = fuselage.layout.n_webs
 
-        d_fuse_geom["a_nose"] = ac_g[iganose]
-        d_fuse_geom["b_tail"] = ac_g[igbtail]
+        d_fuse_geom["a_nose"] = fuselage.layout.nose_radius
+        d_fuse_geom["b_tail"] = fuselage.layout.tail_radius
 
         d_fuse_geom["taper_fuse_to"] = taperfuse[ac_i[iifclose]]
 
-        d_fuse_geom["tailcone_taper"] = ac_g[iglambdac]
+        d_fuse_geom["tailcone_taper"] = fuselage.layout.taper_tailcone
         d_fuse_geom["HT_load_fuse_bend_relief"] = ac_g[igrMh]
         d_fuse_geom["VT_load_fuse_bend_relief"] = ac_g[igrMv]
 
@@ -194,20 +195,20 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["seat_width"] = ac_g[igseatwidth]
         d_fuse_geom["aisle_halfwidth"] = ac_g[igaislehalfwidth]  
 
-        d_fuse_geom["x_nose_tip"] = ac_g[igxnose]
-        d_fuse_geom["x_pressure_shell_fwd"] = ac_g[igxshell1]
-        d_fuse_geom["x_start_cylinder"] = ac_g[igxblend1]
-        d_fuse_geom["x_end_cylinder"] = ac_g[igxblend2]
-        d_fuse_geom["x_pressure_shell_aft"] = ac_g[igxshell2]
-        d_fuse_geom["x_cone_end"] = ac_g[igxconend]
-        d_fuse_geom["x_end"] = ac_g[igxend]
+        d_fuse_geom["x_nose_tip"] = fuselage.layout.x_nose
+        d_fuse_geom["x_pressure_shell_fwd"] = fuselage.layout.x_pressure_shell_fwd
+        d_fuse_geom["x_start_cylinder"] = fuselage.layout.x_start_cylinder
+        d_fuse_geom["x_end_cylinder"] = fuselage.layout.x_end_cylinder
+        d_fuse_geom["x_pressure_shell_aft"] = fuselage.layout.x_pressure_shell_aft
+        d_fuse_geom["x_cone_end"] = fuselage.layout.x_cone_end
+        d_fuse_geom["x_end"] = fuselage.layout.x_end
 
         d_fuse_geom["x_nose_landing_gear"] = ac_g[igxlgnose]
         d_fuse_geom["x_main_landing_gear_offset"] = ac_g[igdxlgmain]
-        d_fuse_geom["x_APU"] = ac_g[igxapu]
-        d_fuse_geom["x_HPE_sys"] = ac_g[igxhpesys]
+        d_fuse_geom["x_APU"] = fuselage.APU.x
+        d_fuse_geom["x_HPE_sys"] = fuselage.HPE_sys.x
 
-        d_fuse_geom["x_fixed_weight"] = ac_g[igxfix]
+        d_fuse_geom["x_fixed_weight"] = fuselage.fixed.x
 
         d_fuse_geom["x_engines"] = ac_g[igxeng]
         d_fuse_geom["y_critical_engines"] = ac_g[igyeng]
@@ -386,22 +387,22 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_struct = Dict()
         d_struct["stress_factor"] = ac_g[igsigfac]
 
-        d_struct["sigma_fuse_skin"] = ac_g[igsigskin]
-        d_struct["sigma_fuse_bending"] = ac_g[igsigbend]
+        d_struct["sigma_fuse_skin"] = fuselage.skin.σ
+        d_struct["sigma_fuse_bending"] = fuselage.bendingmaterial_h.σ
 
         d_struct["sigma_caps"] = ac_g[igsigcap]
         d_struct["tau_webs"] = ac_g[igtauweb]
 
         d_struct["sigma_struts"] = ac_g[igsigstrut]
         
-        d_struct["fuse_shell_modulus_ratio"] = ac_g[igrEshell]
+        d_struct["fuse_shell_modulus_ratio"] = fuselage.ratio_young_mod_fuse_bending
         
         d_struct["E_wing_spar_cap"] = ac_g[igEcap]
         d_struct["E_struts"] = ac_g[igEstrut]
         
         # Structural material densities
-        d_struct["skin_density"] = ac_g[igrhoskin]
-        d_struct["fuse_stringer_density"] = ac_g[igrhobend]
+        d_struct["skin_density"] = fuselage.skin.ρ
+        d_struct["fuse_stringer_density"] = fuselage.bendingmaterial_h.ρ
         d_struct["wing_tail_cap_density"] = ac_g[igrhocap]
         d_struct["wing_tail_web_density"] = ac_g[igrhoweb]
         d_struct["strut_density"] = ac_g[igrhostrut]
