@@ -24,6 +24,8 @@ saveName = "Etha3000nmi"
 ac.pari[iifuel] = 32 #(JetA:24 Ethanol:32 JetAEtha31%Blend: 322431 JetAEtha29%Blend: 322429)
 ac.parg[igrhofuel] = 789.0 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805 JetAEtha29%Blend: 805.649)
 rhoFuelShell = 789.0 #Fuel density inside the cargo space [kg/m3]
+bmax = 36 #Maximum Span of Wing [m]
+bvmax = 13.7 #Maximum Vertical Tail Height [m]
 # Objective function
 xarray = []
 farray = []
@@ -57,11 +59,18 @@ function obj(x, grad)
     
 
     # Max span constriant
-    # bmax = ac.parg[igbmax]
-    # b    = ac.parg[igb]
-    # constraint  = b/bmax - 1.0
-    # penfac  = 0.01* ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    b = ac.parg[igb]
+    constraint = b/bmax - 1.0
+    penfac = 0.01* ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+    println("Wingspan = $(b) m")
+
+    # Max vertical tail height
+    bv = ac.parg[igbv]
+    constraint = bv/bvmax - 1.0
+    penfac = 0.01* ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+    println("Vertical Tail Span = $(bv) m")
     
     # Ensure aircraft weight makes sense
     WTOmax = ac.parg[igWMTO]
