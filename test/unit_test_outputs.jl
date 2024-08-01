@@ -23,6 +23,10 @@
         f = open(io->TASOPT.geometry(ac,io=io), "temp.txt", "w")
         content = read(file_geom, String)
         content = replace(content, "\r\n"=> "\n") # Convert \r\n to \n
+        println("CONTENT")
+        println(content)
+        println("temp")
+        println(read("temp.txt", String))
         @test content == read("temp.txt", String)
         rm("temp.txt")
     end
