@@ -327,7 +327,7 @@ readgeom(x) = read_input(x, geom, dgeom)
         cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
         bubble_center_y_offset = dy, n_webs = n_webs)
     end
-    println(cross_section)
+
     fuselage.layout.cross_section = cross_section
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
     fuselage.layout.nose_radius = readgeom("a_nose")

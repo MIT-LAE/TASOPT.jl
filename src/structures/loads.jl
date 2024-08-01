@@ -85,8 +85,12 @@ function +(W1::T, W2::T) where T<:Weight
 end  # function +
 
 function *(W::Weight, fac::Float64)
+    return Weight(W.W*fac, W.r)
+end
+
+function scale!(W::Weight, fac::Float64)
     W.W = W.W*fac
-    return W
+    return nothing
 end
 
 """
@@ -110,7 +114,7 @@ function center_of_weight(W_array::AbstractArray{Weight}, frame::Frame = WORLD)
         total_weight += weight.W
         r̄ = r̄ + weight.W * weight.r
     end
-    return Weight(W = total_weight, r = r̄./total_weight)
+    return Weight(total_weight, r̄./total_weight)
 end
 
 function Base.getproperty(obj::Weight, sym::Symbol)
