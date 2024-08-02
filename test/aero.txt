@@ -1,6 +1,6 @@
 Aerodynamics:
  -------------- 
-Ref.Area= 139.79282 m²
+Ref.Area= 139.79287 m²
 L/D     = 17.66611
 CL      = 0.57000
 CD      = 0.03227
@@ -14,7 +14,7 @@ CDBLIf  = -0.00000
 CDBLIw  = -0.00000
 
 Drag Areas = CD × Sref:
-CL     × Sref = 79.68191 m²
+CL     × Sref = 79.68194 m²
 CD     × Sref = 4.51044 m²
 CDfuse × Sref = 0.95001 m²
 CDi    × Sref = 1.56151 m²
