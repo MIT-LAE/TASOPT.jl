@@ -17,7 +17,13 @@ function quicksave_aircraft(ac::TASOPT.aircraft=TASOPT.read_aircraft_model();
     filepath=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_quicksave_aircraft.toml"))
 
     #convert structure into dictionary
-    acdict = Dict(fieldnames(typeof(ac)) .=> getfield.(Ref(ac), fieldnames(typeof(ac))))
+    # acdict = Dict(fieldnames(typeof(ac)) .=> getfield.(Ref(ac), fieldnames(typeof(ac))))
+    ## We might want to consider something like:
+    acdict = struct2dict(ac)
+    ## But this works for the output portion but need to be *very* careful in reading it. 
+    # The dictionary stores by sorting the hash or something so the order is going to be different
+    # So the only way to effectively load this would be to enforce kwargs explicitly either 
+    # by ensuring all the structs are defined with the @kwargs macro or an explicit kw constructor is provided.
 
     #check dict values, replace 2d arrays (toml-unsupported)
     # with nested arrays via helper fxn
@@ -97,4 +103,21 @@ function fix_dict_for_toml(dict::Dict)
         end
     end
     return dict
+end
+
+function struct2dict(obj)
+    type = typeof(obj)
+    # println("T = $type")
+    d = Dict()
+    for key ∈ fieldnames(type)
+        # println("field = $key")
+        if fieldtype(type, key) <: Union{AbstractArray,Number,String}
+            # println("pushing...")
+            push!(d, key => getfield(obj, key))
+        else
+            # println("recursing...")
+            push!(d, key => struct2dict(getfield(obj, key)))
+        end
+    end
+    return d
 end
