@@ -66,8 +66,6 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 
 #--- cone material properties
 #     (assumed same as skin, but could be different)
-      taucone = fuse.skin.σ
-      rhocone = fuse.skin.ρ      
 
       rE = Ebend/Eskin
 
@@ -92,25 +90,14 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--------------------------------------------------------------------
 #--- size tailcone to withstand vertical-tail torsion Qv
       size_tailcone(fuse, nvtail, Lvmax, bv, λv)
+
       thetafb, hfb, sin2t, cost, web_length = web_geometry(layout.cross_section)
-      Afuse = area(layout.cross_section)
-      Qv = (nvtail*Lvmax*bv/3.0)*(1.0+2.0* λv)/(1.0+ λv)
-      Vcone = (Qv/taucone)* 
-             (pi + layout.n_webs* 2.0*thetafb)/
-            (pi + layout.n_webs*(2.0*thetafb+sin2t))*
-            (layout.x_cone_end-layout.x_pressure_shell_aft)/layout.radius *
-            2.0/(1.0+layout.taper_tailcone)
 
-      fuse.cone.weight = Weight(W = rhocone*gee*Vcone*(1.0+fuse.weight_frac_stringers+fuse.weight_frac_frame+fuse.weight_frac_skin_addl))
-      xWcone = fuse.cone.weight.W * 0.5*(layout.x_pressure_shell_aft + layout.x_cone_end)
-
-      fuse.cone.thickness = Qv / (2.0*taucone*Afuse)
+      xWcone = y_moment(fuse.cone.weight)
 
 #--------------------------------------------------------------------
 #--- torsional stiffnesses
-      fuse.shell.GJ = Gskin*4.0*Afuse^2 * fuse.skin.thickness / get_perimeter(layout.cross_section)
-      fuse.cone.GJ  = Gskin*4.0*Afuse^2 * fuse.cone.thickness / get_perimeter(layout.cross_section)
-
+      fuse.shell.GJ = Gskin*4.0*A_fuse^2 * fuse.skin.thickness / get_perimeter(layout.cross_section)
 #--------------------------------------------------------------------
 #--- lumped tail weight and location  
 #      (Weng=0 if there are no tail-mounted engines)
@@ -234,9 +221,9 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--- pressurized cabin volume
 
       if nftanks == 0
-            cabVol = Afuse*(layout.l_shell + 0.67*layout.l_nose + 0.67*layout.radius)
+            cabVol = A_fuse*(layout.l_shell + 0.67*layout.l_nose + 0.67*layout.radius)
       else #If there is a fuel tank in the fuselage, the pressure vessel has a smaller air volume
-            cabVol = Afuse*(lcabin + 0.67*l_nose + 0.67*layout.radius)
+            cabVol = A_fuse*(lcabin + 0.67*l_nose + 0.67*layout.radius)
       end
 
 return  cabVol
@@ -304,11 +291,11 @@ function size_tailcone(fuse::Fuselage, n_vertical_tails, L_vmax, b_v, λv)
       n_webs = layout.n_webs
   
       # Get cone volume
-      V_cone =
-          Qv / cone.τ * (π + 2 * n_webs * θ_web) / (π + n_webs * (2θ_web + sin2θ)) *
-          (layout.x_cone_end - layout.x_pressure_shell_aft) / layout.radius *
-          (2.0 / (1.0 * layout.taper_tailcone))
-  
+      V_cone = (Qv / cone.τ) *
+               (π + 2 * n_webs * θ_web) / (π + n_webs * (2θ_web + sin2θ)) *
+               (layout.x_cone_end - layout.x_pressure_shell_aft) / layout.radius *
+               (2.0 / (1.0 + layout.taper_tailcone))
+
       x_cone = 0.5 * (layout.x_pressure_shell_aft + layout.x_cone_end)
   
       W_frac_add =
@@ -321,8 +308,5 @@ function size_tailcone(fuse::Fuselage, n_vertical_tails, L_vmax, b_v, λv)
   
       cone.thickness = Qv / (2.0 * cone.τ * A_fuse)
       cone.GJ = cone.material.G * 4.0 * A_fuse^2 * cone.thickness / perimeter
-      # println("In size_tailcone: $(cone.τ), $(cone.ρ)")
-      # println(cone)
-      # println(cone.thickness)
   
   end  # function size_tailcone

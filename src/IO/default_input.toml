@@ -384,7 +384,7 @@
 
     cone_material = "TASOPT-Al"
     cone_max_avg_stress = 1.1
-    cone_safety_factor = 3.0
+    cone_safety_factor = 2.0
 
     floor_material = "TASOPT-Al"
     floor_max_avg_stress = 1.1
