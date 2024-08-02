@@ -63,7 +63,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈  0.9186792726434271
+    @test ac.parm[imPFEI] ≈  0.9186795447828657
 end
 
 @testset "Wide sizing" verbose=true begin
@@ -83,23 +83,23 @@ end
 
     @testset "Geometry" begin
         for i in eachindex(parg)
-            @test parg[i] ≈ ac.parg[i] rtol=1e-5
+            @test parg[i] ≈ ac.parg[i]
         end
     end
 
     @testset "Aero" begin
         for i in eachindex(para)
-            @test para[i] ≈ ac.para[i] rtol=1e-5
+            @test para[i] ≈ ac.para[i] 
         end
     end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] rtol=1e-5
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 1.1500428097635498
+    @test ac.parm[imPFEI] ≈ 1.1500431956693837
 
 end
 
@@ -136,7 +136,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.8131852088386338
+    @test ac.parm[imPFEI] ≈ 0.8131853553294737
 
 end
 
