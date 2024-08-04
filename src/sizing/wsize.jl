@@ -978,6 +978,7 @@ function wsize(ac; itermax=35,
             fwCargoTank = WCargoTank/(2.0 * (Wscen + Wsinn + Wsout))
             println("fwCargoTank: $(fwCargoTank)")
         else
+            println("NO Extra Fuel Tank")
             fwCargoTank = 0.0            
         end
         Wwing = Wwing + 2.0 * (Wscen + Wsinn + Wsout) * fwCargoTank
