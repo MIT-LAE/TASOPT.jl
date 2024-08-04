@@ -948,7 +948,40 @@ function wsize(ac; itermax=35,
             rfmax = Wfuelmp / Wfmax
         end
 
-
+        # Calculate additional fuel tank weight
+        ## Extra fuel volume to take Calculation
+        WeiFuelExtra = parg[igWfuel] - Wfmax # Extra fuel that need to be store in the cargo place
+        if (WeiFuelExtra >= 0.0)# If needed
+            println("Extra Fuel Tank Needed")
+            ### Calculate Skin Thickness
+            PFuelVaporMax = 40524. #[Pa] 40524 Pa is etha vapor pressure at 56.7C
+            PCargoTank = (PFuelVaporMax + parg[igrhofuel]*(gee)*Rfuse)*2.5*2.0 #[Pa]
+            println("PCargoTank (Pa): $(PCargoTank)")
+            POutside = 23800. #[Pa] ISA pressure at 35000 ft
+            DeltaPCargoTank = PCargoTank - POutside
+            if (DeltaPCargoTank <= 0.0)
+                println("Warning: Negative Cargo Tank Pressure")
+            end
+            UTSCargoTank = 505e6 #Al-7075
+            rhoCargoTank = 2810.0 #kg/m3 Al-7075
+            WeldEffCargoTank = 0.9
+            SigAllowCargoTank = UTSCargoTank / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
+            tSkinCargoTank = DeltaPCargoTank * (2 * Rfuse) / (2 * SigAllowCargoTank * WeldEffCargoTank + 0.8 * DeltaPCargoTank) #(7.1) in Barron (1985)
+            println("Tank Thickness (mm): $(tSkinCargoTank*1000)")
+            ### Calcualte Surface Area
+            areaCargoTank = 0.5 * pi * (Rfuse^2) #Hemisphere Area
+            volCargoTankReq = WeiFuelExtra/parg[igrhofuel]/gee #[m3] volume of fuel
+            lenCargoTank = volCargoTankReq/areaCargoTank #[m]
+            areaCargoTank = areaCargoTank*2 + pi*Rfuse*lenCargoTank + 2*Rfuse*lenCargoTank #[m2] Front/Back Cap ; Bottom Surface ; Top Cap
+            volCargoTank = areaCargoTank*tSkinCargoTank
+            WCargoTank = volCargoTank*rhoCargoTank*gee #[N]
+            fwCargoTank = WCargoTank/(2.0 * (Wscen + Wsinn + Wsout))
+            println("fwCargoTank: $(fwCargoTank)")
+        else
+            fwCargoTank = 0.0            
+        end
+        Wwing = Wwing + 2.0 * (Wscen + Wsinn + Wsout) * fwCargoTank
+        dxWwing = dxWwing + 2.0 * (dxWsinn + dxWsout) * fwCargoTank
         # Save wing details into geometry array
         parg[igWwing] = Wwing * rlx + parg[igWwing] * (1.0 - rlx)
         parg[igWfmax] = Wfmax
