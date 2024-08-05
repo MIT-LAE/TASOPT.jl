@@ -12,7 +12,7 @@ using NLsolve
 using Roots
 using NLopt
 
-export surfw, surfdx!, fusew!, tailpo, tanksize!,
+export surft!, surfw, surfdx!, fusew!, tailpo, tanksize!,
  update_fuse!, update_fuse_for_pax!
 
 
@@ -38,6 +38,7 @@ export Tail
 #include sizing of surfaces
 include("surfdx.jl")
 include("surfw.jl")
+include("surft.jl")
 include("tailpo.jl")
 
 #Hydrogen tank related code

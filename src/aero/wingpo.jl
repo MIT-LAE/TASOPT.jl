@@ -24,27 +24,34 @@ N*W - L_{h tail} \\times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 
 See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function wingpo(b, bs, bo,
-               λt, λs, γt, γs,
-               AR, N, W, Lhtail, fLo, fLt)
-      
-      ηo = bo/b #calculate non-dim. span locations eta
-      ηs = bs/b
-     
-      Kc = ηo +
-	 0.5*(1.0    +λs)*(ηs-ηo) +
-	 0.5*(λs+λt)*(1.0 -ηs)
+# function wingpo(b, bs, bo,
+#                λt, λs, γt, γs,
+#                AR, N, W, Lhtail, fLo, fLt)
 
-      Ko = 1.0/(AR*Kc)
+# (wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan,
+#                     wing.outboard.layout.λ, wing.inboard.layout.λ, γt, γs,
+#                     wing.layout.AR, Nlift, BW, Lhtail, fLo, fLt)
+function wingpo(wing, rclt, rcls, N, W, Lhtail, fLo, fLt)
+    
+    γt, γs = wing.outboard.layout.λ * rclt, wing.inboard.layout.λ * rcls
+        
+    ηo = wing.layout.box_halfspan/wing.outboard.layout.b #calculate non-dim. span locations eta
+    ηs = wing.inboard.layout.b/wing.outboard.layout.b
+    
+    Kc = ηo +
+    0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +
+    0.5*(wing.inboard.layout.λ+wing.outboard.layout.λ)*(1.0 -ηs)
 
-      Kp = ηo +
-	 0.5*(1.0    +γs )*(ηs-ηo) +
-	 0.5*(γs +γt )*(1.0 -ηs) +
-	 fLo*ηo + 2.0*fLt*Ko*γt*λt
+    Ko = 1.0/(wing.layout.AR*Kc)
 
-      po = (N*W - Lhtail)/(Kp*b)
+    Kp = ηo +
+    0.5*(1.0    +γs )*(ηs-ηo) +
+    0.5*(γs +γt )*(1.0 -ηs) +
+    fLo*ηo + 2.0*fLt*Ko*γt*wing.outboard.layout.λ
 
-      return po
+    po = (N*W - Lhtail)/(Kp*wing.outboard.layout.b)
+
+    return po
 end # wingpo
 
 

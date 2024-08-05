@@ -542,9 +542,7 @@ function wsize(ac; itermax=35,
         γt, γs = wing.outboard.layout.λ * para[iarclt, ip], wing.inboard.layout.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wingpo(wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan,
-                    wing.outboard.layout.λ, wing.inboard.layout.λ, γt, γs,
-                    wing.layout.AR, Nlift, BW, Lhtail, fLo, fLt)
+        po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail, fLo, fLt)
 
         # Calculate engine weight
         Weng1 = (wing.planform == 1) ? (pari[iiengtype] == 0 ? parg[igWfan] + parg[igWmot] + parg[igWfanGB] : parg[igWeng] / parg[igneng]) : 0.0
