@@ -446,11 +446,9 @@ function wsize(ac; itermax=35,
              Δp,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
             bv, vtail.outboard.λ, vtail.ntails,
-            
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
             xeng)
-
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
@@ -669,7 +667,6 @@ function wsize(ac; itermax=35,
         surft!(htail, poh, λhs, htail.outboard.λ, λhs,
         fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
-
         # HT centroid x-offset
         surfdx!(htail, htail.outboard.b, λhs)
         # HT pitching moment coeff
@@ -743,7 +740,7 @@ function wsize(ac; itermax=35,
             parg[igxWfuel] = parg[igWfuel] * xfuel
 
             # Update fuselage according to tank requirements
-            update_fuse!(pari, parg) #update fuselage length to accommodate tank
+            update_fuse!(fuselage, wing, htail, vtail, pari, parg) #update fuselage length to accommodate tank
             fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties

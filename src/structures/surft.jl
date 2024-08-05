@@ -206,7 +206,6 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
         tail.dxW = dxWhtail
 
      tail.thickness_web, tail.thickness_cap, tail.EI_bending, tail.EI_normal, tail.GJ =  tbwebo,tbcapo,EIco,EIno,GJo
-
 end # surft!
 
 

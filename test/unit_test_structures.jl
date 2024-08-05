@@ -5,18 +5,17 @@
   fuselage = ac_test.fuselage
 
   Nland, Wpaymax, Wengtail, 
-  nftanks,
-  Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
-  Δp,
-  Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-  bv, λv, nvtail,
-  xhtail, xvtail,
-  xwing, xwbox, cbox,
-  xeng = [6.0, 219964.5779, 0.0, 0, 0.0, 0.0, 0.0, 0.0, "", 
-          56016.16406368774, 14401.51302958861, 9645.666840197786, 
-          0.4, 0.7, 1.2379954317075564e6, 1.0469874186878382e6, 7.958908725623409, 
-          0.3, 1.0, 36.21248821998368, 35.0505846520266, 18.465757410492177, 
-          15.688376236863938, 3.119653923461824, 14.164376236863939 ]
+                          nftanks,
+                          Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
+                          Δp,
+                          Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
+                          bv, λv, nvtail,
+                          xhtail, xvtail,
+                          xwing, xwbox, cbox,
+                          xeng = [6.0, 219964.5779, 0.0, 0, 0.0, 0.0, 0.0, 0.0, "", 56016.1756316446, 14400.815502104786, 
+        9645.22120844135, 0.4, 0.7, 1.2379754637499652e6, 1.0469704911343623e6, 7.958844386073947, 
+        0.3, 1.0, 36.212475021199154, 35.05057234350367, 18.465770971525686, 15.688410884477133, 
+        3.119635043953234, 14.164410884477133 ]
   
   cabVol = TASOPT.fusew!(fuselage, Nland, Wpaymax, Wengtail, 
                           nftanks,
@@ -40,30 +39,12 @@
             fuselage.bendingmaterial_h.weight.W, fuselage.bendingmaterial_v.weight.W,
             fuselage.weight,fuselage.moment,
             cabVol]
-
-  ## Old FORTRAN outputs just temporarily retained. Better representation of 
-  # material properties and sizing consideration (τ instead of σ and proper G vals) means 
-  # the new calculations are "better" and more accurate.
-  # fort_out = [0.0010592914302080562, 0.0012235633080289908, 0.0, 
-  #             0.0009061565981319232, 31.85596336970722, 31.098559122927245, 
-  #             2.361319618160982e9, 2.4686136573868637e10, 2.3173490053921146e9, 
-  #             2.4686136573868637e10, 1.570840175144195e9, 1.8144415656291723e9, 
-  #             20947.348347295865, 5667.632920626953, 11269.980000000001, 
-  #             5018.7283576257105, 13415.7630120004, 14314.44885191115, 
-  #             7381.15959985673, 198042.54737081684, 3.620266695235501e6, 414.54271063740043]
-  
-  # for i in eachindex(out)
-  #   @test out[i] ≈ fort_out[i] rtol=1e-3
-  # end
-
-  test_out = [0.0010592914302080562, 0.0012235812333327315, 0.0,
-    0.0009061565981319232, 31.855960860329677, 31.098559122927245,
-    2.361319618160982e9, 2.4686144041160843e10, 2.3173490053921146e9,
-    2.4686144041160843e10, 1.570840175144195e9, 1.6421579148805373e9,
-    20947.348347295865, 5667.715951918366, 11269.980000000001,
-    5018.7283576257105, 13415.7630120004, 14314.452366401405,
-    7381.155204479751, 198042.62952122153, 3.620269431679788e6,
-    414.54271063740043]
+            
+  test_out = [0.0010592916489634418, 0.0012236016395195024, 0.0, 0.0009061565981319232, 
+  31.85585727200865, 31.098482101397437, 2.361320105799576e9, 2.4685708558261826e10, 
+  2.317349483950291e9, 2.4685708558261826e10, 1.5708404995400493e9, 1.6421853018493836e9, 
+  20947.352673154768, 5667.810474837753, 11269.980000000001, 5018.7283576257105, 13415.796495703155, 
+  14314.082074792976, 7380.925148634968, 198042.16150624937, 3.620261283824471e6, 414.54271063740043]
     
 @test all(isapprox.(out, test_out))
 
@@ -87,121 +68,42 @@ dx_out, macco_out = TASOPT.structures.surfdx(b,bs,bo,lambdat,lambdas,sweep)
 
 
 #surfw:
-  gee = 9.8100000000000005
-  po = 110091.58394892939
-  b = 35.486921629195265
-  bs = 10.113772664320649
-  bo = 3.6067999999999998
-  co = 5.8841656099573720
-  zs = 3.9116000000000000
-  lambdat = 0.25000000000000000
-  lambdas = 0.69999999999999996
-  gammat = 0.22500000000000001
-  gammas = 0.86659999999999993
+  po = 114119.45308868506
+  gammat = 0.225
+  gammas = 0.8665999999999999
   Nlift = 3.0000000000000000
-  iwplan = 1
-  Weng1 = 27312.133624204889
-  Winn = 48907.685542960695
-  Wout = 70390.482266430423
-  dyWinn = 70296.379288596174
-  dyWout = 315316.83291120041
-  sweep = 26.000000000000000
-  wbox = 0.50000000000000000
-  hboxo = 0.12680000000000000
-  hboxs = 0.12659999999999999
-  rh = 0.75000000000000000
-  fLt = -5.0000000000000003E-002
-  tauweb = 137931034.48275861
-  sigcap = 206896551.72413793
-  sigstrut = 206896551.72413793
-  Ecap = 68965517241.379318
-  Eweb = 68965517241.379318
-  Gcap = 26525198938.992046
-  Gweb = 26525198938.992046
-  rhoweb = 2700.0000000000000
-  rhocap = 2700.0000000000000
-  rhostrut = 2700.0000000000000
+  Weng1 = 30083.769249783934
+  fLt = -0.05
+  sigfac = 1.0
   rhofuel = 817.00000000000000
-  fort_Ss = 549317.34029970923
-  fort_Ms = 2919107.4513926785
-  fort_tbwebs = 1.5302067790179924E-003
-  fort_tbcaps = 6.4712234567801050E-003
-  fort_EIcs = 256525134.96391767
-  fort_EIns = 1981689904.7351539
-  fort_GJs = 220465338.41465056
-  fort_So = 654948.64283556491
-  fort_Mo = 4759686.3416206865
-  fort_tbwebo = 8.9257473924635666E-004
-  fort_tbcapo = 3.4237821474538827E-003
-  fort_EIco = 598779822.13510609
-  fort_EIno = 4420836188.7699680
-  fort_GJo = 529475637.81714487
-  fort_Astrut = 0.0000000000000000
-  fort_lstrutp = 0.0000000000000000
-  fort_cosLs = 1.0000000000000000
-  fort_Wscen = 5943.1718341806891
-  fort_Wsinn = 9074.6000905588244
-  fort_Wsout = 17146.749196179870
-  fort_dxWsinn = 6361.5817898457608
-  fort_dxWsout = 64671.501022901110
-  fort_dyWsinn = 13043.175582241660
-  fort_dyWsout = 76809.512837201284
-  fort_Wfcen = 27272.842046818590
-  fort_Wfinn = 31647.789098991288
-  fort_Wfout = 39316.171146500550
-  fort_dxWfinn = 22186.101515424907
-  fort_dxWfout = 148286.75531592543
-  fort_dyWfinn = 45488.249166743939
-  fort_dyWfout = 176118.27862155536
-  fort_Wweb = 2855.5435405652265
-  fort_Wcap = 61473.498701273536
-  fort_Wstrut = 0.0000000000000000
-  fort_dxWweb = 6133.4918937186821
-  fort_dxWcap = 135932.67373177505
-  fort_dxWstrut = 0.0000000000000000
 
-neout = 0
-neinn = 1
-dyeout = 0 
-dyeinn = 0.5*(bs - bo)
-
-Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
-So,Mo,tbwebo,tbcapo,EIco,EIno,GJo,
-Astrut,lsp,cosLs,
-Wscen,Wsinn,Wsout,dxWsinn,dxWsout,dyWsinn,dyWsout,
-Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,
-Wweb,  Wcap,  Wstrut,
-dxWweb,dxWcap,dxWstrut = TASOPT.surfw(po,b,bs,bo,co,zs,
-lambdat,lambdas,gammat,gammas,
-Nlift,iwplan,Weng1,neout, dyeout, neinn, dyeinn,
-Winn,Wout,dyWinn,dyWout,
-sweep,wbox,hboxo,hboxs,rh, fLt,
-tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
-rhoweb,rhocap,rhostrut,rhofuel)
+  fort_Wwing = 129055.8385739653
+  fort_Wsinn = 11643.760847427178
+  fort_Wsout = 20444.306372488714
+  fort_dyWsinn = 18266.601840430056
+  fort_dyWsout = 96970.09656550126
+  fort_Wfcen =  30488.07253761438
+  fort_Wfinn = 38682.37013612792
+  fort_Wfout = 46796.44312114958
+  fort_dxWfinn = 29597.79354199928 
+  fort_dxWfout = 189307.87250917125
+  fort_dyWfinn =  60684.46980143201
+  fort_dyWfout = 221961.82769430208
+  fort_lstrutp = 0.0
 
 
-@test fort_Ss ≈ Ss 
-@test fort_Ms ≈ Ms 
-@test fort_tbwebs ≈ tbwebs 
-@test fort_tbcaps ≈ tbcaps 
-@test fort_EIcs ≈ EIcs 
-@test fort_EIns ≈ EIns 
-@test fort_GJs ≈ GJs 
-@test fort_So ≈ So 
-@test fort_Mo ≈ Mo 
-@test fort_tbwebo ≈ tbwebo 
-@test fort_tbcapo ≈ tbcapo 
-@test fort_EIco ≈ EIco 
-@test fort_EIno ≈ EIno 
-@test fort_GJo ≈ GJo 
-@test fort_Astrut ≈ Astrut 
-@test fort_lstrutp ≈ lsp 
-@test fort_cosLs ≈ cosLs 
-@test fort_Wscen ≈ Wscen 
+Wwing,Wsinn,Wsout,
+        dyWsinn,dyWsout,
+        Wfcen,Wfinn,Wfout,
+        dxWfinn,dxWfout,
+        dyWfinn,dyWfout,lstrutp = TASOPT.surfw!(wing, po, gammat, gammas,
+                                            Nlift, Weng1, 0, 0.0, 0, 0.0,
+                                            fLt, sigfac, rhofuel)
+
+
+@test fort_Wwing ≈ Wwing 
 @test fort_Wsinn ≈ Wsinn 
 @test fort_Wsout ≈ Wsout 
-@test fort_dxWsinn ≈ dxWsinn 
-@test fort_dxWsout ≈ dxWsout 
 @test fort_dyWsinn ≈ dyWsinn 
 @test fort_dyWsout ≈ dyWsout 
 @test fort_Wfcen ≈ Wfcen 
@@ -211,13 +113,25 @@ rhoweb,rhocap,rhostrut,rhofuel)
 @test fort_dxWfout ≈ dxWfout 
 @test fort_dyWfinn ≈ dyWfinn 
 @test fort_dyWfout ≈ dyWfout 
-@test fort_Wweb ≈ Wweb 
-@test fort_Wcap ≈ Wcap 
-@test fort_Wstrut ≈ Wstrut 
-@test fort_dxWweb ≈ dxWweb 
-@test fort_dxWcap ≈ dxWcap 
-@test fort_dxWstrut ≈ dxWstrut 
+@test fort_lstrutp ≈ lstrutp 
 #end surfw
+
+#surft
+poh = 115893.98734144184
+λhs = 1.0
+fLt = -0.05
+tauwebh = 1.378913257881327e8
+σcaph = 2.0684848484848484e8
+surft_f_out = [14400.81547163942, 14069.611170000926, 0.0011568849664072272, 0.0023905578555627194, 1.896322960387795e8, 1.2616774558497725e9, 1.982246806635212e8]
+TASOPT.surft!(htail, poh, λhs, htail.outboard.λ, λhs,
+        fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
+        wing.inboard.webs.ρ, wing.inboard.caps.ρ)
+
+surft_out = [htail.weight, htail.dxW, htail.thickness_web, htail.thickness_cap, htail.EI_bending, htail.EI_normal, htail.GJ]
+
+@test all(isapprox.(surft_out, surft_f_out))
+#end surft
+
 
 #tailpo:
   Sh = 42.443587259163984
@@ -247,10 +161,10 @@ parg[igdxeng2wbox] = 1.5239999999999991
 fuselage.APU.r = [36.576, 0.0, 0.0]
 fuselage.layout.x_end = 37.7952
 fuselage.layout.x_cone_end = 35.6616
-parg[igxhbox ] = 34.8996
-parg[igxvbox ] = 33.528
-parg[igxwbox] = 16.04432532088372
-parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+htail.layout.box_x = 34.8996
+vtail.layout.box_x = 33.528
+wing.layout.box_x = 16.04432532088372
+parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
 fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
 pari = zeros(iitotal)
@@ -261,7 +175,7 @@ pari[iinftanks] = 1
 
 #Update fuel tank length and check changes
 parg[iglftank] = 5.0
-TASOPT.update_fuse!(fuselage, pari, parg)
+TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 
 # parg_check = [43.40480000000001, 6.096, 35.175200000000004, 36.699200000000005, 41.27120000000001, 14.52032532088372, 16.04432532088372, 40.50920000000001, 39.137600000000006, 42.18560000000001, 21.660776608000003, 5.0, 23.4696, 1.5239999999999991, 18.716634144] 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
@@ -270,8 +184,8 @@ fuselage.layout.x_cone_end,
 fuselage.APU.x,
 fuselage.layout.x_end,
 fuselage.HPE_sys.x,
-parg[igxhbox],
-parg[igxvbox],
+htail.layout.box_x,
+vtail.layout.box_x,
 parg[igxeng]]
 
 update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.326234144000004, 42.18560000000001, 43.40480000000001, 12.767380728136962, 40.50920000000001, 39.137600000000006, 14.52032532088372]
@@ -281,7 +195,7 @@ update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.3262341440000
 #Return to original points?
 pari[iinftanks] = 0.0
 parg[iglftank] = 0.0
-TASOPT.update_fuse!(fuselage, pari, parg)
+TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
 fuselage.layout.x_pressure_shell_aft, 
@@ -289,8 +203,8 @@ fuselage.layout.x_cone_end,
 fuselage.APU.x,
 fuselage.layout.x_end,
 fuselage.HPE_sys.x,
-parg[igxhbox],
-parg[igxvbox],
+htail.layout.box_x,
+vtail.layout.box_x,
 parg[igxeng]]
 
 update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79520000000001, 9.82323826413696, 34.89960000000001, 33.528000000000006, 14.52032532088372]
