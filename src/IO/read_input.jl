@@ -264,9 +264,9 @@ readweight(x) = read_input(x, weight, dweight)
 
     fuselage.fixed.W = Force(readweight("fixed_weight"))
 
-    fuselage.window.W_per_length = readweight("window_per_length")
-    fuselage.insulation.W_per_area = readweight("window_insul_per_area")
-    fuselage.floor.W_per_area = readweight("floor_weight_per_area")
+    fuselage.window_W_per_length= readweight("window_per_length")
+    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
+    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
     parg[igflgnose] = readweight("LG_nose_weight_fraction")
@@ -330,7 +330,7 @@ readgeom(x) = read_input(x, geom, dgeom)
         cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
         bubble_center_y_offset = dy, n_webs = n_webs)
     end
-    println(cross_section)
+
     fuselage.layout.cross_section = cross_section
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
     fuselage.layout.nose_radius = readgeom("a_nose")
@@ -695,6 +695,12 @@ readstruct(x) = read_input(x, structures, dstructures)
                                     max_avg_stress = skin_max_avg,
                                     safety_factor = skin_safety_fac)
 
+    cone_max_avg = readstruct("cone_max_avg_stress")
+    cone_safety_fac = readstruct("cone_safety_factor")
+    fuselage.cone.material =  StructuralAlloy(readstruct("cone_material"), 
+                                    max_avg_stress = cone_max_avg,
+                                    safety_factor = cone_safety_fac)
+
     bend_max_avg = readstruct("bending_max_avg_stress")
     bend_safety_fac = readstruct("bending_safety_factor")
     fuselage.bendingmaterial_h.material = StructuralAlloy(readstruct("bending_material"),
@@ -702,6 +708,13 @@ readstruct(x) = read_input(x, structures, dstructures)
                                 safety_factor = bend_safety_fac)
 
     fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
+
+    floor_max_avg = readstruct("floor_max_avg_stress")
+    floor_safety_fac = readstruct("floor_safety_factor")
+    fuselage.floor.material = StructuralAlloy(readstruct("floor_material"),
+        max_avg_stress=floor_max_avg,
+        safety_factor=floor_safety_fac)
+
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------

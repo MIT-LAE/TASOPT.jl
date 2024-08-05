@@ -3,6 +3,9 @@
 @testset "wing aerodynamics" begin
     filename = TASOPT.aerodynamics.airfoil_data
     airf = TASOPT.aerodynamics.airtable(filename)
+    include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
+    fuselage = ac_test.fuselage
+    wing = ac_test.wing
 
     #Test that it is reading the database correctly first
     @test airf.Re == 2.0e7
@@ -146,25 +149,26 @@
     #end Wingpo
 
     #start wingsc
-    BW = 761687.25696433627
+    BW = 853967.1303861982
     CL = 0.56999999999999995
     qinf = 10717.328761811295
-    AR = 10.100000000000000
-    etas = 0.28499999999999998
-    bo = 3.6067999999999998
-    lambdat = 0.25000000000000000
-    lambdas = 0.69999999999999996
-    fort_S = 124.68530759570760
-    fort_b = 35.486921629195265
-    fort_bs = 10.113772664320649
-    fort_co = 5.8841656099573720
+    # AR = 10.100000000000000
+    # etas = 0.28499999999999998
+    # bo = 3.6067999999999998
+    # lambdat = 0.25000000000000000
+    # lambdas = 0.69999999999999996
+    fort_S = 139.79117197415886
+    fort_b = 37.57513588716619
+    fort_bs = 10.708913727842363
+    fort_co = 6.239270087906468
 
-    S,b,bs,co = TASOPT.aerodynamics.wingsc(BW,CL,qinf,AR,
-    etas,bo,lambdat,lambdas)
-    @test fort_S  == S 
-    @test fort_b  == b 
-    @test fort_bs == bs
-    @test fort_co == co
+    TASOPT.aerodynamics.wingsc!(BW,CL,qinf,wing)
+    # wingsc(BW,CL,qinf,AR,
+    # etas,bo,lambdat,lambdas)
+    @test fort_S  == wing.layout.S 
+    @test fort_b  == wing.outboard.layout.b
+    @test fort_bs == wing.inboard.layout.b
+    @test fort_co == wing.layout.chord
     #end wingsc
     
     #surfcm
