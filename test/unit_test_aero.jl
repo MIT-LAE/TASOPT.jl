@@ -126,24 +126,16 @@
 
     #end surfcd
     #start Wingpo
-    b = 35.486921629195265
-    bs = 10.113772664320649
-    bo = 3.6067999999999998
-    λt  = 0.25000000000000000
-    λs  = 0.69999999999999996
-    γt = 0.22500000000000001
-    γs = 0.86659999999999993
-    AR = 10.100000000000000
+    rclt = 0.9
+    rcls = 1.238
     N = 3.0000000000000000
-    W = 778345.75427325454
-    Lhtail = -132476.65894384123
-    fLo = -0.29999999999999999
-    fLt = -5.0000000000000003E-002
-    fort_po = 110091.58394892939
+    W = 853967.1303861982
+    Lhtail = -152047.6033818514
+    fLo = -0.3
+    fLt = -0.05
+    fort_po = 114119.45308868506
 
-    po = TASOPT.aerodynamics.wingpo(b, bs, bo,
-        λt, λs, γt, γs,
-        AR, N, W, Lhtail, fLo, fLt)
+    po = TASOPT.aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail, fLo, fLt)
     
     @test po == fort_po
     #end Wingpo
