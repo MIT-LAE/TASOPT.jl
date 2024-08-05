@@ -1019,11 +1019,11 @@ function wsize(ac; itermax=35,
         parg[igSstrut] = Ssturt
 
         # Individual panel weights
-        Winn = Wsinn * (1.0 + fwadd) + rfmax * Wfinn
-        Wout = Wsout * (1.0 + fwadd) + rfmax * Wfout
+        Winn = Wsinn * (1.0 + fwadd) + min(1.0,rfmax) * Wfinn
+        Wout = Wsout * (1.0 + fwadd) + min(1.0,rfmax) * Wfout
 
-        dyWinn = dyWsinn * (1.0 + fwadd) + rfmax * dyWfinn
-        dyWout = dyWsout * (1.0 + fwadd) + rfmax * dyWfout
+        dyWinn = dyWsinn * (1.0 + fwadd) + min(1.0,rfmax) * dyWfinn
+        dyWout = dyWsout * (1.0 + fwadd) + min(1.0,rfmax) * dyWfout
 
         parg[igWinn] = Winn
         parg[igWout] = Wout
