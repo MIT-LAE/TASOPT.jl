@@ -11,12 +11,12 @@ N*W - L_{h tail} \\times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `b::Float64`: Wing span.
-    - `bs::Float64`: Span of inner wing section.
-    - `bo::Float64`:  Span of wing box (span at wing root).
-    - `λt::Float64`, `λs::Float64` : Wing chord taper ratios at tip and break ("snag"), respectively.
-    - `γt::Float64`,`γs::Float64` : Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
-    - `AR::Float64`, `N::Float64`, `W::Float64`, `Lhtail` : Aspect ratio, Load factor, weight and H-tail lift.
+    - `wing::TASOPT.structures.wing`: Wing structure.
+    - `rclt::Float64`: .
+    - `rcls::Float64`: .
+    - `N::Float64`: 
+    - `W::Float64`: 
+    - `Lhtail::Float64`: 
     - `fLo::Float64`, `fLt::Float64` : Wing root and tip load adjustment factors.
 
     **Outputs:**
@@ -24,13 +24,6 @@ N*W - L_{h tail} \\times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 
 See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-# function wingpo(b, bs, bo,
-#                λt, λs, γt, γs,
-#                AR, N, W, Lhtail, fLo, fLt)
-
-# (wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan,
-#                     wing.outboard.layout.λ, wing.inboard.layout.λ, γt, γs,
-#                     wing.layout.AR, Nlift, BW, Lhtail, fLo, fLt)
 function wingpo(wing, rclt, rcls, N, W, Lhtail, fLo, fLt)
     
     γt, γs = wing.outboard.layout.λ * rclt, wing.inboard.layout.λ * rcls

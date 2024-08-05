@@ -49,7 +49,12 @@ function surfdx(b,bs,bo,λt,λs,sweep)
 
 end # surfdx
 
+"""
+      surfdx!(wing, b, bs, parg)
 
+surfdx wrapper for Wing
+
+"""
 function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{Float64} = Float64[])
       if isempty(parg)
           dx, _ = surfdx(b, bs,
@@ -69,7 +74,12 @@ function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{F
       wing.layout.x = wing.layout.box_x + dx
 end
 
+"""
+      surfdx!(wing, b, λs)
 
+surfdx wrapper for Tail
+
+"""
 function surfdx!(tail::Tail, b::Float64, λs::Float64)
       dx, _ = surfdx(b,
                   tail.layout.box_halfspan,
