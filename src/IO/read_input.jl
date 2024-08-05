@@ -550,6 +550,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail.layout.box_x  = Distance(readhtail("x_Htail"))
     htail.layout.z = Distance(readhtail("z_Htail"))
+    htail.ntails  = readhtail("number_Htails")
 
     htail.CL_CLmax = readhtail("max_tail_download")
 

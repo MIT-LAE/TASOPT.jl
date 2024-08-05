@@ -12,7 +12,7 @@ using NLsolve
 using Roots
 using NLopt
 
-export surft!, surfw, surfdx!, fusew!, tailpo, tanksize!,
+export surft!, surfw!, surfw, surfdx!, fusew!, tailpo, tanksize!,
  update_fuse!, update_fuse_for_pax!
 
 
