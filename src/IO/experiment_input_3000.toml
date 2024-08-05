@@ -87,7 +87,7 @@
                                 
     range = "3000.0 nmi" # Design Range + second mission range
 
-    pax = 180                    # Number of passengers in each mission
+    pax = 230                    # Number of passengers in each mission
                                         # weight per pax also specified (215 lbf/pax is std)
 
     weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
