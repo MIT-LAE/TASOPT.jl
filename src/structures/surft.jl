@@ -92,149 +92,122 @@ Also returns the material gauges, torsional and bending stiffness.
 
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
-function surft!(tail,po,b,lambdas,fLt,
-                  tauweb,sigcap,Ecap,
-                  rhoweb,rhocap)
 
-    #               (tail,po,b,lambdas,
-    # fLt,
-    # tauweb,sigcap,Ecap,
-    # rhoweb,rhocap)
-    
-    
+function surft!(tail, po, lambdas,gammat,gammas,fLt,
+            tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.outboard.b)
 
-    #               surft!(htail, poh, tail.outboard.b, tail.layout.box_halfspan, 
-    #             tail.layout.box_halfspan, tail.layout.chord,
-    #             tail.outboard.λ, λhs,
-    #             tail.layout.sweep, tail.layout.box_width, tail.outboard.chord_thickness, 
-    #             tail.outboard.chord_thickness, tail.layout.hweb_to_hbox, fLt,
-    #             tauwebh, σcaph, wing.inboard.caps.material.E, 
-    #             wing.inboard.webs.ρ, wing.inboard.caps.ρ)
+       Eweb = Ecap
+       Gcap = Ecap * 0.5 / (1.0 + 0.3)
+       Gweb = Ecap * 0.5 / (1.0 + 0.3)
 
-    #             surft!(vtail, pov, bv2, #vtail.layout.box_halfspan, 
-    #         #vtail.layout.box_halfspan, #vtail.layout.chord,
-    #         #vtail.outboard.λ,
-    #         λvs, 
-    #         #vtail.layout.sweep, vtail.layout.box_width, vtail.outboard.chord_thickness, 
-    #         #vtail.outboard.chord_thickness, vtail.layout.hweb_to_hbox, 
-    #         fLt,
-    #         tauwebv, σcapv, wing.inboard.caps.material.E,
-    #         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
+       cosL = cos(deg2rad(tail.layout.sweep))
+       sinL = sin(deg2rad(tail.layout.sweep))
 
-  gammat,gammas = tail.outboard.λ,lambdas
-  Eweb = Ecap
-  Gcap = Ecap * 0.5 / (1.0 + 0.3)
-  Gweb = Ecap * 0.5 / (1.0 + 0.3)
+      # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
+      etao = tail.layout.box_halfspan/b
+      etas = tail.layout.box_halfspan/b
 
-  cosL = cos(tail.layout.sweep*pi/180)
-       sinL = sin(tail.layout.sweep*pi/180)
+      cop = tail.layout.chord*cosL
+      # Tip roll off Lift (modeled as a point load) and it's moment about ηs
+      dLt = fLt*po*tail.layout.chord*gammat*tail.outboard.λ
+      dMt = dLt*0.5*b*(1.0-etas)
 
-  # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
-  etao = tail.layout.box_halfspan/b
-  etas = tail.layout.box_halfspan/b
+      havgo = tail.outboard.chord_thickness * (1.0 - (1.0-tail.layout.hweb_to_hbox)/3.0)
 
-  cop = tail.layout.chord*cosL
-  #   csp = tail.layout.chord*cosL*lambdas
-  # Tip roll off Lift (modeled as a point load) and it's moment about ηs
-  dLt = fLt*po*tail.layout.chord*gammat*tail.outboard.λ
-  dMt = dLt*0.5*b*(1.0-etas)
+      hrmso = tail.outboard.chord_thickness * sqrt(1.0 - (1.0-tail.layout.hweb_to_hbox)/1.5 + (1.0-tail.layout.hweb_to_hbox)^2 / 5.0)
+      hrmss = tail.outboard.chord_thickness * sqrt(1.0 - (1.0-tail.layout.hweb_to_hbox)/1.5 + (1.0-tail.layout.hweb_to_hbox)^2 / 5.0)
 
-  havgo = tail.outboard.chord_thickness * (1.0 - (1.0-tail.layout.hweb_to_hbox)/3.0)
-  #   havgs = tail.outboard.chord_thickness * (1.0 - (1.0-tail.layout.hweb_to_hbox)/3.0)
+# Outboard section:
+#---- strut-attach shear,moment from outer-wing loading. 
+#     Note added term to account for any outboard engines.
+#     If neout = 0 this simplifies to Drela's version which assumes engine
+#     fixed at ηs locations only.
+      Ss = (po*b   / 4.0)*(gammas+    gammat)*(1.0-etas) +
+	 dLt 
+      Ms = (po*b^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
+	 dMt
 
-  hrmso = tail.outboard.chord_thickness * sqrt(1.0 - (1.0-tail.layout.hweb_to_hbox)/1.5 + (1.0-tail.layout.hweb_to_hbox)^2 / 5.0)
-  hrmss = tail.outboard.chord_thickness * sqrt(1.0 - (1.0-tail.layout.hweb_to_hbox)/1.5 + (1.0-tail.layout.hweb_to_hbox)^2 / 5.0)
+#---- size strut-attach station at etas
+      cs = tail.layout.chord*lambdas
+      tbwebs = Ss*0.5/(cs^2*tauweb*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness*cosL^2)
+      con  = Ms*6.0*tail.outboard.chord_thickness/(cs^3*sigcap*tail.layout.box_width*cosL^4)
+      tbcaps = 0.5*(hrmss - (hrmss^3-con)^(1.0/3.0))
+      Abcaps = 2.0*tbcaps*tail.layout.box_width
+      Abwebs = 2.0*tbwebs*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness
 
-  # Outboard section:
-  #---- strut-attach shear,moment from outer-wing loading. 
-  #     Note added term to account for any outboard engines.
-  #     If neout = 0 this simplifies to Drela's version which assumes engine
-  #     fixed at ηs locations only.
-  Ss = (po*b   / 4.0)*(gammas+    gammat)*(1.0-etas) +
-  dLt
-  Ms = (po*b^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
-  dMt 
+    #----- no strut, with or without engine at etas
 
-  #---- size strut-attach station at etas
-  cs = tail.layout.chord*lambdas
-  tbwebs = Ss*0.5/(cs^2*tauweb*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness*cosL^2)
-  con  = Ms*6.0*tail.outboard.chord_thickness/(cs^3*sigcap*tail.layout.box_width*cosL^4)
-  tbcaps = 0.5*(hrmss - (hrmss^3-con)^(1.0/3.0))
-  Abcaps = 2.0*tbcaps*tail.layout.box_width
-  Abwebs = 2.0*tbwebs*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness
+    # Modifed to account for bending relief from multiple engines.
+    # dyeinn allows engine to be in locations other than ηs
+    So = Ss +
+    0.25*po*b*(1.0+gammas)*(etas-etao) 
+    Mo = Ms + Ss*0.5*b*(etas-etao) +
+    (1.0/24.0)*po*b^2*(1.0+2.0*gammas)*(etas-etao)^2 
 
-  # Inboard Section:
+    #----- limit So,Mo to Ss,Ms, which might be needed with heavy outboard engine
+    #-      (rules out negatively-tapered structure, deemed not feasible for downloads)
+    So = max(So ,Ss)
+    Mo = max(Mo ,Ms)
 
-  # Modifed to account for bending relief from multiple engines.
-  # dyeinn allows engine to be in locations other than ηs
-  So = Ss +
-  0.25*po*b*(1.0+gammas)*(etas-etao) 
-  Mo = Ms + Ss*0.5*b*(etas-etao) +
-  (1.0/24.0)*po*b^2*(1.0+2.0*gammas)*(etas-etao)^2 
-
-  #----- limit So,Mo to Ss,Ms, which might be needed with heavy outboard engine
-  #-      (rules out negatively-tapered structure, deemed not feasible for downloads)
-  So = max(So ,Ss)
-  Mo = max(Mo ,Ms)
-
-  #----- size root station at etao
-  tbwebo = So*0.5/(tail.layout.chord^2*tauweb*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness*cosL^2)
-  con  = Mo*6.0*tail.outboard.chord_thickness/(tail.layout.chord^3*sigcap*tail.layout.box_width*cosL^4)
-  tbcapo = 0.5*(hrmso - (hrmso^3-con)^(1.0/3.0))
-  Abcapo = 2.0*tbcapo*tail.layout.box_width
-  Abwebo = 2.0*tbwebo*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness
+    #----- size root station at etao
+    tbwebo = So*0.5/(tail.layout.chord^2*tauweb*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness*cosL^2)
+    con  = Mo*6.0*tail.outboard.chord_thickness/(tail.layout.chord^3*sigcap*tail.layout.box_width*cosL^4)
+    tbcapo = 0.5*(hrmso - (hrmso^3-con)^(1.0/3.0))
+    Abcapo = 2.0*tbcapo*tail.layout.box_width
+    Abwebo = 2.0*tbwebo*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness
 
 
-  tail.EI_bending = Ecap*cop^4 * (hrmso^3 - (hrmso-2.0*tbcapo)^3)*tail.layout.box_width/12.0 +
-  Eweb*cop^4 * tbwebo*(tail.layout.hweb_to_hbox*tail.outboard.chord_thickness)^3 / 6.0
-  tail.EI_normal = Ecap*cop^4 * tbcapo*    tail.layout.box_width  ^3 / 6.0 +
-  Eweb*cop^4 * tbwebo*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness * 0.5*tail.layout.box_width^2
-  tail.GJ = cop^4 * 2.0*((tail.layout.box_width-tbwebo)*(havgo-tbcapo))^2 /
-  (  (tail.layout.hweb_to_hbox*tail.outboard.chord_thickness-tbcapo)/(Gweb*tbwebo) +
-  (   tail.layout.box_width -tbwebo)/(Gcap*tbcapo) )
+      EIco = Ecap*cop^4 * (hrmso^3 - (hrmso-2.0*tbcapo)^3)*tail.layout.box_width/12.0 +
+	 Eweb*cop^4 * tbwebo*(tail.layout.hweb_to_hbox*tail.outboard.chord_thickness)^3 / 6.0
+      EIno = Ecap*cop^4 * tbcapo*    tail.layout.box_width  ^3 / 6.0 +
+	 Eweb*cop^4 * tbwebo*tail.layout.hweb_to_hbox*tail.outboard.chord_thickness * 0.5*tail.layout.box_width^2
+      GJo = cop^4 * 2.0*((tail.layout.box_width-tbwebo)*(havgo-tbcapo))^2 /
+	 (  (tail.layout.hweb_to_hbox*tail.outboard.chord_thickness-tbcapo)/(Gweb*tbwebo) +
+	 (   tail.layout.box_width -tbwebo)/(Gcap*tbcapo) )
 
 
-  Vcen = tail.layout.chord^2*b *  etao / 2.0
+      Vcen = tail.layout.chord^2*b *  etao / 2.0
 
-  Vinn = tail.layout.chord^2*b * (etas-etao) *
-  (1.0 + lambdas + lambdas^2)/6.0 *
-  cosL
-  Vout = tail.layout.chord^2*b * (1.0 -etas) *
-  (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/6.0 *
-  cosL
+      Vinn = tail.layout.chord^2*b * (etas-etao) *
+	 (1.0 + lambdas + lambdas^2)/6.0 *
+	 cosL
+      Vout = tail.layout.chord^2*b * (1.0 -etas) *
+	 (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/6.0 *
+	 cosL
 
-  dxVinn = tail.layout.chord^2*b^2 * (etas-etao)^2 *
-  (1.0 + 2.0*lambdas + 3.0*lambdas^2)/48.0 *
-  sinL
-  dxVout = tail.layout.chord^2*b^2 * (1.0 -etas)^2 *
-  (lambdas^2 + 2.0*lambdas*tail.outboard.λ + 3.0*tail.outboard.λ^2)/48.0 *
-  sinL +
-  tail.layout.chord^2*b^2 * (etas-etao)*(1.0 -etas) *
-  (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/12.0 *
-  sinL
+      dxVinn = tail.layout.chord^2*b^2 * (etas-etao)^2 *
+	 (1.0 + 2.0*lambdas + 3.0*lambdas^2)/48.0 *
+	 sinL
+      dxVout = tail.layout.chord^2*b^2 * (1.0 -etas)^2 *
+	 (lambdas^2 + 2.0*lambdas*tail.outboard.λ + 3.0*tail.outboard.λ^2)/48.0 *
+	 sinL +
+	  tail.layout.chord^2*b^2 * (etas-etao)*(1.0 -etas) *
+	 (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/12.0 *
+	 sinL
 
+#---- set chord^2 weighted average areas for inner panel
+      Abcapi = (Abcapo + Abcaps*lambdas^2)/(1.0+lambdas^2)
+      Abwebi = (Abwebo + Abwebs*lambdas^2)/(1.0+lambdas^2)
 
-  #---- set chord^2 weighted average areas for inner panel
-  Abcapi = (Abcapo + Abcaps*lambdas^2)/(1.0+lambdas^2)
-  Abwebi = (Abwebo + Abwebs*lambdas^2)/(1.0+lambdas^2)
+      Wscen   = (rhocap*Abcapo + rhoweb*Abwebo)*gee*Vcen
+      Wsinn   = (rhocap*Abcapi + rhoweb*Abwebi)*gee*Vinn
+      Wsout   = (rhocap*Abcaps + rhoweb*Abwebs)*gee*Vout
 
-  Wscen   = (rhocap*Abcapo + rhoweb*Abwebo)*gee*Vcen
-  Wsinn   = (rhocap*Abcapi + rhoweb*Abwebi)*gee*Vinn
-  Wsout   = (rhocap*Abcaps + rhoweb*Abwebs)*gee*Vout
+      dxWsinn = (rhocap*Abcapi + rhoweb*Abwebi)*gee*dxVinn
+      dxWsout = (rhocap*Abcaps + rhoweb*Abwebs)*gee*dxVout
 
-  dxWsinn = (rhocap*Abcapi + rhoweb*Abwebi)*gee*dxVinn
-  dxWsout = (rhocap*Abcaps + rhoweb*Abwebs)*gee*dxVout
+      Vout = tail.layout.chord^2*b * (1.0 -etas) *
+	 (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/6.0 *
+	 cosL
 
+        Whtail = tail.ntails * (Wscen + Wsinn + Wsout) * (1.0 + tail.weight_fraction_added)
+        dxWhtail = tail.ntails * (dxWsinn + dxWsout) * (1.0 + tail.weight_fraction_added)
+        tail.weight = Whtail
+        tail.dxW = dxWhtail
 
-  tail.weight = (Wscen + Wsinn + Wsout) * (1.0 + tail.weight_fraction_added) * tail.ntails
-  tail.dxW = (dxWsinn + dxWsout) * (1.0 + tail.weight_fraction_added) * tail.ntails
+     tail.thickness_web, tail.thickness_cap, tail.EI_bending, tail.EI_normal, tail.GJ =  tbwebo,tbcapo,EIco,EIno,GJo
 
+end # surft!
 
-  tail.thickness_web = tbwebo
-  tail.thickness_cap = tbcapo
-
-
-
-end # surfw
 
 

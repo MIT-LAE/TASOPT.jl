@@ -113,7 +113,7 @@ function wsize(ac; itermax=35,
     # Tail surface taper ratios and strut parameters
     λhs = λvs = 1.0
     tohstrut = 0.05
-    zsh = zsv = 0.0
+
 
     # Load factors and dynamic pressure
     Nlift = parg[igNlift]
@@ -553,27 +553,13 @@ function wsize(ac; itermax=35,
         rhofuel = (pari[iifwing] == 0) ? 0.0 : parg[igrhofuel]
 
         # Call surfw function
-        wing_out = surfw(po, wing.outboard.layout.b, wing.inboard.layout.b, wing.layout.box_halfspan, wing.layout.chord, wing.strut.z,
-                         wing.outboard.layout.λ, wing.inboard.layout.λ, γt, γs,
-                         Nlift, wing.planform, Weng1,
-                         0, 0.0, 0, 0.0,
-                         Winn, Wout, dyWinn, dyWout,
-                         wing.layout.sweep, wing.layout.box_width, wing.inboard.layout.chord_thickness, wing.outboard.layout.chord_thickness, wing.layout.hweb_to_hbox, fLt,
-                         tauweb, σcap, σstrut, wing.inboard.caps.material.E,
-                         wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
-
-        # Unpack results from surfw
-        wing.outboard.max_shear_load, wing.outboard.moment, wing.outboard.webs.thickness, wing.outboard.caps.thickness, wing.outboard.web_cap.EI_bending, wing.outboard.web_cap.EI_normal, wing.outboard.web_cap.GJ,
-        wing.inboard.max_shear_load, wing.inboard.moment, wing.inboard.webs.thickness, wing.inboard.caps.thickness, wing.inboard.web_cap.EI_bending, wing.inboard.web_cap.EI_normal, wing.inboard.web_cap.GJ,
-        wing.strut.axial_force, lstrutp, wing.strut.cos_lambda,
-        Wscen, Wsinn, Wsout, dxWsinn, dxWsout, dyWsinn, dyWsout,
-        Wfcen, Wfinn, Wfout, dxWfinn, dxWfout, dyWfinn, dyWfout,
-        wing.inboard.webs.weight.W, wing.inboard.caps.weight.W, wing.strut.weight,
-        dxWweb, dxWcap, wing.strut.dxW = wing_out
-
-        # Calculate wing weight
-        Wwing = 2.0 * (Wscen + Wsinn + Wsout) * (1.0 + fwadd)
-        dxWwing = 2.0 * (dxWsinn + dxWsout) * (1.0 + fwadd)
+        Wwing,Wsinn,Wsout,
+        dyWsinn,dyWsout,
+        Wfcen,Wfinn,Wfout,
+        dxWfinn,dxWfout,
+        dyWfinn,dyWfout,lstrutp = surfw!(wing, po, γt, γs,
+                                            Nlift, Weng1, 0, 0.0, 0, 0.0,
+                                            fLt, parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings
         Wfmax, dxWfmax, rfmax = 0.0, 0.0, 0.0
@@ -587,7 +573,7 @@ function wsize(ac; itermax=35,
         # Update wing properties
         wing.weight = Wwing * rlx + wing.weight * (1.0 - rlx)
         parg[igWfmax] = Wfmax
-        wing.dxW = dxWwing
+        # wing.dxW = dxWwing
         parg[igdxWfuel] = dxWfmax * rfmax
 
         wing.outboard.webs.weight = wing.inboard.webs.weight
@@ -680,28 +666,9 @@ function wsize(ac; itermax=35,
         vtail.outboard.b = bv
 
         # HT weight
-        γh, γhs = htail.outboard.λ, λhs
-        ihplan, Wengh = 0, 0.0
-
-        _, _, _, _, _, _, _,
-        _, _, htail.thickness_web, htail.thickness_cap, 
-        htail.EI_bending, htail.EI_normal, htail.GJ,
-        _, _, _,
-        Wscenh, Wsinnh, Wsouth, dxWsinnh, dxWsouth, _, _,
-        _, _, _, _, _, _, _,
-        _, _, _,
-        _, _, _ = surfw(poh, htail.outboard.b, htail.layout.box_halfspan, htail.layout.box_halfspan, htail.layout.chord, zsh,
-            htail.outboard.λ, λhs, γh, γhs,
-            1, ihplan, Wengh, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0,
-            htail.layout.sweep, htail.layout.box_width, htail.outboard.chord_thickness, htail.outboard.chord_thickness, htail.layout.hweb_to_hbox, fLt,
-            tauwebh, σcaph, σstrut, wing.inboard.caps.material.E, 
-            wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
-
-        Whtail = 2.0 * (Wscenh + Wsinnh + Wsouth) * (1.0 + htail.weight_fraction_added)
-        dxWhtail = 2.0 * (dxWsinnh + dxWsouth) * (1.0 + htail.weight_fraction_added)
-        htail.weight = Whtail
-        htail.dxW = dxWhtail
+        surft!(htail, poh, λhs, htail.outboard.λ, λhs,
+        fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
+        wing.inboard.webs.ρ, wing.inboard.caps.ρ)
 
         # HT centroid x-offset
         surfdx!(htail, htail.outboard.b, λhs)
@@ -713,28 +680,9 @@ function wsize(ac; itermax=35,
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        γv, γvs = vtail.outboard.λ, λvs
-        ivplan, Wengv = 0, 0.0
-
-        _, _, _, _, _, _, _,
-        _, _, vtail.thickness_web, vtail.thickness_cap, vtail.EI_bending, 
-        vtail.EI_normal, vtail.GJ,
-        _, _, _,
-        Wscenv, Wsinnv, Wsoutv, dxWsinnv, dxWsoutv, dyWsinnv, dyWsoutv,
-        _, _, _, _, _, _, _,
-        _, _, _,
-        _, _, _ = surfw(pov, bv2, vtail.layout.box_halfspan, vtail.layout.box_halfspan, vtail.layout.chord, zsv,
-            vtail.outboard.λ, λvs, γv, γvs,
-            1.0, ivplan, Wengv, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0,
-            vtail.layout.sweep, vtail.layout.box_width, vtail.outboard.chord_thickness, vtail.outboard.chord_thickness, vtail.layout.hweb_to_hbox, fLt,
-            tauwebv, σcapv, σstrut, wing.inboard.caps.material.E,
-            wing.inboard.webs.ρ, wing.inboard.caps.ρ, wing.strut.material.ρ, rhofuel)
-
-        Wvtail = (Wscenv + Wsinnv + Wsoutv) * (1.0 + vtail.weight_fraction_added) * vtail.ntails
-        dxWvtail = (dxWsinnv + dxWsoutv) * (1.0 + vtail.weight_fraction_added) * vtail.ntails
-        vtail.weight = Wvtail
-        vtail.dxW = dxWvtail
+        surft!(vtail, pov, λvs, vtail.outboard.λ, λvs,
+        fLt,tauwebv, σcapv, wing.inboard.caps.material.E, 
+        wing.inboard.webs.ρ, wing.inboard.caps.ρ, bv2)
 
         # VT centroid x-offset
         surfdx!(vtail, bv2, λhs)
