@@ -58,14 +58,14 @@ surfdx wrapper for Wing
 function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{Float64} = Float64[])
       if isempty(parg)
           dx, _ = surfdx(b, bs,
-                      wing.layout.box_halfspan,
+                      wing.outboard.layout.b,
                       wing.outboard.layout.λ,
                       wing.inboard.layout.λ,
                       wing.layout.sweep)
       else
-          dx, macco = surfdx(wing.outboard.layout.b,
+          dx, macco = surfdx(wing.layout.b,
                           wing.inboard.layout.b,
-                          wing.layout.box_halfspan,
+                          wing.outboard.layout.b,
                           wing.outboard.layout.λ,
                           wing.inboard.layout.λ,
                           wing.layout.sweep)
@@ -82,8 +82,8 @@ surfdx wrapper for Tail
 """
 function surfdx!(tail::Tail, b::Float64, λs::Float64)
       dx, _ = surfdx(b,
-                  tail.layout.box_halfspan,
-                  tail.layout.box_halfspan,
+                  tail.outboard.b,
+                  tail.outboard.b,
                   tail.outboard.λ,
                   λs,
                   tail.layout.sweep)

@@ -135,12 +135,12 @@ end
     AR::Float64 = 0 
     """Sweep [degrees]"""
     sweep::Float64 = 0
+    """ Wing Span [m]"""
+    b::Float64 = 0 
     """Max Wing Span [m]"""
     b_max::Float64 = 0 
     """Wing chord at root """
     chord::Float64 = 0
-    """Wing center box width [m]"""
-    box_halfspan::Float64 = 0 
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0 
     """Wing Box wing x to chord"""

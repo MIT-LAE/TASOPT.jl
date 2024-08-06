@@ -1,6 +1,6 @@
 """
     surft!(tail, po, lambdas,gammat,gammas,fLt,
-            tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.outboard.b)
+            tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.layout.b)
 
 Calculates Tail loads, stresses, weights of individual tail sections.
 Also returns the material gauges, torsional and bending stiffness.
@@ -25,7 +25,7 @@ See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Secti
 """
 
 function surft!(tail, po, lambdas,gammat,gammas,fLt,
-            tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.outboard.b)
+            tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.layout.b)
 
        Eweb = Ecap
        Gcap = Ecap * 0.5 / (1.0 + 0.3)
@@ -35,8 +35,8 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
        sinL = sin(deg2rad(tail.layout.sweep))
 
       # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
-      etao = tail.layout.box_halfspan/b
-      etas = tail.layout.box_halfspan/b
+      etao = tail.outboard.b/b
+      etas = tail.outboard.b/b
 
       cop = tail.layout.chord*cosL
       # Tip roll off Lift (modeled as a point load) and it's moment about ηs

@@ -176,9 +176,9 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "co      = %5.1f m (%8.1f ft)\n" , co, co / ft_to_m )
     @printf(io, "cs      = %5.1f m (%8.1f ft)\n" , cs, cs / ft_to_m )
     @printf(io, "ct      = %5.1f m (%8.1f ft)\n" , ct, ct / ft_to_m )
-    @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , wing.layout.box_halfspan, wing.layout.box_halfspan/ft_to_m   )
+    @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , wing.outboard.layout.b, wing.outboard.layout.b/ft_to_m   )
     @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , wing.inboard.layout.b, wing.inboard.layout.b/ft_to_m   )
-    @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.outboard.layout.b, wing.outboard.layout.b/ft_to_m   )
+    @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.b, wing.layout.b/ft_to_m   )
     @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , wing.layout.S, wing.layout.S/ft_to_m^2 )
 
 
@@ -211,9 +211,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         λs = wing.inboard.layout.λ
         λt = wing.outboard.layout.λ
 
-        bo = wing.layout.box_halfspan
+        bo = wing.outboard.layout.b
         bs = wing.inboard.layout.b
-        b  = wing.outboard.layout.b
+        b  = wing.layout.b
 
         xax = 0.40
         xcLE = -xax
@@ -301,7 +301,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xh = zeros(6)
         yh = zeros(6)
         
-        boh = htail.layout.box_halfspan
+        boh = htail.outboard.b
         Sh  = htail.layout.S
         ARh = htail.layout.AR
         lambdah = htail.outboard.λ
@@ -573,7 +573,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.outboard.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
@@ -1111,9 +1111,9 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         λs = wing.inboard.layout.λ
         λt = wing.outboard.layout.λ
 
-        bo = wing.layout.box_halfspan
+        bo = wing.outboard.layout.b
         bs = wing.inboard.layout.b
-        b  = wing.outboard.layout.b
+        b  = wing.layout.b
 
         xax = 0.40
         xcLE = -xax
@@ -1210,7 +1210,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xh = zeros(6)
     yh = zeros(6)
     
-        boh = htail.layout.box_halfspan
+        boh = htail.outboard.b
         Sh  = htail.layout.S
         ARh = htail.layout.AR
         lambdah = htail.outboard.λ
@@ -1297,13 +1297,13 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xv = zeros(6)
     yv = zeros(6)
     
-    bov = vtail.layout.box_halfspan
+    bov = vtail.outboard.b
     Sv  = vtail.layout.S
     ARv = vtail.layout.AR
     lambdav = vtail.outboard.λ
     sweepv  = vtail.layout.sweep
 
-    bv = vtail.outboard.b
+    bv = vtail.layout.b
     cov = vtail.layout.chord
 
 
@@ -1536,7 +1536,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.outboard.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
