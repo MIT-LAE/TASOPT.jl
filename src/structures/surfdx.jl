@@ -19,9 +19,10 @@ and the mean aerodynamic chord (normalized by root chord, `co`)
 
 See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Description](@ref dreladocs).
 """
+
 function surfdx(b,bs,bo,λt,λs,sweep)
 
-      tanL = tan(sweep * π/180.0)
+      tanL = tan(deg2rad(sweep))
 
       ηo = bo/b
       ηs = bs/b
@@ -43,7 +44,48 @@ function surfdx(b,bs,bo,λt,λs,sweep)
 
       dx    = Kcx/Kc * b*tanL
       macco = Kcc/Kc
-   
-      return dx, macco
+
+      return dx,macco
+
 end # surfdx
 
+"""
+      surfdx!(wing, b, bs, parg)
+
+surfdx wrapper for Wing
+
+"""
+function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{Float64} = Float64[])
+      if isempty(parg)
+          dx, _ = surfdx(b, bs,
+                      wing.outboard.layout.b,
+                      wing.outboard.layout.λ,
+                      wing.inboard.layout.λ,
+                      wing.layout.sweep)
+      else
+          dx, macco = surfdx(wing.layout.b,
+                          wing.inboard.layout.b,
+                          wing.outboard.layout.b,
+                          wing.outboard.layout.λ,
+                          wing.inboard.layout.λ,
+                          wing.layout.sweep)
+          parg[igcma] = macco * wing.layout.chord
+      end
+      wing.layout.x = wing.layout.box_x + dx
+end
+
+"""
+      surfdx!(wing, b, λs)
+
+surfdx wrapper for Tail
+
+"""
+function surfdx!(tail::Tail, b::Float64, λs::Float64)
+      dx, _ = surfdx(b,
+                  tail.outboard.layout.b,
+                  tail.outboard.layout.b,
+                  tail.outboard.layout.λ,
+                  λs,
+                  tail.layout.sweep)
+      tail.layout.x = tail.layout.box_x + dx         
+end

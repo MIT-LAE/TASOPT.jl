@@ -6,20 +6,23 @@ function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
     pari = ac.pari
     fuselage = ac.fuselage
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
     Wlgnose = parg[igWMTO] * parg[igflgnose]
     Wlgmain = parg[igWMTO] * parg[igflgmain]
     Wtotadd = Whpesys + Wlgnose + Wlgmain
 
-    Wbox    = parg[igWweb] + parg[igWcap]
-    Wflap   = Wbox * parg[igfflap]
-    Wslat   = Wbox * parg[igfslat]
-    Waile   = Wbox * parg[igfaile]
-    Wlete   = Wbox * parg[igflete]
-    Wribs   = Wbox * parg[igfribs]
-    Wspoi   = Wbox * parg[igfspoi]
-    Wwatt   = Wbox * parg[igfwatt]
+    Wbox    = wing.inboard.webs.weight.W + wing.inboard.caps.weight.W
+    Wflap   = Wbox * wing.weight_frac_flap
+    Wslat   = Wbox * wing.weight_frac_slat
+    Waile   = Wbox * wing.weight_frac_ailerons
+    Wlete   = Wbox * wing.weight_frac_leading_trailing_edge
+    Wribs   = Wbox * wing.weight_frac_ribs
+    Wspoi   = Wbox * wing.weight_frac_spoilers
+    Wwatt   = Wbox * wing.weight_frac_attachments
     Wwing   = Wbox + Wflap + Wslat + Waile + Wlete + Wribs + Wspoi + Wwatt
 
 
@@ -32,21 +35,21 @@ function weight_buildup(ac::aircraft; io=stdout)
                          parg[igWMTO], parg[igWMTO]/lbf_to_N); color=:bold)
 
     @printf(io,"Wfuse   + %10.1f N (%8.1f lb)\n", fuselage.weight, fuselage.weight/lbf_to_N)
-    @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", parg[igWwing ], parg[igWwing ]/lbf_to_N)
-    @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", parg[igWvtail], parg[igWvtail]/lbf_to_N)
-    @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", parg[igWhtail], parg[igWhtail]/lbf_to_N)
+    @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", wing.weight, wing.weight/lbf_to_N)
+    @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", vtail.weight, vtail.weight/lbf_to_N)
+    @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", htail.weight, htail.weight/lbf_to_N)
     @printf(io,"Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
     @printf(io,"Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
     @printf(io,"Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
     @printf(io,"--------------------\n")
     printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
-    fuselage.weight + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
+    fuselage.weight + wing.weight + vtail.weight + htail.weight + 
     parg[igWtesys] + +parg[igWftank] + Wtotadd, 
-    (fuselage.weight + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
+    (fuselage.weight + wing.weight + vtail.weight + htail.weight + 
     parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
 
-    @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", parg[igWcap], parg[igWcap]/lbf_to_N)
-    @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", parg[igWweb], parg[igWweb]/lbf_to_N)
+    @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", wing.inboard.caps.weight.W, wing.inboard.caps.weight.W/lbf_to_N)
+    @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", wing.inboard.webs.weight.W , wing.inboard.webs.weight.W /lbf_to_N)
     @printf(io,"Wflap   + %10.1f N (%8.1f lb)\n", Wflap, Wflap/lbf_to_N)
     @printf(io,"Wslat   + %10.1f N (%8.1f lb)\n", Wslat, Wslat/lbf_to_N)
     @printf(io,"Waile   + %10.1f N (%8.1f lb)\n", Waile, Waile/lbf_to_N)
@@ -88,10 +91,11 @@ of the aircraft
 """
 function aero(ac::aircraft; io = stdout)
     parg = ac.parg
+    wing = ac.wing
     @views para = ac.para[:,:,1]
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
-    @printf(io, "Ref.Area= %6.5f m²\n", parg[igS])
+    @printf(io, "Ref.Area= %6.5f m²\n", wing.layout.S)
     @printf(io, "L/D     = %6.5f\n", para[iaCL, ipcruise1]/ para[iaCD, ipcruise1])
     @printf(io, "CL      = %6.5f\n", para[iaCL, ipcruise1])
     @printf(io, "CD      = %6.5f\n", para[iaCD, ipcruise1])
@@ -105,16 +109,16 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
 
     printstyled(io, "\nDrag Areas = CD × Sref:\n", color=:bold)
-    @printf(io, "CL     × Sref = %6.5f m²\n", parg[igS]*para[iaCL, ipcruise1])
-    @printf(io, "CD     × Sref = %6.5f m²\n", parg[igS]*para[iaCD, ipcruise1])
-    @printf(io, "CDfuse × Sref = %6.5f m²\n", parg[igS]*para[iaCDfuse, ipcruise1])
-    @printf(io, "CDi    × Sref = %6.5f m²\n", parg[igS]*para[iaCDi, ipcruise1])
-    @printf(io, "CDwing × Sref = %6.5f m²\n", parg[igS]*para[iaCDwing, ipcruise1])
-    @printf(io, "CDhtail× Sref = %6.5f m²\n", parg[igS]*para[iaCDhtail, ipcruise1])
-    @printf(io, "CDvtail× Sref = %6.5f m²\n", parg[igS]*para[iaCDvtail, ipcruise1])
-    @printf(io, "CDnace × Sref = %6.5f m²\n", parg[igS]*para[iaCDnace, ipcruise1])
-    @printf(io, "CDBLIf × Sref = %6.5f m²\n", parg[igS]*para[iadCDBLIf, ipcruise1])
-    @printf(io, "CDBLIw × Sref = %6.5f m²\n\n", parg[igS]*para[iadCDBLIw, ipcruise1])
+    @printf(io, "CL     × Sref = %6.5f m²\n", wing.layout.S*para[iaCL, ipcruise1])
+    @printf(io, "CD     × Sref = %6.5f m²\n", wing.layout.S*para[iaCD, ipcruise1])
+    @printf(io, "CDfuse × Sref = %6.5f m²\n", wing.layout.S*para[iaCDfuse, ipcruise1])
+    @printf(io, "CDi    × Sref = %6.5f m²\n", wing.layout.S*para[iaCDi, ipcruise1])
+    @printf(io, "CDwing × Sref = %6.5f m²\n", wing.layout.S*para[iaCDwing, ipcruise1])
+    @printf(io, "CDhtail× Sref = %6.5f m²\n", wing.layout.S*para[iaCDhtail, ipcruise1])
+    @printf(io, "CDvtail× Sref = %6.5f m²\n", wing.layout.S*para[iaCDvtail, ipcruise1])
+    @printf(io, "CDnace × Sref = %6.5f m²\n", wing.layout.S*para[iaCDnace, ipcruise1])
+    @printf(io, "CDBLIf × Sref = %6.5f m²\n", wing.layout.S*para[iadCDBLIf, ipcruise1])
+    @printf(io, "CDBLIw × Sref = %6.5f m²\n\n", wing.layout.S*para[iadCDBLIw, ipcruise1])
 
 end
 
@@ -124,21 +128,24 @@ end
 function geometry(ac::aircraft; io = stdout)
     parg = ac.parg
     fuselage = ac.fuselage
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
     printstyled(io, "Fuselage Layout:\n -------------- \n", color=:bold )
     @printf(io, "xnose     = %5.1f m (%8.1f ft)\n", fuselage.layout.x_nose , fuselage.layout.x_nose/ft_to_m)
     @printf(io, "xend      = %5.1f m (%8.1f ft)\n", fuselage.layout.x_end , fuselage.layout.x_end/ft_to_m)
-    @printf(io, "xwing     = %5.1f m (%8.1f ft)\n", parg[igxwing  ] , parg[igxwing   ]/ft_to_m)
-    @printf(io, "xhtail    = %5.1f m (%8.1f ft)\n", parg[igxhtail ] , parg[igxhtail  ]/ft_to_m)
-    @printf(io, "xvtail    = %5.1f m (%8.1f ft)\n", parg[igxvtail ] , parg[igxvtail  ]/ft_to_m)
+    @printf(io, "xwing     = %5.1f m (%8.1f ft)\n", wing.layout.x , wing.layout.x/ft_to_m)
+    @printf(io, "xhtail    = %5.1f m (%8.1f ft)\n", htail.layout.x , htail.layout.x/ft_to_m)
+    @printf(io, "xvtail    = %5.1f m (%8.1f ft)\n", vtail.layout.x , vtail.layout.x/ft_to_m)
     @printf(io, "xblend1   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_start_cylinder , fuselage.layout.x_start_cylinder/ft_to_m)
     @printf(io, "xblend2   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_end_cylinder , fuselage.layout.x_end_cylinder/ft_to_m)
     @printf(io, "xshell1   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_pressure_shell_fwd , fuselage.layout.x_pressure_shell_fwd/ft_to_m)
     @printf(io, "xshell2   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_pressure_shell_aft , fuselage.layout.x_pressure_shell_aft/ft_to_m)
     @printf(io, "xhbend    = %5.1f m (%8.1f ft)\n", fuselage.bendingmaterial_h.weight.x , fuselage.bendingmaterial_h.weight.x/ft_to_m)
     @printf(io, "xvbend    = %5.1f m (%8.1f ft)\n", fuselage.bendingmaterial_v.weight.x , fuselage.bendingmaterial_v.weight.x/ft_to_m)
-    @printf(io, "xwbox     = %5.1f m (%8.1f ft)\n", parg[igxwbox  ] , parg[igxwbox   ]/ft_to_m)
-    @printf(io, "xhbox     = %5.1f m (%8.1f ft)\n", parg[igxhbox  ] , parg[igxhbox   ]/ft_to_m)
-    @printf(io, "xvbox     = %5.1f m (%8.1f ft)\n", parg[igxvbox  ] , parg[igxvbox   ]/ft_to_m)
+    @printf(io, "xwbox     = %5.1f m (%8.1f ft)\n", wing.layout.box_x , wing.layout.box_x/ft_to_m)
+    @printf(io, "xhbox     = %5.1f m (%8.1f ft)\n", htail.layout.box_x , htail.layout.box_x/ft_to_m)
+    @printf(io, "xvbox     = %5.1f m (%8.1f ft)\n", vtail.layout.box_x , vtail.layout.box_x/ft_to_m)
     @printf(io, "xtshaft   = %5.1f m (%8.1f ft)\n", parg[igxtshaft] , parg[igxtshaft ]/ft_to_m)
     @printf(io, "xgen      = %5.1f m (%8.1f ft)\n", parg[igxgen   ] , parg[igxgen    ]/ft_to_m)
     @printf(io, "xcat      = %5.1f m (%8.1f ft)\n", parg[igxcat   ] , parg[igxcat    ]/ft_to_m)
@@ -157,23 +164,22 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "xSMfwd  = %5.4f\n", SMfwd)
     @printf(io, "xSMaft  = %5.4f\n", SMaft)
 
-    
     printstyled(io, "\nWing Layout:\n -------------- \n", color=:bold )
-    @printf(io, "AR      = %5.3f \n" , parg[igAR     ])
-    @printf(io, "sweep   = %5.3f \n" , parg[igsweep  ])
-    @printf(io, "lambdas = %5.3f \n" , parg[iglambdas])
-    @printf(io, "lambdat = %5.3f \n" , parg[iglambdat]) 
-    co = parg[igco]
-    cs = parg[igco]*parg[iglambdas]
-    ct = parg[igco]*parg[iglambdat]
+    @printf(io, "AR      = %5.3f \n" , wing.layout.AR)
+    @printf(io, "sweep   = %5.3f \n" , wing.layout.sweep)
+    @printf(io, "lambdas = %5.3f \n" , wing.inboard.layout.λ)
+    @printf(io, "lambdat = %5.3f \n" , wing.outboard.layout.λ) 
+    co = wing.layout.chord
+    cs = wing.layout.chord*wing.inboard.layout.λ 
+    ct = wing.layout.chord*wing.outboard.layout.λ 
 
     @printf(io, "co      = %5.1f m (%8.1f ft)\n" , co, co / ft_to_m )
     @printf(io, "cs      = %5.1f m (%8.1f ft)\n" , cs, cs / ft_to_m )
     @printf(io, "ct      = %5.1f m (%8.1f ft)\n" , ct, ct / ft_to_m )
-    @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , parg[igbo], parg[igbo]/ft_to_m   )
-    @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , parg[igbs], parg[igbs]/ft_to_m   )
-    @printf(io, "b       = %5.1f m (%8.1f ft)\n" , parg[igb ], parg[igb ]/ft_to_m   )
-    @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , parg[igS ], parg[igS ]/ft_to_m^2 )
+    @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , wing.outboard.layout.b, wing.outboard.layout.b/ft_to_m   )
+    @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , wing.inboard.layout.b, wing.inboard.layout.b/ft_to_m   )
+    @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.b, wing.layout.b/ft_to_m   )
+    @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , wing.layout.S, wing.layout.S/ft_to_m^2 )
 
 
 end
@@ -192,24 +198,28 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    fuselage = ac.fuselage
     # Wing
-        co = parg[igco]
-        cs = parg[igco]*parg[iglambdas]
-        ct = parg[igco]*parg[iglambdat]
+        co = wing.layout.chord
+        cs = wing.layout.chord*wing.inboard.layout.λ
+        ct = wing.layout.chord*wing.outboard.layout.λ
 
-        sweep = parg[igsweep  ]
-        λs = parg[iglambdas]
-        λt = parg[iglambdat]
+        sweep = wing.layout.sweep
+        λs = wing.inboard.layout.λ
+        λt = wing.outboard.layout.λ
 
-        bo = parg[igbo]
-        bs = parg[igbs]
-        b  = parg[igb ]
+        bo = wing.outboard.layout.b
+        bs = wing.inboard.layout.b
+        b  = wing.layout.b
 
         xax = 0.40
         xcLE = -xax
         xcTE = 1.0 - xax
 
-        dx = parg[igxwbox]      
+        dx = wing.layout.box_x
         etas = bs/b
         etao = bo/b
         cosL = cos(sweep*pi/180.0)
@@ -237,7 +247,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         yw[5] = bs/2.0
         yw[6] = bo/2.0
     # Fuse
-        fuselage = ac.fuselage
+        
         Rfuse = fuselage.layout.radius
         wfb   = fuselage.layout.bubble_center_y_offset
 
@@ -248,16 +258,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xend     = fuselage.layout.x_end
         xblend1  = fuselage.layout.x_start_cylinder
         xblend2  = fuselage.layout.x_end_cylinder
-        xhtail   = parg[igxhtail  ]
-        xvtail   = parg[igxvtail  ]
-        xwing    = parg[igxwing   ]
-
-        xwbox    = parg[igxwbox   ]
-        xhbox    = parg[igxhbox   ]
-        xvbox    = parg[igxvbox   ]
-
-        lcyl = xblend2 - xblend1
-        xtail = xvtail 
+        xhbox    = htail.layout.box_x
         
         hwidth = Rfuse + wfb
         
@@ -300,11 +301,11 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xh = zeros(6)
         yh = zeros(6)
         
-        boh = parg[igboh]
-        Sh  = parg[igSh]
-        ARh = parg[igARh]
-        lambdah = parg[iglambdah]
-        sweeph  = parg[igsweeph]
+        boh = htail.outboard.layout.b
+        Sh  = htail.layout.S
+        ARh = htail.layout.AR
+        lambdah = htail.outboard.layout.λ
+        sweeph  = htail.layout.sweep
 
         bh = sqrt(Sh*ARh)
         coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
@@ -478,12 +479,12 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         
         # Plot Tail
         tailz = 1
-        parg[igzhtail] > 0 ? tailz = 21 : tailz = 1
+        htail.layout.z> 0 ? tailz = 21 : tailz = 1
             # ax.plot(xh,  yh, "-k", zorder = tailz)
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
-        xvt = [-0.4, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
-        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(parg[igcov]*parg[ighboxv]/2) 0.0])[:]
+        xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.chord .+ vtail.layout.box_x
+        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.chord*vtail.layout.box_x/2) 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 
         # Plot fuse
@@ -522,7 +523,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
-            ηs = parg[igetas]
+            ηs = wing.ηs
             dy = 2*D # space to leave near wing root and tip [m]
             if parg[igneng] == 2
                 yi = [ηs*b/2]
@@ -542,8 +543,8 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
                 end
             end
 
-            tanL = tan(parg[igsweep]*π/180.0)
-            @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
+            tanL = tan(wing.layout.sweep*π/180.0)
+            @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
             xlocations = hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...) #hcat is to avoid this being an array of arrays
             ylocations = hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...)
             ax.plot(xlocations, ylocations, color = "r", linewidth = 1.5)
@@ -572,7 +573,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
@@ -631,6 +632,9 @@ function plot_details(ac::aircraft; ax = nothing)
     pari = ac.pari
     parg = ac.parg
     fuselage = ac.fuselage
+    wing = ac.wing
+    htail = ac.wing
+    vtail = ac.wing
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
@@ -682,10 +686,10 @@ function plot_details(ac::aircraft; ax = nothing)
         Wfuel = parg[igWfuel]
         WMTO  = parg[igWMTO]
 
-        Wwing  = parg[igWwing]
+        Wwing  = wing.weight
         Wfuse  = fuselage.weight
-        Wvtail = parg[igWvtail]
-        Whtail = parg[igWhtail]
+        Wvtail = vtail.weight
+        Whtail = htail.weight
         Weng = parg[igWeng]
         Wtesys = parg[igWtesys]
         Wftank = parg[igWftank]
@@ -1092,27 +1096,30 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     pari = ac.pari
     parg = ac.parg
     fuselage = ac.fuselage
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
     # Wing
-        co = parg[igco]
-        cs = parg[igco]*parg[iglambdas]
-        ct = parg[igco]*parg[iglambdat]
+        co = wing.layout.chord
+        cs = wing.layout.chord*wing.inboard.layout.λ
+        ct = wing.layout.chord*wing.outboard.layout.λ
 
-        sweep = parg[igsweep  ]
-        λs = parg[iglambdas]
-        λt = parg[iglambdat]
+        sweep = wing.layout.sweep
+        λs = wing.inboard.layout.λ
+        λt = wing.outboard.layout.λ
 
-        bo = parg[igbo]
-        bs = parg[igbs]
-        b  = parg[igb ]
+        bo = wing.outboard.layout.b
+        bs = wing.inboard.layout.b
+        b  = wing.layout.b
 
         xax = 0.40
         xcLE = -xax
         xcTE = 1.0 - xax
 
-        dx = parg[igxwbox]      
+        dx = wing.layout.box_x
         etas = bs/b
         etao = bo/b
         cosL = cos(sweep*pi/180.0)
@@ -1151,13 +1158,13 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         xend     = fuselage.layout.x_end
         xblend1  = fuselage.layout.x_start_cylinder
         xblend2  = fuselage.layout.x_end_cylinder
-        xhtail   = parg[igxhtail  ]
-        xvtail   = parg[igxvtail  ]
-        xwing    = parg[igxwing   ]
+        xhtail   = htail.layout.x
+        xvtail   = vtail.layout.x
+        xwing    = wing.layout.x
 
-        xwbox    = parg[igxwbox   ]
-        xhbox    = parg[igxhbox   ]
-        xvbox    = parg[igxvbox   ]
+        xwbox    = wing.layout.box_x
+        xhbox    = htail.layout.box_x
+        xvbox    = vtail.layout.box_x
 
         lcyl = xblend2 - xblend1
         xtail = xvtail 
@@ -1200,15 +1207,14 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     
     # Tail
-        xh = zeros(6)
-        yh = zeros(6)
-        
-        boh = parg[igboh]
-        Sh  = parg[igSh]
-        ARh = parg[igARh]
-        lambdah = parg[iglambdah]
-        sweeph  = parg[igsweeph]
-
+    xh = zeros(6)
+    yh = zeros(6)
+    
+        boh = htail.outboard.layout.b
+        Sh  = htail.layout.S
+        ARh = htail.layout.AR
+        lambdah = htail.outboard.layout.λ
+        sweeph  = htail.layout.sweep
         bh = sqrt(Sh*ARh)
         coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
 
@@ -1291,17 +1297,17 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xv = zeros(6)
     yv = zeros(6)
     
-    bov = parg[igbov]
-    Sv  = parg[igSv]
-    ARv = parg[igARv]
-    lambdav = parg[iglambdav]
-    sweepv  = parg[igsweepv]
+    bov = vtail.outboard.layout.b
+    Sv  = vtail.layout.S
+    ARv = vtail.layout.AR
+    lambdav = vtail.outboard.layout.λ
+    sweepv  = vtail.layout.sweep
 
-    bv = parg[igbv]
-    cov = parg[igcov]
+    bv = vtail.layout.b
+    cov = vtail.layout.chord
 
 
-    dx = parg[igxvbox]
+    dx = vtail.layout.box_x
     tanLv = tan(sweepv*π/180.0)
     ctv = cov*lambdav
 
@@ -1431,12 +1437,12 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             # ax.plot(xw[[2,5]], -yw[[2,5]], "-k", lw = 1.0, alpha = 0.5)
         
         # Plot Tail
-        parg[igzhtail] > 0 ? tailz = 21 : tailz = 1
+        htail.layout.z > 0 ? tailz = 21 : tailz = 1
             # ax.plot(xh,  yh, "-k", zorder = tailz)
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
-        xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
-        tailthick = (parg[igcov]*parg[ighboxv]/2)
+        xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.chord .+ vtail.layout.box_x
+        tailthick = (vtail.layout.chord*vtail.outboard.layout.chord_thickness/2)
         yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 
@@ -1493,8 +1499,8 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
                 end
             end
 
-            tanL = tan(parg[igsweep]*π/180.0)
-            @. xi = tanL * (yi - bo/2) - 0.4ci + parg[igxwbox] - 1.0
+            tanL = tan(wing.layout.sweep*π/180.0)
+            @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
             
             xlocs = hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)
             ylocs = hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ]...)
@@ -1530,7 +1536,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20

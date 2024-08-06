@@ -42,45 +42,45 @@ See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@r
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cdsum!(pari,parg,para,pare, icdfun)
+function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
 
       Ldebug = false
 #      Ldebug = true
 
-      AR       = parg[igAR     ]
-      sweep    = parg[igsweep  ]
-      hboxo    = parg[ighboxo  ]
-      hboxs    = parg[ighboxs  ]
+      AR       = wing.layout.AR
+      sweep    = wing.layout.sweep
+      hboxo    = wing.inboard.layout.chord_thickness
+      hboxs    = wing.outboard.layout.chord_thickness
       hboxt    = hboxs
       fSnace   = parg[igfSnace ]
-      bo       = parg[igbo     ]
-      bs       = parg[igbs     ]
-      boh      = parg[igboh    ]
-      bov      = parg[igbov    ]
+      bo       = wing.outboard.layout.b
+      bs       = wing.inboard.layout.b
+      boh      = htail.outboard.layout.b
+      bov      = vtail.outboard.layout.b
 
-      lambdat  = parg[iglambdat]
-      lambdas  = parg[iglambdas]
-      gammat   = parg[iglambdat]*para[iarclt]
-      gammas   = parg[iglambdas]*para[iarcls]
+      lambdat  = wing.outboard.layout.λ
+      lambdas  = wing.inboard.layout.λ
+      gammat   = wing.outboard.layout.λ*para[iarclt]
+      gammas   = wing.inboard.layout.λ*para[iarcls]
 
-      lambdah  = parg[iglambdah]
-      lambdav  = parg[iglambdav]
-      sweeph   = parg[igsweeph ]
-      sweepv   = parg[igsweepv ]
-      cosLs    = parg[igcosLs  ]
-      Sstrut   = parg[igSstrut ]
+      lambdah  = htail.outboard.layout.λ
+      lambdav  = vtail.outboard.layout.λ
+      sweeph   = htail.layout.sweep
+      sweepv   = vtail.layout.sweep
+      cosLs    = wing.strut.cos_lambda
+      Sstrut   = wing.strut.S
 
-      co   = parg[igco ]
-      coh  = parg[igcoh]
-      cov  = parg[igcov]
+      co   = wing.layout.chord
+      coh  = htail.layout.chord
+      cov  = vtail.layout.chord
 
-      b    = parg[igb  ]
-      bh   = parg[igbh ]
-      bv   = parg[igbv ]
+      b    = wing.layout.b
+      bh   = htail.layout.b
+      bv   = vtail.layout.b
 
-      S    = parg[igS  ]
-      Sh   = parg[igSh ]
-      Sv   = parg[igSv ]
+      S    = wing.layout.S
+      Sh   = htail.layout.S
+      Sv   = vtail.layout.S
 
       fLo  = parg[igfLo]
       fLt  = parg[igfLt]
@@ -89,9 +89,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
       fCDhcen = parg[igfCDhcen]
       fCDvcen = 0.0
 
-      Astrut   = parg[igAstrut ]
-      cstrut   = parg[igcstrut ]
-      nvtail   = parg[ignvtail ]
+      nvtail   = vtail.ntails
 
       rVnace = parg[igrVnace]
 
@@ -228,7 +226,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
 #---- strut profile CD
       cdfs = para[iacdfs]
       cdps = para[iacdps]
-      rVstrut = parg[igrVstrut]
+      rVstrut = wing.strut.local_velocity_ratio
       CDstrut = (Sstrut/S)*(cdfs + cdps*cosLs^3) * rVstrut^3
       para[iaCDstrut] = CDstrut
 
@@ -236,7 +234,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
 #---- induced CD
 #      if(Ldebug) write(*,*) '...calling CDITRP...'
 
-      cditrp(pari,parg,para)
+      cditrp(pari,parg,para, wing, htail, vtail)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -268,7 +266,7 @@ end # cdsum
 
 
 """
-      cditrp(pari,parg,para)
+      cditrp(pari,parg,para, wing)
 
 Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
 
@@ -285,7 +283,7 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cditrp(pari,parg,para)
+function cditrp(pari,parg,para, wing, htail, vtail)
 
       CL = para[iaCL]
 
@@ -295,10 +293,10 @@ function cditrp(pari,parg,para)
        return
       end
 
-      CLhtail = para[iaCLh]*parg[igSh]/parg[igS]
-      # println("CLhtail: $(para[iaCLh]) $(parg[igSh]) $(parg[igS])")
-      bref = parg[igb]
-      Sref = parg[igS]
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
+      # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
+      bref = wing.layout.b
+      Sref = wing.layout.S
 
       Mach = para[iaMach]
 
@@ -324,16 +322,16 @@ function cditrp(pari,parg,para)
 #      fLo = 0.0
 
 #---- span, wing-break span, wing-root span
-      b[1]  = parg[igb]
-      bs[1] = parg[igbs]
-      bo[1] = parg[igbo]
+      b[1]  = wing.layout.b
+      bs[1] = wing.inboard.layout.b
+      bo[1] = wing.outboard.layout.b
 
 #---- span of wing-root streamline in Trefftz Plane
-      bop[1] = parg[igbo] * 0.2
+      bop[1] = wing.outboard.layout.b * 0.2
 
-      zcent[1]  = parg[igzwing]
-      gammas[1] = parg[iglambdas]*para[iarcls]
-      gammat[1] = parg[iglambdat]*para[iarclt]
+      zcent[1]  = wing.layout.z
+      gammas[1] = wing.inboard.layout.λ*para[iarcls]
+      gammat[1] = wing.outboard.layout.λ*para[iarclt]
       po[1]     = 1.0
       CLsurfsp[1] = CL - CLhtail
 
@@ -343,14 +341,14 @@ function cditrp(pari,parg,para)
       fdut = para[iafdut]
 
 #---- horizontal tail wake parameters
-      b[2]   = parg[igbh]
-      bs[2]  = parg[igboh]
-      bo[2]  = parg[igboh]
-      bop[2] = parg[igboh]
+      b[2]   = htail.layout.b
+      bs[2]  = htail.outboard.layout.b
+      bo[2]  = htail.outboard.layout.b
+      bop[2] = htail.outboard.layout.b
 
-      zcent[2] = parg[igzhtail]
+      zcent[2] = htail.layout.z
       gammas[2] = 1.0
-      gammat[2] = parg[iglambdah]
+      gammat[2] = htail.outboard.layout.λ
       po[2]     = 1.0
       CLsurfsp[2] = CLhtail
 

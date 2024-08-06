@@ -11,12 +11,12 @@ N*W - L_{h tail} \\times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `b::Float64`: Wing span.
-    - `bs::Float64`: Span of inner wing section.
-    - `bo::Float64`:  Span of wing box (span at wing root).
-    - `λt::Float64`, `λs::Float64` : Wing chord taper ratios at tip and break ("snag"), respectively.
-    - `γt::Float64`,`γs::Float64` : Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
-    - `AR::Float64`, `N::Float64`, `W::Float64`, `Lhtail` : Aspect ratio, Load factor, weight and H-tail lift.
+    - `wing::TASOPT.structures.wing`: Wing structure.
+    - `rclt::Float64`: .
+    - `rcls::Float64`: .
+    - `N::Float64`: 
+    - `W::Float64`: 
+    - `Lhtail::Float64`: 
     - `fLo::Float64`, `fLt::Float64` : Wing root and tip load adjustment factors.
 
     **Outputs:**
@@ -24,27 +24,27 @@ N*W - L_{h tail} \\times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 
 See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function wingpo(b, bs, bo,
-               λt, λs, γt, γs,
-               AR, N, W, Lhtail, fLo, fLt)
-      
-      ηo = bo/b #calculate non-dim. span locations eta
-      ηs = bs/b
-     
-      Kc = ηo +
-	 0.5*(1.0    +λs)*(ηs-ηo) +
-	 0.5*(λs+λt)*(1.0 -ηs)
+function wingpo(wing, rclt, rcls, N, W, Lhtail, fLo, fLt)
+    
+    γt, γs = wing.outboard.layout.λ * rclt, wing.inboard.layout.λ * rcls
+        
+    ηo = wing.outboard.layout.b/wing.layout.b #calculate non-dim. span locations eta
+    ηs = wing.inboard.layout.b/wing.layout.b
+    
+    Kc = ηo +
+    0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +
+    0.5*(wing.inboard.layout.λ+wing.outboard.layout.λ)*(1.0 -ηs)
 
-      Ko = 1.0/(AR*Kc)
+    Ko = 1.0/(wing.layout.AR*Kc)
 
-      Kp = ηo +
-	 0.5*(1.0    +γs )*(ηs-ηo) +
-	 0.5*(γs +γt )*(1.0 -ηs) +
-	 fLo*ηo + 2.0*fLt*Ko*γt*λt
+    Kp = ηo +
+    0.5*(1.0    +γs )*(ηs-ηo) +
+    0.5*(γs +γt )*(1.0 -ηs) +
+    fLo*ηo + 2.0*fLt*Ko*γt*wing.outboard.layout.λ
 
-      po = (N*W - Lhtail)/(Kp*b)
+    po = (N*W - Lhtail)/(Kp*wing.layout.b)
 
-      return po
+    return po
 end # wingpo
 
 

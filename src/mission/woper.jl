@@ -25,6 +25,9 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     parad = ac.parad
     pared = ac.pared
 
+    fuse = ac.fuse
+    wing = ac.wing
+
     time_propsys = 0.0
 
     tolerW = 1.0e-8
@@ -153,11 +156,11 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     b  = parg[igb]
     bs = parg[igbs]
     bo = parg[igbo]
-    sweep = parg[igsweep]
+    sweep = wing.layout.sweep
     Xaxis = parg[igXaxis]
-    λs = parg[iglambdas]
-    λt = parg[iglambdat]
-    AR = parg[igAR]
+    λs = wing.inboard.layout.λ
+    λt = wing.outboard.layout.λ
+    AR = wing.layout.AR
     fLo = parg[igfLo]
     fLt = parg[igfLt]
 
@@ -165,8 +168,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     cmpo = para[iacmpo,ip]
     cmps = para[iacmps,ip]
     cmpt = para[iacmpt,ip]
-    γt = parg[iglambdat]*para[iarclt,ip]
-    γs = parg[iglambdas]*para[iarcls,ip]
+    γt = wing.outboard.layout.λ*para[iarclt,ip]
+    γs = wing.inboard.layout.λ*para[iarcls,ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
@@ -178,8 +181,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     ip = ipcruise1
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
 
-    γt = parg[iglambdat]*para[iarclt, ip]
-    γs = parg[iglambdas]*para[iarcls, ip]
+    γt = wing.outboard.layout.λ*para[iarclt, ip]
+    γs = wing.inboard.layout.λ*para[iarcls, ip]
     
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -190,8 +193,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     
     ip = ipdescentn
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-    γt = parg[iglambdat]*para[iarclt, ip]
-    γs = parg[iglambdas]*para[iarcls, ip]
+    γt = wing.outboard.layout.λ*para[iarclt, ip]
+    γs = wing.inboard.layout.λ*para[iarcls, ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -239,7 +242,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     set_ambient_conditions!(ac, ipcruise1)
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, false)
+    time_propsys += mission!(pari, parg, parm, para, pare,fuse, wing, false)
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
