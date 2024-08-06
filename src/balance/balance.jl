@@ -132,8 +132,8 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
            fuse.moment + xWtesys + xWftank +
            Wwing * wing.layout.box_x + wing.dxW +
            Wstrut * wing.layout.box_x + wing.strut.dxW +
-           (Whtail * htail.layout.box_x + htail.dxW) * Sh / Sh1 +
-           Wvtail * vtail.layout.box_x + vtail.dxW +
+           (Whtail * htail.layout.box_x + htail.outboard.dxW) * Sh / Sh1 +
+           Wvtail * vtail.layout.box_x + vtail.outboard.dxW +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
            Wlgnose * parg[igxlgnose] +
@@ -141,7 +141,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
-      xW_Sh = (Whtail * htail.layout.box_x + htail.dxW) / Sh1
+      xW_Sh = (Whtail * htail.layout.box_x + htail.outboard.dxW) / Sh1
 
       #---- total aero moment and derivatives
       CMw0 = para[iaCMw0]
@@ -348,8 +348,8 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
       dxWwing = wing.dxW
       dxWstrut = wing.strut.dxW
-      dxWhtail = htail.dxW
-      dxWvtail = vtail.dxW
+      dxWhtail = htail.outboard.dxW
+      dxWvtail = vtail.outboard.dxW
 
       xeng = parg[igxeng]
       xlgnose = parg[igxlgnose]
@@ -713,8 +713,8 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
             fuse.moment + parg[igxWtesys] + parg[igxWftank] +
             Wwing * wing.layout.box_x + wing.dxW +
             Wstrut * wing.layout.box_x + wing.strut.dxW +
-            Whtail * htail.layout.box_x + htail.dxW +
-            Wvtail * vtail.layout.box_x + vtail.dxW +
+            Whtail * htail.layout.box_x + htail.outboard.dxW +
+            Wvtail * vtail.layout.box_x + vtail.outboard.dxW +
             Weng * parg[igxeng] +
             Whpesys * fuse.HPE_sys.r.x +
             Wlgnose * parg[igxlgnose] +

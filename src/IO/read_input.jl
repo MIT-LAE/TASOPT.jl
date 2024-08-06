@@ -544,9 +544,9 @@ readtails(x) = read_input(x, tails, dtails)
 
 readhtail(x) = read_input(x, htail_input, dhtail)
     htail.layout.AR = readhtail("AR_Htail")
-    htail.outboard.λ = readhtail("taper")
+    htail.outboard.layout.λ = readhtail("taper")
     htail.layout.sweep = readhtail("sweep")
-    htail.outboard.b = 2*Distance(readhtail("center_box_halfspan"))
+    htail.outboard.layout.b = 2*Distance(readhtail("center_box_halfspan"))
 
     htail.layout.box_x  = Distance(readhtail("x_Htail"))
     htail.layout.z = Distance(readhtail("z_Htail"))
@@ -602,7 +602,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     htail.weight_fraction_added = readhtail("added_weight_fraction")
 
     htail.layout.box_width = readhtail("box_width_chord")
-    htail.outboard.chord_thickness = readhtail("box_height_chord")
+    htail.outboard.layout.chord_thickness = readhtail("box_height_chord")
     htail.layout.hweb_to_hbox  = readhtail("web_height_hbox")
 
 
@@ -610,9 +610,9 @@ vtail_input = readtails("Vtail")
 dvtail = dtails["Vtail"]
 readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.layout.AR = readvtail("AR_Vtail")
-    vtail.outboard.λ = readvtail("taper")
+    vtail.outboard.layout.λ = readvtail("taper")
     vtail.layout.sweep  = readvtail("sweep")
-    vtail.outboard.b = Distance(readvtail("center_box_halfspan"))
+    vtail.outboard.layout.b = Distance(readvtail("center_box_halfspan"))
     vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
     vtail.ntails  = readvtail("number_Vtails")
 
@@ -633,7 +633,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
     vtail.weight_fraction_added = readvtail("added_weight_fraction")
     vtail.layout.box_width = readvtail("box_width_chord")
-    vtail.outboard.chord_thickness = readvtail("box_height_chord")
+    vtail.outboard.layout.chord_thickness = readvtail("box_height_chord")
     vtail.layout.hweb_to_hbox  = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----

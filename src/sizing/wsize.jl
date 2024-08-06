@@ -214,8 +214,8 @@ function wsize(ac; itermax=35,
         wing.inboard.weight = Winn
         wing.outboard.weight = Wout
         parg[igWftank] = Wftank
-        htail.dxW = dxWhtail
-        vtail.dxW = dxWvtail
+        htail.outboard.dxW = dxWhtail
+        vtail.outboard.dxW = dxWvtail
         wing.inboard.dyW = dyWinn
         wing.outboard.dyW = dyWout
 
@@ -347,7 +347,7 @@ function wsize(ac; itermax=35,
         Wtesys = parg[igWtesys]
 
         # Extract weight moments
-        dxWhtail, dxWvtail = htail.dxW, vtail.dxW
+        dxWhtail, dxWvtail = htail.outboard.dxW, vtail.outboard.dxW
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
 
         # Calculate weight fractions
@@ -445,7 +445,7 @@ function wsize(ac; itermax=35,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
              Δp,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-            bv, vtail.outboard.λ, vtail.ntails,
+            bv, vtail.outboard.layout.λ, vtail.ntails,
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
             xeng)
@@ -656,15 +656,15 @@ function wsize(ac; itermax=35,
         end
 
         # Set HT max loading magnitude
-        htail.layout.b, htail.layout.chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.λ, qne, htail.CL_max)
+        htail.layout.b, htail.layout.chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.layout.λ, qne, htail.CL_max)
 
         # Set VT max loading magnitude, based on single tail + its bottom image
-        bv2, vtail.layout.chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.λ, qne, vtail.CL_max)
+        bv2, vtail.layout.chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.layout.λ, qne, vtail.CL_max)
         bv = bv2 / 2
         vtail.layout.b = bv
 
         # HT weight
-        surft!(htail, poh, λhs, htail.outboard.λ, λhs,
+        surft!(htail, poh, λhs, htail.outboard.layout.λ, λhs,
         fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
         
@@ -672,13 +672,13 @@ function wsize(ac; itermax=35,
         surfdx!(htail, htail.layout.b, λhs)
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
-        CMh0, CMh1 = surfcm(htail.layout.b, htail.outboard.b, htail.outboard.b, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
+        CMh0, CMh1 = surfcm(htail.layout.b, htail.outboard.layout.b, htail.outboard.layout.b, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.layout.λ, 1.0, htail.outboard.layout.λ, 1.0,
             htail.layout.AR, fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        surft!(vtail, pov, λvs, vtail.outboard.λ, λvs,
+        surft!(vtail, pov, λvs, vtail.outboard.layout.λ, λvs,
         fLt,tauwebv, σcapv, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ, bv2)
 

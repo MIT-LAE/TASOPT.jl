@@ -82,9 +82,9 @@ surfdx wrapper for Tail
 """
 function surfdx!(tail::Tail, b::Float64, λs::Float64)
       dx, _ = surfdx(b,
-                  tail.outboard.b,
-                  tail.outboard.b,
-                  tail.outboard.λ,
+                  tail.outboard.layout.b,
+                  tail.outboard.layout.b,
+                  tail.outboard.layout.λ,
                   λs,
                   tail.layout.sweep)
       tail.layout.x = tail.layout.box_x + dx         

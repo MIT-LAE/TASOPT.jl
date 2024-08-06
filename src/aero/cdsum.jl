@@ -55,16 +55,16 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       fSnace   = parg[igfSnace ]
       bo       = wing.outboard.layout.b
       bs       = wing.inboard.layout.b
-      boh      = htail.outboard.b
-      bov      = vtail.outboard.b
+      boh      = htail.outboard.layout.b
+      bov      = vtail.outboard.layout.b
 
       lambdat  = wing.outboard.layout.λ
       lambdas  = wing.inboard.layout.λ
       gammat   = wing.outboard.layout.λ*para[iarclt]
       gammas   = wing.inboard.layout.λ*para[iarcls]
 
-      lambdah  = htail.outboard.λ
-      lambdav  = vtail.outboard.λ
+      lambdah  = htail.outboard.layout.λ
+      lambdav  = vtail.outboard.layout.λ
       sweeph   = htail.layout.sweep
       sweepv   = vtail.layout.sweep
       cosLs    = wing.strut.cos_lambda
@@ -342,13 +342,13 @@ function cditrp(pari,parg,para, wing, htail, vtail)
 
 #---- horizontal tail wake parameters
       b[2]   = htail.layout.b
-      bs[2]  = htail.outboard.b
-      bo[2]  = htail.outboard.b
-      bop[2] = htail.outboard.b
+      bs[2]  = htail.outboard.layout.b
+      bo[2]  = htail.outboard.layout.b
+      bop[2] = htail.outboard.layout.b
 
       zcent[2] = htail.layout.z
       gammas[2] = 1.0
-      gammat[2] = htail.outboard.λ
+      gammat[2] = htail.outboard.layout.λ
       po[2]     = 1.0
       CLsurfsp[2] = CLhtail
 

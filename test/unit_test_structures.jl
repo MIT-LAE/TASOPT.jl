@@ -39,7 +39,7 @@
             fuselage.bendingmaterial_h.weight.W, fuselage.bendingmaterial_v.weight.W,
             fuselage.weight,fuselage.moment,
             cabVol]
-            
+
   test_out = [0.0010592916489634418, 0.0012236016395195024, 0.0, 0.0009061565981319232, 
   31.85585727200865, 31.098482101397437, 2.361320105799576e9, 2.4685708558261826e10, 
   2.317349483950291e9, 2.4685708558261826e10, 1.5708404995400493e9, 1.6421853018493836e9, 
@@ -123,11 +123,11 @@ fLt = -0.05
 tauwebh = 1.378913257881327e8
 σcaph = 2.0684848484848484e8
 surft_f_out = [14400.81547163942, 14069.611170000926, 0.0011568849664072272, 0.0023905578555627194, 1.896322960387795e8, 1.2616774558497725e9, 1.982246806635212e8]
-TASOPT.surft!(htail, poh, λhs, htail.outboard.λ, λhs,
+TASOPT.surft!(htail, poh, λhs, htail.outboard.layout.λ, λhs,
         fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
 
-surft_out = [htail.weight, htail.dxW, htail.thickness_web, htail.thickness_cap, htail.EI_bending, htail.EI_normal, htail.GJ]
+surft_out = [htail.weight, htail.outboard.dxW, htail.outboard.thickness_web, htail.outboard.thickness_cap, htail.outboard.EI_bending, htail.outboard.EI_normal, htail.outboard.GJ]
 
 @test all(isapprox.(surft_out, surft_f_out))
 #end surft
