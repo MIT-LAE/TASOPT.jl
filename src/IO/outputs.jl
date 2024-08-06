@@ -301,10 +301,10 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xh = zeros(6)
         yh = zeros(6)
         
-        boh = htail.outboard.b
+        boh = htail.outboard.layout.b
         Sh  = htail.layout.S
         ARh = htail.layout.AR
-        lambdah = htail.outboard.λ
+        lambdah = htail.outboard.layout.λ
         sweeph  = htail.layout.sweep
 
         bh = sqrt(Sh*ARh)
@@ -1210,10 +1210,10 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xh = zeros(6)
     yh = zeros(6)
     
-        boh = htail.outboard.b
+        boh = htail.outboard.layout.b
         Sh  = htail.layout.S
         ARh = htail.layout.AR
-        lambdah = htail.outboard.λ
+        lambdah = htail.outboard.layout.λ
         sweeph  = htail.layout.sweep
         bh = sqrt(Sh*ARh)
         coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
@@ -1297,10 +1297,10 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xv = zeros(6)
     yv = zeros(6)
     
-    bov = vtail.outboard.b
+    bov = vtail.outboard.layout.b
     Sv  = vtail.layout.S
     ARv = vtail.layout.AR
-    lambdav = vtail.outboard.λ
+    lambdav = vtail.outboard.layout.λ
     sweepv  = vtail.layout.sweep
 
     bv = vtail.layout.b
@@ -1442,7 +1442,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
         xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.chord .+ vtail.layout.box_x
-        tailthick = (vtail.layout.chord*vtail.outboard.chord_thickness/2)
+        tailthick = (vtail.layout.chord*vtail.outboard.layout.chord_thickness/2)
         yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 

@@ -31,8 +31,9 @@ export Fuselage
 include("fuseW.jl")
 include("../misc/fuselage_geometry.jl")
 
+include("../misc/wingSections.jl")
 include("../misc/wing.jl")
-export WingSection,Wing,wing_additional_weight 
+export WingSection,TailSection,Wing,wing_additional_weight 
 include("../misc/tail.jl")
 export Tail
 #include sizing of surfaces
