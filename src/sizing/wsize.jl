@@ -951,7 +951,8 @@ function wsize(ac; itermax=35,
         # Calculate additional fuel tank weight
         ## Extra fuel volume to take Calculation
         WeiFuelExtra = parg[igWfuel] - Wfmax # Extra fuel that need to be store in the cargo place
-        if (WeiFuelExtra >= 0.0)# If needed
+        gravEffCargoTank = 0.98
+        if ((WeiFuelExtra >= 0.0) && (gravEffCargoTank <= 0))# If needed
             println("Extra Fuel Tank Needed")
             ### Calculate Skin Thickness
             PFuelVaporMax = 40524. #[Pa] 40524 Pa is etha vapor pressure at 56.7C
@@ -975,6 +976,11 @@ function wsize(ac; itermax=35,
             areaCargoTank = areaCargoTank*2 + pi*Rfuse*lenCargoTank + 2*Rfuse*lenCargoTank #[m2] Front/Back Cap ; Bottom Surface ; Top Cap
             volCargoTank = areaCargoTank*tSkinCargoTank
             WCargoTank = volCargoTank*rhoCargoTank*gee #[N]
+            fwCargoTank = WCargoTank/(2.0 * (Wscen + Wsinn + Wsout))
+            println("fwCargoTank: $(fwCargoTank)")
+        elseif (WeiFuelExtra >= 0.0)
+            println("Extra Fuel Tank Needed with tank eff $(gravEffCargoTank)")
+            WCargoTank = (1-gravEffCargoTank)*WeiFuelExtra #[N]
             fwCargoTank = WCargoTank/(2.0 * (Wscen + Wsinn + Wsout))
             println("fwCargoTank: $(fwCargoTank)")
         else
