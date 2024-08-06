@@ -16,6 +16,7 @@ export SaturatedMixture, tanksize!
 
 include(__TASOPTindices__)
 include("../misc/constants.jl")
+include("../utils/bubble_geom.jl")
 
 include("tankWmech.jl")
 include("tankWthermal.jl")
