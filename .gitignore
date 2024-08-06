@@ -13,6 +13,7 @@
 *.PTF
 *.LTO
 *.csv
+*.txt
 **/Models/*
 Manifest.toml
 *.pptx
