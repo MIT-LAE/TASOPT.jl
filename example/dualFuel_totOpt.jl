@@ -24,8 +24,8 @@ saveName = "EthaJetA1000nmi_230Pax"
 ac.pari[iifuel] = 322429 #(JetA:25 Ethanol:32 JetAEtha31%Blend: 322431 JetAEtha29%Blend: 322429 JetAEtha71%Blend: 322471)
 ac.parg[igrhofuel] = 805.649 #(JetA:817.0 Ethanol:789.0 JetAEtha31%Blend: 805 JetAEtha29%Blend: 805.649 JetAEtha71%Blend: 794.504)
 rhoFuelShell = 805.649 #Fuel density inside the cargo space [kg/m3]
-bmax = 36 #Maximum Span of Wing [m]
-bvmax = 13.7 #Maximum Vertical Tail Height [m]
+bmax = 1036 #Maximum Span of Wing [m]
+bvmax = 1013.7 #Maximum Vertical Tail Height [m]
 # Objective function
 xarray = []
 farray = []
@@ -105,8 +105,8 @@ end
 
 # Set lower and upper limits
 #             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
-lower      = [6.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6.,      0.]
-upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15.,     10.] 
+lower      = [6.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6.,      1]
+upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15.,     2] 
 
 # Set initial changes
 initial_dx = [0.5,  1000.0,  0.05, 0.1, 0.01, 0.01,0.01,   0.01,   0.01,   0.01,     100.0, 0.5,     0.2]
