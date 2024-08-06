@@ -14,6 +14,7 @@
 *.LTO
 *.csv
 *.txt
+*.zip
 **/Models/*
 Manifest.toml
 *.pptx
