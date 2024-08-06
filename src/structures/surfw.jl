@@ -39,14 +39,14 @@ cosL = cos(wing.layout.sweep*pi/180)
 sinL = sin(wing.layout.sweep*pi/180)
 
 # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
-etao = wing.layout.box_halfspan/wing.outboard.layout.b
-etas = wing.inboard.layout.b/wing.outboard.layout.b
+etao = wing.outboard.layout.b/wing.layout.b
+etas = wing.inboard.layout.b/wing.layout.b
 
 cop = wing.layout.chord*cosL
 csp = wing.layout.chord*cosL*wing.inboard.layout.λ
 # Tip roll off Lift (modeled as a point load) and it's moment about ηs
 dLt = fLt*po*wing.layout.chord*gammat*wing.outboard.layout.λ
-dMt = dLt*0.5*wing.outboard.layout.b*(1.0-etas)
+dMt = dLt*0.5*wing.layout.b*(1.0-etas)
 
 havgo = wing.inboard.layout.chord_thickness * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
 havgs = wing.outboard.layout.chord_thickness * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
@@ -59,9 +59,9 @@ hrmss = wing.outboard.layout.chord_thickness * sqrt(1.0 - (1.0-wing.layout.hweb_
 #     Note added term to account for any outboard engines.
 #     If neout = 0 this simplifies to Drela's version which assumes engine
 #     fixed at ηs locations only.
-wing.outboard.max_shear_load = (po*wing.outboard.layout.b   / 4.0)*(gammas+    gammat)*(1.0-etas) +
+wing.outboard.max_shear_load = (po*wing.layout.b   / 4.0)*(gammas+    gammat)*(1.0-etas) +
  dLt - Nload*wing.outboard.weight - Nload*neout*We
- wing.outboard.moment = (po*wing.outboard.layout.b^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
+ wing.outboard.moment = (po*wing.layout.b^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
  dMt - Nload*wing.outboard.dyW - Nload*neout*We*dyeout
 
 #---- size strut-attach station at etas
@@ -91,10 +91,10 @@ Pstrut = 0.
 # Modifed to account for bending relief from multiple engines.
 # dyeinn allows engine to be in locations other than ηs
 So = wing.outboard.max_shear_load - Nload*neinn*We +
- 0.25*po*wing.outboard.layout.b*(1.0+gammas)*(etas-etao) -
+ 0.25*po*wing.layout.b*(1.0+gammas)*(etas-etao) -
  Nload*wing.inboard.weight
-Mo = wing.outboard.moment + wing.outboard.max_shear_load*0.5*wing.outboard.layout.b*(etas-etao) +
- (1.0/24.0)*po*wing.outboard.layout.b^2*(1.0+2.0*gammas)*(etas-etao)^2 -
+Mo = wing.outboard.moment + wing.outboard.max_shear_load*0.5*wing.layout.b*(etas-etao) +
+ (1.0/24.0)*po*wing.layout.b^2*(1.0+2.0*gammas)*(etas-etao)^2 -
  Nload*wing.inboard.dyW - Nload*neinn*We*dyeinn
 
 #----- limit So,Mo to Ss,Ms, which might be needed with heavy outboard engine
@@ -115,10 +115,10 @@ wing.strut.cos_lambda = 1.0
 
 else
 #----- strut present
-ls = sqrt(wing.strut.z^2 + (0.5*wing.outboard.layout.b*(etas-etao))^2)
-Rstrut = (po*wing.outboard.layout.b/12.0)*(etas-etao)*(1.0+2.0*gammas) + wing.outboard.max_shear_load
+ls = sqrt(wing.strut.z^2 + (0.5*wing.layout.b*(etas-etao))^2)
+Rstrut = (po*wing.layout.b/12.0)*(etas-etao)*(1.0+2.0*gammas) + wing.outboard.max_shear_load
 Tstrut = Rstrut*ls/wing.strut.z
-#c     Pstrut = Rstrut*0.5*wing.outboard.layout.b*(etas-etao)/zs
+#c     Pstrut = Rstrut*0.5*wing.layout.b*(etas-etao)/zs
 
 #----- inboard shear,moment used for sparbox sizing
 wing.inboard.max_shear_load = wing.outboard.max_shear_load
@@ -132,7 +132,7 @@ Abcapo = 2.0*tbcapo*wing.layout.box_width
 Abwebo = 2.0*tbwebo*wing.layout.hweb_to_hbox*wing.inboard.layout.chord_thickness
 
 #----- total strut length, tension
-lsp = sqrt(wing.strut.z^2 + (0.5*wing.outboard.layout.b*(etas-etao)/cosL)^2)
+lsp = sqrt(wing.strut.z^2 + (0.5*wing.layout.b*(etas-etao)/cosL)^2)
 Tstrutp = Tstrut*lsp/ls
 wing.strut.cos_lambda = ls/lsp
 
@@ -152,29 +152,29 @@ Abfuelo = (wing.layout.box_width-2.0*tbwebo)*(havgo-2.0*tbcapo)
 
 wing.strut.axial_force = Tstrutp/sigstrut
 
-Vcen = wing.layout.chord^2*wing.outboard.layout.b*  etao / 2.0
+Vcen = wing.layout.chord^2*wing.layout.b*  etao / 2.0
 
-Vinn = wing.layout.chord^2*wing.outboard.layout.b* (etas-etao) *
+Vinn = wing.layout.chord^2*wing.layout.b* (etas-etao) *
  (1.0 + wing.inboard.layout.λ + wing.inboard.layout.λ^2)/6.0 *
  cosL
-Vout = wing.layout.chord^2*wing.outboard.layout.b* (1.0 -etas) *
+Vout = wing.layout.chord^2*wing.layout.b* (1.0 -etas) *
  (wing.inboard.layout.λ^2 + wing.inboard.layout.λ*wing.outboard.layout.λ + wing.outboard.layout.λ^2)/6.0 *
  cosL
 
-dxVinn = wing.layout.chord^2*wing.outboard.layout.b^2 * (etas-etao)^2 *
+dxVinn = wing.layout.chord^2*wing.layout.b^2 * (etas-etao)^2 *
  (1.0 + 2.0*wing.inboard.layout.λ + 3.0*wing.inboard.layout.λ^2)/48.0 *
  sinL
-dxVout = wing.layout.chord^2*wing.outboard.layout.b^2 * (1.0 -etas)^2 *
+dxVout = wing.layout.chord^2*wing.layout.b^2 * (1.0 -etas)^2 *
  (wing.inboard.layout.λ^2 + 2.0*wing.inboard.layout.λ*wing.outboard.layout.λ + 3.0*wing.outboard.layout.λ^2)/48.0 *
  sinL +
-  wing.layout.chord^2*wing.outboard.layout.b^2 * (etas-etao)*(1.0 -etas) *
+  wing.layout.chord^2*wing.layout.b^2 * (etas-etao)*(1.0 -etas) *
  (wing.inboard.layout.λ^2 + wing.inboard.layout.λ*wing.outboard.layout.λ + wing.outboard.layout.λ^2)/12.0 *
  sinL
 
-dyVinn = wing.layout.chord^2*wing.outboard.layout.b^2 * (etas-etao)^2 *
+dyVinn = wing.layout.chord^2*wing.layout.b^2 * (etas-etao)^2 *
  (1.0 + 2.0*wing.inboard.layout.λ + 3.0*wing.inboard.layout.λ^2)/48.0 *
  cosL
-dyVout = wing.layout.chord^2*wing.outboard.layout.b^2 * (1.0 -etas)^2 *
+dyVout = wing.layout.chord^2*wing.layout.b^2 * (1.0 -etas)^2 *
  (wing.inboard.layout.λ^2 + 2.0*wing.inboard.layout.λ*wing.outboard.layout.λ + 3.0*wing.outboard.layout.λ^2)/48.0 *
  cosL
 
@@ -212,9 +212,9 @@ dxWcap = 2.0*wing.inboard.caps.ρ*gee*( Abcapi*dxVinn + Abcaps*dxVout )
 dxWweb = 2.0*wing.inboard.webs.ρ*gee*( Abwebi*dxVinn + Abwebs*dxVout )
 
 wing.strut.weight   = 2.0*wing.strut.material.ρ*gee*wing.strut.axial_force*lsp
-wing.strut.dxW = wing.strut.weight * 0.25*wing.outboard.layout.b*(etas-etao) * sinL/cosL
+wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.b*(etas-etao) * sinL/cosL
 
-Vout = wing.layout.chord^2*wing.outboard.layout.b* (1.0 -etas) *
+Vout = wing.layout.chord^2*wing.layout.b* (1.0 -etas) *
  (wing.inboard.layout.λ^2 + wing.inboard.layout.λ*wing.outboard.layout.λ + wing.outboard.layout.λ^2)/6.0 *
  cosL
 

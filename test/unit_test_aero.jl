@@ -158,7 +158,7 @@
     # wingsc(BW,CL,qinf,AR,
     # etas,bo,lambdat,lambdas)
     @test fort_S  == wing.layout.S 
-    @test fort_b  == wing.outboard.layout.b
+    @test fort_b  == wing.layout.b
     @test fort_bs == wing.inboard.layout.b
     @test fort_co == wing.layout.chord
     #end wingsc

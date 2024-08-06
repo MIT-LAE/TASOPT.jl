@@ -53,10 +53,10 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       hboxs    = wing.outboard.layout.chord_thickness
       hboxt    = hboxs
       fSnace   = parg[igfSnace ]
-      bo       = wing.layout.box_halfspan
+      bo       = wing.outboard.layout.b
       bs       = wing.inboard.layout.b
-      boh      = htail.layout.box_halfspan
-      bov      = vtail.layout.box_halfspan
+      boh      = htail.outboard.b
+      bov      = vtail.outboard.b
 
       lambdat  = wing.outboard.layout.λ
       lambdas  = wing.inboard.layout.λ
@@ -74,9 +74,9 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       coh  = htail.layout.chord
       cov  = vtail.layout.chord
 
-      b    = wing.outboard.layout.b
-      bh   = htail.outboard.b
-      bv   = vtail.outboard.b
+      b    = wing.layout.b
+      bh   = htail.layout.b
+      bv   = vtail.layout.b
 
       S    = wing.layout.S
       Sh   = htail.layout.S
@@ -295,7 +295,7 @@ function cditrp(pari,parg,para, wing, htail, vtail)
 
       CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
       # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
-      bref = wing.outboard.layout.b
+      bref = wing.layout.b
       Sref = wing.layout.S
 
       Mach = para[iaMach]
@@ -322,12 +322,12 @@ function cditrp(pari,parg,para, wing, htail, vtail)
 #      fLo = 0.0
 
 #---- span, wing-break span, wing-root span
-      b[1]  = wing.outboard.layout.b
+      b[1]  = wing.layout.b
       bs[1] = wing.inboard.layout.b
-      bo[1] = wing.layout.box_halfspan
+      bo[1] = wing.outboard.layout.b
 
 #---- span of wing-root streamline in Trefftz Plane
-      bop[1] = wing.layout.box_halfspan * 0.2
+      bop[1] = wing.outboard.layout.b * 0.2
 
       zcent[1]  = wing.layout.z
       gammas[1] = wing.inboard.layout.λ*para[iarcls]
@@ -341,10 +341,10 @@ function cditrp(pari,parg,para, wing, htail, vtail)
       fdut = para[iafdut]
 
 #---- horizontal tail wake parameters
-      b[2]   = htail.outboard.b
-      bs[2]  = htail.layout.box_halfspan
-      bo[2]  = htail.layout.box_halfspan
-      bop[2] = htail.layout.box_halfspan
+      b[2]   = htail.layout.b
+      bs[2]  = htail.outboard.b
+      bo[2]  = htail.outboard.b
+      bop[2] = htail.outboard.b
 
       zcent[2] = htail.layout.z
       gammas[2] = 1.0
