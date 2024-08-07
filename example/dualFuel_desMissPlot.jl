@@ -71,10 +71,24 @@ FnTotCRRec    = [ac.pare[ieFe,ipcruise1,1]] #N
 WEmpRec       = [WMTORec - WFuelRec - WPayRec] # Ton Metric
 EFuelRec      = [PFEIRec.*WPayRec*1000*9.81.*RanRec*1852.0] #Joul
 SweepRec      = [ac.parg[igsweep]] #deg
+## Add additional output on cargo bay fuel volume
+Wfmax = ac.parg[igWfmax]
+Wf    = ac.parg[igWfuel]
+# Compute the additional fuel tank volume available from the cargo bay
+AFuse = ac.parg[igAfuse] #fuselage crosssection area [m2]
+lShell = ac.parg[igxshell2]-ac.parg[igxshell1] #length of the cylindrical sector [m]
+WCargo = AFuse*0.45*lShell*ac.parg[igrhofuel]*9.81 #[N]
+# Finish additional fuel tank calculation
+if ((Wf-Wfmax)>0)
+    fCargoFuel = (Wf - Wfmax)/WCargo #Percentage volume taken in cargo space of fuel storage
+else
+    fCargoFuel = 0.0
+end
+
 outputTup = (AltRec=AltRec,RanRec=RanRec,WMTORec=WMTORec,WFuelRec=WFuelRec
              ,WPayRec=WPayRec,PFEIRec=PFEIRec,WTO_WTOmaxRec=WTO_WTOmaxRec
              ,Wf_WfmaxRec=Wf_WfmaxRec,areaWingRec=areaWingRec,ARWingRec=ARWingRec
-             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec,EFuelRec=EFuelRec,SweepRec=SweepRec)
+             ,spanWingRec=spanWingRec,diaFanRec=diaFanRec,FnTotCRRec=FnTotCRRec,WEmpRec=WEmpRec,EFuelRec=EFuelRec,SweepRec=SweepRec,fCargoFuel=fCargoFuel)
 CSV.write(saveName*"MissDetail.csv",  outputTup, writeheader=true)
 ##Create a mask to mask out unreported phases
 maskRep = ac.pare[ieFe,:,1].>0 #Reported Phase has non zero thrust
