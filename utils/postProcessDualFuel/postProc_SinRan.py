@@ -2,58 +2,58 @@
 ##Print out:
 import os
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-keyLst = ["JetA1500","Etha1500","JetAEtha1500","EthaJetA1500","JetA2250","Etha2250","JetAEtha2250","EthaJetA2250","JetA3000","Etha3000","JetAEtha3000","EthaJetA3000"]
+keyLst = ["JetA3000","Etha3000","JetAEtha3000","EthaJetA3000"]
 ExtNam = "_230MissDetail"
 labels = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
-formLine = ["x","x","x","x","x","x","x","x","x","x","x","x"]
-colorLine = ["k","orange","g","r","k","orange","g","r","k","orange","g","r","k","orange","g","r"]
-PFEILst = []
-RanLst = []
+formLine = ["x","x","x","x"]
+colorLine = ["k","orange","g","r"]
+AltLst = []
+WMTOLst = []
+fracFCarLst = [] #Percentage of fuel that is store inside the cargo 
+spanWingLst = []
+diaFanLst  = [] #Fan Diameter
 for idxKey, keyCur in enumerate(keyLst):
     desReadNam = keyCur+ExtNam+".csv"
     desRead = pd.read_csv(desReadNam)
-    PFEILst.append(desRead["PFEIRec"].values[0])
-    RanLst.append(desRead["RanRec"].values[0])
-
+    AltLst.append(desRead["AltRec"].values[0]) #[ft]
+    WMTOLst.append(desRead["WMTORec"].values[0]) #[ton]
+    fracFCarLst.append(100*(desRead["Wf_WfmaxRec"].values[0]-1)/desRead["Wf_WfmaxRec"].values[0]) #[%]
+    spanWingLst.append(desRead["spanWingRec"].values[0]) #[m]
+    diaFanLst.append(desRead["diaFanRec"].values[0]) #[m]
+#Process Para into Percentage
+AltLst = np.array(AltLst)
+WMTOLst = np.array(WMTOLst)
+fracFCarLst = np.array(fracFCarLst)
+spanWingLst = np.array(spanWingLst)
+diaFanLst = np.array(diaFanLst)
+fAltLst = (AltLst-AltLst[0])*100/AltLst[0]
+fWMTOLst = (WMTOLst-WMTOLst[0])*100/WMTOLst[0]
+ffracFCarLst = (fracFCarLst-fracFCarLst[0])*100/fracFCarLst[0]
+fspanWingLst = (spanWingLst-spanWingLst[0])*100/spanWingLst[0]
+fdiaFanLst = (diaFanLst-diaFanLst[0])*100/diaFanLst[0]
 # Create Movie Directory
 if os.path.isdir('Movie' + '/') == False:
     os.mkdir('Movie' + '/')
-#Plot out PFEI
-fig = plt.figure(dpi = 300)
-ax  = fig.add_subplot(1,1,1)
-for idxRan in range(len(RanLst)):
-    if idxRan>3:
-        ax.plot(RanLst[idxRan], PFEILst[idxRan],formLine[idxRan],color=colorLine[idxRan])
-    else:
-        ax.plot(RanLst[idxRan], PFEILst[idxRan],formLine[idxRan],color=colorLine[idxRan],label=labels[idxRan])
-ax.set_xlabel('Range [nmi]')
-ax.set_ylabel('PFEI [J/J]')
-ax.set_xlim(left=1400, right=3200)
-ax.set_ylim(bottom=0.6, top=0.8)
-ax.grid(True)
-plt.legend()
-plt.savefig('Movie' + '/' + "PFEI.jpg")
-plt.close('all')
-
-#Plot out PFEI Change
-fig = plt.figure(dpi = 300)
-ax  = fig.add_subplot(1,1,1)
-for idxRan in range(3):
-    PFEIbase = PFEILst[idxRan*4]
-    for idxFuel in range(1,4):
-        PFEIPerc = 100*(PFEILst[idxRan*4+idxFuel]-PFEIbase)/PFEIbase
-        if (idxRan*4+idxFuel)>3:
-             ax.plot(RanLst[idxRan*4+idxFuel], PFEIPerc,formLine[idxRan*4+idxFuel],color=colorLine[idxRan*4+idxFuel])           
-        else:
-             ax.plot(RanLst[idxRan*4+idxFuel], PFEIPerc,formLine[idxRan*4+idxFuel],color=colorLine[idxRan*4+idxFuel],label=labels[idxRan*4+idxFuel])
-ax.set_xlabel('Range [nmi]')
-ax.set_ylabel('PFEI Percentage Increase [%]')
-ax.set_xlim(left=1400, right=3200)
-ax.set_ylim(bottom=0.0, top=20.0)
-ax.grid(True)
-plt.legend()
-plt.savefig('Movie' + '/' + "fracPFEI.jpg")
-plt.close('all')
-
-print("End")
+#Plot MultiMiss Comparison
+bigPhases = ("$\%\Delta Alt_{cruise}$","$\%\Delta WTO_{max}$","$\%\Delta frac_{fuel,cargo}$","$\%\Delta span_{wing}$","$\%\Delta Dia_{fan}$")
+PropMiss = {}
+for indKey in range(1,len(labels)):
+    PropMiss[labels[indKey]] = (fAltLst[indKey],fWMTOLst[indKey],ffracFCarLst[indKey],fspanWingLst[indKey],fdiaFanLst[indKey])
+x = np.arange(len(bigPhases))  # the label locations
+width = 0.25  # the width of the bars
+multiplier = 1
+fig, ax = plt.subplots(layout='constrained',dpi = 300)
+for attribute, measurement in PropMiss.items():
+    offset = width * (multiplier-1)
+    rects = ax.bar(x + offset, measurement, width, label=attribute, color=colorLine[multiplier])
+    ax.bar_label(rects, padding=0,fontsize=9,fmt='%.1f')
+    multiplier += 1
+# Add some text for labels, title and custom x-axis tick labels, etc.
+ax.set_ylabel('%Change based to Jet Fuel Both Zones Injection Case')
+ax.set_xticks(x + width, bigPhases)
+ax.legend()
+ax.yaxis.grid()
+ax.set_ylim(bottom=-10, top=60)
+plt.savefig('Movie' + '/' + "PropMiss.jpg")
