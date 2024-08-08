@@ -14,6 +14,8 @@
 *.LTO
 *.csv
 *.txt
+*.jpg
+*.png
 *.zip
 **/Models/*
 Manifest.toml
