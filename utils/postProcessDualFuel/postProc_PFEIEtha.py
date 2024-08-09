@@ -24,7 +24,7 @@ for idxRes in range(len(ResKey)):
         Ran_Cur = Res["RanRec"].values[0]*1852.0 #[m]
         WPay_Cur = Res['WPayRec'].values[0]*9.81*1000 #[N]
         EFuel_Cur = PFEI_Cur*Ran_Cur*WPay_Cur #[J] Total Fuel Energy Burnt
-        RanLst.append(Ran_Cur/1852.0)
+        RanLst.append(Ran_Cur/1852.0) #[nmi]
         #Get Ethanol Energy Burnt
         Inp = pd.read_csv(InpKey[idxRes][idxCas]+".csv")
         IdxEtha_Cur = IdxEtha[idxCas]
@@ -32,7 +32,7 @@ for idxRes in range(len(ResKey)):
         EIEtha_Cur = (Inp['Wf[kg/s]'].values[:]*IdxEtha_Cur[0] + Inp['WAS[kg/s]'].values[:]*IdxEtha_Cur[1])/Inp['WfTot'].values[:] #[kg/kg] Consumption Index of Ethanol Per Unit Fuel Burn
         InteEmis = EmisInteg(Weight_Cur,EIEtha_Cur)
         mEtha_Cur = InteEmis["mPolTot"] #[kg]
-        EEtha_Cur = hf_Etha*mEtha_Cur #[J]
+        EEtha_Cur = hf_Etha*mEtha_Cur #[J] Total Ethanol Energy Burnt
         ##Compute Ethanol Energy Cost
         if idxCas == 0: #Baseline Pure Jet Fuel Case
             EFuel_Base = EFuel_Cur #[J]
@@ -40,7 +40,7 @@ for idxRes in range(len(ResKey)):
             if EEtha_Cur != 0.0:
                 print("Warning: First Case has Ethanol: ",EEtha_Cur," J")
         else:
-            Del_EFuel = EFuel_Cur-EFuel_Base #[J]
+            Del_EFuel = EFuel_Cur-EFuel_Base #[J] Extra Energy Burnt
             fECost_Etha = Del_EFuel/EEtha_Cur #[J/J] Energy cost per unit ethanol burnt
             fECost_EthaLst.append(fECost_Etha)
     fECost_EthaLstLst.append(fECost_EthaLst)
@@ -54,12 +54,12 @@ if os.path.isdir('Movie' + '/') == False:
 #Plot out PFEI
 fig = plt.figure(dpi = 300)
 ax  = fig.add_subplot(1,1,1)
-for idxCas in range(len(labels)):
+for idxCas in range(1,len(labels)):
     ax.plot(RanLstLst[idxCas], fECost_EthaLstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
 ax.set_xlabel('Range [nmi]')
 ax.set_ylabel('Energy Penalty from Ethanol [J/J]')
 ax.set_xlim(left=1400, right=3200)
-# ax.set_ylim(bottom=0.6, top=0.8)
+ax.set_ylim(bottom=0.04, top=0.18)
 ax.grid(True)
 plt.legend()
 plt.savefig('Movie' + '/' + "EthaPFEI.jpg")
