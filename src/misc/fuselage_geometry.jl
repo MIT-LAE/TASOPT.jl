@@ -78,7 +78,7 @@ end
 """
     skin_thickness(cs::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
 
-TBW
+Calculates the skin thickness for a given pressure load and allowable stress
 """
 function skin_thickness(cs::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
     return cs.skin_thickness = Δp * cs.radius / σ
@@ -97,6 +97,9 @@ $TYPEDSIGNATURES
 web_thickness(cs::SingleBubble, Δp::AbstractFloat, σ::AbstractFloat) = 0.0
 
 """
+$TYPEDSIGNATURES
+
+Returns the skin and web thickness. 
 """
 function size_skin_web!(cs::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
     return skin_thickness(cs, Δp, σ), web_thickness(cs, Δp, σ)
@@ -131,6 +134,8 @@ end
     weight_ratio = W_stringers/W_skin
     density_ratio = ρ_string/ρ_skin
     modulus_ratio = E_string/E_skin
+
+    Returns the effective modulus weighted shell thickness 
 """
 function effective_shell_thickness(t_skin, weight_ratio, modulus_ratio, density_ratio)
     return t_skin * (1.0 + modulus_ratio * weight_ratio / density_ratio)
@@ -220,6 +225,7 @@ end  # function perimeter
 Calculates the insulation weight. Assumes, by default, that 55% of the fuselage 
 cross-sectional perimeter is the cabin which is insulated and 45% is the cargo 
 hold that is not insulated.
+Returns a [`Weight`](@ref) type.
 """
 function size_insulation(
     layout::FuselageLayout,
@@ -245,6 +251,9 @@ end  # function size_insulation
     size_windows(x_cabin, l_cabin, weight_per_length, n_decks)
     weight_per_length, n_decks, n_fuel_tanks, l_tank)
 
+Calculates the weight contribution of the windows to the total fuselage weight.
+Returns a [`Weight`](@ref) type.
+
 """
 function size_windows(x_cabin, l_cabin, weight_per_length, n_decks)
     windows = Weight(W = n_decks * weight_per_length * l_cabin, x = x_cabin)
@@ -252,6 +261,11 @@ function size_windows(x_cabin, l_cabin, weight_per_length, n_decks)
 end  # function size_windows
 
 """
+    get_cabin_dimensions(layout::FuselageLayout, tank_placement::String,
+    n_fuel_tanks, l_tank)
+
+Calculates the cabin centroid and length of the cabin. This accounts for placement
+of any internal tanks (e.g., cryogenic hydrogen tanks)
 """
 function get_cabin_dimensions(
     layout::FuselageLayout,
