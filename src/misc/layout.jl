@@ -23,13 +23,6 @@ $TYPEDFIELDS
 
 end
 
-"""
-"""
-function calc_skin_thickness(cs::AbstractCrossSection, Δp, σ)
-    cs.skin_thickness = Δp*cs.radius/100.0
-    return cs
-end  # function calc_skin_thickness
-
 
 # function SingleBubble(radius, dz, Δp)
 
@@ -72,6 +65,55 @@ function Base.getproperty(obj::SingleBubble, sym::Symbol)
     end
 end  # function Base.getproperty
 
+"""
+$TYPEDEF
+
+Contains dimensions of the fuselage cross section for an elliptical type 
+fuselage
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct EllipticalCrossSection <:AbstractCrossSection
+    """Half Width [m]"""
+    a::Float64 = 2.0
+    """Half height [m]"""
+    b::Float64 = 1.8
+    """Skin thickness [m]"""
+    skin_thickness::Float64 = 0.0
+end
+
+function area(cs::EllipticalCrossSection)
+    return π * cs.a * cs.b
+end
+
+"""
+    get_perimeter(cs::EllipticalCrossSection)
+
+Use [Ramanujam's approximation](https://books.google.com/books?id=oSioAM4wORMC&pg=PA39#v=onepage&q&f=false)
+for the circumference of an Ellipse.
+"""
+function get_perimeter(cs::EllipticalCrossSection)
+    a = cs.a
+    b = cs.b
+    h = ((a - b)/(a + b))^2
+    C = π * (a + b) * (1 + (3h / (10 + sqrt(4 - 3h))))
+    return C
+end
+
+function skin_thickness(cs::EllipticalCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    R = max(cs.a, cs.b)
+    return cs.skin_thickness = Δp * R / σ
+end
+
+
+function web_geometry(cs::EllipticalCrossSection)
+    θ_web = 0.0
+    h_web = cs.b
+    sin2θ = 0.0
+    cosθ = 1.0
+    effective_web_length = 0.0
+    return θ_web, h_web, sin2θ, cosθ, effective_web_length
+end
 """
 $TYPEDEF
 
