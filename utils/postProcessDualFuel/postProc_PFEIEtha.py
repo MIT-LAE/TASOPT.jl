@@ -2,19 +2,51 @@
 ##Print out:
 import os
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
-keyLst = ["JetA1500","Etha1500","JetAEtha1500","EthaJetA1500","JetA2250","Etha2250","JetAEtha2250","EthaJetA2250","JetA3000","Etha3000","JetAEtha3000","EthaJetA3000"]
-ExtNam = "_230MissDetail"
-labels = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
-formLine = ["x","x","x","x","x","x","x","x","x","x","x","x"]
-colorLine = ["k","orange","g","r","k","orange","g","r","k","orange","g","r","k","orange","g","r"]
-PFEILst = []
-RanLst = []
-for idxKey, keyCur in enumerate(keyLst):
-    desReadNam = keyCur+ExtNam+".csv"
-    desRead = pd.read_csv(desReadNam)
-    PFEILst.append(desRead["PFEIRec"].values[0])
-    RanLst.append(desRead["RanRec"].values[0])
+from PostProcACS_RQLDeFunUnMixSZ import EmisInteg
+hf_Etha = 26810134. #[J/kg] heating value of ethanol with evaporation
+ResKey    = [["JetA1500_230MissDetail","Etha1500_230MissDetail","JetAEtha1500_230MissDetail","EthaJetA1500_230MissDetail"],["JetA2250_230MissDetail","Etha2250_230MissDetail","JetAEtha2250_230MissDetail","EthaJetA2250_230MissDetail"],["JetA3000_230MissDetail","Etha3000_230MissDetail","JetAEtha3000_230MissDetail","EthaJetA3000_230MissDetail"]]
+InpKey    = [["ACS_CFmFpCom_Fli1500_0606_JetAJetA","ACS_CFmFpCom_Fli1500_0606_EthaEtha","ACS_CFmFpCom_Fli1500_0606_JetAEtha","ACS_CFmFpCom_Fli1500_0606_EthaJetA"],["ACS_CFmFpCom_Fli2250_0606_JetAJetA","ACS_CFmFpCom_Fli2250_0606_EthaEtha","ACS_CFmFpCom_Fli2250_0606_JetAEtha","ACS_CFmFpCom_Fli2250_0606_EthaJetA"],["ACS_CFmFpCom_Fli3000_0606_JetAJetA","ACS_CFmFpCom_Fli3000_0606_EthaEtha","ACS_CFmFpCom_Fli3000_0606_JetAEtha","ACS_CFmFpCom_Fli3000_0606_EthaJetA"]]
+labels    = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
+IdxEtha   = [[0,0],[1,1],[0,1],[1,0]]
+formLine  = ["x","x","x","x"]
+colorLine = ["k","orange","g","r"]
+RanLstLst         = []
+fECost_EthaLstLst = []
+for idxRes in range(len(ResKey)):
+    fECost_EthaLst = []
+    RanLst         = []
+    for idxCas in range(len(ResKey[idxRes])):
+        #Get Total Fuel Energy Burnt
+        Res = pd.read_csv(ResKey[idxRes][idxCas]+".csv")
+        PFEI_Cur = Res["PFEIRec"].values[0] #[J/J]
+        Ran_Cur = Res["RanRec"].values[0]*1852.0 #[m]
+        WPay_Cur = Res['WPayRec'].values[0]*9.81*1000 #[N]
+        EFuel_Cur = PFEI_Cur*Ran_Cur*WPay_Cur #[J] Total Fuel Energy Burnt
+        RanLst.append(Ran_Cur/1852.0)
+        #Get Ethanol Energy Burnt
+        Inp = pd.read_csv(InpKey[idxRes][idxCas]+".csv")
+        IdxEtha_Cur = IdxEtha[idxCas]
+        Weight_Cur = Inp["Weight"].values[:] #[kg] Weight of the aircraft
+        EIEtha_Cur = (Inp['Wf[kg/s]'].values[:]*IdxEtha_Cur[0] + Inp['WAS[kg/s]'].values[:]*IdxEtha_Cur[1])/Inp['WfTot'].values[:] #[kg/kg] Consumption Index of Ethanol Per Unit Fuel Burn
+        InteEmis = EmisInteg(Weight_Cur,EIEtha_Cur)
+        mEtha_Cur = InteEmis["mPolTot"] #[kg]
+        EEtha_Cur = hf_Etha*mEtha_Cur #[J]
+        ##Compute Ethanol Energy Cost
+        if idxCas == 0: #Baseline Pure Jet Fuel Case
+            EFuel_Base = EFuel_Cur #[J]
+            fECost_EthaLst.append(0)
+            if EEtha_Cur != 0.0:
+                print("Warning: First Case has Ethanol: ",EEtha_Cur," J")
+        else:
+            Del_EFuel = EFuel_Cur-EFuel_Base #[J]
+            fECost_Etha = Del_EFuel/EEtha_Cur #[J/J] Energy cost per unit ethanol burnt
+            fECost_EthaLst.append(fECost_Etha)
+    fECost_EthaLstLst.append(fECost_EthaLst)
+    RanLstLst.append(RanLst)
+fECost_EthaLstLst=np.transpose(fECost_EthaLstLst)
+RanLstLst=np.transpose(RanLstLst)
 
 # Create Movie Directory
 if os.path.isdir('Movie' + '/') == False:
@@ -22,38 +54,13 @@ if os.path.isdir('Movie' + '/') == False:
 #Plot out PFEI
 fig = plt.figure(dpi = 300)
 ax  = fig.add_subplot(1,1,1)
-for idxRan in range(len(RanLst)):
-    if idxRan>3:
-        ax.plot(RanLst[idxRan], PFEILst[idxRan],formLine[idxRan],color=colorLine[idxRan])
-    else:
-        ax.plot(RanLst[idxRan], PFEILst[idxRan],formLine[idxRan],color=colorLine[idxRan],label=labels[idxRan])
+for idxCas in range(len(labels)):
+    ax.plot(RanLstLst[idxCas], fECost_EthaLstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
 ax.set_xlabel('Range [nmi]')
-ax.set_ylabel('PFEI [J/J]')
+ax.set_ylabel('Energy Penalty from Ethanol [J/J]')
 ax.set_xlim(left=1400, right=3200)
-ax.set_ylim(bottom=0.6, top=0.8)
+# ax.set_ylim(bottom=0.6, top=0.8)
 ax.grid(True)
 plt.legend()
-plt.savefig('Movie' + '/' + "PFEI.jpg")
+plt.savefig('Movie' + '/' + "EthaPFEI.jpg")
 plt.close('all')
-
-#Plot out PFEI Change
-fig = plt.figure(dpi = 300)
-ax  = fig.add_subplot(1,1,1)
-for idxRan in range(3):
-    PFEIbase = PFEILst[idxRan*4]
-    for idxFuel in range(1,4):
-        PFEIPerc = 100*(PFEILst[idxRan*4+idxFuel]-PFEIbase)/PFEIbase
-        if (idxRan*4+idxFuel)>3:
-             ax.plot(RanLst[idxRan*4+idxFuel], PFEIPerc,formLine[idxRan*4+idxFuel],color=colorLine[idxRan*4+idxFuel])           
-        else:
-             ax.plot(RanLst[idxRan*4+idxFuel], PFEIPerc,formLine[idxRan*4+idxFuel],color=colorLine[idxRan*4+idxFuel],label=labels[idxRan*4+idxFuel])
-ax.set_xlabel('Range [nmi]')
-ax.set_ylabel('PFEI Percentage Increase [%]')
-ax.set_xlim(left=1400, right=3200)
-ax.set_ylim(bottom=0.0, top=20.0)
-ax.grid(True)
-plt.legend()
-plt.savefig('Movie' + '/' + "fracPFEI.jpg")
-plt.close('all')
-
-print("End")
