@@ -21,6 +21,7 @@ fECost_Etha_DE_LstLst = []
 fECost_Etha_TT_LstLst = []
 fracEFuel_CRLstLst = []
 fracEFuel_DELstLst = []
+fPFEI_LstLst = []
 for idxRes in range(len(ResKey)):
     fECost_Etha_TO_Lst = []
     fECost_Etha_CL_Lst = []
@@ -31,6 +32,7 @@ for idxRes in range(len(ResKey)):
     fracEFuel_DELst = []
     RanLst         = []
     PFEILst        = []
+    fPFEI_Lst      = []
     for idxCas in range(len(ResKey[idxRes])):
         #For PFEI Calculation
         Res = pd.read_csv(ResKey[idxRes][idxCas]+".csv")
@@ -81,7 +83,14 @@ for idxRes in range(len(ResKey)):
             Del_EFuel = EFuel_TT-EFuel_TT_Base #[J] Extra Energy Burnt
             fECost_Etha_TT_Lst.append(Del_EFuel/EEtha_TT) #[J/J] Energy cost per unit ethanol burnt
         #Calculate PFEI
-        PFEILst.append(EFuel_TT/(Ran_Cur*WPay_Cur))#[J/J]
+        PFEI_TT = EFuel_TT/(Ran_Cur*WPay_Cur) #[J/J]
+        PFEILst.append(PFEI_TT)#[J/J]
+        if idxCas == 0: #Baseline Pure Jet Fuel Case
+            PFEI_TT_Base = PFEI_TT
+            fPFEI_Lst.append(0)
+        else:
+            Del_PFEI = PFEI_TT-PFEI_TT_Base # Change of PFEI
+            fPFEI_Lst.append(100*Del_PFEI/PFEI_TT_Base) #[%] Relative Change of PFEI
     fECost_Etha_TO_LstLst.append(fECost_Etha_TO_Lst)
     fECost_Etha_CL_LstLst.append(fECost_Etha_CL_Lst)
     fECost_Etha_CR_LstLst.append(fECost_Etha_CR_Lst)
@@ -91,6 +100,7 @@ for idxRes in range(len(ResKey)):
     PFEILstLst.append(PFEILst)
     fracEFuel_CRLstLst.append(fracEFuel_CRLst)
     fracEFuel_DELstLst.append(fracEFuel_DELst)
+    fPFEI_LstLst.append(fPFEI_Lst)
 fECost_Etha_TO_LstLst = np.transpose(fECost_Etha_TO_LstLst)
 fECost_Etha_CL_LstLst = np.transpose(fECost_Etha_CL_LstLst)
 fECost_Etha_CR_LstLst = np.transpose(fECost_Etha_CR_LstLst)
@@ -100,6 +110,7 @@ fracEFuel_CRLstLst    = np.transpose(fracEFuel_CRLstLst)
 fracEFuel_DELstLst    = np.transpose(fracEFuel_DELstLst)
 RanLstLst             = np.transpose(RanLstLst)
 PFEILstLst            = np.transpose(PFEILstLst)
+fPFEI_LstLst          = np.transpose(fPFEI_LstLst)
 
 # Create Movie Directory
 if os.path.isdir('Movie' + '/') == False:
@@ -203,8 +214,21 @@ for idxCas in range(len(labels)):
 ax.set_xlabel('Range [nmi]')
 ax.set_ylabel('PFEI [J/J]')
 ax.set_xlim(left=1400, right=3200)
-# ax.set_ylim(bottom=0.04, top=0.18)
+ax.set_ylim(bottom=0.6, top=0.85)
 ax.grid(True)
 plt.legend()
 plt.savefig('Movie' + '/' + "PFEI.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(1,len(labels)):
+    ax.plot(RanLstLst[idxCas], fPFEI_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('PFEI Percentage Increase [%]')
+ax.set_xlim(left=1400, right=3200)
+ax.set_ylim(bottom=0.0, top=20.0)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "fracPFEI.jpg")
 plt.close('all')
