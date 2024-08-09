@@ -19,11 +19,11 @@ function calculate_shell_geometry!(fuse::Fuselage, Δp::AbstractFloat)
     θ_web, h_web, sin2θ, web_length = web_geometry(layout.cross_section)
     perimeter = get_perimeter(layout.cross_section)
 
-    fuse.skin.thickness = Δp * R / fuse.skin.σ
-    web_thickness = 2.0 * Δp * layout.bubble_center_y_offset / fuse.skin.σ
+    fuse.skin.thickness, web_thickness =
+        size_skin_web!(layout.cross_section, Δp, fuse.skin.σ)
 
     # Cross sectional areas
-    A_skin = perimeter * fuse.skin.thickness
+    A_skin = perimeter * layout.cross_section.skin_thickness
     A_web = web_length * web_thickness
     A_fuse = area(layout.cross_section)
 
@@ -76,22 +76,31 @@ end
 
 
 """
-    skin_thickness(xSection::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    skin_thickness(cs::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
 
 TBW
 """
-function skin_thickness(xSection::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
-    return Δp * xSection.radius / σ
+function skin_thickness(cs::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    return cs.skin_thickness = Δp * cs.radius / σ
 end
 
 """
-    web_thickness(xSection::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
-
-TBW
+$TYPEDSIGNATURES
 """
-function web_thickness(xSection::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
-    return 2 * Δp * xSection.bubble_center_y_offset / σ
+function web_thickness(cs::MultiBubble, Δp::AbstractFloat, σ::AbstractFloat)
+    cs.web_thickness = 2.0 * Δp * cs.bubble_center_y_offset / σ
+    return cs.web_thickness
 end
+"""
+$TYPEDSIGNATURES
+"""
+web_thickness(cs::SingleBubble, Δp::AbstractFloat, σ::AbstractFloat) = 0.0
+
+"""
+"""
+function size_skin_web!(cs::AbstractCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    return skin_thickness(cs, Δp, σ), web_thickness(cs, Δp, σ)
+end  # function size_skin!
 
 function web_geometry(cs::MultiBubble)
     # fuselage bubble subtended half-angle
@@ -278,4 +287,3 @@ function get_cabin_dimensions(
 
     return x_cabin, l_cabin
 end  # function get_cabin_centroid
-
