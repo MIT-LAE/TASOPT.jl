@@ -14,8 +14,20 @@ formLine  = ["x","x","x","x"]
 colorLine = ["k","orange","g","r"]
 RanLstLst         = []
 fECost_EthaLstLst = []
+fECost_Etha_TO_LstLst = []
+fECost_Etha_CL_LstLst = []
+fECost_Etha_CR_LstLst = []
+fECost_Etha_DE_LstLst = []
+fracEFuel_CRLstLst = []
+fracEFuel_DELstLst = []
 for idxRes in range(len(ResKey)):
     fECost_EthaLst = []
+    fECost_Etha_TO_Lst = []
+    fECost_Etha_CL_Lst = []
+    fECost_Etha_CR_Lst = []
+    fECost_Etha_DE_Lst = []
+    fracEFuel_CRLst = []
+    fracEFuel_DELst = []
     RanLst         = []
     for idxCas in range(len(ResKey[idxRes])):
         #Get Total Fuel Energy Burnt
@@ -33,6 +45,10 @@ for idxRes in range(len(ResKey)):
         InteEmis = EmisInteg(Weight_Cur,EIEtha_Cur)
         mEtha_Cur = InteEmis["mPolTot"] #[kg]
         EEtha_Cur = hf_Etha*mEtha_Cur #[J] Total Ethanol Energy Burnt
+        EEtha_TO = hf_Etha*InteEmis["mPolTO"] #[J]
+        EEtha_CL = hf_Etha*InteEmis["mPolCL"] #[J]
+        EEtha_CR = hf_Etha*InteEmis["mPolCR"] #[J]
+        EEtha_DE = hf_Etha*InteEmis["mPolDE"] #[J]
         ##Compute Ethanol Energy Cost
         if idxCas == 0: #Baseline Pure Jet Fuel Case
             EFuel_Base = EFuel_Cur #[J]
@@ -43,9 +59,48 @@ for idxRes in range(len(ResKey)):
             Del_EFuel = EFuel_Cur-EFuel_Base #[J] Extra Energy Burnt
             fECost_Etha = Del_EFuel/EEtha_Cur #[J/J] Energy cost per unit ethanol burnt
             fECost_EthaLst.append(fECost_Etha)
+        #Get Total Fuel Energy at different phases
+        hf_Cur = Inp["HeatingValue"].values[:] #[J/kg] Heating Value at different phase of flight
+        InteEmis = EmisInteg(Weight_Cur,hf_Cur) #[J] Energy at different phase
+        EFuel_TO = InteEmis["mPolTO"] #[J]Total Energy Burnt at takeoff
+        EFuel_CL = InteEmis["mPolCL"] #[J]
+        EFuel_CR = InteEmis["mPolCR"] #[J]
+        EFuel_DE = InteEmis["mPolDE"] #[J]
+        fracEFuel_CRLst.append(100*EFuel_CR/(EFuel_TO+EFuel_CL+EFuel_CR+EFuel_DE)) #Percentage Energy in Cruise
+        fracEFuel_DELst.append(100*EFuel_DE/(EFuel_TO+EFuel_CL+EFuel_CR+EFuel_DE)) #Percentage Energy in Cruise
+        if idxCas == 0: #Baseline Pure Jet Fuel Case
+            EFuel_TO_Base = EFuel_TO #[J]
+            EFuel_CL_Base = EFuel_CL #[J]
+            EFuel_CR_Base = EFuel_CR #[J]
+            EFuel_DE_Base = EFuel_DE #[J]
+            fECost_Etha_TO_Lst.append(0)
+            fECost_Etha_CL_Lst.append(0)
+            fECost_Etha_CR_Lst.append(0)
+            fECost_Etha_DE_Lst.append(0)
+        else:
+            Del_EFuel = EFuel_TO-EFuel_TO_Base #[J] Extra Energy Burnt
+            fECost_Etha_TO_Lst.append(Del_EFuel/EEtha_TO) #[J/J] Energy cost per unit ethanol burnt
+            Del_EFuel = EFuel_CL-EFuel_CL_Base #[J] Extra Energy Burnt
+            fECost_Etha_CL_Lst.append(Del_EFuel/EEtha_CL) #[J/J] Energy cost per unit ethanol burnt
+            Del_EFuel = EFuel_CR-EFuel_CR_Base #[J] Extra Energy Burnt
+            fECost_Etha_CR_Lst.append(Del_EFuel/EEtha_CR) #[J/J] Energy cost per unit ethanol burnt
+            Del_EFuel = EFuel_DE-EFuel_DE_Base #[J] Extra Energy Burnt
+            fECost_Etha_DE_Lst.append(Del_EFuel/EEtha_DE) #[J/J] Energy cost per unit ethanol burnt
     fECost_EthaLstLst.append(fECost_EthaLst)
+    fECost_Etha_TO_LstLst.append(fECost_Etha_TO_Lst)
+    fECost_Etha_CL_LstLst.append(fECost_Etha_CL_Lst)
+    fECost_Etha_CR_LstLst.append(fECost_Etha_CR_Lst)
+    fECost_Etha_DE_LstLst.append(fECost_Etha_DE_Lst)
     RanLstLst.append(RanLst)
+    fracEFuel_CRLstLst.append(fracEFuel_CRLst)
+    fracEFuel_DELstLst.append(fracEFuel_DELst)
 fECost_EthaLstLst=np.transpose(fECost_EthaLstLst)
+fECost_Etha_TO_LstLst = np.transpose(fECost_Etha_TO_LstLst)
+fECost_Etha_CL_LstLst = np.transpose(fECost_Etha_CL_LstLst)
+fECost_Etha_CR_LstLst = np.transpose(fECost_Etha_CR_LstLst)
+fECost_Etha_DE_LstLst = np.transpose(fECost_Etha_DE_LstLst)
+fracEFuel_CRLstLst = np.transpose(fracEFuel_CRLstLst)
+fracEFuel_DELstLst = np.transpose(fracEFuel_DELstLst)
 RanLstLst=np.transpose(RanLstLst)
 
 # Create Movie Directory
@@ -63,4 +118,82 @@ ax.set_ylim(bottom=0.04, top=0.18)
 ax.grid(True)
 plt.legend()
 plt.savefig('Movie' + '/' + "EthaPFEI.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(1,len(labels)):
+    ax.plot(RanLstLst[idxCas], fECost_Etha_TO_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('Energy Penalty from Ethanol in Take-off [J/J]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.04, top=0.18)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "EthaPFEI_TO.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(1,len(labels)):
+    ax.plot(RanLstLst[idxCas], fECost_Etha_CL_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('Energy Penalty from Ethanol in Climb-out [J/J]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.04, top=0.18)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "EthaPFEI_CL.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(1,len(labels)):
+    ax.plot(RanLstLst[idxCas], fECost_Etha_CR_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('Energy Penalty from Ethanol in Cruise [J/J]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.04, top=0.18)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "EthaPFEI_CR.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(1,len(labels)):
+    ax.plot(RanLstLst[idxCas], fECost_Etha_DE_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('Energy Penalty from Ethanol in Descent [J/J]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.04, top=0.18)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "EthaPFEI_DE.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(len(labels)):
+    ax.plot(RanLstLst[idxCas], fracEFuel_CRLstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('Percentage Energy Spent on Cruise [%]')
+ax.set_xlim(left=1400, right=3200)
+ax.set_ylim(bottom=0, top=100)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "EnergySpentCR.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(len(labels)):
+    ax.plot(RanLstLst[idxCas], fracEFuel_DELstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('Percentage Energy Spent on Descent [%]')
+ax.set_xlim(left=1400, right=3200)
+ax.set_ylim(bottom=0, top=4)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "EnergySpentDE.jpg")
 plt.close('all')
