@@ -116,6 +116,18 @@ function web_geometry(cs::SingleBubble)
 end
 
 """
+    $TYPEDSIGNATURES
+    
+    The ratios are specified as stringer:skin
+    weight_ratio = W_stringers/W_skin
+    density_ratio = ρ_string/ρ_skin
+    modulus_ratio = E_string/E_skin
+"""
+function effective_shell_thickness(t_skin, weight_ratio, modulus_ratio, density_ratio)
+    return t_skin * (1.0 + modulus_ratio * weight_ratio / density_ratio)
+end  # function effective_shell_thickness
+
+"""
     Iy(cs::AbstractCrossSection)
 Calculates the second moment of area about the y-axis (i.e., the horizontal 
 axis w.r.t the cross-section)
