@@ -164,7 +164,7 @@ ax  = fig.add_subplot(1,1,1)
 for idxCas in range(1,len(labels)):
     ax.plot(RanLstLst[idxCas], fECost_Etha_DE_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
 ax.set_xlabel('Range [nmi]')
-ax.set_ylabel('Ethanol induced Energy Penalty [J/J]')
+ax.set_ylabel('Ethanol induced Energy Penalty in Descent [J/J]')
 ax.set_xlim(left=1400, right=3200)
 # ax.set_ylim(bottom=0.04, top=0.18)
 ax.grid(True)
