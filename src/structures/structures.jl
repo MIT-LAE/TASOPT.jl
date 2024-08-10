@@ -23,6 +23,7 @@ export î, ĵ, k̂, WORLD, Weight
 
 #include fuselage sizing
 include("../misc/layout.jl")
+include("cross_sections.jl")
 export SingleBubble, MultiBubble
 include("../misc/structuralMember.jl")
 include("../misc/fuselage.jl")

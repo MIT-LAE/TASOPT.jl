@@ -84,6 +84,13 @@ function skin_thickness(cs::AbstractCrossSection, Δp::AbstractFloat, σ::Abstra
     return cs.skin_thickness = Δp * cs.radius / σ
 end
 
+
+function skin_thickness(cs::EllipticalCrossSection, Δp::AbstractFloat, σ::AbstractFloat)
+    R = max(cs.a, cs.b)
+    return cs.skin_thickness = Δp * R / σ
+end
+
+
 """
 $TYPEDSIGNATURES
 """
@@ -105,27 +112,6 @@ function size_skin_web!(cs::AbstractCrossSection, Δp::AbstractFloat, σ::Abstra
     return skin_thickness(cs, Δp, σ), web_thickness(cs, Δp, σ)
 end  # function size_skin!
 
-function web_geometry(cs::MultiBubble)
-    # fuselage bubble subtended half-angle
-    θ_web = asin(cs.bubble_center_y_offset / cs.radius)
-    h_web = sqrt(cs.radius^2 - cs.bubble_center_y_offset^2)
-    cosθ = h_web / cs.radius
-    sinθ = cs.bubble_center_y_offset / cs.radius
-    sin2θ = 2 * sinθ * cosθ
-
-    effective_web_length = cs.n_webs * (2 * h_web + cs.bubble_lower_downward_shift)
-
-    return θ_web, h_web, sin2θ, cosθ, effective_web_length
-end
-
-function web_geometry(cs::SingleBubble)
-    θ_web = 0.0
-    h_web = cs.radius
-    sin2θ = 0.0
-    cosθ = 1.0
-    effective_web_length = 0.0
-    return θ_web, h_web, sin2θ, cosθ, effective_web_length
-end
 
 """
     $TYPEDSIGNATURES
@@ -172,51 +158,6 @@ end  # function Iy
 
 # end  # function Iz
 
-"""
-    $(TYPEDSIGNATURES)
-"""
-function area(cs::SingleBubble)
-    R = cs.radius
-    ΔR = cs.bubble_lower_downward_shift
-    enclosed_area = π * R^2 + 2 * R * ΔR
-    return enclosed_area
-end  # function area
-
-"""
-$(TYPEDSIGNATURES)
-"""
-function area(cs::MultiBubble)
-    R = cs.radius
-    ΔR = cs.bubble_lower_downward_shift
-    θ_web, h_web, sin2θ, web_length = web_geometry(cs)
-    enclosed_area = (π + cs.n_webs * (2θ_web + sin2θ)) * R^2 + 2R * ΔR
-    return enclosed_area
-end # function area
-
-"""
-    get_perimeter(x::SingleBubble)
-
-$(TYPEDSIGNATURES)
-
-Returns the perimeter of a given cross-section
-"""
-function get_perimeter(cs::SingleBubble)
-    return (2π * cs.radius) + (2 * cs.bubble_lower_downward_shift)
-end  # function perimeter
-
-"""
-    get_perimeter(x::MultiBubble)
-
-$(TYPEDSIGNATURES)
-
-Returns the perimeter of a given cross-section
-"""
-function get_perimeter(cs::MultiBubble)
-    θ_web, _, _, _ = web_geometry(cs)
-    perimeter =
-        (2π + 4.0 * θ_web * cs.n_webs) * cs.radius + (2 * cs.bubble_lower_downward_shift)
-    return perimeter
-end  # function perimeter
 
 """
     size_insulation(cs::AbstractCrossSection,
