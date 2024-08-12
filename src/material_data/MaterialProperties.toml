@@ -56,6 +56,35 @@
     shear_strength = 280e6
     thermal_conductivity = 121 #W/(m K)
 
+[Al-2024-T4]
+    description = """2000 series aluminum alloy that's a common choice for aerospace and structural applications. 
+    It's made of aluminum, copper, and manganese, with copper as the main element. """
+
+    source = "https://www.matweb.com/search/datasheet.aspx?MatGUID=0ea3c1617f984cb08cdc98f0e2fa5b4f"
+    density = 2780.0 #kg/m3
+    youngs_modulus = 73.1e9 #Pa
+    shear_modulus = 28e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 324e6 #Yield tensile strength
+    UTS = 469e6  #Ultimate tensile strength
+    shear_strength = 283e6
+    thermal_conductivity = 121 #W/(m K)
+
+[Al-Li-1441]
+    description = """The low density and good mechanical properties of Al-Li alloys make them attractive for
+many structural applications, especially in the aerospace industry. Compared to other Al-Cu-Mg alloys, 1441 Al-Li alloy has similar strength but exhibits 7% lower
+density and 12% higher modulus, as well as other improved properties """
+
+    source = "https://ntrs.nasa.gov/api/citations/20040086797/downloads/20040086797.pdf"
+    density =  2600.0 #kg/m3
+    youngs_modulus = 78.4 #Pa
+    shear_modulus = 28e9 #Pa
+    poissons_ratio = 0.34
+    YTS = 315e6 #Yield tensile strength
+    UTS = 430e6  #Ultimate tensile strength
+    shear_strength = 320e6
+    thermal_conductivity =  88 #W/(m K)
+
 [Ti-6242]
     description = "Titanium 6242 alloy"
     #Structural properties: https://www.matweb.com/search/datasheet_print.aspx?matguid=66f20965748441d8916768ed80be0cba
@@ -80,6 +109,7 @@
     UTS = 505e6  #Ultimate tensile strength
     shear_strength = 386.0e6 #From https://protoxyz.com/materials/metal/Stainless_Steel_304
     thermal_conductivity = 16.2 #W/(m K)
+
 # -----------------------------------------------------
 # Generic conductors with electrical properties taken 
 # from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
