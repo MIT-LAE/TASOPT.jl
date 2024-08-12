@@ -25,8 +25,9 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     parad = ac.parad
     pared = ac.pared
 
-    fuse = ac.fuse
+    fuse = ac.fuselage
     wing = ac.wing
+    htail = ac.htail
 
     time_propsys = 0.0
 
@@ -47,7 +48,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
     # Calculates surface velocities, boundary layer, wake 
-    fusebl!(pari, parg, para, ipcruise1)
+    fusebl!(fuse, parm, para, ipcruise1)
+    #fusebl!(pari, parg, para, ipcruise1)
 
 #---- assume K.E., dissipation, drag areas will be the same for all points
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
@@ -153,11 +155,11 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 
 #--------------------------------------------------------------------------
 #---- set wing pitching moment constants
-    b  = parg[igb]
-    bs = parg[igbs]
-    bo = parg[igbo]
+    b  = wing.layout.b
+    bs = wing.inboard.layout.b
+    bo = wing.outboard.layout.b
     sweep = wing.layout.sweep
-    Xaxis = parg[igXaxis]
+    Xaxis = wing.layout.spar_box_x_c
     λs = wing.inboard.layout.λ
     λt = wing.outboard.layout.λ
     AR = wing.layout.AR
@@ -204,11 +206,11 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     para[iaCMw1, ipdescentn] = CMw1
 
 #---- tail pitching moment constants
-    bh      = parg[igbh]
-    boh     = parg[igboh]
-    sweeph  = parg[igsweeph]
-    λh      = parg[iglambdah]
-    ARh     = parg[igARh]
+    bh      = htail.layout.b
+    boh     = htail.outboard.layout.b
+    sweeph  = htail.layout.sweep
+    λh      = htail.outboard.layout.λ
+    ARh     = htail.layout.AR
     fLoh = 0.
     fLth = fLt
     cmph = 0.
@@ -242,7 +244,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     set_ambient_conditions!(ac, ipcruise1)
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare,fuse, wing, false)
+    time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, htail, ac.vtail, false)
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
