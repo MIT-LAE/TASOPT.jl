@@ -23,20 +23,14 @@ jobs:
         uses: julia-actions/setup-julia@v2
         with:
           version: '1'
-      - uses: actions/cache@v4
+      - name: Cache Julia artifacts
+        uses: julia-actions/cache@v2
         env:
           cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
 
       - name: Build Julia package
         uses: julia-actions/julia-buildpkg@v1
-        
+
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
