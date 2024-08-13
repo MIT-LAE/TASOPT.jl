@@ -82,8 +82,8 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       Sh   = htail.layout.S
       Sv   = vtail.layout.S
 
-      fLo  = parg[igfLo]
-      fLt  = parg[igfLt]
+      fLo  = wing.inboard.lift_rolloff
+      fLt  = wing.outboard.lift_rolloff
 
       fCDwcen = 0.0
       fCDhcen = parg[igfCDhcen]
@@ -130,13 +130,10 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
 
       # if(Ldebug) write(*,*) 'calling SURFCD2...'
       clpo,clps,clpt,
-	cdfw,cdpw,CDwing,CDover = surfcd2(S, b,bs,bo,
-	lambdat,lambdas,gammat,gammas,
-	hboxo,hboxs,hboxt,
-	Mach,sweep,co, 
-	CL,CLhtail, fLo,fLt,
-	Reco,aRexp, rkSunsw,fexcdw,
-	fduo,fdus,fdut)
+	cdfw,cdpw,CDwing,CDover = surfcd2(wing,gammat,gammas,
+                                    Mach,CL,CLhtail,Reco,
+                                    aRexp, rkSunsw,fexcdw,
+                                    fduo,fdus,fdut)
 	
        #if(Ldebug) write(*,*) '...exited SURFCD2'
 
@@ -160,10 +157,9 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
       para[iaCDwing] = CDwing
       para[iaCDover] = CDover
 
-      clpo, clps, clpt = wingcl(b,bs,bo,
-	lambdat,lambdas,gammat,gammas,
-	sweep,AR,CL,CLhtail,fLo,fLt,
-	fduo,fdus,fdut)
+      clpo, clps, clpt = wingcl(wing,gammat,gammas,
+                              CL,CLhtail,
+	                        fduo,fdus,fdut)
 
       end
 
@@ -318,7 +314,7 @@ function cditrp(pari,parg,para, wing, htail, vtail)
 
       #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
 #---- wing wake parameters
-      fLo = parg[igfLo]
+      fLo =  wing.inboard.lift_rolloff
 #      fLo = 0.0
 
 #---- span, wing-break span, wing-root span

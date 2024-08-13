@@ -98,8 +98,8 @@ function wsize(ac; itermax=35,
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
     freserve = parg[igfreserve]
-    fLo = parg[igfLo]
-    fLt = parg[igfLt]
+    fLo =  wing.inboard.lift_rolloff
+    fLt =  wing.outboard.lift_rolloff
 
     # Extract layout parameters
     xhbox = htail.layout.box_x
@@ -531,16 +531,16 @@ function wsize(ac; itermax=35,
         xwing = wing.layout.x
         
         # Update wing pitching moment constants
-        update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
-        update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
-        update_wing_pitching_moments!(para, ipdescentn:ipdescentn, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+        update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+        update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+        update_wing_pitching_moments!(para, ipdescentn:ipdescentn, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
 
         # Calculate wing center load
         ip = ipcruise1
         γt, γs = wing.outboard.layout.λ * para[iarclt, ip], wing.inboard.layout.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail, fLo, fLt)
+        po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate engine weight
         Weng1 = (wing.planform == 1) ? (pari[iiengtype] == 0 ? parg[igWfan] + parg[igWmot] + parg[igWfanGB] : parg[igWeng] / parg[igneng]) : 0.0
@@ -1132,7 +1132,7 @@ update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, ia
 
 Updates wing pitching moments and calls surfcm for mission points
 """
-function update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
     for ip in ip_range
         cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
         γt = wing.outboard.layout.λ * para[iarclt, ip]
@@ -1141,7 +1141,7 @@ function update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, i
         CMw0, CMw1 = surfcm(
             wing.layout.b, wing.inboard.layout.b, wing.outboard.layout.b, 
             wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.layout.λ, wing.inboard.layout.λ, 
-            γt, γs, wing.layout.AR, fLo, fLt, cmpo, cmps, cmpt
+            γt, γs, wing.layout.AR, wing.inboard.lift_rolloff, wing.outboard.lift_rolloff, cmpo, cmps, cmpt
         )
 
         para[iaCMw0, ip] = CMw0

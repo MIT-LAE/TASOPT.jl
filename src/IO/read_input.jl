@@ -460,8 +460,8 @@ readwing(x) = read_input(x, wing_i, dwing)
 # ----------------------------------
 aero = readwing("Aero")
 daero = dwing["Aero"]
-    parg[igfLo] = readaero("fuselage_lift_carryover_loss_factor")
-    parg[igfLt] = readaero("wing_tip_lift_rolloff_factor")
+    wing.inboard.lift_rolloff = readaero("fuselage_lift_carryover_loss_factor")
+    wing.outboard.lift_rolloff = readaero("wing_tip_lift_rolloff_factor")
 
     para[iacdfw, 1:iptotal, :]   .= readaero("lowspeed_cdf")  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
     para[iacdpw, 1:iptotal, :]   .= readaero("lowspeed_cdp")  #  cdpw    
