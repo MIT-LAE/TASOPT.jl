@@ -6,12 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PostProcACS_RQLDeFunUnMixSZ import EmisInteg
 hf_Etha = 25761470. #[J/kg] heating value of ethanol with evaporation
-ResKey    = [["JetA1500_230MissDetail","Etha1500_230MissDetail","JetAEtha1500_230MissDetail","EthaJetA1500_230MissDetail"],["JetA2250_230MissDetail","Etha2250_230MissDetail","JetAEtha2250_230MissDetail","EthaJetA2250_230MissDetail"],["JetA3000_230MissDetail","Etha3000_230MissDetail","JetAEtha3000_230MissDetail","EthaJetA3000_230MissDetail"]]
-InpKey    = [["ACS_CFmFpCom_Fli1500_0606_JetAJetA","ACS_CFmFpCom_Fli1500_0606_EthaEtha","ACS_CFmFpCom_Fli1500_0606_JetAEtha","ACS_CFmFpCom_Fli1500_0606_EthaJetA"],["ACS_CFmFpCom_Fli2250_0606_JetAJetA","ACS_CFmFpCom_Fli2250_0606_EthaEtha","ACS_CFmFpCom_Fli2250_0606_JetAEtha","ACS_CFmFpCom_Fli2250_0606_EthaJetA"],["ACS_CFmFpCom_Fli3000_0606_JetAJetA","ACS_CFmFpCom_Fli3000_0606_EthaEtha","ACS_CFmFpCom_Fli3000_0606_JetAEtha","ACS_CFmFpCom_Fli3000_0606_EthaJetA"]]
+ResKey    = [["JetA1500_230MissDetail","Etha1500_230MissDetail","JetAEtha1500_230DMissDetail","EthaJetA1500_230DMissDetail"],["JetA2250_230MissDetail","Etha2250_230MissDetail","JetAEtha2250_230MissDetail","EthaJetA2250_230MissDetail"],["JetA3000_230MissDetail","Etha3000_230MissDetail","JetAEtha3000_230MissDetail","EthaJetA3000_230MissDetail"]]
+InpKey    = [["ACS_CFmFpCom_Fli1500_0606_JetAJetA","ACS_CFmFpCom_Fli1500_0606_EthaEtha","ACS_CFmFpCom_Fli1500_0606_JetAEthaD","ACS_CFmFpCom_Fli1500_0606_EthaJetAD"],["ACS_CFmFpCom_Fli2250_0606_JetAJetA","ACS_CFmFpCom_Fli2250_0606_EthaEtha","ACS_CFmFpCom_Fli2250_0606_JetAEtha","ACS_CFmFpCom_Fli2250_0606_EthaJetA"],["ACS_CFmFpCom_Fli3000_0606_JetAJetA","ACS_CFmFpCom_Fli3000_0606_EthaEtha","ACS_CFmFpCom_Fli3000_0606_JetAEtha","ACS_CFmFpCom_Fli3000_0606_EthaJetA"]]
 labels    = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
 IdxEtha   = [[0,0],[1,1],[0,1],[1,0]]
 formLine  = ["x","x","x","x"]
-colorLine = ["k","orange","g","r"]
+colorLine = ["C0","orange","g","r"]
 RanLstLst         = []
 PFEILstLst        = []
 fECost_Etha_TO_LstLst = []
@@ -231,4 +231,19 @@ ax.set_ylim(bottom=0.0, top=20.0)
 ax.grid(True)
 plt.legend()
 plt.savefig('Movie' + '/' + "fracPFEI.jpg")
+plt.close('all')
+
+NOxlst = np.array([[261.4,349.0,543.7],[135.0,245.3,282.0],[191.4,335.6,452.5],[150.9,248.4,402.9]])
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(len(labels)):
+    ax.plot(RanLstLst[idxCas], NOxlst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_ylabel('Total Mission NOx Emissions [kg]')
+ax.set_xlabel('Range [nmi]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.0, top=20.0)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "TotNOx.jpg")
 plt.close('all')
