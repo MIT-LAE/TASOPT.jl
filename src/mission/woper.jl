@@ -163,8 +163,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     λs = wing.inboard.layout.λ
     λt = wing.outboard.layout.λ
     AR = wing.layout.AR
-    fLo = parg[igfLo]
-    fLt = parg[igfLt]
+    fLo =  wing.inboard.lift_rolloff
+    fLt =  wing.outboard.lift_rolloff
 
     ip = iptakeoff
     cmpo = para[iacmpo,ip]

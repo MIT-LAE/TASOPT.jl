@@ -249,8 +249,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Aero , for multiple segments
     d_wing_aero = Dict()
-        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g[igfLo]
-        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g[igfLt]
+        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g.wing.inboard.lift_rolloff
+        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g.wing.outboard.lift_rolloff
 
         d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,:]
         d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,:]
@@ -832,6 +832,8 @@ function reset_regression_test(fname, ac)
         @printf(io, "wing.layout.b= %20.20f \n", wing.layout.b)
         @printf(io, "wing.layout.sweep = %20.20f \n", wing.layout.sweep)
         @printf(io, "wing.layout.AR = %20.20f \n", wing.layout.AR)
+        @printf(io, "wing.inboard.lift_rolloff = %20.20f \n", wing.inboard.lift_rolloff)
+        @printf(io, "wing.outboard.lift_rolloff = %20.20f \n", wing.outboard.lift_rolloff)
 
         @printf(io, "# ------------------------------\n")
         @printf(io,"# Htail\n")

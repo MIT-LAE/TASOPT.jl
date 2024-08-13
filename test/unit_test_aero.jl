@@ -44,50 +44,37 @@
 
     # surfcd2
     #Start surfcd2
-    S = 124.68530759570760
-    b = 35.486921629195265
-    bs = 10.113772664320649
-    bo = 3.6067999999999998
-    λt = 0.25000000000000000
-    λs = 0.69999999999999996
-    γt = 0.22500000000000001
-    γs = 0.86659999999999993
-    hboxo = 0.12680000000000000
-    hboxs = 0.12659999999999999
-    hboxt = 0.12659999999999999
-    Mach = 0.58952911671974617
-    sweep = 26.000000000000000
-    co = 5.8841656099573720
-    CL = 0.28499999999999998
-    CLhtail = -6.2697771129503563E-003
-    fLo = -0.29999999999999999
-    fLt = -5.0000000000000003E-002
-    Reco = 61282898.209462374
-    aRexp = -0.14999999999999999
-    rkSunsw = 0.50000000000000000
-    fexcdw = 1.0200000000000000
-    fduo = 1.7999999999999999E-002
-    fdus = 1.4000000000000000E-002
-    fdut = 4.4999999999999997E-003
+    γt = 0.225
+    γs = 0.8665999999999999
+    Mach = 0.5917830310706261
+    CL = 0.285
+    CLhtail = -0.0016806695060863123
+    Reco = 6.5275125903133705e7
+    aRexp = -0.15
+    rkSunsw = 0.5
+    fexcdw = 1.02
+    fduo = 0.018
+    fdus = 0.014
+    fdut = 0.0045
 
-    fort_clpo = 0.32893068972603751
-    fort_clps = 0.41043528170442389
-    fort_clpt = 0.30404829961507862
+    fort_clpo = 0.32261639979597084
+    fort_clps = 0.40255639582615926
+    fort_clpt = 0.29821166236450036
     fort_cdfw = 5.1447209302202422E-003
     fort_cdpw = 2.2187499862715509E-003
     fort_CDwing = 7.3634709164917935E-003
     fort_CDover = 0.0000000000000000
     clpo, clps, clpt, CDfwing, CDpwing,
     CDwing, CDover = TASOPT.aerodynamics.surfcd2(
-        S,
-        b, bs, bo,
-        λt, λs, γt, γs,
-        hboxo, hboxs, hboxt,
-        Mach, sweep, co,
-        CL, CLhtail, fLo, fLt,
-        Reco, aRexp, rkSunsw, fexcdw,
-        fduo, fdus, fdut)
+      wing, γt, γs,
+      Mach, CL, CLhtail, 
+      Reco, aRexp, rkSunsw, fexcdw,
+      fduo, fdus, fdut)
 
+#       SURFCD2 INPUT
+# (0.225, 0.8665999999999999, 0.5917830310706261, 0.285, -0.0016806695060863123, 6.5275125903133705e7, -0.15, 0.5, 1.02, 0.018, 0.014, 0.0045)
+# SURFCD2 OUTPUT
+# (0.005092435287160669, 0.002484528306027699, 0.007576963593188367, 0.0)
     @test fort_clpo == clpo
     @test fort_clps == clps
     @test fort_clpt == clpt
@@ -131,11 +118,9 @@
     N = 3.0000000000000000
     W = 853967.1303861982
     Lhtail = -152047.6033818514
-    fLo = -0.3
-    fLt = -0.05
     fort_po = 114119.45308868506
 
-    po = TASOPT.aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail, fLo, fLt)
+    po = TASOPT.aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail)
     
     @test po == fort_po
     #end Wingpo

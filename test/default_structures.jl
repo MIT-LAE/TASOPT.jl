@@ -137,6 +137,8 @@ wing.inboard.layout.b = 10.70891372784236317273
 wing.layout.b= 37.57513588716619068464 
 wing.layout.sweep = 26.00000000000000000000 
 wing.layout.AR = 10.09999999999999964473 
+wing.inboard.lift_rolloff = -0.3
+wing.outboard.lift_rolloff = -0.05
 # ------------------------------
 # Htail
 # ------------------------------
