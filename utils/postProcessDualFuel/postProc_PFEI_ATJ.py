@@ -9,7 +9,7 @@ hf_Etha = 26810134 #[J/kg] heating value of ethanol with evaporation
 hf_JetA = 43215118 #[J/kg] heating value of jet fuel with evaporation
 ResKey    = [["JetA1500_230MissDetail","Etha1500_230MissDetail","JetAEtha1500_230DMissDetail","EthaJetA1500_230DMissDetail"],["JetA2250_230MissDetail","Etha2250_230MissDetail","JetAEtha2250_230MissDetail","EthaJetA2250_230MissDetail"],["JetA3000_230MissDetail","Etha3000_230MissDetail","JetAEtha3000_230MissDetail","EthaJetA3000_230MissDetail"]]
 InpKey    = [["ACS_CFmFpCom_Fli1500_0606_JetAJetA","ACS_CFmFpCom_Fli1500_0606_EthaEtha","ACS_CFmFpCom_Fli1500_0606_JetAEthaD","ACS_CFmFpCom_Fli1500_0606_EthaJetAD"],["ACS_CFmFpCom_Fli2250_0606_JetAJetA","ACS_CFmFpCom_Fli2250_0606_EthaEtha","ACS_CFmFpCom_Fli2250_0606_JetAEtha","ACS_CFmFpCom_Fli2250_0606_EthaJetA"],["ACS_CFmFpCom_Fli3000_0606_JetAJetA","ACS_CFmFpCom_Fli3000_0606_EthaEtha","ACS_CFmFpCom_Fli3000_0606_JetAEtha","ACS_CFmFpCom_Fli3000_0606_EthaJetA"]]
-labels    = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
+labels    = ["Jet Fuel Only","Ethanol Only","Ethanol Main Dual Fuel","Ethanol Pilot Dual Fuel"]
 IdxEtha   = [[0,0],[1,1],[0,1],[1,0]]
 IdxJetA   = 1-np.array(IdxEtha)
 ATJCost   = [0.097, 0.435] #[LowCost, HighCost] [J/J]
@@ -100,4 +100,30 @@ ax.set_ylim(bottom=0.0, top=20.0)
 ax.grid(True)
 plt.legend()
 plt.savefig('Movie' + '/' + "fracPFEI.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(len(labels)):
+    ax.plot(RanLstLst[idxCas], PFEI_ATJL_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('PFEI with Lower Bound ATJ Cost Estimation [J/J]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.6, top=0.85)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "PFEI_ATJL.jpg")
+plt.close('all')
+
+fig = plt.figure(dpi = 300)
+ax  = fig.add_subplot(1,1,1)
+for idxCas in range(len(labels)):
+    ax.plot(RanLstLst[idxCas], PFEI_ATJH_LstLst[idxCas], formLine[idxCas],color=colorLine[idxCas],label=labels[idxCas])
+ax.set_xlabel('Range [nmi]')
+ax.set_ylabel('PFEI with Upper Bound ATJ Cost Estimation [J/J]')
+ax.set_xlim(left=1400, right=3200)
+# ax.set_ylim(bottom=0.6, top=0.85)
+ax.grid(True)
+plt.legend()
+plt.savefig('Movie' + '/' + "PFEI_ATJU.jpg")
 plt.close('all')
