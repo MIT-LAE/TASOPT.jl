@@ -401,6 +401,21 @@
     floor_max_avg_stress = 1.1
     floor_safety_factor = 1.5
 
+    ## Wing and tail bending and shear stresses
+    sigma_caps    = "30e3 lbf/in2"
+    sigma_struts  = "30e3 lbf/in2"
+    tau_webs = "20e3 lbf/in2"
+
+    fuse_shell_modulus_ratio = 1.0 # Ebend/Eskin
+
+    E_wing_spar_cap = "10e6 lbf/in2"
+    E_struts        = "10e6 lbf/in2"
+
+    # Material densities (Aluminium)
+    wing_tail_cap_density = 2700.0
+    wing_tail_web_density = 2700.0
+    strut_density = 2700.0
+
 [Propulsion]
 
     number_of_engines = 2
