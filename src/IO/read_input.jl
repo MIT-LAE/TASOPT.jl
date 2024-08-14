@@ -655,23 +655,10 @@ structures = read_input("Structures", data, default)
 dstructures = default["Structures"]
 readstruct(x) = read_input(x, structures, dstructures)
     parg[igsigfac] = readstruct("stress_factor")
-    #- allowable stresses at sizing cases
-    # parg[igsigcap] = Stress(readstruct("sigma_caps"))
-    # parg[igtauweb] = Stress(readstruct("tau_webs"))
-
-    # parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
     fuselage.ratio_young_mod_fuse_bending = readstruct("fuse_shell_modulus_ratio")
 
-    #- moduli, for strut-induced buckling load estimation
-    # parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
-    # parg[igEstrut] = Stress(readstruct("E_struts"))
-
-    #- structural material densities
-    # parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
-    # parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
-    # parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
     caps_max_avg = readstruct("caps_max_avg_stress")
     caps_safety_fac = readstruct("caps_safety_factor")
     wing.inboard.caps.material = StructuralAlloy(readstruct("caps_material"),
