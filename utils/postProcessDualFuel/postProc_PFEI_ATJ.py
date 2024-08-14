@@ -12,15 +12,20 @@ InpKey    = [["ACS_CFmFpCom_Fli1500_0606_JetAJetA","ACS_CFmFpCom_Fli1500_0606_Et
 labels    = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
 IdxEtha   = [[0,0],[1,1],[0,1],[1,0]]
 IdxJetA   = 1-np.array(IdxEtha)
+ATJCost   = [0.097, 0.435] #[LowCost, HighCost] [J/J]
 formLine  = ["x","x","x","x"]
 colorLine = ["C0","orange","g","r"]
 RanLstLst    = []
 PFEILstLst   = []
 fPFEI_LstLst = []
+PFEI_ATJL_LstLst = []
+PFEI_ATJH_LstLst = []
 for idxRes in range(len(ResKey)):
     RanLst    = []
     PFEILst   = []
     fPFEI_Lst = []
+    PFEI_ATJL_Lst = []
+    PFEI_ATJH_Lst = []
     for idxCas in range(len(ResKey[idxRes])):
         #For PFEI Calculation
         Res = pd.read_csv(ResKey[idxRes][idxCas]+".csv")
@@ -51,12 +56,21 @@ for idxRes in range(len(ResKey)):
         else:
             Del_PFEI = PFEI_TT-PFEI_TT_Base # Change of PFEI
             fPFEI_Lst.append(100*Del_PFEI/PFEI_TT_Base) #[%] Relative Change of PFEI
+        #Calculate Extended PFEI taking into account the additional process heat required to turn alcohol into jet fuel
+        PFEI_TT_ATJL = (EEtha_TT+EJetA_TT*(1+ATJCost[0]))/(Ran_Cur*WPay_Cur) #[J/J] Low ATJ Cost Estimation
+        PFEI_TT_ATJH = (EEtha_TT+EJetA_TT*(1+ATJCost[1]))/(Ran_Cur*WPay_Cur) #[J/J] High ATJ Cost Estimation
+        PFEI_ATJL_Lst.append(PFEI_TT_ATJL)
+        PFEI_ATJH_Lst.append(PFEI_TT_ATJH)
     RanLstLst.append(RanLst)
     PFEILstLst.append(PFEILst)
     fPFEI_LstLst.append(fPFEI_Lst)
+    PFEI_ATJL_LstLst.append(PFEI_ATJL_Lst)
+    PFEI_ATJH_LstLst.append(PFEI_ATJH_Lst)
 RanLstLst             = np.transpose(RanLstLst)
 PFEILstLst            = np.transpose(PFEILstLst)
 fPFEI_LstLst          = np.transpose(fPFEI_LstLst)
+PFEI_ATJL_LstLst      = np.transpose(PFEI_ATJL_LstLst)
+PFEI_ATJH_LstLst      = np.transpose(PFEI_ATJH_LstLst)
 
 # Create Movie Directory
 if os.path.isdir('Movie' + '/') == False:
