@@ -5,11 +5,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from PostProcACS_RQLDeFunUnMixSZ import EmisInteg
-hf_Etha = 25761470. #[J/kg] heating value of ethanol with evaporation
+hf_Etha = 26810134 #[J/kg] heating value of ethanol with evaporation
+hf_JetA = 43215118 #[J/kg] heating value of jet fuel with evaporation
 ResKey    = [["JetA1500_230MissDetail","Etha1500_230MissDetail","JetAEtha1500_230DMissDetail","EthaJetA1500_230DMissDetail"],["JetA2250_230MissDetail","Etha2250_230MissDetail","JetAEtha2250_230MissDetail","EthaJetA2250_230MissDetail"],["JetA3000_230MissDetail","Etha3000_230MissDetail","JetAEtha3000_230MissDetail","EthaJetA3000_230MissDetail"]]
 InpKey    = [["ACS_CFmFpCom_Fli1500_0606_JetAJetA","ACS_CFmFpCom_Fli1500_0606_EthaEtha","ACS_CFmFpCom_Fli1500_0606_JetAEthaD","ACS_CFmFpCom_Fli1500_0606_EthaJetAD"],["ACS_CFmFpCom_Fli2250_0606_JetAJetA","ACS_CFmFpCom_Fli2250_0606_EthaEtha","ACS_CFmFpCom_Fli2250_0606_JetAEtha","ACS_CFmFpCom_Fli2250_0606_EthaJetA"],["ACS_CFmFpCom_Fli3000_0606_JetAJetA","ACS_CFmFpCom_Fli3000_0606_EthaEtha","ACS_CFmFpCom_Fli3000_0606_JetAEtha","ACS_CFmFpCom_Fli3000_0606_EthaJetA"]]
 labels    = ["Jet Fuel Both Zones","Ethanol Both Zones","Ethanol Main Zone","Ethanol Pilot Zone"]
 IdxEtha   = [[0,0],[1,1],[0,1],[1,0]]
+IdxJetA   = 1-np.array(IdxEtha)
 formLine  = ["x","x","x","x"]
 colorLine = ["C0","orange","g","r"]
 RanLstLst         = []
@@ -42,14 +44,18 @@ for idxRes in range(len(ResKey)):
         #Get Ethanol Energy Burnt
         Inp = pd.read_csv(InpKey[idxRes][idxCas]+".csv")
         IdxEtha_Cur = IdxEtha[idxCas]
+        IdxJetA_Cur = IdxJetA[idxCas]
         Weight_Cur = Inp["Weight"].values[:] #[kg] Weight of the aircraft
         EIEtha_Cur = (Inp['Wf[kg/s]'].values[:]*IdxEtha_Cur[0] + Inp['WAS[kg/s]'].values[:]*IdxEtha_Cur[1])/Inp['WfTot'].values[:] #[kg/kg] Consumption Index of Ethanol Per Unit Fuel Burn
+        EIJetA_Cur = (Inp['Wf[kg/s]'].values[:]*IdxJetA_Cur[0] + Inp['WAS[kg/s]'].values[:]*IdxJetA_Cur[1])/Inp['WfTot'].values[:] #[kg/kg] Consumption Index of Jet Fuel Per Unit Fuel Burn
         InteEmis = EmisInteg(Weight_Cur,EIEtha_Cur)
         EEtha_TO = hf_Etha*InteEmis["mPolTO"] #[J]
         EEtha_CL = hf_Etha*InteEmis["mPolCL"] #[J]
         EEtha_CR = hf_Etha*InteEmis["mPolCR"] #[J]
         EEtha_DE = hf_Etha*InteEmis["mPolDE"] #[J]
         EEtha_TT = hf_Etha*InteEmis["mPolTot"] #[J]
+        InteEmis = EmisInteg(Weight_Cur,EIJetA_Cur)
+        EJetA_TT = hf_JetA*InteEmis["mPolTot"] #[J]
         #Get Total Fuel Energy at different phases
         hf_Cur = Inp["HeatingValue"].values[:] #[J/kg] Heating Value at different phase of flight
         InteEmis = EmisInteg(Weight_Cur,hf_Cur) #[J] Energy at different phase
@@ -83,7 +89,7 @@ for idxRes in range(len(ResKey)):
             Del_EFuel = EFuel_TT-EFuel_TT_Base #[J] Extra Energy Burnt
             fECost_Etha_TT_Lst.append(Del_EFuel/EEtha_TT) #[J/J] Energy cost per unit ethanol burnt
         #Calculate PFEI
-        PFEI_TT = EFuel_TT/(Ran_Cur*WPay_Cur) #[J/J]
+        PFEI_TT = (EEtha_TT+EJetA_TT)/(Ran_Cur*WPay_Cur) #[J/J]
         PFEILst.append(PFEI_TT)#[J/J]
         if idxCas == 0: #Baseline Pure Jet Fuel Case
             PFEI_TT_Base = PFEI_TT
