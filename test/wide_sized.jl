@@ -48,6 +48,7 @@ fuse.layout.floor_depth = 0.20319999999999999174
 fuse.layout.taper_tailcone = 0.29999999999999998890 
 fuse.ratio_young_mod_fuse_bending = 1.00000000000000000000 
 fuse.skin.thickness = 0.00175077250460729632 
+fuse.layout.cross_section.skin_thickness = fuse.skin.thickness
 fuse.cone.thickness = 0.00113188101579309594 
 fuse.layout.thickness_webs = 0.00000000000000000000 
 fuse.floor.thickness = 0.00098610402504400703 

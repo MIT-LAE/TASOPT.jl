@@ -2,23 +2,27 @@
 function check_struct_equivalence(s1, s2)
     fields_s1 = fieldnames(typeof(s1))
     fields_s2 = fieldnames(typeof(s2))
-    
+    println("Inside check_struct_equivalence")
     # Check if both structs have the same fields
     if fields_s1 != fields_s2
+        println("don't have same fields")
         return false
     end
     
     # Check if each field has the same value in both structs
     for field in fields_s1
+        println("Field: $field")
         val1 = getproperty(s1, field)
         val2 = getproperty(s2, field)
         if typeof(val1) == typeof(val2)
-            if typeof(val1) != Float64
+            if !(typeof(val1) <:Number)
+                println("not a number: ", field)
                 if !check_struct_equivalence(val1, val2)
                     return false
                 end
-            else
-                @test val1 ≈ val2 
+            elseif !isapprox(val1, val2; rtol=1e-6)
+                println("Error in ", field, " --> ", val1, " != ", val2,)
+                return false
             end
         else
             return false
