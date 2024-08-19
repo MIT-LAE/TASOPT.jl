@@ -43,6 +43,35 @@ end
 const WORLD = Frame()
 
 """
+    toWORLD(L::AbstractLoad)
+
+Returns a new equivalent load in the WORLD frame.
+"""
+function copytoWORLD(L::AbstractLoad)
+    O′= L.frame.origin
+    O = WORLD.origin
+    Δ = O′ - O
+    L2 = deepcopy(L)
+    L2.frame = WORLD
+    L2.r = L.r + Δ
+    return L2
+end  # function toWORLD
+
+"""
+    movetoWORLD!(L::AbstractLoad)
+
+Mutates the load by moving it to the WORLD frame
+"""
+function movetoWORLD!(L::AbstractLoad)
+    O′= L.frame.origin
+    O = WORLD.origin
+    Δ = O′ - O
+    L.frame = WORLD
+    L.r = L.r + Δ
+    return nothing
+end  # function movetoWORLD!
+
+"""
 $(TYPEDEF) 
 
 Represents a weight at a given location `r` with respect to a 
