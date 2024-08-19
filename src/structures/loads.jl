@@ -160,6 +160,21 @@ function Base.getproperty(obj::Weight, sym::Symbol)
     end
 end
 
+function Base.setproperty!(obj::Weight, sym::Symbol, val::AbstractFloat)
+    if sym === :x
+        setfield!(obj, :r, SA[val, obj.r[2], obj.r[3]])
+        return nothing
+    elseif sym === :y
+        setfield!(obj, :r, SA[obj.r[1], val, obj.r[3]])
+        return nothing
+    elseif sym === :z
+        setfield!(obj, :r, SA[obj.r[1], obj.r[2], val])
+        return nothing
+    else 
+        setfield!(obj, sym, val)
+    end
+end  # function Base.setproperty!
+
 """
     moment(weight::Weight)
 
