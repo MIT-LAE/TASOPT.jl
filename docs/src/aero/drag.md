@@ -74,7 +74,7 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-aerodynamics.cditrp(pari,parg,para)
+aerodynamics.cditrp(para, wing, htail)
 
 aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
@@ -109,7 +109,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.cdsum!(pari, parg, para, pare, icdfun)
+aerodynamics.cdsum!(parg, para, pare, wing, htail, vtail, icdfun)
 ```
 ---
 

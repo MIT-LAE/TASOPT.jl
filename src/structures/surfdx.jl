@@ -19,7 +19,6 @@ and the mean aerodynamic chord (normalized by root chord, `co`)
 
 See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Description](@ref dreladocs).
 """
-
 function surfdx(b,bs,bo,λt,λs,sweep)
 
       tanL = tan(deg2rad(sweep))
@@ -75,7 +74,7 @@ function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{F
 end
 
 """
-      surfdx!(wing, b, λs)
+      surfdx!(tail, b, λs)
 
 surfdx wrapper for Tail
 

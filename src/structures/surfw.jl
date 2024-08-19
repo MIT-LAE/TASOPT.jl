@@ -51,8 +51,8 @@ end
 
 """
     surfw!(wing, po, gammat, gammas, 
-       Nload, We, neout, dyeout, neinn, dyeinn,
-       fLt, sigfac, rhofuel)
+    Nload, We, neout, dyeout, neinn, dyeinn,
+    fLt, sigfac, rhofuel)
 
 Calculates Wing or Tail loads, stresses, weights of individual wing sections.
 Also returns the material gauges, torsional and bending stiffness.
@@ -76,7 +76,6 @@ Also returns the material gauges, torsional and bending stiffness.
 
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
-
 function surfw!(wing, po, gammat, gammas, 
        Nload, We, neout, dyeout, neinn, dyeinn,
        fLt, sigfac, rhofuel)

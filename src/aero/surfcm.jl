@@ -1,7 +1,7 @@
 """
-    surfcm(b, bs, bo, sweep, Xaxis, 
-		λt, λs, γt, γs, 
-		AR, fLo, fLt, cmpo, cmps, cmpt)
+    surfcm(b,bs,bo, sweep, Xaxis,
+                       λt, λs, γt, γs,
+                       AR, fLo, fLt, cmpo, cmps, cmpt)
 
 Calculates components of wing pitching moment (``C_M``) about wing root axis:
 

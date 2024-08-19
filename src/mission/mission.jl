@@ -1,5 +1,5 @@
 """
-    mission!(pari, parg, parm, para, pare, Ldebug)
+    mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
@@ -8,6 +8,10 @@ Input:
  pari[.]   integer flags
  parg[.]   geometry parameters
  parm[.]   mission parameters
+ fuse      TASOPT.Fuselage
+ wing      TASOPT.Wing
+ htail     TASOPT.Tail
+ vtail     TASOPT.Tail
  iairf     index of airfoil database to use
  initeng    0 = engine state will be initialized for all points
             1 = engine state is assumed to be initialized
@@ -357,7 +361,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   else
                         icdfun = 1 #use airfoil database
                   end
-                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
+                  cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
 
                   icall = 1
                   icool = 1
@@ -483,7 +487,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
+            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -563,7 +567,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
 
       # Calc Drag
       icdfun = 1
-      cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  icdfun)
+      cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  icdfun)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -716,7 +720,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   # use airfoil database for wing cdf,cdp
                   icdfun = 1
             end
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
+            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
 
             # set up for engine calculation
             sing = sin(gamVde)
