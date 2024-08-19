@@ -1,5 +1,5 @@
 """
-    cdsum!(pari,parg,para,pare,icdfun)
+    cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 
 Calculates aircraft `CD` components for operating point, ipoint.
 If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
@@ -26,10 +26,12 @@ where:
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
       - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
       - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
       - `pare::AbstractArray{Float64}`: Vector of `aircraft` model engine parameters.
+      - `Wing::TASOPT.Wing`: Wing Structure.
+      - `Htail::TASOPT.Tail`: Htail Structure.
+      - `Vtail::TASOPT.Tail`: Vtail Structure.
       - `icdfun::Integer`: Flag if drag should be computed (=1) or if para values should be used (=0).
 
       **Outputs:**
@@ -42,7 +44,7 @@ See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@r
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
+function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 
       Ldebug = false
 #      Ldebug = true
@@ -230,7 +232,7 @@ function cdsum!(pari,parg,para,pare, wing, htail, vtail, icdfun)
 #---- induced CD
 #      if(Ldebug) write(*,*) '...calling CDITRP...'
 
-      cditrp(pari,parg,para, wing, htail, vtail)
+      cditrp(para, wing, htail)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -262,15 +264,15 @@ end # cdsum
 
 
 """
-      cditrp(pari,parg,para, wing)
+      cditrp(para, wing, htail)
 
 Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
-      - `parg::AbstractVector{Float64}`: Vector of `aircraft` model geometry parameters.
       - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
+      - `wing::TASOPT.Wing`: Wing Structure.
+      - `htail::TASOPT.Tail`: Htail Structure.
 
       **Outputs:**
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
@@ -279,7 +281,7 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cditrp(pari,parg,para, wing, htail, vtail)
+function cditrp(para, wing, htail)
 
       CL = para[iaCL]
 

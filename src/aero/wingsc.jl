@@ -1,5 +1,5 @@
 """
-    wingsc(W, CL, qinf, AR, ηsi, bo, λt, λs)
+   wingsc!(W,CL,qinf,wing)
 
 Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (taken as start-of-cruise in `wsize`).
 

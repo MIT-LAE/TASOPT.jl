@@ -1,5 +1,5 @@
 """
-      balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
+balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
 Makes one of three (or none) changes to achieve pitch trim
 calculates resulting CG, CP, NP locations.
@@ -8,6 +8,10 @@ Inputs:
 - `pari[.]`  integer flag array
 - `parg[.]`  geometry parameter array
 - `para[.]`  aero parameter array
+- `fuse`      TASOPT.Fuselage
+- `wing`      TASOPT.Wing
+- `htail`     TASOPT.Tail
+- `vtail`     TASOPT.Tail
 - `rfuel`    fuel fraction   Wfuel_actual/Wfuel_MTOW
 - `rpay`     payload fraction Wpay_actual/Wpay_MTOW
 - `ξpay`    partial-payload packing location

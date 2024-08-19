@@ -1,6 +1,6 @@
 """
     surft!(tail, po, lambdas,gammat,gammas,fLt,
-            tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.layout.b)
+            tauweb,sigcap,Ecap,rhoweb,rhocap, b)
 
 Calculates Tail loads, stresses, weights of individual tail sections.
 Also returns the material gauges, torsional and bending stiffness.
@@ -23,7 +23,6 @@ Also returns the material gauges, torsional and bending stiffness.
 
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
-
 function surft!(tail, po, lambdas,gammat,gammas,fLt,
             tauweb,sigcap,Ecap,rhoweb,rhocap, b = tail.layout.b)
 
