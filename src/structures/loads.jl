@@ -153,6 +153,8 @@ function Base.getproperty(obj::Weight, sym::Symbol)
         return obj.r[2]
     elseif sym === :z
         return obj.r[3]
+    elseif sym === :force
+        return [0.0, 0.0, -1.0*getfield(obj, :W)]
     else
         return getfield(obj, sym)
     end
