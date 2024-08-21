@@ -1008,6 +1008,8 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       end
 
       #Size HX
+      Iobj = 1e9 #Start with very high value of objective function
+      try 
       hxsize!(HXgas, HXgeom)
 
       #Extract outputs
@@ -1042,6 +1044,8 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
             p = max(pmin, pmax)
 
             Iobj = Iobj * p
+      end
+      catch #Do nothing if it errors
       end
 
       return Iobj
