@@ -1,27 +1,15 @@
 """
-    tfsize!(gee, M0, T0, p0, a0, M2, M25,
-      Feng, Phiinl, Kinl, iBLIc,
-      BPR, pif, pilc, pihc,
-      pid, pib, pifn, pitn,
-      Ttf, ifuel, etab,
-      epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
-      mofft, Pofft,
-      Tt9, pt9, Tt4,
-      epsl, epsh,
-      icool,
-      Mtexit, dTstrk, StA, efilm, tfilm,
-      M4a, ruc,
-      ncrowx, ncrow,
-      epsrow, Tmrow, 
-      Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
-      Δp_PreC, Δp_InterC, Δp_Regen)
+      ductedfansize!(gee, M0, T0, p0, a0, M2,
+            Feng, Phiinl, Kinl, iBLIc,
+            pif,
+            pid, pifn, 
+            epf0,
+            pifK, epfK
+            )
 
-
-Turbofan performance and sizing routine.
+Ducted fan performance and sizing routine.
       
-Calculation procedure follows that of Kerrebrock, but the usual gas property formulas are replaced by function calls, which can therefore implement more general gas models.  
-In addition, a turbine cooling model is added.
+This model is based on the turbofan model in `tfsize()`, stripped of the core.
       
 The gas routines reside in the following source files:
     gascalc.f  Routines for various processes (compressor, turbine, combustor, etc)
@@ -34,65 +22,22 @@ The gas routines reside in the following source files:
     - `T0`:      freestream temperature  [K]
     - `p0`:      freestream pressure  [Pa]
     - `M2`:      fan-face Mach number
-    - `M25`:     HPC-face Mach number
     - `Feng`:    required net thrust  (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
     - `Phiinl`:  inlet ingested dissipation
-    - `iBLIc`:   0=core in clear flow, 1=core sees Phiinl
-    - `BPR`:     bypass ratio  = mdot_fan/mdot_core
     - `pif`:     fan      pressure ratio  ( = pt7 /pt2)
-    - `pilc`:    LP comp  pressure ratio  ( = pt25/pt2)
-    - `pihc`:    HP comp  pressure ratio  ( = pt3 /pt25)
     - `pid`:     diffuser pressure ratio  ( = pt2 /pt0)
     - `pib`:     burner   pressure ratio  ( = pt4 /pt3)
-    - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt2.1)
-    - `pitn`:    turbine nozzle pressure ratio  ( = pt5/pt4.9)
-    - `Ttf`:     fuel temperature entering combustor
-    - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    fan max polytropic efficiency
-    - `eplc0`:   LPC max polytropic efficiency
-    - `ephc0`:   HPC max polytropic efficiency
-    - `epht0`:   HPT max polytropic efficiency
-    - `eplt0`:   LPT max polytropic efficiency
     - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
     - `epfK`:    fan efficiency pif derivative
-      
-    - `mofft`:    mass flow offtake at LPC discharge station 2.5
-    - `Pofft`:    low spool power offtake
-    - `Tt9`:     offtake air discharge total temperature
-    - `pt9`:     offtake air discharge total pressure
-    - `epsl`:    low  spool power loss fraction
-    - `epsh`:    high spool power loss fraction
-      
-    - `icool   turbine cooling flag
-               0 = no cooling, ignore all cooling parameters below
-               1 = usual cooling, using passed-in fcool
-               2 = usual cooling, but set (and return) fcool from Tmetal
-    - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if icool=2
-    - `StA`:      area-weighted Stanton number    , used only if icool=2
-    - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
-    - `ruc`:      cooling-flow outlet velocity ratio, u/ue
-    - `ncrowx`:      dimension of epsrow array
-    - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if icool=1
-                     output resulting cooling-flow bypass ratio if icool=2
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if icool=2
-                     output resulting metal temperature  [K]    if icool=1
 
       **Outputs:**
-    - `epsrow(.)`:   see above
-    - `Tmrow(.)`:    see above
-    - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
     - `Fsp`:     specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
-    - `hfuel`:   fuel heating value   [J / kg K]
-    - `ff`:      fuel mass flow fraction  =  mdot_fuel / mdot_core
+    - `Pfan`:    power required to drive fan [W]
     - `mcore`:   core mass flow = mdot_core  [kg/s]
     - `A2`:      fan-face area [m^2]
-    - `A25`:     HPC-face area [m^2]
-    - `A5`:      core nozzle area [m^2]
     - `A7`:      fan  nozzle area [m^2]
-    - `A6`:      core plume  area [m^2]
     - `A8`:      fan  plume  area [m^2]
     - `Tt?`:     total temperature
     - `ht?`:     total complete enthalpy (includes heat of formation)
@@ -102,15 +47,7 @@ The gas routines reside in the following source files:
     - `T?`:      static temperature
     - `u?`:      velocity
     - `epf`:     fan polytropic efficiency
-    - `eplc`:    LPC polytropic efficiency
-    - `ephc`:    HPC polytropic efficiency
-    - `epht`:    HPT polytropic efficiency
-    - `eplt`:    LPT polytropic efficiency
     - `etaf`:    fan overall efficiency
-    - `etalc`:   LPC overall efficiency
-    - `etahc`:   HPC overall efficiency
-    - `etaht`:   HPT overall efficiency
-    - `etalt`:   LPT overall efficiency
     - `Lconv`:   T if convergence was successful, F otherwise
 
     The "?" symbol denotes the station index:
@@ -119,14 +56,6 @@ The gas routines reside in the following source files:
       19 fan face over LPC portion
       2  fan face over fan portion
       21 fan exit
-      25 LPC exit, HPC inlet
-      3  compressor exit
-      4  combustor exit before cooling air addition
-      41 turbine  inlet after  cooling air addition
-      45 HPT exit, LPT inlet
-      49 LPT exit
-      5  core nozzle
-      6  core flow downstream
       7  fan nozzle
       8  fan flow downstream
 """
@@ -135,7 +64,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
       pif,
       pid, pifn, 
       epf0,
-      pifK, epfK,
+      pifK, epfK
       )
 
       n = 6
@@ -366,7 +295,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
       end
 
       if (npass > 1)
-            println("TFSIZE: Convergence failed.  dm/m = ", dmfrac)
+            println("DUCTEDFANSIZE: Convergence failed.  dm/m = ", dmfrac)
       end
 
 end # tfsize

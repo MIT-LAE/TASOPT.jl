@@ -39,12 +39,14 @@ mutable struct DuctedFanData
     cp2::Float64
     R2::Float64
     M2::Float64
+    A2::Float64
     T7::Float64
     u7::Float64
     p7::Float64
     cp7::Float64
     R7::Float64
     M7::Float64
+    A7::Float64
     T8::Float64
     u8::Float64
     p8::Float64
@@ -67,44 +69,28 @@ mutable struct DuctedFanData
     pifn::Float64
     pifD::Float64
     mbfD::Float64
-    A2::Float64
-    A7::Float64
     epf0::Float64
     pifK::Float64
     epfK::Float64
     DuctedFanData() = new() 
 end
 """
-function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-      Phiinl, Kinl, iBLIc,
-      pid, pib, pifn, pitn,
-      Gearf,
-      pifD, pilcD, pihcD, pihtD, piltD,
-      mbfD, mblcD, mbhcD, mbhtD, mbltD,
-      NbfD, NblcD, NbhcD, NbhtD, NbltD,
-      A2, A25, A5, A7,
-      iTFspec,
-      Ttf, ifuel, etab,
-      epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
-      mofft, Pofft,
-      Tt9, pt9,
-      epsl, epsh,
-      icool,
-      Mtexit, dTstrk, StA, efilm, tfilm,
-      M4a, ruc,
-      ncrowx, ncrow,
-      epsrow, Tmrow,
-      Feng,
-      M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
+    ductedfanoper!(M0, T0, p0, a0, Tref, pref,
+        Phiinl, Kinl, iBLIc,
+        pid, pifn, 
+        pifD, 
+        mbfD, 
+        A2, A7,
+        epf0,
+        pifK, epfK,
+        Feng, Peng,
+        M2, pif, mbf, 
+        iPspec)
 
-Turbofan operation routine
+Ducted fan operation routine
 
-    Calculation procedure follows that of Kerrebrock,
-    but the usual gas property formulas are replaced
-    by function calls, which can therefore implement
-    more general gas models.  
-    In addition, a turbine cooling model is added.
+    This code follows a similar strategy as that in `tfoper()`. However, as the problem has fewer unknowns, the 
+    Jacobian is not computed manually and a black-box non-linear solver is used instead.
 
     The gas routines reside in the following source files:
      gascalc.f  Routines for various processes 
@@ -114,7 +100,6 @@ Turbofan operation routine
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `gee`:     gravity acceleration
     - `M0`:      freestream Mach
     - `T0`:      freestream temperature  [K]
     - `p0`:      freestream pressure  [Pa]
@@ -123,108 +108,31 @@ Turbofan operation routine
     - `Phiinl`:  inlet ingested dissipation  Phi_inl
     - `iBLIc`:   0=core in clear flow, 1=core sees Phiinl
     - `pid`:     diffuser pressure ratio  ( = pt2/pt0)
-    - `pib`:     burner   pressure ratio  ( = pt4/pt3)
     - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt6.9)
-    - `pitn`:    turbine nozzle pressure ratio  ( = pt5/pt4.9)
-    - `Gearf`:   fan gear ratio  ( = Nl/Nf )
     - `pifD`:    design fan pressure ratio  ( = pt21/pt2 )
-    - `pilcD`:   design LPC pressure ratio  ( = pt25/pt19)
-    - `pihcD`:   design HPC pressure ratio  ( = pt3 /pt25)
-    - `pihtD`:   design HPT pressure ratio  ( = pt45/pt41)
-    - `piltD`:   design LPT pressure ratio  ( = pt49/pt45)
     - `mbfD`:    design corrected fan mass flow ( = mf*sqrt(Tt2 /Tref)/(pt2 /pref) )
-    - `mblcD`:   design corrected LPC mass flow ( = mc*sqrt(Tt19/Tref)/(pt19/pref) )
-    - `mbhcD`:   design corrected HLC mass flow ( = mc*sqrt(Tt25/Tref)/(pt25/pref) )
-    - `mbhtD`:   design corrected HPT mass flow ( = mt*sqrt(Tt41/Tref)/(pt41/pref) )
-    - `mbltD`:   design corrected LPT mass flow ( = mt*sqrt(Tt45/Tref)/(pt45/pref) )
-    - `NbfD`:    design corrected fan speed ( = Nf/sqrt(Tt2 /Tref) )
-    - `NblcD`:   design corrected LPC speed ( = Nl/sqrt(Tt19/Tref) )
-    - `NbhcD`:   design corrected HPC speed ( = Nh/sqrt(Tt25/Tref) )
-    - `NbhtD`:   design corrected HPT speed ( = Nh/sqrt(Tt41/Tref) )
-    - `NbltD`:   design corrected LPT speed ( = Nl/sqrt(Tt45/Tref) )
     - `A2`:      fan-face area [m^2]                mf = mc*BPR, mt = mc*(1+ff)
-    - `A25`:     HPC-face area [m^2]
-    - `A5`:      core nozzle area [m^2]
     - `A7`:      fan  nozzle area [m^2]
-    - `iTFspec`:   = 1 Tt4  is specified
-                   = 2 Feng is specified
-    - `Tt4`:     turbine-inlet total temperature [K]
-    - `Ttf`:     fuel temperature entering combustor
-    - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
-    - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    max fan polytropic efficiency
-    - `eplc0`:   LPC max polytropic efficiency
-    - `ephc0`:   HPC max polytropic efficiency
-    - `epht0`:   HPT max polytropic efficiency
-    - `eplt0`:   LPT max polytropic efficiency
     - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
     - `epfK`:    fan efficiency pif derivative
-
-    - `mofft`:    mass flow offtake at LPC discharge station 2.5
-    - `Pofft`:    low spool power offtake
-    - `Tt9`:     offtake air discharge total temperature
-    - `pt9`:     offtake air discharge total pressure
-    - `epsl`:    low  spool power loss fraction
-    - `epsh`:    high spool power loss fraction
-
-    - `icool`:    turbine cooling flag
-                  0 = no cooling, ignore all cooling parameters below
-                  1 = usual cooling, using passed-in fc
-                  2 = usual cooling, but set (and return) fc from Tmetal
-    - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `Tmetal`:   specified metal temperature  [K], used only if icool=2
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if icool=2
-    - `StA`:      area-weighted Stanton number    , used only if icool=2
-    - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
-    - `ruc`:      cooling-flow outlet velocity ratio, u/ue
-    - `ncrowx`:      dimension of epsrow array
-    - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if icool=1
-                     output resulting cooling-flow bypass ratio if icool=2
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if icool=2
-                     output resulting metal temperature  [K]    if icool=1
+    - `Feng`:    required net thrust [N]
+    - `Peng`:    power required to drive fan [W]
+    - `M2`:      guess Mach number at station 2
+    - `pif`:     guess fan pressure ratio
+    - `mbf`:     guess corrected fan mass flow rate
+    - `iPspec`:  true if power is specified, false if thrust is specified
 
       **Output:**
     ------
-    - `epsrow(.)`:   see above
-    - `Tmrow(.)`:    see above
-    - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
-    - `Fsp`:     specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
-    - `hfuel`:   fuel heating value   [J / kg K]
-    - `ff`:      fuel mass flow fraction  =  mdot_fuel / mdot_core
-    - `Feng`:    net effective thrust  = (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
-    - `mcore`:   core mass flow = mdot_core  [kg/s]
-    - `BPR`:     bypass ratio   = mdot_fan/mdot_core
-    - `Tt?`:     total temperature
-    - `ht?`:     total complete enthalpy (includes heat of formation)
-    - `pt?`:     total pressure
-    - `cpt?`:    specific heat at stagnation temperature  (= dh/dT)
-    - `Rt?`:     gas constant  at stagnation conditions
-    - `T?`:     static temperature
-    - `u?`:      velocity
-    - `etaf`:    fan          overall efficiency
-    - `etac`:    compressor   overall efficiency
-    - `etatf`:   fan-turbine  overall efficiency
-    - `etatc`:   comp-turbine overall efficiency
-    - `Lconv`:   T if convergence was successful, F otherwise
+    - `pif`:     fan pressure ratio
+    - `mbf`:     corrected fan mass flow rate
+    - `M2`:      Mach number at station 2
 
     The "?" symbol denotes the station index:
       0   freestream
       18  fan face outside of casing BLs
-      19  fan face over LPC portion
       2   fan face over fan portion
-      21  fan exit, precooler inlet
-      19c precooler outlet, LPC inlet
-      25  LPC exit, intercooler inlet 
-      25c intercooler exit, HPC inlet
-      3   compressor exit
-      4   combustor exit before cooling air addition
-      41  turbine  inlet after  cooling air addition
-      45  HPT exit, LPT inlet
-      49  LPT exit, regenerative cooler inlet
-      49c regenerative cooler outlet
-      5   core nozzle
-      6   core flow downstream
       7   fan nozzle
       8   fan flow downstream
 """
@@ -237,7 +145,8 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
       epf0,
       pifK, epfK,
       Feng, Peng,
-      M2, pif, mbf)
+      M2, pif, mbf, 
+      iPspec)
     
     pf = pif
     mf = mbf
@@ -266,7 +175,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     guess[2] = mf
     guess[3] = Mi
 
-    residual(x) = res_df(x, engdata)
+    residual(x) = res_df(x, engdata, iPspec = iPspec)
     sol = nlsolve(residual, guess, ftol = 1e-8) 
 
     return sol.zero
@@ -326,7 +235,7 @@ function update_engine_data!(data::DuctedFanData, inputs)
 end
 
 
-function res_df(x, engdata, iPspec = false, store_data = false)
+function res_df(x, engdata; iPspec = false, store_data = false)
     #Extract unknowns
     pf = x[1]
     mf = x[2]
