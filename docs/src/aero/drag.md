@@ -48,7 +48,7 @@ aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
-aerodynamics.fusebl!(pari, parg, para, parm, ip)
+aerodynamics.fusebl!(fuse, parm, para, ip)
 ```
 
 ---

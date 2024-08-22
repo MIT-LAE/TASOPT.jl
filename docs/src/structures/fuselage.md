@@ -339,5 +339,5 @@ x \hspace{-0.45ex} W_{\rm vbend}
 \end{aligned}$$
 
 ```@docs
-TASOPT.fusew
+TASOPT.fusew!
 ```

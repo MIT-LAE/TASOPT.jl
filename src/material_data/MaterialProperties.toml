@@ -1,5 +1,16 @@
 # Default Material Properties for commonly used materials in TASOPT
 # All units are assumed to be in SI units
+[TASOPT-Al]
+    description = "Aluminium used in default TASOPT models"
+    density = 2700.0 #kg/m3
+    youngs_modulus =  6.894757889515779e10 #Pa
+    shear_modulus = 24.0e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 34.13e7 #Yield tensile strength
+    UTS = 90e6 #Ultimate tensile strength
+    shear_strength = 227.53e6
+    thermal_conductivity = 180 #W/(m K)
+
 [Al-6061]
     description = "Aluminium 6061 alloy"
     source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=626ec8cdca604f1994be4fc2bc6f7f63"
