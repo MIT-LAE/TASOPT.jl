@@ -1135,7 +1135,7 @@ function wsize(ac; itermax=35,
             parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
 
             #Tank placement and weight moment
-            lcabin = dx_cabin(fuse)
+            lcabin = fuse.layout.l_cabin_cylinder
             if tank_placement == "front"
                 flag_front = 1
                 flag_aft = 0
@@ -1160,7 +1160,7 @@ function wsize(ac; itermax=35,
             parg[igxWfuel] = parg[igWfuel] * xfuel
 
             # Update fuselage according to tank requirements
-            update_fuse!(pari, parg) #update fuselage length to accommodate tank
+            update_fuse!(fuse, pari, parg) #update fuselage length to accommodate tank
             fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties

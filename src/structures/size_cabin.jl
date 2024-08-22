@@ -129,7 +129,7 @@ function aisle_flag(idx, layout)
 end
 
 """
-    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64, h_seat::Float64)
+    find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Int64, θ::Float64, h_seat::Float64)
 
 This function can be used to calculate the width of the passenger cabin from the double-bubble parameters
 and the floor angular position.
@@ -145,7 +145,7 @@ and the floor angular position.
     **Outputs:**
     - `w::Float64`: width of cabin (m).
 """
-function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Float64, θ::Float64, h_seat::Float64)
+function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Int64, θ::Float64, h_seat::Float64)
     #Use trigonometry to find cabin width
     θseat = asin((h_seat + Rfuse * sin(θ)) / Rfuse)  
     cosθ = min(cos(θ), cos(θseat)) #For the effective cabin width, take the minimum of the widths at the floor and at the seat height
@@ -182,7 +182,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
 end
 
 """
-    find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+    find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
 
 This function can be used to calculate the length of a double decker cabin with different number of 
 passengers on each deck.
@@ -190,21 +190,22 @@ passengers on each deck.
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `fuse::Fuselage`: structure with fuselage parameters
     - `parm::Array{Float64}`: array with mission parameters
 
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
 """
-function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
     seat_pitch = parg[igseatpitch]
     seat_width = parg[igseatwidth]
     aisle_halfwidth = parg[igaislehalfwidth]
     h_seat = parg[igseatheight]
 
-    Rfuse = parg[igRfuse]
-    dRfuse = parg[igdRfuse]
-    wfb = parg[igwfb]
-    nfweb = parg[ignfweb]
+    Rfuse = fuse.layout.radius
+    dRfuse = fuse.layout.bubble_lower_downward_shift
+    wfb = fuse.layout.bubble_center_y_offset
+    nfweb = fuse.layout.n_webs
     d_floor = parg[igfloordist]
 
     paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
@@ -233,20 +234,21 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
 end
 
 """
-    find_double_decker_cabin_length(x::Vector{Float64}, parg, parm)
+    optimize_double_decker_cabin(parg, fuse, parm)
 
 This function can be used to optimize the passenger distribution across two decks in a double decker aircraft. 
 If the cross-section is circular, it also optimizes the deck layouts.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `fuse::Fuselage`: structure with fuselage parameters
     - `parm::Array{Float64}`: array with mission parameters
 
     **Outputs:**
     - `xopt::Vector{Float64}`: vector with optimization results
 """
-function optimize_double_decker_cabin(parg, parm)
-    dRfuse = parg[igdRfuse]
+function optimize_double_decker_cabin(parg, fuse, parm)
+    dRfuse = fuse.layout.bubble_lower_downward_shift
 
     paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
 
@@ -254,7 +256,7 @@ function optimize_double_decker_cabin(parg, parm)
     lower = [1.0, -pi/2]
     upper = [paxsize - 1.0, pi/2]
         
-    obj(x, grad) = find_double_decker_cabin_length(x, parg, parm)[1] #Objective function is cabin length
+    obj(x, grad) = find_double_decker_cabin_length(x, parg, fuse, parm)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
@@ -264,37 +266,37 @@ function optimize_double_decker_cabin(parg, parm)
     opt.min_objective = obj
 
     if dRfuse ≈ 0.0 #Apply constraints on lower floor if it can be moved around
-        inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, parg), 1e-5) #Minimum height of cargo hold
-        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, parg), 1e-5) #Minimum height of upper cabin
+        inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, fuse), 1e-5) #Minimum height of cargo hold
+        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, parg, fuse), 1e-5) #Minimum height of upper cabin
     end
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Evaluate number of passengers per row in main cabin
-    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, parm)
+    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, fuse, parm)
 
     return xopt, seats_per_row_main
 end
 
 """
-    MinCargoHeightConst(x, parg, minheight = 1.626)
+    MinCargoHeightConst(x, fuse, minheight = 1.626)
 
 This function evaluates a minimum height constraint on the cargo hold. It returns a number less than or equal 0 if
 the constraint is met and a value greater than 0 if it is not.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
-    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `fuse::Fuselage`: structure with fuselage parameters
     - `minheight::Float64`:minimum height of cargo hold
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCargoHeightConst(x, parg, minheight = 1.626)
+function MinCargoHeightConst(x, fuse, minheight = 1.626)
     #Extract parameters
     θ1 = x[2]
-    Rfuse = parg[igRfuse]
-    dRfuse = parg[igdRfuse]
+    Rfuse = fuse.layout.radius
+    dRfuse = fuse.layout.bubble_lower_downward_shift
 
     hcargo = Rfuse * (1 + sin(θ1)) + dRfuse #Height left for cargo containers under floor; need to add dRfuse
 
@@ -303,7 +305,7 @@ function MinCargoHeightConst(x, parg, minheight = 1.626)
 end
 
 """
-    MinCabinHeightConst(x, parg, minheight = 2.0)
+    MinCabinHeightConst(x, parg, fuse, minheight = 2.0)
 
 This function evaluates a minimum height constraint on the upper cabin. It returns a number less than or equal 0 if
 the constraint is met and a value greater than 0 if it is not.
@@ -311,16 +313,17 @@ the constraint is met and a value greater than 0 if it is not.
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `fuse::Fuselage`: structure with fuselage parameters
     - `minheight::Float64`:minimum height of upper cabin
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCabinHeightConst(x, parg, minheight = 2.0)
+function MinCabinHeightConst(x, parg, fuse, minheight = 2.0)
     #Extract parameters
     θ1 = x[2] #Main deck angle
-    Rfuse = parg[igRfuse]
-    dRfuse = parg[igdRfuse]
+    Rfuse = fuse.layout.radius
+    dRfuse = fuse.layout.bubble_lower_downward_shift
     d_floor = parg[igfloordist]
 
     try #The calculation could fail for some inputs if an asin returns an error

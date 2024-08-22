@@ -352,6 +352,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.x_end_cylinder = Distance(readgeom("x_end_cylinder"))
     fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
     fuselage.layout.x_end = Distance(readgeom("x_end")) 
+    fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
 
 # ------ End fuse -------
 
