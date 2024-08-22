@@ -49,49 +49,14 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       Ldebug = false
 #      Ldebug = true
 
-      AR       = wing.layout.AR
-      sweep    = wing.layout.sweep
-      hboxo    = wing.inboard.layout.chord_thickness
-      hboxs    = wing.outboard.layout.chord_thickness
-      hboxt    = hboxs
       fSnace   = parg[igfSnace ]
-      bo       = wing.outboard.layout.b
-      bs       = wing.inboard.layout.b
-      boh      = htail.outboard.layout.b
-      bov      = vtail.outboard.layout.b
-
-      lambdat  = wing.outboard.layout.λ
-      lambdas  = wing.inboard.layout.λ
+      
       gammat   = wing.outboard.layout.λ*para[iarclt]
       gammas   = wing.inboard.layout.λ*para[iarcls]
-
-      lambdah  = htail.outboard.layout.λ
-      lambdav  = vtail.outboard.layout.λ
-      sweeph   = htail.layout.sweep
-      sweepv   = vtail.layout.sweep
-      cosLs    = wing.strut.cos_lambda
-      Sstrut   = wing.strut.S
-
-      co   = wing.layout.chord
-      coh  = htail.layout.chord
-      cov  = vtail.layout.chord
-
-      b    = wing.layout.b
-      bh   = htail.layout.b
-      bv   = vtail.layout.b
-
-      S    = wing.layout.S
-      Sh   = htail.layout.S
-      Sv   = vtail.layout.S
-
-      fLo  = wing.inboard.lift_rolloff
-      fLt  = wing.outboard.lift_rolloff
 
       fCDwcen = 0.0
       fCDhcen = parg[igfCDhcen]
       fCDvcen = 0.0
-
-      nvtail   = vtail.ntails
 
       rVnace = parg[igrVnace]
 
@@ -109,7 +74,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       fexcdw = para[iafexcdw]
 
 #---- tail lift
-      CLhtail = para[iaCLh]*Sh/S
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
 
 #---- parameters for Re-scaling of cd's
       Reunit = para[iaReunit]
@@ -124,7 +89,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       rkSunsv = 0.
 #
 #---- Re referenced to root chord
-      Reco = Reunit*co
+      Reco = Reunit*wing.layout.chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (icdfun==1) 
@@ -151,8 +116,8 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       cdfw = para[iacdfw] * fexcdw
       cdpw = para[iacdpw] * fexcdw
 
-	CDwing,CDover = surfcd(S,
-	b,bs,bo,lambdat,lambdas,sweep,co, 
+	CDwing,CDover = surfcd(wing.layout.S,
+	wing.layout.b,wing.inboard.layout.b,wing.outboard.layout.b,wing.outboard.layout.λ,wing.inboard.layout.λ,wing.layout.sweep,wing.layout.chord, 
 	cdfw,cdpw,Reco,Rerefw,aRexp,rkSunsw,
        fCDwcen)
  
@@ -176,27 +141,27 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       cdpt = para[iacdpt] * para[iafexcdt]
 
 #---- horizontal tail profile CD
-      Recoh = Reunit*coh
-	CDhtail,CDhover = surfcd(S,
-	bh,boh,boh,lambdah,1.0,sweeph,coh, 
+      Recoh = Reunit*htail.layout.chord
+	CDhtail,CDhover = surfcd(wing.layout.S,
+	htail.layout.b,htail.outboard.layout.b,htail.outboard.layout.b,htail.outboard.layout.λ,1.0,htail.layout.sweep,htail.layout.chord, 
 	cdft,cdpt,Recoh,Rereft,aRexp,rkSunsh,
 	fCDhcen)
 
 #---- vertical tail profile CD
-      Recov = Reunit*cov
-      CDvtail1,CDvover1 = surfcd(S,
-	bv,bov,bov,lambdav,1.0,sweepv,cov, 
+      Recov = Reunit*vtail.layout.chord
+      CDvtail1,CDvover1 = surfcd(wing.layout.S,
+	vtail.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.λ,1.0,vtail.layout.sweep,vtail.layout.chord, 
 	cdft,cdpt,Recov,Rereft,aRexp,rkSunsv,
       fCDvcen)
 	
-      CDvtail = CDvtail1*nvtail
+      CDvtail = CDvtail1*vtail.ntails
 
       para[iaCDhtail] = CDhtail
       para[iaCDvtail] = CDvtail
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- fuselage profile CD, using fuselage CDA from BLI calculation
-      CDfuse = PAfinf/S
+      CDfuse = PAfinf/wing.layout.S
       para[iaCDfuse] = CDfuse
 
 #      if(Ldebug) write(*,*) 'nacelle CD...'
@@ -225,7 +190,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       cdfs = para[iacdfs]
       cdps = para[iacdps]
       rVstrut = wing.strut.local_velocity_ratio
-      CDstrut = (Sstrut/S)*(cdfs + cdps*cosLs^3) * rVstrut^3
+      CDstrut = (wing.strut.S/wing.layout.S)*(cdfs + cdps*wing.strut.cos_lambda^3) * rVstrut^3
       para[iaCDstrut] = CDstrut
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -238,7 +203,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- apparent fuselage deltaCD from ingestion
       fBLIf = parg[igfBLIf]
-      dCDBLIf = -fBLIf*DAfwake/S
+      dCDBLIf = -fBLIf*DAfwake/wing.layout.S
       para[iadCDBLIf] = dCDBLIf
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -

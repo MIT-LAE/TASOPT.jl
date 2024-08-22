@@ -295,7 +295,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       a = zeros(Float64, (2, 2))
 
       sweep = wing.layout.sweep
-      cosL = cos(sweep * π / 180.0)
+      cosL = cosd(sweep)
 
       #---- set CG limits with worst-case payload arrangements
       rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse, wing, htail, vtail)

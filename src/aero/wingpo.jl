@@ -70,7 +70,7 @@ function wingcl(wing,γt,γs,
                 CL,CLhtail,
                 duo,dus,dut)
 
-      cosL = cos(deg2rad(wing.layout.sweep))
+      cosL = cosd(wing.layout.sweep)
 
       ηo = wing.outboard.layout.b/wing.layout.b
       ηs = wing.inboard.layout.b/wing.layout.b

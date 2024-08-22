@@ -30,8 +30,8 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
        Gcap = Ecap * 0.5 / (1.0 + 0.3)
        Gweb = Ecap * 0.5 / (1.0 + 0.3)
 
-       cosL = cos(deg2rad(tail.layout.sweep))
-       sinL = sin(deg2rad(tail.layout.sweep))
+       cosL = cosd(tail.layout.sweep)
+       sinL = sind(tail.layout.sweep)
 
       # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
       etao = tail.outboard.layout.b/b
