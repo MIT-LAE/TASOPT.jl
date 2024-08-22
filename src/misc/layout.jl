@@ -109,6 +109,8 @@ $TYPEDFIELDS
     tail_radius::Float64 = 0
     """Taper fuselage to Point (0) or Edge (1)"""
     taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
+    """Length of cylindrical portion of cabin that contains payload [m]"""
+    l_cabin_cylinder::Float64 = 0.0 # 0 = point ; 1 = edge
 end
 
 # Helper function to be able to simplify 

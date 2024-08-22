@@ -400,7 +400,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
                 xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
             elseif tank_placement == "rear"
                 xtanks = [parg[igxftankaft]]
-                xseats0 = parg[igxshell1 ]
+                xseats0 = fuselage.layout.x_pressure_shell_fwd
             elseif tank_placement == "both"
                 xtanks = [parg[igxftank], parg[igxftankaft]]
                 xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
@@ -451,17 +451,24 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
         end
 
-    pax = parg[igWpay]/parm[imWperpax]
+    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+        h_seat = parg[igseatheight]
+        pax = parg[igWpay]/parm[imWperpax]
+        Rfuse = fuselage.layout.radius
+        dRfuse = fuselage.layout.bubble_lower_downward_shift
+        wfb = fuselage.layout.bubble_center_y_offset
+        nfweb = fuselage.layout.n_webs
 
-    wcabin = find_cabin_width(fuselage.layout.radius, fuselage.layout.bubble_lower_downward_shift, fuselage.layout.bubble_center_y_offset, fuselage.layout.n_webs, parg[igfloordist]) #Find cabin width
-    _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
-    xseats = xseats .+ xseats0
-    rows = length(xseats)
+        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
+        wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
+        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
+
+        xseats = xseats .+ xseats0
+        rows = length(xseats)
 
         println("Seats per row = $seats_per_row, Total rows = $rows")
         yseats = arrange_seats(seats_per_row, wcabin)
     end
-
     ## Plot
     if ax === nothing
         # plt.style.use(["../miscellaneous/prash.mplstyle"]) # HACK
@@ -1406,8 +1413,13 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
         h_seat = parg[igseatheight]
         pax = parg[igWpay]/parm[imWperpax]
-        θ = find_floor_angles(false, parg[igRfuse], parg[igdRfuse], h_seat = parg[igseatheight]) #Find the floor angle
-        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ, h_seat) #Cabin width
+        Rfuse = fuselage.layout.radius
+        dRfuse = fuselage.layout.bubble_lower_downward_shift
+        wfb = fuselage.layout.bubble_center_y_offset
+        nfweb = fuselage.layout.n_webs
+
+        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
+        wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
         _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
 
         xseats = xseats .+ xseats0
