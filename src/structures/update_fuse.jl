@@ -1,6 +1,6 @@
 export update_fuse!, update_fuse_for_pax!
 """
-    update_fuse!(pari, parg)
+update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 
 Function to update the fuselage layout when there is a change in fuselage fuel tank length.
 
@@ -12,7 +12,7 @@ Function to update the fuselage layout when there is a change in fuselage fuel t
     **Outputs:**
     No direct outputs; parameters in `parg` are modified.
 """
-function update_fuse!(fuselage, pari, parg)
+function update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
     # parg[igRfuse   ] = 90 * in_to_m 
@@ -25,8 +25,8 @@ function update_fuse!(fuselage, pari, parg)
     dxapu2end = fuselage.layout.x_end - fuselage.APU.x
     dxshell2conend =fuselage.layout.x_cone_end - fuselage.layout.x_pressure_shell_aft
     dxshell2apu = fuselage.APU.x - fuselage.layout.x_pressure_shell_aft
-    dxhbox2conend = fuselage.layout.x_cone_end - parg[igxhbox ]
-    dxvbox2conend = fuselage.layout.x_cone_end - parg[igxvbox ]
+    dxhbox2conend = fuselage.layout.x_cone_end - htail.layout.box_x
+    dxvbox2conend = fuselage.layout.x_cone_end - vtail.layout.box_x
 
     if parg[igxftankaft] == 0.0 #if there is not a rear tank
         dxcyl2shellaft = fuselage.layout.x_pressure_shell_aft - fuselage.layout.x_end_cylinder
@@ -44,10 +44,10 @@ function update_fuse!(fuselage, pari, parg)
     fuselage.layout.x_end = fuselage.APU.x + dxapu2end
     fuselage.HPE_sys.r = [fuselage.layout.x_cone_end * 0.52484, 0.0,0.0]#TODO: address this
     
-    parg[igxhbox   ] = fuselage.layout.x_cone_end - dxhbox2conend
-    parg[igxvbox   ] = fuselage.layout.x_cone_end - dxvbox2conend
+    htail.layout.box_x = fuselage.layout.x_cone_end - dxhbox2conend
+    vtail.layout.box_x = fuselage.layout.x_cone_end - dxvbox2conend
     
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox
+    parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox
 
 end
 
@@ -93,7 +93,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     dxhbox2conend = fuse.layout.x_cone_end - parg[igxhbox ] #Distance from conend to xhbox
     dxvbox2conend = fuse.layout.x_cone_end - parg[igxvbox ] #Distance from conend to xvbox
     #Fraction of cabin length at which wing is located
-    wbox_cabin_frac =  (parg[igxwbox]- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
+    wbox_cabin_frac =  (wing.layout.box_x- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
 
     #Find new cabin length
     wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_lower_downward_shift, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, parg[igfloordist]) #Find cabin width
@@ -110,7 +110,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     fuselage.layout.x_end_cylinder = fuselage.layout.x_start_cylinder + lcyl
 
     #Update wingbox position
-    parg[igxwbox] = fuselage.layout.x_start_cylinder + wbox_cabin_frac * lcyl
+    wing.layout.box_x = fuselage.layout.x_start_cylinder + wbox_cabin_frac * lcyl
        
     #Update other lengths
     fuselage.layout.x_pressure_shell_aft = fuselage.layout.x_end_cylinder + dxcyl2shellaft
@@ -123,7 +123,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     parg[igxhbox   ] = fuselage.layout.x_cone_end - dxhbox2conend
     parg[igxvbox   ] = fuselage.layout.x_cone_end - dxvbox2conend
     
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
+    parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox #Move engine
 
     parg[igdxcabin] = lcyl #Store new cabin length
 end

@@ -16,13 +16,15 @@ Markdown.parse_file(joinpath("../..", "src/structures","theory_wingstruct.md"))
 
 ```@docs
 
-structures.surfw(po,b,bs,bo,co,zs,
-	lambdat,lambdas,gammat,gammas,
-	Nload,iwplan,We,neout, dyeout, neinn, dyeinn,
-	Winn,Wout,dyWinn,dyWout,
-	sweep,wbox,hboxo,hboxs,rh, fLt,
-	tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
-	rhoweb,rhocap,rhostrut,rhofuel)
+structures.size_wing_section!(layout, section, cs, cp, 
+        cap_material, tauweb, sigfac)
+
+structures.surfw!(wing, po, gammat, gammas, 
+       Nload, We, neout, dyeout, neinn, dyeinn,
+       fLt, sigfac, rhofuel)
+
+structures.surft!(tail, po, lambdas,gammat,gammas,fLt,
+            tauweb,sigcap,Ecap,rhoweb,rhocap,b)
 
 structures.tailpo(S, AR, λa, qne, CLmax)
 

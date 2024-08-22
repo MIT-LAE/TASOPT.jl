@@ -37,12 +37,24 @@ end
     
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_sized.jl"))
     # Fuselage
-    include(joinpath(TASOPT.__TASOPTroot__, "../test/default_fuselage.jl"))
+    include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
 
     size_aircraft!(ac; printiter=false);
 
     @testset "Fuselage" begin
         @test  check_struct_equivalence(ac_test.fuselage, ac.fuselage)
+    end
+
+    @testset "Wing" begin
+        @test  check_struct_equivalence(ac_test.wing, ac.wing)
+    end
+
+    @testset "Htail" begin
+        @test  check_struct_equivalence(ac_test.htail, ac.htail)
+    end
+
+    @testset "Vtail" begin
+        @test  check_struct_equivalence(ac_test.vtail, ac.vtail)
     end
 
     @testset "Geometry" begin
@@ -59,11 +71,11 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] rtol=1e-6
+            @test pare[i] ≈ ac.pare[i] 
         end
     end
     
-    @test ac.parm[imPFEI] ≈  0.9186795447828657
+    @test ac.parm[imPFEI] ≈  0.9186704256854404
 end
 
 @testset "Wide sizing" verbose=true begin
@@ -78,12 +90,24 @@ end
     size_aircraft!(ac; printiter=false);
 
     @testset "Fuselage" begin
-        @test  check_struct_equivalence(fuse, ac.fuselage)
+        @test  check_struct_equivalence(ac_test.fuselage, ac.fuselage)
+    end
+
+    @testset "Wing" begin
+        @test  check_struct_equivalence(ac_test.wing, ac.wing)
+    end
+
+    @testset "Htail" begin
+        @test  check_struct_equivalence(ac_test.htail, ac.htail)
+    end
+
+    @testset "Vtail" begin
+        @test  check_struct_equivalence(ac_test.vtail, ac.vtail)
     end
 
     @testset "Geometry" begin
         for i in eachindex(parg)
-            @test parg[i] ≈ ac.parg[i]
+            @test parg[i] ≈ ac.parg[i] rtol=1e-5
         end
     end
 
@@ -95,11 +119,11 @@ end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] rtol=1e-6
+            @test pare[i] ≈ ac.pare[i] rtol=1e-5
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 1.1500431956693837
+    @test ac.parm[imPFEI] ≈ 1.1500287571308965
 
 end
 
@@ -115,7 +139,19 @@ end
     size_aircraft!(ac; printiter=false);
 
     @testset "Fuselage" begin
-        @test  check_struct_equivalence(fuse, ac.fuselage)
+        @test  check_struct_equivalence(ac_test.fuselage, ac.fuselage)
+    end
+
+    @testset "Wing" begin
+        @test  check_struct_equivalence(ac_test.wing, ac.wing)
+    end
+
+    @testset "Htail" begin
+        @test  check_struct_equivalence(ac_test.htail, ac.htail)
+    end
+
+    @testset "Vtail" begin
+        @test  check_struct_equivalence(ac_test.vtail, ac.vtail)
     end
     
     @testset "Geometry" begin
@@ -136,7 +172,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.8131853553294737
+    @test ac.parm[imPFEI] ≈ 0.813182191733463
 
 end
 

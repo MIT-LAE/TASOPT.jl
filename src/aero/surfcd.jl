@@ -1,12 +1,7 @@
 """
-    surfcd2(S,
-            b, bs, bo,
-            λt, λs, γt, γs,
-            toco, tocs, toct,
-            Mach, sweep, co,
-            CL, CLhtail, fLo, fLt,
+      surfcd2(wing, γt, γs,
+            Mach, CL, CLhtail, 
             Reco, aRexp, kSuns, fexcd,
-            AMa, Acl, Atau, ARe, A,
             fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
@@ -14,19 +9,12 @@ Called by [`cdsum!`](@ref) if `icdfun` flag set to 1.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `S::Float64`: Reference area.
-      - `b::Float64`: Span.
-      - `bs::Float64`: Outer panel break span.
-      - `bo::Float64`: Wing-root (fuselage) span.
-      - `λt::Float64`: Outer-panel chord taper ratio  ct/co.
-      - `λs::Float64`: Inner-panel chord taper ratio  cs/co.
+      - `Wing::TASOPT.Wing`: Wing Structure.
       - `γt::Float64`: Outer-panel load  taper ratio  pt/po.
       - `γs::Float64`: Inner-panel load  taper ratio  ps/po.
-      - `toco::Float64`: Root  airfoil t/c.
-      - `tocs::Float64`: Break airfoil t/c.
-      - `toct::Float64`: Tip   airfoil t/c.
-      - `sweep::Float64`: Wing sweep, degrees.
-      - `co::Float64`: Wing root chord.
+      - `Mach::Float64`: Mach number.
+      - `CL::Float64`: Wing CL.
+      - `CLhtail::Float64`: Htail CL.
       - `Reco::Float64`: Reynolds number for co.
       - `aRexp::Float64`: Re-scaling exponent.
       - `kSuns::Float64`: Shock-unsweep area constant.
@@ -47,12 +35,8 @@ See also [`cdsum!`](@ref), [`surfcd`](@ref), [`surfcm`], and [`airfun`].
       This function will be renamed for clarity of use.
 """
 function surfcd2(
-      S,
-      b, bs, bo,
-      λt, λs, γt, γs,
-      toco, tocs, toct,
-      Mach, sweep, co,
-      CL, CLhtail, fLo, fLt,
+      wing, γt, γs,
+      Mach, CL, CLhtail, 
       Reco, aRexp, kSuns, fexcd,
       fduo, fdus, fdut)
 
@@ -63,31 +47,31 @@ function surfcd2(
 
       #     call tset(time0)
 
-      cosL = cos(sweep * π / 180.0)
+      cosL = cosd(wing.layout.sweep)
 
-      AR = b^2 / S
+      AR = wing.layout.b^2 / wing.layout.S
 
-      ηo = bo / b
-      ηs = bs / b
+      ηo = wing.outboard.layout.b / wing.layout.b
+      ηs = wing.inboard.layout.b / wing.layout.b
 
       #---- set center clpo
       Kc = ηo +
-           0.5 * (1.0 + λs) * (ηs - ηo) +
-           0.5 * (λs + λt) * (1.0 - ηs)
+           0.5 * (1.0 + wing.inboard.layout.λ) * (ηs - ηo) +
+           0.5 * (wing.inboard.layout.λ + wing.outboard.layout.λ) * (1.0 - ηs)
 
       Kp0 = ηo +
             0.5 * (1.0 + γs) * (ηs - ηo) +
             0.5 * (γs + γt) * (1.0 - ηs)
 
       Ko = 1.0 / (Kc * AR)
-      Kp = Kp0 + fLo * ηo + 2.0 * fLt * Ko * γt * λt
-
-      clp1 = (CL - CLhtail) / cosL^2 * S / (Kp * b * co)
+      Kp = Kp0 + wing.inboard.lift_rolloff * ηo + 2.0 * wing.outboard.lift_rolloff * Ko * γt * wing.outboard.layout.λ
+      
+      clp1 = (CL - CLhtail) / cosL^2 * wing.layout.S / (Kp * wing.layout.b * wing.layout.chord)
 
       #---- set break and tip clp for passing back
       clpo = clp1 / (1.0 + fduo)^2
-      clps = clp1 * γs / λs / (1.0 + fdus)^2
-      clpt = clp1 * γt / λt / (1.0 + fdut)^2
+      clps = clp1 * γs / wing.inboard.layout.λ / (1.0 + fdus)^2
+      clpt = clp1 * γt / wing.outboard.layout.λ / (1.0 + fdut)^2
 
       #c---- area of exposed wing
       #      Swing = co*b * ( 0.5*(1.0    +λs)*(ηs-ηo)
@@ -108,12 +92,12 @@ function surfcd2(
             η = ηo * (1.0 - frac) + ηs * frac
             dη = (ηs - ηo) / float(n / 2)
             P = 1.0 - frac + γs * frac
-            C = 1.0 - frac + λs * frac
-            toc = toco * (1.0 - frac) + tocs * frac
+            C = 1.0 - frac + wing.inboard.layout.λ * frac
+            toc = wing.inboard.layout.chord_thickness * (1.0 - frac) + wing.outboard.layout.chord_thickness * frac
             fdu = fduo * (1.0 - frac) + fdus * frac
 
             #wing root shock "unsweep" function
-            fSuns = exp(-(η - ηo) * b / (kSuns * C * 2.0 * co))
+            fSuns = exp(-(η - ηo) * wing.layout.b / (kSuns * C * 2.0 * wing.layout.chord))
 
             clp = clp1 * (P / C) / (1.0 + fdu)^2
             Rec = Reco * C * (1.0 + fdu)
@@ -143,11 +127,11 @@ function surfcd2(
             η = ηs * (1.0 - frac) + 1.0 * frac
             dη = (1.0 - ηs) / float(n / 2)
             P = γs * (1.0 - frac) + γt * frac
-            C = λs * (1.0 - frac) + λt * frac
-            toc = tocs * (1.0 - frac) + toct * frac
+            C = wing.inboard.layout.λ * (1.0 - frac) + wing.outboard.layout.λ * frac
+            toc = wing.outboard.layout.chord_thickness * (1.0 - frac) + wing.outboard.layout.chord_thickness * frac
             fdu = fdus * (1.0 - frac) + fdut * frac
 
-            fSuns = exp(-(η - ηo) * b / (kSuns * C * 2.0 * co))
+            fSuns = exp(-(η - ηo) * wing.layout.b / (kSuns * C * 2.0 * wing.layout.chord))
 
             clp = clp1 * (P / C) / (1.0 + fdu)^2
             Rec = Reco * C * (1.0 + fdu)
@@ -232,7 +216,7 @@ function surfcd(S,
       fCDcen)
 
 
-      cosL = cos(sweep * π / 180.0)
+      cosL = cosd(sweep)
 
       ηo = bo / b
       ηs = bs / b
