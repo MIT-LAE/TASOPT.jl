@@ -161,7 +161,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
 
 
       #---- estimate takeoff speed and set V,Re over climb and descent
-      cosL = cos(wing.layout.sweep * π / 180.0)
+      cosL = cosd(wing.layout.sweep)
       CLTO = para[iaclpmax, iptakeoff] * cosL^2
       # [prash] I think the assumption here is that Wcruise/WTO~1 and
       # just scaling it with rho and CL to get an initial estimate for V
@@ -192,7 +192,7 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       ip = iprotate
       clpmax = para[iaclpmax, ip]
       sweep = wing.layout.sweep
-      cosL = cos(sweep * π / 180.0)
+      cosL = cosd(sweep)
       CLmax = clpmax * cosL^2
 
       #---- Vs stall speed (takeoff condition)

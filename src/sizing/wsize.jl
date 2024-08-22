@@ -595,8 +595,8 @@ function wsize(ac; itermax=35,
 
         # Set tail CL derivative
         dϵdα = htail.downwash_factor
-        tanL = tan(deg2rad(wing.layout.sweep))
-        tanLh = tan(deg2rad(htail.layout.sweep))
+        tanL = tand(wing.layout.sweep)
+        tanLh = tand(htail.layout.sweep)
 
         ip = ipcruise1
         Mach = para[iaMach, ip]

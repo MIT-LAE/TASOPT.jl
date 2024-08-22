@@ -47,7 +47,7 @@ function surfcd2(
 
       #     call tset(time0)
 
-      cosL = cos(deg2rad(wing.layout.sweep))
+      cosL = cosd(wing.layout.sweep)
 
       AR = wing.layout.b^2 / wing.layout.S
 
@@ -216,7 +216,7 @@ function surfcd(S,
       fCDcen)
 
 
-      cosL = cos(sweep * π / 180.0)
+      cosL = cosd(sweep)
 
       ηo = bo / b
       ηs = bs / b

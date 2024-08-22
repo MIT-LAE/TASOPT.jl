@@ -21,7 +21,7 @@ See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Descrip
 """
 function surfdx(b,bs,bo,λt,λs,sweep)
 
-      tanL = tan(deg2rad(sweep))
+      tanL = tand(sweep)
 
       ηo = bo/b
       ηs = bs/b

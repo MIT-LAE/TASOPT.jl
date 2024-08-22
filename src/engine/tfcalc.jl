@@ -31,7 +31,6 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
         Gearf = parg[igGearf]
         Tmetal = parg[igTmetal]
         neng = parg[igneng]
-        S = wing.layout.S
 
         mofWpay = parg[igmofWpay]
         mofWMTO = parg[igmofWMTO]
@@ -126,7 +125,7 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
 
                 #----- assume 85% of wing dissipation is on surface
                 fDwake = 0.15
-                CDAwing = para[iaCDwing] * S
+                CDAwing = para[iaCDwing] * wing.layout.S
                 DAwsurf = CDAwing * (1.0 - fDwake)
                 KAwTE = DAwsurf
 
