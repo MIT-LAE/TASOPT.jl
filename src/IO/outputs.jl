@@ -5,8 +5,9 @@ using PythonCall
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
     pari = ac.pari
+    fuselage = ac.fuselage
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-    Whpesys = parg[igWMTO] * parg[igfhpesys]
+    Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
     Wlgnose = parg[igWMTO] * parg[igflgnose]
     Wlgmain = parg[igWMTO] * parg[igflgmain]
     Wtotadd = Whpesys + Wlgnose + Wlgmain
@@ -30,7 +31,7 @@ function weight_buildup(ac::aircraft; io=stdout)
     printstyled(io, @sprintf("WMTO    = %10.1f N (%8.1f lb)\n\n",
                          parg[igWMTO], parg[igWMTO]/lbf_to_N); color=:bold)
 
-    @printf(io,"Wfuse   + %10.1f N (%8.1f lb)\n", parg[igWfuse ], parg[igWfuse ]/lbf_to_N)
+    @printf(io,"Wfuse   + %10.1f N (%8.1f lb)\n", fuselage.weight, fuselage.weight/lbf_to_N)
     @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", parg[igWwing ], parg[igWwing ]/lbf_to_N)
     @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", parg[igWvtail], parg[igWvtail]/lbf_to_N)
     @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", parg[igWhtail], parg[igWhtail]/lbf_to_N)
@@ -39,9 +40,9 @@ function weight_buildup(ac::aircraft; io=stdout)
     @printf(io,"Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
     @printf(io,"--------------------\n")
     printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
-    parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
+    fuselage.weight + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
     parg[igWtesys] + +parg[igWftank] + Wtotadd, 
-    (parg[igWfuse] + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
+    (fuselage.weight + parg[igWwing]+ parg[igWvtail] + parg[igWhtail] + 
     parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
 
     @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", parg[igWcap], parg[igWcap]/lbf_to_N)
@@ -122,18 +123,19 @@ end
 """
 function geometry(ac::aircraft; io = stdout)
     parg = ac.parg
+    fuselage = ac.fuselage
     printstyled(io, "Fuselage Layout:\n -------------- \n", color=:bold )
-    @printf(io, "xnose     = %5.1f m (%8.1f ft)\n", parg[igxnose  ] , parg[igxnose   ]/ft_to_m)
-    @printf(io, "xend      = %5.1f m (%8.1f ft)\n", parg[igxend   ] , parg[igxend    ]/ft_to_m)
+    @printf(io, "xnose     = %5.1f m (%8.1f ft)\n", fuselage.layout.x_nose , fuselage.layout.x_nose/ft_to_m)
+    @printf(io, "xend      = %5.1f m (%8.1f ft)\n", fuselage.layout.x_end , fuselage.layout.x_end/ft_to_m)
     @printf(io, "xwing     = %5.1f m (%8.1f ft)\n", parg[igxwing  ] , parg[igxwing   ]/ft_to_m)
     @printf(io, "xhtail    = %5.1f m (%8.1f ft)\n", parg[igxhtail ] , parg[igxhtail  ]/ft_to_m)
     @printf(io, "xvtail    = %5.1f m (%8.1f ft)\n", parg[igxvtail ] , parg[igxvtail  ]/ft_to_m)
-    @printf(io, "xblend1   = %5.1f m (%8.1f ft)\n", parg[igxblend1] , parg[igxblend1 ]/ft_to_m)
-    @printf(io, "xblend2   = %5.1f m (%8.1f ft)\n", parg[igxblend2] , parg[igxblend2 ]/ft_to_m)
-    @printf(io, "xshell1   = %5.1f m (%8.1f ft)\n", parg[igxshell1] , parg[igxshell1 ]/ft_to_m)
-    @printf(io, "xshell2   = %5.1f m (%8.1f ft)\n", parg[igxshell2] , parg[igxshell2 ]/ft_to_m)
-    @printf(io, "xhbend    = %5.1f m (%8.1f ft)\n", parg[igxhbend ] , parg[igxhbend  ]/ft_to_m)
-    @printf(io, "xvbend    = %5.1f m (%8.1f ft)\n", parg[igxvbend ] , parg[igxvbend  ]/ft_to_m)
+    @printf(io, "xblend1   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_start_cylinder , fuselage.layout.x_start_cylinder/ft_to_m)
+    @printf(io, "xblend2   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_end_cylinder , fuselage.layout.x_end_cylinder/ft_to_m)
+    @printf(io, "xshell1   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_pressure_shell_fwd , fuselage.layout.x_pressure_shell_fwd/ft_to_m)
+    @printf(io, "xshell2   = %5.1f m (%8.1f ft)\n", fuselage.layout.x_pressure_shell_aft , fuselage.layout.x_pressure_shell_aft/ft_to_m)
+    @printf(io, "xhbend    = %5.1f m (%8.1f ft)\n", fuselage.bendingmaterial_h.weight.x , fuselage.bendingmaterial_h.weight.x/ft_to_m)
+    @printf(io, "xvbend    = %5.1f m (%8.1f ft)\n", fuselage.bendingmaterial_v.weight.x , fuselage.bendingmaterial_v.weight.x/ft_to_m)
     @printf(io, "xwbox     = %5.1f m (%8.1f ft)\n", parg[igxwbox  ] , parg[igxwbox   ]/ft_to_m)
     @printf(io, "xhbox     = %5.1f m (%8.1f ft)\n", parg[igxhbox  ] , parg[igxhbox   ]/ft_to_m)
     @printf(io, "xvbox     = %5.1f m (%8.1f ft)\n", parg[igxvbox  ] , parg[igxvbox   ]/ft_to_m)
@@ -143,7 +145,7 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "xftank    = %5.1f m (%8.1f ft)\n", parg[igxftank ] , parg[igxftank  ]/ft_to_m)
     @printf(io, "xftankaft = %5.1f m (%8.1f ft)\n", parg[igxftankaft ] , parg[igxftankaft  ]/ft_to_m)
     
-    @printf(io, "\nRfuse  = %5.1f m (%8.1f ft)\n", parg[igRfuse ] , parg[igRfuse  ]/ft_to_m)
+    @printf(io, "\nRfuse  = %5.1f m (%8.1f ft)\n", fuselage.layout.cross_section.radius , fuselage.layout.cross_section.radius/ft_to_m)
 
     
     SMfwd = (parg[igxNP] - parg[igxCGfwd])/parg[igcma]
@@ -235,16 +237,17 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         yw[5] = bs/2.0
         yw[6] = bo/2.0
     # Fuse
-        Rfuse = parg[igRfuse]
-        wfb   = parg[igwfb]
+        fuselage = ac.fuselage
+        Rfuse = fuselage.layout.radius
+        wfb   = fuselage.layout.bubble_center_y_offset
 
-        anose    = parg[iganose]
-        btail    = parg[igbtail]
+        anose    = fuselage.layout.nose_radius
+        btail    = fuselage.layout.tail_radius
 
-        xnose    = parg[igxnose   ]
-        xend     = parg[igxend    ]
-        xblend1  = parg[igxblend1 ]
-        xblend2  = parg[igxblend2 ]
+        xnose    = fuselage.layout.x_nose
+        xend     = fuselage.layout.x_end
+        xblend1  = fuselage.layout.x_start_cylinder
+        xblend2  = fuselage.layout.x_end_cylinder
         xhtail   = parg[igxhtail  ]
         xvtail   = parg[igxvtail  ]
         xwing    = parg[igxwing   ]
@@ -264,7 +267,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xf = zeros(nnose + ntail + 1)
         yf = zeros(nnose + ntail + 1)
 
-        if pari[iifclose] == 0
+        if fuselage.layout.taper_fuse == 0
             dytail = -hwidth 
         else
             dytail = -0.2*hwidth
@@ -324,7 +327,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         ytTEh = 0.5*bh
 
 
-        if (pari[iifclose] == 0)
+        if (fuselage.layout.taper_fuse == 0)
             xcLEh = xoLEh
             xcTEh = xoTEh
             ycLEh = yoLEh
@@ -382,7 +385,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         yh[ 6] = ycTEh
   
         #Initialize seat start x-position
-        xseats0 = parg[igxshell1 ]
+        xseats0 = fuselage.layout.x_pressure_shell_fwd
         # Fuel tank
         ntank = 8
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
@@ -438,7 +441,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         xshell = zeros(ntank)
         yshell = zeros(ntank)
         AR = 3.0
-        xshellcenter = parg[igxshell2] - Rfuse/AR
+        xshellcenter = fuselage.layout.x_pressure_shell_aft - Rfuse/AR
         for i = 1: ntank
             fraci = float(i-1)/float(ntank-1)
             fracx = sin(0.5*pi*fraci)
@@ -448,15 +451,12 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
             yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
         end
 
-    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
-        h_seat = parg[igseatheight]
-        pax = parg[igWpay]/parm[imWperpax]
-        θ = find_floor_angles(false, parg[igRfuse], parg[igdRfuse], h_seat = parg[igseatheight]) #Find the floor angle
-        wcabin = find_cabin_width(parg[igRfuse], parg[igwfb], parg[ignfweb], θ, h_seat) #Cabin width
-        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
+    pax = parg[igWpay]/parm[imWperpax]
 
-        xseats = xseats .+ xseats0
-        rows = length(xseats)
+    wcabin = find_cabin_width(fuselage.layout.radius, fuselage.layout.bubble_lower_downward_shift, fuselage.layout.bubble_center_y_offset, fuselage.layout.n_webs, parg[igfloordist]) #Find cabin width
+    _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
+    xseats = xseats .+ xseats0
+    rows = length(xseats)
 
         println("Seats per row = $seats_per_row, Total rows = $rows")
         yseats = arrange_seats(seats_per_row, wcabin)
@@ -574,7 +574,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
@@ -632,6 +632,7 @@ function plot_details(ac::aircraft; ax = nothing)
 
     pari = ac.pari
     parg = ac.parg
+    fuselage = ac.fuselage
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
@@ -674,7 +675,7 @@ function plot_details(ac::aircraft; ax = nothing)
 
         # Weight build-up
         Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-        Whpesys = parg[igWMTO] * parg[igfhpesys]
+        Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
         Wlgnose = parg[igWMTO] * parg[igflgnose]
         Wlgmain = parg[igWMTO] * parg[igflgmain]
         Wtotadd = Whpesys + Wlgnose + Wlgmain
@@ -684,7 +685,7 @@ function plot_details(ac::aircraft; ax = nothing)
         WMTO  = parg[igWMTO]
 
         Wwing  = parg[igWwing]
-        Wfuse  = parg[igWfuse]
+        Wfuse  = fuselage.weight
         Wvtail = parg[igWvtail]
         Whtail = parg[igWhtail]
         Weng = parg[igWeng]
@@ -1092,6 +1093,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     pari = ac.pari
     parg = ac.parg
+    fuselage = ac.fuselage
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
@@ -1140,16 +1142,17 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         yw[5] = bs/2.0
         yw[6] = bo/2.0
     # Fuse
-        Rfuse = parg[igRfuse]
-        wfb   = parg[igwfb]
+        fuselage = ac.fuselage
+        Rfuse = fuselage.layout.radius
+        wfb   = fuselage.layout.bubble_center_y_offset
 
-        anose    = parg[iganose]
-        btail    = parg[igbtail]
+        anose    = fuselage.layout.nose_radius
+        btail    = fuselage.layout.tail_radius
 
-        xnose    = parg[igxnose   ]
-        xend     = parg[igxend    ]
-        xblend1  = parg[igxblend1 ]
-        xblend2  = parg[igxblend2 ]
+        xnose    = fuselage.layout.x_nose
+        xend     = fuselage.layout.x_end
+        xblend1  = fuselage.layout.x_start_cylinder
+        xblend2  = fuselage.layout.x_end_cylinder
         xhtail   = parg[igxhtail  ]
         xvtail   = parg[igxvtail  ]
         xwing    = parg[igxwing   ]
@@ -1169,7 +1172,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         xf = zeros(nnose + ntail + 1)
         yf = zeros(nnose + ntail + 1)
 
-        if pari[iifclose] == 0
+        if fuselage.layout.taper_fuse == 0
             dytail = -hwidth 
         else
             dytail = -0.2*hwidth
@@ -1229,7 +1232,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         ytTEh = 0.5*bh
 
 
-        if (pari[iifclose] == 0)
+        if (fuselage.layout.taper_fuse == 0)
             xcLEh = xoLEh
             xcTEh = xoTEh
             ycLEh = yoLEh
@@ -1336,7 +1339,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     yv[ 6] = ycTEv
 
     #Initialize seat start x-position
-    xseats0 = parg[igxshell1 ]
+    xseats0 = fuselage.layout.x_pressure_shell_fwd
     # Fuel tank
     ntank = 8
     Rtank = Rfuse - 0.1 # Account for clearance_fuse
@@ -1351,7 +1354,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
         elseif tank_placement == "rear"
             xtanks = [parg[igxftankaft]]
-            xseats0 = parg[igxshell1 ]
+            xseats0 = fuselage.layout.x_pressure_shell_fwd
         elseif tank_placement == "both"
             xtanks = [parg[igxftank], parg[igxftankaft]]
             xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
@@ -1389,7 +1392,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xshell = zeros(ntank)
     yshell = zeros(ntank)
     AR = 3.0
-    xshellcenter = parg[igxshell2] - Rfuse/AR
+    xshellcenter = fuselage.layout.x_pressure_shell_aft - Rfuse/AR
     for i = 1: ntank
         fraci = float(i-1)/float(ntank-1)
         fracx = sin(0.5*pi*fraci)
@@ -1535,7 +1538,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], parg[igRfuse], para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, parg[igb], parg[igco], parg[igsweep], fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20

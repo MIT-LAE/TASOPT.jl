@@ -65,332 +65,332 @@
       const igRange    =   3
       const igWMTO     =   4
       const igWpay     =   5
-      const igWfix     =   6
-      const igWfuel    =   7
-      const igWfmax    =   8
-      const igrWfmax   =   9
-      const igWshell   =  10
-      const igWwindow  =  11
-      const igWinsul   =  12
-      const igWfloor   =  13
-      const igWcone    =  14
-      const igWhbend   =  15
-      const igWvbend   =  16
-      const igWfuse    =  17
-      const igWweb     =  18
-      const igWcap     =  19
-      const igWwing    =  20
-      const igWebare   =  21
-      const igWnace    =  22
-      const igWeng     =  23
-      const igWhtail   =  24
-      const igWvtail   =  25
-      const igWstrut   =  26
-      const igxWfuse   =  27
-      const igdxWfuel  =  28
-      const igdxWwing  =  29
-      const igdxWstrut =  30
-      const igdxWhtail =  31
-      const igdxWvtail =  32
-      const igWinn     =  33
-      const igWout     =  34
-      const igdyWinn   =  35
-      const igdyWout   =  36
-      const igxCGfwd   =  37
-      const igxCGaft   =  38
-      const igfreserve =  39
-      const igfpadd    =  40
-      const igfseat    =  41
-      const igfeadd    =  42
-      const igfpylon   =  43
-      const igfnace    =  44
-      const igfflap    =  45
-      const igfslat    =  46
-      const igfaile    =  47
-      const igflete    =  48
-      const igfribs    =  49
-      const igfspoi    =  50
-      const igfwatt    =  51
-      const igfhadd    =  52
-      const igfvadd    =  53
-      const igfapu     =  54
-      const igfhpesys  =  55
-      const igflgnose  =  56
-      const igflgmain  =  57
-      const igfstring  =  58
-      const igfframe   =  59
-      const igffadd    =  60
-      const igWpwindow =  61
-      const igWppinsul =  62
-      const igWppfloor =  63
-      const igNlift    =  64
-      const igNland    =  65
-      const igVne      =  66
-      const igneng     =  67
-      const igGearf    =  68
-      const igfTt4CL1  =  69
-      const igfTt4CLn  =  70
-      const igHTRf     =  71
-      const igHTRlc    =  72
-      const igHTRhc    =  73
-      const igrSnace   =  74
-      const igrVnace   =  75
-      const igrVstrut  =  76
-      const igfSnace   =  77
-      const igpcabin   =  78
-      const igdeltap   =  79
-      const iganose    =  80 
-      const igbtail    =  81
-      const igxnose    =  82
-      const igxend     =  83
-      const igxblend1  =  84
-      const igxblend2  =  85
-      const igxshell1  =  86
-      const igxshell2  =  87
-      const igxconend  =  88
-      const igxhbend   =  89
-      const igxvbend   =  90
-      const igxhtail   =  91 
-      const igxvtail   =  92
-      const igxeng     =  93     
-      const igxwing    =  94
-      const igxwbox    =  95
-      const igxhbox    =  96
-      const igxvbox    =  97
-      const igxfix     =  98
-      const igxapu     =  99
-      const igxhpesys  = 100
-      const igxlgnose  = 101
-      const igdxlgmain = 102
-      const igyeng     = 103
-      const igzwing    = 104
-      const igzhtail   = 105
-      const ignfweb    = 106
-      const igwfb      = 107
-      const igRfuse    = 108
-      const igdRfuse   = 109
-      const ighfloor   = 110
-      const iglambdac  = 111
-      const igcabVol   = 112
-      const igcosLs    = 113
-      const igSstrut   = 114
-      const igrpayfwd  = 115
-      const igrpayaft  = 116
-      const igxNP      = 117
-      const igCMVf1    = 118
-      const igCLMf0    = 119
-      const igdepsda   = 120
-      const igdCLnda   = 121
-      const igdCLhdCL  = 122
-      const igdCLndCL  = 123
-      const igCLhspec  = 124
-      const igCLhCGfwd = 125
-      const igCLveout  = 126
-      const igCLhmax   = 127
-      const igCLvmax   = 128
-      const igfCDhcen  = 129
-      const igSMmin    = 130
-      const igrMh      = 131
-      const igrMv      = 132
-      const igXaxis    = 133
-      const igwbox     = 134
-      const ighboxo    = 135
-      const ighboxs    = 136
-      const igrh       = 137
-      const igwboxh    = 138
-      const ighboxh    = 139
-      const igrhh      = 140
-      const igwboxv    = 141
-      const ighboxv    = 142
-      const igrhv      = 143
-      const igsigfac   = 144
-      const igsigskin  = 145
-      const igsigbend  = 146
-      const igsigcap   = 147
-      const igtauweb   = 148
-      const igsigstrut = 149
-      const igrEshell  = 150
-      const igEcap     = 151
-      const igEstrut   = 152
-      const igrhoskin  = 153
-      const igrhobend  = 154
-      const igrhocap   = 155
-      const igrhoweb   = 156
-      const igrhostrut = 157
-      const igrhofuel  = 158
-      const igrcls     = 159
-      const igrclt     = 160
-      const igCLhNrat  = 161
-      const igSomax    = 162
-      const igMomax    = 163
-      const igSsmax    = 164
-      const igMsmax    = 165
-      const igtbcapo   = 166
-      const igtbwebo   = 167
-      const igtbcaps   = 168
-      const igtbwebs   = 169
-      const igtbcaph   = 170
-      const igtbwebh   = 171
-      const igtbcapv   = 172
-      const igtbwebv   = 173
-      const igEIco     = 174
-      const igEIno     = 175
-      const igGJo      = 176
-      const igEIcs     = 177
-      const igEIns     = 178
-      const igGJs      = 179
-      const igEIch     = 180
-      const igEInh     = 181
-      const igGJh      = 182
-      const igEIcv     = 183
-      const igEInv     = 184
-      const igGJv      = 185
-      const igtskin    = 186
-      const igtcone    = 187
-      const igtfweb    = 188
-      const igtfloor   = 189
-      const igEIhshell = 190
-      const igEIhbend  = 191
-      const igEIvshell = 192
-      const igEIvbend  = 193
-      const igGJshell  = 194
-      const igGJcone   = 195
-      const igfLo      = 196
-      const igfLt      = 197
-      const igfLn      = 198
-      const igcma      = 199
-      const igAR       = 200
-      const igS        = 201
-      const igb        = 202
-      const igbo       = 203
-      const igbs       = 204
-      const igetas     = 205
-      const iglambdat  = 206
-      const iglambdas  = 207
-      const igco       = 208
-      const igsweep    = 209
-      const igVh       = 210
-      const igARh      = 211
-      const igSh       = 212
-      const igbh       = 213
-      const igboh      = 214
-      const iglambdah  = 215
-      const igcoh      = 216
-      const igsweeph   = 217
-      const igVv       = 218
-      const igARv      = 219
-      const igSv       = 220
-      const igbv       = 221
-      const igbov      = 222
-      const iglambdav  = 223
-      const igcov      = 224
-      const igsweepv   = 225
-      const ignvtail   = 226
-      const igzs       = 227
-      const ighstrut   = 228
-      const igAstrut   = 229
-      const igcstrut   = 230
-      const igfBLIw    = 231
-      const igfBLIf    = 232
-      const igdfan     = 233
-      const igdlcomp   = 234
-      const igdhcomp   = 235
-      const iglnace    = 236
-      const igA5       = 237
-      const igA7       = 238
-      const igTmetal   = 239
-      const igcdefan   = 240
-      const igCDgear   = 241
-      const igCDspoil  = 242
-      const igmuroll   = 243
-      const igmubrake  = 244
-      const ighobst    = 245
-      const iglBFmax   = 246
-      const igbmax     = 247
-      const iggtocmin  = 248
-      const igdBSLmax  = 249
-      const igdBCBmax  = 250
-      const igmofWpay  = 251
-      const igmofWMTO  = 252
-      const igPofWpay  = 253
-      const igPofWMTO  = 254
+### Good Riddance ###
+      const igWfuel    =   6
+      const igWfmax    =   7
+      const igrWfmax   =   8
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+      const igWweb     =  9
+      const igWcap     =  10
+      const igWwing    =  11
+      const igWebare   =  12
+      const igWnace    =  13
+      const igWeng     =  14
+      const igWhtail   =  15
+      const igWvtail   =  16
+      const igWstrut   =  17
+### Good Riddance ###
+      const igdxWfuel  =  18
+      const igdxWwing  =  19
+      const igdxWstrut =  20
+      const igdxWhtail =  21
+      const igdxWvtail =  22
+      const igWinn     =  23
+      const igWout     =  24
+      const igdyWinn   =  25
+      const igdyWout   =  26
+      const igxCGfwd   =  27
+      const igxCGaft   =  28
+      const igfreserve =  29
+### Good Riddance ###
+### Good Riddance ###
+      const igfeadd    =  30
+      const igfpylon   =  31
+### Good Riddance ###
+      const igfflap    =  32
+      const igfslat    =  33
+      const igfaile    =  34
+      const igflete    =  35
+      const igfribs    =  36
+      const igfspoi    =  37
+      const igfwatt    =  38
+      const igfhadd    =  39
+      const igfvadd    =  40
+### Good Riddance ###
+### Good Riddance ###
+      const igflgnose  =  41
+      const igflgmain  =  42
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+      const igNlift    =  43
+      const igNland    =  44
+      const igVne      =  45
+      const igneng     =  46
+      const igGearf    =  47
+      const igfTt4CL1  =  48
+      const igfTt4CLn  =  49
+      const igHTRf     =  50
+      const igHTRlc    =  51
+      const igHTRhc    =  52
+      const igrSnace   =  53
+      const igrVnace   =  54
+      const igrVstrut  =  55
+      const igfSnace   =  56
+      const igpcabin   =  57
+      const igdeltap   =  58
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+      const igxhtail   =  59 
+      const igxvtail   =  60
+      const igxeng     =  61     
+      const igxwing    =  62
+      const igxwbox    =  63
+      const igxhbox    =  64
+      const igxvbox    =  65
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+      const igxlgnose  = 66
+      const igdxlgmain = 67
+      const igyeng     = 68
+      const igzwing    = 69
+      const igzhtail   = 70
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+      const igcabVol   = 71
+      const igcosLs    = 72
+      const igSstrut   = 73
+      const igrpayfwd  = 74
+      const igrpayaft  = 75
+      const igxNP      = 76
+      const igCMVf1    = 77
+      const igCLMf0    = 78
+      const igdepsda   = 79
+      const igdCLnda   = 80
+      const igdCLhdCL  = 81
+      const igdCLndCL  = 82
+      const igCLhspec  = 83
+      const igCLhCGfwd = 84
+      const igCLveout  = 85
+      const igCLhmax   = 86
+      const igCLvmax   = 87
+      const igfCDhcen  = 88
+      const igSMmin    = 89
+      const igrMh      = 90
+      const igrMv      = 91
+      const igXaxis    = 92
+      const igwbox     = 93
+      const ighboxo    = 94
+      const ighboxs    = 95
+      const igrh       = 96
+      const igwboxh    = 97
+      const ighboxh    = 98
+      const igrhh      = 99
+      const igwboxv    = 100
+      const ighboxv    = 101
+      const igrhv      = 102
+      const igsigfac   = 103
+### Good Riddance ###
+### Good Riddance ###
+      const igsigcap   = 104
+      const igtauweb   = 105
+      const igsigstrut = 106
+### Good Riddance ###
+      const igEcap     = 107
+      const igEstrut   = 108
+### Good Riddance ###
+### Good Riddance ###
+      const igrhocap   = 109
+      const igrhoweb   = 110
+      const igrhostrut = 111
+      const igrhofuel  = 112
+      const igrcls     = 113
+      const igrclt     = 114
+      const igCLhNrat  = 115
+      const igSomax    = 116
+      const igMomax    = 117
+      const igSsmax    = 118
+      const igMsmax    = 119
+      const igtbcapo   = 120
+      const igtbwebo   = 121
+      const igtbcaps   = 122
+      const igtbwebs   = 123
+      const igtbcaph   = 124
+      const igtbwebh   = 125
+      const igtbcapv   = 126
+      const igtbwebv   = 127
+      const igEIco     = 128
+      const igEIno     = 129
+      const igGJo      = 130
+      const igEIcs     = 131
+      const igEIns     = 132
+      const igGJs      = 133
+      const igEIch     = 134
+      const igEInh     = 135
+      const igGJh      = 136
+      const igEIcv     = 137
+      const igEInv     = 138
+      const igGJv      = 139
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+### Good Riddance ###
+      const igfLo      = 140
+      const igfLt      = 141
+      const igfLn      = 142
+      const igcma      = 143
+      const igAR       = 144
+      const igS        = 145
+      const igb        = 146
+      const igbo       = 147
+      const igbs       = 148
+      const igetas     = 149
+      const iglambdat  = 150
+      const iglambdas  = 151
+      const igco       = 152
+      const igsweep    = 153
+      const igVh       = 154
+      const igARh      = 155
+      const igSh       = 156
+      const igbh       = 157
+      const igboh      = 158
+      const iglambdah  = 159
+      const igcoh      = 160
+      const igsweeph   = 161
+      const igVv       = 162
+      const igARv      = 163
+      const igSv       = 164
+      const igbv       = 165
+      const igbov      = 166
+      const iglambdav  = 167
+      const igcov      = 168
+      const igsweepv   = 169
+      const ignvtail   = 170
+      const igzs       = 171
+      const ighstrut   = 172
+      const igAstrut   = 173
+      const igcstrut   = 174
+      const igfBLIw    = 175
+      const igfBLIf    = 176
+      const igdfan     = 177
+      const igdlcomp   = 178
+      const igdhcomp   = 179
+      const iglnace    = 180
+      const igA5       = 181
+      const igA7       = 182
+      const igTmetal   = 183
+      const igcdefan   = 184
+      const igCDgear   = 185
+      const igCDspoil  = 186
+      const igmuroll   = 187
+      const igmubrake  = 188
+      const ighobst    = 189
+      const iglBFmax   = 190
+      const igbmax     = 191
+      const iggtocmin  = 192
+      const igdBSLmax  = 193
+      const igdBCBmax  = 194
+      const igmofWpay  = 195
+      const igmofWMTO  = 196
+      const igPofWpay  = 197
+      const igPofWMTO  = 198
 
       # Adding indices to store TE weights and locations
-      const igWtshaft  = 255
-      const igWgen     = 256
-      const igWinv     = 257
-      const igWmot     = 258
-      const igWfan     = 259
-      const igWftank   = 260
+      const igWtshaft  = 199
+      const igWgen     = 200
+      const igWinv     = 201
+      const igWmot     = 202
+      const igWfan     = 203
+      const igWftank   = 204
 
-      const igxtshaft  = 261
-      const igxgen     = 262
-      const igxinv     = 263
-      const igxmot     = 264
-      const igxfan     = 265
-      const igxftank   = 266
+      const igxtshaft  = 205
+      const igxgen     = 206
+      const igxinv     = 207
+      const igxmot     = 208
+      const igxfan     = 209
+      const igxftank   = 210
       
-      const igxcables  = 267
-      const igWcables  = 268
+      const igxcables  = 211
+      const igWcables  = 212
 
-      const igxcat     = 269
-      const igWcat     = 270
+      const igxcat     = 213
+      const igWcat     = 214
 
-      const igWtesys   = 271
-      const igxWtesys  = 272
+      const igWtesys   = 215
+      const igxWtesys  = 216
 
-      const iglftank   = 273
-      const igWinsftank= 274
-      const igxWftank  = 275
+      const iglftank   = 217
+      const igWinsftank= 218
+      const igxWftank  = 219
       
-      const igRftank   = 276
-      const igWc3des   = 277
+      const igRftank   = 220
+      const igWc3des   = 221
 
-      const igdaftfan  = 278
-      const iglnaceaft = 279
-      const igfuseVol  = 280
-      const igneout    = 281
-      const igyeout    = 282
-      const igyeinn    = 283
-      const iglftankin = 284 #lftank input
-      const igLHVfuel  = 285
-      const igWfburn   = 286
+      const igdaftfan  = 222
+      const iglnaceaft = 223
+### Good Riddance ###
+      const igneout    = 224
+      const igyeout    = 225
+      const igyeinn    = 226
+      const iglftankin = 227 #lftank input
+      const igLHVfuel  = 228
+      const igWfburn   = 229
 
-      const igWaftfan  = 287
-      const igWfanGB   = 288
-      const igWaftfanGB   = 289
-      const igWrect    = 290
-      const igWtms     = 291
+      const igWaftfan  = 230
+      const igWfanGB   = 231
+      const igWaftfanGB   = 232
+      const igWrect    = 233
+      const igWtms     = 234
 
-      const igfanPCT   = 292
+      const igfanPCT   = 235
 
-      const iggamVtarget = 293
+      const iggamVtarget = 236
 
-      const igWpaymax    = 294
+      const igWpaymax    = 237
 
-      const ig_YC = 295
-      const ig_YH = 296
-      const ig_YO = 297
-      const ig_YN = 298
-      const ig_MW = 299
-      const ighfuel      = 300
-      const igTfuel      = 301
+      const ig_YC = 238
+      const ig_YH = 239
+      const ig_YO = 240
+      const ig_YN = 241
+      const ig_MW = 242
+      const ighfuel      = 243
+      const igTfuel      = 244
 
-      const igxftankaft  = 302
-      const igdxcabin    = 303
-      const igdxeng2wbox = 304
+      const igxftankaft  = 245
+      const igdxcabin    = 246
+      const igdxeng2wbox = 247
 
-      const igxWfuel = 305
+      const igxWfuel = 248
 
-      const igseatpitch = 306
-      const igseatwidth = 307
-      const igaislehalfwidth = 308
-      const igfloordist = 309
-      const igseatheight = 310
+      const igseatpitch = 249
+      const igseatwidth = 250
+      const igaislehalfwidth = 251
+      const igfloordist = 252
+      const igseatheight = 253
 
-      const igWfvent = 311
+      const igWfvent = 254
 
-      const igtotal    = 311
+      const igtotal    = 254
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
