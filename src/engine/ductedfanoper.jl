@@ -377,6 +377,25 @@ function res_df(x, engdata; iPspec = false, store_data = false)
 
     rho7 = p7 / (R7 * T7)
 
+    #Calculate thrust
+    epi = 1.0
+    p8, T8, h8, s8, cp8, R8 = gas_prat(alpha, nair,
+                    pt7, Tt7, ht7, st7, cpt7, Rt7, pfn, epi)
+
+    if (ht7 > h8)
+        u8 = sqrt(2.0 * (ht7 - h8))
+    else
+        u8 = 0.0
+    end
+
+    #----- overall thrust
+    if (u0 == 0.0)
+        Finl = 0.0
+    else
+        Finl = Phiinl / u0
+    end
+    F = mfan * (u8 - u0)  + Finl
+
 # ===============================================================
     #---- #Set up residuals
     res = zeros(3)
@@ -391,29 +410,9 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     res[2] = mfA - A2
 
     if iPspec #Specified power constraint
-       
         res[3] = P - Pspec
 
     else #Specified thrust constraint
-        epi = 1.0
-        p8, T8, h8, s8, cp8, R8 = gas_prat(alpha, nair,
-                        pt7, Tt7, ht7, st7, cpt7, Rt7, pfn, epi)
-
-        if (ht7 > h8)
-            u8 = sqrt(2.0 * (ht7 - h8))
-        else
-            u8 = 0.0
-        end
-
-        #----- overall thrust
-        if (u0 == 0.0)
-            Finl = 0.0
-        else
-            Finl = Phiinl / u0
-        end
-        F = mfan * (u8 - u0)  + Finl
-
-        #residual
         res[3] = F - Fspec
     end
     return res
