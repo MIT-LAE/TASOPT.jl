@@ -72,10 +72,10 @@ It sizes the cabin for the design number of passengers.
 """
 function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
 
-    seat_pitch = parg[igseatpitch]
-    seat_width = parg[igseatwidth]
-    aisle_halfwidth = parg[igaislehalfwidth]
-    h_seat = parg[igseatheight]
+    seat_pitch = fuse.cabin.seat_pitch
+    seat_width = fuse.cabin.seat_width 
+    aisle_halfwidth = fuse.cabin.aisle_halfwidth
+    h_seat = fuse.cabin.seat_height
 
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
@@ -133,6 +133,8 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
 
     fuse.layout.l_cabin_cylinder = lcyl #Store new cabin length
+
+    EvaluateCabinProps!(fuse) #Update cabin parameters
 
     return seats_per_row
 end
