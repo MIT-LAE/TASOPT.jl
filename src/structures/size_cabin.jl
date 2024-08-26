@@ -24,17 +24,8 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
     #TODO the hardcoded 10 ft is not elegant
 
-    #Calculate the maximum number of seats per row
-    seats_per_row = 1
-    Dmin = seats_per_row*seat_width + 2*aisle_halfwidth + 2*fuse_offset #Minimum diameter for one passenger
-    while (cabin_width > Dmin) || (cabin_width ≈ Dmin) #While the required diameter is smaller than the fuselage diameter
-        seats_per_row = seats_per_row + 1 #Add one more seat
-        layout = seat_layouts[seats_per_row] #Find corresponding seat layour from seat dict
-        Dmin = seats_per_row*seat_width + (length(layout) - 1)*2*aisle_halfwidth + 2*fuse_offset #New minimum diameter
-    end
+    seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
     
-    seats_per_row = seats_per_row - 1 #Subtract 1 seat to find maximum number of seats per row such that cabin_width > Dmin
-
     rows = Int(ceil(pax / seats_per_row))
 
     if seats_per_row <= 10
@@ -54,8 +45,25 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     end
 
     lcabin = xseats[end]
+
     return lcabin, xseats, seats_per_row
 end # function place_cabin_seats
+
+function findSeatsAbreast(cabin_width, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
+
+    #Calculate the maximum number of seats per row
+    seats_per_row = 1
+    Dmin = seats_per_row*seat_width + 2*aisle_halfwidth + 2*fuse_offset #Minimum diameter for one passenger
+    while (cabin_width > Dmin) || (cabin_width ≈ Dmin) #While the required diameter is smaller than the fuselage diameter
+        seats_per_row = seats_per_row + 1 #Add one more seat
+        layout = seat_layouts[seats_per_row] #Find corresponding seat layour from seat dict
+        Dmin = seats_per_row*seat_width + (length(layout) - 1)*2*aisle_halfwidth + 2*fuse_offset #New minimum diameter
+    end
+    
+    seats_per_row = seats_per_row - 1 #Subtract 1 seat to find maximum number of seats per row such that cabin_width > Dmin
+    return seats_per_row
+end
 
 """
     arrange_seats(seats_per_row, cabin_width,
@@ -197,10 +205,10 @@ passengers on each deck.
     - `maxl::Float64`: required cabin length (m)
 """
 function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
-    seat_pitch = parg[igseatpitch]
-    seat_width = parg[igseatwidth]
-    aisle_halfwidth = parg[igaislehalfwidth]
-    h_seat = parg[igseatheight]
+    seat_pitch = fuse.cabin.seat_pitch
+    seat_width = fuse.cabin.seat_width 
+    aisle_halfwidth = fuse.cabin.aisle_halfwidth
+    h_seat = fuse.cabin.seat_height 
 
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
@@ -231,6 +239,45 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
     catch
         return 1e6, 1e6
     end
+end
+
+function EvaluateCabinProps!(fuse)
+    seat_pitch = fuse.cabin.seat_pitch
+    seat_width = fuse.cabin.seat_width 
+    aisle_halfwidth = fuse.cabin.aisle_halfwidth
+    h_seat = fuse.cabin.seat_height 
+
+    Rfuse = fuse.layout.radius
+    dRfuse = fuse.layout.bubble_lower_downward_shift
+    wfb = fuse.layout.bubble_center_y_offset
+    nfweb = fuse.layout.n_webs
+
+    if fuse.n_decks == 1
+        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
+        wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
+        seats_per_row = findSeatsAbreast(wcabin, seat_width, aisle_halfwidth)
+
+        fuse.cabin.floor_angle_main = θ
+        fuse.cabin.cabin_width_main = wcabin
+        fuse.cabin.seats_abreast_main = seats_per_row
+    else #Floor angles must be provided already, either as input or via optimization
+        θ1 = fuse.cabin.floor_angle_main #Main deck angle
+        θ2 = fuse.cabin.floor_angle_top
+
+        #Find width of each cabin
+        w1 = find_cabin_width(Rfuse, wfb, nfweb, θ1, h_seat)
+        w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2, h_seat)
+
+        #Find seats abreast in each cabin
+        seats_per_row = findSeatsAbreast(w1, seat_width, aisle_halfwidth)
+        seats_per_row_top = findSeatsAbreast(w2, seat_width, aisle_halfwidth)
+
+        fuse.cabin.cabin_width_main = w1
+        fuse.cabin.seats_abreast_main = seats_per_row
+        fuse.cabin.cabin_width_top = w2
+        fuse.cabin.seats_abreast_top = seats_per_row_top
+    end
+
 end
 
 """
@@ -267,7 +314,7 @@ function optimize_double_decker_cabin(parg, fuse, parm)
 
     if dRfuse ≈ 0.0 #Apply constraints on lower floor if it can be moved around
         inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, fuse), 1e-5) #Minimum height of cargo hold
-        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, parg, fuse), 1e-5) #Minimum height of upper cabin
+        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, fuse), 1e-5) #Minimum height of upper cabin
     end
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
@@ -319,12 +366,12 @@ the constraint is met and a value greater than 0 if it is not.
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCabinHeightConst(x, parg, fuse, minheight = 2.0)
+function MinCabinHeightConst(x, fuse, minheight = 2.0)
     #Extract parameters
     θ1 = x[2] #Main deck angle
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
-    d_floor = parg[igfloordist]
+    d_floor = fuse.cabin.floor_distance
 
     try #The calculation could fail for some inputs if an asin returns an error
 

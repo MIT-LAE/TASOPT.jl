@@ -24,6 +24,9 @@ $TYPEDFIELDS
     """Fuselage Layout"""
     layout::FuselageLayout = FuselageLayout()
 
+    """Cabin Properties"""
+    cabin::Cabin = Cabin()
+
     # Internal Structure
     """Fuselage Material"""
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")

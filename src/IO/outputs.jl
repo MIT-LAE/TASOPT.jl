@@ -452,7 +452,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
         end
 
     if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
-        h_seat = parg[igseatheight]
+        h_seat = fuselage.cabin.seat_height
         pax = parg[igWpay]/parm[imWperpax]
         Rfuse = fuselage.layout.radius
         dRfuse = fuselage.layout.bubble_lower_downward_shift
@@ -1411,7 +1411,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     #Seats
     if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
-        h_seat = parg[igseatheight]
+        h_seat = fuselage.cabin.seat_height
         pax = parg[igWpay]/parm[imWperpax]
         Rfuse = fuselage.layout.radius
         dRfuse = fuselage.layout.bubble_lower_downward_shift

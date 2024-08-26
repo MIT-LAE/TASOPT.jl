@@ -282,13 +282,13 @@ readgeom(x) = read_input(x, geom, dgeom)
     pari[iidoubledeck] = readgeom("double_decker") 
 
     if pari[iidoubledeck] == 1 #If aircraft is a double decker
-        parg[igfloordist] = Distance(readgeom("floor_distance")) #read vertical distance between floors
+        fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
     end
 
-    parg[igseatpitch] = Distance(readgeom("seat_pitch"))
-    parg[igseatwidth] = Distance(readgeom("seat_width"))
-    parg[igseatheight] = Distance(readgeom("seat_height"))
-    parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
+    fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))
+    fuselage.cabin.seat_width = Distance(readgeom("seat_width"))
+    fuselage.cabin.seat_height = Distance(readgeom("seat_height"))
+    fuselage.cabin.aisle_halfwidth = Distance(readgeom("aisle_halfwidth"))
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
     parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
