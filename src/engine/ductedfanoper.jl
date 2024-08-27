@@ -1,6 +1,6 @@
 mutable struct DuctedFanData
+    TSEC::Float64
     Fsp::Float64
-    Pfan::Float64
     Feng::Float64
     Peng::Float64
     mfan::Float64
@@ -178,7 +178,20 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     residual(x) = res_df(x, engdata, iPspec = iPspec)
     sol = nlsolve(residual, guess, ftol = 1e-8) 
 
-    return sol.zero
+    #Evaluate residual once more, storing parameters
+    _ = res_df(sol.zero, engdata, iPspec = iPspec,  store_data = true)
+
+    return engdata.TSEC, engdata.Fsp, engdata.Feng, engdata.Peng, engdata.mfan, 
+    engdata.pif, engdata.mbf, 
+    engdata.Tt0, engdata.ht0, engdata.pt0, engdata.cpt0, engdata.Rt0,
+    engdata.Tt18, engdata.ht18, engdata.pt18, engdata.cpt18, engdata.Rt18,
+    engdata.Tt2, engdata.ht2, engdata.pt2, engdata.cpt2, engdata.Rt2,
+    engdata.Tt21, engdata.ht21, engdata.pt21, engdata.cpt21, engdata.Rt21,
+    engdata.Tt7, engdata.ht7, engdata.pt7, engdata.cpt7, engdata.Rt7,
+    engdata.u0, engdata.T2, engdata.u2, engdata.p2, engdata.cp2, engdata.R2, engdata.M2,
+    engdata.T7, engdata.u7, engdata.p7, engdata.cp7, engdata.R7, engdata.M7,
+    engdata.T8, engdata.u8, engdata.p8, engdata.cp8, engdata.R8, engdata.M8, engdata.A8,
+    engdata.epf, engdata.etaf
 end
 
 function unpack_input_data(data::DuctedFanData)
@@ -387,21 +400,25 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     else
         u8 = 0.0
     end
+    M8 = u8 / sqrt(T8 * R8 * cp8 / (cp8 - R8))
+    rho8 = p8 / (R8 * T8)
 
-    #----- overall thrust
+    #----- overall thrust and power
     if (u0 == 0.0)
         Finl = 0.0
     else
         Finl = Phiinl / u0
     end
-    F = mfan * (u8 - u0)  + Finl
+    mfan = mf * sqrt(Tref / Tt2) * pt2 / pref #Fan mass flow rate
+    Feng = mfan * (u8 - u0)  + Finl #Total thrust
+    Peng = mfan * (ht21 - ht2) #Fan power
+
+    A8 = mfan / (rho8 * u8) #Plume area
 
 # ===============================================================
     #---- #Set up residuals
     res = zeros(3)
 
-    mfan = mf * sqrt(Tref / Tt2) * pt2 / pref #Fan mass flow ref
-    P = mfan * (ht21 - ht2) #Fan power
     #Fan nozzle mass flow, choked or unchoked
     res[1] = mfan - rho7 * A7 * u7
 
@@ -410,10 +427,91 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     res[2] = mfA - A2
 
     if iPspec #Specified power constraint
-        res[3] = P - Pspec
+        res[3] = Peng - Pspec
 
     else #Specified thrust constraint
-        res[3] = F - Fspec
+        res[3] = Feng - Fspec
+    end
+
+    if store_data
+        pif = pf
+        mbf = mf
+        M2 = Mi
+         #---- fan isentropic efficiency
+        pt21i, Tt21i, ht21i, st21i, cpt21i, Rt21i = gas_prat(alpha, nair,
+        pt2, Tt2, ht2, st2, cpt2, Rt2, pif, 1.0)
+        etaf = (ht21i - ht2) / (ht21 - ht2)
+
+        #---- overall Fsp
+        if (u0 == 0.0)
+            Fsp = 0.0
+        else
+            Fsp = Feng / (u0 * mfan)
+        end
+
+        #---- thrust-specific energy consumption
+        TSEC = Peng/Feng
+
+        #Store all relevant engine variables
+        function store_converged_data!(data::DuctedFanData)
+            data.TSEC = TSEC
+            data.Fsp = Fsp
+            data.Feng = Feng
+            data.Peng = Peng
+            data.mfan = mfan
+            data.pif = pif
+            data.mbf = mbf
+            data.Tt0 = Tt0
+            data.ht0 = ht0
+            data.pt0 = pt0
+            data.cpt0 = cpt0
+            data.Rt0 = Rt0
+            data.Tt18 = Tt18
+            data.ht18 = ht18
+            data.pt18 = pt18
+            data.cpt18 = cpt18
+            data.Rt18 = Rt18
+            data.Tt2 = Tt2
+            data.ht2 = ht2
+            data.pt2 = pt2
+            data.cpt2 = cpt2
+            data.Rt2 = Rt2
+            data.Tt21 = Tt21
+            data.ht21 = ht21
+            data.pt21 = pt21
+            data.cpt21 = cpt21
+            data.Rt21 = Rt21
+            data.Tt7 = Tt7
+            data.ht7 = ht7
+            data.pt7 = pt7
+            data.cpt7 = cpt7
+            data.Rt7 = Rt7
+            data.u0 = u0
+            data.T2 = T2
+            data.u2 = u2
+            data.p2 = p2
+            data.cp2 = cp2
+            data.R2 = R2
+            data.M2 = M2
+            data.T7 = T7
+            data.u7 = u7
+            data.p7 = p7
+            data.cp7 = cp7
+            data.R7 = R7
+            data.M7 = M7
+            data.T8 = T8
+            data.u8 = u8
+            data.p8 = p8
+            data.cp8 = cp8
+            data.R8 = R8
+            data.M8 = M8
+            data.A8 = A8
+            data.epf = epf
+            data.etaf = etaf
+        end
+        
+        store_converged_data!(engdata)
     end
     return res
 end
+
