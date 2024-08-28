@@ -6,10 +6,21 @@ are exported other functions are kept within the `aerodynamics` namespace.
 module aerodynamics
 
 using StaticArrays
+using LinearAlgebra
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
 export airfoil, cdsum!, surfcm, wingsc, wingpo, wingcl, fusebl!
+
+# Define the __init__ function
+#This function gets executed automatically when the module is loaded
+function __init__()
+    BLAS.set_num_threads(1) #This sets the number of threads in BLAS to be equal to 1. 
+    #It prevents multithreading but ensures consistent speed across CPU families. Without it,
+    #the LU calculation in blax() can take up to 1000x longer.
+    #TODO this may cause issues if parallelization is attempted in the future. Other approaches are to 
+    #match the number of BLAS threads to the CPUs available on the machine or server
+end
 
 #include index to access arrays
 include(__TASOPTindices__)
