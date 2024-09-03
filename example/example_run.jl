@@ -31,4 +31,4 @@ summary(example_ac)
 # 5) Plot figures
 using PythonPlot
 TASOPT.stickfig(example_ac)
-plt.savefig("Example.png")
+pyplot.savefig("Example.png")
