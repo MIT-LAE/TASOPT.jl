@@ -69,8 +69,9 @@ Structure containing the heat exchanger geometric and material properties.
 
 !!! details "💾 Data fields"
     **Inputs:**
-    - `fconc::Bool`: flag for concentric geometry (1: concentric ; 0: rectangular)
-    - `frecirc::Bool`: flag for recirculation (1: recirculation ; 0: no recirculation)
+    - `fconc::Bool`: flag for concentric geometry (true: concentric ; false: rectangular)
+    - `frecirc::Bool`: flag for recirculation (true: recirculation ; false: no recirculation)
+    - `fshaf::Bool`: flag for whether HX contains shaf(true: shaft ; false: no shaft)
     - `N_t::Float64`: number of tubes per row
     - `n_stages::Float64`: number of different coolant stages with different coolant flows
     - `n_passes::Float64`: number of coolant passes
@@ -1152,6 +1153,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.D_i = D_i 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
+                  HXgeom.fshaft = true #HX contains a shaft
 
                   HXgas.mdot_p = mcore   #Core mass flow 
                   iTp_in = ieTt19
@@ -1166,6 +1168,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
+                  HXgeom.fshaft = true
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
                   iTp_in = ieTt25
@@ -1569,7 +1572,7 @@ function hxweight(gee, HXgeom, fouter)
 
       W_hx = gee * m_t * (1 + fouter)
 
-      if HXgeom.fconc #If the HEX is in the core with a shaft through it, add additional mass for the shaft
+      if HXgeom.fshaft #If the HEX is in the core with a shaft through it, add additional mass for the shaft
             shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
             W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
             W_hx = W_hx + W_shaft
