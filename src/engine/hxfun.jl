@@ -35,32 +35,31 @@ Structure containing the gas properties of the process and coolant streams.
     - `mdot_r::Float64`: recirculating flow mass flow rate (kg/s)
     - `h_lat::Float64`: latent heat capacity in freestream coolant liquid (J/kg)
 """
-mutable struct HX_gas
-      fluid_p :: String 
-      fluid_c :: String 
-      alpha_p :: Vector{Float64} 
-      igas_c :: Float64 
-      mdot_p :: Float64
-      mdot_c :: Float64
-      Tp_in :: Float64
-      Tc_in :: Float64
-      pp_in :: Float64
-      pc_in :: Float64
-      Mp_in  :: Float64
-      Mc_in :: Float64
-      Tp_out :: Float64
-      Tc_out :: Float64 
-      Δh_p :: Float64
-      Δh_c :: Float64
-      Δp_p :: Float64 
-      Δp_c :: Float64
-      Pl_p :: Float64
-      Pl_c :: Float64
-      ε :: Float64 
-      recircT :: Float64 
-      mdot_r :: Float64 
-      h_lat :: Float64 
-      HX_gas() = new("", "", [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+@kwdef mutable struct HX_gas
+      fluid_p :: String = ""
+      fluid_c :: String = "" 
+      alpha_p :: Vector{Float64} = []
+      igas_c :: Float64 = 0.0
+      mdot_p :: Float64 = 0.0
+      mdot_c :: Float64 = 0.0
+      Tp_in :: Float64 = 0.0
+      Tc_in :: Float64 = 0.0
+      pp_in :: Float64 = 0.0
+      pc_in :: Float64 = 0.0
+      Mp_in  :: Float64 = 0.0
+      Mc_in :: Float64 = 0.0
+      Tp_out :: Float64 = 0.0
+      Tc_out :: Float64 = 0.0
+      Δh_p :: Float64 = 0.0
+      Δh_c :: Float64 = 0.0
+      Δp_p :: Float64 = 0.0
+      Δp_c :: Float64 = 0.0
+      Pl_p :: Float64 = 0.0
+      Pl_c :: Float64 = 0.0
+      ε :: Float64 = 0.0 
+      recircT :: Float64 = 0.0 
+      mdot_r :: Float64 = 0.0 
+      h_lat :: Float64 = 0.0 
 end
 
 """
@@ -86,24 +85,24 @@ Structure containing the heat exchanger geometric and material properties.
     - `D_i::Float64`: inner diameter of core (m)
     - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
 """
-mutable struct HX_tubular
-      fconc :: Bool
-      frecirc :: Bool 
-      N_t :: Float64 
-      n_stages :: Float64 
-      n_passes:: Float64 
-      A_cs:: Float64 
-      l :: Float64
-      t :: Float64
-      tD_o :: Float64
-      xt_D :: Float64
-      xl_D :: Float64
-      Rfp :: Float64
-      Rfc :: Float64
-      D_i :: Float64
-      material :: StructuralAlloy
-      Δpdes::Float64
-      HX_tubular() = new(false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, StructuralAlloy("Al-2219-T87"), 0.0)
+@kwdef mutable struct HX_tubular
+      fconc :: Bool = false
+      frecirc :: Bool = false
+      fshaft :: Bool = false
+      N_t :: Float64 = 0.0
+      n_stages :: Float64 = 0.0
+      n_passes:: Float64 = 0.0
+      A_cs:: Float64  = 0.0
+      l :: Float64 = 0.0
+      t :: Float64 = 0.0
+      tD_o :: Float64 = 0.0
+      xt_D :: Float64 = 0.0
+      xl_D :: Float64 = 0.0
+      Rfp :: Float64 = 0.0
+      Rfc :: Float64 = 0.0
+      D_i :: Float64 = 0.0
+      material :: StructuralAlloy = StructuralAlloy("Al-2219-T87")
+      Δpdes::Float64 = 0.0
 end
 
 # Overload Base.getproperty for convenience
@@ -1570,7 +1569,7 @@ function hxweight(gee, HXgeom, fouter)
 
       W_hx = gee * m_t * (1 + fouter)
 
-      if HXgeom.fconc #If the HEX is in the core, add additional mass for the shaft
+      if HXgeom.fconc #If the HEX is in the core with a shaft through it, add additional mass for the shaft
             shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
             W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
             W_hx = W_hx + W_shaft
