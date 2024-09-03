@@ -31,8 +31,9 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 1
-        HXgeom.frecirc = 0
+        HXgeom.fconc = true
+        HXgeom.frecirc = false
+        HXgeom.fshaft = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.n_stages = 4
@@ -61,7 +62,7 @@
 
         W = TASOPT.engine.hxweight(gee, HXgeom, fouter)
 
-        W_check = 4485.930972477996
+        W_check = 801.5192810553101
 
         @test W == W_check
         #---------------------------------     
@@ -85,8 +86,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 1
-        HXgeom.frecirc = 0
+        HXgeom.fconc = true
+        HXgeom.frecirc = false
         HXgeom.D_i = 0.564
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.tD_o = 0.004760326082769499
@@ -131,8 +132,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 1
-        HXgeom.frecirc = 0
+        HXgeom.fconc = true
+        HXgeom.frecirc = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.xl_D = 1
@@ -199,8 +200,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 0
-        HXgeom.frecirc = 1
+        HXgeom.fconc = false
+        HXgeom.frecirc = true
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.xl_D = 1
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
