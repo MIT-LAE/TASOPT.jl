@@ -81,8 +81,6 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
-#functionalities to be categorized: #TODO
-include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
