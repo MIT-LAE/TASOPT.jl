@@ -7,10 +7,12 @@ module propsys
 
 export NPSS_run, startNPSS, endNPSS
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
+using ..materials
+using DocStringExtensions
 
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"misc/constants.jl"))
-
+include("cable.jl")
 include("NPSS_functions.jl")
 
 end
