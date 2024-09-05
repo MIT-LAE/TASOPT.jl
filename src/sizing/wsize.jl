@@ -1214,6 +1214,7 @@ function wsize(ac; itermax=35,
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in HXs
+                parg[igdHXmax] = 0.0 #restart diameter
                 if HX.HXgeom.fconc #If HX is in the core
                     parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
                 end
