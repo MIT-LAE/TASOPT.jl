@@ -7,6 +7,7 @@ module materials
 using TOML, DocStringExtensions
 
 export StructuralAlloy, Conductor, Insulator
+export resistivity, resxden
 
 __abs_path_prefix__ = dirname(@__DIR__)
 MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
