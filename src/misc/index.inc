@@ -377,10 +377,11 @@
       const igTfuel      = 244
 
       const igxftankaft  = 245
-      const igdxcabin    = 246
-      const igdxeng2wbox = 247
+      const igdxeng2wbox = 246
 
-      const igxWfuel = 248
+      const igxWfuel = 247
+
+      const igWfvent = 248
 
       const igseatpitch = 249
       const igseatwidth = 250
