@@ -156,6 +156,7 @@ name = "TASOPT Model with cryo fuel and HX"
     floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
