@@ -190,7 +190,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
 end
 
 """
-    find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
+    find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse)
 
 This function can be used to calculate the length of a double decker cabin with different number of 
 passengers on each deck.
@@ -199,12 +199,11 @@ passengers on each deck.
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `parm::Array{Float64}`: array with mission parameters
 
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
 """
-function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
+function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse)
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
     aisle_halfwidth = fuse.cabin.aisle_halfwidth
@@ -216,7 +215,7 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
     nfweb = fuse.layout.n_webs
     d_floor = parg[igfloordist]
 
-    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+    paxsize = fuse.cabin.exit_limit #maximum number of passengers
 
     paxmain = x[1]
     paxtop = paxsize - paxmain
@@ -281,7 +280,7 @@ function EvaluateCabinProps!(fuse)
 end
 
 """
-    optimize_double_decker_cabin(parg, fuse, parm)
+    optimize_double_decker_cabin(parg, fuse)
 
 This function can be used to optimize the passenger distribution across two decks in a double decker aircraft. 
 If the cross-section is circular, it also optimizes the deck layouts.
@@ -289,21 +288,20 @@ If the cross-section is circular, it also optimizes the deck layouts.
     **Inputs:**
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `parm::Array{Float64}`: array with mission parameters
 
     **Outputs:**
     - `xopt::Vector{Float64}`: vector with optimization results
 """
-function optimize_double_decker_cabin(parg, fuse, parm)
+function optimize_double_decker_cabin(parg, fuse)
     dRfuse = fuse.layout.bubble_lower_downward_shift
 
-    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+    paxsize = fuse.cabin.exit_limit #maximum number of passengers
 
     initial_x = [paxsize/2, -pi/4]
     lower = [1.0, -pi/2]
     upper = [paxsize - 1.0, pi/2]
         
-    obj(x, grad) = find_double_decker_cabin_length(x, parg, fuse, parm)[1] #Objective function is cabin length
+    obj(x, grad) = find_double_decker_cabin_length(x, parg, fuse)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
@@ -320,7 +318,7 @@ function optimize_double_decker_cabin(parg, fuse, parm)
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Evaluate number of passengers per row in main cabin
-    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, fuse, parm)
+    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, fuse)
 
     return xopt, seats_per_row_main
 end

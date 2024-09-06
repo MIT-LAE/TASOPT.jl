@@ -89,8 +89,6 @@
     
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
-    max_pax = 230               # Maximum number of passengers for aircarft
-                                # defines the maximum payload carrying capacity of the aircraft
                                 
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
 
@@ -100,6 +98,12 @@
     weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
                                     # includes luggage [lbm or lbf or kg or N] 
                                     # judging you if you use imperial units but wtvs
+
+    exit_limit = 189            # Maximum number of passengers that can sit in the cabin
+
+    max_payload_in_pax_equivalent = 230         # Defines the maximum payload carrying capacity of the aircraft
+                                                # It is the maximum payload that the aircraft can carry (including cargo),
+                                                # as an equivalent number of passengers
 
     fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
 
