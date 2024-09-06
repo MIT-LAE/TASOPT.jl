@@ -30,7 +30,7 @@ See also [`blax`](@ref) and [`axisol!`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function fusebl!(pari, parg, para, parm, ip)
+function fusebl!(fuse, parm, para, ip)
       
 #     nc,     # number of control points for fuselage potential-flow problem
 #     nbl,    # number of BL+wake points
@@ -62,12 +62,11 @@ function fusebl!(pari, parg, para, parm, ip)
 
       Vol = 0.0
 
-      ifclose = pari[iifclose]
-
-      xnose   = parg[igxnose]
-      xend    = parg[igxend ]
-      xblend1 = parg[igxblend1]
-      xblend2 = parg[igxblend2]
+      ifclose = fuse.layout.taper_fuse
+      xnose = fuse.layout.x_nose
+      xend = fuse.layout.x_end
+      xblend1 = fuse.layout.x_start_cylinder
+      xblend2 = fuse.layout.x_end_cylinder
 
       Mach  = para[iaMach, ip]
       altkm = para[iaalt, ip]/1000.0
@@ -76,9 +75,9 @@ function fusebl!(pari, parg, para, parm, ip)
     
       Reunit = Mach*a0 * rho0/mu0
 
-      wfb    = parg[igwfb]
-      Rfuse  = parg[igRfuse]
-      dRfuse = parg[igdRfuse]
+      wfb = fuse.layout.bubble_center_y_offset
+      Rfuse = fuse.layout.radius
+      dRfuse = fuse.layout.bubble_lower_downward_shift
 
 #---- fuselage cross-section geometric parameters
       wfblim = max( min( wfb , Rfuse ) , 0.0 )
@@ -87,8 +86,8 @@ function fusebl!(pari, parg, para, parm, ip)
       sin2t = 2.0*hfb*wfb/Rfuse^2
       Sfuse = (pi + 2.0*thetafb + sin2t)*Rfuse^2 + 2.0*Rfuse*dRfuse
 
-      anose = parg[iganose]
-      btail = parg[igbtail]
+      anose = fuse.layout.nose_radius
+      btail = fuse.layout.tail_radius
 
 #---- calculate potential-flow surface velocity uinv(.) using PG source line
       nc = 30
@@ -102,7 +101,7 @@ function fusebl!(pari, parg, para, parm, ip)
             ra = 0.5*(zbl[i+1]+zbl[i])
             Vol += π*ra^2*(xbl[i+1] - xbl[i])
       end
-      parg[igfuseVol] = Vol
+      fuse.volume = Vol
       
       if(ifclose==0) 
        @inbounds for  ibl = 1: nbl
@@ -186,12 +185,6 @@ function fusebl!(pari, parg, para, parm, ip)
       para[iaKAfTE  , ip] = KTE/(qinf*Vinf)
       para[iaPAfinf , ip] = Pinf/qinf
     
-      # println(para[iaDAfsurf])
-      # println(para[iaDAfwake])
-      # println(para[iaKAfTE]  )
-      # println(para[iaPAfinf] )
-
-      # return
       end # fusebl
 
 
