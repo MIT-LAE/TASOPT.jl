@@ -203,7 +203,7 @@ passengers on each deck.
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
 """
-function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse)
+function find_double_decker_cabin_length(x::Vector{Float64}, fuse)
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
     aisle_halfwidth = fuse.cabin.aisle_halfwidth
@@ -213,7 +213,7 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse)
     dRfuse = fuse.layout.bubble_lower_downward_shift
     wfb = fuse.layout.bubble_center_y_offset
     nfweb = fuse.layout.n_webs
-    d_floor = parg[igfloordist]
+    d_floor = fuse.cabin.floor_distance
 
     paxsize = fuse.cabin.exit_limit #maximum number of passengers
 
@@ -280,7 +280,7 @@ function EvaluateCabinProps!(fuse)
 end
 
 """
-    optimize_double_decker_cabin(parg, fuse)
+    optimize_double_decker_cabin(fuse)
 
 This function can be used to optimize the passenger distribution across two decks in a double decker aircraft. 
 If the cross-section is circular, it also optimizes the deck layouts.
@@ -292,7 +292,7 @@ If the cross-section is circular, it also optimizes the deck layouts.
     **Outputs:**
     - `xopt::Vector{Float64}`: vector with optimization results
 """
-function optimize_double_decker_cabin(parg, fuse)
+function optimize_double_decker_cabin(fuse)
     dRfuse = fuse.layout.bubble_lower_downward_shift
 
     paxsize = fuse.cabin.exit_limit #maximum number of passengers
@@ -301,7 +301,7 @@ function optimize_double_decker_cabin(parg, fuse)
     lower = [1.0, -pi/2]
     upper = [paxsize - 1.0, pi/2]
         
-    obj(x, grad) = find_double_decker_cabin_length(x, parg, fuse)[1] #Objective function is cabin length
+    obj(x, grad) = find_double_decker_cabin_length(x, fuse)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
@@ -310,15 +310,13 @@ function optimize_double_decker_cabin(parg, fuse)
 
     opt.min_objective = obj
 
-    if dRfuse ≈ 0.0 #Apply constraints on lower floor if it can be moved around
-        inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, fuse), 1e-5) #Minimum height of cargo hold
-        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, fuse), 1e-5) #Minimum height of upper cabin
-    end
+    inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, fuse), 1e-5) #Minimum height of cargo hold
+    inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, fuse), 1e-5) #Minimum height of upper cabin
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Evaluate number of passengers per row in main cabin
-    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, fuse)
+    _, seats_per_row_main = find_double_decker_cabin_length(xopt, fuse)
 
     return xopt, seats_per_row_main
 end

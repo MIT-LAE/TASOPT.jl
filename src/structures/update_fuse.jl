@@ -83,9 +83,9 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
 
     #Find cabin length by placing seats
     if fuse.n_decks == 2 #if the aircraft is a double decker
-        xopt, seats_per_row = optimize_double_decker_cabin(parg, fuse) #Optimize the floor layout and passenger distributions
+        xopt, seats_per_row = optimize_double_decker_cabin(fuse) #Optimize the floor layout and passenger distributions
 
-        lcyl, _ = find_double_decker_cabin_length(xopt, parg, fuse) #Total length is maximum of the two
+        lcyl, _ = find_double_decker_cabin_length(xopt, fuse) #Total length is maximum of the two
 
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
@@ -182,7 +182,13 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     (minf,xopt,ret) = NLopt.optimize(opt, xopt) #Solve optimization problem starting from global solution
 
     R = xopt[1]
-    return R
+    #Check if constraint is met
+    diff = check_seats_per_row_diff(seats_per_row, xopt, ac)
+    if diff ≈ 0.0
+        return R
+    else
+        return 0.0
+    end
 end
 
 """
@@ -209,7 +215,6 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
         #println("R = $Rfuse, s = $seats_per_row_rad")
         return diff
     catch
-        #println("failed")
         return 1.0
     end
 end
