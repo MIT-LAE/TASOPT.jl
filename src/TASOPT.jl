@@ -38,7 +38,7 @@ export convertMass, convertForce, convertDist,
 include("./misc/index.inc")
 include(joinpath(__TASOPTroot__,"misc/materials.jl"))
 using .materials
-export StructuralAlloy, Conductor, Insulator
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 include(__TASOPTindices__)
 # include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
