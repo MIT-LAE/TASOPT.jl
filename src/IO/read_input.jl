@@ -28,11 +28,11 @@ function read_input(k::String, dict::AbstractDict=data,
 end
 
 function get_default_input_file(input)
-    if input == 0 || input == "Regional Aircraft"
+    if input == 0 || lowercase(input) == "regional aircraft"
         defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
-    elseif input == 1 || input == "Narrow Body Aircraft"
+    elseif input == 1 || lowercase(input) == "narrow body aircraft"
         defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
-    elseif input == 2 || input == "Wide Body Aircraft"
+    elseif input == 2 || lowercase(input) == "wide body aircraft"
         defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
     else
         println("\n")
