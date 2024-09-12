@@ -147,13 +147,13 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
-            if lowercase(material[i]) == "vacuum"
+            if lowercase(material[i].name) == "vacuum"
                   S_inner = 2π * l_cyl * r_inner + 2*Shead[i]
                   S_outer = 2π * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
                   R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
-                  k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
+                  k = material[i].conductivity((T_mli[i] + T_prev)/2)
                   R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
@@ -245,9 +245,9 @@ mutable struct thermal_params
       l_cyl::Float64
       l_tank::Float64
       r_tank::Float64
-      Shead::Array{Float64}
-      t_cond::Array{Float64} 
-      material::Array{String}
+      Shead::Vector{Float64}
+      t_cond::Vector{Float64} 
+      material::Vector{ThermalInsulator}
       Tfuel::Float64
       z::Float64
       TSL::Float64

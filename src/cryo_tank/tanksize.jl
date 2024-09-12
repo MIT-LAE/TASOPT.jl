@@ -180,17 +180,17 @@ This function checks if any of the insulation layers requires a vacuum.
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `material_insul::Vector{String}`: vector with layer materials
+        - `material_insul::Vector{ThermalInsulator}`: vector with layer materials
 
         **Outputs:**
         - `flag_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
 """
-function check_vacuum(material_insul::Vector{String})
+function check_vacuum(material_insul::Vector{ThermalInsulator})
         vacuum_materials = ["vacuum", "microspheres"] #currently supported options are vacuum and microspheres
 
         flag_vacuum = false
         for material in material_insul
-                if lowercase(material) in vacuum_materials
+                if lowercase(material.name) in vacuum_materials
                         flag_vacuum = true
                 end
         end

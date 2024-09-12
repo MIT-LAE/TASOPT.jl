@@ -122,7 +122,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
 
       #Assemble array with layer densities
       for i = 1:N
-            rho_insul[i] = insulation_density_calc(material_insul[i])
+            rho_insul[i] = material_insul[i].ρ
       end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank

@@ -6,7 +6,7 @@ module materials
 
 using TOML, DocStringExtensions
 
-export StructuralAlloy, Conductor, Insulator
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 __abs_path_prefix__ = dirname(@__DIR__)
 MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
@@ -196,6 +196,50 @@ function resistivity(cond::Conductor, T::Float64=293.15)
     ΔT = T - cond.T0
     return cond.resistivity*(1 + cond.α*ΔT)
 end  # function resistivity
+
+"""
+$TYPEDEF
+
+Generic thermal insulator.
+
+$TYPEDFIELDS
+"""
+@kwdef struct ThermalInsulator 
+    """Name"""
+    name::String = ""
+    """Density [kg/m³]"""
+    ρ::Float64
+    """Thermal conductivity as a function of temperature [W/(m⋅K)]"""
+    conductivity::Function
+end
+
+"""
+    ThermalInsulator(material::String)
+
+Outer constructor for `ThermalInsulator` types. 
+Material specified needs to have the following data in the database:
+- ρ (density): Density [kg/m³]
+- conductivity (thermal conductivity): a string with the thermal conductivity as a function of `T` [W/(m⋅K)]
+"""
+function ThermalInsulator(material::String)
+    local MatProp, ρ, conductivity
+    try
+        MatProp = MaterialProperties[material]
+    catch
+        error("Cannot find $material in Material Properties database")
+    else
+        try
+            ρ = MatProp["density"]
+            cond_expr = Meta.parse(MatProp["conductivity"])
+            conductivity = eval(:(T -> $cond_expr))
+        catch 
+            error("Insufficient data in database for $material to build a ThermalInsulator")
+        else
+            ThermalInsulator(material, ρ, conductivity)
+        end
+    end
+
+end
 
 """
     create_dict(material)
