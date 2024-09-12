@@ -65,6 +65,7 @@ using .engine
 using .CryoTank
 
 #Load other functions
+include("./misc/fuselage_tank.jl")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
 

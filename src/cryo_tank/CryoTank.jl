@@ -5,6 +5,7 @@ module CryoTank
 
 using ..engine
 using ..atmosphere
+using ..materials
 using NLsolve
 using Roots
 using NLopt

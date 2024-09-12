@@ -20,7 +20,7 @@ fuse_tank.ARtank = 2.0
 fuse_tank.inner_material = TASOPT.StructuralAlloy("Al-2219-T87")
 
 fuse_tank.t_insul = [0.15,0.15,0.15]
-fuse_tank.material_insul = ["rohacell41S", "rohacell41S", "polyurethane27"]
+fuse_tank.material_insul = [TASOPT.ThermalInsulator("rohacell41s"), TASOPT.ThermalInsulator("rohacell41s"), TASOPT.ThermalInsulator("polyurethane27")]
 fuse_tank.size_insulation = true
 fuse_tank.iinsuldes = [1,2,3]
 fuse_tank.boiloff_rate = 0.15
@@ -82,7 +82,7 @@ fuse_tank.Wfuelintank = 1e5
     end
     
     fuse_tank.t_insul = [0.065]
-    fuse_tank.material_insul = ["vacuum"]
+    fuse_tank.material_insul = [TASOPT.ThermalInsulator("vacuum")]
     fuse_tank.size_insulation = false
 
     @testset "Vacuum insulation" begin
