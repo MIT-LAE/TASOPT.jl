@@ -208,9 +208,9 @@ $TYPEDFIELDS
     """Name"""
     name::String = ""
     """Density [kg/m³]"""
-    ρ::Float64
-    """Thermal conductivity as a function of temperature [W/(m⋅K)]"""
-    conductivity::Function
+    ρ::Float64 = 0.0
+    """Coefficients for thermal conductivity as a function of temperature [W/(m⋅K)]"""
+    conductivity_coeffs::Vector{Float64} = ""
 end
 
 """
@@ -222,7 +222,7 @@ Material specified needs to have the following data in the database:
 - conductivity (thermal conductivity): a string with the thermal conductivity as a function of `T` [W/(m⋅K)]
 """
 function ThermalInsulator(material::String)
-    local MatProp, ρ, conductivity
+    local MatProp, ρ, cond_coeffs
     try
         MatProp = MaterialProperties[material]
     catch
@@ -230,12 +230,12 @@ function ThermalInsulator(material::String)
     else
         try
             ρ = MatProp["density"]
-            cond_expr = Meta.parse(MatProp["conductivity"])
-            conductivity = eval(:(T -> $cond_expr))
+            cond_coeffs = MatProp["conductivity_coeffs"]
+
         catch 
             error("Insufficient data in database for $material to build a ThermalInsulator")
         else
-            ThermalInsulator(material, ρ, conductivity)
+            ThermalInsulator(material, ρ, cond_coeffs)
         end
     end
 
