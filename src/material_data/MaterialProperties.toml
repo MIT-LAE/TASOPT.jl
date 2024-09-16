@@ -127,31 +127,32 @@
 # -----------------------------------------------------
 # Thermal insulators
 # -----------------------------------------------------
-#The field `conductivity` is a string defining the thermal conductivity as a function of temperature
+# The field `conductivity_coeffs` has coefficients defining the thermal conductivity as a function of temperature. For example
+# conductivity_coeffs = [2, 3, 5] represents k(T) = 2 + 3*T + 5*T^2.
 [rohacell41s] 
     density = 35.0 #kg/m^3. From Brewer (1991)
-    conductivity = "0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3" #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
+    conductivity_coeffs = [0.001579, 1.283e-4, -3.353e-7, 8.487e-10]#Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
 
 [polyurethane27]
     density = 27.0
-    conductivity = "2.114e-13 * T^5 - 1.639e-10 *T^4 + 4.438e-8 * T^3 - 5.222e-6*T^2 + 3.740e-4*T - 2.192e-3"  # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
+    conductivity_coeffs = [-2.192e-3, 3.740e-4, -5.222e-6, 4.438e-8, -1.639e-10, 2.114e-13] # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
 
 [polyurethane32]
     density = 32.0
-    conductivity = "2.179E-13 * T^5 - 1.683E-10* T^4 + 4.542E-08* T^3 - 5.341E-06* T^2 + 3.816E-04* T - 2.367E-03"
+    conductivity_coeffs = [-2.367E-03, 3.816E-04, -5.341E-06, 4.542E-08, -1.683E-10, 2.179E-13]
 
 [polyurethane35]
     density = 35.0
-    conductivity = "2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03"
+    conductivity_coeffs = [-2.575E-03, 3.970E-04, -5.662E-06, 4.746E-08, -1.695E-10, 2.104E-13]
 
 [mylar]
     density = 1390.0 #kg/m^3, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
-    conductivity = "0.155" # W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
+    conductivity_coeffs = [0.155] # W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
 
 [microspheres]
     density = 69.0
-    conductivity = "1.4632E-10*T^3 - 9.6487E-08*T^2 + 5.1956E-05*T - 3.7191E-05"  # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 15 and 400 K
+    conductivity_coeffs = [-3.7191E-05, 5.1956E-05, -9.6487E-08, 1.4632E-10]
 
 [vacuum]
     density = 0.0
-    conductivity = "0.0"
+    conductivity_coeffs = [0.0]
