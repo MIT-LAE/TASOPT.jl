@@ -287,8 +287,8 @@ function wsize(ac; itermax=35,
     # Engine model setup
     # ------------------------------
     if pari[iiengmodel] == 0 #Drela's model
-        propcalc!(para_sl, pare_sl, ip, icall, icool, initeng) = tfcalc!(pari, parg, para_sl, pare_sl, ip, icall, icool, initeng)
         propweight(ac, HXs) = tfweight(ac, HXs)
+        engine_type = "turbofan"
     end
    
     # -------------------------------------------------------    
@@ -1193,14 +1193,14 @@ function wsize(ac; itermax=35,
                 icall = 1
                 icool = 1
     
-                ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
     
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 icall = 1
                 icool = 1
-                ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
     
                 takeoff!(ac; printTO = false)
             end
@@ -1252,6 +1252,8 @@ function wsize(ac; itermax=35,
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])
+        ip = ipcruise1
+        WMTO = parg[igWMTO]
         LoD = para[iaCL, ip] / para[iaCD, ip]
         gamV = para[iagamV, ip]
         We = para[iafracW, ip] * WMTO
@@ -1260,47 +1262,9 @@ function wsize(ac; itermax=35,
         Fdes = BW * (1 / LoD + gamV)
 
         pare[ieFe, ip] = Fdes / neng
-
         # Size engine for TOC
-        icall = 0
-        icool = 1
-        if (iterw == 1 || initeng == 0)
-            # initialize engine state
-            inite1 = 0
-        else
-            # start with current engine state
-            inite1 = 1
-        end
 
-        ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
-
-        # store engine design-point parameters for all operating points
-        parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
-        parg[igA7] = pare[ieA7, ip] / pare[ieA7fac, ip]
-        for jp = 1:iptotal
-            pare[ieA2, jp] = pare[ieA2, ip]
-            pare[ieA25, jp] = pare[ieA25, ip]
-            pare[ieA5, jp] = parg[igA5] * pare[ieA5fac, jp]
-            pare[ieA7, jp] = parg[igA7] * pare[ieA7fac, jp]
-
-            pare[ieNbfD, jp] = pare[ieNbfD, ip]
-            pare[ieNblcD, jp] = pare[ieNblcD, ip]
-            pare[ieNbhcD, jp] = pare[ieNbhcD, ip]
-            pare[ieNbhtD, jp] = pare[ieNbhtD, ip]
-            pare[ieNbltD, jp] = pare[ieNbltD, ip]
-
-            pare[iembfD, jp] = pare[iembfD, ip]
-            pare[iemblcD, jp] = pare[iemblcD, ip]
-            pare[iembhcD, jp] = pare[iembhcD, ip]
-            pare[iembhtD, jp] = pare[iembhtD, ip]
-            pare[iembltD, jp] = pare[iembltD, ip]
-
-            pare[iepifD, jp] = pare[iepifD, ip]
-            pare[iepilcD, jp] = pare[iepilcD, ip]
-            pare[iepihcD, jp] = pare[iepihcD, ip]
-            pare[iepihtD, jp] = pare[iepihtD, ip]
-            pare[iepiltD, jp] = pare[iepiltD, ip]
-        end
+        enginecalc!(ac, "design", engine_type, initeng, iterw)
 
         Mach = para[iaMach, ip]
         CL = para[iaCL, ip]
@@ -1322,7 +1286,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, propcalc!, Ldebug)
+        time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1340,7 +1304,7 @@ function wsize(ac; itermax=35,
 
         icall = 1
         icool = 2
-        ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points
         for jp = 1:iptotal
@@ -1390,14 +1354,14 @@ function wsize(ac; itermax=35,
     icall = 1
     icool = 1
 
-    ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
     icall = 1
     icool = 1
-    ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
     takeoff!(ac)
