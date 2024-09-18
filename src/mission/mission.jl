@@ -30,7 +30,7 @@ NOTE:
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, ipc1)
+function mission!(pari, parg, parm, para, pare, fuse, propcalc!, Ldebug)#, iairf, initeng, ipc1)
 
       t_prop = 0.0
       calc_ipc1 = true
@@ -362,7 +362,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
                   icall = 1
                   icool = 1
 
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+                  ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
                   Ftotal = pare[ieFe, ip] * parg[igneng]
                   TSFC = pare[ieTSFC, ip]
@@ -491,7 +491,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             Wpay = parg[igWpay]
             icall = 2
             icool = 1
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+            ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
       end
 
@@ -573,7 +573,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       icall = 2
       icool = 1
 
-      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+      ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -753,7 +753,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             # use previously-set turbine cooling mass flow
             icool = 1
 
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
+            ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]

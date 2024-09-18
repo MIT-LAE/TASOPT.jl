@@ -288,6 +288,11 @@ function wsize(ac; itermax=35,
     fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
     fuse_tank.wfb = fuse.layout.bubble_center_y_offset
     fuse_tank.nfweb = fuse.layout.n_webs
+
+    #Engine model
+    if pari[iiengmodel] == 0 #Drela's model
+        propcalc!(para_sl, pare_sl, ip, icall, icool, initeng) = tfcalc!(pari, parg, para_sl, pare_sl, ip, icall, icool, initeng)
+    end
    
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1191,14 +1196,14 @@ function wsize(ac; itermax=35,
                 icall = 1
                 icool = 1
     
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
     
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 icall = 1
                 icool = 1
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
     
                 takeoff!(ac; printTO = false)
             end
@@ -1270,7 +1275,7 @@ function wsize(ac; itermax=35,
             inite1 = 1
         end
 
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+        ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
         # store engine design-point parameters for all operating points
         parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -1331,7 +1336,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
+        time_propsys += mission!(pari, parg, parm, para, pare, fuse, propcalc!, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1349,7 +1354,7 @@ function wsize(ac; itermax=35,
 
         icall = 1
         icool = 2
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+        ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points
         for jp = 1:iptotal
@@ -1399,14 +1404,14 @@ function wsize(ac; itermax=35,
     icall = 1
     icool = 1
 
-    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
     icall = 1
     icool = 1
-    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    ichoke5, ichoke7 = propcalc!(view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
     takeoff!(ac)
