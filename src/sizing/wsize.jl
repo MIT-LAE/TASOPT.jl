@@ -125,13 +125,10 @@ function wsize(ac; itermax=35,
     parg[igWpay] = Wpay
 
     # Weight fractions
-    feadd = parg[igfeadd]
     fhadd = parg[igfhadd]
     fvadd = parg[igfvadd]
     fwadd = parg[igfflap] + parg[igfslat] +
             parg[igfaile] + parg[igflete] + parg[igfribs] + parg[igfspoi] + parg[igfwatt]
-
-    fpylon = parg[igfpylon]
 
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
@@ -240,9 +237,6 @@ function wsize(ac; itermax=35,
     # fan hub/tip ratio
     HTRf = parg[igHTRf]
 
-    # nacelle wetted area / fan area ratio
-    rSnace = parg[igrSnace]
-
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
 
     #Fuselage fuel tank placement and moment
@@ -289,9 +283,12 @@ function wsize(ac; itermax=35,
     fuse_tank.wfb = fuse.layout.bubble_center_y_offset
     fuse_tank.nfweb = fuse.layout.n_webs
 
-    #Engine model
+    # -----------------------------
+    # Engine model setup
+    # ------------------------------
     if pari[iiengmodel] == 0 #Drela's model
         propcalc!(para_sl, pare_sl, ip, icall, icool, initeng) = tfcalc!(pari, parg, para_sl, pare_sl, ip, icall, icool, initeng)
+        propweight(ac, HXs) = tfweight(ac, HXs)
     end
    
     # -------------------------------------------------------    
@@ -1305,23 +1302,12 @@ function wsize(ac; itermax=35,
             pare[iepiltD, jp] = pare[iepiltD, ip]
         end
 
-        dfan = parg[igdfan]
-        dlcomp = parg[igdlcomp]
-        dhcomp = parg[igdhcomp]
-
         Mach = para[iaMach, ip]
         CL = para[iaCL, ip]
         CD = para[iaCD, ip]
 
-        # bare weight for one engine [Newtons]
-        mdotc = pare[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)
-        BPR = pare[ieBPR, ip]
-        OPR = pare[iepilc, ip] * pare[iepihc, ip]
-
         # weight of engine and related stuff
-        Gearf = parg[igGearf]
-        Weng, Wnace, Webare, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-            dlcomp, neng, feadd, fpylon, HXs)
+        Weng, Wnace, Webare, Snace1 = propweight(ac, HXs)
 
         parg[igWeng] = Weng
         parg[igWebare] = Webare

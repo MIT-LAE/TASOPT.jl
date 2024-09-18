@@ -23,8 +23,23 @@ Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald m
     - `Webare`: Bare engine weight.
     - `Snace1`: Nacelle area.
 """
-function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-    dlcomp, neng, feadd, fpylon, HXs)
+function tfweight(ac, HXs)
+
+    TSL = Tref
+    pSL = pref
+    ip = ipcruise1 #OPR and BPR designed for start-of-cruise
+
+    iengwgt = ac.pari[iiengwgt]
+    Gearf = ac.parg[igGearf]
+    mdotc = ac.pared[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)
+    BPR = ac.pared[ieBPR, ip]
+    OPR = ac.pared[iepilc, ip] * ac.pared[iepihc, ip]
+    dfan = ac.parg[igdfan]
+    dlcomp = ac.parg[igdlcomp]
+    rSnace = ac.parg[igrSnace]
+    neng = ac.parg[igneng]
+    feadd = ac.parg[igfeadd]
+    fpylon = ac.parg[igfpylon]
 
     # include("constants.inc")
 
