@@ -875,7 +875,12 @@
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
 
-      ietotal = 264
+      iemfan      = 265
+      ieTSEC      = 266
+      iePfan      = 267
+      iePfanmax   = 268
+
+      ietotal = 268
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

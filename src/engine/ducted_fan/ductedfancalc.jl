@@ -77,7 +77,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
 
         Fe = pare[ieFe]
 
-        Fsp, Pfan,
+        TSEC, Fsp, Pfan, mfan,
         Tt0, ht0, pt0, cpt0, Rt0,
         Tt18, ht18, pt18, cpt18, Rt18,
         Tt2, ht2, pt2, cpt2, Rt2,
@@ -95,6 +95,10 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                         epolf,
                         pifK, epfK
                         )
+        pare[iePfanmax] = Pfan
+
+        mbf = mfan * sqrt(Tt2 / Tref) / (pt2 / pref)
+        M7 = u7 / sqrt(T7 * R7 * cp7 / (cp7 - R7))
     else
         #----- fixed parameters
         A2 = pare[ieA2]
@@ -117,10 +121,10 @@ function ductedfancalc!(pari, parg, para, pare, ip,
         end
         if (icall == 1) #Power is specified, thrust will be computed
             Feng = 0.0
-            Peng = 1e6
+            Peng = pare[iePfanmax]
             iPspec = true
 
-            TSEC, Fsp, Feng, Peng, mfan, 
+            TSEC, Fsp, Feng, Pfan, mfan, 
             pif, mbf, 
             Tt0, ht0, pt0, cpt0, Rt0,
             Tt18, ht18, pt18, cpt18, Rt18,
@@ -142,11 +146,11 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             M2, pif, mbf, 
                             iPspec)
         elseif (icall == 2) #Thrust is specified, power to be computed
-            Feng = 1e6
+            Feng = pare[ieFe]
             Peng = 0.0
             iPspec = false
 
-            TSEC, Fsp, Feng, Peng, mfan, 
+            TSEC, Fsp, Feng, Pfan, mfan, 
             pif, mbf, 
             Tt0, ht0, pt0, cpt0, Rt0,
             Tt18, ht18, pt18, cpt18, Rt18,
@@ -168,5 +172,85 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             M2, pif, mbf, 
                             iPspec)
         end
+    end
+    HTRf = parg[igHTRf]
+    dfan = sqrt(4.0 * A2 / (pi * (1.0 - HTRf^2)))
+    parg[igdfan] = dfan
+
+    pare[iePfan] = Pfan
+    pare[ieTSEC] = TSEC
+    pare[ieFsp] = Fsp
+    pare[iemfan] = mfan
+    pare[iePhiinl] = Phiinl
+    pare[ieKinl] = Kinl
+
+    pare[iembf] = mbf
+    pare[iepif] = pif
+
+    pare[ieTt0] = Tt0
+    pare[ieht0] = ht0
+    pare[iept0] = pt0
+    pare[iecpt0] = cpt0
+    pare[ieRt0] = Rt0
+
+    pare[ieTt18] = Tt18
+    pare[ieht18] = ht18
+    pare[iept18] = pt18
+    pare[iecpt18] = cpt18
+    pare[ieRt18] = Rt18
+
+    pare[ieTt2] = Tt2
+    pare[ieht2] = ht2
+    pare[iept2] = pt2
+    pare[iecpt2] = cpt2
+    pare[ieRt2] = Rt2
+
+    pare[ieTt21] = Tt21
+    pare[ieht21] = ht21
+    pare[iept21] = pt21
+    pare[iecpt21] = cpt21
+    pare[ieRt21] = Rt21
+
+    pare[ieTt7] = Tt7
+    pare[ieht7] = ht7
+    pare[iept7] = pt7
+    pare[iecpt7] = cpt7
+    pare[ieRt7] = Rt7
+
+    pare[ieu0] = u0
+
+    pare[iep2] = p2
+    pare[ieT2] = T2
+    pare[ieR2] = R2
+    pare[iecp2] = cp2
+    pare[ieu2] = u2
+
+    pare[iep7] = p7
+    pare[ieT7] = T7
+    pare[ieR7] = R7
+    pare[iecp7] = cp7
+    pare[ieu7] = u7
+
+    pare[iep8] = p8
+    pare[ieT8] = T8
+    pare[ieR8] = R8
+    pare[iecp8] = cp8
+    pare[ieu8] = u8
+
+    pare[ieA8] = A8
+
+    pare[ieepf] = epf
+
+    pare[ieetaf] = etaf
+
+    if (M7 <= 0.999999)
+            ichoke7 = 0
+    else
+            ichoke7 = 1
+    end
+
+    if (Lprint)
+            println(" exiting TFCALC")
+            println("Tt3 Tt4 u0 u6 u8 fo fc", Tt3, Tt4, u0, u6, u8, fo, pare[iefc])
     end
 end

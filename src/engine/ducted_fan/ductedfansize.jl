@@ -225,6 +225,8 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
             #---- Fan power 
             Pfan = mfan * (ht21 - ht2)
 
+            TSEC = Pfan/Feng
+
             # ===============================================================
 
             M8 = u8 / sqrt(cp8 * R8 / (cp8 - R8) * T8)
@@ -275,7 +277,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
                         etaf = (ht21i - ht2) / (ht21 - ht2)
                         
                         Lconv = true
-                        return Fsp, Pfan,
+                        return TSEC, Fsp, Pfan, mfan,
                         Tt0, ht0, pt0, cpt0, Rt0,
                         Tt18, ht18, pt18, cpt18, Rt18,
                         Tt2, ht2, pt2, cpt2, Rt2,
