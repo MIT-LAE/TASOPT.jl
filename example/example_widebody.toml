@@ -105,7 +105,7 @@
     dRadius = "0 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "8.0 in" # depth of floor beams
-    Nwebs = 1              # number of webs (for double bubble designs)
+    Nwebs = 0              # number of webs (for double bubble designs)
 
     a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 2.0 # Tail radius = Rfuse*(1 - xi^b_tail)
@@ -122,6 +122,7 @@
     double_decker   = false #if true, the fuselage has two passenger decks
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout

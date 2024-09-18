@@ -8,6 +8,9 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
+    aircraft_type   = "Narrow Body"     # 0: Regional Aircraft
+                                    # 1: Narrow Body Aircraft
+                                    # 2: Wide Body Aircraft
 
 #-------------------------------------------------#
 ##               Note on units                   ##
@@ -139,12 +142,11 @@
     cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
+    number_of_bubbles = 1  # SingleBubble or MultiBubble Designs
     radius = "77 in"       # Fuselage radius
     dRadius = "15 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "5.0 in" # depth of floor beams
-    Nwebs = 1              # number of webs (for double bubble designs)
-
     a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 2.0 # Tail radius = Rfuse*(1 - xi^b_tail)
     tailcone_taper = 0.3
@@ -161,6 +163,7 @@
     floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
@@ -373,8 +376,24 @@
 
     # Allowable stresses at sizing cases:
     ## Fuselage pressurization skin stress and bending skin+stringer stress
-    sigma_fuse_skin = "15e3 lbf/in2" 
-    sigma_fuse_bending = "30e3 lbf/in2"
+    skin_material = "TASOPT-Al"
+    skin_max_avg_stress = 1.1
+    skin_safety_factor = 3.0
+    # the sigma_max works out to be roughly 15e3 lbf/in2
+    
+    bending_material = "TASOPT-Al"
+    bending_max_avg_stress = 1.1
+    bending_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+
+    cone_material = "TASOPT-Al"
+    cone_max_avg_stress = 1.1
+    cone_safety_factor = 2.0
+
+    floor_material = "TASOPT-Al"
+    floor_max_avg_stress = 1.1
+    floor_safety_factor = 1.5
+
     ## Wing and tail bending and shear stresses
     sigma_caps    = "30e3 lbf/in2"
     sigma_struts  = "30e3 lbf/in2"
@@ -386,8 +405,6 @@
     E_struts        = "10e6 lbf/in2"
 
     # Material densities (Aluminium)
-    skin_density = 2700.0
-    fuse_stringer_density = 2700.0
     wing_tail_cap_density = 2700.0
     wing_tail_web_density = 2700.0
     strut_density = 2700.0
