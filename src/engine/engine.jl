@@ -32,6 +32,7 @@ include("turbofan/tfcalc.jl")
 include("turbofan/tfweight.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
+include("ducted_fan/ductedfancalc.jl")
 include("ducted_fan/ductedfansize.jl")
 include("ducted_fan/ductedfanoper.jl")
 
