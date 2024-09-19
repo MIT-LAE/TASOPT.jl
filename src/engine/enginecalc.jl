@@ -1,12 +1,11 @@
-function enginecalc!(ac, case, engine_type, initeng, iterw)
+function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
     #Unpack data storage arrays
     pari = ac.pari
     parg = ac.parg
     para = ac.parad
     pare = ac.pared  
     if engine_type == "turbofan"
-        if case == "sizing"
-            ip = ipcruise1
+        if case == "design"
             icall = 0
             icool = 1
             if (iterw == 1 || initeng == 0)
@@ -17,7 +16,7 @@ function enginecalc!(ac, case, engine_type, initeng, iterw)
                 inite1 = 1
             end
 
-            ichoke5, ichoke7 = tfcalc(pari,parg,view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+            ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
             # store engine design-point parameters for all operating points
             parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -46,7 +45,19 @@ function enginecalc!(ac, case, engine_type, initeng, iterw)
                 pare[iepihtD, jp] = pare[iepihtD, ip]
                 pare[iepiltD, jp] = pare[iepiltD, ip]
             end
-        elseif case == "offdesign"
+        elseif case == "off_design"
+            if ip in range(ipstatic, ipclimbn)
+                icall = 1
+                icool = 1
+            else
+                icall = 2
+                icool = 1
+            end
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+        elseif case == "cooling_sizing"
+            icall = 1
+            icool = 2
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
         end
     end
 end

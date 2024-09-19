@@ -30,7 +30,15 @@ NOTE:
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, ipc1)
+function mission!(ac, engine_type, Ldebug)#, iairf, initeng, ipc1)
+
+      #Unpack data storage arrays
+      pari = ac.pari
+      parg = ac.parg
+      parm = ac.parmd
+      para = ac.parad
+      pare = ac.pared
+      fuse = ac.fuselage       
 
       t_prop = 0.0
       calc_ipc1 = true
@@ -359,10 +367,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
                   end
                   cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
-                  icall = 1
-                  icool = 1
-
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+                  enginecalc!(ac, "off_design", engine_type, ip, initeng)
 
                   Ftotal = pare[ieFe, ip] * parg[igneng]
                   TSFC = pare[ieTSFC, ip]
@@ -489,9 +494,8 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             BW = W + para[iaWbuoy, ip]
             F = BW * (DoL + para[iagamV, ip])
             Wpay = parg[igWpay]
-            icall = 2
-            icool = 1
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+
+            enginecalc!(ac, "off_design", engine_type, ip, initeng)
 
       end
 
@@ -570,10 +574,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       Ftotal = BW * (DoL + para[iagamV, ip])
       pare[ieFe, ip] = Ftotal / parg[igneng]
 
-      icall = 2
-      icool = 1
-
-      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+      enginecalc!(ac, "off_design", engine_type, ip, initeng)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -749,11 +750,8 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             end
 
             # use fixed engine geometry, specified Fe
-            icall = 2
             # use previously-set turbine cooling mass flow
-            icool = 1
-
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
+            enginecalc!(ac, "off_design", engine_type, ip, inite)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]

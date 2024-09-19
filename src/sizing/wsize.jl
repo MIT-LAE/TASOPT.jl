@@ -1190,17 +1190,14 @@ function wsize(ac; itermax=35,
                 #This is needed to know the TO duration to integrate the tank state
                 # set static thrust for takeoff routine
                 ip = ipstatic
-                icall = 1
-                icool = 1
     
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                enginecalc!(ac, "off_design", engine_type, ip, inite1)
     
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
-                icall = 1
-                icool = 1
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                
+                enginecalc!(ac, "off_design", engine_type, ip, inite1)
     
                 takeoff!(ac; printTO = false)
             end
@@ -1264,7 +1261,7 @@ function wsize(ac; itermax=35,
         pare[ieFe, ip] = Fdes / neng
         # Size engine for TOC
 
-        enginecalc!(ac, "design", engine_type, initeng, iterw)
+        enginecalc!(ac, "design", engine_type, ip, initeng, iterw)
 
         Mach = para[iaMach, ip]
         CL = para[iaCL, ip]
@@ -1286,7 +1283,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
+        time_propsys += mission!(ac, engine_type, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1302,9 +1299,7 @@ function wsize(ac; itermax=35,
         cosL = cos(parg[igsweep] * pi / 180.0)
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
-        icall = 1
-        icool = 2
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+        enginecalc!(ac, "cooling_sizing", engine_type, ip, inite1)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points
         for jp = 1:iptotal
@@ -1351,17 +1346,14 @@ function wsize(ac; itermax=35,
     # normal takeoff and balanced-field takeoff calculations
     # set static thrust for takeoff routine
     ip = ipstatic
-    icall = 1
-    icool = 1
 
-    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+    enginecalc!(ac, "off_design", engine_type, ip, inite1)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
-    icall = 1
-    icool = 1
-    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+
+    enginecalc!(ac, "off_design", engine_type, ip, inite1)
 
     # calculate takeoff and balanced-field lengths
     takeoff!(ac)
