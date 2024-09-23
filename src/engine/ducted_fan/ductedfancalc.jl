@@ -1,11 +1,8 @@
 function ductedfancalc!(pari, parg, para, pare, ip,
-    icall, icool, initeng)
+    icall, initeng)
 
     Lprint = false
 
-    if (Lprint)
-            println("entering TFCALC", icall, icool, initeng)
-    end
 
     iBLIc = pari[iiBLIc]
 
@@ -75,7 +72,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
     if (icall == 0)
         #----- engine sizing case
 
-        Fe = pare[ieFe]
+        Fe = pare[ieFe] #ducted fan sized for a given thrust
 
         TSEC, Fsp, Pfan, mfan,
         Tt0, ht0, pt0, cpt0, Rt0,
@@ -95,10 +92,20 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                         epolf,
                         pifK, epfK
                         )
-        pare[iePfanmax] = Pfan
 
         mbf = mfan * sqrt(Tt2 / Tref) / (pt2 / pref)
         M7 = u7 / sqrt(T7 * R7 * cp7 / (cp7 - R7))
+
+        pifD = pif
+        mbfD = mbf
+
+        #----- store design-point parameters
+        pare[ieA2] = A2
+        pare[ieA7] = A7
+
+        pare[iembfD] = mbfD
+        pare[iepifD] = pifD
+
     else
         #----- fixed parameters
         A2 = pare[ieA2]
@@ -242,6 +249,10 @@ function ductedfancalc!(pari, parg, para, pare, ip,
     pare[ieepf] = epf
 
     pare[ieetaf] = etaf
+
+    if (icall == 1)
+        pare[ieFe] = Feng
+    end
 
     if (M7 <= 0.999999)
             ichoke7 = 0

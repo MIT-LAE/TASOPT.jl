@@ -11,6 +11,7 @@ using LinearAlgebra
 
 export tfcalc!, mcool, Tmcalc, gas_tset, gaschem, enginecalc!
 export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
+export ductedfanoper!, ductedfansize!, ductedfancalc!, ductedfanweight
 
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
 export hxdesign!, hxweight, resetHXs
@@ -36,5 +37,6 @@ include("PEMfuelcell.jl")
 include("ducted_fan/ductedfancalc.jl")
 include("ducted_fan/ductedfansize.jl")
 include("ducted_fan/ductedfanoper.jl")
+include("ducted_fan/ductedfanweight.jl")
 
 end

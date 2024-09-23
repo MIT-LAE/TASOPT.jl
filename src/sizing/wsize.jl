@@ -290,7 +290,8 @@ function wsize(ac; itermax=35,
         propweight(ac, HXs) = tfweight(ac, HXs)
         engine_type = "turbofan"
     end
-   
+    pare[iePfanmax,:] .= 20e6
+
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------
@@ -331,7 +332,6 @@ function wsize(ac; itermax=35,
         parg[igdxWvtail] = dxWvtail
         parg[igdyWinn] = dyWinn
         parg[igdyWout] = dyWout
-
 
         # wing centroid x-offset form wingbox
         dxwing, macco = surfdx(b, bs, bo, λt, λs, sweep)
@@ -870,6 +870,9 @@ function wsize(ac; itermax=35,
             rfmax = Wfuelmp / Wfmax
         end
 
+        if iterw == 3
+            error("STOP")
+        end
 
         # Save wing details into geometry array
         parg[igWwing] = Wwing * rlx + parg[igWwing] * (1.0 - rlx)

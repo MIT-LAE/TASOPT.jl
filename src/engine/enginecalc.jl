@@ -21,30 +21,30 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             # store engine design-point parameters for all operating points
             parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
             parg[igA7] = pare[ieA7, ip] / pare[ieA7fac, ip]
-            for jp = 1:iptotal
-                pare[ieA2, jp] = pare[ieA2, ip]
-                pare[ieA25, jp] = pare[ieA25, ip]
-                pare[ieA5, jp] = parg[igA5] * pare[ieA5fac, jp]
-                pare[ieA7, jp] = parg[igA7] * pare[ieA7fac, jp]
+            
+            pare[ieA2, :] .= pare[ieA2, ip]
+            pare[ieA25, :] .= pare[ieA25, ip]
+            pare[ieA5, :] .= parg[igA5] .* pare[ieA5fac, :]
+            pare[ieA7, :] .= parg[igA7] .* pare[ieA7fac, :]
 
-                pare[ieNbfD, jp] = pare[ieNbfD, ip]
-                pare[ieNblcD, jp] = pare[ieNblcD, ip]
-                pare[ieNbhcD, jp] = pare[ieNbhcD, ip]
-                pare[ieNbhtD, jp] = pare[ieNbhtD, ip]
-                pare[ieNbltD, jp] = pare[ieNbltD, ip]
+            pare[ieNbfD, :] .= pare[ieNbfD, ip]
+            pare[ieNblcD, :] .= pare[ieNblcD, ip]
+            pare[ieNbhcD, :] .= pare[ieNbhcD, ip]
+            pare[ieNbhtD, :] .= pare[ieNbhtD, ip]
+            pare[ieNbltD, :] .= pare[ieNbltD, ip]
 
-                pare[iembfD, jp] = pare[iembfD, ip]
-                pare[iemblcD, jp] = pare[iemblcD, ip]
-                pare[iembhcD, jp] = pare[iembhcD, ip]
-                pare[iembhtD, jp] = pare[iembhtD, ip]
-                pare[iembltD, jp] = pare[iembltD, ip]
+            pare[iembfD, :] .= pare[iembfD, ip]
+            pare[iemblcD, :] .= pare[iemblcD, ip]
+            pare[iembhcD, :] .= pare[iembhcD, ip]
+            pare[iembhtD, :] .= pare[iembhtD, ip]
+            pare[iembltD, :] .= pare[iembltD, ip]
 
-                pare[iepifD, jp] = pare[iepifD, ip]
-                pare[iepilcD, jp] = pare[iepilcD, ip]
-                pare[iepihcD, jp] = pare[iepihcD, ip]
-                pare[iepihtD, jp] = pare[iepihtD, ip]
-                pare[iepiltD, jp] = pare[iepiltD, ip]
-            end
+            pare[iepifD, :] .= pare[iepifD, ip]
+            pare[iepilcD, :] .= pare[iepilcD, ip]
+            pare[iepihcD, :] .= pare[iepihcD, ip]
+            pare[iepihtD, :] .= pare[iepihtD, ip]
+            pare[iepiltD, :] .= pare[iepiltD, ip]
+            
         elseif case == "off_design"
             if ip in range(ipstatic, ipclimbn)
                 icall = 1
@@ -58,6 +58,30 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             icall = 1
             icool = 2
             ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+        end
+
+    elseif engine_type == "ducted_fan"
+        if case == "design"
+            icall = 0
+
+            ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
+
+            parg[igA7] = pare[ieA7, ip] / pare[ieA7fac, ip]
+            
+            pare[ieA2, :] .= pare[ieA2, ip]
+            pare[ieA7, :] .= parg[igA7] .* pare[ieA7fac, :]
+
+            pare[iembfD, :] .= pare[iembfD, ip]
+            pare[iepifD, :] .= pare[iepifD, ip]
+
+        else
+            if ip in range(ipstatic, ipclimbn)
+                icall = 1
+            else
+                icall = 2
+            end
+
+            ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
         end
     end
 end
