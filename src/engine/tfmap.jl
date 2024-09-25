@@ -1,3 +1,42 @@
+using TOML
+
+"""
+    NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
+
+Calculates compressor or fan corrected speed as a function of pressure ratio and corrected mass flow using linear interpolation of E3 data
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`: pressure ratio 
+    - `mb`:       corrected mass flow
+    - `piD`:      design pressure ratio
+    - `mbD`:      design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `mapName`:  map name ('E3fan', 'E3lpc', 'E3hpc')
+
+    **Outputs:**
+    - `Nb`:     wheel speed
+    - `Nb_?`:   derivatives
+
+"""
+function NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
+    eps = 1.0e-11
+
+    #---- corrected mass flow / design corrected mass flow
+    m = mb / mbD
+    m_mb = 1.0 / mbD
+
+    #---- scaled pressure ratio
+    p = (pratio - 1.0) / (piD - 1.0)
+    p_pi = 1.0 / (piD - 1.0)
+
+
+
+end # NcInterpMap
+
+
+
+
 """
     Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
