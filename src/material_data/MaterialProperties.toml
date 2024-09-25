@@ -80,6 +80,19 @@
     UTS = 505e6  #Ultimate tensile strength
     shear_strength = 386.0e6 #From https://protoxyz.com/materials/metal/Stainless_Steel_304
     thermal_conductivity = 16.2 #W/(m K)
+
+[AISI-4340]
+    description = """4340 Steel, normalized
+    Uses: Piston pins, bearings, gears, dies, pressure vessels"""
+    #Structural properties: https://www.matweb.com/search/DataSheet.aspx?MatGUID=fd2df45bffa54018b54989bc14092d9f
+    density = 7850.0 #kg/m3
+    youngs_modulus = 200e9 #Pa
+    shear_modulus = 78e9 #Pa
+    poissons_ratio = 0.29
+    YTS = 862e6 #Yield tensile strength
+    UTS = 1282e6  #Ultimate tensile strength
+    shear_strength = 758.4e6 #From https://www.onlinemetals.com/en/product-guide/alloy/4340
+    thermal_conductivity = 44.5 #W/(m K)
 # -----------------------------------------------------
 # Generic conductors with electrical properties taken 
 # from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
