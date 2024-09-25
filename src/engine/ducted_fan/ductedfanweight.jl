@@ -1,7 +1,7 @@
 function ductedfanweight(ac, HXs)
-    Weng = 0.0
-    Wnac = 0.0
-    Webare = 0.0
-    Snace1 = 0.0
+    Weng = 1.0
+    Wnac = 1.0
+    Webare = 1.0
+    Snace1 = 1.0
     return Weng, Wnac, Webare, Snace1
 end

@@ -875,12 +875,31 @@
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
 
+#Ducted fan and fuel cell variables
       iemfan      = 265
       ieTSEC      = 266
       iePfan      = 267
       iePfanmax   = 268
+      iePfc       = 269
+      iePfcmax    = 270
+      iencells    = 271
+      ieAcell     = 272
+      ieQheat     = 273
+      iejdens     = 274
+      ieVstack    = 275
+      ieTfc       = 276
+      iepanode    = 277
+      iepcathode  = 278
+      iexwanode   = 279
+      iexwcathode = 280
+      ielambdaw   = 281
+      ielambdaox  = 282
+      ietmembrane = 283
+      ietanode    = 284
+      ietcathode  = 285
+      iemfuel     = 286
 
-      ietotal = 268
+      ietotal = 286
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

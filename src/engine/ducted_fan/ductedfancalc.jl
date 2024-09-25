@@ -186,6 +186,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
 
     pare[iePfan] = Pfan
     pare[ieTSEC] = TSEC
+    pare[ieTSFC] = TSEC / 120e6  #TODO change when fuel is not burnt
     pare[ieFsp] = Fsp
     pare[iemfan] = mfan
     pare[iePhiinl] = Phiinl

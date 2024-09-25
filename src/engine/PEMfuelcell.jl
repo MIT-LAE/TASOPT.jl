@@ -18,8 +18,8 @@ A simple 0D model of a low temperature PEM fuel cell, accounting for thermodynam
 function LT_PEMFC_voltage_simple(j, T, p_H2, p_air)
 
     # Parameters
-    R = 8.314 # J/(mol*K)
-    F = 96485.3329 # C/mol
+    R = Runiv # J/(mol*K), universal gas constant
+    F = F_const # C/mol, Faraday contant
     T0 = 298.15  # Temperature in Kelvin
     p0 = 1.01325e5  # Pressure in Pascal
     n = 2 #number of electrons in half-reaction
@@ -95,8 +95,8 @@ in O'Hayre et al. (2016), which is a simplified version of that in Springer et a
 function LT_PEMFC_voltage_OHayre(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_O2)
 
     # Parameters from physics
-    R = 8.314 # J/(mol*K), universal gas constant
-    F = 96485.3329 # C/mol, Faraday contant
+    R = Runiv # J/(mol*K), universal gas constant
+    F = F_const # C/mol, Faraday contant
     n_O2 = 4 #number of electrons in reduction reaction
     n = 2 #number of electrons in oxidation reaction
     p0 = 101325 #Pa, reference pressure
@@ -289,8 +289,8 @@ function LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
     # Parameters
     #---------------------------------
     # Parameters from physics
-    R = 8.314 # J/(mol*K), universal gas constant
-    F = 96485.3329 # C/mol, Faraday contant
+    R = Runiv # J/(mol*K), universal gas constant
+    F = F_const # C/mol, Faraday contant
     n = 2 #number of electrons in oxidation reaction
     n_C = 4 #number of electrons in reduction reaction
     p0 = 101325 #Pa, reference pressure
@@ -465,8 +465,8 @@ function HT_PEMFC_voltage(u)
     # Parameters
     #---------------------------------
     # Parameters from physics
-    R = 8.314 # J/(mol*K), universal gas constant
-    F = 96485.3329 # C/mol, Faraday contant
+    R = Runiv # J/(mol*K), universal gas constant
+    F = F_const # C/mol, Faraday contant
     n = 2 #number of electrons in oxidation reaction
     n_C = 4 #number of electrons in reduction reaction
     p0 = 101325 #Pa, reference pressure
@@ -996,6 +996,7 @@ Designs the fuel cell stack for the design point conditions.
     - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
  
     **Outputs:**
+    - `mfuel::Float64`: mass flow rate of fuel (kg/s)
     - `n_cells::Float64`: number of cells in stack
     - `A_cell::Float64`: cell surface area (m^2)
     - `Q::Float64`: waste power produced by the fuel cell at design point (W)
@@ -1004,6 +1005,7 @@ function PEMsize(P_des, V_des, u)
     #Extract inputs
     type = u.type
     j = u.j
+    F = F_const #Faraday constant
     
     #Find heating voltage
     if type == "LT-PEMFC"
@@ -1023,7 +1025,12 @@ function PEMsize(P_des, V_des, u)
     #Calculate heat to be dissipated
     Q = n_cells * A_cell * (V_heat - V_cell) * j
 
-    return n_cells, A_cell, Q
+    #Calculate fuel mass flow rate
+    M_h2 = 2.016e-3 #kg/mol
+    Iflux = j / (2*F) #Molar flux of hydrogen gas
+    mfuel = n_cells * A_cell * Iflux * M_h2 #fuel mass flow rate
+
+    return mfuel, n_cells, A_cell, Q
 end #PEMsize
 
 """
@@ -1039,12 +1046,14 @@ Evaluates fuel cell stack performance in off-design conditions.
     - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
  
     **Outputs:**
+    - `mfuel::Float64`: mass flow rate of fuel (kg/s)
     - `V_stack::Float64`: stack voltage (V)
     - `Q::Float64`: waste power produced by the fuel cell (W)
 """
 function PEMoper(P_stack, n_cells, A_cell, u)
     #Extract inputs
     type = u.type
+    F = F_const #Faraday constant
     
     #Find heating voltage
     if type == "LT-PEMFC"
@@ -1067,7 +1076,12 @@ function PEMoper(P_stack, n_cells, A_cell, u)
     #Calculate heat to be dissipated
     Q = n_cells * A_cell * (V_heat - V_cell) * j
 
-    return V_stack, Q
+    #Calculate fuel mass flow rate
+    M_h2 = 2.016e-3 #kg/mol
+    Iflux = j / (2*F) #Molar flux of hydrogen gas
+    mfuel = n_cells * A_cell * Iflux * M_h2 #fuel mass flow rate
+
+    return mfuel, V_stack, Q
 end #PEMoper
 
 """

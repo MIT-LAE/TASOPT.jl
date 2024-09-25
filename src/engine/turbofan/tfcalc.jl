@@ -701,6 +701,8 @@ function tfcalc!(pari, parg, para, pare, ip,
         pare[ieetaht] = etaht
         pare[ieetalt] = etalt
 
+        #----- fuel mass flow rate
+        pare[iemfuel] = ff * mcore * parg[igneng]
 
         if (M5 <= 0.999999)
                 ichoke5 = 0

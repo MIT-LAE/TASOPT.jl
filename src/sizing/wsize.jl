@@ -287,8 +287,8 @@ function wsize(ac; itermax=35,
     # Engine model setup
     # ------------------------------
     if pari[iiengmodel] == 0 #Drela's model
-        propweight(ac, HXs) = tfweight(ac, HXs)
-        engine_type = "turbofan"
+        propweight(ac, HXs) = ductedfanweight(ac, HXs)
+        engine_type = "ducted_fan"
     end
     pare[iePfanmax,:] .= 20e6
 
@@ -870,9 +870,9 @@ function wsize(ac; itermax=35,
             rfmax = Wfuelmp / Wfmax
         end
 
-        if iterw == 3
-            error("STOP")
-        end
+        # if iterw == 3
+        #     error("STOP")
+        # end
 
         # Save wing details into geometry array
         parg[igWwing] = Wwing * rlx + parg[igWwing] * (1.0 - rlx)
