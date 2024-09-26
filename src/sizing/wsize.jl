@@ -292,6 +292,19 @@ function wsize(ac; itermax=35,
     end
     pare[iePfanmax,:] .= 20e6
 
+    pare[iejdens,ipstatic] = 1e4
+    pare[ieTfc,:] .= 353.15
+    pare[iepanode,:] .= 3e5
+    pare[iepcathode,:] .= 3e5
+    pare[iexwanode,:] .= 0.1
+    pare[iexwcathode,:] .= 0.1
+    pare[ielambdaw,:] .= 3.0
+    pare[ielambdaox,:] .= 3.0
+    pare[ietmembrane,:] .= 100e-6
+    pare[ietanode,:] .= 250e-6
+    pare[ietcathode,:] .= 250e-6
+    pare[ieVstack,:] .= 200
+
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------

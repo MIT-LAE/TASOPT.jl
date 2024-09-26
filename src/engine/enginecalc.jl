@@ -62,6 +62,7 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
 
     elseif engine_type == "ducted_fan"
         if case == "design"
+            powersizing!(ac, engine_type, ipstatic)
             icall = 0
 
             ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
@@ -74,6 +75,8 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             pare[iembfD, :] .= pare[iembfD, ip]
             pare[iepifD, :] .= pare[iepifD, ip]
 
+            poweroper!(ac, engine_type, ip)
+
         else
             if ip in range(ipstatic, ipclimbn)
                 icall = 1
@@ -82,6 +85,8 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             end
 
             ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
+
+            poweroper!(ac, engine_type, ip)
         end
     end
 end

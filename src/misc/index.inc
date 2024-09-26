@@ -383,7 +383,10 @@
 
       const igWfvent = 248
 
-      const igtotal    = 248
+      const igFCfouter  = 249
+      const igWfuelcell = 250
+
+      const igtotal    = 250
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -898,8 +901,9 @@
       ietanode    = 284
       ietcathode  = 285
       iemfuel     = 286
+      iealphawat  = 287
 
-      ietotal = 286
+      ietotal = 287
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

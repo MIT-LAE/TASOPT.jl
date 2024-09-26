@@ -996,12 +996,11 @@ Designs the fuel cell stack for the design point conditions.
     - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
  
     **Outputs:**
-    - `mfuel::Float64`: mass flow rate of fuel (kg/s)
     - `n_cells::Float64`: number of cells in stack
     - `A_cell::Float64`: cell surface area (m^2)
     - `Q::Float64`: waste power produced by the fuel cell at design point (W)
 """
-function PEMsize(P_des, V_des, u)
+function PEMsize(P_des, V_des, u, α_g = 0.25)
     #Extract inputs
     type = u.type
     j = u.j
@@ -1014,7 +1013,7 @@ function PEMsize(P_des, V_des, u)
         V_heat = 1.254
     end
     #Calculate power density of a cell
-    P2A = P2Acalc(u, j)
+    P2A, _ = P2Acalc(u, j, α_g)
     V_cell = P2A / j
 
     #Size stack
@@ -1025,12 +1024,7 @@ function PEMsize(P_des, V_des, u)
     #Calculate heat to be dissipated
     Q = n_cells * A_cell * (V_heat - V_cell) * j
 
-    #Calculate fuel mass flow rate
-    M_h2 = 2.016e-3 #kg/mol
-    Iflux = j / (2*F) #Molar flux of hydrogen gas
-    mfuel = n_cells * A_cell * Iflux * M_h2 #fuel mass flow rate
-
-    return mfuel, n_cells, A_cell, Q
+    return n_cells, A_cell, Q
 end #PEMsize
 
 """
@@ -1050,7 +1044,13 @@ Evaluates fuel cell stack performance in off-design conditions.
     - `V_stack::Float64`: stack voltage (V)
     - `Q::Float64`: waste power produced by the fuel cell (W)
 """
-function PEMoper(P_stack, n_cells, A_cell, u)
+function PEMoper(P_stack, n_cells, A_cell, u, j_g = 1, α_g = 0.25)
+    if j_g ≈ 0
+        j_g = 1 #change guess to 1 A/m^2 if guess is 0
+    end
+    if α_g ≈ 0
+        α_g = 0.25 #change guess to 0.25 if guess is 0
+    end
     #Extract inputs
     type = u.type
     F = F_const #Faraday constant
@@ -1065,9 +1065,10 @@ function PEMoper(P_stack, n_cells, A_cell, u)
 
     P2A = P_stack / (n_cells * A_cell) #Power density of a cell
 
-    f(x) = P2A - P2Acalc(u, x) #Residual function; it should be 0 if x = j
-    j_g = 1 #A/m^2, very low current density as a guess
+    f(x) = P2A - P2Acalc(u, x, α_g)[1] #Residual function; it should be 0 if x = j
     j = find_zero(f, j_g) #Find root with Roots.jl. Careful! There are two roots, must use the smallest one
+
+    _, α = P2Acalc(u, j, α_g)
 
     #Find stack voltage
     V_cell = P2A / j
@@ -1081,7 +1082,7 @@ function PEMoper(P_stack, n_cells, A_cell, u)
     Iflux = j / (2*F) #Molar flux of hydrogen gas
     mfuel = n_cells * A_cell * Iflux * M_h2 #fuel mass flow rate
 
-    return mfuel, V_stack, Q
+    return mfuel, V_stack, Q, j, α
 end #PEMoper
 
 """
@@ -1097,17 +1098,18 @@ Calculates the power density of a fuel cell.
     **Outputs:**
     - `P2A::Float64`: power density (W/m^2)
 """
-function P2Acalc(u, j)
+function P2Acalc(u, j, α_guess::Float64 = 0.25)
     u.j = j
     if u.type == "LT-PEMFC"
-        V_cell, _ = LT_PEMFC_voltage(u)
+        V_cell, α  = LT_PEMFC_voltage(u, α_guess)
 
     elseif u.type == "HT-PEMFC"
         V_cell = HT_PEMFC_voltage(u)
+        α = 0.0
     end
     
     P2A = j * V_cell
-    return P2A
+    return P2A, α
 end
 
 """

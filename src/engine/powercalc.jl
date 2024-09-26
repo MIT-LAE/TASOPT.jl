@@ -1,25 +1,11 @@
 # function powercalc!(ac, engine_type, ip)
 # end
-engine_type = ""
-pare = ac.pared
-pare[iejdens,:] .= 1e4
-pare[ieTfc,:] .= 353.15
-pare[iepanode,:] .= 3e5
-pare[iepcathode,:] .= 3e5
-pare[iexwanode,:] .= 0.1
-pare[iexwcathode,:] .= 0.1
-pare[ielambdaw,:] .= 3.0
-pare[ielambdaox,:] .= 3.0
-pare[ietmembrane,:] .= 100e-6
-pare[ietanode,:] .= 250e-6
-pare[ietcathode,:] .= 250e-6
-pare[ieVstack,:] .= 200
 
 function powersizing!(ac, engine_type, ip)
     pare = view(ac.pared, :, ip)
     
     Pdes = ac.pared[iePfanmax]
-    u_LT = TASOPT.engine.PEMFC_inputs()
+    u_LT = engine.PEMFC_inputs()
 
     u_LT.j = pare[iejdens]
     u_LT.T = pare[ieTfc]
@@ -35,10 +21,10 @@ function powersizing!(ac, engine_type, ip)
     u_LT.type = "LT-PEMFC"
 
     Vdes = pare[ieVstack]
+    α_guess = pare[iealphawat]
 
-    mfuel, n_cells, A_cell, Q = TASOPT.engine.PEMsize(Pdes, Vdes, u_LT)
+    n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT, α_guess)
 
-    pare[iemfuel] = mfuel
     pare[ieQheat] = Q
     ac.pared[iencells, :] .= n_cells
     ac.pared[ieAcell, :] .= A_cell
@@ -47,7 +33,7 @@ end
 function poweroper!(ac, engine_type, ip)
     pare = view(ac.pared, :, ip)
     
-    u_LT = TASOPT.engine.PEMFC_inputs()
+    u_LT = engine.PEMFC_inputs()
 
     u_LT.T = pare[ieTfc]
     u_LT.p_A = pare[iepanode]
@@ -63,15 +49,16 @@ function poweroper!(ac, engine_type, ip)
 
     n_cells = pare[iencells]
     A_cell = pare[ieAcell]
-
-    ac.pared[ietcathode, :] .= n_cells
-    ac.pared[ieAcell, :] .= A_cell
+    j_guess = pare[iejdens]
+    α_guess = pare[iealphawat]
 
     P = pare[iePfan]
-    mfuel, V_stack, Q = TASOPT.engine.PEMoper(P, n_cells, A_cell, u_LT)
+    mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT, j_guess, α_guess)
 
-    pare[iemfuel] = mfuel
+    pare[iemfuel] = mfuel * ac.parg[igneng]
     pare[ieVstack] = V_stack
     pare[ieQheat] = Q
+    pare[iejdens] = j
+    pare[iealphawat] = α
   
 end

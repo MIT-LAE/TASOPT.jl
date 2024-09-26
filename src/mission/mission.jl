@@ -402,7 +402,7 @@ function mission!(ac, engine_type, Ldebug)#, iairf, initeng, ipc1)
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
 
-            mfuel = Ftotal * TSFC / gee
+            mfuel = pare[iemfuel, ip]
             FFC[ip] = mfuel * gee / (W * V * cosg)
 
             Vgi[ip] = 1.0 / (V * cosg)
@@ -524,7 +524,7 @@ function mission!(ac, engine_type, Ldebug)#, iairf, initeng, ipc1)
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      mfuel = Ftotal * TSFC / gee
+      mfuel = pare[iemfuel, ip]
       FFC[ip] = mfuel * gee / (W * V * cosg)
       Vgi[ip] = 1.0 / (V * cosg)
 
@@ -589,7 +589,7 @@ function mission!(ac, engine_type, Ldebug)#, iairf, initeng, ipc1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
 
-      mfuel = Ftotal * TSFC / gee
+      mfuel = pare[iemfuel, ip]
       FFC[ip] = mfuel * gee / (W * V * cosg) 
 
       Vgi[ip] = 1.0 / (V * cosg)
@@ -763,7 +763,7 @@ function mission!(ac, engine_type, Ldebug)#, iairf, initeng, ipc1)
             Vgi[ip] = 1.0 / (V * cosg)
 
             # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
-            mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
+            mfuel = pare[iemfuel, ip]
             FFC[ip] = mfuel * gee / (W * V * cosg)
 
             if (ip > ipdescent1)
