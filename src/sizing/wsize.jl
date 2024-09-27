@@ -287,7 +287,6 @@ function wsize(ac; itermax=35,
     # Engine model setup
     # ------------------------------
     if pari[iiengmodel] == 0 #Drela's model
-        propweight(ac, HXs) = ductedfanweight(ac, HXs)
         engine_type = "ducted_fan"
     end
     pare[iePfanmax,:] .= 20e6
@@ -303,7 +302,7 @@ function wsize(ac; itermax=35,
     pare[ietmembrane,:] .= 100e-6
     pare[ietanode,:] .= 250e-6
     pare[ietcathode,:] .= 250e-6
-    pare[ieVstack,:] .= 200
+    pare[ieVstack,:] .= 200.0
 
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1284,17 +1283,10 @@ function wsize(ac; itermax=35,
         CD = para[iaCD, ip]
 
         # weight of engine and related stuff
-        Weng, Wnace, Webare, Snace1 = propweight(ac, HXs)
+        engineweight!(ac, engine_type, HXs)
 
-        parg[igWeng] = Weng
-        parg[igWebare] = Webare
-        parg[igWnace] = Wnace
-        parg[igWeng] = Weng
+        Weng = parg[igWeng]
 
-        # set new nacelle area / reference area  fraction fSnace
-        Snace = Snace1 * neng
-        fSnace = Snace / S
-        parg[igfSnace] = fSnace
         lnace = parg[igdfan] * parg[igrSnace] * 0.15
         parg[iglnace] = lnace
 

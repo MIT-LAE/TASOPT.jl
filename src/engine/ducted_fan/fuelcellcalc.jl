@@ -1,6 +1,3 @@
-# function powercalc!(ac, engine_type, ip)
-# end
-
 function powersizing!(ac, engine_type, ip)
     pare = view(ac.pared, :, ip)
     

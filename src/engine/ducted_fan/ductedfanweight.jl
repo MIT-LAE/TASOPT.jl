@@ -1,4 +1,4 @@
-function ductedfanweight(ac, HXs)
+function ductedfanweight!(ac, HXs)
     Weng = 1.0
     Wnac = 1.0
     Webare = 1.0
