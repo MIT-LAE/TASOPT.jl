@@ -1,4 +1,6 @@
 using TOML
+using Interpolations
+using NLopt
 
 """
     NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
@@ -22,13 +24,85 @@ Calculates compressor or fan corrected speed as a function of pressure ratio and
 function NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
     eps = 1.0e-11
 
-    #---- corrected mass flow / design corrected mass flow
-    m = mb / mbD
-    m_mb = 1.0 / mbD
+    # Load map data
+    map_data = TOML.parsefile("$(@__DIR__)/data/$mapName.toml")
 
-    #---- scaled pressure ratio
-    p = (pratio - 1.0) / (piD - 1.0)
-    p_pi = 1.0 / (piD - 1.0)
+    NbD_map = map_data["design"]["des_Nc"]
+    RlineD_map = map_data["design"]["des_Rline"]
+
+    Nb_grid = stack(map_data["grid"]["grid_Nc"])
+    Rline_grid = stack(map_data["grid"]["grid_Rline"])
+
+    mb_map = stack(map_data["characteristic"]["massflow"], dims=1)
+    pr_map = stack(map_data["characteristic"]["pressure_ratio"], dims=1)
+
+    # Get map design values
+    NbDes_ind = findall(x -> x == NbD_map, Nb_grid)[1]
+    RlineDes_ind = findall(x -> x == RlineD_map, Rline_grid)[1]
+
+    mbD_map = mb_map[NbDes_ind, RlineDes_ind]
+    piD_map = pr_map[NbDes_ind, RlineDes_ind]
+
+    # Calculate map scaling factors
+    s_Nb = NbD / NbD_map
+    s_pr = (piD - 1) / (piD_map - 1)
+    s_mb = mbD / mbD_map
+
+    interp_mesh = (Nb_grid, Rline_grid)
+    mb_interp = interpolate(interp_mesh, mb_map, Gridded(Linear()))
+    pr_interp = interpolate(interp_mesh, pr_map, Gridded(Linear()))
+
+    function objective(x, g)
+        return sqrt((mb_interp(x[1], x[2]) - mb)^2 + (pr_interp(x[1], x[2]))^2)
+    end
+
+    opt = NLopt.Opt(:LD_MMA, 2)
+    NLopt.lower_bounds!(opt, [0.4, 1.])
+    NLopt.upper_bounds!(opt, [1.05, 2.])
+    NLopt.min_objective!(opt, objective)
+
+    minf, minx, ret = NLopt.optimize(opt, [.85, 1.8])
+
+
+    # ------ OLD direct mc, pr -> Nb interpolation
+
+    # Nb_interp_grid = ones(length(Nb_grid), length(Rline_grid))
+    # for i in eachindex(Nb_grid)
+    #     # println(Nb_interp_grid[i,:])
+    #     Nb_interp_grid[i,:] = Nb_interp_grid[i,:] .* Nb_grid[i]
+    # end
+
+    # interp_grid = zeros(length(Nb_grid)*length(Rline_grid), 2)
+    # interp_data = zeros(length(Nb_grid)*length(Rline_grid))
+
+    # for i in eachindex(Nb_grid)
+    #     for j in eachindex(Rline_grid)
+    #         single_index = length(Rline_grid) * (i-1) + j
+
+    #         interp_grid[single_index, 1] = mb_map[i,j]
+    #         interp_grid[single_index, 2] = pr_map[i,j]
+    #         interp_data[single_index]    = Nb_interp_grid[i,j]
+    #     end
+    # end
+
+    # sort_ind = sortperm(interp_data)
+    # interp_data_sorted = interp_data[sort_ind]
+    # interp_grid_sorted = interp_grid[sort_ind]
+
+    # map_interp = ParametricSpline(interp_data_sorted, transpose(interp_grid_sorted))
+    # map_interp = interpolate(Multiquadratic(), transpose(interp_grid), interp_data)
+
+    
+
+
+
+    # #---- corrected mass flow / design corrected mass flow
+    # m = mb / mbD
+    # m_mb = 1.0 / mbD
+
+    # #---- scaled pressure ratio
+    # p = (pratio - 1.0) / (piD - 1.0)
+    # p_pi = 1.0 / (piD - 1.0)
 
 
 
