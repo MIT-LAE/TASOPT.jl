@@ -88,7 +88,7 @@
     lower wing skin and center wing box components of commercial aircraft """
     source = "https://www.lookpolymers.com/polymer_Alcoa-2324-T39-Aluminum-Plate.php"
     density = 2770.0 #kg/m3
-    youngs_modulus = 72.4 e9#Pa
+    youngs_modulus = 72.4e9 #Pa
     shear_modulus = 27.0e9 #Pa  
     poissons_ratio = 0.33
     YTS = 370e6 #Yield tensile strength
@@ -101,7 +101,7 @@
     strength in wide sections, grade 7050 is commonly used in the wing skins and fuselage and more so in military crafts."""
     source = "https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=ma7050t765"
     density = 2830.0 #kg/m3
-    youngs_modulus = 71.7 e9#Pa
+    youngs_modulus = 71.7e9 #Pa
     shear_modulus = 26.9e9 #Pa  
     poissons_ratio = 0.33
     YTS = 490e6 #Yield tensile strength
@@ -188,7 +188,7 @@ density and 12% higher modulus, as well as other improved properties """
     UTS = 1282e6  #Ultimate tensile strength
     shear_strength = 758.4e6 #From https://www.onlinemetals.com/en/product-guide/alloy/4340
     thermal_conductivity = 44.5 #W/(m K)
-    
+
 # -----------------------------------------------------
 # Generic conductors with electrical properties taken 
 # from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
