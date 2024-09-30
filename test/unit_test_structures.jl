@@ -242,7 +242,6 @@ parg = zeros(igtotal)
 fuselage.layout.x_start_cylinder = 6.096
 fuselage.layout.x_end_cylinder = 29.5656
 fuselage.layout.x_pressure_shell_aft = 31.0896
-parg[igdxcabin] = 23.4696
 parg[igdxeng2wbox] = 1.5239999999999991
 fuselage.APU.r = [36.576, 0.0, 0.0]
 fuselage.layout.x_end = 37.7952
