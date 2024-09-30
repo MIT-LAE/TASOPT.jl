@@ -28,7 +28,7 @@
     alpha = 3.90e-3
     T0 = 293.15
 
-[Al-7075-T6]
+[Al-7075]
     description = """Aluminum 7075-T6 Sheet: Used in Fuselage skin. Most widely used alloy for aircraft structures along with Al-2024"""
 
     source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=4f19a42be94546b686bbf43f79c51b7d"
