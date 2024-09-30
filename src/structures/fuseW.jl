@@ -223,7 +223,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       if nftanks == 0
             cabVol = A_fuse*(layout.l_shell + 0.67*layout.l_nose + 0.67*layout.radius)
       else #If there is a fuel tank in the fuselage, the pressure vessel has a smaller air volume
-            cabVol = A_fuse*(lcabin + 0.67*l_nose + 0.67*layout.radius)
+            cabVol = A_fuse*(l_cabin + 0.67*layout.l_nose + 0.67*layout.radius)
       end
 
 return  cabVol

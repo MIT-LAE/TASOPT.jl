@@ -48,6 +48,7 @@ The gas routines reside in the following source files:
     - `pitn`:    turbine nozzle pressure ratio  ( = pt5/pt4.9)
     - `Ttf`:     fuel temperature entering combustor
     - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
+    - `hvap`:    fuel enthalpy of vaporization (J/kg)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    fan max polytropic efficiency
     - `eplc0`:   LPC max polytropic efficiency
@@ -134,7 +135,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Feng, Phiinl, Kinl, iBLIc,
       BPR, pif, pilc, pihc,
       pid, pib, pifn, pitn,
-      Ttf, ifuel, etab,
+      Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
       pifK, epfK,
       mofft, Pofft,
@@ -248,11 +249,13 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       eplt = eplt0
 
 
-      #---- initial guesses for station 2 and 1.9
+      #---- initial guesses for station 2, 1.9 and 1.9c
       pt2 = pt18
       Tt2 = Tt18
       pt19 = pt18
       Tt19 = Tt18
+      pt19c = pt19
+      Tt19c = Tt19
 
 
       if (Kinl == 0.0 && mofft == 0.0 && Pofft == 0.0)
@@ -293,7 +296,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   else
                         #------ BL mixes with fan + core flow
                         mmix = BPR * mcore * sqrt(Tt2 / Tt0) * pt0 / pt2 +
-                               mcore * sqrt(Tt19 / Tt0) * pt0 / pt19
+                               mcore * sqrt(Tt19c / Tt0) * pt0 / pt19c
                         sbfan2 = Kinl * gam0 / (mmix * a2sq)
                         sbcore2 = sbfan
                   end
@@ -379,7 +382,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
             # ===============================================================
             #---- combustor flow 3-4   (ffb = mdot_fuel/mdot_burner)
-            ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4)
+            ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4, hvap)
             st4, dsdt, ht4, dhdt, cpt4, Rt4 = gassum(lambda, nair, Tt4)
             pt4 = pt3 * pib
             gam4 = cpt4 / (cpt4 - Rt4)

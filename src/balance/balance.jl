@@ -796,14 +796,14 @@ function cabin_centroid(nftanks,fuse,xftankaft,lftank)
       if nftanks == 1
             if xftankaft == 0.0 #If tank is at the front
                   xcabin = 0.5 * (fuse.layout.x_start_cylinder + lftank + 2.0*ft_to_m + fuse.layout.x_pressure_shell_aft)
-                  lcabin = fuse.layout.x_pressure_shell_aft - fuse.layout.x_end_cylinder + dx_cabin(fuse) #cabin length is smaller if there are fuel tanks
+                  lcabin = fuse.layout.x_pressure_shell_aft - fuse.layout.x_end_cylinder + fuse.layout.l_cabin_cylinder #cabin length is smaller if there are fuel tanks
             else #tank is at rear
                   xcabin = 0.5 * (fuse.layout.x_pressure_shell_fwd + fuse.layout.x_end_cylinder - (lftank + 2.0*ft_to_m))
-                  lcabin = fuse.layout.x_start_cylinder - fuse.layout.x_pressure_shell_fwd + dx_cabin(fuse) #cabin length is smaller if there are fuel tanks
+                  lcabin = fuse.layout.x_start_cylinder - fuse.layout.x_pressure_shell_fwd + fuse.layout.l_cabin_cylinder #cabin length is smaller if there are fuel tanks
             end
       elseif nftanks == 2
             xcabin = 0.5 * (fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft) #TODO noticed convergence issues if the average of the blends is used instead
-            lcabin = dx_cabin(fuse)
+            lcabin = fuse.layout.l_cabin_cylinder
       elseif nftanks == 0
             xcabin = 0.5 * (fuse.layout.x_pressure_shell_fwd + fuse.layout.x_pressure_shell_aft)
             lcabin = fuse.layout.x_pressure_shell_aft - fuse.layout.x_pressure_shell_fwd
