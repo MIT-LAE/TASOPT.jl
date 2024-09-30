@@ -1,7 +1,9 @@
 """
 Module containing all propulsion system related code.
 
-Will cover alternate engine models - NPSS vs Drela's orig. model vs pyCycle
+This includes alternate propulsion systems such as turbo-electric architectures.
+Will eventually cover alternate engine models - NPSS vs Drela's orig. model vs pyCycle, 
+replacing the turbofan code such as `tfoper`, `tfsize`etc.
 """
 module propsys
 
