@@ -35,7 +35,7 @@ end
     (c::cable)(P::Float64, V::Float64, lcable::Float64)
 
 Sizes the cable given a power, voltage, and length of the cable and returns 
-the efficiency function for the sized cable.
+the *efficiency function* for the sized cable.
 """
 function (c::cable)(P::Float64, V::Float64, lcable::Float64)
     cond = c.cond
