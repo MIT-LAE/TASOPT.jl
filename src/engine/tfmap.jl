@@ -115,7 +115,7 @@ function NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
     Nb_mb = (sol_plusmb.zero[1] - sol_negmb.zero[1]) * s_Nb / (2 * mEps * mb)
     mEps = 0.0
     
-    return N_nominal, Nb_pi, Nb_mb
+    return Nb, Nb_pi, Nb_mb
 
 end # NcInterpMap
 
