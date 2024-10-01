@@ -243,7 +243,7 @@ density and 12% higher modulus, as well as other improved properties """
                     for Direct-Drive Vehicle Propulsion,” Ph.D. Dissertation, 
                     Massachusetts Institute of Technology, Cambridge, MA, 1996."""
     density = 7750.0 #kg/m3
-    ke = 7.0963515e-5 # W/kg/Hz2/T2 = 32.183e-6 W/lb/Hz2/T2
+    ke = 7.0963515e-5 # W/kg/Hz²/T² = 32.183e-6 W/lb/Hz²/T²
     kh = 2.351412e-2  # W/kg/Hz = 10.664e-3 W/lb/Hz
     alpha = 1.793
 [Hiperco50]
