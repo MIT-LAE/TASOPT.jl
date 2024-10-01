@@ -1,6 +1,7 @@
 using TOML
 using Interpolations
 using NLopt
+using NLsolve
 
 """
     NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
@@ -24,90 +25,129 @@ Calculates compressor or fan corrected speed as a function of pressure ratio and
 function NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
     eps = 1.0e-11
 
-    # Load map data
+    # ---- Load map data
     map_data = TOML.parsefile("$(@__DIR__)/data/$mapName.toml")
 
+    # ---- Get map design values for speed and Rline
     NbD_map = map_data["design"]["des_Nc"]
     RlineD_map = map_data["design"]["des_Rline"]
 
+    # ---- Get the parameter used for speed guesses ('b' from old Drela model)
+    spdGuess_param = map_data["map_spdGuess_param"]
+
+    # ---- Load the corrected speed and Rline grid values
     Nb_grid = stack(map_data["grid"]["grid_Nc"])
     Rline_grid = stack(map_data["grid"]["grid_Rline"])
 
+    # ---- Load the PR and mass flow data
     mb_map = stack(map_data["characteristic"]["massflow"], dims=1)
     pr_map = stack(map_data["characteristic"]["pressure_ratio"], dims=1)
 
-    # Get map design values
+    # ---- Get map indices at which the design mass flow and PR will occur
     NbDes_ind = findall(x -> x == NbD_map, Nb_grid)[1]
     RlineDes_ind = findall(x -> x == RlineD_map, Rline_grid)[1]
 
+    # ---- Use the design indices to get the map design PR and mass flow
     mbD_map = mb_map[NbDes_ind, RlineDes_ind]
     piD_map = pr_map[NbDes_ind, RlineDes_ind]
 
-    # Calculate map scaling factors
+    # ---- Calculate map scaling factors
     s_Nb = NbD / NbD_map
     s_pr = (piD - 1) / (piD_map - 1)
     s_mb = mbD / mbD_map
 
+    # ---- Create interpolation functions
     interp_mesh = (Nb_grid, Rline_grid)
     mb_interp = interpolate(interp_mesh, mb_map, Gridded(Linear()))
     pr_interp = interpolate(interp_mesh, pr_map, Gridded(Linear()))
 
-    function objective(x, g)
-        return sqrt((mb_interp(x[1], x[2]) - mb)^2 + (pr_interp(x[1], x[2]))^2)
+    # ---- Get the maximum and minimum Nb and Rline values
+    Nmin = minimum(Nb_grid)
+    Nmax = maximum(Nb_grid)
+    Rmin = minimum(Rline_grid)
+    Rmax = maximum(Rline_grid)
+
+    Nbounds = [Nmin, Nmax]
+    Rbounds = [Rmin, Rmax]
+
+    # ---- Precalculate the map equivalents to the desired actual PR and mass flow
+    p_map = (pratio - 1) / s_pr + 1
+    m_map = mb/s_mb
+
+    # ---- Define a local objective function for NLsolve root finding
+    function objective(x, pTest, mTest, Nbounds, Rbounds)
+        # ---- Ensure Nb and Rline are within bounds
+        p_map = (pTest - 1) / s_pr + 1
+        m_map = mTest/s_mb
+        Ni = x[1]
+        Ri = x[2]
+        Ni = max(Ni, Nbounds[1])
+        Ni = min(Ni, Nbounds[2])
+        Ri = max(Ri, Rbounds[1])
+        Ri = min(Ri, Rbounds[2])
+        return [
+            pr_interp(Ni, Ri) - p_map,
+            mb_interp(Ni, Ri) - m_map
+        ]
     end
 
-    opt = NLopt.Opt(:LD_MMA, 2)
-    NLopt.lower_bounds!(opt, [0.4, 1.])
-    NLopt.upper_bounds!(opt, [1.05, 2.])
-    NLopt.min_objective!(opt, objective)
+    # ---- Relative change to desired pressure and mass flow (used for derivative approximation)
+    pEps = 0.
+    mEps = 0.
 
-    minf, minx, ret = NLopt.optimize(opt, [.85, 1.8])
-
-
-    # ------ OLD direct mc, pr -> Nb interpolation
-
-    # Nb_interp_grid = ones(length(Nb_grid), length(Rline_grid))
-    # for i in eachindex(Nb_grid)
-    #     # println(Nb_interp_grid[i,:])
-    #     Nb_interp_grid[i,:] = Nb_interp_grid[i,:] .* Nb_grid[i]
-    # end
-
-    # interp_grid = zeros(length(Nb_grid)*length(Rline_grid), 2)
-    # interp_data = zeros(length(Nb_grid)*length(Rline_grid))
-
-    # for i in eachindex(Nb_grid)
-    #     for j in eachindex(Rline_grid)
-    #         single_index = length(Rline_grid) * (i-1) + j
-
-    #         interp_grid[single_index, 1] = mb_map[i,j]
-    #         interp_grid[single_index, 2] = pr_map[i,j]
-    #         interp_data[single_index]    = Nb_interp_grid[i,j]
-    #     end
-    # end
-
-    # sort_ind = sortperm(interp_data)
-    # interp_data_sorted = interp_data[sort_ind]
-    # interp_grid_sorted = interp_grid[sort_ind]
-
-    # map_interp = ParametricSpline(interp_data_sorted, transpose(interp_grid_sorted))
-    # map_interp = interpolate(Multiquadratic(), transpose(interp_grid), interp_data)
-
+    # ---- Calculate the nominal solution Nb and Rline
+    sol_nominal = nlsolve(x->objective(x, pratio, mb, Nbounds, Rbounds), [s_mb^(1.0/spdGuess_param), (Rmax+Rmin)/2.0], ftol=eps)
+    N_nominal = sol_nominal.zero[1]
+    Nb = N_nominal * s_Nb
     
+    # ---- Get the Nb_pi derivative
+    pEps = 0.01
+    sol_plusPR = nlsolve(x->objective(x, pratio * (1+pEps), mb, Nbounds, Rbounds), [s_mb^(1.0/spdGuess_param), (Rmax+Rmin)/2.0], ftol=eps)
+    sol_negPR  = nlsolve(x->objective(x, pratio * (1-pEps), mb, Nbounds, Rbounds), [s_mb^(1.0/spdGuess_param), (Rmax+Rmin)/2.0], ftol=eps)
+    Nb_pi = (sol_plusPR.zero[1] - sol_negPR.zero[1]) * s_Nb / (2 * pEps * pratio)
+    pEps = 0.0
 
-
-
-    # #---- corrected mass flow / design corrected mass flow
-    # m = mb / mbD
-    # m_mb = 1.0 / mbD
-
-    # #---- scaled pressure ratio
-    # p = (pratio - 1.0) / (piD - 1.0)
-    # p_pi = 1.0 / (piD - 1.0)
-
-
+    # ---- Get the Nb_mb derivative
+    mEps = 0.01
+    sol_plusmb = nlsolve(x->objective(x, pratio, mb * (1+mEps), Nbounds, Rbounds), [s_mb^(1.0/spdGuess_param), (Rmax+Rmin)/2.0], ftol=eps)
+    sol_negmb  = nlsolve(x->objective(x, pratio, mb * (1-mEps), Nbounds, Rbounds), [s_mb^(1.0/spdGuess_param), (Rmax+Rmin)/2.0], ftol=eps)
+    Nb_mb = (sol_plusmb.zero[1] - sol_negmb.zero[1]) * s_Nb / (2 * mEps * mb)
+    mEps = 0.0
+    
+    return N_nominal, Nb_pi, Nb_mb
 
 end # NcInterpMap
 
+
+
+"""
+    ecInterpMap(pratio, mb, piD, mbD, Cmap, effo, piK, effK)
+
+Calculates compressor or fan efficiency as a function of pressure ratio and corrected mass flow
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:        pressure ratio
+    - `mb`:        corrected mass flow
+    - `piD`:       design pressure ratio
+    - `mbD`:       design corrected mass flow
+    - `Cmap(.)`:   map constants
+    - `effo`:      maximum efficiency
+    - `piK`:       pi-dependence offset  eff = effo + effK*(pi-piK)
+    - `effK`:      pi-dependence slope
+    - `g`:         specific heat ratio; default 1.4
+    - `R`:         gas constant for air; default 287 J/kgK
+
+    **Outputs:**
+    - `eff`:        efficiency
+    - `eff_?`:      derivatives
+
+"""
+function ecInterpMap(pratio, mb, piD, mbD, Cmap, effo, piK, effK; g=1.4, R=287)
+    isen_to_poly = (pr, isen, g) -> (g-1)/g * log(pr) / log( (pr^((g-1)/g) - 1) / isen + 1 )
+    poly_to_isen = (pr, poly, g) -> (pr^((g-1)/g) - 1) / (pr^((g-1)/(g*poly)) - 1)
+
+end
 
 
 
