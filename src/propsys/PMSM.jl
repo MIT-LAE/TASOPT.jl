@@ -16,6 +16,8 @@ const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/
     P_design::Float64 = 1e6
     """Angular velocity [rad/s]"""
     Ω::Float64 = 10e3
+    """Frequency [Hz]"""
+    f::Float64 = 12e3
     """Slots per pole [-]"""
     Nsp::Int = 3
     """Phases [-]"""
@@ -38,11 +40,6 @@ const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/
     airgap_thickness::Float64 = 2e-3
     """Pole pairs [-]"""
     p::Int = 8
-    """Eddy current loss coefficient [W/lbm/Hz²/T²]"""
-    kₑ::Float64 = 32.183e-6 #https://arc.aiaa.org/doi/10.2514/6.2018-5026
-    """Hysteresis loss coefficient [W/lbm/Hz]"""
-    kₕ::Float64 = 10.664e-3 #https://arc.aiaa.org/doi/10.2514/6.2018-5026
-
     """Mass of machine [kg]"""
     mass::Float64 = 0.0
 end
@@ -85,7 +82,7 @@ end
     """Flux density [Wb/m² = T]"""
     B::Float64 = 1.0
     """Material"""
-    material::AbstractMaterial
+    material::ElectricSteel = ElectricSteel("M19")
     """Mass [kg]"""
     mass::Float64 = 0.0
 end
@@ -100,7 +97,7 @@ end
     """Flux density [Wb/m² = T]"""
     B::Float64 = 1.0
     """Material"""
-    material::AbstractMaterial
+    material::ElectricSteel = ElectricSteel("M19")
     """Mass [kg]"""
     mass::Float64 = 0.0
 end
@@ -115,7 +112,7 @@ end
     """Flux density [Wb/m² = T]"""
     B::Float64 = 1.0
     """Material"""
-    material::AbstractMaterial
+    material::ElectricSteel = ElectricSteel("M19")
     """Mass [kg]"""
     mass::Float64 = 0.0
 end
@@ -169,11 +166,11 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     windings = motor.windings
     shaft = motor.shaft
 
-    Ω = shaft_speed * (2 * π / 60)
-    f = motor.N_pole_pairs * shaft_speed / 60
+    motor.Ω = shaft_speed * (2 * π / 60)
+    motor.f = motor.N_pole_pairs * shaft_speed / 60
 
     #Outer radius of the magnet - subject to the highest rotational speeds
-    radius_gap = motor.U_max / Ω
+    radius_gap = motor.U_max / motor.Ω
 
     # Calculate maximum flux through the stator and rotor back iron
     # Really, this needs to be a constraint Bsbi ≤ Bsat (at the top level) rather 
@@ -210,7 +207,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
         @warn "Flux density in teeth exceeds saturation flux density"
     end
 
-    torque = design_power / Ω
+    torque = design_power / motor.Ω
     slot_current = J_max * windings.kpf * A_slot #Update to be peak current
     windings.N_turns = floor(windings.kpf * A_slot / windings.A_wire)
 
@@ -269,12 +266,22 @@ end  # function ohmic_loss
 """
 """
 function hysteresis_loss(motor::Motor)
-    return hysteresis_loss(motor.stator) + hysteresis_loss(motor.teeth)
+    return hysteresis_loss(motor.stator, motor.f) + hysteresis_loss(motor.teeth, motor.f)
 end  # function hysteresis_loss
 
-function hysteresis_loss(stator, f)
-    stator.mass * stator.material.kₕ * f *stator.B^rotor.material.α
+function hysteresis_loss(steel, f)
+    return steel.mass * steel.material.kₕ * f * steel.B^steel.material.α
 end
+
+"""
+"""
+function eddy_loss(motor::Motor)
+    return eddy_loss(motor.stator, motor.f) + eddy_loss(motor.teeth, motor.f)
+end #function eddy_loss
+
+function eddy_loss(steel, f)
+    return steel.mass * steel.material.kₑ * f^2 * steel.B^2    
+end  # function eddy_loss
     
 """
 """
