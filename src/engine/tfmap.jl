@@ -85,6 +85,7 @@ function NcInterpMap(pratio, mb, piD, mbD, NbD, mapName)
         Ni = min(Ni, Nbounds[2])
         Ri = max(Ri, Rbounds[1])
         Ri = min(Ri, Rbounds[2])
+        println(Ni, Ri)
         return [
             pr_interp(Ni, Ri) - p_map,
             mb_interp(Ni, Ri) - m_map
