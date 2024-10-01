@@ -232,3 +232,22 @@ density and 12% higher modulus, as well as other improved properties """
     #Dowdle et al https://doi.org/10.2514/6.2018-5026
     density = 1700.0
     dielectric_strength = 10e6
+
+# -----------------------------------------------------
+# Electric Steels
+# -----------------------------------------------------
+[M19]
+    description = """29-Gauge M-19 nonoriented steel; 
+                     Data from Ofori-Tenkorang, J., 
+                    “Permanent-Magnet Synchronous Motors and Associated Power Electrics 
+                    for Direct-Drive Vehicle Propulsion,” Ph.D. Dissertation, 
+                    Massachusetts Institute of Technology, Cambridge, MA, 1996."""
+    density = 7750.0 #kg/m3
+    ke = 7.0963515e-5 # W/kg/Hz2/T2 = 32.183e-6 W/lb/Hz2/T2
+    kh = 2.351412e-2  # W/kg/Hz = 10.664e-3 W/lb/Hz
+    alpha = 1.793
+[Hiperco50]
+    description = """Hiperco® 50 alloy is an iron-cobalt-vanadium soft magnetic 
+    alloy which exhibits high magnetic saturation (24 kilogauss), 
+    high D.C. maximum permeability, low D.C. coercive force, and low A.C. core loss."""
+    density = 8110.0
