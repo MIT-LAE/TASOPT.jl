@@ -374,9 +374,8 @@
       const ighfuel      = 126
       const igTfuel      = 127
 
-      const igxftankaft  = 128
-      const igdxcabin    = 129
-      const igdxeng2wbox = 130
+      const igxftankaft  = 245
+      const igdxeng2wbox = 246
 
       const igxWfuel = 131
 
@@ -857,7 +856,7 @@
       ieTft = 241
       iefrecirc = 242
       ierecircT = 243
-      iehlat = 244
+      iehvap = 244
       iePreCorder = 245
       iePreCepsilon = 246
       iePreCMp = 247
@@ -878,8 +877,9 @@
       ieTurbCMp = 262
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
+      iehvapcombustor = 265
 
-      ietotal = 264
+      ietotal = 265
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

@@ -8,6 +8,9 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
+    aircraft_type   = "Narrow Body"     # 0: Regional Aircraft
+                                    # 1: Narrow Body Aircraft
+                                    # 2: Wide Body Aircraft
 
 #-------------------------------------------------#
 ##               Note on units                   ##
@@ -53,6 +56,7 @@
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
@@ -160,6 +164,7 @@
     floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
@@ -512,8 +517,8 @@
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 0
     recirculation_temperature = 0
-    latent_heat = 0
     core_inner_diameter = 0
+    added_mass_frac = 0.0
 
     precooler_order = 0
     precooler_effectiveness = 0

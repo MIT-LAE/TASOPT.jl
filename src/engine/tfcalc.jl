@@ -87,6 +87,7 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
         epsh = pare[ieepsh]
         epsrow = zeros(ncrowx)
         Tmrow = zeros(ncrowx)
+        hvap = pare[iehvapcombustor] #Enthalpy of vaporization of fuel
 
         #Heat exchanger variables
         Δh_PreC = pare[iePreCDeltah]
@@ -223,7 +224,7 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
                         Fe, Phiinl, Kinl, iBLIc,
                         BPR, pif, pilc, pihc,
                         pid, pib, pifn, pitn,
-                        Tfuel, ifuel, etab,
+                        Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
                         pifK, epfK,
                         mofft, Pofft,
@@ -465,7 +466,7 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
                         NbfD, NblcD, NbhcD, NbhtD, NbltD,
                         A2, A25, A5, A7,
                         iTFspec,
-                        Tfuel, ifuel, etab,
+                        Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
                         pifK, epfK,
                         mofft, Pofft,

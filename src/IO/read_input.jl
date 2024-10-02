@@ -27,6 +27,20 @@ function read_input(k::String, dict::AbstractDict=data,
     end
 end
 
+function get_default_input_file(input)
+    if input == 0 || lowercase(string(input)) == "regional aircraft"
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
+    elseif input == 1 || lowercase(string(input)) == "narrow body aircraft"
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+    elseif input == 2 || lowercase(string(input)) == "wide body aircraft"
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
+    else
+        println("\n")
+        @info """Requested aircraft type not supported. Selecting Narrow Body Aircraft"""
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+    end
+    return TOML.parsefile(defaultfile)
+end
 # Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
 Distance(x)      = convertDist(parse_unit(x)...)
@@ -85,6 +99,17 @@ ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
 sized = get(ac_descrip, "sized",[false])
+
+# Check if aircraft type exists
+if "aircraft_type" in keys(ac_descrip)
+    default = get_default_input_file(ac_descrip["aircraft_type"])
+    ac_type_fixed = true
+else
+    println("\n")
+    @info """Aircraft Type not specified: Selecting AC type depending on range or payload"""
+    ac_type_fixed = false
+end
+
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
 dmis = default["Mission"]
@@ -100,6 +125,39 @@ fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
+
+# Setup mission variables
+ranges = readmis("range")
+parm[imRange, :] .= Distance.(ranges)
+
+if !ac_type_fixed
+    if parm[imRange, 1] <= 2600 * nmi_to_m
+        default = get_default_input_file(0)
+        @info """Setting AC Type based on design range: Regional Aircraft"""
+    elseif parm[imRange, 1] <= 3115 * nmi_to_m
+        default = get_default_input_file(1)
+        @info """Setting AC Type based on design range: Narrow Body Aircraft"""
+    elseif parm[imRange, 1] <= 8500 * nmi_to_m
+        default = get_default_input_file(2)
+        @info """Setting AC Type based on design range: Wide Body Aircraft"""
+    end    
+    ac_type_fixed = true
+end
+
+maxpax = readmis("max_pax")
+pax = readmis("pax")
+despax = pax[1] #Design number of passengers
+if despax > maxpax
+    error("Design mission has higher # of passengers than max passengers for aircraft!")
+end
+
+Wpax =  Force(readmis("weight_per_pax"))
+parm[imWperpax, :] .= Wpax
+parm[imWpay, :] .= pax * Wpax
+parg[igWpaymax] = maxpax * Wpax
+parg[igfreserve] = readmis("fuel_reserves")
+parg[igVne] = Speed(readmis("Vne"))
+parg[igNlift] = readmis("Nlift")
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -162,21 +220,8 @@ end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
-
-# Setup mission variables
-ranges = readmis("range")
-parm[imRange, :] .= Distance.(ranges)
-
-maxpax = readmis("max_pax")
-pax = readmis("pax")
-despax = pax[1] #Design number of passengers
-Wpax =  Force(readmis("weight_per_pax"))
-parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= pax * Wpax
-parg[igWpaymax] = maxpax * Wpax
-parg[igfreserve] = readmis("fuel_reserves")
-parg[igVne] = Speed(readmis("Vne"))
-parg[igNlift] = readmis("Nlift")
+pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
+pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
 
 ##Takeoff
 takeoff = readmis("Takeoff")
@@ -285,12 +330,13 @@ readgeom(x) = read_input(x, geom, dgeom)
     pari[iidoubledeck] = readgeom("double_decker") 
 
     if pari[iidoubledeck] == 1 #If aircraft is a double decker
-        parg[igfloordist] = Distance(readgeom("floor_distance")) #read vertical distance between floors
+        fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
     end
 
-    parg[igseatpitch] = Distance(readgeom("seat_pitch"))
-    parg[igseatwidth] = Distance(readgeom("seat_width"))
-    parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
+    fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))
+    fuselage.cabin.seat_width = Distance(readgeom("seat_width"))
+    fuselage.cabin.seat_height = Distance(readgeom("seat_height"))
+    fuselage.cabin.aisle_halfwidth = Distance(readgeom("aisle_halfwidth"))
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
     parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
@@ -354,6 +400,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.x_end_cylinder = Distance(readgeom("x_end_cylinder"))
     fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
     fuselage.layout.x_end = Distance(readgeom("x_end")) 
+    fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
 
 # ------ End fuse -------
 
@@ -924,9 +971,10 @@ dweight = dprop["Weight"]
 
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
+    parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
+
     pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
     pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-    pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
     pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
     
     pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
