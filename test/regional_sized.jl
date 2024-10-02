@@ -4,22 +4,22 @@ parm = zeros(Float64, imtotal)
 para = zeros(Float64, (iatotal, iptotal))
 pare = zeros(Float64, (ietotal, iptotal))
  
-ac_test = load_default_model()
+ac = load_default_model()
 # ------------------------------
 # Fuselage
 # ------------------------------
-fuse = ac_test.fuselage
+fuse = ac.fuselage
 Weight = TASOPT.structures.Weight
 fuse.n_decks = 1.00000000000000000000 
-fuse.shell.weight = Weight(W = 12939.65858818943524966016 ) 
-fuse.shell.weight.r = [ 16.95709238145882125082 ,0.0,0.0] 
+fuse.shell.weight = Weight(W = 12939.65746777791900967713 ) 
+fuse.shell.weight.r = [ 16.95709238145882480353 ,0.0,0.0] 
 fuse.window.W = 11402.56800000000112049747 
 fuse.window.r = [ 18.28800000000000025580 ,0.0,0.0] 
 fuse.window_W_per_length = 435.00000000000000000000 
 fuse.insulation.W = 3876.99296275049255200429 
 fuse.insulation.r = [ 18.28800000000000025580 ,0.0,0.0] 
 fuse.insulation_W_per_area = 22.00000000000000000000 
-fuse.floor.weight.W = 7115.17409093143032805528 
+fuse.floor.weight.W = 7115.16036658370012446539 
 fuse.floor_W_per_area = 60.00000000000000000000 
 fuse.cone.weight = Weight(W = 3204.99907603359542918042 ) 
 fuse.cone.weight.r = [ 33.52799999999999869260 ,0.0,0.0] 
@@ -80,163 +80,26 @@ fuse.cabin.seats_abreast_top = 0
 fuse.cabin.floor_angle_main = 0.00000000000000000000 
 fuse.cabin.floor_angle_top = 0.00000000000000000000 
 # ------------------------------
-# Wing
-# ------------------------------
-wing = ac_test.wing
-wing.inboard.webs.weight = Weight(W = 1524.08580403389169077855) 
-wing.outboard.webs.weight = Weight(W = 1524.08580403389169077855) 
-wing.inboard.caps.weight = Weight(W = 26024.45100626889689010568) 
-wing.outboard.caps.weight = Weight(W = 26024.45100626889689010568) 
-wing.inboard.caps.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
-        max_avg_stress = 1.1,
-        safety_factor = 1.5)
-wing.outboard.caps.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
-        max_avg_stress = 1.1,
-        safety_factor = 1.5)
-wing.inboard.caps.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
-        max_avg_stress = 1.1,
-        safety_factor = 1.5)
-wing.inboard.webs.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
-        max_avg_stress = 1.1,
-        safety_factor = 1.5)
-wing.outboard.webs.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
-        max_avg_stress = 1.1,
-        safety_factor = 1.5)
-wing.weight = 45179.60019497604662319645 
-wing.strut.weight = 0.00000000000000000000 
-wing.dxW = 76497.13737379871599841863 
-wing.strut.dxW = 0.00000000000000000000 
-wing.inboard.weight = 28684.42810994034516625106 
-wing.outboard.weight = 21120.22745094926358433440 
-wing.inboard.dyW = 50466.60968470259103924036 
-wing.outboard.dyW = 65224.27803717441565822810 
-wing.weight_frac_flap = 0.20000000000000001110 
-wing.weight_frac_slat = 0.10000000000000000555 
-wing.weight_frac_ailerons = 0.04000000000000000083 
-wing.weight_frac_leading_trailing_edge = 0.10000000000000000555 
-wing.weight_frac_ribs = 0.14999999999999999445 
-wing.weight_frac_spoilers = 0.02000000000000000042 
-wing.weight_frac_attachments = 0.02999999999999999889 
-wing.strut.local_velocity_ratio = 1.00000000000000000000 
-wing.layout.x = 18.70739645583922694527 
-wing.layout.box_x = 16.58829468084643821157 
-wing.layout.z = -1.21920000000000006146 
-wing.strut.cos_lambda = 1.00000000000000000000 
-wing.strut.S = 0.00000000000000000000 
-wing.layout.spar_box_x_c = 0.40000000000000002220 
-wing.layout.box_width = 0.50000000000000000000 
-wing.inboard.layout.chord_thickness = 0.13500000000000000888 
-wing.outboard.layout.chord_thickness = 0.11999999999999999556 
-wing.layout.hweb_to_hbox = 0.75000000000000000000 
-wing.layout.b_max = 30.48000000000000042633 
-wing.strut.thickness_to_chord = 0.14999999999999999445 
-wing.strut.z = 3.91159999999999996589 
-wing.outboard.moment = 1174095.86421054648235440254 
-wing.outboard.max_shear_load = 307163.58610631001647561789 
-wing.outboard.web_cap.GJ = 85398572.72253143787384033203 
-wing.outboard.web_cap.EI_normal = 744224490.30821931362152099609 
-wing.outboard.web_cap.EI_bending = 88395817.56119583547115325928 
-wing.outboard.caps.thickness = 0.00356759141363664073 
-wing.inboard.moment = 2762087.88717148778960108757 
-wing.inboard.max_shear_load = 484446.33643953874707221985 
-wing.inboard.web_cap.GJ = 305412720.75568336248397827148 
-wing.inboard.web_cap.EI_normal = 2201250977.72552490234375000000 
-wing.inboard.web_cap.EI_bending = 334549037.76773631572723388672 
-wing.inboard.caps.thickness = 0.00249602568330072050 
-wing.inboard.webs.thickness = 0.00076238264221229661 
-wing.outboard.webs.thickness = 0.00110982242414513882 
-wing.layout.S = 94.09292441282293850691 
-wing.outboard.layout.b = 2.62128000000000005443 
-wing.ηs = 0.36999999999999999556 
-wing.inboard.layout.λ = 0.69999999999999995559 
-wing.outboard.layout.λ = 0.22500000000000000555 
-wing.layout.chord = 5.30756307152576489727 
-wing.inboard.layout.b = 10.58619363904725041436 
-wing.layout.b= 28.61133415958716597061 
-wing.layout.sweep = 26.00000000000000000000 
-wing.layout.AR = 8.69999999999999928946 
-wing.inboard.lift_rolloff = -0.3
-wing.outboard.lift_rolloff = -0.05
-# ------------------------------
-# Htail
-# ------------------------------
-htail = ac_test.htail
-htail.weight = 4895.87889089579675783170 
-htail.outboard.dxW = 2673.05619675731486495351 
-htail.weight_fraction_added = 0.29999999999999998890 
-htail.layout.box_x = 35.05199999999999960210 
-htail.layout.z = 1.21920000000000006146 
-htail.downwash_factor = 0.55000000000000004441 
-htail.CL_max_fwd_CG = -0.59999999999999997780 
-htail.CL_max = 2.00000000000000000000 
-htail.SM_min = 0.14999999999999999445 
-htail.layout.x = 35.80778740776658963796 
-htail.layout.box_width = 0.50000000000000000000 
-htail.outboard.layout.chord_thickness = 0.11999999999999999556 
-htail.layout.hweb_to_hbox = 0.75000000000000000000 
-htail.outboard.thickness_web = 0.00122324981889318290 
-htail.move_wingbox = 2.00000000000000000000 
-htail.CL_CLmax = -0.50000000000000000000 
-htail.size = 2.00000000000000000000 
-htail.volume = 1.11329197468324658793 
-htail.outboard.thickness_cap = 0.00230121797513783977 
-htail.outboard.GJ = 37419317.32563660293817520142 
-htail.outboard.EI_normal = 300032390.05014419555664062500 
-htail.outboard.EI_bending = 33393922.82865076512098312378 
-htail.layout.sweep = 25.00000000000000000000 
-htail.layout.chord = 3.19748812471326182560 
-htail.outboard.layout.λ = 0.25000000000000000000 
-htail.outboard.layout.b = 1.52400000000000002132 
-htail.layout.b = 11.59089445208557300759 
-htail.layout.AR = 5.79999999999999982236 
-htail.layout.S = 23.16359210334277918264 
-# ------------------------------
-# Vtail
-# ------------------------------
-vtail = ac_test.vtail
-vtail.weight = 5229.92185780355157476151 
-vtail.outboard.dxW = 5069.00314076308950461680 
-vtail.weight_fraction_added = 0.40000000000000002220 
-vtail.layout.box_x = 34.44239999999999923830 
-vtail.CL_max = 2.60000000000000008882 
-vtail.layout.x = 35.62466796445193040199 
-vtail.layout.box_width = 0.50000000000000000000 
-vtail.outboard.layout.chord_thickness = 0.11999999999999999556 
-vtail.layout.hweb_to_hbox = 0.75000000000000000000 
-vtail.ntails = 1.00000000000000000000 
-vtail.volume = 0.11999999999999999556 
-vtail.outboard.thickness_web = 0.00136282864315662167 
-vtail.outboard.thickness_cap = 0.00215954002416587909 
-vtail.outboard.GJ = 178914965.45404684543609619141 
-vtail.outboard.EI_normal = 1433104653.20329284667968750000 
-vtail.outboard.EI_bending = 154124181.89232668280601501465 
-vtail.layout.sweep = 25.00000000000000000000 
-vtail.layout.chord = 4.75384093436983068415 
-vtail.outboard.layout.λ = 0.29999999999999998890 
-vtail.layout.b = 6.17999321468078033348 
-vtail.layout.AR = 2.00000000000000000000 
-vtail.layout.S = 19.09615806675024529682 
-vtail.size = 1.00000000000000000000 
-vtail.outboard.dxW = 5069.00314076308950461680 
-# ------------------------------
 # Flags  - stored in pari array:
 # ------------------------------
 pari[1] = 24 
 pari[2] = 1 
-pari[3] = 0 
+pari[3] = 1 
 pari[4] = 1 
 pari[5] = 1 
 pari[6] = 0 
 pari[7] = 0 
-pari[8] = 0 
+pari[8] = 2 
 pari[9] = 1 
-pari[10] = 0 
+pari[10] = 2 
 pari[11] = 1 
 pari[12] = 0 
-pari[13] = 0 
+pari[13] = 1 
 pari[14] = 0 
 pari[15] = 0 
 pari[16] = 0 
+pari[17] = 0 
+pari[18] = 0 
 # --------------------------------
 # Geometry - stored in parg array:
 # --------------------------------

@@ -374,19 +374,21 @@
       const ighfuel      = 126
       const igTfuel      = 127
 
-      const igxftankaft  = 245
-      const igdxeng2wbox = 246
+      const igxftankaft  = 128
+      const igdxeng2wbox = 129
 
-      const igxWfuel = 131
+      const igxWfuel = 130
 
-      const igseatpitch = 132
-      const igseatwidth = 133
-      const igaislehalfwidth = 134
-      const igfloordist = 135
+      const igseatpitch = 131
+      const igseatwidth = 132
+      const igaislehalfwidth = 133
+      const igfloordist = 134
 
-      const igWfvent = 136
-
-      const igtotal    = 136
+      const igWfvent = 135
+      const igdHXmax = 136
+      const igHXaddmassfrac = 137
+      const igWHXs = 138
+      const igtotal    = 138
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
