@@ -716,7 +716,7 @@ function wsize(ac; itermax=35,
             parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
 
             #Tank placement and weight moment
-            lcabin = dx_cabin(fuse)
+            lcabin = fuse.layout.l_cabin_cylinder
             if tank_placement == "front"
                 flag_front = 1
                 flag_aft = 0
@@ -791,7 +791,15 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs)
+            HXs = hxdesign!(pare, pari, ipdes, HXs, rlx = 0.5) #design and off-design HX performance
+
+            #Find and store maximum HX outer diameter to check fit in engine 
+            for HX in HXs
+                parg[igdHXmax] = 0.0 #restart diameter
+                if HX.HXgeom.fconc #If HX is in the core
+                    parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
+                end
+            end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
             #With fuel storage in tanks, this is done in the block above.
         end
@@ -896,13 +904,15 @@ function wsize(ac; itermax=35,
 
         # weight of engine and related stuff
         Gearf = parg[igGearf]
-        Weng, Wnace, Webare, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-            dlcomp, neng, feadd, fpylon, HXs)
+        HX_add_mass_frac = parg[igHXaddmassfrac] #Added mass fraction to HX
+        Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
+            dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
 
         parg[igWeng] = Weng
         parg[igWebare] = Webare
         parg[igWnace] = Wnace
         parg[igWeng] = Weng
+        parg[igWHXs] = W_HXs #Store total weight of heat exchangers
 
         # set new nacelle area / reference area  fraction fSnace
         Snace = Snace1 * neng

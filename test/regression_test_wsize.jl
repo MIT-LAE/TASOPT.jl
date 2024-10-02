@@ -176,35 +176,39 @@ end
 
 end
 
-# @testset "Hydrogen sizing" verbose=true begin
-#     ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"))
+@testset "Hydrogen sizing" verbose=true begin
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"))
     
-#     include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
+    include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
 
-#     @test ac.fuselage.layout.radius ≈ 2.54
+    @test ac.fuselage.layout.radius ≈ 2.54
     
-#     include(joinpath(TASOPT.__TASOPTroot__, "../test/hydrogen_sized.jl"))
+    include(joinpath(TASOPT.__TASOPTroot__, "../test/hydrogen_sized.jl"))
 
-#     size_aircraft!(ac, iter=50; printiter=false);
+    size_aircraft!(ac, iter=50; printiter=false);
 
-#     @testset "Geometry" begin
-#         for i in eachindex(parg)
-#             @test parg[i] ≈ ac.parg[i]
-#         end
-#     end
+    @testset "Fuselage" begin
+        @test  check_struct_equivalence(fuse, ac.fuselage)
+    end
 
-#     @testset "Aero" begin
-#         for i in eachindex(para)
-#             @test para[i] ≈ ac.para[i]
-#         end
-#     end
+    @testset "Geometry" begin
+        for i in eachindex(parg)
+            @test parg[i] ≈ ac.parg[i]
+        end
+    end
 
-#     @testset "Propulsion" begin
-#         for i in eachindex(pare)
-#             @test pare[i] ≈ ac.pare[i] rtol=1e-6
-#         end
-#     end
+    @testset "Aero" begin
+        for i in eachindex(para)
+            @test para[i] ≈ ac.para[i]
+        end
+    end
+
+    @testset "Propulsion" begin
+        for i in eachindex(pare)
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
+        end
+    end
     
-#     @test ac.parm[imPFEI] ≈ 0.9884135735224845
+    @test ac.parm[imPFEI] ≈ 0.986478710037419
 
-# end
+end

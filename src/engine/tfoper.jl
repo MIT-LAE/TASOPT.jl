@@ -75,6 +75,7 @@ Turbofan operation routine
     - `Tt4`:     turbine-inlet total temperature [K]
     - `Ttf`:     fuel temperature entering combustor
     - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
+    - `hvap`:    fuel enthalpy of vaporization (J/kg)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    max fan polytropic efficiency
     - `eplc0`:   LPC max polytropic efficiency
@@ -161,7 +162,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       NbfD, NblcD, NbhcD, NbhtD, NbltD,
       A2, A25, A5, A7,
       iTFspec,
-      Ttf, ifuel, etab,
+      Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
       pifK, epfK,
       mofft, Pofft,
@@ -771,7 +772,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             #---- burner fuel flow from Tt3-Tb difference   (ffb = m_fuel/m_burner)
             ffb, lambda,
             ffb_Tt3, ffb_Ttf, ffb_Tb,
-            lam_Tt3, lam_Ttf, lam_Tb = gas_burnd(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tb)
+            lam_Tt3, lam_Ttf, lam_Tb = gas_burnd(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tb, hvap)
             ffb_pl = ffb_Tt3 * Tt3_pl
             ffb_ph = ffb_Tt3 * Tt3_ph
             ffb_ml = ffb_Tt3 * Tt3_ml

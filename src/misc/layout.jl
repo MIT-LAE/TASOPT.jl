@@ -1,6 +1,7 @@
 using DocStringExtensions
 abstract type AbstractLayout end
 abstract type AbstractCrossSection end
+abstract type AbstractCabin end
 
 """
 $TYPEDEF
@@ -109,6 +110,8 @@ $TYPEDFIELDS
     tail_radius::Float64 = 0
     """Taper fuselage to Point (0) or Edge (1)"""
     taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
+    """Length of cylindrical portion of cabin that contains payload [m]"""
+    l_cabin_cylinder::Float64 = 0.0
 end
 
 # Helper function to be able to simplify 
@@ -155,6 +158,39 @@ end
     x::Float64 = 0
     """Z location of wing"""
     z::Float64 = 0
+end
+
+"""
+$TYPEDEF
+
+Fuselage Layout Structure:
+Contains dimensions, heights, etc. to design a fuselage
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct Cabin <: AbstractCabin
+    """Longitudinal seat pitch [m]"""
+    seat_pitch = 0.0
+    """Transverse seat width [m]"""
+    seat_width = 0.0
+    """Seat height [m]"""
+    seat_height = 0.0
+    """Aisle half-width [m]"""
+    aisle_halfwidth = 0.0
+    """Distance between double decker floors [m]"""
+    floor_distance = 0.0
+    """Main cabin width [m]"""
+    cabin_width_main::Float64 = 0.0
+    """Top cabin width [m]"""
+    cabin_width_top::Float64 = 0.0
+    """Number of seats abreast in main cabin"""
+    seats_abreast_main::Int64 = 0
+    """Number of seats abreast in top cabin"""
+    seats_abreast_top::Int64 = 0
+    """Floor angle of main cabin [rad]"""
+    floor_angle_main::Float64 = 0.0
+    """Floor angle of top cabin [rad]"""
+    floor_angle_top::Float64 = 0.0
 end
 
 """
