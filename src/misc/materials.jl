@@ -6,7 +6,7 @@ module materials
 
 using TOML, DocStringExtensions
 
-export StructuralAlloy, Conductor, Insulator, ThermalInsulator
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator, thermal_conductivity
 
 __abs_path_prefix__ = dirname(@__DIR__)
 MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
@@ -239,6 +239,28 @@ function ThermalInsulator(material::String)
         end
     end
 
+end
+
+"""
+    thermal_conductivity(material::ThermalInsulator, T::Float64)
+
+This function evaluates a thermal conductivity polynomial.
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `material::ThermalInsulator`: material object`
+      - `T::Float64`: temperature (K)
+
+      **Outputs:**
+      - `k::Float64`: thermal conductivity ([W/(m⋅K)]).
+"""
+function thermal_conductivity(material::ThermalInsulator, T::Float64)
+    coeffs = material.conductivity_coeffs
+    k = 0.0
+    for i = 1:length(coeffs)
+        k += coeffs[i] * T^(i-1)
+    end
+    return k
 end
 
 """
