@@ -3090,7 +3090,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   pilc = pl
                   pihc = ph
 
-                  Nbf = Nl / Gearf * sqrt(Tt19 / Tt2)
+                  Nbf = Nl / Gearf * sqrt(Tt19c / Tt2)
                   Nblc = Nl
                   Nbhc = Nh
 
