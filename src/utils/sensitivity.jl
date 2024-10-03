@@ -23,7 +23,7 @@ you can also call the function directly with just the params:
 
 TASOPT.get_sensitivity(params)
 """
-module sensitivity
+
 
 """
     expr_to_string(expr)
@@ -135,7 +135,6 @@ function format_params(param_str)
                 idx_2 = eval(Symbol(strip(range_parts[2])))
                 push!(processed_indices, UnitRange{Int}(idx_1,idx_2))
             elseif tryparse(Float64, idx) !== nothing
-                println("d ",idx)
                 idx_1 = parse(Int64, idx)
                 push!(processed_indices, idx_1)
             else
@@ -265,6 +264,53 @@ function central_diff_run(eps, par, model_state)
 end
 
 """
+    plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.png")
+
+`plot_sensitivities` plots the finite differences
+    **Inputs:**
+    - `sensitivities`: List of caclulated sensitivities
+    - `output_file`: File location of the plot figure
+"""
+function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.png")
+    fig, ax = subplots(dpi=300)
+
+    # Store the y-axis positions
+    y_positions = []
+
+    # Loop through the sensitivities to plot each value
+    for i in 1:length(sensitivities)
+        if isa(sensitivities[i], Number)
+            ax.barh(i, sensitivities[i], color="blue")
+            push!(y_positions, i)
+        elseif isa(sensitivities[i], Vector)
+            # Plot each element in the sub-list as a separate bar, side by side
+            for j in 1:length(sensitivities[i])
+                offset = (j - 1) * 0.25  # Slight offset for side-by-side bars
+                ax.barh(i + offset, sensitivities[i][j], height=0.25, color="green")
+            push!(y_positions, i)  # Append only once to avoid extra ticks
+            end
+        end
+    end
+
+    # Draw a vertical line at x = 0
+    ax.axvline(x=0, color="black", linestyle="--", linewidth=1)
+
+    # Set y-axis ticks to integers only
+    ax.set_yticks(1:length(sensitivities))
+    ax.set_yticklabels(1:length(sensitivities))
+
+    # Add labels and title
+    ax.set_xlabel("Sensitivity")
+    ax.set_ylabel("Element Number")
+    ax.set_title("Sensitivity Plot")
+    ax.invert_yaxis()  # Invert y-axis to match the order of elements
+
+    # Save the figure to an image file
+    savefig(output_file)
+    println("Plot saved as $output_file")
+end
+
+"""
     get_sensitivity(input_params; model_state=nothing, eps=1e-5)
 
 `get_sensitivity` starts the finite differences calculation
@@ -290,5 +336,4 @@ function get_sensitivity(input_params; model_state=nothing, eps=1e-5)
         push!(fd_array, finite_diff)
     end
     return fd_array
-end
 end
