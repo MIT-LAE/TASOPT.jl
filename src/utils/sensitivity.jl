@@ -7,11 +7,11 @@ Example Usage:
 using TASOPT
 include(__TASOPTindices__)
 # List of the parameters you want to update as symbols
-params = [
+    params = [
     :(ac.parg[igetas]),
-    :(ac.para[iaalt, ipcruise1:ipcruise2, 1]),
     :(ac.pare[ieepolf,:,:]),
-    :(ac.fuselage.floor.material.ρ)
+    :(ac.pare[iepihc,ipclimbn:ipcruise1,1]),
+    :(ac.fuselage.layout.cross_section.radius)
 ]
 epsilon = 1e-5
 default_model = load_default_model()
