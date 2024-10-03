@@ -754,6 +754,10 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgas.Δp_p = Δp_p
       HXgas.ε = ε
 
+      if frecirc
+            HXgas.mdot_r = mdot_r
+      end
+
 end #hxoper!
 
 """
