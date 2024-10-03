@@ -153,7 +153,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
                   R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
-                  k = conductivity_from_coeffs(material[i].conductivity_coeffs, (T_mli[i] + T_prev)/2)
+                  k = thermal_conductivity(material[i], (T_mli[i] + T_prev)/2)
                   R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
@@ -369,25 +369,4 @@ function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_ou
       #Parallel addition of resistance
       R_eq = R_conv * R_rad / (R_conv + R_rad) 
       return R_eq
-end
-
-"""
-      conductivity_from_coeffs(coeffs::Vector{Float64}, T::Float64)
-
-This function evaluates a thermal conductivity polynomial.
-      
-!!! details "🔃 Inputs and Outputs"
-      **Inputs:**
-      - `coeffs::Vector{Float64}`: vector with coefficients.
-      - `T::Float64`: temperature (K)
-
-      **Outputs:**
-      - `k::Float64`: thermal conductivity ([W/(m⋅K)]).
-"""
-function conductivity_from_coeffs(coeffs::Vector{Float64}, T::Float64)
-      k = 0.0
-      for i = 1:length(coeffs)
-            k += coeffs[i] * T^(i-1)
-      end
-      return k
 end
