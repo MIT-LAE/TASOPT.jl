@@ -18,7 +18,7 @@ Generic structural alloy.
 
 $TYPEDFIELDS
 """
-@kwdef struct StructuralAlloy
+@kwdef mutable struct StructuralAlloy
     """Name"""
     name::String = ""
     """Density [kg/m³]"""
