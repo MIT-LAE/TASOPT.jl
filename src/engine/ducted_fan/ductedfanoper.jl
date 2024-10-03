@@ -69,6 +69,7 @@ mutable struct DuctedFanData
     pifn::Float64
     pifD::Float64
     mbfD::Float64
+    NbfD::Float64
     epf0::Float64
     pifK::Float64
     epfK::Float64
@@ -140,7 +141,8 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, iBLIc,
       pid, pifn, 
       pifD, 
-      mbfD, 
+      mbfD,
+      NbfD, 
       A2, A7,
       epf0,
       pifK, epfK,
@@ -166,7 +168,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     engdata = DuctedFanData()
     inputs = (
         M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
-        pifD, mbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
+        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
     ) 
     update_engine_data!(engdata, inputs)
 
@@ -182,7 +184,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     _ = res_df(sol.zero, engdata, iPspec = iPspec,  store_data = true)
 
     return engdata.TSEC, engdata.Fsp, engdata.Feng, engdata.Peng, engdata.mfan, 
-    engdata.pif, engdata.mbf, 
+    engdata.pif, engdata.mbf, engdata.Nbf, 
     engdata.Tt0, engdata.ht0, engdata.pt0, engdata.cpt0, engdata.Rt0,
     engdata.Tt18, engdata.ht18, engdata.pt18, engdata.cpt18, engdata.Rt18,
     engdata.Tt2, engdata.ht2, engdata.pt2, engdata.cpt2, engdata.Rt2,
@@ -208,6 +210,7 @@ function unpack_input_data(data::DuctedFanData)
     pifn = data.pifn
     pifD = data.pifD
     mbfD = data.mbfD
+    NbfD = data.NbfD
     A2 = data.A2
     A7 = data.A7
     epf0 = data.epf0
@@ -216,13 +219,13 @@ function unpack_input_data(data::DuctedFanData)
     Feng = data.Feng
     Peng = data.Peng
     
-    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, A2, A7, epf0, pifK, epfK, Feng, Peng)
+    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng)
 end
 
 function update_engine_data!(data::DuctedFanData, inputs)
     (
         M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
-        pifD, mbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
+        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
     ) = inputs
 
     data.M0 = M0
@@ -238,6 +241,7 @@ function update_engine_data!(data::DuctedFanData, inputs)
     data.pifn = pifn
     data.pifD = pifD
     data.mbfD = mbfD
+    data.NbfD = NbfD
     data.A2 = A2
     data.A7 = A7
     data.epf0 = epf0
@@ -255,7 +259,7 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     Mi = x[3]
 
     #Extract Inputs
-    (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, A2, A7, epf0, pifK, epfK, Fspec, Pspec) =
+    (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Fspec, Pspec) =
         unpack_input_data(engdata)
 
     # Constants
@@ -442,6 +446,8 @@ function res_df(x, engdata; iPspec = false, store_data = false)
         pt2, Tt2, ht2, st2, cpt2, Rt2, pif, 1.0)
         etaf = (ht21i - ht2) / (ht21 - ht2)
 
+        Nbf, _, _ = Ncmap(pf, mf, pifD, mbfD, NbfD, Cmapf)
+
         #---- overall Fsp
         if (u0 == 0.0)
             Fsp = 0.0
@@ -461,6 +467,7 @@ function res_df(x, engdata; iPspec = false, store_data = false)
             data.mfan = mfan
             data.pif = pif
             data.mbf = mbf
+            data.Nbf = Nbf
             data.Tt0 = Tt0
             data.ht0 = ht0
             data.pt0 = pt0

@@ -74,6 +74,7 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
 
             pare[iembfD, :] .= pare[iembfD, ip]
             pare[iepifD, :] .= pare[iepifD, ip]
+            pare[ieNbfD, :] .= pare[ieNbfD, ip]
 
             poweroper!(ac, engine_type, ip)
 

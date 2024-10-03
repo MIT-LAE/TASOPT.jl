@@ -99,12 +99,17 @@ function ductedfancalc!(pari, parg, para, pare, ip,
         pifD = pif
         mbfD = mbf
 
+        Nf = 1.0 #Arbitrarily set to 1 as only ratios matter
+        Nbf = Nf / sqrt(Tt2 / Tref)
+        NbfD = Nbf
+
         #----- store design-point parameters
         pare[ieA2] = A2
         pare[ieA7] = A7
 
         pare[iembfD] = mbfD
         pare[iepifD] = pifD
+        pare[ieNbfD] = Nbf
 
     else
         #----- fixed parameters
@@ -112,8 +117,8 @@ function ductedfancalc!(pari, parg, para, pare, ip,
         A7 = pare[ieA7]
 
         mbfD = pare[iembfD]
-
         pifD = pare[iepifD]
+        NbfD = pare[ieNbfD]
 
         if (initeng == 0)
                 #------ force TFOPER to initialize these state variables
@@ -132,7 +137,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
             iPspec = true
 
             TSEC, Fsp, Feng, Pfan, mfan, 
-            pif, mbf, 
+            pif, mbf, Nbf,
             Tt0, ht0, pt0, cpt0, Rt0,
             Tt18, ht18, pt18, cpt18, Rt18,
             Tt2, ht2, pt2, cpt2, Rt2,
@@ -145,7 +150,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             Phiinl, Kinl, iBLIc,
                             pid, pifn, 
                             pifD, 
-                            mbfD, 
+                            mbfD, NbfD,
                             A2, A7,
                             epolf,
                             pifK, epfK,
@@ -158,7 +163,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
             iPspec = false
 
             TSEC, Fsp, Feng, Pfan, mfan, 
-            pif, mbf, 
+            pif, mbf, Nbf,
             Tt0, ht0, pt0, cpt0, Rt0,
             Tt18, ht18, pt18, cpt18, Rt18,
             Tt2, ht2, pt2, cpt2, Rt2,
@@ -171,7 +176,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             Phiinl, Kinl, iBLIc,
                             pid, pifn, 
                             pifD, 
-                            mbfD, 
+                            mbfD, NbfD,
                             A2, A7,
                             epolf,
                             pifK, epfK,
@@ -194,6 +199,8 @@ function ductedfancalc!(pari, parg, para, pare, ip,
 
     pare[iembf] = mbf
     pare[iepif] = pif
+    pare[ieNbf] = Nbf
+    pare[ieNf] = Nbf * sqrt(Tt2 / Tref)
 
     pare[ieTt0] = Tt0
     pare[ieht0] = ht0
