@@ -62,7 +62,7 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
 
     elseif engine_type == "ducted_fan"
         if case == "design"
-            powersizing!(ac, engine_type, ipstatic)
+            #Design ducted fan for start of cruise
             icall = 0
 
             ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
@@ -76,6 +76,22 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             pare[iepifD, :] .= pare[iepifD, ip]
             pare[ieNbfD, :] .= pare[ieNbfD, ip]
 
+            #Design fuel cell for static conditions
+            Pfanmax = pare[iePfanmax, ipstatic]
+
+            ## Model of electric machine to deliver Pfanmax
+            Pmotormax = Pfanmax #100% efficiency for now
+            ##
+            pare[iePfcdes, :] .= Pmotormax
+
+            powersizing!(ac, engine_type, ipstatic)
+
+            #Evaluate state at start of cruise
+            Pfan = pare[iePfan, ip]
+            ## Model of electric machine to deliver Pfan
+            Pmotor = Pfan #100% efficiency for now
+            ##
+            pare[iePfc, ip] = Pmotor
             poweroper!(ac, engine_type, ip)
 
         else
@@ -86,6 +102,12 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             end
 
             ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
+
+            Pfan = pare[iePfan, ip]
+            ## Model of electric machine to deliver Pfan
+            Pmotor = Pfan #100% efficiency for now
+            ##
+            pare[iePfc, ip] = Pmotor
 
             poweroper!(ac, engine_type, ip)
         end

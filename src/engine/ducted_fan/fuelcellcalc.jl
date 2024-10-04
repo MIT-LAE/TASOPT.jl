@@ -1,7 +1,7 @@
 function powersizing!(ac, engine_type, ip)
     pare = view(ac.pared, :, ip)
     
-    Pdes = ac.pared[iePfanmax]
+    Pdes = ac.pare[iePfcdes]
     u_LT = engine.PEMFC_inputs()
 
     u_LT.j = pare[iejdens]
@@ -49,7 +49,7 @@ function poweroper!(ac, engine_type, ip)
     j_guess = pare[iejdens]
     α_guess = pare[iealphawat]
 
-    P = pare[iePfan]
+    P = pare[iePfc]
     mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT, j_guess, α_guess)
 
     pare[iemfuel] = mfuel * ac.parg[igneng]

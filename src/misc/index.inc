@@ -884,7 +884,7 @@
       iePfan      = 267
       iePfanmax   = 268
       iePfc       = 269
-      iePfcmax    = 270
+      iePfcdes    = 270
       iencells    = 271
       ieAcell     = 272
       ieQheat     = 273
