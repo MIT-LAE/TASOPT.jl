@@ -5,6 +5,7 @@ module CryoTank
 
 using ..engine
 using ..atmosphere
+using ..structures
 using NLsolve
 using Roots
 using NLopt
@@ -16,7 +17,6 @@ export SaturatedMixture, tanksize!
 
 include(__TASOPTindices__)
 include("../misc/constants.jl")
-include("../utils/bubble_geom.jl")
 
 include("tankWmech.jl")
 include("tankWthermal.jl")
@@ -26,7 +26,5 @@ include("mixture.jl")
 include("fuel_thermo.jl")
 include("pressure.jl")
 include("tanktools.jl")
-
-
 
 end

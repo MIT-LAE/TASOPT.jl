@@ -134,6 +134,59 @@ function Base.getproperty(layout::FuselageLayout, sym::Symbol)
 end
 
 """
+    scaled_cross_section(cross_section::SingleBubble, R::Float64)
+
+Calculates the geometric properties of a scaled single-bubble cross section.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `cross_section::SingleBubble`: unscaled fuselage cross-section
+    - `R::Float64`: radius of geometrically-similar cross-section (m)
+
+    **Outputs:**
+    - `p::Float64`: perimeter
+    - `A::Float64`: cross-sectional area (m^2)
+"""
+function scaled_cross_section(cross_section::SingleBubble, R::Float64)
+    scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
+    #Scale geometric parameters 
+    R_Rprev = R/cross_section.radius
+
+    #Scale geometric parameters
+    scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
+    scaled_cs.bubble_lower_downward_shift = R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
+
+    return get_perimeter(scaled_cs), area(scaled_cs)
+end
+
+"""
+    scaled_cross_section(cross_section::MultiBubble, R::Float64)
+
+Calculates the geometric properties of a scaled multi-bubble cross section.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `cross_section::MultiBubble`: unscaled fuselage cross-section
+    - `R::Float64`: radius of geometrically-similar cross-section (m)
+
+    **Outputs:**
+    - `p::Float64`: perimeter
+    - `A::Float64`: cross-sectional area (m^2)
+"""
+function scaled_cross_section(cross_section::MultiBubble, R::Float64)
+    scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
+    #Scale geometric parameters 
+    R_Rprev = R/cross_section.radius #Radii ratio
+
+    #Scale geometric parameters
+    scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
+    scaled_cs.bubble_lower_downward_shift = R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
+    scaled_cs.bubble_center_y_offset = R_Rprev * cross_section.bubble_center_y_offset
+
+    return get_perimeter(scaled_cs), area(scaled_cs)
+end
+
+"""
 $TYPEDEF
 
 Fuselage Layout Structure:
