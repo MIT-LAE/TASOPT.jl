@@ -29,6 +29,7 @@ export SingleBubble, MultiBubble, scaled_cross_section
 include("../misc/structuralMember.jl")
 include("../misc/fuselage.jl")
 export Fuselage
+export AbstractCrossSection
 include("fuseW.jl")
 include("../misc/fuselage_geometry.jl")
 

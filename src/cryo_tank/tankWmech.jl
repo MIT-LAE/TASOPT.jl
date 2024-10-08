@@ -1,11 +1,12 @@
 """
-      size_inner_tank(fuse, fuse_tank, t_cond::Vector{Float64})
+      size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vector{Float64})
 
 `size_inner_tank` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `fuse_tank::Struct`: structure with tank parameters.
+      - `fuse::Fuselage`: fuselage object.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
       - `t_cond::Float64`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
       non-linear solve process.
 
@@ -30,7 +31,7 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 
 See [here](@ref fueltanks).
 """
-function size_inner_tank(fuse, fuse_tank, t_cond::Vector{Float64})
+function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vector{Float64})
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
@@ -163,12 +164,13 @@ end
 
 
 """
-    size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm)
+    size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
 This function sizes the outer vessel and calculates the weights of its components.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `fuse_tank::Struct`: structure with tank parameters.
+    - `fuse::Fuselage`: fuselage object.
+    - `fuse_tank::fuselage_tank`: fuselage tank object.
     - `Winnertank::Float64`: weight of inner vessel and contents (N).
     - `l_cyl::Float64`: length of cylindrical portion of outer vessel (m).
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
@@ -185,7 +187,7 @@ This function sizes the outer vessel and calculates the weights of its component
     - `t_head::Float64`: wall thickness of tank head (m). 
     - `l_tank::Float64`: Total length of the tank (m).
 """
-function size_outer_tank(fuse, fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
+function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
@@ -403,19 +405,20 @@ function stiffeners_bendingM_outer(θ1::Float64, θ2::Float64)
 end
 
 """
-    optimize_outer_tank(fuse_tank, Winnertank, l_cyl, θ1, θ2)
+    optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank, l_cyl, θ1, θ2)
 This function optimizes the number of intermediate stiffener rings to minimize the weight of an outer vessel.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `fuse_tank::Struct`: structure with tank parameters.
+    - `fuse::Fuselage`: fuselage object.
+    - `fuse_tank::fuselage_tank`: fuselage tank object.
     - `Winnertank::Float64`: weight of inner vessel and contents (N).
     - `l_cyl::Float64`: length of cylindrical portion of outer vessel (m).
 
     **Outputs:**
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
 """
-function optimize_outer_tank(fuse, fuse_tank, Winnertank::Float64, l_cyl::Float64)
+function optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64)
 
       obj(x, grad) = size_outer_tank(fuse, fuse_tank, Winnertank, l_cyl, x[1])[1] #Minimize Wtank
 

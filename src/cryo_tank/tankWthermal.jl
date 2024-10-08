@@ -1,5 +1,5 @@
 """
-      tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+      tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
 `tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
 
@@ -9,7 +9,8 @@ for a given insulation thickness
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `fuse_tank::Struct`: structure with tank parameters.
+      - `fuse::Fuselage`: fuselage object.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
       - `z::Float64`: flight altitude (m)
       - `Mair::Float64`: external air Mach number
       - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
@@ -23,7 +24,7 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
@@ -265,7 +266,7 @@ mutable struct thermal_params
       Mair::Float64
       xftank::Float64
       ifuel::Int64
-      fuse_cs
+      fuse_cs::AbstractCrossSection
       thermal_params() = new() 
 end
 

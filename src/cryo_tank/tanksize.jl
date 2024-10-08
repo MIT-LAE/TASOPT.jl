@@ -1,12 +1,13 @@
 """
-        tanksize!(fuse, fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
+        tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+        - `fuse::Fuselage`: fuselage object.
+        - `fuse_tank::fuselage_tank`: fuselage tank object.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
@@ -22,7 +23,7 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize!(fuse, fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
+function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64)
 
         #Unpack variables in fuse_tank
@@ -104,7 +105,7 @@ function tanksize!(fuse, fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
 end
 
 """
-        res_MLI_thick(x, fuse_tank, z, TSL, Mair, xftank, ifuel)
+        res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -112,7 +113,8 @@ insulation interface temperatures.
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `x::Float64`: vector with states
-        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+        - `fuse::Fuselage`: fuselage object.
+        - `fuse_tank::fuselage_tank`: fuselage tank object.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
@@ -121,7 +123,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x::Vector{Float64}, fuse, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate

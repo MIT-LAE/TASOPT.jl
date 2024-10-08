@@ -14,7 +14,7 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
+function find_mdot_time(t::Float64, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
     nftanks = pari[iinftanks]
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
@@ -58,7 +58,7 @@ This function calculates the heat transfer rate into the tank at the design miss
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
 """
-function calc_Q_points(fuse, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
+function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -122,7 +122,8 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `t::Float64`: time in mission (s)
-    - `fuse_tank::FuselageTank`: struct with aircraft cryogenic tank parameters
+    - `fuse::Fuselage`: fuselage object.
+    - `fuse_tank::fuselage_tank`: fuselage tank object.
     - `pari::Vector{Int64}`: vector with aircraft Boolean and integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Array{Float64}`: array with aircraft aerodynamic parameters
@@ -130,7 +131,7 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time(t, fuse, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
+function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if ac.fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -189,7 +190,7 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
     
 """
-function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0)
+function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times

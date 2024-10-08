@@ -1,4 +1,3 @@
-include("../src/utils/bubble_geom.jl")
 #Sample parameters
 ifuel = 40
 z = 11e3
