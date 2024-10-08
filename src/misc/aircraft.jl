@@ -8,10 +8,7 @@ mutable struct fuselage_tank
     placement::String
     size_insulation::Bool
     Wfuelintank::Float64
-    Rfuse::Float64
-    dRfuse::Float64
-    wfb::Float64
-    nfweb::Float64
+    
     clearance_fuse::Float64
 
     t_insul::Array{Float64}
@@ -44,7 +41,7 @@ mutable struct fuselage_tank
     qfac::Float64
     pfac::Float64
 
-    fuselage_tank() = new("", "", false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, [], [], [], StructuralAlloy("Al-2219-T87"), StructuralAlloy("Al-2219-T87"), 0.0, 0.0, [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
+    fuselage_tank() = new("", "", false, 0.0, 0.0, [], [], [], StructuralAlloy("Al-2219-T87"), StructuralAlloy("Al-2219-T87"), 0.0, 0.0, [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
 end
 
 

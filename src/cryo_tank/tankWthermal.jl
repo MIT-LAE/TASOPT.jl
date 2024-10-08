@@ -23,7 +23,7 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+function tankWthermal(fuse, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
 
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
@@ -32,7 +32,7 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       TSL = fuse_tank.TSLtank
 
       Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-      Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, fuse_tank.t_insul)
+      Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
       #Create struct with thermal parameters
       p = thermal_params()
@@ -47,11 +47,8 @@ function tankWthermal(fuse_tank, z::Float64, Mair::Float64, xftank::Float64, tim
       p.TSL = TSL
       p.Mair = Mair
       p.xftank = xftank
-      p.Rfuse = fuse_tank.Rfuse
-      p.dRfuse = fuse_tank.dRfuse
-      p.wfb = fuse_tank.wfb
-      p.nfweb = fuse_tank.nfweb
       p.ifuel = ifuel
+      p.fuse_cs = fuse.layout.cross_section
 
       _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature
       
@@ -126,10 +123,8 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       TSL = p.TSL
       Mair = p.Mair
       xftank = p.xftank
-      Rfuse = p.Rfuse
-      dRfuse = p.dRfuse
-      wfb = p.wfb
-      nfweb = p.nfweb
+      Rfuse = p.fuse_cs.radius
+      fuse_cs = p.fuse_cs
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
@@ -140,12 +135,14 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       thickness = sum(t_cond)  # total thickness of insulation
 
       #Geometry
-      perim_inner, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, r_inner) #Tank perimeter and cross-sectional area
+      perim_inner, _ = scaled_cross_section(fuse_cs, r_inner) #Tank perimeter and cross-sectional area
+
       S_cyl = perim_inner*l_cyl #Surface area of cylindrical portion
       S_int = S_cyl + 2*Shead[1] #liquid side surface area
       perim_R = perim_inner/r_inner #ratio of geometric shape perimeter to radius; if a circle this is 2π
   
-      perim_fuse, _, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb) #Fuselage outer perimeter
+      perim_fuse = fuse_cs.perimeter #Fuselage perimeter
+
       Rair = 1 / (h_air * (perim_fuse * l_tank ))  # thermal resistance of ambient air
 
       #Liquid-side resistance
@@ -251,10 +248,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `TSL::Float64`: sea-level temperature (K)
     - `Mair::Float64`: external air Mach number
     - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-    - `Rfuse::Float64`: fuselage exterior radius (m)
-    - `dRfuse::Float64`: downward shift of double bubble (m)
-    - `wfb::Float64`: lateral shift of double bubble (m)
-    - `nfweb::Float64`: number of vertical webs in fuselage
+    - `fuse_cs::AbtractCrossSection`: fuselage cross section
     - `ifuel::Int64`: fuel species index
 """
 mutable struct thermal_params
@@ -270,11 +264,8 @@ mutable struct thermal_params
       TSL::Float64
       Mair::Float64
       xftank::Float64
-      Rfuse::Float64
-      dRfuse::Float64
-      wfb::Float64
-      nfweb::Float64
       ifuel::Int64
+      fuse_cs
       thermal_params() = new() 
 end
 

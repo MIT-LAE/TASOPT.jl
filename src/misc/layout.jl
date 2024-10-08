@@ -68,6 +68,21 @@ function Base.getproperty(obj::SingleBubble, sym::Symbol)
         return 0.0
     elseif sym === :web_thickness
         return 0.0
+    elseif sym === :perimeter
+        return get_perimeter(obj)
+    elseif sym === :area
+        return area(obj)
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
+#Return area and perimeter of multi bubble
+function Base.getproperty(obj::MultiBubble, sym::Symbol)
+    if sym === :perimeter
+        return get_perimeter(obj)
+    elseif sym === :area
+        return area(obj)
     else
         return getfield(obj, sym)
     end

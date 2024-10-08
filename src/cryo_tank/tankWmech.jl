@@ -1,7 +1,5 @@
 """
-      size_inner_tank(fuse_tank, t_cond::Vector{Float64}, ρfuel::Float64,
-                        Rfuse::Float64, dRfuse::Float64, wfb::Float64, nfweb::Float64,
-                        Wfuel::Float64)
+      size_inner_tank(fuse, fuse_tank, t_cond::Vector{Float64})
 
 `size_inner_tank` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
 
@@ -32,14 +30,12 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 
 See [here](@ref fueltanks).
 """
-function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
+function size_inner_tank(fuse, fuse_tank, t_cond::Vector{Float64})
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
-      Rfuse = fuse_tank.Rfuse
-      dRfuse = fuse_tank.dRfuse
-      wfb = fuse_tank.wfb
-      nfweb = fuse_tank.nfweb
+      Rfuse = fuse.layout.radius
+      fuse_cs = fuse.layout.cross_section #Fuselage cross section
 
       Wfuel = fuse_tank.Wfuelintank
 
@@ -75,7 +71,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       #---------------------------------
       # Vessel geometry
       #---------------------------------
-      perim_tank, Atank, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Rtank) #Tank perimeter and cross-sectional area
+      perim_tank, Atank = scaled_cross_section(fuse_cs, Rtank) #Tank perimeter and cross-sectional area
 
       # Calculate length of cylindrical portion
       Wfuel_tot = Wfuel #Wfuel already includes the amount that boils off
@@ -135,7 +131,7 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
       end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
-      _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro) #Cross-sectional area of double bubble
+      _, Ao = scaled_cross_section(fuse_cs, Ro) #Cross-sectional area of double bubble
       Shead_insul[1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625 #Surface area of vessel head
       
       for n in 1:N
@@ -143,8 +139,8 @@ function size_inner_tank(fuse_tank, t_cond::Vector{Float64})
             Ro = Ro + t_cond[n]
             L  = L  + t_cond[n]
 
-            _, Ao, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ro) 
-            _, Ai, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Ri)
+            _, Ao = scaled_cross_section(fuse_cs, Ro)
+            _, Ai = scaled_cross_section(fuse_cs, Ri)
             Vcyl_insul[n]  = l_cyl * (Ao - Ai) #Volume of cylindrical layer
             Shead_insul[n+1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625 #Surface area of ellipsodal cap
 
@@ -189,10 +185,13 @@ This function sizes the outer vessel and calculates the weights of its component
     - `t_head::Float64`: wall thickness of tank head (m). 
     - `l_tank::Float64`: Total length of the tank (m).
 """
-function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
+function size_outer_tank(fuse, fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
+      Rfuse = fuse.layout.radius
+      fuse_cs = fuse.layout.cross_section #Fuselage cross section
+
       poiss = fuse_tank.inner_material.ν
       Eouter = fuse_tank.inner_material.E
       ρouter = fuse_tank.inner_material.ρ
@@ -200,10 +199,6 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       ftankadd = fuse_tank.ftankadd
       ARtank = fuse_tank.ARtank
       θ_outer = fuse_tank.theta_outer
-      Rfuse = fuse_tank.Rfuse 
-      dRfuse = fuse_tank.dRfuse
-      wfb = fuse_tank.wfb
-      nfweb = fuse_tank.nfweb
 
       #---------------------------------
       # Size outer vessel
@@ -239,7 +234,7 @@ function size_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64, Ninterm
       #---------------------------------
       # Vessel geometry
       #---------------------------------
-      perim_vessel, Avessel, _ = double_bubble_geom(Rfuse, dRfuse, wfb, nfweb, Rtank_outer) #Tank perimeter and cross-sectional area
+      perim_vessel, Avessel = scaled_cross_section(fuse_cs, Rtank_outer) #Tank perimeter and cross-sectional area
 
       Shead = 2*Avessel*(0.333 + 0.667*(1/ARtank)^1.6 )^0.625 #ellipsoid surface area
       Scyl  = perim_vessel*l_cyl  # surface area
@@ -420,9 +415,9 @@ This function optimizes the number of intermediate stiffener rings to minimize t
     **Outputs:**
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
 """
-function optimize_outer_tank(fuse_tank, Winnertank::Float64, l_cyl::Float64)
+function optimize_outer_tank(fuse, fuse_tank, Winnertank::Float64, l_cyl::Float64)
 
-      obj(x, grad) = size_outer_tank(fuse_tank, Winnertank, l_cyl, x[1])[1] #Minimize Wtank
+      obj(x, grad) = size_outer_tank(fuse, fuse_tank, Winnertank, l_cyl, x[1])[1] #Minimize Wtank
 
       initial_x = [fuse_tank.Ninterm]
 
