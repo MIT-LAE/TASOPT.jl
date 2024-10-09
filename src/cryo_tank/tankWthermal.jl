@@ -147,13 +147,13 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
-            if lowercase(material[i]) == "vacuum"
+            if lowercase(material[i].name) == "vacuum"
                   S_inner = 2π * l_cyl * r_inner + 2*Shead[i]
                   S_outer = 2π * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
                   R_mli[i] = vacuum_resistance(T_prev, T_mli[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
-                  k = insulation_conductivity_calc((T_mli[i] + T_prev)/2, material[i])
+                  k = thermal_conductivity(material[i], (T_mli[i] + T_prev)/2)
                   R_mli_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (2π*l_cyl * k) #Resistance of each MLI layer; from integration of Fourier's law in cylindrical coordinates
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
@@ -184,41 +184,6 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
 end  
 
 """
-      insulation_conductivity_calc(T, material)
-
-This function calculates the thermal conductivity of different insulation materials as a function of temperature.
-      
-!!! details "🔃 Inputs and Outputs"
-      **Inputs:**
-      - `T::Float64`: temperature (K).
-      - `material::String`: material name.
-
-      **Outputs:**
-      - `k::Float64`: thermal conductivity (W/(m K)).
-"""
-function insulation_conductivity_calc(T::Float64, material::String)
-      if lowercase(material) == "rohacell41s"
-            #Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
-            k = 0.001579 + 1.283e-4 * T - 3.353e-7*T^2 + 8.487e-10 * T^3 # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif lowercase(material) == "polyurethane27" #polyurethane with density of 27 kg/m^3
-            k = 2.114e-13 * T^5 - 1.639e-10 *T^4 + 4.438e-8 * T^3 - 5.222e-6*T^2 + 3.740e-4*T - 2.192e-3
-            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif lowercase(material) == "polyurethane32" #polyurethane with density of 32 kg/m^3
-            k = 2.179E-13 * T^5 - 1.683E-10* T^4 + 4.542E-08* T^3 - 5.341E-06* T^2 + 3.816E-04* T - 2.367E-03
-            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif lowercase(material) == "polyurethane35" #polyurethane with density of 35 kg/m^3
-            k = 2.104E-13* T^5 - 1.695E-10* T^4 + 4.746E-08* T^3 - 5.662E-06* T^2 + 3.970E-04* T - 2.575E-03
-            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
-      elseif lowercase(material) == "microspheres" #microspheres with density 69 kg/m^3
-            k = 1.4632E-10*T^3 - 9.6487E-08*T^2 + 5.1956E-05*T - 3.7191E-05
-            # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 15 and 400 K
-      elseif lowercase(material) == "mylar"
-            k = 0.155# W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
-      end
-      return k
-end
-
-"""
       thermal_params
 
 This structure stores the material and thermal properties of a cryogenic tank insulation layer.
@@ -245,9 +210,9 @@ mutable struct thermal_params
       l_cyl::Float64
       l_tank::Float64
       r_tank::Float64
-      Shead::Array{Float64}
-      t_cond::Array{Float64} 
-      material::Array{String}
+      Shead::Vector{Float64}
+      t_cond::Vector{Float64} 
+      material::Vector{ThermalInsulator}
       Tfuel::Float64
       z::Float64
       TSL::Float64

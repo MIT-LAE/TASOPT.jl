@@ -569,7 +569,7 @@ function gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 end # gas_delhd
 
 """
-    gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
+    gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t, hvap)
 
 Calculates fuel/air mass fraction in combustion with specified start and end temperatures to,t .
 Calculates mass fractions of post-combustion constituents
@@ -583,13 +583,14 @@ Calculates mass fractions of post-combustion constituents
     - `to`: starting air temperatur
     - `tf`: starting fuel temperature
     - `t`: temperature of combustion products
+    - `hvap`: fuel enthalpy of vaporization
       
     **Output:**
     `f`: fuel/air mass fraction
     `lambda(.)`: mass fractions for combustion product constituents
 
 """
-function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
+function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t, hvap)
 
       nm = n - 1
       so, s_t, ho, h_t, cpo, ro = gassum(alpha, nm, to)
@@ -599,7 +600,7 @@ function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
 
       #---- add on fuel contribution to hf and hc, which gassum cannot index via ifuel
       si, s_t, hi, h_t, cpi, ri = gasfun(ifuel, tf)
-      hf = hf + hi * beta[n]
+      hf = hf + (hi - hvap) * beta[n]
 
       #sb, s_t, hb, h_t, cpb, rb = gasfun(ifuel, t)
       #hc = hc + hb * gamma[n] #Add contribution from unburnt fuel when etab < 1
@@ -617,7 +618,7 @@ function gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
 end # gas_burn
 
 """
-    gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
+    gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t, hvap)
     
 Same as gas_burn, but also returns derivatives.
 
@@ -631,6 +632,7 @@ Same as gas_burn, but also returns derivatives.
     - `to`: starting air temperatur
     - `tf`: starting fuel temperature
     - `t`: temperature of combustion products
+    - `hvap`: fuel enthalpy of vaporization
       
     **Output:**
     `f`: fuel/air mass fraction
@@ -641,7 +643,7 @@ Same as gas_burn, but also returns derivatives.
     `l_t`: 
 
 """
-function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
+function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t, hvap)
 
       nm = n - 1
       so, s_t, ho, ho_to, cpo, ro = gassum(alpha, nm, to)
@@ -651,7 +653,7 @@ function gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
 
       #---- add on fuel contribution to hf and hc, which gassum cannot index via ifuel
       si, s_t, hi, hi_tf, cpi, ri = gasfun(ifuel, tf)
-      hf = hf + hi * beta[n]
+      hf = hf + (hi - hvap) * beta[n]
       hf_tf = hf_tf + hi_tf * beta[n]
 
       #sb, s_t, hb, hb_t, cpb, rb = gasfun(ifuel, t)

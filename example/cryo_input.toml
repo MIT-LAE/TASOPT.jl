@@ -49,6 +49,8 @@ name = "TASOPT Model with cryo fuel and HX"
     fuel_in_wingcen = false # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
+
 [Fuel.Storage]
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
 
@@ -486,8 +488,8 @@ name = "TASOPT Model with cryo fuel and HX"
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 1
     recirculation_temperature = 200
-    latent_heat = 0
-    core_inner_diameter = 0.564
+    core_inner_diameter = 0.2
+    added_mass_frac = 1.0
 
     precooler_order = 1
     precooler_effectiveness = 0

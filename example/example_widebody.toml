@@ -50,6 +50,7 @@
 
     fuel_temp = 280.0
     fuel_density = 810.0 #kg/m3
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
@@ -455,8 +456,8 @@
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 0
     recirculation_temperature = 0
-    latent_heat = 0
     core_inner_diameter = 0
+    added_mass_frac = 0.0
 
     precooler_order = 0
     precooler_effectiveness = 0
