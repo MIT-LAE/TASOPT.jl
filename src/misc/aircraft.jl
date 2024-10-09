@@ -1,54 +1,4 @@
 """
-$TYPEDEF
-Fuselage tank component. Usually for Hydrogen aircraft
-$TYPEDFIELDS
-"""
-mutable struct fuselage_tank
-    fueltype::String
-    placement::String
-    size_insulation::Bool
-    Wfuelintank::Float64
-    Rfuse::Float64
-    dRfuse::Float64
-    wfb::Float64
-    nfweb::Float64
-    clearance_fuse::Float64
-
-    t_insul::Array{Float64}
-    material_insul::Array{String}
-    iinsuldes::Array{Int64}
-
-    inner_material::StructuralAlloy
-    outer_material::StructuralAlloy
-    ARtank::Float64
-    theta_inner::Float64
-    theta_outer::Vector{Float64}
-    Ninterm::Float64
-    
-    pvent::Float64
-    pinitial::Float64
-    pmin::Float64
-    t_hold_orig::Float64
-    t_hold_dest::Float64
-    TSLtank::Float64
-
-    rhofuel::Float64
-    Tfuel::Float64
-    rhofuelgas::Float64
-    hvap::Float64
-    boiloff_rate::Float64
-
-    ftankadd::Float64
-    ew::Float64
-    ullage_frac::Float64
-    qfac::Float64
-    pfac::Float64
-
-    fuselage_tank() = new("", "", false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, [], [], [], StructuralAlloy("Al-2219-T87"), StructuralAlloy("Al-2219-T87"), 0.0, 0.0, [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
-end
-
-
-"""
     aircraft
 
 A type representing a TASOPT aircraft model including, geometric,
@@ -81,6 +31,7 @@ Base.@kwdef struct aircraft #inner constructor
     
     sized::AbstractVector{Bool} = [false]
     fuse_tank::fuselage_tank = fuselage_tank()
+    fuselage::Fuselage = Fuselage()
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required
@@ -93,7 +44,7 @@ end
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank())
+        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
 end
 
 

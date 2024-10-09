@@ -27,6 +27,20 @@ function read_input(k::String, dict::AbstractDict=data,
     end
 end
 
+function get_default_input_file(input)
+    if input == 0 || lowercase(string(input)) == "regional aircraft"
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
+    elseif input == 1 || lowercase(string(input)) == "narrow body aircraft"
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+    elseif input == 2 || lowercase(string(input)) == "wide body aircraft"
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
+    else
+        println("\n")
+        @info """Requested aircraft type not supported. Selecting Narrow Body Aircraft"""
+        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+    end
+    return TOML.parsefile(defaultfile)
+end
 # Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
 Distance(x)      = convertDist(parse_unit(x)...)
@@ -85,6 +99,17 @@ ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
 sized = get(ac_descrip, "sized",[false])
+
+# Check if aircraft type exists
+if "aircraft_type" in keys(ac_descrip)
+    default = get_default_input_file(ac_descrip["aircraft_type"])
+    ac_type_fixed = true
+else
+    println("\n")
+    @info """Aircraft Type not specified: Selecting AC type depending on range or payload"""
+    ac_type_fixed = false
+end
+
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
 dmis = default["Mission"]
@@ -95,6 +120,41 @@ parg = zeros(Float64, igtotal)
 parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
+
+fuselage = Fuselage()
+
+# Setup mission variables
+ranges = readmis("range")
+parm[imRange, :] .= Distance.(ranges)
+
+if !ac_type_fixed
+    if parm[imRange, 1] <= 2600 * nmi_to_m
+        default = get_default_input_file(0)
+        @info """Setting AC Type based on design range: Regional Aircraft"""
+    elseif parm[imRange, 1] <= 3115 * nmi_to_m
+        default = get_default_input_file(1)
+        @info """Setting AC Type based on design range: Narrow Body Aircraft"""
+    elseif parm[imRange, 1] <= 8500 * nmi_to_m
+        default = get_default_input_file(2)
+        @info """Setting AC Type based on design range: Wide Body Aircraft"""
+    end    
+    ac_type_fixed = true
+end
+
+maxpax = readmis("max_pax")
+pax = readmis("pax")
+despax = pax[1] #Design number of passengers
+if despax > maxpax
+    error("Design mission has higher # of passengers than max passengers for aircraft!")
+end
+
+Wpax =  Force(readmis("weight_per_pax"))
+parm[imWperpax, :] .= Wpax
+parm[imWpay, :] .= pax * Wpax
+parg[igWpaymax] = maxpax * Wpax
+parg[igfreserve] = readmis("fuel_reserves")
+parg[igVne] = Speed(readmis("Vne"))
+parg[igNlift] = readmis("Nlift")
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -157,21 +217,8 @@ end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
-
-# Setup mission variables
-ranges = readmis("range")
-parm[imRange, :] .= Distance.(ranges)
-
-maxpax = readmis("max_pax")
-pax = readmis("pax")
-despax = pax[1] #Design number of passengers
-Wpax =  Force(readmis("weight_per_pax"))
-parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= pax * Wpax
-parg[igWpaymax] = maxpax * Wpax
-parg[igfreserve] = readmis("fuel_reserves")
-parg[igVne] = Speed(readmis("Vne"))
-parg[igNlift] = readmis("Nlift")
+pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
+pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
 
 ##Takeoff
 takeoff = readmis("Takeoff")
@@ -253,23 +300,23 @@ readaero(x) = read_input(x, aero, daero)
 weight = read_input("Weights", fuse, dfuse)
 dweight = dfuse["Weights"]
 readweight(x) = read_input(x, weight, dweight)
-    parg[igfframe]  = readweight("frame")
-    parg[igfstring] = readweight("stringer")
-    parg[igffadd]   = readweight("additional")
+    fuselage.weight_frac_frame = readweight("frame")
+    fuselage.weight_frac_stringers = readweight("stringer")
+    fuselage.weight_frac_skin_addl   = readweight("additional")
 
-    parg[igWfix] = Force(readweight("fixed_weight"))
+    fuselage.fixed.W = Force(readweight("fixed_weight"))
 
-    parg[igWpwindow] = readweight("window_per_length")
-    parg[igWppinsul] = readweight("window_insul_per_area")
-    parg[igWppfloor] = readweight("floor_weight_per_area")
+    fuselage.window_W_per_length= readweight("window_per_length")
+    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
+    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
 
-    parg[igfhpesys] = readweight("HPE_sys_weight_fraction")
+    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
     parg[igflgnose] = readweight("LG_nose_weight_fraction")
     parg[igflgmain] = readweight("LG_main_weight_fraction")
 
-    parg[igfapu] = readweight("APU_weight_fraction")
-    parg[igfseat] = readweight("seat_weight_fraction")
-    parg[igfpadd] = readweight("add_payload_weight_fraction")
+    fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
 
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
@@ -279,56 +326,78 @@ readgeom(x) = read_input(x, geom, dgeom)
     calculate_cabin = readgeom("calculate_cabin_length") 
     pari[iidoubledeck] = readgeom("double_decker") 
 
-    parg[igseatpitch] = Distance(readgeom("seat_pitch"))
-    parg[igseatwidth] = Distance(readgeom("seat_width"))
-    parg[igaislehalfwidth] = Distance(readgeom("aisle_halfwidth"))
+    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+        fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
+    end
 
-    parg[igRfuse]  = Distance(readgeom("radius"))
-    parg[igdRfuse] = Distance(readgeom("dRadius"))
-    parg[igwfb]    = Distance(readgeom("y_offset"))
-    parg[ighfloor] = Distance(readgeom("floor_depth"))
-    parg[ignfweb]  = readgeom("Nwebs")
+    fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))
+    fuselage.cabin.seat_width = Distance(readgeom("seat_width"))
+    fuselage.cabin.seat_height = Distance(readgeom("seat_height"))
+    fuselage.cabin.aisle_halfwidth = Distance(readgeom("aisle_halfwidth"))
+    parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
+    parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
+    parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
+    parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
+    fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
+    fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
-    parg[iganose] = readgeom("a_nose")
-    parg[igbtail] = readgeom("b_tail")
+    fuselage.fixed.r = [Distance(readgeom("x_fixed_weight")),0.0,0.0]
 
+    parg[igxeng] = Distance(readgeom("x_engines"))
+    parg[igyeng] = Distance(readgeom("y_critical_engines"))
+    
+    if readgeom("double_decker")
+        fuselage.n_decks =  2
+    else
+        fuselage.n_decks =  1
+    end
+
+    # Number of webs = number of bubbles - 1
+    n_bubbles = Int(readgeom("number_of_bubbles"))
+
+    radius = Distance(readgeom("radius"))
+    dz = Distance(readgeom("dRadius"))
+    dy = Distance(readgeom("y_offset"))
+
+    if n_bubbles > 1 && dy == 0.0
+        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        "y-offset of bubble set to 0.0. "*
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        n_bubbles = 1
+    end
+
+    if n_bubbles == 1
+        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
+    else
+        n_webs = n_bubbles - 1
+        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
+        bubble_center_y_offset = dy, n_webs = n_webs)
+    end
+
+    fuselage.layout.cross_section = cross_section
+    fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
+    fuselage.layout.nose_radius = readgeom("a_nose")
+    fuselage.layout.tail_radius = readgeom("b_tail")
+    fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
     fuse_end = lowercase(readgeom("taper_fuse_to")) 
     if fuse_end == "point"
-        pari[iifclose] = 0
+        fuselage.layout.taper_fuse = 0
     elseif fuse_end == "edge"
-        pari[iifclose] = 1
+        fuselage.layout.taper_fuse = 1
     else
-        pari[iifclose] = 0
+        fuselage.layout.taper_fuse = 0
         @warn "Fuselage can only be closed to a 'point' or an 'edge'"*
                 " but '$fuse_end' was provided."*
                 " Setting fuselage to end at a point."
     end
-
-    parg[iglambdac] = readgeom("tailcone_taper")
-    parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
-    parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
-
-    parg[igxnose]   = Distance(readgeom("x_nose_tip")) 
-    parg[igxshell1] = Distance(readgeom("x_pressure_shell_fwd"))
-    parg[igxblend1] = Distance(readgeom("x_start_cylinder"))
-    parg[igxblend2] = Distance(readgeom("x_end_cylinder"))
-    parg[igxshell2] = Distance(readgeom("x_pressure_shell_aft"))
-    parg[igxconend] = Distance(readgeom("x_cone_end"))
-    parg[igxend]    = Distance(readgeom("x_end")) 
-    
-    parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
-    parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
-    parg[igxapu]     = Distance(readgeom("x_APU"))
-    parg[igxhpesys]  = Distance(readgeom("x_HPE_sys"))
-
-    parg[igxfix] = Distance(readgeom("x_fixed_weight"))
-
-    parg[igxeng] = Distance(readgeom("x_engines"))
-    parg[igyeng] = Distance(readgeom("y_critical_engines"))
-
-    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
-
-    parg[igdxcabin] = parg[igxblend2] - parg[igxblend1]
+    fuselage.layout.x_nose = Distance(readgeom("x_nose_tip")) 
+    fuselage.layout.x_pressure_shell_fwd = Distance(readgeom("x_pressure_shell_fwd"))
+    fuselage.layout.x_pressure_shell_aft = Distance(readgeom("x_pressure_shell_aft"))
+    fuselage.layout.x_start_cylinder = Distance(readgeom("x_start_cylinder"))
+    fuselage.layout.x_end_cylinder = Distance(readgeom("x_end_cylinder"))
+    fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
+    fuselage.layout.x_end = Distance(readgeom("x_end")) 
+    fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
 
 # ------ End fuse -------
 
@@ -347,7 +416,12 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
-    fuse_tank.material_insul = readfuel_storage("insulation_material")
+    insul_mats_names = readfuel_storage("insulation_material")
+    insul_mats = []
+    for insul_mat_name in insul_mats_names
+        push!(insul_mats, ThermalInsulator(insul_mat_name))
+    end
+    fuse_tank.material_insul = insul_mats
     if fuse_tank.size_insulation
         fuse_tank.boiloff_rate = readfuel_storage("cruise_boiloff_rate")
         fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
@@ -619,7 +693,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
 
-    update_fuse_for_pax!(pari, parg, parm, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, parm, fuselage, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 
@@ -632,27 +706,49 @@ dstructures = default["Structures"]
 readstruct(x) = read_input(x, structures, dstructures)
     parg[igsigfac] = readstruct("stress_factor")
     #- allowable stresses at sizing cases
-    parg[igsigskin] = Stress(readstruct("sigma_fuse_skin"))
-    parg[igsigbend] = Stress(readstruct("sigma_fuse_bending"))
-
     parg[igsigcap] = Stress(readstruct("sigma_caps"))
     parg[igtauweb] = Stress(readstruct("tau_webs"))
 
     parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
-    parg[igrEshell] = readstruct("fuse_shell_modulus_ratio")
+    fuselage.ratio_young_mod_fuse_bending = readstruct("fuse_shell_modulus_ratio")
 
     #- moduli, for strut-induced buckling load estimation
     parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
     parg[igEstrut] = Stress(readstruct("E_struts"))
 
     #- structural material densities
-    parg[igrhoskin] = Density(readstruct("skin_density"))  #  rhoskin     fuselage skin
-    parg[igrhobend] = Density(readstruct("fuse_stringer_density"))  #  rhobend     fuselage bending stringers 
     parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
     parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
     parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
+
+
+    skin_max_avg = readstruct("skin_max_avg_stress")
+    skin_safety_fac = readstruct("skin_safety_factor")
+    fuselage.skin.material =  StructuralAlloy(readstruct("skin_material"), 
+                                    max_avg_stress = skin_max_avg,
+                                    safety_factor = skin_safety_fac)
+
+    cone_max_avg = readstruct("cone_max_avg_stress")
+    cone_safety_fac = readstruct("cone_safety_factor")
+    fuselage.cone.material =  StructuralAlloy(readstruct("cone_material"), 
+                                    max_avg_stress = cone_max_avg,
+                                    safety_factor = cone_safety_fac)
+
+    bend_max_avg = readstruct("bending_max_avg_stress")
+    bend_safety_fac = readstruct("bending_safety_factor")
+    fuselage.bendingmaterial_h.material = StructuralAlloy(readstruct("bending_material"),
+                                max_avg_stress = bend_max_avg,
+                                safety_factor = bend_safety_fac)
+
+    fuselage.bendingmaterial_v.material = fuselage.bendingmaterial_h.material                            
+
+    floor_max_avg = readstruct("floor_max_avg_stress")
+    floor_safety_fac = readstruct("floor_safety_factor")
+    fuselage.floor.material = StructuralAlloy(readstruct("floor_material"),
+        max_avg_stress=floor_max_avg,
+        safety_factor=floor_safety_fac)
 
 # ---------------------------------
 # Propulsion systems
@@ -875,9 +971,10 @@ dweight = dprop["Weight"]
 
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
+    parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
+
     pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
     pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-    pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
     pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
     
     pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
@@ -898,7 +995,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage)
 
 end
 

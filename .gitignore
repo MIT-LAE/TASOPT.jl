@@ -20,4 +20,4 @@ docs/build/*
 .VSCodeCounter/*
 .vscode/*
 .CondaPkg/*
-
+__pycache__/*

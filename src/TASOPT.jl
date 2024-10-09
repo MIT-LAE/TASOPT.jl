@@ -12,7 +12,8 @@ using Printf
 
 using StaticArrays
 # using PyCall
-using PyPlot
+using PythonPlot
+plt = pyplot #Aliasing just for convenience
 # pygui(true)
 using Dates
 using ForwardDiff
@@ -34,15 +35,14 @@ include(joinpath(__TASOPTroot__,"misc/units.jl"))
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
 
+include("./misc/index.inc")
 include(joinpath(__TASOPTroot__,"misc/materials.jl"))
-export StructuralAlloy, Conductor, Insulator
+using .materials
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 include(__TASOPTindices__)
-include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
-export aircraft, fuselage_tank
-
-#functionalities to be categorized: #TODO
-include(joinpath(__TASOPTroot__,"IO/size_cabin.jl"))
+# include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
+# export aircraft, fuselage_tank
 
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
@@ -50,11 +50,24 @@ include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
+include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
-include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
+
+#Use above modules
+using .atmosphere
+using .aerodynamics
+using .structures
+using .propsys
+using .engine
+using .CryoTank
+
+#Load other functions
+include("./misc/fuselage_tank.jl")
+include("./misc/aircraft.jl")
+export aircraft, fuselage_tank
 
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
@@ -79,16 +92,7 @@ include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 
-
 export size_aircraft!
-
-
-using .atmosphere
-using .aerodynamics
-using .structures
-using .propsys
-using .engine
-using .CryoTank
 
 #------------------------------------------------------
 #End imports/loading files

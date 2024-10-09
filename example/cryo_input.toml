@@ -49,6 +49,8 @@ name = "TASOPT Model with cryo fuel and HX"
     fuel_in_wingcen = false # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
+
 [Fuel.Storage]
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
 
@@ -151,8 +153,10 @@ name = "TASOPT Model with cryo fuel and HX"
     calculate_cabin_length = true 
 
     double_decker   = false #if true, the fuselage has two passenger decks
+    floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
@@ -480,8 +484,8 @@ name = "TASOPT Model with cryo fuel and HX"
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 1
     recirculation_temperature = 200
-    latent_heat = 0
-    core_inner_diameter = 0.564
+    core_inner_diameter = 0.2
+    added_mass_frac = 1.0
 
     precooler_order = 1
     precooler_effectiveness = 0

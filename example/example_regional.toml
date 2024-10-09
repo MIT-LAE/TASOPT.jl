@@ -48,6 +48,7 @@
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
@@ -103,7 +104,7 @@
     dRadius = "13.0 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "6.0 in" # depth of floor beams
-    Nwebs = 1              # number of webs (for double bubble designs)
+    Nwebs = 0              # number of webs (for double bubble designs)
 
     a_nose = 1.7 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 1.75 # Tail radius = Rfuse*(1 - xi^b_tail)
@@ -120,6 +121,7 @@
     double_decker   = false #if true, the fuselage has two passenger decks
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
@@ -446,8 +448,8 @@
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 0
     recirculation_temperature = 0
-    latent_heat = 0
     core_inner_diameter = 0
+    added_mass_frac = 0.0
 
     precooler_order = 0
     precooler_effectiveness = 0

@@ -1,5 +1,5 @@
 # 1. Import modules
-using PyPlot
+using PythonPlot
 using TASOPT
 using Printf
 # you can optionally define
@@ -97,7 +97,7 @@ function obj(x, grad)
     # f = f + penfac*max(0.0, constraint)^2
 
     # # Ensure fans will fit within fuselage
-    # daftfanmax = min(3.0, 0.9*ac.parg[igRfuse])
+    # daftfanmax = min(3.0, 0.9*ac.fuselage.layout.radius)
     # daftfan = ac.parg[igdaftfan]
     # constraint = daftfan/daftfanmax - 1.0
     # penfac = ac.parg[igWpay]

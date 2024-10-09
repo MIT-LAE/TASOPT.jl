@@ -1,7 +1,15 @@
+"""
+`materials` is a module that provides basic functionality to represent
+various materials such as `StructuralAlloy`s,`Conductor`s, and `Insulator`s. 
+"""
+module materials
+
 using TOML, DocStringExtensions
 
-filepath = joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml")
-MaterialProperties = TOML.parsefile(filepath)
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator, thermal_conductivity
+
+__abs_path_prefix__ = dirname(@__DIR__)
+MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
 
 """
 $TYPEDEF
@@ -11,6 +19,8 @@ Generic structural alloy.
 $TYPEDFIELDS
 """
 @kwdef struct StructuralAlloy
+    """Name"""
+    name::String = ""
     """Density [kg/m³]"""
     ρ::Float64
     """Young's Modulus [Pa]"""
@@ -66,7 +76,7 @@ function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor =
         catch 
             error("Insufficient data in database for $material to build a StructuralAlloy")
         else
-            StructuralAlloy(ρ, E, G, ν, σmax, τmax, YTS, UTS, USS, k)
+            StructuralAlloy(material, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS, k)
         end
     end
 
@@ -80,6 +90,8 @@ Generic conductor.
 $TYPEDFIELDS
 """
 @kwdef struct Conductor 
+    """Name"""
+    name::String = ""
     """Density [kg/m³]"""
     ρ::Float64
     """Resistivity [Ω⋅m]"""
@@ -116,7 +128,7 @@ function Conductor(material::String)
         catch 
             error("Insufficient data in database for $material to build a Conductor")
         else
-            Conductor(ρ, resistivity, α, T0)
+            Conductor(material, ρ, resistivity, α, T0)
         end
     end
 
@@ -130,6 +142,8 @@ Generic insulator.
 $TYPEDFIELDS
 """
 @kwdef struct Insulator
+    """Name"""
+    name::String = ""
     """Density [kg/m³]"""
     ρ::Float64
     """Dielectric strength [V/m]"""
@@ -157,7 +171,7 @@ function Insulator(material::String)
         catch 
             error("Insufficient data in database for $material to build an Insulator")
         else
-            Insulator(ρ, Emax)
+            Insulator(material, ρ, Emax)
         end
     end
 
@@ -182,6 +196,72 @@ function resistivity(cond::Conductor, T::Float64=293.15)
     ΔT = T - cond.T0
     return cond.resistivity*(1 + cond.α*ΔT)
 end  # function resistivity
+
+"""
+$TYPEDEF
+
+Generic thermal insulator.
+
+$TYPEDFIELDS
+"""
+@kwdef struct ThermalInsulator 
+    """Name"""
+    name::String = ""
+    """Density [kg/m³]"""
+    ρ::Float64 = 0.0
+    """Coefficients for thermal conductivity as a function of temperature [W/(m⋅K)]"""
+    conductivity_coeffs::Vector{Float64} = ""
+end
+
+"""
+    ThermalInsulator(material::String)
+
+Outer constructor for `ThermalInsulator` types. 
+Material specified needs to have the following data in the database:
+- ρ (density): Density [kg/m³]
+- conductivity (thermal conductivity): a string with the thermal conductivity as a function of `T` [W/(m⋅K)]
+"""
+function ThermalInsulator(material::String)
+    local MatProp, ρ, cond_coeffs
+    try
+        MatProp = MaterialProperties[material]
+    catch
+        error("Cannot find $material in Material Properties database")
+    else
+        try
+            ρ = MatProp["density"]
+            cond_coeffs = MatProp["conductivity_coeffs"]
+
+        catch 
+            error("Insufficient data in database for $material to build a ThermalInsulator")
+        else
+            ThermalInsulator(material, ρ, cond_coeffs)
+        end
+    end
+
+end
+
+"""
+    thermal_conductivity(material::ThermalInsulator, T::Float64)
+
+This function evaluates a thermal conductivity polynomial.
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `material::ThermalInsulator`: material object`
+      - `T::Float64`: temperature (K)
+
+      **Outputs:**
+      - `k::Float64`: thermal conductivity ([W/(m⋅K)]).
+"""
+function thermal_conductivity(material::ThermalInsulator, T::Float64)
+    coeffs = material.conductivity_coeffs
+    k = 0.0
+    for i = 1:length(coeffs)
+        k += coeffs[i] * T^(i-1)
+    end
+    return k
+end
 
 """
     create_dict(material)
@@ -210,3 +290,22 @@ end  # function save_material_toml
 
 save_material_toml(filename::String, material) = 
 save_material_toml(filename, create_material_dict(material))
+
+function Base.show(io::IO, alloy::StructuralAlloy)
+    print(io, "StructuralAlloy(", alloy.name, ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", alloy::StructuralAlloy)
+    print("StructuralAlloy(",alloy.name,"):")
+    print("\n ρ    = ",alloy.ρ   ," kg/m³")
+    print("\n E    = ",alloy.E   ," Pa")
+    print("\n G    = ",alloy.G   ," Pa")
+    print("\n ν    = ",alloy.ν)
+    print("\n YTS  = ",alloy.YTS ," Pa")
+    print("\n UTS  = ",alloy.UTS ," Pa")
+    print("\n USS  = ",alloy.USS ," Pa")
+    print("\n σmax = ",round(alloy.σmax,sigdigits=3)," Pa")
+    print("\n τmax = ",round(alloy.τmax,sigdigits=3)," Pa")
+end
+
+end

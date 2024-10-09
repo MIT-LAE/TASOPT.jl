@@ -35,32 +35,31 @@ Structure containing the gas properties of the process and coolant streams.
     - `mdot_r::Float64`: recirculating flow mass flow rate (kg/s)
     - `h_lat::Float64`: latent heat capacity in freestream coolant liquid (J/kg)
 """
-mutable struct HX_gas
-      fluid_p :: String 
-      fluid_c :: String 
-      alpha_p :: Vector{Float64} 
-      igas_c :: Float64 
-      mdot_p :: Float64
-      mdot_c :: Float64
-      Tp_in :: Float64
-      Tc_in :: Float64
-      pp_in :: Float64
-      pc_in :: Float64
-      Mp_in  :: Float64
-      Mc_in :: Float64
-      Tp_out :: Float64
-      Tc_out :: Float64 
-      Δh_p :: Float64
-      Δh_c :: Float64
-      Δp_p :: Float64 
-      Δp_c :: Float64
-      Pl_p :: Float64
-      Pl_c :: Float64
-      ε :: Float64 
-      recircT :: Float64 
-      mdot_r :: Float64 
-      h_lat :: Float64 
-      HX_gas() = new("", "", [], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+@kwdef mutable struct HX_gas
+      fluid_p :: String = ""
+      fluid_c :: String = "" 
+      alpha_p :: Vector{Float64} = []
+      igas_c :: Float64 = 0.0
+      mdot_p :: Float64 = 0.0
+      mdot_c :: Float64 = 0.0
+      Tp_in :: Float64 = 0.0
+      Tc_in :: Float64 = 0.0
+      pp_in :: Float64 = 0.0
+      pc_in :: Float64 = 0.0
+      Mp_in  :: Float64 = 0.0
+      Mc_in :: Float64 = 0.0
+      Tp_out :: Float64 = 0.0
+      Tc_out :: Float64 = 0.0
+      Δh_p :: Float64 = 0.0
+      Δh_c :: Float64 = 0.0
+      Δp_p :: Float64 = 0.0
+      Δp_c :: Float64 = 0.0
+      Pl_p :: Float64 = 0.0
+      Pl_c :: Float64 = 0.0
+      ε :: Float64 = 0.0 
+      recircT :: Float64 = 0.0 
+      mdot_r :: Float64 = 0.0 
+      h_lat :: Float64 = 0.0 
 end
 
 """
@@ -70,8 +69,9 @@ Structure containing the heat exchanger geometric and material properties.
 
 !!! details "💾 Data fields"
     **Inputs:**
-    - `fconc::Bool`: flag for concentric geometry (1: concentric ; 0: rectangular)
-    - `frecirc::Bool`: flag for recirculation (1: recirculation ; 0: no recirculation)
+    - `fconc::Bool`: flag for concentric geometry (true: concentric ; false: rectangular)
+    - `frecirc::Bool`: flag for recirculation (true: recirculation ; false: no recirculation)
+    - `fshaf::Bool`: flag for whether HX contains shaf(true: shaft ; false: no shaft)
     - `N_t::Float64`: number of tubes per row
     - `n_stages::Float64`: number of different coolant stages with different coolant flows
     - `n_passes::Float64`: number of coolant passes
@@ -86,25 +86,43 @@ Structure containing the heat exchanger geometric and material properties.
     - `D_i::Float64`: inner diameter of core (m)
     - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
 """
-mutable struct HX_tubular
-      fconc :: Bool
-      frecirc :: Bool 
-      N_t :: Float64 
-      n_stages :: Float64 
-      n_passes:: Float64 
-      A_cs:: Float64 
-      l :: Float64
-      t :: Float64
-      tD_o :: Float64
-      xt_D :: Float64
-      xl_D :: Float64
-      Rfp :: Float64
-      Rfc :: Float64
-      D_i :: Float64
-      material :: StructuralAlloy
-      Δpdes::Float64
-      HX_tubular() = new(false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, StructuralAlloy("Al-2219-T87"), 0.0)
+@kwdef mutable struct HX_tubular
+      fconc :: Bool = false
+      frecirc :: Bool = false
+      fshaft :: Bool = false
+      N_t :: Float64 = 0.0
+      n_stages :: Float64 = 0.0
+      n_passes:: Float64 = 0.0
+      A_cs:: Float64  = 0.0
+      l :: Float64 = 0.0
+      t :: Float64 = 0.0
+      tD_o :: Float64 = 0.0
+      xt_D :: Float64 = 0.0
+      xl_D :: Float64 = 0.0
+      Rfp :: Float64 = 0.0
+      Rfc :: Float64 = 0.0
+      D_i :: Float64 = 0.0
+      material :: StructuralAlloy = StructuralAlloy("Al-2219-T87")
+      Δpdes::Float64 = 0.0
 end
+
+# Overload Base.getproperty for convenience
+function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
+      if (sym === :D_o) && getfield(HXgeom, :fconc)
+            A_cs = getfield(HXgeom, :A_cs)
+            D_i = getfield(HXgeom, :D_i)
+            D_o = sqrt(4 * A_cs / pi +D_i^2)
+         return D_o
+      elseif sym === :N_tubes_tot
+            return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :N_t)
+      elseif sym === :tD_i
+            return getfield(HXgeom, :tD_o) - 2* getfield(HXgeom, :t) 
+      elseif sym === :L
+            return getfield(HXgeom, :n_stages) * getfield(HXgeom, :n_passes) * getfield(HXgeom, :xl_D) * getfield(HXgeom, :tD_o)
+      else
+         return getfield(HXgeom, sym)
+      end
+   end
 
 """
     HX_struct
@@ -180,9 +198,6 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
 
-            if isnan(h_lat) #If the latent heat was not specified, assume it is 0
-                  h_lat = 0
-            end
       end
 
       #---------------------------------
@@ -447,7 +462,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgas.Pl_c = Pl_c
       HXgas.ε = ε
 
-      #Gas parameters
+      #Geometry parameters
       HXgeom.N_t = N_t
       HXgeom.n_passes = n_passes
       HXgeom.A_cs = A_cs
@@ -510,10 +525,6 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       if frecirc
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
-
-            if isnan(h_lat) #If the latent heat was not specified, assume it is 0
-                  h_lat = 0
-            end
       end
 
       #---------------------------------
@@ -566,9 +577,9 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       A_min = A_cs - A_D
       G = ρ_p_in * Vp_in * A_cs / A_min #mass flow rate per unit area at minimum area      
 
-      N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
+      N_tubes_tot = HXgeom.N_tubes_tot #total number of tubes across all rows
       N_L = n_passes * n_stages #total number of rows
-      L = N_L * xl_D * tD_o #total axial length
+      L =  HXgeom.L #total axial length
 
       Ah = N_tubes_tot * pi * tD_o * l #Total external surface area of cooling tubes
 
@@ -997,6 +1008,8 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       end
 
       #Size HX
+      Iobj = 1e9 #Start with very high value of objective function
+      try 
       hxsize!(HXgas, HXgeom)
 
       #Extract outputs
@@ -1007,21 +1020,18 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       N_t = HXgeom.N_t
       Δp_p = HXgas.Δp_p
       Δp_c = HXgas.Δp_c
-      fconc = HXgeom.fconc
+      L = HXgeom.L #HX length
 
       #Inlet pressures (pressure drops should not exceed these)
       pp_in = HXgas.pp_in
       pc_in = HXgas.pc_in
       p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
 
-      vars = [n_passes, N_t, Δp_p, Δp_c]
-      lower = [1, 1, 1, 1] #desired lower limits
+      vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
-      if fconc
-            upper = [20, 200, p_thres * pp_in, p_thres * pc_in] #desired upper limits for concentric case
-      else
-            upper = [20, 200, p_thres * pp_in, p_thres * pc_in]  #allow more passes in rectangular case
-      end
+      lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
+      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.5]
+
       Iobj = (Pl_p + Pl_c) #Initialize objective function
 
       # Apply penalty function so that outputs are within desired range
@@ -1034,6 +1044,8 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
             p = max(pmin, pmax)
 
             Iobj = Iobj * p
+      end
+      catch #Do nothing if it errors
       end
 
       return Iobj
@@ -1051,12 +1063,12 @@ then evaluates performance for all missions and points with hxoper!().
     - `pari::Vector{Int}`: vector with integer parameters
     - `ipdes::Float64`: index for design mission segment
     - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HX_struct` structures
- 
+    - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
     - Also modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
-function hxdesign!(pare, pari, ipdes, HXs_prev)
+function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       
       #---------------------------------
       # Extract inputs
@@ -1067,7 +1079,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       Tc_ft = pare_sl[ieTft]
       frecirc = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
-      h_lat = pare_sl[iehlat]
+      h_lat = pare_sl[iehvap]
       igas = pari[iifuel]
       PreCorder = pare_sl[iePreCorder]
       PreCepsilon = pare_sl[iePreCepsilon]
@@ -1108,7 +1120,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
       end
 
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
-
       #Initialize Heat Exchanger vector
       HeatExchangers = []
 
@@ -1142,6 +1153,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgeom.D_i = D_i 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
+                  HXgeom.fshaft = true #HX contains a shaft
 
                   HXgas.mdot_p = mcore   #Core mass flow 
                   iTp_in = ieTt19
@@ -1156,6 +1168,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
+                  HXgeom.fshaft = true
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
                   iTp_in = ieTt25
@@ -1326,15 +1339,15 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgas_mis[ip] = HXgasp
 
                   #Store output in pare
-                  pare[Dh_i, ip] = HXgasp.Δh_p
-                  pare[Dp_i, ip] = HXgasp.Δp_p
+                  pare[Dh_i, ip] =  (1 - rlx) * pare[Dh_i, ip] + rlx * HXgasp.Δh_p
+                  pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
                   
             end
             push!(HeatExchangers, HX_struct(type, HXgeom, HXgas_mis)) #Store HX struct in overall array
       end
 
       #---------------------------------
-      # Update fuel temperature
+      # Update fuel temperature and heat of vaporization
       #---------------------------------
 
       for ip = 1:size(pare)[2] #For every mission point
@@ -1343,8 +1356,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev)
                   HXgas = lastHX.HXgas_mission[ip]
                   Tf = HXgas.Tc_out
 
-                  pare[ieTfuel, ip] = Tf
+                  pare[ieTfuel, ip] = (1 - rlx) * pare[ieTfuel, ip] + rlx * Tf
             end
+      end
+
+      if (frecirc) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+            pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
      
       return HeatExchangers
@@ -1376,6 +1393,9 @@ function resetHXs(pare)
       pare[ieTurbCDeltap, :] .= 0.0
       pare[ieRegenDeltah, :] .= 0.0
       pare[ieRegenDeltap, :] .= 0.0
+
+      #Reset heat of vaporization in combustor
+      pare[iehvapcombustor, :, :] = pare[iehvap, :, :]
 
 end
 
@@ -1540,21 +1560,23 @@ Calculates the weight of a heat exchanger with involute tubes.
 """
 function hxweight(gee, HXgeom, fouter)
       #Extract inputs
-      N_t = HXgeom.N_t
-      n_stages = HXgeom.n_stages
-      n_passes = HXgeom.n_passes
       tD_o = HXgeom.tD_o 
       ρ = HXgeom.material.ρ
       l = HXgeom.l
       t = HXgeom.t
+      N_tubes_tot = HXgeom.N_tubes_tot #total number of tubes across all rows
+      tD_i = HXgeom.tD_i
 
-      N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
-      tD_i = tD_o - 2 * t
       V_t = N_tubes_tot * pi * (tD_o^2 - tD_i^2) / 4 * l #total tube volume
       m_t = ρ * V_t #total tube mass
 
       W_hx = gee * m_t * (1 + fouter)
 
+      if HXgeom.fshaft #If the HEX is in the core with a shaft through it, add additional mass for the shaft
+            shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
+            W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
+            W_hx = W_hx + W_shaft
+      end
       return W_hx
 end #hxweight
 
@@ -1581,6 +1603,7 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
       Tt3 = pare_sl[ieTt3]
       Ttf = pare_sl[ieTfuel]
       Tt4 = pare_sl[ieTt4]
+      hvap = pare_sl[iehvapcombustor]
 
       etab = pare[ieetab]
       beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
@@ -1606,7 +1629,7 @@ function lambdap_calc(pare, alpha_in, ifuel, ip)
       gamma = copy(buf)
       #
 
-      ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4)
+      ffb, lambda = gas_burn(alpha, beta, gamma, n, ifuel, Tt3, Ttf, Tt4, hvap)
 
       lambdap = zeros(nair)
 
