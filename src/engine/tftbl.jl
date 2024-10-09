@@ -1,7 +1,8 @@
 """
 `tftbl.jl` loads in the E3 map data for bilinear interpolation in tfmap.jl
 """
-using TOML
+# using TOML
+# import ..TASOPT: __TASOPTroot__
 
 struct compressorTbl
     # ---- Independent variables
@@ -23,11 +24,15 @@ struct compressorTbl
 end 
 
 
-E3fan_toml = TOML.parsefile("$(@__DIR__)/data/E3fan_tbl.toml")
-E3lpc_toml = TOML.parsefile("$(@__DIR__)/data/E3lpc_tbl.toml")
-E3hpc_toml = TOML.parsefile("$(@__DIR__)/data/E3hpc_tbl.toml")
+E3fan_toml = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/E3fan_tbl.toml"))
+E3lpc_toml = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/E3lpc_tbl.toml"))
+E3hpc_toml = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/E3hpc_tbl.toml"))
 
-E3fan = compressorTbl(
+# E3fan_toml = TOML.parsefile("$(@__DIR__)/data/E3fan_tbl.toml")
+# E3lpc_toml = TOML.parsefile("$(@__DIR__)/data/E3lpc_tbl.toml")
+# E3hpc_toml = TOML.parsefile("$(@__DIR__)/data/E3hpc_tbl.toml")
+
+const E3fan = compressorTbl(
     E3fan_toml["input"]["mb"],
     E3fan_toml["input"]["pr"],
     E3fan_toml["design"]["Nb_des"],
@@ -35,13 +40,13 @@ E3fan = compressorTbl(
     E3fan_toml["design"]["mb_des"],
     E3fan_toml["design"]["pr_des"],
     E3fan_toml["design"]["eff_des"],
-    E3fan_toml["output"]["Nb"],
-    E3fan_toml["output"]["R"],
-    E3fan_toml["output"]["Ei"],
-    E3fan_toml["output"]["Ep"],
+    stack(E3fan_toml["output"]["Nb"]),
+    stack(E3fan_toml["output"]["R"]),
+    stack(E3fan_toml["output"]["Ei"]),
+    stack(E3fan_toml["output"]["Ep"]),
 )
 
-E3lpc = compressorTbl(
+const E3lpc = compressorTbl(
     E3lpc_toml["input"]["mb"],
     E3lpc_toml["input"]["pr"],
     E3lpc_toml["design"]["Nb_des"],
@@ -49,13 +54,13 @@ E3lpc = compressorTbl(
     E3lpc_toml["design"]["mb_des"],
     E3lpc_toml["design"]["pr_des"],
     E3lpc_toml["design"]["eff_des"],
-    E3lpc_toml["output"]["Nb"],
-    E3lpc_toml["output"]["R"],
-    E3lpc_toml["output"]["Ei"],
-    E3lpc_toml["output"]["Ep"],
+    stack(E3lpc_toml["output"]["Nb"]),
+    stack(E3lpc_toml["output"]["R"]),
+    stack(E3lpc_toml["output"]["Ei"]),
+    stack(E3lpc_toml["output"]["Ep"]),
 )
 
-E3lpc = compressorTbl(
+const E3hpc = compressorTbl(
     E3hpc_toml["input"]["mb"],
     E3hpc_toml["input"]["pr"],
     E3hpc_toml["design"]["Nb_des"],
@@ -63,8 +68,8 @@ E3lpc = compressorTbl(
     E3hpc_toml["design"]["mb_des"],
     E3hpc_toml["design"]["pr_des"],
     E3hpc_toml["design"]["eff_des"],
-    E3hpc_toml["output"]["Nb"],
-    E3hpc_toml["output"]["R"],
-    E3hpc_toml["output"]["Ei"],
-    E3hpc_toml["output"]["Ep"],
+    stack(E3hpc_toml["output"]["Nb"]),
+    stack(E3hpc_toml["output"]["R"]),
+    stack(E3hpc_toml["output"]["Ei"]),
+    stack(E3hpc_toml["output"]["Ep"]),
 )
