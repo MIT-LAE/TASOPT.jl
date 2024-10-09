@@ -103,7 +103,7 @@
 
     max_payload_in_pax_equivalent = 230         # Defines the maximum payload carrying capacity of the aircraft
                                                 # It is the maximum payload that the aircraft can carry (including cargo),
-                                                # as an equivalent number of passengers
+                                                # as an equivalent number of passengers in an off-design mission
 
     fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
 
