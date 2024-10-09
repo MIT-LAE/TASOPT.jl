@@ -101,6 +101,8 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             elseif ip in range(ipclimb1, ipclimbn)
                 icall = 2
 
+                #During climb, a lot of excess power is available
+                #Instead of climbing at max power, climb with a specified ROC
                 neng = parg[igneng]
                 WMTO = parg[igWMTO]
                 S = parg[igS]
@@ -114,12 +116,12 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
 
                 #Solve with numerical & analytical solution
                 f(γ) = ROC - sin(γ) * sqrt(2*BW*cos(γ) / (ρ*S*CL))
-                γ = find_zero(f, para[iagamV, ip])
+                γ = find_zero(f, para[iagamV, ip]) #Solve for climb angle
                 A = sin(γ)
                 B = DoL
                 ϕ = (sqrt(-A^2*B^6 - 2*A^2*B^4 - A^2*B^2 + B^6 + 2*B^4 + B^2) + A*B^2 + A)/(B^2 + 1)
                 Ftotal = BW * ϕ
-                pare[ieFe, ip] = Ftotal / neng
+                pare[ieFe, ip] = Ftotal / neng #required thrust per engine
 
             else
                 icall = 2
