@@ -7,6 +7,7 @@ using ..engine
 using ..atmosphere
 using ..structures
 using ..TASOPT: fuselage_tank, aircraft
+using ..materials
 using NLsolve
 using Roots
 using NLopt

@@ -38,7 +38,7 @@ export convertMass, convertForce, convertDist,
 include("./misc/index.inc")
 include(joinpath(__TASOPTroot__,"misc/materials.jl"))
 using .materials
-export StructuralAlloy, Conductor, Insulator
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 include(__TASOPTindices__)
 # include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
@@ -64,6 +64,7 @@ using .engine
 
 
 #Load other functions
+include("./misc/fuselage_tank.jl")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
 

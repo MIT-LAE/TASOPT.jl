@@ -416,7 +416,12 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
-    fuse_tank.material_insul = readfuel_storage("insulation_material")
+    insul_mats_names = readfuel_storage("insulation_material")
+    insul_mats = []
+    for insul_mat_name in insul_mats_names
+        push!(insul_mats, ThermalInsulator(insul_mat_name))
+    end
+    fuse_tank.material_insul = insul_mats
     if fuse_tank.size_insulation
         fuse_tank.boiloff_rate = readfuel_storage("cruise_boiloff_rate")
         fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
