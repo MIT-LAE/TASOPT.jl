@@ -1,6 +1,6 @@
 # Calculating Parameter Sensitivities
 
-![SensitivityPlot](../assets/sensitivity_plot.png)
+![SensitivityPlot](../assets/sensitivity_plot.svg)
 
 Using the sensitivity module it is possible to calculate the gradients of TASOPT parameters over PFEI. The sensitivity is calculated using finite difference (central relative difference).
 

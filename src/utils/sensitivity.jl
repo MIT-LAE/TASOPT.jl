@@ -236,7 +236,7 @@ end
     **Outputs:**
     - The function returns the finite difference
 """
-function central_diff_run(eps, par, model_state)
+function central_diff_run(eps, par, model_state; optimizer=false)
     field_path, index = par
     # Get property from default model
     x = getNestedProp(model_state, field_path, index)
@@ -251,13 +251,20 @@ function central_diff_run(eps, par, model_state)
         push!(f, f_out)
     end
     if typeof(x_both[1]) == Vector{Float64} || typeof(x_both[2]) == Vector{Float64}
-        @warn  "Specific range of values given ... returning vector of sensitivities "
+        
         vecSens = []
         for (idx, each_x) in enumerate(x_both[1])
             fd_i =  (f[1] - f[2]) / (x_both[1][idx] - x_both[2][idx])
             push!(vecSens, fd_i)
         end
-        return vecSens
+        if optimizer
+            return sum(vecSens)/size(vecSens)[1]
+            
+        else
+            @warn  "Specific range of values given ... returning vector of sensitivities "
+            return vecSens
+        end
+        # 
     else
         return (f[1] - f[2]) / (x_both[1] - x_both[2])
     end
@@ -271,7 +278,7 @@ end
     - `sensitivities`: List of caclulated sensitivities
     - `output_file`: File location of the plot figure
 """
-function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.png")
+function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.svg")
     fig, ax = subplots(dpi=300)
 
     # Store the y-axis positions
@@ -323,7 +330,7 @@ end
     **Outputs:**
     - The function returns the finite difference of each input param in a vector.  
 """
-function get_sensitivity(input_params; model_state=nothing, eps=1e-5)
+function get_sensitivity(input_params; model_state=nothing, eps=1e-5, optimizer=false)
     if isnothing(model_state)
         @info "Aircraft model not provided. Using Default sized model"
         model_state = load_default_model()
@@ -332,7 +339,7 @@ function get_sensitivity(input_params; model_state=nothing, eps=1e-5)
     params = map(p -> format_params(expr_to_string(p)), input_params)
     fd_array = []
     for param in params
-        finite_diff = central_diff_run(eps, param, model_state)
+        finite_diff = central_diff_run(eps, param, model_state; optimizer=optimizer)
         push!(fd_array, finite_diff)
     end
     return fd_array
