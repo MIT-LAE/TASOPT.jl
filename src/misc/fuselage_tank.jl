@@ -13,15 +13,6 @@ $TYPEDFIELDS
     """Weight of fuel in one tank (N)"""
     Wfuelintank::Float64 = 0.0
 
-    """Fuselage radius (m)"""
-    Rfuse::Float64 = 0.0
-    """Lower bubble downward shift (m)"""
-    dRfuse::Float64 = 0.0
-    """Horizontal shift of lateral bubble (m)"""
-    wfb::Float64 = 0.0
-    """Number of fuselage webs"""
-    nfweb::Int64 = 0
-    """Tank fuselage clearance (m)"""
     clearance_fuse::Float64 = 0.0
 
     """Vector with insulation layer thickness (m)"""
