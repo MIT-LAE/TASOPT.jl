@@ -4,21 +4,12 @@ function printBADA(io, name, W0, maxalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS,
     sing = sin(γdes)
     kts_to_ft = 1.68781
 # Flight levels to output in BADA file:
-    if wide
-        FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+    FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
         30 ,   40 ,   60 ,   80 ,  100 , 
         120 ,  140 ,  160 ,  180 ,  200 ,
         220 ,  240 ,  260 ,  280 ,  290 , 
         310 ,  330 ,  350 ,  370 ,  390 ,
-        410, 430, 431])
-    else
-        FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
-            30 ,   40 ,   60 ,   80 ,  100 , 
-            120 ,  140 ,  160 ,  180 ,  200 ,
-            220 ,  240 ,  260 ,  280 ,  290 , 
-            310 ,  330 ,  350 ,  370 ,  390 ,
-            410])
-    end
+        410])
 
     maxalt = maxalt/ft_to_m  #idk why but AEIC subtracts 7000 ft
 
@@ -55,6 +46,16 @@ function printBADA(io, name, W0, maxalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS,
         iin = findall(x->x ≈ FL[i], FLin)[1]
         if FL[i]≥ 60 && FL[i]≤410
 
+            # For AEIC ingestion
+            if crzf[1, iin] == 0.0
+                crzf[1, iin] = crzf[1, iin-1]
+            end
+            if crzf[2, iin] == 0.0
+                crzf[2, iin] = crzf[1, iin]
+            end
+            if crzf[3, iin] == 0.0
+                crzf[3, iin] = crzf[2, iin]
+            end
             # For AEIC ingestion
             if crzf[1, iin] == 0.0
                 crzf[1, iin] = crzf[1, iin-1]
