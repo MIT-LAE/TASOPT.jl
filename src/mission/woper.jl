@@ -44,7 +44,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
     # Calculates surface velocities, boundary layer, wake 
-    fusebl!(pari, parg, para, parm, ipcruise1)
+    fusebl!(ac.fuselage, parm, para, ipcruise1)
 
 #---- assume K.E., dissipation, drag areas will be the same for all points
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
@@ -239,7 +239,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     set_ambient_conditions!(ac, ipcruise1)
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, false)
+    time_propsys += mission!(pari, parg, parm, para, pare, ac.fuselage, false)
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------

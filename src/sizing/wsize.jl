@@ -1439,7 +1439,7 @@ function wsize(ac; itermax=35,
     balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
     
     if saveODperf
-        if ac.description == "77W"
+        if ac.aircraft_type == 2 || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
                 
             open("B77W.LTO", "w") do f
                 LTO("B77W__", ac; fileout = f)
@@ -1478,7 +1478,7 @@ function wsize(ac; itermax=35,
             
             # If initwgt == 1 (no optimization) also export to BADA
             if (initwgt == 1)
-                if parg[8] < parg[7]
+                if ac.parg[igWfmax] < ac.parg[igWfuel]
                     println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
                 else
                     open("B77W__.PTF", "w") do f
@@ -1489,7 +1489,12 @@ function wsize(ac; itermax=35,
                 end
             end
         else
-            
+                if ac.aircraft_type == 1 || lowercase(string(ac.aircraft_type)) == "narrow body aircraft"
+                    println("Using $(ac.aircraft_type) for LTO calculations")
+                else 
+                    @warn "Aircraft type not valid: Using Narrow body to calculate LTO/BADA output"
+                end
+
                 open("B738__.LTO", "w") do f
                     LTO("B738__", ac; fileout = f)
                 end
@@ -1526,7 +1531,7 @@ function wsize(ac; itermax=35,
                 
                 # If initwgt == 1 (no optimization) also export to BADA
                 if (initwgt == 1)
-                    if parg[8] < parg[7]
+                    if ac.parg[igWfmax] < ac.parg[igWfuel]
                         println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
                     else
                         open("B738__.PTF", "w") do f

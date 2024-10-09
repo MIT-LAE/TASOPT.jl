@@ -147,7 +147,7 @@ function odperf!(ac, W, FL, Ldebug)
             Wf = W - Wzero
             rfuel = Wf/ac.parg[igWfuel]*0
             itrim = 1
-            balance(ac.pari, ac.parg, view(ac.parad, :, ip), rfuel, rpay, ξpay, itrim)
+            balance(ac.pari, ac.parg, view(ac.parad, :, ip), ac.fuselage, rfuel, rpay, ξpay, itrim)
             
             # Calculate Drag
             if (i == 1)
@@ -312,7 +312,7 @@ function odperf!(ac, W, FL, Ldebug)
 
             #Trim aircraft
             itrim = 1
-            balance(ac.pari, ac.parg, view(ac.parad, :, ip), rfuel, rpay, ξpay, itrim)
+            balance(ac.pari, ac.parg, view(ac.parad, :, ip), ac.fuselage, rfuel, rpay, ξpay, itrim)
             icdfun = 1
 
             # printstyled(@sprintf("%9.4e  %9.4e n", FL[i], crzTAS[i]); color =:light_red)

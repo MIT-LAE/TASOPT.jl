@@ -11,6 +11,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 # Fields:
 - `name::String` : Aircraft name (eg: "Boeing 777")      
 - `description::String` : A brief description of the aircraft
+- `aircraft_type::String` : Type of aircraft (Narrow body/ Wide body/ Regional)
 - `pari::AbstractVector{Int64}` : integer flag parameters               
 - `parg::AbstractArray{Float64}` : Geometry parameters                   
 - `parm::AbstractArray{Float64}` : Mission parameters                    
@@ -23,6 +24,7 @@ For devs: the indices for accessing specific data are defined in `/src/misc/inde
 Base.@kwdef struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
+    aircraft_type::String = "Indescribable"
     pari::AbstractVector{Int64}
     parg::AbstractVector{Float64}
     parm::AbstractArray{Float64}
@@ -41,10 +43,10 @@ end
 #         return aircraft(name, description, pari, parg, parm, para, pare, [false])
 # end
 # #constructor for if fuse_tank not given
-function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
+function aircraft(name::String, description::String, aircraft_type::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
+        return aircraft(name, description, aircraft_type::String, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
 end
 
 
@@ -64,6 +66,7 @@ function Base.summary(ac::aircraft)
     println("\n----- TASOPT model summary -----")
     println(ac.name)
     println(ac.description)
+    println(ac.aircraft_type)
     geometry(ac)
     weight_buildup(ac)
     aero(ac)
@@ -71,6 +74,7 @@ end
 function Base.show(io::IO, ac::aircraft)
     print(io, 
     """Name: $(ac.name);
+    Type: $(ac.aircraft_type)
     Wpay = $(round(ac.parm[imWpay]/1e3, sigdigits = 3)) kN
     Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
