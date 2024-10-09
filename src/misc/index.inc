@@ -598,7 +598,8 @@
       iadCDBLIf = 62
       iadCDBLIw = 63
       iaROC     = 64
-      iatotal   = 64 
+      iaROCdes  = 65
+      iatotal   = 65 
 
 #---- indices for engine variables at each mission point
       iehfuel =   1

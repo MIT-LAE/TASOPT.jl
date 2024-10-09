@@ -304,6 +304,8 @@ function wsize(ac; itermax=35,
     pare[ietcathode,:] .= 250e-6
     pare[ieVstack,:] .= 200.0
 
+    para[iaROCdes, ipclimb1:ipclimbn] .= 500 * ft_to_m / 60
+
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------

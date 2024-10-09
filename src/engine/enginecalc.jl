@@ -95,10 +95,35 @@ function enginecalc!(ac, case, engine_type, ip, initeng, iterw = 0)
             poweroper!(ac, engine_type, ip)
 
         else
-            if ip in range(ipstatic, ipclimbn)
+            if ip in range(ipstatic, ipcutback)
                 icall = 1
+
+            elseif ip in range(ipclimb1, ipclimbn)
+                icall = 2
+
+                neng = parg[igneng]
+                WMTO = parg[igWMTO]
+                S = parg[igS]
+                DoL = para[iaCD, ip] / para[iaCL, ip]
+                W = para[iafracW, ip] * WMTO
+                BW = W + para[iaWbuoy, ip]
+                CL = para[iaCL, ip]
+                ρ = pare[ierho0, ip]
+                #Ftotal = BW * (DoL + para[iagamVdes, ip])
+                ROC = para[iaROCdes, ip]
+
+                #Solve with numerical & analytical solution
+                f(γ) = ROC - sin(γ) * sqrt(2*BW*cos(γ) / (ρ*S*CL))
+                γ = find_zero(f, para[iagamV, ip])
+                A = sin(γ)
+                B = DoL
+                ϕ = (sqrt(-A^2*B^6 - 2*A^2*B^4 - A^2*B^2 + B^6 + 2*B^4 + B^2) + A*B^2 + A)/(B^2 + 1)
+                Ftotal = BW * ϕ
+                pare[ieFe, ip] = Ftotal / neng
+
             else
                 icall = 2
+
             end
 
             ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
