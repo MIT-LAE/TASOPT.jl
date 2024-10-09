@@ -320,12 +320,6 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             Wpay = parg[igWpay]
             neng = parg[igneng]
 
-            dgamV = 1.0
-            Ftotal = 0.0
-            DoL = 0.0
-            mdotf = 0.0
-            V = 0.0
-
             V = sqrt(2.0 * BW * cosg / (ρ * S * CL))
             Mach = V / Vsound
 
