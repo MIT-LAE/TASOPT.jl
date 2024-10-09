@@ -24,6 +24,15 @@ const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/
     phases::Int = 3
     """Phase resistance [Ω]"""
     phase_resistance::Float64 = 0.0
+    """Design current [A]"""
+    Id::Float64 = 0.0
+    """Design Voltage [V]"""
+    Vd::Float64 = 0.0
+    """Current [A]"""
+    I::Float64 = 0.0
+    """Voltage [V]"""
+    V::Float64 = 0.0
+
     """Pole pairs [-]"""
     N_pole_pairs::Int = 8
     """Max rotor tip speed [m/s]"""
@@ -36,6 +45,9 @@ const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/
     rB_sat::Float64 = 0.98
     """Stack length [m]"""
     l::Float64 = 1.0
+    """Mean internal temperature [K],
+     used to calculate air density and viscosity, and winding resistance"""
+    T::Float64 = 273.15 + 90
     """Thickness of air gap [m]"""
     airgap_thickness::Float64 = 2e-3
     """Pole pairs [-]"""
@@ -208,11 +220,12 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     end
 
     torque = design_power / motor.Ω
-    slot_current = J_max * windings.kpf * A_slot #Update to be peak current
+    slot_current = J_max * windings.kpf * A_slot #Peak slot current
     windings.N_turns = floor(windings.kpf * A_slot / windings.A_wire)
 
-    #Assume 2/3 phases excited at any given time, implicitly assumes 3 phase machine
-    force_length = (2 / 3 * motor.Nsp * 2 * motor.N_pole_pairs) * B_gap * slot_current
+    #Assume 2 phases excited at any given time
+    motor.I = motor.Id = (2 / motor.phases * motor.Nsp * 2 * motor.N_pole_pairs) * slot_current
+    force_length = motor.Id * B_gap 
     motor.l = torque / (force_length * radius_gap)
 
     #Size shaft
@@ -242,6 +255,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     #size_windings!()
 
     ## Calculate losses
+    windings.T = motor.T # Set temperature
     motor.phase_resistance = motor.Nsp / motor.phases * 2 * motor.N_pole_pairs *
                              slot_resistance(motor.windings,
                                  windings.kpf * A_slot,
@@ -253,15 +267,23 @@ end  # function size_PMSM!
 """
 """
 function calculate_losses(EM::Motor)
-
+    Q_ohmic = ohmic_loss(EM.I, EM.phase_resistance)
+    Q_core = core_loss(EM)
+    Q_wind = windage_loss(EM)
+    return Q_ohmic + Q_core + Q_wind
 end  # function calculate_losses
 
 """
+
+Returns the power dissipated due to resistive heating assuming a certain 
+number of phases are energized at any given time. 
 """
 function ohmic_loss(I::AbstractFloat, phase_resistance::AbstractFloat;
     energized_phases::Int=2)
     return I^2 * (energized_phases * phase_resistance)
 end  # function ohmic_loss
+
+core_loss(motor) = hysteresis_loss(motor) + eddy_loss(motor)
 
 """
 """
@@ -285,7 +307,13 @@ end  # function eddy_loss
     
 """
 """
-end
+function windage_loss(motor::Motor, air)
+    #air from IdealGases?
+    Re = motor.Ω * motor.radius_gap * motor.airgap_thickness * air.ρ/air.μ
+    Cf = 0.0725*Re^-0.2 #avg. skin friction approx. from fully turbulent flat plate
+    return Cf*π*air.ρ*motor.Ω^3 * motor.radius_gap^4 * motor.l
+end  # function windage_loss
+
 function slot_resistance(wind::Windings, A, l)
     resist = resistivity(wind.conductor, wind.T)
     return resist * l / A
@@ -315,6 +343,7 @@ function size_rotor!(rotor::RotorGeometry, R_gap::AbstractFloat)
 end  # function size_rotor!
 
 """
+    airgap_flux(M, thickness, airgap)
 
 Given the magnetization constant (M), thickness of the magnet, and the 
 air gap thickness, returns the flux density in the air gap. 
