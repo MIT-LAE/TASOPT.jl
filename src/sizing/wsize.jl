@@ -1578,7 +1578,7 @@ function wsize(ac; itermax=35,
                 if parg[8] < parg[7]
                     println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
                 else
-                    open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B77W__.PTF", "w") do f
+                    open("B77W__.PTF", "w") do f
                     printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
                     V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
                     hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; wide = true)
@@ -1617,8 +1617,8 @@ function wsize(ac; itermax=35,
                 W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
                 open("B738__.PTF", "w") do f
                     printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
-                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
                 end
                 
                 # If initwgt == 1 (no optimization) also export to BADA
@@ -1626,33 +1626,22 @@ function wsize(ac; itermax=35,
                     if parg[8] < parg[7]
                         println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
                     else
-                        open("/home/aditeya/SM_Thesis/PW_EEI/AEIC/Model_Files/BADA/B738__.PTF", "w") do f
-                        printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
-                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
-                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax)
+                        open("B738__.PTF", "w") do f
+                            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = false, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                        end
+                        
+                        open("B738_modified__.PTF", "w") do f
+                            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
                         end
                     end
                 end
             
         end
     end
-        # open("B738__NOx.PTF", "w") do f
-        #     printBADA(f, "B738__NOx", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
-        #     V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom.*60.0.*clmbEINOxnom,
-        #     hcat(crzmdotflo*60 .*crzEINOxlo, crzmdotfnom*60 .*crzEINOxnom, crzmdotfhigh*60 .*crzEINOxhigh)', crzTASlo, FL, Wpay; NOx = true)
-        # end
-        
-        # open("B738__.OPF", "w") do f
-        #     cruisechar(f, "B738", W/parg[igWMTO], para[iaMach, ipcruise1], FL, V0slo,
-        #      hcat(FFmaxcrzhigh, FFmaxcrznom, FFmaxcrzlo)',
-        #      hcat(crzmdotfhigh, crzmdotfnom, crzmdotflo)',
-        #      hcat(ROCmaxhigh, ROCmaxnom, ROCmaxlo)',
-        #      hcat(EGThigh, EGTnom, EGTlo)',
-        #      hcat(Tt4crzhigh, Tt4crznom, Tt4crzlo)',
-        #      hcat(Tt4crzmaxhigh, Tt4crzmaxnom, Tt4crzmaxlo)',
-        #      hcat(crzFARhigh, crzFARnom, crzFARlo)')
-        # end
-    # end
 end
 
 """
