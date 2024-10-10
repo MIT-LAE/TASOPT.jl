@@ -205,7 +205,15 @@ macro define_gas_method(func_name, gas_name)
     func_symbol = esc(func_name)
     gas_symbol = esc(gas_name)
     return quote
-        $func_symbol(t1) = $func_symbol(t1, $gas_symbol.t, $gas_symbol.tl, $gas_symbol.cp, $gas_symbol.cpt, $gas_symbol.h, $gas_symbol.s)
+        $func_symbol(t1) = $func_symbol(
+            t1,
+            $gas_symbol.t,
+            $gas_symbol.tl,
+            $gas_symbol.cp,
+            $gas_symbol.cpt,
+            $gas_symbol.h,
+            $gas_symbol.s,
+        )
     end
 end
 
@@ -257,8 +265,17 @@ end
 """
 Helper function that returns the thermo properties by table interpolation
 """
-function get_thermo(r::T, hform::T, t1::T, t::Vector{T}, tl::Vector{T},
-    cp::Vector{T}, cpt::Vector{T}, h::Vector{T}, s::Vector{T}) where {T<:AbstractFloat}
+function get_thermo(
+    r::T,
+    hform::T,
+    t1::T,
+    t::Vector{T},
+    tl::Vector{T},
+    cp::Vector{T},
+    cpt::Vector{T},
+    h::Vector{T},
+    s::Vector{T},
+) where {T<:AbstractFloat}
 
     i, im, dt, f = findsegment(t1, t)
 
@@ -267,20 +284,21 @@ function get_thermo(r::T, hform::T, t1::T, t::Vector{T}, tl::Vector{T},
     A = 1.0 - f
     B = 1.0 - fl
     #- - - - - - - - - - -
-    s1 = B * s[im] +
-         fl * s[i] +
-         fl * B * (B * (dtl * cp[im] - s[i] + s[im]) -
-                   fl * (dtl * cp[i] - s[i] + s[im]))
+    s1 =
+        B * s[im] +
+        fl * s[i] +
+        fl * B * (B * (dtl * cp[im] - s[i] + s[im]) - fl * (dtl * cp[i] - s[i] + s[im]))
 
-    h1 = hform + A * h[im] +
-         f * h[i] +
-         f * A * (A * (dt * cp[im] - h[i] + h[im]) -
-                  f * (dt * cp[i] - h[i] + h[im]))
+    h1 =
+        hform +
+        A * h[im] +
+        f * h[i] +
+        f * A * (A * (dt * cp[im] - h[i] + h[im]) - f * (dt * cp[i] - h[i] + h[im]))
 
-    cp1 = A * cp[im] +
-          f * cp[i] +
-          f * A * (A * (dt * cpt[im] - cp[i] + cp[im]) -
-                   f * (dt * cpt[i] - cp[i] + cp[im]))
+    cp1 =
+        A * cp[im] +
+        f * cp[i] +
+        f * A * (A * (dt * cpt[im] - cp[i] + cp[im]) - f * (dt * cpt[i] - cp[i] + cp[im]))
 
     r1 = r
     #- - - - - - - - - - -
