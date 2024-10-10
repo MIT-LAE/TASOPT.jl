@@ -113,7 +113,7 @@ function wsize(ac; itermax=35,
     #Typical payload
     Wpay = parm[imWpay]
 
-    Wpaymax = parg[igWpaymax] # Max payload
+    Wpaymax = parg[igWpaymax] # Max payload in offdesign mission (used to size structures)
     # if Wpay or Wpaymax is unset
     if (Wpaymax == 0)
         println("Max payload weight was not set, setting Wpaymax = Wpay")
@@ -631,7 +631,7 @@ function wsize(ac; itermax=35,
             xftank_fuse = 0.0
             Wftank_single = 0.0
         end
-        
+        #Note that fuselage is sized for a maximum payload weight in off-design missions
         parg[igcabVol] = fusew!(fuse, Nland, Wpaymax, Wengtail, 
              nftanks,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
