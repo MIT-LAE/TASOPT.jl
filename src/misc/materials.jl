@@ -6,7 +6,7 @@ module materials
 
 using TOML, DocStringExtensions
 
-export StructuralAlloy, Conductor, Insulator
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator, thermal_conductivity
 
 __abs_path_prefix__ = dirname(@__DIR__)
 MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
@@ -18,7 +18,7 @@ Generic structural alloy.
 
 $TYPEDFIELDS
 """
-@kwdef struct StructuralAlloy
+@kwdef mutable struct StructuralAlloy
     """Name"""
     name::String = ""
     """Density [kg/m³]"""
@@ -196,6 +196,72 @@ function resistivity(cond::Conductor, T::Float64=293.15)
     ΔT = T - cond.T0
     return cond.resistivity*(1 + cond.α*ΔT)
 end  # function resistivity
+
+"""
+$TYPEDEF
+
+Generic thermal insulator.
+
+$TYPEDFIELDS
+"""
+@kwdef struct ThermalInsulator 
+    """Name"""
+    name::String = ""
+    """Density [kg/m³]"""
+    ρ::Float64 = 0.0
+    """Coefficients for thermal conductivity as a function of temperature [W/(m⋅K)]"""
+    conductivity_coeffs::Vector{Float64} = ""
+end
+
+"""
+    ThermalInsulator(material::String)
+
+Outer constructor for `ThermalInsulator` types. 
+Material specified needs to have the following data in the database:
+- ρ (density): Density [kg/m³]
+- conductivity (thermal conductivity): a string with the thermal conductivity as a function of `T` [W/(m⋅K)]
+"""
+function ThermalInsulator(material::String)
+    local MatProp, ρ, cond_coeffs
+    try
+        MatProp = MaterialProperties[material]
+    catch
+        error("Cannot find $material in Material Properties database")
+    else
+        try
+            ρ = MatProp["density"]
+            cond_coeffs = MatProp["conductivity_coeffs"]
+
+        catch 
+            error("Insufficient data in database for $material to build a ThermalInsulator")
+        else
+            ThermalInsulator(material, ρ, cond_coeffs)
+        end
+    end
+
+end
+
+"""
+    thermal_conductivity(material::ThermalInsulator, T::Float64)
+
+This function evaluates a thermal conductivity polynomial.
+      
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `material::ThermalInsulator`: material object`
+      - `T::Float64`: temperature (K)
+
+      **Outputs:**
+      - `k::Float64`: thermal conductivity ([W/(m⋅K)]).
+"""
+function thermal_conductivity(material::ThermalInsulator, T::Float64)
+    coeffs = material.conductivity_coeffs
+    k = 0.0
+    for i = 1:length(coeffs)
+        k += coeffs[i] * T^(i-1)
+    end
+    return k
+end
 
 """
     create_dict(material)

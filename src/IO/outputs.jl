@@ -192,7 +192,9 @@ end
 like [`plot_details`](@ref) to create summary plots to track progress of optimization
 or present results.
 """
-function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
+function stickfig(ac::aircraft; ax = nothing, label_fs = 16, 
+    annotate_text = true, annotate_length = true, annotate_group = true, show_grid = false)
+
     pari = ac.pari
     parg = ac.parg
     @views pare = ac.pare[:,:,1]
@@ -474,6 +476,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
     if ax === nothing
         # plt.style.use(["../miscellaneous/prash.mplstyle"]) # HACK
         fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
+        fig.subplots_adjust(right=0.75)
     else
         ax.cla()
     end
@@ -553,8 +556,8 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
             tanL = tan(wing.layout.sweep*π/180.0)
             @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
-            xlocations = hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...) #hcat is to avoid this being an array of arrays
-            ylocations = hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...)
+            xlocations = vec(hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)) #hcat is to avoid this being an array of arrays
+            ylocations = vec(hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...))
             ax.plot(xlocations, ylocations, color = "r", linewidth = 1.5)
 
         # Plot NP and CG range
@@ -581,53 +584,61 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16)
 
 
     # Annotations
-    ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
-     fontsize = label_fs, ha="left", va="top")
-
-    yloc = -20
-    ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
-            fontsize=16, ha="center", va="bottom",
-            arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
-             zorder = 30)
-    ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
-
-    # Span annotations:
-    codeD = true
-    codeE = false
-    xcodeD = -2.0
-    xcodeE = -3.5
-        if codeD
-            # ICAO code D 
-            bmaxD = 36
-            ax.vlines(xcodeD, -bmaxD/2, bmaxD/2, lw = 5, alpha = 0.2, color = "y")
-            ax.hlines( bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
-            ax.hlines(-bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
-            ax.text(20, bmaxD/2+1, "ICAO Code D/ FAA Group III", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
-        end
-        if codeE
-            # ICAO code E
-            bmaxE = 52
-            ax.vlines(xcodeE, -bmaxE/2, bmaxE/2, lw = 5, alpha = 0.2, color = "b")
-            ax.hlines( bmaxE/2, xcodeE, 40.0, lw = 5, alpha = 0.2, color = "b")
-            ax.hlines(-bmaxE/2, xcodeE, 40.0, lw = 5, alpha = 0.2, color = "b")
-            ax.text(20, bmaxE/2+1, "ICAO Code E/ FAA Group IV", color = "b", alpha = 0.5, fontsize = 12, ha="center", va="center")
-        end
-
-    if codeE
-        ax.set_ylim(min(-27, -b/2.0), max(27, b/2.0))
-    elseif codeD
-        ax.set_ylim(min(-23, -b/2.0),max(23, b/2.0))
-    else
-        ax.set_ylim(min(-20, -2b/2.0), max(20, b/2.0))
+    if annotate_text
+        ax.text(1.05, 0.75, transform=ax.transAxes, @sprintf("PFEI = %5.3f\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f t\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
+        parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+        fontsize = label_fs, ha="left", va="top")
     end
+    if annotate_length
+        yloc = -20
+        ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
+                fontsize=16, ha="center", va="bottom",
+                arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
+                zorder = 30)
+        ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
+    end
+    # Span annotations:
+    groups, bmax = find_aerodrome_code(parg[igbmax]) #Find ICAO and FAA groups as well as max span
+    xcode = -2.0
+
+    if annotate_group
+        ax.vlines(xcode, -bmax/2, bmax/2, lw = 5, alpha = 0.2, color = "y")
+        ax.hlines( bmax/2, xcode, 40.0, lw = 5, alpha = 0.2, color = "y")
+        ax.hlines(-bmax/2, xcode, 40.0, lw = 5, alpha = 0.2, color = "y")
+        ax.text(20, bmax/2+1, "ICAO Code $(groups[1])/ FAA Group $(groups[2])", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
+    end
+    ax.set_ylim(-1.2*bmax/2, 1.2*bmax/2)
+
     ax.set_aspect(1)
     ax.set_ylabel("y[m]")
     ax.set_xlabel("x[m]")
     plt.tight_layout()
     # ax.legend()
 
+    if show_grid
+        ax.grid()
+    end
+
     return ax
+end
+
+"""
+    find_aerodrome_code(b)
+
+`find_aerodrome_code` finds the airport code corresponding to a given aircraft wingspan. It returns 
+the codes in the ICAO and FAA formats, as well as the maximum wingspan for these codes.
+"""
+function find_aerodrome_code(b::Float64)
+    max_bs = sort(collect(keys(aerodrome_codes)))
+    idx = 1
+    for cand_maxb in max_bs
+        if b >= cand_maxb 
+            idx += 1
+        end
+    end
+    maxb = max_bs[idx]
+    groups = aerodrome_codes[maxb]
+    return groups, Float64(maxb)
 end
 
 """
