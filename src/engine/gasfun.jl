@@ -1,5 +1,7 @@
 using Zygote
 
+include("gasdata.jl")
+
 """
     gasfun(igas, t)
 
