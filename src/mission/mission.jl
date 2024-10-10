@@ -42,10 +42,6 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       # ipc1 = 0
       ipc1 = 0 # HACK
 
-      itergmax::Int64 = 15
-      gamVtol = 1.0e-12
-      #     gamVtol  = 1.0e-10
-
       # unpack flags
       # iengloc = pari[iiengloc]
       # ifclose = pari[iifclose]
@@ -324,75 +320,46 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             Wpay = parg[igWpay]
             neng = parg[igneng]
 
-            dgamV = 1.0
-            Ftotal = 0.0
-            DoL = 0.0
-            mdotf = 0.0
-            V = 0.0
+            V = sqrt(2.0 * BW * cosg / (ρ * S * CL))
+            Mach = V / Vsound
 
-            if (Ldebug)
-                  printstyled(@sprintf("\t%5s  %10s  %10s  %10s  %10s  %10s  %10s  %10s \n",
-                              "iterg", "dgamV", "gamV", "cosg", "BW", "Ftotal", "DoL", "V"); color=:light_green)
+            para[iaMach, ip] = Mach
+            para[iaReunit, ip] = V * ρ / μ
+
+            pare[ieu0, ip] = V
+            pare[ieM0, ip] = Mach
+
+            # Set pitch trim by adjusting CLh
+            Wf = W - Wzero
+            rfuel = Wf / parg[igWfuel]
+            itrim = 1
+            balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+
+            if (ip == ipclimb1)
+                  icdfun = 0 #use explicitly specified wing cdf, cdp
+            else
+                  icdfun = 1 #use airfoil database
             end
+            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
 
+            icall = 1
+            icool = 1
 
-            @inbounds for iterg = 1:itergmax
-                  V = sqrt(2.0 * BW * cosg / (ρ * S * CL))
-                  Mach = V / Vsound
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
 
-                  para[iaMach, ip] = Mach
-                  para[iaReunit, ip] = V * ρ / μ
+            Ftotal = pare[ieFe, ip] * parg[igneng]
+            TSFC = pare[ieTSFC, ip]
+            DoL = para[iaCD, ip] / para[iaCL, ip]
 
-                  pare[ieu0, ip] = V
-                  pare[ieM0, ip] = Mach
+            # Calculate improved flight angle
+            ϕ = Ftotal / BW
+            sing = (ϕ - DoL * sqrt(1.0 - ϕ^2 + DoL^2)) / (1.0 + DoL^2)
+            gamV = asin(sing)
+            cosg = sqrt(1.0 - sing^2)
+            # gamV = atan(sing, cosg)
 
-                  # Set pitch trim by adjusting CLh
-                  Wf = W - Wzero
-                  rfuel = Wf / parg[igWfuel]
-                  itrim = 1
-                  balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
-
-                  if (ip == ipclimb1)
-                        icdfun = 0 #use explicitly specified wing cdf, cdp
-                  else
-                        icdfun = 1 #use airfoil database
-                  end
-                  cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
-
-                  icall = 1
-                  icool = 1
-
-                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
-
-                  Ftotal = pare[ieFe, ip] * parg[igneng]
-                  TSFC = pare[ieTSFC, ip]
-                  DoL = para[iaCD, ip] / para[iaCL, ip]
-
-
-                  # Calculate improved flight angle
-                  ϕ = Ftotal / BW
-                  sing = (ϕ - DoL * sqrt(1.0 - ϕ^2 + DoL^2)) / (1.0 + DoL^2)
-                  gamV = asin(sing)
-                  cosg = sqrt(1.0 - sing^2)
-                  # gamV = atan(sing, cosg)
-
-                  dgamV = gamV - para[iagamV, ip]
-
-                  para[iagamV, ip] = gamV
-                  para[iaROC, ip] = sing * V * 60 / ft_to_m #ft per min
-                  if (Ldebug)
-                        printstyled(@sprintf("\t%5d  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e  %9.4e\n",
-                                    iterg, abs(dgamV), gamV * 180 / π, cosg, BW, Ftotal, DoL, V); color=:light_green)
-                  end
-
-                  if (abs(dgamV) < gamVtol)
-                        break
-                  end
-            end
-
-            if (abs(dgamV) > gamVtol)
-                  println("Climb gamV not converged")
-            end
+            para[iagamV, ip] = gamV
+            para[iaROC, ip] = sing * V * 60 / ft_to_m #ft per min
 
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
