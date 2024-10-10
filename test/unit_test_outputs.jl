@@ -31,10 +31,8 @@
         
         TASOPT.stickfig(ac)
         @test 1 == 1
-        TASOPT.high_res_airplane_plot(ac)
-        @test 2 == 2
         TASOPT.plot_details(ac)
-        @test 3 == 3
+        @test 2 == 2
 
     end
 

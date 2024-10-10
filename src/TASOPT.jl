@@ -38,7 +38,7 @@ export convertMass, convertForce, convertDist,
 include("./misc/index.inc")
 include(joinpath(__TASOPTroot__,"misc/materials.jl"))
 using .materials
-export StructuralAlloy, Conductor, Insulator
+export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 include(__TASOPTindices__)
 
@@ -52,7 +52,6 @@ include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
-include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
 
 #Use above modules
 using .atmosphere
@@ -60,11 +59,16 @@ using .aerodynamics
 using .structures
 using .propsys
 using .engine
-using .CryoTank
+
 
 #Load other functions
+include("./misc/fuselage_tank.jl")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
+
+#Include cryogenic tanks after loading Fuselage and fuselage_tank
+include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
+using .CryoTank
 
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
@@ -88,8 +92,10 @@ include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
+include(joinpath(__TASOPTroot__,"utils/sensitivity.jl"))
 
 export size_aircraft!
+
 
 #------------------------------------------------------
 #End imports/loading files

@@ -68,6 +68,21 @@ function Base.getproperty(obj::SingleBubble, sym::Symbol)
         return 0.0
     elseif sym === :web_thickness
         return 0.0
+    elseif sym === :perimeter
+        return get_perimeter(obj)
+    elseif sym === :area
+        return area(obj)
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
+#Return area and perimeter of multi bubble
+function Base.getproperty(obj::MultiBubble, sym::Symbol)
+    if sym === :perimeter
+        return get_perimeter(obj)
+    elseif sym === :area
+        return area(obj)
     else
         return getfield(obj, sym)
     end
@@ -158,6 +173,59 @@ end
     x::Float64 = 0
     """Z location of wing"""
     z::Float64 = 0
+end
+
+"""
+    scaled_cross_section(cross_section::SingleBubble, R::Float64)
+
+Calculates the geometric properties of a scaled single-bubble cross section.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `cross_section::SingleBubble`: unscaled fuselage cross-section
+    - `R::Float64`: radius of geometrically-similar cross-section (m)
+
+    **Outputs:**
+    - `p::Float64`: perimeter
+    - `A::Float64`: cross-sectional area (m^2)
+"""
+function scaled_cross_section(cross_section::SingleBubble, R::Float64)
+    scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
+    #Scale geometric parameters 
+    R_Rprev = R/cross_section.radius
+
+    #Scale geometric parameters
+    scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
+    scaled_cs.bubble_lower_downward_shift = R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
+
+    return get_perimeter(scaled_cs), area(scaled_cs)
+end
+
+"""
+    scaled_cross_section(cross_section::MultiBubble, R::Float64)
+
+Calculates the geometric properties of a scaled multi-bubble cross section.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `cross_section::MultiBubble`: unscaled fuselage cross-section
+    - `R::Float64`: radius of geometrically-similar cross-section (m)
+
+    **Outputs:**
+    - `p::Float64`: perimeter
+    - `A::Float64`: cross-sectional area (m^2)
+"""
+function scaled_cross_section(cross_section::MultiBubble, R::Float64)
+    scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
+    #Scale geometric parameters 
+    R_Rprev = R/cross_section.radius #Radii ratio
+
+    #Scale geometric parameters
+    scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
+    scaled_cs.bubble_lower_downward_shift = R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
+    scaled_cs.bubble_center_y_offset = R_Rprev * cross_section.bubble_center_y_offset
+
+    return get_perimeter(scaled_cs), area(scaled_cs)
 end
 
 """
