@@ -100,21 +100,21 @@ $TYPEDFIELDS
     """Cross section definition"""
     cross_section::AbstractCrossSection = SingleBubble()
     """Thickness of webs """
-    thickness_webs::Float64 = 0 #nfwebs
+    thickness_webs::Float64 = 0
     """X position of nose [m]"""
-    x_nose::Float64  = 0# = ac.parg[igxnose] #xnose
+    x_nose::Float64  = 0
     """X position of pressure shell forward [m]"""
-    x_pressure_shell_fwd::Float64 = 0# = ac.parg[igxshell1] #xshell1
+    x_pressure_shell_fwd::Float64 = 0
     """X position of pressure shell aft [m]"""
-    x_pressure_shell_aft::Float64 = 0# = ac.parg[igxshell2] #xshell2
+    x_pressure_shell_aft::Float64 = 0
     """X position of cylinder start [m]"""
-    x_start_cylinder::Float64 = 0# = ac.parg[igxblend1] #xblend1
+    x_start_cylinder::Float64 = 0
     """X position of cylinder end [m]"""
-    x_end_cylinder::Float64 = 0# = ac.parg[igxblend2] #xblend2
+    x_end_cylinder::Float64 = 0
     """X position of fuselage cone end [m]"""
-    x_cone_end::Float64 = 0# = ac.parg[igxend] #xconeend
+    x_cone_end::Float64 = 0
     """X position of fuselage end [m]"""
-    x_end::Float64 = 0# = ac.parg[igxend] #xend
+    x_end::Float64 = 0
     """Tailcone taper (lambdac) [m]"""
     taper_tailcone::Float64 = 0# lambdac
     """Floor depth (depth of floor beams) [m]"""
@@ -146,6 +146,33 @@ function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     else
         return getfield(layout, sym)
     end
+end
+
+@kwdef mutable struct WingLayout
+    """Aspect Ratio [m]"""
+    AR::Float64 = 0 
+    """Sweep [degrees]"""
+    sweep::Float64 = 0
+    """ Wing Span [m]"""
+    b::Float64 = 0 
+    """Max Wing Span [m]"""
+    b_max::Float64 = 0 
+    """Wing chord at root """
+    chord::Float64 = 0
+    """Wing planform area (including fuselage carryover) [m^2]"""
+    S::Float64 = 0 
+    """Wing Box wing x to chord"""
+    box_width::Float64 = 0 
+    """web-height/hbox ratio"""
+    hweb_to_hbox::Float64 = 0 #igrh
+    """Spar box axis x/c location """
+    spar_box_x_c::Float64 = 0
+    """X position of wing box"""
+    box_x::Float64 = 0 
+    """X location of wing"""
+    x::Float64 = 0
+    """Z location of wing"""
+    z::Float64 = 0
 end
 
 """
@@ -242,25 +269,11 @@ Contains dimensions, heights, etc. to design a Wing
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct WingLayout
-    """Aspect Ratio [m]"""
-    AR::Float64 = 0
-    """Sweep [degrees]"""
-    sweep::Float64 = 0
-    """Wing Span [m]"""
+@kwdef mutable struct WingSectionLayout
+    """Wing Section Span [m]"""
     b::Float64 = 0
-    """Span of inner wing (break/"snag") [m]"""
-    b_inner::Float64 = 0
-    """Max Wing Span [m]"""
-    b_max::Float64 = 0
-    """Outer or "tip" taper ratio of chord"""
-    λt::Float64 = 0
-    """Inner or break/"snag" taper ratio of chord"""
-    λs::Float64 = 0
-    """Span fraction of inner wing break ("snag")"""
-    ηs::Float64 = 0
-    """Wing center box width [m]"""
-    box_width::Float64 = 0
-    """Wing planform area (including fuselage carryover) [m^2]"""
-    S::Float64 = 0
+    """Wing Section taper"""
+    λ::Float64 = 0 
+    """Chord Thickness"""
+    chord_thickness::Float64 = 0 
 end

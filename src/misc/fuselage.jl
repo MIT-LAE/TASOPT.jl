@@ -103,3 +103,7 @@ end
 # ac = load_default_model()
 # size_aircraft!(ac)
 # fuselage_autodiff(ac)
+
+# ac = load_default_model()
+# size_aircraft!(ac)
+# fuselage_autodiff(ac)
