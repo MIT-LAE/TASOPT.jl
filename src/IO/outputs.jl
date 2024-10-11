@@ -598,7 +598,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
     end
     # Span annotations:
-    groups, bmax = find_aerodrome_code(parg[igbmax]) #Find ICAO and FAA groups as well as max span
+    groups, bmax = find_aerodrome_code(wing.layout.b_max) #Find ICAO and FAA groups as well as max span
     xcode = -2.0
 
     if annotate_group
