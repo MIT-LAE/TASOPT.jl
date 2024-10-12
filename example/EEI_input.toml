@@ -8,9 +8,6 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
-    aircraft_type   = "Narrow Body Aircraft"     # 0: Regional Aircraft
-                                    # 1: Narrow Body Aircraft
-                                    # 2: Wide Body Aircraft
 
 #-------------------------------------------------#
 ##               Note on units                   ##
@@ -56,7 +53,6 @@
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
-    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
     tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
@@ -92,27 +88,27 @@
     outer_vessel_support_angles = ["45 deg", "135 deg"]
     
 [Mission]
-    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 5 # Number of missions to be modeled (first mission is the design mission)
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
                                 
-    range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
+    range = ["2940.0 nmi", "2000.0 nmi", "1500.0 nmi", "1000.0 nmi", "500.0 nmi"] # Design Range + second mission range
 
-    pax = [180, 150]                    # Number of passengers in each mission
+    pax = [174, 161, 161, 161, 161]                    # Number of passengers in each mission
                                         # weight per pax also specified (215 lbf/pax is std)
 
-    weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
+    weight_per_pax = "210.0 lbf"    # Specify weight per passenger - 
                                     # includes luggage [lbm or lbf or kg or N] 
                                     # judging you if you use imperial units but wtvs
 
-    fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
+    fuel_reserves = 0.15 # W_reserveFuel / W_fuelburned
 
     Nlift = 3.0 # Max vertical load factor for wing bending loads
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = ["0.0 ft", "500 ft"] 
-    takeoff_T = [288.2, 298.0]
+    takeoff_alt = 0.0
+    takeoff_T = 288.0
 
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
@@ -131,7 +127,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = ["35000.0 ft", "30e3 ft"]
+    cruise_alt  = "35000.0 ft"
     cruise_mach = 0.80
     cruise_CL   = 0.57
 
@@ -143,11 +139,12 @@
     cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
-    number_of_bubbles = 1  # SingleBubble or MultiBubble Designs
     radius = "77 in"       # Fuselage radius
     dRadius = "15 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "5.0 in" # depth of floor beams
+    Nwebs = 1              # number of webs (for double bubble designs)
+
     a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 2.0 # Tail radius = Rfuse*(1 - xi^b_tail)
     tailcone_taper = 0.3
@@ -161,10 +158,8 @@
     calculate_cabin_length = false 
 
     double_decker   = false #if true, the fuselage has two passenger decks
-    floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
-    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
@@ -191,23 +186,23 @@
 
 
 [Fuselage.Weights]
-    stringer = 0.35   # (Weight of stringers)/ Wskin
-    frame    = 0.25   # (Weight of frame)/ Wskin
+    stringer = 0.36   # (Weight of stringers)/ Wskin
+    frame    = 0.28   # (Weight of frame)/ Wskin
     additional = 0.20 # (Additional weight)/ Wskin
 
     fixed_weight = "3000 lbf" #cockpit, pilots etc
 
     window_per_length     = 435.0 #[N/m]
-    window_insul_per_area =  22.0 #[N/m2]
+    window_insul_per_area =  40.00000 #[N/m2]
     floor_weight_per_area =  60.0 #[N/m2]
 
-    HPE_sys_weight_fraction = 0.010 # W_HPEsys/WMTO
-    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
-    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
+    HPE_sys_weight_fraction = 0.013 # W_HPEsys/WMTO
+    LG_nose_weight_fraction = 0.012 # Wlgnose/WMTO
+    LG_main_weight_fraction = 0.045 # Wlgmain/WMTO
 
-    APU_weight_fraction = 0.035 # W_APU/W_payload
-    seat_weight_fraction = 0.10 # Wseats/W_payload
-    add_payload_weight_fraction = 0.35 # Additional payload proportional Wfrac
+    APU_weight_fraction = 0.05 # W_APU/W_payload
+    seat_weight_fraction = 0.13 # Wseats/W_payload
+    add_payload_weight_fraction = 0.38 # Additional payload proportional Wfrac
 
 [Fuselage.Aero]
     fuse_moment_volume_deriv = "2390.0 ft3" # d(Mfuse/q)/dCL
@@ -226,24 +221,24 @@
                       # 1: Wing cantilever with engine
     strut_braced_wing = false
 
-    sweep = 26.0 # wing sweep in degrees
-    AR    = 10.1
+    sweep = 25.016320 # wing sweep in degrees
+    AR    = 9.45
     maxSpan = "117.5 ft"
 
-    inner_panel_taper_ratio = 0.7  #cs/co
-    outer_panel_taper_ratio = 0.25 #ct/co
+    inner_panel_taper_ratio = 0.688141  #cs/co
+    outer_panel_taper_ratio = 0.190000 #ct/co
 
     panel_break_location = 0.285 # eta_s panel break eta location. eta = y/b
     
     center_box_halfspan = "71.0 in"
     box_width_chord = 0.50
-    root_thickness_to_chord = 0.1268
-    spanbreak_thickness_to_chord = 0.1266
+    root_thickness_to_chord = 0.150363
+    spanbreak_thickness_to_chord = 0.134446
 
     hweb_to_hbox = 0.75 #web-height/hbox ratio
     spar_box_x_c = 0.40 # spar box axis x/c location
 
-    x_wing_box = "57 ft"
+    x_wing_box = 16.510380
     z_wing  = "-5.5 ft"
     z_strut = "154 in" #Note only used if `strut_braced_wing = true`
 
@@ -299,7 +294,7 @@
     slat = 0.1 #slats, slat mounts and actuators weight fraction
     aileron = 0.04 #ailerons, aileron mounts and actuators weight fraction
     leading_trailing_edge = 0.1
-    ribs = 0.15        # Ribs, local stiffeners, reinforcements
+    ribs = 0.16        # Ribs, local stiffeners, reinforcements
     spoilers = 0.020   # Spoilers, spolier mounts and attachements
     attachments = 0.03 # Wing attachment hardware
 
@@ -317,7 +312,7 @@
     [Stabilizers.Htail]
         AR_Htail = 6.0
         taper = 0.25
-        sweep = 26.0 #typically can be set to be the same as the wings
+        sweep = 25.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
         x_Htail = "114.5 ft"
         z_Htail = "0 ft"
@@ -377,24 +372,8 @@
 
     # Allowable stresses at sizing cases:
     ## Fuselage pressurization skin stress and bending skin+stringer stress
-    skin_material = "TASOPT-Al"
-    skin_max_avg_stress = 1.1
-    skin_safety_factor = 3.0
-    # the sigma_max works out to be roughly 15e3 lbf/in2
-    
-    bending_material = "TASOPT-Al"
-    bending_max_avg_stress = 1.1
-    bending_safety_factor = 1.5
-    # the sigma_max works out to be roughly 30e3 lbf/in2
-
-    cone_material = "TASOPT-Al"
-    cone_max_avg_stress = 1.1
-    cone_safety_factor = 2.0
-
-    floor_material = "TASOPT-Al"
-    floor_max_avg_stress = 1.1
-    floor_safety_factor = 1.5
-
+    sigma_fuse_skin = "15e3 lbf/in2" 
+    sigma_fuse_bending = "30e3 lbf/in2"
     ## Wing and tail bending and shear stresses
     sigma_caps    = "30e3 lbf/in2"
     sigma_struts  = "30e3 lbf/in2"
@@ -406,6 +385,8 @@
     E_struts        = "10e6 lbf/in2"
 
     # Material densities (Aluminium)
+    skin_density = 2700.0
+    fuse_stringer_density = 2700.0
     wing_tail_cap_density = 2700.0
     wing_tail_web_density = 2700.0
     strut_density = 2700.0
@@ -413,7 +394,7 @@
 [Propulsion]
 
     number_of_engines = 2
-    T_max_metal = 1280.0
+    T_max_metal = 1762.737516
 
     Tt4_takeoff = 1833.0
     Tt4_frac_bottom_of_climb = 0.2
@@ -506,8 +487,8 @@
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 0
     recirculation_temperature = 0
+    latent_heat = 0
     core_inner_diameter = 0
-    added_mass_frac = 0.0
 
     precooler_order = 0
     precooler_effectiveness = 0

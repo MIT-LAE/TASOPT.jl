@@ -77,6 +77,7 @@ using .CryoTank
 include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
 include(joinpath(__TASOPTroot__,"mission/woper.jl"))
 include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
+include(joinpath(__TASOPTroot__,"mission/printBADA.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
 include(joinpath(__TASOPTroot__,"engine/PT.inc"))
@@ -93,7 +94,6 @@ include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
 include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
-include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
 include(joinpath(__TASOPTroot__,"utils/sensitivity.jl"))
 
 export size_aircraft!

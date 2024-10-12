@@ -22,7 +22,7 @@ function wsize(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
-    #Unpack data storage arrays
+    #Unpack data storage a rrays
     pari = ac.pari
     parg = ac.parg
     parm = ac.parmd
@@ -657,7 +657,9 @@ function wsize(ac; itermax=35,
             parg[igWMTO] = WMTO
             parg[igWeng] = Weng
             parg[igWfuel] = Wfuel
-            println("Wfuel initial = ", (ffuel * WMTO))
+            if printiter
+                println("Wfuel initial = ", (ffuel * WMTO))
+            end
 
         else
             # Call a better Wupdate function
@@ -1413,7 +1415,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(ac)
+    takeoff!(ac; printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
@@ -1432,6 +1434,118 @@ function wsize(ac; itermax=35,
     itrim = 0
     balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
     
+    if saveODperf
+        if ac.aircraft_type == 2 || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
+                
+            open("B77W.LTO", "w") do f
+                LTO("B77W__", ac; fileout = f)
+            end
+
+            open("B77W__extra_pts.LTO", "w") do f
+                LTO("B77W__extra_pts", ac; fileout = f, extra_points = true)
+            end
+            
+
+            FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+                30 ,   40 ,   60 ,   80 ,  100 , 
+                120 ,  140 ,  160 ,  180 ,  200 ,
+                220 ,  240 ,  260 ,  280 ,  290 , 
+                310 ,  330 ,  350 ,  370 ,  390 ,
+                410, 430, 431])
+
+            ZFW = parg[igWMTO] - parg[igWfuel]
+            OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+            
+            M_high = 0.92 * parg[igWMTO]
+            M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
+            W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
+
+            println("WEIGHTS  = $W")
+            
+            W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
+            W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug)
+            W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug)
+            
+            open("B77W__.PTF", "w") do f
+                printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; wide = true)
+            end
+            
+            # If initwgt == 1 (no optimization) also export to BADA
+            if (initwgt == 1)
+                if ac.parg[igWfmax] < ac.parg[igWfuel]
+                    println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
+                else
+                    open("B77W__.PTF", "w") do f
+                    printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; wide = true)
+                    end
+                end
+            end
+        else
+                if ac.aircraft_type == 1 || lowercase(string(ac.aircraft_type)) == "narrow body aircraft"
+                    println("Using $(ac.aircraft_type) for LTO calculations")
+                else 
+                    @warn "Aircraft type not valid: Using Narrow body to calculate LTO/BADA output"
+                end
+
+                open("B738__.LTO", "w") do f
+                    LTO("B738__", ac; fileout = f)
+                end
+
+                open("B738__extra_pts.LTO", "w") do f
+                    LTO("B738__extra_pts", ac; fileout = f, extra_points = true)
+                end
+            
+                FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+                    30 ,   40 ,   60 ,   80 ,  100 , 
+                    120 ,  140 ,  160 ,  180 ,  200 ,
+                    220 ,  240 ,  260 ,  280 ,  290 , 
+                    310 ,  330 ,  350 ,  370 ,  390 ,
+                    410])
+            
+                ZFW = parg[igWMTO] - parg[igWfuel]
+                OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+            
+                M_high = 0.92 * parg[igWMTO]
+                M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
+                W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
+                #W = [M_high, 1/2*(M_high + M_low), M_low]
+                Ldebug = false
+                
+            
+                W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
+                W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug) 
+                W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
+                open("B738__.PTF", "w") do f
+                    printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                end
+                
+                # If initwgt == 1 (no optimization) also export to BADA
+                if (initwgt == 1)
+                    if ac.parg[igWfmax] < ac.parg[igWfuel]
+                        println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
+                    else
+                        open("B738__.PTF", "w") do f
+                            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = false, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                        end
+                        
+                        open("B738_modified__.PTF", "w") do f
+                            printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                            V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                            hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                        end
+                    end
+                end
+            
+        end
+    end
 end
 
 """
