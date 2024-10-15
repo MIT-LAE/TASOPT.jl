@@ -14,7 +14,7 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
+function find_mdot_time(t::Float64, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
     nftanks = pari[iinftanks]
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
@@ -45,7 +45,7 @@ function find_mdot_time(t, pari::Vector{Int64}, parg::Vector{Float64}, para::Arr
 end
 
 """
-    calc_Q_points(fuse_tank, pari, parg, para)
+    calc_Q_points(fuse, fuse_tank, pari, parg, para)
 
 This function calculates the heat transfer rate into the tank at the design mission points.
 !!! details "🔃 Inputs and Outputs"
@@ -58,7 +58,7 @@ This function calculates the heat transfer rate into the tank at the design miss
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
 """
-function calc_Q_points(fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
+function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -75,7 +75,7 @@ function calc_Q_points(fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, pa
         t = para[iatime, ip, 1]
 
         #Calculate heat rate at this point
-        Qs[ip], _, _ = tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
+        Qs[ip], _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
        
     end
     return Qs
@@ -122,7 +122,8 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `t::Float64`: time in mission (s)
-    - `fuse_tank::FuselageTank`: struct with aircraft cryogenic tank parameters
+    - `fuse::Fuselage`: fuselage object.
+    - `fuse_tank::fuselage_tank`: fuselage tank object.
     - `pari::Vector{Int64}`: vector with aircraft Boolean and integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Array{Float64}`: array with aircraft aerodynamic parameters
@@ -130,7 +131,7 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time(t, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
+function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if ac.fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -146,7 +147,7 @@ function find_Q_time(t, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, p
             M0 = para[iaMach, ip, 1]
             z0 = para[iaalt, ip, 1]
 
-            Q, _, _ = tankWthermal(fuse_tank, z0, M0, xftank, t, ifuel)
+            Q, _, _ = tankWthermal(fuse, fuse_tank, z0, M0, xftank, t, ifuel)
         elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
@@ -160,7 +161,7 @@ function find_Q_time(t, fuse_tank, pari::Vector{Int64}, parg::Vector{Float64}, p
             z = z0 + (zf - z0)/(tf-t0) * (t - t0)
 
             #Calculate heat rate at this point
-            Q, _, _ = tankWthermal(fuse_tank, z, Mair, xftank, t, ifuel)
+            Q, _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
         end
     end
     return Q
@@ -189,7 +190,7 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
     
 """
-function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0)
+function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times
@@ -206,7 +207,7 @@ function analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::F
     pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:]
     
     #Precompute heat transfer rate at each mission point for speed
-    Qs_points = calc_Q_points(ac.fuse_tank, ac.pari, ac.parg, para_alt)
+    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.pari, ac.parg, para_alt)
 
     #Define functions for heat and fuel burn profiles through mission 
     Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)
