@@ -282,12 +282,6 @@ function wsize(ac; itermax=35,
     #Initialize HX storage array and reset previous HX engine values
     HXs = []
     resetHXs(pare)
-
-    #Store fuselage parameters in fuse_tank for ease of access 
-    fuse_tank.Rfuse = fuse.layout.radius
-    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
-    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
-    fuse_tank.nfweb = fuse.layout.n_webs
    
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -1125,7 +1119,7 @@ function wsize(ac; itermax=35,
             #Fuel tank design
             fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
             
-            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse_tank, z_alt, M_inf, xftank_heat,
+            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse, fuse_tank, z_alt, M_inf, xftank_heat,
             time_flight, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank

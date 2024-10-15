@@ -26,6 +26,11 @@
         PTFE = Insulator("PTFE")
         @test PTFE.ρ == database["PTFE"]["density"]
     end
+
+    @testset "Thermal Insulators" begin
+        poly = ThermalInsulator("polyurethane32")
+        @test poly.ρ == database["polyurethane32"]["density"]
+    end
     
     # Test that unreasonable requests throw errors
     ## Try making something structural with silver, a conductor using
@@ -34,6 +39,7 @@
         @test_throws ErrorException StructuralAlloy("unobtanium")
         @test_throws ErrorException Conductor("unobtanium")
         @test_throws ErrorException Insulator("unobtanium")
+        @test_throws ErrorException ThermalInsulator("unobtanium")
 
         @test_throws ErrorException StructuralAlloy("Ag")
         @test_throws ErrorException Conductor("PTFE")

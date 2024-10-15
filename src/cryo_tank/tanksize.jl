@@ -1,12 +1,13 @@
 """
-        tanksize!(fuse_tank, z, TSL, Mair, xftank,
-        time_flight, ifuel)
+        tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64,
+                      time_flight::Float64, ifuel::Int64)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+        - `fuse::Fuselage`: fuselage object.
+        - `fuse_tank::fuselage_tank`: fuselage tank object.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
@@ -22,7 +23,7 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
+function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64,
                       time_flight::Float64, ifuel::Int64)
 
         #Unpack variables in fuse_tank
@@ -42,7 +43,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 ΔT = Taw - Tfuel
 
                 #Create inline function with residuals as a function of x
-                residual(x) = res_MLI_thick(x, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
+                residual(x) = res_MLI_thick(x, fuse, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
                 guess = zeros(length(t_cond) + 2) 
@@ -66,27 +67,27 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
                 m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
                 
         else #If insulation does not need to be sized
-                _, m_boiloff, mdot_boiloff = tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
+                _, m_boiloff, mdot_boiloff = tankWthermal(fuse, fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
         
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
         Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
-        Sinternal, Shead_insul, l_inner = size_inner_tank(fuse_tank, fuse_tank.t_insul)
+        Sinternal, Shead_insul, l_inner = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
         flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
         if flag_vacuum #If tank is double-walled
-                Routertank = fuse_tank.Rfuse - fuse_tank.clearance_fuse
+                Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 
-                Ninterm = optimize_outer_tank(fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
+                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
 
                 Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
-                t_cyl2, t_head2, l_outer = size_outer_tank(fuse_tank, Winner_tot, lcyl2, Ninterm)
+                t_cyl2, t_head2, l_outer = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
 
                 Wtank_total = Winner_tot + Wtank2
                 Wtank = Winnertank + Wtank2
@@ -104,7 +105,7 @@ function tanksize!(fuse_tank, z::Float64, Mair::Float64, xftank::Float64,
 end
 
 """
-        res_MLI_thick(x, fuse_tank, z, TSL, Mair, xftank, ifuel)
+        res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -112,7 +113,8 @@ insulation interface temperatures.
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `x::Float64`: vector with states
-        - `fuse_tank::Struct`: structure of type `fuselage_tank` with parameters.
+        - `fuse::Fuselage`: fuselage object.
+        - `fuse_tank::fuselage_tank`: fuselage tank object.
         - `z::Float64`: flight altitude (m)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
@@ -121,7 +123,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate
@@ -145,7 +147,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         end
 
         Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse_tank, t_all)
+        Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse, fuse_tank, t_all)
 
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization
@@ -166,8 +168,8 @@ function res_MLI_thick(x::Vector{Float64}, fuse_tank, z::Float64, Mair::Float64,
         p.TSL = TSL
         p.Mair = Mair
         p.xftank = xftank
-        p.Rfuse = fuse_tank.Rfuse
         p.ifuel = ifuel
+        p.fuse_cs = fuse.layout.cross_section
 
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res
@@ -180,17 +182,17 @@ This function checks if any of the insulation layers requires a vacuum.
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `material_insul::Vector{String}`: vector with layer materials
+        - `material_insul::Vector{ThermalInsulator}`: vector with layer materials
 
         **Outputs:**
         - `flag_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
 """
-function check_vacuum(material_insul::Vector{String})
+function check_vacuum(material_insul::Vector{ThermalInsulator})
         vacuum_materials = ["vacuum", "microspheres"] #currently supported options are vacuum and microspheres
 
         flag_vacuum = false
         for material in material_insul
-                if lowercase(material) in vacuum_materials
+                if lowercase(material.name) in vacuum_materials
                         flag_vacuum = true
                 end
         end
