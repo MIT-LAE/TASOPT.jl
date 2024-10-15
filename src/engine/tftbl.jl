@@ -22,7 +22,6 @@ struct compressorTbl
     eff_is_tbl::AbstractArray{AbstractFloat}
     eff_poly_tbl::AbstractArray{AbstractFloat}
 end 
-println("hi")
 
 E3fan_toml = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/E3fan_tbl.toml"))
 E3lpc_toml = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/E3lpc_tbl.toml"))
