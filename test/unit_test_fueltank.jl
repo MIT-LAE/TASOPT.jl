@@ -7,10 +7,7 @@ time_flight = 7*3600.0
 
 fuse_tank = TASOPT.fuselage_tank()
 fuse_tank.fueltype = "LH2"
-fuse_tank.Rfuse = 2.5
-fuse_tank.dRfuse = 0.3
-fuse_tank.wfb = 0.0
-fuse_tank.nfweb = 1.0
+
 fuse_tank.clearance_fuse = 0.1
 fuse_tank.TSLtank = 288.2
 fuse_tank.TSLtank = 288.2
@@ -20,7 +17,7 @@ fuse_tank.ARtank = 2.0
 fuse_tank.inner_material = TASOPT.StructuralAlloy("Al-2219-T87")
 
 fuse_tank.t_insul = [0.15,0.15,0.15]
-fuse_tank.material_insul = ["rohacell41S", "rohacell41S", "polyurethane27"]
+fuse_tank.material_insul = [ThermalInsulator("rohacell41s"), ThermalInsulator("rohacell41s"), ThermalInsulator("polyurethane27")]
 fuse_tank.size_insulation = true
 fuse_tank.iinsuldes = [1,2,3]
 fuse_tank.boiloff_rate = 0.15
@@ -31,7 +28,7 @@ fuse_tank.theta_inner = 1.0
 fuse_tank.ftankadd = 0.1
 fuse_tank.ew = 0.9
 
-fuse_tank.outer_material = TASOPT.StructuralAlloy("Al-2219-T87")
+fuse_tank.outer_material = StructuralAlloy("Al-2219-T87")
 fuse_tank.theta_outer = [1.0, 2.0]
 fuse_tank.Ninterm = 1.0
 
@@ -50,20 +47,25 @@ fuse_tank.Tfuel = Tsat
 fuse_tank.hvap = hvap
 fuse_tank.Wfuelintank = 1e5
 
+#Fuselage
+fuse = TASOPT.Fuselage()
+fuse.layout.cross_section.radius = 2.5
+fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
+
 @testset "Fuselage tank" begin
     @testset "Foam insulation" begin
-        outputs_size = TASOPT.CryoTank.tanksize!(fuse_tank, z, Mair, xftank,
+        outputs_size = TASOPT.CryoTank.tanksize!(fuse, fuse_tank, z, Mair, xftank,
                                         time_flight,
                                         ifuel)
-        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.8560228485807642, 39680.33874822331, 17.180326496942726, 62911.70682863779)
+        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.8740119151889265, 38185.08012765128, 15.778042937598197, 60140.568517238586)
         
         for i in 1:length(outputs_size)
             @test outputs_size[i] ≈ outputs_size_check[i]
         end
 
-        outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse_tank, fuse_tank.t_insul)
+        outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        outputs_mech_check = (162911.7068286378, 14.232892426878994, 0.0034633753472303867, 1.8560228485807642, 166.77327116515787, 62911.70682863779, 100000.0, 39680.33874822331, 0.0034601469958627225, 1435.565477934579, 16809.72417613172, 1438.5703956486466, [12929.026476470144, 14426.720449466233, 12324.591822286933], 203.99342250401241, [14.958424149290229, 18.67075702260973, 22.80048975074802, 27.34638419260493], 17.180326496942726)
+        outputs_mech_check = (160140.5685172386, 12.848564428768595, 0.003496943301341531, 1.8740119151889265, 166.77327116515787, 60140.568517238586, 100000.0, 38185.08012765128, 0.003493683659934613, 1590.6019601067815, 15273.952985313967, 1504.3779940972875, [12469.462987273082, 13880.427717198025, 11835.189423180173], 189.4574311887127, [16.41478963327391, 20.306728650515254, 24.618791939176347, 29.34975388954838], 15.778042937598197)
         for i in 1:length(outputs_mech)
             @test outputs_mech[i] ≈ outputs_mech_check[i]
         end
@@ -72,9 +74,9 @@ fuse_tank.Wfuelintank = 1e5
         l_tank = outputs_mech_check[16]
         r_tank = outputs_mech_check[4]
         Shead = outputs_mech_check[15]
-        outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse_tank, z, Mair, xftank, time_flight, ifuel)
+        outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse, fuse_tank, z, Mair, xftank, time_flight, ifuel)
 
-        outputs_thermal_check = (1835.8608916010598, 107.03363914366383, 0.0042473666326850726)
+        outputs_thermal_check = (1835.8608916011449, 107.0336391436688, 0.0042473666326852694)
 
         for i in 1:length(outputs_thermal)
             @test outputs_thermal[i] ≈ outputs_thermal_check[i]
@@ -82,22 +84,22 @@ fuse_tank.Wfuelintank = 1e5
     end
     
     fuse_tank.t_insul = [0.065]
-    fuse_tank.material_insul = ["vacuum"]
+    fuse_tank.material_insul = [ThermalInsulator("vacuum")]
     fuse_tank.size_insulation = false
 
     @testset "Vacuum insulation" begin
 
-        outputs_vac_size = TASOPT.CryoTank.tanksize!(fuse_tank, z, Mair, xftank,
+        outputs_vac_size = TASOPT.CryoTank.tanksize!(fuse, fuse_tank, z, Mair, xftank,
                                             time_flight,
                                             ifuel)
-        outputs_vac_size_check = (0.0033909173806944666, 166.77327116515787, 2.4, 0.0, 10.884763251319967, 114902.51923675802)
+        outputs_vac_size_check = (0.0033447002334008723, 166.77327116515787, 2.4, 0.0, 10.17184549721119, 113248.97600936973)
         
         for i in 1:length(outputs_vac_size)
             @test outputs_vac_size[i] ≈ outputs_vac_size_check[i]
         end
 
-        outputs_vac_mech = TASOPT.CryoTank.size_inner_tank(fuse_tank, fuse_tank.t_insul)
-        outputs_vac_mech_check = (125124.15434149424, 8.219175642639724, 0.00435715618585557, 2.335, 166.77327116515787, 25124.15434149424, 100000.0, 0.0, 0.004353094705443698, 2858.4704423225353, 15209.457128611886, 1913.7422971923515, [0.0], 172.43073912598143, [23.675162947566548, 25.28189535258484], 10.688524675864757)
+        outputs_vac_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        outputs_vac_mech_check = (124223.11547325406, 7.525566077704729, 0.00435715618585557, 2.335, 166.77327116515787, 24223.115473254056, 100000.0, 0.0, 0.004353094705443698, 3076.8414985998347, 13888.811713075278, 1978.5193563196497, [0.0], 165.15270608329905, [25.483812169139977, 27.21328988831087], 9.994915110929762)
 
         for i in 1:length(outputs_vac_mech)
             @test outputs_vac_mech[i] ≈ outputs_vac_mech_check[i]
@@ -106,12 +108,12 @@ fuse_tank.Wfuelintank = 1e5
         l_cyl = outputs_vac_mech_check[2]
 
         fuse_tank.Ninterm = 1.0
-        Ninterm = TASOPT.CryoTank.optimize_outer_tank(fuse_tank, Winnertank, l_cyl)
-        Ninterm_check = 15.38916015625
+        Ninterm = TASOPT.CryoTank.optimize_outer_tank(fuse, fuse_tank, Winnertank, l_cyl)
+        Ninterm_check = 14.025390625
         @test Ninterm ≈ Ninterm_check
 
-        outputs_vac_outer = TASOPT.CryoTank.size_outer_tank(fuse_tank, Winnertank, l_cyl, Ninterm_check)
-        outputs_vac_outer_check = (88153.61722490133, 33033.25329386777, 12808.143626608879, 21490.11147555205, 173.928350628553, 24.993050952321795, 123.9422487239094, 0.009566313929022768, 0.018394143361195915, 10.655963929362116)
+        outputs_vac_outer = TASOPT.CryoTank.size_outer_tank(fuse, fuse_tank, Winnertank, l_cyl, Ninterm_check)
+        outputs_vac_outer_check = (87481.39236647873, 31381.827647692957, 13786.613724211644, 20573.48341886441, 171.6223477616751, 26.90237940128641, 117.81758895910225, 0.009560503271690743, 0.018394143361195915, 9.96235436442712)
         for i in 1:length(outputs_vac_outer)
             @test outputs_vac_outer[i] ≈ outputs_vac_outer_check[i]
         end
@@ -134,9 +136,11 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_bendM_outer[i] ≈ outputs_bendM_outer_check[i]
         end
 
-        Wstiff = TASOPT.CryoTank.stiffener_weight("outer", 7e4, fuse_tank.Rfuse, fuse_tank.outer_material.UTS / 4, 
+        perim_vessel = fuse.layout.cross_section.perimeter
+
+        Wstiff = TASOPT.CryoTank.stiffener_weight("outer", 7e4, fuse.layout.radius, perim_vessel, fuse_tank.outer_material.UTS / 4, 
         fuse_tank.outer_material.ρ, θ1, θ2, 10.0, 5.0, fuse_tank.outer_material.E)
-        Wstiff_check = 1653.9008501855653
+        Wstiff_check = 1717.0752091513864
         
         @test Wstiff ≈ Wstiff_check
     end
@@ -154,7 +158,7 @@ fuse_tank.Wfuelintank = 1e5
             @test outputs_free[i] ≈ outputs_free_check[i]
         end
 
-        outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, fuse_tank.TSLtank, 0.0, xftank, 287.0, fuse_tank.Rfuse)
+        outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, fuse_tank.TSLtank, 0.0, xftank, 287.0, fuse.layout.radius)
         outputs_natural_check = (1.6786556204397758, 288.2, 288.2)
         for i in 1:length(outputs_natural)
             @test outputs_natural[i] ≈ outputs_natural_check[i]
