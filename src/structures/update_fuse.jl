@@ -187,7 +187,7 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     if diff ≈ 0.0
         return R
     else
-        return 0.0
+        error("Optimizer failed to find a fuselage radius for the desired pax per row")
     end
 end
 
