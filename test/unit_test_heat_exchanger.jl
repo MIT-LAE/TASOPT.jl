@@ -31,8 +31,9 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 1
-        HXgeom.frecirc = 0
+        HXgeom.fconc = true
+        HXgeom.frecirc = false
+        HXgeom.fshaft = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.n_stages = 4
@@ -85,8 +86,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 1
-        HXgeom.frecirc = 0
+        HXgeom.fconc = true
+        HXgeom.frecirc = false
         HXgeom.D_i = 0.564
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.tD_o = 0.004760326082769499
@@ -131,8 +132,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 1
-        HXgeom.frecirc = 0
+        HXgeom.fconc = true
+        HXgeom.frecirc = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.xl_D = 1
@@ -199,8 +200,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = 0
-        HXgeom.frecirc = 1
+        HXgeom.fconc = false
+        HXgeom.frecirc = true
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.xl_D = 1
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
@@ -240,7 +241,7 @@
 
         Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-        I_check_rec = 1216.2671171369964
+        I_check_rec = 4783.922531591281
 
         @test Iobj_rec ≈ I_check_rec    rtol = 1e-5
     end
@@ -405,13 +406,13 @@
         HX = HXs[1]
 
         @test HX.HXgeom.n_stages ≈ 20.0    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 6.975457747565532    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  6.211895113125989    rtol = 1e-5
         @test HX.HXgeom.l ≈  0.08973681556581393    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 31.428718347964182     rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 37.16237909994032     rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -215422.60328655195    rtol = 1e-5 
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1009.7403953740396    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 918.0567918908455     rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieTurbCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -455,7 +456,7 @@
         @test HX.HXgeom.n_stages ≈ 19.999995398417617    rtol = 1e-5
         @test HX.HXgeom.n_passes ≈ 4.924990037610598    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.2982717368848314    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 100.42011705142482    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 100.41906968588613    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.7999999999981817    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -87846.51831616473    rtol = 1e-5

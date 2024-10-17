@@ -1144,7 +1144,7 @@ function wsize(ac; itermax=35,
             #Fuel tank design
             fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
             
-            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse_tank, z_alt, M_inf, xftank_heat,
+            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse, fuse_tank, z_alt, M_inf, xftank_heat,
             time_flight, ifuel)
 
             parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
@@ -1226,7 +1226,15 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs)
+            HXs = hxdesign!(pare, pari, ipdes, HXs, rlx = 0.5) #design and off-design HX performance
+
+            #Find and store maximum HX outer diameter to check fit in engine 
+            for HX in HXs
+                parg[igdHXmax] = 0.0 #restart diameter
+                if HX.HXgeom.fconc #If HX is in the core
+                    parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
+                end
+            end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
             #With fuel storage in tanks, this is done in the block above.
         end

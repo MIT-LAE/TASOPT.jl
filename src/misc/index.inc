@@ -381,12 +381,20 @@
 
       const igxWfuel = 247
 
-      const igWfvent = 248
+      const igseatpitch = 248
+      const igseatwidth = 249
+      const igaislehalfwidth = 250
+      const igfloordist = 251
 
-      const igFCfouter  = 249
-      const igWfuelcell = 250
+      const igWfvent = 252
+      const igdHXmax = 253
+      const igHXaddmassfrac = 254
+      const igWHXs = 255
 
-      const igtotal    = 250
+      const igFCfouter  = 256
+      const igWfuelcell = 257
+
+      const igtotal    = 257
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -857,7 +865,7 @@
       ieTft = 241
       iefrecirc = 242
       ierecircT = 243
-      iehlat = 244
+      iehvap = 244
       iePreCorder = 245
       iePreCepsilon = 246
       iePreCMp = 247
@@ -878,33 +886,34 @@
       ieTurbCMp = 262
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
+      iehvapcombustor = 265
 
 #Ducted fan and fuel cell variables
-      iemfan      = 265
-      ieTSEC      = 266
-      iePfan      = 267
-      iePfanmax   = 268
-      iePfc       = 269
-      iePfcdes    = 270
-      iencells    = 271
-      ieAcell     = 272
-      ieQheat     = 273
-      iejdens     = 274
-      ieVstack    = 275
-      ieTfc       = 276
-      iepanode    = 277
-      iepcathode  = 278
-      iexwanode   = 279
-      iexwcathode = 280
-      ielambdaw   = 281
-      ielambdaox  = 282
-      ietmembrane = 283
-      ietanode    = 284
-      ietcathode  = 285
-      iemfuel     = 286
-      iealphawat  = 287
+      iemfan      = 266
+      ieTSEC      = 267
+      iePfan      = 268
+      iePfanmax   = 269
+      iePfc       = 270
+      iePfcdes    = 271
+      iencells    = 272
+      ieAcell     = 273
+      ieQheat     = 274
+      iejdens     = 275
+      ieVstack    = 276
+      ieTfc       = 277
+      iepanode    = 278
+      iepcathode  = 279
+      iexwanode   = 280
+      iexwcathode = 281
+      ielambdaw   = 282
+      ielambdaox  = 283
+      ietmembrane = 284
+      ietanode    = 285
+      ietcathode  = 286
+      iemfuel     = 287
+      iealphawat  = 288
 
-      ietotal = 287
+      ietotal = 288
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

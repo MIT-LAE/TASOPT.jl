@@ -38,3 +38,13 @@ const seat_layouts = Dict{Int64, Vector{Int64}}(
     15 => [3, 5, 4, 3],
     16 => [3, 5, 5, 3]
 )
+
+const aerodrome_codes = Dict{Int64, Vector{String}}(
+    #max_wingspan => [ICAO code, FAA code]
+    15 => ["A", "I"],
+    24 => ["B", "II"],
+    36 => ["C", "III"],
+    52 => ["D", "IV"],
+    65 => ["E", "V"],
+    80 => ["F", "VI"],
+)

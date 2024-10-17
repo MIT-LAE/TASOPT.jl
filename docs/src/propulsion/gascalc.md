@@ -25,9 +25,9 @@ engine.gas_delh(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
 engine.gas_delhd(alpha, n, po, to, ho, so, cpo, ro, delh, epol)
 
-engine.gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t)
+engine.gas_burn(alpha, beta, gamma, n, ifuel, to, tf, t, hvap)
 
-engine.gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t)
+engine.gas_burnd(alpha, beta, gamma, n, ifuel, to, tf, t, hvap)
 
 engine.gas_mach(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
 

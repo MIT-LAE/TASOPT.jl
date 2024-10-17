@@ -217,6 +217,8 @@ end
 pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
+pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
+pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
 
 ##Takeoff
 takeoff = readmis("Takeoff")
@@ -414,7 +416,12 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     fuse_tank.size_insulation = readfuel_storage("size_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
-    fuse_tank.material_insul = readfuel_storage("insulation_material")
+    insul_mats_names = readfuel_storage("insulation_material")
+    insul_mats = []
+    for insul_mat_name in insul_mats_names
+        push!(insul_mats, ThermalInsulator(insul_mat_name))
+    end
+    fuse_tank.material_insul = insul_mats
     if fuse_tank.size_insulation
         fuse_tank.boiloff_rate = readfuel_storage("cruise_boiloff_rate")
         fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
@@ -964,9 +971,10 @@ dweight = dprop["Weight"]
 
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
+    parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
+
     pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
     pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-    pare[iehlat, :, :] .= read_input("latent_heat", HEx, dHEx)
     pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
     
     pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
