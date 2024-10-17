@@ -11,16 +11,17 @@ permissions:
   contents: read
   
 jobs:
-  test:
+  #test set for varied julia versions
+  test: 
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-          version: 
-               - '1.9'
-               - 'lts'
-               - 'nightly'
+          version:          #as defined by setup-julia - https://github.com/julia-actions/setup-julia?tab=readme-ov-file#examples
+               - '1.9'      #initial version for tasopt dev
+               - 'lts'      #long-term-support, julia 1.10 as of 10/2024
+               - 'nightly'  #latest and greatest build
           os: 
               - ubuntu-latest
           arch: 
@@ -55,3 +56,41 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           file: lcov.info
+  
+  #test for deprecations as errors
+  test_depr: 
+    name: Deprecs. Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+          version:          #as defined by setup-julia - https://github.com/julia-actions/setup-julia?tab=readme-ov-file#examples
+               - 'nightly'  #latest and greatest build
+          os: 
+              - ubuntu-latest
+          arch: 
+              - x64
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      
+      - name: Cache Julia artifacts
+        uses: julia-actions/cache@v2
+        env:
+          cache-name: cache-artifacts
+
+      - name: Build Julia package
+        uses: julia-actions/julia-buildpkg@v1
+
+      - name: Run Julia tests
+        uses: julia-actions/julia-runtest@v1
+        with:
+          depwarn: 'error'
+
+
