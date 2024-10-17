@@ -39,14 +39,21 @@ jobs:
         uses: julia-actions/cache@v2
         env:
           cache-name: cache-artifacts
+      
+      - name: Build and run
+        run: |
+          import Pkg
+          Pkg.instantiate()
+          Pkg.test(; coverage=true)
+        shell: julia --color=yes --code-coverage=user --depwarn=yes --project=. {0}
+        
+      # - name: Build Julia package
+      #   uses: julia-actions/julia-buildpkg@v1
 
-      - name: Build Julia package
-        uses: julia-actions/julia-buildpkg@v1
-
-      - name: Run Julia tests
-        uses: julia-actions/julia-runtest@v1
-        with:
-          depwarn: 'yes'
+      # - name: Run Julia tests
+      #   uses: julia-actions/julia-runtest@v1
+      #   with:
+      #     depwarn: 'error'
 
       - name: Process coverage
         uses: julia-actions/julia-processcoverage@v1
