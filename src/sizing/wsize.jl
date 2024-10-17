@@ -277,12 +277,6 @@ function wsize(ac; itermax=35,
     HXs = []
     resetHXs(pare)
 
-    #Store fuselage parameters in fuse_tank for ease of access 
-    fuse_tank.Rfuse = fuse.layout.radius
-    fuse_tank.dRfuse = fuse.layout.bubble_lower_downward_shift
-    fuse_tank.wfb = fuse.layout.bubble_center_y_offset
-    fuse_tank.nfweb = fuse.layout.n_webs
-
     # -----------------------------
     # Engine model setup
     # ------------------------------
