@@ -5,56 +5,8 @@ abstract type AbstractMagnets end
 
 const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/Value?mu0 
 
-@kwdef mutable struct Motor
-    rotor::RotorGeometry = RotorGeometry()
-    stator::StatorGeometry = StatorGeometry()
-    teeth::Teeth = Teeth()
-    magnet::PermanentMagnet = PermanentMagnet()
-    windings::Windings = Windings()
-
-    """Design shaft power [W]"""
-    P_design::Float64 = 1e6
-    """Angular velocity [rad/s]"""
-    Ω::Float64 = 10e3
-    """Frequency [Hz]"""
-    f::Float64 = 12e3
-    """Slots per pole [-]"""
-    Nsp::Int = 3
-    """Phases [-]"""
-    phases::Int = 3
-    """Phase resistance [Ω]"""
-    phase_resistance::Float64 = 0.0
-    """Design current [A]"""
-    Id::Float64 = 0.0
-    """Design Voltage [V]"""
-    Vd::Float64 = 0.0
-    """Current [A]"""
-    I::Float64 = 0.0
-    """Voltage [V]"""
-    V::Float64 = 0.0
-
-    """Pole pairs [-]"""
-    N_pole_pairs::Int = 8
-    """Max rotor tip speed [m/s]"""
-    U_max::Float64 = 200.0
-    """Saturation Flux [Wb/m²]"""
-    B_sat::Float64 = 1.8
-    """Maximum Current Density [A/m²]"""
-    J_max::Float64 = 1e6
-    """Max ratio to saturation"""
-    rB_sat::Float64 = 0.98
-    """Stack length [m]"""
-    l::Float64 = 1.0
-    """Mean internal temperature [K],
-     used to calculate air density and viscosity, and winding resistance"""
-    T::Float64 = 273.15 + 90
-    """Thickness of air gap [m]"""
-    airgap_thickness::Float64 = 2e-3
-    """Pole pairs [-]"""
-    p::Int = 8
-    """Mass of machine [kg]"""
-    mass::Float64 = 0.0
-end
+using ..materials
+using DocStringExtensions
 
 @kwdef struct PermanentMagnet <: AbstractMagnets
     """Magnet thickness [m]"""
@@ -137,10 +89,69 @@ end
     """Overhang fraction of shaft [-]"""
     l_extra::Float64 = 1.2
     """Material"""
-    material::AbstractMaterial
+    material::StructuralAlloy
     """Mass [kg]"""
     mass::Float64 = 0.0
 end
+
+"""
+$TYPEDEF
+
+$TYPEDFIELDS
+
+Structure that defines a permanent magnet synchronous motor (PMSM).
+"""
+@kwdef mutable struct Motor
+    rotor::RotorGeometry = RotorGeometry()
+    stator::StatorGeometry = StatorGeometry()
+    teeth::Teeth = Teeth()
+    magnet::PermanentMagnet = PermanentMagnet()
+    windings::Windings = Windings()
+
+    """Design shaft power [W]"""
+    P_design::Float64 = 1e6
+    """Angular velocity [rad/s]"""
+    Ω::Float64 = 10e3
+    """Frequency [Hz]"""
+    f::Float64 = 12e3
+    """Slots per pole [-]"""
+    Nsp::Int = 3
+    """Phases [-]"""
+    phases::Int = 3
+    """Phase resistance [Ω]"""
+    phase_resistance::Float64 = 0.0
+    """Design current [A]"""
+    Id::Float64 = 0.0
+    """Design Voltage [V]"""
+    Vd::Float64 = 0.0
+    """Current [A]"""
+    I::Float64 = 0.0
+    """Voltage [V]"""
+    V::Float64 = 0.0
+
+    """Pole pairs [-]"""
+    N_pole_pairs::Int = 8
+    """Max rotor tip speed [m/s]"""
+    U_max::Float64 = 200.0
+    """Saturation Flux [Wb/m²]"""
+    B_sat::Float64 = 1.8
+    """Maximum Current Density [A/m²]"""
+    J_max::Float64 = 1e6
+    """Max ratio to saturation"""
+    rB_sat::Float64 = 0.98
+    """Stack length [m]"""
+    l::Float64 = 1.0
+    """Mean internal temperature [K],
+     used to calculate air density and viscosity, and winding resistance"""
+    T::Float64 = 273.15 + 90
+    """Thickness of air gap [m]"""
+    airgap_thickness::Float64 = 2e-3
+    """Pole pairs [-]"""
+    p::Int = 8
+    """Mass of machine [kg]"""
+    mass::Float64 = 0.0
+end
+
 # Layout:
 # 		
 #          +-------------------------------+     <----------------+
