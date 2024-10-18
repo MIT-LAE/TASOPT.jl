@@ -86,9 +86,9 @@ end
 `aero` returns a summary of all aerodynamic properties 
 of the aircraft
 """
-function aero(ac::aircraft; io = stdout)
+function aero(ac::aircraft; io = stdout, mi =1)
     parg = ac.parg
-    @views para = ac.para[:,:,1]
+    @views para = ac.para[:,:,mi]
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
     @printf(io, "Ref.Area= %6.5f m²\n", parg[igS])
