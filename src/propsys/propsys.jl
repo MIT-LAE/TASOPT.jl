@@ -15,6 +15,7 @@ using DocStringExtensions
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"misc/constants.jl"))
 include("cable.jl")
+include("PMSM.jl")
 include("NPSS_functions.jl")
 
 end
