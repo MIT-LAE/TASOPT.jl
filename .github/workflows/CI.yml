@@ -59,7 +59,7 @@ jobs:
   
   #test for deprecations as errors
   test_depr: 
-    name: Strict Deprec. Check, Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    name: Strict Deprecation Check, Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
