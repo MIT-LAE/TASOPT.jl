@@ -1,3 +1,107 @@
+using TOML
+using Interpolations
+using NLopt
+using NLsolve
+
+include(joinpath(__TASOPTroot__,"utils/bilinearBounded.jl"))
+
+"""
+    NcTblMap(pratio, mb, piD, mbD, NbD, map)
+
+Calculates compressor or fan corrected speed as a function of pressure ratio and corrected mass flow using bilinear interpolation
+of interpolated E3 compressor data generated externally.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:   pressure ratio 
+    - `mb`:       corrected mass flow
+    - `piD`:      design pressure ratio
+    - `mbD`:      design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `map`:      dictionary of map data loaded in `tftbl.jl`
+
+    **Outputs:**
+    - `Nb`:     wheel speed
+    - `Nb_?`:   derivatives
+
+"""
+function NcTblMap(pratio, mb, piD, mbD, NbD, map)
+    # ---- Calculate map scaling factors
+    s_Nb = NbD / map.Nb_des
+    s_pr = (piD - 1) / (map.pr_des - 1)
+    s_mb = mbD / map.mb_des
+
+    # ---- De-scale inputs back to nominal E3 map values
+    pratio_descl = (pratio - 1) / s_pr + 1
+    mb_descl = mb / s_mb
+
+    # ---- Perform the bilinear interpolation on the precomputed map table
+    Nnom, Nnom_mb, Nnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.Nb_tbl)
+
+    # ---- Rescale map speed to using s_Nb
+    Nb = Nnom * s_Nb
+    Nb_pi = Nnom_pr * s_Nb / s_pr 
+    Nb_mb = Nnom_mb * s_Nb / s_mb
+
+    return Nb, Nb_pi, Nb_mb
+
+end # NcInterpMap
+
+
+"""
+    ecTblMap(pratio, mb, piD, mbD, map, effo, piK, effK; g=1.4, R=287)
+
+Calculates compressor or fan polytropic efficiency as a function of pressure ratio and corrected mass flow using bilinear interpolation
+of interpolated E3 compressor data generated externally.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:        pressure ratio
+    - `mb`:        corrected mass flow
+    - `piD`:       design pressure ratio
+    - `mbD`:       design corrected mass flow
+    - `map`:       dictionary of map data loaded in `tftbl.jl`
+    - `effo`:      maximum efficiency
+    - `piK`:       pi-dependence offset  eff = effo + effK*(pi-piK)
+    - `effK`:      pi-dependence slope
+    - `g`:         specific heat ratio; default 1.4
+    - `R`:         gas constant for air; default 287 J/kgK
+
+    **Outputs:**
+    - `eff`:        efficiency
+    - `eff_?`:      derivatives
+
+"""
+function ecTblMap(pratio, mb, piD, mbD, map, effo, piK, effK; g=1.4, R=287)
+    # TODO: [Does TASOPT have station-wise estimates of specific heat ratio?
+    #        What are what is the pi-dependence offset and slope and are they needed on map interpolation?]
+
+    # ---- Define anonymous functions to convert between isentropic and polytropic efficiency
+    isen_to_poly = (pr, isen, g) -> (g-1)/g * log(pr) / log( (pr^((g-1)/g) - 1) / isen + 1 )
+
+    # ---- Calculate map scaling factors
+    s_pr = (piD - 1) / (map.pr_des - 1)
+    s_mb = mbD / map.mb_des
+    s_eff = effo / isen_to_poly(map.pr_des, map.eff_is_des, g) # Scale polytropic efficiency
+
+    # ---- De-scale inputs back to nominal E3 map values
+    pratio_descl = (pratio - 1) / s_pr + 1
+    mb_descl = mb / s_mb
+
+    # ---- Perform the bilinear interpolation on the precomputed map table for nominal value
+    # ---- NOTE: Polytropic efficiency table was generated using g=1.4 and R=287 J/kgK
+    effnom, effnom_mb, effnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.eff_poly_tbl)
+
+    # ---- Rescale map speed to using s_eff
+    eff = effnom * s_eff
+    eff_pi = effnom_pr * s_eff / s_pr
+    eff_mb = effnom_mb * s_eff / s_mb
+
+    return eff, eff_pi, eff_mb
+
+end # ecTblMap
+
+
 """
     Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
