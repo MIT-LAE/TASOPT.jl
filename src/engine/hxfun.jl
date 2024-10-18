@@ -1200,6 +1200,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.fconc = true 
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
+                  HXgeom.material = StructuralAlloy("Al-2219-T87")
 
                   Q = pare_sl[ieQheat]
                   HXgas.mdot_p = pare_sl[iemfan]
