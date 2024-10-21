@@ -84,22 +84,20 @@ fuse.cabin.floor_angle_top = 0.00000000000000000000
 # ------------------------------
 pari[1] = 24 
 pari[2] = 1 
-pari[3] = 1 
+pari[3] = 0 
 pari[4] = 1 
 pari[5] = 1 
 pari[6] = 0 
 pari[7] = 0 
-pari[8] = 1 
+pari[8] = 0 
 pari[9] = 1 
-pari[10] = 2 
+pari[10] = 0 
 pari[11] = 1 
 pari[12] = 0 
-pari[13] = 1 
+pari[13] = 0 
 pari[14] = 0 
 pari[15] = 0 
 pari[16] = 0 
-pari[17] = 0 
-pari[18] = 0 
 # --------------------------------
 # Geometry - stored in parg array:
 # --------------------------------

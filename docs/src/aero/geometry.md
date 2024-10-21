@@ -17,5 +17,5 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_geometry.md"))
 ```
 
 ```@docs
-aerodynamics.wingsc(W,CL,qinf,AR,ηsi,bo,λt,λs)
+aerodynamics.wingsc!(W,CL,qinf,wing)
 ```
