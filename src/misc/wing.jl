@@ -1,5 +1,5 @@
 using DocStringExtensions
-
+using ..aerodynamics
 """
 $TYPEDEF
 
@@ -58,6 +58,9 @@ $TYPEDFIELDS
                       # 1: Wing cantilever with engine
     """Wing Material """
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
+
+    """Airfoil data"""
+    airsection::aerodynamics.airfoil = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C.air"))
 
     """Inboard Wing Section (at wing root)"""
     inboard::WingSection = WingSection(material=material) # at wing root 

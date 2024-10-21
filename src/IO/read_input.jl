@@ -507,6 +507,9 @@ readwing(x) = read_input(x, wing_i, dwing)
     wing.strut.thickness_to_chord  = readwing("strut_toc")
     wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
 
+    airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/", readwing("airfoil"))
+    wing.airsection = TASOPT.aerodynamics.airtable(airfoil_data);
+
 # ----------------------------------
 # ------- Wing Aerodynamics --------
 # ----------------------------------

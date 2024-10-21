@@ -85,7 +85,7 @@ function surfcd2(
       CDpwing = 0.0
       CDwing = 0.0
       Snorm = 0.0
-      ARe = airsection.Re
+      ARe = wing.airsection.Re
 
       for i = 1:n/2
             frac = (float(i) - 0.5) / float(n / 2)
@@ -103,7 +103,7 @@ function surfcd2(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, airsection)
+            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
             #println(cdf1, " ", cdp1, " ", cm)
 
             Refac = (Rec / ARe)^aRexp
@@ -137,7 +137,7 @@ function surfcd2(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, airsection)
+            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
 
             Refac = (Rec / ARe)^aRexp
             cdf = cdf1 * Refac * fexcd * (1.0 + fdu)^3

@@ -37,9 +37,9 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     para .= parad
     pare .= pared
     
-    para[iaalt, ipcruise1] = 10668
-    para[iaalt, ipclimbn] = 10668
-    para[iaMach, ipclimbn:ipdescent1] .= 0.78
+    # para[iaalt, ipcruise1] = 10668
+    # para[iaalt, ipclimbn] = 10668
+    # para[iaMach, ipclimbn:ipdescent1] .= 0.78
 
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
@@ -140,7 +140,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
       para[iaReunit,ip] = Re
     end
 
-    if initeng
+    if initeng == 1
 #----- use design case as initial guess for engine state
           for ip = 1: iptotal
                 for ie = 1: ietotal
