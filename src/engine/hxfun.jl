@@ -388,6 +388,8 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+            else
+                  Nu_c = Nu_cm
             end
             h_c = Nu_c * k_c_m / tD_i
 
@@ -679,6 +681,8 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+            else #For liquid
+                  Nu_c = Nu_cm
             end
             h_c = Nu_c * k_c_m / tD_i
 
@@ -783,6 +787,7 @@ function radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
       #Fluid parameters
       Tp_in = HXgas.Tp_in
       Tc_in = HXgas.Tc_in
+      ε = HXgas.ε
 
       #specific heats
       if occursin("liquid", HXgas.fluid_c)
@@ -1128,7 +1133,8 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             # Heat exchanger materials and wall properties
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
-            HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
+            HXgeom.Δpdes = max(maximum(pare[iept21,:]), maximum(pare[iept3,:])) #size wall thickness for maximum HPC pressure
+                                                                              #TODO change this for cases with fuel cells
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1211,7 +1217,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
 
                   Q = pare_sl[ieQheat]
                   HXgas.mdot_p = pare_sl[iemfan]
-                  HXgas.mdot_c = radiator_coolant_mass(HXgas, Q)
                   iTp_in = ieTt21
                   ipp_in = iept21
                   ipc_in = iept21
@@ -1226,11 +1231,10 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgas.Mp_in = Mp_in[i]
 
             HXgas.fluid_c = coolant_name
-            HXgas.igas_c = igas
-            
             HXgas.pc_in = pare_sl[ipc_in]
 
             if (i == 1) && (type != "Radiator")  #At first heat exchanger
+                  HXgas.igas_c = igas
                   HXgas.Tc_in = Tc_ft #Coolant temperature is the tank temperature
                   if frecirc #There can only be recirculation in the first heat exchanger
                         HXgeom.frecirc = true 
@@ -1244,6 +1248,9 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXprev = HeatExchangers[i - 1] #Get previous heat exchanger struct
                   all_gas_prev = HXprev.HXgas_mission
                   HXgas.Tc_in = all_gas_prev[ipdes].Tc_out #The inlet temperature is the outlet of previous HX at design point 
+            
+            else #If the HEX is a radiator
+                  HXgas.mdot_c = radiator_coolant_mass(HXgas, Q) #Calculate coolant mass rate to release required heat
             end
 
             # Guess starting point for optimization
@@ -1270,8 +1277,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             #Now set starting point
             if isempty(HXs_prev) #If there is no previous heat exchanger design point
                   #Calculate initial length
-
-                  initial_x = [3, 4, 4, linit] #Initial guess
+                  if type == "Radiator"
+                        n_stage0 = 19.0
+                  else
+                        n_stage0 = 4.0
+                  end
+                  initial_x = [3.0, n_stage0, 4.0, linit] #Initial guess
             else 
                   #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
                   initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, 
@@ -1325,7 +1336,14 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgasp.pp_in = pare_sl[ipp_in]
                   HXgasp.pc_in = pare_sl[ipc_in]
 
-                  if type != "Radiator"
+                  if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
+                        HXgasp.Tp_out = HXgasp.Tp_in
+                        HXgasp.Tc_out = HXgasp.Tc_in
+                        HXgasp.Δh_p = 0
+                        HXgasp.Δp_p = 0
+                        HXgasp.ε = 0
+
+                  elseif type != "Radiator"
                         HXgasp.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                         if i == 1 #If this is the first heat exchanger
                               HXgas.Tc_in = Tc_ft #Temperature is the tank temperature
@@ -1339,17 +1357,9 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                               HXgasp.Tc_in = all_gas_prev[ip].Tc_out
                         end
 
-                        if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
-                              HXgasp.Tp_out = HXgasp.Tp_in
-                              HXgasp.Tc_out = HXgasp.Tc_in
-                              HXgasp.Δh_p = 0
-                              HXgasp.Δp_p = 0
-                              HXgasp.ε = 0
-                        else #Otherwise, call HX off-design routine
-                              hxoper!(HXgasp, HXgeom)
+                        hxoper!(HXgasp, HXgeom)
 
-                        end
-                  else #For radiator
+                  elseif type == "Radiator" #For radiator
                         HXoffDesignCalc!(HXgasp, HXgeom, pare_sl[ieQheat])
                   end
 
