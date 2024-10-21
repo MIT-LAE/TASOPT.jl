@@ -251,6 +251,9 @@
     strut_toc = 0.15 #strut thickness to chord
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
 
+    # Airfoil data (Should be stored in src/airfoil_data/)
+    airfoil = "C.air"
+
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
     wing_tip_lift_rolloff_factor        = -0.05

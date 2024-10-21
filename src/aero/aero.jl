@@ -49,8 +49,8 @@ include("airfoil.jl")
 include("airtable.jl")
 include("airfun.jl")
 
-airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
-airsection = airtable(airfoil_data);
+# airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
+# airsection = airtable(airfoil_data);
 
 include("surfcd.jl")
 include("surfcm.jl")
