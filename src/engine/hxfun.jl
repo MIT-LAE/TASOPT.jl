@@ -1015,42 +1015,44 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       #Size HX
       Iobj = 1e9 #Start with very high value of objective function
       try 
-      hxsize!(HXgas, HXgeom)
+            hxsize!(HXgas, HXgeom)
 
-      #Extract outputs
-      Pl_p = HXgas.Pl_p
-      Pl_c = HXgas.Pl_c
+            #Extract outputs
+            Pl_p = HXgas.Pl_p
+            Pl_c = HXgas.Pl_c
 
-      n_passes = HXgeom.n_passes
-      N_t = HXgeom.N_t
-      Δp_p = HXgas.Δp_p
-      Δp_c = HXgas.Δp_c
-      L = HXgeom.L #HX length
+            n_passes = HXgeom.n_passes
+            N_t = HXgeom.N_t
+            Δp_p = HXgas.Δp_p
+            Δp_c = HXgas.Δp_c
+            L = HXgeom.L #HX length
 
-      #Inlet pressures (pressure drops should not exceed these)
-      pp_in = HXgas.pp_in
-      pc_in = HXgas.pc_in
-      p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
+            #Inlet pressures (pressure drops should not exceed these)
+            pp_in = HXgas.pp_in
+            pc_in = HXgas.pc_in
+            p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
 
-      vars = [n_passes, N_t, Δp_p, Δp_c, L]
+            #Constraints are applied to these variables
+            vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
-      lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
-      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.5]
+            lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
+            upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.25]
+            #TODO: the HEX length (L) constraint should be an input (maybe a global optimization variable?)
 
-      Iobj = (Pl_p + Pl_c) #Initialize objective function
+            Iobj = (Pl_p + Pl_c) #Initialize objective function
 
-      # Apply penalty function so that outputs are within desired range
-      for (i,var) in enumerate(vars)
-            vmin = lower[i]
-            vmax = upper[i]
+            # Apply penalty function so that outputs are within desired range
+            for (i,var) in enumerate(vars)
+                  vmin = lower[i]
+                  vmax = upper[i]
 
-            pmin = ( vmin / min(vmin, var) )^2 #Penalty function
-            pmax = ( max(vmax, var) / vmax )^2
-            p = max(pmin, pmax)
+                  pmin = ( vmin / min(vmin, var) )^2 #Penalty function
+                  pmax = ( max(vmax, var) / vmax )^2
+                  p = max(pmin, pmax)
 
-            Iobj = Iobj * p
-      end
-      catch #Do nothing if it errors
+                  Iobj = Iobj * p
+            end
+      catch #Do nothing if it errors; this returns the high Iobj
       end
 
       return Iobj
