@@ -15,7 +15,7 @@ function powersizing!(ac, engine_type, ip)
     u_LT.t_M = pare[ietmembrane]
     u_LT.t_A = pare[ietanode]
     u_LT.t_C = pare[ietcathode]
-    u_LT.type = "LT-PEMFC"
+    u_LT.type = "HT-PEMFC"
 
     Vdes = pare[ieVstack]
     α_guess = pare[iealphawat]
@@ -42,7 +42,7 @@ function poweroper!(ac, engine_type, ip)
     u_LT.t_M = pare[ietmembrane]
     u_LT.t_A = pare[ietanode]
     u_LT.t_C = pare[ietcathode]
-    u_LT.type = "LT-PEMFC"
+    u_LT.type = "HT-PEMFC"
 
     n_cells = pare[iencells]
     A_cell = pare[ieAcell]

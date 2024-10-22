@@ -286,9 +286,8 @@ function wsize(ac; itermax=35,
     pare[iePfanmax,:] .= 20e6
 
     pare[iejdens,ipstatic] = 1e4
-    pare[ieTfc,:] .= 353.15
-    pare[iepanode,:] .= 3e5
-    pare[iepcathode,:] .= 3e5
+    pare[ieTfc,:] .= 453.15
+    pare[iepfc,:] .= 3e5
     pare[iexwanode,:] .= 0.1
     pare[iexwcathode,:] .= 0.1
     pare[ielambdaw,:] .= 3.0

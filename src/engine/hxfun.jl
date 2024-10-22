@@ -388,6 +388,8 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+            else
+                  Nu_c = Nu_cm
             end
             h_c = Nu_c * k_c_m / tD_i
 
@@ -678,6 +680,8 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+            else
+                  Nu_c = Nu_cm
             end
             h_c = Nu_c * k_c_m / tD_i
 
@@ -925,11 +929,11 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
       #Set bounds
       if length(initial_x) == 4
-            lower = [0.0, 1.0, 1.0, lmin]
+            lower = [1e-9, 1.0, 1.0, lmin]
             upper = [30.0, 20.0, 6.0, lmax]
             initial_dx = [0.1, -0.1, -0.1, 0.1]
       else #Only 3 optimization variables
-            lower = [0.0, 1.0, 1.0]
+            lower = [1e-9, 1.0, 1.0]
             upper = [30.0, 20.0, 6.0]
             initial_dx = [0.1, -0.1, -0.1]
       end
@@ -990,7 +994,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       end
 
       #Size HX
-      Iobj = 1e9 #Start with very high value of objective function
+      Iobj = Inf #Start with very high value of objective function
       try 
       hxsize!(HXgas, HXgeom)
 
@@ -1011,8 +1015,13 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
       vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
+      if occursin("liquid", HXgas.fluid_c)
+            Lmax = 1
+      else
+            Lmax = 0.5
+      end
       lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
-      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.5]
+      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, Lmax]
 
       Iobj = (Pl_p + Pl_c) #Initialize objective function
 
@@ -1332,7 +1341,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       return HeatExchangers
 end #hxdesign!
 
-function radiator_design!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
+function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
 
       #---------------------------------
       # Extract inputs
@@ -1346,7 +1355,7 @@ function radiator_design!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
       #Initialize Heat Exchanger vector, for similarity with engine-integrated HEXs
       HeatExchangers = []
-
+      type = "Radiator"
       #---------------------------------
       # Design radiator
       #---------------------------------
@@ -1365,9 +1374,9 @@ function radiator_design!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       HXgas.alpha_p = alpha
 
       if pare_sl[ieTfc] > 373
-            coolant_name = "liquid water"
-      else
             coolant_name = "liquid ethylene glycol"
+      else
+            coolant_name = "liquid water"
       end
       HXgas.fluid_c = coolant_name
       
