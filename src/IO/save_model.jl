@@ -755,6 +755,8 @@ function reset_regression_test(fname, ac)
         @printf(io,"fuse.HPE_sys.W = %20.20f \n", ac.fuselage.HPE_sys.W)
         @printf(io,"fuse.added_payload.W = %20.20f \n", ac.fuselage.added_payload.W)
 
+        @printf(io, "fuse.cabin.design_pax = %20.20f \n", ac.fuselage.cabin.design_pax)
+        @printf(io, "fuse.cabin.exit_limit = %20.20f \n", ac.fuselage.cabin.exit_limit)
         @printf(io, "fuse.cabin.seat_pitch = %20.20f \n", ac.fuselage.cabin.seat_pitch)
         @printf(io, "fuse.cabin.seat_width = %20.20f \n", ac.fuselage.cabin.seat_width)
         @printf(io, "fuse.cabin.seat_height = %20.20f \n", ac.fuselage.cabin.seat_height)
