@@ -901,19 +901,22 @@
       iejdens     = 275
       ieVstack    = 276
       ieTfc       = 277
-      iepanode    = 278
-      iepcathode  = 279
-      iexwanode   = 280
-      iexwcathode = 281
-      ielambdaw   = 282
-      ielambdaox  = 283
-      ietmembrane = 284
-      ietanode    = 285
-      ietcathode  = 286
-      iemfuel     = 287
-      iealphawat  = 288
+      iepfc       = 278
+      iexwanode   = 279
+      iexwcathode = 280
+      ielambdaw   = 281
+      ielambdaox  = 282
+      ietmembrane = 283
+      ietanode    = 284
+      ietcathode  = 285
+      iemfuel     = 286
+      iealphawat  = 287
+      ieRadiatorepsilon = 288 
+      ieRadiatorMp = 289
+      ieRadiatorDeltah = 290
+      ieRadiatorDeltap = 291
 
-      ietotal = 288
+      ietotal = 291
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

@@ -6,8 +6,8 @@ function powersizing!(ac, engine_type, ip)
 
     u_LT.j = pare[iejdens]
     u_LT.T = pare[ieTfc]
-    u_LT.p_A = pare[iepanode]
-    u_LT.p_C = pare[iepcathode]
+    u_LT.p_A = pare[iepfc]
+    u_LT.p_C = pare[iepfc]
     u_LT.x_H2O_A = pare[iexwanode]
     u_LT.x_H2O_C = pare[iexwcathode]
     u_LT.λ_H2 = pare[ielambdaw]
@@ -33,8 +33,8 @@ function poweroper!(ac, engine_type, ip)
     u_LT = engine.PEMFC_inputs()
 
     u_LT.T = pare[ieTfc]
-    u_LT.p_A = pare[iepanode]
-    u_LT.p_C = pare[iepcathode]
+    u_LT.p_A = pare[iepfc]
+    u_LT.p_C = pare[iepfc]
     u_LT.x_H2O_A = pare[iexwanode]
     u_LT.x_H2O_C = pare[iexwcathode]
     u_LT.λ_H2 = pare[ielambdaw]

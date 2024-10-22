@@ -42,6 +42,7 @@ function tfweight(ac, HXs)
     neng = ac.parg[igneng]
     feadd = ac.parg[igfeadd]
     fpylon = ac.parg[igfpylon]
+    HX_add_mass_frac = ac.parg[igHXaddmassfrac]
 
     # include("constants.inc")
 
