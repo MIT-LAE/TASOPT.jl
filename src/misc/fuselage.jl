@@ -57,7 +57,7 @@ $TYPEDFIELDS
 
     # Misc properties
     """Number of decks in fuselage"""
-    n_decks::Float64 = 0
+    n_decks::Int64 = 0
     """Fuselage Weight fraction of stringers """
     weight_frac_stringers::Float64 = 0
     """Fuselage Weight fraction of frame """
