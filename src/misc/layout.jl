@@ -237,16 +237,20 @@ Contains dimensions, heights, etc. to design a fuselage
 $TYPEDFIELDS
 """
 @kwdef mutable struct Cabin <: AbstractCabin
+    """Design number of passengers"""
+    design_pax::Int64 = 0
+    """Maximum number of passengers"""
+    exit_limit::Int64 = 0
     """Longitudinal seat pitch [m]"""
-    seat_pitch = 0.0
+    seat_pitch::Float64 = 0.0
     """Transverse seat width [m]"""
-    seat_width = 0.0
+    seat_width::Float64 = 0.0
     """Seat height [m]"""
-    seat_height = 0.0
+    seat_height::Float64 = 0.0
     """Aisle half-width [m]"""
-    aisle_halfwidth = 0.0
+    aisle_halfwidth::Float64 = 0.0
     """Distance between double decker floors [m]"""
-    floor_distance = 0.0
+    floor_distance::Float64 = 0.0
     """Main cabin width [m]"""
     cabin_width_main::Float64 = 0.0
     """Top cabin width [m]"""
