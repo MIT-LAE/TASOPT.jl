@@ -407,7 +407,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             #Wall temperature (neglect change across wall)
             Tw = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc)
 
-            if (abs(n_passes_prev - n_passes)/n_passes < tol)
+            if (abs((n_passes_prev - n_passes)/n_passes) < tol)
                   break #Break for loop if convergence has been reached
             end 
             n_passes_prev = n_passes #otherwise store current value for comparison
@@ -718,7 +718,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
                   Tc_out = gas_tset_single(igas_c, hc_out, Tc_out_guess)
             end
 
-            if (abs(Q-Qprev)/Q < tol)
+            if (abs((Q-Qprev)/Q) < tol)
                   break #break loop if convergence has been reached
             end
             Qprev = Q #else update previous heat
