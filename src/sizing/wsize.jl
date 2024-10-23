@@ -283,7 +283,7 @@ function wsize(ac; itermax=35,
     if pari[iiengmodel] == 0 #Drela's model
         engine_type = "ducted_fan"
     end
-    pare[iePfanmax,:] .= 20e6
+    pare[iePfanmax,:] .= 10e6
 
     pare[iejdens,ipstatic] = 1e4
     pare[ieTfc,:] .= 453.15

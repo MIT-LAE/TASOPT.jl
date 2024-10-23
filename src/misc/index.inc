@@ -915,8 +915,10 @@
       ieRadiatorMp = 289
       ieRadiatorDeltah = 290
       ieRadiatorDeltap = 291
+      iemaxLcoreHEX = 292
+      iemaxLRadiator = 293
 
-      ietotal = 291
+      ietotal = 293
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

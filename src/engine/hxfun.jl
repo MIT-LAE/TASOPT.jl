@@ -85,6 +85,7 @@ Structure containing the heat exchanger geometric and material properties.
     - `Rfc::Float64`: coolant-side fouling factor (m^2 K/W)
     - `D_i::Float64`: inner diameter of core (m)
     - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
+    - `maxL::Float64`: maximum allowable HEX length (m)
 """
 @kwdef mutable struct HX_tubular
       fconc :: Bool = false
@@ -104,6 +105,7 @@ Structure containing the heat exchanger geometric and material properties.
       D_i :: Float64 = 0.0
       material :: StructuralAlloy = StructuralAlloy("Al-2219-T87")
       Δpdes::Float64 = 0.0
+      maxL::Float64 = 0.0
 end
 
 # Overload Base.getproperty for convenience
@@ -1015,11 +1017,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
       vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
-      if occursin("liquid", HXgas.fluid_c)
-            Lmax = 1
-      else
-            Lmax = 0.5
-      end
+      Lmax = HXgeom.maxL #maximum HEX length
       lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
       upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, Lmax]
 
@@ -1129,6 +1127,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
             HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
+            HXgeom.maxL = 0.5 #maximum HEX length
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1369,6 +1368,7 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
       HXgeom.xl_D = 1
       HXgeom.Rfc = 9E-05 #Distilled water fouling resistance, m^2*K/W
       HXgeom.Δpdes = maximum(abs.(pare[iepfc,:] - pare[iept21,:])) #size wall thickness for maximum post fan pressure                                                           
+      HXgeom.maxL = 2.0 #Maximum radiator length
 
       HXgas.fluid_p = "air"
       HXgas.alpha_p = alpha
