@@ -275,6 +275,7 @@ function wsize(ac; itermax=35,
 
     #Initialize HX storage array and reset previous HX engine values
     HXs = []
+    radiator = engine.HX_struct()
     resetHXs(pare)
 
     # -----------------------------
@@ -283,7 +284,7 @@ function wsize(ac; itermax=35,
     if pari[iiengmodel] == 0 #Drela's model
         engine_type = "ducted_fan"
     end
-    pare[iePfanmax,:] .= 10e6
+    pare[iePfanmax,:] .= 15e6
 
     pare[iejdens,ipstatic] = 1e4
     pare[ieTfc,:] .= 453.15
@@ -1220,7 +1221,7 @@ function wsize(ac; itermax=35,
         # Heat exchanger design and operation
         # ------------------------------
         ipdes = ipcruise1 #Design point: start of cruise
-
+        
         if iterw > 2 #Only include heat exchangers after second iteration
             HXs = hxdesign!(pare, pari, ipdes, HXs, rlx = 0.5) #design and off-design HX performance
 
@@ -1233,7 +1234,15 @@ function wsize(ac; itermax=35,
             end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
             #With fuel storage in tanks, this is done in the block above.
+
+            #Radiator design and off-design operatior
+            enginecalc!(ac, "off_design", engine_type, ipstatic, inite1) #TODO: remove this. Needed for radiator
+            if engine_type == "ducted_fan"
+                radiator = radiator_design!(pare, ipstatic, radiator; rlx = 1.0)
+                HXs = [radiator]
+            end
         end
+        
 
         # -----------------------------
         # Drag and engine calculations

@@ -137,10 +137,10 @@ Structure containing all the heat exchanger geometry and operational information
     - `HXgeom::HX_tubular`: structure containing the HX geometric information
     - `HXgas_mission::Array{Any}`: array containing the gas properties, of type `HX_gas` for each mission and segment
 """
-mutable struct HX_struct
-      type :: String 
-      HXgeom :: HX_tubular  
-      HXgas_mission :: Array{Any}
+@kwdef mutable struct HX_struct
+      type :: String = ""
+      HXgeom :: HX_tubular = HX_tubular()
+      HXgas_mission :: Array{Any} = []
 end
   
 """
@@ -1351,6 +1351,10 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
       Radiatorepsilon = pare_sl[ieRadiatorepsilon]
       RadiatorMp = pare_sl[ieRadiatorMp]
 
+      if Radiatorepsilon ≈ 0
+            return #Skip if there is no radiator
+      end
+
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
       #Initialize Heat Exchanger vector, for similarity with engine-integrated HEXs
       
@@ -1411,7 +1415,7 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
       lmin, linit = calculate_min_tube_length(HXgeom, HXgas) #Minimum tube lenght and initial guess
 
       #Now set starting point
-      if isempty(HXs_prev) #If there is no previous heat exchanger design point
+      if HXs_prev.HXgeom.n_passes ≈ 0 #If there is no previous heat exchanger design point
             #Calculate initial length
             initial_x = [3.0, 19.0, 4.0, linit] #Initial guess
       else 
@@ -1487,6 +1491,8 @@ function resetHXs(pare)
       pare[ieTurbCDeltap, :] .= 0.0
       pare[ieRegenDeltah, :] .= 0.0
       pare[ieRegenDeltap, :] .= 0.0
+      pare[ieRadiatorDeltah, :] .= 0.0
+      pare[ieRadiatorDeltap, :] .= 0.0
 
       #Reset heat of vaporization in combustor
       pare[iehvapcombustor, :, :] = pare[iehvap, :, :]

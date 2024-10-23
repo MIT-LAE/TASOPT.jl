@@ -4,6 +4,7 @@ function ductedfanweight(ac, HXs)
     fpylon = ac.parg[igfpylon]
     neng = ac.parg[igneng]
     rSnace = ac.parg[igrSnace]
+    HX_add_mass_frac = ac.parg[igHXaddmassfrac]
 
     ARfan  = 3   #Blade aspeect ratio
     bladesolidity = 0.4 # Blade solidity c/s

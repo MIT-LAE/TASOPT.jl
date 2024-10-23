@@ -14,7 +14,7 @@ export tfweight!, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, e
 export ductedfanoper!, ductedfansize!, ductedfancalc!, ductedfanweight, powersize!, poweroper!
 
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
-export hxdesign!, hxweight, resetHXs
+export hxdesign!, radiator_design!, hxweight, resetHXs
 
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy
 
