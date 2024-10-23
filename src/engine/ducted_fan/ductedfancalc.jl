@@ -33,13 +33,8 @@ function ductedfancalc!(pari, parg, para, pare, ip,
     u0 = pare[ieu0]
     
     #Heat exchanger variables
-    Δh_PreC = pare[iePreCDeltah]
-    Δh_InterC = pare[ieInterCDeltah]
-    Δh_Regen = pare[ieRegenDeltah]
-    Δh_TurbC = pare[ieTurbCDeltah]
-    Δp_PreC = pare[iePreCDeltap]
-    Δp_InterC = pare[ieInterCDeltap]
-    Δp_Regen = pare[ieRegenDeltap]
+    Δh_radiator = pare[ieRadiatorDeltah]
+    Δp_radiator = pare[ieRadiatorDeltap]
 
     #- - - - - - - - - - - - - - - - - - - - - - - 
     #---- set BL ingestion parameters
@@ -90,7 +85,8 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                         pif,
                         pid, pifn, 
                         epolf,
-                        pifK, epfK
+                        pifK, epfK,
+                        Δh_radiator, Δp_radiator
                         )
 
         mbf = mfan * sqrt(Tt2 / Tref) / (pt2 / pref)
@@ -119,6 +115,8 @@ function ductedfancalc!(pari, parg, para, pare, ip,
         mbfD = pare[iembfD]
         pifD = pare[iepifD]
         NbfD = pare[ieNbfD]
+        Δh_radiator = pare[ieRadiatorDeltah]
+        Δp_radiator = pare[ieRadiatorDeltap]
 
         if (initeng == 0)
                 #------ force TFOPER to initialize these state variables
@@ -156,6 +154,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             pifK, epfK,
                             Feng, Peng,
                             M2, pif, mbf, 
+                            Δh_radiator, Δp_radiator,
                             iPspec)
         elseif (icall == 2) #Thrust is specified, power to be computed
             Feng = pare[ieFe]
@@ -182,6 +181,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             pifK, epfK,
                             Feng, Peng,
                             M2, pif, mbf, 
+                            Δh_radiator, Δp_radiator,
                             iPspec)
         end
     end

@@ -73,6 +73,8 @@ mutable struct DuctedFanData
     epf0::Float64
     pifK::Float64
     epfK::Float64
+    Δh_radiator::Float64
+    Δp_radiator::Float64
     DuctedFanData() = new() 
 end
 """
@@ -148,6 +150,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
       pifK, epfK,
       Feng, Peng,
       M2, pif, mbf, 
+      Δh_radiator, Δp_radiator,
       iPspec)
     
     pf = pif
@@ -168,7 +171,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     engdata = DuctedFanData()
     inputs = (
         M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
-        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
+        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator
     ) 
     update_engine_data!(engdata, inputs)
 
@@ -218,14 +221,17 @@ function unpack_input_data(data::DuctedFanData)
     epfK = data.epfK
     Feng = data.Feng
     Peng = data.Peng
+    Δh_radiator = data.Δh_radiator
+    Δp_radiator = data.Δp_radiator
     
-    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng)
+    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, 
+    NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator)
 end
 
 function update_engine_data!(data::DuctedFanData, inputs)
     (
         M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
-        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng
+        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator
     ) = inputs
 
     data.M0 = M0
@@ -249,6 +255,8 @@ function update_engine_data!(data::DuctedFanData, inputs)
     data.epfK = epfK
     data.Feng = Feng
     data.Peng = Peng
+    data.Δh_radiator = Δh_radiator
+    data.Δp_radiator = Δp_radiator
 end
 
 
@@ -259,7 +267,7 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     Mi = x[3]
 
     #Extract Inputs
-    (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Fspec, Pspec) =
+    (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Fspec, Pspec, Δh_radiator, Δp_radiator) =
         unpack_input_data(engdata)
 
     # Constants
@@ -357,13 +365,13 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
             pt2, Tt2, ht2, st2, cpt2, Rt2, pf, epf)
 
-    #---- fan duct nozzle total quantities
-    pt7 = pt21 * pifn
-    Tt7 = Tt21
-    ht7 = ht21
-    st7 = st21
-    cpt7 = cpt21
-    Rt7 = Rt21
+    # ===============================================================
+    #---- Radiator heat exchanger
+    pt7 = pt21 * pifn - Δp_radiator
+    ht7 = ht21 + Δh_radiator
+
+    Tt7 = gas_tset(alpha, nair, ht7, Tt21)
+    st7, _, ht7, _, cpt7, Rt7 = gassum(alpha, nair, Tt7)
 
  # ===============================================================
     #---- fan nozzle flow 7-8, use alpha mass fraction (air)

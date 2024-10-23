@@ -296,6 +296,9 @@ function wsize(ac; itermax=35,
     pare[ietanode,:] .= 250e-6
     pare[ietcathode,:] .= 250e-6
     pare[ieVstack,:] .= 200.0
+    pare[ieRadiatorepsilon,:] .= 0.7
+    pare[ieRadiatorMp,:] .= 0.12
+    pare[ieDi,:] .= 0.4
 
     para[iaROCdes, ipclimb1:ipclimbn] .= 500 * ft_to_m / 60
 

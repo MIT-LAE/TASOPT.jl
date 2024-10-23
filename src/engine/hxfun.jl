@@ -1353,7 +1353,7 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
 
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
       #Initialize Heat Exchanger vector, for similarity with engine-integrated HEXs
-      HeatExchangers = []
+      
       type = "Radiator"
       #---------------------------------
       # Design radiator
@@ -1416,8 +1416,8 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
             initial_x = [3.0, 19.0, 4.0, linit] #Initial guess
       else 
             #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
-            initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, 
-            HXs_prev[i].HXgeom.n_stages, HXs_prev[i].HXgeom.xt_D, max(HXs_prev[i].HXgeom.l, lmin)] #guess is previous iteration design point
+            initial_x = [100 * HXs_prev.HXgas_mission[ipdes].Mc_in, 
+            HXs_prev.HXgeom.n_stages, HXs_prev.HXgeom.xt_D, max(HXs_prev.HXgeom.l, lmin)] #guess is previous iteration design point
       end
 
       hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
@@ -1458,7 +1458,7 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
             pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
             
       end
-      push!(HeatExchangers, HX_struct(type, HXgeom, HXgas_mis)) #Store HX struct in overall array
+      return HX_struct(type, HXgeom, HXgas_mis)
 end
 
 """

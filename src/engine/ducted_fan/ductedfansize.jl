@@ -64,7 +64,9 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
       pif,
       pid, pifn, 
       epf0,
-      pifK, epfK
+      pifK, epfK,
+      Δh_radiator,
+      Δp_radiator
       )
 
       n = 6
@@ -172,13 +174,13 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
             pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
 
-            #---- fan duct nozzle total quantities
-            pt7 = pt21 * pifn
-            Tt7 = Tt21
-            ht7 = ht21
-            st7 = st21
-            cpt7 = cpt21
-            Rt7 = Rt21
+            # ===============================================================
+            #---- Radiator heat exchanger
+            pt7 = pt21 * pifn - Δp_radiator
+            ht7 = ht21 + Δh_radiator
+      
+            Tt7 = gas_tset(alpha, nair, ht7, Tt21)
+            st7, _, ht7, _, cpt7, Rt7 = gassum(alpha, nair, Tt7)
 
             # ===============================================================
             #---- fan plume flow 7-8, use alpha mass fraction (air)
