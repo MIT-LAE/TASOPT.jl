@@ -153,6 +153,8 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
       Δh_radiator, Δp_radiator,
       iPspec)
     
+    tol = 1e-10 #convergence tolerance
+
     pf = pif
     mf = mbf
     Mi = M2
@@ -181,10 +183,14 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     guess[3] = Mi
 
     residual(x) = res_df(x, engdata, iPspec = iPspec)
-    sol = nlsolve(residual, guess, ftol = 1e-8) 
+    sol = nlsolve(residual, guess, ftol = tol) 
 
     #Evaluate residual once more, storing parameters
-    _ = res_df(sol.zero, engdata, iPspec = iPspec,  store_data = true)
+    res = res_df(sol.zero, engdata, iPspec = iPspec,  store_data = true)
+    
+    if maximum(abs.(res)) > tol #If infinity norm is above tolerance
+        println("DUCTEDFANOPER: convergence failed, iPspec = $iPspec")
+    end
 
     return engdata.TSEC, engdata.Fsp, engdata.Feng, engdata.Peng, engdata.mfan, 
     engdata.pif, engdata.mbf, engdata.Nbf, 
@@ -432,17 +438,16 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     res = zeros(3)
 
     #Fan nozzle mass flow, choked or unchoked
-    res[1] = mfan - rho7 * A7 * u7
+    res[1] = (mfan - rho7 * A7 * u7)/mfan
 
-    #Inlet Mach area constraint
-    mfA = mf * sqrt(Tref / Tt2) * pt2 / pref / (rho2 * u2)
-    res[2] = mfA - A2
+    #Front mass flow
+    res[2] = (mfan - rho2 * A2 * u2)/mfan
 
     if iPspec #Specified power constraint
-        res[3] = Peng - Pspec
+        res[3] = (Peng - Pspec)/Pspec
 
     else #Specified thrust constraint
-        res[3] = Feng - Fspec
+        res[3] = (Feng - Fspec)/Fspec
     end
 
     if store_data
