@@ -792,13 +792,18 @@ function radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
       else
             _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
       end
-      #TODO: this calculation does not work when there is recirculation or if the process side has C_min
-
+      _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+      
       #Calculate minimum heat capacity rate from desired effectiveness and temperature difference
       C_min = abs(Q / (ε * (Tp_in - Tc_in)))
 
       #Design for C_min being C_c
       mdot_c = C_min / cp_c
+
+      C_r = mdot_c * cp_c / (HXgas.mdot_p * cp_p)
+      if C_r > 1 #If the coolant has the maximum heat capacity rate
+            error("In radiator sizing, process stream has minimum heat capacity rate")
+      end
             
       return mdot_c
 end
@@ -831,10 +836,13 @@ function HXoffDesignCalc!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 
       HXod_res(C_r) = HXheating_residual!(HXgas, HXgeom, Q, C_r) #Should be 0 at correct C_r
 
-      Crg = 1.5 #guess for heat capacity rate
+      Crg = 0.5 #guess for heat capacity rate
       C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
 
-      HXgas.mdot_c = 1 / C_r * HXgas.mdot_p * cp_p / cp_c
+      if abs(HXod_res(C_r)) > 1e-4 #If the non-linear solver did not find a suitable solution
+            error("Failed to find coolant mass flow rate in radiator off-design model")
+      end
+      HXgas.mdot_c = C_r * HXgas.mdot_p * cp_p / cp_c
 
       hxoper!(HXgas, HXgeom)
 
@@ -865,9 +873,13 @@ function HXheating_residual!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64, C_r:
       end
       _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
 
-      HXgas.mdot_c = 1 / C_r * (HXgas.mdot_p * cp_p) / cp_c
+      HXgas.mdot_c = C_r * (HXgas.mdot_p * cp_p) / cp_c
 
-      hxoper!(HXgas, HXgeom)
+      try
+            hxoper!(HXgas, HXgeom)
+      catch
+            return 1.0 #return something other than 0 if it fails
+      end
 
       Q_HX = HXgas.Δh_p * HXgas.mdot_p
 
