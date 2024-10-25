@@ -17,7 +17,11 @@ makedocs(
     "Examples" => Any[
         "Loading and running"=>"examples/loadingrunning.md",
         "Payload-range diagram" => "examples/payload_range.md",
-        "Multivariable optimization"=>"examples/optimization.md"
+        "Optimization" => Any[
+            "Nelder Mead"=>"examples/NM_optimization.md",
+            "Gradient Based Optimization"=>"examples/gradient_based_optimization.md",
+        ],
+        "Sensitivities"=>"examples/sensitivity.md"
         ],
     "Aerodynamics" => Any[
         "aero/geometry.md",

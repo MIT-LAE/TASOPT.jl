@@ -236,7 +236,7 @@ end
     **Outputs:**
     - The function returns the finite difference
 """
-function central_diff_run(eps, par, model_state; optimizer=false)
+function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothing)
     field_path, index = par
     # Get property from default model
     x = getNestedProp(model_state, field_path, index)
@@ -247,7 +247,11 @@ function central_diff_run(eps, par, model_state; optimizer=false)
         ac = deepcopy(model_state)
         setNestedProp!(ac, field_path, x_i, index)
         TASOPT.size_aircraft!(ac,printiter=false)
-        f_out = ac.parm[imPFEI]
+        if isnothing(f_out_fn)
+            f_out = ac.parm[imPFEI]
+        else
+            f_out = f_out_fn(ac)
+        end
         push!(f, f_out)
     end
     if typeof(x_both[1]) == Vector{Float64} || typeof(x_both[2]) == Vector{Float64}
@@ -330,16 +334,19 @@ end
     **Outputs:**
     - The function returns the finite difference of each input param in a vector.  
 """
-function get_sensitivity(input_params; model_state=nothing, eps=1e-5, optimizer=false)
+function get_sensitivity(input_params; model_state=nothing, eps=1e-5, optimizer=false, f_out_fn=nothing)
     if isnothing(model_state)
         @info "Aircraft model not provided. Using Default sized model"
         model_state = load_default_model()
         TASOPT.size_aircraft!(model_state,printiter=false)
     end
+    if isnothing(f_out_fn) && !optimizer
+        @info "Output function not defined, using PFEI"
+    end
     params = map(p -> format_params(expr_to_string(p)), input_params)
     fd_array = []
     for param in params
-        finite_diff = central_diff_run(eps, param, model_state; optimizer=optimizer)
+        finite_diff = central_diff_run(eps, param, model_state; optimizer=optimizer, f_out_fn=f_out_fn)
         push!(fd_array, finite_diff)
     end
     return fd_array
