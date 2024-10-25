@@ -2005,6 +2005,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   h7_mf = h7_pt7 * pt7_mf + h7_st7 * st7_mf
                   s7_mf = s7_pt7 * pt7_mf + s7_st7 * st7_mf
 
+                  p7_ml = p7_pt7 * pt7_ml 
+                  T7_ml = T7_pt7 * pt7_ml
+                  h7_ml = h7_pt7 * pt7_ml
+                  s7_ml = s7_pt7 * pt7_ml
+
                   p7_Mi = p7_pt7 * pt7_Mi
                   T7_Mi = T7_pt7 * pt7_Mi
                   h7_Mi = h7_pt7 * pt7_Mi
@@ -2037,6 +2042,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   h7_mf = h7_ht7 * ht7_mf + h7_Tt7 * Tt7_mf
                   s7_mf = s7_ht7 * ht7_mf + s7_Tt7 * Tt7_mf
 
+                  p7_ml = p7_pt7 * pt7_ml 
+                  T7_ml = 0.0 #Choked, so independent of total pressure
+                  h7_ml = 0.0
+                  s7_ml = 0.0
+
                   p7_Mi = p7_pt7 * pt7_Mi
                   T7_Mi = 0.0
 
@@ -2046,12 +2056,14 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   u7 = sqrt(2.0 * (ht7 - h7))
                   u7_pf = (ht7_pf - h7_pf) / u7
                   u7_mf = (ht7_mf - h7_mf) / u7
+                  u7_ml = (ht7_ml - h7_ml) / u7
                   u7_Mi = ht7_Mi / u7
             else
                   u7 = 0.0
                   u7tmp = max(0.2 * u0, 0.02 * sqrt(Rt7 * Tt7))
                   u7_pf = (ht7_pf - h7_pf) / u7tmp
                   u7_mf = (ht7_mf - h7_mf) / u7tmp
+                  u7_ml = (ht7_ml - h7_ml) / u7tmp
                   u7_Mi = ht7_Mi / u7tmp
             end
 
@@ -2558,23 +2570,25 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   else
                         Finl = Phiinl / u0
                   end
-                  F = ((1.0 - fo + ff) * u6 - u0 + BPR * (u8 - u0) + fo * u9) * mdotl + Finl
-                  F_ff = u6 * mdotl
-                  F_u6 = (1.0 - fo + ff) * mdotl
-                  F_BPR = (u8 - u0) * mdotl
-                  F_u8 = BPR * mdotl
-                  F_fo = (-u6 + u9) * mdotl
-                  F_mdotl = (1.0 - fo + ff) * u6 - u0 + BPR * (u8 - u0) + fo * u9
+                  F = ((1.0 - fo + ff) * u5 - u0 + BPR * (u7 - u0) + fo * u9) * mdotl + A5 * (p5 - p0) + A7 * (p7 - p0) + Finl 
+                  F_ff = u5 * mdotl
+                  F_u5 = (1.0 - fo + ff) * mdotl
+                  F_BPR = (u7 - u0) * mdotl
+                  F_u7 = BPR * mdotl
+                  F_fo = (-u5 + u9) * mdotl
+                  F_mdotl = (1.0 - fo + ff) * u5 - u0 + BPR * (u7 - u0) + fo * u9
+                  F_p5 = A5
+                  F_p7 = A7
 
-                  F_pf = F_u6 * u6_pf + F_u8 * u8_pf
-                  F_pl = F_ff * ff_pl + F_u6 * u6_pl
-                  F_ph = F_ff * ff_ph + F_u6 * u6_ph
-                  F_mf = F_ff * ff_mf + F_u6 * u6_mf + F_u8 * u8_mf + F_BPR * BPR_mf
-                  F_ml = F_ff * ff_ml + F_u6 * u6_ml + F_u8 * u8_ml + F_BPR * BPR_ml
-                  F_mh = F_ff * ff_mh + F_u6 * u6_mh
-                  F_Tb = F_ff * ff_Tb + F_u6 * u6_Tb
-                  F_Pc = F_u6 * u6_Pc
-                  F_Mi = F_ff * ff_Mi + F_u6 * u6_Mi + F_u8 * u8_Mi + F_BPR * BPR_Mi
+                  F_pf = F_u5 * u5_pf + F_u7 * u7_pf + F_p5 * p5_pf + F_p7 * p7_pf
+                  F_pl = F_ff * ff_pl + F_u5 * u5_pl + F_p5 * p5_pl
+                  F_ph = F_ff * ff_ph + F_u5 * u5_ph + F_p5 * p5_ph
+                  F_mf = F_ff * ff_mf + F_u5 * u5_mf + F_u7 * u7_mf + F_BPR * BPR_mf + F_p5 * p5_mf + F_p7 * p7_mf
+                  F_ml = F_ff * ff_ml + F_u5 * u5_ml + F_u7 * u7_ml + F_BPR * BPR_ml + F_p5 * p5_ml + F_p7 * p7_ml
+                  F_mh = F_ff * ff_mh + F_u5 * u5_mh + F_p5 * p5_mh
+                  F_Tb = F_ff * ff_Tb + F_u5 * u5_Tb + F_p5 * p5_Tb
+                  F_Pc = F_u5 * u5_Pc + F_p5 * p5_Pc
+                  F_Mi = F_ff * ff_Mi + F_u5 * u5_Mi + F_u7 * u7_Mi + F_BPR * BPR_Mi + F_p5 * p5_Mi + F_p7 * p7_Mi
 
                   F_mf = F_mf + F_fo * fo_mf + F_mdotl * mdotl_mf
                   F_ml = F_ml + F_fo * fo_ml + F_mdotl * mdotl_ml
@@ -3120,7 +3134,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   else
                         Finl = Phiinl / u0
                   end
-                  Feng = ((1.0 - fo + ff) * u6 - u0 + BPR * (u8 - u0) + fo * u9) * mcore + Finl
+                  Feng = ((1.0 - fo + ff) * u5 - u0 + BPR * (u7 - u0) + fo * u9) * mcore + A5 * (p5 - p0) + A7 * (p7 - p0) + Finl
 
                   #---- overall Fsp and TSFC
                   if (u0 == 0.0)
