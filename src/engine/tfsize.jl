@@ -625,31 +625,6 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   Finl = Phiinl / u0
             end
 
-            #---- set core mass flow from specified effective net thrust
-            mcore = (Feng - Finl) /
-                    ((1.0 - fo + ff) * u6 - u0 + BPR * (u8 - u0) + fo * u9)
-
-            #---- corresponding new offtake mass flow fraction
-            fonew = mofft / mcore
-            dfo = fonew - foold
-
-            fo = fo + rlxfo * dfo
-
-            #---- estimate better new mass flow, compensating for change in mass offtake
-            mfac = min(2.0, 1.0 / (1.0 - dfo))
-            mcore = mcore * mfac
-
-            #---- power offtake per mass flow
-            Pom = Pofft / mcore
-
-            #---- overall Fsp and TSFC
-            Fsp = Feng / (u0 * mcore * (1.0 + BPR))
-            if (Feng <= 0.0)
-                  TSFC = 0.0
-            else
-                  TSFC = (gee * ff * mcore) / Feng
-            end
-
             # ===============================================================
 
             M8 = u8 / sqrt(cp8 * R8 / (cp8 - R8) * T8)
@@ -670,10 +645,6 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   u7 = sqrt(2.0 * (ht7 - h7))
             end
             rho7 = p7 / (R7 * T7)
-
-            #---- size fan  nozzle and plume areas
-            A7 = BPR * mcore / (rho7 * u7)
-            A8 = BPR * mcore / (rho8 * u8)
 
             # ===============================================================
             M6 = u6 / sqrt(cp6 * R6 / (cp6 - R6) * T6)
@@ -696,6 +667,35 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             end
 
             rho5 = p5 / (R5 * T5)
+
+            #---- set core mass flow from specified effective net thrust
+            mcore = (Feng - Finl) /
+            ((1.0 - fo + ff) * (u5 + (p5 - p0)/(rho5 * u5)) - u0 + BPR * (u7 - u0 + (p7 - p0)/(rho7 * u7)) + fo * u9)
+
+            #---- corresponding new offtake mass flow fraction
+            fonew = mofft / mcore
+            dfo = fonew - foold
+
+            fo = fo + rlxfo * dfo
+
+            #---- estimate better new mass flow, compensating for change in mass offtake
+            mfac = min(2.0, 1.0 / (1.0 - dfo))
+            mcore = mcore * mfac
+
+            #---- power offtake per mass flow
+            Pom = Pofft / mcore
+
+            #---- overall Fsp and TSFC
+            Fsp = Feng / (u0 * mcore * (1.0 + BPR))
+            if (Feng <= 0.0)
+                  TSFC = 0.0
+            else
+                  TSFC = (gee * ff * mcore) / Feng
+            end
+
+            #---- size fan  nozzle and plume areas
+            A7 = BPR * mcore / (rho7 * u7)
+            A8 = BPR * mcore / (rho8 * u8)
 
             #---- size core nozzle and plume areas
             A5 = (1.0 - fo + ff) * mcore / (rho5 * u5)
