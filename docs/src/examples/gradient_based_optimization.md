@@ -34,6 +34,7 @@ Initialize arrays used for plotting as well as the finite difference parameter
 design_variables = []
 objective_array = []
 
+#Set relative tolerance used in the Finite difference method
 epsilon = 1e-5
 ```
 
@@ -79,6 +80,7 @@ function size_ac(x...)
     # Set params
     for (i,x_i) in enumerate(x)
         field_path, index = params[i]
+        # Set param value at specific tasopt location for a specific ac model
         TASOPT.setNestedProp!(ac, field_path, x_i, index)
     end
     # Size aircraft
@@ -116,6 +118,53 @@ function fdiff_all!(g, x...)
 end
 ```
 
+## Constraint Function
+In this optimization we will have a constraint on max fuel weight, max span, min climb gradient, and max Tt3. In order to do this we will specifiy a constraint function as well as a sensitivity function:
+
+```julia
+function constraint_fn(ac)
+    return (ac.parg[igWfuel]/ac.parg[igWfmax] - 1.0) + (ac.parg[igb]/ac.parg[igbmax] - 1.0) + (1.0 - ac.para[iagamV, ipclimbn,1]/ac.parg[iggtocmin]) + (maximum(ac.pare[ieTt3, :, 1])/900 - 1)
+end
+
+function size_constraint(x...)
+    # println("State: ",x)
+    ac = deepcopy(default_model)
+    # Set params
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
+    end
+    # Size aircraft
+    push!(design_variables, x)
+    try
+        size_aircraft!(ac,printiter=false)
+        return constraint_fn(ac)
+    catch
+        println("wsize FAILED")
+        return 1.0e12
+    end
+end
+```
+
+```julia
+function fdiff_all_for_constraint!(g, x...)
+    # Reset model
+    ac = deepcopy(default_model)
+    # Set current state
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
+    end
+    # Calculate gradient
+    if (size(g)[1] >0)
+        gradients = TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true,f_out_fn=constraint_fn)
+        for (k,grads) in enumerate(gradients)
+            g[k] = grads
+        end
+    end
+end
+```
+
 ## Running the optimization
 
 ```julia
@@ -132,9 +181,16 @@ function exampleOPT()
         return size_ac(x...)
     end
 
+    function eval_g(x...)
+        return size_constraint(x...)
+    end
+
+    # Register function so you can use user defined/external functions and specify a custom sensitivity function
     register(model, :eval_f, size(initial)[1], eval_f, fdiff_all!; autodiff = false)
+    register(model, :eval_g, size(initial)[1], eval_g, fdiff_all_for_constraint!; autodiff = false)
 
     @NLobjective(model, Min, eval_f(x...))
+    @NLconstraint(model, eval_g(x...) >=0)
 
     optimize!(model)
     println("""
