@@ -51,6 +51,32 @@ function size_ac(x...)
     end
 end
 
+function constraint_fn(ac)
+    return (ac.parg[igWfuel]/ac.parg[igWfmax] - 1.0) + (ac.parg[igb]/ac.parg[igbmax] - 1.0) + (1.0 - ac.para[iagamV, ipclimbn,1]/ac.parg[iggtocmin]) + (maximum(ac.pare[ieTt3, :, 1])/900 - 1)
+end
+
+function size_constraint(x...)
+    # println("State: ",x)
+    ac = deepcopy(default_model)
+    # Set params
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
+    end
+    # Size aircraft
+    push!(design_variables, x)
+    try
+        size_aircraft!(ac,printiter=false)
+        push!(objective_array, ac.parm[imPFEI])
+        return constraint_fn(ac)
+    catch
+        println("wsize FAILED")
+        push!(objective_array, NaN)
+        return 1.0e12
+    end
+end
+
+
 function fdiff_all!(g, x...)
     # Reset model
     ac = deepcopy(default_model)
@@ -62,6 +88,23 @@ function fdiff_all!(g, x...)
     # Calculate gradient
     if (size(g)[1] >0)
         gradients = TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true)
+        for (k,grads) in enumerate(gradients)
+            g[k] = grads
+        end
+    end
+end
+
+function fdiff_all_for_constraint!(g, x...)
+    # Reset model
+    ac = deepcopy(default_model)
+    # Set current state
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
+    end
+    # Calculate gradient
+    if (size(g)[1] >0)
+        gradients = TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true,f_out_fn=constraint_fn)
         for (k,grads) in enumerate(gradients)
             g[k] = grads
         end
@@ -81,9 +124,15 @@ function exampleOPT()
         return size_ac(x...)
     end
 
+    function eval_g(x...)
+        return size_constraint(x...)
+    end
+
     register(model, :eval_f, size(initial)[1], eval_f, fdiff_all!; autodiff = false)
+    register(model, :eval_g, size(initial)[1], eval_g, fdiff_all_for_constraint!; autodiff = false)
 
     @NLobjective(model, Min, eval_f(x...))
+    @NLconstraint(model, eval_g(x...) >=0)
 
     optimize!(model)
     println("""
@@ -92,7 +141,7 @@ function exampleOPT()
     objective_value    = $(objective_value(model))
     """)
 
-    return [value(x[i]) for i in 1:2]
+    return [value(x[i]) for i in 1:size(initial)[1]]
 end
 
 

@@ -48,25 +48,25 @@ function obj(x, grad)
     push!(OPRarray, ac.pare[iept3]/ac.pare[iept2])
 
     # Max span constriant
-    # bmax = ac.parg[igbmax]
-    # b    = ac.parg[igb]
-    # constraint  = b/bmax - 1.0
-    # penfac  = 25.0* ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    bmax = ac.parg[igbmax]
+    b    = ac.parg[igb]
+    constraint  = b/bmax - 1.0
+    penfac  = 25.0* ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
 
     # # Min climb gradient
-    # gtocmin = ac.parg[iggtocmin]
-    # gtoc    = ac.para[iagamV, ipclimbn,1]
-    # constraint = 1.0 - gtoc/gtocmin
-    # penfac = 1.0*ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    gtocmin = ac.parg[iggtocmin]
+    gtoc    = ac.para[iagamV, ipclimbn,1]
+    constraint = 1.0 - gtoc/gtocmin
+    penfac = 1.0*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
 
     # # Max Tt3 at TOC 
-    # Tt3max = 900 
-    # Tt3    = maximum(ac.pare[ieTt3, :, 1])
-    # constraint = Tt3/Tt3max - 1
-    # penfac = 5.0*ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    Tt3max = 900 
+    Tt3    = maximum(ac.pare[ieTt3, :, 1])
+    constraint = Tt3/Tt3max - 1
+    penfac = 5.0*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
 
     # # Max Tmetal at Rotation
     # Tvanemax = 1333.33 
@@ -123,23 +123,17 @@ end
 
 lower      = [9.0 , 0.53, 25.0, 10000.0, 0.65, 0.1,  0.125,    0.125,    0.9,   0.7, 1400.0, 10.0,  1.25, 2.98]
 upper      = [11.0, 0.60, 30.0, 10900.0, 0.85, 0.4,  0.15,   0.15,   1.3,   1.0, 1650.0, 15.0, 2.0, 3.02] 
-#initial    = [10.987, 0.598, 27.58, 10015.46, 0.85, 0.1587, 0.1449, 0.126, 1.0295, 0.993, 1649.359, 13.346, 1.8436, 3.0 ]
 initial    = [10.5, 0.57, 26.0, 10668.0, 0.7, 0.25, 0.1268, 0.1266, 1.238, 0.9, 1580.0, 12.0, 1.685, 3.0 ]
-
-
-# #             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
-# lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6,      0]
-# upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15,     10] 
 
 # Set initial changes
 initial_dx = [ 0.5,  0.05, 0.1, 100.0, 0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.2]
 
 # # Set initial values
-# initial =[
-#         ac.parg[igAR], 33000.0, 0.57, ac.parg[igsweep], 
-#         ac.parg[iglambdas], ac.parg[iglambdat], ac.parg[ighboxo], 
-#         ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
-# ]
+initial =[
+        ac.parg[igAR], 33000.0, 0.57, ac.parg[igsweep], 
+        ac.parg[iglambdas], ac.parg[iglambdat], ac.parg[ighboxo], 
+        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
+]
 
 # Set FTOL
 f_tol_rel = 1e-5
