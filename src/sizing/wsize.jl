@@ -657,7 +657,9 @@ function wsize(ac; itermax=35,
             parg[igWMTO] = WMTO
             parg[igWeng] = Weng
             parg[igWfuel] = Wfuel
-            println("Wfuel initial = ", (ffuel * WMTO))
+            if printiter
+                println("Wfuel initial = ", (ffuel * WMTO))
+            end
 
         else
             # Call a better Wupdate function
@@ -1413,7 +1415,7 @@ function wsize(ac; itermax=35,
     ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
 
     # calculate takeoff and balanced-field lengths
-    takeoff!(ac)
+    takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
