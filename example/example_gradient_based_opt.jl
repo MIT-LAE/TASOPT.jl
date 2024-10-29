@@ -1,17 +1,10 @@
-using TASOPT
 using JuMP
 using Ipopt
-using PythonPlot
 using Test
-
+using TASOPT
 include(__TASOPTindices__)
 
 epsilon = 1e-5
-default_model = load_default_model()
-size_aircraft!(default_model)
-
-design_variables = []
-objective_array = []
 
 input_params = [
     :(ac.parg[igAR]), 
@@ -20,158 +13,131 @@ input_params = [
     :(ac.pare[ieTt4, ipcruise1:ipcruise2, 1]),
     :(ac.pare[iepif, ipcruise1, 1]) ,
 ]
-
-    
 params = map(p -> TASOPT.format_params(TASOPT.expr_to_string(p)), input_params)
-
 
 lower      = [9.0 , 0.53, 25.0, 1400.0, 1.25]
 upper      = [11.0, 0.60, 30.0, 1650.0, 2.0 ] 
 initial    = [10.5, 0.57, 26.0, 1580.0, 1.685]
 
+default_model = load_default_model() 
+size_aircraft!(default_model)
 
-function size_ac(x...)
-    # println("State: ",x)
+function pfei_fn(ac)
+    return ac.parm[imPFEI]
+end
+
+function wfuel_fn(ac)
+    return ac.parg[igWfuel]/ac.parg[igWfmax]
+end
+
+function span_fn(ac)
+    return ac.parg[igb]/ac.parg[igbmax]
+end
+
+function gtoc_fn(ac)
+    return ac.para[iagamV, ipclimbn,1]/ac.parg[iggtocmin]
+end
+
+function tt3_fn(ac)
+    maxtt3 = 900
+    return maximum(ac.pare[ieTt3, :, 1])/maxtt3
+end
+
+con_f_arr = [
+    pfei_fn, wfuel_fn, span_fn, tt3_fn, gtoc_fn
+]
+
+# Function that sizes aircraft and returns both objective function and gradient
+function sizing_ac(x::T...) where {T<:Real}
     ac = deepcopy(default_model)
     # Set params
     for (i,x_i) in enumerate(x)
         field_path, index = params[i]
         TASOPT.setNestedProp!(ac, field_path, x_i, index)
     end
-    # Size aircraft
-    push!(design_variables, x)
+
+    # size and get objective value and constraint
     try
         size_aircraft!(ac,printiter=false)
-        push!(objective_array, ac.parm[imPFEI])
-        return ac.parm[imPFEI]
+        return [con_f_arr[i](ac) for i in 1:length(con_f_arr)]
     catch
         println("wsize FAILED")
-        push!(objective_array, NaN)
-        return 1.0e12
+        return [Inf for i in 1:length(con_f_arr)]
     end
-end
-
-function constraint_fn(ac)
-    return (ac.parg[igWfuel]/ac.parg[igWfmax] - 1.0) + (ac.parg[igb]/ac.parg[igbmax] - 1.0) + (1.0 - ac.para[iagamV, ipclimbn,1]/ac.parg[iggtocmin]) + (maximum(ac.pare[ieTt3, :, 1])/900 - 1)
-end
-
-function size_constraint(x...)
-    # println("State: ",x)
-    ac = deepcopy(default_model)
-    # Set params
-    for (i,x_i) in enumerate(x)
-        field_path, index = params[i]
-        TASOPT.setNestedProp!(ac, field_path, x_i, index)
-    end
-    # Size aircraft
-    push!(design_variables, x)
-    try
-        size_aircraft!(ac,printiter=false)
-        push!(objective_array, ac.parm[imPFEI])
-        return constraint_fn(ac)
-    catch
-        println("wsize FAILED")
-        push!(objective_array, NaN)
-        return 1.0e12
-    end
-end
-
-
-function fdiff_all!(g, x...)
-    # Reset model
-    ac = deepcopy(default_model)
-    # Set current state
-    for (i,x_i) in enumerate(x)
-        field_path, index = params[i]
-        TASOPT.setNestedProp!(ac, field_path, x_i, index)
-    end
-    # Calculate gradient
-    if (size(g)[1] >0)
-        gradients = TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true)
-        for (k,grads) in enumerate(gradients)
-            g[k] = grads
-        end
-    end
-end
-
-function fdiff_all_for_constraint!(g, x...)
-    # Reset model
-    ac = deepcopy(default_model)
-    # Set current state
-    for (i,x_i) in enumerate(x)
-        field_path, index = params[i]
-        TASOPT.setNestedProp!(ac, field_path, x_i, index)
-    end
-    # Calculate gradient
-    if (size(g)[1] >0)
-        gradients = TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true,f_out_fn=constraint_fn)
-        for (k,grads) in enumerate(gradients)
-            g[k] = grads
-        end
-    end
-end
-
-function exampleOPT()
-    model = Model(Ipopt.Optimizer)
-
-    # For almost localy solved (Takes much shorter time, almost solves):
-    # set_optimizer_attribute(model, "acceptable_tol", 1e-2)
-    # set_optimizer_attribute(model, "acceptable_iter", 1)
     
-    @variable(model, lower[i] <= x[i=1:size(initial)[1]] <= upper[i], start=initial[i])
+end
 
-    function eval_f(x...)
-        return size_ac(x...)
+function gradient_all(x::T...) where {T<:Real}
+    ac = deepcopy(default_model)
+    # Set params
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
     end
+    return TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true, f_out_fn=con_f_arr)
+end
 
-    function eval_g(x...)
-        return size_constraint(x...)
+"""
+    memoize(foo::Function, n_outputs::Int)
+
+Take a function `foo` and return a vector of length `n_outputs`, where element
+`i` is a function that returns the equivalent of `foo(x...)[i]`.
+
+To avoid duplication of work, cache the most-recent evaluations of `foo`.
+Because `foo_i` is auto-differentiated with ForwardDiff, our cache needs to
+work when `x` is a `Float64` and a `ForwardDiff.Dual`.
+"""
+function memoize(foo::Function, n_outputs::Int)
+    last_x, last_f = nothing, nothing
+    function foo_i(i, x::T...) where {T<:Real}
+        if x !== last_x
+            last_x, last_f = x, foo(x...)
+        end
+        return last_f[i]::T
     end
-
-    register(model, :eval_f, size(initial)[1], eval_f, fdiff_all!; autodiff = false)
-    register(model, :eval_g, size(initial)[1], eval_g, fdiff_all_for_constraint!; autodiff = false)
-
-    @NLobjective(model, Min, eval_f(x...))
-    @NLconstraint(model, eval_g(x...) >=0)
-
-    optimize!(model)
-    println("""
-    termination_status = $(termination_status(model))
-    primal_status      = $(primal_status(model))
-    objective_value    = $(objective_value(model))
-    """)
-
-    return [value(x[i]) for i in 1:size(initial)[1]]
+    return [(x...) -> foo_i(i, x...) for i in 1:n_outputs]
 end
 
-
-opt_time = @elapsed (x) = exampleOPT()
-
-println("Optimization completed in $opt_time with x = $x")
-
-
-# To plot results:
-figure()
-savedir = joinpath(__TASOPTroot__,"../example/optimization/")
-if !isdir(savedir)
-    # If it doesn't exist, create the "optimization" directory
-    mkdir(savedir)
-    println("The 'optimization' directory has been created.")
+function memoize_sensitivity(foo::Function, n_outputs::Int)
+    last_x, last_f = nothing, nothing
+    function foo_s!(i, g::AbstractVector{T}, x::T...) where {T<:Real}
+        if x !== last_x
+            last_x, last_f = x, foo(x...)
+        end
+        if (size(g)[1] >0)
+            for (k,grads) in enumerate(g)
+                g[k] = last_f[i][k]
+            end
+        end
+    end
+    return [(x...) -> foo_s!(i, x...) for i in 1:n_outputs]
 end
 
-fig, ax = subplots(size(initial)[1]+1,1, figsize = (12,14), dpi=600)
-ax[0].plot(objective_array)
-# ax[0].set_xlabel("Iterations")
-ax[0].set_ylabel("PFEI (J/Nm)")
+memoized_size_ac = memoize(sizing_ac, length(con_f_arr))
+memoized_fd_ac = memoize_sensitivity(gradient_all, length(con_f_arr))
 
-for (idx, xi) in enumerate(initial)
-    ax[idx].plot([x[idx] for x in design_variables])
-    ax[idx].set_ylabel("Variable $idx")
-end
-ax[size(initial)[1]].set_xlabel("Iterations")
-suptitle("Optimization outputs")
-figname2 = "Gradient_Optimizer_iterations"
-fig.savefig(savedir*figname2*".svg")
+model = Model(Ipopt.Optimizer)
+# set_silent(model)
+set_optimizer_attribute(model, "tol", 1e-3)
+set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
+set_optimizer_attribute(model, "obj_scaling_factor", 1.0)
+set_optimizer_attribute(model, "nlp_scaling_max_gradient", Float64(1))
+set_optimizer_attribute(model, "nlp_scaling_min_value", 1e-8)
 
+@variable(model, lower[i] <= x[i=1:length(initial)] <= upper[i], start=initial[i])
 
+@operator(model, f_size_ac, length(initial), memoized_size_ac[1],memoized_fd_ac[1])
+@operator(model, f_con_wfuel, length(initial), memoized_size_ac[2],memoized_fd_ac[2])
+@operator(model, f_con_b, length(initial), memoized_size_ac[3],memoized_fd_ac[3])
+@operator(model, f_con_tt3, length(initial), memoized_size_ac[4],memoized_fd_ac[4])
+@operator(model, f_con_gtoc, length(initial), memoized_size_ac[5],memoized_fd_ac[5])
 
+@objective(model, Min, f_size_ac(x...))
+@constraint(model, f_con_wfuel(x...) <= 1)
+@constraint(model, f_con_b(x...) <= 1)
+@constraint(model, f_con_tt3(x...) <= 1)
+@constraint(model, f_con_gtoc(x...) >= 1)
+
+optimize!(model)
+
+println("Finished optimization with $(value.(x))")
