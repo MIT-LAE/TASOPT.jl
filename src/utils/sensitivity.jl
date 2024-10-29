@@ -225,6 +225,20 @@ function setNestedProp!(ac, field_path::Vector, x, index=nothing)
 end
 
 """
+    check_if_multiple_vals(x,i)
+
+`check_if_multiple_vals` Is a helper function to transpose the sensitivities array in case 
+    there is an array of output functions and range of input parameters
+"""
+function check_if_multiple_vals(x,i)
+    if isa(x[1], Float64)
+        return x[i]
+    else
+        return map(y -> y[i], x)
+    end
+end
+
+"""
     central_diff_run(eps, par, model_state)
 
 `central_diff_run` calculates the finite differences using relative central difference
@@ -241,36 +255,86 @@ function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothi
     # Get property from default model
     x = getNestedProp(model_state, field_path, index)
     x_both = [x*(1+eps), x*(1-eps)]
-    f = []
+    
+    # Initialize results array for each perturbation
+    f_results = []
+    
     for x_i in x_both
         # Reset model
         ac = deepcopy(model_state)
         setNestedProp!(ac, field_path, x_i, index)
-        TASOPT.size_aircraft!(ac,printiter=false)
-        if isnothing(f_out_fn)
-            f_out = ac.parm[imPFEI]
-        else
-            f_out = f_out_fn(ac)
-        end
-        push!(f, f_out)
-    end
-    if typeof(x_both[1]) == Vector{Float64} || typeof(x_both[2]) == Vector{Float64}
         
+        # Initialize outputs for this perturbation
+        if isnothing(f_out_fn)
+            f_out = Inf
+            try
+                TASOPT.size_aircraft!(ac, printiter=false)
+                f_out = ac.parm[imPFEI]
+            catch
+                println("wsize FAILED")
+            end
+            push!(f_results, f_out)
+        else
+            # Handle single function or array of functions
+            f_out = []
+            try
+                TASOPT.size_aircraft!(ac, printiter=false)
+                if isa(f_out_fn, Array)
+                    # Multiple output functions
+                    for fn in f_out_fn
+                        push!(f_out, fn(ac))
+                    end
+                else
+                    # Single output function
+                    push!(f_out, f_out_fn(ac))
+                end
+            catch
+                println("wsize FAILED")
+                if isa(f_out_fn, Array)
+                    f_out = fill(Inf, length(f_out_fn))
+                else
+                    f_out = [Inf]
+                end
+            end
+            push!(f_results, f_out)
+        end
+    end
+    
+    # Calculate finite differences
+    if typeof(x_both[1]) == Vector{Float64} || typeof(x_both[2]) == Vector{Float64}
         vecSens = []
         for (idx, each_x) in enumerate(x_both[1])
-            fd_i =  (f[1] - f[2]) / (x_both[1][idx] - x_both[2][idx])
+            if isa(f_results[1], Array)
+                # Multiple output functions
+                fd_i = [(f1 - f2) / (x_both[1][idx] - x_both[2][idx]) 
+                       for (f1, f2) in zip(f_results[1], f_results[2])]
+            else
+                # Single output
+                fd_i = (f_results[1] - f_results[2]) / (x_both[1][idx] - x_both[2][idx])
+            end
             push!(vecSens, fd_i)
         end
+        
         if optimizer
-            return sum(vecSens)/size(vecSens)[1]
-            
+            if isa(f_results[1], Array)
+                # Return average sensitivity for each output function
+                return [sum(getindex.(vecSens, i))/length(vecSens) for i in 1:length(f_results[1])]
+            else
+                return sum(vecSens)/length(vecSens)
+            end
         else
-            @warn  "Specific range of values given ... returning vector of sensitivities "
+            @warn "Specific range of values given ... returning vector of sensitivities"
             return vecSens
         end
-        # 
     else
-        return (f[1] - f[2]) / (x_both[1] - x_both[2])
+        if isa(f_results[1], Array)
+            # Multiple output functions
+            return [(f1 - f2) / (x_both[1] - x_both[2]) 
+                   for (f1, f2) in zip(f_results[1], f_results[2])]
+        else
+            # Single output
+            return (f_results[1] - f_results[2]) / (x_both[1] - x_both[2])
+        end
     end
 end
 
@@ -338,16 +402,27 @@ function get_sensitivity(input_params; model_state=nothing, eps=1e-5, optimizer=
     if isnothing(model_state)
         @info "Aircraft model not provided. Using Default sized model"
         model_state = load_default_model()
-        TASOPT.size_aircraft!(model_state,printiter=false)
+        TASOPT.size_aircraft!(model_state, printiter=false)
     end
-    if isnothing(f_out_fn) && !optimizer
+    
+    if isnothing(f_out_fn)
         @info "Output function not defined, using PFEI"
+    elseif isa(f_out_fn, Array) && !optimizer
+        @info "Multiple output functions provided, will return sensitivities for each"
     end
+    
     params = map(p -> format_params(expr_to_string(p)), input_params)
     fd_array = []
+    
     for param in params
-        finite_diff = central_diff_run(eps, param, model_state; optimizer=optimizer, f_out_fn=f_out_fn)
+        finite_diff = central_diff_run(eps, param, model_state; 
+                                     optimizer=optimizer, f_out_fn=f_out_fn)
         push!(fd_array, finite_diff)
+    end
+    
+    if isa(f_out_fn, Array)
+        # Multiple output function, transpose array
+        fd_array = [map(x -> check_if_multiple_vals(x,i), fd_array) for i in 1:length(fd_array[1])]
     end
     return fd_array
 end
