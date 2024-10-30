@@ -1698,7 +1698,7 @@ end
 
 function MaxProcessΔPCstr(HXgas)
       pp_in = HXgas.pp_in
-      p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
+      p_thres = 0.5
       Δp_p = HXgas.Δp_p
       Δp_max = p_thres * pp_in
       return Δp_p/Δp_max - 1.0
@@ -1706,7 +1706,7 @@ end
 
 function MaxCoolantΔPCstr(HXgas)
       pc_in = HXgas.pc_in
-      p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
+      p_thres = 0.5 
       Δp_c = HXgas.Δp_c
       Δp_max = p_thres * pc_in
       return Δp_c/Δp_max - 1.0
