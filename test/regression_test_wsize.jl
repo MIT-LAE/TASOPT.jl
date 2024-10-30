@@ -114,7 +114,29 @@ end
     @test ac.fuselage.layout.radius ≈ 2.54
 
     size_aircraft!(ac, iter=50; printiter=false);
+
+    @testset "Fuselage" begin
+        @test  check_struct_equivalence(fuse, ac.fuselage)
+    end
+
+    @testset "Geometry" begin
+        for i in eachindex(parg)
+            @test parg[i] ≈ ac.parg[i]
+        end
+    end
+
+    @testset "Aero" begin
+        for i in eachindex(para)
+            @test para[i] ≈ ac.para[i]
+        end
+    end
+
+    @testset "Propulsion" begin
+        for i in eachindex(pare)
+            @test pare[i] ≈ ac.pare[i] rtol=1e-6
+        end
+    end
     
-    @test ac.parm[imPFEI] ≈ 0.9805703474546061 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.9786974657791612
 
 end
