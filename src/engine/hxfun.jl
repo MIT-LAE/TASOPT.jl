@@ -910,7 +910,7 @@ optimized.
     No direct outputs. Input structures are modified with HX design geometry.
 """
 function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
-      #Parameters to optimize: x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l (optional)
+      #Parameters to optimize: x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l
       #Set function to minimize
       obj(x, grad) =  hxobjf(x, HXgas, HXgeom) #Minimize objective function
 
@@ -951,10 +951,6 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
             lower = [1e-9, 1.0, 1.0, lmin]
             upper = [30.0, 20.0, 6.0, lmax]
             initial_dx = [0.1, -0.1, -0.1, 0.1]
-      else #Only 3 optimization variables
-            lower = [1e-9, 1.0, 1.0]
-            upper = [30.0, 20.0, 6.0]
-            initial_dx = [0.1, -0.1, -0.1]
       end
       
       #Use NLopt.jl to minimize function 
@@ -965,7 +961,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       opt.upper_bounds = upper
       opt.ftol_rel = 1e-9
       opt.initial_step = initial_dx
-      opt.maxeval = 500  # Set the maximum number of function evaluations
+      opt.maxeval = 1000  # Set the maximum number of function evaluations
 
       opt.min_objective = obj
       
@@ -987,10 +983,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
       HXgeom.n_stages = xopt[2]
       HXgeom.xt_D = xopt[3]
-
-      if length(initial_x) == 4 #only add length if it is being optimized
-            HXgeom.l = xopt[4]
-      end
+      HXgeom.l = xopt[4]
 
       #Return optimum parameters by modifying input structs
 
@@ -1019,10 +1012,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
       HXgeom.n_stages = x[2]
       HXgeom.xt_D = x[3]
-
-      if length(x) == 4 #only add length if it is being optimized
-            HXgeom.l = x[4]
-      end
+      HXgeom.l = x[4]
 
       #Size HX
       Iobj = Inf #Start with very high value of objective function
