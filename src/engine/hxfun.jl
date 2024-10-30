@@ -958,7 +958,9 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       end
       
       #Use NLopt.jl to minimize function 
-      opt = Opt(:LN_NELDERMEAD, length(initial_x))
+      opt = NLopt.Opt(:LN_COBYLA, length(initial_x)) #COBYLA can handle constraints natively
+
+      # Set Optimization parameters
       opt.lower_bounds = lower
       opt.upper_bounds = upper
       opt.ftol_rel = 1e-9
@@ -967,10 +969,19 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
       opt.min_objective = obj
       
+      tol = 1e-4
+      inequality_constraint!(opt, (x, grad) -> MinPassesCstr(HXgeom), tol)
+      inequality_constraint!(opt, (x, grad) -> MaxPassesCstr(HXgeom), tol)
+      inequality_constraint!(opt, (x, grad) -> MinTubesCstr(HXgeom), tol)
+      inequality_constraint!(opt, (x, grad) -> MaxTubesCstr(HXgeom), tol)
+      inequality_constraint!(opt, (x, grad) -> MaxProcessΔPCstr(HXgas), tol)
+      inequality_constraint!(opt, (x, grad) -> MaxCoolantΔPCstr(HXgas), tol)
+      inequality_constraint!(opt, (x, grad) -> MaxLengthCstr(HXgeom), tol)
+
       (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
       #println(opt.numevals)
       #xopt_round = round.(xopt) #elements 2 and 3 must be integers
-
+      
       #Modify structs with output
       HXgas.Mc_in = xopt[1] / 100 #x[1] has 100*Mc_in
 
@@ -985,11 +996,12 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
 end #hxoptim!
 
+ 
 """
       hxobjf(x, HXgas, HXgeom)
 
 Objective function for HX optimization in hxoptim!(). It returns the sum of the power dissipated due to pressure
-drops in the process and coolant streams, with penalty factors to enforce constraints.
+drops in the process and coolant streams.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -1014,45 +1026,19 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
       #Size HX
       Iobj = Inf #Start with very high value of objective function
+      Iobj = Inf #Start with very high value of objective function
       try 
+            hxsize!(HXgas, HXgeom)
             hxsize!(HXgas, HXgeom)
 
             #Extract outputs
             Pl_p = HXgas.Pl_p
             Pl_c = HXgas.Pl_c
 
-            n_passes = HXgeom.n_passes
-            N_t = HXgeom.N_t
-            Δp_p = HXgas.Δp_p
-            Δp_c = HXgas.Δp_c
-            L = HXgeom.L #HX length
-
-            #Inlet pressures (pressure drops should not exceed these)
-            pp_in = HXgas.pp_in
-            pc_in = HXgas.pc_in
-            p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
-
-            #Constraints are applied to these variables
-            vars = [n_passes, N_t, Δp_p, Δp_c, L]
-
-      Lmax = HXgeom.maxL #maximum HEX length
-      lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
-      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, Lmax]
-
+            Iobj = (Pl_p + Pl_c) #Initialize objective function
             Iobj = (Pl_p + Pl_c) #Initialize objective function
 
-            # Apply penalty function so that outputs are within desired range
-            for (i,var) in enumerate(vars)
-                  vmin = lower[i]
-                  vmax = upper[i]
-
-                  pmin = ( vmin / min(vmin, var) )^2 #Penalty function
-                  pmax = ( max(vmax, var) / vmax )^2
-                  p = max(pmin, pmax)
-
-                  Iobj = Iobj * p
-            end
-      catch #Do nothing if it errors; this returns the high Iobj
+      catch #Do nothing if it errors
       end
 
       return Iobj
@@ -1828,3 +1814,50 @@ function liquid_properties(fluid, T)
 
       return ρ, cp, μ, k, Pr, a 
 end #liquid_properties
+
+#Constraint functions for HX optimization
+function MinPassesCstr(HXgeom)
+      n_passes = HXgeom.n_passes
+      min_passes = 1.0
+      return min_passes/n_passes - 1.0
+end
+
+function MaxPassesCstr(HXgeom)
+      n_passes = HXgeom.n_passes
+      max_passes = 20.0
+      return n_passes/max_passes - 1.0
+end
+
+function MinTubesCstr(HXgeom)
+      N_t = HXgeom.N_t
+      min_tubes = 1.0
+      return min_tubes/N_t - 1.0
+end
+
+function MaxTubesCstr(HXgeom)
+      N_t = HXgeom.N_t
+      max_tubes = 200.0
+      return N_t/max_tubes - 1.0
+end
+
+function MaxProcessΔPCstr(HXgas)
+      pp_in = HXgas.pp_in
+      p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
+      Δp_p = HXgas.Δp_p
+      Δp_max = p_thres * pp_in
+      return Δp_p/Δp_max - 1.0
+end
+
+function MaxCoolantΔPCstr(HXgas)
+      pc_in = HXgas.pc_in
+      p_thres = 0.5 #start applying penalty function is pressure drops exceed this fraction of the inlet pressure
+      Δp_c = HXgas.Δp_c
+      Δp_max = p_thres * pc_in
+      return Δp_c/Δp_max - 1.0
+end
+
+function MaxLengthCstr(HXgeom)
+      L = HXgeom.L
+      Lmax = 0.5
+      return L/Lmax - 1.0
+end
