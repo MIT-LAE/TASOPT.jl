@@ -185,7 +185,7 @@ This function can be used to place the passenger decks inside the fuselage. It w
 cabins. It returns the angular position of each deck with respect to the center of the upper bubble.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `Rfuse::Bool`: flag to indicate whether aircraft is a double decker
+    - `fdoubledecker::Bool`: flag to indicate whether aircraft is a double decker
     - `Rfuse::Float64`: fuselage exterior radius (m)
     - `dRfuse::Float64`: vertical shift of downward bubble (m)
     - `θ1::Float64`: required in some cases; angle of main floor wrt upper bubble center (rad)
