@@ -189,7 +189,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     res = res_df(sol.zero, engdata, iPspec = iPspec,  store_data = true)
     
     if maximum(abs.(res)) > tol #If infinity norm is above tolerance
-        println("DUCTEDFANOPER: convergence failed, iPspec = $iPspec")
+        @warn "DUCTEDFANOPER: convergence failed, iPspec = $iPspec"
     end
 
     return engdata.TSEC, engdata.Fsp, engdata.Feng, engdata.Peng, engdata.mfan, 
