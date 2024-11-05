@@ -1472,7 +1472,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
         xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.chord .+ vtail.layout.box_x
-        tailthick = (vtail.layout.chord*vtail.outboard.layout.chord_thickness/2)
+        tailthick = (vtail.layout.chord*vtail.outboard.layout.thickness_to_chord/2)
         yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 

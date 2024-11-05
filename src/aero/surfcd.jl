@@ -93,7 +93,7 @@ function surfcd2(
             dη = (ηs - ηo) / float(n / 2)
             P = 1.0 - frac + γs * frac
             C = 1.0 - frac + wing.inboard.layout.λ * frac
-            toc = wing.inboard.layout.chord_thickness * (1.0 - frac) + wing.outboard.layout.chord_thickness * frac
+            toc = wing.inboard.layout.thickness_to_chord * (1.0 - frac) + wing.outboard.layout.thickness_to_chord * frac
             fdu = fduo * (1.0 - frac) + fdus * frac
 
             #wing root shock "unsweep" function
@@ -128,7 +128,7 @@ function surfcd2(
             dη = (1.0 - ηs) / float(n / 2)
             P = γs * (1.0 - frac) + γt * frac
             C = wing.inboard.layout.λ * (1.0 - frac) + wing.outboard.layout.λ * frac
-            toc = wing.outboard.layout.chord_thickness * (1.0 - frac) + wing.outboard.layout.chord_thickness * frac
+            toc = wing.outboard.layout.thickness_to_chord * (1.0 - frac) + wing.outboard.layout.thickness_to_chord * frac
             fdu = fdus * (1.0 - frac) + fdut * frac
 
             fSuns = exp(-(η - ηo) * wing.layout.b / (kSuns * C * 2.0 * wing.layout.chord))

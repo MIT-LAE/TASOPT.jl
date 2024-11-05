@@ -265,7 +265,7 @@ end
 $TYPEDEF
 
 Wing Layout Structure:
-Contains dimensions, heights, etc. to design a Wing
+Holds the span, taper, and chord thickness of a single wing section.
 
 $TYPEDFIELDS
 """
@@ -275,5 +275,5 @@ $TYPEDFIELDS
     """Wing Section taper"""
     λ::Float64 = 0 
     """Chord Thickness"""
-    chord_thickness::Float64 = 0 
+    thickness_to_chord::Float64 = 0 
 end

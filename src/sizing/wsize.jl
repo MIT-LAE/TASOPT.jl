@@ -604,7 +604,7 @@ function wsize(ac; itermax=35,
         # Set Nacelle CL derivative fraction
         dCLnda = parg[igdCLnda]
         dCLndCL = dCLnda * (β + 2.0 / wing.layout.AR) * sqrt(β^2 + tanL^2) / 
-                  (2.0 * π * (1.0 + 0.5 * wing.inboard.layout.chord_thickness))
+                  (2.0 * π * (1.0 + 0.5 * wing.inboard.layout.thickness_to_chord))
         parg[igdCLndCL] = dCLndCL
 
         # Fuselage pitching moment calculation omitted for now

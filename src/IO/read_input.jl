@@ -492,8 +492,8 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     wing.outboard.layout.b = 2*Distance(readwing("center_box_halfspan"))
     wing.layout.box_width  = readwing("box_width_chord")
-    wing.inboard.layout.chord_thickness = readwing("root_thickness_to_chord")
-    wing.outboard.layout.chord_thickness = readwing("spanbreak_thickness_to_chord")
+    wing.inboard.layout.thickness_to_chord = readwing("root_thickness_to_chord")
+    wing.outboard.layout.thickness_to_chord = readwing("spanbreak_thickness_to_chord")
     wing.layout.hweb_to_hbox    = readwing("hweb_to_hbox")
     wing.layout.spar_box_x_c = readwing("spar_box_x_c")
 
@@ -657,7 +657,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     htail.weight_fraction_added = readhtail("added_weight_fraction")
 
     htail.layout.box_width = readhtail("box_width_chord")
-    htail.outboard.layout.chord_thickness = readhtail("box_height_chord")
+    htail.outboard.layout.thickness_to_chord = readhtail("box_height_chord")
     htail.layout.hweb_to_hbox  = readhtail("web_height_hbox")
 
 
@@ -688,7 +688,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
     vtail.weight_fraction_added = readvtail("added_weight_fraction")
     vtail.layout.box_width = readvtail("box_width_chord")
-    vtail.outboard.layout.chord_thickness = readvtail("box_height_chord")
+    vtail.outboard.layout.thickness_to_chord = readvtail("box_height_chord")
     vtail.layout.hweb_to_hbox  = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----

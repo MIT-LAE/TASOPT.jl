@@ -32,7 +32,7 @@ $TYPEDFIELDS
     """Wing Section caps"""
     caps::StructuralMember = StructuralMember(material=material)
     """Wing Strut web and caps"""
-    web_cap::Web_Cap_Strut = Web_Cap_Strut() 
+    web_cap::Web_Cap_Strut = Web_Cap_Strut() # Do we need this and the webs + caps??
     """Lift Rolloff"""
     lift_rolloff::Float64 = 0
     """Max shear load [N]"""
