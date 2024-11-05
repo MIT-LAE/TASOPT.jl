@@ -266,7 +266,19 @@ $TYPEDEF
 
 Wing Layout Structure:
 Holds the span, taper, and chord thickness of a single wing section.
+Ratios are with respect to the normal-plane chord c⟂=c×cos(Λ).
 
+Cross-section of wing box:                                                                                                            
+                  ┌──────────────────────────────────────┐        
+               ┌──┘               ▲                      └──┐     
+           ▲┌──┘                  │                         └──┐  
+ web height ││               spar box height                  ││  
+           ▼└──┐                  │                         ┌──┘  
+               └──┐               ▼                      ┌──┘     
+                  └──────────────────────────────────────┘        
+             ◄───────────────── box width ──────────────────────►   
+   ◄───────────────────────────── c⟂ ──────────────────────────────────►                                                    
+                                                          
 $TYPEDFIELDS
 """
 @kwdef mutable struct WingSectionLayout
@@ -277,7 +289,7 @@ $TYPEDFIELDS
     """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
     thickness_to_chord::Float64 = 0.0
     """Wing section's spar box width to c⟂[-]"""
-    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs
+    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs #TODO needs to be connected to box_width of WingLayout
     """Wing section's web height to max box height [-]"""
     web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
 end

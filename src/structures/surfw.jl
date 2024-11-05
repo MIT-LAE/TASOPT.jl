@@ -12,7 +12,7 @@ Calculates Loads and thicknesses for wing sections
     - `cp::Float64`: Chord times cosine of sweep
     - `cap_material::TASOPT.materials`: Material of cap.
     - `tauweb::Float64`: Webs tau
-    - `sigfac::Float64`: Stres factor
+    - `sigfac::Float64`: Stress factor
 """
 function size_wing_section!(layout, section, cs, cp, cap_material, tauweb, sigfac)
     shear_load = section.max_shear_load
@@ -20,18 +20,18 @@ function size_wing_section!(layout, section, cs, cp, cap_material, tauweb, sigfa
 
     Eweb = cap_material.E
     Ecap = cap_material.E
-    Gcap = cap_material.E * 0.5 / (1.0 + 0.3)
-    Gweb = cap_material.E * 0.5 / (1.0 + 0.3)
+    Gcap = cap_material.G
+    Gweb = cap_material.G
     sigcap = cap_material.σmax * sigfac
 
     cosL = cos(layout.sweep*pi/180)
-    
-    h_avg, h_rms = get_average_sparbox_heights(section.layout)
-    
 
-    tbweb = shear_load*0.5/(cs^2*tauweb*layout.hweb_to_hbox*section.layout.thickness_to_chord*cosL^2)
-    con  = moment*6.0*section.layout.thickness_to_chord/(cs^3*sigcap*layout.box_width*cosL^4)
-    tbcap = 0.5*(h_rms - (h_rms^3-con)^(1.0/3.0))
+    h_avg, h_rms = get_average_sparbox_heights(section.layout)
+
+    tbweb = calc_web_thickness(tauweb, shear_load, cs*cosL, layout.hweb_to_hbox*section.layout.thickness_to_chord)
+    tbcap = calc_cap_thickness(sigcap, moment, section.layout.thickness_to_chord,
+        layout.box_width, h_rms, cs, cosL)
+
     Abcap = 2.0*tbcap*layout.box_width
     Abweb = 2.0*tbweb*layout.hweb_to_hbox*section.layout.thickness_to_chord
 
@@ -245,3 +245,17 @@ function surfw!(wing, po, gammat, gammas,
 end # surfw
 
 
+"""
+"""
+function calc_web_thickness(τmax, shear, c_perp, web_height)
+    t_web = shear / (c_perp^2 * 2 * web_height * τmax)
+    return t_web
+end  # function calc_web_thickness
+
+"""
+"""
+function calc_cap_thickness(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
+    con = moment * 6h̄ / w̄ * 1 / (c^3 * σmax * cosΛ^4)
+    t_cap = 0.5 * (h_rms - ∛(h_rms^3 - con))
+    return t_cap
+end  # function calc_cap_thickness
