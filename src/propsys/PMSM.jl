@@ -138,7 +138,7 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     """Maximum Current Density [A/m²]"""
     J_max::Float64 = 1e6
     """Max ratio to saturation"""
-    rB_sat::Float64 = 0.98
+    rB_sat::Float64 = 0.98 #Default assumption is that the metal is almost saturated at design
     """Stack length [m]"""
     l::Float64 = 1.0
     """Mean internal temperature [K],
@@ -197,8 +197,8 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     # Calculate maximum flux through the stator and rotor back iron
     # Really, this needs to be a constraint Bsbi ≤ Bsat (at the top level) rather 
-    # than a prescribed setting. 
-    # The higher Bsbi is the thinner the sbi, but higher Bsbi ⟹ higher core losses
+    # than a prescribed setting. Or rB_sat can be a global optimization variable.
+    # The higher Bsbi, the thinner the sbi, but higher Bsbi ⟹ higher core losses
     stator.B = motor.rB_sat * motor.B_sat
     rotor.B = motor.rB_sat * motor.B_sat
 
