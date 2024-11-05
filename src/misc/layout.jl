@@ -271,9 +271,28 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct WingSectionLayout
     """Wing Section Span [m]"""
-    b::Float64 = 0
+    b::Float64 = 0.0
     """Wing Section taper"""
-    λ::Float64 = 0 
-    """Chord Thickness"""
-    thickness_to_chord::Float64 = 0 
+    λ::Float64 = 0.0
+    """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
+    thickness_to_chord::Float64 = 0.0
+    """Wing section's spar box width to c⟂[-]"""
+    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs
+    """Wing section's web height to max box height [-]"""
+    web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
 end
+
+"""
+    get_average_sparbox_heights(section::WingSectionLayout) -> (h̄_avg, h̄_rms)
+
+Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
+These are used in [`surfw`](@ref) for further calculations
+"""
+function get_average_sparbox_heights(section::WingSectionLayout)
+    A = 1 - section.web_to_box_height
+    h̄ = section.thickness_to_chord
+    h̄_avg = h̄ * (1 - A / 3.0)
+    h̄_rms = sqrt(h̄^2 * (1 - 2 * A / 3 + A^2 / 5))
+    return h̄_avg, h̄_rms
+end  # function get_average_sparbox_heights
+

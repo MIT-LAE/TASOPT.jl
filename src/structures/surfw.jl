@@ -25,26 +25,23 @@ function size_wing_section!(layout, section, cs, cp, cap_material, tauweb, sigfa
     sigcap = cap_material.σmax * sigfac
 
     cosL = cos(layout.sweep*pi/180)
-
-    hrms = section.layout.thickness_to_chord * 
-    sqrt(1.0 - (1.0-layout.hweb_to_hbox)/1.5 + (1.0-layout.hweb_to_hbox)^2 / 5.0)
-    havg = section.layout.thickness_to_chord * 
-    (1.0 - (1.0-layout.hweb_to_hbox)/3.0)
-
+    
+    h_avg, h_rms = get_average_sparbox_heights(section.layout)
+    
 
     tbweb = shear_load*0.5/(cs^2*tauweb*layout.hweb_to_hbox*section.layout.thickness_to_chord*cosL^2)
     con  = moment*6.0*section.layout.thickness_to_chord/(cs^3*sigcap*layout.box_width*cosL^4)
-    tbcap = 0.5*(hrms - (hrms^3-con)^(1.0/3.0))
+    tbcap = 0.5*(h_rms - (h_rms^3-con)^(1.0/3.0))
     Abcap = 2.0*tbcap*layout.box_width
     Abweb = 2.0*tbweb*layout.hweb_to_hbox*section.layout.thickness_to_chord
 
-    section.web_cap.EI_bending = Ecap*cp^4 * (hrms^3 - (hrms-2.0*tbcap)^3)*layout.box_width/12.0 +
+    section.web_cap.EI_bending = Ecap*cp^4 * (h_rms^3 - (h_rms-2.0*tbcap)^3)*layout.box_width/12.0 +
         Eweb*cp^4 * tbweb*(layout.hweb_to_hbox*section.layout.thickness_to_chord)^3 / 6.0
     
     section.web_cap.EI_normal = Ecap*cp^4 * tbcap*    layout.box_width  ^3 / 6.0 +
         Eweb*cp^4 * tbweb*layout.hweb_to_hbox*section.layout.thickness_to_chord * 0.5*layout.box_width^2
             
-    section.web_cap.GJ = cp^4 * 2.0*((layout.box_width-tbweb)*(havg-tbcap))^2 /
+    section.web_cap.GJ = cp^4 * 2.0*((layout.box_width-tbweb)*(h_avg-tbcap))^2 /
         (  (layout.hweb_to_hbox*section.layout.thickness_to_chord-tbcap)/(Gweb*tbweb) +
         (   layout.box_width -tbweb)/(Gcap*tbcap) )
 
@@ -97,8 +94,8 @@ function surfw!(wing, po, gammat, gammas,
     dLt = fLt*po*wing.layout.chord*gammat*wing.outboard.layout.λ
     dMt = dLt*0.5*wing.layout.b*(1.0-etas)
 
-    havgo = wing.inboard.layout.thickness_to_chord * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
-    havgs = wing.outboard.layout.thickness_to_chord * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
+    h_avgo = wing.inboard.layout.thickness_to_chord * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
+    h_avgs = wing.outboard.layout.thickness_to_chord * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
 
     # Outboard section:
     #---- strut-attach shear,moment from outer-wing loading. 
@@ -163,8 +160,8 @@ function surfw!(wing, po, gammat, gammas,
 
     end
 
-    Abfuels = (wing.layout.box_width-2.0*tbwebs)*(havgs-2.0*tbcaps)
-    Abfuelo = (wing.layout.box_width-2.0*tbwebo)*(havgo-2.0*tbcapo)
+    Abfuels = (wing.layout.box_width-2.0*tbwebs)*(h_avgs-2.0*tbcaps)
+    Abfuelo = (wing.layout.box_width-2.0*tbwebo)*(h_avgo-2.0*tbcapo)
 
     wing.strut.axial_force = Tstrutp/sigstrut
 
