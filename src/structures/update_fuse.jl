@@ -145,13 +145,13 @@ This function calculates the minimum radius required to have a desired number of
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
+    - `seats_per_row::Int64`: number of seats per row in main cabin (lower deck if double decker)
     - `ac_base::aircraft`: aircraft object
 
     **Outputs:**
     - `R::Float64`: minimum radius for desired number of seats per row (m)
 """
-function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
+function find_minimum_radius_for_seats_per_row(seats_per_row::Int64, ac_base)
     ac = deepcopy(ac_base) #Copy input ac to avoid modifying it
     obj(x, grad) = x[1] + 1e3 * abs(check_seats_per_row_diff(seats_per_row, x, ac))  #Objective function is the radius plus a big penalty if constraint is not met
 
@@ -173,7 +173,7 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Next, use local optimizer to polish off optimum
-    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a 
+    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a local optimizer
     opt.lower_bounds = [0.0]
     opt.upper_bounds = [5.0]
     opt.min_objective = obj
@@ -218,6 +218,3 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
         return 1.0
     end
 end
-
-# [fuselage.layout.x_end_cylinder, parg[igxwbox], fuselage.layout.x_pressure_shell_aft, fuselage.layout.x_cone_end,
-# fuselage.APU.x, fuselage.layout.x_end, fuselage.HPE_sys.x, parg[igxhbox], parg[igxvbox],parg[igxeng],parg[igdxcabin]]
