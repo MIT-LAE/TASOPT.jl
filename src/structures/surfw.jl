@@ -94,8 +94,8 @@ function surfw!(wing, po, gammat, gammas,
     dLt = fLt*po*wing.layout.chord*gammat*wing.outboard.layout.λ
     dMt = dLt*0.5*wing.layout.b*(1.0-etas)
 
-    h_avgo = wing.inboard.layout.thickness_to_chord * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
-    h_avgs = wing.outboard.layout.thickness_to_chord * (1.0 - (1.0-wing.layout.hweb_to_hbox)/3.0)
+    h_avgo, h_rmso = get_average_sparbox_heights(wing.inboard.layout)
+    h_avgs, h_rmss = get_average_sparbox_heights(wing.outboard.layout)
 
     # Outboard section:
     #---- strut-attach shear,moment from outer-wing loading. 
