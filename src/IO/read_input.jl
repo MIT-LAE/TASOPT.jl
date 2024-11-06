@@ -152,7 +152,7 @@ if any(maxpax .< pax)
     "\n Payloads listed [in pax] = "*string(pax))
 end
 if any(exitlimit .< pax)
-    error("One or more missions have higher payload than the prescribed exit limit!:"*
+    error("One or more missions have higher passenger counts than the prescribed exit limit!:"*
     "\n Exit limit [in pax] = "*string(exitlimit)*
     "\n Payloads listed [in pax] = "*string(pax))
 end
