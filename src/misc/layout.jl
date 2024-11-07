@@ -292,7 +292,51 @@ $TYPEDFIELDS
     width_to_chord::Float64 = 0.50 #Default values from TASOPT docs #TODO needs to be connected to box_width of WingLayout
     """Wing section's web height to max box height [-]"""
     web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
+    """Sparbox cap normalized thickness (i.e., h_cap/c⟂) [-]"""
+    t_cap::Float64 = 0.0
+    """Sparbox web normalized thickness"""
 end
+
+@kwdef mutable struct WingCrossSection
+    """Section Chord [m]"""
+    c_perp::Float64 = 0.0
+    """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
+    thickness_to_chord::Float64 = 0.0
+    """Wing section's spar box width to c⟂[-]"""
+    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs #TODO needs to be connected to box_width of WingLayout
+    """Wing section's web height to max box height [-]"""
+    web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
+    """Sparbox cap normalized thickness (i.e., h_cap/c⟂) [-]"""
+    t_cap::Float64 = 0.0
+    """Sparbox web normalized thickness"""
+    t_web::Float64 = 0.0
+    """Internal Area normalized by chord2"""
+    A_internal::Float64 = 0.0
+end
+
+@kwdef mutable struct WingSection_ #_ just to differentiate temporarily from the other struct WingSection
+    start_section::WingCrossSection
+    end_section::WingCrossSection
+    """Section length [m]"""
+    b_section::Float64
+    """Sweep [°]"""
+    Λ::Float64 = 0.0 # need to let this be the wing overall Λ by default
+
+end
+
+"""
+"""
+function normalized_chord(η; λs = 0.8, λt = 0.7, ηo=0.0, ηs = 0.5)
+    if 0.0 ≤ η < ηo
+        1.0
+    elseif ηo ≤ η < ηs
+        1 + (λs - 1) * (η - ηo)/(ηs - ηo)
+    elseif ηs ≤ η ≤ 1
+        λs + (λt - λs)*(η - ηs)/(1 - ηs)
+    else
+        error("η should be 0≤η≤1")
+    end
+end  # function normalized_chord
 
 """
     get_average_sparbox_heights(section::WingSectionLayout) -> (h̄_avg, h̄_rms)
