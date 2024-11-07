@@ -85,6 +85,7 @@ Structure containing the heat exchanger geometric and material properties.
     - `Rfc::Float64`: coolant-side fouling factor (m^2 K/W)
     - `D_i::Float64`: inner diameter of core (m)
     - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
+    - `maxL::Float64`: maximum allowable HEX length (m)
 """
 @kwdef mutable struct HX_tubular
       fconc :: Bool = false
@@ -104,6 +105,7 @@ Structure containing the heat exchanger geometric and material properties.
       D_i :: Float64 = 0.0
       material :: StructuralAlloy = StructuralAlloy("Al-2219-T87")
       Δpdes::Float64 = 0.0
+      maxL::Float64 = 0.0
 end
 
 # Overload Base.getproperty for convenience
@@ -135,10 +137,10 @@ Structure containing all the heat exchanger geometry and operational information
     - `HXgeom::HX_tubular`: structure containing the HX geometric information
     - `HXgas_mission::Array{Any}`: array containing the gas properties, of type `HX_gas` for each mission and segment
 """
-mutable struct HX_struct
-      type :: String 
-      HXgeom :: HX_tubular  
-      HXgas_mission :: Array{Any}
+@kwdef mutable struct HX_struct
+      type :: String = ""
+      HXgeom :: HX_tubular = HX_tubular()
+      HXgas_mission :: Array{Any} = []
 end
   
 """
@@ -681,7 +683,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
-            else #For liquid
+            else
                   Nu_c = Nu_cm
             end
             h_c = Nu_c * k_c_m / tD_i
@@ -766,7 +768,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
 end #hxoper!
 
 """
-      radiator_design!(HXgas, HXgeom, Q)
+      radiator_coolant_mass(HXgas, HXgeom, Q)
 
     Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
     The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
@@ -795,13 +797,18 @@ function radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
       else
             _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
       end
-      #TODO: this calculation does not work when there is recirculation or if the process side has C_min
-
+      _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+      
       #Calculate minimum heat capacity rate from desired effectiveness and temperature difference
       C_min = abs(Q / (ε * (Tp_in - Tc_in)))
 
       #Design for C_min being C_c
       mdot_c = C_min / cp_c
+
+      C_r = mdot_c * cp_c / (HXgas.mdot_p * cp_p)
+      if C_r > 1 #If the coolant has the maximum heat capacity rate
+            error("In radiator sizing, process stream has minimum heat capacity rate")
+      end
             
       return mdot_c
 end
@@ -834,10 +841,13 @@ function HXoffDesignCalc!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 
       HXod_res(C_r) = HXheating_residual!(HXgas, HXgeom, Q, C_r) #Should be 0 at correct C_r
 
-      Crg = 1.5 #guess for heat capacity rate
+      Crg = 0.5 #guess for heat capacity rate
       C_r = find_zero(HXod_res, Crg) #Find root with Roots.jl
 
-      HXgas.mdot_c = 1 / C_r * HXgas.mdot_p * cp_p / cp_c
+      if abs(HXod_res(C_r)) > 1e-4 #If the non-linear solver did not find a suitable solution
+            error("Failed to find coolant mass flow rate in radiator off-design model")
+      end
+      HXgas.mdot_c = C_r * HXgas.mdot_p * cp_p / cp_c
 
       hxoper!(HXgas, HXgeom)
 
@@ -868,9 +878,13 @@ function HXheating_residual!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64, C_r:
       end
       _, _, _, _, cp_p, _ = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
 
-      HXgas.mdot_c = 1 / C_r * (HXgas.mdot_p * cp_p) / cp_c
+      HXgas.mdot_c = C_r * (HXgas.mdot_p * cp_p) / cp_c
 
-      hxoper!(HXgas, HXgeom)
+      try
+            hxoper!(HXgas, HXgeom)
+      catch
+            return 1.0 #return something other than 0 if it fails
+      end
 
       Q_HX = HXgas.Δh_p * HXgas.mdot_p
 
@@ -934,11 +948,11 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
       #Set bounds
       if length(initial_x) == 4
-            lower = [0.0, 1.0, 1.0, lmin]
+            lower = [1e-9, 1.0, 1.0, lmin]
             upper = [30.0, 20.0, 6.0, lmax]
             initial_dx = [0.1, -0.1, -0.1, 0.1]
       else #Only 3 optimization variables
-            lower = [0.0, 1.0, 1.0]
+            lower = [1e-9, 1.0, 1.0]
             upper = [30.0, 20.0, 6.0]
             initial_dx = [0.1, -0.1, -0.1]
       end
@@ -999,7 +1013,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       end
 
       #Size HX
-      Iobj = 1e9 #Start with very high value of objective function
+      Iobj = Inf #Start with very high value of objective function
       try 
             hxsize!(HXgas, HXgeom)
 
@@ -1021,9 +1035,9 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
             #Constraints are applied to these variables
             vars = [n_passes, N_t, Δp_p, Δp_c, L]
 
-            lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
-            upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, 0.25]
-            #TODO: the HEX length (L) constraint should be an input (maybe a global optimization variable?)
+      Lmax = HXgeom.maxL #maximum HEX length
+      lower = [1.0, 1.0, 1.0, 1.0, 1e-3] #desired lower limits
+      upper = [20.0, 200.0, p_thres * pp_in, p_thres * pc_in, Lmax]
 
             Iobj = (Pl_p + Pl_c) #Initialize objective function
 
@@ -1086,9 +1100,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       TurbCorder = pare_sl[ieTurbCorder]
       TurbCepsilon = pare_sl[ieTurbCepsilon]
       TurbCMp = pare_sl[ieTurbCMp]
-      Radiatororder = pare_sl[ieRadiatororder]
-      Radiatorepsilon = pare_sl[ieRadiatorepsilon]
-      RadiatorMp = pare_sl[ieRadiatorMp]
 
       if igas == 11 #TODO: add more options
             coolant_name = "ch4"
@@ -1097,10 +1108,10 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       end
 
       # Sort heat exchangers
-      all_types = ["PreC", "InterC", "Regen", "TurbC", "Radiator"]
-      all_orders = [PreCorder, InterCorder, Regenorder, TurbCorder, Radiatororder]
-      all_Mp = [PreCMp, InterCMp, RegenMp, TurbCMp, RadiatorMp]
-      all_eps = [PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon, Radiatorepsilon]
+      all_types = ["PreC", "InterC", "Regen", "TurbC"]
+      all_orders = [PreCorder, InterCorder, Regenorder, TurbCorder]
+      all_Mp = [PreCMp, InterCMp, RegenMp, TurbCMp]
+      all_eps = [PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon]
 
       HXtypes = []
       Mp_in = []
@@ -1133,8 +1144,8 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             # Heat exchanger materials and wall properties
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
-            HXgeom.Δpdes = max(maximum(pare[iept21,:]), maximum(pare[iept3,:])) #size wall thickness for maximum HPC pressure
-                                                                              #TODO change this for cases with fuel cells
+            HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
+            HXgeom.maxL = 0.25 #maximum HEX length
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1153,7 +1164,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.fshaft = true #HX contains a shaft
 
                   HXgas.mdot_p = mcore   #Core mass flow 
-                  HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                   iTp_in = ieTt19
                   ipp_in = iept19
                   ipc_in = iept3
@@ -1169,7 +1179,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.fshaft = true
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
-                  HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                   iTp_in = ieTt25
                   ipp_in = iept25
                   ipc_in = iept3
@@ -1184,7 +1193,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.material = StructuralAlloy("SS-304") #use stainless steel for regenerative cooler as temp is above melting for Al
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
-                  HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                   iTp_in = ieTt49
                   ipp_in = iept49
                   ipc_in = iept3
@@ -1200,30 +1208,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
 
                   HXgas.mdot_p = mcore * fc #Only cooling mass flow rate
-                  HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                   iTp_in = ieTt3
                   ipp_in = iept3
                   ipc_in = iept3
 
                   Dh_i = ieTurbCDeltah
                   Dp_i = ieTurbCDeltap
-
-            elseif type == "Radiator" 
-                  coolant_name = "liquid ethylene glycol"
-                  HXgeom.fconc = true 
-                  HXgeom.D_i = D_i
-                  HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
-                  HXgeom.material = StructuralAlloy("Al-2219-T87")
-
-                  Q = pare_sl[ieQheat]
-                  HXgas.mdot_p = pare_sl[iemfan]
-                  iTp_in = ieTt21
-                  ipp_in = iept21
-                  ipc_in = iept21
-                  HXgas.Tc_in = pare_sl[ieTfc]
-
-                  Dh_i = ieRadiatorDeltah
-                  Dp_i = ieRadiatorDeltap
             end
 
             HXgas.Tp_in = pare_sl[iTp_in]
@@ -1231,10 +1221,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgas.Mp_in = Mp_in[i]
 
             HXgas.fluid_c = coolant_name
+            HXgas.igas_c = igas
+            HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
+            
             HXgas.pc_in = pare_sl[ipc_in]
 
-            if (i == 1) && (type != "Radiator")  #At first heat exchanger
-                  HXgas.igas_c = igas
+            if i == 1 #At first heat exchanger
                   HXgas.Tc_in = Tc_ft #Coolant temperature is the tank temperature
                   if frecirc #There can only be recirculation in the first heat exchanger
                         HXgeom.frecirc = true 
@@ -1244,45 +1236,22 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                         HXgeom.frecirc = false 
                   end
                         
-            elseif type != "Radiator" # For subsequent exchangers
+            else # For subsequent exchangers
                   HXprev = HeatExchangers[i - 1] #Get previous heat exchanger struct
                   all_gas_prev = HXprev.HXgas_mission
-                  HXgas.Tc_in = all_gas_prev[ipdes].Tc_out #The inlet temperature is the outlet of previous HX at design point 
-            
-            else #If the HEX is a radiator
-                  HXgas.mdot_c = radiator_coolant_mass(HXgas, Q) #Calculate coolant mass rate to release required heat
+                  HXgas.Tc_in = all_gas_prev[ipdes].Tc_out #The inlet temperature is the outlet of previous HX at design point
+                  
             end
 
             # Guess starting point for optimization
             #First calculate minimum tube length
-            _, _, _, _, cp_p_in, Rp = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
-            γ_p_in = cp_p_in / (cp_p_in - Rp)
-            ρ_p_in = HXgas.pp_in / (Rp * HXgas.Tp_in)
-            Vp_in = HXgas.Mp_in * sqrt(γ_p_in * Rp * HXgas.Tp_in)
-
-            A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
-            
-            if HXgeom.fconc #Flow is concentric
-                  D_i = HXgeom.D_i
-                  D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
-
-                  lmin = (D_o - D_i) / 2 #minimum tube length
-                  linit = 1.1 * lmin
-            else #square cross-section
-                  AR_min = 0.1 #Minimum aspect ratio
-                  lmin = sqrt(AR_min * A_cs)
-                  linit = sqrt(A_cs)
-            end
+            lmin, linit = calculate_min_tube_length(HXgeom, HXgas) #Minimum tube lenght and initial guess
 
             #Now set starting point
             if isempty(HXs_prev) #If there is no previous heat exchanger design point
                   #Calculate initial length
-                  if type == "Radiator"
-                        n_stage0 = 19.0
-                  else
-                        n_stage0 = 4.0
-                  end
-                  initial_x = [3.0, n_stage0, 4.0, linit] #Initial guess
+
+                  initial_x = [3, 4, 4, linit] #Initial guess
             else 
                   #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
                   initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, 
@@ -1327,14 +1296,25 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   elseif type =="TurbC"
                         HXgasp.mdot_p = mcore * fc
 
-                  elseif type =="Radiator"
-                        HXgasp.mdot_p = pare_sl[iemfan] #Fan mass flow rate
-                        HXgasp.Tc_in = pare_sl[ieTfc] #Fuel cell temperature
                   end        
 
                   HXgasp.Tp_in = pare_sl[iTp_in] #The indices come from the design process above as the HX is the same
                   HXgasp.pp_in = pare_sl[ipp_in]
+
+                  HXgasp.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
                   HXgasp.pc_in = pare_sl[ipc_in]
+
+                  if i == 1 #If this is the first heat exchanger
+                        HXgas.Tc_in = Tc_ft #Temperature is the tank temperature
+                        if frecirc #If there is recirculation, it can only happen at fist HX
+                              HXgasp.recircT = recircT
+                              HXgasp.h_lat = h_lat
+                        end
+                  else
+                        HXprev = HeatExchangers[i - 1]
+                        all_gas_prev = HXprev.HXgas_mission
+                        HXgasp.Tc_in = all_gas_prev[ip].Tc_out
+                  end
 
                   if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
                         HXgasp.Tp_out = HXgasp.Tp_in
@@ -1342,25 +1322,9 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                         HXgasp.Δh_p = 0
                         HXgasp.Δp_p = 0
                         HXgasp.ε = 0
-
-                  elseif type != "Radiator"
-                        HXgasp.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
-                        if i == 1 #If this is the first heat exchanger
-                              HXgas.Tc_in = Tc_ft #Temperature is the tank temperature
-                              if frecirc #If there is recirculation, it can only happen at fist HX
-                                    HXgasp.recircT = recircT
-                                    HXgasp.h_lat = h_lat
-                              end
-                        else
-                              HXprev = HeatExchangers[i - 1]
-                              all_gas_prev = HXprev.HXgas_mission
-                              HXgasp.Tc_in = all_gas_prev[ip].Tc_out
-                        end
-
+                  else #Otherwise, call HX off-design routine
                         hxoper!(HXgasp, HXgeom)
 
-                  elseif type == "Radiator" #For radiator
-                        HXoffDesignCalc!(HXgasp, HXgeom, pare_sl[ieQheat])
                   end
 
                   HXgas_mis[ip] = HXgasp
@@ -1394,6 +1358,134 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       return HeatExchangers
 end #hxdesign!
 
+function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
+
+      #---------------------------------
+      # Extract inputs
+      #---------------------------------
+      pare_sl = pare[:, ipdes] #Slice pare at design point
+
+      D_i = pare_sl[ieDi] #Inner diameter of HEX
+      Radiatorepsilon = pare_sl[ieRadiatorepsilon]
+      RadiatorMp = pare_sl[ieRadiatorMp]
+
+      if Radiatorepsilon ≈ 0
+            return #Skip if there is no radiator
+      end
+
+      alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
+      #Initialize Heat Exchanger vector, for similarity with engine-integrated HEXs
+      
+      type = "Radiator"
+      #---------------------------------
+      # Design radiator
+      #---------------------------------
+      #Initiliaze design geometry and gas property as empty structs
+      HXgas = HX_gas()
+      HXgeom = HX_tubular()
+
+      HXgas.ε = Radiatorepsilon
+
+      # Heat exchanger materials and wall properties
+      HXgeom.xl_D = 1
+      HXgeom.Rfc = 9E-05 #Distilled water fouling resistance, m^2*K/W
+      HXgeom.maxL = 2.0 #Maximum radiator length
+
+      HXgas.fluid_p = "air"
+      HXgas.alpha_p = alpha
+
+      if pare_sl[ieTfc] > 373
+            coolant_name = "liquid ethylene glycol"
+      else
+            coolant_name = "liquid water"
+      end
+      HXgas.fluid_c = coolant_name
+      
+      HXgeom.fconc = true 
+      HXgeom.D_i = D_i
+      HXgeom.Rfp = 1.761e-4 #Compressed air fouling resistance, m^2*K/W 
+      HXgeom.material = StructuralAlloy("Al-2219-T87")
+
+      #Indices for HEX variables
+      Dh_i = ieRadiatorDeltah
+      Dp_i = ieRadiatorDeltap
+      iTp_in = inpts_dict["iTp_in"]
+      ipp_in = inpts_dict["ipp_in"]
+      iTc_in = inpts_dict["iTc_in"]
+      ipc_in = inpts_dict["ipc_in"]
+      imp_in = inpts_dict["imp_in"]
+      iQheat = inpts_dict["iQheat"]
+
+      #Store inlet properties in relevant fields
+      HXgas.mdot_p = pare_sl[imp_in]
+      HXgas.Tp_in = pare_sl[iTp_in]
+      HXgas.pp_in = pare_sl[ipp_in]
+      HXgas.Tc_in = pare_sl[iTc_in]
+      HXgas.pc_in = pare_sl[ipc_in]
+
+      HXgeom.Δpdes = maximum(abs.(pare[ipc_in,:] - pare[ipp_in,:])) #size wall thickness for maximum post fan pressure                                                           
+
+      HXgas.Mp_in = RadiatorMp
+
+      #Calculate coolant mass rate to release required heat
+      Q = pare_sl[iQheat]
+      HXgas.mdot_c = radiator_coolant_mass(HXgas, Q) 
+
+      # Guess starting point for optimization
+      #First calculate minimum tube length
+      lmin, linit = calculate_min_tube_length(HXgeom, HXgas) #Minimum tube lenght and initial guess
+
+      #Now set starting point
+      if HXs_prev.HXgeom.n_passes ≈ 0 #If there is no previous heat exchanger design point
+            #Calculate initial length
+            initial_x = [3.0, 19.0, 4.0, linit] #Initial guess
+      else 
+            #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
+            initial_x = [100 * HXs_prev.HXgas_mission[ipdes].Mc_in, 
+            HXs_prev.HXgeom.n_stages, HXs_prev.HXgeom.xt_D, max(HXs_prev.HXgeom.l, lmin)] #guess is previous iteration design point
+      end
+
+      hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
+      hxsize!(HXgas, HXgeom) #Evaluate all geometry properties at design point
+
+      #---------------------------------
+      # Analyze off-design performance
+      #---------------------------------
+      HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
+
+      for ip = 1:size(pare)[2] #For every point
+            pare_sl = pare[:, ip] #Slice pare with the parameters for the current point
+            HXgasp = deepcopy(HXgas) #Initialize gas property struct for this segment
+
+            HXgasp.mdot_p = pare_sl[imp_in] #Fan mass flow rate
+            
+            HXgasp.Tp_in = pare_sl[iTp_in] #The indices come from the design process above as the HX is the same
+            HXgasp.pp_in = pare_sl[ipp_in]
+            HXgasp.Tc_in = pare_sl[iTc_in] #Fuel cell temperature        
+            HXgasp.pc_in = pare_sl[ipc_in]
+
+            if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
+                  HXgasp.Tp_out = HXgasp.Tp_in
+                  HXgasp.Tc_out = HXgasp.Tc_in
+                  HXgasp.Δh_p = 0
+                  HXgasp.Δp_p = 0
+                  HXgasp.ε = 0
+            else
+                  #Calculate off-design performance to reject required heat
+                  Q = pare_sl[iQheat] #Heat load
+                  HXoffDesignCalc!(HXgasp, HXgeom, Q)
+            end
+
+            HXgas_mis[ip] = HXgasp
+
+            #Store output in pare
+            pare[Dh_i, ip] =  (1 - rlx) * pare[Dh_i, ip] + rlx * HXgasp.Δh_p
+            pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
+            
+      end
+      return HX_struct(type, HXgeom, HXgas_mis)
+end
+
 """
       resetHXs(pare)
 
@@ -1420,10 +1512,34 @@ function resetHXs(pare)
       pare[ieTurbCDeltap, :] .= 0.0
       pare[ieRegenDeltah, :] .= 0.0
       pare[ieRegenDeltap, :] .= 0.0
+      pare[ieRadiatorDeltah, :] .= 0.0
+      pare[ieRadiatorDeltap, :] .= 0.0
 
       #Reset heat of vaporization in combustor
       pare[iehvapcombustor, :, :] = pare[iehvap, :, :]
 
+end
+
+function calculate_min_tube_length(HXgeom, HXgas)
+      _, _, _, _, cp_p_in, Rp = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
+      γ_p_in = cp_p_in / (cp_p_in - Rp)
+      ρ_p_in = HXgas.pp_in / (Rp * HXgas.Tp_in)
+      Vp_in = HXgas.Mp_in * sqrt(γ_p_in * Rp * HXgas.Tp_in)
+
+      A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
+      
+      if HXgeom.fconc #Flow is concentric
+            D_i = HXgeom.D_i
+            D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
+
+            lmin = (D_o - D_i) / 2 #minimum tube length
+            linit = 1.1 * lmin
+      else #square cross-section
+            AR_min = 0.1 #Minimum aspect ratio
+            lmin = sqrt(AR_min * A_cs)
+            linit = sqrt(A_cs)
+      end
+      return lmin, linit
 end
 
 """
