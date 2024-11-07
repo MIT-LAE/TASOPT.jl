@@ -53,7 +53,7 @@ function update_fuse!(fuselage, pari, parg)
 end
 
 """
-    update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
+    update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
@@ -62,7 +62,6 @@ It sizes the cabin for the design number of passengers.
     **Inputs:**
     - `pari::Vector{Int64}`: vector with aircraft integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
-    - `parm::Array{Float64}`: array with mission parameters
     - `fuse::Fuselage`: structure with fuselage parameters
     - `fuse_tank::fuselage_tank`: structure with cryogenic fuel tank parameters
 
@@ -70,7 +69,7 @@ It sizes the cabin for the design number of passengers.
     Parameters in `parg` are modified. It also outputs:
     - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
 """
-function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
+function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
 
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
@@ -84,13 +83,13 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
 
     #Find cabin length by placing seats
     if fuse.n_decks == 2 #if the aircraft is a double decker
-        xopt, seats_per_row = optimize_double_decker_cabin(parg, fuse, parm) #Optimize the floor layout and passenger distributions
+        xopt, seats_per_row = optimize_double_decker_cabin(fuse) #Optimize the floor layout and passenger distributions
 
-        lcyl, _ = find_double_decker_cabin_length(xopt, parg, fuse, parm) #Total length is maximum of the two
+        lcyl, _ = find_double_decker_cabin_length(xopt, fuse) #Total length is maximum of the two
 
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
-        paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+        paxsize = fuse.cabin.exit_limit #maximum number of passengers
         w = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
         lcyl, _, seats_per_row = place_cabin_seats(paxsize, w, seat_pitch, seat_width, aisle_halfwidth) #Cabin length
     end
@@ -183,7 +182,13 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     (minf,xopt,ret) = NLopt.optimize(opt, xopt) #Solve optimization problem starting from global solution
 
     R = xopt[1]
-    return R
+    #Check if constraint is met
+    diff = check_seats_per_row_diff(seats_per_row, xopt, ac)
+    if diff ≈ 0.0
+        return R
+    else
+        error("Optimizer failed to find a fuselage radius for the desired pax per row")
+    end
 end
 
 """
@@ -205,12 +210,11 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
     Rfuse = x[1]
     ac.fuselage.layout.cross_section.radius = Rfuse
     try #Sometimes update_fuse_for_pax may fail
-        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.parm, ac.fuselage, ac.fuse_tank)
+        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.fuselage, ac.fuse_tank)
         diff = seats_per_row_rad - seats_per_row
         #println("R = $Rfuse, s = $seats_per_row_rad")
         return diff
     catch
-        #println("failed")
         return 1.0
     end
 end
