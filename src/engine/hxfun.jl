@@ -69,9 +69,9 @@ Structure containing the heat exchanger geometric and material properties.
 
 !!! details "💾 Data fields"
     **Inputs:**
-    - `fconc::Bool`: flag for concentric geometry (true: concentric ; false: rectangular)
-    - `frecirc::Bool`: flag for recirculation (true: recirculation ; false: no recirculation)
-    - `fshaf::Bool`: flag for whether HX contains shaf(true: shaft ; false: no shaft)
+    - `flag_is_concentric::Bool`: flag for concentric geometry (true: concentric ; false: rectangular)
+    - `flag_recirculates::Bool`: flag for recirculation (true: recirculation ; false: no recirculation)
+    - `flag_has_shaft::Bool`: flag for whether HX contains shaft(true: shaft ; false: no shaft)
     - `N_t::Float64`: number of tubes per row
     - `n_stages::Float64`: number of different coolant stages with different coolant flows
     - `n_passes::Float64`: number of coolant passes
@@ -87,9 +87,9 @@ Structure containing the heat exchanger geometric and material properties.
     - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
 """
 @kwdef mutable struct HX_tubular
-      fconc :: Bool = false
-      frecirc :: Bool = false
-      fshaft :: Bool = false
+      flag_is_concentric :: Bool = false
+      flag_recirculates :: Bool = false
+      flag_has_shaft :: Bool = false
       N_t :: Float64 = 0.0
       n_stages :: Float64 = 0.0
       n_passes:: Float64 = 0.0
@@ -108,7 +108,7 @@ end
 
 # Overload Base.getproperty for convenience
 function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
-      if (sym === :D_o) && getfield(HXgeom, :fconc)
+      if (sym === :D_o) && getfield(HXgeom, :flag_is_concentric)
             A_cs = getfield(HXgeom, :A_cs)
             D_i = getfield(HXgeom, :D_i)
             D_o = sqrt(4 * A_cs / pi +D_i^2)
@@ -176,8 +176,8 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       pc_in = HXgas.pc_in
 
       #Flags 
-      fconc = HXgeom.fconc
-      frecirc = HXgeom.frecirc
+      flag_is_concentric = HXgeom.flag_is_concentric
+      flag_recirculates = HXgeom.flag_recirculates
 
       #HX geometry
       t = HXgeom.t #Initial wall thickness, may be overwritten
@@ -190,11 +190,11 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
 
       tol = 1e-10 #convergence tolerance
 
-      if fconc #If geometry is concentric
+      if flag_is_concentric #If geometry is concentric
             D_i = HXgeom.D_i
       end
 
-      if frecirc
+      if flag_recirculates
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
 
@@ -219,7 +219,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       mdot_c = mdot_c_inf
       modot_c_prev = mdot_c
 
-      if frecirc #If there is recirculation
+      if flag_recirculates #If there is recirculation
             _, _, hc_in, _, cp_c_in, _ = gasfun(igas_c, recircT)
             Tc_in = recircT
             N_iters_rec = 15 #Iterations in recirculation loop
@@ -342,7 +342,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       A_cs = mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-      if fconc #If channel is concentric, e.g., engine core
+      if flag_is_concentric #If channel is concentric, e.g., engine core
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
             b = pi * D_i #Inner circumference
       else #If channel is rectangular
@@ -467,7 +467,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgeom.n_passes = n_passes
       HXgeom.A_cs = A_cs
 
-      if frecirc
+      if flag_recirculates
             HXgas.mdot_r = mdot_r
       end
 
@@ -504,8 +504,8 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       pc_in = HXgas.pc_in
 
       #Flags 
-      fconc = HXgeom.fconc
-      frecirc = HXgeom.frecirc
+      flag_is_concentric = HXgeom.flag_is_concentric
+      flag_recirculates = HXgeom.flag_recirculates
 
       #HX geometry
       t = HXgeom.t
@@ -522,7 +522,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
 
       tol = 1e-10
 
-      if frecirc
+      if flag_recirculates
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
       end
@@ -544,7 +544,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       # Fluid calculations
       #---------------------------------
 
-      if frecirc
+      if flag_recirculates
             _, _, hc_in, _, cp_c_in, _ = gasfun(igas_c, recircT)
             Tc_in = recircT
       
@@ -619,7 +619,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
 
       for i = 1 : N_iter
             
-            if frecirc
+            if flag_recirculates
                   #Calculate assuming that C_c = C_min
                   mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Tp_in -  recircT) )
                   
@@ -917,7 +917,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       pp_in  = HXgas.pp_in
 
       #Flags 
-      fconc = HXgeom.fconc
+      flag_is_concentric = HXgeom.flag_is_concentric
 
       _, _, _, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
       γ_p_in = cp_p_in / (cp_p_in - Rp)
@@ -926,7 +926,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
       A_cs = mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
       
-      if fconc #Flow is concentric
+      if flag_is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -1077,7 +1077,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
 
       D_i = pare_sl[ieDi]
       Tc_ft = pare_sl[ieTft]
-      frecirc = Bool(pare_sl[iefrecirc])
+      flag_recirculates = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
       h_lat = pare_sl[iehvap]
       igas = pari[iifuel]
@@ -1149,11 +1149,11 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgas.alpha_p = alpha #Use alpha by default, except for Regen
 
             if type == "PreC" #Compressor Precooler
-                  HXgeom.fconc = true #Concentric
+                  HXgeom.flag_is_concentric = true #Concentric
                   HXgeom.D_i = D_i 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
-                  HXgeom.fshaft = true #HX contains a shaft
+                  HXgeom.flag_has_shaft = true #HX contains a shaft
 
                   HXgas.mdot_p = mcore   #Core mass flow 
                   iTp_in = ieTt19
@@ -1164,11 +1164,11 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   Dp_i = iePreCDeltap
 
             elseif type == "InterC" #Compressor Intercooler
-                  HXgeom.fconc = true #Concentric
+                  HXgeom.flag_is_concentric = true #Concentric
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
-                  HXgeom.fshaft = true
+                  HXgeom.flag_has_shaft = true
 
                   HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
                   iTp_in = ieTt25
@@ -1179,7 +1179,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   Dp_i = ieInterCDeltap
 
             elseif type == "Regen" #Regenerative cooling
-                  HXgeom.fconc = true 
+                  HXgeom.flag_is_concentric = true 
                   HXgeom.D_i = D_i
                   HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("SS-304") #use stainless steel for regenerative cooler as temp is above melting for Al
@@ -1195,7 +1195,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   HXgas.alpha_p = lambdap_calc(pare, alpha, igas, ipdes) #Calculate postcombustion and mixing composition
 
             elseif type =="TurbC" #Cooling of turbine cooling flow
-                  HXgeom.fconc = false 
+                  HXgeom.flag_is_concentric = false 
                   HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
                   HXgeom.material = StructuralAlloy("Al-2219-T87")
 
@@ -1220,12 +1220,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
 
             if i == 1 #At first heat exchanger
                   HXgas.Tc_in = Tc_ft #Coolant temperature is the tank temperature
-                  if frecirc #There can only be recirculation in the first heat exchanger
-                        HXgeom.frecirc = true 
+                  if flag_recirculates #There can only be recirculation in the first heat exchanger
+                        HXgeom.flag_recirculates = true 
                         HXgas.recircT = recircT
                         HXgas.h_lat = h_lat
                   else
-                        HXgeom.frecirc = false 
+                        HXgeom.flag_recirculates = false 
                   end
                         
             else # For subsequent exchangers
@@ -1244,7 +1244,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
 
             A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
             
-            if HXgeom.fconc #Flow is concentric
+            if HXgeom.flag_is_concentric #Flow is concentric
                   D_i = HXgeom.D_i
                   D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -1315,7 +1315,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
 
                   if i == 1 #If this is the first heat exchanger
                         HXgas.Tc_in = Tc_ft #Temperature is the tank temperature
-                        if frecirc #If there is recirculation, it can only happen at fist HX
+                        if flag_recirculates #If there is recirculation, it can only happen at fist HX
                               HXgasp.recircT = recircT
                               HXgasp.h_lat = h_lat
                         end
@@ -1360,7 +1360,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             end
       end
 
-      if (frecirc) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+      if (flag_recirculates) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
             pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
      
@@ -1572,7 +1572,7 @@ function hxweight(gee, HXgeom, fouter)
 
       W_hx = gee * m_t * (1 + fouter)
 
-      if HXgeom.fshaft #If the HEX is in the core with a shaft through it, add additional mass for the shaft
+      if HXgeom.flag_has_shaft #If the HEX is in the core with a shaft through it, add additional mass for the shaft
             shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
             W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
             W_hx = W_hx + W_shaft
