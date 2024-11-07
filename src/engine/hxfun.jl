@@ -1139,7 +1139,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
             HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
-            HXgeom.maxL = 0.5 #maximum HEX length
+            HXgeom.maxL = 0.25 #maximum HEX length
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1352,7 +1352,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       return HeatExchangers
 end #hxdesign!
 
-function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
+function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
 
       #---------------------------------
       # Extract inputs
@@ -1383,7 +1383,6 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
       # Heat exchanger materials and wall properties
       HXgeom.xl_D = 1
       HXgeom.Rfc = 9E-05 #Distilled water fouling resistance, m^2*K/W
-      HXgeom.Δpdes = maximum(abs.(pare[iepfc,:] - pare[iept21,:])) #size wall thickness for maximum post fan pressure                                                           
       HXgeom.maxL = 2.0 #Maximum radiator length
 
       HXgas.fluid_p = "air"
@@ -1404,22 +1403,26 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
       #Indices for HEX variables
       Dh_i = ieRadiatorDeltah
       Dp_i = ieRadiatorDeltap
-      iTp_in = ieTt21
-      ipp_in = iept21
-      iTc_in = ieTfc
-      ipc_in = iepfc
+      iTp_in = inpts_dict["iTp_in"]
+      ipp_in = inpts_dict["ipp_in"]
+      iTc_in = inpts_dict["iTc_in"]
+      ipc_in = inpts_dict["ipc_in"]
+      imp_in = inpts_dict["imp_in"]
+      iQheat = inpts_dict["iQheat"]
 
       #Store inlet properties in relevant fields
-      HXgas.mdot_p = pare_sl[iemfan]
+      HXgas.mdot_p = pare_sl[imp_in]
       HXgas.Tp_in = pare_sl[iTp_in]
       HXgas.pp_in = pare_sl[ipp_in]
       HXgas.Tc_in = pare_sl[iTc_in]
       HXgas.pc_in = pare_sl[ipc_in]
 
+      HXgeom.Δpdes = maximum(abs.(pare[ipc_in,:] - pare[ipp_in,:])) #size wall thickness for maximum post fan pressure                                                           
+
       HXgas.Mp_in = RadiatorMp
 
       #Calculate coolant mass rate to release required heat
-      Q = pare_sl[ieQheat]
+      Q = pare_sl[iQheat]
       HXgas.mdot_c = radiator_coolant_mass(HXgas, Q) 
 
       # Guess starting point for optimization
@@ -1448,7 +1451,7 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
             pare_sl = pare[:, ip] #Slice pare with the parameters for the current point
             HXgasp = deepcopy(HXgas) #Initialize gas property struct for this segment
 
-            HXgasp.mdot_p = pare_sl[iemfan] #Fan mass flow rate
+            HXgasp.mdot_p = pare_sl[imp_in] #Fan mass flow rate
             
             HXgasp.Tp_in = pare_sl[iTp_in] #The indices come from the design process above as the HX is the same
             HXgasp.pp_in = pare_sl[ipp_in]
@@ -1463,7 +1466,7 @@ function radiator_design!(pare, ipdes, HXs_prev; rlx = 1.0)
                   HXgasp.ε = 0
             else
                   #Calculate off-design performance to reject required heat
-                  Q = pare_sl[ieQheat] #Heat load
+                  Q = pare_sl[iQheat] #Heat load
                   HXoffDesignCalc!(HXgasp, HXgeom, Q)
             end
 

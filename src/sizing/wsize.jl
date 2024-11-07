@@ -1238,7 +1238,15 @@ function wsize(ac; itermax=35,
             #Radiator design and off-design operatior
             enginecalc!(ac, "off_design", engine_type, ipstatic, inite1) #TODO: remove this. Needed for radiator
             if engine_type == "ducted_fan"
-                radiator = radiator_design!(pare, ipstatic, radiator; rlx = 1.0)
+                rad_dict = Dict(
+                "iTp_in" => ieTt21,
+                "ipp_in" => iept21,
+                "iTc_in" => ieTfc,
+                "ipc_in" => iepfc,
+                "imp_in" => iemfan,
+                "iQheat" => ieQheat
+                )
+                radiator = radiator_design!(pare, ipstatic, rad_dict, radiator; rlx = 1.0)
                 HXs = [radiator]
             end
         end
