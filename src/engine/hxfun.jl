@@ -763,21 +763,18 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
 end #hxoper!
 
 """
-      radiator_coolant_mass(HXgas, HXgeom, Q)
+      radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
 
-    Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
-    The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
-    meet the heat transfer requirement. 
+Calculates the coolant mass flow rate that a heat exchanger needs to reject a desired amount of heat. It assumes
+that the process side has maximum heat capacity rate.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `HXgas::Struct`: structure of type HX_gas with the gas properties
-    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `HXgas::HX_gas`: structure with the gas properties
     - `Q::Float64`: required heat transfer rate (W)
     
     **Outputs:**
-    No direct outputs. Input structures are modified with outlet gas and HX properties.
-
+    - `mdot_c::Float64`: coolant mass flow rate (kg/s)
 """
 function radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
 
@@ -809,7 +806,7 @@ function radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
 end
 
 """
-      HXoffDesignCalc!(HXgas, HXgeom, Q)
+      HXoffDesignCalc!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 
 Evaluates the off-design performance of a heat exchanger for a given process-side mass flow rate and required heat transfer rate.
 The function assumes that the minimum heat capacity rate is in the coolant stream, and calculates the coolant mass flow rate required to 
@@ -817,8 +814,8 @@ meet the heat transfer requirement.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `HXgas::Struct`: structure of type HX_gas with the gas properties
-    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric properties
+    - `HXgas::HX_gas`: structure with the gas properties
+    - `HXgeom::HX_tubular`: structure with the HX geometric properties
     - `Q::Float64`: required heat transfer rate (W)
     
     **Outputs:**
@@ -849,7 +846,7 @@ function HXoffDesignCalc!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 end
   
   """
-      HXheating_residual!(HXgas, HXgeom, Q, C_r)
+      HXheating_residual!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64, C_r::Float64)
 
 Calculates the difference between the heat transfer rate of a heat exchanger and its required heat capacity rate for a given
 ratio of heat capacity rates.  
@@ -1113,7 +1110,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
             HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
-            HXgeom.maxL = 0.25 #maximum HEX length
+            HXgeom.maxL = 0.5 #maximum HEX length
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1326,6 +1323,25 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       return HeatExchangers
 end #hxdesign!
 
+"""
+      radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
+
+This function runs the design and operation of a radiator to reject heat from a coolant to air. It calls hxoptim!() 
+to optimize the radiator at the design point and then evaluates performance for all missions and points 
+with hxoper!(). The coolant mass flow rate is adjusted so that a desired heat is rejected at every mission point.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pare::Array{Float64 , 3}`: array with engine parameters
+    - `pari::Vector{Int}`: vector with integer parameters
+    - `ipdes::Float64`: index for design mission segment
+    - `inpts_dict::Dict`: dictionary containing the indices in `pare` of the coolant and air properties.
+    - `HXs_prev::HX_struct`: structure with heat exchanger data from the previous wsize iteration
+    - `rlx::Float64`: relaxation factor for pare update
+    **Outputs:**
+    - `radiator::HX_struct`: structure with heat exchanger data
+    - Also modifies `pare` with the fuel temperature and the radiator enthalpy and pressure changes
+"""
 function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
 
       #---------------------------------
@@ -1840,6 +1856,6 @@ end
 
 function MaxLengthCstr(HXgeom)
       L = HXgeom.L
-      Lmax = 0.5
+      Lmax = HXgeom.maxL
       return L/Lmax - 1.0
 end
