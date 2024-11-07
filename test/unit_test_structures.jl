@@ -127,7 +127,7 @@ TASOPT.surft!(htail, poh, λhs, htail.outboard.layout.λ, λhs,
         fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
 
-surft_out = [htail.weight, htail.outboard.dxW, htail.outboard.thickness_web, htail.outboard.thickness_cap, htail.outboard.EI_bending, htail.outboard.EI_normal, htail.outboard.GJ]
+surft_out = [htail.weight, htail.outboard.dxW, htail.outboard.thickness_web, htail.outboard.thickness_cap, htail.outboard.EI[1], htail.outboard.EI[4], htail.outboard.GJ]
 
 @test all(isapprox.(surft_out, surft_f_out))
 #end surft

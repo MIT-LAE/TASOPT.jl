@@ -3,22 +3,6 @@ abstract type AbstractWingSection end
 """
 $TYPEDEF
 
-Strut Webs and Caps
-
-$TYPEDFIELDS
-"""
-@kwdef mutable struct Web_Cap_Strut
-    """Bending Stiffness [N m^2] """
-    EI_bending::Float64 = 0
-    """Normal Stiffness [N m^2] """
-    EI_normal::Float64 = 0
-    """Torsional Rigidity [N m^2]"""
-    GJ::Float64 = 0
-end
-
-"""
-$TYPEDEF
-
 Wing Section
 
 $TYPEDFIELDS
@@ -31,8 +15,10 @@ $TYPEDFIELDS
     webs::StructuralMember = StructuralMember(material=material)
     """Wing Section caps"""
     caps::StructuralMember = StructuralMember(material=material)
-    """Wing Strut web and caps"""
-    web_cap::Web_Cap_Strut = Web_Cap_Strut() # Do we need this and the webs + caps??
+    """Bending Stiffness EI matrix [N m^2]"""
+    EI::Matrix{Float64} = zeros(Float64, 2, 2)
+    """Torsional Stiffness GJ [N m^2]"""
+    GJ::Float64 = 0
     """Lift Rolloff"""
     lift_rolloff::Float64 = 0
     """Max shear load [N]"""
@@ -48,11 +34,9 @@ end
 @kwdef mutable struct TailSection <: AbstractWingSection
     """Tail Section layout"""
     layout::WingSectionLayout = WingSectionLayout()
-    """Bending Stiffness [N m^2] """
-    EI_bending::Float64 = 0
-    """Normal Stiffness [N m^2] """
-    EI_normal::Float64 = 0
-    """Torsional Rigidity [N m^2]"""
+    """Bending Stiffness EI matrix [N m^2]"""
+    EI::Matrix{Float64} = zeros(Float64, 2, 2)
+    """Torsional Stiffness GJ [N m^2]"""
     GJ::Float64 = 0
     """Caps Thickness [m]"""
     thickness_cap::Float64 = 0 

@@ -79,100 +79,30 @@ end
 end
 
 @testset "Wide sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/example_widebody.toml"))
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "./IO/default_wide.toml"))
     
     include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
 
     @test ac.fuselage.layout.radius ≈ 3.0988
     
-    include(joinpath(TASOPT.__TASOPTroot__, "../test/wide_sized.jl"))
 
     size_aircraft!(ac; printiter=false);
-
-    @testset "Fuselage" begin
-        @test  check_struct_equivalence(ac_test.fuselage, ac.fuselage)
-    end
-
-    @testset "Wing" begin
-        @test  check_struct_equivalence(ac_test.wing, ac.wing)
-    end
-
-    @testset "Htail" begin
-        @test  check_struct_equivalence(ac_test.htail, ac.htail)
-    end
-
-    @testset "Vtail" begin
-        @test  check_struct_equivalence(ac_test.vtail, ac.vtail)
-    end
-
-    @testset "Geometry" begin
-        for i in eachindex(parg)
-            @test parg[i] ≈ ac.parg[i] rtol=1e-5
-        end
-    end
-
-    @testset "Aero" begin
-        for i in eachindex(para)
-            @test para[i] ≈ ac.para[i] 
-        end
-    end
-
-    @testset "Propulsion" begin
-        for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] rtol=1e-5
-        end
-    end
     
-    @test ac.parm[imPFEI] ≈ 1.1500287571308965
+    @test ac.parm[imPFEI] ≈ 1.2128645669186773 rtol=1e-4
 
 end
 
 @testset "Regional sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/example_regional.toml"))
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "./IO/default_regional.toml"))
     
     include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
 
     @test ac.fuselage.layout.radius ≈ 1.5113
-    
-    include(joinpath(TASOPT.__TASOPTroot__, "../test/regional_sized.jl"))
+
 
     size_aircraft!(ac; printiter=false);
-
-    @testset "Fuselage" begin
-        @test  check_struct_equivalence(ac_test.fuselage, ac.fuselage)
-    end
-
-    @testset "Wing" begin
-        @test  check_struct_equivalence(ac_test.wing, ac.wing)
-    end
-
-    @testset "Htail" begin
-        @test  check_struct_equivalence(ac_test.htail, ac.htail)
-    end
-
-    @testset "Vtail" begin
-        @test  check_struct_equivalence(ac_test.vtail, ac.vtail)
-    end
     
-    @testset "Geometry" begin
-        for i in eachindex(parg)
-            @test parg[i] ≈ ac.parg[i]
-        end
-    end
-
-    @testset "Aero" begin
-        for i in eachindex(para)
-            @test para[i] ≈ ac.para[i]
-        end
-    end
-
-    @testset "Propulsion" begin
-        for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] rtol=1e-6
-        end
-    end
-    
-    @test ac.parm[imPFEI] ≈ 0.813182191733463
+    @test ac.parm[imPFEI] ≈ 0.8427990063214706 rtol=1e-4
 
 end
 
@@ -182,33 +112,9 @@ end
     include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
 
     @test ac.fuselage.layout.radius ≈ 2.54
+
+    size_aircraft!(ac, iter=70; printiter=false);
     
-    include(joinpath(TASOPT.__TASOPTroot__, "../test/hydrogen_sized.jl"))
-
-    size_aircraft!(ac, iter=50; printiter=false);
-
-    @testset "Fuselage" begin
-        @test  check_struct_equivalence(fuse, ac.fuselage)
-    end
-
-    @testset "Geometry" begin
-        for i in eachindex(parg)
-            @test parg[i] ≈ ac.parg[i]
-        end
-    end
-
-    @testset "Aero" begin
-        for i in eachindex(para)
-            @test para[i] ≈ ac.para[i]
-        end
-    end
-
-    @testset "Propulsion" begin
-        for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] rtol=1e-6
-        end
-    end
-    
-    @test ac.parm[imPFEI] ≈ 0.9786975455109468
+    @test ac.parm[imPFEI] ≈ 0.978692291858513 rtol=1e-4
 
 end

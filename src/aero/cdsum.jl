@@ -187,11 +187,17 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- strut profile CD
-      cdfs = para[iacdfs]
-      cdps = para[iacdps]
-      rVstrut = wing.strut.local_velocity_ratio
-      CDstrut = (wing.strut.S/wing.layout.S)*(cdfs + cdps*wing.strut.cos_lambda^3) * rVstrut^3
-      para[iaCDstrut] = CDstrut
+      if wing.has_strut
+            cdfs = para[iacdfs]
+            cdps = para[iacdps]
+            rVstrut = wing.strut.local_velocity_ratio
+            CDstrut = (wing.strut.S/wing.layout.S)*(cdfs + cdps*wing.strut.cos_lambda^3) * rVstrut^3
+            para[iaCDstrut] = CDstrut
+      else
+            CDstrut = 0.0
+            para[iaCDstrut] = 0.0
+      end
+
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- induced CD

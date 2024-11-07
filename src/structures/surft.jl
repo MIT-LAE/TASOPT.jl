@@ -135,7 +135,7 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
         tail.weight = Whtail
         tail.outboard.dxW = dxWhtail
 
-     tail.outboard.thickness_web, tail.outboard.thickness_cap, tail.outboard.EI_bending, tail.outboard.EI_normal, tail.outboard.GJ =  tbwebo,tbcapo,EIco,EIno,GJo
+     tail.outboard.thickness_web, tail.outboard.thickness_cap, tail.outboard.EI[1], tail.outboard.EI[4], tail.outboard.GJ =  tbwebo,tbcapo,EIco,EIno,GJo
 end # surft!
 
 

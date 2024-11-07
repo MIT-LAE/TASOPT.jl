@@ -54,21 +54,22 @@ end # surfdx
 surfdx wrapper for Wing
 
 """
-function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, parg::Vector{Float64} = Float64[])
-      if isempty(parg)
-          dx, _ = surfdx(b, bs,
-                      wing.outboard.layout.b,
-                      wing.outboard.layout.λ,
-                      wing.inboard.layout.λ,
-                      wing.layout.sweep)
-      else
-          dx, macco = surfdx(wing.layout.b,
+function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, calc_cma=false)
+      if calc_cma
+            dx, macco = surfdx(wing.layout.b,
                           wing.inboard.layout.b,
                           wing.outboard.layout.b,
                           wing.outboard.layout.λ,
                           wing.inboard.layout.λ,
                           wing.layout.sweep)
-          parg[igcma] = macco * wing.layout.chord
+            wing.mean_aero_chord = macco * wing.layout.chord
+          
+      else
+            dx, _ = surfdx(b, bs,
+            wing.outboard.layout.b,
+            wing.outboard.layout.λ,
+            wing.inboard.layout.λ,
+            wing.layout.sweep)
       end
       wing.layout.x = wing.layout.box_x + dx
 end

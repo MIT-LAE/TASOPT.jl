@@ -483,9 +483,7 @@ wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
 readwing(x) = read_input(x, wing_i, dwing)
     wing.planform = readwing("wing_planform")
-    if readwing("strut_braced_wing")
-        wing.planform = 2
-    end
+    wing.has_strut = readwing("strut_braced_wing")
 
     wing.layout.sweep = readwing("sweep")
     wing.layout.AR = readwing("AR")
@@ -508,9 +506,11 @@ readwing(x) = read_input(x, wing_i, dwing)
     parg[igdxeng2wbox] = wing.layout.box_x - parg[igxeng] #TODO add this as a function of wing
 
     ## Strut details only used if strut_braced_wing is true
-    wing.strut.z  = Distance(readwing("z_strut"))
-    wing.strut.thickness_to_chord  = readwing("strut_toc")
-    wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
+    if wing.has_strut
+        wing.strut.z  = Distance(readwing("z_strut"))
+        wing.strut.thickness_to_chord  = readwing("strut_toc")
+        wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
+    end
 
     airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/", readwing("airfoil"))
     wing.airsection = TASOPT.aerodynamics.airtable(airfoil_data);
@@ -702,8 +702,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 # Recalculate cabin length
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-
-    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
 end
 # ---------------------------------
 

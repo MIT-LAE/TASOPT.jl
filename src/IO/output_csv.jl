@@ -235,7 +235,7 @@ default_output_indices =
                     igdfan, igGearf,
 
                     #performance, different from im?
-                    igPFEI, igRange
+                    igRange
                     ],
         "parm" => [imRange, imWpay, imWTO, imWfuel, imPFEI, 
                     ],

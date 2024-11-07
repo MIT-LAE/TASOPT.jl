@@ -69,9 +69,13 @@ $TYPEDFIELDS
     """Span fraction of inner wing break ("snag")"""
     ηs::Float64 = 0 
 
-    """Wing Strut""" #TODO: similar to single vs multibubble, add way to do strut and no strut
-    strut::Strut = Strut()
+    """Mean Aerodynamic Chord"""
+    mean_aero_chord::Float64 = 0
 
+    """Wing Strut"""
+    has_strut::Bool = false
+    strut::Strut = Strut()
+    
     """Wing flap weight fraction"""
     weight_frac_flap::Float64 = 0
     """Wing slats weight fraction"""

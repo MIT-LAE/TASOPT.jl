@@ -522,9 +522,7 @@ function wsize(ac; itermax=35,
         cbox = wing.layout.chord * wing.layout.box_width
 
         # Calculate wing centroid and mean aerodynamic chord
-        surfdx!(wing, parg=parg)
-
-        cma = parg[igcma]
+        surfdx!(wing,calc_cma=true)
         xwing = wing.layout.x
         
         # Update wing pitching moment constants
@@ -575,9 +573,11 @@ function wsize(ac; itermax=35,
         wing.outboard.caps.weight = wing.inboard.caps.weight
 
         # Calculate strut properties
-        cstrut = sqrt(0.5 * wing.strut.axial_force / (tohstrut * wing.strut.thickness_to_chord))
-        wing.strut.chord = cstrut
-        wing.strut.S = 2.0 * cstrut * lstrutp
+        if wing.has_strut
+            cstrut = sqrt(0.5 * wing.strut.axial_force / (tohstrut * wing.strut.thickness_to_chord))
+            wing.strut.chord = cstrut
+            wing.strut.S = 2.0 * cstrut * lstrutp
+        end
 
         # Update wing panel weights
         wing.inboard.weight = Wsinn * (1.0 + fwadd) + rfmax * Wfinn
@@ -617,14 +617,14 @@ function wsize(ac; itermax=35,
         if (iterw <= 2 && initwgt == 0)
             lhtail = xhtail - xwing
             Vh = htail.volume
-            Sh = Vh * wing.layout.S * cma / lhtail
+            Sh = Vh * wing.layout.S * wing.mean_aero_chord / lhtail
             htail.layout.S = Sh
         else
             htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing, htail, vtail)
             wing.layout.box_x, xwing = wing.layout.box_x, wing.layout.x
             lhtail = xhtail - xwing
             Sh = htail.layout.S
-            htail.volume = Sh * lhtail / (wing.layout.S * cma)
+            htail.volume = Sh * lhtail / (wing.layout.S * wing.mean_aero_chord)
         end
 
         # Vertical tail sizing 
@@ -738,7 +738,7 @@ function wsize(ac; itermax=35,
             parg[igxWfuel] = parg[igWfuel] * xfuel
 
             # Update fuselage according to tank requirements
-            update_fuse!(fuselage, wing, htail, vtail, pari, parg) #update fuselage length to accommodate tank
+            update_fuse!(fuse, wing, htail, vtail, pari, parg) #update fuselage length to accommodate tank
             fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
@@ -768,15 +768,14 @@ function wsize(ac; itermax=35,
                 ip = ipstatic
                 icall = 1
                 icool = 1
-    
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
     
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 icall = 1
                 icool = 1
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
     
                 takeoff!(ac; printTO = false)
             end
