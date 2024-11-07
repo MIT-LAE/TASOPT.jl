@@ -8,7 +8,7 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
-    aircraft_type   = "Narrow Body"     # 0: Regional Aircraft
+    aircraft_type   = 1             # 0: Regional Aircraft
                                     # 1: Narrow Body Aircraft
                                     # 2: Wide Body Aircraft
 

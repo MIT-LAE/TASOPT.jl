@@ -53,7 +53,7 @@ function update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 end
 
 """
-    update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
+    update_fuse_for_pax!(pari, parg, fuse, fuse_tank, wing, htail, vtail)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
@@ -69,7 +69,7 @@ It sizes the cabin for the design number of passengers.
     Parameters in `parg` are modified. It also outputs:
     - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
 """
-function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
+function update_fuse_for_pax!(pari, parg, fuse, fuse_tank, wing, htail, vtail)
 
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
@@ -100,13 +100,16 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
     dxapu2end = fuse.layout.x_end - fuse.APU.x #Distance from APU to end
     dxshell2conend = fuse.layout.x_cone_end - fuse.layout.x_pressure_shell_aft #Distance from shell2 to conend
     dxshell2apu = fuse.APU.x - fuse.layout.x_pressure_shell_aft #Distance from shell2 to APU
-    dxhbox2conend = fuse.layout.x_cone_end - parg[igxhbox ] #Distance from conend to xhbox
-    dxvbox2conend = fuse.layout.x_cone_end - parg[igxvbox ] #Distance from conend to xvbox
+    dxhbox2conend = fuse.layout.x_cone_end - htail.layout.box_x #Distance from conend to xhbox
+    dxvbox2conend = fuse.layout.x_cone_end - vtail.layout.box_x #Distance from conend to xvbox
     #Fraction of cabin length at which wing is located
     wbox_cabin_frac =  (wing.layout.box_x- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
 
     #Find new cabin length
-    wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_lower_downward_shift, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, parg[igfloordist]) #Find cabin width
+    d_floor = fuse.cabin.floor_distance
+    h_seat = fuse.cabin.seat_height 
+    θ = find_floor_angles(false, fuse.layout.radius, fuse.layout.cross_section.bubble_lower_downward_shift, h_seat = h_seat, d_floor=d_floor) #Find the floor angle
+    wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, θ, h_seat) #Find cabin width
     lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
@@ -120,7 +123,7 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
     fuse.layout.x_end_cylinder = fuse.layout.x_start_cylinder + lcyl
 
     #Update wingbox position
-    wing.layout.box_x = fuselage.layout.x_start_cylinder + wbox_cabin_frac * lcyl
+    wing.layout.box_x = fuse.layout.x_start_cylinder + wbox_cabin_frac * lcyl
        
     #Update other lengths
     fuse.layout.x_pressure_shell_aft = fuse.layout.x_end_cylinder + dxcyl2shellaft
@@ -130,8 +133,8 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
     fuse.layout.x_end = fuse.APU.x + dxapu2end
     fuse.HPE_sys.r = [fuse.layout.x_cone_end * 0.52484, 0.0, 0.0] #TODO: address this
     
-    parg[igxhbox   ] = fuse.layout.x_cone_end - dxhbox2conend
-    parg[igxvbox   ] = fuse.layout.x_cone_end - dxvbox2conend
+    htail.layout.box_x = fuse.layout.x_cone_end - dxhbox2conend
+    vtail.layout.box_x = fuse.layout.x_cone_end - dxvbox2conend
     
     parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox #Move engine
 
@@ -214,7 +217,7 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
     Rfuse = x[1]
     ac.fuselage.layout.cross_section.radius = Rfuse
     try #Sometimes update_fuse_for_pax may fail
-        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.fuselage, ac.fuse_tank)
+        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.fuselage, ac.fuse_tank, ac.wing, ac.htail, ac.vtail)
         diff = seats_per_row_rad - seats_per_row
         #println("R = $Rfuse, s = $seats_per_row_rad")
         return diff

@@ -14,15 +14,16 @@ Calculates Loads and thicknesses for wing sections
     - `tauweb::Float64`: Webs tau
     - `sigfac::Float64`: Stress factor
 """
-function size_wing_section!(layout, section, cs, cap_material, tauweb, sigfac)
+function size_wing_section!(layout, section, sigfac; cs=layout.chord)
     shear_load = section.max_shear_load
     moment = section.moment
 
-    Eweb = cap_material.E
-    Ecap = cap_material.E
-    Gcap = cap_material.G
-    Gweb = cap_material.G
-    sigcap = cap_material.σmax * sigfac
+    Eweb = section.webs.material.E
+    Ecap = section.caps.material.E
+    Gcap = section.caps.material.G
+    Gweb = section.webs.material.G
+    sigcap = section.caps.material.σmax * sigfac
+    tauweb = section.webs.material.τmax * sigfac
 
     cosL = cos(layout.sweep * pi / 180)
     cp = cs*cosL
@@ -35,13 +36,14 @@ function size_wing_section!(layout, section, cs, cap_material, tauweb, sigfac)
     tbcap, Abcap = size_cap(sigcap, moment, section.layout.thickness_to_chord,
         layout.box_width, h_rms, cs, cosL)
 
-    section.web_cap.EI_bending = Ecap * cp^4 * (h_rms^3 - (h_rms - 2.0 * tbcap)^3) * layout.box_width / 12.0 +
+    # EI_xx
+    section.EI[1] = Ecap * cp^4 * (h_rms^3 - (h_rms - 2.0 * tbcap)^3) * layout.box_width / 12.0 +
                                  Eweb * cp^4 * tbweb * web_height^3 / 6.0
-    
-    section.web_cap.EI_normal = Ecap * cp^4 * tbcap * layout.box_width^3 / 6.0 +
+    # EI_yy 
+    section.EI[4] = Ecap * cp^4 * tbcap * layout.box_width^3 / 6.0 +
                                 Eweb * cp^4 * tbweb * web_height * 0.5 * layout.box_width^2
             
-    section.web_cap.GJ = cp^4 * 2.0*((layout.box_width-tbweb)*(h_avg-tbcap))^2 /
+    section.GJ = cp^4 * 2.0*((layout.box_width-tbweb)*(h_avg-tbcap))^2 /
         (  (layout.hweb_to_hbox*section.layout.thickness_to_chord-tbcap)/(Gweb*tbweb) +
         (   layout.box_width -tbweb)/(Gcap*tbcap) )
 
@@ -108,9 +110,9 @@ function surfw!(wing, po, gammat, gammas,
     #---- size strut-attach station at etas
     cs = wing.layout.chord*wing.inboard.layout.λ
 
-    tbwebs, tbcaps, Abcaps, Abwebs = size_wing_section!(wing.layout, wing.outboard, cs, wing.inboard.caps.material, tauweb, sigfac)
+    tbwebs, tbcaps, Abcaps, Abwebs = size_wing_section!(wing.layout, wing.outboard, sigfac; cs=cs)
     # Inboard Section:
-    if(wing.planform==0 || wing.planform==1) 
+    if(!wing.has_strut) 
         #----- no strut, with or without engine at etas
         ls = 0.
         Tstrut = 0.
@@ -131,7 +133,7 @@ function surfw!(wing, po, gammat, gammas,
         wing.inboard.max_shear_load = max(So ,wing.outboard.max_shear_load)
         wing.inboard.moment = max(Mo ,wing.outboard.moment)
 
-        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.layout, wing.inboard, wing.layout.chord, wing.inboard.caps.material, tauweb, sigfac)
+        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.layout, wing.inboard, sigfac)
 
         lsp = 0.
         Tstrutp = 0.
@@ -149,19 +151,21 @@ function surfw!(wing, po, gammat, gammas,
         wing.inboard.moment = wing.outboard.moment
         #
         #----- size inboard station at etao
-        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.layout, wing.inboard, wing.layout.chord, wing.inboard.caps.material, tauweb, sigfac)
+        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.layout, wing.inboard, sigfac)
 
         #----- total strut length, tension
         lsp = sqrt(wing.strut.z^2 + (0.5*wing.layout.b*(etas-etao)/cosL)^2)
         Tstrutp = Tstrut*lsp/ls
         wing.strut.cos_lambda = ls/lsp
-
+        wing.strut.axial_force = Tstrutp/sigstrut
+        wing.strut.weight   = 2.0*wing.strut.material.ρ*gee*wing.strut.axial_force*lsp
+        wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.b*(etas-etao) * sinL/cosL
     end
 
     Abfuels = calc_sparbox_internal_area(wing.layout.box_width, h_avgs, tbcaps, tbwebs)
     Abfuelo = calc_sparbox_internal_area(wing.layout.box_width, h_avgo, tbcapo, tbwebo) 
     
-    wing.strut.axial_force = Tstrutp/sigstrut
+    
 
     Vcen = wing.layout.chord^2*wing.layout.b*  etao / 2.0
 
@@ -221,9 +225,6 @@ function surfw!(wing, po, gammat, gammas,
 
     dxWcap = 2.0*wing.inboard.caps.ρ*gee*( Abcapi*dxVinn + Abcaps*dxVout )
     dxWweb = 2.0*wing.inboard.webs.ρ*gee*( Abwebi*dxVinn + Abwebs*dxVout )
-
-    wing.strut.weight   = 2.0*wing.strut.material.ρ*gee*wing.strut.axial_force*lsp
-    wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.b*(etas-etao) * sinL/cosL
 
     Vout = wing.layout.chord^2*wing.layout.b* (1.0 -etas) *
     (wing.inboard.layout.λ^2 + wing.inboard.layout.λ*wing.outboard.layout.λ + wing.outboard.layout.λ^2)/6.0 *

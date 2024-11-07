@@ -155,8 +155,8 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "\nRfuse  = %5.1f m (%8.1f ft)\n", fuselage.layout.cross_section.radius , fuselage.layout.cross_section.radius/ft_to_m)
 
     
-    SMfwd = (parg[igxNP] - parg[igxCGfwd])/parg[igcma]
-    SMaft = (parg[igxNP] - parg[igxCGaft])/parg[igcma]
+    SMfwd = (parg[igxNP] - parg[igxCGfwd])/wing.mean_aero_chord
+    SMaft = (parg[igxNP] - parg[igxCGaft])/wing.mean_aero_chord
     printstyled(io, "\nStability:\n -------------- \n", color=:bold )
     @printf(io, "xNP     = %5.1f m (%8.1f ft)\n", parg[igxNP ] , parg[igxNP ]/ft_to_m)
     @printf(io, "xCGfwd  = %5.1f m (%8.1f ft)\n", parg[igxCGfwd ] , parg[igxCGfwd ]/ft_to_m)

@@ -1,11 +1,10 @@
 
 
 @testset "wing aerodynamics" begin
-    filename = TASOPT.aerodynamics.airfoil_data
-    airf = TASOPT.aerodynamics.airtable(filename)
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
     fuselage = ac_test.fuselage
     wing = ac_test.wing
+    airf = wing.airsection
 
     #Test that it is reading the database correctly first
     @test airf.Re == 2.0e7

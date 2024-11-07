@@ -83,7 +83,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       coh = htail.layout.chord
       xhbox = htail.layout.box_x
 
-      cma = parg[igcma]
+      cma = wing.mean_aero_chord
 
       #---- for better convergence, 
       #      will assume that HT weight will scale with its area
@@ -312,7 +312,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       CLhC = parg[igCLhspec]
 
       SM = htail.SM_min
-      cma = parg[igcma]
+      cma = wing.mean_aero_chord
 
       # Unpack flags
       iengloc = pari[iiengloc]  # Engine location 
