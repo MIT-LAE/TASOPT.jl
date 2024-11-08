@@ -19,8 +19,6 @@ $TYPEDFIELDS
     EI::Matrix{Float64} = zeros(Float64, 2, 2)
     """Torsional Stiffness GJ [N m^2]"""
     GJ::Float64 = 0
-    """Lift Rolloff"""
-    lift_rolloff::Float64 = 0
     """Max shear load [N]"""
     max_shear_load::Float64 = 0
     """Moment [N m]"""
