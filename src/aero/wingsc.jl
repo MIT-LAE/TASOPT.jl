@@ -12,20 +12,20 @@ Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (take
 
 See Sections 2.5 and 3.4.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function wingsc!(W,CL,qinf,wing)
-    wing.layout.S = W/(qinf*CL)
-    wing.layout.b= sqrt(wing.layout.S*wing.layout.AR)
+function wingsc!(W, CL, qinf, wing)
+    wing.layout.S = W / (qinf * CL)
+    wing.layout.b = sqrt(wing.layout.S * wing.layout.AR)
 
-    wing.inboard.layout.b = max( wing.layout.b*wing.ηs , wing.outboard.layout.b  )
+    wing.inboard.layout.b = max(wing.layout.b * wing.layout.ηs, wing.layout.root_chord)
 
-    ηo = wing.outboard.layout.b /wing.layout.b
-    ηs = wing.inboard.layout.b/wing.layout.b
+    ηo = wing.outboard.layout.b / wing.layout.b
+    ηs = wing.inboard.layout.b / wing.layout.b
 
     Kc = ηo +
-    0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +
-    0.5*(wing.inboard.layout.λ+ wing.outboard.layout.λ)*(1.0 -ηs)
+         0.5 * (1.0 + wing.inboard.layout.λ) * (ηs - ηo) +
+         0.5 * (wing.inboard.layout.λ + wing.outboard.layout.λ) * (1.0 - ηs)
 
-    wing.layout.chord = wing.layout.S/(Kc*wing.layout.b)
+    wing.layout.root_chord = wing.layout.S / (Kc * wing.layout.b)
 end # wingsc
 
 

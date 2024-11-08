@@ -169,9 +169,9 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "sweep   = %5.3f \n" , wing.layout.sweep)
     @printf(io, "lambdas = %5.3f \n" , wing.inboard.layout.λ)
     @printf(io, "lambdat = %5.3f \n" , wing.outboard.layout.λ) 
-    co = wing.layout.chord
-    cs = wing.layout.chord*wing.inboard.layout.λ 
-    ct = wing.layout.chord*wing.outboard.layout.λ 
+    co = wing.layout.root_chord
+    cs = wing.layout.root_chord*wing.inboard.layout.λ 
+    ct = wing.layout.root_chord*wing.outboard.layout.λ 
 
     @printf(io, "co      = %5.1f m (%8.1f ft)\n" , co, co / ft_to_m )
     @printf(io, "cs      = %5.1f m (%8.1f ft)\n" , cs, cs / ft_to_m )
@@ -205,9 +205,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     vtail = ac.vtail
     fuselage = ac.fuselage
     # Wing
-        co = wing.layout.chord
-        cs = wing.layout.chord*wing.inboard.layout.λ
-        ct = wing.layout.chord*wing.outboard.layout.λ
+        co = wing.layout.root_chord
+        cs = wing.layout.root_chord*wing.inboard.layout.λ
+        ct = wing.layout.root_chord*wing.outboard.layout.λ
 
         sweep = wing.layout.sweep
         λs = wing.inboard.layout.λ
@@ -494,8 +494,8 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
             # ax.plot(xh,  yh, "-k", zorder = tailz)
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
-        xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.chord .+ vtail.layout.box_x
-        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.chord*vtail.layout.box_x/2) 0.0])[:]
+        xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
+        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.root_chord*vtail.layout.box_x/2) 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 
         # Plot fuse
@@ -534,7 +534,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
             D = parg[igdfan]
             neng = parg[igneng]
             lnace = parg[iglnace]
-            ηs = wing.ηs
+            ηs = wing.layout.ηs
             dy = 2*D # space to leave near wing root and tip [m]
             if parg[igneng] == 2
                 yi = [ηs*b/2]
@@ -586,7 +586,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     # Annotations
     if annotate_text
         ax.text(1.05, 0.75, transform=ax.transAxes, @sprintf("PFEI = %5.3f\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f t\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-        parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+        parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
         fontsize = label_fs, ha="left", va="top")
     end
     if annotate_length
@@ -1123,9 +1123,9 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
     # Wing
-        co = wing.layout.chord
-        cs = wing.layout.chord*wing.inboard.layout.λ
-        ct = wing.layout.chord*wing.outboard.layout.λ
+        co = wing.layout.root_chord
+        cs = wing.layout.root_chord*wing.inboard.layout.λ
+        ct = wing.layout.root_chord*wing.outboard.layout.λ
 
         sweep = wing.layout.sweep
         λs = wing.inboard.layout.λ
@@ -1324,7 +1324,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     sweepv  = vtail.layout.sweep
 
     bv = vtail.layout.b
-    cov = vtail.layout.chord
+    cov = vtail.layout.root_chord
 
 
     dx = vtail.layout.box_x
@@ -1471,8 +1471,8 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             # ax.plot(xh,  yh, "-k", zorder = tailz)
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
-        xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.chord .+ vtail.layout.box_x
-        tailthick = (vtail.layout.chord*vtail.outboard.layout.thickness_to_chord/2)
+        xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
+        tailthick = (vtail.layout.root_chord*vtail.outboard.layout.thickness_to_chord/2)
         yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 
@@ -1567,7 +1567,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20
