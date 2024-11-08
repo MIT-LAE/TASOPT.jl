@@ -79,8 +79,8 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
       S = wing.layout.S
       Sh = htail.layout.S
-      co = wing.layout.chord
-      coh = htail.layout.chord
+      co = wing.layout.root_chord
+      coh = htail.layout.root_chord
       xhbox = htail.layout.box_x
 
       cma = wing.mean_aero_chord
@@ -383,8 +383,8 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
       S = wing.layout.S
       Sh = htail.layout.S
-      co = wing.layout.chord
-      coh = htail.layout.chord
+      co = wing.layout.root_chord
+      coh = htail.layout.root_chord
       xhbox = htail.layout.box_x
       xvbox = vtail.layout.box_x
 

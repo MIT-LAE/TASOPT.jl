@@ -89,7 +89,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       rkSunsv = 0.
 #
 #---- Re referenced to root chord
-      Reco = Reunit*wing.layout.chord
+      Reco = Reunit*wing.layout.root_chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (icdfun==1) 
@@ -117,7 +117,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       cdpw = para[iacdpw] * fexcdw
 
 	CDwing,CDover = surfcd(wing.layout.S,
-	wing.layout.b,wing.inboard.layout.b,wing.outboard.layout.b,wing.outboard.layout.λ,wing.inboard.layout.λ,wing.layout.sweep,wing.layout.chord, 
+	wing.layout.b,wing.inboard.layout.b,wing.outboard.layout.b,wing.outboard.layout.λ,wing.inboard.layout.λ,wing.layout.sweep,wing.layout.root_chord, 
 	cdfw,cdpw,Reco,Rerefw,aRexp,rkSunsw,
        fCDwcen)
  
@@ -141,16 +141,16 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       cdpt = para[iacdpt] * para[iafexcdt]
 
 #---- horizontal tail profile CD
-      Recoh = Reunit*htail.layout.chord
+      Recoh = Reunit*htail.layout.root_chord
 	CDhtail,CDhover = surfcd(wing.layout.S,
-	htail.layout.b,htail.outboard.layout.b,htail.outboard.layout.b,htail.outboard.layout.λ,1.0,htail.layout.sweep,htail.layout.chord, 
+	htail.layout.b,htail.outboard.layout.b,htail.outboard.layout.b,htail.outboard.layout.λ,1.0,htail.layout.sweep,htail.layout.root_chord, 
 	cdft,cdpt,Recoh,Rereft,aRexp,rkSunsh,
 	fCDhcen)
 
 #---- vertical tail profile CD
-      Recov = Reunit*vtail.layout.chord
+      Recov = Reunit*vtail.layout.root_chord
       CDvtail1,CDvover1 = surfcd(wing.layout.S,
-	vtail.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.λ,1.0,vtail.layout.sweep,vtail.layout.chord, 
+	vtail.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.λ,1.0,vtail.layout.sweep,vtail.layout.root_chord, 
 	cdft,cdpt,Recov,Rereft,aRexp,rkSunsv,
       fCDvcen)
 	

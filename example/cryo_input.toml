@@ -232,7 +232,7 @@ name = "TASOPT Model with cryo fuel and HX"
     panel_break_location = 0.285 # eta_s panel break eta location. eta = y/(b/2)
     
     center_box_halfspan = "71.0 in"
-    box_width_chord = 0.50
+    box_width_to_chord = 0.50
     root_thickness_to_chord = 0.1268
     spanbreak_thickness_to_chord = 0.1266
 
@@ -343,7 +343,7 @@ name = "TASOPT Model with cryo fuel and HX"
 
         added_weight_fraction = 0.30 # e.g. ribs, LE, elevator, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.14
         web_height_hbox  = 0.75
 
@@ -364,7 +364,7 @@ name = "TASOPT Model with cryo fuel and HX"
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.14 
         web_height_hbox  = 0.75
 

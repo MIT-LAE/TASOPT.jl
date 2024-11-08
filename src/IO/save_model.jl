@@ -231,7 +231,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing["panel_break_location"] = ac_g[igetas]
 
         d_wing["center_box_halfspan"] = ac_g[igbo]/2
-        d_wing["box_width_chord"] = ac_g[igwbox]
+        d_wing["box_width_to_chord"] = ac_g[igwbox]
         d_wing["root_thickness_to_chord"] = ac_g[ighboxo]
         d_wing["spanbreak_thickness_to_chord"] = ac_g[ighboxs]
         d_wing["hweb_to_hbox"] = ac_g[igrh]
@@ -349,7 +349,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_htail["added_weight_fraction"] = ac_g[igfhadd]
 
-        d_stab_htail["box_width_chord"] = ac_g[igwboxh]
+        d_stab_htail["box_width_to_chord"] = ac_g[igwboxh]
         d_stab_htail["box_height_chord"] = ac_g[ighboxh]
         d_stab_htail["web_height_hbox"] = ac_g[igrhh]
     d_stab["Htail"] = d_stab_htail
@@ -373,7 +373,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_vtail["CLv_max"] = ac_g[igCLvmax]
         d_stab_vtail["added_weight_fraction"] = ac_g[igfvadd]
-        d_stab_vtail["box_width_chord"] = ac_g[igwboxv]
+        d_stab_vtail["box_width_to_chord"] = ac_g[igwboxv]
         d_stab_vtail["box_height_chord"] = ac_g[ighboxv]
         d_stab_vtail["web_height_hbox"] = ac_g[igrhv]
 
@@ -839,10 +839,10 @@ function reset_regression_test(fname, ac)
         @printf(io, "wing.outboard.webs.thickness = %20.20f \n", wing.outboard.webs.thickness)
         @printf(io, "wing.layout.S = %20.20f \n", wing.layout.S)
         @printf(io, "wing.outboard.layout.b = %20.20f \n", wing.outboard.layout.b)
-        @printf(io, "wing.ηs = %20.20f \n", wing.ηs)
+        @printf(io, "wing.layout.ηs = %20.20f \n", wing.layout.ηs)
         @printf(io, "wing.inboard.layout.λ = %20.20f \n", wing.inboard.layout.λ)
         @printf(io, "wing.outboard.layout.λ = %20.20f \n", wing.outboard.layout.λ)
-        @printf(io, "wing.layout.chord = %20.20f \n", wing.layout.chord)
+        @printf(io, "wing.layout.root_chord = %20.20f \n", wing.layout.root_chord)
         @printf(io, "wing.inboard.layout.b = %20.20f \n", wing.inboard.layout.b)
         @printf(io, "wing.layout.b= %20.20f \n", wing.layout.b)
         @printf(io, "wing.layout.sweep = %20.20f \n", wing.layout.sweep)
@@ -877,7 +877,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "htail.outboard.EI[4] = %20.20f \n", htail.outboard.EI[4])
         @printf(io, "htail.outboard.EI[1] = %20.20f \n", htail.outboard.EI[1])
         @printf(io, "htail.layout.sweep = %20.20f \n", htail.layout.sweep)
-        @printf(io, "htail.layout.chord = %20.20f \n", htail.layout.chord)
+        @printf(io, "htail.layout.root_chord = %20.20f \n", htail.layout.root_chord)
         @printf(io, "htail.outboard.layout.λ = %20.20f \n", htail.outboard.layout.λ)
         @printf(io, "htail.outboard.layout.b = %20.20f \n", htail.outboard.layout.b)
         @printf(io, "htail.layout.b = %20.20f \n", htail.layout.b)
@@ -905,7 +905,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "vtail.outboard.EI[4] = %20.20f \n", vtail.outboard.EI[4])
         @printf(io, "vtail.outboard.EI[1] = %20.20f \n", vtail.outboard.EI[1])
         @printf(io, "vtail.layout.sweep = %20.20f \n", vtail.layout.sweep)
-        @printf(io, "vtail.layout.chord = %20.20f \n", vtail.layout.chord)
+        @printf(io, "vtail.layout.root_chord = %20.20f \n", vtail.layout.root_chord)
         @printf(io, "vtail.outboard.layout.λ = %20.20f \n", vtail.outboard.layout.λ)
         @printf(io, "vtail.layout.b = %20.20f \n", vtail.layout.b)
         @printf(io, "vtail.layout.AR = %20.20f \n", vtail.layout.AR)

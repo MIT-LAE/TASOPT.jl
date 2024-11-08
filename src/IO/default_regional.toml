@@ -234,7 +234,7 @@
     panel_break_location = 0.370 # eta_s panel break eta location. eta = y/b
     
     center_box_halfspan = "4.30 ft"
-    box_width_chord = 0.50
+    box_width_to_chord = 0.50
     root_thickness_to_chord = 0.135
     spanbreak_thickness_to_chord = 0.12
 
@@ -349,7 +349,7 @@
 
         added_weight_fraction = 0.30 # e.g. ribs, LE, elevator, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.12
         web_height_hbox  = 0.75
 
@@ -370,7 +370,7 @@
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.12
         web_height_hbox  = 0.75
 

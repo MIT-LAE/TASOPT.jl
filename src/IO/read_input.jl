@@ -491,10 +491,19 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     wing.inboard.layout.λ = readwing("inner_panel_taper_ratio")
     wing.outboard.layout.λ = readwing("outer_panel_taper_ratio")
-    wing.ηs    = readwing("panel_break_location")
+    wing.layout.ηs    = readwing("panel_break_location")
+    if !(0 ≤ wing.layout.ηs ≤ 1.0)
+        @warn "Wing span break location input was $(wing.layout.ηs); ηs must be 0 ≤ ηs ≤ 1.0"
+        if wing.layout.ηs > 1.0
+            wing.layout.ηs = 1.0
+        else 
+            wing.layout.ηs = 0.0
+        end
+        @warn "ηs set to $(wing.layout.ηs)"
+    end
 
     wing.outboard.layout.b = 2*Distance(readwing("center_box_halfspan"))
-    wing.layout.box_width  = readwing("box_width_chord")
+    wing.layout.box_width  = readwing("box_width_to_chord")
     wing.inboard.layout.thickness_to_chord = readwing("root_thickness_to_chord")
     wing.outboard.layout.thickness_to_chord = readwing("spanbreak_thickness_to_chord")
     wing.layout.hweb_to_hbox    = readwing("hweb_to_hbox")
@@ -661,7 +670,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail.weight_fraction_added = readhtail("added_weight_fraction")
 
-    htail.layout.box_width = readhtail("box_width_chord")
+    htail.layout.box_width = readhtail("box_width_to_chord")
     htail.outboard.layout.thickness_to_chord = readhtail("box_height_chord")
     htail.layout.hweb_to_hbox  = readhtail("web_height_hbox")
 
@@ -692,7 +701,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.CL_max = readvtail("CLv_max")
 
     vtail.weight_fraction_added = readvtail("added_weight_fraction")
-    vtail.layout.box_width = readvtail("box_width_chord")
+    vtail.layout.box_width = readvtail("box_width_to_chord")
     vtail.outboard.layout.thickness_to_chord = readvtail("box_height_chord")
     vtail.layout.hweb_to_hbox  = readvtail("web_height_hbox")
 
