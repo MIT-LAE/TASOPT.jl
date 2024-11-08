@@ -138,13 +138,13 @@
     fort_bs = 10.708913727842363
     fort_co = 6.239270087906468
 
-    TASOPT.aerodynamics.wingsc!(BW,CL,qinf,wing)
+    TASOPT.aerodynamics.set_wing_geometry!(BW,CL,qinf,wing)
     # wingsc(BW,CL,qinf,AR,
     # etas,bo,lambdat,lambdas)
     @test fort_S  == wing.layout.S 
-    @test fort_b  == wing.layout.b
+    @test fort_b  == wing.layout.span
     @test fort_bs == wing.inboard.layout.b
-    @test fort_co == wing.layout.chord
+    @test fort_co == wing.layout.root_chord
     #end wingsc
     
     #surfcm

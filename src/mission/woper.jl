@@ -155,9 +155,9 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 
 #--------------------------------------------------------------------------
 #---- set wing pitching moment constants
-    b  = wing.layout.b
+    b  = wing.layout.span
     bs = wing.inboard.layout.b
-    bo = wing.outboard.layout.b
+    bo = wing.layout.root_span
     sweep = wing.layout.sweep
     Xaxis = wing.layout.spar_box_x_c
     λs = wing.inboard.layout.λ
@@ -206,7 +206,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     para[iaCMw1, ipdescentn] = CMw1
 
 #---- tail pitching moment constants
-    bh      = htail.layout.b
+    bh      = htail.layout.span
     boh     = htail.outboard.layout.b
     sweeph  = htail.layout.sweep
     λh      = htail.outboard.layout.λ

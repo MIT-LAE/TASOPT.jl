@@ -8,7 +8,7 @@ For this example, the design variables are:
 
 1. Aspect Ratio: `AR`
 2. Lift Coefficient: `Cl`  
-3. Wing Sweep: `Λ`
+3. Wing Sweep: `sweep`
 4. Tt4 at Cruise: `Tt4`
 5. Fan Pressure ratio: `pif`
 

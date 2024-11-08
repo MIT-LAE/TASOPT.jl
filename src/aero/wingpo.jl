@@ -27,8 +27,8 @@ function wingpo(wing, rclt, rcls, N, W, Lhtail)
     
     γt, γs = wing.outboard.layout.λ * rclt, wing.inboard.layout.λ * rcls
         
-    ηo = wing.outboard.layout.b/wing.layout.b #calculate non-dim. span locations eta
-    ηs = wing.inboard.layout.b/wing.layout.b
+    ηo = wing.layout.root_span/wing.layout.span #calculate non-dim. span locations eta
+    ηs = wing.inboard.layout.b/wing.layout.span
     
     Kc = ηo +
     0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +
@@ -41,7 +41,7 @@ function wingpo(wing, rclt, rcls, N, W, Lhtail)
     0.5*(γs +γt )*(1.0 -ηs) +
     wing.inboard.lift_rolloff*ηo + 2.0*wing.outboard.lift_rolloff*Ko*γt*wing.outboard.layout.λ
 
-    po = (N*W - Lhtail)/(Kp*wing.layout.b)
+    po = (N*W - Lhtail)/(Kp*wing.layout.span)
 
     return po
 end # wingpo
@@ -72,8 +72,8 @@ function wingcl(wing,γt,γs,
 
       cosL = cosd(wing.layout.sweep)
 
-      ηo = wing.outboard.layout.b/wing.layout.b
-      ηs = wing.inboard.layout.b/wing.layout.b
+      ηo = wing.layout.root_span/wing.layout.span
+      ηs = wing.inboard.layout.b/wing.layout.span
      
       Kc = ηo +
 	 0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +

@@ -10,7 +10,7 @@ using LinearAlgebra
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-export airfoil, cdsum!, surfcm, wingsc!, wingpo, wingcl, fusebl!
+export airfoil, cdsum!, surfcm, set_wing_geometry!, wingpo, wingcl, fusebl!
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -55,7 +55,7 @@ include("airfun.jl")
 include("surfcd.jl")
 include("surfcm.jl")
 include("wingpo.jl")
-include("wingsc.jl")
+include("set_wing_geometry.jl")
 
 # Fuselage IBLT calculations
 include("fusebl.jl")
