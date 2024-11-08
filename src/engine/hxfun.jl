@@ -621,6 +621,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       Δh_p = 0.0
       Δh_c = 0.0
 
+      mdot_r = 0.0 #Initialize
       for i = 1 : N_iter
             
             if frecirc
@@ -759,6 +760,10 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgas.Δh_c = Δh_c
       HXgas.Δp_p = Δp_p
       HXgas.ε = ε
+
+      if frecirc
+            HXgas.mdot_r = mdot_r
+      end
 
 end #hxoper!
 
