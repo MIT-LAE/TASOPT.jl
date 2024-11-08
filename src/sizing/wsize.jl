@@ -194,7 +194,7 @@ function wsize(ac; itermax=35,
         W = 5.0 * Wpay
         S = W / (0.5 * pare[ierho0, ip] * pare[ieu0, ip]^2 * para[iaCL, ip])
         b = sqrt(S * wing.layout.AR)
-        bs = b * wing.ηs
+        bs = b * wing.layout.ηs
         Winn = 0.15 * Wpay / parg[igsigfac]
         Wout = 0.05 * Wpay / parg[igsigfac]
         dyWinn = Winn * 0.30 * (0.5 * (bs - wing.outboard.layout.b))
@@ -327,8 +327,8 @@ function wsize(ac; itermax=35,
 
         # Extract layout parameters
         bv = vtail.layout.b
-        coh, cov = htail.layout.chord, vtail.layout.chord
-        cbox = wing.layout.chord * wing.layout.box_width
+        coh, cov = htail.layout.root_chord, vtail.layout.root_chord
+        cbox = wing.layout.root_chord * wing.layout.box_width
         xwing, xhtail, xvtail = wing.layout.x, htail.layout.x, vtail.layout.x
         xhbox, xvbox = htail.layout.box_x, vtail.layout.box_x
         dxwing = xwing - wing.layout.box_x
@@ -519,7 +519,7 @@ function wsize(ac; itermax=35,
         wingsc!(BW, CL, qinf, wing)
 
         # Update wing box chord for fuseW in next iteration
-        cbox = wing.layout.chord * wing.layout.box_width
+        cbox = wing.layout.root_chord * wing.layout.box_width
 
         # Calculate wing centroid and mean aerodynamic chord
         surfdx!(wing,calc_cma=true)
@@ -653,10 +653,10 @@ function wsize(ac; itermax=35,
         end
 
         # Set HT max loading magnitude
-        htail.layout.b, htail.layout.chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.layout.λ, qne, htail.CL_max)
+        htail.layout.b, htail.layout.root_chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.layout.λ, qne, htail.CL_max)
 
         # Set VT max loading magnitude, based on single tail + its bottom image
-        bv2, vtail.layout.chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.layout.λ, qne, vtail.CL_max)
+        bv2, vtail.layout.root_chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.layout.λ, qne, vtail.CL_max)
         bv = bv2 / 2
         vtail.layout.b = bv
 

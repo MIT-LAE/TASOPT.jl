@@ -148,6 +148,10 @@ function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     end
 end
 
+"""
+Wing layout is a structure that defines the wing planform.
+See [WingSection](@ref) and [WingCrossSection](@ref) as well.
+"""
 @kwdef mutable struct WingLayout
     """Aspect Ratio [m]"""
     AR::Float64 = 0 
@@ -303,9 +307,15 @@ $TYPEDFIELDS
     """Sparbox web normalized thickness"""
 end
 
+"""
+$TYPEDEF
+
+Stores all the non-dimensional parameters 
+in the normal-plane cross section of the wing (mainly related to the spar-box)
+
+$TYPEDFIELDS
+"""
 @kwdef mutable struct WingCrossSection
-    """Section Chord [m]"""
-    c_perp::Float64 = 0.0
     """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
     thickness_to_chord::Float64 = 0.0
     """Wing section's spar box width to c⟂[-]"""
@@ -320,15 +330,6 @@ end
     A_internal::Float64 = 0.0
 end
 
-@kwdef mutable struct WingSection_ #_ just to differentiate temporarily from the other struct WingSection
-    start_section::WingCrossSection
-    end_section::WingCrossSection
-    """Section length [m]"""
-    b_section::Float64
-    """Sweep [°]"""
-    Λ::Float64 = 0.0 # need to let this be the wing overall Λ by default
-
-end
 
 """
 """
