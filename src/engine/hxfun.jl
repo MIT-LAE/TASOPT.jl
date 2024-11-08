@@ -944,12 +944,10 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       end
 
       #Set bounds
-      if length(initial_x) == 4
-            lower = [1e-9, 1.0, 1.0, lmin]
-            upper = [30.0, 20.0, 6.0, lmax]
-            initial_dx = [0.1, -0.1, -0.1, 0.1]
-      end
-      
+      lower = [1e-9, 1.0, 1.0, lmin]
+      upper = [30.0, 20.0, 6.0, lmax]
+      initial_dx = [0.1, -0.1, -0.1, 0.1]
+
       #Use NLopt.jl to minimize function 
       opt = NLopt.Opt(:LN_COBYLA, length(initial_x)) #COBYLA can handle constraints natively
 
@@ -1118,7 +1116,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             HXgeom.xl_D = 1
             HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
             HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
-            HXgeom.maxL = 0.5 #maximum HEX length
+            HXgeom.maxL = 0.25 #maximum HEX length TODO make this an input?
 
             mcore = pare_sl[iemcore]
             mofft = pare_sl[iemofft]
@@ -1386,7 +1384,7 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       HXgas.fluid_p = "air"
       HXgas.alpha_p = alpha
 
-      if pare_sl[ieTfc] > 373
+      if pare_sl[ieTfc] > 373.15 #TODO add more coolant options
             coolant_name = "liquid ethylene glycol"
       else
             coolant_name = "liquid water"
@@ -1401,6 +1399,7 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       #Indices for HEX variables
       Dh_i = ieRadiatorDeltah
       Dp_i = ieRadiatorDeltap
+      #Read remaining properties from dictionary with indices
       iTp_in = inpts_dict["iTp_in"]
       ipp_in = inpts_dict["ipp_in"]
       iTc_in = inpts_dict["iTc_in"]
@@ -1453,7 +1452,7 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
             
             HXgasp.Tp_in = pare_sl[iTp_in] #The indices come from the design process above as the HX is the same
             HXgasp.pp_in = pare_sl[ipp_in]
-            HXgasp.Tc_in = pare_sl[iTc_in] #Fuel cell temperature        
+            HXgasp.Tc_in = pare_sl[iTc_in] #coolant temperature (e.g. fuel cell temp.)       
             HXgasp.pc_in = pare_sl[ipc_in]
 
             if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
@@ -1512,7 +1511,22 @@ function resetHXs(pare)
 
 end
 
-function calculate_min_tube_length(HXgeom, HXgas)
+"""
+      calculate_min_tube_length(HXgeom::HX_tubular, HXgas::HX_gas)
+
+This function calculates the minimum tube length in a tubular HX pass. It also returns an initial guess 
+for its optimization.  
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgeom::HX_tubular`: structure with the HX geometric properties
+    - `HXgas::HX_gas`: structure with the gas properties
+    
+    **Outputs:**
+    - `lmin::Float64`: minimum tube length (m)
+    - `linit::Float64`: initial guess for tube length (m)
+"""
+function calculate_min_tube_length(HXgeom::HX_tubular, HXgas::HX_gas)
       _, _, _, _, cp_p_in, Rp = gassum(HXgas.alpha_p, length(HXgas.alpha_p), HXgas.Tp_in)
       γ_p_in = cp_p_in / (cp_p_in - Rp)
       ρ_p_in = HXgas.pp_in / (Rp * HXgas.Tp_in)
@@ -1822,6 +1836,7 @@ function liquid_properties(fluid, T)
 end #liquid_properties
 
 #Constraint functions for HX optimization
+#TODO consider making the minima and maxima inputs rather than hardcoded params
 function MinPassesCstr(HXgeom)
       n_passes = HXgeom.n_passes
       min_passes = 1.0
