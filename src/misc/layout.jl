@@ -155,10 +155,12 @@ end
     sweep::Float64 = 0
     """ Wing Span [m]"""
     b::Float64 = 0 
-    """Max Wing Span [m]"""
+    """Max Wing Span used as a constraint for optimization [m]"""
     b_max::Float64 = 0 
+    """Span break location [-]"""
+    ηs::Float64 = 0.0
     """Wing chord at root """
-    chord::Float64 = 0
+    root_chord::Float64 = 0
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0 
     """Wing Box wing x to chord"""
