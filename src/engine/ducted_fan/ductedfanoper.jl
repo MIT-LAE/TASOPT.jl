@@ -373,7 +373,7 @@ function res_df(x, engdata; iPspec = false, store_data = false)
         Finl = Phiinl / u0
     end
     mfan = mf * sqrt(Tref / Tt2) * pt2 / pref #Fan mass flow rate
-    Feng = mfan * (u8 - u0)  + Finl #Total thrust
+    Feng = mfan * (u7 - u0) + A7 * (p7 - p0) + Finl #Total thrust
     Peng = mfan * (ht21 - ht2) #Fan power
 
     A8 = mfan / (rho8 * u8) #Plume area
@@ -417,12 +417,69 @@ function res_df(x, engdata; iPspec = false, store_data = false)
         TSEC = Peng/Feng
 
         #Store all relevant engine variables
+        function store_converged_data!(data::DuctedFanData)
+            data.TSEC = TSEC
+            data.Fsp = Fsp
+            data.Feng = Feng
+            data.Peng = Peng
+            data.mfan = mfan
+            data.pif = pif
+            data.mbf = mbf
+            data.Nbf = Nbf
+            data.Tt0 = Tt0
+            data.ht0 = ht0
+            data.pt0 = pt0
+            data.cpt0 = cpt0
+            data.Rt0 = Rt0
+            data.Tt18 = Tt18
+            data.ht18 = ht18
+            data.pt18 = pt18
+            data.cpt18 = cpt18
+            data.Rt18 = Rt18
+            data.Tt2 = Tt2
+            data.ht2 = ht2
+            data.pt2 = pt2
+            data.cpt2 = cpt2
+            data.Rt2 = Rt2
+            data.Tt21 = Tt21
+            data.ht21 = ht21
+            data.pt21 = pt21
+            data.cpt21 = cpt21
+            data.Rt21 = Rt21
+            data.Tt7 = Tt7
+            data.ht7 = ht7
+            data.pt7 = pt7
+            data.cpt7 = cpt7
+            data.Rt7 = Rt7
+            data.u0 = u0
+            data.T2 = T2
+            data.u2 = u2
+            data.p2 = p2
+            data.cp2 = cp2
+            data.R2 = R2
+            data.M2 = M2
+            data.T7 = T7
+            data.u7 = u7
+            data.p7 = p7
+            data.cp7 = cp7
+            data.R7 = R7
+            data.M7 = M7
+            data.T8 = T8
+            data.u8 = u8
+            data.p8 = p8
+            data.cp8 = cp8
+            data.R8 = R8
+            data.M8 = M8
+            data.A8 = A8
+            data.epf = epf
+            data.etaf = etaf
+        end
         store_converged_data!(engdata)
     end
     return res
 end
 
-#Helper functions to pack, unpack and store data
+#Helper functions to pack & unpack data
 function unpack_input_data(data::DuctedFanData)
     M0 = data.M0
     T0 = data.T0
@@ -481,62 +538,4 @@ function update_engine_data!(data::DuctedFanData, inputs)
     data.Peng = Peng
     data.Δh_radiator = Δh_radiator
     data.Δp_radiator = Δp_radiator
-end
-
-function store_converged_data!(data::DuctedFanData)
-    data.TSEC = TSEC
-    data.Fsp = Fsp
-    data.Feng = Feng
-    data.Peng = Peng
-    data.mfan = mfan
-    data.pif = pif
-    data.mbf = mbf
-    data.Nbf = Nbf
-    data.Tt0 = Tt0
-    data.ht0 = ht0
-    data.pt0 = pt0
-    data.cpt0 = cpt0
-    data.Rt0 = Rt0
-    data.Tt18 = Tt18
-    data.ht18 = ht18
-    data.pt18 = pt18
-    data.cpt18 = cpt18
-    data.Rt18 = Rt18
-    data.Tt2 = Tt2
-    data.ht2 = ht2
-    data.pt2 = pt2
-    data.cpt2 = cpt2
-    data.Rt2 = Rt2
-    data.Tt21 = Tt21
-    data.ht21 = ht21
-    data.pt21 = pt21
-    data.cpt21 = cpt21
-    data.Rt21 = Rt21
-    data.Tt7 = Tt7
-    data.ht7 = ht7
-    data.pt7 = pt7
-    data.cpt7 = cpt7
-    data.Rt7 = Rt7
-    data.u0 = u0
-    data.T2 = T2
-    data.u2 = u2
-    data.p2 = p2
-    data.cp2 = cp2
-    data.R2 = R2
-    data.M2 = M2
-    data.T7 = T7
-    data.u7 = u7
-    data.p7 = p7
-    data.cp7 = cp7
-    data.R7 = R7
-    data.M7 = M7
-    data.T8 = T8
-    data.u8 = u8
-    data.p8 = p8
-    data.cp8 = cp8
-    data.R8 = R8
-    data.M8 = M8
-    data.A8 = A8
-    data.epf = epf
-    data.etaf = etaf
 end
