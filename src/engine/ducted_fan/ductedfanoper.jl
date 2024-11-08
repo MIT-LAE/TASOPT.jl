@@ -1,3 +1,8 @@
+"""
+    DuctedFanData
+
+Structure containign the operating conditions of the ducted fan at a given point.
+"""
 mutable struct DuctedFanData
     TSEC::Float64
     Fsp::Float64
@@ -77,6 +82,7 @@ mutable struct DuctedFanData
     Δp_radiator::Float64
     DuctedFanData() = new() 
 end
+
 """
     ductedfanoper!(M0, T0, p0, a0, Tref, pref,
         Phiinl, Kinl, iBLIc,
@@ -183,7 +189,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     guess[3] = Mi
 
     residual(x) = res_df(x, engdata, iPspec = iPspec)
-    sol = nlsolve(residual, guess, ftol = tol) 
+    sol = nlsolve(residual, guess, ftol = tol) #Use NLsolve.jl to solve for ducted fan state
 
     #Evaluate residual once more, storing parameters
     res = res_df(sol.zero, engdata, iPspec = iPspec,  store_data = true)
@@ -204,67 +210,6 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     engdata.T8, engdata.u8, engdata.p8, engdata.cp8, engdata.R8, engdata.M8, engdata.A8,
     engdata.epf, engdata.etaf
 end
-
-function unpack_input_data(data::DuctedFanData)
-    M0 = data.M0
-    T0 = data.T0
-    p0 = data.p0
-    a0 = data.a0
-    Tref = data.Tref
-    pref = data.pref
-    Phiinl = data.Phiinl
-    Kinl = data.Kinl
-    iBLIc = data.Phiinl
-    pid = data.pid
-    pifn = data.pifn
-    pifD = data.pifD
-    mbfD = data.mbfD
-    NbfD = data.NbfD
-    A2 = data.A2
-    A7 = data.A7
-    epf0 = data.epf0
-    pifK = data.pifK
-    epfK = data.epfK
-    Feng = data.Feng
-    Peng = data.Peng
-    Δh_radiator = data.Δh_radiator
-    Δp_radiator = data.Δp_radiator
-    
-    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, 
-    NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator)
-end
-
-function update_engine_data!(data::DuctedFanData, inputs)
-    (
-        M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
-        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator
-    ) = inputs
-
-    data.M0 = M0
-    data.T0 = T0
-    data.p0 = p0
-    data.a0 = a0
-    data.Tref = Tref
-    data.pref = pref
-    data.Phiinl = Phiinl
-    data.Kinl = Kinl
-    data.iBLIc = iBLIc
-    data.pid = pid
-    data.pifn = pifn
-    data.pifD = pifD
-    data.mbfD = mbfD
-    data.NbfD = NbfD
-    data.A2 = A2
-    data.A7 = A7
-    data.epf0 = epf0
-    data.pifK = pifK
-    data.epfK = epfK
-    data.Feng = Feng
-    data.Peng = Peng
-    data.Δh_radiator = Δh_radiator
-    data.Δp_radiator = Δp_radiator
-end
-
 
 function res_df(x, engdata; iPspec = false, store_data = false)
     #Extract unknowns
@@ -535,3 +480,63 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     return res
 end
 
+#Helper functions to pack and unpack data
+function unpack_input_data(data::DuctedFanData)
+    M0 = data.M0
+    T0 = data.T0
+    p0 = data.p0
+    a0 = data.a0
+    Tref = data.Tref
+    pref = data.pref
+    Phiinl = data.Phiinl
+    Kinl = data.Kinl
+    iBLIc = data.Phiinl
+    pid = data.pid
+    pifn = data.pifn
+    pifD = data.pifD
+    mbfD = data.mbfD
+    NbfD = data.NbfD
+    A2 = data.A2
+    A7 = data.A7
+    epf0 = data.epf0
+    pifK = data.pifK
+    epfK = data.epfK
+    Feng = data.Feng
+    Peng = data.Peng
+    Δh_radiator = data.Δh_radiator
+    Δp_radiator = data.Δp_radiator
+    
+    return (M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, pifD, mbfD, 
+    NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator)
+end
+
+function update_engine_data!(data::DuctedFanData, inputs)
+    (
+        M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
+        pifD, mbfD, NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator
+    ) = inputs
+
+    data.M0 = M0
+    data.T0 = T0
+    data.p0 = p0
+    data.a0 = a0
+    data.Tref = Tref
+    data.pref = pref
+    data.Phiinl = Phiinl
+    data.Kinl = Kinl
+    data.iBLIc = iBLIc
+    data.pid = pid
+    data.pifn = pifn
+    data.pifD = pifD
+    data.mbfD = mbfD
+    data.NbfD = NbfD
+    data.A2 = A2
+    data.A7 = A7
+    data.epf0 = epf0
+    data.pifK = pifK
+    data.epfK = epfK
+    data.Feng = Feng
+    data.Peng = Peng
+    data.Δh_radiator = Δh_radiator
+    data.Δp_radiator = Δp_radiator
+end
