@@ -208,29 +208,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
             rho8 = p8 / (R8 * T8)
 
             # ===============================================================
-            #---- size mass flow
-            #---- store current values for better update, convergence checks
-            mfold = mfan
-
-            #---- added effective net thrust from dissipation in ingested streamtube
-            if (u0 == 0.0)
-                Finl = 0.0
-            else
-                Finl = Phiinl / u0
-            end
-            #---- set core mass flow from specified effective net thrust
-            mfan = (Feng - Finl) /
-                    ((u8 - u0))
-
-            #---- overall Fsp and TSFC
-            Fsp = Feng / (u0 * mfan)
-            #---- Fan power 
-            Pfan = mfan * (ht21 - ht2)
-
-            TSEC = Pfan/Feng
-
-            # ===============================================================
-
+            #Static properties
             M8 = u8 / sqrt(cp8 * R8 / (cp8 - R8) * T8)
             if (M8 < 1.0)
                   #----- subsonic fan plume... fan nozzle flow is same as plume
@@ -250,10 +228,31 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
             end
             rho7 = p7 / (R7 * T7)
 
+            # ===============================================================
+            #---- size mass flow
+            #---- store current values for better update, convergence checks
+            mfold = mfan
+
+            #---- added effective net thrust from dissipation in ingested streamtube
+            if (u0 == 0.0)
+                Finl = 0.0
+            else
+                Finl = Phiinl / u0
+            end
+            #---- set core mass flow from specified effective net thrust
+            mfan = (Feng - Finl) /
+                  (u7 + (p7 - p0)/(rho7 * u7) - u0)
+
+            #---- overall Fsp and TSFC
+            Fsp = Feng / (u0 * mfan)
+            #---- Fan power 
+            Pfan = mfan * (ht21 - ht2)
+
+            TSEC = Pfan/Feng
+
             #---- size fan  nozzle and plume areas
             A7 = mfan / (rho7 * u7)
             A8 = mfan / (rho8 * u8)
-
 
             # ===============================================================
             #---- size fan areas
