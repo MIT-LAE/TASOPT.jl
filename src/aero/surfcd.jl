@@ -64,7 +64,7 @@ function surfcd2(
             0.5 * (γs + γt) * (1.0 - ηs)
 
       Ko = 1.0 / (Kc * AR)
-      Kp = Kp0 + wing.inboard.lift_rolloff * ηo + 2.0 * wing.outboard.lift_rolloff * Ko * γt * wing.outboard.layout.λ
+      Kp = Kp0 + wing.fuse_lift_carryover * ηo + 2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.layout.λ
       
       clp1 = (CL - CLhtail) / cosL^2 * wing.layout.S / (Kp * wing.layout.span * wing.layout.root_chord)
 

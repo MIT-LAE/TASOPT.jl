@@ -50,7 +50,7 @@
 
 # end Fuselage weight
 
-# surfdx:
+# calculate_centroid_offset:
   b = 35.486921629195265
   bs = 10.113772664320649
   bo = 3.6067999999999998
@@ -60,11 +60,11 @@
   dxwing = 2.5792921907840762
   macco = 0.68475212288241949
 
-dx_out, macco_out = TASOPT.structures.surfdx(b,bs,bo,lambdat,lambdas,sweep)
+dx_out, macco_out = TASOPT.structures.calculate_centroid_offset(b,bs,bo,lambdat,lambdas,sweep)
 @test dx_out ≈ dxwing
 @test macco_out ≈ macco 
 
-# end surfdx
+# end calculate_centroid_offset
 
 
 #surfw:

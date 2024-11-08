@@ -176,9 +176,9 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "co      = %5.1f m (%8.1f ft)\n" , co, co / ft_to_m )
     @printf(io, "cs      = %5.1f m (%8.1f ft)\n" , cs, cs / ft_to_m )
     @printf(io, "ct      = %5.1f m (%8.1f ft)\n" , ct, ct / ft_to_m )
-    @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , wing.outboard.layout.b, wing.outboard.layout.b/ft_to_m   )
+    @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , wing.layout.root_span, wing.layout.root_span/ft_to_m   )
     @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , wing.inboard.layout.b, wing.inboard.layout.b/ft_to_m   )
-    @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.b, wing.layout.b/ft_to_m   )
+    @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.span, wing.layout.span/ft_to_m   )
     @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , wing.layout.S, wing.layout.S/ft_to_m^2 )
 
 
@@ -213,9 +213,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         λs = wing.inboard.layout.λ
         λt = wing.outboard.layout.λ
 
-        bo = wing.outboard.layout.b
+        bo = wing.layout.root_span
         bs = wing.inboard.layout.b
-        b  = wing.layout.b
+        b  = wing.layout.span
 
         xax = 0.40
         xcLE = -xax
@@ -586,7 +586,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     # Annotations
     if annotate_text
         ax.text(1.05, 0.75, transform=ax.transAxes, @sprintf("PFEI = %5.3f\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f t\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-        parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+        parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.span, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
         fontsize = label_fs, ha="left", va="top")
     end
     if annotate_length
@@ -598,7 +598,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
     end
     # Span annotations:
-    groups, bmax = find_aerodrome_code(wing.layout.b_max) #Find ICAO and FAA groups as well as max span
+    groups, bmax = find_aerodrome_code(wing.layout.max_span) #Find ICAO and FAA groups as well as max span
     xcode = -2.0
 
     if annotate_group
@@ -1131,9 +1131,9 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
         λs = wing.inboard.layout.λ
         λt = wing.outboard.layout.λ
 
-        bo = wing.outboard.layout.b
+        bo = wing.layout.root_span
         bs = wing.inboard.layout.b
-        b  = wing.layout.b
+        b  = wing.layout.span
 
         xax = 0.40
         xcLE = -xax
@@ -1323,7 +1323,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     lambdav = vtail.outboard.layout.λ
     sweepv  = vtail.layout.sweep
 
-    bv = vtail.layout.b
+    bv = vtail.layout.span
     cov = vtail.layout.root_chord
 
 
@@ -1567,7 +1567,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
 
     # Annotations
     ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.b, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
+     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.span, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
      fontsize = label_fs, ha="left", va="top")
 
     yloc = -20

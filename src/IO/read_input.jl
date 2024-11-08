@@ -487,7 +487,7 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     wing.layout.sweep = readwing("sweep")
     wing.layout.AR = readwing("AR")
-    wing.layout.b_max = Distance(readwing("maxSpan"))
+    wing.layout.max_span = Distance(readwing("maxSpan"))
 
     wing.inboard.layout.λ = readwing("inner_panel_taper_ratio")
     wing.outboard.layout.λ = readwing("outer_panel_taper_ratio")
@@ -502,7 +502,7 @@ readwing(x) = read_input(x, wing_i, dwing)
         @warn "ηs set to $(wing.layout.ηs)"
     end
 
-    wing.outboard.layout.b = 2*Distance(readwing("center_box_halfspan"))
+    wing.layout.root_span = 2*Distance(readwing("center_box_halfspan"))
     wing.layout.box_width  = readwing("box_width_to_chord")
     wing.inboard.layout.thickness_to_chord = readwing("root_thickness_to_chord")
     wing.outboard.layout.thickness_to_chord = readwing("spanbreak_thickness_to_chord")
@@ -529,8 +529,8 @@ readwing(x) = read_input(x, wing_i, dwing)
 # ----------------------------------
 aero = readwing("Aero")
 daero = dwing["Aero"]
-    wing.inboard.lift_rolloff = readaero("fuselage_lift_carryover_loss_factor")
-    wing.outboard.lift_rolloff = readaero("wing_tip_lift_rolloff_factor")
+    wing.fuse_lift_carryover = readaero("fuselage_lift_carryover_loss_factor")
+    wing.tip_lift_loss = readaero("wing_tip_lift_rolloff_factor")
 
     para[iacdfw, 1:iptotal, :]   .= readaero("lowspeed_cdf")  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
     para[iacdpw, 1:iptotal, :]   .= readaero("lowspeed_cdp")  #  cdpw    

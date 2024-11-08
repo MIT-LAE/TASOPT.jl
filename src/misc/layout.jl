@@ -157,10 +157,12 @@ See [WingSection](@ref) and [WingCrossSection](@ref) as well.
     AR::Float64 = 0 
     """Sweep [degrees]"""
     sweep::Float64 = 0
+    """ Wing start [m]"""
+    root_span::Float64 = 0.0
     """ Wing Span [m]"""
-    b::Float64 = 0 
+    span::Float64 = 0 
     """Max Wing Span used as a constraint for optimization [m]"""
-    b_max::Float64 = 0 
+    max_span::Float64 = 0 
     """Span break location [-]"""
     ηs::Float64 = 0.0
     """Wing chord at root """
@@ -276,7 +278,7 @@ $TYPEDEF
 
 Wing Layout Structure:
 Holds the span, taper, and chord thickness of a single wing section.
-Ratios are with respect to the normal-plane chord c⟂=c×cos(Λ).
+Ratios are with respect to the normal-plane chord c⟂=c×cos(sweep).
 
 Cross-section of wing box:                                                                                                            
                   ┌──────────────────────────────────────┐        

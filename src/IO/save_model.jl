@@ -249,8 +249,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Aero , for multiple segments
     d_wing_aero = Dict()
-        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g.wing.inboard.lift_rolloff
-        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g.wing.outboard.lift_rolloff
+        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g.wing.fuse_lift_carryover
+        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g.wing.tip_lift_loss
 
         d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,:]
         d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,:]
@@ -820,7 +820,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "wing.inboard.layout.thickness_to_chord = %20.20f \n", wing.inboard.layout.thickness_to_chord)
         @printf(io, "wing.outboard.layout.thickness_to_chord = %20.20f \n", wing.outboard.layout.thickness_to_chord)
         @printf(io, "wing.layout.hweb_to_hbox = %20.20f \n", wing.layout.hweb_to_hbox)
-        @printf(io, "wing.layout.b_max = %20.20f \n", wing.layout.b_max)
+        @printf(io, "wing.layout.max_span = %20.20f \n", wing.layout.max_span)
         @printf(io, "wing.strut.thickness_to_chord = %20.20f \n", wing.strut.thickness_to_chord)
         @printf(io, "wing.strut.z = %20.20f \n", wing.strut.z)
         @printf(io, "wing.outboard.moment = %20.20f \n", wing.outboard.moment)
@@ -838,17 +838,17 @@ function reset_regression_test(fname, ac)
         @printf(io, "wing.inboard.webs.thickness = %20.20f \n", wing.inboard.webs.thickness)
         @printf(io, "wing.outboard.webs.thickness = %20.20f \n", wing.outboard.webs.thickness)
         @printf(io, "wing.layout.S = %20.20f \n", wing.layout.S)
-        @printf(io, "wing.outboard.layout.b = %20.20f \n", wing.outboard.layout.b)
+        @printf(io, "wing.layout.root_span = %20.20f \n", wing.layout.root_span)
         @printf(io, "wing.layout.ηs = %20.20f \n", wing.layout.ηs)
         @printf(io, "wing.inboard.layout.λ = %20.20f \n", wing.inboard.layout.λ)
         @printf(io, "wing.outboard.layout.λ = %20.20f \n", wing.outboard.layout.λ)
         @printf(io, "wing.layout.root_chord = %20.20f \n", wing.layout.root_chord)
         @printf(io, "wing.inboard.layout.b = %20.20f \n", wing.inboard.layout.b)
-        @printf(io, "wing.layout.b= %20.20f \n", wing.layout.b)
+        @printf(io, "wing.layout.span= %20.20f \n", wing.layout.span)
         @printf(io, "wing.layout.sweep = %20.20f \n", wing.layout.sweep)
         @printf(io, "wing.layout.AR = %20.20f \n", wing.layout.AR)
-        @printf(io, "wing.inboard.lift_rolloff = %20.20f \n", wing.inboard.lift_rolloff)
-        @printf(io, "wing.outboard.lift_rolloff = %20.20f \n", wing.outboard.lift_rolloff)
+        @printf(io, "wing.fuse_lift_carryover = %20.20f \n", wing.fuse_lift_carryover)
+        @printf(io, "wing.tip_lift_loss = %20.20f \n", wing.tip_lift_loss)
 
         @printf(io, "# ------------------------------\n")
         @printf(io,"# Htail\n")
@@ -880,7 +880,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "htail.layout.root_chord = %20.20f \n", htail.layout.root_chord)
         @printf(io, "htail.outboard.layout.λ = %20.20f \n", htail.outboard.layout.λ)
         @printf(io, "htail.outboard.layout.b = %20.20f \n", htail.outboard.layout.b)
-        @printf(io, "htail.layout.b = %20.20f \n", htail.layout.b)
+        @printf(io, "htail.layout.span = %20.20f \n", htail.layout.span)
         @printf(io, "htail.layout.AR = %20.20f \n", htail.layout.AR)
         @printf(io, "htail.layout.S = %20.20f \n", htail.layout.S)
         
@@ -907,7 +907,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "vtail.layout.sweep = %20.20f \n", vtail.layout.sweep)
         @printf(io, "vtail.layout.root_chord = %20.20f \n", vtail.layout.root_chord)
         @printf(io, "vtail.outboard.layout.λ = %20.20f \n", vtail.outboard.layout.λ)
-        @printf(io, "vtail.layout.b = %20.20f \n", vtail.layout.b)
+        @printf(io, "vtail.layout.span = %20.20f \n", vtail.layout.span)
         @printf(io, "vtail.layout.AR = %20.20f \n", vtail.layout.AR)
         @printf(io, "vtail.layout.S = %20.20f \n", vtail.layout.S)
         @printf(io, "vtail.size = %20.20f \n", vtail.size)
