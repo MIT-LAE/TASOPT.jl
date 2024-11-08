@@ -99,8 +99,8 @@ function wsize(ac; itermax=35,
     flgnose = parg[igflgnose]
     flgmain = parg[igflgmain]
     freserve = parg[igfreserve]
-    fLo =  wing.inboard.lift_rolloff
-    fLt =  wing.outboard.lift_rolloff
+    fLo =  wing.fuse_lift_carryover
+    fLt =  wing.tip_lift_loss
 
     # Extract layout parameters
     xhbox = htail.layout.box_x
@@ -215,7 +215,7 @@ function wsize(ac; itermax=35,
         wing.outboard.dyW = dyWout
 
         # Wing centroid x-offset from wingbox
-        surfdx!(wing, b=b, bs=bs)
+        calculate_centroid_offset!(wing, b=b, bs=bs)
 
         # Tail area centroid locations
         htail.layout.x, vtail.layout.x = xhbox, xvbox
@@ -522,7 +522,7 @@ function wsize(ac; itermax=35,
         cbox = wing.layout.root_chord * wing.layout.box_width
 
         # Calculate wing centroid and mean aerodynamic chord
-        surfdx!(wing,calc_cma=true)
+        calculate_centroid_offset!(wing,calc_cma=true)
         xwing = wing.layout.x
         
         # Update wing pitching moment constants
@@ -666,7 +666,7 @@ function wsize(ac; itermax=35,
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
         
         # HT centroid x-offset
-        surfdx!(htail, htail.layout.span, λhs)
+        calculate_centroid_offset!(htail, htail.layout.span, λhs)
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
         CMh0, CMh1 = surfcm(htail.layout.span, htail.outboard.layout.b, htail.outboard.layout.b, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.layout.λ, 1.0, htail.outboard.layout.λ, 1.0,
@@ -680,7 +680,7 @@ function wsize(ac; itermax=35,
         wing.inboard.webs.ρ, wing.inboard.caps.ρ, bv2)
 
         # VT centroid x-offset
-        surfdx!(vtail, bv2, λhs)
+        calculate_centroid_offset!(vtail, bv2, λhs)
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
@@ -1147,7 +1147,7 @@ function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iac
         CMw0, CMw1 = surfcm(
             wing.layout.span, wing.inboard.layout.b, wing.layout.root_span, 
             wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.layout.λ, wing.inboard.layout.λ, 
-            γt, γs, wing.layout.AR, wing.inboard.lift_rolloff, wing.outboard.lift_rolloff, cmpo, cmps, cmpt
+            γt, γs, wing.layout.AR, wing.fuse_lift_carryover, wing.tip_lift_loss, cmpo, cmps, cmpt
         )
 
         para[iaCMw0, ip] = CMw0

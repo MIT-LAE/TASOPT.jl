@@ -28,5 +28,5 @@ structures.surft!(tail, po, lambdas,gammat,gammas,fLt,
 
 structures.tailpo(S, AR, λa, qne, CLmax)
 
-structures.surfdx(b, bs, bo, λt, λs, sweep)
+structures.calculate_centroid_offset(b, bs, bo, λt, λs, sweep)
 ```

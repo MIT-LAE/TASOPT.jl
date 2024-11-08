@@ -1,5 +1,5 @@
 """
-      surfdx(b, bs, bo, λt, λs, sweep)
+      calculate_centroid_offset(b, bs, bo, λt, λs, sweep)
 
 Calculates area centroid x-offset due to sweep
 and the mean aerodynamic chord (normalized by root chord, `co`)
@@ -19,7 +19,7 @@ and the mean aerodynamic chord (normalized by root chord, `co`)
 
 See [Geometry](@ref geometry) or Section 2.5.1  of the [TASOPT Technical Description](@ref dreladocs).
 """
-function surfdx(b,bs,bo,λt,λs,sweep)
+function calculate_centroid_offset(b,bs,bo,λt,λs,sweep)
 
       tanL = tand(sweep)
 
@@ -46,27 +46,27 @@ function surfdx(b,bs,bo,λt,λs,sweep)
 
       return dx,macco
 
-end # surfdx
+end # calculate_centroid_offset
 
 """
-      surfdx!(wing, b, bs, parg)
+      calculate_centroid_offset!(wing, b, bs, parg)
 
-surfdx wrapper for Wing
+calculate_centroid_offset wrapper for Wing
 
 """
-function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, calc_cma=false)
+function calculate_centroid_offset!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, calc_cma=false)
       if calc_cma
-            dx, macco = surfdx(wing.layout.b,
+            dx, macco = calculate_centroid_offset(wing.layout.span,
                           wing.inboard.layout.b,
-                          wing.outboard.layout.b,
+                          wing.layout.root_span,
                           wing.outboard.layout.λ,
                           wing.inboard.layout.λ,
                           wing.layout.sweep)
-            wing.mean_aero_chord = macco * wing.layout.chord
+            wing.mean_aero_chord = macco * wing.layout.root_chord
           
       else
-            dx, _ = surfdx(b, bs,
-            wing.outboard.layout.b,
+            dx, _ = calculate_centroid_offset(b, bs,
+            wing.layout.root_span,
             wing.outboard.layout.λ,
             wing.inboard.layout.λ,
             wing.layout.sweep)
@@ -75,13 +75,13 @@ function surfdx!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, calc_cma=false
 end
 
 """
-      surfdx!(tail, b, λs)
+      calculate_centroid_offset!(tail, b, λs)
 
-surfdx wrapper for Tail
+calculate_centroid_offset wrapper for Tail
 
 """
-function surfdx!(tail::Tail, b::Float64, λs::Float64)
-      dx, _ = surfdx(b,
+function calculate_centroid_offset!(tail::Tail, b::Float64, λs::Float64)
+      dx, _ = calculate_centroid_offset(b,
                   tail.outboard.layout.b,
                   tail.outboard.layout.b,
                   tail.outboard.layout.λ,

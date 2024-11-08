@@ -287,7 +287,7 @@ function cditrp(para, wing, htail)
 
       #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
 #---- wing wake parameters
-      fLo =  wing.inboard.lift_rolloff
+      fLo =  wing.fuse_lift_carryover
 #      fLo = 0.0
 
 #---- span, wing-break span, wing-root span

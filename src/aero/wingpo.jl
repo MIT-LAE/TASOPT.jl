@@ -39,7 +39,7 @@ function wingpo(wing, rclt, rcls, N, W, Lhtail)
     Kp = ηo +
     0.5*(1.0    +γs )*(ηs-ηo) +
     0.5*(γs +γt )*(1.0 -ηs) +
-    wing.inboard.lift_rolloff*ηo + 2.0*wing.outboard.lift_rolloff*Ko*γt*wing.outboard.layout.λ
+    wing.fuse_lift_carryover*ηo + 2.0*wing.tip_lift_loss*Ko*γt*wing.outboard.layout.λ
 
     po = (N*W - Lhtail)/(Kp*wing.layout.span)
 
@@ -84,7 +84,7 @@ function wingcl(wing,γt,γs,
       Kp = ηo + #planform loading factor
 	 0.5*(1.0    +γs )*(ηs-ηo) +
 	 0.5*(γs +γt )*(1.0 -ηs) +
-	 wing.inboard.lift_rolloff*ηo + 2.0*wing.outboard.lift_rolloff*Ko*γt*wing.outboard.layout.λ
+	 wing.fuse_lift_carryover*ηo + 2.0*wing.tip_lift_loss*Ko*γt*wing.outboard.layout.λ
 
       cl1 = (CL-CLhtail)/cosL^2 * (Kc/Kp)
 
