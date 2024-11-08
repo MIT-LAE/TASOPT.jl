@@ -25,20 +25,20 @@ See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
 """
 function wingpo(wing, rclt, rcls, N, W, Lhtail)
     
-    γt, γs = wing.outboard.layout.λ * rclt, wing.inboard.layout.λ * rcls
+    γt, γs = wing.outboard.λ * rclt, wing.inboard.λ * rcls
         
     ηo, ηs = wing.layout.ηo, wing.layout.ηs
     
     Kc = ηo +
-    0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +
-    0.5*(wing.inboard.layout.λ+wing.outboard.layout.λ)*(1.0 -ηs)
+    0.5*(1.0    +wing.inboard.λ)*(ηs-ηo) +
+    0.5*(wing.inboard.λ+wing.outboard.λ)*(1.0 -ηs)
 
     Ko = 1.0/(wing.layout.AR*Kc)
 
     Kp = ηo +
     0.5*(1.0    +γs )*(ηs-ηo) +
     0.5*(γs +γt )*(1.0 -ηs) +
-    wing.fuse_lift_carryover*ηo + 2.0*wing.tip_lift_loss*Ko*γt*wing.outboard.layout.λ
+    wing.fuse_lift_carryover*ηo + 2.0*wing.tip_lift_loss*Ko*γt*wing.outboard.λ
 
     po = (N*W - Lhtail)/(Kp*wing.layout.span)
 
@@ -74,21 +74,21 @@ function wingcl(wing,γt,γs,
       ηo, ηs = wing.layout.ηo, wing.layout.ηs
      
       Kc = ηo +
-	 0.5*(1.0    +wing.inboard.layout.λ)*(ηs-ηo) +
-	 0.5*(wing.inboard.layout.λ+wing.outboard.layout.λ)*(1.0 -ηs) #surface area factor S = co*bo*K
+	 0.5*(1.0    +wing.inboard.λ)*(ηs-ηo) +
+	 0.5*(wing.inboard.λ+wing.outboard.λ)*(1.0 -ηs) #surface area factor S = co*bo*K
 
       Ko = 1.0/(wing.layout.AR*Kc) #root chord def'n factor
 
       Kp = ηo + #planform loading factor
 	 0.5*(1.0    +γs )*(ηs-ηo) +
 	 0.5*(γs +γt )*(1.0 -ηs) +
-	 wing.fuse_lift_carryover*ηo + 2.0*wing.tip_lift_loss*Ko*γt*wing.outboard.layout.λ
+	 wing.fuse_lift_carryover*ηo + 2.0*wing.tip_lift_loss*Ko*γt*wing.outboard.λ
 
       cl1 = (CL-CLhtail)/cosL^2 * (Kc/Kp)
 
       clo = cl1                / (1.0+duo)^2
-      cls = cl1*γs/wing.inboard.layout.λ / (1.0+dus)^2
-      clt = cl1*γt/wing.outboard.layout.λ / (1.0+dut)^2
+      cls = cl1*γs/wing.inboard.λ / (1.0+dus)^2
+      clt = cl1*γt/wing.outboard.λ / (1.0+dut)^2
 
       return clo, cls, clt
 

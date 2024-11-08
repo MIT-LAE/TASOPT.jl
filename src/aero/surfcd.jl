@@ -56,22 +56,22 @@ function surfcd2(
 
       #---- set center clpo
       Kc = ηo +
-           0.5 * (1.0 + wing.inboard.layout.λ) * (ηs - ηo) +
-           0.5 * (wing.inboard.layout.λ + wing.outboard.layout.λ) * (1.0 - ηs)
+           0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
+           0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs)
 
       Kp0 = ηo +
             0.5 * (1.0 + γs) * (ηs - ηo) +
             0.5 * (γs + γt) * (1.0 - ηs)
 
       Ko = 1.0 / (Kc * AR)
-      Kp = Kp0 + wing.fuse_lift_carryover * ηo + 2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.layout.λ
+      Kp = Kp0 + wing.fuse_lift_carryover * ηo + 2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.λ
       
       clp1 = (CL - CLhtail) / cosL^2 * wing.layout.S / (Kp * wing.layout.span * wing.layout.root_chord)
 
       #---- set break and tip clp for passing back
       clpo = clp1 / (1.0 + fduo)^2
-      clps = clp1 * γs / wing.inboard.layout.λ / (1.0 + fdus)^2
-      clpt = clp1 * γt / wing.outboard.layout.λ / (1.0 + fdut)^2
+      clps = clp1 * γs / wing.inboard.λ / (1.0 + fdus)^2
+      clpt = clp1 * γt / wing.outboard.λ / (1.0 + fdut)^2
 
       #c---- area of exposed wing
       #      Swing = co*b * ( 0.5*(1.0    +λs)*(ηs-ηo)
@@ -92,8 +92,8 @@ function surfcd2(
             η = ηo * (1.0 - frac) + ηs * frac
             dη = (ηs - ηo) / float(n / 2)
             P = 1.0 - frac + γs * frac
-            C = 1.0 - frac + wing.inboard.layout.λ * frac
-            toc = wing.inboard.layout.thickness_to_chord * (1.0 - frac) + wing.outboard.layout.thickness_to_chord * frac
+            C = 1.0 - frac + wing.inboard.λ * frac
+            toc = wing.inboard.cross_section.thickness_to_chord * (1.0 - frac) + wing.outboard.cross_section.thickness_to_chord * frac
             fdu = fduo * (1.0 - frac) + fdus * frac
 
             #wing root shock "unsweep" function
@@ -127,8 +127,8 @@ function surfcd2(
             η = ηs * (1.0 - frac) + 1.0 * frac
             dη = (1.0 - ηs) / float(n / 2)
             P = γs * (1.0 - frac) + γt * frac
-            C = wing.inboard.layout.λ * (1.0 - frac) + wing.outboard.layout.λ * frac
-            toc = wing.outboard.layout.thickness_to_chord * (1.0 - frac) + wing.outboard.layout.thickness_to_chord * frac
+            C = wing.inboard.λ * (1.0 - frac) + wing.outboard.λ * frac
+            toc = wing.outboard.cross_section.thickness_to_chord * (1.0 - frac) + wing.outboard.cross_section.thickness_to_chord * frac
             fdu = fdus * (1.0 - frac) + fdut * frac
 
             fSuns = exp(-(η - ηo) * wing.layout.span / (kSuns * C * 2.0 * wing.layout.root_chord))

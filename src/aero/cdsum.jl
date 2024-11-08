@@ -51,8 +51,8 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 
       fSnace   = parg[igfSnace ]
       
-      gammat   = wing.outboard.layout.λ*para[iarclt]
-      gammas   = wing.inboard.layout.λ*para[iarcls]
+      gammat   = wing.outboard.λ*para[iarclt]
+      gammas   = wing.inboard.λ*para[iarcls]
 
       fCDwcen = 0.0
       fCDhcen = parg[igfCDhcen]
@@ -117,7 +117,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       cdpw = para[iacdpw] * fexcdw
 
 	CDwing,CDover = surfcd(wing.layout.S,
-	wing.layout.span,wing.inboard.layout.b,wing.layout.root_span,wing.outboard.layout.λ,wing.inboard.layout.λ,wing.layout.sweep,wing.layout.root_chord, 
+	wing.layout.span,wing.layout.break_span,wing.layout.root_span,wing.outboard.λ,wing.inboard.λ,wing.layout.sweep,wing.layout.root_chord, 
 	cdfw,cdpw,Reco,Rerefw,aRexp,rkSunsw,
        fCDwcen)
  
@@ -143,14 +143,14 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 #---- horizontal tail profile CD
       Recoh = Reunit*htail.layout.root_chord
 	CDhtail,CDhover = surfcd(wing.layout.S,
-	htail.layout.span,htail.outboard.layout.b,htail.outboard.layout.b,htail.outboard.layout.λ,1.0,htail.layout.sweep,htail.layout.root_chord, 
+	htail.layout.span,htail.layout.root_span,htail.layout.root_span,htail.outboard.λ,1.0,htail.layout.sweep,htail.layout.root_chord, 
 	cdft,cdpt,Recoh,Rereft,aRexp,rkSunsh,
 	fCDhcen)
 
 #---- vertical tail profile CD
       Recov = Reunit*vtail.layout.root_chord
       CDvtail1,CDvover1 = surfcd(wing.layout.S,
-	vtail.layout.span,vtail.outboard.layout.b,vtail.outboard.layout.b,vtail.outboard.layout.λ,1.0,vtail.layout.sweep,vtail.layout.root_chord, 
+	vtail.layout.span,vtail.layout.root_span,vtail.layout.root_span,vtail.outboard.λ,1.0,vtail.layout.sweep,vtail.layout.root_chord, 
 	cdft,cdpt,Recov,Rereft,aRexp,rkSunsv,
       fCDvcen)
 	
@@ -292,15 +292,15 @@ function cditrp(para, wing, htail)
 
 #---- span, wing-break span, wing-root span
       b[1]  = wing.layout.span
-      bs[1] = wing.inboard.layout.b
+      bs[1] = wing.layout.break_span
       bo[1] = wing.layout.root_span
 
 #---- span of wing-root streamline in Trefftz Plane
       bop[1] = wing.layout.root_span * 0.2
 
       zcent[1]  = wing.layout.z
-      gammas[1] = wing.inboard.layout.λ*para[iarcls]
-      gammat[1] = wing.outboard.layout.λ*para[iarclt]
+      gammas[1] = wing.inboard.λ*para[iarcls]
+      gammat[1] = wing.outboard.λ*para[iarclt]
       po[1]     = 1.0
       CLsurfsp[1] = CL - CLhtail
 
@@ -311,13 +311,13 @@ function cditrp(para, wing, htail)
 
 #---- horizontal tail wake parameters
       b[2]   = htail.layout.span
-      bs[2]  = htail.outboard.layout.b
-      bo[2]  = htail.outboard.layout.b
-      bop[2] = htail.outboard.layout.b
+      bs[2]  = htail.layout.root_span
+      bo[2]  = htail.layout.root_span
+      bop[2] = htail.layout.root_span
 
       zcent[2] = htail.layout.z
       gammas[2] = 1.0
-      gammat[2] = htail.outboard.layout.λ
+      gammat[2] = htail.outboard.λ
       po[2]     = 1.0
       CLsurfsp[2] = CLhtail
 

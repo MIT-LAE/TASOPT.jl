@@ -143,7 +143,7 @@
     # etas,bo,lambdat,lambdas)
     @test fort_S  == wing.layout.S 
     @test fort_b  == wing.layout.span
-    @test fort_bs == wing.inboard.layout.b
+    @test fort_bs == wing.layout.break_span
     @test fort_co == wing.layout.root_chord
     #end wingsc
     

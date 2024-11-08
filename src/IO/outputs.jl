@@ -167,17 +167,17 @@ function geometry(ac::aircraft; io = stdout)
     printstyled(io, "\nWing Layout:\n -------------- \n", color=:bold )
     @printf(io, "AR      = %5.3f \n" , wing.layout.AR)
     @printf(io, "sweep   = %5.3f \n" , wing.layout.sweep)
-    @printf(io, "lambdas = %5.3f \n" , wing.inboard.layout.λ)
-    @printf(io, "lambdat = %5.3f \n" , wing.outboard.layout.λ) 
+    @printf(io, "lambdas = %5.3f \n" , wing.inboard.λ)
+    @printf(io, "lambdat = %5.3f \n" , wing.outboard.λ) 
     co = wing.layout.root_chord
-    cs = wing.layout.root_chord*wing.inboard.layout.λ 
-    ct = wing.layout.root_chord*wing.outboard.layout.λ 
+    cs = wing.layout.root_chord*wing.inboard.λ 
+    ct = wing.layout.root_chord*wing.outboard.λ 
 
     @printf(io, "co      = %5.1f m (%8.1f ft)\n" , co, co / ft_to_m )
     @printf(io, "cs      = %5.1f m (%8.1f ft)\n" , cs, cs / ft_to_m )
     @printf(io, "ct      = %5.1f m (%8.1f ft)\n" , ct, ct / ft_to_m )
     @printf(io, "bo      = %5.1f m (%8.1f ft)\n" , wing.layout.root_span, wing.layout.root_span/ft_to_m   )
-    @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , wing.inboard.layout.b, wing.inboard.layout.b/ft_to_m   )
+    @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , wing.layout.break_span, wing.layout.break_span/ft_to_m   )
     @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.span, wing.layout.span/ft_to_m   )
     @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , wing.layout.S, wing.layout.S/ft_to_m^2 )
 
@@ -206,15 +206,15 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     fuselage = ac.fuselage
     # Wing
         co = wing.layout.root_chord
-        cs = wing.layout.root_chord*wing.inboard.layout.λ
-        ct = wing.layout.root_chord*wing.outboard.layout.λ
+        cs = wing.layout.root_chord*wing.inboard.λ
+        ct = wing.layout.root_chord*wing.outboard.λ
 
         sweep = wing.layout.sweep
-        λs = wing.inboard.layout.λ
-        λt = wing.outboard.layout.λ
+        λs = wing.inboard.λ
+        λt = wing.outboard.λ
 
         bo = wing.layout.root_span
-        bs = wing.inboard.layout.b
+        bs = wing.layout.break_span
         b  = wing.layout.span
 
         xax = 0.40
@@ -303,10 +303,10 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         xh = zeros(6)
         yh = zeros(6)
         
-        boh = htail.outboard.layout.b
+        boh = htail.layout.root_span
         Sh  = htail.layout.S
         ARh = htail.layout.AR
-        lambdah = htail.outboard.layout.λ
+        lambdah = htail.outboard.λ
         sweeph  = htail.layout.sweep
 
         bh = sqrt(Sh*ARh)
@@ -1124,15 +1124,15 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     @views parm = ac.parm[:,:,1]
     # Wing
         co = wing.layout.root_chord
-        cs = wing.layout.root_chord*wing.inboard.layout.λ
-        ct = wing.layout.root_chord*wing.outboard.layout.λ
+        cs = wing.layout.root_chord*wing.inboard.λ
+        ct = wing.layout.root_chord*wing.outboard.λ
 
         sweep = wing.layout.sweep
-        λs = wing.inboard.layout.λ
-        λt = wing.outboard.layout.λ
+        λs = wing.inboard.λ
+        λt = wing.outboard.λ
 
         bo = wing.layout.root_span
-        bs = wing.inboard.layout.b
+        bs = wing.layout.break_span
         b  = wing.layout.span
 
         xax = 0.40
@@ -1230,10 +1230,10 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xh = zeros(6)
     yh = zeros(6)
     
-        boh = htail.outboard.layout.b
+        boh = htail.layout.root_span
         Sh  = htail.layout.S
         ARh = htail.layout.AR
-        lambdah = htail.outboard.layout.λ
+        lambdah = htail.outboard.λ
         sweeph  = htail.layout.sweep
         bh = sqrt(Sh*ARh)
         coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
@@ -1317,10 +1317,10 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
     xv = zeros(6)
     yv = zeros(6)
     
-    bov = vtail.outboard.layout.b
+    bov = vtail.layout.root_span
     Sv  = vtail.layout.S
     ARv = vtail.layout.AR
-    lambdav = vtail.outboard.layout.λ
+    lambdav = vtail.outboard.λ
     sweepv  = vtail.layout.sweep
 
     bv = vtail.layout.span
@@ -1472,7 +1472,7 @@ function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = not
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
         xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
-        tailthick = (vtail.layout.root_chord*vtail.outboard.layout.thickness_to_chord/2)
+        tailthick = (vtail.layout.root_chord*vtail.outboard.cross_section.thickness_to_chord/2)
         yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 

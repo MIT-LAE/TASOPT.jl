@@ -98,7 +98,7 @@ Wwing,Wsinn,Wsout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = TASOPT.surfw!(wing, po, gammat, gammas,
                                             Nlift, Weng1, 0, 0.0, 0, 0.0,
-                                            fLt, sigfac, rhofuel)
+                                            sigfac, rhofuel)
 
 
 @test fort_Wwing ≈ Wwing 
@@ -123,7 +123,7 @@ fLt = -0.05
 tauwebh = 1.378913257881327e8
 σcaph = 2.0684848484848484e8
 surft_f_out = [14400.81547163942, 14069.611170000926, 0.0011568849664072272, 0.0023905578555627194, 1.896322960387795e8, 1.2616774558497725e9, 1.982246806635212e8]
-TASOPT.surft!(htail, poh, λhs, htail.outboard.layout.λ, λhs,
+TASOPT.surft!(htail, poh, λhs, htail.outboard.λ, λhs,
         fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
 

@@ -156,12 +156,12 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 #--------------------------------------------------------------------------
 #---- set wing pitching moment constants
     b  = wing.layout.span
-    bs = wing.inboard.layout.b
+    bs = wing.layout.break_span
     bo = wing.layout.root_span
     sweep = wing.layout.sweep
     Xaxis = wing.layout.spar_box_x_c
-    λs = wing.inboard.layout.λ
-    λt = wing.outboard.layout.λ
+    λs = wing.inboard.λ
+    λt = wing.outboard.λ
     AR = wing.layout.AR
     fLo =  wing.fuse_lift_carryover
     fLt =  wing.tip_lift_loss
@@ -170,8 +170,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     cmpo = para[iacmpo,ip]
     cmps = para[iacmps,ip]
     cmpt = para[iacmpt,ip]
-    γt = wing.outboard.layout.λ*para[iarclt,ip]
-    γs = wing.inboard.layout.λ*para[iarcls,ip]
+    γt = wing.outboard.λ*para[iarclt,ip]
+    γs = wing.inboard.λ*para[iarcls,ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
@@ -183,8 +183,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     ip = ipcruise1
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
 
-    γt = wing.outboard.layout.λ*para[iarclt, ip]
-    γs = wing.inboard.layout.λ*para[iarcls, ip]
+    γt = wing.outboard.λ*para[iarclt, ip]
+    γs = wing.inboard.λ*para[iarcls, ip]
     
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -195,8 +195,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     
     ip = ipdescentn
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-    γt = wing.outboard.layout.λ*para[iarclt, ip]
-    γs = wing.inboard.layout.λ*para[iarcls, ip]
+    γt = wing.outboard.λ*para[iarclt, ip]
+    γs = wing.inboard.λ*para[iarcls, ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -207,9 +207,9 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 
 #---- tail pitching moment constants
     bh      = htail.layout.span
-    boh     = htail.outboard.layout.b
+    boh     = htail.layout.root_span
     sweeph  = htail.layout.sweep
-    λh      = htail.outboard.layout.λ
+    λh      = htail.outboard.λ
     ARh     = htail.layout.AR
     fLoh = 0.
     fLth = fLt

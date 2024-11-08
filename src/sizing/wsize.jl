@@ -328,7 +328,7 @@ function wsize(ac; itermax=35,
         # Extract layout parameters
         bv = vtail.layout.span
         coh, cov = htail.layout.root_chord, vtail.layout.root_chord
-        cbox = wing.layout.root_chord * wing.layout.box_width
+        cbox = wing.layout.root_chord * wing.inboard.cross_section.width_to_chord
         xwing, xhtail, xvtail = wing.layout.x, htail.layout.x, vtail.layout.x
         xhbox, xvbox = htail.layout.box_x, vtail.layout.box_x
         dxwing = xwing - wing.layout.box_x
@@ -440,7 +440,7 @@ function wsize(ac; itermax=35,
             Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
              Δp,
             Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-            bv, vtail.outboard.layout.λ, vtail.ntails,
+            bv, vtail.outboard.λ, vtail.ntails,
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
             xeng)
@@ -519,7 +519,7 @@ function wsize(ac; itermax=35,
         set_wing_geometry!(BW, CL, qinf, wing)
 
         # Update wing box chord for fuseW in next iteration
-        cbox = wing.layout.root_chord * wing.layout.box_width
+        cbox = wing.layout.root_chord * wing.inboard.cross_section.width_to_chord
 
         # Calculate wing centroid and mean aerodynamic chord
         calculate_centroid_offset!(wing,calc_cma=true)
@@ -532,7 +532,7 @@ function wsize(ac; itermax=35,
 
         # Calculate wing center load
         ip = ipcruise1
-        γt, γs = wing.outboard.layout.λ * para[iarclt, ip], wing.inboard.layout.λ * para[iarcls, ip]
+        γt, γs = wing.outboard.λ * para[iarclt, ip], wing.inboard.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
         po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
@@ -607,7 +607,7 @@ function wsize(ac; itermax=35,
         # Set Nacelle CL derivative fraction
         dCLnda = parg[igdCLnda]
         dCLndCL = dCLnda * (β + 2.0 / wing.layout.AR) * sqrt(β^2 + tanL^2) / 
-                  (2.0 * π * (1.0 + 0.5 * wing.inboard.layout.thickness_to_chord))
+                  (2.0 * π * (1.0 + 0.5 * wing.inboard.cross_section.thickness_to_chord))
         parg[igdCLndCL] = dCLndCL
 
         # Fuselage pitching moment calculation omitted for now
@@ -653,15 +653,15 @@ function wsize(ac; itermax=35,
         end
 
         # Set HT max loading magnitude
-        htail.layout.span, htail.layout.root_chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.layout.λ, qne, htail.CL_max)
+        htail.layout.span, htail.layout.root_chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.λ, qne, htail.CL_max)
 
         # Set VT max loading magnitude, based on single tail + its bottom image
-        bv2, vtail.layout.root_chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.layout.λ, qne, vtail.CL_max)
+        bv2, vtail.layout.root_chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.λ, qne, vtail.CL_max)
         bv = bv2 / 2
         vtail.layout.span = bv
 
         # HT weight
-        surft!(htail, poh, λhs, htail.outboard.layout.λ, λhs,
+        surft!(htail, poh, λhs, htail.outboard.λ, λhs,
         fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ)
         
@@ -669,13 +669,13 @@ function wsize(ac; itermax=35,
         calculate_centroid_offset!(htail, htail.layout.span, λhs)
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
-        CMh0, CMh1 = surfcm(htail.layout.span, htail.outboard.layout.b, htail.outboard.layout.b, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.layout.λ, 1.0, htail.outboard.layout.λ, 1.0,
+        CMh0, CMh1 = surfcm(htail.layout.span, htail.layout.root_span, htail.layout.root_span, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
             htail.layout.AR, fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        surft!(vtail, pov, λvs, vtail.outboard.layout.λ, λvs,
+        surft!(vtail, pov, λvs, vtail.outboard.λ, λvs,
         fLt,tauwebv, σcapv, wing.inboard.caps.material.E, 
         wing.inboard.webs.ρ, wing.inboard.caps.ρ, bv2)
 
@@ -1141,12 +1141,12 @@ Updates wing pitching moments and calls surfcm for mission points
 function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
     ip = ip_range[1]
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-    γt = wing.outboard.layout.λ * para[iarclt, ip]
-    γs = wing.inboard.layout.λ * para[iarcls, ip]
+    γt = wing.outboard.λ * para[iarclt, ip]
+    γs = wing.inboard.λ * para[iarcls, ip]
     
     CMw0, CMw1 = surfcm(
-        wing.layout.span, wing.inboard.layout.b, wing.layout.root_span, 
-        wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.layout.λ, wing.inboard.layout.λ, 
+        wing.layout.span, wing.layout.break_span, wing.layout.root_span, 
+        wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.λ, wing.inboard.λ, 
         γt, γs, wing.layout.AR, wing.fuse_lift_carryover, wing.tip_lift_loss, cmpo, cmps, cmpt
     )
     for ip in ip_range
