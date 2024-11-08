@@ -63,9 +63,9 @@ $TYPEDFIELDS
     airsection::aerodynamics.airfoil = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C.air"))
 
     """Inboard Wing Section (at wing root)"""
-    inboard::WingSection = WingSection(material=material) # at wing root 
+    inboard::WingSection = WingSection() # at wing root 
     """Outboard Wing Section (at strut attachment point)"""
-    outboard::WingSection = WingSection(material=material) # at strut attachment point
+    outboard::WingSection = WingSection() # at strut attachment point
     """Span fraction of inner wing break ("snag")"""
     ηs::Float64 = 0 
 
@@ -109,6 +109,8 @@ end
 function Base.getproperty(obj::WingLayout, sym::Symbol)
     if sym === :ηo
         getfield(obj, :root_span)/getfield(obj, :span)
+    elseif sym === :break_span
+        getfield(obj, :ηs)*getfield(obj, :span)
     else
         getfield(obj, sym)
     end

@@ -34,18 +34,18 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
        sinL = sind(tail.layout.sweep)
 
       # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
-      etao = tail.outboard.layout.b/b
-      etas = tail.outboard.layout.b/b
+      etao = tail.layout.root_span/b
+      etas = tail.layout.root_span/b
 
       cop = tail.layout.root_chord*cosL
       # Tip roll off Lift (modeled as a point load) and it's moment about ηs
-      dLt = fLt*po*tail.layout.root_chord*gammat*tail.outboard.layout.λ
+      dLt = fLt*po*tail.layout.root_chord*gammat*tail.outboard.λ
       dMt = dLt*0.5*b*(1.0-etas)
 
-      havgo = tail.outboard.layout.thickness_to_chord * (1.0 - (1.0-tail.layout.hweb_to_hbox)/3.0)
+      havgo = tail.outboard.cross_section.thickness_to_chord * (1.0 - (1.0-tail.outboard.cross_section.web_to_box_height)/3.0)
 
-      hrmso = tail.outboard.layout.thickness_to_chord * sqrt(1.0 - (1.0-tail.layout.hweb_to_hbox)/1.5 + (1.0-tail.layout.hweb_to_hbox)^2 / 5.0)
-      hrmss = tail.outboard.layout.thickness_to_chord * sqrt(1.0 - (1.0-tail.layout.hweb_to_hbox)/1.5 + (1.0-tail.layout.hweb_to_hbox)^2 / 5.0)
+      hrmso = tail.outboard.cross_section.thickness_to_chord * sqrt(1.0 - (1.0-tail.outboard.cross_section.web_to_box_height)/1.5 + (1.0-tail.outboard.cross_section.web_to_box_height)^2 / 5.0)
+      hrmss = tail.outboard.cross_section.thickness_to_chord * sqrt(1.0 - (1.0-tail.outboard.cross_section.web_to_box_height)/1.5 + (1.0-tail.outboard.cross_section.web_to_box_height)^2 / 5.0)
 
 # Outboard section:
 #---- strut-attach shear,moment from outer-wing loading. 
@@ -58,12 +58,12 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
 	 dMt
 
 #---- size strut-attach station at etas
-      cs = tail.layout.root_chord*lambdas
-      tbwebs = Ss*0.5/(cs^2*tauweb*tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord*cosL^2)
-      con  = Ms*6.0*tail.outboard.layout.thickness_to_chord/(cs^3*sigcap*tail.layout.box_width*cosL^4)
-      tbcaps = 0.5*(hrmss - (hrmss^3-con)^(1.0/3.0))
-      Abcaps = 2.0*tbcaps*tail.layout.box_width
-      Abwebs = 2.0*tbwebs*tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord
+      cs = tail.layout.root_chord * lambdas
+      tbwebs = Ss * 0.5 / (cs^2 * tauweb * tail.outboard.cross_section.web_to_box_height * tail.outboard.cross_section.thickness_to_chord * cosL^2)
+      con = Ms * 6.0 * tail.outboard.cross_section.thickness_to_chord / (cs^3 * sigcap * tail.outboard.cross_section.width_to_chord * cosL^4)
+      tbcaps = 0.5 * (hrmss - (hrmss^3 - con)^(1.0 / 3.0))
+      Abcaps = 2.0 * tbcaps * tail.outboard.cross_section.width_to_chord
+      Abwebs = 2.0 * tbwebs * tail.outboard.cross_section.web_to_box_height * tail.outboard.cross_section.thickness_to_chord
 
     #----- no strut, with or without engine at etas
 
@@ -80,20 +80,20 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
     Mo = max(Mo ,Ms)
 
     #----- size root station at etao
-    tbwebo = So*0.5/(tail.layout.root_chord^2*tauweb*tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord*cosL^2)
-    con  = Mo*6.0*tail.outboard.layout.thickness_to_chord/(tail.layout.root_chord^3*sigcap*tail.layout.box_width*cosL^4)
+    tbwebo = So*0.5/(tail.layout.root_chord^2*tauweb*tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord*cosL^2)
+    con  = Mo*6.0*tail.outboard.cross_section.thickness_to_chord/(tail.layout.root_chord^3*sigcap*tail.outboard.cross_section.width_to_chord*cosL^4)
     tbcapo = 0.5*(hrmso - (hrmso^3-con)^(1.0/3.0))
-    Abcapo = 2.0*tbcapo*tail.layout.box_width
-    Abwebo = 2.0*tbwebo*tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord
+    Abcapo = 2.0*tbcapo*tail.outboard.cross_section.width_to_chord
+    Abwebo = 2.0*tbwebo*tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord
 
 
-      EIco = Ecap*cop^4 * (hrmso^3 - (hrmso-2.0*tbcapo)^3)*tail.layout.box_width/12.0 +
-	 Eweb*cop^4 * tbwebo*(tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord)^3 / 6.0
-      EIno = Ecap*cop^4 * tbcapo*    tail.layout.box_width  ^3 / 6.0 +
-	 Eweb*cop^4 * tbwebo*tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord * 0.5*tail.layout.box_width^2
-      GJo = cop^4 * 2.0*((tail.layout.box_width-tbwebo)*(havgo-tbcapo))^2 /
-	 (  (tail.layout.hweb_to_hbox*tail.outboard.layout.thickness_to_chord-tbcapo)/(Gweb*tbwebo) +
-	 (   tail.layout.box_width -tbwebo)/(Gcap*tbcapo) )
+      EIco = Ecap*cop^4 * (hrmso^3 - (hrmso-2.0*tbcapo)^3)*tail.outboard.cross_section.width_to_chord/12.0 +
+	 Eweb*cop^4 * tbwebo*(tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord)^3 / 6.0
+      EIno = Ecap*cop^4 * tbcapo*    tail.outboard.cross_section.width_to_chord  ^3 / 6.0 +
+	 Eweb*cop^4 * tbwebo*tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord * 0.5*tail.outboard.cross_section.width_to_chord^2
+      GJo = cop^4 * 2.0*((tail.outboard.cross_section.width_to_chord-tbwebo)*(havgo-tbcapo))^2 /
+	 (  (tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord-tbcapo)/(Gweb*tbwebo) +
+	 (   tail.outboard.cross_section.width_to_chord -tbwebo)/(Gcap*tbcapo) )
 
 
       Vcen = tail.layout.root_chord^2*b *  etao / 2.0
@@ -102,17 +102,17 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
 	 (1.0 + lambdas + lambdas^2)/6.0 *
 	 cosL
       Vout = tail.layout.root_chord^2*b * (1.0 -etas) *
-	 (lambdas^2 + lambdas*tail.outboard.layout.λ + tail.outboard.layout.λ^2)/6.0 *
+	 (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/6.0 *
 	 cosL
 
       dxVinn = tail.layout.root_chord^2*b^2 * (etas-etao)^2 *
 	 (1.0 + 2.0*lambdas + 3.0*lambdas^2)/48.0 *
 	 sinL
       dxVout = tail.layout.root_chord^2*b^2 * (1.0 -etas)^2 *
-	 (lambdas^2 + 2.0*lambdas*tail.outboard.layout.λ + 3.0*tail.outboard.layout.λ^2)/48.0 *
+	 (lambdas^2 + 2.0*lambdas*tail.outboard.λ + 3.0*tail.outboard.λ^2)/48.0 *
 	 sinL +
 	  tail.layout.root_chord^2*b^2 * (etas-etao)*(1.0 -etas) *
-	 (lambdas^2 + lambdas*tail.outboard.layout.λ + tail.outboard.layout.λ^2)/12.0 *
+	 (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/12.0 *
 	 sinL
 
 #---- set chord^2 weighted average areas for inner panel
@@ -127,7 +127,7 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
       dxWsout = (rhocap*Abcaps + rhoweb*Abwebs)*gee*dxVout
 
       Vout = tail.layout.root_chord^2*b * (1.0 -etas) *
-	 (lambdas^2 + lambdas*tail.outboard.layout.λ + tail.outboard.layout.λ^2)/6.0 *
+	 (lambdas^2 + lambdas*tail.outboard.λ + tail.outboard.λ^2)/6.0 *
 	 cosL
 
         Whtail = tail.ntails * (Wscen + Wsinn + Wsout) * (1.0 + tail.weight_fraction_added)

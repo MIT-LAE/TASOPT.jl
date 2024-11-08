@@ -8,13 +8,18 @@ Wing Section
 $TYPEDFIELDS
 """
 @kwdef mutable struct WingSection <: AbstractWingSection
-    material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
     """Wing Section layout"""
-    layout::WingSectionLayout = WingSectionLayout()
+    cross_section::WingCrossSection = WingCrossSection()
+    """Starting section chord [m]"""
+    co::Float64 = 0.0
+    """Taper ratio λ = c_end/c_start"""
+    λ::Float64 = 0.0
+    """Wing section sweep (assumed to be constant across sections)"""
+    sweep::Float64 = 0.0
     """Wing Section webs"""
-    webs::StructuralMember = StructuralMember(material=material)
+    webs::StructuralMember = StructuralMember(material=StructuralAlloy("TASOPT-Al"))
     """Wing Section caps"""
-    caps::StructuralMember = StructuralMember(material=material)
+    caps::StructuralMember = StructuralMember(material=StructuralAlloy("TASOPT-Al"))
     """Bending Stiffness EI matrix [N m^2]"""
     EI::Matrix{Float64} = zeros(Float64, 2, 2)
     """Torsional Stiffness GJ [N m^2]"""
@@ -24,14 +29,16 @@ $TYPEDFIELDS
     """Moment [N m]"""
     moment::Float64 = 0
     """Weight [N]"""
-    weight::Float64 = 0
+    weight::Float64 = 0 # make it a weight
     """Wing root moment contribution from wing weight section of engine [N m]"""
     dyW::Float64 = 0
 end
 
 @kwdef mutable struct TailSection <: AbstractWingSection
     """Tail Section layout"""
-    layout::WingSectionLayout = WingSectionLayout()
+    cross_section::WingCrossSection = WingCrossSection()
+    """Taper ratio λ = c_end/c_start"""
+    λ::Float64 = 0.0
     """Bending Stiffness EI matrix [N m^2]"""
     EI::Matrix{Float64} = zeros(Float64, 2, 2)
     """Torsional Stiffness GJ [N m^2]"""

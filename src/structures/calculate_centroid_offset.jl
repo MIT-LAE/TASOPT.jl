@@ -57,18 +57,18 @@ calculate_centroid_offset wrapper for Wing
 function calculate_centroid_offset!(wing::Wing; b::Float64 = 0.0, bs::Float64 = 0.0, calc_cma=false)
       if calc_cma
             dx, macco = calculate_centroid_offset(wing.layout.span,
-                          wing.inboard.layout.b,
+                          wing.layout.break_span,
                           wing.layout.root_span,
-                          wing.outboard.layout.λ,
-                          wing.inboard.layout.λ,
+                          wing.outboard.λ,
+                          wing.inboard.λ,
                           wing.layout.sweep)
             wing.mean_aero_chord = macco * wing.layout.root_chord
           
       else
             dx, _ = calculate_centroid_offset(b, bs,
             wing.layout.root_span,
-            wing.outboard.layout.λ,
-            wing.inboard.layout.λ,
+            wing.outboard.λ,
+            wing.inboard.λ,
             wing.layout.sweep)
       end
       wing.layout.x = wing.layout.box_x + dx
@@ -82,9 +82,9 @@ calculate_centroid_offset wrapper for Tail
 """
 function calculate_centroid_offset!(tail::Tail, b::Float64, λs::Float64)
       dx, _ = calculate_centroid_offset(b,
-                  tail.outboard.layout.b,
-                  tail.outboard.layout.b,
-                  tail.outboard.layout.λ,
+                  tail.layout.root_span,
+                  tail.layout.root_span,
+                  tail.outboard.λ,
                   λs,
                   tail.layout.sweep)
       tail.layout.x = tail.layout.box_x + dx         

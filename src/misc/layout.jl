@@ -169,10 +169,6 @@ See [WingSection](@ref) and [WingCrossSection](@ref) as well.
     root_chord::Float64 = 0
     """Wing planform area (including fuselage carryover) [m^2]"""
     S::Float64 = 0 
-    """Wing Box wing x to chord"""
-    box_width::Float64 = 0 
-    """web-height/hbox ratio"""
-    hweb_to_hbox::Float64 = 0 #igrh
     """Spar box axis x/c location """
     spar_box_x_c::Float64 = 0
     """X position of wing box"""
@@ -291,23 +287,7 @@ Cross-section of wing box:
              ◄───────────────── box width ──────────────────────►   
    ◄───────────────────────────── c⟂ ──────────────────────────────────►                                                    
                                                           
-$TYPEDFIELDS
 """
-@kwdef mutable struct WingSectionLayout
-    """Wing Section Span [m]"""
-    b::Float64 = 0.0
-    """Wing Section taper"""
-    λ::Float64 = 0.0
-    """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
-    thickness_to_chord::Float64 = 0.0
-    """Wing section's spar box width to c⟂[-]"""
-    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs #TODO needs to be connected to box_width of WingLayout
-    """Wing section's web height to max box height [-]"""
-    web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
-    """Sparbox cap normalized thickness (i.e., h_cap/c⟂) [-]"""
-    t_cap::Float64 = 0.0
-    """Sparbox web normalized thickness"""
-end
 
 """
 $TYPEDEF
@@ -321,7 +301,7 @@ $TYPEDFIELDS
     """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
     thickness_to_chord::Float64 = 0.0
     """Wing section's spar box width to c⟂[-]"""
-    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs #TODO needs to be connected to box_width of WingLayout
+    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs 
     """Wing section's web height to max box height [-]"""
     web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
     """Sparbox cap normalized thickness (i.e., h_cap/c⟂) [-]"""
@@ -348,12 +328,12 @@ function normalized_chord(η; λs = 0.8, λt = 0.7, ηo=0.0, ηs = 0.5)
 end  # function normalized_chord
 
 """
-    get_average_sparbox_heights(section::WingSectionLayout) -> (h̄_avg, h̄_rms)
+    get_average_sparbox_heights(section::WingCrossSection) -> (h̄_avg, h̄_rms)
 
 Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
 These are used in [`surfw`](@ref) for further calculations
 """
-function get_average_sparbox_heights(section::WingSectionLayout)
+function get_average_sparbox_heights(section::WingCrossSection)
     A = 1 - section.web_to_box_height
     h̄ = section.thickness_to_chord
     h̄_avg = h̄ * (1 - A / 3.0)

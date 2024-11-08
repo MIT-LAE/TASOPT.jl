@@ -16,16 +16,18 @@ function set_wing_geometry!(W, CL, q_inf, wing)
     wing.layout.S = W / (q_inf * CL)
     wing.layout.span = sqrt(wing.layout.S * wing.layout.AR)
 
-    wing.inboard.layout.b = max(wing.layout.span * wing.layout.ηs, wing.layout.root_span)
+    wing.layout.ηs = max(wing.layout.ηs, wing.layout.ηo)
 
     ηo = wing.layout.ηo
     ηs = wing.layout.ηs
 
     Kc = ηo +
-         0.5 * (1.0 + wing.inboard.layout.λ) * (ηs - ηo) +
-         0.5 * (wing.inboard.layout.λ + wing.outboard.layout.λ) * (1.0 - ηs)
+         0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
+         0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs)
 
     wing.layout.root_chord = wing.layout.S / (Kc * wing.layout.span)
+    wing.inboard.co = wing.layout.root_chord
+    wing.outboard.co = wing.inboard.co * wing.inboard.λ
 end # wingsc
 
 
