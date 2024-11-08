@@ -69,9 +69,9 @@ $TYPEDFIELDS
     """Span fraction of inner wing break ("snag")"""
     ηs::Float64 = 0 
 
-    """Fuselage lift carryover"""
+    """Fuselage lift carryover factor"""
     fuse_lift_carryover::Float64 = 0.0
-    """Tip lift roll-off"""
+    """Tip lift roll-off factor"""
     tip_lift_loss::Float64 = 0.0
 
     """Mean Aerodynamic Chord"""
