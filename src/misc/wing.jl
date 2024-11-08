@@ -103,3 +103,14 @@ function wing_additional_weight(wing::Wing)
             wing.weight_frac_leading_trailing_edge + wing.weight_frac_ribs +
             wing.weight_frac_spoilers + wing.weight_frac_attachments
 end
+
+"""
+"""
+function Base.getproperty(obj::WingLayout, sym::Symbol)
+    if sym === :ηo
+        getfield(obj, :root_span)/getfield(obj, :span)
+    else
+        getfield(obj, sym)
+    end
+    
+end  # function Base.get_property

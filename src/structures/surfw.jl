@@ -78,21 +78,20 @@ Also returns the material gauges, torsional and bending stiffness.
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
 function surfw!(wing, po, gammat, gammas, 
-       Nload, We, neout, dyeout, neinn, dyeinn,
-       fLt, sigfac, rhofuel)
+       Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel)
 
     tauweb,sigstrut = wing.inboard.webs.material.τmax * sigfac, wing.strut.material.σmax * sigfac
 
-    cosL = cos(wing.layout.sweep*pi/180)
-    sinL = sin(wing.layout.sweep*pi/180)
+    cosL = cosd(wing.layout.sweep)
+    sinL = sind(wing.layout.sweep)
 
     # Calculate non-dim span coordinate at span break and root (ηs and ηo resp.)
-    etao = wing.layout.root_span/wing.layout.span
-    etas = wing.inboard.layout.b/wing.layout.span
+    etao = wing.layout.ηo
+    etas = wing.layout.ηs
 
     # Tip roll off Lift (modeled as a point load) and it's moment about ηs
-    dLt = fLt*po*wing.layout.root_chord*gammat*wing.outboard.layout.λ
-    dMt = dLt*0.5*wing.layout.span*(1.0-etas)
+    dLt = wing.tip_lift_loss * po * wing.layout.root_chord * gammat * wing.outboard.layout.λ
+    dMt = dLt * 0.5 * wing.layout.span * (1.0 - etas)
 
     h_avgo, h_rmso = get_average_sparbox_heights(wing.inboard.layout)
     h_avgs, h_rmss = get_average_sparbox_heights(wing.outboard.layout)

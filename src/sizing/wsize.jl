@@ -552,7 +552,7 @@ function wsize(ac; itermax=35,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = surfw!(wing, po, γt, γs,
                                             Nlift, Weng1, 0, 0.0, 0, 0.0,
-                                            fLt, parg[igsigfac], rhofuel)
+                                            parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings
         Wfmax, dxWfmax, rfmax = 0.0, 0.0, 0.0
@@ -1139,17 +1139,17 @@ update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, ia
 Updates wing pitching moments and calls surfcm for mission points
 """
 function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+    ip = ip_range[1]
+    cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
+    γt = wing.outboard.layout.λ * para[iarclt, ip]
+    γs = wing.inboard.layout.λ * para[iarcls, ip]
+    
+    CMw0, CMw1 = surfcm(
+        wing.layout.span, wing.inboard.layout.b, wing.layout.root_span, 
+        wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.layout.λ, wing.inboard.layout.λ, 
+        γt, γs, wing.layout.AR, wing.fuse_lift_carryover, wing.tip_lift_loss, cmpo, cmps, cmpt
+    )
     for ip in ip_range
-        cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-        γt = wing.outboard.layout.λ * para[iarclt, ip]
-        γs = wing.inboard.layout.λ * para[iarcls, ip]
-        
-        CMw0, CMw1 = surfcm(
-            wing.layout.span, wing.inboard.layout.b, wing.layout.root_span, 
-            wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.layout.λ, wing.inboard.layout.λ, 
-            γt, γs, wing.layout.AR, wing.fuse_lift_carryover, wing.tip_lift_loss, cmpo, cmps, cmpt
-        )
-
         para[iaCMw0, ip] = CMw0
         para[iaCMw1, ip] = CMw1
     end
