@@ -18,8 +18,8 @@ function set_wing_geometry!(W, CL, q_inf, wing)
 
     wing.inboard.layout.b = max(wing.layout.span * wing.layout.ηs, wing.layout.root_span)
 
-    ηo = wing.layout.root_span / wing.layout.span
-    ηs = wing.inboard.layout.b / wing.layout.span
+    ηo = wing.layout.ηo
+    ηs = wing.layout.ηs
 
     Kc = ηo +
          0.5 * (1.0 + wing.inboard.layout.λ) * (ηs - ηo) +

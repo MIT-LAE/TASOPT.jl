@@ -51,8 +51,8 @@ function surfcd2(
 
       AR = wing.layout.span^2 / wing.layout.S
 
-      ηo = wing.layout.root_span / wing.layout.span
-      ηs = wing.inboard.layout.b / wing.layout.span
+      ηo = wing.layout.ηo
+      ηs = wing.layout.ηs
 
       #---- set center clpo
       Kc = ηo +
