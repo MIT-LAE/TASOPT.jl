@@ -141,6 +141,7 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
         HXgeom.Δpdes = 3e6
+        HXgeom.maxL = 0.5
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -208,6 +209,7 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
         HXgeom.Δpdes = 3e6
+        HXgeom.maxL = 0.5
 
         #Calculate starting point
         #First calculate minimum tube length
