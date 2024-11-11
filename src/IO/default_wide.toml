@@ -92,7 +92,7 @@
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
     pax = 370            # Number of passengers in each mission
-    exit_limit = 425            # Maximum number of passengers that can sit in the cabin
+    exit_limit = 450            # Maximum number of passengers that can sit in the cabin
 
     max_payload_in_pax_equivalent = 450         # Defines the maximum payload carrying capacity of the aircraft
                                                 # It is the maximum payload that the aircraft can carry (including cargo),
