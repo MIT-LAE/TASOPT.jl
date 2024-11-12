@@ -53,9 +53,7 @@ include("airfun.jl")
 # airsection = airtable(airfoil_data);
 
 include("surfcd.jl")
-include("surfcm.jl")
-include("wingpo.jl")
-include("set_wing_geometry.jl")
+include("wing_calculations.jl")
 
 # Fuselage IBLT calculations
 include("fusebl.jl")
