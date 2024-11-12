@@ -14,12 +14,11 @@ Calculates Loads and thicknesses for wing sections
     - `tauweb::Float64`: Webs tau
     - `sigfac::Float64`: Stress factor
 """
-function size_wing_section!(section, sigfac)
+function size_wing_section!(section, sweep, sigfac)
     shear_load = section.max_shear_load
     moment = section.moment
 
     cross_section = section.cross_section
-    sweep = section.sweep
 
     Eweb = section.webs.material.E
     Ecap = section.caps.material.E
@@ -113,7 +112,7 @@ function surfw!(wing, po, gammat, gammas,
     #---- size strut-attach station at etas
     cs = wing.layout.root_chord*wing.inboard.λ
 
-    tbwebs, tbcaps, Abcaps, Abwebs = size_wing_section!(wing.outboard, sigfac)
+    tbwebs, tbcaps, Abcaps, Abwebs = size_wing_section!(wing.outboard, wing.sweep, sigfac)
     # Inboard Section:
     if(!wing.has_strut) 
         #----- no strut, with or without engine at etas
@@ -136,7 +135,7 @@ function surfw!(wing, po, gammat, gammas,
         wing.inboard.max_shear_load = max(So ,wing.outboard.max_shear_load)
         wing.inboard.moment = max(Mo ,wing.outboard.moment)
 
-        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.inboard, sigfac)
+        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.inboard, wing.sweep, sigfac)
 
         lsp = 0.
         Tstrutp = 0.
@@ -154,7 +153,7 @@ function surfw!(wing, po, gammat, gammas,
         wing.inboard.moment = wing.outboard.moment
         #
         #----- size inboard station at etao
-        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.inboard, sigfac)
+        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.inboard, wing.sweep, sigfac)
 
         #----- total strut length, tension
         lsp = sqrt(wing.strut.z^2 + (0.5*wing.layout.span*(etas-etao)/cosL)^2)

@@ -18,7 +18,7 @@ function check_struct_equivalence(s1, s2)
                     return false
                 end
             else
-                println(field)
+                # println(field)
                 @test val1 ≈ val2 
             end
         else
