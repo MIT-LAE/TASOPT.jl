@@ -884,9 +884,13 @@
       ieTurbCMp = 262
       ieTurbCDeltah = 263
       ieTurbCDeltap = 264
-      iehvapcombustor = 265
+      ieRadiatorepsilon = 265
+      ieRadiatorMp = 266
+      ieRadiatorDeltah = 267
+      ieRadiatorDeltap = 268
+      iehvapcombustor = 269
 
-      ietotal = 265
+      ietotal = 269
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
