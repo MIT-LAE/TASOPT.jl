@@ -27,7 +27,7 @@ end
 """
 """
 function calc_skin_thickness(cs::AbstractCrossSection, Δp, σ)
-    cs.skin_thickness = Δp*cs.radius/100.0
+    cs.skin_thickness = Δp * cs.radius / 100.0
     return cs
 end  # function calc_skin_thickness
 
@@ -102,7 +102,7 @@ $TYPEDFIELDS
     """Thickness of webs """
     thickness_webs::Float64 = 0
     """X position of nose [m]"""
-    x_nose::Float64  = 0
+    x_nose::Float64 = 0
     """X position of pressure shell forward [m]"""
     x_pressure_shell_fwd::Float64 = 0
     """X position of pressure shell aft [m]"""
@@ -132,15 +132,15 @@ end
 # Helper function to be able to simplify 
 function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     cross_section = getfield(layout, :cross_section)
-    
+
     if sym === :l_nose
         return getfield(layout, :x_pressure_shell_fwd) - getfield(layout, :x_nose)
     elseif sym === :l_shell
-        return getfield(layout, :x_pressure_shell_aft) - 
+        return getfield(layout, :x_pressure_shell_aft) -
                getfield(layout, :x_pressure_shell_fwd)
     elseif sym === :l_floor
-        return getproperty(layout, :l_shell) + 2.0*getproperty(layout, :radius)
-    
+        return getproperty(layout, :l_shell) + 2.0 * getproperty(layout, :radius)
+
     elseif sym ∈ (:radius, :n_webs, :bubble_lower_downward_shift, :bubble_center_y_offset)
         return getproperty(cross_section, sym)
     else
@@ -148,36 +148,6 @@ function Base.getproperty(layout::FuselageLayout, sym::Symbol)
     end
 end
 
-"""
-Wing layout is a structure that defines the wing planform.
-See [WingSection](@ref) and [WingCrossSection](@ref) as well.
-"""
-@kwdef mutable struct WingLayout
-    """Aspect Ratio [m]"""
-    AR::Float64 = 0 
-    """Sweep [degrees]"""
-    sweep::Float64 = 0
-    """ Wing start [m]"""
-    root_span::Float64 = 0.0
-    """ Wing Span [m]"""
-    span::Float64 = 0 
-    """Max Wing Span used as a constraint for optimization [m]"""
-    max_span::Float64 = 0 
-    """Span break location [-]"""
-    ηs::Float64 = 0.0
-    """Wing chord at root """
-    root_chord::Float64 = 0
-    """Wing planform area (including fuselage carryover) [m^2]"""
-    S::Float64 = 0 
-    """Spar box axis x/c location """
-    spar_box_x_c::Float64 = 0
-    """X position of wing box"""
-    box_x::Float64 = 0 
-    """X location of wing"""
-    x::Float64 = 0
-    """Z location of wing"""
-    z::Float64 = 0
-end
 
 """
     scaled_cross_section(cross_section::SingleBubble, R::Float64)
@@ -196,11 +166,12 @@ Calculates the geometric properties of a scaled single-bubble cross section.
 function scaled_cross_section(cross_section::SingleBubble, R::Float64)
     scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
     #Scale geometric parameters 
-    R_Rprev = R/cross_section.radius
+    R_Rprev = R / cross_section.radius
 
     #Scale geometric parameters
     scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
-    scaled_cs.bubble_lower_downward_shift = R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
+    scaled_cs.bubble_lower_downward_shift =
+        R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
 
     return get_perimeter(scaled_cs), area(scaled_cs)
 end
@@ -222,11 +193,12 @@ Calculates the geometric properties of a scaled multi-bubble cross section.
 function scaled_cross_section(cross_section::MultiBubble, R::Float64)
     scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
     #Scale geometric parameters 
-    R_Rprev = R/cross_section.radius #Radii ratio
+    R_Rprev = R / cross_section.radius #Radii ratio
 
     #Scale geometric parameters
     scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
-    scaled_cs.bubble_lower_downward_shift = R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
+    scaled_cs.bubble_lower_downward_shift =
+        R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
     scaled_cs.bubble_center_y_offset = R_Rprev * cross_section.bubble_center_y_offset
 
     return get_perimeter(scaled_cs), area(scaled_cs)
@@ -268,66 +240,3 @@ $TYPEDFIELDS
     """Floor angle of top cabin [rad]"""
     floor_angle_top::Float64 = 0.0
 end
-
-"""
-$TYPEDEF
-
-Stores all the non-dimensional parameters 
-in the normal-plane cross section of the wing (mainly related to the spar-box)
-Cross-section of wing box:                                                                                                            
-                  ┌──────────────────────────────────────┐        
-               ┌──┘               ▲                      └──┐     
-           ▲┌──┘                  │                         └──┐  
- web height ││               spar box height                  ││  
-           ▼└──┐                  │                         ┌──┘  
-               └──┐               ▼                      ┌──┘     
-                  └──────────────────────────────────────┘        
-             ◄───────────────── box width ──────────────────────►   
-   ◄───────────────────────────── c⟂ ──────────────────────────────────►       
-
-$TYPEDFIELDS
-"""
-@kwdef mutable struct WingCrossSection
-    """Wing section's spar box height to perpendicular chord (c⟂) [-]"""
-    thickness_to_chord::Float64 = 0.0
-    """Wing section's spar box width to c⟂[-]"""
-    width_to_chord::Float64 = 0.50 #Default values from TASOPT docs 
-    """Wing section's web height to max box height [-]"""
-    web_to_box_height::Float64 = 0.75 #Default values from TASOPT docs
-    """Sparbox cap normalized thickness (i.e., h_cap/c⟂) [-]"""
-    t_cap::Float64 = 0.0
-    """Sparbox web normalized thickness"""
-    t_web::Float64 = 0.0
-    """Internal Area normalized by chord2"""
-    A_internal::Float64 = 0.0
-end
-
-
-"""
-"""
-function normalized_chord(η; λs = 0.8, λt = 0.7, ηo=0.0, ηs = 0.5)
-    if 0.0 ≤ η < ηo
-        1.0
-    elseif ηo ≤ η < ηs
-        1 + (λs - 1) * (η - ηo)/(ηs - ηo)
-    elseif ηs ≤ η ≤ 1
-        λs + (λt - λs)*(η - ηs)/(1 - ηs)
-    else
-        error("η should be 0≤η≤1")
-    end
-end  # function normalized_chord
-
-"""
-    get_average_sparbox_heights(section::WingCrossSection) -> (h̄_avg, h̄_rms)
-
-Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
-These are used in [`surfw`](@ref) for further calculations
-"""
-function get_average_sparbox_heights(section::WingCrossSection)
-    A = 1 - section.web_to_box_height
-    h̄ = section.thickness_to_chord
-    h̄_avg = h̄ * (1 - A / 3.0)
-    h̄_rms = sqrt(h̄^2 * (1 - 2 * A / 3 + A^2 / 5))
-    return h̄_avg, h̄_rms
-end  # function get_average_sparbox_heights
-
