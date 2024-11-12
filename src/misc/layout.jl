@@ -272,10 +272,8 @@ end
 """
 $TYPEDEF
 
-Wing Layout Structure:
-Holds the span, taper, and chord thickness of a single wing section.
-Ratios are with respect to the normal-plane chord c⟂=c×cos(sweep).
-
+Stores all the non-dimensional parameters 
+in the normal-plane cross section of the wing (mainly related to the spar-box)
 Cross-section of wing box:                                                                                                            
                   ┌──────────────────────────────────────┐        
                ┌──┘               ▲                      └──┐     
@@ -285,15 +283,7 @@ Cross-section of wing box:
                └──┐               ▼                      ┌──┘     
                   └──────────────────────────────────────┘        
              ◄───────────────── box width ──────────────────────►   
-   ◄───────────────────────────── c⟂ ──────────────────────────────────►                                                    
-                                                          
-"""
-
-"""
-$TYPEDEF
-
-Stores all the non-dimensional parameters 
-in the normal-plane cross section of the wing (mainly related to the spar-box)
+   ◄───────────────────────────── c⟂ ──────────────────────────────────►       
 
 $TYPEDFIELDS
 """
