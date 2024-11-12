@@ -47,8 +47,6 @@ $TYPEDFIELDS
     co::Float64 = 0.0
     """Taper ratio λ = c_end/c_start"""
     λ::Float64 = 0.0
-    """Wing section sweep (assumed to be constant across sections)"""
-    sweep::Float64 = 0.0
     """Wing Section webs"""
     webs::StructuralMember = StructuralMember(material = StructuralAlloy("TASOPT-Al"))
     """Wing Section caps"""

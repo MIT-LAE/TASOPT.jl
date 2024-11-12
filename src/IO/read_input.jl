@@ -486,7 +486,6 @@ readwing(x) = read_input(x, wing_i, dwing)
     wing.has_strut = readwing("strut_braced_wing")
 
     wing.layout.sweep = readwing("sweep")
-    wing.inboard.sweep = wing.outboard.sweep = readwing("sweep")
     wing.layout.AR = readwing("AR")
     wing.layout.max_span = Distance(readwing("maxSpan"))
 

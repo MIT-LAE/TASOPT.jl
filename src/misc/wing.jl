@@ -104,6 +104,18 @@ function wing_additional_weight(wing::Wing)
             wing.weight_frac_spoilers + wing.weight_frac_attachments
 end
 
+
+"""
+"""
+function Base.getproperty(obj::Wing, sym::Symbol)
+    if hasfield(Wing, sym)
+        return getfield(obj, sym)
+    elseif hasfield(WingLayout, sym)
+        return getfield(obj.layout, sym)
+    else
+        throw(KeyError("Property $sym not found in Wing or WingLayout"))
+    end
+end  # function Base.getproperty
 """
 """
 function Base.getproperty(obj::WingLayout, sym::Symbol)
