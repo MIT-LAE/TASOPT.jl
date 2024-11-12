@@ -889,8 +889,9 @@
       ieRadiatorDeltah = 267
       ieRadiatorDeltap = 268
       iehvapcombustor = 269
+      ieHXminTwall = 270
 
-      ietotal = 269
+      ietotal = 270
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
