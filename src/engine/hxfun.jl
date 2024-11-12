@@ -25,6 +25,7 @@ Structure containing the gas properties of the process and coolant streams.
     - `Mc_in::Float64`: coolant gas inlet Mach number
     - `Tp_out::Float64`: process gas outlet temperature
     - `Tc_out::Float64`: coolant gas outlet temperature
+    - `Tw::Float64`: wall temperature (K)
     - `Δh_p::Float64`: enthalpy change across HX (J/kg)
     - `Δp_p::Float64`: pressure drop of process gas across heat exchanger (Pa)
     - `Δp_c::Float64`: pressure drop of coolant gas across tubes (Pa)
@@ -50,6 +51,7 @@ Structure containing the gas properties of the process and coolant streams.
       Mc_in :: Float64 = 0.0
       Tp_out :: Float64 = 0.0
       Tc_out :: Float64 = 0.0
+      Tw :: Float64 = 0.0
       Δh_p :: Float64 = 0.0
       Δh_c :: Float64 = 0.0
       Δp_p :: Float64 = 0.0
@@ -750,6 +752,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       #Gas parameters
       HXgas.Tp_out = Tp_out
       HXgas.Tc_out = Tc_out
+      HXgas.Tw = Tw
       HXgas.Δh_p = Δh_p
       HXgas.Δh_c = Δh_c
       HXgas.Δp_p = Δp_p
@@ -1370,7 +1373,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       if (frecirc) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
             pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
-     
+      findMinWallTemperature!(pare, HeatExchangers)
       return HeatExchangers
 end #hxdesign!
 
@@ -1587,6 +1590,31 @@ function hxweight(gee, HXgeom, fouter)
       return W_hx
 end #hxweight
 
+"""
+      findMinWallTemperature!(pare, HXs)
+
+Calculates and stores the minimum tube wall temperature at each mission point.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pare::Array{Float64 , 3}`: array with engine parameters
+    - `HXs_prev::Vector{HX_struct}`: vector with heat exchanger data
+
+    **Outputs:**
+    Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
+"""
+function findMinWallTemperature!(pare, HXs)
+      
+      for ip in 1:iptotal
+            minT = Inf #Start with infinite temperature
+            for HX in HXs
+                  if HX.HXgas_mission[ip].mdot_c > 0 
+                        minT = min(minT,  HX.HXgas_mission[ip].Tw)
+                  end
+            end
+            pare[ieHXminTwall, ip] = minT #Note that this is still Inf if there is no mass flow rate
+      end
+end
 
 """
       lambdap_calc(pare, alpha_in, ifuel, ip)
