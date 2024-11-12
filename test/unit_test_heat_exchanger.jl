@@ -141,6 +141,7 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
         HXgeom.Δpdes = 3e6
+        HXgeom.maxL = 0.5
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -174,7 +175,7 @@
         TASOPT.engine.hxsize!(HXgas, HXgeom)
 
         Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I too
-        I_check = 71367.15052776688
+        I_check = 71419.66226260524
 
         @test Iobj ≈ I_check    rtol = 1e-5
 
@@ -208,6 +209,7 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
         HXgeom.Δpdes = 3e6
+        HXgeom.maxL = 0.5
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -362,14 +364,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 17.32417440493928    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 17.323955467246847    rtol = 1e-5
         @test HX.HXgeom.n_passes ≈ 1.0000000035523804    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.44330987861529786    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 135.87687052262797    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 135.87947388047039    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.500000000011525    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈  -13469.833152449006    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.643144820823274    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.64270109056272   rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[iePreCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -383,14 +385,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 18.866605656654635    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 1.0000000687008141    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 14.527464130788207     rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 1.3271447727542498    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.24880364903969382    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 167.51811148622306    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 146.5207876236378    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -19023.600308918238    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.45343292282888    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.36476402590245    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieInterCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -428,14 +430,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 7.729947951643161    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 3.3090670749981417    rtol = 1e-5 
+        @test HX.HXgeom.n_stages ≈ 7.522559447567376    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  3.408526566581165   rtol = 1e-5 
         @test HX.HXgeom.l ≈ 0.2982717368848314    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 96.21223850121407    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 94.55469282148118    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -48190.134937808325    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.7830071648647    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.657070891006    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
