@@ -1373,7 +1373,9 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       if (frecirc) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
             pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
-      findMinWallTemperature!(pare, HeatExchangers)
+
+      findMinWallTemperature!(pare, HeatExchangers) #Store minimum wall temperature at each mission point to check for freezing
+
       return HeatExchangers
 end #hxdesign!
 
