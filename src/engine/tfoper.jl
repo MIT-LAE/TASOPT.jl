@@ -2074,10 +2074,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             cp_al, R_al = gas_pratd(lambdap, nair,
                   pt5, Tt5, ht5, st5, cpt5, Rt5, pcn, 1.0)
 
-            if (ht5 < h5)
-                  println("? ht5 h5 = ", ht5, h5)
-            end
-
             u5 = sqrt(2.0 * max(ht5 - h5, 0.0))
             M5 = u5 / sqrt(T5 * cp5 * R5 / (cp5 - R5))
 
@@ -3090,7 +3086,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   pilc = pl
                   pihc = ph
 
-                  Nbf = Nl / Gearf * sqrt(Tt19 / Tt2)
+                  Nbf = Nl / Gearf * sqrt(Tt19c / Tt2)
                   Nblc = Nl
                   Nbhc = Nh
 
