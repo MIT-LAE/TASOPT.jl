@@ -1,28 +1,18 @@
-
 using Pkg, Dates
-import ..TASOPT: __TASOPTindices__
 
 println(today())
 println("Current location $(pwd())")
 using TASOPT
 const aerodynamics = TASOPT.aerodynamics
-include(__TASOPTindices__)
+include(TASOPT.__TASOPTindices__)
 nmisx = 1
-pari = zeros(Int64, iitotal)
-parg = zeros(Float64, igtotal)
-parm = zeros(Float64, (imtotal, nmisx))
-para = zeros(Float64, (iatotal, iptotal, nmisx))
-pare = zeros(Float64, (ietotal, iptotal, nmisx))
-parpt = zeros(Union{Int64, Float64}, ipt_total)
-parmot = zeros(Float64, ite_total)
-pargen = zeros(Float64, ite_total)
 
 using Profile
 using BenchmarkTools
 
-println("Loading TASOPT...")
+println("Loading aircraft model...")
 
-println("Loading input file...")
+include(joinpath(TASOPT.__TASOPTroot__, "../test/default_sized.jl"))
 
 println("\nNotes (from BenchmarkTools Manual):
 - The minimum is a robust estimator for the location parameter of the
@@ -116,13 +106,8 @@ function benchmark_fuseBL()
     $Reyn, $Mach, $fexcr) seconds=30 evals=5
     bench_blax = run(b)
 
-    println("Benchmarking... blax2")
-    b = @benchmarkable aerodynamics.blax2($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
-    $Reyn, $Mach, $fexcr) seconds=30 evals=5
-    bench_blax2 = run(b)
-
     println("Benchmarking... fusebl")
-    b = @benchmarkable aerodynamics.fusebl!($pari, $parg, $para, $ipcruise1) seconds=30 evals=5
+    b = @benchmarkable aerodynamics.fusebl!($fuse, $parm, $para, $ipcruise1) seconds=30 evals=5
     bench_fusebl = run(b)
 
     println("Benchmark results...")
@@ -137,12 +122,6 @@ function benchmark_fuseBL()
     println("blax (FORTRAN on MacPro M2 ~ 1.9 ms)")
     println("---------------------------------------")
     show(stdout, MIME("text/plain"),bench_blax)
-    println(" ")
-
-    println("---------------------------------------")
-    println("blax2 (FORTRAN on MacPro M2 ~ 1.9 ms)")
-    println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_blax2)
     println(" ")
 
     println("---------------------------------------")
@@ -356,8 +335,6 @@ function benchmark_gas()
     end
     @benchmark f($100)
 end
-
-include("../Models/ZISA/ZIA_SAF_BLI_10_8_0.647_17.4.mdl")
 
 benchmark_fuseBL()
 benchmark_drag()

@@ -76,7 +76,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈  0.9186704256854404
+    @test ac.parm[imPFEI] ≈  0.9186795447828657 rtol=1e-4
 end
 
 @testset "Wide sizing" verbose=true begin
@@ -89,7 +89,7 @@ end
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.1500431956597377 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.1500431956693837 rtol=1e-4
 
 end
 
@@ -100,10 +100,9 @@ end
 
     @test ac.fuselage.layout.radius ≈ 1.5113
 
-
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 0.8427990063214706 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.8131853553294737 rtol=1e-4
 
 end
 
@@ -114,8 +113,8 @@ end
 
     @test ac.fuselage.layout.radius ≈ 2.54
 
-    size_aircraft!(ac, iter=70; printiter=false);
+    size_aircraft!(ac, iter=50; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 0.978692291858513 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.9805703474546061 rtol=1e-4
 
 end

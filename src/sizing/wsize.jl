@@ -791,9 +791,12 @@ function wsize(ac; itermax=35,
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in HXs
-                parg[igdHXmax] = 0.0 #restart diameter
-                if HX.HXgeom.fconc #If HX is in the core
-                    parg[igdHXmax] = max(parg[igdHXmax], HX.HXgeom.D_o)
+                if HX.type == "PreC"
+                    parg[igdHXPreC] = HX.HXgeom.D_o
+                elseif HX.type == "InterC"
+                    parg[igdHXInterC] = HX.HXgeom.D_o
+                elseif HX.type == "Regen"
+                    parg[igdHXRegen] = HX.HXgeom.D_o
                 end
             end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 

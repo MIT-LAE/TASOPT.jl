@@ -212,10 +212,12 @@
 ### Good Riddance ###
 
       const igWfvent = 128
-      const igdHXmax = 129
-      const igHXaddmassfrac = 130
-      const igWHXs = 131
-      const igtotal    = 131
+      const igdHXPreC = 129
+      const igdHXInterC = 130
+      const igdHXRegen = 131
+      const igHXaddmassfrac = 132
+      const igWHXs = 133
+      const igtotal    = 133
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

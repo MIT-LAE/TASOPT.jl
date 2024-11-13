@@ -148,10 +148,16 @@ maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum a
 pax = readmis("pax")
 exitlimit = readmis("exit_limit")
 despax = pax[1] #Design number of passengers
-if despax > maxpax
-    error("Design mission has higher payload weight than maximum aircraft payload!")
-elseif despax > exitlimit
-    error("Design mission has higher # of passengers than the exit limit!")
+
+if any(maxpax .< pax)
+    error("One or more missions have higher payload than prescribed maximum aircraft payload!:"*
+    "\n Max Payload [in pax] = "*string(maxpax)*
+    "\n Payloads listed [in pax] = "*string(pax))
+end
+if any(exitlimit .< pax)
+    error("One or more missions have higher passenger counts than the prescribed exit limit!:"*
+    "\n Exit limit [in pax] = "*string(exitlimit)*
+    "\n Payloads listed [in pax] = "*string(pax))
 end
 
 Wpax =  Force(readmis("weight_per_pax"))

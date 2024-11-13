@@ -92,7 +92,7 @@
     pax = 118       # Number of passengers in each mission
     exit_limit = 122            # Maximum number of passengers that can sit in the cabin
 
-    max_payload_in_pax_equivalent = 142         # Defines the maximum payload carrying capacity of the aircraft
+    max_payload_in_pax_equivalent = 122         # Defines the maximum payload carrying capacity of the aircraft
                                                 # It is the maximum payload that the aircraft can carry (including cargo),
                                                 # as an equivalent number of passengers in an off-design mission
     
