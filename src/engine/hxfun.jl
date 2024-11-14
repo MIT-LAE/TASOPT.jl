@@ -1377,6 +1377,7 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       HXgeom = HX_tubular()
 
       HXgas.ε = Radiatorepsilon
+      HXgas.Mp_in = RadiatorMp
 
       # Heat exchanger materials and wall properties
       HXgeom.xl_D = 1
@@ -1385,13 +1386,6 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
 
       HXgas.fluid_p = "air"
       HXgas.alpha_p = alpha
-
-      if pare_sl[ieTfc] > 373.15 #TODO add more coolant options
-            coolant_name = "liquid ethylene glycol"
-      else
-            coolant_name = "liquid water"
-      end
-      HXgas.fluid_c = coolant_name
       
       HXgeom.fconc = true 
       HXgeom.D_i = D_i
@@ -1416,9 +1410,14 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       HXgas.Tc_in = pare_sl[iTc_in]
       HXgas.pc_in = pare_sl[ipc_in]
 
-      HXgeom.Δpdes = maximum(abs.(pare[ipc_in,:] - pare[ipp_in,:])) #size wall thickness for maximum post fan pressure                                                           
+      if pare_sl[iTc_in] > 373.15 #TODO add more coolant options
+            coolant_name = "liquid ethylene glycol"
+      else
+            coolant_name = "liquid water"
+      end
+      HXgas.fluid_c = coolant_name
 
-      HXgas.Mp_in = RadiatorMp
+      HXgeom.Δpdes = maximum(abs.(pare[ipc_in,:] - pare[ipp_in,:])) #size wall thickness for maximum post fan pressure                                                           
 
       #Calculate coolant mass rate to release required heat
       Q = pare_sl[iQheat]
