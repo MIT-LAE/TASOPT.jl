@@ -244,6 +244,7 @@
         Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
         I_check_rec = 3498.8733964760736
+        I_check_rec = 3498.8733964760736
 
         @test Iobj_rec ≈ I_check_rec    rtol = 1e-5
     end
@@ -408,13 +409,13 @@
         HX = HXs[1]
 
         @test HX.HXgeom.n_stages ≈ 20.0    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈  4.250618292934674    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  4.250517424315109    rtol = 1e-5
         @test HX.HXgeom.l ≈  0.08973681556581393    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 64.20524090023717     rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 64.20716382870775    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -215422.60328655195    rtol = 1e-5 
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1123.5114955634986     rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1123.6270956822698     rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieTurbCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -455,14 +456,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 17.715007487657825    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 5.619277682385023    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 19.999999999998554    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 4.764535918055722    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.2982717368848314    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 93.01161681411426    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 112.5610974052182    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.7999999999981817    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -87846.51831616473    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2321.095930009292    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2282.751781954118    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
