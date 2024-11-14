@@ -1614,7 +1614,10 @@ function findMinWallTemperature!(pare, HXs)
                         minT = min(minT,  HX.HXgas_mission[ip].Tw)
                   end
             end
-            pare[ieHXminTwall, ip] = minT #Note that this is still Inf if there is no mass flow rate
+            if minT == Inf
+                  minT = 0.0 #Replace Inf with 0 when there is no mass flow rate
+            end
+            pare[ieHXminTwall, ip] = minT
       end
 end
 
