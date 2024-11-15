@@ -52,14 +52,14 @@ function Base.show(io::IO, airf::airfoil)
     )
 end
 
-using PythonPlot
-function plot(airf::airfoil)
-    fig, ax = plt.subplots(2,1, sharex = true)
-    ax[1].plot(airf.cl, airf.A[end, :, :, 1] + airf.A[end, :, :, 2], label = airf.τ)
-    ax[1].legend(title="Thickness-to-chord (\$\\tau\$)")
-    ax[end].set_xlabel("\$c_l\$")
-    ax[1].set_ylabel("\$c_d\$")
+# using PythonPlot
+# function plot(airf::airfoil)
+#     fig, ax = plt.subplots(2,1, sharex = true)
+#     ax[1].plot(airf.cl, airf.A[end, :, :, 1] + airf.A[end, :, :, 2], label = airf.τ)
+#     ax[1].legend(title="Thickness-to-chord (\$\\tau\$)")
+#     ax[end].set_xlabel("\$c_l\$")
+#     ax[1].set_ylabel("\$c_d\$")
 
-    ax[2].plot(airf.cl, airf.A[end, :, :, 3], label = airf.τ)
-    ax[2].set_ylabel("\$c_m\$")
-end
+#     ax[2].plot(airf.cl, airf.A[end, :, :, 3], label = airf.τ)
+#     ax[2].set_ylabel("\$c_m\$")
+# end

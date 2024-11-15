@@ -4,13 +4,11 @@ fleet of missions
 """
 
 # 1. Import modules
-using PythonPlot
+# using PythonPlot
 using TASOPT
-# you can optionally define
-# const tas = TASOPT 
-# to use as a shorthand
-include(__TASOPTindices__)
+using Plots
 # import indices for calling parameters
+include(__TASOPTindices__)
 
 function PayloadRange(ac; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false)
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
@@ -53,8 +51,9 @@ function PayloadRange(ac; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.
                     println("Converged - moving to next range...")
                     break
                 end     
-            catch
+            catch err
                 println("Not Converged - moving to lower payload...")      
+                rethrow(err)
             end
         end
         append!(RangesToPlot, Range)
@@ -64,19 +63,37 @@ function PayloadRange(ac; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.
             append!(PayloadToPlot, maxPay)
         end
     end
+
+    # Convert values for plotting
+    dpi = 300
+    ranges_kft = RangesToPlot ./ (1000 * 1852.0)
+    payload_tons = PayloadToPlot ./ (9.8 * 1000)
+
+
+    # Plot with all attributes set in plot()
+    plot1 = plot(ranges_kft, payload_tons, 
+        lw=2,                   # Line width
+        line=:solid,            # Line style
+        color=:blue,            # Line color
+        label="Payload",        # Legend label
+        xlabel="Range (1000 nmi)", 
+        ylabel="Weight (1000 kg)", 
+        title="Payload-Range Diagram: "*string(ac.name), 
+        grid=true,              # Enable grid
+        dpi = 300)
+        # size=(8*dpi, 5*dpi))  # Size in pixels (width, height)
+
+    # Save with specified DPI
+    savefig(filename)
+
+    display(plot1)
     println(RangesToPlot)
     println(PayloadToPlot)
-    fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-    ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
-    ax.set_xlabel("Range (1000 nmi)")
-    ax.set_ylabel("Weight (1000 kg)")
-    ax.legend()
-    ax.set_title("Payload Range Plot")
-    ax.grid()
 
-    fig.savefig(filename)
 end
 
 # Load default model
 ac = TASOPT.read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/PRD_input.toml"))
+        # defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
 size_aircraft!(ac)
+PayloadRange(ac)

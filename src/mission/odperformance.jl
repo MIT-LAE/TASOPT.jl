@@ -509,11 +509,12 @@ end
 
 function show_ff_sens(ff, H; ax = nothing)
 
-    if ax === nothing
-        fig, ax = plt.subplots()
-    end
-    ffnorm = ff'./minimum.(eachcol(ff))
+    # if ax === nothing
+    #     fig, ax = plt.subplots()
+    # end
+    # ffnorm = ff'./minimum.(eachcol(ff))
 
-    ax.plot(ffnorm', H)
+    # ax.plot(ffnorm', H)
+    
 
 end
