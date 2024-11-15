@@ -62,8 +62,6 @@ of interpolated E3 compressor data generated externally.
     - `mbD`:       design corrected mass flow
     - `map`:       dictionary of map data loaded in `tftbl.jl`
     - `effo`:      maximum efficiency
-    - `piK`:       pi-dependence offset  eff = effo + effK*(pi-piK)
-    - `effK`:      pi-dependence slope
     - `g`:         specific heat ratio; default 1.4
     - `R`:         gas constant for air; default 287 J/kgK
 
@@ -72,9 +70,9 @@ of interpolated E3 compressor data generated externally.
     - `eff_?`:      derivatives
 
 """
-function ecTblMap(pratio, mb, piD, mbD, map, effo, piK, effK; g=1.4, R=287)
+function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
     # TODO: [Does TASOPT have station-wise estimates of specific heat ratio?
-    #        What are what is the pi-dependence offset and slope and are they needed on map interpolation?]
+    #        Check that we don't actually need piK and effK]
 
     # ---- Define anonymous functions to convert between isentropic and polytropic efficiency
     isen_to_poly = (pr, isen, g) -> (g-1)/g * log(pr) / log( (pr^((g-1)/g) - 1) / isen + 1 )

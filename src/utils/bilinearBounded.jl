@@ -51,6 +51,8 @@ function bilinearBoundedLookup(x, y, xGrid, yGrid, lookupGrid)
     # println(xGrid[xIndLow], " ", xGrid[xIndUpp])
 
     if (xIndLow == -1 || xIndUpp == -1) || (yIndLow == -1 || yIndUpp == -1)
+        # error()
+        # @warn 
         # TODO: raise error for outside of interpolation grid
         return -1.0
     end
