@@ -11,10 +11,7 @@ using BenchmarkTools
 using Printf
 
 using StaticArrays
-# using PyCall
-using PythonPlot
-plt = pyplot #Aliasing just for convenience
-# pygui(true)
+
 using Dates
 using ForwardDiff
 using CSV, Tables
@@ -82,6 +79,7 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
+export stickfig
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
