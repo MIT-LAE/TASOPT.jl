@@ -8,6 +8,7 @@ using NLopt
 using Roots
 using LinearAlgebra
 import NaturalNeighbours as natNeigh
+using TOML
 
 export tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
@@ -22,8 +23,8 @@ include(joinpath(__TASOPTroot__,"misc/constants.jl"))
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")
-include("tfmap.jl")
 include("tftbl.jl")
+include("tfmap.jl")
 include("tfcool.jl")
 include("tfsize.jl")
 include("gaussn.jl")
