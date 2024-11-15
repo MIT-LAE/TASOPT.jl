@@ -387,11 +387,13 @@
       const igfloordist = 251
 
       const igWfvent = 252
-      const igdHXmax = 253
-      const igHXaddmassfrac = 254
-      const igWHXs = 255
+      const igdHXPreC = 253
+      const igdHXInterC = 254
+      const igdHXRegen = 255
+      const igHXaddmassfrac = 256
+      const igWHXs = 257
 
-      const igtotal    = 255
+      const igtotal    = 257
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

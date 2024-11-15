@@ -141,11 +141,20 @@ if !ac_type_fixed
     ac_type_fixed = true
 end
 
-maxpax = readmis("max_pax")
+maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
 pax = readmis("pax")
+exitlimit = readmis("exit_limit")
 despax = pax[1] #Design number of passengers
-if despax > maxpax
-    error("Design mission has higher # of passengers than max passengers for aircraft!")
+
+if any(maxpax .< pax)
+    error("One or more missions have higher payload than prescribed maximum aircraft payload!:"*
+    "\n Max Payload [in pax] = "*string(maxpax)*
+    "\n Payloads listed [in pax] = "*string(pax))
+end
+if any(exitlimit .< pax)
+    error("One or more missions have higher passenger counts than the prescribed exit limit!:"*
+    "\n Exit limit [in pax] = "*string(exitlimit)*
+    "\n Payloads listed [in pax] = "*string(pax))
 end
 
 Wpax =  Force(readmis("weight_per_pax"))
@@ -155,6 +164,8 @@ parg[igWpaymax] = maxpax * Wpax
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
+fuselage.cabin.design_pax = despax
+fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -693,7 +704,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
 
-    update_fuse_for_pax!(pari, parg, parm, fuselage, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank) #update fuselage dimensions
 end
 # ---------------------------------
 
