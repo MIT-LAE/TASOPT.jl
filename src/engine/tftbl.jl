@@ -56,7 +56,7 @@ for correected speed and efficiency.
     - `mapStruct`: compressorTbl representation of the map
 
 """
-function create_map_struct(map_name; method=natNeigh.Sibson())
+function create_map_struct(map_name; method=natNeigh.Sibson(), Nres=50, Rres=50)
     # Load map data from TOML file
     println("Generatring Map: " * map_name)
     map = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/",map_name))
@@ -73,22 +73,22 @@ function create_map_struct(map_name; method=natNeigh.Sibson())
 
     # Create Natural Neighbour interpolators for each parameter in terms of N and R
     println("Creating Grid Interpolators")
-    Mitp = natNeigh.interpolate(Nvec, Rvec, Mvec)
-    Pitp = natNeigh.interpolate(Nvec, Rvec, Pvec)
-    Eitp = natNeigh.interpolate(Nvec, Rvec, Evec)
+    Mitp = natNeigh.interpolate(Nvec, Rvec, Mvec; derivatives=true)
+    Pitp = natNeigh.interpolate(Nvec, Rvec, Pvec; derivatives=true)
+    Eitp = natNeigh.interpolate(Nvec, Rvec, Evec; derivatives=true)
     
     # Create a finer grid of test points; convert them to interpolant input using the same method as Nvec and Rvec (above)
-    N_testGrid = range(minimum(map["grid"]["grid_Nc"]),    maximum(map["grid"]["grid_Nc"]),    150)
-    R_testGrid = range(minimum(map["grid"]["grid_Rline"]), maximum(map["grid"]["grid_Rline"]), 250)
+    N_testGrid = range(minimum(map["grid"]["grid_Nc"]),    maximum(map["grid"]["grid_Nc"]),    Nres)
+    R_testGrid = range(minimum(map["grid"]["grid_Rline"]), maximum(map["grid"]["grid_Rline"]), Rres)
 
     N_testVec = vec([i for i in N_testGrid, _ in R_testGrid])
     R_testVec = vec([j for _ in N_testGrid, j in R_testGrid])
 
     # Get the mass flow, pressure ratio, and efficiency values at the finer grid using the interpolators
     println("Starting gridding interpolation")
-    M_testVec = Mitp(N_testVec, R_testVec; method=method, parallel=true)
-    P_testVec = Pitp(N_testVec, R_testVec; method=method, parallel=true)
-    E_testVec = Eitp(N_testVec, R_testVec; method=method, parallel=true)
+    M_testVec = Mitp(N_testVec, R_testVec; method=method, parallel=false)
+    P_testVec = Pitp(N_testVec, R_testVec; method=method, parallel=false)
+    E_testVec = Eitp(N_testVec, R_testVec; method=method, parallel=false)
 
     # Create direct interpolators from mb, PR -> Nb and efficiency
     println("Creating final interpolators")
@@ -128,12 +128,24 @@ function create_map_struct(map_name; method=natNeigh.Sibson())
     return mapStruct
 end # create_map_struct
 
-const E3fan = create_map_struct("E3fan.toml")
-const E3lpc = create_map_struct("E3lpc.toml")
-const E3hpc = create_map_struct("E3hpc.toml")
+
+const E3fan = create_map_struct("E3fan.toml"; method=natNeigh.Triangle(; allow_cache=false), Nres=50, Rres=50)
+const E3lpc = create_map_struct("E3lpc.toml"; method=natNeigh.Sibson(), Nres=50, Rres=50)
+const E3hpc = create_map_struct("E3hpc.toml"; method=natNeigh.Triangle(; allow_cache=false), Nres=25, Rres=25)
 
 
-function evalNc(map, m, p; method=natNeigh.Sibson())
+function evalNc(map, m, p; method=natNeigh.Sibson(1))
     return map.Nc_itp(m, p; method=method)
 end
 
+function evalEff(map, m, p; method=natNeigh.Sibson(1))
+    return map.eff_itp(m, p; method=method)
+end
+
+function evalNcGrad(map, m, p)
+    return map.Nc_grad(m, p)
+end
+
+function evalEffGrad(map, m, p)
+    return map.eff_grad(m, p)
+end

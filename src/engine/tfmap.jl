@@ -1,8 +1,3 @@
-using TOML
-using Interpolations
-using NLopt
-using NLsolve
-
 include(joinpath(__TASOPTroot__,"utils/bilinearBounded.jl"))
 
 """
@@ -36,7 +31,8 @@ function NcTblMap(pratio, mb, piD, mbD, NbD, map)
     mb_descl = mb / s_mb
 
     # ---- Perform the bilinear interpolation on the precomputed map table
-    Nnom, Nnom_mb, Nnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.Nb_tbl)
+    Nnom = evalNc(map, mb_descl, pratio_descl)
+    Nnom_mb, Nnom_pr = evalNcGrad(map, mb_descl, pratio_descl)
 
     # ---- Rescale map speed to using s_Nb
     Nb = Nnom * s_Nb
@@ -88,7 +84,9 @@ function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
 
     # ---- Perform the bilinear interpolation on the precomputed map table for nominal value
     # ---- NOTE: Polytropic efficiency table was generated using g=1.4 and R=287 J/kgK
-    effnom, effnom_mb, effnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.eff_poly_tbl)
+    # effnom, effnom_mb, effnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.eff_poly_tbl)
+    effnom = evalEff(map, mb_descl, pratio_descl)
+    effnom_mb, effnom_pr = evalEffGrad(map, mb_descl, pratio_descl)
 
     # ---- Rescale map speed to using s_eff
     eff = effnom * s_eff
