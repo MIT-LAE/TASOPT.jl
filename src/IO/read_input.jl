@@ -350,7 +350,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
     xlgnose = Distance(readgeom("x_nose_landing_gear"))
     landing_gear.nose_gear.weight = TASOPT.structures.Weight(W = 0.0, x = xlgnose)
-    landing_gear.main_gear.distance_wing_to_landing_gear = Distance(readgeom("x_main_landing_gear_offset"))
+    landing_gear.main_gear.distance_CG_to_landing_gear = Distance(readgeom("x_main_landing_gear_offset"))
     fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
     fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 

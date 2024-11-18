@@ -73,7 +73,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
       dxwing = parg[igxwing] - parg[igxwbox]
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = xcgB + landing_gear.main_gear.distance_wing_to_landing_gear - parg[igxwbox]
+      dxlg = xcgB + landing_gear.main_gear.distance_CG_to_landing_gear - parg[igxwbox]
 
       S = parg[igS]
       Sh = parg[igSh]
@@ -137,7 +137,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
            Wvtail * parg[igxvbox] + parg[igdxWvtail] +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
-           landing_gear.main_gear.moment + landing_gear.nose_gear.moment
+           Wlgmain * (parg[igxwbox] + dxlg) + landing_gear.nose_gear.moment
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
@@ -376,7 +376,7 @@ function htsize(ac, paraF, paraB, paraC)
       dxwing = parg[igxwing] - parg[igxwbox]
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = parg[igxCGaft] + landing_gear.main_gear.distance_wing_to_landing_gear - parg[igxwbox]
+      dxlg = parg[igxCGaft] + landing_gear.main_gear.distance_CG_to_landing_gear - parg[igxwbox]
 
       S = parg[igS]
       Sh = parg[igSh]
@@ -447,7 +447,7 @@ function htsize(ac, paraF, paraB, paraC)
                   Weng * xeng +
                   Whpesys * fuse.HPE_sys.r.x +
                   landing_gear.nose_gear.moment +
-                  Wlgmain * (xwbox + dxlg)
+                  Wlgmain * (parg[igxwbox] + dxlg)
 
             xWe_Sh = Whtail_Sh * xhbox + dxWhtail_Sh
             xWe_xw = Wwing +
@@ -719,7 +719,7 @@ function cglpay(ac)
             Wvtail * parg[igxvbox] + parg[igdxWvtail] +
             Weng * parg[igxeng] +
             Whpesys * fuse.HPE_sys.r.x +
-            landing_gear.main_gear.moment +
+            Wlgmain * (parg[igxwbox] + delxw + landing_gear.main_gear.distance_CG_to_landing_gear) +
             landing_gear.nose_gear.moment
 
 
