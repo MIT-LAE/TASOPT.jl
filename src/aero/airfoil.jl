@@ -52,14 +52,31 @@ function Base.show(io::IO, airf::airfoil)
     )
 end
 
-# using PythonPlot
-# function plot(airf::airfoil)
-#     fig, ax = plt.subplots(2,1, sharex = true)
-#     ax[1].plot(airf.cl, airf.A[end, :, :, 1] + airf.A[end, :, :, 2], label = airf.τ)
-#     ax[1].legend(title="Thickness-to-chord (\$\\tau\$)")
-#     ax[end].set_xlabel("\$c_l\$")
-#     ax[1].set_ylabel("\$c_d\$")
-
-#     ax[2].plot(airf.cl, airf.A[end, :, :, 3], label = airf.τ)
-#     ax[2].set_ylabel("\$c_m\$")
-# end
+using Plots
+function plot_airf(airf::airfoil)
+    # Create two subplots
+    p1 = plot(
+        airf.cl,
+        airf.A[end, :, :, 1] + airf.A[end, :, :, 2],
+        label = string.(airf.τ'),
+        xlabel = "\$c_l\$",
+        ylabel = "\$c_d\$",
+        legendtitle = "Thickness-to-chord (τ)",
+        grid = true,
+        legend=:outerright
+    )
+    
+    p2 = plot(
+        airf.cl,
+        airf.A[end, :, :, 3],
+        label = "τ = ".*string.(airf.τ'),
+        xlabel = "\$c_l\$",
+        ylabel = "\$c_m\$",
+        grid = true,
+        legend=:false
+    )
+    
+    # Combine the subplots vertically
+    plot(p1, p2, layout = (2, 1), link = :x,
+        suptitle="Airfoil Section Database")
+end
