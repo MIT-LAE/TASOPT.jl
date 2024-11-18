@@ -464,6 +464,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
         _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
+        #TODO, if aircraft not sized, script breaks within this^ fxn
 
         xseats = xseats .+ xseats0
         rows = length(xseats)
@@ -471,154 +472,164 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         println("Seats per row = $seats_per_row, Total rows = $rows")
         yseats = arrange_seats(seats_per_row, wcabin)
     end
-    ## Plot
-    # if ax === nothing
-    #     # plt.style.use(["../miscellaneous/prash.mplstyle"]) # HACK
-    #     fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-    #     fig.subplots_adjust(right=0.75)
-    # else
-    #     ax.cla()
-    # end
-    #     # Plot wing
-    #         ax.plot(xw, yw, "-k")
-    #         ax.plot(xw, -yw, "-k")
+
+    # Plot
+    plot1 = plot(
+        legend = false,
+        size = (800, 500),  # Equivalent to figsize=(8, 5) in inches
+        dpi = 300,
+        grid = show_grid,
+        show=true,
+        aspect_ratio=:equal
+    )
+    
+    # Plot wing (upper and lower surfaces)
+    plot!(xw, yw, label = "", color = :black)
+    plot!(xw, -yw, label = "", color = :black)
+
+    # Panel break (alpha transparency and line width)
+    plot!(xw[[2, 5]], yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
+    plot!(xw[[2, 5]], -yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
+    
+    # Plot Tail (conditionally plot fill based on tailz value)
+    tailz = parg[igzhtail] > 0 ? :back : 1
+    plot!(xh, yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    # plot!(xh, -yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    plot!(xh, -yh, fillrange=yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    
+    # Tail box (fill between xvt and yvt for the tail volume)
+    xvt = [-0.4, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
+    yvt = hcat([0.0 ones(length(xvt) - 2)' .*(parg[igcov]*parg[ighboxv]/2) 0.0])[:]
+    plot!(xvt, -yvt, fillrange=yvt, label = "", color = :black, alpha = 0.8, linecolor = :black, z_order = :front)
+    
+    # Plot fuselage (fill with edge color)
+    plot!(xf, -yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
+    plot!(xf, yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
+    plot!(xf, -yf, fillrange=yf, label = "", color = :white, edgecolor = :black, linewidth = 2.0, z_order = 5)
+
+    # Tank plotting
+    if pari[iifwing] == 0
+        for m in 1:nftanks
+            # Tank outline
+            plot!(xt[:, m], yt[:, m], color=:black, lw=1.5, z_order=10)
+            plot!(xt[:, m], -yt[:, m], color=:black, lw=1.5, z_order=10)
             
-    #         # Panel break
-    #         ax.plot(xw[[2,5]],  yw[[2,5]], "-k", lw = 1.0, alpha = 0.5)
-    #         ax.plot(xw[[2,5]], -yw[[2,5]], "-k", lw = 1.0, alpha = 0.5)
-        
-        # Plot Tail
-        tailz = 1
-        htail.layout.z> 0 ? tailz = 21 : tailz = 1
-            # ax.plot(xh,  yh, "-k", zorder = tailz)
-            # ax.plot(xh, -yh, "-k", zorder = tailz)
-            ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
-        xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
-        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.root_chord*vtail.outboard.cross_section.thickness_to_chord/2) 0.0])[:]
-        ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
-
-    #     # Plot fuse
-    #         # ax.fill(xf,  yf, facecolor = "w", edgecolor = "k")
-    #         # ax.fill(xf, -yf, facecolor = "w", edgecolor = "k")
-    #         ax.fill_between(xf, -yf, yf, facecolor = "w", edgecolor = "k", zorder = 5, linewidth = 2.0)
+            # Filled area between
+            plot!(xt[:, m], yt[:, m], fillrange=-yt[:, m], color=:red, alpha=0.1, z_order=6, linewidth=1.0)
             
-    #     # Tank
-    #     if (pari[iifwing] == 0)
-    #         for m = 1:nftanks
-    #             ax.plot(xt[m,:],  yt[m,:], "k", lw = 1.5, zorder = 10)
-    #             ax.plot(xt[m,:], -yt[m,:], "k", lw = 1.5, zorder = 10)
-    #             ax.fill_between(xt[m,:], -yt[m,:], yt[m,:], facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = 6, linewidth = 1.0)
-
-    #             if pari[iifuel] == 11
-    #                 fuelname = "CH\$_4\$"
-    #             elseif pari[iifuel] == 40
-    #                 fuelname = "LH\$_2\$"
-    #             end
-    #             ax.text(xtanks[m], 0.0, fuelname, fontsize = label_fs-2.0, zorder = 10, ha="center", va="center")
-    #         end
-    #     end
-
-    #     # Xshell2
-    #     ax.plot(xshell,  yshell, "k", lw = 1.5, zorder = 10)
-    #     ax.plot(xshell, -yshell, "k", lw = 1.5, zorder = 10)
-
-    #     # Plot Engines:
-    #         D = parg[igdaftfan]
-            
-    #         lnace = parg[iglnaceaft]
-    #         x = parg[igxtshaft]
-    #         ax.plot([x,x, x+lnace, x+lnace, x], [ D/8,  D/8 + D,  D/8 + D*3/4,  D/8 + 1/4*D,  D/8], lw = 1.5, color = "r", zorder = 25)
-    #         ax.plot([x,x, x+lnace, x+lnace, x], [-D/8, -D/8 - D, -D/8 - D*3/4, -D/8 - 1/4*D, -D/8], lw = 1.5, color = "r", zorder = 25)
-
-            D = parg[igdfan]
-            neng = parg[igneng]
-            lnace = parg[iglnace]
-            ηs = wing.layout.ηs
-            dy = 2*D # space to leave near wing root and tip [m]
-            if parg[igneng] == 2
-                yi = [ηs*b/2]
-            else
-                yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
+            # Fuel name
+            fuelname = ""
+            if pari[iifuel] == 11
+                fuelname ="\$CH_4\$"
+            elseif pari[iifuel] == 40
+                fuelname ="\$LH_2\$"
             end
-            xi = zero(yi)
-            ηi = yi/(b/2)
-            ηs = bs/b
-            ηo = bo/b
-            ci = zero(yi)
-            for (i, η)  in enumerate(ηi)
-                if η <=ηs
-                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
-                else
-                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
-                end
-            end
+            annotate!((xtanks[m], 0.0, text(fuelname, label_fs - 2.0, :center, :center)))
+        end
+    end
+
+    # Xshell2 plotting
+    plot!(xshell, yshell, color=:black, lw=1.5, z_order=10)
+    plot!(xshell, -yshell, color=:black, lw=1.5, z_order=10)
+
+    # Plot Engines
+    D = parg[igdaftfan]
+    lnace = parg[iglnaceaft]
+    x = parg[igxtshaft]
+
+    # Aft fan outline
+    plot!([x, x, x + lnace, x + lnace, x], [D / 8, D / 8 + D, D / 8 + D * 3 / 4, D / 8 + D / 4, D / 8],
+        lw=1.5, color=:red, z_order=:front)
+    plot!([x, x, x + lnace, x + lnace, x], [-D / 8, -D / 8 - D, -D / 8 - D * 3 / 4, -D / 8 - D / 4, -D / 8],
+        lw=1.5, color=:red, z_order=:front)
+
+    D = parg[igdfan]
+    neng = parg[igneng]
+    lnace = parg[iglnace]
+    ηs = wing.layout.ηs
+    dy = 2 * D  # Space to leave near wing root and tip [m]
+
+    if neng == 2
+        yi = [ηs * b / 2]
+    else
+        yi = range(bo / 2 + dy, b / 2 * 3 / 4, length=Int(neng / 2))
+    end
+
+    xi = zeros(length(yi))
+    ηi = yi / (b / 2)
+    ηo = bo / b
+    ci = zeros(length(yi))
+
+    for (i, η) in enumerate(ηi)
+        if η <= ηs
+            ci[i] = co * (1 + (λs - 1) * (η - ηo) / (ηs - ηo))
+        else
+            ci[i] = co * (λs + (λt - λs) * (η - ηs) / (1 - ηs))
+        end
+    end
 
             tanL = tan(wing.layout.sweep*π/180.0)
             @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
             xlocations = vec(hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)) #hcat is to avoid this being an array of arrays
             ylocations = vec(hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...))
-            ax.plot(xlocations, ylocations, color = "r", linewidth = 1.5)
+            plot!(xlocations, ylocations, color=:red, linewidth=1.5)
 
-    #     # Plot NP and CG range
-    #         ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
-    #         ax.text(parg[igxNP], -1.0, "NP", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
+    # Plot NP and annotate
+    scatter!([parg[igxNP]], [0.0], color=:blue, marker=:circle, z_order=15, label="NP")
+    annotate!((parg[igxNP]+2, 0.5, text("NP", label_fs - 2.0, :center, :center, color=:blue)))
 
-    #         ax.annotate("", xy=(parg[igxCGfwd ] , 0.0), xytext=(parg[igxCGaft ] , 0.0),
-    #         fontsize=16, ha="center", va="bottom",
-    #         arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.2, widthB=0.2"),
-    #         zorder = 21, label = "CG movement")
-    #         ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
+    # Annotate CG range
+    plot!([parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], color=:black, lw=2.0, label="CG movement")  # Line between points
+    scatter!([parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], marker=:vline, color=:black)                # End points
+    annotate!(parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
 
-    #     # Show seats
-
-    #     if pari[iidoubledeck] == 0 #Show seats in single deck case
-    #         ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-    #     end
-    #  # diagnostic marks
-    # #  ax.scatter(parg[igxftank] - l/2, 0.0, color = "k", marker="o", zorder = 21)
-    # #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
-    # #  ax.scatter(parg[igxblend2], 0.0, color = "k", marker="o", zorder = 21)
-    # #  ax.plot([parg[igxftank]-l/2, parg[igxftank]+l/2],[0.0, 0.0], zorder = 21)
-
-
+    # Show seats (single-deck case)
+    if pari[iidoubledeck] == 0
+        scatter!(xseats, repeat(yseats, outer=length(xseats)),
+            color=:gray, alpha=0.1, marker=:rect, ms=2, z_order=:front, label="")
+    end
 
     # Annotations
     if annotate_text
-        ax.text(1.05, 0.75, transform=ax.transAxes, @sprintf("PFEI = %5.3f\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f t\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-        parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.span, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
-        fontsize = label_fs, ha="left", va="top")
+        annotate!(-18, 21, text("PFEI = $(round(parm[imPFEI], digits = 4))\n" *
+            "Mₘₐₓ = $(round(para[iaMach][1], digits=2))\n" *
+            "WMTO = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
+            "Span = $(round(wing.layout.span, digits=1)) m\n" *
+            "c₀ = $(round(wing.layout.root_chord, digits=1)) m\n" *
+            "Λ = $(round(wing.layout.sweep, digits=1))°\n" *
+            "Rfuse = $(fuselage.layout.radius) m\n" *
+            "L/D = $(round(para[iaCL][ipcruise1] / para[iaCD][ipcruise1], digits=2))",
+            fontsize=label_fs, halign=:left, valign=:top, color=:black),
+            z_order=:front)
     end
+
     if annotate_length
-        yloc = -20
-        ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
-                fontsize=label_fs, ha="center", va="bottom",
-                arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
-                zorder = 30)
-        ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = label_fs-2, zorder = 31)
+        yloc = -1.1*maximum(yw)
+        plot!([0.0, xf[end]], [yloc, yloc], lw=1.5, arrow=:h, color=:black, label="")
+        annotate!(xf[end] *0.25, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m",
+            halign=:center, valign=:center, fontsize=14))
     end
-    # Span annotations:
-    groups, bmax = find_aerodrome_code(wing.layout.max_span) #Find ICAO and FAA groups as well as max span
+
+    # Span annotations
+    groups, bmax = find_aerodrome_code(wing.layout.max_span)
     xcode = -2.0
 
-    # if annotate_group
-    #     ax.vlines(xcode, -bmax/2, bmax/2, lw = 5, alpha = 0.2, color = "y")
-    #     ax.hlines( bmax/2, xcode, 40.0, lw = 5, alpha = 0.2, color = "y")
-    #     ax.hlines(-bmax/2, xcode, 40.0, lw = 5, alpha = 0.2, color = "y")
-    #     ax.text(20, bmax/2+1, "ICAO Code $(groups[1])/ FAA Group $(groups[2])", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
-    # end
-    # ax.set_ylim(-1.2*bmax/2, 1.2*bmax/2)
+    if annotate_group
+        box_color = :orange
+        plot!([xcode, xcode], [-bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        plot!([xcode, 40.0], [bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        plot!([xcode, 40.0], [-bmax / 2, -bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        annotate!(20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
+            color=box_color, alpha=0.8, fontsize=12, halign=:center, valign=:center))
+    end
 
-    # ax.set_aspect(1)
-    # ax.set_ylabel("y[m]")
-    # ax.set_xlabel("x[m]")
-    # plt.tight_layout()
-    # # ax.legend()
+    # Set plot limits and labels
+    ylims!(-1.2 * bmax / 2, 1.2 * bmax / 2)
+    xlims!(-20, maximum(xh)*1.15)
+    xlabel!("x [m]")
+    ylabel!("y [m]")
 
-    # if show_grid
-    #     ax.grid()
-    # end
-
-    # return ax
+    return plot1
 end
 
 """
@@ -1731,6 +1742,6 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
         dpi = 300)
 
     # Save with specified DPI
-savefig(filename)
-display(plot1)
+    savefig(filename)
+    display(plot1)
 end
