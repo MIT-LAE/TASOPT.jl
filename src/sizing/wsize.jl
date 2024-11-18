@@ -951,7 +951,7 @@ function wsize(ac; itermax=35,
             parg[igSh] = Sh
         else
             # for subsequent iterations:
-            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse)
+            htsize(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
 
             xwbox, xwing = parg[igxwbox], parg[igxwing]
 
@@ -1419,7 +1419,7 @@ function wsize(ac; itermax=35,
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(ac)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -1441,7 +1441,7 @@ end
 Wupdate0 updates the weight of the aircraft
 """
 function Wupdate0!(ac, rlx, fsum)
-    parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
+    pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
     ftotadd = fuse.HPE_sys.W
@@ -1469,7 +1469,7 @@ end
 Wupdate
 """
 function Wupdate!(ac, rlx, fsum)
-    parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
+    pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 

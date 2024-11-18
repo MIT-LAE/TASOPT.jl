@@ -7,6 +7,8 @@
     number_wheels::Int64 = 0
     """Number of shock struts"""
     number_struts::Int64 = 0
+    """Wing-to-landing gear distance, for main gear (m)"""
+    distance_wing_to_landing_gear::Float64 = 0.0
 end
 
 function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)

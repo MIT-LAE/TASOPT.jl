@@ -96,10 +96,11 @@ function unpack_ac(ac, imission; ip = 0)
 end
 
 function unpack_ac_components(ac)
+    pari = ac.pari
     parg = ac.parg
     fuse_tank = ac.fuse_tank
     fuse = ac.fuselage 
     landing_gear = ac.landing_gear 
 
-    return parg, fuse, fuse_tank, landing_gear
+    return pari, parg, fuse, fuse_tank, landing_gear
 end

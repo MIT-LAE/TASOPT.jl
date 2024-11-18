@@ -67,13 +67,13 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
       xwbox = parg[igxwbox]
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = parg[igxwing] - parg[igxwbox]
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = xcgB + parg[igdxlgmain] - parg[igxwbox]
+      dxlg = xcgB + landing_gear.main_gear.distance_wing_to_landing_gear - parg[igxwbox]
 
       S = parg[igS]
       Sh = parg[igSh]
@@ -282,7 +282,8 @@ Outputs:
 - `parg[igxwing]` wing centroid location
 
 """
-function htsize(pari, parg, paraF, paraB, paraC,fuse)
+function htsize(ac, paraF, paraB, paraC)
+      pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -294,7 +295,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       cosL = cos(sweep * π / 180.0)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       rpayC = 1.0
 
@@ -341,8 +342,8 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xWfuse = fuse.moment
 
@@ -352,7 +353,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       dxWvtail = parg[igdxWvtail]
 
       xeng = parg[igxeng]
-      xlgnose = parg[igxlgnose]
+      xlgnose = landing_gear.nose_gear.weight.r[1]
 
       # xtshaft = parg[igxtshaft ]
       # xgen    = parg[igxgen    ]
@@ -375,7 +376,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
       dxwing = parg[igxwing] - parg[igxwbox]
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = parg[igxCGaft] + parg[igdxlgmain] - parg[igxwbox]
+      dxlg = parg[igxCGaft] + landing_gear.main_gear.distance_wing_to_landing_gear - parg[igxwbox]
 
       S = parg[igS]
       Sh = parg[igSh]
@@ -445,7 +446,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse)
                   Wvtail * xvbox + dxWvtail +
                   Weng * xeng +
                   Whpesys * fuse.HPE_sys.r.x +
-                  Wlgnose * xlgnose +
+                  landing_gear.nose_gear.moment +
                   Wlgmain * (xwbox + dxlg)
 
             xWe_Sh = Whtail_Sh * xhbox + dxWhtail_Sh
@@ -661,7 +662,8 @@ which gives an explicit solution for `rpayF`,`rpayB`.
 The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
-function cglpay(pari, parg, fuse)
+function cglpay(ac)
+      pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -685,8 +687,8 @@ function cglpay(pari, parg, fuse)
       #      xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
       delxw = parg[igxwing] - parg[igxwbox]
@@ -717,8 +719,8 @@ function cglpay(pari, parg, fuse)
             Wvtail * parg[igxvbox] + parg[igdxWvtail] +
             Weng * parg[igxeng] +
             Whpesys * fuse.HPE_sys.r.x +
-            Wlgnose * parg[igxlgnose] +
-            Wlgmain * (parg[igxwbox] + delxw + parg[igdxlgmain])
+            landing_gear.main_gear.moment +
+            landing_gear.nose_gear.moment
 
 
       # Some derivation here:        
