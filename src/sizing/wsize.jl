@@ -1222,6 +1222,12 @@ function wsize(ac; itermax=35,
             #With fuel storage in tanks, this is done in the block above.
         end
 
+
+        # -----------------------------
+        # Landing gear sizing
+        # ------------------------------
+        landing_gear_size!(ac)
+
         # -----------------------------
         # Drag and engine calculations
         # ------------------------------

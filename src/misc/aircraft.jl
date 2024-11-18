@@ -32,6 +32,7 @@ Base.@kwdef struct aircraft #inner constructor
     sized::AbstractVector{Bool} = [false]
     fuse_tank::fuselage_tank = fuselage_tank()
     fuselage::Fuselage = Fuselage()
+    landing_gear = LandingGear()
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required

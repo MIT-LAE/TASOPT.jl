@@ -122,6 +122,7 @@ para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
 fuselage = Fuselage()
+landing_gear = LandingGear()
 
 # Setup mission variables
 ranges = readmis("range")
@@ -1004,9 +1005,8 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, landing_gear)
 
 end
 
