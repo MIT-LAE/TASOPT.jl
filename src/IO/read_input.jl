@@ -142,7 +142,7 @@ if !ac_type_fixed
 end
 
 maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
-                                                #Part of this payload may be carried in the aircraft's cargo hold
+                                                #This may exceed the seatable capacity to account for belly cargo
 pax = readmis("pax")
 exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
 despax = pax[1] #Design number of passengers
