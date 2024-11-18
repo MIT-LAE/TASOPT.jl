@@ -1714,26 +1714,23 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
         end
     end
 
-    fig, axes = pyplot.subplots(2,1,figsize=(8,10), dpi = 300)
-    ax1 = axes[0]
-    ax2 = axes[1]
+    # Convert values for plotting
+    ranges_kft = RangesToPlot ./ (1000 * 1852.0)
+    payload_tons = PayloadToPlot ./ (9.8 * 1000)
 
-    ax1.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
-    ax1.set_xlabel("Range (1000 nmi)")
-    ax1.set_ylabel("Weight (1000 kg)")
-    ax1.legend()
-    ax1.set_xlim([0,RangesToPlot[end] / (1000*1852.0)])
-    ax1.set_title("Payload-Range Plot")
-    ax1.grid()
+    # Plot with all attributes set in plot()
+    plot1 = plot(ranges_kft, payload_tons, 
+        lw=2,                   # Line width
+        line=:solid,            # Line style
+        color=:blue,            # Line color
+        label="Payload",        # Legend label
+        xlabel="Range (1000 nmi)", 
+        ylabel="Weight (1000 kg)", 
+        title="Payload-Range Diagram: "*string(ac.name), 
+        grid=true,              # Enable grid
+        dpi = 300)
 
-    ax2.plot(RangesToPlot ./ (1000*1852.0), PFEIsToPlot, linestyle="-",  color="b")
-    ax2.set_xlabel("Range (1000 nmi)")
-    ax2.set_ylabel("PFEI at maximum payload")
-    ax2.legend()
-    ax2.set_ylim([0,2])
-    ax2.set_xlim([0,RangesToPlot[end] / (1000*1852.0)])
-    ax2.set_title("PFEI-Range Plot")
-    ax2.grid()
-
-    # fig.savefig(filename)
+    # Save with specified DPI
+savefig(filename)
+display(plot1)
 end
