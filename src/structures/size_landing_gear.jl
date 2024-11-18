@@ -8,8 +8,7 @@ function landing_gear_size!(ac)
     
     nose_gear.weight = Weight(W = WMTO * parg[igflgnose], x = parg[igxlgnose])
 
-    delxw = parg[igxwing] - parg[igxwbox]
-    main_gear.weight = Weight(W = WMTO * parg[igflgmain], x = parg[igxwbox] + delxw + parg[igdxlgmain])
+    main_gear.weight = Weight(W = WMTO * parg[igflgmain], x = parg[igxwing] + parg[igdxlgmain])
     # load_factor = 1.5*2.5
     # deg = 3.5 * (pi/180)
     # lgmain_length = max(1.1 * parg[igdfan]/2.0, (parg[igxend]/ 2.0) * tan(deg))

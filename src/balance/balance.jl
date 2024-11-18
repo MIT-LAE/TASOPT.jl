@@ -29,7 +29,9 @@ Outputs:
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 """
-function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
+function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+      #Unpack aircraft
+      pari, parg, parm, para, pare, fuse, fuse_tank, landing_gear = unpack_ac(ac, imission, ip = ip)
 
       iengloc = pari[iiengloc]
 
@@ -56,8 +58,8 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
 
       # Use weight fractions to calcualte weights of subsystems
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
       
@@ -135,8 +137,7 @@ function balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
            Wvtail * parg[igxvbox] + parg[igdxWvtail] +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
-           Wlgnose * parg[igxlgnose] +
-           Wlgmain * (parg[igxwbox] + dxlg)
+           landing_gear.main_gear.moment + landing_gear.nose_gear.moment
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 

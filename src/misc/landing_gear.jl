@@ -9,6 +9,18 @@
     number_struts::Int64 = 0
 end
 
+function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)
+    if sym === :moment
+        # Use `getfield` to directly access fields of `Weight`
+        weight = getfield(obj, :weight)
+        return getfield(weight, :W) * getfield(weight, :r)[1]
+
+    else
+        # Use `getfield` to directly access fields of `IndividualLandingGear`
+        return getfield(obj, sym)
+    end
+end
+
 @kwdef mutable struct LandingGear
    
     """Front and main landing gears"""

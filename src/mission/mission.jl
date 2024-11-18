@@ -30,8 +30,10 @@ NOTE:
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, ipc1)
-
+function mission!(ac, imission, Ldebug)#, iairf, initeng, ipc1)
+      #Unpack aircraft
+      pari, parg, parm, para, pare, fuse, fuse_tank, landing_gear = unpack_ac(ac, imission) 
+      
       t_prop = 0.0
       calc_ipc1 = true
       ifirst = true
@@ -214,7 +216,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
       itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
       CLh2 = para[iaCLh, ip]
       xCG2 = para[iaxCG, ip]
@@ -333,7 +335,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
             itrim = 1
-            balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+            balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
             if (ip == ipclimb1)
                   icdfun = 0 #use explicitly specified wing cdf, cdp
@@ -441,7 +443,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
       # if (calc_ipc1)
       if (ipc1 == 0)
@@ -526,7 +528,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
       # Calc Drag
       icdfun = 1
@@ -674,7 +676,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
             itrim = 1
-            balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+            balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp

@@ -48,7 +48,6 @@ function aircraft(name::String, description::String, pari::AbstractVector{Int64}
         return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
 end
 
-
 function Base.getproperty(ac::aircraft, sym::Symbol)
     if sym === :parad #Design para
         return view(getfield(ac, :para), :, : , 1) 
@@ -75,4 +74,32 @@ function Base.show(io::IO, ac::aircraft)
     Wpay = $(round(ac.parm[imWpay]/1e3, sigdigits = 3)) kN
     Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
+end
+
+function unpack_ac(ac, imission; ip = 0)
+    pari = ac.pari
+    parg = ac.parg
+    parm = view(ac.parm, :, imission) 
+    fuse_tank = ac.fuse_tank
+    fuse = ac.fuselage 
+    landing_gear = ac.landing_gear 
+
+    if ip == 0 #If no point is given
+        para = view(ac.para, :, :, imission)
+        pare = view(ac.pare, :, :, imission)
+    else #ip is given
+        para = view(ac.para, :, ip, imission)
+        pare = view(ac.pare, :, ip, imission)
+    end
+
+    return pari, parg, parm, para, pare, fuse, fuse_tank, landing_gear
+end
+
+function unpack_ac_components(ac)
+    parg = ac.parg
+    fuse_tank = ac.fuse_tank
+    fuse = ac.fuselage 
+    landing_gear = ac.landing_gear 
+
+    return parg, fuse, fuse_tank, landing_gear
 end
