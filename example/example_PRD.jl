@@ -65,7 +65,6 @@ function PayloadRange(ac; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.
     end
 
     # Convert values for plotting
-    dpi = 300
     ranges_kft = RangesToPlot ./ (1000 * 1852.0)
     payload_tons = PayloadToPlot ./ (9.8 * 1000)
 
@@ -87,8 +86,8 @@ function PayloadRange(ac; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.
     savefig(filename)
 
     display(plot1)
-    println(RangesToPlot)
-    println(PayloadToPlot)
+    # println(RangesToPlot)
+    # println(PayloadToPlot)
 
 end
 

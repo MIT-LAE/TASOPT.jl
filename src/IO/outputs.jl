@@ -1170,15 +1170,24 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
             append!(PayloadToPlot, maxPay)
         end
     end
-    println(RangesToPlot)
-    println(PayloadToPlot)
-    # fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-    # ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
-    # ax.set_xlabel("Range (1000 nmi)")
-    # ax.set_ylabel("Weight (1000 kg)")
-    # ax.legend()
-    # ax.set_title("Payload Range Plot")
-    # ax.grid()
 
-    # fig.savefig(filename)
+    # Convert values for plotting
+    ranges_kft = RangesToPlot ./ (1000 * 1852.0)
+    payload_tons = PayloadToPlot ./ (9.8 * 1000)
+
+    # Plot with all attributes set in plot()
+    plot1 = plot(ranges_kft, payload_tons, 
+        lw=2,                   # Line width
+        line=:solid,            # Line style
+        color=:blue,            # Line color
+        label="Payload",        # Legend label
+        xlabel="Range (1000 nmi)", 
+        ylabel="Weight (1000 kg)", 
+        title="Payload-Range Diagram: "*string(ac.name), 
+        grid=true,              # Enable grid
+        dpi = 300)
+
+    # Save with specified DPI
+savefig(filename)
+display(plot1)
 end
