@@ -45,6 +45,7 @@ include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
+export plot_airf
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
