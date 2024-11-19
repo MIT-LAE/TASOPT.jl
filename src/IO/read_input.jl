@@ -423,12 +423,21 @@ landing_gear.main_gear.distance_CG_to_landing_gear = Distance(readlg("x_main_lan
 
 #The mass model for the landing gear can be specified by the user
 lgmodel = readlg("landing_gear_model")
+landing_gear.model = lgmodel
 
-if lgmodel == "mass_fractions" #This is the most basic model, just fixed fractions of the MTOW
+if lowercase(lgmodel) == "mass_fractions" #This is the most basic model, just fixed fractions of the MTOW
     landing_gear.nose_gear.overall_mass_fraction = readlg("LG_nose_weight_fraction")
     landing_gear.main_gear.overall_mass_fraction = readlg("LG_main_weight_fraction")
+elseif lowercase(lgmodel) == "historical_correlations"
+    landing_gear.tailstrike_angle = Angle(readlg("tailstrike_angle"))
+    landing_gear.wing_dihedral_angle = Angle(readlg("wing_dihedral_angle"))
+    landing_gear.engine_ground_clearance = Distance(readlg("engine_ground_clearance"))
+    landing_gear.nose_gear.number_struts = readlg("LG_nose_number_struts")
+    landing_gear.nose_gear.wheels_per_strut = readlg("LG_nose_wheels_per_strut")
+    landing_gear.main_gear.number_struts = readlg("LG_main_number_struts")
+    landing_gear.main_gear.wheels_per_strut = readlg("LG_main_wheels_per_strut")
 end
-
+# ------ End landing gear -------
 
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params

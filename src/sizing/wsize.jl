@@ -1457,7 +1457,8 @@ function Wupdate0!(ac, rlx, fsum)
            parg[igWfuel] +
            parg[igWtesys] +
            parg[igWftank] + 
-           landing_gear.nose_gear.weight.W + landing_gear.main_gear.weight.W
+           landing_gear.nose_gear.weight.W + 
+           landing_gear.main_gear.weight.W
 
     WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
     parg[igWMTO] = WMTO

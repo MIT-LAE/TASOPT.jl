@@ -3,10 +3,10 @@
     weight::structures.Weight = structures.Weight()
     """Landing gear length (m)"""
     length::Float64 = 0.0
-    """Number of wheels"""
-    number_wheels::Int64 = 0
     """Number of shock struts"""
     number_struts::Int64 = 0
+    """Number of wheels per strut"""
+    wheels_per_strut::Int64 = 0
     """CG-to-landing gear distance, for main gear (m)"""
     distance_CG_to_landing_gear::Float64 = 0.0
     """Overall mass fraction of MTOW"""
@@ -26,13 +26,17 @@ function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)
 end
 
 @kwdef mutable struct LandingGear
-    model::String = "mass_fractions"
+    model::String = ""
 
     """Front and main landing gears"""
     nose_gear::IndividualLandingGear = IndividualLandingGear()
     main_gear::IndividualLandingGear = IndividualLandingGear()
 
-    # Misc properties
-    """Design load factor"""
-    load_factor::Float64 = 0.0
+    #Miscellaneous
+    """Tailstrike angle (rad)"""
+    tailstrike_angle::Float64 = 0.0
+    """Wing dihedral angle (rad)"""
+    wing_dihedral_angle::Float64 = 0.0 #TODO this should be a wing param, but it does not appear to be used elsewhere
+    """Engine ground clearance (m)"""
+    engine_ground_clearance::Float64 = 0.0
 end
