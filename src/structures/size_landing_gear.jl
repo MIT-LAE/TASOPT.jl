@@ -34,7 +34,7 @@ function landing_gear_size!(ac)
         #Calculate landing gear length
         #First calculate required length to avoid tailstrike
         tailstrike_angle = landing_gear.tailstrike_angle
-        x_lg = main_gear.weight.r[1] #Main gear longitudinal position
+        x_lg = parg[igxCGaft] + main_gear.distance_CG_to_landing_gear #Main gear longitudinal position
         l_tailstrike = (fuse.layout.x_end - x_lg) * tan(tailstrike_angle) - 2*fuse.layout.radius
 
         #Next, find the length that gives desired engine ground clearance
