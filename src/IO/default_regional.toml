@@ -336,6 +336,15 @@
     LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
     LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
 
+    #For "historical_correlations" model
+    tailstrike_angle = "10 deg"
+    wing_dihedral_angle = "6 deg"
+    engine_ground_clearance = "7 in"
+    LG_nose_number_struts = 1
+    LG_nose_wheels_per_strut = 2
+    LG_main_number_struts = 2
+    LG_main_wheels_per_strut = 2
+
 [Structures]
     stress_factor = 1.0 # convenient factor to multiply all stress below
 

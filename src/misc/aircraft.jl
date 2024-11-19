@@ -45,7 +45,7 @@ end
 function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage())
+        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage(), LandingGear())
 end
 
 function Base.getproperty(ac::aircraft, sym::Symbol)
@@ -76,6 +76,27 @@ function Base.show(io::IO, ac::aircraft)
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
 
+"""
+    unpack_ac(ac, imission; ip = 0)
+
+Helper function to unpack all aircraft parameters.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft` : aircraft object to unpack   
+    - `imission::Int64`: mission index
+    - `ip::Int64`: mission point index (optional)
+
+    **Outputs:**
+    - `pari::AbstractVector{Int64}` : integer flag parameters               
+    - `parg::AbstractArray{Float64}` : Geometry parameters 
+    - `parm::AbstractArray{Float64}` : Mission parameters                    
+    - `para::AbstractArray{Float64}` : Aero parameters                       
+    - `pare::AbstractArray{Float64}` : Engine parameters      
+    - `fuse::Fuselage` : fuselage parameters             
+    - `fuse_tank::fuselage_tank` : fuel tank in fuselage parameters
+    - `landing_gear::LandingGear`: landing gear parameters
+"""
 function unpack_ac(ac, imission; ip = 0)
     pari = ac.pari
     parg = ac.parg
@@ -95,6 +116,22 @@ function unpack_ac(ac, imission; ip = 0)
     return pari, parg, parm, para, pare, fuse, fuse_tank, landing_gear
 end
 
+"""
+    unpack_ac_components(ac)
+
+Helper function to unpack aircraft physical components.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft` : aircraft object to unpack   
+
+    **Outputs:**
+    - `pari::AbstractVector{Int64}` : integer flag parameters               
+    - `parg::AbstractArray{Float64}` : Geometry parameters      
+    - `fuse::Fuselage` : fuselage parameters             
+    - `fuse_tank::fuselage_tank` : fuel tank in fuselage parameters
+    - `landing_gear::LandingGear`: landing gear parameters
+"""
 function unpack_ac_components(ac)
     pari = ac.pari
     parg = ac.parg

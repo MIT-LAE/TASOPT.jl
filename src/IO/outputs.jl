@@ -8,8 +8,8 @@ function weight_buildup(ac::aircraft; io=stdout)
     fuselage = ac.fuselage
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
-    Wlgnose = parg[igWMTO] * parg[igflgnose]
-    Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wlgnose = ac.landing_gear.nose_gear.weight.W
+    Wlgmain = ac.landing_gear.main_gear.weight.W
     Wtotadd = Whpesys + Wlgnose + Wlgmain
 
     Wbox    = parg[igWweb] + parg[igWcap]
@@ -694,8 +694,8 @@ function plot_details(ac::aircraft; ax = nothing)
         # Weight build-up
         Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
         Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
-        Wlgnose = parg[igWMTO] * parg[igflgnose]
-        Wlgmain = parg[igWMTO] * parg[igflgmain]
+        Wlgnose = ac.landing_gear.nose_gear.weight.W
+        Wlgmain = ac.landing_gear.main_gear.weight.W
         Wtotadd = Whpesys + Wlgnose + Wlgmain
         
         Wpay  = parg[igWpay]
@@ -931,8 +931,8 @@ function plot737compare(;weightdetail= true, fracs = false)
         Wvtail = parg[igWvtail]
         Weng = parg[igWtesys]
             Whpesys = parg[igWMTO] * parg[igfhpesys]
-            Wlgnose = parg[igWMTO] * parg[igflgnose]
-            Wlgmain = parg[igWMTO] * parg[igflgmain]
+            Wlgnose = ac.landing_gear.nose_gear.weight.W
+            Wlgmain = ac.landing_gear.main_gear.weight.W
         Wtotadd = Whpesys + Wlgnose + Wlgmain
         Wftank = parg[igWftank]
 

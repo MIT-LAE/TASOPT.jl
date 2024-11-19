@@ -428,9 +428,9 @@ landing_gear.model = lgmodel
 if lowercase(lgmodel) == "mass_fractions" #This is the most basic model, just fixed fractions of the MTOW
     landing_gear.nose_gear.overall_mass_fraction = readlg("LG_nose_weight_fraction")
     landing_gear.main_gear.overall_mass_fraction = readlg("LG_main_weight_fraction")
-elseif lowercase(lgmodel) == "historical_correlations"
+elseif lowercase(lgmodel) == "historical_correlations" #model based on historical-data relations in Raymer (2012)
     landing_gear.tailstrike_angle = Angle(readlg("tailstrike_angle"))
-    landing_gear.wing_dihedral_angle = Angle(readlg("wing_dihedral_angle"))
+    landing_gear.wing_dihedral_angle = Angle(readlg("wing_dihedral_angle")) #TODO consider storing this as a wing parameter
     landing_gear.engine_ground_clearance = Distance(readlg("engine_ground_clearance"))
     landing_gear.nose_gear.number_struts = readlg("LG_nose_number_struts")
     landing_gear.nose_gear.wheels_per_strut = readlg("LG_nose_wheels_per_strut")

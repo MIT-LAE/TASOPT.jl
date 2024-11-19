@@ -1,3 +1,13 @@
+using DocStringExtensions
+
+"""
+$TYPEDEF
+
+Individual landing gear (nose or main): this object stores the geometric and mass properties of
+a landing gear.
+
+$TYPEDFIELDS
+"""
 @kwdef mutable struct IndividualLandingGear
     """Weight and location"""
     weight::structures.Weight = structures.Weight()
@@ -25,6 +35,16 @@ function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)
     end
 end
 
+"""
+$TYPEDEF
+
+Landing Gear structure:
+    Divided into 2 modules
+    1. Main and nose gear objects
+    2. Misc Properties
+
+$TYPEDFIELDS
+"""
 @kwdef mutable struct LandingGear
     model::String = ""
 
