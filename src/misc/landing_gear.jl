@@ -9,6 +9,8 @@
     number_struts::Int64 = 0
     """CG-to-landing gear distance, for main gear (m)"""
     distance_CG_to_landing_gear::Float64 = 0.0
+    """Overall mass fraction of MTOW"""
+    overall_mass_fraction::Float64 = 0.0
 end
 
 function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)
@@ -24,7 +26,8 @@ function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)
 end
 
 @kwdef mutable struct LandingGear
-   
+    model::String = "mass_fractions"
+
     """Front and main landing gears"""
     nose_gear::IndividualLandingGear = IndividualLandingGear()
     main_gear::IndividualLandingGear = IndividualLandingGear()

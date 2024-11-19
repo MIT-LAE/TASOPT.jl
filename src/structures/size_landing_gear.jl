@@ -5,10 +5,14 @@ function landing_gear_size!(ac)
     main_gear = landing_gear.main_gear
     
     WMTO = parg[igWMTO]
-    
-    nose_gear.weight = Weight(W = WMTO * parg[igflgnose], x = nose_gear.weight.r[1])
 
-    main_gear.weight = Weight(W = WMTO * parg[igflgmain], x = parg[igxCGaft] + main_gear.distance_CG_to_landing_gear)
+    if landing_gear.model == "mass_fractions"
+    
+        nose_gear.weight = Weight(W = WMTO * nose_gear.overall_mass_fraction, x = nose_gear.weight.r[1])
+
+        main_gear.weight = Weight(W = WMTO * main_gear.overall_mass_fraction, x = parg[igxCGaft] + main_gear.distance_CG_to_landing_gear)
+    elseif landing_gear.model == "historical_correlations"
+    end
     # load_factor = 1.5*2.5
     # deg = 3.5 * (pi/180)
     # lgmain_length = max(1.1 * parg[igdfan]/2.0, (parg[igxend]/ 2.0) * tan(deg))

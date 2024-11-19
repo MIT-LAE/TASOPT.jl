@@ -323,8 +323,6 @@ readweight(x) = read_input(x, weight, dweight)
     fuselage.floor_W_per_area = readweight("floor_weight_per_area")
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
-    parg[igflgnose] = readweight("LG_nose_weight_fraction")
-    parg[igflgmain] = readweight("LG_main_weight_fraction")
 
     fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
     fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
@@ -348,9 +346,6 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.cabin.aisle_halfwidth = Distance(readgeom("aisle_halfwidth"))
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
-    xlgnose = Distance(readgeom("x_nose_landing_gear"))
-    landing_gear.nose_gear.weight = TASOPT.structures.Weight(W = 0.0, x = xlgnose)
-    landing_gear.main_gear.distance_CG_to_landing_gear = Distance(readgeom("x_main_landing_gear_offset"))
     fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
     fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
@@ -413,6 +408,26 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
 
 # ------ End fuse -------
+
+# ---------------------------------
+# Landing gear
+# ---------------------------------
+lg = read_input("LandingGear", data, default)
+dlg = default["LandingGear"]
+readlg(x::String) = read_input(x, lg, dlg)
+
+#Landing gear CG positions or offsets
+xlgnose = Distance(readlg("x_nose_landing_gear"))
+landing_gear.nose_gear.weight = TASOPT.structures.Weight(W = 0.0, x = xlgnose)
+landing_gear.main_gear.distance_CG_to_landing_gear = Distance(readlg("x_main_landing_gear_offset"))
+
+#The mass model for the landing gear can be specified by the user
+lgmodel = readlg("landing_gear_model")
+
+if lgmodel == "mass_fractions" #This is the most basic model, just fixed fractions of the MTOW
+    landing_gear.nose_gear.overall_mass_fraction = readlg("LG_nose_weight_fraction")
+    landing_gear.main_gear.overall_mass_fraction = readlg("LG_main_weight_fraction")
+end
 
 
 #Fuel storage options

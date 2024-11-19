@@ -140,8 +140,6 @@
     
 # Power systems and landing gear locations
     x_HPE_sys = "125 ft" #Hydraulic, Pneumatic and Electrical systems
-    x_nose_landing_gear        = "28 ft"
-    x_main_landing_gear_offset = "3 ft" # main LG offset behind the wing lift centroid
 
     x_APU = "232 ft"
 
@@ -164,8 +162,6 @@
     floor_weight_per_area =  60.0 #[N/m2]
 
     HPE_sys_weight_fraction = 0.010 # W_HPEsys/WMTO
-    LG_nose_weight_fraction = 0.010 # Wlgnose/WMTO
-    LG_main_weight_fraction = 0.040 # Wlgmain/WMTO
 
     APU_weight_fraction = 0.035 # W_APU/W_payload
     seat_weight_fraction = 0.10 # Wseats/W_payload
@@ -333,6 +329,15 @@
         box_width_chord = 0.50
         box_height_chord = 0.14 
         web_height_hbox  = 0.75
+
+[LandingGear]
+    landing_gear_model = "mass_fractions" #Options are "mass_fractions" and "historical_correlations"
+    x_nose_landing_gear        = "28 ft"
+    x_main_landing_gear_offset = "3 ft" # main LG offset behind the rearmost CG position
+
+    #For "mass_fractions" model
+    LG_nose_weight_fraction = 0.010 # Wlgnose/WMTO
+    LG_main_weight_fraction = 0.040 # Wlgmain/WMTO
 
 [Structures]
     stress_factor = 1.0 # convenient factor to multiply all stress below

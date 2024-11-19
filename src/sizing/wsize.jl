@@ -126,8 +126,8 @@ function wsize(ac; itermax=35,
 
     fpylon = parg[igfpylon]
 
-    flgnose = parg[igflgnose]
-    flgmain = parg[igflgmain]
+    flgnose = landing_gear.nose_gear.overall_mass_fraction
+    flgmain = landing_gear.main_gear.overall_mass_fraction
 
 
     freserve = parg[igfreserve]
