@@ -25,6 +25,28 @@ function boundingIndices(x, array)
 end # boundingIndices
 
 
+function regGridBoundingIndices(x, dx, N, xLow)
+    fracInd = (x - xLow) / dx + 1
+    remainder = fracInd % 1
+    if fracInd > N
+        # TODO: Add upper OOB warning
+        return (N, N)
+    end
+    if fracInd < 0
+        # TODO: Add lower OOB warning
+        return (0,0)    
+    end
+    
+    if isapprox(remainder, 0.)
+        iLow, iHigh = Int(round(fracInd)), Int(round(fracInd))
+    else
+        iLow, iHigh = Int(floor(fracInd)), Int(ceil(fracInd))
+    end
+
+    return iLow, iHigh
+end # regGridBoundingIndices
+
+
 """
         bilinearBoundedLookup(x, y, xGrid, yGrid, lookupGrid)
 
