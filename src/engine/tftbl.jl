@@ -16,6 +16,56 @@ struct compressorTbl
     eff_grad::natNeigh.NaturalNeighboursDifferentiator    
 end 
 
+
+function gen2DGrid(itp, xLow, xHigh, yLow, yHigh, Nx, Ny; method=natNeigh.Sibson(1))
+    xg = range(xLow, xHigh, Nx)
+    yg = range(yLow, yHigh, Ny)
+
+    dx = (xHigh - xLow) / (Nx-1)
+    dy = (yHigh - yLow) / (Ny-1)
+
+    xVec = vec([i for i in xg, _ in yg])
+    yVec = vec([j for _ in xg, j in yg])
+
+    fVec = itp(xVec, yVec; method=method)
+
+    fGridded = reshape(fVec, (length(xg), length(yg)))
+
+    return fGridded, xg, yg, dx, dy
+end # gen2DGrid
+
+
+function gen2DDerivatives(grid, dx, dy, Nx, Ny)
+    xDeriv = stack(fill(0., Nx, Ny))
+    yDeriv = stack(fill(0., Nx, Ny))
+
+    for i in 1:Nx
+        for j in 1:Ny
+            if i == 1
+                xDeriv[i,j] = -3. * grid[i,j] + 4. * grid[i+1, j] - grid[i+2, j]
+            elseif i == Nx
+                xDeriv[i,j] = 3. * grid[i,j] - 4. * grid[i-1, j] + grid[i-2, j]
+            else
+                xDeriv[i,j] = grid[i+1,j] - grid[i-1,j]
+            end
+
+            if j == 1
+                yDeriv[i,j] = -3. * grid[i,j] + 4. * grid[i, j+1] - grid[i, j+2]
+            elseif j == Ny
+                yDeriv[i,j] =  3. * grid[i,j] - 4. * grid[i, j-1] + grid[i, j-2]
+            else
+                yDeriv[i,j] = grid[i,j+1] - grid[i,j-1]
+            end
+        end
+    end
+
+    xDeriv = xDeriv ./ (2*dx)
+    yDeriv = yDeriv ./ (2*dy)
+
+    return xDeriv, yDeriv
+end # gen2DDerivatives
+
+
 """
     create_map_struct(map_name; method=natNeigh.Sibson())
 
@@ -107,23 +157,18 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
 end # create_map_struct
 
 
-const E3fan = create_map_struct("E3fan.toml"; method=natNeigh.Triangle(0; allow_cache=false), Nres=50, Rres=50)
+if isfile(joinpath(__TASOPTroot__,"engine/data/E3fan_gridded.toml"))
+    fanDict = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/E3fan_gridded.toml"))
+else
+    fanDict = create_map_struct("E3fan.toml"; method=natNeigh.Triangle(0; allow_cache=false), Nres=250, Rres=250)
+end
+
+
+
+
+
+
 const E3lpc = create_map_struct("E3lpc.toml"; method=natNeigh.Sibson(0), Nres=50, Rres=50)
 const E3hpc = create_map_struct("E3hpc.toml"; method=natNeigh.Triangle(0; allow_cache=false), Nres=25, Rres=25)
 
 
-function evalNcScalar(map::compressorTbl, m::Float64, p::Float64; method=natNeigh.Sibson(1))
-    return map.Nc_itp(m, p; method=method)::Float64
-end
-
-function evalEff(map, m, p; method=natNeigh.Sibson(1))
-    return map.eff_itp(m, p; method=method)::Float
-end
-
-function evalNcGrad(map, m, p)
-    return map.Nc_grad(m, p)
-end
-
-function evalEffGrad(map, m, p)
-    return map.eff_grad(m, p)
-end
