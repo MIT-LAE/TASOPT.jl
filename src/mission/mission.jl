@@ -1,23 +1,12 @@
 """
-    mission!(pari, parg, parm, para, pare, Ldebug)
+    mission!(ac, imission, Ldebug)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
 
 Input:
- pari[.]   integer flags
- parg[.]   geometry parameters
- parm[.]   mission parameters
- iairf     index of airfoil database to use
- initeng    0 = engine state will be initialized for all points
-            1 = engine state is assumed to be initialized
- ipc1       0 = ipcruise1 aero and engine point needs to be calculated
-            1 = ipcruise1 aero and engine point assumed calculated
-
-Input/Output:
- para[.p]  aero     parameters for points p=1..iptotal
- pare[.p]  engine   parameters for points p=1..iptotal
-
+ ac        aircraft object
+ imission  mission index
 
 NOTE: 
  This routine assumes that estimates of the climb-leg flight path 
@@ -25,10 +14,6 @@ NOTE:
  These appear as cos(gamma) factors in the climb equations,
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
-
- !!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
-
 """
 function mission!(ac, imission, Ldebug)#, iairf, initeng, ipc1)
       #Unpack aircraft

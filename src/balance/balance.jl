@@ -1,14 +1,13 @@
 """
-      balance(pari, parg, para, rfuel, rpay, ξpay, itrim)
+      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
 Makes one of three (or none) changes to achieve pitch trim
 calculates resulting CG, CP, NP locations.
 
 Inputs:
-- `pari[.]`  integer flag array
-- `parg[.]`  geometry parameter array
-- `para[.]`  aero parameter array
-- `rfuel`    fuel fraction   Wfuel_actual/Wfuel_MTOW
+- `ac::aircraft`: structure with aircraft parameters
+- `imission::Int64`: mission index (1 is design mission)
+- `ip::Int64`: mission point index
 - `rpay`     payload fraction Wpay_actual/Wpay_MTOW
 - `ξpay`    partial-payload packing location
     * = 0.0   all the way in front  of cabin
@@ -21,13 +20,7 @@ Inputs:
     * = 3  adjust xwbox (wing box location)
 
 Outputs: 
-
-- `para[iaxCG]`  center of gravity
-- `para[iaxCP]`  center of pressure ( = xCG if itrim=1,2,3 )
-- `para[iaxNP]`  neutral point location
-
-!!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+No direct outputs. Fields in `ac` are modified.
 """
 function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
       #Unpack aircraft
@@ -269,18 +262,14 @@ Calculates resulting CG, CP, NP locations
 
 Inputs:  
       
-- `pari[.]`  integer fla array
+- `ac`       aircraft object
 - `parg[.]`  geometry parameter array
 - `paraF[.]` aero parameter array for fwdCG case
 - `paraB[.]` aero parameter array for aft CG case
 - `paraC[.]` aero parameter array for cruise tail CL case
 
 Outputs: 
-  
-- `parg[igSh]`    HT area
-- `parg[igxwbox]` wingbox location
-- `parg[igxwing]` wing centroid location
-
+No direct outputs. Fields in `ac` are modified.
 """
 function htsize(ac, paraF, paraB, paraC)
       pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
