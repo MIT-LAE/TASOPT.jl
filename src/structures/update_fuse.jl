@@ -24,7 +24,7 @@ function update_fuse!(fuselage, pari, parg)
     lcyl = fuselage.layout.l_cabin_cylinder
     dxeng2wbox = parg[igdxeng2wbox]
     dxapu2end = fuselage.layout.x_end - fuselage.APU.x
-    dxshell2conend =fuselage.layout.x_cone_end - fuselage.layout.x_pressure_shell_aft
+    dxshell2conend = fuselage.layout.x_cone_end - fuselage.layout.x_pressure_shell_aft
     dxshell2apu = fuselage.APU.x - fuselage.layout.x_pressure_shell_aft
     dxhbox2conend = fuselage.layout.x_cone_end - parg[igxhbox ]
     dxvbox2conend = fuselage.layout.x_cone_end - parg[igxvbox ]

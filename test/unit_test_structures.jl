@@ -333,4 +333,36 @@ update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79
 # for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
 #   @test parg_nz[i] ≈ parg_check[i]
 # end
+
+#Test landing gear sizing
+ac = load_default_model()
+
+#Test simple sizing based on mass fractions
+WMTO = 80e4
+ac.parg[igWMTO] = WMTO
+ac.landing_gear.main_gear.overall_mass_fraction = 0.04
+ac.landing_gear.nose_gear.overall_mass_fraction = 0.01
+
+TASOPT.landing_gear_size!(ac)
+@test ac.landing_gear.main_gear.weight.W ≈ 0.04 * 80e4
+@test ac.landing_gear.nose_gear.weight.W ≈ 0.01 * 80e4
+
+#Test models based on historical data
+ac.landing_gear.model = "historical_correlations"
+ac.landing_gear.tailstrike_angle = 10*pi/180
+ac.landing_gear.wing_dihedral_angle = 6*pi/180
+ac.landing_gear.engine_ground_clearance = 7*in_to_m
+ac.landing_gear.nose_gear.number_struts = 1
+ac.landing_gear.nose_gear.wheels_per_strut = 2
+ac.landing_gear.main_gear.number_struts = 2
+ac.landing_gear.main_gear.wheels_per_strut = 2
+
+ac.parg[igxCGaft] = 30
+ac.pare[ieu0,iprotate,1] = 70
+ac.parg[igdfan] = 1.5
+ac.parg[igb] = 40
+TASOPT.landing_gear_size!(ac)
+
+@test ac.landing_gear.main_gear.weight.W ≈ 25733.572498747944
+@test ac.landing_gear.nose_gear.weight.W ≈ 4247.610705426578
 end

@@ -65,6 +65,7 @@ using .engine
 
 #Load other functions
 include("./misc/fuselage_tank.jl")
+include("./misc/landing_gear.jl")
 include("./misc/aircraft.jl")
 export aircraft, fuselage_tank
 

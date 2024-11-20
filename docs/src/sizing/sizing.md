@@ -17,11 +17,11 @@ TASOPT.woper(ac, itermax)
 A sized aircraft's mission performance can be obtained (`mission!`), along with operation constraints via a pitch trim calculation (`balance`) and balanced field length calculation (`takeoff!`).
 
 ```@docs
-TASOPT.mission!(pari, parg, parm, para, pare, fuse, Ldebug)
+TASOPT.mission!
 
-TASOPT.takeoff!(ac; printTO)
+TASOPT.takeoff!
 
-TASOPT.balance(pari, parg, para, fuse, rfuel, rpay, ξpay, itrim)
+TASOPT.balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
 ```
 

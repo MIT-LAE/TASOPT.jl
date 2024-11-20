@@ -31,7 +31,8 @@ makedocs(
         "atmos/atmos.md"
         ],
     "Structures" => Any["structures/wing.md",
-        "structures/fuselage.md"
+        "structures/fuselage.md",
+        "structures/landing_gear.md"
         ],
     "Cryogenic tanks" => Any["cryo_tank/cryotank.md",
     "cryo_tank/fueltanks.md"

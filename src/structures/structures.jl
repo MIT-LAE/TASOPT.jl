@@ -14,7 +14,7 @@ using Roots
 using NLopt
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-export surfw, surfdx, fusew!, tailpo,
+export surfw, surfdx, fusew!, tailpo, landing_gear_size!,
  update_fuse!, update_fuse_for_pax!, place_cabin_seats, find_cabin_width, find_floor_angles, arrange_seats
 
 
@@ -39,7 +39,7 @@ include("surfw.jl")
 include("tailpo.jl")
 
 include("size_cabin.jl") #Seat layouts and cabin length
-
+include("size_landing_gear.jl")
 #Hydrogen tank related code
 include("update_fuse.jl")
 

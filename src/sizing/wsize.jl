@@ -23,15 +23,8 @@ function wsize(ac; itermax=35,
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
     #Unpack data storage arrays
-    pari = ac.pari
-    parg = ac.parg
-    parm = ac.parmd
-    para = ac.parad
-    pare = ac.pared      
-    
-    fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
-    
-    fuse = ac.fuselage 
+    imission = 1 #Design mission
+    pari, parg, parm, para, pare, fuse, fuse_tank, landing_gear = unpack_ac(ac, imission)
 
     time_propsys = 0.0
 
@@ -133,8 +126,8 @@ function wsize(ac; itermax=35,
 
     fpylon = parg[igfpylon]
 
-    flgnose = parg[igflgnose]
-    flgmain = parg[igflgmain]
+    flgnose = landing_gear.nose_gear.overall_mass_fraction
+    flgmain = landing_gear.main_gear.overall_mass_fraction
 
 
     freserve = parg[igfreserve]
@@ -663,7 +656,7 @@ function wsize(ac; itermax=35,
 
         else
             # Call a better Wupdate function
-            Wupdate0!(parg, fuse, rlx, fsum)
+            Wupdate0!(ac, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -958,7 +951,7 @@ function wsize(ac; itermax=35,
             parg[igSh] = Sh
         else
             # for subsequent iterations:
-            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse)
+            htsize(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
 
             xwbox, xwing = parg[igxwbox], parg[igxwing]
 
@@ -1223,6 +1216,11 @@ function wsize(ac; itermax=35,
         end
 
         # -----------------------------
+        # Landing gear sizing
+        # ------------------------------
+        landing_gear_size!(ac)
+
+        # -----------------------------
         # Drag and engine calculations
         # ------------------------------
         # Total Drag
@@ -1245,7 +1243,7 @@ function wsize(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         itrim = 1
-        balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+        balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -1340,7 +1338,7 @@ function wsize(ac; itermax=35,
         parg[iglnace] = lnace
 
         ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
+        time_propsys += mission!(ac, imission, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -1371,7 +1369,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, fuse, rlx, fsum)
+        Wupdate!(ac, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1387,7 +1385,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, fuse, rlx, fsum)
+        Wupdate!(ac, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -1421,7 +1419,7 @@ function wsize(ac; itermax=35,
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(ac)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -1435,18 +1433,18 @@ function wsize(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     itrim = 0
-    balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+    balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
     
 end
 
 """
 Wupdate0 updates the weight of the aircraft
 """
-function Wupdate0!(parg, fuse, rlx, fsum)
-    WMTO = parg[igWMTO]
-    
+function Wupdate0!(ac, rlx, fsum)
+    pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
 
-    ftotadd = fuse.HPE_sys.W + parg[igflgnose] + parg[igflgmain]
+    WMTO = parg[igWMTO]
+    ftotadd = fuse.HPE_sys.W
     fsum = 0.0
 
     Wsum = parg[igWpay] +
@@ -1458,7 +1456,9 @@ function Wupdate0!(parg, fuse, rlx, fsum)
            parg[igWeng] +
            parg[igWfuel] +
            parg[igWtesys] +
-           parg[igWftank]
+           parg[igWftank] + 
+           landing_gear.nose_gear.weight.W + 
+           landing_gear.main_gear.weight.W
 
     WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
     parg[igWMTO] = WMTO
@@ -1469,7 +1469,8 @@ end
 """
 Wupdate
 """
-function Wupdate!(parg, fuse, rlx, fsum)
+function Wupdate!(ac, rlx, fsum)
+    pari, parg, fuse, fuse_tank, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 
@@ -1479,8 +1480,8 @@ function Wupdate!(parg, fuse, rlx, fsum)
     fvtail = parg[igWvtail] / WMTO
     feng = parg[igWeng] / WMTO
     ffuel = parg[igWfuel] / WMTO
-    flgnose = parg[igflgnose]
-    flgmain = parg[igflgmain]
+    flgnose = landing_gear.nose_gear.weight.W / WMTO
+    flgmain = landing_gear.main_gear.weight.W / WMTO
 
     ftesys = parg[igWtesys] / WMTO
 
