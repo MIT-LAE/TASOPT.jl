@@ -75,6 +75,7 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
     seat_width = fuse.cabin.seat_width 
     aisle_halfwidth = fuse.cabin.aisle_halfwidth
     h_seat = fuse.cabin.seat_height
+    d_floor = fuse.cabin.floor_distance
 
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
@@ -87,6 +88,9 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank)
 
         lcyl, _ = find_double_decker_cabin_length(xopt, fuse) #Total length is maximum of the two
 
+        #Store angles
+        fuse.cabin.floor_angle_main = xopt[2]
+        fuse.cabin.floor_angle_top = find_floor_angles(true, Rfuse, dRfuse, θ1 = xopt[2], h_seat = h_seat, d_floor = d_floor)[2]
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         paxsize = fuse.cabin.exit_limit #maximum number of passengers
