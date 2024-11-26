@@ -20,7 +20,7 @@ of interpolated E3 compressor data generated externally.
     - `Nb_?`:   derivatives
 
 """
-function NcTblMap(pratio, mb, piD, mbD, NbD, map)
+function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD::Float64, map::compressorTbl)
     # ---- Calculate map scaling factors
     s_Nb = NbD / map.Nb_des
     s_pr = (piD - 1) / (map.pr_des - 1)
@@ -31,8 +31,9 @@ function NcTblMap(pratio, mb, piD, mbD, NbD, map)
     mb_descl = mb / s_mb
 
     # ---- Perform the bilinear interpolation on the precomputed map table
-    Nnom = evalNc(map, mb_descl, pratio_descl)
-    Nnom_mb, Nnom_pr = evalNcGrad(map, mb_descl, pratio_descl)
+    Nnom, Nnom_mb, Nnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
+                                             map.Np, map.mbGrid, map.prGrid, map.Nb_nom, 
+                                             map.Nb_mb, map.Nb_pr)
 
     # ---- Rescale map speed to using s_Nb
     Nb = Nnom * s_Nb
@@ -85,8 +86,10 @@ function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
     # ---- Perform the bilinear interpolation on the precomputed map table for nominal value
     # ---- NOTE: Polytropic efficiency table was generated using g=1.4 and R=287 J/kgK
     # effnom, effnom_mb, effnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.eff_poly_tbl)
-    effnom = evalEff(map, mb_descl, pratio_descl)
-    effnom_mb, effnom_pr = evalEffGrad(map, mb_descl, pratio_descl)
+    # ---- Perform the bilinear interpolation on the precomputed map table
+    effnom, effnom_mb, effnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
+                                                         map.Np, map.mbGrid, map.prGrid, map.Eff_nom, 
+                                                         map.Eff_mb, map.Eff_pr)
 
     # ---- Rescale map speed to using s_eff
     eff = effnom * s_eff
