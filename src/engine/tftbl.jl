@@ -264,7 +264,7 @@ end # checkMapHash
 function map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=250, Rres=250, Mres=100, Pres=100)
     genComp, compDict = checkMapHash(gridded_map_name, data_map_name)
 
-    if genComp
+    if true
         # Generate new fan data and save to a file
         compStruct = create_map_struct(data_map_name; method=map_gridding_method, Nres=Nres, Rres=Rres, Mres=Mres, Pres=Pres)
         compTbl_to_TOML(compStruct, gridded_map_name)    
@@ -276,7 +276,9 @@ function map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=
 end # map_startup
 
 
+N, R, M, P = 300, 500, 250, 250
+
 # Create compressorTbl objects as constants to prevent re-generating all the maps every run
-const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Triangle(0; allow_cache=false); Nres=300, Rres=300, Mres=100, Pres=100)
-const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(0);                      Nres=300, Rres=300, Mres=100, Pres=100)
-const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Triangle(0; allow_cache=false); Nres=300, Rres=300, Mres=100, Pres=100)
+const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Triangle(0; allow_cache=false); Nres=N, Rres=R, Mres=M, Pres=P)
+const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(0);                      Nres=N, Rres=R, Mres=M, Pres=P)
+const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Triangle(0; allow_cache=false); Nres=N, Rres=R, Mres=M, Pres=P)
