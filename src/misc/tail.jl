@@ -11,7 +11,24 @@ $TYPEDFIELDS
     """Tail Layout """
     layout::WingLayout = WingLayout()
     """Tail Section """
-    outboard::TailSection = TailSection()
+    outboard::WingSection= WingSection()
+    inboard::WingSection = WingSection()
+    """Tail Strut"""
+    has_strut::Bool = false
+    strut::Strut = Strut()
+    """Tip lift roll-off factor"""
+    tip_lift_loss::Float64 = 0.0
+    """Aircraft pitching moment contribution from the weight distribution of the strut [N m]"""
+    dxW::Float64 = 0
+    # igbs = igbo
+    # strutz = 0
+    # lambdat = gammat = iglambdah 
+    # lambdas = gammas = 1.0
+
+    # create inner
+    # lambdas, gammas = 1.0
+    # igbs = igbo
+    # hboxs = hboxh
     """Tail Weight [N] """
     weight::Float64 = 0
     """Tail Added Weight Fraction"""
@@ -36,3 +53,19 @@ $TYPEDFIELDS
     move_wingbox::Int64 = 0
     
 end
+
+function wing_additional_weight(tail::Tail)
+    return tail.weight_fraction_added
+end
+
+"""
+"""
+function Base.getproperty(obj::Tail, sym::Symbol)
+    if hasfield(Tail, sym)
+        return getfield(obj, sym)
+    elseif hasfield(WingLayout, sym)
+        return getfield(obj.layout, sym)
+    else
+        throw(KeyError("Property $sym not found in Wing or WingLayout"))
+    end
+end  # function Base.getproperty

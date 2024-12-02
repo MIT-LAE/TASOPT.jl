@@ -29,6 +29,7 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
        Eweb = Ecap
        Gcap = Ecap * 0.5 / (1.0 + 0.3)
        Gweb = Ecap * 0.5 / (1.0 + 0.3)
+       
 
        cosL = cosd(tail.layout.sweep)
        sinL = sind(tail.layout.sweep)
@@ -91,11 +92,11 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
 	 Eweb*cop^4 * tbwebo*(tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord)^3 / 6.0
       EIno = Ecap*cop^4 * tbcapo*    tail.outboard.cross_section.width_to_chord  ^3 / 6.0 +
 	 Eweb*cop^4 * tbwebo*tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord * 0.5*tail.outboard.cross_section.width_to_chord^2
-      GJo = cop^4 * 2.0*((tail.outboard.cross_section.width_to_chord-tbwebo)*(havgo-tbcapo))^2 /
+      #  println("GJ SURFT: cop = $cop, width_to_chord = $(tail.outboard.cross_section.width_to_chord), tbwebo = $tbwebo, havgo = $havgo, tbcapo = $tbcapo, web_to_box_height = $(tail.outboard.cross_section.web_to_box_height), thickness_to_chord = $(tail.outboard.cross_section.thickness_to_chord), Gweb = $Gweb, Gcap = $Gcap")
+       GJo = cop^4 * 2.0*((tail.outboard.cross_section.width_to_chord-tbwebo)*(havgo-tbcapo))^2 /
 	 (  (tail.outboard.cross_section.web_to_box_height*tail.outboard.cross_section.thickness_to_chord-tbcapo)/(Gweb*tbwebo) +
 	 (   tail.outboard.cross_section.width_to_chord -tbwebo)/(Gcap*tbcapo) )
-
-
+      
       Vcen = tail.layout.root_chord^2*b *  etao / 2.0
 
       Vinn = tail.layout.root_chord^2*b * (etas-etao) *
@@ -133,9 +134,9 @@ function surft!(tail, po, lambdas,gammat,gammas,fLt,
         Whtail = tail.ntails * (Wscen + Wsinn + Wsout) * (1.0 + tail.weight_fraction_added)
         dxWhtail = tail.ntails * (dxWsinn + dxWsout) * (1.0 + tail.weight_fraction_added)
         tail.weight = Whtail
-        tail.outboard.dxW = dxWhtail
+        tail.dxW = dxWhtail
 
-     tail.outboard.thickness_web, tail.outboard.thickness_cap, tail.outboard.EI[1], tail.outboard.EI[4], tail.outboard.GJ =  tbwebo,tbcapo,EIco,EIno,GJo
+     tail.outboard.webs.thickness, tail.outboard.caps.thickness, tail.outboard.EI[1], tail.outboard.EI[4], tail.outboard.GJ =  tbwebo,tbcapo,EIco,EIno,GJo
 end # surft!
 
 

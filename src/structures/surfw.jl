@@ -36,6 +36,7 @@ function size_wing_section!(section, sweep, sigfac)
     web_height = cross_section.web_to_box_height * cross_section.thickness_to_chord
 
     tbweb, Abweb = size_web(tauweb, shear_load, cs * cosL, web_height)
+    
     tbcap, Abcap = size_cap(sigcap, moment, cross_section.thickness_to_chord,
         cross_section.width_to_chord, h_rms, cs, cosL)
 
@@ -45,7 +46,7 @@ function size_wing_section!(section, sweep, sigfac)
     # EI_yy 
     section.EI[4] = Ecap * cp^4 * tbcap * cross_section.width_to_chord^3 / 6.0 +
                                 Eweb * cp^4 * tbweb * web_height * 0.5 * cross_section.width_to_chord^2
-            
+    # println("GJ SURFW: cp = $cp, width_to_chord = $(cross_section.width_to_chord), tbweb = $tbweb, h_avg = $h_avg, tbcap = $tbcap, web_to_box_height = $(cross_section.web_to_box_height), thickness_to_chord = $(cross_section.thickness_to_chord), Gweb = $Gweb, Gcap = $Gcap")
     section.GJ = cp^4 * 2.0*((cross_section.width_to_chord-tbweb)*(h_avg-tbcap))^2 /
         (  (cross_section.web_to_box_height*section.cross_section.thickness_to_chord-tbcap)/(Gweb*tbweb) +
         (   cross_section.width_to_chord -tbweb)/(Gcap*tbcap) )
@@ -81,7 +82,7 @@ Also returns the material gauges, torsional and bending stiffness.
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
 function surfw!(wing, po, gammat, gammas, 
-       Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel)
+       Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
     tauweb,sigstrut = wing.inboard.webs.material.τmax * sigfac, wing.strut.material.σmax * sigfac
 
@@ -238,8 +239,8 @@ function surfw!(wing, po, gammat, gammas,
     wing.outboard.webs.thickness = tbwebs
 
     fwadd = wing_additional_weight(wing)
-    Wwing = 2.0 * (Wscen + Wsinn + Wsout) * (1.0 + fwadd)
-    wing.dxW = 2.0 * (dxWsinn + dxWsout) * (1.0 + fwadd)
+    Wwing = n_wings * (Wscen + Wsinn + Wsout) * (1.0 + fwadd)
+    wing.dxW = n_wings * (dxWsinn + dxWsout) * (1.0 + fwadd)
 
     return Wwing,Wsinn,Wsout,dyWsinn,dyWsout,Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,lsp
 

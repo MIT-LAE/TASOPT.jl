@@ -25,7 +25,7 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     #TODO the hardcoded 10 ft is not elegant
 
     seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
-    
+
     rows = Int(ceil(pax / seats_per_row))
 
     if seats_per_row <= 10
