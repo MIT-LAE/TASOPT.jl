@@ -632,7 +632,7 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     #     htail.layout.ηs = 0.0
     # end
     htail.inboard.λ = 1.0
-    vtail.inboard.λ = 1.0
+    
     # igbs = igbo
     # strutz = 0
     # lambdat = gammat = iglambdah 
@@ -712,6 +712,7 @@ dvtail = dtails["Vtail"]
 readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.layout.AR = readvtail("AR_Vtail")
     vtail.outboard.λ = readvtail("taper")
+    vtail.inboard.λ = 1.0
     vtail.layout.sweep  = readvtail("sweep")
     vtail.layout.root_span = Distance(readvtail("center_box_halfspan"))
     vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
