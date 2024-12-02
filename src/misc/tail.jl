@@ -10,7 +10,7 @@ $TYPEDFIELDS
 @kwdef mutable struct Tail
     """Tail Layout """
     layout::WingLayout = WingLayout()
-    """Tail Section """
+    """Tail Sections """
     outboard::WingSection= WingSection()
     inboard::WingSection = WingSection()
     """Tail Strut"""
@@ -20,15 +20,6 @@ $TYPEDFIELDS
     tip_lift_loss::Float64 = 0.0
     """Aircraft pitching moment contribution from the weight distribution of the strut [N m]"""
     dxW::Float64 = 0
-    # igbs = igbo
-    # strutz = 0
-    # lambdat = gammat = iglambdah 
-    # lambdas = gammas = 1.0
-
-    # create inner
-    # lambdas, gammas = 1.0
-    # igbs = igbo
-    # hboxs = hboxh
     """Tail Weight [N] """
     weight::Float64 = 0
     """Tail Added Weight Fraction"""
@@ -51,7 +42,6 @@ $TYPEDFIELDS
     ntails::Float64 = 0
     """Move wingbox factor. 0="fix" wing position ,1=move wing to get CLh="CLhspec" in cruise, 2= move wing to get min static margin = "SMmin"  """
     move_wingbox::Int64 = 0
-    
 end
 
 function wing_additional_weight(tail::Tail)

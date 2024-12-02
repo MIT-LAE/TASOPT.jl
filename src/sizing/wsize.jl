@@ -663,25 +663,13 @@ function wsize(ac; itermax=35,
         vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ
         vtail.inboard.co = vtail.layout.root_chord
         bv = bv2 / 2
-        vtail.layout.span = bv
+        vtail.layout.span = bv2
         vtail.layout.ηs = vtail.layout.ηo
 
         # HT weight
-        
-        htail.inboard.webs.material.G=2.6518299575060688e10
-        htail.outboard.webs.material.G=2.6518299575060688e10
-        htail.inboard.caps.material.G=2.6518299575060688e10
-        htail.outboard.caps.material.G=2.6518299575060688e10
         htail.weight,_=surfw!(htail, poh, htail.outboard.λ, htail.inboard.λ,
                 0.0, 0.0, 0, 0.0, 0, 0.0,
                 parg[igsigfac], rhofuel)
-
-        # println("weight $(htail.weight), 14400.815502104786")
-        # htail.weight = 14400.815502104786
-        # htail.outboard.GJ = 198224681.32888934016227722168 
-        # surft!(htail, poh, λhs, htail.outboard.λ, λhs,
-        # fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
-        # wing.inboard.webs.ρ, wing.inboard.caps.ρ)
         
         # HT centroid x-offset
         calculate_centroid_offset!(htail, htail.layout.span, λhs)
@@ -693,11 +681,12 @@ function wsize(ac; itermax=35,
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        surft!(vtail, pov, λvs, vtail.outboard.λ, λvs,
-        fLt,tauwebv, σcapv, wing.inboard.caps.material.E, 
-        wing.inboard.webs.ρ, wing.inboard.caps.ρ, bv2)
-
-        # vtail.layout.span = bv
+        vtail.weight,_=surfw!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
+        0.0, 0.0, 0, 0.0, 0, 0.0,
+        parg[igsigfac], rhofuel; n_wings=vtail.ntails)
+        # Set VT span
+        vtail.layout.span = bv
+        
         # VT centroid x-offset
         calculate_centroid_offset!(vtail, bv2, λhs)
         # ----------------------
