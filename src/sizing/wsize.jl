@@ -653,15 +653,11 @@ function wsize(ac; itermax=35,
         end
 
         # Set HT max loading magnitude
-        htail.layout.span, htail.layout.root_chord, poh = tailpo(Sh, htail.layout.AR, htail.outboard.λ, qne, htail.CL_max)
-        htail.outboard.co = htail.layout.root_chord*htail.inboard.λ
-        htail.inboard.co = htail.layout.root_chord
+        poh,htail.layout.span = tailpo!(htail,Sh, qne)
         htail.layout.ηs = htail.layout.ηo
-
+        
         # Set VT max loading magnitude, based on single tail + its bottom image
-        bv2, vtail.layout.root_chord, pov = tailpo(2.0 * Sv / vtail.ntails, 2.0 * vtail.layout.AR, vtail.outboard.λ, qne, vtail.CL_max)
-        vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ
-        vtail.inboard.co = vtail.layout.root_chord
+        pov,bv2 = tailpo!(vtail,2.0 * Sv / vtail.ntails, qne; t_fac=2.0)
         bv = bv2 / 2
         vtail.layout.span = bv2
         vtail.layout.ηs = vtail.layout.ηo
@@ -685,7 +681,7 @@ function wsize(ac; itermax=35,
         0.0, 0.0, 0, 0.0, 0, 0.0,
         parg[igsigfac], rhofuel; n_wings=vtail.ntails)
         # Set VT span
-        vtail.layout.span = bv
+        vtail.layout.span = vtail.layout.span/2.0
         
         # VT centroid x-offset
         calculate_centroid_offset!(vtail, bv2, λhs)

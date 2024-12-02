@@ -1,5 +1,5 @@
 """
-    tailpo(S, AR, λa, qne, CLmax)
+    tailpo!(tail,S,qne; t_fac = 1.0)
 
 Calculates stabilizer span, root chord, and root loading based on the 
 never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
@@ -19,10 +19,12 @@ never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
 
 See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function tailpo(S, AR, λa, qne, CLmax)
+function tailpo!(tail, S, qne; t_fac = 1.0)
 
-    b  = sqrt(S*AR)
-    co = S/(0.5*b*(1.0+λa))
-    po = qne*S*CLmax/b * 2.0/(1.0 + λa)
-    return b, co, po
+    b  = sqrt(S*tail.layout.AR*t_fac)
+    tail.layout.root_chord = S/(0.5*b*(1.0+tail.outboard.λ))
+    po = qne*S*tail.CL_max/b * 2.0/(1.0 + tail.outboard.λ)
+    tail.outboard.co = tail.layout.root_chord*tail.inboard.λ
+    tail.inboard.co = tail.layout.root_chord
+    return po,b
 end
