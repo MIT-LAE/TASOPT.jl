@@ -495,7 +495,7 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
             # ax.plot(xh, -yh, "-k", zorder = tailz)
             ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
         xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
-        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.root_chord*vtail.layout.box_x/2) 0.0])[:]
+        yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.root_chord*vtail.outboard.cross_section.thickness_to_chord/2) 0.0])[:]
         ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
 
         # Plot fuse
@@ -592,10 +592,10 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     if annotate_length
         yloc = -20
         ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
-                fontsize=16, ha="center", va="bottom",
+                fontsize=label_fs, ha="center", va="bottom",
                 arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
                 zorder = 30)
-        ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
+        ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = label_fs-2, zorder = 31)
     end
     # Span annotations:
     groups, bmax = find_aerodrome_code(wing.layout.max_span) #Find ICAO and FAA groups as well as max span
@@ -607,8 +607,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
         ax.hlines(-bmax/2, xcode, 40.0, lw = 5, alpha = 0.2, color = "y")
         ax.text(20, bmax/2+1, "ICAO Code $(groups[1])/ FAA Group $(groups[2])", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
     end
-    ax.set_ylim(-1.2*bmax/2, 1.2*bmax/2)
-
+    ax.set_ylim(-39, 39)
+    ax.set_xlim(0, 80)
+    # println("LIMS ARE ",-1.2*bmax/2, " ", 1.2*bmax/2)
     ax.set_aspect(1)
     ax.set_ylabel("y[m]")
     ax.set_xlabel("x[m]")

@@ -541,6 +541,8 @@ aero = readwing("Aero")
 daero = dwing["Aero"]
     wing.fuse_lift_carryover = readaero("fuselage_lift_carryover_loss_factor")
     wing.tip_lift_loss = readaero("wing_tip_lift_rolloff_factor")
+    htail.tip_lift_loss = wing.tip_lift_loss
+    vtail.tip_lift_loss = wing.tip_lift_loss
 
     para[iacdfw, 1:iptotal, :]   .= readaero("lowspeed_cdf")  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
     para[iacdpw, 1:iptotal, :]   .= readaero("lowspeed_cdp")  #  cdpw    
@@ -624,6 +626,22 @@ readtails(x) = read_input(x, tails, dtails)
 readhtail(x) = read_input(x, htail_input, dhtail)
     htail.layout.AR = readhtail("AR_Htail")
     htail.outboard.λ = readhtail("taper")
+    #TODO: change 
+    multi_section = readhtail("multi_section")
+    # if !multi_section
+    #     htail.layout.ηs = 0.0
+    # end
+    htail.inboard.λ = 1.0
+    vtail.inboard.λ = 1.0
+    # igbs = igbo
+    # strutz = 0
+    # lambdat = gammat = iglambdah 
+    # lambdas = gammas = 1.0
+
+    # create inner
+    # lambdas, gammas = 1.0
+    # igbs = igbo
+    # hboxs = hboxh
     htail.layout.sweep = readhtail("sweep")
     htail.layout.root_span = 2*Distance(readhtail("center_box_halfspan"))
 
@@ -684,6 +702,10 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     htail.outboard.cross_section.thickness_to_chord = readhtail("box_height_chord")
     htail.outboard.cross_section.web_to_box_height  = readhtail("web_height_hbox")
 
+    htail.inboard.cross_section.width_to_chord = readhtail("box_width_to_chord")
+    htail.inboard.cross_section.thickness_to_chord = readhtail("box_height_chord")
+    htail.inboard.cross_section.web_to_box_height  = readhtail("web_height_hbox")
+    
 
 vtail_input = readtails("Vtail")
 dvtail = dtails["Vtail"]
@@ -714,6 +736,10 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.outboard.cross_section.width_to_chord = readvtail("box_width_to_chord")
     vtail.outboard.cross_section.thickness_to_chord = readvtail("box_height_chord")
     vtail.outboard.cross_section.web_to_box_height  = readvtail("web_height_hbox")
+
+    vtail.inboard.cross_section.width_to_chord = readvtail("box_width_to_chord")
+    vtail.inboard.cross_section.thickness_to_chord = readvtail("box_height_chord")
+    vtail.inboard.cross_section.web_to_box_height  = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----
 

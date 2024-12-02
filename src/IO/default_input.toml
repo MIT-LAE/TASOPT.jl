@@ -322,6 +322,7 @@
     excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
 
     [Stabilizers.Htail]
+        multi_section = false # True for inner and outer section
         AR_Htail = 6.0
         taper = 0.25
         sweep = 26.0 #typically can be set to be the same as the wings
