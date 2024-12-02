@@ -23,10 +23,7 @@ structures.surfw!(wing, po, gammat, gammas,
        Nload, We, neout, dyeout, neinn, dyeinn,
        fLt, sigfac, rhofuel)
 
-structures.surft!(tail, po, lambdas,gammat,gammas,fLt,
-            tauweb,sigcap,Ecap,rhoweb,rhocap,b)
-
-structures.tailpo(S, AR, λa, qne, CLmax)
+structures.tailpo!(tail,S, qne)
 
 structures.calculate_centroid_offset(b, bs, bo, λt, λs, sweep)
 ```

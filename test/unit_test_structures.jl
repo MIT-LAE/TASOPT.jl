@@ -116,18 +116,19 @@ Wwing,Wsinn,Wsout,
 @test fort_lstrutp ≈ lstrutp 
 #end surfw
 
-#surft
+#surfw for Htail
 poh = 115893.98734144184
 λhs = 1.0
 fLt = -0.05
 tauwebh = 1.378913257881327e8
 σcaph = 2.0684848484848484e8
-surft_f_out = [14400.81547163942, 14069.611170000926, 0.0011568849664072272, 0.0023905578555627194, 1.896322960387795e8, 1.2616774558497725e9, 1.982246806635212e8]
-TASOPT.surft!(htail, poh, λhs, htail.outboard.λ, λhs,
-        fLt,tauwebh, σcaph, wing.inboard.caps.material.E, 
-        wing.inboard.webs.ρ, wing.inboard.caps.ρ)
+surft_f_out = [14400.81547163942, 14069.611170000926, 0.0011568849664072272, 0.0023905578555627194, 1.896322960387795e8, 1.2616774558497725e9, 1.794003547786858e8]
 
-surft_out = [htail.weight, htail.outboard.dxW, htail.outboard.thickness_web, htail.outboard.thickness_cap, htail.outboard.EI[1], htail.outboard.EI[4], htail.outboard.GJ]
+TASOPT.surfw!(htail, poh, htail.outboard.λ, λhs,
+0.0, 0.0, 0, 0.0, 0, 0.0,
+sigfac, rhofuel)
+
+surft_out = [htail.weight, htail.dxW, htail.outboard.webs.thickness, htail.outboard.caps.thickness, htail.outboard.EI[1], htail.outboard.EI[4], htail.outboard.GJ]
 
 @test all(isapprox.(surft_out, surft_f_out))
 #end surft
@@ -143,10 +144,10 @@ surft_out = [htail.weight, htail.outboard.dxW, htail.outboard.thickness_web, hta
   fort_coh = 4.2554980786323124
   fort_poh = 108025.98516125829
 
-bh, coh, poh = TASOPT.structures.tailpo(Sh, ARh, lambdah, qne, CLhmax)
+poh = TASOPT.structures.tailpo!(htail, Sh, qne)
 
-@test fort_bh ≈ bh
-@test fort_coh ≈ coh
+@test fort_bh ≈ htail.layout.span
+@test fort_coh ≈ htail.layout.root_chord
 @test fort_poh ≈ poh
 #end tailpo:
 
