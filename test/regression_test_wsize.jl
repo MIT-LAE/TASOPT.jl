@@ -28,6 +28,17 @@ function check_struct_equivalence(s1, s2)
     return true
 end
 
+#Simple function to call woper() and test off-design performance
+function test_ac_off_design(ac, PFEI, Wfuel, WTO)
+    @testset "Off-design" begin
+        TASOPT.woper(ac, 2)
+
+        @test ac.parm[imPFEI, 2] ≈ PFEI
+        @test ac.parm[imWfuel, 2] ≈ Wfuel
+        @test ac.parm[imWTO, 2] ≈ WTO
+    end
+end
+
 @testset "Default sizing" verbose=true begin
     ac = load_default_model()
     
@@ -62,6 +73,8 @@ end
             @test pare[i] ≈ ac.pare[i] rtol=1e-6
         end
     end
+
+    test_ac_off_design(ac, 1.077314940360805, 151768.98663144396, 763300.0390620844)
     
     @test ac.parm[imPFEI] ≈  0.9186795447828657
 end
