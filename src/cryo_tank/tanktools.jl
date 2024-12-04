@@ -204,8 +204,8 @@ function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_ho
     para_alt[iatime, Np-1] = maximum(para_alt[iatime, :])
     para_alt[iatime, Np] = para_alt[iatime, Np-1] + t_hold_dest #Apply hold at destination
 
-    pare_alt = zeros(size(ac.pare)[1], size(ac.pare)[2] + 3, size(ac.pare)[3])
-    pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:]
+    pare_alt = zeros(size(ac.pare)[1], size(ac.pare)[2] + 3)
+    pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:, im]
     
     #Precompute heat transfer rate at each mission point for speed
     Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.pari, ac.parg, para_alt)

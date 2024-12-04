@@ -239,10 +239,13 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     end
 
     set_ambient_conditions!(ac, ipcruise1)
+
     if (pari[iifwing] == 0) #If fuel is stored in the fuselage
-        _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
-        parm[imWfvent] = Mvents[end] * gee
+        #Analyze pressure evolution in tank and store the vented mass flow rate
+        _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, mi)
+        parm[imWfvent] = Mvents[end] * gee #Store vented weight
     end
+    
     # Calling mission
     time_propsys += mission!(pari, parg, parm, para, pare, fuse, false)
     # println(parm[imWfuel,:])
