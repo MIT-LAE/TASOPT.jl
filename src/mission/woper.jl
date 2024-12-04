@@ -9,19 +9,18 @@
 - `mi::Int4`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
 - `initeng::Boolean`: Use design case as initial guess for engine state if true
-- `saveOffDesign::Boolean`: Set true if you want computed quanties to be saved in the selected off design par arrays of the aircraft model
 
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
+function woper(ac, mi = 1; itermax = 35, initeng = true)
 
     pari = ac.pari
     parg = ac.parg
-    parm = ac.parm[:,mi:mi]
-    para = ac.para[:,:,mi:mi]
-    pare = ac.pare[:,:,mi:mi]
+    parm = view(ac.parm, :, mi:mi)
+    para = view(ac.para, :, :, mi:mi)
+    pare = view(ac.pare, :, :, mi:mi)
     parad = ac.parad
     pared = ac.pared
 
@@ -245,7 +244,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
         _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, mi)
         parm[imWfvent] = Mvents[end] * gee #Store vented weight
     end
-    
+
     # Calling mission
     time_propsys += mission!(pari, parg, parm, para, pare, fuse, false)
     # println(parm[imWfuel,:])
@@ -258,17 +257,12 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     errw1 = (WTO - WTO1)/WTO
     errw2 = (WTO - WTO2)/WTO
     errw3 = (WTO - WTO3)/WTO
-println(WTO)
+
     errw = max(abs(errw1), abs(errw2), abs(errw3))
 
     if (errw <= tolerW) 
           Lconv = true
-          printstyled("Converged!", "\n"; color=:green)
-          if saveOffDesign
-            ac.parm[:,mi:mi] = parm
-            ac.para[:,:,mi:mi] = para
-            ac.pare[:,:,mi:mi] = pare
-          end
+
           break
     end
 
