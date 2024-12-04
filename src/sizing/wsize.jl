@@ -104,7 +104,7 @@ function wsize(ac; itermax=35,
     para[iaPAfinf, :] .= PAfinf
 
     #Calculate fuel lower heating value for PFEI
-    parm[imLHVfuel] = fuelLHV(ifuel)
+    parg[igLHVfuel] = fuelLHV(ifuel)
 
     # Set quantities that are fixed during weight iteration
 
@@ -1177,7 +1177,8 @@ function wsize(ac; itermax=35,
 
             #Use homogeneous tank model to calculate required venting
             _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
-            parg[igWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
+            parm[imWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
+            parg[igWfvent] = parm[imWfvent] #Store vented weight as parg parameter too
             fuse_tank.pmin = minimum(ps) #Store minimum tank pressure across mission
 
             if iterw > 2 #Calculate takeoff engine state and time

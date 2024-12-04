@@ -45,7 +45,6 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
     parm[imDeltaTatm] = ΔTatmos
 
-
     # Calculates surface velocities, boundary layer, wake 
     fusebl!(fuse, parm, para, ipcruise1)
 
@@ -240,7 +239,10 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     end
 
     set_ambient_conditions!(ac, ipcruise1)
-
+    if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+        _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
+        parm[imWfvent] = Mvents[end] * gee
+    end
     # Calling mission
     time_propsys += mission!(pari, parg, parm, para, pare, fuse, false)
     # println(parm[imWfuel,:])

@@ -293,10 +293,8 @@ parm[imthCB   , :]  .= 40.0 * π/180.0
 
         if pari[iifuel] == 1
             parg[igrhofuel]  = ρmix(0.1, 1.5)
-            parg[igLHVfuel]  = 120 # MJ/kg
         elseif pari[iifuel] == 2
             parg[igrhofuel]  = 817.0 #kg/m³
-            parg[igLHVfuel]  = 43.0 # MJ/kg
         end
 
         # if pari[iifuel] == 0
