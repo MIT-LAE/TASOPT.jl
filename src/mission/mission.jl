@@ -780,7 +780,8 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       end
 
       # mission fuel fractions and weights
-      Wfvent = parg[igWfvent] #Weight of fuel that is vented from tank
+      Wfvent = parm[imWfvent] #Weight of fuel that is vented from tank
+
       ffvent = Wfvent/WMTO #weight fraction of vented fuel
       
       fracWa = para[iafracW, ipclimb1]
@@ -797,7 +798,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
 
       # mission PFEI
       Wburn = WMTO * fburn
-      parm[imPFEI] = Wburn/gee * parm[imLHVfuel] / (parm[imWpay] * parm[imRange])
+      parm[imPFEI] = Wburn/gee * parg[igLHVfuel] / (parm[imWpay] * parm[imRange])
 
       return t_prop
 end
