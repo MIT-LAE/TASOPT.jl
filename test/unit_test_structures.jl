@@ -67,7 +67,7 @@ dx_out, macco_out = TASOPT.structures.calculate_centroid_offset(b,bs,bo,lambdat,
 # end calculate_centroid_offset
 
 
-#surfw:
+#get_wing_weights:
   po = 114119.45308868506
   gammat = 0.225
   gammas = 0.8665999999999999
@@ -96,7 +96,7 @@ Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
-        dyWfinn,dyWfout,lstrutp = TASOPT.surfw!(wing, po, gammat, gammas,
+        dyWfinn,dyWfout,lstrutp = TASOPT.get_wing_weights!(wing, po, gammat, gammas,
                                             Nlift, Weng1, 0, 0.0, 0, 0.0,
                                             sigfac, rhofuel)
 
@@ -114,9 +114,9 @@ Wwing,Wsinn,Wsout,
 @test fort_dyWfinn ≈ dyWfinn 
 @test fort_dyWfout ≈ dyWfout 
 @test fort_lstrutp ≈ lstrutp 
-#end surfw
+#end get_wing_weights
 
-#surfw for Htail
+#get_wing_weights for Htail
 poh = 115893.98734144184
 λhs = 1.0
 fLt = -0.05
@@ -124,7 +124,7 @@ tauwebh = 1.378913257881327e8
 σcaph = 2.0684848484848484e8
 surft_f_out = [14400.81547163942, 14069.611170000926, 0.0011568849664072272, 0.0023905578555627194, 1.896322960387795e8, 1.2616774558497725e9, 1.794003547786858e8]
 
-TASOPT.surfw!(htail, poh, htail.outboard.λ, λhs,
+TASOPT.get_wing_weights!(htail, poh, htail.outboard.λ, λhs,
 0.0, 0.0, 0, 0.0, 0, 0.0,
 sigfac, rhofuel)
 
@@ -144,7 +144,7 @@ surft_out = [htail.weight, htail.dxW, htail.outboard.webs.thickness, htail.outbo
   fort_coh = 4.2554980786323124
   fort_poh = 108025.98516125829
 
-poh,htail_span = TASOPT.structures.tailpo!(htail, Sh, qne)
+poh,htail_span = TASOPT.aerodynamics.tailpo!(htail, Sh, qne)
 
 @test fort_bh ≈ htail_span
 @test fort_coh ≈ htail.layout.root_chord

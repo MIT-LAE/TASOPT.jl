@@ -10,7 +10,7 @@ using LinearAlgebra
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-export airfoil, cdsum!, surfcm, set_wing_geometry!, wingpo, wingcl, fusebl!
+export airfoil, cdsum!, surfcm, set_wing_geometry!, wingpo, tailpo!, wingcl, fusebl!
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded

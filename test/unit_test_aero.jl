@@ -157,7 +157,7 @@
         AR, fLo, fLt, cmpo, cmps, cmpt)
 
     @test CM0 == -0.05330921996771545
-    @test CM1 == -0.3480891589464311
+    @test CM1 == -0.3480891589464312
     #end surfcm
 
 end

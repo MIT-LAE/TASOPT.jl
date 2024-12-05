@@ -41,7 +41,7 @@ function takeoff!(ac; printTO = true)
     Vstall = pare[ieu0, iprotate]
     V2 = pare[ieu0, iptakeoff]
 
-    cosL = cos(sweep * pi / 180.0)
+    cosL = cosd(sweep)
     Afan = 0.25 * pi * dfan^2 * (1.0 - HTRf^2)
     CDgear = parg[igCDgear]
     CDeng = parg[igcdefan] * (0.25 * pi * dfan^2) / S

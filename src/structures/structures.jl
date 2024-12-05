@@ -14,7 +14,7 @@ using Roots
 using NLopt
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
-export surfw!, calculate_centroid_offset!, calculate_centroid_offset, fusew!, tailpo!,
+export get_wing_weights!, calculate_centroid_offset!, calculate_centroid_offset, fusew!,
  update_fuse!, update_fuse_for_pax!, place_cabin_seats, find_cabin_width, find_floor_angles, arrange_seats
 
 
@@ -36,13 +36,11 @@ include("../misc/fuselage_geometry.jl")
 
 include("../misc/wingSections.jl")
 include("../misc/wing.jl")
-export WingSection,TailSection,Wing,wing_additional_weight 
-include("../misc/tail.jl")
-export Tail
+export WingSection,TailSection,Wing,Tail,wing_additional_weight 
+
 #include sizing of surfaces
 include("calculate_centroid_offset.jl")
-include("surfw.jl")
-include("tailpo.jl")
+include("get_wing_weights.jl")
 
 include("size_cabin.jl") #Seat layouts and cabin length
 

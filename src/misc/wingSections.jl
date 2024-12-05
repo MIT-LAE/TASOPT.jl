@@ -78,7 +78,6 @@ end
     thickness_cap::Float64 = 0
     """Webs Thickness [m]"""
     thickness_web::Float64 = 0
-    dxW::Float64 = 0
 end
 
 """
@@ -113,6 +112,20 @@ See [WingSection](@ref) and [WingCrossSection](@ref) as well.
 end
 
 """
+"""
+function Base.getproperty(obj::WingLayout, sym::Symbol)
+    if sym === :ηo
+        getfield(obj, :root_span)/getfield(obj, :span)
+    elseif sym === :break_span
+        getfield(obj, :ηs)*getfield(obj, :span)
+    else
+        getfield(obj, sym)
+    end
+    
+end  # function Base.get_property
+
+
+"""
     normalized_chord(η; λs = 0.8, λt = 0.7, ηo=0.0, ηs = 0.5)
 
 Piecewise function to give the normalized chord C = c/co; co is the root chord.
@@ -133,7 +146,7 @@ end  # function normalized_chord
     get_average_sparbox_heights(section::WingCrossSection) -> (h̄_avg, h̄_rms)
 
 Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
-These are used in [`surfw`](@ref) for further calculations
+These are used in [`get_wing_weights`](@ref) for further calculations
 """
 function get_average_sparbox_heights(section::WingCrossSection)
     A = 1 - section.web_to_box_height

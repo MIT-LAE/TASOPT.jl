@@ -19,6 +19,8 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_lifting.md"))
 ```@docs
 aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail)
 
+aerodynamics.tailpo!(tail,S, qne)
+
 aerodynamics.wingcl(wing,γt,γs,
             CL,CLhtail,
             duo,dus,dut)
