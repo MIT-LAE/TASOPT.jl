@@ -243,12 +243,21 @@ end # get_wing_weights
 """
     size_cap(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
 
-Calculates Area and thickness of wing caps
+Calculates area and thickness of wing caps based on maximum stress and geometric parameters.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `sigfac::Float64`: Stress factor
+    - `σmax::Float64`: Maximum allowable stress
+    - `moment::Float64`: Bending moment
+    - `h̄::Float64`: Height-to-chord ratio
+    - `w̄::Float64`: Width-to-chord ratio
+    - `h_rms::Float64`: RMS height of sparbox
+    - `c::Float64`: Chord length
+    - `cosΛ::Float64`: Cosine of sweep angle
+    
     **Outputs:**
+    - `t_cap::Float64`: Thickness of cap
+    - `Ab_cap::Float64`: Cross-sectional area of cap
 """
 function size_cap(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
     t_cap = calc_cap_thickness(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
@@ -257,6 +266,20 @@ function size_cap(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
 end  # function size_cap
 
 """
+    size_web(τmax, shear, c_perp, web_height)
+
+Calculates area and thickness of wing webs based on maximum shear stress and geometric parameters.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `τmax::Float64`: Maximum allowable shear stress
+    - `shear::Float64`: Shear load
+    - `c_perp::Float64`: Perpendicular chord length
+    - `web_height::Float64`: Height of web
+    
+    **Outputs:**
+    - `t_web::Float64`: Thickness of web
+    - `Ab_web::Float64`: Cross-sectional area of web
 """
 function size_web(τmax, shear, c_perp, web_height)
     t_web = calc_web_thickness(τmax, shear, c_perp, web_height)
@@ -265,6 +288,19 @@ function size_web(τmax, shear, c_perp, web_height)
 end  # function size_web
 
 """
+    calc_web_thickness(τmax, shear, c_perp, web_height)
+
+Calculates the required web thickness based on maximum shear stress and loading conditions.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `τmax::Float64`: Maximum allowable shear stress
+    - `shear::Float64`: Shear load
+    - `c_perp::Float64`: Perpendicular chord length
+    - `web_height::Float64`: Height of web
+    
+    **Outputs:**
+    - `t_web::Float64`: Required thickness of web
 """
 function calc_web_thickness(τmax, shear, c_perp, web_height)
     t_web = shear / (c_perp^2 * 2 * web_height * τmax)
@@ -272,6 +308,22 @@ function calc_web_thickness(τmax, shear, c_perp, web_height)
 end  # function calc_web_thickness
 
 """
+    calc_cap_thickness(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
+
+Calculates the required cap thickness based on maximum stress and geometric parameters.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `σmax::Float64`: Maximum allowable stress
+    - `moment::Float64`: Bending moment
+    - `h̄::Float64`: Height-to-chord ratio
+    - `w̄::Float64`: Width-to-chord ratio
+    - `h_rms::Float64`: RMS height of sparbox
+    - `c::Float64`: Chord length
+    - `cosΛ::Float64`: Cosine of sweep angle
+    
+    **Outputs:**
+    - `t_cap::Float64`: Required thickness of cap
 """
 function calc_cap_thickness(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
     con = moment * 6h̄ / w̄ * 1 / (c^3 * σmax * cosΛ^4)
