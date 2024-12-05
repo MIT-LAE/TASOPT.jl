@@ -21,7 +21,6 @@ jobs:
           version:          #as defined by setup-julia - https://github.com/julia-actions/setup-julia?tab=readme-ov-file#examples
                - '1.9'      #initial version for tasopt dev
                - 'lts'      #long-term-support, julia 1.10 as of 10/2024
-               - 'nightly'  #latest and greatest build
           os: 
               - ubuntu-latest
           arch: 
