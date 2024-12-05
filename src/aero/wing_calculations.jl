@@ -46,6 +46,34 @@ function wingpo(wing, rclt, rcls, N, W, Lhtail)
     return po
 end # wingpo
 
+"""
+    tailpo!(tail,S,qne; t_fac = 1.0)
+
+Calculates stabilizer span, root chord, and root loading based on the 
+never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `tail::TASOPT.structures.tail`: Tail structure.
+    - `S::Float64`: Stabilizer area.
+    - `qne::Float64`: Never-exceed dynamic pressure.
+    - `t_fac::Float64`: Tail Factor (1 for Htail/Wing, 2 for Vtail).
+    
+    **Outputs:**
+    - `po::Float64`: Stabilizer root loading.
+    - `b::Float64`: Stabilizer wingspan.
+
+See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
+"""
+function tailpo!(tail, S, qne; t_fac = 1.0)
+
+    b  = sqrt(S*tail.layout.AR*t_fac)
+    tail.layout.root_chord = S/(0.5*b*(1.0+tail.outboard.λ))
+    po = qne*S*tail.CL_max/b * 2.0/(1.0 + tail.outboard.λ)
+    tail.outboard.co = tail.layout.root_chord*tail.inboard.λ
+    tail.inboard.co = tail.layout.root_chord
+    return po,b
+end
 
 """
     wingcl(wing, gammat, gammas,
@@ -189,8 +217,8 @@ See also [`surfcd`](@ref) and [`surfcd2`](@ref).
 """
 function surfcm(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo, cmps, cmpt)
 
-    cosL = cos(sweep * pi / 180.0)
-    tanL = tan(sweep * pi / 180.0)
+    cosL = cosd(sweep)
+    tanL = tand(sweep)
 
     ηo = bo / b
     ηs = bs / b

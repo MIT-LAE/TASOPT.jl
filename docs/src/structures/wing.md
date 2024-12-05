@@ -19,11 +19,9 @@ Markdown.parse_file(joinpath("../..", "src/structures","theory_wingstruct.md"))
 structures.size_wing_section!(layout, section, cs, cp, 
         cap_material, tauweb, sigfac)
 
-structures.surfw!(wing, po, gammat, gammas, 
+structures.get_wing_weights!(wing, po, gammat, gammas, 
        Nload, We, neout, dyeout, neinn, dyeinn,
        fLt, sigfac, rhofuel)
-
-structures.tailpo!(tail,S, qne)
 
 structures.calculate_centroid_offset(b, bs, bo, λt, λs, sweep)
 ```

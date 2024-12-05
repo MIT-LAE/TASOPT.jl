@@ -1,5 +1,7 @@
 using DocStringExtensions
 using ..aerodynamics
+abstract type AbstractWing end
+
 """
 $TYPEDEF
 
@@ -46,7 +48,7 @@ Wing Structure:
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct Wing
+@kwdef mutable struct Wing <: AbstractWing
     """Wing Weight [N] """
     weight::Float64 = 0
     """Aircraft pitching moment contribution from the weight distribution of the wing [Nm]"""
@@ -98,33 +100,71 @@ $TYPEDFIELDS
 
 end
 
-function wing_additional_weight(wing::Wing)
-    return wing.weight_frac_flap + wing.weight_frac_slat + wing.weight_frac_ailerons + 
-            wing.weight_frac_leading_trailing_edge + wing.weight_frac_ribs +
-            wing.weight_frac_spoilers + wing.weight_frac_attachments
+"""
+$TYPEDEF
+
+Tail
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct Tail <: AbstractWing
+    """Tail Layout """
+    layout::WingLayout = WingLayout()
+    """Tail Sections """
+    outboard::WingSection= WingSection()
+    inboard::WingSection = WingSection()
+    """Tail Strut"""
+    has_strut::Bool = false
+    strut::Strut = Strut()
+    """Tip lift roll-off factor"""
+    tip_lift_loss::Float64 = 0.0
+    """Aircraft pitching moment contribution from the weight distribution of the strut [N m]"""
+    dxW::Float64 = 0
+    """Tail Weight [N] """
+    weight::Float64 = 0
+    """Tail Added Weight Fraction"""
+    weight_fraction_added::Float64 = 0
+    """Tail Max CL """
+    CL_max::Float64 = 0
+    """Tail Volume [m^3] """
+    volume::Float64 = 0
+    """Tail Sizing factor: 1=set Sh via specified Vh, 2=et Sh via CLhCGfwd at max-forward CG during landing """
+    size::Int64 = 0
+    """Tail Downwash factor dε/dα """
+    downwash_factor::Float64 = 0
+    """Tail max fwd CG (only used if HTsize == "maxforwardCG") """
+    CL_max_fwd_CG::Float64 = 0
+    """Tail Minimum static margin"""
+    SM_min::Float64 = 0
+    """Max Tail down load. Tail download param at max load case"""
+    CL_CLmax::Float64 = 0
+    """Number of Tails"""
+    ntails::Float64 = 0
+    """Move wingbox factor. 0="fix" wing position ,1=move wing to get CLh="CLhspec" in cruise, 2= move wing to get min static margin = "SMmin"  """
+    move_wingbox::Int64 = 0
+end
+
+function wing_additional_weight(wing::AbstractWing)
+    if wing isa Wing
+        return wing.weight_frac_flap + wing.weight_frac_slat + wing.weight_frac_ailerons + 
+        wing.weight_frac_leading_trailing_edge + wing.weight_frac_ribs +
+        wing.weight_frac_spoilers + wing.weight_frac_attachments
+    elseif wing isa Tail
+        return wing.weight_fraction_added
+    end
+    
 end
 
 
 """
 """
-function Base.getproperty(obj::Wing, sym::Symbol)
-    if hasfield(Wing, sym)
+function Base.getproperty(obj::AbstractWing, sym::Symbol)
+    concrete_type = typeof(obj)  # Gets the actual type (Wing or Tail)
+    if hasfield(concrete_type, sym)
         return getfield(obj, sym)
     elseif hasfield(WingLayout, sym)
         return getfield(obj.layout, sym)
     else
-        throw(KeyError("Property $sym not found in Wing or WingLayout"))
+        throw(KeyError("Property $sym not found in $(concrete_type) or WingLayout"))
     end
-end  # function Base.getproperty
-"""
-"""
-function Base.getproperty(obj::WingLayout, sym::Symbol)
-    if sym === :ηo
-        getfield(obj, :root_span)/getfield(obj, :span)
-    elseif sym === :break_span
-        getfield(obj, :ηs)*getfield(obj, :span)
-    else
-        getfield(obj, sym)
-    end
-    
-end  # function Base.get_property
+end

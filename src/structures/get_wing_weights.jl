@@ -1,17 +1,12 @@
 """
-    size_wing_section!(layout, section, cs, cp, 
-        cap_material, tauweb, sigfac)
+    size_wing_section!(section, sweep, sigfac)
 
 Calculates Loads and thicknesses for wing sections
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `layout::TASOPT.structures.Wing.WingLayout`: Wing Layout.
     - `section::TASOPT.structures.Wing.WingSection`: Wing Section to be sized.
-    - `cs::Float64`: Wing section chord.
-    - `cp::Float64`: Chord times cosine of sweep
-    - `cap_material::TASOPT.materials`: Material of cap.
-    - `tauweb::Float64`: Webs tau
+    - `sweep::Float64`: Wing sweep.
     - `sigfac::Float64`: Stress factor
 """
 function size_wing_section!(section, sweep, sigfac)
@@ -35,7 +30,7 @@ function size_wing_section!(section, sweep, sigfac)
 
     web_height = cross_section.web_to_box_height * cross_section.thickness_to_chord
 
-    tbweb, Abweb = size_web(tauweb, shear_load, cs * cosL, web_height)
+    tbweb, Abweb = size_web(tauweb, shear_load, cp, web_height)
     
     tbcap, Abcap = size_cap(sigcap, moment, cross_section.thickness_to_chord,
         cross_section.width_to_chord, h_rms, cs, cosL)
@@ -55,9 +50,8 @@ function size_wing_section!(section, sweep, sigfac)
 end
 
 """
-    surfw!(wing, po, gammat, gammas, 
-    Nload, We, neout, dyeout, neinn, dyeinn,
-    fLt, sigfac, rhofuel)
+    get_wing_weights!(wing, po, gammat, gammas, 
+       Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
 Calculates Wing or Tail loads, stresses, weights of individual wing sections.
 Also returns the material gauges, torsional and bending stiffness.
@@ -69,19 +63,18 @@ Also returns the material gauges, torsional and bending stiffness.
     - `gammat::Float64`: Tip airfoil section shape exponent.
     - `gammas::Float64`: Start airfoil section shape exponent.
     - `Nload::Int`: Number of loads (used to distribute engine loads).
-    - `iwplan::Int`: Indicates the presence of a strut.
     - `We::Float64`: Weight of the engine.
     - `neout::Int`: Number of outboard engines.
     - `dyeout::Float64`: Distance between engines and the wingtip.
     - `neinn::Int`: Number of inboard engines.
     - `dyeinn::Float64`: Distance between engines and the wing root.
-    - `fLt::Float64`: Factor applied to the tip load.
     - `sigfac::Float64`: Stress Factor.
     - `rhofuel::Float64`: Density of the fuel.
+    - `n_wings::Int64`: Number of total wings (1 for Vtail).
 
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
-function surfw!(wing, po, gammat, gammas, 
+function get_wing_weights!(wing, po, gammat, gammas, 
        Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
     tauweb,sigstrut = wing.inboard.webs.material.τmax * sigfac, wing.strut.material.σmax * sigfac
@@ -244,10 +237,18 @@ function surfw!(wing, po, gammat, gammas,
 
     return Wwing,Wsinn,Wsout,dyWsinn,dyWsout,Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,lsp
 
-end # surfw
+end # get_wing_weights
 
 
 """
+    size_cap(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
+
+Calculates Area and thickness of wing caps
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `sigfac::Float64`: Stress factor
+    **Outputs:**
 """
 function size_cap(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
     t_cap = calc_cap_thickness(σmax, moment, h̄, w̄, h_rms, c, cosΛ)
