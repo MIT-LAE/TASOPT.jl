@@ -18,9 +18,9 @@ function find_mdot_time(t::Float64, pari::Vector{Int64}, parg::Vector{Float64}, 
     nftanks = pari[iinftanks]
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
-    mdots = pare[ieff, :,1] .* pare[iemcore, :,1] .* parg[igneng] / nftanks
+    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / nftanks
 
-    times = para[iatime,:,1]
+    times = para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
     if t in times
@@ -70,9 +70,9 @@ function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{In
     Npoints = size(para)[2]
     Qs = zeros(Npoints)
     for ip = 1:Npoints
-        Mair = para[iaMach, ip, 1]
-        z = para[iaalt, ip, 1]
-        t = para[iatime, ip, 1]
+        Mair = para[iaMach, ip]
+        z = para[iaalt, ip]
+        t = para[iatime, ip]
 
         #Calculate heat rate at this point
         Qs[ip], _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
@@ -96,7 +96,7 @@ at each mission point for speed.
     - `Q::Float64`: heat transfer rate (W)
 """
 function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64})
-    times = para[iatime,:,1]
+    times = para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
     if t in times
@@ -151,10 +151,10 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, pari:
         elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
-            M0 = para[iaMach, ip, 1]
-            Mf = para[iaMach, ip+1, 1]
-            z0 = para[iaalt, ip, 1]
-            zf = para[iaalt, ip+1, 1]
+            M0 = para[iaMach, ip]
+            Mf = para[iaMach, ip+1]
+            z0 = para[iaalt, ip]
+            zf = para[iaalt, ip+1]
 
             #Interpolate Mach number and altitude linearly
             Mair = M0 + (Mf - M0)/(tf-t0) * (t - t0) 

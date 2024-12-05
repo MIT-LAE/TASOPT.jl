@@ -1103,7 +1103,7 @@ function MomentShear(parg)
 end
 
 """
-    PayloadRange(ac_og, Rpts, Ppts, filename, OEW, itermax)
+    PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false, uniform_map = true)
 
 Function to plot a payload range diagram for an aircraft
 
@@ -1114,35 +1114,48 @@ Function to plot a payload range diagram for an aircraft
     - `Ppts::Int64`: Density of payloads to be plot (Optional).
     - `filename::String`: filename string for the plot to be stored (Optional).
     - `OEW::Boolean`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
-    - `itermax::Int64`: Max Iterations for woper loop (Optional).
-    - `initeng::Boolean`: Use design case as initial guess for engine state if true (Optional)
+    - `uniform_map::Boolean`: use a uniform or non-uniform spacing between ranges and payloads (Optional)
 """
+function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false, uniform_map = true)
+    #Duplicate design mission as second mission, which will be modified
+    parm = cat(ac_og.parm[:,1], ac_og.parm[:,1], dims=2)
+    pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
+    para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
+    ac = aircraft(ac_og.name, ac_og.description,
+    ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank, ac_og.fuselage)
 
-function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false)
-    ac = deepcopy(ac_og)
-    RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
-    maxPay = 0
-
+    #Extract aircraft parameters
+    maxPay = ac.parg[igWpaymax]
     Wmax = ac.parg[igWMTO]
     Fuelmax = ac.parg[igWfmax]
     Wempty = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
+    PFEI = 0
+
+    #Use a uniform or non-uniform map for the range 
+    if uniform_map #Use unifrom map
+        RangeMap = LinRange(0.1,2, Rpts)
+        PayMap = LinRange(1, 0, Ppts)
+    else #greater density around design range
+        RangeMap = unique([LinRange(0.01,1, Int64(ceil(Rpts/2)+1)).^0.5; 1 .+ LinRange(0,1, Int64(floor(Rpts/2))).^2])
+        PayMap = LinRange(1, 0, Ppts).^0.75 #Use a map with greater density in the high payloads
+    end
+    RangeArray = ac.parm[imRange,1] * RangeMap
+    Payloads = PayMap * maxPay
 
     RangesToPlot = []
     PayloadToPlot = []
-    maxPay = ac.parm[imWpay]
+    PFEIsToPlot = []
 
     for Range = RangeArray
         if maxPay == 0
-            break
-        else
-            Payloads = (maxPay) * LinRange(1, 0, Ppts)
+            break   
         end
         ac.parm[imRange,2] = Range
         for mWpay = Payloads
             println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
             ac.parm[imWpay,2] = mWpay
             try
-                TASOPT.woper(ac, 2, saveOffDesign = true)
+                TASOPT.woper(ac, 2)
                 # woper success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
@@ -1154,9 +1167,11 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
                     if mWpay == 0
                         println("Payload 0 and no convergence found")
                         maxPay = 0
+                        PFEI = NaN
                     end
                 else
                     maxPay = mWpay
+                    PFEI = ac.parm[imPFEI, 2]
                     println("Converged - moving to next range...")
                     break
                 end     
@@ -1165,6 +1180,7 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
             end
         end
         append!(RangesToPlot, Range)
+        append!(PFEIsToPlot, PFEI)
         if OEW
             append!(PayloadToPlot, maxPay+Wempty)
         else
@@ -1173,13 +1189,26 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
     end
     println(RangesToPlot)
     println(PayloadToPlot)
-    fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-    ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
-    ax.set_xlabel("Range (1000 nmi)")
-    ax.set_ylabel("Weight (1000 kg)")
-    ax.legend()
-    ax.set_title("Payload Range Plot")
-    ax.grid()
+    fig, axes = pyplot.subplots(2,1,figsize=(8,10), dpi = 300)
+    ax1 = axes[0]
+    ax2 = axes[1]
+
+    ax1.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
+    ax1.set_xlabel("Range (1000 nmi)")
+    ax1.set_ylabel("Weight (1000 kg)")
+    ax1.legend()
+    ax1.set_xlim([0,RangesToPlot[end] / (1000*1852.0)])
+    ax1.set_title("Payload-Range Plot")
+    ax1.grid()
+
+    ax2.plot(RangesToPlot ./ (1000*1852.0), PFEIsToPlot, linestyle="-",  color="b")
+    ax2.set_xlabel("Range (1000 nmi)")
+    ax2.set_ylabel("PFEI at maximum payload")
+    ax2.legend()
+    ax2.set_ylim([0,2])
+    ax2.set_xlim([0,RangesToPlot[end] / (1000*1852.0)])
+    ax2.set_title("PFEI-Range Plot")
+    ax2.grid()
 
     fig.savefig(filename)
 end
