@@ -144,9 +144,9 @@ surft_out = [htail.weight, htail.dxW, htail.outboard.webs.thickness, htail.outbo
   fort_coh = 4.2554980786323124
   fort_poh = 108025.98516125829
 
-poh = TASOPT.structures.tailpo!(htail, Sh, qne)
+poh,htail_span = TASOPT.structures.tailpo!(htail, Sh, qne)
 
-@test fort_bh ≈ htail.layout.span
+@test fort_bh ≈ htail_span
 @test fort_coh ≈ htail.layout.root_chord
 @test fort_poh ≈ poh
 #end tailpo:
@@ -216,15 +216,15 @@ parg[igdxeng2wbox] = 1.5239999999999991
 fuselage.APU.r = [36.576, 0.0, 0.0]
 fuselage.layout.x_end = 37.7952
 fuselage.layout.x_cone_end = 35.6616
-parg[igxhbox ] = 34.8996
-parg[igxvbox ] = 33.528
-parg[igxwbox] = 16.04432532088372
-parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+htail.layout.box_x = 34.8996
+vtail.layout.box_x = 33.528
+wing.layout.box_x = 16.04432532088372
+parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
 fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-parg[igseatpitch] = 0.762
-parg[igseatwidth] = 0.4826
-parg[igaislehalfwidth] = 0.254
+fuselage.cabin.seat_pitch = 0.762
+fuselage.cabin.seat_width = 0.4826
+fuselage.cabin.aisle_halfwidth = 0.254
 parg[igWpaymax] = 219964.5779
 fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
@@ -233,9 +233,10 @@ pari[iidoubledeck] = 0
 
 fuse_tank = TASOPT.fuselage_tank()
 
-TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank)
+TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail)
 
-parg_check = [14.584924835954398, 16.108924835954397, 35.05200000000001, 33.680400000000006, 219964.5779, 1.5239999999999991, 0.762, 0.4826, 0.254]
+parg_check = [14.584924835954398, 219964.5779, 1.5239999999999991]
+
 parg_nz = deepcopy(parg)
 deleteat!(parg_nz, parg_nz .== 0)
 for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
