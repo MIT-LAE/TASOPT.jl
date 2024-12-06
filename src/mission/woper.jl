@@ -246,7 +246,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true)
     end
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, fuse, false)
+    time_propsys += mission!(pari, parg, parm, para, pare, fuse, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
