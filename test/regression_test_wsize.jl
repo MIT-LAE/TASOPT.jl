@@ -74,7 +74,7 @@ end
         end
     end
 
-    test_ac_off_design(ac, 1.077314940360805, 151768.98663144396, 763300.0390620844)
+    test_ac_off_design(ac, 1.0108638919129378, 142407.55674154367, 753938.6094352446)
     
     @test ac.parm[imPFEI] ≈  0.9186795447828657
 end
@@ -186,6 +186,6 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈ 0.9805703474546061
+    @test ac.parm[imPFEI] ≈ 0.9805702555616473
 
 end

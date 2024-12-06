@@ -1,5 +1,5 @@
 """
-    mission!(pari, parg, parm, para, pare, Ldebug)
+    mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise = false)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
@@ -8,16 +8,7 @@ Input:
  pari[.]   integer flags
  parg[.]   geometry parameters
  parm[.]   mission parameters
- iairf     index of airfoil database to use
- initeng    0 = engine state will be initialized for all points
-            1 = engine state is assumed to be initialized
- ipc1       0 = ipcruise1 aero and engine point needs to be calculated
-            1 = ipcruise1 aero and engine point assumed calculated
-
-Input/Output:
- para[.p]  aero     parameters for points p=1..iptotal
- pare[.p]  engine   parameters for points p=1..iptotal
-
+ calculate_cruise  boolean flag to calculate start-of-cruise in off-design
 
 NOTE: 
  This routine assumes that estimates of the climb-leg flight path 
@@ -30,7 +21,7 @@ NOTE:
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, ipc1)
+function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise = false)
 
       t_prop = 0.0
       calc_ipc1 = true
@@ -39,8 +30,6 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       # HACK TODO add the para back
       # iairf
       initeng = 0
-      # ipc1 = 0
-      ipc1 = 0 # HACK
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -444,22 +433,23 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug)#, iairf, initeng, 
       balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
 
       # if (calc_ipc1)
-      if (ipc1 == 0)
+      if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
-            # println(pare[ieFe, ip])
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
             cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
             F = BW * (DoL + para[iagamV, ip])
+            pare[ieFe, ip] = F / parg[igneng] #Store required thrust for engine calcs
             Wpay = parg[igWpay]
+
             icall = 2
             icool = 1
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
-
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)    
       end
 
       # set cruise-climb climb angle, from fuel burn rate and atmospheric dp/dz

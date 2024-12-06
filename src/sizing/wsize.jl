@@ -1262,7 +1262,6 @@ function wsize(ac; itermax=35,
         gamV = para[iagamV, ip]
         We = para[iafracW, ip] * WMTO
         BW = We + WbuoyCR
-        # Fdes = BW * (1 / LoD + gamV) * 1.05 #Ad-hoc 5% addition for OEI
         Fdes = BW * (1 / LoD + gamV)
 
         pare[ieFe, ip] = Fdes / neng
