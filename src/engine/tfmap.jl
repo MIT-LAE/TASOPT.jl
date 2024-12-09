@@ -1,3 +1,106 @@
+include(joinpath(__TASOPTroot__,"utils/bilinearBounded.jl"))
+
+"""
+    NcTblMap(pratio, mb, piD, mbD, NbD, map)
+
+Calculates compressor or fan corrected speed as a function of pressure ratio and corrected mass flow using bilinear interpolation
+of interpolated E3 compressor data generated externally.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:   pressure ratio 
+    - `mb`:       corrected mass flow
+    - `piD`:      design pressure ratio
+    - `mbD`:      design corrected mass flow
+    - `NbD`:      design corrected speed
+    - `map`:      dictionary of map data loaded in `tftbl.jl`
+
+    **Outputs:**
+    - `Nb`:     wheel speed
+    - `Nb_?`:   derivatives
+
+"""
+function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD::Float64, map::compressorTbl)
+    # ---- Calculate map scaling factors
+    s_Nb = NbD / map.Nb_des
+    s_pr = (piD - 1) / (map.pr_des - 1)
+    s_mb = mbD / map.mb_des
+
+    # ---- De-scale inputs back to nominal E3 map values
+    pratio_descl = (pratio - 1) / s_pr + 1
+    mb_descl = mb / s_mb
+
+    # ---- Perform the bilinear interpolation on the precomputed map table
+    Nnom, Nnom_mb, Nnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
+                                             map.Np, map.mbGrid, map.prGrid, map.Nb_nom, 
+                                             map.Nb_mb, map.Nb_pr)
+
+    # ---- Rescale map speed to using s_Nb
+    Nb = Nnom * s_Nb
+    Nb_pi = Nnom_pr * s_Nb / s_pr 
+    Nb_mb = Nnom_mb * s_Nb / s_mb
+
+    return Nb, Nb_pi, Nb_mb
+
+end # NcInterpMap
+
+
+"""
+    ecTblMap(pratio, mb, piD, mbD, map, effo, piK, effK; g=1.4, R=287)
+
+Calculates compressor or fan polytropic efficiency as a function of pressure ratio and corrected mass flow using bilinear interpolation
+of interpolated E3 compressor data generated externally.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pratio`:        pressure ratio
+    - `mb`:        corrected mass flow
+    - `piD`:       design pressure ratio
+    - `mbD`:       design corrected mass flow
+    - `map`:       dictionary of map data loaded in `tftbl.jl`
+    - `effo`:      maximum efficiency
+    - `g`:         specific heat ratio; default 1.4
+    - `R`:         gas constant for air; default 287 J/kgK
+
+    **Outputs:**
+    - `eff`:        efficiency
+    - `eff_?`:      derivatives
+
+"""
+function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
+    # TODO: [Does TASOPT have station-wise estimates of specific heat ratio?
+    #        Check that we don't actually need piK and effK]
+
+    # ---- Define anonymous functions to convert between isentropic and polytropic efficiency
+    isen_to_poly = (pr, isen, g) -> (g-1)/g * log(pr) / log( (pr^((g-1)/g) - 1) / isen + 1 )
+
+    # ---- Calculate map scaling factors
+    s_pr = (piD - 1) / (map.pr_des - 1)
+    s_mb = mbD / map.mb_des
+    s_eff = effo / isen_to_poly(map.pr_des, map.eff_is_des, g) # Scale polytropic efficiency
+
+    # ---- De-scale inputs back to nominal E3 map values
+    pratio_descl = (pratio - 1) / s_pr + 1
+    mb_descl = mb / s_mb
+
+    # ---- Perform the bilinear interpolation on the precomputed map table for nominal value
+    # ---- NOTE: Polytropic efficiency table was generated using g=1.4 and R=287 J/kgK
+    # effnom, effnom_mb, effnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.eff_poly_tbl)
+    # ---- Perform the bilinear interpolation on the precomputed map table
+    effnom, effnom_mb, effnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
+                                                         map.Np, map.mbGrid, map.prGrid, map.Eff_nom, 
+                                                         map.Eff_mb, map.Eff_pr)
+
+    # ---- Rescale map speed to using s_eff
+    eff = effnom * s_eff
+    eff_pi = effnom_pr * s_eff / s_pr
+    eff_mb = effnom_mb * s_eff / s_mb
+
+    return eff, eff_pi, eff_mb
+
+end # ecTblMap
+
+
 """
     Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
