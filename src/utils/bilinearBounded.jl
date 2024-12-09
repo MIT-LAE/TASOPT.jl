@@ -67,19 +67,19 @@ function bilinearBoundedLookup(x::Float64, y::Float64, dx::Float64, dy::Float64,
 
     # ---- Get function values at bounding points
     p1 = nominal[xIndLow, yIndLow]
-    p2 = nominal[xIndUpp, yIndLow]
+    p2 = nominal[xIndLow, yIndUpp]
     p3 = nominal[xIndUpp, yIndUpp]
-    p4 = nominal[xIndLow, yIndUpp]
+    p4 = nominal[xIndUpp, yIndLow]
 
     p1x = dqdx[xIndLow, yIndLow]
-    p2x = dqdx[xIndUpp, yIndLow]
+    p2x = dqdx[xIndLow, yIndUpp]
     p3x = dqdx[xIndUpp, yIndUpp]
-    p4x = dqdx[xIndLow, yIndUpp]
+    p4x = dqdx[xIndUpp, yIndLow]
 
     p1y = dqdy[xIndLow, yIndLow]
-    p2y = dqdy[xIndUpp, yIndLow]
+    p2y = dqdy[xIndLow, yIndUpp]
     p3y = dqdy[xIndUpp, yIndUpp]
-    p4y = dqdy[xIndLow, yIndUpp]
+    p4y = dqdy[xIndUpp, yIndLow]
 
     xLow, xUpp = xGrid[xIndLow], xGrid[xIndUpp]
     yLow, yUpp = yGrid[yIndLow], yGrid[yIndUpp]

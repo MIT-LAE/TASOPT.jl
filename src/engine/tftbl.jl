@@ -1,6 +1,37 @@
 """
 `tftbl.jl` loads in the E3 map data for bilinear interpolation in tfmap.jl
 """
+
+"""
+    compressorTbl
+
+A type representing a compressor map, parameterized in terms of mass flow and pressure ratio. Data is either generated from NPSS data using `create_map_struct` or is loaded
+directly. In either case, the data files are stored in `src/engine/data`.
+
+# Fields:
+- `Nb_des::Float64`: Design corrected speed
+- `Rline_des::Float64`: Design R-line value; currently unused
+- `mb_des::Float64`: Design corrected mass flow
+- `pr_des::Float64`: Design pressure ratio
+- `eff_is_des::Float64`: Design isentropic efficiency
+
+- `mbGrid::Vector{Float64}`: Grid of mass flow points at which output parameters are defined
+- `prGrid::Vector{Float64}`: Grid of pressure ratio points at which output parameters are defined
+- `dm::Float64`: Mass flow grid spacing
+- `dp::Float64`: Pressure ratio grid spacing
+- `Nm::Int`: Number of mass flow grid points
+- `Np::Int`: Number of pressure ratio grid points
+
+- `Nb_nom::Matrix{Float64}`: Nm by Np matrix of corrected speed values
+- `Nb_mb::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to mass flow
+- `Nb_pr::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to pressure ratio
+
+- `Eff_nom::Matrix{Float64}`: Nm by Np matrix of isentropic efficiencies
+- `Eff_mb::Matrix{Float64}`: Nm by Np matrix of isentriopic efficiency with respect to mass flow
+- `Eff_pr::Matrix{Float64}`: Nm by Np matrix of isentriopic efficiency with respect to pressure ratio
+
+- `hash_val::Integer`: Hash value corresponding to NPSS map data; tracks whether map data has been updated
+"""
 struct compressorTbl
     # ---- Design values
     Nb_des::Float64
@@ -32,6 +63,16 @@ struct compressorTbl
 end 
 
 
+"""
+    compTbl_to_TOML(compressor::compressorTbl, saveName)
+
+Converts a `compressorTbl` object to a TOML-saveable format and saves it as a TOML file to the `src/engine/data/` folder as `saveName`
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `compressor::compressorTbl`:  compressorTbl structure
+    - `saveName`:    string file name for the saved data; should probably end in `.toml`
+"""
 function compTbl_to_TOML(compressor::compressorTbl, saveName)
     # Convert the struct fields to a dictionary
     compressor_dict = Dict(
@@ -61,6 +102,18 @@ function compTbl_to_TOML(compressor::compressorTbl, saveName)
 end # compTbl_to_TOML
 
 
+"""
+    dict_to_compTbl(compressor_dict)
+
+Converts a compressorTbl dictionary (created when reading in a XXXX_gridded.toml file) to a compressorTbl object
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `compressor_dict`:  dictionary containing the compressor_dict data
+
+    **Outputs:**
+    - `compressor_struct`: compressorTbl representation of the data
+"""
 function dict_to_compTbl(compressor_dict)
     compressor_struct = compressorTbl(
         compressor_dict["Nb_des"],
@@ -87,6 +140,34 @@ function dict_to_compTbl(compressor_dict)
 end # dict_to_compTbl
 
 
+"""
+    gen2DGrid(itp, xLow, xHigh, yLow, yHigh, Nx, Ny; method=natNeigh.Sibson(1))
+
+Creates a struct representative of a compressor map given toml inputs like those included
+in the data folder (see E3fan.toml for an example). The struct includes design values of
+corrected speed, Rline, mass flow, pressure ratio, and isentropic efficiency. It also 
+includes four functions meant to act as interpolators for the nominal values and gradients
+for correected speed and efficiency.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `itp`: NaturalNeighbours.NaturalNeighboursInterpolant object such that (x, y) -> f, where f is the interpolated data output
+    - `xLow`: minimum value of the x grid
+    - `xHigh`: maximum value of the x grid
+    - `yLow`: minimum value of the y grid
+    - `yHigh`: maximum value of the y grid
+    - `Nx`: number of x grid points
+    - `Ny`: number of y grid points
+    - `method`: interpolant method; defaults to Sibson-1 from the NaturalNeighbours package
+
+    **Outputs:**
+    - `fGridded`: Nx by Ny matrix of regularly gridded function values
+    - `xg`: vector of x grid values
+    - `yg`: vector of y grid values
+    - `dx`: x grid spacing
+    - `dy`: y grid spacing
+
+"""
 function gen2DGrid(itp, xLow, xHigh, yLow, yHigh, Nx, Ny; method=natNeigh.Sibson(1))
     xg = range(xLow, xHigh, Nx)
     yg = range(yLow, yHigh, Ny)
@@ -105,6 +186,24 @@ function gen2DGrid(itp, xLow, xHigh, yLow, yHigh, Nx, Ny; method=natNeigh.Sibson
 end # gen2DGrid
 
 
+"""
+    gen2DDerivatives(grid, dx, dy, Nx, Ny)
+
+Uses central finite difference method to estimate x and y derivatives of grid values. At boundaries, uses second-order accurate forward/backwards derivatives.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `itp`: NaturalNeighbours.NaturalNeighboursInterpolant object such that (x, y) -> f, where f is the interpolated data output
+    - `dx`: x grid spacing
+    - `dy`: y grid spacing
+    - `Nx`: number of x grid points
+    - `Ny`: number of y grid points
+
+    **Outputs:**
+    - `xDeriv`: Nx by Ny matrix of x derivatives
+    - `yDeriv`: Nx by Ny matrix of y derivatives
+
+"""
 function gen2DDerivatives(grid, dx, dy, Nx, Ny)
     xDeriv = stack(fill(0., Nx, Ny))
     yDeriv = stack(fill(0., Nx, Ny))
@@ -178,9 +277,10 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
     Rvec::Vector{Float64} = vec([j for _ in map["grid"]["grid_Nc"], j in map["grid"]["grid_Rline"]])
 
     # Load in the mass flow, pressure ratio, and isentropic efficiency values in the same order as the points are specified above
-    Mvec::Vector{Float64} = vec([map["characteristic"]["massflow"][i][j]/mb_des for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
-    Pvec::Vector{Float64} = vec([map["characteristic"]["pressure_ratio"][i][j]  for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
-    Evec::Vector{Float64} = vec([map["characteristic"]["isen_efficiency"][i][j] for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
+    # Make sure to normalize the mass flow and pressure ratio by the design values to get them on a similar scale
+    Mvec::Vector{Float64} = vec([map["characteristic"]["massflow"][i][j]/mb_des        for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
+    Pvec::Vector{Float64} = vec([map["characteristic"]["pressure_ratio"][i][j]/pr_des  for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
+    Evec::Vector{Float64} = vec([map["characteristic"]["isen_efficiency"][i][j]        for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
 
     # Create Natural Neighbour interpolators for each parameter in terms of N and R
     println("Creating Grid Interpolators")
@@ -211,8 +311,12 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
     N_gridded, Mg, Pg, dm, dp = gen2DGrid(N_interpolator, minimum(Mvec), maximum(Mvec), minimum(Pvec), maximum(Pvec), Mres, Pres; method=natNeigh.Sibson(1))
     E_gridded, _,  _,  _,  _  = gen2DGrid(E_interpolator, minimum(Mvec), maximum(Mvec), minimum(Pvec), maximum(Pvec), Mres, Pres; method=natNeigh.Sibson(1)) 
 
+    # Scale the mass flow and pressure back up post-interpolation
     Mg = Mg .* mb_des
     dm = dm  * mb_des
+
+    Pg = Pg .* pr_des
+    dp = dp  * pr_des
 
     # Calculate the partial derivatives of N and efficiency to mass flow and pressure ratio on the same grid
     println("Calculating partials")
@@ -247,6 +351,22 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
 end # create_map_struct
 
 
+"""
+    checkMapHash(gridded_map_name, data_map_name)
+
+Loads gridded and NPSS map data from the `src/engine/data/` folder and checks whether the hash value stored in the gridded file is equal to the hash value of the
+NPSS map data.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `gridded_map_name`: name of the gridded data file
+    - `data_map_name`: name of the NPSS map data file
+
+    **Outputs:**
+    - `genComp`: boolean; false if the hash matches, true if the hash does not
+    - `cacheDict`: dictionary representation of the gridded data
+
+"""
 function checkMapHash(gridded_map_name, data_map_name)
     println("Checking hash for"*data_map_name)
     genComp = true
@@ -264,10 +384,30 @@ function checkMapHash(gridded_map_name, data_map_name)
 end # checkMapHash
 
 
-function map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=250, Rres=250, Mres=100, Pres=100)
+"""
+    map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=250, Rres=250, Mres=100, Pres=100)
+
+Map loading and generating function, runs on the time of precompilation. Determines whether a gridded version of the map data already exists and loads it if so. Otherwise
+the map is generated from the NPSS data using `create_map_struct`.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `gridded_map_name`: `.toml` file name of the gridded data
+    - `data_map_name`: `.toml` file name of the NPSS map data
+    - `map_gridding_method`: NaturalNeighbours.NaturalNeighboursInterpolant to be used for map gridding (if needed)
+    - `Nres`: resolution of corrected speed sampling; default 200
+    - `Rres`: resolution of R-line sampling; default 200
+    - `Mres`: resolution of corrected mass flow sampling; default 200
+    - `Pres`: resolution of pressure ratio sampling; default 200
+
+    **Outputs:**
+    - `compStruct`: compressorTbl structure representing the loaded map
+
+"""
+function map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=200, Rres=200, Mres=200, Pres=200)
     genComp, compDict = checkMapHash(gridded_map_name, data_map_name)
 
-    if true
+    if genComp
         # Generate new fan data and save to a file
         compStruct = create_map_struct(data_map_name; method=map_gridding_method, Nres=Nres, Rres=Rres, Mres=Mres, Pres=Pres)
         compTbl_to_TOML(compStruct, gridded_map_name)    
@@ -279,9 +419,10 @@ function map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=
 end # map_startup
 
 
-N, R, M, P = 100, 100, 100, 100
+# Specify desired griding fineness; possibly make this a startup variable?
+N, R, M, P = 200, 200, 200, 200
 
 # Create compressorTbl objects as constants to prevent re-generating all the maps every run
 const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Sibson(1); Nres=N, Rres=R, Mres=M, Pres=P)
-const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(1);                      Nres=N, Rres=R, Mres=M, Pres=P)
+const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(1); Nres=N, Rres=R, Mres=M, Pres=P)
 const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Sibson(1); Nres=N, Rres=R, Mres=M, Pres=P)
