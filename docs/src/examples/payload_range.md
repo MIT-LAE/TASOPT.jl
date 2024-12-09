@@ -4,9 +4,7 @@
 
 ## Choosing a design mission
 
-To plot a payload-range diagram with a fleet of missions you must first load any aircraft model and set it to have 2 missions (The off design mission is how we will see if certain payload and ranges work)
-
-Start by choosing a design mission. Your design mission should be what you want the second corner point in your Payload Range plot to be. Once you have a chosen a specific design range and payload weight (For eg: 3500 nmi and 195 pax) you can add it to the input toml file for eg: `default_input.toml`
+To plot a payload-range diagram with a fleet of missions you must first load any aircraft model. Start by choosing a design mission. Your design mission should be what you want the second corner point in your Payload-Range plot to be. Once you have a chosen a specific design range and payload weight (For eg: 3500 nmi and 195 pax) you can add it to the input toml file for eg: `default_input.toml`
 
 ```toml
 [Mission]
@@ -20,11 +18,11 @@ Start by choosing a design mission. Your design mission should be what you want 
 
 ## Julia script for Payload Range Diagram
 
-Start the script importing `TASOPT.jl`, `PyPlot` and `index.inc` and then loading the default `aircraft` model.
+Start the script importing `TASOPT.jl` and then loading the default `aircraft` model.
 
 ```julia
 # Import modules
-using PyPlot
+using PythonPlot
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
@@ -33,8 +31,8 @@ include(__TASOPTindices__)
 # import indices for calling parameters
 
 # Load aircraft using default module
-ac = TASOPT.read_aircraft_model(joinpath(__TASOPTroot__, "../example/PRD_input.toml"))
-time_wsize = @elapsed size_aircraft!(ac)
+ac = load_default_model() #Use default model for payload-range diagram
+size_aircraft!(ac)
 ```
 
 One way is to call the `PayloadRange` function:
@@ -42,8 +40,9 @@ One way is to call the `PayloadRange` function:
 ```julia
 TASOPT.PayloadRange(ac)
 ```
+In this approach, only one mission needs to be specified. TASOPT will copy the parameters from the sizing mission (e.g., takeoff altitude and temperature), and vary the payload and range to produce a payload-range diagram. 
 
-If you want a more customizable diagram, first initialize some variables for mission range and payloads
+If you want a more customizable diagram, you may specify a second mission and use an approach such as the one below. First initialize some variables for mission range and payloads
 
 ```julia
 # Make an array of ranges to plot
@@ -104,8 +103,8 @@ end
 ## Plot Payload Range diagram
 
 ```julia
-using PyPlot
-fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
+using PythonPlot
+fig, ax = pyplot.subplots(figsize=(8,5), dpi = 300)
 ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
 ax.set_xlabel("Range (1000 nmi)")
 ax.set_ylabel("Weight (1000 kg)")
