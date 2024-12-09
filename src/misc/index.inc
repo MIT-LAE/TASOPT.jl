@@ -56,7 +56,7 @@
       imfexcdt   = 32
       imfexcdf   = 33
       imDeltaTatm= 34
-      imLHVfuel  = 35
+      imWfvent   = 35
       imtotal    = 35
 
 #---- indices for geometry (airframe) variables and other sizing variables
@@ -386,14 +386,14 @@
       const igaislehalfwidth = 250
       const igfloordist = 251
 
-      const igWfvent = 252
-      const igdHXPreC = 253
-      const igdHXInterC = 254
-      const igdHXRegen = 255
+      const igWfvent        = 252
+      const igdHXPreC       = 253
+      const igdHXInterC     = 254
+      const igdHXRegen      = 255
       const igHXaddmassfrac = 256
-      const igWHXs = 257
+      const igWHXs          = 257
 
-      const igtotal    = 257
+      const igtotal         = 257
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1

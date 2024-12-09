@@ -9,19 +9,18 @@
 - `mi::Int4`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
 - `initeng::Boolean`: Use design case as initial guess for engine state if true
-- `saveOffDesign::Boolean`: Set true if you want computed quanties to be saved in the selected off design par arrays of the aircraft model
 
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
+function woper(ac, mi = 1; itermax = 35, initeng = true)
 
     pari = ac.pari
     parg = ac.parg
-    parm = ac.parm[:,mi:mi]
-    para = ac.para[:,:,mi:mi]
-    pare = ac.pare[:,:,mi:mi]
+    parm = view(ac.parm, :, mi:mi)
+    para = view(ac.para, :, :, mi:mi)
+    pare = view(ac.pare, :, :, mi:mi)
     parad = ac.parad
     pared = ac.pared
 
@@ -30,12 +29,8 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     tolerW = 1.0e-8
     errw   = 1.0
 
-    para .= parad
-    pare .= pared
-    
-    para[iaalt, ipcruise1] = 10668
-    para[iaalt, ipclimbn] = 10668
-    para[iaMach, ipclimbn:ipdescent1] .= 0.78
+    fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
+    fuse = ac.fuselage 
 
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
@@ -43,8 +38,14 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 #        para(iafexcdt,ip) = parm[imfexcdt]
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
+    #Calculate sea level temperature corresponding to TO conditions
+    altTO = parm[imaltTO] 
+    T_std,_,_,_,_ = atmos(altTO/1e3)
+    ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
+    parm[imDeltaTatm] = ΔTatmos
+
     # Calculates surface velocities, boundary layer, wake 
-    fusebl!(pari, parg, para, ipcruise1)
+    fusebl!(fuse, parm, para, ipcruise1)
 
 #---- assume K.E., dissipation, drag areas will be the same for all points
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
@@ -217,7 +218,7 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
     para[iaCMh1, :] .= CMh1
 
     # Initialize previous weight iterations
-    WMTO1, WMTO2, WMTO3 = zeros(Float64, 3) #1st-previous to 3rd previous iteration weight for convergence criterion
+    WTO1, WTO2, WTO3 = zeros(Float64, 3) #1st-previous to 3rd previous iteration weight for convergence criterion
 
 #---- no convergence yet
     Lconv = false
@@ -238,37 +239,38 @@ function woper(ac, mi = 1; itermax = 35, initeng = true, saveOffDesign = false)
 
     set_ambient_conditions!(ac, ipcruise1)
 
+    if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+        #Analyze pressure evolution in tank and store the vented mass flow rate
+        _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, mi)
+        parm[imWfvent] = Mvents[end] * gee #Store vented weight
+    end
+
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, false)
+    time_propsys += mission!(pari, parg, parm, para, pare, fuse, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
 
 # Convergence tests
     
-    WMTO = parg[igWMTO]
-    errw1 = (WMTO - WMTO1)/WMTO
-    errw2 = (WMTO - WMTO2)/WMTO
-    errw3 = (WMTO - WMTO3)/WMTO
+    WTO = parm[imWTO]
+    errw1 = (WTO - WTO1)/WTO
+    errw2 = (WTO - WTO2)/WTO
+    errw3 = (WTO - WTO3)/WTO
 
     errw = max(abs(errw1), abs(errw2), abs(errw3))
 
     if (errw <= tolerW) 
           Lconv = true
-          printstyled("Converged!", "\n"; color=:green)
-          if saveOffDesign
-            ac.parm[:,mi:mi] = parm
-            ac.para[:,:,mi:mi] = para
-            ac.pare[:,:,mi:mi] = pare
-          end
+
           break
     end
 
 #-----------------------------------------------------------------
 #---- set previous-iteration weights for next iteration
-    WMTO3 = WMTO2
-    WMTO2 = WMTO1
-    WMTO1 = parg[igWMTO]
+    WTO3 = WTO2
+    WTO2 = WTO1
+    WTO1 = parm[imWTO]
 
     end
 
