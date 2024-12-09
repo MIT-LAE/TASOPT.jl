@@ -255,14 +255,10 @@ fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484
 pari = zeros(iitotal)
 pari[iinftanks] = 1
 
-# parg_orig = deepcopy(parg)
-# deleteat!(parg_orig, parg_orig .== 0)
-
 #Update fuel tank length and check changes
 parg[iglftank] = 5.0
 TASOPT.update_fuse!(fuselage, pari, parg)
 
-# parg_check = [43.40480000000001, 6.096, 35.175200000000004, 36.699200000000005, 41.27120000000001, 14.52032532088372, 16.04432532088372, 40.50920000000001, 39.137600000000006, 42.18560000000001, 21.660776608000003, 5.0, 23.4696, 1.5239999999999991, 18.716634144] 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
 fuselage.layout.x_pressure_shell_aft, 
 fuselage.layout.x_cone_end, 
@@ -295,42 +291,47 @@ parg[igxeng]]
 update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79520000000001, 9.82323826413696, 34.89960000000001, 33.528000000000006, 14.52032532088372]
 @test all(isapprox.(update_fuse_out, update_fuse_out_test))
 
-# #Test cabin resizing
-# parg = zeros(igtotal)
-# fuselage.layout.x_start_cylinder = 6.096
-# fuselage.layout.x_end_cylinder = 29.5656
-# fuselage.layout.x_pressure_shell_aft = 31.0896
-# parg[igdxcabin] = 23.4696
-# parg[igdxeng2wbox] = 1.5239999999999991
-# fuselage.APU.r = [36.576, 0.0, 0.0]
-# fuselage.layout.x_end = 37.7952
-# fuselage.layout.x_cone_end = 35.6616
-# parg[igxhbox ] = 34.8996
-# parg[igxvbox ] = 33.528
-# parg[igxwbox] = 16.04432532088372
-# parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
-# fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
+#Test cabin resizing
+parg = zeros(igtotal)
+fuselage.layout.x_start_cylinder = 6.096
+fuselage.layout.x_end_cylinder = 29.5656
+fuselage.layout.x_pressure_shell_aft = 31.0896
+fuselage.layout.l_cabin_cylinder = 23.4696
+parg[igdxeng2wbox] = 1.5239999999999991
+fuselage.APU.r = [36.576, 0.0, 0.0]
+fuselage.layout.x_end = 37.7952
+fuselage.layout.x_cone_end = 35.6616
+parg[igxhbox ] = 34.8996
+parg[igxvbox ] = 33.528
+parg[igxwbox] = 16.04432532088372
+parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-# parg[igseatpitch] = 0.762
-# parg[igseatwidth] = 0.4826
-# parg[igaislehalfwidth] = 0.254
-# parg[igWpaymax] = 219964.5779
-# fuselage.layout.radius
+parg[igseatpitch] = 0.762
+parg[igseatwidth] = 0.4826
+parg[igaislehalfwidth] = 0.254
+parg[igWpaymax] = 219964.5779
+fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
-# pari = zeros(iitotal)
-# pari[iidoubledeck] = 0
+pari = zeros(iitotal)
+pari[iidoubledeck] = 0
 
-# parm = zeros(imtotal)
-# parm[imWperpax,1] = 956.36773
+fuse_tank = TASOPT.fuselage_tank()
 
-# fuse_tank = TASOPT.fuselage_tank()
+TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank)
 
-# TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank)
+parg_check = [14.584924835954398, 16.108924835954397, 35.05200000000001, 33.680400000000006, 219964.5779, 1.5239999999999991, 0.762, 0.4826, 0.254]
+parg_nz = deepcopy(parg)
+deleteat!(parg_nz, parg_nz .== 0)
+for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
+  @test parg_nz[i] ≈ parg_check[i]
+end
 
-# parg_check = [47.091600000000014, 6.096, 38.86200000000001, 40.38600000000001, 44.95800000000001, 18.460895740194808, 19.98489574019481, 44.19600000000001, 42.82440000000001, 45.87240000000001, 23.595756720000004, 1.9558, 219964.5779, 32.76600000000001, 1.5239999999999991, 0.762, 0.4826, 0.254]
-# parg_nz = deepcopy(parg)
-# deleteat!(parg_nz, parg_nz .== 0)
-# for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
-#   @test parg_nz[i] ≈ parg_check[i]
-# end
+@test fuselage.layout.x_pressure_shell_aft ≈ 31.24200000000001
+@test fuselage.layout.x_cone_end ≈ 18.86903414400001
+@test fuselage.layout.x_end ≈ 37.94760000000001
+
+#Test minimum radius calculation
+Rmin = TASOPT.structures.find_minimum_radius_for_seats_per_row(5, ac_test)
+@test Rmin ≈ 1.7113052179793784
 end
