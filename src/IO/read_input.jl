@@ -122,6 +122,9 @@ para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
 fuselage = Fuselage()
+wing = Wing()
+htail = Tail()
+vtail = Tail()
 
 # Setup mission variables
 ranges = readmis("range")
@@ -483,47 +486,64 @@ end
 # Wing
 # ---------------------------------
 # Setup wing
-wing = read_input("Wing", data, default)
+wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
-readwing(x) = read_input(x, wing, dwing)
-    pari[iiwplan] = readwing("wing_planform")
-    if readwing("strut_braced_wing")
-        pari[iiwplan] = 2
+readwing(x) = read_input(x, wing_i, dwing)
+    wing.planform = readwing("wing_planform")
+    wing.has_strut = readwing("strut_braced_wing")
+
+    wing.layout.sweep = readwing("sweep")
+    wing.layout.AR = readwing("AR")
+    wing.layout.max_span = Distance(readwing("maxSpan"))
+
+    wing.inboard.λ = readwing("inner_panel_taper_ratio")
+    wing.outboard.λ = readwing("outer_panel_taper_ratio")
+    wing.layout.ηs    = readwing("panel_break_location")
+    if !(0 ≤ wing.layout.ηs ≤ 1.0)
+        @warn "Wing span break location input was $(wing.layout.ηs); ηs must be 0 ≤ ηs ≤ 1.0"
+        if wing.layout.ηs > 1.0
+            wing.layout.ηs = 1.0
+        else 
+            wing.layout.ηs = 0.0
+        end
+        @warn "ηs set to $(wing.layout.ηs)"
     end
 
-    parg[igsweep] = readwing("sweep")
-    parg[igAR] = readwing("AR")
-    parg[igbmax] = Distance(readwing("maxSpan"))
+    wing.layout.root_span = 2*Distance(readwing("center_box_halfspan"))
+    wing.inboard.cross_section.width_to_chord  = readwing("box_width_to_chord")
+    wing.outboard.cross_section.width_to_chord  = readwing("box_width_to_chord")
+   
+    wing.inboard.cross_section.thickness_to_chord = readwing("root_thickness_to_chord")
+    wing.outboard.cross_section.thickness_to_chord = readwing("spanbreak_thickness_to_chord")
+    
+    wing.inboard.cross_section.web_to_box_height  = readwing("hweb_to_hbox")
+    wing.outboard.cross_section.web_to_box_height = readwing("hweb_to_hbox")
+    wing.layout.spar_box_x_c = readwing("spar_box_x_c")
 
-    parg[iglambdas] = readwing("inner_panel_taper_ratio")
-    parg[iglambdat] = readwing("outer_panel_taper_ratio")
-    parg[igetas]    = readwing("panel_break_location")
+    wing.layout.box_x = Distance(readwing("x_wing_box"))
+    wing.layout.z = Distance(readwing("z_wing"))
 
-    parg[igbo] = 2*Distance(readwing("center_box_halfspan"))
-    parg[igwbox]  = readwing("box_width_chord")
-    parg[ighboxo] = readwing("root_thickness_to_chord")
-    parg[ighboxs] = readwing("spanbreak_thickness_to_chord")
-    parg[igrh]    = readwing("hweb_to_hbox")
-    parg[igXaxis] = readwing("spar_box_x_c")
-
-    parg[igxwbox] = Distance(readwing("x_wing_box"))
-    parg[igzwing] = Distance(readwing("z_wing"))
-
-    parg[igdxeng2wbox] = parg[igxwbox] - parg[igxeng]
-
+    parg[igdxeng2wbox] = wing.layout.box_x - parg[igxeng] #TODO add this as a function of wing
 
     ## Strut details only used if strut_braced_wing is true
-    parg[igzs]      = Distance(readwing("z_strut"))
-    parg[ighstrut]  = readwing("strut_toc")
-    parg[igrVstrut] = readwing("strut_local_velocity_ratio")
+    if wing.has_strut
+        wing.strut.z  = Distance(readwing("z_strut"))
+        wing.strut.thickness_to_chord  = readwing("strut_toc")
+        wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
+    end
+
+    airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/", readwing("airfoil"))
+    wing.airsection = TASOPT.aerodynamics.airtable(airfoil_data);
 
 # ----------------------------------
 # ------- Wing Aerodynamics --------
 # ----------------------------------
 aero = readwing("Aero")
 daero = dwing["Aero"]
-    parg[igfLo] = readaero("fuselage_lift_carryover_loss_factor")
-    parg[igfLt] = readaero("wing_tip_lift_rolloff_factor")
+    wing.fuse_lift_carryover = readaero("fuselage_lift_carryover_loss_factor")
+    wing.tip_lift_loss = readaero("wing_tip_lift_rolloff_factor")
+    htail.tip_lift_loss = wing.tip_lift_loss
+    vtail.tip_lift_loss = wing.tip_lift_loss
 
     para[iacdfw, 1:iptotal, :]   .= readaero("lowspeed_cdf")  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
     para[iacdpw, 1:iptotal, :]   .= readaero("lowspeed_cdp")  #  cdpw    
@@ -578,14 +598,13 @@ readland(x) = read_input(x, land, dland)
 # and secondary wing components, 
 weight = readwing("Weightfracs")
 dweight = dwing["Weightfracs"]
-
-    parg[igfflap] = readweight("flap")
-    parg[igfslat] = readweight("slat")
-    parg[igfaile] = readweight("aileron")
-    parg[igflete] = readweight("leading_trailing_edge")
-    parg[igfribs] = readweight("ribs")
-    parg[igfspoi] = readweight("spoilers")
-    parg[igfwatt] = readweight("attachments")
+    wing.weight_frac_flap  = readweight("flap")
+    wing.weight_frac_slat = readweight("slat")
+    wing.weight_frac_ailerons = readweight("aileron")
+    wing.weight_frac_leading_trailing_edge = readweight("leading_trailing_edge")
+    wing.weight_frac_ribs = readweight("ribs")
+    wing.weight_frac_spoilers = readweight("spoilers")
+    wing.weight_frac_attachments = readweight("attachments")
 
 # ---- End Wing -----
 
@@ -602,28 +621,45 @@ readtails(x) = read_input(x, tails, dtails)
 
     para[iafexcdt, 1:iptotal, :] .= transpose(readtails("excrescence_drag_factor"))
 
-    htail = readtails("Htail")
+    htail_input = readtails("Htail")
     dhtail = dtails["Htail"]
 
-readhtail(x) = read_input(x, htail, dhtail)
-    parg[igARh]     = readhtail("AR_Htail")
-    parg[iglambdah] = readhtail("taper")
-    parg[igsweeph]  = readhtail("sweep")
-    parg[igboh]     = 2*Distance(readhtail("center_box_halfspan"))
+readhtail(x) = read_input(x, htail_input, dhtail)
+    htail.layout.AR = readhtail("AR_Htail")
+    htail.outboard.λ = readhtail("taper")
+    #TODO: change 
+    multi_section = readhtail("multi_section")
+    # if !multi_section
+    #     htail.layout.ηs = 0.0
+    # end
+    htail.inboard.λ = 1.0
+    
+    # igbs = igbo
+    # strutz = 0
+    # lambdat = gammat = iglambdah 
+    # lambdas = gammas = 1.0
 
-    parg[igxhbox]  = Distance(readhtail("x_Htail"))
-    parg[igzhtail] = Distance(readhtail("z_Htail"))
+    # create inner
+    # lambdas, gammas = 1.0
+    # igbs = igbo
+    # hboxs = hboxh
+    htail.layout.sweep = readhtail("sweep")
+    htail.layout.root_span = 2*Distance(readhtail("center_box_halfspan"))
 
-    parg[igCLhNrat] = readhtail("max_tail_download")
+    htail.layout.box_x  = Distance(readhtail("x_Htail"))
+    htail.layout.z = Distance(readhtail("z_Htail"))
+    htail.ntails  = readhtail("number_Htails")
+
+    htail.CL_CLmax = readhtail("max_tail_download")
 
     htail_size = lowercase(readhtail("HTsize"))
     if htail_size == "vh"
-        pari[iiHTsize] = 1
-        parg[igVh] = readhtail("Vh")
+        htail.size = 1
+        htail.volume = readhtail("Vh")
     elseif htail_size == "maxforwardcg"
-        pari[iiHTsize] = 2
-        parg[igCLhCGfwd] = readhtail("CLh_at_max_forward_CG")
-        parg[igVh] = 1.0
+        htail.size = 2
+        htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
+        htail.volume = 1.0
     else
         error("Horizontal tail can only be sized via:
             1: specified tail volume coeff \"Vh\";
@@ -633,15 +669,15 @@ readhtail(x) = read_input(x, htail, dhtail)
 
     movewing = readhtail("move_wingbox")
     if typeof(movewing) == Int
-        pari[iixwmove] = movewing
+        htail.move_wingbox = movewing
     elseif typeof(movewing) <: AbstractString
         movewing = lowercase(movewing)
         if movewing =="fix"
-            pari[iixwmove] = 0
+            htail.move_wingbox = 0
         elseif movewing == "clhspec"
-            pari[iixwmove] = 1
+            htail.move_wingbox = 1
         elseif movewing == "smmin"
-            pari[iixwmove] = 2
+            htail.move_wingbox = 2
         else
             error("Wing position during horizontal tail sizing can only be sized via:
             0: \"fix\" wing position;
@@ -651,39 +687,44 @@ readhtail(x) = read_input(x, htail, dhtail)
     else
         error("Check wing position input during htail sizing... something isn't right")
     end
-    parg[igSMmin] = readhtail("SM_min")
+    htail.SM_min = readhtail("SM_min")
 
     parg[igCLhspec] = readhtail("CLh_spec")
 
-    parg[igdepsda] = readhtail("downwash_factor")
+    htail.downwash_factor = readhtail("downwash_factor")
     parg[igdCLnda] = readhtail("nacelle_lift_curve_slope")
 
     parg[igfCDhcen] = readhtail("CD_Htail_from_center")
-    parg[igCLhmax]  = readhtail("CLh_max")
+    htail.CL_max  = readhtail("CLh_max")
 
-    parg[igfhadd] = readhtail("added_weight_fraction")
+    htail.weight_fraction_added = readhtail("added_weight_fraction")
 
-    parg[igwboxh] = readhtail("box_width_chord")
-    parg[ighboxh] = readhtail("box_height_chord")
-    parg[igrhh]   = readhtail("web_height_hbox")
+    htail.outboard.cross_section.width_to_chord = readhtail("box_width_to_chord")
+    htail.outboard.cross_section.thickness_to_chord = readhtail("box_height_chord")
+    htail.outboard.cross_section.web_to_box_height  = readhtail("web_height_hbox")
 
+    htail.inboard.cross_section.width_to_chord = readhtail("box_width_to_chord")
+    htail.inboard.cross_section.thickness_to_chord = readhtail("box_height_chord")
+    htail.inboard.cross_section.web_to_box_height  = readhtail("web_height_hbox")
+    
 
-vtail = readtails("Vtail")
+vtail_input = readtails("Vtail")
 dvtail = dtails["Vtail"]
-readvtail(x) = read_input(x, vtail, dvtail)
-    parg[igARv]     = readvtail("AR_Vtail")
-    parg[iglambdav] = readvtail("taper")
-    parg[igsweepv]  = readvtail("sweep")
-    parg[igbov]     = Distance(readvtail("center_box_halfspan"))
-    parg[igxvbox]  = Distance(readvtail("x_Vtail"))
-    parg[ignvtail]  = readvtail("number_Vtails")
+readvtail(x) = read_input(x, vtail_input, dvtail)
+    vtail.layout.AR = readvtail("AR_Vtail")
+    vtail.outboard.λ = readvtail("taper")
+    vtail.inboard.λ = 1.0
+    vtail.layout.sweep  = readvtail("sweep")
+    vtail.layout.root_span = Distance(readvtail("center_box_halfspan"))
+    vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
+    vtail.ntails  = readvtail("number_Vtails")
 
     vtail_size = lowercase(readvtail("VTsize"))
     if vtail_size == "vv"
-        pari[iiVTsize] = 1
-        parg[igVv] = readvtail("Vv")
+        vtail.size = 1
+        vtail.volume = readvtail("Vv")
     elseif vtail_size == "oei"
-        pari[iiVTsize] = 2
+        vtail.size = 2
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
         error("Vertical tail can only be sized via:
@@ -691,12 +732,16 @@ readvtail(x) = read_input(x, vtail, dvtail)
             2: specified CL at one engine out trim (\"OEI\")")
     end
 
-    parg[igCLvmax] = readvtail("CLv_max")
+    vtail.CL_max = readvtail("CLv_max")
 
-    parg[igfvadd] = readvtail("added_weight_fraction")
-    parg[igwboxv] = readvtail("box_width_chord")
-    parg[ighboxv] = readvtail("box_height_chord")
-    parg[igrhv]   = readvtail("web_height_hbox")
+    vtail.weight_fraction_added = readvtail("added_weight_fraction")
+    vtail.outboard.cross_section.width_to_chord = readvtail("box_width_to_chord")
+    vtail.outboard.cross_section.thickness_to_chord = readvtail("box_height_chord")
+    vtail.outboard.cross_section.web_to_box_height  = readvtail("web_height_hbox")
+
+    vtail.inboard.cross_section.width_to_chord = readvtail("box_width_to_chord")
+    vtail.inboard.cross_section.thickness_to_chord = readvtail("box_height_chord")
+    vtail.inboard.cross_section.web_to_box_height  = readvtail("web_height_hbox")
 
 # ----- End Stabilizers -----
 
@@ -704,8 +749,7 @@ readvtail(x) = read_input(x, vtail, dvtail)
 # Recalculate cabin length
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-
-    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank) #update fuselage dimensions
+    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
 end
 # ---------------------------------
 
@@ -717,24 +761,27 @@ structures = read_input("Structures", data, default)
 dstructures = default["Structures"]
 readstruct(x) = read_input(x, structures, dstructures)
     parg[igsigfac] = readstruct("stress_factor")
-    #- allowable stresses at sizing cases
-    parg[igsigcap] = Stress(readstruct("sigma_caps"))
-    parg[igtauweb] = Stress(readstruct("tau_webs"))
-
-    parg[igsigstrut] = Stress(readstruct("sigma_struts"))
 
     #- fuselage shell modulus ratio, for bending material sizing
     fuselage.ratio_young_mod_fuse_bending = readstruct("fuse_shell_modulus_ratio")
 
-    #- moduli, for strut-induced buckling load estimation
-    parg[igEcap] = Stress(readstruct("E_wing_spar_cap"))
-    parg[igEstrut] = Stress(readstruct("E_struts"))
+    caps_max_avg = readstruct("caps_max_avg_stress")
+    caps_safety_fac = readstruct("caps_safety_factor")
+    wing.inboard.caps.material = StructuralAlloy(readstruct("caps_material"),
+                                max_avg_stress = caps_max_avg,
+                                safety_factor = caps_safety_fac)
+    wing.outboard.caps.material = StructuralAlloy(readstruct("caps_material"),
+                                max_avg_stress = caps_max_avg,
+                                safety_factor = caps_safety_fac)
 
-    #- structural material densities
-    parg[igrhocap]  = Density(readstruct("wing_tail_cap_density"))  #  rhocap  	wing, tail bending caps	 
-    parg[igrhoweb]  = Density(readstruct("wing_tail_web_density"))  #  rhoweb  	wing, tail shear webs	 
-    parg[igrhostrut]= Density(readstruct("strut_density"))  #  rhostrut	strut   
-
+    webs_max_avg = readstruct("webs_max_avg_stress")
+    webs_safety_fac = readstruct("webs_safety_factor")
+    wing.inboard.webs.material = StructuralAlloy(readstruct("webs_material"),
+                                max_avg_stress = webs_max_avg,
+                                safety_factor = webs_safety_fac)
+    wing.outboard.webs.material = StructuralAlloy(readstruct("webs_material"),
+                                max_avg_stress = webs_max_avg,
+                                safety_factor = webs_safety_fac)
 
     skin_max_avg = readstruct("skin_max_avg_stress")
     skin_safety_fac = readstruct("skin_safety_factor")
@@ -1007,7 +1054,7 @@ dHEx = dprop["HeatExchangers"]
 
 
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
 
 end
 
