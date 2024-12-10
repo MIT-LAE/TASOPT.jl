@@ -60,9 +60,9 @@ Also returns the material gauges, torsional and bending stiffness.
     **Inputs:**
     - `wing::TASOPT.structures.Wing`: Wing structure.
     - `po::Float64`: Point where loads and stresses are calculated.
-    - `gammat::Float64`: Tip airfoil section shape exponent.
-    - `gammas::Float64`: Start airfoil section shape exponent.
-    - `Nload::Int`: Number of loads (used to distribute engine loads).
+    - `gammat::Float64`: Tip airfoil lift taper ratio.
+    - `gammas::Float64`: Start airfoil lift taper ratio.
+    - `Nload::Float64`: max vertical load factor for wing bending loads
     - `We::Float64`: Weight of the engine.
     - `neout::Int`: Number of outboard engines.
     - `dyeout::Float64`: Distance between engines and the wingtip.
@@ -235,7 +235,8 @@ function get_wing_weights!(wing, po, gammat, gammas,
     Wwing = n_wings * (Wscen + Wsinn + Wsout) * (1.0 + fwadd)
     wing.dxW = n_wings * (dxWsinn + dxWsout) * (1.0 + fwadd)
 
-    return Wwing,Wsinn,Wsout,dyWsinn,dyWsout,Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,lsp
+    return Wwing, Wsinn, Wsout, dyWsinn, dyWsout, Wfcen, Wfinn, Wfout,
+    dxWfinn, dxWfout, dyWfinn, dyWfout, lsp
 
 end # get_wing_weights
 
