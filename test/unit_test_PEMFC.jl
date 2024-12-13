@@ -18,7 +18,7 @@
 
     V_LT, α_LT = TASOPT.engine.LT_PEMFC_voltage(u_LT)
 
-    @test V_LT ≈ 0.7103339015901087
+    @test V_LT ≈ 0.7031848337088604 
     @test α_LT ≈ 0.13026807266756726
 
     u_HT = TASOPT.engine.PEMFC_inputs()
@@ -38,23 +38,24 @@
 
     V_HT= TASOPT.engine.HT_PEMFC_voltage(u_HT)
 
-    @test V_HT ≈ 0.7532410548758377
+    @test V_HT ≈ 0.7511805292248419
 
     Pdes = 1e6
     Vdes = 200
 
     n_cells, A_cell, Q = TASOPT.engine.PEMsize(Pdes, Vdes, u_HT)
 
-    @test n_cells ≈ 265.5192500533146
+    @test n_cells ≈ 266.2475825969344
     @test A_cell ≈ 0.5
-    @test Q ≈ 664805.6978342824
+    @test Q ≈  676426.8383800443
 
-    V_stack, Q_od = TASOPT.engine.PEMoper(5e5, n_cells, A_cell, u_HT)
+    mfuel, V_stack, Q_od, j, α = TASOPT.engine.PEMoper(5e5, n_cells, A_cell, u_HT)
 
-    @test V_stack ≈ 237.6830551160271
-    @test Q_od ≈ 200430.95710865577
+    @test mfuel ≈ 0.0058233133683716085 
+    @test V_stack ≈ 238.82772890173237
+    @test Q_od ≈ 201939.78148568503
 
     W_FC = TASOPT.engine.PEMstackweight(9.81, u_HT, n_cells, A_cell, 4.0)
 
-    @test W_FC ≈ 7032.808376162144
+    @test W_FC ≈ 7052.099720245001
 end

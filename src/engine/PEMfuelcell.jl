@@ -96,13 +96,13 @@ function LT_PEMFC_voltage_OHayre(j, T, p_A, p_C, x_H2O_A, x_H2O_C, λ_O2)
 
     # Parameters from physics
     R = Runiv # J/(mol*K), universal gas constant
-    F = Faraday_F # C/mol, Faraday contant
+    F = Faraday_F # C/mol, Faraday constant
     n_O2 = 4 #number of electrons in reduction reaction
     n = 2 #number of electrons in oxidation reaction
     p0 = 101325 #Pa, reference pressure
     T0 = 298.15  #K, reference temperature
     n_drag = 2.5 #electro-osmotic drag coefficient in Nafion at saturation
-    M_m = 1 #kg/mol, Nafion equaivalent weight, typically 1-1.1 kg/mol
+    M_m = 1 #kg/mol, Nafion equivalent weight, typically 1-1.1 kg/mol
     ρ_dry = 1970 #kg/m^3, dry density of Nafion
     x_ON = 0.21 #mole fraction of oxygen in dry air
 
@@ -213,19 +213,18 @@ Structure containing the LT-PEMFC problem parameters.
     - `α_star::Float64`: ratio of water flux to proton flux
     - `Iflux::Float64`: proton flux through membrane (mol/m^2/s)
 """
-mutable struct PEMFC_params
-    p0 :: Float64
-    T0 :: Float64
-    n_drag :: Float64
-    M_m :: Float64
-    ρ_dry :: Float64
-    x_ON :: Float64
-    α  :: Float64
-    ε :: Float64
-    τ :: Float64
-    α_star :: Float64
-    Iflux :: Float64
-    PEMFC_params() = new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+@kwdef mutable struct PEMFC_params
+    p0 :: Float64 = 0.0
+    T0 :: Float64 = 0.0
+    n_drag :: Float64 = 0.0
+    M_m :: Float64 = 0.0
+    ρ_dry :: Float64 = 0.0
+    x_ON :: Float64 = 0.0
+    α  :: Float64 = 0.0
+    ε :: Float64 = 0.0
+    τ :: Float64 = 0.0
+    α_star :: Float64 = 0.0
+    Iflux :: Float64 = 0.0
 end
 
 """
@@ -248,20 +247,19 @@ Structure containing the LT-PEMFC and HT-PEMFC model inputs.
     - `t_C::Float64`: cathode thickness (m)
     - `type::String`: type of fuel cell
 """
-mutable struct PEMFC_inputs
-    j :: Float64
-    T :: Float64 
-    p_A :: Float64 
-    p_C :: Float64
-    x_H2O_A :: Float64 
-    x_H2O_C :: Float64
-    λ_H2 :: Float64
-    λ_O2 :: Float64
-    t_M :: Float64
-    t_A :: Float64
-    t_C :: Float64
-    type :: String
-    PEMFC_inputs() = new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, "")
+@kwdef mutable struct PEMFC_inputs
+    j :: Float64 = 0.0
+    T :: Float64 = 0.0
+    p_A :: Float64 = 0.0 
+    p_C :: Float64 = 0.0
+    x_H2O_A :: Float64 = 0.0 
+    x_H2O_C :: Float64 = 0.0
+    λ_H2 :: Float64 = 0.0
+    λ_O2 :: Float64 = 0.0
+    t_M :: Float64 = 0.0
+    t_A :: Float64 = 0.0
+    t_C :: Float64 = 0.0
+    type :: String = ""
 end
 
 """
@@ -273,7 +271,7 @@ in the membrane.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs
+    - `u::PEMFC_inputs`: structure with inputs 
     - `α_guess::Float64`: guess for ratio of water flux to proton flux; default is 0.25
  
     **Outputs:**
@@ -286,7 +284,7 @@ function LT_PEMFC_voltage(u, α_guess::Float64 = 0.25)
     #---------------------------------
     # Parameters from physics
     R = Runiv # J/(mol*K), universal gas constant
-    F = Faraday_C # C/mol, Faraday contant
+    F = Faraday_C # C/mol, Faraday constant
     n = 2 #number of electrons in oxidation reaction
     n_C = 4 #number of electrons in reduction reaction
     p0 = 101325 #Pa, reference pressure
@@ -442,7 +440,7 @@ PBI.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs
+    - `u::PEMFC_inputs`: structure with inputs 
     
     **Outputs:**
     - `V::Float64`: voltage across cell (V)
@@ -453,7 +451,7 @@ function HT_PEMFC_voltage(u)
     #---------------------------------
     # Parameters from physics
     R = Runiv # J/(mol*K), universal gas constant
-    F = Faraday_C # C/mol, Faraday contant
+    F = Faraday_C # C/mol, Faraday constant
     n = 2 #number of electrons in oxidation reaction
     n_C = 4 #number of electrons in reduction reaction
     p0 = 101325 #Pa, reference pressure
@@ -564,6 +562,21 @@ function HT_PEMFC_voltage(u)
     return V
 end
 
+"""
+    reversible_voltage(T, a_H2O, a_H2, a_O2)
+
+This function uses the Nernst equation to calculate the reversible voltage of a fuel cell.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `T::Float64`: fuel cell temperature (K)
+    - `a_H2O::Float64`: activity of water in cathode side
+    - `a_H2::Float64`: activity of hydrogen
+    - `a_O2::Float64`: activity of oxygen
+
+    **Outputs:**
+    - `E_r::Float64`: reversible voltage (V)
+"""
 function reversible_voltage(T, a_H2O, a_H2, a_O2)
     T0 = 298.15
     n = 2
@@ -583,7 +596,20 @@ function reversible_voltage(T, a_H2O, a_H2, a_O2)
     return E_r
 end
 
-function efficiency_voltage(T)
+"""
+    heating_voltage(T)
+
+This function calculates the voltage corresponding to the change in enthalpy of a fuel cell. It can 
+    be used to calculate the heat produced by the fuel cell.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `T::Float64`: fuel cell temperature (K)
+
+    **Outputs:**
+    - `E_heat::Float64`: voltage corresponding to change in enthalpy (V)
+"""
+function heating_voltage(T)
     T0 = 298.15
     n = 2
     F = Faraday_C
@@ -600,8 +626,8 @@ function efficiency_voltage(T)
     end
     Δh = Δh0 + (cp_H2O - cp_H2 - 0.5*cp_O2) * (T - T0) #change in enthalpy in reaction
 
-    E_eff = -Δh / (n * F) #Convert to voltage
-    return E_eff
+    E_heat = -Δh / (n * F) #Convert to voltage
+    return E_heat
 end
 
 """
@@ -847,8 +873,8 @@ This function evaluates the derivative in space of the water content in the memb
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `λ::Float64`: water content; ratio of water molecules to SO3- sites
-    - `u::Struct`: structure of type PEMFC_inputs with inputs 
-    - `p::Struct`: structure of type PEMFC_params with parameters 
+    - `u::PEMFC_inputs`: structure with inputs 
+    - `p::PEMFC_params`: structure with parameters 
     
     **Outputs:**
     - `dλ_dz::Float64`: derivative of λ in space
@@ -916,8 +942,8 @@ This residual should be 0 if α_star is the correct one.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `α_star::Float64`: ratio of water flux to proton flux
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
-    - `p::Struct`: structure of type `PEMFC_params` with parameters 
+    - `u::PEMFC_inputs`: structure with inputs 
+    - `p::PEMFC_params`: structure with parameters 
 
     **Outputs:**
     - `x_end::Vector{Float64}`: vector with values of x at z = d
@@ -1007,7 +1033,7 @@ function water_balance(α_star, u, p)
 end
 
 """
-    PEMsize(P_des, V_des, u)
+    PEMsize(P_des, V_des, u, α_g = 0.25)
 
 Designs the fuel cell stack for the design point conditions.
 
@@ -1015,7 +1041,8 @@ Designs the fuel cell stack for the design point conditions.
     **Inputs:**
     - `P_des::Float64`: design stack output power, ideally maximum power in mission (W)
     - `V_des::Float64`: design stack voltage (V)
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+    - `u::PEMFC_inputs`: structure with inputs 
+    - `α_g::Float64`: guess ratio of water flux to proton flux (optional) 
  
     **Outputs:**
     - `n_cells::Float64`: number of cells in stack
@@ -1024,16 +1051,13 @@ Designs the fuel cell stack for the design point conditions.
 """
 function PEMsize(P_des, V_des, u, α_g = 0.25)
     #Extract inputs
-    type = u.type
     j = u.j
+    T = u.T
     F = Faraday_C #Faraday constant
     
     #Find heating voltage
-    if type == "LT-PEMFC"
-        V_heat = 1.482
-    elseif type == "HT-PEMFC"
-        V_heat = 1.254
-    end
+    V_heat = heating_voltage(T)
+
     #Calculate power density of a cell
     P2A, _ = P2Acalc(u, j, α_g)
     V_cell = P2A / j
@@ -1050,7 +1074,7 @@ function PEMsize(P_des, V_des, u, α_g = 0.25)
 end #PEMsize
 
 """
-    PEMoper(P_stack, n_cells, A_cell, u)
+    PEMoper(P_stack, n_cells, A_cell, u, α_g = 0.25)
 
 Evaluates fuel cell stack performance in off-design conditions.
 
@@ -1059,14 +1083,18 @@ Evaluates fuel cell stack performance in off-design conditions.
     - `P_stack::Float64`: stack output power (W)
     - `n_cells::Float64`: number of cells in stack
     - `A_cell::Float64`: cell surface area (m^2)
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+    - `u::PEMFC_inputs`: structure with inputs 
+    - `α_g::Float64`: guess ratio of water flux to proton flux
  
     **Outputs:**
     - `mfuel::Float64`: mass flow rate of fuel (kg/s)
     - `V_stack::Float64`: stack voltage (V)
     - `Q::Float64`: waste power produced by the fuel cell (W)
+    - `j::Float64`: current density (A/m^2)
+    - `α_star::Float64`: ratio of water flux to proton flux
 """
-function PEMoper(P_stack, n_cells, A_cell, u, j_g = 1, α_g = 0.25)
+function PEMoper(P_stack, n_cells, A_cell, u, α_g = 0.25)
+    j_g = u.j #Use passed current as starting guess
     if j_g ≈ 0
         j_g = 1 #change guess to 1 A/m^2 if guess is 0
     end
@@ -1074,23 +1102,18 @@ function PEMoper(P_stack, n_cells, A_cell, u, j_g = 1, α_g = 0.25)
         α_g = 0.25 #change guess to 0.25 if guess is 0
     end
     #Extract inputs
-    type = u.type
+    T = u.T
     F = Faraday_C #Faraday constant
     
     #Find heating voltage
-    if type == "LT-PEMFC"
-        V_heat = 1.482
-
-    elseif type == "HT-PEMFC"
-        V_heat = 1.254
-    end
+    V_heat = heating_voltage(T)
 
     P2A = P_stack / (n_cells * A_cell) #Power density of a cell
 
     f(x) = P2A - P2Acalc(u, x, α_g)[1] #Residual function; it should be 0 if x = j
     j = find_zero(f, j_g) #Find root with Roots.jl. Careful! There are two roots, must use the smallest one
 
-    _, α = P2Acalc(u, j, α_g)
+    _, α_star = P2Acalc(u, j, α_g)
 
     #Find stack voltage
     V_cell = P2A / j
@@ -1104,34 +1127,36 @@ function PEMoper(P_stack, n_cells, A_cell, u, j_g = 1, α_g = 0.25)
     Iflux = j / (2*F) #Molar flux of hydrogen gas
     mfuel = n_cells * A_cell * Iflux * M_h2 #fuel mass flow rate
 
-    return mfuel, V_stack, Q, j, α
+    return mfuel, V_stack, Q, j, α_star
 end #PEMoper
 
 """
-    P2Acalc(u, j)
+    P2Acalc(u, j, α_g::Float64 = 0.25)
 
 Calculates the power density of a fuel cell.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+    - `u::PEMFC_inputs`: structure with inputs 
     - `j::Float64`: current density (A/m^2)
+    - `α_g::Float64`: guess ratio of water flux to proton flux
  
     **Outputs:**
     - `P2A::Float64`: power density (W/m^2)
+    - `α_star::Float64`: ratio of water flux to proton flux
 """
-function P2Acalc(u, j, α_guess::Float64 = 0.25)
+function P2Acalc(u, j, α_g::Float64 = 0.25)
     u.j = j
     if u.type == "LT-PEMFC"
-        V_cell, α  = LT_PEMFC_voltage(u, α_guess)
+        V_cell, α_star  = LT_PEMFC_voltage(u, α_g)
 
     elseif u.type == "HT-PEMFC"
         V_cell = HT_PEMFC_voltage(u)
-        α = 0.0
+        α_star = 0.0
     end
     
     P2A = j * V_cell
-    return P2A, α
+    return P2A, α_star
 end
 
 """
@@ -1142,7 +1167,7 @@ Calculates the weight of a stack of PEM fuel cells.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `gee::Float64`: gravitational acceleration (m/s^2)
-    - `u::Struct`: structure of type `PEMFC_inputs` with inputs 
+    - `u::PEMFC_inputs`: structure with inputs   
     - `n_cells::Float64`: number of cells in stack
     - `A_cell::Float64`: cell surface area (m^2)
     - `fouter::Float64`: ratio of stack structural mass (inc. bipolar plates) to membrane and electrode mass
