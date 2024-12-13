@@ -15,6 +15,10 @@ engine.tfweight
 ## Turbofan Maps
 
 ```@docs
+engine.NcTblMap(pratio, mb, piD, mbD, NbD, map)
+
+engine.ecTblMap(pratio, mb, piD, mbD, map, effo, piK, effK; g=1.4, R=287)
+
 engine.Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
 
 engine.ecmap(pratio, mb, piD, mbD, Cmap, effo, piK, effK)
