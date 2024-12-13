@@ -58,7 +58,7 @@ of interpolated E3 compressor data generated externally.
     - `piD`:       design pressure ratio
     - `mbD`:       design corrected mass flow
     - `map`:       dictionary of map data loaded in `tftbl.jl`
-    - `effo`:      maximum efficiency
+    - `effo`:      maximum polytropic efficiency
     - `g`:         specific heat ratio; default 1.4
     - `R`:         gas constant for air; default 287 J/kgK
 
@@ -78,6 +78,10 @@ function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
     s_pr = (piD - 1) / (map.pr_des - 1)
     s_mb = mbD / map.mb_des
     s_eff = effo / isen_to_poly(map.pr_des, map.eff_is_des, g) # Scale polytropic efficiency
+
+    # println(s_pr)
+    # println(s_mb)
+    # println(s_eff)
 
     # ---- De-scale inputs back to nominal E3 map values
     pratio_descl = (pratio - 1) / s_pr + 1

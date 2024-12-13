@@ -26,9 +26,9 @@ directly. In either case, the data files are stored in `src/engine/data`.
 - `Nb_mb::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to mass flow
 - `Nb_pr::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to pressure ratio
 
-- `Eff_nom::Matrix{Float64}`: Nm by Np matrix of isentropic efficiencies
-- `Eff_mb::Matrix{Float64}`: Nm by Np matrix of isentriopic efficiency with respect to mass flow
-- `Eff_pr::Matrix{Float64}`: Nm by Np matrix of isentriopic efficiency with respect to pressure ratio
+- `Eff_nom::Matrix{Float64}`: Nm by Np matrix of polytropic efficiencies
+- `Eff_mb::Matrix{Float64}`: Nm by Np matrix of polytropic efficiency with respect to mass flow
+- `Eff_pr::Matrix{Float64}`: Nm by Np matrix of polytropic efficiency with respect to pressure ratio
 
 - `hash_val::Integer`: Hash value corresponding to NPSS map data; tracks whether map data has been updated
 """
@@ -278,9 +278,12 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
 
     # Load in the mass flow, pressure ratio, and isentropic efficiency values in the same order as the points are specified above
     # Make sure to normalize the mass flow and pressure ratio by the design values to get them on a similar scale
+    isen_to_poly = (pr, isen, g) -> (g-1)/g * log(pr) / log( (pr^((g-1)/g) - 1) / isen + 1 )
     Mvec::Vector{Float64} = vec([map["characteristic"]["massflow"][i][j]/mb_des        for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
     Pvec::Vector{Float64} = vec([map["characteristic"]["pressure_ratio"][i][j]/pr_des  for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
-    Evec::Vector{Float64} = vec([map["characteristic"]["isen_efficiency"][i][j]        for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
+    
+    # Convert from isentropic to polytropic efficiency here; gamma is considered constant at 1.4
+    Evec::Vector{Float64} = vec([isen_to_poly(map["characteristic"]["pressure_ratio"][i][j], map["characteristic"]["isen_efficiency"][i][j], 1.4) for i in 1:length(map["grid"]["grid_Nc"]), j in 1:length(map["grid"]["grid_Rline"])])
 
     # Create Natural Neighbour interpolators for each parameter in terms of N and R
     println("Creating Grid Interpolators")
