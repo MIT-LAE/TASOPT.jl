@@ -371,7 +371,6 @@ NPSS map data.
 
 """
 function checkMapHash(gridded_map_name, data_map_name)
-    println("Checking hash for"*data_map_name)
     genComp = true
     compDict = Dict()
     cacheDict = Dict()

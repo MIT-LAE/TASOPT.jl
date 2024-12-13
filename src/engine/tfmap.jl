@@ -30,6 +30,8 @@ function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD:
     pratio_descl = (pratio - 1) / s_pr + 1
     mb_descl = mb / s_mb
 
+    println(pratio_descl, "    ", mb_descl)
+
     # ---- Perform the bilinear interpolation on the precomputed map table
     Nnom, Nnom_mb, Nnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
                                              map.Np, map.mbGrid, map.prGrid, map.Nb_nom, 
@@ -39,6 +41,15 @@ function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD:
     Nb = Nnom * s_Nb
     Nb_pi = Nnom_pr * s_Nb / s_pr 
     Nb_mb = Nnom_mb * s_Nb / s_mb
+
+    # println(Nb)
+    # if Nb_pi ≈ 0.0 rtol=1e-6
+    #     Nb_pi = 1e-3
+    # end
+
+    # if Nb_mb ≈ 0.0 rtol=1e-6
+    #     Nb_mb = 1e-3
+    # end
 
     return Nb, Nb_pi, Nb_mb
 
