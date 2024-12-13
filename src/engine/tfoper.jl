@@ -549,6 +549,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- fan flow 2-7
             epf, epf_pf, epf_mf = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
+            # epf, epf_pf, epf_mf = ecTblMap(pf, mf, pifD, mbfD, E3fan, epf0)
 
             if (epf < epfmin)
                   epf = epfmin
@@ -662,6 +663,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- LP compressor flow 2-25
             eplc, eplc_pl, eplc_ml = ecmap(pl, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
+            # eplc, eplc_pl, eplc_ml = ecTblMap(pl, ml, pilcD, mblcD, E3lpc, eplc0)
 
             if (eplc < 0.70)
                   eplc = 0.70
@@ -725,6 +727,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- HP compressor flow 25-3
             ephc, ephc_ph, ephc_mh = ecmap(ph, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
+            # ephc, ephc_ph, ephc_mh = ecTblMap(ph, mh, pihcD, mbhcD, E3hpc, ephc0)
             if (ephc < 0.70)
                   ephc = 0.70
                   ephc_ph = 0.0
@@ -1369,13 +1372,16 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- fan corrected speed
 
-            Nf, Nf_pf, Nf_mf = Ncmap(pf, mf, pifD, mbfD, NbfD, Cmapf)
+            # Nf, Nf_pf, Nf_mf = Ncmap(pf, mf, pifD, mbfD, NbfD, Cmapf)
+            Nf, Nf_pf, Nf_mf = NcTblMap(pf, mf, pifD, mbfD, NbfD, E3fan)
 
             #---- LPC corrected speed
-            Nl, Nl_pl, Nl_ml = Ncmap(pl, ml, pilcD, mblcD, NblcD, Cmapl)
+            # Nl, Nl_pl, Nl_ml = Ncmap(pl, ml, pilcD, mblcD, NblcD, Cmapl)
+            Nl, Nl_pl, Nl_ml = NcTblMap(pl, ml, pilcD, mblcD, NblcD, E3lpc)
 
             #---- HPC corrected speed
-            Nh, Nh_ph, Nh_mh = Ncmap(ph, mh, pihcD, mbhcD, NbhcD, Cmaph)
+            # Nh, Nh_ph, Nh_mh = Ncmap(ph, mh, pihcD, mbhcD, NbhcD, Cmaph)
+            Nh, Nh_ph, Nh_mh = NcTblMap(ph, mh, pihcD, mbhcD, NbhcD, E3hpc)
 
             # ===============================================================
             #---- HPT and LPT work
@@ -2316,6 +2322,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             a[1, 8] = 0.0
             a[1, 9] = 0.0
             rrel[1] = res[1] / Nl
+
+            println(Nl, " ", Nl_pl, "   ", Nl_ml)
 
             #-------------------------------------------------------------------------
             #---- fixed corrected mass flow at LPT IGV (vertical-line LPT map)

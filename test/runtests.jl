@@ -15,6 +15,8 @@ include(TASOPT.__TASOPTindices__)
     include("unit_test_cryotank.jl")
     include("unit_test_outputs.jl")
     include("unit_test_io.jl")
+    include("unit_test_bilinear.jl")
+    include("unit_test_maps.jl")
 
     #engine tests housed in /src/engine/test/
     # neglected for a while, should probs include, though some break rn
