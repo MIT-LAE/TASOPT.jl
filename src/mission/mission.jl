@@ -5,32 +5,32 @@ Runs aircraft through mission, calculating fuel burn
 and other mission variables.
 
 Input:
- pari[.]   integer flags
- parg[.]   geometry parameters
- parm[.]   mission parameters
- fuse      TASOPT.Fuselage
- wing      TASOPT.Wing
- htail     TASOPT.Tail
- vtail     TASOPT.Tail
- iairf     index of airfoil database to use
- initeng    0 = engine state will be initialized for all points
+- `pari[.]`   integer flags
+- `parg[.]`   geometry parameters
+- `parm[.]`   mission parameters
+- `fuse`      TASOPT.Fuselage
+- `wing`      TASOPT.Wing
+- `htail`     TASOPT.Tail
+- `vtail`     TASOPT.Tail
+- `iairf`     index of airfoil database to use
+- `initeng` 0 = engine state will be initialized for all points
             1 = engine state is assumed to be initialized
- ipc1       0 = ipcruise1 aero and engine point needs to be calculated
+- `ipc1`    0 = ipcruise1 aero and engine point needs to be calculated
             1 = ipcruise1 aero and engine point assumed calculated
 
 Input/Output:
- para[.p]  aero     parameters for points p=1..iptotal
- pare[.p]  engine   parameters for points p=1..iptotal
+- `para[.p]` aero     parameters for points p=1..iptotal
+- `pare[.p]` engine   parameters for points p=1..iptotal
 
 
 NOTE: 
- This routine assumes that estimates of the climb-leg flight path 
- gamma angles are passed in via para[iagamV,ipclimb1:ipclimbn].
- These appear as cos(gamma) factors in the climb equations,
- and can be passed in as zero with only a minor error.
- They are updated and returned in the same para[iagamV,ip] array.
+This routine assumes that estimates of the climb-leg flight path 
+gamma angles are passed in via para[iagamV,ipclimb1:ipclimbn].
+These appear as cos(gamma) factors in the climb equations,
+and can be passed in as zero with only a minor error.
+They are updated and returned in the same para[iagamV,ip] array.
 
- !!! compat "Future Changes"
+!!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
