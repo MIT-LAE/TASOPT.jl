@@ -1,0 +1,41 @@
+"""
+    engineweight!(ac, HXs)
+
+General function to estimate the weight of different types of propulsion systems.
+      
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `ac::aircraft`: aircraft object
+    - `HXs`: vector with heat exchanger performance data
+
+    **Output:**
+    No direct outputs. The `ac` object gets modified with the engine weights.
+"""
+function engineweight!(ac, HXs)
+    pari = ac.pari
+    parg = ac.parg
+    neng = parg[igneng]
+    
+    if pari[iiengtype] == 1 #turbofan TODO: replace with better flag
+        Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(ac, HXs)
+        
+    end
+    parg[igWeng] = Weng
+    parg[igWebare] = Webare
+    parg[igWnace] = Wnace
+    parg[igWHXs] = W_HXs
+
+    # set new nacelle area / reference area  fraction fSnace
+    S = parg[igS]
+
+    Snace = Snace1 * neng
+    fSnace = Snace / S
+    parg[igfSnace] = fSnace
+
+    # set new nacelle area / reference area  fraction fSnace
+    Snace = Snace1 * neng
+    fSnace = Snace / S
+    parg[igfSnace] = fSnace
+    lnace = parg[igdfan] * parg[igrSnace] * 0.15
+    parg[iglnace] = lnace
+end

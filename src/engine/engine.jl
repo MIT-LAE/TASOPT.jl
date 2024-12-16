@@ -9,7 +9,7 @@ using Roots
 using LinearAlgebra
 
 export enginecalc!, tfcalc!, mcool, Tmcalc, gas_tset, gaschem
-export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
+export engineweight!, tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
 
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
 export hxdesign!, radiator_design!, hxweight, resetHXs
@@ -32,5 +32,6 @@ include("turbofan/tfweight.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
 include("enginecalc.jl")
+include("engineweight.jl")
 
 end

@@ -1,23 +1,12 @@
 """
-      tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-      dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
+    tfweight(ac, HXs)
 
 Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald model.
       
 !!! details "🔃 Inputs and Outputs"
     **Input:**
-    - `iengwgt`: Engine model index, Drela=0, Fitzgerald=1, and Pantalone>=3, 
-    - `OPR`: Overall pressure ratio.
-    - `BPR`: By-pass ratio.
-    - `mdotc`: Engine core mass flow rate.
-    - `dfan`: Fan diameter.
-    - `rSnace`: 
-    - `dlcomp`:
-    - `neng`: Number of engines.
-    - `feadd`: Fuel system weight ratio.
-    - `fpylon`: Pylon weight fraction.
+    - `ac::aircraft`: aircraft object
     - `HXs`: vector with heat exchanger performance data
-    - `HX_add_mass_frac`: added mass fraction to heat exchangers
 
     **Output:**
     - `Weng`: Total engine weight.
@@ -25,8 +14,24 @@ Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald m
     - `Webare`: Bare engine weight.
     - `Snace1`: Nacelle area.
 """
-function tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-    dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
+function tfweight(ac, HXs)
+
+    TSL = Tref
+    pSL = pref
+    ip = ipcruise1 #OPR and BPR designed for start-of-cruise
+
+    iengwgt = ac.pari[iiengwgt]
+    Gearf = ac.parg[igGearf]
+    mdotc = ac.pared[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)
+    BPR = ac.pared[ieBPR, ip]
+    OPR = ac.pared[iepilc, ip] * ac.pared[iepihc, ip]
+    dfan = ac.parg[igdfan]
+    dlcomp = ac.parg[igdlcomp]
+    rSnace = ac.parg[igrSnace]
+    neng = ac.parg[igneng]
+    feadd = ac.parg[igfeadd]
+    fpylon = ac.parg[igfpylon]
+    HX_add_mass_frac = ac.parg[igHXaddmassfrac]
 
     # include("constants.inc")
 

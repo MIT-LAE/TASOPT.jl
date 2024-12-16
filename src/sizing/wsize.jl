@@ -1271,37 +1271,8 @@ function wsize(ac; itermax=35,
         case = "design" #Design the engine for this mission point
         enginecalc!(ac, case, imission, ip, initeng, iterw)
 
-        dfan = parg[igdfan]
-        dlcomp = parg[igdlcomp]
-        dhcomp = parg[igdhcomp]
-
-        Mach = para[iaMach, ip]
-        CL = para[iaCL, ip]
-        CD = para[iaCD, ip]
-
-        # bare weight for one engine [Newtons]
-        mdotc = pare[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)
-        BPR = pare[ieBPR, ip]
-        OPR = pare[iepilc, ip] * pare[iepihc, ip]
-
-        # weight of engine and related stuff
-        Gearf = parg[igGearf]
-        HX_add_mass_frac = parg[igHXaddmassfrac] #Added mass fraction to HX
-        Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-            dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
-
-        parg[igWeng] = Weng
-        parg[igWebare] = Webare
-        parg[igWnace] = Wnace
-        parg[igWeng] = Weng
-        parg[igWHXs] = W_HXs #Store total weight of heat exchangers
-
-        # set new nacelle area / reference area  fraction fSnace
-        Snace = Snace1 * neng
-        fSnace = Snace / S
-        parg[igfSnace] = fSnace
-        lnace = parg[igdfan] * parg[igrSnace] * 0.15
-        parg[iglnace] = lnace
+        #Calculate engine mass properties
+        engineweight!(ac, HXs)
 
         ipc1 = 1
         time_propsys += mission!(pari, parg, parm, para, pare, fuse, Ldebug)
