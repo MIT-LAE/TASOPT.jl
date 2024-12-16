@@ -1,0 +1,1019 @@
+"""
+    stickfig(parg,para,pari,parm; plot_obj = nothing, label_fs = 16)
+
+`stickfig` plots a "stick figure" airplane on the plot or subplot object `plot_obj` if provided 
+(else a new plot is created). This is used in conjuction with other functions
+like [`plot_details`](@ref) to create summary plots to track progress of optimization
+or present results.
+"""
+function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16, 
+    annotate_text = true, annotate_length = true, annotate_group = true, show_grid = false)
+
+    pari = ac.pari
+    parg = ac.parg
+    @views pare = ac.pare[:,:,1]
+    @views para = ac.para[:,:,1]
+    @views parm = ac.parm[:,:,1]
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    fuselage = ac.fuselage
+
+    # Wing
+        co = wing.layout.root_chord
+        cs = wing.layout.root_chord*wing.inboard.λ
+        ct = wing.layout.root_chord*wing.outboard.λ
+
+        sweep = wing.layout.sweep
+        λs = wing.inboard.λ
+        λt = wing.outboard.λ
+
+        bo = wing.layout.root_span
+        bs = wing.layout.break_span
+        b  = wing.layout.span
+
+        xax = 0.40
+        xcLE = -xax
+        xcTE = 1.0 - xax
+
+        dx = wing.layout.box_x    
+        etas = bs/b
+        etao = bo/b
+        cosL = cos(sweep*pi/180.0)
+        tanL = tan(sweep*pi/180.0)
+
+        xs = tanL*(bs-bo)/2.0
+        xt = tanL*(b -bo)/2.0
+
+        xw = zeros(6)
+        yw = zeros(6)
+
+        #X locations of wing vertices
+        xw[1] =      co*xcLE + dx
+        xw[2] = xs + cs*xcLE + dx
+        xw[3] = xt + ct*xcLE + dx
+        xw[4] = xt + ct*xcTE + dx
+        xw[5] = xs + cs*xcTE + dx
+        xw[6] =      co*xcTE + dx
+        
+        #Y locations of wing vertices
+        yw[1] = bo/2.0
+        yw[2] = bs/2.0
+        yw[3] = b /2.0
+        yw[4] = b /2.0
+        yw[5] = bs/2.0
+        yw[6] = bo/2.0
+
+    # Fuse
+        fuselage = ac.fuselage
+        Rfuse = fuselage.layout.radius
+        wfb   = fuselage.layout.bubble_center_y_offset
+
+        anose    = fuselage.layout.nose_radius
+        btail    = fuselage.layout.tail_radius
+
+        xnose    = fuselage.layout.x_nose
+        xend     = fuselage.layout.x_end
+        xblend1  = fuselage.layout.x_start_cylinder
+        xblend2  = fuselage.layout.x_end_cylinder
+        xhtail   = parg[igxhtail  ]
+        xvtail   = parg[igxvtail  ]
+        xwing    = parg[igxwing   ]
+
+        xhbox    = htail.layout.box_x
+
+        lcyl = xblend2 - xblend1
+        xtail = xvtail 
+        
+        hwidth = Rfuse + wfb
+        
+        nnose = 10
+        ntail = 10
+
+        xf = zeros(nnose + ntail + 1)
+        yf = zeros(nnose + ntail + 1)
+
+        if fuselage.layout.taper_fuse == 0
+            dytail = -hwidth 
+        else
+            dytail = -0.2*hwidth
+        end
+
+        for i = 1: nnose
+            fraci = float(i-1)/float(nnose-1)
+            fracx = cos(0.5*pi*fraci)
+
+            k = i
+            xf[k] = xblend1 + (xnose-xblend1)*fracx
+            yf[k] = hwidth*(1.0 - fracx^anose)^(1.0/anose)
+        end
+
+        for i = 1: ntail
+            fraci = float(i-1)/float(ntail-1)
+            fracx = fraci
+
+            k = i + nnose
+            xf[k] = xblend2 + (xend-xblend2)*fracx
+            yf[k] = hwidth + dytail*fracx^btail
+        end
+
+        k = k+1
+        xf[k] = xf[k-1]
+        yf[k] = 0.
+
+    
+    # Tail
+        xh = zeros(6)
+        yh = zeros(6)
+        
+        boh = htail.layout.root_span
+        Sh  = htail.layout.S
+        ARh = htail.layout.AR
+        lambdah = htail.outboard.λ
+        sweeph  = htail.layout.sweep
+
+        bh = sqrt(Sh*ARh)
+        coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
+
+
+        dx = xhbox
+        tanLh = tan(sweeph*π/180.0)
+        cth = coh*lambdah
+
+        xaxh = 0.40
+
+        xoLEh = coh*(    - xaxh) + dx
+        xoTEh = coh*(1.0 - xaxh) + dx
+        xtLEh = cth*(    - xaxh) + dx + 0.5*(bh - boh)*tanLh
+        xtTEh = cth*(1.0 - xaxh) + dx + 0.5*(bh - boh)*tanLh
+
+        yoLEh = 0.5*boh
+        yoTEh = 0.5*boh
+        ytLEh = 0.5*bh
+        ytTEh = 0.5*bh
+
+
+        if (fuselage.layout.taper_fuse == 0)
+            xcLEh = xoLEh
+            xcTEh = xoTEh
+            ycLEh = yoLEh
+            ycTEh = yoTEh
+        else
+            xcLEh = coh*(    - xaxh) + dx + 0.5*(0. - boh)*tanLh
+            xcTEh = coh*(1.0 - xaxh) + dx + 0.5*(0. - boh)*tanLh
+            ycLEh = 0.0
+            ycTEh = 0.0
+        end
+
+        if  (false)
+            yoLEh = hwidth
+            xoLEh = yoLEh*tanLh + xcLEh
+            if (xoLEh > xblend2)
+                fracx = min( (xoLEh-xblend2)/(xend-xblend2) , 1.0 )
+                yoLEh = hwidth + dytail*fracx^btail
+                xoLEh = yoLEh*tanLh + xcLEh
+            end
+            if (xoLEh > xblend2)
+                fracx = min( (xoLEh-xblend2)/(xend-xblend2) , 1.0 )
+                yoLEh = hwidth + dytail*fracx^btail
+                xoLEh = yoLEh*tanLh + xcLEh
+            end
+
+            yoTEh = 0.0
+            xoTEh = yoTEh*tanLh + xcTEh
+            if (xoTEh > xblend2)
+                fracx = min( (xoTEh-xblend2)/(xend-xblend2) , 1.0 )
+                yoTEh = hwidth + dytail*fracx^btail
+                xoTEh = yoTEh*tanLh + xcTEh
+            end
+            if (xoTEh > xblend2)
+                fracx = min( (xoTEh-xblend2)/(xend-xblend2) , 1.0 )
+                yoTEh = hwidth + dytail*fracx^btail
+                xoTEh = yoTEh*tanLh + xcTEh
+            end
+        
+        end
+        
+
+
+        xh[ 1] = xcLEh
+        xh[ 2] = xoLEh
+        xh[ 3] = xtLEh
+        xh[ 4] = xtTEh
+        xh[ 5] = xoTEh
+        xh[ 6] = xcTEh
+  
+        yh[ 1] = ycLEh
+        yh[ 2] = yoLEh
+        yh[ 3] = ytLEh
+        yh[ 4] = ytTEh
+        yh[ 5] = yoTEh
+        yh[ 6] = ycTEh
+  
+        #Initialize seat start x-position
+        xseats0 = fuselage.layout.x_pressure_shell_fwd
+        # Fuel tank
+        ntank = 8
+        Rtank = Rfuse - 0.1 # Account for clearance_fuse
+        l = max(parg[iglftankin], parg[iglftank])
+        nftanks = pari[iinftanks] #Number of fuel tanks
+        ARtank = 2.0
+
+        if nftanks != 0
+            tank_placement = ac.fuse_tank.placement
+            if tank_placement == "front"
+                xtanks = [parg[igxftank]]
+                xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
+            elseif tank_placement == "rear"
+                xtanks = [parg[igxftankaft]]
+                xseats0 = fuselage.layout.x_pressure_shell_fwd
+            elseif tank_placement == "both"
+                xtanks = [parg[igxftank], parg[igxftankaft]]
+                xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
+            end
+            
+            xt = zeros(nftanks, ntank*2 )
+            yt = zeros(nftanks, ntank*2 )
+            for m = 1:nftanks
+                xcyl0 = xtanks[m] - l/2 + Rtank/ARtank
+                xcyl1 = xtanks[m] + l/2 - Rtank/ARtank
+                
+                for i = 1: ntank
+                    fraci = float(i-1)/float(ntank-1)
+                    fracx = cos(0.5*pi*fraci)
+
+                    k = i
+                    xt[m, k] = xcyl0 - Rtank/ARtank*fracx
+                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
+                end
+                # k = k+1
+                # xt[k] = xcyl0 + parg[iglftank]
+                # yt[k] = Rtank
+                for i = 1: ntank
+                    fraci = float(i-1)/float(ntank-1)
+                    fracx = sin(0.5*pi*fraci)
+
+                    k = i + ntank
+                    xt[m, k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
+                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
+                end
+            end
+        end
+
+        # xt = LinRange(xcyl0 - Rfuse/ARtank , xcyl0, 20 )
+        # yt = zeros(length(xt))
+        # @. yt = sqrt(Rfuse^2 * max((1 - ((xt-xcyl0)/(Rfuse/ARtank))^2), 0.0) )
+
+        xshell = zeros(ntank)
+        yshell = zeros(ntank)
+        AR = 3.0
+        xshellcenter = fuselage.layout.x_pressure_shell_aft - Rfuse/AR
+        for i = 1: ntank
+            fraci = float(i-1)/float(ntank-1)
+            fracx = sin(0.5*pi*fraci)
+
+            k = i
+            xshell[k] = xshellcenter + Rfuse/AR *fracx
+            yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
+        end
+
+    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+        h_seat = fuselage.cabin.seat_height
+        pax = parg[igWpay]/parm[imWperpax]
+        Rfuse = fuselage.layout.radius
+        dRfuse = fuselage.layout.bubble_lower_downward_shift
+        wfb = fuselage.layout.bubble_center_y_offset
+        nfweb = fuselage.layout.n_webs
+
+        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
+        wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
+        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
+        #TODO, if aircraft not sized, script breaks within this^ fxn
+
+        xseats = xseats .+ xseats0
+        rows = length(xseats)
+
+        println("Seats per row = $seats_per_row, Total rows = $rows")
+        yseats = arrange_seats(seats_per_row, wcabin)
+    end
+
+    # Plot
+    if isnothing(plot_obj)
+        plot_obj = plot(
+            legend = false,
+            size = (800, 500),  # Equivalent to figsize=(8, 5) in inches
+            dpi = 300,
+            grid = show_grid,
+            show=true,
+            aspect_ratio=:equal)
+    end
+    
+    # Plot wing (upper and lower surfaces)
+    plot!(plot_obj, xw, yw, label = "", color = :black)
+    plot!(plot_obj, xw, -yw, label = "", color = :black)
+
+    # Panel break (alpha transparency and line width)
+    plot!(plot_obj, xw[[2, 5]], yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
+    plot!(plot_obj, xw[[2, 5]], -yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
+    
+    # Plot Tail (conditionally plot fill based on tailz value)
+    tailz = parg[igzhtail] > 0 ? :back : 1
+    plot!(plot_obj, xh, yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    # plot!(xh, -yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    plot!(plot_obj, xh, -yh, fillrange=yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    
+    # Tail box (fill between xvt and yvt for the tail volume)
+    xvt = [-0.4, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
+    yvt = hcat([0.0 ones(length(xvt) - 2)' .*(parg[igcov]*parg[ighboxv]/2) 0.0])[:]
+    plot!(plot_obj, xvt, -yvt, fillrange=yvt, label = "", color = :black, alpha = 0.8, linecolor = :black, z_order = :front)
+    
+    # Plot fuselage (fill with edge color)
+    plot!(plot_obj, xf, -yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
+    plot!(plot_obj, xf, yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
+    plot!(plot_obj, xf, -yf, fillrange=yf, label = "", color = :white, edgecolor = :black, linewidth = 2.0, z_order = 5)
+
+    # Tank plotting
+    if pari[iifwing] == 0
+        for m in 1:nftanks
+            # Tank outline
+            plot!(plot_obj, xt[:, m], yt[:, m], color=:black, lw=1.5, z_order=10)
+            plot!(plot_obj, xt[:, m], -yt[:, m], color=:black, lw=1.5, z_order=10)
+            
+            # Filled area between
+            plot!(plot_obj, xt[:, m], yt[:, m], fillrange=-yt[:, m], color=:red, alpha=0.1, z_order=6, linewidth=1.0)
+            
+            # Fuel name
+            fuelname = ""
+            if pari[iifuel] == 11
+                fuelname ="\$CH_4\$"
+            elseif pari[iifuel] == 40
+                fuelname ="\$LH_2\$"
+            end
+            annotate!(plot_obj, (xtanks[m], 0.0, text(fuelname, label_fs - 2.0, :center, :center)))
+        end
+    end
+
+    # Xshell2 plotting
+    plot!(plot_obj, xshell, yshell, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshell, -yshell, color=:black, lw=1.5, z_order=10)
+
+    # Plot Engines
+    D = parg[igdaftfan]
+    lnace = parg[iglnaceaft]
+    x = parg[igxtshaft]
+
+    # Aft fan outline
+    plot!(plot_obj, [x, x, x + lnace, x + lnace, x], [D / 8, D / 8 + D, D / 8 + D * 3 / 4, D / 8 + D / 4, D / 8],
+        lw=1.5, color=:red, z_order=:front)
+    plot!(plot_obj, [x, x, x + lnace, x + lnace, x], [-D / 8, -D / 8 - D, -D / 8 - D * 3 / 4, -D / 8 - D / 4, -D / 8],
+        lw=1.5, color=:red, z_order=:front)
+
+    D = parg[igdfan]
+    neng = parg[igneng]
+    lnace = parg[iglnace]
+    ηs = wing.layout.ηs
+    dy = 2 * D  # Space to leave near wing root and tip [m]
+
+    if neng == 2
+        yi = [ηs * b / 2]
+    else
+        yi = range(bo / 2 + dy, b / 2 * 3 / 4, length=Int(neng / 2))
+    end
+
+    xi = zeros(length(yi))
+    ηi = yi / (b / 2)
+    ηo = bo / b
+    ci = zeros(length(yi))
+
+    for (i, η) in enumerate(ηi)
+        if η <= ηs
+            ci[i] = co * (1 + (λs - 1) * (η - ηo) / (ηs - ηo))
+        else
+            ci[i] = co * (λs + (λt - λs) * (η - ηs) / (1 - ηs))
+        end
+    end
+
+    tanL = tan(wing.layout.sweep*π/180.0)
+    @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
+    xlocations = vec(hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)) #hcat is to avoid this being an array of arrays
+    ylocations = vec(hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...))
+    
+    # Plot engine locations
+    plot!(plot_obj, xlocations, ylocations, color=:red, linewidth=1.5)
+
+    # Plot NP and annotate
+    scatter!(plot_obj, [parg[igxNP]], [0.0], color=:blue, marker=:circle, z_order=15, label="NP")
+    annotate!(plot_obj, (parg[igxNP]+2, 0.5, text("NP", label_fs - 2.0, :center, :center, color=:blue)))
+
+    # Annotate CG range
+    plot!(plot_obj, [parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], color=:black, lw=2.0, label="CG movement")  # Line between points
+    scatter!(plot_obj, [parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], marker=:vline, color=:black)                # End points
+    annotate!(plot_obj, parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
+
+    # Show seats (single-deck case)
+    if pari[iidoubledeck] == 0
+        scatter!(plot_obj, xseats, repeat(yseats, outer=length(xseats)),
+            color=:gray, alpha=0.1, marker=:rect, ms=2, z_order=:front, label="")
+    end
+
+    # Annotations
+    if annotate_text
+        annotate!(plot_obj, -18, 21, text("PFEI = $(round(parm[imPFEI], digits = 4))\n" *
+            "Mₘₐₓ = $(round(para[iaMach][1], digits=2))\n" *
+            "WMTO = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
+            "Span = $(round(wing.layout.span, digits=1)) m\n" *
+            "c₀ = $(round(wing.layout.root_chord, digits=1)) m\n" *
+            "Λ = $(round(wing.layout.sweep, digits=1))°\n" *
+            "Rfuse = $(fuselage.layout.radius) m\n" *
+            "L/D = $(round(para[iaCL][ipcruise1] / para[iaCD][ipcruise1], digits=2))",
+            fontsize=label_fs, halign=:left, valign=:top, color=:black),
+            z_order=:front)
+    end
+
+    if annotate_length
+        yloc = -1.1*maximum(yw)
+        plot!(plot_obj, [0.0, xf[end]], [yloc, yloc], lw=1.5, arrow=:h, color=:black, label="")
+        annotate!(plot_obj, xf[end] *0.25, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m",
+            halign=:center, valign=:center, fontsize=14))
+    end
+
+    # Span annotations
+    groups, bmax = find_aerodrome_code(parg[igbmax])
+    xcode = -2.0
+
+    if annotate_group
+        box_color = :orange
+        plot!(plot_obj, [xcode, xcode], [-bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        plot!(plot_obj, [xcode, 40.0], [bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        plot!(plot_obj, [xcode, 40.0], [-bmax / 2, -bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        annotate!(plot_obj, 20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
+            color=box_color, alpha=0.8, fontsize=12, halign=:center, valign=:center))
+    end
+
+    # Set plot limits and labels
+    ylims!(plot_obj, -1.2 * bmax / 2, 1.2 * bmax / 2)
+    xlims!(plot_obj, -20, maximum(xh)*1.15)
+    xlabel!(plot_obj, "x [m]")
+    ylabel!(plot_obj, "y [m]")
+
+    return plot_obj
+end
+
+"""
+    find_aerodrome_code(b)
+
+`find_aerodrome_code` finds the airport code corresponding to a given aircraft wingspan. It returns 
+the codes in the ICAO and FAA formats, as well as the maximum wingspan for these codes.
+"""
+function find_aerodrome_code(b::Float64)
+    max_bs = sort(collect(keys(aerodrome_codes)))
+    idx = 1
+    for cand_maxb in max_bs
+        if b >= cand_maxb 
+            idx += 1
+        end
+    end
+    maxb = max_bs[idx]
+    groups = aerodrome_codes[maxb]
+    return groups, Float64(maxb)
+end
+
+"""
+    plot_details(ac::aircraft; plot_obj = nothing)
+
+`plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
+weight and drag buildup stacked bar charts to present results.
+"""
+function plot_details(ac::aircraft; plot_obj = nothing)
+
+    parg = ac.parg
+    fuselage = ac.fuselage
+    wing = ac.wing
+    htail = ac.wing
+    vtail = ac.wing
+    @views pare = ac.pare[:,:,1]
+    @views para = ac.para[:,:,1]
+    @views parm = ac.parm[:,:,1]
+
+  ## Gather data to be plotted
+    # Drag build-up for subplot 2
+    LoD     = para[iaCL, ipcruise1]/ para[iaCD, ipcruise1]
+    CL      = para[iaCL, ipcruise1]
+    CD      = para[iaCD, ipcruise1]
+    CDfuse  = para[iaCDfuse, ipcruise1]
+    CDi     = para[iaCDi, ipcruise1]
+    CDwing  = para[iaCDwing, ipcruise1]
+    CDhtail = para[iaCDhtail, ipcruise1]
+    CDvtail = para[iaCDvtail, ipcruise1]
+    CDnace  = para[iaCDnace, ipcruise1]
+
+    CDfusefrac  = CDfuse /CD
+    CDifrac     = CDi    /CD
+    CDwingfrac  = CDwing /CD
+    CDhtailfrac = CDhtail/CD
+    CDvtailfrac = CDvtail/CD
+    CDnacefrac  = CDnace /CD
+
+    # Weight build-up for subplot 2
+    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+    Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
+    Wlgnose = parg[igWMTO] * parg[igflgnose]
+    Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wtotadd = Whpesys + Wlgnose + Wlgmain
+    
+    Wpay  = parg[igWpay]
+    Wfuel = parg[igWfuel]
+    WMTO  = parg[igWMTO]
+
+    Wwing  = wing.weight
+    Wfuse  = fuselage.weight
+    Wvtail = vtail.weight
+    Whtail = htail.weight
+    Weng = parg[igWeng]
+    Wtesys = parg[igWtesys]
+    Wftank = parg[igWftank]
+
+    Wwingfrac = Wwing /WMTO
+    Wfusefrac = Wfuse /WMTO
+    Wvtailfrac = Wvtail/WMTO
+    Whtailfrac = Whtail/WMTO
+    Wtesysfrac = Wtesys/WMTO
+    Wftankfrac = Wftank/WMTO
+    Wtotaddfrac = Wtotadd/WMTO
+    Wengfrac = Weng/WMTO
+
+    Wemptyfrac = Wempty/WMTO
+    Wfuelfrac  = Wfuel /WMTO
+    Wpayfrac   = Wpay  /WMTO
+
+    
+    # For subplot 3
+    h     = [para[iaalt,ipclimb1:ipcruisen]; 0.0]./ft_to_m./1000 # show in 1000s of ft.
+    R     = [para[iaRange,ipclimb1:ipcruisen]; para[iaRange, ipdescentn]]./nmi_to_m
+    deNOx = pare[iedeNOx, :]
+    fracW = [para[iafracW, ipclimb1:ipcruisen]; para[iafracW, ipdescentn]]
+    mdotf = pare[iemdotf, :]
+    mdotH2O = pare[iemdotf, :].*9.0
+    gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
+
+    bar_width = 0.2
+
+  ## Do the plotting
+    
+    if isnothing(plot_obj)
+        # Create a layout
+        layout = @layout [A; B C]
+        fig = plot(layout=layout, size=(800, 1000), dpi=300,
+                    plot_title="Optimization Outputs",
+                    legend=false)
+    else
+        fig = plot_obj
+    end
+
+  #=
+    Subplot 1: draw stick figure
+    =#
+
+    stickfigout = stickfig(ac, plot_obj = fig[1])
+    
+    #=
+    Subplot 2: bar graphs for drag, weight buildups
+    =#
+    # Bar plot 1: Drag Components (CD)
+    groupedbar!(fig,
+            [0],
+            [CDifrac, CDnacefrac, CDvtailfrac, CDhtailfrac, CDwingfrac, CDfusefrac]',
+            bar_position=:stack,
+            width=bar_width,
+            label=["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
+            ylabel="Fraction",
+            title="Drag, Weight Breakdowns",
+            subplot=2)
+
+    # # Bar plot 2: Weight Fractions (WMTO)
+    groupedbar!(
+            fig,
+            [1],
+            [Wpayfrac, Wfuelfrac, Wemptyfrac]',
+            bar_position=:stack,
+            width=bar_width,
+            label=["Wpay" "Wfuel" "Wempty"],
+            # xlabel="Weight Fractions",
+            # ylabel="Fraction",
+            # title="Weight Fractions (WMTO)",
+            subplot=2)
+
+    # Add lines for Wempty fractions
+    plot!(
+        fig,
+        [0.5, 2.5], [Wemptyfrac, Wemptyfrac],
+        lw=2, color=:black, linestyle=:dash,
+        label="Wempty Line",
+        subplot=2
+    )
+
+    # Bar plot 3: Other Weight Fractions
+    groupedbar!(
+        fig, 
+        [2],
+        [Wengfrac, Wtotaddfrac, Wftankfrac, Wtesysfrac, Wvtailfrac, Whtailfrac, Wwingfrac, Wfusefrac]',
+        bar_position=:stack,
+        width=bar_width,
+        label=["Weng" "Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"],
+        # xlabel="Weight Fractions",
+        # ylabel="Fraction",
+        # title="Detailed Weight Fractions",
+        subplot=2,
+        legend = true
+    )
+
+    xticks!(fig, [0, 1, 2], ["Drag","Total\nWeight","Empty\nWeight"],
+            subplot=2)
+
+    #TODO: re-do/re-apply label_bars() to use here
+
+    #=
+    Subplot 3: mission profile
+    =#
+
+    # Plot altitude vs range
+    plot!(fig, R, h, label="Altitude", xlabel="Range [nmi]", 
+            title="Mission Profile",ylabel="Altitude [kft]", lw=2., subplot=3)
+
+    yaxis2 = twinx(fig[3])
+    # Overlay climb angle on the secondary y-axis
+    plot!(yaxis2, R, gamV, color=:red, label="Climb Angle [rads]", ylabel="Climb Angle", lw=2,legend=:bottomright, subplot=3)
+    # Add a horizontal line at climb angle = 0.015
+    hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, subplot=3,
+            label="γ = 0.015")
+
+## Send it back
+    return fig
+end
+
+"""
+Simple utility function to label bars in a stacked bar chart
+"""
+#TODO: Bring this functionality back. Right now, we're working with legends in plots
+# `label_bars()` is the original function. `label_bars!()` is the first cut at refactoring but hasn't been tested
+# function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
+#     # for (i,bar) in enumerate(Bararray)
+#     #     w, h = bar[0].get_width(), bar[0].get_height()
+#     #     x, y = bar[0].get_x(), bar[0].get_y()
+#     #     a.text(x+w, y+h/2, @sprintf("%7.3f", pyconvert(Float64, h)*val_multiplier), ha = "left", va = "center", fontsize = fontsize)
+#     #     a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = fontsize)
+#     # end
+# end
+# """
+# Utility function to label bars in a stacked bar chart using Plots.jl
+# """
+# function label_bars!(xvals, yvals, labels; val_multiplier = 1, fontsize = 8)
+#     for (i, y) in enumerate(yvals)
+#         y_pos = sum(y[1:end-1]) + y[end] / 2
+#         x_pos = xvals[i]
+#         annotate!(x_pos, y_pos, text(@sprintf("%.2f", y[end] * val_multiplier), fontsize))
+#         annotate!(x_pos, y_pos - y[end] / 2, text(labels[i], fontsize))
+#     end
+# end
+
+"""
+Function to plot the comparison of 737-800 weights from TASOPT w 220 pax
+"""
+function plot737compare(ac::aircraft; weightdetail = true, fracs = false)
+    
+    #plot layout
+    layout = @layout([A B])
+    fig = plot(layout=layout, size=(800, 500), dpi=300)
+    
+    #=
+    Subplot 1: Mass comparison
+    =#
+    # Constants
+    lbf_to_N = 4.44822
+
+    # 737-800 Weights breakdown
+    Wempty737 = 105757.5 * lbf_to_N
+    Wpay737 = 47318.9 * lbf_to_N
+    Wfuel737 = 49862.7 * lbf_to_N
+    WMTO737 = 202939.1 * lbf_to_N
+    Wtotadd737 = 13191.0 * lbf_to_N
+    Wfuse737 = 44496.3 * lbf_to_N
+    Wwing737 = 26043.3 * lbf_to_N
+    Whtail737 = 2650.0 * lbf_to_N
+    Wvtail737 = 1749.0 * lbf_to_N
+    Weng737 = 17628.0 * lbf_to_N
+
+    # ac weights
+    parg = ac.parg
+    Wpay  = parg[igWpay]
+    Wfuel = parg[igWfuel]
+    WMTO  = parg[igWMTO]
+    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+    Wwing = parg[igWwing]
+    Wfuse = ac.fuselage.weight
+    Whtail = parg[igWhtail]
+    Wvtail = parg[igWvtail]
+    Weng = parg[igWeng]
+        Whpesys = parg[igWMTO] * ac.fuselage.HPE_sys.W
+        Wlgnose = parg[igWMTO] * parg[igflgnose]
+        Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wtotadd = Whpesys + Wlgnose + Wlgmain
+    Wftank = parg[igWftank]
+
+    # Convert to fractions or tonnes
+    if fracs
+        weight_factor = WMTO
+        weight_factor737 = WMTO737
+    else
+        weight_factor = 9.81 * 1000
+        weight_factor737 = weight_factor
+    end
+
+    # Stacked bar chart
+    bar_width = 0.8
+    grp_labels = ["737-800"; ac.name]
+
+    if weightdetail
+        yvals_737 = [
+            Wfuse737,
+            Wwing737,
+            Whtail737,
+            Wvtail737,
+            Weng737,
+            Wtotadd737,
+            Wfuel737,
+            Wpay737,
+        ]/weight_factor737
+        yvals_ac = [
+            Wfuse,
+            Wwing,
+            Whtail,
+            Wvtail,
+            Weng,
+            Wtotadd,
+            Wfuel,
+            Wpay,
+        ]/weight_factor
+    
+        col_labels = ["Fuselage" "Wing" "Horz.\nTail" "Vert.\nTail" "Engine" "Add'l" "Fuel" "Payload"]
+    
+        groupedbar!(fig,
+            subplot=1,
+            hcat(yvals_737, yvals_ac)',
+            label = col_labels,
+            width = bar_width,
+            color = [:black :blue :orange :purple :green :red :cyan :yellow],
+            legend = :best,
+            grid = true,
+            bar_position = :stack
+        )
+    else
+        yvals_737 = [Wempty737, Wfuel737, Wpay737,]/weight_factor737
+        yvals_ac = [Wempty,Wfuel,Wpay]/weight_factor
+
+        col_labels = ["Empty" "Fuel" "Payload"]
+
+        groupedbar!(fig,
+            subplot=1,
+            hcat(yvals_737, yvals_ac)',
+            label = col_labels,
+            width = bar_width,
+            color = [:red :blue :green],
+            legend = :best,
+            grid = true,
+            bar_position=:stack
+        )
+
+    end
+
+    xlabel!(fig[1],"Aircraft")
+    ylabel!(fig[1], fracs ? "Fraction of MTOW" : "Mass [tonnes]")
+    xticks!(fig[1], (1:length(grp_labels)), grp_labels)
+    
+    
+    #=
+    Subplot 2: Drag comparison
+    =#
+
+    # 737 perf data
+    CD737     = 0.03185
+    CDi737    = 0.01114
+    CDfuse737 = 0.00622
+    CDwing737 = 0.00830
+    CDhtail737= 0.00261
+    CDvtail737= 0.00176
+    CDnace737 = 0.00182
+    
+
+    # ac perf data
+    para = ac.para
+    CD      = para[iaCD, ipcruise1,1]
+    CDfuse  = para[iaCDfuse, ipcruise1,1]
+    CDi     = para[iaCDi, ipcruise1,1]
+    CDwing  = para[iaCDwing, ipcruise1,1]
+    CDhtail = para[iaCDhtail, ipcruise1,1]
+    CDvtail = para[iaCDvtail, ipcruise1,1]
+    CDnace  = para[iaCDnace, ipcruise1,1]
+
+    drag_yvals_ac = [CDfuse, CDi, CDwing, CDhtail, CDvtail, CDnace]
+    drag_yvals_737 = [CDfuse737, CDi737, CDwing737, CDhtail737, CDvtail737, CDnace737]
+
+    # Convert to fractions if needed
+    if fracs
+        drag_yvals_ac = drag_yvals_ac/CD
+        drag_yvals_737 = drag_yvals_737/CD737
+    end
+
+    drag_col_labels = ["Fuselage" "Induced" "Wing" "Horz.\nTail" "Vert.\nTail" "Nacelle"]
+    
+    groupedbar!(fig,
+        subplot=2,
+        hcat(drag_yvals_737, drag_yvals_ac)',
+        label = drag_col_labels,
+        width = bar_width,
+        color = [:black :blue :orange :purple :green :red :cyan :yellow],
+        legend = :best,
+        grid = true,
+        bar_position = :stack
+    )
+
+    xlabel!(fig[2],"Aircraft")
+    ylabel!(fig[2], fracs ? "Fraction of Total Drag Coeff." : "Component Drag Coeff.")
+    xticks!(fig[2], (1:length(grp_labels)), grp_labels)
+
+    return fig
+end
+
+"""
+    MomentShear(ac)
+
+Plot moment and shear diagrams
+"""
+function MomentShear(ac::aircraft)
+    parg = ac.parg
+    co = parg[igco]
+    cs = parg[igco]*parg[iglambdas]
+    ct = parg[igco]*parg[iglambdat]
+  
+    bo = parg[igbo]
+    bs = parg[igbs]
+    b  = parg[igb ]
+
+    etas = bs/b
+    etao = bo/b
+
+    λs = parg[iglambdas]
+    λt = parg[iglambdat]
+
+    Ss = parg[igSsmax]
+    Ms = parg[igMsmax]
+    So = parg[igSomax]
+    Mo = parg[igMomax]
+    
+    etaRange =[LinRange(etao,etas,20) ; LinRange(etas,1,20)]
+    c = zero(etaRange)
+    S = zero(etaRange)
+    M = zero(etaRange)
+
+    for (i,eta) in enumerate(etaRange)
+        if eta<etao
+            c[i] = co
+        elseif eta<etas
+            c[i] = co*( 1 + (λs - 1)*(eta - etao)/(etas - etao))
+            S[i] = So
+            M[i] = Mo
+        else
+            c[i] = co*(λs + (λt -λs)*(eta - etas)/(   1 - etas))
+            S[i] = Ss*(c[i]/cs)^2
+            M[i] = Ms*(c[i]/cs)^3
+        end
+    end
+
+    # Define layout
+    layout = @layout [A; B]
+    fig = plot(layout=layout, size=(800, 500), dpi=300, link=:x)
+
+    # Shear and moment distribution along wings
+    # Shear
+    plot!(fig, 
+        etaRange, S, 
+        ylabel="Shear [N]", 
+        label="",
+        subplot=1,
+        title="Shear and Moment Distribution along Wing"
+    )
+    # Moment
+    plot!(fig, 
+        etaRange, M, 
+        ylabel="Moment [N-m]", 
+        xlabel="Normalized Span Coord. [-]", # Set x-label only on the bottom plot
+        label="",           # Disable legend for individual plots
+        subplot=2           # Target second subplot
+    )
+
+    # Add dividing vertical lines for strut and outer section 
+    for i in 1:2
+        vline!(fig, [etas, etao], ls=:dash, color=:black, 
+                subplot=i, label="") # Add dashed lines at etas and etao
+    end
+
+    annotate!(fig[2], etao, 0,
+            text(" ← Wing start/\n     Wing box end",
+            halign=:left, valign=:bottom, 11,))
+    annotate!(fig[2], etas, Mo,
+            text(" ← Planform Break",
+            halign=:left, valign=:top, 11,))
+
+    return fig
+
+end
+
+"""
+    PayloadRange(ac_og, Rpts, Ppts, filename, OEW, itermax)
+
+Function to plot a payload range diagram for an aircraft
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac_og::aircraft`: Aircraft structure for payload range diagram.
+    - `Rpts::Int64`: Density of ranges to be plot (Optional).
+    - `Ppts::Int64`: Density of payloads to be plot (Optional).
+    - `filename::String`: filename string for the plot to be stored (Optional).
+    - `OEW::Boolean`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
+    - `itermax::Int64`: Max Iterations for woper loop (Optional).
+    - `initeng::Boolean`: Use design case as initial guess for engine state if true (Optional)
+"""
+
+function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false)
+    ac = deepcopy(ac_og)
+    RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
+    maxPay = 0
+
+    Wmax = ac.parg[igWMTO]
+    Fuelmax = ac.parg[igWfmax]
+    Wempty = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
+
+    RangesToPlot = []
+    PayloadToPlot = []
+    maxPay = ac.parm[imWpay]
+
+    for Range = RangeArray
+        if maxPay == 0
+            break
+        else
+            Payloads = (maxPay) * LinRange(1, 0, Ppts)
+        end
+        ac.parm[imRange,2] = Range
+        for mWpay = Payloads
+            println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
+            ac.parm[imWpay,2] = mWpay
+            try
+                TASOPT.woper(ac, 2, saveOffDesign = true)
+                # woper success: store maxPay, break loop
+                mWfuel = ac.parm[imWfuel,2]
+                WTO = Wempty + mWpay + mWfuel
+
+                if WTO > Wmax || mWfuel > Fuelmax || WTO < 0.0 || mWfuel < 0.0 
+                    WTO = 0.0
+                    mWfuel = 0.0
+                    println("Max out error!")
+                    if mWpay == 0
+                        println("Payload 0 and no convergence found")
+                        maxPay = 0
+                    end
+                else
+                    maxPay = mWpay
+                    println("Converged - moving to next range...")
+                    break
+                end     
+            catch
+                println("Not Converged - moving to lower payload...")      
+            end
+        end
+        append!(RangesToPlot, Range)
+        if OEW
+            append!(PayloadToPlot, maxPay+Wempty)
+        else
+            append!(PayloadToPlot, maxPay)
+        end
+    end
+
+    # Convert values for plotting
+    ranges_kft = RangesToPlot ./ (1000 * 1852.0)
+    payload_tons = PayloadToPlot ./ (9.8 * 1000)
+
+    # Plot with all attributes set in plot()
+    plot1 = plot(ranges_kft, payload_tons, 
+        lw=2,                   # Line width
+        line=:solid,            # Line style
+        color=:blue,            # Line color
+        label="Payload",        # Legend label
+        xlabel="Range (1000 nmi)", 
+        ylabel="Weight (1000 kg)", 
+        title="Payload-Range Diagram: "*string(ac.name), 
+        grid=true,              # Enable grid
+        dpi = 300)
+
+    savefig(plot1, filename)
+    return plot1
+end
