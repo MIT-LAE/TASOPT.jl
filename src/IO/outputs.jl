@@ -186,12 +186,12 @@ end
 """
     stickfig(parg,para,pari,parm; ax = nothing, label_fs = 16)
 
-`stickfig` plots a "stick figure" airplane on the axis `ax` if provided 
-(else a new axis is created). This is used in conjuction with other functions
+`stickfig` plots a "stick figure" airplane on the plot or subplot object `plot_obj` if provided 
+(else a new plot is created). This is used in conjuction with other functions
 like [`plot_details`](@ref) to create summary plots to track progress of optimization
 or present results.
 """
-function stickfig(ac::aircraft; ax = nothing, label_fs = 16, 
+function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16, 
     annotate_text = true, annotate_length = true, annotate_group = true, show_grid = false)
 
     pari = ac.pari
@@ -474,48 +474,49 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     end
 
     # Plot
-    plot1 = plot(
-        legend = false,
-        size = (800, 500),  # Equivalent to figsize=(8, 5) in inches
-        dpi = 300,
-        grid = show_grid,
-        show=true,
-        aspect_ratio=:equal
-    )
+    if isnothing(plot_obj)
+        plot_obj = plot(
+            legend = false,
+            size = (800, 500),  # Equivalent to figsize=(8, 5) in inches
+            dpi = 300,
+            grid = show_grid,
+            show=true,
+            aspect_ratio=:equal)
+    end
     
     # Plot wing (upper and lower surfaces)
-    plot!(xw, yw, label = "", color = :black)
-    plot!(xw, -yw, label = "", color = :black)
+    plot!(plot_obj, xw, yw, label = "", color = :black)
+    plot!(plot_obj, xw, -yw, label = "", color = :black)
 
     # Panel break (alpha transparency and line width)
-    plot!(xw[[2, 5]], yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
-    plot!(xw[[2, 5]], -yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
+    plot!(plot_obj, xw[[2, 5]], yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
+    plot!(plot_obj, xw[[2, 5]], -yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
     
     # Plot Tail (conditionally plot fill based on tailz value)
     tailz = parg[igzhtail] > 0 ? :back : 1
-    plot!(xh, yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    plot!(plot_obj, xh, yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
     # plot!(xh, -yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
-    plot!(xh, -yh, fillrange=yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
+    plot!(plot_obj, xh, -yh, fillrange=yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
     
     # Tail box (fill between xvt and yvt for the tail volume)
     xvt = [-0.4, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
     yvt = hcat([0.0 ones(length(xvt) - 2)' .*(parg[igcov]*parg[ighboxv]/2) 0.0])[:]
-    plot!(xvt, -yvt, fillrange=yvt, label = "", color = :black, alpha = 0.8, linecolor = :black, z_order = :front)
+    plot!(plot_obj, xvt, -yvt, fillrange=yvt, label = "", color = :black, alpha = 0.8, linecolor = :black, z_order = :front)
     
     # Plot fuselage (fill with edge color)
-    plot!(xf, -yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
-    plot!(xf, yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
-    plot!(xf, -yf, fillrange=yf, label = "", color = :white, edgecolor = :black, linewidth = 2.0, z_order = 5)
+    plot!(plot_obj, xf, -yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
+    plot!(plot_obj, xf, yf, label = "", color = :black, linewidth = 2.0, z_order = 5)
+    plot!(plot_obj, xf, -yf, fillrange=yf, label = "", color = :white, edgecolor = :black, linewidth = 2.0, z_order = 5)
 
     # Tank plotting
     if pari[iifwing] == 0
         for m in 1:nftanks
             # Tank outline
-            plot!(xt[:, m], yt[:, m], color=:black, lw=1.5, z_order=10)
-            plot!(xt[:, m], -yt[:, m], color=:black, lw=1.5, z_order=10)
+            plot!(plot_obj, xt[:, m], yt[:, m], color=:black, lw=1.5, z_order=10)
+            plot!(plot_obj, xt[:, m], -yt[:, m], color=:black, lw=1.5, z_order=10)
             
             # Filled area between
-            plot!(xt[:, m], yt[:, m], fillrange=-yt[:, m], color=:red, alpha=0.1, z_order=6, linewidth=1.0)
+            plot!(plot_obj, xt[:, m], yt[:, m], fillrange=-yt[:, m], color=:red, alpha=0.1, z_order=6, linewidth=1.0)
             
             # Fuel name
             fuelname = ""
@@ -524,13 +525,13 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
             elseif pari[iifuel] == 40
                 fuelname ="\$LH_2\$"
             end
-            annotate!((xtanks[m], 0.0, text(fuelname, label_fs - 2.0, :center, :center)))
+            annotate!(plot_obj, (xtanks[m], 0.0, text(fuelname, label_fs - 2.0, :center, :center)))
         end
     end
 
     # Xshell2 plotting
-    plot!(xshell, yshell, color=:black, lw=1.5, z_order=10)
-    plot!(xshell, -yshell, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshell, yshell, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshell, -yshell, color=:black, lw=1.5, z_order=10)
 
     # Plot Engines
     D = parg[igdaftfan]
@@ -538,9 +539,9 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
     x = parg[igxtshaft]
 
     # Aft fan outline
-    plot!([x, x, x + lnace, x + lnace, x], [D / 8, D / 8 + D, D / 8 + D * 3 / 4, D / 8 + D / 4, D / 8],
+    plot!(plot_obj, [x, x, x + lnace, x + lnace, x], [D / 8, D / 8 + D, D / 8 + D * 3 / 4, D / 8 + D / 4, D / 8],
         lw=1.5, color=:red, z_order=:front)
-    plot!([x, x, x + lnace, x + lnace, x], [-D / 8, -D / 8 - D, -D / 8 - D * 3 / 4, -D / 8 - D / 4, -D / 8],
+    plot!(plot_obj, [x, x, x + lnace, x + lnace, x], [-D / 8, -D / 8 - D, -D / 8 - D * 3 / 4, -D / 8 - D / 4, -D / 8],
         lw=1.5, color=:red, z_order=:front)
 
     D = parg[igdfan]
@@ -572,26 +573,26 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
             @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
             xlocations = vec(hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)) #hcat is to avoid this being an array of arrays
             ylocations = vec(hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...))
-            plot!(xlocations, ylocations, color=:red, linewidth=1.5)
+            plot!(plot_obj, xlocations, ylocations, color=:red, linewidth=1.5)
 
     # Plot NP and annotate
-    scatter!([parg[igxNP]], [0.0], color=:blue, marker=:circle, z_order=15, label="NP")
-    annotate!((parg[igxNP]+2, 0.5, text("NP", label_fs - 2.0, :center, :center, color=:blue)))
+    scatter!(plot_obj, [parg[igxNP]], [0.0], color=:blue, marker=:circle, z_order=15, label="NP")
+    annotate!(plot_obj, (parg[igxNP]+2, 0.5, text("NP", label_fs - 2.0, :center, :center, color=:blue)))
 
     # Annotate CG range
-    plot!([parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], color=:black, lw=2.0, label="CG movement")  # Line between points
-    scatter!([parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], marker=:vline, color=:black)                # End points
-    annotate!(parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
+    plot!(plot_obj, [parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], color=:black, lw=2.0, label="CG movement")  # Line between points
+    scatter!(plot_obj, [parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], marker=:vline, color=:black)                # End points
+    annotate!(plot_obj, parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
 
     # Show seats (single-deck case)
     if pari[iidoubledeck] == 0
-        scatter!(xseats, repeat(yseats, outer=length(xseats)),
+        scatter!(plot_obj, xseats, repeat(yseats, outer=length(xseats)),
             color=:gray, alpha=0.1, marker=:rect, ms=2, z_order=:front, label="")
     end
 
     # Annotations
     if annotate_text
-        annotate!(-18, 21, text("PFEI = $(round(parm[imPFEI], digits = 4))\n" *
+        annotate!(plot_obj, -18, 21, text("PFEI = $(round(parm[imPFEI], digits = 4))\n" *
             "Mₘₐₓ = $(round(para[iaMach][1], digits=2))\n" *
             "WMTO = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
             "Span = $(round(wing.layout.span, digits=1)) m\n" *
@@ -605,8 +606,8 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
 
     if annotate_length
         yloc = -1.1*maximum(yw)
-        plot!([0.0, xf[end]], [yloc, yloc], lw=1.5, arrow=:h, color=:black, label="")
-        annotate!(xf[end] *0.25, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m",
+        plot!(plot_obj, [0.0, xf[end]], [yloc, yloc], lw=1.5, arrow=:h, color=:black, label="")
+        annotate!(plot_obj, xf[end] *0.25, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m",
             halign=:center, valign=:center, fontsize=14))
     end
 
@@ -616,20 +617,20 @@ function stickfig(ac::aircraft; ax = nothing, label_fs = 16,
 
     if annotate_group
         box_color = :orange
-        plot!([xcode, xcode], [-bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
-        plot!([xcode, 40.0], [bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
-        plot!([xcode, 40.0], [-bmax / 2, -bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
-        annotate!(20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
+        plot!(plot_obj, [xcode, xcode], [-bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        plot!(plot_obj, [xcode, 40.0], [bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        plot!(plot_obj, [xcode, 40.0], [-bmax / 2, -bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
+        annotate!(plot_obj, 20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
             color=box_color, alpha=0.8, fontsize=12, halign=:center, valign=:center))
     end
 
     # Set plot limits and labels
-    ylims!(-1.2 * bmax / 2, 1.2 * bmax / 2)
-    xlims!(-20, maximum(xh)*1.15)
-    xlabel!("x [m]")
-    ylabel!("y [m]")
+    ylims!(plot_obj, -1.2 * bmax / 2, 1.2 * bmax / 2)
+    xlims!(plot_obj, -20, maximum(xh)*1.15)
+    xlabel!(plot_obj, "x [m]")
+    ylabel!(plot_obj, "y [m]")
 
-    return plot1
+    return plot_obj
 end
 
 """
@@ -668,158 +669,157 @@ function plot_details(ac::aircraft; ax = nothing)
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
-        ## Create empty plot
-        # if ax === nothing
-        #     axd = plt.figure(figsize=(8,5), dpi = 300, layout="constrained").subplot_mosaic(
-        #             """
-        #             AA
-        #             BC
-        #             """,
-        #             # set the height ratios between the rows
-        #             height_ratios=[1, 3],
-        #             # set the width ratios between the columns
-        #             width_ratios=[1, 3],
-        #             )
-        #     ax = [axd["A"], axd["B"], axd["C"]]
-        # else
-        #     for a in ax
-        #         a.cla()
-        #     end
-        # end
 
-        # Drag build-up
-        LoD     = para[iaCL, ipcruise1]/ para[iaCD, ipcruise1]
-        CL      = para[iaCL, ipcruise1]
-        CD      = para[iaCD, ipcruise1]
-        CDfuse  = para[iaCDfuse, ipcruise1]
-        CDi     = para[iaCDi, ipcruise1]
-        CDwing  = para[iaCDwing, ipcruise1]
-        CDhtail = para[iaCDhtail, ipcruise1]
-        CDvtail = para[iaCDvtail, ipcruise1]
-        CDnace  = para[iaCDnace, ipcruise1]
+  ## Gather data to be plotted
+    # Drag build-up for subplot 2
+    LoD     = para[iaCL, ipcruise1]/ para[iaCD, ipcruise1]
+    CL      = para[iaCL, ipcruise1]
+    CD      = para[iaCD, ipcruise1]
+    CDfuse  = para[iaCDfuse, ipcruise1]
+    CDi     = para[iaCDi, ipcruise1]
+    CDwing  = para[iaCDwing, ipcruise1]
+    CDhtail = para[iaCDhtail, ipcruise1]
+    CDvtail = para[iaCDvtail, ipcruise1]
+    CDnace  = para[iaCDnace, ipcruise1]
 
-        CDfusefrac  = CDfuse /CD
-        CDifrac     = CDi    /CD
-        CDwingfrac  = CDwing /CD
-        CDhtailfrac = CDhtail/CD
-        CDvtailfrac = CDvtail/CD
-        CDnacefrac  = CDnace /CD
+    CDfusefrac  = CDfuse /CD
+    CDifrac     = CDi    /CD
+    CDwingfrac  = CDwing /CD
+    CDhtailfrac = CDhtail/CD
+    CDvtailfrac = CDvtail/CD
+    CDnacefrac  = CDnace /CD
 
-        # Weight build-up
-        Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-        Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
-        Wlgnose = parg[igWMTO] * parg[igflgnose]
-        Wlgmain = parg[igWMTO] * parg[igflgmain]
-        Wtotadd = Whpesys + Wlgnose + Wlgmain
-        
-        Wpay  = parg[igWpay]
-        Wfuel = parg[igWfuel]
-        WMTO  = parg[igWMTO]
+    # Weight build-up for subplot 2
+    Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+    Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
+    Wlgnose = parg[igWMTO] * parg[igflgnose]
+    Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wtotadd = Whpesys + Wlgnose + Wlgmain
+    
+    Wpay  = parg[igWpay]
+    Wfuel = parg[igWfuel]
+    WMTO  = parg[igWMTO]
 
-        Wwing  = wing.weight
-        Wfuse  = fuselage.weight
-        Wvtail = vtail.weight
-        Whtail = htail.weight
-        Weng = parg[igWeng]
-        Wtesys = parg[igWtesys]
-        Wftank = parg[igWftank]
+    Wwing  = wing.weight
+    Wfuse  = fuselage.weight
+    Wvtail = vtail.weight
+    Whtail = htail.weight
+    Weng = parg[igWeng]
+    Wtesys = parg[igWtesys]
+    Wftank = parg[igWftank]
 
-        Wwingfrac = Wwing /WMTO
-        Wfusefrac = Wfuse /WMTO
-        Wvtailfrac = Wvtail/WMTO
-        Whtailfrac = Whtail/WMTO
-        Wtesysfrac = Wtesys/WMTO
-        Wftankfrac = Wftank/WMTO
-        Wtotaddfrac = Wtotadd/WMTO
-        Wengfrac = Weng/WMTO
+    Wwingfrac = Wwing /WMTO
+    Wfusefrac = Wfuse /WMTO
+    Wvtailfrac = Wvtail/WMTO
+    Whtailfrac = Whtail/WMTO
+    Wtesysfrac = Wtesys/WMTO
+    Wftankfrac = Wftank/WMTO
+    Wtotaddfrac = Wtotadd/WMTO
+    Wengfrac = Weng/WMTO
 
-        Wemptyfrac = Wempty/WMTO
-        Wfuelfrac  = Wfuel /WMTO
-        Wpayfrac   = Wpay  /WMTO
+    Wemptyfrac = Wempty/WMTO
+    Wfuelfrac  = Wfuel /WMTO
+    Wpayfrac   = Wpay  /WMTO
 
-        # a = ax[2]
-        # bar_width = 0.2
-        # # ax[1,1].bar("CL", CL)
-        # CDbars = []
-        # push!(CDbars, a.bar(0, CDifrac    , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac+CDnacefrac, label = "CDi"))
-        # push!(CDbars, a.bar(0, CDnacefrac , width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac+CDvtailfrac           , label = "CDnace"))
-        # push!(CDbars, a.bar(0, CDvtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac+CDhtailfrac                       , label = "CDvtail"))
-        # push!(CDbars, a.bar(0, CDhtailfrac, width = bar_width, bottom = CDfusefrac+CDwingfrac                                   , label = "CDhtail"))
-        # push!(CDbars, a.bar(0, CDwingfrac , width = bar_width, bottom = CDfusefrac                                              , label = "CDwing"))
-        # push!(CDbars, a.bar(0, CDfusefrac , width = bar_width, label = "CDfuse"))
-        
-        # CDlabels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
+    
+    # For subplot 3
+    h     = [para[iaalt,ipclimb1:ipcruisen]; 0.0]./ft_to_m./1000 # show in 1000s of ft.
+    R     = [para[iaRange,ipclimb1:ipcruisen]; para[iaRange, ipdescentn]]./nmi_to_m
+    deNOx = pare[iedeNOx, :]
+    fracW = [para[iafracW, ipclimb1:ipcruisen]; para[iafracW, ipdescentn]]
+    mdotf = pare[iemdotf, :]
+    mdotH2O = pare[iemdotf, :].*9.0
+    gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
 
-        # label_bars(a, CDbars, CDlabels; val_multiplier = CD)
-        # # a.legend(loc = "upper center")
-        # # a.legend(bbox_to_anchor=(1.05, 1))
-        # a.set_xlim(-1,3.5)
+    bar_width = 0.2
 
-        
-        # Wbar1 = a.bar(1.5, Wpayfrac  , bottom = Wemptyfrac + Wfuelfrac, width = bar_width, label = "Wpay")
-        # Wbar2 = a.bar(1.5, Wfuelfrac , bottom = Wemptyfrac, width = bar_width, label = "Wfuel")
-        # Wbar3 = a.bar(1.5, Wemptyfrac, width = bar_width, label = "Wempty")
-        # Wbars = [Wbar1, Wbar2, Wbar3]
-        # Wlabels = ["Wpay", "Wfuel", "Wempty"]
-        # label_bars(a, Wbars, Wlabels, val_multiplier = WMTO/9.81/1000)
-        
-        # Webars = []
-        # push!(Webars, a.bar(3, Wengfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac+Wtotaddfrac, width = bar_width, label = "Weng"))
-        # push!(Webars, a.bar(3, Wtotaddfrac , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac+Wftankfrac, width = bar_width, label = "Wadd"))
-        # push!(Webars, a.bar(3, Wftankfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac+Wtesysfrac, width = bar_width, label = "Wftank"))
-        # push!(Webars, a.bar(3, Wtesysfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac+Wvtailfrac, width = bar_width, label = "Wtesys"))
-        # push!(Webars, a.bar(3, Wvtailfrac  , bottom = Wfusefrac+Wwingfrac+Whtailfrac, width = bar_width, label = "Wvtail"))
-        # push!(Webars, a.bar(3, Whtailfrac  , bottom = Wfusefrac+Wwingfrac, width = bar_width, label = "Whtail"))
-        # push!(Webars, a.bar(3, Wwingfrac   , bottom = Wfusefrac, width = bar_width, label = "Wwing"))
-        # push!(Webars, a.bar(3, Wfusefrac   , width = bar_width, label = "Wfuse"))
-        
-        # Welabels = ["Weng" "Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"]
-        # label_bars(a, Webars, Welabels, val_multiplier = WMTO/9.81/1000)
+## Do the plotting
+    # Create a layout
+    layout = @layout [A; B C]
+    fig = plot(layout=layout, size=(800, 1000), dpi=300,
+                plot_title="Optimization Outputs",
+                legend=false)
 
-        # a.hlines(Wemptyfrac, 1.5+bar_width/2, 3-bar_width/2, lw=0.8, color = "k", ls = "--")
-        # a.grid()
-        # a.set_xticks([0, 1.5, 3])
-        # a.set_xticklabels(["CD","WMTO", "Wempty"])
-        # # ar.cla()
-        # # ar = a.twinx()
-        # # ar.bar(1.7, CDi     , width = 0.4, bottom = CDfuse +CDwing +CDhtail +CDvtail +CDnace , label = "CDi")
-        # # ar.bar(1.7, CDnace  , width = 0.4, bottom = CDfuse +CDwing +CDhtail +CDvtail            , label = "CDnace")
-        # # ar.bar(1.7, CDvtail , width = 0.4, bottom = CDfuse +CDwing +CDhtail                        , label = "CDvtail")
-        # # ar.bar(1.7, CDhtail , width = 0.4, bottom = CDfuse +CDwing                                    , label = "CDhtail")
-        # # ar.bar(1.7, CDwing  , width = 0.4, bottom = CDfuse                                               , label = "CDwing")
-        # # ar.bar(1.7, CDfuse  , width = 0.4, label = "CDfuse")
-        # # ar.grid()
+  #=
+    Subplot 1: draw stick figure
+    =#
 
+    stickfigout = stickfig(ac, plot_obj = fig[1])
+    
 
+    #=
+    Subplot 2: bar graphs for drag, weight buildups
+    =#
+    # Bar plot 1: Drag Components (CD)
+    groupedbar!(fig,
+            [0],
+            [CDifrac, CDnacefrac, CDvtailfrac, CDhtailfrac, CDwingfrac, CDfusefrac]',
+            bar_position=:stack,
+            width=bar_width,
+            label=["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
+            ylabel="Fraction",
+            title="Drag, Weight Breakdowns",
+            subplot=2)
 
-        # # Draw mission profile
-        # a = ax[1]
-        # h     = [para[iaalt,ipclimb1:ipcruisen]; 0.0]./ft_to_m./1000 # show in 1000s of ft.
-        # R     = [para[iaRange,ipclimb1:ipcruisen]; para[iaRange, ipdescentn]]./nmi_to_m
-        # deNOx = pare[iedeNOx, :]
-        # fracW = [para[iafracW, ipclimb1:ipcruisen]; para[iafracW, ipdescentn]]
-        # mdotf = pare[iemdotf, :]
-        # mdotH2O = pare[iemdotf, :].*9.0
-        # gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
+    # # Bar plot 2: Weight Fractions (WMTO)
+    groupedbar!(
+            fig,
+            [1],
+            [Wpayfrac, Wfuelfrac, Wemptyfrac]',
+            bar_position=:stack,
+            width=bar_width,
+            label=["Wpay" "Wfuel" "Wempty"],
+            # xlabel="Weight Fractions",
+            # ylabel="Fraction",
+            # title="Weight Fractions (WMTO)",
+            subplot=2)
 
-        # a.plot(R, h)
-        # a.set_ylim(0, 60.0)
-        # a.set_xlabel("Range [nmi]")
-        # a.set_ylabel("Altitude [kft]")
-        
-        # # ar = a.twinx()
-        # # ar.plot(R, gamV, color = "r")
-        # # ar.axhline(0.015, lw = 1.0, color = "r")
-        # # ar.set_ylabel("Climb angle")
+    # Add lines for Wempty fractions
+    plot!(
+        fig,
+        [0.5, 2.5], [Wemptyfrac, Wemptyfrac],
+        lw=2, color=:black, linestyle=:dash,
+        label="Wempty Line",
+        subplot=2
+    )
 
-        # # Draw stick figure to keep track
-        # stickfig(ac; ax = ax[3], label_fs = 12)
-        # plt.tight_layout()
+    # Bar plot 3: Other Weight Fractions
+    groupedbar!(
+        fig, 
+        [2],
+        [Wengfrac, Wtotaddfrac, Wftankfrac, Wtesysfrac, Wvtailfrac, Whtailfrac, Wwingfrac, Wfusefrac]',
+        bar_position=:stack,
+        width=bar_width,
+        label=["Weng" "Wadd" "Wftank" "Wtesys" "Wvtail" "Whtail" "Wwing" "Wfuse"],
+        # xlabel="Weight Fractions",
+        # ylabel="Fraction",
+        # title="Detailed Weight Fractions",
+        subplot=2,
+        legend = true
+    )
 
-        # #Print other details:
-        # # ax[3].text(48,20, @sprintf("WMTO = %.1f tons\n\$ \\Lambda \$ = %.1f\$ ^\\circ \$\n", parg[igWMTO]/9.81/1000, parg[igsweep]), va = "top")
+    xticks!(fig, [0, 1, 2], ["Drag","Total\nWeight","Empty\nWeight"],
+            subplot=2)
 
-        # return ax
+    #TODO: re-do/re-apply label_bars() to use here
+
+    #=
+    Subplot 3: mission profile
+    =#
+
+    # Plot altitude vs range
+    plot!(fig, R, h, label="Altitude", xlabel="Range [nmi]", 
+            title="Mission Profile",ylabel="Altitude [kft]", lw=2., subplot=3)
+
+    yaxis2 = twinx(fig[3])
+    # Overlay climb angle on the secondary y-axis
+    plot!(yaxis2, R, gamV, color=:red, label="Climb Angle [rads]", ylabel="Climb Angle", lw=2,legend=:bottomright, subplot=3)
+    # Add a horizontal line at climb angle = 0.015
+    hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, subplot=3,
+            label="γ = 0.015")
+
+## Send it back
+    return fig
 
 end
 
@@ -1114,528 +1114,6 @@ function MomentShear(parg)
 
     # return ax
 
-end
-
-"""
-    high_res_airplane_plot(parg, pari, parm; ax = nothing, label_fs = 16, save_name = nothing)
-
-plots high resolution figure for publications
-"""
-function high_res_airplane_plot(ac; ax = nothing, label_fs = 16, save_name = nothing)
-
-    pari = ac.pari
-    parg = ac.parg
-    fuselage = ac.fuselage
-    wing = ac.wing
-    htail = ac.htail
-    vtail = ac.vtail
-    @views pare = ac.pare[:,:,1]
-    @views para = ac.para[:,:,1]
-    @views parm = ac.parm[:,:,1]
-    # Wing
-        co = wing.layout.root_chord
-        cs = wing.layout.root_chord*wing.inboard.λ
-        ct = wing.layout.root_chord*wing.outboard.λ
-
-        sweep = wing.layout.sweep
-        λs = wing.inboard.λ
-        λt = wing.outboard.λ
-
-        bo = wing.layout.root_span
-        bs = wing.layout.break_span
-        b  = wing.layout.span
-
-        xax = 0.40
-        xcLE = -xax
-        xcTE = 1.0 - xax
-
-        dx = wing.layout.box_x
-        etas = bs/b
-        etao = bo/b
-        cosL = cos(sweep*pi/180.0)
-        tanL = tan(sweep*pi/180.0)
-
-        xs = tanL*(bs-bo)/2.0
-        xt = tanL*(b -bo)/2.0
-
-        xw = zeros(6)
-        yw = zeros(6)
-
-        #X locations of wing vertices
-        xw[1] =      co*xcLE + dx
-        xw[2] = xs + cs*xcLE + dx
-        xw[3] = xt + ct*xcLE + dx
-        xw[4] = xt + ct*xcTE + dx
-        xw[5] = xs + cs*xcTE + dx
-        xw[6] =      co*xcTE + dx
-        
-        #Y locations of wing vertices
-        yw[1] = bo/2.0
-        yw[2] = bs/2.0
-        yw[3] = b /2.0
-        yw[4] = b /2.0
-        yw[5] = bs/2.0
-        yw[6] = bo/2.0
-    # Fuse
-        fuselage = ac.fuselage
-        Rfuse = fuselage.layout.radius
-        wfb   = fuselage.layout.bubble_center_y_offset
-
-        anose    = fuselage.layout.nose_radius
-        btail    = fuselage.layout.tail_radius
-
-        xnose    = fuselage.layout.x_nose
-        xend     = fuselage.layout.x_end
-        xblend1  = fuselage.layout.x_start_cylinder
-        xblend2  = fuselage.layout.x_end_cylinder
-        xhtail   = htail.layout.x
-        xvtail   = vtail.layout.x
-        xwing    = wing.layout.x
-
-        xwbox    = wing.layout.box_x
-        xhbox    = htail.layout.box_x
-        xvbox    = vtail.layout.box_x
-
-        lcyl = xblend2 - xblend1
-        xtail = xvtail 
-        
-        hwidth = Rfuse + wfb
-        
-        nnose = 15
-        ntail = 10
-
-        xf = zeros(nnose + ntail + 1)
-        yf = zeros(nnose + ntail + 1)
-
-        if fuselage.layout.taper_fuse == 0
-            dytail = -hwidth 
-        else
-            dytail = -0.2*hwidth
-        end
-
-        for i = 1: nnose
-            fraci = float(i-1)/float(nnose-1)
-            fracx = cos(0.5*pi*fraci)
-
-            k = i
-            xf[k] = xblend1 + (xnose-xblend1)*fracx
-            yf[k] = hwidth*(1.0 - fracx^anose)^(1.0/anose)
-        end
-
-        for i = 1: ntail
-            fraci = float(i-1)/float(ntail-1)
-            fracx = fraci
-
-            k = i + nnose
-            xf[k] = xblend2 + (xend-xblend2)*fracx
-            yf[k] = hwidth + dytail*fracx^btail
-        end
-
-        k = k+1
-        xf[k] = xf[k-1]
-        yf[k] = 0.
-
-    
-    # Tail
-    xh = zeros(6)
-    yh = zeros(6)
-    
-        boh = htail.layout.root_span
-        Sh  = htail.layout.S
-        ARh = htail.layout.AR
-        lambdah = htail.outboard.λ
-        sweeph  = htail.layout.sweep
-        bh = sqrt(Sh*ARh)
-        coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
-
-
-        dx = xhbox
-        tanLh = tan(sweeph*π/180.0)
-        cth = coh*lambdah
-
-        xaxh = 0.40
-
-        xoLEh = coh*(    - xaxh) + dx
-        xoTEh = coh*(1.0 - xaxh) + dx
-        xtLEh = cth*(    - xaxh) + dx + 0.5*(bh - boh)*tanLh
-        xtTEh = cth*(1.0 - xaxh) + dx + 0.5*(bh - boh)*tanLh
-
-        yoLEh = 0.5*boh
-        yoTEh = 0.5*boh
-        ytLEh = 0.5*bh
-        ytTEh = 0.5*bh
-
-
-        if (fuselage.layout.taper_fuse == 0)
-            xcLEh = xoLEh
-            xcTEh = xoTEh
-            ycLEh = yoLEh
-            ycTEh = yoTEh
-        else
-            xcLEh = coh*(    - xaxh) + dx + 0.5*(0. - boh)*tanLh
-            xcTEh = coh*(1.0 - xaxh) + dx + 0.5*(0. - boh)*tanLh
-            ycLEh = 0.0
-            ycTEh = 0.0
-        end
-
-        if  (false)
-            yoLEh = hwidth
-            xoLEh = yoLEh*tanLh + xcLEh
-            if (xoLEh > xblend2)
-                fracx = min( (xoLEh-xblend2)/(xend-xblend2) , 1.0 )
-                yoLEh = hwidth + dytail*fracx^btail
-                xoLEh = yoLEh*tanLh + xcLEh
-            end
-            if (xoLEh > xblend2)
-                fracx = min( (xoLEh-xblend2)/(xend-xblend2) , 1.0 )
-                yoLEh = hwidth + dytail*fracx^btail
-                xoLEh = yoLEh*tanLh + xcLEh
-            end
-
-            yoTEh = 0.0
-            xoTEh = yoTEh*tanLh + xcTEh
-            if (xoTEh > xblend2)
-                fracx = min( (xoTEh-xblend2)/(xend-xblend2) , 1.0 )
-                yoTEh = hwidth + dytail*fracx^btail
-                xoTEh = yoTEh*tanLh + xcTEh
-            end
-            if (xoTEh > xblend2)
-                fracx = min( (xoTEh-xblend2)/(xend-xblend2) , 1.0 )
-                yoTEh = hwidth + dytail*fracx^btail
-                xoTEh = yoTEh*tanLh + xcTEh
-            end
-        
-        end
-        
-
-
-        xh[ 1] = xcLEh
-        xh[ 2] = xoLEh
-        xh[ 3] = xtLEh
-        xh[ 4] = xtTEh
-        xh[ 5] = xoTEh
-        xh[ 6] = xcTEh
-  
-        yh[ 1] = ycLEh
-        yh[ 2] = yoLEh
-        yh[ 3] = ytLEh
-        yh[ 4] = ytTEh
-        yh[ 5] = yoTEh
-        yh[ 6] = ycTEh
-  
-    # Vtail
-    xv = zeros(6)
-    yv = zeros(6)
-    
-    bov = vtail.layout.root_span
-    Sv  = vtail.layout.S
-    ARv = vtail.layout.AR
-    lambdav = vtail.outboard.λ
-    sweepv  = vtail.layout.sweep
-
-    bv = vtail.layout.span
-    cov = vtail.layout.root_chord
-
-
-    dx = vtail.layout.box_x
-    tanLv = tan(sweepv*π/180.0)
-    ctv = cov*lambdav
-
-    xaxv = 0.40
-
-    xoLEv = cov*(    - xaxv) + dx
-    xoTEv = cov*(1.0 - xaxv) + dx
-    xtLEv = ctv*(    - xaxv) + dx + 0.5*(bv - bov)*tanLv
-    xtTEv = ctv*(1.0 - xaxv) + dx + 0.5*(bv - bov)*tanLv
-
-    yoLEv = 0.5*bov
-    yoTEv = 0.5*bov
-    ytLEv = 0.5*bv
-    ytTEv = 0.5*bv
-
-    xcLEv = xoLEv
-    xcTEv = xoTEv
-    ycLEv = yoLEv
-    ycTEv = yoTEv
-
-    xv[ 1] = xcLEv
-    xv[ 2] = xoLEv
-    xv[ 3] = xtLEv
-    xv[ 4] = xtTEv
-    xv[ 5] = xoTEv
-    xv[ 6] = xcTEv
-
-    yv[ 1] = ycLEv
-    yv[ 2] = yoLEv
-    yv[ 3] = ytLEv
-    yv[ 4] = ytTEv
-    yv[ 5] = yoTEv
-    yv[ 6] = ycTEv
-
-    #Initialize seat start x-position
-    xseats0 = fuselage.layout.x_pressure_shell_fwd
-    # Fuel tank
-    ntank = 8
-    Rtank = Rfuse - 0.1 # Account for clearance_fuse
-    l = max(parg[iglftankin], parg[iglftank])
-    nftanks = pari[iinftanks] #Number of fuel tanks
-    ARtank = 2.0
-
-    if nftanks != 0
-        tank_placement = ac.fuse_tank.placement
-        if tank_placement == "front"
-            xtanks = [parg[igxftank]]
-            xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
-        elseif tank_placement == "rear"
-            xtanks = [parg[igxftankaft]]
-            xseats0 = fuselage.layout.x_pressure_shell_fwd
-        elseif tank_placement == "both"
-            xtanks = [parg[igxftank], parg[igxftankaft]]
-            xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
-        end
-    
-        xcyl0 = parg[igxftank] - l/2 + Rtank/ARtank
-        xcyl1 = parg[igxftank] + l/2 - Rtank/ARtank
-        ntank = 8
-        xt = zeros(ntank*2 )
-        yt = zeros(ntank*2 )
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = cos(0.5*pi*fraci)
-
-            k = i
-            xt[k] = xcyl0 - Rtank/ARtank*fracx
-            yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
-        end
-        # k = k+1
-        # xt[k] = xcyl0 + parg[iglftank]
-        # yt[k] = Rtank
-        for i = 1: ntank
-            fraci = float(i-1)/float(ntank-1)
-            fracx = sin(0.5*pi*fraci)
-
-            k = i + ntank
-            xt[k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
-            yt[k] = sqrt(Rtank^2 * max((1 - ((xt[k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
-        end
-    end
-        # xt = LinRange(xcyl0 - Rfuse/ARtank , xcyl0, 20 )
-        # yt = zeros(length(xt))
-        # @. yt = sqrt(Rfuse^2 * max((1 - ((xt-xcyl0)/(Rfuse/ARtank))^2), 0.0) )
-
-    xshell = zeros(ntank)
-    yshell = zeros(ntank)
-    AR = 3.0
-    xshellcenter = fuselage.layout.x_pressure_shell_aft - Rfuse/AR
-    for i = 1: ntank
-        fraci = float(i-1)/float(ntank-1)
-        fracx = sin(0.5*pi*fraci)
-
-        k = i
-        xshell[k] = xshellcenter + Rfuse/AR *fracx
-        yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
-    end
-
-    #Seats
-    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
-        h_seat = fuselage.cabin.seat_height
-        pax = parg[igWpay]/parm[imWperpax]
-        Rfuse = fuselage.layout.radius
-        dRfuse = fuselage.layout.bubble_lower_downward_shift
-        wfb = fuselage.layout.bubble_center_y_offset
-        nfweb = fuselage.layout.n_webs
-
-        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
-        wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
-        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
-
-        xseats = xseats .+ xseats0
-        rows = length(xseats)
-
-        println("Seats per row = $seats_per_row, Total rows = $rows")
-        yseats = arrange_seats(seats_per_row, wcabin)
-    end
-
-    ## Plot
-    if ax === nothing
-        # plt.style.use(["../miscellaneous/prash.mplstyle"]) # HACK
-        fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-    else
-        ax.cla()
-    end
-    engz  = 25
-    tankz = 10
-    fusez = 5
-    wingz = 6
-    tailz = 1
-        # Plot wing
-            ax.plot(xw, yw, "-k", zorder = wingz)
-            ax.plot(xw, -yw, "-k", zorder = wingz)
-            
-            # Panel break
-            # ax.plot(xw[[2,5]],  yw[[2,5]], "-k", lw = 1.0, alpha = 0.5)
-            # ax.plot(xw[[2,5]], -yw[[2,5]], "-k", lw = 1.0, alpha = 0.5)
-        
-        # Plot Tail
-        htail.layout.z > 0 ? tailz = 21 : tailz = 1
-            # ax.plot(xh,  yh, "-k", zorder = tailz)
-            # ax.plot(xh, -yh, "-k", zorder = tailz)
-            ax.fill_between(xh, -yh, yh, facecolor = "w", alpha = 0.8, edgecolor = "k", zorder = tailz, linewidth = 2.0)
-        xvt = [-0.4, -0.3, -0.2, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
-        tailthick = (vtail.layout.root_chord*vtail.outboard.cross_section.thickness_to_chord/2)
-        yvt = hcat([0.0 0.5*tailthick 0.9*tailthick ones(2)' .*tailthick 0.0])[:]
-        ax.fill_between(xvt, -yvt, yvt, facecolor = "k", alpha = 0.8, edgecolor = "k", zorder = 22)
-
-        ax.plot(xv,yv, "--r", zorder = 21)
-
-        # Plot fuse
-            # ax.fill(xf,  yf, facecolor = "w", edgecolor = "k")
-            # ax.fill(xf, -yf, facecolor = "w", edgecolor = "k")
-            ax.fill_between(xf, -yf, yf, facecolor = "w", edgecolor = "k", zorder = fusez, linewidth = 2.0)
-            
-        # Tank
-        if (pari[iifwing] == 0)
-            ax.plot(xt,  yt, "k", lw = 1.5, alpha = 0.8, zorder = tankz)
-            ax.plot(xt, -yt, "k", lw = 1.5, alpha = 0.8, zorder = tankz)
-            ax.fill_between(xt, -yt, yt, facecolor = "r", alpha = 0.1, edgecolor = "k", zorder = tankz-1, linewidth = 1.0)
-            ax.text(parg[igxftank], 0.0, "LH\$_2\$", fontsize = label_fs-2.0, zorder = tankz+1, ha="center", va="center")
-        end
-
-        # Xshell2
-        ax.plot(xshell,  yshell, "k", lw = 1.5, zorder = tankz)
-        ax.plot(xshell, -yshell, "k", lw = 1.5, zorder = tankz)
-
-        # Plot Engines:
-            D = parg[igdaftfan]
-            
-            lnace = parg[iglnaceaft]
-            x = parg[igxtshaft] - 0.5
-            xlocs = hcat([x,x, x+lnace, x+lnace, x]...)
-            ylocs = hcat([ D/8,  D/8 + D,  D/8 + D*3/4,  D/8 + 1/4*D,  D/8]...)
-            ax.fill(xlocs, ylocs,
-            lw = 1.5, edgecolor = "k", zorder = engz, facecolor = "w")
-            ax.fill(xlocs, -1 .* ylocs,
-            lw = 1.5, edgecolor = "k", zorder = engz, facecolor = "w")
-
-            ηs = bs/b
-            ηo = bo/b
-            D = parg[igdfan]
-            neng = parg[igneng]
-            lnace = parg[iglnace]
-            dy = 2*D # space to leave near wing root and tip [m]
-            if parg[igneng] == 2
-                yi = [ηs*b/2]
-            else
-                yi = LinRange(bo/2 + dy , b/2 *3/4, Int(parg[igneng]/2))
-            end
-            xi = zero(yi)
-            ηi = yi/(b/2)
-            ci = zero(yi)
-            for (i, η)  in enumerate(ηi)
-                if η <=ηs
-                    ci[i] = co*(1  + (λs -  1)*(η - ηo)/(ηs - ηo))
-                else
-                    ci[i] = co*(λs + (λt - λs)*(η - ηs)/(1  - ηs))
-                end
-            end
-
-            tanL = tan(wing.layout.sweep*π/180.0)
-            @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
-            
-            xlocs = hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)
-            ylocs = hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2 ]...)
-            ax.plot(xlocs, ylocs, color = "k", lw = 1.5, zorder = wingz-1)
-            ax.plot(xlocs , -1 .* ylocs, color = "k", lw = 1.5, zorder = wingz-1)
-            
-             #Pylons
-             xlocs = hcat([xi.+lnace/2, xi.+1.0]...)
-             ylocs = hcat([yi, yi]...)
-            ax.plot(xlocs , ylocs, color = "k", lw = 2, zorder = wingz-2)
-            ax.plot(xlocs , -1.0 .* ylocs, color = "k", lw = 2, zorder = wingz-2)
-      
-
-        # Plot NP and CG range
-            ax.scatter(parg[igxNP], 0.0, color = "k", marker="o", zorder = 21, label = "NP")
-            ax.text(parg[igxNP], -1.0, "NP", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
-
-            ax.annotate("", xy=(parg[igxCGfwd ] , 0.0), xytext=(parg[igxCGaft ] , 0.0),
-            fontsize=16, ha="center", va="bottom",
-            arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.2, widthB=0.2"),
-            zorder = 21, label = "CG movement")
-            ax.text(0.5*(parg[igxCGfwd ]+parg[igxCGaft ]), -1.0, "CG", fontsize=label_fs-2.0, ha="center", va="center", zorder = 21)
-
-        # Show seats
-        if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
-            ax.scatter(ones(length(yseats),1).*xseats, ones(1,rows).* yseats, color = "gray", alpha = 0.1, marker = "s", s=15, zorder = 21)
-        end
-     # diagnostic marks
-    #  ax.scatter(parg[igxftank] - l/2, 0.0, color = "k", marker="o", zorder = 21)
-    #  ax.scatter(parg[igxftank], 0.0, color = "b", marker="o", zorder = 21)
-    #  ax.scatter(parg[igxblend2], 0.0, color = "k", marker="o", zorder = 21)
-    #  ax.plot([parg[igxftank]-l/2, parg[igxftank]+l/2],[0.0, 0.0], zorder = 21)
-
-
-    # Annotations
-    ax.text(0, 16, @sprintf("PFEI = %5.3f J/Nm\nM\$_{cruise}\$ = %.2f\nWMTO = %.1f tonnes\nSpan = %5.1f m\nco    = %5.1f m\n\$ \\Lambda \$ = %.1f\$^\\circ\$\nRfuse = %5.1f m\nL/D = %3.2f",
-     parm[imPFEI], para[iaMach, ipcruise1],parg[igWMTO]/9.81/1000, wing.layout.span, wing.layout.root_chord, wing.layout.sweep, fuselage.layout.radius, para[iaCL, ipcruise1]/para[iaCD, ipcruise1]),
-     fontsize = label_fs, ha="left", va="top")
-
-    yloc = -20
-    ax.annotate("", xy=(0.0, yloc), xytext=( xf[end], yloc),
-            fontsize=16, ha="center", va="bottom",
-            arrowprops=Dict("arrowstyle"=> "|-|, widthA=0.5, widthB=0.5"),
-             zorder = 30)
-    ax.text(xend/2, yloc, @sprintf("l = %5.1f m", xend), bbox=Dict("ec"=>"w", "fc"=>"w"), ha="center", va="center", fontsize = 14, zorder = 31)
-
-    # Span annotations:
-    codeD = false
-    codeE = false
-    xcodeD = -2.0
-    xcodeE = -3.5
-        if codeD
-            # ICAO code D 
-            bmaxD = 36
-            ax.vlines(xcodeD, -bmaxD/2, bmaxD/2, lw = 5, alpha = 0.2, color = "y")
-            ax.hlines( bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
-            ax.hlines(-bmaxD/2, xcodeD, 40.0, lw = 5, alpha = 0.2, color = "y")
-            ax.text(20, bmaxD/2+1, "ICAO Code D/ FAA Group III", color = "y", alpha = 0.8, fontsize = 12, ha="center", va="center")
-        end
-        if codeE
-            # ICAO code E
-            bmaxE = 52
-            ax.vlines(xcodeE, -bmaxE/2, bmaxE/2, lw = 5, alpha = 0.2, color = "b")
-            ax.hlines( bmaxE/2, xcodeE, 40.0, lw = 5, alpha = 0.2, color = "b")
-            ax.hlines(-bmaxE/2, xcodeE, 40.0, lw = 5, alpha = 0.2, color = "b")
-            ax.text(20, bmaxE/2+1, "ICAO Code E/ FAA Group IV", color = "b", alpha = 0.5, fontsize = 12, ha="center", va="center")
-        end
-
-    if codeE
-        ax.set_ylim(-27,27)
-    elseif codeD
-        ax.set_ylim(-23,23)
-    else
-        ax.set_ylim(-23, 23)
-    end
-    ax.set_aspect(1)
-    ax.set_xlim(-2.5, 52)
-    ax.set_ylabel("y[m]")
-    ax.set_xlabel("x[m]")
-    plt.tight_layout()
-    # ax.legend()
-    ax.grid()
-
-    if save_name !== nothing
-        if pari[iifuel] == 1
-            figname = @sprintf("ZIA_BLI_%d_%d_%.3f_%.1f", seats_per_row, parg[igneng], parm[imPFEI],  para[iaCL, ipcruise1]/para[iaCD, ipcruise1])
-        elseif pari[iifuel] == 2
-            figname = @sprintf("ZIA_SAF_BLI_%d_%d_%.3f_%.1f", seats_per_row, parg[igneng], parm[imPFEI],  para[iaCL, ipcruise1]/para[iaCD, ipcruise1])
-        end
-        plt.savefig(save_name*".png", metadata = Dict("Title"=>figname))
-    end
-
-    # Scale bar
-
-    return ax
 end
 
 """
