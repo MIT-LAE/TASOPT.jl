@@ -184,7 +184,7 @@ function geometry(ac::aircraft; io = stdout)
 end
 
 """
-    stickfig(parg,para,pari,parm; ax = nothing, label_fs = 16)
+    stickfig(parg,para,pari,parm; plot_obj = nothing, label_fs = 16)
 
 `stickfig` plots a "stick figure" airplane on the plot or subplot object `plot_obj` if provided 
 (else a new plot is created). This is used in conjuction with other functions
@@ -653,12 +653,12 @@ function find_aerodrome_code(b::Float64)
 end
 
 """
-    plot_details(parg, pari, para, parm; ax = nothing)
+    plot_details(parg, pari, para, parm; plot_obj = nothing)
 
 `plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
 weight and drag buildup stacked bar charts to present results.
 """
-function plot_details(ac::aircraft; ax = nothing)
+function plot_details(ac::aircraft; plot_obj = nothing)
 
     pari = ac.pari
     parg = ac.parg
@@ -734,11 +734,16 @@ function plot_details(ac::aircraft; ax = nothing)
     bar_width = 0.2
 
 ## Do the plotting
-    # Create a layout
-    layout = @layout [A; B C]
-    fig = plot(layout=layout, size=(800, 1000), dpi=300,
-                plot_title="Optimization Outputs",
-                legend=false)
+    
+    if isnothing(plot_obj)
+        # Create a layout
+        layout = @layout [A; B C]
+        fig = plot(layout=layout, size=(800, 1000), dpi=300,
+                    plot_title="Optimization Outputs",
+                    legend=false)
+    else
+        fig = plot_obj
+    end
 
   #=
     Subplot 1: draw stick figure
@@ -1101,18 +1106,43 @@ function MomentShear(parg)
             M[i] = Ms*(c[i]/cs)^3
         end
     end
-    # fig, ax = plt.subplots(2,1,figsize=(8,5), sharex = true, dpi = 300)
-    # ax[1].plot(etaRange,S)
-    # ax[1].set_ylabel("Shear")
-    # ax[2].plot(etaRange,M)
-    # ax[2].set_ylabel("Moment")
 
-    # for a in ax
-    #     a.axvline(etas, ls = "--")
-    #     a.axvline(etao)
-    # end
+    # Define layout
+    layout = @layout [A; B]
+    fig = plot(layout=layout, size=(800, 500), dpi=300, link=:x)
 
-    # return ax
+    # Shear and moment distribution along wings
+    # Shear
+    plot!(fig, 
+        etaRange, S, 
+        ylabel="Shear [N]", 
+        label="",
+        subplot=1,
+        title="Shear and Moment Distribution along Wing"
+    )
+    # Moment
+    plot!(fig, 
+        etaRange, M, 
+        ylabel="Moment [N-m]", 
+        xlabel="Normalized Span Coord. [-]", # Set x-label only on the bottom plot
+        label="",           # Disable legend for individual plots
+        subplot=2           # Target second subplot
+    )
+
+    # Add dividing vertical lines for strut and outer section 
+    for i in 1:2
+        vline!(fig, [etas, etao], ls=:dash, color=:black, 
+                subplot=i, label="") # Add dashed lines at etas and etao
+    end
+
+    annotate!(fig[2], etao, 0,
+            text(" ← Wing start/\n     Wing box end",
+            halign=:left, valign=:bottom, 11,))
+    annotate!(fig[2], etas, Mo,
+            text(" ← Planform Break",
+            halign=:left, valign=:top, 11,))
+
+    return fig
 
 end
 
