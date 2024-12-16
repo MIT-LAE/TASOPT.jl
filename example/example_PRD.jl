@@ -4,7 +4,6 @@ fleet of missions
 """
 
 # 1. Import modules
-# using PythonPlot
 using TASOPT
 using Plots
 # import indices for calling parameters
