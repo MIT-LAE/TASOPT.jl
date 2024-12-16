@@ -20,11 +20,10 @@ Start by choosing a design mission. Your design mission should be what you want 
 
 ## Julia script for Payload Range Diagram
 
-Start the script importing `TASOPT.jl`, `PyPlot` and `index.inc` and then loading the default `aircraft` model.
+Start the script importing `TASOPT.jl`, `Plots` and `index.inc` and then loading the default `aircraft` model.
 
 ```julia
 # Import modules
-using PyPlot
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
@@ -111,7 +110,7 @@ x = RangesToPlot ./ (1000 * 1852.0) #to nmi
 y = PayloadToPlot ./ (9.8 * 1000) #to tonnes
 
 # Create the plot
-plot(x, y,
+p = plot(x, y,
     label = "Payload",
     linestyle = :solid, 
     color = :blue,
@@ -124,6 +123,6 @@ plot(x, y,
 )
 
 # Save the plot to a file
-savefig("./PayloadRangeExample.png")
+savefig(p, "./PayloadRangeExample.png")
 
 ```
