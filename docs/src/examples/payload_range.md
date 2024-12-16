@@ -103,14 +103,26 @@ end
 ## Plot Payload Range diagram
 
 ```julia
-using PythonPlot
-fig, ax = pyplot.subplots(figsize=(8,5), dpi = 300)
-ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
-ax.set_xlabel("Range (1000 nmi)")
-ax.set_ylabel("Weight (1000 kg)")
-ax.legend()
-ax.set_title("Payload Range Plot")
-ax.grid()
+using Plots
 
-fig.savefig("./PayloadRangeExample.png")
+#unit conversions
+x = RangesToPlot ./ (1000 * 1852.0) #to nmi
+y = PayloadToPlot ./ (9.8 * 1000) #to tonnes
+
+# Create the plot
+plot(x, y,
+    label = "Payload",
+    linestyle = :solid, 
+    color = :blue,
+    xlabel = "Range [1000 nmi]",
+    ylabel = "Weight [tonnes]",
+    title = "Payload Range Plot",
+    grid = true,
+    dpi = 300,
+    size = (800, 500)
+)
+
+# Save the plot to a file
+savefig("./PayloadRangeExample.png")
+
 ```
