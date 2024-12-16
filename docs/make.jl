@@ -6,7 +6,7 @@ push!(LOAD_PATH, "../src")
 aerodynamics = TASOPT.aerodynamics
 structures = TASOPT.structures
 engine = TASOPT.engine
-aircraft = TASOPT.aircraft
+airc = TASOPT.aircraft      #"aircraft = ..." conflicted with the global namespace
 CryoTank = TASOPT.CryoTank
 
 makedocs(
