@@ -8,7 +8,7 @@ using NLopt
 using Roots
 using LinearAlgebra
 
-export tfcalc!, mcool, Tmcalc, gas_tset, gaschem
+export enginecalc!, tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
 
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
@@ -31,5 +31,6 @@ include("turbofan/tfcalc.jl")
 include("turbofan/tfweight.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
+include("enginecalc.jl")
 
 end
