@@ -653,14 +653,13 @@ function find_aerodrome_code(b::Float64)
 end
 
 """
-    plot_details(parg, pari, para, parm; plot_obj = nothing)
+    plot_details(ac::aircraft; plot_obj = nothing)
 
 `plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
 weight and drag buildup stacked bar charts to present results.
 """
 function plot_details(ac::aircraft; plot_obj = nothing)
 
-    pari = ac.pari
     parg = ac.parg
     fuselage = ac.fuselage
     wing = ac.wing
@@ -733,7 +732,7 @@ function plot_details(ac::aircraft; plot_obj = nothing)
 
     bar_width = 0.2
 
-## Do the plotting
+  ## Do the plotting
     
     if isnothing(plot_obj)
         # Create a layout
@@ -751,7 +750,6 @@ function plot_details(ac::aircraft; plot_obj = nothing)
 
     stickfigout = stickfig(ac, plot_obj = fig[1])
     
-
     #=
     Subplot 2: bar graphs for drag, weight buildups
     =#
@@ -825,12 +823,13 @@ function plot_details(ac::aircraft; plot_obj = nothing)
 
 ## Send it back
     return fig
-
 end
 
 """
 Simple utility function to label bars in a stacked bar chart
 """
+#TODO: Bring this functionality back. Right now, we're working with legends in plots
+# `label_bars()` is the original function. `label_bars!()` is the first cut at refactoring but hasn't been tested
 # function label_bars(a, Bararray, labels; val_multiplier = 1, fontsize = 8)
 #     # for (i,bar) in enumerate(Bararray)
 #     #     w, h = bar[0].get_width(), bar[0].get_height()
@@ -839,27 +838,22 @@ Simple utility function to label bars in a stacked bar chart
 #     #     a.text(x-w/2, y+h/2, @sprintf("%7s", labels[i]), ha = "right", va = "center", fontsize = fontsize)
 #     # end
 # end
-"""
-Utility function to label bars in a stacked bar chart using Plots.jl
-"""
-function label_bars!(xvals, yvals, labels; val_multiplier = 1, fontsize = 8)
-    for (i, y) in enumerate(yvals)
-        y_pos = sum(y[1:end-1]) + y[end] / 2
-        x_pos = xvals[i]
-        annotate!(x_pos, y_pos, text(@sprintf("%.2f", y[end] * val_multiplier), fontsize))
-        annotate!(x_pos, y_pos - y[end] / 2, text(labels[i], fontsize))
-    end
-end
+# """
+# Utility function to label bars in a stacked bar chart using Plots.jl
+# """
+# function label_bars!(xvals, yvals, labels; val_multiplier = 1, fontsize = 8)
+#     for (i, y) in enumerate(yvals)
+#         y_pos = sum(y[1:end-1]) + y[end] / 2
+#         x_pos = xvals[i]
+#         annotate!(x_pos, y_pos, text(@sprintf("%.2f", y[end] * val_multiplier), fontsize))
+#         annotate!(x_pos, y_pos - y[end] / 2, text(labels[i], fontsize))
+#     end
+# end
 
 """
 Function to plot the comparison of 737-800 weights from TASOPT w 220 pax
 """
-function plot737compare(;ac = nothing, weightdetail = true, fracs = false)
-    if isnothing(ac)
-        @info "No Aircraft model provided for B737 comparison. Using TASOPT default input model..."
-        ac = load_default_model()
-        size_aircraft!(ac)
-    end
+function plot737compare(ac::aircraft; weightdetail = true, fracs = false)
     
     #plot layout
     layout = @layout([A B])
@@ -1025,11 +1019,12 @@ function plot737compare(;ac = nothing, weightdetail = true, fracs = false)
 end
 
 """
-    MomentShear(parg)
+    MomentShear(ac)
 
 Plot moment and shear diagrams
 """
-function MomentShear(parg)
+function MomentShear(ac::aircraft)
+    parg = ac.parg
     co = parg[igco]
     cs = parg[igco]*parg[iglambdas]
     ct = parg[igco]*parg[iglambdat]
@@ -1210,7 +1205,6 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
         grid=true,              # Enable grid
         dpi = 300)
 
-    # Save with specified DPI
-    savefig(filename)
-    display(plot1)
+    savefig(plot1, filename)
+    return plot1
 end
