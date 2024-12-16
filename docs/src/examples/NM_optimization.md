@@ -20,11 +20,11 @@ To run a multi-variable optimization run on an aircraft model first determining 
 
 ## Initialiation and loading models
 
-Start the script importing `TASOPT.jl`, `PyPlot`, `index.inc`, `NLopt`.
+Start the script importing `TASOPT.jl`, `Plots`, `index.inc`, `NLopt`.
 
 ```julia
 # Import modules
-using PyPlot
+using Plots
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
@@ -178,7 +178,7 @@ if !isdir(savedir)
 end
 figname = "Opt_tutorial_ac_details"
 plot_obj = TASOPT.plot_details(ac; plot_obj = plot_obj)
-plt.savefig(savedir*figname*".png")
+savefig(plot_obj, savedir*figname*".png")
 ```
 
 ### Plot optimization outputs over iterations

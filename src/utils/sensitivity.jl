@@ -346,8 +346,20 @@ end
     - `sensitivities`: List of caclulated sensitivities
     - `output_file`: File location of the plot figure
 """
-function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.svg")
-    fig, ax = subplots(dpi=300)
+function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.png")
+
+    #TODO: Sensitivity plotter should list the parameter name as yticks
+
+    # Initialize plot
+    p = plot(
+        legend=false,
+        xlabel="Sensitivity",
+        ylabel="Element Number",
+        title="Sensitivity Plot",
+        dpi=300,
+        size=(800, 600),
+        yticks=(1:length(sensitivities), string.(1:length(sensitivities)))
+    )
 
     # Store the y-axis positions
     y_positions = []
@@ -355,34 +367,29 @@ function plot_sensitivities(sensitivities::Vector, output_file::String="sensitiv
     # Loop through the sensitivities to plot each value
     for i in 1:length(sensitivities)
         if isa(sensitivities[i], Number)
-            ax.barh(i, sensitivities[i], color="blue")
+            bar!(p, [i], [sensitivities[i]], color=:blue, bar_width=0.5, orientation=:horizontal)
             push!(y_positions, i)
         elseif isa(sensitivities[i], Vector)
             # Plot each element in the sub-list as a separate bar, side by side
             for j in 1:length(sensitivities[i])
                 offset = (j - 1) * 0.25  # Slight offset for side-by-side bars
-                ax.barh(i + offset, sensitivities[i][j], height=0.25, color="green")
-            push!(y_positions, i)  # Append only once to avoid extra ticks
+                bar!(p, [i + offset], [sensitivities[i][j]], color=:green, bar_width=0.25, orientation=:horizontal)
             end
+            push!(y_positions, i)  # Append only once to avoid extra ticks
         end
     end
 
     # Draw a vertical line at x = 0
-    ax.axvline(x=0, color="black", linestyle="--", linewidth=1)
+    vline!(p, [0], linestyle=:dash, color=:black, linewidth=1)
 
-    # Set y-axis ticks to integers only
-    ax.set_yticks(1:length(sensitivities))
-    ax.set_yticklabels(1:length(sensitivities))
-
-    # Add labels and title
-    ax.set_xlabel("Sensitivity")
-    ax.set_ylabel("Element Number")
-    ax.set_title("Sensitivity Plot")
-    ax.invert_yaxis()  # Invert y-axis to match the order of elements
+    # Invert y-axis to match the order of elements
+    yflip!(p, true)
 
     # Save the figure to an image file
-    savefig(output_file)
-    println("Plot saved as $output_file")
+    # savefig(p, output_file)
+    # println("Plot saved as $output_file")
+
+    return p
 end
 
 """

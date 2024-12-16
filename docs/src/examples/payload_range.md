@@ -22,7 +22,6 @@ Start the script importing `TASOPT.jl` and then loading the default `aircraft` m
 
 ```julia
 # Import modules
-using PythonPlot
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
@@ -110,7 +109,7 @@ x = RangesToPlot ./ (1000 * 1852.0) #to nmi
 y = PayloadToPlot ./ (9.8 * 1000) #to tonnes
 
 # Create the plot
-plot(x, y,
+p = plot(x, y,
     label = "Payload",
     linestyle = :solid, 
     color = :blue,
@@ -123,6 +122,6 @@ plot(x, y,
 )
 
 # Save the plot to a file
-savefig("./PayloadRangeExample.png")
+savefig(p, "./PayloadRangeExample.png")
 
 ```
