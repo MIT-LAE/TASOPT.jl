@@ -16,7 +16,7 @@ using Dates
 using ForwardDiff
 using CSV, Tables
 using DocStringExtensions
-using Plots, StatsPlots
+using Plots, StatsPlots, Plots.PlotMeasures
 
 #convenient directories
 const __TASOPTroot__ = @__DIR__
