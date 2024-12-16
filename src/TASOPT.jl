@@ -80,8 +80,8 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
-include(joinpath(__TASOPTroot__,"IO/text_outputs.jl"))
-include(joinpath(__TASOPTroot__,"IO/plot_outputs.jl"))
+include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
+include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
 export stickfig, plot_details
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
