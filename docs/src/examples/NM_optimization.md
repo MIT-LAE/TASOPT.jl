@@ -42,7 +42,7 @@ farray = []
 PFEIarray = []
 CDarray = []
 OPRarray = []
-track_fig = nothing
+plot_obj = nothing
 ft_to_m = 0.3048
 ```
 
@@ -58,7 +58,7 @@ size_aircraft!(ac)
 
 ## Setting Optimization Parameters
 
-This example uses a Nedler Mead optimization aimed towards optimizing for passenger fuel emission index (PFEI) while checking for other constraints.
+This example uses a Nelder Mead optimization aimed towards optimizing for passenger fuel emission index (PFEI) while checking for other constraints.
 
 ### Set the Upper and Lower limits for all design variables
 
@@ -177,27 +177,30 @@ if !isdir(savedir)
     println("The 'optimization' directory has been created.")
 end
 figname = "Opt_tutorial_ac_details"
-global track_fig = TASOPT.plot_details(ac; ax = track_fig)
+plot_obj = TASOPT.plot_details(ac; plot_obj = plot_obj)
 plt.savefig(savedir*figname*".png")
 ```
 
 ### Plot optimization outputs over iterations
 
 ```julia
-fig, ax = plt.subplots(2,2, figsize = (12,8))
-ax[1].plot(PFEIarray)
-ax[1].set_xlabel("Iterations")
-ax[1].set_ylabel("PFEI (J/Nm)")
-ax[2].semilogy(farray)
-ax[2].set_xlabel("Iterations")
-ax[2].set_ylabel("Objective f")
-ax[3].plot(CDarray)
-ax[3].set_xlabel("Iterations")
-ax[3].set_ylabel("CD")
-ax[4].plot(OPRarray)
-ax[4].set_xlabel("Iterations")
-ax[4].set_ylabel("OPR")
-plt.suptitle("Optimization outputs")
+## Second figure
+# Create a 2x2 layout
+layout = @layout [a b; c d]
+
+p1 = plot(PFEIarray, xlabel="Iterations", ylabel="PFEI (J/Nm)", title="")
+p2 = plot(farray, yscale=:log10, xlabel="Iterations", ylabel="Objective f", title="")
+p3 = plot(CDarray, xlabel="Iterations", ylabel="CD", title="")
+p4 = plot(OPRarray, xlabel="Iterations", ylabel="OPR", title="")
+
+# Create the plot
+p = plot(p1, p2, p3, p4,    
+    layout = layout,
+    size=(1200, 800),
+    plot_title="Optimization outputs"
+)
+
+# Save the plot
 figname2 = "Opt_tutorial_iterations"
-fig.savefig(savedir*figname2*".png")
+savefig(p, savedir * figname2 * ".png")
 ```

@@ -15,7 +15,7 @@ farray = []
 PFEIarray = []
 CDarray = []
 OPRarray = []
-track_fig = nothing
+plot_obj = nothing
 ft_to_m = 0.3048
 
 # Load default model
@@ -164,7 +164,7 @@ if !isdir(savedir)
 end
 
 figname = "Opt_tutorial_ac_details"
-summplot = TASOPT.plot_details(ac)
+summplot = TASOPT.plot_details(ac, plot_obj=plot_obj)
 savefig(summplot, savedir*figname*".png")
 
 
@@ -173,7 +173,7 @@ savefig(summplot, savedir*figname*".png")
 layout = @layout [a b; c d]
 
 p1 = plot(PFEIarray, xlabel="Iterations", ylabel="PFEI (J/Nm)", title="")
-p2 = plot(farray, xscale=:log10, xlabel="Iterations", ylabel="Objective f", title="")
+p2 = plot(farray, yscale=:log10, xlabel="Iterations", ylabel="Objective f", title="")
 p3 = plot(CDarray, xlabel="Iterations", ylabel="CD", title="")
 p4 = plot(OPRarray, xlabel="Iterations", ylabel="OPR", title="")
 
