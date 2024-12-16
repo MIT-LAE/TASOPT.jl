@@ -87,37 +87,37 @@
     output_csv(ac_def, filepath_csv, indices = output_indices_wGeom)
     
     #test that it creates the files as expected
-    @test_broken isfile(filepath_csv)
-    @test_broken isfile(filepath_csv2)
+    @test isfile(filepath_csv)
+    @test isfile(filepath_csv2)
     
     #pull the files
     csv1 = CSV.File(filepath_csv)
     csv2 = CSV.File(filepath_csv2)
 
     #check row and column counts
-    @test_broken size(csv1,1) == 4 #4 rows w default indices
-    @test_broken size(csv2,1) == 1 #1 row with addl indices
+    @test size(csv1,1) == 4 #4 rows w default indices
+    @test size(csv2,1) == 1 #1 row with addl indices
 
     @test_broken length(csv1[1]) == 72 # = indices in default_output_indices
     @test_broken length(csv2[1]) == 97 # = indices in output_indices_wGeom
 
     #test the nested vector Structures
     #a: row 1 in both csvs matches the design cruise point/mission 
-    @test_broken parse(Float64, string(csv1[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
-    @test_broken parse(Float64, string(csv2[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
+    @test parse(Float64, string(csv1[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
+    @test parse(Float64, string(csv2[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
     #b: row 2 has the correct structure (m flight points, n missions)
     #note - for simplicity of imports, evaluate structure by counting brackets
     # since much of the data is parsed as Strings when using CSV.File
     #if more than one mission, one more bracket added
     entry2 = csv1[2].iaalt
     bracket_for_missions = Int( (size(ac_def.parm,2) > 1) ) 
-    @test_broken count(ichar->(ichar=='['), entry2) == iptotal + bracket_for_missions
+    @test count(ichar->(ichar=='['), entry2) == iptotal + bracket_for_missions
     #c: row 3 has the same structure as b despite 1 mission bc forceMatrices
     entry3 = csv1[3].iaalt
-    @test_broken count(ichar->(ichar=='['), entry3) == iptotal + bracket_for_missions
+    @test count(ichar->(ichar=='['), entry3) == iptotal + bracket_for_missions
     #d: row 4 only has flight points, thus 1 bracket
     entry4 = csv1[4].iaalt
-    @test_broken count(ichar->(ichar=='['), entry4) == 1
+    @test count(ichar->(ichar=='['), entry4) == 1
 
     #cleanup
     rm(filepath_csv)
