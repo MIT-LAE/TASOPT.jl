@@ -244,7 +244,6 @@
         Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
         I_check_rec = 3498.8733964760736
-        I_check_rec = 3498.8733964760736
 
         @test Iobj_rec ≈ I_check_rec    rtol = 1e-5
     end
