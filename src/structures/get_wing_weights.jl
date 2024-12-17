@@ -59,15 +59,15 @@ Also returns the material gauges, torsional and bending stiffness.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `wing::TASOPT.structures.Wing`: Wing structure.
-    - `po::Float64`: Point where loads and stresses are calculated.
-    - `gammat::Float64`: Tip airfoil lift taper ratio.
-    - `gammas::Float64`: Start airfoil lift taper ratio.
-    - `Nload::Float64`: max vertical load factor for wing bending loads
+    - `po::Float64`: Wing root loading magnitude.
+    - `gammat::Float64`: Wing outer section taper ratio.
+    - `gammas::Float64`: Wing inner section taper ratio.
+    - `Nload::Int`: Max vertical load factor for wing bending loads.
     - `We::Float64`: Weight of the engine.
-    - `neout::Int`: Number of outboard engines.
-    - `dyeout::Float64`: Distance between engines and the wingtip.
-    - `neinn::Int`: Number of inboard engines.
-    - `dyeinn::Float64`: Distance between engines and the wing root.
+    - `neout::Int`:  Number of engines mounted outboard of the wing break (strut attachment point).
+    - `dyeout::Float64`: Spanwise moment arm for outboard engines, measured from the wing break station.
+    - `neinn::Int`: Number of engines mounted inboard of the wing break (strut attachment point).
+    - `dyeinn::Float64`: Spanwise moment arm for inboard engines, measured from the wing break station.
     - `sigfac::Float64`: Stress Factor.
     - `rhofuel::Float64`: Density of the fuel.
     - `n_wings::Int64`: Number of total wings (1 for Vtail).
