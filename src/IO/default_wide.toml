@@ -47,19 +47,56 @@
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
-    fuel_type       = "Jet-A" # Choices are ... [TODO]
+    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
-    fuel_usability_factor = 1 # fraction of max fuel volume that is usable
+    fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
     fuel_temp = 280.0
-    fuel_density = 810.0 #kg/m3
+    fuel_density = 817.0 #kg/m3
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
+
+[Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
+    tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
+
+    tank_aspect_ratio = 2.0
+    fuselage_clearance = "0.3 ft"
+    additional_mass_fraction = 0.25
+    weld_efficiency = 0.9 
+    ullage_fraction = 0.05 #minimum ullage fraction at tank venting pressure
+    heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
+    SL_temperature_for_tank = "288.2 K"
+
+    #Tank pressure design parameters
+    pressure_rise_factor = 2.0 #Factor to account for stratification in homogenous tank model (pfac >= 1)
+    pressure_venting = "2 atm"
+    pressure_initial = "1.2 atm"
+    hold_departure = "0 h"
+    hold_arrival = "0 h"
+
+    inner_vessel_material = "Al-2219-T87"
+    inner_vessel_support_angle = "80 deg"
+    
+    #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum", "mylar", "microspheres"
+    size_insulation = true #Flag to decide whether to size insulation for boiloff
+    insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
+    insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
+    
+    cruise_boiloff_rate = 0.4 #%/hour, used if size_insulation == true
+    insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if size_insulation == true
+
+    #Parameters for double-walled tank, if "vacuum" is in insulation_material
+    outer_vessel_material = "Al-2219-T87"
+    outer_vessel_support_angles = ["45 deg", "135 deg"]
 
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
     pax = 370            # Number of passengers in each mission
-    max_pax = 450               # Maximum number of passengers for aircarft
-                                # defines the maximum payload carrying capacity of the aircraft
+    exit_limit = 450            # Maximum number of passengers that can sit in the cabin
+
+    max_payload_in_pax_equivalent = 450         # Defines the maximum payload carrying capacity of the aircraft
+                                                # It is the maximum payload that the aircraft can carry (including cargo),
+                                                # as an equivalent number of passengers in an off-design mission
                                 
     range = "7800.0 nmi" # Design Range 
 
@@ -125,8 +162,10 @@
     calculate_cabin_length = false 
 
     double_decker   = false #if true, the fuselage has two passenger decks
+    floor_distance  = "0 in" #Vertical distance between floors if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
+    seat_height     = "45 in"
     aisle_halfwidth = "10 in"
 
     #Provided layout
@@ -195,10 +234,10 @@
     inner_panel_taper_ratio = 0.58  #cs/co #NOT CHANGED
     outer_panel_taper_ratio = 0.1 #ct/co
 
-    panel_break_location = 0.32 # eta_s panel break eta location. eta = y/b
+    panel_break_location = 0.32 # eta_s panel break eta location. eta = y/(b/2)
     
     center_box_halfspan = "120.0 in"
-    box_width_chord = 0.50
+    box_width_to_chord = 0.50
     root_thickness_to_chord = 0.1
     spanbreak_thickness_to_chord = 0.108
 
@@ -212,6 +251,9 @@
     #Only used if `sturt_braced_wing == true`:
     strut_toc = 0.15 #strut thickness to chord
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
+
+    # Airfoil data (Should be stored in src/airfoil_data/)
+    airfoil = "C.air"
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
@@ -277,12 +319,14 @@
     excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
 
     [Stabilizers.Htail]
+        multi_section = false # True for inner and outer section
         AR_Htail = 4.8
         taper = 0.32
         sweep = 33.0 #typically can be set to be the same as the wings
         center_box_halfspan = "5 ft"
         x_Htail = "220 ft"
         z_Htail = "9 ft"
+        number_Htails = 2.0
 
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
         
@@ -309,7 +353,7 @@
 
         added_weight_fraction = 0.30 # e.g. ribs, LE, elevator, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.14
         web_height_hbox  = 0.75
 
@@ -330,7 +374,7 @@
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.14 
         web_height_hbox  = 0.75
 
@@ -338,6 +382,16 @@
     stress_factor = 1.0 # convenient factor to multiply all stress below
 
     # Allowable stresses at sizing cases:
+    caps_material = "TASOPT-Al"
+    caps_max_avg_stress = 1.1
+    caps_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
+    webs_material = "TASOPT-Al"
+    webs_max_avg_stress = 1.1
+    webs_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
     ## Fuselage pressurization skin stress and bending skin+stringer stress
     skin_material = "TASOPT-Al"
     skin_max_avg_stress = 1.1
@@ -469,8 +523,8 @@
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 0
     recirculation_temperature = 0
-    latent_heat = 0
     core_inner_diameter = 0
+    added_mass_frac = 0.0
 
     precooler_order = 0
     precooler_effectiveness = 0
