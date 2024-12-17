@@ -1014,7 +1014,6 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 
       #Size HX
       Iobj = Inf #Start with very high value of objective function
-      Iobj = Inf #Start with very high value of objective function
       try 
             hxsize!(HXgas, HXgeom)
             hxsize!(HXgas, HXgeom)
@@ -1023,7 +1022,6 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
             Pl_p = HXgas.Pl_p
             Pl_c = HXgas.Pl_c
 
-            Iobj = (Pl_p + Pl_c) #Initialize objective function
             Iobj = (Pl_p + Pl_c) #Initialize objective function
 
       catch #Do nothing if it errors
