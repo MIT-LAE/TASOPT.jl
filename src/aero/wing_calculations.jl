@@ -10,11 +10,11 @@ N*W - L_{h tail} \times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `wing::TASOPT.structures.wing`: Wing structure.
-    - `rclt::Float64`: .
-    - `rcls::Float64`: .
-    - `N::Float64`: 
-    - `W::Float64`: 
-    - `Lhtail::Float64`: 
+    - `rclt::Float64`: tip  /root cl ratio (clt/clo)
+    - `rcls::Float64`: break/root cl ratio (cls/clo)
+    - `N::Float64`: Max vertical load factor for wing bending loads
+    - `W::Float64`: Aircraft Weight
+    - `Lhtail::Float64`: Worst-case (most negative) tail lift expected in the critical sizing case
 
     **Outputs:**
     - `po::Float64`: Wing root loading magnitude.
@@ -157,30 +157,6 @@ function set_wing_geometry!(W, CL, q_inf, wing)
     wing.outboard.co = wing.inboard.co * wing.inboard.λ
 end # wingsc
 
-
-#"""
-#  Sets wing area, AR, root chord 
-#  to be consistent with q,CL,weight,span
-#"""
-#      function wingAc(W,CL,qinf,b,ηsi,bo,bs,λt,λs)
-#
-#      S = W/(qinf*CL)
-#
-#      ηo = bo/b
-#      ηs = bs/b
-#
-#      Kc = ηo +
-#	 0.5*(1.0    +λs)*(ηs-ηo) +
-#	 0.5*(λs+λt)*(1.0 -ηs)
-#
-#      co = S/(Kc*b)
-#
-#      AR = b^2 / S
-#
-#      return  S,AR,co
-#      end # wingAc
-#
-
 """
     surfcm(b,bs,bo, sweep, Xaxis,
                        λt, λs, γt, γs,
@@ -198,7 +174,7 @@ Calculates components of wing pitching moment (``C_M``) about wing root axis:
       - `bs::Float64`: Outer panel break span.
       - `bo::Float64`: Root (fuselage) span.
       - `sweep::Float64`: Sweep, degrees.
-	    -	`Xaxis::Float64`: Surface axis position.
+      -	`Xaxis::Float64`: Surface axis position.
       - `λt::Float64`: Outer-panel chord taper ratio  ct/co.
       - `λs::Float64`: Inner-panel chord taper ratio  cs/co.
       - `γt::Float64`: Outer-panel load  taper ratio  pt/po.
