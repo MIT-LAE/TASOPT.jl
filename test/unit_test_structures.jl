@@ -66,6 +66,56 @@ dx_out, macco_out = TASOPT.structures.calculate_centroid_offset(b,bs,bo,lambdat,
 
 # end calculate_centroid_offset
 
+#size_wing_section
+sigfac = 1.0
+test_tbwebs, test_tbcaps, test_Abcaps, test_Abwebs = 0.001541622994131993, 0.006479347956718236, 0.006479347956718236, 0.00029275420658566545
+tbwebs, tbcaps, Abcaps, Abwebs = TASOPT.structures.size_wing_section!(wing.outboard, wing.sweep, sigfac)
+@test test_tbwebs ≈ tbwebs
+@test test_tbcaps ≈ tbcaps
+@test test_Abcaps ≈ Abcaps
+@test test_Abwebs ≈ Abwebs
+#end size_wing_section!
+
+#size_cap
+sigcap = 2.0684848484848484e8
+moment = 3.374158220198118e6
+toc = 0.14
+width_to_chord = 0.5
+h_rms = 0.1287568768389997
+cs = 6.12218798433346
+cosL = 0.9063077870366499
+
+test_tbcap = 0.0016511998748901524
+test_Abcap = 0.0016511998748901524
+tbcap, Abcap = TASOPT.structures.size_cap(sigcap, moment, wing.outboard.cross_section.thickness_to_chord,
+  wing.outboard.cross_section.width_to_chord, h_rms, cs, cosL)
+
+@test test_tbcap ≈ tbcap
+@test test_Abcap ≈ Abcap
+#end size_cap
+
+# size_web
+tauweb = 1.378913257881327e8
+shear_load = 1.0413949053835782e6
+cp = 5.548586639725954
+web_height = 0.10500000000000001
+
+test_tbweb = 0.0011681388369913896
+test_Abweb = 0.00024530915576819183
+
+tbweb, Abweb = TASOPT.structures.size_web(tauweb, shear_load, cp, web_height)
+
+@test test_tbweb ≈ tbweb
+@test test_Abweb ≈ Abweb
+#end size_web
+
+#calc_sparbox_internal_area
+h_avgs = 0.12833333333333333
+tbcaps = 0.0018311280070005542
+tbwebs = 0.0011681388369913902
+Abfuels = TASOPT.structures.calc_sparbox_internal_area(wing.inboard.cross_section.width_to_chord, h_avgs, tbcaps, tbwebs)
+@test Abfuels ≈ 0.06204427240513358
+#end calc_sparbox_internal_area
 
 #get_wing_weights:
   po = 114119.45308868506
