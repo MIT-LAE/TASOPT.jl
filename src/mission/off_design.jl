@@ -1,12 +1,12 @@
 """
-    woper(ac, mi, itermax, initeng, saveOffDesign)
+    fly_off_design(ac, mi, itermax, initeng, saveOffDesign)
 
-`woper` runs the aircraft through input off-design missions
+`fly_off_design` runs the aircraft through input off-design missions
 
 !!! details "🔃 Inputs and Outputs"
 **Inputs:**
 - `ac::aircraft`: Aircraft with first mission being the design mission
-- `mi::Int4`: Off design mission to run (Default: 1)
+- `mi::Int64`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
 - `initeng::Boolean`: Use design case as initial guess for engine state if true
 
@@ -14,7 +14,7 @@
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function woper(ac, mi = 1; itermax = 35, initeng = true)
+function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
 
     pari = ac.pari
     parg = ac.parg
