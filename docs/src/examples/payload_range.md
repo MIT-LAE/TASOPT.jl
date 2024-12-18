@@ -67,10 +67,10 @@ for Range = RangeArray
     for mWpay = Payloads
         println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
         ac.parm[imWpay ] = mWpay
-        # Try woper after setting new range and payload
+        # Try fly_off_design after setting new range and payload
         try
-            TASOPT.woper(ac, 2, saveOffDesign = true)
-            # woper success: store maxPay, break loop
+            TASOPT.fly_off_design(ac, 2, saveOffDesign = true)
+            # fly_off_design success: store maxPay, break loop
             mWfuel = ac.parm[imWfuel,2]
             WTO = Wempty + mWpay + mWfuel
 

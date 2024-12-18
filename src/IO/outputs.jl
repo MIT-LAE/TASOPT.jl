@@ -1155,8 +1155,8 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
             println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
             ac.parm[imWpay,2] = mWpay
             try
-                TASOPT.woper(ac, 2)
-                # woper success: store maxPay, break loop
+                TASOPT.fly_off_design(ac, 2)
+                # fly_off_design success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
 

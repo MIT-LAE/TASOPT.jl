@@ -28,10 +28,10 @@ function check_struct_equivalence(s1, s2)
     return true
 end
 
-#Simple function to call woper() and test off-design performance
+#Simple function to call fly_off_design() and test off-design performance
 function test_ac_off_design(ac, PFEI, Wfuel, WTO)
     @testset "Off-design" begin
-        TASOPT.woper(ac, 2)
+        TASOPT.fly_off_design(ac, 2)
 
         @test ac.parm[imPFEI, 2] ≈ PFEI
         @test ac.parm[imWfuel, 2] ≈ Wfuel
