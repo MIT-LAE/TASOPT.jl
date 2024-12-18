@@ -305,7 +305,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             dpi = 300,
             grid = show_grid,
             show=true,
-            aspect_ratio=:equal)
+            aspect_ratio=:equal,
+            margin=4mm)
     end
     
     # Plot wing (upper and lower surfaces)
@@ -425,7 +426,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             "c₀ = $(round(wing.layout.root_chord, digits=1)) m\n" *
             "Λ = $(round(wing.layout.sweep, digits=1))°\n" *
             "Rfuse = $(fuselage.layout.radius) m\n" *
-            "L/D = $(round(para[iaCL][ipcruise1] / para[iaCD][ipcruise1], digits=2))",
+            "L/D = $(round(para[iaCL,ipcruise1,1] / para[iaCD,ipcruise1,1], digits=2))",
             fontsize=label_fs, halign=:left, valign=:top, color=:black),
             z_order=:front)
     end
@@ -565,7 +566,7 @@ function plot_details(ac::aircraft; plot_obj = nothing)
         layout = @layout [A; B C]
         fig = plot(layout=layout, size=(800, 1000), dpi=300,
                     plot_title="Optimization Outputs",
-                    legend=false)
+                    legend=false, margin=4mm)
     else
         fig = plot_obj
     end
@@ -642,7 +643,7 @@ function plot_details(ac::aircraft; plot_obj = nothing)
 
     yaxis2 = twinx(fig[3])
     # Overlay climb angle on the secondary y-axis
-    plot!(yaxis2, R, gamV, color=:red, label="Climb Angle [rads]", ylabel="Climb Angle", lw=2,legend=:bottomright, subplot=3)
+    plot!(yaxis2, R, gamV, color=:red, label="Traj. Climb Angle, γ", ylabel="Angle [rads]", lw=2,legend=:bottomright, subplot=3)
     # Add a horizontal line at climb angle = 0.015
     hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, subplot=3,
             label="γ = 0.015")
@@ -683,7 +684,7 @@ function plot737compare(ac::aircraft; weightdetail = true, fracs = false)
     
     #plot layout
     layout = @layout([A B])
-    fig = plot(layout=layout, size=(800, 500), dpi=300)
+    fig = plot(layout=layout, size=(800, 500), dpi=300, margin=4mm)
     
     #=
     Subplot 1: Mass comparison
@@ -891,7 +892,7 @@ function MomentShear(ac::aircraft)
 
     # Define layout
     layout = @layout [A; B]
-    fig = plot(layout=layout, size=(800, 500), dpi=300, link=:x)
+    fig = plot(layout=layout, size=(800, 500), dpi=300, link=:x, margin=4mm)
 
     # Shear and moment distribution along wings
     # Shear
@@ -1012,7 +1013,8 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
         ylabel="Weight (1000 kg)", 
         title="Payload-Range Diagram: "*string(ac.name), 
         grid=true,              # Enable grid
-        dpi = 300)
+        dpi = 300,
+        margin=4mm)
 
     savefig(plot1, filename)
     return plot1
