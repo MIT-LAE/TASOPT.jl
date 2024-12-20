@@ -680,21 +680,69 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
 
 end
 
-function reset_regression_test(fname, ac)
+function reset_regression_test(ac)
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
-    open(fname, "w") do io
+    open(joinpath(__TASOPTroot__,"../test/default_sized.jl"), "w") do io
         @printf(io, "pari = zeros(Int64, iitotal)\n")
         @printf(io, "parg = zeros(Float64, igtotal)\n")
         @printf(io, "parm = zeros(Float64, imtotal)\n")
         @printf(io, "para = zeros(Float64, (iatotal, iptotal))\n")
         @printf(io, "pare = zeros(Float64, (ietotal, iptotal))\n \n")
-        @printf(io,"ac = load_default_model()\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io, "# Flags  - stored in pari array:\n")
+        @printf(io, "# ------------------------------\n")
+        for (i,val) in enumerate(ac.pari)
+            @printf(io, "pari[%d] = %d \n", i, val )
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Geometry - stored in parg array:\n")
+        @printf(io, "# --------------------------------\n")
+        for (i,val) in enumerate(ac.parg)
+            @printf(io, "parg[%d] = %20.20f\n", i, val )
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Mission  - stored in parm array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.parm)[1]
+        for i = 1:l
+            @printf(io, "parm[%d] = %20.20f \n", i, ac.parm[i,1])
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Aero     - stored in para array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.para)[1]
+        m = size(ac.para)[2]
+        for i = 1:l
+            @printf(io, "para[%d, :] .= [", i)
+            for j = 1:m
+                @printf(io, "%20.20f, ", ac.para[i, j,1])
+            end
+            @printf(io, "]\n")
+        end
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Engine   - stored in pare array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.pare)[1]
+        m = size(ac.pare)[2]
+        for i = 1:l
+            @printf(io, "pare[%d, :] .= [", i)
+            for j = 1:m
+                @printf(io, "%20.20f, ", ac.pare[i, j,1])
+            end
+            @printf(io, "]\n")
+        end
+    end
+    open(joinpath(__TASOPTroot__,"../test/default_structures.jl"), "w") do io
+        @printf(io,"ac_test = load_default_model()\n")
         @printf(io, "# ------------------------------\n")
         @printf(io, "# Fuselage\n")
         @printf(io, "# ------------------------------\n")
-        @printf(io, "fuse = ac.fuselage\n")
+        @printf(io, "fuse = ac_test.fuselage\n")
         @printf(io, "Weight = TASOPT.structures.Weight\n")
         @printf(io, "fuse.n_decks = %20.20f \n", ac.fuselage.n_decks)
         @printf(io, "fuse.shell.weight = Weight(W = %20.20f ) \n", ac.fuselage.shell.weight.W)
@@ -772,7 +820,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "# ------------------------------\n")
         @printf(io, "# Wing\n")
         @printf(io, "# ------------------------------\n")
-        @printf(io, "wing = ac.wing\n")
+        @printf(io, "wing = ac_test.wing\n")
         @printf(io, "wing.inboard.webs.weight = Weight(W = %20.20f) \n", wing.inboard.webs.weight.W)
         @printf(io, "wing.outboard.webs.weight = Weight(W = %20.20f) \n", wing.outboard.webs.weight.W)
         @printf(io, "wing.inboard.caps.weight = Weight(W = %20.20f) \n", wing.inboard.caps.weight.W)
@@ -855,7 +903,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "# ------------------------------\n")
         @printf(io,"# Htail\n")
         @printf(io, "# ------------------------------\n")
-        @printf(io,"htail = ac.htail\n")
+        @printf(io,"htail = ac_test.htail\n")
         @printf(io, "htail.weight = %20.20f \n", htail.weight)
         @printf(io, "htail.dxW = %20.20f \n", htail.dxW)
         @printf(io, "htail.weight_fraction_added = %20.20f \n", htail.weight_fraction_added)
@@ -903,7 +951,7 @@ function reset_regression_test(fname, ac)
         @printf(io, "# ------------------------------\n")
         @printf(io,"# Vtail\n")
         @printf(io, "# ------------------------------\n")
-        @printf(io,"vtail = ac.vtail\n")
+        @printf(io,"vtail = ac_test.vtail\n")
         @printf(io, "vtail.weight = %20.20f \n", vtail.weight)
         @printf(io, "vtail.dxW = %20.20f \n", vtail.dxW)
         @printf(io, "vtail.weight_fraction_added = %20.20f \n", vtail.weight_fraction_added)
@@ -942,51 +990,5 @@ function reset_regression_test(fname, ac)
         @printf(io, "vtail.inboard.GJ = %20.20f \n", vtail.inboard.GJ)
         @printf(io, "vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ \n")
         @printf(io, "vtail.inboard.co = vtail.layout.root_chord \n")
-
-        @printf(io, "# ------------------------------\n")
-        @printf(io, "# Flags  - stored in pari array:\n")
-        @printf(io, "# ------------------------------\n")
-        for (i,val) in enumerate(ac.pari)
-            @printf(io, "pari[%d] = %d \n", i, val )
-        end
-
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Geometry - stored in parg array:\n")
-        @printf(io, "# --------------------------------\n")
-        for (i,val) in enumerate(ac.parg)
-            @printf(io, "parg[%d] = %20.20f\n", i, val )
-        end
-
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Mission  - stored in parm array:\n")
-        @printf(io, "# --------------------------------\n")
-        for (i,val) in enumerate(ac.parm)
-            @printf(io, "parm[%d] = %20.20f \n", i, val)
-        end
-
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Aero     - stored in para array:\n")
-        @printf(io, "# --------------------------------\n")
-        l = size(ac.para)[1]
-        m = size(ac.para)[2]
-        for i = 1:l
-            @printf(io, "para[%d, :] .= [", i)
-            for j = 1:m
-                @printf(io, "%20.20f, ", ac.para[i, j,1])
-            end
-            @printf(io, "]\n")
-        end
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Engine   - stored in pare array:\n")
-        @printf(io, "# --------------------------------\n")
-        l = size(ac.pare)[1]
-        m = size(ac.pare)[2]
-        for i = 1:l
-            @printf(io, "pare[%d, :] .= [", i)
-            for j = 1:m
-                @printf(io, "%20.20f, ", ac.pare[i, j,1])
-            end
-            @printf(io, "]\n")
-        end
     end
 end
