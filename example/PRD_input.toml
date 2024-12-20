@@ -8,6 +8,7 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
+    aircraft_type   = "Narrow Body Aircraft"
 
 #-------------------------------------------------#
 ##               Note on units                   ##
@@ -53,12 +54,14 @@
 
     fuel_temp = 280.0
     fuel_density = 817.0 #kg/m3
+    fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
 [Mission]
     N_missions = 5 # Number of missions to be modeled (first mission is the design mission)
     pax = 195       # Number of passengers in each mission
-    max_pax = 230               # Maximum number of passengers for aircarft
+    max_payload_in_pax_equivalent = 235               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
+    exit_limit = 235
                                 
     range = "3500.0 nmi" # Design Range + second mission range           
     weight_per_pax = "215.0 lbf" # Specify weight per passenger - 

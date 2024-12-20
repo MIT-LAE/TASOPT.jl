@@ -507,13 +507,17 @@ function TAS_CAS(TAS, h)
     return CAS
 end
 
-function show_ff_sens(ff, H; ax = nothing)
-
-    if ax === nothing
-        fig, ax = plt.subplots()
-    end
-    ffnorm = ff'./minimum.(eachcol(ff))
-
-    ax.plot(ffnorm', H)
-
+using Plots 
+function show_ff_sens(ff, H)
+    # Normalize `ff` by dividing each column by its minimum
+    ffnorm = ff' ./ minimum.(eachcol(ff))
+    
+    # Create the plot
+    plot(
+        ffnorm', H,
+        xlabel = "Normalized ff",
+        ylabel = "H",
+        legend = false,
+        grid = true
+    )
 end

@@ -11,14 +11,12 @@ using BenchmarkTools
 using Printf
 
 using StaticArrays
-# using PyCall
-using PythonPlot
-plt = pyplot #Aliasing just for convenience
-# pygui(true)
+
 using Dates
 using ForwardDiff
 using CSV, Tables
 using DocStringExtensions
+using Plots, StatsPlots, Plots.PlotMeasures
 
 #convenient directories
 const __TASOPTroot__ = @__DIR__
@@ -50,6 +48,7 @@ include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
+export plot_airf
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
@@ -83,7 +82,9 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
-include(joinpath(__TASOPTroot__,"IO/outputs.jl"))
+include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
+include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
+export stickfig, plot_details
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
