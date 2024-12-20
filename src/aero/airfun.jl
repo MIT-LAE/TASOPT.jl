@@ -47,14 +47,13 @@ end
                 A_M_cl_τ::AbstractArray{Float64})
 
     nAfun::Int = 3
-
-    Ai = zeros(2,2)
-    Ai_cl = zeros(2,2)
-    Ai_tau = zeros(2,2)
-    Ai_cl_tau = zeros(2,2)
-    Aij = zeros(2)
-    Aij_tau = zeros(2)
-    Aijk = zeros(nAfun) # for the three vars cdf, cdp and cm
+    Ai = @MMatrix zeros(2,2)
+    Ai_cl = @MMatrix zeros(2,2)
+    Ai_tau = @MMatrix zeros(2,2)
+    Ai_cl_tau = @MMatrix zeros(2,2)
+    Aij = @MVector zeros(2)
+    Aij_tau = @MVector zeros(2)
+    Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
     
     # io, im, dMa , tMa  = findsegment(Mach, AMa)
     jo, jm, dcl , tcl  = findsegment(cl, Acl)
