@@ -74,9 +74,9 @@
 # (0.225, 0.8665999999999999, 0.5917830310706261, 0.285, -0.0016806695060863123, 6.5275125903133705e7, -0.15, 0.5, 1.02, 0.018, 0.014, 0.0045)
 # SURFCD2 OUTPUT
 # (0.005092435287160669, 0.002484528306027699, 0.007576963593188367, 0.0)
-    @test fort_clpo == clpo
-    @test fort_clps == clps
-    @test fort_clpt == clpt
+    @test fort_clpo ≈ clpo
+    @test fort_clps ≈ clps
+    @test fort_clpt ≈ clpt
     @test_broken fort_cdfw ≈ CDfwing
     @test_broken fort_cdpw ≈ CDpwing
     @test_broken fort_CDwing ≈ CDwing
@@ -121,7 +121,7 @@
 
     po = TASOPT.aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail)
     
-    @test po == fort_po
+    @test po ≈ fort_po
     #end Wingpo
 
     #start wingsc

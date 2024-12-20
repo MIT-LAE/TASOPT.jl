@@ -68,7 +68,7 @@ $TYPEDFIELDS
     inboard::WingSection = WingSection() # at wing root 
     """Outboard Wing Section (at strut attachment point)"""
     outboard::WingSection = WingSection() # at strut attachment point
-    # """Span fraction of inner wing break ("snag")"""
+    """Span fraction of inner wing break ("snag")"""
     # ηs::Float64 = 0 
 
     """Fuselage lift carryover factor"""
