@@ -16,7 +16,7 @@ Calls function tfsize or tfoper for one operating point.
     - `initeng`:    0  initialize variables for iteration in TFOPER
                 1  use current variables as initial guesses in TFOPER
 """
-function tfcalc!(pari, parg, para, pare, ip,
+function tfcalc!(pari, parg, para, pare, wing, ip,
         icall, icool, initeng)
 
         Lprint = false
@@ -31,7 +31,6 @@ function tfcalc!(pari, parg, para, pare, ip,
         Gearf = parg[igGearf]
         Tmetal = parg[igTmetal]
         neng = parg[igneng]
-        S = parg[igS]
 
         mofWpay = parg[igmofWpay]
         mofWMTO = parg[igmofWMTO]
@@ -127,7 +126,7 @@ function tfcalc!(pari, parg, para, pare, ip,
 
                 #----- assume 85% of wing dissipation is on surface
                 fDwake = 0.15
-                CDAwing = para[iaCDwing] * S
+                CDAwing = para[iaCDwing] * wing.layout.S
                 DAwsurf = CDAwing * (1.0 - fDwake)
                 KAwTE = DAwsurf
 

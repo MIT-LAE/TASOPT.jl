@@ -1,22 +1,21 @@
 @testset "structural components" begin
 
   # Fuselage
-  include(joinpath(TASOPT.__TASOPTroot__, "../test/default_fuselage.jl"))
+  include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
   fuselage = ac_test.fuselage
 
   Nland, Wpaymax, Wengtail, 
-  nftanks,
-  Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
-  Δp,
-  Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
-  bv, λv, nvtail,
-  xhtail, xvtail,
-  xwing, xwbox, cbox,
-  xeng = [6.0, 219964.5779, 0.0, 0, 0.0, 0.0, 0.0, 0.0, "", 
-          56016.16406368774, 14401.51302958861, 9645.666840197786, 
-          0.4, 0.7, 1.2379954317075564e6, 1.0469874186878382e6, 7.958908725623409, 
-          0.3, 1.0, 36.21248821998368, 35.0505846520266, 18.465757410492177, 
-          15.688376236863938, 3.119653923461824, 14.164376236863939 ]
+                          nftanks,
+                          Waftfuel,  Wftank_single, ltank, xftank_fuse, tank_placement,
+                          Δp,
+                          Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
+                          bv, λv, nvtail,
+                          xhtail, xvtail,
+                          xwing, xwbox, cbox,
+                          xeng = [6.0, 219964.5779, 0.0, 0, 0.0, 0.0, 0.0, 0.0, "", 56016.1756316446, 14400.815502104786, 
+        9645.22120844135, 0.4, 0.7, 1.2379754637499652e6, 1.0469704911343623e6, 7.958844386073947, 
+        0.3, 1.0, 36.212475021199154, 35.05057234350367, 18.465770971525686, 15.688410884477133, 
+        3.119635043953234, 14.164410884477133 ]
   
   cabVol = TASOPT.fusew!(fuselage, Nland, Wpaymax, Wengtail, 
                           nftanks,
@@ -41,35 +40,13 @@
             fuselage.weight,fuselage.moment,
             cabVol]
 
-  ## Old FORTRAN outputs just temporarily retained. Better representation of 
-  # material properties and sizing consideration (τ instead of σ and proper G vals) means 
-  # the new calculations are "better" and more accurate.
-  # fort_out = [0.0010592914302080562, 0.0012235633080289908, 0.0, 
-  #             0.0009061565981319232, 31.85596336970722, 31.098559122927245, 
-  #             2.361319618160982e9, 2.4686136573868637e10, 2.3173490053921146e9, 
-  #             2.4686136573868637e10, 1.570840175144195e9, 1.8144415656291723e9, 
-  #             20947.348347295865, 5667.632920626953, 11269.980000000001, 
-  #             5018.7283576257105, 13415.7630120004, 14314.44885191115, 
-  #             7381.15959985673, 198042.54737081684, 3.620266695235501e6, 414.54271063740043]
-  
-  # for i in eachindex(out)
-  #   @test out[i] ≈ fort_out[i] rtol=1e-3
-  # end
+  test_out = [0.0010592916489634418, 0.0012236016395195024, 0.0, 0.0009061565981319232, 31.85585727200865, 31.098482101397437, 2.361320105799576e9, 2.4685708558261826e10, 2.317349483950291e9, 2.4685708558261826e10, 1.5708404995400493e9, 1.6421853018493836e9, 20947.352673154768, 5667.810474837753, 11269.980000000001, 5018.7283576257105, 13415.796495703155, 14314.079534858021, 7380.701144174144, 198041.9349618536, 3.6202561572463284e6, 414.54271063740043]
 
-  test_out = [0.0010592914302080562, 0.0012235812333327315, 0.0,
-    0.0009061565981319232, 31.855960860329677, 31.098559122927245,
-    2.361319618160982e9, 2.4686144041160843e10, 2.3173490053921146e9,
-    2.4686144041160843e10, 1.570840175144195e9, 1.6421579148805373e9,
-    20947.348347295865, 5667.715951918366, 11269.980000000001,
-    5018.7283576257105, 13415.7630120004, 14314.452366401405,
-    7381.155204479751, 198042.62952122153, 3.620269431679788e6,
-    414.54271063740043]
-    
 @test all(isapprox.(out, test_out))
 
 # end Fuselage weight
 
-# surfdx:
+# calculate_centroid_offset:
   b = 35.486921629195265
   bs = 10.113772664320649
   bo = 3.6067999999999998
@@ -79,129 +56,100 @@
   dxwing = 2.5792921907840762
   macco = 0.68475212288241949
 
-dx_out, macco_out = TASOPT.structures.surfdx(b,bs,bo,lambdat,lambdas,sweep)
+dx_out, macco_out = TASOPT.structures.calculate_centroid_offset(b,bs,bo,lambdat,lambdas,sweep)
 @test dx_out ≈ dxwing
 @test macco_out ≈ macco 
 
-# end surfdx
+# end calculate_centroid_offset
 
+#size_wing_section
+sigfac = 1.0
+test_tbwebs, test_tbcaps, test_Abcaps, test_Abwebs = 0.001541944450552547, 0.006480816113833214, 0.006480816113833214, 0.00029281525115992866
+tbwebs, tbcaps, Abcaps, Abwebs = TASOPT.structures.size_wing_section!(wing.outboard, wing.sweep, sigfac)
+@test test_tbwebs ≈ tbwebs
+@test test_tbcaps ≈ tbcaps
+@test test_Abcaps ≈ Abcaps
+@test test_Abwebs ≈ Abwebs
+#end size_wing_section!
 
-#surfw:
-  gee = 9.8100000000000005
-  po = 110091.58394892939
-  b = 35.486921629195265
-  bs = 10.113772664320649
-  bo = 3.6067999999999998
-  co = 5.8841656099573720
-  zs = 3.9116000000000000
-  lambdat = 0.25000000000000000
-  lambdas = 0.69999999999999996
-  gammat = 0.22500000000000001
-  gammas = 0.86659999999999993
+#size_cap
+sigcap = 2.0684848484848484e8
+moment = 3.374158220198118e6
+toc = 0.14
+width_to_chord = 0.5
+h_rms = 0.1287568768389997
+cs = 6.12218798433346
+cosL = 0.9063077870366499
+
+test_tbcap = 0.0016511998748901524
+test_Abcap = 0.0016511998748901524
+tbcap, Abcap = TASOPT.structures.size_cap(sigcap, moment, wing.outboard.cross_section.thickness_to_chord,
+  wing.outboard.cross_section.width_to_chord, h_rms, cs, cosL)
+
+@test test_tbcap ≈ tbcap
+@test test_Abcap ≈ Abcap
+#end size_cap
+
+# size_web
+tauweb = 1.378913257881327e8
+shear_load = 1.0413949053835782e6
+cp = 5.548586639725954
+web_height = 0.10500000000000001
+
+test_tbweb = 0.0011681388369913896
+test_Abweb = 0.00024530915576819183
+
+tbweb, Abweb = TASOPT.structures.size_web(tauweb, shear_load, cp, web_height)
+
+@test test_tbweb ≈ tbweb
+@test test_Abweb ≈ Abweb
+#end size_web
+
+#calc_sparbox_internal_area
+h_avgs = 0.12833333333333333
+tbcaps = 0.0018311280070005542
+tbwebs = 0.0011681388369913902
+Abfuels = TASOPT.structures.calc_sparbox_internal_area(wing.inboard.cross_section.width_to_chord, h_avgs, tbcaps, tbwebs)
+@test Abfuels ≈ 0.06204427240513358
+#end calc_sparbox_internal_area
+
+#get_wing_weights:
+  po = 114119.45308868506
+  gammat = 0.225
+  gammas = 0.8665999999999999
   Nlift = 3.0000000000000000
-  iwplan = 1
-  Weng1 = 27312.133624204889
-  Winn = 48907.685542960695
-  Wout = 70390.482266430423
-  dyWinn = 70296.379288596174
-  dyWout = 315316.83291120041
-  sweep = 26.000000000000000
-  wbox = 0.50000000000000000
-  hboxo = 0.12680000000000000
-  hboxs = 0.12659999999999999
-  rh = 0.75000000000000000
-  fLt = -5.0000000000000003E-002
-  tauweb = 137931034.48275861
-  sigcap = 206896551.72413793
-  sigstrut = 206896551.72413793
-  Ecap = 68965517241.379318
-  Eweb = 68965517241.379318
-  Gcap = 26525198938.992046
-  Gweb = 26525198938.992046
-  rhoweb = 2700.0000000000000
-  rhocap = 2700.0000000000000
-  rhostrut = 2700.0000000000000
+  Weng1 = 30083.769249783934
+  fLt = -0.05
+  sigfac = 1.0
   rhofuel = 817.00000000000000
-  fort_Ss = 549317.34029970923
-  fort_Ms = 2919107.4513926785
-  fort_tbwebs = 1.5302067790179924E-003
-  fort_tbcaps = 6.4712234567801050E-003
-  fort_EIcs = 256525134.96391767
-  fort_EIns = 1981689904.7351539
-  fort_GJs = 220465338.41465056
-  fort_So = 654948.64283556491
-  fort_Mo = 4759686.3416206865
-  fort_tbwebo = 8.9257473924635666E-004
-  fort_tbcapo = 3.4237821474538827E-003
-  fort_EIco = 598779822.13510609
-  fort_EIno = 4420836188.7699680
-  fort_GJo = 529475637.81714487
-  fort_Astrut = 0.0000000000000000
-  fort_lstrutp = 0.0000000000000000
-  fort_cosLs = 1.0000000000000000
-  fort_Wscen = 5943.1718341806891
-  fort_Wsinn = 9074.6000905588244
-  fort_Wsout = 17146.749196179870
-  fort_dxWsinn = 6361.5817898457608
-  fort_dxWsout = 64671.501022901110
-  fort_dyWsinn = 13043.175582241660
-  fort_dyWsout = 76809.512837201284
-  fort_Wfcen = 27272.842046818590
-  fort_Wfinn = 31647.789098991288
-  fort_Wfout = 39316.171146500550
-  fort_dxWfinn = 22186.101515424907
-  fort_dxWfout = 148286.75531592543
-  fort_dyWfinn = 45488.249166743939
-  fort_dyWfout = 176118.27862155536
-  fort_Wweb = 2855.5435405652265
-  fort_Wcap = 61473.498701273536
-  fort_Wstrut = 0.0000000000000000
-  fort_dxWweb = 6133.4918937186821
-  fort_dxWcap = 135932.67373177505
-  fort_dxWstrut = 0.0000000000000000
 
-neout = 0
-neinn = 1
-dyeout = 0 
-dyeinn = 0.5*(bs - bo)
-
-Ss,Ms,tbwebs,tbcaps,EIcs,EIns,GJs,
-So,Mo,tbwebo,tbcapo,EIco,EIno,GJo,
-Astrut,lsp,cosLs,
-Wscen,Wsinn,Wsout,dxWsinn,dxWsout,dyWsinn,dyWsout,
-Wfcen,Wfinn,Wfout,dxWfinn,dxWfout,dyWfinn,dyWfout,
-Wweb,  Wcap,  Wstrut,
-dxWweb,dxWcap,dxWstrut = TASOPT.surfw(po,b,bs,bo,co,zs,
-lambdat,lambdas,gammat,gammas,
-Nlift,iwplan,Weng1,neout, dyeout, neinn, dyeinn,
-Winn,Wout,dyWinn,dyWout,
-sweep,wbox,hboxo,hboxs,rh, fLt,
-tauweb,sigcap,sigstrut,Ecap,Eweb,Gcap,Gweb,
-rhoweb,rhocap,rhostrut,rhofuel)
+  fort_Wwing = 128938.6987239125
+  fort_Wsinn = 11628.586033197067
+  fort_Wsout = 20426.086030894225
+  fort_dyWsinn = 18223.86914912334
+  fort_dyWsout = 96817.0136533246
+  fort_Wfcen =  30442.713635875174
+  fort_Wfinn = 38583.76809013594
+  fort_Wfout = 46690.92699159976
+  fort_dxWfinn = 29491.719272607046
+  fort_dxWfout = 188722.8051493076
+  fort_dyWfinn =  60466.98531940439
+  fort_dyWfout = 221308.97271238975
+  fort_lstrutp = 0.0
 
 
-@test fort_Ss ≈ Ss 
-@test fort_Ms ≈ Ms 
-@test fort_tbwebs ≈ tbwebs 
-@test fort_tbcaps ≈ tbcaps 
-@test fort_EIcs ≈ EIcs 
-@test fort_EIns ≈ EIns 
-@test fort_GJs ≈ GJs 
-@test fort_So ≈ So 
-@test fort_Mo ≈ Mo 
-@test fort_tbwebo ≈ tbwebo 
-@test fort_tbcapo ≈ tbcapo 
-@test fort_EIco ≈ EIco 
-@test fort_EIno ≈ EIno 
-@test fort_GJo ≈ GJo 
-@test fort_Astrut ≈ Astrut 
-@test fort_lstrutp ≈ lsp 
-@test fort_cosLs ≈ cosLs 
-@test fort_Wscen ≈ Wscen 
+Wwing,Wsinn,Wsout,
+        dyWsinn,dyWsout,
+        Wfcen,Wfinn,Wfout,
+        dxWfinn,dxWfout,
+        dyWfinn,dyWfout,lstrutp = TASOPT.get_wing_weights!(wing, po, gammat, gammas,
+                                            Nlift, Weng1, 0, 0.0, 0, 0.0,
+                                            sigfac, rhofuel)
+
+
+@test fort_Wwing ≈ Wwing 
 @test fort_Wsinn ≈ Wsinn 
 @test fort_Wsout ≈ Wsout 
-@test fort_dxWsinn ≈ dxWsinn 
-@test fort_dxWsout ≈ dxWsout 
 @test fort_dyWsinn ≈ dyWsinn 
 @test fort_dyWsout ≈ dyWsout 
 @test fort_Wfcen ≈ Wfcen 
@@ -211,13 +159,26 @@ rhoweb,rhocap,rhostrut,rhofuel)
 @test fort_dxWfout ≈ dxWfout 
 @test fort_dyWfinn ≈ dyWfinn 
 @test fort_dyWfout ≈ dyWfout 
-@test fort_Wweb ≈ Wweb 
-@test fort_Wcap ≈ Wcap 
-@test fort_Wstrut ≈ Wstrut 
-@test fort_dxWweb ≈ dxWweb 
-@test fort_dxWcap ≈ dxWcap 
-@test fort_dxWstrut ≈ dxWstrut 
-#end surfw
+@test fort_lstrutp ≈ lstrutp 
+#end get_wing_weights
+
+#get_wing_weights for Htail
+poh = 115893.98734144184
+λhs = 1.0
+fLt = -0.05
+tauwebh = 1.378913257881327e8
+σcaph = 2.0684848484848484e8
+surft_f_out = [14366.067634789782, 14032.558269851817, 0.0011577052661293624, 0.0023921269535798137, 1.8915676188667163e8, 1.258557904500963e9, 1.7895336288389182e8]
+
+TASOPT.get_wing_weights!(htail, poh, htail.outboard.λ, λhs,
+0.0, 0.0, 0, 0.0, 0, 0.0,
+sigfac, rhofuel)
+
+surft_out = [htail.weight, htail.dxW, htail.outboard.webs.thickness, htail.outboard.caps.thickness, htail.outboard.EI[1], htail.outboard.EI[4], htail.outboard.GJ]
+
+@test all(isapprox.(surft_out, surft_f_out))
+#end surft
+
 
 #tailpo:
   Sh = 42.443587259163984
@@ -229,10 +190,10 @@ rhoweb,rhocap,rhostrut,rhofuel)
   fort_coh = 4.2554980786323124
   fort_poh = 108025.98516125829
 
-bh, coh, poh = TASOPT.structures.tailpo(Sh, ARh, lambdah, qne, CLhmax)
+poh,htail_span = TASOPT.aerodynamics.tailpo!(htail, Sh, qne)
 
-@test fort_bh ≈ bh
-@test fort_coh ≈ coh
+@test fort_bh ≈ htail_span
+@test fort_coh ≈ htail.layout.root_chord
 @test fort_poh ≈ poh
 #end tailpo:
 
@@ -246,10 +207,10 @@ parg[igdxeng2wbox] = 1.5239999999999991
 fuselage.APU.r = [36.576, 0.0, 0.0]
 fuselage.layout.x_end = 37.7952
 fuselage.layout.x_cone_end = 35.6616
-parg[igxhbox ] = 34.8996
-parg[igxvbox ] = 33.528
-parg[igxwbox] = 16.04432532088372
-parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+htail.layout.box_x = 34.8996
+vtail.layout.box_x = 33.528
+wing.layout.box_x = 16.04432532088372
+parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
 fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
 pari = zeros(iitotal)
@@ -257,7 +218,7 @@ pari[iinftanks] = 1
 
 #Update fuel tank length and check changes
 parg[iglftank] = 5.0
-TASOPT.update_fuse!(fuselage, pari, parg)
+TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
 fuselage.layout.x_pressure_shell_aft, 
@@ -265,8 +226,8 @@ fuselage.layout.x_cone_end,
 fuselage.APU.x,
 fuselage.layout.x_end,
 fuselage.HPE_sys.x,
-parg[igxhbox],
-parg[igxvbox],
+htail.layout.box_x,
+vtail.layout.box_x,
 parg[igxeng]]
 
 update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.326234144000004, 42.18560000000001, 43.40480000000001, 12.767380728136962, 40.50920000000001, 39.137600000000006, 14.52032532088372]
@@ -276,7 +237,7 @@ update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.3262341440000
 #Return to original points?
 pari[iinftanks] = 0.0
 parg[iglftank] = 0.0
-TASOPT.update_fuse!(fuselage, pari, parg)
+TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
 fuselage.layout.x_pressure_shell_aft, 
@@ -284,8 +245,8 @@ fuselage.layout.x_cone_end,
 fuselage.APU.x,
 fuselage.layout.x_end,
 fuselage.HPE_sys.x,
-parg[igxhbox],
-parg[igxvbox],
+htail.layout.box_x,
+vtail.layout.box_x,
 parg[igxeng]]
 
 update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79520000000001, 9.82323826413696, 34.89960000000001, 33.528000000000006, 14.52032532088372]
@@ -301,15 +262,15 @@ parg[igdxeng2wbox] = 1.5239999999999991
 fuselage.APU.r = [36.576, 0.0, 0.0]
 fuselage.layout.x_end = 37.7952
 fuselage.layout.x_cone_end = 35.6616
-parg[igxhbox ] = 34.8996
-parg[igxvbox ] = 33.528
-parg[igxwbox] = 16.04432532088372
-parg[igxeng] = parg[igxwbox] - parg[igdxeng2wbox]
+htail.layout.box_x = 34.8996
+vtail.layout.box_x = 33.528
+wing.layout.box_x = 16.04432532088372
+parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
 fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-parg[igseatpitch] = 0.762
-parg[igseatwidth] = 0.4826
-parg[igaislehalfwidth] = 0.254
+fuselage.cabin.seat_pitch = 0.762
+fuselage.cabin.seat_width = 0.4826
+fuselage.cabin.aisle_halfwidth = 0.254
 parg[igWpaymax] = 219964.5779
 fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
@@ -318,9 +279,10 @@ pari[iidoubledeck] = 0
 
 fuse_tank = TASOPT.fuselage_tank()
 
-TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank)
+TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail)
 
-parg_check = [14.584924835954398, 16.108924835954397, 35.05200000000001, 33.680400000000006, 219964.5779, 1.5239999999999991, 0.762, 0.4826, 0.254]
+parg_check = [14.584924835954398, 219964.5779, 1.5239999999999991]
+
 parg_nz = deepcopy(parg)
 deleteat!(parg_nz, parg_nz .== 0)
 for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
