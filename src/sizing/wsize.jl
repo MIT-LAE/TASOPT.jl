@@ -122,13 +122,6 @@ function wsize(ac; itermax=35,
     Vne = parg[igVne]
     qne = 0.5 * ρSL * Vne^2
 
-    # Stress calculations
-    σcap = wing.inboard.caps.σ * parg[igsigfac]
-    tauweb = wing.inboard.webs.material.τmax * parg[igsigfac]
-    σstrut = wing.strut.material.σmax * parg[igsigfac]
-    σcaph = σcapv = σcap
-    tauwebh = tauwebv = tauweb
-
     # Engine parameters
     neng = parg[igneng]
     yeng = parg[igyeng]
