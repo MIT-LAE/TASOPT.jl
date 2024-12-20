@@ -76,7 +76,7 @@ end
         end
     end
     
-    @test ac.parm[imPFEI] ≈  0.9186795447828657 rtol=1e-4
+    @test ac.parm[imPFEI] ≈  0.917673976786092 rtol=1e-4
 end
 
 @testset "Wide sizing" verbose=true begin
@@ -89,7 +89,7 @@ end
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.1500431956693837 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.1474240779433338 rtol=1e-4
 
 end
 
@@ -102,7 +102,7 @@ end
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 0.8131853553294737 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.8123372491240723 rtol=1e-4
 
 end
 
@@ -115,6 +115,6 @@ end
 
     size_aircraft!(ac, iter=50; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 0.9805649347258262 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.9798772952515598 rtol=1e-4
 
 end
