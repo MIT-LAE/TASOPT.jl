@@ -385,14 +385,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 14.527464130788207    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 1.3271447727542498    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 15.117642363818238     rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 1.270473046989811    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.24880364903969382    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 146.5207876236378   rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 149.67684320661107   rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -19023.600308918238    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.36476402590245     rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.3113280324075     rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieInterCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -430,14 +430,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 7.522559447567376    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈  3.408526566581165   rtol = 1e-5 
+        @test HX.HXgeom.n_stages ≈ 7.521991023907611    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  3.4089173173716776   rtol = 1e-5 
         @test HX.HXgeom.l ≈ 0.2982717368848314    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈  94.55469282148118    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈  94.5395923669446    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -48190.134937808325    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.657070891006    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.6675018796004    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
