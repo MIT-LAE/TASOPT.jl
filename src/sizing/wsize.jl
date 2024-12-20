@@ -551,7 +551,7 @@ function wsize(ac; itermax=35,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = get_wing_weights!(wing, po, γt, γs,
-                                            Nlift, Weng1, 0, 0.0, 0, 0.0,
+                                            Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
                                             parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings
@@ -663,9 +663,9 @@ function wsize(ac; itermax=35,
         vtail.layout.ηs = vtail.layout.ηo
 
         # HT weight
-        htail.weight,_=get_wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,
-                0.0, 0.0, 0, 0.0, 0, 0.0,
-                parg[igsigfac], rhofuel)
+        htail.weight, _ = get_wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,
+            0.0, 0.0, 0, 0.0, 0, 0.0,
+            parg[igsigfac], rhofuel)
         
         # HT centroid x-offset
         calculate_centroid_offset!(htail, htail.layout.span, λhs)
@@ -677,9 +677,9 @@ function wsize(ac; itermax=35,
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        vtail.weight,_=get_wing_weights!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
-        0.0, 0.0, 0, 0.0, 0, 0.0,
-        parg[igsigfac], rhofuel; n_wings=vtail.ntails)
+        vtail.weight, _ = get_wing_weights!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
+            0.0, 0.0, 0, 0.0, 0, 0.0,
+            parg[igsigfac], rhofuel; n_wings=vtail.ntails)
         # Set VT span
         vtail.layout.span = vtail.layout.span/2.0
         

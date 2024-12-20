@@ -74,7 +74,7 @@ Also returns the material gauges, torsional and bending stiffness.
 
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
-function get_wing_weights!(wing, po, gammat, gammas, 
+function get_wing_weights!(wing, po, gammat, gammas,
        Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
     tauweb,sigstrut = wing.inboard.webs.material.τmax * sigfac, wing.strut.material.σmax * sigfac
@@ -98,10 +98,10 @@ function get_wing_weights!(wing, po, gammat, gammas,
     #     Note added term to account for any outboard engines.
     #     If neout = 0 this simplifies to Drela's version which assumes engine
     #     fixed at ηs locations only.
-    wing.outboard.max_shear_load = (po*wing.layout.span   / 4.0)*(gammas+    gammat)*(1.0-etas) +
-    dLt - Nload*wing.outboard.weight - Nload*neout*We
-    wing.outboard.moment = (po*wing.layout.span^2/24.0)*(gammas+2.0*gammat)*(1.0-etas)^2 +
-    dMt - Nload*wing.outboard.dyW - Nload*neout*We*dyeout
+    wing.outboard.max_shear_load = (po * wing.layout.span / 4.0) * (gammas + gammat) * (1.0 - etas) +
+                                   dLt - Nload * wing.outboard.weight - Nload * neout * We
+    wing.outboard.moment = (po * wing.layout.span^2 / 24.0) * (gammas + 2.0 * gammat) * (1.0 - etas)^2 +
+                           dMt - Nload * wing.outboard.dyW - Nload * neout * We * dyeout
 
     #---- size strut-attach station at etas
     cs = wing.layout.root_chord*wing.inboard.λ
