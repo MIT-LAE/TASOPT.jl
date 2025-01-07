@@ -25,21 +25,23 @@ Various views of the data:
 
 See also [`airfun`](@ref) and [`airtable`](@ref).
 """
-struct airfoil
-    Ma::AbstractVector{Float64}
-    cl::AbstractVector{Float64}
-    τ::AbstractVector{Float64}
-    Re::Float64 # Data assumed for a single Re
+struct airfoil{T<:AbstractFloat, 
+        V<:AbstractVector{Float64}, 
+        Ar<:AbstractArray{Float64}} 
+    Ma::V
+    cl::V
+    τ::V
+    Re::T # Data assumed for a single Re
   
-    A::AbstractArray{Float64} # Airfoil aero data 
+    A::Ar # Airfoil aero data 
     
-    A_M::AbstractArray{Float64}
-    A_τ::AbstractArray{Float64}
-    A_cl::AbstractArray{Float64}
-    A_M_τ::AbstractArray{Float64}
-    A_M_cl::AbstractArray{Float64}
-    A_cl_τ::AbstractArray{Float64}
-    A_M_cl_τ::AbstractArray{Float64}
+    A_M::Ar
+    A_τ::Ar
+    A_cl::Ar
+    A_M_τ::Ar
+    A_M_cl::Ar
+    A_cl_τ::Ar
+    A_M_cl_τ::Ar
 end 
 
 function Base.show(io::IO, airf::airfoil)
