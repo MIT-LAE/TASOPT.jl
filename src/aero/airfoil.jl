@@ -1,7 +1,8 @@
 """
     airfoil
 
-A type representing a database of pre-computed airfoil data for a single Reyolds number and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord ratios.
+A type representing a database of pre-computed airfoil data for a single Reyolds number 
+and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord ratios.
 By default, this is the original TASOPT transonic airfoil, as modelled by M. Drela in MSES and stored in `src/air/`.
 
 Overloads Base.show to print a summary of the `airfoil` model.
