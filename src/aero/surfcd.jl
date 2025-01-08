@@ -45,8 +45,6 @@ function surfcd2(
       n::Int = 8     #  ~0.07% error
       #     n = 12    #  ~0.07% error
 
-      #     call tset(time0)
-
       cosL = cosd(wing.layout.sweep)
 
       AR = wing.layout.span^2 / wing.layout.S
@@ -74,11 +72,7 @@ function surfcd2(
       clpt = clp1 * γt / wing.outboard.λ / (1.0 + fdut)^2
 
       #c---- area of exposed wing
-      #      Swing = co*b * ( 0.5*(1.0    +λs)*(ηs-ηo)
-      #     &               + 0.5*(λs+λt)*(1.0 -ηs) )
-
-      #      write(*,*)
-      #      write(*,*) CL, CLhtail, S/(Kp*b*co)
+      #      Swing = co*b * ( 0.5*(1.0    +λs)*(ηs-ηo) + 0.5*(λs+λt)*(1.0 -ηs) )
 
       #---- fraction of exposed wing subject to wing-root shock unsweep
       CDfwing = 0.0
@@ -113,8 +107,6 @@ function surfcd2(
 
             cd = cdf + cdp
 
-            #        write(*,'(1x,8f12.6)') η, fSuns, clp, cdf+cdp*cosL^3, cd
-
             Snorm = Snorm + C * dη
             CDwing = CDwing + C * dη * cd
 
@@ -146,8 +138,6 @@ function surfcd2(
 
             cd = cdf + cdp
 
-            #        write(*,'(1x,8f12.6)') η, fSuns, clp, cdf+cdp*cosL^3, cd
-
             Snorm = Snorm + C * dη
             CDwing = CDwing + C * dη * cd
 
@@ -164,8 +154,6 @@ function surfcd2(
       #      dCp = (Kc/Kp)*(CL-CLhtail)*(1.0+fLo)
       #      CDover = 2.0*Cdiss*(ηo/Kc)*0.5*dCp*(3.0 + 0.0625*dCp^2)
       CDover = 0.0
-
-      #     call tadd(time0,t_surfcd2)
 
       return clpo, clps, clpt, CDfwing, CDpwing, CDwing, CDover
 
@@ -261,29 +249,7 @@ function surfcd(S,
                 (1.0 + λs) * (ηs - ηo) * lsfac +
                 (λs + λt) * (1.0 - ηs) * lfac)
 
-      #      if(λt==0.25) 
-      #      write(*,*)
-      #      write(*,*) fCDcen, lsfac, lfac
-      #      write(*,*) ηo, ηs-ηo, 1.0-ηs
-      #      write(*,*) ηo, ηs-ηo, 1.0-ηs
-      #      write(*,*) 2.0 * ηo,
-      #     &          (1.0    +λs)*(ηs-ηo),
-      #     &          (λs+λt)*(1.0 -ηs), 
-      #     &          2.0 * ηo
-      #     &         +(1.0    +λs)*(ηs-ηo)
-      #     &         +(λs+λt)*(1.0 -ηs)
-      #        write(*,*) 2.0 * ηo * fCDcen,
-      #     &          (1.0    +λs)*(ηs-ηo)*lsfac,
-      #     &          (λs+λt)*(1.0 -ηs)*lfac,
-      #     &           2.0 * ηo * fCDcen
-      #     &         +(1.0    +λs)*(ηs-ηo)*lsfac
-      #     &         +(λs+λt)*(1.0 -ηs)*lfac
-      #      write(*,*) Sh/0.3048^2 , CDsurf
-      #      end
-
       CDover = 0.0
-
-      #     call tadd(time0,t_surfcd)
 
       return CDsurf, CDover
 end # surfcd
