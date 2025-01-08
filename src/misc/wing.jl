@@ -48,11 +48,11 @@ Wing Structure:
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct Wing <: AbstractWing
+@kwdef mutable struct Wing{air<:aerodynamics.airfoil} <: AbstractWing
     """Wing Weight [N] """
-    weight::Float64 = 0
+    weight::Float64 = 0.0
     """Aircraft pitching moment contribution from the weight distribution of the wing [Nm]"""
-    dxW::Float64 = 0
+    dxW::Float64 = 0.0
     """Wing Layout """
     layout::WingLayout = WingLayout()
     """Wing Planform (0: wing catilever, plain; 1: wing cantilever with engine"""
@@ -62,9 +62,7 @@ $TYPEDFIELDS
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 
     """Airfoil data"""
-    airsection::aerodynamics.airfoil{Float64, Vector{Float64}, Array{Float64, 4}} = 
-     aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C.air"))
-    #kinda dirty hack to force type stability but I don't like it. 
+    airsection::air = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C.air"))
 
     """Inboard Wing Section (at wing root)"""
     inboard::WingSection = WingSection() # at wing root 
@@ -79,26 +77,26 @@ $TYPEDFIELDS
     tip_lift_loss::Float64 = 0.0
 
     """Mean Aerodynamic Chord"""
-    mean_aero_chord::Float64 = 0
+    mean_aero_chord::Float64 = 0.0
 
     """Wing Strut"""
     has_strut::Bool = false
     strut::Strut = Strut()
     
     """Wing flap weight fraction"""
-    weight_frac_flap::Float64 = 0
+    weight_frac_flap::Float64 = 0.0
     """Wing slats weight fraction"""
-    weight_frac_slat::Float64 = 0
+    weight_frac_slat::Float64 = 0.0
     """Wing ailerons weight fraction"""
-    weight_frac_ailerons::Float64 = 0
+    weight_frac_ailerons::Float64 = 0.0
     """Wing leading_trailing_edge weight fraction"""
-    weight_frac_leading_trailing_edge::Float64 = 0
+    weight_frac_leading_trailing_edge::Float64 = 0.0
     """Wing ribs weight fraction"""
-    weight_frac_ribs::Float64 = 0
+    weight_frac_ribs::Float64 = 0.0
     """Wing spoilers weight fraction"""
-    weight_frac_spoilers::Float64 = 0
+    weight_frac_spoilers::Float64 = 0.0
     """Wing attachments weight fraction"""
-    weight_frac_attachments::Float64 = 0
+    weight_frac_attachments::Float64 = 0.0
 
 end
 
