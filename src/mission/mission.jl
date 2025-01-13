@@ -37,6 +37,8 @@ NOTE:
 function mission!(ac, imission, Ldebug)
       #Unpack aircraft
       pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission) 
+      #Engine model
+      enginecalc!, engineweight! = extract_engine_model(ac.engine)
 
       t_prop = 0.0
       calc_ipc1 = true

@@ -125,6 +125,7 @@ fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
+engine = Engine()
 
 # Setup mission variables
 ranges = readmis("range")
@@ -1052,9 +1053,10 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-
+engine.model_name = "turbofan_md" #TODO: add more engine models and make this an input
+engine.weight_model_name = "turbofan"
 return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
+    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail, engine)
 
 end
 

@@ -35,6 +35,7 @@ Base.@kwdef mutable struct aircraft #inner constructor
     wing::Wing = Wing()
     htail::Tail = Tail()
     vtail::Tail = Tail()
+    engine::Engine = Engine()
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required

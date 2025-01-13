@@ -26,6 +26,10 @@ function wsize(ac; itermax=35,
     imission = 1 #Design mission
     pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission) 
 
+    #Engine models
+    store_engine_model!(ac.engine)
+    enginecalc!, engineweight! = extract_engine_model(ac.engine)
+
     # Initialize variables
     time_propsys = 0.0
     inite1 = 0

@@ -1,8 +1,8 @@
 """ 
-    enginecalc!(ac, case, imission, ip, initeng, iterw = 0)
+    tfwrap!(ac, case, imission, ip, initeng, iterw = 0)
 
-Calls the propulsion system sizing or off-design performance functions for the aircraft's
-propulsion system type.
+Calls the turbofan sizing or off-design performance functions for the aircraft's
+turbofan model.
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**
@@ -18,7 +18,7 @@ propulsion system type.
     **Output:**
     No direct outputs. The `ac` object gets modified with the engine parameters.
 """
-function enginecalc!(ac, case, imission, ip, initeng, iterw = 0)
+function tfwrap!(ac, case, imission, ip, initeng, iterw = 0)
     #Unpack data storage arrays
     pari = ac.pari
     parg = ac.parg
