@@ -1,13 +1,14 @@
 # This is a template TOML input file and are the default values that will
 # be used by TASOPT
 ["Aircraft Description"]
-    name = "Example TASOPT Model"
-    description = """
+    name = "Default TASOPT Model"
+    description = """737-800
     This model file describes a basic single-aisle aircraft to 
     demonstrate how to define a model file. The contents of this file are 
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
+
 #-------------------------------------------------#
 ##               Note on units                   ##
 #-------------------------------------------------#
@@ -39,8 +40,8 @@
 [Options] #
     optimize        = false   # Do you want TASOPT to optimize the aircraft or just size it 
     
-    engloc = 1      # 1: Engines on wing
-                    # 2: Engines on fuselage
+    engine_location = "wing" # 1: Engines on "wing"
+                             # 2: Engines on "fuselage"
 
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
@@ -51,15 +52,15 @@
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
     fuel_temp = 280.0
+    fuel_density = 817.0 #kg/m3
 
 [Mission]
-    N_missions = 1 # Number of missions to be modeled
-    pax = 220            # Number of passengers
+    N_missions = 5 # Number of missions to be modeled (first mission is the design mission)
+    pax = 195       # Number of passengers in each mission
     max_pax = 230               # Maximum number of passengers for aircarft
                                 # defines the maximum payload carrying capacity of the aircraft
-
-    range = "3000.0 nmi" # Design Range
-
+                                
+    range = "3500.0 nmi" # Design Range + second mission range           
     weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] 
                             # judging you if you use imperial units but wtvs
@@ -70,11 +71,13 @@
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = "0.0 ft" 
+    takeoff_alt = "0 ft"
+    takeoff_T = 298.0
+
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
 
-    CL_max_perp     = 2.15  #CLmax/(cos(sweep))^2
+    CL_max_perp     = 2.25  #CLmax/(cos(sweep))^2
     CD_dead_engine  = 0.50  #CDA_fan/ A_fan
     CD_landing_gear = 0.015 #CD*Agear/ Sref
     CD_spoilers     = 0.10  #CD*Aspoiler/ Sref
@@ -88,7 +91,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = "35000.0 ft" 
+    cruise_alt  = "35e3 ft"
     cruise_mach = 0.80
     cruise_CL   = 0.57
 
@@ -107,7 +110,7 @@
     Nwebs = 1              # number of webs (for double bubble designs)
 
     a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
-    b_tail = 1.65 # Tail radius = Rfuse*(1 - xi^b_tail)
+    b_tail = 2.0 # Tail radius = Rfuse*(1 - xi^b_tail)
     tailcone_taper = 0.3
     taper_fuse_to = "point" # Options are "point" or "edge"
     
@@ -130,6 +133,8 @@
 
     x_APU = "120 ft"
 
+    x_fixed_weight = "7ft" #Cockpit/ pilots etc
+
 # Engine positions
     x_engines = "52 ft"
     y_critical_engines = "16 ft" # y location of engines that would cause max yaw
@@ -140,7 +145,9 @@
     frame    = 0.25   # (Weight of frame)/ Wskin
     additional = 0.20 # (Additional weight)/ Wskin
 
-    window_per_length     = 145.0 #[N/m]
+    fixed_weight = "3000 lbf" #cockpit, pilots etc
+
+    window_per_length     = 435.0 #[N/m]
     window_insul_per_area =  22.0 #[N/m2]
     floor_weight_per_area =  60.0 #[N/m2]
 
@@ -154,13 +161,13 @@
 
 [Fuselage.Aero]
     fuse_moment_volume_deriv = "2390.0 ft3" # d(Mfuse/q)/dCL
-    CL_zero_fuse_moment      = 0.70         # CL when Mfuse = 0
+    CL_zero_fuse_moment      = 0.185         # CL when Mfuse = 0
     #Fuselage velocity overspeed at wing
     wingroot_fuse_overspeed  = 0.018
     wingbreak_fuse_overspeed = 0.014
     wingtip_fuse_overspeed   = 0.0045
 
-    excrescence_drag_factor = 1.05 # Rivets, sheet breaks etc
+    excrescence_drag_factor = 1.03 # Rivets, sheet breaks etc
 
     BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
@@ -222,15 +229,15 @@
     cm_t = -0.02 # tip section cm
 
 [Wing.Aero.Climb] #used for all clean situations
-    cls_clo = 1.2 #rcls = break/root cl ratio = cls/clo
-    clt_clo = 1.0 #rclt = tip  /root cl ratio = clt/clo
-    cm_o = -0.02 # root section cm
-    cm_s = -0.02 # span-break section cm
-    cm_t = -0.02 # tip section cm
+    cls_clo = 1.238 #rcls = break/root cl ratio = cls/clo
+    clt_clo = 0.90 #rclt = tip  /root cl ratio = clt/clo
+    cm_o = -0.06 # root section cm
+    cm_s = -0.06 # span-break section cm
+    cm_t = -0.06 # tip section cm
 
 [Wing.Aero.Landing] #Forward-CG tail sizing case
     cls_clo = 1.1 #rcls = break/root cl ratio = cls/clo
-    clt_clo = 0.6 #rclt = tip  /root cl ratio = clt/clo
+    clt_clo = 0.5 #rclt = tip  /root cl ratio = clt/clo
     cm_o = -0.35 # root section cm
     cm_s = -0.35 # span-break section cm
     cm_t = -0.02 # tip section cm
@@ -255,7 +262,7 @@
     lowspeed_cdp = 0.0035
     Re_ref       = 10e6
 
-    excrescence_drag_factor = 1.03 # Rivets, sheet breaks etc
+    excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
 
     [Stabilizers.Htail]
         AR_Htail = 6.0
@@ -271,10 +278,10 @@
         HTsize = "Vh" # Options are "Vh" or "maxforwardCG" 
         # 1: set Sh via specified Vh
         # 2: set Sh via CLhCGfwd at max-forward CG during landing
-        Vh = 1.45 # Horizontal tail volume
-        CLh_at_max_forward_CG = -0.7
+        Vh = 1.45 # Horizontal tail volume (only used if HTsize == "Vh")
+        CLh_at_max_forward_CG = -0.7 # (only used if HTsize == "maxforwardCG")
 
-        move_wingbox = "fix" # 0: "fix" wing position 
+        move_wingbox = "SMmin" # 0: "fix" wing position 
                              # 1: move wing to get CLh="CLhspec" in cruise 
                              # 2: move wing to get min static margin = "SMmin"
 
@@ -282,7 +289,7 @@
         CLh_spec = -0.02
 
         downwash_factor = 0.60 #dε/dα
-        nacelle_lift-curve_slope = 3.8 #dCL_nacelle/dα
+        nacelle_lift_curve_slope = 3.8 #dCL_nacelle/dα
                                        # Recommend ~3.8 for wing mounted nacelle
                                        #           ~0.0 for rear mounted nacelle
         CD_Htail_from_center = 0.1 #CDhtail contribution factor from center part 0 < y < yoh
@@ -302,9 +309,11 @@
         x_Vtail = "110 ft"
         number_Vtails = 1.0
 
-        VTsize = "Vv" #
-        Vv = 0.1
-        CLv_at_engine_out = 0.5
+        VTsize = "Vv" # Options are "Vv" or "OEI"
+        # 1: set Vtail area Sv via specified Vv
+        # 2: set Vtail area Sv via engine-out trim CL
+        Vv = 0.1 # only used if VTsize == "Vv"
+        CLv_at_engine_out = 0.5 # only used if VTsize == "OEI"
         CLv_max = 2.6
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
@@ -339,11 +348,12 @@
 
 [Propulsion]
 
+    number_of_engines = 2
     T_max_metal = 1280.0
 
-    Tt4_takeoff = 1360.0
+    Tt4_takeoff = 1833.0
     Tt4_frac_bottom_of_climb = 0.2
-    Tt4_frac_top_of_climb = 0.9
+    Tt4_frac_top_of_climb = 0.2
     Tt4_cruise = 1587.0
 
     # Core in clean flow or does core ingests KE defect?
@@ -370,7 +380,7 @@
     LPT_eta_poly = 0.899
 
     #Fan efficiency function constants -> epoly_actual = epolyf + Kf*(FPR-FPR0)
-    FPR0 = 1.90
+    FPR0 = 1.685
     Kf_polyeff = -0.077 
 
     HTR_fan = 0.30
@@ -389,7 +399,7 @@
 [Propulsion.Cooling]
     hot_streak_T_allowance = 200.0
     M_turbine_blade_exit = 1.0
-    St = 0.09 # area-weighted Stanton number
+    St = 0.09 # area-weighted effective Stanton number
     e_film_cooling = 0.70 #blade-to-cooling flow heat transfer eff
     t_film_cooling = 0.30 #cooling-film effectiveness factor
     M41 = 0.9 # Mach number at start of cooling-air mixing zone
@@ -430,6 +440,8 @@
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
 [Propulsion.Weight]
+    engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
+    pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   
     weight_model = "basic" #Options are "MD": Mark Drela's original model
                               #   "basic": NF's new model with basic tech
                               #"advanced": NF's new model with advanced tech

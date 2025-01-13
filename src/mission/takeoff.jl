@@ -6,11 +6,14 @@
 
 """
 function takeoff!(ac; printTO = true)
-    pari = ac.pari
-    parg = ac.parg
-    parm = ac.parmd
-    para = ac.parad
-    pare = ac.pared  
+    pari  = ac.pari
+    parg  = ac.parg
+    parm  = ac.parmd
+    para  = ac.parad
+    pare  = ac.pared  
+    wing  = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
 
     #---- Newton convergence tolerance
     toler = 1.0e-7
@@ -26,8 +29,8 @@ function takeoff!(ac; printTO = true)
 
     #---- unpack parameters passed in via global data arrays parg,pare
     W = parm[imWTO]    # total takeoff weight
-    S = parg[igS]      # reference (wing) area
-    sweep = parg[igsweep]  # sweep angle, degrees
+    S = wing.layout.S   # reference (wing) area
+    sweep = wing.layout.sweep # sweep angle, degrees
     dfan = parg[igdfan]   # fan diameter , for engine-out CD_eng estimate
     HTRf = parg[igHTRf]   # hub/tip ratio, for engine-out CD_eng estimate
     neng = parg[igneng]   # number of engines
@@ -38,7 +41,7 @@ function takeoff!(ac; printTO = true)
     Vstall = pare[ieu0, iprotate]
     V2 = pare[ieu0, iptakeoff]
 
-    cosL = cos(sweep * pi / 180.0)
+    cosL = cosd(sweep)
     Afan = 0.25 * pi * dfan^2 * (1.0 - HTRf^2)
     CDgear = parg[igCDgear]
     CDeng = parg[igcdefan] * (0.25 * pi * dfan^2) / S
@@ -68,7 +71,7 @@ function takeoff!(ac; printTO = true)
     #---- total CD during roll
     icdfun = 0
     # iairf = 1
-    cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+    cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail, icdfun)
     CDroll = para[iaCD, ip] + parg[igCDgear]
 
     #---- thrust constants for all engines operating

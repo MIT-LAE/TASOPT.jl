@@ -24,6 +24,10 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
     parad = ac.parad
     pared = ac.pared
 
+    fuse = ac.fuselage
+    wing = ac.wing
+    htail = ac.htail
+
     time_propsys = 0.0
 
     tolerW = 1.0e-8
@@ -136,7 +140,7 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
       para[iaReunit,ip] = Re
     end
 
-    if initeng
+    if initeng == 1
 #----- use design case as initial guess for engine state
           for ip = 1: iptotal
                 for ie = 1: ietotal
@@ -151,23 +155,23 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
 
 #--------------------------------------------------------------------------
 #---- set wing pitching moment constants
-    b  = parg[igb]
-    bs = parg[igbs]
-    bo = parg[igbo]
-    sweep = parg[igsweep]
-    Xaxis = parg[igXaxis]
-    λs = parg[iglambdas]
-    λt = parg[iglambdat]
-    AR = parg[igAR]
-    fLo = parg[igfLo]
-    fLt = parg[igfLt]
+    b  = wing.layout.span
+    bs = wing.layout.break_span
+    bo = wing.layout.root_span
+    sweep = wing.layout.sweep
+    Xaxis = wing.layout.spar_box_x_c
+    λs = wing.inboard.λ
+    λt = wing.outboard.λ
+    AR = wing.layout.AR
+    fLo =  wing.fuse_lift_carryover
+    fLt =  wing.tip_lift_loss
 
     ip = iptakeoff
     cmpo = para[iacmpo,ip]
     cmps = para[iacmps,ip]
     cmpt = para[iacmpt,ip]
-    γt = parg[iglambdat]*para[iarclt,ip]
-    γs = parg[iglambdas]*para[iarcls,ip]
+    γt = wing.outboard.λ*para[iarclt,ip]
+    γs = wing.inboard.λ*para[iarcls,ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
@@ -179,8 +183,8 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
     ip = ipcruise1
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
 
-    γt = parg[iglambdat]*para[iarclt, ip]
-    γs = parg[iglambdas]*para[iarcls, ip]
+    γt = wing.outboard.λ*para[iarclt, ip]
+    γs = wing.inboard.λ*para[iarcls, ip]
     
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -191,8 +195,8 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
     
     ip = ipdescentn
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
-    γt = parg[iglambdat]*para[iarclt, ip]
-    γs = parg[iglambdas]*para[iarcls, ip]
+    γt = wing.outboard.λ*para[iarclt, ip]
+    γs = wing.inboard.λ*para[iarcls, ip]
 
     CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
@@ -202,11 +206,11 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
     para[iaCMw1, ipdescentn] = CMw1
 
 #---- tail pitching moment constants
-    bh      = parg[igbh]
-    boh     = parg[igboh]
-    sweeph  = parg[igsweeph]
-    λh      = parg[iglambdah]
-    ARh     = parg[igARh]
+    bh      = htail.layout.span
+    boh     = htail.layout.root_span
+    sweeph  = htail.layout.sweep
+    λh      = htail.outboard.λ
+    ARh     = htail.layout.AR
     fLoh = 0.
     fLth = fLt
     cmph = 0.
@@ -246,7 +250,7 @@ function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
     end
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, fuse, false, calculate_cruise = true) #Calculate start of cruise too
+    time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, htail, ac.vtail, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
     
 #-------------------------------------------------------------------------
