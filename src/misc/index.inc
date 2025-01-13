@@ -14,9 +14,8 @@
       iiopt      = 12  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
       iiaircraftclass = 13 # 737 = 737 size aircraft; 777 = 777 size aircraft
       iinftanks = 14 # number of fuel tanks in fuselage
-      iiengmodel = 15 #engine model 
-      iidoubledeck = 16 #double decker flag
-      iitotal    = 16
+      iidoubledeck = 15 #double decker flag
+      iitotal    = 15
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)

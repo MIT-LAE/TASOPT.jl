@@ -1,7 +1,7 @@
 """
-    engineweight!(ac, HXs)
+    tfweightwrap!(ac, HXs)
 
-General function to estimate the weight of different types of propulsion systems.
+General function to estimate and store the weight of a turbofan engine.
       
 !!! details "🔃 Inputs and Outputs"
     **Input:**
@@ -11,7 +11,7 @@ General function to estimate the weight of different types of propulsion systems
     **Output:**
     No direct outputs. The `ac` object gets modified with the engine weights.
 """
-function engineweight!(ac, HXs)
+function tfweightwrap!(ac, HXs)
     pari = ac.pari
     parg = ac.parg
     wing = ac.wing
