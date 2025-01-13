@@ -69,7 +69,7 @@ for Range = RangeArray
         ac.parm[imWpay ] = mWpay
         # Try fly_off_design after setting new range and payload
         try
-            TASOPT.fly_off_design(ac, 2, saveOffDesign = true)
+            TASOPT.fly_off_design!(ac, 2)
             # fly_off_design success: store maxPay, break loop
             mWfuel = ac.parm[imWfuel,2]
             WTO = Wempty + mWpay + mWfuel
