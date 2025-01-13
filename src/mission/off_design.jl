@@ -1,7 +1,7 @@
 """
-    fly_off_design(ac, mi, itermax, initeng, saveOffDesign)
+    fly_off_design!(ac, mi, itermax, initeng, saveOffDesign)
 
-`fly_off_design` runs the aircraft through input off-design missions
+`fly_off_design!` runs the aircraft through input off-design missions
 
 !!! details "🔃 Inputs and Outputs"
 **Inputs:**
@@ -14,7 +14,7 @@
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function fly_off_design(ac, mi = 1; itermax = 35, initeng = true)
+function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
 
     pari = ac.pari
     parg = ac.parg

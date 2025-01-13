@@ -1127,7 +1127,8 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
     pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
     ac = aircraft(ac_og.name, ac_og.description,
-    ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank, ac_og.fuselage)
+    ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank,
+    ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail)
 
     #Extract aircraft parameters
     maxPay = ac.parg[igWpaymax]
@@ -1160,7 +1161,7 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
             println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
             ac.parm[imWpay,2] = mWpay
             try
-                TASOPT.fly_off_design(ac, 2)
+                TASOPT.fly_off_design!(ac, 2)
                 # fly_off_design success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
@@ -1192,8 +1193,7 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
             append!(PayloadToPlot, maxPay)
         end
     end
-    println(RangesToPlot)
-    println(PayloadToPlot)
+
     fig, axes = pyplot.subplots(2,1,figsize=(8,10), dpi = 300)
     ax1 = axes[0]
     ax2 = axes[1]
