@@ -20,8 +20,6 @@ $TYPEDFIELDS
     GJ::Float64 = 0
     """Thickness [m]"""
     thickness::Float64 = 0
-    """Weight Lateral Distribution"""
-    dxW::Float64 = 0 #TODO: remove
 end
 
 function Base.getproperty(obj::StructuralMember, sym::Symbol)

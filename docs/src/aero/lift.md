@@ -17,12 +17,13 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_lifting.md"))
 ```
 
 ```@docs
-aerodynamics.wingpo(b, bs, bo,
-               λt, λs, γt, γs,
-               AR, N, W, Lhtail, fLo, fLt)
+aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail)
 
-aerodynamics.wingcl(b,bs,bo,
-            λt,λs,γt,γs,
-            sweep,AR,CL,CLhtail,fLo,fLt,
+aerodynamics.tailpo!(tail,S, qne)
+
+aerodynamics.wingcl(wing,γt,γs,
+            CL,CLhtail,
             duo,dus,dut)
+
+
 ```
