@@ -7,7 +7,7 @@ To run a multi-variable optimization run on an aircraft model first determining 
 1. Aspect Ratio: `AR`
 2. Cruise Altitude: `Alt`
 3. Lift Coefficient: `Cl`  
-4. Wing Sweep: `Λ`
+4. Wing Sweep: `sweep`
 5. Inner panel taper ratio: `λs`  
 6. Outer panel taper ratio: `λt`  
 7. Root thickness to chord: `hboxo`
@@ -64,7 +64,7 @@ This example uses a Nedler Mead optimization aimed towards optimizing for passen
 
 ```julia
 # DESIGN VARIABLES
-#             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
+#             AR    Alt(ft)  Cl     sweep     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
 lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6,      0]
 upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15,     10] 
 

@@ -226,14 +226,16 @@ default_output_indices =
     Dict("pari" => Colon(),
         "parg" => [#weights
                     igWMTO, igWfuel, igWpay, igWpaymax, igflgnose,igflgmain,
-                    igWweb,igWcap, igfflap,igfslat, igfaile, igflete, igfribs, igfspoi, igfwatt,
-                 igWwing, igWvtail, igWhtail, igWtesys, igWftank, 
+                    #FIX: wing params no more
+                   # igWweb,igWcap, igfflap,igfslat, igfaile, igflete, igfribs, igfspoi, igfwatt,
+                 #igWwing, igWvtail, igWhtail, 
+                 igWtesys, igWftank, 
                     
                     #other
                     igdfan, igGearf,
 
                     #performance, different from im?
-                    igPFEI, igRange
+                    igRange
                     ],
         "parm" => [imRange, imWpay, imWTO, imWfuel, imPFEI, 
                     ],
@@ -247,10 +249,13 @@ default_output_indices =
 output_indices_wGeom = deepcopy(default_output_indices)
 #append geometry params
 parginds = output_indices_wGeom["parg"]
-parg_toadd = [igAR, igS, igb, igbo, igbs, igco, iglambdat, iglambdas, igsweep, #wing geom
+parg_toadd = [
+    #FIX: wing params no more
+    #igAR, igS, igb, igbo, igbs, igco, iglambdat, iglambdas, igsweep, #wing geom
                 #stabilizers geom
-                igVh, igARh, igSh, igbh, igboh, iglambdah, igcoh, igsweeph, 
-                igVv, igARv, igSv, igbv, igbov, iglambdav, igcov, igsweepv,]
+                #igVh, igARh, igSh, igbh, igboh, iglambdah, igcoh, igsweeph, 
+                #igVv, igARv, igSv, igbv, igbov, iglambdav, igcov, igsweepv,
+                ]
 append!(parginds, parg_toadd)
 output_indices_wGeom["parg"] = parginds
 

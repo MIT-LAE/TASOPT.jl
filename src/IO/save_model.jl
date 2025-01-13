@@ -231,7 +231,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing["panel_break_location"] = ac_g[igetas]
 
         d_wing["center_box_halfspan"] = ac_g[igbo]/2
-        d_wing["box_width_chord"] = ac_g[igwbox]
+        d_wing["box_width_to_chord"] = ac_g[igwbox]
         d_wing["root_thickness_to_chord"] = ac_g[ighboxo]
         d_wing["spanbreak_thickness_to_chord"] = ac_g[ighboxs]
         d_wing["hweb_to_hbox"] = ac_g[igrh]
@@ -249,8 +249,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Aero , for multiple segments
     d_wing_aero = Dict()
-        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g[igfLo]
-        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g[igfLt]
+        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g.wing.fuse_lift_carryover
+        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g.wing.tip_lift_loss
 
         d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,:]
         d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,:]
@@ -349,7 +349,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_htail["added_weight_fraction"] = ac_g[igfhadd]
 
-        d_stab_htail["box_width_chord"] = ac_g[igwboxh]
+        d_stab_htail["box_width_to_chord"] = ac_g[igwboxh]
         d_stab_htail["box_height_chord"] = ac_g[ighboxh]
         d_stab_htail["web_height_hbox"] = ac_g[igrhh]
     d_stab["Htail"] = d_stab_htail
@@ -373,7 +373,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_vtail["CLv_max"] = ac_g[igCLvmax]
         d_stab_vtail["added_weight_fraction"] = ac_g[igfvadd]
-        d_stab_vtail["box_width_chord"] = ac_g[igwboxv]
+        d_stab_vtail["box_width_to_chord"] = ac_g[igwboxv]
         d_stab_vtail["box_height_chord"] = ac_g[ighboxv]
         d_stab_vtail["web_height_hbox"] = ac_g[igrhv]
 
@@ -680,22 +680,73 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
 
 end
 
-function reset_regression_test(fname, ac)
-    open(fname, "w") do io
+function reset_regression_test(ac)
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    open(joinpath(__TASOPTroot__,"../test/default_sized.jl"), "w") do io
         @printf(io, "pari = zeros(Int64, iitotal)\n")
         @printf(io, "parg = zeros(Float64, igtotal)\n")
         @printf(io, "parm = zeros(Float64, imtotal)\n")
         @printf(io, "para = zeros(Float64, (iatotal, iptotal))\n")
         @printf(io, "pare = zeros(Float64, (ietotal, iptotal))\n \n")
-        @printf(io,"ac = load_default_model()\n")
         @printf(io, "# ------------------------------\n")
-        @printf(io,"# Fuselage\n")
+        @printf(io, "# Flags  - stored in pari array:\n")
         @printf(io, "# ------------------------------\n")
-        @printf(io,"fuse = ac.fuselage\n")
-        @printf(io,"Weight = TASOPT.structures.Weight\n")
+        for (i,val) in enumerate(ac.pari)
+            @printf(io, "pari[%d] = %d \n", i, val )
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Geometry - stored in parg array:\n")
+        @printf(io, "# --------------------------------\n")
+        for (i,val) in enumerate(ac.parg)
+            @printf(io, "parg[%d] = %20.20f\n", i, val )
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Mission  - stored in parm array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.parm)[1]
+        for i = 1:l
+            @printf(io, "parm[%d] = %20.20f \n", i, ac.parm[i,1])
+        end
+
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Aero     - stored in para array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.para)[1]
+        m = size(ac.para)[2]
+        for i = 1:l
+            @printf(io, "para[%d, :] .= [", i)
+            for j = 1:m
+                @printf(io, "%20.20f, ", ac.para[i, j,1])
+            end
+            @printf(io, "]\n")
+        end
+        @printf(io, "# --------------------------------\n")
+        @printf(io, "# Engine   - stored in pare array:\n")
+        @printf(io, "# --------------------------------\n")
+        l = size(ac.pare)[1]
+        m = size(ac.pare)[2]
+        for i = 1:l
+            @printf(io, "pare[%d, :] .= [", i)
+            for j = 1:m
+                @printf(io, "%20.20f, ", ac.pare[i, j,1])
+            end
+            @printf(io, "]\n")
+        end
+    end
+    open(joinpath(__TASOPTroot__,"../test/default_structures.jl"), "w") do io
+        @printf(io,"ac_test = load_default_model()\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io, "# Fuselage\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io, "fuse = ac_test.fuselage\n")
+        @printf(io, "Weight = TASOPT.structures.Weight\n")
         @printf(io, "fuse.n_decks = %20.20f \n", ac.fuselage.n_decks)
         @printf(io, "fuse.shell.weight = Weight(W = %20.20f ) \n", ac.fuselage.shell.weight.W)
-        @printf(io,"fuse.shell.weight.r = [ %20.20f ,0.0,0.0] \n", ac.fuselage.shell.weight.x)
+        @printf(io, "fuse.shell.weight.r = [ %20.20f ,0.0,0.0] \n", ac.fuselage.shell.weight.x)
         @printf(io,"fuse.window.W = %20.20f \n", ac.fuselage.window.W)
         @printf(io,"fuse.window.r = [ %20.20f ,0.0,0.0] \n", ac.fuselage.window.x)
         @printf(io,"fuse.window_W_per_length = %20.20f \n", ac.fuselage.window_W_per_length)
@@ -767,49 +818,177 @@ function reset_regression_test(fname, ac)
         @printf(io, "fuse.cabin.floor_angle_top = %20.20f \n", ac.fuselage.cabin.floor_angle_top)
 
         @printf(io, "# ------------------------------\n")
-        @printf(io, "# Flags  - stored in pari array:\n")
+        @printf(io, "# Wing\n")
         @printf(io, "# ------------------------------\n")
-        for (i,val) in enumerate(ac.pari)
-            @printf(io, "pari[%d] = %d \n", i, val )
-        end
+        @printf(io, "wing = ac_test.wing\n")
+        @printf(io, "wing.inboard.webs.weight = Weight(W = %20.20f) \n", wing.inboard.webs.weight.W)
+        @printf(io, "wing.outboard.webs.weight = Weight(W = %20.20f) \n", wing.outboard.webs.weight.W)
+        @printf(io, "wing.inboard.caps.weight = Weight(W = %20.20f) \n", wing.inboard.caps.weight.W)
+        @printf(io, "wing.outboard.caps.weight = Weight(W = %20.20f) \n", wing.outboard.caps.weight.W)
+        @printf(io, "wing.inboard.caps.material = TASOPT.materials.StructuralAlloy(\"TASOPT-Al\",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)\n")
+        @printf(io, "wing.outboard.caps.material = TASOPT.materials.StructuralAlloy(\"TASOPT-Al\",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)\n")
+        @printf(io, "wing.inboard.caps.material = TASOPT.materials.StructuralAlloy(\"TASOPT-Al\",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)\n")
+        @printf(io, "wing.inboard.webs.material = TASOPT.materials.StructuralAlloy(\"TASOPT-Al\",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)\n")
+        @printf(io, "wing.outboard.webs.material = TASOPT.materials.StructuralAlloy(\"TASOPT-Al\",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)\n")
 
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Geometry - stored in parg array:\n")
-        @printf(io, "# --------------------------------\n")
-        for (i,val) in enumerate(ac.parg)
-            @printf(io, "parg[%d] = %20.20f\n", i, val )
-        end
 
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Mission  - stored in parm array:\n")
-        @printf(io, "# --------------------------------\n")
-        for (i,val) in enumerate(ac.parm)
-            @printf(io, "parm[%d] = %20.20f \n", i, val)
-        end
+        @printf(io, "wing.weight = %20.20f \n", wing.weight)
+        @printf(io, "wing.strut.weight = %20.20f \n", wing.strut.weight)
+        @printf(io, "wing.dxW = %20.20f \n", wing.dxW)
+        @printf(io, "wing.strut.dxW = %20.20f \n", wing.strut.dxW)
+        @printf(io, "wing.inboard.weight = %20.20f \n", wing.inboard.weight)
+        @printf(io, "wing.outboard.weight = %20.20f \n", wing.outboard.weight)
+        @printf(io, "wing.inboard.dyW = %20.20f \n", wing.inboard.dyW)
+        @printf(io, "wing.outboard.dyW = %20.20f \n", wing.outboard.dyW)
+        @printf(io, "wing.weight_frac_flap = %20.20f \n", wing.weight_frac_flap)
+        @printf(io, "wing.weight_frac_slat = %20.20f \n", wing.weight_frac_slat)
+        @printf(io, "wing.weight_frac_ailerons = %20.20f \n", wing.weight_frac_ailerons)
+        @printf(io, "wing.weight_frac_leading_trailing_edge = %20.20f \n", wing.weight_frac_leading_trailing_edge)
+        @printf(io, "wing.weight_frac_ribs = %20.20f \n", wing.weight_frac_ribs)
+        @printf(io, "wing.weight_frac_spoilers = %20.20f \n", wing.weight_frac_spoilers)
+        @printf(io, "wing.weight_frac_attachments = %20.20f \n", wing.weight_frac_attachments)
+        @printf(io, "wing.strut.local_velocity_ratio = %20.20f \n", wing.strut.local_velocity_ratio)
+        @printf(io, "wing.layout.x = %20.20f \n", wing.layout.x)
+        @printf(io, "wing.layout.box_x = %20.20f \n", wing.layout.box_x)
+        @printf(io, "wing.layout.z = %20.20f \n", wing.layout.z)
+        @printf(io, "wing.strut.cos_lambda = %20.20f \n", wing.strut.cos_lambda)
+        @printf(io, "wing.strut.S = %20.20f \n", wing.strut.S)
+        @printf(io, "wing.layout.spar_box_x_c = %20.20f \n", wing.layout.spar_box_x_c)
+        @printf(io, "wing.inboard.cross_section.width_to_chord = %20.20f \n", wing.inboard.cross_section.width_to_chord)
+        @printf(io, "wing.inboard.cross_section.web_to_box_height = %20.20f \n", wing.inboard.cross_section.web_to_box_height)
+        @printf(io, "wing.inboard.cross_section.thickness_to_chord = %20.20f \n", wing.inboard.cross_section.thickness_to_chord)
+        @printf(io, "wing.outboard.cross_section.thickness_to_chord = %20.20f \n", wing.outboard.cross_section.thickness_to_chord)
+        @printf(io, "wing.layout.max_span = %20.20f \n", wing.layout.max_span)
+        @printf(io, "wing.strut.thickness_to_chord = %20.20f \n", wing.strut.thickness_to_chord)
+        @printf(io, "wing.strut.z = %20.20f \n", wing.strut.z)
+        @printf(io, "wing.outboard.moment = %20.20f \n", wing.outboard.moment)
+        @printf(io, "wing.outboard.max_shear_load = %20.20f \n", wing.outboard.max_shear_load)
+        @printf(io, "wing.outboard.GJ = %20.20f \n", wing.outboard.GJ)
+        @printf(io, "wing.outboard.EI[4] = %20.20f \n", wing.outboard.EI[4])
+        @printf(io, "wing.outboard.EI[1] = %20.20f \n", wing.outboard.EI[1])
+        @printf(io, "wing.outboard.caps.thickness = %20.20f \n", wing.outboard.caps.thickness)
+        @printf(io, "wing.inboard.moment = %20.20f \n", wing.inboard.moment)
+        @printf(io, "wing.inboard.max_shear_load = %20.20f \n", wing.inboard.max_shear_load)
+        @printf(io, "wing.inboard.GJ = %20.20f \n", wing.inboard.GJ)
+        @printf(io, "wing.inboard.EI[4] = %20.20f \n", wing.inboard.EI[4])
+        @printf(io, "wing.inboard.EI[1] = %20.20f \n", wing.inboard.EI[1])
+        @printf(io, "wing.inboard.caps.thickness = %20.20f \n", wing.inboard.caps.thickness)
+        @printf(io, "wing.inboard.webs.thickness = %20.20f \n", wing.inboard.webs.thickness)
+        @printf(io, "wing.outboard.webs.thickness = %20.20f \n", wing.outboard.webs.thickness)
+        @printf(io, "wing.layout.S = %20.20f \n", wing.layout.S)
+        @printf(io, "wing.layout.root_span = %20.20f \n", wing.layout.root_span)
+        @printf(io, "wing.layout.ηs = %20.20f \n", wing.layout.ηs)
+        @printf(io, "wing.inboard.λ = %20.20f \n", wing.inboard.λ)
+        @printf(io, "wing.outboard.λ = %20.20f \n", wing.outboard.λ)
+        @printf(io, "wing.layout.root_chord = %20.20f \n", wing.layout.root_chord)
+        @printf(io, "wing.layout.span= %20.20f \n", wing.layout.span)
+        @printf(io, "wing.layout.sweep = %20.20f \n", wing.layout.sweep)
+        @printf(io, "wing.layout.AR = %20.20f \n", wing.layout.AR)
+        @printf(io, "wing.fuse_lift_carryover = %20.20f \n", wing.fuse_lift_carryover)
+        @printf(io, "wing.tip_lift_loss = %20.20f \n", wing.tip_lift_loss)
+        @printf(io, "wing.inboard.co = %20.20f \n", wing.inboard.co)
+        @printf(io, "wing.outboard.co = %20.20f \n", wing.outboard.co)
+        @printf(io, "wing.mean_aero_chord = %20.20f \n", wing.mean_aero_chord)
 
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Aero     - stored in para array:\n")
-        @printf(io, "# --------------------------------\n")
-        l = size(ac.para)[1]
-        m = size(ac.para)[2]
-        for i = 1:l
-            @printf(io, "para[%d, :] .= [", i)
-            for j = 1:m
-                @printf(io, "%20.20f, ", ac.para[i, j,1])
-            end
-            @printf(io, "]\n")
-        end
-        @printf(io, "# --------------------------------\n")
-        @printf(io, "# Engine   - stored in pare array:\n")
-        @printf(io, "# --------------------------------\n")
-        l = size(ac.pare)[1]
-        m = size(ac.pare)[2]
-        for i = 1:l
-            @printf(io, "pare[%d, :] .= [", i)
-            for j = 1:m
-                @printf(io, "%20.20f, ", ac.pare[i, j,1])
-            end
-            @printf(io, "]\n")
-        end
+        @printf(io, "# ------------------------------\n")
+        @printf(io,"# Htail\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io,"htail = ac_test.htail\n")
+        @printf(io, "htail.weight = %20.20f \n", htail.weight)
+        @printf(io, "htail.dxW = %20.20f \n", htail.dxW)
+        @printf(io, "htail.weight_fraction_added = %20.20f \n", htail.weight_fraction_added)
+        @printf(io, "htail.layout.box_x = %20.20f \n", htail.layout.box_x)
+        @printf(io, "htail.layout.z = %20.20f \n", htail.layout.z)
+        @printf(io, "htail.downwash_factor = %20.20f \n", htail.downwash_factor)
+        @printf(io, "htail.CL_max_fwd_CG = %20.20f \n", htail.CL_max_fwd_CG)
+        @printf(io, "htail.CL_max = %20.20f \n", htail.CL_max)
+        @printf(io, "htail.SM_min = %20.20f \n", htail.SM_min)
+        @printf(io, "htail.layout.x = %20.20f \n", htail.layout.x)
+        @printf(io, "htail.outboard.cross_section.thickness_to_chord = %20.20f \n", htail.outboard.cross_section.thickness_to_chord)
+        @printf(io, "htail.move_wingbox = %20.20f \n", htail.move_wingbox)
+        @printf(io, "htail.CL_CLmax = %20.20f \n", htail.CL_CLmax)
+        @printf(io, "htail.size = %20.20f \n", htail.size)
+        @printf(io, "htail.volume = %20.20f \n", htail.volume)
+        @printf(io, "htail.outboard.GJ = %20.20f \n", htail.outboard.GJ)
+        @printf(io, "htail.outboard.EI[4] = %20.20f \n", htail.outboard.EI[4])
+        @printf(io, "htail.outboard.EI[1] = %20.20f \n", htail.outboard.EI[1])
+        @printf(io, "htail.layout.sweep = %20.20f \n", htail.layout.sweep)
+        @printf(io, "htail.layout.root_chord = %20.20f \n", htail.layout.root_chord)
+        @printf(io, "htail.outboard.λ = %20.20f \n", htail.outboard.λ)
+        @printf(io, "htail.layout.root_span = %20.20f \n", htail.layout.root_span)
+        @printf(io, "htail.layout.span = %20.20f \n", htail.layout.span)
+        @printf(io, "htail.layout.AR = %20.20f \n", htail.layout.AR)
+        @printf(io, "htail.layout.S = %20.20f \n", htail.layout.S)
+        @printf(io, "htail.outboard.cross_section.width_to_chord = %20.20f \n", htail.outboard.cross_section.width_to_chord)
+        @printf(io, "htail.outboard.cross_section.web_to_box_height = %20.20f \n", htail.outboard.cross_section.web_to_box_height)
+        @printf(io, "htail.layout.ηs = htail.layout.root_span/htail.layout.span \n")
+        @printf(io, "htail.strut.cos_lambda = %20.20f \n", htail.strut.cos_lambda)
+        @printf(io, "htail.inboard.moment = %20.20f \n", htail.inboard.moment)
+        @printf(io, "htail.outboard.moment = %20.20f \n", htail.outboard.moment)
+        @printf(io, "htail.inboard.max_shear_load = %20.20f \n", htail.inboard.max_shear_load)
+        @printf(io, "htail.outboard.max_shear_load = %20.20f \n", htail.outboard.max_shear_load)
+        @printf(io, "htail.outboard.webs.thickness = %20.20f \n", htail.outboard.webs.thickness)
+        @printf(io, "htail.inboard.webs.weight.W = %20.20f \n", htail.inboard.webs.weight.W)
+        @printf(io, "htail.inboard.caps.weight.W = %20.20f \n", htail.inboard.caps.weight.W)
+        @printf(io, "htail.inboard.webs.thickness = %20.20f \n", htail.inboard.webs.thickness)
+        @printf(io, "htail.inboard.caps.thickness = %20.20f \n", htail.inboard.caps.thickness)
+        @printf(io, "htail.outboard.webs.thickness = %20.20f \n", htail.inboard.webs.thickness)
+        @printf(io, "htail.outboard.caps.thickness = %20.20f \n", htail.inboard.caps.thickness)
+        @printf(io, "htail.inboard.GJ = %20.20f \n", htail.inboard.GJ)
+        @printf(io, "htail.outboard.co = htail.layout.root_chord*htail.inboard.λ \n")
+        @printf(io, "htail.inboard.co = htail.layout.root_chord \n")
+        
+        @printf(io, "# ------------------------------\n")
+        @printf(io,"# Vtail\n")
+        @printf(io, "# ------------------------------\n")
+        @printf(io,"vtail = ac_test.vtail\n")
+        @printf(io, "vtail.weight = %20.20f \n", vtail.weight)
+        @printf(io, "vtail.dxW = %20.20f \n", vtail.dxW)
+        @printf(io, "vtail.weight_fraction_added = %20.20f \n", vtail.weight_fraction_added)
+        @printf(io, "vtail.layout.box_x = %20.20f \n", vtail.layout.box_x)
+        @printf(io, "vtail.CL_max = %20.20f \n", vtail.CL_max)
+        @printf(io, "vtail.layout.x = %20.20f \n", vtail.layout.x)
+        @printf(io, "vtail.outboard.cross_section.thickness_to_chord = %20.20f \n", vtail.outboard.cross_section.thickness_to_chord)
+        @printf(io, "vtail.ntails = %20.20f \n", vtail.ntails)
+        @printf(io, "vtail.volume = %20.20f \n", vtail.volume)
+        @printf(io, "vtail.outboard.GJ = %20.20f \n", vtail.outboard.GJ)
+        @printf(io, "vtail.outboard.EI[4] = %20.20f \n", vtail.outboard.EI[4])
+        @printf(io, "vtail.outboard.EI[1] = %20.20f \n", vtail.outboard.EI[1])
+        @printf(io, "vtail.layout.sweep = %20.20f \n", vtail.layout.sweep)
+        @printf(io, "vtail.layout.root_chord = %20.20f \n", vtail.layout.root_chord)
+        @printf(io, "vtail.outboard.λ = %20.20f \n", vtail.outboard.λ)
+        @printf(io, "vtail.layout.span = %20.20f \n", vtail.layout.span)
+        @printf(io, "vtail.layout.AR = %20.20f \n", vtail.layout.AR)
+        @printf(io, "vtail.layout.S = %20.20f \n", vtail.layout.S)
+        @printf(io, "vtail.size = %20.20f \n", vtail.size)
+        @printf(io, "vtail.dxW = %20.20f \n", vtail.dxW)
+        @printf(io, "vtail.outboard.cross_section.width_to_chord = %20.20f \n", vtail.outboard.cross_section.width_to_chord)
+        @printf(io, "vtail.outboard.cross_section.web_to_box_height = %20.20f \n", vtail.outboard.cross_section.web_to_box_height)
+        @printf(io, "vtail.layout.ηs = vtail.layout.root_span/vtail.layout.span \n")
+        @printf(io, "vtail.strut.cos_lambda = %20.20f \n", vtail.strut.cos_lambda)
+        @printf(io, "vtail.inboard.moment = %20.20f \n", vtail.inboard.moment)
+        @printf(io, "vtail.outboard.moment = %20.20f \n", vtail.outboard.moment)
+        @printf(io, "vtail.inboard.max_shear_load = %20.20f \n", vtail.inboard.max_shear_load)
+        @printf(io, "vtail.outboard.max_shear_load = %20.20f \n", vtail.outboard.max_shear_load)
+        @printf(io, "vtail.outboard.webs.thickness = %20.20f \n", vtail.outboard.webs.thickness)
+        @printf(io, "vtail.inboard.webs.weight.W = %20.20f \n", vtail.inboard.webs.weight.W)
+        @printf(io, "vtail.inboard.caps.weight.W = %20.20f \n", vtail.inboard.caps.weight.W)
+        @printf(io, "vtail.inboard.webs.thickness = %20.20f \n", vtail.inboard.webs.thickness)
+        @printf(io, "vtail.inboard.caps.thickness = %20.20f \n", vtail.inboard.caps.thickness)
+        @printf(io, "vtail.outbaord.webs.thickness = %20.20f \n", vtail.inboard.webs.thickness)
+        @printf(io, "vtail.outboard.caps.thickness = %20.20f \n", vtail.inboard.caps.thickness)
+        @printf(io, "vtail.inboard.GJ = %20.20f \n", vtail.inboard.GJ)
+        @printf(io, "vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ \n")
+        @printf(io, "vtail.inboard.co = vtail.layout.root_chord \n")
     end
 end

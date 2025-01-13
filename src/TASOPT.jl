@@ -41,8 +41,6 @@ using .materials
 export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 include(__TASOPTindices__)
-# include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
-# export aircraft, fuselage_tank
 
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))

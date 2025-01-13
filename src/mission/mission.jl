@@ -1,5 +1,5 @@
 """
-    mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise = false)
+    mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug; calculate_cruise = false)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
@@ -8,7 +8,20 @@ Input:
  pari[.]   integer flags
  parg[.]   geometry parameters
  parm[.]   mission parameters
- calculate_cruise  boolean flag to calculate start-of-cruise in off-design
+ fuse      TASOPT.Fuselage
+ wing      TASOPT.Wing
+ htail     TASOPT.Tail
+ vtail     TASOPT.Tail
+ iairf     index of airfoil database to use
+ initeng    0 = engine state will be initialized for all points
+            1 = engine state is assumed to be initialized
+ ipc1       0 = ipcruise1 aero and engine point needs to be calculated
+            1 = ipcruise1 aero and engine point assumed calculated
+
+Input/Output:
+ para[.p]  aero     parameters for points p=1..iptotal
+ pare[.p]  engine   parameters for points p=1..iptotal
+
 
 NOTE: 
  This routine assumes that estimates of the climb-leg flight path 
@@ -21,7 +34,7 @@ NOTE:
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise = false)
+function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug; calculate_cruise = false)
 
       t_prop = 0.0
       calc_ipc1 = true
@@ -142,7 +155,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
 
 
       #---- estimate takeoff speed and set V,Re over climb and descent
-      cosL = cos(parg[igsweep] * π / 180.0)
+      cosL = cosd(wing.layout.sweep)
       CLTO = para[iaclpmax, iptakeoff] * cosL^2
       # [prash] I think the assumption here is that Wcruise/WTO~1 and
       # just scaling it with rho and CL to get an initial estimate for V
@@ -172,14 +185,14 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
       #---- takeoff CLmax via section clmax and sweep correction
       ip = iprotate
       clpmax = para[iaclpmax, ip]
-      sweep = parg[igsweep]
-      cosL = cos(sweep * π / 180.0)
+      sweep = wing.layout.sweep
+      cosL = cosd(sweep)
       CLmax = clpmax * cosL^2
 
       #---- Vs stall speed (takeoff condition)
       rho0 = pare[ierho0, ip]
       a0 = pare[iea0, ip]
-      S = parg[igS]
+      S = wing.layout.S
       Vstall = sqrt(2.0 * WTO / (rho0 * S * CLmax))
       Mstall = Vstall / a0
       pare[ieu0, ip] = Vstall
@@ -203,7 +216,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
       itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
       CLh2 = para[iaCLh, ip]
       xCG2 = para[iaxCG, ip]
@@ -318,23 +331,23 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
             pare[ieu0, ip] = V
             pare[ieM0, ip] = Mach
 
-            # Set pitch trim by adjusting CLh
-            Wf = W - Wzero
-            rfuel = Wf / parg[igWfuel]
-            itrim = 1
-            balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+                  # Set pitch trim by adjusting CLh
+                  Wf = W - Wzero
+                  rfuel = Wf / parg[igWfuel]
+                  itrim = 1
+                  balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
-            if (ip == ipclimb1)
-                  icdfun = 0 #use explicitly specified wing cdf, cdp
-            else
-                  icdfun = 1 #use airfoil database
-            end
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+                  if (ip == ipclimb1)
+                        icdfun = 0 #use explicitly specified wing cdf, cdp
+                  else
+                        icdfun = 1 #use airfoil database
+                  end
+                  cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
 
             icall = 1
             icool = 1
 
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+                  ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
 
             Ftotal = pare[ieFe, ip] * parg[igneng]
             TSFC = pare[ieTSFC, ip]
@@ -430,7 +443,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
       # if (calc_ipc1)
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
@@ -438,8 +451,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
-
+            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -449,7 +461,8 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
 
             icall = 2
             icool = 1
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)    
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
+
       end
 
       # set cruise-climb climb angle, from fuel burn rate and atmospheric dp/dz
@@ -516,11 +529,11 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
       # Calc Drag
       icdfun = 1
-      cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+      cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  icdfun)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -530,7 +543,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
       icall = 2
       icool = 1
 
-      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+      ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -664,7 +677,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
             itrim = 1
-            balance(pari, parg, view(para, :, ip), fuse, rfuel, rpay, ξpay, itrim)
+            balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp
@@ -673,7 +686,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
                   # use airfoil database for wing cdf,cdp
                   icdfun = 1
             end
-            cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
 
             # set up for engine calculation
             sing = sin(gamVde)
@@ -710,7 +723,7 @@ function mission!(pari, parg, parm, para, pare, fuse, Ldebug; calculate_cruise =
             # use previously-set turbine cooling mass flow
             icool = 1
 
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]
