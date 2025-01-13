@@ -14,6 +14,7 @@ General function to estimate the weight of different types of propulsion systems
 function engineweight!(ac, HXs)
     pari = ac.pari
     parg = ac.parg
+    wing = ac.wing
     neng = parg[igneng]
     
     if pari[iiengtype] == 1 #turbofan TODO: replace with better flag
@@ -26,7 +27,7 @@ function engineweight!(ac, HXs)
     parg[igWHXs] = W_HXs
 
     # set new nacelle area / reference area  fraction fSnace
-    S = parg[igS]
+    S = wing.layout.S
 
     Snace = Snace1 * neng
     fSnace = Snace / S

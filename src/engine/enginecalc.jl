@@ -24,6 +24,7 @@ function enginecalc!(ac, case, imission, ip, initeng, iterw = 0)
     parg = ac.parg
     para = view(ac.para, :, :, imission)
     pare = view(ac.pare, :, :, imission)
+    wing = ac.wing
     if pari[iiengtype] == 1 #turbofan TODO: replace with better flag
         if case == "design"
             icall = 0
@@ -36,7 +37,7 @@ function enginecalc!(ac, case, imission, ip, initeng, iterw = 0)
                 inite1 = 1
             end
 
-            ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), ip, icall, icool, inite1)
+            ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
 
             # store engine design-point parameters for all operating points
             parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -73,12 +74,12 @@ function enginecalc!(ac, case, imission, ip, initeng, iterw = 0)
                 icall = 2
                 icool = 1
             end
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
 
         elseif case == "cooling_sizing"
             icall = 1
             icool = 2
-            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, icool, initeng)
+            ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
 
             # Tmetal was specified... set blade row cooling flow ratios for all points
             for jp = 1:iptotal

@@ -78,3 +78,66 @@ function Base.show(io::IO, ac::aircraft)
     Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
+
+"""
+    unpack_ac(ac, imission; ip = 0)
+Helper function to unpack all aircraft parameters.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft` : aircraft object to unpack   
+    - `imission::Int64`: mission index
+    - `ip::Int64`: mission point index (optional)
+    **Outputs:**
+    - `pari::AbstractVector{Int64}` : integer flag parameters               
+    - `parg::AbstractArray{Float64}` : Geometry parameters 
+    - `parm::AbstractArray{Float64}` : Mission parameters                    
+    - `para::AbstractArray{Float64}` : Aero parameters                       
+    - `pare::AbstractArray{Float64}` : Engine parameters      
+    - `fuse::Fuselage` : fuselage parameters             
+    - `fuse_tank::fuselage_tank` : fuel tank in fuselage parameters
+"""
+function unpack_ac(ac, imission; ip = 0)
+    pari = ac.pari
+    parg = ac.parg
+    parm = view(ac.parm, :, imission) 
+    fuse_tank = ac.fuse_tank
+    fuse = ac.fuselage 
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+
+    if ip == 0 #If no point is given
+        para = view(ac.para, :, :, imission)
+        pare = view(ac.pare, :, :, imission)
+    else #ip is given
+        para = view(ac.para, :, ip, imission)
+        pare = view(ac.pare, :, ip, imission)
+    end
+
+    return pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail
+end
+
+"""
+    unpack_ac_components(ac)
+Helper function to unpack aircraft physical components.
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft` : aircraft object to unpack   
+    **Outputs:**
+    - `pari::AbstractVector{Int64}` : integer flag parameters               
+    - `parg::AbstractArray{Float64}` : Geometry parameters      
+    - `fuse::Fuselage` : fuselage parameters             
+    - `fuse_tank::fuselage_tank` : fuel tank in fuselage parameters
+    - `landing_gear::LandingGear`: landing gear parameters
+"""
+function unpack_ac_components(ac)
+    pari = ac.pari
+    parg = ac.parg
+    fuse_tank = ac.fuse_tank
+    fuse = ac.fuselage 
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+
+    return pari, parg, fuse, fuse_tank, wing, htail, vtail
+end
