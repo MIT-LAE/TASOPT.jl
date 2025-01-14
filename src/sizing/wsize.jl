@@ -24,11 +24,11 @@ function wsize(ac; itermax=35,
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
-    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission) 
+    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     #Engine models
-    store_engine_model!(ac.engine)
-    enginecalc!, engineweight! = extract_engine_model(ac.engine)
+    store_engine_model!(engine) #Produce the engine functions in case they are not in aircraft
+    enginecalc!, engineweight! = extract_engine_model(engine) #Define handles for the functions
 
     # Initialize variables
     time_propsys = 0.0
@@ -847,17 +847,13 @@ function wsize(ac; itermax=35,
         pare[ieFe, ip] = Fdes / neng
 
         # Size engine for TOC
-        icall = 0
-        icool = 1
-
         case = "design" #Design the engine for this mission point
         enginecalc!(ac, case, imission, ip, initeng, iterw)
 
         #Calculate engine mass properties
         engineweight!(ac, HXs)
 
-        ipc1 = 1
-        time_propsys += mission!(ac, imission, Ldebug)
+        mission!(ac, imission, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]

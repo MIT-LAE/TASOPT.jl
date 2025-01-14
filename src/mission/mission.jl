@@ -1,27 +1,14 @@
 """
-    mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug)
+    mission!(ac, imission, Ldebug)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
 
-Input:
- pari[.]   integer flags
- parg[.]   geometry parameters
- parm[.]   mission parameters
- fuse      TASOPT.Fuselage
- wing      TASOPT.Wing
- htail     TASOPT.Tail
- vtail     TASOPT.Tail
- iairf     index of airfoil database to use
- initeng    0 = engine state will be initialized for all points
-            1 = engine state is assumed to be initialized
- ipc1       0 = ipcruise1 aero and engine point needs to be calculated
-            1 = ipcruise1 aero and engine point assumed calculated
-
-Input/Output:
- para[.p]  aero     parameters for points p=1..iptotal
- pare[.p]  engine   parameters for points p=1..iptotal
-
+!!! details "🔃 Inputs and Outputs"
+**Inputs:**
+      - `ac::aircraft`: aircraft data storage object
+      - `imission::Int64`: mission index
+      - `Ldebug::Bool`: debugging flag
 
 NOTE: 
  This routine assumes that estimates of the climb-leg flight path 
@@ -30,17 +17,13 @@ NOTE:
  and can be passed in as zero with only a minor error.
  They are updated and returned in the same para[iagamV,ip] array.
 
- !!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
-
 """
 function mission!(ac, imission, Ldebug)
       #Unpack aircraft
       pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission) 
       #Engine model
-      enginecalc!, engineweight! = extract_engine_model(ac.engine)
+      enginecalc!, _ = extract_engine_model(ac.engine)
 
-      t_prop = 0.0
       calc_ipc1 = true
       ifirst = true
 
@@ -369,7 +352,7 @@ function mission!(ac, imission, Ldebug)
             # Store integrands for range and weight integration using a predictor-corrector scheme
             FoW[ip] = Ftotal / (BW * cosg) - DoL
 
-            mfuel = Ftotal * TSFC / gee
+            mfuel = pare[iemfuel, ip]
             FFC[ip] = mfuel * gee / (W * V * cosg)
 
             Vgi[ip] = 1.0 / (V * cosg)
@@ -491,7 +474,7 @@ function mission!(ac, imission, Ldebug)
       cosg = cos(gamVcr1)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
-      mfuel = Ftotal * TSFC / gee
+      mfuel = pare[iemfuel, ip]
       FFC[ip] = mfuel * gee / (W * V * cosg)
       Vgi[ip] = 1.0 / (V * cosg)
 
@@ -556,7 +539,7 @@ function mission!(ac, imission, Ldebug)
 
       FoW[ip] = Ftotal / (BW * cosg) - DoL
 
-      mfuel = Ftotal * TSFC / gee
+      mfuel = pare[iemfuel, ip]
       FFC[ip] = mfuel * gee / (W * V * cosg) 
 
       Vgi[ip] = 1.0 / (V * cosg)
@@ -728,7 +711,7 @@ function mission!(ac, imission, Ldebug)
             Vgi[ip] = 1.0 / (V * cosg)
 
             # if F < 0, then TSFC is not valid, so calculate mdot_fuel directly
-            mfuel = pare[ieff, ip] * pare[iemcore, ip] * parg[igneng]
+            mfuel = pare[iemfuel, ip]
             FFC[ip] = mfuel * gee / (W * V * cosg)
 
             if (ip > ipdescent1)
@@ -795,5 +778,4 @@ function mission!(ac, imission, Ldebug)
       Wburn = WMTO * fburn
       parm[imPFEI] = Wburn/gee * parm[imLHVfuel] / (parm[imWpay] * parm[imRange])
 
-      return t_prop
 end

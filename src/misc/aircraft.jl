@@ -106,6 +106,7 @@ function unpack_ac(ac, imission; ip = 0)
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
+    engine = ac.engine
 
     if ip == 0 #If no point is given
         para = view(ac.para, :, :, imission)
@@ -115,7 +116,7 @@ function unpack_ac(ac, imission; ip = 0)
         pare = view(ac.pare, :, ip, imission)
     end
 
-    return pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail
+    return pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine
 end
 
 """
