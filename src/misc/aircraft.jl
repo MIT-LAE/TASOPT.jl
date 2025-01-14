@@ -83,6 +83,7 @@ end
 """
     unpack_ac(ac, imission; ip = 0)
 Helper function to unpack all aircraft parameters.
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac::aircraft` : aircraft object to unpack   
@@ -96,6 +97,10 @@ Helper function to unpack all aircraft parameters.
     - `pare::AbstractArray{Float64}` : Engine parameters      
     - `fuse::Fuselage` : fuselage parameters             
     - `fuse_tank::fuselage_tank` : fuel tank in fuselage parameters
+    - `wing::Wing` : wing object
+    - `htail::Tail` : horizontal stabilizer object
+    - `vtail::Tail` : vertical stabilizer object
+    - `engine::Engine`: engine object
 """
 function unpack_ac(ac, imission; ip = 0)
     pari = ac.pari
@@ -122,6 +127,7 @@ end
 """
     unpack_ac_components(ac)
 Helper function to unpack aircraft physical components.
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac::aircraft` : aircraft object to unpack   
@@ -130,7 +136,9 @@ Helper function to unpack aircraft physical components.
     - `parg::AbstractArray{Float64}` : Geometry parameters      
     - `fuse::Fuselage` : fuselage parameters             
     - `fuse_tank::fuselage_tank` : fuel tank in fuselage parameters
-    - `landing_gear::LandingGear`: landing gear parameters
+    - `wing::Wing` : wing object
+    - `htail::Tail` : horizontal stabilizer object
+    - `vtail::Tail` : vertical stabilizer object
 """
 function unpack_ac_components(ac)
     pari = ac.pari
