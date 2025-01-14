@@ -2,7 +2,8 @@
     tfwrap!(ac, case, imission, ip, initeng, iterw = 0)
 
 Calls the turbofan sizing or off-design performance functions for the aircraft's
-turbofan model.
+turbofan model. This function is basically a wrapper on tfcalc!, going from the
+basic engine inputs to those required by the function and storing the outputs.
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**

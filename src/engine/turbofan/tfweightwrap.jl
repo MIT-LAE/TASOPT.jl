@@ -1,7 +1,9 @@
 """
     tfweightwrap!(ac, HXs)
 
-General function to estimate and store the weight of a turbofan engine.
+General function to estimate and store the weight of a turbofan engine. 
+This function is basically a wrapper on tfweight, going from the
+basic aircraft inputs to those required by the function and storing the outputs.
       
 !!! details "🔃 Inputs and Outputs"
     **Input:**
