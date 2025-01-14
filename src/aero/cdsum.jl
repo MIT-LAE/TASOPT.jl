@@ -44,7 +44,14 @@ See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@r
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
+function cdsum!(ac, imission, ip, icdfun)
+      #Unpack data storage
+      parg = ac.parg
+      para = view(ac.para, :, ip, imission)
+      pare = view(ac.pare, :, ip, imission)
+      wing = ac.wing
+      htail = ac.htail
+      vtail = ac.vtail
 
       Ldebug = false
 #      Ldebug = true

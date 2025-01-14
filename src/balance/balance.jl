@@ -273,6 +273,7 @@ Outputs:
 No direct outputs. Fields in `ac` are modified.
 """
 function htsize(ac, paraF, paraB, paraC)
+      #TODO find a way to remove the para inputs and use ac instead
       pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
 
       itmax = 10
