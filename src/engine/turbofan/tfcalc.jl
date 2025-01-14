@@ -326,6 +326,9 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
                 pare[iepihtD] = pihtD
                 pare[iepiltD] = piltD
 
+                #Fuel mass flow rate
+                pare[iemfuel] = ff * mcore * neng
+
                 #--------------------------------------------------------------------------
         else
                 #----- off-design operation case
@@ -701,6 +704,8 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
         pare[ieetaht] = etaht
         pare[ieetalt] = etalt
 
+        #Fuel mass flow rate
+        pare[iemfuel] = ff * mcore * neng
 
         if (M5 <= 0.999999)
                 ichoke5 = 0
