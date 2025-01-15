@@ -27,7 +27,6 @@ function wsize(ac; itermax=35,
     pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     #Engine models
-    store_engine_model!(engine) #Produce the engine functions in case they are not in aircraft
     enginecalc!, engineweight! = extract_engine_model(engine) #Define handles for the functions
 
     # Initialize variables

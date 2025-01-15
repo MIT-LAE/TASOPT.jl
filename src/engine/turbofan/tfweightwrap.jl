@@ -19,10 +19,8 @@ function tfweightwrap!(ac, HXs)
     wing = ac.wing
     neng = parg[igneng]
     
-    if pari[iiengtype] == 1 #turbofan TODO: replace with better flag
-        Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(ac, HXs)
+    Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(ac, HXs)
         
-    end
     parg[igWeng] = Weng
     parg[igWebare] = Webare
     parg[igWnace] = Wnace
