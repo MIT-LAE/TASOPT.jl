@@ -15,6 +15,9 @@ $TYPEDFIELDS
     weight_model_name::String = ""
     """Weight model to be used by TASOPT"""
     weight_model::Function = (x->x)
+
+    """Heat exchanger parameters and data"""
+    heat_exchangers::Vector{Any} = []
 end
 
 """
