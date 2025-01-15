@@ -163,8 +163,7 @@ function wsize(ac; itermax=35,
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
 
-    # Initialize heat exchanger storage and reset engine values
-    HXs = []
+    # Reset engine values for heat exchangers
     resetHXs(pare)
    
     # -------------------------------------------------------    
@@ -785,10 +784,10 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs, rlx = 0.5) #design and off-design HX performance
+            engine.heat_exchangers = hxdesign!(pare, pari, ipdes, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
-            for HX in HXs
+            for HX in engine.heat_exchangers
                 if HX.type == "PreC"
                     parg[igdHXPreC] = HX.HXgeom.D_o
                 elseif HX.type == "InterC"
@@ -850,7 +849,7 @@ function wsize(ac; itermax=35,
         enginecalc!(ac, case, imission, ip, initeng, iterw)
 
         #Calculate engine mass properties
-        engineweight!(ac, HXs)
+        engineweight!(ac, engine.heat_exchangers)
 
         mission!(ac, imission, Ldebug)
 
