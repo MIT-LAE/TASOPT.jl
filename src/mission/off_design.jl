@@ -24,6 +24,8 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
     parad = ac.parad
     pared = ac.pared
 
+    resetHXs(pare) #Reset heat exchanger parameters
+
     fuse = ac.fuselage
     wing = ac.wing
     htail = ac.htail
@@ -252,6 +254,9 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
     # Calling mission
     time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, htail, ac.vtail, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
+
+    #TODO add heat exchanger models once HX parameters are stored
+    #HXOffDesign!(HeatExchangers, pare, pari)
     
 #-------------------------------------------------------------------------
 
