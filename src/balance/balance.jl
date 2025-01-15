@@ -8,12 +8,12 @@ Inputs:
 - `ac::aircraft`: structure with aircraft parameters
 - `imission::Int64`: mission index (1 is design mission)
 - `ip::Int64`: mission point index
+- `rfuel`    fuel fraction
 - `rpay`     payload fraction Wpay_actual/Wpay_MTOW
 - `ξpay`    partial-payload packing location
     * = 0.0   all the way in front  of cabin
     * = 0.5   all the way in middle of cabin
     * = 1.0   all the way in back   of cabin
-- `iengloc`  engine location index
 - `itrim`      = 0  no changes
     * = 1  adjust CLh   (horizontal tail cl)
     * = 2  adjust Sh    (horizontal tail area)

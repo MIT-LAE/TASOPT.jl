@@ -5,10 +5,10 @@ Runs aircraft through mission, calculating fuel burn
 and other mission variables.
 
 !!! details "🔃 Inputs and Outputs"
-**Inputs:**
-      - `ac::aircraft`: aircraft data storage object
-      - `imission::Int64`: mission index
-      - `Ldebug::Bool`: debugging flag
+    **Inputs:**
+    - `ac::aircraft`: aircraft data storage object
+    - `imission::Int64`: mission index
+    - `Ldebug::Bool`: debugging flag
 
 NOTE: 
  This routine assumes that estimates of the climb-leg flight path 
