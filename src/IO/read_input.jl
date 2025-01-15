@@ -181,13 +181,17 @@ pari[iiopt] = read_input("optimize", options, doptions)
 propsys = read_input("prop_sys_arch", options, doptions)
 if lowercase(propsys) == "tf"
     pari[iiengtype] = 1
+    engine.model_name = "turbofan_md" #TODO: add more engine models
+    engine.weight_model_name = "turbofan"
 elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
 else
+    
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
+store_engine_model!(engine) #Produce and store the engine functions 
 
 engloc = read_input("engine_location", options, doptions)
 
@@ -1053,8 +1057,6 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-engine.model_name = "turbofan_md" #TODO: add more engine models and make this an input
-engine.weight_model_name = "turbofan"
 return TASOPT.aircraft(name, description,
     pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail, engine)
 
