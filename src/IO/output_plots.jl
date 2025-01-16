@@ -76,9 +76,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         xend     = fuselage.layout.x_end
         xblend1  = fuselage.layout.x_start_cylinder
         xblend2  = fuselage.layout.x_end_cylinder
-        xhtail   = parg[igxhtail  ]
-        xvtail   = parg[igxvtail  ]
-        xwing    = parg[igxwing   ]
+        xhtail   = htail.layout.x
+        xvtail   = vtail.layout.x
+        xwing    = wing.layout.x
 
         xhbox    = htail.layout.box_x
 
@@ -318,14 +318,14 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     plot!(plot_obj, xw[[2, 5]], -yw[[2, 5]], label = "", color = :black, linewidth = 1.0, alpha = 0.5)
     
     # Plot Tail (conditionally plot fill based on tailz value)
-    tailz = parg[igzhtail] > 0 ? :back : 1
+    tailz = htail.layout.z > 0 ? :back : 1
     plot!(plot_obj, xh, yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
     # plot!(xh, -yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
     plot!(plot_obj, xh, -yh, fillrange=yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
     
     # Tail box (fill between xvt and yvt for the tail volume)
-    xvt = [-0.4, -0.15, 0.2, 0.6].*parg[igcov] .+ parg[igxvbox]
-    yvt = hcat([0.0 ones(length(xvt) - 2)' .*(parg[igcov]*parg[ighboxv]/2) 0.0])[:]
+    xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
+    yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.root_chord*vtail.outboard.cross_section.thickness_to_chord/2) 0.0])[:]
     plot!(plot_obj, xvt, -yvt, fillrange=yvt, label = "", color = :black, alpha = 0.8, linecolor = :black, z_order = :front)
     
     # Plot fuselage (fill with edge color)
@@ -439,7 +439,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     end
 
     # Span annotations
-    groups, bmax = find_aerodrome_code(parg[igbmax])
+    groups, bmax = find_aerodrome_code(wing.layout.max_span)
     xcode = -2.0
 
     if annotate_group
@@ -706,14 +706,19 @@ function plot737compare(ac::aircraft; weightdetail = true, fracs = false)
 
     # ac weights
     parg = ac.parg
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    fuselage = ac.fuselage
+
     Wpay  = parg[igWpay]
     Wfuel = parg[igWfuel]
     WMTO  = parg[igWMTO]
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-    Wwing = parg[igWwing]
+    Wwing = wing.weight
     Wfuse = ac.fuselage.weight
-    Whtail = parg[igWhtail]
-    Wvtail = parg[igWvtail]
+    Whtail = htail.weight
+    Wvtail = vtail.weight
     Weng = parg[igWeng]
         Whpesys = parg[igWMTO] * ac.fuselage.HPE_sys.W
         Wlgnose = parg[igWMTO] * parg[igflgnose]
@@ -852,24 +857,26 @@ Plot moment and shear diagrams
 """
 function MomentShear(ac::aircraft)
     parg = ac.parg
-    co = parg[igco]
-    cs = parg[igco]*parg[iglambdas]
-    ct = parg[igco]*parg[iglambdat]
+    wing = ac.wing
+
+    co = wing.layout.root_chord
+    cs = co*wing.inboard.λ
+    ct = co*wing.outboard.λ
   
-    bo = parg[igbo]
-    bs = parg[igbs]
-    b  = parg[igb ]
+    bo = wing.layout.root_span
+    bs = wing.layout.break_span
+    b  = wing.layout.span
 
     etas = bs/b
     etao = bo/b
 
-    λs = parg[iglambdas]
-    λt = parg[iglambdat]
+    λs = wing.inboard.λ
+    λt = wing.outboard.λ
 
-    Ss = parg[igSsmax]
-    Ms = parg[igMsmax]
-    So = parg[igSomax]
-    Mo = parg[igMomax]
+    Ss = wing.outboard.max_shear_load
+    Ms = wing.outboard.moment
+    So = wing.inboard.max_shear_load
+    Mo = wing.inboard.moment
     
     etaRange =[LinRange(etao,etas,20) ; LinRange(etas,1,20)]
     c = zero(etaRange)
