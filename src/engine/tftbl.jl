@@ -1,143 +1,87 @@
 """
-`tftbl.jl` loads in the E3 map data for bilinear interpolation in tfmap.jl
-"""
+    pointInMap(m, p, surge, windmill, bottom, top)
 
-"""
-    compressorTbl
-
-A type representing a compressor map, parameterized in terms of mass flow and pressure ratio. Data is either generated from NPSS data using `create_map_struct` or is loaded
-directly. In either case, the data files are stored in `src/engine/data`.
-
-# Fields:
-- `Nb_des::Float64`: Design corrected speed
-- `Rline_des::Float64`: Design R-line value; currently unused
-- `mb_des::Float64`: Design corrected mass flow
-- `pr_des::Float64`: Design pressure ratio
-- `eff_is_des::Float64`: Design isentropic efficiency
-
-- `mbGrid::Vector{Float64}`: Grid of mass flow points at which output parameters are defined
-- `prGrid::Vector{Float64}`: Grid of pressure ratio points at which output parameters are defined
-- `dm::Float64`: Mass flow grid spacing
-- `dp::Float64`: Pressure ratio grid spacing
-- `Nm::Int`: Number of mass flow grid points
-- `Np::Int`: Number of pressure ratio grid points
-
-- `Nb_nom::Matrix{Float64}`: Nm by Np matrix of corrected speed values
-- `Nb_mb::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to mass flow
-- `Nb_pr::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to pressure ratio
-
-- `Eff_nom::Matrix{Float64}`: Nm by Np matrix of polytropic efficiencies
-- `Eff_mb::Matrix{Float64}`: Nm by Np matrix of polytropic efficiency with respect to mass flow
-- `Eff_pr::Matrix{Float64}`: Nm by Np matrix of polytropic efficiency with respect to pressure ratio
-
-- `hash_val::Integer`: Hash value corresponding to NPSS map data; tracks whether map data has been updated
-"""
-struct compressorTbl
-    # ---- Design values
-    Nb_des::Float64
-    Rline_des::Float64 # Currently unused
-    mb_des::Float64
-    pr_des::Float64
-    eff_is_des::Float64 # Isentropic design efficiency
-
-    # ---- mb and PR grids and fineness variables
-    mbGrid::Vector{Float64}
-    prGrid::Vector{Float64}
-    dm::Float64
-    dp::Float64
-    Nm::Int
-    Np::Int
-
-    # ---- Nc grids
-    Nb_nom::Matrix{Float64}
-    Nb_mb::Matrix{Float64}
-    Nb_pr::Matrix{Float64}
-
-    # ---- Eff grids
-    Eff_nom::Matrix{Float64}
-    Eff_mb::Matrix{Float64}
-    Eff_pr::Matrix{Float64}
-
-    # ---- Hash
-    hash_val::Integer
-end 
-
-
-"""
-    compTbl_to_TOML(compressor::compressorTbl, saveName)
-
-Converts a `compressorTbl` object to a TOML-saveable format and saves it as a TOML file to the `src/engine/data/` folder as `saveName`
+Checks whether a mass flow / pressure ratio map is in the domain of the map
+defined by N and Rline. Assumes the boundary lists are pre-sorted
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `compressor::compressorTbl`:  compressorTbl structure
-    - `saveName`:    string file name for the saved data; should probably end in `.toml`
-"""
-function compTbl_to_TOML(compressor::compressorTbl, saveName)
-    # Convert the struct fields to a dictionary
-    compressor_dict = Dict(
-        :Nb_des => compressor.Nb_des,
-        :Rline_des => compressor.Rline_des,
-        :mb_des => compressor.mb_des,
-        :pr_des => compressor.pr_des,
-        :eff_is_des => compressor.eff_is_des,
-        :mbGrid => compressor.mbGrid,
-        :prGrid => compressor.prGrid,
-        :dm => compressor.dm,
-        :dp => compressor.dp,
-        :Nm => compressor.Nm,
-        :Np => compressor.Np,
-        :Nb_nom => [compressor.Nb_nom[i, :] for i in 1:size(compressor.Nb_nom, 1)],
-        :Nb_mb => [compressor.Nb_mb[i, :] for i in 1:size(compressor.Nb_mb, 1)],
-        :Nb_pr => [compressor.Nb_pr[i, :] for i in 1:size(compressor.Nb_pr, 1)],
-        :Eff_nom => [compressor.Eff_nom[i, :] for i in 1:size(compressor.Eff_nom, 1)],
-        :Eff_mb => [compressor.Eff_mb[i, :] for i in 1:size(compressor.Eff_mb, 1)],
-        :Eff_pr => [compressor.Eff_pr[i, :] for i in 1:size(compressor.Eff_pr, 1)],
-        :hash_val => compressor.hash_val
-    )
-
-    open(joinpath(__TASOPTroot__,"engine/data/",saveName), "w") do io
-        TOML.print(io, compressor_dict)
-    end
-end # compTbl_to_TOML
-
-
-"""
-    dict_to_compTbl(compressor_dict)
-
-Converts a compressorTbl dictionary (created when reading in a XXXX_gridded.toml file) to a compressorTbl object
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `compressor_dict`:  dictionary containing the compressor_dict data
+    - `m`:        mass flow test value
+    - `p`:        pressure ratio test value
+    - `surge`:    matrix of m/p coordinates defining surge line
+    - `windmill`: matrix of m/p coordinates defining windmill line
+    - `bottom`:   matrix of m/p coordinates defining topmost N line
+    - `top`:      matrix of m/p coordinates defining bottommost N line
 
     **Outputs:**
-    - `compressor_struct`: compressorTbl representation of the data
+    - `inMap`:    boolean; true if point is in map; false otherwise
+
 """
-function dict_to_compTbl(compressor_dict)
-    compressor_struct = compressorTbl(
-        compressor_dict["Nb_des"],
-        compressor_dict["Rline_des"],
-        compressor_dict["mb_des"],
-        compressor_dict["pr_des"],
-        compressor_dict["eff_is_des"],
-        compressor_dict["mbGrid"],
-        compressor_dict["prGrid"],
-        compressor_dict["dm"],
-        compressor_dict["dp"],
-        compressor_dict["Nm"],
-        compressor_dict["Np"],
-        transpose(hcat(compressor_dict["Nb_nom"]...)),
-        transpose(hcat(compressor_dict["Nb_mb"]...)),
-        transpose(hcat(compressor_dict["Nb_pr"]...)),
-        transpose(hcat(compressor_dict["Eff_nom"]...)),
-        transpose(hcat(compressor_dict["Eff_mb"]...)),
-        transpose(hcat(compressor_dict["Eff_pr"]...)),
-        compressor_dict["hash_val"]
-    )
+function pointInMap(m, p, surge, windmill, bottom, top)
+    # Find the transition point on the x axis between the upper and lower bounding lines of the map
+    mMid_top = maximum(surge[:,1])
+    mMid_bot = maximum(bottom[:,1])
+
+    top_bound = surge
+    bot_bound = bottom
+    # println(m, " ", p)
+
+    # Set the upper and lower bound appropriately for the given m value
+    if m > mMid_top
+        top_bound = top
+        # println("top")
+    else
+        # println("surge")
+    end
+
+    if m > mMid_bot
+        bot_bound = windmill
+        # println("windmill")
+    else
+        # println("bottom")
+    end
+
+    # Get the indices of points the m value lies between for interpolation
+    indUpp_top = searchsortedfirst(top_bound[:,1], m)
+    indLow_top = max(indUpp_top - 1, 1)
+    indUpp_top = min(indUpp_top, length(top_bound[:,1]))
+    low_top = top_bound[indLow_top,:]
+    upp_top = top_bound[indUpp_top,:]
+
+    indUpp_bot = searchsortedfirst(bot_bound[:,1], m)
+    indLow_bot = max(indUpp_bot - 1, 1)
+    indUpp_bot = min(indUpp_bot, length(bot_bound[:,1]))
+    # println(indLow_bot + 1, " ", length(bot_bound[:,1]), " ", indUpp_bot)
+    low_bot = bot_bound[indLow_bot,:]
+    upp_bot = bot_bound[indUpp_bot,:]
+
+    # Calculate the minimum/maximum pr value required to be in map using linear interpolation
+    if indLow_top != indUpp_top
+        dm_top = upp_top[1] - low_top[1]
+        wLow_top = (upp_top[1] - m) / dm_top
+        wUpp_top = (m - low_top[1]) / dm_top
+        pmax = low_top[2] * wLow_top + upp_top[2] * wUpp_top
+    else
+        pmax = upp_top[2]
+    end
+
+    if indLow_bot != indUpp_bot
+        dm_bot = upp_bot[1] - low_bot[1]
+        wLow_bot = (upp_bot[1] - m) / dm_bot
+        wUpp_bot = (m - low_bot[1]) / dm_bot
+        pmin = low_bot[2] * wLow_bot + upp_bot[2] * wUpp_bot
+    else
+        pmin = upp_bot[2]
+    end
+
+    # If greater than pmax or lower than pmin, the point isn't in the map
+    if p < pmin || p > pmax
+        return false
+    else
+        return true
+    end
     
-    return compressor_struct
-end # dict_to_compTbl
+end # pointInMap
 
 
 """
@@ -253,7 +197,7 @@ for correected speed and efficiency.
     - `mapStruct`: compressorTbl representation of the map
 
 """
-function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolator=natNeigh.Sibson(), Nres::Int=250, Rres::Int=250, Mres::Int=100, Pres::Int=100)
+function create_map_struct(map_name::String, oob_consts::Vector{Float64}; method::natNeigh.AbstractInterpolator=natNeigh.Sibson(), Nres::Int=250, Rres::Int=250, Mres::Int=100, Pres::Int=100)
     # Load map data from TOML file
     println("Generatring Map: " * map_name)
     map = TOML.parsefile(joinpath(__TASOPTroot__,"engine/data/",map_name))
@@ -270,6 +214,23 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
     mb_des::Float64  = map["characteristic"]["massflow"][N_ind][R_ind]
     pr_des::Float64  = map["characteristic"]["pressure_ratio"][N_ind][R_ind]
     eff_des::Float64 = map["characteristic"]["isen_efficiency"][N_ind][R_ind]
+
+    # Get map boundaries in the mb - pr space
+    surgex = stack(map["characteristic"]["massflow"])[1,:]
+    surgey = stack(map["characteristic"]["pressure_ratio"])[1,:]
+    surge = hcat(surgex, surgey)
+
+    windmillx = stack(map["characteristic"]["massflow"])[end,:]
+    windmilly = stack(map["characteristic"]["pressure_ratio"])[end,:]
+    windmill = hcat(windmillx, windmilly)
+
+    bottomx = stack(map["characteristic"]["massflow"])[:,1]
+    bottomy = stack(map["characteristic"]["pressure_ratio"])[:,1]
+    bottom = hcat(bottomx, bottomy)
+
+    topx = stack(map["characteristic"]["massflow"])[:,end]
+    topy = stack(map["characteristic"]["pressure_ratio"])[:,end]
+    top = hcat(topx, topy)
 
     # Need to specify each point in the N-R plane (i.e. all combinations of N_i and R_i)
     # To do so, create a vector with all x (N) components and a vector with all y (R) components
@@ -321,6 +282,16 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
     Pg = Pg .* pr_des
     dp = dp  * pr_des
 
+    # Replace out-of-map points with the Drela approximation
+    for i in eachindex(Mg)
+        for j in eachindex(Pg)
+            if !pointInMap(Mg[i], Pg[j], surge, windmill, bottom, top)
+                N_gridded[i,j], _, _ = Ncmap(Pg[j], Mg[i], pr_des, mb_des, Nb_des, oob_consts)
+                E_gridded[i,j], _, _ = ecmap(Pg[j], Mg[i], pr_des, mb_des, oob_consts, isen_to_poly(pr_des, eff_des, 1.4), 0.0, 0.0)
+            end
+        end
+    end
+
     # Calculate the partial derivatives of N and efficiency to mass flow and pressure ratio on the same grid
     println("Calculating partials")
     dNdm, dNdp = gen2DDerivatives(N_gridded, dm, dp, Mres, Pres)
@@ -340,6 +311,10 @@ function create_map_struct(map_name::String; method::natNeigh.AbstractInterpolat
         dp,
         Mres,
         Pres,
+        surge,
+        windmill,
+        bottom,
+        top,
         N_gridded,
         dNdm,
         dNdp,
@@ -406,12 +381,12 @@ the map is generated from the NPSS data using `create_map_struct`.
     - `compStruct`: compressorTbl structure representing the loaded map
 
 """
-function map_startup(gridded_map_name, data_map_name, map_gridding_method; Nres=200, Rres=200, Mres=200, Pres=200)
+function map_startup(gridded_map_name, data_map_name, map_gridding_method, oob_consts; Nres=200, Rres=200, Mres=200, Pres=200)
     genComp, compDict = checkMapHash(gridded_map_name, data_map_name)
 
     if genComp
         # Generate new fan data and save to a file
-        compStruct = create_map_struct(data_map_name; method=map_gridding_method, Nres=Nres, Rres=Rres, Mres=Mres, Pres=Pres)
+        compStruct = create_map_struct(data_map_name, oob_consts; method=map_gridding_method, Nres=Nres, Rres=Rres, Mres=Mres, Pres=Pres)
         compTbl_to_TOML(compStruct, gridded_map_name)    
     else
         compStruct = dict_to_compTbl(compDict)
@@ -422,9 +397,16 @@ end # map_startup
 
 
 # Specify desired griding fineness; possibly make this a startup variable?
-N, R, M, P = 200, 200, 200, 200
+N, R, M, P = 200, 200, 400, 400
+
+
+# Load Drela constants for out-of-bounds calculations
+#                  a     b     k     mo     da    c    d    C     D
+const Cmapf_oob = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0,  2.5, 15.0]
+const Cmapl_oob = [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 15.0,  1.0]
+const Cmaph_oob = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 15.0,  1.0]
 
 # Create compressorTbl objects as constants to prevent re-generating all the maps every run
-const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Sibson(1); Nres=N, Rres=R, Mres=M, Pres=P)
-const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(1); Nres=N, Rres=R, Mres=M, Pres=P)
-const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Sibson(1); Nres=N, Rres=R, Mres=M, Pres=P)
+const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Sibson(1), Cmapf_oob; Nres=N, Rres=R, Mres=M, Pres=P)
+const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(1), Cmapl_oob; Nres=N, Rres=R, Mres=M, Pres=P)
+const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Sibson(1), Cmaph_oob; Nres=N, Rres=R, Mres=M, Pres=P)

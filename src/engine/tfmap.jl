@@ -20,7 +20,7 @@ of interpolated E3 compressor data generated externally.
     - `Nb_?`:   derivatives
 
 """
-function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD::Float64, map::compressorTbl)
+function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD::Float64, map::compressorTbl, mapConst::Vector{Float64})
     # ---- Calculate map scaling factors
     s_Nb = NbD / map.Nb_des
     s_pr = (piD - 1) / (map.pr_des - 1)
@@ -30,28 +30,23 @@ function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD:
     pratio_descl = (pratio - 1) / s_pr + 1
     mb_descl = mb / s_mb
 
-    println(pratio_descl, "    ", mb_descl)
+    # println(pratio_descl, "    ", mb_descl)
 
-    # ---- Perform the bilinear interpolation on the precomputed map table
-    Nnom, Nnom_mb, Nnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
-                                             map.Np, map.mbGrid, map.prGrid, map.Nb_nom, 
-                                             map.Nb_mb, map.Nb_pr)
+    if mb_descl > map.mbGrid[end] || pratio_descl > map.prGrid[end]
+        return Ncmap(pratio, mb, piD, mbD, NbD, mapConst)
+    else
+        # ---- Perform the bilinear interpolation on the precomputed map table
+        Nnom, Nnom_mb, Nnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
+                                                map.Np, map.mbGrid, map.prGrid, map.Nb_nom, 
+                                                map.Nb_mb, map.Nb_pr)
 
-    # ---- Rescale map speed to using s_Nb
-    Nb = Nnom * s_Nb
-    Nb_pi = Nnom_pr * s_Nb / s_pr 
-    Nb_mb = Nnom_mb * s_Nb / s_mb
+        # ---- Rescale map speed to using s_Nb
+        Nb = Nnom * s_Nb
+        Nb_pi = Nnom_pr * s_Nb / s_pr 
+        Nb_mb = Nnom_mb * s_Nb / s_mb
 
-    # println(Nb)
-    # if Nb_pi ≈ 0.0 rtol=1e-6
-    #     Nb_pi = 1e-3
-    # end
-
-    # if Nb_mb ≈ 0.0 rtol=1e-6
-    #     Nb_mb = 1e-3
-    # end
-
-    return Nb, Nb_pi, Nb_mb
+        return Nb, Nb_pi, Nb_mb
+    end
 
 end # NcInterpMap
 

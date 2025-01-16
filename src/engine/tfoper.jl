@@ -42,6 +42,7 @@ Turbofan operation routine
     - `M0`:      freestream Mach
     - `T0`:      freestream temperature  [K]
     - `p0`:      freestream pressure  [Pa]
+    - `a0`:      freestream speed of sound [m/s]
     - `Tref`:    reference temperature for corrected mass flow and speed
     - `pref`:    reference pressure for corrected mass flow
     - `Phiinl`:  inlet ingested dissipation  Phi_inl
@@ -182,69 +183,26 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       ncrowy = 8
 
       # Determine whether we are in AD...
-      prod = gee * M0 * T0 * p0 * a0 * Tref * pref * Phiinl * Kinl * pid * pib * pifn * pitn * Gearf
-      prod *= pifD * pilcD * pihcD * pihtD * piltD
-      prod *= mbfD * mblcD * mbhcD * mbhtD * mbltD
-      prod *= NbfD * NblcD * NbhcD * NbhtD * NbltD
-      prod *= A2 * A25 * A5 * A7
-      prod *= Ttf * ifuel * etab
-      prod *= epf0 * eplc0 * ephc0 * epht0 * eplt0
-      prod *= pifK * epfK * mofft * Pofft * Tt9 * pt9 * epsl * epsh
-      prod *= Mtexit * dTstrk * StA * efilm * tfilm
-      prod *= M4a * ruc
-      prod *= epsrow[1] * M2 * pif * pilc * pihc * mbf * mblc * mbhc * Tt4 * pt5 * mcore * M25
-      T = typeof(prod)
-
+      T = check_AD(gee, M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, pid, pib, pifn, pitn, Gearf,
+            pifD, pilcD, pihcD, pihtD, piltD, mbfD, mblcD, mbhcD, mbhtD, mbltD, NbfD, NblcD, NbhcD,
+            NbhtD, NbltD, A2, A25, A5, A7, Ttf, ifuel, etab, epf0, eplc0, ephc0, epht0, eplt0, pifK,
+            epfK, mofft, Pofft, Tt9, pt9, epsl, epsh, Mtexit, dTstrk, StA, efilm, tfilm, M4a, ruc, M25,
+            mcore, pt5, Tt4, mbhc, mblc, mbf, pihc, pilc, pif, M2, epsrow)
 
       #---- Newton system arrays
-      res = zeros(T, 9, 1)
-      a = zeros(T, 9, 9)
-      rrel = zeros(T, 9)
-      rsav = zeros(T, 9)
-      asav = zeros(T, 9, 10)
-
-      res_dlls = zeros(T, 9)
-      a_dlls = zeros(T, 9, 9)
+      res, a, rrel, rsav, asav, res_dlls, a_dlls = crate_newton_arrays(T)
 
 
       #---- number of gas constituents
       n = 6
 
       #---- mass fractions
-      alpha = zeros(T, n)    # air
-      beta = zeros(T, n)     # fuel
-      gamma = zeros(T, n)    # combustion-caused change in air
-      lambda = zeros(T, n)   # combustion product gas
-      lambdap = zeros(T, n)  # combustion product gas with cooling flow added
-
-      lam_Tt3 = zeros(T, n)
-      lam_Ttf = zeros(T, n)
-      lam_pl = zeros(T, n)
-      lam_ph = zeros(T, n)
-      lam_ml = zeros(T, n)
-      lam_mh = zeros(T, n)
-      lam_Tb = zeros(T, n)
-      lamp_pl = zeros(T, n)
-      lamp_ph = zeros(T, n)
-      lamp_mf = zeros(T, n)
-      lamp_ml = zeros(T, n)
-      lamp_mh = zeros(T, n)
-      lamp_Tb = zeros(T, n)
-      lamp_Mi = zeros(T, n)
-
-      T_al = zeros(T, n)
-      p_al = zeros(T, n)
-      h_al = zeros(T, n)
-      s_al = zeros(T, n)
-      R_al = zeros(T, n)
-      cp_al = zeros(T, n)
+      alpha, beta, gamma, lambda, lambdap, lam_Tt3, lam_Ttf, 
+      lam_pl, lam_ph, lam_ml, lam_mh, lam_Tb, lamp_pl, lamp_ph,
+      lamp_mf, lamp_ml, lamp_mh, lamp_Tb, lamp_Mi, T_al, p_al, 
+      h_al, s_al, R_al, cp_al = create_massfrac_arrays(T, n)
 
       # from "tfmap.inc"
-      #        a     b     k     mo     da    c    d     C    D
-      Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
-      Cmapl = [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 0.0, 0.0]
-      Cmaph = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 0.0, 0.0]
-
       Tmapl = [0.15, 0.15]
       Tmaph = [0.15, 0.15]
 
@@ -255,13 +213,13 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       # air fractions  
       #        N2      O2      CO2    H2O      Ar       fuel
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
-      beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+      beta  = [0.0,    0.0,    0.0,    0.0,    0.0,    1.0]
 
       #---- convergence tolerance
       #      data toler  1.0e-7 
       toler = 1.0e-10
 
-      itmax = 50
+      itmax = 100
 
       #---- max fan-face Mach number, above which it will be artificially limited
       Mimax = 0.98
@@ -290,24 +248,13 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             gamma[i] = etab * gamma[i]
       end
       gamma[n] = 1.0 - etab
-      #
-      # ===============================================================
-      #---- freestream static quantities
-      s0, dsdt, h0, dhdt, cp0, R0 = gassum(alpha, nair, T0)
-      gam0 = cp0 / (cp0 - R0)
-      #      a0 = sqrt(gam0*R0*T0)
-      u0 = M0 * a0
-      #
-      # ===============================================================
-      #---- freestream total quantities
-      hspec = h0 + 0.5 * u0^2
-      Tguess = T0 * (1.0 + 0.5 * (gam0 - 1.0) * M0^2)
-      Tt0 = gas_tset(alpha, nair, hspec, Tguess)
-      st0, dsdt, ht0, dhdt, cpt0, Rt0 = gassum(alpha, nair, Tt0)
-      pt0 = p0 * exp((st0 - s0) / Rt0)
-      at0 = sqrt(Tt0 * Rt0 * cpt0 / (cpt0 - Rt0))
 
-      #
+      # ===============================================================
+      # Calculate freestream gas properties (static + total)
+      s0,  dsdt, h0,  dhdt, cp0,  R0,
+      st0, dsdt, ht0, dhdt, cpt0, Rt0,
+      gam0, u0, hspec, Tguess, Tt0, pt0, at0 = freestream_gasprop(alpha, nair, T0, p0, M0, a0)
+
       # ===============================================================
       #---- Offtake plume flow 9
       Trat = (p0 / pt9)^(Rt0 / cpt0)
@@ -329,40 +276,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       pt18 = pt0 * pid
 
       #---- initial guesses for primary Newton variables
-      pf = pif
-      pl = pilc
-      ph = pihc
-      mf = mbf
-      ml = mblc
-      mh = mbhc
-      Tb = Tt4
-      Pc = pt5
-      Mi = M2
-
-      if (pf == 0.0)
-            pf = pifD
-      end
-      if (pl == 0.0)
-            pl = pilcD
-      end
-      if (ph == 0.0)
-            ph = pihcD
-      end
-      if (mf == 0.0)
-            mf = mbfD
-      end
-      if (ml == 0.0)
-            ml = mblcD
-      end
-      if (mh == 0.0)
-            mh = mbhcD
-      end
-      if (Mi == 0.0)
-            Mi = 0.6
-      end
-      if (Mi == 1.0)
-            Mi = 0.6
-      end
+      pf, pl, ph, mf, ml, mh, Tb, Pc, Mi = design_initialization(pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, M2,
+                                                pifD, pilcD, pihcD, mbfD, mblcD, mbhcD)
 
       #---- total cooling mass flow ratio
       fc = 0.0
@@ -410,97 +325,10 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- set fan inlet total pressure pt21 corrected for BLI
             #-    (Tt2,pt2 approximated with Tt0,pt0 here to avoid circular definition)
-            if (u0 == 0.0)
-                  #----- static case... no BL defect
-                  sbfan = 0.0
-                  sbfan_mf = 0.0
-                  sbfan_ml = 0.0
-                  sbfan_Mi = 0.0
+            Tt2,  ht2,  st2,  cpt2,             Rt2,  pt2,  pt2_mf,  pt2_ml,  pt2_Mi,
+            Tt19, ht19, st19, cpt19, Tt19_ht19, Rt19, pt19, pt19_mf, pt19_ml, pt19_Mi = boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, Tt0, pt0, Kinl)
 
-                  sbcore = 0.0
-                  sbcore_mf = 0.0
-                  sbcore_ml = 0.0
-                  sbcore_Mi = 0.0
-
-            else
-                  #----- account for inlet BLI defect via mass-averaged entropy
-                  a2sq = at0^2 / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2)
-                  a2sq_Mi = -a2sq / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2) *
-                            (gam0 - 1.0) * Mi
-
-                  if (iBLIc == 0)
-                        #------ BL mixes with fan flow only
-                        #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
-
-                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_Mi = 0.0
-
-                        sbfan = Kinl * gam0 / (mmix * a2sq)
-                        sbfan_mf = (-sbfan / mmix) * mmix_mf
-                        sbfan_ml = 0.0
-                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
-                                   (-sbfan / a2sq) * a2sq_Mi
-
-                        sbcore = 0.0
-                        sbcore_mf = 0.0
-                        sbcore_ml = 0.0
-                        sbcore_Mi = 0.0
-
-                  else
-                        #------ BL mixes with fan + core flow
-                        #c      mmix    = mf*sqrt(Tref/Tt2 ) * pt2    /pref
-                        #c             + ml*sqrt(Tref/Tt19) * pt19   /pref
-                        #c      mmix_mf =    sqrt(Tref/Tt2 ) * pt2    /pref
-                        #c      mmix_ml =    sqrt(Tref/Tt19) * pt19   /pref
-                        #c      mmix_Mi = mf*sqrt(Tref/Tt2 ) * pt2_Mi /pref
-                        #c             + ml*sqrt(Tref/Tt19) * pt19_Mi/pref
-
-                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref +
-                               ml * sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_ml = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_Mi = 0.0
-
-                        sbfan = Kinl * gam0 / (mmix * a2sq)
-                        sbfan_mf = (-sbfan / mmix) * mmix_mf
-                        sbfan_ml = (-sbfan / mmix) * mmix_ml
-                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
-                                   (-sbfan / a2sq) * a2sq_Mi
-
-                        sbcore = sbfan
-                        sbcore_mf = sbfan_mf
-                        sbcore_ml = sbfan_ml
-                        sbcore_Mi = sbfan_Mi
-                  end
-
-            end
-
-            #---- note: BL is assumed adiabatic, 
-            #-     so Tt2,ht2,st2,cpt2,Rt2  will not change due to BL ingestion
-            Tt2 = Tt18
-            ht2 = ht18
-            st2 = st18
-            cpt2 = cpt18
-            Rt2 = Rt18
-            pt2 = pt18 * exp(-sbfan)
-            pt2_mf = pt2 * (-sbfan_mf)
-            pt2_ml = pt2 * (-sbfan_ml)
-            pt2_Mi = pt2 * (-sbfan_Mi)
-
-            Tt19 = Tt18
-            ht19 = ht18
-            st19 = st18
-            cpt19 = cpt18
-            Tt19_ht19 = 1 / cpt19
-            Rt19 = Rt18
-            pt19 = pt18 * exp(-sbcore)
-            pt19_mf = pt19 * (-sbcore_mf)
-            pt19_ml = pt19 * (-sbcore_ml)
-            pt19_Mi = pt19 * (-sbcore_Mi)
-
+            # Station 2 Static Quantities
             p2, T2, h2, s2, cp2, R2,
             p2_st2,
             p2_pt2,
@@ -1373,15 +1201,15 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             #---- fan corrected speed
 
             # Nf, Nf_pf, Nf_mf = Ncmap(pf, mf, pifD, mbfD, NbfD, Cmapf)
-            Nf, Nf_pf, Nf_mf = NcTblMap(pf, mf, pifD, mbfD, NbfD, E3fan)
+            Nf, Nf_pf, Nf_mf = NcTblMap(pf, mf, pifD, mbfD, NbfD, E3fan, Cmapf_oob)
 
             #---- LPC corrected speed
             # Nl, Nl_pl, Nl_ml = Ncmap(pl, ml, pilcD, mblcD, NblcD, Cmapl)
-            Nl, Nl_pl, Nl_ml = NcTblMap(pl, ml, pilcD, mblcD, NblcD, E3lpc)
+            Nl, Nl_pl, Nl_ml = NcTblMap(pl, ml, pilcD, mblcD, NblcD, E3lpc, Cmapl_oob)
 
             #---- HPC corrected speed
             # Nh, Nh_ph, Nh_mh = Ncmap(ph, mh, pihcD, mbhcD, NbhcD, Cmaph)
-            Nh, Nh_ph, Nh_mh = NcTblMap(ph, mh, pihcD, mbhcD, NbhcD, E3hpc)
+            Nh, Nh_ph, Nh_mh = NcTblMap(ph, mh, pihcD, mbhcD, NbhcD, E3hpc, Cmaph_oob)
 
             # ===============================================================
             #---- HPT and LPT work
@@ -2323,8 +2151,21 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             a[1, 9] = 0.0
             rrel[1] = res[1] / Nl
 
-            println(Nl, " ", Nl_pl, "   ", Nl_ml)
+            # ---- Calculate map scaling factors
+            sf_Nb = NbfD / E3fan.Nb_des
+            sf_pr = (pifD - 1) / (E3fan.pr_des - 1)
+            sf_mb = mbfD / E3fan.mb_des
 
+            sl_Nb = NblcD / E3lpc.Nb_des
+            sl_pr = (pilcD - 1) / (E3lpc.pr_des - 1)
+            sl_mb = mblcD / E3lpc.mb_des
+
+            sh_Nb = NbhcD / E3hpc.Nb_des
+            sh_pr = (pihcD - 1) / (E3hpc.pr_des - 1)
+            sh_mb = mbhcD / E3hpc.mb_des
+
+            println(sf_Nb, " ", sf_pr, " ", sf_mb, " ", mf, " ", pf, " ", Nf, " ", Nf_pf, " ", Nf_mf, " ", sl_Nb, " ", sl_pr, " ", sl_mb, " ", ml, " ", pl, " ", Nl, " ", Nl_pl, " ", Nl_ml, " ", sh_Nb, " ", sh_pr, " ", sh_mb, " ", mh, " ", ph, " ", Nh, " ", Nh_ph, " ", Nh_mh)
+            pifD, mbfD, NbfD
             #-------------------------------------------------------------------------
             #---- fixed corrected mass flow at LPT IGV (vertical-line LPT map)
             res[2, 1] = mblt - mbltD
@@ -2731,7 +2572,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         dd = (res[i, 1] - res_dlls[i]) / eps
                         aa = (a[i, j] + a_dlls[i, j]) * 0.5
                         compare(ss, aa, dd)
-                        println("Ja", i, j, aa, ss, "Jd", i, j, dd, ss)
+                        # println("Ja", i, j, aa, ss, "Jd", i, j, dd, ss)
                   end
 
                   error("tfoper.jl error due to iter == -1")
@@ -2741,22 +2582,22 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             if (iter < 0)
 
-                  println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
+                  # println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
 
                   Tt4 = Tb
                   pt5 = Pc
                   BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
 
-                  println("pt18 Tt18 =", pt18, Tt18)
-                  println("pt2  Tt2  =", pt2, Tt2)
-                  println("pt25 Tt25 =", pt25, Tt25)
-                  println("pt3  Tt3  =", pt3, Tt3)
-                  println("pt4  Tt4  =", pt4, Tt4)
-                  println("pt41 Tt41 =", pt41, Tt41)
-                  println("pt45 Tt45 =", pt45, Tt45)
-                  println("pt5  Tt5  =", pt5, Tt5)
-                  println("p5        =", p5)
-                  println("FPR  BPR  =", pf, BPR)
+                  # println("pt18 Tt18 =", pt18, Tt18)
+                  # println("pt2  Tt2  =", pt2, Tt2)
+                  # println("pt25 Tt25 =", pt25, Tt25)
+                  # println("pt3  Tt3  =", pt3, Tt3)
+                  # println("pt4  Tt4  =", pt4, Tt4)
+                  # println("pt41 Tt41 =", pt41, Tt41)
+                  # println("pt45 Tt45 =", pt45, Tt45)
+                  # println("pt5  Tt5  =", pt5, Tt5)
+                  # println("p5        =", p5)
+                  # println("FPR  BPR  =", pf, BPR)
 
                   Lconv = false
                   return TSFC, Fsp, hfuel, ff,
@@ -3023,22 +2864,22 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   end
 
                   if (iter == 1)
-                        println("---------------------------------")
+                        # println("---------------------------------")
                   end
                   ru2 = rho2 * u2
                   ru19 = rho19 * u19
 
-                  println(iter, vrlx, rlx, iTFspec)
-                  println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
-                  println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
-                  println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
-                  println("mf dmf R4   ", mf / mbfD, dmf / mbfD, rrel[4])
-                  println("ml dml R5   ", ml / mblcD, dml / mblcD, rrel[5])
-                  println("mh dmh R6   ", mh / mbhcD, dmh / mbhcD, rrel[6])
-                  println("Tb dTb R7 F ", Tb, dTb, rrel[7], F, Fspec, Tt4)
-                  println("Pc dPc R8 pt", Pc, dPc, rrel[8], pt5, pitn * pt5h)
-                  println("M2 dM2 R9   ", Mi, dMi, rrel[9], ru2, ru19)
-                  println("u0 u5 u7 del", u0, u5, u7, dmax - toler)
+                  # println(iter, vrlx, rlx, iTFspec)
+                  # println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
+                  # println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
+                  # println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
+                  # println("mf dmf R4   ", mf / mbfD, dmf / mbfD, rrel[4])
+                  # println("ml dml R5   ", ml / mblcD, dml / mblcD, rrel[5])
+                  # println("mh dmh R6   ", mh / mbhcD, dmh / mbhcD, rrel[6])
+                  # println("Tb dTb R7 F ", Tb, dTb, rrel[7], F, Fspec, Tt4)
+                  # println("Pc dPc R8 pt", Pc, dPc, rrel[8], pt5, pitn * pt5h)
+                  # println("M2 dM2 R9   ", Mi, dMi, rrel[9], ru2, ru19)
+                  # println("u0 u5 u7 del", u0, u5, u7, dmax - toler)
             end
 
             #---- exit if convergence test is met
