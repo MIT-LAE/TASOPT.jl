@@ -81,12 +81,12 @@ function surfcd2(
       Snorm = 0.0
       ARe = wing.airsection.Re
 
-      for i = 1:n/2
-            frac = (float(i) - 0.5) / float(n / 2)
+      for i = 1:n÷2
+            frac = (i - 0.5) / (n / 2)
             η = ηo * (1.0 - frac) + ηs * frac
-            dη = (ηs - ηo) / float(n / 2)
-            P = 1.0 - frac + γs * frac
-            C = 1.0 - frac + wing.inboard.λ * frac
+            dη = (ηs - ηo) / (n / 2)
+            P = 1.0*(1.0 - frac) + γs * frac
+            C = 1.0*(1.0 - frac) + wing.inboard.λ * frac
             toc = wing.inboard.cross_section.thickness_to_chord * (1.0 - frac) + wing.outboard.cross_section.thickness_to_chord * frac
             fdu = fduo * (1.0 - frac) + fdus * frac
 
@@ -115,9 +115,9 @@ function surfcd2(
       end
 
       for i = n/2+1:n
-            frac = (float(i - n / 2) - 0.5) / float(n / 2)
+            frac = (i - n / 2 - 0.5) / (n / 2)
             η = ηs * (1.0 - frac) + 1.0 * frac
-            dη = (1.0 - ηs) / float(n / 2)
+            dη = (1.0 - ηs) / (n / 2)
             P = γs * (1.0 - frac) + γt * frac
             C = wing.inboard.λ * (1.0 - frac) + wing.outboard.λ * frac
             toc = wing.outboard.cross_section.thickness_to_chord * (1.0 - frac) + wing.outboard.cross_section.thickness_to_chord * frac
