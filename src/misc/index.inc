@@ -53,7 +53,7 @@
       imfexcdt   = 32
       imfexcdf   = 33
       imDeltaTatm= 34
-      imLHVfuel  = 35
+      imWfvent   = 35
       imtotal    = 35
 
 #---- indices for geometry (airframe) variables and other sizing variables

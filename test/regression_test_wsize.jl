@@ -29,6 +29,17 @@ function check_struct_equivalence(s1, s2)
     return true
 end
 
+#Simple function to call fly_off_design!() and test off-design performance
+function test_ac_off_design(ac, PFEI, Wfuel, WTO)
+    @testset "Off-design" begin
+        TASOPT.fly_off_design!(ac, 2)
+
+        @test ac.parm[imPFEI, 2] ≈ PFEI
+        @test ac.parm[imWfuel, 2] ≈ Wfuel
+        @test ac.parm[imWTO, 2] ≈ WTO
+    end
+end
+
 @testset "Default sizing" verbose=true begin
     ac = load_default_model()
     
@@ -75,6 +86,8 @@ end
             @test pare[i] ≈ ac.pare[i] 
         end
     end
+
+    test_ac_off_design(ac, 1.0096973917571241, 142243.2236018826, 752813.5924999793)
     
     @test ac.parm[imPFEI] ≈  0.917673976786092 rtol=1e-4
 end

@@ -1,5 +1,5 @@
 """
-    mission!(ac, imission, Ldebug)
+    mission!(ac, imission, Ldebug; calculate_cruise = false)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
@@ -18,7 +18,7 @@ NOTE:
  They are updated and returned in the same para[iagamV,ip] array.
 
 """
-function mission!(ac, imission, Ldebug)
+function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
       pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission) 
       #Engine model
@@ -30,8 +30,6 @@ function mission!(ac, imission, Ldebug)
       # HACK TODO add the para back
       # iairf
       initeng = 0
-      # ipc1 = 0
-      ipc1 = 0 # HACK
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -432,9 +430,8 @@ function mission!(ac, imission, Ldebug)
       balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
       # if (calc_ipc1)
-      if (ipc1 == 0)
+      if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
-            # println(pare[ieFe, ip])
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
             icdfun = 1
@@ -443,6 +440,7 @@ function mission!(ac, imission, Ldebug)
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
             F = BW * (DoL + para[iagamV, ip])
+            pare[ieFe, ip] = F / parg[igneng] #Store required thrust for engine calcs
             Wpay = parg[igWpay]
             
             enginecalc!(ac, "off_design", imission, ip, initeng)
@@ -759,7 +757,8 @@ function mission!(ac, imission, Ldebug)
       end
 
       # mission fuel fractions and weights
-      Wfvent = parg[igWfvent] #Weight of fuel that is vented from tank
+      Wfvent = parm[imWfvent] #Weight of fuel that is vented from tank
+
       ffvent = Wfvent/WMTO #weight fraction of vented fuel
       
       fracWa = para[iafracW, ipclimb1]
@@ -776,6 +775,6 @@ function mission!(ac, imission, Ldebug)
 
       # mission PFEI
       Wburn = WMTO * fburn
-      parm[imPFEI] = Wburn/gee * parm[imLHVfuel] / (parm[imWpay] * parm[imRange])
+      parm[imPFEI] = Wburn/gee * parg[igLHVfuel] / (parm[imWpay] * parm[imRange])
 
 end
