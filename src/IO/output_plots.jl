@@ -1,5 +1,7 @@
 """
-    stickfig(parg,para,pari,parm; plot_obj = nothing, label_fs = 16)
+    stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16, 
+            annotate_text = true, annotate_length = true, 
+            annotate_group = true, show_grid = false)
 
 `stickfig` plots a "stick figure" airplane on the plot or subplot object `plot_obj` if provided 
 (else a new plot is created). This is used in conjuction with other functions
@@ -9,6 +11,13 @@ or present results.
 function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16, 
     annotate_text = true, annotate_length = true, annotate_group = true, show_grid = false)
 
+    #if aircraft is not sized, cannot plot
+    if !ac.sized[1] 
+        @warn "The aircraft ($(ac.name)) must be sized before being plotted. Skipping `stick_fig`..."
+        return nothing
+    end
+
+    #convenience vars
     pari = ac.pari
     parg = ac.parg
     @views pare = ac.pare[:,:,1]
@@ -288,9 +297,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
         _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
-        #TODO, if aircraft not sized, script breaks within this^ fxn
 
-        xseats = xseats .+ xseats0
+        xseats = xseats[:] .+ xseats0
         rows = length(xseats)
 
         println("Seats per row = $seats_per_row, Total rows = $rows")
@@ -412,9 +420,13 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     annotate!(plot_obj, parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
 
     # Show seats (single-deck case)
+    xgrid = repeat(xseats, inner=length(yseats))
+    ygrid = repeat(yseats, outer=length(xseats))
+
     if pari[iidoubledeck] == 0
-        scatter!(plot_obj, xseats, repeat(yseats, outer=length(xseats)),
-            color=:gray, alpha=0.1, marker=:rect, ms=2, z_order=:front, label="")
+        scatter!(plot_obj, xgrid, ygrid,
+            color=:gray, alpha=0.1, marker=:rect, 
+            ms=2, z_order=:front, label="")
     end
 
     # Annotations
