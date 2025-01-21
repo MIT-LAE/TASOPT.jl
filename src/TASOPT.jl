@@ -41,8 +41,6 @@ using .materials
 export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
 include(__TASOPTindices__)
-# include(joinpath(__TASOPTroot__,"misc/aircraft.jl"))
-# export aircraft, fuselage_tank
 
 #Load modules
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
@@ -75,7 +73,7 @@ using .CryoTank
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
 include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
-include(joinpath(__TASOPTroot__,"mission/woper.jl"))
+include(joinpath(__TASOPTroot__,"mission/off_design.jl"))
 include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
