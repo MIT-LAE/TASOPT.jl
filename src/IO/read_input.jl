@@ -99,11 +99,13 @@ ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
 sized = get(ac_descrip, "sized",[false])
+aircraft_type = ""
 
 # Check if aircraft type exists
 if "aircraft_type" in keys(ac_descrip)
     default = get_default_input_file(ac_descrip["aircraft_type"])
     ac_type_fixed = true
+    aircraft_type = default["Aircraft Description"]["aircraft_type"]
 else
     println("\n")
     @info """Aircraft Type not specified: Selecting AC type depending on range or payload"""
@@ -142,6 +144,7 @@ if !ac_type_fixed
         @info """Setting AC Type based on design range: Wide Body Aircraft"""
     end    
     ac_type_fixed = true
+    aircraft_type = default["Aircraft Description"]["aircraft_type"]
 end
 
 maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
@@ -1053,7 +1056,7 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
 
-return TASOPT.aircraft(name, description,
+return TASOPT.aircraft(name, description, string(aircraft_type),
     pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
 
 end

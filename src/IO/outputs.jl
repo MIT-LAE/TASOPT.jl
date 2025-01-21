@@ -84,6 +84,41 @@ function weight_buildup(ac::aircraft; io=stdout)
     @printf(io,"ηtank     = %3.1f %% \n\n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
 end
 """
+`engine` prints out the engine params for the aircraft
+"""
+function engine_info(ac::aircraft; io=stdout)
+    parg = ac.parg
+    pari = ac.pari
+    fuselage = ac.fuselage
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    
+    P3_kPa = ac.pared[iept3, iprotate]./1000.0
+    T3_K   = ac.pared[ieTt3, iprotate]
+    t4_CR = ac.pared[ieTt4, ipcruise1]
+    OPR = ac.pared[iepilc,ipclimbn].*ac.pared[iepihc,ipclimbn]
+    PIHC = ac.pared[iepihc,ipclimbn]
+    PILC = ac.pared[iepilc,ipclimbn]
+    BPR = ac.pared[ieBPR, ipclimbn]
+    FPR = ac.pared[iepif, ipclimbn]
+    PFEI = ac.parm[imPFEI]
+    EINOx_cruise = TASOPT.EINOx(ac,ipcruise1)
+
+    printstyled(io, "ENGINE:\n -------------- \n", color=:bold )
+    @printf(io, "P3  = %6.5f kPa\n", P3_kPa)
+    @printf(io, "Tt3  = %6.5f K\n", T3_K)
+    @printf(io, "Tt4  = %6.5f K\n", t4_CR)
+    @printf(io, "OPR  = %6.5f \n", OPR)
+    @printf(io, "HPC_PR  = %6.5f \n", PIHC)
+    @printf(io, "LPC_PR  = %6.5f \n", PILC)
+    @printf(io, "BPR  = %6.5f \n", BPR)
+    @printf(io, "FPR  = %6.5f \n", FPR)
+    @printf(io, "EI_NOX_Cruise  = %6.5f \n", EINOx_cruise)
+    @printf(io, "PFEI  = %6.5f \n", PFEI)
+    @printf(io,"--------------------\n")
+end
+"""
     aero(parg, para; io = stdout)
 
 `aero` returns a summary of all aerodynamic properties 
