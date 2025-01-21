@@ -307,7 +307,6 @@ function boundary_layer_calculations(fs2, fs19, fs18, fs0, Mi, iBLIc, mf, ml, Tr
     fs19.pt_M  = fs19.pt * (-sbcore_Mi)
 
     return fs2, fs19
-
 end # boundary_layer_calculations
 
 
@@ -321,5 +320,16 @@ function comp_eff(comp::compressor, piK, epfK; useTbl=true)
         comp.ep, comp.ep_pr, comp.ep_mb = ecTblMap(comp.pr, comp.mb, comp.prD, comp.mbD, comp.map, comp.epD)
     else
         comp.ep, comp.ep_pr, comp.ep_mb = ecmap(comp.pr, comp.mb, comp.prD, comp.mbD, comp.oob_map, comp.epD, pifK, epfK)
+    end
+
+    if (epf < epfmin)
+        epf = epfmin
+        epf_pf = 0.0
+        epf_mf = 0.0
+    end
+    if (pf < 1.0)
+            epf_pf = (-1.0 / epf^2) * epf_pf
+            epf_mf = (-1.0 / epf^2) * epf_mf
+            epf = 1.0 / epf
     end
 end # comp_eff
