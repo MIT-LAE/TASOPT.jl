@@ -96,66 +96,63 @@ function freestream_gasprop(alpha, nair, T0, p0, M0, a0)
 
 Calculate the static/total properties of freestream air
 """
-function freestream_gasprop(alpha, nair, T0, p0, M0, a0)
+function freestream_gasprop(alpha, nair, fs::flowStation)
     #---- freestream static quantities
-    s0, dsdt, h0, dhdt, cp0, R0 = gassum(alpha, nair, T0)
-    gam0 = cp0 / (cp0 - R0)
-    #      a0 = sqrt(gam0*R0*T0)
-    u0 = M0 * a0
+    fs = gassum_fs(alpha, nair, fs; type="static")
+    fs.u = fs.M * fs.as
 
     # ===============================================================
     #---- freestream total quantities
-    hspec = h0 + 0.5 * u0^2
-    Tguess = T0 * (1.0 + 0.5 * (gam0 - 1.0) * M0^2)
-    Tt0 = gas_tset(alpha, nair, hspec, Tguess)
-    st0, dsdt, ht0, dhdt, cpt0, Rt0 = gassum(alpha, nair, Tt0)
-    pt0 = p0 * exp((st0 - s0) / Rt0)
-    at0 = sqrt(Tt0 * Rt0 * cpt0 / (cpt0 - Rt0))
+    hspec = fs.hs + 0.5 * fs.u^2
+    Tguess = fs.Ts * (1.0 + 0.5 * (fs.gams - 1.0) * fs.M^2)
+    fs.Tt = gas_tset(alpha, nair, hspec, Tguess)
+    fs = gassum_fs(alpha, nair, fs; type="total")
+    fs.pt = fs.ps * exp((fs.st - fs.ss) / fs.Rt)
+    fs.at = sqrt(fs.Tt * fs.Rt * fs.gamt)
 
-    return s0,  dsdt, h0,  dhdt, cp0,  R0,
-           st0, dsdt, ht0, dhdt, cpt0, Rt0,
-           gam0, u0, hspec, Tguess, Tt0, pt0, at0
+    return fs
 
 end # freestream_gasprop
 
 
 """
-function design_initialization(pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, M2,
-    pifD, pilcD, pihcD, mbfD, mblcD, mbhcD)
+function offtake_plume(fs0, fs9)
+
+    Calculates key offtake plume flowstation properties
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `fs0::flowStation` : freestream flowStation
+    - `fs9::flowStation` : offtake plume flowStation
+
+    **Output**
+    ------
+    - `fs9` : offtake plume flowStation (updated) 
+"""
+function offtake_plume(fs0::flowStation, fs9::flowStation)
+    Trat = (fs0.ps / fs9.pt)^(fs0.Rt / fs0.cpt)
+    if (Trat < 1.0)
+          fs9.u = sqrt(2.0 * fs0.cpt * fs9.Tt * (1.0 - Trat))
+          fs9.rhos = fs0.ps / (fs0.Rt * fs0.Tt * Trat)
+    else
+          fs9.u = 0.0
+          fs9.rhos = p0 / (Rt0 * Tt0)
+    end
+
+    return fs9
+end # offtake_plume
+
+
+"""
+function design_initialization(fan, lpc, hpc, Tt4, pt5, M2)
 
 Generate guesses for primary Newton variables
 """
-function design_initialization(pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, M2,
-    pifD, pilcD, pihcD, mbfD, mblcD, mbhcD)
-
-    pf = pif
-    pl = pilc
-    ph = pihc
-    mf = mbf
-    ml = mblc
-    mh = mbhc
+function design_initialization(Tt4, pt5, M2)
     Tb = Tt4
     Pc = pt5
     Mi = M2
 
-    if (pf == 0.0)
-        pf = pifD
-    end
-    if (pl == 0.0)
-        pl = pilcD
-    end
-    if (ph == 0.0)
-        ph = pihcD
-    end
-    if (mf == 0.0)
-        mf = mbfD
-    end
-    if (ml == 0.0)
-        ml = mblcD
-    end
-    if (mh == 0.0)
-        mh = mbhcD
-    end
     if (Mi == 0.0)
         Mi = 0.6
     end
@@ -163,9 +160,30 @@ function design_initialization(pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, M2,
         Mi = 0.6
     end
 
-    return pf, pl, ph, mf, ml, mh, Tb, Pc, Mi
+    return Tb, Pc, Mi
 
 end # design_initialization
+
+
+"""
+function cooling_mass_flow_ratio(icool, mcore, mofft, icore, ncrow, epsrow)
+
+Calculates cooling mass flow ratios
+"""
+function cooling_mass_flow_ratio(icool, mcore, mofft, icore, ncrow, epsrow)
+    if (icool == 1)
+        if (mcore == 0.0)
+              fo = 0.0
+        else
+              fo = mofft / mcore
+        end
+        for icrow = 1:ncrow
+              fc = fc + (1.0 - fo) * epsrow[icrow]
+        end
+    end
+
+    return fo, fc
+end # cooling_mass_flow_ratio
 
 
 """
@@ -195,8 +213,8 @@ Boundary layer calcualtor
     - `sbcore`:    core stream pressure correction
     - `sbcore_?`:  core correction derivatives
 """
-function boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, Tt0, pt0, Kinl)
-    if (u0 == 0.0)
+function boundary_layer_calculations(fs2, fs19, fs18, fs0, Mi, iBLIc, mf, ml, Tref, pref, Kinl)
+    if (fs0.u == 0.0)
         #----- static case... no BL defect
         sbfan = 0.0
         sbfan_mf = 0.0
@@ -210,9 +228,9 @@ function boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, T
 
     else
             #----- account for inlet BLI defect via mass-averaged entropy
-            a2sq = at0^2 / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2)
-            a2sq_Mi = -a2sq / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2) *
-                    (gam0 - 1.0) * Mi
+            a2sq = fs0.at^2 / (1.0 + 0.5 * (fs0.gams - 1.0) * Mi^2)
+            a2sq_Mi = -a2sq / (1.0 + 0.5 * (fs0.gams - 1.0) * Mi^2) *
+                    (fs0.gams - 1.0) * Mi
 
             if (iBLIc == 0)
                 #------ BL mixes with fan flow only
@@ -220,11 +238,11 @@ function boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, T
                 #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
                 #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
 
-                mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
-                mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
+                mmix = mf * sqrt(Tref / fs0.Tt) * fs0.pt / pref
+                mmix_mf = sqrt(Tref / fs0.Tt) * fs0.pt / pref
                 mmix_Mi = 0.0
 
-                sbfan = Kinl * gam0 / (mmix * a2sq)
+                sbfan = Kinl * fs0.gams / (mmix * a2sq)
                 sbfan_mf = (-sbfan / mmix) * mmix_mf
                 sbfan_ml = 0.0
                 sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
@@ -244,13 +262,13 @@ function boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, T
                 #c      mmix_Mi = mf*sqrt(Tref/Tt2 ) * pt2_Mi /pref
                 #c             + ml*sqrt(Tref/Tt19) * pt19_Mi/pref
 
-                mmix = mf * sqrt(Tref / Tt0) * pt0 / pref +
-                        ml * sqrt(Tref / Tt0) * pt0 / pref
-                mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                mmix_ml = sqrt(Tref / Tt0) * pt0 / pref
+                mmix = mf * sqrt(Tref / fs0.Tt) * fs0.pt / pref +
+                        ml * sqrt(Tref / fs0.Tt) * fs0.pt / pref
+                mmix_mf = sqrt(Tref / fs0.Tt) * fs0.pt / pref
+                mmix_ml = sqrt(Tref / fs0.Tt) * fs0.pt / pref
                 mmix_Mi = 0.0
 
-                sbfan = Kinl * gam0 / (mmix * a2sq)
+                sbfan = Kinl * fs0.gams / (mmix * a2sq)
                 sbfan_mf = (-sbfan / mmix) * mmix_mf
                 sbfan_ml = (-sbfan / mmix) * mmix_ml
                 sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
@@ -267,33 +285,41 @@ function boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, T
     #---- note: BL is assumed adiabatic, 
     #-     so Tt2,ht2,st2,cpt2,Rt2  will not change due to BL ingestion
 
-    Tt2 = Tt18
-    ht2 = ht18
-    st2 = st18
-    cpt2 = cpt18
-    Rt2 = Rt18
-    pt2 = pt18 * exp(-sbfan)
-    pt2_mf = pt2 * (-sbfan_mf)
-    pt2_ml = pt2 * (-sbfan_ml)
-    pt2_Mi = pt2 * (-sbfan_Mi)
+    fs2.Tt = fs18.Tt
+    fs2.ht = fs18.ht
+    fs2.st = fs18.st
+    fs2.cpt = fs18.cpt
+    fs2.Rt = fs18.Rt
+    fs2.pt = fs18.pt * exp(-sbfan)
+    fs2.pt_mf = fs2.pt * (-sbfan_mf)
+    fs2.pt_ml = fs2.pt * (-sbfan_ml)
+    fs2.pt_M  = fs2.pt * (-sbfan_Mi)
 
-    Tt19 = Tt18
-    ht19 = ht18
-    st19 = st18
-    cpt19 = cpt18
-    Tt19_ht19 = 1 / cpt19
-    Rt19 = Rt18
-    pt19 = pt18 * exp(-sbcore)
-    pt19_mf = pt19 * (-sbcore_mf)
-    pt19_ml = pt19 * (-sbcore_ml)
-    pt19_Mi = pt19 * (-sbcore_Mi)
+    fs19.Tt = fs18.Tt
+    fs19.ht = fs18.ht
+    fs19.st = fs18.st
+    fs19.cpt = fs18.cpt
+    fs19.Tt_ht = 1 / fs19.cpt
+    fs19.Rt = fs18.Rt
+    fs19.pt = fs18.pt * exp(-sbcore)
+    fs19.pt_mf = fs19.pt * (-sbcore_mf)
+    fs19.pt_ml = fs19.pt * (-sbcore_ml)
+    fs19.pt_M  = fs19.pt * (-sbcore_Mi)
 
-    return Tt2,  ht2,  st2,  cpt2,             Rt2,  pt2,  pt2_mf,  pt2_ml,  pt2_Mi,
-           Tt19, ht19, st19, cpt19, Tt19_ht19, Rt19, pt19, pt19_mf, pt19_ml, pt19_Mi
+    return fs2, fs19
 
 end # boundary_layer_calculations
 
 
-function compressor(pf, mf, pifD, mbfD, Cmap)
-    return 0
-end # compressor
+"""
+function comp_eff(comp::compressor, piK, epfK; useTbl=true)
+
+    Wrapper for ecmap and ecTblMap for use with the compressor struct
+"""
+function comp_eff(comp::compressor, piK, epfK; useTbl=true)
+    if useTbl
+        comp.ep, comp.ep_pr, comp.ep_mb = ecTblMap(comp.pr, comp.mb, comp.prD, comp.mbD, comp.map, comp.epD)
+    else
+        comp.ep, comp.ep_pr, comp.ep_mb = ecmap(comp.pr, comp.mb, comp.prD, comp.mbD, comp.oob_map, comp.epD, pifK, epfK)
+    end
+end # comp_eff

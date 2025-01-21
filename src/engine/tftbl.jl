@@ -410,3 +410,7 @@ const Cmaph_oob = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 15.0,  1.0]
 const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Sibson(1), Cmapf_oob; Nres=N, Rres=R, Mres=M, Pres=P)
 const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(1), Cmapl_oob; Nres=N, Rres=R, Mres=M, Pres=P)
 const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Sibson(1), Cmaph_oob; Nres=N, Rres=R, Mres=M, Pres=P)
+
+# Turbine map constants
+const Tmapl = [0.15, 0.15]
+const Tmaph = [0.15, 0.15]

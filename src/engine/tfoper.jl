@@ -182,6 +182,29 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #---- ncrowy must be at least as big as ncrowx defined in index.inc
       ncrowy = 8
 
+      #---- number of gas constituents
+      n = 6
+
+      #---- number of air constitutents (all but fuel)
+      nair = n - 1
+
+      #---- create compressors
+      fan = compressor(pifD,  mbfD,  epf0,  NbfD,  E3fan, Cmapf_oob; pr=pif,  mb=mbf )
+      lpc = compressor(pilcD, mblcD, eplc0, NblcD, E3lpc, Cmapl_oob; pr=pilc, mb=mblc)
+      hpc = compressor(pihcD, mbhcD, ephc0, NbhcD, E3hpc, Cmaph_oob; pr=pihc, mb=mbhc)
+
+      #---- create turbines
+      hpt = turbine(pihtD, mbhtD, epht0, NbhtD, Tmaph)
+      lpt = turbine(piltD, mbltD, eplt0, NbltD, Tmapl)
+
+      #---- create flowStations
+      F000 = flowStation(M=M0, Ts=T0, ps=p0, as=a0)          # Freesteam
+      F090 = flowStation(pt=pt9, Tt=Tt9)                     # Offtake air discharge
+      F018 = flowStation(Tt=F000.Tt, st=F000.st, ht=F000.ht, # Fan face outside BL 
+                         cpt=F000.cpt, Rt=F000.Rt)
+      F020 = flowStation()                                   # Fan face over fan
+      F019 = flowStation()                                   # Fan face over lpc
+
       # Determine whether we are in AD...
       T = check_AD(gee, M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, pid, pib, pifn, pitn, Gearf,
             pifD, pilcD, pihcD, pihtD, piltD, mbfD, mblcD, mbhcD, mbhtD, mbltD, NbfD, NblcD, NbhcD,
@@ -192,19 +215,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #---- Newton system arrays
       res, a, rrel, rsav, asav, res_dlls, a_dlls = crate_newton_arrays(T)
 
-
-      #---- number of gas constituents
-      n = 6
-
       #---- mass fractions
       alpha, beta, gamma, lambda, lambdap, lam_Tt3, lam_Ttf, 
       lam_pl, lam_ph, lam_ml, lam_mh, lam_Tb, lamp_pl, lamp_ph,
       lamp_mf, lamp_ml, lamp_mh, lamp_Tb, lamp_Mi, T_al, p_al, 
       h_al, s_al, R_al, cp_al = create_massfrac_arrays(T, n)
-
-      # from "tfmap.inc"
-      Tmapl = [0.15, 0.15]
-      Tmaph = [0.15, 0.15]
 
       #---- minimum allowable fan efficiency
       epfmin = 0.60
@@ -232,9 +247,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             Fspec = Feng
       end
 
-      #---- number of air constitutents (all but fuel)
-      nair = n - 1
-
       # ===============================================================
       #---- set combustion-change mass fractions gamma[i] for specified fuel
       gamma = gasfuel(ifuel, n)
@@ -251,47 +263,21 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       # ===============================================================
       # Calculate freestream gas properties (static + total)
-      s0,  dsdt, h0,  dhdt, cp0,  R0,
-      st0, dsdt, ht0, dhdt, cpt0, Rt0,
-      gam0, u0, hspec, Tguess, Tt0, pt0, at0 = freestream_gasprop(alpha, nair, T0, p0, M0, a0)
+      F000 = freestream_gasprop(alpha, nair, F000)
 
       # ===============================================================
       #---- Offtake plume flow 9
-      Trat = (p0 / pt9)^(Rt0 / cpt0)
-      if (Trat < 1.0)
-            u9 = sqrt(2.0 * cpt0 * Tt9 * (1.0 - Trat))
-            rho9 = p0 / (Rt0 * Tt0 * Trat)
-      else
-            u9 = 0.0
-            rho9 = p0 / (Rt0 * Tt0)
-      end
+      F090 = offtake_plume(F000, F090)
 
       # ===============================================================
-      #---- diffuser flow 0-2
-      Tt18 = Tt0
-      st18 = st0
-      ht18 = ht0
-      cpt18 = cpt0
-      Rt18 = Rt0
-      pt18 = pt0 * pid
+      #---- diffuser flow 0-2 (update total pressure)
+      F018.pt = F000.pt * pid
 
-      #---- initial guesses for primary Newton variables
-      pf, pl, ph, mf, ml, mh, Tb, Pc, Mi = design_initialization(pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, M2,
-                                                pifD, pilcD, pihcD, mbfD, mblcD, mbhcD)
-
+      #---- initial guesses for primary Newton variables; fan, lpc, hpc already set
+      Tb, Pc, Mi = design_initialization(F040.Tt, F050.pt, M2)
+      
       #---- total cooling mass flow ratio
-      fc = 0.0
-
-      if (icool == 1)
-            if (mcore == 0.0)
-                  fo = 0.0
-            else
-                  fo = mofft / mcore
-            end
-            for icrow = 1:ncrow
-                  fc = fc + (1.0 - fo) * epsrow[icrow]
-            end
-      end
+      fo, fc = cooling_mass_flow_ratio(icool, mcore, mofft, icore, ncrow, epsrow)
 
       fc_pl = 0.0
       fc_ph = 0.0
@@ -305,19 +291,16 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   eps1 = 2.0e-7
                   eps = eps1
 
-                  pf = pf + eps
+                  fan.pr = fan.pr + eps
                   j = 1
-
             end
 
-            epf = epf0
-            eplc = eplc0
-            ephc = ephc0
-            epht = epht0
-            eplt = eplt0
+            fan.ep = fan.epD
+            lpc.ep = lpc.epD
+            hpc.ep = hpc.epD
+            hpt.ep = hpt.epD
+            lpt.ep = lpt.epD
 
-            # println("epf, eplc, ephc, epht, eplt")
-            # println(epf, eplc, ephc, epht, eplt)
             # exit()
 
             # HSC: SEEMS TO BE FINE
@@ -325,58 +308,15 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- set fan inlet total pressure pt21 corrected for BLI
             #-    (Tt2,pt2 approximated with Tt0,pt0 here to avoid circular definition)
-            Tt2,  ht2,  st2,  cpt2,             Rt2,  pt2,  pt2_mf,  pt2_ml,  pt2_Mi,
-            Tt19, ht19, st19, cpt19, Tt19_ht19, Rt19, pt19, pt19_mf, pt19_ml, pt19_Mi = boundary_layer_calculations(at0, gam0, Mi, iBLIc, mf, ml, Tref, pref, Tt0, pt0, Kinl)
+            F020, F019 = boundary_layer_calculations(F020, F019, F018, F000, Mi, iBLIc, mf, ml, Tref, pref, Kinl)
 
             # Station 2 Static Quantities
-            p2, T2, h2, s2, cp2, R2,
-            p2_st2,
-            p2_pt2,
-            dum,
-            p2_Tt2, T2_Tt2, h2_Tt2, s2_Tt2,
-            p2_ht2, T2_ht2, h2_ht2, s2_ht2,
-            p2_Mi, T2_Mi, h2_Mi, s2_Mi,
-            p_al, T_al, h_al, s_al,
-            cp_al, R_al = gas_machd(alpha, nair,
-                  pt2, Tt2, ht2, st2, cpt2, Rt2, 0.0, Mi, 1.0)
-            u2 = sqrt(2.0 * (ht2 - h2))
-            u2_Mi = (-1.0 / u2) * h2_Mi
-
-            rho2 = p2 / (R2 * T2)
-            rho2_p2 = 1.0 / (R2 * T2)
-            rho2_T2 = -rho2 / T2
-
-            rho2_Mi = rho2_T2 * T2_Mi +
-                      rho2_p2 * (p2_pt2 * pt2_Mi + p2_Mi)
-            rho2_mf = rho2_p2 * p2_pt2 * pt2_mf
-            rho2_ml = rho2_p2 * p2_pt2 * pt2_ml
-
-
-            p19, T19, h19, s19, cp19, R19,
-            p19_st19,
-            p19_pt19,
-            dum,
-            p19_Tt19, T19_Tt19, h19_Tt19, s19_Tt19,
-            p19_ht19, T19_ht19, h19_ht19, s19_ht19,
-            p19_Mi, T19_Mi, h19_Mi, s19_Mi,
-            p_al, T_al, h_al, s_al,
-            cp_al, R_al = gas_machd(alpha, nair,
-                  pt19, Tt19, ht19, st19, cpt19, Rt19, 0.0, Mi, 1.0)
-            u19 = sqrt(2.0 * (ht19 - h19))
-            u19_Mi = (-1.0 / u19) * h19_Mi
-
-            rho19 = p19 / (R19 * T19)
-            rho19_p19 = 1.0 / (R19 * T19)
-            rho19_T19 = -rho19 / T19
-
-            rho19_Mi = rho19_T19 * T19_Mi +
-                       rho19_p19 * (p19_pt19 * pt19_Mi + p19_Mi)
-            rho19_mf = rho19_p19 * p19_pt19 * pt19_mf
-            rho19_ml = rho19_p19 * p19_pt19 * pt19_ml
+            F020 = gas_machd_setstatic_fs(alpha, nair, F020, 0.0, Mi, 1.0)
+            F019 = gas_machd_setstatic_fs(alpha, nair, F019, 0.0, Mi, 1.0)
 
             # ===============================================================
             #---- fan flow 2-7
-            epf, epf_pf, epf_mf = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
+            epf, epf_pf, epf_mf = ecmap(fan.pr, fan.mb, fan.prD, fan.mbD, fan.oob_map, fan.epD, pifK, epfK)
             # epf, epf_pf, epf_mf = ecTblMap(pf, mf, pifD, mbfD, E3fan, epf0)
 
             if (epf < epfmin)

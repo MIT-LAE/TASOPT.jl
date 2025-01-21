@@ -136,6 +136,35 @@ function gassum(alpha, n, t)
 end # gassum
 
 """
+    gassum_fs(alpha, n, t, fs; type="total")
+    
+Calculates all gas-mixture properties at specified temperature T, and mixing fractions alpha(.)
+using flowStation (assumes appropriate T is set already)
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `alpha(.)`: mass fractions for gas constituents i = 1..n
+    - `n`: number of gas constituents
+    - `fs::flowStation` : flowStation
+
+    **Outputs:**
+    - `fs::flowStation` : updated flowStation
+"""
+function gassum_fs(alpha, n, fs; type="total")
+      if type == "total"
+            fs.st, fs.st_Tt, fs.ht, fs.ht_Tt, fan.cpt, fan.Rt = gassum(alpha, n, fs.Tt)
+            fs.gamt = fs.cpt / (fs.cpt - fs.Rt)
+      elseif type == "static"
+            fs.ss, fs.ss_Ts, fs.hs, fs.hs_Ts, fan.cps, fan.Rs = gassum(alpha, n, fs.Ts)
+            fs.gams = fs.cps / (fs.cps - fs.Rs)
+      else
+            error("gassum type must be total or static")
+      end
+
+      return fs
+end # gassum
+
+"""
     gassumd(alpha, n, t)
     
 Same as gassum, but also returns cp_t
@@ -907,6 +936,40 @@ function gas_machd(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
       println("gas_mach: convergence failed.  dT =", dt)
 
 end # gas_machd
+
+
+"""
+    gas_machd_setstatic_fs(alpha, n, po, to, ho, so, cpo, ro, mo, m, epol)
+
+Same as gas_machd, but utilizes flowStations to set static properties
+"""
+function gas_machd_setstatic_fs(alpha, nair, fs, m0, mi, ep)
+      fs.ps, fs.Ts, fs.hs, fs.ss, fs.cps, fs.Rs,
+      fs.ps_st,
+      fs.ps_pt,
+      dum,
+      fs.ps_Tt, fs.Ts_Tt, fs.hs_Tt, fs.ss_Tt,
+      fs.ps_ht, fs.Ts_ht, fs.hs_ht, fs.ss_ht,
+      fs.ps_M,  fs.Ts_M,  fs.hs_M,  fs.ss_M,
+      fs.p_al,  fs.T_al,  fs.h_al,  fs.s_al,
+      fs.cp_al, fs.R_al = gas_machd(alpha, nair,
+            fs.pt, fs.Tt, fs.ht, fs.st, fs.cpt, fs.Rt, m0, mi, ep)
+
+      fs.u = sqrt(2.0 * (fs.ht - fs.hs))
+      fs.u_M = (-1.0 / fs.u) * fs.hs_M
+
+      fs.rhos = fs.ps / (fs.Rs * fs.Ts)
+      fs.rhos_ps = 1.0 / (fs.Rs * fs.Ts)
+      fs.rhos_Ts = -fs.rhos / fs.Ts
+
+      fs.rhos_M = fs.rhos_Ts * fs.Ts_M +
+                  fs.rhos_ps * (fs.ps_pt * fs.pt_M + fs.ps_M)
+      fs.rhos_mf = fs.rhos_ps * fs.ps_pt * fs.pt_mf
+      fs.rhos_ml = fs.rhos_ps * fs.ps_pt * fs.pt_ml
+
+      return fs
+end # gas_machd_setstatic_fs
+
 
 """
     gas_mass(alpha, n, po, to, ho, so, cpo, ro, mflux, Mguess)
