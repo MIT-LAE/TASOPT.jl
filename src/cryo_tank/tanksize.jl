@@ -1,23 +1,14 @@
 """
-        tanksize!(ac, imission, ip)
+        tanksize!(ac, imission)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `fuse::Fuselage`: fuselage object.
-        - `fuse_tank::fuselage_tank`: fuselage tank object.
-        - `z::Float64`: flight altitude (m)
-        - `Mair::Float64`: external air Mach number
-        - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `ifuel::Int64`: fuel index.
+        - `ac::aircraft`: TASOPT aircraft object.
         
         **Outputs:**
-        - `Vfuel::Float64`: Volume of fuel (m^3).
-        - `Rtank::Float64`: Radius of the tank (m).
-        - `Winsul_sum::Float64`: Sum of the insulation weight (N).
-        - `l_tank::Float64`: Length of the tank (m).
-        - `Wtank::Float64`: Weight of the tank structure (N).
+        No direct outputs. Aircraft object gets modified with tank parameters.
 
 See [here](@ref fueltanks).
 """
@@ -90,15 +81,16 @@ function tanksize!(ac, imission)
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, _ = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
         flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
         if flag_vacuum #If tank is double-walled
                 Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
-                
-                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winnertank + Wfuelintank, lcyl2) #Find optimal number of intermediate stiffeners
+                Winner_tot = Winnertank + Wfuelintank #weight of inner vessel + fuel
+
+                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
 
