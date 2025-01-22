@@ -684,6 +684,7 @@ function wsize(ac; itermax=35,
         # ----------------------
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
             
+            #Size fuel tank and calculate weight
             tanksize!(ac, 1)
 
             # Update fuselage according to tank requirements
