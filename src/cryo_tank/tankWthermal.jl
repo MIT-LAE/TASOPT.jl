@@ -32,8 +32,7 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair
       h_v = fuse_tank.hvap #heat of vaporization
       TSL = fuse_tank.TSLtank
 
-      Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-      Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+      Wtank, Winsul_sum, Vfuel, Shead, r_tank, l_tank, l_cyl = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
       #Create struct with thermal parameters
       p = thermal_params()

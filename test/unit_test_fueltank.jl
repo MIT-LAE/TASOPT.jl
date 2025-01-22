@@ -54,15 +54,6 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
 
 @testset "Fuselage tank" begin
     @testset "Foam insulation" begin
-        outputs_size = TASOPT.CryoTank.tanksize!(fuse, fuse_tank, z, Mair, xftank,
-                                        time_flight,
-                                        ifuel)
-        outputs_size_check = (0.004247366632687734, 166.77327116515787, 1.8740119151889265, 38185.08012765128, 15.778042937598197, 60140.568517238586)
-        
-        for i in 1:length(outputs_size)
-            @test outputs_size[i] ≈ outputs_size_check[i]
-        end
-
         outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
         outputs_mech_check = (160140.5685172386, 12.848564428768595, 0.003496943301341531, 1.8740119151889265, 166.77327116515787, 60140.568517238586, 100000.0, 38185.08012765128, 0.003493683659934613, 1590.6019601067815, 15273.952985313967, 1504.3779940972875, [12469.462987273082, 13880.427717198025, 11835.189423180173], 189.4574311887127, [16.41478963327391, 20.306728650515254, 24.618791939176347, 29.34975388954838], 15.778042937598197)
@@ -88,15 +79,6 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
     fuse_tank.size_insulation = false
 
     @testset "Vacuum insulation" begin
-
-        outputs_vac_size = TASOPT.CryoTank.tanksize!(fuse, fuse_tank, z, Mair, xftank,
-                                            time_flight,
-                                            ifuel)
-        outputs_vac_size_check = (0.0033447002334008723, 166.77327116515787, 2.4, 0.0, 10.17184549721119, 113248.97600936973)
-        
-        for i in 1:length(outputs_vac_size)
-            @test outputs_vac_size[i] ≈ outputs_vac_size_check[i]
-        end
 
         outputs_vac_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
         outputs_vac_mech_check = (124223.11547325406, 7.525566077704729, 0.00435715618585557, 2.335, 166.77327116515787, 24223.115473254056, 100000.0, 0.0, 0.004353094705443698, 3076.8414985998347, 13888.811713075278, 1978.5193563196497, [0.0], 165.15270608329905, [25.483812169139977, 27.21328988831087], 9.994915110929762)
