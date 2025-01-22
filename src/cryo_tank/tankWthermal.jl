@@ -1,10 +1,10 @@
 """
-      tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+      tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
-`tankWthermal` calculates the boil-off rate of a cryogenic liquid for a given insulation thickness.
+`tankWthermal` calculates the heat rate to a cryogenic tank for a given insulation thickness.
 
 This function does **not** size the thermal insulation layers
-but rather calculates the boil-off rate of the fuel, 
+but rather calculates the heat rate to the tank, 
 for a given insulation thickness
       
 !!! details "🔃 Inputs and Outputs"
@@ -14,17 +14,14 @@ for a given insulation thickness
       - `z::Float64`: flight altitude (m)
       - `Mair::Float64`: external air Mach number
       - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-      - `time_flight::Float64`: Time of flight (s).
       - `ifuel::Int64`: fuel index.
       
       **Outputs:**
       - `Q::Float64`: Heat transfer rate into the tank (W).
-      - `m_boiloff::Float64`: Boil-off LH2 mass (kg).
-      - `mdot_boiloff::Float64`: Boil-off rate of LH2 (kg/s).
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, time_flight::Float64, ifuel::Int64)
+function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
@@ -71,10 +68,8 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair
       sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
       
       Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
-      mdot_boiloff = Q / h_v  # Boil-off rate equals the heat rate divided by heat of vaporization
-      m_boiloff = mdot_boiloff * time_flight # Boil-off mass calculation
       
-      return  Q, m_boiloff, mdot_boiloff
+      return  Q
 end
 
 """
