@@ -48,11 +48,12 @@ function tanksize!(ac, imission)
         #Unpack variables in fuse_tank
         rhofuel = fuse_tank.rhofuel
         t_cond = fuse_tank.t_insul #thickness of each insulation layer
-        Wfuel = fuse_tank.Wfuelintank #weight of fuel in tank
+        Wfuelintank = fuse_tank.Wfuelintank #weight of fuel in tank
         Tfuel = fuse_tank.Tfuel #fuel temperature
         flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
         TSL = fuse_tank.TSLtank #sea-level temperature for tank design
 
+        #------Size insulation, if requested------
         if flag_size #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
                 iinsuldes = fuse_tank.iinsuldes
@@ -85,11 +86,11 @@ function tanksize!(ac, imission)
                 
         end
         
+        #------Calculate tank weight------
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
-        Sinternal, Shead_insul, l_inner = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, _ = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
         flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
@@ -97,26 +98,24 @@ function tanksize!(ac, imission)
                 Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 
-                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
+                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winnertank + Wfuelintank, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
 
                 Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
                 t_cyl2, t_head2, l_outer = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
 
-                Wtank_total = Winner_tot + Wtank2
                 Wtank = Winnertank + Wtank2
                 ltank = l_outer #If there is an outer vessel, the total length is the length of this tank
                 Rtank = Routertank
 
         else
-                Wtank_total = Winner_tot
                 Wtank = Winnertank
                 ltank = l_inner #Tank length when there is only an inner vessel
                 Rtank = Rinnertank
         end
 
-        #------Store outputs in arrays-----
+        #------Store outputs in arrays------
         parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
         parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)
         parg[iglftank] = ltank
@@ -192,8 +191,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
                 t_all[ind] = t_all[ind] + Δt
         end
 
-        Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse, fuse_tank, t_all)
+        Wtank, Winsul_sum, Vfuel, Shead, r_tank, l_tank, l_cyl = size_inner_tank(fuse, fuse_tank, t_all)
 
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization

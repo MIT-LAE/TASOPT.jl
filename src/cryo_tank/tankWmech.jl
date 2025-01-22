@@ -156,10 +156,8 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       Winsul_sum = sum(Winsul)
       Wtank = (Wtank + Winsul_sum)
       l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
-      # overall tank weight
-      Wtank_total = Wtank + Wfuel_tot 
 
-return  Wtank_total, l_cyl, tskin, Rtank_outer, Vfuel, Wtank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead_insul, l_tank
+return  Wtank, Winsul_sum, Vfuel, Shead_insul, Rtank_outer, l_tank, l_cyl
 end
 
 
