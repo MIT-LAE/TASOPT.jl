@@ -345,11 +345,11 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     if pari[iifwing] == 0
         for m in 1:nftanks
             # Tank outline
-            plot!(plot_obj, xt[:, m], yt[:, m], color=:black, lw=1.5, z_order=10)
-            plot!(plot_obj, xt[:, m], -yt[:, m], color=:black, lw=1.5, z_order=10)
+            plot!(plot_obj, xt[m,:], yt[m,:], color=:black, lw=1.5, z_order=10)
+            plot!(plot_obj, xt[m,:], -yt[m,:], color=:black, lw=1.5, z_order=10)
             
             # Filled area between
-            plot!(plot_obj, xt[:, m], yt[:, m], fillrange=-yt[:, m], color=:red, alpha=0.1, z_order=6, linewidth=1.0)
+            plot!(plot_obj, xt[m,:], yt[m,:], fillrange=-yt[m,:], color=:red, alpha=0.1, z_order=4, linewidth=1.0)
             
             # Fuel name
             fuelname = ""
@@ -439,7 +439,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             "Λ = $(round(wing.layout.sweep, digits=1))°\n" *
             "Rfuse = $(fuselage.layout.radius) m\n" *
             "L/D = $(round(para[iaCL,ipcruise1,1] / para[iaCD,ipcruise1,1], digits=2))",
-            fontsize=label_fs, halign=:left, valign=:top, color=:black),
+            label_fs, #fontsize
+            halign=:left, valign=:top, color=:black),
             z_order=:front)
     end
 
@@ -447,7 +448,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         yloc = -1.1*maximum(yw)
         plot!(plot_obj, [0.0, xf[end]], [yloc, yloc], lw=1.5, arrow=:h, color=:black, label="")
         annotate!(plot_obj, xf[end] *0.25, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m",
-            halign=:center, valign=:center, fontsize=14))
+            halign=:center, valign=:center),
+            14) #fontsize
     end
 
     # Span annotations
@@ -460,7 +462,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         plot!(plot_obj, [xcode, 40.0], [bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
         plot!(plot_obj, [xcode, 40.0], [-bmax / 2, -bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
         annotate!(plot_obj, 20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
-            color=box_color, alpha=0.8, fontsize=12, halign=:center, valign=:center))
+            label_fs, color=box_color, #fontsize
+            halign=:center, valign=:center))
     end
 
     # Set plot limits and labels
