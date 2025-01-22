@@ -5,17 +5,24 @@ Calls function ductedfansize! or ductedfanoper! for one operating point.
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**
-    - `pari`, `parg`, `para`, `pare`: aircraft data storage arrays
-    - `ip::Int64`: mission point
-    - `icall`:    0  call on-design  sizing   routine ductedfansize!
-                  1  call off-design analysis routine ductedfanoper!, specified fan power
-                  2  call off-design analysis routine ductedfanoper!, specified thrust
-          
-    - `initeng`:    0  initialize variables for iteration in ductedfanoper!
-                1  use current variables as initial guesses in ductedfanoper!
+    - `ac::aircraft`: aircraft object
+    - `case::String`: case identifier, e.g. "sizing" or "off_design"
+    - `imission::Int64`: mission index
+    - `ip::Int64`: mission point index
+    - `initeng::Int64`: flag to initialize engine 
+        0  initialize variables for iteration in engine
+        1  use current variables as initial guesses in engine
+    - `iterw::Int64`: sizing loop iteration
+
+    **Output:**
+    No direct outputs. The `ac` object gets modified with the engine parameters.
 """
-function ductedfancalc!(pari, parg, para, pare, ip,
-    icall, initeng)
+function ductedfancalc!(ac, case, imission, ip, initeng, iterw = 0)
+    #Unpack data storage arrays
+    pari = ac.pari
+    parg = ac.parg
+    para = view(ac.para, :, ip, imission)
+    pare = view(ac.pare, :, ip, imission)
 
     iBLIc = pari[iiBLIc]
 
@@ -77,7 +84,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
     #- - - - - - - - - - - - - - - - - - - - - - - 
 
     # #--------------------------------------------------------------------------
-    if (icall == 0)
+    if (case == "sizing")
         #----- engine sizing case
 
         Fe = pare[ieFe] #ducted fan sized for a given thrust
@@ -120,7 +127,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
         pare[iepifD] = pifD
         pare[ieNbfD] = Nbf
 
-    else
+    elseif case == "off_design"
         #----- fixed parameters
         A2 = pare[ieA2]
         A7 = pare[ieA7]
@@ -142,7 +149,8 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                 pif = pare[iepif]
                 M2 = pare[ieM2]
         end
-        if (icall == 1) #Power is specified, thrust will be computed
+        if ip in range(ipstatic, ipclimbn) 
+            #Power is specified, thrust will be computed -- in takeoff and climb
             Feng = 0.0
             Peng = pare[iePfanmax]
             iPspec = true
@@ -169,7 +177,7 @@ function ductedfancalc!(pari, parg, para, pare, ip,
                             M2, pif, mbf, 
                             Δh_radiator, Δp_radiator,
                             iPspec)
-        elseif (icall == 2) #Thrust is specified, power to be computed
+        else #Thrust is specified, power to be computed
             Feng = pare[ieFe]
             Peng = 0.0
             iPspec = false
