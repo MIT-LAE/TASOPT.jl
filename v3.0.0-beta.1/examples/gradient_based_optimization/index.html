@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Gradient Based Optimization · TASOPT.jl</title><meta name="title" content="Gradient Based Optimization · TASOPT.jl"/><meta property="og:title" content="Gradient Based Optimization · TASOPT.jl"/><meta property="twitter:title" content="Gradient Based Optimization · TASOPT.jl"/><meta name="description" content="Documentation for TASOPT.jl."/><meta property="og:description" content="Documentation for TASOPT.jl."/><meta property="twitter:description" content="Documentation for TASOPT.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TASOPT.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../loadingrunning/">Loading and running</a></li><li><a class="tocitem" href="../payload_range/">Payload-range diagram</a></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox" checked/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Optimization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../NM_optimization/">Nelder Mead</a></li><li class="is-active"><a class="tocitem" href>Gradient Based Optimization</a><ul class="internal"><li><a class="tocitem" href="#Initialiation-and-loading-models"><span>Initialiation and loading models</span></a></li><li><a class="tocitem" href="#Setting-Optimization-Parameters"><span>Setting Optimization Parameters</span></a></li><li><a class="tocitem" href="#Objective-and-Constraint-Functions"><span>Objective and Constraint Functions</span></a></li><li><a class="tocitem" href="#Objective-Function"><span>Objective Function</span></a></li><li><a class="tocitem" href="#Gradient-Function"><span>Gradient Function</span></a></li><li><a class="tocitem" href="#Memoization"><span>Memoization</span></a></li><li><a class="tocitem" href="#Running-the-optimization"><span>Running the optimization</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../sensitivity/">Sensitivities</a></li></ul></li><li><span class="tocitem">Aerodynamics</span><ul><li><a class="tocitem" href="../../aero/geometry/">Geometry</a></li><li><a class="tocitem" href="../../aero/lift/">Lift</a></li><li><a class="tocitem" href="../../aero/drag/">Drag</a></li><li><a class="tocitem" href="../../aero/moment/">Pitching moment</a></li><li><a class="tocitem" href="../../atmos/atmos/">Atmospheric properties</a></li></ul></li><li><span class="tocitem">Structures</span><ul><li><a class="tocitem" href="../../structures/wing/">Wings and tails</a></li><li><a class="tocitem" href="../../structures/fuselage/">Fuselage</a></li><li><a class="tocitem" href="../../structures/cabin_sizing/">Cabin sizing</a></li></ul></li><li><span class="tocitem">Cryogenic tanks</span><ul><li><a class="tocitem" href="../../cryo_tank/cryotank/">Homogeneous model</a></li><li><a class="tocitem" href="../../cryo_tank/fueltanks/">Thermal and structural models</a></li></ul></li><li><span class="tocitem">Propulsion systems</span><ul><li><a class="tocitem" href="../../propulsion/propsys/">Propulsion system</a></li><li><a class="tocitem" href="../../propulsion/gascalc/">Gas Calculations</a></li><li><a class="tocitem" href="../../propulsion/hxfun/">Heat exchangers</a></li><li><a class="tocitem" href="../../propulsion/PEMfuelcell/">PEM fuel cells</a></li></ul></li><li><a class="tocitem" href="../../balance/balance/">Stability</a></li><li><span class="tocitem">Mission and sizing</span><ul><li><a class="tocitem" href="../../sizing/sizing/">Design and evaluation</a></li><li><a class="tocitem" href="../../sizing/weightmodels/">Weight models</a></li></ul></li><li><span class="tocitem">Data and I/O</span><ul><li><a class="tocitem" href="../../data_io/data_basics/">Data structure basics</a></li><li><a class="tocitem" href="../../data_io/data_io/">Loading and saving models</a></li></ul></li><li><span class="tocitem">Miscellaneous</span><ul><li><a class="tocitem" href="../../misc/structs/">Data structures</a></li><li><a class="tocitem" href="../../misc/dreladocs/">Original Drela docs</a></li><li><a class="tocitem" href="../../misc/misc/">Other utilities</a></li><li><a class="tocitem" href="../../misc/fordevs/">Notes for devs</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Optimization</a></li><li class="is-active"><a href>Gradient Based Optimization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Gradient Based Optimization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/MIT-LAE/TASOPT.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/MIT-LAE/TASOPT.jl/blob/main/docs/src/examples/gradient_based_optimization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Example-for-a-Gradient-Based-Optimization"><a class="docs-heading-anchor" href="#Example-for-a-Gradient-Based-Optimization">Example for a Gradient Based Optimization</a><a id="Example-for-a-Gradient-Based-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Example-for-a-Gradient-Based-Optimization" title="Permalink"></a></h1><p>This example shows how to perform a gradient based optimization on a TASOPT model. It uses the IPOPT optimization module using a central, relative finite difference sensitivity module.</p><p><strong><em>NOTE:</em></strong>  We are currently working on a autodiff based sensitivity module.</p><p>For this example, the design variables are:</p><ol><li>Aspect Ratio: <code>AR</code></li><li>Lift Coefficient: <code>Cl</code>  </li><li>Wing Sweep: <code>Λ</code></li><li>Tt4 at Cruise: <code>Tt4</code></li><li>Fan Pressure ratio: <code>pif</code></li></ol><h2 id="Initialiation-and-loading-models"><a class="docs-heading-anchor" href="#Initialiation-and-loading-models">Initialiation and loading models</a><a id="Initialiation-and-loading-models-1"></a><a class="docs-heading-anchor-permalink" href="#Initialiation-and-loading-models" title="Permalink"></a></h2><p>Start the script importing the necessary modules.</p><pre><code class="language-julia hljs"># Import modules
+using TASOPT
+using JuMP
+using Ipopt
+using PythonPlot
+using Test
+include(__TASOPTindices__)</code></pre><p>Set the relative tolerance used in the Finite difference method</p><pre><code class="language-julia hljs">epsilon = 1e-5</code></pre><p>Load the default <code>aircraft</code> model and size it to get initial values:</p><pre><code class="language-julia hljs">default_model = load_default_model()
+size_aircraft!(default_model)</code></pre><h2 id="Setting-Optimization-Parameters"><a class="docs-heading-anchor" href="#Setting-Optimization-Parameters">Setting Optimization Parameters</a><a id="Setting-Optimization-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Setting-Optimization-Parameters" title="Permalink"></a></h2><h3 id="Set-the-input-parameters"><a class="docs-heading-anchor" href="#Set-the-input-parameters">Set the input parameters</a><a id="Set-the-input-parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Set-the-input-parameters" title="Permalink"></a></h3><pre><code class="language-julia hljs">input_params = [
+    :(ac.parg[igAR]), 
+    :(ac.para[iaCL,ipcruise1:ipcruise2,1]),
+    :(ac.parg[igsweep]),
+    :(ac.pare[ieTt4, ipcruise1:ipcruise2, 1]),
+    :(ac.pare[iepif, ipcruise1, 1]) ,
+]
+
+# Formatting params for usage 
+params = map(p -&gt; TASOPT.format_params(TASOPT.expr_to_string(p)), input_params)</code></pre><h3 id="Set-the-Upper-and-Lower-limits-for-all-design-variables-as-well-as-initial-values"><a class="docs-heading-anchor" href="#Set-the-Upper-and-Lower-limits-for-all-design-variables-as-well-as-initial-values">Set the Upper and Lower limits for all design variables as well as initial values</a><a id="Set-the-Upper-and-Lower-limits-for-all-design-variables-as-well-as-initial-values-1"></a><a class="docs-heading-anchor-permalink" href="#Set-the-Upper-and-Lower-limits-for-all-design-variables-as-well-as-initial-values" title="Permalink"></a></h3><pre><code class="language-julia hljs">lower      = [9.0 , 0.53, 25.0, 1400.0, 1.25]
+upper      = [11.0, 0.60, 30.0, 1650.0, 2.0 ] 
+initial    = [10.5, 0.57, 26.0, 1580.0, 1.685]
+</code></pre><h2 id="Objective-and-Constraint-Functions"><a class="docs-heading-anchor" href="#Objective-and-Constraint-Functions">Objective and Constraint Functions</a><a id="Objective-and-Constraint-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Objective-and-Constraint-Functions" title="Permalink"></a></h2><p>In this optimization we will have a constraint on max fuel weight, max span, min climb gradient, and max Tt3. Set functions that return the objective value and constraints of your optimization</p><pre><code class="language-julia hljs">function pfei_fn(ac)
+    return ac.parm[imPFEI]
+end
+
+function wfuel_fn(ac)
+    return ac.parg[igWfuel]/ac.parg[igWfmax]
+end
+
+function span_fn(ac)
+    return ac.parg[igb]/ac.parg[igbmax]
+end
+
+function gtoc_fn(ac)
+    return ac.para[iagamV, ipclimbn,1]/ac.parg[iggtocmin]
+end
+
+function tt3_fn(ac)
+    maxtt3 = 900
+    return maximum(ac.pare[ieTt3, :, 1])/maxtt3
+end
+
+# Make an array that stores all these functions
+con_f_arr = [
+    pfei_fn, wfuel_fn, span_fn, tt3_fn, gtoc_fn
+]</code></pre><h2 id="Objective-Function"><a class="docs-heading-anchor" href="#Objective-Function">Objective Function</a><a id="Objective-Function-1"></a><a class="docs-heading-anchor-permalink" href="#Objective-Function" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Function that sizes aircraft and returns both objective value and constraint values
+function sizing_ac(x::T...) where {T&lt;:Real}
+    ac = deepcopy(default_model)
+    # Set params
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
+    end
+
+    try
+        size_aircraft!(ac,printiter=false)
+        return [con_f_arr[i](ac) for i in 1:length(con_f_arr)]
+    catch
+        println(&quot;wsize FAILED&quot;)
+        return [Inf for i in 1:length(con_f_arr)]
+    end
+    
+end</code></pre><h2 id="Gradient-Function"><a class="docs-heading-anchor" href="#Gradient-Function">Gradient Function</a><a id="Gradient-Function-1"></a><a class="docs-heading-anchor-permalink" href="#Gradient-Function" title="Permalink"></a></h2><pre><code class="language-julia hljs">function gradient_all(x::T...) where {T&lt;:Real}
+    ac = deepcopy(default_model)
+    # Set params
+    for (i,x_i) in enumerate(x)
+        field_path, index = params[i]
+        TASOPT.setNestedProp!(ac, field_path, x_i, index)
+    end
+    return TASOPT.get_sensitivity(input_params; model_state=ac, eps=epsilon, optimizer=true, f_out_fn=con_f_arr)
+end</code></pre><h2 id="Memoization"><a class="docs-heading-anchor" href="#Memoization">Memoization</a><a id="Memoization-1"></a><a class="docs-heading-anchor-permalink" href="#Memoization" title="Permalink"></a></h2><p>In order to reduce the function calls to <code>size_aircraft</code> we shall be using memoization to chache objective and constraint values for a specific point in the design space</p><pre><code class="language-julia hljs">function memoize(foo::Function, n_outputs::Int)
+    last_x, last_f = nothing, nothing
+    function foo_i(i, x::T...) where {T&lt;:Real}
+        if x !== last_x
+            last_x, last_f = x, foo(x...)
+        end
+        return last_f[i]::T
+    end
+    return [(x...) -&gt; foo_i(i, x...) for i in 1:n_outputs]
+end
+
+function memoize_sensitivity(foo::Function, n_outputs::Int)
+    last_x, last_f = nothing, nothing
+    function foo_s!(i, g::AbstractVector{T}, x::T...) where {T&lt;:Real}
+        if x !== last_x
+            last_x, last_f = x, foo(x...)
+        end
+        if (size(g)[1] &gt;0)
+            for (k,grads) in enumerate(g)
+                g[k] = last_f[i][k]
+            end
+        end
+    end
+    return [(x...) -&gt; foo_s!(i, x...) for i in 1:n_outputs]
+end
+
+memoized_size_ac = memoize(sizing_ac, length(con_f_arr))
+memoized_fd_ac = memoize_sensitivity(gradient_all, length(con_f_arr))</code></pre><h2 id="Running-the-optimization"><a class="docs-heading-anchor" href="#Running-the-optimization">Running the optimization</a><a id="Running-the-optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Running-the-optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">model = Model(Ipopt.Optimizer)
+# set_silent(model)
+set_optimizer_attribute(model, &quot;tol&quot;, 1e-3)
+set_optimizer_attribute(model, &quot;nlp_scaling_method&quot;, &quot;gradient-based&quot;)
+set_optimizer_attribute(model, &quot;obj_scaling_factor&quot;, 1.0)
+set_optimizer_attribute(model, &quot;nlp_scaling_max_gradient&quot;, Float64(1))
+set_optimizer_attribute(model, &quot;nlp_scaling_min_value&quot;, 1e-8)
+
+@variable(model, lower[i] &lt;= x[i=1:length(initial)] &lt;= upper[i], start=initial[i])
+
+@operator(model, f_size_ac, length(initial), memoized_size_ac[1],memoized_fd_ac[1])
+@operator(model, f_con_wfuel, length(initial), memoized_size_ac[2],memoized_fd_ac[2])
+@operator(model, f_con_b, length(initial), memoized_size_ac[3],memoized_fd_ac[3])
+@operator(model, f_con_tt3, length(initial), memoized_size_ac[4],memoized_fd_ac[4])
+@operator(model, f_con_gtoc, length(initial), memoized_size_ac[5],memoized_fd_ac[5])
+
+@objective(model, Min, f_size_ac(x...))
+@constraint(model, f_con_wfuel(x...) &lt;= 1)
+@constraint(model, f_con_b(x...) &lt;= 1)
+@constraint(model, f_con_tt3(x...) &lt;= 1)
+@constraint(model, f_con_gtoc(x...) &gt;= 1)
+
+optimize!(model)
+
+println(&quot;Finished optimization with $(value.(x))&quot;)
+</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../NM_optimization/">« Nelder Mead</a><a class="docs-footer-nextpage" href="../sensitivity/">Sensitivities »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Thursday 23 January 2025 16:09">Thursday 23 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
