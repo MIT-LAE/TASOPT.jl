@@ -73,6 +73,7 @@ using .CryoTank
 #  and LTO output for EDB points for use in AEIC
 include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
 include(joinpath(__TASOPTroot__,"mission/off_design.jl"))
+export fly_off_design!
 include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
@@ -82,7 +83,7 @@ include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
-export stickfig, plot_details
+export stickfig, plot_details, PayloadRange
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
