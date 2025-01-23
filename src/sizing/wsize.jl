@@ -688,25 +688,8 @@ function wsize(ac; itermax=35,
             tanksize!(ac, 1)
 
             # Update fuselage according to tank requirements
-            update_fuse!(fuse, wing, htail, vtail, pari, parg) #update fuselage length to accommodate tank
-            fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
-
-            #Update fuselage BL properties
-            # Kinetic energy area at T.E.
-            KAfTE = para[iaKAfTE, ipcruise1]
-            # Surface dissapation area 
-            DAfsurf = para[iaDAfsurf, ipcruise1]
-            # Wake dissapation area
-            DAfwake = para[iaDAfwake, ipcruise1]
-            # Momentum area at ∞
-            PAfinf = para[iaPAfinf, ipcruise1]
-
-            # Assume K.E., Disspation and momentum areas are const. for all mission points:
-            para[iaKAfTE, :] .= KAfTE
-            para[iaDAfsurf, :] .= DAfsurf
-            para[iaDAfwake, :] .= DAfwake
-            para[iaPAfinf, :] .= PAfinf
-
+            update_fuse!(ac, 1) #update fuselage length to accommodate tank; boundary layer also recalculated
+            
             #Use homogeneous tank model to calculate required venting
             _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
             parm[imWfvent] = Mvents[end] * gee #Store total fuel weight that is vented
