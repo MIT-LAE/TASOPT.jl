@@ -306,10 +306,15 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     end
 
     # Plot
+    #if starting from scratch, generate plot_obj
     if isnothing(plot_obj)
+        #conditional statement
+        # make fig size larger if adding annotate_text
+        figsize = annotate_text ? (900, 500) : (650, 500)
+
         plot_obj = plot(
             legend = false,
-            size = (800, 500),  # Equivalent to figsize=(8, 5) in inches
+            size = figsize,
             dpi = 300,
             grid = show_grid,
             show=true,
@@ -431,7 +436,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
 
     # Annotations
     if annotate_text
-        annotate!(plot_obj, -18, 21, text("PFEI = $(round(parm[imPFEI], digits = 4))\n" *
+        annotate!(plot_obj, 
+            maximum(xh)*1.15, 21, #position based on aircraft length (outside plotting area)
+            text("PFEI = $(round(parm[imPFEI], digits = 3))\n" *
             "Mₘₐₓ = $(round(para[iaMach][1], digits=2))\n" *
             "WMTO = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
             "Span = $(round(wing.layout.span, digits=1)) m\n" *
@@ -442,6 +449,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             label_fs, #fontsize
             halign=:left, valign=:top, color=:black),
             z_order=:front)
+
+        
+        plot!(plot_obj, right_margin=200px) #"left-aligns" the plot within the figure
     end
 
     if annotate_length
@@ -468,9 +478,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
 
     # Set plot limits and labels
     ylims!(plot_obj, -1.2 * bmax / 2, 1.2 * bmax / 2)
-    xlims!(plot_obj, -20, maximum(xh)*1.15)
-    xlabel!(plot_obj, "x [m]")
-    ylabel!(plot_obj, "y [m]")
+    xlims!(plot_obj, -5, maximum(xh)*1.1)
+    xlabel!(plot_obj, "x [m]", fontsize=label_fs)
+    ylabel!(plot_obj, "y [m]", fontsize=label_fs)
 
     return plot_obj
 end
