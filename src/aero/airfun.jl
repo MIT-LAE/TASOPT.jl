@@ -149,7 +149,11 @@ function findsegment(x::Float64, xarr)
 
     return io, im, dx, t
 end
+"""
+    find_bisection(x::T, X::AbstractVector{T}) where T
 
+Simple, fast bisection search in a **sorted** array. This does not sort the array for you.
+"""
 function find_bisection(x::T, X::AbstractVector{T}) where T
     ilow::Int = 1
     i::Int = length(X)
@@ -164,8 +168,17 @@ function find_bisection(x::T, X::AbstractVector{T}) where T
     return i-1
 end  # function find_bisection
 
-function interpolate(;ix1, ix2, dx, t,
-    Y, dYdX)
+"""
+    interpolate(;ix1, ix2, dx, t, Y, dYdX)
+
+Convenience function to evaluate the symmetric form of the cubic spline equation, given
+the x interval defined by the indices (ix1, ix2),  the interval (dx), normalized x location (t),
+the Y array to be interpolated and the slopes (dYdX) at the interval end points.
+
+Note: This is intentionally defined as a kw only argument list to encourage anyone working 
+with this deep part of the code knows what they are doing. See [`eval_spline`](@ref).
+"""
+function interpolate(;ix1, ix2, dx, t, Y, dYdX)
 
     yim = Y[ix1] 
     yi = Y[ix2]
@@ -176,6 +189,14 @@ function interpolate(;ix1, ix2, dx, t,
     return eval_spline(t = t, yim = yim, yi = yi, fxm = fxm, fxo = fxo)
 end
 
+"""
+    eval_spline(;t, yim, yi, fxm, fxo)
+
+Given normalized interpolation location t, y₋ and y, calculates the
+spline interpolation of the form    
+    (1 - t)*y₁ + t*y₂ + t*(1 - t)*((1 - t)fxm + t*fx),
+    where t = (x - x₁)/Δx.
+"""
 function eval_spline(;t, yim, yi, fxm, fxo)
     tmi = 1.0 - t
     return t*yi + tmi*yim + t*tmi*(tmi*fxm - t*fxo)
