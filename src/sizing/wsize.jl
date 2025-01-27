@@ -531,6 +531,7 @@ function wsize(ac; itermax=35,
         po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate engine weight
+        #TODO: improve readability, either a comment or break up into if statements
         Weng1 = (wing.planform == 1) ? (pari[iiengtype] == 0 ? parg[igWfan] + parg[igWmot] + parg[igWfanGB] : parg[igWeng] / parg[igneng]) : 0.0
 
         # Set up parameters for get_wing_weights function
