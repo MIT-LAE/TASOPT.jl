@@ -20,7 +20,6 @@ import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy
 
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"misc/constants.jl"))
-include("../misc/engine.jl")
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")
@@ -36,5 +35,6 @@ include("turbofan/tfwrap.jl")
 include("turbofan/tfweightwrap.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
+include("../misc/engine.jl")
 
 end

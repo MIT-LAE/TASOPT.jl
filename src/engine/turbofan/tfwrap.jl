@@ -19,7 +19,7 @@ basic engine inputs to those required by the function and storing the outputs.
     **Output:**
     No direct outputs. The `ac` object gets modified with the engine parameters.
 """
-function tfwrap!(ac, case, imission, ip, initeng, iterw = 0)
+function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initeng::Int64, iterw::Int64 = 0)
     #Unpack data storage arrays
     pari = ac.pari
     parg = ac.parg
