@@ -223,7 +223,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Wing ------------------------
     d_wing = Dict()
-        d_wing["wing_planform"] = wing.planform
+        d_wing["planform"] = wing.planform
         d_wing["strut_braced_wing"] = wing.has_strut
 
         d_wing["sweep"] = wing.layout.sweep
@@ -339,7 +339,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
-        d_stab_htail["move_wingbox"] = ac_i[iixwmove]
+        d_stab_htail["move_wingbox"] = htail.move_wingbox
 
         d_stab_htail["SM_min"] = htail.SM_min
 
