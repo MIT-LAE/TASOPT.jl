@@ -26,9 +26,6 @@ function wsize(ac; itermax=35,
     imission = 1 #Design mission
     pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
-    #Engine models
-    enginecalc!, engineweight! = extract_engine_model(engine) #Define handles for the functions
-
     # Initialize variables
     time_propsys = 0.0
     inite1 = 0
@@ -767,13 +764,13 @@ function wsize(ac; itermax=35,
                 # set static thrust for takeoff routine
                 ip = ipstatic
                 case = "off_design"
-                enginecalc!(ac, case, imission, ip, initeng)
+                engine.enginecalc!(ac, case, imission, ip, initeng)
 
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 case = "off_design"
-                enginecalc!(ac, case, imission, ip, initeng)
+                engine.enginecalc!(ac, case, imission, ip, initeng)
 
                 takeoff!(ac; printTO = false)
             end
@@ -846,10 +843,10 @@ function wsize(ac; itermax=35,
 
         # Size engine for TOC
         case = "design" #Design the engine for this mission point
-        enginecalc!(ac, case, imission, ip, initeng, iterw)
+        engine.enginecalc!(ac, case, imission, ip, initeng, iterw)
 
         #Calculate engine mass properties
-        engineweight!(ac, engine.heat_exchangers)
+        engine.engineweight!(ac, engine.heat_exchangers)
 
         mission!(ac, imission, Ldebug)
 
@@ -868,7 +865,7 @@ function wsize(ac; itermax=35,
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
         case = "cooling_sizing"
-        enginecalc!(ac, case, imission, ip, initeng, iterw)
+        engine.enginecalc!(ac, case, imission, ip, initeng, iterw)
 
         # Recalculate weight wupdate()
         ip = ipcruise1
@@ -907,13 +904,13 @@ function wsize(ac; itermax=35,
     # set static thrust for takeoff routine
     ip = ipstatic
     case = "off_design"
-    enginecalc!(ac, case, imission, ip, initeng)
+    engine.enginecalc!(ac, case, imission, ip, initeng)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
     case = "off_design"
-    enginecalc!(ac, case, imission, ip, initeng)
+    engine.enginecalc!(ac, case, imission, ip, initeng)
 
     # calculate takeoff and balanced-field lengths
     takeoff!(ac, printTO = printiter)

@@ -125,7 +125,6 @@ fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
-engine = Engine()
 
 # Setup mission variables
 ranges = readmis("range")
@@ -181,8 +180,13 @@ pari[iiopt] = read_input("optimize", options, doptions)
 propsys = read_input("prop_sys_arch", options, doptions)
 if lowercase(propsys) == "tf"
     pari[iiengtype] = 1
-    engine.model_name = "turbofan_md" #TODO: add more engine models
-    engine.weight_model_name = "turbofan"
+    modelname = "turbofan_md"
+    enginecalc! = tfwrap!
+    engineweightname = "turbofan"
+    engineweight! = tfweightwrap!
+
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
+    
 elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
 else
@@ -191,7 +195,8 @@ else
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-store_engine_model!(engine) #Produce and store the engine functions 
+
+engine = Engine(enginemodel, [])
 
 engloc = read_input("engine_location", options, doptions)
 
