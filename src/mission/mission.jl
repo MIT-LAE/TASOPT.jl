@@ -20,9 +20,7 @@ NOTE:
 """
 function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
-      pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission) 
-      #Engine model
-      enginecalc!, _ = extract_engine_model(ac.engine)
+      pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
       calc_ipc1 = true
       ifirst = true
@@ -331,7 +329,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   end
                   cdsum!(ac, imission, ip, icdfun)
 
-                  enginecalc!(ac, "off_design", imission, ip, initeng)
+                  engine.enginecalc!(ac, "off_design", imission, ip, initeng)
 
             Ftotal = pare[ieFe, ip] * parg[igneng]
             TSFC = pare[ieTSFC, ip]
@@ -443,7 +441,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             pare[ieFe, ip] = F / parg[igneng] #Store required thrust for engine calcs
             Wpay = parg[igWpay]
             
-            enginecalc!(ac, "off_design", imission, ip, initeng)
+            engine.enginecalc!(ac, "off_design", imission, ip, initeng)
 
       end
 
@@ -522,7 +520,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       Ftotal = BW * (DoL + para[iagamV, ip])
       pare[ieFe, ip] = Ftotal / parg[igneng]
 
-      enginecalc!(ac, "off_design", imission, ip, initeng)
+      engine.enginecalc!(ac, "off_design", imission, ip, initeng)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -697,7 +695,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   inite = initeng
             end
 
-            enginecalc!(ac, "off_design", imission, ip, inite)
+            engine.enginecalc!(ac, "off_design", imission, ip, inite)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]
