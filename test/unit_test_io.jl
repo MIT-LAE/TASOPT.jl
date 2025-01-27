@@ -12,7 +12,7 @@
     size_aircraft!(ac_def, Ldebug=false, printiter=false, saveOD=false)
     size_aircraft!(ac_reread, Ldebug=false, printiter=false, saveOD=false)
 
-    @test_skip ac_def.parg[igWMTO] ≈ ac_reread.parg[igWMTO]
+    @test ac_def.parg[igWMTO] ≈ ac_reread.parg[igWMTO]
     rm(filepath_rewrite)
 
     #check via MTOW that changing an important parameter survives the save
@@ -27,7 +27,7 @@
     size_aircraft!(ac_lopay_reread, Ldebug=false, printiter=false, saveOD=false)
     
     #TODO: do a quicksave+meld comparison, identify what is not being saved right
-    @test_broken ac_lopay.parg[igWMTO] ≈ ac_lopay_reread.parg[igWMTO]
+    @test ac_lopay.parg[igWMTO] ≈ ac_lopay_reread.parg[igWMTO]
     @test !(ac_lopay.parg[igWMTO] ≈ ac_def.parg[igWMTO])
     rm(filepath_nopay)
 
@@ -131,7 +131,3 @@
     # rm(filepath_csv2)
 
 end #testset "io"
-
-
-
-
