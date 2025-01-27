@@ -7,22 +7,29 @@ Engine and models
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct Engine
-    model::AbstractModel
+mutable struct Engine{M<:AbstractModel}
+    model::M
 
     """Heat exchanger parameters and data"""
-    heat_exchangers::Vector{Any} = []
+    heat_exchangers::Vector{HX_struct}
 end
 
-struct TurbofanModel <: AbstractModel
+"""
+$TYPEDEF
+
+Turbofan model
+
+$TYPEDFIELDS
+"""
+struct TurbofanModel{F1, F2} <: AbstractModel
     """Engine performance model identifier"""
     model_name::String
     """Engine function to be used by TASOPT"""
-    enginecalc!::Function
+    enginecalc!::F1
     """Weight model identifier"""
     weight_model_name::String 
     """Weight model to be used by TASOPT"""
-    engineweight!::Function
+    engineweight!::F2
 end
 
 # Override Engine getproperty to return default values
