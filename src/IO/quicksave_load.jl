@@ -13,7 +13,7 @@ Converts aircraft `struct` into a dictionary with fields as keys and saves as a 
     **Outputs:**
     - None.
 """
-function quicksave_aircraft(ac::TASOPT.aircraft=TASOPT.read_aircraft_model();
+function quicksave_aircraft(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
     filepath=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_quicksave_aircraft.toml"))
 
     #convert structure into dictionary
