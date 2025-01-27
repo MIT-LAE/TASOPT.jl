@@ -15,20 +15,13 @@
 
 """
 function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
-
-    pari = ac.pari
-    parg = ac.parg
-    parm = view(ac.parm, :, mi:mi)
-    para = view(ac.para, :, :, mi:mi)
-    pare = view(ac.pare, :, :, mi:mi)
+    #Extract aircraft components and storage arrays
+    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
+    
     parad = ac.parad
     pared = ac.pared
 
     resetHXs(pare) #Reset heat exchanger parameters
-
-    fuse = ac.fuselage
-    wing = ac.wing
-    htail = ac.htail
 
     time_propsys = 0.0
 
@@ -37,6 +30,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
 
     fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
     fuse = ac.fuselage 
+    
 
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
@@ -252,11 +246,11 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
     end
 
     # Calling mission
-    time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, htail, ac.vtail, false, calculate_cruise = true) #Calculate start of cruise too
+    time_propsys += mission!(ac, mi, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
 
-    #TODO add heat exchanger models once HX parameters are stored
-    #HXOffDesign!(HeatExchangers, pare, pari)
+    #Simulate heat exchanger performance if the engine contains any
+    HXOffDesign!(engine.heat_exchangers, pare, pari)
     
 #-------------------------------------------------------------------------
 

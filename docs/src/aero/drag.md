@@ -109,7 +109,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.cdsum!(parg, para, pare, wing, htail, vtail, icdfun)
+aerodynamics.cdsum!(ac, imission, ip, icdfun)
 ```
 ---
 
