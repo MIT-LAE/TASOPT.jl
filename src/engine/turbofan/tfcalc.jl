@@ -16,8 +16,8 @@ Calls function tfsize or tfoper for one operating point.
     - `initeng`:    0  initialize variables for iteration in TFOPER
                 1  use current variables as initial guesses in TFOPER
 """
-function tfcalc!(pari, parg, para, pare, wing, ip,
-        icall, icool, initeng)
+function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
+        icall::Int64, icool::Int64, initeng::Int64)
 
         Lprint = false
 

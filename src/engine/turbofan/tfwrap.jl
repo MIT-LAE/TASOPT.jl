@@ -68,13 +68,8 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initeng::Int64, i
         pare[iepiltD, :] .= pare[iepiltD, ip]
         
     elseif case == "off_design"
-        if ip in range(ipstatic, ipclimbn)
-            icall = 1
-            icool = 1
-        else
-            icall = 2
-            icool = 1
-        end
+        icall = (ip in range(ipstatic, ipclimbn)) ? 1 : 2 #One if in range, 2 if not
+        icool = 1
         ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initeng)
 
     elseif case == "cooling_sizing"
