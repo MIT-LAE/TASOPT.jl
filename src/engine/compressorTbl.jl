@@ -27,6 +27,8 @@ directly. In either case, the data files are stored in `src/engine/data`.
 - `bottom::Matrix{Float64}`:   matrix of m/p coordinates defining topmost N line
 - `top::Matrix{Float64}`:      matrix of m/p coordinates defining bottommost N line
 
+- `mask::Matrix{Bool}`
+
 - `Nb_nom::Matrix{Float64}`: Nm by Np matrix of corrected speed values
 - `Nb_mb::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to mass flow
 - `Nb_pr::Matrix{Float64}`: Nm by Np matrix of corrected speed derivatives with respect to pressure ratio
@@ -58,6 +60,9 @@ struct compressorTbl
     windmill::Matrix{Float64}
     bottom::Matrix{Float64}
     top::Matrix{Float64}
+
+    # ---- Mask of in-map points (1=in; 0=out)
+    mask::Matrix{Bool}
 
     # ---- Nc grids
     Nb_nom::Matrix{Float64}
@@ -102,6 +107,7 @@ function compTbl_to_TOML(compressor::compressorTbl, saveName)
         :windmill => [compressor.windmill[i, :] for i in 1:size(compressor.windmill, 1)],
         :bottom => [compressor.bottom[i, :] for i in 1:size(compressor.bottom, 1)],
         :top => [compressor.top[i, :] for i in 1:size(compressor.top, 1)],
+        :mask => [compressor.mask[i, :] for i in 1:size(compressor.mask, 1)],
         :Nb_nom => [compressor.Nb_nom[i, :] for i in 1:size(compressor.Nb_nom, 1)],
         :Nb_mb => [compressor.Nb_mb[i, :] for i in 1:size(compressor.Nb_mb, 1)],
         :Nb_pr => [compressor.Nb_pr[i, :] for i in 1:size(compressor.Nb_pr, 1)],
@@ -146,6 +152,7 @@ function dict_to_compTbl(compressor_dict)
         transpose(hcat(compressor_dict["windmill"]...)),
         transpose(hcat(compressor_dict["bottom"]...)),
         transpose(hcat(compressor_dict["top"]...)),
+        transpose(hcat(compressor_dict["mask"]...)),
         transpose(hcat(compressor_dict["Nb_nom"]...)),
         transpose(hcat(compressor_dict["Nb_mb"]...)),
         transpose(hcat(compressor_dict["Nb_pr"]...)),

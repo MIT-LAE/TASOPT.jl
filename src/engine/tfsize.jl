@@ -151,16 +151,6 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
       n = 6
 
-      # from 'tfmap.inc'
-      #        a     b     k     mo     da    c    d     C    D
-      Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
-      Cmapl = [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 0.0, 0.0]
-      Cmaph = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 0.0, 0.0]
-
-      #       Pcon   Ncon
-      Tmapl = [0.15, 0.15]
-      Tmaph = [0.15, 0.15]
-
       # from 'airfrac.inc'
       # air fractions  
       #        N2      O2      CO2    H2O      Ar       fuel
@@ -330,8 +320,8 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             mbfD = 1.0
             mf = 1.0
 
-            # epf, epf_pf, epf_mf = ecmap(pif, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
-            epf, epf_pf, epf_mf = ecTblMap(pif, mf, pifD, mbfD, E3fan, epf0)
+            fan = compressor(pifD, mbfD, epf0, 1.0, E3fan, Cmapf_oob)
+            epf, epf_pf, epf_mf = comp_eff(pif, mf, fan, pifK, epfK)
 
             pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
@@ -359,8 +349,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pilcD = pilc
             mblcD = 1.0
             ml = 1.0
-            # eplc, eplc_pl, eplc_ml = ecmap(pilc, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
-            eplc, eplc_pl, eplc_ml = ecTblMap(pilc, ml, pilcD, mblcD, E3lpc, eplc0)
+
+            lpc = compressor(pilcD, mblcD, eplc0, 1.0, E3lpc, Cmapl_oob)
+            eplc, eplc_pl, eplc_ml = comp_eff(pilc, ml, lpc, 0.0, 0.0)
 
             pt25, Tt25, ht25, st25, cpt25, Rt25 = gas_prat(alpha, nair,
                   pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pilc, eplc)
@@ -377,8 +368,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pihcD = pihc
             mbhcD = 1.0
             mh = 1.0
-            # ephc, ephc_ph, ephc_mh = ecmap(pihc, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
-            ephc, ephc_ph, ephc_mh = ecTblMap(pihc, mh, pihcD, mbhcD, E3hpc, ephc0)
+
+            hpc = compressor(pihcD, mbhcD, ephc0, 1.0, E3hpc, Cmaph_oob)
+            ephc, eplc_ph, eplc_mh = comp_eff(pihc, mh, hpc, 0.0, 0.0)
             pt3, Tt3, ht3, st3, cpt3, Rt3 = gas_prat(alpha, nair,
                   pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, pihc, ephc)
 

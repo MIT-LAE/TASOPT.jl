@@ -42,6 +42,7 @@ Turbofan operation routine
     - `M0`:      freestream Mach
     - `T0`:      freestream temperature  [K]
     - `p0`:      freestream pressure  [Pa]
+    - `a0`:      freestream speed of sound [m/s]
     - `Tref`:    reference temperature for corrected mass flow and speed
     - `pref`:    reference pressure for corrected mass flow
     - `Phiinl`:  inlet ingested dissipation  Phi_inl
@@ -181,72 +182,36 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #---- ncrowy must be at least as big as ncrowx defined in index.inc
       ncrowy = 8
 
-      # Determine whether we are in AD...
-      prod = gee * M0 * T0 * p0 * a0 * Tref * pref * Phiinl * Kinl * pid * pib * pifn * pitn * Gearf
-      prod *= pifD * pilcD * pihcD * pihtD * piltD
-      prod *= mbfD * mblcD * mbhcD * mbhtD * mbltD
-      prod *= NbfD * NblcD * NbhcD * NbhtD * NbltD
-      prod *= A2 * A25 * A5 * A7
-      prod *= Ttf * ifuel * etab
-      prod *= epf0 * eplc0 * ephc0 * epht0 * eplt0
-      prod *= pifK * epfK * mofft * Pofft * Tt9 * pt9 * epsl * epsh
-      prod *= Mtexit * dTstrk * StA * efilm * tfilm
-      prod *= M4a * ruc
-      prod *= epsrow[1] * M2 * pif * pilc * pihc * mbf * mblc * mbhc * Tt4 * pt5 * mcore * M25
-      T = typeof(prod)
-
-
-      #---- Newton system arrays
-      res = zeros(T, 9, 1)
-      a = zeros(T, 9, 9)
-      rrel = zeros(T, 9)
-      rsav = zeros(T, 9)
-      asav = zeros(T, 9, 10)
-
-      res_dlls = zeros(T, 9)
-      a_dlls = zeros(T, 9, 9)
-
-
       #---- number of gas constituents
       n = 6
 
+      #---- number of air constitutents (all but fuel)
+      nair = n - 1
+
+      #---- create compressors
+      fan = compressor(pifD,  mbfD,  epf0,  NbfD,  E3fan, Cmapf_oob; pr=pif,  mb=mbf )
+      lpc = compressor(pilcD, mblcD, eplc0, NblcD, E3lpc, Cmapl_oob; pr=pilc, mb=mblc)
+      hpc = compressor(pihcD, mbhcD, ephc0, NbhcD, E3hpc, Cmaph_oob; pr=pihc, mb=mbhc)
+
+      #---- create turbines
+      hpt = turbine(pihtD, mbhtD, epht0, NbhtD, Tmaph)
+      lpt = turbine(piltD, mbltD, eplt0, NbltD, Tmapl)
+
+      # Determine whether we are in AD...
+      T = check_AD(gee, M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, pid, pib, pifn, pitn, Gearf,
+            pifD, pilcD, pihcD, pihtD, piltD, mbfD, mblcD, mbhcD, mbhtD, mbltD, NbfD, NblcD, NbhcD,
+            NbhtD, NbltD, A2, A25, A5, A7, Ttf, ifuel, etab, epf0, eplc0, ephc0, epht0, eplt0, pifK,
+            epfK, mofft, Pofft, Tt9, pt9, epsl, epsh, Mtexit, dTstrk, StA, efilm, tfilm, M4a, ruc, M25,
+            mcore, pt5, Tt4, mbhc, mblc, mbf, pihc, pilc, pif, M2, epsrow)
+
+      #---- Newton system arrays
+      res, a, rrel, rsav, asav, res_dlls, a_dlls = crate_newton_arrays(T)
+
       #---- mass fractions
-      alpha = zeros(T, n)    # air
-      beta = zeros(T, n)     # fuel
-      gamma = zeros(T, n)    # combustion-caused change in air
-      lambda = zeros(T, n)   # combustion product gas
-      lambdap = zeros(T, n)  # combustion product gas with cooling flow added
-
-      lam_Tt3 = zeros(T, n)
-      lam_Ttf = zeros(T, n)
-      lam_pl = zeros(T, n)
-      lam_ph = zeros(T, n)
-      lam_ml = zeros(T, n)
-      lam_mh = zeros(T, n)
-      lam_Tb = zeros(T, n)
-      lamp_pl = zeros(T, n)
-      lamp_ph = zeros(T, n)
-      lamp_mf = zeros(T, n)
-      lamp_ml = zeros(T, n)
-      lamp_mh = zeros(T, n)
-      lamp_Tb = zeros(T, n)
-      lamp_Mi = zeros(T, n)
-
-      T_al = zeros(T, n)
-      p_al = zeros(T, n)
-      h_al = zeros(T, n)
-      s_al = zeros(T, n)
-      R_al = zeros(T, n)
-      cp_al = zeros(T, n)
-
-      # from "tfmap.inc"
-      #        a     b     k     mo     da    c    d     C    D
-      Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
-      Cmapl = [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 0.0, 0.0]
-      Cmaph = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 0.0, 0.0]
-
-      Tmapl = [0.15, 0.15]
-      Tmaph = [0.15, 0.15]
+      alpha, beta, gamma, lambda, lambdap, lam_Tt3, lam_Ttf, 
+      lam_pl, lam_ph, lam_ml, lam_mh, lam_Tb, lamp_pl, lamp_ph,
+      lamp_mf, lamp_ml, lamp_mh, lamp_Tb, lamp_Mi, T_al, p_al, 
+      h_al, s_al, R_al, cp_al = create_massfrac_arrays(T, n)
 
       #---- minimum allowable fan efficiency
       epfmin = 0.60
@@ -255,7 +220,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       # air fractions  
       #        N2      O2      CO2    H2O      Ar       fuel
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
-      beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+      beta  = [0.0,    0.0,    0.0,    0.0,    0.0,    1.0]
 
       #---- convergence tolerance
       #      data toler  1.0e-7 
@@ -274,9 +239,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             Fspec = Feng
       end
 
-      #---- number of air constitutents (all but fuel)
-      nair = n - 1
-
       # ===============================================================
       #---- set combustion-change mass fractions gamma[i] for specified fuel
       gamma = gasfuel(ifuel, n)
@@ -290,93 +252,26 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             gamma[i] = etab * gamma[i]
       end
       gamma[n] = 1.0 - etab
-      #
-      # ===============================================================
-      #---- freestream static quantities
-      s0, dsdt, h0, dhdt, cp0, R0 = gassum(alpha, nair, T0)
-      gam0 = cp0 / (cp0 - R0)
-      #      a0 = sqrt(gam0*R0*T0)
-      u0 = M0 * a0
-      #
-      # ===============================================================
-      #---- freestream total quantities
-      hspec = h0 + 0.5 * u0^2
-      Tguess = T0 * (1.0 + 0.5 * (gam0 - 1.0) * M0^2)
-      Tt0 = gas_tset(alpha, nair, hspec, Tguess)
-      st0, dsdt, ht0, dhdt, cpt0, Rt0 = gassum(alpha, nair, Tt0)
-      pt0 = p0 * exp((st0 - s0) / Rt0)
-      at0 = sqrt(Tt0 * Rt0 * cpt0 / (cpt0 - Rt0))
 
-      #
+      # ===============================================================
+      # Calculate freestream gas properties (static + total)
+      F000 = freestream_gasprop(alpha, nair, T0, M0, a0)
+
       # ===============================================================
       #---- Offtake plume flow 9
-      Trat = (p0 / pt9)^(Rt0 / cpt0)
-      if (Trat < 1.0)
-            u9 = sqrt(2.0 * cpt0 * Tt9 * (1.0 - Trat))
-            rho9 = p0 / (Rt0 * Tt0 * Trat)
-      else
-            u9 = 0.0
-            rho9 = p0 / (Rt0 * Tt0)
-      end
+      F090 = offtake_plume(F000, pt9, Tt9)
 
       # ===============================================================
       #---- diffuser flow 0-2
-      Tt18 = Tt0
-      st18 = st0
-      ht18 = ht0
-      cpt18 = cpt0
-      Rt18 = Rt0
-      pt18 = pt0 * pid
-
-      #---- initial guesses for primary Newton variables
-      pf = pif
-      pl = pilc
-      ph = pihc
-      mf = mbf
-      ml = mblc
-      mh = mbhc
-      Tb = Tt4
-      Pc = pt5
-      Mi = M2
-
-      if (pf == 0.0)
-            pf = pifD
-      end
-      if (pl == 0.0)
-            pl = pilcD
-      end
-      if (ph == 0.0)
-            ph = pihcD
-      end
-      if (mf == 0.0)
-            mf = mbfD
-      end
-      if (ml == 0.0)
-            ml = mblcD
-      end
-      if (mh == 0.0)
-            mh = mbhcD
-      end
-      if (Mi == 0.0)
-            Mi = 0.6
-      end
-      if (Mi == 1.0)
-            Mi = 0.6
-      end
-
+      F018 = flowStation(Tt=F000.Tt, st=F000.st, ht=F000.ht, cpt=F000.cpt, Rt=F000.Rt,
+                         F018.pt = F000.pt * pid # Update total pressure
+      )
+      
+      #---- initial guesses for primary Newton variables; fan, lpc, hpc already set
+      Tb, Pc, Mi = design_initialization(Tt4, pt5, M2)
+      
       #---- total cooling mass flow ratio
-      fc = 0.0
-
-      if (icool == 1)
-            if (mcore == 0.0)
-                  fo = 0.0
-            else
-                  fo = mofft / mcore
-            end
-            for icrow = 1:ncrow
-                  fc = fc + (1.0 - fo) * epsrow[icrow]
-            end
-      end
+      fo, fc = cooling_mass_flow_ratio(icool, mcore, mofft, icore, ncrow, epsrow)
 
       fc_pl = 0.0
       fc_ph = 0.0
@@ -390,19 +285,16 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   eps1 = 2.0e-7
                   eps = eps1
 
-                  pf = pf + eps
+                  fan.pr = fan.pr + eps
                   j = 1
-
             end
 
-            epf = epf0
-            eplc = eplc0
-            ephc = ephc0
-            epht = epht0
-            eplt = eplt0
+            fan.ep = fan.epD
+            lpc.ep = lpc.epD
+            hpc.ep = hpc.epD
+            hpt.ep = hpt.epD
+            lpt.ep = lpt.epD
 
-            # println("epf, eplc, ephc, epht, eplt")
-            # println(epf, eplc, ephc, epht, eplt)
             # exit()
 
             # HSC: SEEMS TO BE FINE
@@ -410,156 +302,25 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- set fan inlet total pressure pt21 corrected for BLI
             #-    (Tt2,pt2 approximated with Tt0,pt0 here to avoid circular definition)
-            if (u0 == 0.0)
-                  #----- static case... no BL defect
-                  sbfan = 0.0
-                  sbfan_mf = 0.0
-                  sbfan_ml = 0.0
-                  sbfan_Mi = 0.0
+            F020, F019 = boundary_layer_calculations(F020, F019, F018, F000, Mi, iBLIc, mf, ml, Tref, pref, Kinl)
 
-                  sbcore = 0.0
-                  sbcore_mf = 0.0
-                  sbcore_ml = 0.0
-                  sbcore_Mi = 0.0
-
-            else
-                  #----- account for inlet BLI defect via mass-averaged entropy
-                  a2sq = at0^2 / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2)
-                  a2sq_Mi = -a2sq / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2) *
-                            (gam0 - 1.0) * Mi
-
-                  if (iBLIc == 0)
-                        #------ BL mixes with fan flow only
-                        #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
-
-                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_Mi = 0.0
-
-                        sbfan = Kinl * gam0 / (mmix * a2sq)
-                        sbfan_mf = (-sbfan / mmix) * mmix_mf
-                        sbfan_ml = 0.0
-                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
-                                   (-sbfan / a2sq) * a2sq_Mi
-
-                        sbcore = 0.0
-                        sbcore_mf = 0.0
-                        sbcore_ml = 0.0
-                        sbcore_Mi = 0.0
-
-                  else
-                        #------ BL mixes with fan + core flow
-                        #c      mmix    = mf*sqrt(Tref/Tt2 ) * pt2    /pref
-                        #c             + ml*sqrt(Tref/Tt19) * pt19   /pref
-                        #c      mmix_mf =    sqrt(Tref/Tt2 ) * pt2    /pref
-                        #c      mmix_ml =    sqrt(Tref/Tt19) * pt19   /pref
-                        #c      mmix_Mi = mf*sqrt(Tref/Tt2 ) * pt2_Mi /pref
-                        #c             + ml*sqrt(Tref/Tt19) * pt19_Mi/pref
-
-                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref +
-                               ml * sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_ml = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_Mi = 0.0
-
-                        sbfan = Kinl * gam0 / (mmix * a2sq)
-                        sbfan_mf = (-sbfan / mmix) * mmix_mf
-                        sbfan_ml = (-sbfan / mmix) * mmix_ml
-                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
-                                   (-sbfan / a2sq) * a2sq_Mi
-
-                        sbcore = sbfan
-                        sbcore_mf = sbfan_mf
-                        sbcore_ml = sbfan_ml
-                        sbcore_Mi = sbfan_Mi
-                  end
-
-            end
-
-            #---- note: BL is assumed adiabatic, 
-            #-     so Tt2,ht2,st2,cpt2,Rt2  will not change due to BL ingestion
-            Tt2 = Tt18
-            ht2 = ht18
-            st2 = st18
-            cpt2 = cpt18
-            Rt2 = Rt18
-            pt2 = pt18 * exp(-sbfan)
-            pt2_mf = pt2 * (-sbfan_mf)
-            pt2_ml = pt2 * (-sbfan_ml)
-            pt2_Mi = pt2 * (-sbfan_Mi)
-
-            Tt19 = Tt18
-            ht19 = ht18
-            st19 = st18
-            cpt19 = cpt18
-            Tt19_ht19 = 1 / cpt19
-            Rt19 = Rt18
-            pt19 = pt18 * exp(-sbcore)
-            pt19_mf = pt19 * (-sbcore_mf)
-            pt19_ml = pt19 * (-sbcore_ml)
-            pt19_Mi = pt19 * (-sbcore_Mi)
-
-            p2, T2, h2, s2, cp2, R2,
-            p2_st2,
-            p2_pt2,
-            dum,
-            p2_Tt2, T2_Tt2, h2_Tt2, s2_Tt2,
-            p2_ht2, T2_ht2, h2_ht2, s2_ht2,
-            p2_Mi, T2_Mi, h2_Mi, s2_Mi,
-            p_al, T_al, h_al, s_al,
-            cp_al, R_al = gas_machd(alpha, nair,
-                  pt2, Tt2, ht2, st2, cpt2, Rt2, 0.0, Mi, 1.0)
-            u2 = sqrt(2.0 * (ht2 - h2))
-            u2_Mi = (-1.0 / u2) * h2_Mi
-
-            rho2 = p2 / (R2 * T2)
-            rho2_p2 = 1.0 / (R2 * T2)
-            rho2_T2 = -rho2 / T2
-
-            rho2_Mi = rho2_T2 * T2_Mi +
-                      rho2_p2 * (p2_pt2 * pt2_Mi + p2_Mi)
-            rho2_mf = rho2_p2 * p2_pt2 * pt2_mf
-            rho2_ml = rho2_p2 * p2_pt2 * pt2_ml
-
-
-            p19, T19, h19, s19, cp19, R19,
-            p19_st19,
-            p19_pt19,
-            dum,
-            p19_Tt19, T19_Tt19, h19_Tt19, s19_Tt19,
-            p19_ht19, T19_ht19, h19_ht19, s19_ht19,
-            p19_Mi, T19_Mi, h19_Mi, s19_Mi,
-            p_al, T_al, h_al, s_al,
-            cp_al, R_al = gas_machd(alpha, nair,
-                  pt19, Tt19, ht19, st19, cpt19, Rt19, 0.0, Mi, 1.0)
-            u19 = sqrt(2.0 * (ht19 - h19))
-            u19_Mi = (-1.0 / u19) * h19_Mi
-
-            rho19 = p19 / (R19 * T19)
-            rho19_p19 = 1.0 / (R19 * T19)
-            rho19_T19 = -rho19 / T19
-
-            rho19_Mi = rho19_T19 * T19_Mi +
-                       rho19_p19 * (p19_pt19 * pt19_Mi + p19_Mi)
-            rho19_mf = rho19_p19 * p19_pt19 * pt19_mf
-            rho19_ml = rho19_p19 * p19_pt19 * pt19_ml
+            # Station 2 Static Quantities and Constituent Quantities
+            F020, p_al, T_al, h_al, s_al, cp_al, R_al = gas_machd_setstatic_fs(alpha, nair, F020, 0.0, Mi, 1.0)
+            F019, p_al, T_al, h_al, s_al, cp_al, R_al = gas_machd_setstatic_fs(alpha, nair, F019, 0.0, Mi, 1.0)
 
             # ===============================================================
             #---- fan flow 2-7
-            epf, epf_pf, epf_mf = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
-            # epf, epf_pf, epf_mf = ecTblMap(pf, mf, pifD, mbfD, E3fan, epf0)
+            fan = comp_eff(fan, pifK, epfK; useTbl=false)
 
-            if (epf < epfmin)
-                  epf = epfmin
-                  epf_pf = 0.0
-                  epf_mf = 0.0
+            if (fan.ep < epfmin)
+                  fan.ep = epfmin
+                  fan.ep_pr = 0.0
+                  fan.ep_mb = 0.0
             end
-            if (pf < 1.0)
-                  epf_pf = (-1.0 / epf^2) * epf_pf
-                  epf_mf = (-1.0 / epf^2) * epf_mf
-                  epf = 1.0 / epf
+            if (fan.pr < 1.0)
+                  fan.ep_pr = (-1.0 / fan.ep^2) * fan.ep_pr
+                  fan.ep_mb = (-1.0 / fan.ep^2) * fan.ep_mb
+                  fan.ep = 1.0 / fan.ep
             end
 
             pt21, Tt21, ht21, st21, cpt21, Rt21,

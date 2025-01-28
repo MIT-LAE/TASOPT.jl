@@ -275,6 +275,9 @@ function create_map_struct(map_name::String, oob_consts::Vector{Float64}; method
     N_gridded, Mg, Pg, dm, dp = gen2DGrid(N_interpolator, minimum(Mvec), maximum(Mvec), minimum(Pvec), maximum(Pvec), Mres, Pres; method=natNeigh.Sibson(1))
     E_gridded, _,  _,  _,  _  = gen2DGrid(E_interpolator, minimum(Mvec), maximum(Mvec), minimum(Pvec), maximum(Pvec), Mres, Pres; method=natNeigh.Sibson(1)) 
 
+    # Make a grid to store the in/out mask
+    mask = zeros(Bool, size(N_gridded))
+
     # Scale the mass flow and pressure back up post-interpolation
     Mg = Mg .* mb_des
     dm = dm  * mb_des
@@ -285,10 +288,12 @@ function create_map_struct(map_name::String, oob_consts::Vector{Float64}; method
     # Replace out-of-map points with the Drela approximation
     for i in eachindex(Mg)
         for j in eachindex(Pg)
-            if !pointInMap(Mg[i], Pg[j], surge, windmill, bottom, top)
+            inMap = pointInMap(Mg[i], Pg[j], surge, windmill, bottom, top)
+            if !inMap
                 N_gridded[i,j], _, _ = Ncmap(Pg[j], Mg[i], pr_des, mb_des, Nb_des, oob_consts)
                 E_gridded[i,j], _, _ = ecmap(Pg[j], Mg[i], pr_des, mb_des, oob_consts, isen_to_poly(pr_des, eff_des, 1.4), 0.0, 0.0)
             end
+            mask[i,j] = inMap
         end
     end
 
@@ -315,6 +320,7 @@ function create_map_struct(map_name::String, oob_consts::Vector{Float64}; method
         windmill,
         bottom,
         top,
+        mask,
         N_gridded,
         dNdm,
         dNdp,
@@ -386,6 +392,7 @@ function map_startup(gridded_map_name, data_map_name, map_gridding_method, oob_c
 
     if genComp
         # Generate new fan data and save to a file
+        println("Generating compressor map data; this may take a while (~1 hour)")
         compStruct = create_map_struct(data_map_name, oob_consts; method=map_gridding_method, Nres=Nres, Rres=Rres, Mres=Mres, Pres=Pres)
         compTbl_to_TOML(compStruct, gridded_map_name)    
     else
@@ -397,14 +404,14 @@ end # map_startup
 
 
 # Specify desired griding fineness; possibly make this a startup variable?
-N, R, M, P = 200, 200, 400, 400
+N, R, M, P = 400, 400, 400, 400
 
 
 # Load Drela constants for out-of-bounds calculations
-#                  a     b     k     mo     da    c    d    C     D
-const Cmapf_oob = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0,  2.5, 15.0]
-const Cmapl_oob = [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 15.0,  1.0]
-const Cmaph_oob = [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 15.0,  1.0]
+#                           a     b     k     mo     da    c    d    C     D
+const Cmapf_oob = @SVector [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0,  2.5, 15.0]
+const Cmapl_oob = @SVector [1.90, 1.00, 0.03, 0.95, -0.20, 3.0, 5.5, 15.0,  1.0]
+const Cmaph_oob = @SVector [1.75, 2.00, 0.03, 0.95, -0.35, 3.0, 5.0, 15.0,  1.0]
 
 # Create compressorTbl objects as constants to prevent re-generating all the maps every run
 const E3fan = map_startup("E3fan_gridded.toml", "E3fan.toml", natNeigh.Sibson(1), Cmapf_oob; Nres=N, Rres=R, Mres=M, Pres=P)
@@ -412,5 +419,18 @@ const E3lpc = map_startup("E3lpc_gridded.toml", "E3lpc.toml", natNeigh.Sibson(1)
 const E3hpc = map_startup("E3hpc_gridded.toml", "E3hpc.toml", natNeigh.Sibson(1), Cmaph_oob; Nres=N, Rres=R, Mres=M, Pres=P)
 
 # Turbine map constants
-const Tmapl = [0.15, 0.15]
-const Tmaph = [0.15, 0.15]
+const Tmapl = @SVector [0.15, 0.15]
+const Tmaph = @SVector [0.15, 0.15]
+
+# Newton Variable Simple Bounds 
+const Tb_bounds = @SVector [0.0, 5000.0]
+const Pc_bounds = @SVector [0.0, 50000000.0]
+const Mi_bounds = @SVector [0.0, 0.98]
+
+# Control whether to use interpolated maps in tfoper
+#---- choose whether to use interpolated maps
+const useTbl = true
+
+# Set convergence tolerances
+const abs_tol = 1.0e-10
+const rel_tol = 1.0e-10

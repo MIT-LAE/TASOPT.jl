@@ -23,10 +23,10 @@ air constituents.
 """
 struct flowStation
     # ---- Physical Flow
-    M::Float64
+    Mi::Float64
     A::Float64
     u::Float64
-    u_M::Float64
+    u_Mi::Float64
 
     # ---- Static Quantities
     ps::Float64
@@ -59,7 +59,7 @@ struct flowStation
     ps_Tt::Float64
     ps_hs::Float64
     ps_ht::Float64
-    ps_M::Float64
+    ps_Mi::Float64
     ps_pf::Float64
     ps_pl::Float64
     ps_ph::Float64
@@ -78,7 +78,7 @@ struct flowStation
     Ts_Tt::Float64
     Ts_hs::Float64
     Ts_ht::Float64
-    Ts_M::Float64
+    Ts_Mi::Float64
     Ts_pf::Float64
     Ts_pl::Float64
     Ts_ph::Float64
@@ -97,7 +97,7 @@ struct flowStation
     hs_Tt::Float64
     hs_hs::Float64
     hs_ht::Float64
-    hs_M::Float64
+    hs_Mi::Float64
     hs_pf::Float64
     hs_pl::Float64
     hs_ph::Float64
@@ -116,7 +116,7 @@ struct flowStation
     rhos_Tt::Float64
     rhos_hs::Float64
     rhos_ht::Float64
-    rhos_M::Float64
+    rhos_Mi::Float64
     rhos_pf::Float64
     rhos_pl::Float64
     rhos_ph::Float64
@@ -135,7 +135,7 @@ struct flowStation
     ss_Tt::Float64
     ss_hs::Float64
     ss_ht::Float64
-    ss_M::Float64
+    ss_Mi::Float64
     ss_pf::Float64
     ss_pl::Float64
     ss_ph::Float64
@@ -155,7 +155,7 @@ struct flowStation
     pt_Tt::Float64
     pt_hs::Float64
     pt_ht::Float64
-    pt_M::Float64
+    pt_Mi::Float64
     pt_pf::Float64
     pt_pl::Float64
     pt_ph::Float64
@@ -174,7 +174,7 @@ struct flowStation
     Tt_Tt::Float64
     Tt_hs::Float64
     Tt_ht::Float64
-    Tt_M::Float64
+    Tt_Mi::Float64
     Tt_pf::Float64
     Tt_pl::Float64
     Tt_ph::Float64
@@ -193,7 +193,7 @@ struct flowStation
     ht_Tt::Float64
     ht_hs::Float64
     ht_ht::Float64
-    ht_M::Float64
+    ht_Mi::Float64
     ht_pf::Float64
     ht_pl::Float64
     ht_ph::Float64
@@ -212,7 +212,7 @@ struct flowStation
     rhot_Tt::Float64
     rhot_hs::Float64
     rhot_ht::Float64
-    rhot_M::Float64
+    rhot_Mi::Float64
     rhot_pf::Float64
     rhot_pl::Float64
     rhot_ph::Float64
@@ -231,7 +231,7 @@ struct flowStation
     st_Tt::Float64
     st_hs::Float64
     st_ht::Float64
-    st_M::Float64
+    st_Mi::Float64
     st_pf::Float64
     st_pl::Float64
     st_ph::Float64
@@ -242,73 +242,97 @@ struct flowStation
     st_el::Float64
     st_eh::Float64
 
+    function flowStation(;
+        Mi::Float64 = 0.0, A::Float64 = 1.0, u::Float64 = 0.0, u_Mi::Float64 = 0.0,
+        ps::Float64 = 1.0, Ts::Float64 = 0.0, hs::Float64 = 1.0, rhos::Float64 = 0.0, ss::Float64 = 0.0,
+        cps::Float64 = 1.0, cvs::Float64 = 1.0, gams::Float64 = 1.0, as::Float64 = 0.0,
+        pt::Float64 = 1.0, Tt::Float64 = 0.0, ht::Float64 = 1.0, rhot::Float64 = 0.0, st::Float64 = 0.0,
+        cpt::Float64 = 1.0, cvt::Float64 = 1.0, gamt::Float64 = 1.0, at::Float64 = 0.0,
 
-    # Constructor with `n` parameter for `_al` vector sizes
-    function flowStation( 
-        M::Float64 = 0.0, A::Float64 = 1.0, u::Float64 = 0.0,
-        ps::Float64 = 1.0, Ts::Float64 = 300.0, hs::Float64 = 1.0, rhos::Float64 = 0.0, ss::Float64 = 0.0,
-        cps::Float64 = 1.0, cvs::Float64 = 1.0, gams::Float64 = 1.4, as::Float64 = 340.0,
-        pt::Float64 = 1.0, Tt::Float64 = 300.0, ht::Float64 = 1.0, rhot::Float64 = 0.0, st::Float64 = 0.0,
-        cpt::Float64 = 1.0, cvt::Float64 = 1.0, gamt::Float64 = 1.4, at::Float64 = 340.0
+        ps_ps::Float64 = 0.0, ps_pt::Float64 = 0.0, ps_ss::Float64 = 0.0, ps_st::Float64 = 0.0, 
+        ps_Ts::Float64 = 0.0, ps_Tt::Float64 = 0.0, ps_hs::Float64 = 0.0, ps_ht::Float64 = 0.0, 
+        ps_Mi::Float64 = 0.0, ps_pf::Float64 = 0.0, ps_pl::Float64 = 0.0, ps_ph::Float64 = 0.0, 
+        ps_mf::Float64 = 0.0, ps_ml::Float64 = 0.0, ps_mh::Float64 = 0.0, ps_ef::Float64 = 0.0, 
+        ps_el::Float64 = 0.0, ps_eh::Float64 = 0.0,
+        
+        Ts_ps::Float64 = 0.0, Ts_pt::Float64 = 0.0, Ts_ss::Float64 = 0.0, Ts_st::Float64 = 0.0, 
+        Ts_Ts::Float64 = 0.0, Ts_Tt::Float64 = 0.0, Ts_hs::Float64 = 0.0, Ts_ht::Float64 = 0.0, 
+        Ts_Mi::Float64 = 0.0, Ts_pf::Float64 = 0.0, Ts_pl::Float64 = 0.0, Ts_ph::Float64 = 0.0, 
+        Ts_mf::Float64 = 0.0, Ts_ml::Float64 = 0.0, Ts_mh::Float64 = 0.0, Ts_ef::Float64 = 0.0, 
+        Ts_el::Float64 = 0.0, Ts_eh::Float64 = 0.0,
+
+        hs_ps::Float64 = 0.0, hs_pt::Float64 = 0.0, hs_ss::Float64 = 0.0, hs_st::Float64 = 0.0, 
+        hs_Ts::Float64 = 0.0, hs_Tt::Float64 = 0.0, hs_hs::Float64 = 0.0, hs_ht::Float64 = 0.0, 
+        hs_Mi::Float64 = 0.0, hs_pf::Float64 = 0.0, hs_pl::Float64 = 0.0, hs_ph::Float64 = 0.0, 
+        hs_mf::Float64 = 0.0, hs_ml::Float64 = 0.0, hs_mh::Float64 = 0.0, hs_ef::Float64 = 0.0, 
+        hs_el::Float64 = 0.0, hs_eh::Float64 = 0.0, 
+        
+        rhos_ps::Float64 = 0.0, rhos_pt::Float64 = 0.0, rhos_ss::Float64 = 0.0, rhos_st::Float64 = 0.0, 
+        rhos_Ts::Float64 = 0.0, rhos_Tt::Float64 = 0.0, rhos_hs::Float64 = 0.0, rhos_ht::Float64 = 0.0, 
+        rhos_Mi::Float64 = 0.0, rhos_pf::Float64 = 0.0, rhos_pl::Float64 = 0.0, rhos_ph::Float64 = 0.0, 
+        rhos_mf::Float64 = 0.0, rhos_ml::Float64 = 0.0, rhos_mh::Float64 = 0.0, rhos_ef::Float64 = 0.0, 
+        rhos_el::Float64 = 0.0, rhos_eh::Float64 = 0.0, 
+        
+        ss_ps::Float64 = 0.0, ss_pt::Float64 = 0.0, ss_ss::Float64 = 0.0, ss_st::Float64 = 0.0, 
+        ss_Ts::Float64 = 0.0, ss_Tt::Float64 = 0.0, ss_hs::Float64 = 0.0, ss_ht::Float64 = 0.0, 
+        ss_Mi::Float64 = 0.0, ss_pf::Float64 = 0.0, ss_pl::Float64 = 0.0, ss_ph::Float64 = 0.0, 
+        ss_mf::Float64 = 0.0, ss_ml::Float64 = 0.0, ss_mh::Float64 = 0.0, ss_ef::Float64 = 0.0, 
+        ss_el::Float64 = 0.0, ss_eh::Float64 = 0.0, 
+
+        pt_ps::Float64 = 0.0, pt_pt::Float64 = 0.0, pt_ss::Float64 = 0.0, pt_st::Float64 = 0.0, 
+        pt_Ts::Float64 = 0.0, pt_Tt::Float64 = 0.0, pt_hs::Float64 = 0.0, pt_ht::Float64 = 0.0, 
+        pt_Mi::Float64 = 0.0, pt_pf::Float64 = 0.0, pt_pl::Float64 = 0.0, pt_ph::Float64 = 0.0, 
+        pt_mf::Float64 = 0.0, pt_ml::Float64 = 0.0, pt_mh::Float64 = 0.0, pt_ef::Float64 = 0.0, 
+        pt_el::Float64 = 0.0, pt_eh::Float64 = 0.0,
+        
+        Tt_ps::Float64 = 0.0, Tt_pt::Float64 = 0.0, Tt_ss::Float64 = 0.0, Tt_st::Float64 = 0.0, 
+        Tt_Ts::Float64 = 0.0, Tt_Tt::Float64 = 0.0, Tt_hs::Float64 = 0.0, Tt_ht::Float64 = 0.0, 
+        Tt_Mi::Float64 = 0.0, Tt_pf::Float64 = 0.0, Tt_pl::Float64 = 0.0, Tt_ph::Float64 = 0.0, 
+        Tt_mf::Float64 = 0.0, Tt_ml::Float64 = 0.0, Tt_mh::Float64 = 0.0, Tt_ef::Float64 = 0.0, 
+        Tt_el::Float64 = 0.0, Tt_eh::Float64 = 0.0,
+
+        ht_ps::Float64 = 0.0, ht_pt::Float64 = 0.0, ht_ss::Float64 = 0.0, ht_st::Float64 = 0.0, 
+        ht_Ts::Float64 = 0.0, ht_Tt::Float64 = 0.0, ht_hs::Float64 = 0.0, ht_ht::Float64 = 0.0, 
+        ht_Mi::Float64 = 0.0, ht_pf::Float64 = 0.0, ht_pl::Float64 = 0.0, ht_ph::Float64 = 0.0, 
+        ht_mf::Float64 = 0.0, ht_ml::Float64 = 0.0, ht_mh::Float64 = 0.0, ht_ef::Float64 = 0.0, 
+        ht_el::Float64 = 0.0, ht_eh::Float64 = 0.0, 
+        
+        rhot_ps::Float64 = 0.0, rhot_pt::Float64 = 0.0, rhot_ss::Float64 = 0.0, rhot_st::Float64 = 0.0, 
+        rhot_Ts::Float64 = 0.0, rhot_Tt::Float64 = 0.0, rhot_hs::Float64 = 0.0, rhot_ht::Float64 = 0.0, 
+        rhot_Mi::Float64 = 0.0, rhot_pf::Float64 = 0.0, rhot_pl::Float64 = 0.0, rhot_ph::Float64 = 0.0, 
+        rhot_mf::Float64 = 0.0, rhot_ml::Float64 = 0.0, rhot_mh::Float64 = 0.0, rhot_ef::Float64 = 0.0, 
+        rhot_el::Float64 = 0.0, rhot_eh::Float64 = 0.0, 
+        
+        st_ps::Float64 = 0.0, st_pt::Float64 = 0.0, st_ss::Float64 = 0.0, st_st::Float64 = 0.0, 
+        st_Ts::Float64 = 0.0, st_Tt::Float64 = 0.0, st_hs::Float64 = 0.0, st_ht::Float64 = 0.0, 
+        st_Mi::Float64 = 0.0, st_pf::Float64 = 0.0, st_pl::Float64 = 0.0, st_ph::Float64 = 0.0, 
+        st_mf::Float64 = 0.0, st_ml::Float64 = 0.0, st_mh::Float64 = 0.0, st_ef::Float64 = 0.0, 
+        st_el::Float64 = 0.0, st_eh::Float64 = 0.0, 
+
     )
         return new(
             # ---- Physical Flow
-            M, A, u, 0.0,
-    
+            Mi, A, u, u_Mi,
+
             # ---- Static Quantities
             ps, Ts, hs, rhos, ss, cps, cvs, gams, as,
-    
+
             # ---- Total Quantities
             pt, Tt, ht, rhot, st, cpt, cvt, gamt, at,
-    
-            # ---- Static Derivatives
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    
-            # ---- Total Derivatives
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-        )
-    end
-
-
-    function flowStation(
-        M::Float64 = 0.0, A::Float64 = 1.0, u::Float64 = 0.0,
-        ps::Float64 = 1.0, Ts::Float64 = 300.0, hs::Float64 = 1.0, ss::Float64 = 0.0,
-        cps::Float64 = 1.0, cvs::Float64 = 1.0, gams::Float64 = 1.4, as::Float64 = 340.0,
-        pt::Float64 = 1.0, Tt::Float64 = 300.0, ht::Float64 = 1.0, st::Float64 = 0.0,
-        cpt::Float64 = 1.0, cvt::Float64 = 1.0, gamt::Float64 = 1.4, at::Float64 = 340.0
-    )
-        return new(
-            # ---- Physical Flow
-            M, A, u,
-
-            # ---- Static Quantities
-            ps, Ts, hs, ss, cps, cvs, gams, as,
-
-            # ---- Total Quantities
-            pt, Tt, ht, st, cpt, cvt, gamt, at,
             
             # ---- Static Derivatives
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+            ps_ps, ps_pt, ps_ss, ps_st, ps_Ts, ps_Tt, ps_hs, ps_ht, ps_Mi, ps_pf, ps_pl, ps_ph, ps_mf, ps_ml, ps_mh, ps_ef, ps_el, ps_eh, 
+            Ts_ps, Ts_pt, Ts_ss, Ts_st, Ts_Ts, Ts_Tt, Ts_hs, Ts_ht, Ts_Mi, Ts_pf, Ts_pl, Ts_ph, Ts_mf, Ts_ml, Ts_mh, Ts_ef, Ts_el, Ts_eh, 
+            hs_ps, hs_pt, hs_ss, hs_st, hs_Ts, hs_Tt, hs_hs, hs_ht, hs_Mi, hs_pf, hs_pl, hs_ph, hs_mf, hs_ml, hs_mh, hs_ef, hs_el, hs_eh, 
+            rhos_ps, rhos_pt, rhos_ss, rhos_st, rhos_Ts, rhos_Tt, rhos_hs, rhos_ht, rhos_Mi, rhos_pf, rhos_pl, rhos_ph, rhos_mf, rhos_ml, rhos_mh, rhos_ef, rhos_el, rhos_eh, 
+            ss_ps, ss_pt, ss_ss, ss_st, ss_Ts, ss_Tt, ss_hs, ss_ht, ss_Mi, ss_pf, ss_pl, ss_ph, ss_mf, ss_ml, ss_mh, ss_ef, ss_el, ss_eh, 
             
             # ---- Total Derivatives
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+            pt_ps, pt_pt, pt_ss, pt_st, pt_Ts, pt_Tt, pt_hs, pt_ht, pt_Mi, pt_pf, pt_pl, pt_ph, pt_mf, pt_ml, pt_mh, pt_ef, pt_el, pt_eh, 
+            Tt_ps, Tt_pt, Tt_ss, Tt_st, Tt_Ts, Tt_Tt, Tt_hs, Tt_ht, Tt_Mi, Tt_pf, Tt_pl, Tt_ph, Tt_mf, Tt_ml, Tt_mh, Tt_ef, Tt_el, Tt_eh, 
+            ht_ps, ht_pt, ht_ss, ht_st, ht_Ts, ht_Tt, ht_hs, ht_ht, ht_Mi, ht_pf, ht_pl, ht_ph, ht_mf, ht_ml, ht_mh, ht_ef, ht_el, ht_eh, 
+            rhot_ps, rhot_pt, rhot_ss, rhot_st, rhot_Ts, rhot_Tt, rhot_hs, rhot_ht, rhot_Mi, rhot_pf, rhot_pl, rhot_ph, rhot_mf, rhot_ml, rhot_mh, rhot_ef, rhot_el, rhot_eh, 
+            st_ps, st_pt, st_ss, st_st, st_Ts, st_Tt, st_hs, st_ht, st_Mi, st_pf, st_pl, st_ph, st_mf, st_ml, st_mh, st_ef, st_el, st_eh, 
         )
     end
 end # flowStation
@@ -340,55 +364,15 @@ requires design quantities for the device.
 
 """
 struct compressor
-# ---- Design values
-prD::Float64
-mbD::Float64
-epD::Float64
-NbD::Float64
+    # ---- Design values
+    prD::Float64
+    mbD::Float64
+    epD::Float64
+    NbD::Float64
 
-# ---- Map (and out-of-bounds coefficients)
-map::compressorTbl
-oob_map::SVector{9, Float64}
-
-# ---- Current values
-pr::Float64
-mb::Float64
-ep::Float64
-Nb::Float64
-
-# ---- Derivatives
-Nb_pr::Float64
-Nb_mb::Float64
-
-ep_pr::Float64
-ep_mb::Float64
-
-function compressor(prD::Float64, mbD::Float64, epD::Float64, NbD::Float64,
-    map::compressorTbl, oob_map::SVector{9, Float64}; pr::Float64=0., 
-    mb::Float64=0., ep::Float64=0., Nb::Float64=0.
-)
-
-    if pr == 0.
-        pr = prD
-    end
-    if mb == 0.
-        mb = mbD
-    end
-    if ep == 0.
-        ep = epD
-    end
-    if Nb == 0.
-        Nb = NbD
-    end
-
-    Nb_pr = 0.0
-    Nb_mb = 0.0
-    ep_pr = 0.0
-    ep_mb = 0.0
-
-    new(prD, mbD, epD, NbD, map, oob_map, pr, mb, ep, Nb, Nb_pr, Nb_mb, ep_pr, ep_mb)
-end
-
+    # ---- Map (and out-of-bounds coefficients)
+    map::compressorTbl
+    oob_map::SVector{9, Float64}
 end # compressor
 
 
@@ -415,55 +399,12 @@ requires design quantities for the device.
 
 """
 struct turbine
-# ---- Design values
-prD::Float64
-mbD::Float64
-epD::Float64
-NbD::Float64
+    # ---- Design values
+    prD::Float64
+    mbD::Float64
+    epD::Float64
+    NbD::Float64
 
-# ---- Map (and out-of-bounds coefficients)
-map::SVector{2, Float64}
-
-# ---- Current values
-pr::Float64
-mb::Float64
-ep::Float64
-Nb::Float64
-
-# ---- Derivatives
-ep_dh::Float64
-ep_mb::Float64
-ep_Nb::Float64
-ep_Tt41::Float64
-ep_cpt41::Float64
-ep_Rt41::Float64
-
-function compressor(prD::Float64, mbD::Float64, epD::Float64, NbD::Float64,
-    map::SVector{2, Float64}; pr::Float64=0., mb::Float64=0., ep::Float64=0.,
-    Nb::Float64=0.
-)
-
-    if pr == 0.
-        pr = prD
-    end
-    if mb == 0.
-        mb = mbD
-    end
-    if ep == 0.
-        ep = epD
-    end
-    if Nb == 0.
-        Nb = NbD
-    end
-
-    ep_dh = 0.0
-    ep_mb = 0.0
-    ep_Nb = 0.0
-    ep_Tt41 = 0.0
-    ep_cpt41 = 0.0
-    ep_Rt41 = 0.0
-
-    new(prD, mbD, epD, NbD, map, pr, mb, ep, Nb, ep_dh, ep_mb, ep_Nb, ep_Tt41, ep_cpt41, ep_Rt41)
-end
-
+    # ---- Map (and out-of-bounds coefficients)
+    map::SVector{2, Float64}
 end # turbine

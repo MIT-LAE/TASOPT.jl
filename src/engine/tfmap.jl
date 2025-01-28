@@ -20,7 +20,7 @@ of interpolated E3 compressor data generated externally.
     - `Nb_?`:   derivatives
 
 """
-function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD::Float64, map::compressorTbl, mapConst::Vector{Float64})
+function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD::Float64, map::compressorTbl, mapConst::SVector{9, Float64})
     # ---- Calculate map scaling factors
     s_Nb = NbD / map.Nb_des
     s_pr = (piD - 1) / (map.pr_des - 1)
@@ -47,7 +47,6 @@ function NcTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, NbD:
 
         return Nb, Nb_pi, Nb_mb
     end
-
 end # NcInterpMap
 
 
@@ -73,10 +72,7 @@ of interpolated E3 compressor data generated externally.
     - `eff_?`:      derivatives
 
 """
-function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
-    # TODO: [Does TASOPT have station-wise estimates of specific heat ratio?
-    #        Check that we don't actually need piK and effK]
-
+function ecTblMap(pratio::Float64, mb::Float64, piD::Float64, mbD::Float64, map::compressorTbl, mapConst::SVector{9, Float64}, effo::Float64; g=1.4, R=287.0, pifK=0.0, epfK=0.0)
     # ---- Define anonymous functions to convert between isentropic and polytropic efficiency
     isen_to_poly = (pr, isen, g) -> (g-1)/g * log(pr) / log( (pr^((g-1)/g) - 1) / isen + 1 )
 
@@ -85,21 +81,20 @@ function ecTblMap(pratio, mb, piD, mbD, map, effo; g=1.4, R=287)
     s_mb = mbD / map.mb_des
     s_eff = effo / isen_to_poly(map.pr_des, map.eff_is_des, g) # Scale polytropic efficiency
 
-    # println(s_pr)
-    # println(s_mb)
-    # println(s_eff)
-
     # ---- De-scale inputs back to nominal E3 map values
     pratio_descl = (pratio - 1) / s_pr + 1
     mb_descl = mb / s_mb
 
     # ---- Perform the bilinear interpolation on the precomputed map table for nominal value
     # ---- NOTE: Polytropic efficiency table was generated using g=1.4 and R=287 J/kgK
-    # effnom, effnom_mb, effnom_pr = bilinearDerivatives(mb_descl, pratio_descl, map.mb_map, map.pr_map, map.eff_poly_tbl)
-    # ---- Perform the bilinear interpolation on the precomputed map table
-    effnom, effnom_mb, effnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
-                                                         map.Np, map.mbGrid, map.prGrid, map.Eff_nom, 
-                                                         map.Eff_mb, map.Eff_pr)
+    if mb_descl > map.mbGrid[end] || pratio_descl > map.prGrid[end]
+        return ecmap(pratio, mb, piD, mbD, mapConst, effo, pifK, epfK)
+    else
+        # ---- Perform the bilinear interpolation on the precomputed map table
+        effnom, effnom_mb, effnom_pr = bilinearBoundedLookup(mb_descl, pratio_descl, map.dm, map.dp, map.Nm, 
+                                                             map.Np, map.mbGrid, map.prGrid, map.Eff_nom, 
+                                                             map.Eff_mb, map.Eff_pr)
+    end
 
     # ---- Rescale map speed to using s_eff
     eff = effnom * s_eff
