@@ -94,8 +94,6 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (icdfun==1) 
 #----- integrated across span for CDwing
-
-      # if(Ldebug) write(*,*) 'calling SURFCD2...'
       clpo,clps,clpt,
 	cdfw,cdpw,CDwing,CDover = surfcd2(wing,gammat,gammas,
                                     Mach,CL,CLhtail,Reco,
@@ -201,8 +199,6 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- induced CD
-#      if(Ldebug) write(*,*) '...calling CDITRP...'
-
       cditrp(para, wing, htail)
       CDi = para[iaCDi]
 
@@ -223,13 +219,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
 #---- total CD
       CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw
       para[iaCD] = CD      
-      CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
-      # println(CD_components)
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#      if(Ldebug) write(*,*) '...exiting CDSUM...'
-      # println("Total CD = ", CD)
-      # println("PARA = ", para)
       return
 end # cdsum
 
