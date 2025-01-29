@@ -1128,7 +1128,7 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
     ac = aircraft(ac_og.name, ac_og.description,
     ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank,
-    ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail)
+    ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine)
 
     #Extract aircraft parameters
     maxPay = ac.parg[igWpaymax]

@@ -1,5 +1,5 @@
 """
-    cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
+   cdsum!(ac, imission, ip, icdfun)
 
 Calculates aircraft `CD` components for operating point, ipoint.
 If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
@@ -25,26 +25,25 @@ where:
 
 
 !!! details "🔃 Inputs and Outputs"
-      **Inputs:**
-      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
-      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
-      - `pare::AbstractArray{Float64}`: Vector of `aircraft` model engine parameters.
-      - `Wing::TASOPT.Wing`: Wing Structure.
-      - `Htail::TASOPT.Tail`: Htail Structure.
-      - `Vtail::TASOPT.Tail`: Vtail Structure.
-      - `icdfun::Integer`: Flag if drag should be computed (=1) or if para values should be used (=0).
+**Inputs:**
+      - `ac::aircraft`: aircraft data storage object
+      - `imission::Int64`: mission index
+      - `icdfun::Int64`: Flag if drag should be computed (=1) or if para values should be used (=0).
 
       **Outputs:**
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
-
-!!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
-
 """
-function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
+function cdsum!(ac, imission, ip, icdfun)
+      #Unpack data storage
+      parg = ac.parg
+      para = view(ac.para, :, ip, imission)
+      pare = view(ac.pare, :, ip, imission)
+      wing = ac.wing
+      htail = ac.htail
+      vtail = ac.vtail
 
       Ldebug = false
 #      Ldebug = true

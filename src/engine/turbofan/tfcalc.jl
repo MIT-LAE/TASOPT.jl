@@ -16,8 +16,8 @@ Calls function tfsize or tfoper for one operating point.
     - `initeng`:    0  initialize variables for iteration in TFOPER
                 1  use current variables as initial guesses in TFOPER
 """
-function tfcalc!(pari, parg, para, pare, wing, ip,
-        icall, icool, initeng)
+function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
+        icall::Int64, icool::Int64, initeng::Int64)
 
         Lprint = false
 
@@ -325,6 +325,9 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
                 pare[iepihcD] = pihcD
                 pare[iepihtD] = pihtD
                 pare[iepiltD] = piltD
+
+                #Fuel mass flow rate
+                pare[iemfuel] = ff * mcore * neng
 
                 #--------------------------------------------------------------------------
         else
@@ -701,6 +704,8 @@ function tfcalc!(pari, parg, para, pare, wing, ip,
         pare[ieetaht] = etaht
         pare[ieetalt] = etalt
 
+        #Fuel mass flow rate
+        pare[iemfuel] = ff * mcore * neng
 
         if (M5 <= 0.999999)
                 ichoke5 = 0
