@@ -310,7 +310,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     if isnothing(plot_obj)
         #conditional statement
         # make fig size larger if adding annotate_text
-        figsize = annotate_text ? (900, 500) : (650, 500)
+        figsize = annotate_text ? (800, 500) : (650, 500)
 
         plot_obj = plot(
             legend = false,
@@ -319,7 +319,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             grid = show_grid,
             show=true,
             aspect_ratio=:equal,
-            margin=4mm)
+            margin=4mm
+            )
     end
     
     # Plot wing (upper and lower surfaces)
@@ -353,8 +354,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             plot!(plot_obj, xt[m,:], yt[m,:], color=:black, lw=1.5, z_order=10)
             plot!(plot_obj, xt[m,:], -yt[m,:], color=:black, lw=1.5, z_order=10)
             
-            # Filled area between
-            plot!(plot_obj, xt[m,:], yt[m,:], fillrange=-yt[m,:], color=:red, alpha=0.1, z_order=4, linewidth=1.0)
+            # Filled area between tank outline
+            plot!(xt[m, :], yt[m, :], fill_between=(-yt[m, :], yt[m, :]), color=:red, alpha=0.1)
             
             # Fuel name
             fuelname = ""
@@ -437,14 +438,14 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     # Annotations
     if annotate_text
         annotate!(plot_obj, 
-            maximum(xh)*1.15, 21, #position based on aircraft length (outside plotting area)
+            maximum(xh)*1.11, 21, #position based on aircraft length (outside plotting area)
             text("PFEI = $(round(parm[imPFEI], digits = 3))\n" *
-            "Mₘₐₓ = $(round(para[iaMach][1], digits=2))\n" *
+            "Mₘₐₓ = $(round(maximum(para[iaMach,:,:]), digits=3))\n" *
             "WMTO = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
             "Span = $(round(wing.layout.span, digits=1)) m\n" *
             "c₀ = $(round(wing.layout.root_chord, digits=1)) m\n" *
             "Λ = $(round(wing.layout.sweep, digits=1))°\n" *
-            "Rfuse = $(fuselage.layout.radius) m\n" *
+            "Rfuse = $(round(fuselage.layout.radius,digits=2)) m\n" *
             "L/D = $(round(para[iaCL,ipcruise1,1] / para[iaCD,ipcruise1,1], digits=2))",
             label_fs, #fontsize
             halign=:left, valign=:top, color=:black),
@@ -452,14 +453,6 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
 
         
         plot!(plot_obj, right_margin=200px) #"left-aligns" the plot within the figure
-    end
-
-    if annotate_length
-        yloc = -1.1*maximum(yw)
-        plot!(plot_obj, [0.0, xf[end]], [yloc, yloc], lw=1.5, arrow=:h, color=:black, label="")
-        annotate!(plot_obj, xf[end] *0.25, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m",
-            halign=:center, valign=:center),
-            14) #fontsize
     end
 
     # Span annotations
@@ -474,6 +467,15 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         annotate!(plot_obj, 20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
             label_fs, color=box_color, #fontsize
             halign=:center, valign=:center))
+    end
+    
+    if annotate_length
+        yloc = (-bmax / 2) * 1.11
+        plot!(plot_obj, [0.0, xf[end]], [yloc, yloc], lw=1.5, color=:black, label="")       #line
+        scatter!(plot_obj, [0.0, xf[end]], [yloc, yloc], yerror=0.03*yloc, markersize=0)    #end ticks
+        annotate!(plot_obj, xf[end] *0.3, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m", #text
+            halign=:center, valign=:center),
+            label_fs) #fontsize
     end
 
     # Set plot limits and labels
@@ -510,8 +512,7 @@ end
 `plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
 weight and drag buildup stacked bar charts to present results.
 """
-function plot_details(ac::aircraft; plot_obj = nothing)
-
+function plot_details(ac::aircraft)
     parg = ac.parg
     fuselage = ac.fuselage
     wing = ac.wing
@@ -585,28 +586,22 @@ function plot_details(ac::aircraft; plot_obj = nothing)
     bar_width = 0.2
 
   ## Do the plotting
-    
-    if isnothing(plot_obj)
-        # Create a layout
-        layout = @layout [A; B C]
-        fig = plot(layout=layout, size=(800, 1000), dpi=300,
-                    plot_title="Optimization Outputs",
-                    legend=false, margin=4mm)
-    else
-        fig = plot_obj
-    end
+    #subplots are created and synthesized into one figure at the end
 
   #=
     Subplot 1: draw stick figure
     =#
 
-    stickfigout = stickfig(ac, plot_obj = fig[1])
-    
+    # stickfigout = stickfig(ac, plot_obj = fig[1])
+    p1 = stickfig(ac)
+    # plot!(stickfigout, subplot=1, layout=layout)
+    #undo the right margin adjustment
+
     #=
     Subplot 2: bar graphs for drag, weight buildups
     =#
     # Bar plot 1: Drag Components (CD)
-    groupedbar!(fig,
+    p2 = groupedbar(
             [0],
             [CDifrac, CDnacefrac, CDvtailfrac, CDhtailfrac, CDwingfrac, CDfusefrac]',
             bar_position=:stack,
@@ -614,11 +609,10 @@ function plot_details(ac::aircraft; plot_obj = nothing)
             label=["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
             ylabel="Fraction",
             title="Drag, Weight Breakdowns",
-            subplot=2)
+            )
 
     # # Bar plot 2: Weight Fractions (WMTO)
-    groupedbar!(
-            fig,
+    groupedbar!(p2,
             [1],
             [Wpayfrac, Wfuelfrac, Wemptyfrac]',
             bar_position=:stack,
@@ -627,20 +621,17 @@ function plot_details(ac::aircraft; plot_obj = nothing)
             # xlabel="Weight Fractions",
             # ylabel="Fraction",
             # title="Weight Fractions (WMTO)",
-            subplot=2)
+            )
 
     # Add lines for Wempty fractions
-    plot!(
-        fig,
+    plot!(p2,
         [0.5, 2.5], [Wemptyfrac, Wemptyfrac],
         lw=2, color=:black, linestyle=:dash,
-        label="Wempty Line",
-        subplot=2
+        label="Wempty Line"
     )
 
     # Bar plot 3: Other Weight Fractions
-    groupedbar!(
-        fig, 
+    groupedbar!(p2,
         [2],
         [Wengfrac, Wtotaddfrac, Wftankfrac, Wtesysfrac, Wvtailfrac, Whtailfrac, Wwingfrac, Wfusefrac]',
         bar_position=:stack,
@@ -649,12 +640,11 @@ function plot_details(ac::aircraft; plot_obj = nothing)
         # xlabel="Weight Fractions",
         # ylabel="Fraction",
         # title="Detailed Weight Fractions",
-        subplot=2,
         legend = true
     )
 
-    xticks!(fig, [0, 1, 2], ["Drag","Total\nWeight","Empty\nWeight"],
-            subplot=2)
+    xticks!(p2, [0, 1, 2], ["Drag","Total\nWeight","Empty\nWeight"],
+            )
 
     #TODO: re-do/re-apply label_bars() to use here
 
@@ -663,15 +653,21 @@ function plot_details(ac::aircraft; plot_obj = nothing)
     =#
 
     # Plot altitude vs range
-    plot!(fig, R, h, label="Altitude", xlabel="Range [nmi]", 
-            title="Mission Profile",ylabel="Altitude [kft]", lw=2., subplot=3)
+    p3 = plot(R, h, label="Altitude", xlabel="Range [nmi]", 
+            title="Mission Profile",ylabel="Altitude [kft]", lw=2.)
 
-    yaxis2 = twinx(fig[3])
+    yaxis2 = twinx(p3)
     # Overlay climb angle on the secondary y-axis
-    plot!(yaxis2, R, gamV, color=:red, label="Traj. Climb Angle, γ", ylabel="Angle [rads]", lw=2,legend=:bottomright, subplot=3)
+    plot!(yaxis2, R, gamV, color=:red, label="Traj. Climb Angle, γ", ylabel="Angle [rads]", lw=2,legend=:bottomright)
     # Add a horizontal line at climb angle = 0.015
-    hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, subplot=3,
-            label="γ = 0.015")
+    hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, label="γ = 0.015")
+
+    # Define layout
+    layout = @layout [A; B C]
+    # Generate the figure
+    fig = plot(p1, p2, p3, layout=layout, 
+                size=(800, 1000), dpi=300,
+                margin=4mm)
 
 ## Send it back
     return fig
@@ -706,7 +702,7 @@ Simple utility function to label bars in a stacked bar chart
 Function to plot the comparison of 737-800 weights from TASOPT w 220 pax
 """
 function plot737compare(ac::aircraft; weightdetail = true, fracs = false)
-    
+    #note for any dev: the layout treatment in plot_details is preferred
     #plot layout
     layout = @layout([A B])
     fig = plot(layout=layout, size=(800, 500), dpi=300, margin=4mm)
