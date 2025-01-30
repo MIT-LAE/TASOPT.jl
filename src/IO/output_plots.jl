@@ -973,7 +973,10 @@ Function to plot a payload range diagram for an aircraft
     - `initeng::Boolean`: Use design case as initial guess for engine state if true (Optional)
 """
 
-function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagram.png", OEW = false)
+function PayloadRange(ac_og::TASOPT.aircraft; 
+    Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
+    filename::String = "")
+
     ac = deepcopy(ac_og)
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
     maxPay = 0
@@ -981,9 +984,11 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
     Wmax = ac.parg[igWMTO]
     Fuelmax = ac.parg[igWfmax]
     Wempty = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
+    PFEI = 0.0
 
     RangesToPlot = []
     PayloadToPlot = []
+    PFEIsToPlot = []
     maxPay = ac.parm[imWpay]
 
     for Range = RangeArray
@@ -1012,6 +1017,7 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
                     end
                 else
                     maxPay = mWpay
+                    PFEI = ac.parm[imPFEI, 2]
                     println("Converged - moving to next range...")
                     break
                 end     
@@ -1020,6 +1026,7 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
             end
         end
         append!(RangesToPlot, Range)
+        append!(PFEIsToPlot, PFEI)
         if OEW
             append!(PayloadToPlot, maxPay+Wempty)
         else
@@ -1031,19 +1038,40 @@ function PayloadRange(ac_og; Rpts = 20, Ppts = 20, filename = "PayloadRangeDiagr
     ranges_kft = RangesToPlot ./ (1000 * 1852.0)
     payload_tons = PayloadToPlot ./ (9.8 * 1000)
 
-    # Plot with all attributes set in plot()
+    # Standard PR Diagram
     plot1 = plot(ranges_kft, payload_tons, 
         lw=2,                   # Line width
         line=:solid,            # Line style
         color=:blue,            # Line color
-        label="Payload",        # Legend label
         xlabel="Range (1000 nmi)", 
-        ylabel="Weight (1000 kg)", 
+        ylabel= OEW ? "Payload Weight (1000 kg)" : "OEW + Payload Weight (1000 kg)", 
         title="Payload-Range Diagram: "*string(ac.name), 
         grid=true,              # Enable grid
         dpi = 300,
-        margin=4mm)
+        margin=4mm,
+        legend=false)
 
-    savefig(plot1, filename)
-    return plot1
+    # PFEI plot
+    plot2 = plot(ranges_kft, PFEIsToPlot, 
+        lw=2,                   # Line width
+        line=:solid,            # Line style
+        color=:green,            # Line color
+        xlabel="Range (1000 nmi)", 
+        ylabel="PFEI at max payload (dimensionless)", 
+        title="Payload-Range Diagram: "*string(ac.name), 
+        grid=true,              # Enable grid
+        dpi = 300,
+        margin=4mm,
+        legend=false)
+
+    layout = @layout [A; B]
+    fig = plot(plot1, plot2, layout=layout, 
+    size=(600, 800), 
+    dpi=300, margin=4mm)
+        
+    if filename != ""
+        savefig(fig, filename)
+    end
+
+    return fig
 end
