@@ -516,8 +516,9 @@ function plot_details(ac::aircraft)
     parg = ac.parg
     fuselage = ac.fuselage
     wing = ac.wing
-    htail = ac.wing
-    vtail = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
     @views parm = ac.parm[:,:,1]
