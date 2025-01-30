@@ -42,7 +42,7 @@
     filepath_quick = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick.toml")
     quicksave_aircraft(load_default_model(), filepath_quick)
     ac_quick = quickload_aircraft(filepath_quick)
-    size_aircraft!(ac_quick, Ldebug=true, printiter=true, saveOD=false)
+    size_aircraft!(ac_quick, Ldebug=false, printiter=false, saveOD=false)
 
     @test ac_quick.parg[igWMTO] ≈ ac_def.parg[igWMTO]
     rm(filepath_quick)
