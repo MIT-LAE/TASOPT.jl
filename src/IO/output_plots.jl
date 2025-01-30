@@ -627,7 +627,7 @@ function plot_details(ac::aircraft)
     plot!(p2,
         [0.5, 2.5], [Wemptyfrac, Wemptyfrac],
         lw=2, color=:black, linestyle=:dash,
-        label="Wempty Line"
+        label=" "
     )
 
     # Bar plot 3: Other Weight Fractions
@@ -640,7 +640,7 @@ function plot_details(ac::aircraft)
         # xlabel="Weight Fractions",
         # ylabel="Fraction",
         # title="Detailed Weight Fractions",
-        legend = true
+        legend = :outerright
     )
 
     xticks!(p2, [0, 1, 2], ["Drag","Total\nWeight","Empty\nWeight"],
@@ -663,10 +663,11 @@ function plot_details(ac::aircraft)
     hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, label="γ = 0.015")
 
     # Define layout
-    layout = @layout [A; B C]
+    layout = @layout [A; B{0.6w} C]
+
     # Generate the figure
     fig = plot(p1, p2, p3, layout=layout, 
-                size=(800, 1000), dpi=300,
+                size=(800, 900), dpi=300,
                 margin=4mm)
 
 ## Send it back
