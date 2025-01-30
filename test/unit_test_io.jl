@@ -37,7 +37,7 @@
     # the quicksaves largely work, but they haven't been checked/properly tested
     #until then, these need to be disabled
 
-    #=
+    
     #test that quicksave/load roundtrip default aircraft sizes identically to default load
     filepath_quick = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick.toml")
     quicksave_aircraft(load_default_model(), filepath_quick)
@@ -51,13 +51,12 @@
     # and changes the solution
     filepath_quick_nopay = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick_nopay.toml")
     ac_quick.parm[imWpay] = 1
-    quicksave_aircraft(ac_quick, filepath = filepath_quick_nopay)
+    quicksave_aircraft(ac_quick, filepath_quick_nopay)
 
     ac_quick_nopay_reread = quickload_aircraft(filepath_quick_nopay)
     size_aircraft!(ac_quick_nopay_reread, Ldebug=false, printiter=false, saveOD=false)
     @test_broken ac_quick_nopay_reread.parg[igWMTO] ≈ ac_lopay.parg[igWMTO]
     rm(filepath_quick_nopay)
-    =#
 
 #C: outputs to .csv
 

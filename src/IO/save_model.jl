@@ -996,3 +996,55 @@ function reset_regression_test(ac)
         @printf(io, "vtail.inboard.co = vtail.layout.root_chord \n")
     end
 end
+
+
+
+#NOTE:  the following functions are not currently used in the codebase, 
+#       but are retained for potential future use with saving models in a less-manual, yet human-readable way
+"""
+    fix_dict_for_toml(dict::Dict)
+
+Prepares a `dict` for output into .toml by:
+    - replacing any multi-dimensional arrays with nested arrays (TOML library compatibility restriction),
+    - and recursively applying this for any nested `dict`s.
+    - Also replaces structs with dictionaries, then recursively applying this function.
+"""
+function fix_dict_for_toml(dict::Dict)
+    #deep copy of dictionary
+    dict = deepcopy(dict)
+    for (key, value) in dict
+        #if it's an array, convert to nested vectors
+        if isa(value, Array) && ndims(value) >= 2
+            dict[key] = array2nestedvectors(value)
+        #if it's another dict, pass it through this fxn
+        elseif isa(value, Dict)
+            dict[key] = fix_dict_for_toml(value)
+        #if it's a TOML-compatible value, assign directly
+        #TODO: convert structs to dictionaries for output 
+        elseif (value isa TOML.Internals.Printer.TOMLValue)
+            dict[key] = value
+        else #if not TOML-compatible
+            @warn "TOML cannot output the following `aircraft` field and will skip it: "*String(key)
+            # println("Field value: ", value)
+            delete!(dict, key)
+        end
+    end
+    return dict
+end
+
+function struct2dict(obj)
+    type = typeof(obj)
+    # println("T = $type")
+    d = Dict()
+    for key ∈ fieldnames(type)
+        # println("field = $key")
+        if fieldtype(type, key) <: Union{AbstractArray,Number,String}
+            # println("pushing...")
+            push!(d, key => getfield(obj, key))
+        else
+            # println("recursing...")
+            push!(d, key => struct2dict(getfield(obj, key)))
+        end
+    end
+    return d
+end
