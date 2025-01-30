@@ -207,8 +207,8 @@ end
 """
 $TYPEDEF
 
-Fuselage Layout Structure:
-Contains dimensions, heights, etc. to design a fuselage
+Cabin Layout Structure:
+Contains seating dimensions and quantities to design a cabin layout
 
 $TYPEDFIELDS
 """
