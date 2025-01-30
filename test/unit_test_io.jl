@@ -26,7 +26,6 @@
     size_aircraft!(ac_lopay, Ldebug=false, printiter=false, saveOD=false)
     size_aircraft!(ac_lopay_reread, Ldebug=false, printiter=false, saveOD=false)
     
-    #TODO: do a quicksave+meld comparison, identify what is not being saved right
     @test ac_lopay.parg[igWMTO] ≈ ac_lopay_reread.parg[igWMTO]
     @test !(ac_lopay.parg[igWMTO] ≈ ac_def.parg[igWMTO])
     rm(filepath_nopay)
@@ -41,12 +40,12 @@
     #=
     #test that quicksave/load roundtrip default aircraft sizes identically to default load
     filepath_quick = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick.toml")
-    quicksave_aircraft(load_default_model(), filepath = filepath_quick)
+    quicksave_aircraft(load_default_model(), filepath_quick)
     ac_quick = quickload_aircraft(filepath_quick)
     size_aircraft!(ac_quick, Ldebug=true, printiter=true, saveOD=false)
 
-    @test_broken ac_quick.parg[igWMTO] ≈ ac_def.parg[igWMTO]
-    # rm(filepath_quick)
+    @test ac_quick.parg[igWMTO] ≈ ac_def.parg[igWMTO]
+    rm(filepath_quick)
 
     #check via MTOW that changing an important parameter survives the quicksave
     # and changes the solution

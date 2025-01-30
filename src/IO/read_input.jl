@@ -98,12 +98,12 @@ data = TOML.parsefile(datafile)
 # Get template input file, with appropriate user notices when needed
 # handle default templatefile value
 if templatefile == ""
-    @info "No template input file provided. Proceeding with templatefile as determined by design mission range."
+    @info "No template input file provided. Proceeding with template file as determined by design mission range."
     templatefile = nothing
 # check if provided template input file is extant
 elseif !isfile(templatefile)
     #if not, warn that we're ignoring it
-    @warn "Template input file provided does not exist: $templatefile \n Proceeding with templatefile as determined by design mission range."
+    @warn "Template input file provided does not exist: $templatefile \n Proceeding with template file as determined by design mission range."
     templatefile = nothing
 end
 #if no valid templatefile provided
@@ -111,6 +111,7 @@ if isnothing(templatefile)
     #determine appropriate template input file based on mission range
     designrange = Distance.(data["Mission"]["range"])[1] #in meters
     templatefile = get_template_input_file(designrange)
+    @info "Template input file selected: $templatefile"
 end
 
 default = TOML.parsefile(templatefile)
