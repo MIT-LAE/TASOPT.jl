@@ -977,7 +977,7 @@ Function to plot a payload range diagram for an aircraft
 
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
-    filename::String = "")
+    filename::String = "", Ldebug = false)
 
     ac = deepcopy(ac_og)
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
@@ -1001,7 +1001,8 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         end
         ac.parm[imRange,2] = Range
         for mWpay = Payloads
-            println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
+            if Ldebug println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822)) end
+
             ac.parm[imWpay,2] = mWpay
             try
                 fly_off_design!(ac, 2)
@@ -1012,19 +1013,23 @@ function PayloadRange(ac_og::TASOPT.aircraft;
                 if WTO > Wmax || mWfuel > Fuelmax || WTO < 0.0 || mWfuel < 0.0 
                     WTO = 0.0
                     mWfuel = 0.0
-                    println("Max out error!")
+
+                    if Ldebug println("Max out error!") end
+
                     if mWpay == 0
-                        println("Payload 0 and no convergence found")
+                        if Ldebug println("Payload 0 and no convergence found") end
+                        
                         maxPay = 0
                     end
                 else
                     maxPay = mWpay
                     PFEI = ac.parm[imPFEI, 2]
-                    println("Converged - moving to next range...")
+                    if Ldebug println("Converged - moving to next range...") end
+                    
                     break
                 end     
             catch
-                println("Not Converged - moving to lower payload...")      
+                if Ldebug println("Not Converged - moving to lower payload...") end
             end
         end
         append!(RangesToPlot, Range)
