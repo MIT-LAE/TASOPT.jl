@@ -970,14 +970,17 @@ Function to plot a payload range diagram for an aircraft
     - `Rpts::Int64`: Density of ranges to be plot (Optional).
     - `Ppts::Int64`: Density of payloads to be plot (Optional).
     - `filename::String`: filename string for the plot to be stored (Optional).
-    - `OEW::Boolean`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
+    - `OEW::Bool`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
     - `itermax::Int64`: Max Iterations for fly_off_design! loop (Optional).
     - `initeng::Boolean`: Use design case as initial guess for engine state if true (Optional)
+    - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
 """
 
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
-    filename::String = "", Ldebug = false)
+    filename::String = "", 
+    itermax::Int64 = 35, initeng::Bool = true,
+    Ldebug::Bool = false)
 
     ac = deepcopy(ac_og)
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
@@ -1005,7 +1008,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
 
             ac.parm[imWpay,2] = mWpay
             try
-                fly_off_design!(ac, 2)
+                fly_off_design!(ac, 2; itermax = itermax, initeng = initeng)
                 # fly_off_design success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
