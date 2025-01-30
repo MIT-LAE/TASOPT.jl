@@ -11,7 +11,7 @@ $TYPEDFIELDS
     """Material: Automatically sets stress and density of StructuralMember [StructuralAlloy]"""
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
     """Weight"""
-    weight::Weight = Weight(0.0, [0.0, 0.0, 0.0])
+    Weight::Weight = Weight(0.0, [0.0, 0.0, 0.0])
     """Horizontal/Bending Stiffness [N m^2]""" 
     EIh::Float64 = 0
     """Vertical/Normal Stiffness [N m^2]"""

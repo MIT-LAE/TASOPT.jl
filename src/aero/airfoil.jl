@@ -25,21 +25,21 @@ Various views of the data:
 
 See also [`airfun`](@ref) and [`airtable`](@ref).
 """
-struct airfoil
-    Ma::AbstractVector{Float64}
-    cl::AbstractVector{Float64}
-    τ::AbstractVector{Float64}
-    Re::Float64 # Data assumed for a single Re
-  
-    A::AbstractArray{Float64} # Airfoil aero data 
+@kwdef mutable struct airfoil
+    Ma::AbstractVector{Float64} = []
+    cl::AbstractVector{Float64} = []
+    τ::AbstractVector{Float64} = []
+    Re::Float64 = 0.0 # Data assumed for a single Re
     
-    A_M::AbstractArray{Float64}
-    A_τ::AbstractArray{Float64}
-    A_cl::AbstractArray{Float64}
-    A_M_τ::AbstractArray{Float64}
-    A_M_cl::AbstractArray{Float64}
-    A_cl_τ::AbstractArray{Float64}
-    A_M_cl_τ::AbstractArray{Float64}
+    A::AbstractArray{Float64} = empty_array # Airfoil aero data 
+    
+    A_M::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
+    A_τ::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
+    A_cl::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
+    A_M_τ::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
+    A_M_cl::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
+    A_cl_τ::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
+    A_M_cl_τ::AbstractArray{Float64} = zeros(Float64, 1, 1, 1, 1)
 end 
 
 function Base.show(io::IO, airf::airfoil)

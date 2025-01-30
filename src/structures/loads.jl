@@ -50,13 +50,13 @@ specified coordinate `frame`
 
 $(TYPEDFIELDS)
 """
-mutable struct Weight <: AbstractLoad
+@kwdef mutable struct Weight <: AbstractLoad
     """Weight [N]"""
-    W::Float64
+    W::Float64 = 0.0
     """Location {x,y,z} [m]"""
-    r::SVector{3, Float64}
+    r::SVector{3, Float64} = SA[0.0, 0.0, 0.0]
     """Coordinate Frame"""
-    frame::Frame
+    frame::Frame = WORLD
 end
 
 """
@@ -66,15 +66,36 @@ function Weight(W::Float64, r::AbstractVector)
     Weight(W, r, WORLD)
 end  # function Weight
 
-"""
-    Weight(;W::Float64, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+# """
+# Keyword constructor for `Weight` type, can use r or x, y, z as inputs.
 
-$(TYPEDSIGNATURES)
+#     Weight(;W::Float64, r::Vector{Float64}=[0.0, 0.0, 0.0], frame::Frame=WORLD)
 
-"""
-function Weight(;W::Float64=0.0, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
-    Weight(W, SA[x,y,z], frame)
-end
+# OR
+
+#     Weight(;W::Float64, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+
+# $(TYPEDSIGNATURES)
+
+# """
+# function Weight(; W::Float64=0.0, r=nothing, 
+#     x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+
+#     # If `r` is explicitly provided, prioritize it
+#     if ~isnothing(r)
+#         if isa(r, AbstractVector{Float64}) && length(r) == 3
+#             return Weight(W, r, frame)
+#         else
+#             error("position (r) of Weight must be a 3-element vector of floats.")
+#         end
+#     # Otherwise, use `x`, `y`, and `z`
+#     else
+#         return Weight(W, SA[x, y, z], frame)
+#     end #end if
+# end #end function
+# function Weight(;W::Float64=0.0, x::Float64=0.0, y::Float64=0.0, z::Float64=0.0, frame::Frame=WORLD)
+#     Weight(W, SA[x,y,z], frame)
+# end
 
 import Base.+, Base.*
 
