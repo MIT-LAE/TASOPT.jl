@@ -23,7 +23,7 @@ Output is customizable by:
     - `ac::TASOPT.aircraft`: TASOPT aircraft `struct` containing model in any state. 
     - `filepath::String`: path and name of .csv file to be written.
     - `overwrite::Bool`: deletes existing file at filepath when true, default is false.
-    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: specifies desired indices of par arrays given as keys. Customizable; built-in options: [`default_output_indices`](@ref), `output_indices_all`, `output_indices_wGeom`, and `output_indices_wGeom`.
+    - `indices::Dict{String => Union{AbstractVector,Colon(), Integer}}`: specifies desired indices of par arrays given as keys. Customizable; built-in options: [`default_output_indices`](@ref), `output_indices_all`, and `output_indices_wEngine`.
     - `includeMissions::Union{AbstractVector,Colon,Bool,Integer}`: saves all mission entries as an array in a CSV cell when true, default is false, inner nested array when flight points are also output. specific indices can also be specified as Vectors of Ints.
     - `includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer}`: saves all flight point entries as an array in a CSV cell when true, default is false, outer nested array when missions are also output. specific indices can also be specified as Vectors of Ints.
     - `forceMatrices::Bool`: forces all entries that vary with mission and flight point to follow nested array structure
@@ -47,23 +47,38 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
 
     #initialize row to write out
     csv_row = []
+    #initalize header row to assess compatibility, and maybe write out
+    header = ["Model Name","Description","Sized?"]
+    par_array_names = ["pari", "parg", "parm", "para", "pare"] #used for checking/populating indices Dict, deleting from struct
 
     #pull name and description, removing line breaks and commas
     append!(csv_row, [ac.name, 
-                     replace(ac.description, r"[\r\n,]" => ""),
+                     replace(ac.description, r"[\r\n,]" => " "),
                      ac.sized[1]])
 
-    par_array_names = ["pari", "parg", "parm", "para", "pare"] #used for checking/populating indices Dict
+    #flatten the struct into a list of names and values
+    titles, values = flatten_struct(ac) 
+    #remove par arrays from titles and values (the contents will be appended later)
+    par_array_indices = findall(title -> any( contains.(title, par_array_names) ), titles)
+    titles = deleteat!(titles, par_array_indices)
+    values = deleteat!(values, par_array_indices)
+    #append the rest of the struct to the row
+    append!(csv_row, values)
+    append!(header, titles)
+
+
     #if all outputs are desired, map all par arrays to colon() for data pull below
-    if indices in [Colon(), Dict()]
+    if indices in [Colon(), Dict()] #if indices is Colon() or an EMPTY dict()
         indices = Dict(name => Colon() for name in par_array_names)
-    #if desired output indices are indicated, check inputs
+    #if desired output indices are indicated...
     elseif indices isa Dict
         for indexkey in keys(indices)
+            # ...if key is not in valid names dict, remove it
             if !(indexkey in par_array_names)
                 @warn "indices Dict for csv_output() contains an unparsable key: "*String(indexkey)*". Removing key and continuing."
                 delete!(indices,indexkey)
-            elseif indices[indexkey] != Colon() #if indexkey is okay and not Colon()
+            # ...else if key is not Colon(), ensure there are no repeats
+            elseif indices[indexkey] != Colon()
                 #remove duplicate indices in array because CSV.jl can't handle them
                 oldlen = length(indices[indexkey])
                 indices[indexkey] = union(indices[indexkey])
@@ -72,7 +87,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
                 end
             end
         end
-    else
+    else #complain if not as expected
         throw(ArgumentError("indices parameter must be Dict or Colon()"))
     end
 
@@ -107,8 +122,9 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
                     ac.parg[indices["parg"]])
 
     #append mission-dependent arrays
-    append!(csv_row,array2nestedvectors(ac.parm[indices["parm"], includeMissions]))
+    append!(csv_row, array2nestedvectors(ac.parm[indices["parm"], includeMissions])) #append to csv_rows
 
+    #append flight-point- and mission-dependent arrays
     if (indices["para"]==Colon()) || !isempty(indices["para"])    #explicit check required, lest an empty [] be appended
         append!(csv_row,array2nestedvectors(ac.para[indices["para"], includeFlightPoints , includeMissions]))
     end
@@ -124,7 +140,6 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     par_indname_dict = generate_par_indname(suffixes) #gets dictionary with all index var names via global scope
 
     #get column names in order
-    header = ["Model Name","Description","Sized?"]
     for suffix in suffixes
         append!(header,par_indname_dict["par"*suffix][indices["par"*suffix]])
     end
@@ -145,9 +160,39 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     end
 
     io = open(newfilepath,"a+")
-    CSV.write(io, Tables.table(csv_row), header = header, append = bool_append)
+    CSV.write(io, Tables.table(csv_row), header = header, append = bool_append,
+                    delim=',', quotechar='"')
     close(io)
     return newfilepath
+end
+
+
+
+function flatten_struct(s, prefix="")
+    T = typeof(s)
+    #get all field names and values of current struct
+    field_names = String.(collect(fieldnames(T))) 
+    field_values = [getfield(s, f) for f in fieldnames(T)]
+
+    flat_names = []
+    flat_values = []
+    
+    #iterate over field-value pairs
+    for (name, value) in zip(field_names, field_values)
+        full_name = prefix * name #add prefix to name if this struct is a field of another struct
+        #if value is a struct, call recursively
+        if isstructtype(typeof(value)) && !(value isa AbstractArray)
+            sub_names, sub_values = flatten_struct(value, full_name * ".")
+            append!(flat_names, sub_names)
+            append!(flat_values, sub_values)
+        else
+            push!(flat_names, full_name)
+            push!(flat_values, value)
+            # push!(flat_values, string(value))   #ensure value is a string for CSV writing - unclear if necessary
+        end
+    end
+
+    return flat_names, flat_values
 end
 
 """
@@ -226,14 +271,9 @@ default_output_indices =
     Dict("pari" => Colon(),
         "parg" => [#weights
                     igWMTO, igWfuel, igWpay, igWpaymax, igflgnose,igflgmain,
-                    #FIX: wing params no more
-                   # igWweb,igWcap, igfflap,igfslat, igfaile, igflete, igfribs, igfspoi, igfwatt,
-                 #igWwing, igWvtail, igWhtail, 
-                 igWtesys, igWftank, 
-                    
+                    igWtesys, igWftank, 
                     #other
                     igdfan, igGearf,
-
                     #performance, different from im?
                     igRange
                     ],
@@ -245,19 +285,6 @@ default_output_indices =
                     ],
         "pare" => [iehfuel, ieTfuel, ieff, ieTSFC, ieBPR, ieOPR, iepif, iepilc, iepihc
         ])
-                     
-output_indices_wGeom = deepcopy(default_output_indices)
-#append geometry params
-parginds = output_indices_wGeom["parg"]
-parg_toadd = [
-    #FIX: wing params no more
-    #igAR, igS, igb, igbo, igbs, igco, iglambdat, iglambdas, igsweep, #wing geom
-                #stabilizers geom
-                #igVh, igARh, igSh, igbh, igboh, iglambdah, igcoh, igsweeph, 
-                #igVv, igARv, igSv, igbv, igbov, iglambdav, igcov, igsweepv,
-                ]
-append!(parginds, parg_toadd)
-output_indices_wGeom["parg"] = parginds
 
 output_indices_wEngine = deepcopy(default_output_indices)
 #append engine params
