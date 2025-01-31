@@ -1,7 +1,7 @@
 # 1. Import modules
-using PythonPlot
 using TASOPT
 using Printf
+using Plots
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
@@ -15,7 +15,7 @@ farray = []
 PFEIarray = []
 CDarray = []
 OPRarray = []
-track_fig = nothing
+plot_obj = nothing
 ft_to_m = 0.3048
 
 # Load default model
@@ -126,13 +126,13 @@ upper      = [11.0, 0.60, 30.0, 10900.0, 0.85, 0.4,  0.15,   0.15,   1.3,   1.0,
 initial    = [10.5, 0.57, 26.0, 10668.0, 0.7, 0.25, 0.1268, 0.1266, 1.238, 0.9, 1580.0, 12.0, 1.685, 3.0 ]
 
 # Set initial changes
-initial_dx = [ 0.5,  0.05, 0.1, 100.0, 0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.2]
+initial_dx = [ 0.5,  0.05, 0.1, 100.0, 0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.05, 0.01]
 
 # # Set initial values
 initial =[
         ac.parg[igAR], 33000.0, 0.57, ac.parg[igsweep], 
         ac.parg[iglambdas], ac.parg[iglambdat], ac.parg[ighboxo], 
-        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
+        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66, 3.0
 ]
 
 # Set FTOL
@@ -156,30 +156,34 @@ numevals = opt.numevals # the number of function evaluations
 
 println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
 
-figure()
 savedir = "./example/optimization/"
 if !isdir(savedir)
     # If it doesn't exist, create the "optimization" directory
     mkdir(savedir)
     println("The 'optimization' directory has been created.")
 end
-figname = "Opt_tutorial_ac_details"
-global track_fig = TASOPT.plot_details(ac; ax = track_fig)
-plt.savefig(savedir*figname*".png")
 
-fig, ax = plt.subplots(2,2, figsize = (12,8))
-ax[1].plot(PFEIarray)
-ax[1].set_xlabel("Iterations")
-ax[1].set_ylabel("PFEI (J/Nm)")
-ax[2].semilogy(farray)
-ax[2].set_xlabel("Iterations")
-ax[2].set_ylabel("Objective f")
-ax[3].plot(CDarray)
-ax[3].set_xlabel("Iterations")
-ax[3].set_ylabel("CD")
-ax[4].plot(OPRarray)
-ax[4].set_xlabel("Iterations")
-ax[4].set_ylabel("OPR")
-plt.suptitle("Optimization outputs")
+figname = "Opt_tutorial_ac_details"
+summplot = TASOPT.plot_details(ac, plot_obj=plot_obj)
+savefig(summplot, savedir*figname*".png")
+
+
+## Second figure
+# Create a 2x2 layout
+layout = @layout [a b; c d]
+
+p1 = plot(PFEIarray, xlabel="Iterations", ylabel="PFEI (J/Nm)", title="")
+p2 = plot(farray, yscale=:log10, xlabel="Iterations", ylabel="Objective f", title="")
+p3 = plot(CDarray, xlabel="Iterations", ylabel="CD", title="")
+p4 = plot(OPRarray, xlabel="Iterations", ylabel="OPR", title="")
+
+# Create the plot
+p = plot(p1, p2, p3, p4,    
+    layout = layout,
+    size=(1200, 800),
+    plot_title="Optimization outputs"
+)
+
+# Save the plot
 figname2 = "Opt_tutorial_iterations"
-fig.savefig(savedir*figname2*".png")
+savefig(p, savedir * figname2 * ".png")

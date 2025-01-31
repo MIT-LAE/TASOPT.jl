@@ -29,6 +29,6 @@ summary(example_ac)
 # TASOPT.geometry(example_ac)
 
 # 5) Plot figures
-using PythonPlot
-TASOPT.stickfig(example_ac)
-pyplot.savefig("Example.png")
+using Plots
+p = TASOPT.stickfig(example_ac)
+savefig(p, "Example.png")
