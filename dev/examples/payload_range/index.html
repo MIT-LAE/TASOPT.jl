@@ -6,7 +6,6 @@
                             #[&quot;3000.0 nmi&quot;, &quot;500.0 nmi&quot;, &quot;2500.0 nmi&quot;, &quot;3550.0 nmi&quot;, &quot;3734.0 nmi&quot;] # Design Range + second mission range
     weight_per_pax = &quot;215.0 lbf&quot; # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] </code></pre><h2 id="Julia-script-for-Payload-Range-Diagram"><a class="docs-heading-anchor" href="#Julia-script-for-Payload-Range-Diagram">Julia script for Payload Range Diagram</a><a id="Julia-script-for-Payload-Range-Diagram-1"></a><a class="docs-heading-anchor-permalink" href="#Julia-script-for-Payload-Range-Diagram" title="Permalink"></a></h2><p>Start the script importing <code>TASOPT.jl</code> and then loading the default <code>aircraft</code> model.</p><pre><code class="language-julia hljs"># Import modules
-using PythonPlot
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
@@ -62,13 +61,25 @@ maxPay = ac.parm[imWpay ]</code></pre><h2 id="Main-iteration-loop"><a class="doc
     else
         append!(PayloadToPlot, maxPay)
     end
-end</code></pre><h2 id="Plot-Payload-Range-diagram"><a class="docs-heading-anchor" href="#Plot-Payload-Range-diagram">Plot Payload Range diagram</a><a id="Plot-Payload-Range-diagram-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-Payload-Range-diagram" title="Permalink"></a></h2><pre><code class="language-julia hljs">using PythonPlot
-fig, ax = pyplot.subplots(figsize=(8,5), dpi = 300)
-ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle=&quot;-&quot;,  color=&quot;b&quot;, label=&quot;Payload &quot;)
-ax.set_xlabel(&quot;Range (1000 nmi)&quot;)
-ax.set_ylabel(&quot;Weight (1000 kg)&quot;)
-ax.legend()
-ax.set_title(&quot;Payload Range Plot&quot;)
-ax.grid()
+end</code></pre><h2 id="Plot-Payload-Range-diagram"><a class="docs-heading-anchor" href="#Plot-Payload-Range-diagram">Plot Payload Range diagram</a><a id="Plot-Payload-Range-diagram-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-Payload-Range-diagram" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Plots
 
-fig.savefig(&quot;./PayloadRangeExample.png&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../loadingrunning/">« Loading and running</a><a class="docs-footer-nextpage" href="../NM_optimization/">Nelder Mead »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Friday 17 January 2025 13:20">Friday 17 January 2025</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+#unit conversions
+x = RangesToPlot ./ (1000 * 1852.0) #to nmi
+y = PayloadToPlot ./ (9.8 * 1000) #to tonnes
+
+# Create the plot
+p = plot(x, y,
+    label = &quot;Payload&quot;,
+    linestyle = :solid, 
+    color = :blue,
+    xlabel = &quot;Range [1000 nmi]&quot;,
+    ylabel = &quot;Weight [tonnes]&quot;,
+    title = &quot;Payload Range Plot&quot;,
+    grid = true,
+    dpi = 300,
+    size = (800, 500)
+)
+
+# Save the plot to a file
+savefig(p, &quot;./PayloadRangeExample.png&quot;)
+</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../loadingrunning/">« Loading and running</a><a class="docs-footer-nextpage" href="../NM_optimization/">Nelder Mead »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Friday 31 January 2025 18:23">Friday 31 January 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
