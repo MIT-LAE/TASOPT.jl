@@ -46,7 +46,6 @@ jobs:
         uses: julia-actions/julia-runtest@v1
         with:
           depwarn: 'error'
-          annotate: true
         continue-on-error: true
 
 
