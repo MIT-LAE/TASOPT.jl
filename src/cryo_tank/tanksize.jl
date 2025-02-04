@@ -30,10 +30,10 @@ function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::F
         t_cond = fuse_tank.t_insul
         Wfuel = fuse_tank.Wfuelintank
         Tfuel = fuse_tank.Tfuel
-        flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
+        sizes_insulation = fuse_tank.sizes_insulation #Boolean for whether to size for a boiloff rate
         TSL = fuse_tank.TSLtank
 
-        if flag_size #If insulation is sized for a given boiloff rate
+        if sizes_insulation #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
                 iinsuldes = fuse_tank.iinsuldes
 
@@ -76,9 +76,9 @@ function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::F
         Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
         Sinternal, Shead_insul, l_inner = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
+        has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
-        if flag_vacuum #If tank is double-walled
+        if has_vacuum #If tank is double-walled
                 Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 
@@ -185,17 +185,17 @@ This function checks if any of the insulation layers requires a vacuum.
         - `material_insul::Vector{ThermalInsulator}`: vector with layer materials
 
         **Outputs:**
-        - `flag_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
+        - `has_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
 """
 function check_vacuum(material_insul::Vector{ThermalInsulator})
         vacuum_materials = ["vacuum", "microspheres"] #currently supported options are vacuum and microspheres
 
-        flag_vacuum = false
+        has_vacuum = false
         for material in material_insul
                 if lowercase(material.name) in vacuum_materials
-                        flag_vacuum = true
+                        has_vacuum = true
                 end
         end
 
-        return flag_vacuum
+        return has_vacuum
 end

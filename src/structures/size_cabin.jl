@@ -120,8 +120,8 @@ function arrange_seats(seats_per_row, cabin_width,
     yseats = zeros(seats_per_row)
     yseats[1] = fuse_offset + seat_width/2 #First seat is window seat
     for i = 2:seats_per_row
-        flag_aisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
-        yseats[i] = yseats[i - 1] + seat_width + flag_aisle*2*exp_aisle_halfwidth
+        has_aisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
+        yseats[i] = yseats[i - 1] + seat_width + has_aisle*2*exp_aisle_halfwidth
     end
 
     #Shift seat coordinates to start in centerline
