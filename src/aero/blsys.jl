@@ -1,8 +1,7 @@
-using Test
 using StaticArrays
 
 """
-    blsys(simi, lami, wake, direct, Mach, uinv, hksep,
+    blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv, hksep,
           x, b, rn, th, ds, ue,
           h , h_th, h_ds,
           hk, hk_th, hk_ds, hk_ue,
@@ -22,10 +21,10 @@ Computes Jacobian matrices for BL solution at an axial station. Called repeatedl
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `simi::Integer`: Self-similar BL profile flag.
-      - `lami::Integer`: Laminar flow flag.
-      - `wake::Integer`: In wake? Flag.
-      - `direct::Integer`: Direct solution flag.
+      - `is_selfsimilar::Bool`: Self-similar BL profile flag.
+      - `is_laminar::Bool`: Laminar flow flag.
+      - `is_wake::Bool`: In wake? Flag.
+      - `solves_direct::Bool`: Direct solution flag.
       - `Mach::Float64`: Mach number for compressibility.
       - `uinv::Float64`: Inviscid velocity.
       - `x::Float64`: Arc length.
@@ -51,7 +50,7 @@ Computes Jacobian matrices for BL solution at an axial station. Called repeatedl
 
 See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
 """
-function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
+function blsys(is_selfsimilar,is_laminar,is_wake,solves_direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -87,7 +86,7 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
       rhm = amsq^(1.0/gmi)
       rhm_uem = rhm/(gmi*amsq) * amsq_uem
 
-      if(simi)
+      if is_selfsimilar
        xl = 1.0
        bl = 1.0
        rl = 0.0
@@ -278,7 +277,7 @@ function blsys(simi,lami,wake,direct, Mach, uinv,hksep,
       bb[2,2] = hl_dsm - dcxa_dsm*xl + btmp_dsm*ul
       bb[2,3] = hl_uem - dcxa_uem*xl + btmp_uem*ul + btmp * ul_uem
 
-      if(direct)
+      if(solves_direct)
        rr[3]   = ue - uinv
        aa[3,1] = 0.
        aa[3,2] = 0.
@@ -301,15 +300,15 @@ end # blsys
 
 
 """
-    blvar(simi, lami, wake, Reyn, Mach, fexcr, x, θ, δs, ue)
+    blvar(is_selfsimilar, is_laminar, is_wake, Reyn, Mach, fexcr, x, θ, δs, ue)
 
 Returns the boundary layer variables needed for solution.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `simi::Integer`: Self-similar BL profile flag.
-      - `lami::Integer`: Laminar flow flag.
-      - `wake::Integer`: In wake flag.
+      - `is_selfsimilar::Bool`: Self-similar BL profile flag.
+      - `is_laminar::Bool`: Laminar flow flag.
+      - `is_wake::Bool`: In wake flag.
       - `Reyn::Float64`: Reynolds number.
       - `Mach::Float64`: Mach number for compressibility.
       - `fexcr::Float64`: Excrescence factor.
@@ -323,7 +322,7 @@ Returns the boundary layer variables needed for solution.
       - `cd::Float64`: Dissipation factor and their derivatives.
 
 """
-function blvar(simi,lami,wake, Reyn,Mach, fexcr,
+function blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
       acon = 6.0
@@ -360,7 +359,7 @@ function blvar(simi,lami,wake, Reyn,Mach, fexcr,
       rt_ue = rh   *θ/mu + rh_ue*ue*θ/mu  - (rt/mu)*mu_ue
       rt_θ = rh*ue   /mu
 
-      if(lami)
+      if(is_laminar)
        (hs, hs_hk, hs_rt, hs_msq) = hsl( hk, rt, msq)
       else
        (hs, hs_hk, hs_rt, hs_msq) = hst( hk, rt, msq)
@@ -379,13 +378,13 @@ function blvar(simi,lami,wake, Reyn,Mach, fexcr,
       ∂hc_∂θ = 0.5*gmi*msq   *∂h_∂θ
       ∂hc_∂δs = 0.5*gmi*msq   *∂h_∂δs
 
-      if(wake) 
+      if(is_wake) 
        cf    = 0.
        ∂cf_∂θ = 0.
        ∂cf_∂δs = 0.
        cf_ue = 0.
       else
-       if(lami)
+       if(is_laminar)
         (cf, cf_hk, cf_rt, cf_msq) = cfl( hk, rt, msq )
        else
         (cf, cf_hk, cf_rt, cf_msq) = cft( hk, rt, msq )
@@ -400,7 +399,7 @@ function blvar(simi,lami,wake, Reyn,Mach, fexcr,
        cf_ue = cf_hk*hk_ue + cf_rt*rt_ue + cf_msq*msq_ue
       end
 
-      if(lami) 
+      if(is_laminar) 
        (𝒟ᵢ, 𝒟ᵢ_hk, 𝒟ᵢ_rt) = 𝒟ᵢl( hk, rt )
        ∂𝒟ᵢ_∂θ = 𝒟ᵢ_hk*∂hk_∂θ + 𝒟ᵢ_rt*rt_θ
        ∂𝒟ᵢ_∂δs = 𝒟ᵢ_hk*∂hk_∂δs
@@ -433,7 +432,7 @@ function blvar(simi,lami,wake, Reyn,Mach, fexcr,
        𝒟ᵢ_ue = 𝒟ᵢ_cf*cf_ue + 𝒟ᵢ_hk*hk_ue + 𝒟ᵢ_uq*uq_ue
       end
 
-      if(wake) 
+      if(is_wake) 
        wfac = 2.0
        𝒟ᵢ    = wfac*𝒟ᵢ
        ∂𝒟ᵢ_∂θ = wfac*∂𝒟ᵢ_∂θ
