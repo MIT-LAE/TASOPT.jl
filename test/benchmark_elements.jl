@@ -226,7 +226,7 @@ function benchmark_drag()
     println("Benchmarking... cdsum!")
     bench = @benchmarkable aerodynamics.cdsum!($pari, $parg, 
     $view(para, :, 10),
-    $view(pare,:, 10), $(1)) seconds=30 evals=1
+    $view(pare,:, 10), $(true)) seconds=30 evals=1
     bench_cdsum = run(bench)
 
 
