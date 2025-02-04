@@ -50,7 +50,7 @@ Computes Jacobian matrices for BL solution at an axial station. Called repeatedl
 
 See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
 """
-function blsys(is_selfsimilar,is_laminar,is_wake,solves_direct, Mach, uinv,hksep,
+function blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -86,7 +86,7 @@ function blsys(is_selfsimilar,is_laminar,is_wake,solves_direct, Mach, uinv,hksep
       rhm = amsq^(1.0/gmi)
       rhm_uem = rhm/(gmi*amsq) * amsq_uem
 
-      if is_selfsimilar
+      if (is_selfsimilar)
        xl = 1.0
        bl = 1.0
        rl = 0.0
