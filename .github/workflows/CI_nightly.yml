@@ -48,17 +48,5 @@ jobs:
           depwarn: 'error'
         continue-on-error: true
 
-      - name: Run tests, note depwarns
-        run: |
-          # Run the tests and capture depwarns
-          julia --project -e "
-          using Pkg
-          Pkg.instantiate()
-          Pkg.test()
-          " 2>&1 | tee result.log | grep 'DeprecationWarning' | while read -r line; do
-            echo "::warning file=result.log::\$line"
-          done
-        env:
-          JULIA_DEPWARN: error
 
 
