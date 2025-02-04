@@ -31,13 +31,6 @@
     rm(filepath_nopay)
 
 #B: quicksaves and loads
-
-    #!!!
-    #TODO: quicksaves need to be updated to handle struct formats
-    # the quicksaves largely work, but they haven't been checked/properly tested
-    #until then, these need to be disabled
-
-    
     #test that quicksave/load roundtrip default aircraft sizes identically to default load
     filepath_quick = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick.toml")
     quicksave_aircraft(load_default_model(), filepath_quick)
@@ -50,20 +43,15 @@
     #check via MTOW that changing an important parameter survives the quicksave
     # and changes the solution
     filepath_quick_nopay = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick_nopay.toml")
-    ac_quick.parm[imWpay] = 1
+    ac_quick.parm[imWpay] = ac_def.parm[imWperpax, 1] * 30 #thirty pax in N
     quicksave_aircraft(ac_quick, filepath_quick_nopay)
 
     ac_quick_nopay_reread = quickload_aircraft(filepath_quick_nopay)
     size_aircraft!(ac_quick_nopay_reread, Ldebug=false, printiter=false, saveOD=false)
-    @test_broken ac_quick_nopay_reread.parg[igWMTO] ≈ ac_lopay.parg[igWMTO]
+    @test ac_quick_nopay_reread.parg[igWMTO] ≈ ac_lopay.parg[igWMTO]
     rm(filepath_quick_nopay)
 
 #C: outputs to .csv
-
-    #!!!
-    #TODO: these work! (hence "unexpected pass") but they need to be updated to handle struct formats
-    #currently, those parameters are glossed over entirely. probably some circumstance that breaks
-
     using CSV
     #generate file paths
     filepath_csv = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_def.csv")
@@ -83,31 +71,29 @@
                 includeMissions = false, includeFlightPoints = true,
                 forceMatrices = true)
     output_csv(ac_def, filepath_csv, includeFlightPoints = true)
-    output_csv(ac_def, filepath_csv, indices = output_indices_wGeom)
+
+    #this call generates the second file since indices don't match and fuse_tank excluded
+    output_csv(ac_def, filepath_csv, indices = Dict(), struct_excludes = ["fuse_tank"])
     
     #test that it creates the files as expected
     @test isfile(filepath_csv)
-    #TODO: output_indices approach needs re-doing after incorporation of wing
-    @test_broken isfile(filepath_csv2)
+    @test isfile(filepath_csv2)
     
     #pull the files
     csv1 = CSV.File(filepath_csv)
-    #TODO: uncomment when above test is fixed
-    # csv2 = CSV.File(filepath_csv2)
+    csv2 = CSV.File(filepath_csv2)
 
     #check row and column counts
-        #TODO: uncomment when above test is fixed
-# @test size(csv1,1) == 4 #4 rows w default indices
-    # @test size(csv2,1) == 1 #1 row with addl indices
+    @test size(csv1,1) == 4 #4 rows w default indices
+    @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test_broken length(csv1[1]) == 72 # = indices in default_output_indices
-    @test_broken length(csv2[1]) == 97 # = indices in output_indices_wGeom
+    @test length(csv1[1]) == 749 # = entries w/ full ac struct and in default_output_indices
+    @test length(csv2[1]) == 1166 # = entries w/ full ac struct and all output_indices
 
-    #test the nested vector Structures
+    #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 
     @test parse(Float64, string(csv1[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
-    #TODO: uncomment when above test is fixed
-    # @test parse(Float64, string(csv2[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
+    @test parse(Float64, string(csv2[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
     
     #b: row 2 has the correct structure (m flight points, n missions)
     #note - for simplicity of imports, evaluate structure by counting brackets
@@ -123,9 +109,16 @@
     entry4 = csv1[4].iaalt
     @test count(ichar->(ichar=='['), entry4) == 1
 
+    #test that structs are properly saved
+    #a: check fuselage detail, wing detail
+    @test csv1[1][Symbol("fuselage.layout.cross_section.radius")] == ac_def.fuselage.layout.cross_section.radius
+    @test csv2[1][Symbol("wing.inboard.cross_section.thickness_to_chord")] == ac_def.wing.inboard.cross_section.thickness_to_chord
+
+    #b: test exclusion of structs when indicated
+    @test !haskey(csv2[1], Symbol("fuse_tank.tank_type")) #excluded
+
     #cleanup
     rm(filepath_csv)
-    #TODO: uncomment when above test is fixed
-    # rm(filepath_csv2)
+    rm(filepath_csv2)
 
 end #testset "io"
