@@ -27,6 +27,7 @@ Output is customizable by:
     - `includeMissions::Union{AbstractVector,Colon,Bool,Integer}`: saves all mission entries as an array in a CSV cell when true, default is false, inner nested array when flight points are also output. specific indices can also be specified as Vectors of Ints.
     - `includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer}`: saves all flight point entries as an array in a CSV cell when true, default is false, outer nested array when missions are also output. specific indices can also be specified as Vectors of Ints.
     - `forceMatrices::Bool`: forces all entries that vary with mission and flight point to follow nested array structure
+    - `struct_excludes::AbstractVector{String}`: names/substrings of fields to exclude from output of ac struct. Default is `[]`, excluding nothing.
     **Outputs:**
     - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
 """
@@ -35,15 +36,8 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     overwrite::Bool = false, indices::Dict = default_output_indices,
     includeMissions::Union{AbstractVector,Colon,Bool,Integer} = false, 
     includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer} = false,
-    forceMatrices::Bool = false)
-
-    """
-    #TODO:
-    - human-readable column names - lookup with /another/ dict
-        currently column headers are index vars - e.g., iifuel, ieA5fac
-        desire human readable. can generate a lookup dict: index2string["pari"][iifuel] = "fuel_type"
-    - bug: bonus rows of last #? (comes from mismatch of headers and cells)
-    """
+    forceMatrices::Bool = false,
+    struct_excludes::AbstractVector = [])
 
     #initialize row to write out
     csv_row = []
@@ -56,16 +50,24 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
                      replace(ac.description, r"[\r\n,]" => " "),
                      ac.sized[1]])
 
-    #flatten the struct into a list of names and values
-    titles, values = flatten_struct(ac) 
-    #remove par arrays from titles and values (the contents will be appended later)
-    par_array_indices = findall(title -> any( contains.(title, par_array_names) ), titles)
-    titles = deleteat!(titles, par_array_indices)
-    values = deleteat!(values, par_array_indices)
-    #append the rest of the struct to the row
-    append!(csv_row, values)
-    append!(header, titles)
-
+    #if the entire struct is not excluded from output
+    if length(intersect(struct_excludes, ["aircraft","ac", "all"])) < 1
+        #flatten the struct into a list of names and values
+        titles, values = flatten_struct(ac) 
+        #remove par arrays from titles and values (the contents will be appended later)
+        par_array_indices = findall(title -> any( contains.(title, par_array_names) ), titles)
+        titles = deleteat!(titles, par_array_indices)
+        values = deleteat!(values, par_array_indices)
+        #remove any fields that contain the substrings in struct_excludes
+        if !isempty(struct_excludes)
+            exclude_indices = findall(title -> any( contains.(title, struct_excludes) ), titles)
+            titles = deleteat!(titles, exclude_indices)
+            values = deleteat!(values, exclude_indices)
+        end
+        #append the rest of the struct to the row
+        append!(csv_row, values)
+        append!(header, titles)
+    end
 
     #if all outputs are desired, map all par arrays to colon() for data pull below
     if indices in [Colon(), Dict()] #if indices is Colon() or an EMPTY dict()
