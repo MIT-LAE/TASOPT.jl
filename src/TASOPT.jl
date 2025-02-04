@@ -129,5 +129,6 @@ function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
     #if sized properly, mark as such
     #TODO: apply logic and exit codes to make check more robust
     ac.sized .= true
+    ;
 end
 end
