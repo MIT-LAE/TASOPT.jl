@@ -1,3 +1,7 @@
+# This job checks the "nightly" build of Julia for deprecation warnings in the dependencies. 
+# Thus, we'll get a heads-up if something may break, and if it needs to be fixed by us or the dependency devs. 
+# Since nightly is the latest *unstable* version, this job is expected to fail often, hence continue-on-error: true (love a green check-mark)
+
 name: CI_nightly
 on:
   push:
