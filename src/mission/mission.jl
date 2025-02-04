@@ -338,11 +338,11 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
                   if (ip == ipclimb1)
-                        icdfun = 0 #use explicitly specified wing cdf, cdp
+                        computes_surfcd = false #use explicitly specified wing cdf, cdp
                   else
-                        icdfun = 1 #use airfoil database
+                        computes_surfcd = true #use airfoil database
                   end
-                  cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
+                  cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, computes_surfcd)
 
             icall = 1
             icool = 1
@@ -450,8 +450,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             # println("Calculating cruise point")
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
-            icdfun = 1
-            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
+            computes_surfcd = true
+            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, computes_surfcd)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -532,8 +532,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
 
       # Calc Drag
-      icdfun = 1
-      cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  icdfun)
+      computes_surfcd = true
+      cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  computes_surfcd)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -681,12 +681,12 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp
-                  icdfun = 0
+                  computes_surfcd = false
             else
                   # use airfoil database for wing cdf,cdp
-                  icdfun = 1
+                  computes_surfcd = true
             end
-            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, icdfun)
+            cdsum!(parg, view(para, :, ip), view(pare, :, ip), wing, htail, vtail, computes_surfcd)
 
             # set up for engine calculation
             sing = sin(gamVde)

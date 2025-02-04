@@ -1,8 +1,8 @@
 """
-    cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
+    cdsum!(parg,para,pare, wing, htail, vtail, computes_surfcd)
 
 Calculates aircraft `CD` components for operating point, ipoint.
-If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
+If `computes_surfcd` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
 otherwise uses default values in para array. Called by `mission!`, `wsize`, `takeoff!`, and `odperf!`.
 
 The total drag is computed by
@@ -32,7 +32,7 @@ where:
       - `Wing::TASOPT.Wing`: Wing Structure.
       - `Htail::TASOPT.Tail`: Htail Structure.
       - `Vtail::TASOPT.Tail`: Vtail Structure.
-      - `icdfun::Integer`: Flag if drag should be computed (=1) or if para values should be used (=0).
+      - `computes_surfcd::Bool`: Flag if drag should be computed with `surfcd2` (true) or if para values should be used (false).
 
       **Outputs:**
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
@@ -44,7 +44,7 @@ See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@r
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
+function cdsum!(parg,para,pare, wing, htail, vtail, computes_surfcd)
 
       Ldebug = false
 #      Ldebug = true
@@ -92,7 +92,7 @@ function cdsum!(parg,para,pare, wing, htail, vtail, icdfun)
       Reco = Reunit*wing.layout.root_chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      if (icdfun==1) 
+      if (computes_surfcd) 
 #----- integrated across span for CDwing
 
       # if(Ldebug) write(*,*) 'calling SURFCD2...'

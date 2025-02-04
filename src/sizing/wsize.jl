@@ -833,7 +833,8 @@ function wsize(ac; itermax=35,
         para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
 
         # Drag buildup cdsum()
-        cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  1)
+        computes_surfcd = true
+        cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  computes_surfcd)
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])

@@ -5,7 +5,7 @@
             fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
-Called by [`cdsum!`](@ref) if `icdfun` flag set to 1.
+Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -180,7 +180,7 @@ end # surfcd2
     aRexp, kSuns, fCDcen)
 
 Computes wing or tail surface profile CD from pre-computed chord quantities and corrections.
-Called by [`cdsum!`](@ref) if `icdfun` flag set to 0.
+Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
 
 !!! compat "Future Changes" 
       This function may be renamed for clarity of use.

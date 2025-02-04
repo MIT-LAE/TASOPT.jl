@@ -142,14 +142,14 @@ for   i = 1:N
         
         # Calculate Drag
         if (i == 1)
-            icdfun = 0
+            computes_surfcd = false
         else 
-            icdfun = 1
+            computes_surfcd = true
         end
         if CL > 0.9
-            icdfun = 0
+            computes_surfcd = false
         end
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
 
         #BLI parameters
         ρ0 = pare[ierho0, ip]
@@ -241,13 +241,13 @@ for   i = 1:N
         #Trim aircraft
         itrim = 1
         balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
-        icdfun = 1
+        computes_surfcd = true
         if CL > 1.0
             println("CL during cruise is $CL")
-            icdfun = 0
+            computes_surfcd = false
         end
         #Get Drag
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         F  = BW*(DoL) #zero climb angle for cruise
