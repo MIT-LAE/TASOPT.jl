@@ -426,7 +426,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.fueltype = fueltype
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
-    fuse_tank.size_insulation = readfuel_storage("size_insulation")
+    fuse_tank.sizes_insulation = readfuel_storage("sizes_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
     insul_mats_names = readfuel_storage("insulation_material")
     insul_mats = []
@@ -434,7 +434,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
         push!(insul_mats, ThermalInsulator(insul_mat_name))
     end
     fuse_tank.material_insul = insul_mats
-    if fuse_tank.size_insulation
+    if fuse_tank.sizes_insulation
         fuse_tank.boiloff_rate = readfuel_storage("cruise_boiloff_rate")
         fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
     end
@@ -457,9 +457,9 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
-    flag_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
+    has_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
 
-    if flag_vacuum #If tank is double-walled
+    if has_vacuum #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
         fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
 

@@ -9,7 +9,7 @@ $TYPEDFIELDS
     """Fuel tank location"""
     placement::String = ""
     """Flag for insulation sizing"""
-    size_insulation::Bool = false
+    sizes_insulation::Bool = false
     """Weight of fuel in one tank (N)"""
     Wfuelintank::Float64 = 0.0
 
