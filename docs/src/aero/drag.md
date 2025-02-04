@@ -27,7 +27,7 @@ aerodynamics.axisol!(xnose,xend,xblend1,xblend2, Amax,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
 
-aerodynamics.blsys(simi,lami,wake,direct, Mach, uinv,
+aerodynamics.blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,
                       hksep, x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -45,7 +45,7 @@ aerodynamics.blsys(simi,lami,wake,direct, Mach, uinv,
 
 aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
-aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
+aerodynamics.blvar(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
 aerodynamics.fusebl!(fuse, parm, para, ip)
