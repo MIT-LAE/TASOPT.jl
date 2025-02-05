@@ -130,10 +130,14 @@ function trefftz1(nsurf, npout, npinn, npimg,
       # ηₒ' fuse non-dim y location that is constricted in the Trefftz plane 
       eop = bop[isurf]/b[isurf]
 
-      t0 = 1.0
+      # Inverting the cosine spacing and 
+      # then normalizing by π/2 so θ spans from 1.0 to 0.0
+      # You want these specific θs since you know what Γ is at these points from 
+      # the piece wise lift distributions
+      t0 = 1.0 # acos(0.0)/(π/2)
       to = acos(eo)/(0.5*π)
       ts = acos(es)/(0.5*π)
-      t1 = 0.0
+      t1 = 0.0 # acos(1.0)
 
       if(bunch > 0.0) 
        to = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*to))*0.5/bunch
