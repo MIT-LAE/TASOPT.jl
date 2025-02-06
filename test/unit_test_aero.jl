@@ -266,7 +266,7 @@ end
     gammas = [0.77000000000000002,  1.0000000000000000]
     fLo = -0.29999999999999999 
     ktip = 16
-    Lspec = true
+    specifies_CL = true
     CLsurfsp = [1.2502595055642693 1.1976022033901442E-002]
 
     fort_CLsurf = [1.2502595055642693, 1.1976022033901442E-002]
@@ -296,7 +296,7 @@ end
         Sref, bref,
         b, bs, bo, bop, zcent,
         po, gammat, gammas, fLo, ktip,
-        Lspec, CLsurfsp,
+        specifies_CL, CLsurfsp,
         t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
     @test all(fort_CLsurf .≈ CLsurf)
