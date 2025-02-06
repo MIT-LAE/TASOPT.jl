@@ -269,7 +269,7 @@ function cditrp(para, wing, htail)
 
       Mach = para[iaMach]
 
-      Lspec = true
+      specifies_CL = true
 
       b        = zeros(Float64, 2)
       bs       = zeros(Float64, 2)
@@ -360,14 +360,14 @@ function cditrp(para, wing, htail)
 	# $Sref, $bref,
 	# $b,$bs,$bo,$bop, $zcent,
 	# $po,$gammat,gammas, $fLo, $ktip,
-      # $Lspec,$CLsurfsp")
+      # $specifies_CL,$CLsurfsp")
 
 
       CLsurf, CLtp, CDtp, sefftp = trefftz1(nsurf, npout, npinn, npimg, 
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo, ktip,
-      Lspec,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+      specifies_CL,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
       
       # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 
