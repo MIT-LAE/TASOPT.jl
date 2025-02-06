@@ -20,21 +20,21 @@ using Plots, StatsPlots, Plots.PlotMeasures
 
 #convenient directories
 const __TASOPTroot__ = @__DIR__
-const __TASOPTindices__ = joinpath(__TASOPTroot__,"misc/index.inc") #include(__TASOPTindices__) in REPL
+const __TASOPTindices__ = joinpath(__TASOPTroot__,"data_structs/index.inc") #include(__TASOPTindices__) in REPL
 export __TASOPTroot__, __TASOPTindices__
 
 # Constants and array indices
-include(joinpath(__TASOPTroot__,"misc/constants.jl"))
+include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
 export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
        lbf_to_N, kts_to_mps, hp_to_W, lb_N
 export gee, gamSL, cpSL, μAir, pref, Tref
 
-include(joinpath(__TASOPTroot__,"misc/units.jl"))
+include(joinpath(__TASOPTroot__,"data_structs/units.jl"))
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
 
-include("./misc/index.inc")
-include(joinpath(__TASOPTroot__,"misc/materials.jl"))
+include("./data_structs/index.inc")
+include(joinpath(__TASOPTroot__,"data_structs/materials.jl"))
 using .materials
 export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
@@ -61,8 +61,8 @@ using .engine
 
 
 #Load other functions
-include("./misc/fuselage_tank.jl")
-include("./misc/aircraft.jl")
+include("./data_structs/fuselage_tank.jl")
+include("./data_structs/aircraft.jl")
 export aircraft, fuselage_tank
 
 #Include cryogenic tanks after loading Fuselage and fuselage_tank

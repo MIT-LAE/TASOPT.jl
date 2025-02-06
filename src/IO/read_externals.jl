@@ -1,4 +1,4 @@
-include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
+include(__TASOPTindices__)
 export read_mdl, read_jl
 
 """

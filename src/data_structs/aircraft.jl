@@ -18,7 +18,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `pare::AbstractArray{Float64}` : Engine parameters 
 - `sized::AbstractVector{1,Bool}`: flag if aircraft is sized (default is `[false]`)
 
-For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
+For devs: the indices for accessing specific data are defined in `/src/data_structs/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
 Base.@kwdef mutable struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
