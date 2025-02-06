@@ -20,9 +20,9 @@ function read_mdl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_sample
     #generate the aircraft struct and return
     name = basename(filepath)
     description = "Imported using read_mdl() from: "*filepath*". Assumed and marked unsized on import."
-    sized = [false]
+    is_sized = [false]
     return TASOPT.aircraft(name, description,
-        pari, parg, parm, para, pare, sized)
+        pari, parg, parm, para, pare, is_sized)
 end
 
 """
@@ -37,7 +37,7 @@ function read_jl(filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples
     #generate the aircraft struct and return
     name = basename(filepath)
     description = "Imported using read_jl() from: "*filepath*". Assumed and marked unsized on import."
-    sized = [false]
+    is_sized = [false]
     return TASOPT.aircraft(name, description,
-        pari, parg, parm, para, pare, sized)
+        pari, parg, parm, para, pare, is_sized)
 end

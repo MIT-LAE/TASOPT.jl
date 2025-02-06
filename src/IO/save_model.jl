@@ -58,7 +58,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_desc = Dict()
     d_desc["name"] = ac.name
     d_desc["description"] = ac.description
-    d_desc["sized"] = ac.sized
+    d_desc["is_sized"] = ac.is_sized
     d_out["Aircraft Description"] = d_desc
 
     #Options------------------------
@@ -548,7 +548,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         if save_output
             println("Functions for saving sized params not yet implemented.")
-            if ac.sized[1]
+            if ac.is_sized[1]
                 #TODO: sized aircraft output
 
             else
@@ -595,8 +595,8 @@ function make_dict_singletons(dict::Dict{K, V}) where {K, V}
         if isa(value, Dict)  
             new_dict[key] = make_dict_singletons(value)
         #if element is a vector and has identical elements, save singleton
-        #AND not ac.sized (exception needed bc ac.sized needs to be a vector for mutability)
-        elseif isa(value, Vector) && all(x -> x == value[1], value) && key != "sized"
+        #AND not ac.is_sized (exception needed bc ac.is_sized needs to be a vector for mutability)
+        elseif isa(value, Vector) && all(x -> x == value[1], value) && key != "is_sized"
             new_dict[key] = value[1]
         else
             new_dict[key] = value

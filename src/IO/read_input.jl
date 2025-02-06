@@ -118,7 +118,7 @@ default = TOML.parsefile(templatefile)
 ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
-sized = get(ac_descrip, "sized",[false])
+is_sized = get(ac_descrip, "is_sized",[false])
 
 
 #Get number of missions to create data arrays
