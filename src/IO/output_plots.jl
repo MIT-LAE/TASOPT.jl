@@ -12,7 +12,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     annotate_text = true, annotate_length = true, annotate_group = true, show_grid = false)
 
     #if aircraft is not sized, cannot plot
-    if !ac.sized[1] 
+    if !ac.is_sized[1] 
         @warn "The aircraft ($(ac.name)) must be sized before being plotted. Skipping `stick_fig`..."
         return nothing
     end

@@ -51,7 +51,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     #pull name and description, removing line breaks and commas
     append!(csv_row, [ac.name, 
                      replace(ac.description, r"[\r\n,]" => ""),
-                     ac.sized[1]])
+                     ac.is_sized[1]])
 
     par_array_names = ["pari", "parg", "parm", "para", "pare"] #used for checking/populating indices Dict
     #if all outputs are desired, map all par arrays to colon() for data pull below

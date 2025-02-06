@@ -55,7 +55,7 @@ can be included via the convenience variable `__TASOPTindices__`
 
 ## `aircraft` struct
 
-An aircraft is composed of `par` array fields, title and description fields, and a `sized` flag to indicate its status. An optional `fuse_tank` field is present as a trial for future struct-based development. All fields are dot-accessible and array elements can be changed (e.g., `ac.parg[igS] = 20`), though the struct itself is not mutable.
+An aircraft is composed of `par` array fields, title and description fields, and a `is_sized` flag to indicate its status. An optional `fuse_tank` field is present as a trial for future struct-based development. All fields are dot-accessible and array elements can be changed (e.g., `ac.parg[igS] = 20`), though the struct itself is not mutable.
 
 Refer to the [struct reference page](@ref datastructs) for add'l details.
 
