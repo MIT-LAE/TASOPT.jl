@@ -17,7 +17,7 @@ export hxdesign!, radiator_design!, hxweight, resetHXs
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy
 
 include(__TASOPTindices__)
-include(joinpath(__TASOPTroot__,"misc/constants.jl"))
+include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")

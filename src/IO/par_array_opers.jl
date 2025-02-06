@@ -44,7 +44,7 @@ ex:
 """
 function generate_par_indname(par_suffix::String)
     #ensure index vars are available
-    include(joinpath(TASOPT.__TASOPTroot__, "misc/index.inc"))
+    include(joinpath(TASOPT.__TASOPTroot__, "data_structs/index.inc"))
     #get all variables in global scope
     all_vars = names(TASOPT,all=true)
 
