@@ -824,8 +824,8 @@ function wsize(ac; itermax=35,
         rfuel = Wf / parg[igWfuel]
         rpay = 1.0
         ξpay = 0.0
-        itrim = 1
-        balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+        opt_trim_var = "CL_htail"
+        balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -1014,8 +1014,8 @@ function wsize(ac; itermax=35,
     rfuel = Wf / parg[igWfuel]
     rpay = 1.0
     ξpay = 0.0
-    itrim = 0
-    balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+    opt_trim_var = "none"
+    balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
     
 end
 

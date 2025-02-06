@@ -38,6 +38,9 @@ include(joinpath(__TASOPTroot__,"data_structs/materials.jl"))
 using .materials
 export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 
+#miscellaneous auxiliary fxns
+include("./utils/helper_functions.jl")
+
 include(__TASOPTindices__)
 
 #Load modules

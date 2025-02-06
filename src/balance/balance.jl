@@ -1,5 +1,5 @@
 """
-balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
 Makes one of three (or none) changes to achieve pitch trim
 calculates resulting CG, CP, NP locations.
@@ -19,21 +19,21 @@ Inputs:
     * = 0.5   all the way in middle of cabin
     * = 1.0   all the way in back   of cabin
 - `iengloc`  engine location index
-- `itrim`      = 0  no changes
-    * = 1  adjust CLh   (horizontal tail cl)
-    * = 2  adjust Sh    (horizontal tail area)
-    * = 3  adjust xwbox (wing box location)
+- `opt_trim_var`      = "none"  no changes
+    * = "CL_htail"      adjust CLh   (horizontal tail cl)
+    * = "S_htail"       adjust Sh    (horizontal tail area)
+    * = "x_wingbox"     adjust xwbox (wing box location)
 
 Outputs: 
 
 - `para[iaxCG]`  center of gravity
-- `para[iaxCP]`  center of pressure ( = xCG if itrim=1,2,3 )
+- `para[iaxCP]`  center of pressure ( = xCG if opt_trim_var != "none" )
 - `para[iaxNP]`  neutral point location
 
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 """
-function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
       iengloc = pari[iiengloc]
 
@@ -154,7 +154,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       CMh1 = para[iaCMh1]
       CL = para[iaCL]
       CLh = para[iaCLh]
-      # println("before itrim $(para[iaCLh]), CL = $CL")
+      # println("before opt_trim_var $(para[iaCLh]), CL = $CL")
       CMVf1 = parg[igCMVf1]
       CLMf0 = parg[igCLMf0]
 
@@ -185,15 +185,15 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
       #---- drive to Res=0 (pitch trim) by one of three changes...
 
-      if (itrim == 1)
+      if compare_strings(opt_trim_var,"CL_htail")
             #----- ... adjust horizontal tail CLh
             delCLh = -Res / Res_CLh
             CLh = CLh + delCLh
-            #  println("inside itrim = 1: $delCLh, $CLh")
+            #  println("inside opt_trim_var = "CL_htail": $delCLh, $CLh")
             cCM = cCM + cCM_CLh * delCLh
             para[iaCLh] = CLh
 
-      elseif (itrim == 2)
+      elseif compare_strings(opt_trim_var, "S_htail")
             #----- ... adjust horizontal tail area
             delSh = -Res / Res_Sh
             Sh = Sh + delSh
@@ -202,7 +202,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
             htail.layout.S = Sh
 
-      elseif (itrim == 3)
+      elseif compare_strings(opt_trim_var, "x_wingbox")
             #----- ... adjust wing box location
             delxwbox = -Res / Res_xwbox
             xwbox = xwbox + delxwbox
