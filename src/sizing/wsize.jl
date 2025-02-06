@@ -713,26 +713,26 @@ function wsize(ac; itermax=35,
             #Tank placement and weight moment
             lcabin = fuse.layout.l_cabin_cylinder
             if tank_placement == "front"
-                flag_front = 1
-                flag_aft = 0
+                frac_front = 1
+                frac_aft = 0
                 xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
                 xftankaft = 0.0
             elseif tank_placement == "rear"
-                flag_front = 0
-                flag_aft = 1
+                frac_front = 0
+                frac_aft = 1
                 xftank = 0.0
                 xftankaft = fuse.layout.x_start_cylinder + lcabin + 1.0*ft_to_m + ltank/2.0
             elseif tank_placement == "both"
-                flag_front = 1
-                flag_aft = 1
+                frac_front = 1
+                frac_aft = 1
                 xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
                 xftankaft = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
             end
             
             parg[igxftank] = xftank
             parg[igxftankaft] = xftankaft
-            parg[igxWftank] = Wtank * (flag_front * xftank + flag_aft * xftankaft) 
-            xfuel = (flag_front * xftank + flag_aft * xftankaft) / (flag_front + flag_aft)
+            parg[igxWftank] = Wtank * (frac_front * xftank + frac_aft * xftankaft) 
+            xfuel = (frac_front * xftank + frac_aft * xftankaft) / (frac_front + frac_aft)
             parg[igxWfuel] = parg[igWfuel] * xfuel
 
             # Update fuselage according to tank requirements
