@@ -21,7 +21,7 @@ TASOPT.mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug)
 
 TASOPT.takeoff!(ac; printTO)
 
-TASOPT.balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+TASOPT.balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
 ```
 

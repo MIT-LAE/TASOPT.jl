@@ -215,8 +215,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       #---- set pitch trim by adjusting CLh
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+      opt_trim_var = "CL_htail"
+      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
       CLh2 = para[iaCLh, ip]
       xCG2 = para[iaxCG, ip]
@@ -334,8 +334,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
                   # Set pitch trim by adjusting CLh
                   Wf = W - Wzero
                   rfuel = Wf / parg[igWfuel]
-                  itrim = 1
-                  balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+                  opt_trim_var = "CL_htail"
+                  balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
                   if (ip == ipclimb1)
                         computes_surfcd = false #use explicitly specified wing cdf, cdp
@@ -442,8 +442,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+      opt_trim_var = "CL_htail"
+      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
       # if (calc_ipc1)
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
@@ -528,8 +528,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
       # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      itrim = 1
-      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+      opt_trim_var = "CL_htail"
+      balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
       # Calc Drag
       computes_surfcd = true
@@ -676,8 +676,8 @@ function mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug
             # set pitch trim by adjusting CLh
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
-            itrim = 1
-            balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+            opt_trim_var = "CL_htail"
+            balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp

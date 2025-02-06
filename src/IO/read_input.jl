@@ -175,9 +175,9 @@ doptions = default["Options"]
 pari[iiopt] = read_input("optimize", options, doptions)
 
 propsys = read_input("prop_sys_arch", options, doptions)
-if lowercase(propsys) == "tf"
+if compare_strings(propsys,"tf")
     pari[iiengtype] = 1
-elseif lowercase(propsys) == "te"
+elseif compare_strings(propsys, "te")
     pari[iiengtype] = 0
 else
     error("Propulsion system \"$propsys\" specified. Choose between
@@ -190,10 +190,9 @@ engloc = read_input("engine_location", options, doptions)
 if typeof(engloc) == Int
     pari[iiengloc] = engloc
 elseif typeof(engloc) <: AbstractString
-    engloc = lowercase(engloc)
-    if engloc == "wing"
+    if compare_strings(engloc, "wing")
         pari[iiengloc] = 1
-    elseif engloc == "fuselage" || engloc == "fuse"
+    elseif compare_strings(engloc,"fuselage") || compare_strings(engloc,"fuse")
         pari[iiengloc] = 2
     else
         error("Engine location provided is \"$engloc\". Engine position can only be:
@@ -391,10 +390,10 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
     fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
-    fuse_end = lowercase(readgeom("taper_fuse_to")) 
-    if fuse_end == "point"
+    fuse_end = readgeom("taper_fuse_to")
+    if compare_strings(fuse_end,"point")
         fuselage.layout.taper_fuse = 0
-    elseif fuse_end == "edge"
+    elseif compare_strings(fuse_end,"edge")
         fuselage.layout.taper_fuse = 1
     else
         fuselage.layout.taper_fuse = 0
@@ -649,11 +648,11 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail.CL_CLmax = readhtail("max_tail_download")
 
-    htail_size = lowercase(readhtail("HTsize"))
-    if htail_size == "vh"
+    htail_size = readhtail("HTsize")
+    if compare_strings(htail_size,"vh")
         htail.size = 1
         htail.volume = readhtail("Vh")
-    elseif htail_size == "maxforwardcg"
+    elseif compare_strings(htail_size,"maxforwardcg")
         htail.size = 2
         htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
         htail.volume = 1.0
@@ -668,12 +667,11 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     if typeof(movewing) == Int
         htail.move_wingbox = movewing
     elseif typeof(movewing) <: AbstractString
-        movewing = lowercase(movewing)
-        if movewing =="fix"
+        if compare_strings(movewing, "fix")
             htail.move_wingbox = 0
-        elseif movewing == "clhspec"
+        elseif compare_strings(movewing, "clhspec")
             htail.move_wingbox = 1
-        elseif movewing == "smmin"
+        elseif compare_strings(movewing, "smmin")
             htail.move_wingbox = 2
         else
             error("Wing position during horizontal tail sizing can only be sized via:
@@ -716,11 +714,11 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
     vtail.ntails  = readvtail("number_Vtails")
 
-    vtail_size = lowercase(readvtail("VTsize"))
-    if vtail_size == "vv"
+    vtail_size = readvtail("VTsize")
+    if compare_strings(vtail_size, "vv")
         vtail.size = 1
         vtail.volume = readvtail("Vv")
-    elseif vtail_size == "oei"
+    elseif compare_strings(vtail_size, "oei")
         vtail.size = 2
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
@@ -1012,11 +1010,11 @@ dweight = dprop["Weight"]
     parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
     parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
     TF_wmodel = read_input("weight_model", weight, dweight)
-    if lowercase(TF_wmodel) == "md"
+    if compare_strings(TF_wmodel, "md")
         pari[iiengwgt] = 0
-    elseif lowercase(TF_wmodel) == "basic"
+    elseif compare_strings(TF_wmodel, "basic")
         pari[iiengwgt] = 1
-    elseif lowercase(TF_wmodel) == "advanced"
+    elseif compare_strings(TF_wmodel, "advanced")
         pari[iiengwgt] = 2
     else
         error("\"$TF_wmodel\" engine weight model was specifed. 

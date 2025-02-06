@@ -136,8 +136,8 @@ for   i = 1:N
         # Set pitch trim by adjusting CLh
         Wf = W - Wzero
         rfuel = Wf/parg[igWfuel]*0
-        itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+        opt_trim_var = "CL_htail"
+        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
 
         
         # Calculate Drag
@@ -239,8 +239,8 @@ for   i = 1:N
         rfuel = Wf/parg[igWfuel]*0
 
         #Trim aircraft
-        itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+        opt_trim_var = "CL_htail"
+        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
         computes_surfcd = true
         if CL > 1.0
             println("CL during cruise is $CL")
