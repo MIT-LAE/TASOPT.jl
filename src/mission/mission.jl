@@ -27,7 +27,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
 
       # HACK TODO add the para back
       # iairf
-      initeng = 0
+      initeng = false
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -672,14 +672,14 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             Fspec = BW * (sing + cosg * DoL)
             pare[ieFe, ip] = Fspec / parg[igneng]
 
-            if (initeng == 0)
+            if ~initeng
                   pare[iembf, ip] = pare[iembf, ip-1]
                   pare[iemblc, ip] = pare[iemblc, ip-1]
                   pare[iembhc, ip] = pare[iembhc, ip-1]
                   pare[iepif, ip] = pare[iepif, ip-1]
                   pare[iepilc, ip] = pare[iepilc, ip-1]
                   pare[iepihc, ip] = pare[iepihc, ip-1]
-                  inite = 1
+                  inite = true
 
 
                   # make better estimate for new Tt4, adjusted for new ambient T0

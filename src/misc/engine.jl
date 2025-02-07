@@ -10,6 +10,7 @@ $TYPEDFIELDS
 mutable struct Engine{M<:AbstractModel}
     model::M
 
+    #TODO add more engine elements are pare gets undone
     """Heat exchanger parameters and data"""
     heat_exchangers::Vector{HX_struct}
 end
