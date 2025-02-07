@@ -27,19 +27,19 @@ function read_input(k::String, dict::AbstractDict=data,
     end
 end
 
-function get_default_input_file(input)
-    if input == 0 || lowercase(string(input)) == "regional aircraft"
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
-    elseif input == 1 || lowercase(string(input)) == "narrow body aircraft"
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
-    elseif input == 2 || lowercase(string(input)) == "wide body aircraft"
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
+function get_template_input_file(designrange)
+    if designrange <= 2600 * nmi_to_m
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
+    elseif designrange <= 3115 * nmi_to_m
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+    elseif designrange <= 8500 * nmi_to_m
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
     else
         println("\n")
-        @info """Requested aircraft type not supported. Selecting Narrow Body Aircraft"""
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+        @warn """Requested aircraft design range exceeds expected capability. Selecting Wide Body Aircraft Template, but be warned. """
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
     end
-    return TOML.parsefile(defaultfile)
+    return templatefile
 end
 # Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
@@ -91,24 +91,35 @@ Cruise Mach = 0.8
 """
 function read_aircraft_model(
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"); 
-    defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
+    templatefile = "")
 
 data = TOML.parsefile(datafile)
-default = TOML.parsefile(defaultfile)
+
+# Get template input file, with appropriate user notices when needed
+# handle default templatefile value
+if templatefile == ""
+    @info "No template input file provided. Proceeding with template file as determined by design mission range."
+    templatefile = nothing
+# check if provided template input file is extant
+elseif !isfile(templatefile)
+    #if not, warn that we're ignoring it
+    @warn "Template input file provided does not exist: $templatefile \n Proceeding with template file as determined by design mission range."
+    templatefile = nothing
+end
+#if no valid templatefile provided
+if isnothing(templatefile)
+    #determine appropriate template input file based on mission range
+    designrange = Distance.(data["Mission"]["range"])[1] #in meters
+    templatefile = get_template_input_file(designrange)
+    @info "Template input file selected: $templatefile"
+end
+
+default = TOML.parsefile(templatefile)
 ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
 sized = get(ac_descrip, "sized",[false])
 
-# Check if aircraft type exists
-if "aircraft_type" in keys(ac_descrip)
-    default = get_default_input_file(ac_descrip["aircraft_type"])
-    ac_type_fixed = true
-else
-    println("\n")
-    @info """Aircraft Type not specified: Selecting AC type depending on range or payload"""
-    ac_type_fixed = false
-end
 
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
@@ -129,20 +140,6 @@ vtail = Tail()
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
-
-if !ac_type_fixed
-    if parm[imRange, 1] <= 2600 * nmi_to_m
-        default = get_default_input_file(0)
-        @info """Setting AC Type based on design range: Regional Aircraft"""
-    elseif parm[imRange, 1] <= 3115 * nmi_to_m
-        default = get_default_input_file(1)
-        @info """Setting AC Type based on design range: Narrow Body Aircraft"""
-    elseif parm[imRange, 1] <= 8500 * nmi_to_m
-        default = get_default_input_file(2)
-        @info """Setting AC Type based on design range: Wide Body Aircraft"""
-    end    
-    ac_type_fixed = true
-end
 
 maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
                                                 #This may exceed the seatable capacity to account for belly cargo
