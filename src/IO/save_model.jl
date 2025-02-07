@@ -37,6 +37,10 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     ac_m = ac.parm      #mission    "
     ac_a = ac.para      #aero       "
     ac_e = ac.pare      #engine     "
+
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
     fuselage = ac.fuselage  #fuselage     "
 
     #dictionaries to map some selections (e.g., ints) to outputs
@@ -191,9 +195,9 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_fuse_geom["double_decker"] = false
         end
       
-        d_fuse_geom["seat_pitch"] = ac_g[igseatpitch]
-        d_fuse_geom["seat_width"] = ac_g[igseatwidth]
-        d_fuse_geom["aisle_halfwidth"] = ac_g[igaislehalfwidth]  
+        d_fuse_geom["seat_pitch"] = fuselage.cabin.seat_pitch
+        d_fuse_geom["seat_width"] = fuselage.cabin.seat_width
+        d_fuse_geom["aisle_halfwidth"] = fuselage.cabin.aisle_halfwidth  
 
         d_fuse_geom["x_nose_tip"] = fuselage.layout.x_nose
         d_fuse_geom["x_pressure_shell_fwd"] = fuselage.layout.x_pressure_shell_fwd
@@ -219,38 +223,38 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Wing ------------------------
     d_wing = Dict()
-        d_wing["wing_planform"] = ac_i[iiwplan]
-        d_wing["strut_braced_wing"] = ac_i[iiwplan] == 2
+        d_wing["planform"] = wing.planform
+        d_wing["strut_braced_wing"] = wing.has_strut
 
-        d_wing["sweep"] = ac_g[igsweep]
-        d_wing["AR"] = ac_g[igAR]
-        d_wing["maxSpan"] = ac_g[igbmax]
+        d_wing["sweep"] = wing.layout.sweep
+        d_wing["AR"] = wing.layout.AR
+        d_wing["maxSpan"] = wing.layout.max_span
 
-        d_wing["inner_panel_taper_ratio"] = ac_g[iglambdas]
-        d_wing["outer_panel_taper_ratio"] = ac_g[iglambdat]
-        d_wing["panel_break_location"] = ac_g[igetas]
+        d_wing["inner_panel_taper_ratio"] = wing.inboard.λ
+        d_wing["outer_panel_taper_ratio"] = wing.outboard.λ
+        d_wing["panel_break_location"] = wing.layout.ηs
 
-        d_wing["center_box_halfspan"] = ac_g[igbo]/2
-        d_wing["box_width_to_chord"] = ac_g[igwbox]
-        d_wing["root_thickness_to_chord"] = ac_g[ighboxo]
-        d_wing["spanbreak_thickness_to_chord"] = ac_g[ighboxs]
-        d_wing["hweb_to_hbox"] = ac_g[igrh]
-        d_wing["spar_box_x_c"] = ac_g[igXaxis]
+        d_wing["center_box_halfspan"] = wing.layout.root_span/2
+        d_wing["box_width_to_chord"] = wing.inboard.cross_section.width_to_chord
+        d_wing["root_thickness_to_chord"] = wing.inboard.cross_section.thickness_to_chord
+        d_wing["spanbreak_thickness_to_chord"] = wing.outboard.cross_section.thickness_to_chord
+        d_wing["hweb_to_hbox"] = wing.inboard.cross_section.web_to_box_height
+        d_wing["spar_box_x_c"] = wing.layout.spar_box_x_c
 
-        d_wing["x_wing_box"] = ac_g[igxwbox]
-        d_wing["z_wing"] = ac_g[igzwing]
+        d_wing["x_wing_box"] = wing.layout.box_x
+        d_wing["z_wing"] = wing.layout.z
 
     # Strut details (only used if strut_braced_wing is True)
         if d_wing["strut_braced_wing"]
-            d_wing["z_strut"] = ac_g[igzs]
-            d_wing["strut_toc"] = ac_g[ighstrut]
-            d_wing["strut_local_velocity_ratio"] = ac_g[igrVstrut]
+            d_wing["z_strut"] = wing.strut.z
+            d_wing["strut_toc"] = wing.strut.thickness_to_chord
+            d_wing["strut_local_velocity_ratio"] = wing.strut.local_velocity_ratio
         end
 
     #Aero , for multiple segments
     d_wing_aero = Dict()
-        d_wing_aero["fuselage_lift_carryover_loss_factor"] = ac_g.wing.fuse_lift_carryover
-        d_wing_aero["wing_tip_lift_rolloff_factor"] = ac_g.wing.tip_lift_loss
+        d_wing_aero["fuselage_lift_carryover_loss_factor"] = wing.fuse_lift_carryover
+        d_wing_aero["wing_tip_lift_rolloff_factor"] = wing.tip_lift_loss
 
         d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,:]
         d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,:]
@@ -292,13 +296,13 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Weight
     d_wing_weight = Dict()
-        d_wing_weight["flap"] = ac_g[igfflap]
-        d_wing_weight["slat"] = ac_g[igfslat]
-        d_wing_weight["aileron"] = ac_g[igfaile]
-        d_wing_weight["leading_trailing_edge"] = ac_g[igflete]
-        d_wing_weight["ribs"] = ac_g[igfribs]
-        d_wing_weight["spoilers"] = ac_g[igfspoi]
-        d_wing_weight["attachments"] = ac_g[igfwatt]
+        d_wing_weight["flap"] = wing.weight_frac_flap
+        d_wing_weight["slat"] = wing.weight_frac_slat
+        d_wing_weight["aileron"] = wing.weight_frac_ailerons
+        d_wing_weight["leading_trailing_edge"] = wing.weight_frac_leading_trailing_edge
+        d_wing_weight["ribs"] = wing.weight_frac_ribs
+        d_wing_weight["spoilers"] = wing.weight_frac_spoilers
+        d_wing_weight["attachments"] = wing.weight_frac_attachments
     d_wing["Weightfracs"] = d_wing_weight
 
     d_out["Wing"] = d_wing
@@ -317,65 +321,65 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Horz tail
     d_stab_htail  = Dict()
-        d_stab_htail["AR_Htail"] = ac_g[igARh]
-        d_stab_htail["taper"] = ac_g[iglambdah]
-        d_stab_htail["sweep"] = ac_g[igsweeph]
-        d_stab_htail["center_box_halfspan"] = ac_g[igboh]/2
+        d_stab_htail["AR_Htail"] = htail.layout.AR
+        d_stab_htail["taper"] = htail.outboard.λ
+        d_stab_htail["sweep"] = htail.layout.sweep
+        d_stab_htail["center_box_halfspan"] = htail.layout.root_span/2
 
-        d_stab_htail["x_Htail"] = ac_g[igxhbox]
-        d_stab_htail["z_Htail"] = ac_g[igzhtail]
+        d_stab_htail["x_Htail"] = htail.layout.box_x
+        d_stab_htail["z_Htail"] = htail.layout.z
 
-        d_stab_htail["max_tail_download"] = ac_g[igCLhNrat]
+        d_stab_htail["max_tail_download"] = htail.CL_CLmax
     
-        if ac_i[iiHTsize] == 1
+        if htail.size == 1
             d_stab_htail["HTsize"] = "vh"
-            d_stab_htail["Vh"] = ac_g[igVh]
-        elseif ac_i[iiHTsize] == 2
+            d_stab_htail["Vh"] = htail.volume
+        elseif htail.size == 2
             d_stab_htail["HTsize"] = "maxforwardcg"
-            d_stab_htail["CLh_at_max_forward_CG"] = ac_g[igCLhCGfwd]
+            d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
-        d_stab_htail["move_wingbox"] = ac_i[iixwmove]
+        d_stab_htail["move_wingbox"] = htail.move_wingbox
 
-        d_stab_htail["SM_min"] = ac_g[igSMmin]
+        d_stab_htail["SM_min"] = htail.SM_min
 
         d_stab_htail["CLh_spec"] = ac_g[igCLhspec]
 
-        d_stab_htail["downwash_factor"] = ac_g[igdepsda]
+        d_stab_htail["downwash_factor"] = htail.downwash_factor
         d_stab_htail["nacelle_lift_curve_slope"] = ac_g[igdCLnda]
 
         d_stab_htail["CD_Htail_from_center"] = ac_g[igfCDhcen]
-        d_stab_htail["CLh_max"] = ac_g[igCLhmax]
+        d_stab_htail["CLh_max"] = htail.CL_max
 
-        d_stab_htail["added_weight_fraction"] = ac_g[igfhadd]
+        d_stab_htail["added_weight_fraction"] = htail.weight_fraction_added
 
-        d_stab_htail["box_width_to_chord"] = ac_g[igwboxh]
-        d_stab_htail["box_height_chord"] = ac_g[ighboxh]
-        d_stab_htail["web_height_hbox"] = ac_g[igrhh]
+        d_stab_htail["box_width_to_chord"] = htail.outboard.cross_section.width_to_chord
+        d_stab_htail["box_height_chord"] = htail.outboard.cross_section.thickness_to_chord
+        d_stab_htail["web_height_hbox"] = htail.outboard.cross_section.web_to_box_height
     d_stab["Htail"] = d_stab_htail
 
     #Vertical tail
     d_stab_vtail = Dict()
-        d_stab_vtail["AR_Vtail"] = ac_g[igARv]
-        d_stab_vtail["taper"] = ac_g[iglambdav]
-        d_stab_vtail["sweep"] = ac_g[igsweepv]
-        d_stab_vtail["center_box_halfspan"] = ac_g[igbov]
-        d_stab_vtail["x_Vtail"] = ac_g[igxvbox]
-        d_stab_vtail["number_Vtails"] = ac_g[ignvtail]
+        d_stab_vtail["AR_Vtail"] = vtail.layout.AR
+        d_stab_vtail["taper"] = vtail.outboard.λ
+        d_stab_vtail["sweep"] = vtail.layout.sweep
+        d_stab_vtail["center_box_halfspan"] = vtail.layout.root_span
+        d_stab_vtail["x_Vtail"] = vtail.layout.box_x
+        d_stab_vtail["number_Vtails"] = vtail.ntails
 
-        if ac_i[iiVTsize] == 1
+        if vtail.size == 1
             d_stab_vtail["VTsize"] = "vv"
-            d_stab_vtail["Vv"] = ac_g[igVv]
-        elseif ac_i[iiVTsize] == 2
+            d_stab_vtail["Vv"] = vtail.volume
+        elseif avtail.size == 2
             d_stab_vtail["VTsize"] = "oei"
             d_stab_vtail["CLv_at_engine_out"] = ac_g[igCLveout]
         end
 
-        d_stab_vtail["CLv_max"] = ac_g[igCLvmax]
-        d_stab_vtail["added_weight_fraction"] = ac_g[igfvadd]
-        d_stab_vtail["box_width_to_chord"] = ac_g[igwboxv]
-        d_stab_vtail["box_height_chord"] = ac_g[ighboxv]
-        d_stab_vtail["web_height_hbox"] = ac_g[igrhv]
+        d_stab_vtail["CLv_max"] = vtail.CL_max
+        d_stab_vtail["added_weight_fraction"] = vtail.weight_fraction_added
+        d_stab_vtail["box_width_to_chord"] = vtail.outboard.cross_section.width_to_chord
+        d_stab_vtail["box_height_chord"] = vtail.outboard.cross_section.thickness_to_chord
+        d_stab_vtail["web_height_hbox"] = vtail.outboard.cross_section.web_to_box_height
 
     d_stab["Vtail"] = d_stab_vtail
 
@@ -390,22 +394,22 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_struct["sigma_fuse_skin"] = fuselage.skin.σ
         d_struct["sigma_fuse_bending"] = fuselage.bendingmaterial_h.σ
 
-        d_struct["sigma_caps"] = ac_g[igsigcap]
-        d_struct["tau_webs"] = ac_g[igtauweb]
+        d_struct["sigma_caps"] = wing.inboard.caps.σ
+        d_struct["tau_webs"] = wing.inboard.webs.σ
 
-        d_struct["sigma_struts"] = ac_g[igsigstrut]
+        d_struct["sigma_struts"] = wing.strut.material.σmax
         
         d_struct["fuse_shell_modulus_ratio"] = fuselage.ratio_young_mod_fuse_bending
         
-        d_struct["E_wing_spar_cap"] = ac_g[igEcap]
-        d_struct["E_struts"] = ac_g[igEstrut]
+        d_struct["E_wing_spar_cap"] = wing.inboard.caps.material.E
+        d_struct["E_struts"] = wing.strut.material.E
         
         # Structural material densities
         d_struct["skin_density"] = fuselage.skin.ρ
         d_struct["fuse_stringer_density"] = fuselage.bendingmaterial_h.ρ
-        d_struct["wing_tail_cap_density"] = ac_g[igrhocap]
-        d_struct["wing_tail_web_density"] = ac_g[igrhoweb]
-        d_struct["strut_density"] = ac_g[igrhostrut]
+        d_struct["wing_tail_cap_density"] = wing.inboard.caps.ρ
+        d_struct["wing_tail_web_density"] = wing.inboard.webs.ρ
+        d_struct["strut_density"] = wing.strut.material.ρ
     d_out["Structures"] = d_struct
     #--end Structures----------------
 
@@ -991,4 +995,56 @@ function reset_regression_test(ac)
         @printf(io, "vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ \n")
         @printf(io, "vtail.inboard.co = vtail.layout.root_chord \n")
     end
+end
+
+
+
+#NOTE:  the following functions are not currently used in the codebase, 
+#       but are retained for potential future use with saving models in a less-manual, yet human-readable way
+"""
+    fix_dict_for_toml(dict::Dict)
+
+Prepares a `dict` for output into .toml by:
+    - replacing any multi-dimensional arrays with nested arrays (TOML library compatibility restriction),
+    - and recursively applying this for any nested `dict`s.
+    - Also replaces structs with dictionaries, then recursively applying this function.
+"""
+function fix_dict_for_toml(dict::Dict)
+    #deep copy of dictionary
+    dict = deepcopy(dict)
+    for (key, value) in dict
+        #if it's an array, convert to nested vectors
+        if isa(value, Array) && ndims(value) >= 2
+            dict[key] = array2nestedvectors(value)
+        #if it's another dict, pass it through this fxn
+        elseif isa(value, Dict)
+            dict[key] = fix_dict_for_toml(value)
+        #if it's a TOML-compatible value, assign directly
+        #TODO: convert structs to dictionaries for output 
+        elseif (value isa TOML.Internals.Printer.TOMLValue)
+            dict[key] = value
+        else #if not TOML-compatible
+            @warn "TOML cannot output the following `aircraft` field and will skip it: "*String(key)
+            # println("Field value: ", value)
+            delete!(dict, key)
+        end
+    end
+    return dict
+end
+
+function struct2dict(obj)
+    type = typeof(obj)
+    # println("T = $type")
+    d = Dict()
+    for key ∈ fieldnames(type)
+        # println("field = $key")
+        if fieldtype(type, key) <: Union{AbstractArray,Number,String}
+            # println("pushing...")
+            push!(d, key => getfield(obj, key))
+        else
+            # println("recursing...")
+            push!(d, key => struct2dict(getfield(obj, key)))
+        end
+    end
+    return d
 end

@@ -1,8 +1,8 @@
 """
-      takeoff(ac)
+    takeoff(ac)
 
-      Calculates takeoff parameters and balanced field length.
-      The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
+Calculates takeoff parameters and balanced field length.
+The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
 
 """
 function takeoff!(ac; printTO = true)

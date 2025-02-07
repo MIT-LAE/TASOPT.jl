@@ -11,11 +11,11 @@ and other mission variables.
     - `Ldebug::Bool`: debugging flag
 
 NOTE: 
- This routine assumes that estimates of the climb-leg flight path 
- gamma angles are passed in via para[iagamV,ipclimb1:ipclimbn].
- These appear as cos(gamma) factors in the climb equations,
- and can be passed in as zero with only a minor error.
- They are updated and returned in the same para[iagamV,ip] array.
+This routine assumes that estimates of the climb-leg flight path 
+gamma angles are passed in via para[iagamV,ipclimb1:ipclimbn].
+These appear as cos(gamma) factors in the climb equations,
+and can be passed in as zero with only a minor error.
+They are updated and returned in the same para[iagamV,ip] array.
 
 """
 function mission!(ac, imission, Ldebug; calculate_cruise = false)

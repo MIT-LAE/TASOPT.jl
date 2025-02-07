@@ -118,7 +118,12 @@ Converts vectors nested within vectors to a multi-dimensional array.
 Used in .toml IO.
 """
 function nestedvectors2array(nested_vectors::AbstractVector)
-    #identify how many levels deep it goes, obtaining lengths
+    #head off any empty vectors
+    if isempty(nested_vectors)
+        return nested_vectors
+    end
+    
+    #identify how many levels deep the nesting goes, obtaining lengths
     first_elem = nested_vectors[1]
     lengths = [length(nested_vectors)]
         #while the vector's first element is /still/ a vector
