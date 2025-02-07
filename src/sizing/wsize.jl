@@ -1,7 +1,7 @@
 using Printf
 """
     wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=false, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
@@ -19,7 +19,7 @@ and iterates until the MTOW converges to within a specified tolerance.
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
 function wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=false, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
     # Unpack data storage arrays and components
@@ -847,7 +847,7 @@ function wsize(ac; itermax=35,
         engine.enginecalc!(ac, case, imission, ip, initeng, iterw)
 
         #Calculate engine mass properties
-        engine.engineweight!(ac, engine.heat_exchangers)
+        engine.engineweight!(ac)
 
         mission!(ac, imission, Ldebug)
 

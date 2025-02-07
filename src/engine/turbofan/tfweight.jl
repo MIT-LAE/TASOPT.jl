@@ -1,12 +1,11 @@
 """
-    tfweight(ac, HXs)
+    tfweight(ac)
 
 Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald model.
       
 !!! details "🔃 Inputs and Outputs"
     **Input:**
     - `ac::aircraft`: aircraft object
-    - `HXs`: vector with heat exchanger performance data
 
     **Output:**
     - `Weng`: Total engine weight.
@@ -14,12 +13,13 @@ Engine weight estimation function using Giulia Pantalone, Drela, or Fitzgerald m
     - `Webare`: Bare engine weight.
     - `Snace1`: Nacelle area.
 """
-function tfweight(ac, HXs)
+function tfweight(ac)
 
     TSL = Tref
     pSL = pref
     ip = ipcruise1 #OPR and BPR designed for start-of-cruise
 
+    HXs = ac.engine.heat_exchangers	
     iengwgt = ac.pari[iiengwgt]
     Gearf = ac.parg[igGearf]
     mdotc = ac.pared[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)

@@ -8,7 +8,7 @@ using NLopt
 using Roots
 using LinearAlgebra
 
-export Engine, store_engine_model!, extract_engine_model
+export Engine
 
 export tfwrap!, tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweightwrap!, tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
