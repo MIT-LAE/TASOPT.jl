@@ -298,11 +298,14 @@ function trefftz1(nsurf, npout, npinn, npimg,
          cltest = 0.
          @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
            dy = yp[i+1] - yp[i]
-           cltest = cltest + 2.0*gc[i]*dy * bref/(0.5*Sref)
+           cltest = cltest + gc[i]*dy
          end
+         
+         cltest = cltest * 2.0 * bref/(0.5*Sref)
 
-         gfac = CLsurfsp[isurf]/cltest
-#        println("$isurf, $gfac")
+         ## Calculate the scaling factor for the circulations
+         gfac = CLsurfsp[isurf]/(cltest)
+        # println("$isurf, $gfac, $cltest, $(CLsurfsp[isurf])")
 
          @inbounds for  i = ifrst[isurf]: ilast[isurf]
            gc[i] = gc[i]*gfac
