@@ -1047,9 +1047,30 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
+    test = readfuel("fuel_in_wing")
 
-return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
+    ac_options = TASOPT.options(
+        opt_fuel = "JET-A",
+        has_centerbox_fuel = readfuel("fuel_in_wing"),
+        has_wing_fuel = readfuel("fuel_in_wingcen"),
+        
+        opt_wing_type = "TODO: FIX THIS, wingtype spec",
+        moves_wingbox_forbalance = true,
+        
+        opt_engine_location = engloc,
+        opt_engine_type = propsys,
+        opt_engine_model = "TODO: FIX THIS engine model spec",
+        opt_engine_weight_model = TF_wmodel,
+        has_BLI_cores = Bool(!readprop("core_in_clean_flow")),
+        
+        opt_fuselage_taper = fuse_end,
+        is_doubledecker = Bool(readgeom("double_decker"))
+    )
+    
+
+return TASOPT.aircraft(name, description, ac_options,
+    pari, parg, parm, para, pare, [false], 
+    fuselage, fuse_tank, wing, htail, vtail)
 
 end
 

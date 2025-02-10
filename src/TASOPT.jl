@@ -65,6 +65,8 @@ using .engine
 
 #Load other functions
 include("./data_structs/fuselage_tank.jl")
+
+include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include("./data_structs/aircraft.jl")
 export aircraft, fuselage_tank
 
