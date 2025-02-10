@@ -1,5 +1,5 @@
 """ 
-    tfcalc(pari,parg,para,pare, ip, icall,icool,initeng)
+    tfcalc(pari,parg,para,pare, ip, icall,icool,initializes_engine)
 
 Calls function tfsize or tfoper for one operating point.
 
@@ -13,16 +13,16 @@ Calls function tfsize or tfoper for one operating point.
                   1  use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
                   2  use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
 
-    - `initeng`:    0  initialize variables for iteration in TFOPER
-                1  use current variables as initial guesses in TFOPER
+    - `initializes_engine`:    false  initialize variables for iteration in TFOPER
+                                true  use current variables as initial guesses in TFOPER
 """
 function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
-        icall::Int64, icool::Int64, initeng::Int64)
+        icall::Int64, icool::Int64, initializes_engine::Bool)
 
         Lprint = false
 
         if (Lprint)
-                println("entering TFCALC", icall, icool, initeng)
+                println("entering TFCALC", icall, icool, initializes_engine)
         end
 
         ifuel = pari[iifuel]
@@ -357,7 +357,7 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 pihtD = pare[iepihtD]
                 piltD = pare[iepiltD]
 
-                if (initeng == 0)
+                if !(initializes_engine)
                         #------ force TFOPER to initialize these state variables
                         mbf = 0.0
                         mblc = 0.0

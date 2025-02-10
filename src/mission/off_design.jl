@@ -1,5 +1,5 @@
 """
-    fly_off_design!(ac, mi, itermax, initeng, saveOffDesign)
+    fly_off_design!(ac, mi, itermax, initializes_engine, saveOffDesign)
 
 `fly_off_design!` runs the aircraft through input off-design missions
 
@@ -8,13 +8,13 @@
 - `ac::aircraft`: Aircraft with first mission being the design mission
 - `mi::Int64`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
-- `initeng::Boolean`: Use design case as initial guess for engine state if true
+- `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
 
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
+function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     #Extract aircraft components and storage arrays
     pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
     
@@ -136,7 +136,8 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initeng = true)
       para[iaReunit,ip] = Re
     end
 
-    if initeng == 1
+    if (initializes_engine)
+          
 #----- use design case as initial guess for engine state
           for ip = 1: iptotal
                 for ie = 1: ietotal

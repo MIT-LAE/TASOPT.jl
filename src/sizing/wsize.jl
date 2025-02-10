@@ -1,7 +1,7 @@
 using Printf
 """
     wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initialize_engine=false, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=false, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
@@ -19,7 +19,7 @@ and iterates until the MTOW converges to within a specified tolerance.
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
 function wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initialize_engine=false, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=false, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
     # Unpack data storage arrays and components
@@ -765,13 +765,13 @@ function wsize(ac; itermax=35,
                 # set static thrust for takeoff routine
                 ip = ipstatic
                 case = "off_design"
-                engine.enginecalc!(ac, case, imission, ip, initialize_engine)
+                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 case = "off_design"
-                engine.enginecalc!(ac, case, imission, ip, initialize_engine)
+                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
                 takeoff!(ac; printTO = false)
             end
@@ -844,7 +844,7 @@ function wsize(ac; itermax=35,
 
         # Size engine for TOC
         case = "design" #Design the engine for this mission point
-        engine.enginecalc!(ac, case, imission, ip, initialize_engine, iterw)
+        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         #Calculate engine mass properties
         engine.engineweight!(ac)
@@ -866,7 +866,7 @@ function wsize(ac; itermax=35,
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
         case = "cooling_sizing"
-        engine.enginecalc!(ac, case, imission, ip, initialize_engine, iterw)
+        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         # Recalculate weight wupdate()
         ip = ipcruise1
@@ -905,13 +905,13 @@ function wsize(ac; itermax=35,
     # set static thrust for takeoff routine
     ip = ipstatic
     case = "off_design"
-    engine.enginecalc!(ac, case, imission, ip, initialize_engine)
+    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
     case = "off_design"
-    engine.enginecalc!(ac, case, imission, ip, initialize_engine)
+    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     # calculate takeoff and balanced-field lengths
     takeoff!(ac, printTO = printiter)

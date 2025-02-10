@@ -1,5 +1,5 @@
 """ 
-    tfwrap!(ac, case, imission, ip, initialize_engine, iterw = 0)
+    tfwrap!(ac, case, imission, ip, initializes_engine, iterw = 0)
 
 Calls the turbofan sizing or off-design performance functions for the aircraft's
 turbofan model. This function is basically a wrapper on tfcalc!, going from the
@@ -11,7 +11,7 @@ basic engine inputs to those required by the function and storing the outputs.
     - `case::String`: case identifier, e.g. "sizing" or "off_design"
     - `imission::Int64`: mission index
     - `ip::Int64`: mission point index
-    - `initialize_engine::Bool`: flag to initialize engine 
+    - `initializes_engine::Bool`: flag to initialize engine 
         0  initialize variables for iteration in engine
         1  use current variables as initial guesses in engine
     - `iterw::Int64`: sizing loop iteration
@@ -19,22 +19,22 @@ basic engine inputs to those required by the function and storing the outputs.
     **Output:**
     No direct outputs. The `ac` object gets modified with the engine parameters.
 """
-function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initialize_engine::Bool, iterw::Int64 = 0)
+function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
     #Unpack data storage arrays
     pari, parg, _, para, pare, _, _, wing, _, _, _ = unpack_ac(ac, imission)
     
     if case == "design"
         icall = 0
         icool = 1
-        if (iterw == 1 || (~initialize_engine))
+        if (iterw == 1 || (~initializes_engine))
             # initialize engine state
-            initialize_engine_firstiter  = 0
+            initializes_engine_firstiter  = false
         else
             # start with current engine state
-            initialize_engine_firstiter  = 1
+            initializes_engine_firstiter  = true
         end
 
-        ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initialize_engine_firstiter )
+        ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine_firstiter )
 
         # store engine design-point parameters for all operating points
         parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -66,12 +66,12 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initialize_engine
     elseif case == "off_design"
         icall = (ip in range(ipstatic, ipclimbn)) ? 1 : 2 #One if in range, 2 if not
         icool = 1
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, Int(initialize_engine))
+        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
 
     elseif case == "cooling_sizing"
         icall = 1
         icool = 2
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, Int(initialize_engine))
+        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points
         for jp = 1:iptotal
