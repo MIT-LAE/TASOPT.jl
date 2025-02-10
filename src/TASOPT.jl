@@ -62,8 +62,8 @@ using .engine
 
 
 #Load other functions
-include("./misc/fuselage_tank.jl")
-include("./misc/aircraft.jl")
+include(joinpath(__TASOPTroot__,"./misc/fuselage_tank.jl"))
+include(joinpath(__TASOPTroot__,"./misc/aircraft.jl"))
 export aircraft, fuselage_tank
 
 #Include cryogenic tanks after loading Fuselage and fuselage_tank
