@@ -1,4 +1,3 @@
-using DocStringExtensions
 using ..aerodynamics
 abstract type AbstractWing end
 

@@ -1,5 +1,5 @@
 """
-`engine` is a module that contains all low-fidelity (NPSS is included in a different directory) calculations
+`engine` is a module that contains all low-fidelity calculations
 required in the aircraft sizing. 
 """
 module engine
