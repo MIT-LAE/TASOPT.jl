@@ -16,7 +16,7 @@ export tfweightwrap!, tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncm
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
 export hxdesign!, radiator_design!, hxweight, resetHXs, HXOffDesign!
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy, unpack_ac
 
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"misc/constants.jl"))

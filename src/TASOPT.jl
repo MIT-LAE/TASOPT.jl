@@ -41,6 +41,7 @@ export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 include(__TASOPTindices__)
 
 #Load modules
+include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission.jl"))
