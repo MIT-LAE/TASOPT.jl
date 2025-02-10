@@ -37,6 +37,7 @@ Base.@kwdef mutable struct aircraft #inner constructor
     wing::Wing = Wing()
     htail::Tail = Tail()
     vtail::Tail = Tail()
+    engine::Engine = Engine()
 
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
 end
