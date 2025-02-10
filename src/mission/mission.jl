@@ -27,7 +27,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
 
       # HACK TODO add the para back
       # iairf
-      initeng = false
+      initialize_engine = false
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -329,7 +329,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   end
                   cdsum!(ac, imission, ip, icdfun)
 
-                  engine.enginecalc!(ac, "off_design", imission, ip, initeng)
+                  engine.enginecalc!(ac, "off_design", imission, ip, initialize_engine)
 
             Ftotal = pare[ieFe, ip] * parg[igneng]
             TSFC = pare[ieTSFC, ip]
@@ -441,7 +441,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             pare[ieFe, ip] = F / parg[igneng] #Store required thrust for engine calcs
             Wpay = parg[igWpay]
             
-            engine.enginecalc!(ac, "off_design", imission, ip, initeng)
+            engine.enginecalc!(ac, "off_design", imission, ip, initialize_engine)
 
       end
 
@@ -520,7 +520,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       Ftotal = BW * (DoL + para[iagamV, ip])
       pare[ieFe, ip] = Ftotal / parg[igneng]
 
-      engine.enginecalc!(ac, "off_design", imission, ip, initeng)
+      engine.enginecalc!(ac, "off_design", imission, ip, initialize_engine)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -672,7 +672,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             Fspec = BW * (sing + cosg * DoL)
             pare[ieFe, ip] = Fspec / parg[igneng]
 
-            if ~initeng
+            if ~initialize_engine
                   pare[iembf, ip] = pare[iembf, ip-1]
                   pare[iemblc, ip] = pare[iemblc, ip-1]
                   pare[iembhc, ip] = pare[iembhc, ip-1]
@@ -692,7 +692,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   pare[iept5, ip] = pare[iept5, ip-1] * pare[iep0, ip] / pare[iep0, ip-1]
 
             else
-                  inite = initeng
+                  inite = initialize_engine
             end
 
             engine.enginecalc!(ac, "off_design", imission, ip, inite)
