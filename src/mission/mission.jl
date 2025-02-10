@@ -27,7 +27,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
 
       # HACK TODO add the para back
       # iairf
-      initialize_engine = false
+      initializes_engine = false
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -329,7 +329,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   end
                   cdsum!(ac, imission, ip, icdfun)
 
-                  engine.enginecalc!(ac, "off_design", imission, ip, initialize_engine)
+                  engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
             Ftotal = pare[ieFe, ip] * parg[igneng]
             TSFC = pare[ieTSFC, ip]
@@ -441,7 +441,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             pare[ieFe, ip] = F / parg[igneng] #Store required thrust for engine calcs
             Wpay = parg[igWpay]
             
-            engine.enginecalc!(ac, "off_design", imission, ip, initialize_engine)
+            engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
       end
 
@@ -520,7 +520,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       Ftotal = BW * (DoL + para[iagamV, ip])
       pare[ieFe, ip] = Ftotal / parg[igneng]
 
-      engine.enginecalc!(ac, "off_design", imission, ip, initialize_engine)
+      engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -672,14 +672,14 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             Fspec = BW * (sing + cosg * DoL)
             pare[ieFe, ip] = Fspec / parg[igneng]
 
-            if ~initialize_engine
+            if ~initializes_engine
                   pare[iembf, ip] = pare[iembf, ip-1]
                   pare[iemblc, ip] = pare[iemblc, ip-1]
                   pare[iembhc, ip] = pare[iembhc, ip-1]
                   pare[iepif, ip] = pare[iepif, ip-1]
                   pare[iepilc, ip] = pare[iepilc, ip-1]
                   pare[iepihc, ip] = pare[iepihc, ip-1]
-                  inite = true
+                  initializes_engine = true
 
 
                   # make better estimate for new Tt4, adjusted for new ambient T0
@@ -691,11 +691,9 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   # make better estimate for new pt5, adjusted for new ambient p0
                   pare[iept5, ip] = pare[iept5, ip-1] * pare[iep0, ip] / pare[iep0, ip-1]
 
-            else
-                  inite = initialize_engine
             end
 
-            engine.enginecalc!(ac, "off_design", imission, ip, inite)
+            engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]
