@@ -1,4 +1,3 @@
-using DocStringExtensions
 abstract type AbstractLayout end
 abstract type AbstractCrossSection end
 abstract type AbstractCabin end

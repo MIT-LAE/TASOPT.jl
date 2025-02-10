@@ -1,7 +1,7 @@
 using StaticArrays
 
 """
-    fusebl!(pari, parg, para, ip)
+    fusebl!(fuse, parg, para, ip)
 
 Calculates surface velocities, boundary layer, wake 
 for a quasi-axisymmetric body in compressible flow.
@@ -14,7 +14,7 @@ which are defined by the various geometric parameters in `parg`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
+      - `fuse::Fuselage`: Fuselage model object.
       - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
       - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
       - `parm::AbstractArray{Float64}`: Vector of `aircraft` model mission parameters.
