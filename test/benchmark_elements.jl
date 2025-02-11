@@ -13,6 +13,12 @@ using BenchmarkTools
 println("Loading aircraft model...")
 
 include(joinpath(TASOPT.__TASOPTroot__, "../test/default_sized.jl"))
+include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
+ac = ac_test
+ac.parg = parg
+ac.pare = pare 
+ac.para = para
+ac.parm = parm
 
 println("\nNotes (from BenchmarkTools Manual):
 - The minimum is a robust estimator for the location parameter of the
@@ -146,8 +152,7 @@ function benchmark_drag()
 
 
     println("Benchmarking... cditrp")
-    bench_cditrp = @benchmark aerodynamics.cditrp($pari, $parg,
-     $view(para, :, ipcruise1))
+    bench_cditrp = @benchmark aerodynamics.cditrp($view(para, :, ipcruise1), ac.wing, ac.htail)
 
     nsurf = 2
     npout = [20, 10]
@@ -224,9 +229,7 @@ function benchmark_drag()
 
 
     println("Benchmarking... cdsum!")
-    bench = @benchmarkable aerodynamics.cdsum!($pari, $parg, 
-    $view(para, :, 10),
-    $view(pare,:, 10), $(true)) seconds=30 evals=1
+    bench = @benchmarkable aerodynamics.cdsum!(ac, 1, 10, true) seconds=30 evals=1
     bench_cdsum = run(bench)
 
 

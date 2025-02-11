@@ -1,18 +1,14 @@
 """
-balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
+      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
 Makes one of three (or none) changes to achieve pitch trim
 calculates resulting CG, CP, NP locations.
 
 Inputs:
-- `pari[.]`  integer flag array
-- `parg[.]`  geometry parameter array
-- `para[.]`  aero parameter array
-- `fuse`      TASOPT.Fuselage
-- `wing`      TASOPT.Wing
-- `htail`     TASOPT.Tail
-- `vtail`     TASOPT.Tail
-- `rfuel`    fuel fraction   Wfuel_actual/Wfuel_MTOW
+- `ac::aircraft`: structure with aircraft parameters
+- `imission::Int64`: mission index (1 is design mission)
+- `ip::Int64`: mission point index
+- `rfuel`    fuel fraction
 - `rpay`     payload fraction Wpay_actual/Wpay_MTOW
 - `ξpay`    partial-payload packing location
     * = 0.0   all the way in front  of cabin
@@ -25,15 +21,15 @@ Inputs:
     * = "x_wingbox"     adjust xwbox (wing box location)
 
 Outputs: 
-
+No direct outputs. Fields in `ac` are modified. Namely:
 - `para[iaxCG]`  center of gravity
 - `para[iaxCP]`  center of pressure ( = xCG if opt_trim_var != "none" )
 - `para[iaxNP]`  neutral point location
 
-!!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 """
-function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, opt_trim_var)
+function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      #Unpack aircraft
+      pari, parg, _, para, _, fuse, _, wing, htail, vtail = unpack_ac(ac, imission, ip = ip)
 
       iengloc = pari[iiengloc]
 
@@ -69,7 +65,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
       xwbox = wing.layout.box_x
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing, htail, vtail)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = wing.layout.x - wing.layout.box_x
@@ -90,7 +86,6 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       Sh1 = Sh
 
       #---- total weight, weight moment, and derivatives
-
       W = rpay * Wpay +
           rfuel * Wfuel +
           Wfuse +
@@ -273,20 +268,18 @@ Calculates resulting CG, CP, NP locations
 
 Inputs:  
       
-- `pari[.]`  integer fla array
+- `ac`       aircraft object
 - `parg[.]`  geometry parameter array
 - `paraF[.]` aero parameter array for fwdCG case
 - `paraB[.]` aero parameter array for aft CG case
 - `paraC[.]` aero parameter array for cruise tail CL case
 
 Outputs: 
-  
-- `parg[igSh]`    HT area
-- `parg[igxwbox]` wingbox location
-- `parg[igxwing]` wing centroid location
-
+No direct outputs. Fields in `ac` are modified.
 """
-function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
+function htsize(ac, paraF, paraB, paraC)
+      #TODO find a way to remove the para inputs and use ac instead
+      pari, parg, fuse, _, wing, htail, vtail = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -298,7 +291,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       cosL = cosd(sweep)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse, wing, htail, vtail)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       rpayC = 1.0
 
@@ -490,7 +483,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
                   lhtail = htail.layout.x - (xwbox + dxwing)
                   lhtail_xw = -1.0
 
-                  Vh = htail.volume      # Tail volume is specified here!
+                  Vh = htail.volume     # Tail volume is specified here!
                   Sh = Vh * S * cma / lhtail # Corresponding tail surf area
 
                   r[1] = Sh * lhtail - Vh * S * cma  # This is 0 (residual is 0 ∵ Vh = Sh*lh/(S*cma))
@@ -665,7 +658,8 @@ which gives an explicit solution for `rpayF`,`rpayB`.
 The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
 and unwarranted in practice.
 """
-function cglpay(pari, parg, fuse, wing, htail, vtail)
+function cglpay(ac)
+      pari, parg, fuse, _, wing, htail, vtail = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]

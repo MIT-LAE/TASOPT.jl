@@ -39,6 +39,7 @@ For devs: the indices for accessing specific data are defined in `/src/data_stru
     wing::Wing = Wing()
     htail::Tail = Tail()
     vtail::Tail = Tail()
+    engine::Engine = Engine()
 
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
 end

@@ -1094,6 +1094,16 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       #---------------------------------
       pare_sl = pare[:, ipdes] #Slice pare at design point
 
+      PreCepsilon = pare_sl[iePreCepsilon]
+      InterCepsilon = pare_sl[ieInterCepsilon]
+      Regenepsilon = pare_sl[ieRegenepsilon]
+      TurbCepsilon = pare_sl[ieTurbCepsilon]
+
+      #Bypass rest if there are no HXs
+      if maximum([PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon]) ≈ 0
+            return HXs_prev
+      end
+
       D_i = pare_sl[ieDi]
       Tc_ft = pare_sl[ieTft]
       recirculates = Bool(pare_sl[iefrecirc])
@@ -1101,16 +1111,12 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       h_lat = pare_sl[iehvap]
       igas = pari[iifuel]
       PreCorder = pare_sl[iePreCorder]
-      PreCepsilon = pare_sl[iePreCepsilon]
       PreCMp = pare_sl[iePreCMp]
       InterCorder = pare_sl[ieInterCorder]
-      InterCepsilon = pare_sl[ieInterCepsilon]
       InterCMp = pare_sl[ieInterCMp]
       Regenorder = pare_sl[ieRegenorder]
-      Regenepsilon = pare_sl[ieRegenepsilon]
       RegenMp = pare_sl[ieRegenMp]
       TurbCorder = pare_sl[ieTurbCorder]
-      TurbCepsilon = pare_sl[ieTurbCepsilon]
       TurbCMp = pare_sl[ieTurbCMp]
 
       if igas == 11 #TODO: add more options
@@ -1136,6 +1142,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
                   push!(ε_des, all_eps[ind])
             end
       end
+
 
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
       #Initialize Heat Exchanger vector
