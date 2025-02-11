@@ -71,6 +71,113 @@ airfoil{Float64, LinRange{Float64, Int64}}
 In this case given the type, **not the value**, of `a` the compiler can correctly infer 
 the type of `a.cl`, and generate appropriate code. 
 
+### Type instability from using variables in parent scopes
+
+Here let's look at a common pattern that can be tempting to write and what the performance penalty is.
+
+```julia-repl
+ia = 3
+function do_something1(A)
+    a = A[ia]
+    if a == 0.0
+        return 1.0
+    else
+        return 2.0
+    end
+end
+```
+
+Consider the code above - it takes in some Array, loads a particular value and then compares it and does something to it. 
+
+```julia-repl
+julia> A = rand(3,3)
+3×3 Matrix{Float64}:
+ 0.355865  0.81659    0.529105
+ 0.210353  0.978487   0.671198
+ 0.734191  0.0497119  0.72487
+ 
+julia> @code_warntype do_something1(A)
+MethodInstance for do_something1(::Matrix{Float64})
+  from do_something1(A) @ Main REPL[6]:1
+Arguments
+  #self#::Core.Const(Main.do_something1)
+  A::Matrix{Float64}
+Locals
+  a::Any
+Body::Float64
+1 ─      (a = Base.getindex(A, Main.ia))
+│   %2 = Main.:(==)::Core.Const(==)
+│   %3 = a::Any
+│   %4 = (%2)(%3, 0.0)::Any
+└──      goto #3 if not %4
+2 ─      return 1.0
+3 ─      return 2.0
+```
+
+The compiler can't determine the type of a from the arguments alone (**even though** it correctly identifies that the input argument type is `Matrix{Float64}`). This is because the type of `ia` is not specified.
+
+You can fix that by doing something like this:
+```julia-repl
+const ia2 = 3
+function do_something2(A)
+    a = A[ia2]
+    if a == 0.0
+        return 1.0
+    else
+        return 2.0
+    end
+end
+
+ia3::Int = 3
+function do_something3(A)
+    a = A[ia3]
+    if a == 0.0
+        return 1.0
+    else
+        return 2.0
+    end
+end
+```
+
+Both of the above now return type stable code:
+
+```julia-repl
+julia> @code_warntype do_something2(A)
+MethodInstance for do_something2(::Matrix{Float64})
+  from do_something2(A) @ Main REPL[3]:1
+Arguments
+  #self#::Core.Const(Main.do_something2)
+  A::Matrix{Float64}
+Locals
+  a::Float64
+Body::Float64
+1 ─      (a = Base.getindex(A, Main.ia2))
+│   %2 = Main.:(==)::Core.Const(==)
+│   %3 = a::Float64
+│   %4 = (%2)(%3, 0.0)::Bool
+└──      goto #3 if not %4
+2 ─      return 1.0
+3 ─      return 2.0
+
+julia> @code_warntype do_something3(A)
+MethodInstance for do_something3(::Matrix{Float64})
+  from do_something3(A) @ Main REPL[11]:1
+Arguments
+  #self#::Core.Const(Main.do_something3)
+  A::Matrix{Float64}
+Locals
+  a::Float64
+Body::Float64
+1 ─      (a = Base.getindex(A, Main.ia3))
+│   %2 = a::Float64
+│   %3 = (%2 == 0.0)::Bool
+└──      goto #3 if not %3
+2 ─      return 1.0
+3 ─      return 2.0
+```
+
+The relevant sections in the performance docs are [here](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-untyped-global-variables).
+
 ### Static arrays and performance
 
 [`StaticArrays`](https://github.com/JuliaArrays/StaticArrays.jl) is a package that provides functionality for *statically sized* (i.e., the size is determined from the *type*, doesn't **have** to be immutable) arrays.
