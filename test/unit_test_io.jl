@@ -63,7 +63,7 @@
     isfile(filepath_csv) ? rm(filepath_csv) : nothing
     isfile(filepath_csv2) ? rm(filepath_csv2) : nothing
     
-    #generate output files
+    #generate output files, indices are default_output_indices
     output_csv(ac_def, filepath_csv)
     output_csv(ac_def, filepath_csv, 
                 includeMissions = true, includeFlightPoints = true)
@@ -88,7 +88,7 @@
     @test size(csv2,1) == 1 #1 row with addl indices (all)
 
     @test length(csv1[1]) == 749 # = entries w/ full ac struct and in default_output_indices
-    @test length(csv2[1]) == 1166 # = entries w/ full ac struct and all output_indices
+    @test length(csv2[1]) == 1167 # = entries w/ full ac struct and all output_indices
 
     #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 
