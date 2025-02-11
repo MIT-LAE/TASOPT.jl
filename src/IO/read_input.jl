@@ -484,11 +484,14 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     #Find number of tanks from placement
     if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")
-        pari[iinftanks] = 1
+        nftanks = 1
     elseif (fuse_tank.placement == "both") 
-        pari[iinftanks] = 2
+        nftanks = 2
     end
-end
+else #else all fuel in wings
+    nftanks = 0
+end #if
+
 # ---------------------------------
 # Wing
 # ---------------------------------
@@ -1062,6 +1065,7 @@ dHEx = dprop["HeatExchangers"]
         opt_fuel = "JET-A",
         has_centerbox_fuel = readfuel("fuel_in_wing"),
         has_wing_fuel = readfuel("fuel_in_wingcen"),
+        fuselage_fueltank_count = nftanks,
         
         opt_wing_type = "TODO: FIX THIS, wingtype spec",
         moves_wingbox_forbalance = true,
@@ -1078,7 +1082,7 @@ dHEx = dprop["HeatExchangers"]
     
 
 return TASOPT.aircraft(name, description, ac_options,
-    pari, parg, parm, para, pare, [false], 
+    pari, parg, parm, para, pare, is_sized, 
     fuselage, fuse_tank, wing, htail, vtail, engine)
 
 end

@@ -940,7 +940,7 @@ end
 Wupdate0 updates the weight of the aircraft
 """
 function Wupdate0!(ac, rlx, fsum)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
     
@@ -968,7 +968,7 @@ end
 Wupdate
 """
 function Wupdate!(ac, rlx, fsum)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 
