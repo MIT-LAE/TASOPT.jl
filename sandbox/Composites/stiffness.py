@@ -14,7 +14,9 @@ def compute_ABD_matrices(E1, E2, G12, nu12, ply_angles, t):
         theta = np.radians(ply_angles[k])
         c, s = np.cos(theta), np.sin(theta)
         T = np.array([[c**2, s**2, 2*c*s], [s**2, c**2, -2*c*s], [-c*s, c*s, c**2 - s**2]])
-        Q_bar = np.linalg.inv(T) @ Q @ T.T
+        #Q_bar = np.linalg.inv(T) @ Q @ T.T   << Incorrect transofrmation
+        T_inv = np.linalg.inv(T)
+        Q_bar = T_inv @ Q @ T_inv.T
         z_upper, z_lower = z_k[k + 1], z_k[k]
         ABD[:3, :3] += Q_bar * (z_upper - z_lower)
         ABD[3:, 3:] += Q_bar * ((z_upper**3 - z_lower**3) / 3)
