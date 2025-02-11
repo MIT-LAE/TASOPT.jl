@@ -24,6 +24,8 @@ const __TASOPTindices__ = joinpath(__TASOPTroot__,"data_structs/index.inc") #inc
 export __TASOPTroot__, __TASOPTindices__
 
 # Constants and array indices
+include(__TASOPTindices__)
+
 include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
 export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
        lbf_to_N, kts_to_mps, hp_to_W, lb_N
@@ -33,7 +35,6 @@ include(joinpath(__TASOPTroot__,"data_structs/units.jl"))
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
 
-include("./data_structs/index.inc")
 include(joinpath(__TASOPTroot__,"data_structs/materials.jl"))
 using .materials
 export StructuralAlloy, Conductor, Insulator, ThermalInsulator
@@ -41,9 +42,9 @@ export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 #miscellaneous auxiliary fxns
 include("./utils/helper_functions.jl")
 
-include(__TASOPTindices__)
 
 #Load modules
+include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission.jl"))
@@ -64,10 +65,10 @@ using .engine
 
 
 #Load other functions
-include("./data_structs/fuselage_tank.jl")
+include(joinpath(__TASOPTroot__,"./data_structs/fuselage_tank.jl"))
 
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
-include("./data_structs/aircraft.jl")
+include(joinpath(__TASOPTroot__,"./data_structs/aircraft.jl"))
 export aircraft, fuselage_tank
 
 #Include cryogenic tanks after loading Fuselage and fuselage_tank

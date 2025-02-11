@@ -177,13 +177,24 @@ pari[iiopt] = read_input("optimize", options, doptions)
 propsys = read_input("prop_sys_arch", options, doptions)
 if compare_strings(propsys,"tf")
     pari[iiengtype] = 1
+    modelname = "turbofan_md"
+    enginecalc! = tfwrap!
+    engineweightname = "turbofan"
+    engineweight! = tfweightwrap!
+
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
+    
 elseif compare_strings(propsys, "te")
     pari[iiengtype] = 0
 else
+    
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
+
+engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
+
 
 engloc = read_input("engine_location", options, doptions)
 
@@ -1047,8 +1058,6 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-    test = readfuel("fuel_in_wing")
-
     ac_options = TASOPT.options(
         opt_fuel = "JET-A",
         has_centerbox_fuel = readfuel("fuel_in_wing"),
@@ -1070,7 +1079,7 @@ dHEx = dprop["HeatExchangers"]
 
 return TASOPT.aircraft(name, description, ac_options,
     pari, parg, parm, para, pare, [false], 
-    fuselage, fuse_tank, wing, htail, vtail)
+    fuselage, fuse_tank, wing, htail, vtail, engine)
 
 end
 

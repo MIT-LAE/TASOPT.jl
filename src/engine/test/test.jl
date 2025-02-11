@@ -1169,10 +1169,10 @@ end
     ip = 17
     icall = 0
     icool = 1
-    initeng = 1
+    initializes_engine = true
 
     ichoke5, ichoke7 = tfcalc!(pari, parg, para, pare, ip,
-        icall, icool, initeng)
+        icall, icool, initializes_engine)
 
     @test pare[ieetaf] == 0.8867761611442198
     @test pare[ieetalc] == 0.8418066828324892
@@ -1182,7 +1182,7 @@ end
 
     icall = 1
     ichoke5, ichoke7 = tfcalc!(pari_off, parg_off, para_off, pare_off, ip,
-        icall, icool, initeng)
+        icall, icool, initializes_engine)
 
     @test pare_off[ieetaf] ≈ 0.8821046629543674 rtol = 1e-10
     @test pare_off[ieetalc] ≈ 0.841187444476946 rtol = 1e-10
