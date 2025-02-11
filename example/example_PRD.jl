@@ -4,12 +4,8 @@ fleet of missions
 """
 
 # 1. Import modules
-using PythonPlot
 using TASOPT
-# you can optionally define
-# const tas = TASOPT 
-# to use as a shorthand
-include(__TASOPTindices__)
+using Plots
 # import indices for calling parameters
 
 # Load default model

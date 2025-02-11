@@ -1,7 +1,7 @@
 using Printf
 """
     wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=false, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
@@ -19,12 +19,12 @@ and iterates until the MTOW converges to within a specified tolerance.
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
 function wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initeng=0, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=false, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
     # Unpack data storage arrays and components
-    pari, parg, parm, para, pare = ac.pari, ac.parg, ac.parmd, ac.parad, ac.pared
-    fuse_tank, fuse, wing, htail, vtail = ac.fuse_tank, ac.fuselage, ac.wing, ac.htail, ac.vtail
+    imission = 1 #Design mission
+    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     # Initialize variables
     time_propsys = 0.0
@@ -160,8 +160,7 @@ function wsize(ac; itermax=35,
     parg[igxftank] = xftank
     parg[igxftankaft] = xftankaft
 
-    # Initialize heat exchanger storage and reset engine values
-    HXs = []
+    # Reset engine values for heat exchangers
     resetHXs(pare)
    
     # -------------------------------------------------------    
@@ -459,7 +458,7 @@ function wsize(ac; itermax=35,
 
         else
             # Call a better Wupdate function
-            Wupdate0!(parg, fuse, wing, htail, vtail, rlx, fsum)
+            Wupdate0!(ac, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -532,6 +531,7 @@ function wsize(ac; itermax=35,
         po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate engine weight
+        #TODO: improve readability, either a comment or break up into if statements
         Weng1 = (wing.planform == 1) ? (pari[iiengtype] == 0 ? parg[igWfan] + parg[igWmot] + parg[igWfanGB] : parg[igWeng] / parg[igneng]) : 0.0
 
         # Set up parameters for get_wing_weights function
@@ -614,7 +614,7 @@ function wsize(ac; itermax=35,
             Sh = Vh * wing.layout.S * wing.mean_aero_chord / lhtail
             htail.layout.S = Sh
         else
-            htsize(pari, parg, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1), fuse, wing, htail, vtail)
+            htsize(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
             wing.layout.box_x, xwing = wing.layout.box_x, wing.layout.x
             lhtail = xhtail - xwing
             Sh = htail.layout.S
@@ -700,17 +700,15 @@ function wsize(ac; itermax=35,
                 #This is needed to know the TO duration to integrate the tank state
                 # set static thrust for takeoff routine
                 ip = ipstatic
-                icall = 1
-                icool = 1
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
-    
+                case = "off_design"
+                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
-                icall = 1
-                icool = 1
-                ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
-    
+                case = "off_design"
+                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+
                 takeoff!(ac; printTO = false)
             end
         end
@@ -721,10 +719,10 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            HXs = hxdesign!(pare, pari, ipdes, HXs, rlx = 0.5) #design and off-design HX performance
+            engine.heat_exchangers = hxdesign!(pare, pari, ipdes, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
-            for HX in HXs
+            for HX in engine.heat_exchangers
                 if HX.type == "PreC"
                     parg[igdHXPreC] = HX.HXgeom.D_o
                 elseif HX.type == "InterC"
@@ -760,7 +758,7 @@ function wsize(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         itrim = 1
-        balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+        balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -768,7 +766,7 @@ function wsize(ac; itermax=35,
         para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
 
         # Drag buildup cdsum()
-        cdsum!(parg, view(para, :, ip), view(pare, :, ip),  wing, htail, vtail,  1)
+        cdsum!(ac, imission, ip, 1)
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])
@@ -781,80 +779,13 @@ function wsize(ac; itermax=35,
         pare[ieFe, ip] = Fdes / neng
 
         # Size engine for TOC
-        icall = 0
-        icool = 1
-        if (iterw == 1 || initeng == 0)
-            # initialize engine state
-            inite1 = 0
-        else
-            # start with current engine state
-            inite1 = 1
-        end
+        case = "design" #Design the engine for this mission point
+        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
+        #Calculate engine mass properties
+        engine.engineweight!(ac)
 
-        # store engine design-point parameters for all operating points
-        parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
-        parg[igA7] = pare[ieA7, ip] / pare[ieA7fac, ip]
-        for jp = 1:iptotal
-            pare[ieA2, jp] = pare[ieA2, ip]
-            pare[ieA25, jp] = pare[ieA25, ip]
-            pare[ieA5, jp] = parg[igA5] * pare[ieA5fac, jp]
-            pare[ieA7, jp] = parg[igA7] * pare[ieA7fac, jp]
-
-            pare[ieNbfD, jp] = pare[ieNbfD, ip]
-            pare[ieNblcD, jp] = pare[ieNblcD, ip]
-            pare[ieNbhcD, jp] = pare[ieNbhcD, ip]
-            pare[ieNbhtD, jp] = pare[ieNbhtD, ip]
-            pare[ieNbltD, jp] = pare[ieNbltD, ip]
-
-            pare[iembfD, jp] = pare[iembfD, ip]
-            pare[iemblcD, jp] = pare[iemblcD, ip]
-            pare[iembhcD, jp] = pare[iembhcD, ip]
-            pare[iembhtD, jp] = pare[iembhtD, ip]
-            pare[iembltD, jp] = pare[iembltD, ip]
-
-            pare[iepifD, jp] = pare[iepifD, ip]
-            pare[iepilcD, jp] = pare[iepilcD, ip]
-            pare[iepihcD, jp] = pare[iepihcD, ip]
-            pare[iepihtD, jp] = pare[iepihtD, ip]
-            pare[iepiltD, jp] = pare[iepiltD, ip]
-        end
-
-        dfan = parg[igdfan]
-        dlcomp = parg[igdlcomp]
-        dhcomp = parg[igdhcomp]
-
-        Mach = para[iaMach, ip]
-        CL = para[iaCL, ip]
-        CD = para[iaCD, ip]
-
-        # bare weight for one engine [Newtons]
-        mdotc = pare[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)
-        BPR = pare[ieBPR, ip]
-        OPR = pare[iepilc, ip] * pare[iepihc, ip]
-
-        # weight of engine and related stuff
-        Gearf = parg[igGearf]
-        HX_add_mass_frac = parg[igHXaddmassfrac] #Added mass fraction to HX
-        Weng, Wnace, Webare, W_HXs, Snace1 = tfweight(iengwgt, Gearf, OPR, BPR, mdotc, dfan, rSnace,
-            dlcomp, neng, feadd, fpylon, HXs, HX_add_mass_frac)
-
-        parg[igWeng] = Weng
-        parg[igWebare] = Webare
-        parg[igWnace] = Wnace
-        parg[igWeng] = Weng
-        parg[igWHXs] = W_HXs #Store total weight of heat exchangers
-
-        # set new nacelle area / reference area  fraction fSnace
-        Snace = Snace1 * neng
-        fSnace = Snace / wing.layout.S
-        parg[igfSnace] = fSnace
-        lnace = parg[igdfan] * parg[igrSnace] * 0.15
-        parg[iglnace] = lnace
-
-        ipc1 = 1
-        time_propsys += mission!(pari, parg, parm, para, pare, fuse, wing, htail, vtail, Ldebug)
+        mission!(ac, imission, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -870,22 +801,12 @@ function wsize(ac; itermax=35,
         cosL = cosd(wing.layout.sweep)
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
-        icall = 1
-        icool = 2
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
-
-        # Tmetal was specified... set blade row cooling flow ratios for all points
-        for jp = 1:iptotal
-            for icrow = 1:ncrowx
-                pare[ieepsc1+icrow-1, jp] = pare[ieepsc1+icrow-1, ip]
-            end
-            # also set first estimate of total cooling mass flow fraction
-            pare[iefc, jp] = pare[iefc, ip]
-        end
+        case = "cooling_sizing"
+        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
+        Wupdate!(ac, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -901,7 +822,7 @@ function wsize(ac; itermax=35,
 
         # Recalculate weight wupdate()
         ip = ipcruise1
-        Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
+        Wupdate!(ac, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -919,23 +840,20 @@ function wsize(ac; itermax=35,
     # normal takeoff and balanced-field takeoff calculations
     # set static thrust for takeoff routine
     ip = ipstatic
-    icall = 1
-    icool = 1
-
-    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
+    case = "off_design"
+    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
-    icall = 1
-    icool = 1
-    ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, inite1)
+    case = "off_design"
+    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     # calculate takeoff and balanced-field lengths
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(pari, parg,fuse, wing, htail, vtail)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(ac)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -949,17 +867,18 @@ function wsize(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     itrim = 0
-    balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+    balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
     
 end
 
 """
 Wupdate0 updates the weight of the aircraft
 """
-function Wupdate0!(parg, fuse, wing, htail, vtail, rlx, fsum)
+function Wupdate0!(ac, rlx, fsum)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
+
     WMTO = parg[igWMTO]
     
-
     ftotadd = fuse.HPE_sys.W + parg[igflgnose] + parg[igflgmain]
     fsum = 0.0
 
@@ -983,7 +902,8 @@ end
 """
 Wupdate
 """
-function Wupdate!(parg, fuse, wing, htail, vtail, rlx, fsum)
+function Wupdate!(ac, rlx, fsum)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 

@@ -23,6 +23,7 @@ For devs: the indices for accessing specific data are defined in `/src/misc/inde
 Base.@kwdef mutable struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
+
     pari::AbstractVector{Int64}
     parg::AbstractVector{Float64}
     parm::AbstractArray{Float64}
@@ -30,11 +31,15 @@ Base.@kwdef mutable struct aircraft #inner constructor
     pare::AbstractArray{Float64}
     
     sized::AbstractVector{Bool} = [false]
+
     fuse_tank::fuselage_tank = fuselage_tank()
     fuselage::Fuselage = Fuselage()
     wing::Wing = Wing()
     htail::Tail = Tail()
     vtail::Tail = Tail()
+    engine::Engine = Engine()
+
+    #TODO: update DOCSTRING for ANY NEW fields/sub-structures
 end
 
 # #TODO: sort out a robust meta-structure such that new individual constructors aren't required

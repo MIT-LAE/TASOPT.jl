@@ -24,10 +24,12 @@ epsilon = 1e-5
 default_model = load_default_model()
 size_aircraft!(default_model)
 TASOPT.get_sensitivity(params, model_state = default_model, eps = epsilon)
+```
 
 If you want the default model as the model state and epsilon as 1e-5 
 you can also call the function directly with just the params:
 
+```julia
 sens = TASOPT.get_sensitivity(params)
 
 #Plot Sensitivities
