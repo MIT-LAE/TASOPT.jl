@@ -70,3 +70,144 @@ airfoil{Float64, LinRange{Float64, Int64}}
 
 In this case given the type, **not the value**, of `a` the compiler can correctly infer 
 the type of `a.cl`, and generate appropriate code. 
+
+### Static arrays and performance
+
+[`StaticArrays`](https://github.com/JuliaArrays/StaticArrays.jl) is a package that provides functionality for *statically sized* (i.e., the size is determined from the *type*, doesn't **have** to be immutable) arrays.
+
+Consider the `Weight` types defined in TASOPT.
+
+```julia
+@kwdef struct Weight <: AbstractLoad
+	"""Weight [N]"""
+	W::Float64
+	"""Location {x,y,z} [m]"""
+	r::SVector{3, Float64} = SA[0.0,0.0,0.0]
+	"""Coordinate Frame"""
+	frame::Frame = WORLD
+
+end
+```
+
+Then extending `Base.+` and adding a new function to do center of mass calculations:
+```julia
+import Base.+
+
+function +(W1::T, W2::T) where T<:Weight
+	total_W = W1.W + W2.W
+	Weight(total_W, (W1.r*W1.W + W2.r*W2.W)/total_W)
+end # function +
+
+"""
+    center_of_weight(W_array::AbstractArray{Weight})
+
+Calculates the coordinates of the center of mass/weight and returns a `Weight`
+type of the equivalent weight and at the center of mass.
+"""
+function center_of_weight(W_array::AbstractArray{Weight})
+    total_weight = 0.0
+    r̄ = SVector{3,Float64}(zeros(3))
+    for weight in W_array
+        total_weight += weight.W
+        r̄ = r̄ + weight.W * weight.r
+    end
+    return Weight(W = total_weight, r = r̄./total_weight)
+end
+
+```
+
+Now let's look at performance:
+
+```julia
+julia> Ws = [W1, W2, W3, W4] #Assume these are already defined
+4-element Vector{Weight}:
+ Weight(10.0, [0.0, 0.0, 0.0], Frame(0, [0.0, 0.0, 0.0]))
+ Weight(10.0, [10.0, 0.0, 0.0], Frame(0, [0.0, 0.0, 0.0]))
+ Weight(10.0, [10.0, 10.0, 0.0], Frame(0, [0.0, 0.0, 0.0]))
+ Weight(10.0, [0.0, 10.0, 0.0], Frame(0, [0.0, 0.0, 0.0]))
+
+julia> center_of_weight(Ws)
+Weight(40.0, [5.0, 5.0, 0.0], Frame(0, [0.0, 0.0, 0.0]))
+
+julia> sum(Ws)
+Weight(40.0, [5.0, 5.0, 0.0], Frame(0, [0.0, 0.0, 0.0]))
+
+julia> @benchmark center_of_weight($Ws)
+BenchmarkTools.Trial: 10000 samples with 997 evaluations.
+ Range (min … max):  19.475 ns … 571.464 ns  ┊ GC (min … max): 0.00% … 92.64%
+ Time  (median):     20.186 ns               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   21.935 ns ±  18.992 ns  ┊ GC (mean ± σ):  3.39% ±  3.80%
+
+  ▃▃▇█▆▃▂▃▄▂▁▁ ▁▁▁▁▁▁ ▂▂▁▁▁▁▂▂▂▁ ▁                             ▂
+  █████████████████████████████████▇█▇▇█▇▆▇▇▇▆▇▆▇▆█▆▇▇▆▅▅▅▆▆▁▅ █
+  19.5 ns       Histogram: log(frequency) by time      31.5 ns <
+
+ Memory estimate: 80 bytes, allocs estimate: 1.
+
+julia> @benchmark sum($Ws)
+BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
+ Range (min … max):  7.458 ns … 21.667 ns  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     7.708 ns              ┊ GC (median):    0.00%
+ Time  (mean ± σ):   7.791 ns ±  0.836 ns  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+    █▁▃                                                       
+  ▂▄███▄▃▂▂▂▂▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▂ ▂
+  7.46 ns        Histogram: frequency by time        11.5 ns <
+
+ Memory estimate: 0 bytes, allocs estimate: 0.
+ ```
+So by extending `Base.+` we got the `sum` function for free cause it just knows how to add things together. But you see that the static array approach seems to take much longer, that's because the 
+static array definition here isn't done correctly. This is an easy to make mistake, look at the following comparison: 
+
+```julia
+function center_of_weight(W_array::AbstractArray{Weight})
+    total_weight = 0.0
+    r̄ = SVector{3}([0.0, 0.0, 0.0])
+    for weight in W_array
+        total_weight += weight.W
+        r̄ = r̄ + weight.W * weight.r
+    end
+    return Weight(W = total_weight, r = r̄./total_weight)
+end
+julia> @benchmark center_of_weight($Ws)
+BenchmarkTools.Trial: 10000 samples with 998 evaluations.
+ Range (min … max):  17.995 ns … 541.165 ns  ┊ GC (min … max): 0.00% … 94.78%
+ Time  (median):     18.745 ns               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   19.894 ns ±  19.000 ns  ┊ GC (mean ± σ):  3.84% ±  3.87%
+
+  ▄▆▆▅▇██▇▄▂                    ▁▃▃▃▂▂▁▁                       ▂
+  ███████████▇▆▆▅▆▅▃▅▁▅▅▅▅▅▇█▇██████████▇█▇▇▆▆▆▆▆▄▅▄▅▄▅▃▅▅▄▄▅▇ █
+  18 ns         Histogram: log(frequency) by time      25.8 ns <
+
+ Memory estimate: 80 bytes, allocs estimate: 1.```
+ 
+ VERSUS:
+```julia
+function center_of_weight(W_array::AbstractArray{Weight})
+    total_weight = 0.0
+    r̄ = SVector{3}(0.0, 0.0, 0.0)
+    for weight in W_array
+        total_weight += weight.W
+        r̄ = r̄ + weight.W * weight.r
+    end
+    return Weight(W = total_weight, r = r̄./total_weight)
+end
+
+
+julia> @benchmark center_of_weight($Ws)
+BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
+ Range (min … max):  3.917 ns … 17.292 ns  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     4.000 ns              ┊ GC (median):    0.00%
+ Time  (mean ± σ):   4.046 ns ±  0.431 ns  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+          ▃       █       ▆       ▁        ▃       ▁         ▁
+  ▃▁▁▁▁▁▁▁█▁▁▁▁▁▁▁█▁▁▁▁▁▁▁█▁▁▁▁▁▁▁██▁▁▁▁▁▁▁█▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▆ █
+  3.92 ns      Histogram: log(frequency) by time     4.21 ns <
+
+ Memory estimate: 0 bytes, allocs estimate: 0.
+
+```
+
+**All that really changed was the little square brackets!**
+`SVector{3}(0.0, 0.0, 0.0)` vs `SVector{3}([0.0, 0.0, 0.0])`
+The latter results in 1 allocation which for such a small calculation is a significant increase in the time required for the calculations!
