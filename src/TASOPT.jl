@@ -56,6 +56,9 @@ include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
 
+include(joinpath(__TASOPTroot__,"./data_structs/fuselage_tank.jl"))
+export fuselage_tank
+
 #Use above modules
 using .atmosphere
 using .aerodynamics
@@ -63,13 +66,10 @@ using .structures
 using .propsys
 using .engine
 
-
-#Load other functions
-include(joinpath(__TASOPTroot__,"./data_structs/fuselage_tank.jl"))
-
+# Load primary aircraft structure 
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include(joinpath(__TASOPTroot__,"./data_structs/aircraft.jl"))
-export aircraft, fuselage_tank
+export aircraft
 
 #Include cryogenic tanks after loading Fuselage and fuselage_tank
 include(joinpath(__TASOPTroot__,"cryo_tank/CryoTank.jl"))
