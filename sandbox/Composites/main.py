@@ -1,15 +1,5 @@
-# Execute the provided code to validate results
+from config import stiff, sol, bound, np, plt, sp, msh, pproc
 
-import numpy as np
-import scipy.sparse as sp
-import scipy.sparse.linalg as spla
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
-import stiffness as stiff
-import mesh as msh
-import solve as sol
-import boundary as bound
 
 def compute_stress_fields(nodes, U, nx, ny, ABD):
     w_disp = U[0::3].reshape(ny + 1, nx + 1)
@@ -17,34 +7,6 @@ def compute_stress_fields(nodes, U, nx, ny, ABD):
     sigma_yy = ABD[1, 1] * w_disp
     sigma_res = np.sqrt(sigma_xx**2 + sigma_yy**2)
     return sigma_xx, sigma_yy, sigma_res
-
-def plot_stress_fields(nodes, sigma_xx, sigma_yy, sigma_res, nx, ny):
-    X, Y = nodes[:, 0].reshape(ny + 1, nx + 1), nodes[:, 1].reshape(ny + 1, nx + 1)
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5), dpi=300)
-    
-    cmap = "coolwarm"
-    for ax, sigma, title in zip(axes, [sigma_xx, sigma_yy, sigma_res],
-                                ["Sigma_xx", "Sigma_yy", "Resultant Stress"]):
-        c = ax.contourf(X, Y, sigma, cmap=cmap, levels=20)
-        fig.colorbar(c, ax=ax)
-        ax.set_title(title)
-        ax.set_xlabel("x (m)")
-        ax.set_ylabel("y (m)")
-    
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_displacement(U, nodes, nx, ny):
-    w_disp = U[0::3].reshape(ny + 1, nx + 1) * 1e6  # Scale displacement for visibility
-    X, Y = nodes[:, 0].reshape(ny + 1, nx + 1), nodes[:, 1].reshape(ny + 1, nx + 1)
-    plt.figure(figsize=(8, 6))
-    plt.contourf(X, Y, w_disp, cmap="coolwarm", levels=20)
-    plt.colorbar(label="Displacement (µm)")
-    plt.xlabel("x (m)")
-    plt.ylabel("y (m)")
-    plt.title("Displacement Contour (Scaled in µm)")
-    plt.show()
 
 # Run main simulation
 Lx, Ly = 5.0, 1.0
@@ -78,9 +40,9 @@ U = sol.solve_system(K, F)
 
 # Display Results
 print("Max displacement:", np.max(np.abs(U[0::3])))
-plot_displacement(U, nodes, nx, ny)
+pproc.plot_displacement(U, nodes, nx, ny)
 
 sigma_xx, sigma_yy, sigma_res = compute_stress_fields(nodes, U, nx, ny, ABD)
-plot_stress_fields(nodes, sigma_xx, sigma_yy, sigma_res, nx, ny)
+pproc.plot_stress_fields(nodes, sigma_xx, sigma_yy, sigma_res, nx, ny)
 
 
