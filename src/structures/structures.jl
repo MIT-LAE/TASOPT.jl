@@ -15,8 +15,8 @@ using NLopt
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
 export get_wing_weights!, calculate_centroid_offset!, calculate_centroid_offset, fusew!,
- update_fuse!, update_fuse_for_pax!, place_cabin_seats, find_cabin_width, find_floor_angles, arrange_seats
-
+ update_fuse!, update_fuse_for_pax!, place_cabin_seats, find_cabin_width, find_floor_angles, arrange_seats,
+landing_gear_size!
 
 include("../misc/index.inc")
 include("../misc/constants.jl")
@@ -47,5 +47,6 @@ include("size_cabin.jl") #Seat layouts and cabin length
 #Hydrogen tank related code
 include("update_fuse.jl")
 
+include("size_landing_gear.jl") #Landing gear sizing
 
 end
