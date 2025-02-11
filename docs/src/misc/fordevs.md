@@ -19,6 +19,49 @@
 
 Below are a few performance tips based on lessons learnt during TASOPT.jl development. The Julia docs has a section on performance that you can find [here](https://docs.julialang.org/en/v1/manual/performance-tips/), so the goal is not to repeat everything but expand on sections that are rather terse in there. 
 
+### Reducing allocations and profiling
+
+The `test/benchmark_elements.jl` file shows some examples of using `BenchmarkTools.jl` to benchmark functions in Julia. Two key things to keep in mind to get fast julia code are:
+1. Type stable code - write code that the compiler can generate performant code.
+2. Reducing unnecessary allocations.
+
+The below sections cover "gotchas" on type stability (1). 
+
+For point (2), sometimes you need more than just the number of allocations from benchmarking to actually go reduce it. Mainly it can be non-obvious where the allocations are being made in some cases. [`Coverage.jl`](https://github.com/JuliaCI/Coverage.jl) is a useful package for getting a better sense of where in your code the allocations are coming from.
+
+Specifically you want to follow the steps [here](https://github.com/JuliaCI/Coverage.jl?tab=readme-ov-file#memory-allocation). Reproduced here for convenience:
+
+Start julia with tracking allocations enabled:
+```bash
+julia --track-allocation=user
+```
+Then run all the commands you want to profile (this is to ensure they compile first), then clear the memory allocation tracking by running `Profile.clear_malloc_data()`; run your commands again and then quit julia. For example:
+
+```julia-repl
+using TASOPT, Profile
+julia> Re = 10e6
+1.0e7
+
+julia> TASOPT.aerodynamics.cfturb(Re)
+0.002954557862895432
+
+julia> Profile.clear_malloc_data()
+
+julia> TASOPT.aerodynamics.cfturb(Re)
+0.002954557862895432
+
+julia> exit()
+```
+
+Then look at the directory where these files live (i.e., the source code) and you should see some additional files with annotations showing where the allocations were made. 
+
+You can do all the above steps without needing `Coverage.jl`. Where `Coverage.jl` becomes useful is to analyze large parts of the code by doing:
+
+```julia-repl
+using Coverage
+analyze_malloc(dirnames)  # could be "." for the current directory, or "src", etc.
+```
+
 ### Custom types and type inference 
 
 While defining new types you need to think about type inference and how the compiler can or cannot learn the types of the downstream calculations. See this section [here in the Julia manual that has some examples](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-fields-with-abstract-type). I'll list a more TASOPT.jl relevant example here to emphasize the point. 
