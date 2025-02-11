@@ -679,6 +679,7 @@ function wsize(ac; itermax=35,
         
         # VT centroid x-offset
         calculate_centroid_offset!(vtail, bv2, λhs)
+        
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
