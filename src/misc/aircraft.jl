@@ -23,7 +23,7 @@ For devs: the indices for accessing specific data are defined in `/src/misc/inde
 Base.@kwdef mutable struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
-
+    aircraft_type::String = "Unknown Type"
     pari::AbstractVector{Int64}
     parg::AbstractVector{Float64}
     parm::AbstractArray{Float64}
@@ -49,7 +49,7 @@ end
 #         return aircraft(name, description, pari, parg, parm, para, pare, [false])
 # end
 # #constructor for if fuse_tank not given
-function aircraft(name::String, description::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
+function aircraft(name::String, description::String, aircraft_type::String, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
         return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage(), Wing(), Tail(), Tail())

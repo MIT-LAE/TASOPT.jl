@@ -16,6 +16,7 @@ include(TASOPT.__TASOPTindices__)
     include("unit_test_cryotank.jl")
     include("unit_test_outputs.jl")
     include("unit_test_io.jl")
+    include("unit_test_performance.jl")
 
     # TODO: engine tests
     #engine tests housed in /src/engine/test/
