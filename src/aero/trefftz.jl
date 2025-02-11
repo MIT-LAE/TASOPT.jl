@@ -100,7 +100,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       
       CLsurf= zeros(Float64, nsurf)
       
-      # Calcualte total number of points
+      # Calculate total number of points
       # outboard point + inboard + points within fuselage + dummy between surfaces
       isum = 0
       @inbounds for  isurf = 1: nsurf
@@ -118,7 +118,8 @@ function trefftz1(nsurf, npout, npinn, npimg,
       end
 
 
-      i::Int = 0
+      i::Int64 = 0
+
 @inbounds for  isurf = 1: nsurf
 
 #---- η at center, side-of-body, wing break, tip
@@ -363,8 +364,8 @@ function trefftz1(nsurf, npout, npinn, npimg,
  end #end for loop
 
       AR = bref^2/Sref
-      CDell = CL^2 / (π*AR)
-
+      CDell = CL^2 / (π*AR) #CD for elliptical loading here. 
+      # For general CD = CL²/(π*AR*spaneff) ∴spaneff calculated as:
       spanef = CDell / CD
 
       return CLsurf, CL, CD , spanef
