@@ -1061,7 +1061,7 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-    ac_options = TASOPT.options(
+    ac_options = TASOPT.Options(
         opt_fuel = "JET-A",
         has_centerbox_fuel = readfuel("fuel_in_wing"),
         has_wing_fuel = readfuel("fuel_in_wingcen"),

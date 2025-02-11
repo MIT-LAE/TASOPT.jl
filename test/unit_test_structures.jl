@@ -214,11 +214,11 @@ parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
 fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
 pari = zeros(iitotal)
-pari[iinftanks] = 1
+fuselage_fueltank_count = 1
 
 #Update fuel tank length and check changes
 parg[iglftank] = 5.0
-TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+TASOPT.update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
 fuselage.layout.x_pressure_shell_aft, 
@@ -235,9 +235,9 @@ update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.3262341440000
 
 
 #Return to original points?
-pari[iinftanks] = 0.0
+fuselage_fueltank_count = 0
 parg[iglftank] = 0.0
-TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+TASOPT.update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
 update_fuse_out = [fuselage.layout.x_end_cylinder, 
 fuselage.layout.x_pressure_shell_aft, 

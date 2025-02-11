@@ -17,16 +17,8 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         return nothing
     end
 
-    #convenience vars
-    pari = ac.pari
-    parg = ac.parg
-    @views pare = ac.pare[:,:,1]
-    @views para = ac.para[:,:,1]
-    @views parm = ac.parm[:,:,1]
-    wing = ac.wing
-    htail = ac.htail
-    vtail = ac.vtail
-    fuselage = ac.fuselage
+    # Unpack aircraft components
+    pari, parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac,1) #imission = 1 
 
     # Wing
         co = wing.layout.root_chord
@@ -225,7 +217,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         ntank = 8
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
         l = max(parg[iglftankin], parg[iglftank])
-        nftanks = pari[iinftanks] #Number of fuel tanks
+        nftanks = options.fuselage_fueltank_count #Number of fuel tanks
         ARtank = 2.0
 
         if nftanks != 0

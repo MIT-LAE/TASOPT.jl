@@ -11,7 +11,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 # Fields:
 - `name::String` : Aircraft name (eg: "Boeing 777")      
 - `description::String` : A brief description of the aircraft
-- `options::TASOPT.options` : Configuration options for the aircraft
+- `options::TASOPT.Options` : Configuration options for the aircraft
 - `pari::AbstractVector{Int64}` : integer flag parameters               
 - `parg::AbstractArray{Float64}` : Geometry parameters                   
 - `parm::AbstractArray{Float64}` : Mission parameters                    
@@ -24,7 +24,7 @@ For devs: the indices for accessing specific data are defined in `/src/data_stru
 @kwdef mutable struct aircraft #inner constructor
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
-    options::TASOPT.options
+    options::TASOPT.Options
 
     pari::AbstractVector{Int64}
     parg::AbstractVector{Float64}

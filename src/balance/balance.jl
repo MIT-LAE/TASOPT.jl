@@ -29,9 +29,7 @@ No direct outputs. Fields in `ac` are modified. Namely:
 """
 function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       #Unpack aircraft
-      pari, parg, _, para, _, fuse, _, wing, htail, vtail = unpack_ac(ac, imission, ip = ip)
-
-      iengloc = pari[iiengloc]
+      _, parg, _, para, _, options, fuse, _, wing, htail, vtail, _ = unpack_ac(ac, imission, ip = ip)
 
       # Unpack weights
       Wpay = parg[igWpay]
@@ -51,7 +49,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
-      nftanks = pari[iinftanks] #number of fuel tanks in fuselage
+      nftanks = options.fuselage_fueltank_count #number of fuel tanks in fuselage
       lftank = parg[iglftank]
 
       # Use weight fractions to calcualte weights of subsystems
@@ -117,11 +115,11 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       W_Sh = Whtail / Sh1
 
-      #Calcualte fuel moment and derivaties wrt to wing box location 
-      if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+      #Calculate fuel moment and derivatives wrt to wing box location 
+      if !(options.has_wing_fuel) #If no wing fuel, therefore fuel is stored in the fuselage
             xWfuel = rfuel * xWfuel
             xWfuel_xwbox = 0.0
-      else
+      else #if wing fuel
             xWfuel = rfuel * xWfuel
             xWfuel_xwbox = rfuel * Wfuel
       end
@@ -279,7 +277,7 @@ No direct outputs. Fields in `ac` are modified.
 """
 function htsize(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
-      pari, parg, fuse, _, wing, htail, vtail = unpack_ac_components(ac)
+      _, parg, options, fuse, _, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -308,7 +306,6 @@ function htsize(ac, paraF, paraB, paraC)
       cma = wing.mean_aero_chord
 
       # Unpack flags
-      iengloc = pari[iiengloc]  # Engine location 
       iHTsize = htail.size
       ixwmove = htail.move_wingbox
       # Unpack Weights
@@ -332,7 +329,7 @@ function htsize(ac, paraF, paraB, paraC)
       Wtesys = parg[igWtesys]
       xWtesys = parg[igxWtesys]
 
-      nftanks = pari[iinftanks]
+      nftanks = options.fuselage_fueltank_count
       lftank = parg[iglftank]
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
@@ -461,7 +458,7 @@ function htsize(ac, paraF, paraB, paraC)
             WC_Sh = We_Sh
 
             #---- total weight moment at forward and aft CG limits
-            if pari[iifwing] == 0
+            if !(ac.options.has_wing_fuel)
                   xWfuel_xw = 0.0
             else
                   xWfuel_xw = Wfuel
@@ -659,7 +656,7 @@ The alternative 2D search for `rfuel`,`rpay` is kinda ugly,
 and unwarranted in practice.
 """
 function cglpay(ac)
-      pari, parg, fuse, _, wing, htail, vtail = unpack_ac_components(ac)
+      _, parg, options, fuse, _, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -677,7 +674,7 @@ function cglpay(ac)
       Wtesys = parg[igWtesys]
       #      xWtesys = parg[igxWtesys]
 
-      nftanks = pari[iinftanks]
+      nftanks = options.fuselage_fueltank_count
       lftank = parg[iglftank]
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]
@@ -744,7 +741,7 @@ function cglpay(ac)
       sgn = [-1.0, 1.0]
 
       xftank = parg[igxWftank] / Wftank
-      if pari[iifwing] == 1 #Fuel is in wings
+      if (options.has_wing_fuel) #Fuel is in wings
             rf = [0.0, 0.0]
       elseif xftank < xcabin
             rf = [1.0, 0.0]
