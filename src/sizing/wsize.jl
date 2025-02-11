@@ -1014,13 +1014,9 @@ function Wupdate!(ac, rlx, fsum)
     parg[igWeng] = WMTO * feng
     parg[igWfuel] = WMTO * ffuel
    
-    
     parg[igWftank] = WMTO * ftank 
 
-
     parg[igWtesys] = WMTO * ftesys
-
-
 end
 
 """
