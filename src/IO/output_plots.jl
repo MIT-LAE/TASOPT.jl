@@ -981,7 +981,16 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     itermax::Int64 = 35, initializes_engine::Bool = true,
     Ldebug::Bool = false)
 
-    ac = deepcopy(ac_og)
+    #Duplicate design mission as second mission, which will be modified
+    parm = cat(ac_og.parm[:,1], ac_og.parm[:,1], dims=2)
+    pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
+    para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
+    ac = aircraft(ac_og.name, ac_og.description,
+    ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank,
+    ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine)
+
+    #Extract aircraft parameters
+    maxPay = ac.parg[igWpaymax]
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
     maxPay = 0
 
