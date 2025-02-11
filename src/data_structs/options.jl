@@ -5,11 +5,13 @@ Configuration options for an [`aircraft`](@ref).
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct options
+@kwdef mutable struct Options
     #fuel options
     opt_fuel::String
     has_centerbox_fuel::Bool
     has_wing_fuel::Bool
+    # has_fuselage_fuel::Bool       #TODO: put this in and...
+    fuselage_fueltank_count::Int    #... move this field to the fuselage class.
 
     #wing options
     opt_wing_type::String

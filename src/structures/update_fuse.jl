@@ -1,21 +1,26 @@
 export update_fuse!, update_fuse_for_pax!
 """
-update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+    update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
 Function to update the fuselage layout when there is a change in fuselage fuel tank length.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `fuselage::Fuselage`: structure with fuselage parameters
-    - `pari::Vector{Int64}`: vector with aircraft integer parameters
+    - `wing::Wing`: structure with wing parameters
+    - `htail::HorizontalTail`: structure with horizontal tail parameters
+    - `vtail::VerticalTail`: structure with vertical tail parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `fuselage_fueltank_count::Int`: number of fuel tanks in the fuselage
 
     **Outputs:**
     No direct outputs; parameters in `parg` are modified.
 """
-function update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+#TODO: this docstring is well out of Date
 
-    nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
+function update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
+
+    nftanks = fuselage_fueltank_count #Number of fuel tanks in fuselage
     # parg[igRfuse   ] = 90 * in_to_m 
     lftank = parg[iglftank] # Get length of tank from previous iteration
     lftoffset = 2.0*ft_to_m #1 ft buffer for front and back of tanks

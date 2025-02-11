@@ -24,7 +24,7 @@ function wsize(ac; itermax=35,
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
-    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
+    pari, parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     # Initialize variables
     time_propsys = 0.0
@@ -129,7 +129,7 @@ function wsize(ac; itermax=35,
     rSnace = parg[igrSnace]
 
     # Fuel tank parameters
-    nftanks = pari[iinftanks]
+    nftanks = options.fuselage_fueltank_count
     xfuel = ltank = 0.0
 
     if pari[iifwing] == 1
@@ -401,7 +401,7 @@ function wsize(ac; itermax=35,
         xhtail, xvtail, xwing = htail.layout.x, vtail.layout.x, wing.layout.x
         xeng = parg[igxeng]
         Wtesys = parg[igWtesys]
-        nftanks = pari[iinftanks]
+        nftanks = options.fuselage_fueltank_count
         ifwing = pari[iifwing]
         
         if ifwing == 0 #fuselage fuel store
@@ -735,7 +735,7 @@ function wsize(ac; itermax=35,
             parg[igxWfuel] = parg[igWfuel] * xfuel
 
             # Update fuselage according to tank requirements
-            update_fuse!(fuse, wing, htail, vtail, pari, parg) #update fuselage length to accommodate tank
+            update_fuse!(fuse, wing, htail, vtail, parg, options.fuselage_fueltank_count) #update fuselage length to accommodate tank
             fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties
@@ -940,7 +940,7 @@ end
 Wupdate0 updates the weight of the aircraft
 """
 function Wupdate0!(ac, rlx, fsum)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+    pari, parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
     
@@ -968,7 +968,7 @@ end
 Wupdate
 """
 function Wupdate!(ac, rlx, fsum)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+    pari, parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 

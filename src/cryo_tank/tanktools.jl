@@ -14,11 +14,10 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t::Float64, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
-    nftanks = pari[iinftanks]
+function find_mdot_time(t::Float64, fuselage_fueltank_count::Int64, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
-    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / nftanks
+    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / fuselage_fueltank_count
 
     times = para[iatime,:]
 
@@ -213,7 +212,7 @@ function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_ho
     #Define functions for heat and fuel burn profiles through mission 
     Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)
     W_calc(t) = 0.0
-    mdot_calc(t) = find_mdot_time(t, ac.pari, ac.parg, para_alt, pare_alt)
+    mdot_calc(t) = find_mdot_time(t, ac.options.fuselage_fueltank_count, ac.parg, para_alt, pare_alt)
 
     #Store profiles in input struct
     u = tank_inputs(Q_calc, W_calc, mdot_calc)
