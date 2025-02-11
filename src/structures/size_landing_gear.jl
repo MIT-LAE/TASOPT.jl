@@ -8,10 +8,7 @@ Function to calculate the landing gear mass and geometric properties.
     No direct outputs; parameters in `ac` are modified.
 """
 function landing_gear_size!(ac)
-    parg = ac.parg
-    pare = ac.pared
-    fuse = ac.fuselage
-    landing_gear = ac.landing_gear
+    pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
     nose_gear = landing_gear.nose_gear
     main_gear = landing_gear.main_gear
 
@@ -26,7 +23,7 @@ function landing_gear_size!(ac)
     elseif lowercase(landing_gear.model) == "historical_correlations"
         #Model from Raymer (2012). Aircraft Design: A Conceptual Approach, based on historical-data correlations
         load_factor = 4.5 #Assumed 3 gear load factor times 1.5 ultimate load factor
-        Vstall = pare[ieu0,iprotate] #Stall speed, for correlation
+        Vstall = ac.pare[ieu0,iprotate, 1] #Stall speed, for correlation
 
         #Calculate landing gear length
         #First calculate required length to avoid tailstrike
@@ -35,7 +32,7 @@ function landing_gear_size!(ac)
         l_tailstrike = (fuse.layout.x_end - x_lg) * tan(tailstrike_angle) - 2*fuse.layout.radius
 
         #Next, find the length that gives desired engine ground clearance
-        yeng = parg[igetas] * parg[igb ] / 2
+        yeng = wing.layout.ηs * wing.layout.span / 2
         ground_clearance = landing_gear.engine_ground_clearance
         dihedral_angle = landing_gear.wing_dihedral_angle
         Deng = parg[igdfan]

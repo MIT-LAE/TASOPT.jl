@@ -323,7 +323,7 @@ ac.landing_gear.main_gear.wheels_per_strut = 2
 ac.parg[igxCGaft] = 30
 ac.pare[ieu0,iprotate,1] = 70
 ac.parg[igdfan] = 1.5
-ac.parg[igb] = 40
+ac.wing.layout.span = 40
 TASOPT.landing_gear_size!(ac)
 
 @test ac.landing_gear.main_gear.weight.W ≈ 25733.572498747944
