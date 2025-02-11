@@ -68,5 +68,5 @@ function unpack_ac_components(ac)
     htail = ac.htail
     vtail = ac.vtail
 
-    return pari, parg, fuse, fuse_tank, wing, htail, vtail
+    return pari, parg, fuse, fuse_tank, wing, htail, vtail, engine
 end
