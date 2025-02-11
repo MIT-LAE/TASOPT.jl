@@ -104,7 +104,7 @@ if templatefile == ""
 elseif !isfile(templatefile)
     #if not, warn that we're ignoring it
     @warn "Template input file provided does not exist: $templatefile \n Proceeding with template file as determined by design mission range."
-    templatefile = nothing
+    templatefile = nothing 
 end
 #if no valid templatefile provided
 if isnothing(templatefile)
@@ -119,7 +119,7 @@ ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
 sized = get(ac_descrip, "sized",[false])
-
+aircraft_type = get(ac_descrip, "aircraft_type", default["Aircraft Description"]["aircraft_type"])
 
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
@@ -1060,7 +1060,7 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-return TASOPT.aircraft(name, description,
+return TASOPT.aircraft(name, description, aircraft_type,
     pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail, engine)
 
 end
