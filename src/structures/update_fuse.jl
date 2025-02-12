@@ -58,14 +58,14 @@ function update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_coun
 end
 
 """
-    update_fuse_for_pax!(pari, parg, fuse, fuse_tank, wing, htail, vtail)
+    update_fuse_for_pax!(has_wing_fuel, parg, fuse, fuse_tank, wing, htail, vtail)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `pari::Vector{Int64}`: vector with aircraft integer parameters
+    - `has_wing_fuel::Bool`: true if fuel is stored in the wing, false if in fuselage
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
     - `fuse_tank::fuselage_tank`: structure with cryogenic fuel tank parameters
@@ -74,7 +74,7 @@ It sizes the cabin for the design number of passengers.
     Parameters in `parg` are modified. It also outputs:
     - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
 """
-function update_fuse_for_pax!(pari, parg, fuse, fuse_tank, wing, htail, vtail)
+function update_fuse_for_pax!(has_wing_fuel, parg, fuse, fuse_tank, wing, htail, vtail)
 
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
@@ -123,7 +123,7 @@ function update_fuse_for_pax!(pari, parg, fuse, fuse_tank, wing, htail, vtail)
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back
-    if (pari[iifwing]  == 0) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
+    if !(has_wing_fuel) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
         lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
         #TODO the hardcoded 5 ft is not elegant
     end
@@ -226,7 +226,7 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
     Rfuse = x[1]
     ac.fuselage.layout.cross_section.radius = Rfuse
     try #Sometimes update_fuse_for_pax may fail
-        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.fuselage, ac.fuse_tank, ac.wing, ac.htail, ac.vtail)
+        seats_per_row_rad = update_fuse_for_pax!(ac.options.has_wing_fuel, ac.parg, ac.fuselage, ac.fuse_tank, ac.wing, ac.htail, ac.vtail)
         diff = seats_per_row_rad - seats_per_row
         #println("R = $Rfuse, s = $seats_per_row_rad")
         return diff

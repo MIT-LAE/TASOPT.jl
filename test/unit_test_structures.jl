@@ -278,8 +278,9 @@ pari = zeros(iitotal)
 pari[iidoubledeck] = 0
 
 fuse_tank = TASOPT.fuselage_tank()
+has_wing_fuel = false
 
-TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail)
+TASOPT.update_fuse_for_pax!(has_wing_fuel, parg, fuselage, fuse_tank, wing, htail, vtail)
 
 parg_check = [14.584924835954398, 219964.5779, 1.5239999999999991]
 

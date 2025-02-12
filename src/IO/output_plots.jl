@@ -340,7 +340,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     plot!(plot_obj, xf, -yf, fillrange=yf, label = "", color = :white, edgecolor = :black, linewidth = 2.0, z_order = 5)
 
     # Tank plotting
-    if pari[iifwing] == 0
+    if !(ac.options.has_wing_fuel)
         for m in 1:nftanks
             # Tank outline
             plot!(plot_obj, xt[m,:], yt[m,:], color=:black, lw=1.5, z_order=10)
