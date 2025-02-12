@@ -236,7 +236,6 @@ elseif uppercase(fueltype) == "JET-A"
 else
     error("Check fuel type")
 end
-pari[iifwing]  = readfuel("fuel_in_wing")
 pari[iifwcen]  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
@@ -427,7 +426,8 @@ readgeom(x) = read_input(x, geom, dgeom)
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
 
-if pari[iifwing]  == 0 #If fuel is stored in fuselage
+has_wing_fuel = readfuel("fuel_in_wing")
+if !(has_wing_fuel) #If fuel is stored in fuselage
     fuel_stor = readfuel("Storage")
     dfuel_stor = dfuel["Storage"]
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
@@ -758,7 +758,7 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 # Recalculate cabin length
 if calculate_cabin #Resize the cabin if desired, keeping deltas
     @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
+    update_fuse_for_pax!(has_wing_fuel, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
 end
 # ---------------------------------
 
@@ -1063,8 +1063,8 @@ dHEx = dprop["HeatExchangers"]
 
     ac_options = TASOPT.Options(
         opt_fuel = "JET-A",
-        has_centerbox_fuel = readfuel("fuel_in_wing"),
-        has_wing_fuel = readfuel("fuel_in_wingcen"),
+        has_wing_fuel = has_wing_fuel,
+        has_centerbox_fuel = readfuel("fuel_in_wingcen"),
         fuselage_fueltank_count = nftanks,
         
         opt_wing_type = "TODO: FIX THIS, wingtype spec",

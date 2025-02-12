@@ -31,17 +31,9 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
     save_output::Bool=false)
 
-    #get parameter arrays from aircraft struct
-    ac_i = ac.pari      #options parameters
-    ac_g = ac.parg      #geometry   "
-    ac_m = ac.parm      #mission    "
-    ac_a = ac.para      #aero       "
-    ac_e = ac.pare      #engine     "
-
-    wing = ac.wing
-    htail = ac.htail
-    vtail = ac.vtail
-    fuselage = ac.fuselage  #fuselage     "
+    #unpack aircraft struct
+    imission = 1 #design mission for now
+    pari, parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     #dictionaries to map some selections (e.g., ints) to outputs
     propsysarch = Dict(0 => "te", 1 => "tf")
@@ -63,71 +55,71 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Options------------------------
     d_opt = Dict()
-        d_opt["optimize"] = ac_i[iiopt]
-        d_opt["prop_sys_arch"] = propsysarch[ac_i[iiengtype]]
-        d_opt["engine_location"] = engloc[ac_i[iiengloc]]
+        d_opt["optimize"] = pari[iiopt]
+        d_opt["prop_sys_arch"] = propsysarch[pari[iiengtype]]
+        d_opt["engine_location"] = engloc[pari[iiengloc]]
     d_out["Options"] = d_opt
     #--end options----------------
 
     #Fuel------------------------
 
     d_fuel = Dict()
-        d_fuel["fuel_type"] = fueltype[ac_i[iifuel]]
-        d_fuel["fuel_in_wing"] = ac_i[iifwing]
-        d_fuel["fuel_in_wingcen"] = ac_i[iifwcen]
-        d_fuel["fuel_usability_factor"] = ac_g[igrWfmax]
+        d_fuel["fuel_type"] = fueltype[pari[iifuel]]
+        d_fuel["fuel_in_wing"] = options.has_wing_fuel
+        d_fuel["fuel_in_wingcen"] = pari[iifwcen]
+        d_fuel["fuel_usability_factor"] = parg[igrWfmax]
 
-        d_fuel["fuel_temp"] = ac_e[ieTfuel,1,1]             
+        d_fuel["fuel_temp"] = pare[ieTfuel,1,1]             
 
-        d_fuel["fuel_density"] = ac_g[igrhofuel]
+        d_fuel["fuel_density"] = parg[igrhofuel]
     d_out["Fuel"] = d_fuel
     #--end fuel----------------
 
     #Mission------------------------
     d_miss = Dict()
 
-        d_miss["N_missions"] = size(ac_m,2)
+        d_miss["N_missions"] = size(parm,2)
         
-        d_miss["range"] = ac_m[imRange,:]
-        d_miss["weight_per_pax"] = ac_m[imWperpax, :]
-        d_miss["pax"] = ac_m[imWpay,:] ./ ac_m[imWperpax, :]
-        d_miss["max_pax"] = ac_g[igWpaymax] ./ ac_m[imWperpax, :]
-        d_miss["fuel_reserves"] = ac_g[igfreserve]
-        d_miss["Vne"] = ac_g[igVne]
-        d_miss["Nlift"] = ac_g[igNlift]
+        d_miss["range"] = parm[imRange,:]
+        d_miss["weight_per_pax"] = parm[imWperpax, :]
+        d_miss["pax"] = parm[imWpay,:] ./ parm[imWperpax, :]
+        d_miss["max_pax"] = parg[igWpaymax] ./ parm[imWperpax, :]
+        d_miss["fuel_reserves"] = parg[igfreserve]
+        d_miss["Vne"] = parg[igVne]
+        d_miss["Nlift"] = parg[igNlift]
 
     # mission: Takeoff
     d_to = Dict()
-        d_to["takeoff_alt"] = ac_m[imaltTO, :]
-        d_to["braking_resistance_coeff"] = ac_g[igmubrake]
-        d_to["rolling_resistance_coeff"] = ac_g[igmuroll]
-        d_to["takeoff_obstacle_height"] = ac_g[ighobst]
-        d_to["CD_dead_engine"] = ac_g[igcdefan]
-        d_to["CD_landing_gear"] = ac_g[igCDgear]
-        d_to["CD_spoilers"] = ac_g[igCDspoil]
-        d_to["max_balanced_field_length"] = ac_g[iglBFmax]
-        d_to["Nland"] = ac_g[igNland]
+        d_to["takeoff_alt"] = parm[imaltTO, :]
+        d_to["braking_resistance_coeff"] = parg[igmubrake]
+        d_to["rolling_resistance_coeff"] = parg[igmuroll]
+        d_to["takeoff_obstacle_height"] = parg[ighobst]
+        d_to["CD_dead_engine"] = parg[igcdefan]
+        d_to["CD_landing_gear"] = parg[igCDgear]
+        d_to["CD_spoilers"] = parg[igCDspoil]
+        d_to["max_balanced_field_length"] = parg[iglBFmax]
+        d_to["Nland"] = parg[igNland]
 
-        d_to["takeoff_T"] = ac_m[imT0TO, :]
-        d_to["CL_max_perp"] = ac_a[iaclpmax, iptakeoff, 1]
+        d_to["takeoff_T"] = parm[imT0TO, :]
+        d_to["CL_max_perp"] = para[iaclpmax, iptakeoff, 1]
     d_miss["Takeoff"] = d_to
 
     # mission: Climb
     d_climb = Dict()
-        d_climb["minimum_top-of-climb_gradient"] = ac_g[iggtocmin]
+        d_climb["minimum_top-of-climb_gradient"] = parg[iggtocmin]
     d_miss["Climb"] = d_climb
 
     # mission: Cruise
     d_crz = Dict()
-        d_crz["cruise_alt"] = ac_a[iaalt, ipcruise1, :]
-        d_crz["cruise_mach"] = ac_a[iaMach, ipclimbn, :]
-        d_crz["cruise_CL"] = ac_a[iaCL, ipclimb1+1, :]
+        d_crz["cruise_alt"] = para[iaalt, ipcruise1, :]
+        d_crz["cruise_mach"] = para[iaMach, ipclimbn, :]
+        d_crz["cruise_CL"] = para[iaCL, ipclimb1+1, :]
     d_miss["Cruise"] = d_crz
 
     # mission: Descent
     d_desc = Dict()
-        d_desc["descent_angle_top-of-descent"] = ac_m[imgamVDE1,:]
-        d_desc["descent_angle_bottom-of-descent"] = ac_m[imgamVDEn, :]
+        d_desc["descent_angle_top-of-descent"] = parm[imgamVDE1,:]
+        d_desc["descent_angle_bottom-of-descent"] = parm[imgamVDEn, :]
     d_miss["Descent"] = d_desc
 
     d_out["Mission"] = d_miss #add to output dictionary
@@ -135,19 +127,19 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Fuselage------------------------
     d_fuse = Dict()
-        d_fuse["cabin_pressure"] = ac_g[igpcabin]
+        d_fuse["cabin_pressure"] = parg[igpcabin]
 
     #aero 
     d_fuse_aero = Dict()
-        d_fuse_aero["excrescence_drag_factor"] = ac_a[iafexcdf,1,:]
-        d_fuse_aero["BLI_frac"] = ac_g[igfBLIf]
+        d_fuse_aero["excrescence_drag_factor"] = para[iafexcdf,1,:]
+        d_fuse_aero["BLI_frac"] = parg[igfBLIf]
 
-        d_fuse_aero["wingroot_fuse_overspeed"] = ac_a[iafduo,1,:]
-        d_fuse_aero["wingbreak_fuse_overspeed"] = ac_a[iafdus,1,:]
-        d_fuse_aero["wingtip_fuse_overspeed"] = ac_a[iafdut,1,:]
+        d_fuse_aero["wingroot_fuse_overspeed"] = para[iafduo,1,:]
+        d_fuse_aero["wingbreak_fuse_overspeed"] = para[iafdus,1,:]
+        d_fuse_aero["wingtip_fuse_overspeed"] = para[iafdut,1,:]
 
-        d_fuse_aero["fuse_moment_volume_deriv"] = ac_g[igCMVf1]
-        d_fuse_aero["CL_zero_fuse_moment"] = ac_g[igCLMf0]
+        d_fuse_aero["fuse_moment_volume_deriv"] = parg[igCMVf1]
+        d_fuse_aero["CL_zero_fuse_moment"] = parg[igCLMf0]
     d_fuse["Aero"] = d_fuse_aero
 
     #weight
@@ -162,12 +154,12 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_weights["floor_weight_per_area"] =fuselage.floor_W_per_area
 
         d_fuse_weights["HPE_sys_weight_fraction"] = fuselage.HPE_sys.W
-        d_fuse_weights["LG_nose_weight_fraction"] = ac_g[igflgnose]
-        d_fuse_weights["LG_main_weight_fraction"] = ac_g[igflgmain]
+        d_fuse_weights["LG_nose_weight_fraction"] = parg[igflgnose]
+        d_fuse_weights["LG_main_weight_fraction"] = parg[igflgmain]
 
-        d_fuse_weights["APU_weight_fraction"] = fuselage.APU.W/ac_g[igWpaymax] 
-        d_fuse_weights["seat_weight_fraction"] = fuselage.seat.W/ac_g[igWpaymax] 
-        d_fuse_weights["add_payload_weight_fraction"] = fuselage.added_payload.W/ac_g[igWpaymax] 
+        d_fuse_weights["APU_weight_fraction"] = fuselage.APU.W/parg[igWpaymax] 
+        d_fuse_weights["seat_weight_fraction"] = fuselage.seat.W/parg[igWpaymax] 
+        d_fuse_weights["add_payload_weight_fraction"] = fuselage.added_payload.W/parg[igWpaymax] 
     d_fuse["Weights"] = d_fuse_weights
 
 
@@ -182,14 +174,14 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["a_nose"] = fuselage.layout.nose_radius
         d_fuse_geom["b_tail"] = fuselage.layout.tail_radius
 
-        d_fuse_geom["taper_fuse_to"] = taperfuse[ac_i[iifclose]]
+        d_fuse_geom["taper_fuse_to"] = taperfuse[pari[iifclose]]
 
         d_fuse_geom["tailcone_taper"] = fuselage.layout.taper_tailcone
-        d_fuse_geom["HT_load_fuse_bend_relief"] = ac_g[igrMh]
-        d_fuse_geom["VT_load_fuse_bend_relief"] = ac_g[igrMv]
+        d_fuse_geom["HT_load_fuse_bend_relief"] = parg[igrMh]
+        d_fuse_geom["VT_load_fuse_bend_relief"] = parg[igrMv]
 
         d_fuse_geom["calculate_cabin_length"] = false #Use final fuselage parameters by default
-        if ac_i[iidoubledeck] == 1
+        if pari[iidoubledeck] == 1
             d_fuse_geom["double_decker"] = true
         else
             d_fuse_geom["double_decker"] = false
@@ -207,15 +199,15 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["x_cone_end"] = fuselage.layout.x_cone_end
         d_fuse_geom["x_end"] = fuselage.layout.x_end
 
-        d_fuse_geom["x_nose_landing_gear"] = ac_g[igxlgnose]
-        d_fuse_geom["x_main_landing_gear_offset"] = ac_g[igdxlgmain]
+        d_fuse_geom["x_nose_landing_gear"] = parg[igxlgnose]
+        d_fuse_geom["x_main_landing_gear_offset"] = parg[igdxlgmain]
         d_fuse_geom["x_APU"] = fuselage.APU.x
         d_fuse_geom["x_HPE_sys"] = fuselage.HPE_sys.x
 
         d_fuse_geom["x_fixed_weight"] = fuselage.fixed.x
 
-        d_fuse_geom["x_engines"] = ac_g[igxeng]
-        d_fuse_geom["y_critical_engines"] = ac_g[igyeng]
+        d_fuse_geom["x_engines"] = parg[igxeng]
+        d_fuse_geom["y_critical_engines"] = parg[igyeng]
     d_fuse["Geometry"] = d_fuse_geom
 
     d_out["Fuselage"] = d_fuse
@@ -256,40 +248,40 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing_aero["fuselage_lift_carryover_loss_factor"] = wing.fuse_lift_carryover
         d_wing_aero["wing_tip_lift_rolloff_factor"] = wing.tip_lift_loss
 
-        d_wing_aero["lowspeed_cdf"] = ac_a[iacdfw, 1,:]
-        d_wing_aero["lowspeed_cdp"] = ac_a[iacdpw, 1,:]
-        d_wing_aero["Re_ref"] = ac_a[iaRerefw, 1,:]
+        d_wing_aero["lowspeed_cdf"] = para[iacdfw, 1,:]
+        d_wing_aero["lowspeed_cdp"] = para[iacdpw, 1,:]
+        d_wing_aero["Re_ref"] = para[iaRerefw, 1,:]
 
-        d_wing_aero["strut_lowspeed_cdf"] = ac_a[iacdfs, 1,:]
-        d_wing_aero["strut_lowspeed_cdp"] = ac_a[iacdps, 1,:]
-        d_wing_aero["strut_Re_ref"] = ac_a[iaRerefs, 1,:]
+        d_wing_aero["strut_lowspeed_cdf"] = para[iacdfs, 1,:]
+        d_wing_aero["strut_lowspeed_cdp"] = para[iacdps, 1,:]
+        d_wing_aero["strut_Re_ref"] = para[iaRerefs, 1,:]
 
-        d_wing_aero["Reynolds_scaling"] = ac_a[iaaRexp, 1,:]
-        d_wing_aero["excrescence_drag_factor"] = ac_a[iafexcdw, 1,:]
-        d_wing_aero["BLI_frac"] = ac_g[igfBLIw]
+        d_wing_aero["Reynolds_scaling"] = para[iaaRexp, 1,:]
+        d_wing_aero["excrescence_drag_factor"] = para[iafexcdw, 1,:]
+        d_wing_aero["BLI_frac"] = parg[igfBLIw]
       
     d_wing_aero_to = Dict()
-        d_wing_aero_to["cls_clo"] = ac_a[iarcls, 1,:]
-        d_wing_aero_to["clt_clo"] = ac_a[iarclt, 1,:]
-        d_wing_aero_to["cm_o"] = ac_a[iacmpo, 1,:]
-        d_wing_aero_to["cm_s"] = ac_a[iacmps, 1,:]
-        d_wing_aero_to["cm_t"] = ac_a[iacmpt, 1,:]
+        d_wing_aero_to["cls_clo"] = para[iarcls, 1,:]
+        d_wing_aero_to["clt_clo"] = para[iarclt, 1,:]
+        d_wing_aero_to["cm_o"] = para[iacmpo, 1,:]
+        d_wing_aero_to["cm_s"] = para[iacmps, 1,:]
+        d_wing_aero_to["cm_t"] = para[iacmpt, 1,:]
     d_wing_aero["Takeoff"] = d_wing_aero_to
     
     d_wing_aero_clm = Dict()
-        d_wing_aero_clm["cls_clo"] = ac_a[iarcls, ipclimb1+1,:]
-        d_wing_aero_clm["clt_clo"] = ac_a[iarclt, ipclimb1+1,:]
-        d_wing_aero_clm["cm_o"] = ac_a[iacmpo, ipclimb1+1,:]
-        d_wing_aero_clm["cm_s"] = ac_a[iacmps, ipclimb1+1,:]
-        d_wing_aero_clm["cm_t"] = ac_a[iacmpt, ipclimb1+1,:]
+        d_wing_aero_clm["cls_clo"] = para[iarcls, ipclimb1+1,:]
+        d_wing_aero_clm["clt_clo"] = para[iarclt, ipclimb1+1,:]
+        d_wing_aero_clm["cm_o"] = para[iacmpo, ipclimb1+1,:]
+        d_wing_aero_clm["cm_s"] = para[iacmps, ipclimb1+1,:]
+        d_wing_aero_clm["cm_t"] = para[iacmpt, ipclimb1+1,:]
     d_wing_aero["Climb"] = d_wing_aero_clm
 
     d_wing_aero_la = Dict()
-        d_wing_aero_la["cls_clo"] = ac_a[iarcls, ipdescentn,:]
-        d_wing_aero_la["clt_clo"] = ac_a[iarclt, ipdescentn,:]
-        d_wing_aero_la["cm_o"] = ac_a[iacmpo, ipdescentn,:]
-        d_wing_aero_la["cm_s"] = ac_a[iacmps, ipdescentn,:]
-        d_wing_aero_la["cm_t"] = ac_a[iacmpt, ipdescentn,:]
+        d_wing_aero_la["cls_clo"] = para[iarcls, ipdescentn,:]
+        d_wing_aero_la["clt_clo"] = para[iarclt, ipdescentn,:]
+        d_wing_aero_la["cm_o"] = para[iacmpo, ipdescentn,:]
+        d_wing_aero_la["cm_s"] = para[iacmps, ipdescentn,:]
+        d_wing_aero_la["cm_t"] = para[iacmpt, ipdescentn,:]
     d_wing_aero["Landing"] = d_wing_aero_la
 
     d_wing["Aero"] = d_wing_aero
@@ -312,11 +304,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #Stabilizers------------------------
     d_stab = Dict()
 
-        d_stab["lowspeed_cdf"] = ac_a[iacdft,1,:]
-        d_stab["lowspeed_cdp"] = ac_a[iacdpt,1,:]
-        d_stab["Re_ref"] = ac_a[iaRereft,1,:]
+        d_stab["lowspeed_cdf"] = para[iacdft,1,:]
+        d_stab["lowspeed_cdp"] = para[iacdpt,1,:]
+        d_stab["Re_ref"] = para[iaRereft,1,:]
 
-        d_stab["excrescence_drag_factor"] = ac_a[iafexcdt,1,:]
+        d_stab["excrescence_drag_factor"] = para[iafexcdt,1,:]
 
 
     #Horz tail
@@ -343,12 +335,12 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_htail["SM_min"] = htail.SM_min
 
-        d_stab_htail["CLh_spec"] = ac_g[igCLhspec]
+        d_stab_htail["CLh_spec"] = parg[igCLhspec]
 
         d_stab_htail["downwash_factor"] = htail.downwash_factor
-        d_stab_htail["nacelle_lift_curve_slope"] = ac_g[igdCLnda]
+        d_stab_htail["nacelle_lift_curve_slope"] = parg[igdCLnda]
 
-        d_stab_htail["CD_Htail_from_center"] = ac_g[igfCDhcen]
+        d_stab_htail["CD_Htail_from_center"] = parg[igfCDhcen]
         d_stab_htail["CLh_max"] = htail.CL_max
 
         d_stab_htail["added_weight_fraction"] = htail.weight_fraction_added
@@ -372,7 +364,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_stab_vtail["Vv"] = vtail.volume
         elseif avtail.size == 2
             d_stab_vtail["VTsize"] = "oei"
-            d_stab_vtail["CLv_at_engine_out"] = ac_g[igCLveout]
+            d_stab_vtail["CLv_at_engine_out"] = parg[igCLveout]
         end
 
         d_stab_vtail["CLv_max"] = vtail.CL_max
@@ -389,7 +381,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Structures------------------------
     d_struct = Dict()
-        d_struct["stress_factor"] = ac_g[igsigfac]
+        d_struct["stress_factor"] = parg[igsigfac]
 
         d_struct["sigma_fuse_skin"] = fuselage.skin.σ
         d_struct["sigma_fuse_bending"] = fuselage.bendingmaterial_h.σ
@@ -415,117 +407,117 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Propulsion ------------------------
     d_prop = Dict()
-        d_prop["number_of_engines"] = ac_g[igneng]
-        d_prop["T_max_metal"] = ac_g[igTmetal]
-        d_prop["Tt4_frac_bottom_of_climb"] = ac_g[igfTt4CL1]
-        d_prop["Tt4_frac_top_of_climb"] = ac_g[igfTt4CLn]
+        d_prop["number_of_engines"] = parg[igneng]
+        d_prop["T_max_metal"] = parg[igTmetal]
+        d_prop["Tt4_frac_bottom_of_climb"] = parg[igfTt4CL1]
+        d_prop["Tt4_frac_top_of_climb"] = parg[igfTt4CLn]
         
-        d_prop["Tt4_cruise"] = ac_e[ieTt4,ipcruise1,:]
-        d_prop["Tt4_takeoff"] =  ac_e[ieTt4,ipstatic,:]
+        d_prop["Tt4_cruise"] = pare[ieTt4,ipcruise1,:]
+        d_prop["Tt4_takeoff"] =  pare[ieTt4,ipstatic,:]
 
-        d_prop["core_in_clean_flow"] = !Bool(ac_i[iiBLIc])
+        d_prop["core_in_clean_flow"] = !Bool(pari[iiBLIc])
             #expression negates 0 to 1 and vice versa (), see read_input.jl
         
     #Turbomachinery
     d_prop_turb = Dict()
-        d_prop_turb["BPR"] = ac_e[ieBPR, 1, 1]
-        d_prop_turb["Fan_PR"] = ac_e[iepif, 1, 1]
-        d_prop_turb["LPC_PR"] = ac_e[iepilc, 1, 1]
-        d_prop_turb["OPR"] = d_prop_turb["LPC_PR"]*ac_e[iepihc, 1, 1]
+        d_prop_turb["BPR"] = pare[ieBPR, 1, 1]
+        d_prop_turb["Fan_PR"] = pare[iepif, 1, 1]
+        d_prop_turb["LPC_PR"] = pare[iepilc, 1, 1]
+        d_prop_turb["OPR"] = d_prop_turb["LPC_PR"]*pare[iepihc, 1, 1]
         
-        d_prop_turb["diffuser_PR"] = ac_e[iepid, 1, 1]
-        d_prop_turb["burner_PR"] = ac_e[iepib, 1, 1]
-        d_prop_turb["fan_nozzle_PR"] = ac_e[iepifn, 1, 1]
-        d_prop_turb["core_nozzle_PR"] = ac_e[iepitn, 1, 1]
+        d_prop_turb["diffuser_PR"] = pare[iepid, 1, 1]
+        d_prop_turb["burner_PR"] = pare[iepib, 1, 1]
+        d_prop_turb["fan_nozzle_PR"] = pare[iepifn, 1, 1]
+        d_prop_turb["core_nozzle_PR"] = pare[iepitn, 1, 1]
         
-        d_prop_turb["fan_eta_poly"] = ac_e[ieepolf, 1, 1]
-        d_prop_turb["LPC_eta_poly"] = ac_e[ieepollc, 1, 1]
-        d_prop_turb["HPC_eta_poly"] = ac_e[ieepolhc, 1, 1]
-        d_prop_turb["HPT_eta_poly"] = ac_e[ieepolht, 1, 1]
-        d_prop_turb["LPT_eta_poly"] = ac_e[ieepollt, 1, 1]
+        d_prop_turb["fan_eta_poly"] = pare[ieepolf, 1, 1]
+        d_prop_turb["LPC_eta_poly"] = pare[ieepollc, 1, 1]
+        d_prop_turb["HPC_eta_poly"] = pare[ieepolhc, 1, 1]
+        d_prop_turb["HPT_eta_poly"] = pare[ieepolht, 1, 1]
+        d_prop_turb["LPT_eta_poly"] = pare[ieepollt, 1, 1]
         
-        d_prop_turb["FPR0"] = ac_e[iepifK, 1, 1]
-        d_prop_turb["Kf_polyeff"] = ac_e[ieepfK, 1, 1]
+        d_prop_turb["FPR0"] = pare[iepifK, 1, 1]
+        d_prop_turb["Kf_polyeff"] = pare[ieepfK, 1, 1]
         
-        d_prop_turb["M2"] = ac_e[ieM2, 1, 1]
-        d_prop_turb["M25"] = ac_e[ieM25, 1, 1]
+        d_prop_turb["M2"] = pare[ieM2, 1, 1]
+        d_prop_turb["M25"] = pare[ieM25, 1, 1]
         
-        d_prop_turb["low_spool_loss"] = ac_e[ieepsl, 1, 1]
-        d_prop_turb["high_spool_loss"] = ac_e[ieepsh, 1, 1]
+        d_prop_turb["low_spool_loss"] = pare[ieepsl, 1, 1]
+        d_prop_turb["high_spool_loss"] = pare[ieepsh, 1, 1]
 
-        d_prop_turb["gear_ratio"] = ac_g[igGearf]
-        d_prop_turb["HTR_fan"] = ac_g[igHTRf]
-        d_prop_turb["HTR_LPC"] = ac_g[igHTRlc]
-        d_prop_turb["HTR_HPC"] = ac_g[igHTRhc]
+        d_prop_turb["gear_ratio"] = parg[igGearf]
+        d_prop_turb["HTR_fan"] = parg[igHTRf]
+        d_prop_turb["HTR_LPC"] = parg[igHTRlc]
+        d_prop_turb["HTR_HPC"] = parg[igHTRhc]
     d_prop["Turbomachinery"] = d_prop_turb
 
     #Combustor
     d_prop_comb = Dict()
-        d_prop_comb["combustion_efficiency"] = ac_e[ieetab,1,1]
+        d_prop_comb["combustion_efficiency"] = pare[ieetab,1,1]
     d_prop["Combustor"] = d_prop_comb
 
     #Cooling
     d_prop_cool = Dict()
-        d_prop_cool["hot_streak_T_allowance"] = ac_e[iedTstrk,1,1]
-        d_prop_cool["M_turbine_blade_exit"] = ac_e[ieMtexit,1,1]
-        d_prop_cool["St"] = ac_e[ieStA,1,1]
+        d_prop_cool["hot_streak_T_allowance"] = pare[iedTstrk,1,1]
+        d_prop_cool["M_turbine_blade_exit"] = pare[ieMtexit,1,1]
+        d_prop_cool["St"] = pare[ieStA,1,1]
 
-        d_prop_cool["e_film_cooling"] = ac_e[ieefilm,1,1]
-        d_prop_cool["t_film_cooling"] = ac_e[ietfilm,1,1]
+        d_prop_cool["e_film_cooling"] = pare[ieefilm,1,1]
+        d_prop_cool["t_film_cooling"] = pare[ietfilm,1,1]
         
-        d_prop_cool["M41"] = ac_e[ieM4a,1,1]
-        d_prop_cool["cooling_air_V_ratio"] = ac_e[ieruc,1,1]
+        d_prop_cool["M41"] = pare[ieM4a,1,1]
+        d_prop_cool["cooling_air_V_ratio"] = pare[ieruc,1,1]
     d_prop["Cooling"] = d_prop_cool
 
     #Offtakes
     d_prop_offt = Dict()
         #TODO: check if htese expressions are correct (Wpax)
         #Also, check matrix slicing thing here too
-        d_prop_offt["LPC_mass_offtake_per_pax"] = ac_g[igmofWpay]*ac_m[imWperpax, 1]
-        d_prop_offt["LPC_mass_offtake_per_max_mass"] = ac_g[igmofWMTO]*gee
+        d_prop_offt["LPC_mass_offtake_per_pax"] = parg[igmofWpay]*parm[imWperpax, 1]
+        d_prop_offt["LPC_mass_offtake_per_max_mass"] = parg[igmofWMTO]*gee
 
-        d_prop_offt["Low_spool_power_offtake_per_pax"] = ac_g[igPofWpay]*ac_m[imWperpax, 1]
-        d_prop_offt["Low_spool_power_offtake_per_max_mass"] = ac_g[igPofWMTO]*gee
+        d_prop_offt["Low_spool_power_offtake_per_pax"] = parg[igPofWpay]*parm[imWperpax, 1]
+        d_prop_offt["Low_spool_power_offtake_per_max_mass"] = parg[igPofWMTO]*gee
 
-        d_prop_offt["Tt_offtake_air"] = ac_e[ieTt9,1,1]
-        d_prop_offt["Pt_offtake_air"] = ac_e[iept9,1,1]
+        d_prop_offt["Tt_offtake_air"] = pare[ieTt9,1,1]
+        d_prop_offt["Pt_offtake_air"] = pare[iept9,1,1]
     d_prop["Offtakes"] = d_prop_offt
 
     #Nozzles
     d_prop_nozz = Dict()
         #core nozzle
         d_prop_cnoz = Dict()
-            d_prop_cnoz["static"] = ac_e[ieA5fac, ipstatic,1]
-            d_prop_cnoz["rotation"] = ac_e[ieA5fac, iprotate,1]
-            d_prop_cnoz["cutback"] = ac_e[ieA5fac, ipcutback,1]
-            d_prop_cnoz["climbstart"] = ac_e[ieA5fac,ipclimb1,1]
-            d_prop_cnoz["climbend"] = ac_e[ieA5fac,ipclimbn,1]
-            d_prop_cnoz["descentstart"] = ac_e[ieA5fac,ipdescent1,1]
-            d_prop_cnoz["descentend"] = ac_e[ieA5fac,ipdescentn,1]
+            d_prop_cnoz["static"] = pare[ieA5fac, ipstatic,1]
+            d_prop_cnoz["rotation"] = pare[ieA5fac, iprotate,1]
+            d_prop_cnoz["cutback"] = pare[ieA5fac, ipcutback,1]
+            d_prop_cnoz["climbstart"] = pare[ieA5fac,ipclimb1,1]
+            d_prop_cnoz["climbend"] = pare[ieA5fac,ipclimbn,1]
+            d_prop_cnoz["descentstart"] = pare[ieA5fac,ipdescent1,1]
+            d_prop_cnoz["descentend"] = pare[ieA5fac,ipdescentn,1]
         d_prop_nozz["core_nozzle_area"] = d_prop_cnoz
         #fan nozzle
         d_prop_fnoz = Dict()
-            d_prop_fnoz["static"] = ac_e[ieA7fac, ipstatic,1]
-            d_prop_fnoz["rotation"] = ac_e[ieA7fac, iprotate,1]
-            d_prop_fnoz["cutback"] = ac_e[ieA7fac, ipcutback,1]
-            d_prop_fnoz["climbstart"] = ac_e[ieA7fac,ipclimb1,1]
-            d_prop_fnoz["climbend"] = ac_e[ieA7fac,ipclimbn,1]
-            d_prop_fnoz["descentstart"] = ac_e[ieA7fac,ipdescent1,1]
-            d_prop_fnoz["descentend"] = ac_e[ieA7fac,ipdescentn,1]
+            d_prop_fnoz["static"] = pare[ieA7fac, ipstatic,1]
+            d_prop_fnoz["rotation"] = pare[ieA7fac, iprotate,1]
+            d_prop_fnoz["cutback"] = pare[ieA7fac, ipcutback,1]
+            d_prop_fnoz["climbstart"] = pare[ieA7fac,ipclimb1,1]
+            d_prop_fnoz["climbend"] = pare[ieA7fac,ipclimbn,1]
+            d_prop_fnoz["descentstart"] = pare[ieA7fac,ipdescent1,1]
+            d_prop_fnoz["descentend"] = pare[ieA7fac,ipdescentn,1]
         d_prop_nozz["fan_nozzle_area"] = d_prop_fnoz
     d_prop["Nozzles"] = d_prop_nozz
     
     #Nacelles
     d_prop_nace = Dict()
-        d_prop_nace["nacelle_pylon_wetted_area_ratio"] = ac_g[igrSnace]
-        d_prop_nace["nacelle_local_velocity_ratio"] = ac_g[igrVnace]        
+        d_prop_nace["nacelle_pylon_wetted_area_ratio"] = parg[igrSnace]
+        d_prop_nace["nacelle_local_velocity_ratio"] = parg[igrVnace]        
     d_prop["Nacelles"] = d_prop_nace
 
     #Weight
     d_prop_weight = Dict()
-        d_prop_weight["engine_access_weight_fraction"] = ac_g[igfeadd]
-        d_prop_weight["pylon_weight_fraction"] = ac_g[igfpylon]
-        d_prop_weight["weight_model"] = engweightmodel[ac_i[iiengwgt]]
+        d_prop_weight["engine_access_weight_fraction"] = parg[igfeadd]
+        d_prop_weight["pylon_weight_fraction"] = parg[igfpylon]
+        d_prop_weight["weight_model"] = engweightmodel[pari[iiengwgt]]
     d_prop["Weight"] = d_prop_weight
 
     d_out["Propulsion"] = d_prop
@@ -604,9 +596,6 @@ function make_dict_singletons(dict::Dict{K, V}) where {K, V}
     end
     return new_dict
 end
-
-
-
 
 
 

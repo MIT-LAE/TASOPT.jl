@@ -45,7 +45,7 @@ function wsize(ac; itermax=35,
 
     # Extract flags
     ifuel, iwplan, iengloc, iengwgt, iVTsize, ifwing = 
-        pari[iifuel], pari[iiwplan], pari[iiengloc], pari[iiengwgt], vtail.size, pari[iifwing]
+        pari[iifuel], pari[iiwplan], pari[iiengloc], pari[iiengwgt], vtail.size, options.has_wing_fuel
 
     # Unpack powertrain elements
     ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
@@ -132,7 +132,7 @@ function wsize(ac; itermax=35,
     nftanks = options.fuselage_fueltank_count
     xfuel = ltank = 0.0
 
-    if pari[iifwing] == 1
+    if options.has_wing_fuel
         xftank = xftankaft = 0.0
     else
         xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m
@@ -402,9 +402,8 @@ function wsize(ac; itermax=35,
         xeng = parg[igxeng]
         Wtesys = parg[igWtesys]
         nftanks = options.fuselage_fueltank_count
-        ifwing = pari[iifwing]
         
-        if ifwing == 0 #fuselage fuel store
+        if !(options.has_wing_fuel) #fuselage fuel store
             tank_placement = fuse_tank.placement
             Wftank_single = parg[igWftank] / nftanks #Weight of a single tank
 
@@ -536,7 +535,7 @@ function wsize(ac; itermax=35,
         # Set up parameters for get_wing_weights function
         Winn, Wout = wing.inboard.weight, wing.outboard.weight
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
-        rhofuel = (pari[iifwing] == 0) ? 0.0 : parg[igrhofuel]
+        rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
         # Call get_wing_weights function
         Wwing,Wsinn,Wsout,
@@ -549,7 +548,7 @@ function wsize(ac; itermax=35,
 
         # Calculate fuel weight if stored in wings
         Wfmax, dxWfmax, rfmax = 0.0, 0.0, 0.0
-        if pari[iifwing] == 1
+        if (options.has_wing_fuel)
             Wfmax = 2.0 * ((pari[iifwcen] == 1 ? Wfcen : 0.0) + Wfinn + Wfout)
             dxWfmax = 2.0 * (dxWfinn + dxWfout)
             Wfuelmp = Wpay - Wpaymax + parg[igWfuel]
@@ -681,7 +680,7 @@ function wsize(ac; itermax=35,
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
-        if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+        if !(options.has_wing_fuel) #If fuel is stored in the fuselage
             #Unpack parameters
             time_flight = para[iatime, ipdescent1]
             tank_placement = fuse_tank.placement
@@ -810,7 +809,7 @@ function wsize(ac; itermax=35,
         ip = ipcruise1
 
         #Calculate fuel weight moment for balance
-        if (pari[iifwing] == 1) #If fuel is stored in the wings
+        if (options.has_wing_fuel) #If fuel is stored in the wings
             xfuel = wing.layout.box_x + parg[igdxWfuel] / parg[igWfuel]
             parg[igxWfuel] = parg[igWfuel] * wing.layout.box_x + parg[igdxWfuel] #Store fuel weight moment
         end
