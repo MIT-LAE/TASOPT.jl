@@ -26,7 +26,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
 
       # HACK TODO add the para back
       # iairf
-      initializes_engine = false
+      initializes_engine = true
 
       # unpack flags
       # iengloc = pari[iiengloc]

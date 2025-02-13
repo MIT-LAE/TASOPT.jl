@@ -151,10 +151,6 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
       n = 6
 
-      #       Pcon   Ncon
-      Tmapl = [0.15, 0.15]
-      Tmaph = [0.15, 0.15]
-
       # from 'airfrac.inc'
       # air fractions  
       #        N2      O2      CO2    H2O      Ar       fuel
