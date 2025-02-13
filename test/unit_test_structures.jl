@@ -1,7 +1,7 @@
 @testset "structural components" begin
 
   # Fuselage
-  include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
+  include(joinpath(TASOPT.__TASOPTroot__, "../test/structures_params.jl"))
   fuselage = ac_test.fuselage
 
   Nland, Wpaymax, Wengtail, 

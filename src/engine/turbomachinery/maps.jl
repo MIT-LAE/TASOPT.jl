@@ -1,5 +1,5 @@
 # TASOPT turbomachinery maps
-# These maps are used in log-form equations for the polytropic efficiency
+# These maps are used in exponential-form equations for the polytropic efficiency
 
 # The parameters come from "tfmap.inc" in Mark Drela's original TASOPT 
 
