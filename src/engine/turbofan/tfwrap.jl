@@ -26,12 +26,12 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
     if case == "design"
         icall = 0
         icool = 1
-        if (iterw == 1 || (~initializes_engine))
+        if (iterw == 1 || (initializes_engine))
             # initialize engine state
-            initializes_engine_firstiter  = false
+            initializes_engine_firstiter  = true
         else
             # start with current engine state
-            initializes_engine_firstiter  = true
+            initializes_engine_firstiter  = false
         end
 
         ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine_firstiter )
