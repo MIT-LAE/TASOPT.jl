@@ -22,12 +22,11 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
       pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
-      calc_ipc1 = true
       ifirst = true
 
       # HACK TODO add the para back
       # iairf
-      initializes_engine = true
+      initializes_engine = false
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -427,7 +426,6 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       itrim = 1
       balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
-      # if (calc_ipc1)
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
