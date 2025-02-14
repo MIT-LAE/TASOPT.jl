@@ -96,3 +96,28 @@ function WakeSystem(points::SVector{NP, Point2D}) where NP
     calculate_influence_matrix!(ws)
     return ws
 end  # function WakeSystem
+
+function calculate_influence_matrix!(ws::WakeSystem{NP,NE}) where {NP,NE}
+    for j in 1:NP
+        wake_point = ws.points[j]
+
+        for i in 1:NE
+            element = ws.elements[i]
+            r_vec = element.control_point - wake_point
+            r_squared = dot(r_vec, r_vec)
+
+            if r_squared > 1e-10
+                # Cross product with x-unit vector simplified in 2D
+                # x̂ × (rₚ - rᵢ) = -(zₚ - zᵢ)ŷ + (yₚ - yᵢ)ẑ
+                cross_prod = Point2D(-r_vec[2], r_vec[1])
+                # Each element is in turn given by (x̂ × (rₚ - rᵢ)) · n̂ / |rₚ - rᵢ|²
+                ws.influence_matrix[i, j] = dot(cross_prod, element.unit_normal) / r_squared
+            else
+                ws.influence_matrix[i, j] = 0.0
+            end
+        end
+    end
+
+    return nothing
+end
+
