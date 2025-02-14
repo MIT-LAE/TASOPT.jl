@@ -34,29 +34,28 @@ Looks up airfoil performance data at specified conditions, as precomputed and fo
 end
 
 @views function airfun(cl, τ, Mach, 
-                Acl::AbstractVector{Float64},
-                Aτ::AbstractVector{Float64},
-                AMa::AbstractVector{Float64},
-                A::AbstractArray{Float64},
-                A_M::AbstractArray{Float64},
-                A_τ::AbstractArray{Float64},
-                A_cl::AbstractArray{Float64},
-                A_M_τ::AbstractArray{Float64},
-                A_M_cl::AbstractArray{Float64},
-                A_cl_τ::AbstractArray{Float64},
-                A_M_cl_τ::AbstractArray{Float64})
+                Acl,
+                Aτ,
+                AMa,
+                A,
+                A_M,
+                A_τ,
+                A_cl,
+                A_M_τ,
+                A_M_cl,
+                A_cl_τ,
+                A_M_cl_τ)
 
     nAfun::Int = 3
-
-    Ai = zeros(2,2)
-    Ai_cl = zeros(2,2)
-    Ai_tau = zeros(2,2)
-    Ai_cl_tau = zeros(2,2)
-    Aij = zeros(2)
-    Aij_tau = zeros(2)
-    Aijk = zeros(nAfun) # for the three vars cdf, cdp and cm
+    Ai = @MMatrix zeros(2,2)
+    Ai_cl = @MMatrix zeros(2,2)
+    Ai_tau = @MMatrix zeros(2,2)
+    Ai_cl_tau = @MMatrix zeros(2,2)
+    Aij = @MVector zeros(2)
+    Aij_tau = @MVector zeros(2)
+    Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
     
-    # io, im, dMa , tMa  = findsegment(Mach, AMa)
+    io, im, dMa , tMa  = findsegment(Mach, AMa)
     jo, jm, dcl , tcl  = findsegment(cl, Acl)
     ko, km, dtau, ttau = findsegment(τ, Aτ)
     
@@ -66,10 +65,21 @@ end
                 j = jo + jd-2
                 k = ko + kd-2
 
-                @views        Ai[jd,kd] = SEVAL(Mach,      A[:, j, k, l],      A_M[:, j, k, l], AMa)
-                @views     Ai_cl[jd,kd] = SEVAL(Mach,   A_cl[:, j, k, l],   A_M_cl[:, j, k, l], AMa)
-                @views    Ai_tau[jd,kd] = SEVAL(Mach,    A_τ[:, j, k, l],    A_M_τ[:, j, k, l], AMa)
-                @views Ai_cl_tau[jd,kd] = SEVAL(Mach, A_cl_τ[:, j, k, l], A_M_cl_τ[:, j, k, l], AMa)
+                Ai[jd, kd] = interpolate(ix1=im, ix2=io,
+                    dx=dMa, t=tMa, Y=view(A, :, j, k, l),
+                    dYdX=view(A_M, :, j, k, l))
+                
+                Ai_cl[jd, kd] = interpolate(ix1=im, ix2=io,
+                    dx=dMa, t=tMa, Y=view(A_cl, :, j, k, l),
+                    dYdX=view(A_M_cl, :, j, k, l))
+                
+                Ai_tau[jd, kd] = interpolate(ix1=im, ix2=io,
+                    dx=dMa, t=tMa, Y=view(A_τ, :, j, k, l),
+                    dYdX=view(A_M_τ, :, j, k, l))
+                
+                Ai_cl_tau[jd, kd] = interpolate(ix1=im, ix2=io,
+                    dx=dMa, t=tMa, Y=view(A_cl_τ, :, j, k, l),
+                    dYdX=view(A_M_cl_τ, :, j, k, l))
 
             end
         end
@@ -125,26 +135,69 @@ Returns im and io s.t. `xarr[im] < x < xarr[io]`.
 
 Additionally returns the interval `dx = xarr[io] - xarr[im]`
 """
-function findsegment(x::Float64, xarr::AbstractArray{Float64})
+function findsegment(x::Float64, xarr)
 
     if isnan(x)
         error("Oops, you're searching for a NaN! Go fix your bug!")
     end
     
-    io::Int = length(xarr)
-
-    if x ≤ xarr[1]
-        im = 1
-        io = 2
-    elseif x ≥ xarr[end]
-        im = io - 1
-    else
-        im = searchsortedlast(xarr, x)
-        io = im + 1
-    end
+    im::Int = find_bisection(x, xarr)
+    io = im+1
 
     dx = xarr[io] - xarr[im]
     t = (x - xarr[im])/dx
 
     return io, im, dx, t
+end
+"""
+    find_bisection(x::T, X::AbstractVector{T}) where T
+
+Simple, fast bisection search in a **sorted** array. This does not sort the array for you.
+"""
+function find_bisection(x::T, X::AbstractVector{T}) where T
+    ilow::Int = 1
+    i::Int = length(X)
+    while (i-ilow > 1)
+        imid = (i+ilow)÷2
+        if x<X[imid]
+            i = imid
+        else
+            ilow = imid
+        end
+    end
+    return i-1
+end  # function find_bisection
+
+"""
+    interpolate(;ix1, ix2, dx, t, Y, dYdX)
+
+Convenience function to evaluate the symmetric form of the cubic spline equation, given
+the x interval defined by the indices (ix1, ix2),  the interval (dx), normalized x location (t),
+the Y array to be interpolated and the slopes (dYdX) at the interval end points.
+
+Note: This is intentionally defined as a kw only argument list to encourage anyone working 
+with this deep part of the code knows what they are doing. See [`eval_spline`](@ref).
+"""
+function interpolate(;ix1, ix2, dx, t, Y, dYdX)
+
+    yim = Y[ix1] 
+    yi = Y[ix2]
+    Δ = yi - yim
+    fxm = dx * dYdX[ix1] - Δ
+    fxo = dx * dYdX[ix2] - Δ
+
+    return eval_spline(t = t, yim = yim, yi = yi, fxm = fxm, fxo = fxo)
+end
+
+"""
+    eval_spline(;t, yim, yi, fxm, fxo)
+
+Given normalized interpolation location t, y₋ and y, calculates the
+spline interpolation of the form    
+    (1 - t)*y₁ + t*y₂ + t*(1 - t)*((1 - t)fxm + t*fx),
+    where t = (x - x₁)/Δx.
+"""
+function eval_spline(;t, yim, yi, fxm, fxo)
+    tmi = 1.0 - t
+    return t*yi + tmi*yim + t*tmi*(tmi*fxm - t*fxo)
 end
