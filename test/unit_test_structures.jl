@@ -198,56 +198,55 @@ poh,htail_span = TASOPT.aerodynamics.tailpo!(htail, Sh, qne)
 #end tailpo:
 
 # #Test fuselage layout updating for tank
+ac = deepcopy(ac_test)
 
-parg = zeros(igtotal)
-fuselage.layout.x_start_cylinder = 6.096
-fuselage.layout.x_end_cylinder = 29.5656
-fuselage.layout.x_pressure_shell_aft = 31.0896
-parg[igdxeng2wbox] = 1.5239999999999991
-fuselage.APU.r = [36.576, 0.0, 0.0]
-fuselage.layout.x_end = 37.7952
-fuselage.layout.x_cone_end = 35.6616
-htail.layout.box_x = 34.8996
-vtail.layout.box_x = 33.528
-wing.layout.box_x = 16.04432532088372
-parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
-fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
+ac.fuselage.layout.x_start_cylinder = 6.096
+ac.fuselage.layout.x_end_cylinder = 29.5656
+ac.fuselage.layout.x_pressure_shell_aft = 31.0896
+ac.parg[igdxeng2wbox] = 1.5239999999999991
+ac.fuselage.APU.r = [36.576, 0.0, 0.0]
+ac.fuselage.layout.x_end = 37.7952
+ac.fuselage.layout.x_cone_end = 35.6616
+ac.htail.layout.box_x = 34.8996
+ac.vtail.layout.box_x = 33.528
+ac.wing.layout.box_x = 16.04432532088372
+ac.parg[igxeng] = ac.wing.layout.box_x - ac.parg[igdxeng2wbox]
+ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-pari = zeros(iitotal)
-pari[iinftanks] = 1
+ac.pari[iinftanks] = 1
 
 #Update fuel tank length and check changes
-parg[iglftank] = 5.0
-TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+ac.parg[iglftank] = 5.0
+TASOPT.update_fuse!(ac, 1)
 
-update_fuse_out = [fuselage.layout.x_end_cylinder, 
-fuselage.layout.x_pressure_shell_aft, 
-fuselage.layout.x_cone_end, 
-fuselage.APU.x,
-fuselage.layout.x_end,
-fuselage.HPE_sys.x,
-htail.layout.box_x,
-vtail.layout.box_x,
-parg[igxeng]]
+update_fuse_out = [ac.fuselage.layout.x_end_cylinder, 
+ac.fuselage.layout.x_pressure_shell_aft, 
+ac.fuselage.layout.x_cone_end, 
+ac.fuselage.APU.x,
+ac.fuselage.layout.x_end,
+ac.fuselage.HPE_sys.x,
+ac.htail.layout.box_x,
+ac.vtail.layout.box_x,
+ac.parg[igxeng]]
 
 update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.326234144000004, 42.18560000000001, 43.40480000000001, 12.767380728136962, 40.50920000000001, 39.137600000000006, 14.52032532088372]
 @test all(isapprox.(update_fuse_out, update_fuse_out_test))
 
 
 #Return to original points?
-pari[iinftanks] = 0.0
-parg[iglftank] = 0.0
-TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+ac.pari[iinftanks] = 0.0
+ac.parg[iglftank] = 0.0
+TASOPT.update_fuse!(ac, 1)
 
-update_fuse_out = [fuselage.layout.x_end_cylinder, 
-fuselage.layout.x_pressure_shell_aft, 
-fuselage.layout.x_cone_end, 
-fuselage.APU.x,
-fuselage.layout.x_end,
-fuselage.HPE_sys.x,
-htail.layout.box_x,
-vtail.layout.box_x,
-parg[igxeng]]
+update_fuse_out = [ac.fuselage.layout.x_end_cylinder, 
+ac.fuselage.layout.x_pressure_shell_aft, 
+ac.fuselage.layout.x_cone_end, 
+ac.fuselage.APU.x,
+ac.fuselage.layout.x_end,
+ac.fuselage.HPE_sys.x,
+ac.htail.layout.box_x,
+ac.vtail.layout.box_x,
+ac.parg[igxeng]]
 
 update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79520000000001, 9.82323826413696, 34.89960000000001, 33.528000000000006, 14.52032532088372]
 @test all(isapprox.(update_fuse_out, update_fuse_out_test))
