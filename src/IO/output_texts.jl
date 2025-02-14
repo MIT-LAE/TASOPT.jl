@@ -8,10 +8,11 @@ function weight_buildup(ac::aircraft; io=stdout)
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
+    landing_gear = ac.landing_gear
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
-    Wlgnose = parg[igWMTO] * parg[igflgnose]
-    Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wlgnose = landing_gear.nose_gear.weight.W
+    Wlgmain = landing_gear.main_gear.weight.W
     Wtotadd = Whpesys + Wlgnose + Wlgmain
 
     Wbox    = wing.inboard.webs.weight.W + wing.inboard.caps.weight.W
