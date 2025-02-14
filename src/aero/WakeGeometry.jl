@@ -99,16 +99,6 @@ function WakeSystem(points::SVector{NP, Point2D}) where NP
     elements = WakeElement(points)
     NE = NP - 1
     influence_matrix = @MMatrix zeros(NE, NP)
-@inline function calculate_influence_coefficient(r_vec::Point2D, normal::Point2D)
-    r_squared = dot(r_vec, r_vec)
-    # Effectively checking if the control point is too close to a wake point. 
-    # Could be improved with some model of a finite core vortex?
-    if r_squared > MINIMUM_DISTANCE_SQUARED
-        # Cross product x̂ × r gives [-z, y], dot with normal [ny, nz] gives = y*nz - z*ny
-        return (r_vec[1] * normal[2] - r_vec[2] * normal[1]) / r_squared
-    end
-    return 0.0
-end
     ws = WakeSystem(points,elements,influence_matrix)
     calculate_influence_matrix!(ws)
     return ws
@@ -124,24 +114,31 @@ end  # function WakeSystem
     end
     return 0.0
 end
+
+"""
+    mirror_point(p1::Point2D)
+
+Mirrors point about the x-z plane by negating the y coordinate
+p1 = [y, z] --> [-y, z]
+"""
+function mirror_point(p1::Point2D)
+    return Point2D(-p1[1], p1[2])
+end 
+
 function calculate_influence_matrix!(ws::WakeSystem{NP,NE}) where {NP,NE}
     for j in 1:NP
         wake_point = ws.points[j]
-
+        mirrored_point = mirror_point(wake_point)
         for i in 1:NE
             element = ws.elements[i]
+            # Get contribution from j'th wake point
             r_vec = element.control_point - wake_point
-            r_squared = dot(r_vec, r_vec)
-
-            if r_squared > 1e-10
-                # Cross product with x-unit vector simplified in 2D
-                # x̂ × (rₚ - rᵢ) = -(zₚ - zᵢ)ŷ + (yₚ - yᵢ)ẑ
-                cross_prod = Point2D(-r_vec[2], r_vec[1])
-                # Each element is in turn given by (x̂ × (rₚ - rᵢ)) · n̂ / |rₚ - rᵢ|²
-                ws.influence_matrix[i, j] = dot(cross_prod, element.unit_normal) / r_squared
-            else
-                ws.influence_matrix[i, j] = 0.0
-            end
+            influence = calculate_influence_coefficient(r_vec, element.unit_normal)
+            # Now do the same for the mirrored point:
+            r_vec_mirror = element.control_point - mirrored_point
+            influence += calculate_influence_coefficient(r_vec_mirror, element.unit_normal)
+            
+            ws.influence_matrix = influence
         end
     end
 
