@@ -305,7 +305,6 @@ BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
   7.46 ns        Histogram: frequency by time        11.5 ns <
 
  Memory estimate: 0 bytes, allocs estimate: 0.
- ```
 So by extending `Base.+` we got the `sum` function for free cause it just knows how to add things together. But you see that the static array approach seems to take much longer, that's because the 
 static array definition here isn't done correctly. This is an easy to make mistake, look at the following comparison: 
 
