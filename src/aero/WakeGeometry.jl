@@ -23,7 +23,9 @@ const Point2D = SVector{2, Float64} # [y, z] really just a shorthand for SVector
 """
     $(TYPEDEF)
 
-Represents a single wake element defined by two points in the y-z plane.
+Represents a single wake element defined by two points in the y-z plane and a control
+point. Note the control point does *not* have to be the midpoint, but it defaults
+to that if nothing is provided.
 
 # Fields
 $(FIELDS)
@@ -42,23 +44,34 @@ struct WakeElement
     unit_normal::Point2D
     
     # Inner constructor to help in calculating the control point and the normal
-    function WakeElement(p1::Point2D, p2::Point2D)
+    function WakeElement(p1::Point2D, p2::Point2D;
+        control_point::Union{Point2D, Nothing}=nothing)
         Δs = p2 - p1
         length = norm(Δs)
         unit_normal = Point2D(Δs[2] / length, -Δs[1] / length)
-        # Midpoint calculation
-        control_point = (p1 + p2) * 0.5
+        # Midpoint calculation as control point if not provided
+        control_point = isnothing(control_point) ? (p1 + p2) * 0.5 : control_point
         new(p1, p2, control_point, unit_normal)
     end
 end
 
 """
-    WakeElement(wp::SVector{N, Point2D}) where N
+    generate_wake_elements(points::SVector{N, Point2D};
+    control_points::Union{SVector{M, Point2D}, Nothing}=nothing) where {N, M}
 
 Returns an SVector of WakeElements
 """
-@inline function WakeElement(wp::SVector{N, Point2D}) where N
-    SVector{N-1,WakeElement}(WakeElement(wp[i], wp[i+1]) for i in 1:N-1)
+@inline function generate_wake_elements(points::SVector{N, Point2D};
+    control_points::Union{SVector{M, Point2D}, Nothing}=nothing) where {N, M}
+    if isnothing(control_points)
+        # If no control points are provided, calculate midpoints and set that as the control point
+        return SVector{N-1,WakeElement}(WakeElement(points[i], points[i+1]) for i in 1:N-1)
+    else
+        if M != N - 1
+            throw(ArgumentError("Number of control points must be exactly one less than the number of points."))
+        end
+        return SVector{N-1,WakeElement}(WakeElement(points[i], points[i+1]; control_point=control_points[i]) for i in 1:N-1)
+    end
 end
 
 """
@@ -83,7 +96,7 @@ where:
 struct WakeSystem{NP, NE}
     points::SVector{NP, Point2D}
     elements::SVector{NE, WakeElement}
-    influence_matrix::SMatrix{NE, NP, Float64}
+    influence_matrix::MMatrix{NE, NP, Float64}
     
     function WakeSystem(points::SVector{NP, Point2D}, 
         elements::SVector{NE, WakeElement},
@@ -95,8 +108,12 @@ struct WakeSystem{NP, NE}
     end
 end
 
-function WakeSystem(points::SVector{NP, Point2D}) where NP
-    elements = WakeElement(points)
+"""
+"""
+function WakeSystem(points::SVector{NP, Point2D}; 
+    control_points::Union{SVector{NC, Point2D}, Nothing}=nothing) where {NP, NC}
+
+    elements = generate_wake_elements(points; control_points = control_points)
     NE = NP - 1
     influence_matrix = @MMatrix zeros(NE, NP)
     ws = WakeSystem(points,elements,influence_matrix)
@@ -138,7 +155,7 @@ function calculate_influence_matrix!(ws::WakeSystem{NP,NE}) where {NP,NE}
             r_vec_mirror = element.control_point - mirrored_point
             influence += calculate_influence_coefficient(r_vec_mirror, element.unit_normal)
             
-            ws.influence_matrix = influence
+            ws.influence_matrix[i,j] = influence
         end
     end
 
