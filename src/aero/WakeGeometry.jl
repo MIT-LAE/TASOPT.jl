@@ -40,6 +40,8 @@ struct WakeElement
     p2::Point2D
     "Control point (midpoint) of the element"
     control_point::Point2D
+    "Length of element"
+    length::Float64
     "Unit normal vector to the element"
     unit_normal::Point2D
     
@@ -53,7 +55,7 @@ struct WakeElement
         unit_normal = Point2D(-Δs[2] / length, Δs[1] / length)
         # Midpoint calculation as control point if not provided
         control_point = isnothing(control_point) ? (p1 + p2) * 0.5 : control_point
-        new(p1, p2, control_point, unit_normal)
+        new(p1, p2, control_point, length, unit_normal)
     end
 end
 
@@ -72,8 +74,13 @@ Returns an SVector of WakeElements
         if M != N - 1
             throw(ArgumentError("Number of control points must be exactly one less than the number of points."))
         end
-        return SVector{N-1,WakeElement}(WakeElement(points[i], points[i+1]; control_point=control_points[i]) for i in 1:N-1)
+    return SVector{N-1,WakeElement}(WakeElement(points[i], points[i+1]; 
+                                        control_point=control_points[i]) for i in 1:N-1)
     end
+end
+
+function element_lengths(wake_elements::SVector{N, WakeElement}) where N
+    SVector{N, Float64}(wake_elements[i].length for i in 1:N)
 end
 
 """
@@ -102,7 +109,7 @@ struct WakeSystem{NP, NE}
     
     function WakeSystem(points::SVector{NP, Point2D}, 
         elements::SVector{NE, WakeElement},
-        influence_matrix::SMatrix{NE, NP, Float64}) where {NP, NE}
+        influence_matrix::MMatrix{NE, NP, Float64}) where {NP, NE}
         if NE != NP - 1
             throw(ArgumentError("Number of elements (NE) must be exactly one less than the number of points (NP)."))
         end
@@ -110,6 +117,7 @@ struct WakeSystem{NP, NE}
     end
 end
 
+element_lengths(WS::WakeSystem) = element_lengths(WS.elements)
 """
 """
 function WakeSystem(points::SVector{NP, Point2D}; 
@@ -145,17 +153,19 @@ function mirror_point(p1::Point2D)
 end 
 
 function calculate_influence_matrix!(ws::WakeSystem{NP,NE}) where {NP,NE}
-    for j in 1:NP
+    @inbounds for j in 1:NP
         wake_point = ws.points[j]
         mirrored_point = mirror_point(wake_point)
-        for i in 1:NE
+        @inbounds for i in 1:NE
             element = ws.elements[i]
             # Get contribution from j'th wake point
             r_vec = element.control_point - wake_point
             influence = calculate_influence_coefficient(r_vec, element.unit_normal)
             # Now do the same for the mirrored point:
             r_vec_mirror = element.control_point - mirrored_point
-            influence += calculate_influence_coefficient(r_vec_mirror, element.unit_normal)
+            # Note the subtraction below is because the contribution of the "image" leg of the 
+            # horse shoe vortex is going to be in the opposite orientation so the negation.
+            influence = influence - calculate_influence_coefficient(r_vec_mirror, element.unit_normal)
             
             ws.influence_matrix[i,j] = influence
         end
@@ -164,3 +174,16 @@ function calculate_influence_matrix!(ws::WakeSystem{NP,NE}) where {NP,NE}
     return nothing
 end
 
+function generate_wake_system(y::AbstractVector{Float64}, z::AbstractVector{Float64}, 
+                            ycp::AbstractVector{Float64}, zcp::AbstractVector{Float64})
+    # Check dimensions
+    np = length(y)
+    @assert length(z) == np "y and z must have same length"
+    @assert length(ycp) == np-1 "Control points must have one less control point than wake points"
+    @assert length(zcp) == np-1 "Control points must have one less control point than wake points"
+    
+    # Create arrays of wake points and control points 
+    points = SVector{np, Point2D}(Point2D(y[i], z[i]) for i in 1:np)
+    control_points = SVector{np-1, Point2D}(Point2D(ycp[i], zcp[i]) for i in 1:np-1)
+    WakeSystem(points, control_points = control_points)
+end
