@@ -30,9 +30,28 @@ The aircraft is sized via a fixed point iteration for the design mission ([`TASO
 
     Once the engines are sized, the fuel demand at every point in the mission is calculated using [`TASOPT.mission!`](@ref). This function in turn recalculates the balance, drag, and engine performance at every point. Further details on mission are provided below. `mission!` is usually the greatest time sink in an aircraft sizing. The weight gets updated after running `mission` and the loop restarts.
 
-## [Mission evaluation] (@id missionexec)
-A sized aircraft's mission performance can be obtained (`mission!`), along with operation constraints via a pitch trim calculation (`balance`) and balanced field length calculation (`takeoff!`).
+## [Mission evaluation] (@id mission)
+The function [`TASOPT.mission!`](@ref) contains the fuel burn calculation for the entire mission. It can be used both in sizing, as part of the iteration to obtain a converged aircraft, or in off-design, to calculate the performance of an already-designed airplane. 
 
+!!! details "🖥️ Code structure - Mission" 
+    The `mission!` function simulates the entire mission of an aircraft, calculating fuel burn and other mission variables. 
+
+    The function sets the initial conditions for takeoff, including altitude, temperature, pressure, and density. It then interpolates the lift coefficient over the climb and descent points to ensure smooth transitions between different phases of the mission. 
+
+    Next, the function estimates the takeoff speed and sets the velocity and Reynolds number over the climb and descent points. This involves calculating the takeoff lift coefficient and using it to estimate the takeoff speed. The Reynolds number is then calculated based on the takeoff speed and other atmospheric conditions.
+
+    The function proceeds to calculate the climb and descent parameters using aerodynamic and engine performance models. It integrates the climb and descent trajectories using a predictor-corrector scheme to update the range, time, and weight fractions. 
+
+    Once the climb and descent parameters are set, the function sets the conditions for the cruise phase, including altitude, speed, and fuel consumption. It calculates the fuel burn and weight fractions for the entire mission via calls to `engine.enginecalc!`, and adds any vented fuel. This involves adjusting the aircraft's balance and trim settings via calls to `balance` to ensure stability throughout the mission, and recalculating the drag via `cdsum!`.
+
+    The function also sets up the climb points at equal altitude intervals and calculates the available thrust assuming max throttle climb. It initializes the climb integrands and integrates the trajectory over the climb phase. The function calculates the cruise-climb angle based on available thrust and atmospheric conditions.
+
+    The descent phase is then set up, with the function interpolating the descent points and integrating the time and weight over the descent. It calculates the velocity, Mach number, and Reynolds number for each descent point and adjusts the pitch trim by adjusting the horizontal tail lift coefficient.
+
+    Finally, the function calculates the mission fuel fractions and weights, including the weight of any vented fuel. It updates the mission parameters, such as the takeoff weight and fuel weight, and calculates the mission payload-fuel energy intensity (PFEI).
+
+## [Off-design performance] (@id missionexec)
+A sized aircraft's mission performance can be obtained using `mission`, along with operation constraints via a pitch trim calculation (`balance`) and balanced field length calculation (`takeoff!`). The function [`TASOPT.fly_off_design!`](@ref) performs this calculation: it runs the aircraft through a mission with different range, payload, and conditions to the design mission.
 
 ## Function documentation
 ```@docs
