@@ -54,6 +54,25 @@ Returns an SVector of WakeElements
     SVector{N-1,WakeElement}([WakeElement(a,b) for (a,b) in zip(wp[begin:end-1], wp[begin+1:end])])
 end
 
+"""
+    $(TYPEDEF)
+
+A complete wake system with N wake points forming N-1 wake elements.
+
+# Type Parameters
+$(TYPEDFIELDS)
+
+The `influence_matrix` is purely geometric! So compute once and reuse it for different
+loading conditions. For each element-point pair, the coefficient is:
+```math
+\\left(\\hat{x} \\times (\\mathbf{r}_{cp} - \\mathbf{r}_{wp})\\right) \\cdot \\hat{n}
+```
+where:
+- ``\\hat{x}`` is the unit vector in x-direction
+- ``\\mathbf{r}_{cp}`` is the control point position vector
+- ``\\mathbf{r}_{wp}`` is the wake point position vector
+- ``\\hat{n}`` is the unit normal to the wake element
+"""
 struct WakeSystem{NP, NE}
     points::SVector{NP, Point2D}
     elements::SVector{NE, WakeElement}
