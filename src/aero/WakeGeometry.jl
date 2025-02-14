@@ -3,8 +3,25 @@ using StaticArrays
 using LinearAlgebra
 using DocStringExtensions
 
+"""
+    $(TYPEDEF)
+
+Two-dimensional point type using StaticArrays for stack allocation.
+First component is y-coordinate, second is z-coordinate.
+"""
 const Point2D = SVector{2, Float64} # [y, z] really just a shorthand for SVector
 
+"""
+    $(TYPEDEF)
+
+Represents a single wake element defined by two points in the y-z plane.
+
+# Fields
+$(FIELDS)
+
+It store a few more things inside WakeElement to help with calculations later.
+The unit normal is computed as [Δz, -Δy]/|Δs| where Δs is the vector connecting the end points.
+"""
 struct WakeElement
     "Starting point of the wake element"
     p1::Point2D
@@ -28,6 +45,35 @@ struct WakeElement
     end
 end
 
+"""
+    WakeElement(wp::SVector{N, Point2D}) where N
+
+Returns an SVector of WakeElements
+"""
 @views function WakeElement(wp::SVector{N, Point2D}) where N
     SVector{N-1,WakeElement}([WakeElement(a,b) for (a,b) in zip(wp[begin:end-1], wp[begin+1:end])])
 end
+
+struct WakeSystem{NP, NE}
+    points::SVector{NP, Point2D}
+    elements::SVector{NE, WakeElement}
+    influence_matrix::SMatrix{NE, NP, Float64}
+    
+    function WakeSystem(points::SVector{NP, Point2D}, 
+        elements::SVector{NE, WakeElement},
+        influence_matrix::SMatrix{NE, NP, Float64}) where {NP, NE}
+        if NE != NP - 1
+            throw(ArgumentError("Number of elements (NE) must be exactly one less than the number of points (NP)."))
+        end
+        new{NP, NE}(points, elements, influence_matrix)
+    end
+end
+
+function WakeSystem(points::SVector{NP, Point2D}) where NP
+    elements = WakeElement(points)
+    NE = NP - 1
+    influence_matrix = @MMatrix zeros(NE, NP)
+    ws = WakeSystem(points,elements,influence_matrix)
+    calculate_influence_matrix!(ws)
+    return ws
+end  # function WakeSystem
