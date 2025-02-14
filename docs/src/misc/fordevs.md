@@ -9,25 +9,24 @@
     - Look out for `!!! compat` admonishments marking where things will likely change in the future.
     - References to NPSS are currently non-functional. We're working on replacing this functionality efficiently.
 
-!!! tip "Benchmarks"
-    - Examples of aircraft-sizing benchmarking and profiling files are provided in `test/benchmark_sizing.jl`. These can be run after making changes to the code to check if there has been a speed-up or slow-down.
-    - Some individual functions are additionally benchmarked in `test/benchmark_elements.jl`.
-    - Developers can similarly create other benchmarks for new features, models, and functions.
+## Benchmarks
+- Examples of aircraft-sizing benchmarking and profiling files are provided in `test/benchmark_sizing.jl`. These can be run after making changes to the code to check if there has been a speed-up or slow-down.
+- Some individual functions are additionally benchmarked in `test/benchmark_elements.jl`.
+- Developers can similarly create other benchmarks for new features, models, and functions.
 
 
 ## [Performance tips](@id perftips)
 
-Below are a few performance tips based on lessons learnt during TASOPT.jl development. The Julia docs has a section on performance that you can find [here](https://docs.julialang.org/en/v1/manual/performance-tips/), so the goal is not to repeat everything but expand on sections that are rather terse in there. 
+Below are a few performance tips based on lessons learnt during TASOPT.jl development. The Julia docs has a section on performance that you can find [here](https://docs.julialang.org/en/v1/manual/performance-tips/), so the goal is not to repeat everything but expand on sections that are rather terse in there. Two key things to keep in mind to get fast Julia code are:
+1. _Writing type stable code_ for which the compiler can generate performant code.
+2. _Reducing unnecessary allocations_.
 
-### Reducing allocations and profiling
 
-The `test/benchmark_elements.jl` file shows some examples of using `BenchmarkTools.jl` to benchmark functions in Julia. Two key things to keep in mind to get fast julia code are:
-1. Type stable code - write code that the compiler can generate performant code.
-2. Reducing unnecessary allocations.
+## Reducing allocations and profiling
 
-The below sections cover "gotchas" on type stability (1). 
+The `test/benchmark_elements.jl` file shows some examples of using `BenchmarkTools.jl` to benchmark functions in Julia. 
 
-For point (2), sometimes you need more than just the number of allocations from benchmarking to actually go reduce it. Mainly it can be non-obvious where the allocations are being made in some cases. [`Coverage.jl`](https://github.com/JuliaCI/Coverage.jl) is a useful package for getting a better sense of where in your code the allocations are coming from.
+Sometimes you need more than just the number of allocations from benchmarking to actually go eliminate or reduce the allocations. _Where_ the allocations are being made can be non-obvious in some cases. [`Coverage.jl`](https://github.com/JuliaCI/Coverage.jl) is a useful package for getting a better sense of where in your code the allocations are coming from.
 
 Specifically you want to follow the steps [here](https://github.com/JuliaCI/Coverage.jl?tab=readme-ov-file#memory-allocation). Reproduced here for convenience:
 
@@ -62,7 +61,7 @@ using Coverage
 analyze_malloc(dirnames)  # could be "." for the current directory, or "src", etc.
 ```
 
-### Custom types and type inference 
+## Custom types and type inference 
 
 While defining new types you need to think about type inference and how the compiler can or cannot learn the types of the downstream calculations. See this section [here in the Julia manual that has some examples](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-fields-with-abstract-type). I'll list a more TASOPT.jl relevant example here to emphasize the point. 
 
@@ -114,7 +113,7 @@ airfoil{Float64, LinRange{Float64, Int64}}
 In this case given the type, **not the value**, of `a` the compiler can correctly infer 
 the type of `a.cl`, and generate appropriate code. 
 
-### Type instability from using variables in parent scopes
+## Type instability from using variables in parent scopes
 
 Here let's look at a common pattern that can be tempting to write and what the performance penalty is.
 
@@ -221,7 +220,7 @@ Body::Float64
 
 The relevant sections in the performance docs are [here](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-untyped-global-variables).
 
-### Static arrays and performance
+## Static arrays and performance
 
 [`StaticArrays`](https://github.com/JuliaArrays/StaticArrays.jl) is a package that provides functionality for *statically sized* (i.e., the size is determined from the *type*, doesn't **have** to be immutable) arrays.
 
