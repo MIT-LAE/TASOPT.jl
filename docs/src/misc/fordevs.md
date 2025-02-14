@@ -328,7 +328,7 @@ BenchmarkTools.Trial: 10000 samples with 998 evaluations.
   ███████████▇▆▆▅▆▅▃▅▁▅▅▅▅▅▇█▇██████████▇█▇▇▆▆▆▆▆▄▅▄▅▄▅▃▅▅▄▄▅▇ █
   18 ns         Histogram: log(frequency) by time      25.8 ns <
 
- Memory estimate: 80 bytes, allocs estimate: 1.```
+ Memory estimate: 80 bytes, allocs estimate: 1.
  
  VERSUS:
 ```julia
