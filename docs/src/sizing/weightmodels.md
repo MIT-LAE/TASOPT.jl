@@ -1,6 +1,6 @@
-## TASOPT Weight Model
+# TASOPT Weight Model
 
-### Overall Weight Breakdown
+## Overall Weight Breakdown
 
 In calculating the weight models, TASOPT combines:
 
@@ -30,14 +30,14 @@ where $r_{\mathrm{pay}}$ and $r_{\mathrm{fuel}}$ can range from 0 to 1 to repres
 
 ---
 
-### [Fuselage Weight](@ref fuselage)
+## [Fuselage Weight](@ref fuselage)
 
 !!! details "📖 Theory - Fuselage Weight Calculation"
     The fuselage structural weight is calculated using:
 
     1. **Pressure shell modeling**
     2. **Bending loads**
-    3. **Secondary items** (Seats, galleys, and other interior equipment often scale with **payload**).
+    3. **Secondary items** (Seats, and other interior equipment).
 
 These fuselage-related weights (shell, floor beams, tail cone, added bending material, etc.) plus passenger-proportional items are summed to get the total fuselage weight, expressed mathematically as:
 
@@ -59,17 +59,14 @@ W_{\rm floor}
 W_{\rm hbend}\:+\: 
 W_{\rm vbend}
 \end{aligned}$$
-where
+where $W_{\rm fix}$ is a fixed weight (cockpit, instruments, etc.), $W_{\rm apu}$,$W_{\rm seat}$, $W_{\rm padd}$ scale with passenger payload or seating capacity, $W_{\rm shell}$, $W_{\rm cone}$, $W_{\rm floor}$ come from explicit structural and geometric modeling (pressurization, bending, torsion), and $W_{\rm hbend}$, $W_{\rm vbend}$ represent added fuselage skin/stringer material for horizontal and vertical bending loads.
 
-- $W_{\rm fix}$ is a fixed weight (cockpit, instruments, etc.).
-- $W_{\rm apu}$,$W_{\rm seat}$, $W_{\rm padd}$ scale with passenger payload or seating capacity.
-- $W_{\rm shell}$, $W_{\rm cone}$, $W_{\rm floor}$ come from explicit structural and geometric modeling (pressurization, bending, torsion).
-- $W_{\rm hbend}$, $W_{\rm vbend}$ represent added fuselage skin/stringer material for horizontal and vertical bending loads.
 ---
 
-### [Wing Weight](@ref wingtail)
+## [Wing Weight](@ref wingtail)
 
-TASOPT’s wing weight model first computes the **primary wingbox** weight via beam theory, sizing spar caps and webs to meet bending and shear stress limits under specified load factors. Each panel (inner and outer) is integrated for structural volume, as well as for **maximum possible fuel volume**. Secondary elements (leading and trailing-edge devices, ribs, flaps, spoilers, etc.) are included through empirical fraction multipliers on the primary structure.
+!!! details "📖 Theory - Wing Weight Calculation"
+    TASOPT’s wing weight model first computes the **primary wingbox** weight via beam theory, sizing spar caps and webs to meet bending and shear stress limits under specified load factors. Each panel (inner and outer) is integrated for structural volume, as well as for **maximum possible fuel volume**. Secondary elements (leading and trailing-edge devices, ribs, flaps, spoilers, etc.) are included through empirical fraction multipliers on the primary structure.
 
 The total wing structural weight is:
 
@@ -78,13 +75,11 @@ W_{\rm wing} &= \,
 2 \,\bigl(\,W_{\mathrm{s,\,cen}} + W_{\mathrm{s,\,inn}} + W_{\mathrm{s,\,out}}\bigr)\bigl(1 + f_{\mathrm{w\,add}}\bigr)
 \end{aligned}$$
 
-where \(W_{\mathrm{s,\,cen}}\), \(W_{\mathrm{s,\,inn}}\), and \(W_{\mathrm{s,\,out}}\) are the structural weights of the center, inner, and outer wing panels, respectively, and \(f_{\mathrm{w\,add}}\) is the sum of fractional add-ons (flaps, slats, ailerons, etc.).
-
-Fuel weight in the wing is tracked separately. TASOPT can allow partial fuel loads or full loads, integrated into overall CG calculations.
+where $W_{\mathrm{s,\,cen}}$, $W_{\mathrm{s,\,inn}}$, and $W_{\mathrm{s,\,out}}$ are the structural weights of the center, inner, and outer wing panels, respectively, and $f_{\mathrm{w\,add}}$ is the sum of fractional add-ons (flaps, slats, ailerons, etc.).
 
 ---
 
-### [Tail Weight](@ref wingtail)
+## [Tail Weight](@ref wingtail)
 
 Both horizontal and vertical tails are sized much like a small wing:
 - Each tail’s planform is analyzed for maximum tail-load conditions (e.g., at never-exceed dynamic pressure).
@@ -93,7 +88,7 @@ Both horizontal and vertical tails are sized much like a small wing:
 
 ---
 
-### Engine Weight
+## Engine Weight
 
 Engine weight is partly derived from more empirically based correlations. The **bare engine weight** $W_{\mathrm{e,\,bare}}$ scales with turbofan design parameters (mass flow, overall pressure ratio, bypass ratio). Added fractions for accessories, fuel systems, and pylons yield the overall engine system weight:
 
@@ -107,7 +102,7 @@ W_{\rm eng} &=\; W_{\rm bare} + W_{\rm add} + W_{\rm nace} + W_{\rm pylon}
 Here, $W_{\rm bare}$ is determined by the core flow correlation; $W_{\rm add}$ is an empirical fraction of $W_{\rm bare}$; $W_{\rm nace}$ is the nacelle + thrust reverser weight (based on fan diameter, length, etc.), and $W_{\rm pylon}$ accounts for the engine mounting structure.
 
 ---
-### Emperical Weight Fractions
+## Emperical Weight Fractions
 
 The aircraft model takes an input for the below weight fractions which are scaled using different aircraft weights:
 
