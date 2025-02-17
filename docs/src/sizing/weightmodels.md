@@ -102,7 +102,7 @@ W_{\rm eng} &=\; W_{\rm bare} + W_{\rm add} + W_{\rm nace} + W_{\rm pylon}
 Here, $W_{\rm bare}$ is determined by the core flow correlation; $W_{\rm add}$ is an empirical fraction of $W_{\rm bare}$; $W_{\rm nace}$ is the nacelle + thrust reverser weight (based on fan diameter, length, etc.), and $W_{\rm pylon}$ accounts for the engine mounting structure.
 
 ---
-## Emperical Weight Fractions
+## Empirical Weight Fractions
 
 The aircraft model takes an input for the below weight fractions which are scaled using different aircraft weights:
 
