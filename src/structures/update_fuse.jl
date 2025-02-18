@@ -12,7 +12,7 @@ Function to update the fuselage layout when there is a change in fuselage fuel-t
     **Outputs:**
     No direct outputs; parameters in `ac` are modified.
 """
-function update_fuse!(ac, imission::Int64)
+function update_fuse!(ac, imission::Int64 = 1)
     #Unpack storage objects
     fuse = ac.fuselage
     wing = ac.wing
