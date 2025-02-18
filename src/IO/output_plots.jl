@@ -426,8 +426,10 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     annotate!(plot_obj, parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
 
     # Show seats (single-deck case)
-    xgrid = repeat(xseats, inner=length(yseats))
-    ygrid = repeat(yseats, outer=length(xseats))
+    if pari[iidoubledeck] == 0 
+        xgrid = repeat(xseats, inner=length(yseats))
+        ygrid = repeat(yseats, outer=length(xseats))
+    end
 
     if pari[iidoubledeck] == 0
         scatter!(plot_obj, xgrid, ygrid,
