@@ -686,10 +686,10 @@ function wsize(ac; itermax=35,
         if (pari[iifwing] == 0) #If fuel is stored in the fuselage
             
             #Size fuel tank and calculate weight
-            tanksize!(ac, 1)
+            tanksize!(ac)
 
             # Update fuselage according to tank requirements
-            update_fuse!(ac, 1) #update fuselage length to accommodate tank; boundary layer also recalculated
+            update_fuse!(ac) #update fuselage length to accommodate tank; boundary layer also recalculated
             
             #Use homogeneous tank model to calculate required venting
             _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
