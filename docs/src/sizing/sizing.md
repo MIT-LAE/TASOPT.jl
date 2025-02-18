@@ -44,14 +44,14 @@ The function [`TASOPT.mission!`](@ref) contains the fuel burn calculation for th
 
     Once the climb and descent parameters are set, the function sets the conditions for the cruise phase, including altitude, speed, and fuel consumption. It calculates the fuel burn and weight fractions for the entire mission via calls to `engine.enginecalc!`, and adds any vented fuel. This involves adjusting the aircraft's balance and trim settings via calls to `balance` to ensure stability throughout the mission, and recalculating the drag via `cdsum!`.
 
-    The function also sets up the climb points at equal altitude intervals and calculates the available thrust assuming max throttle climb. It initializes the climb integrands and integrates the trajectory over the climb phase. The function calculates the cruise-climb angle based on available thrust and atmospheric conditions.
+    The function also sets up the climb points at equal altitude intervals and calculates the available thrust assuming maximum-throttle climb. It initializes the climb integrands and integrates the trajectory over the climb phase. The function calculates the cruise-climb angle based on available thrust and atmospheric conditions.
 
     The descent phase is then set up, with the function interpolating the descent points and integrating the time and weight over the descent. It calculates the velocity, Mach number, and Reynolds number for each descent point and adjusts the pitch trim by adjusting the horizontal tail lift coefficient.
 
     Finally, the function calculates the mission fuel fractions and weights, including the weight of any vented fuel. It updates the mission parameters, such as the takeoff weight and fuel weight, and calculates the mission payload-fuel energy intensity (PFEI).
 
 ## [Off-design performance] (@id missionexec)
-A sized aircraft's mission performance can be obtained using `mission`, along with operation constraints via a pitch trim calculation (`balance`) and balanced field length calculation (`takeoff!`). The function [`TASOPT.fly_off_design!`](@ref) performs this calculation: it runs the aircraft through a mission with different range, payload, and conditions to the design mission.
+A sized aircraft's mission performance can be obtained using `mission!`, along with operation constraints via a pitch trim calculation (`balance`) and balanced field length calculation (`takeoff!`). The function [`TASOPT.fly_off_design!`](@ref) performs this calculation: it runs the aircraft through a mission with different range, payload, and conditions to the design mission.
 
 ## Function documentation
 ```@docs
