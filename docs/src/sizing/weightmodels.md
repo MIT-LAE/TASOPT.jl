@@ -90,7 +90,12 @@ Both horizontal and vertical tails are sized much like a small wing:
 
 ## Engine Weight
 
-Engine weight is partly derived from more empirically based correlations. The **bare engine weight** $W_{\mathrm{e,\,bare}}$ scales with turbofan design parameters (mass flow, overall pressure ratio, bypass ratio). Added fractions for accessories, fuel systems, and pylons yield the overall engine system weight:
+There are options for two engine weight models in TASOPT. The Drela engine model  or Fitzgerald's engine model (Section 2.10 of the [TASOPT Technical Desc](@ref dreladocs)).  
+
+### Drela Engine Model
+
+The bare weight function has been calibrated with listed weights for existing turbofans,
+as described in the document [Turbofan Weight Model from Historical Data](@ref dreladocs). The **bare engine weight** $W_{\mathrm{e,\,bare}}$ scales with turbofan design parameters (mass flow, overall pressure ratio, bypass ratio). Added fractions for accessories, fuel systems, and pylons yield the overall engine system weight:
 
 $$\begin{aligned}
 W_{\rm bare} &=\; n_{\rm eng}\,W_{e_1}\!\bigl(\dot{m}_D,\; OPR_D,\;BPR_D\bigr),\\[6pt]
@@ -101,24 +106,42 @@ W_{\rm eng} &=\; W_{\rm bare} + W_{\rm add} + W_{\rm nace} + W_{\rm pylon}
 
 Here, $W_{\rm bare}$ is determined by the core flow correlation; $W_{\rm add}$ is an empirical fraction of $W_{\rm bare}$; $W_{\rm nace}$ is the nacelle + thrust reverser weight (based on fan diameter, length, etc.), and $W_{\rm pylon}$ accounts for the engine mounting structure.
 
+### Fitzgerald Engine Model
+
+This engine weight model is based on a correlation for bare engine weight as a function of overall pressure ratio, bypass ratio, and core mass flow. There are options to use the basic as well as advanced model.
+
+In the basic model four bare engine weight correlations are based on data from NPSS/WATE++. It has the ability to model a direct-drive turbofan or a geared turbofan. The nacelle, pylon, and additional weights are calculated as functions of bare engine weight and fan diameter and then summed to find the total engine weight as given in the equation below:
+
+$$\begin{aligned}
+W_{\rm eng} &=\; W_{\rm bare} + W_{\rm add} + W_{\rm nace} + W_{\rm pylon}
+\end{aligned}$$
+
+The advanced model uses the weight correlations from NPSS/WATE++ as well but features separate surrogate models for the core, fan, combustor, nozzle and nacelle weights:
+
+$$\begin{aligned}
+W_{\rm eng} &=\; W_{\rm core} + W_{\rm fan} + W_{\rm comb} + W_{\rm nozz} + W_{\rm nace} + W_{\rm pylon}
+\end{aligned}$$
 ---
 ## Empirical Weight Fractions
 
 The aircraft model takes an input for the below weight fractions which are scaled using different aircraft weights:
 
-1. High-Pressure and Electrical Systems ($W_{\rm hpesys}$): Standard set of high-pressure hydraulics, electrical components, or similar systems carried by the aircraft — **scaled using $W_{\rm MTO}$**
-2. Landing Gear Weight fractions ($W_{\rm lgnose}$ and $W_{\rm lgmain}$): **scaled using $W_{\rm MTO}$**
-3. APU weight fraction: **scaled using $W_{\rm payload}$**
-4. Seat weight fraction: **scaled using $W_{\rm payload}$**
-5. Added Payload weight fraction: **scaled using $W_{\rm payload}$**
-6. Wing flaps weight fraction: **scaled using $W_{\rm wing}$**
-7. Wing slats weight fraction: **scaled using $W_{\rm wing}$**
-8. Wing aileron weight fraction: **scaled using $W_{\rm wing}$**
-9. Wing leading trailing edgae weight fraction: **scaled using $W_{\rm wing}$**
-10. Wing ribs weight fraction: **scaled using $W_{\rm wing}$**
-11. Wing spoilers weight fraction: **scaled using $W_{\rm wing}$**
-12. Wing attachments weight fraction: **scaled using $W_{\rm wing}$**
-13. Htail added weight fraction: **scaled using $W_{\rm tail}$**
-14. Vtail added weight fraction: **scaled using $W_{\rm tail}$**
-15. Engine access weight fraction: **scaled using $W_{\rm eng, bare}$**
-16. Pylon weight fraction: **scaled using $W_{\rm eng}$**
+| **Weight Fraction**                  | **Scaling Factor** | **Default Value** |
+|--------------------------------------|--------------------|-------------------|
+| High-Pressure and Electrical Systems | $W_{\rm MTO}$      | 0.010             |
+| Landing Gear (main)                  | $W_{\rm MTO}$      | 0.044             |
+| Landing Gear (nose)                  | $W_{\rm MTO}$      | 0.011             |
+| APU                                  | $W_{\rm payload}$  | 0.035             |
+| Seat                                 | $W_{\rm payload}$  | 0.1               |
+| Added Payload                        | $W_{\rm payload}$  | 0.35              |
+| Wing Flaps                           | $W_{\rm wing}$     | 0.2               |
+| Wing Slats                           | $W_{\rm wing}$     | 0.1               |
+| Wing Ailerons                        | $W_{\rm wing}$     | 0.04              |
+| Wing Leading Trailing Edge           | $W_{\rm wing}$     | 0.1               |
+| Wing Ribs                            | $W_{\rm wing}$     | 0.15              |
+| Wing Spoilers                        | $W_{\rm wing}$     | 0.02              |
+| Wing Attachments                     | $W_{\rm wing}$     | 0.03              |
+| H-tail Added Weight                  | $W_{\rm htail}$    | 0.3               |
+| V-tail Added Weight                  | $W_{\rm vtail}$    | 0.4               |
+| Engine Access Weight                 | $W_{\rm eng,bare}$ | 0.1               |
+| Pylon                                | $W_{\rm eng}$      | 0.1               |
