@@ -12,7 +12,7 @@
 
 See [here](@ref fueltanks).
 """
-function tanksize!(ac, imission)
+function tanksize!(ac, imission::Int64 = 1)
         #Unpack storage arrays
         fuse = ac.fuselage
         fuse_tank = ac.fuse_tank
