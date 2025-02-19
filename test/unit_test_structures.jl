@@ -274,9 +274,6 @@ fuselage.cabin.aisle_halfwidth = 0.254
 parg[igWpaymax] = 219964.5779
 fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
-pari = zeros(iitotal)
-pari[iidoubledeck] = 0
-
 fuse_tank = TASOPT.fuselage_tank()
 has_wing_fuel = false
 
