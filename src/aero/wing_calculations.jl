@@ -125,7 +125,7 @@ function wingcl(wing, γt, γs, CL, CLhtail, duo, dus, dut)
 end # wingcl
 
 """
-   set_wing_geometry!(W,CL,qinf,wing)
+    set_wing_geometry!(W,CL,qinf,wing)
 
 Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (taken as start-of-cruise in `wsize`).
 
