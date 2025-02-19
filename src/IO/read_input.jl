@@ -441,6 +441,7 @@ if lowercase(lgmodel) == "mass_fractions" #This is the most basic model, just fi
     landing_gear.nose_gear.overall_mass_fraction = readlg("LG_nose_weight_fraction")
     landing_gear.main_gear.overall_mass_fraction = readlg("LG_main_weight_fraction")
 elseif lowercase(lgmodel) == "historical_correlations" #model based on historical-data relations in Raymer (2012)
+    landing_gear.main_gear.y_offset_halfspan_fraction = readlg("y_main_landing_gear_halfspan_fraction")
     landing_gear.tailstrike_angle = Angle(readlg("tailstrike_angle"))
     landing_gear.wing_dihedral_angle = Angle(readlg("wing_dihedral_angle")) #TODO consider storing this as a wing parameter
     landing_gear.engine_ground_clearance = Distance(readlg("engine_ground_clearance"))

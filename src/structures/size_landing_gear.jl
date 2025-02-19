@@ -31,19 +31,20 @@ function landing_gear_size!(ac)
         x_lg = parg[igxCGaft] + main_gear.distance_CG_to_landing_gear #Main gear longitudinal position
         l_tailstrike = (fuse.layout.x_end - x_lg) * tan(tailstrike_angle) - 2*fuse.layout.radius
 
-        #Next, find the length that gives desired engine ground clearance
+        #Next, find the nose length that gives desired engine ground clearance
         yeng = wing.layout.ηs * wing.layout.span / 2
         ground_clearance = landing_gear.engine_ground_clearance
         dihedral_angle = landing_gear.wing_dihedral_angle
         Deng = parg[igdfan]
         l_clearance = ground_clearance + Deng - yeng * tan(dihedral_angle)
 
-        lgmain_length = max(l_clearance, l_tailstrike) #Choose the maximum of the tailstrike and clearance lengths
+        #Calculate nose gear length
+        lgnose_length = max(l_clearance, l_tailstrike) #Choose the maximum of the tailstrike and clearance lengths
 
         lgmain_nshock_struts = main_gear.number_struts
         lgmain_nwheels = main_gear.number_struts * main_gear.wheels_per_strut
 
-        lgnose_length = lgmain_length #Assume same length as main gear #TODO drop this assumption
+        lgmain_length = lgnose_length + main_gear.weight.y * tan(dihedral_angle) #Main gear length
         lgnose_nwheels = nose_gear.number_struts * nose_gear.wheels_per_strut
 
         Wlgmain = 0.0106 * (WMTO * lb_N)^0.888 * (load_factor)^0.25 * (lgmain_length / in_to_m)^0.4 * (lgmain_nwheels)^0.321 * 
@@ -62,5 +63,6 @@ function landing_gear_size!(ac)
 
     #Store mass and location of landing gear
     nose_gear.weight = Weight(W = Wlgnose, x = nose_gear.weight.r[1])
-    main_gear.weight = Weight(W = Wlgmain, x = parg[igxCGaft] + main_gear.distance_CG_to_landing_gear)
+    main_gear.weight = Weight(W = Wlgmain, x = parg[igxCGaft] + main_gear.distance_CG_to_landing_gear, 
+        y = wing.span / 2 * main_gear.y_offset_halfspan_fraction)
 end 
