@@ -181,11 +181,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["VT_load_fuse_bend_relief"] = parg[igrMv]
 
         d_fuse_geom["calculate_cabin_length"] = false #Use final fuselage parameters by default
-        if pari[iidoubledeck] == 1
-            d_fuse_geom["double_decker"] = true
-        else
-            d_fuse_geom["double_decker"] = false
-        end
+        d_fuse_geom["double_decker"] = options.is_doubledecker
       
         d_fuse_geom["seat_pitch"] = fuselage.cabin.seat_pitch
         d_fuse_geom["seat_width"] = fuselage.cabin.seat_width

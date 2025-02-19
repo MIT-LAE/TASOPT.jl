@@ -345,9 +345,9 @@ readgeom(x) = read_input(x, geom, dgeom)
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
-    pari[iidoubledeck] = readgeom("double_decker") 
+    is_doubledecker = Bool(readgeom("double_decker"))
 
-    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+    if is_doubledecker #If aircraft is a double decker
         fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
     end
 
@@ -1077,7 +1077,7 @@ dHEx = dprop["HeatExchangers"]
         has_BLI_cores = Bool(!readprop("core_in_clean_flow")),
         
         opt_fuselage_taper = fuse_end,
-        is_doubledecker = Bool(readgeom("double_decker"))
+        is_doubledecker = is_doubledecker
     )
     
 
