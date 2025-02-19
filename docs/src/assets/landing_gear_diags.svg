@@ -24,9 +24,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="9.57076"
-     inkscape:cx="298.35666"
-     inkscape:cy="108.40309"
+     inkscape:zoom="4.78538"
+     inkscape:cx="742.15632"
+     inkscape:cy="103.12661"
      inkscape:window-width="1920"
      inkscape:window-height="991"
      inkscape:window-x="2151"
@@ -535,10 +535,49 @@
        height="5.8418427"
        x="178.16211"
        y="138.35767" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.575336;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4597-9"
+       width="1.4949528"
+       height="12.428423"
+       x="208.94994"
+       y="127.54898" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.750001;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4599-7"
+       width="1.8855984"
+       height="5.8418427"
+       x="211.05954"
+       y="138.28528" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.750001;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4599-4-1"
+       width="1.8855984"
+       height="5.8418427"
+       x="206.44344"
+       y="138.28528" />
     <path
        style="fill:#ffffff;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        d="m 222.8468,119.9557 0.0366,5.87985"
        id="path1492-6"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';text-align:center;text-anchor:middle;fill:none;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="212.34654"
+       y="119.56629"
+       id="text2502-1-1-4"><tspan
+         sodipodi:role="line"
+         id="tspan2500-7-7-2"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:'Arial Italic';fill:#010000;fill-opacity:1;stroke:none;stroke-width:0.2"
+         x="212.34654"
+         y="119.56629">y<tspan
+   style="font-size:65%;baseline-shift:sub"
+   id="tspan6034-4">mg</tspan></tspan></text>
+    <path
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.2;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="m 209.78667,121.1775 0.0366,5.87985"
+       id="path1492-6-0"
        sodipodi:nodetypes="cc" />
     <path
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.3;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
