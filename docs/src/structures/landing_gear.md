@@ -3,7 +3,7 @@
 The landing gear in TASOPT.jl can be modeled in two ways depending on the user preference in the input file. The simplest model assumes that the nose and main landing gears are simply constant fractions of the maximum takeoff weight. A more elaborate model calculates the landing gear length and uses this to find its mass via a correlation to historical data from Raymer[^1]. The landing gear is sized in [`structures.landing_gear_size!`](@ref).
 
 !!! details "📖 Theory - Landing gear sizing via historical correlations" 
-    The landing gear length can be sized by (i) the need to avoid a tailstrike at rotation during takeoff, or (ii) the need to provide a minimum engine ground clearance, as illustrated in the figure below. In TASOPT.jl, the main and nose gears are assumed to have approximately the same length. 
+    The landing gear length can be sized by (i) the need to avoid a tailstrike at rotation during takeoff, or (ii) the need to provide a minimum engine ground clearance, as illustrated in the figure below. In TASOPT.jl, the nose gear length is calculated first and the main gear length is subsequently calculated based on the wing geometry. 
 
     ![LGlength](../assets/landing_gear_diags.svg)
 
@@ -19,7 +19,13 @@ The landing gear in TASOPT.jl can be modeled in two ways depending on the user p
     ```
     where ``d_c`` is the desired ground clearance, ``D_{fan}`` is the fan diameter, ``y_{eng}`` is the distance from the fuselage centerline to the engine centerline, and ``\Gamma`` is the wing dihedral angle.
 
-    The selected landing gear length is ``\max(l_{ts},l_c)``. Once this has been determined, the historical-data correlations in Raymer[^1] can be used to calculate the mass of the nose and main landing gears. For the main gear, the mass (in lbs) is given by
+    The selected nose gear length is ``l_{ng}=\max(l_{ts},l_c)``. The main gear length is
+    ```math
+        l_{mg} = l_{ng}+y_{mg}\tan(\Gamma),
+    ```
+    where ``y_{mg}`` is the spanwise location of the main gear.
+    
+    Once this has been determined, the historical-data correlations in Raymer[^1] can be used to calculate the mass of the nose and main landing gears. For the main gear, the mass (in lbs) is given by
     ```math
         m_{mg} = 0.0106 \mathrm{MTOW}^{0.888} N_l^{0.25} l_{mg}^{0.4} N_{w,m}^{0.321} N_{s,m}^{-0.5} V_{stall}^{0.1},
     ```

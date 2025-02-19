@@ -314,18 +314,22 @@ TASOPT.landing_gear_size!(ac)
 ac.landing_gear.model = "historical_correlations"
 ac.landing_gear.tailstrike_angle = 10*pi/180
 ac.landing_gear.wing_dihedral_angle = 6*pi/180
-ac.landing_gear.engine_ground_clearance = 7*in_to_m
+ac.landing_gear.engine_ground_clearance = 20*in_to_m
 ac.landing_gear.nose_gear.number_struts = 1
 ac.landing_gear.nose_gear.wheels_per_strut = 2
 ac.landing_gear.main_gear.number_struts = 2
 ac.landing_gear.main_gear.wheels_per_strut = 2
+ac.landing_gear.main_gear.y_offset_halfspan_fraction = 0.2
 
 ac.parg[igxCGaft] = 30
 ac.pare[ieu0,iprotate,1] = 70
 ac.parg[igdfan] = 1.5
 ac.wing.layout.span = 40
+
+ac.landing_gear.main_gear.weight = TASOPT.Weight(y = ac.landing_gear.main_gear.y_offset_halfspan_fraction * ac.wing.layout.span / 2)
+
 TASOPT.landing_gear_size!(ac)
 
-@test ac.landing_gear.main_gear.weight.W ≈ 25733.572498747944
-@test ac.landing_gear.nose_gear.weight.W ≈ 4247.610705426578
+@test ac.landing_gear.main_gear.weight.W ≈ 31787.399917196755
+@test ac.landing_gear.nose_gear.weight.W ≈ 4854.384534273811
 end
