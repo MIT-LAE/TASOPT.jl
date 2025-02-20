@@ -56,7 +56,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #Options------------------------
     d_opt = Dict()
         d_opt["prop_sys_arch"] = propsysarch[pari[iiengtype]]
-        d_opt["engine_location"] = engloc[pari[iiengloc]]
+        d_opt["engine_location"] = options.opt_engine_location
     d_out["Options"] = d_opt
     #--end options----------------
 
