@@ -14,7 +14,8 @@ $TYPEDFIELDS
     fuselage_fueltank_count::Int    #... move this field to the fuselage class.
 
     #wing options
-    opt_wing_type::String
+     #TODO: re-add these functionalities
+    opt_wing_type::String       #can be "bare", "engine", "strut"/"strutbraced"
     moves_wingbox_forbalance::Bool
     
     #engine options

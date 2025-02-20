@@ -44,8 +44,8 @@ function wsize(ac; itermax=35,
     ifirst = true
 
     # Extract flags
-    ifuel, iwplan, iengloc, iengwgt, iVTsize, ifwing = 
-        pari[iifuel], pari[iiwplan], pari[iiengloc], pari[iiengwgt], vtail.size, options.has_wing_fuel
+    ifuel, iwplan, iengwgt, iVTsize = 
+        pari[iifuel], options.opt_wing_type, pari[iiengwgt], vtail.size
 
     # Unpack powertrain elements
     ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
@@ -388,12 +388,16 @@ function wsize(ac; itermax=35,
         parg[igdeltap] = Δp
 
        # Engine weight mounted on tailcone, if any
-        if (iengloc == 1) # 1: Eng on wing. 2: Eng on aft fuse
+        if compare_strings(options.opt_engine_location, "wing") # Eng on "wing" or aft "fuselage"
             Wengtail = 0.0
             Waftfuel = 0.0
-        else
+        elseif compare_strings(options.opt_engine_location, "fuselage")
             Wengtail = (parg[igWtshaft] + parg[igWcat]) * nTshaft +
                         parg[igWgen] * ngen
+        else
+            error("Engine location provided is \"$options.opt_engine_location\". Engine position can only be:
+                        > \"wing\" - engines under wing
+                        > \"fuselage\" - engines on aft fuselage")
         end
 
         # Extract relevant weights and positions

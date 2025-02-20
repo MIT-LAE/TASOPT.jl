@@ -195,23 +195,12 @@ engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
 
 
 engloc = read_input("engine_location", options, doptions)
-
-if typeof(engloc) == Int
-    pari[iiengloc] = engloc
-elseif typeof(engloc) <: AbstractString
-    if compare_strings(engloc, "wing")
-        pari[iiengloc] = 1
-    elseif compare_strings(engloc,"fuselage") || compare_strings(engloc,"fuse")
-        pari[iiengloc] = 2
-    else
-        error("Engine location provided is \"$engloc\". Engine position can only be:
-        > 1: Engines on \"wing\"
-        > 2: Engines on \"fuselage\"")
-    end
-else
-    error("Check engine position input... something isn't right")
+#throw error if engloc isn't a string indicating a supported location
+if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
+   error("Engine location provided is \"$engloc\". Engine position can only be:
+        > \"wing\" - engines under wing
+        > \"fuselage\" - engines on aft fuselage")
 end
-
 
 # Fuel related options
 fuel = read_input("Fuel", data, default)
