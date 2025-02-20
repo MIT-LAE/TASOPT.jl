@@ -172,8 +172,6 @@ fuselage.cabin.exit_limit = exitlimit
 options = read_input("Options", data, default)
 doptions = default["Options"]
 
-pari[iiopt] = read_input("optimize", options, doptions)
-
 propsys = read_input("prop_sys_arch", options, doptions)
 if compare_strings(propsys,"tf")
     pari[iiengtype] = 1
