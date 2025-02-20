@@ -7,7 +7,7 @@ In calculating the weight models, TASOPT combines:
 - **Fundamental, physics-based structural models** for the primary structures (fuselage, wing, tail), sized by specified load factors and material properties.
 - **Empirically derived fractional weights** (for items such as seats, furnishings, equipment, etc.) that scale with either payload or primary structure area/weight.
 
-![](../assets/weight_model.png)
+![](../assets/tasopt_weight_model.jpg)
 
 As shown in the figure above, each component in the aircraft can be divided into sub-weights, some of which are explicitly derived from geometry and stress analyses, and others that are assigned via fractional or fixed scaling. Altogether the overall flying weight of the aircraft is:
 
@@ -124,24 +124,28 @@ W_{\rm eng} &=\; W_{\rm core} + W_{\rm fan} + W_{\rm comb} + W_{\rm nozz} + W_{\
 ---
 ## Empirical Weight Fractions
 
-The aircraft model takes an input for the below weight fractions which are scaled using different aircraft weights:
+Many aircraft components are assumed to scale linearly with related weights. For example:
+$$\begin{aligned}
+W_{\rm APU} = f_{\rm APU} W_{\rm payload} = 0.035 \times W_{\rm payload}
+\end{aligned}$$
+The default values for these empirical weight fractions ($f$) are:
 
-| **Weight Fraction**                  | **Scaling Factor** | **Default Value** |
-|--------------------------------------|--------------------|-------------------|
-| High-Pressure and Electrical Systems | $W_{\rm MTO}$      | 0.010             |
-| Landing Gear (main)                  | $W_{\rm MTO}$      | 0.044             |
-| Landing Gear (nose)                  | $W_{\rm MTO}$      | 0.011             |
-| APU                                  | $W_{\rm payload}$  | 0.035             |
-| Seat                                 | $W_{\rm payload}$  | 0.1               |
-| Added Payload                        | $W_{\rm payload}$  | 0.35              |
-| Wing Flaps                           | $W_{\rm wing}$     | 0.2               |
-| Wing Slats                           | $W_{\rm wing}$     | 0.1               |
-| Wing Ailerons                        | $W_{\rm wing}$     | 0.04              |
-| Wing Leading Trailing Edge           | $W_{\rm wing}$     | 0.1               |
-| Wing Ribs                            | $W_{\rm wing}$     | 0.15              |
-| Wing Spoilers                        | $W_{\rm wing}$     | 0.02              |
-| Wing Attachments                     | $W_{\rm wing}$     | 0.03              |
-| H-tail Added Weight                  | $W_{\rm htail}$    | 0.3               |
-| V-tail Added Weight                  | $W_{\rm vtail}$    | 0.4               |
-| Engine Access Weight                 | $W_{\rm eng,bare}$ | 0.1               |
-| Pylon                                | $W_{\rm eng}$      | 0.1               |
+| **Weight**        | **Components**                       | **Default $f$**              | **Scaling Weight** |
+|-------------------|:-------------------------------------|------------------------------|:-------------------|
+| $W_{\rm hpesys}$  | High-Pressure and Electrical Systems | 0.010                        | $W_{\rm MTO}$      |
+| $W_{\rm lgmain}$  | Landing Gear (main)                  | 0.044                        | $W_{\rm MTO}$      |
+| $W_{\rm lgnose}$  | Landing Gear (nose)                  | 0.011                        | $W_{\rm MTO}$      |
+| $W_{\rm APU}$     | APU                                  | 0.035                        | $W_{\rm payload}$  |
+| $W_{\rm seat}$    | Seat                                 | 0.1                          | $W_{\rm payload}$  |
+| $W_{\rm padd}$    | Added Payload                        | 0.35                         | $W_{\rm payload}$  |
+| $W_{\rm flap}$    | Wing Flaps                           | 0.2                          | $W_{\rm wing}$     |
+| $W_{\rm slat}$    | Wing Slats                           | 0.1                          | $W_{\rm wing}$     |
+| $W_{\rm aile}$    | Wing Ailerons                        | 0.04                         | $W_{\rm wing}$     |
+| $W_{\rm lete}$    | Wing Leading Trailing Edge           | 0.1                          | $W_{\rm wing}$     |
+| $W_{\rm ribs}$    | Wing Ribs                            | 0.15                         | $W_{\rm wing}$     |
+| $W_{\rm spoi}$    | Wing Spoilers                        | 0.02                         | $W_{\rm wing}$     |
+| $W_{\rm watt}$    | Wing Attachments                     | 0.03                         | $W_{\rm wing}$     |
+| $W_{\rm hadd}$    | H-tail Added Weight                  | 0.3                          | $W_{\rm htail}$    |
+| $W_{\rm vadd}$    | V-tail Added Weight                  | 0.4                          | $W_{\rm vtail}$    |
+| $W_{\rm eadd}$    | Engine Access Weight                 | 0.1                          | $W_{\rm eng,bare}$ |
+| $W_{\rm pylon}$   | Pylon                                | 0.1                          | $W_{\rm eng}$      |
