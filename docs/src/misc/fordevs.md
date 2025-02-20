@@ -30,36 +30,37 @@ Sometimes you need more than just the number of allocations from benchmarking to
 
 Specifically you want to follow the steps [here](https://github.com/JuliaCI/Coverage.jl?tab=readme-ov-file#memory-allocation). Reproduced here for convenience:
 
-Start julia with tracking allocations enabled:
-```bash
-julia --track-allocation=user
-```
-Then run all the commands you want to profile (this is to ensure they compile first), then clear the memory allocation tracking by running `Profile.clear_malloc_data()`; run your commands again and then quit julia. For example:
+!!! details "How to track down allocations"
+    Start julia with tracking allocations enabled:
+    ```bash
+    julia --track-allocation=user
+    ```
+    Then run all the commands you want to profile (this is to ensure they compile first), then clear the memory allocation tracking by running `Profile.clear_malloc_data()`; run your commands again and then quit julia. For example:
 
-```julia-repl
-using TASOPT, Profile
-julia> Re = 10e6
-1.0e7
+    ```julia-repl
+    using TASOPT, Profile
+    julia> Re = 10e6
+    1.0e7
 
-julia> TASOPT.aerodynamics.cfturb(Re)
-0.002954557862895432
+    julia> TASOPT.aerodynamics.cfturb(Re)
+    0.002954557862895432
 
-julia> Profile.clear_malloc_data()
+    julia> Profile.clear_malloc_data()
 
-julia> TASOPT.aerodynamics.cfturb(Re)
-0.002954557862895432
+    julia> TASOPT.aerodynamics.cfturb(Re)
+    0.002954557862895432
 
-julia> exit()
-```
+    julia> exit()
+    ```
 
-Then look at the directory where these files live (i.e., the source code) and you should see some additional files with annotations showing where the allocations were made. 
+    Then look at the directory where these files live (i.e., the source code) and you should see some additional files with annotations showing where the allocations were made. 
 
-You can do all the above steps without needing `Coverage.jl`. Where `Coverage.jl` becomes useful is to analyze large parts of the code by doing:
+    You can do all the above steps without needing `Coverage.jl`. Where `Coverage.jl` becomes useful is to analyze large parts of the code by doing:
 
-```julia-repl
-using Coverage
-analyze_malloc(dirnames)  # could be "." for the current directory, or "src", etc.
-```
+    ```julia-repl
+    using Coverage
+    analyze_malloc(dirnames)  # could be "." for the current directory, or "src", etc.
+    ```
 
 ## Custom types and type inference 
 
@@ -301,11 +302,12 @@ BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
 
     █▁▃                                                       
   ▂▄███▄▃▂▂▂▂▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▂ ▂
-  7.46 ns        Histogram: frequency by time        11.5 ns <
+ 7.46 ns        Histogram: frequency by time        11.5 ns <
 
  Memory estimate: 0 bytes, allocs estimate: 0.
-So by extending `Base.+` we got the `sum` function for free cause it just knows how to add things together. But you see that the static array approach seems to take much longer, that's because the 
-static array definition here isn't done correctly. This is an easy to make mistake, look at the following comparison: 
+```
+
+By extending `Base.+` we got the `sum` function for free cause it just knows how to add things together. But you see that the static array approach seems to take much longer, that's because the static array definition here isn't done correctly. This is an easy to make mistake, look at the following comparison: 
 
 ```julia
 function center_of_weight(W_array::AbstractArray{Weight})
@@ -328,7 +330,8 @@ BenchmarkTools.Trial: 10000 samples with 998 evaluations.
   18 ns         Histogram: log(frequency) by time      25.8 ns <
 
  Memory estimate: 80 bytes, allocs estimate: 1.
- 
+```
+
  VERSUS:
 ```julia
 function center_of_weight(W_array::AbstractArray{Weight})
@@ -358,4 +361,4 @@ BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
 
 **All that really changed was the little square brackets!**
 `SVector{3}(0.0, 0.0, 0.0)` vs `SVector{3}([0.0, 0.0, 0.0])`
-The latter results in 1 allocation which for such a small calculation is a significant increase in the time required for the calculations!
+The latter results in 1 allocation, which, for such a small calculation, is a significant increase in the time required!
