@@ -19,4 +19,4 @@ nothing #needs to either return nothing or a .md
 ---
 
 # [TASOPT Flowchart](@id flowchart)
-For an attempt to make graphical sense of the workflow, see [here](../assets/TASOPT_flowchart.pdf).
+For an attempt to make graphical sense of the aircraft-sizing workflow, see [here](../assets/2025.02_TASOPT_Flowchart.pdf).

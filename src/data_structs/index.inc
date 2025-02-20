@@ -782,6 +782,7 @@ ncrowx = ieTmet1 - ieepsc1
       ioT4TO  = 14
       ioOPR   = 15
       iototal = 15
+      ;
 
 #=
       character*8 cpars(istotal)
