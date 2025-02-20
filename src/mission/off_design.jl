@@ -238,7 +238,22 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
           rlx = 0.5
     end
 
-    set_ambient_conditions!(ac, ipcruise1)
+    #Calculate start-of-cruise altitude from desired lift coefficient
+    # Use cabin volume to get buoyancy weight
+    ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
+    WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * parg[igcabVol]
+
+    ip = ipcruise1
+    We = WMTO * para[iafracW, ip]
+    CL = para[iaCL, ip]
+    u0 = pare[ieu0, ip]
+    BW = We + WbuoyCR # Weight including buoyancy
+    S = wing.layout.S
+
+    ρ0 = BW / (0.5*u0^2*S*CL) #Find density from L=W
+    para[iaalt, ip] = find_altitude_from_density(ρ0, ΔTatmos) * 1e3
+
+    set_ambient_conditions!(ac, ipcruise1, im = mi)
 
     if (pari[iifwing] == 0) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
