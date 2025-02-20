@@ -967,7 +967,6 @@ Function to plot a payload range diagram for an aircraft
     - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true (Optional)
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
 """
-
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
     filename::String = "", 
