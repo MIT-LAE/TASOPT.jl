@@ -553,7 +553,7 @@ function wsize(ac; itermax=35,
         # Calculate fuel weight if stored in wings
         Wfmax, dxWfmax, rfmax = 0.0, 0.0, 0.0
         if (options.has_wing_fuel)
-            Wfmax = 2.0 * ((pari[iifwcen] == 1 ? Wfcen : 0.0) + Wfinn + Wfout)
+            Wfmax = 2.0 * ((options.has_centerbox_fuel ? Wfcen : 0.0) + Wfinn + Wfout)
             dxWfmax = 2.0 * (dxWfinn + dxWfout)
             Wfuelmp = Wpay - Wpaymax + parg[igWfuel]
             rfmax = Wfuelmp / Wfmax

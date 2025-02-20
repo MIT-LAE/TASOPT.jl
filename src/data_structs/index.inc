@@ -1,7 +1,7 @@
 
 #---- indices for integer variables and flags
       iifuel   =  1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
-      iifwcen  =  2  # 0 = no fuel in center box  1 = fuel in center box
+      #iifwcen  =  2  # 0 = no fuel in center box  1 = fuel in center box
       #iiwplan  =  3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
       #iiengloc =  4  # 1 = engines on wing 2 = engines on fuselage "Options.engine_location"  
       iiengwgt =  5  # 1 = basic tech eng. weight 2 = advanced tech eng. weight 
