@@ -251,7 +251,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     S = wing.layout.S
 
     ρ0 = BW / (0.5*u0^2*S*CL) #Find density from L=W
-    para[iaalt, ip] = find_altitude_from_density(ρ0, ΔTatmos) * 1e3
+    para[iaalt, ip] = find_altitude_from_density(ρ0, ΔTatmos) * 1e3 #Store altitude
 
     set_ambient_conditions!(ac, ipcruise1, im = mi)
 

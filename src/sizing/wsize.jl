@@ -1017,7 +1017,7 @@ function Wupdate!(ac, rlx, fsum)
 end
 
 """
-    set_ambient_conditions!(ac, ip, Mach=NaN)
+    set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
 
 Sets ambient condition at the given mission point `ip` and mission `im` (default is 1).
 """
