@@ -48,7 +48,7 @@ The function [`mission!()`](@ref TASOPT.mission!) contains the fuel burn calcula
 
     The descent phase is then set up, with the function interpolating the descent points and integrating the time and weight over the descent. It calculates the velocity, Mach number, and Reynolds number for each descent point and adjusts the pitch trim by adjusting the horizontal tail lift coefficient.
 
-    Finally, the function calculates the mission fuel fractions and weights, including the weight of any vented fuel; it updates the mission parameters, such as the takeoff and fuel weights, and computes the mission's payload-fuel energy intensity (PFEI; a productivity-specific energy metric in J/kg-m),
+    Finally, the function calculates the mission fuel fractions and weights, including the weight of any vented fuel; it updates the mission parameters, such as the takeoff and fuel weights, and computes the mission's payload-fuel energy intensity (PFEI; a productivity-specific energy metric in kJ/kg-km),
 
     ```math
     \mathrm{PFEI} = \frac{W_{f,b}\mathrm{LHV}}{g W_{pay} R},
