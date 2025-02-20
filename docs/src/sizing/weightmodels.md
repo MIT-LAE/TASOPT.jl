@@ -90,7 +90,7 @@ Both horizontal and vertical tails are sized much like a small wing:
 
 ## Engine Weight
 
-There are options for two engine weight models in TASOPT. The Drela engine model  or Fitzgerald's engine model (Section 2.10 of the [TASOPT Technical Desc](@ref dreladocs)).  
+There are currently two options for engine weight models in TASOPT. The Drela engine model  or Fitzgerald's engine model (Section 2.10 of the [TASOPT Technical Desc](@ref dreladocs)).  
 
 ### Drela Engine Model
 
@@ -125,9 +125,11 @@ W_{\rm eng} &=\; W_{\rm core} + W_{\rm fan} + W_{\rm comb} + W_{\rm nozz} + W_{\
 ## Empirical Weight Fractions
 
 Many aircraft components are assumed to scale linearly with related weights. For example:
+
 $$\begin{aligned}
 W_{\rm APU} = f_{\rm APU} W_{\rm payload} = 0.035 \times W_{\rm payload}
 \end{aligned}$$
+
 The default values for these empirical weight fractions ($f$) are:
 
 | **Weight**        | **Components**                       | **Default $f$**              | **Scaling Weight** |
