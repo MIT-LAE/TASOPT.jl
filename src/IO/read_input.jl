@@ -223,7 +223,7 @@ elseif uppercase(fueltype) == "JET-A"
 else
     error("Check fuel type")
 end
-pari[iifwcen]  = readfuel("fuel_in_wingcen")
+has_centerbox_fuel  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
 pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
@@ -1051,7 +1051,7 @@ dHEx = dprop["HeatExchangers"]
     ac_options = TASOPT.Options(
         opt_fuel = "JET-A",
         has_wing_fuel = has_wing_fuel,
-        has_centerbox_fuel = readfuel("fuel_in_wingcen"),
+        has_centerbox_fuel = has_centerbox_fuel,
         fuselage_fueltank_count = nftanks,
         
         opt_wing_type = "TODO: FIX THIS, wingtype spec",

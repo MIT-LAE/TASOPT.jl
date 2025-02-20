@@ -65,7 +65,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_fuel = Dict()
         d_fuel["fuel_type"] = fueltype[pari[iifuel]]
         d_fuel["fuel_in_wing"] = options.has_wing_fuel
-        d_fuel["fuel_in_wingcen"] = pari[iifwcen]
+        d_fuel["fuel_in_wingcen"] = options.has_centerbox_fuel
         d_fuel["fuel_usability_factor"] = parg[igrWfmax]
 
         d_fuel["fuel_temp"] = pare[ieTfuel,1,1]             
