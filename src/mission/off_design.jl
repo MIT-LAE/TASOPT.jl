@@ -137,13 +137,10 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     end
 
     if (initializes_engine)
-          
 #----- use design case as initial guess for engine state
-          for ip = 1: iptotal
-                for ie = 1: ietotal
-                      pare[ie,ip] = pared[ie,ip]
-                end
-          end
+        pare[:,:] .= pared[:,:]
+    else
+        pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
     end
   
     for ip = ipstatic: ipdescentn
