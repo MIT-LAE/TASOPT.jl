@@ -14,7 +14,6 @@ Inputs:
     * = 0.0   all the way in front  of cabin
     * = 0.5   all the way in middle of cabin
     * = 1.0   all the way in back   of cabin
-- `iengloc`  engine location index
 - `opt_trim_var`      = "none"  no changes
     * = "CL_htail"      adjust CLh   (horizontal tail cl)
     * = "S_htail"       adjust Sh    (horizontal tail area)

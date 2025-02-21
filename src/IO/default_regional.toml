@@ -37,8 +37,6 @@
 # ╚══════════╩══════════╩═════╩═══════╩═══════╩════╝
 
 [Options] #
-    optimize        = false   # Do you want TASOPT to optimize the aircraft or just size it 
-    
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
@@ -150,7 +148,7 @@
     a_nose = 1.7 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 1.75 # Tail radius = Rfuse*(1 - xi^b_tail)
     tailcone_taper = 0.3
-    taper_fuse_to = "point" # Options are "point" or "edge"
+    tapers_to = "point" # Options are "point" or "edge"
     
     # Tail load fuselage bending moment inertial relief factor
     HT_load_fuse_bend_relief = 0.4 
@@ -220,9 +218,9 @@
     BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
 [Wing]
-    wing_planform = 1 # 0: Wing cantilever, plain
-                      # 1: Wing cantilever with engine
-    strut_braced_wing = false
+    has_engine = true # false: Wing cantilever, plain
+                      # true:  Wing cantilever with engine
+    has_strut = false
 
     sweep = 26.0 # wing sweep in degrees
     AR    = 8.7
@@ -243,9 +241,9 @@
 
     x_wing_box = "55 ft"
     z_wing  = "-4.0 ft"
-    z_strut = "154 in" #Note only used if `strut_braced_wing = true` CHECK
+    z_strut = "154 in" #Note only used if `has_strut = true` CHECK
 
-    #Only used if `sturt_braced_wing == true`:
+    #Only used if `has_strut == true`:
     strut_toc = 0.15 #strut thickness to chord
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
 
