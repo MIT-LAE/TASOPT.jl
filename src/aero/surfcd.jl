@@ -81,7 +81,9 @@ function surfcd2(
       Snorm = 0.0
       ARe = wing.airsection.Re
 
-      for i = 1:n÷2
+      #remember \ will give you a float which makes the iterator
+      # also work on floats, which can make some cases type unstable.
+      @inbounds for i = 1:n÷2 
             frac = (i - 0.5) / (n / 2)
             η = ηo * (1.0 - frac) + ηs * frac
             dη = (ηs - ηo) / (n / 2)
@@ -114,7 +116,7 @@ function surfcd2(
             CDpwing = CDpwing + C * dη * cdp
       end
 
-      for i = n/2+1:n
+      @inbounds for i = n/2+1:n
             frac = (i - n / 2 - 0.5) / (n / 2)
             η = ηs * (1.0 - frac) + 1.0 * frac
             dη = (1.0 - ηs) / (n / 2)
