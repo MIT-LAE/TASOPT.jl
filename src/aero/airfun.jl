@@ -85,22 +85,15 @@ end
         end
 
         @inbounds for kd = 1:2
-            Δ = Ai[2, kd] - Ai[1, kd]
-            fxm = dcl*Ai_cl[1, kd] - Δ
-            fxo = dcl*Ai_cl[2, kd] - Δ
-            Aij[kd] = tcl*Ai[2,kd] + (1-tcl)*Ai[1,kd] + tcl*(1-tcl)*((1-tcl)*fxm - tcl*fxo)
-
-            Δ = Ai_tau[2, kd] - Ai_tau[1, kd]
-            fxm = dcl*Ai_cl_tau[1, kd] - Δ
-            fxo = dcl*Ai_cl_tau[2, kd] - Δ
-            Aij_tau[kd] = tcl*Ai_tau[2,kd] + (1-tcl)*Ai_tau[1,kd] + tcl*(1-tcl)*((1-tcl)*fxm - tcl*fxo)
+            Aij[kd] = interpolate(ix1=1, ix2=2, 
+                dx=dcl, t=tcl, Y=view(Ai, :, kd), dYdX=view(Ai_cl, :, kd))
+            
+            Aij_tau[kd] = interpolate(ix1=1, ix2=2,
+                dx=dcl, t = tcl, Y=view(Ai_tau, :, kd), dYdX=view(Ai_cl_tau,:,kd))
         end
 
-        Δ = Aij[2] - Aij[1]
-        fxm = dtau*Aij_tau[1] - Δ
-        fxo = dtau*Aij_tau[2] - Δ
-        Aijk[l] = ttau*Aij[2] + (1-ttau)*Aij[1] + ttau*(1-ttau)*((1-ttau)*fxm - ttau*fxo)
-
+        Aijk[l] = interpolate(ix1=1, ix2=2,
+            dx=dtau, t=ttau, Y=view(Aij, :), dYdX=view(Aij_tau, :))
     end
     cdf = Aijk[1]
     cdp = Aijk[2]
