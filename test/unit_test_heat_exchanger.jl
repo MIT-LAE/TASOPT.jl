@@ -321,13 +321,12 @@
 
     @testset "HEX design and off-design performance" begin
         pare = zeros(ietotal, iptotal)
-        pari = zeros(iitotal)
 
         pare[ieDi, :] .= 0.564
         pare[ieTft, :] .= 20
         pare[iefrecirc, :] .= 0
 
-        pari[iifuel] = 40
+        ifuel = 40
         pare[iePreCorder,:] .= 1
        
         pare[iePreCMp,:] .= 0.1
@@ -360,7 +359,7 @@
 
         #Test precooler
         pare[iePreCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -381,7 +380,7 @@
 
         #Test intercooler
         pare[ieInterCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -403,7 +402,7 @@
 
         #Test cooler of turbine cool. air
         pare[ieTurbCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -426,7 +425,7 @@
         #Test regenerative cooler
         pare[ieTfuel, :] .= 20
         pare[ieRegenepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -451,7 +450,7 @@
         pare[ieRegenepsilon,:] .= 0.8
         pare[iefrecirc, :] .= 1
         pare[ierecircT, :] .= 200.0
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 

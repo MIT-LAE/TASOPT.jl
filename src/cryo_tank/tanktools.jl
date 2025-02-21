@@ -1,12 +1,11 @@
 """
-    find_mdot_time(t, pari, parg, para, pare)
+    find_mdot_time(t, parg, para, pare)
 
 This function outputs the fuel mass flow rate to the engines as a function of time for a TASOPT aircraft 
 model.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `t::Float64`: time in mission (s)
-    - `parg::Vector{Float64}`: vector with aircraft integer parameters
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Array{Float64}`: array with aircraft aerodynamic parameters
     - `pare::Array{Float64}`: array with aircraft engine parameters
@@ -44,27 +43,26 @@ function find_mdot_time(t::Float64, fuselage_fueltank_count::Int64, parg::Vector
 end
 
 """
-    calc_Q_points(fuse, fuse_tank, pari, parg, para)
+    calc_Q_points(fuse, fuse_tank, ifuel, parg, para)
 
 This function calculates the heat transfer rate into the tank at the design mission points.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `fuse_tank::FuselageTank`: struct with aircraft cryogenic tank parameters
-    - `pari::Vector{Int64}`: vector with aircraft Boolean and integer parameters
+    - `ifuel::Integer`: fuel type specification for gas calcs from ac.options
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `pare::Array{Float64}`: array with aircraft engine parameters
     
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
 """
-function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
+function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, ifuel::Int, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
     else
         xftank = parg[igxftank]
     end
-    ifuel = pari[iifuel]
 
     Npoints = size(para)[2]
     Qs = zeros(Npoints)
@@ -115,7 +113,7 @@ function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64
 end
 
 """
-    find_Q_time(t, fuse_tank, pari, parg, para)
+    find_Q_time(t, fuse_tank, fueltype, parg, para)
 
 This function calculates the heat transfer rate into the tank in a TASOPT model for a given time.
 !!! details "🔃 Inputs and Outputs"
@@ -123,21 +121,21 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     - `t::Float64`: time in mission (s)
     - `fuse::Fuselage`: fuselage object.
     - `fuse_tank::fuselage_tank`: fuselage tank object.
-    - `pari::Vector{Int64}`: vector with aircraft Boolean and integer parameters
+    - `fueltype::String`: fuel type specification from ac.options
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Array{Float64}`: array with aircraft aerodynamic parameters
     
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{Int64}, parg::Vector{Float64}, para::Array{Float64})
+function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fueltype::String, parg::Vector{Float64}, para::Array{Float64})
     #Extract tank parameters
     if ac.fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
     else
         xftank = parg[igxftank]
     end
-    ifuel = pari[iifuel]
+    
     times = para[iatime,:,1]
 
     Q = 0.0
@@ -207,7 +205,7 @@ function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_ho
     pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:, im]
     
     #Precompute heat transfer rate at each mission point for speed
-    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.pari, ac.parg, para_alt)
+    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt)
 
     #Define functions for heat and fuel burn profiles through mission 
     Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)
@@ -218,9 +216,9 @@ function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_ho
     u = tank_inputs(Q_calc, W_calc, mdot_calc)
 
     # Original tank state in TASOPT
-    if ac.pari[iifuel] == 11
+    if compare_strings(ac.options.opt_fuel, "CH4")
         species = "CH4"
-    elseif ac.pari[iifuel] == 40
+    elseif compare_strings(ac.options.opt_fuel, "LH2")
         species = "H2"
     end
 

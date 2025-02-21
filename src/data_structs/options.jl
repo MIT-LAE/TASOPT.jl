@@ -9,6 +9,7 @@ $TYPEDFIELDS
     #fuel options
     """Fuel type_________________""" #TODO: finish these descriptions
     opt_fuel::String
+    ifuel::Integer
     has_centerbox_fuel::Bool
     has_wing_fuel::Bool
     # has_fuselage_fuel::Bool       #TODO: put this in and...

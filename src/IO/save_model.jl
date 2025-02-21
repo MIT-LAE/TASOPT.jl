@@ -36,7 +36,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     pari, parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     #dictionaries to map some selections (e.g., ints) to outputs
-    fueltype = Dict(1 => "LH2", 24 => "JET-A")
     engweightmodel = Dict(0 => "md", 1 =>"basic", 2=>"advanced")
 
     #Save everything in a dict() of dicts()
@@ -59,7 +58,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #Fuel------------------------
 
     d_fuel = Dict()
-        d_fuel["fuel_type"] = fueltype[pari[iifuel]]
+        d_fuel["fuel_type"] = options.opt_fuel
         d_fuel["fuel_in_wing"] = options.has_wing_fuel
         d_fuel["fuel_in_wingcen"] = options.has_centerbox_fuel
         d_fuel["fuel_usability_factor"] = parg[igrWfmax]
@@ -664,6 +663,7 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
 
 end
 
+#TODO: update to use ac.options (not pari)
 function reset_regression_test(ac)
     wing = ac.wing
     htail = ac.htail

@@ -351,9 +351,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             
             # Fuel name
             fuelname = ""
-            if pari[iifuel] == 11
+            if options.ifuel == 11
                 fuelname ="\$CH_4\$"
-            elseif pari[iifuel] == 40
+            elseif options.ifuel == 40
                 fuelname ="\$LH_2\$"
             end
             annotate!(plot_obj, (xtanks[m], 0.0, text(fuelname, label_fs - 2.0, :center, :center)))
