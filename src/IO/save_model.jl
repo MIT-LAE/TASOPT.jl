@@ -34,9 +34,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #unpack aircraft struct
     imission = 1 #design mission for now
     pari, parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
-
-    #dictionaries to map some selections (e.g., ints) to outputs
-    engweightmodel = Dict(0 => "md", 1 =>"basic", 2=>"advanced")
+    #TODO: fuse_tank fields are not saved
 
     #Save everything in a dict() of dicts()
     d_out = Dict()
@@ -507,7 +505,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_prop_weight = Dict()
         d_prop_weight["engine_access_weight_fraction"] = parg[igfeadd]
         d_prop_weight["pylon_weight_fraction"] = parg[igfpylon]
-        d_prop_weight["weight_model"] = engweightmodel[pari[iiengwgt]]
+        d_prop_weight["weight_model"] = engine.model.weight_model_name
     d_prop["Weight"] = d_prop_weight
 
     d_out["Propulsion"] = d_prop

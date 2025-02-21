@@ -508,6 +508,6 @@ name = "TASOPT Model with cryo fuel and HX"
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   
-    weight_model = "basic" #Options are "MD": Mark Drela's original model
-                              #   "basic": NF's new model with basic tech
-                              #"advanced": NF's new model with advanced tech
+    weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
+                                    #   "fitzgerald_basic": NF's new model with basic tech
+                                    #     "fitzgerald_adv": NF's new model with advanced tech

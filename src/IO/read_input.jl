@@ -172,28 +172,10 @@ fuselage.cabin.exit_limit = exitlimit
 options = read_input("Options", data, default)
 doptions = default["Options"]
 
+# these are used later
 propsys = read_input("prop_sys_arch", options, doptions)
-if compare_strings(propsys,"tf")
-    modelname = "turbofan_md"
-    enginecalc! = tfwrap!
-    engineweightname = "turbofan"
-    engineweight! = tfweightwrap!
-
-    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
-    
-elseif compare_strings(propsys, "te")
-    nothing
-    #TODO: decide if turboelectric stuff still works, if we'll fix it, or if we'll remove all references
-else
-    
-    error("Propulsion system \"$propsys\" specified. Choose between
-    > TF - turbo-fan
-    > TE - turbo-electric" )
-end
-
-engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
-
 engloc = read_input("engine_location", options, doptions)
+
 #throw error if engloc isn't a string indicating a supported location
 if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
    error("Engine location provided is \"$engloc\". Engine position can only be:
@@ -1008,20 +990,41 @@ weight = readprop("Weight")
 dweight = dprop["Weight"]
     parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
     parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
-    TF_wmodel = read_input("weight_model", weight, dweight)
-    if compare_strings(TF_wmodel, "md")
-        pari[iiengwgt] = 0
-    elseif compare_strings(TF_wmodel, "basic")
-        pari[iiengwgt] = 1
-    elseif compare_strings(TF_wmodel, "advanced")
-        pari[iiengwgt] = 2
-    else
-        error("\"$TF_wmodel\" engine weight model was specifed. 
-        Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
+    
+    #read/check engine weight model options
+    if compare_strings(propsys, "tf")
+    #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
+        TF_wmodel = read_input("weight_model", weight, dweight)
+        if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
+            error("\"$TF_wmodel\" engine weight model was specifed. 
+            Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
+        end
+    elseif compare_strings(propsys, "te")
+        @warn("Propulsion weight models for turboelectric are currently not available.")
     end
 
-# Heat exchangers
+# Create engine object
+if compare_strings(propsys,"tf")
+    modelname = "turbofan_md"
+    enginecalc! = tfwrap!
+    engineweightname = TF_wmodel
+    engineweight! = tfweightwrap!
 
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
+
+elseif compare_strings(propsys, "te")
+    nothing
+    #TODO: decide if turboelectric stuff still works, if we'll fix it, or if we'll remove all references
+else
+    error("Propulsion system \"$propsys\" specified. Choose between
+    > TF - turbo-fan
+    > TE - turbo-electric" )
+end
+    
+engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
+
+    
+# Heat exchangers
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
     parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
