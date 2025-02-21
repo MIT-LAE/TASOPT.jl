@@ -315,6 +315,9 @@ function cditrp(para, wing, htail)
       nsurf = 2
 
 #---- number of spanwise intervals
+# -----------------------------------------------------------------------
+# The below # of panels (43 total) gives about 1.8% higher CDi relative to the 
+# finest one here with ~360 panels
       npout[1] = 20  # outer panel
       npinn[1] = 6   # inner panel
       npimg[1] = 3   # image inside fuselage
@@ -326,7 +329,9 @@ function cditrp(para, wing, htail)
       else
        npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
       end
-
+# -----------------------------------------------------------------------
+# The below # of panels (84 total) gives about 0.60% higher CDi relative to the 
+# finest one here with ~360 panels
 #     npout[1] = 40  # outer panel
 #     npinn[1] = 12  # inner panel
 #     npimg[1] = 6   # image inside fuselage
@@ -334,7 +339,7 @@ function cditrp(para, wing, htail)
 #     npout[2] = 20  # outer panel
 #     npinn[2] = 0   # inner panel
 #     npimg[2] = 4   # image inside fuselage  (or inner panel if T-tail)
-
+# -----------------------------------------------------------------------
 #      npout[1] = 160  # outer panel
 #      npinn[1] = 48   # inner panel
 #      npimg[1] = 24   # image inside fuselage
@@ -342,6 +347,7 @@ function cditrp(para, wing, htail)
 #      npout[2] = 80  # outer panel
 #      npinn[2] = 0   # inner panel
 #      npimg[2] = 16  # image inside fuselage  (or inner panel if T-tail)
+# -----------------------------------------------------------------------
 
       ktip = 16
       #CLsurf = zeros(Float64, nsurf)
