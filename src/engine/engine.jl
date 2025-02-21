@@ -35,6 +35,8 @@ include("turbofan/tfwrap.jl")
 include("turbofan/tfweightwrap.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
+include("simple_engine/constant_TSFC_engine.jl")
+include("simple_engine/fractional_engine_weight.jl")
 include("../misc/engine.jl")
 
 end

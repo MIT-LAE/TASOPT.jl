@@ -184,6 +184,19 @@ if lowercase(propsys) == "tf"
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
     
+elseif lowercase(propsys) == "simple_engine"
+    pari[iiengtype] = 1
+    modelname = "simple_engine"
+    enginecalc! = TASOPT.engine.constant_TSFC_engine!
+    engineweightname = "fractional_weight"
+    engineweight! = TASOPT.engine.fractional_engine_weight!
+
+    para[iaROCdes,:,1] .= 500 * ft_to_m / 60
+    pare[ieTSFC,:,1] .= 1.8e-4
+    parg[igfeng] = 0.05
+
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
+    
 elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
 else
