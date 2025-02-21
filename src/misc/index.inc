@@ -216,7 +216,8 @@
       const igdHXRegen = 128
       const igHXaddmassfrac = 129
       const igWHXs = 130
-      const igtotal    = 130
+      const igfeng = 131
+      const igtotal    = 131
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
@@ -428,7 +429,8 @@
       iadCDBLIf = 62
       iadCDBLIw = 63
       iaROC     = 64
-      iatotal   = 64 
+      iaROCdes  = 65
+      iatotal   = 65
 
 #---- indices for engine variables at each mission point
       iehfuel =   1
