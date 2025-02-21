@@ -16,7 +16,7 @@ Calls function tfsize or tfoper for one operating point.
     - `initializes_engine`:    false  initialize variables for iteration in TFOPER
                                 true  use current variables as initial guesses in TFOPER
 """
-function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
+function tfcalc!(ifuel, pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
         icall::Int64, icool::Int64, initializes_engine::Bool)
 
         Lprint = false
@@ -25,7 +25,6 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 println("entering TFCALC", icall, icool, initializes_engine)
         end
 
-        ifuel = pari[iifuel]
         iBLIc = pari[iiBLIc]
 
         Gearf = parg[igGearf]

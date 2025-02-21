@@ -29,11 +29,6 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       # iairf
       initializes_engine = false
 
-      # unpack flags
-      # iengloc = pari[iiengloc]
-      # ifclose = pari[iifclose]
-      # ifuel = pari[iifuel]
-
       # Mission range
       Rangetot = parm[imRange]
       para[iaRange, ipdescentn] = Rangetot

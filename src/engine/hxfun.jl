@@ -1071,7 +1071,7 @@ HXsDict = Dict{String, Dict}(
 )
 
 """
-      hxdesign!(pare, pari, ipdes, HXs_prev)
+      hxdesign!(pare, ifuel, ipdes, HXs_prev)
 
 Heat exchanger design and operation function. It calls hxoptim!() to optimize the heat exchanger at the design point and 
 then evaluates performance for all missions and points with hxoper!().      
@@ -1079,7 +1079,7 @@ then evaluates performance for all missions and points with hxoper!().
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `pari::Vector{Int}`: vector with integer parameters
+    - `ifuel::Integer`: fuel type spec for gas calcs from ac.options
     - `ipdes::Float64`: index for design mission segment
     - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HX_struct` structures
     - `rlx::Float64`: relaxation factor for pare update
@@ -1087,7 +1087,7 @@ then evaluates performance for all missions and points with hxoper!().
     - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
     - Also modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
-function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
+function hxdesign!(pare, ifuel, ipdes, HXs_prev; rlx = 1.0)
       
       #---------------------------------
       # Extract inputs
@@ -1109,7 +1109,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       recirculates = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
       h_lat = pare_sl[iehvap]
-      igas = pari[iifuel]
       PreCorder = pare_sl[iePreCorder]
       PreCMp = pare_sl[iePreCMp]
       InterCorder = pare_sl[ieInterCorder]
@@ -1119,6 +1118,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       TurbCorder = pare_sl[ieTurbCorder]
       TurbCMp = pare_sl[ieTurbCMp]
 
+      igas = ifuel
       if igas == 11 #TODO: add more options
             coolant_name = "ch4"
       elseif igas == 40
@@ -1271,7 +1271,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       #---------------------------------
       # Analyze off-design performance
       #---------------------------------
-      HXOffDesign!(HeatExchangers, pare, pari, rlx = rlx)
+      HXOffDesign!(HeatExchangers, pare, ifuel, rlx = rlx)
 
       for i in 1:length(HeatExchangers)
             HeatExchangers[i].HXgas_mission[ipdes].Mc_in = Mc_opts[i] #Store optimum Mc_in
@@ -1281,7 +1281,7 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
 end #hxdesign!
 
 """
-      HXOffDesign!(HeatExchangers, pare, pari; rlx = 1.0)
+      HXOffDesign!(HeatExchangers, pare, ifuel; rlx = 1.0)
 
 This function runs the heat exchangers through an aircraft mission and calculates performance at every
 mission point.      
@@ -1290,16 +1290,16 @@ mission point.
     **Inputs:**
     - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
     - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `pari::Vector{Int}`: vector with integer parameters
+    - `ifuel::Integer`: fuel type spec for gas calcs from ac.options
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes. 
 """
-function HXOffDesign!(HeatExchangers, pare, pari; rlx = 1.0)
+function HXOffDesign!(HeatExchangers, pare, ifuel; rlx = 1.0)
       recirculates = Bool(pare[iefrecirc, ipcruise1])
-      igas = pari[iifuel]
       alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
 
+      igas = ifuel
       if igas == 11 #TODO: add more options
             coolant_name = "ch4"
       elseif igas == 40
@@ -1430,7 +1430,6 @@ with hxoper!(). The coolant mass flow rate is adjusted so that a desired heat is
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `pari::Vector{Int}`: vector with integer parameters
     - `ipdes::Float64`: index for design mission segment
     - `inpts_dict::Dict`: dictionary containing the indices in `pare` of the coolant and air properties.
     - `HXs_prev::HX_struct`: structure with heat exchanger data from the previous wsize iteration

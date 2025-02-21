@@ -206,22 +206,23 @@ fuel = read_input("Fuel", data, default)
 dfuel = default["Fuel"]
 readfuel(x::String) = read_input(x, fuel, dfuel)
 fueltype = readfuel("fuel_type")
-#TODO this needs to be updated once I include Gas.jl into TASOPT
-if uppercase(fueltype) == "LH2"
-    pari[iifuel] = 40
-    
-elseif uppercase(fueltype) == "CH4"
-    pari[iifuel] = 11
-    
-elseif uppercase(fueltype) == "JET-A"
-    pari[iifuel] = 24
+#TODO this needs to be updated once Prash includes Gas.jl into TASOPT
 
+#check input, perform actions based on fuel type
+if compare_strings(fueltype, "JET-A")
     pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
     pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
     parg[igrhofuel] = readfuel("fuel_density")
-else
-    error("Check fuel type")
+    ifuel = 24
+elseif compare_strings(fueltype, "LH2") 
+    ifuel = 40
+elseif compare_strings(fueltype, "CH4")
+    ifuel = 11
+#throw error if fueltype isn't a supported value
+else 
+    error("'$fueltype' is not a supported fuel type (e.g., \"JET-A\", \"LH2\", \"CH4\")")
 end
+
 has_centerbox_fuel  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
@@ -388,8 +389,8 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
 
     fuse_end = readgeom("tapers_to")
-    #throw error if fuse_end isn't a string indicating a supported fuse taper
-    if !(typeof(fuse_end) <: AbstractString && fuse_end in ["point", "edge"])
+    #throw error if fuse_end isn't a supported fuse taper
+    if !(fuse_end in ["point", "edge"])
         error("Fuselage can only be closed to a 'point' or an 'edge' but '$fuse_end' was provided.")
     else
         fuselage.layout.opt_tapers_to = fuse_end
@@ -1046,7 +1047,8 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
     ac_options = TASOPT.Options(
-        opt_fuel = "JET-A",
+        opt_fuel = fueltype,
+        ifuel = ifuel,
         has_wing_fuel = has_wing_fuel,
         has_centerbox_fuel = has_centerbox_fuel,
         fuselage_fueltank_count = nftanks,

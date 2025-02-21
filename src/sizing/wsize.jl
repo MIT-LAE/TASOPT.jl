@@ -44,7 +44,7 @@ function wsize(ac; itermax=35,
     ifirst = true
 
     # Extract flags
-    ifuel, iengwgt = pari[iifuel], pari[iiengwgt]
+    ifuel, iengwgt = options.ifuel, pari[iiengwgt]
 
     # Unpack powertrain elements
     ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
@@ -702,7 +702,6 @@ function wsize(ac; itermax=35,
             else
                 xftank_heat = parg[igxftank]
             end
-            ifuel = pari[iifuel]
             M_inf = para[iaMach, ipcruise1]
             z_alt = para[iaalt, ipcruise1]
             
@@ -792,7 +791,7 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            engine.heat_exchangers = hxdesign!(pare, pari, ipdes, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
+            engine.heat_exchangers = hxdesign!(pare, options.ifuel, ipdes, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in engine.heat_exchangers

@@ -34,7 +34,7 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
             initializes_engine_firstiter  = true
         end
 
-        ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine_firstiter )
+        ichoke5, ichoke7 = tfcalc!(options.ifuel, pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine_firstiter )
 
         # store engine design-point parameters for all operating points
         parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -66,12 +66,12 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
     elseif case == "off_design"
         icall = (ip in range(ipstatic, ipclimbn)) ? 1 : 2 #One if in range, 2 if not
         icool = 1
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
+        ichoke5, ichoke7 = tfcalc!(options.ifuel, pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
 
     elseif case == "cooling_sizing"
         icall = 1
         icool = 2
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
+        ichoke5, ichoke7 = tfcalc!(options.ifuel, pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points
         for jp = 1:iptotal
