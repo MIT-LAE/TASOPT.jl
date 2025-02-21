@@ -1135,9 +1135,6 @@ isGradient = false
         ac = TASOPT.load_default_model()
         ip = ipcruise1
 
-        ac.pari[iiengwgt] = 1
-        ac.parg[igGearf] = 1.0
-        ac.pari[iiengwgt] = 1
         ac.parg[igGearf] = 1.0
         ac.pared[iemblcD, ip] = 46.110246609262873
         ac.pared[ieBPR, ip] = 5.0999999999999996

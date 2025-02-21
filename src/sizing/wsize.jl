@@ -44,7 +44,7 @@ function wsize(ac; itermax=35,
     ifirst = true
 
     # Extract flags
-    ifuel, iengwgt = options.ifuel, pari[iiengwgt]
+    ifuel = options.ifuel
 
     # Unpack powertrain elements
     ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]

@@ -428,6 +428,6 @@
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
 [Propulsion.Weight]
-    weight_model = "basic" #Options are "MD": Mark Drela's original model
-                              #   "basic": NF's new model with basic tech
-                              #"advanced": NF's new model with advanced tech
+    weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
+                                    #   "fitzgerald_basic": NF's new model with basic tech
+                                    #     "fitzgerald_adv": NF's new model with advanced tech

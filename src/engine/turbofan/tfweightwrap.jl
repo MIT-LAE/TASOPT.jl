@@ -13,7 +13,6 @@ basic aircraft inputs to those required by the function and storing the outputs.
     No direct outputs. The `ac` object gets modified with the engine weights.
 """
 function tfweightwrap!(ac)
-    pari = ac.pari
     parg = ac.parg
     wing = ac.wing
     neng = parg[igneng]
