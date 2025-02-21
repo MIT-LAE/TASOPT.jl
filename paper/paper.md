@@ -25,6 +25,7 @@ authors:
     affiliation: 1
   - name: Prateek Ranjan
     affiliation: 1
+    orcid: https://orcid.org/0009-0001-9201-0630
   - name: Jonas J Gonzalez
     orcid: https://orcid.org/0009-0007-9210-9589
     affiliation: 1
