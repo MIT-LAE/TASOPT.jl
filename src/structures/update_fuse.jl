@@ -1,4 +1,6 @@
 export update_fuse!, update_fuse_for_pax!
+
+#TODO: this docstring is well out of Date
 """
     update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
@@ -16,8 +18,6 @@ Function to update the fuselage layout when there is a change in fuselage fuel t
     **Outputs:**
     No direct outputs; parameters in `parg` are modified.
 """
-#TODO: this docstring is well out of Date
-
 function update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
     nftanks = fuselage_fueltank_count #Number of fuel tanks in fuselage
