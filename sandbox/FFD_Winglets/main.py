@@ -84,7 +84,7 @@ def plot_ffd_box(ffd_vertices, new_point_1, new_point_2, intersection_point):
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
 
-    ax.add_collection3d(Poly3DCollection(faces, facecolors='cyan', linewidths=1, edgecolors='k', alpha=0.5))
+    ax.add_collection3d(Poly3DCollection(faces, facecolors='whitesmoke', linewidths=1, edgecolors='k', alpha=0.5))
     ax.add_collection3d(Poly3DCollection(arbitrary_plane_faces, facecolors='yellow', linewidths=1, edgecolors='k', alpha=0.3))
 
     ax.plot([new_point_1[0], new_point_2[0]], [new_point_1[1], new_point_2[1]], [new_point_1[2], new_point_2[2]], 
