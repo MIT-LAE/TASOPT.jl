@@ -62,11 +62,10 @@ function plot_airf(airf::airfoil)
         airf.cl,
         airf.A[end, :, :, 1] + airf.A[end, :, :, 2],
         label = string.(airf.τ'),
-        xlabel = "\$c_l\$",
+        # xlabel = "\$c_l\$",
         ylabel = "\$c_d\$",
-        legendtitle = "Thickness-to-chord (τ)",
+        legend=:false,
         grid = true,
-        legend=:outerright
     )
     
     p2 = plot(
@@ -76,10 +75,18 @@ function plot_airf(airf::airfoil)
         xlabel = "\$c_l\$",
         ylabel = "\$c_m\$",
         grid = true,
-        legend=:false
+        legend=:false,
     )
     
+    labels = string.(airf.τ')
+    p_legend = plot((1:length(airf.τ))', labels = labels,
+        legendtitle = "Thickness-to-chord (τ)",
+        legend_title_font_pointsize = 7,
+        legendfontsize=7, legend=:outertop, legendcolumns=1,
+        fg_color_legend = nothing, frame=:none)
+    
+    l = @layout [[a; b] c{0.2w}]
     # Combine the subplots vertically
-    plot(p1, p2, layout = (2, 1), link = :x,
+    plot(p1, p2, p_legend, layout = l, link = :x,
         suptitle="Airfoil Section Database")
 end
