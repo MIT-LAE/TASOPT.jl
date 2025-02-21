@@ -94,9 +94,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         xf = zeros(nnose + ntail + 1)
         yf = zeros(nnose + ntail + 1)
 
-        if fuselage.layout.taper_fuse == 0
+        if compare_strings(fuselage.layout.opt_tapers_to, "point")
             dytail = -hwidth 
-        else
+        else # to "edge"
             dytail = -0.2*hwidth
         end
 
@@ -154,12 +154,12 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         ytTEh = 0.5*bh
 
 
-        if (fuselage.layout.taper_fuse == 0)
+        if compare_strings(fuselage.layout.opt_tapers_to,"point")
             xcLEh = xoLEh
             xcTEh = xoTEh
             ycLEh = yoLEh
             ycTEh = yoTEh
-        else
+        else #to "edge"
             xcLEh = coh*(    - xaxh) + dx + 0.5*(0. - boh)*tanLh
             xcTEh = coh*(1.0 - xaxh) + dx + 0.5*(0. - boh)*tanLh
             ycLEh = 0.0

@@ -174,7 +174,6 @@ doptions = default["Options"]
 
 propsys = read_input("prop_sys_arch", options, doptions)
 if compare_strings(propsys,"tf")
-    pari[iiengtype] = 1
     modelname = "turbofan_md"
     enginecalc! = tfwrap!
     engineweightname = "turbofan"
@@ -183,7 +182,8 @@ if compare_strings(propsys,"tf")
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
     
 elseif compare_strings(propsys, "te")
-    pari[iiengtype] = 0
+    nothing
+    #TODO: decide if turboelectric stuff still works, if we'll fix it, or if we'll remove all references
 else
     
     error("Propulsion system \"$propsys\" specified. Choose between
@@ -192,7 +192,6 @@ else
 end
 
 engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
-
 
 engloc = read_input("engine_location", options, doptions)
 #throw error if engloc isn't a string indicating a supported location
@@ -387,17 +386,15 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
     fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
-    fuse_end = readgeom("taper_fuse_to")
-    if compare_strings(fuse_end,"point")
-        fuselage.layout.taper_fuse = 0
-    elseif compare_strings(fuse_end,"edge")
-        fuselage.layout.taper_fuse = 1
+
+    fuse_end = readgeom("tapers_to")
+    #throw error if fuse_end isn't a string indicating a supported fuse taper
+    if !(typeof(fuse_end) <: AbstractString && fuse_end in ["point", "edge"])
+        error("Fuselage can only be closed to a 'point' or an 'edge' but '$fuse_end' was provided.")
     else
-        fuselage.layout.taper_fuse = 0
-        @warn "Fuselage can only be closed to a 'point' or an 'edge'"*
-                " but '$fuse_end' was provided."*
-                " Setting fuselage to end at a point."
+        fuselage.layout.opt_tapers_to = fuse_end
     end
+
     fuselage.layout.x_nose = Distance(readgeom("x_nose_tip")) 
     fuselage.layout.x_pressure_shell_fwd = Distance(readgeom("x_pressure_shell_fwd"))
     fuselage.layout.x_pressure_shell_aft = Distance(readgeom("x_pressure_shell_aft"))
@@ -486,8 +483,8 @@ end #if
 wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
 readwing(x) = read_input(x, wing_i, dwing)
-    wing.planform = readwing("wing_planform")
-    wing.has_strut = readwing("strut_braced_wing")
+    wing.has_engine = compare_strings(engloc,"wing") #true if engines are mounted on wing
+    wing.has_strut = readwing("has_strut")
 
     wing.layout.sweep = readwing("sweep")
     wing.layout.AR = readwing("AR")
@@ -522,7 +519,7 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     parg[igdxeng2wbox] = wing.layout.box_x - parg[igxeng] #TODO add this as a function of wing
 
-    ## Strut details only used if strut_braced_wing is true
+    ## Strut details only used if has_strut is true
     if wing.has_strut
         wing.strut.z  = Distance(readwing("z_strut"))
         wing.strut.thickness_to_chord  = readwing("strut_toc")
@@ -1054,16 +1051,12 @@ dHEx = dprop["HeatExchangers"]
         has_centerbox_fuel = has_centerbox_fuel,
         fuselage_fueltank_count = nftanks,
         
-        opt_wing_type = "TODO: FIX THIS, wingtype spec",
-        moves_wingbox_forbalance = true,
-        
         opt_engine_location = engloc,
-        opt_engine_type = propsys,
+        opt_prop_sys_arch = propsys,
         opt_engine_model = "TODO: FIX THIS engine model spec",
         opt_engine_weight_model = TF_wmodel,
         has_BLI_cores = Bool(!readprop("core_in_clean_flow")),
         
-        opt_fuselage_taper = fuse_end,
         is_doubledecker = is_doubledecker
     )
     

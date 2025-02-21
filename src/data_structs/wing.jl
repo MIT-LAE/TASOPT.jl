@@ -55,8 +55,8 @@ $TYPEDFIELDS
     """Wing Layout """
     layout::WingLayout = WingLayout()
     """Wing Planform (0: wing catilever, plain; 1: wing cantilever with engine"""
-    planform::Int64 = 0 # 0: Wing cantilever, plain
-                      # 1: Wing cantilever with engine
+    has_engine::Bool = false # false: Wing cantilever, plain
+                             # true:  Wing cantilever with engine
     """Wing Material """
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 

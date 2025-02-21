@@ -36,16 +36,12 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     pari, parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     #dictionaries to map some selections (e.g., ints) to outputs
-    propsysarch = Dict(0 => "te", 1 => "tf")
-    engloc = Dict(1 => "wing", 2 => "fuselage")
     fueltype = Dict(1 => "LH2", 24 => "JET-A")
-    taperfuse = Dict(0=>"point", 1=>"edge")
     engweightmodel = Dict(0 => "md", 1 =>"basic", 2=>"advanced")
 
     #Save everything in a dict() of dicts()
     d_out = Dict()
-    #operations on ac
-    #TODO: reverse operations of read_input.jl
+
     # General description data
     d_desc = Dict()
     d_desc["name"] = ac.name
@@ -55,7 +51,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Options------------------------
     d_opt = Dict()
-        d_opt["prop_sys_arch"] = propsysarch[pari[iiengtype]]
+        d_opt["prop_sys_arch"] = options.opt_prop_sys_arch
         d_opt["engine_location"] = options.opt_engine_location
     d_out["Options"] = d_opt
     #--end options----------------
@@ -173,7 +169,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["a_nose"] = fuselage.layout.nose_radius
         d_fuse_geom["b_tail"] = fuselage.layout.tail_radius
 
-        d_fuse_geom["taper_fuse_to"] = taperfuse[pari[iifclose]]
+        d_fuse_geom["tapers_to"] = fuselage.layout.opt_tapers_to
 
         d_fuse_geom["tailcone_taper"] = fuselage.layout.taper_tailcone
         d_fuse_geom["HT_load_fuse_bend_relief"] = parg[igrMh]
@@ -210,8 +206,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Wing ------------------------
     d_wing = Dict()
-        d_wing["planform"] = wing.planform
-        d_wing["strut_braced_wing"] = wing.has_strut
+        d_wing["has_engine"] = wing.has_engine
+        d_wing["has_strut"] = wing.has_strut
 
         d_wing["sweep"] = wing.layout.sweep
         d_wing["AR"] = wing.layout.AR
@@ -231,8 +227,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing["x_wing_box"] = wing.layout.box_x
         d_wing["z_wing"] = wing.layout.z
 
-    # Strut details (only used if strut_braced_wing is True)
-        if d_wing["strut_braced_wing"]
+    # Strut details (only used if has_strut is True)
+        if d_wing["has_strut"]
             d_wing["z_strut"] = wing.strut.z
             d_wing["strut_toc"] = wing.strut.thickness_to_chord
             d_wing["strut_local_velocity_ratio"] = wing.strut.local_velocity_ratio

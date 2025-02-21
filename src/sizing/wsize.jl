@@ -44,8 +44,7 @@ function wsize(ac; itermax=35,
     ifirst = true
 
     # Extract flags
-    ifuel, iwplan, iengwgt, iVTsize = 
-        pari[iifuel], options.opt_wing_type, pari[iiengwgt], vtail.size
+    ifuel, iengwgt = pari[iifuel], pari[iiengwgt]
 
     # Unpack powertrain elements
     ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
@@ -532,9 +531,16 @@ function wsize(ac; itermax=35,
 
         po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
-        # Calculate engine weight
-        #TODO: improve readability, either a comment or break up into if statements
-        Weng1 = (wing.planform == 1) ? (pari[iiengtype] == 0 ? parg[igWfan] + parg[igWmot] + parg[igWfanGB] : parg[igWeng] / parg[igneng]) : 0.0
+        # Calculate wing engine weight
+        if wing.has_engine
+            if compare_strings(options.opt_prop_sys_arch,"te")
+                Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB]
+            elseif compare_strings(options.opt_prop_sys_arch,"tf")
+                Weng1 = parg[igWeng] / parg[igneng]
+            end
+        else
+            Weng1 = 0.0
+        end
 
         # Set up parameters for get_wing_weights function
         Winn, Wout = wing.inboard.weight, wing.outboard.weight
@@ -634,7 +640,7 @@ function wsize(ac; itermax=35,
         # Calculate max eng out moment
         Me = (Fe + De) * yeng
 
-        if (iVTsize == 1)
+        if (vtail.size == 1)
             lvtail = xvtail - xwing
             Vv = vtail.volume
             Sv = Vv * wing.layout.S * wing.layout.span/ lvtail
