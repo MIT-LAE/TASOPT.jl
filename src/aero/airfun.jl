@@ -1,4 +1,12 @@
 export airfun
+const nAfun::Int = 3
+const Ai = @MMatrix zeros(2,2)
+const Ai_cl = @MMatrix zeros(2,2)
+const Ai_tau = @MMatrix zeros(2,2)
+const Ai_cl_tau = @MMatrix zeros(2,2)
+const Aij = @MVector zeros(2)
+const Aij_tau = @MVector zeros(2)
+const Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
 
 """
     airfun(cl, τ, Mach, air::airfoil)
@@ -45,15 +53,6 @@ end
                 A_M_cl,
                 A_cl_τ,
                 A_M_cl_τ)
-
-    nAfun::Int = 3
-    Ai = @MMatrix zeros(2,2)
-    Ai_cl = @MMatrix zeros(2,2)
-    Ai_tau = @MMatrix zeros(2,2)
-    Ai_cl_tau = @MMatrix zeros(2,2)
-    Aij = @MVector zeros(2)
-    Aij_tau = @MVector zeros(2)
-    Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
     
     io, im, dMa , tMa  = findsegment(Mach, AMa)
     jo, jm, dcl , tcl  = findsegment(cl, Acl)
