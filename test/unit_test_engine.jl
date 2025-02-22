@@ -843,7 +843,7 @@ isGradient = false
         A25 = 3.8585338087708761E-002
         A5 = 0.19210855588408102
         A7 = 0.64211443204484309
-        iTFspec = 1
+        opt_calc_call = "oper_fixedTt4"
         Ttf = 280.00000000000000
         ifuel = 24
         etab = 0.98499999999999999
@@ -934,7 +934,7 @@ isGradient = false
             mbfD, mblcD, mbhcD, mbhtD, mbltD,
             NbfD, NblcD, NbhcD, NbhtD, NbltD,
             A2, A25, A5, A7,
-            iTFspec,
+            opt_calc_call,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
             pifK, epfK,
@@ -1009,7 +1009,7 @@ isGradient = false
         A25 = 3.8585338087708761E-002
         A5 = 0.19210855588408102
         A7 = 0.64211443204484309
-        iTFspec = 1
+        opt_calc_call = "oper_fixedTt4"
         Ttf = 280.00000000000000
         ifuel = 24
         etab = 0.98499999999999999
@@ -1101,7 +1101,7 @@ isGradient = false
             mbfD, mblcD, mbhcD, mbhtD, mbltD,
             NbfD, NblcD, NbhcD, NbhtD, NbltD,
             A2, A25, A5, A7,
-            iTFspec,
+            opt_calc_call,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
             pifK, epfK,
