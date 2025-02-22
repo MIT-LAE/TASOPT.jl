@@ -20,8 +20,6 @@ $TYPEDFIELDS
     opt_prop_sys_arch::String
     opt_engine_model::String
     opt_engine_weight_model::String
-    has_BLI_cores::Bool
-    #TODO: has_BLI_cores should be in the engine class^
     
     #fuselage/cabin options
     is_doubledecker::Bool

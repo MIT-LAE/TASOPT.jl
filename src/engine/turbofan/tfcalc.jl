@@ -1,5 +1,5 @@
 """ 
-    tfcalc(wing, engine, parg, para, pare, ip, ifuel, icall, icool, initializes_engine)
+    tfcalc(wing, engine, parg, para, pare, ip, ifuel, icall, opt_cooling, initializes_engine)
 
 Calls function tfsize or tfoper for one operating point.
 
@@ -8,21 +8,22 @@ Calls function tfsize or tfoper for one operating point.
     - `icall`:    0  call on-design  sizing   routine tfsize
                   1  call off-design analysis routine tfoper, specified Tt4
                   2  call off-design analysis routine tfoper, specified Fe
-          
-    - `icool`:    0  use zero cooling mass flow ratio regardless
-                  1  use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
-                  2  use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
+
+    - `opt_cooling`:   turbine cooling flag
+               "none" = no cooling mass flow
+               "fixed_coolingflowratio" = use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
+               "fixed_Tmetal" = use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
 
     - `initializes_engine`:    false  initialize variables for iteration in TFOPER
                                 true  use current variables as initial guesses in TFOPER
 """
 function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
-        icall::Int64, icool::Int64, initializes_engine::Bool)
+        icall::Int64, opt_cooling::String, initializes_engine::Bool)
 
         Lprint = false
 
         if (Lprint)
-                println("entering TFCALC", icall, icool, initializes_engine)
+                println("entering TFCALC", icall, opt_cooling, initializes_engine)
         end
 
         eng_has_BLI_cores = engine.model.has_BLI_cores
@@ -97,12 +98,12 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         Δp_InterC = pare[ieInterCDeltap]
         Δp_Regen = pare[ieRegenDeltap]
 
-        if (icool == 1)
+        if compare_strings(opt_cooling, "fixed_coolingflowratio")
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
                         epsrow[icrow] = pare[ieepsc1+icrow-1]
                 end
-        elseif (icool == 2)
+        elseif compare_strings(opt_cooling, "fixed_Tmetal")
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
                         #cc      Tmrow[icrow]  = pare(ieTmet1+icrow-1)
@@ -229,7 +230,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         mofft, Pofft,
                         Tt9, pt9, Tt4,
                         epsl, epsh,
-                        icool,
+                        opt_cooling,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
@@ -396,7 +397,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
 
                 if (Lprint)
                         println(cplab[ip], iTFspec, Tt4, Fe)
-                        println("Calling TFOPER...", icall, icool, ip)
+                        println("Calling TFOPER...", icall, opt_cooling, ip)
                         println(DAwsurf, para[iagamV])
                         println(rho0, u0, parg[igWMTO])
                         println(mcore, M2, M25)
@@ -474,7 +475,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         mofft, Pofft,
                         Tt9, pt9,
                         epsl, epsh,
-                        icool,
+                        opt_cooling,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
@@ -518,13 +519,13 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         end
         #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if (icool == 1)
+        if compare_strings(opt_cooling, "fixed_coolingflowratio")
                 #------ cooling flow was specified... set metal temperatures
                 for icrow = 1:ncrowx
                         pare[ieTmet1+icrow-1] = Tmrow[icrow]
                 end
 
-        elseif (icool == 2)
+        elseif compare_strings(opt_cooling, "fixed_Tmetal")
                 #------ Tmetal was specified... set cooling flow ratios
                 epstot = 0.0
                 for icrow = 1:ncrowx

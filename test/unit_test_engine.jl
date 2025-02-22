@@ -515,7 +515,8 @@ isGradient = false
 
     @testset "tfsize.jl" begin
 
-        # TODO []: icool change the function signiture. Only works for icool = 1.
+        # TODO []: icool change the function signature. Only works for icool = 1.
+        # note: icool::Int -> opt_cooling::String
         # TODO []: the output shall cover most of the functions. Ideally, test all other outputs.
 
         gee = 9.8100000000000005
@@ -553,7 +554,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 1
+        opt_cooling = "fixed_coolingflowratio"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -616,7 +617,7 @@ isGradient = false
             mofft, Pofft,
             Tt9, pt9, Tt4,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -645,7 +646,7 @@ isGradient = false
                     mofft, Pofft,
                     Tt9, pt9, Tt4,
                     epsl, epsh,
-                    icool,
+                    opt_cooling,
                     Mtexit, dTstrk, StA, efilm, tfilm,
                     M4a, ruc,
                     ncrowx, ncrow,
@@ -664,7 +665,7 @@ isGradient = false
                 mofft, Pofft,
                 Tt9, pt9, Tt4,
                 epsl, epsh,
-                icool,
+                opt_cooling,
                 Mtexit, dTstrk, StA, efilm, tfilm,
                 M4a, ruc,
                 ncrowx, ncrow,
@@ -712,7 +713,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 2
+        opt_cooling = "fixed_Tmetal"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -764,7 +765,7 @@ isGradient = false
             mofft, Pofft,
             Tt9, pt9, Tt4,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -859,7 +860,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 1
+        opt_cooling = "fixed_coolingflowratio"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -940,7 +941,7 @@ isGradient = false
             mofft, Pofft,
             Tt9, pt9,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -1025,7 +1026,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 1
+        opt_cooling = "fixed_coolingflowratio"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -1061,7 +1062,7 @@ isGradient = false
         Δp_Regen = 0.0
 
         # Fix temperature find mass flow
-        icool = 2
+        opt_cooling = "fixed_Tmetal"
         TSFC, Fsp, hfuel, ff,
         Feng, mcore,
         pif, pilc, pihc,
@@ -1107,7 +1108,7 @@ isGradient = false
             mofft, Pofft,
             Tt9, pt9,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
