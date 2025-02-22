@@ -7,7 +7,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       mbfD, mblcD, mbhcD, mbhtD, mbltD,
       NbfD, NblcD, NbhcD, NbhtD, NbltD,
       A2, A25, A5, A7,
-      iTFspec,
+      opt_calc_call,
       Ttf, ifuel, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
       pifK, epfK,
@@ -70,8 +70,9 @@ Turbofan operation routine
     - `A25`:     HPC-face area [m^2]
     - `A5`:      core nozzle area [m^2]
     - `A7`:      fan  nozzle area [m^2]
-    - `iTFspec`:   = 1 Tt4  is specified
-                   = 2 Feng is specified
+    - `opt_calc_call`:
+                  = "oper_fixedTt4", Tt4 is specified
+                  = "oper_fixedFe", Feng is specified
     - `Tt4`:     turbine-inlet total temperature [K]
     - `Ttf`:     fuel temperature entering combustor
     - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
@@ -161,7 +162,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       mbfD, mblcD, mbhcD, mbhtD, mbltD,
       NbfD, NblcD, NbhcD, NbhtD, NbltD,
       A2, A25, A5, A7,
-      iTFspec,
+      opt_calc_call,
       Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
       pifK, epfK,
@@ -268,9 +269,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       Lprint = false
 
-      if (iTFspec == 1)
+      if compare_strings(opt_calc_call, "oper_fixedTt4")
             Tt4spec = Tt4
-      else
+      elseif compare_strings(opt_calc_call, "oper_fixedFe")
             Fspec = Feng
       end
 
@@ -2427,7 +2428,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #-------------------------------------------------------------------------
 
-            if (iTFspec == 1)
+            if compare_strings(opt_calc_call, "oper_fixedTt4")
                   #----- specified Tt4 constraint
                   res[7, 1] = Tt4 - Tt4spec
                   a[7, 1] = 0.0
@@ -2732,7 +2733,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             if (iter < 0)
 
-                  println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
+                  println("TFOPER: Convergence failed.  opt_call_calc=", opt_calc_call)
 
                   Tt4 = Tb
                   pt5 = Pc
@@ -2992,7 +2993,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             end
 
             if (Lprint || iter >= itmax - 6)
-                  if (iTFspec == 1)
+                  if compare_strings(opt_calc_call, "oper_fixedTt4")
                         if (u0 == 0.0)
                               Finl = 0.0
                         else
@@ -3019,7 +3020,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   ru2 = rho2 * u2
                   ru19 = rho19 * u19
 
-                  println(iter, vrlx, rlx, iTFspec)
+                  println(iter, vrlx, rlx, opt_calc_call)
                   println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
                   println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
                   println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)

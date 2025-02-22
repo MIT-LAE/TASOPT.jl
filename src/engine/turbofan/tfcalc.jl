@@ -159,40 +159,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         println("        altkm =", para[iaalt] / 1000.0)
                 end
 
-                #        tset[time0]
-
-                # println("===========================")
-                # println(["gee, M0, T0, p0, a0, M2, M25,
-                # Fe, Phiinl, Kinl, iBLIc,
-                # BPR, pif, pilc, pihc,
-                # pid, pib, pifn, pitn,
-                # Tfuel, ifuel, etab,
-                # epolf, epollc, epolhc, epolht, epollt,
-                # pifK, epfK,
-                # mofft, Pofft,
-                # Tt9, pt9, Tt4,
-                # epsl, epsh,
-                # icool,
-                # Mtexit, dTstrk, StA, efilm, tfilm,
-                # M4a, ruc,
-                # ncrowx, ncrow,
-                # epsrow,", gee, M0, T0, p0, a0, M2, M25,
-                #         Fe, Phiinl, Kinl, iBLIc,
-                #         BPR, pif, pilc, pihc,
-                #         pid, pib, pifn, pitn,
-                #         Tfuel, ifuel, etab,
-                #         epolf, epollc, epolhc, epolht, epollt,
-                #         pifK, epfK,
-                #         mofft, Pofft,
-                #         Tt9, pt9, Tt4,
-                #         epsl, epsh,
-                #         icool,
-                #         Mtexit, dTstrk, StA, efilm, tfilm,
-                #         M4a, ruc,
-                #         ncrowx, ncrow,
-                #         epsrow])
-                # println("===========================")
-
                 epsrow, Tmrow,
                 TSFC, Fsp, hfuel, ff, mcore,
                 Tt0, ht0, pt0, cpt0, Rt0,
@@ -386,17 +352,14 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
 
                 if compare_strings(opt_calc_call, "oper_fixedTt4")
                         #------ specified Tt4 -- Fe will be computed
-                        iTFspec = 1
-
+                        nothing; #nothing special is done
                 elseif compare_strings(opt_calc_call, "oper_fixedFe")
                         #------ specified Fe -- Tt4 will be computed (set initial guess here)
                         Fe = pare[ieFe]
-                        iTFspec = 2
-
                 end
 
                 if (Lprint)
-                        println(cplab[ip], iTFspec, Tt4, Fe)
+                        println(cplab[ip], opt_calc_call, Tt4, Fe)
                         println("Calling TFOPER...", opt_calc_call, opt_cooling, ip)
                         println(DAwsurf, para[iagamV])
                         println(rho0, u0, parg[igWMTO])
@@ -404,31 +367,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         println("Phiinl, Kinl", Phiinl, Kinl)
 
                 end
-
-                # println("================================")
-                # println([gee, M0, T0, p0, a0, Tref, pref])
-                # println([Phiinl, Kinl, iBLIc])
-                # println([pid, pib, pifn, pitn])
-                # println([Gearf])
-                # println([pifD, pilcD, pihcD, pihtD, piltD])
-                # println([mbfD, mblcD, mbhcD, mbhtD, mbltD])
-                # println([NbfD, NblcD, NbhcD, NbhtD, NbltD])
-                # println([A2, A25, A5, A7])
-                # println([iTFspec])
-                # println([Tfuel, ifuel, etab])
-                # println([epolf, epollc, epolhc, epolht, epollt])
-                # println([pifK, epfK])
-                # println([mofft, Pofft])
-                # println([Tt9, pt9])
-                # println([epsl, epsh])
-                # println([icool])
-                # println([Mtexit, dTstrk, StA, efilm, tfilm])
-                # println([M4a, ruc])
-                # println([ncrowx, ncrow])
-                # println([epsrow, Tmrow])
-                # println(Fe)
-                # println([M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25])
-                # println("================================")
 
                 TSFC, Fsp, hfuel, ff,
                 Fe, mcore,
@@ -468,7 +406,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         mbfD, mblcD, mbhcD, mbhtD, mbltD,
                         NbfD, NblcD, NbhcD, NbhtD, NbltD,
                         A2, A25, A5, A7,
-                        iTFspec,
+                        opt_calc_call,
                         Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
                         pifK, epfK,
@@ -493,9 +431,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 if (!Lconv)
                         println("Failed on operating point", ip, ":  ", cplab[ip])
                 end
-                # if (iTFspec == 1)
-                #         exit()
-                # end
 
                 fo = mofft / mcore
 
