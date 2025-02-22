@@ -809,7 +809,7 @@ readprop(x) = read_input(x, prop, dprop)
     pare[ieT0, iptakeoff, :] .= T0TO
 
     # Core in clean-flow -> 0; Core ingests KE defect -> 1
-    pari[iiBLIc] = !readprop("core_in_clean_flow")
+    eng_has_BLI_cores = !readprop("core_in_clean_flow")
 
     #Turbomachinery
     turb = readprop("Turbomachinery")
@@ -1010,7 +1010,7 @@ if compare_strings(propsys,"tf")
     engineweightname = TF_wmodel
     engineweight! = tfweightwrap!
 
-    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
 
 elseif compare_strings(propsys, "te")
     nothing

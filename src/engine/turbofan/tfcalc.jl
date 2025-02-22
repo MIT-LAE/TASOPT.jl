@@ -1,5 +1,5 @@
 """ 
-    tfcalc(pari,parg,para,pare, ip, icall,icool,initializes_engine)
+    tfcalc(wing, engine, parg, para, pare, ip, ifuel, icall, icool, initializes_engine)
 
 Calls function tfsize or tfoper for one operating point.
 
@@ -16,7 +16,7 @@ Calls function tfsize or tfoper for one operating point.
     - `initializes_engine`:    false  initialize variables for iteration in TFOPER
                                 true  use current variables as initial guesses in TFOPER
 """
-function tfcalc!(ifuel, pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
+function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
         icall::Int64, icool::Int64, initializes_engine::Bool)
 
         Lprint = false
@@ -25,7 +25,7 @@ function tfcalc!(ifuel, pari::Vector{Int64}, parg::Vector{Float64}, para, pare, 
                 println("entering TFCALC", icall, icool, initializes_engine)
         end
 
-        iBLIc = pari[iiBLIc]
+        eng_has_BLI_cores = engine.model.has_BLI_cores
 
         Gearf = parg[igGearf]
         Tmetal = parg[igTmetal]
@@ -220,7 +220,7 @@ function tfcalc!(ifuel, pari::Vector{Int64}, parg::Vector{Float64}, para, pare, 
                 epf, eplc, ephc, epht, eplt,
                 etaf, etalc, etahc, etaht, etalt,
                 Lconv = tfsize!(gee, M0, T0, p0, a0, M2, M25,
-                        Fe, Phiinl, Kinl, iBLIc,
+                        Fe, Phiinl, Kinl, eng_has_BLI_cores,
                         BPR, pif, pilc, pihc,
                         pid, pib, pifn, pitn,
                         Tfuel, ifuel, hvap, etab,
@@ -460,7 +460,7 @@ function tfcalc!(ifuel, pari::Vector{Int64}, parg::Vector{Float64}, para, pare, 
                 epf, eplc, ephc, epht, eplt,
                 etaf, etalc, etahc, etaht, etalt,
                 Lconv = tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-                        Phiinl, Kinl, iBLIc,
+                        Phiinl, Kinl, eng_has_BLI_cores,
                         pid, pib, pifn, pitn,
                         Gearf,
                         pifD, pilcD, pihcD, pihtD, piltD,

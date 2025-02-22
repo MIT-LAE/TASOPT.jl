@@ -1,6 +1,6 @@
 """
     tfsize!(gee, M0, T0, p0, a0, M2, M25,
-      Feng, Phiinl, Kinl, iBLIc,
+      Feng, Phiinl, Kinl, eng_has_BLI_cores,
       BPR, pif, pilc, pihc,
       pid, pib, pifn, pitn,
       Ttf, ifuel, etab,
@@ -37,7 +37,7 @@ The gas routines reside in the following source files:
     - `M25`:     HPC-face Mach number
     - `Feng`:    required net thrust  (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
     - `Phiinl`:  inlet ingested dissipation
-    - `iBLIc`:   0=core in clear flow, 1=core sees Phiinl
+    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees Phiinl
     - `BPR`:     bypass ratio  = mdot_fan/mdot_core
     - `pif`:     fan      pressure ratio  ( = pt7 /pt2)
     - `pilc`:    LP comp  pressure ratio  ( = pt25/pt2)
@@ -132,7 +132,7 @@ The gas routines reside in the following source files:
       8  fan flow downstream
 """
 function tfsize!(gee, M0, T0, p0, a0, M2, M25,
-      Feng, Phiinl, Kinl, iBLIc,
+      Feng, Phiinl, Kinl, eng_has_BLI_cores,
       BPR, pif, pilc, pihc,
       pid, pib, pifn, pitn,
       Ttf, ifuel, hvap, etab,
@@ -276,10 +276,10 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             if (ipass == 1)
                   #c      if(mcore == 0.0)
                   #----- don't know engine mass flow yet, so ignore any BLI mixing
-                  if (iBLIc == 0)
+                  if (eng_has_BLI_cores)
                         sbfan = 0.0
                         sbcore = 0.0
-                  else
+                  else #clean flow
                         sbfan = 0.0
                         sbcore = 0.0
                   end
@@ -288,17 +288,17 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   #----- account for inlet BLI defect via mass-averaged entropy
                   a2sq = at0^2 / (1.0 + 0.5 * (gam0 - 1.0) * M2^2)
 
-                  if (iBLIc == 0)
+                  if eng_has_BLI_cores
+                        #------ BL mixes with fan + core flow
+                        mmix = BPR * mcore * sqrt(Tt2 / Tt0) * pt0 / pt2 +
+                                    mcore * sqrt(Tt19c / Tt0) * pt0 / pt19c
+                        sbfan2 = Kinl * gam0 / (mmix * a2sq)
+                        sbcore2 = sbfan
+                  else
                         #------ BL mixes with fan flow only
                         mmix = BPR * mcore * sqrt(Tt2 / Tt0) * pt0 / pt2
                         sbfan2 = Kinl * gam0 / (mmix * a2sq)
                         sbcore2 = 0.0
-                  else
-                        #------ BL mixes with fan + core flow
-                        mmix = BPR * mcore * sqrt(Tt2 / Tt0) * pt0 / pt2 +
-                               mcore * sqrt(Tt19c / Tt0) * pt0 / pt19c
-                        sbfan2 = Kinl * gam0 / (mmix * a2sq)
-                        sbcore2 = sbfan
                   end
 
                   #----- update mixed-out entropies, with some underrelaxation       

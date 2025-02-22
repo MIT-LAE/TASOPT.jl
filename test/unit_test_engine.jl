@@ -528,7 +528,7 @@ isGradient = false
         Feng = 22182.101361240744
         Phiinl = 0.0000000000000000
         Kinl = 0.0000000000000000
-        iBLIc = 0
+        eng_has_BLI_cores = false
         BPR = 5.0999999999999996
         pif = 1.6850000000000001
         pilc = 8.0000000000000000
@@ -607,7 +607,7 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfsize!(gee, M0, T0, p0, a0, M2, M25,
-            Feng, Phiinl, Kinl, iBLIc,
+            Feng, Phiinl, Kinl, eng_has_BLI_cores,
             BPR, pif, pilc, pihc,
             pid, pib, pifn, pitn,
             Ttf, ifuel, hvap, etab,
@@ -636,7 +636,7 @@ isGradient = false
         if isGradient
             # AD
             d_etaf_dM0 = gradient(M0 -> TASOPT.engine.tfsize(gee, M0, T0, p0, a0, M2, M25,
-                    Feng, Phiinl, Kinl, iBLIc,
+                    Feng, Phiinl, Kinl, eng_has_BLI_cores,
                     BPR, pif, pilc, pihc,
                     pid, pib, pifn, pitn,
                     Ttf, ifuel, hvap, etab,
@@ -655,7 +655,7 @@ isGradient = false
             # FD
             epsilon = 1e-6
             etaf_d = TASOPT.engine.tfsize(gee, M0 + epsilon, T0, p0, a0, M2, M25,
-                Feng, Phiinl, Kinl, iBLIc,
+                Feng, Phiinl, Kinl, eng_has_BLI_cores,
                 BPR, pif, pilc, pihc,
                 pid, pib, pifn, pitn,
                 Ttf, ifuel, hvap, etab,
@@ -687,7 +687,7 @@ isGradient = false
         Feng = 22182.101361240744
         Phiinl = 0.0000000000000000
         Kinl = 0.0000000000000000
-        iBLIc = 0
+        eng_has_BLI_cores = false
         BPR = 5.0999999999999996
         pif = 1.6850000000000001
         pilc = 8.0000000000000000
@@ -755,7 +755,7 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfsize!(gee, M0, T0, p0, a0, M2, M25,
-            Feng, Phiinl, Kinl, iBLIc,
+            Feng, Phiinl, Kinl, eng_has_BLI_cores,
             BPR, pif, pilc, pihc,
             pid, pib, pifn, pitn,
             Ttf, ifuel, hvap, etab,
@@ -816,7 +816,7 @@ isGradient = false
 
         Phiinl = 0.0
         Kinl = 0.0
-        iBLIc = 0
+        eng_has_BLI_cores = false
 
         pid = 0.99800000000000000
         pib = 0.93999999999999995
@@ -926,7 +926,7 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-            Phiinl, Kinl, iBLIc,
+            Phiinl, Kinl, eng_has_BLI_cores,
             pid, pib, pifn, pitn,
             Gearf,
             pifD, pilcD, pihcD, pihtD, piltD,
@@ -982,7 +982,7 @@ isGradient = false
 
         Phiinl = 0.0
         Kinl = 0.0
-        iBLIc = 0
+        eng_has_BLI_cores = false
 
         pid = 0.99800000000000000
         pib = 0.93999999999999995
@@ -1093,7 +1093,7 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-            Phiinl, Kinl, iBLIc,
+            Phiinl, Kinl, eng_has_BLI_cores,
             pid, pib, pifn, pitn,
             Gearf,
             pifD, pilcD, pihcD, pihtD, piltD,

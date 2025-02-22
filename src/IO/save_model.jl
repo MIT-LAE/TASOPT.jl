@@ -403,8 +403,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_prop["Tt4_cruise"] = pare[ieTt4,ipcruise1,:]
         d_prop["Tt4_takeoff"] =  pare[ieTt4,ipstatic,:]
 
-        d_prop["core_in_clean_flow"] = !Bool(pari[iiBLIc])
-            #expression negates 0 to 1 and vice versa (), see read_input.jl
+        d_prop["core_in_clean_flow"] = !engine.model.has_BLI_cores
+            #expression negates bool, see read_input.jl
         
     #Turbomachinery
     d_prop_turb = Dict()
