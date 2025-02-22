@@ -1,13 +1,13 @@
 """ 
-    tfcalc(wing, engine, parg, para, pare, ip, ifuel, icall, opt_cooling, initializes_engine)
+    tfcalc(wing, engine, parg, para, pare, ip, ifuel, opt_calc_call, opt_cooling, initializes_engine)
 
 Calls function tfsize or tfoper for one operating point.
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**
-    - `icall`:    0  call on-design  sizing   routine tfsize
-                  1  call off-design analysis routine tfoper, specified Tt4
-                  2  call off-design analysis routine tfoper, specified Fe
+    - `opt_calc_call`:  "sizing"        call on-design  sizing   routine tfsize
+                        "oper_fixedTt4" call off-design analysis routine tfoper, specified Tt4
+                        "oper_fixedFe"  call off-design analysis routine tfoper, specified Fe
 
     - `opt_cooling`:   turbine cooling flag
                "none" = no cooling mass flow
@@ -18,12 +18,12 @@ Calls function tfsize or tfoper for one operating point.
                                 true  use current variables as initial guesses in TFOPER
 """
 function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
-        icall::Int64, opt_cooling::String, initializes_engine::Bool)
+        opt_calc_call::String, opt_cooling::String, initializes_engine::Bool)
 
         Lprint = false
 
         if (Lprint)
-                println("entering TFCALC", icall, opt_cooling, initializes_engine)
+                println("entering TFCALC", opt_calc_call, opt_cooling, initializes_engine)
         end
 
         eng_has_BLI_cores = engine.model.has_BLI_cores
@@ -146,7 +146,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         pt9 = pare[iept9]
 
         # #--------------------------------------------------------------------------
-        if (icall == 0)
+        if compare_strings(opt_calc_call, "sizing")
                 #----- engine sizing case
 
                 Fe = pare[ieFe]
@@ -384,11 +384,11 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 Fe = 0.0
                 Tt4 = pare[ieTt4]
 
-                if (icall == 1)
+                if compare_strings(opt_calc_call, "oper_fixedTt4")
                         #------ specified Tt4 -- Fe will be computed
                         iTFspec = 1
 
-                else
+                elseif compare_strings(opt_calc_call, "oper_fixedFe")
                         #------ specified Fe -- Tt4 will be computed (set initial guess here)
                         Fe = pare[ieFe]
                         iTFspec = 2
@@ -397,7 +397,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
 
                 if (Lprint)
                         println(cplab[ip], iTFspec, Tt4, Fe)
-                        println("Calling TFOPER...", icall, opt_cooling, ip)
+                        println("Calling TFOPER...", opt_calc_call, opt_cooling, ip)
                         println(DAwsurf, para[iagamV])
                         println(rho0, u0, parg[igWMTO])
                         println(mcore, M2, M25)
@@ -506,9 +506,9 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 pare[ieM2] = M2
                 pare[ieM25] = M25
 
-                if (icall == 1)
+                if compare_strings(opt_calc_call, "oper_fixedTt4")
                         pare[ieFe] = Fe
-                else
+                elseif compare_strings(opt_calc_call, "oper_fixedFe")
                         pare[ieTt4] = Tt4
                 end
 
