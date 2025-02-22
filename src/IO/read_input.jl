@@ -455,6 +455,7 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     elseif (fuse_tank.placement == "both") 
         nftanks = 2
     end
+    fuse_tank.tank_count = nftanks
 else #else all fuel in wings
     nftanks = 0
 end #if
@@ -1054,7 +1055,7 @@ dHEx = dprop["HeatExchangers"]
         ifuel = ifuel,
         has_wing_fuel = has_wing_fuel,
         has_centerbox_fuel = has_centerbox_fuel,
-        fuselage_fueltank_count = nftanks,
+        has_fuselage_fuel = (nftanks>0),
         
         opt_engine_location = engloc,
         opt_prop_sys_arch = propsys,

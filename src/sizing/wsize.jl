@@ -128,7 +128,7 @@ function wsize(ac; itermax=35,
     rSnace = parg[igrSnace]
 
     # Fuel tank parameters
-    nftanks = options.fuselage_fueltank_count
+    nftanks = fuse_tank.tank_count
     xfuel = ltank = 0.0
 
     if options.has_wing_fuel
@@ -404,7 +404,7 @@ function wsize(ac; itermax=35,
         xhtail, xvtail, xwing = htail.layout.x, vtail.layout.x, wing.layout.x
         xeng = parg[igxeng]
         Wtesys = parg[igWtesys]
-        nftanks = options.fuselage_fueltank_count
+        nftanks = fuse_tank.tank_count
         
         if !(options.has_wing_fuel) #fuselage fuel store
             tank_placement = fuse_tank.placement
@@ -743,7 +743,7 @@ function wsize(ac; itermax=35,
             parg[igxWfuel] = parg[igWfuel] * xfuel
 
             # Update fuselage according to tank requirements
-            update_fuse!(fuse, wing, htail, vtail, parg, options.fuselage_fueltank_count) #update fuselage length to accommodate tank
+            update_fuse!(fuse, wing, htail, vtail, parg, fuse_tank.tank_count) #update fuselage length to accommodate tank
             fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
             #Update fuselage BL properties

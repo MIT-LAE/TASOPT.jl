@@ -12,8 +12,8 @@ $TYPEDFIELDS
     ifuel::Integer
     has_centerbox_fuel::Bool
     has_wing_fuel::Bool
-    # has_fuselage_fuel::Bool       #TODO: put this in and...
-    fuselage_fueltank_count::Int    #... move this field to the fuselage class.
+    has_fuselage_fuel::Bool 
+        #TODO: consider making ^ a driving parameter, rather than a reflection of fuse_tank parameters
     
     #engine options
     opt_engine_location::String
