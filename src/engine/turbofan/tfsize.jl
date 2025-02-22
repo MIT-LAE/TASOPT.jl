@@ -9,7 +9,7 @@
       mofft, Pofft,
       Tt9, pt9, Tt4,
       epsl, epsh,
-      icool,
+      opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
       M4a, ruc,
       ncrowx, ncrow,
@@ -65,21 +65,21 @@ The gas routines reside in the following source files:
     - `epsl`:    low  spool power loss fraction
     - `epsh`:    high spool power loss fraction
       
-    - `icool   turbine cooling flag
-               0 = no cooling, ignore all cooling parameters below
-               1 = usual cooling, using passed-in fcool
-               2 = usual cooling, but set (and return) fcool from Tmetal
+    - `opt_cooling`:   turbine cooling flag
+               "none" = no cooling, ignore all cooling parameters below
+               "fixed_coolingflowratio" = usual cooling, using passed-in fcool
+               "fixed_Tmetal" = usual cooling, but set (and return) fcool from Tmetal
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if icool=2
-    - `StA`:      area-weighted Stanton number    , used only if icool=2
+    - `dTstrk`:   hot-streak temperature delta {K}, used only if opt_cooling="fixed_Tmetal"
+    - `StA`:      area-weighted Stanton number    , used only if opt_cooling="fixed_Tmetal"
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
     - `ruc`:      cooling-flow outlet velocity ratio, u/ue
     - `ncrowx`:      dimension of epsrow array
     - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if icool=1
-                     output resulting cooling-flow bypass ratio if icool=2
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if icool=2
-                     output resulting metal temperature  [K]    if icool=1
+    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if opt_cooling="fixed_coolingflowratio"
+                     output resulting cooling-flow bypass ratio if opt_cooling="fixed_Tmetal"
+    - `Tmrow(.)`:    input specified  metal temperature  [K]    if opt_cooling="fixed_Tmetal"
+                     output resulting metal temperature  [K]    if opt_cooling="fixed_coolingflowratio"
 
       **Outputs:**
     - `epsrow(.)`:   see above
@@ -141,7 +141,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       mofft, Pofft,
       Tt9, pt9, Tt4,
       epsl, epsh,
-      icool,
+      opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
       M4a, ruc,
       ncrowx, ncrow,
@@ -390,7 +390,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             # ===============================================================
 
             lambdap = zeros(nair)
-            if (icool == 0)
+            if compare_strings(opt_cooling, "none")
                   #----- no cooling air present... station 41 is same as 4
                   ff = ffb * (1.0 - fo)
 
@@ -416,12 +416,12 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
                   Tt_tc = gas_tset(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
 
-                  if (icool == 1)
+                  if compare_strings(opt_cooling, "fixed_coolingflowratio")
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
                         Tmrow = Tmcalc(ncrowx, ncrow,
                         Tt_tc, Tt4, dTstrk, Trrat,
                               efilm, tfilm, StA, epsrow)
-                  else
+                  elseif compare_strings(opt_cooling, "fixed_Tmetal")
                         #------ calculate cooling mass flow ratios epsrow(.) to get specified Tmrow(.)
                         ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr = mcool(ncrowx,
                               Tmrow, Tt_tc, Tt4, dTstrk, Trrat,

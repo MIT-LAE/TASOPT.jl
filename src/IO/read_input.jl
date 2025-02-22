@@ -1060,7 +1060,6 @@ dHEx = dprop["HeatExchangers"]
         opt_prop_sys_arch = propsys,
         opt_engine_model = "TODO: FIX THIS engine model spec",
         opt_engine_weight_model = TF_wmodel,
-        has_BLI_cores = Bool(!readprop("core_in_clean_flow")),
         
         is_doubledecker = is_doubledecker
     )

@@ -33,20 +33,20 @@
     - `epolc`:   compressor polytropic efficiency
     - `epolt`:   turbine    polytropic efficiency
 
-    - `icool`:    turbine cooling flag
-            0 = no cooling, ignore all cooling parameters below
-            1 = usual cooling, using passed-in BPRc
-            2 = usual cooling, but set (and return) BPRc from Tmetal
+    - `opt_cooling`:   turbine cooling flag
+               "none" = no cooling, ignore all cooling parameters below
+               "fixed_coolingflowratio" = usual cooling, using passed-in fcool (here, BPRc)
+               "fixed_Tmetal" = usual cooling, but set (and return) fcool (here, BPRc) from Tmetal
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `Tmetal`:   specified metal temperature  [K], used only if icool=2
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if icool=2
-    - `Stc`:      area-weighted Stanton number    , used only if icool=2
+    - `Tmetal`:   specified metal temperature  [K], used only if opt_cooling="fixed_Tmetal"
+    - `dTstrk`:   hot-streak temperature delta {K}, used only if opt_cooling="fixed_Tmetal"
+    - `Stc`:      area-weighted Stanton number    , used only if opt_cooling="fixed_Tmetal"
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
     - `ruc`:      cooling-flow outlet velocity ratio, u/ue
-    - `BPRc`:     cooling-flow bypass ratio, mdot_cool/mdot_core, input if icool=1
+    - `BPRc`:     cooling-flow bypass ratio, mdot_cool/mdot_core, input if opt_cooling="fixed_coolingflowratio"
 
    **Output**
-   - `BPRc`:    cooling-flow bypass ratio, mdot_cool/mdot_core, output if icool=2
+   - `BPRc`:    cooling-flow bypass ratio, mdot_cool/mdot_core, output if opt_cooling="fixed_Tmetal"
    - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
    - `Fsp`:     specific thrust  = F / (mdot a) = F / ((1+BPR) mdot_core a)
    - `hfuel`:   fuel heating value   [J / kg K]
@@ -77,7 +77,7 @@ function tfan(gee, M0, T0, p0, Mfan, Afan,
     BPR, pif, pic, pid, pib,
     Tt4, Ttf, ifuel,
     epolf, epolc, epolt,
-    icool,
+    opt_cooling,
     Mtexit, Tmetal, dTstrk, Stc,
     M4a, ruc)
  
@@ -169,7 +169,7 @@ function tfan(gee, M0, T0, p0, Mfan, Afan,
     #     lambda[1]+lambda[2]+lambda[3]+lambda[4]+lambda[5]+lambda[6]
 
     # =========================
-    if (icool == 2)
+    if compare_strings(opt_cooling, "fixed_Tmetal")
         #----- set cooling mass flow
         efilm = 0.7
         tfilm = 0.4
@@ -187,7 +187,7 @@ function tfan(gee, M0, T0, p0, Mfan, Afan,
 
     lambdap = zeros(nair)
     #----------------------------------------------------------------
-    if (icool == 0)
+    if compare_strings(opt_cooling, "none")
         #----- no cooling air present
         pt41 = pt4
         Tt41 = Tt4
