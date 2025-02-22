@@ -1,6 +1,4 @@
 export update_fuse!, update_fuse_for_pax!
-
-#TODO: this docstring is well out of Date
 """
     update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
@@ -20,8 +18,6 @@ Function to update the fuselage layout when there is a change in fuselage fuel t
 """
 function update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_count)
 
-    nftanks = fuselage_fueltank_count #Number of fuel tanks in fuselage
-    # parg[igRfuse   ] = 90 * in_to_m 
     lftank = parg[iglftank] # Get length of tank from previous iteration
     lftoffset = 2.0*ft_to_m #1 ft buffer for front and back of tanks
 
@@ -41,7 +37,7 @@ function update_fuse!(fuselage, wing, htail, vtail, parg, fuselage_fueltank_coun
     end
 
     #Update positions and fuselage length
-    fuselage.layout.x_end_cylinder = fuselage.layout.x_start_cylinder + nftanks * (lftank + lftoffset) + lcyl
+    fuselage.layout.x_end_cylinder = fuselage.layout.x_start_cylinder + fuselage_fueltank_count * (lftank + lftoffset) + lcyl
 
     fuselage.layout.x_pressure_shell_aft = fuselage.layout.x_end_cylinder + dxcyl2shellaft
 

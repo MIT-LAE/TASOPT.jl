@@ -28,7 +28,7 @@ No direct outputs. Fields in `ac` are modified. Namely:
 """
 function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       #Unpack aircraft
-      _, parg, _, para, _, options, fuse, _, wing, htail, vtail, _ = unpack_ac(ac, imission, ip = ip)
+      _, parg, _, para, _, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac(ac, imission, ip = ip)
 
       # Unpack weights
       Wpay = parg[igWpay]
@@ -48,7 +48,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
 
-      nftanks = options.fuselage_fueltank_count #number of fuel tanks in fuselage
+      nftanks = fuse_tank.tank_count #number of fuel tanks in fuselage
       lftank = parg[iglftank]
 
       # Use weight fractions to calcualte weights of subsystems
@@ -276,7 +276,7 @@ No direct outputs. Fields in `ac` are modified.
 """
 function htsize(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
-      _, parg, options, fuse, _, wing, htail, vtail, _ = unpack_ac_components(ac)
+      _, parg, _, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -328,7 +328,7 @@ function htsize(ac, paraF, paraB, paraC)
       Wtesys = parg[igWtesys]
       xWtesys = parg[igxWtesys]
 
-      nftanks = options.fuselage_fueltank_count
+      nftanks = fuse_tank.tank_count
       lftank = parg[iglftank]
       Wftank = parg[igWftank]
       xWftank = parg[igxWftank]
@@ -655,7 +655,7 @@ The alternative 2D search for `rfuel`,`rpay` is kinda ugly,
 and unwarranted in practice.
 """
 function cglpay(ac)
-      _, parg, options, fuse, _, wing, htail, vtail, _ = unpack_ac_components(ac)
+      _, parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -673,7 +673,7 @@ function cglpay(ac)
       Wtesys = parg[igWtesys]
       #      xWtesys = parg[igxWtesys]
 
-      nftanks = options.fuselage_fueltank_count
+      nftanks = fuse_tank.tank_count
       lftank = parg[iglftank]
       Wftank = parg[igWftank]
       #      xWftank = parg[igxWftank]

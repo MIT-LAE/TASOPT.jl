@@ -210,7 +210,7 @@ function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_ho
     #Define functions for heat and fuel burn profiles through mission 
     Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)
     W_calc(t) = 0.0
-    mdot_calc(t) = find_mdot_time(t, ac.options.fuselage_fueltank_count, ac.parg, para_alt, pare_alt)
+    mdot_calc(t) = find_mdot_time(t, ac.fuse_tank.tank_count, ac.parg, para_alt, pare_alt)
 
     #Store profiles in input struct
     u = tank_inputs(Q_calc, W_calc, mdot_calc)

@@ -217,7 +217,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         ntank = 8
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
         l = max(parg[iglftankin], parg[iglftank])
-        nftanks = options.fuselage_fueltank_count #Number of fuel tanks
+        nftanks = fuse_tank.tank_count #Number of fuel tanks
         ARtank = 2.0
 
         if nftanks != 0
