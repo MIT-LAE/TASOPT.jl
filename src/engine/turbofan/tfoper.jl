@@ -1,6 +1,6 @@
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-      Phiinl, Kinl, iBLIc,
+      Phiinl, Kinl, eng_has_BLI_cores,
       pid, pib, pifn, pitn,
       Gearf,
       pifD, pilcD, pihcD, pihtD, piltD,
@@ -45,7 +45,7 @@ Turbofan operation routine
     - `Tref`:    reference temperature for corrected mass flow and speed
     - `pref`:    reference pressure for corrected mass flow
     - `Phiinl`:  inlet ingested dissipation  Phi_inl
-    - `iBLIc`:   0=core in clear flow, 1=core sees Phiinl
+    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees Phiinl
     - `pid`:     diffuser pressure ratio  ( = pt2/pt0)
     - `pib`:     burner   pressure ratio  ( = pt4/pt3)
     - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt6.9)
@@ -154,7 +154,7 @@ Turbofan operation routine
       8   fan flow downstream
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-      Phiinl, Kinl, iBLIc,
+      Phiinl, Kinl, eng_has_BLI_cores,
       pid, pib, pifn, pitn,
       Gearf,
       pifD, pilcD, pihcD, pihtD, piltD,
@@ -428,28 +428,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   a2sq_Mi = -a2sq / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2) *
                             (gam0 - 1.0) * Mi
 
-                  if (iBLIc == 0)
-                        #------ BL mixes with fan flow only
-                        #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
-
-                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_Mi = 0.0
-
-                        sbfan = Kinl * gam0 / (mmix * a2sq)
-                        sbfan_mf = (-sbfan / mmix) * mmix_mf
-                        sbfan_ml = 0.0
-                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
-                                   (-sbfan / a2sq) * a2sq_Mi
-
-                        sbcore = 0.0
-                        sbcore_mf = 0.0
-                        sbcore_ml = 0.0
-                        sbcore_Mi = 0.0
-
-                  else
+                  if eng_has_BLI_cores
                         #------ BL mixes with fan + core flow
                         #c      mmix    = mf*sqrt(Tref/Tt2 ) * pt2    /pref
                         #c             + ml*sqrt(Tref/Tt19) * pt19   /pref
@@ -474,8 +453,28 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         sbcore_mf = sbfan_mf
                         sbcore_ml = sbfan_ml
                         sbcore_Mi = sbfan_Mi
-                  end
 
+                  else #clean flow
+                        #------ BL mixes with fan flow only
+                        #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
+                        #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
+                        #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
+
+                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
+                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
+                        mmix_Mi = 0.0
+
+                        sbfan = Kinl * gam0 / (mmix * a2sq)
+                        sbfan_mf = (-sbfan / mmix) * mmix_mf
+                        sbfan_ml = 0.0
+                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
+                                    (-sbfan / a2sq) * a2sq_Mi
+
+                        sbcore = 0.0
+                        sbcore_mf = 0.0
+                        sbcore_ml = 0.0
+                        sbcore_Mi = 0.0
+                  end
             end
 
             #---- note: BL is assumed adiabatic, 
