@@ -16,7 +16,7 @@
 """
 function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     #Extract aircraft components and storage arrays
-    pari, parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
     
     parad = ac.parad
     pared = ac.pared

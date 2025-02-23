@@ -87,8 +87,11 @@
     @test size(csv1,1) == 4 #4 rows w default indices
     @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test length(csv1[1]) == 751 # = entries w/ full ac struct and in default_output_indices
-    @test length(csv2[1]) == 1168 # = entries w/ ac struct less fuse_tank and all output_indices
+    #NOTE to anyone about to change these tests. 
+    #These values change if you added/removed structs or fields to aircraft, or if you added/removed par entries
+    #If it shifts by an expected amount, feel free to update them. Otherwise, think twice.
+    @test length(csv1[1]) == 736 # = entries w/ full ac struct and in default_output_indices
+    @test length(csv2[1]) == 1153 # = entries w/ ac struct less fuse_tank and all output_indices
 
     #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 

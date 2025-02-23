@@ -6,7 +6,6 @@ The aircraft must be defined in parg array. The ipstatic and iprotate points are
 
 """
 function takeoff!(ac; printTO = true)
-    pari  = ac.pari
     parg  = ac.parg
     parm  = ac.parmd
     para  = ac.parad

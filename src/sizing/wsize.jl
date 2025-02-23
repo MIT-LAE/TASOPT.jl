@@ -24,7 +24,7 @@ function wsize(ac; itermax=35,
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
-    pari, parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     # Initialize variables
     time_propsys = 0.0
@@ -949,7 +949,7 @@ end
 Wupdate0 updates the weight of the aircraft
 """
 function Wupdate0!(ac, rlx, fsum)
-    pari, parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+    parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
     
@@ -977,7 +977,7 @@ end
 Wupdate
 """
 function Wupdate!(ac, rlx, fsum)
-    pari, parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+    parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 

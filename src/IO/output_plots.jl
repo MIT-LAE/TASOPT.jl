@@ -18,7 +18,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     end
 
     # Unpack aircraft components
-    pari, parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac,1) #imission = 1 
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac,1) #imission = 1 
 
     # Wing
         co = wing.layout.root_chord

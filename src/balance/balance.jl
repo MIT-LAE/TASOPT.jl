@@ -28,7 +28,7 @@ No direct outputs. Fields in `ac` are modified. Namely:
 """
 function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       #Unpack aircraft
-      _, parg, _, para, _, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac(ac, imission, ip = ip)
+      parg, _, para, _, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac(ac, imission, ip = ip)
 
       # Unpack weights
       Wpay = parg[igWpay]
@@ -278,7 +278,7 @@ No direct outputs. Fields in `ac` are modified.
 """
 function size_htail(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
-      _, parg, _, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+      parg, _, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -656,7 +656,7 @@ The alternative 2D search for `rfuel`,`rpay` is kinda ugly,
 and unwarranted in practice.
 """
 function cglpay(ac)
-      _, parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+      parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]

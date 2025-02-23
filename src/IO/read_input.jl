@@ -126,7 +126,6 @@ mis = read_input("Mission", data, default)
 dmis = default["Mission"]
 readmis(x::String) = read_input(x, mis, dmis)
 nmisx = readmis("N_missions")
-pari = zeros(Int64, iitotal)
 parg = zeros(Float64, igtotal)
 parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
@@ -1053,7 +1052,7 @@ dHEx = dprop["HeatExchangers"]
     
 
 return TASOPT.aircraft(name, description, ac_options,
-    pari, parg, parm, para, pare, is_sized, 
+    parg, parm, para, pare, is_sized, 
     fuselage, fuse_tank, wing, htail, vtail, engine)
 
 end
