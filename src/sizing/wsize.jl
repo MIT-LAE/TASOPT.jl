@@ -1027,26 +1027,25 @@ function Wupdate!(ac, rlx, fsum)
 end
 
 """
-    set_ambient_conditions!(ac, mis_point, Mach=NaN)
+    set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
 
-Sets ambient condition at the given mission point `mis_point`.
+Sets ambient condition at the given mission point `ip` and mission `im` (default is 1).
 """
-function set_ambient_conditions!(ac, mis_point, Mach=NaN)
-    mis_point = mis_point
-    ΔTatmos = ac.parmd[imDeltaTatm]
-    altkm = ac.parad[iaalt, mis_point]/1000.0
+function set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
+    ΔTatmos = ac.parm[imDeltaTatm]
+    altkm = ac.para[iaalt, ip, im]/1000.0
     T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
     if Mach === NaN
-        Mach = ac.parad[iaMach, mis_point]
+        Mach = ac.para[iaMach, ip, im]
     end
-    ac.pared[iep0, mis_point] = p0
-    ac.pared[ieT0, mis_point] = T0
-    ac.pared[iea0, mis_point] = a0
-    ac.pared[ierho0, mis_point] = ρ0
-    ac.pared[iemu0, mis_point] = μ0
-    ac.pared[ieM0, mis_point] = Mach
-    ac.pared[ieu0, mis_point] = Mach * a0
-    ac.parad[iaReunit, mis_point] = Mach * a0 * ρ0 / μ0
+    ac.pare[iep0, ip, im] = p0
+    ac.pare[ieT0, ip, im] = T0
+    ac.pare[iea0, ip, im] = a0
+    ac.pare[ierho0, ip, im] = ρ0
+    ac.pare[iemu0, ip, im] = μ0
+    ac.pare[ieM0, ip, im] = Mach
+    ac.pare[ieu0, ip, im] = Mach * a0
+    ac.para[iaReunit, ip, im] = Mach * a0 * ρ0 / μ0
 
 end  # function set_ambient_conditions
 
