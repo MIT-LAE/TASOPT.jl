@@ -93,7 +93,7 @@ end
 end
 
 @testset "Wide sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "./IO/default_wide.toml"))
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml"))
     
     include(__TASOPTindices__)
 
@@ -107,7 +107,7 @@ end
 end
 
 @testset "Regional sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "./IO/default_regional.toml"))
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_regional.toml"))
     
     include(__TASOPTindices__)
 
