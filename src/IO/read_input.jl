@@ -630,20 +630,19 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail.CL_CLmax = readhtail("max_tail_download")
 
-    htail_size = readhtail("HTsize")
-    if compare_strings(htail_size,"vh")
-        htail.size = 1
+    htail_sizing = readhtail("opt_sizing")
+    if compare_strings(htail_sizing,"fixed_Vh")
+        htail.opt_sizing = htail_sizing
         htail.volume = readhtail("Vh")
-    elseif compare_strings(htail_size,"maxforwardcg")
-        htail.size = 2
+    elseif compare_strings(htail_sizing,"max_fwd_CG")
+        htail.opt_sizing = htail_sizing
         htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
         htail.volume = 1.0
     else
         error("Horizontal tail can only be sized via:
-            1: specified tail volume coeff \"Vh\";
-            2: specified CLh at max-forward CG case during landing (\"maxforwardCG\")")
+            \"fixed_Vh\":   specified tail volume coeff \"Vh\";
+            \"max_fwd_CG\": specified CLh at max-forward CG case during landing (\"CLh_at_max_forward_CG\")")
     end
-
 
     movewing = readhtail("move_wingbox")
     if typeof(movewing) == Int
@@ -696,17 +695,17 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
     vtail.ntails  = readvtail("number_Vtails")
 
-    vtail_size = readvtail("VTsize")
-    if compare_strings(vtail_size, "vv")
-        vtail.size = 1
+    vtail_sizing = readvtail("opt_sizing")
+    if compare_strings(vtail_sizing, "fixed_Vv")
+        vtail.opt_sizing = vtail_sizing
         vtail.volume = readvtail("Vv")
-    elseif compare_strings(vtail_size, "oei")
-        vtail.size = 2
+    elseif compare_strings(vtail_sizing, "OEI")
+        vtail.opt_sizing = vtail_sizing
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
         error("Vertical tail can only be sized via:
-            1: specified tail volume coeff \"Vv\";
-            2: specified CL at one engine out trim (\"OEI\")")
+            \"fixed_Vv\": specified tail volume coeff \"Vv\";
+            \"OEI\": specified CL at one engine out trim (\"OEI\") via \"CLv_at_engine_out\"")
     end
 
     vtail.CL_max = readvtail("CLv_max")

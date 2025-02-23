@@ -305,7 +305,7 @@ function htsize(ac, paraF, paraB, paraC)
       cma = wing.mean_aero_chord
 
       # Unpack flags
-      iHTsize = htail.size
+      htail_opt_sizing = htail.opt_sizing
       ixwmove = htail.move_wingbox
       # Unpack Weights
       Wpay = parg[igWpay]
@@ -474,7 +474,7 @@ function htsize(ac, paraF, paraB, paraC)
             xWB_Sh = xWe_Sh
             xWC_Sh = xWe_Sh
 
-            if (iHTsize == 1)
+            if compare_strings(htail.opt_sizing, "fixed_Vh")
                   #----- fix HT volume (Section 2.12.1 of TASOPT docs)
                   lhtail = htail.layout.x - (xwbox + dxwing)
                   lhtail_xw = -1.0
@@ -613,7 +613,7 @@ function htsize(ac, paraF, paraB, paraC)
       dxeng2wbox = parg[igdxeng2wbox]
       parg[igxeng] = xwbox - dxeng2wbox
 
-      if (iHTsize == 1)
+      if compare_strings(ac.htail.opt_sizing, "fixed_Vh")
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
             CMw0 = paraF[iaCMw0]
             CMw1 = paraF[iaCMw1]

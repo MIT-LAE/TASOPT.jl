@@ -13,7 +13,7 @@ $TYPEDFIELDS
     has_centerbox_fuel::Bool
     has_wing_fuel::Bool
     has_fuselage_fuel::Bool 
-        #TODO: consider making ^ a driving parameter, rather than a reflection of fuse_tank parameters
+      #TODO: consider making ^ a driving parameter, rather than a reflection of fuse_tank parameters
     
     #engine options
     opt_engine_location::String
