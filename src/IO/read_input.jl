@@ -1047,8 +1047,6 @@ dHEx = dprop["HeatExchangers"]
         
         opt_engine_location = engloc,
         opt_prop_sys_arch = propsys,
-        opt_engine_model = "TODO: FIX THIS engine model spec",
-        opt_engine_weight_model = TF_wmodel,
         
         is_doubledecker = is_doubledecker
     )
