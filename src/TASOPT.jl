@@ -26,12 +26,12 @@ export __TASOPTroot__, __TASOPTindices__
 # Constants and array indices
 include(__TASOPTindices__)
 
-include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
+include(joinpath(__TASOPTroot__,"utils/constants.jl"))
 export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
        lbf_to_N, kts_to_mps, hp_to_W, lb_N
 export gee, gamSL, cpSL, μAir, pref, Tref
 
-include(joinpath(__TASOPTroot__,"data_structs/units.jl"))
+include(joinpath(__TASOPTroot__,"utils/units.jl"))
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
 
