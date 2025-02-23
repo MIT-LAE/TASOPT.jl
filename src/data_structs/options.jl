@@ -1,7 +1,7 @@
 """
     $TYPEDEF
 
-Configuration options for an [`aircraft`](@ref).
+Field of an [`aircraft`](@ref) containing configuration-level design choices.
 
 $TYPEDFIELDS
 """
@@ -11,11 +11,11 @@ $TYPEDFIELDS
     opt_fuel::String
     """Fuel option index (non-driving; determined and used by gas calcs)"""
     ifuel::Integer
-    """Indicates presence of centerbox fuel tank [true/false], can only be true if has_wing_fuel is true"""
+    """Indicates presence of centerbox fuel tank, can only be true if has_wing_fuel is true"""
     has_centerbox_fuel::Bool
-    """Indicates presence of wing fuel tanks [true/false]"""
+    """Indicates presence of wing fuel tanks """
     has_wing_fuel::Bool
-    """Indicates presence of fuselage fuel tanks [true/false] (non-driving; set by `fuse_tank`` inputs)"""
+    """Indicates presence of fuselage fuel tanks (non-driving; set by `fuse_tank` inputs)"""
     has_fuselage_fuel::Bool 
       #TODO: consider making ^ a driving parameter, rather than a reflection of fuse_tank parameters
       #Note: right now fuel can only be stored in the wings or the fuselage, not both
@@ -28,4 +28,19 @@ $TYPEDFIELDS
     
     #fuselage/cabin options
     is_doubledecker::Bool
+end
+
+function Base.summary(opt::Options)
+  println("\n-------- Options Summary --------")
+  println("Fuel Type: ", opt.opt_fuel)
+  println("Fuel stored in: "*(opt.has_wing_fuel ? "wing "*(opt.has_centerbox_fuel ? " wingbox " : "(none in wingbox)") : "")*(opt.has_fuselage_fuel ? "fuselage " : ""))
+  println("Propulsion Architecture: ", opt.opt_prop_sys_arch)
+  println("Engine Location: ", opt.opt_engine_location)
+  println("Cabin decks: ", opt.is_doubledecker ? "double" : "single")
+  println("---------------------------------")
+end
+function Base.show(io::IO, opt::Options)
+  print(io, "Options(Fuel: $(opt.opt_fuel); Fuel Storage: " * (opt.has_wing_fuel ? "wing " * 
+      (opt.has_centerbox_fuel ? "wingbox " : "(none in wingbox) ") : "") * (opt.has_fuselage_fuel ? "fuselage " : "") * 
+      "; Propulsion Arch.: $(opt.opt_prop_sys_arch); Engine Location: $(opt.opt_engine_location); Cabin decks: $(opt.is_doubledecker ? "double" : "single"))")
 end
