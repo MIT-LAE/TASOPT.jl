@@ -4,7 +4,7 @@
 
 The aircraft is sized via a fixed point iteration for the design mission ([`wsize()`](@ref TASOPT.wsize)). The performance of the design can be evaluated for an off-design mission ([`fly_off_design!()`](@ref TASOPT.fly_off_design!)).
 
-[`wsize()`](@ref TASOPT.wsize) is typically the driving script in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `get_wing_weights!()`, `cdsum!()`, `mission!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`wsize()`](@ref TASOPT.wsize).
+[`wsize()`](@ref TASOPT.wsize) is typically the driving script in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `calc_wing_weights!()`, `cdsum!()`, `mission!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`wsize()`](@ref TASOPT.wsize).
 
 !!! details "🖥️ Code structure - Aircraft sizing" 
     The aircraft-sizing function requires an `aircraft` object as input. See [`read_aircraft_model()`](@ref TASOPT.read_aircraft_model) to get an idea of the fields that are required in this object. This object is unpacked into storage arrays and other component objects, such as `wing`, `fuselage` or `engine`. The eventual aim is to eliminate all data storage array and replace them by component objects but this is still work in progress.  
@@ -17,7 +17,7 @@ The aircraft is sized via a fixed point iteration for the design mission ([`wsiz
 
     The fuselage weight is calculated first in the sizing loop through [`fusew!()`](@ref TASOPT.fusew!). Then, the total maximum takeoff weight gets recomputed and there is a check for whether the sizing loop is terminated. If weight has not converged, the loop continues.
 
-    The wing geometry is set by running [`set_wing_geometry!()`](@ref TASOPT.set_wing_geometry!) and the wing pitching moments are computed through [`surfcm()`](@ref TASOPT.surfcm). The horizontal and vertical tail geometry is computed through [`tailpo!()`](@ref TASOPT.tailpo!). Finally, the weights of the three aerodynamic surfaces are calculated by running [`get_wing_weights!()`](@ref TASOPT.get_wing_weights!).
+    The wing geometry is set by running [`set_wing_geometry!()`](@ref TASOPT.set_wing_geometry!) and the wing pitching moments are computed through [`surfcm()`](@ref TASOPT.surfcm). The horizontal and vertical tail geometry is computed through [`tailpo!()`](@ref TASOPT.tailpo!). Finally, the weights of the three aerodynamic surfaces are calculated by running [`calc_wing_weights!()`](@ref TASOPT.calc_wing_weights!).
 
     If the aircraft requires an insulated fuel tank in the fuselage, for example, if the fuel is cryogenic, the tank is sized using [`tanksize!()`](@ref TASOPT.tanksize!); this function calculates the structural weight and sizes the thermal insulation. For details on how the fuel tank is sized, see [Fuel tanks](@ref fueltanks). The sized tank dimensions are then use to recalculate the fuselage geometry to accommodate the tank in [`update_fuse!()`](@ref TASOPT.update_fuse!).
 
@@ -76,7 +76,7 @@ TASOPT.surfcm
 
 TASOPT.tailpo!
 
-TASOPT.get_wing_weights!
+TASOPT.calc_wing_weights!
 
 TASOPT.update_fuse!
 
