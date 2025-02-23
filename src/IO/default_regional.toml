@@ -332,9 +332,9 @@
         Vh = 1.3 # Horizontal tail volume (only used if opt_sizing == "fixed_Vh")
         CLh_at_max_forward_CG = -0.6 # (only used if opt_sizing == "max_fwd_CG")
 
-        move_wingbox = "SMmin" # 0: "fix" wing position 
-                             # 1: move wing to get CLh="CLhspec" in cruise 
-                             # 2: move wing to get min static margin = "SMmin"
+        opt_move_wing = "min_static_margin" # "fixed": "fix" wing position 
+                            # "fixed_CLh": move wing to get CLh="CLhspec" in cruise 
+                            # "min_static_margin": move wing to get min static margin = "SMmin"
 
         SM_min = 0.15 # Minimum static margin
         CLh_spec = -0.02

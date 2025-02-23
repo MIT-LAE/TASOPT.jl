@@ -644,25 +644,14 @@ readhtail(x) = read_input(x, htail_input, dhtail)
             \"max_fwd_CG\": specified CLh at max-forward CG case during landing (\"CLh_at_max_forward_CG\")")
     end
 
-    movewing = readhtail("move_wingbox")
-    if typeof(movewing) == Int
-        htail.move_wingbox = movewing
-    elseif typeof(movewing) <: AbstractString
-        if compare_strings(movewing, "fix")
-            htail.move_wingbox = 0
-        elseif compare_strings(movewing, "clhspec")
-            htail.move_wingbox = 1
-        elseif compare_strings(movewing, "smmin")
-            htail.move_wingbox = 2
-        else
-            error("Wing position during horizontal tail sizing can only be sized via:
-            0: \"fix\" wing position;
-            1: move wing to get CLh=\"CLhspec\" in cruise 
-            2: move wing to get min static margin = \"SMmin\"")
-        end
+    opt_move_wing = readhtail("opt_move_wing")
+    if any(compare_strings.(opt_move_wing, ["fixed", "fixed_CLh", "min_static_margin"]))
+        htail.opt_move_wing = opt_move_wing
     else
-        error("Check wing position input during htail sizing... something isn't right")
+        error("Input error: \"opt_move_wing\" = $opt_move_wing\nWing position during horizontal tail sizing can only be sized via:\n" *
+              join(["\"$opt\": " * opt for opt in valid_options], "\n"))
     end
+
     htail.SM_min = readhtail("SM_min")
 
     parg[igCLhspec] = readhtail("CLh_spec")

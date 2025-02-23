@@ -319,7 +319,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
-        d_stab_htail["move_wingbox"] = htail.move_wingbox
+        d_stab_htail["opt_move_wing"] = htail.opt_move_wing
 
         d_stab_htail["SM_min"] = htail.SM_min
 
@@ -897,7 +897,7 @@ function reset_regression_test(ac)
         @printf(io, "htail.SM_min = %20.20f \n", htail.SM_min)
         @printf(io, "htail.layout.x = %20.20f \n", htail.layout.x)
         @printf(io, "htail.outboard.cross_section.thickness_to_chord = %20.20f \n", htail.outboard.cross_section.thickness_to_chord)
-        @printf(io, "htail.move_wingbox = %20.20f \n", htail.move_wingbox)
+        @printf(io, "htail.opt_move_wing = %20.20f \n", htail.opt_move_wing)
         @printf(io, "htail.CL_CLmax = %20.20f \n", htail.CL_CLmax)
         @printf(io, "htail.opt_sizing = %20.20f \n", htail.opt_sizing)
         @printf(io, "htail.volume = %20.20f \n", htail.volume)

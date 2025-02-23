@@ -306,9 +306,6 @@ function size_htail(ac, paraF, paraB, paraC)
       SM = htail.SM_min
       cma = wing.mean_aero_chord
 
-      # Unpack flags
-      htail_opt_sizing = htail.opt_sizing
-      ixwmove = htail.move_wingbox
       # Unpack Weights
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -520,13 +517,13 @@ function size_htail(ac, paraF, paraB, paraC)
             end
 
 
-            if (ixwmove == 0)
+            if compare_strings(htail.opt_move_wing, "fixed")
                   #----- fix wing location
                   r[2] = 0.0
                   a[2, 1] = 0.0
                   a[2, 2] = 1.0
 
-            elseif (ixwmove == 1)
+            elseif compare_strings(htail.opt_move_wing, "fixed_CLh")
                   #----- set wing location to get CLh=CLhspec in cruise
                   CMw0 = paraC[iaCMw0]
                   CMw1 = paraC[iaCMw1]
@@ -549,7 +546,7 @@ function size_htail(ac, paraF, paraB, paraC)
                   a[2, 1] = cCM_Sh / CL + xWC_Sh / WC - (xWC / WC^2) * WC_Sh
                   a[2, 2] = cCM_xw / CL + xWC_xw / WC
 
-            elseif (ixwmove == 2)
+            elseif compare_strings(htail.opt_move_wing, "min_static_margin")
                   #----- set wing location by stability margin at aft-CG case
                   CMw1 = paraB[iaCMw1]
                   CMh1 = paraB[iaCMh1]
