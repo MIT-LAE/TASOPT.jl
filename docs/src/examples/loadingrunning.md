@@ -1,6 +1,6 @@
 # [Loading and running a model] (@id firstexample)
 
-`TASOPT.jl` uses TOML files to define aircraft models. You can find an example input file at `/src/IO/default_input.toml`. The majority of aircraft parameters and assumptions are defined here, and it's a useful resource for understanding the parameters and typical values.
+`TASOPT.jl` uses TOML files to define aircraft models. You can find an example input file at `/example/defaults/default_input.toml`. The majority of aircraft parameters and assumptions are defined here, and it's a useful resource for understanding the parameters and typical values.
 
 Start by importing `TASOPT.jl` and then loading the default aircraft model.
 ```julia-repl
@@ -14,7 +14,7 @@ Cruise Mach = 0.8
 ```
 Alternatively you can load your desired input file by using
 ```julia-repl
-julia> example_ac = read_aircraft_model("../src/IO/input.toml") # MODIFY <path> appropriately
+julia> example_ac = read_aircraft_model("../input.toml") # MODIFY <path> appropriately
 ```
 
 `example_ac` is an instance of an `aircraft` type, that is a thin wrapper for 
