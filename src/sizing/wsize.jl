@@ -622,7 +622,7 @@ function wsize(ac; itermax=35,
             Sh = Vh * wing.layout.S * wing.mean_aero_chord / lhtail
             htail.layout.S = Sh
         else
-            htsize(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
+            size_htail(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
             wing.layout.box_x, xwing = wing.layout.box_x, wing.layout.x
             lhtail = xhtail - xwing
             Sh = htail.layout.S
@@ -640,6 +640,7 @@ function wsize(ac; itermax=35,
         # Calculate max eng out moment
         Me = (Fe + De) * yeng
 
+        #Size vertical tail (size_vtail())
         if compare_strings(vtail.opt_sizing,"fixed_Vv")
             lvtail = xvtail - xwing
             Vv = vtail.volume
