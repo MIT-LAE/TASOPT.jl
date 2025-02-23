@@ -542,17 +542,17 @@ function wsize(ac; itermax=35,
             Weng1 = 0.0
         end
 
-        # Set up parameters for get_wing_weights function
+        # Set up parameters for calc_wing_weights function
         Winn, Wout = wing.inboard.weight, wing.outboard.weight
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
         rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
-        # Call get_wing_weights function
+        # Call calc_wing_weights function
         Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
-        dyWfinn,dyWfout,lstrutp = get_wing_weights!(wing, po, γt, γs,
+        dyWfinn,dyWfout,lstrutp = calc_wing_weights!(wing, po, γt, γs,
                                             Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
                                             parg[igsigfac], rhofuel)
 
@@ -587,7 +587,7 @@ function wsize(ac; itermax=35,
         wing.inboard.dyW = dyWsinn * (1.0 + fwadd) + rfmax * dyWfinn
         wing.outboard.dyW = dyWsout * (1.0 + fwadd) + rfmax * dyWfout
 
-        #TODO: No reason why above lines shouldnt be inside get_wing_weights
+        #TODO: No reason why above lines shouldnt be inside calc_wing_weights
         # -------------------------------
         #      Tail sizing section
         # -------------------------------
@@ -666,7 +666,7 @@ function wsize(ac; itermax=35,
         vtail.layout.ηs = vtail.layout.ηo
 
         # HT weight
-        htail.weight, _ = get_wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,
+        htail.weight, _ = calc_wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,
             0.0, 0.0, 0, 0.0, 0, 0.0,
             parg[igsigfac], rhofuel)
         
@@ -680,7 +680,7 @@ function wsize(ac; itermax=35,
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        vtail.weight, _ = get_wing_weights!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
+        vtail.weight, _ = calc_wing_weights!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
             0.0, 0.0, 0, 0.0, 0, 0.0,
             parg[igsigfac], rhofuel; n_wings=vtail.ntails)
         # Set VT span
