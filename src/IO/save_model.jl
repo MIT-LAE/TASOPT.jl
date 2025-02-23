@@ -311,11 +311,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_htail["max_tail_download"] = htail.CL_CLmax
     
-        if htail.size == 1
-            d_stab_htail["HTsize"] = "vh"
+        if compare_strings(htail.opt_sizing, "fixed_Vh")
+            d_stab_htail["opt_sizing"] = htail.opt_sizing
             d_stab_htail["Vh"] = htail.volume
-        elseif htail.size == 2
-            d_stab_htail["HTsize"] = "maxforwardcg"
+        elseif compare_strings(htail.opt_sizing, "max_fwd_CG")
+            d_stab_htail["opt_sizing"] = htail.opt_sizing
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
@@ -347,11 +347,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_stab_vtail["x_Vtail"] = vtail.layout.box_x
         d_stab_vtail["number_Vtails"] = vtail.ntails
 
-        if vtail.size == 1
-            d_stab_vtail["VTsize"] = "vv"
+        if compare_strings(vtail.opt_sizing, "fixed_Vv")
+            d_stab_vtail["opt_sizing"] = vtail.opt_sizing
             d_stab_vtail["Vv"] = vtail.volume
-        elseif avtail.size == 2
-            d_stab_vtail["VTsize"] = "oei"
+        elseif compare_strings(vtail.opt_sizing, "OEI")
+            d_stab_vtail["opt_sizing"] = vtail.opt_sizing
             d_stab_vtail["CLv_at_engine_out"] = parg[igCLveout]
         end
 
@@ -899,7 +899,7 @@ function reset_regression_test(ac)
         @printf(io, "htail.outboard.cross_section.thickness_to_chord = %20.20f \n", htail.outboard.cross_section.thickness_to_chord)
         @printf(io, "htail.move_wingbox = %20.20f \n", htail.move_wingbox)
         @printf(io, "htail.CL_CLmax = %20.20f \n", htail.CL_CLmax)
-        @printf(io, "htail.size = %20.20f \n", htail.size)
+        @printf(io, "htail.opt_sizing = %20.20f \n", htail.opt_sizing)
         @printf(io, "htail.volume = %20.20f \n", htail.volume)
         @printf(io, "htail.outboard.GJ = %20.20f \n", htail.outboard.GJ)
         @printf(io, "htail.outboard.EI[4] = %20.20f \n", htail.outboard.EI[4])
@@ -952,7 +952,7 @@ function reset_regression_test(ac)
         @printf(io, "vtail.layout.span = %20.20f \n", vtail.layout.span)
         @printf(io, "vtail.layout.AR = %20.20f \n", vtail.layout.AR)
         @printf(io, "vtail.layout.S = %20.20f \n", vtail.layout.S)
-        @printf(io, "vtail.size = %20.20f \n", vtail.size)
+        @printf(io, "vtail.opt_sizing = %20.20f \n", vtail.opt_sizing)
         @printf(io, "vtail.dxW = %20.20f \n", vtail.dxW)
         @printf(io, "vtail.outboard.cross_section.width_to_chord = %20.20f \n", vtail.outboard.cross_section.width_to_chord)
         @printf(io, "vtail.outboard.cross_section.web_to_box_height = %20.20f \n", vtail.outboard.cross_section.web_to_box_height)

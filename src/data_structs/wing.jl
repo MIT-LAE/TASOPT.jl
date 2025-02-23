@@ -128,10 +128,10 @@ $TYPEDFIELDS
     """Tail Volume [m^3] """
     volume::Float64 = 0
     """Tail Sizing factor: 1=set Sh via specified Vh, 2=et Sh via CLhCGfwd at max-forward CG during landing """
-    size::Int64 = 0
+    opt_sizing::String = ""
     """Tail Downwash factor dε/dα """
     downwash_factor::Float64 = 0
-    """Tail max fwd CG (only used if HTsize == "maxforwardCG") """
+    """Tail max fwd CG (only used if opt_sizing == "max_fwd_CG") """
     CL_max_fwd_CG::Float64 = 0
     """Tail Minimum static margin"""
     SM_min::Float64 = 0

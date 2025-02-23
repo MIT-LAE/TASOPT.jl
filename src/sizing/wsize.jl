@@ -640,13 +640,13 @@ function wsize(ac; itermax=35,
         # Calculate max eng out moment
         Me = (Fe + De) * yeng
 
-        if (vtail.size == 1)
+        if compare_strings(vtail.opt_sizing,"fixed_Vv")
             lvtail = xvtail - xwing
             Vv = vtail.volume
             Sv = Vv * wing.layout.S * wing.layout.span/ lvtail
             vtail.layout.S = Sv
             parg[igCLveout] = Me / (qstall * Sv * lvtail)
-        else
+        elseif compare_strings(vtail.opt_sizing,"OEI")
             lvtail = xvtail - xwing
             CLveout = parg[igCLveout]
             Sv = Me / (qstall * CLveout * lvtail)

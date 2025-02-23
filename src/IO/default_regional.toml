@@ -326,11 +326,11 @@
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
         
         # How do you want to size the horizontal stabilizers?
-        HTsize = "maxforwardCG" # Options are "Vh" or "maxforwardCG" 
+        opt_sizing = "max_fwd_CG" # Options are "fixed_Vh" or "max_fwd_CG" 
         # 1: set Sh via specified Vh
         # 2: set Sh via CLhCGfwd at max-forward CG during landing
-        Vh = 1.3 # Horizontal tail volume (only used if HTsize == "Vh")
-        CLh_at_max_forward_CG = -0.6 # (only used if HTsize == "maxforwardCG")
+        Vh = 1.3 # Horizontal tail volume (only used if opt_sizing == "fixed_Vh")
+        CLh_at_max_forward_CG = -0.6 # (only used if opt_sizing == "max_fwd_CG")
 
         move_wingbox = "SMmin" # 0: "fix" wing position 
                              # 1: move wing to get CLh="CLhspec" in cruise 
@@ -360,11 +360,12 @@
         x_Vtail = "113 ft"
         number_Vtails = 1.0
 
-        VTsize = "Vv" # Options are "Vv" or "OEI"
-        # 1: set Vtail area Sv via specified Vv
-        # 2: set Vtail area Sv via engine-out trim CL
-        Vv = 0.12 # only used if VTsize == "Vv"
-        CLv_at_engine_out = 0.5 # only used if VTsize == "OEI"
+        # How do you want to size the vertical stabilizer?
+        opt_sizing = "fixed_Vv" # Options are "fixed_Vv" or "OEI"
+        # "fixed_Vv": set Vtail area Sv via specified Vv
+        # "OEI": set Vtail area Sv via engine-out trim CL "CLv_at_engine_out"
+        Vv = 0.12 # only used if opt_sizing == "fixed_Vv"
+        CLv_at_engine_out = 0.5 # only used if opt_sizing == "OEI"
         CLv_max = 2.6
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
