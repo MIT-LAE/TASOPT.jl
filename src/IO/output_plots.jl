@@ -1058,7 +1058,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         line=:solid,            # Line style
         color=:green,            # Line color
         xlabel="Range (1000 nmi)", 
-        ylabel="PFEI at max payload (dimensionless)", 
+        ylabel="PFEI at max payload (kJ/kg-km)", 
         title="Payload-Range Diagram: "*string(ac.name), 
         grid=true,              # Enable grid
         dpi = 300,
