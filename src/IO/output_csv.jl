@@ -43,7 +43,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     csv_row = []
     #initalize header row to assess compatibility, and maybe write out
     header = ["Model Name","Description","Sized?"]
-    par_array_names = ["pari", "parg", "parm", "para", "pare"] #used for checking/populating indices Dict, deleting from struct
+    par_array_names = ["parg", "parm", "para", "pare"] #used for checking/populating indices Dict, deleting from struct
 
     #pull name and description, removing line breaks and commas
     append!(csv_row, [ac.name, 
@@ -120,8 +120,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     end
 
     #append mission- and flight-point-independent arrays
-    append!(csv_row,ac.pari[indices["pari"]],
-                    ac.parg[indices["parg"]])
+    append!(csv_row, ac.parg[indices["parg"]])
 
     #append mission-dependent arrays
     append!(csv_row, array2nestedvectors(ac.parm[indices["parm"], includeMissions])) #append to csv_rows
@@ -138,7 +137,7 @@ function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(),
     csv_row=reshape(csv_row,1,:) 
 
     #get lookup dict for column names from variable indices in indices Dict()
-    suffixes = ["i","g","m","a","e"]
+    suffixes = ["g","m","a","e"]
     par_indname_dict = generate_par_indname(suffixes) #gets dictionary with all index var names via global scope
 
     #get column names in order
@@ -263,15 +262,15 @@ Note that this selection is only along the first dimension of par arrays (i.e., 
 
 Custom Dicts() can be passed to [`output_csv()`](@ref) following the format: `Dict(){String => Union{AbstractVector,Colon(), Integer}}`. 
 
-Example usage:
-
-1 : `default_output_indices["pari"] = [1, 5, iitotal]`
+For example:
+1 : `default_output_indices["parg"] = [1, 5, igtotal]`
+        > when submitted to `output_csv()`, will output as columns the first, fifth, and last entry of `parg`
     
 2 : `default_output_indices["para"] = Colon() #NOT [Colon()]`
+        > when submitted to `output_csv()`, will output all indices of `para` (whether all flights or missions are included is controlled by a separate parameter)
 """
 default_output_indices = 
-    Dict("pari" => Colon(),
-        "parg" => [#weights
+    Dict("parg" => [#weights
                     igWMTO, igWfuel, igWpay, igWpaymax, igflgnose,igflgmain,
                     igWtesys, igWftank, 
                     #other
@@ -307,8 +306,7 @@ pare_toadd = [
 append!(pareinds, pare_toadd)
 output_indices_wEngine["pare"] = pareinds
 
-output_indices_all =  Dict("pari" => Colon(),
-                            "parg" => Colon(),
+output_indices_all =  Dict("parg" => Colon(),
                             "parm" => Colon(),
                             "para" => Colon(),
                             "pare" => Colon())

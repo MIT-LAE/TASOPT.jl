@@ -5,14 +5,13 @@ export array2nestedvectors, nestedvectors2array
 """
     init_par_arrays(;n_flight_pts::Int, n_missions::Int)
 
-initializes global arrays pari, parg, etc., to enable certain imports (e.g., via `mdl_read`).
+initializes global arrays parg, etc., to enable certain imports (e.g., via `mdl_read`).
 
 Inputs: 
 - `n_flight_pts::Int`: number of flight points modelled
 - `n_mision::Int`: number of missions modelled
 """
 function init_par_arrays(;n_flight_pts::Int, n_missions::Int)
-    global pari = Array{Int64, 1}(undef, iitotal)
     global parg = Array{Float64, 1}(undef, igtotal)
     global parm = Array{Float64, 2}(undef, imtotal, n_missions)
     global pare = Array{Float64, 3}(undef, ietotal, n_flight_pts, n_missions)
@@ -30,15 +29,15 @@ ex:
 
 ```@example par_indname
     using TASOPT
-    #note that iifuel = 1 (from `index.inc`)
+    #note that igRange = 1 (from `index.inc`)
 
-    pari_indname = generate_par_indname("i")
-    pari_indname[1]
+    parg_indname = generate_par_indname("g")
+    parg_indname[1]
 ```
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `par_suffix::String`: suffix of a par array (e.g., "i" for "pari"), 
+    - `par_suffix::String`: suffix of a par array (e.g., "g" for "parg"), 
     **Outputs:**
     - `par_indname::Vector{String}`: vector of strings with entries corresponding to the index variable names
 """

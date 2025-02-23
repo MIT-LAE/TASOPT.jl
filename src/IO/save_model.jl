@@ -15,7 +15,7 @@ The same value is applied for all flight segments/points for:
     - parm[] parameters
     - excrescence_drag_factors, wing overspeeds, wing/stabilizer Re_refs
 The same value is applied for all missions and flight segments for:
-    - parg[], pare[], and pari[] parameters
+    - parg[] and pare[] parameters
     - fuel temperature
 
 Said value is the first entry in the corresponding array axis, 
@@ -33,7 +33,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #unpack aircraft struct
     imission = 1 #design mission for now
-    pari, parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
+    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
     #TODO: fuse_tank fields are not saved
 
     #Save everything in a dict() of dicts()
@@ -589,15 +589,8 @@ end
 
 # Store label names
 iglabels = ["igFOpt     ", "igPFEI     ","igRange    ","igWMTO     ","igWpay     ","igWfix     ","igWfuel    ","igWfmax    ","igrWfmax   ","igWshell   ","igWwindow  ","igWinsul   ","igWfloor   ","igWcone    ","igWhbend   ","igWvbend   ","igWfuse    ","igWweb     ","igWcap     ","igWwing    ","igWebare   ","igWnace    ","igWeng     ","igWhtail   ","igWvtail   ","igWstrut   ","igxWfuse   ","igdxWfuel  ","igdxWwing  ","igdxWstrut ","igdxWhtail ","igdxWvtail ","igWinn     ","igWout     ","igdyWinn   ","igdyWout   ","igxCGfwd   ","igxCGaft   ","igfreserve ","igfpadd    ","igfseat    ","igfeadd    ","igfpylon   ","igfnace    ","igfflap    ","igfslat    ","igfaile    ","igflete    ","igfribs    ","igfspoi    ","igfwatt    ","igfhadd    ","igfvadd    ","igfapu     ","igfhpesys  ","igflgnose  ","igflgmain  ","igfstring  ","igfframe   ","igffadd    ","igWpwindow ","igWppinsul ","igWppfloor ","igNlift    ","igNland    ","igVne      ","igneng     ","igGearf    ","igfTt4CL1  ","igfTt4CLn  ","igHTRf     ","igHTRlc    ","igHTRhc    ","igrSnace   ","igrVnace   ","igrVstrut  ","igfSnace   ","igpcabin   ","igdeltap   ","iganose    ","igbtail    ","igxnose    ","igxend     ","igxblend1  ","igxblend2  ","igxshell1  ","igxshell2  ","igxconend  ","igxhbend   ","igxvbend   ","igxhtail   ","igxvtail   ","igxeng     ","igxwing    ","igxwbox    ","igxhbox    ","igxvbox    ","igxfix     ","igxapu     ","igxhpesys  ","igxlgnose  ","igdxlgmain ","igyeng     ","igzwing    ","igzhtail   ","ignfweb    ","igwfb      ","igRfuse    ","igdRfuse   ","ighfloor   ","iglambdac  ","igcabVol   ","igcosLs    ","igSstrut   ","igrpayfwd  ","igrpayaft  ","igxNP      ","igCMVf1    ","igCLMf0    ","igdepsda   ","igdCLnda   ","igdCLhdCL  ","igdCLndCL  ","igCLhspec  ","igCLhCGfwd ","igCLveout  ","igCLhmax   ","igCLvmax   ","igfCDhcen  ","igSMmin    ","igrMh      ","igrMv      ","igXaxis    ","igwbox     ","ighboxo    ","ighboxs    ","igrh       ","igwboxh    ","ighboxh    ","igrhh      ","igwboxv    ","ighboxv    ","igrhv      ","igsigfac   ","igsigskin  ","igsigbend  ","igsigcap   ","igtauweb   ","igsigstrut ","igrEshell  ","igEcap     ","igEstrut   ","igrhoskin  ","igrhobend  ","igrhocap   ","igrhoweb   ","igrhostrut ","igrhofuel  ","igrcls     ","igrclt     ","igCLhNrat  ","igSomax    ","igMomax    ","igSsmax    ","igMsmax    ","igtbcapo   ","igtbwebo   ","igtbcaps   ","igtbwebs   ","igtbcaph   ","igtbwebh   ","igtbcapv   ","igtbwebv   ","igEIco     ","igEIno     ","igGJo      ","igEIcs     ","igEIns     ","igGJs      ","igEIch     ","igEInh     ","igGJh      ","igEIcv     ","igEInv     ","igGJv      ","igtskin    ","igtcone    ","igtfweb    ","igtfloor   ","igEIhshell ","igEIhbend  ","igEIvshell ","igEIvbend  ","igGJshell  ","igGJcone   ","igfLo      ","igfLt      ","igfLn      ","igcma      ","igAR       ","igS        ","igb        ","igbo       ","igbs       ","igetas     ","iglambdat  ","iglambdas  ","igco       ","igsweep    ","igVh       ","igARh      ","igSh       ","igbh       ","igboh      ","iglambdah  ","igcoh      ","igsweeph   ","igVv       ","igARv      ","igSv       ","igbv       ","igbov      ","iglambdav  ","igcov      ","igsweepv   ","ignvtail   ","igzs       ","ighstrut   ","igAstrut   ","igcstrut   ","igfBLIw    ","igfBLIf    ","igdfan     ","igdlcomp   ","igdhcomp   ","iglnace    ","igA5       ","igA7       ","igTmetal   ","igcdefan   ","igCDgear   ","igCDspoil  ","igmuroll   ","igmubrake  ","ighobst    ","iglBFmax   ","igbmax     ","iggtocmin  ","igdBSLmax  ","igdBCBmax  ","igmofWpay  ","igmofWMTO  ","igPofWpay  ","igPofWMTO  ","igWtshaft  ","igWgen     ","igWinv     ","igWmot     ","igWfan     ","igWftank   ","igxtshaft  ","igxgen     ","igxinv     ","igxmot     ","igxfan     ","igxftank   ","igxcables  ","igWcables  ","igxcat     ","igWcat     ","igWtesys   ","igxWtesys  ","iglftank   ","igWinsftank","igxWftank  ","igRftank   ","igWc3des   ", "igdaftfan", "lnaceaft", "igfuseVol", "igneout", "igyeout", "igyeinn", "iglftankin", "igLHVfuel", "igWfburn", "igWaftfan", "igWfanGB", "igWaftfanGB", "igWrect", "igWtms"] 
-function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
+function savemodel(fname, parg, parm, para, pare, parpt, parmot, pargen)
     open(fname, "w") do io
-
-        @printf(io, "# ------------------------------\n")
-        @printf(io, "# Flags  - stored in pari array:\n")
-        @printf(io, "# ------------------------------\n")
-        for (i,val) in enumerate(pari)
-            @printf(io, "pari[%d] = %d \n", i, val )
-        end
 
         @printf(io, "# --------------------------------\n")
         @printf(io, "# Geometry - stored in parg array:\n")
@@ -661,23 +654,17 @@ function savemodel(fname, pari, parg, parm, para, pare, parpt, parmot, pargen)
 
 end
 
-#TODO: update to use ac.options (not pari)
+#TODO: Update to output ac.options (now that pari is dead)
 function reset_regression_test(ac)
+    options = ac.options
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
     open(joinpath(__TASOPTroot__,"../test/default_sized.jl"), "w") do io
-        @printf(io, "pari = zeros(Int64, iitotal)\n")
         @printf(io, "parg = zeros(Float64, igtotal)\n")
         @printf(io, "parm = zeros(Float64, imtotal)\n")
         @printf(io, "para = zeros(Float64, (iatotal, iptotal))\n")
         @printf(io, "pare = zeros(Float64, (ietotal, iptotal))\n \n")
-        @printf(io, "# ------------------------------\n")
-        @printf(io, "# Flags  - stored in pari array:\n")
-        @printf(io, "# ------------------------------\n")
-        for (i,val) in enumerate(ac.pari)
-            @printf(io, "pari[%d] = %d \n", i, val )
-        end
 
         @printf(io, "# --------------------------------\n")
         @printf(io, "# Geometry - stored in parg array:\n")

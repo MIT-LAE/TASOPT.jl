@@ -20,7 +20,7 @@ They are updated and returned in the same para[iagamV,ip] array.
 """
 function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
-      pari, parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
+      parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
       calc_ipc1 = true
       ifirst = true

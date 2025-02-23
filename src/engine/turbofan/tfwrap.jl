@@ -21,7 +21,7 @@ basic engine inputs to those required by the function and storing the outputs.
 """
 function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
     #Unpack data storage arrays
-    _, parg, _, para, pare, options, _, _, wing, _, _, engine = unpack_ac(ac, imission)
+    parg, _, para, pare, options, _, _, wing, _, _, engine = unpack_ac(ac, imission)
     
     if case == "design"
         opt_calc_call = "sizing"

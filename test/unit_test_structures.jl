@@ -213,7 +213,6 @@ wing.layout.box_x = 16.04432532088372
 parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
 fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-pari = zeros(iitotal)
 fuselage_fueltank_count = 1
 
 #Update fuel tank length and check changes

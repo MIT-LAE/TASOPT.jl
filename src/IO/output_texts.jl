@@ -3,7 +3,6 @@
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
-    pari = ac.pari
     fuselage = ac.fuselage
     wing = ac.wing
     htail = ac.htail
