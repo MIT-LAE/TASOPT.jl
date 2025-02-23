@@ -1,23 +1,4 @@
 
-#---- indices for integer variables and flags
-      #iifuel   =  1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
-      #iifwcen  =  2  # 0 = no fuel in center box  1 = fuel in center box
-      #iiwplan  =  3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
-      #iiengloc =  4  # 1 = engines on wing 2 = engines on fuselage "Options.engine_location"  
-      #iiengwgt =  5  # 1 = basic tech eng. weight 2 = advanced tech eng. weight 
-      #iiBLIc   =  6  # 0 = core in clean flow 1 = core ingests KE defect   
-      #iifclose =  7  # 0 = fuse tapers to point 1 = tapers to edge 
-      #iixwmove = 8  # 0 = wing centroid fixed 1 = move wing to balance
-      #iifwing  = 9  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
-      #iicalcCMVf = 10
-
-      #iiengtype  = 11  # 0 = Turboelectric engine; 1 = Turbofan engine; "prop_sys_arch"
-      #iiopt      = 12  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
-      #iiaircraftclass = 13 # 737 = 737 size aircraft; 777 = 777 size aircraft
-      #iinftanks = 14 # number of fuel tanks in fuselage
-      #iidoubledeck = 15 #double decker flag
-      iitotal    = 15
-
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
       imwOpt     =  1 

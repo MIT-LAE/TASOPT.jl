@@ -1,4 +1,4 @@
-pari = zeros(Int64, iitotal)
+pari = zeros(Int64, 15)
 parg = zeros(Float64, igtotal)
 parm = zeros(Float64, imtotal)
 para = zeros(Float64, (iatotal, iptotal))
