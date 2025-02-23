@@ -3,5 +3,5 @@
 ```@docs
 TASOPT.balance
 TASOPT.cglpay
-TASOPT.htsize
+TASOPT.size_htail
 ```

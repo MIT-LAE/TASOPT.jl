@@ -256,6 +256,8 @@ end # balance
 
 
 """
+      size_htail(ac, paraF, paraB, paraC)
+
 Sets horizontal tail area and wing position to simultaneously:
 
 1) Meet pitch trim requirement with forward CG
@@ -274,7 +276,7 @@ Inputs:
 Outputs: 
 No direct outputs. Fields in `ac` are modified.
 """
-function htsize(ac, paraF, paraB, paraC)
+function size_htail(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
       _, parg, _, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
@@ -600,7 +602,9 @@ function htsize(ac, paraF, paraB, paraC)
             end
 
       end #end for loop iter
-      dmax > toler && println("HTSIZE: Pitch not converged. dxwbox,dSh = $dxw, $dSh")
+      if (dmax > toler)
+            @warn "`size_htail()`: Pitch not converged. dxwbox,dSh = $dxw, $dSh"
+      end
 
 
       #---- set converged results
@@ -638,7 +642,7 @@ function htsize(ac, paraF, paraB, paraC)
 
 
       return
-end # htsize
+end # size_htail
 
 
 """
