@@ -4,7 +4,7 @@
 
 ### Human-readable TOML and the default input
 
-TASOPT models can be loaded from and saved to human-readable TOML files via [`read_aircraft_model()`](@ref) and [`save_aircraft_model()`](@ref). These scripts are written to process files based on the `default_input.toml`, as is done when `load_default_model()` is run; they are usable for simple cases that alter the default inputs. For larger deviations from the default (e.g., mission-specific aero or engine performance), customized scripts are recommended when not required.
+TASOPT models can be loaded from and saved to human-readable TOML files via [`read_aircraft_model()`](@ref) and [`save_aircraft_model()`](@ref). These scripts are written to process files based on the `/example/defaults/default_input.toml`, as is done when `load_default_model()` is run; they are usable for simple cases that alter the default inputs. For larger deviations from the default (e.g., mission-specific aero or engine performance), customized scripts are recommended when not required.
 
 Once it is loaded in this fashion, the `aircraft` can be manipulated and re-sized. Note: TOML-based saves **do not** store the performance of the sized model, so a model must be sized before data can be referenced usefully:
 
