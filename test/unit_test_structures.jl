@@ -284,7 +284,7 @@ Abfuels = TASOPT.structures.calc_sparbox_internal_area(wing.inboard.cross_sectio
 @test Abfuels ≈ 0.06204427240513358
 #end calc_sparbox_internal_area
 
-#get_wing_weights:
+#calc_wing_weights:
   po = 114119.45308868506
   gammat = 0.225
   gammas = 0.8665999999999999
@@ -313,7 +313,7 @@ Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
-        dyWfinn,dyWfout,lstrutp = TASOPT.get_wing_weights!(wing, po, gammat, gammas,
+        dyWfinn,dyWfout,lstrutp = TASOPT.calc_wing_weights!(wing, po, gammat, gammas,
                                             Nlift, Weng1, 0, 0.0, 0, 0.0,
                                             sigfac, rhofuel)
 
@@ -331,9 +331,9 @@ Wwing,Wsinn,Wsout,
 @test fort_dyWfinn ≈ dyWfinn 
 @test fort_dyWfout ≈ dyWfout 
 @test fort_lstrutp ≈ lstrutp 
-#end get_wing_weights
+#end calc_wing_weights
 
-#get_wing_weights for Htail
+#calc_wing_weights for Htail
 poh = 115893.98734144184
 λhs = 1.0
 fLt = -0.05
@@ -341,7 +341,7 @@ tauwebh = 1.378913257881327e8
 σcaph = 2.0684848484848484e8
 surft_f_out = [14366.067634789782, 14032.558269851817, 0.0011577052661293624, 0.0023921269535798137, 1.8915676188667163e8, 1.258557904500963e9, 1.7895336288389182e8]
 
-TASOPT.get_wing_weights!(htail, poh, htail.outboard.λ, λhs,
+TASOPT.calc_wing_weights!(htail, poh, htail.outboard.λ, λhs,
 0.0, 0.0, 0, 0.0, 0, 0.0,
 sigfac, rhofuel)
 
