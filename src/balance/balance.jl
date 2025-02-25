@@ -855,7 +855,7 @@ determines the cabin centroid (`xcabin`) and cabin length (`lcabin`) based on:
 The cabin centroid is calculated as the midpoint of the effective passenger cabin length,
 which varies depending on fuel tank placement.
 
-!!! details "Inputs and Outputs"
+!!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `nftanks` : Number of fuel tanks (`0`, `1`, or `2`).
     - `fuse` : Fuselage object containing geometry properties.
