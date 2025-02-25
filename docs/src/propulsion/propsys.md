@@ -51,4 +51,4 @@ The compressor off-design performance is determined by logarithmic fits to perfo
 | **LPC**    | 2.50| 1.00 | 0.03 | 0.75              | -0.20      | 3.0 | 5.5 | 4.0  | 6.0 |
 | **HPC**    | 1.50| 5.00 | 0.03 | 0.75              | -0.35      | 3.0 | 5.0 | 10.5 | 3.0 |
 
-![E3_vs_TASOPT_maps](../assets/E3_vs_TASOPT_maps.png)
+![E3_vs_Drela_Maps](../assets/E3_vs_Drela_Maps.svg)
