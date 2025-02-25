@@ -59,7 +59,7 @@ displacement to allow calculation of separated flow.
       - ``P_{inf} = P_{end} u_{e,i}^{H_{avg}}  =  D_p``
 
 See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
-See also [`blsys`](@ref) and [`blvar`](@ref). Deprecates `blax`.
+See also [`blsys`](@ref) and [`blvar`](@ref).
 """
 function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
 
