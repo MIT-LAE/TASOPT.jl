@@ -4,7 +4,7 @@
 # The parameters come from "tfmap.inc" in Mark Drela's original TASOPT 
 
 # Compressor maps
-# Based on the `ccc` option in Drela's TASOPT, with the a, b, k parameters
+# Based on one of the maps in Drela's TASOPT (labeled with the comment 'ccc'), with the a, b, k parameters
 # in his documentation used for the HPC
 #               a     b     k     mo     da    c    d     C    D
 const Cmapf = [3.50, 0.80, 0.03, 0.75, -0.50, 3.0, 6.0,  2.5, 15.0]
