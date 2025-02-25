@@ -294,7 +294,7 @@ The routine considers:
       - Static margin constraints (`SM`).
       - Fuel and payload distribution effects.
 
-!!! details "Inputs and Outputs"
+!!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac` : Aircraft object
     - `paraF[.]` : Aerodynamic parameters for the forward CG trim condition.
