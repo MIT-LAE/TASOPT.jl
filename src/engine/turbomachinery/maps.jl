@@ -4,8 +4,10 @@
 # The parameters come from "tfmap.inc" in Mark Drela's original TASOPT 
 
 # Compressor maps
-# Based on the `ccc` option in Drela's TASOPT, with the a, b, k parameters
-# in his documentation used for the HPC
+# Based on a set of map parameters found in comments of Drela's TASOPT, with the a, b, k 
+# parameters in his documentation used for the HPC. These were the values that appeared
+# to best match the E3 compressor data. See https://arc.aiaa.org/doi/10.2514/3.23024 for
+# more details.
 #               a     b     k     mo     da    c    d     C    D
 const Cmapf = [3.50, 0.80, 0.03, 0.75, -0.50, 3.0, 6.0,  2.5, 15.0]
 const Cmapl = [2.50, 1.00, 0.03, 0.75, -0.20, 3.0, 5.5,  4.0,  6.0]
