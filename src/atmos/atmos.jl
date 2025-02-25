@@ -1,5 +1,6 @@
 module atmosphere
-export atmos
+using Roots
+export atmos, find_altitude_from_density
 
 """
     atmos(h, ΔT)
@@ -43,5 +44,24 @@ function atmos(h::Float64, ΔT::Float64 = 0.0)
  return T,p,ρ,a,μ
 
 end # atmos
+
+"""
+    find_altitude_from_density(ρ::Float64, ΔT::Float64 = 0.0) 
+    
+Uses a non-linear solver to find the altitude corresponding to a given air density.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ρ::Float64`: air density (kg/m^3)
+    - `ΔT::Float64`: temperature difference from standard atmosphere (K)
+    
+    **Outputs:**
+    - `h::Float64`: altitude (km)
+"""
+function find_altitude_from_density(ρ::Float64, ΔT::Float64 = 0.0) 
+    res(x) = atmos(x, ΔT)[3] - ρ #Residual for density
+    h = find_zero(res, 0.0)
+    return h
+end
 
 end
