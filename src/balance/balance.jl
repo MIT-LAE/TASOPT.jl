@@ -692,7 +692,7 @@ This function determines the CG shift due to varying passenger and fuel load con
 - `rpayF`: The fraction of payload contributing to the forward-most CG.
 - `rpayB`: The fraction of payload contributing to the rearward-most CG.
 
-!!! details "Inputs and Outputs"
+!!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac` : Aircraft object 
 
