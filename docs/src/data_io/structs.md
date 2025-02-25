@@ -1,4 +1,4 @@
-# [Data structures](@id datastructs)
+# [Data structure details](@id datastructs)
 We're incorporating `struct`s as part of modernizing TASOPT from Fortran. Note that as we represent more parts of an `aircraft` as `struct`s, these may change and will hopefully become a natural and intuitive data structure. 
 
 ## Primary `struct`s

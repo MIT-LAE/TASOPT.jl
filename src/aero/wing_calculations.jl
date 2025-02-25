@@ -92,7 +92,7 @@ Calculates section cl at  eta = ηo,ηs,1
     **Outputs:**
     - `clo::Float64`, `cls::Float64`, `clt::Float64`: Section lift coefficient at root, wing break ("snag"), and tip.
 
-See Sections 2.5 and 2.6 of the [TASOPT Technical Desc](@ref dreladocs). Called by `cdsum!`.
+See Sections 2.5 and 2.6 of the [TASOPT Technical Desc](@ref dreladocs). Called by [`cdsum!`](@ref).
 """
 function wingcl(wing, γt, γs, CL, CLhtail, duo, dus, dut)
 

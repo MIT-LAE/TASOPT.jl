@@ -86,7 +86,7 @@ aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
 
 ## Wing and tail surfaces
 
-Lifting surface drag is determined via `surfcd` (when constant airfoil section `cdf` and `cdp` are already determined), and `surfcd2` (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
+Lifting surface drag is determined via [`surfcd`](@ref aerodynamics.surfcd) (when constant airfoil section `cdf` and `cdp` are already determined), and [`surfcd2`](@ref aerodynamics.surfcd2) (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
 
 ```@docs
 aerodynamics.surfcd2(wing, γt, γs,
