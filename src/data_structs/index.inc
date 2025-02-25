@@ -39,8 +39,6 @@
       const imtotal = 35
 
 #---- indices for geometry (airframe) variables and other sizing variables
-### Good Riddance ###
-### Good Riddance ###
       const igRange    =   1
       const igWMTO     =   2
       const igWpay     =   3
@@ -56,8 +54,6 @@
       const igfreserve =  13
       const igfeadd    =  14
       const igfpylon   =  15
-### Good Riddance ###
-### Good Riddance ###
       const igNlift    =  16
       const igNland    =  17
       const igVne      =  18
@@ -73,9 +69,7 @@
       const igfSnace   =  28
       const igpcabin   =  29
       const igdeltap   =  30
-      const igxeng     =  31     
-### Good Riddance ###
-### Good Riddance ###
+      const igxeng     =  31
       const igyeng     = 32
       const igcabVol   = 33
       const igrpayfwd  = 34
@@ -93,10 +87,6 @@
       const igrMv      = 46
       const igsigfac   = 47
       const igrhofuel  = 48
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
       const igfBLIw    = 49
       const igfBLIf    = 50
       const igdfan     = 51
@@ -186,11 +176,6 @@
       const igdxeng2wbox = 119
 
       const igxWfuel = 120
-
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
 
       const igWfvent = 121
       const igdHXPreC = 122
