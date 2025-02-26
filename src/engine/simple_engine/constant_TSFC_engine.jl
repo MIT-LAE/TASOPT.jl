@@ -13,7 +13,7 @@ function constant_TSFC_engine!(ac, case::String, imission::Int64, ip::Int64, ini
         BW = W + para[iaWbuoy]
         CL = para[iaCL]
         ρ = pare[ierho0]
-        #Ftotal = BW * (DoL + para[iagamVdes, ip])
+
         ROC = para[iaROCdes]
 
         #Solve with numerical & analytical solution
@@ -31,6 +31,6 @@ function constant_TSFC_engine!(ac, case::String, imission::Int64, ip::Int64, ini
         
     end
 
-    mfuel_per_eng =  TSFC * Fe / gee
+    mfuel_per_eng =  TSFC * Fe / gee #Calculate fuel flow per engine from set TSFC
     pare[iemfuel] = mfuel_per_eng * neng
 end
