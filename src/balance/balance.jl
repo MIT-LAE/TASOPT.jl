@@ -18,22 +18,23 @@ The routine ensures pitch trim by solving for one of the following:
 
 It also computes the **neutral point (`xNP`), indicating the aircraft's longitudinal static stability.
 
-## Inputs
-- `ac` : Aircraft object
-- `imission` : Mission index (used for unpacking mission-specific parameters).
-- `ip` : Performance index (used for aerodynamic/weight calculations).
-- `rfuel` : Fuel fraction.
-- `rpay` : Payload fraction.
-- `ξpay` : Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded).
-- `itrim` : Trim mode (`1` for `CLh`, `2` for `Sh`, `3` for `xwbox`).
+!!! details "🔃 Inputs and Outputs"
+      **Inputs**
+      - `ac` : Aircraft object
+      - `imission` : Mission index (used for unpacking mission-specific parameters).
+      - `ip` : Performance index (used for aerodynamic/weight calculations).
+      - `rfuel` : Fuel fraction.
+      - `rpay` : Payload fraction.
+      - `ξpay` : Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded).
+      - `itrim` : Trim mode (`1` for `CLh`, `2` for `Sh`, `3` for `xwbox`). #TODO: these are outdated
 
-## Outputs
-No explicit return values, but updates fields inside `para`:
-- `para[iaxCG]` → Computed center of gravity (`xCG`).
-- `para[iaxCP]` → Computed center of pressure (`xCP`).
-- `para[iaxNP]` → Computed neutral point (`xNP`).
+      **Outputs** 
+      No explicit return values, but updates fields inside `para`:
+      - `para[iaxCG]` : Computed center of gravity (`xCG`).
+      - `para[iaxCP]` : Computed center of pressure (`xCP`).
+      - `para[iaxNP]` : Computed neutral point (`xNP`).
 
-## Trim Adjustment Modes
+## Trim Adjustment Modes TODO: these are outdated
 | `itrim` | Adjustment Method |
 |---------|------------------|
 | `1`     | Adjusts horizontal tail lift coefficient (`CLh`) |
@@ -303,9 +304,11 @@ The routine considers:
 
     **Outputs:**  
     No direct return values. Instead, the function updates key fields inside `ac`:
+      - `htail.layout.S` : Horizontal tail area (`Sh`).
+      - `wing.layout.box_x` : Wing box location (`xwbox`).
+      - `wing.layout.x` : Wing location (adjusted for `xwbox`).
 
-
-## Notes:
+## Notes: (TODO: these are outdated)
       - If `iHTsize == 1`, the function fixes `Sh` and solves for the required tail lift `CLh`.
       - If `ixwmove == 0`, the wing location is fixed (no movement).
       - If `ixwmove == 1`, `xwbox` is adjusted to satisfy cruise tail lift conditions.
@@ -643,7 +646,6 @@ function htsize(ac, paraF, paraB, paraC)
 
       #---- set converged results
       htail.layout.S = Sh
-      #c    parg[igWhtail] = (Whtail_o/Sh_o) * Sh
       wing.layout.box_x = xwbox
       wing.layout.x = xwbox + dxwing
 
