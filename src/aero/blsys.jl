@@ -651,7 +651,7 @@ function blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
  
  
 """
-CFT returns the turbulent skin friciton factor using the turbulent compressible version
+CFT returns the turbulent skin friction factor using the turbulent compressible version
 of the Coles formula 
 
 
