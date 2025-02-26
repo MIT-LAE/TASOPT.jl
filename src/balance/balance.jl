@@ -283,7 +283,7 @@ end # balance
 
 Solves for the feasible horizontal tail area (`Sh`) and
 wing box location (`xwbox`) to ensure pitch trim and
-stability requirements across different flight conditions.
+stability requirements with aft CG across different flight conditions.
 
 This routine iteratively adjusts:
       - Horizontal tail area (`Sh`): Ensuring sufficient control authority.
