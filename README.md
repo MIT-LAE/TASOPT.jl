@@ -60,11 +60,11 @@ The PR will not be reviewed if the regression or unit test fails. If you find th
 
 ### Work in branches
 
-Don't commit anything to the main branch. Here's how you create your own fork and branch.  
-First create a fork of this repo by clicking on "fork" on the top right hand of the github page. This creates a copy of this repo that is separate form this one. This ensures that any chagnes made to your fork will not affect other's forks.
+Don't commit directly to the main branch. Here's how you create your own fork and branch.  
+First create a fork of this repo by clicking on "fork" on the top right hand of the github page. This creates a copy of this repo that is separate from this one. This ensures that any changes made to your fork will not affect other's forks.
 
 You will now need to clone your forked version of the repo to your machine where you will be writing code. This [page](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) has a good overview of how to do this whole process.
-After this I highly recommend using branches within your own fork and I prefer the git command line interface over the web interface.
+After this, I highly recommend using branches within your own fork. The Git command-line interface is generally more efficient than the web interface for this workflow.
 Use this command to create a new branch for example `dev_prash`
 
     git checkout -b <name_of_branch>
