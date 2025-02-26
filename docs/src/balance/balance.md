@@ -1,6 +1,27 @@
 # Aircraft Stability
 
-This module provides key functions for aircraft **stability and center of gravity (CG) analysis**, ensuring proper trim and balance throughout flight. The [`balance()`](@ref TASOPT.balance) routine calculates the aircraft's **center of gravity (`xCG`)**, **center of pressure (`xCP`)**, and **neutral point (`xNP`)**, adjusting horizontal tail lift, area, or wing box location to maintain stability. The [`size_htail()`](@ref TASOPT.htsize) routine determines the **horizontal tail area (`Sh`)** and **wing box position (`xwbox`)**, solving for pitch trim and static stability across different flight conditions. The [`cglpay()`](@ref TASOPT.cglpay) routine computes **forward (`xcgF`) and aft (`xcgB`) CG limits** based on payload and fuel distribution. Lastly, the [`cabin_centroid()`](@ref TASOPT.cabin_centroid) routine calculates the **cabin centroid (`xcabin`) and length (`lcabin`)**, accounting for fuel tank placement and fuselage geometry.
+This module provides functions for aircraft **stability and center of gravity (CG) analysis**, ensuring proper trim and balance throughout flight when called by [`wsize()`](@ref TASOPT.wsize).
+
+- [`balance()`](@ref TASOPT.balance) calculates the aircraft's **center of gravity (`xCG`)**, **center of pressure (`xCP`)**, and **neutral point (`xNP`)** at a specific flight point. To meet the pitch trim requirement, the routine adjusts one of (i) the horizontal tail's lift coefficient, (ii) its area, or (iii) the axial location of the wing box. 
+- [`size_htail()`](@ref TASOPT.htsize) performs a more involved stability analysis: it determines the **horizontal tail area (`Sh`)** and **wing box position (`xwbox`)**, solving for pitch trim and static stability across all flight conditions.
+
+Both stability analyses call the following helper functions.
+
+- [`cglpay()`](@ref TASOPT.cglpay) computes **forward (`xcgF`) and aft (`xcgB`) CG limits** based on payload and fuel distribution. 
+- Lastly, [`cabin_centroid()`](@ref TASOPT.cabin_centroid) calculates the **cabin centroid (`xcabin`) and length (`lcabin`)**, accounting for fuel tank placement and fuselage geometry.
+
+!!! details "📖 Theory - Pitch trim and stability requirements"
+    Every operating point must meet the requirement of pitch trim, which is equivalent to the centers of weight and pressure coinciding. This is enforced by requiring that the following total-moment residual is zero.
+
+    ```math
+    \mathcal{R}_M\left( x_{\text{wbox}}, S_h, C_{Lh}, C_L, r_{\text{fuel}}, r_{\text{pay}}, \xi_{\text{pay}} \right) \equiv x_{\text{CG}} - x_{\text{CP}} = \frac{xW}{W} + \frac{c_o \, C_m}{C_L} = 0
+    ```
+    
+    An aircraft must also have some minimum amount of static pitch stability, which means that the rearmost center of gravity must be ahead of the neutral point by the static margin fraction $f_{SM}$ of the mean aerodynamic chord. This is met when the following stability residual is zero:
+
+    ```math
+    \mathcal{R}_{S_h}\left( x_{\text{wbox}}, S_h, r_{\text{fuel}}, r_{\text{pay}}, \xi_{\text{pay}} \right) \equiv x_{\text{CG}} - x_{\text{NP}} + f_{\text{SM}} \, c_{\text{MA}} = 0
+    ```
 
 ```@docs
 TASOPT.balance
