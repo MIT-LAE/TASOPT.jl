@@ -8,7 +8,7 @@ def load_histogram_data(file_path):
     return pd.read_csv(file_path)
 
 
-def plot_2d_histogram(df):
+def plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5):
     """Plot the 2D histogram with integration points using exact frequency values."""
     
     # Use Seaborn rocket_r colormap
@@ -37,9 +37,14 @@ def plot_2d_histogram(df):
     # Ensure tick labels use the desired font
     for label in cbar.ax.get_yticklabels():
         label.set_fontname("Times New Roman")
+        
+    # Add the bounding box
+    bbox_x = [mach_min, mach_max, mach_max, mach_min, mach_min]
+    bbox_y = [cl_min, cl_min, cl_max, cl_max, cl_min]
+    plt.plot(bbox_x, bbox_y, color='red', linewidth=3, linestyle='dashed')
     
     # Add the 5 integration points
-    #plt.scatter(mach_points_5, cl_points_5, color='white', marker='o', edgecolor='black', s=100, label="Integration Points")
+    plt.scatter(mach_points_5, cl_points_5, color='C0', marker='o', edgecolor='black', s=100, label="Integration Points")
     
     # Add a vertical dashed line at Mach = 0.80 for all Reynolds numbers
     ax1.axvline(x=MMo, color='C0', linewidth=2, linestyle=':')    
@@ -74,13 +79,31 @@ def plot_2d_histogram(df):
     plt.show()
 
 
+def compute_frequencies_and_weights(mach_points, cl_points, df):
+    """Compute average frequencies from surrounding bins and normalize weights. Ensure sum of weights is 1."""
+    frequencies = []
+    for mach, cl in zip(mach_points, cl_points):
+        surrounding_bins = df[(df["Mach_bin"] >= mach - 0.01) & (df["Mach_bin"] <= mach + 0.01) &
+                              (df["CL_bin"] >= cl - 0.005) & (df["CL_bin"] <= cl + 0.005)]
+        avg_freq = surrounding_bins["Frequency"].mean() if not surrounding_bins.empty else 0
+        frequencies.append(avg_freq)
+    frequencies = np.array(frequencies)
+    weights = frequencies / np.sum(frequencies)
+    
+    # Check if weights sum to 1
+    if not np.isclose(np.sum(weights), 1.0):
+        raise ValueError("Sum of weights does not equal 1. Check frequency data and normalization.")
+    
+    return mach_points, cl_points, weights
+
+
 # Load the dataset
 file_path = "data/E170_histogram_data.csv"
 df = load_histogram_data(file_path)
 
 # Define the bounding box limits
-mach_min, mach_max = 0.70, 0.78
-cl_min, cl_max = 0.49, 0.54
+mach_min, mach_max = 0.71, 0.78
+cl_min, cl_max = 0.48, 0.54
 
 # Compute the center of the bounding box
 mach_center = (mach_min + mach_max) / 2
@@ -91,4 +114,11 @@ mach_points_5 = np.array([mach_min, mach_max, mach_center, mach_min, mach_max])
 cl_points_5 = np.array([cl_min, cl_min, cl_center, cl_max, cl_max])
 
 # Plot the 2D histogram with integration points
-plot_2d_histogram(df)
+plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5)
+
+# Compute frequencies and weights
+mach_points_5, cl_points_5, weights_5 = compute_frequencies_and_weights(mach_points_5, cl_points_5, df)
+
+# Display the numerical weights in tabular format
+print("\nNumerical Weights for Integration Points:")
+print(pd.DataFrame({"Mach": mach_points_5, "CL": cl_points_5, "Weight": weights_5}))
