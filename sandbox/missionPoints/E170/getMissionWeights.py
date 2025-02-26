@@ -2,6 +2,21 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import scipy.stats as stats
+from numpy.polynomial.hermite import hermgauss
+
+def compute_statistics(df):
+    """Compute and print the mean and variance of Mach and CL bins."""
+    mean_mach = np.mean(df["Mach_bin"])
+    var_mach = np.var(df["Mach_bin"])
+    mean_cl = np.mean(df["CL_bin"])
+    var_cl = np.var(df["CL_bin"])
+    
+    print(f"Mean Mach: {mean_mach}, Variance Mach: {var_mach}")
+    print(f"Mean CL: {mean_cl}, Variance CL: {var_cl}")
+    
+    return mean_mach, var_mach, mean_cl, var_cl
+
 
 def load_histogram_data(file_path):
     """Load the CSV file and return the dataframe."""
@@ -121,6 +136,29 @@ def get_bin_sizes(df):
     return mach_bin_size, cl_bin_size
 
 
+def plot_bivariate_normal_distribution(mu_M, sigma_M, mu_CL, sigma_CL):
+    """Plot the filled contour of the Bivariate Normal distribution using mean and variance."""
+    plt.figure(figsize=(8, 6))
+    
+    # Generate a grid for contour plot
+    mach_vals = np.linspace(mu_M - 3*sigma_M, mu_M + 3*sigma_M, 100)
+    cl_vals = np.linspace(mu_CL - 3*sigma_CL, mu_CL + 3*sigma_CL, 100)
+    M_grid, CL_grid = np.meshgrid(mach_vals, cl_vals)
+    
+    # Compute the bivariate normal distribution
+    rv = stats.multivariate_normal(mean=[mu_M, mu_CL], cov=[[sigma_M**2, 0], [0, sigma_CL**2]])
+    Z = rv.pdf(np.dstack((M_grid, CL_grid)))
+    
+    # Overlay filled contour plot
+    plt.contourf(M_grid, CL_grid, Z, levels=20, cmap='coolwarm', alpha=0.7)
+    plt.colorbar(label="Probability Density")
+    
+    # Labels and title
+    plt.xlabel("Mach Number")
+    plt.ylabel("Lift Coefficient (C_L)")
+    plt.title("Bivariate Normal Distribution of Mach-CL")
+    plt.show()
+
 
 # Load the dataset
 file_path = "data/E170_histogram_data.csv"
@@ -143,11 +181,19 @@ mach_points_5 = np.array([mach_min, mach_max, mach_center, mach_min, mach_max])
 cl_points_5 = np.array([cl_min, cl_min, cl_center, cl_max, cl_max])
 
 # Compute frequencies and weights using bin sizes
-mach_points_5, cl_points_5, weights_5 , surrounding_bins_list = compute_frequencies_and_weights(mach_points_5, cl_points_5, df, mach_bin_size, cl_bin_size, filter_radius)
+#mach_points_5, cl_points_5, weights_5 , surrounding_bins_list = compute_frequencies_and_weights(mach_points_5, cl_points_5, df, mach_bin_size, cl_bin_size, filter_radius)
 
 # Plot the 2D histogram with integration points
-plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5, surrounding_bins_list, weights_5)
+#plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5, surrounding_bins_list, weights_5)
+
 
 # Display the numerical weights in tabular format
-print("\nNumerical Weights for Integration Points:")
-print(pd.DataFrame({"Mach": mach_points_5, "CL": cl_points_5, "Weight": weights_5}))
+#print("\nNumerical Weights for Integration Points:")
+#print(pd.DataFrame({"Mach": mach_points_5, "CL": cl_points_5, "Weight": weights_5}))
+
+
+# Compute and print statistics
+mean_mach, var_mach, mean_cl, var_cl = compute_statistics(df)
+
+# Plot the Bivariate Normal Distribution
+plot_bivariate_normal_distribution(mean_mach, np.sqrt(var_mach), mean_cl, np.sqrt(var_cl))
