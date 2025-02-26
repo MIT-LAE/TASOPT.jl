@@ -54,9 +54,6 @@ $TYPEDFIELDS
     dxW::Float64 = 0
     """Wing Layout """
     layout::WingLayout = WingLayout()
-    """Wing Planform (0: wing catilever, plain; 1: wing cantilever with engine"""
-    has_engine::Bool = false # false: Wing cantilever, plain
-                             # true:  Wing cantilever with engine
     """Wing Material """
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 

@@ -1,3 +1,4 @@
+#TODO: takeoff doc page needed; docstrings need updating
 """
     takeoff(ac)
 

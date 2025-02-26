@@ -163,8 +163,6 @@
     BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
 [Wing]
-    has_engine = true # false: Wing cantilever, plain
-                      # true:  Wing cantilever with engine
     has_strut = false
 
     sweep = 26.0 # wing sweep in degrees
