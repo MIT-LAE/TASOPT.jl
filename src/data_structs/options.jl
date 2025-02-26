@@ -27,7 +27,13 @@ $TYPEDFIELDS
     opt_prop_sys_arch::String
     
     #fuselage/cabin options
+
+    """Indicates if the aircraft has a double-decker fuselage configuration"""
     is_doubledecker::Bool
+
+    #wing/stability options
+    """Move wingbox selection for longitudinal stability analysis. "fixed" = static wing position ,"fixed_CLh" move wing to get CLh="CLhspec" in cruise, "min_static_margin" = move wing to get min static margin = "SMmin"  """
+    opt_move_wing::String
 end
 
 function Base.summary(opt::Options)

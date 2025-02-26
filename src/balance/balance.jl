@@ -278,7 +278,7 @@ No direct outputs. Fields in `ac` are modified.
 """
 function size_htail(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
-      parg, _, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
+      parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -517,13 +517,13 @@ function size_htail(ac, paraF, paraB, paraC)
             end
 
 
-            if compare_strings(htail.opt_move_wing, "fixed")
+            if compare_strings(options.opt_move_wing, "fixed")
                   #----- fix wing location
                   r[2] = 0.0
                   a[2, 1] = 0.0
                   a[2, 2] = 1.0
 
-            elseif compare_strings(htail.opt_move_wing, "fixed_CLh")
+            elseif compare_strings(options.opt_move_wing, "fixed_CLh")
                   #----- set wing location to get CLh=CLhspec in cruise
                   CMw0 = paraC[iaCMw0]
                   CMw1 = paraC[iaCMw1]
@@ -546,7 +546,7 @@ function size_htail(ac, paraF, paraB, paraC)
                   a[2, 1] = cCM_Sh / CL + xWC_Sh / WC - (xWC / WC^2) * WC_Sh
                   a[2, 2] = cCM_xw / CL + xWC_xw / WC
 
-            elseif compare_strings(htail.opt_move_wing, "min_static_margin")
+            elseif compare_strings(options.opt_move_wing, "min_static_margin")
                   #----- set wing location by stability margin at aft-CG case
                   CMw1 = paraB[iaCMw1]
                   CMh1 = paraB[iaCMh1]

@@ -139,8 +139,6 @@ $TYPEDFIELDS
     CL_CLmax::Float64 = 0
     """Number of Tails"""
     ntails::Float64 = 0
-    """Move wingbox selection for longitudinal stability analysis. "fixed" = static wing position ,"fixed_CLh" move wing to get CLh="CLhspec" in cruise, "min_static_margin" = move wing to get min static margin = "SMmin"  """
-    opt_move_wing::String = "fixed"
 end
 
 function wing_additional_weight(wing::AbstractWing)

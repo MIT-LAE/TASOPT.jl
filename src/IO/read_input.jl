@@ -644,11 +644,11 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     end
 
     opt_move_wing = readhtail("opt_move_wing")
-    if any(compare_strings.(opt_move_wing, ["fixed", "fixed_CLh", "min_static_margin"]))
-        htail.opt_move_wing = opt_move_wing
-    else
+    #if not an expected input, throw an error
+    valid_options = ["fixed", "fixed_CLh", "min_static_margin"]
+    if !(any(compare_strings.(opt_move_wing, valid_options)))
         error("Input error: \"opt_move_wing\" = $opt_move_wing\nWing position during horizontal tail sizing can only be sized via:\n" *
-              join(["\"$opt\": " * opt for opt in valid_options], "\n"))
+              join([">\"$opt\"" for opt in valid_options], "\n"))
     end
 
     htail.SM_min = readhtail("SM_min")
@@ -1047,7 +1047,9 @@ dHEx = dprop["HeatExchangers"]
         opt_engine_location = engloc,
         opt_prop_sys_arch = propsys,
         
-        is_doubledecker = is_doubledecker
+        is_doubledecker = is_doubledecker,
+
+        opt_move_wing = opt_move_wing
     )
     
 
