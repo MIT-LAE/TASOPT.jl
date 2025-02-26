@@ -135,7 +135,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       # then normalizing by π/2 so θ spans from 1.0 to 0.0
       # You want these specific θs since you know what Γ is at these points from 
       # the piece wise lift distributions
-      t0 = 1.0 # acos(0.0)/(π/2)
+      t0 = 1.0 # which is basically acos(0.0)/(π/2)
       to = acos(eo)/(0.5*π)
       ts = acos(es)/(0.5*π)
       t1 = 0.0 # acos(1.0)
