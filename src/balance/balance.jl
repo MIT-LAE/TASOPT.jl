@@ -34,7 +34,7 @@ It also computes the **neutral point (`xNP`), indicating the aircraft's longitud
       - `para[iaxCP]` : Computed center of pressure (`xCP`).
       - `para[iaxNP]` : Computed neutral point (`xNP`).
 
-## Trim Adjustment Modes TODO: these are outdated
+## Trim Adjustment Modes
 | `itrim` | Adjustment Method |
 |---------|------------------|
 | `1`     | Adjusts horizontal tail lift coefficient (`CLh`) |
