@@ -138,7 +138,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       t0 = 1.0 # which is basically acos(0.0)/(π/2)
       to = acos(eo)/(0.5*π)
       ts = acos(es)/(0.5*π)
-      t1 = 0.0 # acos(1.0)
+      t1 = 0.0 # which is basically acos(1.0)
 
       # This is to transform the to and ts angles to the right values such
       # that the bunch transform gives us back exactly the right ηo and ηs.
