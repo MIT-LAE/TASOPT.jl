@@ -184,16 +184,12 @@ if lowercase(propsys) == "tf"
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
     
-elseif lowercase(propsys) == "simple_engine"
+elseif lowercase(propsys) == "constant_tsfc"
     pari[iiengtype] = 1
-    modelname = "simple_engine"
+    modelname = "constant_TSFC"
     enginecalc! = TASOPT.engine.constant_TSFC_engine!
     engineweightname = "fractional_weight"
     engineweight! = TASOPT.engine.fractional_engine_weight!
-
-    para[iaROCdes,:,1] .= 500 * ft_to_m / 60
-    pare[ieTSFC,:,1] .= 1.8e-4
-    parg[igfeng] = 0.05
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
     
@@ -838,6 +834,8 @@ prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
     parg[igneng] = readprop("number_of_engines")
+
+if lowercase(propsys) != "constant_tsfc"
     parg[igTmetal] = Temp.(readprop("T_max_metal"))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
@@ -1031,6 +1029,14 @@ dnac = dprop["Nacelles"]
     parg[igrSnace] = read_input("nacelle_pylon_wetted_area_ratio", nac, dnac)
     parg[igrVnace] = read_input("nacelle_local_velocity_ratio", nac, dnac)
 
+else #For constant TSFC model
+    para[iaROCdes,:,:] .= readprop("rate_of_climb") * ft_to_m /60
+    pare[ieTSFC,1:ipclimb1,:] .= readprop("takeoff_TSFC")
+    pare[ieTSFC,ipclimb2:ipclimbn,:] .= readprop("climb_TSFC")
+    pare[ieTSFC,ipcruise1:ipcruise2,:] .= readprop("cruise_TSFC")
+    pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
+end
+
 weight = readprop("Weight")
 dweight = dprop["Weight"]
     parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
@@ -1042,6 +1048,8 @@ dweight = dprop["Weight"]
         pari[iiengwgt] = 1
     elseif lowercase(TF_wmodel) == "advanced"
         pari[iiengwgt] = 2
+    elseif lowercase(TF_wmodel) == "fractional_weight"
+        parg[igfeng] = read_input("engine_weight_fraction", weight, dweight)
     else
         error("\"$TF_wmodel\" engine weight model was specifed. 
         Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
