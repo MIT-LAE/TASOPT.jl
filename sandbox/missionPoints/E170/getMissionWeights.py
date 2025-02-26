@@ -1,10 +1,82 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+def load_histogram_data(file_path):
+    """Load the CSV file and return the dataframe."""
+    return pd.read_csv(file_path)
+
+
+def plot_2d_histogram(df):
+    """Plot the 2D histogram with integration points using exact frequency values."""
+    
+    # Use Seaborn rocket_r colormap
+    cmap = sns.color_palette("rocket_r", as_cmap=True)
+    
+    MMo = 0.82
+    
+    fig, ax1 = plt.subplots()
+    histogram_data = df.pivot(index="CL_bin", columns="Mach_bin", values="Frequency")
+    mach_bins = df["Mach_bin"].unique()
+    cl_bins = df["CL_bin"].unique()
+    
+    pcm = ax1.pcolor(mach_bins, cl_bins, histogram_data, cmap=cmap, shading='auto', vmin = 0, vmax = 200, alpha = 0.8)
+    
+    # Configure the colorbar
+    cbar = fig.colorbar(pcm, ax=ax1, label='Frequency')
+    
+    # Define linear ticks for the colorbar
+    ticks = [0, 25, 50, 75, 100, 125, 150, 175, 200]  # Linear tick positions
+    cbar.set_ticks(ticks)
+    
+    # Customize the colorbar appearance
+    cbar.ax.tick_params(labelsize=20, labelrotation=0, labelcolor='black')
+    cbar.set_label('Frequency', fontsize=20, fontname="Times New Roman")
+    
+    # Ensure tick labels use the desired font
+    for label in cbar.ax.get_yticklabels():
+        label.set_fontname("Times New Roman")
+    
+    # Add the 5 integration points
+    #plt.scatter(mach_points_5, cl_points_5, color='white', marker='o', edgecolor='black', s=100, label="Integration Points")
+    
+    # Add a vertical dashed line at Mach = 0.80 for all Reynolds numbers
+    ax1.axvline(x=MMo, color='C0', linewidth=2, linestyle=':')    
+
+    # Add labels and title
+    ax1.set_xlabel('Mach', fontsize=22, fontname="Times New Roman")
+    ax1.set_ylabel(r'C$_L$', fontsize=22, fontname="Times New Roman")
+    
+    # Adjust axis ticks and spines
+    ax1.tick_params(bottom=True, top=False, left=True, right=True)
+    ax1.tick_params(labelbottom=True, labeltop=False, labelleft=True, labelright=False)
+    ax1.tick_params(which='major', length=10, width=1.2, direction='in')
+    ax1.tick_params(which='minor', length=5, width=1.2, direction='in')
+
+    for axis in ['top', 'bottom', 'left', 'right']:
+        ax1.spines[axis].set_linewidth(1.5)
+    
+    plt.xticks(fontname="Times New Roman", fontsize=20)
+    plt.yticks(fontname="Times New Roman", fontsize=20)
+    
+    F = plt.gcf()
+    Size = F.get_size_inches()
+    F.set_size_inches(Size[0] * 1.5, Size[1] * 1.5, forward=True)
+    
+    plt.rcParams['figure.dpi'] = 300
+    plt.rcParams['savefig.dpi'] = 300
+    
+    ax1.set_xlim(0.59, 0.90)
+    ax1.set_ylim(0.44, 0.58)
+    plt.tight_layout()
+
+    plt.show()
+
 
 # Load the dataset
 file_path = "data/E170_histogram_data.csv"
-df = pd.read_csv(file_path)
+df = load_histogram_data(file_path)
 
 # Define the bounding box limits
 mach_min, mach_max = 0.70, 0.78
@@ -18,41 +90,5 @@ cl_center = (cl_min + cl_max) / 2
 mach_points_5 = np.array([mach_min, mach_max, mach_center, mach_min, mach_max])
 cl_points_5 = np.array([cl_min, cl_min, cl_center, cl_max, cl_max])
 
-# Function to extract the average frequency from the 5 surrounding bins
-def get_average_frequency(mach, cl, df):
-    """Find the average frequency from the 5 surrounding bins for a given Mach and CL."""
-    surrounding_bins = df[(df["Mach_bin"] >= mach - 0.01) & (df["Mach_bin"] <= mach + 0.01) &
-                          (df["CL_bin"] >= cl - 0.005) & (df["CL_bin"] <= cl + 0.005)]
-    return surrounding_bins["Frequency"].mean() if not surrounding_bins.empty else 0
-
-# Get frequencies by averaging over the 5 surrounding bins
-frequencies_5 = np.array([get_average_frequency(m, cl, df) for m, cl in zip(mach_points_5, cl_points_5)])
-
-# Normalize weights so they sum to 1
-weights_5 = frequencies_5 / np.sum(frequencies_5)
-
-# Plot the 2D histogram with 5 integration points
-plt.figure(figsize=(8, 6))
-histogram_data = df.pivot(index="CL_bin", columns="Mach_bin", values="Frequency")
-log_histogram_data = np.log1p(histogram_data)
-
-# Set color range limits for consistency
-vmin, vmax = log_histogram_data.min().min(), log_histogram_data.max().max()
-
-plt.imshow(log_histogram_data, aspect="auto", origin="lower",
-           extent=[df["Mach_bin"].min(), df["Mach_bin"].max(), df["CL_bin"].min(), df["CL_bin"].max()],
-           cmap="viridis", vmin=vmin, vmax=vmax)
-
-# Add the 5 integration points
-plt.scatter(mach_points_5, cl_points_5, color='white', marker='o', edgecolor='black', s=100, label="Integration Points")
-
-# Labels and title
-plt.colorbar(label="Log(Frequency)")
-plt.xlabel("Mach Number")
-plt.ylabel("Lift Coefficient (C_L)")
-plt.title("2D Histogram with 5 Integration Points (Log Scale)")
-plt.legend()
-plt.show()
-
-# Display the numerical weights
-weights_5
+# Plot the 2D histogram with integration points
+plot_2d_histogram(df)
