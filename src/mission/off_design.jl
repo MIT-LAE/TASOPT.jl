@@ -27,11 +27,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 
     tolerW = 1.0e-8
     errw   = 1.0
-
-    fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
-    fuse = ac.fuselage 
     
-
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
 #        para(iafexcdw,ip) = parm[imfexcdw]
@@ -43,6 +39,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     T_std,_,_,_,_ = atmos(altTO/1e3)
     ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
     parm[imDeltaTatm] = ΔTatmos
+    fuse_tank.TSLtank = Tref + ΔTatmos #store sea-level temperature in tank struct
 
     # Calculates surface velocities, boundary layer, wake 
     fusebl!(fuse, parm, para, ipcruise1)
@@ -137,13 +134,10 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     end
 
     if (initializes_engine)
-          
 #----- use design case as initial guess for engine state
-          for ip = 1: iptotal
-                for ie = 1: ietotal
-                      pare[ie,ip] = pared[ie,ip]
-                end
-          end
+        pare[:,:] .= pared[:,:]
+    else
+        pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
     end
   
     for ip = ipstatic: ipdescentn
@@ -238,7 +232,22 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
           rlx = 0.5
     end
 
-    set_ambient_conditions!(ac, ipcruise1)
+    #Calculate start-of-cruise altitude from desired lift coefficient
+    # Use cabin volume to get buoyancy weight
+    ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
+    WbuoyCR = (ρcab - pare[ierho0, ipcruise1]) * gee * parg[igcabVol]
+
+    ip = ipcruise1
+    We = WMTO * para[iafracW, ip]
+    CL = para[iaCL, ip]
+    u0 = pare[ieu0, ip]
+    BW = We + WbuoyCR # Weight including buoyancy
+    S = wing.layout.S
+
+    ρ0 = BW / (0.5*u0^2*S*CL) #Find density from L=W
+    para[iaalt, ip] = find_altitude_from_density(ρ0, ΔTatmos) * 1e3 #Store altitude
+
+    set_ambient_conditions!(ac, ipcruise1, im = mi)
 
     if (pari[iifwing] == 0) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
