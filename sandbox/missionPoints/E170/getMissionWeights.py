@@ -79,12 +79,14 @@ def plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_
     plt.show()
 
 
-def compute_frequencies_and_weights(mach_points, cl_points, df):
+def compute_frequencies_and_weights(mach_points, cl_points, df, mach_bin_size, cl_bin_size):
     """Compute average frequencies from surrounding bins and normalize weights. Ensure sum of weights is 1."""
     frequencies = []
+    surrounding_bins_list = []
     for mach, cl in zip(mach_points, cl_points):
-        surrounding_bins = df[(df["Mach_bin"] >= mach - 0.01) & (df["Mach_bin"] <= mach + 0.01) &
-                              (df["CL_bin"] >= cl - 0.005) & (df["CL_bin"] <= cl + 0.005)]
+        surrounding_bins = df[(df["Mach_bin"] >= mach - 4 * mach_bin_size) & (df["Mach_bin"] <= mach + 4 * mach_bin_size) &
+                              (df["CL_bin"] >= cl - 4 * cl_bin_size) & (df["CL_bin"] <= cl + 4 * cl_bin_size)]
+        surrounding_bins_list.append(surrounding_bins)
         avg_freq = surrounding_bins["Frequency"].mean() if not surrounding_bins.empty else 0
         frequencies.append(avg_freq)
     frequencies = np.array(frequencies)
@@ -94,15 +96,28 @@ def compute_frequencies_and_weights(mach_points, cl_points, df):
     if not np.isclose(np.sum(weights), 1.0):
         raise ValueError("Sum of weights does not equal 1. Check frequency data and normalization.")
     
-    return mach_points, cl_points, weights
+    return mach_points, cl_points, weights, surrounding_bins_list
+
+
+def get_bin_sizes(df):
+    """Return the bin size for Mach and CL from the CSV file."""
+    mach_bins = np.sort(df["Mach_bin"].unique())
+    cl_bins = np.sort(df["CL_bin"].unique())
+    mach_bin_size = np.min(np.diff(mach_bins))
+    cl_bin_size = np.min(np.diff(cl_bins))
+    return mach_bin_size, cl_bin_size
+
 
 
 # Load the dataset
 file_path = "data/E170_histogram_data.csv"
 df = load_histogram_data(file_path)
 
+# Get bin sizes
+mach_bin_size, cl_bin_size = get_bin_sizes(df)
+
 # Define the bounding box limits
-mach_min, mach_max = 0.71, 0.78
+mach_min, mach_max = 0.70, 0.82
 cl_min, cl_max = 0.48, 0.54
 
 # Compute the center of the bounding box
@@ -116,8 +131,8 @@ cl_points_5 = np.array([cl_min, cl_min, cl_center, cl_max, cl_max])
 # Plot the 2D histogram with integration points
 plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5)
 
-# Compute frequencies and weights
-mach_points_5, cl_points_5, weights_5 = compute_frequencies_and_weights(mach_points_5, cl_points_5, df)
+# Compute frequencies and weights using bin sizes
+mach_points_5, cl_points_5, weights_5 = compute_frequencies_and_weights(mach_points_5, cl_points_5, df, mach_bin_size, cl_bin_size)
 
 # Display the numerical weights in tabular format
 print("\nNumerical Weights for Integration Points:")
