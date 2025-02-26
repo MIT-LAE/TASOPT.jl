@@ -626,12 +626,12 @@ isGradient = false
 
 
 
-        @test etaf == 0.88677616114421975
-        @test etalc == 0.84180668283248916
-        @test etahc == 0.84558106490256713
-        @test etaht == 0.89774201734138448
-        @test etalt == 0.91852098314708253
-        @test Tmrow[1] ≈ 1114.7762513333382 rtol = 1e-10
+        @test etaf == 0.8669669309871176
+        @test etalc == 0.8253599539389056
+        @test etahc == 0.8328904728351655 
+        @test etaht ==  0.897964412328221
+        @test etalt == 0.9191100140438033
+        @test Tmrow[1] ≈ 1121.4017246720114  rtol = 1e-10
 
         if isGradient
             # AD
@@ -771,7 +771,7 @@ isGradient = false
             epsrow, Tmrow, Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
             Δp_PreC, Δp_InterC, Δp_Regen)
 
-        @test epsrow[1] ≈ 0.12811308404512714 rtol = 1e-10
+        @test epsrow[1] ≈ 0.13147111518413135 rtol = 1e-10
 
     end
 
@@ -951,17 +951,17 @@ isGradient = false
             Δp_PreC, Δp_InterC, Δp_Regen)
 
 
-        @test etaf ≈ 0.88936819538102763 atol = 1e-8
-        @test etalc ≈ 0.84229764537731722 atol = 1e-8
-        @test etahc ≈ 0.84677585645982412 atol = 1e-8
-        @test etaht ≈ 0.89741440418859175 atol = 1e-8
-        @test etalt ≈ 0.91779651735495371 atol = 1e-8
+        @test etaf ≈ 0.8832832281545349 atol = 1e-8
+        @test etalc ≈ 0.8292163505070079 atol = 1e-8
+        @test etahc ≈ 0.8396031409105092 atol = 1e-8
+        @test etaht ≈ 0.8974013806048625  atol = 1e-8
+        @test etalt ≈ 0.9177711851884208 atol = 1e-8
 
         Tt4_ref = 1783.8000000000002
-        ht4_ref = 477720.02780793706
-        pt4_ref = 2875170.9899538476
-        cpt4_ref = 1311.6018949513275
-        Rt4_ref = 288.11622141645694
+        ht4_ref = 477968.6525802446
+        pt4_ref = 2.7823232536409046e6
+        cpt4_ref = 1311.5865737175513
+        Rt4_ref =  288.11608774614365 
         @test Tt4 ≈ Tt4_ref atol = 1e-8 * Tt4_ref
         @test ht4 ≈ ht4_ref atol = 1e-8 * ht4_ref
         @test pt4 ≈ pt4_ref atol = 1e-8 * pt4_ref
@@ -1117,17 +1117,17 @@ isGradient = false
             Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
             Δp_PreC, Δp_InterC, Δp_Regen)
 
-        @test etaf ≈ 0.92394886262679266 rtol = 1e-6
-        @test etalc ≈ 0.85099625437988058 rtol = 1e-6
-        @test etahc ≈ 0.84828010217617134 rtol = 1e-6
-        @test etaht ≈ 0.89789044306438737 rtol = 1e-6
-        @test etalt ≈ 0.90186675988322329 rtol = 1e-6
+        @test etaf ≈ 0.9030492271458281 rtol = 1e-6
+        @test etalc ≈ 0.6508936589177887 rtol = 1e-6
+        @test etahc ≈ 0.8354812454373838 rtol = 1e-6
+        @test etaht ≈ 0.897856854646557 rtol = 1e-6
+        @test etalt ≈ 0.8671218952270937 rtol = 1e-6
 
         @test Tt4 ≈ 1783.8000000000002 rtol = 1e-6
-        @test ht4 ≈ 328894.12201844301 rtol = 1e-6
-        @test pt4 ≈ 1619938.3094288020 rtol = 1e-6
-        @test cpt4 ≈ 1320.7731310811930 rtol = 1e-6
-        @test Rt4 ≈ 288.19623599129534 rtol = 1e-6
+        @test ht4 ≈ 303318.6850089128  rtol = 1e-6
+        @test pt4 ≈ 1.0707777851566991e6  rtol = 1e-6
+        @test cpt4 ≈ 1322.349189837191 rtol = 1e-6
+        @test Rt4 ≈ 288.2099863374315  rtol = 1e-6
     end
 
     @testset "tfweight.jl" begin
