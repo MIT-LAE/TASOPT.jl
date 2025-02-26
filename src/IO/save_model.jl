@@ -203,7 +203,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Wing ------------------------
     d_wing = Dict()
-        d_wing["has_engine"] = wing.has_engine
         d_wing["has_strut"] = wing.has_strut
 
         d_wing["sweep"] = wing.layout.sweep

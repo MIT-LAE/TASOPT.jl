@@ -532,7 +532,7 @@ function wsize(ac; itermax=35,
         po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
-        if wing.has_engine
+        if compare_strings(options.opt_engine_location,"wing")
             if compare_strings(options.opt_prop_sys_arch,"te")
                 Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB]
             elseif compare_strings(options.opt_prop_sys_arch,"tf")
@@ -945,6 +945,7 @@ function wsize(ac; itermax=35,
     
 end
 
+#TODO: Wupdate0 and Wupdate docstrings need updating
 """
 Wupdate0 updates the weight of the aircraft
 """

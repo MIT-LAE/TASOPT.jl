@@ -466,7 +466,6 @@ end #if
 wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
 readwing(x) = read_input(x, wing_i, dwing)
-    wing.has_engine = compare_strings(engloc,"wing") #true if engines are mounted on wing
     wing.has_strut = readwing("has_strut")
 
     wing.layout.sweep = readwing("sweep")
