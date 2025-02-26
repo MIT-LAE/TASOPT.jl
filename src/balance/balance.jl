@@ -308,11 +308,14 @@ The routine considers:
       - `wing.layout.box_x` : Wing box location (`xwbox`).
       - `wing.layout.x` : Wing location (adjusted for `xwbox`).
 
-## Notes: (TODO: these are outdated)
-      - If `iHTsize == 1`, the function fixes `Sh` and solves for the required tail lift `CLh`.
+## Notes: (TODO: flag names to be updated)
+      - If `iHTsize == 1`, the function uses the specified tail volume coefficient `Vh` to set `Sh` and solves for the minimum required tail lift `CLh`.
+      - If `iHTsize == 2`, the horizontal tail area `Sh` is set by the specified `htail.CL_max_fwd_CG`
       - If `ixwmove == 0`, the wing location is fixed (no movement).
       - If `ixwmove == 1`, `xwbox` is adjusted to satisfy cruise tail lift conditions.
       - If `ixwmove == 2`, `xwbox` is adjusted to enforce static margin at aft-CG.
+      
+Note the two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function. 
 """
 function htsize(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
