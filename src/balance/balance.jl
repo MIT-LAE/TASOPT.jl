@@ -40,7 +40,7 @@ It also computes the **neutral point (`xNP`), indicating the aircraft's longitud
 | `1`     | Adjusts horizontal tail lift coefficient (`CLh`) |
 | `2`     | Adjusts horizontal tail area (`Sh`) |
 | `3`     | Adjusts wing box location (`xwbox`) |
-
+| `0`     | Simply calculates and returns the neutral point (`xNP`) | 
 ## Notes
 - Uses `cglpay(ac)` to compute CG limits (`xcgF`, `xcgB`).
 - Uses `cabin_centroid(...)` to determine cabin location.
