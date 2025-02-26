@@ -990,7 +990,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
     ac = aircraft(ac_og.name, ac_og.description,
     ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank,
-    ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine)
+    ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine, ac_og.landing_gear)
 
     #Extract aircraft parameters
     maxPay = ac.parg[igWpaymax]
