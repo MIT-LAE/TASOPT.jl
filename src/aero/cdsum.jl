@@ -36,7 +36,7 @@ where:
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
 """
-function cdsum!(ac, imission, ip, computes_surfcd)
+function cdsum!(ac, imission, ip, computes_surfcd; Ldebug=false)
       #Unpack data storage
       parg = ac.parg
       para = view(ac.para, :, ip, imission)
@@ -44,9 +44,6 @@ function cdsum!(ac, imission, ip, computes_surfcd)
       wing = ac.wing
       htail = ac.htail
       vtail = ac.vtail
-
-      Ldebug = false
-#      Ldebug = true
 
       fSnace   = parg[igfSnace ]
       
