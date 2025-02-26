@@ -1,6 +1,6 @@
 # Aircraft Stability
 
-This module provides functions for aircraft **stability and center of gravity (CG) analysis**, ensuring proper trim and balance throughout flight when called by [`wsize()`](@ref TASOPT.wsize).
+This module provides functions to size the tail surfaces and balance the aircraft to achieve pitch trim throughout flight when called by [`wsize()`](@ref TASOPT.wsize).
 
 - [`balance()`](@ref TASOPT.balance) calculates the aircraft's **center of gravity (`xCG`)**, **center of pressure (`xCP`)**, and **neutral point (`xNP`)** at a specific flight point. To meet the pitch trim requirement, the routine adjusts one of (i) the horizontal tail's lift coefficient, (ii) its area, or (iii) the axial location of the wing box. 
 - [`size_htail()`](@ref TASOPT.htsize) performs a more involved stability analysis: it determines the **horizontal tail area (`Sh`)** and **wing box position (`xwbox`)**, solving for pitch trim and static stability across all flight conditions.
