@@ -76,7 +76,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
       nftanks = pari[iinftanks] #number of fuel tanks in fuselage
       lftank = parg[iglftank]
 
-      # Use weight fractions to calcualte weights of subsystems
+      # Use weight fractions to calculate weights of subsystems
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
       Wlgnose = landing_gear.nose_gear.weight.W
       Wlgmain = landing_gear.main_gear.weight.W
@@ -157,7 +157,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
            Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
-           Wlgmain * (wing.layout.box_x + dxlg)+ + landing_gear.nose_gear.moment
+           Wlgmain * (wing.layout.box_x + dxlg) + landing_gear.nose_gear.moment
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 

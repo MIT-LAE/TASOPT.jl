@@ -1083,7 +1083,7 @@ dHEx = dprop["HeatExchangers"]
 
     #Create aircraft object
     ac = TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail, engine, landing_gear)
+    pari, parg, parm, para, pare, fuse_tank, fuselage, wing, htail, vtail, engine, landing_gear, [false])
     
     # ---------------------------------
     # Recalculate cabin length
