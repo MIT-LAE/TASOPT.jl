@@ -69,10 +69,9 @@ function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, ifuel::Int, par
     for ip = 1:Npoints
         Mair = para[iaMach, ip]
         z = para[iaalt, ip]
-        t = para[iatime, ip]
 
         #Calculate heat rate at this point
-        Qs[ip], _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
+        Qs[ip] = tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
        
     end
     return Qs
@@ -144,7 +143,7 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
             M0 = para[iaMach, ip, 1]
             z0 = para[iaalt, ip, 1]
 
-            Q, _, _ = tankWthermal(fuse, fuse_tank, z0, M0, xftank, t, ifuel)
+            Q = tankWthermal(fuse, fuse_tank, z0, M0, xftank, ifuel)
         elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
@@ -158,7 +157,7 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
             z = z0 + (zf - z0)/(tf-t0) * (t - t0)
 
             #Calculate heat rate at this point
-            Q, _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
+            Q = tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
         end
     end
     return Q

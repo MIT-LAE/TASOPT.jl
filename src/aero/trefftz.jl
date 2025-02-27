@@ -100,7 +100,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       
       CLsurf= zeros(Float64, nsurf)
       
-      # Calcualte total number of points
+      # Calculate total number of points
       # outboard point + inboard + points within fuselage + dummy between surfaces
       isum = 0
       @inbounds for  isurf = 1: nsurf
@@ -118,7 +118,8 @@ function trefftz1(nsurf, npout, npinn, npimg,
       end
 
 
-      i = 0
+      i::Int64 = 0
+
 @inbounds for  isurf = 1: nsurf
 
 #---- η at center, side-of-body, wing break, tip
@@ -130,11 +131,17 @@ function trefftz1(nsurf, npout, npinn, npimg,
       # ηₒ' fuse non-dim y location that is constricted in the Trefftz plane 
       eop = bop[isurf]/b[isurf]
 
-      t0 = 1.0
+      # Inverting the cosine spacing and 
+      # then normalizing by π/2 so θ spans from 1.0 to 0.0
+      # You want these specific θs since you know what Γ is at these points from 
+      # the piece wise lift distributions
+      t0 = 1.0 # which is basically acos(0.0)/(π/2)
       to = acos(eo)/(0.5*π)
       ts = acos(es)/(0.5*π)
-      t1 = 0.0
+      t1 = 0.0 # which is basically acos(1.0)
 
+      # This is to transform the to and ts angles to the right values such
+      # that the bunch transform gives us back exactly the right ηo and ηs.
       if(bunch > 0.0) 
        to = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*to))*0.5/bunch
        ts = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*ts))*0.5/bunch
@@ -172,15 +179,17 @@ function trefftz1(nsurf, npout, npinn, npimg,
       zp[i] = z0
 
 #---- set points over fuselage
-      @inbounds for  k = k0+1 : ko
+      @inbounds for  k = k0+1 : ko #start at k0+1 cause you already set stuff for k0.
         i = i+1
 
-        fk = float(k-k0)/float(ko-k0)
-        t[i] = t0*(1.0-fk) + to*fk
-        tc = 0.5*(t[i-1]+t[i])
+        fk = (k-k0)/(ko-k0)
+        t[i] = t0*(1.0-fk) + to*fk #field points at i
+        tc = 0.5*(t[i-1]+t[i]) #collocation point at i+1/2 points
 
         e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
         ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
+       
+        # E.g., eo can be = e0 if we have something like a T-tail
         if(eo-e0 == 0.0) 
          fi = 1.0
          fc = 0.5
@@ -205,11 +214,11 @@ function trefftz1(nsurf, npout, npinn, npimg,
         ycp[i-1] = yop * (yc[i-1]/yo)^yexp
         zcp[i-1] = zc[i-1]
       end
-
+      #Inner panel
       @inbounds for  k = ko+1: ks
         i = i+1
 
-        fk = float(k-ko)/float(ks-ko)
+        fk = (k-ko)/(ks-ko)
         t[i] = to*(1.0-fk) + ts*fk
         tc = 0.5*(t[i-1]+t[i])
 
@@ -236,11 +245,11 @@ function trefftz1(nsurf, npout, npinn, npimg,
         ycp[i-1] = sqrt(yc[i-1]^2 - yo^2 + yop^2)
         zcp[i-1] = zc[i-1]
       end
-
+      # Outer panel
       @inbounds for  k = ks+1 : k1
         i = i+1
 
-        fk = float(k-ks)/float(k1-ks)
+        fk = (k-ks)/(k1-ks)
         t[i] = ts*(1.0-fk) + t1*fk
         tc = 0.5*(t[i-1]+t[i])
 
@@ -279,7 +288,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
 
       @inbounds for  isurf = 1: nsurf
         i = ifrst[isurf]
-        gw[i] = 0.
+        gw[i] = 0. #Circulation in the wake
         @inbounds for  i = ifrst[isurf]+1: ilast[isurf]-1
           gw[i] = gc[i-1] - gc[i]
         end
@@ -294,11 +303,14 @@ function trefftz1(nsurf, npout, npinn, npimg,
          cltest = 0.
          @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
            dy = yp[i+1] - yp[i]
-           cltest = cltest + 2.0*gc[i]*dy * bref/(0.5*Sref)
+           cltest = cltest + gc[i]*dy
          end
+         
+         cltest = cltest * 2.0 * bref/(0.5*Sref)
 
-         gfac = CLsurfsp[isurf]/cltest
-#        println("$isurf, $gfac")
+         ## Calculate the scaling factor for the circulations
+         gfac = CLsurfsp[isurf]/(cltest)
+        # println("$isurf, $gfac, $cltest, $(CLsurfsp[isurf])")
 
          @inbounds for  i = ifrst[isurf]: ilast[isurf]
            gc[i] = gc[i]*gfac
@@ -352,8 +364,8 @@ function trefftz1(nsurf, npout, npinn, npimg,
  end #end for loop
 
       AR = bref^2/Sref
-      CDell = CL^2 / (π*AR)
-
+      CDell = CL^2 / (π*AR) #CD for elliptical loading here. 
+      # For general CD = CL²/(π*AR*spaneff) ∴spaneff calculated as:
       spanef = CDell / CD
 
       return CLsurf, CL, CD , spanef

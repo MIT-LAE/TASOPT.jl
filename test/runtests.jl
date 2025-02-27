@@ -18,9 +18,4 @@ include(TASOPT.__TASOPTindices__)
     include("unit_test_outputs.jl")
     include("unit_test_io.jl")
 
-    # TODO: engine tests
-    #engine tests housed in /src/engine/test/
-    # neglected for a while, should probs include, though some break rn
-    # include(joinpath(__TASOPTroot__, "engine/test/test.jl"))
-
 end

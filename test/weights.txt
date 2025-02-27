@@ -1,32 +1,32 @@
 Weight build-up:
  -------------- 
-Wempty  +   467115.2 N (105011.7 lb)
+Wempty  +   473832.5 N (106521.8 lb)
 Wpay    +   172146.2 N ( 38700.0 lb)
-Wfuel   +   232702.6 N ( 52313.6 lb)
+Wfuel   +   239475.4 N ( 53836.2 lb)
 --------------------
-WMTO    =   871964.0 N (196025.3 lb)
+WMTO    =   885454.0 N (199058.0 lb)
 
-Wfuse   +   197958.3 N ( 44502.8 lb)
-Wwing   +   128386.9 N ( 28862.5 lb)
-Wvtail  +     9622.8 N (  2163.3 lb)
-Whtail  +    14366.1 N (  3229.6 lb)
+Wfuse   +   198732.6 N ( 44676.9 lb)
+Wwing   +   130323.9 N ( 29298.0 lb)
+Wvtail  +     9854.3 N (  2215.3 lb)
+Whtail  +    14722.0 N (  3309.6 lb)
 Wtesys  +        0.0 N (     0.0 lb)
 Wftank  +        0.0 N (     0.0 lb)
-Wadd    +    56677.7 N ( 12741.6 lb)
+Wadd    +    57554.5 N ( 12938.8 lb)
 --------------------
-Wempty  =   407011.6 N ( 91499.8 lb)
+Wempty  =   411187.3 N ( 92438.6 lb)
 
-Wcap    +    74843.5 N ( 16825.5 lb)
-Wweb    +     3441.2 N (   773.6 lb)
-Wflap   +    15656.9 N (  3519.8 lb)
-Wslat   +     7828.5 N (  1759.9 lb)
-Waile   +     3131.4 N (   704.0 lb)
-Wlete   +     7828.5 N (  1759.9 lb)
-Wribs   +    11742.7 N (  2639.9 lb)
-Wspoi   +     1565.7 N (   352.0 lb)
-Wwatt   +     2348.5 N (   528.0 lb)
+Wcap    +    75979.8 N ( 17080.9 lb)
+Wweb    +     3486.0 N (   783.7 lb)
+Wflap   +    15893.2 N (  3572.9 lb)
+Wslat   +     7946.6 N (  1786.5 lb)
+Waile   +     3178.6 N (   714.6 lb)
+Wlete   +     7946.6 N (  1786.5 lb)
+Wribs   +    11919.9 N (  2679.7 lb)
+Wspoi   +     1589.3 N (   357.3 lb)
+Wwatt   +     2384.0 N (   535.9 lb)
 --------------------
-Wwing  =   128386.9 N ( 28862.5 lb)
+Wwing  =   130323.9 N ( 29298.0 lb)
 
 Wtshaft +        0.0 N (     0.0 lb) × 2
 Wcat    +        0.0 N (     0.0 lb) × 2

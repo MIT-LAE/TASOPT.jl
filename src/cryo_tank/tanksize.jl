@@ -1,49 +1,60 @@
 """
-        tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64,
-                      time_flight::Float64, ifuel::Int64)
+        tanksize!(ac, imission)
 
 `tanksize` sizes a cryogenic fuel tank for a cryogenic-fuel aircraft
 
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
-        - `fuse::Fuselage`: fuselage object.
-        - `fuse_tank::fuselage_tank`: fuselage tank object.
-        - `z::Float64`: flight altitude (m)
-        - `Mair::Float64`: external air Mach number
-        - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-        - `ifuel::Int64`: fuel index.
+        - `ac::aircraft`: TASOPT aircraft object.
         
         **Outputs:**
-        - `mdot_boiloff::Float64`: Mass boiled off during the mission flight (kg).
-        - `Vfuel::Float64`: Volume of fuel (m^3).
-        - `Rtank::Float64`: Radius of the tank (m).
-        - `Winsul_sum::Float64`: Sum of the insulation weight (N).
-        - `l_tank::Float64`: Length of the tank (m).
-        - `Wtank::Float64`: Weight of the tank structure (N).
+        No direct outputs. Aircraft object gets modified with tank parameters.
 
 See [here](@ref fueltanks).
 """
-function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64,
-                      time_flight::Float64, ifuel::Int64)
+function tanksize!(ac, imission::Int64 = 1)
+        #Unpack storage arrays
+        fuse = ac.fuselage
+        fuse_tank = ac.fuse_tank
+        para = view(ac.para, :, :, imission)
+        parg = ac.parg
+
+        #Unpack variables in ac
+        tank_placement = fuse_tank.placement
+        nftanks = fuse_tank.tank_count
+       
+        #Convective cooling
+        if tank_placement == "rear"
+                xftank_heat = parg[igxftankaft]
+        else
+                xftank_heat = parg[igxftank]
+        end
+        ifuel = ac.options.ifuel
+        Mair = para[iaMach, ipcruise1]
+        z = para[iaalt, ipcruise1]
+            
+        fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
 
         #Unpack variables in fuse_tank
-        t_cond = fuse_tank.t_insul
-        Wfuel = fuse_tank.Wfuelintank
-        Tfuel = fuse_tank.Tfuel
+        rhofuel = fuse_tank.rhofuel
+        t_cond = fuse_tank.t_insul #thickness of each insulation layer
+        Wfuelintank = fuse_tank.Wfuelintank #weight of fuel in tank
+        Tfuel = fuse_tank.Tfuel #fuel temperature
         sizes_insulation = fuse_tank.sizes_insulation #Boolean for whether to size for a boiloff rate
-        TSL = fuse_tank.TSLtank
+        TSL = fuse_tank.TSLtank #sea-level temperature for tank design
 
+        #------Size insulation, if requested------
         if sizes_insulation #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
                 iinsuldes = fuse_tank.iinsuldes
 
                 #Thermal calculations
-                _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank) #Find adiabatic wall temperature 
+                _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank_heat) #Find adiabatic wall temperature 
 
                 ΔT = Taw - Tfuel
 
                 #Create inline function with residuals as a function of x
-                residual(x) = res_MLI_thick(x, fuse, fuse_tank, z, Mair, xftank, ifuel) #Residual in boiloff rate as a function of Δt
+                residual(x) = res_MLI_thick(x, fuse, fuse_tank, z, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
                 guess = zeros(length(t_cond) + 2) 
@@ -62,26 +73,22 @@ function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::F
                 for ind in iinsuldes #For every segment whose thickness can be changed
                         t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
                 end
-
-                mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) /3600
-                m_boiloff = boiloff_percent *  Wfuel / (gee * 100)*time_flight/3600 #initial value of boil-off mass
                 
-        else #If insulation does not need to be sized
-                _, m_boiloff, mdot_boiloff = tankWthermal(fuse, fuse_tank, z, Mair, xftank, time_flight, ifuel)
         end
         
+        #------Calculate tank weight------
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winner_tot, lcyl1, tskin, Rinnertank, Vfuel, Winnertank, Wfuel_tot, Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul,
-        Sinternal, Shead_insul, l_inner = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
         has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
         if has_vacuum #If tank is double-walled
                 Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
-                
+                Winner_tot = Winnertank + Wfuelintank #weight of inner vessel + fuel
+
                 Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
@@ -89,19 +96,48 @@ function tanksize!(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::F
                 Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
                 t_cyl2, t_head2, l_outer = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
 
-                Wtank_total = Winner_tot + Wtank2
                 Wtank = Winnertank + Wtank2
-                l_tank = l_outer #If there is an outer vessel, the total length is the length of this tank
+                ltank = l_outer #If there is an outer vessel, the total length is the length of this tank
                 Rtank = Routertank
 
         else
-                Wtank_total = Winner_tot
                 Wtank = Winnertank
-                l_tank = l_inner #Tank length when there is only an inner vessel
+                ltank = l_inner #Tank length when there is only an inner vessel
                 Rtank = Rinnertank
         end
+
+        #------Store outputs in arrays------
+        parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
+        parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)
+        parg[iglftank] = ltank
+        parg[igRftank] = Rtank
+        parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
+
+        #Tank placement and weight moment
+        lcabin = fuse.layout.l_cabin_cylinder
+        if tank_placement == "front"
+                flag_front = 1
+                flag_aft = 0
+                xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
+                xftankaft = 0.0
+        elseif tank_placement == "rear"
+                flag_front = 0
+                flag_aft = 1
+                xftank = 0.0
+                xftankaft = fuse.layout.x_start_cylinder + lcabin + 1.0*ft_to_m + ltank/2.0
+        elseif tank_placement == "both"
+                flag_front = 1
+                flag_aft = 1
+                xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
+                xftankaft = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
+        end
         
-        return mdot_boiloff, Vfuel, Rtank, Winsul_sum, l_tank, Wtank
+        parg[igxftank] = xftank
+        parg[igxftankaft] = xftankaft
+        parg[igxWftank] = Wtank * (flag_front * xftank + flag_aft * xftankaft) 
+        xfuel = (flag_front * xftank + flag_aft * xftankaft) / (flag_front + flag_aft)
+        parg[igxWfuel] = parg[igWfuel] * xfuel
+        
 end
 
 """
@@ -146,8 +182,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
                 t_all[ind] = t_all[ind] + Δt
         end
 
-        Wtank_total, l_cyl, tskin, r_tank, Vfuel, Wtank, Wfuel_tot,
-        Winsul_sum, t_head, Whead, Wcyl, Wstiff, Winsul, Sinternal, Shead, l_tank = size_inner_tank(fuse, fuse_tank, t_all)
+        Wtank, Winsul_sum, Vfuel, Shead, r_tank, l_tank, l_cyl = size_inner_tank(fuse, fuse_tank, t_all)
 
         mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
         # Boil-off rate equals the heat rate divided by heat of vaporization
