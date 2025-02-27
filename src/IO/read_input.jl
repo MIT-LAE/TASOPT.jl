@@ -632,14 +632,14 @@ readhtail(x) = read_input(x, htail_input, dhtail)
     if compare_strings(htail_sizing,"fixed_Vh")
         htail.opt_sizing = htail_sizing
         htail.volume = readhtail("Vh")
-    elseif compare_strings(htail_sizing,"max_fwd_CG")
+    elseif compare_strings(htail_sizing,"CLmax_fwdCG")
         htail.opt_sizing = htail_sizing
         htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
         htail.volume = 1.0
     else
         error("Horizontal tail can only be sized via:
-            \"fixed_Vh\":   specified tail volume coeff \"Vh\";
-            \"max_fwd_CG\": specified CLh at max-forward CG case during landing (\"CLh_at_max_forward_CG\")")
+            \"fixed_Vh\":   specified tail volume coeff (\"Vh\");
+            \"CLmax_fwdCG\": specified CLh (\"CLh_at_max_forward_CG\") at 'worst-case': max-forward CG, max wing lift")
     end
 
     opt_move_wing = readhtail("opt_move_wing")

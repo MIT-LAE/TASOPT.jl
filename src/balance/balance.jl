@@ -284,7 +284,7 @@ This routine iteratively adjusts:
 - Wing box location (`xwbox`): Maintaining static and dynamic stability.
 
 The routine considers:
-- Worst-case CG locations** (`xcgF`, `xcgB`) computed using `cglpay(ac)`.
+- Max and min CG locations** (`xcgF`, `xcgB`) computed using `cglpay(ac)`.
 - Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
 - Static margin constraints (`SM`).
 - Fuel and payload distribution effects.
@@ -305,8 +305,8 @@ The routine considers:
 **Note**: two flags determine the sizing strategy:
 
       - `htail.opt_sizing`
-            * = "fixed_Vh"      adjust Sh    (horizontal tail area)
-            * = "CLh_max_fwd_CG"    adjust Sh   (horizontal tail area)
+            * = "fixed_Vh"    set Sh from prescribed tail volume
+            * = "CLmax_fwdCG" set Sh to meet the "worst-case" scenario: max wing CL with most fwd CG, with an assumed max CLh
 
       - `ac.opt_move_wing`
             * = "fixed"         no changes to wing location
@@ -514,7 +514,7 @@ function size_htail(ac, paraF, paraB, paraC)
             xWC_Sh = xWe_Sh
 
             if compare_strings(htail.opt_sizing, "fixed_Vh")
-                  #----- fix HT volume (Section 2.12.1 of TASOPT docs)
+                  #----- set HT area from fixed volume (Section 2.12.1 of TASOPT docs)
                   lhtail = htail.layout.x - (xwbox + dxwing)
                   lhtail_xw = -1.0
 
@@ -525,8 +525,8 @@ function size_htail(ac, paraF, paraB, paraC)
                   a[1, 1] = lhtail
                   a[1, 2] = Sh * lhtail_xw
 
-            elseif compare_strings(htail.opt_sizing, "max_fwd_CG")
-                  #----- set HT area by pitch trim power at forward CG case
+            elseif compare_strings(htail.opt_sizing, "CLmax_fwdCG")
+                  #----- set HT area by worst case: max pitch trim power at forward CG case w/ max wing CL
                   CMw0 = paraF[iaCMw0]
                   CMw1 = paraF[iaCMw1]
                   CMh0 = paraF[iaCMh0]
