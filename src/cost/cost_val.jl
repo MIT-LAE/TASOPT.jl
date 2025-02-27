@@ -1,3 +1,14 @@
+"""
+!!! warning "Unused and Unvetted"
+    This legacy function is not used elsewhere in the code but has been
+    retained for reference and in case we decide to update it in the future.
+    Note that it has not been updated to work with the new `struct`s, that it
+    has not been vetted, and is not endorsed by the current dev team. 
+
+    Read the reference before using it!
+
+Honestly, not a clue.
+"""
 function CostVal(prod_Q)
     # baseline cost of 737-MAX9 with CFM LEAP-1B engines, from TASOPT model provided by Prashanth
     wfuse = 20183.2

@@ -1,8 +1,16 @@
-
+#TODO: make this work with new structs or delete
 """
 cost_est estimates the program and airframe cost for the aircraft
 aircraft cost model developed from DAPCA IV, as found in Raymer's
 Aircraft Design (2006)
+
+!!! warning "Unused and Unvetted"
+    This legacy function is not used elsewhere in the code but has been
+    retained for reference and in case we decide to update it in the future.
+    Note that it has not been updated to work with the new `struct`s, that it
+    has not been vetted, and is not endorsed by the current dev team. 
+
+    Read the reference before using it!
 
 Inputs:
 parg[,] geometric parameters
