@@ -2,7 +2,7 @@
     find_mdot_time(t, parg, para, pare)
 
 This function outputs the fuel mass flow rate to the engines as a function of time for a TASOPT aircraft 
-model.
+model with fuselage fuel tanks.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `t::Float64`: time in mission (s)
@@ -13,10 +13,10 @@ model.
     **Outputs:**
     - `t::mdot`: fuel mass flow rate out of the tank (kg/s)
 """
-function find_mdot_time(t::Float64, fuselage_fueltank_count::Int64, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
+function find_mdot_time(t::Float64, tank_count::Int64, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
-    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / fuselage_fueltank_count
+    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / tank_count
 
     times = para[iatime,:]
 
