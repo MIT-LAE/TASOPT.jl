@@ -306,7 +306,7 @@ The routine considers:
 
       - `htail.opt_sizing`
             * = "fixed_Vh"      adjust Sh    (horizontal tail area)
-            * = "max_fwd_CG"    adjust CLh   (horizontal tail cl)
+            * = "CLh_max_fwd_CG"    adjust Sh   (horizontal tail area)
 
       - `ac.opt_move_wing`
             * = "fixed"         no changes to wing location
