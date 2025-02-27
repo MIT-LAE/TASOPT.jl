@@ -16,7 +16,7 @@
 """
 function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     #Extract aircraft components and storage arrays
-    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
     
     parad = ac.parad
     pared = ac.pared
@@ -249,7 +249,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 
     set_ambient_conditions!(ac, ipcruise1, im = mi)
 
-    if (pari[iifwing] == 0) #If fuel is stored in the fuselage
+    if !(options.has_wing_fuel) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
         _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, mi)
         parm[imWfvent] = Mvents[end] * gee #Store vented weight
@@ -260,7 +260,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    HXOffDesign!(engine.heat_exchangers, pare, pari)
+    HXOffDesign!(engine.heat_exchangers, pare, options.ifuel)
     
 #-------------------------------------------------------------------------
 

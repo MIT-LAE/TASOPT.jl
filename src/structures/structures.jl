@@ -18,24 +18,24 @@ export get_wing_weights!, calculate_centroid_offset!, calculate_centroid_offset,
  update_fuse!, update_fuse_for_pax!, place_cabin_seats, find_cabin_width, find_floor_angles, arrange_seats
 
 
-include("../misc/index.inc")
-include("../misc/constants.jl")
+include("../data_structs/index.inc")
+include("../data_structs/constants.jl")
 include("loads.jl")
 export î, ĵ, k̂, WORLD, Weight
 
 #include fuselage sizing
-include("../misc/layout.jl")
+include("../data_structs/layout.jl")
 export SingleBubble, MultiBubble, scaled_cross_section
-include("../misc/structuralMember.jl")
+include("../data_structs/structuralMember.jl")
 export StructuralMember
-include("../misc/fuselage.jl")
+include("../data_structs/fuselage.jl")
 export Fuselage
 export AbstractCrossSection
 include("fuseW.jl")
-include("../misc/fuselage_geometry.jl")
+include("../data_structs/fuselage_geometry.jl")
 
-include("../misc/wingSections.jl")
-include("../misc/wing.jl")
+include("../data_structs/wingSections.jl")
+include("../data_structs/wing.jl")
 export WingSection,TailSection,Wing,Tail,wing_additional_weight 
 
 #include sizing of surfaces

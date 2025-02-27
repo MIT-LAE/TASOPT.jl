@@ -82,7 +82,7 @@ end
 
 """
 Wing layout is a structure that defines the wing planform.
-See [WingSection](@ref) and [WingCrossSection](@ref) as well.
+See `WingSection` and `WingCrossSection` as well.
 """
 @kwdef mutable struct WingLayout
     """Aspect Ratio [m]"""

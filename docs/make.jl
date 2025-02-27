@@ -50,13 +50,13 @@ makedocs(
         ],
     "Data and I/O" => Any[
         "data_io/data_basics.md",
+        "data_io/structs.md",
         "data_io/data_io.md"
         ],
 
     "Miscellaneous" => Any[
-        "misc/structs.md",
         "misc/dreladocs.md",
-        "misc/misc.md",
+        # "misc/misc.md",
         "misc/fordevs.md"
         ]
     ],

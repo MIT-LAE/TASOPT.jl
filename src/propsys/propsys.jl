@@ -9,7 +9,7 @@ export NPSS_run, startNPSS, endNPSS
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 
 include(__TASOPTindices__)
-include(joinpath(__TASOPTroot__,"misc/constants.jl"))
+include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
 
 include("NPSS_functions.jl")
 

@@ -20,7 +20,7 @@ function tfweight(ac)
     ip = ipcruise1 #OPR and BPR designed for start-of-cruise
 
     HXs = ac.engine.heat_exchangers	
-    iengwgt = ac.pari[iiengwgt]
+    engwgt = ac.engine.model.weight_model_name
     Gearf = ac.parg[igGearf]
     mdotc = ac.pared[iemblcD, ip] * sqrt(Tref / TSL) * (pSL / pref)
     BPR = ac.pared[ieBPR, ip]
@@ -33,102 +33,13 @@ function tfweight(ac)
     fpylon = ac.parg[igfpylon]
     HX_add_mass_frac = ac.parg[igHXaddmassfrac]
 
-    # include("constants.inc")
-
-    if (iengwgt > 2)
-
-        # Giulia Pantalone's weight model (iengwgt = 3 or 4)
-        if (abs(Gearf - 1.0) < 0.001)
-
-            # ungeared fan
-            if (iengwgt == 3)
-
-                # basic technology
-                Wcore, Wfan, Wcomb, Wnozz, Wnace = ddct(mdotc / 0.4535, OPR, BPR)
-
-            else
-
-                # advanced technology
-                Wcore, Wfan, Wcomb, Wnozz, Wnace = ddat(mdotc / 0.4535, OPR, BPR)
-
-            end
-
-        else
-
-            # geared fan
-            if (iengwgt == 3)
-
-                # basic technology
-                Wcore, Wfan, Wcomb, Wnozz, Wnace = gct(mdotc / 0.4535, OPR, BPR)
-
-            else
-
-                # advanced technology
-                Wcore, Wfan, Wcomb, Wnozz, Wnace = gat(mdotc / 0.4535, OPR, BPR)
-
-            end
-        end
-
-        # total engine weight
-        Weng1 = (Wcore + Wfan + Wcomb + Wnace + Wnozz) / lb_N
-        Wpylon = Weng1 * fpylon
-        We1 = (Wcore + Wcomb + Wfan) / lb_N
-        Weng = (Weng1 + Wpylon) * neng
-        Webare = We1 * neng
-        Wnac = neng * Wnace / lb_N
-
-    else
-
-        # Use Drela's or Fitzgerald's engine model
-        if (iengwgt == 0)
-
-            #  Drela's original weight model
-            We1 = (mdotc / 45.35) *
-                  (1684.5 +
-                   17.7 * (OPR / 30.0) +
-                   1662.2 * (BPR / 5.0)^1.2) / lb_N
-
-        else
-
-            if (abs(Gearf - 1.0) < 0.001)
-
-                # Nate Fitzgerald's weight model, ungeared fan
-                if (iengwgt == 1)
-
-                    # basic technology
-                    acon = 18.09 * BPR^2 + 476.9 * BPR + 701.3
-                    bcon = 0.001077 * BPR^2 - 0.03716 * BPR + 1.190
-                    ccon = -0.01058 * BPR + 0.3259
-
-                else
-
-                    # advanced technology
-                    acon = 15.38 * BPR^2 + 401.1 * BPR + 631.5
-                    bcon = 0.001057 * BPR^2 - 0.03693 * BPR + 1.171
-                    ccon = -0.01022 * BPR + 0.2321
-                end
-
-            else
-
-                # Nate Fitzgerald's weight model, geared fan
-                if (iengwgt == 1)
-
-                    # basic technology
-                    acon = -0.6590 * BPR^2 + 292.8 * BPR + 1915.0
-                    bcon = 0.00006784 * BPR^2 - 0.006488 * BPR + 1.061
-                    ccon = -0.001969 * BPR + 0.07107
-
-                else
-                    # advanced technology
-                    acon = -0.6204 * BPR^2 + 237.3 * BPR + 1702.0
-                    bcon = 0.00005845 * BPR^2 - 0.005866 * BPR + 1.045
-                    ccon = -0.001918 * BPR + 0.06765
-
-                end
-            end
-
-            We1 = (acon / lb_N) * (mdotc / 45.35)^bcon * (OPR / 40.0)^ccon
-        end
+    #Apply engine weight model based on selection
+    #  Drela's original weight model
+    if compare_strings(engwgt, "drela")
+        We1 = (mdotc / 45.35) *
+                (1684.5 +
+                17.7 * (OPR / 30.0) +
+                1662.2 * (BPR / 5.0)^1.2) / lb_N
 
         # bare engine weight
         Webare = We1 * neng
@@ -153,6 +64,93 @@ function tfweight(ac)
         # total engine weight
         Weng = Webare + Weadd + Wnac + Wpylon
 
+    #Fitzgerald model options #formerly iengwgt = 1,2
+    elseif contains(lowercase(engwgt), "fitzgerald")
+        #ungeared fan
+        if (abs(Gearf - 1.0) < 0.001)
+            # Nate Fitzgerald's weight model, ungeared fan
+            if compare_strings(engwgt, "fitzgerald_basic")
+                # basic technology
+                acon = 18.09 * BPR^2 + 476.9 * BPR + 701.3
+                bcon = 0.001077 * BPR^2 - 0.03716 * BPR + 1.190
+                ccon = -0.01058 * BPR + 0.3259
+            elseif compare_strings(engwgt, "fitzgerald_adv")
+                # advanced technology
+                acon = 15.38 * BPR^2 + 401.1 * BPR + 631.5
+                bcon = 0.001057 * BPR^2 - 0.03693 * BPR + 1.171
+                ccon = -0.01022 * BPR + 0.2321
+            end
+        #geared fan
+        else
+            # Nate Fitzgerald's weight model, geared fan
+            if compare_strings(engwgt, "fitzgerald_basic")
+                # basic technology
+                acon = -0.6590 * BPR^2 + 292.8 * BPR + 1915.0
+                bcon = 0.00006784 * BPR^2 - 0.006488 * BPR + 1.061
+                ccon = -0.001969 * BPR + 0.07107
+            elseif compare_strings(engwgt, "fitzgerald_adv")
+                # advanced technology
+                acon = -0.6204 * BPR^2 + 237.3 * BPR + 1702.0
+                bcon = 0.00005845 * BPR^2 - 0.005866 * BPR + 1.045
+                ccon = -0.001918 * BPR + 0.06765
+            end
+        end
+
+        We1 = (acon / lb_N) * (mdotc / 45.35)^bcon * (OPR / 40.0)^ccon
+
+        # bare engine weight
+        Webare = We1 * neng
+        # nacelle weight model from NASA CR 151970
+        Snace1 = rSnace * 0.25 * pi * dfan^2
+        Ainlet = 0.4 * Snace1
+        Acowl = 0.2 * Snace1
+        Aexh = 0.4 * Snace1
+        Acore = pi * dlcomp * (3.0 * dlcomp)
+        Wnace1 = 4.45 * (Ainlet / 0.3048^2) * (2.5 + 0.0238 * dfan / 0.0254) +
+                 4.45 * (Acowl / 0.3048^2) * 1.9 +
+                 4.45 * (Aexh / 0.3048^2) * (2.5 + 0.0363 * dfan / 0.0254) +
+                 4.45 * (Acore / 0.3048^2) * 1.9
+        Wnac = Wnace1 * neng
+
+        # engine accessories + fuel system
+        Weadd = Webare * feadd
+
+        # engine pylons
+        Wpylon = (Webare + Weadd + Wnac) * fpylon
+
+        # total engine weight
+        Weng = Webare + Weadd + Wnac + Wpylon
+
+    # Giulia Pantalone's weight model (formerly, iengwgt = 3 or 4)
+    elseif contains(lowercase(engwgt), "pantalone")
+        @warn("Pantalone weight models were requested and are implemented, but they have not been tested or verified. Proceed with caution.")
+        # ungeared fan
+        if (abs(Gearf - 1.0) < 0.001)
+            if compare_strings(engwgt, "pantalone_basic")
+                # basic technology
+                Wcore, Wfan, Wcomb, Wnozz, Wnace = ddct(mdotc / 0.4535, OPR, BPR)
+            elseif compare_strings(engwgt, "pantalone_adv")
+                # advanced technology
+                Wcore, Wfan, Wcomb, Wnozz, Wnace = ddat(mdotc / 0.4535, OPR, BPR)
+            end
+        # geared fan
+        else
+            if compare_strings(engwgt, "pantalone_basic")
+                # basic technology
+                Wcore, Wfan, Wcomb, Wnozz, Wnace = gct(mdotc / 0.4535, OPR, BPR)
+            elseif compare_strings(engwgt, "pantalone_adv")
+                # advanced technology
+                Wcore, Wfan, Wcomb, Wnozz, Wnace = gat(mdotc / 0.4535, OPR, BPR)
+            end
+        end
+
+        # total engine weight
+        Weng1 = (Wcore + Wfan + Wcomb + Wnace + Wnozz) / lb_N
+        Wpylon = Weng1 * fpylon
+        We1 = (Wcore + Wcomb + Wfan) / lb_N
+        Weng = (Weng1 + Wpylon) * neng
+        Webare = We1 * neng
+        Wnac = neng * Wnace / lb_N
     end
 
     W_HXs = 0.0 #Store total weight of HXs
