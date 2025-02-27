@@ -15,7 +15,8 @@
       const iiaircraftclass = 13 # 737 = 737 size aircraft; 777 = 777 size aircraft
       const iinftanks = 14 # number of fuel tanks in fuselage
       const iidoubledeck = 15 #double decker flag
-      const iitotal = 15
+      const iicalctakeoff = 16 #flag to calculate takeoff
+      const iitotal = 16
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
@@ -216,7 +217,8 @@
       const igdHXRegen = 128
       const igHXaddmassfrac = 129
       const igWHXs = 130
-      const igtotal    = 130
+      const igfeng = 131
+      const igtotal    = 131
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
