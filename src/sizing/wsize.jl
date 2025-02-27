@@ -739,7 +739,7 @@ function wsize(ac; itermax=35,
         # -----------------------------
         # Landing gear sizing
         # ------------------------------
-        landing_gear_size!(ac)
+        size_landing_gear!(ac)
 
         # -----------------------------
         # Drag and engine calculations
@@ -885,7 +885,7 @@ function Wupdate0!(ac, rlx, fsum)
 
     WMTO = parg[igWMTO]
     
-    ftotadd = fuse.HPE_sys.W
+    ftotadd = fuse.HPE_sys.W #TODO this should be stored as a weight fraction, not a weight
     fsum = 0.0
 
     Wsum = parg[igWpay] +

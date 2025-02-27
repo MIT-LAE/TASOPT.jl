@@ -1,5 +1,5 @@
 """
-    landing_gear_size!(ac)
+    size_landing_gear!(ac)
 Function to calculate the landing gear mass and geometric properties.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -7,7 +7,7 @@ Function to calculate the landing gear mass and geometric properties.
     **Outputs:**
     No direct outputs; parameters in `ac` are modified.
 """
-function landing_gear_size!(ac)
+function size_landing_gear!(ac)
     pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
     nose_gear = landing_gear.nose_gear
     main_gear = landing_gear.main_gear

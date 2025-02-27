@@ -476,7 +476,7 @@ ac.parg[igWMTO] = WMTO
 ac.landing_gear.main_gear.overall_mass_fraction = 0.04
 ac.landing_gear.nose_gear.overall_mass_fraction = 0.01
 
-TASOPT.landing_gear_size!(ac)
+TASOPT.size_landing_gear!(ac)
 @test ac.landing_gear.main_gear.weight.W ≈ 0.04 * 80e4
 @test ac.landing_gear.nose_gear.weight.W ≈ 0.01 * 80e4
 
@@ -498,7 +498,7 @@ ac.wing.layout.span = 40
 
 ac.landing_gear.main_gear.weight = TASOPT.Weight(y = ac.landing_gear.main_gear.y_offset_halfspan_fraction * ac.wing.layout.span / 2)
 
-TASOPT.landing_gear_size!(ac)
+TASOPT.size_landing_gear!(ac)
 
 @test ac.landing_gear.main_gear.weight.W ≈ 31787.399917196755
 @test ac.landing_gear.nose_gear.weight.W ≈ 4854.384534273811
