@@ -391,8 +391,7 @@ function wsize(ac; itermax=35,
             Wengtail = 0.0
             Waftfuel = 0.0
         elseif compare_strings(options.opt_engine_location, "fuselage")
-            Wengtail = (parg[igWtshaft] + parg[igWcat]) * nTshaft +
-                        parg[igWgen] * ngen
+            Wengtail = parg[igWeng]
         else
             error("Engine location provided is \"$options.opt_engine_location\". Engine position can only be:
                         > \"wing\" - engines under wing
@@ -535,7 +534,7 @@ function wsize(ac; itermax=35,
         # Calculate wing engine weight
         if compare_strings(options.opt_engine_location,"wing")
             if compare_strings(options.opt_prop_sys_arch,"te")
-                Weng1 = parg[igWfan] + parg[igWmot] + parg[igWfanGB]
+                @error "Support for turboelectric architectures is not currently supported. Their reintroduction with `struct`s is on the roadmap."
             elseif compare_strings(options.opt_prop_sys_arch,"tf")
                 Weng1 = parg[igWeng] / parg[igneng]
             end
