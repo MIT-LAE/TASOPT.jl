@@ -28,21 +28,6 @@ Wwatt   +     2348.5 N (   528.0 lb)
 --------------------
 Wwing  =   128386.9 N ( 28862.5 lb)
 
-Wtshaft +        0.0 N (     0.0 lb) × 2
-Wcat    +        0.0 N (     0.0 lb) × 2
-Waftfan +        0.0 N (     0.0 lb) × 2
-WaftGB  +        0.0 N (     0.0 lb) × 2
-Wgen    +        0.0 N (     0.0 lb) × 4
-Wrect   +        0.0 N (     0.0 lb) × 4
-Wcables +        0.0 N (     0.0 lb) ----
-Winv    +        0.0 N (     0.0 lb) × 6
-Wmot    +        0.0 N (     0.0 lb) × 6
-Wfan    +        0.0 N (     0.0 lb) × 6
-WfanGB  +        0.0 N (     0.0 lb) × 6
-Wtms    +        0.0 N (     0.0 lb) ----
---------------------
-Wtesys  =        0.0 N (     0.0 lb)
-
 Wftnkins  =        0.0 N (     0.0 lb)
 Wftank    =        0.0 N (     0.0 lb)
 
