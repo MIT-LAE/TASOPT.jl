@@ -22,12 +22,11 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
       pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
-      calc_ipc1 = true
       ifirst = true
 
       # HACK TODO add the para back
       # iairf
-      initializes_engine = false
+      initializes_engine = true
 
       # unpack flags
       # iengloc = pari[iiengloc]
@@ -427,7 +426,6 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       itrim = 1
       balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
-      # if (calc_ipc1)
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
@@ -672,14 +670,14 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             Fspec = BW * (sing + cosg * DoL)
             pare[ieFe, ip] = Fspec / parg[igneng]
 
-            if ~initializes_engine
+            if initializes_engine
                   pare[iembf, ip] = pare[iembf, ip-1]
                   pare[iemblc, ip] = pare[iemblc, ip-1]
                   pare[iembhc, ip] = pare[iembhc, ip-1]
                   pare[iepif, ip] = pare[iepif, ip-1]
                   pare[iepilc, ip] = pare[iepilc, ip-1]
                   pare[iepihc, ip] = pare[iepihc, ip-1]
-                  initializes_engine = true
+                  initializes_engine = false
 
 
                   # make better estimate for new Tt4, adjusted for new ambient T0
