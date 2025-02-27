@@ -1,4 +1,4 @@
-function printBADA(io, name, W0, maxalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS, FLin, Wpaymax; NOx = false, wide = false, crzNoxEI =[], ffpminNoxEI=[] )
+function output_BADA(io, name, W0, maxalt, TAS, desTAS, ROC, ffpmin, crzf, crzTAS, FLin, Wpaymax; NOx = false, wide = false, crzNoxEI =[], ffpminNoxEI=[] )
 
     γdes = 3.0 * π/180.0
     sing = sin(γdes)
