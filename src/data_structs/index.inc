@@ -185,152 +185,6 @@
       const igWHXs = 126
       const igtotal    = 126
 
-# indices for turbo-electric systems - really just the electrical machines
-      const ite_ratSM   = 1
-      const ite_ratAg   = 2
-      const ite_ratM    = 3
-      const ite_ratSp   = 4
-      const ite_ratW    = 5
-      const ite_ratShft = 6
-      const ite_z       = 7
-      const ite_kServ   = 8
-      const ite_ratSd   = 9
-      const ite_kpf     = 10
-      const ite_wSd     = 11
-      const ite_Nshrt   = 12
-      const ite_hRS     = 13
-      const ite_Tarm    = 14
-      const ite_kst     = 15
-      const ite_p        = 16
-      const ite_Br       = 17
-      const ite_BSat     = 18
-      const ite_mu0      = 19
-      const ite_rhoMag   = 20
-      const ite_rhoCu    = 21
-      const ite_rhoFe    = 22
-      const ite_rhoSteel = 23
-      const ite_tauMax   = 24
-      const ite_sigCu    = 25
-      const ite_thetaCu  = 26
-      const ite_psi      = 27
-      const ite_pb0      = 28
-      const ite_Bb0      = 29
-      const ite_fb0      = 30
-      const ite_epsb     = 31   
-      const ite_epsf     = 32 
-      const ite_lambda   = 33
-      const ite_kw       = 34
-      const ite_ks       = 35
-      const ite_BAg      = 36
-      const ite_rRoti    = 37
-      const ite_hM       = 38
-      const ite_lRot     = 39
-      const ite_hAg      = 40
-      const ite_areaArm  = 41
-      const ite_Bsbi     = 42
-      const ite_Bt       = 43
-      const ite_mSBI     = 44
-      const ite_mTeeth   = 45
-      const ite_lArm     = 46
-      const ite_NSz      = 47
-      const ite_Wpmsm    = 48
-      const ite_k1       = 49  # k1, k2, k3 are inverter constants for efficiency calcs
-      const ite_k2       = 50
-      const ite_k3       = 51
-      const ite_Pinvdes  = 52  # Stores design inverter power
-      const ite_SPdes    = 53  # Specific power at design
-      const ite_effdes   = 54  
-
-      const ite_total    = 54
-
-
-# indices for powertrain
-      const ipt_nfan    = 1
-      const ipt_ngen    = 2
-      const ipt_nTshaft = 3
-
-      const ipt_pifan   = 4
-      const ipt_piLPC   = 5
-      const ipt_piHPC   = 6
-
-      const ipt_ARgen       = 7
-      const ipt_sigAgGen    = 8
-      const ipt_ratSplitGen = 9
-
-      const ipt_ARmot       = 10
-      const ipt_sigAgMot    = 11
-      const ipt_ratSplitMot = 12
-      
-      const ipt_Tt41     = 13
-
-      const ipt_cpsi    = 14
-      const ipt_wcat    = 15
-      const ipt_lcat    = 16
-      const ipt_deNOx   = 17
-
-      const ipt_Wfan     = 18
-      const ipt_Wmot     = 19
-      const ipt_Winv     = 20
-      const ipt_Wcables  = 21
-      const ipt_Wgen     = 22
-      const ipt_Wtshaft  = 23
-      const ipt_Wnacelle = 24
-      const ipt_Wcatalyst= 25
-      const ipt_Wpttotal = 26
-      
-      const ipt_NdesGen  = 27
-      const ipt_NdesFan  = 28
-      const ipt_NdesMot  = 29
-      
-      const ipt_fb0      = 30
-      const ipt_epsb     = 31   
-      const ipt_epsf     = 32 
-      const ipt_lambda   = 33
-      const ipt_kw       = 34
-      const ipt_ks       = 35
-      const ipt_BAg      = 36
-      const ipt_rRoti    = 37
-      const ipt_hM       = 38
-      const ipt_lRot     = 39
-      const ipt_hAg      = 40
-      const ipt_areaArm  = 41
-      const ipt_Bsbi     = 42
-      const ipt_Bt       = 43
-      const ipt_mSBI     = 44
-      const ipt_mTeeth   = 45
-      const ipt_lArm     = 46
-      const ipt_NSz      = 47
-      const ipt_Wpmsm    = 48
-      const ipt_k1       = 49  # k1, k2, k3 are inverter constants for efficiency calcs
-      const ipt_k2       = 50
-      const ipt_k3       = 51
-      const ipt_Pinvdes  = 52  # Stores design inverter power
-
-      const ipt_time_NPSS  = 53
-      const ipt_calls_NPSS = 54
-      const ipt_FanGR      = 55
-
-      const ipt_Ptshaft   = 56
-      const ipt_Fnsplit   = 57 # Thrust split between fuse mounted fans and wing podded fans
-
-      const ipt_Rcable    = 58
-      const ipt_Vcable    = 59
-      const ipt_lcable    = 60
-      const ipt_sigcon    = 61 # Conductance of conductor
-      const ipt_alphacon  = 62 # Temp coeff
-      const ipt_rholcable = 63 # linear density kg/m
-      const ipt_rhocon    = 64
-      const ipt_Jmax      = 65
-      const ipt_rhoins    = 66
-      const ipt_Emax      = 67
-      const ipt_kpf       = 68
-      
-      const ipt_Pelec_mot = 69
-      const ipt_Pelec_gen = 70
-
-
-      const ipt_total     = 70
-
 #---- indices for aero variables at each mission point
       const iaalt     =  1
       const iatime    =  2
@@ -600,6 +454,7 @@
       const iePLH2 = 198
       const ieyg = 199
 
+#TODO: need to delete all turboelectric/powertrain and NPSS refs while adjusting the HX indices
       const ieemot = 200
       const ieeinv = 201
       const ieecable = 202
@@ -712,39 +567,26 @@ ncrowx = ieTmet1 - ieepsc1
       const ipcruisen  = ipcruise2     # last cruise  point
       const ipdescentn = ipdescent5    # last descent point
 
-#---- indices for indexing optimization parameters (to be sequenced over)
-      isRange  =  1
-      isMach   =  2
-      isNmax   =  3
-      issigfac =  4
-      isCL     =  5
-      isAR     =  6
-      issweep  =  7
-      isetas   =  8
-      isT4CR   =  9
-      isT4TO   = 10
-      isTmetal = 11
-      isOPR    = 12
-      isFPR    = 13
-      islBFmax = 14
-      isbmax   = 15
-      isalt    = 16
-      istotal  = 16  
-
-#---- indices for indexing optimization variables      
-      ioCL    =  1
-      ioAR    =  2
-      iosweep =  3
-      iohboxo =  4
-      iohboxs =  5
-      iolams  =  6
-      iolamt  =  7
-      iorcls  =  8
-      iorclt  =  9
-      ioFPR   = 10
-      ioBPR   = 11
-      ioalt   = 12
-      ioT4CR  = 13
-      ioT4TO  = 14
-      ioOPR   = 15
-      iototal = 15;
+#---- keywords for ij sequence parameters 
+#=
+      character*2 cplab(iptotal)
+#---- printout labels for mission points
+      data cplab /
+      'ST'
+      'RO'
+      'TO'
+      'CB'
+      'B1'
+      'B2'
+      'B3'
+      'B4'
+      'B5'
+      'C1'
+      'C2'
+      'D1'
+      'D2'
+      'D3'
+      'D4'
+      'D5'
+      'TE'  /
+=#

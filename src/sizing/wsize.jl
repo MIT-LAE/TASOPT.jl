@@ -46,9 +46,6 @@ function wsize(ac; itermax=35,
     # Extract flags
     ifuel = options.ifuel
 
-    # Unpack powertrain elements
-    ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
-
     # Calculate sea level temperature for takeoff conditions
     altTO = parm[imaltTO]
     T_std, _, _, _, _ = atmos(altTO / 1e3)
