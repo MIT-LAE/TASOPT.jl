@@ -8,7 +8,7 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct IndividualLandingGear
     """Weight and location"""
-    weight::structures.Weight = structures.Weight()
+    weight::Weight = Weight()
     """Landing gear length (m)"""
     length::Float64 = 0.0
     """Number of shock struts"""
@@ -17,7 +17,7 @@ $TYPEDFIELDS
     wheels_per_strut::Int64 = 0
     """CG-to-landing gear distance, for main gear (m)"""
     distance_CG_to_landing_gear::Float64 = 0.0
-    """y-offset as function of halfspan"""
+    """y-offset as fraction of halfspan"""
     y_offset_halfspan_fraction::Float64 = 0.0
     """Overall mass fraction of MTOW"""
     overall_mass_fraction::Float64 = 0.0
@@ -25,9 +25,7 @@ end
 
 function Base.getproperty(obj::IndividualLandingGear, sym::Symbol)
     if sym === :moment
-        # Use `getfield` to directly access fields of `Weight`
-        weight = getfield(obj, :weight)
-        return getfield(weight, :W) * getfield(weight, :r)[1]
+        return structures.y_moment(getfield(obj, :weight))
 
     else
         # Use `getfield` to directly access fields of `IndividualLandingGear`
