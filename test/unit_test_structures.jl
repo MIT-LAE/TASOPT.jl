@@ -160,9 +160,8 @@ htail.CL_max = 2.00000000000000000000
 htail.SM_min = 0.05000000000000000278 
 htail.layout.x = 36.21118914551904310883 
 htail.outboard.cross_section.thickness_to_chord = 0.14000000000000001332 
-htail.move_wingbox = 2.00000000000000000000 
 htail.CL_CLmax = -0.50000000000000000000 
-htail.size = 1.00000000000000000000 
+htail.opt_sizing = "fixed_Vh"
 htail.volume = 1.44999999999999884537 
 htail.outboard.GJ = 178813858.18902274966239929199 
 htail.outboard.EI[4] = 1257539450.85079479217529296875 
@@ -214,7 +213,7 @@ vtail.outboard.λ = 0.29999999999999998890
 vtail.layout.span = 7.95265888485497285387 
 vtail.layout.AR = 2.00000000000000000000 
 vtail.layout.S = 31.62239166943137291810 
-vtail.size = 1.00000000000000000000 
+vtail.opt_sizing = "fixed_Vv"
 vtail.dxW = 12001.92569704716697742697 
 vtail.outboard.cross_section.width_to_chord = 0.50000000000000000000 
 vtail.outboard.cross_section.web_to_box_height = 0.75000000000000000000 
@@ -385,7 +384,7 @@ ac.wing.layout.box_x = 16.04432532088372
 ac.parg[igxeng] = ac.wing.layout.box_x - ac.parg[igdxeng2wbox]
 ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-ac.pari[iinftanks] = 1
+ac.fuse_tank.tank_count = 1
 
 #Update fuel tank length and check changes
 ac.parg[iglftank] = 5.0
@@ -406,7 +405,7 @@ update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.3262341440000
 
 
 #Return to original points?
-ac.pari[iinftanks] = 0.0
+ac.fuse_tank.tank_count = 0
 ac.parg[iglftank] = 0.0
 TASOPT.update_fuse!(ac, 1)
 
@@ -447,7 +446,7 @@ ac.fuselage.cabin.aisle_halfwidth = 0.254
 ac.parg[igWpaymax] = 219964.5779
 ac.fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
-ac.pari[iidoubledeck] = 0
+ac.options.is_doubledecker = false
 
 TASOPT.update_fuse_for_pax!(ac)
 

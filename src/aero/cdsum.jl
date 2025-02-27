@@ -1,8 +1,8 @@
 """
-   cdsum!(ac, imission, ip, icdfun)
+   cdsum!(ac, imission, ip, computes_surfcd)
 
 Calculates aircraft `CD` components for operating point, ipoint.
-If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
+If `computes_surfcd` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
 otherwise uses default values in para array. Called by `mission!`, `wsize`, `takeoff!`, and `odperf!`.
 
 The total drag is computed by
@@ -28,7 +28,7 @@ where:
 **Inputs:**
       - `ac::aircraft`: aircraft data storage object
       - `imission::Int64`: mission index
-      - `icdfun::Int64`: Flag if drag should be computed (=1) or if para values should be used (=0).
+      - `computes_surfcd::Bool`: Flag if drag should be computed with `surfcd2` (true) or if para values should be used (false).
 
       **Outputs:**
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
@@ -36,7 +36,7 @@ where:
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
 """
-function cdsum!(ac, imission, ip, icdfun)
+function cdsum!(ac, imission, ip, computes_surfcd; Ldebug=false)
       #Unpack data storage
       parg = ac.parg
       para = view(ac.para, :, ip, imission)
@@ -44,9 +44,6 @@ function cdsum!(ac, imission, ip, icdfun)
       wing = ac.wing
       htail = ac.htail
       vtail = ac.vtail
-
-      Ldebug = false
-#      Ldebug = true
 
       fSnace   = parg[igfSnace ]
       
@@ -91,7 +88,7 @@ function cdsum!(ac, imission, ip, icdfun)
       Reco = Reunit*wing.layout.root_chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      if (icdfun==1) 
+      if (computes_surfcd) 
 #----- integrated across span for CDwing
       clpo,clps,clpt,
 	cdfw,cdpw,CDwing,CDover = surfcd2(wing,gammat,gammas,
@@ -258,7 +255,7 @@ function cditrp(para, wing, htail)
 
       Mach = para[iaMach]
 
-      Lspec = true
+      specifies_CL = true
 
       b        = zeros(Float64, 2)
       bs       = zeros(Float64, 2)
@@ -355,14 +352,14 @@ function cditrp(para, wing, htail)
 	# $Sref, $bref,
 	# $b,$bs,$bo,$bop, $zcent,
 	# $po,$gammat,gammas, $fLo, $ktip,
-      # $Lspec,$CLsurfsp")
+      # $specifies_CL,$CLsurfsp")
 
 
       CLsurf, CLtp, CDtp, sefftp = trefftz1(nsurf, npout, npinn, npimg, 
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo, ktip,
-      Lspec,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+      specifies_CL,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
       
       # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 

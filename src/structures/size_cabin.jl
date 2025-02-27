@@ -120,8 +120,8 @@ function arrange_seats(seats_per_row, cabin_width,
     yseats = zeros(seats_per_row)
     yseats[1] = fuse_offset + seat_width/2 #First seat is window seat
     for i = 2:seats_per_row
-        flag_aisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
-        yseats[i] = yseats[i - 1] + seat_width + flag_aisle*2*exp_aisle_halfwidth
+        has_leftaisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
+        yseats[i] = yseats[i - 1] + seat_width + has_leftaisle*2*exp_aisle_halfwidth
     end
 
     #Shift seat coordinates to start in centerline
@@ -140,17 +140,17 @@ Helper function to find if there is an aisle to the left of a given seat.
     - `layout::Vector{Int64}`: seat layout map.
 
     **Outputs:**
-    - `flag::Float64`: 1.0 if there is an aise to the left of seat, 0.0 if not.
+    - `has_leftaisle::Bool`: true if there is an aisle to the left of seat, false if not.
 """
 function aisle_flag(idx, layout)
     #Use cumulative sum to find total number of seats to the left of a given aisle.
     #If the difference between the cumsum and the index is exactly 1, the seat has an aisle to the left.
     if 1 in (idx .- cumsum(layout))
-        flag = 1.0
+        has_leftaisle = 1.0
     else
-        flag = 0.0
+        has_leftaisle = 0.0
     end
-    return flag
+    return has_leftaisle
 end
 
 """
@@ -179,13 +179,13 @@ function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Int64, θ::Float6
 end
 
 """
-    find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
+    find_floor_angles(is_doubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
 
 This function can be used to place the passenger decks inside the fuselage. It works for single deck or double decker
 cabins. It returns the angular position of each deck with respect to the center of the upper bubble.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `Rfuse::Bool`: flag to indicate whether aircraft is a double decker
+    - `is_doubledecker::Bool`: flag to indicate whether aircraft is a double decker
     - `Rfuse::Float64`: fuselage exterior radius (m)
     - `dRfuse::Float64`: vertical shift of downward bubble (m)
     - `θ1::Float64`: required in some cases; angle of main floor wrt upper bubble center (rad)
@@ -196,8 +196,8 @@ cabins. It returns the angular position of each deck with respect to the center 
     - `θ1::Float64`: angle of main floor wrt upper bubble center (rad)
     - `θ2::Float64`: returned when double decker; angle of upper floor wrt upper bubble center (rad)
 """
-function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
-    if ~fdoubledecker #If it has a single deck
+function find_floor_angles(is_doubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
+    if ~is_doubledecker #If it has a single deck
         θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
         return θ1
     else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle

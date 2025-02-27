@@ -6,10 +6,12 @@ $TYPEDFIELDS
 @kwdef mutable struct fuselage_tank
     """Fuel type name"""
     fueltype::String = ""
+    """Fuel tank count"""
+    tank_count::Int64 = 0
     """Fuel tank location"""
     placement::String = ""
     """Flag for insulation sizing"""
-    size_insulation::Bool = false
+    sizes_insulation::Bool = false
     """Weight of fuel in one tank (N)"""
     Wfuelintank::Float64 = 0.0
 
