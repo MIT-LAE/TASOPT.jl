@@ -641,7 +641,7 @@ function wsize(ac; itermax=35,
         # Calculate max eng out moment
         Me = (Fe + De) * yeng
 
-        #Size vertical tail (size_vtail())
+        #Size vertical tail ("size_vtail()")
         if compare_strings(vtail.opt_sizing,"fixed_Vv")
             lvtail = xvtail - xwing
             Vv = vtail.volume
