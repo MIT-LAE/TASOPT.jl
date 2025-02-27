@@ -47,6 +47,8 @@ include("size_cabin.jl") #Seat layouts and cabin length
 #Hydrogen tank related code
 include("update_fuse.jl")
 
-include("size_landing_gear.jl") #Landing gear sizing
+#Landing gear 
+include("../misc/landing_gear.jl")# type definitions for the landing gear
+include("size_landing_gear.jl") 
 
 end
