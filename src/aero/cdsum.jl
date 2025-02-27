@@ -93,8 +93,6 @@ function cdsum!(ac, imission, ip, icdfun)
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (icdfun==1) 
 #----- integrated across span for CDwing
-
-      # if(Ldebug) write(*,*) 'calling SURFCD2...'
       clpo,clps,clpt,
 	cdfw,cdpw,CDwing,CDover = surfcd2(wing,gammat,gammas,
                                     Mach,CL,CLhtail,Reco,
@@ -200,8 +198,6 @@ function cdsum!(ac, imission, ip, icdfun)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- induced CD
-#      if(Ldebug) write(*,*) '...calling CDITRP...'
-
       cditrp(para, wing, htail)
       CDi = para[iaCDi]
 
@@ -222,13 +218,7 @@ function cdsum!(ac, imission, ip, icdfun)
 #---- total CD
       CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw
       para[iaCD] = CD      
-      CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
-      # println(CD_components)
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#      if(Ldebug) write(*,*) '...exiting CDSUM...'
-      # println("Total CD = ", CD)
-      # println("PARA = ", para)
       return
 end # cdsum
 
@@ -325,6 +315,9 @@ function cditrp(para, wing, htail)
       nsurf = 2
 
 #---- number of spanwise intervals
+# -----------------------------------------------------------------------
+# The below # of panels (43 total) gives about 1.8% higher CDi relative to the 
+# finest one here with ~360 panels
       npout[1] = 20  # outer panel
       npinn[1] = 6   # inner panel
       npimg[1] = 3   # image inside fuselage
@@ -336,7 +329,9 @@ function cditrp(para, wing, htail)
       else
        npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
       end
-
+# -----------------------------------------------------------------------
+# The below # of panels (84 total) gives about 0.60% higher CDi relative to the 
+# finest one here with ~360 panels
 #     npout[1] = 40  # outer panel
 #     npinn[1] = 12  # inner panel
 #     npimg[1] = 6   # image inside fuselage
@@ -344,7 +339,7 @@ function cditrp(para, wing, htail)
 #     npout[2] = 20  # outer panel
 #     npinn[2] = 0   # inner panel
 #     npimg[2] = 4   # image inside fuselage  (or inner panel if T-tail)
-
+# -----------------------------------------------------------------------
 #      npout[1] = 160  # outer panel
 #      npinn[1] = 48   # inner panel
 #      npimg[1] = 24   # image inside fuselage
@@ -352,6 +347,7 @@ function cditrp(para, wing, htail)
 #      npout[2] = 80  # outer panel
 #      npinn[2] = 0   # inner panel
 #      npimg[2] = 16  # image inside fuselage  (or inner panel if T-tail)
+# -----------------------------------------------------------------------
 
       ktip = 16
       #CLsurf = zeros(Float64, nsurf)

@@ -27,11 +27,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 
     tolerW = 1.0e-8
     errw   = 1.0
-
-    fuse_tank = ac.fuse_tank #Unpack struct with tank parameters
-    fuse = ac.fuselage 
     
-
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
 #        para(iafexcdw,ip) = parm[imfexcdw]
@@ -43,6 +39,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     T_std,_,_,_,_ = atmos(altTO/1e3)
     ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
     parm[imDeltaTatm] = ΔTatmos
+    fuse_tank.TSLtank = Tref + ΔTatmos #store sea-level temperature in tank struct
 
     # Calculates surface velocities, boundary layer, wake 
     fusebl!(fuse, parm, para, ipcruise1)
