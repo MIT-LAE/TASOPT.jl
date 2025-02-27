@@ -14,8 +14,8 @@ Calls function tfsize or tfoper for one operating point.
                "fixed_coolingflowratio" = use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
                "fixed_Tmetal" = use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
 
-    - `initializes_engine`:    false  initialize variables for iteration in TFOPER
-                                true  use current variables as initial guesses in TFOPER
+    - `initializes_engine`:    true  initialize variables for iteration in TFOPER
+                               false  use current variables as initial guesses in TFOPER
 """
 function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
         opt_calc_call::String, opt_cooling::String, initializes_engine::Bool)
@@ -323,7 +323,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 pihtD = pare[iepihtD]
                 piltD = pare[iepiltD]
 
-                if !(initializes_engine)
+                if (initializes_engine)
                         #------ force TFOPER to initialize these state variables
                         mbf = 0.0
                         mblc = 0.0

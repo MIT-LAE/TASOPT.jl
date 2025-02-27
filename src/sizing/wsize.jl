@@ -1,7 +1,7 @@
 using Printf
 """
     wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=false, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
@@ -19,7 +19,7 @@ and iterates until the MTOW converges to within a specified tolerance.
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
 function wsize(ac; itermax=35,
-    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=false, 
+    wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
     # Unpack data storage arrays and components
@@ -409,6 +409,7 @@ function wsize(ac; itermax=35,
         if !(options.has_wing_fuel) #fuselage fuel store
             tank_placement = fuse_tank.placement
             Wftank_single = parg[igWftank] / nftanks #Weight of a single tank
+            ltank = parg[iglftank] #length of a fuel tank
 
             #Calculate the weight of the fuel near the tail depending on the tank location
             if tank_placement == "rear"
@@ -688,81 +689,18 @@ function wsize(ac; itermax=35,
         
         # VT centroid x-offset
         calculate_centroid_offset!(vtail, bv2, λhs)
+        
         # ----------------------
         #     Fuselage Fuel Tank weight
         # ----------------------
         if !(options.has_wing_fuel) #If fuel is stored in the fuselage
-            #Unpack parameters
-            time_flight = para[iatime, ipdescent1]
-            tank_placement = fuse_tank.placement
-            rhofuel = fuse_tank.rhofuel
-
-            #Convective cooling
-            if tank_placement == "rear"
-                xftank_heat = parg[igxftankaft]
-            else
-                xftank_heat = parg[igxftank]
-            end
-            M_inf = para[iaMach, ipcruise1]
-            z_alt = para[iaalt, ipcruise1]
             
-            #Fuel tank design
-            fuse_tank.Wfuelintank = parg[igWfuel] / nftanks #Each fuel tank carries 1/nftanks of the fuel
-            
-            mdot_boiloff, Vfuel, Rtank, Winsul_sum, ltank, Wtank = tanksize!(fuse, fuse_tank, z_alt, M_inf, xftank_heat,
-            time_flight, ifuel)
-
-            parg[igWfmax] = Vfuel * rhofuel * gee * nftanks #If more than one tank, max fuel capacity is nftanks times that of one tank
-            parg[igWftank] = nftanks * Wtank #total weight of fuel tanks (including insulation)
-            parg[iglftank] = ltank
-            parg[igRftank] = Rtank
-            parg[igWinsftank] = nftanks * Winsul_sum #total weight of insulation in fuel tanks
-
-            #Tank placement and weight moment
-            lcabin = fuse.layout.l_cabin_cylinder
-            if tank_placement == "front"
-                frac_front = 1
-                frac_aft = 0
-                xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
-                xftankaft = 0.0
-            elseif tank_placement == "rear"
-                frac_front = 0
-                frac_aft = 1
-                xftank = 0.0
-                xftankaft = fuse.layout.x_start_cylinder + lcabin + 1.0*ft_to_m + ltank/2.0
-            elseif tank_placement == "both"
-                frac_front = 1
-                frac_aft = 1
-                xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank/2.0
-                xftankaft = fuse.layout.x_start_cylinder + 1.0*ft_to_m + ltank + 1.0*ft_to_m + lcabin + 1.0*ft_to_m + ltank/2.0
-            end
-            
-            parg[igxftank] = xftank
-            parg[igxftankaft] = xftankaft
-            parg[igxWftank] = Wtank * (frac_front * xftank + frac_aft * xftankaft) 
-            xfuel = (frac_front * xftank + frac_aft * xftankaft) / (frac_front + frac_aft)
-            parg[igxWfuel] = parg[igWfuel] * xfuel
+            #Size fuel tank and calculate weight
+            tanksize!(ac)
 
             # Update fuselage according to tank requirements
-            update_fuse!(fuse, wing, htail, vtail, parg, fuse_tank.tank_count) #update fuselage length to accommodate tank
-            fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
-
-            #Update fuselage BL properties
-            # Kinetic energy area at T.E.
-            KAfTE = para[iaKAfTE, ipcruise1]
-            # Surface dissapation area 
-            DAfsurf = para[iaDAfsurf, ipcruise1]
-            # Wake dissapation area
-            DAfwake = para[iaDAfwake, ipcruise1]
-            # Momentum area at ∞
-            PAfinf = para[iaPAfinf, ipcruise1]
-
-            # Assume K.E., Disspation and momentum areas are const. for all mission points:
-            para[iaKAfTE, :] .= KAfTE
-            para[iaDAfsurf, :] .= DAfsurf
-            para[iaDAfwake, :] .= DAfwake
-            para[iaPAfinf, :] .= PAfinf
-
+            update_fuse!(ac) #update fuselage length to accommodate tank; boundary layer also recalculated
+            
             #Use homogeneous tank model to calculate required venting
             _, ps, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest)
             parm[imWfvent] = Mvents[end] * gee #Store total fuel weight that is vented

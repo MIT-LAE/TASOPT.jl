@@ -1,42 +1,42 @@
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
-      imwOpt     =  1 
-      imRange    =  2
-      imWpay     =  3 
-      imWperpax  =  4
-      imaltTO    =  5
-      imT0TO     =  6
-      imWTO      =  7
-      imWfuel    =  8
-      imPFEI     =  9
-      imV1       = 10
-      imV2       = 11
-      imtTO      = 12
-      imFTO      = 13
-      iml1       = 14
-      imlTO      = 15
-      imlBF      = 16
-      imlCB      = 17
-      imgamVTO   = 18
-      imgamVBF   = 19
-      imgamVCB   = 20
-      imgamVDE1  = 21
-      imgamVDEn  = 22
-      imthCB     = 23
-      imxCB      = 24
-      imzCB      = 25
-      imxFO      = 26
-      imzFO      = 27
-      imdBSL     = 28
-      imdBCB     = 29
-      imdBFO     = 30
-      imfexcdw   = 31
-      imfexcdt   = 32
-      imfexcdf   = 33
-      imDeltaTatm= 34
-      imWfvent   = 35
-      imtotal    = 35
+      const imwOpt = 1 
+      const imRange = 2
+      const imWpay = 3 
+      const imWperpax = 4
+      const imaltTO = 5
+      const imT0TO = 6
+      const imWTO = 7
+      const imWfuel = 8
+      const imPFEI = 9
+      const imV1 = 10
+      const imV2 = 11
+      const imtTO = 12
+      const imFTO = 13
+      const iml1 = 14
+      const imlTO = 15
+      const imlBF = 16
+      const imlCB = 17
+      const imgamVTO = 18
+      const imgamVBF = 19
+      const imgamVCB = 20
+      const imgamVDE1 = 21
+      const imgamVDEn = 22
+      const imthCB = 23
+      const imxCB = 24
+      const imzCB = 25
+      const imxFO = 26
+      const imzFO = 27
+      const imdBSL = 28
+      const imdBCB = 29
+      const imdBFO = 30
+      const imfexcdw = 31
+      const imfexcdt = 32
+      const imfexcdf = 33
+      const imDeltaTatm = 34
+      const imWfvent = 35
+      const imtotal = 35
 
 #---- indices for geometry (airframe) variables and other sizing variables
 ### Good Riddance ###
@@ -347,386 +347,385 @@
       const ipt_total     = 70
 
 #---- indices for aero variables at each mission point
-      iaalt     =  1
-      iatime    =  2
-      iaRange   =  3
-      iafracW   =  4
-      iaWbuoy   =  5
-      iaMach    =  6
-      iaReunit  =  7
-      iagamV    =  9
-      iaCL      = 10
-      iaCD      = 11
-      iaCDi     = 12
-      iaDAfsurf = 13
-      iaDAfwake = 14
-      iaKAfTE   = 15
-      iaPAfinf  = 16
-      iaCDfuse  = 17
-      iaCDwing  = 18
-      iaCDhtail = 19
-      iaCDvtail = 20
-      iaCDnace  = 21
-      iaCDstrut = 22
-      iaCDover  = 23
-      iaCfnace  = 24
-      iarcls    = 25
-      iarclt    = 26
-      iaclpo    = 27
-      iaclps    = 28
-      iaclpt    = 29
-      iacmpo    = 30
-      iacmps    = 31
-      iacmpt    = 32
-      iafduo    = 33
-      iafdus    = 34
-      iafdut    = 35
-      iaclpmax  = 36
-      iaCLh     = 37
-      iaCMw0    = 38
-      iaCMw1    = 39
-      iaCMh0    = 40
-      iaCMh1    = 41
-      iaCMwing  = 42
-      iaCMfuse  = 43
-      iaCMtail  = 44
-      iaxCG     = 45
-      iaxCP     = 46
-      iaxNP     = 47
-      iafexcdw  = 48
-      iafexcdt  = 49
-      iafexcdf  = 50
-      iacdfw    = 51
-      iacdpw    = 52
-      iaspaneff = 53
-      iaRerefw  = 54
-      iaaRexp   = 55
-      iacdft    = 56
-      iacdpt    = 57
-      iaRereft  = 58
-      iacdfs    = 59
-      iacdps    = 60
-      iaRerefs  = 61
-      iadCDBLIf = 62
-      iadCDBLIw = 63
-      iaROC     = 64
-      iatotal   = 64 
+      const iaalt     =  1
+      const iatime    =  2
+      const iaRange   =  3
+      const iafracW   =  4
+      const iaWbuoy   =  5
+      const iaMach    =  6
+      const iaReunit  =  7
+      const iagamV    =  9
+      const iaCL      = 10
+      const iaCD      = 11
+      const iaCDi     = 12
+      const iaDAfsurf = 13
+      const iaDAfwake = 14
+      const iaKAfTE   = 15
+      const iaPAfinf  = 16
+      const iaCDfuse  = 17
+      const iaCDwing  = 18
+      const iaCDhtail = 19
+      const iaCDvtail = 20
+      const iaCDnace  = 21
+      const iaCDstrut = 22
+      const iaCDover  = 23
+      const iaCfnace  = 24
+      const iarcls    = 25
+      const iarclt    = 26
+      const iaclpo    = 27
+      const iaclps    = 28
+      const iaclpt    = 29
+      const iacmpo    = 30
+      const iacmps    = 31
+      const iacmpt    = 32
+      const iafduo    = 33
+      const iafdus    = 34
+      const iafdut    = 35
+      const iaclpmax  = 36
+      const iaCLh     = 37
+      const iaCMw0    = 38
+      const iaCMw1    = 39
+      const iaCMh0    = 40
+      const iaCMh1    = 41
+      const iaCMwing  = 42
+      const iaCMfuse  = 43
+      const iaCMtail  = 44
+      const iaxCG     = 45
+      const iaxCP     = 46
+      const iaxNP     = 47
+      const iafexcdw  = 48
+      const iafexcdt  = 49
+      const iafexcdf  = 50
+      const iacdfw    = 51
+      const iacdpw    = 52
+      const iaspaneff = 53
+      const iaRerefw  = 54
+      const iaaRexp   = 55
+      const iacdft    = 56
+      const iacdpt    = 57
+      const iaRereft  = 58
+      const iacdfs    = 59
+      const iacdps    = 60
+      const iaRerefs  = 61
+      const iadCDBLIf = 62
+      const iadCDBLIw = 63
+      const iaROC     = 64
+      const iatotal   = 64 
 
 #---- indices for engine variables at each mission point
-      iehfuel =   1
-      ieTfuel =   2
-      ieff    =   3
-      iepid   =   4
-      iepib   =   5
-      iepifn  =   6
-      iepitn  =   7
-      ieBPR   =   8
-      ieepolf =   9
-      ieepollc=  10
-      ieepolhc=  11
-      ieepolht=  12
-      ieepollt=  13
-      ieetab  =  14
-      iepifK  =  15
-      ieepfK  =  16
-      ieNf    =  17
-      ieN1    =  18
-      ieN2    =  19
-      ieNbf   =  20
-      ieNblc  =  21
-      ieNbhc  =  22
-      iembf   =  23
-      iemblc  =  24
-      iembhc  =  25
-      iepif   =  26
-      iepilc  =  27
-      iepihc  =  28
-      ieNbfD  =  29
-      ieNblcD =  30
-      ieNbhcD =  31
-      ieNbhtD =  32
-      ieNbltD =  33
-      iembfD  =  34
-      iemblcD =  35
-      iembhcD =  36
-      iembhtD =  37
-      iembltD =  38
-      iepifD  =  39
-      iepilcD =  40
-      iepihcD =  41
-      iepihtD =  42
-      iepiltD =  43
-      ieM2    =  44
-      ieM25   =  45
-      ieM0    =  46
-      iep0    =  47
-      iea0    =  48
-      ierho0  =  49
-      iemu0   =  50
-      ieT0    =  51
-      ieu0    =  52
-      ieTt0   =  53
-      ieht0   =  54
-      iept0   =  55
-      iecpt0  =  56
-      ieRt0   =  57
-      ieTt18  =  58
-      ieht18  =  59
-      iept18  =  60
-      iecpt18 =  61
-      ieRt18  =  62
-      ieTt19  =  63
-      ieht19  =  64
-      iept19  =  65
-      iecpt19 =  66
-      ieRt19  =  67
-      ieTt2   =  68
-      ieht2   =  69
-      iept2   =  70
-      iecpt2  =  71
-      ieRt2   =  72
-      ieTt21  =  73
-      ieht21  =  74
-      iept21  =  75
-      iecpt21 =  76
-      ieRt21  =  77
-      ieTt25  =  78
-      ieht25  =  79 
-      iept25  =  80 
-      iecpt25 =  81 
-      ieRt25  =  82 
-      ieTt3   =  83
-      ieht3   =  84
-      iept3   =  85
-      iecpt3  =  86
-      ieRt3   =  87
-      ieTt4   =  88
-      ieht4   =  89
-      iept4   =  90
-      iecpt4  =  91
-      ieRt4   =  92
-      ieTt41  =  93
-      ieht41  =  94
-      iept41  =  95
-      iecpt41 =  96
-      ieRt41  =  97
-      ieTt45  =  98
-      ieht45  =  99
-      iept45  = 100
-      iecpt45 = 101
-      ieRt45  = 102
-      ieTt49  = 103
-      ieht49  = 104
-      iept49  = 105
-      iecpt49 = 106
-      ieRt49  = 107
-      ieTt5   = 108
-      ieht5   = 109
-      iept5   = 110
-      iecpt5  = 111
-      ieRt5   = 112
-      ieTt7   = 113
-      ieht7   = 114
-      iept7   = 115
-      iecpt7  = 116
-      ieRt7   = 117
-      ieTt9   = 118
-      iept9   = 119
-      iep2    = 120
-      ieT2    = 121
-      ieR2    = 122
-      iecp2   = 123
-      ieu2    = 124
-      ieA2    = 125
-      iep25   = 126
-      ieT25   = 127
-      ieR25   = 128
-      iecp25  = 129
-      ieu25   = 130
-      ieA25   = 131
-      iep5    = 132
-      ieT5    = 133
-      ieR5    = 134
-      iecp5   = 135
-      ieu5    = 136
-      ieA5    = 137
-      iep6    = 138
-      ieT6    = 139
-      ieR6    = 140
-      iecp6   = 141
-      ieu6    = 142
-      ieA6    = 143
-      iep7    = 144
-      ieT7    = 145
-      ieR7    = 146
-      iecp7   = 147
-      ieu7    = 148
-      ieA7    = 149
-      iep8    = 150
-      ieT8    = 151
-      ieR8    = 152
-      iecp8   = 153
-      ieu8    = 154
-      ieA8    = 155
-      ieu9    = 156
-      ieA9    = 157
-      ieepf   = 158
-      ieeplc  = 159
-      ieephc  = 160
-      ieepht  = 161
-      ieeplt  = 162
-      ieetaf  = 163
-      ieetalc = 164
-      ieetahc = 165
-      ieetaht = 166
-      ieetalt = 167
-      iemcore = 168
-      iemofft = 169
-      iePofft = 170
-      iePhiinl= 171
-      ieKinl  = 172
-      ieepsl  = 173
-      ieepsh  = 174
-      ieFe    = 175 
-      ieFsp   = 176
-      ieTSFC  = 177
-      ieA5fac = 178
-      ieA7fac = 179
-      iedTstrk= 180
-      ieStA   = 181
-      ieMtexit= 182
-      ieM4a   = 183
-      ieruc   = 184
-      ieefilm = 185
-      ietfilm = 186
-      iefc    = 187
-      ieepsc1 = 188
-      ieepsc2 = 189
-      ieepsc3 = 190
-      ieepsc4 = 191
-      ieTmet1 = 192
-      ieTmet2 = 193
-      ieTmet3 = 194
-      ieTmet4 = 195
+      const iehfuel = 1
+      const ieTfuel = 2
+      const ieff = 3
+      const iepid = 4
+      const iepib = 5
+      const iepifn = 6
+      const iepitn = 7
+      const ieBPR = 8
+      const ieepolf = 9
+      const ieepollc = 10
+      const ieepolhc = 11
+      const ieepolht = 12
+      const ieepollt = 13
+      const ieetab = 14
+      const iepifK = 15
+      const ieepfK = 16
+      const ieNf = 17
+      const ieN1 = 18
+      const ieN2 = 19
+      const ieNbf = 20
+      const ieNblc = 21
+      const ieNbhc = 22
+      const iembf = 23
+      const iemblc = 24
+      const iembhc = 25
+      const iepif = 26
+      const iepilc = 27
+      const iepihc = 28
+      const ieNbfD = 29
+      const ieNblcD = 30
+      const ieNbhcD = 31
+      const ieNbhtD = 32
+      const ieNbltD = 33
+      const iembfD = 34
+      const iemblcD = 35
+      const iembhcD = 36
+      const iembhtD = 37
+      const iembltD = 38
+      const iepifD = 39
+      const iepilcD = 40
+      const iepihcD = 41
+      const iepihtD = 42
+      const iepiltD = 43
+      const ieM2 = 44
+      const ieM25 = 45
+      const ieM0 = 46
+      const iep0 = 47
+      const iea0 = 48
+      const ierho0 = 49
+      const iemu0 = 50
+      const ieT0 = 51
+      const ieu0 = 52
+      const ieTt0 = 53
+      const ieht0 = 54
+      const iept0 = 55
+      const iecpt0 = 56
+      const ieRt0 = 57
+      const ieTt18 = 58
+      const ieht18 = 59
+      const iept18 = 60
+      const iecpt18 = 61
+      const ieRt18 = 62
+      const ieTt19 = 63
+      const ieht19 = 64
+      const iept19 = 65
+      const iecpt19 = 66
+      const ieRt19 = 67
+      const ieTt2 = 68
+      const ieht2 = 69
+      const iept2 = 70
+      const iecpt2 = 71
+      const ieRt2 = 72
+      const ieTt21 = 73
+      const ieht21 = 74
+      const iept21 = 75
+      const iecpt21 = 76
+      const ieRt21 = 77
+      const ieTt25 = 78
+      const ieht25 = 79 
+      const iept25 = 80 
+      const iecpt25 = 81 
+      const ieRt25 = 82 
+      const ieTt3 = 83
+      const ieht3 = 84
+      const iept3 = 85
+      const iecpt3 = 86
+      const ieRt3 = 87
+      const ieTt4 = 88
+      const ieht4 = 89
+      const iept4 = 90
+      const iecpt4 = 91
+      const ieRt4 = 92
+      const ieTt41 = 93
+      const ieht41 = 94
+      const iept41 = 95
+      const iecpt41 = 96
+      const ieRt41 = 97
+      const ieTt45 = 98
+      const ieht45 = 99
+      const iept45 = 100
+      const iecpt45 = 101
+      const ieRt45 = 102
+      const ieTt49 = 103
+      const ieht49 = 104
+      const iept49 = 105
+      const iecpt49 = 106
+      const ieRt49 = 107
+      const ieTt5 = 108
+      const ieht5 = 109
+      const iept5 = 110
+      const iecpt5 = 111
+      const ieRt5 = 112
+      const ieTt7 = 113
+      const ieht7 = 114
+      const iept7 = 115
+      const iecpt7 = 116
+      const ieRt7 = 117
+      const ieTt9 = 118
+      const iept9 = 119
+      const iep2 = 120
+      const ieT2 = 121
+      const ieR2 = 122
+      const iecp2 = 123
+      const ieu2 = 124
+      const ieA2 = 125
+      const iep25 = 126
+      const ieT25 = 127
+      const ieR25 = 128
+      const iecp25 = 129
+      const ieu25 = 130
+      const ieA25 = 131
+      const iep5 = 132
+      const ieT5 = 133
+      const ieR5 = 134
+      const iecp5 = 135
+      const ieu5 = 136
+      const ieA5 = 137
+      const iep6 = 138
+      const ieT6 = 139
+      const ieR6 = 140
+      const iecp6 = 141
+      const ieu6 = 142
+      const ieA6 = 143
+      const iep7 = 144
+      const ieT7 = 145
+      const ieR7 = 146
+      const iecp7 = 147
+      const ieu7 = 148
+      const ieA7 = 149
+      const iep8 = 150
+      const ieT8 = 151
+      const ieR8 = 152
+      const iecp8 = 153
+      const ieu8 = 154
+      const ieA8 = 155
+      const ieu9 = 156
+      const ieA9 = 157
+      const ieepf = 158
+      const ieeplc = 159
+      const ieephc = 160
+      const ieepht = 161
+      const ieeplt = 162
+      const ieetaf = 163
+      const ieetalc = 164
+      const ieetahc = 165
+      const ieetaht = 166
+      const ieetalt = 167
+      const iemcore = 168
+      const iemofft = 169
+      const iePofft = 170
+      const iePhiinl = 171
+      const ieKinl = 172
+      const ieepsl = 173
+      const ieepsh = 174
+      const ieFe = 175 
+      const ieFsp = 176
+      const ieTSFC = 177
+      const ieA5fac = 178
+      const ieA7fac = 179
+      const iedTstrk = 180
+      const ieStA = 181
+      const ieMtexit = 182
+      const ieM4a = 183
+      const ieruc = 184
+      const ieefilm = 185
+      const ietfilm = 186
+      const iefc = 187
+      const ieepsc1 = 188
+      const ieepsc2 = 189
+      const ieepsc3 = 190
+      const ieepsc4 = 191
+      const ieTmet1 = 192
+      const ieTmet2 = 193
+      const ieTmet3 = 194
+      const ieTmet4 = 195
 
-      iedeNOx = 196
-      iemdotf = 197
+      const iedeNOx = 196
+      const iemdotf = 197
 
-      iePLH2  = 198
-      ieyg    = 199
+      const iePLH2 = 198
+      const ieyg = 199
 
-      ieemot     = 200
-      ieeinv     = 201
-      ieecable   = 202
-      ieegen     = 203
-      ieethermal = 204
+      const ieemot = 200
+      const ieeinv = 201
+      const ieecable = 202
+      const ieegen = 203
+      const ieethermal = 204
 
-      iePinmot     = 205
-      iePininv     = 206
-      iePincable   = 207
-      iePingen     = 208
-      iePinthermal = 209
+      const iePinmot = 205
+      const iePininv = 206
+      const iePincable = 207
+      const iePingen = 208
+      const iePinthermal = 209
 
-      ieEINOx1     = 210
-      ieEINOx2     = 211
-      ieFAR        = 212
-      ieOPR        = 213
-      ieWc3        = 214
+      const ieEINOx1 = 210
+      const ieEINOx2 = 211
+      const ieFAR = 212
+      const ieOPR = 213
+      const ieWc3 = 214
       
       # Heat rejection:
-      ieHrejmot   = 215
-      ieHrejinv   = 216
-      ieHrejcab   = 217
-      ieHrejgen   = 218
-      ieHrejtot   = 219
+      const ieHrejmot = 215
+      const ieHrejinv = 216
+      const ieHrejcab = 217
+      const ieHrejgen = 218
+      const ieHrejtot = 219
 
-      ieHexcess   = 220
+      const ieHexcess = 220
 #Guesses for NPSS offdes:
-      iegsFnsplit = 221
-      iegsMotShP  = 222
-      iegsmdotf   = 223
-      iegsWin     = 224
-      iegsRlineF  = 225
-      iegsBPR     = 226
-      iegsRlinelc = 227
-      iegsRlinehc = 228
-      iegsPRhtrb  = 229
-      iegsPRltrb  = 230
-      iegsNmechH  = 231
-      iegsGBtrq   = 232
-      iegsNmechL  = 233
-      iegsNmechF  = 234
-      iegsPodWin  = 235
+      const iegsFnsplit = 221
+      const iegsMotShP = 222
+      const iegsmdotf = 223
+      const iegsWin = 224
+      const iegsRlineF = 225
+      const iegsBPR = 226
+      const iegsRlinelc = 227
+      const iegsRlinehc = 228
+      const iegsPRhtrb = 229
+      const iegsPRltrb = 230
+      const iegsNmechH = 231
+      const iegsGBtrq = 232
+      const iegsNmechL = 233
+      const iegsNmechF = 234
+      const iegsPodWin = 235
 
-      iegsPodRlineF   = 236
-      iegsPodGBtrq    = 237
-      iegsPodMotNmech = 238
-      iegsPodFanNmech = 239
+      const iegsPodRlineF = 236
+      const iegsPodGBtrq = 237
+      const iegsPodMotNmech = 238
+      const iegsPodFanNmech = 239
 
 #Heat exchanger variables
-      ieDi = 240
-      ieTft = 241
-      iefrecirc = 242
-      ierecircT = 243
-      iehvap = 244
-      iePreCorder = 245
-      iePreCepsilon = 246
-      iePreCMp = 247
-      iePreCDeltah = 248
-      iePreCDeltap = 249
-      ieInterCorder = 250
-      ieInterCepsilon = 251 
-      ieInterCMp = 252
-      ieInterCDeltah = 253
-      ieInterCDeltap = 254
-      ieRegenorder = 255
-      ieRegenepsilon = 256 
-      ieRegenMp = 257
-      ieRegenDeltah = 258
-      ieRegenDeltap = 259
-      ieTurbCorder = 260
-      ieTurbCepsilon = 261 
-      ieTurbCMp = 262
-      ieTurbCDeltah = 263
-      ieTurbCDeltap = 264
-      ieRadiatorepsilon = 265
-      ieRadiatorMp = 266
-      ieRadiatorDeltah = 267
-      ieRadiatorDeltap = 268
-      iehvapcombustor = 269
-      ieHXminTwall = 270
+      const ieDi = 240
+      const ieTft = 241
+      const iefrecirc = 242
+      const ierecircT = 243
+      const iehvap = 244
+      const iePreCorder = 245
+      const iePreCepsilon = 246
+      const iePreCMp = 247
+      const iePreCDeltah = 248
+      const iePreCDeltap = 249
+      const ieInterCorder = 250
+      const ieInterCepsilon = 251 
+      const ieInterCMp = 252
+      const ieInterCDeltah = 253
+      const ieInterCDeltap = 254
+      const ieRegenorder = 255
+      const ieRegenepsilon = 256 
+      const ieRegenMp = 257
+      const ieRegenDeltah = 258
+      const ieRegenDeltap = 259
+      const ieTurbCorder = 260
+      const ieTurbCepsilon = 261 
+      const ieTurbCMp = 262
+      const ieTurbCDeltah = 263
+      const ieTurbCDeltap = 264
+      const ieRadiatorepsilon = 265
+      const ieRadiatorMp = 266
+      const ieRadiatorDeltah = 267
+      const ieRadiatorDeltap = 268
+      const iehvapcombustor = 269
+      const ieHXminTwall = 270
+      const iemfuel = 271
 
-      iemfuel = 271
-
-      ietotal = 271
+      const ietotal = 271
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
 ncrowx = ieTmet1 - ieepsc1
 
 #---- indices for indexing mission points
-      ipstatic   =  1
-      iprotate   =  2
-      iptakeoff  =  3
-      ipcutback  =  4
-      ipclimb1   =  5
-      ipclimb2   =  6
-      ipclimb3   =  7
-      ipclimb4   =  8
-      ipclimb5   =  9
-      ipcruise1  = 10
-      ipcruise2  = 11
-      ipdescent1 = 12
-      ipdescent2 = 13
-      ipdescent3 = 14
-      ipdescent4 = 15
-      ipdescent5 = 16
-      iptest     = 17
-      iptotal    = 17 
+      const ipstatic = 1
+      const iprotate = 2
+      const iptakeoff = 3
+      const ipcutback = 4
+      const ipclimb1 = 5
+      const ipclimb2 = 6
+      const ipclimb3 = 7
+      const ipclimb4 = 8
+      const ipclimb5 = 9
+      const ipcruise1 = 10
+      const ipcruise2 = 11
+      const ipdescent1 = 12
+      const ipdescent2 = 13
+      const ipdescent3 = 14
+      const ipdescent4 = 15
+      const ipdescent5 = 16
+      const iptest = 17
+      const iptotal = 17 
       
-      ipclimbn   = ipclimb5      # last climb   point
-      ipcruisen  = ipcruise2     # last cruise  point
-      ipdescentn = ipdescent5    # last descent point
+      const ipclimbn   = ipclimb5      # last climb   point
+      const ipcruisen  = ipcruise2     # last cruise  point
+      const ipdescentn = ipdescent5    # last descent point
 
 #---- indices for indexing optimization parameters (to be sequenced over)
       isRange  =  1
@@ -763,70 +762,4 @@ ncrowx = ieTmet1 - ieepsc1
       ioT4CR  = 13
       ioT4TO  = 14
       ioOPR   = 15
-      iototal = 15
-      ;
-
-#=
-      character*8 cpars(istotal)
-      character*8 cparo(iototal)
-      character*2 cplab(iptotal)
-
-#---- keywords for ij sequence parameters 
-#-     (must not have any leading blanks must have at least one trailing blank)
-      data cpars /
-      'Range   '
-      'Mach    '
-      'Nmax    '
-      'sigfac  '
-      'CL      '
-      'AR      '
-      'sweep   '
-      'etas    '
-      'Tt4CR   '
-      'Tt4TO   '
-      'Tmetal  '
-      'OPR     '
-      'FPR     '
-      'lBFmax  '
-      'bmax    '
-      'alt     ' /
-
-#---- keywords for optimization variables
-#-     (must not have any leading blanks must have at least one trailing blank)
-      data cparo /
-      'CL      '
-      'AR      '
-      'sweep   '
-      'hboxo   '
-      'hboxs   '
-      'lambdas '
-      'lambdat '
-      'rcls    '
-      'rclt    '
-      'FPR     '
-      'BPR     '
-      'alt     '
-      'Tt4CR   '
-      'Tt4TO   '
-      'OPR     ' /
-
-#---- printout labels for mission points
-      data cplab /
-      'ST'
-      'RO'
-      'TO'
-      'CB'
-      'B1'
-      'B2'
-      'B3'
-      'B4'
-      'B5'
-      'C1'
-      'C2'
-      'D1'
-      'D2'
-      'D3'
-      'D4'
-      'D5'
-      'TE'  /
-=#
+      iototal = 15;

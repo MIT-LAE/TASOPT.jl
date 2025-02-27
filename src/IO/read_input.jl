@@ -709,12 +709,6 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 # ----- End Stabilizers -----
 
 # ---------------------------------
-# Recalculate cabin length
-if calculate_cabin #Resize the cabin if desired, keeping deltas
-    @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-    update_fuse_for_pax!(has_wing_fuel, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
-end
-# ---------------------------------
 
 # ---------------------------------
 # Structures
@@ -1051,10 +1045,19 @@ dHEx = dprop["HeatExchangers"]
         opt_move_wing = opt_move_wing
     )
     
+#Create aircraft object
+    ac = TASOPT.aircraft(name, description, ac_options,
+        parg, parm, para, pare, is_sized, 
+        fuselage, fuse_tank, wing, htail, vtail, engine)
+    
+    # ---------------------------------
+    # Recalculate cabin length
+    if calculate_cabin #Resize the cabin if desired, keeping deltas
+        @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
+        update_fuse_for_pax!(ac) #update fuselage dimensions
+    end
 
-return TASOPT.aircraft(name, description, ac_options,
-    parg, parm, para, pare, is_sized, 
-    fuselage, fuse_tank, wing, htail, vtail, engine)
+return ac
 
 end
 
