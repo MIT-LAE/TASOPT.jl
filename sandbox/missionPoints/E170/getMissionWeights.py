@@ -23,7 +23,7 @@ def load_histogram_data(file_path):
     return pd.read_csv(file_path)
 
 
-def plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5, surrounding_bins_list, weights_5):
+def plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5, surrounding_bins_list, weights_5,plot_box, plot_points):
     """Plot the 2D histogram with integration points using exact frequency values."""
     
     # Use Seaborn rocket_r colormap
@@ -52,25 +52,34 @@ def plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_
     # Ensure tick labels use the desired font
     for label in cbar.ax.get_yticklabels():
         label.set_fontname("Times New Roman")
-        
+    
+    if plot_box and plot_points == False:     
     # Add the bounding box
-    bbox_x = [mach_min, mach_max, mach_max, mach_min, mach_min]
-    bbox_y = [cl_min, cl_min, cl_max, cl_max, cl_min]
-    plt.plot(bbox_x, bbox_y, color='red', linewidth=3, linestyle='dashed')
+        bbox_x = [mach_min, mach_max, mach_max, mach_min, mach_min]
+        bbox_y = [cl_min, cl_min, cl_max, cl_max, cl_min]
+        plt.plot(bbox_x, bbox_y, color='gray', linewidth=3, linestyle='dashed')
     
     # Add the 5 integration points
     #plt.scatter(mach_points_5, cl_points_5, color='C0', marker='o', edgecolor='black', s=100, label="Integration Points")
     
     # Add a vertical dashed line at Mach = 0.80 for all Reynolds numbers
-    ax1.axvline(x=MMo, color='C0', linewidth=2, linestyle=':')
+    ax1.axvline(x=MMo, color='black', linewidth=2.5, linestyle=':')
     
-    # Highlight surrounding bins in gray
-    for surrounding_bins in surrounding_bins_list:
-        plt.scatter(surrounding_bins["Mach_bin"], surrounding_bins["CL_bin"], color='gray', marker='s', s=50, alpha=0.5)
+    
+    if plot_points and plot_box == False:
         
-    # Add the 5 integration points with size proportional to weight
-    integration_point_sizes = weights_5 * 500  # Scale weights for better visibility
-    plt.scatter(mach_points_5, cl_points_5, color='red', marker='o', edgecolor='black', s=integration_point_sizes)    
+        # Add the bounding box
+        bbox_x = [mach_min, mach_max, mach_max, mach_min, mach_min]
+        bbox_y = [cl_min, cl_min, cl_max, cl_max, cl_min]
+        plt.plot(bbox_x, bbox_y, color='gray', linewidth=2, linestyle='dashed')
+        
+       # Highlight surrounding bins in gray
+       # for surrounding_bins in surrounding_bins_list:
+        #    plt.scatter(surrounding_bins["Mach_bin"], surrounding_bins["CL_bin"], color='gray', marker='s', s=50, alpha=0.5)
+       
+        # Add the 5 integration points with size proportional to weight
+        integration_point_sizes = weights_5 * 1000  # Scale weights for better visibility
+        plt.scatter(mach_points_5, cl_points_5, color='C0', marker='P', edgecolor='black', s=integration_point_sizes)    
 
     # Add labels and title
     ax1.set_xlabel('Mach', fontsize=22, fontname="Times New Roman")
@@ -99,8 +108,12 @@ def plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_
     ax1.set_ylim(0.44, 0.58)
     plt.tight_layout()
 
-    plt.show()
-
+    if plot_points:
+        plt.savefig("Plots/E170_Mach_CL_hist_weights.png")
+    if plot_box:
+        plt.savefig("Plots/E170_Mach_CL_hist_box.png")
+    else:
+        plt.savefig("Plots/E170_Mach_CL_hist.png")
 
 def compute_frequencies_and_weights(mach_points, cl_points, df, mach_bin_size, cl_bin_size, filter_radius):
     """Compute average frequencies from surrounding bins and normalize weights. Ensure sum of weights is 1."""
@@ -181,19 +194,23 @@ mach_points_5 = np.array([mach_min, mach_max, mach_center, mach_min, mach_max])
 cl_points_5 = np.array([cl_min, cl_min, cl_center, cl_max, cl_max])
 
 # Compute frequencies and weights using bin sizes
-#mach_points_5, cl_points_5, weights_5 , surrounding_bins_list = compute_frequencies_and_weights(mach_points_5, cl_points_5, df, mach_bin_size, cl_bin_size, filter_radius)
+mach_points_5, cl_points_5, weights_5 , surrounding_bins_list = compute_frequencies_and_weights(mach_points_5, cl_points_5, df, mach_bin_size, cl_bin_size, filter_radius)
+
+plot_box = False
+plot_points = True
+
 
 # Plot the 2D histogram with integration points
-#plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5, surrounding_bins_list, weights_5)
+plot_2d_histogram(df, mach_min, mach_max, cl_min, cl_max, mach_points_5, cl_points_5, surrounding_bins_list, weights_5, plot_box, plot_points)
 
 
 # Display the numerical weights in tabular format
-#print("\nNumerical Weights for Integration Points:")
-#print(pd.DataFrame({"Mach": mach_points_5, "CL": cl_points_5, "Weight": weights_5}))
+print("\nNumerical Weights for Integration Points:")
+print(pd.DataFrame({"Mach": mach_points_5, "CL": cl_points_5, "Weight": np.round(weights_5, 2)}))
 
 
 # Compute and print statistics
-mean_mach, var_mach, mean_cl, var_cl = compute_statistics(df)
+#mean_mach, var_mach, mean_cl, var_cl = compute_statistics(df)
 
 # Plot the Bivariate Normal Distribution
-plot_bivariate_normal_distribution(mean_mach, np.sqrt(var_mach), mean_cl, np.sqrt(var_cl))
+#plot_bivariate_normal_distribution(mean_mach, np.sqrt(var_mach), mean_cl, np.sqrt(var_cl))
