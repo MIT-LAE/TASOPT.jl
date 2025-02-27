@@ -280,14 +280,14 @@ Solves for the feasible horizontal tail area (`Sh`) and wing box location
 (2) stability requirement with aft CG across different flight conditions.
 
 This routine iteratively adjusts:
-      - Horizontal tail area (`Sh`): Ensuring sufficient control authority.
-      - Wing box location (`xwbox`): Maintaining static and dynamic stability.
+- Horizontal tail area (`Sh`): Ensuring sufficient control authority.
+- Wing box location (`xwbox`): Maintaining static and dynamic stability.
 
 The routine considers:
-      - Worst-case CG locations** (`xcgF`, `xcgB`) computed using `cglpay(ac)`.
-      - Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
-      - Static margin constraints (`SM`).
-      - Fuel and payload distribution effects.
+- Worst-case CG locations** (`xcgF`, `xcgB`) computed using `cglpay(ac)`.
+- Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
+- Static margin constraints (`SM`).
+- Fuel and payload distribution effects.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -304,17 +304,14 @@ The routine considers:
 
 **Note**: two flags determine the sizing strategy:
 
-      - `htail.opt_sizing` = 
+      - `htail.opt_sizing`
             * = "fixed_Vh"      adjust Sh    (horizontal tail area)
             * = "max_fwd_CG"    adjust CLh   (horizontal tail cl)
+
       - `ac.opt_move_wing`
             * = "fixed"         no changes to wing location
             * = "fixed_CLh"     adjust wingbox location to set tail lift at cruise, CLh = CLhspec
             * = "min_static_margin" adjust wingbox location to get SM = SMmin at aft-CG
-
-            * = "CL_htail"      adjust CLh   (horizontal tail cl)
-            * = "S_htail"       adjust Sh    (horizontal tail area)
-            * = "x_wingbox"     adjust xwbox (wing box location)
 
 The two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function. 
 
