@@ -515,7 +515,8 @@ isGradient = false
 
     @testset "tfsize.jl" begin
 
-        # TODO []: icool change the function signiture. Only works for icool = 1.
+        # TODO []: icool change the function signature. Only works for icool = 1.
+        # note: icool::Int -> opt_cooling::String
         # TODO []: the output shall cover most of the functions. Ideally, test all other outputs.
 
         gee = 9.8100000000000005
@@ -528,7 +529,7 @@ isGradient = false
         Feng = 22182.101361240744
         Phiinl = 0.0000000000000000
         Kinl = 0.0000000000000000
-        iBLIc = 0
+        eng_has_BLI_cores = false
         BPR = 5.0999999999999996
         pif = 1.6850000000000001
         pilc = 8.0000000000000000
@@ -553,7 +554,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 1
+        opt_cooling = "fixed_coolingflowratio"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -607,7 +608,7 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfsize!(gee, M0, T0, p0, a0, M2, M25,
-            Feng, Phiinl, Kinl, iBLIc,
+            Feng, Phiinl, Kinl, eng_has_BLI_cores,
             BPR, pif, pilc, pihc,
             pid, pib, pifn, pitn,
             Ttf, ifuel, hvap, etab,
@@ -616,7 +617,7 @@ isGradient = false
             mofft, Pofft,
             Tt9, pt9, Tt4,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -636,7 +637,7 @@ isGradient = false
         if isGradient
             # AD
             d_etaf_dM0 = gradient(M0 -> TASOPT.engine.tfsize(gee, M0, T0, p0, a0, M2, M25,
-                    Feng, Phiinl, Kinl, iBLIc,
+                    Feng, Phiinl, Kinl, eng_has_BLI_cores,
                     BPR, pif, pilc, pihc,
                     pid, pib, pifn, pitn,
                     Ttf, ifuel, hvap, etab,
@@ -645,7 +646,7 @@ isGradient = false
                     mofft, Pofft,
                     Tt9, pt9, Tt4,
                     epsl, epsh,
-                    icool,
+                    opt_cooling,
                     Mtexit, dTstrk, StA, efilm, tfilm,
                     M4a, ruc,
                     ncrowx, ncrow,
@@ -655,7 +656,7 @@ isGradient = false
             # FD
             epsilon = 1e-6
             etaf_d = TASOPT.engine.tfsize(gee, M0 + epsilon, T0, p0, a0, M2, M25,
-                Feng, Phiinl, Kinl, iBLIc,
+                Feng, Phiinl, Kinl, eng_has_BLI_cores,
                 BPR, pif, pilc, pihc,
                 pid, pib, pifn, pitn,
                 Ttf, ifuel, hvap, etab,
@@ -664,7 +665,7 @@ isGradient = false
                 mofft, Pofft,
                 Tt9, pt9, Tt4,
                 epsl, epsh,
-                icool,
+                opt_cooling,
                 Mtexit, dTstrk, StA, efilm, tfilm,
                 M4a, ruc,
                 ncrowx, ncrow,
@@ -687,7 +688,7 @@ isGradient = false
         Feng = 22182.101361240744
         Phiinl = 0.0000000000000000
         Kinl = 0.0000000000000000
-        iBLIc = 0
+        eng_has_BLI_cores = false
         BPR = 5.0999999999999996
         pif = 1.6850000000000001
         pilc = 8.0000000000000000
@@ -712,7 +713,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 2
+        opt_cooling = "fixed_Tmetal"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -755,7 +756,7 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfsize!(gee, M0, T0, p0, a0, M2, M25,
-            Feng, Phiinl, Kinl, iBLIc,
+            Feng, Phiinl, Kinl, eng_has_BLI_cores,
             BPR, pif, pilc, pihc,
             pid, pib, pifn, pitn,
             Ttf, ifuel, hvap, etab,
@@ -764,7 +765,7 @@ isGradient = false
             mofft, Pofft,
             Tt9, pt9, Tt4,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -816,7 +817,7 @@ isGradient = false
 
         Phiinl = 0.0
         Kinl = 0.0
-        iBLIc = 0
+        eng_has_BLI_cores = false
 
         pid = 0.99800000000000000
         pib = 0.93999999999999995
@@ -842,7 +843,7 @@ isGradient = false
         A25 = 3.8585338087708761E-002
         A5 = 0.19210855588408102
         A7 = 0.64211443204484309
-        iTFspec = 1
+        opt_calc_call = "oper_fixedTt4"
         Ttf = 280.00000000000000
         ifuel = 24
         etab = 0.98499999999999999
@@ -859,7 +860,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 1
+        opt_cooling = "fixed_coolingflowratio"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -926,21 +927,21 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-            Phiinl, Kinl, iBLIc,
+            Phiinl, Kinl, eng_has_BLI_cores,
             pid, pib, pifn, pitn,
             Gearf,
             pifD, pilcD, pihcD, pihtD, piltD,
             mbfD, mblcD, mbhcD, mbhtD, mbltD,
             NbfD, NblcD, NbhcD, NbhtD, NbltD,
             A2, A25, A5, A7,
-            iTFspec,
+            opt_calc_call,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
             pifK, epfK,
             mofft, Pofft,
             Tt9, pt9,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -982,7 +983,7 @@ isGradient = false
 
         Phiinl = 0.0
         Kinl = 0.0
-        iBLIc = 0
+        eng_has_BLI_cores = false
 
         pid = 0.99800000000000000
         pib = 0.93999999999999995
@@ -1008,7 +1009,7 @@ isGradient = false
         A25 = 3.8585338087708761E-002
         A5 = 0.19210855588408102
         A7 = 0.64211443204484309
-        iTFspec = 1
+        opt_calc_call = "oper_fixedTt4"
         Ttf = 280.00000000000000
         ifuel = 24
         etab = 0.98499999999999999
@@ -1025,7 +1026,7 @@ isGradient = false
         pt9 = 30000.000000000000
         epsl = 1.0000000000000000E-002
         epsh = 2.1999999999999999E-002
-        icool = 1
+        opt_cooling = "fixed_coolingflowratio"
         Mtexit = 1.0000000000000000
         dTstrk = 200.00000000000000
         StA = 8.9999999999999997E-002
@@ -1061,7 +1062,7 @@ isGradient = false
         Δp_Regen = 0.0
 
         # Fix temperature find mass flow
-        icool = 2
+        opt_cooling = "fixed_Tmetal"
         TSFC, Fsp, hfuel, ff,
         Feng, mcore,
         pif, pilc, pihc,
@@ -1093,21 +1094,21 @@ isGradient = false
         epf, eplc, ephc, epht, eplt,
         etaf, etalc, etahc, etaht, etalt,
         Lconv = TASOPT.engine.tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-            Phiinl, Kinl, iBLIc,
+            Phiinl, Kinl, eng_has_BLI_cores,
             pid, pib, pifn, pitn,
             Gearf,
             pifD, pilcD, pihcD, pihtD, piltD,
             mbfD, mblcD, mbhcD, mbhtD, mbltD,
             NbfD, NblcD, NbhcD, NbhtD, NbltD,
             A2, A25, A5, A7,
-            iTFspec,
+            opt_calc_call,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
             pifK, epfK,
             mofft, Pofft,
             Tt9, pt9,
             epsl, epsh,
-            icool,
+            opt_cooling,
             Mtexit, dTstrk, StA, efilm, tfilm,
             M4a, ruc,
             ncrowx, ncrow,
@@ -1135,9 +1136,6 @@ isGradient = false
         ac = TASOPT.load_default_model()
         ip = ipcruise1
 
-        ac.pari[iiengwgt] = 1
-        ac.parg[igGearf] = 1.0
-        ac.pari[iiengwgt] = 1
         ac.parg[igGearf] = 1.0
         ac.pared[iemblcD, ip] = 46.110246609262873
         ac.pared[ieBPR, ip] = 5.0999999999999996

@@ -43,7 +43,7 @@ end
 @testset "Default sizing" verbose=true begin
     ac = load_default_model()
     
-    include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
+    include(__TASOPTindices__)
 
     @test ac.fuselage.layout.radius == 1.9558
     
@@ -93,9 +93,9 @@ end
 end
 
 @testset "Wide sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "./IO/default_wide.toml"))
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml"))
     
-    include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
+    include(__TASOPTindices__)
 
     @test ac.fuselage.layout.radius ≈ 3.0988
     
@@ -107,9 +107,9 @@ end
 end
 
 @testset "Regional sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "./IO/default_regional.toml"))
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_regional.toml"))
     
-    include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
+    include(__TASOPTindices__)
 
     @test ac.fuselage.layout.radius ≈ 1.5113
 
@@ -122,7 +122,7 @@ end
 @testset "Hydrogen sizing" verbose=true begin
     ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"))
     
-    include(joinpath(TASOPT.__TASOPTroot__, "./misc/index.inc"))
+    include(__TASOPTindices__)
 
     @test ac.fuselage.layout.radius ≈ 2.54
 

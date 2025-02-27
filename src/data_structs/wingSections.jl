@@ -82,7 +82,7 @@ end
 
 """
 Wing layout is a structure that defines the wing planform.
-See [WingSection](@ref) and [WingCrossSection](@ref) as well.
+See `WingSection` and `WingCrossSection` as well.
 """
 @kwdef mutable struct WingLayout
     """Aspect Ratio [m]"""
@@ -146,7 +146,7 @@ end  # function normalized_chord
     get_average_sparbox_heights(section::WingCrossSection) -> (h̄_avg, h̄_rms)
 
 Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
-These are used in [`get_wing_weights`](@ref) for further calculations
+These are used in [`calc_wing_weights!`](@ref) for further calculations
 """
 function get_average_sparbox_heights(section::WingCrossSection)
     A = 1 - section.web_to_box_height

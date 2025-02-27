@@ -5,11 +5,11 @@ ifuel = 40
 z = 11e3
 Mair = 0.8
 xftank = 15.0
-ac.pari[iifuel] = ifuel
+ac.options.ifuel = ifuel
 ac.para[iaalt, ipcruise1,1] = z
 ac.para[iaMach, ipcruise1,1] = Mair
 ac.parg[igxftank] = xftank
-ac.pari[iinftanks] = 1
+ac.fuse_tank.tank_count = 1
 ac.parg[igWfuel] = 1e5
 
 fuse_tank = ac.fuse_tank
@@ -26,7 +26,7 @@ fuse_tank.inner_material = TASOPT.StructuralAlloy("Al-2219-T87")
 
 fuse_tank.t_insul = [0.15,0.15,0.15]
 fuse_tank.material_insul = [ThermalInsulator("rohacell41s"), ThermalInsulator("rohacell41s"), ThermalInsulator("polyurethane27")]
-fuse_tank.size_insulation = true
+fuse_tank.sizes_insulation = true
 fuse_tank.iinsuldes = [1,2,3]
 fuse_tank.boiloff_rate = 0.15
 
@@ -81,7 +81,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
     
     fuse_tank.t_insul = [0.065]
     fuse_tank.material_insul = [ThermalInsulator("vacuum")]
-    fuse_tank.size_insulation = false
+    fuse_tank.sizes_insulation = false
 
     @testset "Vacuum insulation" begin
         TASOPT.tanksize!(ac, 1)

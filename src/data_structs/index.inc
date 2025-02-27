@@ -1,22 +1,4 @@
 
-#---- indices for integer variables and flags
-      const iifuel = 1  # index specifying the fuel (see gasfun.f)    0 = JetA 1 = LH2      
-      const iifwcen = 2  # 0 = no fuel in center box  1 = fuel in center box
-      const iiwplan = 3  # 0 = bare wing 1 = cantilever with engine 2 = strut braced
-      const iiengloc = 4  # 1 = engines on wing 2 = engines on fuselage "Options.engine_location"  
-      const iiengwgt = 5  # 1 = basic tech eng. weight 2 = advanced tech eng. weight 
-      const iiBLIc = 6  # 0 = core in clean flow 1 = core ingests KE defect   
-      const iifclose = 7  # 0 = fuse tapers to point 1 = tapers to edge 
-      const iixwmove = 8  # 0 = wing centroid fixed 1 = move wing to balance
-      const iifwing = 9  # 0 = no fuel in wing (for LH2) 1 = fuel in wing
-      const iicalcCMVf = 10
-      const iiengtype = 11  # 0 = Turboelectric engine; 1 = Turbofan engine; "prop_sys_arch"
-      const iiopt = 12  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
-      const iiaircraftclass = 13 # 737 = 737 size aircraft; 777 = 777 size aircraft
-      const iinftanks = 14 # number of fuel tanks in fuselage
-      const iidoubledeck = 15 #double decker flag
-      const iitotal = 15
-
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
       const imwOpt = 1 
@@ -57,8 +39,6 @@
       const imtotal = 35
 
 #---- indices for geometry (airframe) variables and other sizing variables
-### Good Riddance ###
-### Good Riddance ###
       const igRange    =   1
       const igWMTO     =   2
       const igWpay     =   3
@@ -111,10 +91,6 @@
       const igrMv      = 50
       const igsigfac   = 51
       const igrhofuel  = 52
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
       const igfBLIw    = 53
       const igfBLIf    = 54
       const igdfan     = 55
@@ -204,11 +180,6 @@
       const igdxeng2wbox = 123
 
       const igxWfuel = 124
-
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
 
       const igWfvent = 125
       const igdHXPreC = 126

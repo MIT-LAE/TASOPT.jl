@@ -4,7 +4,7 @@
 
 ## Choosing a design mission
 
-To plot a payload-range diagram with a fleet of missions you must first load any aircraft model. Start by choosing a design mission. Your design mission should be what you want the second corner point in your Payload-Range plot to be. Once you have a chosen a specific design range and payload weight (For eg: 3500 nmi and 195 pax) you can add it to the input toml file for eg: `default_input.toml`
+To plot a payload-range diagram with a fleet of missions you must first load any aircraft model. Start by choosing a design mission. Your design mission should be what you want the second corner point in your Payload-Range plot to be. Once you have a chosen a specific design range and payload weight (e.g., 3500 nmi and 195 pax) you can add it to the input toml file, e.g., `/example/defaults/default_input.toml`
 
 ```toml
 [Mission]
