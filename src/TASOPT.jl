@@ -83,8 +83,6 @@ export fly_off_design!
 include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 
-include(joinpath(__TASOPTroot__,"engine/PT.inc"))
-
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))

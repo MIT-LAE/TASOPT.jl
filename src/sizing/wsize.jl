@@ -46,9 +46,6 @@ function wsize(ac; itermax=35,
     # Extract flags
     ifuel = options.ifuel
 
-    # Unpack powertrain elements
-    ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
-
     # Calculate sea level temperature for takeoff conditions
     altTO = parm[imaltTO]
     T_std, _, _, _, _ = atmos(altTO / 1e3)
@@ -390,9 +387,10 @@ function wsize(ac; itermax=35,
         if compare_strings(options.opt_engine_location, "wing") # Eng on "wing" or aft "fuselage"
             Wengtail = 0.0
             Waftfuel = 0.0
+        #TODO: figure this out. fuselage engine weight appears to be just turboelectric, which we don't currently support
         elseif compare_strings(options.opt_engine_location, "fuselage")
-            Wengtail = (parg[igWtshaft] + parg[igWcat]) * nTshaft +
-                        parg[igWgen] * ngen
+            Wengtail = (parg[igWtshaft] + parg[igWcat]) * nTshaft
+                        # parg[igWgen] * ngen 
         else
             error("Engine location provided is \"$options.opt_engine_location\". Engine position can only be:
                         > \"wing\" - engines under wing
