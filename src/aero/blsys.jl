@@ -24,7 +24,7 @@ Computes Jacobian matrices for BL solution at an axial station. Called repeatedl
       - `is_selfsimilar::Bool`: Self-similar BL profile flag.
       - `is_laminar::Bool`: Laminar flow flag.
       - `is_wake::Bool`: In wake? Flag.
-      - `solves_direct::Bool`: Direct solution flag.
+      - `solves_direct::Bool`: Direct solution flag, with prescribed inviscid velocity ``u_e = u_\\mathrm{inv}``
       - `Mach::Float64`: Mach number for compressibility.
       - `uinv::Float64`: Inviscid velocity.
       - `x::Float64`: Arc length.
