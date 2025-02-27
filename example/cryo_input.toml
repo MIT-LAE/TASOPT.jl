@@ -6,6 +6,9 @@ name = "TASOPT Model with cryo fuel and HX"
     with liquid hydrogen and makes the corresponding fuel system changes such as fuselage storage and insulation. It
     also demonstrates the heat exchanger capabilities in the engine model.
     """
+    aircraft_type   = "Narrow Body Aircraft"     # Regional Aircraft
+                                    # Narrow Body Aircraft
+                                    # Wide Body Aircraft
 
 #-------------------------------------------------#
 ##               Note on units                   ##

@@ -72,7 +72,7 @@ function odperf!(ac, W, FL, Ldebug)
         
         # velocity calculation from CL, Weight, altitude
         #Get flight speed from climb schedule
-        if ac.aircraft_type == "2" || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
+        if ac.aircraft_type == :wide
 
             CAScl, TAScl, Mcl = get_climbspeed_77W(alts[i], MNcr)
             #Get flight speed from descent schedule
@@ -175,7 +175,7 @@ function odperf!(ac, W, FL, Ldebug)
             OEW = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
 
             # Climb Tt41 schedule
-            if ac.aircraft_type == "2" || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
+            if ac.aircraft_type == :wide
                 if W > 0.95 * ac.parg[igWMTO]
                     Tt41frac = LinRange(0.965, 0.97, length(alts)-5) # length(alts)-"5" is to account for alt at or under 2000ft
                 elseif W < 1.05*(1.2*OEW) # Low weight
@@ -222,7 +222,7 @@ function odperf!(ac, W, FL, Ldebug)
 
             icall = 1
             icool = 1
-            initeng = false
+            initeng = true
             ac.pared[ieTt41,ip] = Tt41s[i]
             ac.parad[iaalt,ip] = alts[i]
 
@@ -273,13 +273,13 @@ function odperf!(ac, W, FL, Ldebug)
     
         # Cruise Section
         FLcrzmax = 410
-        if ac.aircraft_type == "2" || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
+        if ac.aircraft_type == :wide
             FLcrzmax = 431
         end
         if FL[i]≥ 60 && FL[i]≤FLcrzmax
             ip = iptest
             #Get flight speed from climb schedule
-            if ac.aircraft_type == "2" || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
+            if ac.aircraft_type == :wide
                 CAScr, TAScr, Mcr = get_cruisespeed_77W(alts[i], MNcr)
             else
                 CAScr, TAScr, Mcr = get_cruisespeed(alts[i], MNcr)
@@ -359,7 +359,7 @@ function odperf!(ac, W, FL, Ldebug)
 
             icall = 1
             icool = 1
-            initeng = false
+            initeng = true
             ac.pared[ieTt41,ip] = Tt41s[i]
             ac.parad[iaalt,ip] = alts[i]
 
@@ -384,7 +384,7 @@ function odperf!(ac, W, FL, Ldebug)
 
             icall = 2
             icool = 1
-            initeng = false
+            initeng = true
             ac.pared[ieFe, ip] = F
             TASOPT.tfcalc!(ac.pari, ac.parg, view(ac.parad, :, ip), 
                                         view(ac.pared, :, ip), ac.wing, ip, icall, icool, initeng)

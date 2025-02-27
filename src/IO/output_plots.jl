@@ -987,7 +987,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     parm = cat(ac_og.parm[:,1], ac_og.parm[:,1], dims=2)
     pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
-    ac = aircraft(ac_og.name, ac_og.description,
+    ac = aircraft(ac_og.name, ac_og.description, ac_og.aircraft_type,
     ac_og.pari, ac_og.parg, parm, para, pare, [true], ac_og.fuse_tank,
     ac_og.fuselage, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine)
 

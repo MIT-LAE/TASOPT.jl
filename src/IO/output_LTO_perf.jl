@@ -1,9 +1,9 @@
 """
-    LTO(name, ac; fileout = stdout)
+    output_LTO_perf(name, ac; fileout = stdout)
 
 Prints out LTO EI(NOₓ) values
 """
-function LTO(name, ac; fileout = stdout, method = "cubic", extra_points = false)
+function output_LTO_perf(name, ac; fileout = stdout, method = "cubic", extra_points = false)
 
     #LTO values
     if extra_points
@@ -82,7 +82,7 @@ ICAO Annex 16 Vol. II (part 2.1.4.1)
 function EINOx3(P3_kPa, T3_K, sp_humidity = 0.00634, ac_type = "1")
     # Constants derived using a CRN model for a CFM56 tech level engine
         
-    if ac_type == "2" || lowercase(string(ac_type)) == "wide body aircraft"
+    if ac_type == :wide
         a = 1.01084407e-07
         b = -2.12716481e-04
         c = 1.50618950e-01
@@ -109,7 +109,7 @@ Assumes a default specific humidity of 0.00634 kg water/kg dry air per
 ICAO Annex 16 Vol. II (part 2.1.4.1)
 """
 function EINOx4(P3_kPa, T3_K, sp_humidity = 0.00634, ac_type = "1")
-    if ac_type == "2" || lowercase(string(ac_type)) == "wide body aircraft"
+    if ac_type == :wide
         a = 9.15868718e-10
         b = -2.60435361e-06
         c = 2.75257358e-03
