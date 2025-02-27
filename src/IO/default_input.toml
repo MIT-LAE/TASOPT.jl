@@ -46,8 +46,9 @@
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
-    prop_sys_arch = "constant_TSFC" #Options are TF: Turbofan
+    prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
+                         #            constant_TSFC: simple engine with constant TSFC
 [Fuel]
     fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
@@ -443,7 +444,6 @@
     core_in_clean_flow = true
 
     #Parameters for "constant_TSFC" engine model; not used in other models
-    takeoff_TSFC = 0.00018 #1/s
     climb_TSFC = 0.00018 #1/s
     cruise_TSFC = 0.00018 #1/s
     descent_TSFC = 0.00018 #1/s
@@ -554,7 +554,7 @@
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   
-    weight_model = "fractional_weight" #Options are "MD": Mark Drela's original model
+    weight_model = "basic" #Options are "MD": Mark Drela's original model
                               #   "basic": NF's new model with basic tech
                               #"advanced": NF's new model with advanced tech
                               #"fractional_weight": simple model with constant weight fractions

@@ -175,6 +175,7 @@ doptions = default["Options"]
 pari[iiopt] = read_input("optimize", options, doptions)
 
 propsys = read_input("prop_sys_arch", options, doptions)
+pari[iicalctakeoff] = 1 #True by default
 if lowercase(propsys) == "tf"
     pari[iiengtype] = 1
     modelname = "turbofan_md"
@@ -193,6 +194,8 @@ elseif lowercase(propsys) == "constant_tsfc"
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
     
+    pari[iicalctakeoff] = 0 #Engine model cannot be used for takeoff
+
 elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
 else
@@ -1031,8 +1034,7 @@ dnac = dprop["Nacelles"]
 
 else #For constant TSFC model
     para[iaROCdes,:,:] .= readprop("rate_of_climb") * ft_to_m /60
-    pare[ieTSFC,1:ipclimb1,:] .= readprop("takeoff_TSFC")
-    pare[ieTSFC,ipclimb2:ipclimbn,:] .= readprop("climb_TSFC")
+    pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
     pare[ieTSFC,ipcruise1:ipcruise2,:] .= readprop("cruise_TSFC")
     pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
 end

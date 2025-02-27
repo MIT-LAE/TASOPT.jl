@@ -913,8 +913,12 @@ function wsize(ac; itermax=35,
     case = "off_design"
     engine.enginecalc!(ac, case, imission, ip, initializes_engine)
 
-    # calculate takeoff and balanced-field lengths
-    takeoff!(ac, printTO = printiter)
+    if pari[iicalctakeoff] == 1 #If the engine can model the takeoff performance
+        # calculate takeoff and balanced-field lengths
+        takeoff!(ac, printTO = printiter)
+    else
+        @warn "Engine model does not allow takeoff calculations"
+    end
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(ac)

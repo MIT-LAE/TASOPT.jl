@@ -15,7 +15,8 @@
       iiaircraftclass = 13 # 737 = 737 size aircraft; 777 = 777 size aircraft
       iinftanks = 14 # number of fuel tanks in fuselage
       iidoubledeck = 15 #double decker flag
-      iitotal    = 15
+      iicalctakeoff = 16 #flag to calculate takeoff
+      iitotal    = 16
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
