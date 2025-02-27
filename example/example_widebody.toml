@@ -284,11 +284,11 @@
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
         
         # How do you want to size the horizontal stabilizers?
-        opt_sizing = "max_fwd_CG" # Options are "fixed_Vh" or "max_fwd_CG" 
+        opt_sizing = "CLmax_fwdCG" # Options are "fixed_Vh" or "CLmax_fwdCG" 
         # 1: set Sh via specified Vh
         # 2: set Sh via CLhCGfwd at max-forward CG during landing
         Vh = 0.85 # Horizontal tail volume (only used if opt_sizing == "fixed_Vh")
-        CLh_at_max_forward_CG = -1.0 # (only used if opt_sizing == "max_fwd_CG")
+        CLh_at_max_forward_CG = -1.0 # (only used if opt_sizing == "CLmax_fwdCG")
 
         opt_move_wing = "min_static_margin" # "fixed": "fix" wing position 
                             # "fixed_CLh": move wing to get CLh="CLhspec" in cruise 

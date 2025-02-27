@@ -128,7 +128,7 @@ $TYPEDFIELDS
     opt_sizing::String = ""
     """Tail Downwash factor dε/dα """
     downwash_factor::Float64 = 0
-    """Tail max fwd CG (only used if opt_sizing == "max_fwd_CG" for HTail) """
+    """Tail max fwd CG (only used if opt_sizing == "CLmax_fwdCG" for HTail) """
     CL_max_fwd_CG::Float64 = 0
     """Tail Minimum static margin"""
     SM_min::Float64 = 0

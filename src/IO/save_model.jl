@@ -313,7 +313,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         if compare_strings(htail.opt_sizing, "fixed_Vh")
             d_stab_htail["opt_sizing"] = htail.opt_sizing
             d_stab_htail["Vh"] = htail.volume
-        elseif compare_strings(htail.opt_sizing, "max_fwd_CG")
+        elseif compare_strings(htail.opt_sizing, "CLmax_fwdCG")
             d_stab_htail["opt_sizing"] = htail.opt_sizing
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
