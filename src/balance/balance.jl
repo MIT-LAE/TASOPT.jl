@@ -50,7 +50,8 @@ It also computes the **neutral point (`xNP`), indicating the aircraft's longitud
 """
 function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
       #Unpack aircraft
-      pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail = unpack_ac(ac, imission, ip = ip)
+      pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, 
+            engine, landing_gear = unpack_ac(ac, imission, ip = ip)
 
       iengloc = pari[iiengloc]
 
@@ -75,10 +76,10 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
       nftanks = pari[iinftanks] #number of fuel tanks in fuselage
       lftank = parg[iglftank]
 
-      # Use weight fractions to calcualte weights of subsystems
+      # Use weight fractions to calculate weights of subsystems
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
       
@@ -92,7 +93,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
       dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = xcgB + parg[igdxlgmain] - wing.layout.box_x
+      dxlg = xcgB + landing_gear.main_gear.distance_CG_to_landing_gear - wing.layout.box_x
 
       S = wing.layout.S
       Sh = htail.layout.S
@@ -156,8 +157,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
            Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
-           Wlgnose * parg[igxlgnose] +
-           Wlgmain * (wing.layout.box_x + dxlg)
+           Wlgmain * (wing.layout.box_x + dxlg) + landing_gear.nose_gear.moment
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
@@ -319,7 +319,7 @@ Note the two flags can be set independently and affect how the two stability res
 """
 function htsize(ac, paraF, paraB, paraC)
       #TODO find a way to remove the para inputs and use ac instead
-      pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
+      pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -378,8 +378,8 @@ function htsize(ac, paraF, paraB, paraC)
       xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xWfuse = fuse.moment
 
@@ -389,7 +389,7 @@ function htsize(ac, paraF, paraB, paraC)
       dxWvtail = vtail.dxW
 
       xeng = parg[igxeng]
-      xlgnose = parg[igxlgnose]
+      xlgnose = landing_gear.nose_gear.weight.r[1]
 
       # xtshaft = parg[igxtshaft ]
       # xgen    = parg[igxgen    ]
@@ -412,7 +412,7 @@ function htsize(ac, paraF, paraB, paraC)
       dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.box_x
+      dxlg = parg[igxCGaft] + landing_gear.main_gear.distance_CG_to_landing_gear - wing.layout.box_x
 
       S = wing.layout.S
       Sh = htail.layout.S
@@ -482,7 +482,7 @@ function htsize(ac, paraF, paraB, paraC)
                   Wvtail * xvbox + dxWvtail +
                   Weng * xeng +
                   Whpesys * fuse.HPE_sys.r.x +
-                  Wlgnose * xlgnose +
+                  landing_gear.nose_gear.moment +
                   Wlgmain * (xwbox + dxlg)
 
             xWe_Sh = Whtail_Sh * xhbox + dxWhtail_Sh
@@ -712,7 +712,7 @@ This function determines the CG shift due to varying passenger and fuel load con
 
 """
 function cglpay(ac)
-      pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
+      pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -736,8 +736,8 @@ function cglpay(ac)
       #      xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
       delxw = wing.layout.x - wing.layout.box_x
@@ -768,8 +768,8 @@ function cglpay(ac)
             Wvtail * vtail.layout.box_x + vtail.dxW +
             Weng * parg[igxeng] +
             Whpesys * fuse.HPE_sys.r.x +
-            Wlgnose * parg[igxlgnose] +
-            Wlgmain * (wing.layout.box_x + delxw + parg[igdxlgmain])
+            landing_gear.nose_gear.moment +
+            Wlgmain * (wing.layout.box_x + delxw + landing_gear.main_gear.distance_CG_to_landing_gear)
 
 
       # Some derivation here:        

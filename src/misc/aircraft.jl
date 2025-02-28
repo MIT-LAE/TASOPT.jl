@@ -16,6 +16,13 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `parm::AbstractArray{Float64}` : Mission parameters                    
 - `para::AbstractArray{Float64}` : Aero parameters                       
 - `pare::AbstractArray{Float64}` : Engine parameters 
+- `fuse_tank::fuselage_tank`: fuselage fuel tank object
+- `fuselage::Fuselage`: fuselage fuel tank object
+- `wing::Wing`: wing object
+- `htail::Tail`: horizontal tail object
+- `vtail::Tail`: vertical tail object
+- `engine::Engine`: engine object
+- `landing_gear::LandingGear`: landing gear object
 - `sized::AbstractVector{1,Bool}`: flag if aircraft is sized (default is `[false]`)
 
 For devs: the indices for accessing specific data are defined in `/src/misc/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
@@ -29,8 +36,6 @@ Base.@kwdef mutable struct aircraft #inner constructor
     parm::AbstractArray{Float64}
     para::AbstractArray{Float64}
     pare::AbstractArray{Float64}
-    
-    sized::AbstractVector{Bool} = [false]
 
     fuse_tank::fuselage_tank = fuselage_tank()
     fuselage::Fuselage = Fuselage()
@@ -38,6 +43,9 @@ Base.@kwdef mutable struct aircraft #inner constructor
     htail::Tail = Tail()
     vtail::Tail = Tail()
     engine::Engine = Engine()
+    landing_gear::LandingGear = LandingGear()
+
+    sized::AbstractVector{Bool} = [false]
 
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
 end
@@ -52,7 +60,7 @@ end
 function aircraft(name::String, description::String, aircraft_type::Symbol, pari::AbstractVector{Int64}, parg::AbstractVector{Float64},
         parm::AbstractArray{Float64}, para::AbstractArray{Float64}, pare::AbstractArray{Float64}, 
         sized::AbstractVector{Bool}) 
-        return aircraft(name, description, pari, parg, parm, para, pare, sized, fuselage_tank(), Fuselage(), Wing(), Tail(), Tail())
+        return aircraft(name, description, pari, parg, parm, para, pare, fuselage_tank(), Fuselage(), Wing(), Tail(), Tail(), LandingGear(), sized)
 end
 
 
