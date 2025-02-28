@@ -69,6 +69,8 @@ mutable struct FuelCellDuctedFanData <: AbstractData
     thickness_anode::Float64
     """Cathode thickness (m)"""
     thickness_cathode::Float64
+    """Design_stack_power (W)"""
+    design_power::Float64
     """Fuel cell total power (W)"""
     fuel_cell_power::Array{Float64, 2}
     """Fuel cell heat rate (W)"""
@@ -98,11 +100,13 @@ mutable struct FuelCellDuctedFanData <: AbstractData
         area_cell::Float64=0.00, 
         thickness_membrane::Float64=0.0, 
         thickness_anode::Float64=0.0, 
-        thickness_cathode::Float64=0.0)
+        thickness_cathode::Float64=0.0,
+        design_power::Float64=0.0)
         # Initialize matrix fields
         matrices = ntuple(_ -> zeros(iptotal, nmis), 11)  # Adjust count for number of matrix fields
 
-        return new(type, number_cells, area_cell, thickness_membrane, thickness_anode, thickness_cathode, matrices...)
+        return new(type, number_cells, area_cell, thickness_membrane, 
+        thickness_anode, thickness_cathode, design_power,matrices...)
     end
 end
 
