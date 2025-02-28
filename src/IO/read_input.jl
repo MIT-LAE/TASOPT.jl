@@ -27,19 +27,19 @@ function read_input(k::String, dict::AbstractDict=data,
     end
 end
 
-function get_default_input_file(input)
-    if input == "0" || lowercase(string(input)) == "regional aircraft"
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
-    elseif input == "1" || lowercase(string(input)) == "narrow body aircraft"
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
-    elseif input == "2" || lowercase(string(input)) == "wide body aircraft"
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
+function get_template_input_file(designrange)
+    if designrange <= 2600 * nmi_to_m
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
+    elseif designrange <= 3115 * nmi_to_m
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+    elseif designrange <= 8500 * nmi_to_m
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
     else
         println("\n")
-        @info """Requested aircraft type not supported. Selecting Narrow Body Aircraft"""
-        defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+        @warn """Requested aircraft design range exceeds expected capability. Selecting Wide Body Aircraft Template, but be warned. """
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
     end
-    return TOML.parsefile(defaultfile)
+    return templatefile
 end
 # Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
@@ -91,10 +91,30 @@ Cruise Mach = 0.8
 """
 function read_aircraft_model(
     datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"); 
-    defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
+    templatefile = "")
 
 data = TOML.parsefile(datafile)
-default = TOML.parsefile(defaultfile)
+
+# Get template input file, with appropriate user notices when needed
+# handle default templatefile value
+if templatefile == ""
+    @info "No template input file provided. Proceeding with template file as determined by design mission range."
+    templatefile = nothing
+# check if provided template input file is extant
+elseif !isfile(templatefile)
+    #if not, warn that we're ignoring it
+    @warn "Template input file provided does not exist: $templatefile \n Proceeding with template file as determined by design mission range."
+    templatefile = nothing
+end
+#if no valid templatefile provided
+if isnothing(templatefile)
+    #determine appropriate template input file based on mission range
+    designrange = Distance.(data["Mission"]["range"])[1] #in meters
+    templatefile = get_template_input_file(designrange)
+    @info "Template input file selected: $templatefile"
+end
+
+default = TOML.parsefile(templatefile)
 ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
@@ -127,25 +147,11 @@ fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
+landing_gear = LandingGear()
 
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
-
-if !ac_type_fixed
-    if parm[imRange, 1] <= 2600 * nmi_to_m
-        default = get_default_input_file(0)
-        @info """Setting AC Type based on design range: Regional Aircraft"""
-    elseif parm[imRange, 1] <= 3115 * nmi_to_m
-        default = get_default_input_file(1)
-        @info """Setting AC Type based on design range: Narrow Body Aircraft"""
-    elseif parm[imRange, 1] <= 8500 * nmi_to_m
-        default = get_default_input_file(2)
-        @info """Setting AC Type based on design range: Wide Body Aircraft"""
-    end    
-    ac_type_fixed = true
-    aircraft_type = default["Aircraft Description"]["aircraft_type"]
-end
 
 maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
                                                 #This may exceed the seatable capacity to account for belly cargo
@@ -183,13 +189,24 @@ pari[iiopt] = read_input("optimize", options, doptions)
 propsys = read_input("prop_sys_arch", options, doptions)
 if lowercase(propsys) == "tf"
     pari[iiengtype] = 1
+    modelname = "turbofan_md"
+    enginecalc! = tfwrap!
+    engineweightname = "turbofan"
+    engineweight! = tfweightwrap!
+
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
+    
 elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
 else
+    
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
+
+engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
+
 
 engloc = read_input("engine_location", options, doptions)
 
@@ -329,8 +346,6 @@ readweight(x) = read_input(x, weight, dweight)
     fuselage.floor_W_per_area = readweight("floor_weight_per_area")
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
-    parg[igflgnose] = readweight("LG_nose_weight_fraction")
-    parg[igflgmain] = readweight("LG_main_weight_fraction")
 
     fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
     fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
@@ -354,8 +369,6 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.cabin.aisle_halfwidth = Distance(readgeom("aisle_halfwidth"))
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
-    parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
-    parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
     fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
     fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
@@ -419,6 +432,36 @@ readgeom(x) = read_input(x, geom, dgeom)
 
 # ------ End fuse -------
 
+# ---------------------------------
+# Landing gear
+# ---------------------------------
+lg = read_input("LandingGear", data, default)
+dlg = default["LandingGear"]
+readlg(x::String) = read_input(x, lg, dlg)
+
+#Landing gear CG positions or offsets
+xlgnose = Distance(readlg("x_nose_landing_gear"))
+landing_gear.nose_gear.weight = TASOPT.structures.Weight(W = 0.0, x = xlgnose)
+landing_gear.main_gear.distance_CG_to_landing_gear = Distance(readlg("x_main_landing_gear_offset"))
+
+#The mass model for the landing gear can be specified by the user
+lgmodel = readlg("landing_gear_model")
+landing_gear.model = lgmodel
+
+if lowercase(lgmodel) == "mass_fractions" #This is the most basic model, just fixed fractions of the MTOW
+    landing_gear.nose_gear.overall_mass_fraction = readlg("LG_nose_weight_fraction")
+    landing_gear.main_gear.overall_mass_fraction = readlg("LG_main_weight_fraction")
+elseif lowercase(lgmodel) == "historical_correlations" #model based on historical-data relations in Raymer (2012)
+    landing_gear.main_gear.y_offset_halfspan_fraction = readlg("y_main_landing_gear_halfspan_fraction")
+    landing_gear.tailstrike_angle = Angle(readlg("tailstrike_angle"))
+    landing_gear.wing_dihedral_angle = Angle(readlg("wing_dihedral_angle")) #TODO consider storing this as a wing parameter
+    landing_gear.engine_ground_clearance = Distance(readlg("engine_ground_clearance"))
+    landing_gear.nose_gear.number_struts = readlg("LG_nose_number_struts")
+    landing_gear.nose_gear.wheels_per_strut = readlg("LG_nose_wheels_per_strut")
+    landing_gear.main_gear.number_struts = readlg("LG_main_number_struts")
+    landing_gear.main_gear.wheels_per_strut = readlg("LG_main_wheels_per_strut")
+end
+# ------ End landing gear -------
 
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
@@ -749,12 +792,6 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 # ----- End Stabilizers -----
 
 # ---------------------------------
-# Recalculate cabin length
-if calculate_cabin #Resize the cabin if desired, keeping deltas
-    @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
-end
-# ---------------------------------
 
 # ---------------------------------
 # Structures
@@ -1055,9 +1092,18 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
+    #Create aircraft object
+    ac = TASOPT.aircraft(name, description,
+    pari, parg, parm, para, pare, fuse_tank, fuselage, wing, htail, vtail, engine, landing_gear, [false])
+    
+    # ---------------------------------
+    # Recalculate cabin length
+    if calculate_cabin #Resize the cabin if desired, keeping deltas
+        @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
+        update_fuse_for_pax!(ac) #update fuselage dimensions
+    end
 
-return TASOPT.aircraft(name, description, string(aircraft_type),
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
+return ac
 
 end
 

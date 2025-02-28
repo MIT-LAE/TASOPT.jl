@@ -1,7 +1,7 @@
 @testset "structural components" begin
 
   # Fuselage
-  include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
+  include(joinpath(TASOPT.__TASOPTroot__, "../test/structures_params.jl"))
   fuselage = ac_test.fuselage
 
   Nland, Wpaymax, Wengtail, 
@@ -62,6 +62,178 @@ dx_out, macco_out = TASOPT.structures.calculate_centroid_offset(b,bs,bo,lambdat,
 
 # end calculate_centroid_offset
 
+# --------------------------------------------------------------
+# Structural sizing tests using the Wing and WingSection types
+# --------------------------------------------------------------
+# ------------------------------
+# Wing
+# ------------------------------
+wing = ac_test.wing
+wing.inboard.webs.weight = Weight(W = 3441.16315609358662186423) 
+wing.outboard.webs.weight = Weight(W = 3441.16315609358662186423) 
+wing.inboard.caps.weight = Weight(W = 74843.53209370737022254616) 
+wing.outboard.caps.weight = Weight(W = 74843.53209370737022254616) 
+wing.inboard.caps.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)
+wing.outboard.caps.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)
+wing.inboard.caps.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)
+wing.inboard.webs.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)
+wing.outboard.webs.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
+        max_avg_stress = 1.1,
+        safety_factor = 1.5)
+wing.weight = 128386.90028286514279898256 
+wing.strut.weight = 0.00000000000000000000 
+wing.dxW = 299510.30434786697151139379 
+wing.strut.dxW = 0.00000000000000000000 
+wing.inboard.weight = 49780.59713745497720083222 
+wing.outboard.weight = 70752.93408993091725278646 
+wing.inboard.dyW = 78014.22168667706137057394 
+wing.outboard.dyW = 335359.78341273276600986719 
+wing.weight_frac_flap = 0.20000000000000001110 
+wing.weight_frac_slat = 0.10000000000000000555 
+wing.weight_frac_ailerons = 0.04000000000000000083 
+wing.weight_frac_leading_trailing_edge = 0.10000000000000000555 
+wing.weight_frac_ribs = 0.14999999999999999445 
+wing.weight_frac_spoilers = 0.02000000000000000042 
+wing.weight_frac_attachments = 0.02999999999999999889 
+wing.strut.local_velocity_ratio = 0.00000000000000000000 
+wing.layout.x = 18.47304210589511797025 
+wing.layout.box_x = 15.69813728625496729308 
+wing.layout.z = -1.67640000000000011227 
+wing.strut.cos_lambda = 1.00000000000000000000 
+wing.strut.S = 0.00000000000000000000 
+wing.layout.spar_box_x_c = 0.40000000000000002220 
+wing.inboard.cross_section.width_to_chord = 0.50000000000000000000 
+wing.inboard.cross_section.web_to_box_height = 0.75000000000000000000 
+wing.inboard.cross_section.thickness_to_chord = 0.12679999999999999605 
+wing.outboard.cross_section.thickness_to_chord = 0.12659999999999999032 
+wing.layout.max_span = 35.81400000000000005684 
+wing.strut.thickness_to_chord = 0.00000000000000000000 
+wing.strut.z = 0.00000000000000000000 
+wing.outboard.moment = 3476534.48820107197389006615 
+wing.outboard.max_shear_load = 621301.47081772319506853819 
+wing.outboard.GJ = 252453751.39864748716354370117 
+wing.outboard.EI[4] = 2502969300.33896875381469726562 
+wing.outboard.EI[1] = 323733378.60267031192779541016 
+wing.outboard.caps.thickness = 0.00648081611396861268 
+wing.inboard.moment = 6074518.19739722646772861481 
+wing.inboard.max_shear_load = 759371.76371910830494016409 
+wing.inboard.GJ = 637210633.19837903976440429688 
+wing.inboard.EI[4] = 5973671886.48499298095703125000 
+wing.inboard.EI[1] = 809365031.46897768974304199219 
+wing.inboard.caps.thickness = 0.00369099037929488533 
+wing.inboard.webs.thickness = 0.00092200085359745961 
+wing.outboard.webs.thickness = 0.00154194445053246480 
+wing.layout.S = 139.59886994635940027365 
+wing.layout.root_span = 3.60679999999999978400 
+wing.layout.ηs = 0.28499999999999997558 
+wing.inboard.λ = 0.69999999999999995559 
+wing.outboard.λ = 0.25000000000000000000 
+wing.layout.root_chord = 6.23487346145193299662 
+wing.layout.span= 37.54928210310058034338 
+wing.layout.sweep = 26.00000000000000000000 
+wing.layout.AR = 10.09999999999999964473 
+wing.fuse_lift_carryover = -0.29999999999999998890 
+wing.tip_lift_loss = -0.05000000000000000278 
+wing.inboard.co = 6.23487346145193299662 
+wing.outboard.co = 4.36441142301635309764 
+wing.mean_aero_chord = 4.25957824083664071679 
+# ------------------------------
+# Htail
+# ------------------------------
+htail = ac_test.htail
+htail.weight = 14366.06764700812527735252 
+htail.dxW = 14021.14191882828163215891 
+htail.weight_fraction_added = 0.29999999999999998890 
+htail.layout.box_x = 34.89959999999999951115 
+htail.layout.z = 0.00000000000000000000 
+htail.downwash_factor = 0.59999999999999997780 
+htail.CL_max_fwd_CG = -0.11279688449577944531 
+htail.CL_max = 2.00000000000000000000 
+htail.SM_min = 0.05000000000000000278 
+htail.layout.x = 36.21118914551904310883 
+htail.outboard.cross_section.thickness_to_chord = 0.14000000000000001332 
+htail.move_wingbox = 2.00000000000000000000 
+htail.CL_CLmax = -0.50000000000000000000 
+htail.size = 1.00000000000000000000 
+htail.volume = 1.44999999999999884537 
+htail.outboard.GJ = 178813858.18902274966239929199 
+htail.outboard.EI[4] = 1257539450.85079479217529296875 
+htail.outboard.EI[1] = 189008140.11557617783546447754 
+htail.layout.sweep = 26.00000000000000000000 
+htail.layout.root_chord = 4.55405723428494280114 
+htail.outboard.λ = 0.25000000000000000000 
+htail.layout.root_span = 1.52400000000000002132 
+htail.layout.span = 17.07771462856853617041 
+htail.layout.AR = 6.00000000000000000000 
+htail.layout.S = 48.60805615580396477071 
+htail.outboard.cross_section.width_to_chord = 0.50000000000000000000 
+htail.outboard.cross_section.web_to_box_height = 0.75000000000000000000 
+htail.layout.ηs = htail.layout.root_span/htail.layout.span 
+htail.strut.cos_lambda = 1.00000000000000000000 
+htail.inboard.moment = 1738109.50381608842872083187 
+htail.outboard.moment = 1738109.50381608842872083187 
+htail.inboard.max_shear_load = 561216.24125756067223846912 
+htail.outboard.max_shear_load = 561216.24125756067223846912 
+htail.outboard.webs.thickness = 0.00115679564788597486 
+htail.inboard.webs.weight.W = 1019.53692057405589821428 
+htail.inboard.caps.weight.W = 10031.28435002535297826398 
+htail.inboard.webs.thickness = 0.00115679564788597486 
+htail.inboard.caps.thickness = 0.00239017403624703501 
+htail.outboard.webs.thickness = 0.00115679564788597486 
+htail.outboard.caps.thickness = 0.00239017403624703501 
+htail.inboard.GJ = 178813858.18902274966239929199 
+htail.outboard.co = htail.layout.root_chord*htail.inboard.λ 
+htail.inboard.co = htail.layout.root_chord 
+# ------------------------------
+# Vtail
+# ------------------------------
+vtail = ac_test.vtail
+vtail.weight = 9622.75029359092150116339 
+vtail.dxW = 12001.92569704716697742697 
+vtail.weight_fraction_added = 0.40000000000000002220 
+vtail.layout.box_x = 33.52799999999999869260 
+vtail.CL_max = 2.60000000000000008882 
+vtail.layout.x = 35.04938902182657045614 
+vtail.outboard.cross_section.thickness_to_chord = 0.14000000000000001332 
+vtail.ntails = 1.00000000000000000000 
+vtail.volume = 0.10000000000000000555 
+vtail.outboard.GJ = 500649964.25236284732818603516 
+vtail.outboard.EI[4] = 3484110272.10832309722900390625 
+vtail.outboard.EI[1] = 495174831.98658269643783569336 
+vtail.layout.sweep = 25.00000000000000000000 
+vtail.layout.root_chord = 6.11742991142690240025 
+vtail.outboard.λ = 0.29999999999999998890 
+vtail.layout.span = 7.95265888485497285387 
+vtail.layout.AR = 2.00000000000000000000 
+vtail.layout.S = 31.62239166943137291810 
+vtail.size = 1.00000000000000000000 
+vtail.dxW = 12001.92569704716697742697 
+vtail.outboard.cross_section.width_to_chord = 0.50000000000000000000 
+vtail.outboard.cross_section.web_to_box_height = 0.75000000000000000000 
+vtail.layout.ηs = vtail.layout.root_span/vtail.layout.span 
+vtail.strut.cos_lambda = 1.00000000000000000000 
+vtail.inboard.moment = 3366297.29689422156661748886 
+vtail.outboard.moment = 3366297.29689422156661748886 
+vtail.inboard.max_shear_load = 1039776.82288908748887479305 
+vtail.outboard.max_shear_load = 1039776.82288908748887479305 
+vtail.outboard.webs.thickness = 0.00116813883699138938 
+vtail.inboard.webs.weight.W = 1624.03782910894824453862 
+vtail.inboard.caps.weight.W = 12122.74830915780330542475 
+vtail.inboard.webs.thickness = 0.00116813883699138938 
+vtail.inboard.caps.thickness = 0.00183112800700055423 
+vtail.outboard.webs.thickness = 0.00116813883699138938 
+vtail.outboard.caps.thickness = 0.00183112800700055423 
+vtail.inboard.GJ = 500649964.25236284732818603516 
+vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ 
+vtail.inboard.co = vtail.layout.root_chord 
 #size_wing_section
 sigfac = 1.0
 test_tbwebs, test_tbcaps, test_Abcaps, test_Abwebs = 0.001541944450552547, 0.006480816113833214, 0.006480816113833214, 0.00029281525115992866
@@ -198,102 +370,136 @@ poh,htail_span = TASOPT.aerodynamics.tailpo!(htail, Sh, qne)
 #end tailpo:
 
 # #Test fuselage layout updating for tank
+ac = deepcopy(ac_test)
 
-parg = zeros(igtotal)
-fuselage.layout.x_start_cylinder = 6.096
-fuselage.layout.x_end_cylinder = 29.5656
-fuselage.layout.x_pressure_shell_aft = 31.0896
-parg[igdxeng2wbox] = 1.5239999999999991
-fuselage.APU.r = [36.576, 0.0, 0.0]
-fuselage.layout.x_end = 37.7952
-fuselage.layout.x_cone_end = 35.6616
-htail.layout.box_x = 34.8996
-vtail.layout.box_x = 33.528
-wing.layout.box_x = 16.04432532088372
-parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
-fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
+ac.fuselage.layout.x_start_cylinder = 6.096
+ac.fuselage.layout.x_end_cylinder = 29.5656
+ac.fuselage.layout.x_pressure_shell_aft = 31.0896
+ac.parg[igdxeng2wbox] = 1.5239999999999991
+ac.fuselage.APU.r = [36.576, 0.0, 0.0]
+ac.fuselage.layout.x_end = 37.7952
+ac.fuselage.layout.x_cone_end = 35.6616
+ac.htail.layout.box_x = 34.8996
+ac.vtail.layout.box_x = 33.528
+ac.wing.layout.box_x = 16.04432532088372
+ac.parg[igxeng] = ac.wing.layout.box_x - ac.parg[igdxeng2wbox]
+ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-pari = zeros(iitotal)
-pari[iinftanks] = 1
+ac.pari[iinftanks] = 1
 
 #Update fuel tank length and check changes
-parg[iglftank] = 5.0
-TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+ac.parg[iglftank] = 5.0
+TASOPT.update_fuse!(ac, 1)
 
-update_fuse_out = [fuselage.layout.x_end_cylinder, 
-fuselage.layout.x_pressure_shell_aft, 
-fuselage.layout.x_cone_end, 
-fuselage.APU.x,
-fuselage.layout.x_end,
-fuselage.HPE_sys.x,
-htail.layout.box_x,
-vtail.layout.box_x,
-parg[igxeng]]
+update_fuse_out = [ac.fuselage.layout.x_end_cylinder, 
+ac.fuselage.layout.x_pressure_shell_aft, 
+ac.fuselage.layout.x_cone_end, 
+ac.fuselage.APU.x,
+ac.fuselage.layout.x_end,
+ac.fuselage.HPE_sys.x,
+ac.htail.layout.box_x,
+ac.vtail.layout.box_x,
+ac.parg[igxeng]]
 
 update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.326234144000004, 42.18560000000001, 43.40480000000001, 12.767380728136962, 40.50920000000001, 39.137600000000006, 14.52032532088372]
 @test all(isapprox.(update_fuse_out, update_fuse_out_test))
 
 
 #Return to original points?
-pari[iinftanks] = 0.0
-parg[iglftank] = 0.0
-TASOPT.update_fuse!(fuselage, wing, htail, vtail, pari, parg)
+ac.pari[iinftanks] = 0.0
+ac.parg[iglftank] = 0.0
+TASOPT.update_fuse!(ac, 1)
 
-update_fuse_out = [fuselage.layout.x_end_cylinder, 
-fuselage.layout.x_pressure_shell_aft, 
-fuselage.layout.x_cone_end, 
-fuselage.APU.x,
-fuselage.layout.x_end,
-fuselage.HPE_sys.x,
-htail.layout.box_x,
-vtail.layout.box_x,
-parg[igxeng]]
+update_fuse_out = [ac.fuselage.layout.x_end_cylinder, 
+ac.fuselage.layout.x_pressure_shell_aft, 
+ac.fuselage.layout.x_cone_end, 
+ac.fuselage.APU.x,
+ac.fuselage.layout.x_end,
+ac.fuselage.HPE_sys.x,
+ac.htail.layout.box_x,
+ac.vtail.layout.box_x,
+ac.parg[igxeng]]
 
 update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79520000000001, 9.82323826413696, 34.89960000000001, 33.528000000000006, 14.52032532088372]
 @test all(isapprox.(update_fuse_out, update_fuse_out_test))
 
 #Test cabin resizing
-parg = zeros(igtotal)
-fuselage.layout.x_start_cylinder = 6.096
-fuselage.layout.x_end_cylinder = 29.5656
-fuselage.layout.x_pressure_shell_aft = 31.0896
-fuselage.layout.l_cabin_cylinder = 23.4696
-parg[igdxeng2wbox] = 1.5239999999999991
-fuselage.APU.r = [36.576, 0.0, 0.0]
-fuselage.layout.x_end = 37.7952
-fuselage.layout.x_cone_end = 35.6616
-htail.layout.box_x = 34.8996
-vtail.layout.box_x = 33.528
-wing.layout.box_x = 16.04432532088372
-parg[igxeng] = wing.layout.box_x - parg[igdxeng2wbox]
-fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
+ac = TASOPT.load_default_model()
 
-fuselage.cabin.seat_pitch = 0.762
-fuselage.cabin.seat_width = 0.4826
-fuselage.cabin.aisle_halfwidth = 0.254
-parg[igWpaymax] = 219964.5779
-fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
+ac.parg = zeros(igtotal)
+ac.fuselage.layout.x_start_cylinder = 6.096
+ac.fuselage.layout.x_end_cylinder = 29.5656
+ac.fuselage.layout.x_pressure_shell_aft = 31.0896
+ac.fuselage.layout.l_cabin_cylinder = 23.4696
+ac.parg[igdxeng2wbox] = 1.5239999999999991
+ac.fuselage.APU.r = [36.576, 0.0, 0.0]
+ac.fuselage.layout.x_end = 37.7952
+ac.fuselage.layout.x_cone_end = 35.6616
+ac.htail.layout.box_x = 34.8996
+ac.vtail.layout.box_x = 33.528
+ac.wing.layout.box_x = 16.04432532088372
+ac.parg[igxeng] = wing.layout.box_x - ac.parg[igdxeng2wbox]
+ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
 
-pari = zeros(iitotal)
-pari[iidoubledeck] = 0
+ac.fuselage.cabin.seat_pitch = 0.762
+ac.fuselage.cabin.seat_width = 0.4826
+ac.fuselage.cabin.aisle_halfwidth = 0.254
+ac.parg[igWpaymax] = 219964.5779
+ac.fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
-fuse_tank = TASOPT.fuselage_tank()
+ac.pari[iidoubledeck] = 0
 
-TASOPT.update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail)
+TASOPT.update_fuse_for_pax!(ac)
 
 parg_check = [14.584924835954398, 219964.5779, 1.5239999999999991]
 
-parg_nz = deepcopy(parg)
+parg_nz = deepcopy(ac.parg)
 deleteat!(parg_nz, parg_nz .== 0)
 for (i,item) in enumerate(parg_nz) #For every nonzero element in parg
   @test parg_nz[i] ≈ parg_check[i]
 end
 
-@test fuselage.layout.x_pressure_shell_aft ≈ 31.24200000000001
-@test fuselage.layout.x_cone_end ≈ 18.86903414400001
-@test fuselage.layout.x_end ≈ 37.94760000000001
+@test ac.fuselage.layout.x_pressure_shell_aft ≈ 31.24200000000001
+@test ac.fuselage.layout.x_cone_end ≈ 18.86903414400001
+@test ac.fuselage.layout.x_end ≈ 37.94760000000001
 
 #Test minimum radius calculation
 Rmin = TASOPT.structures.find_minimum_radius_for_seats_per_row(5, ac_test)
 @test Rmin ≈ 1.7113052179793784
+
+#Test landing gear sizing
+ac = load_default_model()
+
+#Test simple sizing based on mass fractions
+WMTO = 80e4
+ac.parg[igWMTO] = WMTO
+ac.landing_gear.main_gear.overall_mass_fraction = 0.04
+ac.landing_gear.nose_gear.overall_mass_fraction = 0.01
+
+TASOPT.size_landing_gear!(ac)
+@test ac.landing_gear.main_gear.weight.W ≈ 0.04 * 80e4
+@test ac.landing_gear.nose_gear.weight.W ≈ 0.01 * 80e4
+
+#Test models based on historical data
+ac.landing_gear.model = "historical_correlations"
+ac.landing_gear.tailstrike_angle = 10*pi/180
+ac.landing_gear.wing_dihedral_angle = 6*pi/180
+ac.landing_gear.engine_ground_clearance = 20*in_to_m
+ac.landing_gear.nose_gear.number_struts = 1
+ac.landing_gear.nose_gear.wheels_per_strut = 2
+ac.landing_gear.main_gear.number_struts = 2
+ac.landing_gear.main_gear.wheels_per_strut = 2
+ac.landing_gear.main_gear.y_offset_halfspan_fraction = 0.2
+
+ac.parg[igxCGaft] = 30
+ac.pare[ieu0,iprotate,1] = 70
+ac.parg[igdfan] = 1.5
+ac.wing.layout.span = 40
+
+ac.landing_gear.main_gear.weight = TASOPT.Weight(y = ac.landing_gear.main_gear.y_offset_halfspan_fraction * ac.wing.layout.span / 2)
+
+TASOPT.size_landing_gear!(ac)
+
+@test ac.landing_gear.main_gear.weight.W ≈ 31787.399917196755
+@test ac.landing_gear.nose_gear.weight.W ≈ 4854.384534273811
 end

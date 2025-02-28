@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
           version:          #as defined by setup-julia - https://github.com/julia-actions/setup-julia?tab=readme-ov-file#examples
-               - '1.11'      #latest stable release as of 12/2024
+               - '1'        #latest stable release
                - 'lts'      #long-term-support, julia 1.10 as of 10/2024
           os: 
               - ubuntu-latest

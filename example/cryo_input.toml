@@ -174,9 +174,7 @@ name = "TASOPT Model with cryo fuel and HX"
     
 # Power systems and landing gear locations
     x_HPE_sys = "62ft" #Hydraulic, Pneumatic and Electrical systems
-    x_nose_landing_gear        = "14ft"
-    x_main_landing_gear_offset = "1 ft" # main LG offset behind the wing lift centroid
-
+   
     x_APU = "120 ft"
 
     x_fixed_weight = "7ft" #Cockpit/ pilots etc
@@ -198,8 +196,6 @@ name = "TASOPT Model with cryo fuel and HX"
     floor_weight_per_area =  60.0 #[N/m2]
 
     HPE_sys_weight_fraction = 0.010 # W_HPEsys/WMTO
-    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
-    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
 
     APU_weight_fraction = 0.035 # W_APU/W_payload
     seat_weight_fraction = 0.10 # Wseats/W_payload
@@ -232,7 +228,7 @@ name = "TASOPT Model with cryo fuel and HX"
     panel_break_location = 0.285 # eta_s panel break eta location. eta = y/(b/2)
     
     center_box_halfspan = "71.0 in"
-    box_width_to_chord = 0.50
+    box_width_to_chord = 0.50 #Spar box width to chord ratio
     root_thickness_to_chord = 0.1268
     spanbreak_thickness_to_chord = 0.1266
 
@@ -246,6 +242,9 @@ name = "TASOPT Model with cryo fuel and HX"
     #Only used if `sturt_braced_wing == true`:
     strut_toc = 0.15 #strut thickness to chord
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
+
+    # Airfoil data (Should be stored in src/airfoil_data/)
+    airfoil = "C.air"
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
@@ -311,12 +310,14 @@ name = "TASOPT Model with cryo fuel and HX"
     excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
 
     [Stabilizers.Htail]
+        multi_section = false # True for inner and outer section
         AR_Htail = 6.0
         taper = 0.25
         sweep = 26.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
         x_Htail = "114.5 ft"
         z_Htail = "0 ft"
+        number_Htails = 2.0
 
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
         
@@ -368,13 +369,58 @@ name = "TASOPT Model with cryo fuel and HX"
         box_height_chord = 0.14 
         web_height_hbox  = 0.75
 
+[LandingGear]
+    landing_gear_model = "mass_fractions" #Options are "mass_fractions" and "historical_correlations"
+    x_nose_landing_gear        = "14ft"
+    x_main_landing_gear_offset = "1 ft" # main LG offset behind the rearmost CG position
+
+    #For "mass_fractions" model
+    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
+    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
+
+    #For "historical_correlations" model
+    y_main_landing_gear_halfspan_fraction = 0.2 # eta landing gear location. eta = y/(b/2)
+    tailstrike_angle = "10 deg"
+    wing_dihedral_angle = "6 deg"
+    engine_ground_clearance = "23 in"
+    LG_nose_number_struts = 1
+    LG_nose_wheels_per_strut = 2
+    LG_main_number_struts = 2
+    LG_main_wheels_per_strut = 2
+
 [Structures]
     stress_factor = 1.0 # convenient factor to multiply all stress below
 
     # Allowable stresses at sizing cases:
+    caps_material = "TASOPT-Al"
+    caps_max_avg_stress = 1.1
+    caps_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
+    webs_material = "TASOPT-Al"
+    webs_max_avg_stress = 1.1
+    webs_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
     ## Fuselage pressurization skin stress and bending skin+stringer stress
-    sigma_fuse_skin = "15e3 lbf/in2" 
-    sigma_fuse_bending = "30e3 lbf/in2"
+    skin_material = "TASOPT-Al"
+    skin_max_avg_stress = 1.1
+    skin_safety_factor = 3.0
+    # the sigma_max works out to be roughly 15e3 lbf/in2
+    
+    bending_material = "TASOPT-Al"
+    bending_max_avg_stress = 1.1
+    bending_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+
+    cone_material = "TASOPT-Al"
+    cone_max_avg_stress = 1.1
+    cone_safety_factor = 2.0
+
+    floor_material = "TASOPT-Al"
+    floor_max_avg_stress = 1.1
+    floor_safety_factor = 1.5
+
     ## Wing and tail bending and shear stresses
     sigma_caps    = "30e3 lbf/in2"
     sigma_struts  = "30e3 lbf/in2"
@@ -386,8 +432,6 @@ name = "TASOPT Model with cryo fuel and HX"
     E_struts        = "10e6 lbf/in2"
 
     # Material densities (Aluminium)
-    skin_density = 2700.0
-    fuse_stringer_density = 2700.0
     wing_tail_cap_density = 2700.0
     wing_tail_web_density = 2700.0
     strut_density = 2700.0

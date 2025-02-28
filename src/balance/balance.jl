@@ -1,39 +1,57 @@
+
 """
-balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+    balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
 
-Makes one of three (or none) changes to achieve pitch trim
-calculates resulting CG, CP, NP locations.
+Computes the aircraft's center of gravity (`xCG`), center of pressure (`xCP`), and neutral point (`xNP`) based on payload, fuel distribution, and trim adjustments.
 
-Inputs:
-- `pari[.]`  integer flag array
-- `parg[.]`  geometry parameter array
-- `para[.]`  aero parameter array
-- `fuse`      TASOPT.Fuselage
-- `wing`      TASOPT.Wing
-- `htail`     TASOPT.Tail
-- `vtail`     TASOPT.Tail
-- `rfuel`    fuel fraction   Wfuel_actual/Wfuel_MTOW
-- `rpay`     payload fraction Wpay_actual/Wpay_MTOW
-- `ξpay`    partial-payload packing location
-    * = 0.0   all the way in front  of cabin
-    * = 0.5   all the way in middle of cabin
-    * = 1.0   all the way in back   of cabin
-- `iengloc`  engine location index
-- `itrim`      = 0  no changes
-    * = 1  adjust CLh   (horizontal tail cl)
-    * = 2  adjust Sh    (horizontal tail area)
-    * = 3  adjust xwbox (wing box location)
+## Description
+This routine performs a CG and stability analysis for a given aircraft configuration. It calculates the **total weight and moment** by accounting for:
+- Payload distribution (`rpay`, `ξpay`).
+- Fuel distribution (`rfuel`).
+- Structural components (fuselage, wing, tail, landing gear).
+- Trim adjustments (`itrim`), which modify horizontal tail lift, area, or wing box location.
 
-Outputs: 
+The routine ensures pitch trim by solving for one of the following:
+1. Horizontal tail lift coefficient (`CLh`) adjustment (`itrim = 1`).
+2. Horizontal tail area (`Sh`) adjustment (`itrim = 2`).
+3. Wing box location (`xwbox`) adjustment (`itrim = 3`).
 
-- `para[iaxCG]`  center of gravity
-- `para[iaxCP]`  center of pressure ( = xCG if itrim=1,2,3 )
-- `para[iaxNP]`  neutral point location
+It also computes the **neutral point (`xNP`), indicating the aircraft's longitudinal static stability.
 
-!!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+!!! details "🔃 Inputs and Outputs"
+      **Inputs**
+      - `ac` : Aircraft object
+      - `imission` : Mission index (used for unpacking mission-specific parameters).
+      - `ip` : Performance index (used for aerodynamic/weight calculations).
+      - `rfuel` : Fuel fraction.
+      - `rpay` : Payload fraction.
+      - `ξpay` : Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded).
+      - `itrim` : Trim mode (`1` for `CLh`, `2` for `Sh`, `3` for `xwbox`). #TODO: these are outdated
+
+      **Outputs** 
+      No explicit return values, but updates fields inside `para`:
+      - `para[iaxCG]` : Computed center of gravity (`xCG`).
+      - `para[iaxCP]` : Computed center of pressure (`xCP`).
+      - `para[iaxNP]` : Computed neutral point (`xNP`).
+
+## Trim Adjustment Modes
+| `itrim` | Adjustment Method |
+|---------|------------------|
+| `1`     | Adjusts horizontal tail lift coefficient (`CLh`) |
+| `2`     | Adjusts horizontal tail area (`Sh`) |
+| `3`     | Adjusts wing box location (`xwbox`) |
+| `0`     | Simply calculates and returns the neutral point (`xNP`) | 
+## Notes
+- Uses `cglpay(ac)` to compute CG limits (`xcgF`, `xcgB`).
+- Uses `cabin_centroid(...)` to determine cabin location.
+- If fuel is in the wings (`pari[iifwing] == 1`), it does not shift between CG cases.
+- `xNP` is affected by engine placement (`xengcp`), aerodynamics (`CMw1`, `CMh1`), and fuel distribution.
+
 """
-function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
+function balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+      #Unpack aircraft
+      pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, 
+            engine, landing_gear = unpack_ac(ac, imission, ip = ip)
 
       iengloc = pari[iiengloc]
 
@@ -58,10 +76,10 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       nftanks = pari[iinftanks] #number of fuel tanks in fuselage
       lftank = parg[iglftank]
 
-      # Use weight fractions to calcualte weights of subsystems
+      # Use weight fractions to calculate weights of subsystems
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
       
@@ -69,13 +87,13 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
 
       xwbox = wing.layout.box_x
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg, fuse, wing, htail, vtail)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = xcgB + parg[igdxlgmain] - wing.layout.box_x
+      dxlg = xcgB + landing_gear.main_gear.distance_CG_to_landing_gear - wing.layout.box_x
 
       S = wing.layout.S
       Sh = htail.layout.S
@@ -90,7 +108,6 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       Sh1 = Sh
 
       #---- total weight, weight moment, and derivatives
-
       W = rpay * Wpay +
           rfuel * Wfuel +
           Wfuse +
@@ -140,8 +157,7 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
            Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
-           Wlgnose * parg[igxlgnose] +
-           Wlgmain * (wing.layout.box_x + dxlg)
+           Wlgmain * (wing.layout.box_x + dxlg) + landing_gear.nose_gear.moment
 
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
 
@@ -262,31 +278,48 @@ function balance(pari, parg, para, fuse, wing, htail, vtail, rfuel, rpay, ξpay,
       return
 end # balance
 
-
 """
-Sets horizontal tail area and wing position to simultaneously:
+    htsize(ac, paraF, paraB, paraC)
 
-1) Meet pitch trim requirement with forward CG
-2) Meet stability requirement with aft CG
+Solves for the feasible horizontal tail area (`Sh`) and
+wing box location (`xwbox`) to ensure pitch trim and
+stability requirements with aft CG across different flight conditions.
 
-Calculates resulting CG, CP, NP locations
+This routine iteratively adjusts:
+      - Horizontal tail area (`Sh`): Ensuring sufficient control authority.
+      - Wing box location (`xwbox`): Maintaining static and dynamic stability.
 
-Inputs:  
+The routine considers:
+      - Worst-case CG locations** (`xcgF`, `xcgB`) computed using `cglpay(ac)`.
+      - Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
+      - Static margin constraints (`SM`).
+      - Fuel and payload distribution effects.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac` : Aircraft object
+    - `paraF[.]` : Aerodynamic parameters for the forward CG trim condition.
+    - `paraB[.]` : Aerodynamic parameters for the aft CG stability condition.
+    - `paraC[.]` : Aerodynamic parameters for the cruise tail lift condition.
+
+    **Outputs:**  
+    No direct return values. Instead, the function updates key fields inside `ac`:
+      - `htail.layout.S` : Horizontal tail area (`Sh`).
+      - `wing.layout.box_x` : Wing box location (`xwbox`).
+      - `wing.layout.x` : Wing location (adjusted for `xwbox`).
+
+## Notes: (TODO: flag names to be updated)
+      - If `iHTsize == 1`, the function uses the specified tail volume coefficient `Vh` to set `Sh` and solves for the minimum required tail lift `CLh`.
+      - If `iHTsize == 2`, the horizontal tail area `Sh` is set by the specified `htail.CL_max_fwd_CG`
+      - If `ixwmove == 0`, the wing location is fixed (no movement).
+      - If `ixwmove == 1`, `xwbox` is adjusted to satisfy cruise tail lift conditions.
+      - If `ixwmove == 2`, `xwbox` is adjusted to enforce static margin at aft-CG.
       
-- `pari[.]`  integer fla array
-- `parg[.]`  geometry parameter array
-- `paraF[.]` aero parameter array for fwdCG case
-- `paraB[.]` aero parameter array for aft CG case
-- `paraC[.]` aero parameter array for cruise tail CL case
-
-Outputs: 
-  
-- `parg[igSh]`    HT area
-- `parg[igxwbox]` wingbox location
-- `parg[igxwing]` wing centroid location
-
+Note the two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function. 
 """
-function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
+function htsize(ac, paraF, paraB, paraC)
+      #TODO find a way to remove the para inputs and use ac instead
+      pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
 
       itmax = 10
       toler = 1.0e-7
@@ -298,7 +331,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       cosL = cosd(sweep)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(pari, parg,fuse, wing, htail, vtail)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       rpayC = 1.0
 
@@ -345,8 +378,8 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xWfuse = fuse.moment
 
@@ -356,7 +389,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       dxWvtail = vtail.dxW
 
       xeng = parg[igxeng]
-      xlgnose = parg[igxlgnose]
+      xlgnose = landing_gear.nose_gear.weight.r[1]
 
       # xtshaft = parg[igxtshaft ]
       # xgen    = parg[igxgen    ]
@@ -379,7 +412,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
-      dxlg = parg[igxCGaft] + parg[igdxlgmain] - wing.layout.box_x
+      dxlg = parg[igxCGaft] + landing_gear.main_gear.distance_CG_to_landing_gear - wing.layout.box_x
 
       S = wing.layout.S
       Sh = htail.layout.S
@@ -449,7 +482,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
                   Wvtail * xvbox + dxWvtail +
                   Weng * xeng +
                   Whpesys * fuse.HPE_sys.r.x +
-                  Wlgnose * xlgnose +
+                  landing_gear.nose_gear.moment +
                   Wlgmain * (xwbox + dxlg)
 
             xWe_Sh = Whtail_Sh * xhbox + dxWhtail_Sh
@@ -490,7 +523,7 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
                   lhtail = htail.layout.x - (xwbox + dxwing)
                   lhtail_xw = -1.0
 
-                  Vh = htail.volume      # Tail volume is specified here!
+                  Vh = htail.volume     # Tail volume is specified here!
                   Sh = Vh * S * cma / lhtail # Corresponding tail surf area
 
                   r[1] = Sh * lhtail - Vh * S * cma  # This is 0 (residual is 0 ∵ Vh = Sh*lh/(S*cma))
@@ -616,7 +649,6 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
 
       #---- set converged results
       htail.layout.S = Sh
-      #c    parg[igWhtail] = (Whtail_o/Sh_o) * Sh
       wing.layout.box_x = xwbox
       wing.layout.x = xwbox + dxwing
 
@@ -651,21 +683,36 @@ function htsize(pari, parg, paraF, paraB, paraC,fuse,wing, htail, vtail)
       return
 end # htsize
 
+"""
+    cglpay(ac)
+
+Computes the most forward (`xcgF`) and most rearward (`xcgB`) 
+enter of gravity (CG) locations based on payload extremes,
+along with the corresponding payload fractions.
+
+## Description
+This function determines the CG shift due to varying passenger and fuel load configurations.
+- `xcgF`: The forward-most CG position, assuming worst-case forward payload arrangement.
+- `xcgB`: The rearward-most CG position, assuming worst-case aft payload arrangement.
+- `rpayF`: The fraction of payload contributing to the forward-most CG.
+- `rpayB`: The fraction of payload contributing to the rearward-most CG.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac` : Aircraft object 
+
+    **Outputs:**  
+    Returns six values:
+    - `rfuelF` : Fuel fraction for forward CG case (always 0.0).
+    - `rfuelB` : Fuel fraction for aft CG case (always 0.0).
+    - `rpayF` : Payload fraction contributing to the forward CG (`xcgF`).
+    - `rpayB` : Payload fraction contributing to the rearward CG (`xcgB`).
+    - `xcgF` : Most forward CG location.
+    - `xcgB` : Most rearward CG location.
 
 """
-Calculates min and max xCG locations from payload extremes,
-and corresponding payload fractions.
-
-`rfuelF`,`rpayF`   give most-forward  location `xcgF`
-`rfuelB`,`rpayB`   give most-rearward location `xcgB`
-
-This version always returns `rfuelF` = `rfuelB` = 0.0
-which gives an explicit solution for `rpayF`,`rpayB`.
-
-The alternative 2D search for `rfuel`,`rpay` is kinda ugly, 
-and unwarranted in practice.
-"""
-function cglpay(pari, parg, fuse, wing, htail, vtail)
+function cglpay(ac)
+      pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -689,8 +736,8 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
       #      xWftank = parg[igxWftank]
 
       Whpesys = parg[igWMTO] * fuse.HPE_sys.W
-      Wlgnose = parg[igWMTO] * parg[igflgnose]
-      Wlgmain = parg[igWMTO] * parg[igflgmain]
+      Wlgnose = landing_gear.nose_gear.weight.W
+      Wlgmain = landing_gear.main_gear.weight.W
 
       xcabin,lcabin = cabin_centroid(nftanks,fuse,parg[igxftankaft],lftank)
       delxw = wing.layout.x - wing.layout.box_x
@@ -721,8 +768,8 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
             Wvtail * vtail.layout.box_x + vtail.dxW +
             Weng * parg[igxeng] +
             Whpesys * fuse.HPE_sys.r.x +
-            Wlgnose * parg[igxlgnose] +
-            Wlgmain * (wing.layout.box_x + delxw + parg[igdxlgmain])
+            landing_gear.nose_gear.moment +
+            Wlgmain * (wing.layout.box_x + delxw + landing_gear.main_gear.distance_CG_to_landing_gear)
 
 
       # Some derivation here:        
@@ -796,6 +843,34 @@ function cglpay(pari, parg, fuse, wing, htail, vtail)
       return rf[1], rf[2], rpay[1], rpay[2], xcg[1], xcg[2]
 end # cglpay
 
+
+
+"""
+    cabin_centroid(nftanks, fuse, xftankaft, lftank)
+
+Computes the centroid (`xcabin`) and length (`lcabin`) of the passenger cabin
+accounting for the presence and location of fuel tanks.
+
+determines the cabin centroid (`xcabin`) and cabin length (`lcabin`) based on:
+- The number of fuel tanks (`nftanks`).
+- Whether the fuel tank is located at the front or rear (`xftankaft`).
+- The length of the fuel tank (`lftank`).
+- The fuselage layout (`fuse.layout`), including pressure shell and cylindrical section dimensions.
+
+The cabin centroid is calculated as the midpoint of the effective passenger cabin length,
+which varies depending on fuel tank placement.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `nftanks` : Number of fuel tanks (`0`, `1`, or `2`).
+    - `fuse` : Fuselage object containing geometry properties.
+    - `xftankaft` : Binary flag (`0.0` if fuel tank is at the front, otherwise rear).
+    - `lftank` : Length of the fuel tank.
+
+    **Outputs:**
+    - `xcabin` : `x`-coordinate of the cabin centroid.
+    - `lcabin` : Length of the passenger cabin.
+"""
 function cabin_centroid(nftanks,fuse,xftankaft,lftank)
       # Calculate x location of cabin centroid  and length of cabin
       if nftanks == 1
