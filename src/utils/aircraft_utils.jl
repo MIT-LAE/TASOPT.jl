@@ -20,6 +20,7 @@ Helper function to unpack all aircraft parameters.
     - `htail::Tail` : horizontal stabilizer object
     - `vtail::Tail` : vertical stabilizer object
     - `engine::Engine`: engine object
+    - `landing_gear::LandingGear`: landing gear object
 """
 function unpack_ac(ac, imission::Int64; ip::Int64 = 0)
     pari = ac.pari
@@ -31,6 +32,7 @@ function unpack_ac(ac, imission::Int64; ip::Int64 = 0)
     htail = ac.htail
     vtail = ac.vtail
     engine = ac.engine
+    landing_gear = ac.landing_gear
 
     if ip == 0 #If no point is given
         para = view(ac.para, :, :, imission)
@@ -40,7 +42,7 @@ function unpack_ac(ac, imission::Int64; ip::Int64 = 0)
         pare = view(ac.pare, :, ip, imission)
     end
 
-    return pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine
+    return pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear
 end
 
 """
@@ -58,6 +60,7 @@ Helper function to unpack aircraft physical components.
     - `wing::Wing` : wing object
     - `htail::Tail` : horizontal stabilizer object
     - `vtail::Tail` : vertical stabilizer object
+    - `landing_gear::LandingGear`: landing gear object
 """
 function unpack_ac_components(ac)
     pari = ac.pari
@@ -67,6 +70,7 @@ function unpack_ac_components(ac)
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
+    landing_gear = ac.landing_gear
 
-    return pari, parg, fuse, fuse_tank, wing, htail, vtail
+    return pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear
 end
