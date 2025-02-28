@@ -7,9 +7,12 @@ generates a pyNA case in its preferred location. The case comprises a
 case directory (with subdirectories as shown in `generate_pyna_dirs`)
 and the necessary data to run a noise assessment.
 
+
+TASOPT does not calculate dimensional engine speed and relies on RPM_fan_ref for the design point spool speed.
+    default of 5000 rpm from fan speed of CFM56-5b
 """
 function output_pyna(pyna_path::String, ac::TASOPT.aircraft=TASOPT.load_default_model();
-    case_name::String="tasopt_default", overwrite::Bool = false)
+    case_name::String="tasopt_default", overwrite::Bool = false, RPM_fan_ref::AbstractFloat = 5000.)
 
   #aircraft checks
     #ensure aircraft is sized
@@ -21,13 +24,13 @@ function output_pyna(pyna_path::String, ac::TASOPT.aircraft=TASOPT.load_default_
     generate_pyna_dirs(pyna_path, case_name, overwrite = overwrite)
 
     #generate the aircraft def'n .json
-    generate_pyna_json(pyna_path, ac, case_name = case_name)
+    generate_pyna_json(pyna_path, ac, case_name = case_name, RPM_fan_ref=RPM_fan_ref)
 
     #generate the aero deck precursors and save to aircraft
     generate_pyna_aero_inputs(pyna_path, ac, case_name = case_name)
 
     #generate the engine deck and save to engine
-    generate_pyna_engine_inputs(pyna_path, ac, case_name = case_name)
+    # generate_pyna_engine_inputs(pyna_path, ac, RPM_fan_ref, case_name = case_name)
 
     #hope for the best
 
@@ -130,7 +133,7 @@ end #function
 pulls geometry and other data from aircraft model (able to add reasonable defaults where specific data absent)
 """
 function generate_pyna_json(pyna_path::String, ac::TASOPT.aircraft; case_name::String="tasopt_default",
-                            add_defaults::Bool = false)
+                            add_defaults::Bool = false, RPM_fan_ref::AbstractFloat = -1.)
     #initialize output dict and populate with TASOPT-sourced values, 
     #marking `nothing` if unavail (`nothing`s will be substituted with default values below)
     ac_dict = Dict( #TODO: update these. for now, test
@@ -170,6 +173,57 @@ function generate_pyna_json(pyna_path::String, ac::TASOPT.aircraft; case_name::S
         "alpha_0" => 0              #Wing mounting angle [deg]
     )
 
+    #if design fan speed is provided, design tip mach number can be computed
+    #when not computed, the TASOPT default is assumed
+    if RPM_fan_ref > 0
+        #engine computation for M_d_fan (design tangential tip mach no.)
+        ip = iptakeoff  #index of flight point, doesn't do anything tfcalc! but selects the mission point within para and pare
+        im = 1
+        icall = 2       #flag to specify thrust setting spec. approach (1 for Tt4 set, Fe computed; 2 for vice-versa) 
+        icool = 2       #flag to use turbine cooling flow, 2 uses T_max_metal to set cooling fraction, fc
+        initeng = 0     #flag to use current eng. vars for initialization
+
+        #deepcopy to avoid overwrite
+        pari = deepcopy(ac.pari)
+        parg = deepcopy(ac.parg)
+        para = deepcopy(ac.para[:,ip,im])
+        pare = deepcopy(ac.pare[:,ip,im])
+
+        altkm = 12.5  #assume SLS reference state
+        T0, P0, _,  a0 = atmos(altkm)
+
+        #propagate input params within the par arrays
+        pare[iep0] = P0
+        pare[ieT0] = T0
+        pare[iea0] = a0
+        
+        pare[ieM0] = 0.81 #static case
+
+        Fe_max = calculate_Fe_max(pare, pari, parg, para, ip, icool)    
+        pare[ieFe] = Fe_max
+        tfcalc!(pari, parg, para, pare, ip, icall, icool, initeng)
+
+        N_fan = pare[ieNf]*RPM_fan_ref  #dimensional, corrected to Tt2 by tfcalc, 
+                                        #scaled from N1des = unity assumed by engine model
+        HTR_fan = parg[igHTRf]          #Hub-to-tip ratio
+        d_fan = 2*sqrt(pare[ieA2]/pi*(1-HTR_fan^2)) #diameter relation w/ HTR                     
+        M2 = pare[ieM2]
+        gam2 = 1/(1-pare[ieR2]/pare[iecp2])
+        a2 = sqrt(gam2*pare[ieR2]*pare[ieT2])
+        M2_tan_tip = N_fan/60 * (d_fan/2) / a2     #tip tangential mach number
+        M2_rel_tip = sqrt(M2^2 + M2_tan_tip^2)  #relative tip mach number 
+        
+        ac_dict["M_d_fan"] = M2_rel_tip
+
+        #troubleshoot Prints
+        print("M2_rel_tip ",M2_rel_tip,"\n")
+        print("M2_tan_tip ",M2_tan_tip,"\n")
+        print("M2 ",M2,"\n")
+        print("N_fan ",N_fan,"\n")
+
+
+    end
+
     #pull sample file for defaults
     default_filepath = joinpath(__TASOPTroot__,"IO","IO_samples","pyna_aircraft_defaults_stca.json")
     def_dict = JSON.parsefile(default_filepath)
@@ -193,8 +247,13 @@ end #function
 """
 
 pulls engine data from sized `aircraft` model, outputs for pyna consumption 
+
+
+TASOPT does not calculate dimensional engine speed and relies on RPM_fan_ref for the design point spool speed.
+    default of 5000 rpm from fan speed of CFM56-5b
 """
-function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; case_name::String="tasopt_default")
+function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft, RPM_fan_ref::AbstractFloat;
+    case_name::String="tasopt_default")
 
     #determine range of parameters
     alt_sample = collect(0:500:4500) #in meters
@@ -251,7 +310,7 @@ function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; cas
     for alt in alt_sample
         #generate input params from the sample vars
         altkm = alt/1000. #in km
-        T0, P0, _,  a0 = atmos(altkm/1000)
+        T0, P0, _,  a0 = atmos(altkm)
 
         #propagate input params within the par arrays
         pare[iep0] = P0
@@ -269,59 +328,34 @@ function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; cas
             println("M0 = ", M0)
 
             #find maximum Fe at these conditions (for TS normalization)
-
-            #Set function to minimize, 
-            #x will be Tt4, output will be Fe
-            obj(x, grad) =  Fe_tcalc_eval(x, pari, parg, para, pare, ip, 1, icool, 0) #Minimize objective function
-            #icall = 1, solving for Fe from Tt4^; initeng = 0 (fresh initialization every time)
-
-            #Use NLopt.jl to minimize function
-            opt = Opt(:LN_NELDERMEAD, 1) #optimizer algorithm, dimensionality of space
-            opt.lower_bounds = 700
-            opt.upper_bounds = 2500
-            opt.ftol_rel = 1e-3
-            opt.maxeval = 100  # Set the maximum number of function evaluations
-
-            opt.min_objective = obj
-            initial_x = [1900] #K, initial estimate for max thrust Tt4
-
-            (min_nFe,Tt4_star,returncode) = NLopt.optimize(opt, initial_x)
-
-            if string(returncode) in ["NLOPT_MAXEVAL_REACHED", "NLOPT_FAILURE","NLOPT_OUT_OF_MEMORY","NLOPT_ROUNDOFF_LIMITED","NLOPT_FORCED_STOP"] 
-                throw(ErrorException("Engine calcs for pyNA export failed to find max thrust setting, return code: "*string(returncode)))
-                
-            else
-                Fe_max = -1*min_nFe
-                println("Solve for max Fe complete: Fe_max = ", Fe_max, " @ ", Tt4_star, " K")
-            end
-            
+            Fe_max = calculate_Fe_max(pare, pari, parg, para, ip, icool)
 
             for TS in TS_sample
                 println("TS = ", TS)
 
                 pare[ieFe] = Fe_max*TS
-                #does this need to be set? check in the output
-                # u0 = pare[ieu0] #checked, no. leave for now as an example
             
                 #execute calculation / pull the lever kronk
                 tfcalc!(pari, parg, para, pare, ip, icall, icool, initeng)
 
-                #back out what TS would be
-                Tt2 = pare[ieTt2]           #fan face stag temp
-                Nf = pare[ieNf]             #fan speed, dimensional
-                N1 = Nf * parg[igGearf]     #LPC speed, dimensional
-                N1c2 = N1 / sqrt(Tt2/Tref)  #LPC speed, corrected + dimensional
-
-                N1des = pare[ieNbfD]        #design condition, fan speed, corrected + dimensional 
-                # TS = N1c2/N1des #THIS IS NOT RIGHT. TEMP. TODO: find best way to ID the max thrust condition and speed
-                
             #calculate relevant outputs
                 rho8 = pare[iep8]/pare[ieR8]/pare[ieT8]
                 gam8 = 1/(1-pare[ieR8]/pare[iecp8])
                 M8 = pare[ieu8]/sqrt(gam8*pare[ieR8]*pare[ieT8])
+
+                #fan quantities
                 DTt_turb = pare[ieTt41] - pare[ieTt5]
                 DTt_fan = pare[ieTt21] - pare[ieTt0]
                 mdot_fan = pare[iemcore]*(1+pare[ieBPR])
+                N_fan = pare[ieNf]*RPM_fan_ref  #dimensional, corrected to Tt2 by tfcalc, 
+                                                #scaled from N1des = unity assumed by engine model
+                HTR_fan = parg[igHTRf]          #Hub-to-tip ratio
+                d_fan = 2*sqrt(pare[ieA2]/pi*(1-HTR_fan^2)) #diameter relation w/ HTR                     
+                M2 = pare[ieM2]
+                gam2 = 1/(1-pare[ieR2]/pare[iecp2])
+                a2 = sqrt(gam2*pare[ieR2]*pare[ieT2])
+                M2_tan_tip = N_fan/60 * (d_fan/2) / a2     #tip tangential mach number
+                M2_rel_tip = sqrt(M2^2 + M2_tan_tip^2)  #relative tip mach number 
                 
                 #LPT exit quantities: total density, gamma, "total speed of sound"
                 rhot_49 = pare[iept49]/pare[ieTt49]/pare[ieRt49]
@@ -335,31 +369,31 @@ function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; cas
                 
                 #compile outputs into the csv_row
                 csv_row = [
-                    alt,                #"z [m]",
-                    M0,                #"M_0 [-]",	
-                    TS,                #"T/TMAX [-]", # = Nfb (in tasopt)
-                    pare[ieFe],             #"Fn [N]", total thrust
+                    alt,                 #"z [m]",
+                    M0,                  #"M_0 [-]",	
+                    TS,                  #"T/TMAX [-]", # = Nfb (in tasopt)
+                    pare[ieFe],          #"Fn [N]", total thrust
                     pare[ieff]*pare[iemcore],               #"Wf [kg/s]", fuel flow
-                    pare[ieu8],               #"jet_V [m/s]",
-                    pare[ieTt7],               #"jet_Tt [K]",
-                    rho8,           #"jet_rho [kg/m3]",
-                    pare[ieA8],               #"jet_A [m2]",
-                    M8,               #"jet_M [-]",
-                    pare[iemcore] ,               #"core_mdot_in [kg/s]",
-                    pare[ieTt21] ,               #"core_Tt_in [K]",
-                    pare[ieTt5] ,               #"core_Tt_out [K]",
-                    pare[iept21],               #"core_Pt_in [Pa]",
-                    DTt_turb ,               #"core_DT_t [K]",
-                    rhot_49 ,               #"core_LPT_rho_out [kg/m3]",
-                    rhot_41 ,               #"core_HPT_rho_in [kg/m3]",
-                    at_49 ,               #"core_LPT_c_out [m/s]",
-                    at_41 ,               #"core_HPT_c_in [m/s]",
-                    DTt_fan ,               #"fan_DTt [K]",
-                    mdot_fan ,               #"fan_mdot_in [kg/s]",
-                    pare[ieNf]*60 ,               #"fan_N [rpm]",
-                    pare[ieA2] ,               #"fan_A [m2]",
-                    sqrt(pare[ieA2]/pi)*2,               #"fan_d [m]",
-                    0                 #"fan_M_d [-]", 0 for now, unclear where used
+                    pare[ieu8],          #"jet_V [m/s]",
+                    pare[ieTt7],         #"jet_Tt [K]",
+                    rho8,                #"jet_rho [kg/m3]",
+                    pare[ieA8],          #"jet_A [m2]",
+                    M8,                  #"jet_M [-]",
+                    pare[iemcore] ,      #"core_mdot_in [kg/s]",
+                    pare[ieTt21] ,       #"core_Tt_in [K]",
+                    pare[ieTt5] ,        #"core_Tt_out [K]",
+                    pare[iept21],        #"core_Pt_in [Pa]",
+                    DTt_turb ,           #"core_DT_t [K]",
+                    rhot_49 ,            #"core_LPT_rho_out [kg/m3]",
+                    rhot_41 ,            #"core_HPT_rho_in [kg/m3]",
+                    at_49 ,              #"core_LPT_c_out [m/s]",
+                    at_41 ,              #"core_HPT_c_in [m/s]",
+                    DTt_fan ,            #"fan_DTt [K]",
+                    mdot_fan ,           #"fan_mdot_in [kg/s]",
+                    N_fan ,              #"fan_N [rpm]",
+                    pare[ieA2] ,         #"fan_A [m2]",
+                    d_fan,               #"fan_d [m]",
+                    M2_rel_tip           #"fan_M_d [-]", 0 for now, unclear where used
                 ]
 
                 csv_out[ctr,:] = csv_row
@@ -377,6 +411,37 @@ function generate_pyna_engine_inputs(pyna_path::String, ac::TASOPT.aircraft; cas
         #Tables.table(csv_out)
 end
 
+
+"""
+calculates maximum thrust using NLopt optimization and varying Tt4
+
+"""
+function calculate_Fe_max(pare, pari, parg, para, ip, icool)
+    # Set objective function for optimization (to find max Fe)
+    obj(x, grad) = Fe_tcalc_eval(x, pari, parg, para, pare, ip, 1, icool, 0) # solving for Fe from Tt4
+    
+    # Define the optimizer with NLopt
+    opt = Opt(:LN_NELDERMEAD, 1) # Optimizer algorithm, dimensionality of space
+    opt.lower_bounds = 700       # Lower bound for Tt4
+    opt.upper_bounds = 2500      # Upper bound for Tt4
+    opt.ftol_rel = 1e-3          # Tolerance for optimization
+    opt.maxeval = 100            # Maximum number of function evaluations
+    opt.min_objective = obj
+    
+    initial_x = [1900] # Initial guess for Tt4
+    
+    # Perform the optimization
+    (min_nFe, Tt4_star, returncode) = NLopt.optimize(opt, initial_x)
+
+    # Check for optimization success or failure
+    if string(returncode) in ["NLOPT_MAXEVAL_REACHED", "NLOPT_FAILURE", "NLOPT_OUT_OF_MEMORY", "NLOPT_ROUNDOFF_LIMITED", "NLOPT_FORCED_STOP"]
+        throw(ErrorException("Engine calcs for pyNA export failed to find max thrust setting, return code: "*string(returncode)))
+    else
+        Fe_max = -1 * min_nFe
+        println("Solve for max Fe complete: Fe_max = ", Fe_max, " @ ", Tt4_star, " K")
+        return Fe_max
+    end
+end
 
 """
 
