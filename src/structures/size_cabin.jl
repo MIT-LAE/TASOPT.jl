@@ -9,6 +9,7 @@ length.
     **Inputs:**
     - `pax::Float64`: design number of passengers
     - `cabin_width::Float64`: width of cabin (m).
+    - `seat_pitch::Float64`: longitudinal distance between seats (m).
     - `seat_width::Float64`: width of one seat (m).
     - `aisle_halfwidth::Float64`: half the width of an aisle (m).
     - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
@@ -21,11 +22,11 @@ length.
 function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
     seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
-    cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
+    cabin_offset = 10 * ft_to_m #Distance to the front of seats
     #TODO the hardcoded 10 ft is not elegant
 
     seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
-    
+
     rows = Int(ceil(pax / seats_per_row))
 
     if seats_per_row <= 10
@@ -49,6 +50,22 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     return lcabin, xseats, seats_per_row
 end # function place_cabin_seats
 
+"""
+    findSeatsAbreast(cabin_width, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
+
+Function to find the number of seats abreast that can fit in a given cabin width.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `cabin_width::Float64`: width of cabin (m).
+    - `seat_width::Float64`: width of one seat (m).
+    - `aisle_halfwidth::Float64`: half the width of an aisle (m).
+    - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
+
+    **Outputs:**
+    - `seats_per_row::Float64`: number of seats per row.
+"""
 function findSeatsAbreast(cabin_width, 
     seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
@@ -202,6 +219,7 @@ passengers on each deck.
 
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
+    - `pax_per_row_main::Float64`: number of seats abreast in lower cabin
 """
 function find_double_decker_cabin_length(x::Vector{Float64}, fuse)
     seat_pitch = fuse.cabin.seat_pitch
@@ -282,8 +300,8 @@ end
 """
     optimize_double_decker_cabin(fuse)
 
-This function can be used to optimize the passenger distribution across two decks in a double decker aircraft. 
-If the cross-section is circular, it also optimizes the deck layouts.
+This function can be used to optimize the deck layouts and passenger distribution in a double decker aircraft. 
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
@@ -291,6 +309,7 @@ If the cross-section is circular, it also optimizes the deck layouts.
 
     **Outputs:**
     - `xopt::Vector{Float64}`: vector with optimization results
+    - `seats_per_row_main::Float64`: number of seats abreast in lower cabin
 """
 function optimize_double_decker_cabin(fuse)
     dRfuse = fuse.layout.bubble_lower_downward_shift

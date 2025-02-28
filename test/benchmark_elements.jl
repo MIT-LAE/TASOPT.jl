@@ -13,6 +13,8 @@ using BenchmarkTools
 println("Loading aircraft model...")
 
 include(joinpath(TASOPT.__TASOPTroot__, "../test/default_sized.jl"))
+ac = load_default_model()
+size_aircraft!(ac; printiter = false )
 
 println("\nNotes (from BenchmarkTools Manual):
 - The minimum is a robust estimator for the location parameter of the
@@ -107,7 +109,7 @@ function benchmark_fuseBL()
     bench_blax = run(b)
 
     println("Benchmarking... fusebl")
-    b = @benchmarkable aerodynamics.fusebl!($fuse, $parm, $para, $ipcruise1) seconds=30 evals=5
+    b = @benchmarkable aerodynamics.fusebl!($(ac.fuselage), $parm, $para, $ipcruise1) seconds=30 evals=5
     bench_fusebl = run(b)
 
     println("Benchmark results...")
@@ -146,8 +148,8 @@ function benchmark_drag()
 
 
     println("Benchmarking... cditrp")
-    bench_cditrp = @benchmark aerodynamics.cditrp($pari, $parg,
-     $view(para, :, ipcruise1))
+    bench_cditrp = @benchmark aerodynamics.cditrp($view(para, :, ipcruise1), 
+    $(ac.wing), $(ac.htail))
 
     nsurf = 2
     npout = [20, 10]
@@ -221,12 +223,38 @@ function benchmark_drag()
     # po,gammat,gammas, fLo, ktip,
     # Lspec,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc); end)
     # # Profile.print()
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    para1 = view(ac.para, :, ipcruise1, 1)
+    gammat = wing.outboard.λ * para1[iarclt]
+    gammas = wing.inboard.λ * para1[iarcls]
+    Mach = para1[iaMach]
+    fduo = para1[iafduo]
+    fdus = para1[iafdus]
+    fdut = para1[iafdut]
+    CL   = para1[iaCL]
+    CLhtail = para1[iaCLh]*htail.layout.S/wing.layout.S
+    Reunit = para1[iaReunit]
+    Reco = Reunit*wing.layout.root_chord
+    rkSunsw = 0.5
+    aRexp  = para1[iaaRexp]
+    fexcdw = para1[iafexcdw]
+    println("Benchmarking... surfcd2")
+    bench = @benchmarkable aerodynamics.surfcd2($(ac.wing), $gammat, $gammas,
+        $Mach, $CL, $CLhtail, $Reco,
+        $aRexp, $rkSunsw, $fexcdw,
+        $fduo, $fdus, $fdut) seconds=30 evals=5
 
+    bench_surfcd2 = run(bench)
 
     println("Benchmarking... cdsum!")
-    bench = @benchmarkable aerodynamics.cdsum!($pari, $parg, 
+    bench = @benchmarkable aerodynamics.cdsum!($parg, 
     $view(para, :, 10),
-    $view(pare,:, 10), $(1)) seconds=30 evals=1
+    $view(pare,:, 10), $(ac.wing), $(ac.htail), $(ac.vtail),
+    $(1)) seconds=30 evals=1
+    
+    bench = @benchmarkable aerodynamics.cdsum!(ac, 1, 10, 1) seconds=30 evals=1
     bench_cdsum = run(bench)
 
 
@@ -258,6 +286,12 @@ function benchmark_drag()
     println("trefftz struct (FORTRAN on MacPro M2 ~ 4.6 μs)")
     println("---------------------------------------")
     show(stdout, MIME("text/plain"),bench_trefftz_struct)
+    println(" ")
+
+    println("---------------------------------------")
+    println("surfcd2 (FORTRAN on MacPro M2 ~ 2.01 μs)")
+    println("---------------------------------------")
+    show(stdout, MIME("text/plain"),bench_surfcd2)
     println(" ")
 
     println("---------------------------------------")
@@ -336,5 +370,5 @@ function benchmark_gas()
     @benchmark f($100)
 end
 
-benchmark_fuseBL()
-benchmark_drag()
+# benchmark_fuseBL()
+# benchmark_drag()

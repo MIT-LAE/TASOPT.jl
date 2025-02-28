@@ -29,11 +29,16 @@
 
     @testset "output plots" begin
         
-        TASOPT.stickfig(ac)
-        @test 1 == 1
-        TASOPT.plot_details(ac)
-        @test 2 == 2
-
+        p1 = TASOPT.stickfig(ac)
+        @test p1 isa Plots.Plot
+        p2 = TASOPT.plot_details(ac)
+        @test p2 isa Plots.Plot
+        p3 = TASOPT.plot737compare(ac)
+        @test p3 isa Plots.Plot
+        p4 = TASOPT.MomentShear(ac)
+        @test p4 isa Plots.Plot
+        p5 = TASOPT.PayloadRange(ac)
+        @test p5 isa Plots.Plot
     end
 
 end

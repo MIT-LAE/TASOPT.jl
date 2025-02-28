@@ -1,5 +1,5 @@
 """
-    cdsum!(pari,parg,para,pare,icdfun)
+   cdsum!(ac, imission, ip, icdfun)
 
 Calculates aircraft `CD` components for operating point, ipoint.
 If `icdfun=1`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
@@ -25,73 +25,37 @@ where:
 
 
 !!! details "🔃 Inputs and Outputs"
-      **Inputs:**
-      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
-      - `parg::AbstractArray{Float64}`: Vector of `aircraft` model geometry parameters.
-      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
-      - `pare::AbstractArray{Float64}`: Vector of `aircraft` model engine parameters.
-      - `icdfun::Integer`: Flag if drag should be computed (=1) or if para values should be used (=0).
+**Inputs:**
+      - `ac::aircraft`: aircraft data storage object
+      - `imission::Int64`: mission index
+      - `icdfun::Int64`: Flag if drag should be computed (=1) or if para values should be used (=0).
 
       **Outputs:**
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
-
-!!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
-
 """
-function cdsum!(pari,parg,para,pare, icdfun)
+function cdsum!(ac, imission, ip, icdfun)
+      #Unpack data storage
+      parg = ac.parg
+      para = view(ac.para, :, ip, imission)
+      pare = view(ac.pare, :, ip, imission)
+      wing = ac.wing
+      htail = ac.htail
+      vtail = ac.vtail
 
       Ldebug = false
 #      Ldebug = true
 
-      AR       = parg[igAR     ]
-      sweep    = parg[igsweep  ]
-      hboxo    = parg[ighboxo  ]
-      hboxs    = parg[ighboxs  ]
-      hboxt    = hboxs
       fSnace   = parg[igfSnace ]
-      bo       = parg[igbo     ]
-      bs       = parg[igbs     ]
-      boh      = parg[igboh    ]
-      bov      = parg[igbov    ]
-
-      lambdat  = parg[iglambdat]
-      lambdas  = parg[iglambdas]
-      gammat   = parg[iglambdat]*para[iarclt]
-      gammas   = parg[iglambdas]*para[iarcls]
-
-      lambdah  = parg[iglambdah]
-      lambdav  = parg[iglambdav]
-      sweeph   = parg[igsweeph ]
-      sweepv   = parg[igsweepv ]
-      cosLs    = parg[igcosLs  ]
-      Sstrut   = parg[igSstrut ]
-
-      co   = parg[igco ]
-      coh  = parg[igcoh]
-      cov  = parg[igcov]
-
-      b    = parg[igb  ]
-      bh   = parg[igbh ]
-      bv   = parg[igbv ]
-
-      S    = parg[igS  ]
-      Sh   = parg[igSh ]
-      Sv   = parg[igSv ]
-
-      fLo  = parg[igfLo]
-      fLt  = parg[igfLt]
+      
+      gammat   = wing.outboard.λ*para[iarclt]
+      gammas   = wing.inboard.λ*para[iarcls]
 
       fCDwcen = 0.0
       fCDhcen = parg[igfCDhcen]
       fCDvcen = 0.0
-
-      Astrut   = parg[igAstrut ]
-      cstrut   = parg[igcstrut ]
-      nvtail   = parg[ignvtail ]
 
       rVnace = parg[igrVnace]
 
@@ -109,7 +73,7 @@ function cdsum!(pari,parg,para,pare, icdfun)
       fexcdw = para[iafexcdw]
 
 #---- tail lift
-      CLhtail = para[iaCLh]*Sh/S
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
 
 #---- parameters for Re-scaling of cd's
       Reunit = para[iaReunit]
@@ -124,21 +88,16 @@ function cdsum!(pari,parg,para,pare, icdfun)
       rkSunsv = 0.
 #
 #---- Re referenced to root chord
-      Reco = Reunit*co
+      Reco = Reunit*wing.layout.root_chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (icdfun==1) 
 #----- integrated across span for CDwing
-
-      # if(Ldebug) write(*,*) 'calling SURFCD2...'
       clpo,clps,clpt,
-	cdfw,cdpw,CDwing,CDover = surfcd2(S, b,bs,bo,
-	lambdat,lambdas,gammat,gammas,
-	hboxo,hboxs,hboxt,
-	Mach,sweep,co, 
-	CL,CLhtail, fLo,fLt,
-	Reco,aRexp, rkSunsw,fexcdw,
-	fduo,fdus,fdut)
+	cdfw,cdpw,CDwing,CDover = surfcd2(wing,gammat,gammas,
+                                    Mach,CL,CLhtail,Reco,
+                                    aRexp, rkSunsw,fexcdw,
+                                    fduo,fdus,fdut)
 	
        #if(Ldebug) write(*,*) '...exited SURFCD2'
 
@@ -154,18 +113,17 @@ function cdsum!(pari,parg,para,pare, icdfun)
       cdfw = para[iacdfw] * fexcdw
       cdpw = para[iacdpw] * fexcdw
 
-	CDwing,CDover = surfcd(S,
-	b,bs,bo,lambdat,lambdas,sweep,co, 
+	CDwing,CDover = surfcd(wing.layout.S,
+	wing.layout.span,wing.layout.break_span,wing.layout.root_span,wing.outboard.λ,wing.inboard.λ,wing.layout.sweep,wing.layout.root_chord, 
 	cdfw,cdpw,Reco,Rerefw,aRexp,rkSunsw,
        fCDwcen)
  
       para[iaCDwing] = CDwing
       para[iaCDover] = CDover
 
-      clpo, clps, clpt = wingcl(b,bs,bo,
-	lambdat,lambdas,gammat,gammas,
-	sweep,AR,CL,CLhtail,fLo,fLt,
-	fduo,fdus,fdut)
+      clpo, clps, clpt = wingcl(wing,gammat,gammas,
+                              CL,CLhtail,
+	                        fduo,fdus,fdut)
 
       end
 
@@ -180,27 +138,27 @@ function cdsum!(pari,parg,para,pare, icdfun)
       cdpt = para[iacdpt] * para[iafexcdt]
 
 #---- horizontal tail profile CD
-      Recoh = Reunit*coh
-	CDhtail,CDhover = surfcd(S,
-	bh,boh,boh,lambdah,1.0,sweeph,coh, 
+      Recoh = Reunit*htail.layout.root_chord
+	CDhtail,CDhover = surfcd(wing.layout.S,
+	htail.layout.span,htail.layout.root_span,htail.layout.root_span,htail.outboard.λ,1.0,htail.layout.sweep,htail.layout.root_chord, 
 	cdft,cdpt,Recoh,Rereft,aRexp,rkSunsh,
 	fCDhcen)
 
 #---- vertical tail profile CD
-      Recov = Reunit*cov
-      CDvtail1,CDvover1 = surfcd(S,
-	bv,bov,bov,lambdav,1.0,sweepv,cov, 
+      Recov = Reunit*vtail.layout.root_chord
+      CDvtail1,CDvover1 = surfcd(wing.layout.S,
+	vtail.layout.span,vtail.layout.root_span,vtail.layout.root_span,vtail.outboard.λ,1.0,vtail.layout.sweep,vtail.layout.root_chord, 
 	cdft,cdpt,Recov,Rereft,aRexp,rkSunsv,
       fCDvcen)
 	
-      CDvtail = CDvtail1*nvtail
+      CDvtail = CDvtail1*vtail.ntails
 
       para[iaCDhtail] = CDhtail
       para[iaCDvtail] = CDvtail
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- fuselage profile CD, using fuselage CDA from BLI calculation
-      CDfuse = PAfinf/S
+      CDfuse = PAfinf/wing.layout.S
       para[iaCDfuse] = CDfuse
 
 #      if(Ldebug) write(*,*) 'nacelle CD...'
@@ -226,23 +184,27 @@ function cdsum!(pari,parg,para,pare, icdfun)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- strut profile CD
-      cdfs = para[iacdfs]
-      cdps = para[iacdps]
-      rVstrut = parg[igrVstrut]
-      CDstrut = (Sstrut/S)*(cdfs + cdps*cosLs^3) * rVstrut^3
-      para[iaCDstrut] = CDstrut
+      if wing.has_strut
+            cdfs = para[iacdfs]
+            cdps = para[iacdps]
+            rVstrut = wing.strut.local_velocity_ratio
+            CDstrut = (wing.strut.S/wing.layout.S)*(cdfs + cdps*wing.strut.cos_lambda^3) * rVstrut^3
+            para[iaCDstrut] = CDstrut
+      else
+            CDstrut = 0.0
+            para[iaCDstrut] = 0.0
+      end
+
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- induced CD
-#      if(Ldebug) write(*,*) '...calling CDITRP...'
-
-      cditrp(pari,parg,para)
+      cditrp(para, wing, htail)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- apparent fuselage deltaCD from ingestion
       fBLIf = parg[igfBLIf]
-      dCDBLIf = -fBLIf*DAfwake/S
+      dCDBLIf = -fBLIf*DAfwake/wing.layout.S
       para[iadCDBLIf] = dCDBLIf
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -256,27 +218,21 @@ function cdsum!(pari,parg,para,pare, icdfun)
 #---- total CD
       CD = CDi + CDfuse + CDwing + CDover + CDhtail + CDvtail + CDstrut + CDnace + dCDBLIf + dCDBLIw
       para[iaCD] = CD      
-      CD_components = [CDi  CDfuse  CDwing  CDover CDhtail  CDvtail  CDstrut 	CDnace dCDBLIf dCDBLIw]
-      # println(CD_components)
 
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#      if(Ldebug) write(*,*) '...exiting CDSUM...'
-      # println("Total CD = ", CD)
-      # println("PARA = ", para)
       return
 end # cdsum
 
 
 """
-      cditrp(pari,parg,para)
+      cditrp(para, wing, htail)
 
 Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
-      - `pari::AbstractVector{Int64}`: Vector of `aircraft` model integer/flag parameters.
-      - `parg::AbstractVector{Float64}`: Vector of `aircraft` model geometry parameters.
       - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
+      - `wing::TASOPT.Wing`: Wing Structure.
+      - `htail::TASOPT.Tail`: Htail Structure.
 
       **Outputs:**
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
@@ -285,7 +241,7 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cditrp(pari,parg,para)
+function cditrp(para, wing, htail)
 
       CL = para[iaCL]
 
@@ -295,10 +251,10 @@ function cditrp(pari,parg,para)
        return
       end
 
-      CLhtail = para[iaCLh]*parg[igSh]/parg[igS]
-      # println("CLhtail: $(para[iaCLh]) $(parg[igSh]) $(parg[igS])")
-      bref = parg[igb]
-      Sref = parg[igS]
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
+      # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
+      bref = wing.layout.span
+      Sref = wing.layout.S
 
       Mach = para[iaMach]
 
@@ -320,20 +276,20 @@ function cditrp(pari,parg,para)
 
       #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
 #---- wing wake parameters
-      fLo = parg[igfLo]
+      fLo =  wing.fuse_lift_carryover
 #      fLo = 0.0
 
 #---- span, wing-break span, wing-root span
-      b[1]  = parg[igb]
-      bs[1] = parg[igbs]
-      bo[1] = parg[igbo]
+      b[1]  = wing.layout.span
+      bs[1] = wing.layout.break_span
+      bo[1] = wing.layout.root_span
 
 #---- span of wing-root streamline in Trefftz Plane
-      bop[1] = parg[igbo] * 0.2
+      bop[1] = wing.layout.root_span * 0.2
 
-      zcent[1]  = parg[igzwing]
-      gammas[1] = parg[iglambdas]*para[iarcls]
-      gammat[1] = parg[iglambdat]*para[iarclt]
+      zcent[1]  = wing.layout.z
+      gammas[1] = wing.inboard.λ*para[iarcls]
+      gammat[1] = wing.outboard.λ*para[iarclt]
       po[1]     = 1.0
       CLsurfsp[1] = CL - CLhtail
 
@@ -343,14 +299,14 @@ function cditrp(pari,parg,para)
       fdut = para[iafdut]
 
 #---- horizontal tail wake parameters
-      b[2]   = parg[igbh]
-      bs[2]  = parg[igboh]
-      bo[2]  = parg[igboh]
-      bop[2] = parg[igboh]
+      b[2]   = htail.layout.span
+      bs[2]  = htail.layout.root_span
+      bo[2]  = htail.layout.root_span
+      bop[2] = htail.layout.root_span
 
-      zcent[2] = parg[igzhtail]
+      zcent[2] = htail.layout.z
       gammas[2] = 1.0
-      gammat[2] = parg[iglambdah]
+      gammat[2] = htail.outboard.λ
       po[2]     = 1.0
       CLsurfsp[2] = CLhtail
 
@@ -359,6 +315,9 @@ function cditrp(pari,parg,para)
       nsurf = 2
 
 #---- number of spanwise intervals
+# -----------------------------------------------------------------------
+# The below # of panels (43 total) gives about 1.8% higher CDi relative to the 
+# finest one here with ~360 panels
       npout[1] = 20  # outer panel
       npinn[1] = 6   # inner panel
       npimg[1] = 3   # image inside fuselage
@@ -370,7 +329,9 @@ function cditrp(pari,parg,para)
       else
        npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
       end
-
+# -----------------------------------------------------------------------
+# The below # of panels (84 total) gives about 0.60% higher CDi relative to the 
+# finest one here with ~360 panels
 #     npout[1] = 40  # outer panel
 #     npinn[1] = 12  # inner panel
 #     npimg[1] = 6   # image inside fuselage
@@ -378,7 +339,7 @@ function cditrp(pari,parg,para)
 #     npout[2] = 20  # outer panel
 #     npinn[2] = 0   # inner panel
 #     npimg[2] = 4   # image inside fuselage  (or inner panel if T-tail)
-
+# -----------------------------------------------------------------------
 #      npout[1] = 160  # outer panel
 #      npinn[1] = 48   # inner panel
 #      npimg[1] = 24   # image inside fuselage
@@ -386,6 +347,7 @@ function cditrp(pari,parg,para)
 #      npout[2] = 80  # outer panel
 #      npinn[2] = 0   # inner panel
 #      npimg[2] = 16  # image inside fuselage  (or inner panel if T-tail)
+# -----------------------------------------------------------------------
 
       ktip = 16
       #CLsurf = zeros(Float64, nsurf)
