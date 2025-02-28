@@ -24,7 +24,7 @@ function wsize(ac; itermax=35,
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
-    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
+    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
 
     # Initialize variables
     time_propsys = 0.0
@@ -96,8 +96,8 @@ function wsize(ac; itermax=35,
     feadd = parg[igfeadd]
     fwadd = wing_additional_weight(wing)
     fpylon = parg[igfpylon]
-    flgnose = landing_gear.nose_gear.overall_mass_fraction
-    flgmain = landing_gear.main_gear.overall_mass_fraction
+    flgnose = parg[igflgnose]
+    flgmain = parg[igflgmain]
     freserve = parg[igfreserve]
     fLo =  wing.fuse_lift_carryover
     fLt =  wing.tip_lift_loss
@@ -737,11 +737,6 @@ function wsize(ac; itermax=35,
         end
 
         # -----------------------------
-        # Landing gear sizing
-        # ------------------------------
-        size_landing_gear!(ac)
-
-        # -----------------------------
         # Drag and engine calculations
         # ------------------------------
         # Total Drag
@@ -881,11 +876,11 @@ end
 Wupdate0 updates the weight of the aircraft
 """
 function Wupdate0!(ac, rlx, fsum)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
     
-    ftotadd = fuse.HPE_sys.W #TODO this should be stored as a weight fraction, not a weight
+    ftotadd = fuse.HPE_sys.W + parg[igflgnose] + parg[igflgmain]
     fsum = 0.0
 
     Wsum = parg[igWpay] +
@@ -897,9 +892,7 @@ function Wupdate0!(ac, rlx, fsum)
            parg[igWeng] +
            parg[igWfuel] +
            parg[igWtesys] +
-           parg[igWftank] +
-           landing_gear.nose_gear.weight.W + 
-           landing_gear.main_gear.weight.W
+           parg[igWftank]
 
     WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
     parg[igWMTO] = WMTO
@@ -911,7 +904,7 @@ end
 Wupdate
 """
 function Wupdate!(ac, rlx, fsum)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail, landing_gear = unpack_ac_components(ac)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
 
@@ -921,8 +914,8 @@ function Wupdate!(ac, rlx, fsum)
     fvtail = vtail.weight / WMTO
     feng = parg[igWeng] / WMTO
     ffuel = parg[igWfuel] / WMTO
-    flgnose = landing_gear.nose_gear.weight.W / WMTO
-    flgmain = landing_gear.main_gear.weight.W / WMTO
+    flgnose = parg[igflgnose]
+    flgmain = parg[igflgmain]
 
     ftesys = parg[igWtesys] / WMTO
 
@@ -951,9 +944,13 @@ function Wupdate!(ac, rlx, fsum)
     parg[igWeng] = WMTO * feng
     parg[igWfuel] = WMTO * ffuel
    
+    
     parg[igWftank] = WMTO * ftank 
 
+
     parg[igWtesys] = WMTO * ftesys
+
+
 end
 
 """

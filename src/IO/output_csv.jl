@@ -272,7 +272,7 @@ Example usage:
 default_output_indices = 
     Dict("pari" => Colon(),
         "parg" => [#weights
-                    igWMTO, igWfuel, igWpay, igWpaymax,
+                    igWMTO, igWfuel, igWpay, igWpaymax, igflgnose,igflgmain,
                     igWtesys, igWftank, 
                     #other
                     igdfan, igGearf,

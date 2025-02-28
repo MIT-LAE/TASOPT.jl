@@ -42,7 +42,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     htail = ac.htail
     vtail = ac.vtail
     fuselage = ac.fuselage  #fuselage     "
-    landing_gear = ac.landing_gear
 
     #dictionaries to map some selections (e.g., ints) to outputs
     propsysarch = Dict(0 => "te", 1 => "tf")
@@ -163,8 +162,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_weights["floor_weight_per_area"] =fuselage.floor_W_per_area
 
         d_fuse_weights["HPE_sys_weight_fraction"] = fuselage.HPE_sys.W
+        d_fuse_weights["LG_nose_weight_fraction"] = ac_g[igflgnose]
+        d_fuse_weights["LG_main_weight_fraction"] = ac_g[igflgmain]
 
-        
+        d_fuse_weights["APU_weight_fraction"] = fuselage.APU.W/ac_g[igWpaymax] 
+        d_fuse_weights["seat_weight_fraction"] = fuselage.seat.W/ac_g[igWpaymax] 
         d_fuse_weights["add_payload_weight_fraction"] = fuselage.added_payload.W/ac_g[igWpaymax] 
     d_fuse["Weights"] = d_fuse_weights
 
@@ -205,6 +207,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["x_cone_end"] = fuselage.layout.x_cone_end
         d_fuse_geom["x_end"] = fuselage.layout.x_end
 
+        d_fuse_geom["x_nose_landing_gear"] = ac_g[igxlgnose]
+        d_fuse_geom["x_main_landing_gear_offset"] = ac_g[igdxlgmain]
         d_fuse_geom["x_APU"] = fuselage.APU.x
         d_fuse_geom["x_HPE_sys"] = fuselage.HPE_sys.x
 
@@ -382,15 +386,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_out["Stabilizers"] = d_stab
     #--end Stabilizers----------------
 
-    #Landing gear------------------------
-    d_lg  = Dict()
-        d_lg["x_nose_landing_gear"] = landing_gear.nose_gear.weight.r[1]
-        d_lg["x_main_landing_gear_offset"] = landing_gear.main_gear.distance_CG_to_landing_gear
-        d_lg["LG_nose_weight_fraction"] = landing_gear.nose_gear.overall_mass_fraction
-        d_lg["LG_main_weight_fraction"] = landing_gear.main_gear.overall_mass_fraction
-    
-    d_out["Landing_gear"] = d_lg
-    #--end Landing gear----------------
 
     #Structures------------------------
     d_struct = Dict()
