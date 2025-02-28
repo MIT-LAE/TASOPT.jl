@@ -270,7 +270,7 @@ Creates a dictionary from a given material type
 """
 function create_material_dict(material)
     fn = fieldnames(typeof(material))
-    isempty(fn) ? error("Not an appropriate sturct") :
+    isempty(fn) ? error("Not an appropriate struct") :
     Dict("Material" => Dict(fn .=> getproperty.([material], fn)))
 end
 

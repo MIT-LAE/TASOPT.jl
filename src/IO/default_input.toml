@@ -8,7 +8,7 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
-    aircraft_type   = "Narrow Body"     # 0: Regional Aircraft
+    aircraft_type   = "Narrow Body Aircraft"     # 0: Regional Aircraft
                                     # 1: Narrow Body Aircraft
                                     # 2: Wide Body Aircraft
 
@@ -135,9 +135,9 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = ["35000.0 ft", "30e3 ft"]
+    cruise_alt  = "35000 ft" #This gets recalculated for off-design missions
     cruise_mach = 0.80
-    cruise_CL   = 0.57
+    cruise_CL   = [0.57, 0.57]
 
 [Mission.Descent]
     descent_angle_top-of-descent = "-3.0 deg"
@@ -182,9 +182,6 @@
     
 # Power systems and landing gear locations
     x_HPE_sys = "62ft" #Hydraulic, Pneumatic and Electrical systems
-    x_nose_landing_gear        = "14ft"
-    x_main_landing_gear_offset = "1 ft" # main LG offset behind the wing lift centroid
-
     x_APU = "120 ft"
 
     x_fixed_weight = "7ft" #Cockpit/ pilots etc
@@ -206,8 +203,6 @@
     floor_weight_per_area =  60.0 #[N/m2]
 
     HPE_sys_weight_fraction = 0.010 # W_HPEsys/WMTO
-    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
-    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
 
     APU_weight_fraction = 0.035 # W_APU/W_payload
     seat_weight_fraction = 0.10 # Wseats/W_payload
@@ -237,10 +232,10 @@
     inner_panel_taper_ratio = 0.7  #cs/co
     outer_panel_taper_ratio = 0.25 #ct/co
 
-    panel_break_location = 0.285 # eta_s panel break eta location. eta = y/b
+    panel_break_location = 0.285 # eta_s panel break eta location. eta = y/(b/2)
     
     center_box_halfspan = "71.0 in"
-    box_width_chord = 0.50
+    box_width_to_chord = 0.50 #Spar box width to chord ratio
     root_thickness_to_chord = 0.1268
     spanbreak_thickness_to_chord = 0.1266
 
@@ -254,6 +249,9 @@
     #Only used if `sturt_braced_wing == true`:
     strut_toc = 0.15 #strut thickness to chord
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
+
+    # Airfoil data (Should be stored in src/airfoil_data/)
+    airfoil = "C.air"
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
@@ -319,12 +317,14 @@
     excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
 
     [Stabilizers.Htail]
+        multi_section = false # True for inner and outer section
         AR_Htail = 6.0
         taper = 0.25
         sweep = 26.0 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
         x_Htail = "114.5 ft"
         z_Htail = "0 ft"
+        number_Htails = 2.0
 
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
         
@@ -351,7 +351,7 @@
 
         added_weight_fraction = 0.30 # e.g. ribs, LE, elevator, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.14
         web_height_hbox  = 0.75
 
@@ -372,14 +372,43 @@
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
 
-        box_width_chord = 0.50
+        box_width_to_chord = 0.50
         box_height_chord = 0.14 
         web_height_hbox  = 0.75
+
+[LandingGear]
+    landing_gear_model = "mass_fractions" #Options are "mass_fractions" and "historical_correlations"
+    x_nose_landing_gear        = "14ft"
+    x_main_landing_gear_offset = "1 ft" # main LG offset behind the rearmost CG position
+
+    #For "mass_fractions" model
+    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
+    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
+
+    #For "historical_correlations" model
+    y_main_landing_gear_halfspan_fraction = 0.2 # eta landing gear location. eta = y/(b/2)
+    tailstrike_angle = "10 deg"
+    wing_dihedral_angle = "6 deg"
+    engine_ground_clearance = "23 in"
+    LG_nose_number_struts = 1
+    LG_nose_wheels_per_strut = 2
+    LG_main_number_struts = 2
+    LG_main_wheels_per_strut = 2
 
 [Structures]
     stress_factor = 1.0 # convenient factor to multiply all stress below
 
     # Allowable stresses at sizing cases:
+    caps_material = "TASOPT-Al"
+    caps_max_avg_stress = 1.1
+    caps_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
+    webs_material = "TASOPT-Al"
+    webs_max_avg_stress = 1.1
+    webs_safety_factor = 1.5
+    # the sigma_max works out to be roughly 30e3 lbf/in2
+    
     ## Fuselage pressurization skin stress and bending skin+stringer stress
     skin_material = "TASOPT-Al"
     skin_max_avg_stress = 1.1

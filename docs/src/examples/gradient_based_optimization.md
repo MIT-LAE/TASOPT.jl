@@ -21,7 +21,6 @@ Start the script importing the necessary modules.
 using TASOPT
 using JuMP
 using Ipopt
-using PythonPlot
 using Test
 include(__TASOPTindices__)
 ```

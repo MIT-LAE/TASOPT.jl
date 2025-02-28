@@ -1,23 +1,21 @@
-# const structures = TASOPT.structures
-# const Weight = TASOPT.Weight
 @testset "Weights" begin
     #Test frame
     frame = TASOPT.structures.Frame()
     @test frame.origin == [0.0, 0.0, 0.0]
 
     #Test Weight constructors
-    W = Weight()
+    W = TASOPT.Weight()
     @test W.r == [0.0, 0.0, 0.0]
     @test W.frame === TASOPT.WORLD
     @test W.W == 0.0
 
-    W = Weight(1.0, [1.0, 0.0, 0.0])
+    W = TASOPT.Weight(1.0, [1.0, 0.0, 0.0])
     @test W.W == 1.0
     @test W.r == [1.0, 0.0, 0.0]
 
-    W1 = Weight(W = 1.0, frame = frame)
-    W2 = Weight(W = 2.0)
-    W3 = Weight(W = 2.0, x = 10.0, y = 10.0, z = 10.0)
+    W1 = TASOPT.Weight(W = 1.0, frame = frame)
+    W2 = TASOPT.Weight(W = 2.0)
+    W3 = TASOPT.Weight(W = 2.0, x = 10.0, y = 10.0, z = 10.0)
 
     # Test exceptions
     @test_throws "Cannot add weights in different frames" W1 + W2

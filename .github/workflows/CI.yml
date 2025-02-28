@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
           version:          #as defined by setup-julia - https://github.com/julia-actions/setup-julia?tab=readme-ov-file#examples
-               - '1.9'      #initial version for tasopt dev
+               - '1'        #latest stable release
                - 'lts'      #long-term-support, julia 1.10 as of 10/2024
           os: 
               - ubuntu-latest
@@ -52,6 +52,6 @@ jobs:
         uses: julia-actions/julia-processcoverage@v1
   
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
-          file: lcov.info
+          files: lcov.info
