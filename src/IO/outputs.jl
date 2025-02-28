@@ -25,6 +25,8 @@ function weight_buildup(ac::aircraft; io=stdout)
     Wwatt   = Wbox * wing.weight_frac_attachments
     Wwing   = Wbox + Wflap + Wslat + Waile + Wlete + Wribs + Wspoi + Wwatt
 
+    Weng = parg[igWeng]
+
 
     printstyled(io, "Weight build-up:\n -------------- \n", color=:bold )
     @printf(io, "Wempty  + %10.1f N (%8.1f lb)\n", Wempty, Wempty/lbf_to_N)
@@ -82,6 +84,8 @@ function weight_buildup(ac::aircraft; io=stdout)
     @printf(io,"Rftank    = %10.1f m (%8.1f ft)\n"  , parg[igRftank    ], parg[igRftank    ]/ft_to_m) 
 
     @printf(io,"ηtank     = %3.1f %% \n\n", parg[igWfuel]/(parg[igWfuel] + parg[igWftank])*100)
+
+    @printf(io,"Weng    = %10.1f N (%8.1f lb)\n\n", Weng, Weng/lbf_to_N) 
 end
 """
 `engine` prints out the engine params for the aircraft
@@ -97,13 +101,14 @@ function engine_info(ac::aircraft; io=stdout)
     P3_kPa = ac.pared[iept3, iprotate]./1000.0
     T3_K   = ac.pared[ieTt3, iprotate]
     t4_CR = ac.pared[ieTt4, ipcruise1]
-    OPR = ac.pared[iepilc,ipclimbn].*ac.pared[iepihc,ipclimbn]
-    PIHC = ac.pared[iepihc,ipclimbn]
-    PILC = ac.pared[iepilc,ipclimbn]
+    OPR = ac.pared[iepilc,ipcruise1].*ac.pared[iepihc,ipcruise1]
+    PIHC = ac.pared[iepihc,ipcruise1]
+    PILC = ac.pared[iepilc,ipcruise1]
     BPR = ac.pared[ieBPR, ipclimbn]
     FPR = ac.pared[iepif, ipclimbn]
     PFEI = ac.parm[imPFEI]
     EINOx_cruise = TASOPT.EINOx(ac,ipcruise1)
+    fan_diameter = ac.parg[igdfan]
 
     printstyled(io, "ENGINE:\n -------------- \n", color=:bold )
     @printf(io, "P3  = %6.5f kPa\n", P3_kPa)
@@ -116,6 +121,7 @@ function engine_info(ac::aircraft; io=stdout)
     @printf(io, "FPR  = %6.5f \n", FPR)
     @printf(io, "EI_NOX_Cruise  = %6.5f \n", EINOx_cruise)
     @printf(io, "PFEI  = %6.5f \n", PFEI)
+    @printf(io, "Fan_Diameter  = %6.5f \n", fan_diameter)
     @printf(io,"--------------------\n")
 end
 """

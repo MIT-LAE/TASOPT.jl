@@ -3,7 +3,7 @@
     description = """
     This model file describes a basic single-aisle regional aircraft.
     """
-    aircraft_type   = "Regional Aircraft"   # 0: Regional Aircraft
+    aircraft_type   = "0"   # 0: Regional Aircraft
                                         # 1: Narrow Body Aircraft
                                         # 2: Wide Body Aircraft
 
@@ -88,11 +88,11 @@
     outer_vessel_support_angles = ["45 deg", "135 deg"]
 
 [Mission]
-    N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = 118       # Number of passengers in each mission
-    exit_limit = 122            # Maximum number of passengers that can sit in the cabin
+    exit_limit = 118            # Maximum number of passengers that can sit in the cabin
 
-    max_payload_in_pax_equivalent = 122         # Defines the maximum payload carrying capacity of the aircraft
+    max_payload_in_pax_equivalent = 142         # Defines the maximum payload carrying capacity of the aircraft
                                                 # It is the maximum payload that the aircraft can carry (including cargo),
                                                 # as an equivalent number of passengers in an off-design mission
     
@@ -128,9 +128,9 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = "38500 ft"
-    cruise_mach = 0.80
-    cruise_CL   = 0.52
+    cruise_alt  = "35000 ft"
+    cruise_mach = 0.82
+    cruise_CL   = 0.5
 
 [Mission.Descent]
     descent_angle_top-of-descent = "-2.5 deg"
@@ -224,9 +224,9 @@
                       # 1: Wing cantilever with engine
     strut_braced_wing = false
 
-    sweep = 26.0 # wing sweep in degrees
-    AR    = 8.7
-    maxSpan = "100 ft"
+    sweep = 23.5 # wing sweep in degrees
+    AR    = 8.1
+    maxSpan = "94.2 ft"
 
     inner_panel_taper_ratio = 0.7  #cs/co
     outer_panel_taper_ratio = 0.225 #ct/co
@@ -319,7 +319,7 @@
         multi_section = false # True for inner and outer section
         AR_Htail = 5.8
         taper = 0.25
-        sweep = 25.0 #typically can be set to be the same as the wings
+        sweep = 23.5 #typically can be set to be the same as the wings
         center_box_halfspan = "2.5 ft"
         x_Htail = "115 ft"
         z_Htail = "4 ft"
@@ -357,7 +357,7 @@
     [Stabilizers.Vtail]
         AR_Vtail = 2.0
         taper = 0.30
-        sweep = 25.0
+        sweep = 23.5
         center_box_halfspan = 0.0
         x_Vtail = "113 ft"
         number_Vtails = 1.0
@@ -438,23 +438,29 @@
 
 [Propulsion.Turbomachinery]
 
-    BPR = 5.0
+    BPR = 5.4 # https://www.geaerospace.com/sites/default/files/2022-03/CF34-10E-Datasheet.pdf#:~:text=Performance%20Specifications%20Maximum%20takeoff%20thrust,145%20in%20Weight%203%2C700%20lb
     gear_ratio = 1.0 #Fan gear ratio. 1 => direct drive turbofan
 
-    OPR    = 28.0
-    Fan_PR = 1.6
-    LPC_PR = 8.0
+    OPR    = 29.0 # https://www.geaerospace.com/sites/default/files/2022-03/CF34-10E-Datasheet.pdf#:~:text=Bypass%20ratio%205,145%20in%20Weight%203%2C700%20lb
+    Fan_PR = 1.6 # Ranges 1.4-1.6
+    LPC_PR = 1.7
     
-    diffuser_PR    = 0.995
+    diffuser_PR    = 0.98
     burner_PR      = 0.94
-    fan_nozzle_PR  = 0.98
-    core_nozzle_PR = 0.995
+    fan_nozzle_PR  = 0.979
+    core_nozzle_PR = 0.985
 
-    fan_eta_poly = 0.9
-    LPC_eta_poly = 0.89
-    HPC_eta_poly = 0.88
-    HPT_eta_poly = 0.9
-    LPT_eta_poly = 0.9
+    fan_eta_poly = 0.8898
+    LPC_eta_poly = 0.875
+    HPC_eta_poly = 0.865
+    HPT_eta_poly = 0.884
+    LPT_eta_poly = 0.894
+    #fan_eta_poly = 0.8898
+    #LPC_eta_poly = 0.87
+    #HPC_eta_poly = 0.87
+    #HPT_eta_poly = 0.889
+    #LPT_eta_poly = 0.889
+
 
     #Fan efficiency function constants -> epoly_actual = epolyf + Kf*(FPR-FPR0)
     FPR0 = 1.65

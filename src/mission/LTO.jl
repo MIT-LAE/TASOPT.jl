@@ -79,12 +79,20 @@ Uses a third order polynomial in T₃
 Assumes a default specific humidity of 0.00634 kg water/kg dry air per 
 ICAO Annex 16 Vol. II (part 2.1.4.1)
 """
-function EINOx3(P3_kPa, T3_K, sp_humidity = 0.00634)
+function EINOx3(P3_kPa, T3_K, sp_humidity = 0.00634, ac_type = "1")
     # Constants derived using a CRN model for a CFM56 tech level engine
-    a = 6.25528852e-08
-    b = -1.17064467e-04
-    c = 7.36953400e-02
-    d = -1.50392850e+01
+        
+    if ac_type == "2"
+        a = 1.01084407e-07
+        b = -2.12716481e-04
+        c = 1.50618950e-01
+        d = -3.49737491e+01
+    else
+        a = 6.25528852e-08
+        b = -1.17064467e-04
+        c = 7.36953400e-02
+        d = -1.50392850e+01
+    end
 
     H = -19.0*(sp_humidity - 0.00634)
     
@@ -100,12 +108,20 @@ Uses a fourth order polynomial which behaves a little better at low T₃ than th
 Assumes a default specific humidity of 0.00634 kg water/kg dry air per 
 ICAO Annex 16 Vol. II (part 2.1.4.1)
 """
-function EINOx4(P3_kPa, T3_K, sp_humidity = 0.00634)
-    a = 4.85354237e-11
-    b = -6.51089333e-08
-    c =  7.19366066e-06
-    d = 2.06850617e-02
-    e =  -6.69412110e+00
+function EINOx4(P3_kPa, T3_K, sp_humidity = 0.00634, ac_type = "1")
+    if ac_type == "2"
+        a = 9.15868718e-10
+        b = -2.60435361e-06
+        c = 2.75257358e-03
+        d = -1.27746983e+00
+        e = 2.19853429e+02
+    else
+        a = 4.85354237e-11
+        b = -6.51089333e-08
+        c =  7.19366066e-06
+        d = 2.06850617e-02
+        e =  -6.69412110e+00
+    end
 
     H = -19.0*(sp_humidity - 0.00634)
 
@@ -117,9 +133,9 @@ function EINOx(ac::aircraft, ip::Int; sp_humidity = 0.00634, method="cubic")
        P3_kPa = ac.pared[iept3, ip]/1000.0
        T3_K   = ac.pared[ieTt3, ip]
        if lowercase(method) == "cubic"
-            EI = EINOx3(P3_kPa, T3_K, sp_humidity)
+            EI = EINOx3(P3_kPa, T3_K, sp_humidity,ac.aircraft_type)
        elseif lowercase(method) == "quartic"
-            EI = EINOx4(P3_kPa, T3_K, sp_humidity)
+            EI = EINOx4(P3_kPa, T3_K, sp_humidity,ac.aircraft_type)
        end
        return EI
 end

@@ -5,7 +5,7 @@
     description = """
     This model file describes a basic twin-aisle aircraft.
     """
-    aircraft_type   = "Wide Body Aircraft"  # 0: Regional Aircraft
+    aircraft_type   = "2"  # 0: Regional Aircraft
                                         # 1: Narrow Body Aircraft
                                         # 2: Wide Body Aircraft
 
@@ -90,7 +90,7 @@
     outer_vessel_support_angles = ["45 deg", "135 deg"]
 
 [Mission]
-    N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
+    N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
     pax = 370            # Number of passengers in each mission
     exit_limit = 450            # Maximum number of passengers that can sit in the cabin
 

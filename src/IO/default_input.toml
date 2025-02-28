@@ -8,7 +8,7 @@
     also loaded by the `TASOPT.jl` package as default if no other details are 
     provided by the user.
     """
-    aircraft_type   = 1             # 0: Regional Aircraft
+    aircraft_type   = "1"             # 0: Regional Aircraft
                                     # 1: Narrow Body Aircraft
                                     # 2: Wide Body Aircraft
 
@@ -94,9 +94,9 @@
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
                                 
-    range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
+    range = ["3000.0 nmi", "3000.0 nmi"] # Design Range + second mission range
 
-    pax = [180, 150]                    # Number of passengers in each mission
+    pax = [180, 180]                    # Number of passengers in each mission
                                         # weight per pax also specified (215 lbf/pax is std)
 
     weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
@@ -115,8 +115,8 @@
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = ["0.0 ft", "500 ft"] 
-    takeoff_T = [288.2, 298.0]
+    takeoff_alt = ["0.0 ft", "0.0 ft"] 
+    takeoff_T = [288.2, 288.2]
 
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
@@ -135,7 +135,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = ["35000.0 ft", "30e3 ft"]
+    cruise_alt  = ["35000.0 ft", "35000.0 ft"]
     cruise_mach = 0.80
     cruise_CL   = 0.57
 

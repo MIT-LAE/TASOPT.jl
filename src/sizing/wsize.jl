@@ -1017,7 +1017,7 @@ function wsize(ac; itermax=35,
     balance(pari, parg, view(para, :, ip), fuse, wing, htail, vtail, rfuel, rpay, ξpay, itrim)
     
     if saveODperf
-        if ac.aircraft_type == 2 || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
+        if ac.aircraft_type == "2" || lowercase(string(ac.aircraft_type)) == "wide body aircraft"
                 
             open("B77W.LTO", "w") do f
                 LTO("B77W__", ac; fileout = f)
@@ -1049,7 +1049,7 @@ function wsize(ac; itermax=35,
             W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug)
             
             # ptf_file_name = ac.name *"_B77W__.PTF" 
-            ptf_file_name = "B77W__.PTF" 
+            ptf_file_name = ac.name * "_B77W__.PTF" 
             open(ptf_file_name, "w") do f
                 printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
                 V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
@@ -1062,50 +1062,54 @@ function wsize(ac; itermax=35,
                 println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
             end
             #ptf_file_name = ac.name *"_B77W__.PTF" 
-            ptf_file_name = "B77W__.PTF" 
+            ptf_file_name = ac.name * "_B77W__.PTF" 
             open(ptf_file_name, "w") do f
                 printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
                 V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
                 hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; wide = true)
             end
+
+            ptf_file_name = ac.name * "_B77W_modified__.PTF" 
+            open(ptf_file_name, "w") do f
+            # open("B738_modified__.PTF", "w") do f
+                printBADA(f, "B77W__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+            end
                 
             
         else
-                if ac.aircraft_type == 1 || lowercase(string(ac.aircraft_type)) == "narrow body aircraft"
+            FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
+            30 ,   40 ,   60 ,   80 ,  100 , 
+            120 ,  140 ,  160 ,  180 ,  200 ,
+            220 ,  240 ,  260 ,  280 ,  290 , 
+            310 ,  330 ,  350 ,  370 ,  390 ,
+            410])
+    
+            ZFW = parg[igWMTO] - parg[igWfuel]
+            OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+        
+            M_high = 0.92 * parg[igWMTO]
+            M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
+            W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
+            #W = [M_high, 1/2*(M_high + M_low), M_low]
+            Ldebug = false
+            
+        
+            W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
+            W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug) 
+            W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
+                if ac.aircraft_type == "1" || lowercase(string(ac.aircraft_type)) == "narrow body aircraft"
                     println("Using $(ac.aircraft_type) for LTO calculations")
-                else 
-                    @warn "Aircraft type not valid: Using Narrow body to calculate LTO/BADA output"
-                end
+                    open("B738__.LTO", "w") do f
+                        LTO("B738__", ac; fileout = f, method = "quartic")
+                    end
+    
+                    open("B738__extra_pts.LTO", "w") do f
+                        LTO("B738__extra_pts", ac; fileout = f, extra_points = true,method = "quartic")
+                    end
 
-                open("B738__.LTO", "w") do f
-                    LTO("B738__", ac; fileout = f)
-                end
-
-                open("B738__extra_pts.LTO", "w") do f
-                    LTO("B738__extra_pts", ac; fileout = f, extra_points = true)
-                end
-            
-                FL = float([  0 ,    5 ,   10 ,   15 ,   20 ,   
-                    30 ,   40 ,   60 ,   80 ,  100 , 
-                    120 ,  140 ,  160 ,  180 ,  200 ,
-                    220 ,  240 ,  260 ,  280 ,  290 , 
-                    310 ,  330 ,  350 ,  370 ,  390 ,
-                    410])
-            
-                ZFW = parg[igWMTO] - parg[igWfuel]
-                OEW = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
-            
-                M_high = 0.92 * parg[igWMTO]
-                M_low = 0.45 * parg[igWMTO] +(0.63 * (parg[igWMTO]^0.924))
-                W = [parg[igWMTO], 1/3*(OEW+2*parg[igWMTO]), 1.2*OEW]
-                #W = [M_high, 1/2*(M_high + M_low), M_low]
-                Ldebug = false
-                
-            
-                W0high, h3, V0shigh, desTAShigh, ROChigh, mdotfhigh, crzmdotfhigh, crzTAShigh, EGThigh, FFmaxcrzhigh, ROCmaxhigh , Tt4crzhigh, Tt4crzmaxhigh, crzEINOxhigh, clmbEINOxhigh, crzFARhigh, cruisealthigh = odperf!(ac, W[1], FL, Ldebug) 
-                W0nom , h2, V0snom , desTASnom, ROCnom , mdotfnom , crzmdotfnom , crzTASnom , EGTnom , FFmaxcrznom , ROCmaxnom  , Tt4crznom , Tt4crzmaxnom , crzEINOxnom , clmbEINOxnom , crzFARnom, cruisealtnom  = odperf!(ac, W[2], FL, Ldebug) 
-                W0lo  , h1, V0slo  , desTASlo, ROClo  , mdotflo  , crzmdotflo  , crzTASlo  , EGTlo  , FFmaxcrzlo  , ROCmaxlo   , Tt4crzlo  , Tt4crzmaxlo  , crzEINOxlo  , clmbEINOxlo  , crzFARlo, cruisealtlo   = odperf!(ac, W[3], FL, Ldebug) 
-                # ptf_file_name = ac.name *"_B738__.PTF" 
+                    # ptf_file_name = ac.name *"_B738__.PTF" 
                 ptf_file_name = ac.name * "_B738__.PTF" 
                 open(ptf_file_name, "w") do f
                     printBADA(f, "B738__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
@@ -1135,6 +1139,56 @@ function wsize(ac; itermax=35,
                     V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
                     hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
                 end
+
+                elseif ac.aircraft_type == "0"
+                    println("Using $(ac.aircraft_type) for LTO calculations")
+                    open("E195__.LTO", "w") do f
+                        LTO("E195__", ac; fileout = f)
+                    end
+    
+                    open("E195__extra_pts.LTO", "w") do f
+                        LTO("E195__extra_pts", ac; fileout = f, extra_points = true)
+                    end
+
+                    # ptf_file_name = ac.name *"_B738__.PTF" 
+                ptf_file_name = ac.name * "_E195__.PTF" 
+                open(ptf_file_name, "w") do f
+                    printBADA(f, "E195__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                        V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                        hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                end
+                
+                # If initwgt == 1 (no optimization) also export to BADA
+                
+                if ac.parg[igWfmax] + 10.0 < ac.parg[igWfuel]
+                    println("WARNING!!!!, Wfmax < Wfuel, not a physical aircraft")
+                end
+                # ptf_file_name = ac.name *"_B738__.PTF" 
+                ptf_file_name = ac.name * "_E195__.PTF" 
+                open(ptf_file_name, "w") do f
+                # open("B738__.PTF", "w") do f
+                    printBADA(f, "E195__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = false, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                end
+                
+                # ptf_file_name = ac.name *"_B738_modified__.PTF" 
+                ptf_file_name = ac.name * "_E195_modified__.PTF" 
+                open(ptf_file_name, "w") do f
+                # open("B738_modified__.PTF", "w") do f
+                    printBADA(f, "E195__", [W0lo, W0nom, W0high], max(cruisealthigh, cruisealtnom, cruisealtlo),
+                    V0slo./kts_to_mps, desTASlo, hcat(ROClo, ROCnom, ROChigh)', mdotfnom*60,
+                    hcat(crzmdotflo*60, crzmdotfnom*60, crzmdotfhigh*60)', crzTASlo, FL, Wpaymax; NOx = true, crzNoxEI =hcat(crzEINOxlo,crzEINOxnom,crzEINOxhigh)', ffpminNoxEI=clmbEINOxnom)
+                end
+
+                else 
+                    @warn "Aircraft type not valid: Not calculating LTO/BADA output"
+                end
+
+                
+            
+                
+                
                     
                 
             
