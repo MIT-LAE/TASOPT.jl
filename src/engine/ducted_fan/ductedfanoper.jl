@@ -224,8 +224,7 @@ function res_df(x, engdata; iPspec = false, store_data = false)
     # Constants
     alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
     nair = 5
-    #        a     b     k     mo     da    c    d     C    D
-    Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
+
     #---- minimum allowable fan efficiency
     epfmin = 0.60
 
