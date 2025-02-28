@@ -71,10 +71,6 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
 
       n = 6
 
-      # from 'tfmap.inc'
-      #        a     b     k     mo     da    c    d     C    D
-      Cmapf = [3.50, 0.80, 0.03, 0.95, -0.50, 3.0, 6.0, 0.0, 0.0]
-
       # from 'airfrac.inc'
       # air fractions  
       #        N2      O2      CO2    H2O      Ar       fuel

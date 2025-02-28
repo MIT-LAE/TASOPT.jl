@@ -1,5 +1,5 @@
 """ 
-    ductedfancalc!(pari, parg, para, pare, ip, icall, initeng)
+    ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
 
 Calls function ductedfansize! or ductedfanoper! for one operating point.
 
@@ -17,7 +17,7 @@ Calls function ductedfansize! or ductedfanoper! for one operating point.
     **Output:**
     No direct outputs. The `ac` object gets modified with the engine parameters.
 """
-function ductedfancalc!(ac, case, imission, ip, initeng, iterw = 0)
+function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
     #Unpack data storage arrays
     pari = ac.pari
     parg = ac.parg
@@ -138,8 +138,8 @@ function ductedfancalc!(ac, case, imission, ip, initeng, iterw = 0)
         Δh_radiator = pare[ieRadiatorDeltah]
         Δp_radiator = pare[ieRadiatorDeltap]
 
-        if (initeng == 0)
-                #------ force TFOPER to initialize these state variables
+        if initializes_engine
+                #------ initialize these state variables
                 mbf = 0.0
                 pif = 0.0
                 M2 = 1.0
