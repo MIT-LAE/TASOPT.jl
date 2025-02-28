@@ -194,7 +194,7 @@ else
     > TE - turbo-electric" )
 end
 
-engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
+engine = TASOPT.engine.Engine(enginemodel, TASOPT.engine.EmptyData(), Vector{TASOPT.engine.HX_struct}())
 
 
 engloc = read_input("engine_location", options, doptions)
