@@ -1096,9 +1096,9 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
     #Create aircraft object
+    #Create aircraft object
     ac = TASOPT.aircraft(name, description, aircraft_type,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail, engine)
-    
+    pari, parg, parm, para, pare, fuse_tank, fuselage, wing, htail, vtail, engine, landing_gear, [false])
     # ---------------------------------
     # Recalculate cabin length
     if calculate_cabin #Resize the cabin if desired, keeping deltas
