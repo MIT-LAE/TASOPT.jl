@@ -18,9 +18,9 @@ function find_mdot_time(t::Float64, pari::Vector{Int64}, parg::Vector{Float64}, 
     nftanks = pari[iinftanks]
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
-    mdots = pare[ieff, :,1] .* pare[iemcore, :,1] .* parg[igneng] / nftanks
+    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / nftanks
 
-    times = para[iatime,:,1]
+    times = para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
     if t in times
@@ -70,12 +70,11 @@ function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, pari::Vector{In
     Npoints = size(para)[2]
     Qs = zeros(Npoints)
     for ip = 1:Npoints
-        Mair = para[iaMach, ip, 1]
-        z = para[iaalt, ip, 1]
-        t = para[iatime, ip, 1]
+        Mair = para[iaMach, ip]
+        z = para[iaalt, ip]
 
         #Calculate heat rate at this point
-        Qs[ip], _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
+        Qs[ip] = tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
        
     end
     return Qs
@@ -96,7 +95,7 @@ at each mission point for speed.
     - `Q::Float64`: heat transfer rate (W)
 """
 function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64})
-    times = para[iatime,:,1]
+    times = para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
     if t in times
@@ -147,21 +146,21 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, pari:
             M0 = para[iaMach, ip, 1]
             z0 = para[iaalt, ip, 1]
 
-            Q, _, _ = tankWthermal(fuse, fuse_tank, z0, M0, xftank, t, ifuel)
+            Q = tankWthermal(fuse, fuse_tank, z0, M0, xftank, ifuel)
         elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
-            M0 = para[iaMach, ip, 1]
-            Mf = para[iaMach, ip+1, 1]
-            z0 = para[iaalt, ip, 1]
-            zf = para[iaalt, ip+1, 1]
+            M0 = para[iaMach, ip]
+            Mf = para[iaMach, ip+1]
+            z0 = para[iaalt, ip]
+            zf = para[iaalt, ip+1]
 
             #Interpolate Mach number and altitude linearly
             Mair = M0 + (Mf - M0)/(tf-t0) * (t - t0) 
             z = z0 + (zf - z0)/(tf-t0) * (t - t0)
 
             #Calculate heat rate at this point
-            Q, _, _ = tankWthermal(fuse, fuse_tank, z, Mair, xftank, t, ifuel)
+            Q = tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
         end
     end
     return Q
@@ -176,6 +175,7 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `ac_orig::aicraft`: TASOPT aircraft model
     - `t_hold_orig::Float64`: hold at origin (s)
     - `t_hold_dest::Float64`: hold at destination (s)
+    - `im::Int64`: mission index
     
     **Outputs:**
     - `ts::Vector{Float64}`: vector with times (s)
@@ -190,21 +190,21 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
     
 """
-function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0)
+function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, im::Int64 = 1)
     ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
 
     #Modify aircraft with holding times
-    para_alt = zeros(size(ac.para)[1], size(ac.para)[2] + 3, size(ac.para)[3])
-    ac.para[iatime, :] .= ac.para[iatime, :] .- minimum(ac.para[iatime, :, 1])
-    para_alt[:, 3:(iptotal + 1)] .= ac.para[:,1:(size(ac.para)[2] - 1)] #Do not copy iptest
+    para_alt = zeros(size(ac.para)[1], size(ac.para)[2] + 3)
+    ac.para[iatime, :, im] .= ac.para[iatime, :, im] .- minimum(ac.para[iatime, :, im])
+    para_alt[:, 3:(iptotal + 1)] .= ac.para[:, 1:(size(ac.para)[2] - 1), im] #Do not copy iptest
     para_alt[iatime, 2:(iptotal + 1)] .= para_alt[iatime, 2:(iptotal + 1)] .+ t_hold_orig #Apply hold at origin
     para_alt[iatime, 1] = 0.0
     Np = size(para_alt)[2]
     para_alt[iatime, Np-1] = maximum(para_alt[iatime, :])
     para_alt[iatime, Np] = para_alt[iatime, Np-1] + t_hold_dest #Apply hold at destination
 
-    pare_alt = zeros(size(ac.pare)[1], size(ac.pare)[2] + 3, size(ac.pare)[3])
-    pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:]
+    pare_alt = zeros(size(ac.pare)[1], size(ac.pare)[2] + 3)
+    pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:, im]
     
     #Precompute heat transfer rate at each mission point for speed
     Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.pari, ac.parg, para_alt)

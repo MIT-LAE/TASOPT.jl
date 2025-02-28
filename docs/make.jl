@@ -6,7 +6,7 @@ push!(LOAD_PATH, "../src")
 aerodynamics = TASOPT.aerodynamics
 structures = TASOPT.structures
 engine = TASOPT.engine
-aircraft = TASOPT.aircraft
+airc = TASOPT.aircraft      #"aircraft = ..." conflicted with the global namespace
 CryoTank = TASOPT.CryoTank
 
 makedocs(
@@ -31,7 +31,9 @@ makedocs(
         "atmos/atmos.md"
         ],
     "Structures" => Any["structures/wing.md",
-        "structures/fuselage.md"
+        "structures/fuselage.md",
+        "structures/landing_gear.md",
+        "structures/cabin_sizing.md"
         ],
     "Cryogenic tanks" => Any["cryo_tank/cryotank.md",
     "cryo_tank/fueltanks.md"

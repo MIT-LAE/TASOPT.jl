@@ -33,7 +33,7 @@ function spline(S, X)
         ΔX₊ = X[i + 1] - X[i    ]
         ΔX₋ = X[i    ] - X[i - 1]
 
-        B[i] = ΔS₊
+        B[i-1] = ΔS₊
         A[i] = 2.0 * (ΔS₋ + ΔS₊)
         C[i] = ΔS₋
         D[i] = 3.0 * (ΔX₊ * ΔS₋/ΔS₊ + ΔX₋ * ΔS₊/ΔS₋)
@@ -56,10 +56,13 @@ function spline(S, X)
         D[N] = 3.0 * (X[N] - X[N - 1]) / (S[N] - S[N - 1])
     end
 
+    # @show A
+    # @show B
+    # @show C
 # ---- solve for derivative array XS
     SYS = Tridiagonal(B, A, C)
     XS = SYS \ D    
-
+    # @show XS
     return XS
 end # SPLINE
 

@@ -7,7 +7,7 @@ To run a multi-variable optimization run on an aircraft model first determining 
 1. Aspect Ratio: `AR`
 2. Cruise Altitude: `Alt`
 3. Lift Coefficient: `Cl`  
-4. Wing Sweep: `Λ`
+4. Wing Sweep: `sweep`
 5. Inner panel taper ratio: `λs`  
 6. Outer panel taper ratio: `λt`  
 7. Root thickness to chord: `hboxo`
@@ -20,11 +20,11 @@ To run a multi-variable optimization run on an aircraft model first determining 
 
 ## Initialiation and loading models
 
-Start the script importing `TASOPT.jl`, `PyPlot`, `index.inc`, `NLopt`.
+Start the script importing `TASOPT.jl`, `Plots`, `index.inc`, `NLopt`.
 
 ```julia
 # Import modules
-using PyPlot
+using Plots
 using TASOPT
 # you can optionally define
 # const tas = TASOPT 
@@ -42,7 +42,7 @@ farray = []
 PFEIarray = []
 CDarray = []
 OPRarray = []
-track_fig = nothing
+plot_obj = nothing
 ft_to_m = 0.3048
 ```
 
@@ -58,13 +58,13 @@ size_aircraft!(ac)
 
 ## Setting Optimization Parameters
 
-This example uses a Nedler Mead optimization aimed towards optimizing for passenger fuel emission index (PFEI) while checking for other constraints.
+This example uses a Nelder Mead optimization aimed towards optimizing for passenger fuel emission index (PFEI) while checking for other constraints.
 
 ### Set the Upper and Lower limits for all design variables
 
 ```julia
 # DESIGN VARIABLES
-#             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
+#             AR    Alt(ft)  Cl     sweep     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
 lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6,      0]
 upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15,     10] 
 
@@ -177,27 +177,30 @@ if !isdir(savedir)
     println("The 'optimization' directory has been created.")
 end
 figname = "Opt_tutorial_ac_details"
-global track_fig = TASOPT.plot_details(ac; ax = track_fig)
-plt.savefig(savedir*figname*".png")
+plot_obj = TASOPT.plot_details(ac; plot_obj = plot_obj)
+savefig(plot_obj, savedir*figname*".png")
 ```
 
 ### Plot optimization outputs over iterations
 
 ```julia
-fig, ax = plt.subplots(2,2, figsize = (12,8))
-ax[1].plot(PFEIarray)
-ax[1].set_xlabel("Iterations")
-ax[1].set_ylabel("PFEI (J/Nm)")
-ax[2].semilogy(farray)
-ax[2].set_xlabel("Iterations")
-ax[2].set_ylabel("Objective f")
-ax[3].plot(CDarray)
-ax[3].set_xlabel("Iterations")
-ax[3].set_ylabel("CD")
-ax[4].plot(OPRarray)
-ax[4].set_xlabel("Iterations")
-ax[4].set_ylabel("OPR")
-plt.suptitle("Optimization outputs")
+## Second figure
+# Create a 2x2 layout
+layout = @layout [a b; c d]
+
+p1 = plot(PFEIarray, xlabel="Iterations", ylabel="PFEI (J/Nm)", title="")
+p2 = plot(farray, yscale=:log10, xlabel="Iterations", ylabel="Objective f", title="")
+p3 = plot(CDarray, xlabel="Iterations", ylabel="CD", title="")
+p4 = plot(OPRarray, xlabel="Iterations", ylabel="OPR", title="")
+
+# Create the plot
+p = plot(p1, p2, p3, p4,    
+    layout = layout,
+    size=(1200, 800),
+    plot_title="Optimization outputs"
+)
+
+# Save the plot
 figname2 = "Opt_tutorial_iterations"
-fig.savefig(savedir*figname2*".png")
+savefig(p, savedir * figname2 * ".png")
 ```
