@@ -37,11 +37,15 @@ include("turbofan/tfweight.jl")
 include("turbofan/tfwrap.jl")
 include("turbofan/tfweightwrap.jl")
 include("hxfun.jl")
-include("PEMfuelcell.jl")
 include("../misc/engine.jl")
 include("ducted_fan/ductedfancalc.jl")
 include("ducted_fan/ductedfansize.jl")
 include("ducted_fan/ductedfanoper.jl")
 include("ducted_fan/ductedfanweight.jl")
+
+#Fuel cell models
+include("PEMfuelcell.jl")
+include("fuel_cell/FC_objects.jl")
+include("fuel_cell/fuel_cell_operations.jl")
 
 end

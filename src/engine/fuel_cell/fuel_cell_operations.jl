@@ -1,5 +1,4 @@
 function size_fuel_cell!(ac, ip, imission)
-    pare = view(ac.pare, :, ip, imission)
     fcdata = ac.engine.data
     
     Pdes = fcdata.design_power
@@ -9,54 +8,54 @@ function size_fuel_cell!(ac, ip, imission)
     u_LT.T = fcdata.FC_temperature[ip, imission]	
     u_LT.p_A = fcdata.FC_pressure[ip, imission]
     u_LT.p_C = fcdata.FC_pressure[ip, imission]
-    u_LT.x_H2O_A = pare[iexwanode]
-    u_LT.x_H2O_C = pare[iexwcathode]
-    u_LT.λ_H2 = pare[ielambdaw]
-    u_LT.λ_O2 = pare[ielambdaox]
-    u_LT.t_M = pare[ietmembrane]
-    u_LT.t_A = pare[ietanode]
-    u_LT.t_C = pare[ietcathode]
+    u_LT.x_H2O_A = fcdata.water_concentration_anode[ip, imission]
+    u_LT.x_H2O_C = fcdata.water_concentration_cathode[ip, imission]
+    u_LT.λ_H2 = fcdata.λ_H2[ip, imission]
+    u_LT.λ_O2 = fcdata.λ_O2[ip, imission]
+    u_LT.t_M = fcdata.thickness_membrane
+    u_LT.t_A = fcdata.thickness_anode
+    u_LT.t_C = fcdata.thickness_cathode
     u_LT.type = fcdata.type
 
-    Vdes = pare[ieVstack]
-    α_guess = pare[iealphawat]
+    Vdes = fcdata.design_voltage
+    α_guess = fcdata.α_water[ip, imission]
 
     n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT, α_guess)
 
-    pare[ieQheat] = Q
-    ac.pared[iencells, :] .= n_cells
-    ac.pared[ieAcell, :] .= A_cell
+    fcdata.fuel_cell_heat[ip, imission] = Q
+    fcdata.number_cells = n_cells
+    fcdata.area_cell = A_cell
 end
 
-function operate_fuel_cell!(ac, ip)
+function operate_fuel_cell!(ac, ip, imission)
     pare = view(ac.pared, :, ip)
     
     u_LT = engine.PEMFC_inputs()
 
-    u_LT.T = pare[ieTfc]
-    u_LT.p_A = pare[iepfc]
-    u_LT.p_C = pare[iepfc]
-    u_LT.x_H2O_A = pare[iexwanode]
-    u_LT.x_H2O_C = pare[iexwcathode]
-    u_LT.λ_H2 = pare[ielambdaw]
-    u_LT.λ_O2 = pare[ielambdaox]
-    u_LT.t_M = pare[ietmembrane]
-    u_LT.t_A = pare[ietanode]
-    u_LT.t_C = pare[ietcathode]
-    u_LT.type = "HT-PEMFC"
+    u_LT.T = fcdata.FC_temperature[ip, imission]	
+    u_LT.p_A = fcdata.FC_pressure[ip, imission]
+    u_LT.p_C = fcdata.FC_pressure[ip, imission]
+    u_LT.x_H2O_A = fcdata.water_concentration_anode[ip, imission]
+    u_LT.x_H2O_C = fcdata.water_concentration_cathode[ip, imission]
+    u_LT.λ_H2 = fcdata.λ_H2[ip, imission]
+    u_LT.λ_O2 = fcdata.λ_O2[ip, imission]
+    u_LT.t_M = fcdata.thickness_membrane
+    u_LT.t_A = fcdata.thickness_anode
+    u_LT.t_C = fcdata.thickness_cathode
+    u_LT.type = fcdata.type
 
-    n_cells = pare[iencells]
-    A_cell = pare[ieAcell]
-    j_guess = pare[iejdens]
-    α_guess = pare[iealphawat]
+    n_cells = fcdata.number_cells
+    A_cell = fcdata.area_cell
+    j_guess = fcdata.current_density[ip, imission]
+    α_guess = fcdata.α_water[ip, imission]
 
-    P = pare[iePfc]
+    P = fcdata.fuel_cell_power[ip, imission]
     mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT, j_guess, α_guess)
 
     pare[iemfuel] = mfuel * ac.parg[igneng]
-    pare[ieVstack] = V_stack
-    pare[ieQheat] = Q
-    pare[iejdens] = j
-    pare[iealphawat] = α
+    fcdata.stack_voltage[ip, imission] = V_stack
+    fcdata.fuel_cell_heat[ip, imission] = Q
+    fcdata.current_density[ip, imission] = j
+    fcdata.α_water[ip, imission] = α
   
 end
