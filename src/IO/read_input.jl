@@ -41,6 +41,19 @@ function get_template_input_file(designrange)
     end
     return templatefile
 end
+
+function ac_sym(aircraft_type::String)
+    if lowercase(aircraft_type) == "narrow body aircraft"
+        return :narrow
+    elseif lowercase(aircraft_type) == "wide body aircraft"
+        return :wide
+    elseif lowercase(aircraft_type) == "regional aircraft"
+        return :regional
+    else
+        return :narrow
+    end
+end
+
 # Convenience functions to convert to SI units
 Speed(x)    = convertSpeed(parse_unit(x)...)
 Distance(x)      = convertDist(parse_unit(x)...)
@@ -104,7 +117,7 @@ if templatefile == ""
 elseif !isfile(templatefile)
     #if not, warn that we're ignoring it
     @warn "Template input file provided does not exist: $templatefile \n Proceeding with template file as determined by design mission range."
-    templatefile = nothing
+    templatefile = nothing 
 end
 #if no valid templatefile provided
 if isnothing(templatefile)
@@ -119,7 +132,8 @@ ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
 sized = get(ac_descrip, "sized",[false])
-
+ac_type_string = get(ac_descrip, "aircraft_type", default["Aircraft Description"]["aircraft_type"])
+aircraft_type = ac_sym(ac_type_string)
 
 #Get number of missions to create data arrays
 mis = read_input("Mission", data, default)
@@ -1082,9 +1096,9 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
     #Create aircraft object
-    ac = TASOPT.aircraft(name, description,
+    #Create aircraft object
+    ac = TASOPT.aircraft(name, description, aircraft_type,
     pari, parg, parm, para, pare, fuse_tank, fuselage, wing, htail, vtail, engine, landing_gear, [false])
-    
     # ---------------------------------
     # Recalculate cabin length
     if calculate_cabin #Resize the cabin if desired, keeping deltas

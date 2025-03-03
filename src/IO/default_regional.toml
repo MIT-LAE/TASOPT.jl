@@ -3,9 +3,9 @@
     description = """
     This model file describes a basic single-aisle regional aircraft.
     """
-    aircraft_type   = "Regional Aircraft"   # 0: Regional Aircraft
-                                        # 1: Narrow Body Aircraft
-                                        # 2: Wide Body Aircraft
+    aircraft_type   = "Regional Aircraft"   # Regional Aircraft
+                                        # Narrow Body Aircraft
+                                        # Wide Body Aircraft
 
 
 #-------------------------------------------------#
