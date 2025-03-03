@@ -54,6 +54,7 @@ Angle(x)    = convertAngle(parse_unit(x)...)
 Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
+
 """
     read_aircraft_model(datafile; 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
@@ -141,32 +142,34 @@ landing_gear = LandingGear()
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
-
-maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
-                                                #This may exceed the seatable capacity to account for belly cargo
-pax = readmis("pax")
-exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
-despax = pax[1] #Design number of passengers
-
-if any(maxpax .< pax)
-    error("One or more missions have higher payload than prescribed maximum aircraft payload!:"*
-    "\n Max Payload [in pax] = "*string(maxpax)*
-    "\n Payloads listed [in pax] = "*string(pax))
-end
-if any(exitlimit .< pax)
-    error("One or more missions have higher passenger counts than the prescribed exit limit!:"*
-    "\n Exit limit [in pax] = "*string(exitlimit)*
-    "\n Payloads listed [in pax] = "*string(pax))
-end
-
 Wpax =  Force(readmis("weight_per_pax"))
+
+#Weight() can take in "pax" as a unit; the weight of a passenger is user-defined
+function Weight(x)
+    if x isa AbstractVector
+        return [Weight(w) for w in x]  # Recursively call Weight on each element
+    elseif x isa AbstractString
+        value, unit = parse_unit(x)
+        return unit == "pax" ? value * Wpax : convertForce(value, unit)
+    elseif x isa Float64
+        return x
+    else
+        throw(ArgumentError("Unsupported input type: $(typeof(x))"))
+    end
+end
+
+maxpay = Weight(readmis("max_payload")) #This represents the maximum aircraft payload
+                                #This may exceed the seatable capacity to account for belly cargo
+
+payload = Weight(readmis("payload"))
+exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
+
 parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= pax * Wpax
-parg[igWpaymax] = maxpax * Wpax
+parm[imWpay, :] .= payload
+parg[igWpaymax] = maxpay 
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
-fuselage.cabin.design_pax = despax
 fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
@@ -336,9 +339,9 @@ readweight(x) = read_input(x, weight, dweight)
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
 
-    fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
-    fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
-    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
+    fuselage.APU.W = readweight("APU_weight_fraction")*maxpay
+    fuselage.seat.W = readweight("seat_weight_fraction")*maxpay #TODO it may be better to scale this with exit_limit
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpay
 
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
