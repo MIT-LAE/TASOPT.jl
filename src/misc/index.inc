@@ -75,150 +75,150 @@
       const igfreserve =  13
       const igfeadd    =  14
       const igfpylon   =  15
-      const igflgnose  =  16
-      const igflgmain  =  17
-      const igNlift    =  18
-      const igNland    =  19
-      const igVne      =  20
-      const igneng     =  21
-      const igGearf    =  22
-      const igfTt4CL1  =  23
-      const igfTt4CLn  =  24
-      const igHTRf     =  25
-      const igHTRlc    =  26
-      const igHTRhc    =  27
-      const igrSnace   =  28
-      const igrVnace   =  29
-      const igfSnace   =  30
-      const igpcabin   =  31
-      const igdeltap   =  32
-      const igxeng     =  33     
-      const igxlgnose  = 34
-      const igdxlgmain = 35
-      const igyeng     = 36
-      const igcabVol   = 37
-      const igrpayfwd  = 38
-      const igrpayaft  = 39
-      const igxNP      = 40
-      const igCMVf1    = 41
-      const igCLMf0    = 42
-      const igdCLnda   = 43
-      const igdCLhdCL  = 44
-      const igdCLndCL  = 45
-      const igCLhspec  = 46
-      const igCLveout  = 47
-      const igfCDhcen  = 48
-      const igrMh      = 49
-      const igrMv      = 50
-      const igsigfac   = 51
-      const igrhofuel  = 52
+### Good Riddance ###
+### Good Riddance ###
+      const igNlift    =  16
+      const igNland    =  17
+      const igVne      =  18
+      const igneng     =  19
+      const igGearf    =  20
+      const igfTt4CL1  =  21
+      const igfTt4CLn  =  22
+      const igHTRf     =  23
+      const igHTRlc    =  24
+      const igHTRhc    =  25
+      const igrSnace   =  26
+      const igrVnace   =  27
+      const igfSnace   =  28
+      const igpcabin   =  29
+      const igdeltap   =  30
+      const igxeng     =  31     
+### Good Riddance ###
+### Good Riddance ###
+      const igyeng     = 32
+      const igcabVol   = 33
+      const igrpayfwd  = 34
+      const igrpayaft  = 35
+      const igxNP      = 36
+      const igCMVf1    = 37
+      const igCLMf0    = 38
+      const igdCLnda   = 39
+      const igdCLhdCL  = 40
+      const igdCLndCL  = 41
+      const igCLhspec  = 42
+      const igCLveout  = 43
+      const igfCDhcen  = 44
+      const igrMh      = 45
+      const igrMv      = 46
+      const igsigfac   = 47
+      const igrhofuel  = 48
 ### Good Riddance ###
 ### Good Riddance ###
 ### Good Riddance ###
 ### Good Riddance ###
-      const igfBLIw    = 53
-      const igfBLIf    = 54
-      const igdfan     = 55
-      const igdlcomp   = 56
-      const igdhcomp   = 57
-      const iglnace    = 58
-      const igA5       = 59
-      const igA7       = 60
-      const igTmetal   = 61
-      const igcdefan   = 62
-      const igCDgear   = 63
-      const igCDspoil  = 64
-      const igmuroll   = 65
-      const igmubrake  = 66
-      const ighobst    = 67
-      const iglBFmax   = 68
-      const iggtocmin  = 69
-      const igdBSLmax  = 70
-      const igdBCBmax  = 71
-      const igmofWpay  = 72
-      const igmofWMTO  = 73
-      const igPofWpay  = 74
-      const igPofWMTO  = 75
+      const igfBLIw    = 49
+      const igfBLIf    = 50
+      const igdfan     = 51
+      const igdlcomp   = 52
+      const igdhcomp   = 53
+      const iglnace    = 54
+      const igA5       = 55
+      const igA7       = 56
+      const igTmetal   = 57
+      const igcdefan   = 58
+      const igCDgear   = 59
+      const igCDspoil  = 60
+      const igmuroll   = 61
+      const igmubrake  = 62
+      const ighobst    = 63
+      const iglBFmax   = 64
+      const iggtocmin  = 65
+      const igdBSLmax  = 66
+      const igdBCBmax  = 67
+      const igmofWpay  = 68
+      const igmofWMTO  = 69
+      const igPofWpay  = 70
+      const igPofWMTO  = 71
 
       # Adding indices to store TE weights and locations
-      const igWtshaft  = 76
-      const igWgen     = 77
-      const igWinv     = 78
-      const igWmot     = 79
-      const igWfan     = 80
-      const igWftank   = 81
+      const igWtshaft  = 72
+      const igWgen     = 73
+      const igWinv     = 74
+      const igWmot     = 75
+      const igWfan     = 76
+      const igWftank   = 77
 
-      const igxtshaft  = 82
-      const igxgen     = 83
-      const igxinv     = 84
-      const igxmot     = 85
-      const igxfan     = 86
-      const igxftank   = 87
+      const igxtshaft  = 78
+      const igxgen     = 79
+      const igxinv     = 80
+      const igxmot     = 81
+      const igxfan     = 82
+      const igxftank   = 83
       
-      const igxcables  = 88
-      const igWcables  = 89
+      const igxcables  = 84
+      const igWcables  = 85
 
-      const igxcat     = 90
-      const igWcat     = 91
+      const igxcat     = 86
+      const igWcat     = 87
 
-      const igWtesys   = 92
-      const igxWtesys  = 93
+      const igWtesys   = 88
+      const igxWtesys  = 89
 
-      const iglftank   = 94
-      const igWinsftank= 95
-      const igxWftank  = 96
+      const iglftank   = 90
+      const igWinsftank= 91
+      const igxWftank  = 92
       
-      const igRftank   = 97
-      const igWc3des   = 98
+      const igRftank   = 93
+      const igWc3des   = 94
 
-      const igdaftfan  = 99
-      const iglnaceaft = 100
+      const igdaftfan  = 95
+      const iglnaceaft = 96
 
-      const igneout    = 101
-      const igyeout    = 102
-      const igyeinn    = 103
-      const iglftankin = 104 #lftank input
-      const igLHVfuel  = 105
-      const igWfburn   = 106
+      const igneout    = 97
+      const igyeout    = 98
+      const igyeinn    = 99
+      const iglftankin = 100 #lftank input
+      const igLHVfuel  = 101
+      const igWfburn   = 102
 
-      const igWaftfan  = 107
-      const igWfanGB   = 108
-      const igWaftfanGB   = 109
-      const igWrect    = 110
-      const igWtms     = 111
+      const igWaftfan  = 103
+      const igWfanGB   = 104
+      const igWaftfanGB   = 105
+      const igWrect    = 106
+      const igWtms     = 107
 
-      const igfanPCT   = 112
+      const igfanPCT   = 108
 
-      const iggamVtarget = 113
+      const iggamVtarget = 109
 
-      const igWpaymax    = 114
+      const igWpaymax    = 110
 
-      const ig_YC = 115
-      const ig_YH = 116
-      const ig_YO = 117
-      const ig_YN = 118
-      const ig_MW = 119
-      const ighfuel      = 120
-      const igTfuel      = 121
+      const ig_YC = 111
+      const ig_YH = 112
+      const ig_YO = 113
+      const ig_YN = 114
+      const ig_MW = 115
+      const ighfuel      = 116
+      const igTfuel      = 117
 
-      const igxftankaft  = 122
-      const igdxeng2wbox = 123
+      const igxftankaft  = 118
+      const igdxeng2wbox = 119
 
-      const igxWfuel = 124
+      const igxWfuel = 120
 
 ### Good Riddance ###
 ### Good Riddance ###
 ### Good Riddance ###
 ### Good Riddance ###
 
-      const igWfvent = 125
-      const igdHXPreC = 126
-      const igdHXInterC = 127
-      const igdHXRegen = 128
-      const igHXaddmassfrac = 129
-      const igWHXs = 130
-      const igfeng = 131
-      const igtotal    = 131
+      const igWfvent = 121
+      const igdHXPreC = 122
+      const igdHXInterC = 123
+      const igdHXRegen = 124
+      const igHXaddmassfrac = 125
+      const igWHXs = 126
+      const igfeng = 127
+      const igtotal    = 127
 
 # indices for turbo-electric systems - really just the electrical machines
       const ite_ratSM   = 1
