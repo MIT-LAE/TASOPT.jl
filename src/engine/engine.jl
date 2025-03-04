@@ -17,6 +17,7 @@ export ductedfanoper!, ductedfansize!, ductedfancalc!, ductedfanweight
 
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
 export hxdesign!, radiator_design!, hxweight, resetHXs, HXOffDesign!
+export calculate_fuel_cell_with_ducted_fan!, ductedfanweight!
 
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy, unpack_ac
 
@@ -29,6 +30,7 @@ include("turbomachinery/tfmap.jl")
 include("turbomachinery/maps.jl")
 include("turbofan/tfcool.jl")
 include("turbofan/tfsize.jl")
+include("thrust_from_ROC.jl")
 include("gaussn.jl")
 include("compare.jl")
 include("turbofan/tfoper.jl")
@@ -47,5 +49,6 @@ include("ducted_fan/ductedfanweight.jl")
 include("PEMfuelcell.jl")
 include("fuel_cell/FC_objects.jl")
 include("fuel_cell/fuel_cell_operations.jl")
+include("fuel_cell/FC_ducted_fan_models.jl")
 
 end

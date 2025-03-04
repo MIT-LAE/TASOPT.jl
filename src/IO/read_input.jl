@@ -194,7 +194,36 @@ else
     > TE - turbo-electric" )
 end
 
-engine = TASOPT.engine.Engine(enginemodel, TASOPT.engine.EmptyData(), Vector{TASOPT.engine.HX_struct}())
+  # -----------------------------
+    # Engine model setup
+    # ------------------------------
+    
+modelname = "ducted_fan"
+engineweightname = "nasa"
+
+enginecalc! = calculate_fuel_cell_with_ducted_fan!
+engineweight! = ductedfanweight!
+model = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!)
+pare[iePfanmax,:,:] .= 20e6
+
+fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+
+fcdata.type = "HT-PEMFC"
+fcdata.current_density[ipstatic,:] .= 1e4
+fcdata.FC_temperature .= 453.15
+fcdata.FC_pressure .= 3e5
+fcdata.water_concentration_anode .= 0.1
+fcdata.water_concentration_cathode .= 0.1
+fcdata.λ_H2 .= 3.0
+fcdata.λ_O2 .= 3.0
+fcdata.thickness_membrane = 100e-6
+fcdata.thickness_anode  = 250e-6
+fcdata.thickness_cathode  = 250e-6
+fcdata.stack_voltage .= 200.0
+
+para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
+
+engine = TASOPT.engine.Engine(model, fcdata, Vector{TASOPT.engine.HX_struct}())
 
 
 engloc = read_input("engine_location", options, doptions)

@@ -20,7 +20,8 @@ function size_fuel_cell!(ac, ip, imission)
     Vdes = fcdata.design_voltage
     α_guess = fcdata.α_water[ip, imission]
 
-    n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT, α_guess)
+    #n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT, α_guess)
+    n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT)
 
     fcdata.fuel_cell_heat[ip, imission] = Q
     fcdata.number_cells = n_cells
@@ -50,7 +51,7 @@ function operate_fuel_cell!(ac, ip, imission)
     α_guess = fcdata.α_water[ip, imission]
 
     P = fcdata.fuel_cell_power[ip, imission]
-    mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT, j_guess, α_guess)
+    mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT)
 
     pare[iemfuel] = mfuel * ac.parg[igneng]
     fcdata.stack_voltage[ip, imission] = V_stack

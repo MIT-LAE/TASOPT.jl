@@ -19,15 +19,12 @@ Calls function ductedfansize! or ductedfanoper! for one operating point.
 """
 function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
     #Unpack data storage arrays
-    pari = ac.pari
-    parg = ac.parg
-    para = view(ac.para, :, ip, imission)
-    pare = view(ac.pare, :, ip, imission)
+    pari, parg, _, para, pare, _, _, wing, _, _, _ = unpack_ac(ac, imission, ip=ip)
 
     iBLIc = pari[iiBLIc]
 
     neng = parg[igneng]
-    S = parg[igS]
+    S = wing.layout.S
 
     Fsp = pare[ieFsp]
     pif = pare[iepif]
@@ -84,7 +81,7 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
     #- - - - - - - - - - - - - - - - - - - - - - - 
 
     # #--------------------------------------------------------------------------
-    if (case == "sizing")
+    if (case == "design")
         #----- engine sizing case
 
         Fe = pare[ieFe] #ducted fan sized for a given thrust
@@ -177,6 +174,8 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
                             M2, pif, mbf, 
                             Δh_radiator, Δp_radiator,
                             iPspec)
+            pare[ieFe] = Feng
+
         else #Thrust is specified, power to be computed
             Feng = pare[ieFe]
             Peng = 0.0
@@ -279,9 +278,6 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
 
     pare[ieetaf] = etaf
 
-    if (icall == 1)
-        pare[ieFe] = Feng
-    end
 
     if (M7 <= 0.999999)
             ichoke7 = 0

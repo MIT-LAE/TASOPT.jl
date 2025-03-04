@@ -162,7 +162,7 @@ function wsize(ac; itermax=35,
 
     # Reset engine values for heat exchangers
     resetHXs(pare)
-   
+
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------

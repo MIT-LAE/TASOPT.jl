@@ -428,7 +428,8 @@
       const iadCDBLIf = 62
       const iadCDBLIw = 63
       const iaROC     = 64
-      const iatotal   = 64 
+      const iaROCdes  = 65
+      const iatotal   = 65 
 
 #---- indices for engine variables at each mission point
       const iehfuel = 1
@@ -714,8 +715,12 @@
       const iehvapcombustor = 269
       const ieHXminTwall = 270
       const iemfuel = 271
+      const iemfan = 272
+      const iePfan = 273
+      const iePfanmax = 274
+      const ieTSEC = 275
 
-      const ietotal = 271
+      const ietotal = 275
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

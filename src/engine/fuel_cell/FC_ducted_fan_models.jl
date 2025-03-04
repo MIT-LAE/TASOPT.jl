@@ -1,4 +1,4 @@
-function calculate_fuel_cell_with_ducted_fan(ac, case, imission, ip, initializes_engine, iterw = 0) 
+function calculate_fuel_cell_with_ducted_fan!(ac, case, imission, ip, initializes_engine, iterw = 0) 
     #Unpack aircraft data
     pari, parg, _, para, pare, _, _, _, _, _, _ = unpack_ac(ac, imission)
     fcdata = ac.engine.data #Extract fuel cell data
@@ -7,7 +7,7 @@ function calculate_fuel_cell_with_ducted_fan(ac, case, imission, ip, initializes
         #Design ducted fan for start of cruise
         icall = 0
 
-        ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initializes_engine)
+        ductedfancalc!(ac, case, imission, ip, initializes_engine)
 
         parg[igA7] = pare[ieA7, ip] / pare[ieA7fac, ip]
 
@@ -53,7 +53,7 @@ function calculate_fuel_cell_with_ducted_fan(ac, case, imission, ip, initializes
 
         end
 
-        ductedfancalc!(pari, parg, view(para, :, ip), view(pare, :, ip), ip, icall, initeng)
+        ductedfancalc!(ac, case, imission, ip, initializes_engine)
 
         Pfan = pare[iePfan, ip]
         ## Model of electric machine to deliver Pfan

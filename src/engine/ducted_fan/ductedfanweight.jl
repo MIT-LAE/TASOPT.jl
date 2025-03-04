@@ -1,4 +1,4 @@
-function ductedfanweight(ac, HXs)
+function ductedfanweight!(ac)
     Dfan   = ac.parg[igdfan]
     Nmech  = maximum(ac.pared[ieNf, :])
     fpylon = ac.parg[igfpylon]
@@ -31,7 +31,7 @@ function ductedfanweight(ac, HXs)
     Wnac = Wnace * neng
 
     W_HXs = 0.0 #Store total weight of HXs
-    for HX in HXs #For every heat exchanger in the engine
+    for HX in ac.engine.heat_exchangers #For every heat exchanger in the engine
         W_HXs += hxweight(gee, HX.HXgeom, HX_add_mass_frac) * neng #Weight of a heat exchanger times number of engines
     end
     Webare = Webare + W_HXs #Add heat exchanger weight to bare and full engine
