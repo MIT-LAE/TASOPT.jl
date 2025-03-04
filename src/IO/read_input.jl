@@ -219,7 +219,7 @@ fcdata.λ_O2 .= 3.0
 fcdata.thickness_membrane = 100e-6
 fcdata.thickness_anode  = 250e-6
 fcdata.thickness_cathode  = 250e-6
-fcdata.stack_voltage .= 200.0
+fcdata.design_voltage = 200.0
 
 para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
 

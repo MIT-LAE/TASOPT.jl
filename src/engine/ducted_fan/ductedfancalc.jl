@@ -124,7 +124,7 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
         pare[iepifD] = pifD
         pare[ieNbfD] = Nbf
 
-    elseif case == "off_design"
+    else
         #----- fixed parameters
         A2 = pare[ieA2]
         A7 = pare[ieA7]
@@ -146,8 +146,8 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
                 pif = pare[iepif]
                 M2 = pare[ieM2]
         end
-        if ip in range(ipstatic, ipclimbn) 
-            #Power is specified, thrust will be computed -- in takeoff and climb
+        if ip in range(ipstatic, iprotate) 
+            #Power is specified, thrust will be computed -- in takeoff
             Feng = 0.0
             Peng = pare[iePfanmax]
             iPspec = true

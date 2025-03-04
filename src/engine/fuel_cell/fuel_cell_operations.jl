@@ -18,7 +18,7 @@ function size_fuel_cell!(ac, ip, imission)
     u_LT.type = fcdata.type
 
     Vdes = fcdata.design_voltage
-    α_guess = fcdata.α_water[ip, imission]
+    #α_guess = fcdata.α_water[ip, imission]
 
     #n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT, α_guess)
     n_cells, A_cell, Q = engine.PEMsize(Pdes, Vdes, u_LT)
@@ -29,7 +29,8 @@ function size_fuel_cell!(ac, ip, imission)
 end
 
 function operate_fuel_cell!(ac, ip, imission)
-    pare = view(ac.pared, :, ip)
+    pare = view(ac.pare, :, ip, imission)
+    fcdata = ac.engine.data
     
     u_LT = engine.PEMFC_inputs()
 
@@ -47,16 +48,22 @@ function operate_fuel_cell!(ac, ip, imission)
 
     n_cells = fcdata.number_cells
     A_cell = fcdata.area_cell
-    j_guess = fcdata.current_density[ip, imission]
-    α_guess = fcdata.α_water[ip, imission]
+    #j_guess = fcdata.current_density[ip, imission]
+    #α_guess = fcdata.α_water[ip, imission]
 
     P = fcdata.fuel_cell_power[ip, imission]
-    mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT)
+    #mfuel, V_stack, Q, j, α = engine.PEMoper(P, n_cells, A_cell, u_LT)
+    V_stack, Q = engine.PEMoper(P, n_cells, A_cell, u_LT)
+
+    M_h2 = 2.016e-3 #kg/mol
+    F = 96485.3329 # C/mol, Faraday contant
+    I = P / V_stack #Current
+    mfuel = I * M_h2 / (2*F) #Molar flux of hydrogen gas
 
     pare[iemfuel] = mfuel * ac.parg[igneng]
     fcdata.stack_voltage[ip, imission] = V_stack
     fcdata.fuel_cell_heat[ip, imission] = Q
-    fcdata.current_density[ip, imission] = j
-    fcdata.α_water[ip, imission] = α
+    fcdata.current_density[ip, imission] = I/A_cell/n_cells
+    #fcdata.α_water[ip, imission] = α
   
 end

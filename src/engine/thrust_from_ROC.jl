@@ -1,6 +1,7 @@
 function calculate_thrust_from_ROC!(ac, ip, imission)
     _, parg, _, para, pare, _, _, wing, _, _, _, _ = unpack_ac(ac, imission, ip = ip)
 
+    neng = ac.parg[igneng]
     #Calculate climb angle from desired climb rate
     WMTO = parg[igWMTO]
     S = wing.layout.S
