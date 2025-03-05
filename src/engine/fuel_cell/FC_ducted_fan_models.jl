@@ -36,7 +36,7 @@ function calculate_fuel_cell_with_ducted_fan!(ac, case, imission, ip, initialize
         ## Model of electric machine to deliver Pfan
         Pmotor = Pfan #100% efficiency for now
         ##
-        fcdata.fuel_cell_power[ip, imission] = Pmotor
+        fcdata.FC_power[ip, imission] = Pmotor
         operate_fuel_cell!(ac, ip, imission)
 
     else
@@ -59,7 +59,7 @@ function calculate_fuel_cell_with_ducted_fan!(ac, case, imission, ip, initialize
         ## Model of electric machine to deliver Pfan
         Pmotor = Pfan #100% efficiency for now
         ##
-        fcdata.fuel_cell_power[ip, imission] = Pmotor
+        fcdata.FC_power[ip, imission] = Pmotor
 
         operate_fuel_cell!(ac, ip, imission)
     end

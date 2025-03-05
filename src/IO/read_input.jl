@@ -220,6 +220,9 @@ fcdata.thickness_membrane = 100e-6
 fcdata.thickness_anode  = 250e-6
 fcdata.thickness_cathode  = 250e-6
 fcdata.design_voltage = 200.0
+pare[ieRadiatorepsilon,:,:] .= 0.7
+pare[ieRadiatorMp,:,:] .= 0.12
+pare[ieDi,:,:] .= 0.4
 
 para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
 

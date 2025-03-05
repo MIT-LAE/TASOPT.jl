@@ -1517,10 +1517,11 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       lmin, linit = calculate_min_tube_length(HXgeom, HXgas) #Minimum tube lenght and initial guess
 
       #Now set starting point
-      if HXs_prev.HXgeom.n_passes ≈ 0 #If there is no previous heat exchanger design point
+      if isempty(HXs_prev) # #If there is no previous heat exchanger design point
             #Calculate initial length
             initial_x = [3.0, 19.0, 4.0, linit] #Initial guess
       else 
+            HXs_prev = HXs_prev[1]
             #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
             initial_x = [100 * HXs_prev.HXgas_mission[ipdes].Mc_in, 
             HXs_prev.HXgeom.n_stages, HXs_prev.HXgeom.xt_D, max(HXs_prev.HXgeom.l, lmin)] #guess is previous iteration design point
@@ -1564,7 +1565,7 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
             pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
             
       end
-      return HX_struct(type, HXgeom, HXgas_mis)
+      return [HX_struct(type, HXgeom, HXgas_mis)]
 end
 
 """

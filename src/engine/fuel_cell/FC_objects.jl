@@ -30,9 +30,9 @@ mutable struct FuelCellDuctedFanData <: AbstractData
     """Design stack_power (W)"""
     design_power::Float64
     """Fuel cell total power (W)"""
-    fuel_cell_power::Array{Float64, 2}
+    FC_power::Array{Float64, 2}
     """Fuel cell heat rate (W)"""
-    fuel_cell_heat::Array{Float64, 2}
+    FC_heat::Array{Float64, 2}
     """Stack voltage (V)"""
     stack_voltage::Array{Float64, 2}
     """Fuel cell temperature (K)"""
