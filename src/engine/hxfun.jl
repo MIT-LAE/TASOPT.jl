@@ -1627,7 +1627,7 @@ This function calculates the coolant liquid based on its temperature.
     **Outputs:**
     Modifies `HXgas` with the coolant name
 """
-function findRadiatorCoolant!(HXgas)
+function findLiquidCoolant!(HXgas)
       if HXgas.Tc_in > 373.15 #TODO add more coolant options
             coolant_name = "liquid ethylene glycol"
       else

@@ -63,7 +63,7 @@ function operate_fuel_cell!(ac, ip, imission)
     pare[iemfuel] = mfuel * ac.parg[igneng]
     fcdata.stack_voltage[ip, imission] = V_stack
     fcdata.FC_heat[ip, imission] = Q
-    fcdata.current_density[ip, imission] = I/A_cell/n_cells
+    fcdata.current_density[ip, imission] = I/A_cell
     #fcdata.α_water[ip, imission] = α
   
 end

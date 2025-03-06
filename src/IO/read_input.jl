@@ -209,7 +209,7 @@ pare[iePfanmax,:,:] .= 20e6
 fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
 
 fcdata.type = "HT-PEMFC"
-fcdata.current_density[ipstatic,:] .= 1e4
+fcdata.current_density[iprotate,:] .= 1e4
 fcdata.FC_temperature .= 453.15
 fcdata.FC_pressure .= 3e5
 fcdata.water_concentration_anode .= 0.1

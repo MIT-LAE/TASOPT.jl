@@ -734,22 +734,16 @@ function wsize(ac; itermax=35,
             end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
             #With fuel storage in tanks, this is done in the block above.
-            pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
-            pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
-            pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
 
-            ipdes = iprotate #Design point: takeoff rotation
             if engine.model.model_name == "ducted_fan"
-                rad_dict = Dict(
-                "iTp_in" => ieTt21,
-                "ipp_in" => iept21,
-                "iTc_in" => ieRadiatorCoolantT,
-                "ipc_in" => ieRadiatorCoolantP,
-                "imp_in" => iemfan,
-                "iQheat" => ieRadiatorHeat
-                )
-                engine.heat_exchangers = radiator_design!(pare, ipdes, rad_dict, engine.heat_exchangers; rlx = 1.0)
-            end
+                ipdes = iprotate #Design point: takeoff rotation
+                pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
+                pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
+                pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+
+                engine.heat_exchangers = radiator_design!(pare, ipdes, TASOPT.engine.rad_dict, engine.heat_exchangers; rlx = 1.0)
+                TASOPT.engine.VerifyRadiatorHeat(engine, imission)
+            end           
         end
 
         # -----------------------------
