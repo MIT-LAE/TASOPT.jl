@@ -1,4 +1,5 @@
 using DifferentialEquations
+using NLopt
 
 """
     LT_PEMFC_voltage_simple(j, T, p_H2, p_air)
@@ -1194,3 +1195,66 @@ function PEMstackweight(gee, u, n_cells, A_cell, fouter)
 
     return W_stack
 end #PEMstackweight
+
+"""
+    PEM_weight_from_specific_power(u, P_design, P2A_design, specific_power, jg = 1e3)
+
+Calculates the weight of a stack of PEM fuel cells from its specific power.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `u::PEMFC_inputs`: structure with inputs   
+    - `P_design::Float64`: design stack power (W)
+    - `P2A_design::Float64`: design stack power density (W/m^2)
+    - `specific_power::Float64`: specific power of the stack (W/kg)
+    - `jg::Float64`: guess current density at max power (A/m^2)
+ 
+    **Outputs:**
+    - `W_stack::Float64`: weight of FC stack (N)
+    - `j_maxP::Float64`: current density at maximum power (A/m^2)
+"""
+function PEM_weight_from_specific_power(u, P_design, P2A_design, specific_power, jg = 1e3)
+    #Find maximum fuel cell power density
+    P2A_max, j_maxP = find_maximum_PEMFC_power(u, jg)
+
+    P_max = P2A_max * P_design / P2A_design #Maximum power of the stack
+
+    W_stack = gee * P_max / specific_power
+    
+    return W_stack, j_maxP
+end #PEM_weight_from_specific_power
+
+"""
+    find_maximum_PEMFC_power(u, jg = 1e3)
+
+Finds the maximum power density of a PEM fuel cell.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `u::PEMFC_inputs`: structure with inputs   
+    - `jg::Float64`: guess current density at max power (A/m^2)
+ 
+    **Outputs:**
+    - `P2A_maxP::Float64`: maximum power density (W/m^2)
+    - `j_maxP::Float64`: current density at maximum power (A/m^2)
+"""
+function find_maximum_PEMFC_power(u, jg = 1e3)
+    #Optimize j to minimize -P/A (maximize P/A)
+    obj(x, grad) = -P2Acalc(u, x[1])[1] #Function to minimize
+
+    initial_x = [jg]
+    lower = [0.0]
+    upper = [1e5]
+        
+    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
+    opt.lower_bounds = lower
+    opt.upper_bounds = upper
+    opt.maxeval = 500  # Set the maximum number of function evaluations
+    opt.ftol_rel = 1e-8
+
+    opt.min_objective = obj
+    (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
+    j_maxP = xopt[1]
+    P2A_maxP = -minf
+    return P2A_maxP, j_maxP
+end #find_maximum_PEMFC_power

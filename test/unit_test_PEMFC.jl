@@ -58,4 +58,13 @@
     W_FC = TASOPT.engine.PEMstackweight(9.81, u_HT, n_cells, A_cell, 4.0)
 
     @test W_FC ≈ 7052.099720245001
+
+    P2A_maxP, j_maxP = TASOPT.engine.find_maximum_PEMFC_power(u_LT)
+    @test P2A_maxP ≈ 7614.221005014089
+    @test j_maxP ≈ 13237.3046875
+
+    W_FC, j = TASOPT.engine.PEM_weight_from_specific_power(u_LT, 1e7, 5e3, 2000)
+    @test W_FC ≈ 74695.50805918823
+    @test j ≈ j_maxP
+
 end
