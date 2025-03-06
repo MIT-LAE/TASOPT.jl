@@ -24,7 +24,7 @@ function wsize(ac; itermax=35,
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
-    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
+    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear = unpack_ac(ac, imission) 
 
     # Initialize variables
     time_propsys = 0.0
@@ -702,13 +702,13 @@ function wsize(ac; itermax=35,
                 # set static thrust for takeoff routine
                 ip = ipstatic
                 case = "off_design"
-                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+                eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 case = "off_design"
-                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+                eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
                 takeoff!(ac; printTO = false)
             end
@@ -720,10 +720,10 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            engine.heat_exchangers = hxdesign!(pare, pari, ipdes, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
+            eng.heat_exchangers = hxdesign!(pare, pari, ipdes, eng.heat_exchangers, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
-            for HX in engine.heat_exchangers
+            for HX in eng.heat_exchangers
                 if HX.type == "PreC"
                     parg[igdHXPreC] = HX.HXgeom.D_o
                 elseif HX.type == "InterC"
@@ -786,10 +786,10 @@ function wsize(ac; itermax=35,
 
         # Size engine for TOC
         case = "design" #Design the engine for this mission point
-        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
+        eng.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         #Calculate engine mass properties
-        engine.engineweight!(ac)
+        eng.engineweight!(ac)
 
         mission!(ac, imission, Ldebug)
 
@@ -808,7 +808,7 @@ function wsize(ac; itermax=35,
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
         case = "cooling_sizing"
-        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
+        eng.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         # Recalculate weight wupdate()
         ip = ipcruise1
@@ -847,13 +847,13 @@ function wsize(ac; itermax=35,
     # set static thrust for takeoff routine
     ip = ipstatic
     case = "off_design"
-    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+    eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
     case = "off_design"
-    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+    eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     if pari[iicalctakeoff] == 1 #If the engine can model the takeoff performance
         # calculate takeoff and balanced-field lengths
