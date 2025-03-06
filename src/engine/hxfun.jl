@@ -4,6 +4,8 @@
 # https://www.mathworks.com/help/hydro/ref/entuheattransfer.html
 # Nicolas Gomez Vega, Oct 2023
 
+const alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
+
 """
     HX_gas
 
@@ -62,6 +64,15 @@ Structure containing the gas properties of the process and coolant streams.
       recircT :: Float64 = 0.0 
       mdot_r :: Float64 = 0.0 
       h_lat :: Float64 = 0.0 
+end
+
+# Overload Base.getproperty for convenience
+function Base.getproperty(HXgas::HX_gas, sym::Symbol)
+      if (sym === :Q) 
+            return abs(getfield(HXgas, :mdot_c) * getfield(HXgas, :Δh_c))
+      else
+         return getfield(HXgas, sym)
+      end
 end
 
 """
@@ -126,7 +137,7 @@ function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
       else
          return getfield(HXgeom, sym)
       end
-   end
+end
 
 """
     HX_struct
@@ -1144,7 +1155,6 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
       end
 
 
-      alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
       #Initialize Heat Exchanger vector
       HeatExchangers = []
       Mc_opts = []
@@ -1293,12 +1303,12 @@ mission point.
     - `pari::Vector{Int}`: vector with integer parameters
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
-    Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes. 
+    Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes and
+    `HeatExchangers` with the gas properties at every mission point.
 """
 function HXOffDesign!(HeatExchangers, pare, pari; rlx = 1.0)
       frecirc = Bool(pare[iefrecirc, ipcruise1])
       igas = pari[iifuel]
-      alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
 
       if igas == 11 #TODO: add more options
             coolant_name = "ch4"
@@ -1454,7 +1464,6 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
             return #Skip if there is no radiator
       end
 
-      alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
       #Initialize Heat Exchanger vector, for similarity with engine-integrated HEXs
       
       type = "Radiator"
@@ -1481,9 +1490,6 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       HXgeom.Rfp = 1.761e-4 #Compressed air fouling resistance, m^2*K/W 
       HXgeom.material = StructuralAlloy("Al-2219-T87")
 
-      #Indices for HEX variables
-      Dh_i = ieRadiatorDeltah
-      Dp_i = ieRadiatorDeltap
       #Read remaining properties from dictionary with indices
       iTp_in = inpts_dict["iTp_in"]
       ipp_in = inpts_dict["ipp_in"]
@@ -1499,12 +1505,7 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       HXgas.Tc_in = pare_sl[iTc_in]
       HXgas.pc_in = pare_sl[ipc_in]
 
-      if pare_sl[iTc_in] > 373.15 #TODO add more coolant options
-            coolant_name = "liquid ethylene glycol"
-      else
-            coolant_name = "liquid water"
-      end
-      HXgas.fluid_c = coolant_name
+      findLiquidCoolant!(HXgas) #Find coolant based on temperature
 
       HXgeom.Δpdes = maximum(abs.(pare[ipc_in,:] - pare[ipp_in,:])) #size wall thickness for maximum post fan pressure                                                           
 
@@ -1530,14 +1531,57 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
       hxsize!(HXgas, HXgeom) #Evaluate all geometry properties at design point
 
+      HeatExchangers = [HX_struct(type, HXgeom, [])]
       #---------------------------------
       # Analyze off-design performance
       #---------------------------------
+      #Calculate radiator performance at every mission point
+      RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
+
+      HeatExchangers[1].HXgas_mission[ipdes].Mc_in = HXgas.Mc_in #Store optimum Mc_in
+      
+      return HeatExchangers
+end
+
+"""
+      RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
+
+This function runs the radiator through an aircraft mission and calculates performance at every
+mission point.      
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HeatExchangers::Vector{HX_struct}`: vector with radiator data
+    - `pare::Array{Float64 , 3}`: array with engine parameters
+    - `rlx::Float64`: relaxation factor for pare update
+
+    **Outputs:**
+    Modifies `pare` with the radiator enthalpy and pressure changes and
+    `HeatExchangers` with the gas properties at every mission point.
+"""
+function RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
       HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
+      
+      radiator = HeatExchangers[1]
+      HXgeom = radiator.HXgeom
+      #Indices for HEX variables
+      Dh_i = ieRadiatorDeltah
+      Dp_i = ieRadiatorDeltap
+
+      #Read remaining properties from dictionary with indices
+      iTp_in = inpts_dict["iTp_in"]
+      ipp_in = inpts_dict["ipp_in"]
+      iTc_in = inpts_dict["iTc_in"]
+      ipc_in = inpts_dict["ipc_in"]
+      imp_in = inpts_dict["imp_in"]
+      iQheat = inpts_dict["iQheat"]
 
       for ip = 1:size(pare)[2] #For every point
             pare_sl = pare[:, ip] #Slice pare with the parameters for the current point
-            HXgasp = deepcopy(HXgas) #Initialize gas property struct for this segment
+            HXgasp = HX_gas() #Initialize gas property struct for this segment
+
+            HXgasp.fluid_p = "air"
+            HXgasp.alpha_p = alpha
 
             HXgasp.mdot_p = pare_sl[imp_in] #Fan mass flow rate
             
@@ -1545,6 +1589,8 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
             HXgasp.pp_in = pare_sl[ipp_in]
             HXgasp.Tc_in = pare_sl[iTc_in] #coolant temperature (e.g. fuel cell temp.)       
             HXgasp.pc_in = pare_sl[ipc_in]
+
+            findLiquidCoolant!(HXgasp) #Find coolant based on temperature
 
             if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
                   HXgasp.Tp_out = HXgasp.Tp_in
@@ -1565,7 +1611,29 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
             pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
             
       end
-      return [HX_struct(type, HXgeom, HXgas_mis)]
+      HeatExchangers[1].HXgas_mission = HXgas_mis
+      
+end
+
+"""
+      findLiquidCoolant!(HXgas)
+
+This function calculates the coolant liquid based on its temperature.      
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::HX_gas`: heat exchanger gas object
+
+    **Outputs:**
+    Modifies `HXgas` with the coolant name
+"""
+function findRadiatorCoolant!(HXgas)
+      if HXgas.Tc_in > 373.15 #TODO add more coolant options
+            coolant_name = "liquid ethylene glycol"
+      else
+            coolant_name = "liquid water"
+      end
+      HXgas.fluid_c = coolant_name
 end
 
 """
