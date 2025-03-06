@@ -1098,7 +1098,7 @@ then evaluates performance for all missions and points with hxoper!().
     - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
     - Also modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
-function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
+function hxdesign!(pare, pari, ipdes, imission, HXs_prev; rlx = 1.0)
       
       #---------------------------------
       # Extract inputs
@@ -1276,15 +1276,15 @@ function hxdesign!(pare, pari, ipdes, HXs_prev; rlx = 1.0)
             hxsize!(HXgas, HXgeom) #Evaluate all geometry properties at design point
 
             push!(Mc_opts, HXgas.Mc_in)
-            push!(HeatExchangers, HX_struct(type, HXgeom, [])) #Store HX struct in overall array
+            push!(HeatExchangers, HX_struct(type, HXgeom, Array{HX_gas}(undef,iptotal,1))) #Store HX struct in overall array
       end
       #---------------------------------
       # Analyze off-design performance
       #---------------------------------
-      HXOffDesign!(HeatExchangers, pare, pari, rlx = rlx)
+      HXOffDesign!(HeatExchangers, pare, pari, imission, rlx = rlx)
 
       for i in 1:length(HeatExchangers)
-            HeatExchangers[i].HXgas_mission[ipdes].Mc_in = Mc_opts[i] #Store optimum Mc_in
+            HeatExchangers[i].HXgas_mission[ipdes,imission].Mc_in = Mc_opts[i] #Store optimum Mc_in
       end
 
       return HeatExchangers
@@ -1306,7 +1306,7 @@ mission point.
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes and
     `HeatExchangers` with the gas properties at every mission point.
 """
-function HXOffDesign!(HeatExchangers, pare, pari; rlx = 1.0)
+function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
       frecirc = Bool(pare[iefrecirc, ipcruise1])
       igas = pari[iifuel]
 
@@ -1406,7 +1406,7 @@ function HXOffDesign!(HeatExchangers, pare, pari; rlx = 1.0)
                   pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
                   
             end
-            HeatExchangers[i].HXgas_mission = HXgas_mis
+            HeatExchangers[i].HXgas_mission[:,imission] = HXgas_mis
       end
 
       #---------------------------------
@@ -1449,7 +1449,7 @@ with hxoper!(). The coolant mass flow rate is adjusted so that a desired heat is
     - `radiator::HX_struct`: structure with heat exchanger data
     - Also modifies `pare` with the fuel temperature and the radiator enthalpy and pressure changes
 """
-function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
+function radiator_design!(pare, ipdes, imission, inpts_dict, HXs_prev; rlx = 1.0)
 
       #---------------------------------
       # Extract inputs
@@ -1531,12 +1531,12 @@ function radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
       hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
       hxsize!(HXgas, HXgeom) #Evaluate all geometry properties at design point
 
-      HeatExchangers = [HX_struct(type, HXgeom, [])]
+      HeatExchangers = [HX_struct(type, HXgeom, Array{HX_gas}(undef,iptotal,1))]
       #---------------------------------
       # Analyze off-design performance
       #---------------------------------
       #Calculate radiator performance at every mission point
-      RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
+      RadiatorOffDesign!(HeatExchangers, pare, imission, inpts_dict; rlx = 1.0)
 
       HeatExchangers[1].HXgas_mission[ipdes].Mc_in = HXgas.Mc_in #Store optimum Mc_in
       
@@ -1559,7 +1559,7 @@ mission point.
     Modifies `pare` with the radiator enthalpy and pressure changes and
     `HeatExchangers` with the gas properties at every mission point.
 """
-function RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
+function RadiatorOffDesign!(HeatExchangers, pare, imission, inpts_dict; rlx = 1.0)
       HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
       
       radiator = HeatExchangers[1]
@@ -1611,7 +1611,7 @@ function RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
             pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
             
       end
-      HeatExchangers[1].HXgas_mission = HXgas_mis
+      HeatExchangers[1].HXgas_mission[:, imission] = HXgas_mis
       
 end
 

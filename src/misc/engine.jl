@@ -15,7 +15,7 @@ mutable struct Engine{M<:AbstractModel}
     """Engine data storage"""
     data::AbstractData
     """Heat exchanger parameters and data"""
-    heat_exchangers::Vector{HX_struct}
+    heat_exchangers::Array{HX_struct}
 
 end
 

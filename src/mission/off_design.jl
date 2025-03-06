@@ -260,7 +260,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    HXOffDesign!(engine.heat_exchangers, pare, pari)
+    HXOffDesign!(engine.heat_exchangers, pare, pari, mi)
     
 #-------------------------------------------------------------------------
 
