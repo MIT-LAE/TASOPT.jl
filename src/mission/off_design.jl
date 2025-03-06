@@ -16,7 +16,7 @@
 """
 function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     #Extract aircraft components and storage arrays
-    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
+    pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, eng = unpack_ac(ac, mi)
     
     parad = ac.parad
     pared = ac.pared
@@ -260,7 +260,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    HXOffDesign!(engine.heat_exchangers, pare, pari)
+    HXOffDesign!(eng.heat_exchangers, pare, pari)
     
 #-------------------------------------------------------------------------
 
