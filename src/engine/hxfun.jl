@@ -1098,13 +1098,15 @@ then evaluates performance for all missions and points with hxoper!().
     - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
     - Also modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
-function hxdesign!(pare, pari, ipdes, imission, HXs_prev; rlx = 1.0)
-      
+function hxdesign!(ac, ipdes, imission; rlx = 1.0)
+      #Unpack aircraft
+      pare = view(ac.pare,:, :, imission)
+      pare_sl = view(pare,:, ipdes)
+      pari = ac.pari
+      HXs_prev = ac.engine.heat_exchangers
       #---------------------------------
       # Extract inputs
       #---------------------------------
-      pare_sl = pare[:, ipdes] #Slice pare at design point
-
       PreCepsilon = pare_sl[iePreCepsilon]
       InterCepsilon = pare_sl[ieInterCepsilon]
       Regenepsilon = pare_sl[ieRegenepsilon]
@@ -1163,7 +1165,6 @@ function hxdesign!(pare, pari, ipdes, imission, HXs_prev; rlx = 1.0)
             #---------------------------------
             # Design exchangers
             #---------------------------------
-            pare_sl = pare[:, ipdes] #Slice pare at design point
             #Initiliaze design geometry and gas property as empty structs
             HXgas = HX_gas()
             HXgeom = HX_tubular()
@@ -1225,9 +1226,6 @@ function hxdesign!(pare, pari, ipdes, imission, HXs_prev; rlx = 1.0)
             iTp_in = HXsDict[type]["iTp_in"]
             ipp_in = HXsDict[type]["ipp_in"]
             ipc_in = HXsDict[type]["ipc_in"]
-
-            Dh_i = HXsDict[type]["iDh"]
-            Dp_i = HXsDict[type]["iDp"]
 
             #Store inputs
             HXgas.Tp_in = pare_sl[iTp_in]
@@ -1316,7 +1314,19 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
             coolant_name = "h2"
       end
 
-      for (i,HX) in enumerate(HeatExchangers)
+      #Filter out invalid heat exchangers
+      all_types = ["PreC", "InterC", "Regen", "TurbC"]
+      hxs_valid = []
+      idxs_valid = [] #Index of valid heat exchangers in HeatExchangers
+      for (i,hx) in enumerate(HeatExchangers)
+            if hx.type in all_types
+                  push!(hxs_valid, hx)
+                  push!(idxs_valid, i)
+            end
+      end
+
+      #Operate off-design for engine-integrated HEXs
+      for (i,HX) in enumerate(hxs_valid)
             HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
 
             type = HX.type
@@ -1406,7 +1416,7 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
                   pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
                   
             end
-            HeatExchangers[i].HXgas_mission[:,imission] = HXgas_mis
+            HeatExchangers[idxs_valid[i]].HXgas_mission[:,imission] = HXgas_mis
       end
 
       #---------------------------------
@@ -1414,8 +1424,8 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
       #---------------------------------
 
       for ip = 1:size(pare)[2] #For every mission point
-            if length(HeatExchangers) > 0
-                  lastHX = HeatExchangers[end]
+            if length(hxs_valid) > 0
+                  lastHX = hxs_valid[end]
                   HXgas = lastHX.HXgas_mission[ip]
                   Tf = HXgas.Tc_out
 
@@ -1423,11 +1433,11 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
             end
       end
 
-      if (frecirc) && (length(HeatExchangers) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+      if (frecirc) && (length(hxs_valid) > 0) #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
             pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
       end
 
-      findMinWallTemperature!(pare, HeatExchangers) #Store minimum wall temperature at each mission point to check for freezing
+      findMinWallTemperature!(pare, hxs_valid) #Store minimum wall temperature at each mission point to check for freezing
 end
 
 """
@@ -1449,13 +1459,14 @@ with hxoper!(). The coolant mass flow rate is adjusted so that a desired heat is
     - `radiator::HX_struct`: structure with heat exchanger data
     - Also modifies `pare` with the fuel temperature and the radiator enthalpy and pressure changes
 """
-function radiator_design!(pare, ipdes, imission, inpts_dict, HXs_prev; rlx = 1.0)
-
+function radiator_design!(ac, ipdes, imission, inpts_dict; rlx = 1.0)
+      #Unpack aircraft
+      pare = view(ac.pare,:,:,imission)
+      pare_sl = view(pare,:, ipdes)
+      HXs_prev = ac.engine.heat_exchangers
       #---------------------------------
       # Extract inputs
       #---------------------------------
-      pare_sl = pare[:, ipdes] #Slice pare at design point
-
       D_i = pare_sl[ieDi] #Inner diameter of HEX
       Radiatorepsilon = pare_sl[ieRadiatorepsilon]
       RadiatorMp = pare_sl[ieRadiatorMp]
@@ -1591,8 +1602,9 @@ function RadiatorOffDesign!(HeatExchangers, pare, imission, inpts_dict; rlx = 1.
             HXgasp.pc_in = pare_sl[ipc_in]
 
             findLiquidCoolant!(HXgasp) #Find coolant based on temperature
+            Q = pare_sl[iQheat] #Heat load
 
-            if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
+            if (HXgasp.mdot_p ≈ 0) || (Q ≈ 0.0) #If the mass flow rate in this mission is 0, nothing happens
                   HXgasp.Tp_out = HXgasp.Tp_in
                   HXgasp.Tc_out = HXgasp.Tc_in
                   HXgasp.Δh_p = 0
@@ -1600,7 +1612,6 @@ function RadiatorOffDesign!(HeatExchangers, pare, imission, inpts_dict; rlx = 1.
                   HXgasp.ε = 0
             else
                   #Calculate off-design performance to reject required heat
-                  Q = pare_sl[iQheat] #Heat load
                   HXoffDesignCalc!(HXgasp, HXgeom, Q)
             end
 

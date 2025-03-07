@@ -720,7 +720,7 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            engine.heat_exchangers = hxdesign!(pare, pari, ipdes, imission, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
+            engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in engine.heat_exchangers
@@ -741,7 +741,7 @@ function wsize(ac; itermax=35,
                 pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
                 pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
 
-                engine.heat_exchangers = radiator_design!(pare, ipdes, imission, TASOPT.engine.rad_dict, engine.heat_exchangers; rlx = 1.0)
+                engine.heat_exchangers = radiator_design!(ac, ipdes, imission, TASOPT.engine.rad_dict)
                 TASOPT.engine.VerifyRadiatorHeat(engine, imission)
             end           
         end

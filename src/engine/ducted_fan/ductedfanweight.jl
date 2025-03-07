@@ -1,4 +1,4 @@
-function ductedfanweight!(ac)
+function ductedfanweight(ac)
     Dfan   = ac.parg[igdfan]
     Nmech  = maximum(ac.pared[ieNf, :])
     fpylon = ac.parg[igfpylon]

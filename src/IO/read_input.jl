@@ -202,7 +202,7 @@ modelname = "ducted_fan"
 engineweightname = "nasa"
 
 enginecalc! = calculate_fuel_cell_with_ducted_fan!
-engineweight! = ductedfanweight!
+engineweight! = fuel_cell_with_ducted_fan_weight!
 model = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!)
 pare[iePfanmax,:,:] .= 20e6
 
