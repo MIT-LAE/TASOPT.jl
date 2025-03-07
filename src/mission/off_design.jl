@@ -260,18 +260,14 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    HXOffDesign!(engine.heat_exchangers, pare, pari, mi)
-
     if engine.model.model_name == "ducted_fan"
-        ipdes = iprotate #Design point: takeoff rotation
         pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,mi]
         pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,mi]
         pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,mi]
 
-        RadiatorOffDesign!(engine.heat_exchangers, pare, mi, TASOPT.engine.rad_dict)
-        TASOPT.engine.VerifyRadiatorHeat(engine, mi)
-    end           
-    
+    end     
+    HXOffDesign!(engine.heat_exchangers, pare, pari, mi)
+
 #-------------------------------------------------------------------------
 
 # Convergence tests

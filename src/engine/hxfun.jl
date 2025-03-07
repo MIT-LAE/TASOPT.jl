@@ -1204,6 +1204,27 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
       return HeatExchangers
 end #hxdesign!
 
+"""
+      PrepareHXobjects(HeatExchangers, idx, pari, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
+
+This function prepares the gas and geometry heat exchanger objects to be used in design or 
+off design analysis.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
+    - `idx::Float64`: index for the heat exchanger type
+    - `pari::Vector{Int}`: vector with integer parameters
+    - `pare_sl::Vector{Float64}`: sliced engine array with engine parameters
+    - `type::String`: heat exchanger type
+    - `mode::String`: design or off design indicator
+    - `eps::Float64`: heat exchanger effectiveness
+    - `Mp::Float64`: Mach number of the process gas
+
+    **Outputs:**
+    - `HXgeom::HX_tubular`: structure with the HX geometric properties
+    - `HXgas::HX_gas`: structure with the gas properties
+"""  
 function PrepareHXobjects(HeatExchangers, idx, pari, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
       #Initiliaze design geometry and gas property as empty structs
       HXgas = HX_gas()
@@ -1374,15 +1395,25 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
                         HXgasp.Δh_p = 0
                         HXgasp.Δp_p = 0
                         HXgasp.ε = 0
-                  elseif type == "Radiator" #Otherwise, call HX off-design routine
-                        iQheat = HXsDict[type]["iQheat"]
-                        Q = pare_sl[iQheat]
-                        RadiatorOffDesignCalc!(HXgasp, HX.HXgeom, Q)
-                  else
-                        hxoper!(HXgasp, HX.HXgeom)
-
+                  else #Otherwise, call HX off-design routine
+                        if type == "Radiator" #If HEX is a radiator
+                              iQheat = HXsDict[type]["iQheat"]
+                              Q = pare_sl[iQheat]
+                              
+                              if Q > 0 #Radiator with non-zero heat
+                                    RadiatorOffDesignCalc!(HXgasp, HX.HXgeom, Q)
+                                    hxoper!(HXgasp, HX.HXgeom)
+                              else #Radiator with zero heat
+                                    HXgasp.Tp_out = HXgasp.Tp_in
+                                    HXgasp.Tc_out = HXgasp.Tc_in
+                                    HXgasp.Δh_p = 0
+                                    HXgasp.Δp_p = 0
+                                    HXgasp.ε = 0
+                              end
+                        else #Not a radiator
+                              hxoper!(HXgasp, HX.HXgeom)
+                        end
                   end
-
                   HXgas_mis[ip] = HXgasp
 
                   #Store output in pare
@@ -1413,193 +1444,7 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
             end
 
             findMinWallTemperature!(pare, hxs_valid) #Store minimum wall temperature at each mission point to check for freezing
-            end
-end
-
-"""
-      radiator_design!(pare, ipdes, inpts_dict, HXs_prev; rlx = 1.0)
-
-This function runs the design and operation of a radiator to reject heat from a coolant to air. It calls hxoptim!() 
-to optimize the radiator at the design point and then evaluates performance for all missions and points 
-with hxoper!(). The coolant mass flow rate is adjusted so that a desired heat is rejected at every mission point.
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `pari::Vector{Int}`: vector with integer parameters
-    - `ipdes::Float64`: index for design mission segment
-    - `inpts_dict::Dict`: dictionary containing the indices in `pare` of the coolant and air properties.
-    - `HXs_prev::HX_struct`: structure with heat exchanger data from the previous wsize iteration
-    - `rlx::Float64`: relaxation factor for pare update
-    **Outputs:**
-    - `radiator::HX_struct`: structure with heat exchanger data
-    - Also modifies `pare` with the fuel temperature and the radiator enthalpy and pressure changes
-"""
-function radiator_design!(ac, ipdes, imission, inpts_dict; rlx = 1.0)
-      #Unpack aircraft
-      pare = view(ac.pare,:,:,imission)
-      pare_sl = view(pare,:, ipdes)
-      HXs_prev = ac.engine.heat_exchangers
-      #---------------------------------
-      # Extract inputs
-      #---------------------------------
-      D_i = pare_sl[ieDi] #Inner diameter of HEX
-      Radiatorepsilon = pare_sl[ieRadiatorepsilon]
-      RadiatorMp = pare_sl[ieRadiatorMp]
-
-      if Radiatorepsilon ≈ 0
-            return #Skip if there is no radiator
       end
-
-      #Initialize Heat Exchanger vector, for similarity with engine-integrated HEXs
-      
-      type = "Radiator"
-      #---------------------------------
-      # Design radiator
-      #---------------------------------
-      #Initiliaze design geometry and gas property as empty structs
-      HXgas = HX_gas()
-      HXgeom = HX_tubular()
-
-      HXgas.ε = Radiatorepsilon
-      HXgas.Mp_in = RadiatorMp
-
-      # Heat exchanger materials and wall properties
-      HXgeom.xl_D = 1
-      HXgeom.Rfc = 9E-05 #Distilled water fouling resistance, m^2*K/W
-      HXgeom.maxL = 2.0 #Maximum radiator length
-
-      HXgas.fluid_p = "air"
-      HXgas.alpha_p = alpha
-      
-      HXgeom.fconc = true 
-      HXgeom.D_i = D_i
-      HXgeom.Rfp = 1.761e-4 #Compressed air fouling resistance, m^2*K/W 
-      HXgeom.material = StructuralAlloy("Al-2219-T87")
-
-      #Read remaining properties from dictionary with indices
-      iTp_in = inpts_dict["iTp_in"]
-      ipp_in = inpts_dict["ipp_in"]
-      iTc_in = inpts_dict["iTc_in"]
-      ipc_in = inpts_dict["ipc_in"]
-      imp_in = inpts_dict["imp_in"]
-      iQheat = inpts_dict["iQheat"]
-
-      #Store inlet properties in relevant fields
-      HXgas.mdot_p = pare_sl[imp_in]
-      HXgas.Tp_in = pare_sl[iTp_in]
-      HXgas.pp_in = pare_sl[ipp_in]
-      HXgas.Tc_in = pare_sl[iTc_in]
-      HXgas.pc_in = pare_sl[ipc_in]
-
-      findLiquidCoolant!(HXgas) #Find coolant based on temperature
-
-      HXgeom.Δpdes = maximum(abs.(pare[ipc_in,:] - pare[ipp_in,:])) #size wall thickness for maximum post fan pressure                                                           
-
-      #Calculate coolant mass rate to release required heat
-      Q = pare_sl[iQheat]
-      HXgas.mdot_c = radiator_coolant_mass(HXgas, Q) 
-
-      # Guess starting point for optimization
-      #First calculate minimum tube length
-      lmin, linit = calculate_min_tube_length(HXgeom, HXgas) #Minimum tube lenght and initial guess
-
-      #Now set starting point
-      if isempty(HXs_prev) # #If there is no previous heat exchanger design point
-            #Calculate initial length
-            initial_x = [3.0, 19.0, 4.0, linit] #Initial guess
-      else 
-            HXs_prev = HXs_prev[1]
-            #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
-            initial_x = [100 * HXs_prev.HXgas_mission[ipdes].Mc_in, 
-            HXs_prev.HXgeom.n_stages, HXs_prev.HXgeom.xt_D, max(HXs_prev.HXgeom.l, lmin)] #guess is previous iteration design point
-      end
-
-      hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
-      hxsize!(HXgas, HXgeom) #Evaluate all geometry properties at design point
-
-      HeatExchangers = [HX_struct(type, HXgeom, Array{HX_gas}(undef,iptotal,1))]
-      #---------------------------------
-      # Analyze off-design performance
-      #---------------------------------
-      #Calculate radiator performance at every mission point
-      RadiatorOffDesign!(HeatExchangers, pare, imission, inpts_dict; rlx = 1.0)
-
-      HeatExchangers[1].HXgas_mission[ipdes].Mc_in = HXgas.Mc_in #Store optimum Mc_in
-      
-      return HeatExchangers
-end
-
-"""
-      RadiatorOffDesign!(HeatExchangers, pare, inpts_dict; rlx = 1.0)
-
-This function runs the radiator through an aircraft mission and calculates performance at every
-mission point.      
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `HeatExchangers::Vector{HX_struct}`: vector with radiator data
-    - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `rlx::Float64`: relaxation factor for pare update
-
-    **Outputs:**
-    Modifies `pare` with the radiator enthalpy and pressure changes and
-    `HeatExchangers` with the gas properties at every mission point.
-"""
-function RadiatorOffDesign!(HeatExchangers, pare, imission, inpts_dict; rlx = 1.0)
-      HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
-      
-      radiator = HeatExchangers[1]
-      HXgeom = radiator.HXgeom
-      #Indices for HEX variables
-      Dh_i = ieRadiatorDeltah
-      Dp_i = ieRadiatorDeltap
-
-      #Read remaining properties from dictionary with indices
-      iTp_in = inpts_dict["iTp_in"]
-      ipp_in = inpts_dict["ipp_in"]
-      iTc_in = inpts_dict["iTc_in"]
-      ipc_in = inpts_dict["ipc_in"]
-      imp_in = inpts_dict["imp_in"]
-      iQheat = inpts_dict["iQheat"]
-
-      for ip = 1:size(pare)[2] #For every point
-            pare_sl = pare[:, ip] #Slice pare with the parameters for the current point
-            HXgasp = HX_gas() #Initialize gas property struct for this segment
-
-            HXgasp.fluid_p = "air"
-            HXgasp.alpha_p = alpha
-
-            HXgasp.mdot_p = pare_sl[imp_in] #Fan mass flow rate
-            
-            HXgasp.Tp_in = pare_sl[iTp_in] #The indices come from the design process above as the HX is the same
-            HXgasp.pp_in = pare_sl[ipp_in]
-            HXgasp.Tc_in = pare_sl[iTc_in] #coolant temperature (e.g. fuel cell temp.)       
-            HXgasp.pc_in = pare_sl[ipc_in]
-
-            findLiquidCoolant!(HXgasp) #Find coolant based on temperature
-            Q = pare_sl[iQheat] #Heat load
-
-            if (HXgasp.mdot_p ≈ 0) || (Q ≈ 0.0) #If the mass flow rate in this mission is 0, nothing happens
-                  HXgasp.Tp_out = HXgasp.Tp_in
-                  HXgasp.Tc_out = HXgasp.Tc_in
-                  HXgasp.Δh_p = 0
-                  HXgasp.Δp_p = 0
-                  HXgasp.ε = 0
-            else
-                  #Calculate off-design performance to reject required heat
-                  RadiatorOffDesignCalc!(HXgasp, HXgeom, Q)
-            end
-
-            HXgas_mis[ip] = HXgasp
-
-            #Store output in pare
-            pare[Dh_i, ip] =  (1 - rlx) * pare[Dh_i, ip] + rlx * HXgasp.Δh_p
-            pare[Dp_i, ip] = (1 - rlx) * pare[Dp_i, ip] + rlx * HXgasp.Δp_p
-            
-      end
-      HeatExchangers[1].HXgas_mission[:, imission] = HXgas_mis
-      
 end
 
 """
