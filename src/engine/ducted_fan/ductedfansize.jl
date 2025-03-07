@@ -196,8 +196,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
                   error("TFSIZE: Negative fan plume velocity", 
                         "\n\tpt2,  Tt2  = ", pt2, " Pa, ",  Tt2, " K",
                         "\n\tpt8,  Tt8  = ", pt8, " Pa, ",  Tt8, " K", 
-                        "\n\tp8,  T8  = "  , p8,  " Pa, ",  T8,  " K", 
-                        "\n\tpif,  BPR  = ", pif, " Pa, ",  BPR)
+                        "\n\tp8,  T8  = "  , p8,  " Pa, ",  T8,  " K")
             else
                   u8 = sqrt(2.0 * (ht8 - h8))
             end

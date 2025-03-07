@@ -78,12 +78,3 @@ function VerifyRadiatorHeat(engine, imission)
         end
     end
 end
-
-const rad_dict = Dict(
-                "iTp_in" => ieTt21,
-                "ipp_in" => iept21,
-                "iTc_in" => ieRadiatorCoolantT,
-                "ipc_in" => ieRadiatorCoolantP,
-                "imp_in" => iemfan,
-                "iQheat" => ieRadiatorHeat
-                )

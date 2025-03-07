@@ -720,6 +720,12 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
+            if engine.model.model_name == "ducted_fan"
+                ipdes = iprotate #Design point: takeoff rotation
+                pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
+                pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
+                pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+            end
             engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
@@ -730,20 +736,12 @@ function wsize(ac; itermax=35,
                     parg[igdHXInterC] = HX.HXgeom.D_o
                 elseif HX.type == "Regen"
                     parg[igdHXRegen] = HX.HXgeom.D_o
+                elseif HX.type == "Radiator"
+                    TASOPT.engine.VerifyRadiatorHeat(engine, imission)
                 end
             end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
-            #With fuel storage in tanks, this is done in the block above.
-
-            if engine.model.model_name == "ducted_fan"
-                ipdes = iprotate #Design point: takeoff rotation
-                pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
-                pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
-                pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
-
-                engine.heat_exchangers = radiator_design!(ac, ipdes, imission, TASOPT.engine.rad_dict)
-                TASOPT.engine.VerifyRadiatorHeat(engine, imission)
-            end           
+            #With fuel storage in tanks, this is done in the block above.           
         end
 
         # -----------------------------
