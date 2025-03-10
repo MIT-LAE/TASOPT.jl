@@ -1167,7 +1167,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
             # Design exchangers
             #---------------------------------
             HXgeom, HXgas = PrepareHXobjects(HeatExchangers, i, ipdes, imission, pari, pare_sl, type, "sizing", ε_des[i], Mp_in[i])
-            HXgeom.Δpdes = maximum(pare[iept3,:]) #size wall thickness for maximum HPC pressure
+            HXgeom.Δpdes = max(maximum(ac.pare[iept3,:,:]), maximum(ac.pare[ieRadiatorCoolantP,:,:])) #size wall thickness for maximum HPC or coolant pressure
 
             # Guess starting point for optimization
             #First calculate minimum tube length
@@ -1412,7 +1412,7 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
                               
                               if Q > 0 #Radiator with non-zero heat
                                     RadiatorOffDesignCalc!(HXgasp, HX.HXgeom, Q)
-                                    hxoper!(HXgasp, HX.HXgeom)
+
                               else #Radiator with zero heat
                                     HXgasp.Tp_out = HXgasp.Tp_in
                                     HXgasp.Tc_out = HXgasp.Tc_in
