@@ -1254,8 +1254,13 @@ function PrepareHXobjects(HeatExchangers, idx, pari, pare_sl, type, mode = "off_
       mcore = pare_sl[iemcore]
       mofft = pare_sl[iemofft]
       fc = pare_sl[iefc] #Extract cooling gas factor
-      fo = mofft / mcore
       ff = pare_sl[ieff]
+
+      if mcore > 0
+            fo = mofft / mcore
+      else #Avoid divided by 0
+            fo = 0
+      end
 
       HXgas.fluid_p = "air"
       HXgas.alpha_p = alpha #Use alpha by default, except for Regen
@@ -1302,7 +1307,7 @@ function PrepareHXobjects(HeatExchangers, idx, pari, pare_sl, type, mode = "off_
 
             HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
             
-            HXgas.alpha_p = lambdap_calc(pare, alpha, igas, ipdes) #Calculate postcombustion and mixing composition
+            HXgas.alpha_p = lambdap_calc(pare_sl, alpha, igas) #Calculate postcombustion and mixing composition
 
       elseif type =="TurbC" #Cooling of turbine cooling flow
             HXgeom.fconc = false 
@@ -1334,7 +1339,7 @@ function PrepareHXobjects(HeatExchangers, idx, pari, pare_sl, type, mode = "off_
             end
       end
 
-      if type != "Radiator"
+      if type != "Radiator" #If HX is in the engine TODO make more robust to future HEX options
             if idx == 1 #At first heat exchanger
                   HXgas.Tc_in = Tc_ft #Coolant temperature is the tank temperature
                   if frecirc #There can only be recirculation in the first heat exchanger
@@ -1373,7 +1378,9 @@ mission point.
     `HeatExchangers` with the gas properties at every mission point.
 """
 function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
-      
+      if length(HeatExchangers) == 0 #Skip if no HXs
+            return
+      end
       #Operate off-design for engine-integrated HEXs
       for (i,HX) in enumerate(HeatExchangers)
             HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
@@ -1428,7 +1435,7 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
       # Update fuel temperature and heat of vaporization
       #---------------------------------
 
-      if HeatExchangers[end].type != "Radiator"
+      if HeatExchangers[end].type != "Radiator" #If HX is in the engine TODO make more robust to future HEX options
             for ip = 1:size(pare)[2] #For every mission point
                   if length(HeatExchangers) > 0
                         lastHX = HeatExchangers[end]
@@ -1750,30 +1757,27 @@ function findMinWallTemperature!(pare, HXs)
 end
 
 """
-      lambdap_calc(pare, alpha_in, ifuel, ip)
+      lambdap_calc(pare_sl, alpha_in, ifuel)
 
 Calculates the mass fractions of the gases in post-combustion air.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `pare::Array{Float64 , 3}`: array with engine parameters
+    - `pare_sl::Vector{Float64 }`: array slice with engine parameters
     - `alpha_in::Vector{Float64}`: vector with process-side gas composition before combustion and mixing
     - `ifuel::Float64`: fuel gas index
-    - `ip::Float64`: index for mission point
     
     **Outputs:**
     - `lambda_p::Vector{Float64}`: vector with process-side gas composition after combustion and mixing
 """
-function lambdap_calc(pare, alpha_in, ifuel, ip)
+function lambdap_calc(pare_sl, alpha_in, ifuel)
       #Extract inputs
-      pare_sl = pare[:, ip]
-
       Tt3 = pare_sl[ieTt3]
       Ttf = pare_sl[ieTfuel]
       Tt4 = pare_sl[ieTt4]
       hvap = pare_sl[iehvapcombustor]
 
-      etab = pare[ieetab]
+      etab = pare_sl[ieetab]
       beta = [0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
       alpha = deepcopy(alpha_in)
       alpha = push!(alpha, 0.0)

@@ -184,51 +184,50 @@ if lowercase(propsys) == "tf"
     engineweight! = tfweightwrap!
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
-    
+    engdata = TASOPT.engine.EmptyData()
 elseif lowercase(propsys) == "te"
     pari[iiengtype] = 0
+elseif lowercase(propsys) == "fuel_cell_with_ducted_fan"
+    modelname = lowercase(propsys)
+    engineweightname = "nasa"
+
+    enginecalc! = calculate_fuel_cell_with_ducted_fan!
+    engineweight! = fuel_cell_with_ducted_fan_weight!
+    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!)
+    pare[iePfanmax,:,:] .= 20e6
+
+    fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+
+    fcdata.type = "HT-PEMFC"
+    fcdata.current_density[iprotate,:] .= 1e4
+    fcdata.FC_temperature .= 453.15
+    fcdata.FC_pressure .= 3e5
+    fcdata.water_concentration_anode .= 0.1
+    fcdata.water_concentration_cathode .= 0.1
+    fcdata.λ_H2 .= 3.0
+    fcdata.λ_O2 .= 3.0
+    fcdata.thickness_membrane = 100e-6
+    fcdata.thickness_anode  = 250e-6
+    fcdata.thickness_cathode  = 250e-6
+    fcdata.design_voltage = 200.0
+    pare[ieRadiatorepsilon,:,:] .= 0.7
+    pare[ieRadiatorMp,:,:] .= 0.12
+    pare[ieDi,:,:] .= 0.4
+
+    para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
+    engdata = fcdata
+
 else
     
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
 
   # -----------------------------
     # Engine model setup
     # ------------------------------
-    
-modelname = "ducted_fan"
-engineweightname = "nasa"
-
-enginecalc! = calculate_fuel_cell_with_ducted_fan!
-engineweight! = fuel_cell_with_ducted_fan_weight!
-model = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!)
-pare[iePfanmax,:,:] .= 20e6
-
-fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
-
-fcdata.type = "HT-PEMFC"
-fcdata.current_density[iprotate,:] .= 1e4
-fcdata.FC_temperature .= 453.15
-fcdata.FC_pressure .= 3e5
-fcdata.water_concentration_anode .= 0.1
-fcdata.water_concentration_cathode .= 0.1
-fcdata.λ_H2 .= 3.0
-fcdata.λ_O2 .= 3.0
-fcdata.thickness_membrane = 100e-6
-fcdata.thickness_anode  = 250e-6
-fcdata.thickness_cathode  = 250e-6
-fcdata.design_voltage = 200.0
-pare[ieRadiatorepsilon,:,:] .= 0.7
-pare[ieRadiatorMp,:,:] .= 0.12
-pare[ieDi,:,:] .= 0.4
-
-para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
-
-engine = TASOPT.engine.Engine(model, fcdata, Vector{TASOPT.engine.HX_struct}())
-
-
 engloc = read_input("engine_location", options, doptions)
 
 if typeof(engloc) == Int
