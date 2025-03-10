@@ -12,6 +12,7 @@ struct FuelCellDuctedFan{F1, F2} <: AbstractModel
     engineweight!::F2
 end
 
+# Data object for a ducted fan powered by a fuel cell
 mutable struct FuelCellDuctedFanData <: AbstractData
     """Fuel cell type"""
     type::String

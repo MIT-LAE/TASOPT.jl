@@ -720,7 +720,7 @@ function wsize(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            if engine.model.model_name == "ducted_fan"
+            if engine.model.model_name == "fuel_cell_with_ducted_fan"
                 ipdes = iprotate #Design point: takeoff rotation
                 pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
                 pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]

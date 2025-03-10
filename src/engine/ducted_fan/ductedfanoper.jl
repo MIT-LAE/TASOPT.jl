@@ -211,6 +211,32 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
     engdata.epf, engdata.etaf
 end
 
+"""
+    res_df(x, engdata; iPspec=false, store_data=false)
+
+Computes the residuals for a ducted fan engine with a heat exchanger under specified operating conditions.  
+The function solves for fan pressure ratio, mass flow rate, and inlet Mach number to satisfy mass flow conservation and either a power or thrust constraint.
+
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `x::Vector{Float64}`: Vector of unknowns to solve for.  
+        - `x[1]`: Fan pressure ratio (pf)  
+        - `x[2]`: Fan mass flow rate (mf) [kg/s]  
+        - `x[3]`: Inlet Mach number (Mi)  
+    - `engdata::DuctedFanData`: Data structure containing input parameters and storage space for results.  
+    - `iPspec::Bool=false`: If `true`, the power (`Pspec`) is specified. Otherwise, the thrust (`Fspec`) is specified.  
+    - `store_data::Bool=false`: If `true`, the converged solution is stored in `engdata`.
+
+    **Output:**
+    - `res::Vector{Float64}`: Residuals of the system of equations.  
+        - `res[1]`: Mass conservation at the fan nozzle  
+        - `res[2]`: Mass conservation at the fan face  
+        - `res[3]`: Power or thrust constraint
+
+!!! note
+    The heat exchanger introduces a pressure drop (`Δp_radiator`) and heat addition (`Δh_radiator`).  
+    When `store_data=true`, the converged solution is saved in the `engdata` structure.
+"""  
 function res_df(x, engdata; iPspec = false, store_data = false)
     #Extract unknowns
     pf = x[1]
@@ -508,6 +534,7 @@ function unpack_input_data(data::DuctedFanData)
     NbfD, A2, A7, epf0, pifK, epfK, Feng, Peng, Δh_radiator, Δp_radiator)
 end
 
+#Helper function to update engine data
 function update_engine_data!(data::DuctedFanData, inputs)
     (
         M0, T0, p0, a0, Tref, pref, Phiinl, Kinl, iBLIc, pid, pifn, 
