@@ -320,8 +320,9 @@
     end
 
     @testset "HEX design and off-design performance" begin
-        pare = zeros(ietotal, iptotal)
-        pari = zeros(iitotal)
+        ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"))
+        pare = ac.pare
+        pari = ac.pari
 
         pare[ieDi, :] .= 0.564
         pare[ieTft, :] .= 20
@@ -360,7 +361,7 @@
 
         #Test precooler
         pare[iePreCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
@@ -381,7 +382,7 @@
 
         #Test intercooler
         pare[ieInterCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
@@ -403,7 +404,7 @@
 
         #Test cooler of turbine cool. air
         pare[ieTurbCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
@@ -426,7 +427,7 @@
         #Test regenerative cooler
         pare[ieTfuel, :] .= 20
         pare[ieRegenepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
@@ -451,7 +452,7 @@
         pare[ieRegenepsilon,:] .= 0.8
         pare[iefrecirc, :] .= 1
         pare[ierecircT, :] .= 200.0
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
