@@ -1054,7 +1054,12 @@ dnac = dprop["Nacelles"]
     parg[igrVnace] = read_input("nacelle_local_velocity_ratio", nac, dnac)
 
 else #For constant TSFC model
-    para[iaROCdes,:,:] .= readprop("rate_of_climb") * ft_to_m /60
+    ROCdes = readprop("rate_of_climb")
+    if ROCdes isa AbstractVector
+        para[iaROCdes,ipclimb1:ipclimbn,:] .= [Speed(x) for x in ROCdes]
+    else
+        para[iaROCdes,ipclimb1:ipclimbn,:] .= Speed(ROCdes)
+    end
     pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
     pare[ieTSFC,ipcruise1:ipcruise2,:] .= readprop("cruise_TSFC")
     pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")

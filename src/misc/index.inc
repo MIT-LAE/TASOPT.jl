@@ -430,7 +430,8 @@
       const iadCDBLIf = 62
       const iadCDBLIw = 63
       const iaROC     = 64
-      const iatotal   = 64 
+      const iaROCdes  = 65
+      const iatotal   = 65 
 
 #---- indices for engine variables at each mission point
       const iehfuel = 1
