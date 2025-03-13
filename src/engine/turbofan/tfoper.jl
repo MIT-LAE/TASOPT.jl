@@ -170,6 +170,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       epsl, epsh,
       icool,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow,
@@ -1469,16 +1470,16 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #---- HPT efficiency
             # HACK: HSC
+            #First find uncooled HPT efficiency and derivatives
             epht1, epht1_dhht, epht1_mbht, epht1_Nbht, epht1_Tt41,
             epht1_cpt41, epht1_Rt41 = etmap(dhht, mbht, Nbht, pihtD, mbhtD, NbhtD, epht0, Tmaph,
                   Tt41, cpt41, Rt41)
 
-            epht_fc = 0.0
-            fc0 = 0.0 #TODO hack. replace with inputs
+            #Find cooled HPT efficiency epht
             epht = find_cooled_hpt_efficiency(epht1, epht_fc, fc0, fc)
 
             if (epht < 0.80)
-                  epht1 = 0.80
+                  epht = 0.80
                   epht1_dhht = 0.0
                   epht1_mbht = 0.0
                   epht1_Nbht = 0.0
@@ -1510,6 +1511,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             epht1_Mi = epht1_Tt41 * Tt41_Mi + epht1_cpt41 * cpt41_Mi +
                       epht1_Rt41 * Rt41_Mi + epht1_Mi
 
+            #Chain rule for HPT efficiency derivatives
             epht_pl = epht1_pl + epht_fc * fc_pl
             epht_ph = epht1_ph + epht_fc * fc_ph
             epht_mf = epht1_mf + epht_fc * fc_mf

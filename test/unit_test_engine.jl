@@ -570,6 +570,8 @@ isGradient = false
         epsrow[4] = 0.0000000000000000
         Tt4 = 1587.0000000000000
         Tmrow = zeros(ncrowx)
+        fc0 = 0.0
+        epht_fc = 0.0
         hvap = 0.0
         Δh_PreC = 0.0
         Δh_InterC = 0.0
@@ -618,6 +620,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow, Tmrow, 

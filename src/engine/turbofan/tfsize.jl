@@ -11,6 +11,7 @@
       epsl, epsh,
       icool,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow, 
@@ -143,6 +144,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       epsl, epsh,
       icool,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow,
@@ -504,10 +506,11 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             #     Trh =  Tt41/(Tt41 + dhht/cpt41)
             #     gexh = cpt41/(Rt41*epht0)
             #     pihtD = Trh^gexh
-            epht_fc = 0.0
-            fc0 = 0.0 #TODO hack. replace with inputs
             epht1 = epht0 #Assume same as design point prior to cooling
+
+            #Find cooled HPT efficiency
             epht = find_cooled_hpt_efficiency(epht1, epht_fc, fc0, fc)
+            
             epi = 1.0 / epht
             pt45, Tt45, ht45, st45, cpt45, Rt45 = gas_delh(lambdap, nair,
                   pt41, Tt41, ht41, st41, cpt41, Rt41, dhht, epi)
