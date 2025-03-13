@@ -497,3 +497,8 @@ Cmap[8] = 2.5
 Cmap[9] = 15.0
 
 eff, eff_pi, eff_mb = Pimap(mb, Nb, piD, mbD, NbD, Cmap)
+
+function find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)
+    epht = epht0 + epht_fc * (fc - fc0)
+    return epht
+end

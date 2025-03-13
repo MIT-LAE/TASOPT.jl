@@ -1469,44 +1469,55 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #---- HPT efficiency
             # HACK: HSC
-            epht, epht_dhht, epht_mbht, epht_Nbht, epht_Tt41,
-            epht_cpt41, epht_Rt41 = etmap(dhht, mbht, Nbht, pihtD, mbhtD, NbhtD, epht0, Tmaph,
+            epht1, epht1_dhht, epht1_mbht, epht1_Nbht, epht1_Tt41,
+            epht1_cpt41, epht1_Rt41 = etmap(dhht, mbht, Nbht, pihtD, mbhtD, NbhtD, epht0, Tmaph,
                   Tt41, cpt41, Rt41)
 
+            epht_fc = 0.0
+            fc0 = 0.0 #TODO hack. replace with inputs
+            epht = find_cooled_hpt_efficiency(epht1, epht_fc, fc0, fc)
 
             if (epht < 0.80)
-                  epht = 0.80
-                  epht_dhht = 0.0
-                  epht_mbht = 0.0
-                  epht_Nbht = 0.0
-                  epht_Tt41 = 0.0
-                  epht_cpt41 = 0.0
-                  epht_Rt41 = 0.0
+                  epht1 = 0.80
+                  epht1_dhht = 0.0
+                  epht1_mbht = 0.0
+                  epht1_Nbht = 0.0
+                  epht1_Tt41 = 0.0
+                  epht1_cpt41 = 0.0
+                  epht1_Rt41 = 0.0
             end
 
-            epht_pl = epht_dhht * dhht_pl + epht_mbht * mbht_pl + epht_Nbht * Nbht_pl
-            epht_ph = epht_dhht * dhht_ph + epht_mbht * mbht_ph + epht_Nbht * Nbht_ph
-            epht_mf = epht_dhht * dhht_mf + epht_mbht * mbht_mf + epht_Nbht * Nbht_mf
-            epht_ml = epht_dhht * dhht_ml + epht_mbht * mbht_ml + epht_Nbht * Nbht_ml
-            epht_mh = epht_dhht * dhht_mh + epht_mbht * mbht_mh + epht_Nbht * Nbht_mh
-            epht_Tb = epht_dhht * dhht_Tb + epht_mbht * mbht_Tb + epht_Nbht * Nbht_Tb
-            epht_Mi = epht_dhht * dhht_Mi + epht_mbht * mbht_Mi + epht_Nbht * Nbht_Mi
+            epht1_pl = epht1_dhht * dhht_pl + epht1_mbht * mbht_pl + epht1_Nbht * Nbht_pl
+            epht1_ph = epht1_dhht * dhht_ph + epht1_mbht * mbht_ph + epht1_Nbht * Nbht_ph
+            epht1_mf = epht1_dhht * dhht_mf + epht1_mbht * mbht_mf + epht1_Nbht * Nbht_mf
+            epht1_ml = epht1_dhht * dhht_ml + epht1_mbht * mbht_ml + epht1_Nbht * Nbht_ml
+            epht1_mh = epht1_dhht * dhht_mh + epht1_mbht * mbht_mh + epht1_Nbht * Nbht_mh
+            epht1_Tb = epht1_dhht * dhht_Tb + epht1_mbht * mbht_Tb + epht1_Nbht * Nbht_Tb
+            epht1_Mi = epht1_dhht * dhht_Mi + epht1_mbht * mbht_Mi + epht1_Nbht * Nbht_Mi
 
-            epht_pl = epht_Tt41 * Tt41_pl + epht_cpt41 * cpt41_pl +
-                      epht_Rt41 * Rt41_pl + epht_pl
-            epht_ph = epht_Tt41 * Tt41_ph + epht_cpt41 * cpt41_ph +
-                      epht_Rt41 * Rt41_ph + epht_ph
-            epht_mf = epht_Tt41 * Tt41_mf + epht_cpt41 * cpt41_mf +
-                      epht_Rt41 * Rt41_mf + epht_mf
-            epht_ml = epht_Tt41 * Tt41_ml + epht_cpt41 * cpt41_ml +
-                      epht_Rt41 * Rt41_ml + epht_ml
-            epht_mh = epht_Tt41 * Tt41_mh + epht_cpt41 * cpt41_mh +
-                      epht_Rt41 * Rt41_mh + epht_mh
-            epht_Tb = epht_Tt41 * Tt41_Tb + epht_cpt41 * cpt41_Tb +
-                      epht_Rt41 * Rt41_Tb + epht_Tb
-            epht_Mi = epht_Tt41 * Tt41_Mi + epht_cpt41 * cpt41_Mi +
-                      epht_Rt41 * Rt41_Mi + epht_Mi
+            epht1_pl = epht1_Tt41 * Tt41_pl + epht1_cpt41 * cpt41_pl +
+                      epht1_Rt41 * Rt41_pl + epht1_pl
+            epht1_ph = epht1_Tt41 * Tt41_ph + epht1_cpt41 * cpt41_ph +
+                      epht1_Rt41 * Rt41_ph + epht1_ph
+            epht1_mf = epht1_Tt41 * Tt41_mf + epht1_cpt41 * cpt41_mf +
+                      epht1_Rt41 * Rt41_mf + epht1_mf
+            epht1_ml = epht1_Tt41 * Tt41_ml + epht1_cpt41 * cpt41_ml +
+                      epht1_Rt41 * Rt41_ml + epht1_ml
+            epht1_mh = epht1_Tt41 * Tt41_mh + epht1_cpt41 * cpt41_mh +
+                      epht1_Rt41 * Rt41_mh + epht1_mh
+            epht1_Tb = epht1_Tt41 * Tt41_Tb + epht1_cpt41 * cpt41_Tb +
+                      epht1_Rt41 * Rt41_Tb + epht1_Tb
+            epht1_Mi = epht1_Tt41 * Tt41_Mi + epht1_cpt41 * cpt41_Mi +
+                      epht1_Rt41 * Rt41_Mi + epht1_Mi
 
+            epht_pl = epht1_pl + epht_fc * fc_pl
+            epht_ph = epht1_ph + epht_fc * fc_ph
+            epht_mf = epht1_mf + epht_fc * fc_mf
+            epht_ml = epht1_ml + epht_fc * fc_ml
+            epht_mh = epht1_mh + epht_fc * fc_mh
+            epht_Tb = epht1_Tb + epht_fc * fc_Tb
+            epht_Mi = epht1_Mi + epht_fc * fc_Mi
+           
             #---- HPT work to determine station 45
             epi = 1.0 / epht
             pt45, Tt45, ht45, st45, cpt45, Rt45,
