@@ -11,6 +11,7 @@
       epsl, epsh,
       icool,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow, 
@@ -143,6 +144,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       epsl, epsh,
       icool,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow,
@@ -235,10 +237,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       cpt18 = cpt0
       Rt18 = Rt0
       pt18 = pt0 * pid
-      epht = epht0
-      eplt = eplt0
-
-
+      
       #---- initial guesses for station 2, 1.9 and 1.9c
       pt2 = pt18
       Tt2 = Tt18
@@ -507,12 +506,17 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             #     Trh =  Tt41/(Tt41 + dhht/cpt41)
             #     gexh = cpt41/(Rt41*epht0)
             #     pihtD = Trh^gexh
+            epht1 = epht0 #Assume same as design point prior to cooling
 
+            #Find cooled HPT efficiency
+            epht = find_cooled_hpt_efficiency(epht1, epht_fc, fc0, fc)
+            
             epi = 1.0 / epht
             pt45, Tt45, ht45, st45, cpt45, Rt45 = gas_delh(lambdap, nair,
                   pt41, Tt41, ht41, st41, cpt41, Rt41, dhht, epi)
 
 
+            eplt = eplt0 #Assume same as design turbine efficiency
             epi = 1.0 / eplt
             pt49, Tt49, ht49, st49, cpt49, Rt49 = gas_delh(lambdap, nair,
                   pt45, Tt45, ht45, st45, cpt45, Rt45, dhlt, epi)

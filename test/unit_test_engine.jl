@@ -511,6 +511,13 @@ isGradient = false
             @test d_Tmrow_d_Tt3_FD ≈ d_Tmrow_d_Tt3 rtol = 1e-5
         end
 
+        #Test cooled HPT efficiency
+        epht0 = 0.9
+        epht_fc = -0.36
+        fc0 = 0.16
+        fc = 0.2
+        epht = TASOPT.engine.find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)
+        @test epht ≈ 0.8856
     end
 
     @testset "tfsize.jl" begin
@@ -570,6 +577,8 @@ isGradient = false
         epsrow[4] = 0.0000000000000000
         Tt4 = 1587.0000000000000
         Tmrow = zeros(ncrowx)
+        fc0 = 0.0
+        epht_fc = 0.0
         hvap = 0.0
         Δh_PreC = 0.0
         Δh_InterC = 0.0
@@ -618,6 +627,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow, Tmrow, 
@@ -666,6 +676,7 @@ isGradient = false
                 epsl, epsh,
                 icool,
                 Mtexit, dTstrk, StA, efilm, tfilm,
+                fc0, epht_fc,
                 M4a, ruc,
                 ncrowx, ncrow,
                 epsrow, Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
@@ -766,6 +777,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow, Tmrow, Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
@@ -871,7 +883,8 @@ isGradient = false
         ncrow = 4
         epsrow3 = [0.12061791584226822, 5.1292591721870069E-002, 1.5478853228971187E-002, 0.0000000000000000]
         Tmrow3 = [1000.0, 1000.0, 1000.0, 1000.0]
-
+        fc0 = 0.0
+        epht_fc = 0.0
 
         M2 = 1.0
         pif = 0.0000000000000000
@@ -942,6 +955,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow3, Tmrow3,
@@ -1037,7 +1051,8 @@ isGradient = false
         ncrow = 4
         epsrow3 = [0.12061791584226822, 5.1292591721870069E-002, 1.5478853228971187E-002, 0.0000000000000000]
         Tmrow3 = [1000.0, 1000.0, 1000.0, 1000.0]
-
+        fc0 = 0.0
+        epht_fc = 0.0
 
         M2 = 1.0
         pif = 0.0000000000000000
@@ -1109,6 +1124,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow3, Tmrow3,
