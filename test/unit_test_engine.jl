@@ -511,6 +511,13 @@ isGradient = false
             @test d_Tmrow_d_Tt3_FD ≈ d_Tmrow_d_Tt3 rtol = 1e-5
         end
 
+        #Test cooled HPT efficiency
+        epht0 = 0.9
+        epht_fc = -0.36
+        fc0 = 0.16
+        fc = 0.2
+        epht = TASOPT.engine.find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)
+        @test epht ≈ 0.8856
     end
 
     @testset "tfsize.jl" begin
