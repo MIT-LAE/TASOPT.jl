@@ -89,6 +89,10 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
         Tmrow = zeros(ncrowx)
         hvap = pare[iehvapcombustor] #Enthalpy of vaporization of fuel
 
+        #Effect of cooling on HPT efficiency
+        epht_fc = pare[iedehtdfc]
+        fc0 = fc0 = pare[iefc0]
+
         #Heat exchanger variables
         Δh_PreC = pare[iePreCDeltah]
         Δh_InterC = pare[ieInterCDeltah]
@@ -158,8 +162,6 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                         println("ncrow =", ncrow)
                         println("        altkm =", para[iaalt] / 1000.0)
                 end
-                epht_fc =  -0.36
-                fc0 = 0.16373 #TODO hack. replace with inputs
                 #        tset[time0]
 
                 # println("===========================")
@@ -431,8 +433,6 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 # println(Fe)
                 # println([M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25])
                 # println("================================")
-                epht_fc = -0.36
-                fc0 = fc0 = 0.16373 #TODO hack. replace with inputs
 
                 TSFC, Fsp, hfuel, ff,
                 Fe, mcore,

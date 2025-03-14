@@ -669,6 +669,7 @@ isGradient = false
                 epsl, epsh,
                 icool,
                 Mtexit, dTstrk, StA, efilm, tfilm,
+                fc0, epht_fc,
                 M4a, ruc,
                 ncrowx, ncrow,
                 epsrow, Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
@@ -769,6 +770,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow, Tmrow, Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
@@ -874,7 +876,8 @@ isGradient = false
         ncrow = 4
         epsrow3 = [0.12061791584226822, 5.1292591721870069E-002, 1.5478853228971187E-002, 0.0000000000000000]
         Tmrow3 = [1000.0, 1000.0, 1000.0, 1000.0]
-
+        fc0 = 0.0
+        epht_fc = 0.0
 
         M2 = 1.0
         pif = 0.0000000000000000
@@ -945,6 +948,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow3, Tmrow3,
@@ -1040,7 +1044,8 @@ isGradient = false
         ncrow = 4
         epsrow3 = [0.12061791584226822, 5.1292591721870069E-002, 1.5478853228971187E-002, 0.0000000000000000]
         Tmrow3 = [1000.0, 1000.0, 1000.0, 1000.0]
-
+        fc0 = 0.0
+        epht_fc = 0.0
 
         M2 = 1.0
         pif = 0.0000000000000000
@@ -1112,6 +1117,7 @@ isGradient = false
             epsl, epsh,
             icool,
             Mtexit, dTstrk, StA, efilm, tfilm,
+            fc0, epht_fc,
             M4a, ruc,
             ncrowx, ncrow,
             epsrow3, Tmrow3,
