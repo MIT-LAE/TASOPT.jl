@@ -1,6 +1,7 @@
 """
-    place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
+    place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m,
+    front_seat_offset = 10 * ft_to_m)	
 
 Function to calculate the seat arrangement in the cabin and, therefore, the required cabin
 length.
@@ -13,17 +14,16 @@ length.
     - `seat_width::Float64`: width of one seat (m).
     - `aisle_halfwidth::Float64`: half the width of an aisle (m).
     - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
+    - `front_seat_offset::Float64`: distance from front of cabin to first row of seats (m).
 
     **Outputs:**
     - `lcabin::Float64`: cabin length (m).
     - `xseats::Vector{Float64}`: longitudinal coordinate of each row of seats, measured from front of cabin (m).
     - `seats_per_row::Float64`: number of seats per row.
 """
-function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
-
-    cabin_offset = 10 * ft_to_m #Distance to the front of seats
-    #TODO the hardcoded 10 ft is not elegant
+function place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m,
+    front_seat_offset = 10 * ft_to_m)	
 
     seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
 
@@ -36,7 +36,7 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     end
 
     xseats = zeros(rows)'
-    xseats[1] = cabin_offset
+    xseats[1] = front_seat_offset
     for r in 2:rows
         emergency_exit = 0.0
         if (r in emergency_rows)
@@ -248,8 +248,8 @@ function find_double_decker_cabin_length(x::Vector{Float64}, fuse)
         w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2, h_seat)
 
         #Find length of each cabin
-        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
-        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
+        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch = seat_pitch, seat_width = seat_width, aisle_halfwidth = aisle_halfwidth)
+        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch = seat_pitch, seat_width = seat_width, aisle_halfwidth = aisle_halfwidth)
 
         maxl = max(l1, l2) #Required length
         return maxl, pax_per_row_main 

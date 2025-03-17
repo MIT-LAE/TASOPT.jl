@@ -384,6 +384,8 @@ ac.vtail.layout.box_x = 33.528
 ac.wing.layout.box_x = 16.04432532088372
 ac.parg[igxeng] = ac.wing.layout.box_x - ac.parg[igdxeng2wbox]
 ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
+ac.fuselage.cabin.front_seat_offset = 10.0 * ft_to_m
+ac.fuselage.cabin.rear_seat_offset = 0.0
 
 ac.pari[iinftanks] = 1
 
@@ -444,6 +446,8 @@ ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484
 ac.fuselage.cabin.seat_pitch = 0.762
 ac.fuselage.cabin.seat_width = 0.4826
 ac.fuselage.cabin.aisle_halfwidth = 0.254
+ac.fuselage.cabin.front_seat_offset = 10.0 * ft_to_m
+ac.fuselage.cabin.rear_seat_offset = 0.0
 ac.parg[igWpaymax] = 219964.5779
 ac.fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 

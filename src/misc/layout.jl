@@ -239,6 +239,10 @@ $TYPEDFIELDS
     floor_angle_main::Float64 = 0.0
     """Floor angle of top cabin [rad]"""
     floor_angle_top::Float64 = 0.0
+    """Front cabin offset before seats [m]"""
+    front_seat_offset::Float64 = 3.0
+    """Rear cabin offset after seats [m]"""
+    rear_seat_offset::Float64 = 2.0
     """Unit load device type"""
     unit_load_device::String = ""
 end
