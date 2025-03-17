@@ -341,7 +341,7 @@ function optimize_double_decker_cabin(fuse)
 end
 
 """
-    MinCargoHeightConst(x, fuse, minheight = 1.626)
+    MinCargoHeightConst(x, fuse, minheight = 1.626, minwidth = 3.13)
 
 This function evaluates a minimum height constraint on the cargo hold. It returns a number less than or equal 0 if
 the constraint is met and a value greater than 0 if it is not.
@@ -349,20 +349,22 @@ the constraint is met and a value greater than 0 if it is not.
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of cargo hold
+    - `minheight::Float64`:minimum height of cargo hold (m)
+    - `minwidth::Float64`:minimum width of cargo hold (m)
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCargoHeightConst(x, fuse, minheight = 1.626)
+function MinCargoHeightConst(x, fuse, minheight = 1.626, minwidth = 3.13)
     #Extract parameters
     θ1 = x[2]
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
 
-    hcargo = Rfuse * (1 + sin(θ1)) + dRfuse #Height left for cargo containers under floor; need to add dRfuse
+    θcargo = -acos(minwidth/(2*Rfuse)) #Angle of cargo hold floor
+    hmax = dRfuse + Rfuse * (sin(θ1) - sin(θcargo)) #Maximum height of cargo hold
 
-    constraint = minheight/hcargo - 1.0 #Constraint has to be negative if hcargo > minheight
+    constraint = minheight/hmax - 1.0 #Constraint has to be negative if hcargo > minheight
     return constraint
 end
 
