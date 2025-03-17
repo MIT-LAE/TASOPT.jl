@@ -161,12 +161,13 @@
     #Use provided layout (false) or recalculate it (true) for maximum pax keeping deltas
     calculate_cabin_length = false 
 
-    double_decker   = false #if true, the fuselage has two passenger decks
-    floor_distance  = "0 in" #Vertical distance between floors if double decker
-    seat_pitch      = "30 in"
-    seat_width      = "19 in"
-    seat_height     = "45 in"
-    aisle_halfwidth = "10 in"
+    double_decker    = false #if true, the fuselage has two passenger decks
+    floor_distance   = "2.2 m" #Vertical distance between floors if double decker
+    seat_pitch       = "30 in"
+    seat_width       = "19 in"
+    seat_height      = "45 in"
+    aisle_halfwidth  = "10 in"
+    unit_load_device = "LD3" #Cargo container for double decker sizing
 
     #Provided layout
     x_nose_tip           = "0 ft"

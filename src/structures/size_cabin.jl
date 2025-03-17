@@ -349,17 +349,21 @@ the constraint is met and a value greater than 0 if it is not.
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of cargo hold (m)
-    - `minwidth::Float64`:minimum width of cargo hold (m)
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCargoHeightConst(x, fuse, minheight = 1.626, minwidth = 3.13)
+function MinCargoHeightConst(x, fuse)
     #Extract parameters
     θ1 = x[2]
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
+
+    #Find size of unit load device that must fit in cargo bay
+    ULD = fuse.cabin.unit_load_device
+    ULDdims = UnitLoadDeviceDimensions[ULD]
+    minheight = ULDdims[1]
+    minwidth = ULDdims[2] #Base width
 
     θcargo = -acos(minwidth/(2*Rfuse)) #Angle of cargo hold floor
     hmax = dRfuse + Rfuse * (sin(θ1) - sin(θcargo)) #Maximum height of cargo hold

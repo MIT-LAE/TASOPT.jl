@@ -239,4 +239,6 @@ $TYPEDFIELDS
     floor_angle_main::Float64 = 0.0
     """Floor angle of top cabin [rad]"""
     floor_angle_top::Float64 = 0.0
+    """Unit load device type"""
+    unit_load_device::String = ""
 end
