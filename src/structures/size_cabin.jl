@@ -382,17 +382,18 @@ the constraint is met and a value greater than 0 if it is not.
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of upper cabin
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCabinHeightConst(x, fuse, minheight = 2.0)
+function MinCabinHeightConst(x, fuse)
     #Extract parameters
     θ1 = x[2] #Main deck angle
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
     d_floor = fuse.cabin.floor_distance
+
+    minheight = fuse.cabin.min_top_cabin_height
 
     try #The calculation could fail for some inputs if an asin returns an error
 

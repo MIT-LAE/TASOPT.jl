@@ -356,6 +356,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     if pari[iidoubledeck] == 1 #If aircraft is a double decker
         fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
         fuselage.cabin.unit_load_device = readgeom("unit_load_device")
+        fuselage.cabin.min_top_cabin_height = Distance(readgeom("min_top_cabin_height"))
     end
 
     fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))

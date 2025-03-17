@@ -158,6 +158,7 @@ name = "TASOPT Model with cryo fuel and HX"
 
     double_decker   = false #if true, the fuselage has two passenger decks
     floor_distance  = "0 in" #Vertical distance between floors if double decker
+    min_top_cabin_height  = "2 m" #Minimum height of top cabin, if double decker
     seat_pitch      = "30 in"
     seat_width      = "19 in"
     seat_height     = "45 in"

@@ -227,6 +227,8 @@ $TYPEDFIELDS
     aisle_halfwidth::Float64 = 0.0
     """Distance between double decker floors [m]"""
     floor_distance::Float64 = 0.0
+    """Top cabin minimum height [m]"""
+    min_top_cabin_height::Float64 = 0.0
     """Main cabin width [m]"""
     cabin_width_main::Float64 = 0.0
     """Top cabin width [m]"""
