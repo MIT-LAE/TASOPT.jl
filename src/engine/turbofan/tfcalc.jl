@@ -145,6 +145,10 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
         Tt9 = pare[ieTt9]
         pt9 = pare[iept9]
 
+        #--------------------------------------------------------------------------
+        #Engine model convergence
+        pare[ieConvFail] = 0.0 #Converged by default
+
         # #--------------------------------------------------------------------------
         if (icall == 0)
                 #----- engine sizing case
@@ -491,7 +495,8 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 end
 
                 if (!Lconv)
-                        println("Failed on operating point", ip, ":  ", cplab[ip])
+                        @warn "Convergence failed on operating point: $ip"
+                        pare[ieConvFail] = 1.0 #Store convergence failure
                 end
                 # if (iTFspec == 1)
                 #         exit()
@@ -726,3 +731,11 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
         
         return ichoke5, ichoke7
 end # tfcalc
+
+function check_engine_convergence_failure(pare)
+        if sum(pare[ieConvFail]) > 0.0 #If any operating point failed to converge
+                return true
+        else
+                return false #All operating points converged
+        end
+end

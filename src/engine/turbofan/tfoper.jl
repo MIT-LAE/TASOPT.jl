@@ -2721,58 +2721,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             end
 
-
-            if (iter < 0)
-
-                  println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
-
-                  Tt4 = Tb
-                  pt5 = Pc
-                  BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
-
-                  println("pt18 Tt18 =", pt18, Tt18)
-                  println("pt2  Tt2  =", pt2, Tt2)
-                  println("pt25 Tt25 =", pt25, Tt25)
-                  println("pt3  Tt3  =", pt3, Tt3)
-                  println("pt4  Tt4  =", pt4, Tt4)
-                  println("pt41 Tt41 =", pt41, Tt41)
-                  println("pt45 Tt45 =", pt45, Tt45)
-                  println("pt5  Tt5  =", pt5, Tt5)
-                  println("p5        =", p5)
-                  println("FPR  BPR  =", pf, BPR)
-
-                  Lconv = false
-                  return TSFC, Fsp, hfuel, ff,
-                  Feng, mcore,
-                  pif, pilc, pihc,
-                  mbf, mblc, mbhc,
-                  Nbf, Nblc, Nbhc,
-                  Tt0, ht0, pt0, cpt0, Rt0,
-                  Tt18, ht18, pt18, cpt18, Rt18,
-                  Tt19, ht19, pt19, cpt19, Rt19,
-                  Tt2, ht2, pt2, cpt2, Rt2,
-                  Tt21, ht21, pt21, cpt21, Rt21,
-                  Tt25, ht25, pt25, cpt25, Rt25,
-                  Tt3, ht3, pt3, cpt3, Rt3,
-                  Tt4, ht4, pt4, cpt4, Rt4,
-                  Tt41, ht41, pt41, cpt41, Rt41,
-                  Tt45, ht45, pt45, cpt45, Rt45,
-                  Tt49, ht49, pt49, cpt49, Rt49,
-                  Tt5, ht5, pt5, cpt5, Rt5,
-                  Tt7, ht7, pt7, cpt7, Rt7,
-                  u0,
-                  T2, u2, p2, cp2, R2, M2,
-                  T25c, u25c, p25c, cp25c, R25c, M25c,
-                  T5, u5, p5, cp5, R5, M5,
-                  T6, u6, p6, cp6, R6, M6, A6,
-                  T7, u7, p7, cp7, R7, M7,
-                  T8, u8, p8, cp8, R8, M8, A8,
-                  u9, A9,
-                  epf, eplc, ephc, epht, eplt,
-                  etaf, etalc, etahc, etaht, etalt,
-                  Lconv
-            end
-
             #---- solve Newton system and set Newton deltas
             res = gaussn(9, 9, a, res, 1)
 
@@ -2983,49 +2931,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   vrlx = "Mi"
             end
 
-            if (Lprint || iter >= itmax - 6)
-                  if (iTFspec == 1)
-                        if (u0 == 0.0)
-                              Finl = 0.0
-                        else
-                              Finl = Phiinl / u0
-                        end
-
-                        pfn = p0 / pt7
-                        p8, T8, h8, s8, cp8, R8 = gas_prat(alpha, nair,
-                              pt7, Tt7, ht7, st7, cpt7, Rt7, pfn, 1.0)
-                        u8 = sqrt(2.0 * max(ht7 - h8, 0.0))
-
-                        pcn = p0 / pt5
-                        p6, T6, h6, s6, cp6, R6 = gas_prat(lambdap, nair,
-                              pt5, Tt5, ht5, st5, cpt5, Rt5, pcn, 1.0)
-                        u6 = sqrt(2.0 * max(ht5 - h6, 0.0))
-
-                        F = ((1.0 + ff) * u6 - u0 + BPR * (u8 - u0)) * mdotl + Finl
-                        Fspec = 0.0
-                  end
-
-                  if (iter == 1)
-                        println("---------------------------------")
-                  end
-                  ru2 = rho2 * u2
-                  ru19 = rho19 * u19
-
-                  println(iter, vrlx, rlx, iTFspec)
-                  println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
-                  println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
-                  println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
-                  println("mf dmf R4   ", mf / mbfD, dmf / mbfD, rrel[4])
-                  println("ml dml R5   ", ml / mblcD, dml / mblcD, rrel[5])
-                  println("mh dmh R6   ", mh / mbhcD, dmh / mbhcD, rrel[6])
-                  println("Tb dTb R7 F ", Tb, dTb, rrel[7], F, Fspec, Tt4)
-                  println("Pc dPc R8 pt", Pc, dPc, rrel[8], pt5, pitn * pt5h)
-                  println("M2 dM2 R9   ", Mi, dMi, rrel[9], ru2, ru19)
-                  println("u0 u5 u7 del", u0, u5, u7, dmax - toler)
-            end
-
-            #---- exit if convergence test is met
-            if (dmax < toler)
+            #---- exit if convergence test is met or if max iterations reached
+            if (dmax < toler) | (iter == itmax)
 
                   # ===============================================================
                   #---- pick up here if converged normally
@@ -3210,7 +3117,30 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         error("ht5 < h5 : ", ht5, h5)
                   end
                   
-                  Lconv = true
+                  if (dmax < toler) #Convergence achieved
+                        Lconv = true
+
+                  else #Finish run as max iterations reached
+                        Lconv = false
+                        
+                        # println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
+
+                        # Tt4 = Tb
+                        # pt5 = Pc
+                        # BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
+
+                        # println("pt18 Tt18 =", pt18, Tt18)
+                        # println("pt2  Tt2  =", pt2, Tt2)
+                        # println("pt25 Tt25 =", pt25, Tt25)
+                        # println("pt3  Tt3  =", pt3, Tt3)
+                        # println("pt4  Tt4  =", pt4, Tt4)
+                        # println("pt41 Tt41 =", pt41, Tt41)
+                        # println("pt45 Tt45 =", pt45, Tt45)
+                        # println("pt5  Tt5  =", pt5, Tt5)
+                        # println("p5        =", p5)
+                        # println("FPR  BPR  =", pf, BPR)
+                  end
+                 
                   return TSFC, Fsp, hfuel, ff,
                   Feng, mcore,
                   pif, pilc, pihc,
