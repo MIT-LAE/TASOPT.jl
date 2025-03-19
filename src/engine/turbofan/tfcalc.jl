@@ -495,7 +495,7 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 end
 
                 if (!Lconv)
-                        @warn "Convergence failed on operating point: $ip"
+                        #@warn "Convergence failed on operating point: $ip"
                         pare[ieConvFail] = 1.0 #Store convergence failure
                 end
                 # if (iTFspec == 1)
