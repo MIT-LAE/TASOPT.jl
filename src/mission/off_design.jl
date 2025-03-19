@@ -287,5 +287,10 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 
     end
 
+    #Check if all engine points have converged
+    if check_engine_convergence_failure(pare)
+        @warn "Some engine points did not converge"
+    end
+
 return 
 end

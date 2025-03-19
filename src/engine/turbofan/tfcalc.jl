@@ -733,7 +733,7 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
 end # tfcalc
 
 function check_engine_convergence_failure(pare)
-        if sum(pare[ieConvFail]) > 0.0 #If any operating point failed to converge
+        if sum(pare[ieConvFail, :]) > 0.0 #If any operating point failed to converge
                 return true
         else
                 return false #All operating points converged

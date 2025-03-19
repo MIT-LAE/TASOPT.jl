@@ -874,7 +874,11 @@ function wsize(ac; itermax=35,
     ξpay = 0.0
     itrim = 0
     balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
-    
+
+    #Check if all engine points have converged
+    if check_engine_convergence_failure(pare)
+        @warn "Some engine points did not converge"
+    end
 end
 
 """
