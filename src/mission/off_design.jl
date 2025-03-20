@@ -21,8 +21,6 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     parad = ac.parad
     pared = ac.pared
 
-    resetHXs(pare) #Reset heat exchanger parameters
-
     time_propsys = 0.0
 
     tolerW = 1.0e-8
@@ -33,6 +31,11 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 #        para(iafexcdw,ip) = parm[imfexcdw]
 #        para(iafexcdt,ip) = parm[imfexcdt]
 #        para(iafexcdf,ip) = parm[imfexcdf]
+
+    #Initialize para with the design mission values
+    for ip = ipstatic: ipdescentn
+        para[:,ip] = parad[:,ip]
+    end
 
     #Calculate sea level temperature corresponding to TO conditions
     altTO = parm[imaltTO] 
@@ -139,10 +142,6 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     else
         pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
     end
-  
-    for ip = ipstatic: ipdescentn
-      para[iaCfnace,ip] = parad[iaCfnace,ip]
-    end
 
 #--------------------------------------------------------------------------
 #---- set wing pitching moment constants
@@ -214,6 +213,8 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 
     # Initialize previous weight iterations
     WTO1, WTO2, WTO3 = zeros(Float64, 3) #1st-previous to 3rd previous iteration weight for convergence criterion
+
+    resetHXs(pare) #Reset heat exchanger parameters
 
 #---- no convergence yet
     Lconv = false
