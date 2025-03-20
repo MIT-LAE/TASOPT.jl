@@ -8,13 +8,13 @@
 - `ac::aircraft`: Aircraft with first mission being the design mission
 - `mi::Int64`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
-- `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
+- `initializes_arrays::Boolean`: Use design case as initial guess for engine and aerodynamic states if true
 
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
+function fly_off_design!(ac, mi = 1; itermax = 35, initializes_arrays = true)
     #Extract aircraft components and storage arrays
     pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
     
@@ -32,9 +32,13 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 #        para(iafexcdt,ip) = parm[imfexcdt]
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
-    #Initialize para with the design mission values
-    for ip = ipstatic: ipdescentn
-        para[:,ip] = parad[:,ip]
+    #Initialize arrays with the design mission values if desired
+    if (initializes_arrays)
+        #----- use design case as initial guess for engine and aerodynamic states
+        pare[:,:] .= pared[:,:]
+        para[:,:] .= parad[:,:]
+    else
+        pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
     end
 
     #Calculate sea level temperature corresponding to TO conditions
@@ -134,13 +138,6 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
       Re = ReTO*frac + ReCR*(1.0-frac)
       pare[ieu0,ip] = V
       para[iaReunit,ip] = Re
-    end
-
-    if (initializes_engine)
-#----- use design case as initial guess for engine state
-        pare[:,:] .= pared[:,:]
-    else
-        pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
     end
 
 #--------------------------------------------------------------------------
