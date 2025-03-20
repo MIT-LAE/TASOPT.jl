@@ -252,7 +252,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #      data toler  1.0e-7 
       toler = 1.0e-10
 
-      itmax = 50
+      itmax = 100
 
       #---- max fan-face Mach number, above which it will be artificially limited
       Mimax = 0.98
