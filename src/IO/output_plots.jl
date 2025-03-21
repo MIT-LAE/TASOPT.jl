@@ -286,7 +286,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
         end
 
-    if pari[iidoubledeck] == 0 #Only show seats in single deck arrangements
+    if fuselage.n_decks == 1 #Only show seats in single deck arrangements
         h_seat = fuselage.cabin.seat_height
         pax = parg[igWpay]/parm[imWperpax]
         Rfuse = fuselage.layout.radius
@@ -433,12 +433,10 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     annotate!(plot_obj, parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
 
     # Show seats (single-deck case)
-    if pari[iidoubledeck] == 0 
+    if fuselage.n_decks == 1
         xgrid = repeat(xseats, inner=length(yseats))
         ygrid = repeat(yseats, outer=length(xseats))
-    end
 
-    if pari[iidoubledeck] == 0
         scatter!(plot_obj, xgrid, ygrid,
             color=:gray, alpha=0.1, marker=:rect, 
             ms=2, z_order=:front, label="")

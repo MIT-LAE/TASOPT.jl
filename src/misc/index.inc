@@ -14,8 +14,7 @@
       const iiopt = 12  # 0 = run sizing loop only; 1 = run optimization procedure "optimize"
       const iiaircraftclass = 13 # 737 = 737 size aircraft; 777 = 777 size aircraft
       const iinftanks = 14 # number of fuel tanks in fuselage
-      const iidoubledeck = 15 #double decker flag
-      const iitotal = 15
+      const iitotal = 14
 
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)

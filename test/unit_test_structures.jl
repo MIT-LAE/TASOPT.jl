@@ -451,8 +451,6 @@ ac.fuselage.cabin.rear_seat_offset = 0.0
 ac.parg[igWpaymax] = 219964.5779
 ac.fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
 
-ac.pari[iidoubledeck] = 0
-
 TASOPT.update_fuse_for_pax!(ac)
 
 parg_check = [14.584924835954398, 219964.5779, 1.5239999999999991]
