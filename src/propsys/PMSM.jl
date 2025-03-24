@@ -1,4 +1,5 @@
 module ElectricMachine
+using NLsolve
 
 abstract type AbstractElectricMachine end
 abstract type AbstractMagnets end
@@ -145,13 +146,28 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     """Mean internal temperature [K],
      used to calculate air density and viscosity, and winding resistance"""
     T::Float64 = 273.15 + 90
+    A_slot::Float64 = 0.0
+    radius_gap::Float64 = 0.0
     """Thickness of air gap [m]"""
     airgap_thickness::Float64 = 2e-3
+    """Dynamic viscosity of air in motor [Pa s]"""
+    air_viscosity::Float64 = 1.8e-5
+    """Density of air in motor [kg/m^3]"""
+    air_density::Float64 = 1.23
     """Pole pairs [-]"""
     p::Int = 8
     """Mass of machine [kg]"""
     mass::Float64 = 0.0
 end
+
+#Override motor to return other properties
+function Base.getproperty(obj::Motor, sym::Symbol)
+    if sym === :f #Electric frequency
+        return obj.Ω * obj.N_pole_pairs/ (2 * pi)
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
 
 # Layout:
 # 		
@@ -191,10 +207,9 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     shaft = motor.shaft
 
     motor.Ω = shaft_speed * (2 * π / 60)
-    motor.f = motor.N_pole_pairs * shaft_speed / 60
 
     #Outer radius of the magnet - subject to the highest rotational speeds
-    radius_gap = motor.U_max / motor.Ω
+    motor.radius_gap = motor.U_max / motor.Ω
 
     # Calculate maximum flux through the stator and rotor back iron
     # Really, this needs to be a constraint Bsbi ≤ Bsat (at the top level) rather 
@@ -205,13 +220,13 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     B_gap = airgap_flux(magnet.M, magnet.thickness, motor.airgap_thickness)
 
-    stator.thickness = B_gap / stator.B * π * radius_gap / (2 * motor.N_pole_pairs)
-    rotor.thickness = B_gap / rotor.B * π * radius_gap / (2 * motor.N_pole_pairs)
+    stator.thickness = B_gap / stator.B * π * motor.radius_gap / (2 * motor.N_pole_pairs)
+    rotor.thickness = B_gap / rotor.B * π * motor.radius_gap / (2 * motor.N_pole_pairs)
 
-    rotor.Ro = radius_gap - magnet.thickness
+    rotor.Ro = motor.radius_gap - magnet.thickness
     rotor.Ri = rotor.Ro - rotor.thickness
 
-    teeth.Ri = radius_gap + motor.airgap_thickness
+    teeth.Ri = motor.radius_gap + motor.airgap_thickness
 
     stator.Ri = teeth.Ri + teeth.thickness
     stator.Ro = stator.Ri + stator.thickness
@@ -220,7 +235,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     A_teeth = N_teeth * teeth.thickness * teeth.width
     A_slots = π * (teeth.Ri + stator.Ri) * teeth.thickness - A_teeth
-    A_slot = A_slots / N_teeth
+    motor.A_slot = A_slots / N_teeth
     λ = A_slots / (A_slots + A_teeth)
     l_end_turns = π / (2 * motor.N_pole_pairs) * teeth.Ri * (λ / sqrt(1 - λ^2))
 
@@ -233,14 +248,14 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     end
 
     torque = design_power / motor.Ω
-    slot_current = motor.J_max * windings.kpf * A_slot #Peak slot current
-    windings.N_turns = floor(windings.kpf * A_slot / windings.A_wire)
+    slot_current = motor.J_max * windings.kpf * motor.A_slot #Peak slot current
+    windings.N_turns = floor(windings.kpf * motor.A_slot / windings.A_wire)
 
     #Assume 2 phases excited at any given time
     motor.I =
         motor.Id = (2 / motor.phases * motor.Nsp * 2 * motor.N_pole_pairs) * slot_current
     force_length = motor.Id * B_gap
-    motor.l = torque / (force_length * radius_gap)
+    motor.l = torque / (force_length * motor.radius_gap)
 
     #Size shaft
     shaft.Ro = rotor.Ri
@@ -251,11 +266,15 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
         shaft.Ri = 0.0
     end
 
+    if motor.Ω^2*shaft.Ri^2*shaft.material.ρ > shaft.material.YTS
+        @warn "Stresses due to rotational speed exceed shaft yield strength"
+    end
+
     #Masses
     rotor.mass = cross_sectional_area(rotor) * motor.l * rotor.material.ρ
     stator.mass = cross_sectional_area(stator) * motor.l * stator.material.ρ
     magnet.mass =
-        cross_sectional_area(radius_gap, rotor.Ro) * motor.l * magnet.ρ
+        cross_sectional_area(motor.radius_gap, rotor.Ro) * motor.l * magnet.ρ
     teeth.mass = A_teeth * motor.l * teeth.material.ρ
 
     total_winding_volume = A_slots * (motor.l + 2 * l_end_turns)
@@ -278,10 +297,29 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
         motor.Nsp / motor.phases *
         2 *
         motor.N_pole_pairs *
-        slot_resistance(motor.windings, windings.kpf * A_slot, motor.l + 2 * l_end_turns)
+        slot_resistance(motor.windings, windings.kpf * motor.A_slot, motor.l + 2 * l_end_turns)
 
 
 end  # function size_PMSM!
+
+function operate_PMSM(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+    magnet = motor.magnet
+    windings = motor.windings
+
+    motor.Ω = shaft_speed * (2 * π / 60)
+    B_gap = airgap_flux(magnet.M, magnet.thickness, motor.airgap_thickness)
+
+    torque = shaft_power/motor.Ω
+    motor.I = torque / (motor.radius_gap * B_gap * motor.l)
+
+    Q_loss = calculate_losses(motor)
+
+    P_elec = shaft_power + Q_loss #Total required power
+    #TODO the phase calculations in the source paper are sketchy. Verify this or do it properly without "energized" phases
+    motor.V = P_elec / (6/pi * motor.I) #Compute required voltage
+    
+    return motor.V
+end
 
 """
 """
@@ -345,11 +383,11 @@ end  # function eddy_loss
 """
 Calculates the windage (i.e., air friction losses) for the rotor.
 """
-function windage_loss(motor::Motor, air)
+function windage_loss(motor::Motor)
     #air from IdealGases?
-    Re = motor.Ω * motor.radius_gap * motor.airgap_thickness * air.ρ / air.μ
+    Re = motor.Ω * motor.radius_gap * motor.airgap_thickness* motor.air_viscosity / motor.air_viscosity
     Cf = 0.0725 * Re^-0.2 #avg. skin friction approx. from fully turbulent flat plate
-    return Cf * π * air.ρ * motor.Ω^3 * motor.radius_gap^4 * motor.l
+    return Cf * π * motor.air_density * motor.Ω^3 * motor.radius_gap^4 * motor.l
 end  # function windage_loss
 
 """
