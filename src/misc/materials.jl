@@ -222,7 +222,7 @@ function ElectricSteel(material::String)
         catch 
             error("Insufficient data in database for $material to build a Conductor")
         else
-            Conductor(material, ρ, ke, kh, α)
+            ElectricSteel(material, ρ, ke, kh, α)
         end
     end
 

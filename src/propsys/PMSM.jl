@@ -8,22 +8,22 @@ const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/
 using ..materials
 using DocStringExtensions
 
-@kwdef struct PermanentMagnet <: AbstractMagnets
+@kwdef mutable struct PermanentMagnet <: AbstractMagnets
     """Magnet thickness [m]"""
     thickness::Float64 = 20e-3
     """Magnet Density [kg/m⁻³]"""
-    density::Float64 = 7501.0 #Neodymium magnets
+    ρ::Float64 = 7501.0 #Neodymium magnets
     """Magnetization constant [A/m]"""
     M::Float64 = 8.604e5
     """Mass of magnets [kg]"""
     mass::Float64 = 0.0
 end
 
-@kwdef struct Windings
+@kwdef mutable struct Windings
     """Winding conductor material"""
-    conductor::Conductor
+    conductor::Conductor = Conductor("Cu")
     """Winding insulator material"""
-    insulator::Insulator
+    insulator::Insulator = Insulator("PTFE")
     """Number of turns [-]"""
     N_turns::Int = 1
     """Wire area [m²]"""
@@ -89,7 +89,7 @@ end
     """Overhang fraction of shaft [-]"""
     l_extra::Float64 = 1.2
     """Material"""
-    material::StructuralAlloy
+    material::StructuralAlloy = StructuralAlloy("AISI-4340")
     """Mass [kg]"""
     mass::Float64 = 0.0
 end
@@ -107,6 +107,7 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     teeth::Teeth = Teeth()
     magnet::PermanentMagnet = PermanentMagnet()
     windings::Windings = Windings()
+    shaft::ShaftGeometry = ShaftGeometry()
 
     """Design shaft power [W]"""
     P_design::Float64 = 1e6
@@ -232,7 +233,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     end
 
     torque = design_power / motor.Ω
-    slot_current = J_max * windings.kpf * A_slot #Peak slot current
+    slot_current = motor.J_max * windings.kpf * A_slot #Peak slot current
     windings.N_turns = floor(windings.kpf * A_slot / windings.A_wire)
 
     #Assume 2 phases excited at any given time
@@ -251,19 +252,19 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     end
 
     #Masses
-    rotor.mass = cross_sectional_area(rotor) * motor.l * rotor.material.density
-    stator.mass = cross_sectional_area(stator) * motor.l * stator.material.density
+    rotor.mass = cross_sectional_area(rotor) * motor.l * rotor.material.ρ
+    stator.mass = cross_sectional_area(stator) * motor.l * stator.material.ρ
     magnet.mass =
-        cross_sectional_area(radius_gap, rotor.Ro) * motor.l * magnet.material.density
-    teeth.mass = A_teeth * motor.l * teeth.material.density
+        cross_sectional_area(radius_gap, rotor.Ro) * motor.l * magnet.ρ
+    teeth.mass = A_teeth * motor.l * teeth.material.ρ
 
     total_winding_volume = A_slots * (motor.l + 2 * l_end_turns)
     windings.mass =
-        windings.kpf * total_winding_volume * windings.conductor.material.density +
-        (1 - windings.kpf) * total_winding_volume * windings.insulator.material.density
+        windings.kpf * total_winding_volume * windings.conductor.ρ +
+        (1 - windings.kpf) * total_winding_volume * windings.insulator.ρ
 
     shaft.mass =
-        cross_sectional_area(shaft) * (motor.l * shaft.l_extra) * shaft.material.density
+        cross_sectional_area(shaft) * (motor.l * shaft.l_extra) * shaft.material.ρ
 
     motor.mass =
         rotor.mass + stator.mass + magnet.mass + teeth.mass + windings.mass + shaft.mass
