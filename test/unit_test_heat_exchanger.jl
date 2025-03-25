@@ -141,6 +141,7 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
         HXgeom.Δpdes = 3e6
+        HXgeom.maxL = 0.5
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -174,7 +175,7 @@
         TASOPT.engine.hxsize!(HXgas, HXgeom)
 
         Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I too
-        I_check = 71367.15052776688
+        I_check = 71419.66226260524
 
         @test Iobj ≈ I_check    rtol = 1e-5
 
@@ -208,6 +209,7 @@
         HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
         HXgeom.material = TASOPT.StructuralAlloy("SS-304")
         HXgeom.Δpdes = 3e6
+        HXgeom.maxL = 0.5
 
         #Calculate starting point
         #First calculate minimum tube length
@@ -241,7 +243,7 @@
 
         Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-        I_check_rec = 4783.922531591281
+        I_check_rec = 3498.8733964760736
 
         @test Iobj_rec ≈ I_check_rec    rtol = 1e-5
     end
@@ -362,14 +364,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 17.32417440493928    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 17.323955467246847    rtol = 1e-5
         @test HX.HXgeom.n_passes ≈ 1.0000000035523804    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.44330987861529786    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 135.87687052262797    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 135.87947388047039    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.500000000011525    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈  -13469.833152449006    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.643144820823274    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.64270109056272   rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[iePreCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -383,14 +385,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 18.866605656654635    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 1.0000000687008141    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 15.117642363818238     rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 1.270473046989811    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.24880364903969382    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 167.51811148622306    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 149.67684320661107   rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -19023.600308918238    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.45343292282888    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.3113280324075     rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieInterCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -406,13 +408,13 @@
         HX = HXs[1]
 
         @test HX.HXgeom.n_stages ≈ 20.0    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈  6.211895113125989    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  4.250517424315109    rtol = 1e-5
         @test HX.HXgeom.l ≈  0.08973681556581393    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 37.16237909994032     rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 64.20716382870775    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -215422.60328655195    rtol = 1e-5 
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 918.0567918908455     rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1123.6270956822698     rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieTurbCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -428,14 +430,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 7.729947951643161    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 3.3090670749981417    rtol = 1e-5 
+        @test HX.HXgeom.n_stages ≈ 7.521991023907611    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  3.4089173173716776   rtol = 1e-5 
         @test HX.HXgeom.l ≈ 0.2982717368848314    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 96.21223850121407    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈  94.5395923669446    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -48190.134937808325    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.7830071648647    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 578.6675018796004    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -453,14 +455,14 @@
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 19.999995398417617    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 4.924990037610598    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 19.999999999998554    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 4.764535918055722    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.2982717368848314    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 100.41906968588613    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 112.5610974052182    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.7999999999981817    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -87846.51831616473    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2322.7602104058656    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2282.751781954118    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
@@ -468,6 +470,46 @@
         end
 
         pare[ieRegenepsilon,:] .= 0.0
+
+    end
+
+    @testset "Radiator design and off-design performance" begin
+
+        inpts_dict = Dict(
+            "iTp_in" => 1,
+            "ipp_in" => 2,
+            "iTc_in" => 3,
+            "ipc_in" => 4,
+            "imp_in" => 5,
+            "iQheat" => 6
+        )
+        iTp_in = inpts_dict["iTp_in"]
+        ipp_in = inpts_dict["ipp_in"]
+        iTc_in = inpts_dict["iTc_in"]
+        ipc_in = inpts_dict["ipc_in"]
+        imp_in = inpts_dict["imp_in"]
+        iQheat = inpts_dict["iQheat"]
+
+        pare = zeros(ietotal, iptotal)
+        pare[1,:] .= [343.5937504775422, 345.1223581889431, 0.0, 0.0, 313.78565028844844, 307.1133732298289, 299.4976209320901, 295.77161933759936, 297.7979970527857, 292.4179898692317, 290.77602320035004, 263.0449635812037, 281.20843068925603, 298.112881341098, 309.3973072464574, 298.7327491186001, 0.0]
+        pare[2,:] .= [175101.1544126459, 178399.39021402935, 0.0, 0.0, 133748.37095494103, 110626.50581060312, 89022.3186448056, 73988.05771998747, 64580.336522473954, 61271.983314487086, 60150.59571341334, 44236.17815241701, 63955.92953145897, 88974.3688113112, 114550.16697333875, 114113.91098410703, 0.0]
+        pare[3,:] .= [453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15, 453.15]
+        pare[4,:] .= [300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0, 300000.0]
+        pare[5,:] .= [358.3434869671312, 366.38016489316016, 0.0, 0.0, 249.19699475758492, 234.48400704476614, 200.65335506151317, 170.25878321648813, 146.90816150458102, 141.16684807770758, 139.1072989341617, 108.25761644603271, 151.1038255310103, 202.63153614761245, 247.82443427439475, 149.89424326937296, 0.0]
+        pare[6,:] .= [1.3296113956684684e7, 1.3296113956683043e7, 0.0, 0.0, 1.6765644717054842e6, 1.863898537598179e6, 2.0218038992171476e6, 2.239585517913293e6, 2.592509216389226e6, 2.0910313931780618e6, 1.954040175585774e6, 379399.2116786214, 657833.3780815811, 1.0405791722436543e6, 1.2058361829043678e6, 200019.69516559975, 0.0]
+        
+        pare[ieDi,:] .= 0.4 #Inner diameter of HEX
+        pare[ieRadiatorepsilon,:] .= 0.7
+        pare[ieRadiatorMp,:] .= 0.12 
+        TASOPT.radiator_design!(pare, ipstatic, inpts_dict, TASOPT.engine.HX_struct(); rlx = 1.0)
+
+        RadDeltah = [37104.38291823695, 36290.485213795095, 0.0, 0.0, 6727.86793972544, 7948.936735981042, 10076.103131180309, 13154.008713110597, 17647.142199845614, 14812.481978963075, 14046.999622288717, 3504.596019511984, 4353.519017601429, 5135.326869780114, 4865.687221015694, 1334.405450155591, 0.0]
+        RadDeltap = [10340.666258188385, 10610.389907285618, 0.0, 0.0, 5944.078186443225, 6288.854293914368, 5723.524499564487, 5042.66082785144, 4466.157492232167, 4263.680918286111, 4194.406236522616, 3130.5075209024067, 4335.671892740382, 5736.6513825349075, 6736.513011093261, 2534.879218016105, 0.0]
+        
+        for ip =1:iptotal
+            @test pare[ieRadiatorDeltah, ip] ≈ RadDeltah[ip]
+            @test pare[ieRadiatorDeltap, ip] ≈ RadDeltap[ip]
+        end
 
     end
 

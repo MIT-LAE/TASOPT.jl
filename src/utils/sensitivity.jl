@@ -225,6 +225,20 @@ function setNestedProp!(ac, field_path::Vector, x, index=nothing)
 end
 
 """
+    check_if_multiple_vals(x,i)
+
+`check_if_multiple_vals` Is a helper function to transpose the sensitivities array in case 
+    there is an array of output functions and range of input parameters
+"""
+function check_if_multiple_vals(x,i)
+    if isa(x[1], Float64)
+        return x[i]
+    else
+        return map(y -> y[i], x)
+    end
+end
+
+"""
     central_diff_run(eps, par, model_state)
 
 `central_diff_run` calculates the finite differences using relative central difference
@@ -236,37 +250,91 @@ end
     **Outputs:**
     - The function returns the finite difference
 """
-function central_diff_run(eps, par, model_state; optimizer=false)
+function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothing)
     field_path, index = par
     # Get property from default model
     x = getNestedProp(model_state, field_path, index)
     x_both = [x*(1+eps), x*(1-eps)]
-    f = []
+    
+    # Initialize results array for each perturbation
+    f_results = []
+    
     for x_i in x_both
         # Reset model
         ac = deepcopy(model_state)
         setNestedProp!(ac, field_path, x_i, index)
-        TASOPT.size_aircraft!(ac,printiter=false)
-        f_out = ac.parm[imPFEI]
-        push!(f, f_out)
-    end
-    if typeof(x_both[1]) == Vector{Float64} || typeof(x_both[2]) == Vector{Float64}
         
+        # Initialize outputs for this perturbation
+        if isnothing(f_out_fn)
+            f_out = Inf
+            try
+                TASOPT.size_aircraft!(ac, printiter=false)
+                f_out = ac.parm[imPFEI]
+            catch
+                println("wsize FAILED")
+            end
+            push!(f_results, f_out)
+        else
+            # Handle single function or array of functions
+            f_out = []
+            try
+                TASOPT.size_aircraft!(ac, printiter=false)
+                if isa(f_out_fn, Array)
+                    # Multiple output functions
+                    for fn in f_out_fn
+                        push!(f_out, fn(ac))
+                    end
+                else
+                    # Single output function
+                    push!(f_out, f_out_fn(ac))
+                end
+            catch
+                println("wsize FAILED")
+                if isa(f_out_fn, Array)
+                    f_out = fill(Inf, length(f_out_fn))
+                else
+                    f_out = [Inf]
+                end
+            end
+            push!(f_results, f_out)
+        end
+    end
+    
+    # Calculate finite differences
+    if typeof(x_both[1]) == Vector{Float64} || typeof(x_both[2]) == Vector{Float64}
         vecSens = []
         for (idx, each_x) in enumerate(x_both[1])
-            fd_i =  (f[1] - f[2]) / (x_both[1][idx] - x_both[2][idx])
+            if isa(f_results[1], Array)
+                # Multiple output functions
+                fd_i = [(f1 - f2) / (x_both[1][idx] - x_both[2][idx]) 
+                       for (f1, f2) in zip(f_results[1], f_results[2])]
+            else
+                # Single output
+                fd_i = (f_results[1] - f_results[2]) / (x_both[1][idx] - x_both[2][idx])
+            end
             push!(vecSens, fd_i)
         end
+        
         if optimizer
-            return sum(vecSens)/size(vecSens)[1]
-            
+            if isa(f_results[1], Array)
+                # Return average sensitivity for each output function
+                return [sum(getindex.(vecSens, i))/length(vecSens) for i in 1:length(f_results[1])]
+            else
+                return sum(vecSens)/length(vecSens)
+            end
         else
-            @warn  "Specific range of values given ... returning vector of sensitivities "
+            @warn "Specific range of values given ... returning vector of sensitivities"
             return vecSens
         end
-        # 
     else
-        return (f[1] - f[2]) / (x_both[1] - x_both[2])
+        if isa(f_results[1], Array)
+            # Multiple output functions
+            return [(f1 - f2) / (x_both[1] - x_both[2]) 
+                   for (f1, f2) in zip(f_results[1], f_results[2])]
+        else
+            # Single output
+            return (f_results[1] - f_results[2]) / (x_both[1] - x_both[2])
+        end
     end
 end
 
@@ -278,8 +346,20 @@ end
     - `sensitivities`: List of caclulated sensitivities
     - `output_file`: File location of the plot figure
 """
-function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.svg")
-    fig, ax = subplots(dpi=300)
+function plot_sensitivities(sensitivities::Vector, output_file::String="sensitivity_plot.png")
+
+    #TODO: Sensitivity plotter should list the parameter name as yticks
+
+    # Initialize plot
+    p = plot(
+        legend=false,
+        xlabel="Sensitivity",
+        ylabel="Element Number",
+        title="Sensitivity Plot",
+        dpi=300,
+        size=(800, 600),
+        yticks=(1:length(sensitivities), string.(1:length(sensitivities)))
+    )
 
     # Store the y-axis positions
     y_positions = []
@@ -287,34 +367,29 @@ function plot_sensitivities(sensitivities::Vector, output_file::String="sensitiv
     # Loop through the sensitivities to plot each value
     for i in 1:length(sensitivities)
         if isa(sensitivities[i], Number)
-            ax.barh(i, sensitivities[i], color="blue")
+            bar!(p, [i], [sensitivities[i]], color=:blue, bar_width=0.5, orientation=:horizontal)
             push!(y_positions, i)
         elseif isa(sensitivities[i], Vector)
             # Plot each element in the sub-list as a separate bar, side by side
             for j in 1:length(sensitivities[i])
                 offset = (j - 1) * 0.25  # Slight offset for side-by-side bars
-                ax.barh(i + offset, sensitivities[i][j], height=0.25, color="green")
-            push!(y_positions, i)  # Append only once to avoid extra ticks
+                bar!(p, [i + offset], [sensitivities[i][j]], color=:green, bar_width=0.25, orientation=:horizontal)
             end
+            push!(y_positions, i)  # Append only once to avoid extra ticks
         end
     end
 
     # Draw a vertical line at x = 0
-    ax.axvline(x=0, color="black", linestyle="--", linewidth=1)
+    vline!(p, [0], linestyle=:dash, color=:black, linewidth=1)
 
-    # Set y-axis ticks to integers only
-    ax.set_yticks(1:length(sensitivities))
-    ax.set_yticklabels(1:length(sensitivities))
-
-    # Add labels and title
-    ax.set_xlabel("Sensitivity")
-    ax.set_ylabel("Element Number")
-    ax.set_title("Sensitivity Plot")
-    ax.invert_yaxis()  # Invert y-axis to match the order of elements
+    # Invert y-axis to match the order of elements
+    yflip!(p, true)
 
     # Save the figure to an image file
-    savefig(output_file)
-    println("Plot saved as $output_file")
+    # savefig(p, output_file)
+    # println("Plot saved as $output_file")
+
+    return p
 end
 
 """
@@ -330,17 +405,31 @@ end
     **Outputs:**
     - The function returns the finite difference of each input param in a vector.  
 """
-function get_sensitivity(input_params; model_state=nothing, eps=1e-5, optimizer=false)
+function get_sensitivity(input_params; model_state=nothing, eps=1e-5, optimizer=false, f_out_fn=nothing)
     if isnothing(model_state)
         @info "Aircraft model not provided. Using Default sized model"
         model_state = load_default_model()
-        TASOPT.size_aircraft!(model_state,printiter=false)
+        TASOPT.size_aircraft!(model_state, printiter=false)
     end
+    
+    if isnothing(f_out_fn)
+        @info "Output function not defined, using PFEI"
+    elseif isa(f_out_fn, Array) && !optimizer
+        @info "Multiple output functions provided, will return sensitivities for each"
+    end
+    
     params = map(p -> format_params(expr_to_string(p)), input_params)
     fd_array = []
+    
     for param in params
-        finite_diff = central_diff_run(eps, param, model_state; optimizer=optimizer)
+        finite_diff = central_diff_run(eps, param, model_state; 
+                                     optimizer=optimizer, f_out_fn=f_out_fn)
         push!(fd_array, finite_diff)
+    end
+    
+    if isa(f_out_fn, Array)
+        # Multiple output function, transpose array
+        fd_array = [map(x -> check_if_multiple_vals(x,i), fd_array) for i in 1:length(fd_array[1])]
     end
     return fd_array
 end

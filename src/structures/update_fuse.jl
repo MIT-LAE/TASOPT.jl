@@ -1,19 +1,27 @@
 export update_fuse!, update_fuse_for_pax!
 """
-    update_fuse!(fuselage, pari, parg)
+update_fuse!(ac, imission)
 
-Function to update the fuselage layout when there is a change in fuselage fuel tank length.
+Function to update the fuselage layout when there is a change in fuselage fuel-tank length.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `fuselage::Fuselage`: structure with fuselage parameters
-    - `pari::Vector{Int64}`: vector with aircraft integer parameters
-    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
+    - `ac::aircraft`: object with aircraft parameters
+    - `imission::Int64`: mission index
 
     **Outputs:**
-    No direct outputs; parameters in `parg` are modified.
+    No direct outputs; parameters in `ac` are modified.
 """
-function update_fuse!(fuselage, pari, parg)
+function update_fuse!(ac, imission::Int64 = 1)
+    #Unpack storage objects
+    fuse = ac.fuselage
+    wing = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    pari = ac.pari
+    parg = ac.parg
+    parm = view(ac.parm, :, imission)
+    para = view(ac.para, :, :, imission)
 
     nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
     # parg[igRfuse   ] = 90 * in_to_m 
@@ -21,61 +29,78 @@ function update_fuse!(fuselage, pari, parg)
     lftoffset = 2.0*ft_to_m #1 ft buffer for front and back of tanks
 
     #Useful relative distances to conserve
-    lcyl = fuselage.layout.l_cabin_cylinder
+    lcyl = fuse.layout.l_cabin_cylinder
     dxeng2wbox = parg[igdxeng2wbox]
-    dxapu2end = fuselage.layout.x_end - fuselage.APU.x
-    dxshell2conend =fuselage.layout.x_cone_end - fuselage.layout.x_pressure_shell_aft
-    dxshell2apu = fuselage.APU.x - fuselage.layout.x_pressure_shell_aft
-    dxhbox2conend = fuselage.layout.x_cone_end - parg[igxhbox ]
-    dxvbox2conend = fuselage.layout.x_cone_end - parg[igxvbox ]
+    dxapu2end = fuse.layout.x_end - fuse.APU.x
+    dxshell2conend =fuse.layout.x_cone_end - fuse.layout.x_pressure_shell_aft
+    dxshell2apu = fuse.APU.x - fuse.layout.x_pressure_shell_aft
+    dxhbox2conend = fuse.layout.x_cone_end - htail.layout.box_x
+    dxvbox2conend = fuse.layout.x_cone_end - vtail.layout.box_x
 
     if parg[igxftankaft] == 0.0 #if there is not a rear tank
-        dxcyl2shellaft = fuselage.layout.x_pressure_shell_aft - fuselage.layout.x_end_cylinder
+        dxcyl2shellaft = fuse.layout.x_pressure_shell_aft - fuse.layout.x_end_cylinder
     else #if there is a rear tank
         dxcyl2shellaft = 0.0 #no need for offset between shell2 and blend2 since rear space cannot be used
     end
 
     #Update positions and fuselage length
-    fuselage.layout.x_end_cylinder = fuselage.layout.x_start_cylinder + nftanks * (lftank + lftoffset) + lcyl
+    fuse.layout.x_end_cylinder = fuse.layout.x_start_cylinder + nftanks * (lftank + lftoffset) + lcyl
 
-    fuselage.layout.x_pressure_shell_aft = fuselage.layout.x_end_cylinder + dxcyl2shellaft
+    fuse.layout.x_pressure_shell_aft = fuse.layout.x_end_cylinder + dxcyl2shellaft
 
-    fuselage.layout.x_cone_end = fuselage.layout.x_pressure_shell_aft + dxshell2conend
-    fuselage.APU.r = [fuselage.layout.x_pressure_shell_aft + dxshell2apu, 0.0, 0.0]
-    fuselage.layout.x_end = fuselage.APU.x + dxapu2end
-    fuselage.HPE_sys.r = [fuselage.layout.x_cone_end * 0.52484, 0.0,0.0]#TODO: address this
+    fuse.layout.x_cone_end = fuse.layout.x_pressure_shell_aft + dxshell2conend
+    fuse.APU.r = [fuse.layout.x_pressure_shell_aft + dxshell2apu, 0.0, 0.0]
+    fuse.layout.x_end = fuse.APU.x + dxapu2end
+    fuse.HPE_sys.r = [fuse.layout.x_cone_end * 0.52484, 0.0,0.0]#TODO: address this
     
-    parg[igxhbox   ] = fuselage.layout.x_cone_end - dxhbox2conend
-    parg[igxvbox   ] = fuselage.layout.x_cone_end - dxvbox2conend
+    htail.layout.box_x = fuse.layout.x_cone_end - dxhbox2conend
+    vtail.layout.box_x = fuse.layout.x_cone_end - dxvbox2conend
     
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox
+    parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox
 
+
+    #Update fuselage aerodynamic parameters
+    fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
+
+    #Update fuselage BL properties
+    # Kinetic energy area at T.E.
+    KAfTE = para[iaKAfTE, ipcruise1]
+    # Surface dissapation area 
+    DAfsurf = para[iaDAfsurf, ipcruise1]
+    # Wake dissapation area
+    DAfwake = para[iaDAfwake, ipcruise1]
+    # Momentum area at ∞
+    PAfinf = para[iaPAfinf, ipcruise1]
+
+    # Assume K.E., Disspation and momentum areas are const. for all mission points:
+    para[iaKAfTE, :] .= KAfTE
+    para[iaDAfsurf, :] .= DAfsurf
+    para[iaDAfwake, :] .= DAfwake
+    para[iaPAfinf, :] .= PAfinf
 end
 
 """
-    update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
+    update_fuse_for_pax!(ac)
 
 Function to update the fuselage layout when the cabin length is not known a priori, for example if the radius is changed. 
 It sizes the cabin for the design number of passengers.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `pari::Vector{Int64}`: vector with aircraft integer parameters
-    - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
-    - `parm::Array{Float64}`: array with mission parameters
-    - `fuse::Fuselage`: structure with fuselage parameters
-    - `fuse_tank::fuselage_tank`: structure with cryogenic fuel tank parameters
+    - `ac`::aircraft: aircraft object
 
     **Outputs:**
     Parameters in `parg` are modified. It also outputs:
     - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
 """
-function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
+function update_fuse_for_pax!(ac)
+    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
 
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
     aisle_halfwidth = fuse.cabin.aisle_halfwidth
     h_seat = fuse.cabin.seat_height
+    d_floor = fuse.cabin.floor_distance
 
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
@@ -84,13 +109,17 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
 
     #Find cabin length by placing seats
     if fuse.n_decks == 2 #if the aircraft is a double decker
-        xopt, seats_per_row = optimize_double_decker_cabin(parg, fuse, parm) #Optimize the floor layout and passenger distributions
+        xopt, seats_per_row = optimize_double_decker_cabin(fuse) #Optimize the floor layout and passenger distributions
 
-        lcyl, _ = find_double_decker_cabin_length(xopt, parg, fuse, parm) #Total length is maximum of the two
+        lcyl, _ = find_double_decker_cabin_length(xopt, fuse) #Total length is maximum of the two
 
+        paxsize = xopt[1]
+        #Store angles
+        fuse.cabin.floor_angle_main = xopt[2]
+        fuse.cabin.floor_angle_top = find_floor_angles(true, Rfuse, dRfuse, θ1 = xopt[2], h_seat = h_seat, d_floor = d_floor)[2]
     else
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
-        paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers
+        paxsize = fuse.cabin.exit_limit #maximum number of passengers
         w = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
         lcyl, _, seats_per_row = place_cabin_seats(paxsize, w, seat_pitch, seat_width, aisle_halfwidth) #Cabin length
     end
@@ -101,10 +130,17 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     dxapu2end = fuse.layout.x_end - fuse.APU.x #Distance from APU to end
     dxshell2conend = fuse.layout.x_cone_end - fuse.layout.x_pressure_shell_aft #Distance from shell2 to conend
     dxshell2apu = fuse.APU.x - fuse.layout.x_pressure_shell_aft #Distance from shell2 to APU
-    dxhbox2conend = fuse.layout.x_cone_end - parg[igxhbox ] #Distance from conend to xhbox
-    dxvbox2conend = fuse.layout.x_cone_end - parg[igxvbox ] #Distance from conend to xvbox
+    dxhbox2conend = fuse.layout.x_cone_end - htail.layout.box_x #Distance from conend to xhbox
+    dxvbox2conend = fuse.layout.x_cone_end - vtail.layout.box_x #Distance from conend to xvbox
     #Fraction of cabin length at which wing is located
-    wbox_cabin_frac =  (parg[igxwbox]- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
+    wbox_cabin_frac =  (wing.layout.box_x- fuse.layout.x_start_cylinder )/(fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder) 
+
+    #Find new cabin length
+    d_floor = fuse.cabin.floor_distance
+    h_seat = fuse.cabin.seat_height 
+    θ = find_floor_angles(false, fuse.layout.radius, fuse.layout.cross_section.bubble_lower_downward_shift, h_seat = h_seat, d_floor=d_floor) #Find the floor angle
+    wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, θ, h_seat) #Find cabin width
+    lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back
@@ -117,7 +153,7 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     fuse.layout.x_end_cylinder = fuse.layout.x_start_cylinder + lcyl
 
     #Update wingbox position
-    parg[igxwbox] = fuse.layout.x_start_cylinder + wbox_cabin_frac * lcyl
+    wing.layout.box_x = fuse.layout.x_start_cylinder + wbox_cabin_frac * lcyl
        
     #Update other lengths
     fuse.layout.x_pressure_shell_aft = fuse.layout.x_end_cylinder + dxcyl2shellaft
@@ -127,10 +163,10 @@ function update_fuse_for_pax!(pari, parg, parm, fuse, fuse_tank)
     fuse.layout.x_end = fuse.APU.x + dxapu2end
     fuse.HPE_sys.r = [fuse.layout.x_cone_end * 0.52484, 0.0, 0.0] #TODO: address this
     
-    parg[igxhbox   ] = fuse.layout.x_cone_end - dxhbox2conend
-    parg[igxvbox   ] = fuse.layout.x_cone_end - dxvbox2conend
+    htail.layout.box_x = fuse.layout.x_cone_end - dxhbox2conend
+    vtail.layout.box_x = fuse.layout.x_cone_end - dxvbox2conend
     
-    parg[igxeng    ] =  parg[igxwbox] - dxeng2wbox #Move engine
+    parg[igxeng    ] =  wing.layout.box_x - dxeng2wbox #Move engine
 
     fuse.layout.l_cabin_cylinder = lcyl #Store new cabin length
 
@@ -146,13 +182,13 @@ This function calculates the minimum radius required to have a desired number of
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
+    - `seats_per_row::Int64`: number of seats per row in main cabin (lower deck if double decker)
     - `ac_base::aircraft`: aircraft object
 
     **Outputs:**
     - `R::Float64`: minimum radius for desired number of seats per row (m)
 """
-function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
+function find_minimum_radius_for_seats_per_row(seats_per_row::Int64, ac_base)
     ac = deepcopy(ac_base) #Copy input ac to avoid modifying it
     obj(x, grad) = x[1] + 1e3 * abs(check_seats_per_row_diff(seats_per_row, x, ac))  #Objective function is the radius plus a big penalty if constraint is not met
 
@@ -174,7 +210,7 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Next, use local optimizer to polish off optimum
-    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a 
+    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a local optimizer
     opt.lower_bounds = [0.0]
     opt.upper_bounds = [5.0]
     opt.min_objective = obj
@@ -183,7 +219,13 @@ function find_minimum_radius_for_seats_per_row(seats_per_row, ac_base)
     (minf,xopt,ret) = NLopt.optimize(opt, xopt) #Solve optimization problem starting from global solution
 
     R = xopt[1]
-    return R
+    #Check if constraint is met
+    diff = check_seats_per_row_diff(seats_per_row, xopt, ac)
+    if diff ≈ 0.0
+        return R
+    else
+        error("Optimizer failed to find a fuselage radius for the desired pax per row")
+    end
 end
 
 """
@@ -205,15 +247,11 @@ function check_seats_per_row_diff(seats_per_row, x, ac)
     Rfuse = x[1]
     ac.fuselage.layout.cross_section.radius = Rfuse
     try #Sometimes update_fuse_for_pax may fail
-        seats_per_row_rad = update_fuse_for_pax!(ac.pari, ac.parg, ac.parm, ac.fuselage, ac.fuse_tank)
+        seats_per_row_rad = update_fuse_for_pax!(ac)
         diff = seats_per_row_rad - seats_per_row
         #println("R = $Rfuse, s = $seats_per_row_rad")
         return diff
     catch
-        #println("failed")
         return 1.0
     end
 end
-
-# [fuselage.layout.x_end_cylinder, parg[igxwbox], fuselage.layout.x_pressure_shell_aft, fuselage.layout.x_cone_end,
-# fuselage.APU.x, fuselage.layout.x_end, fuselage.HPE_sys.x, parg[igxhbox], parg[igxvbox],parg[igxeng],parg[igdxcabin]]

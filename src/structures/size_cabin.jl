@@ -9,6 +9,7 @@ length.
     **Inputs:**
     - `pax::Float64`: design number of passengers
     - `cabin_width::Float64`: width of cabin (m).
+    - `seat_pitch::Float64`: longitudinal distance between seats (m).
     - `seat_width::Float64`: width of one seat (m).
     - `aisle_halfwidth::Float64`: half the width of an aisle (m).
     - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
@@ -21,11 +22,11 @@ length.
 function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
     seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
-    cabin_offset = 10 * ft_to_m #Distance to the front and back of seats
+    cabin_offset = 10 * ft_to_m #Distance to the front of seats
     #TODO the hardcoded 10 ft is not elegant
 
     seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
-    
+
     rows = Int(ceil(pax / seats_per_row))
 
     if seats_per_row <= 10
@@ -49,6 +50,22 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     return lcabin, xseats, seats_per_row
 end # function place_cabin_seats
 
+"""
+    findSeatsAbreast(cabin_width, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
+
+Function to find the number of seats abreast that can fit in a given cabin width.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `cabin_width::Float64`: width of cabin (m).
+    - `seat_width::Float64`: width of one seat (m).
+    - `aisle_halfwidth::Float64`: half the width of an aisle (m).
+    - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
+
+    **Outputs:**
+    - `seats_per_row::Float64`: number of seats per row.
+"""
 function findSeatsAbreast(cabin_width, 
     seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
 
@@ -190,7 +207,7 @@ function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64;
 end
 
 """
-    find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
+    find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse)
 
 This function can be used to calculate the length of a double decker cabin with different number of 
 passengers on each deck.
@@ -199,12 +216,12 @@ passengers on each deck.
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `parm::Array{Float64}`: array with mission parameters
 
     **Outputs:**
     - `maxl::Float64`: required cabin length (m)
+    - `pax_per_row_main::Float64`: number of seats abreast in lower cabin
 """
-function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
+function find_double_decker_cabin_length(x::Vector{Float64}, fuse)
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
     aisle_halfwidth = fuse.cabin.aisle_halfwidth
@@ -214,9 +231,9 @@ function find_double_decker_cabin_length(x::Vector{Float64}, parg, fuse, parm)
     dRfuse = fuse.layout.bubble_lower_downward_shift
     wfb = fuse.layout.bubble_center_y_offset
     nfweb = fuse.layout.n_webs
-    d_floor = parg[igfloordist]
+    d_floor = fuse.cabin.floor_distance
 
-    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+    paxsize = fuse.cabin.exit_limit #maximum number of passengers
 
     paxmain = x[1]
     paxtop = paxsize - paxmain
@@ -281,29 +298,29 @@ function EvaluateCabinProps!(fuse)
 end
 
 """
-    optimize_double_decker_cabin(parg, fuse, parm)
+    optimize_double_decker_cabin(fuse)
 
-This function can be used to optimize the passenger distribution across two decks in a double decker aircraft. 
-If the cross-section is circular, it also optimizes the deck layouts.
+This function can be used to optimize the deck layouts and passenger distribution in a double decker aircraft. 
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `parm::Array{Float64}`: array with mission parameters
 
     **Outputs:**
     - `xopt::Vector{Float64}`: vector with optimization results
+    - `seats_per_row_main::Float64`: number of seats abreast in lower cabin
 """
-function optimize_double_decker_cabin(parg, fuse, parm)
+function optimize_double_decker_cabin(fuse)
     dRfuse = fuse.layout.bubble_lower_downward_shift
 
-    paxsize = parg[igWpaymax]/parm[imWperpax,1] #maximum number of passengers #TODO replace with better measure
+    paxsize = fuse.cabin.exit_limit #maximum number of passengers
 
     initial_x = [paxsize/2, -pi/4]
     lower = [1.0, -pi/2]
     upper = [paxsize - 1.0, pi/2]
         
-    obj(x, grad) = find_double_decker_cabin_length(x, parg, fuse, parm)[1] #Objective function is cabin length
+    obj(x, grad) = find_double_decker_cabin_length(x, fuse)[1] #Objective function is cabin length
 
     opt = Opt(:GN_AGS, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
     opt.lower_bounds = lower
@@ -312,15 +329,13 @@ function optimize_double_decker_cabin(parg, fuse, parm)
 
     opt.min_objective = obj
 
-    if dRfuse ≈ 0.0 #Apply constraints on lower floor if it can be moved around
-        inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, fuse), 1e-5) #Minimum height of cargo hold
-        inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, fuse), 1e-5) #Minimum height of upper cabin
-    end
+    inequality_constraint!(opt, (x, grad) -> MinCargoHeightConst(x, fuse), 1e-5) #Minimum height of cargo hold
+    inequality_constraint!(opt, (x, grad) -> MinCabinHeightConst(x, fuse), 1e-5) #Minimum height of upper cabin
     
     (minf,xopt,ret) = NLopt.optimize(opt, initial_x) #Solve optimization problem
 
     #Evaluate number of passengers per row in main cabin
-    _, seats_per_row_main = find_double_decker_cabin_length(xopt, parg, fuse, parm)
+    _, seats_per_row_main = find_double_decker_cabin_length(xopt, fuse)
 
     return xopt, seats_per_row_main
 end
