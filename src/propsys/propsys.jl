@@ -10,6 +10,7 @@ module propsys
 export NPSS_run, startNPSS, endNPSS
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 using ..materials
+using ..engine
 using DocStringExtensions
 
 include(__TASOPTindices__)

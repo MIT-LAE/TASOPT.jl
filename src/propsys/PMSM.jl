@@ -108,10 +108,10 @@ end
 #Override air to return other gas properties
 function Base.getproperty(obj::Air, sym::Symbol)
     if sym === :ρ #Density
-        R, _, _, _, _, _ = gasPr(gas, obj.T)
+        R, _, _, _, _, _ = gasPr(obj.gas, obj.T)
         return obj.p /(R * obj.T)
     elseif sym === :μ
-        _, _, _, _, μ, _  = gasPr(gas, obj.T)
+        _, _, _, _, μ, _  = gasPr(obj.gas, obj.T)
         return μ
     elseif sym === :ν
         return obj.μ / obj.ρ
@@ -167,7 +167,9 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     rB_sat::Float64 = 0.98 #Default assumption is that the metal is almost saturated at design
     """Stack length [m]"""
     l::Float64 = 0.0
+    """Area of a single slot [m]"""
     A_slot::Float64 = 0.0
+    """Radius of gap start (top of magnet) [m]"""
     radius_gap::Float64 = 0.0
     """Thickness of air gap [m]"""
     airgap_thickness::Float64 = 2e-3
@@ -307,7 +309,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     #size_windings!()
 
     ## Calculate losses
-    windings.T = motor.T # Set temperature
+    windings.T = motor.air.T # Set temperature
     motor.phase_resistance =
         motor.Nsp / motor.phases *
         2 *
@@ -401,7 +403,7 @@ function windage_loss(motor::Motor)
     #air from IdealGases?
     Re = motor.Ω * motor.radius_gap * motor.airgap_thickness / motor.air.ν
     Cf = 0.0725 * Re^-0.2 #avg. skin friction approx. from fully turbulent flat plate
-    return Cf * π * motor.air_density * motor.Ω^3 * motor.radius_gap^4 * motor.l
+    return Cf * π * motor.air.ρ * motor.Ω^3 * motor.radius_gap^4 * motor.l
 end  # function windage_loss
 
 """
