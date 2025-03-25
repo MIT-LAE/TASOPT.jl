@@ -7,6 +7,7 @@ abstract type AbstractMagnets end
 const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/Value?mu0 
 
 using ..materials
+using ..engine
 using DocStringExtensions
 
 @kwdef mutable struct PermanentMagnet <: AbstractMagnets
@@ -95,6 +96,30 @@ end
     mass::Float64 = 0.0
 end
 
+@kwdef mutable struct Air
+    """Gas name"""
+    gas::String = "air"
+    """Temperature [K]"""
+    T::Float64 = 363.15
+    """Pressure [Pa]"""
+    p::Float64 = 101325
+end
+
+#Override air to return other gas properties
+function Base.getproperty(obj::Air, sym::Symbol)
+    if sym === :ρ #Density
+        R, _, _, _, _, _ = gasPr(gas, obj.T)
+        return obj.p /(R * obj.T)
+    elseif sym === :μ
+        _, _, _, _, μ, _  = gasPr(gas, obj.T)
+        return μ
+    elseif sym === :ν
+        return obj.μ / obj.ρ
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
 """
 $TYPEDEF
 
@@ -109,13 +134,12 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     magnet::PermanentMagnet = PermanentMagnet()
     windings::Windings = Windings()
     shaft::ShaftGeometry = ShaftGeometry()
+    air::Air = Air()
 
     """Design shaft power [W]"""
-    P_design::Float64 = 1e6
+    P_design::Float64 = 250e3
     """Angular velocity [rad/s]"""
     Ω::Float64 = 10e3
-    """Frequency [Hz]"""
-    f::Float64 = 12e3
     """Slots per pole [-]"""
     Nsp::Int = 3
     """Phases [-]"""
@@ -138,24 +162,15 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     """Saturation Flux [Wb/m²]"""
     B_sat::Float64 = 1.8
     """Maximum Current Density [A/m²]"""
-    J_max::Float64 = 1e6
+    J_max::Float64 = 5e6
     """Max ratio to saturation"""
     rB_sat::Float64 = 0.98 #Default assumption is that the metal is almost saturated at design
     """Stack length [m]"""
-    l::Float64 = 1.0
-    """Mean internal temperature [K],
-     used to calculate air density and viscosity, and winding resistance"""
-    T::Float64 = 273.15 + 90
+    l::Float64 = 0.0
     A_slot::Float64 = 0.0
     radius_gap::Float64 = 0.0
     """Thickness of air gap [m]"""
     airgap_thickness::Float64 = 2e-3
-    """Dynamic viscosity of air in motor [Pa s]"""
-    air_viscosity::Float64 = 1.8e-5
-    """Density of air in motor [kg/m^3]"""
-    air_density::Float64 = 1.23
-    """Pole pairs [-]"""
-    p::Int = 8
     """Mass of machine [kg]"""
     mass::Float64 = 0.0
 end
@@ -302,9 +317,8 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
 end  # function size_PMSM!
 
-function operate_PMSM(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     magnet = motor.magnet
-    windings = motor.windings
 
     motor.Ω = shaft_speed * (2 * π / 60)
     B_gap = airgap_flux(magnet.M, magnet.thickness, motor.airgap_thickness)
@@ -385,7 +399,7 @@ Calculates the windage (i.e., air friction losses) for the rotor.
 """
 function windage_loss(motor::Motor)
     #air from IdealGases?
-    Re = motor.Ω * motor.radius_gap * motor.airgap_thickness* motor.air_viscosity / motor.air_viscosity
+    Re = motor.Ω * motor.radius_gap * motor.airgap_thickness / motor.air.ν
     Cf = 0.0725 * Re^-0.2 #avg. skin friction approx. from fully turbulent flat plate
     return Cf * π * motor.air_density * motor.Ω^3 * motor.radius_gap^4 * motor.l
 end  # function windage_loss
