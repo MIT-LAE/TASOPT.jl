@@ -252,7 +252,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #      data toler  1.0e-7 
       toler = 1.0e-10
 
-      itmax = 100
+      itmax = 50
 
       #---- max fan-face Mach number, above which it will be artificially limited
       Mimax = 0.98
@@ -3174,17 +3174,22 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Lconv
 
             end
+            if iter > 20 #Limit cycle may have been reached
+                  rlx_it = 1.0 - 0.5*iter/itmax #Add a relaxation that depends on the iteration count
+            else
+                  rlx_it = 1.0 #Otherwise keep using default relaxation
+            end
 
             #---- Newton update
-            pf = pf + rlx * dpf
-            pl = pl + rlx * dpl
-            ph = ph + rlx * dph
-            mf = mf + rlx * dmf
-            ml = ml + rlx * dml
-            mh = mh + rlx * dmh
-            Tb = Tb + rlx * dTb
-            Pc = Pc + rlx * dPc
-            Mi = Mi + rlx * dMi
+            pf = pf + rlx * rlx_it * dpf
+            pl = pl + rlx * rlx_it * dpl
+            ph = ph + rlx * rlx_it * dph
+            mf = mf + rlx * rlx_it * dmf
+            ml = ml + rlx * rlx_it * dml
+            mh = mh + rlx * rlx_it * dmh
+            Tb = Tb + rlx * rlx_it * dTb
+            Pc = Pc + rlx * rlx_it * dPc
+            Mi = Mi + rlx * rlx_it * dMi
 
             Mi = min(Mi, Mimax)
 

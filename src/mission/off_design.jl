@@ -8,13 +8,13 @@
 - `ac::aircraft`: Aircraft with first mission being the design mission
 - `mi::Int64`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
-- `initializes_arrays::Boolean`: Use design case as initial guess for engine and aerodynamic states if true
+- `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
 
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
 
 """
-function fly_off_design!(ac, mi = 1; itermax = 35, initializes_arrays = true)
+function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     #Extract aircraft components and storage arrays
     pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
     
@@ -33,14 +33,15 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_arrays = true)
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
     #Initialize arrays with the design mission values if desired
-    CL = para[iaCL,:] #Extract lift coefficients
-    if (initializes_arrays)
-        #----- use design case as initial guess for engine and aerodynamic states
+    if (initializes_engine)
+        #----- use design case as initial guess for engine state
         pare[:,:] .= pared[:,:]
-        para[:,:] .= parad[:,:]
-        para[iaCL,:] .= CL #Restore the lift coefficients
     else
         pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
+    end
+
+    for ip = ipstatic: ipdescentn
+        para[iaCfnace,ip] = parad[iaCfnace,ip]
     end
 
     #Calculate sea level temperature corresponding to TO conditions
