@@ -33,10 +33,12 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_arrays = true)
 #        para(iafexcdf,ip) = parm[imfexcdf]
 
     #Initialize arrays with the design mission values if desired
+    CL = para[iaCL,:] #Extract lift coefficients
     if (initializes_arrays)
         #----- use design case as initial guess for engine and aerodynamic states
         pare[:,:] .= pared[:,:]
         para[:,:] .= parad[:,:]
+        para[iaCL,:] .= CL #Restore the lift coefficients
     else
         pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
     end
