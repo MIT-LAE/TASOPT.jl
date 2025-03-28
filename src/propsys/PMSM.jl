@@ -154,7 +154,7 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     Vd::Float64 = 0.0
     """Current [A]"""
     I::Float64 = 0.0
-    """Voltage [V]"""
+    """Voltage or back emf [V]"""
     V::Float64 = 0.0
     """Number of multi-phase inverters [-]"""
     N_inverters::Int = 1
@@ -186,14 +186,20 @@ function Base.getproperty(obj::Motor, sym::Symbol)
     if sym === :f #Electric frequency
         return obj.Ω * obj.N_pole_pairs/ (2 * pi)
     elseif sym === :P #Electric power
-        #Assumes that multiple windings are in parallel to reduce voltage
+        #Assumes that multiple inverters are powering the motor
         return obj.phases * 2/pi * obj.I * obj.V * obj.N_inverters 
-    elseif sym === :T #Torque
+    elseif sym === :torque #Torque
         return obj.P / obj.Ω
+    elseif sym === :N_slots #Number of slots
+        return obj.Nsp * 2 * obj.N_pole_pairs
     elseif sym === :N_slots_per_phase #Number of slots divided by number of phases
         return (obj.Nsp * 2 * obj.N_pole_pairs / obj.phases) 
     elseif sym === :N_energized_slots #Energized slots
         return (obj.energized_phases * obj.N_slots_per_phase) 
+    elseif sym === :λ #Geometric factor
+        return obj.N_slots * obj.A_slot / cross_sectional_area(obj.teeth.Ri + obj.teeth.thickness, obj.teeth.Ri) 
+    elseif sym === :B_gap #Air gap flux density
+        return airgap_flux(obj.magnet.M, obj.magnet.thickness, obj.airgap_thickness)
     else
         return getfield(obj, sym)
     end
@@ -221,8 +227,6 @@ end  # function Base.getproperty
 #                                         Rri    Rro  Rg  Rt  Rsi Rso
 
 
-
-
 """
 $TYPEDEF
 
@@ -242,6 +246,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     #Outer radius of the magnet - subject to the highest rotational speeds
     motor.radius_gap = motor.U_max / motor.Ω
 
+    #-------Rotor and stator sizing-------
     # Calculate maximum flux through the stator and rotor back iron
     # Really, this needs to be a constraint Bsbi ≤ Bsat (at the top level) rather 
     # than a prescribed setting. Or rB_sat can be a global optimization variable.
@@ -249,7 +254,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     stator.B = motor.rB_sat * motor.B_sat
     rotor.B = motor.rB_sat * motor.B_sat
 
-    B_gap = airgap_flux(magnet.M, magnet.thickness, motor.airgap_thickness)
+    B_gap = motor.B_gap #Air gap flux density
 
     stator.thickness = B_gap / stator.B * π * motor.radius_gap / (2 * motor.N_pole_pairs)
     rotor.thickness = B_gap / rotor.B * π * motor.radius_gap / (2 * motor.N_pole_pairs)
@@ -262,22 +267,27 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     stator.Ri = teeth.Ri + teeth.thickness
     stator.Ro = stator.Ri + stator.thickness
 
-    N_teeth = motor.Nsp * 2 * motor.N_pole_pairs
+    #-------Teeth sizing-------
+    #Armature reaction
+    B_windings = μ₀ * motor.J_max * teeth.thickness
+    
+    #Teeth B-field
+    teeth.B = motor.rB_sat * motor.B_sat
 
-    A_teeth = N_teeth * teeth.thickness * teeth.width
-    A_slots = π * (teeth.Ri + stator.Ri) * teeth.thickness - A_teeth
+    #Size teeth
+    A_teeth_annulus = cross_sectional_area(teeth.Ri + teeth.thickness, teeth.Ri) #Annulus area where teeth lie
+    A_teeth = A_teeth_annulus - B_gap * A_teeth_annulus / sqrt(teeth.B^2 - B_windings^2) #Analytical solution
+    N_teeth = motor.N_slots #Number of teeth
+    
+    teeth.width = A_teeth /(N_teeth * teeth.thickness)
+
+    #-------Slot sizing-------
+    A_slots = A_teeth_annulus - A_teeth
     motor.A_slot = A_slots / N_teeth
     λ = A_slots / (A_slots + A_teeth)
     l_end_turns = π / (2 * motor.N_pole_pairs) * teeth.Ri * (λ / sqrt(1 - λ^2))
 
-    #Armature reaction
-    B_windings = μ₀ * motor.J_max * teeth.thickness
-
-    teeth.B = sqrt((B_gap / λ)^2 + B_windings^2)
-    if teeth.B > motor.B_sat
-        @warn "Flux density in teeth exceeds saturation flux density"
-    end
-
+    #-------Calculate length-------
     torque = design_power / motor.Ω
     slot_current = motor.J_max * windings.kpf * motor.A_slot #Peak slot current
     windings.N_turns = floor(windings.kpf * motor.A_slot / windings.A_wire)
@@ -287,20 +297,20 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     force_length = motor.Id * motor.N_energized_slots * B_gap 
     motor.l = torque / (force_length * motor.radius_gap)
 
-    #Size shaft
+    #-------Size shaft-------
     shaft.Ro = rotor.Ri
     if shaft.Ro^4 > torque / shaft.material.τmax * 2 * shaft.Ro / π
         shaft.Ri = (shaft.Ro^4 - torque / shaft.material.τmax * 2 * shaft.Ro / π)^0.25
     else
-        # shaft can be solid as well
-        shaft.Ri = 0.0
+        error("Shaft radius too small")
     end
 
     if motor.Ω^2*shaft.Ri^2*shaft.material.ρ > shaft.material.YTS
         @warn "Stresses due to rotational speed exceed shaft yield strength"
     end
 
-    #Masses
+    #-------Compute masses-------
+    #TODO this could go into the structure definitions by overriding Base.getproperty
     rotor.mass = cross_sectional_area(rotor) * motor.l * rotor.material.ρ
     stator.mass = cross_sectional_area(stator) * motor.l * stator.material.ρ
     magnet.mass =
@@ -318,7 +328,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     motor.mass =
         rotor.mass + stator.mass + magnet.mass + teeth.mass + windings.mass + shaft.mass
 
-    ## Calculate phase resistance
+    #-------Calculate phase resistance-------
     windings.T = motor.air.T # Set temperature
     motor.phase_resistance =
         motor.N_slots_per_phase *
@@ -327,11 +337,12 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
 end  # function size_PMSM!
 
+"""
+Runs a PMSM with a given shaft speed and power and calculates the back emf voltage. 
+"""
 function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
-    magnet = motor.magnet
-
     motor.Ω = shaft_speed * (2 * π / 60)
-    B_gap = airgap_flux(magnet.M, magnet.thickness, motor.airgap_thickness)
+    B_gap = motor.B_gap
 
     torque = shaft_power/motor.Ω
     motor.I = torque / (motor.radius_gap * B_gap * motor.l * motor.N_energized_slots)
@@ -340,20 +351,19 @@ function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::Ab
 
     P_elec = shaft_power + Q_loss #Total required power
     #TODO the phase calculations in the source paper are sketchy. Verify this or do it properly without "energized" phases
-    motor.V = P_elec / (motor.phases * 2/pi * motor.I) / motor.N_inverters #Compute required voltage
+    motor.V = P_elec / (motor.phases * 2/pi * motor.I) / motor.N_inverters #Compute required back emf voltage
     
 end
 
 """
+Calculates the power losses in a PMSM, including ohmic, core and windage losses.
 """
 function calculate_losses(EM::Motor)
     Q_ohmic = ohmic_loss(EM.I, EM.phase_resistance, EM.energized_phases)
     Q_core = core_loss(EM)
     Q_wind = windage_loss(EM)
-    println("Q_ohmic = $Q_ohmic")
-    println("Q_core = $Q_core") 
-    println("Q_wind = $Q_wind")
-    return Q_ohmic + Q_core + Q_wind
+
+    return Q_ohmic + Q_core + Q_wind #Power loss
 end  # function calculate_losses
 
 """
@@ -443,15 +453,6 @@ cross_sectional_area(R::RotorGeometry) = cross_sectional_area(R.Ro, R.Ri)
 cross_sectional_area(R::StatorGeometry) = cross_sectional_area(R.Ro, R.Ri)
 cross_sectional_area(R::ShaftGeometry) = cross_sectional_area(R.Ro, R.Ri)
 
-
-# """
-# """
-# function size_rotor!(rotor::RotorGeometry, R_gap::AbstractFloat)
-#     Ro = R_gap - magnet.thickness
-#     rotor.thickness = (B_gap / rotor.B) * π * R_gap / (2p)
-#     rotor.Ri = Ro
-
-# end  # function size_rotor!
 
 """
     airgap_flux(M, thickness, airgap)
