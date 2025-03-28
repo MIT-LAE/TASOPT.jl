@@ -1,5 +1,5 @@
 module ElectricMachine
-using NLsolve
+using Roots
 
 abstract type AbstractElectricMachine end
 abstract type AbstractMagnets end
@@ -144,6 +144,8 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     Nsp::Int = 3
     """Phases [-]"""
     phases::Int = 3
+    """Energized phases [-]"""
+    energized_phases::Int = 2
     """Phase resistance [Ω]"""
     phase_resistance::Float64 = 0.0
     """Design current [A]"""
@@ -154,6 +156,8 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     I::Float64 = 0.0
     """Voltage [V]"""
     V::Float64 = 0.0
+    """Number of multi-phase inverters [-]"""
+    N_inverters::Int = 1
 
     """Pole pairs [-]"""
     N_pole_pairs::Int = 8
@@ -181,6 +185,15 @@ end
 function Base.getproperty(obj::Motor, sym::Symbol)
     if sym === :f #Electric frequency
         return obj.Ω * obj.N_pole_pairs/ (2 * pi)
+    elseif sym === :P #Electric power
+        #Assumes that multiple windings are in parallel to reduce voltage
+        return obj.phases * 2/pi * obj.I * obj.V * obj.N_inverters 
+    elseif sym === :T #Torque
+        return obj.P / obj.Ω
+    elseif sym === :N_slots_per_phase #Number of slots divided by number of phases
+        return (obj.Nsp * 2 * obj.N_pole_pairs / obj.phases) 
+    elseif sym === :N_energized_slots #Energized slots
+        return (obj.energized_phases * obj.N_slots_per_phase) 
     else
         return getfield(obj, sym)
     end
@@ -224,6 +237,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     shaft = motor.shaft
 
     motor.Ω = shaft_speed * (2 * π / 60)
+    motor.P_design = design_power
 
     #Outer radius of the magnet - subject to the highest rotational speeds
     motor.radius_gap = motor.U_max / motor.Ω
@@ -268,10 +282,9 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     slot_current = motor.J_max * windings.kpf * motor.A_slot #Peak slot current
     windings.N_turns = floor(windings.kpf * motor.A_slot / windings.A_wire)
 
-    #Assume 2 phases excited at any given time
     motor.I =
-        motor.Id = (2 / motor.phases * motor.Nsp * 2 * motor.N_pole_pairs) * slot_current
-    force_length = motor.Id * B_gap
+        motor.Id = slot_current
+    force_length = motor.Id * motor.N_energized_slots * B_gap 
     motor.l = torque / (force_length * motor.radius_gap)
 
     #Size shaft
@@ -304,16 +317,11 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     motor.mass =
         rotor.mass + stator.mass + magnet.mass + teeth.mass + windings.mass + shaft.mass
-    #size_rotor!(rotor, R_gap)
-    #size_stator!()
-    #size_windings!()
 
-    ## Calculate losses
+    ## Calculate phase resistance
     windings.T = motor.air.T # Set temperature
     motor.phase_resistance =
-        motor.Nsp / motor.phases *
-        2 *
-        motor.N_pole_pairs *
+        motor.N_slots_per_phase *
         slot_resistance(motor.windings, windings.kpf * motor.A_slot, motor.l + 2 * l_end_turns)
 
 
@@ -326,23 +334,25 @@ function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::Ab
     B_gap = airgap_flux(magnet.M, magnet.thickness, motor.airgap_thickness)
 
     torque = shaft_power/motor.Ω
-    motor.I = torque / (motor.radius_gap * B_gap * motor.l)
+    motor.I = torque / (motor.radius_gap * B_gap * motor.l * motor.N_energized_slots)
 
     Q_loss = calculate_losses(motor)
 
     P_elec = shaft_power + Q_loss #Total required power
     #TODO the phase calculations in the source paper are sketchy. Verify this or do it properly without "energized" phases
-    motor.V = P_elec / (6/pi * motor.I) #Compute required voltage
+    motor.V = P_elec / (motor.phases * 2/pi * motor.I) / motor.N_inverters #Compute required voltage
     
-    return motor.V
 end
 
 """
 """
 function calculate_losses(EM::Motor)
-    Q_ohmic = ohmic_loss(EM.I, EM.phase_resistance)
+    Q_ohmic = ohmic_loss(EM.I, EM.phase_resistance, EM.energized_phases)
     Q_core = core_loss(EM)
     Q_wind = windage_loss(EM)
+    println("Q_ohmic = $Q_ohmic")
+    println("Q_core = $Q_core") 
+    println("Q_wind = $Q_wind")
     return Q_ohmic + Q_core + Q_wind
 end  # function calculate_losses
 
@@ -354,7 +364,7 @@ phases are energized at any given time.
 """
 function ohmic_loss(
     I::AbstractFloat,
-    phase_resistance::AbstractFloat;
+    phase_resistance::AbstractFloat,
     energized_phases::Int = 2,
 )
     return I^2 * (energized_phases * phase_resistance)
@@ -398,11 +408,13 @@ end  # function eddy_loss
 
 """
 Calculates the windage (i.e., air friction losses) for the rotor.
+From Vrancik (1968) - Prediction of windage power loss in alternators
 """
 function windage_loss(motor::Motor)
     #air from IdealGases?
     Re = motor.Ω * motor.radius_gap * motor.airgap_thickness / motor.air.ν
-    Cf = 0.0725 * Re^-0.2 #avg. skin friction approx. from fully turbulent flat plate
+    res(Cf) = 1/sqrt(Cf) - 2.04 - 1.768*log(Re*sqrt(Cf)) #From Vrancik, residual to be zeroed
+    Cf = find_zero(res, 1e-2) #Solve for skin friction coefficient
     return Cf * π * motor.air.ρ * motor.Ω^3 * motor.radius_gap^4 * motor.l
 end  # function windage_loss
 
@@ -451,6 +463,7 @@ across the steel.
 """
 function airgap_flux(M, thickness, airgap)
     B_gap = μ₀ * M * thickness / (thickness + airgap)
+    return B_gap
 end  # function airgap_flux
 
 """
