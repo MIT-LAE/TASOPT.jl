@@ -465,4 +465,40 @@ end
 #Test minimum radius calculation
 Rmin = TASOPT.structures.find_minimum_radius_for_seats_per_row(5, ac_test)
 @test Rmin ≈ 1.7113052179793784
+
+#Test landing gear sizing
+ac = load_default_model()
+
+#Test simple sizing based on mass fractions
+WMTO = 80e4
+ac.parg[igWMTO] = WMTO
+ac.landing_gear.main_gear.overall_mass_fraction = 0.04
+ac.landing_gear.nose_gear.overall_mass_fraction = 0.01
+
+TASOPT.size_landing_gear!(ac)
+@test ac.landing_gear.main_gear.weight.W ≈ 0.04 * 80e4
+@test ac.landing_gear.nose_gear.weight.W ≈ 0.01 * 80e4
+
+#Test models based on historical data
+ac.landing_gear.model = "historical_correlations"
+ac.landing_gear.tailstrike_angle = 10*pi/180
+ac.landing_gear.wing_dihedral_angle = 6*pi/180
+ac.landing_gear.engine_ground_clearance = 20*in_to_m
+ac.landing_gear.nose_gear.number_struts = 1
+ac.landing_gear.nose_gear.wheels_per_strut = 2
+ac.landing_gear.main_gear.number_struts = 2
+ac.landing_gear.main_gear.wheels_per_strut = 2
+ac.landing_gear.main_gear.y_offset_halfspan_fraction = 0.2
+
+ac.parg[igxCGaft] = 30
+ac.pare[ieu0,iprotate,1] = 70
+ac.parg[igdfan] = 1.5
+ac.wing.layout.span = 40
+
+ac.landing_gear.main_gear.weight = TASOPT.Weight(y = ac.landing_gear.main_gear.y_offset_halfspan_fraction * ac.wing.layout.span / 2)
+
+TASOPT.size_landing_gear!(ac)
+
+@test ac.landing_gear.main_gear.weight.W ≈ 31787.399917196755
+@test ac.landing_gear.nose_gear.weight.W ≈ 4854.384534273811
 end

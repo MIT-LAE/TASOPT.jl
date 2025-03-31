@@ -510,6 +510,7 @@ function plot_details(ac::aircraft)
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
+    landing_gear = ac.landing_gear
     
     @views pare = ac.pare[:,:,1]
     @views para = ac.para[:,:,1]
@@ -537,8 +538,8 @@ function plot_details(ac::aircraft)
     # Weight build-up for subplot 2
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
-    Wlgnose = parg[igWMTO] * parg[igflgnose]
-    Wlgmain = parg[igWMTO] * parg[igflgmain]
+    Wlgnose = ac.landing_gear.nose_gear.weight.W
+    Wlgmain = ac.landing_gear.main_gear.weight.W
     Wtotadd = Whpesys + Wlgnose + Wlgmain
     
     Wpay  = parg[igWpay]
@@ -736,8 +737,8 @@ function plot737compare(ac::aircraft; weightdetail = true, fracs = false)
     Wvtail = vtail.weight
     Weng = parg[igWeng]
         Whpesys = parg[igWMTO] * ac.fuselage.HPE_sys.W
-        Wlgnose = parg[igWMTO] * parg[igflgnose]
-        Wlgmain = parg[igWMTO] * parg[igflgmain]
+        Wlgnose = ac.landing_gear.nose_gear.weight.W
+        Wlgmain = ac.landing_gear.main_gear.weight.W
     Wtotadd = Whpesys + Wlgnose + Wlgmain
     Wftank = parg[igWftank]
 
@@ -979,7 +980,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
     ac = aircraft(ac_og.name, ac_og.description,
     ac_og.options, ac_og.parg, parm, para, pare, [true], 
-    ac_og.fuselage, ac_og.fuse_tank, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine)
+    ac_og.fuselage, ac_og.fuse_tank, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine, ac_og.landing_gear)
 
     #Extract aircraft parameters
     maxPay = ac.parg[igWpaymax]

@@ -16,7 +16,14 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `parm::AbstractArray{Float64}` : Mission parameters                    
 - `para::AbstractArray{Float64}` : Aero parameters                       
 - `pare::AbstractArray{Float64}` : Engine parameters 
-- `is_sized::AbstractVector{1,Bool}`: flag if aircraft is sized (default is `[false]`)
+- `fuse_tank::fuselage_tank`: fuselage fuel tank object
+- `fuselage::Fuselage`: fuselage fuel tank object
+- `wing::Wing`: wing object
+- `htail::Tail`: horizontal tail object
+- `vtail::Tail`: vertical tail object
+- `engine::Engine`: engine object
+- `landing_gear::LandingGear`: landing gear object
+- `sized::AbstractVector{1,Bool}`: flag if aircraft is sized (default is `[false]`)
 
 For devs: the indices for accessing specific data are defined in `/src/data_structs/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
@@ -38,6 +45,9 @@ For devs: the indices for accessing specific data are defined in `/src/data_stru
     htail::Tail = Tail()
     vtail::Tail = Tail()
     engine::Engine = Engine()
+    landing_gear::LandingGear = LandingGear()
+
+    sized::AbstractVector{Bool} = [false]
 
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
 end

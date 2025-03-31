@@ -33,7 +33,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #unpack aircraft struct
     imission = 1 #design mission for now
-    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
     #TODO: fuse_tank fields are not saved
 
     #Save everything in a dict() of dicts()
@@ -365,6 +365,15 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_out["Stabilizers"] = d_stab
     #--end Stabilizers----------------
 
+    #Landing gear------------------------
+    d_lg  = Dict()
+        d_lg["x_nose_landing_gear"] = landing_gear.nose_gear.weight.r[1]
+        d_lg["x_main_landing_gear_offset"] = landing_gear.main_gear.distance_CG_to_landing_gear
+        d_lg["LG_nose_weight_fraction"] = landing_gear.nose_gear.overall_mass_fraction
+        d_lg["LG_main_weight_fraction"] = landing_gear.main_gear.overall_mass_fraction
+    
+    d_out["Landing_gear"] = d_lg
+    #--end Landing gear----------------
 
     #Structures------------------------
     d_struct = Dict()
