@@ -49,9 +49,9 @@ include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
 export plot_airf
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
-include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
+include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 
 #Use above modules
 using .atmosphere
