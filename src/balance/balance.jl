@@ -48,8 +48,6 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       #Unpack aircraft
       parg, _, para, _, options, fuse, fuse_tank, wing, htail, vtail, _, landing_gear = unpack_ac(ac, imission, ip = ip)
 
-      iengloc = pari[iiengloc]
-
       # Unpack weights
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
@@ -85,7 +83,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
-      dxwparg, parm, para, pare, fuse, fuse_tank, wing, htail, vtailing = wing.layout.x - wing.layout.box_x
+      dxwing = wing.layout.x - wing.layout.box_x
 
       #---- main LG offset from wingbox, assumed fixed in CG calculations
       dxlg = xcgB + landing_gear.main_gear.distance_CG_to_landing_gear - wing.layout.box_x

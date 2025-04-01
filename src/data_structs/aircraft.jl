@@ -23,7 +23,6 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `vtail::Tail`: vertical tail object
 - `engine::Engine`: engine object
 - `landing_gear::LandingGear`: landing gear object
-- `sized::AbstractVector{1,Bool}`: flag if aircraft is sized (default is `[false]`)
 
 For devs: the indices for accessing specific data are defined in `/src/data_structs/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
 """
@@ -46,9 +45,6 @@ For devs: the indices for accessing specific data are defined in `/src/data_stru
     vtail::Tail = Tail()
     engine::Engine = Engine()
     landing_gear::LandingGear = LandingGear()
-
-    sized::AbstractVector{Bool} = [false]
-
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
 end
 

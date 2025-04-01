@@ -33,7 +33,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #unpack aircraft struct
     imission = 1 #design mission for now
-    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
+    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
     #TODO: fuse_tank fields are not saved
 
     #Save everything in a dict() of dicts()
@@ -146,8 +146,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_weights["floor_weight_per_area"] =fuselage.floor_W_per_area
 
         d_fuse_weights["HPE_sys_weight_fraction"] = fuselage.HPE_sys.W
-        d_fuse_weights["LG_nose_weight_fraction"] = parg[igflgnose]
-        d_fuse_weights["LG_main_weight_fraction"] = parg[igflgmain]
 
         d_fuse_weights["APU_weight_fraction"] = fuselage.APU.W/parg[igWpaymax] 
         d_fuse_weights["seat_weight_fraction"] = fuselage.seat.W/parg[igWpaymax] 
@@ -187,8 +185,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_geom["x_cone_end"] = fuselage.layout.x_cone_end
         d_fuse_geom["x_end"] = fuselage.layout.x_end
 
-        d_fuse_geom["x_nose_landing_gear"] = parg[igxlgnose]
-        d_fuse_geom["x_main_landing_gear_offset"] = parg[igdxlgmain]
         d_fuse_geom["x_APU"] = fuselage.APU.x
         d_fuse_geom["x_HPE_sys"] = fuselage.HPE_sys.x
 

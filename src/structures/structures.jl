@@ -48,7 +48,7 @@ include("size_cabin.jl") #Seat layouts and cabin length
 include("update_fuse.jl")
 
 #Landing gear 
-include("../misc/landing_gear.jl")# type definitions for the landing gear
+include("../data_structs/landing_gear.jl")# type definitions for the landing gear
 include("size_landing_gear.jl") 
 
 end

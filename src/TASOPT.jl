@@ -57,7 +57,6 @@ include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
 
 include(joinpath(__TASOPTroot__,"data_structs/fuselage_tank.jl"))
-include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
 
 export fuselage_tank
 
@@ -70,6 +69,7 @@ using .engine
 
 
 # Load primary aircraft structure 
+include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/aircraft.jl"))
 export aircraft, fuselage_tank

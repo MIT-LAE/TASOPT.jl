@@ -271,7 +271,7 @@ For example:
 """
 default_output_indices = 
     Dict("parg" => [#weights
-                    igWMTO, igWfuel, igWpay, igWpaymax, igflgnose,igflgmain,
+                    igWMTO, igWfuel, igWpay, igWpaymax,
                     igWtesys, igWftank, 
                     #other
                     igdfan, igGearf,
