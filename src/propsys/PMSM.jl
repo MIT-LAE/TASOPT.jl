@@ -261,6 +261,9 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     rotor.Ro = motor.radius_gap - magnet.thickness
     rotor.Ri = rotor.Ro - rotor.thickness
+    if rotor.Ri < 0.0
+        error("Rotor radius too small")
+    end
 
     teeth.Ri = motor.radius_gap + motor.airgap_thickness
 
@@ -283,7 +286,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     #-------Slot sizing-------
     A_slots = A_teeth_annulus - A_teeth
-    motor.A_slot = A_slots / N_teeth
+    motor.A_slot = A_slots / motor.N_slots
     λ = A_slots / (A_slots + A_teeth)
     l_end_turns = π / (2 * motor.N_pole_pairs) * teeth.Ri * (λ / sqrt(1 - λ^2))
 
@@ -306,7 +309,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
     end
 
     if motor.Ω^2*shaft.Ri^2*shaft.material.ρ > shaft.material.YTS
-        @warn "Stresses due to rotational speed exceed shaft yield strength"
+        error("Stress due to rotational speed exceeds shaft yield strength")
     end
 
     #-------Compute masses-------
@@ -334,6 +337,9 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
         motor.N_slots_per_phase *
         slot_resistance(motor.windings, windings.kpf * motor.A_slot, motor.l + 2 * l_end_turns)
 
+    #-------Calculate design voltage-------
+    operate_PMSM!(motor, shaft_speed, shaft_power)
+    motor.Vd = motor.V #Store design voltage
 
 end  # function size_PMSM!
 
@@ -353,7 +359,7 @@ function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::Ab
     #TODO the phase calculations in the source paper are sketchy. Verify this or do it properly without "energized" phases
     motor.V = P_elec / (motor.phases * 2/pi * motor.I) / motor.N_inverters #Compute required back emf voltage
     
-end
+end  # function operate_PMSM!
 
 """
 Calculates the power losses in a PMSM, including ohmic, core and windage losses.
