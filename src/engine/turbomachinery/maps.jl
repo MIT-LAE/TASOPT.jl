@@ -1,4 +1,9 @@
 # TASOPT turbomachinery maps
+include("map_functions.jl")
+include("FanMap.jl")
+include("LPCMap.jl")
+include("HPCMap.jl")
+
 # These maps are used in exponential-form equations for the polytropic efficiency
 
 # The parameters come from "tfmap.inc" in Mark Drela's original TASOPT 
@@ -31,3 +36,14 @@ const Cmaph = [1.61159761,  3.01716623, 0.0115221233,  1.11644367, -0.248346891,
 #----------Turbine maps----------
 const Tmapl = [0.15, 0.15]
 const Tmaph = [0.15, 0.15]
+
+#Wcobj = 800.0
+#PRobj = 1.7
+#eps = 1e-4
+
+#(x, y, dx_dw, dx_dz, dy_dw, dy_dz) = find_NR_inverse_with_derivatives(FanMap.itp_Wc, FanMap.itp_PR, Wcobj, PRobj)
+#(xw, yw, _, _, _, _) = find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj + eps, PRobj)
+#(xp, yp, _, _, _, _) = find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj, PRobj + eps)
+
+#@benchmark find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj, PRobj)
+#@benchmark TASOPT.engine.Ncmap(PRobj, Wcobj, 1.8, 900, 1, TASOPT.engine.Cmapf)

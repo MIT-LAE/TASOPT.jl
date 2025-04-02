@@ -1,21 +1,9 @@
-using Interpolations, NLsolve
-using BenchmarkTools
-using TASOPT
-
-struct Defaults
-    Rline::Float64
-    PR::Float64 
-    Nc::Float64
-end
-
-struct CompressorMap
-    defaults::Defaults
-    RlineMap::Vector{Float64}
-    NcMap::Vector{Float64}
-    WcMap::Matrix{Float64}
-    PRMap::Matrix{Float64}
-    effMap::Matrix{Float64}
-end
+#-----------------------------
+# pyCycle Fan Map Data
+#-----------------------------
+# Defaults
+default_Nc = 0.99
+default_Rline = 2.20 
 
 RlineMap = [1.000, 1.200, 1.400, 1.600, 1.800, 2.000, 2.200, 2.400, 2.600, 2.800, 3.000]
 NcMap = [0.300, 0.400, 0.500, 0.600, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 1.000, 1.050, 1.100, 1.150]
@@ -54,7 +42,7 @@ effMap = [
     0.8385 0.8532 0.8643 0.8715 0.8745 0.8728 0.8664 0.8552 0.8387 0.8163 0.7873
 ]
 
-PRmap = [
+PRMap = [
     1.0546 1.0558 1.0553 1.0532 1.0494 1.0440 1.0372 1.0290 1.0196 1.0089 1.0000;
     1.1002 1.1010 1.0994 1.0955 1.0892 1.0807 1.0702 1.0578 1.0436 1.0278 1.0102;
     1.1593 1.1606 1.1584 1.1527 1.1434 1.1307 1.1149 1.0964 1.0753 1.0517 1.0258;
@@ -71,7 +59,16 @@ PRmap = [
     2.1043 2.0885 2.0659 2.0366 2.0008 1.9588 1.9114 1.8595 1.8033 1.7433 1.6797
 ]
 
-mRlineMap = [0.0; RlineMap; 4.0]
+#-----------------------------
+# Compute polytropic efficiency
+#-----------------------------
+polyeff_Map = poly_efficiency_map_from_isentropic(effMap, PRMap)
+
+#-----------------------------
+# Create interpolation objects
+#-----------------------------
+#Expand maps with dummy data to cover broader range of speeds and Rlines
+mRlineMap = [0.0; RlineMap; 10.0]
 mNcMap = [0.0; NcMap; 10.0]
 
 Wcmax = 1e4
@@ -84,62 +81,34 @@ highNWc = Wcmax * ones(1, size(mWcMap)[2])
 mWcMap = vcat(lowNWc, mWcMap, highNWc)
 
 PRmax = 3.0
-lowRPR = ones(size(PRmap)[1])
-highRPR = PRmax * ones(size(PRmap)[1])
-mPRMap = [lowRPR PRmap highRPR]
+lowRPR = ones(size(PRMap)[1])
+highRPR = PRmax * ones(size(PRMap)[1])
+mPRMap = [lowRPR PRMap highRPR]
 
 lowNPR = ones(1, size(mPRMap)[2])
 highNPR = PRmax * ones(1, size(mPRMap)[2])
 mPRMap = vcat(lowNPR, mPRMap, highNPR)
 
-function find_xy_inverse_with_derivatives(itp_W, itp_Z, w_target, z_target, xg = 0.5, yg = 2.0)
+lowReff = zeros(size(polyeff_Map)[1])
+highReff = zeros(size(polyeff_Map)[1])
+mpolyeff_Map = [lowReff polyeff_Map highReff]
 
-    # Define the system of equations: Z(x, y) = z_target, W(x, y) = w_target
-    function residuals(p)
-        # Return the residuals for both equations
-        return [itp_W(p...) - w_target, itp_Z(p...) - z_target]
-    end
+lowNeff = zeros(1, size(mpolyeff_Map)[2])
+highNeff = zeros(1, size(mpolyeff_Map)[2])
+mpolyeff_Map = vcat(lowNeff, mpolyeff_Map, highNeff)
 
-    # Define the Jacobian of the system (partial derivatives)
-    function jacobian(p)
-        # Compute the partial derivatives of W and Z with respect to x and y
-        dw_dx, dw_dy = gradient(itp_W, p[1], p[2])
-        dz_dx, dz_dy = gradient(itp_Z, p[1], p[2])
-        
-        # Return the Jacobian matrix
-        return [dw_dx dw_dy; dz_dx dz_dy]
-    end
+# Create interpolation objects for Wc and PR
+itp_Wc = interpolate((mNcMap, mRlineMap), mWcMap, Gridded(Linear()))
+itp_PR = interpolate((mNcMap, mRlineMap), mPRMap, Gridded(Linear()))
+itp_polyeff = interpolate((mNcMap, mRlineMap), mpolyeff_Map, Gridded(Linear()))
 
-    # Solve the system of equations using root finding (non-linear solver)
-    sol = nlsolve(residuals, jacobian, [xg, yg])
+#-----------------------------
+# Create map objects
+#-----------------------------
+default_PR = itp_PR(default_Nc, default_Rline)
+default_Wc = itp_Wc(default_Nc, default_Rline)
 
-    # Extract the solution: the x and y corresponding to the given w_target and z_target
-    x_found, y_found = sol.zero
+defaults = MapDefaults(default_Nc, default_Rline, default_Wc, default_PR)
 
-    # Compute the Jacobian at the found solution
-    jac = jacobian([x_found, y_found])
-
-    # Calculate the derivatives (inverse of the Jacobian matrix)
-    jac_inv = inv(jac)
-
-    # The derivatives of x, y with respect to w and z are the components of the inverse Jacobian
-    dx_dw, dx_dz = jac_inv[1, :]
-    dy_dw, dy_dz = jac_inv[2, :]
-
-    return x_found, y_found, dx_dw, dx_dz, dy_dw, dy_dz
-end
-
-Wcobj = 1000
-PRobj = 1.2
-#eps = 1e-4
-
-# Create interpolation objects for W and Z
-itp_W = interpolate((mNcMap, mRlineMap), mWcMap, Gridded(Linear()))
-itp_PR = interpolate((mNcMap, mRlineMap), mPRmap, Gridded(Linear()))
-
-(x, y, dx_dw, dx_dz, dy_dw, dy_dz) = find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj, PRobj)
-#(xw, yw, _, _, _, _) = find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj + eps, PRobj)
-#(xp, yp, _, _, _, _) = find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj, PRobj + eps)
-
-#@benchmark find_xy_inverse_with_derivatives(itp_W, itp_PR, Wcobj, PRobj)
-#@benchmark TASOPT.engine.Ncmap(PRobj, Wcobj, 1.8, 900, 1, TASOPT.engine.Cmapf)
+const FanMap = CompressorMap(defaults, RlineMap, NcMap, WcMap, PRMap, 
+        effMap, polyeff_Map, itp_Wc, itp_PR, itp_polyeff)
