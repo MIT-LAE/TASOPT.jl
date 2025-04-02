@@ -539,8 +539,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # ===============================================================
             #---- fan flow 2-7
-            epf, epf_pf, epf_mf = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
-
+            Nf, epf, Nf_pf, Nf_mf, epf_pf, epf_mf, _, _ = 
+                  calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, NbfD, Ng = 0.5, Rg = 2.0)
+            
             if (epf < epfmin)
                   epf = epfmin
                   epf_pf = 0.0
@@ -652,8 +653,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       
             # ===============================================================
             #---- LP compressor flow 2-25
-            eplc, eplc_pl, eplc_ml = ecmap(pl, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
-
+            Nl, eplc, Nl_pl, Nl_ml, eplc_pl, eplc_ml, _, _ = 
+                  calculate_compressor_speed_and_efficiency(LPCMap, pl, ml, pilcD, mblcD, NblcD, Ng = 0.5, Rg = 2.0)
+                  
             if (eplc < 0.70)
                   eplc = 0.70
                   eplc_pl = 0.0
@@ -715,7 +717,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       
             # ===============================================================
             #---- HP compressor flow 25-3
-            ephc, ephc_ph, ephc_mh = ecmap(ph, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
+            Nh, ephc, Nh_ph, Nh_mh, ephc_ph, ephc_mh, _, _ = 
+                  calculate_compressor_speed_and_efficiency(HPCMap, ph, mh, pihcD, mbhcD, NbhcD, Ng = 0.5, Rg = 2.0)
+            
             if (ephc < 0.70)
                   ephc = 0.70
                   ephc_ph = 0.0
@@ -1356,17 +1360,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   end
 
             end
-
-            # ===============================================================
-            #---- fan corrected speed
-
-            Nf, Nf_pf, Nf_mf = Ncmap(pf, mf, pifD, mbfD, NbfD, Cmapf)
-
-            #---- LPC corrected speed
-            Nl, Nl_pl, Nl_ml = Ncmap(pl, ml, pilcD, mblcD, NblcD, Cmapl)
-
-            #---- HPC corrected speed
-            Nh, Nh_ph, Nh_mh = Ncmap(ph, mh, pihcD, mbhcD, NbhcD, Cmaph)
 
             # ===============================================================
             #---- HPT and LPT work

@@ -71,7 +71,7 @@ polyeff_Map = poly_efficiency_map_from_isentropic(effMap, PRMap)
 mRlineMap = [0.0; RlineMap; 10.0]
 mNcMap = [0.0; NcMap; 10.0]
 
-Wcmax = 1e4
+Wcmax = maximum(WcMap)
 lowRWc = zeros(size(WcMap)[1])
 highRWc = Wcmax * ones(size(WcMap)[1])
 mWcMap = [lowRWc WcMap highRWc]
@@ -80,9 +80,9 @@ lowNWc = zeros(1, size(mWcMap)[2])
 highNWc = Wcmax * ones(1, size(mWcMap)[2])
 mWcMap = vcat(lowNWc, mWcMap, highNWc)
 
-PRmax = 3.0
+PRmax = maximum(PRMap)
 lowRPR = ones(size(PRMap)[1])
-highRPR = PRmax * ones(size(PRMap)[1])
+highRPR = ones(size(PRMap)[1])
 mPRMap = [lowRPR PRMap highRPR]
 
 lowNPR = ones(1, size(mPRMap)[2])

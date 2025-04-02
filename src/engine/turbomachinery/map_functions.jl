@@ -29,7 +29,7 @@ function poly_efficiency_map_from_isentropic(effMap, PRMap)
 end
 
 function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpolation, itp_PR::Interpolations.GriddedInterpolation, 
-                                    Wc_target::Float64, PR_target::Float64, Ng::Float64 = 0.5, Rg::Float64 = 2.0)
+                                    Wc_target::Float64, PR_target::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
 
     # Define the system of equations: Z(x, y) = z_target, W(x, y) = w_target
     function residuals(p)
@@ -40,8 +40,8 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     # Define the Jacobian of the system (partial derivatives)
     function jacobian(p)
         # Compute the partial derivatives of W and Z with respect to x and y
-        dw_dN, dw_dR = gradient(itp_Wc, p[1], p[2])
-        dpr_dN, dpr_dR = gradient(itp_PR, p[1], p[2])
+        dw_dN, dw_dR = Interpolations.gradient(itp_Wc, p[1], p[2])
+        dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, p[1], p[2])
         
         # Return the Jacobian matrix
         return [dw_dN dw_dR; dpr_dN dpr_dR]
@@ -67,21 +67,24 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 end
 
 function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::Float64, mb::Float64, piD::Float64, 
-                                                    mbD::Float64, NbD::Float64, Ng::Float64 = 0.5, Rg::Float64 = 2.0)
+                                                    mbD::Float64, NbD::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
     Wc = mb/mbD * map.defaults.Wc
     PR = pratio/piD * map.defaults.PR
+    if debug 
+        println([Wc, PR])
+    end
 
     #Calculate speed and Rline for the map
-    N, R, dN_dw, dN_dpr, dR_dw, dR_dpr = find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, Wc, PR, Ng, Rg)
+    N, R, dN_dw, dN_dpr, dR_dw, dR_dpr = find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, Wc, PR, Ng = Ng, Rg = Rg)
 
     #Compute corrected speed and derivatives
     Nb = N * NbD/map.defaults.Nc
     dNb_dmb = dN_dw * map.defaults.Wc/mbD * NbD/map.defaults.Nc
-    dNb_dpi = dN_dw * map.defaults.PR/piD * NbD/map.defaults.Nc
+    dNb_dpi = dN_dpr * map.defaults.PR/piD * NbD/map.defaults.Nc
 
     #Compute efficiency and derivatives
     epol = map.itp_polyeff(N, R)
-    depol_dN, depol_dR = gradient(map.itp_polyeff, N, R)
+    depol_dN, depol_dR = Interpolations.gradient(map.itp_polyeff, N, R)
 
     #Convert to adjusted values
     depol_dw = depol_dN * dN_dw + depol_dR * dR_dw

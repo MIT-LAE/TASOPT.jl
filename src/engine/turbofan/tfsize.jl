@@ -320,7 +320,8 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             mbfD = 1.0
             mf = 1.0
 
-            epf, epf_pf, epf_mf = ecmap(pif, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
+            _, epf, _, _, _, _, _, _ = 
+                  calculate_compressor_speed_and_efficiency(FanMap, pif, mf, pifD, mbfD, 1.0, Ng = 1.0, Rg = 2.0)
 
             pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
@@ -348,7 +349,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pilcD = pilc
             mblcD = 1.0
             ml = 1.0
-            eplc, eplc_pl, eplc_ml = ecmap(pilc, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
+            
+            _, eplc, _, _, _, _, _, _ = 
+                  calculate_compressor_speed_and_efficiency(LPCMap, pilc, ml, pilcD, mblcD, 1.0, Ng = 1.0, Rg = 2.0)
 
             pt25, Tt25, ht25, st25, cpt25, Rt25 = gas_prat(alpha, nair,
                   pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pilc, eplc)
@@ -365,10 +368,12 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pihcD = pihc
             mbhcD = 1.0
             mh = 1.0
-            ephc, ephc_ph, ephc_mh = ecmap(pihc, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
+
+            _, ephc, _, _, _, _, _, _ = 
+                  calculate_compressor_speed_and_efficiency(HPCMap, pihc, mh, pihcD, mbhcD, 1.0, Ng = 1.0, Rg = 2.0)
+
             pt3, Tt3, ht3, st3, cpt3, Rt3 = gas_prat(alpha, nair,
                   pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, pihc, ephc)
-
 
             # ===============================================================
             #---- combustor flow 3-4   (ffb = mdot_fuel/mdot_burner)
