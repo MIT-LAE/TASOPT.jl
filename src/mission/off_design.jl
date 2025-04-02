@@ -21,8 +21,6 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     parad = ac.parad
     pared = ac.pared
 
-    resetHXs(pare) #Reset heat exchanger parameters
-
     time_propsys = 0.0
 
     tolerW = 1.0e-8
@@ -33,6 +31,18 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
 #        para(iafexcdw,ip) = parm[imfexcdw]
 #        para(iafexcdt,ip) = parm[imfexcdt]
 #        para(iafexcdf,ip) = parm[imfexcdf]
+
+    #Initialize arrays with the design mission values if desired
+    if (initializes_engine)
+        #----- use design case as initial guess for engine state
+        pare[:,:] .= pared[:,:]
+    else
+        pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
+    end
+
+    for ip = ipstatic: ipdescentn
+        para[iaCfnace,ip] = parad[iaCfnace,ip]
+    end
 
     #Calculate sea level temperature corresponding to TO conditions
     altTO = parm[imaltTO] 
@@ -133,17 +143,6 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
       para[iaReunit,ip] = Re
     end
 
-    if (initializes_engine)
-#----- use design case as initial guess for engine state
-        pare[:,:] .= pared[:,:]
-    else
-        pare[ieu0, ipcruise1] = pared[ieu0, ipcruise1] #Copy flight speed for altitude calculation
-    end
-  
-    for ip = ipstatic: ipdescentn
-      para[iaCfnace,ip] = parad[iaCfnace,ip]
-    end
-
 #--------------------------------------------------------------------------
 #---- set wing pitching moment constants
     b  = wing.layout.span
@@ -215,6 +214,8 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     # Initialize previous weight iterations
     WTO1, WTO2, WTO3 = zeros(Float64, 3) #1st-previous to 3rd previous iteration weight for convergence criterion
 
+    resetHXs(pare) #Reset heat exchanger parameters
+
 #---- no convergence yet
     Lconv = false
 
@@ -285,6 +286,11 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     WTO2 = WTO1
     WTO1 = parm[imWTO]
 
+    end
+
+    #Check if all engine points have converged
+    if check_engine_convergence_failure(pare)
+        @warn "Some engine points did not converge"
     end
 
 return 
