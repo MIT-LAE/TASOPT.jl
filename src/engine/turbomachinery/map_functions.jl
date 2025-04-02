@@ -70,9 +70,6 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
                                                     mbD::Float64, NbD::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
     Wc = mb/mbD * map.defaults.Wc
     PR = pratio/piD * map.defaults.PR
-    if debug 
-        println([Wc, PR])
-    end
 
     #Calculate speed and Rline for the map
     N, R, dN_dw, dN_dpr, dR_dw, dR_dpr = find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, Wc, PR, Ng = Ng, Rg = Rg)
@@ -93,4 +90,38 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     depol_dmb = depol_dw * map.defaults.Wc/mbD
     depol_dpi = depol_dpr * map.defaults.PR/piD
     return Nb, epol, dNb_dpi, dNb_dmb, depol_dpi, depol_dmb, N, R
+end
+
+function extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
+    mRlineMap = [0.0; RlineMap; 10.0]
+    mNcMap = [0.0; NcMap; 10.0]
+    Wcmax = 10*maximum(WcMap)
+    lowRWc = zeros(size(WcMap)[1])
+    highRWc = 1.0001*WcMap[:,end]
+    mWcMap = [lowRWc WcMap highRWc]
+
+    lowNWc = zeros(1, size(mWcMap)[2])
+    highNWc = Wcmax * ones(1, size(mWcMap)[2])
+    mWcMap = vcat(lowNWc, mWcMap, highNWc)
+    mWcMap[end,1] = 0.0
+
+    PRmax = 10*maximum(PRMap)
+    lowRPR = 1.0001*PRMap[:,1]
+    highRPR = ones(size(PRMap)[1])
+    mPRMap = [lowRPR PRMap highRPR]
+
+    lowNPR = ones(1, size(mPRMap)[2])
+    highNPR = PRmax * ones(1, size(mPRMap)[2])
+    mPRMap = vcat(lowNPR, mPRMap, highNPR)
+    mPRMap[end,end] = 1.0
+
+    lowReff = zeros(size(polyeff_Map)[1])
+    highReff = zeros(size(polyeff_Map)[1])
+    mpolyeff_Map = [lowReff polyeff_Map highReff]
+
+    lowNeff = zeros(1, size(mpolyeff_Map)[2])
+    highNeff = zeros(1, size(mpolyeff_Map)[2])
+    mpolyeff_Map = vcat(lowNeff, mpolyeff_Map, highNeff)
+
+    return mNcMap, mRlineMap, mWcMap, mPRMap, mpolyeff_Map
 end

@@ -1,5 +1,5 @@
 #-----------------------------
-# pyCycle Fan Map Data
+# pyCycle HPC Map Data
 #-----------------------------
 # Defaults
 default_Nc = 0.976
@@ -68,34 +68,7 @@ polyeff_Map = poly_efficiency_map_from_isentropic(effMap, PRMap)
 # Create interpolation objects
 #-----------------------------
 #Expand maps with dummy data to cover broader range of speeds and Rlines
-mRlineMap = [0.0; RlineMap; 10.0]
-mNcMap = [0.0; NcMap; 10.0]
-
-Wcmax = maximum(WcMap)
-lowRWc = zeros(size(WcMap)[1])
-highRWc = Wcmax * ones(size(WcMap)[1])
-mWcMap = [lowRWc WcMap highRWc]
-
-lowNWc = zeros(1, size(mWcMap)[2])
-highNWc = Wcmax * ones(1, size(mWcMap)[2])
-mWcMap = vcat(lowNWc, mWcMap, highNWc)
-
-PRmax = maximum(PRMap)
-lowRPR = ones(size(PRMap)[1])
-highRPR = ones(size(PRMap)[1])
-mPRMap = [lowRPR PRMap highRPR]
-
-lowNPR = ones(1, size(mPRMap)[2])
-highNPR = PRmax * ones(1, size(mPRMap)[2])
-mPRMap = vcat(lowNPR, mPRMap, highNPR)
-
-lowReff = zeros(size(polyeff_Map)[1])
-highReff = zeros(size(polyeff_Map)[1])
-mpolyeff_Map = [lowReff polyeff_Map highReff]
-
-lowNeff = zeros(1, size(mpolyeff_Map)[2])
-highNeff = zeros(1, size(mpolyeff_Map)[2])
-mpolyeff_Map = vcat(lowNeff, mpolyeff_Map, highNeff)
+mNcMap, mRlineMap, mWcMap, mPRMap, mpolyeff_Map = extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
 
 # Create interpolation objects for Wc and PR
 itp_Wc = interpolate((mNcMap, mRlineMap), mWcMap, Gridded(Linear()))

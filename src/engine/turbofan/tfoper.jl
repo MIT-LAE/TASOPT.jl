@@ -540,7 +540,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- fan flow 2-7
             Nf, epf, Nf_pf, Nf_mf, epf_pf, epf_mf, _, _ = 
-                  calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, NbfD, Ng = 0.5, Rg = 2.0)
+                  calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, NbfD, Ng = 1.0, Rg = 2.0)
             
             if (epf < epfmin)
                   epf = epfmin
@@ -654,7 +654,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- LP compressor flow 2-25
             Nl, eplc, Nl_pl, Nl_ml, eplc_pl, eplc_ml, _, _ = 
-                  calculate_compressor_speed_and_efficiency(LPCMap, pl, ml, pilcD, mblcD, NblcD, Ng = 0.5, Rg = 2.0)
+                  calculate_compressor_speed_and_efficiency(LPCMap, pl, ml, pilcD, mblcD, NblcD, Ng = 1.0, Rg = 2.0)
                   
             if (eplc < 0.70)
                   eplc = 0.70
@@ -718,7 +718,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             # ===============================================================
             #---- HP compressor flow 25-3
             Nh, ephc, Nh_ph, Nh_mh, ephc_ph, ephc_mh, _, _ = 
-                  calculate_compressor_speed_and_efficiency(HPCMap, ph, mh, pihcD, mbhcD, NbhcD, Ng = 0.5, Rg = 2.0)
+                  calculate_compressor_speed_and_efficiency(HPCMap, ph, mh, pihcD, mbhcD, NbhcD, Ng = 1.0, Rg = 2.0)
             
             if (ephc < 0.70)
                   ephc = 0.70
@@ -2678,7 +2678,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
 
             # ===========================================================================
-
 
             for i = 1:9
                   rsav[i] = res[i, 1]
