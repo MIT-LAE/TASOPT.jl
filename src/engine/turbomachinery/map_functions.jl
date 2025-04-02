@@ -33,12 +33,18 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 
     # Define the system of equations: Z(x, y) = z_target, W(x, y) = w_target
     function residuals(p)
+        p[1] = clamp(p[1], 0.0, 4.0)
+        p[2] = clamp(p[2], 0.0, 4.0)
+
         # Return the residuals for both equations
         return [itp_Wc(p...) - Wc_target, itp_PR(p...) - PR_target]
     end
 
     # Define the Jacobian of the system (partial derivatives)
     function jacobian(p)
+        p[1] = clamp(p[1], 0.0, 4.0)
+        p[2] = clamp(p[2], 0.0, 4.0)
+        
         # Compute the partial derivatives of W and Z with respect to x and y
         dw_dN, dw_dR = Interpolations.gradient(itp_Wc, p[1], p[2])
         dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, p[1], p[2])
@@ -48,7 +54,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     end
 
     # Solve the system of equations using root finding (non-linear solver)
-    sol = nlsolve(residuals, jacobian, [Ng, Rg])
+    sol = nlsolve(residuals, jacobian, [Ng, Rg], factor = 0.5)
 
     # Extract the solution: the x and y corresponding to the given w_target and z_target
     N_found, R_found = sol.zero
@@ -93,11 +99,11 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
 end
 
 function extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
-    mRlineMap = [0.0; RlineMap; 10.0]
-    mNcMap = [0.0; NcMap; 10.0]
-    Wcmax = 10*maximum(WcMap)
+    mRlineMap = [0; RlineMap; 4]
+    mNcMap = [0; NcMap; 4]
+    Wcmax = 2*maximum(WcMap)
     lowRWc = zeros(size(WcMap)[1])
-    highRWc = 1.0001*WcMap[:,end]
+    highRWc = 1.01*WcMap[:,end]
     mWcMap = [lowRWc WcMap highRWc]
 
     lowNWc = zeros(1, size(mWcMap)[2])
@@ -105,8 +111,8 @@ function extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
     mWcMap = vcat(lowNWc, mWcMap, highNWc)
     mWcMap[end,1] = 0.0
 
-    PRmax = 10*maximum(PRMap)
-    lowRPR = 1.0001*PRMap[:,1]
+    PRmax = 2*maximum(PRMap)
+    lowRPR = 1.01*PRMap[:,1]
     highRPR = ones(size(PRMap)[1])
     mPRMap = [lowRPR PRMap highRPR]
 

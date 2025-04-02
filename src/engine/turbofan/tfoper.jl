@@ -250,7 +250,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       #---- convergence tolerance
       #      data toler  1.0e-7 
-      toler = 1.0e-10
+      toler = 1.0e-8
 
       itmax = 50
 
@@ -281,6 +281,14 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             gamma[i] = etab * gamma[i]
       end
       gamma[n] = 1.0 - etab
+
+      #Starting guesses for compressor map non-linear solvers
+      Nfg = 0.5
+      Rfg = 2.0
+      Nlcg = 0.5
+      Rlcg = 2.0
+      Nhcg = 0.5
+      Rhcg = 2.0
       #
       # ===============================================================
       #---- freestream static quantities
@@ -539,8 +547,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # ===============================================================
             #---- fan flow 2-7
-            Nf, epf, Nf_pf, Nf_mf, epf_pf, epf_mf, _, _ = 
-                  calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, NbfD, Ng = 1.0, Rg = 2.0)
+            Nf, epf, Nf_pf, Nf_mf, epf_pf, epf_mf, Nfg, Rfg = 
+                  calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, NbfD, Ng = Nfg, Rg = Rfg)
             
             if (epf < epfmin)
                   epf = epfmin
@@ -653,8 +661,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       
             # ===============================================================
             #---- LP compressor flow 2-25
-            Nl, eplc, Nl_pl, Nl_ml, eplc_pl, eplc_ml, _, _ = 
-                  calculate_compressor_speed_and_efficiency(LPCMap, pl, ml, pilcD, mblcD, NblcD, Ng = 1.0, Rg = 2.0)
+            Nl, eplc, Nl_pl, Nl_ml, eplc_pl, eplc_ml, Nlcg, Rlcg = 
+                  calculate_compressor_speed_and_efficiency(LPCMap, pl, ml, pilcD, mblcD, NblcD, Ng = Nlcg, Rg = Rlcg)
                   
             if (eplc < 0.70)
                   eplc = 0.70
@@ -717,8 +725,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       
             # ===============================================================
             #---- HP compressor flow 25-3
-            Nh, ephc, Nh_ph, Nh_mh, ephc_ph, ephc_mh, _, _ = 
-                  calculate_compressor_speed_and_efficiency(HPCMap, ph, mh, pihcD, mbhcD, NbhcD, Ng = 1.0, Rg = 2.0)
+            Nh, ephc, Nh_ph, Nh_mh, ephc_ph, ephc_mh, Nhcg, Rhcg = 
+                  calculate_compressor_speed_and_efficiency(HPCMap, ph, mh, pihcD, mbhcD, NbhcD, Ng = Nhcg, Rg = Rhcg)
             
             if (ephc < 0.70)
                   ephc = 0.70
