@@ -3174,7 +3174,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Lconv
 
             end
-            if iter > 20 #Limit cycle may have been reached
+            if iter > 10 #Limit cycle may have been reached
                   rlx_it = 1.0 - 0.5*iter/itmax #Add a relaxation that depends on the iteration count
             else
                   rlx_it = 1.0 #Otherwise keep using default relaxation
