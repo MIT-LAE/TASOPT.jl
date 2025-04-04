@@ -32,33 +32,38 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
                                     Wc_target::Float64, PR_target::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
 
     # Define the system of equations: 
-    function residuals(p)
-        p[1] = clamp(p[1], 0.1, 3.9)
-        p[2] = clamp(p[2], 0.1, 3.9)
+    function residuals!(F::Vector{Float64}, x::Vector{Float64})
+        x[1] = clamp(x[1], 0.1, 3.9)
+        x[2] = clamp(x[2], 0.1, 3.9)
         # Return the residuals for both equations
-        return [itp_Wc(p...) - Wc_target, itp_PR(p...) - PR_target]
+        F[1] = itp_Wc(x...) - Wc_target 
+        F[2] = itp_PR(x...) - PR_target
     end
 
     # Define the Jacobian of the system (partial derivatives)
-    function jacobian(p)
-        p[1] = clamp(p[1], 0.1, 3.9)
-        p[2] = clamp(p[2], 0.1, 3.9)
+    function jacobian!(J::Matrix{Float64}, x::Vector{Float64})
+        x[1] = clamp(x[1], 0.1, 3.9)
+        x[2] = clamp(x[2], 0.1, 3.9)
         # Compute the partial derivatives of W and PR with respect to N and R
-        dw_dN, dw_dR = Interpolations.gradient(itp_Wc, p[1], p[2])
-        dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, p[1], p[2])
+        dw_dN, dw_dR = Interpolations.gradient(itp_Wc, x[1], x[2])
+        dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, x[1], x[2])
         
         # Return the Jacobian matrix
-        return [dw_dN dw_dR; dpr_dN dpr_dR]
+        J[1,1] = dw_dN
+        J[1,2] = dw_dR
+        J[2,1] = dpr_dN
+        J[2,2] = dpr_dR
     end
 
     # Solve the system of equations using root finding (non-linear solver)
-    sol = nlsolve(residuals, jacobian, [Ng, Rg], factor = 0.5)
+    sol = nlsolve(residuals!, jacobian!, [Ng, Rg], iterations = 100)
 
     # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
     N_found, R_found = sol.zero
 
     # Compute the Jacobian at the found solution
-    jac = jacobian([N_found, R_found])
+    jac = zeros(2, 2)
+    jacobian!(jac, [N_found, R_found])
 
     # Calculate the derivatives (inverse of the Jacobian matrix)
     jac_inv = inv(jac)
