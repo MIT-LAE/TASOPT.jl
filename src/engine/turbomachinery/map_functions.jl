@@ -16,9 +16,9 @@ struct CompressorMap
     PRMap::Matrix{Float64}
     effMap::Matrix{Float64}
     polyeffMap::Matrix{Float64}
-    itp_Wc::Interpolations.GriddedInterpolation
-    itp_PR::Interpolations.GriddedInterpolation
-    itp_polyeff::Interpolations.GriddedInterpolation
+    itp_Wc::Interpolations.GriddedInterpolation{Float64, 2, Matrix{Float64}, Gridded{Linear{Throw{OnGrid}}}, Tuple{Vector{Float64}, Vector{Float64}}}
+    itp_PR::Interpolations.GriddedInterpolation{Float64, 2, Matrix{Float64}, Gridded{Linear{Throw{OnGrid}}}, Tuple{Vector{Float64}, Vector{Float64}}}
+    itp_polyeff::Interpolations.GriddedInterpolation{Float64, 2, Matrix{Float64}, Gridded{Linear{Throw{OnGrid}}}, Tuple{Vector{Float64}, Vector{Float64}}}
 end
 
 function poly_efficiency_map_from_isentropic(effMap, PRMap)
@@ -56,7 +56,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     end
 
     # Solve the system of equations using root finding (non-linear solver)
-    sol = nlsolve(residuals!, jacobian!, [Ng, Rg], iterations = 100)
+    sol = nlsolve(residuals!, jacobian!, [Ng, Rg], factor = 0.5, iterations = 100)
 
     # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
     N_found, R_found = sol.zero
