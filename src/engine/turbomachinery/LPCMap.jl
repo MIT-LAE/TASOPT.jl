@@ -68,12 +68,7 @@ polyeff_Map = poly_efficiency_map_from_isentropic(effMap, PRMap)
 # Create interpolation objects
 #-----------------------------
 #Expand maps with dummy data to cover broader range of speeds and Rlines
-mNcMap, mRlineMap, mWcMap, mPRMap, mpolyeff_Map = extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
-
-# Create interpolation objects for Wc and PR
-itp_Wc = interpolate((mNcMap, mRlineMap), mWcMap, Gridded(Linear()))
-itp_PR = interpolate((mNcMap, mRlineMap), mPRMap, Gridded(Linear()))
-itp_polyeff = interpolate((mNcMap, mRlineMap), mpolyeff_Map, Gridded(Linear()))
+itp_Wc, itp_PR, itp_polyeff = create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
 
 #-----------------------------
 # Create map objects

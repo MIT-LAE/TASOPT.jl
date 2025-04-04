@@ -1,5 +1,5 @@
 using Interpolations, NLsolve
-using BenchmarkTools
+#using BenchmarkTools
 
 struct MapDefaults
     Nc::Float64
@@ -31,21 +31,19 @@ end
 function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpolation, itp_PR::Interpolations.GriddedInterpolation, 
                                     Wc_target::Float64, PR_target::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
 
-    # Define the system of equations: Z(x, y) = z_target, W(x, y) = w_target
+    # Define the system of equations: 
     function residuals(p)
-        p[1] = clamp(p[1], 0.0, 4.0)
-        p[2] = clamp(p[2], 0.0, 4.0)
-
+        p[1] = clamp(p[1], 0.1, 3.9)
+        p[2] = clamp(p[2], 0.1, 3.9)
         # Return the residuals for both equations
         return [itp_Wc(p...) - Wc_target, itp_PR(p...) - PR_target]
     end
 
     # Define the Jacobian of the system (partial derivatives)
     function jacobian(p)
-        p[1] = clamp(p[1], 0.0, 4.0)
-        p[2] = clamp(p[2], 0.0, 4.0)
-        
-        # Compute the partial derivatives of W and Z with respect to x and y
+        p[1] = clamp(p[1], 0.1, 3.9)
+        p[2] = clamp(p[2], 0.1, 3.9)
+        # Compute the partial derivatives of W and PR with respect to N and R
         dw_dN, dw_dR = Interpolations.gradient(itp_Wc, p[1], p[2])
         dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, p[1], p[2])
         
@@ -56,7 +54,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     # Solve the system of equations using root finding (non-linear solver)
     sol = nlsolve(residuals, jacobian, [Ng, Rg], factor = 0.5)
 
-    # Extract the solution: the x and y corresponding to the given w_target and z_target
+    # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
     N_found, R_found = sol.zero
 
     # Compute the Jacobian at the found solution
@@ -65,7 +63,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     # Calculate the derivatives (inverse of the Jacobian matrix)
     jac_inv = inv(jac)
 
-    # The derivatives of x, y with respect to w and z are the components of the inverse Jacobian
+    # The derivatives of N, R with respect to Wc and PR are the components of the inverse Jacobian
     dN_dw, dN_dpr = jac_inv[1, :]
     dR_dw, dR_dpr = jac_inv[2, :]
 
@@ -98,7 +96,7 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     return Nb, epol, dNb_dpi, dNb_dmb, depol_dpi, depol_dmb, N, R
 end
 
-function extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
+function create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
     mRlineMap = [0; RlineMap; 4]
     mNcMap = [0; NcMap; 4]
     Wcmax = 2*maximum(WcMap)
@@ -129,5 +127,9 @@ function extrapolate_maps(NcMap, RlineMap, WcMap, PRMap, effMap)
     highNeff = zeros(1, size(mpolyeff_Map)[2])
     mpolyeff_Map = vcat(lowNeff, mpolyeff_Map, highNeff)
 
-    return mNcMap, mRlineMap, mWcMap, mPRMap, mpolyeff_Map
+    itp_Wc = interpolate((mNcMap, mRlineMap), mWcMap, Gridded(Linear()))
+    itp_PR = interpolate((mNcMap, mRlineMap), mPRMap, Gridded(Linear()))
+    itp_polyeff = interpolate((mNcMap, mRlineMap), mpolyeff_Map, Gridded(Linear()))
+
+    return itp_Wc, itp_PR, itp_polyeff
 end
