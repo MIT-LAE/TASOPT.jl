@@ -34,7 +34,7 @@ where:
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
-See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`wing_profiledrag_direct`](@ref), [`wing_profiledrag_scaled`](@ref), [`cfturb`](@ref), and `cditrp`.
+See also [`fusebl!`](@ref), [`wing_profiledrag_direct`](@ref), [`wing_profiledrag_scaled`](@ref), [`cfturb`](@ref), and [`induced_drag!`](@ref).
 """
 function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
       #Unpack data storage
@@ -195,7 +195,7 @@ function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- induced CD
-      cditrp(para, wing, htail)
+      induced_drag!(para, wing, htail)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -221,9 +221,9 @@ end # aircraft_drag!
 
 
 """
-      cditrp(para, wing, htail)
+      induced_drag!(para, wing, htail)
 
-Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
+Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -238,7 +238,7 @@ Computes the induced drag via the Trefftz plane. Calls [`trefftz1`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function cditrp(para, wing, htail)
+function induced_drag!(para, wing, htail)
 
       CL = para[iaCL]
 
@@ -355,7 +355,7 @@ function cditrp(para, wing, htail)
       # $specifies_CL,$CLsurfsp")
 
 
-      CLsurf, CLtp, CDtp, sefftp = trefftz1(nsurf, npout, npinn, npimg, 
+      CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, npout, npinn, npimg, 
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo, ktip,
@@ -367,7 +367,7 @@ function cditrp(para, wing, htail)
       para[iaspaneff] = sefftp
 
       return
-end # cditrp
+end # induced_drag!
 
 """
       cfturb(Re)

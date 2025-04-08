@@ -147,8 +147,8 @@ function benchmark_drag()
     bench_cfturb = @benchmark aerodynamics.cfturb($Re)
 
 
-    println("Benchmarking... cditrp")
-    bench_cditrp = @benchmark aerodynamics.cditrp($view(para, :, ipcruise1), 
+    println("Benchmarking... induced_drag!")
+    bench_induced_drag = @benchmark aerodynamics.induced_drag!($view(para, :, ipcruise1), 
     $(ac.wing), $(ac.htail))
 
     nsurf = 2
@@ -197,8 +197,8 @@ function benchmark_drag()
                                             $airfoil_section) seconds = 30 evals = 100
     bench_airfun = run(bench)
 
-    println("Benchmarking... trefftz1")
-    bench = @benchmarkable aerodynamics.trefftz1($nsurf, $npout,
+    println("Benchmarking... _trefftz_analysis")
+    bench = @benchmarkable aerodynamics._trefftz_analysis($nsurf, $npout,
                             $npinn, $npimg, 
                             $Sref, $bref,
                             $b,$bs,$bo,$bop, $zcent,
@@ -216,7 +216,7 @@ function benchmark_drag()
     # You can use the following tempalte to profile code in the REPL
     # using ProfView
     # Profile.init(delay = 1e-6)
-    # a = ProfileView.@profile (for i=1:10000; aerodynamics.trefftz1(nsurf, npout,
+    # a = ProfileView.@profile (for i=1:10000; aerodynamics._trefftz_analysis(nsurf, npout,
     # npinn, npimg, 
     # Sref, bref,
     # b,bs,bo,bop, zcent,
@@ -265,9 +265,9 @@ function benchmark_drag()
     println(" ")
 
     println("---------------------------------------")
-    println("cditrp (FORTRAN on MacPro M2 ~ 4.5 μs)")
+    println("induced_drag! (FORTRAN on MacPro M2 ~ 4.5 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"), bench_cditrp)
+    show(stdout, MIME("text/plain"), bench_induced_drag)
     println(" ")
     
     println("---------------------------------------")

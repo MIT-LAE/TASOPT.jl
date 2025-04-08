@@ -329,7 +329,7 @@ end
     wc = zeros(Float64, idim)
     vnc = zeros(Float64, idim)
 
-    CLsurf, CL, CD, spanef = TASOPT.aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+    CLsurf, CL, CD, spanef = TASOPT.aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
         Sref, bref,
         b, bs, bo, bop, zcent,
         po, gammat, gammas, fLo, ktip,

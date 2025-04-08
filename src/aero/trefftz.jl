@@ -38,7 +38,7 @@ end
 
 function trefftz(tf::tfp)
   
-  trefftz1(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
+  _trefftz_analysis(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
 	tf.Sref, tf.bref,
 	tf.b, tf.bs, tf.bo, tf.bop, tf.zcent,
 	tf.po,tf.γt,tf.γs, 1, tf.ktip,
@@ -52,7 +52,7 @@ function trefftz(tf::tfp)
 end
 
 """
-    trefftz1(nsurf, npout, npinn, npimg, 
+    _trefftz_analysis(nsurf, npout, npinn, npimg, 
           Sref, bref, b, bs, bo, bop, 
           zcent, po, gammat, gammas, 
           fLo,ktip, specifies_CL, CLsurfsp)
@@ -84,7 +84,7 @@ Trefftz plane routine for the induced drag computation of `nsurf` number of surf
 
 See [theory above](@ref trefftz) or Sections 2.14.7 and 3.8.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function trefftz1(nsurf, npout, npinn, npimg,
+function _trefftz_analysis(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po, gammat, gammas, fLo, ktip,

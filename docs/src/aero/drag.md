@@ -74,9 +74,9 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-aerodynamics.cditrp(para, wing, htail)
+aerodynamics.induced_drag!(para, wing, htail)
 
-aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
