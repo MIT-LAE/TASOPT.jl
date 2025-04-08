@@ -146,7 +146,7 @@ end  # function normalized_chord
     get_average_sparbox_heights(section::WingCrossSection) -> (h̄_avg, h̄_rms)
 
 Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
-These are used in [`calc_wing_weights!`](@ref) for further calculations
+These are used in [`wing_weights!`](@ref) for further calculations
 """
 function get_average_sparbox_heights(section::WingCrossSection)
     A = 1 - section.web_to_box_height

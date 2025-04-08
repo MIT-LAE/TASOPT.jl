@@ -22,7 +22,7 @@ The abstraction of the Wing module is given below. More detail can be seen in Se
 
 structures.size_wing_section!(section, sweep, sigfac)
 
-structures.calc_wing_weights!(wing, po, gammat, gammas, 
+structures.wing_weights!(wing, po, gammat, gammas, 
        Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
 structures.calculate_centroid_offset(b, bs, bo, λt, λs, sweep)

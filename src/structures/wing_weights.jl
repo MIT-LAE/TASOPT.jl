@@ -50,7 +50,7 @@ function size_wing_section!(section, sweep, sigfac)
 end
 
 """
-    calc_wing_weights!(wing, po, gammat, gammas, 
+    wing_weights!(wing, po, gammat, gammas, 
        Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
 Calculates Wing or Tail loads, stresses, weights of individual wing sections.
@@ -74,7 +74,7 @@ Also returns the material gauges, torsional and bending stiffness.
 
 See [Geometry](@ref geometry),  [Wing/Tail Structures](@ref wingtail), and Section 2.7  of the [TASOPT Technical Description](@ref dreladocs). 
 """
-function calc_wing_weights!(wing, po, gammat, gammas,
+function wing_weights!(wing, po, gammat, gammas,
        Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
     tauweb,sigstrut = wing.inboard.webs.material.τmax * sigfac, wing.strut.material.σmax * sigfac
@@ -238,7 +238,7 @@ function calc_wing_weights!(wing, po, gammat, gammas,
     return Wwing, Wsinn, Wsout, dyWsinn, dyWsout, Wfcen, Wfinn, Wfout,
     dxWfinn, dxWfout, dyWfinn, dyWfout, lsp
 
-end # calc_wing_weights
+end # wing_weights
 
 
 """
