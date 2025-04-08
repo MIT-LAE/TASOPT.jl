@@ -56,7 +56,7 @@
 
     end # end airfun
 
-    #start Wingpo
+    #start wing_loading
     wing.layout.root_chord = 5.3938688126436549
     wing.layout.span = 35.486921629195265
     wing.layout.ηs = 10.113772664320649 / wing.layout.span
@@ -75,10 +75,10 @@
     Lhtail = -132476.65894384126  
     fort_po = 110091.58394892939 
 
-    po = TASOPT.aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail)
+    po = TASOPT.aerodynamics.wing_loading(wing, rclt, rcls, N, W, Lhtail)
 
     @test po ≈ fort_po
-    #end Wingpo
+    #end wing_loading
     # wing_profiledrag_direct
     #Start wing_profiledrag_direct
 

@@ -529,7 +529,7 @@ function _size_aircraft!(ac; itermax=35,
         γt, γs = wing.outboard.λ * para[iarclt, ip], wing.inboard.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
+        po = wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
         if compare_strings(options.opt_engine_location,"wing")
@@ -656,11 +656,11 @@ function _size_aircraft!(ac; itermax=35,
         end
 
         # Set HT max loading magnitude
-        poh,htail.layout.span = tailpo!(htail,Sh, qne)
+        poh,htail.layout.span = tail_loading!(htail,Sh, qne)
         htail.layout.ηs = htail.layout.ηo
         
         # Set VT max loading magnitude, based on single tail + its bottom image
-        pov,bv2 = tailpo!(vtail,2.0 * Sv / vtail.ntails, qne; t_fac=2.0)
+        pov,bv2 = tail_loading!(vtail,2.0 * Sv / vtail.ntails, qne; t_fac=2.0)
         bv = bv2 / 2
         vtail.layout.span = bv2
         vtail.layout.ηs = vtail.layout.ηo

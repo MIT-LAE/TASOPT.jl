@@ -361,7 +361,7 @@ surft_out = [htail.weight, htail.dxW, htail.outboard.webs.thickness, htail.outbo
   fort_coh = 4.2554980786323124
   fort_poh = 108025.98516125829
 
-poh,htail_span = TASOPT.aerodynamics.tailpo!(htail, Sh, qne)
+poh,htail_span = TASOPT.aerodynamics.tail_loading!(htail, Sh, qne)
 
 @test fort_bh ≈ htail_span
 @test fort_coh ≈ htail.layout.root_chord

@@ -1,5 +1,5 @@
 """
-    wingpo(wing, rclt, rcls, N, W, Lhtail)
+    wing_loading(wing, rclt, rcls, N, W, Lhtail)
 
 Computes wing root ("center") loading ``p_o`` to balance the net load.
 
@@ -21,7 +21,7 @@ N*W - L_{h tail} \times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
 
 See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function wingpo(wing, rclt, rcls, N, W, Lhtail)
+function wing_loading(wing, rclt, rcls, N, W, Lhtail)
 
     γt, γs = wing.outboard.λ * rclt, wing.inboard.λ * rcls
 
@@ -44,10 +44,10 @@ function wingpo(wing, rclt, rcls, N, W, Lhtail)
     po = (N * W - Lhtail) / (Kp * wing.layout.span)
 
     return po
-end # wingpo
+end # wing_loading
 
 """
-    tailpo!(tail,S,qne; t_fac = 1.0)
+    tail_loading!(tail,S,qne; t_fac = 1.0)
 
 Calculates stabilizer span, root chord, and root loading based on the 
 never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
@@ -65,7 +65,7 @@ never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
 
 See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
 """
-function tailpo!(tail, S, qne; t_fac = 1.0)
+function tail_loading!(tail, S, qne; t_fac = 1.0)
 
     b  = sqrt(S*tail.layout.AR*t_fac)
     tail.layout.root_chord = S/(0.5*b*(1.0+tail.outboard.λ))
