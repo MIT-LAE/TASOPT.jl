@@ -240,13 +240,13 @@ function benchmark_drag()
     rkSunsw = 0.5
     aRexp  = para1[iaaRexp]
     fexcdw = para1[iafexcdw]
-    println("Benchmarking... surfcd2")
-    bench = @benchmarkable aerodynamics.surfcd2($(ac.wing), $gammat, $gammas,
+    println("Benchmarking... wing_profiledrag_direct")
+    bench = @benchmarkable aerodynamics.wing_profiledrag_direct($(ac.wing), $gammat, $gammas,
         $Mach, $CL, $CLhtail, $Reco,
         $aRexp, $rkSunsw, $fexcdw,
         $fduo, $fdus, $fdut) seconds=30 evals=5
 
-    bench_surfcd2 = run(bench)
+    wing_profiledrag_direct = run(bench)
 
     println("Benchmarking... aircraft_drag!")
     bench = @benchmarkable aerodynamics.aircraft_drag!($parg, 
@@ -289,9 +289,9 @@ function benchmark_drag()
     println(" ")
 
     println("---------------------------------------")
-    println("surfcd2 (FORTRAN on MacPro M2 ~ 2.01 μs)")
+    println("wing_profiledrag_direct (FORTRAN on MacPro M2 ~ 2.01 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_surfcd2)
+    show(stdout, MIME("text/plain"),bench_wing_profiledrag_direct)
     println(" ")
 
     println("---------------------------------------")

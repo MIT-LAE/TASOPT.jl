@@ -1,8 +1,8 @@
 """
-   aircraft_drag!(ac, imission, ip, computes_surfcd)
+   aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
 Calculates aircraft `CD` components for operating point, ipoint.
-If `computes_surfcd` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
+If `computes_wing_direct` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
 otherwise uses default values in para array. Called by [`mission!()`](@ref TASOPT.mission!), [`wsize`](@ref TASOPT.wsize), [`takeoff!`](@ref TASOPT.takeoff!), and `odperf!`.
 
 The total drag is computed by
@@ -28,15 +28,15 @@ where:
 **Inputs:**
       - `ac::aircraft`: aircraft data storage object
       - `imission::Int64`: mission index
-      - `computes_surfcd::Bool`: Flag if drag should be computed with `surfcd2` (true) or if para values should be used (false).
+      - `computes_wing_direct::Bool`: Flag if drag should be computed with `wing_profiledrag_direct` (true) or if para values should be used (false).
 
       **Outputs:**
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
-See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
+See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`wing_profiledrag_direct`](@ref), [`wing_profiledrag_scaled`](@ref), [`cfturb`](@ref), and `cditrp`.
 """
-function aircraft_drag!(ac, imission, ip, computes_surfcd; Ldebug=false)
+function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
       #Unpack data storage
       parg = ac.parg
       para = view(ac.para, :, ip, imission)
@@ -88,15 +88,15 @@ function aircraft_drag!(ac, imission, ip, computes_surfcd; Ldebug=false)
       Reco = Reunit*wing.layout.root_chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      if (computes_surfcd) 
+      if (computes_wing_direct) 
 #----- integrated across span for CDwing
       clpo,clps,clpt,
-	cdfw,cdpw,CDwing,CDover = surfcd2(wing,gammat,gammas,
+	cdfw,cdpw,CDwing,CDover = wing_profiledrag_direct(wing,gammat,gammas,
                                     Mach,CL,CLhtail,Reco,
                                     aRexp, rkSunsw,fexcdw,
                                     fduo,fdus,fdut)
 	
-       #if(Ldebug) write(*,*) '...exited SURFCD2'
+       #if(Ldebug) write(*,*) '...exited wing_profiledrag_direct'
 
 #----- store CD values
       para[iaCDwing] = CDwing
@@ -110,7 +110,7 @@ function aircraft_drag!(ac, imission, ip, computes_surfcd; Ldebug=false)
       cdfw = para[iacdfw] * fexcdw
       cdpw = para[iacdpw] * fexcdw
 
-	CDwing,CDover = surfcd(wing.layout.S,
+	CDwing,CDover = wing_profiledrag_scaled(wing.layout.S,
 	wing.layout.span,wing.layout.break_span,wing.layout.root_span,wing.outboard.λ,wing.inboard.λ,wing.layout.sweep,wing.layout.root_chord, 
 	cdfw,cdpw,Reco,Rerefw,aRexp,rkSunsw,
        fCDwcen)
@@ -136,14 +136,14 @@ function aircraft_drag!(ac, imission, ip, computes_surfcd; Ldebug=false)
 
 #---- horizontal tail profile CD
       Recoh = Reunit*htail.layout.root_chord
-	CDhtail,CDhover = surfcd(wing.layout.S,
+	CDhtail,CDhover = wing_profiledrag_scaled(wing.layout.S,
 	htail.layout.span,htail.layout.root_span,htail.layout.root_span,htail.outboard.λ,1.0,htail.layout.sweep,htail.layout.root_chord, 
 	cdft,cdpt,Recoh,Rereft,aRexp,rkSunsh,
 	fCDhcen)
 
 #---- vertical tail profile CD
       Recov = Reunit*vtail.layout.root_chord
-      CDvtail1,CDvover1 = surfcd(wing.layout.S,
+      CDvtail1,CDvover1 = wing_profiledrag_scaled(wing.layout.S,
 	vtail.layout.span,vtail.layout.root_span,vtail.layout.root_span,vtail.outboard.λ,1.0,vtail.layout.sweep,vtail.layout.root_chord, 
 	cdft,cdpt,Recov,Rereft,aRexp,rkSunsv,
       fCDvcen)

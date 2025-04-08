@@ -142,14 +142,14 @@ for   i = 1:N
         
         # Calculate Drag
         if (i == 1)
-            computes_surfcd = false
+            computes_wing_direct = false
         else 
-            computes_surfcd = true
+            computes_wing_direct = true
         end
         if CL > 0.9
-            computes_surfcd = false
+            computes_wing_direct = false
         end
-        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
+        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_wing_direct)
 
         #BLI parameters
         ρ0 = pare[ierho0, ip]
@@ -241,13 +241,13 @@ for   i = 1:N
         #Trim aircraft
         opt_trim_var = "CL_htail"
         balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
-        computes_surfcd = true
+        computes_wing_direct = true
         if CL > 1.0
             println("CL during cruise is $CL")
-            computes_surfcd = false
+            computes_wing_direct = false
         end
         #Get Drag
-        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
+        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_wing_direct)
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         F  = BW*(DoL) #zero climb angle for cruise

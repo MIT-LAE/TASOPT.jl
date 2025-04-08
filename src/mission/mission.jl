@@ -317,11 +317,11 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
                   if (ip == ipclimb1)
-                        computes_surfcd = false #use explicitly specified wing cdf, cdp
+                        computes_wing_direct = false #use explicitly specified wing cdf, cdp
                   else
-                        computes_surfcd = true #use airfoil database
+                        computes_wing_direct = true #use airfoil database
                   end
-                  aircraft_drag!(ac, imission, ip, computes_surfcd)
+                  aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
                   engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
@@ -425,8 +425,8 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             # println("Calculating cruise point")
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
-            computes_surfcd = true
-            aircraft_drag!(ac, imission, ip, computes_surfcd)
+            computes_wing_direct = true
+            aircraft_drag!(ac, imission, ip, computes_wing_direct)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -505,8 +505,8 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       # Calc Drag
-      computes_surfcd = true
-      aircraft_drag!(ac, imission, ip, computes_surfcd)
+      computes_wing_direct = true
+      aircraft_drag!(ac, imission, ip, computes_wing_direct)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -651,12 +651,12 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp
-                  computes_surfcd = false
+                  computes_wing_direct = false
             else
                   # use airfoil database for wing cdf,cdp
-                  computes_surfcd = true
+                  computes_wing_direct = true
             end
-            aircraft_drag!(ac, imission, ip, computes_surfcd)
+            aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
             # set up for engine calculation
             sing = sin(gamVde)

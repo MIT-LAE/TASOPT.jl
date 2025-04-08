@@ -86,15 +86,15 @@ aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
 
 ## Wing and tail surfaces
 
-Lifting surface drag is determined via [`surfcd`](@ref aerodynamics.surfcd) (when constant airfoil section `cdf` and `cdp` are already determined), and [`surfcd2`](@ref aerodynamics.surfcd2) (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
+Lifting surface drag is determined via [`wing_profiledrag_scaled`](@ref aerodynamics.wing_profiledrag_scaled) (when constant airfoil section `cdf` and `cdp` are already determined), and [`wing_profiledrag_direct`](@ref aerodynamics.wing_profiledrag_direct) (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
 
 ```@docs
-aerodynamics.surfcd2(wing, γt, γs,
+aerodynamics.wing_profiledrag_direct(wing, γt, γs,
             Mach, CL, CLhtail, 
             Reco, aRexp, kSuns, fexcd,
             fduo, fdus, fdut)
 
-aerodynamics.surfcd(S,
+aerodynamics.wing_profiledrag_scaled(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
@@ -157,7 +157,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.aircraft_drag!(ac, imission, ip, computes_surfcd)
+aerodynamics.aircraft_drag!(ac, imission, ip, computes_wing_direct)
 ```
 ---
 

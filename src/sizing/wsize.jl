@@ -778,8 +778,8 @@ function wsize(ac; itermax=35,
         para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
 
         # Drag buildup aircraft_drag!()
-        computes_surfcd = true
-        aircraft_drag!(ac, imission, ip, computes_surfcd)
+        computes_wing_direct = true
+        aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])

@@ -79,8 +79,8 @@
 
     @test po ≈ fort_po
     #end Wingpo
-    # surfcd2
-    #Start surfcd2
+    # wing_profiledrag_direct
+    #Start wing_profiledrag_direct
 
     wing.layout.root_chord = 5.3938688126436549
     wing.layout.span = 32.603436685105834
@@ -112,15 +112,15 @@
     fort_CDover = 0.0000000000000000
 
     clpo, clps, clpt, CDfwing, CDpwing,
-    CDwing, CDover = TASOPT.aerodynamics.surfcd2(
+    CDwing, CDover = TASOPT.aerodynamics.wing_profiledrag_direct(
       wing, γt, γs,
       Mach, CL, CLhtail, 
       Reco, aRexp, rkSunsw, fexcdw,
       fduo, fdus, fdut)
 
-#       SURFCD2 INPUT
+#       wing_profiledrag_direct INPUT
 # (0.225, 0.8665999999999999, 0.5917830310706261, 0.285, -0.0016806695060863123, 6.5275125903133705e7, -0.15, 0.5, 1.02, 0.018, 0.014, 0.0045)
-# SURFCD2 OUTPUT
+# wing_profiledrag_direct OUTPUT
 # (0.005092435287160669, 0.002484528306027699, 0.007576963593188367, 0.0)
     @test fort_clpo ≈ clpo
     @test fort_clps ≈ clps
@@ -129,9 +129,9 @@
     @test fort_cdpw ≈ CDpwing
     @test fort_CDwing ≈ CDwing
     @test fort_CDover ≈ CDover
-    #end surfcd2
+    #end wing_profiledrag_direct
 
-    #start surfcd
+    #start wing_profiledrag_scaled
     S = 124.68530759570760
     b = 35.486921629195265
     bs = 10.113772664320649
@@ -150,7 +150,7 @@
     CDwing = 9.4350192385200850E-003
     CDover = 0.0000000000000000
     
-    CDw, CDo = TASOPT.aerodynamics.surfcd(S,
+    CDw, CDo = TASOPT.aerodynamics.wing_profiledrag_scaled(S,
     b, bs, bo, λt, λs, sweep, co,
     cdfw, cdpw, Reco, Rerefw, aRexp, rkSunsw,
     fCDwcen)
@@ -158,7 +158,7 @@
     @test CDwing == CDw
     @test CDover == CDover
 
-    #end surfcd
+    #end wing_profiledrag_scaled
 
 
     #start wingsc
