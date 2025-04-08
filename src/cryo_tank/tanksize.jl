@@ -91,7 +91,7 @@ function tanksize!(ac, imission::Int64 = 1)
 
                 Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
-                fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next wsize iteration
+                fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next _size_aircraft! iteration
 
                 Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
                 t_cyl2, t_head2, l_outer = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)

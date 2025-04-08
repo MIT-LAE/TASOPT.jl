@@ -1,6 +1,6 @@
 # Aircraft Stability
 
-This module provides functions to size the tail surfaces and balance the aircraft to achieve pitch trim throughout flight when called by [`wsize()`](@ref TASOPT.wsize).
+This module provides functions to size the tail surfaces and balance the aircraft to achieve pitch trim throughout flight when called by [`_size_aircraft!()`](@ref TASOPT._size_aircraft!).
 
 - [`balance()`](@ref TASOPT.balance) makes adjustments as described below to achieve pitch trim. It calculates the aircraft's resulting **center of gravity (`xCG`)**, **center of pressure (`xCP`)**, and **neutral point (`xNP`)** at a specific flight point. To meet the pitch trim requirement, the routine adjusts one of (i) the horizontal tail's lift coefficient, (ii) its area, or (iii) the axial location of the wing box. In *almost all* the use cases, only option (i) adjusting the horizontal tail's lift coefficient is relevant for trim calculations.
 

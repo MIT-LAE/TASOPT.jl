@@ -127,7 +127,7 @@ end # wingcl
 """
     set_wing_geometry!(W,CL,qinf,wing)
 
-Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (taken as start-of-cruise in `wsize`).
+Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (taken as start-of-cruise in `size_aircraft!`).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**

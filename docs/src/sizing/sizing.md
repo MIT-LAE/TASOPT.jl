@@ -2,18 +2,18 @@
 
 ## [Sizing the aircraft] (@id sizing)
 
-The aircraft is sized via a fixed point iteration for the design mission ([`wsize()`](@ref TASOPT.wsize)). The performance of the design can be evaluated for an off-design mission ([`fly_off_design!()`](@ref TASOPT.fly_off_design!)).
+The aircraft is sized via a fixed point iteration for the design mission ([`size_aircraft!()`](@ref TASOPT.size_aircraft!)). The performance of the design can be evaluated for an off-design mission ([`fly_off_design!()`](@ref TASOPT.fly_off_design!)).
 
-[`wsize()`](@ref TASOPT.wsize) is typically the driving script in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `wing_weights!()`, `aircraft_drag!()`, `mission!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`wsize()`](@ref TASOPT.wsize).
+[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `wing_weights!()`, `aircraft_drag!()`, `mission!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
 
 !!! details "🖥️ Code structure - Aircraft sizing" 
     The aircraft-sizing function requires an `aircraft` object as input. See [`read_aircraft_model()`](@ref TASOPT.read_aircraft_model) to get an idea of the fields that are required in this object. This object is unpacked into storage arrays and other component objects, such as `wing`, `fuselage` or `engine`. The eventual aim is to eliminate all data storage array and replace them by component objects but this is still work in progress.  
 
-    The first major function called within [`wsize()`](@ref TASOPT.wsize) is [`fusebl!()`](@ref TASOPT.fusebl!), which calculates the fuselage boundary layer properties and drag coefficients for start-of-cruise; these are then used in other mission points. [`wsize()`](@ref TASOPT.wsize) then uses simplified methods to initialize the relevant aircraft weights and parameters, unless the user specifies otherwise with an optional input (`init_weight=true`). The bulk of the computational cost and time is spent in the weight sizing loop. After the weight sizing loop is completed, the aircraft takeoff performance and field lengths are calculated using [`takeoff!()`](@ref TASOPT.takeoff!).
+    The first major function called within [`size_aircraft!()`](@ref TASOPT.size_aircraft!) is [`fusebl!()`](@ref TASOPT.fusebl!), which calculates the fuselage boundary layer properties and drag coefficients for start-of-cruise; these are then used in other mission points. [`size_aircraft!()`](@ref TASOPT.size_aircraft!) then uses simplified methods to initialize the relevant aircraft weights and parameters, unless the user specifies otherwise with an optional input (`init_weight=true`). The bulk of the computational cost and time is spent in the weight sizing loop. After the weight sizing loop is completed, the aircraft takeoff performance and field lengths are calculated using [`takeoff!()`](@ref TASOPT.takeoff!).
 
     ### Weight sizing loop
 
-    [`wsize()`](@ref TASOPT.wsize) performs a fixed point iteration by sequentially running weight and performance models for the different aircraft components. This is done via a `for` loop that gets terminated once the maximum aircraft weight has converged within a desired tolerance. The solver will fail to converge for infeasible combinations of aircraft and missions. The solver may fail to converge due to poor initial guesses (or conditioning); this can be addressed by adjusting the initial guess or raising the maximum number of iterations.
+    [`size_aircraft!()`](@ref TASOPT.size_aircraft!) performs a fixed point iteration by sequentially running weight and performance models for the different aircraft components. This is done via a `for` loop that gets terminated once the maximum aircraft weight has converged within a desired tolerance. The solver will fail to converge for infeasible combinations of aircraft and missions. The solver may fail to converge due to poor initial guesses (or conditioning); this can be addressed by adjusting the initial guess or raising the maximum number of iterations.
 
     The fuselage weight is calculated first in the sizing loop through [`fusew!()`](@ref TASOPT.fusew!). Then, the total maximum takeoff weight gets recomputed and there is a check for whether the sizing loop is terminated. If weight has not converged, the loop continues.
 
@@ -62,11 +62,11 @@ The function [`fly_off_design!()`](@ref TASOPT.fly_off_design!) calculates the o
 
 ## Function documentation
 ```@docs
-TASOPT.wsize
+TASOPT.size_aircraft!
+
+TASOPT._size_aircraft!
 
 TASOPT.fly_off_design!
-
-TASOPT.size_aircraft!
 
 TASOPT.fusebl!
 

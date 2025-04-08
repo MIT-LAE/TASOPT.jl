@@ -379,7 +379,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                         para[iagamV, ip+1] = para[iagamV, ip]
                   end
 
-                  W = para[iafracW, ip+1] * WMTO   # Initial weight fractions have been set in wsize.jl
+                  W = para[iafracW, ip+1] * WMTO   # Initial weight fractions have been set in _size_aircraft!
                   CL = para[iaCL, ip+1]
                   ρ = pare[ierho0, ip+1]
                   cosg = cos(para[iagamV, ip+1])

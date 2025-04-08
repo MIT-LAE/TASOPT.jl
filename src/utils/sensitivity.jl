@@ -271,7 +271,7 @@ function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothi
                 TASOPT.size_aircraft!(ac, printiter=false)
                 f_out = ac.parm[imPFEI]
             catch
-                println("wsize FAILED")
+                println("size_aircraft! FAILED")
             end
             push!(f_results, f_out)
         else
@@ -289,7 +289,7 @@ function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothi
                     push!(f_out, f_out_fn(ac))
                 end
             catch
-                println("wsize FAILED")
+                println("size_aircraft! FAILED")
                 if isa(f_out_fn, Array)
                     f_out = fill(Inf, length(f_out_fn))
                 else

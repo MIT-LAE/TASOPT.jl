@@ -1,11 +1,14 @@
 using Printf
 """
-    wsize(ac; itermax=35,
+    _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
-and iterates until the MTOW converges to within a specified tolerance.
+and iterates until the MTOW converges to within a specified tolerance. Formerly, `wsize()`.
+
+!!! warning
+    `_size_aircraft!()` Should not be called directly by users, instead use `size_aircraft!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -18,7 +21,7 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(ac; itermax=35,
+function _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
