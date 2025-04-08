@@ -164,7 +164,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     γt = wing.outboard.λ*para[iarclt,ip]
     γs = wing.inboard.λ*para[iarcls,ip]
 
-    CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+    CMw0, CMw1 = wing_CM(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
                             AR,fLo,fLt,cmpo,cmps,cmpt)
 
@@ -177,7 +177,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     γt = wing.outboard.λ*para[iarclt, ip]
     γs = wing.inboard.λ*para[iarcls, ip]
     
-    CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+    CMw0, CMw1 = wing_CM(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
                       AR,fLo,fLt,cmpo,cmps,cmpt)
     
@@ -189,7 +189,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     γt = wing.outboard.λ*para[iarclt, ip]
     γs = wing.inboard.λ*para[iarcls, ip]
 
-    CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+    CMw0, CMw1 = wing_CM(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
                       AR,fLo,fLt,cmpo,cmps,cmpt)
 
@@ -206,7 +206,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     fLth = fLt
     cmph = 0.
 
-    CMh0, CMh1 = surfcm(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
+    CMh0, CMh1 = wing_CM(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
     ARh, fLoh, fLth, 0.0, 0.0, 0.0)
 
     para[iaCMh0, :] .= CMh0

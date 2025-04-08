@@ -184,7 +184,7 @@
     @test fort_co == wing.layout.root_chord
     #end wingsc
     
-    #wingcl
+    #wing_section_cls
     gammat = 0.15
     gammas = 0.77
     CL,CLhtail = 1.2622355275981707,0.019038222769452273
@@ -193,27 +193,27 @@
     test_clpo = 1.5734696976792315
     test_clps = 1.7444989594158167
     test_clpt = 0.9696283564047791
-    clpo, clps, clpt = TASOPT.aerodynamics.wingcl(wing,gammat,gammas,
+    clpo, clps, clpt = TASOPT.aerodynamics.wing_section_cls(wing,gammat,gammas,
                               CL,CLhtail,
 	                        fduo,fdus,fdut)
     
     @test test_clpo == clpo
     @test test_clps == clps
     @test test_clpt == clpt
-    #end wingcl
+    #end wing_section_cls
 
-    #surfcm
+    #wing_CM
     (b, bs, bo, sweep, Xaxis,
         λt, λs, γt, γs,
         AR, fLo, fLt, cmpo, cmps, cmpt) = 35.723608571355676, 10.717082571406703, 5.7404, 27.567, 0.4, 0.1503, 0.8784, 0.09018, 0.96624, 10.4411, -0.3, -0.05, -0.2, -0.2, -0.02
 
-    CM0, CM1 = TASOPT.aerodynamics.surfcm(b, bs, bo, sweep, Xaxis,
+    CM0, CM1 = TASOPT.aerodynamics.wing_CM(b, bs, bo, sweep, Xaxis,
         λt, λs, γt, γs,
         AR, fLo, fLt, cmpo, cmps, cmpt)
 
     @test CM0 == -0.05330921996771545
     @test CM1 == -0.3480891589464312
-    #end surfcm
+    #end wing_CM
 
 end
 

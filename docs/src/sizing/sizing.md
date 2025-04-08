@@ -17,7 +17,7 @@ The aircraft is sized via a fixed point iteration for the design mission ([`size
 
     The fuselage weight is calculated first in the sizing loop through [`fusew!()`](@ref TASOPT.fusew!). Then, the total maximum takeoff weight gets recomputed and there is a check for whether the sizing loop is terminated. If weight has not converged, the loop continues.
 
-    The wing geometry is set by running [`set_wing_geometry!()`](@ref TASOPT.set_wing_geometry!) and the wing pitching moments are computed through [`surfcm()`](@ref TASOPT.surfcm). The horizontal and vertical tail geometry is computed through [`tailpo!()`](@ref TASOPT.tailpo!). Finally, the weights of the three aerodynamic surfaces are calculated by running [`wing_weights!()`](@ref TASOPT.wing_weights!).
+    The wing geometry is set by running [`set_wing_geometry!()`](@ref TASOPT.set_wing_geometry!) and the wing pitching moments are computed through [`wing_CM()`](@ref TASOPT.wing_CM). The horizontal and vertical tail geometry is computed through [`tailpo!()`](@ref TASOPT.tailpo!). Finally, the weights of the three aerodynamic surfaces are calculated by running [`wing_weights!()`](@ref TASOPT.wing_weights!).
 
     If the aircraft requires an insulated fuel tank in the fuselage, for example, if the fuel is cryogenic, the tank is sized using [`tanksize!()`](@ref TASOPT.tanksize!); this function calculates the structural weight and sizes the thermal insulation. For details on how the fuel tank is sized, see [Fuel tanks](@ref fueltanks). The sized tank dimensions are then use to recalculate the fuselage geometry to accommodate the tank in [`update_fuse!()`](@ref TASOPT.update_fuse!).
 
@@ -72,7 +72,7 @@ TASOPT.fusebl!
 
 TASOPT.set_wing_geometry!
 
-TASOPT.surfcm
+TASOPT.wing_CM
 
 TASOPT.tailpo!
 

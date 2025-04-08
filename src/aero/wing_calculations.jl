@@ -76,7 +76,7 @@ function tailpo!(tail, S, qne; t_fac = 1.0)
 end
 
 """
-    wingcl(wing, gammat, gammas,
+    wing_section_cls(wing, gammat, gammas,
             CL, CLhtail,
 	        fduo, fdus, fdut)
 
@@ -94,7 +94,7 @@ Calculates section cl at  eta = ηo,ηs,1
 
 See Sections 2.5 and 2.6 of the [TASOPT Technical Desc](@ref dreladocs). Called by [`aircraft_drag!`](@ref).
 """
-function wingcl(wing, γt, γs, CL, CLhtail, duo, dus, dut)
+function wing_section_cls(wing, γt, γs, CL, CLhtail, duo, dus, dut)
 
     cosL = cosd(wing.layout.sweep)
 
@@ -122,7 +122,7 @@ function wingcl(wing, γt, γs, CL, CLhtail, duo, dus, dut)
 
     return clo, cls, clt
 
-end # wingcl
+end # wing_section_cls
 
 """
     set_wing_geometry!(W,CL,qinf,wing)
@@ -188,7 +188,7 @@ Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true.
       - `CDover::Float64`: Fuselage added CD due to lift carryover.
 
 See Sections 2.14.3 and 3.8.3 of TASOPT Technical Desc.
-See also [`aircraft_drag!`](@ref), [`wing_profiledrag_scaled`](@ref), [`surfcm`], and [`airfun`].
+See also [`aircraft_drag!`](@ref), [`wing_profiledrag_scaled`](@ref), [`wing_CM`], and [`airfun`].
 """
 function wing_profiledrag_direct(
       wing, γt, γs,
@@ -411,7 +411,7 @@ end # wing_profiledrag_scaled
 
 
 """
-    surfcm(b,bs,bo, sweep, Xaxis,
+    wing_CM(b,bs,bo, sweep, Xaxis,
                        λt, λs, γt, γs,
                        AR, fLo, fLt, cmpo, cmps, cmpt)
 
@@ -444,7 +444,7 @@ Calculates components of wing pitching moment (``C_M``) about wing root axis:
 See Section 2.6.3 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`wing_profiledrag_scaled`](@ref) and [`wing_profiledrag_direct`](@ref).
 """
-function surfcm(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo, cmps, cmpt)
+function wing_CM(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo, cmps, cmpt)
 
     cosL = cosd(sweep)
     tanL = tand(sweep)
@@ -495,4 +495,4 @@ function surfcm(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo,
 
 
     return CM0, CM1
-end # surfcm
+end # wing_CM

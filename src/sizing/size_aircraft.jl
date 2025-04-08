@@ -674,7 +674,7 @@ function _size_aircraft!(ac; itermax=35,
         calculate_centroid_offset!(htail, htail.layout.span, λhs)
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
-        CMh0, CMh1 = surfcm(htail.layout.span, htail.layout.root_span, htail.layout.root_span, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
+        CMh0, CMh1 = wing_CM(htail.layout.span, htail.layout.root_span, htail.layout.root_span, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
             htail.layout.AR, fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
@@ -1006,7 +1006,7 @@ end
 """
 update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
 
-Updates wing pitching moments and calls surfcm for mission points
+Updates wing pitching moments and calls wing_CM for mission points
 """
 function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
     ip = ip_range[1]
@@ -1014,7 +1014,7 @@ function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iac
     γt = wing.outboard.λ * para[iarclt, ip]
     γs = wing.inboard.λ * para[iarcls, ip]
     
-    CMw0, CMw1 = surfcm(
+    CMw0, CMw1 = wing_CM(
         wing.layout.span, wing.layout.break_span, wing.layout.root_span, 
         wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.λ, wing.inboard.λ, 
         γt, γs, wing.layout.AR, wing.fuse_lift_carryover, wing.tip_lift_loss, cmpo, cmps, cmpt

@@ -118,7 +118,7 @@ function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
       para[iaCDwing] = CDwing
       para[iaCDover] = CDover
 
-      clpo, clps, clpt = wingcl(wing,gammat,gammas,
+      clpo, clps, clpt = wing_section_cls(wing,gammat,gammas,
                               CL,CLhtail,
 	                        fduo,fdus,fdut)
 
