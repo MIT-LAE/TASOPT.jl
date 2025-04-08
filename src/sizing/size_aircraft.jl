@@ -458,8 +458,8 @@ function _size_aircraft!(ac; itermax=35,
             end
 
         else
-            # Call a better Wupdate function
-            Wupdate0!(ac, rlx, fsum)
+            # Call a better update_weights! function
+            update_WMTO!(ac, rlx, fsum)
             if (fsum >= 1.0)
                 println("Something is wrong!! fsum ≥ 1.0")
                 break
@@ -820,9 +820,9 @@ function _size_aircraft!(ac; itermax=35,
         case = "cooling_sizing"
         engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
-        # Recalculate weight wupdate()
+        # Recalculate weight update_weights!()
         ip = ipcruise1
-        Wupdate!(ac, rlx, fsum)
+        update_weights!(ac, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -836,9 +836,9 @@ function _size_aircraft!(ac; itermax=35,
 
         # Get mission fuel burn (check if fuel capacity is sufficent)
 
-        # Recalculate weight wupdate()
+        # Recalculate weight update_weights!()
         ip = ipcruise1
-        Wupdate!(ac, rlx, fsum)
+        update_weights!(ac, rlx, fsum)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -887,11 +887,13 @@ function _size_aircraft!(ac; itermax=35,
     
 end
 
-#TODO: Wupdate0 and Wupdate docstrings need updating
+#TODO: update_WMTO! and update_weights! docstrings need full description
 """
-Wupdate0 updates the weight of the aircraft
+    update_WMTO!(ac, rlx, fsum)
+
+update_WMTO! updates the max takeoff weight of the aircraft (WMTO). Uses relaxation factor rlx.
 """
-function Wupdate0!(ac, rlx, fsum)
+function update_WMTO!(ac, rlx, fsum)
     parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
@@ -919,9 +921,12 @@ end
 
 
 """
-Wupdate
+    update_weights!(ac, rlx, fsum)
+
+Adjusts the aircraft's maximum takeoff weight (WMTO) and other component weights using a relaxation factor (`rlx`). 
+
 """
-function Wupdate!(ac, rlx, fsum)
+function update_weights!(ac, rlx, fsum)
     parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
@@ -948,7 +953,7 @@ function Wupdate!(ac, rlx, fsum)
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)
-        println("SOMETHING IS WRONG fsum ≥ 1")
+        @error "SOMETHING IS WRONG fsum ≥ 1"
     end
 
     # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
