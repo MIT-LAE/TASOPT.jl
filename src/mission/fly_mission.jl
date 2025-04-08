@@ -1,7 +1,7 @@
 """
-    fly_off_design!(ac, mi, itermax, initializes_engine)
+    fly_mission!(ac, imission, itermax, initializes_engine)
 
-`fly_off_design!` runs the aircraft through input off-design missions
+Runs the aircraft through the specified mission, computing and converging the fuel weight. 
 
 !!! details "🔃 Inputs and Outputs"
 **Inputs:**
@@ -11,10 +11,10 @@
 - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
 
 **Outputs:**
-- No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
+- No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the mission selected
 
 """
-function fly_off_design!(ac, imission = 1; itermax = 35, initializes_engine = true)
+function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     #Extract aircraft components and storage arrays
     parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission)
     
@@ -256,7 +256,7 @@ function fly_off_design!(ac, imission = 1; itermax = 35, initializes_engine = tr
     end
 
     # Calling mission
-    time_propsys += mission!(ac, imission, false, calculate_cruise = true) #Calculate start of cruise too
+    time_propsys += mission_iter!(ac, imission, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any

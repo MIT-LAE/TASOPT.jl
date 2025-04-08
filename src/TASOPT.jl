@@ -47,7 +47,8 @@ include("./utils/helper_functions.jl")
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
-include(joinpath(__TASOPTroot__,"mission/mission.jl"))
+include(joinpath(__TASOPTroot__,"mission/mission_iter.jl"))
+include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
 export plot_airf
@@ -81,8 +82,7 @@ using .CryoTank
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
 include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
-include(joinpath(__TASOPTroot__,"mission/off_design.jl"))
-export fly_off_design!
+export fly_mission!
 include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 

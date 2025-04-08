@@ -3,7 +3,7 @@
 
 Calculates aircraft `CD` components for operating point, ipoint.
 If `computes_wing_direct` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
-otherwise uses default values in para array. Called by [`mission!()`](@ref TASOPT.mission!), [`size_aircraft!`](@ref TASOPT.size_aircraft!), [`takeoff!`](@ref TASOPT.takeoff!), and `odperf!`.
+otherwise uses default values in para array. Called by [`mission_iter!()`](@ref TASOPT.mission_iter!), [`size_aircraft!`](@ref TASOPT.size_aircraft!), and [`takeoff!`](@ref TASOPT.takeoff!).
 
 The total drag is computed by
 

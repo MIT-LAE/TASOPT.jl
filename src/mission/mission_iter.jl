@@ -1,5 +1,5 @@
 """
-    mission!(ac, imission, Ldebug; calculate_cruise = false)
+    mission_iter!(ac, imission, Ldebug; calculate_cruise = false)
 
 Runs aircraft through mission, calculating fuel burn
 and other mission variables.
@@ -18,7 +18,7 @@ and can be passed in as zero with only a minor error.
 They are updated and returned in the same para[iagamV,ip] array.
 
 """
-function mission!(ac, imission, Ldebug; calculate_cruise = false)
+function mission_iter!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
       parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
 
