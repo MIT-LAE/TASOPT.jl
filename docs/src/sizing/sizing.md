@@ -21,7 +21,7 @@ The aircraft is sized via a fixed point iteration for the design mission ([`size
 
     If the aircraft requires an insulated fuel tank in the fuselage, for example, if the fuel is cryogenic, the tank is sized using [`tanksize!()`](@ref TASOPT.tanksize!); this function calculates the structural weight and sizes the thermal insulation. For details on how the fuel tank is sized, see [Fuel tanks](@ref fueltanks). The sized tank dimensions are then use to recalculate the fuselage geometry to accommodate the tank in [`update_fuse!()`](@ref TASOPT.update_fuse!).
 
-    The weight and balance of the aircraft at start-of-cruise is adjusted using [`balance()`](@ref TASOPT.balance). This can move the wing, resize the horizontal tail, or change the tail trim to achieve a desired metric for longitudinal stability (e.g., a set static margin).
+    The weight and balance of the aircraft at start-of-cruise is adjusted using [`balance_aircraft!()`](@ref TASOPT.balance_aircraft!). This can move the wing, resize the horizontal tail, or change the tail trim to achieve a desired metric for longitudinal stability (e.g., a set static margin).
 
     The total drag at start-of-cruise, which is the engine design point, is calculated using [`aircraft_drag!()`](@ref aerodynamics.aircraft_drag!). This function calls a combination of models for the drag of aerodynamic surfaces, engine nacelle, and induced drag at the Trefftz plane.
 
@@ -42,7 +42,7 @@ The function [`mission_iter!()`](@ref TASOPT.mission_iter!) contains the fuel bu
 
     The function proceeds to calculate the climb and descent parameters using aerodynamic and engine performance models. It integrates the climb and descent trajectories using a predictor-corrector scheme to update the range, time, and weight fractions.
 
-    Once the climb and descent parameters are set, the function sets the conditions for the cruise phase, including altitude, speed, and fuel consumption. It calculates the fuel burn and weight fractions for the entire mission via calls to `engine.enginecalc!()`, and adds any vented fuel. This involves adjusting the aircraft's balance and trim settings via calls to [`balance()`](@ref TASOPT.balance) to ensure stability throughout the mission, and recalculating the drag via [`aircraft_drag!()`](@ref aerodynamics.aircraft_drag!).
+    Once the climb and descent parameters are set, the function sets the conditions for the cruise phase, including altitude, speed, and fuel consumption. It calculates the fuel burn and weight fractions for the entire mission via calls to `engine.enginecalc!()`, and adds any vented fuel. This involves adjusting the aircraft's balance and trim settings via calls to [`balance_aircraft!()`](@ref TASOPT.balance_aircraft!) to ensure stability throughout the mission, and recalculating the drag via [`aircraft_drag!()`](@ref aerodynamics.aircraft_drag!).
 
     The function also sets up the climb points at equal altitude intervals and calculates the available thrust assuming maximum-throttle climb. It initializes the climb integrands and integrates the trajectory over the climb phase. The function calculates the cruise-climb angle based on available thrust and atmospheric conditions.
 

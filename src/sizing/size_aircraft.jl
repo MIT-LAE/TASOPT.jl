@@ -773,7 +773,7 @@ function _size_aircraft!(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         opt_trim_var = "CL_htail"
-        balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -869,7 +869,7 @@ function _size_aircraft!(ac; itermax=35,
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(ac)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -883,7 +883,7 @@ function _size_aircraft!(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     opt_trim_var = "none"
-    balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
     
 end
 

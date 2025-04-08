@@ -137,7 +137,7 @@ for   i = 1:N
         Wf = W - Wzero
         rfuel = Wf/parg[igWfuel]*0
         opt_trim_var = "CL_htail"
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
+        balance_aircraft!(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
 
         
         # Calculate Drag
@@ -240,7 +240,7 @@ for   i = 1:N
 
         #Trim aircraft
         opt_trim_var = "CL_htail"
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
+        balance_aircraft!(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
         computes_wing_direct = true
         if CL > 1.0
             println("CL during cruise is $CL")
