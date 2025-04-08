@@ -72,7 +72,7 @@ function takeoff!(ac; printTO = true)
     #---- total CD during roll
     computes_surfcd = false
     # iairf = 1
-    cdsum!(ac, imission, ip, computes_surfcd)
+    aircraft_drag!(ac, imission, ip, computes_surfcd)
     CDroll = para[iaCD, ip] + parg[igCDgear]
 
     #---- thrust constants for all engines operating

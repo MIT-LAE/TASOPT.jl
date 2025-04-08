@@ -1,5 +1,5 @@
 """
-   cdsum!(ac, imission, ip, computes_surfcd)
+   aircraft_drag!(ac, imission, ip, computes_surfcd)
 
 Calculates aircraft `CD` components for operating point, ipoint.
 If `computes_surfcd` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
@@ -36,7 +36,7 @@ where:
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`trefftz1`](@ref), [`fusebl!`](@ref), [`surfcd2`](@ref), [`surfcd`](@ref), [`cfturb`](@ref), and `cditrp`.
 """
-function cdsum!(ac, imission, ip, computes_surfcd; Ldebug=false)
+function aircraft_drag!(ac, imission, ip, computes_surfcd; Ldebug=false)
       #Unpack data storage
       parg = ac.parg
       para = view(ac.para, :, ip, imission)
@@ -217,7 +217,7 @@ function cdsum!(ac, imission, ip, computes_surfcd; Ldebug=false)
       para[iaCD] = CD      
 
       return
-end # cdsum
+end # aircraft_drag!
 
 
 """

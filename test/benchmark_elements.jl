@@ -248,14 +248,14 @@ function benchmark_drag()
 
     bench_surfcd2 = run(bench)
 
-    println("Benchmarking... cdsum!")
-    bench = @benchmarkable aerodynamics.cdsum!($parg, 
+    println("Benchmarking... aircraft_drag!")
+    bench = @benchmarkable aerodynamics.aircraft_drag!($parg, 
     $view(para, :, 10),
     $view(pare,:, 10), $(ac.wing), $(ac.htail), $(ac.vtail),
     $(1)) seconds=30 evals=1
     
-    bench = @benchmarkable aerodynamics.cdsum!(ac, 1, 10, true) seconds=30 evals=1
-    bench_cdsum = run(bench)
+    bench = @benchmarkable aerodynamics.aircraft_drag!(ac, 1, 10, true) seconds=30 evals=1
+    bench_aircraft_drag = run(bench)
 
 
     println("---------------------------------------")
@@ -295,9 +295,9 @@ function benchmark_drag()
     println(" ")
 
     println("---------------------------------------")
-    println("cdsum (FORTRAN on MacPro M2 ~ 6.7 μs)")
+    println("aircraft_drag! (FORTRAN on MacPro M2 ~ 6.7 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_cdsum)
+    show(stdout, MIME("text/plain"),bench_aircraft_drag)
 
 end
 

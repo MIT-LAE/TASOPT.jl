@@ -10,7 +10,7 @@ using LinearAlgebra
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
 
-export airfoil, cdsum!, surfcm, set_wing_geometry!, wingpo, tailpo!, wingcl, fusebl!
+export airfoil, aircraft_drag!, surfcm, set_wing_geometry!, wingpo, tailpo!, wingcl, fusebl!
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -65,7 +65,7 @@ include("blsys.jl")
 include("trefftz.jl")
 
 # Total CD calculations 
-include("cdsum.jl")
+include("drag.jl")
 
 
 end

@@ -5,7 +5,7 @@
             fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
-Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
+Called by [`aircraft_drag!`](@ref) if `computes_surfcd` flag set to true.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -29,7 +29,7 @@ Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
       - `CDover::Float64`: Fuselage added CD due to lift carryover.
 
 See Sections 2.14.3 and 3.8.3 of TASOPT Technical Desc.
-See also [`cdsum!`](@ref), [`surfcd`](@ref), [`surfcm`], and [`airfun`].
+See also [`aircraft_drag!`](@ref), [`surfcd`](@ref), [`surfcm`], and [`airfun`].
 
 !!! compat "Future Changes" 
       This function will be renamed for clarity of use.
@@ -170,7 +170,7 @@ end # surfcd2
     aRexp, kSuns, fCDcen)
 
 Computes wing or tail surface profile CD from pre-computed chord quantities and corrections.
-Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
+Called by [`aircraft_drag!`](@ref) if `computes_surfcd` flag set to true.
 
 !!! compat "Future Changes" 
       This function may be renamed for clarity of use.

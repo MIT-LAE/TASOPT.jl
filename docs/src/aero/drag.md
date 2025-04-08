@@ -157,7 +157,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.cdsum!(ac, imission, ip, computes_surfcd)
+aerodynamics.aircraft_drag!(ac, imission, ip, computes_surfcd)
 ```
 ---
 
@@ -167,7 +167,7 @@ aerodynamics.cdsum!(ac, imission, ip, computes_surfcd)
 aerodynamics.cfturb
 ```
 ```@setup cfturb
-include("../../../src/aero/cdsum.jl")
+include("../../../src/aero/drag.jl")
 
 ```
 For example, the turbulent flat plate ``C_f`` for a ``Re`` of ``10e6`` can be calculated as follows:

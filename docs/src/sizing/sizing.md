@@ -4,7 +4,7 @@
 
 The aircraft is sized via a fixed point iteration for the design mission ([`wsize()`](@ref TASOPT.wsize)). The performance of the design can be evaluated for an off-design mission ([`fly_off_design!()`](@ref TASOPT.fly_off_design!)).
 
-[`wsize()`](@ref TASOPT.wsize) is typically the driving script in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `wing_weights!()`, `cdsum!()`, `mission!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`wsize()`](@ref TASOPT.wsize).
+[`wsize()`](@ref TASOPT.wsize) is typically the driving script in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `wing_weights!()`, `aircraft_drag!()`, `mission!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`wsize()`](@ref TASOPT.wsize).
 
 !!! details "🖥️ Code structure - Aircraft sizing" 
     The aircraft-sizing function requires an `aircraft` object as input. See [`read_aircraft_model()`](@ref TASOPT.read_aircraft_model) to get an idea of the fields that are required in this object. This object is unpacked into storage arrays and other component objects, such as `wing`, `fuselage` or `engine`. The eventual aim is to eliminate all data storage array and replace them by component objects but this is still work in progress.  
@@ -23,7 +23,7 @@ The aircraft is sized via a fixed point iteration for the design mission ([`wsiz
 
     The weight and balance of the aircraft at start-of-cruise is adjusted using [`balance()`](@ref TASOPT.balance). This can move the wing, resize the horizontal tail, or change the tail trim to achieve a desired metric for longitudinal stability (e.g., a set static margin).
 
-    The total drag at start-of-cruise, which is the engine design point, is calculated using [`cdsum!()`](@ref aerodynamics.cdsum!). This function calls a combination of models for the drag of aerodynamic surfaces, engine nacelle, and induced drag at the Trefftz plane.
+    The total drag at start-of-cruise, which is the engine design point, is calculated using [`aircraft_drag!()`](@ref aerodynamics.aircraft_drag!). This function calls a combination of models for the drag of aerodynamic surfaces, engine nacelle, and induced drag at the Trefftz plane.
 
     The engines are sized at the start-of-cruise to produce a total thrust force equal to the aircraft drag, as computed by `aircraft.engine.enginecalc!()`, a *specifiable* function in the `engine` object. This field stores a user defined function for the engine performance. Although the user is free to use alternative models by modifying the `engine` object, TASOPT currently includes a two-spool turbofan engine model. The turbofan engine functions are called via a wrapper, [`tfwrap!()`](@ref TASOPT.tfwrap!), which in turns calls the engine calculation function [`tfcalc!()`](@ref engine.tfcalc!).
 
@@ -42,7 +42,7 @@ The function [`mission!()`](@ref TASOPT.mission!) contains the fuel burn calcula
 
     The function proceeds to calculate the climb and descent parameters using aerodynamic and engine performance models. It integrates the climb and descent trajectories using a predictor-corrector scheme to update the range, time, and weight fractions.
 
-    Once the climb and descent parameters are set, the function sets the conditions for the cruise phase, including altitude, speed, and fuel consumption. It calculates the fuel burn and weight fractions for the entire mission via calls to `engine.enginecalc!()`, and adds any vented fuel. This involves adjusting the aircraft's balance and trim settings via calls to [`balance()`](@ref TASOPT.balance) to ensure stability throughout the mission, and recalculating the drag via [`cdsum!()`](@ref aerodynamics.cdsum!).
+    Once the climb and descent parameters are set, the function sets the conditions for the cruise phase, including altitude, speed, and fuel consumption. It calculates the fuel burn and weight fractions for the entire mission via calls to `engine.enginecalc!()`, and adds any vented fuel. This involves adjusting the aircraft's balance and trim settings via calls to [`balance()`](@ref TASOPT.balance) to ensure stability throughout the mission, and recalculating the drag via [`aircraft_drag!()`](@ref aerodynamics.aircraft_drag!).
 
     The function also sets up the climb points at equal altitude intervals and calculates the available thrust assuming maximum-throttle climb. It initializes the climb integrands and integrates the trajectory over the climb phase. The function calculates the cruise-climb angle based on available thrust and atmospheric conditions.
 

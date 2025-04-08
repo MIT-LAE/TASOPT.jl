@@ -149,7 +149,7 @@ for   i = 1:N
         if CL > 0.9
             computes_surfcd = false
         end
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
+        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
 
         #BLI parameters
         ρ0 = pare[ierho0, ip]
@@ -247,7 +247,7 @@ for   i = 1:N
             computes_surfcd = false
         end
         #Get Drag
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
+        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         F  = BW*(DoL) #zero climb angle for cruise
