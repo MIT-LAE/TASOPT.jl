@@ -1,7 +1,7 @@
 using StaticArrays
 
 """
-    fusebl!(fuse, parg, para, ip)
+    fuselage_drag!(fuse, parg, para, ip)
 
 Calculates surface velocities, boundary layer, wake 
 for a quasi-axisymmetric body in compressible flow.
@@ -30,7 +30,7 @@ See also [`blax`](@ref) and [`axisol!`](@ref).
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function fusebl!(fuse, parm, para, ip)
+function fuselage_drag!(fuse, parm, para, ip)
       
 #     nc,     # number of control points for fuselage potential-flow problem
 #     nbl,    # number of BL+wake points
@@ -185,6 +185,6 @@ function fusebl!(fuse, parm, para, ip)
       para[iaKAfTE  , ip] = KTE/(qinf*Vinf)
       para[iaPAfinf , ip] = Pinf/qinf
     
-      end # fusebl
+      end # fuselage_drag!
 
 

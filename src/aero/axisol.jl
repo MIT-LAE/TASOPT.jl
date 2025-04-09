@@ -31,7 +31,7 @@ using a simple piecewise-constant source line.
     - `ql::Array{Float64}`: Velocities V/V_inf along surface and wake.
 
 See [theory above](@ref axi) or Section 3 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf). 
-See also [`fusebl!`](@ref).
+See also [`fuselage_drag!`](@ref).
 """
 function axisol!(xnose, xend, xblend1, xblend2, Amax, 
 	anose, btail, iclose,

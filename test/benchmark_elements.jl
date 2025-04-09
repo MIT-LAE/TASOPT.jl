@@ -28,7 +28,7 @@ println("\nNotes (from BenchmarkTools Manual):
 
 println("Start Benchmarking...")
 
-function benchmark_fuseBL()
+function benchmark_fuselage_drag()
     println("---------------------------------------")
     println("Fuselage boundary layer calculations")
     println("---------------------------------------")
@@ -108,9 +108,9 @@ function benchmark_fuseBL()
     $Reyn, $Mach, $fexcr) seconds=30 evals=5
     bench_blax = run(b)
 
-    println("Benchmarking... fusebl")
-    b = @benchmarkable aerodynamics.fusebl!($(ac.fuselage), $parm, $para, $ipcruise1) seconds=30 evals=5
-    bench_fusebl = run(b)
+    println("Benchmarking... fuselage_drag!")
+    b = @benchmarkable aerodynamics.fuselage_drag!($(ac.fuselage), $parm, $para, $ipcruise1) seconds=30 evals=5
+    bench_fuselage_drag = run(b)
 
     println("Benchmark results...")
 
@@ -127,9 +127,9 @@ function benchmark_fuseBL()
     println(" ")
 
     println("---------------------------------------")
-    println("fusebl (FORTRAN on MacPro M2 ~ 1.95 ms)")
+    println("fuselage_drag! (FORTRAN on MacPro M2 ~ 1.95 ms)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_fusebl)
+    show(stdout, MIME("text/plain"),bench_fuselage_drag)
     println(" ")
 end
 
@@ -370,5 +370,5 @@ function benchmark_gas()
     @benchmark f($100)
 end
 
-# benchmark_fuseBL()
+# benchmark_fuselage_drag()
 # benchmark_drag()

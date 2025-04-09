@@ -34,7 +34,7 @@ where:
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
-See also [`fusebl!`](@ref), [`wing_profiledrag_direct`](@ref), [`wing_profiledrag_scaled`](@ref), [`cfturb`](@ref), and [`induced_drag!`](@ref).
+See also [`fuselage_drag!`](@ref), [`wing_profiledrag_direct`](@ref), [`wing_profiledrag_scaled`](@ref), [`cfturb`](@ref), and [`induced_drag!`](@ref).
 """
 function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
       #Unpack data storage

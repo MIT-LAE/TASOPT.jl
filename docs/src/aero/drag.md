@@ -48,7 +48,7 @@ aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 aerodynamics.blvar(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
-aerodynamics.fusebl!(fuse, parm, para, ip)
+aerodynamics.fuselage_drag!(fuse, parm, para, ip)
 ```
 
 ---

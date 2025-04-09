@@ -42,7 +42,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     fuse_tank.TSLtank = Tref + ΔTatmos #store sea-level temperature in tank struct
 
     # Calculates surface velocities, boundary layer, wake 
-    fusebl!(fuse, parm, para, ipcruise1)
+    fuselage_drag!(fuse, parm, para, ipcruise1)
 
 #---- assume K.E., dissipation, drag areas will be the same for all points
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.

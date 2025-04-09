@@ -4,12 +4,12 @@
 
 The aircraft is sized via a fixed point iteration for the design mission ([`size_aircraft!()`](@ref TASOPT.size_aircraft!)). The performance of the design can be evaluated for the design and off-design missions (`imission` > 1; [`fly_mission!()`](@ref TASOPT.fly_mission!)).
 
-[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fusebl!()`, `wing_weights!()`, `aircraft_drag!()`, `mission_iter!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
+[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fuselage_drag!()`, `wing_weights!()`, `aircraft_drag!()`, `mission_iter!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
 
 !!! details "🖥️ Code structure - Aircraft sizing" 
     The aircraft-sizing function requires an `aircraft` object as input. See [`read_aircraft_model()`](@ref TASOPT.read_aircraft_model) to get an idea of the fields that are required in this object. This object is unpacked into storage arrays and other component objects, such as `wing`, `fuselage` or `engine`. The eventual aim is to eliminate all data storage array and replace them by component objects but this is still work in progress.  
 
-    The first major function called within [`size_aircraft!()`](@ref TASOPT.size_aircraft!) is [`fusebl!()`](@ref TASOPT.fusebl!), which calculates the fuselage boundary layer properties and drag coefficients for start-of-cruise; these are then used in other mission points. [`size_aircraft!()`](@ref TASOPT.size_aircraft!) then uses simplified methods to initialize the relevant aircraft weights and parameters, unless the user specifies otherwise with an optional input (`init_weight=true`). The bulk of the computational cost and time is spent in the weight sizing loop. After the weight sizing loop is completed, the aircraft takeoff performance and field lengths are calculated using [`takeoff!()`](@ref TASOPT.takeoff!).
+    The first major function called within [`size_aircraft!()`](@ref TASOPT.size_aircraft!) is [`fuselage_drag!()`](@ref TASOPT.fuselage_drag!), which calculates the fuselage boundary layer properties and drag coefficients for start-of-cruise; these are then used in other mission points. [`size_aircraft!()`](@ref TASOPT.size_aircraft!) then uses simplified methods to initialize the relevant aircraft weights and parameters, unless the user specifies otherwise with an optional input (`init_weight=true`). The bulk of the computational cost and time is spent in the weight sizing loop. After the weight sizing loop is completed, the aircraft takeoff performance and field lengths are calculated using [`takeoff!()`](@ref TASOPT.takeoff!).
 
     ### Weight sizing loop
 
@@ -68,7 +68,7 @@ TASOPT._size_aircraft!
 
 TASOPT.fly_mission!
 
-TASOPT.fusebl!
+TASOPT.fuselage_drag!
 
 TASOPT.set_wing_geometry!
 

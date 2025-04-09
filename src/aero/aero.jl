@@ -10,7 +10,7 @@ using LinearAlgebra
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
 
-export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, fusebl!
+export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, fuselage_drag!
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -55,7 +55,7 @@ include("airfun.jl")
 include("wing_calculations.jl")
 
 # Fuselage IBLT calculations
-include("fusebl.jl")
+include("fuselage_drag.jl")
 include("axisol.jl")
 include("blax.jl")
 include("blsys.jl")

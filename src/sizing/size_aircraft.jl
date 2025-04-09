@@ -61,7 +61,7 @@ function _size_aircraft!(ac; itermax=35,
     set_ambient_conditions!(ac, ipclimbn)
 
     # Calculate fuselage boundary layer development
-    time_fusebl = @elapsed fusebl!(fuse, parm, para, ipcruise1)
+    time_fuselage_drag = @elapsed fuselage_drag!(fuse, parm, para, ipcruise1)
 
     # Extract and set constant values for all mission points
     KAfTE, DAfsurf, DAfwake, PAfinf = 
