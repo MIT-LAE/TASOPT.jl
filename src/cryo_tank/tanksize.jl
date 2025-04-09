@@ -16,13 +16,12 @@ function tanksize!(ac, imission::Int64 = 1)
         #Unpack storage arrays
         fuse = ac.fuselage
         fuse_tank = ac.fuse_tank
-        pari = ac.pari
         para = view(ac.para, :, :, imission)
         parg = ac.parg
 
         #Unpack variables in ac
         tank_placement = fuse_tank.placement
-        nftanks = pari[iinftanks]
+        nftanks = fuse_tank.tank_count
        
         #Convective cooling
         if tank_placement == "rear"
@@ -30,7 +29,7 @@ function tanksize!(ac, imission::Int64 = 1)
         else
                 xftank_heat = parg[igxftank]
         end
-        ifuel = pari[iifuel]
+        ifuel = ac.options.ifuel
         Mair = para[iaMach, ipcruise1]
         z = para[iaalt, ipcruise1]
             
@@ -41,11 +40,11 @@ function tanksize!(ac, imission::Int64 = 1)
         t_cond = fuse_tank.t_insul #thickness of each insulation layer
         Wfuelintank = fuse_tank.Wfuelintank #weight of fuel in tank
         Tfuel = fuse_tank.Tfuel #fuel temperature
-        flag_size = fuse_tank.size_insulation #Boolean for whether to size for a boiloff rate
+        sizes_insulation = fuse_tank.sizes_insulation #Boolean for whether to size for a boiloff rate
         TSL = fuse_tank.TSLtank #sea-level temperature for tank design
 
         #------Size insulation, if requested------
-        if flag_size #If insulation is sized for a given boiloff rate
+        if sizes_insulation #If insulation is sized for a given boiloff rate
                 boiloff_percent = fuse_tank.boiloff_rate
                 iinsuldes = fuse_tank.iinsuldes
 
@@ -83,9 +82,9 @@ function tanksize!(ac, imission::Int64 = 1)
         #Evaluate tank weight
         Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        flag_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
+        has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
-        if flag_vacuum #If tank is double-walled
+        if has_vacuum #If tank is double-walled
                 Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 Winner_tot = Winnertank + Wfuelintank #weight of inner vessel + fuel
@@ -221,17 +220,17 @@ This function checks if any of the insulation layers requires a vacuum.
         - `material_insul::Vector{ThermalInsulator}`: vector with layer materials
 
         **Outputs:**
-        - `flag_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
+        - `has_vacuum::Bool`: flag for vacuum, true if a vacuum is needed.
 """
 function check_vacuum(material_insul::Vector{ThermalInsulator})
         vacuum_materials = ["vacuum", "microspheres"] #currently supported options are vacuum and microspheres
 
-        flag_vacuum = false
+        has_vacuum = false
         for material in material_insul
                 if lowercase(material.name) in vacuum_materials
-                        flag_vacuum = true
+                        has_vacuum = true
                 end
         end
 
-        return flag_vacuum
+        return has_vacuum
 end

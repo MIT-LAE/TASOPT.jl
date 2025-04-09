@@ -1,5 +1,5 @@
 """
-`engine` is a module that contains all low-fidelity (NPSS is included in a different directory) calculations
+`engine` is a module that contains all low-fidelity calculations
 required in the aircraft sizing. 
 """
 module engine
@@ -21,7 +21,7 @@ export check_engine_convergence_failure
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy, unpack_ac
 
 include(__TASOPTindices__)
-include(joinpath(__TASOPTroot__,"misc/constants.jl"))
+include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")
@@ -38,6 +38,6 @@ include("turbofan/tfwrap.jl")
 include("turbofan/tfweightwrap.jl")
 include("hxfun.jl")
 include("PEMfuelcell.jl")
-include("../misc/engine.jl")
+include(joinpath(__TASOPTroot__,"data_structs/engine.jl"))
 
 end

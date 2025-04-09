@@ -136,20 +136,20 @@ for   i = 1:N
         # Set pitch trim by adjusting CLh
         Wf = W - Wzero
         rfuel = Wf/parg[igWfuel]*0
-        itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
+        opt_trim_var = "CL_htail"
+        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
 
         
         # Calculate Drag
         if (i == 1)
-            icdfun = 0
+            computes_surfcd = false
         else 
-            icdfun = 1
+            computes_surfcd = true
         end
         if CL > 0.9
-            icdfun = 0
+            computes_surfcd = false
         end
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
 
         #BLI parameters
         ρ0 = pare[ierho0, ip]
@@ -239,15 +239,15 @@ for   i = 1:N
         rfuel = Wf/parg[igWfuel]*0
 
         #Trim aircraft
-        itrim = 1
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, itrim)
-        icdfun = 1
+        opt_trim_var = "CL_htail"
+        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
+        computes_surfcd = true
         if CL > 1.0
             println("CL during cruise is $CL")
-            icdfun = 0
+            computes_surfcd = false
         end
         #Get Drag
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         F  = BW*(DoL) #zero climb angle for cruise
