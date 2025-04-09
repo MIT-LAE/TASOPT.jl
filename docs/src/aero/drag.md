@@ -22,12 +22,12 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_fuse_profile_drag.md"))
 ```
 
 ```@docs
-aerodynamics.axisol!(xnose,xend,xblend1,xblend2, Amax, 
+aerodynamics._axisymm_flow(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
 
-aerodynamics.blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,
+aerodynamics._BL_station_system(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,
                       hksep, x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -43,9 +43,9 @@ aerodynamics.blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uin
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
 
-aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+aerodynamics._axisymm_BL(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
-aerodynamics.blvar(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
+aerodynamics._BL_station_vars(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
 aerodynamics.fuselage_drag!(fuse, parm, para, ip)

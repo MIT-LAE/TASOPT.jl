@@ -51,16 +51,16 @@ function benchmark_fuselage_drag()
     dybl = zeros(nbldim)
     uinv = zeros(nbldim)
 
-    println("Benchmarking... axisol")
+    println("Benchmarking... _axisymm_flow")
 
-    bench = @benchmarkable aerodynamics.axisol!($xnose,$xend,$xblend1,$xblend2,
+    bench = @benchmarkable aerodynamics._axisymm_flow($xnose,$xend,$xblend1,$xblend2,
     $Sfuse, $anose, $btail, $ifclose,
     $Mach, $nc, $nbldim,  $xbl, $zbl, $sbl, $dybl, $uinv) seconds=30 evals=50
-    bench_axisol = run(bench)
+    bench_axisymm_flow = run(bench)
 
     #results
     nbl =           47 ;iblte =          31 ;
-    # Blax benchmarks
+    # _axisymm_BL benchmarks
     # Load required inputs:
     ndim, n, ite = 60, 47, 31
     xi  = vec([0.0000000000000000       0.44074620753680366        1.2190552270904040        2.3347760331235596        3.7887094567541970
@@ -102,11 +102,11 @@ function benchmark_fuselage_drag()
     Mach = 0.84 
     fexcr = 1.03  
 
-    println("Benchmarking... blax")
+    println("Benchmarking... _axisymm_BL")
 
-    b = @benchmarkable aerodynamics.blax($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
+    b = @benchmarkable aerodynamics._axisymm_BL($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
     $Reyn, $Mach, $fexcr) seconds=30 evals=5
-    bench_blax = run(b)
+    bench_axisymm_BL = run(b)
 
     println("Benchmarking... fuselage_drag!")
     b = @benchmarkable aerodynamics.fuselage_drag!($(ac.fuselage), $parm, $para, $ipcruise1) seconds=30 evals=5
@@ -115,15 +115,15 @@ function benchmark_fuselage_drag()
     println("Benchmark results...")
 
     println("---------------------------------------")
-    println("axisol (FORTRAN on MacPro M2 ~ 30 μs)")
+    println("_axisymm_flow (FORTRAN on MacPro M2 ~ 30 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_axisol)
+    show(stdout, MIME("text/plain"),bench_axisymm_flow)
     println(" ")
 
     println("---------------------------------------")
-    println("blax (FORTRAN on MacPro M2 ~ 1.9 ms)")
+    println("_axisymm_BL (FORTRAN on MacPro M2 ~ 1.9 ms)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_blax)
+    show(stdout, MIME("text/plain"),bench_axisymm_BL)
     println(" ")
 
     println("---------------------------------------")

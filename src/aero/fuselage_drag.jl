@@ -24,7 +24,7 @@ which are defined by the various geometric parameters in `parg`.
       - No explicit outputs. Computed drag values are saved to `para` of `aircraft` model.
 
 See [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
-See also [`blax`](@ref) and [`axisol!`](@ref).
+See also [`_axisymm_BL`](@ref) and [`_axisymm_flow`](@ref).
 
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
@@ -92,7 +92,7 @@ function fuselage_drag!(fuse, parm, para, ip)
 #---- calculate potential-flow surface velocity uinv(.) using PG source line
       nc = 30
 
-      nbl, iblte =  axisol!(xnose,xend,xblend1,xblend2,Sfuse, 
+      nbl, iblte =  _axisymm_flow(xnose,xend,xblend1,xblend2,Sfuse, 
                             anose,btail,Int(tapers_to_edge),
                             Mach, nc, nbldim,  xbl,zbl,sbl,dybl,uinv)
      
@@ -138,7 +138,7 @@ function fuselage_drag!(fuse, parm, para, ip)
       fex = para[iafexcdf, ip]
      
       uebl, dsbl, thbl, tsbl, dcbl,
-      cfbl, cdbl, ctbl, hkbl, phbl  = blax(nbldim, nbl,iblte, 
+      cfbl, cdbl, ctbl, hkbl, phbl  = _axisymm_BL(nbldim, nbl,iblte, 
 					sbl, bbl, rnbl, uinv, Reunit, Mach, fex)
 
       gam = 1.4 #gamSL

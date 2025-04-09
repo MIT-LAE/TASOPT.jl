@@ -1,5 +1,5 @@
 """
-    blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+    _axisymm_BL(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
      
 Axisymmetric boundary layer + wake calculation routine.
 Uses specified inviscid velocity, corrects for viscous
@@ -59,9 +59,9 @@ displacement to allow calculation of separated flow.
       - ``P_{inf} = P_{end} u_{e,i}^{H_{avg}}  =  D_p``
 
 See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
-See also [`blsys`](@ref) and [`blvar`](@ref).
+See also [`_BL_station_system`](@ref) and [`_BL_station_vars`](@ref).
 """
-function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
+function _axisymm_BL(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
 
       uₑᵢ  = zeros(ndim)
       ρᵢ  = zeros(ndim)
@@ -117,7 +117,7 @@ function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
       ε = 1.0e-6
 
       if(n > idim) 
-       println("BLAX: Local array overflow.  Increase idim to", n)
+       println("_axisymm_BL: Local array overflow.  Increase idim to", n)
        quit()
       end
 
@@ -200,7 +200,7 @@ for i = 2: n #BL march loop
           hc, hc_th, hc_ds, hc_ue,
           hs, hs_th, hs_ds, hs_ue,
           cf, cf_th, cf_ds, cf_ue,
-          di, di_th, di_ds, di_ue ) = blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr, x, th ,ds ,ue) 
+          di, di_th, di_ds, di_ue ) = _BL_station_vars(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr, x, th ,ds ,ue) 
             
           if(iter==1) 
            hkprev = hk
@@ -212,7 +212,7 @@ for i = 2: n #BL march loop
           end
 
 #-------- set up 2-point differenced BL equation system
-          aa, bb, rr = blsys(is_selfsimilar,is_laminar,is_wake,solves_direct, Mach, uinv[i],hksep,
+          aa, bb, rr = _BL_station_system(is_selfsimilar,is_laminar,is_wake,solves_direct, Mach, uinv[i],hksep,
                       x,b,rn,th,ds,ue, 
                       h , ∂h∂θ, ∂h∂δ,
                       hk, hk_th, hk_ds, hk_ue,
@@ -436,7 +436,7 @@ end # BL march loop
         end
 
 #        if(.not.is_selfsimilar) 
-#        call blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
+#        call _BL_station_vars(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
 #     &                 xm, thm ,dsm ,uem , 
 #     &                 hm, hm_thm, hm_dsm,
 #     &                 hkm, hkm_thm, hkm_dsm, hkm_uem,
@@ -451,10 +451,10 @@ end # BL march loop
         hc, hc_th, hc_ds, hc_ue,
         hs, hs_th, hs_ds, hs_ue,
         cf, cf_th, cf_ds, cf_ue,
-        di, di_th, di_ds, di_ue ) = blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,x, th ,ds ,ue)
+        di, di_th, di_ds, di_ue ) = _BL_station_vars(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,x, th ,ds ,ue)
         solves_direct = true
             
-        aa,bb,rr = blsys(is_selfsimilar,is_laminar,is_wake,solves_direct,
+        aa,bb,rr = _BL_station_system(is_selfsimilar,is_laminar,is_wake,solves_direct,
                       Mach, uinv[i],hksep,
                       x,b,rn,th,ds,ue, 
                       h , ∂h∂θ, ∂h∂δ,
@@ -650,4 +650,4 @@ rsys = asys\rsys
       end
 
       return uₑᵢ, δᵢ, θᵢ, θsᵢ, δssᵢ, cfi, cdi, cti, hki, ϕ
-      end # blax
+      end # _axisymm_BL

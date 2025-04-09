@@ -1,5 +1,5 @@
 """
-    axisol!(xnose, xend, xblend1, xblend2, Amax, 
+    _axisymm_flow(xnose, xend, xblend1, xblend2, Amax, 
 	      anose, btail, iclose,
 	      Mach, nc, nldim,
             xl, zl, sl, dyl, ql)
@@ -33,7 +33,7 @@ using a simple piecewise-constant source line.
 See [theory above](@ref axi) or Section 3 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf). 
 See also [`fuselage_drag!`](@ref).
 """
-function axisol!(xnose, xend, xblend1, xblend2, Amax, 
+function _axisymm_flow(xnose, xend, xblend1, xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
@@ -58,7 +58,7 @@ function axisol!(xnose, xend, xblend1, xblend2, Amax,
       ispace =  1     # cosine  x spacing
 
       if(nc > idim) 
-	println("AXISOL: Local-array overflow.  Increase idim to", nc)
+	println("_axisymm_flow: Local-array overflow.  Increase idim to", nc)
         quit()
       end
 
@@ -66,7 +66,7 @@ function axisol!(xnose, xend, xblend1, xblend2, Amax,
       nl = nc + Int(floor(nc/2)) + 2
 
       if(nl > nldim) 
-	println("AXISOL: Passed-in array overflow.  Increase nldim to", nl)
+	println("_axisymm_flow: Passed-in array overflow.  Increase nldim to", nl)
         quit()
       end
 
@@ -293,7 +293,7 @@ function axisol!(xnose, xend, xblend1, xblend2, Amax,
       # sql  = SVector{nldim}(ql)
 
       return nl, ilte #xl, zl, sl, dyl, ql
-      end # axisol
+      end # _axisymm_flow
 
 
 """

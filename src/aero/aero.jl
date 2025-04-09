@@ -17,7 +17,7 @@ export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_
 function __init__()
     BLAS.set_num_threads(1) #This sets the number of threads in BLAS to be equal to 1. 
     #It prevents multithreading but ensures consistent speed across CPU families. Without it,
-    #the LU calculation in blax() can take up to 1000x longer.
+    #the LU calculation in _axisymm_BL() can take up to 1000x longer.
     #TODO this may cause issues if parallelization is attempted in the future. Other approaches are to 
     #match the number of BLAS threads to the CPUs available on the machine or server
 end
@@ -56,9 +56,9 @@ include("wing_calculations.jl")
 
 # Fuselage IBLT calculations
 include("fuselage_drag.jl")
-include("axisol.jl")
-include("blax.jl")
-include("blsys.jl")
+include("axisymm_flow.jl")
+include("axisymm_BL.jl")
+include("BL_station_system.jl")
 
 # Trefftz plane CDi calcs
 include("trefftz.jl")
