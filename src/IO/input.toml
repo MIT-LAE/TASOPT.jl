@@ -37,8 +37,6 @@
 # ╚══════════╩══════════╩═════╩═══════╩═══════╩════╝
 
 [Options] #
-    optimize        = false   # Do you want TASOPT to optimize the aircraft or just size it 
-    
     engloc = 1      # 1: Engines on wing
                     # 2: Engines on fuselage
 
@@ -109,7 +107,7 @@
     a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
     b_tail = 1.65 # Tail radius = Rfuse*(1 - xi^b_tail)
     tailcone_taper = 0.3
-    taper_fuse_to = "point" # Options are "point" or "edge"
+    tapers_to = "point" # Options are "point" or "edge"
     
     # Tail load fuselage bending moment inertial relief factor
     HT_load_fuse_bend_relief = 0.4 
@@ -165,9 +163,7 @@
     BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
 [Wing]
-    wing_planform = 1 # 0: Wing cantilever, plain
-                      # 1: Wing cantilever with engine
-    strut_braced_wing = false
+    has_strut = false
 
     sweep = 26.0 # wing sweep in degrees
     AR    = 10.1
@@ -188,9 +184,9 @@
 
     x_wing_box = "57 ft"
     z_wing  = "-5.5 ft"
-    z_strut = "154 in" #Note only used if `strut_braced_wing = true`
+    z_strut = "154 in" #Note only used if `has_strut = true`
 
-    #Only used if `sturt_braced_wing == true`:
+    #Only used if `has_strut == true`:
     strut_toc = 0.15 #strut thickness to chord
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
 
@@ -268,15 +264,15 @@
         max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
         
         # How do you want to size the horizontal stabilizers?
-        HTsize = "Vh" # Options are "Vh" or "maxforwardCG" 
+        opt_sizing = "fixed_Vh" # Options are "fixed_Vh" or "CLmax_fwdCG" 
         # 1: set Sh via specified Vh
         # 2: set Sh via CLhCGfwd at max-forward CG during landing
-        Vh = 1.45 # Horizontal tail volume
-        CLh_at_max_forward_CG = -0.7
+        Vh = 1.45 # Horizontal tail volume (only used if opt_sizing == "fixed_Vh")
+        CLh_at_max_forward_CG = -0.7 # (only used if opt_sizing == "CLmax_fwdCG")
 
-        move_wingbox = "fix" # 0: "fix" wing position 
-                             # 1: move wing to get CLh="CLhspec" in cruise 
-                             # 2: move wing to get min static margin = "SMmin"
+        opt_move_wing = "fixed" # "fixed": "fix" wing position 
+                            # "fixed_CLh": move wing to get CLh="CLhspec" in cruise 
+                            # "min_static_margin": move wing to get min static margin = "SMmin"
 
         SM_min = 0.05 # Minimum static margin
         CLh_spec = -0.02
@@ -302,9 +298,12 @@
         x_Vtail = "110 ft"
         number_Vtails = 1.0
 
-        VTsize = "Vv" #
-        Vv = 0.1
-        CLv_at_engine_out = 0.5
+        # How do you want to size the vertical stabilizer?
+        opt_sizing = "fixed_Vv" # Options are "fixed_Vv" or "OEI"
+        # "fixed_Vv": set Vtail area Sv via specified Vv
+        # "OEI": set Vtail area Sv via engine-out trim CL "CLv_at_engine_out"
+        Vv = 0.1 # only used if opt_sizing == "fixed_Vv"
+        CLv_at_engine_out = 0.5 # only used if opt_sizing == "OEI"
         CLv_max = 2.6
 
         added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
@@ -430,6 +429,6 @@
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
 [Propulsion.Weight]
-    weight_model = "basic" #Options are "MD": Mark Drela's original model
-                              #   "basic": NF's new model with basic tech
-                              #"advanced": NF's new model with advanced tech
+    weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
+                                    #   "fitzgerald_basic": NF's new model with basic tech
+                                    #     "fitzgerald_adv": NF's new model with advanced tech

@@ -55,7 +55,7 @@ end
     trefftz1(nsurf, npout, npinn, npimg, 
           Sref, bref, b, bs, bo, bop, 
           zcent, po, gammat, gammas, 
-          fLo,ktip, Lspec, CLsurfsp)
+          fLo,ktip, specifies_CL, CLsurfsp)
 
 Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces.
 
@@ -73,7 +73,7 @@ Trefftz plane routine for the induced drag computation of `nsurf` number of surf
     - `gammat::Vector{Float64}`, gammas::Vector{Float64}`: Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
     - `fLo`: wing root load adjustment factors (currently not implemented).
     - `ktip::Float64`: wing tip load adjustment factors.
-    - `Lspec::Integer`: Flag for specified lift calculation (scales vorticities to achieve `CLsurfsp` before computing induced drag).
+    - `specifies_CL::Bool`: Flag for specified lift calculation (scales vorticities to achieve `CLsurfsp` before computing induced drag).
     - `CLsurfsp::Vector{Float64}`: Prescribed surface lift coefficient.
 
     **Outputs:**
@@ -88,7 +88,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po, gammat, gammas, fLo, ktip,
-	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+	specifies_CL,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
 #---- center resolution increase factor (0..1)
 #     bunch = 0.75 
@@ -297,7 +297,7 @@ function trefftz1(nsurf, npout, npinn, npimg,
       end
 
 
-      if(Lspec) 
+      if(specifies_CL) 
 #----- scale circulations to get specified lift for each surface
        @inbounds for  isurf = 1: nsurf
          cltest = 0.

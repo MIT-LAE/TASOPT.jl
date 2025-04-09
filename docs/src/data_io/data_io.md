@@ -11,7 +11,7 @@ Once it is loaded in this fashion, the `aircraft` can be manipulated and re-size
 ```julia
 using TASOPT
 
-include(__TASOPTindices__)  #import array indices from ./src/misc/index.inc, including igTmetal
+include(__TASOPTindices__)  #import array indices from ./src/data_structs/index.inc, including igTmetal
 
 filepath = "/path/to/your/aircraft.toml"
 ac = read_aircraft_model(filepath)   #creates new aircraft using default input .toml

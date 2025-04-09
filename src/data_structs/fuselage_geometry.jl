@@ -1,5 +1,3 @@
-using DocStringExtensions
-
 """
     calculate_shell_geometry(fuse::Fuselage, Δp::AbstractFloat)
 

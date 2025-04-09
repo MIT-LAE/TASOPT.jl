@@ -20,18 +20,13 @@ They are updated and returned in the same para[iagamV,ip] array.
 """
 function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
-      pari, parg, parm, para, pare, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear = unpack_ac(ac, imission) 
+      parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear = unpack_ac(ac, imission) 
 
       ifirst = true
 
       # HACK TODO add the para back
       # iairf
       initializes_engine = true
-
-      # unpack flags
-      # iengloc = pari[iiengloc]
-      # ifclose = pari[iifclose]
-      # ifuel = pari[iifuel]
 
       # Mission range
       Rangetot = parm[imRange]
@@ -199,8 +194,8 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       #---- set pitch trim by adjusting CLh
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      itrim = 1
-      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+      opt_trim_var = "CL_htail"
+      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       CLh2 = para[iaCLh, ip]
       xCG2 = para[iaxCG, ip]
@@ -318,15 +313,15 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   # Set pitch trim by adjusting CLh
                   Wf = W - Wzero
                   rfuel = Wf / parg[igWfuel]
-                  itrim = 1
-                  balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+                  opt_trim_var = "CL_htail"
+                  balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
                   if (ip == ipclimb1)
-                        icdfun = 0 #use explicitly specified wing cdf, cdp
+                        computes_surfcd = false #use explicitly specified wing cdf, cdp
                   else
-                        icdfun = 1 #use airfoil database
+                        computes_surfcd = true #use airfoil database
                   end
-                  cdsum!(ac, imission, ip, icdfun)
+                  cdsum!(ac, imission, ip, computes_surfcd)
 
                   eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
@@ -423,15 +418,15 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      itrim = 1
-      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+      opt_trim_var = "CL_htail"
+      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
-            icdfun = 1
-            cdsum!(ac, imission, ip, icdfun)
+            computes_surfcd = true
+            cdsum!(ac, imission, ip, computes_surfcd)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -506,12 +501,12 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      itrim = 1
-      balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+      opt_trim_var = "CL_htail"
+      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       # Calc Drag
-      icdfun = 1
-      cdsum!(ac, imission, ip, icdfun)
+      computes_surfcd = true
+      cdsum!(ac, imission, ip, computes_surfcd)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -651,17 +646,17 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             # set pitch trim by adjusting CLh
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
-            itrim = 1
-            balance(ac, imission, ip, rfuel, rpay, ξpay, itrim)
+            opt_trim_var = "CL_htail"
+            balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp
-                  icdfun = 0
+                  computes_surfcd = false
             else
                   # use airfoil database for wing cdf,cdp
-                  icdfun = 1
+                  computes_surfcd = true
             end
-            cdsum!(ac, imission, ip, icdfun)
+            cdsum!(ac, imission, ip, computes_surfcd)
 
             # set up for engine calculation
             sing = sin(gamVde)

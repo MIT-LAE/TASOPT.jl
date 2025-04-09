@@ -1,4 +1,3 @@
-using DocStringExtensions
 abstract type AbstractLayout end
 abstract type AbstractCrossSection end
 abstract type AbstractCabin end
@@ -123,8 +122,8 @@ $TYPEDFIELDS
     nose_radius::Float64 = 0
     """Tail Radius [m]"""
     tail_radius::Float64 = 0
-    """Taper fuselage to Point (0) or Edge (1)"""
-    taper_fuse::Int64 = 0 # 0 = point ; 1 = edge
+    """Taper fuselage to "point" or "edge" """
+    opt_tapers_to::String = "point" # "point" or "edge"
     """Length of cylindrical portion of cabin that contains payload [m]"""
     l_cabin_cylinder::Float64 = 0.0
 end

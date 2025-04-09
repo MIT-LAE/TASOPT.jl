@@ -106,7 +106,7 @@ function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
       asys = zeros(kdim,kdim)
       rsys = zeros(kdim)
 
-      simi, lami, wake, direct = true, true, true, true
+      is_selfsimilar, is_laminar, is_wake, solves_direct = true, true, true, true
 
 #---- π  and  1/(4 π)
       π¼  = 0.07957747154594766788444188168625718
@@ -143,15 +143,15 @@ function blax(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
 #---- sweep downstream to initialize BL via standard BL march, 
 #-     fudging by specifying plausible Hk if separation occurs
 
-direct = true
+solves_direct = true
 for i = 2: n #BL march loop
 
-        simi = xᵢ[i-1] == 0.0
+        is_selfsimilar = xᵢ[i-1] == 0.0
 
-#c      lami = simi     # laminar   similarity station
-        lami = false  # turbulent similarity station
+#c      is_laminar = is_selfsimilar     # laminar   similarity station
+        is_laminar = false  # turbulent similarity station
 
-        wake = i  > ite
+        is_wake = (i  > ite)
 
         x = xᵢ[i]
         b = bi[i]
@@ -162,7 +162,7 @@ for i = 2: n #BL march loop
         rnm = rni[i-1]
 
 #------ set i-1 station, and initialize station i for iteration
-        if(simi) 
+        if(is_selfsimilar) 
          uem = 0.
          thm = 0.
          dsm = 0.
@@ -179,7 +179,7 @@ for i = 2: n #BL march loop
 
          th = θᵢ[i-1]
          ds = δᵢ[i-1]
-         if(direct) 
+         if(solves_direct) 
 #-------- previous station was direct... use specified ue as initial guess
           ue = uₑᵢ[i]
          else
@@ -190,7 +190,7 @@ for i = 2: n #BL march loop
         end
  
 #------ always try direct mode first
-        direct = true
+        solves_direct = true
         hkprev = 0.
 
         for iter = 1: 20 #Newton iteration
@@ -200,19 +200,19 @@ for i = 2: n #BL march loop
           hc, hc_th, hc_ds, hc_ue,
           hs, hs_th, hs_ds, hs_ue,
           cf, cf_th, cf_ds, cf_ue,
-          di, di_th, di_ds, di_ue ) = blvar(simi,lami,wake, Reyn,Mach, fexcr, x, th ,ds ,ue) 
+          di, di_th, di_ds, di_ue ) = blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr, x, th ,ds ,ue) 
             
           if(iter==1) 
            hkprev = hk
           else
            if(hk > hksep)  # .and. hk > hkprev) 
 #---------- Hk limit exceeded... switch to inverse mode for θᵢs point
-            direct = false
+            solves_direct = false
            end
           end
 
 #-------- set up 2-point differenced BL equation system
-          aa, bb, rr = blsys(simi,lami,wake,direct, Mach, uinv[i],hksep,
+          aa, bb, rr = blsys(is_selfsimilar,is_laminar,is_wake,solves_direct, Mach, uinv[i],hksep,
                       x,b,rn,th,ds,ue, 
                       h , ∂h∂θ, ∂h∂δ,
                       hk, hk_th, hk_ds, hk_ue,
@@ -246,7 +246,7 @@ for i = 2: n #BL march loop
 
 #          if(iter==1) write(*,*)
 #          rt = ue*th*Reyn
-#          write(*,1200) iter, direct, dmax, rlx, ue, hk, rt, cf, di
+#          write(*,1200) iter, solves_direct, dmax, rlx, ue, hk, rt, cf, di
 # 1200     format(1x,i4, l2, e12.4, 9g13.5)
 
           th = th + rlx*dth
@@ -379,12 +379,12 @@ end # BL march loop
 
 #---- sweep downstream to set up BL equations
       for i = 2: n  # Set up BL loop
-        simi = xᵢ[i-1] == 0.0
+        is_selfsimilar = xᵢ[i-1] == 0.0
 
-#c      lami = simi
-        lami = false
+#c      is_laminar = is_selfsimilar
+        is_laminar = false
 
-        wake = i  > ite
+        is_wake = (i  > ite)
 
         x  = xᵢ[i]
         b  = bi[i]
@@ -417,7 +417,7 @@ end # BL march loop
          ds_ue = 0.5/sqrt(bp^2 + mpu) * (-mpu/ue) / rn
         end
 
-        if(simi) 
+        if(is_selfsimilar) 
          dsm = 0.
          dsm_mdm = 0.
          dsm_uem = 0.
@@ -435,8 +435,8 @@ end # BL march loop
          end
         end
 
-#        if(.not.simi) 
-#        call blvar(simi,lami,wake, Reyn,Mach, fexcr,
+#        if(.not.is_selfsimilar) 
+#        call blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
 #     &                 xm, thm ,dsm ,uem , 
 #     &                 hm, hm_thm, hm_dsm,
 #     &                 hkm, hkm_thm, hkm_dsm, hkm_uem,
@@ -451,10 +451,11 @@ end # BL march loop
         hc, hc_th, hc_ds, hc_ue,
         hs, hs_th, hs_ds, hs_ue,
         cf, cf_th, cf_ds, cf_ue,
-        di, di_th, di_ds, di_ue ) = blvar(simi,lami,wake, Reyn,Mach, fexcr,x, th ,ds ,ue)
-        direct = true
+        di, di_th, di_ds, di_ue ) = blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,x, th ,ds ,ue)
+        solves_direct = true
             
-        aa,bb,rr = blsys(simi,lami,wake,direct, Mach, uinv[i],hksep,
+        aa,bb,rr = blsys(is_selfsimilar,is_laminar,is_wake,solves_direct,
+                      Mach, uinv[i],hksep,
                       x,b,rn,th,ds,ue, 
                       h , ∂h∂θ, ∂h∂δ,
                       hk, hk_th, hk_ds, hk_ue,
@@ -554,7 +555,7 @@ end # BL march loop
         dim_dsm = di_ds
         dim_uem = di_ue
 
-        end #end BL loop
+      end #end BL loop
 
 
 #      for i = 1: n

@@ -13,12 +13,12 @@ using Roots
 using NLopt
 using DifferentialEquations
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
 
 export SaturatedMixture, tanksize!
 
 include(__TASOPTindices__)
-include("../misc/constants.jl")
+include("../data_structs/constants.jl")
 
 include("tankWmech.jl")
 include("tankWthermal.jl")
