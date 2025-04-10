@@ -78,8 +78,9 @@ itp_Wc, itp_PR, itp_polyeff = create_extrapolated_maps(NcMap, RlineMap, WcMap, P
 #-----------------------------
 default_PR = itp_PR(default_Nc, default_Rline)
 default_Wc = itp_Wc(default_Nc, default_Rline)
+default_polyeff = maximum(polyeff_Map)
 
-defaults = MapDefaults(default_Nc, default_Rline, default_Wc, default_PR)
+defaults = MapDefaults(default_Nc, default_Rline, default_Wc, default_PR, default_polyeff)
 
 const FanMap = CompressorMap(defaults, RlineMap, NcMap, WcMap, PRMap, 
         effMap, polyeff_Map, itp_Wc, itp_PR, itp_polyeff)

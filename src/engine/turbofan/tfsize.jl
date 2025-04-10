@@ -321,7 +321,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             mf = 1.0
 
             _, epf, _, _, _, _, _, _ = 
-                  calculate_compressor_speed_and_efficiency(FanMap, pif, mf, pifD, mbfD, 1.0, Ng = 1.0, Rg = 2.0)
+                  calculate_compressor_speed_and_efficiency(FanMap, pif, mf, pifD, mbfD, 1.0, epf0, Ng = 1.0, Rg = 2.0)
 
             pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
@@ -351,7 +351,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             ml = 1.0
             
             _, eplc, _, _, _, _, _, _ = 
-                  calculate_compressor_speed_and_efficiency(LPCMap, pilc, ml, pilcD, mblcD, 1.0, Ng = 1.0, Rg = 2.0)
+                  calculate_compressor_speed_and_efficiency(LPCMap, pilc, ml, pilcD, mblcD, 1.0, eplc0, Ng = 1.0, Rg = 2.0)
 
             pt25, Tt25, ht25, st25, cpt25, Rt25 = gas_prat(alpha, nair,
                   pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pilc, eplc)
@@ -370,7 +370,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             mh = 1.0
 
             _, ephc, _, _, _, _, _, _ = 
-                  calculate_compressor_speed_and_efficiency(HPCMap, pihc, mh, pihcD, mbhcD, 1.0, Ng = 1.0, Rg = 2.0)
+                  calculate_compressor_speed_and_efficiency(HPCMap, pihc, mh, pihcD, mbhcD, 1.0, ephc0, Ng = 1.0, Rg = 2.0)
 
             pt3, Tt3, ht3, st3, cpt3, Rt3 = gas_prat(alpha, nair,
                   pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, pihc, ephc)

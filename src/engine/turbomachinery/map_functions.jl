@@ -10,12 +10,14 @@ Holds the default reference conditions for a compressor map, used for scaling an
     - `Rline::Float64`: R-line value at design point.
     - `Wc::Float64`: corrected mass flow at design point.
     - `PR::Float64`: pressure ratio at design point.
+    - `polyeff::Float64`: maximum polytropic efficiency in the map.
 """
 struct MapDefaults
     Nc::Float64
     Rline::Float64
     Wc::Float64
     PR::Float64 
+    polyeff::Float64
 end
 
 """
@@ -147,7 +149,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 end
 
 """
-    calculate_compressor_speed_and_efficiency(map, pratio, mb, piD, mbD, NbD; Ng=0.5, Rg=2.0)
+    calculate_compressor_speed_and_efficiency(map, pratio, mb, piD, mbD, NbD, epol0; Ng=0.5, Rg=2.0)
 
 Calculates corrected speed and polytropic efficiency for a compressor, along with derivatives to pressure ratio and mass flow.
 
@@ -159,6 +161,7 @@ Calculates corrected speed and polytropic efficiency for a compressor, along wit
     - `piD::Float64`: design pressure ratio.
     - `mbD::Float64`: design mass flow rate.
     - `NbD::Float64`: design rotational speed.
+    - `epol0::Float64`: maximum polytropic efficiency.
     - `Ng::Float64`: initial guess for normalized speed (optional).
     - `Rg::Float64`: initial guess for R-line (optional).
 
@@ -173,7 +176,7 @@ Calculates corrected speed and polytropic efficiency for a compressor, along wit
     - `R::Float64`: matched R-line.
 """
 function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::Float64, mb::Float64, piD::Float64, 
-                                                    mbD::Float64, NbD::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
+                                                    mbD::Float64, NbD::Float64, epol0::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
     Wc = mb/mbD * map.defaults.Wc
     PR = 1.0 + (pratio-1.0)/(piD-1.0) * (map.defaults.PR-1.0)
     dPR_dpi = (map.defaults.PR-1.0)/(piD-1.0)
@@ -187,8 +190,13 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     dNb_dpi = dN_dpr * dPR_dpi * NbD/map.defaults.Nc
 
     #Compute efficiency and derivatives
-    epol = map.itp_polyeff(N, R)
-    depol_dN, depol_dR = Interpolations.gradient(map.itp_polyeff, N, R)
+    ep = map.itp_polyeff(N, R)
+    dep_dN, dep_dR = Interpolations.gradient(map.itp_polyeff, N, R)
+
+    #Rescale efficiency to design point
+    epol = ep * epol0 / map.defaults.polyeff
+    depol_dN = dep_dN * epol0 / map.defaults.polyeff
+    depol_dR = dep_dR * epol0 / map.defaults.polyeff
 
     #Convert to adjusted values
     depol_dw = depol_dN * dN_dw + depol_dR * dR_dw
