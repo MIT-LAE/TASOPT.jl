@@ -531,12 +531,12 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         TOML.print(io,d_out)
 
         if save_output
-            println("Functions for saving sized params not yet implemented.")
+            @warn "Functions for saving sized params to TOML not yet implemented. Consider `output_csv()` or `quicksave_aircraft()`"
             if ac.is_sized[1]
                 #TODO: sized aircraft output
 
             else
-                @warn ac.name * " is not sized. Outputs will not be saved."
+                # @warn ac.name * " is not sized. Outputs will not be saved."
             end #if
         end #if
     end #open()

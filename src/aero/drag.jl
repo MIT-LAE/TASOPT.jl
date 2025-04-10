@@ -20,7 +20,7 @@ where:
 - ``C_{D,over}`` (`CDover`) is the fuselage added CD due to lift carryover,
 - ``C_{D,htail}`` (`CDhtail`) is the horizontal tail profile drag computed in a similar manner with `CDwing`,
 - ``C_{D,vtail}`` (`CDvtail`) is the vertical tail profile drag computed in a similar manner with `CDwing`,
-- ``C_{D,strut}`` (`CDstrut`) is the struct profile drag, 
+- ``C_{D,strut}`` (`CDstrut`) is the strut profile drag, 
 - ``C_{D,nace}`` (`CDnace`) is the nacelle profile drag,
 - ``\\Delta C_{D,BLI,f}`` (`dCDBLIf`) is related to the boundary layer ingestion on the fuselage,
 - and ``\\Delta C_{D,BLI,w}`` (`dCDBLIw`) is related to the boundary layer ingestion on the wing.
@@ -237,7 +237,7 @@ Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@re
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
 
 !!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+      In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
 function induced_drag!(para, wing, htail)

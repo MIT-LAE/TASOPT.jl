@@ -15,6 +15,10 @@ Runs the aircraft through the specified mission, computing and converging the fu
 
 """
 function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
+    if ~ac.is_sized[1]
+        error("Aircraft not sized. Please size the aircraft before running the mission.")
+    end
+    
     #Extract aircraft components and storage arrays
     parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission)
     

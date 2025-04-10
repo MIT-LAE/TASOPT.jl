@@ -38,6 +38,10 @@ TASOPT.structures.StructuralMember
 
 TASOPT.structures.WingLayout
 
+TASOPT.structures.WingSection
+
+TASOPT.structures.WingCrossSection
+
 aerodynamics.airfoil
 
 TASOPT.materials.StructuralAlloy

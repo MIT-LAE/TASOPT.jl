@@ -27,7 +27,7 @@ See [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../ass
 See also [`_axisymm_BL`](@ref) and [`_axisymm_flow`](@ref).
 
 !!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+      In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
 function fuselage_drag!(fuse, parm, para, ip)

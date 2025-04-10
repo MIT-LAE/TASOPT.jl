@@ -2,9 +2,9 @@
 
 ## [Sizing the aircraft] (@id sizing)
 
-The aircraft is sized via a fixed point iteration for the design mission ([`size_aircraft!()`](@ref TASOPT.size_aircraft!)). The performance of the design can be evaluated for the design and off-design missions (`imission` > 1; [`fly_mission!()`](@ref TASOPT.fly_mission!)).
+The aircraft is sized via a fixed point iteration for the design mission ([`size_aircraft!()`](@ref TASOPT.size_aircraft!)). The performance of the design can be evaluated for the design (`imission` = 1) and off-design (`imission` >= 2) missions via [`fly_mission!()`](@ref TASOPT.fly_mission!).
 
-[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as is the case in the `size_aircraft!()` call as demonstrated in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fuselage_drag!()`, `wing_weights!()`, `aircraft_drag!()`, `mission_iter!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
+[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fuselage_drag!()`, `wing_weights!()`, `aircraft_drag!()`, `mission_iter!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
 
 !!! details "🖥️ Code structure - Aircraft sizing" 
     The aircraft-sizing function requires an `aircraft` object as input. See [`read_aircraft_model()`](@ref TASOPT.read_aircraft_model) to get an idea of the fields that are required in this object. This object is unpacked into storage arrays and other component objects, such as `wing`, `fuselage` or `engine`. The eventual aim is to eliminate all data storage array and replace them by component objects but this is still work in progress.  

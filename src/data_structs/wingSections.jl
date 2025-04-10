@@ -5,16 +5,17 @@ $TYPEDEF
 
 Stores all the non-dimensional parameters 
 in the normal-plane cross section of the wing (mainly related to the spar-box)
-Cross-section of wing box:                                                                                                            
-                  ┌──────────────────────────────────────┐        
-               ┌──┘               ▲                      └──┐     
-           ▲┌──┘                  │                         └──┐  
- web height ││               spar box height                  ││  
-           ▼└──┐                  │                         ┌──┘  
-               └──┐               ▼                      ┌──┘     
-                  └──────────────────────────────────────┘        
-             ◄───────────────── box width ──────────────────────►   
-   ◄───────────────────────────── c⟂ ──────────────────────────────────►       
+Cross-section of wing box:          
+
+                    ┌──────────────────────────────────────┐        
+                ┌──┘               ▲                      └──┐     
+            ▲┌──┘                  │                         └──┐  
+    web height ││               spar box height                  ││  
+            ▼└──┐                  │                         ┌──┘  
+                └──┐               ▼                      ┌──┘     
+                    └──────────────────────────────────────┘        
+                ◄───────────────── box width ──────────────────────►   
+    ◄───────────────────────────── c⟂ ──────────────────────────────────►       
 
 $TYPEDFIELDS
 """

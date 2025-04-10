@@ -13,11 +13,6 @@ using Markdown
 Markdown.parse_file(joinpath("../..", "src/structures","theory_wingstruct.md"))
 ```
 
-The abstraction of the Wing module is given below. More detail can be seen in See `structures.Wing`, `structures.WingSection`, `structures.WingLayout` or `structures.WingCrossSection` for more details.
-
-![](../assets/wing_struct.png)
-
-
 ```@docs
 
 structures.size_wing_section!(section, sweep, sigfac)

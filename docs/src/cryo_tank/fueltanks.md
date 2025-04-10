@@ -2,7 +2,7 @@
 
 Liquid long-chain hydrocarbon fuel is assumed to be stored in the interior of the wings and no additional tanks are needed. The weight of the fuel is accounted for while sizing the wing structure. See [`structures.wing_weights!`](@ref).
 
-However, alternate fuels such as cryogenic liquid hydrogen require additional storage tanks that are insulated pressure vessels.
+However, alternate fuels such as cryogenic liquid hydrogen require additional storage tanks that are insulated pressure vessels. To study novel aircraft designs that may leverage such fuels, the following cryogenic tank models were integrated, along with [heat exchanger](@ref hxers) and [fuel cell](@ref fuelcells) models.
 
 ## Theory
 

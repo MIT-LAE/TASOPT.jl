@@ -1,4 +1,6 @@
-# Heat exchangers
+# [Heat exchangers](@id hxers)
+
+To study novel aircraft designs that may leverage cryogenic hydrogen, the following heat exchanger models were integrated, along with [cryogenic tank](@ref fueltanks) and [fuel cell](@ref fuelcells) models.
 
 ## Theory
 
