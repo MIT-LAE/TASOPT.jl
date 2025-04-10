@@ -95,7 +95,6 @@ include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
-include(joinpath(__TASOPTroot__,"IO/read_externals.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
