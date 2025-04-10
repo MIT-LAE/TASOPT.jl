@@ -453,91 +453,47 @@
 
       const iePLH2 = 198
       const ieyg = 199
-
-#TODO: need to delete all turboelectric/powertrain and NPSS refs while adjusting the HX indices
-      const ieemot = 200
-      const ieeinv = 201
-      const ieecable = 202
-      const ieegen = 203
-      const ieethermal = 204
-
-      const iePinmot = 205
-      const iePininv = 206
-      const iePincable = 207
-      const iePingen = 208
-      const iePinthermal = 209
-
-      const ieEINOx1 = 210
-      const ieEINOx2 = 211
-      const ieFAR = 212
-      const ieOPR = 213
-      const ieWc3 = 214
+      const ieEINOx1 = 200
+      const ieEINOx2 = 201
+      const ieFAR = 202
+      const ieOPR = 203
+      const ieWc3 = 204
       
-      # Heat rejection:
-      const ieHrejmot = 215
-      const ieHrejinv = 216
-      const ieHrejcab = 217
-      const ieHrejgen = 218
-      const ieHrejtot = 219
-
-      const ieHexcess = 220
-#Guesses for NPSS offdes:
-      const iegsFnsplit = 221
-      const iegsMotShP = 222
-      const iegsmdotf = 223
-      const iegsWin = 224
-      const iegsRlineF = 225
-      const iegsBPR = 226
-      const iegsRlinelc = 227
-      const iegsRlinehc = 228
-      const iegsPRhtrb = 229
-      const iegsPRltrb = 230
-      const iegsNmechH = 231
-      const iegsGBtrq = 232
-      const iegsNmechL = 233
-      const iegsNmechF = 234
-      const iegsPodWin = 235
-
-      const iegsPodRlineF = 236
-      const iegsPodGBtrq = 237
-      const iegsPodMotNmech = 238
-      const iegsPodFanNmech = 239
-
 #Heat exchanger variables
-      const ieDi = 240
-      const ieTft = 241
-      const iefrecirc = 242
-      const ierecircT = 243
-      const iehvap = 244
-      const iePreCorder = 245
-      const iePreCepsilon = 246
-      const iePreCMp = 247
-      const iePreCDeltah = 248
-      const iePreCDeltap = 249
-      const ieInterCorder = 250
-      const ieInterCepsilon = 251 
-      const ieInterCMp = 252
-      const ieInterCDeltah = 253
-      const ieInterCDeltap = 254
-      const ieRegenorder = 255
-      const ieRegenepsilon = 256 
-      const ieRegenMp = 257
-      const ieRegenDeltah = 258
-      const ieRegenDeltap = 259
-      const ieTurbCorder = 260
-      const ieTurbCepsilon = 261 
-      const ieTurbCMp = 262
-      const ieTurbCDeltah = 263
-      const ieTurbCDeltap = 264
-      const ieRadiatorepsilon = 265
-      const ieRadiatorMp = 266
-      const ieRadiatorDeltah = 267
-      const ieRadiatorDeltap = 268
-      const iehvapcombustor = 269
-      const ieHXminTwall = 270
-      const iemfuel = 271
+      const ieDi = 205
+      const ieTft = 206
+      const iefrecirc = 207
+      const ierecircT = 208
+      const iehvap = 209
+      const iePreCorder = 210
+      const iePreCepsilon = 211
+      const iePreCMp = 212
+      const iePreCDeltah = 213
+      const iePreCDeltap = 214
+      const ieInterCorder = 215
+      const ieInterCepsilon = 216 
+      const ieInterCMp = 217
+      const ieInterCDeltah = 218
+      const ieInterCDeltap = 219
+      const ieRegenorder = 220
+      const ieRegenepsilon = 221 
+      const ieRegenMp = 222
+      const ieRegenDeltah = 223
+      const ieRegenDeltap = 224
+      const ieTurbCorder = 225
+      const ieTurbCepsilon = 226 
+      const ieTurbCMp = 227
+      const ieTurbCDeltah = 228
+      const ieTurbCDeltap = 229
+      const ieRadiatorepsilon = 230
+      const ieRadiatorMp = 231
+      const ieRadiatorDeltah = 232
+      const ieRadiatorDeltap = 233
+      const iehvapcombustor = 234
+      const ieHXminTwall = 235
+      const iemfuel = 236
 
-      const ietotal = 271
+      const ietotal = 236
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
