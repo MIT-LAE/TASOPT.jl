@@ -3,7 +3,9 @@
 
 Calculates aircraft `CD` components for operating point, ipoint.
 If `computes_wing_direct` is `true`, computes wing `cdf`,`cdp` from airfoil database # `iairf`,
-otherwise uses default values in para array. Called by [`mission_iter!()`](@ref TASOPT.mission_iter!), [`size_aircraft!`](@ref TASOPT.size_aircraft!), and [`takeoff!`](@ref TASOPT.takeoff!).
+otherwise uses default values in para array. 
+Called by [`mission_iter!()`](@ref TASOPT.mission_iter!), [`size_aircraft!`](@ref TASOPT.size_aircraft!), and [`takeoff!`](@ref TASOPT.takeoff!).
+Formerly, `cdsum!()`.
 
 The total drag is computed by
 
@@ -223,7 +225,7 @@ end # aircraft_drag!
 """
       induced_drag!(para, wing, htail)
 
-Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref).
+Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). Formerly, `cditrp!()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

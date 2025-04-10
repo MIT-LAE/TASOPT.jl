@@ -5,7 +5,7 @@
             xl, zl, sl, dyl, ql)
 
 Calculates compressible potential flow about a quasi-axisymmetric body, 
-using a simple piecewise-constant source line.
+using a simple piecewise-constant source line. Formerly, `axisol!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**

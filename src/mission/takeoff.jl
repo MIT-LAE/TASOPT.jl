@@ -1,6 +1,6 @@
 #TODO: takeoff doc page needed; docstrings need updating
 """
-    takeoff(ac)
+    takeoff!(ac)
 
 Calculates takeoff parameters and balanced field length.
 The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.

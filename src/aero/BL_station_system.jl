@@ -17,7 +17,7 @@ using StaticArrays
           cfm, cfm_thm, cfm_dsm, cfm_uem,
           dim, dim_thm, dim_dsm, dim_uem)
 
-Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`_axisymm_BL`](@ref).
+Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`_axisymm_BL`](@ref). Formerly, `blsys!()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -302,7 +302,7 @@ end # _BL_station_system
 """
     _BL_station_vars(is_selfsimilar, is_laminar, is_wake, Reyn, Mach, fexcr, x, θ, δs, ue)
 
-Returns the boundary layer variables needed for solution.
+Returns the boundary layer variables needed for solution. Formerly, `blvar!()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

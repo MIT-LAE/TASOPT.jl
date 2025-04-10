@@ -1,7 +1,7 @@
 """
     fly_mission!(ac, imission, itermax, initializes_engine)
 
-Runs the aircraft through the specified mission, computing and converging the fuel weight. 
+Runs the aircraft through the specified mission, computing and converging the fuel weight. Formerly, `fly_offdesign_mission!()`.
 
 !!! details "🔃 Inputs and Outputs"
 **Inputs:**

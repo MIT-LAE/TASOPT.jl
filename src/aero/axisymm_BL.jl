@@ -3,7 +3,7 @@
      
 Axisymmetric boundary layer + wake calculation routine.
 Uses specified inviscid velocity, corrects for viscous
-displacement to allow calculation of separated flow.
+displacement to allow calculation of separated flow. Formerly, `blax!()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

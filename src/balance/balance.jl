@@ -3,7 +3,7 @@
       balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
 Computes the aircraft's center of gravity (`xCG`), center of pressure (`xCP`), and neutral point (`xNP`) based on payload, fuel distribution, and trim adjustments.
-Makes one of three (or none) changes to achieve pitch trim.
+Makes one of three (or none) changes to achieve pitch trim. Formerly, `balance()`.
 
 **Description**
 This routine performs a CG and stability analysis for a given aircraft configuration. It calculates the **total weight and moment** by accounting for:
@@ -684,7 +684,7 @@ end # size_htail
 
 Computes the most forward (`xcgF`) and most rearward (`xcgB`) 
 enter of gravity (CG) locations based on payload extremes,
-along with the corresponding payload fractions.
+along with the corresponding payload fractions. Formerly, `cglpay()`.
 
 ## Description
 This function determines the CG shift due to varying passenger and fuel load configurations.

@@ -2,7 +2,7 @@
     mission_iter!(ac, imission, Ldebug; calculate_cruise = false)
 
 Runs aircraft through mission, calculating fuel burn
-and other mission variables.
+and other mission variables. Formerly, `mission!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**

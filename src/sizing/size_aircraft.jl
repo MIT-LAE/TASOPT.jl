@@ -892,6 +892,7 @@ end
     update_WMTO!(ac, rlx, fsum)
 
 update_WMTO! updates the max takeoff weight of the aircraft (WMTO). Uses relaxation factor rlx.
+Formerly, `Wupdate0!()`.
 """
 function update_WMTO!(ac, rlx, fsum)
     parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
@@ -924,6 +925,7 @@ end
     update_weights!(ac, rlx, fsum)
 
 Adjusts the aircraft's maximum takeoff weight (WMTO) and other component weights using a relaxation factor (`rlx`). 
+Formerly, `Wupdate!()`.
 
 """
 function update_weights!(ac, rlx, fsum)

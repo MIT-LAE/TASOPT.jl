@@ -4,13 +4,13 @@ using StaticArrays
     fuselage_drag!(fuse, parg, para, ip)
 
 Calculates surface velocities, boundary layer, wake 
-for a quasi-axisymmetric body in compressible flow.
+for a quasi-axisymmetric body in compressible flow. Formerly, `fusebl!()`.
 
 A compressible source line represents the potential flow.
 An integral BL formulation with lateral divergence represents the surface BL and wake.
 An added-source distribution represents the viscous displacement influence on the potential flow.
 The body shape is defined by its area and perimeter distributions `A(x)`,  `b0(x)`,
-which are defined by the various geometric parameters in `parg`.
+which are defined by the various geometric parameters in `parg`. 
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

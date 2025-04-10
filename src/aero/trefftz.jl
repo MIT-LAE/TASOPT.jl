@@ -57,7 +57,7 @@ end
           zcent, po, gammat, gammas, 
           fLo,ktip, specifies_CL, CLsurfsp)
 
-Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces.
+Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces. Formerly, `trefftz1()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**

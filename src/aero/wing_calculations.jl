@@ -1,7 +1,7 @@
 """
     wing_loading(wing, rclt, rcls, N, W, Lhtail)
 
-Computes wing root ("center") loading ``p_o`` to balance the net load.
+Computes wing root ("center") loading ``p_o`` to balance the net load. Formerly, `wingpo()`.
 
 ```math
 N*W - L_{h tail} \times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
@@ -50,7 +50,7 @@ end # wing_loading
     tail_loading!(tail,S,qne; t_fac = 1.0)
 
 Calculates stabilizer span, root chord, and root loading based on the 
-never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
+never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio. Formerly, `tailpo!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -80,7 +80,7 @@ end
             CL, CLhtail,
 	        fduo, fdus, fdut)
 
-Calculates section cl at  eta = ηo,ηs,1
+Calculates section cl at  eta = ηo,ηs,1. Formerly, `wingcl()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -164,7 +164,7 @@ end # wingsc
             fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
-Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true.
+Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. Formerly, `surfcd2()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -326,7 +326,7 @@ end # wing_profiledrag_direct
     aRexp, kSuns, fCDcen)
 
 Computes wing or tail surface profile CD from pre-computed chord quantities and corrections.
-Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to false.
+Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to false. Formerly, `surfcd()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -420,6 +420,8 @@ Calculates components of wing pitching moment (``C_M``) about wing root axis:
 ``C_M = C_{M,0} + C_{M,1} (C_L - C_{L,surf})``
 
 ``ΔC_{m, surf} = ΔC_{m, 0} + dCₘ/dCL × (C_L - C_{L,h})``
+
+Formerly, `surfcm()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

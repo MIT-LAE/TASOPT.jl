@@ -54,7 +54,7 @@ end
        Nload, We, neout, dyeout, neinn, dyeinn, sigfac, rhofuel; n_wings=2.0)
 
 Calculates Wing or Tail loads, stresses, weights of individual wing sections.
-Also returns the material gauges, torsional and bending stiffness.
+Also returns the material gauges, torsional and bending stiffness. Formerly, `get_wing_weights!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
