@@ -3,7 +3,7 @@ export output_indices_all, output_indices_wGeom, output_indices_wEngine
 
 """
     output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
-            filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
+            filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.csv");
             overwrite::Bool = false, indices::Dict = default_output_indices,
             includeMissions::Union{AbstractVector,Colon,Bool,Integer} = false, 
             includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer} = false,
@@ -32,7 +32,7 @@ Output is customizable by:
     - `newfilepath::String`: actual output filepath; updates in case of header conflicts. same as input filepath if `overwrite = true`.
 """
 function output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
-    filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.csv");
+    filepath::String=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.csv");
     overwrite::Bool = false, indices::Dict = default_output_indices,
     includeMissions::Union{AbstractVector,Colon,Bool,Integer} = false, 
     includeFlightPoints::Union{AbstractVector,Colon,Bool,Integer} = false,

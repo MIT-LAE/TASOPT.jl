@@ -22,12 +22,12 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_fuse_profile_drag.md"))
 ```
 
 ```@docs
-aerodynamics.axisol!(xnose,xend,xblend1,xblend2, Amax, 
+aerodynamics._axisymm_flow(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
 
-aerodynamics.blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,
+aerodynamics._BL_station_system(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,
                       hksep, x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -43,12 +43,12 @@ aerodynamics.blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uin
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
 
-aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+aerodynamics._axisymm_BL(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
-aerodynamics.blvar(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
+aerodynamics._BL_station_vars(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
-aerodynamics.fusebl!(fuse, parm, para, ip)
+aerodynamics.fuselage_drag!(fuse, parm, para, ip)
 ```
 
 ---
@@ -74,9 +74,9 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-aerodynamics.cditrp(para, wing, htail)
+aerodynamics.induced_drag!(para, wing, htail)
 
-aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
@@ -86,15 +86,15 @@ aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
 
 ## Wing and tail surfaces
 
-Lifting surface drag is determined via `surfcd` (when constant airfoil section `cdf` and `cdp` are already determined), and `surfcd2` (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
+Lifting surface drag is determined via [`wing_profiledrag_scaled`](@ref aerodynamics.wing_profiledrag_scaled) (when constant airfoil section `cdf` and `cdp` are already determined), and [`wing_profiledrag_direct`](@ref aerodynamics.wing_profiledrag_direct) (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
 
 ```@docs
-aerodynamics.surfcd2(wing, γt, γs,
+aerodynamics.wing_profiledrag_direct(wing, γt, γs,
             Mach, CL, CLhtail, 
             Reco, aRexp, kSuns, fexcd,
             fduo, fdus, fdut)
 
-aerodynamics.surfcd(S,
+aerodynamics.wing_profiledrag_scaled(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
@@ -157,7 +157,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.cdsum!(ac, imission, ip, computes_surfcd)
+aerodynamics.aircraft_drag!(ac, imission, ip, computes_wing_direct)
 ```
 ---
 
@@ -167,7 +167,7 @@ aerodynamics.cdsum!(ac, imission, ip, computes_surfcd)
 aerodynamics.cfturb
 ```
 ```@setup cfturb
-include("../../../src/aero/cdsum.jl")
+include("../../../src/aero/drag.jl")
 
 ```
 For example, the turbulent flat plate ``C_f`` for a ``Re`` of ``10e6`` can be calculated as follows:

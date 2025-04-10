@@ -18,7 +18,7 @@ import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
 export SaturatedMixture, tanksize!
 
 include(__TASOPTindices__)
-include("../data_structs/constants.jl")
+include("../utils/constants.jl")
 
 include("tankWmech.jl")
 include("tankWthermal.jl")

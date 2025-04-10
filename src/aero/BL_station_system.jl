@@ -1,7 +1,7 @@
 using StaticArrays
 
 """
-    blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv, hksep,
+    _BL_station_system(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv, hksep,
           x, b, rn, th, ds, ue,
           h , h_th, h_ds,
           hk, hk_th, hk_ds, hk_ue,
@@ -17,7 +17,7 @@ using StaticArrays
           cfm, cfm_thm, cfm_dsm, cfm_uem,
           dim, dim_thm, dim_dsm, dim_uem)
 
-Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`blax`](@ref).
+Computes Jacobian matrices for BL solution at an axial station. Called repeatedly by [`_axisymm_BL`](@ref). Formerly, `blsys!()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -50,7 +50,7 @@ Computes Jacobian matrices for BL solution at an axial station. Called repeatedl
 
 See Section 4 of [Simplified Viscous/Inviscid Analysis for Nearly-Axisymmetric Bodies](../assets/drela_TASOPT_2p16/axibl.pdf).
 """
-function blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,hksep,
+function _BL_station_system(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,hksep,
                       x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -295,14 +295,14 @@ function blsys(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,hk
 
       return aa, bb, rr
 
-end # blsys
+end # _BL_station_system
 
 
 
 """
-    blvar(is_selfsimilar, is_laminar, is_wake, Reyn, Mach, fexcr, x, θ, δs, ue)
+    _BL_station_vars(is_selfsimilar, is_laminar, is_wake, Reyn, Mach, fexcr, x, θ, δs, ue)
 
-Returns the boundary layer variables needed for solution.
+Returns the boundary layer variables needed for solution. Formerly, `blvar!()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -322,7 +322,7 @@ Returns the boundary layer variables needed for solution.
       - `cd::Float64`: Dissipation factor and their derivatives.
 
 """
-function blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
+function _BL_station_vars(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
       acon = 6.0
@@ -447,7 +447,7 @@ function blvar(is_selfsimilar,is_laminar,is_wake, Reyn,Mach, fexcr,
              cf, ∂cf_∂θ, ∂cf_∂δs, cf_ue,
              𝒟ᵢ, ∂𝒟ᵢ_∂θ, ∂𝒟ᵢ_∂δs, 𝒟ᵢ_ue 
     
-      end # blvar
+      end # _BL_station_vars
 
 
 

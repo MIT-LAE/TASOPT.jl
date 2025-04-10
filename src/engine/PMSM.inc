@@ -1,3 +1,6 @@
+# WARNING: this file format is deprecated for TASOPT.jl (no turboelectric par array support)
+# File is retained in case it's useful for future TE development
+
 # ------------- MOTOR ----------------
 # Parameters for the Turbo-electric propulsion system
 parmot = zeros(Float64, ite_total)

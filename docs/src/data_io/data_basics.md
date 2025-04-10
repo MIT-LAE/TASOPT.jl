@@ -1,6 +1,6 @@
-# Data structure basics
+# [Data structure basics](@id datastructs_basics) 
 
-Performance and design data is held largely in the `par` arrays (a holdover from FORTRAN TASOPT) along with a growing body of `struct`s to represent cohesive components and systems. An `aircraft` struct wraps these arrays, `struct`s, and auxiliary information.
+Performance and design data is held largely in the `par` arrays (a holdover from FORTRAN TASOPT) along with a growing body of `struct`s to represent cohesive components and systems. An `aircraft` `struct` wraps these arrays, `struct`s, and auxiliary information.
 
 !!! compat "Future Changes"
     We don't like this hybrid approach either. It's the legacy of Fortran.
@@ -57,8 +57,8 @@ can be included via the convenience variable `__TASOPTindices__`
 
 
 
-## `aircraft` struct
+## `aircraft` `struct`
 
-An `aircraft` is composed of `par` array fields, title and description fields, and a `is_sized` flag to indicate its status. An optional `fuse_tank` field is present as a trial for future struct-based development. All fields are dot-accessible and array elements can be changed (e.g., `ac.parg[igS] = 20`), though the struct itself is not mutable.
+An `aircraft` is composed of `par` array fields, title and description fields, and a `is_sized` flag to indicate its status. An optional `fuse_tank` field is present as a trial for future `struct`-based development. All fields are dot-accessible and array elements can be changed (e.g., `ac.parg[igS] = 20`), though the `struct` itself is not mutable.
 
-Refer to the [struct reference page](@ref datastructs) for add'l details.
+Refer to the [`struct` reference page](@ref datastructs) for add'l details.

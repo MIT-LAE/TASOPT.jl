@@ -5,16 +5,17 @@ $TYPEDEF
 
 Stores all the non-dimensional parameters 
 in the normal-plane cross section of the wing (mainly related to the spar-box)
-Cross-section of wing box:                                                                                                            
-                  ┌──────────────────────────────────────┐        
-               ┌──┘               ▲                      └──┐     
-           ▲┌──┘                  │                         └──┐  
- web height ││               spar box height                  ││  
-           ▼└──┐                  │                         ┌──┘  
-               └──┐               ▼                      ┌──┘     
-                  └──────────────────────────────────────┘        
-             ◄───────────────── box width ──────────────────────►   
-   ◄───────────────────────────── c⟂ ──────────────────────────────────►       
+Cross-section of wing box:          
+
+                    ┌──────────────────────────────────────┐        
+                ┌──┘               ▲                      └──┐     
+            ▲┌──┘                  │                         └──┐  
+    web height ││               spar box height                  ││  
+            ▼└──┐                  │                         ┌──┘  
+                └──┐               ▼                      ┌──┘     
+                    └──────────────────────────────────────┘        
+                ◄───────────────── box width ──────────────────────►   
+    ◄───────────────────────────── c⟂ ──────────────────────────────────►       
 
 $TYPEDFIELDS
 """
@@ -146,7 +147,7 @@ end  # function normalized_chord
     get_average_sparbox_heights(section::WingCrossSection) -> (h̄_avg, h̄_rms)
 
 Calculates the average and root mean square (RMS) heights of a spar box for a given wing section layout.
-These are used in [`get_wing_weights`](@ref) for further calculations
+These are used in [`wing_weights!`](@ref) for further calculations
 """
 function get_average_sparbox_heights(section::WingCrossSection)
     A = 1 - section.web_to_box_height

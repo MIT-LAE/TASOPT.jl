@@ -36,14 +36,16 @@ end
 """
 $TYPEDEF
 
-Wing Structure:
-    Divided into 6 modules
-    1. General Properties
-    2. Wing Layout
-    3. Material
-    4. Wing Sections
-    5. Strut
-    6. Weight Fractions
+The Wing structure is composed of 6 sub-structures as follow and are visualized [here](../assets/wing_struct.png).
+
+1. General Properties
+2. Wing Layout
+3. Material
+4. Wing Sections
+5. Strut
+6. Weight Fractions
+
+See [`structures.WingSection`](@ref), [`structures.WingLayout`](@ref) or [`structures.WingCrossSection`](@ref) for more detail.
 
 $TYPEDFIELDS
 """

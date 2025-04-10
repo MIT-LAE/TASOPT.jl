@@ -1,9 +1,9 @@
 
 """
-      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
 Computes the aircraft's center of gravity (`xCG`), center of pressure (`xCP`), and neutral point (`xNP`) based on payload, fuel distribution, and trim adjustments.
-Makes one of three (or none) changes to achieve pitch trim.
+Makes one of three (or none) changes to achieve pitch trim. Formerly, `balance()`.
 
 **Description**
 This routine performs a CG and stability analysis for a given aircraft configuration. It calculates the **total weight and moment** by accounting for:
@@ -38,13 +38,13 @@ The routine computes the **neutral point (`xNP`), indicating the aircraft's long
       - `para[iaxNP]` : Computed neutral point (`xNP`).
 
 **Notes**
-- Uses [`cglpay()`](@ref TASOPT.cglpay) to compute CG limits (`xcgF`, `xcgB`).
+- Uses [`CG_limits()`](@ref TASOPT.CG_limits) to compute CG limits (`xcgF`, `xcgB`).
 - Uses [`cabin_centroid()`](@ref TASOPT.cabin_centroid) to determine cabin location.
 - If there is fuel in the wings (`ac.options.has_wing_fuel`), it does not shift between CG cases.
 - `xNP` is affected by engine placement (`xengcp`), aerodynamics (`CMw1`, `CMh1`), and fuel distribution.
 
 """
-function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       #Unpack aircraft
       parg, _, para, _, options, fuse, fuse_tank, wing, htail, vtail, _, landing_gear = unpack_ac(ac, imission, ip = ip)
 
@@ -80,7 +80,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       xwbox = wing.layout.box_x
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = CG_limits(ac)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = wing.layout.x - wing.layout.box_x
@@ -269,7 +269,7 @@ function balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
       para[iaxNP] = xNP
 
       return
-end # balance
+end # balance_aircraft!
 
 """
     size_htail(ac, paraF, paraB, paraC)
@@ -283,7 +283,7 @@ This routine iteratively adjusts:
 - Wing box location (`xwbox`): Maintaining static and dynamic stability.
 
 The routine considers:
-- Max and min CG locations** (`xcgF`, `xcgB`) computed using `cglpay(ac)`.
+- Max and min CG locations** (`xcgF`, `xcgB`) computed using `CG_limits(ac)`.
 - Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
 - Static margin constraints (`SM`).
 - Fuel and payload distribution effects.
@@ -329,7 +329,7 @@ function size_htail(ac, paraF, paraB, paraC)
       cosL = cosd(sweep)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = cglpay(ac)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = CG_limits(ac)
 
       rpayC = 1.0
 
@@ -680,11 +680,11 @@ function size_htail(ac, paraF, paraB, paraC)
 end # size_htail
 
 """
-    cglpay(ac)
+    CG_limits(ac)
 
 Computes the most forward (`xcgF`) and most rearward (`xcgB`) 
 enter of gravity (CG) locations based on payload extremes,
-along with the corresponding payload fractions.
+along with the corresponding payload fractions. Formerly, `cglpay()`.
 
 ## Description
 This function determines the CG shift due to varying passenger and fuel load configurations.
@@ -707,7 +707,7 @@ This function determines the CG shift due to varying passenger and fuel load con
     - `xcgB` : Most rearward CG location.
 
 """
-function cglpay(ac)
+function CG_limits(ac)
       parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
@@ -837,7 +837,7 @@ function cglpay(ac)
       #      xcgB = xcg[2]
 
       return rf[1], rf[2], rpay[1], rpay[2], xcg[1], xcg[2]
-end # cglpay
+end # CG_limits
 
 
 

@@ -1,8 +1,17 @@
-
+#TODO: make this work with new structs or delete
 """
 cost_est estimates the program and airframe cost for the aircraft
 aircraft cost model developed from DAPCA IV, as found in Raymer's
 Aircraft Design (2006)
+
+!!! warning "Unused and Unvetted"
+    This legacy function is not used elsewhere in the code but has been
+    retained for reference and in case we decide to update it in the future.
+    Note that (i) it has not been updated to work with the new `struct`s, (ii) it refers to 
+    turboelectric aircraft parameters that have been removed from the model, (iii) it
+    has not been vetted recently, and (iv) it is not endorsed by the current dev team. 
+
+    Read the references before adapting it!
 
 Inputs:
 parg[,] geometric parameters
@@ -14,6 +23,14 @@ cost    total program cost estimate [all \$ in USD 2020]
 
 """
 function CostEst(pari, parg, pare, parm, parpt, prod_Q)
+
+    @warn "This legacy function is not used elsewhere in the code but has been
+    retained for reference and in case we decide to update it in the future.
+    Note that (i) it has not been updated to work with the new `struct`s, (ii) it refers to 
+    turboelectric aircraft parameters that have been removed from the model, (iii) it
+    has not been vetted recently, and (iv) it is not endorsed by the current dev team. 
+
+    Read the references before adapting it!"
 
     conv_dev, conv_prod, conv_prop = CostVal(prod_Q) #737 MAX9 baseline - no longer used
 

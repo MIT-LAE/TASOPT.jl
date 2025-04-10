@@ -13,7 +13,7 @@ Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord r
     - `fname::String`: Path to file.
 
     **Outputs:**
-    - `airf::TASOPT.aerodynamics.airfoil`: struct with airfoil performance characteristics.
+    - `airf::TASOPT.aerodynamics.airfoil`: `struct` with airfoil performance characteristics.
 
 """
 function airtable(fname)
