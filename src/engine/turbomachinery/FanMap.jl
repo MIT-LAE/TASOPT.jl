@@ -1,6 +1,9 @@
 #-----------------------------
 # pyCycle Fan Map Data
 #-----------------------------
+#Notice: the data is sourced from pyCycle: https://github.com/OpenMDAO/pyCycle
+#The original map can be found in pycycle/maps/Fan_map.py
+
 # Defaults
 default_Nc = 0.99
 default_Rline = 2.20 

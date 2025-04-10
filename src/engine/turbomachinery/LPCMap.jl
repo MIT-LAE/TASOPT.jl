@@ -1,6 +1,9 @@
 #-----------------------------
 # pyCycle LPC Map Data
 #-----------------------------
+#Notice: the data is sourced from pyCycle: https://github.com/OpenMDAO/pyCycle
+#The original map can be found in pycycle/maps/LPC_map.py
+
 # Defaults
 default_Nc = 1.0
 default_Rline = 2.150

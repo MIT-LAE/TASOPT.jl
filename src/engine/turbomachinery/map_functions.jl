@@ -1,6 +1,16 @@
 using Interpolations, NLsolve
-#using BenchmarkTools
 
+"""
+    MapDefaults
+
+Holds the default reference conditions for a compressor map, used for scaling and normalization.
+
+!!! details "💾 Fields"
+    - `Nc::Float64`: normalized speed at design point.
+    - `Rline::Float64`: R-line value at design point.
+    - `Wc::Float64`: corrected mass flow at design point.
+    - `PR::Float64`: pressure ratio at design point.
+"""
 struct MapDefaults
     Nc::Float64
     Rline::Float64
@@ -8,6 +18,24 @@ struct MapDefaults
     PR::Float64 
 end
 
+"""
+    CompressorMap
+
+Contains all the map data and interpolations needed to compute compressor performance, including design defaults,
+interpolated surfaces, and extrapolated lookup tables.
+
+!!! details "💾 Fields"
+    - `defaults::MapDefaults`: reference design conditions for scaling.
+    - `RlineMap::Vector{Float64}`: grid of R-line values.
+    - `NcMap::Vector{Float64}`: grid of normalized speeds.
+    - `WcMap::Matrix{Float64}`: corrected mass flow values.
+    - `PRMap::Matrix{Float64}`: pressure ratio values.
+    - `effMap::Matrix{Float64}`: isentropic efficiency values.
+    - `polyeffMap::Matrix{Float64}`: polytropic efficiency values.
+    - `itp_Wc::GriddedInterpolation`: interpolant for `Wc(N, R)`.
+    - `itp_PR::GriddedInterpolation`: interpolant for `PR(N, R)`.
+    - `itp_polyeff::GriddedInterpolation`: interpolant for polytropic efficiency.
+"""
 struct CompressorMap
     defaults::MapDefaults
     RlineMap::Vector{Float64}
@@ -21,13 +49,52 @@ struct CompressorMap
     itp_polyeff::Interpolations.GriddedInterpolation{Float64, 2, Matrix{Float64}, Gridded{Linear{Throw{OnGrid}}}, Tuple{Vector{Float64}, Vector{Float64}}}
 end
 
+"""
+    poly_efficiency_map_from_isentropic(effMap, PRMap)
+
+Computes the polytropic efficiency map from an isentropic efficiency map and pressure ratio map.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `effMap::Matrix{Float64}`: isentropic efficiency at each point in the map.
+    - `PRMap::Matrix{Float64}`: pressure ratio at each point in the map.
+
+    **Outputs:**
+    - `polyeff_Map::Matrix{Float64}`: computed polytropic efficiency at each point.
+
+!!! note
+    Uses γ = 1.4. NaNs are replaced with 0.0 in the output map.
+"""
 function poly_efficiency_map_from_isentropic(effMap, PRMap)
     γ = 1.4
     polyeff_Map = (γ - 1)/γ * log.(PRMap) ./ log.((PRMap.^((γ-1)/γ) .- 1.0) ./ effMap .+ 1)
-    polyeff_Map[isnan.(polyeff_Map)] .=0.0 #Replace NaN values with 0.0
+    polyeff_Map[isnan.(polyeff_Map)] .= 0.0 #Replace NaN values with 0.0
     return polyeff_Map
 end
 
+"""
+    find_NR_inverse_with_derivatives(itp_Wc, itp_PR, Wc_target, PR_target; Ng=0.5, Rg=2.0)
+
+Finds the normalized speed `N` and R-line `R` corresponding to a target corrected mass flow `Wc_target` and pressure ratio `PR_target`,
+using a nonlinear solver with Jacobian information from interpolation gradients.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `itp_Wc::GriddedInterpolation`: interpolation of corrected mass flow over (N, R).
+    - `itp_PR::GriddedInterpolation`: interpolation of pressure ratio over (N, R).
+    - `Wc_target::Float64`: target corrected mass flow.
+    - `PR_target::Float64`: target pressure ratio.
+    - `Ng::Float64`: initial guess for normalized speed (optional).
+    - `Rg::Float64`: initial guess for R-line (optional).
+
+    **Outputs:**
+    - `N::Float64`: normalized speed at the matched point.
+    - `R::Float64`: R-line value at the matched point.
+    - `dN_dw::Float64`: ∂N/∂Wc
+    - `dN_dpr::Float64`: ∂N/∂PR
+    - `dR_dw::Float64`: ∂R/∂Wc
+    - `dR_dpr::Float64`: ∂R/∂PR
+"""
 function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpolation, itp_PR::Interpolations.GriddedInterpolation, 
                                     Wc_target::Float64, PR_target::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
 
@@ -79,6 +146,32 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     return N_found, R_found, dN_dw, dN_dpr, dR_dw, dR_dpr
 end
 
+"""
+    calculate_compressor_speed_and_efficiency(map, pratio, mb, piD, mbD, NbD; Ng=0.5, Rg=2.0)
+
+Calculates corrected speed and polytropic efficiency for a compressor, along with derivatives to pressure ratio and mass flow.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `map::CompressorMap`: structure containing the compressor map and interpolations.
+    - `pratio::Float64`: compressor pressure ratio.
+    - `mb::Float64`: current mass flow rate.
+    - `piD::Float64`: design pressure ratio.
+    - `mbD::Float64`: design mass flow rate.
+    - `NbD::Float64`: design rotational speed.
+    - `Ng::Float64`: initial guess for normalized speed (optional).
+    - `Rg::Float64`: initial guess for R-line (optional).
+
+    **Outputs:**
+    - `Nb::Float64`: corrected compressor speed.
+    - `epol::Float64`: polytropic efficiency.
+    - `dNb_dpi::Float64`: derivative of corrected speed w.r.t. `piD`.
+    - `dNb_dmb::Float64`: derivative of corrected speed w.r.t. `mb`.
+    - `depol_dpi::Float64`: derivative of efficiency w.r.t. `piD`.
+    - `depol_dmb::Float64`: derivative of efficiency w.r.t. `mb`.
+    - `N::Float64`: matched normalized speed.
+    - `R::Float64`: matched R-line.
+"""
 function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::Float64, mb::Float64, piD::Float64, 
                                                     mbD::Float64, NbD::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
     Wc = mb/mbD * map.defaults.Wc
@@ -106,29 +199,59 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     return Nb, epol, dNb_dpi, dNb_dmb, depol_dpi, depol_dmb, N, R
 end
 
+"""
+    create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
+
+Creates extended 2D interpolants for compressor map data, with extrapolation buffers to avoid interpolation edge errors.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `NcMap::Vector{Float64}`: normalized speed grid.
+    - `RlineMap::Vector{Float64}`: R-line grid.
+    - `WcMap::Matrix{Float64}`: corrected mass flow data.
+    - `PRMap::Matrix{Float64}`: pressure ratio data.
+    - `polyeff_Map::Matrix{Float64}`: polytropic efficiency data.
+
+    **Outputs:**
+    - `itp_Wc`: interpolated `Wc(N, R)` map.
+    - `itp_PR`: interpolated `PR(N, R)` map.
+    - `itp_polyeff`: interpolated polytropic efficiency map.
+"""
 function create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
+    # Extend the Rline and Nc axes with padding values
     mRlineMap = [0; RlineMap; 4]
     mNcMap = [0; NcMap; 4]
-    Wcmax = 2*maximum(WcMap)
+
+    # Determine a max value for extrapolated Wc
+    Wcmax = 2 * maximum(WcMap)
+
+    # Pad Wc map along Rline (left = zeros, right = slightly above max Rline)
     lowRWc = zeros(size(WcMap)[1])
-    highRWc = 1.01*WcMap[:,end]
+    highRWc = 1.01 * WcMap[:, end]
     mWcMap = [lowRWc WcMap highRWc]
 
+    # Pad Wc map along Nc (top = zeros, bottom = Wcmax)
     lowNWc = zeros(1, size(mWcMap)[2])
     highNWc = Wcmax * ones(1, size(mWcMap)[2])
     mWcMap = vcat(lowNWc, mWcMap, highNWc)
-    mWcMap[end,1] = 0.0
 
-    PRmax = 2*maximum(PRMap)
-    lowRPR = 1.01*PRMap[:,1]
-    highRPR = ones(size(PRMap)[1])
+    # Ensure bottom-left corner is 0 to avoid NaNs
+    mWcMap[end, 1] = 0.0
+
+    # Extend PR map similarly
+    PRmax = 2 * maximum(PRMap)
+    lowRPR = 1.01 * PRMap[:, 1]                   # Slightly extrapolate on the left
+    highRPR = ones(size(PRMap)[1])                # Constant 1.0 padding on the right
     mPRMap = [lowRPR PRMap highRPR]
 
-    lowNPR = ones(1, size(mPRMap)[2])
-    highNPR = PRmax * ones(1, size(mPRMap)[2])
+    lowNPR = ones(1, size(mPRMap)[2])             # 1.0 padding on top
+    highNPR = PRmax * ones(1, size(mPRMap)[2])    # max value padding on bottom
     mPRMap = vcat(lowNPR, mPRMap, highNPR)
-    mPRMap[end,end] = 1.0
 
+    # Ensure bottom-right corner is 1.0 for robustness
+    mPRMap[end, end] = 1.0
+
+    # Pad efficiency map with zeros
     lowReff = zeros(size(polyeff_Map)[1])
     highReff = zeros(size(polyeff_Map)[1])
     mpolyeff_Map = [lowReff polyeff_Map highReff]
@@ -137,6 +260,7 @@ function create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
     highNeff = zeros(1, size(mpolyeff_Map)[2])
     mpolyeff_Map = vcat(lowNeff, mpolyeff_Map, highNeff)
 
+    # Create linear interpolants over the extended grids
     itp_Wc = interpolate((mNcMap, mRlineMap), mWcMap, Gridded(Linear()))
     itp_PR = interpolate((mNcMap, mRlineMap), mPRMap, Gridded(Linear()))
     itp_polyeff = interpolate((mNcMap, mRlineMap), mpolyeff_Map, Gridded(Linear()))

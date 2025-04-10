@@ -1,6 +1,9 @@
 #-----------------------------
 # pyCycle HPC Map Data
 #-----------------------------
+#Notice: the data is sourced from pyCycle: https://github.com/OpenMDAO/pyCycle
+#The original map can be found in pycycle/maps/HPC_map.py
+
 # Defaults
 default_Nc = 0.976
 default_Rline = 2.050
