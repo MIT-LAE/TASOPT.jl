@@ -36,11 +36,3 @@ const Cmaph = [1.61159761,  3.01716623, 0.0115221233,  1.11644367, -0.248346891,
 #----------Turbine maps----------
 const Tmapl = [0.15, 0.15]
 const Tmaph = [0.15, 0.15]
-
-# Wcobj = 800.0
-# PRobj = 1.7
-
-# (x, y, dx_dw, dx_dz, dy_dw, dy_dz) = find_NR_inverse_with_derivatives(FanMap.itp_Wc, FanMap.itp_PR, Wcobj, PRobj)
-
-#@benchmark find_NR_inverse_with_derivatives(FanMap.itp_Wc, FanMap.itp_PR, Wcobj, PRobj)
-#@benchmark TASOPT.engine.Ncmap(PRobj, Wcobj, 1.8, 900, 1, TASOPT.engine.Cmapf)

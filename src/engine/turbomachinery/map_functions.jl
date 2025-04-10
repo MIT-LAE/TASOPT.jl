@@ -58,6 +58,10 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     # Solve the system of equations using root finding (non-linear solver)
     sol = nlsolve(residuals!, jacobian!, [Ng, Rg], factor = 0.5, iterations = 100)
 
+    if ~converged(sol) #Try again from a different initial guess if the first one fails
+        sol = nlsolve(residuals!, jacobian!, [0.5, 2.0], factor = 0.1, iterations = 100)
+    end
+
     # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
     N_found, R_found = sol.zero
 
@@ -78,7 +82,8 @@ end
 function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::Float64, mb::Float64, piD::Float64, 
                                                     mbD::Float64, NbD::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
     Wc = mb/mbD * map.defaults.Wc
-    PR = pratio/piD * map.defaults.PR
+    PR = 1.0 + (pratio-1.0)/(piD-1.0) * (map.defaults.PR-1.0)
+    dPR_dpi = (map.defaults.PR-1.0)/(piD-1.0)
 
     #Calculate speed and Rline for the map
     N, R, dN_dw, dN_dpr, dR_dw, dR_dpr = find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, Wc, PR, Ng = Ng, Rg = Rg)
@@ -86,7 +91,7 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     #Compute corrected speed and derivatives
     Nb = N * NbD/map.defaults.Nc
     dNb_dmb = dN_dw * map.defaults.Wc/mbD * NbD/map.defaults.Nc
-    dNb_dpi = dN_dpr * map.defaults.PR/piD * NbD/map.defaults.Nc
+    dNb_dpi = dN_dpr * dPR_dpi * NbD/map.defaults.Nc
 
     #Compute efficiency and derivatives
     epol = map.itp_polyeff(N, R)
@@ -97,7 +102,7 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     depol_dpr = depol_dN * dN_dpr + depol_dR * dR_dpr
 
     depol_dmb = depol_dw * map.defaults.Wc/mbD
-    depol_dpi = depol_dpr * map.defaults.PR/piD
+    depol_dpi = depol_dpr * dPR_dpi
     return Nb, epol, dNb_dpi, dNb_dmb, depol_dpi, depol_dmb, N, R
 end
 
