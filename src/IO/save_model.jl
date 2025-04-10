@@ -3,7 +3,7 @@ export save_aircraft_model
 
 """
     save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
-    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
     save_output::Bool=false)
 
 Converts an aircraft model into a dictionary and writes 
@@ -28,7 +28,7 @@ except for some aero parameters where other points are more relevant (e.g., "Cru
     from the default functionality. Thorough knowledge of the model is required.
 """
 function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
-    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
     save_output::Bool=false)
 
     #unpack aircraft struct
