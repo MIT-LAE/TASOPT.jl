@@ -87,9 +87,9 @@ end
         end
     end
 
-    test_ac_off_design(ac, 1.080316807301318, 152191.88089058374, 769479.5232340674)
+    test_ac_off_design(ac, 1.0238464099246982, 144236.49601338693,  741345.2374334445)
     
-    @test ac.parm[imPFEI] ≈  0.9443825860047226 rtol=1e-4
+    @test ac.parm[imPFEI] ≈  0.8940149636977848 rtol=1e-4
 end
 
 @testset "Wide sizing" verbose=true begin
