@@ -7,10 +7,11 @@ Aircraft Design (2006)
 !!! warning "Unused and Unvetted"
     This legacy function is not used elsewhere in the code but has been
     retained for reference and in case we decide to update it in the future.
-    Note that it has not been updated to work with the new `struct`s, that it
-    has not been vetted, and is not endorsed by the current dev team. 
+    Note that (i) it has not been updated to work with the new `struct`s, (ii) it refers to 
+    turboelectric aircraft parameters that have been removed from the model, (iii) it
+    has not been vetted recently, and (iv) it is not endorsed by the current dev team. 
 
-    Read the reference before using it!
+    Read the references before adapting it!
 
 Inputs:
 parg[,] geometric parameters
@@ -25,11 +26,11 @@ function CostEst(pari, parg, pare, parm, parpt, prod_Q)
 
     @warn "This legacy function is not used elsewhere in the code but has been
     retained for reference and in case we decide to update it in the future.
-    Note that it has not been updated to work with the new `struct`s, that it refers to 
-    turboelectric aircraft parameters that have been removed from the model, that it
-    has not been vetted, and is not endorsed by the current dev team. 
+    Note that (i) it has not been updated to work with the new `struct`s, (ii) it refers to 
+    turboelectric aircraft parameters that have been removed from the model, (iii) it
+    has not been vetted recently, and (iv) it is not endorsed by the current dev team. 
 
-    Read the reference before using it!"
+    Read the references before adapting it!"
 
     conv_dev, conv_prod, conv_prop = CostVal(prod_Q) #737 MAX9 baseline - no longer used
 
