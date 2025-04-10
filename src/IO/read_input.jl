@@ -172,12 +172,10 @@ fuselage.cabin.exit_limit = exitlimit
 options = read_input("Options", data, default)
 doptions = default["Options"]
 
-pari[iiopt] = read_input("optimize", options, doptions)
-
-propsys = read_input("prop_sys_arch", options, doptions) #Overall propulsive architecture
-pari[iicalctakeoff] = 1 #True by default
-
+# these are used later
+propsys = read_input("prop_sys_arch", options, doptions)
 engloc = read_input("engine_location", options, doptions)
+calculate_takeoff = true #true by default
 
 #throw error if engloc isn't a string indicating a supported location
 if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
@@ -800,74 +798,11 @@ readstruct(x) = read_input(x, structures, dstructures)
 # Propulsion systems
 # ---------------------------------
 
-#---------- Engine models --------------
-#Engine weight model
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
-
 readprop(x) = read_input(x, prop, dprop)
-    parg[igneng] = readprop("number_of_engines")
 
-weight = readprop("Weight")
-dweight = dprop["Weight"]
-    parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
-    parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
-    TF_wmodel = read_input("weight_model", weight, dweight)
-    if lowercase(TF_wmodel) == "md"
-        pari[iiengwgt] = 0
-        engineweightname = "md"
-        engineweight! = tfweightwrap!
-    elseif lowercase(TF_wmodel) == "basic"
-        pari[iiengwgt] = 1
-        engineweightname = "basic"
-        engineweight! = tfweightwrap!
-    elseif lowercase(TF_wmodel) == "advanced"
-        pari[iiengwgt] = 2
-        engineweightname = "advanced"
-        engineweight! = tfweightwrap!
-    elseif lowercase(TF_wmodel) == "fractional_weight"
-        parg[igfeng] = read_input("engine_weight_fraction", weight, dweight)
-        engineweightname = "fractional_weight"
-        engineweight! = TASOPT.engine.fractional_engine_weight!
-    elseif lowercase(TF_wmodel) == "constant_weight"
-        eng_weight = Force(read_input("engine_weight_total", weight, dweight))
-        engineweightname = "constant_weight"
-        function constant_engine_weight(ac)
-            ac.parg[igWeng] = eng_weight
-        end
-        engineweight! = constant_engine_weight
-    else
-        error("\"$TF_wmodel\" engine weight model was specifed. 
-        Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
-    end
-
-#Engine performance model
-if lowercase(propsys) == "tf"
-    pari[iiengtype] = 1
-    modelname = "turbofan_md"
-    enginecalc! = tfwrap!
-
-    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
-    
-elseif lowercase(propsys) == "constant_tsfc"
-    pari[iiengtype] = 1
-    modelname = "constant_TSFC"
-    enginecalc! = TASOPT.engine.constant_TSFC_engine!
-    
-    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!)
-    
-    pari[iicalctakeoff] = 0 #Engine model cannot be used for takeoff
-
-elseif lowercase(propsys) == "te"
-    pari[iiengtype] = 0
-else
-    
-    error("Propulsion system \"$propsys\" specified. Choose between
-    > TF - turbo-fan
-    > TE - turbo-electric" )
-end
-
-engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
+parg[igneng] = readprop("number_of_engines")
 
 if lowercase(propsys) != "constant_tsfc"
     parg[igTmetal] = Temp.(readprop("T_max_metal"))
@@ -1057,6 +992,18 @@ readfnoz(x) = read_input(x, fannoz, dfannoz)
     pare[ieA7fac, iptest, :] .= A7static
     pare[ieA5fac, iptest, :] .= A5static
 
+else #For constant TSFC model
+    ROCdes = readprop("rate_of_climb")
+    if ROCdes isa AbstractVector
+        para[iaROCdes,ipclimb1:ipclimbn,:] .= [Speed(x) for x in ROCdes]
+    else
+        para[iaROCdes,ipclimb1:ipclimbn,:] .= Speed(ROCdes)
+    end
+    pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
+    pare[ieTSFC,ipcruise1:ipcruise2,:] .= readprop("cruise_TSFC")
+    pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
+end
+
 nac = readprop("Nacelles")
 dnac = dprop["Nacelles"]
     #- nacelle drag stuff
@@ -1069,13 +1016,26 @@ dweight = dprop["Weight"]
     parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
     
     #read/check engine weight model options
+    TF_wmodel = read_input("weight_model", weight, dweight)
     if compare_strings(propsys, "tf")
     #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
-        TF_wmodel = read_input("weight_model", weight, dweight)
+        engineweightname = TF_wmodel
+        engineweight! = tfweightwrap!
         if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
             error("\"$TF_wmodel\" engine weight model was specifed. 
             Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
         end
+    elseif compare_strings(TF_wmodel, "fractional_weight")
+        parg[igfeng] = read_input("engine_weight_fraction", weight, dweight)
+        engineweightname = "fractional_weight"
+        engineweight! = TASOPT.engine.fractional_engine_weight!
+    elseif compare_strings(TF_wmodel, "constant_weight")
+        eng_weight = Force(read_input("engine_weight_total", weight, dweight))
+        engineweightname = "constant_weight"
+        function constant_engine_weight(ac)
+            ac.parg[igWeng] = eng_weight
+        end
+        engineweight! = constant_engine_weight
     elseif compare_strings(propsys, "te")
         @warn("Propulsion weight models for turboelectric are currently not available.")
     end
@@ -1084,14 +1044,19 @@ dweight = dprop["Weight"]
 if compare_strings(propsys,"tf")
     modelname = "turbofan_md"
     enginecalc! = tfwrap!
-    engineweightname = TF_wmodel
-    engineweight! = tfweightwrap!
+
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
 
 elseif compare_strings(propsys, "te")
     nothing
     #TODO: decide if turboelectric stuff still works, if we'll fix it, or if we'll remove all references
+elseif lowercase(propsys) == "constant_tsfc"
+    modelname = "constant_TSFC"
+    enginecalc! = TASOPT.engine.constant_TSFC_engine!
+    
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, false)
+    calculate_takeoff = false #Engine model cannot be used for takeoff
 else
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
@@ -1100,18 +1065,6 @@ end
     
 engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
 
-    
-else #For constant TSFC model
-    ROCdes = readprop("rate_of_climb")
-    if ROCdes isa AbstractVector
-        para[iaROCdes,ipclimb1:ipclimbn,:] .= [Speed(x) for x in ROCdes]
-    else
-        para[iaROCdes,ipclimb1:ipclimbn,:] .= Speed(ROCdes)
-    end
-    pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
-    pare[ieTSFC,ipcruise1:ipcruise2,:] .= readprop("cruise_TSFC")
-    pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
-end
 # Heat exchangers
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
@@ -1146,6 +1099,7 @@ dHEx = dprop["HeatExchangers"]
         
         opt_engine_location = engloc,
         opt_prop_sys_arch = propsys,
+        calculate_takeoff = calculate_takeoff,
         
         is_doubledecker = is_doubledecker,
 

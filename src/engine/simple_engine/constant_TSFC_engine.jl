@@ -17,7 +17,7 @@ the thrust specific fuel consumption (TSFC) of the engine, which is an input.
 """
 function constant_TSFC_engine!(ac, d1, imission::Int64, ip::Int64, d2, d3 = 0)
     #Unpack data storage arrays
-    pari, parg, _, para, pare, _, _, wing, _, _, _ = unpack_ac(ac, imission, ip = ip)
+    parg, _, para, pare, _, _, _, wing, _, _, _, _ = unpack_ac(ac, imission, ip = ip)
     TSFC = pare[ieTSFC] #Extract TSFC at this mission point
     neng = parg[igneng]
 

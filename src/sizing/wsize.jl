@@ -535,7 +535,7 @@ function wsize(ac; itermax=35,
         if compare_strings(options.opt_engine_location,"wing")
             if compare_strings(options.opt_prop_sys_arch,"te")
                 @error "Support for turboelectric architectures is not currently supported. Their reintroduction with `struct`s is on the roadmap."
-            elseif compare_strings(options.opt_prop_sys_arch,"tf")
+            elseif compare_strings(options.opt_prop_sys_arch,"tf") || compare_strings(options.opt_prop_sys_arch,"constant_tsfc")
                 Weng1 = parg[igWeng] / parg[igneng]
             end
         else
@@ -865,7 +865,7 @@ function wsize(ac; itermax=35,
     case = "off_design"
     eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
-    if pari[iicalctakeoff] == 1 #If the engine can model the takeoff performance
+    if options.calculate_takeoff == true #If the engine can model the takeoff performance
         # calculate takeoff and balanced-field lengths
         takeoff!(ac, printTO = printiter)
     else

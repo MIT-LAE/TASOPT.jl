@@ -568,8 +568,8 @@
     weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
                                     #   "fitzgerald_basic": NF's new model with basic tech
                                     #     "fitzgerald_adv": NF's new model with advanced tech
-                              #"fractional_weight": simple model with constant weight fractions
-                              #"constant_weight": use the specified total engine weight
+                                    #  "fractional_weight": simple model with constant weight fractions
+                                    #    "constant_weight": use the specified total engine weight
     #Parameters for "fractional_weight" engine weight model
     engine_weight_fraction = 0.1 #Fraction of MTOW, includes accessories and pylon
 
