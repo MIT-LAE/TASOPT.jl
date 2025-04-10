@@ -1,11 +1,17 @@
 """
 `odperf!` runs the aircraft in off-design mode to generate a `BADA`-like 
 `PTF` file for use in `AEIC`.
+
+!!! compat "Future Changes"
+    This function will be overhauled and renamed in an upcoming revision. NPSS compatibility is not in the scope.
+
 """
 function odperf!(pari, parg, parm, para, pare, Wfrac, FL, 
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
     NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process)
+
+@warn "The function `odperf!` will be overhauled and renamed in an upcoming revision. NPSS compatibility is not in the scope."
 
 calc_ipc1 = true
 # ifirst = true
