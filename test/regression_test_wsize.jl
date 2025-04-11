@@ -87,9 +87,9 @@ end
         end
     end
 
-    test_ac_off_design(ac, 1.0238464099246982, 144236.49601338693,  741345.2374334445)
+    test_ac_off_design(ac, 1.0829112453508323, 152557.3777558931,  768788.1974680235)
     
-    @test ac.parm[imPFEI] ≈  0.8940149636977848 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.9457586115551097 rtol=1e-4
 end
 
 @testset "Wide sizing" verbose=true begin
@@ -102,7 +102,7 @@ end
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.1876205348559312 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.1903760871219906 rtol=1e-4
 
 end
 
@@ -115,7 +115,7 @@ end
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 0.8502640728539307 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.8483560953400366 rtol=1e-4
 
 end
 
@@ -128,6 +128,6 @@ end
 
     size_aircraft!(ac, iter=50; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.00309714275887 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.0065810019832429 rtol=1e-4
 
 end

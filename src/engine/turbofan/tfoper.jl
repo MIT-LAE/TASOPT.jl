@@ -10,7 +10,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       opt_calc_call,
       Ttf, ifuel, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9,
       epsl, epsh,
@@ -83,8 +82,6 @@ Turbofan operation routine
     - `ephc0`:   HPC max polytropic efficiency
     - `epht0`:   HPT max polytropic efficiency
     - `eplt0`:   LPT max polytropic efficiency
-    - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-    - `epfK`:    fan efficiency pif derivative
 
     - `mofft`:    mass flow offtake at LPC discharge station 2.5
     - `Pofft`:    low spool power offtake
@@ -165,7 +162,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       opt_calc_call,
       Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9,
       epsl, epsh,
@@ -190,7 +186,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       prod *= A2 * A25 * A5 * A7
       prod *= Ttf * ifuel * etab
       prod *= epf0 * eplc0 * ephc0 * epht0 * eplt0
-      prod *= pifK * epfK * mofft * Pofft * Tt9 * pt9 * epsl * epsh
+      prod *= mofft * Pofft * Tt9 * pt9 * epsl * epsh
       prod *= Mtexit * dTstrk * StA * efilm * tfilm
       prod *= M4a * ruc
       prod *= epsrow[1] * M2 * pif * pilc * pihc * mbf * mblc * mbhc * Tt4 * pt5 * mcore * M25

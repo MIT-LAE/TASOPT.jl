@@ -59,8 +59,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         epolht = pare[ieepolht]
         epollt = pare[ieepollt]
         etab = pare[ieetab]
-        pifK = pare[iepifK]
-        epfK = pare[ieepfK]
         M2 = pare[ieM2]
         M25 = pare[ieM25]
         M0 = pare[ieM0]
@@ -196,7 +194,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         pid, pib, pifn, pitn,
                         Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
-                        pifK, epfK,
                         mofft, Pofft,
                         Tt9, pt9, Tt4,
                         epsl, epsh,
@@ -413,7 +410,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         opt_calc_call,
                         Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
-                        pifK, epfK,
                         mofft, Pofft,
                         Tt9, pt9,
                         epsl, epsh,

@@ -5,7 +5,6 @@
       pid, pib, pifn, pitn,
       Ttf, ifuel, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9, Tt4,
       epsl, epsh,
@@ -55,8 +54,6 @@ The gas routines reside in the following source files:
     - `ephc0`:   HPC max polytropic efficiency
     - `epht0`:   HPT max polytropic efficiency
     - `eplt0`:   LPT max polytropic efficiency
-    - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-    - `epfK`:    fan efficiency pif derivative
       
     - `mofft`:    mass flow offtake at LPC discharge station 2.5
     - `Pofft`:    low spool power offtake
@@ -137,7 +134,6 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       pid, pib, pifn, pitn,
       Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9, Tt4,
       epsl, epsh,

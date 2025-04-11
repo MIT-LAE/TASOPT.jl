@@ -463,6 +463,9 @@
     fan_nozzle_PR  = 0.98
     core_nozzle_PR = 0.995
 
+    fan_eta_poly = 0.9
+    LPC_eta_poly = 0.89
+    HPC_eta_poly = 0.88
     HPT_eta_poly = 0.9
     LPT_eta_poly = 0.9
 
