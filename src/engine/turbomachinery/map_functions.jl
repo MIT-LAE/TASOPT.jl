@@ -177,7 +177,13 @@ Calculates corrected speed and polytropic efficiency for a compressor, along wit
 """
 function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::Float64, mb::Float64, piD::Float64, 
                                                     mbD::Float64, NbD::Float64, epol0::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
-    Wc = mb/mbD * map.defaults.Wc
+    #Cache conversions
+    dWc_dmb = map.defaults.Wc/mbD
+    dNb_dN = NbD/map.defaults.Nc
+    depol_dep = epol0 / map.defaults.polyeff
+    
+    #Calculate objective Wc and PR
+    Wc = mb * dWc_dmb
     PR = 1.0 + (pratio-1.0)/(piD-1.0) * (map.defaults.PR-1.0)
     dPR_dpi = (map.defaults.PR-1.0)/(piD-1.0)
 
@@ -185,24 +191,24 @@ function calculate_compressor_speed_and_efficiency(map::CompressorMap, pratio::F
     N, R, dN_dw, dN_dpr, dR_dw, dR_dpr = find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, Wc, PR, Ng = Ng, Rg = Rg)
 
     #Compute corrected speed and derivatives
-    Nb = N * NbD/map.defaults.Nc
-    dNb_dmb = dN_dw * map.defaults.Wc/mbD * NbD/map.defaults.Nc
-    dNb_dpi = dN_dpr * dPR_dpi * NbD/map.defaults.Nc
+    Nb = N * dNb_dN
+    dNb_dmb = dN_dw * dWc_dmb * dNb_dN
+    dNb_dpi = dN_dpr * dPR_dpi * dNb_dN
 
     #Compute efficiency and derivatives
     ep = map.itp_polyeff(N, R)
     dep_dN, dep_dR = Interpolations.gradient(map.itp_polyeff, N, R)
 
     #Rescale efficiency to design point
-    epol = ep * epol0 / map.defaults.polyeff
-    depol_dN = dep_dN * epol0 / map.defaults.polyeff
-    depol_dR = dep_dR * epol0 / map.defaults.polyeff
+    epol = ep * depol_dep
+    depol_dN = dep_dN * depol_dep
+    depol_dR = dep_dR * depol_dep
 
     #Convert to adjusted values
     depol_dw = depol_dN * dN_dw + depol_dR * dR_dw
     depol_dpr = depol_dN * dN_dpr + depol_dR * dR_dpr
 
-    depol_dmb = depol_dw * map.defaults.Wc/mbD
+    depol_dmb = depol_dw * dWc_dmb
     depol_dpi = depol_dpr * dPR_dpi
     return Nb, epol, dNb_dpi, dNb_dmb, depol_dpi, depol_dmb, N, R
 end
@@ -275,3 +281,13 @@ function create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
 
     return itp_Wc, itp_PR, itp_polyeff
 end
+
+# Function to compute interpolator gradients by finite differences; doesn't seem to 
+# make much of a difference
+# function interpolator_gradient(itp::Interpolations.GriddedInterpolation, x::Float64, y::Float64)
+#     eps = 1e-6
+#     # Compute the gradient using finite differences
+#     df_dx = (itp(x + eps, y) - itp(x - eps, y)) / (2*eps)
+#     df_dy = (itp(x, y + eps) - itp(x, y - eps)) / (2*eps)
+#     return df_dx, df_dy
+# end

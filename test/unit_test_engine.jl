@@ -625,10 +625,10 @@ isGradient = false
 
 
         @test etaf == 0.8539899545024271
-        @test etalc ==  0.829889518220728
-        @test etahc == 0.8384795893726746 
-        @test etaht ==  0.8978789812518548
-        @test etalt == 0.9191845671925584
+        @test etalc ==  0.8298895182207285
+        @test etahc == 0.8384795893726779
+        @test etaht ==  0.8978789812518558
+        @test etalt == 0.9191845671925591
         @test Tmrow[1] ≈ 1119.1584455133655  rtol = 1e-10
 
         if isGradient
@@ -1143,4 +1143,48 @@ isGradient = false
         @test Snace1 ≈ 24.374719583103083 rtol = 1e-10
 
     end
+
+    @testset "map_functions.jl" begin
+        #Check reverse interpolation function
+        map = TASOPT.engine.FanMap
+        Wc_target = 559.314
+        PR_target = 1.31
+        outps_NR = TASOPT.engine.find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, 
+            Wc_target, PR_target)
+        outp_NR_check = (0.7000000000000002, 1.799999999999995, 0.0002760733345430258, 0.6100706271038377, 0.00430742991535455, -2.9037427622059644)
+        
+        for (i,outp_NR) in enumerate(outps_NR)
+            @test outp_NR ≈ outps_NR[i]
+        end
+
+        #Check function to compute speed and efficiency
+        pratio = 1.6
+        mb = 0.8
+        piD = 1.7
+        mbD = 1.0
+        NbD = 1.0
+        ep0 = 0.9
+        outps_Ne = TASOPT.engine.calculate_compressor_speed_and_efficiency(map, pratio, mb, piD, mbD, NbD, ep0)
+        outps_Ne_check = (0.8826430459793184, 0.8251883153075635, 0.49351112427246263, -0.003692654225532323, -0.39245022849891215, 0.929263500483822, 0.8738166155195252, 1.4836439672220545)
+        
+        for (i,outp_Ne) in enumerate(outps_Ne)
+            @test outp_Ne ≈ outps_Ne_check[i]
+        end
+
+        #Use finite difference to validate derivatives of the maps
+        eps = 1e-6
+        outps_pi = TASOPT.engine.calculate_compressor_speed_and_efficiency(map, pratio + eps, mb, piD, mbD, NbD, ep0)
+        outps_mb = TASOPT.engine.calculate_compressor_speed_and_efficiency(map, pratio, mb + eps, piD, mbD, NbD, ep0)
+        
+        dN_dpi = (outps_pi[1] - outps_Ne[1])/eps
+        depol_dpi = (outps_pi[2] - outps_Ne[2])/eps
+
+        dN_dmb = (outps_mb[1] - outps_Ne[1])/eps
+        depol_dmb = (outps_mb[2] - outps_Ne[2])/eps
+
+        @test dN_dpi ≈ outps_Ne[3] rtol = 1e-4
+        @test dN_dmb ≈ outps_Ne[4] rtol = 1e-4
+        @test depol_dpi ≈ outps_Ne[5] rtol = 1e-4
+        @test depol_dmb ≈ outps_Ne[6] rtol = 1e-4
+    end 
 end
