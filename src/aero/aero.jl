@@ -61,7 +61,7 @@ include("axisymm_BL.jl")
 include("BL_station_system.jl")
 
 # Trefftz plane CDi calcs
-include("trefftz.jl")
+include("induced_drag.jl")
 
 # Total CD calculations 
 include("drag.jl")
