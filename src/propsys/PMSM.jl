@@ -338,7 +338,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
         slot_resistance(motor.windings, windings.kpf * motor.A_slot, motor.l + 2 * l_end_turns)
 
     #-------Calculate design voltage-------
-    operate_PMSM!(motor, shaft_speed, shaft_power)
+    operate_PMSM!(motor, shaft_speed, design_power)
     motor.Vd = motor.V #Store design voltage
 
 end  # function size_PMSM!
