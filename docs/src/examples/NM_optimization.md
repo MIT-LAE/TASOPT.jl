@@ -29,7 +29,7 @@ using TASOPT
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
-include("../src/misc/index.inc")
+include("../src/data_structs/index.inc")
 # import indices for calling parameters
 using NLopt
 ```

@@ -14,17 +14,11 @@ Function to update the fuselage layout when there is a change in fuselage fuel-t
 """
 function update_fuse!(ac, imission::Int64 = 1)
     #Unpack storage objects
-    fuse = ac.fuselage
-    wing = ac.wing
-    htail = ac.htail
-    vtail = ac.vtail
-    pari = ac.pari
-    parg = ac.parg
-    parm = view(ac.parm, :, imission)
-    para = view(ac.para, :, :, imission)
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission) 
+    parm = view(parm, :, imission)
+    para = view(para, :, :, imission)
 
-    nftanks = pari[iinftanks] #Number of fuel tanks in fuselage
-    # parg[igRfuse   ] = 90 * in_to_m 
+    nftanks = fuse_tank.tank_count #number of tanks
     lftank = parg[iglftank] # Get length of tank from previous iteration
     lftoffset = 2.0*ft_to_m #1 ft buffer for front and back of tanks
 
@@ -94,7 +88,7 @@ It sizes the cabin for the design number of passengers.
     - `seats_per_row::Float64`: number of seats per row in main cabin (lower deck if double decker)
 """
 function update_fuse_for_pax!(ac)
-    pari, parg, fuse, fuse_tank, wing, htail, vtail = unpack_ac_components(ac)
+    parg, options, fuse, fuse_tank, wing, htail, vtail, _ = unpack_ac_components(ac)
 
     seat_pitch = fuse.cabin.seat_pitch
     seat_width = fuse.cabin.seat_width 
@@ -144,7 +138,7 @@ function update_fuse_for_pax!(ac)
 
     #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
     #and the start of the tank. For this reason, leave a 5ft offset at back
-    if (pari[iifwing]  == 0) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
+    if !(options.has_wing_fuel) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
         lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
         #TODO the hardcoded 5 ft is not elegant
     end

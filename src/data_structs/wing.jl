@@ -1,4 +1,3 @@
-using DocStringExtensions
 using ..aerodynamics
 abstract type AbstractWing end
 
@@ -55,9 +54,6 @@ $TYPEDFIELDS
     dxW::Float64 = 0.0
     """Wing Layout """
     layout::WingLayout = WingLayout()
-    """Wing Planform (0: wing catilever, plain; 1: wing cantilever with engine"""
-    planform::Int64 = 0 # 0: Wing cantilever, plain
-                      # 1: Wing cantilever with engine
     """Wing Material """
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 
@@ -128,11 +124,11 @@ $TYPEDFIELDS
     CL_max::Float64 = 0
     """Tail Volume [m^3] """
     volume::Float64 = 0
-    """Tail Sizing factor: 1=set Sh via specified Vh, 2=et Sh via CLhCGfwd at max-forward CG during landing """
-    size::Int64 = 0
+    """Tail Sizing assumption selection - different for HTail vs VTail """
+    opt_sizing::String = ""
     """Tail Downwash factor dε/dα """
     downwash_factor::Float64 = 0
-    """Tail max fwd CG (only used if HTsize == "maxforwardCG") """
+    """Tail max fwd CG (only used if opt_sizing == "CLmax_fwdCG" for HTail) """
     CL_max_fwd_CG::Float64 = 0
     """Tail Minimum static margin"""
     SM_min::Float64 = 0
@@ -140,8 +136,6 @@ $TYPEDFIELDS
     CL_CLmax::Float64 = 0
     """Number of Tails"""
     ntails::Float64 = 0
-    """Move wingbox factor. 0="fix" wing position ,1=move wing to get CLh="CLhspec" in cruise, 2= move wing to get min static margin = "SMmin"  """
-    move_wingbox::Int64 = 0
 end
 
 function wing_additional_weight(wing::AbstractWing)
