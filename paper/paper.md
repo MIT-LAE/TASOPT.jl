@@ -10,35 +10,35 @@ authors:
   - name: Prakash Prashanth
     orcid: https://orcid.org/0000-0002-2346-0697
     affiliation: 1
+  - name: Nicolas Gomez-Vega
+    affiliation: 1
+    orcid: https://orcid.org/0000-0002-7921-2158
   - name: Sicheng He
     orcid: https://orcid.org/0000-0003-1307-4909
+    affiliation: 1
+  - name: Aditeya Shukla
+    orcid: https://orcid.org/0000-0002-9567-1602
+    affiliation: 1
+  - name: Jonas J Gonzalez
+    orcid: https://orcid.org/0009-0007-9210-9589
     affiliation: 1
   - name: Diego Salgado Bobadilla
     affiliation: 1
   - name: Kanghyun Lee
     affiliation: 1
-  - name: Nicolas Gomez-Vega
-    affiliation: 1
-    orcid: https://orcid.org/0000-0002-7921-2158
-  - name: Aditeya Shukla
-    orcid: https://orcid.org/0000-0002-9567-1602
-    affiliation: 1
   - name: Prateek Ranjan
     affiliation: 1
     orcid: https://orcid.org/0009-0001-9201-0630
-  - name: Jonas J Gonzalez
-    orcid: https://orcid.org/0009-0007-9210-9589
-    affiliation: 1
   - name: Sayed Shayan Zahid
     orcid: https://orcid.org/0000-0001-8174-0956
     affiliation: 1
   - name: James Abel
     affiliation: 1
-  - name: Raymond Speth
-    orcid: https://orcid.org/0000-0002-8941-4554
-    affiliation: 1
   - name: Mark Drela
     orcid: https://orcid.org/0000-0002-3912-1753
+    affiliation: 1
+  - name: Raymond Speth
+    orcid: https://orcid.org/0000-0002-8941-4554
     affiliation: 1
 
 affiliations:
