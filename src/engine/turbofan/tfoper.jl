@@ -247,7 +247,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       #---- convergence tolerance
       #      data toler  1.0e-7 
-      toler = 1.0e-8
+      toler = 1.0e-9
 
       itmax = 50
 
@@ -3222,11 +3222,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Lconv
 
             end
-            if iter > 10 #Limit cycle may have been reached
-                  rlx_it = 1.0 - 0.5*iter/itmax #Add a relaxation that depends on the iteration count
-            else
-                  rlx_it = 1.0 #Otherwise keep using default relaxation
-            end
+            #If iter>10, a limit cycle may have been reached
+            #Apply a relaxation factor that does not oscillate
+            rlx_it = 1.0 - 0.6*mod(iter * pi, 1) * (iter > 10) #Relaxation based on decimals of pi
 
             #---- Newton update
             pf = pf + rlx * rlx_it * dpf
