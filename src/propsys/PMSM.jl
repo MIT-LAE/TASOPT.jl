@@ -10,6 +10,8 @@ using ..materials
 using ..engine
 using DocStringExtensions
 
+include("inverter.jl")
+
 @kwdef mutable struct PermanentMagnet <: AbstractMagnets
     """Magnet thickness [m]"""
     thickness::Float64 = 20e-3
