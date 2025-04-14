@@ -52,7 +52,8 @@ include("airfun.jl")
 # airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 # airsection = airtable(airfoil_data);
 
-include("wing_calculations.jl")
+include("wing_loading.jl")
+include("wing_drag.jl")
 
 # Fuselage IBLT calculations
 include("fuselage_drag.jl")
