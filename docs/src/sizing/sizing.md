@@ -4,7 +4,7 @@
 
 The aircraft is sized via a fixed point iteration for the design mission ([`size_aircraft!()`](@ref TASOPT.size_aircraft!)). The performance of the design can be evaluated for the design (`imission` = 1) and off-design (`imission` >= 2) missions via [`fly_mission!()`](@ref TASOPT.fly_mission!).
 
-[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fuselage_drag!()`, `wing_weights!()`, `aircraft_drag!()`, `mission_iter!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
+[`size_aircraft!()`](@ref TASOPT.size_aircraft!) is typically the driving function in an analysis, as in the [first example] (@ref firstexample). The sizing analysis calls the various performance subroutines (e.g., `fuselage_drag!()`, `wing_weights!()`, `aircraft_drag!()`, `_mission_iteration!()`, etc.) as shown in the [TASOPT flowchart](@ref flowchart). These subroutines are called automatically within [`_size_aircraft!()`](@ref TASOPT._size_aircraft!), which is wrapped by the user-facing [`size_aircraft!()`](@ref TASOPT.size_aircraft!).
 
 !!! details "🖥️ Code structure - Aircraft sizing" 
     The aircraft-sizing function requires an `aircraft` object as input. See [`read_aircraft_model()`](@ref TASOPT.read_aircraft_model) to get an idea of the fields that are required in this object. This object is unpacked into storage arrays and other component objects, such as `wing`, `fuselage` or `engine`. The eventual aim is to eliminate all data storage array and replace them by component objects but this is still work in progress.  
@@ -27,14 +27,14 @@ The aircraft is sized via a fixed point iteration for the design mission ([`size
 
     The engines are sized at the start-of-cruise to produce a total thrust force equal to the aircraft drag, as computed by `aircraft.engine.enginecalc!()`, a *specifiable* function in the `engine` object. This field stores a user defined function for the engine performance. Although the user is free to use alternative models by modifying the `engine` object, TASOPT currently includes a two-spool turbofan engine model. The turbofan engine functions are called via a wrapper, [`tfwrap!()`](@ref TASOPT.tfwrap!), which in turns calls the engine calculation function [`tfcalc!()`](@ref engine.tfcalc!).
 
-    Once the engines are sized, the fuel demand at every point in the mission is calculated using [`mission_iter!()`](@ref TASOPT.mission_iter!). This function in turn recalculates the balance, drag, and engine performance at every point. Further details on mission are provided below. [`mission_iter!()`](@ref TASOPT.mission_iter!) is usually the greatest time sink in an aircraft sizing. The weight gets updated after running [`mission_iter!()`](@ref TASOPT.mission_iter!) and the loop restarts.
+    Once the engines are sized, the fuel demand at every point in the mission is calculated using [`_mission_iteration!()`](@ref TASOPT._mission_iteration!). This function in turn recalculates the balance, drag, and engine performance at every point. Further details on mission are provided below. [`_mission_iteration!()`](@ref TASOPT._mission_iteration!) is usually the greatest time sink in an aircraft sizing. The weight gets updated after running [`_mission_iteration!()`](@ref TASOPT._mission_iteration!) and the loop restarts.
 
 ## [Mission evaluation] (@id mission)
 
-The function [`mission_iter!()`](@ref TASOPT.mission_iter!) contains the fuel burn calculation for the entire mission. It can be used both in sizing, as part of the iteration to obtain a converged aircraft, or in off-design, to calculate the performance of an already-designed airplane. Rather than calling [`mission_iter!()`](@ref TASOPT.mission_iter!) directly, users should call its user-facing wrapper, [`fly_mission!()`](@ref TASOPT.fly_mission!).
+The function [`_mission_iteration!()`](@ref TASOPT._mission_iteration!) contains the fuel burn calculation for the entire mission. It can be used both in sizing, as part of the iteration to obtain a converged aircraft, or in off-design, to calculate the performance of an already-designed airplane. Rather than calling [`_mission_iteration!()`](@ref TASOPT._mission_iteration!) directly, users should call its user-facing wrapper, [`fly_mission!()`](@ref TASOPT.fly_mission!).
 
 !!! details "🖥️ Code structure - Mission"
-    The [`mission_iter!()`](@ref TASOPT.mission_iter!) function simulates the entire mission of an aircraft, calculating fuel burn and other mission variables.
+    The [`_mission_iteration!()`](@ref TASOPT._mission_iteration!) function simulates the entire mission of an aircraft, calculating fuel burn and other mission variables.
 
     From the altitude, the function sets the initial conditions including temperature, pressure, and density [`atmos()`](@ref TASOPT.atmos). Then, the lift coefficient is interpolated over the climb and descent points to ensure smooth transitions between different phases of the mission.
 
@@ -58,7 +58,7 @@ The function [`mission_iter!()`](@ref TASOPT.mission_iter!) contains the fuel bu
 
 ## [On- and off-design performance] (@id missionexec)
 
-The function [`fly_mission!()`](@ref TASOPT.fly_mission!) can calculate the off-design performance of a *sized* aircraft: it runs the aircraft through a mission with different range, payload, and conditions to the design mission. For this purpose, it calls [`mission_iter!()`](@ref TASOPT.mission_iter!) and iterates the fuel burn until a converged takeoff mass is reached. If called on the design mission, the on-design performance is recovered. See [`PayloadRange()`](@ref TASOPT.PayloadRange) for an example of how [`fly_mission!()`](@ref TASOPT.fly_mission!) can be used.
+The function [`fly_mission!()`](@ref TASOPT.fly_mission!) can calculate the off-design performance of a *sized* aircraft: it runs the aircraft through a mission with different range, payload, and conditions to the design mission. For this purpose, it calls [`_mission_iteration!()`](@ref TASOPT._mission_iteration!) and iterates the fuel burn until a converged takeoff mass is reached. If called on the design mission, the on-design performance is recovered. See [`PayloadRange()`](@ref TASOPT.PayloadRange) for an example of how [`fly_mission!()`](@ref TASOPT.fly_mission!) can be used.
 
 ## Function documentation
 ```@docs
@@ -82,7 +82,7 @@ TASOPT.update_fuse!
 
 TASOPT.tfwrap!
 
-TASOPT.mission_iter!(ac, imission, Ldebug)
+TASOPT._mission_iteration!(ac, imission, Ldebug)
 
 TASOPT.takeoff!(ac; printTO)
 

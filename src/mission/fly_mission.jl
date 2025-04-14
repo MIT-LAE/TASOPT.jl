@@ -260,7 +260,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     end
 
     # Calling mission
-    time_propsys += mission_iter!(ac, imission, false, calculate_cruise = true) #Calculate start of cruise too
+    time_propsys += _mission_iteration!(ac, imission, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
