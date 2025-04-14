@@ -138,6 +138,8 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
 
     """Design shaft power [W]"""
     P_design::Float64 = 250e3
+    """Shaft power [W]"""
+    P::Float64 = 250e3
     """Angular velocity [rad/s]"""
     Ω::Float64 = 10e3
     """Slots per pole [-]"""
@@ -185,7 +187,7 @@ end
 function Base.getproperty(obj::Motor, sym::Symbol)
     if sym === :f #Electric frequency
         return obj.Ω * obj.N_pole_pairs/ (2 * pi)
-    elseif sym === :P #Electric power
+    elseif sym === :P_input # Input electric power
         #Assumes that multiple inverters are powering the motor
         return obj.phases * 2/pi * obj.I * obj.V * obj.N_inverters 
     elseif sym === :torque #Torque
@@ -242,6 +244,7 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
 
     motor.Ω = shaft_speed * (2 * π / 60)
     motor.P_design = design_power
+    motor.P = design_power
 
     #Outer radius of the magnet - subject to the highest rotational speeds
     motor.radius_gap = motor.U_max / motor.Ω
@@ -349,6 +352,7 @@ Runs a PMSM with a given shaft speed and power and calculates the back emf volta
 function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     motor.Ω = shaft_speed * (2 * π / 60)
     B_gap = motor.B_gap
+    motor.P = shaft_power
 
     torque = shaft_power/motor.Ω
     motor.I = torque / (motor.radius_gap * B_gap * motor.l * motor.N_energized_slots)
