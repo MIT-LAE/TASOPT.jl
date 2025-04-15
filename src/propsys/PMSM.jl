@@ -129,7 +129,7 @@ $TYPEDFIELDS
 
 Structure that defines a permanent magnet synchronous motor (PMSM).
 """
-@kwdef mutable struct Motor
+@kwdef mutable struct PMSMBase
     rotor::RotorGeometry = RotorGeometry()
     stator::StatorGeometry = StatorGeometry()
     teeth::Teeth = Teeth()
@@ -160,8 +160,6 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     I::Float64 = 0.0
     """Voltage or back emf [V]"""
     V::Float64 = 0.0
-    """Number of multi-phase inverters [-]"""
-    N_inverters::Int = 1
 
     """Pole pairs [-]"""
     N_pole_pairs::Int = 8
@@ -185,13 +183,10 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     mass::Float64 = 0.0
 end
 
-#Override motor to return other properties
-function Base.getproperty(obj::Motor, sym::Symbol)
+#Override PMSMBase to return other properties
+function Base.getproperty(obj::PMSMBase, sym::Symbol)
     if sym === :f #Electric frequency
         return obj.Ω * obj.N_pole_pairs/ (2 * pi)
-    elseif sym === :P_input # Input electric power
-        #Assumes that multiple inverters are powering the motor
-        return obj.phases * 2/pi * obj.I * obj.V * obj.N_inverters 
     elseif sym === :torque #Torque
         return obj.P / obj.Ω
     elseif sym === :N_slots #Number of slots
@@ -208,6 +203,83 @@ function Base.getproperty(obj::Motor, sym::Symbol)
         return getfield(obj, sym)
     end
 end  # function Base.getproperty
+
+#List of computed fields that are not stored in the structure but are derived from other fields
+const BASE_COMPUTED_FIELDS = [:f, :torque, :N_slots, :N_slots_per_phase, :N_energized_slots, :λ, :B_gap]
+
+"""
+$TYPEDEF
+
+$TYPEDFIELDS
+
+Structure that defines a permanent magnet synchronous motor (PMSM).
+"""
+@kwdef mutable struct Motor <: AbstractElectricMachine
+    base::PMSMBase = PMSMBase()
+
+    """Number of multi-phase inverters [-]"""
+    N_inverters::Int = 1
+end
+
+#Override Motor to return other properties
+function Base.getproperty(obj::Motor, sym::Symbol)
+    if hasfield(typeof(getfield(obj, :base)), sym)
+        return getfield(getfield(obj, :base), sym)
+    elseif sym in BASE_COMPUTED_FIELDS
+        return getproperty(getfield(obj, :base), sym)
+    elseif sym === :P_input # Input electric power
+        #Assumes that multiple inverters are powering the motor
+        return obj.phases * 2/pi * obj.I * obj.V * obj.N_inverters 
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
+#Override Motor to set the base properties without accessing base
+function Base.setproperty!(obj::Motor, sym::Symbol, val)
+    base = getfield(obj, :base)
+    if hasfield(typeof(base), sym)
+        return setfield!(base, sym, val)
+    else
+        return setfield!(obj, sym, val)
+    end
+end
+
+"""
+$TYPEDEF
+
+$TYPEDFIELDS
+
+Structure that defines a permanent magnet synchronous motor (PMSM).
+"""
+@kwdef mutable struct Generator <: AbstractElectricMachine
+    base::PMSMBase = PMSMBase()
+end
+
+#Override Generator to return other properties
+function Base.getproperty(obj::Generator, sym::Symbol)
+    if hasfield(typeof(getfield(obj, :base)), sym)
+        return getfield(getfield(obj, :base), sym)
+    elseif sym in BASE_COMPUTED_FIELDS
+        return getproperty(getfield(obj, :base), sym)
+    elseif sym === :P_output # Input electric power
+        #Assumes that multiple inverters are powering the motor
+        return obj.phases * 2/pi * obj.I * obj.V
+    else
+        return getfield(obj, sym)
+    end
+end  # function Base.getproperty
+
+#Override Generator to set the base properties without accessing base
+function Base.setproperty!(obj::Generator, sym::Symbol, val)
+    base = getfield(obj, :base)
+    if hasfield(typeof(base), sym)
+        return setfield!(base, sym, val)
+    else
+        return setfield!(obj, sym, val)
+    end
+end
+
 
 # Layout:
 # 		
@@ -236,74 +308,74 @@ $TYPEDEF
 
 Simplified permanent magnet synchronous machine (PMSM) sizing.
 """
-function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::AbstractFloat)
-    rotor = motor.rotor
-    stator = motor.stator
-    magnet = motor.magnet
-    teeth = motor.teeth
-    windings = motor.windings
-    shaft = motor.shaft
+function size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, design_power::AbstractFloat)
+    rotor = PMSM.rotor
+    stator = PMSM.stator
+    magnet = PMSM.magnet
+    teeth = PMSM.teeth
+    windings = PMSM.windings
+    shaft = PMSM.shaft
 
-    motor.Ω = shaft_speed * (2 * π / 60)
-    motor.P_design = design_power
-    motor.P = design_power
+    PMSM.Ω = shaft_speed * (2 * π / 60)
+    PMSM.P_design = design_power
+    PMSM.P = design_power
 
     #Outer radius of the magnet - subject to the highest rotational speeds
-    motor.radius_gap = motor.U_max / motor.Ω
+    PMSM.radius_gap = PMSM.U_max / PMSM.Ω
 
     #-------Rotor and stator sizing-------
     # Calculate maximum flux through the stator and rotor back iron
     # Really, this needs to be a constraint Bsbi ≤ Bsat (at the top level) rather 
     # than a prescribed setting. Or rB_sat can be a global optimization variable.
     # The higher Bsbi, the thinner the sbi, but higher Bsbi ⟹ higher core losses
-    stator.B = motor.rB_sat * motor.B_sat
-    rotor.B = motor.rB_sat * motor.B_sat
+    stator.B = PMSM.rB_sat * PMSM.B_sat
+    rotor.B = PMSM.rB_sat * PMSM.B_sat
 
-    B_gap = motor.B_gap #Air gap flux density
+    B_gap = PMSM.B_gap #Air gap flux density
 
-    stator.thickness = B_gap / stator.B * π * motor.radius_gap / (2 * motor.N_pole_pairs)
-    rotor.thickness = B_gap / rotor.B * π * motor.radius_gap / (2 * motor.N_pole_pairs)
+    stator.thickness = B_gap / stator.B * π * PMSM.radius_gap / (2 * PMSM.N_pole_pairs)
+    rotor.thickness = B_gap / rotor.B * π * PMSM.radius_gap / (2 * PMSM.N_pole_pairs)
 
-    rotor.Ro = motor.radius_gap - magnet.thickness
+    rotor.Ro = PMSM.radius_gap - magnet.thickness
     rotor.Ri = rotor.Ro - rotor.thickness
     if rotor.Ri < 0.0
         error("Rotor radius too small")
     end
 
-    teeth.Ri = motor.radius_gap + motor.airgap_thickness
+    teeth.Ri = PMSM.radius_gap + PMSM.airgap_thickness
 
     stator.Ri = teeth.Ri + teeth.thickness
     stator.Ro = stator.Ri + stator.thickness
 
     #-------Teeth sizing-------
     #Armature reaction
-    B_windings = μ₀ * motor.J_max * teeth.thickness
+    B_windings = μ₀ * PMSM.J_max * teeth.thickness
     
     #Teeth B-field
-    teeth.B = motor.rB_sat * motor.B_sat
+    teeth.B = PMSM.rB_sat * PMSM.B_sat
 
     #Size teeth
     A_teeth_annulus = cross_sectional_area(teeth.Ri + teeth.thickness, teeth.Ri) #Annulus area where teeth lie
     A_teeth = A_teeth_annulus - B_gap * A_teeth_annulus / sqrt(teeth.B^2 - B_windings^2) #Analytical solution
-    N_teeth = motor.N_slots #Number of teeth
+    N_teeth = PMSM.N_slots #Number of teeth
     
     teeth.width = A_teeth /(N_teeth * teeth.thickness)
 
     #-------Slot sizing-------
     A_slots = A_teeth_annulus - A_teeth
-    motor.A_slot = A_slots / motor.N_slots
+    PMSM.A_slot = A_slots / PMSM.N_slots
     λ = A_slots / (A_slots + A_teeth)
-    l_end_turns = π / (2 * motor.N_pole_pairs) * teeth.Ri * (λ / sqrt(1 - λ^2))
+    l_end_turns = π / (2 * PMSM.N_pole_pairs) * teeth.Ri * (λ / sqrt(1 - λ^2))
 
     #-------Calculate length-------
-    torque = design_power / motor.Ω
-    slot_current = motor.J_max * windings.kpf * motor.A_slot #Peak slot current
-    windings.N_turns = floor(windings.kpf * motor.A_slot / windings.A_wire)
+    torque = design_power / PMSM.Ω
+    slot_current = PMSM.J_max * windings.kpf * PMSM.A_slot #Peak slot current
+    windings.N_turns = floor(windings.kpf * PMSM.A_slot / windings.A_wire)
 
-    motor.I =
-        motor.Id = slot_current
-    force_length = motor.Id * motor.N_energized_slots * B_gap 
-    motor.l = torque / (force_length * motor.radius_gap)
+    PMSM.I =
+        PMSM.Id = slot_current
+    force_length = PMSM.Id * PMSM.N_energized_slots * B_gap 
+    PMSM.l = torque / (force_length * PMSM.radius_gap)
 
     #-------Size shaft-------
     shaft.Ro = rotor.Ri
@@ -313,43 +385,43 @@ function size_PMSM!(motor::Motor, shaft_speed::AbstractFloat, design_power::Abst
         error("Shaft radius too small")
     end
 
-    if motor.Ω^2*shaft.Ri^2*shaft.material.ρ > shaft.material.YTS
+    if PMSM.Ω^2*shaft.Ri^2*shaft.material.ρ > shaft.material.YTS
         error("Stress due to rotational speed exceeds shaft yield strength")
     end
 
     #-------Compute masses-------
     #TODO this could go into the structure definitions by overriding Base.getproperty
-    rotor.mass = cross_sectional_area(rotor) * motor.l * rotor.material.ρ
-    stator.mass = cross_sectional_area(stator) * motor.l * stator.material.ρ
+    rotor.mass = cross_sectional_area(rotor) * PMSM.l * rotor.material.ρ
+    stator.mass = cross_sectional_area(stator) * PMSM.l * stator.material.ρ
     magnet.mass =
-        cross_sectional_area(motor.radius_gap, rotor.Ro) * motor.l * magnet.ρ
-    teeth.mass = A_teeth * motor.l * teeth.material.ρ
+        cross_sectional_area(PMSM.radius_gap, rotor.Ro) * PMSM.l * magnet.ρ
+    teeth.mass = A_teeth * PMSM.l * teeth.material.ρ
 
-    total_winding_volume = A_slots * (motor.l + 2 * l_end_turns)
+    total_winding_volume = A_slots * (PMSM.l + 2 * l_end_turns)
     windings.mass =
         windings.kpf * total_winding_volume * windings.conductor.ρ +
         (1 - windings.kpf) * total_winding_volume * windings.insulator.ρ
 
     shaft.mass =
-        cross_sectional_area(shaft) * (motor.l * shaft.l_extra) * shaft.material.ρ
+        cross_sectional_area(shaft) * (PMSM.l * shaft.l_extra) * shaft.material.ρ
 
-    motor.mass =
+    PMSM.mass =
         rotor.mass + stator.mass + magnet.mass + teeth.mass + windings.mass + shaft.mass
 
     #-------Calculate phase resistance-------
-    windings.T = motor.air.T # Set temperature
-    motor.phase_resistance =
-        motor.N_slots_per_phase *
-        slot_resistance(motor.windings, windings.kpf * motor.A_slot, motor.l + 2 * l_end_turns)
+    windings.T = PMSM.air.T # Set temperature
+    PMSM.phase_resistance =
+        PMSM.N_slots_per_phase *
+        slot_resistance(PMSM.windings, windings.kpf * PMSM.A_slot, PMSM.l + 2 * l_end_turns)
 
     #-------Calculate design voltage-------
-    operate_PMSM!(motor, shaft_speed, design_power)
-    motor.Vd = motor.V #Store design voltage
+    operate_PMSM!(PMSM, shaft_speed, design_power)
+    PMSM.Vd = PMSM.V #Store design voltage
 
 end  # function size_PMSM!
 
 """
-Runs a PMSM with a given shaft speed and power and calculates the back emf voltage. 
+Runs a motor with a given shaft speed and power and calculates the back emf voltage. 
 """
 function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     motor.Ω = shaft_speed * (2 * π / 60)
@@ -368,9 +440,28 @@ function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::Ab
 end  # function operate_PMSM!
 
 """
+Runs a generator with a given shaft speed and power and calculates the back emf voltage. 
+"""
+function operate_PMSM!(generator::Generator, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+    generator.Ω = shaft_speed * (2 * π / 60)
+    B_gap = generator.B_gap
+    generator.P = shaft_power
+
+    torque = shaft_power/generator.Ω
+    generator.I = torque / (generator.radius_gap * B_gap * generator.l * generator.N_energized_slots)
+
+    Q_loss = calculate_losses(generator)
+
+    P_elec = shaft_power - Q_loss #Total required power
+    #TODO the phase calculations in the source paper are sketchy. Verify this or do it properly without "energized" phases
+    generator.V = P_elec / (generator.phases * 2/pi * generator.I) #Compute produced voltage
+    
+end  # function operate_PMSM!
+
+"""
 Calculates the power losses in a PMSM, including ohmic, core and windage losses.
 """
-function calculate_losses(EM::Motor)
+function calculate_losses(EM::AbstractElectricMachine)
     Q_ohmic = ohmic_loss(EM.I, EM.phase_resistance, EM.energized_phases)
     Q_core = core_loss(EM)
     Q_wind = windage_loss(EM)
@@ -399,7 +490,7 @@ $TYPEDSIGNATURES
 
 Calculates the hysteresis loss in the motor (i.e., in the rotor + the stator)
 """
-function hysteresis_loss(motor::Motor)
+function hysteresis_loss(motor::AbstractElectricMachine)
     return hysteresis_loss(motor.stator, motor.f) + hysteresis_loss(motor.teeth, motor.f)
 end  # function hysteresis_loss
 
@@ -416,7 +507,7 @@ $TYPEDSIGNATURES
 
 Calculates the eddy losses in the motor (i.e., due to the rotor + the stator)
 """
-function eddy_loss(motor::Motor)
+function eddy_loss(motor::AbstractElectricMachine)
     return eddy_loss(motor.stator, motor.f) + eddy_loss(motor.teeth, motor.f)
 end #function eddy_loss
 
@@ -432,7 +523,7 @@ end  # function eddy_loss
 Calculates the windage (i.e., air friction losses) for the rotor.
 From Vrancik (1968) - Prediction of windage power loss in alternators
 """
-function windage_loss(motor::Motor)
+function windage_loss(motor::AbstractElectricMachine)
     #air from IdealGases?
     Re = motor.Ω * motor.radius_gap * motor.airgap_thickness / motor.air.ν
     res(Cf) = 1/sqrt(Cf) - 2.04 - 1.768*log(Re*sqrt(Cf)) #From Vrancik, residual to be zeroed
