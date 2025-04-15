@@ -1,11 +1,11 @@
 # 1. Import modules
-using PyPlot
 using TASOPT
 using Printf
+using Plots
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
-include("../src/misc/index.inc")
+include(__TASOPTindices__)
 # import indices for calling ac.parameters
 using NLopt
 
@@ -15,29 +15,29 @@ farray = []
 PFEIarray = []
 CDarray = []
 OPRarray = []
-track_fig = nothing
+plot_obj = nothing
 ft_to_m = 0.3048
 
 # Load default model
-ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/opt_input.toml"))
+ac = load_default_model() #read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/opt_input.toml"))
 size_aircraft!(ac)
 
 # Objective function
 function obj(x, grad)
 	ac.parg[igAR] = x[1] # Aspect Ratio 
-    ac.para[iaalt, ipcruise1, :] .=  x[2] * ft_to_m # Cruise Altitude
-    ac.para[iaCL, ipclimb1+1:ipdescentn-1, :] .= x[3] # CL
-    ac.parg[igsweep] = x[4] # Wing sweep 
+    ac.para[iaCL,ipcruise1:ipcruise2,1] .=  x[2] #* ft_to_m # Cruise Altitude
+    ac.parg[igsweep] = x[3] # CL
+    ac.para[iaalt, ipclimb2:ipcruise1, 1] .= x[4] # Wing sweep 
     ac.parg[iglambdas] = x[5] #inner_panel_taper_ratio
     ac.parg[iglambdat] = x[6] #outer_panel_taper_ratio
     ac.parg[ighboxo] = x[7] #root_thickness_to_chord
     ac.parg[ighboxs] = x[8] #spanbreak_thickness_to_chord
-    ac.para[iarcls, ipclimb1+1 : ipdescentn-1, :] .= x[9]   #  rcls    break/root cl ratio = cls/clo
-    ac.para[iarclt, ipclimb1+1 : ipdescentn-1, :] .= x[10]   #  rclt    tip  /root cl ratio = clt/clo
-    ac.pare[ieTt4, ipcruise1:ipcruise2, :] .= x[11] # Tt4
-    ac.pare[iepihc, ipclimb1+1 : ipdescentn-1, :] .= x[12] # High Pressure Compressor Pressure Ratio
-    ac.pare[iepif, ipclimbn, :] .= x[13] #Fan PR 
-    ac.pare[iepilc, :, :] .= 3 # Low Pressure Compressure Pressure Ratio set to 3
+    ac.para[iarcls, ipclimb2 : ipdescent4, 1] .= x[9]   #  rcls    break/root cl ratio = cls/clo
+    ac.para[iarclt, ipclimb2 : ipdescent4, 1] .= x[10]   #  rclt    tip  /root cl ratio = clt/clo
+    ac.pare[ieTt4, ipcruise1:ipcruise2, 1] .= x[11] # Tt4
+    ac.pare[iepihc, ipclimb1 : ipdescentn, 1] .= x[12] # High Pressure Compressor Pressure Ratio
+    ac.pare[iepif, ipcruise1, 1] .= x[13] #Fan PR 
+    ac.pare[iepilc, ipclimb1 : ipdescentn, 1] .= 3 # Low Pressure Compressure Pressure Ratio set to 3
 
     # Sizing aircraft with new ac.parameters
     TASOPT.size_aircraft!(ac, iter =50, printiter=false)
@@ -48,25 +48,25 @@ function obj(x, grad)
     push!(OPRarray, ac.pare[iept3]/ac.pare[iept2])
 
     # Max span constriant
-    # bmax = ac.parg[igbmax]
-    # b    = ac.parg[igb]
-    # constraint  = b/bmax - 1.0
-    # penfac  = 25.0* ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    bmax = ac.parg[igbmax]
+    b    = ac.parg[igb]
+    constraint  = b/bmax - 1.0
+    penfac  = 25.0* ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
 
     # # Min climb gradient
-    # gtocmin = ac.parg[iggtocmin]
-    # gtoc    = ac.para[iagamV, ipclimbn,1]
-    # constraint = 1.0 - gtoc/gtocmin
-    # penfac = 1.0*ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    gtocmin = ac.parg[iggtocmin]
+    gtoc    = ac.para[iagamV, ipclimbn,1]
+    constraint = 1.0 - gtoc/gtocmin
+    penfac = 1.0*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
 
     # # Max Tt3 at TOC 
-    # Tt3max = 900 
-    # Tt3    = maximum(ac.pare[ieTt3, :, 1])
-    # constraint = Tt3/Tt3max - 1
-    # penfac = 5.0*ac.parg[igWpay]
-    # f = f + penfac*max(0.0, constraint)^2
+    Tt3max = 900 
+    Tt3    = maximum(ac.pare[ieTt3, :, 1])
+    constraint = Tt3/Tt3max - 1
+    penfac = 5.0*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
 
     # # Max Tmetal at Rotation
     # Tvanemax = 1333.33 
@@ -76,11 +76,11 @@ function obj(x, grad)
     # f = f + penfac*max(0.0, constraint)^2
     
     # Ensure aircraft weight makes sense
-    WTOmax = ac.parg[igWMTO]
-    WTO = ac.parm[imWTO,1]
-    constraint = WTO/WTOmax - 1.0
-    penfac = 10*ac.parg[igWpay]
-    f = f + penfac*max(0.0, constraint)^2
+    # WTOmax = ac.parg[igWMTO]
+    # WTO = ac.parm[imWTO,1]
+    # constraint = WTO/WTOmax - 1.0
+    # penfac = 10*ac.parg[igWpay]
+    # f = f + penfac*max(0.0, constraint)^2
 
     # Ensure fuel volume makes sense
     Wfmax = ac.parg[igWfmax]
@@ -97,7 +97,7 @@ function obj(x, grad)
     # f = f + penfac*max(0.0, constraint)^2
 
     # # Ensure fans will fit within fuselage
-    # daftfanmax = min(3.0, 0.9*ac.parg[igRfuse])
+    # daftfanmax = min(3.0, 0.9*ac.fuselage.layout.radius)
     # daftfan = ac.parg[igdaftfan]
     # constraint = daftfan/daftfanmax - 1.0
     # penfac = ac.parg[igWpay]
@@ -120,18 +120,19 @@ end
 
 # Set lower and upper limits
 # DESIGN VARIABLES
-#             AR    Alt(ft)  Cl     Λ     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
-lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6,      0]
-upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15,     10] 
+
+lower      = [9.0 , 0.53, 25.0, 10000.0, 0.65, 0.1,  0.125,    0.125,    0.9,   0.7, 1400.0, 10.0,  1.25, 2.98]
+upper      = [11.0, 0.60, 30.0, 10900.0, 0.85, 0.4,  0.15,   0.15,   1.3,   1.0, 1650.0, 15.0, 2.0, 3.02] 
+initial    = [10.5, 0.57, 26.0, 10668.0, 0.7, 0.25, 0.1268, 0.1266, 1.238, 0.9, 1580.0, 12.0, 1.685, 3.0 ]
 
 # Set initial changes
-initial_dx = [ 0.5, 1000.0,  0.05, 0.1,  0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.2]
+initial_dx = [ 0.5,  0.05, 0.1, 100.0, 0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.05, 0.01]
 
-# Set initial values
+# # Set initial values
 initial =[
         ac.parg[igAR], 33000.0, 0.57, ac.parg[igsweep], 
         ac.parg[iglambdas], ac.parg[iglambdat], ac.parg[ighboxo], 
-        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
+        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66, 3.0
 ]
 
 # Set FTOL
@@ -155,30 +156,34 @@ numevals = opt.numevals # the number of function evaluations
 
 println("got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)")
 
-figure()
 savedir = "./example/optimization/"
 if !isdir(savedir)
     # If it doesn't exist, create the "optimization" directory
     mkdir(savedir)
     println("The 'optimization' directory has been created.")
 end
-figname = "Opt_tutorial_ac_details"
-global track_fig = TASOPT.plot_details(ac; ax = track_fig)
-plt.savefig(savedir*figname*".png")
 
-fig, ax = plt.subplots(2,2, figsize = (12,8))
-ax[1].plot(PFEIarray)
-ax[1].set_xlabel("Iterations")
-ax[1].set_ylabel("PFEI (J/Nm)")
-ax[2].semilogy(farray)
-ax[2].set_xlabel("Iterations")
-ax[2].set_ylabel("Objective f")
-ax[3].plot(CDarray)
-ax[3].set_xlabel("Iterations")
-ax[3].set_ylabel("CD")
-ax[4].plot(OPRarray)
-ax[4].set_xlabel("Iterations")
-ax[4].set_ylabel("OPR")
-plt.suptitle("Optimization outputs")
+figname = "Opt_tutorial_ac_details"
+summplot = TASOPT.plot_details(ac, plot_obj=plot_obj)
+savefig(summplot, savedir*figname*".png")
+
+
+## Second figure
+# Create a 2x2 layout
+layout = @layout [a b; c d]
+
+p1 = plot(PFEIarray, xlabel="Iterations", ylabel="PFEI (J/Nm)", title="")
+p2 = plot(farray, yscale=:log10, xlabel="Iterations", ylabel="Objective f", title="")
+p3 = plot(CDarray, xlabel="Iterations", ylabel="CD", title="")
+p4 = plot(OPRarray, xlabel="Iterations", ylabel="OPR", title="")
+
+# Create the plot
+p = plot(p1, p2, p3, p4,    
+    layout = layout,
+    size=(1200, 800),
+    plot_title="Optimization outputs"
+)
+
+# Save the plot
 figname2 = "Opt_tutorial_iterations"
-fig.savefig(savedir*figname2*".png")
+savefig(p, savedir * figname2 * ".png")

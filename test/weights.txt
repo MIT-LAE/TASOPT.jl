@@ -1,47 +1,32 @@
 Weight build-up:
  -------------- 
-Wempty  +   466014.1 N (104764.1 lb)
+Wempty  +   473832.5 N (106521.8 lb)
 Wpay    +   172146.2 N ( 38700.0 lb)
-Wfuel   +   233069.6 N ( 52396.1 lb)
+Wfuel   +   239475.4 N ( 53836.2 lb)
 --------------------
-WMTO    =   871229.9 N (195860.3 lb)
+WMTO    =   885454.0 N (199058.0 lb)
 
-Wfuse   +   195735.6 N ( 44003.1 lb)
-Wwing   +   128764.2 N ( 28947.3 lb)
-Wvtail  +     9899.4 N (  2225.5 lb)
-Whtail  +    14759.3 N (  3318.0 lb)
+Wfuse   +   198732.6 N ( 44676.9 lb)
+Wwing   +   130323.9 N ( 29298.0 lb)
+Wvtail  +     9854.3 N (  2215.3 lb)
+Whtail  +    14722.0 N (  3309.6 lb)
 Wtesys  +        0.0 N (     0.0 lb)
 Wftank  +        0.0 N (     0.0 lb)
-Wadd    +    56629.9 N ( 12730.9 lb)
+Wadd    +    57554.5 N ( 12938.8 lb)
 --------------------
-Wempty  =   405788.5 N ( 91224.9 lb)
+Wempty  =   411187.3 N ( 92438.6 lb)
 
-Wcap    +    74931.7 N ( 16845.3 lb)
-Wweb    +     3583.1 N (   805.5 lb)
-Wflap   +    15703.0 N (  3530.2 lb)
-Wslat   +     7851.5 N (  1765.1 lb)
-Waile   +     3140.6 N (   706.0 lb)
-Wlete   +     7851.5 N (  1765.1 lb)
-Wribs   +    11777.2 N (  2647.6 lb)
-Wspoi   +     1570.3 N (   353.0 lb)
-Wwatt   +     2355.4 N (   529.5 lb)
+Wcap    +    75979.8 N ( 17080.9 lb)
+Wweb    +     3486.0 N (   783.7 lb)
+Wflap   +    15893.2 N (  3572.9 lb)
+Wslat   +     7946.6 N (  1786.5 lb)
+Waile   +     3178.6 N (   714.6 lb)
+Wlete   +     7946.6 N (  1786.5 lb)
+Wribs   +    11919.9 N (  2679.7 lb)
+Wspoi   +     1589.3 N (   357.3 lb)
+Wwatt   +     2384.0 N (   535.9 lb)
 --------------------
-Wwing  =   128764.2 N ( 28947.3 lb)
-
-Wtshaft +        0.0 N (     0.0 lb) × 2
-Wcat    +        0.0 N (     0.0 lb) × 2
-Waftfan +        0.0 N (     0.0 lb) × 2
-WaftGB  +        0.0 N (     0.0 lb) × 2
-Wgen    +        0.0 N (     0.0 lb) × 4
-Wrect   +        0.0 N (     0.0 lb) × 4
-Wcables +        0.0 N (     0.0 lb) ----
-Winv    +        0.0 N (     0.0 lb) × 6
-Wmot    +        0.0 N (     0.0 lb) × 6
-Wfan    +        0.0 N (     0.0 lb) × 6
-WfanGB  +        0.0 N (     0.0 lb) × 6
-Wtms    +        0.0 N (     0.0 lb) ----
---------------------
-Wtesys  =        0.0 N (     0.0 lb)
+Wwing  =   130323.9 N ( 29298.0 lb)
 
 Wftnkins  =        0.0 N (     0.0 lb)
 Wftank    =        0.0 N (     0.0 lb)

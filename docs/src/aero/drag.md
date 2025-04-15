@@ -22,12 +22,12 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_fuse_profile_drag.md"))
 ```
 
 ```@docs
-aerodynamics.axisol!(xnose,xend,xblend1,xblend2, Amax, 
+aerodynamics._axisymm_flow(xnose,xend,xblend1,xblend2, Amax, 
 	anose, btail, iclose,
 	Mach, nc, nldim,
       xl, zl, sl, dyl, ql)
 
-aerodynamics.blsys(simi,lami,wake,direct, Mach, uinv,
+aerodynamics._BL_station_system(is_selfsimilar, is_laminar, is_wake, solves_direct, Mach, uinv,
                       hksep, x,b,rn,th,ds,ue,
                       h , h_th, h_ds,
                       hk, hk_th, hk_ds, hk_ue,
@@ -43,12 +43,12 @@ aerodynamics.blsys(simi,lami,wake,direct, Mach, uinv,
                       cfm, cfm_thm, cfm_dsm, cfm_uem,
                       dim, dim_thm, dim_dsm, dim_uem)
 
-aerodynamics.blax(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
+aerodynamics._axisymm_BL(ndim, n,ite, xi, bi, rni, uinv, Reyn, Mach, fexcr)
 
-aerodynamics.blvar(simi,lami,wake, Reyn,Mach, fexcr,
+aerodynamics._BL_station_vars(is_selfsimilar, is_laminar, is_wake, Reyn,Mach, fexcr,
                       x, θ ,δs ,ue )
 
-aerodynamics.fusebl!(pari, parg, para, ip)
+aerodynamics.fuselage_drag!(fuse, parm, para, ip)
 ```
 
 ---
@@ -60,7 +60,7 @@ Trefftz plane analysis computes the induced drag from lifting surfaces. The lift
 ![](../assets/trefftz.png)
 Two shaded streamtubes are shown. Wake center radius $y'_o$ is nonzero due to the fuselage viscous wake displacement area.
 
-The vorticity in the wake is numerially integrated at collocation points to determine the overall induced drag.
+The vorticity in the wake is numerically integrated at collocation points to determine the overall induced drag.
 
 ![T](../assets/tpvort.png)
 
@@ -74,36 +74,79 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-aerodynamics.cditrp(pari,parg,para)
+aerodynamics.induced_drag!(para, wing, htail)
 
-aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po,gammat,gammas, fLo,ktip,
-	Lspec,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+	specifies_CL,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 ```
 ---
 
 ## Wing and tail surfaces
 
-Lifting surface drag is determined via `surfcd` (when constant airfoil section `cdf` and `cdp` are already determined), and `surfcd2` (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
+Lifting surface drag is determined via [`wing_profiledrag_scaled`](@ref aerodynamics.wing_profiledrag_scaled) (when constant airfoil section `cdf` and `cdp` are already determined), and [`wing_profiledrag_direct`](@ref aerodynamics.wing_profiledrag_direct) (when an explicit modelling and integration is desired). Airfoil performance is accessed via a lookup of precomputed airfoil data, `airfun`.
 
 ```@docs
-aerodynamics.surfcd2(
-      S,
-      b, bs, bo,
-      λt, λs, γt, γs,
-      toco, tocs, toct,
-      Mach, sweep, co,
-      CL, CLhtail, fLo, fLt,
-      Reco, aRexp, kSuns, fexcd,
-      fduo, fdus, fdut)
+aerodynamics.wing_profiledrag_direct(wing, γt, γs,
+            Mach, CL, CLhtail, 
+            Reco, aRexp, kSuns, fexcd,
+            fduo, fdus, fdut)
 
-aerodynamics.surfcd(S,
+aerodynamics.wing_profiledrag_scaled(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
+```
+### Airfoil section data
 
+The wing airfoil performance is represented by a parameterized transonic
+airfoil family spanning a range of thicknesses, whose performance is
+determined by 2D viscous/inviscid CFD calculation for a range of lift
+coefficients and Mach numbers. Together with suitable sweep corrections,
+this gives reliable profile+wave drag of the wing in cruise and high
+climb and high descent.
+
+The pressure and friction drag coefficients for the wing are obtained from the 2D drag database via cubic interpolation. For the databases provided, each airfoil has been designed (by Mark Drela) for a well-defined transonic drag rise, so that the database returns $c_{d_f}$ and $c_{d_p}$ values
+representative of the best transonic airfoil technology.
+
+Specifically, the perpendicular-plane friction and
+pressure drag coefficients are then obtained from the 
+database having the form 
+
+$$\begin{aligned}
+c_{d_f} & = & 
+f_{\rm w_{excr}} \:
+\bar{c}_{d_f}(c_{\ell_{\scriptscriptstyle \perp}},M_{\scriptscriptstyle \perp}, {\textstyle \frac{t}{c}} ) 
+             \left( \frac{R\!e_c}{R\!e_{\rm ref}} \right)^{\! a_{\scriptscriptstyle Re}} \\
+c_{d_p} & = & 
+f_{\rm w_{excr}} \:
+\bar{c}_{d_p}(c_{\ell_{\scriptscriptstyle \perp}},M_{\scriptscriptstyle \perp}, {\textstyle \frac{t}{c}} ) 
+             \left( \frac{R\!e_c}{R\!e_{\rm ref}} \right)^{\! a_{\scriptscriptstyle Re}} \\
+\mathrm{where} 
+\hspace{5ex}
+M_{\scriptscriptstyle \perp}& = & M_{{\scriptscriptstyle \infty}}\, \cos \Lambda \\
+\textstyle \frac{t}{c} & = & \bar{h} \\
+R\!e_c& = & \frac{\rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}\,c}{\mu_{\scriptscriptstyle \infty}} \\
+a_{\scriptscriptstyle Re}& \simeq & -0.15
+\end{aligned}$$ 
+
+and $f_{\rm w_{excr}} \geq 1$ is an empirical specified
+factor to account for wing excrescence drag sources, and
+$R\!e_{\rm ref}$ is a reference Reynolds number at which the database
+functions $\bar{c}_{d_f}, \bar{c}_{d_p}$ were computed. The chord
+Reynolds number $R\!e_c$ could of course be treated as an additional
+parameter in the database, but at a considerable increase in the size of
+the database and the computational effort needed to construct it. The
+value of the Re-scaling exponent $a_{\scriptscriptstyle Re}\simeq -0.15$
+is appropriate for fully-turbulent flow. See the theory 📖 block below for more details.
+
+```@eval
+using Markdown
+Markdown.parse_file(joinpath("../..", "src/aero","theory_airfun_and_splines.md"))
+```
+```@docs
 aerodynamics.airtable(fname)
 
 aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
@@ -114,7 +157,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.cdsum!(pari, parg, para, pare, icdfun)
+aerodynamics.aircraft_drag!(ac, imission, ip, computes_wing_direct)
 ```
 ---
 
@@ -124,7 +167,7 @@ aerodynamics.cdsum!(pari, parg, para, pare, icdfun)
 aerodynamics.cfturb
 ```
 ```@setup cfturb
-include("../../../src/aero/cdsum.jl")
+include("../../../src/aero/drag.jl")
 
 ```
 For example, the turbulent flat plate ``C_f`` for a ``Re`` of ``10e6`` can be calculated as follows:

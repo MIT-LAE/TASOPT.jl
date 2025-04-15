@@ -7,7 +7,7 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_pitching.md"))
 ```
 
 ```@docs
-aerodynamics.surfcm(b,bs,bo, sweep, Xaxis,
-                       λt,λs,γt,γs,
-                       AR,fLo,fLt,cmpo,cmps,cmpt)
+aerodynamics.wing_CM(b,bs,bo, sweep, Xaxis,
+                       λt, λs, γt, γs,
+                       AR, fLo, fLt, cmpo, cmps, cmpt)
 ```

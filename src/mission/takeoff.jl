@@ -1,17 +1,20 @@
+#TODO: takeoff doc page needed; docstrings need updating
 """
-      takeoff(pari, parg, parm, para, pare,
-            initeng, ichoke5, ichoke7)
+    takeoff!(ac)
 
-      Calculates takeoff parameters and balanced field length.
-      The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
-
-      !!! compat "Future Changes"
-      In an upcoming revision, an `aircraft` struct and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+Calculates takeoff parameters and balanced field length.
+The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
 
 """
-function takeoff!(pari, parg, parm, para, pare,
-    initeng,
-    ichoke5, ichoke7)
+function takeoff!(ac; printTO = true)
+    parg  = ac.parg
+    parm  = ac.parmd
+    para  = ac.parad
+    pare  = ac.pared  
+    wing  = ac.wing
+    htail = ac.htail
+    vtail = ac.vtail
+    imission = 1
 
     #---- Newton convergence tolerance
     toler = 1.0e-7
@@ -27,8 +30,8 @@ function takeoff!(pari, parg, parm, para, pare,
 
     #---- unpack parameters passed in via global data arrays parg,pare
     W = parm[imWTO]    # total takeoff weight
-    S = parg[igS]      # reference (wing) area
-    sweep = parg[igsweep]  # sweep angle, degrees
+    S = wing.layout.S   # reference (wing) area
+    sweep = wing.layout.sweep # sweep angle, degrees
     dfan = parg[igdfan]   # fan diameter , for engine-out CD_eng estimate
     HTRf = parg[igHTRf]   # hub/tip ratio, for engine-out CD_eng estimate
     neng = parg[igneng]   # number of engines
@@ -39,7 +42,7 @@ function takeoff!(pari, parg, parm, para, pare,
     Vstall = pare[ieu0, iprotate]
     V2 = pare[ieu0, iptakeoff]
 
-    cosL = cos(sweep * pi / 180.0)
+    cosL = cosd(sweep)
     Afan = 0.25 * pi * dfan^2 * (1.0 - HTRf^2)
     CDgear = parg[igCDgear]
     CDeng = parg[igcdefan] * (0.25 * pi * dfan^2) / S
@@ -47,6 +50,7 @@ function takeoff!(pari, parg, parm, para, pare,
     CDivert = 0.002
 
     Fmax = pare[ieFe, ipstatic]
+    pare[ieFe, iptakeoff] = Fmax
     Fref = pare[ieFe, iprotate]
 
     #---- single-engine thrust-curve constants for takeoff roll calculations
@@ -66,9 +70,9 @@ function takeoff!(pari, parg, parm, para, pare,
     #cc      write(*,*) '^ 3a', Fmax, Fref
 
     #---- total CD during roll
-    icdfun = 0
+    computes_wing_direct = false
     # iairf = 1
-    cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), icdfun)
+    aircraft_drag!(ac, imission, ip, computes_wing_direct)
     CDroll = para[iaCD, ip] + parg[igCDgear]
 
     #---- thrust constants for all engines operating
@@ -158,8 +162,10 @@ function takeoff!(pari, parg, parm, para, pare,
     lBF = 1.3 * lTO
     V2sq = V2^2
 
-    @printf("\nTakeoff:\n%2s %10s %10s %10s %10s\n", 
-    "#", "lTO", "l1", "lBF", "dmax")
+    if printTO
+        @printf("\nTakeoff:\n%2s %10s %10s %10s %10s\n", 
+        "#", "lTO", "l1", "lBF", "dmax")
+    end
     
     #---- Newton iteration loop
     for iter = 1:15
@@ -188,8 +194,10 @@ function takeoff!(pari, parg, parm, para, pare,
         dmax = max(abs(dl1), abs(dlBF))
 
         #  print convergence history for debugging
-        @printf("%2d %10.3f %10.3f %10.3f %10.3f\n", 
-        iter, lTO * 3.28, l1 * 3.28, lBF * 3.28, dmax * 3.28)
+        if printTO
+            @printf("%2d %10.3f %10.3f %10.3f %10.3f\n", 
+            iter, lTO * 3.28, l1 * 3.28, lBF * 3.28, dmax * 3.28)
+        end
 
         l1 = l1 + dl1
         lBF = lBF + dlBF

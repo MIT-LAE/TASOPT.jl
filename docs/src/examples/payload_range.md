@@ -1,12 +1,12 @@
-# Example for a Payload-Range diagram
+# Payload-range diagram
+
+Once an `aircraft` model is satisfactory, its capabilities and performance can be evaluated over a range of mission conditions. For example:
 
 ![PayloadRangePlot](../assets/PayloadRangeExample.png)
 
-## Choosing a design mission
+## Using [`PayloadRange()`](@ref)
 
-To plot a payload-range diagram with a fleet of missions you must first load any aircraft model and set it to have 2 missions (The off design mission is how we will see if certain payload and ranges work)
-
-Start by choosing a design mission. Your design mission should be what you want the second corner point in your Payload Range plot to be. Once you have a chosen a specific design range and payload weight (For eg: 3500 nmi and 195 pax) you can add it to the input toml file for eg: `default_input.toml`
+To plot the payload-range diagram of an aircraft model with a fleet of missions, a design mission must be chosen, which will determine the second corner point in the diagram. The design mission should be reflected in the `input.toml` via the design range and payload weight (e.g., 3500 nmi and 195 pax):
 
 ```toml
 [Mission]
@@ -18,32 +18,22 @@ Start by choosing a design mission. Your design mission should be what you want 
                             # includes luggage [lbm or lbf or kg or N] 
 ```
 
-## Julia script for Payload Range Diagram
-
-Start the script importing `TASOPT.jl`, `PyPlot` and `index.inc` and then loading the default `aircraft` model.
-
+After the aircraft is sized, [`PayloadRange()`](@ref) can be called:
 ```julia
-# Import modules
-using PyPlot
+#Use default model for payload-range diagram
 using TASOPT
-# you can optionally define
-# const tas = TASOPT 
-# to use as a shorthand
-include(joinpath(TASOPT.__TASOPTroot__, "./src/misc/index.inc"))
-# import indices for calling parameters
+ac = load_default_model() 
+size_aircraft!(ac)
 
-# Load aircraft using default module
-ac = TASOPT.read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/PRD_input.toml"))
-time_wsize = @elapsed size_aircraft!(ac)
-```
-
-One way is to call the `PayloadRange` function:
-
-```julia
 TASOPT.PayloadRange(ac)
 ```
 
-If you want a more customizable diagram, first initialize some variables for mission range and payloads
+In this approach, only one mission needs to be specified. TASOPT will copy the parameters from the sizing mission (e.g., takeoff altitude and temperature), and vary the payload and range to produce a payload-range diagram. 
+
+
+## Customizing a payload-range diagram
+
+For a more customizable diagram, a second mission may be specified and the following approach can be followed. First, initialize some variables for mission range and payloads:
 
 ```julia
 # Make an array of ranges to plot
@@ -58,7 +48,7 @@ PayloadToPlot = []
 maxPay = ac.parm[imWpay ]
 ```
 
-## Main iteration loop
+Then, evaluate the mission points with some logic shortcuts:
 
 ```julia
 for Range = RangeArray
@@ -68,10 +58,10 @@ for Range = RangeArray
     for mWpay = Payloads
         println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
         ac.parm[imWpay ] = mWpay
-        # Try woper after setting new range and payload
+        # Try fly_mission! after setting new range and payload
         try
-            TASOPT.woper(ac, 2, saveOffDesign = true)
-            # woper success: store maxPay, break loop
+            TASOPT.fly_mission!(ac, 2)
+            # fly_mission! success: store maxPay, break loop
             mWfuel = ac.parm[imWfuel,2]
             WTO = Wempty + mWpay + mWfuel
 
@@ -101,17 +91,29 @@ for Range = RangeArray
 end
 ```
 
-## Plot Payload Range diagram
+Plot as desired. `Plots.jl` is a recommended `matplotlib`-like library:
 
 ```julia
-using PyPlot
-fig, ax = plt.subplots(figsize=(8,5), dpi = 300)
-ax.plot(RangesToPlot ./ (1000*1852.0), PayloadToPlot./ (9.8*1000), linestyle="-",  color="b", label="Payload ")
-ax.set_xlabel("Range (1000 nmi)")
-ax.set_ylabel("Weight (1000 kg)")
-ax.legend()
-ax.set_title("Payload Range Plot")
-ax.grid()
+using Plots
 
-fig.savefig("./PayloadRangeExample.png")
+#unit conversions
+x = RangesToPlot ./ (1000 * 1852.0) #to nmi
+y = PayloadToPlot ./ (9.8 * 1000) #to tonnes
+
+# Create the plot
+p = plot(x, y,
+    label = "Payload",
+    linestyle = :solid, 
+    color = :blue,
+    xlabel = "Range [1000 nmi]",
+    ylabel = "Weight [tonnes]",
+    title = "Payload Range Plot",
+    grid = true,
+    dpi = 300,
+    size = (800, 500)
+)
+
+# Save the plot to a file
+savefig(p, "./PayloadRangeExample.png")
+
 ```

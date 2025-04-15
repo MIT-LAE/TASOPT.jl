@@ -1,7 +1,8 @@
 """
     airfoil
 
-A type representing a database of pre-computed airfoil data for a single Reyolds number and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord ratios.
+A type representing a database of pre-computed airfoil data for a single Reyolds number 
+and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord ratios.
 By default, this is the original TASOPT transonic airfoil, as modelled by M. Drela in MSES and stored in `src/air/`.
 
 Overloads Base.show to print a summary of the `airfoil` model.
@@ -25,21 +26,23 @@ Various views of the data:
 
 See also [`airfun`](@ref) and [`airtable`](@ref).
 """
-struct airfoil
-    Ma::AbstractVector{Float64}
-    cl::AbstractVector{Float64}
-    τ::AbstractVector{Float64}
-    Re::Float64 # Data assumed for a single Re
+struct airfoil{T<:AbstractFloat, 
+        V<:AbstractVector{Float64}, 
+        Ar<:AbstractArray{Float64}} 
+    Ma::V
+    cl::V
+    τ::V
+    Re::T # Data assumed for a single Re
   
-    A::AbstractArray{Float64} # Airfoil aero data 
+    A::Ar # Airfoil aero data 
     
-    A_M::AbstractArray{Float64}
-    A_τ::AbstractArray{Float64}
-    A_cl::AbstractArray{Float64}
-    A_M_τ::AbstractArray{Float64}
-    A_M_cl::AbstractArray{Float64}
-    A_cl_τ::AbstractArray{Float64}
-    A_M_cl_τ::AbstractArray{Float64}
+    A_M::Ar
+    A_τ::Ar
+    A_cl::Ar
+    A_M_τ::Ar
+    A_M_cl::Ar
+    A_cl_τ::Ar
+    A_M_cl_τ::Ar
 end 
 
 function Base.show(io::IO, airf::airfoil)
@@ -52,14 +55,38 @@ function Base.show(io::IO, airf::airfoil)
     )
 end
 
-using PyPlot
-function plot(airf::airfoil)
-    fig, ax = plt.subplots(2,1, sharex = true)
-    ax[1].plot(airf.cl, airf.A[end, :, :, 1] + airf.A[end, :, :, 2], label = airf.τ)
-    ax[1].legend(title="Thickness-to-chord (\$\\tau\$)")
-    ax[end].set_xlabel("\$c_l\$")
-    ax[1].set_ylabel("\$c_d\$")
-
-    ax[2].plot(airf.cl, airf.A[end, :, :, 3], label = airf.τ)
-    ax[2].set_ylabel("\$c_m\$")
+using Plots
+function plot_airf(airf::airfoil)
+    # Create two subplots
+    p1 = plot(
+        airf.cl,
+        airf.A[end, :, :, 1] + airf.A[end, :, :, 2],
+        label = string.(airf.τ'),
+        # xlabel = "\$c_l\$",
+        ylabel = "\$c_d\$",
+        legend=:false,
+        grid = true,
+    )
+    
+    p2 = plot(
+        airf.cl,
+        airf.A[end, :, :, 3],
+        label = "τ = ".*string.(airf.τ'),
+        xlabel = "\$c_l\$",
+        ylabel = "\$c_m\$",
+        grid = true,
+        legend=:false,
+    )
+    
+    labels = string.(airf.τ')
+    p_legend = plot((1:length(airf.τ))', labels = labels,
+        legendtitle = "Thickness-to-chord (τ)",
+        legend_title_font_pointsize = 7,
+        legendfontsize=7, legend=:outertop, legendcolumns=1,
+        fg_color_legend = nothing, frame=:none)
+    
+    l = @layout [[a; b] c{0.2w}]
+    # Combine the subplots vertically
+    plot(p1, p2, p_legend, layout = l, link = :x,
+        suptitle="Airfoil Section Database")
 end

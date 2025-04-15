@@ -1,5 +1,5 @@
 @testset "Materials" verbose=true begin
-    database = TASOPT.MaterialProperties
+    database = TASOPT.materials.MaterialProperties
     @testset "Structural Alloys" begin
         Al7075 = StructuralAlloy("Al-7075")
         @test Al7075.ρ == database["Al-7075"]["density"]
@@ -9,19 +9,27 @@
         Al = StructuralAlloy("Al-7075"; max_avg_stress = 1.0, safety_factor = 2.0)
         @test Al.σmax == database["Al-7075"]["YTS"]/1.0/2.0
         @test Al.τmax == database["Al-7075"]["shear_strength"]/1.0/2.0
+        @test Al.YTS == database["Al-7075"]["YTS"]
+        @test Al.UTS == database["Al-7075"]["UTS"]
+        @test Al.USS == database["Al-7075"]["shear_strength"]
     end
 
     @testset "Conductors" begin
         Cu = Conductor("Cu")
         @test Cu.ρ == database["Cu"]["density"] 
-        @test TASOPT.resxden(Cu) == 0.000150528
-        @test TASOPT.resistivity(Cu) == database["Cu"]["resistivity"]
-        @test TASOPT.resistivity(Cu, 300.0) ≈ 1.7264923200000005e-8
+        @test TASOPT.materials.resxden(Cu) == 0.000150528
+        @test TASOPT.materials.resistivity(Cu) == database["Cu"]["resistivity"]
+        @test TASOPT.materials.resistivity(Cu, 300.0) ≈ 1.7264923200000005e-8
     end
 
     @testset "Insulators" begin
         PTFE = Insulator("PTFE")
         @test PTFE.ρ == database["PTFE"]["density"]
+    end
+
+    @testset "Thermal Insulators" begin
+        poly = ThermalInsulator("polyurethane32")
+        @test poly.ρ == database["polyurethane32"]["density"]
     end
     
     # Test that unreasonable requests throw errors
@@ -31,6 +39,7 @@
         @test_throws ErrorException StructuralAlloy("unobtanium")
         @test_throws ErrorException Conductor("unobtanium")
         @test_throws ErrorException Insulator("unobtanium")
+        @test_throws ErrorException ThermalInsulator("unobtanium")
 
         @test_throws ErrorException StructuralAlloy("Ag")
         @test_throws ErrorException Conductor("PTFE")

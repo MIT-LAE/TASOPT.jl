@@ -1,4 +1,6 @@
-# Heat exchangers
+# [Heat exchangers](@id hxers)
+
+To study novel aircraft designs that may leverage cryogenic hydrogen, the following heat exchanger models were integrated, along with [cryogenic tank](@ref fueltanks) and [fuel cell](@ref fuelcells) models.
 
 ## Theory
 
@@ -97,7 +99,7 @@
     
     The total length of the HX is simply ``L = N_L \frac{x_l}{D} D_{t,o}``.
 
-    Some calculations rely on knowing the tangential pitch between tubes. This pitch may vary in the radial direction as the circumference changes but the tube diameter remains unchaged. In addition to this, the tubes are generally involute, which makes calculating this pitch even more challenging. In the code, a mean tangential pitch ``x_{t,m}`` is used to compute parameters such as the pressure drop and the Nusselt number. This mean pitch is calculated as
+    Some calculations rely on knowing the tangential pitch between tubes. This pitch may vary in the radial direction as the circumference changes but the tube diameter remains unchanged. In addition to this, the tubes are generally involute, which makes calculating this pitch even more challenging. In the code, a mean tangential pitch ``x_{t,m}`` is used to compute parameters such as the pressure drop and the Nusselt number. This mean pitch is calculated as
     ```math
     x_{t,m} = \frac{A_{cs}}{N_t l},
     ```
@@ -126,7 +128,7 @@
     ```
     
     #### Coolant-side heat transfer coefficient
-    The flow inside the tubes can be modeled by assuming that it is fully-developed turbulent flow in a smooth pipe. In this case, the 1913 Blasisus correlation provides a method to calculate the skin-friction coefficient, ``C_f``
+    The flow inside the tubes can be modeled by assuming that it is fully-developed turbulent flow in a smooth pipe. In this case, the 1913 Blasius correlation provides a method to calculate the skin-friction coefficient, ``C_f``
     ```math
     C_f = \frac{\tau_w}{\frac{1}{2}\rho_{c,m} V_{c,m}^2} = 0.0791 \mathrm{Re}_{D,c}^{-1/4},
     ```
@@ -143,7 +145,7 @@
     ```math
     \mathrm{Nu} = C_1 C_2 \mathrm{Re}^m \mathrm{Pr}^n,
     ```
-    where the Rynolds number is defined as ``\mathrm{Re}= \frac{G D_{t,o}}{\mu_{p,m}}``, ``D_{t,o}`` is the tube outer diameter, and ``G`` is the hot-side mass flow rate per unit area at the minimum free-flow area. Hence, this Reynolds number accounts for blockage effects due to the presence of the tubes.
+    where the Reynolds number is defined as ``\mathrm{Re}= \frac{G D_{t,o}}{\mu_{p,m}}``, ``D_{t,o}`` is the tube outer diameter, and ``G`` is the hot-side mass flow rate per unit area at the minimum free-flow area. Hence, this Reynolds number accounts for blockage effects due to the presence of the tubes.
     
     The following table shows the value of the parameters ``C_1``, ``m`` and ``n`` as a function of Reynolds number.
     
@@ -155,7 +157,7 @@
     | 1000–``2\times 10^5`` & ``x_t/x_l\geq 2``| 0.4    |0.6|0.36|
     | ``>2\times 10^5``| ``0.031  (x_t / x_l) ^ {0.2}``|0.8|0.4|
     
-    The paramters in the table can be affected by the distances ``x_t`` and ``x_l``, which are the distances between tubes in the tangential and longitudinal directions. Note that the distance ``x_{t}`` used in the calculations is ``x_{t,m}`` as the pitch varies in the radial direction. The ratios of this distances to the tube outer diameter, ``\frac{x_t}{D}`` and ``\frac{x_t}{D}``, are design parameters. 
+    The parameters in the table can be affected by the distances ``x_t`` and ``x_l``, which are the distances between tubes in the tangential and longitudinal directions. Note that the distance ``x_{t}`` used in the calculations is ``x_{t,m}`` as the pitch varies in the radial direction. The ratios of this distances to the tube outer diameter, ``\frac{x_t}{D}`` and ``\frac{x_t}{D}``, are design parameters. 
     
     The parameter ``C_2`` is a correction that accounts for the number of rows, ``N_L``, and tends to 1 as the number of rows goes to infinity. It can be approximated as 
     ```math
@@ -175,7 +177,7 @@
     ```
     From this, the pressure drop across the process side can be computed as
     ```math
-    \Delta p_p = \frac{G^2 L }{D_v \rho_{p,m}} \frac{f}{2} \left(\frac{D_v}{x_t}\right)^{0.4}\left(\frac{x_l}{x_t}\right)^{0.6},
+    \Delta p_p = \frac{G^2 L }{D_v \rho_{p,m}} \frac{f}{2} \left(\frac{D_v}{x_t}\right)^{0.4}\left(\frac{x_l}{x_t}\right)^{0.6} \left(\frac{\mu}{\mu_w}\right)^{-0.14},
     ```
     where ``\frac{f}{2}`` is a friction factor that can be related to the Reynolds number, ``Re_{D_v} = \frac{G D_v}{\mu_{p,m}}``, as ``\frac{f}{2}= 90 / Re_{D_v}`` for ``Re_{D_v}<200`` and ``\frac{f}{2}= 0.96  Re_{D_v}^{-0.145}`` otherwise. As in the heat transfer coefficient case, note that the distance ``x_{t}`` used in the calculations is ``x_{t,m}`` since the pitch varies in the radial direction.
     
@@ -184,6 +186,19 @@
     \Delta p_c = \frac{4 \tau_w N_\mathrm{passes} \pi D_{t,i} l}{\pi D_{t,i}^2}= \frac{4 \tau_w N_\mathrm{passes} l}{D_{t,i}},
     ```
     with ``\tau_w = C_f \frac{1}{2}\rho_{c,m} V_{c,m}^2``.
+
+    ### Correction for temperature changes across thermal boundary layer
+    Temperature changes across the thermal boundary layer in both the coolant and process streams. Identifying the temperature at which to evaluate the properties is not trivial. In the code, the method in Kays and London[^1] is used: all properties are evaluated at the freestream temperatures (``T_{p,m}`` and ``T_{c,m}``) and a correction is applied to the Nusselt number and the friction coefficient (``f`` in the process stream and ``C_f`` for the coolant). These take the form
+    ```math
+    \mathrm{Nu} = \mathrm{Nu}_m\left(\frac{T_w}{T_m}\right)^n
+    ```
+    ```math
+    f = f_m\left(\frac{T_w}{T_m}\right)^m
+    ```
+    where the coefficients are ``n=0.0`` and ``m=0.0`` for the process-side properties and ``n=-0.5`` and ``m=-0.1`` for the coolant side[^1]. The wall temperature is calculated from the overall thermal resistance and the thermal resistance of the coolant side,
+    ```math
+    T_w = T_{c,m} + \frac{T_{p,m}-T_{c,m}}{R_o A_p}\left(\frac{1}{h_c \frac{A_c}{A_p}} + R_{f,c}A_c \frac{A_p}{A_c}\right)
+    ```
 
 ## Structures
 ```@docs

@@ -6,7 +6,7 @@
     ac_def = load_default_model()
 
     filepath_rewrite = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_rewrite.toml")
-    save_model(ac_def, filepath_rewrite)
+    save_aircraft_model(ac_def, filepath_rewrite)
     ac_reread = read_aircraft_model(filepath_rewrite)
 
     size_aircraft!(ac_def, Ldebug=false, printiter=false, saveOD=false)
@@ -17,23 +17,23 @@
 
     #check via MTOW that changing an important parameter survives the save
     # and changes the solution
-    ac_nopay = load_default_model()
-    ac_nopay.parm[imWpay] = 1 #N
+    ac_lopay = load_default_model()
+    ac_lopay.parm[imWpay] = ac_def.parm[imWperpax, 1] * 30 #thirty pax in N
     filepath_nopay = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_nopay.toml")
-    save_model(ac_nopay, filepath_nopay)
+    save_aircraft_model(ac_lopay, filepath_nopay)
 
-    ac_nopay_reread = read_aircraft_model(filepath_nopay)
-    size_aircraft!(ac_nopay, Ldebug=false, printiter=false, saveOD=false)
-    size_aircraft!(ac_nopay_reread, Ldebug=false, printiter=false, saveOD=false)
+    ac_lopay_reread = read_aircraft_model(filepath_nopay)
+    size_aircraft!(ac_lopay, Ldebug=false, printiter=false, saveOD=false)
+    size_aircraft!(ac_lopay_reread, Ldebug=false, printiter=false, saveOD=false)
     
-    @test ac_nopay.parg[igWMTO] ≈ ac_nopay_reread.parg[igWMTO]
-    @test !(ac_nopay.parg[igWMTO] ≈ ac_def.parg[igWMTO])
+    @test ac_lopay.parg[igWMTO] ≈ ac_lopay_reread.parg[igWMTO]
+    @test !(ac_lopay.parg[igWMTO] ≈ ac_def.parg[igWMTO])
     rm(filepath_nopay)
 
 #B: quicksaves and loads
     #test that quicksave/load roundtrip default aircraft sizes identically to default load
     filepath_quick = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick.toml")
-    quicksave_aircraft(load_default_model(), filepath = filepath_quick)
+    quicksave_aircraft(load_default_model(), filepath_quick)
     ac_quick = quickload_aircraft(filepath_quick)
     size_aircraft!(ac_quick, Ldebug=false, printiter=false, saveOD=false)
 
@@ -43,13 +43,13 @@
     #check via MTOW that changing an important parameter survives the quicksave
     # and changes the solution
     filepath_quick_nopay = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick_nopay.toml")
-    ac_quick.parm[imWpay] = 1
-    quicksave_aircraft(ac_quick, filepath = filepath_quick_nopay)
+    ac_quick.parm[imWpay] = ac_def.parm[imWperpax, 1] * 30 #thirty pax in N
+    quicksave_aircraft(ac_quick, filepath_quick_nopay)
 
     ac_quick_nopay_reread = quickload_aircraft(filepath_quick_nopay)
     size_aircraft!(ac_quick_nopay_reread, Ldebug=false, printiter=false, saveOD=false)
-    @test ac_quick_nopay_reread.parg[igWMTO] ≈ ac_nopay.parg[igWMTO]
-
+    @test ac_quick_nopay_reread.parg[igWMTO] ≈ ac_lopay.parg[igWMTO]
+    rm(filepath_quick_nopay)
 
 #C: outputs to .csv
     using CSV
@@ -63,7 +63,7 @@
     isfile(filepath_csv) ? rm(filepath_csv) : nothing
     isfile(filepath_csv2) ? rm(filepath_csv2) : nothing
     
-    #generate output files
+    #generate output files, indices are default_output_indices
     output_csv(ac_def, filepath_csv)
     output_csv(ac_def, filepath_csv, 
                 includeMissions = true, includeFlightPoints = true)
@@ -71,7 +71,9 @@
                 includeMissions = false, includeFlightPoints = true,
                 forceMatrices = true)
     output_csv(ac_def, filepath_csv, includeFlightPoints = true)
-    output_csv(ac_def, filepath_csv, indices = output_indices_wGeom)
+
+    #this call generates the second file since indices don't match and fuse_tank excluded
+    output_csv(ac_def, filepath_csv, indices = Dict(), struct_excludes = ["fuse_tank"])
     
     #test that it creates the files as expected
     @test isfile(filepath_csv)
@@ -83,15 +85,16 @@
 
     #check row and column counts
     @test size(csv1,1) == 4 #4 rows w default indices
-    @test size(csv2,1) == 1 #1 row with addl indices
+    @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test length(csv1[1]) == 71 # = indices in default_output_indices
-    @test length(csv2[1]) == 96 # = indices in output_indices_wGeom
+    @test length(csv1[1]) == 756 # = entries w/ full ac `struct` and in default_output_indices
+    @test length(csv2[1]) == 1136 # = entries w/ full ac `struct` and all output_indices
 
-    #test the nested vector Structures
+    #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 
     @test parse(Float64, string(csv1[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
     @test parse(Float64, string(csv2[1].iaalt)) == ac_def.para[iaalt,ipcruise1,1]
+    
     #b: row 2 has the correct structure (m flight points, n missions)
     #note - for simplicity of imports, evaluate structure by counting brackets
     # since much of the data is parsed as Strings when using CSV.File
@@ -106,12 +109,16 @@
     entry4 = csv1[4].iaalt
     @test count(ichar->(ichar=='['), entry4) == 1
 
+    #test that structs are properly saved
+    #a: check fuselage detail, wing detail
+    @test csv1[1][Symbol("fuselage.layout.cross_section.radius")] == ac_def.fuselage.layout.cross_section.radius
+    @test csv2[1][Symbol("wing.inboard.cross_section.thickness_to_chord")] == ac_def.wing.inboard.cross_section.thickness_to_chord
+
+    #b: test exclusion of structs when indicated
+    @test !haskey(csv2[1], Symbol("fuse_tank.tank_type")) #excluded
+
     #cleanup
     rm(filepath_csv)
     rm(filepath_csv2)
 
 end #testset "io"
-
-
-
-

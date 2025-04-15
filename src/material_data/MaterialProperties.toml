@@ -1,5 +1,16 @@
 # Default Material Properties for commonly used materials in TASOPT
 # All units are assumed to be in SI units
+[TASOPT-Al]
+    description = "Aluminium used in default TASOPT models"
+    density = 2700.0 #kg/m3
+    youngs_modulus =  6.894757889515779e10 #Pa
+    shear_modulus = 24.0e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 34.13e7 #Yield tensile strength
+    UTS = 90e6 #Ultimate tensile strength
+    shear_strength = 2.2752068755041897e8
+    thermal_conductivity = 180 #W/(m K)
+
 [Al-6061]
     description = "Aluminium 6061 alloy"
     source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=626ec8cdca604f1994be4fc2bc6f7f63"
@@ -10,6 +21,7 @@
     YTS = 55.2e6 #Yield tensile strength
     UTS = 124e6  #Ultimate tensile strength
     shear_strength = 82.7e6
+    thermal_conductivity = 180 #W/(m K)
 
     #Electrical properties taken from here: https://en.wikipedia.org/wiki/Electrical_resistivity_and_conductivity#Resistivity_and_conductivity_of_various_materials 
     resistivity = 2.65e-8
@@ -17,17 +29,127 @@
     T0 = 293.15
 
 [Al-7075]
-    description = """General 7075 characteristics and uses (from Alcoa): Very high strength material used for highly stressed structural parts. The T7351 temper offers improved stress-corrosion cracking resistance.
-    Uses: Aircraft fittings, gears and shafts, fuse parts, meter shafts and gears, missile parts, regulating valve parts, worm gears, keys, aircraft, aerospace and defense applications."""
+    description = """Aluminum 7075-T6 Sheet: Used in Fuselage skin. Most widely used alloy for aircraft structures along with Al-2024"""
 
-    source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=6653b72914864cc0a0ff7adf5b720167"
+    source = "https://www.matweb.com/search/DataSheet.aspx?MatGUID=4f19a42be94546b686bbf43f79c51b7d"
     density = 2810.0 #kg/m3
-    youngs_modulus = 72e9 #Pa
+    youngs_modulus = 71.7e9 #Pa
     shear_modulus = 26.9e9 #Pa
     poissons_ratio = 0.33
-    YTS = 338e6 #Yield tensile strength
-    UTS = 505e6  #Ultimate tensile strength
-    shear_strength = 300e6
+    YTS = 462e6 #Yield tensile strength
+    UTS = 510e6  #Ultimate tensile strength
+    shear_strength = 331e6
+    thermal_conductivity = 130 #W/(m K)
+
+[Al-2219-T87]
+    description = """Aluminum-copper alloy with high strength, resistance to corrosion cracking and enhanced cryogenic properties.
+    Uses: Low-temperature structures, cryogenic fuel storage"""
+
+    source = "https://www.matweb.com/search/datasheet_print.aspx?matguid=86215ca4233a49fdb6b556235fc726b7"
+    density = 2840.0 #kg/m3
+    youngs_modulus = 73.1e9 #Pa
+    shear_modulus = 27e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 393e6 #Yield tensile strength
+    UTS = 476e6  #Ultimate tensile strength
+    shear_strength = 280e6
+    thermal_conductivity = 121 #W/(m K)
+
+[Al-2024-T4]
+    description = """2000 series aluminum alloy that's a common choice for aerospace and structural applications. 
+    It's made of aluminum, copper, and manganese, with copper as the main element. """
+
+    source = "https://www.matweb.com/search/datasheet.aspx?MatGUID=0ea3c1617f984cb08cdc98f0e2fa5b4f"
+    density = 2780.0 #kg/m3
+    youngs_modulus = 73.1e9 #Pa
+    shear_modulus = 28e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 324e6 #Yield tensile strength
+    UTS = 469e6  #Ultimate tensile strength
+    shear_strength = 283e6
+    thermal_conductivity = 121 #W/(m K)
+
+[Al-2524]
+    description = """Advanced Fuselage Skin Alloy. 15–20% improvement in fracture toughness and twice fatigue crack growth resistance of 2024-T3."""
+    source = "10.31399/asm.ad.al0389"
+    density = 2780.0 #kg/m3
+    youngs_modulus = 71e9 #Pa
+    shear_modulus = 28e9 #Pa  # Using Al-2024 since not specified
+    poissons_ratio = 0.35
+    YTS = 310e6 #Yield tensile strength
+    UTS = 421e6  #Ultimate tensile strength
+    shear_strength = 283e6
+    thermal_conductivity = 121 #W/(m K) # Using Al-2024 since not specified
+
+[Al-2324-T39]
+    description = """Alloy 2324-T39 is a higher strength version of alloy 2024-T351 and is a purity controlled composition variant of alloy 2024. 
+    It was developed for tension-dominated, fatigue and fracture critical plate applications. The T39 temper, developed through special fabricating 
+    practices, improves both strength and fracture toughness properties over alloy 2024 plate. Alloy 2324-T39 plate is being used successfully on 
+    lower wing skin and center wing box components of commercial aircraft """
+    source = "https://www.lookpolymers.com/polymer_Alcoa-2324-T39-Aluminum-Plate.php"
+    density = 2770.0 #kg/m3
+    youngs_modulus = 72.4e9 #Pa
+    shear_modulus = 27.0e9 #Pa  
+    poissons_ratio = 0.33
+    YTS = 370e6 #Yield tensile strength
+    UTS = 475e6  #Ultimate tensile strength
+    shear_strength = 283e6
+    thermal_conductivity = 121 #W/(m K) # Using Al-2024 since not specified
+
+[Al-7050-T7]
+    description = """It is fairly strong and features prominently in the wings and fuselage of the planes. For its high corrosion resistance and 
+    strength in wide sections, grade 7050 is commonly used in the wing skins and fuselage and more so in military crafts."""
+    source = "https://asm.matweb.com/search/SpecificMaterial.asp?bassnum=ma7050t765"
+    density = 2830.0 #kg/m3
+    youngs_modulus = 71.7e9 #Pa
+    shear_modulus = 26.9e9 #Pa  
+    poissons_ratio = 0.33
+    YTS = 490e6 #Yield tensile strength
+    UTS = 552e6  #Ultimate tensile strength
+    shear_strength = 324e6
+    thermal_conductivity = 153 #W/(m K) 
+
+[Al-2198-T8]
+    description = """3rd generation Al-Li alloy used on fuselage skin and wing for its high strength, damage tolerance, and corrosion resistance"""
+    source = """https://dl.asminternational.org/handbooks/edited-volume/91/chapter/2088145/2198Fuselage-Sheet,
+                https://www.makeitfrom.com/material-properties/2195-2195-T8-Aluminum"""
+    density = 2710.0 #kg/m3
+    youngs_modulus = 74.9e9 #Pa
+    shear_modulus = 26e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 469e6 #Yield tensile strength
+    UTS = 510e6  #Ultimate tensile strength
+    shear_strength = 350e6
+    thermal_conductivity = 130 #W/(m K) 
+
+[Al-2050-T8]
+    description = """3rd generation Al-Li alloy used in fuselage floor for its high strength, damage tolerance, and corrosion resistance"""
+    source = """https://www.aubertduval.com/wp-media/uploads/sites/2/2017/06/2050_GB-1.pdf
+                https://link.springer.com/article/10.1007/s11665-009-9554-z
+                """
+    density = 2710.0 #kg/m3
+    youngs_modulus = 76.5e9 #Pa
+    shear_modulus = 26e9 #Pa
+    poissons_ratio = 0.33
+    YTS = 476e6 #Yield tensile strength
+    UTS = 503e6  #Ultimate tensile strength
+    shear_strength = 270e6
+    thermal_conductivity = 130 #W/(m K) 
+
+[Al-Li-1441]
+    description = """The low density and good mechanical properties of Al-Li alloys make them attractive for
+many structural applications, especially in the aerospace industry. Compared to other Al-Cu-Mg alloys, 1441 Al-Li alloy has similar strength but exhibits 7% lower
+density and 12% higher modulus, as well as other improved properties """
+
+    source = "https://ntrs.nasa.gov/api/citations/20040086797/downloads/20040086797.pdf"
+    density =  2600.0 #kg/m3
+    youngs_modulus = 78.4 #Pa
+    shear_modulus = 28e9 #Pa
+    poissons_ratio = 0.34
+    YTS = 315e6 #Yield tensile strength
+    UTS = 430e6  #Ultimate tensile strength
+    shear_strength = 320e6
+    thermal_conductivity =  88 #W/(m K)
 
 [Ti-6242]
     description = "Titanium 6242 alloy"
@@ -39,6 +161,33 @@
     YTS = 990e6 #Yield tensile strength
     UTS = 1010e6  #Ultimate tensile strength
     shear_strength = 82.7e6
+    thermal_conductivity = 7.10 #W/(m K)
+
+[SS-304]
+    description = """304 Stainless Steel
+    Uses: Pressure vessels, piping, cryogenic vessels"""
+    #Structural properties: https://www.matweb.com/search/datasheet.aspx?MatGUID=abc4415b0f8b490387e3c922237098da
+    density = 8000.0 #kg/m3
+    youngs_modulus = 193e9 #Pa
+    shear_modulus = 77.0e9 #Pa
+    poissons_ratio = 0.29
+    YTS = 215e6 #Yield tensile strength
+    UTS = 505e6  #Ultimate tensile strength
+    shear_strength = 386.0e6 #From https://protoxyz.com/materials/metal/Stainless_Steel_304
+    thermal_conductivity = 16.2 #W/(m K)
+
+[AISI-4340]
+    description = """4340 Steel, normalized
+    Uses: Piston pins, bearings, gears, dies, pressure vessels"""
+    #Structural properties: https://www.matweb.com/search/DataSheet.aspx?MatGUID=fd2df45bffa54018b54989bc14092d9f
+    density = 7850.0 #kg/m3
+    youngs_modulus = 200e9 #Pa
+    shear_modulus = 78e9 #Pa
+    poissons_ratio = 0.29
+    YTS = 862e6 #Yield tensile strength
+    UTS = 1282e6  #Ultimate tensile strength
+    shear_strength = 758.4e6 #From https://www.onlinemetals.com/en/product-guide/alloy/4340
+    thermal_conductivity = 44.5 #W/(m K)
 
 # -----------------------------------------------------
 # Generic conductors with electrical properties taken 
@@ -83,3 +232,36 @@
     #Dowdle et al https://doi.org/10.2514/6.2018-5026
     density = 1700.0
     dielectric_strength = 10e6
+
+# -----------------------------------------------------
+# Thermal insulators
+# -----------------------------------------------------
+# The field `conductivity_coeffs` has coefficients defining the thermal conductivity as a function of temperature. For example
+# conductivity_coeffs = [2, 3, 5] represents k(T) = 2 + 3*T + 5*T^2.
+[rohacell41s] 
+    density = 35.0 #kg/m^3. From Brewer (1991)
+    conductivity_coeffs = [0.001579, 1.283e-4, -3.353e-7, 8.487e-10]#Note: Brewer (1991) only had one point for rohacell thermal conductivity. They assumed the same curve as PVC
+
+[polyurethane27]
+    density = 27.0
+    conductivity_coeffs = [-2.192e-3, 3.740e-4, -5.222e-6, 4.438e-8, -1.639e-10, 2.114e-13] # W/(m K), polynomial fit to Fig. 4.78 in Brewer (1991) between 20 and 320 K
+
+[polyurethane32]
+    density = 32.0
+    conductivity_coeffs = [-2.367E-03, 3.816E-04, -5.341E-06, 4.542E-08, -1.683E-10, 2.179E-13]
+
+[polyurethane35]
+    density = 35.0
+    conductivity_coeffs = [-2.575E-03, 3.970E-04, -5.662E-06, 4.746E-08, -1.695E-10, 2.104E-13]
+
+[mylar]
+    density = 1390.0 #kg/m^3, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
+    conductivity_coeffs = [0.155] # W/(m K) at 298 K, https://www.matweb.com/search/datasheet_print.aspx?matguid=981d85aa72b0419bb4b26a3c06cb284d
+
+[microspheres]
+    density = 69.0
+    conductivity_coeffs = [-3.7191E-05, 5.1956E-05, -9.6487E-08, 1.4632E-10]
+
+[vacuum]
+    density = 0.0
+    conductivity_coeffs = [0.0]
