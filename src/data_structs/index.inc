@@ -39,8 +39,6 @@
       const imtotal = 35
 
 #---- indices for geometry (airframe) variables and other sizing variables
-### Good Riddance ###
-### Good Riddance ###
       const igRange    =   1
       const igWMTO     =   2
       const igWpay     =   3
@@ -56,8 +54,6 @@
       const igfreserve =  13
       const igfeadd    =  14
       const igfpylon   =  15
-### Good Riddance ###
-### Good Riddance ###
       const igNlift    =  16
       const igNland    =  17
       const igVne      =  18
@@ -73,9 +69,7 @@
       const igfSnace   =  28
       const igpcabin   =  29
       const igdeltap   =  30
-      const igxeng     =  31     
-### Good Riddance ###
-### Good Riddance ###
+      const igxeng     =  31
       const igyeng     = 32
       const igcabVol   = 33
       const igrpayfwd  = 34
@@ -93,10 +87,6 @@
       const igrMv      = 46
       const igsigfac   = 47
       const igrhofuel  = 48
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
       const igfBLIw    = 49
       const igfBLIf    = 50
       const igdfan     = 51
@@ -187,11 +177,6 @@
 
       const igxWfuel = 120
 
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-### Good Riddance ###
-
       const igWfvent = 121
       const igdHXPreC = 122
       const igdHXInterC = 123
@@ -199,152 +184,6 @@
       const igHXaddmassfrac = 125
       const igWHXs = 126
       const igtotal    = 126
-
-# indices for turbo-electric systems - really just the electrical machines
-      const ite_ratSM   = 1
-      const ite_ratAg   = 2
-      const ite_ratM    = 3
-      const ite_ratSp   = 4
-      const ite_ratW    = 5
-      const ite_ratShft = 6
-      const ite_z       = 7
-      const ite_kServ   = 8
-      const ite_ratSd   = 9
-      const ite_kpf     = 10
-      const ite_wSd     = 11
-      const ite_Nshrt   = 12
-      const ite_hRS     = 13
-      const ite_Tarm    = 14
-      const ite_kst     = 15
-      const ite_p        = 16
-      const ite_Br       = 17
-      const ite_BSat     = 18
-      const ite_mu0      = 19
-      const ite_rhoMag   = 20
-      const ite_rhoCu    = 21
-      const ite_rhoFe    = 22
-      const ite_rhoSteel = 23
-      const ite_tauMax   = 24
-      const ite_sigCu    = 25
-      const ite_thetaCu  = 26
-      const ite_psi      = 27
-      const ite_pb0      = 28
-      const ite_Bb0      = 29
-      const ite_fb0      = 30
-      const ite_epsb     = 31   
-      const ite_epsf     = 32 
-      const ite_lambda   = 33
-      const ite_kw       = 34
-      const ite_ks       = 35
-      const ite_BAg      = 36
-      const ite_rRoti    = 37
-      const ite_hM       = 38
-      const ite_lRot     = 39
-      const ite_hAg      = 40
-      const ite_areaArm  = 41
-      const ite_Bsbi     = 42
-      const ite_Bt       = 43
-      const ite_mSBI     = 44
-      const ite_mTeeth   = 45
-      const ite_lArm     = 46
-      const ite_NSz      = 47
-      const ite_Wpmsm    = 48
-      const ite_k1       = 49  # k1, k2, k3 are inverter constants for efficiency calcs
-      const ite_k2       = 50
-      const ite_k3       = 51
-      const ite_Pinvdes  = 52  # Stores design inverter power
-      const ite_SPdes    = 53  # Specific power at design
-      const ite_effdes   = 54  
-
-      const ite_total    = 54
-
-
-# indices for powertrain
-      const ipt_nfan    = 1
-      const ipt_ngen    = 2
-      const ipt_nTshaft = 3
-
-      const ipt_pifan   = 4
-      const ipt_piLPC   = 5
-      const ipt_piHPC   = 6
-
-      const ipt_ARgen       = 7
-      const ipt_sigAgGen    = 8
-      const ipt_ratSplitGen = 9
-
-      const ipt_ARmot       = 10
-      const ipt_sigAgMot    = 11
-      const ipt_ratSplitMot = 12
-      
-      const ipt_Tt41     = 13
-
-      const ipt_cpsi    = 14
-      const ipt_wcat    = 15
-      const ipt_lcat    = 16
-      const ipt_deNOx   = 17
-
-      const ipt_Wfan     = 18
-      const ipt_Wmot     = 19
-      const ipt_Winv     = 20
-      const ipt_Wcables  = 21
-      const ipt_Wgen     = 22
-      const ipt_Wtshaft  = 23
-      const ipt_Wnacelle = 24
-      const ipt_Wcatalyst= 25
-      const ipt_Wpttotal = 26
-      
-      const ipt_NdesGen  = 27
-      const ipt_NdesFan  = 28
-      const ipt_NdesMot  = 29
-      
-      const ipt_fb0      = 30
-      const ipt_epsb     = 31   
-      const ipt_epsf     = 32 
-      const ipt_lambda   = 33
-      const ipt_kw       = 34
-      const ipt_ks       = 35
-      const ipt_BAg      = 36
-      const ipt_rRoti    = 37
-      const ipt_hM       = 38
-      const ipt_lRot     = 39
-      const ipt_hAg      = 40
-      const ipt_areaArm  = 41
-      const ipt_Bsbi     = 42
-      const ipt_Bt       = 43
-      const ipt_mSBI     = 44
-      const ipt_mTeeth   = 45
-      const ipt_lArm     = 46
-      const ipt_NSz      = 47
-      const ipt_Wpmsm    = 48
-      const ipt_k1       = 49  # k1, k2, k3 are inverter constants for efficiency calcs
-      const ipt_k2       = 50
-      const ipt_k3       = 51
-      const ipt_Pinvdes  = 52  # Stores design inverter power
-
-      const ipt_time_NPSS  = 53
-      const ipt_calls_NPSS = 54
-      const ipt_FanGR      = 55
-
-      const ipt_Ptshaft   = 56
-      const ipt_Fnsplit   = 57 # Thrust split between fuse mounted fans and wing podded fans
-
-      const ipt_Rcable    = 58
-      const ipt_Vcable    = 59
-      const ipt_lcable    = 60
-      const ipt_sigcon    = 61 # Conductance of conductor
-      const ipt_alphacon  = 62 # Temp coeff
-      const ipt_rholcable = 63 # linear density kg/m
-      const ipt_rhocon    = 64
-      const ipt_Jmax      = 65
-      const ipt_rhoins    = 66
-      const ipt_Emax      = 67
-      const ipt_kpf       = 68
-      
-      const ipt_Pelec_mot = 69
-      const ipt_Pelec_gen = 70
-
-
-      const ipt_total     = 70
 
 #---- indices for aero variables at each mission point
       const iaalt     =  1
@@ -614,90 +453,47 @@
 
       const iePLH2 = 198
       const ieyg = 199
-
-      const ieemot = 200
-      const ieeinv = 201
-      const ieecable = 202
-      const ieegen = 203
-      const ieethermal = 204
-
-      const iePinmot = 205
-      const iePininv = 206
-      const iePincable = 207
-      const iePingen = 208
-      const iePinthermal = 209
-
-      const ieEINOx1 = 210
-      const ieEINOx2 = 211
-      const ieFAR = 212
-      const ieOPR = 213
-      const ieWc3 = 214
+      const ieEINOx1 = 200
+      const ieEINOx2 = 201
+      const ieFAR = 202
+      const ieOPR = 203
+      const ieWc3 = 204
       
-      # Heat rejection:
-      const ieHrejmot = 215
-      const ieHrejinv = 216
-      const ieHrejcab = 217
-      const ieHrejgen = 218
-      const ieHrejtot = 219
-
-      const ieHexcess = 220
-#Guesses for NPSS offdes:
-      const iegsFnsplit = 221
-      const iegsMotShP = 222
-      const iegsmdotf = 223
-      const iegsWin = 224
-      const iegsRlineF = 225
-      const iegsBPR = 226
-      const iegsRlinelc = 227
-      const iegsRlinehc = 228
-      const iegsPRhtrb = 229
-      const iegsPRltrb = 230
-      const iegsNmechH = 231
-      const iegsGBtrq = 232
-      const iegsNmechL = 233
-      const iegsNmechF = 234
-      const iegsPodWin = 235
-
-      const iegsPodRlineF = 236
-      const iegsPodGBtrq = 237
-      const iegsPodMotNmech = 238
-      const iegsPodFanNmech = 239
-
 #Heat exchanger variables
-      const ieDi = 240
-      const ieTft = 241
-      const iefrecirc = 242
-      const ierecircT = 243
-      const iehvap = 244
-      const iePreCorder = 245
-      const iePreCepsilon = 246
-      const iePreCMp = 247
-      const iePreCDeltah = 248
-      const iePreCDeltap = 249
-      const ieInterCorder = 250
-      const ieInterCepsilon = 251 
-      const ieInterCMp = 252
-      const ieInterCDeltah = 253
-      const ieInterCDeltap = 254
-      const ieRegenorder = 255
-      const ieRegenepsilon = 256 
-      const ieRegenMp = 257
-      const ieRegenDeltah = 258
-      const ieRegenDeltap = 259
-      const ieTurbCorder = 260
-      const ieTurbCepsilon = 261 
-      const ieTurbCMp = 262
-      const ieTurbCDeltah = 263
-      const ieTurbCDeltap = 264
-      const ieRadiatorepsilon = 265
-      const ieRadiatorMp = 266
-      const ieRadiatorDeltah = 267
-      const ieRadiatorDeltap = 268
-      const iehvapcombustor = 269
-      const ieHXminTwall = 270
-      const iemfuel = 271
+      const ieDi = 205
+      const ieTft = 206
+      const iefrecirc = 207
+      const ierecircT = 208
+      const iehvap = 209
+      const iePreCorder = 210
+      const iePreCepsilon = 211
+      const iePreCMp = 212
+      const iePreCDeltah = 213
+      const iePreCDeltap = 214
+      const ieInterCorder = 215
+      const ieInterCepsilon = 216 
+      const ieInterCMp = 217
+      const ieInterCDeltah = 218
+      const ieInterCDeltap = 219
+      const ieRegenorder = 220
+      const ieRegenepsilon = 221 
+      const ieRegenMp = 222
+      const ieRegenDeltah = 223
+      const ieRegenDeltap = 224
+      const ieTurbCorder = 225
+      const ieTurbCepsilon = 226 
+      const ieTurbCMp = 227
+      const ieTurbCDeltah = 228
+      const ieTurbCDeltap = 229
+      const ieRadiatorepsilon = 230
+      const ieRadiatorMp = 231
+      const ieRadiatorDeltah = 232
+      const ieRadiatorDeltap = 233
+      const iehvapcombustor = 234
+      const ieHXminTwall = 235
+      const iemfuel = 236
 
-      const ietotal = 271
+      const ietotal = 236
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
@@ -727,39 +523,27 @@ ncrowx = ieTmet1 - ieepsc1
       const ipcruisen  = ipcruise2     # last cruise  point
       const ipdescentn = ipdescent5    # last descent point
 
-#---- indices for indexing optimization parameters (to be sequenced over)
-      isRange  =  1
-      isMach   =  2
-      isNmax   =  3
-      issigfac =  4
-      isCL     =  5
-      isAR     =  6
-      issweep  =  7
-      isetas   =  8
-      isT4CR   =  9
-      isT4TO   = 10
-      isTmetal = 11
-      isOPR    = 12
-      isFPR    = 13
-      islBFmax = 14
-      isbmax   = 15
-      isalt    = 16
-      istotal  = 16  
-
-#---- indices for indexing optimization variables      
-      ioCL    =  1
-      ioAR    =  2
-      iosweep =  3
-      iohboxo =  4
-      iohboxs =  5
-      iolams  =  6
-      iolamt  =  7
-      iorcls  =  8
-      iorclt  =  9
-      ioFPR   = 10
-      ioBPR   = 11
-      ioalt   = 12
-      ioT4CR  = 13
-      ioT4TO  = 14
-      ioOPR   = 15
-      iototal = 15;
+#---- keywords for ij sequence parameters 
+#=
+      character*2 cplab(iptotal)
+#---- printout labels for mission points
+      data cplab /
+      'ST'
+      'RO'
+      'TO'
+      'CB'
+      'B1'
+      'B2'
+      'B3'
+      'B4'
+      'B5'
+      'C1'
+      'C2'
+      'D1'
+      'D2'
+      'D3'
+      'D4'
+      'D5'
+      'TE'  /
+=#
+;

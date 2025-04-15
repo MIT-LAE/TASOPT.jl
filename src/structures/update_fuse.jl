@@ -54,7 +54,7 @@ function update_fuse!(ac, imission::Int64 = 1)
 
 
     #Update fuselage aerodynamic parameters
-    fusebl!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
+    fuselage_drag!(fuse, parm, para, ipcruise1) #Recalculate fuselage bl properties
 
     #Update fuselage BL properties
     # Kinetic energy area at T.E.

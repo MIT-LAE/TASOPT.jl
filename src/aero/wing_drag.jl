@@ -1,11 +1,11 @@
 """
-      surfcd2(wing, γt, γs,
+      wing_profiledrag_direct(wing, γt, γs,
             Mach, CL, CLhtail, 
             Reco, aRexp, kSuns, fexcd,
             fduo, fdus, fdut)
 
 Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
-Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
+Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. Formerly, `surfcd2()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -29,12 +29,9 @@ Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
       - `CDover::Float64`: Fuselage added CD due to lift carryover.
 
 See Sections 2.14.3 and 3.8.3 of TASOPT Technical Desc.
-See also [`cdsum!`](@ref), [`surfcd`](@ref), [`surfcm`], and [`airfun`].
-
-!!! compat "Future Changes" 
-      This function will be renamed for clarity of use.
+See also [`aircraft_drag!`](@ref), [`wing_profiledrag_scaled`](@ref), [`wing_CM`], and [`airfun`].
 """
-function surfcd2(
+function wing_profiledrag_direct(
       wing, γt, γs,
       Mach, CL, CLhtail, 
       Reco, aRexp, kSuns, fexcd,
@@ -159,10 +156,10 @@ function surfcd2(
 
       return clpo, clps, clpt, CDfwing, CDpwing, CDwing, CDover
 
-end # surfcd2
+end # wing_profiledrag_direct
 
 """
-    surfcd(S, 
+    wing_profiledrag_scaled(S, 
     b, bs, bo, 
     λt, λs, sweep, 
     co, cdf, cdp, 
@@ -170,10 +167,7 @@ end # surfcd2
     aRexp, kSuns, fCDcen)
 
 Computes wing or tail surface profile CD from pre-computed chord quantities and corrections.
-Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
-
-!!! compat "Future Changes" 
-      This function may be renamed for clarity of use.
+Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to false. Formerly, `surfcd()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -200,7 +194,7 @@ Called by [`cdsum!`](@ref) if `computes_surfcd` flag set to true.
 See Sections 2.14.3 and 3.8.3 of the [TASOPT Technical Desc](@ref dreladocs).
 
 """
-function surfcd(S,
+function wing_profiledrag_scaled(S,
       b, bs, bo, λt, λs, sweep, co,
       cdf, cdp, Reco, Reref, aRexp, kSuns,
       fCDcen)
@@ -254,5 +248,4 @@ function surfcd(S,
       CDover = 0.0
 
       return CDsurf, CDover
-end # surfcd
-
+end # wing_profiledrag_scaled

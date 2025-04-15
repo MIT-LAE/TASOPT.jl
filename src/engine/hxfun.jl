@@ -1081,7 +1081,7 @@ then evaluates performance for all missions and points with hxoper!().
     - `pare::Array{Float64 , 3}`: array with engine parameters
     - `ifuel::Integer`: fuel type spec for gas calcs from ac.options
     - `ipdes::Float64`: index for design mission segment
-    - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HX_struct` structures
+    - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous _size_aircraft! iteration; elements are `HX_struct` structures
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
@@ -1432,7 +1432,7 @@ with hxoper!(). The coolant mass flow rate is adjusted so that a desired heat is
     - `pare::Array{Float64 , 3}`: array with engine parameters
     - `ipdes::Float64`: index for design mission segment
     - `inpts_dict::Dict`: dictionary containing the indices in `pare` of the coolant and air properties.
-    - `HXs_prev::HX_struct`: structure with heat exchanger data from the previous wsize iteration
+    - `HXs_prev::HX_struct`: structure with heat exchanger data from the previous _size_aircraft! iteration
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     - `radiator::HX_struct`: structure with heat exchanger data
