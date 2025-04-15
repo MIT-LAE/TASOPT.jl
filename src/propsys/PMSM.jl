@@ -1,16 +1,18 @@
 module ElectricMachine
-using Roots
 
 abstract type AbstractElectricMachine end
 abstract type AbstractMagnets end
 
-const μ₀ = 1.25663706127e-6 #N⋅A⁻² https://physics.nist.gov/cgi-bin/cuu/Value?mu0 
+import ..propsys: __TASOPTindices__, __TASOPTroot__
 
 using ..materials
 using ..engine
 using DocStringExtensions
+using Roots
 
+include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
 include("inverter.jl")
+include("cable.jl")
 
 @kwdef mutable struct PermanentMagnet <: AbstractMagnets
     """Magnet thickness [m]"""

@@ -8,7 +8,7 @@ Default values are for copper based on https://pubs.aip.org/aip/jpr/article/8/4/
 $TYPEDFIELDS
 
 """
-@kwdef mutable struct cable
+@kwdef mutable struct Cable
     """Conductor"""
     cond::Conductor = Conductor("Cu")
     """Insulator"""
@@ -32,12 +32,12 @@ $TYPEDFIELDS
 end
 
 """
-    (c::cable)(P::Float64, V::Float64, lcable::Float64)
+    (c::Cable)(P::Float64, V::Float64, lcable::Float64)
 
 Sizes the cable given a power, voltage, and length of the cable and returns 
 the *efficiency function* for the sized cable.
 """
-function (c::cable)(P::Float64, V::Float64, lcable::Float64)
+function (c::Cable)(P::Float64, V::Float64, lcable::Float64)
     cond = c.cond
     ins  = c.ins
     c.V = V

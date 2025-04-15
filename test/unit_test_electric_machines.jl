@@ -57,4 +57,13 @@
     TASOPT.propsys.ElectricMachine.operate_inverter!(invtr,P_oupt, f)
 
     @test invtr.P_input ≈ 251837.36343069648 rtol = 1e-8
+
+    #Cable
+    c = TASOPT.propsys.ElectricMachine.Cable()
+    P = 1e5
+    l = 10.0
+    V = 200.0
+    eff_f = c(P, V, l)
+
+    @test eff_f(1e5) ≈ 0.9952918084 rtol = 1e-8
 end
