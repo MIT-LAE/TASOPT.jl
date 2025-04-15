@@ -7,7 +7,6 @@ replacing the turbofan code such as `tfoper`, `tfsize`etc.
 """
 module propsys
 
-export NPSS_run, startNPSS, endNPSS
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__
 using ..materials
 using ..engine
@@ -16,6 +15,5 @@ using DocStringExtensions
 include(__TASOPTindices__)
 include("cable.jl")
 include("PMSM.jl")
-include("NPSS_functions.jl")
 
 end

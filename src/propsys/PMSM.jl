@@ -10,7 +10,7 @@ using ..engine
 using DocStringExtensions
 using Roots
 
-include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
+include(joinpath(__TASOPTroot__,"utils/constants.jl"))
 include("inverter.jl")
 include("cable.jl")
 
