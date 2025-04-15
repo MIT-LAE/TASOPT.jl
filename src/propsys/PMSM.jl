@@ -304,9 +304,18 @@ end
 
 
 """
-$TYPEDEF
+    size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, design_power::AbstractFloat)
 
 Simplified permanent magnet synchronous machine (PMSM) sizing.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `PMSM::AbstractElectricMachine`: motor or generator object
+    - `shaft_speed::Float64`: shaft rotational speed [rpm]
+    - `design_power::Float64`: design shaft power [W]
+    
+    **Outputs:**
+    No direct outputs. `PMSM` object gets modified with the input power and mass.
 """
 function size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, design_power::AbstractFloat)
     rotor = PMSM.rotor
@@ -350,6 +359,8 @@ function size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, d
     #-------Teeth sizing-------
     #Armature reaction
     B_windings = μ₀ * PMSM.J_max * windings.kpf * teeth.thickness
+    #TODO: Dowdle uses confusing notation for the maximum current density; it is possible
+    # that the kpf factor is not needed here
     
     #Teeth B-field
     teeth.B = PMSM.rB_sat * PMSM.B_sat
@@ -421,7 +432,18 @@ function size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, d
 end  # function size_PMSM!
 
 """
+    operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+
 Runs a motor with a given shaft speed and power and calculates the back emf voltage. 
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `motor::Motor`: motor object
+    - `shaft_speed::Float64`: shaft rotational speed [rpm]
+    - `design_power::Float64`: design shaft power [W]
+    
+    **Outputs:**
+    No direct outputs. `motor` object gets modified with the input power.
 """
 function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     motor.Ω = shaft_speed * (2 * π / 60)
@@ -440,7 +462,18 @@ function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::Ab
 end  # function operate_PMSM!
 
 """
+    operate_PMSM!(generator::Generator, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+
 Runs a generator with a given shaft speed and power and calculates the back emf voltage. 
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `generator::Generator`: motor object
+    - `shaft_speed::Float64`: shaft rotational speed [rpm]
+    - `design_power::Float64`: design shaft power [W]
+    
+    **Outputs:**
+    No direct outputs. `generator` object gets modified with the input power.
 """
 function operate_PMSM!(generator::Generator, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     generator.Ω = shaft_speed * (2 * π / 60)

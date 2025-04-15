@@ -1,6 +1,3 @@
-using TASOPT
-using Test
-
 @testset "Electric machines" begin
     #Motor
     mot = TASOPT.propsys.ElectricMachine.Motor()

@@ -131,6 +131,7 @@ Permanent-magnet synchronous machines (PMSMs), particularly motors and generator
     where ``N_\mathrm{phases}`` is the number of phases and ``N_\mathrm{inverters}`` is the number of inverters used to power the motor. A similar expression is used to calculate the output voltage of the generator, without the number of inverters.
 
 ## Inverters
+An inverter is an electronic device which converts a direct current into an alternating current. This usually occurs through the use of switches which alternate the current flow. A simplified sizing model for an inverter, [`size_inverter!()`](@ref propsys.ElectricMachine.size_inverter!), calculates the mass of an inverter from its output power and the user-specified specific power (power per unit mass). The efficiency of the inverter can be calculated with [`operate_inverter!()`](@ref propsys.ElectricMachine.operate_inverter!), which uses a simplified efficiency model based on those in Enders[^3] and Faranda et al.[^4] to compute the input power to the inverter.
 
 ## Functions
 ```@docs
@@ -139,6 +140,15 @@ propsys.ElectricMachine.size_PMSM!
 ```@docs
 propsys.ElectricMachine.operate_PMSM!
 ```
+```@docs
+propsys.ElectricMachine.size_inverter!
+```
+```@docs
+propsys.ElectricMachine.operate_inverter!
+```
+
 
 [^1]: Dowdle, Aidan P., David K. Hall, and Jeffrey H. Lang. "Electric propulsion architecture assessment via signomial programming." 2018 AIAA/IEEE Electric Aircraft Technologies Symposium (EATS). IEEE, 2018.
 [^2]: Vrancik, James E. Prediction of windage power loss in alternators. No. NASA-TN-D-4849. 1968.
+[^3]: Enders, Wilhelm. Development of electrical powertrain simulation methods for hybrid- and turboelectric commercial aircraft design. Master's thesis, 2020.
+[^4]: Faranda, Roberto S., et al. "The optimum PV plant for a given solar DC/AC converter." Energies 8.6 (2015): 4853-4870.
