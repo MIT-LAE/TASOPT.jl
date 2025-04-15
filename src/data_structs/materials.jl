@@ -5,13 +5,13 @@ various materials such as `StructuralAlloy`s,`Conductor`s, and `Insulator`s.
 module materials
 
 using TOML, DocStringExtensions
+import ..TASOPT: __TASOPTroot__
 
 export StructuralAlloy, Conductor, Insulator, ElectricSteel, 
 ThermalInsulator, thermal_conductivity
 export resistivity, resxden
 
-__abs_path_prefix__ = dirname(@__DIR__)
-MaterialProperties = TOML.parsefile(joinpath(__abs_path_prefix__,"material_data/MaterialProperties.toml"))
+MaterialProperties = TOML.parsefile(joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml"))
 
 """
 $TYPEDEF

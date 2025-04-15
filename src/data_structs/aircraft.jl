@@ -24,7 +24,16 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `engine::Engine`: engine object
 - `landing_gear::LandingGear`: landing gear object
 
-For devs: the indices for accessing specific data are defined in `/src/data_structs/index.inc`. Refer to the sample input file (`/src/IO/default_input.toml` and `read_input.jl`) for usage.
+- `fuselage::Fuselage` : Fuselage layout, data, and parameters
+- `fuse_tank::fuselage_tank` : Fuselage tank data and parameters (when applicable)
+- `wing::Wing` : Wing data and parameters
+- `htail::Tail` : Horizontal tail data and parameters
+- `vtail::Tail` : Vertical tail data and parameters
+- `engine::Engine` : Engine models, data, and parameters
+
+The indices for accessing specific data in the `par` arrays are defined in `/src/data_structs/index.inc`. 
+Refer to the sample input file (`/example/defaults/default_input.toml` and `read_input.jl`) for usage.
+Refer to the docs for a summary of the main `struct`s.
 """
 @kwdef mutable struct aircraft
     name::String = "Untitled Aircraft"

@@ -1,11 +1,14 @@
 using Printf
 """
-    wsize(ac; itermax=35,
+    _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
-and iterates until the MTOW converges to within a specified tolerance.
+and iterates until the MTOW converges to within a specified tolerance. Formerly, `wsize()`.
+
+!!! warning
+    `_size_aircraft!()` Should not be called directly by users, instead use `size_aircraft!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -18,7 +21,7 @@ and iterates until the MTOW converges to within a specified tolerance.
     **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
 """
-function wsize(ac; itermax=35,
+function _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
     iairf=1, Ldebug=false, printiter=true, saveODperf=false)
 
@@ -46,9 +49,6 @@ function wsize(ac; itermax=35,
     # Extract flags
     ifuel = options.ifuel
 
-    # Unpack powertrain elements
-    ngen, nTshaft = parpt[ipt_ngen], parpt[ipt_nTshaft]
-
     # Calculate sea level temperature for takeoff conditions
     altTO = parm[imaltTO]
     T_std, _, _, _, _ = atmos(altTO / 1e3)
@@ -61,7 +61,7 @@ function wsize(ac; itermax=35,
     set_ambient_conditions!(ac, ipclimbn)
 
     # Calculate fuselage boundary layer development
-    time_fusebl = @elapsed fusebl!(fuse, parm, para, ipcruise1)
+    time_fuselage_drag = @elapsed fuselage_drag!(fuse, parm, para, ipcruise1)
 
     # Extract and set constant values for all mission points
     KAfTE, DAfsurf, DAfwake, PAfinf = 
@@ -458,12 +458,8 @@ function wsize(ac; itermax=35,
             end
 
         else
-            # Call a better Wupdate function
-            Wupdate0!(ac, rlx, fsum)
-            if (fsum >= 1.0)
-                println("Something is wrong!! fsum ≥ 1.0")
-                break
-            end
+            # Call a better update_weights! function
+            update_WMTO!(ac, rlx)
 
             parm[imWTO] = parg[igWMTO]
             parm[imWfuel] = parg[igWfuel]
@@ -529,7 +525,7 @@ function wsize(ac; itermax=35,
         γt, γs = wing.outboard.λ * para[iarclt, ip], wing.inboard.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wingpo(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
+        po = wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
         if compare_strings(options.opt_engine_location,"wing")
@@ -542,17 +538,17 @@ function wsize(ac; itermax=35,
             Weng1 = 0.0
         end
 
-        # Set up parameters for get_wing_weights function
+        # Set up parameters for wing_weights function
         Winn, Wout = wing.inboard.weight, wing.outboard.weight
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
         rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
-        # Call get_wing_weights function
+        # Call wing_weights function
         Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
-        dyWfinn,dyWfout,lstrutp = get_wing_weights!(wing, po, γt, γs,
+        dyWfinn,dyWfout,lstrutp = wing_weights!(wing, po, γt, γs,
                                             Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
                                             parg[igsigfac], rhofuel)
 
@@ -587,7 +583,7 @@ function wsize(ac; itermax=35,
         wing.inboard.dyW = dyWsinn * (1.0 + fwadd) + rfmax * dyWfinn
         wing.outboard.dyW = dyWsout * (1.0 + fwadd) + rfmax * dyWfout
 
-        #TODO: No reason why above lines shouldnt be inside get_wing_weights
+        #TODO: No reason why above lines shouldnt be inside wing_weights
         # -------------------------------
         #      Tail sizing section
         # -------------------------------
@@ -656,17 +652,17 @@ function wsize(ac; itermax=35,
         end
 
         # Set HT max loading magnitude
-        poh,htail.layout.span = tailpo!(htail,Sh, qne)
+        poh,htail.layout.span = tail_loading!(htail,Sh, qne)
         htail.layout.ηs = htail.layout.ηo
         
         # Set VT max loading magnitude, based on single tail + its bottom image
-        pov,bv2 = tailpo!(vtail,2.0 * Sv / vtail.ntails, qne; t_fac=2.0)
+        pov,bv2 = tail_loading!(vtail,2.0 * Sv / vtail.ntails, qne; t_fac=2.0)
         bv = bv2 / 2
         vtail.layout.span = bv2
         vtail.layout.ηs = vtail.layout.ηo
 
         # HT weight
-        htail.weight, _ = get_wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,
+        htail.weight, _ = wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,
             0.0, 0.0, 0, 0.0, 0, 0.0,
             parg[igsigfac], rhofuel)
         
@@ -674,13 +670,13 @@ function wsize(ac; itermax=35,
         calculate_centroid_offset!(htail, htail.layout.span, λhs)
         # HT pitching moment coeff
         fLoh, fLth = 0.0, fLt
-        CMh0, CMh1 = surfcm(htail.layout.span, htail.layout.root_span, htail.layout.root_span, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
+        CMh0, CMh1 = wing_CM(htail.layout.span, htail.layout.root_span, htail.layout.root_span, htail.layout.sweep, wing.layout.spar_box_x_c, htail.outboard.λ, 1.0, htail.outboard.λ, 1.0,
             htail.layout.AR, fLoh, fLth, 0.0, 0.0, 0.0)
         para[iaCMh0, :] .= CMh0
         para[iaCMh1, :] .= CMh1
 
         # VT weight
-        vtail.weight, _ = get_wing_weights!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
+        vtail.weight, _ = wing_weights!(vtail, pov, vtail.outboard.λ, vtail.inboard.λ,
             0.0, 0.0, 0, 0.0, 0, 0.0,
             parg[igsigfac], rhofuel; n_wings=vtail.ntails)
         # Set VT span
@@ -773,16 +769,16 @@ function wsize(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         opt_trim_var = "CL_htail"
-        balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
 
         para[iaalt, ipclimbn] = para[iaalt, ipcruise1]
 
-        # Drag buildup cdsum()
-        computes_surfcd = true
-        cdsum!(ac, imission, ip, computes_surfcd)
+        # Drag buildup aircraft_drag!()
+        computes_wing_direct = true
+        aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
         # L/D and Design point thrust
         # println("CD = ", para[iaCD,ip])
@@ -801,7 +797,7 @@ function wsize(ac; itermax=35,
         #Calculate engine mass properties
         engine.engineweight!(ac)
 
-        mission!(ac, imission, Ldebug)
+        _mission_iteration!(ac, imission, Ldebug)
 
         # this calculated fuel is the design-mission fuel 
         parg[igWfuel] = parm[imWfuel]
@@ -820,9 +816,9 @@ function wsize(ac; itermax=35,
         case = "cooling_sizing"
         engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
-        # Recalculate weight wupdate()
+        # Recalculate weight update_weights!()
         ip = ipcruise1
-        Wupdate!(ac, rlx, fsum)
+        update_weights!(ac, rlx)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -836,9 +832,9 @@ function wsize(ac; itermax=35,
 
         # Get mission fuel burn (check if fuel capacity is sufficent)
 
-        # Recalculate weight wupdate()
+        # Recalculate weight update_weights!()
         ip = ipcruise1
-        Wupdate!(ac, rlx, fsum)
+        update_weights!(ac, rlx)
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -869,7 +865,7 @@ function wsize(ac; itermax=35,
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = cglpay(ac)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -883,21 +879,23 @@ function wsize(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     opt_trim_var = "none"
-    balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
     
 end
 
-#TODO: Wupdate0 and Wupdate docstrings need updating
+#TODO: update_WMTO! and update_weights! docstrings need full description
 """
-Wupdate0 updates the weight of the aircraft
+    update_WMTO!(ac, rlx)
+
+update_WMTO! updates the max takeoff weight of the aircraft (WMTO). Uses relaxation factor rlx.
+Formerly, `Wupdate0!()`.
 """
-function Wupdate0!(ac, rlx, fsum)
+function update_WMTO!(ac, rlx)
     parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
     
     ftotadd = fuse.HPE_sys.W #TODO this should be stored as a weight fraction, not a weight
-    fsum = 0.0
 
     Wsum = parg[igWpay] +
            fuse.weight +
@@ -912,16 +910,40 @@ function Wupdate0!(ac, rlx, fsum)
            landing_gear.nose_gear.weight.W + 
            landing_gear.main_gear.weight.W
 
+    #update WMTO
     WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
     parg[igWMTO] = WMTO
+
+    #check that fsum <= 1.0
+    fwing = wing.weight / WMTO
+    fstrut = wing.strut.weight / WMTO
+    fhtail = htail.weight / WMTO
+    fvtail = vtail.weight / WMTO
+    feng = parg[igWeng] / WMTO
+    ffuel = parg[igWfuel] / WMTO
+    flgnose = landing_gear.nose_gear.weight.W / WMTO
+    flgmain = landing_gear.main_gear.weight.W / WMTO
+    ftesys = parg[igWtesys] / WMTO
+    ftank = parg[igWftank] / WMTO
+
+    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
+           flgnose + flgmain + ftank + ftesys
+
+    if (fsum >= 1.0)
+        @error "Something is wrong!! fsum ≥ 1.0"
+    end
 
 end
 
 
 """
-Wupdate
+    update_weights!(ac, rlx)
+
+Adjusts the aircraft's maximum takeoff weight (WMTO) and other component weights using a relaxation factor (`rlx`). 
+Formerly, `Wupdate!()`.
+
 """
-function Wupdate!(ac, rlx, fsum)
+function update_weights!(ac, rlx)
     parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
     WMTO = parg[igWMTO]
@@ -948,7 +970,7 @@ function Wupdate!(ac, rlx, fsum)
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)
-        println("SOMETHING IS WRONG fsum ≥ 1")
+        @error "SOMETHING IS WRONG fsum ≥ 1"
     end
 
     # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
@@ -1006,7 +1028,7 @@ end
 """
 update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
 
-Updates wing pitching moments and calls surfcm for mission points
+Updates wing pitching moments and calls wing_CM for mission points
 """
 function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
     ip = ip_range[1]
@@ -1014,7 +1036,7 @@ function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iac
     γt = wing.outboard.λ * para[iarclt, ip]
     γs = wing.inboard.λ * para[iarcls, ip]
     
-    CMw0, CMw1 = surfcm(
+    CMw0, CMw1 = wing_CM(
         wing.layout.span, wing.layout.break_span, wing.layout.root_span, 
         wing.layout.sweep, wing.layout.spar_box_x_c, wing.outboard.λ, wing.inboard.λ, 
         γt, γs, wing.layout.AR, wing.fuse_lift_carryover, wing.tip_lift_loss, cmpo, cmps, cmpt

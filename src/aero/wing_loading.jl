@@ -1,133 +1,9 @@
-"""
-    wingpo(wing, rclt, rcls, N, W, Lhtail)
-
-Computes wing root ("center") loading ``p_o`` to balance the net load.
-
-```math
-N*W - L_{h tail} \times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
-```
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `wing::TASOPT.structures.wing`: Wing structure.
-    - `rclt::Float64`: tip  /root cl ratio (clt/clo)
-    - `rcls::Float64`: break/root cl ratio (cls/clo)
-    - `N::Float64`: Max vertical load factor for wing bending loads
-    - `W::Float64`: Aircraft Weight
-    - `Lhtail::Float64`: Worst-case (most negative) tail lift expected in the critical sizing case
-
-    **Outputs:**
-    - `po::Float64`: Wing root loading magnitude.
-
-See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
-"""
-function wingpo(wing, rclt, rcls, N, W, Lhtail)
-
-    γt, γs = wing.outboard.λ * rclt, wing.inboard.λ * rcls
-
-    ηo, ηs = wing.layout.ηo, wing.layout.ηs
-
-    Kc =
-        ηo +
-        0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
-        0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs)
-
-    Ko = 1.0 / (wing.layout.AR * Kc)
-
-    Kp =
-        ηo +
-        0.5 * (1.0 + γs) * (ηs - ηo) +
-        0.5 * (γs + γt) * (1.0 - ηs) +
-        wing.fuse_lift_carryover * ηo +
-        2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.λ
-
-    po = (N * W - Lhtail) / (Kp * wing.layout.span)
-
-    return po
-end # wingpo
+# Contains functions for calculating wing geometry, loading, and pitching moment.
 
 """
-    tailpo!(tail,S,qne; t_fac = 1.0)
+    set_wing_geometry!(W, CL, qinf, wing)
 
-Calculates stabilizer span, root chord, and root loading based on the 
-never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio.
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `tail::TASOPT.structures.tail`: Tail structure.
-    - `S::Float64`: Stabilizer area.
-    - `qne::Float64`: Never-exceed dynamic pressure.
-    - `t_fac::Float64`: Tail Factor (1 for Htail/Wing, 2 for Vtail).
-    
-    **Outputs:**
-    - `po::Float64`: Stabilizer root loading.
-    - `b::Float64`: Stabilizer wingspan.
-
-See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
-"""
-function tailpo!(tail, S, qne; t_fac = 1.0)
-
-    b  = sqrt(S*tail.layout.AR*t_fac)
-    tail.layout.root_chord = S/(0.5*b*(1.0+tail.outboard.λ))
-    po = qne*S*tail.CL_max/b * 2.0/(1.0 + tail.outboard.λ)
-    tail.outboard.co = tail.layout.root_chord*tail.inboard.λ
-    tail.inboard.co = tail.layout.root_chord
-    return po,b
-end
-
-"""
-    wingcl(wing, gammat, gammas,
-            CL, CLhtail,
-	        fduo, fdus, fdut)
-
-Calculates section cl at  eta = ηo,ηs,1
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `Wing::TASOPT.Wing`: Wing Structure
-    - `γt::Float64`, `γs::Float64`: Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
-    - `CL::Float64`, `CLhtail::Float64`: Overall lift coefficient of wing and horizontal tail, respectively.
-    - `duo::Float64`, `dus::Float64`, `dut::Float64`: Velocity-change fractions at wing root, break ("snag"), and tip due to fuselage flow.
-
-    **Outputs:**
-    - `clo::Float64`, `cls::Float64`, `clt::Float64`: Section lift coefficient at root, wing break ("snag"), and tip.
-
-See Sections 2.5 and 2.6 of the [TASOPT Technical Desc](@ref dreladocs). Called by `cdsum!`.
-"""
-function wingcl(wing, γt, γs, CL, CLhtail, duo, dus, dut)
-
-    cosL = cosd(wing.layout.sweep)
-
-    ηo, ηs = wing.layout.ηo, wing.layout.ηs
-
-    Kc =
-        ηo +
-        0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
-        0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs) #surface area factor S = co*bo*K
-
-    Ko = 1.0 / (wing.layout.AR * Kc) #root chord def'n factor
-
-    Kp =
-        ηo + #planform loading factor
-        0.5 * (1.0 + γs) * (ηs - ηo) +
-        0.5 * (γs + γt) * (1.0 - ηs) +
-        wing.fuse_lift_carryover * ηo +
-        2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.λ
-
-    cl1 = (CL - CLhtail) / cosL^2 * (Kc / Kp)
-
-    clo = cl1 / (1.0 + duo)^2
-    cls = cl1 * γs / wing.inboard.λ / (1.0 + dus)^2
-    clt = cl1 * γt / wing.outboard.λ / (1.0 + dut)^2
-
-    return clo, cls, clt
-
-end # wingcl
-
-"""
-    set_wing_geometry!(W,CL,qinf,wing)
-
-Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (taken as start-of-cruise in `wsize`).
+Sizes wing area, span, root chord from `q`, `CL`, `W`, `AR` at given point (taken as start-of-cruise in `size_aircraft!`).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -155,10 +31,137 @@ function set_wing_geometry!(W, CL, q_inf, wing)
     wing.layout.root_chord = wing.layout.S / (Kc * wing.layout.span)
     wing.inboard.co = wing.layout.root_chord
     wing.outboard.co = wing.inboard.co * wing.inboard.λ
-end # wingsc
+end # set_wing_geometry
+
 
 """
-    surfcm(b,bs,bo, sweep, Xaxis,
+    wing_section_cls(wing, gammat, gammas,
+            CL, CLhtail,
+	        fduo, fdus, fdut)
+
+Calculates section cl at  eta = ηo,ηs,1. Formerly, `wingcl()`.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `Wing::TASOPT.Wing`: Wing Structure
+    - `γt::Float64`, `γs::Float64`: Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
+    - `CL::Float64`, `CLhtail::Float64`: Overall lift coefficient of wing and horizontal tail, respectively.
+    - `duo::Float64`, `dus::Float64`, `dut::Float64`: Velocity-change fractions at wing root, break ("snag"), and tip due to fuselage flow.
+
+    **Outputs:**
+    - `clo::Float64`, `cls::Float64`, `clt::Float64`: Section lift coefficient at root, wing break ("snag"), and tip.
+
+See Sections 2.5 and 2.6 of the [TASOPT Technical Desc](@ref dreladocs). Called by [`aircraft_drag!`](@ref).
+"""
+function wing_section_cls(wing, γt, γs, CL, CLhtail, duo, dus, dut)
+
+    cosL = cosd(wing.layout.sweep)
+
+    ηo, ηs = wing.layout.ηo, wing.layout.ηs
+
+    Kc =
+        ηo +
+        0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
+        0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs) #surface area factor S = co*bo*K
+
+    Ko = 1.0 / (wing.layout.AR * Kc) #root chord def'n factor
+
+    Kp =
+        ηo + #planform loading factor
+        0.5 * (1.0 + γs) * (ηs - ηo) +
+        0.5 * (γs + γt) * (1.0 - ηs) +
+        wing.fuse_lift_carryover * ηo +
+        2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.λ
+
+    cl1 = (CL - CLhtail) / cosL^2 * (Kc / Kp)
+
+    clo = cl1 / (1.0 + duo)^2
+    cls = cl1 * γs / wing.inboard.λ / (1.0 + dus)^2
+    clt = cl1 * γt / wing.outboard.λ / (1.0 + dut)^2
+
+    return clo, cls, clt
+
+end # wing_section_cls
+
+"""
+    wing_loading(wing, rclt, rcls, N, W, Lhtail)
+
+Computes wing root ("center") loading ``p_o`` to balance the net load. Formerly, `wingpo()`.
+
+```math
+N*W - L_{h tail} \times 2*∫p(η) dy + 2ΔL₀ + 2ΔLₜ = N*W - (L_{htail}).
+```
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `wing::TASOPT.structures.wing`: Wing structure.
+    - `rclt::Float64`: tip  /root cl ratio (clt/clo)
+    - `rcls::Float64`: break/root cl ratio (cls/clo)
+    - `N::Float64`: Max vertical load factor for wing bending loads
+    - `W::Float64`: Aircraft Weight
+    - `Lhtail::Float64`: Worst-case (most negative) tail lift expected in the critical sizing case
+
+    **Outputs:**
+    - `po::Float64`: Wing root loading magnitude.
+
+See Section 2.6.2 of the [TASOPT Technical Desc](@ref dreladocs).
+"""
+function wing_loading(wing, rclt, rcls, N, W, Lhtail)
+
+    γt, γs = wing.outboard.λ * rclt, wing.inboard.λ * rcls
+
+    ηo, ηs = wing.layout.ηo, wing.layout.ηs
+
+    Kc =
+        ηo +
+        0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
+        0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs)
+
+    Ko = 1.0 / (wing.layout.AR * Kc)
+
+    Kp =
+        ηo +
+        0.5 * (1.0 + γs) * (ηs - ηo) +
+        0.5 * (γs + γt) * (1.0 - ηs) +
+        wing.fuse_lift_carryover * ηo +
+        2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.λ
+
+    po = (N * W - Lhtail) / (Kp * wing.layout.span)
+
+    return po
+end # wing_loading
+
+"""
+    tail_loading!(tail,S,qne; t_fac = 1.0)
+
+Calculates stabilizer span, root chord, and root loading based on the 
+never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio. Formerly, `tailpo!()`.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `tail::TASOPT.structures.tail`: Tail structure.
+    - `S::Float64`: Stabilizer area.
+    - `qne::Float64`: Never-exceed dynamic pressure.
+    - `t_fac::Float64`: Tail Factor (1 for Htail/Wing, 2 for Vtail).
+    
+    **Outputs:**
+    - `po::Float64`: Stabilizer root loading.
+    - `b::Float64`: Stabilizer wingspan.
+
+See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
+"""
+function tail_loading!(tail, S, qne; t_fac = 1.0)
+
+    b  = sqrt(S*tail.layout.AR*t_fac)
+    tail.layout.root_chord = S/(0.5*b*(1.0+tail.outboard.λ))
+    po = qne*S*tail.CL_max/b * 2.0/(1.0 + tail.outboard.λ)
+    tail.outboard.co = tail.layout.root_chord*tail.inboard.λ
+    tail.inboard.co = tail.layout.root_chord
+    return po,b
+end
+
+"""
+    wing_CM(b,bs,bo, sweep, Xaxis,
                        λt, λs, γt, γs,
                        AR, fLo, fLt, cmpo, cmps, cmpt)
 
@@ -167,6 +170,8 @@ Calculates components of wing pitching moment (``C_M``) about wing root axis:
 ``C_M = C_{M,0} + C_{M,1} (C_L - C_{L,surf})``
 
 ``ΔC_{m, surf} = ΔC_{m, 0} + dCₘ/dCL × (C_L - C_{L,h})``
+
+Formerly, `surfcm()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -189,9 +194,9 @@ Calculates components of wing pitching moment (``C_M``) about wing root axis:
 
 
 See Section 2.6.3 of the [TASOPT Technical Desc](@ref dreladocs).
-See also [`surfcd`](@ref) and [`surfcd2`](@ref).
+See also [`wing_profiledrag_scaled`](@ref) and [`wing_profiledrag_direct`](@ref).
 """
-function surfcm(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo, cmps, cmpt)
+function wing_CM(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo, cmps, cmpt)
 
     cosL = cosd(sweep)
     tanL = tand(sweep)
@@ -242,4 +247,4 @@ function surfcm(b, bs, bo, sweep, Xaxis, λt, λs, γt, γs, AR, fLo, fLt, cmpo,
 
 
     return CM0, CM1
-end # surfcm
+end # wing_CM

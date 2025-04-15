@@ -1,3 +1,154 @@
+"""
+      induced_drag!(para, wing, htail)
+
+Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). Formerly, `cditrp!()`.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
+      - `wing::TASOPT.Wing`: Wing Structure.
+      - `htail::TASOPT.Tail`: Htail Structure.
+
+      **Outputs:**
+      - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
+
+!!! compat "Future Changes"
+      In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
+
+"""
+function induced_drag!(para, wing, htail)
+
+      CL = para[iaCL]
+
+      if (CL == 0.0) 
+	    para[iaCDi]  = 0.
+	    para[iaspaneff] = 1.0
+       return
+      end
+
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
+      # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
+      bref = wing.layout.span
+      Sref = wing.layout.S
+
+      Mach = para[iaMach]
+
+      specifies_CL = true
+
+      b        = zeros(Float64, 2)
+      bs       = zeros(Float64, 2)
+      bo       = zeros(Float64, 2)
+      bop      = zeros(Float64, 2)
+      zcent    = zeros(Float64, 2)
+      gammas   = zeros(Float64, 2)
+      gammat   = zeros(Float64, 2)
+      po       = zeros(Float64, 2)
+      CLsurfsp = zeros(Float64, 2)
+
+      npout = zeros(Float64, 2) # outer panel
+      npinn = zeros(Float64, 2) # inner panel
+      npimg = zeros(Float64, 2) # image inside fuselage
+
+      #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
+#---- wing wake parameters
+      fLo =  wing.fuse_lift_carryover
+#      fLo = 0.0
+
+#---- span, wing-break span, wing-root span
+      b[1]  = wing.layout.span
+      bs[1] = wing.layout.break_span
+      bo[1] = wing.layout.root_span
+
+#---- span of wing-root streamline in Trefftz Plane
+      bop[1] = wing.layout.root_span * 0.2
+
+      zcent[1]  = wing.layout.z
+      gammas[1] = wing.inboard.λ*para[iarcls]
+      gammat[1] = wing.outboard.λ*para[iarclt]
+      po[1]     = 1.0
+      CLsurfsp[1] = CL - CLhtail
+
+#---- velocity-change fractions at wing spanwise locations due to fuselage flow
+      fduo = para[iafduo]
+      fdus = para[iafdus]
+      fdut = para[iafdut]
+
+#---- horizontal tail wake parameters
+      b[2]   = htail.layout.span
+      bs[2]  = htail.layout.root_span
+      bo[2]  = htail.layout.root_span
+      bop[2] = htail.layout.root_span
+
+      zcent[2] = htail.layout.z
+      gammas[2] = 1.0
+      gammat[2] = htail.outboard.λ
+      po[2]     = 1.0
+      CLsurfsp[2] = CLhtail
+
+
+#---- number of surfaces  (wing, horizontal tail)
+      nsurf = 2
+
+#---- number of spanwise intervals
+# -----------------------------------------------------------------------
+# The below # of panels (43 total) gives about 1.8% higher CDi relative to the 
+# finest one here with ~360 panels
+      npout[1] = 20  # outer panel
+      npinn[1] = 6   # inner panel
+      npimg[1] = 3   # image inside fuselage
+  
+      npout[2] = 10  # outer panel
+      npinn[2] = 0   # inner panel
+      if (bo[2] == 0.0) 
+       npimg[2] = 0
+      else
+       npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
+      end
+# -----------------------------------------------------------------------
+# The below # of panels (84 total) gives about 0.60% higher CDi relative to the 
+# finest one here with ~360 panels
+#     npout[1] = 40  # outer panel
+#     npinn[1] = 12  # inner panel
+#     npimg[1] = 6   # image inside fuselage
+# 
+#     npout[2] = 20  # outer panel
+#     npinn[2] = 0   # inner panel
+#     npimg[2] = 4   # image inside fuselage  (or inner panel if T-tail)
+# -----------------------------------------------------------------------
+#      npout[1] = 160  # outer panel
+#      npinn[1] = 48   # inner panel
+#      npimg[1] = 24   # image inside fuselage
+# 
+#      npout[2] = 80  # outer panel
+#      npinn[2] = 0   # inner panel
+#      npimg[2] = 16  # image inside fuselage  (or inner panel if T-tail)
+# -----------------------------------------------------------------------
+
+      ktip = 16
+      #CLsurf = zeros(Float64, nsurf)
+      # println("$nsurf, $npout, $npinn, $npimg, 
+	# $Sref, $bref,
+	# $b,$bs,$bo,$bop, $zcent,
+	# $po,$gammat,gammas, $fLo, $ktip,
+      # $specifies_CL,$CLsurfsp")
+
+
+      CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, npout, npinn, npimg, 
+	Sref, bref,
+	b,bs,bo,bop, zcent,
+	po,gammat,gammas, fLo, ktip,
+      specifies_CL,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+      
+      # println("$CLsurf, $CLtp, $CDtp, $sefftp")
+
+      para[iaCDi] = CDtp
+      para[iaspaneff] = sefftp
+
+      return
+end # induced_drag!
+
+
+# Trefftz analysis functions -------------------
 # Investigating potential to have wrappers to make code cleaner
 struct tfp_workarrays
   t::Vector{Float64}
@@ -38,7 +189,7 @@ end
 
 function trefftz(tf::tfp)
   
-  trefftz1(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
+  _trefftz_analysis(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
 	tf.Sref, tf.bref,
 	tf.b, tf.bs, tf.bo, tf.bop, tf.zcent,
 	tf.po,tf.γt,tf.γs, 1, tf.ktip,
@@ -52,12 +203,12 @@ function trefftz(tf::tfp)
 end
 
 """
-    trefftz1(nsurf, npout, npinn, npimg, 
+    _trefftz_analysis(nsurf, npout, npinn, npimg, 
           Sref, bref, b, bs, bo, bop, 
           zcent, po, gammat, gammas, 
           fLo,ktip, specifies_CL, CLsurfsp)
 
-Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces.
+Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces. Formerly, `trefftz1()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -84,7 +235,7 @@ Trefftz plane routine for the induced drag computation of `nsurf` number of surf
 
 See [theory above](@ref trefftz) or Sections 2.14.7 and 3.8.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function trefftz1(nsurf, npout, npinn, npimg,
+function _trefftz_analysis(nsurf, npout, npinn, npimg,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
 	po, gammat, gammas, fLo, ktip,

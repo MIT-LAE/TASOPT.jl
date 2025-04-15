@@ -10,14 +10,14 @@ using LinearAlgebra
 using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
 
-export airfoil, cdsum!, surfcm, set_wing_geometry!, wingpo, tailpo!, wingcl, fusebl!
+export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, fuselage_drag!
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
 function __init__()
     BLAS.set_num_threads(1) #This sets the number of threads in BLAS to be equal to 1. 
     #It prevents multithreading but ensures consistent speed across CPU families. Without it,
-    #the LU calculation in blax() can take up to 1000x longer.
+    #the LU calculation in _axisymm_BL() can take up to 1000x longer.
     #TODO this may cause issues if parallelization is attempted in the future. Other approaches are to 
     #match the number of BLAS threads to the CPUs available on the machine or server
 end
@@ -52,20 +52,20 @@ include("airfun.jl")
 # airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 # airsection = airtable(airfoil_data);
 
-include("surfcd.jl")
-include("wing_calculations.jl")
+include("wing_loading.jl")
+include("wing_drag.jl")
 
 # Fuselage IBLT calculations
-include("fusebl.jl")
-include("axisol.jl")
-include("blax.jl")
-include("blsys.jl")
+include("fuselage_drag.jl")
+include("axisymm_flow.jl")
+include("axisymm_BL.jl")
+include("BL_station_system.jl")
 
 # Trefftz plane CDi calcs
-include("trefftz.jl")
+include("induced_drag.jl")
 
 # Total CD calculations 
-include("cdsum.jl")
+include("drag.jl")
 
 
 end

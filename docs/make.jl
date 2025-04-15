@@ -36,15 +36,16 @@ makedocs(
         "structures/landing_gear.md",
         "structures/cabin_sizing.md"
         ],
-    "Cryogenic tanks" => Any["cryo_tank/cryotank.md",
-    "cryo_tank/fueltanks.md"
-        ],
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
             "propulsion/gascalc.md",
             "propulsion/hxfun.md",
             "propulsion/PEMfuelcell.md",
             "propulsion/ElectricMachines.md",
+        ],
+    "Cryogenic tanks" => Any[
+            "cryo_tank/fueltanks.md",
+            "cryo_tank/cryotank.md"
         ],
     "Stability" => "balance/balance.md",
     "Mission and sizing" => Any[

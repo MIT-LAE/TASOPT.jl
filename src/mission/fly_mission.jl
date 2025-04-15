@@ -1,22 +1,26 @@
 """
-    fly_off_design!(ac, mi, itermax, initializes_engine, saveOffDesign)
+    fly_mission!(ac, imission, itermax, initializes_engine)
 
-`fly_off_design!` runs the aircraft through input off-design missions
+Runs the aircraft through the specified mission, computing and converging the fuel weight. Formerly, `fly_offdesign_mission!()`.
 
 !!! details "🔃 Inputs and Outputs"
 **Inputs:**
 - `ac::aircraft`: Aircraft with first mission being the design mission
-- `mi::Int64`: Off design mission to run (Default: 1)
+- `imission::Int64`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
 - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
 
 **Outputs:**
-- No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the off design mission selected
+- No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the mission selected
 
 """
-function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
+function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
+    if ~ac.is_sized[1]
+        error("Aircraft not sized. Please size the aircraft before running the mission.")
+    end
+    
     #Extract aircraft components and storage arrays
-    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, mi)
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission)
     
     parad = ac.parad
     pared = ac.pared
@@ -42,7 +46,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     fuse_tank.TSLtank = Tref + ΔTatmos #store sea-level temperature in tank struct
 
     # Calculates surface velocities, boundary layer, wake 
-    fusebl!(fuse, parm, para, ipcruise1)
+    fuselage_drag!(fuse, parm, para, ipcruise1)
 
 #---- assume K.E., dissipation, drag areas will be the same for all points
     KAfTE   = para[iaKAfTE  , ipcruise1] # Kinetic energy area at T.E.
@@ -164,7 +168,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     γt = wing.outboard.λ*para[iarclt,ip]
     γs = wing.inboard.λ*para[iarcls,ip]
 
-    CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+    CMw0, CMw1 = wing_CM(b, bs, bo, sweep, Xaxis,
                             λt,λs,γt,γs, 
                             AR,fLo,fLt,cmpo,cmps,cmpt)
 
@@ -177,7 +181,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     γt = wing.outboard.λ*para[iarclt, ip]
     γs = wing.inboard.λ*para[iarcls, ip]
     
-    CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+    CMw0, CMw1 = wing_CM(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
                       AR,fLo,fLt,cmpo,cmps,cmpt)
     
@@ -189,7 +193,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     γt = wing.outboard.λ*para[iarclt, ip]
     γs = wing.inboard.λ*para[iarcls, ip]
 
-    CMw0, CMw1 = surfcm(b, bs, bo, sweep, Xaxis,
+    CMw0, CMw1 = wing_CM(b, bs, bo, sweep, Xaxis,
                       λt,λs,γt,γs, 
                       AR,fLo,fLt,cmpo,cmps,cmpt)
 
@@ -206,7 +210,7 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     fLth = fLt
     cmph = 0.
 
-    CMh0, CMh1 = surfcm(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
+    CMh0, CMh1 = wing_CM(bh, boh, boh, sweeph, Xaxis, λh, 1.0, λh, 1.0,
     ARh, fLoh, fLth, 0.0, 0.0, 0.0)
 
     para[iaCMh0, :] .= CMh0
@@ -247,16 +251,16 @@ function fly_off_design!(ac, mi = 1; itermax = 35, initializes_engine = true)
     ρ0 = BW / (0.5*u0^2*S*CL) #Find density from L=W
     para[iaalt, ip] = find_altitude_from_density(ρ0, ΔTatmos) * 1e3 #Store altitude
 
-    set_ambient_conditions!(ac, ipcruise1, im = mi)
+    set_ambient_conditions!(ac, ipcruise1, im = imission)
 
     if !(options.has_wing_fuel) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
-        _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, mi)
+        _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, imission)
         parm[imWfvent] = Mvents[end] * gee #Store vented weight
     end
 
     # Calling mission
-    time_propsys += mission!(ac, mi, false, calculate_cruise = true) #Calculate start of cruise too
+    time_propsys += _mission_iteration!(ac, imission, false, calculate_cruise = true) #Calculate start of cruise too
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
