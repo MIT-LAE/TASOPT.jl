@@ -15,15 +15,15 @@ using Test
     shaft_speed = 10e3 #RPM
     TASOPT.propsys.ElectricMachine.size_PMSM!(mot, shaft_speed, Pmech)
 
-    @test mot.mass ≈ 99.05953856907007 rtol = 1e-8
-    @test mot.l ≈ 0.15181949029252456 rtol = 1e-8
-    @test mot.P_input ≈ 1.033907198036092e6 rtol = 1e-8
-    @test mot.phase_resistance ≈ 0.0009936903085147378 rtol = 1e-8
+    @test mot.mass ≈ 99.93627515592064 rtol = 1e-8
+    @test mot.l ≈ 0.15319344713958763 rtol = 1e-8
+    @test mot.P_input ≈ 1.0343052741850604e6 rtol = 1e-8
+    @test mot.phase_resistance ≈ 0.0010070190689972127 rtol = 1e-8
 
     Pmech = 2.5e5
     shaft_speed = 5e3
     TASOPT.propsys.ElectricMachine.operate_PMSM!(mot, shaft_speed, Pmech)
-    @test mot.P_input ≈ 259230.26242272905 rtol = 1e-8
+    @test mot.P_input ≈ 259340.74513568674 rtol = 1e-8
 
     #Generator
     gen = TASOPT.propsys.ElectricMachine.Generator()
@@ -36,15 +36,15 @@ using Test
     shaft_speed = 10e3 #RPM
     TASOPT.propsys.ElectricMachine.size_PMSM!(gen, shaft_speed, Pmech)
 
-    @test gen.mass ≈ 99.05953856907007 rtol = 1e-8
-    @test gen.l ≈ 0.15181949029252456 rtol = 1e-8
-    @test gen.P_output ≈ 966092.8019639081 rtol = 1e-8
-    @test gen.phase_resistance ≈ 0.0009936903085147378 rtol = 1e-8
+    @test gen.mass ≈ 99.93627515592064 rtol = 1e-8
+    @test gen.l ≈ 0.15319344713958763 rtol = 1e-8
+    @test gen.P_output ≈ 965694.7258149397 rtol = 1e-8
+    @test gen.phase_resistance ≈ 0.0010070190689972127 rtol = 1e-8
 
     Pmech = 2.5e5
     shaft_speed = 5e3
     TASOPT.propsys.ElectricMachine.operate_PMSM!(gen, shaft_speed, Pmech)
-    @test gen.P_output ≈ 240769.73757727098 rtol = 1e-8
+    @test gen.P_output ≈ 240659.25486431326 rtol = 1e-8
 
     #Inverter
     invtr = TASOPT.propsys.ElectricMachine.Inverter()

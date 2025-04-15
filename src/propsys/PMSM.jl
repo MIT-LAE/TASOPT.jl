@@ -152,11 +152,11 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     energized_phases::Int = 2
     """Phase resistance [Ω]"""
     phase_resistance::Float64 = 0.0
-    """Design current [A]"""
+    """Design current in a slot [A]"""
     Id::Float64 = 0.0
     """Design Voltage [V]"""
     Vd::Float64 = 0.0
-    """Current [A]"""
+    """Current in a slot [A]"""
     I::Float64 = 0.0
     """Voltage or back emf [V]"""
     V::Float64 = 0.0
@@ -349,7 +349,7 @@ function size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, d
 
     #-------Teeth sizing-------
     #Armature reaction
-    B_windings = μ₀ * PMSM.J_max * teeth.thickness
+    B_windings = μ₀ * PMSM.J_max * windings.kpf * teeth.thickness
     
     #Teeth B-field
     teeth.B = PMSM.rB_sat * PMSM.B_sat
