@@ -1,10 +1,8 @@
 # Loading and saving models
 
-## TOML files
+## TOML input files
 
-### Human-readable TOML and the default input
-
-TASOPT models can be loaded from and saved to human-readable TOML files via [`read_aircraft_model()`](@ref) and [`save_aircraft_model()`](@ref). These scripts are written to process files based on the `default_input.toml`, as is done when `load_default_model()` is run; they are usable for simple cases that alter the default inputs. For larger deviations from the default (e.g., mission-specific aero or engine performance), customized scripts are recommended when not required.
+TASOPT models can be loaded from and saved to human-readable TOML files via [`read_aircraft_model()`](@ref) and [`save_aircraft_model()`](@ref). These scripts are written to process files based on the `/example/defaults/default_input.toml`, as is done when `load_default_model()` is run; they are usable for simple cases that alter the default inputs. For larger deviations from the default (e.g., mission-specific aero or engine performance), customized scripts are recommended when not required.
 
 Once it is loaded in this fashion, the `aircraft` can be manipulated and re-sized. Note: TOML-based saves **do not** store the performance of the sized model, so a model must be sized before data can be referenced usefully:
 
@@ -21,9 +19,9 @@ ac.parg[igTmetal] = 2000    #set max metal temp to 2000 K
 size_aircraft!(ac)          #resizing after parameter change
 ```
 
-### Quicksave and quickload
+## Quicksave and quickload to `.jld2`
 
-Complete `aircraft` structs can also be saved to TOML files by calling [`quicksave_aircraft()`](@ref), albeit in a fairly raw format where the fields are saved directly, including the `par` arrays. Though inscrutable to the human eye, these saves capture **ALL** elements of the `aircraft` and can be loaded via [`quickload_aircraft()`](@ref) to a fresh REPL in an already-sized state.
+Complete `aircraft` structs can also be serialized to JLD2 files by calling [`quicksave_aircraft()`](@ref). Though inscrutable to the human eye, these saves capture **ALL** elements of the `aircraft` and can be loaded via [`quickload_aircraft()`](@ref) to a fresh REPL in an already-sized state.
 
 ```julia
 #load and size the default aircraft model

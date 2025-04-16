@@ -1,4 +1,6 @@
-# PEM fuel cells
+# [PEM fuel cells](@id fuelcells)
+
+To study novel aircraft designs that may leverage cryogenic hydrogen, the following fuel cell models were integrated, along with [cryogenic tank](@ref fueltanks) and [heat exchanger](@ref hxers) models.
 
 ## Theory
 

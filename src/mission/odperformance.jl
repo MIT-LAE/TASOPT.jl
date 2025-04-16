@@ -1,11 +1,17 @@
 """
 `odperf!` runs the aircraft in off-design mode to generate a `BADA`-like 
 `PTF` file for use in `AEIC`.
+
+!!! compat "Future Changes"
+    This function will be overhauled and renamed in an upcoming revision. Neither NPSS nor turboelectric compatibility are currently in the scope.
+
 """
 function odperf!(pari, parg, parm, para, pare, Wfrac, FL, 
     NPSS_TS::Base.Process, 
     NPSS_Fan::Base.Process, 
     NPSS_AftFan::Base.Process, Ldebug, ifirst, NPSS_PT, NPSS::Base.Process)
+
+@warn "The function `odperf!` will be overhauled and renamed in an upcoming revision. Neither NPSS nor turboelectric compatibility are currently in the scope."
 
 calc_ipc1 = true
 # ifirst = true
@@ -137,19 +143,19 @@ for   i = 1:N
         Wf = W - Wzero
         rfuel = Wf/parg[igWfuel]*0
         opt_trim_var = "CL_htail"
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
+        balance_aircraft!(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
 
         
         # Calculate Drag
         if (i == 1)
-            computes_surfcd = false
+            computes_wing_direct = false
         else 
-            computes_surfcd = true
+            computes_wing_direct = true
         end
         if CL > 0.9
-            computes_surfcd = false
+            computes_wing_direct = false
         end
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
+        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_wing_direct)
 
         #BLI parameters
         ρ0 = pare[ierho0, ip]
@@ -240,14 +246,14 @@ for   i = 1:N
 
         #Trim aircraft
         opt_trim_var = "CL_htail"
-        balance(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
-        computes_surfcd = true
+        balance_aircraft!(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var)
+        computes_wing_direct = true
         if CL > 1.0
             println("CL during cruise is $CL")
-            computes_surfcd = false
+            computes_wing_direct = false
         end
         #Get Drag
-        cdsum!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_surfcd)
+        aircraft_drag!(pari, parg, view(para, :, ip), view(pare, :, ip), computes_wing_direct)
         DoL = para[iaCD, ip]/ para[iaCL, ip]
 
         F  = BW*(DoL) #zero climb angle for cruise

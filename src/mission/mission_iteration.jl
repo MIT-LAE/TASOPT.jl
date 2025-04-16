@@ -1,8 +1,8 @@
 """
-    mission!(ac, imission, Ldebug; calculate_cruise = false)
+    _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
 Runs aircraft through mission, calculating fuel burn
-and other mission variables.
+and other mission variables. Formerly, `mission!()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -18,7 +18,7 @@ and can be passed in as zero with only a minor error.
 They are updated and returned in the same para[iagamV,ip] array.
 
 """
-function mission!(ac, imission, Ldebug; calculate_cruise = false)
+function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
       parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear = unpack_ac(ac, imission) 
 
@@ -195,7 +195,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
       opt_trim_var = "CL_htail"
-      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       CLh2 = para[iaCLh, ip]
       xCG2 = para[iaxCG, ip]
@@ -314,14 +314,14 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                   Wf = W - Wzero
                   rfuel = Wf / parg[igWfuel]
                   opt_trim_var = "CL_htail"
-                  balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+                  balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
                   if (ip == ipclimb1)
-                        computes_surfcd = false #use explicitly specified wing cdf, cdp
+                        computes_wing_direct = false #use explicitly specified wing cdf, cdp
                   else
-                        computes_surfcd = true #use airfoil database
+                        computes_wing_direct = true #use airfoil database
                   end
-                  cdsum!(ac, imission, ip, computes_surfcd)
+                  aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
                   eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
@@ -379,7 +379,7 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
                         para[iagamV, ip+1] = para[iagamV, ip]
                   end
 
-                  W = para[iafracW, ip+1] * WMTO   # Initial weight fractions have been set in wsize.jl
+                  W = para[iafracW, ip+1] * WMTO   # Initial weight fractions have been set in _size_aircraft!
                   CL = para[iaCL, ip+1]
                   ρ = pare[ierho0, ip+1]
                   cosg = cos(para[iagamV, ip+1])
@@ -419,14 +419,14 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       opt_trim_var = "CL_htail"
-      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
             # Calculate only if requested since for design mission start of cruise is the des point and ∴ already calcualted 
             # Calculate drag
-            computes_surfcd = true
-            cdsum!(ac, imission, ip, computes_surfcd)
+            computes_wing_direct = true
+            aircraft_drag!(ac, imission, ip, computes_wing_direct)
             DoL = para[iaCD, ip] / para[iaCL, ip]
             W = para[iafracW, ip] * WMTO
             BW = W + para[iaWbuoy, ip]
@@ -502,11 +502,11 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       opt_trim_var = "CL_htail"
-      balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       # Calc Drag
-      computes_surfcd = true
-      cdsum!(ac, imission, ip, computes_surfcd)
+      computes_wing_direct = true
+      aircraft_drag!(ac, imission, ip, computes_wing_direct)
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
       BW = W + para[iaWbuoy, ip]
@@ -647,16 +647,16 @@ function mission!(ac, imission, Ldebug; calculate_cruise = false)
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
             opt_trim_var = "CL_htail"
-            balance(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+            balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp
-                  computes_surfcd = false
+                  computes_wing_direct = false
             else
                   # use airfoil database for wing cdf,cdp
-                  computes_surfcd = true
+                  computes_wing_direct = true
             end
-            cdsum!(ac, imission, ip, computes_surfcd)
+            aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
             # set up for engine calculation
             sing = sin(gamVde)

@@ -29,15 +29,15 @@ end
 
 function get_template_input_file(designrange)
     if designrange <= 2600 * nmi_to_m
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_regional.toml")
     elseif designrange <= 3115 * nmi_to_m
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml")
     elseif designrange <= 8500 * nmi_to_m
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml")
     else
         println("\n")
         @warn """Requested aircraft design range exceeds expected capability. Selecting Wide Body Aircraft Template, but be warned. """
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml")
     end
     return templatefile
 end
@@ -56,11 +56,11 @@ Temp(x)     = convertTemp(parse_unit(x)...)
 
 """
     read_aircraft_model(datafile; 
-    defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
+    defaultfile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"))
 
 Reads a specified TOML file that describes a TASOPT `aircraft` model 
 with a fall back to the default `aircraft` definition 
-provided in \"src/IO/default_input.toml\""
+provided in \"/example/defaults/default_input.toml\""
 
 !!! note "Deviating from default"
     Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
@@ -68,7 +68,7 @@ provided in \"src/IO/default_input.toml\""
 
 # Examples
 ```julia-repl
-julia> read_aircraft_model("src/IO/input.toml")
+julia> read_aircraft_model("examples/defaults/default_input.toml")
 
 
 ┌ Info: engine_location not found in user specified input file. 
@@ -90,7 +90,7 @@ Cruise Mach = 0.8
 ```
 """
 function read_aircraft_model(
-    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"); 
+    datafile=joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"); 
     templatefile = "")
 
 data = TOML.parsefile(datafile)
