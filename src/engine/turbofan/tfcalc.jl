@@ -1,32 +1,32 @@
 """ 
-    tfcalc(pari,parg,para,pare, ip, icall,icool,initializes_engine)
+    tfcalc(wing, engine, parg, para, pare, ip, ifuel, opt_calc_call, opt_cooling, initializes_engine)
 
 Calls function tfsize or tfoper for one operating point.
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**
-    - `icall`:    0  call on-design  sizing   routine tfsize
-                  1  call off-design analysis routine tfoper, specified Tt4
-                  2  call off-design analysis routine tfoper, specified Fe
-          
-    - `icool`:    0  use zero cooling mass flow ratio regardless
-                  1  use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
-                  2  use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
+    - `opt_calc_call`:  "sizing"        call on-design  sizing   routine tfsize
+                        "oper_fixedTt4" call off-design analysis routine tfoper, specified Tt4
+                        "oper_fixedFe"  call off-design analysis routine tfoper, specified Fe
+
+    - `opt_cooling`:   turbine cooling flag
+               "none" = no cooling mass flow
+               "fixed_coolingflowratio" = use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
+               "fixed_Tmetal" = use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
 
     - `initializes_engine`:    true  initialize variables for iteration in TFOPER
                                false  use current variables as initial guesses in TFOPER
 """
-function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, ip::Int64,
-        icall::Int64, icool::Int64, initializes_engine::Bool)
+function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
+        opt_calc_call::String, opt_cooling::String, initializes_engine::Bool)
 
         Lprint = false
 
         if (Lprint)
-                println("entering TFCALC", icall, icool, initializes_engine)
+                println("entering TFCALC", opt_calc_call, opt_cooling, initializes_engine)
         end
 
-        ifuel = pari[iifuel]
-        iBLIc = pari[iiBLIc]
+        eng_has_BLI_cores = engine.model.has_BLI_cores
 
         Gearf = parg[igGearf]
         Tmetal = parg[igTmetal]
@@ -98,12 +98,12 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
         Δp_InterC = pare[ieInterCDeltap]
         Δp_Regen = pare[ieRegenDeltap]
 
-        if (icool == 1)
+        if compare_strings(opt_cooling, "fixed_coolingflowratio")
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
                         epsrow[icrow] = pare[ieepsc1+icrow-1]
                 end
-        elseif (icool == 2)
+        elseif compare_strings(opt_cooling, "fixed_Tmetal")
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
                         #cc      Tmrow[icrow]  = pare(ieTmet1+icrow-1)
@@ -146,7 +146,7 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
         pt9 = pare[iept9]
 
         # #--------------------------------------------------------------------------
-        if (icall == 0)
+        if compare_strings(opt_calc_call, "sizing")
                 #----- engine sizing case
 
                 Fe = pare[ieFe]
@@ -158,40 +158,6 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                         println("ncrow =", ncrow)
                         println("        altkm =", para[iaalt] / 1000.0)
                 end
-
-                #        tset[time0]
-
-                # println("===========================")
-                # println(["gee, M0, T0, p0, a0, M2, M25,
-                # Fe, Phiinl, Kinl, iBLIc,
-                # BPR, pif, pilc, pihc,
-                # pid, pib, pifn, pitn,
-                # Tfuel, ifuel, etab,
-                # epolf, epollc, epolhc, epolht, epollt,
-                # pifK, epfK,
-                # mofft, Pofft,
-                # Tt9, pt9, Tt4,
-                # epsl, epsh,
-                # icool,
-                # Mtexit, dTstrk, StA, efilm, tfilm,
-                # M4a, ruc,
-                # ncrowx, ncrow,
-                # epsrow,", gee, M0, T0, p0, a0, M2, M25,
-                #         Fe, Phiinl, Kinl, iBLIc,
-                #         BPR, pif, pilc, pihc,
-                #         pid, pib, pifn, pitn,
-                #         Tfuel, ifuel, etab,
-                #         epolf, epollc, epolhc, epolht, epollt,
-                #         pifK, epfK,
-                #         mofft, Pofft,
-                #         Tt9, pt9, Tt4,
-                #         epsl, epsh,
-                #         icool,
-                #         Mtexit, dTstrk, StA, efilm, tfilm,
-                #         M4a, ruc,
-                #         ncrowx, ncrow,
-                #         epsrow])
-                # println("===========================")
 
                 epsrow, Tmrow,
                 TSFC, Fsp, hfuel, ff, mcore,
@@ -221,7 +187,7 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 epf, eplc, ephc, epht, eplt,
                 etaf, etalc, etahc, etaht, etalt,
                 Lconv = tfsize!(gee, M0, T0, p0, a0, M2, M25,
-                        Fe, Phiinl, Kinl, iBLIc,
+                        Fe, Phiinl, Kinl, eng_has_BLI_cores,
                         BPR, pif, pilc, pihc,
                         pid, pib, pifn, pitn,
                         Tfuel, ifuel, hvap, etab,
@@ -230,7 +196,7 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                         mofft, Pofft,
                         Tt9, pt9, Tt4,
                         epsl, epsh,
-                        icool,
+                        opt_cooling,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
@@ -384,51 +350,23 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 Fe = 0.0
                 Tt4 = pare[ieTt4]
 
-                if (icall == 1)
+                if compare_strings(opt_calc_call, "oper_fixedTt4")
                         #------ specified Tt4 -- Fe will be computed
-                        iTFspec = 1
-
-                else
+                        nothing; #nothing special is done
+                elseif compare_strings(opt_calc_call, "oper_fixedFe")
                         #------ specified Fe -- Tt4 will be computed (set initial guess here)
                         Fe = pare[ieFe]
-                        iTFspec = 2
-
                 end
 
                 if (Lprint)
-                        println(cplab[ip], iTFspec, Tt4, Fe)
-                        println("Calling TFOPER...", icall, icool, ip)
+                        println(cplab[ip], opt_calc_call, Tt4, Fe)
+                        println("Calling TFOPER...", opt_calc_call, opt_cooling, ip)
                         println(DAwsurf, para[iagamV])
                         println(rho0, u0, parg[igWMTO])
                         println(mcore, M2, M25)
                         println("Phiinl, Kinl", Phiinl, Kinl)
 
                 end
-
-                # println("================================")
-                # println([gee, M0, T0, p0, a0, Tref, pref])
-                # println([Phiinl, Kinl, iBLIc])
-                # println([pid, pib, pifn, pitn])
-                # println([Gearf])
-                # println([pifD, pilcD, pihcD, pihtD, piltD])
-                # println([mbfD, mblcD, mbhcD, mbhtD, mbltD])
-                # println([NbfD, NblcD, NbhcD, NbhtD, NbltD])
-                # println([A2, A25, A5, A7])
-                # println([iTFspec])
-                # println([Tfuel, ifuel, etab])
-                # println([epolf, epollc, epolhc, epolht, epollt])
-                # println([pifK, epfK])
-                # println([mofft, Pofft])
-                # println([Tt9, pt9])
-                # println([epsl, epsh])
-                # println([icool])
-                # println([Mtexit, dTstrk, StA, efilm, tfilm])
-                # println([M4a, ruc])
-                # println([ncrowx, ncrow])
-                # println([epsrow, Tmrow])
-                # println(Fe)
-                # println([M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25])
-                # println("================================")
 
                 TSFC, Fsp, hfuel, ff,
                 Fe, mcore,
@@ -461,21 +399,21 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 epf, eplc, ephc, epht, eplt,
                 etaf, etalc, etahc, etaht, etalt,
                 Lconv = tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-                        Phiinl, Kinl, iBLIc,
+                        Phiinl, Kinl, eng_has_BLI_cores,
                         pid, pib, pifn, pitn,
                         Gearf,
                         pifD, pilcD, pihcD, pihtD, piltD,
                         mbfD, mblcD, mbhcD, mbhtD, mbltD,
                         NbfD, NblcD, NbhcD, NbhtD, NbltD,
                         A2, A25, A5, A7,
-                        iTFspec,
+                        opt_calc_call,
                         Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
                         pifK, epfK,
                         mofft, Pofft,
                         Tt9, pt9,
                         epsl, epsh,
-                        icool,
+                        opt_cooling,
                         Mtexit, dTstrk, StA, efilm, tfilm,
                         M4a, ruc,
                         ncrowx, ncrow,
@@ -493,9 +431,6 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 if (!Lconv)
                         println("Failed on operating point", ip, ":  ", cplab[ip])
                 end
-                # if (iTFspec == 1)
-                #         exit()
-                # end
 
                 fo = mofft / mcore
 
@@ -506,9 +441,9 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
                 pare[ieM2] = M2
                 pare[ieM25] = M25
 
-                if (icall == 1)
+                if compare_strings(opt_calc_call, "oper_fixedTt4")
                         pare[ieFe] = Fe
-                else
+                elseif compare_strings(opt_calc_call, "oper_fixedFe")
                         pare[ieTt4] = Tt4
                 end
 
@@ -519,13 +454,13 @@ function tfcalc!(pari::Vector{Int64}, parg::Vector{Float64}, para, pare, wing, i
         end
         #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if (icool == 1)
+        if compare_strings(opt_cooling, "fixed_coolingflowratio")
                 #------ cooling flow was specified... set metal temperatures
                 for icrow = 1:ncrowx
                         pare[ieTmet1+icrow-1] = Tmrow[icrow]
                 end
 
-        elseif (icool == 2)
+        elseif compare_strings(opt_cooling, "fixed_Tmetal")
                 #------ Tmetal was specified... set cooling flow ratios
                 epstot = 0.0
                 for icrow = 1:ncrowx

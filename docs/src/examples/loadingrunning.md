@@ -1,6 +1,6 @@
 # [Loading and running a model] (@id firstexample)
 
-`TASOPT.jl` uses TOML files to define aircraft models. You can find an example input file at `/src/IO/default_input.toml`. The majority of aircraft parameters and assumptions are defined here, and it's a useful resource for understanding the parameters and typical values.
+`TASOPT.jl` uses TOML files to define aircraft models. You can find example input files at `/example/defaults/`. The majority of aircraft parameters and assumptions are defined here, and it's a useful resource for understanding the parameters and typical values.
 
 Start by importing `TASOPT.jl` and then loading the default aircraft model.
 ```julia-repl
@@ -12,16 +12,14 @@ Wpay = 172.0 kN
 Des. Range  = 5.56e6 km
 Cruise Mach = 0.8
 ```
-Alternatively you can load your desired input file by using
+Alternatively, you can load your desired input file (perhaps a modified version of a default file) by using:
 ```julia-repl
-julia> example_ac = read_aircraft_model("../src/IO/input.toml") # MODIFY <path> appropriately
+julia> example_ac = read_aircraft_model("../input.toml") # MODIFY <path> appropriately
 ```
 
-`example_ac` is an instance of an `aircraft` type, that is a thin wrapper for 
-a couple of arrays that store, for example, the geometric `parg`,
- aerodynamic (`para`), engine (`pare`).
+`example_ac` is an instance of an `aircraft` `struct` (what Julia calls composite types); it's a thin wrapper for other `structs` representing aircraft components, and additional "`par`" arrays that store design and performance quantities. Refer to the sections on data structures for an [introduction](@ref datastructs_basics) and [details](@ref datastructs).
 
-You can size this aircraft by running
+You can size this aircraft by running:
 ```julia-repl
 julia> size_aircraft!(example_ac)
 Max payload weight was not set, setting Wpaymax = Wpay
@@ -37,4 +35,22 @@ Takeoff:
  1   6474.360   5179.488   8416.667    355.380
  2   6474.360   5534.868   8485.441      3.718
  3   6474.360   5538.586   8485.689      0.000
+```
+
+Once sized, an aircraft's performance can be determined for other missions by modifying or appending to `Mission` fields within an `input.toml` and running [`fly_mission!()`](@ref).
+
+```julia-repl
+julia> include(__TASOPTindices__)    #provides vars to access par array parameters (here, imPFEI)
+
+julia> example_ac.parm[imPFEI,:]     #after sizing, the design mission (the first) is evaluated and the mission fuel weight is known
+2-element Vector{Float64}:
+ 0.9443825885056822
+ 0.0
+
+julia> fly_mission!(example_ac, 2)   #evaluate the second mission
+
+julia> example_ac.parm[imPFEI,:]     #the second mission's fuel weight is known
+2-element Vector{Float64}:
+ 0.9443825885056822
+ 1.080316809817944
 ```

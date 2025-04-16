@@ -12,8 +12,8 @@ basic engine inputs to those required by the function and storing the outputs.
     - `imission::Int64`: mission index
     - `ip::Int64`: mission point index
     - `initializes_engine::Bool`: flag to initialize engine 
-        0  initialize variables for iteration in engine
-        1  use current variables as initial guesses in engine
+        false  initialize variables for iteration in engine
+        true  use current variables as initial guesses in engine
     - `iterw::Int64`: sizing loop iteration
 
     **Output:**
@@ -21,11 +21,11 @@ basic engine inputs to those required by the function and storing the outputs.
 """
 function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
     #Unpack data storage arrays
-    pari, parg, _, para, pare, _, _, wing, _, _, _ = unpack_ac(ac, imission)
+    parg, _, para, pare, options, _, _, wing, _, _, engine = unpack_ac(ac, imission)
     
     if case == "design"
-        icall = 0
-        icool = 1
+        opt_calc_call = "sizing"
+        opt_cooling = "fixed_coolingflowratio"
         if (iterw == 1 || (initializes_engine))
             # initialize engine state
             initializes_engine_firstiter  = true
@@ -34,7 +34,8 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
             initializes_engine_firstiter  = false
         end
 
-        ichoke5, ichoke7 = tfcalc!(pari,parg,view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine_firstiter )
+        ichoke5, ichoke7 = tfcalc!(wing, engine, parg, view(para, :, ip), view(pare, :, ip), ip, 
+            options.ifuel, opt_calc_call, opt_cooling, initializes_engine_firstiter)
 
         # store engine design-point parameters for all operating points
         parg[igA5] = pare[ieA5, ip] / pare[ieA5fac, ip]
@@ -64,14 +65,22 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
         pare[iepiltD, :] .= pare[iepiltD, ip]
         
     elseif case == "off_design"
-        icall = (ip in range(ipstatic, ipclimbn)) ? 1 : 2 #One if in range, 2 if not
-        icool = 1
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
+        #assume operating at max allowable temp if during TO and climb
+        if ip in range(ipstatic, ipclimbn)
+            opt_calc_call = "oper_fixedTt4"
+        #otherwise, thrust balance sets op point
+        else
+            opt_calc_call = "oper_fixedFe"
+        end
+        opt_cooling = "fixed_coolingflowratio"
+
+        ichoke5, ichoke7 = tfcalc!(wing, engine, parg, view(para, :, ip), view(pare, :, ip), ip, options.ifuel, opt_calc_call, opt_cooling, initializes_engine)
+        
 
     elseif case == "cooling_sizing"
-        icall = 1
-        icool = 2
-        ichoke5, ichoke7 = tfcalc!(pari, parg, view(para, :, ip), view(pare, :, ip), wing, ip, icall, icool, initializes_engine)
+        opt_calc_call = "oper_fixedTt4"
+        opt_cooling = "fixed_Tmetal"
+        ichoke5, ichoke7 = tfcalc!(wing, engine, parg, view(para, :, ip), view(pare, :, ip), ip, options.ifuel, opt_calc_call, opt_cooling, initializes_engine)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points
         for jp = 1:iptotal

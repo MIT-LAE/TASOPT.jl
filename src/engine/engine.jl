@@ -1,5 +1,5 @@
 """
-`engine` is a module that contains all low-fidelity (NPSS is included in a different directory) calculations
+`engine` is a module that contains all low-fidelity calculations
 required in the aircraft sizing. 
 """
 module engine
@@ -19,10 +19,10 @@ export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_
 export hxdesign!, radiator_design!, hxweight, resetHXs, HXOffDesign!, RadiatorOffDesign!
 export calculate_fuel_cell_with_ducted_fan!, ductedfanweight!
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy, unpack_ac
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy, unpack_ac, compare_strings
 
 include(__TASOPTindices__)
-include(joinpath(__TASOPTroot__,"misc/constants.jl"))
+include(joinpath(__TASOPTroot__,"utils/constants.jl"))
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")
@@ -39,7 +39,7 @@ include("turbofan/tfweight.jl")
 include("turbofan/tfwrap.jl")
 include("turbofan/tfweightwrap.jl")
 include("hxfun.jl")
-include("../misc/engine.jl")
+include(joinpath(__TASOPTroot__,"data_structs/engine.jl"))
 include("ducted_fan/ductedfancalc.jl")
 include("ducted_fan/ductedfansize.jl")
 include("ducted_fan/ductedfanoper.jl")
