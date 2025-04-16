@@ -160,9 +160,8 @@ htail.CL_max = 2.00000000000000000000
 htail.SM_min = 0.05000000000000000278 
 htail.layout.x = 36.21118914551904310883 
 htail.outboard.cross_section.thickness_to_chord = 0.14000000000000001332 
-htail.move_wingbox = 2.00000000000000000000 
 htail.CL_CLmax = -0.50000000000000000000 
-htail.size = 1.00000000000000000000 
+htail.opt_sizing = "fixed_Vh"
 htail.volume = 1.44999999999999884537 
 htail.outboard.GJ = 178813858.18902274966239929199 
 htail.outboard.EI[4] = 1257539450.85079479217529296875 
@@ -214,7 +213,7 @@ vtail.outboard.λ = 0.29999999999999998890
 vtail.layout.span = 7.95265888485497285387 
 vtail.layout.AR = 2.00000000000000000000 
 vtail.layout.S = 31.62239166943137291810 
-vtail.size = 1.00000000000000000000 
+vtail.opt_sizing = "fixed_Vv"
 vtail.dxW = 12001.92569704716697742697 
 vtail.outboard.cross_section.width_to_chord = 0.50000000000000000000 
 vtail.outboard.cross_section.web_to_box_height = 0.75000000000000000000 
@@ -285,7 +284,7 @@ Abfuels = TASOPT.structures.calc_sparbox_internal_area(wing.inboard.cross_sectio
 @test Abfuels ≈ 0.06204427240513358
 #end calc_sparbox_internal_area
 
-#get_wing_weights:
+#wing_weights:
   po = 114119.45308868506
   gammat = 0.225
   gammas = 0.8665999999999999
@@ -314,7 +313,7 @@ Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
-        dyWfinn,dyWfout,lstrutp = TASOPT.get_wing_weights!(wing, po, gammat, gammas,
+        dyWfinn,dyWfout,lstrutp = TASOPT.wing_weights!(wing, po, gammat, gammas,
                                             Nlift, Weng1, 0, 0.0, 0, 0.0,
                                             sigfac, rhofuel)
 
@@ -332,9 +331,9 @@ Wwing,Wsinn,Wsout,
 @test fort_dyWfinn ≈ dyWfinn 
 @test fort_dyWfout ≈ dyWfout 
 @test fort_lstrutp ≈ lstrutp 
-#end get_wing_weights
+#end wing_weights
 
-#get_wing_weights for Htail
+#wing_weights for Htail
 poh = 115893.98734144184
 λhs = 1.0
 fLt = -0.05
@@ -342,7 +341,7 @@ tauwebh = 1.378913257881327e8
 σcaph = 2.0684848484848484e8
 surft_f_out = [14366.067634789782, 14032.558269851817, 0.0011577052661293624, 0.0023921269535798137, 1.8915676188667163e8, 1.258557904500963e9, 1.7895336288389182e8]
 
-TASOPT.get_wing_weights!(htail, poh, htail.outboard.λ, λhs,
+TASOPT.wing_weights!(htail, poh, htail.outboard.λ, λhs,
 0.0, 0.0, 0, 0.0, 0, 0.0,
 sigfac, rhofuel)
 
@@ -362,7 +361,7 @@ surft_out = [htail.weight, htail.dxW, htail.outboard.webs.thickness, htail.outbo
   fort_coh = 4.2554980786323124
   fort_poh = 108025.98516125829
 
-poh,htail_span = TASOPT.aerodynamics.tailpo!(htail, Sh, qne)
+poh,htail_span = TASOPT.aerodynamics.tail_loading!(htail, Sh, qne)
 
 @test fort_bh ≈ htail_span
 @test fort_coh ≈ htail.layout.root_chord
@@ -384,10 +383,8 @@ ac.vtail.layout.box_x = 33.528
 ac.wing.layout.box_x = 16.04432532088372
 ac.parg[igxeng] = ac.wing.layout.box_x - ac.parg[igdxeng2wbox]
 ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484 
-ac.fuselage.cabin.front_seat_offset = 10.0 * ft_to_m
-ac.fuselage.cabin.rear_seat_offset = 0.0
 
-ac.pari[iinftanks] = 1
+ac.fuse_tank.tank_count = 1
 
 #Update fuel tank length and check changes
 ac.parg[iglftank] = 5.0
@@ -408,7 +405,7 @@ update_fuse_out_test = [35.175200000000004, 36.699200000000005, 24.3262341440000
 
 
 #Return to original points?
-ac.pari[iinftanks] = 0.0
+ac.fuse_tank.tank_count = 0
 ac.parg[iglftank] = 0.0
 TASOPT.update_fuse!(ac, 1)
 
@@ -446,10 +443,10 @@ ac.fuselage.layout.x_cone_end = fuselage.layout.x_cone_end * 0.52484
 ac.fuselage.cabin.seat_pitch = 0.762
 ac.fuselage.cabin.seat_width = 0.4826
 ac.fuselage.cabin.aisle_halfwidth = 0.254
-ac.fuselage.cabin.front_seat_offset = 10.0 * ft_to_m
-ac.fuselage.cabin.rear_seat_offset = 0.0
 ac.parg[igWpaymax] = 219964.5779
 ac.fuselage.layout.cross_section.radius = 2.5 #Change radius to 2.5 m
+
+ac.options.is_doubledecker = false
 
 TASOPT.update_fuse_for_pax!(ac)
 

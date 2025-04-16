@@ -1,0 +1,434 @@
+# This is a template TOML input file and are the default values that will
+# be used by TASOPT
+["Aircraft Description"]
+    name = "Example TASOPT Model"
+    description = """
+    This model file describes a basic single-aisle aircraft to 
+    demonstrate how to define a model file. The contents of this file are 
+    also loaded by the `TASOPT.jl` package as default if no other details are 
+    provided by the user.
+    """
+#-------------------------------------------------#
+##               Note on units                   ##
+#-------------------------------------------------#
+# TASOPT input files can parse the following units.
+#  if no units are provided or pure numerical values are
+#  provided then they are assumed to be in SI units.
+# ╔══════════╦══════════╦══════════════════════════╗
+# ║ Quantity ║ SI units ║ Other allowed units      ║
+# ╠══════════╬══════════╬═════╦═══════╦═══════╦════╣
+# ║ mass     ║ kg       ║ g   ║ lbm   ║       ║    ║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ distance ║ m        ║ km  ║ nmi   ║ ft    ║ in ║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ area     ║ m2       ║     ║       ║ ft2   ║ in2║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ volume   ║ m3       ║     ║       ║ ft3   ║ in3║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ force    ║ N        ║ kN  ║ lbf   ║       ║    ║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ pressure ║ Pa       ║ atm ║lbf/in2║lbf/ft2║ psi║    
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ speed    ║ m/s      ║ kts ║ km/hr ║ ft/s  ║    ║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ power    ║ W        ║ kW  ║ MW    ║ hp    ║    ║
+# ╠══════════╬══════════╬═════╬═══════╬═══════╬════╣
+# ║ angle    ║ rad      ║ deg ║       ║       ║    ║
+# ╚══════════╩══════════╩═════╩═══════╩═══════╩════╝
+
+[Options] #
+    engloc = 1      # 1: Engines on wing
+                    # 2: Engines on fuselage
+
+    prop_sys_arch = "TF" #Options are TF: Turbofan
+                         #            TE: Turbo-electric
+[Fuel]
+    fuel_type       = "Jet-A" # Choices are ... [TODO]
+    fuel_in_wing    = true # Is fuel stored in wings?
+    fuel_in_wingcen = true # Is fuel stored in wing center box?
+    fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
+
+    fuel_temp = 280.0
+
+[Mission]
+    N_missions = 1 # Number of missions to be modeled
+    pax = 220            # Number of passengers
+    max_pax = 230               # Maximum number of passengers for aircarft
+                                # defines the maximum payload carrying capacity of the aircraft
+
+    range = "3000.0 nmi" # Design Range
+
+    weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
+                            # includes luggage [lbm or lbf or kg or N] 
+                            # judging you if you use imperial units but wtvs
+
+    fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
+
+    Nlift = 3.0 # Max vertical load factor for wing bending loads
+    Vne = "280 kts" # Never exceed IAS for tail loads
+
+[Mission.Takeoff]
+    takeoff_alt = "0.0 ft" 
+    max_balanced_field_length = "8000.0 ft"
+    Nland = 6.0 # Max vertical load factor for fuse bending loads
+
+    CL_max_perp     = 2.15  #CLmax/(cos(sweep))^2
+    CD_dead_engine  = 0.50  #CDA_fan/ A_fan
+    CD_landing_gear = 0.015 #CD*Agear/ Sref
+    CD_spoilers     = 0.10  #CD*Aspoiler/ Sref
+
+    rolling_resistance_coeff = 0.025
+    braking_resistance_coeff = 0.35
+
+    takeoff_obstacle_height = "35 ft"
+
+[Mission.Climb]
+    minimum_top-of-climb_gradient = 0.015
+
+[Mission.Cruise]
+    cruise_alt  = "35000.0 ft" 
+    cruise_mach = 0.80
+    cruise_CL   = 0.57
+
+[Mission.Descent]
+    descent_angle_top-of-descent = "-3.0 deg"
+    descent_angle_bottom-of-descent = "-3.0 deg"
+
+[Fuselage]
+    cabin_pressure_altitude = "8000.0 ft"
+
+[Fuselage.Geometry]
+    radius = "77 in"       # Fuselage radius
+    dRadius = "15 in"      # Downward shift of lower bubbles
+    y_offset = 0.0         # y offset of bubble center
+    floor_depth = "5.0 in" # depth of floor beams
+    Nwebs = 1              # number of webs (for double bubble designs)
+
+    a_nose = 1.65 # Nose radius = Rfuse*(1 - xi^a_nose)^(1/a_nose)
+    b_tail = 1.65 # Tail radius = Rfuse*(1 - xi^b_tail)
+    tailcone_taper = 0.3
+    tapers_to = "point" # Options are "point" or "edge"
+    
+    # Tail load fuselage bending moment inertial relief factor
+    HT_load_fuse_bend_relief = 0.4 
+    VT_load_fuse_bend_relief = 0.7
+# Overall fuselage layout
+    x_nose_tip           = "0 ft"
+    x_pressure_shell_fwd = "17 ft"
+    x_start_cylinder     = "20 ft"
+    x_end_cylinder       = "97 ft"
+    x_pressure_shell_aft = "102 ft"
+    x_cone_end           = "117 ft"
+    x_end                = "124 ft"
+    
+# Power systems and landing gear locations
+    x_HPE_sys = "62ft" #Hydraulic, Pneumatic and Electrical systems
+    x_nose_landing_gear        = "14ft"
+    x_main_landing_gear_offset = "1 ft" # main LG offset behind the wing lift centroid
+
+    x_APU = "120 ft"
+
+# Engine positions
+    x_engines = "52 ft"
+    y_critical_engines = "16 ft" # y location of engines that would cause max yaw
+
+
+[Fuselage.Weights]
+    stringer = 0.35   # (Weight of stringers)/ Wskin
+    frame    = 0.25   # (Weight of frame)/ Wskin
+    additional = 0.20 # (Additional weight)/ Wskin
+
+    window_per_length     = 145.0 #[N/m]
+    window_insul_per_area =  22.0 #[N/m2]
+    floor_weight_per_area =  60.0 #[N/m2]
+
+    HPE_sys_weight_fraction = 0.010 # W_HPEsys/WMTO
+    LG_nose_weight_fraction = 0.011 # Wlgnose/WMTO
+    LG_main_weight_fraction = 0.044 # Wlgmain/WMTO
+
+    APU_weight_fraction = 0.035 # W_APU/W_payload
+    seat_weight_fraction = 0.10 # Wseats/W_payload
+    add_payload_weight_fraction = 0.35 # Additional payload proportional Wfrac
+
+[Fuselage.Aero]
+    fuse_moment_volume_deriv = "2390.0 ft3" # d(Mfuse/q)/dCL
+    CL_zero_fuse_moment      = 0.70         # CL when Mfuse = 0
+    #Fuselage velocity overspeed at wing
+    wingroot_fuse_overspeed  = 0.018
+    wingbreak_fuse_overspeed = 0.014
+    wingtip_fuse_overspeed   = 0.0045
+
+    excrescence_drag_factor = 1.05 # Rivets, sheet breaks etc
+
+    BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
+
+[Wing]
+    has_strut = false
+
+    sweep = 26.0 # wing sweep in degrees
+    AR    = 10.1
+    maxSpan = "117.5 ft"
+
+    inner_panel_taper_ratio = 0.7  #cs/co
+    outer_panel_taper_ratio = 0.25 #ct/co
+
+    panel_break_location = 0.285 # eta_s panel break eta location. eta = y/b
+    
+    center_box_halfspan = "71.0 in"
+    box_width_to_chord = 0.50
+    root_thickness_to_chord = 0.1268
+    spanbreak_thickness_to_chord = 0.1266
+
+    hweb_to_hbox = 0.75 #web-height/hbox ratio
+    spar_box_x_c = 0.40 # spar box axis x/c location
+
+    x_wing_box = "57 ft"
+    z_wing  = "-5.5 ft"
+    z_strut = "154 in" #Note only used if `has_strut = true`
+
+    #Only used if `has_strut == true`:
+    strut_toc = 0.15 #strut thickness to chord
+    strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
+
+[Wing.Aero]
+    fuselage_lift_carryover_loss_factor = -0.3
+    wing_tip_lift_rolloff_factor        = -0.05
+
+    lowspeed_cdf = 0.0085
+    lowspeed_cdp = 0.0035
+    Re_ref       = 20e6
+
+    #Only used if strut present
+    strut_lowspeed_cdf = 0.0085
+    strut_lowspeed_cdp = 0.0035
+    strut_Re_ref       = 1e6
+
+    Reynolds_scaling = -0.15 # = aRe, used for Re-scaling CD = cd*(Re/Re_ref)^aRe
+
+    excrescence_drag_factor = 1.02 # Rivets, sheet breaks etc
+
+    BLI_frac = 0.0 #Fraction of wing BL KE defect ingested
+
+# Spanwise cl and cm distributions:
+[Wing.Aero.Takeoff]
+    cls_clo = 1.1 #rcls = break/root cl ratio = cls/clo
+    clt_clo = 0.6 #rclt = tip  /root cl ratio = clt/clo
+    cm_o = -0.20 # root section cm
+    cm_s = -0.20 # span-break section cm
+    cm_t = -0.02 # tip section cm
+
+[Wing.Aero.Climb] #used for all clean situations
+    cls_clo = 1.2 #rcls = break/root cl ratio = cls/clo
+    clt_clo = 1.0 #rclt = tip  /root cl ratio = clt/clo
+    cm_o = -0.02 # root section cm
+    cm_s = -0.02 # span-break section cm
+    cm_t = -0.02 # tip section cm
+
+[Wing.Aero.Landing] #Forward-CG tail sizing case
+    cls_clo = 1.1 #rcls = break/root cl ratio = cls/clo
+    clt_clo = 0.6 #rclt = tip  /root cl ratio = clt/clo
+    cm_o = -0.35 # root section cm
+    cm_s = -0.35 # span-break section cm
+    cm_t = -0.02 # tip section cm
+
+[Wing.Weightfracs]
+    # Weight fractions of flight surfaces and secondary wing components
+    # as fractions of the sturctural wing box weight
+    flap = 0.2 #flaps, flap mounts and actuators weight fraction
+    slat = 0.1 #slats, slat mounts and actuators weight fraction
+    aileron = 0.04 #ailerons, aileron mounts and actuators weight fraction
+    leading_trailing_edge = 0.1
+    ribs = 0.15        # Ribs, local stiffeners, reinforcements
+    spoilers = 0.020   # Spoilers, spolier mounts and attachements
+    attachments = 0.03 # Wing attachment hardware
+
+
+
+[Stabilizers]
+
+    #Tail profile drags:
+    lowspeed_cdf = 0.0060
+    lowspeed_cdp = 0.0035
+    Re_ref       = 10e6
+
+    excrescence_drag_factor = 1.03 # Rivets, sheet breaks etc
+
+    [Stabilizers.Htail]
+        AR_Htail = 6.0
+        taper = 0.25
+        sweep = 26.0 #typically can be set to be the same as the wings
+        center_box_halfspan = "2.5 ft"
+        x_Htail = "114.5 ft"
+        z_Htail = "0 ft"
+
+        max_tail_download = -0.5 # = CLh/CLmax. Tail download param at max load case.
+        
+        # How do you want to size the horizontal stabilizers?
+        opt_sizing = "fixed_Vh" # Options are "fixed_Vh" or "CLmax_fwdCG" 
+        # 1: set Sh via specified Vh
+        # 2: set Sh via CLhCGfwd at max-forward CG during landing
+        Vh = 1.45 # Horizontal tail volume (only used if opt_sizing == "fixed_Vh")
+        CLh_at_max_forward_CG = -0.7 # (only used if opt_sizing == "CLmax_fwdCG")
+
+        opt_move_wing = "fixed" # "fixed": "fix" wing position 
+                            # "fixed_CLh": move wing to get CLh="CLhspec" in cruise 
+                            # "min_static_margin": move wing to get min static margin = "SMmin"
+
+        SM_min = 0.05 # Minimum static margin
+        CLh_spec = -0.02
+
+        downwash_factor = 0.60 #dε/dα
+        nacelle_lift-curve_slope = 3.8 #dCL_nacelle/dα
+                                       # Recommend ~3.8 for wing mounted nacelle
+                                       #           ~0.0 for rear mounted nacelle
+        CD_Htail_from_center = 0.1 #CDhtail contribution factor from center part 0 < y < yoh
+        CLh_max = 2.0
+
+        added_weight_fraction = 0.30 # e.g. ribs, LE, elevator, attachments
+
+        box_width_to_chord = 0.50
+        box_height_chord = 0.14
+        web_height_hbox  = 0.75
+
+    [Stabilizers.Vtail]
+        AR_Vtail = 2.0
+        taper = 0.30
+        sweep = 25.0
+        center_box_halfspan = 0.0
+        x_Vtail = "110 ft"
+        number_Vtails = 1.0
+
+        # How do you want to size the vertical stabilizer?
+        opt_sizing = "fixed_Vv" # Options are "fixed_Vv" or "OEI"
+        # "fixed_Vv": set Vtail area Sv via specified Vv
+        # "OEI": set Vtail area Sv via engine-out trim CL "CLv_at_engine_out"
+        Vv = 0.1 # only used if opt_sizing == "fixed_Vv"
+        CLv_at_engine_out = 0.5 # only used if opt_sizing == "OEI"
+        CLv_max = 2.6
+
+        added_weight_fraction = 0.40 # e.g. ribs, LE, rudder, attachments
+
+        box_width_to_chord = 0.50
+        box_height_chord = 0.14 
+        web_height_hbox  = 0.75
+
+[Structures]
+    stress_factor = 1.0 # convenient factor to multiply all stress below
+
+    # Allowable stresses at sizing cases:
+    ## Fuselage pressurization skin stress and bending skin+stringer stress
+    sigma_fuse_skin = "15e3 lbf/in2" 
+    sigma_fuse_bending = "30e3 lbf/in2"
+    ## Wing and tail bending and shear stresses
+    sigma_caps    = "30e3 lbf/in2"
+    sigma_struts  = "30e3 lbf/in2"
+    tau_webs = "20e3 lbf/in2"
+
+    fuse_shell_modulus_ratio = 1.0 # Ebend/Eskin
+
+    E_wing_spar_cap = "10e6 lbf/in2"
+    E_struts        = "10e6 lbf/in2"
+
+    # Material densities (Aluminium)
+    skin_density = 2700.0
+    fuse_stringer_density = 2700.0
+    wing_tail_cap_density = 2700.0
+    wing_tail_web_density = 2700.0
+    strut_density = 2700.0
+
+[Propulsion]
+
+    T_max_metal = 1280.0
+
+    Tt4_takeoff = 1360.0
+    Tt4_frac_bottom_of_climb = 0.2
+    Tt4_frac_top_of_climb = 0.9
+    Tt4_cruise = 1587.0
+
+    # Core in clean flow or does core ingests KE defect?
+    core_in_clean_flow = true
+
+[Propulsion.Turbomachinery]
+
+    BPR = 5.1
+    gear_ratio = 1.0 #Fan gear ratio. 1 => direct drive turbofan
+
+    OPR    = 30.0
+    Fan_PR = 1.685
+    LPC_PR = 2.5
+    
+    diffuser_PR    = 0.998
+    burner_PR      = 0.94
+    fan_nozzle_PR  = 0.98
+    core_nozzle_PR = 0.989
+
+    fan_eta_poly = 0.8948
+    LPC_eta_poly = 0.88
+    HPC_eta_poly = 0.87
+    HPT_eta_poly = 0.889
+    LPT_eta_poly = 0.899
+
+    #Fan efficiency function constants -> epoly_actual = epolyf + Kf*(FPR-FPR0)
+    FPR0 = 1.90
+    Kf_polyeff = -0.077 
+
+    HTR_fan = 0.30
+    HTR_LPC = 0.60
+    HTR_HPC = 0.80
+
+    M2  = 0.60
+    M25 = 0.60
+
+    low_spool_loss  = 0.01
+    high_spool_loss = 0.022
+
+[Propulsion.Combustor]
+    combustion_efficiency = 0.98
+
+[Propulsion.Cooling]
+    hot_streak_T_allowance = 200.0
+    M_turbine_blade_exit = 1.0
+    St = 0.09 # area-weighted Stanton number
+    e_film_cooling = 0.70 #blade-to-cooling flow heat transfer eff
+    t_film_cooling = 0.30 #cooling-film effectiveness factor
+    M41 = 0.9 # Mach number at start of cooling-air mixing zone
+    cooling_air_V_ratio = 0.15 #v_cool/v_edge velocity ratio of exiting cooling air
+
+[Propulsion.Offtakes]
+    LPC_mass_offtake_per_pax = 0.0063
+    LPC_mass_offtake_per_max_mass = 0.0
+
+    Low_spool_power_offtake_per_pax = 200.0
+    Low_spool_power_offtake_per_max_mass = 1.8
+
+    Tt_offtake_air = 300.0
+    Pt_offtake_air = 30e3
+
+[Propulsion.Nozzles]
+#Nozzle area factors relative to cruise design_area
+
+    fan_nozzle_area.static       = 1.0
+    fan_nozzle_area.rotation     = 1.0
+    fan_nozzle_area.cutback      = 1.0
+    fan_nozzle_area.climbstart   = 1.0
+    fan_nozzle_area.climbend     = 1.0
+    fan_nozzle_area.descentstart = 1.0
+    fan_nozzle_area.descentend   = 1.0
+
+    core_nozzle_area.static       = 1.0
+    core_nozzle_area.rotation     = 1.0
+    core_nozzle_area.cutback      = 1.0
+    core_nozzle_area.climbstart   = 1.0
+    core_nozzle_area.climbend     = 1.0
+    core_nozzle_area.descentstart = 1.0
+    core_nozzle_area.descentend   = 1.0
+
+
+[Propulsion.Nacelles]
+    nacelle_pylon_wetted_area_ratio = 16.0 # = rSnace = wetted area/fan area
+    nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
+
+[Propulsion.Weight]
+    weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
+                                    #   "fitzgerald_basic": NF's new model with basic tech
+                                    #     "fitzgerald_adv": NF's new model with advanced tech

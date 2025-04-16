@@ -3,7 +3,6 @@
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
-    pari = ac.pari
     fuselage = ac.fuselage
     wing = ac.wing
     htail = ac.htail
@@ -59,22 +58,6 @@ function weight_buildup(ac::aircraft; io=stdout)
     @printf(io,"Wwatt   + %10.1f N (%8.1f lb)\n", Wwatt, Wwatt/lbf_to_N)
     @printf(io,"--------------------\n")
     printstyled(io, @sprintf("Wwing  = %10.1f N (%8.1f lb)\n\n", Wwing, Wwing/lbf_to_N); color=:bold)
-
-    @printf(io,"Wtshaft + %10.1f N (%8.1f lb) × %d\n", parg[igWtshaft], parg[igWtshaft]/lbf_to_N, parpt[ipt_nTshaft])
-    @printf(io,"Wcat    + %10.1f N (%8.1f lb) × %d\n", parg[igWcat   ], parg[igWcat   ]/lbf_to_N, parpt[ipt_nTshaft])
-    @printf(io,"Waftfan + %10.1f N (%8.1f lb) × %d\n", parg[igWaftfan], parg[igWaftfan]/lbf_to_N, 2.0) 
-    @printf(io,"WaftGB  + %10.1f N (%8.1f lb) × %d\n", parg[igWaftfanGB ], parg[igWaftfanGB ]/lbf_to_N, parpt[ipt_nTshaft]) 
-    @printf(io,"Wgen    + %10.1f N (%8.1f lb) × %d\n", parg[igWgen   ], parg[igWgen   ]/lbf_to_N, parpt[ipt_ngen]) 
-    @printf(io,"Wrect   + %10.1f N (%8.1f lb) × %d\n", parg[igWrect  ], parg[igWrect  ]/lbf_to_N, parpt[ipt_ngen]) 
-    @printf(io,"Wcables + %10.1f N (%8.1f lb) ----\n", parg[igWcables], parg[igWcables]/lbf_to_N) 
-    @printf(io,"Winv    + %10.1f N (%8.1f lb) × %d\n", parg[igWinv   ], parg[igWinv   ]/lbf_to_N, parpt[ipt_nfan]) 
-    @printf(io,"Wmot    + %10.1f N (%8.1f lb) × %d\n", parg[igWmot   ], parg[igWmot   ]/lbf_to_N, parpt[ipt_nfan]) 
-    @printf(io,"Wfan    + %10.1f N (%8.1f lb) × %d\n", parg[igWfan   ], parg[igWfan   ]/lbf_to_N, parpt[ipt_nfan]) 
-    @printf(io,"WfanGB  + %10.1f N (%8.1f lb) × %d\n", parg[igWfanGB ], parg[igWfanGB ]/lbf_to_N, parpt[ipt_nfan]) 
-    @printf(io,"Wtms    + %10.1f N (%8.1f lb) ----\n", parg[igWtms   ], parg[igWtms   ]/lbf_to_N) 
-    @printf(io,"--------------------\n")
-    printstyled(io,@sprintf("Wtesys  = %10.1f N (%8.1f lb)\n\n",
-     parg[igWtesys], parg[igWtesys]/lbf_to_N ), color = :bold)
 
     @printf(io,"Wftnkins  = %10.1f N (%8.1f lb)\n", parg[igWinsftank ], parg[igWinsftank ]/lbf_to_N) 
     @printf(io,"Wftank    = %10.1f N (%8.1f lb)\n\n", parg[igWftank    ], parg[igWftank    ]/lbf_to_N) 
