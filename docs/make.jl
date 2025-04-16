@@ -8,6 +8,7 @@ structures = TASOPT.structures
 engine = TASOPT.engine
 airc = TASOPT.aircraft      #"aircraft = ..." conflicted with the global namespace
 CryoTank = TASOPT.CryoTank
+propsys = TASOPT.propsys
 
 makedocs(
     repo = Documenter.Remotes.GitHub("MIT-LAE", "TASOPT.jl"),
@@ -39,7 +40,8 @@ makedocs(
             "propulsion/propsys.md",
             "propulsion/gascalc.md",
             "propulsion/hxfun.md",
-            "propulsion/PEMfuelcell.md"
+            "propulsion/PEMfuelcell.md",
+            "propulsion/ElectricMachines.md",
         ],
     "Cryogenic tanks" => Any[
             "cryo_tank/fueltanks.md",
