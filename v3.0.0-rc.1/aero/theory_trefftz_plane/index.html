@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>- · TASOPT.jl</title><meta name="title" content="- · TASOPT.jl"/><meta property="og:title" content="- · TASOPT.jl"/><meta property="twitter:title" content="- · TASOPT.jl"/><meta name="description" content="Documentation for TASOPT.jl."/><meta property="og:description" content="Documentation for TASOPT.jl."/><meta property="twitter:description" content="Documentation for TASOPT.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TASOPT.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples/loadingrunning/">Loading and running</a></li><li><a class="tocitem" href="../../examples/payload_range/">Payload-range diagram</a></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox"/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Optimization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../examples/NM_optimization/">Nelder Mead</a></li><li><a class="tocitem" href="../../examples/gradient_based_optimization/">Gradient Based Optimization</a></li></ul></li><li><a class="tocitem" href="../../examples/sensitivity/">Sensitivities</a></li></ul></li><li><span class="tocitem">Aerodynamics</span><ul><li><a class="tocitem" href="../geometry/">Geometry</a></li><li><a class="tocitem" href="../lift/">Lift</a></li><li><a class="tocitem" href="../drag/">Drag</a></li><li><a class="tocitem" href="../moment/">Pitching moment</a></li><li><a class="tocitem" href="../../atmos/atmos/">Atmospheric properties</a></li></ul></li><li><span class="tocitem">Structures</span><ul><li><a class="tocitem" href="../../structures/wing/">Wings and tails</a></li><li><a class="tocitem" href="../../structures/fuselage/">Fuselage</a></li><li><a class="tocitem" href="../../structures/landing_gear/">Landing gear</a></li><li><a class="tocitem" href="../../structures/cabin_sizing/">Cabin sizing</a></li></ul></li><li><span class="tocitem">Propulsion systems</span><ul><li><a class="tocitem" href="../../propulsion/propsys/">Propulsion system</a></li><li><a class="tocitem" href="../../propulsion/gascalc/">Gas Calculations</a></li><li><a class="tocitem" href="../../propulsion/hxfun/">Heat exchangers</a></li><li><a class="tocitem" href="../../propulsion/PEMfuelcell/">PEM fuel cells</a></li></ul></li><li><span class="tocitem">Cryogenic tanks</span><ul><li><a class="tocitem" href="../../cryo_tank/fueltanks/">Thermal and structural models</a></li><li><a class="tocitem" href="../../cryo_tank/cryotank/">Homogeneous model</a></li></ul></li><li><a class="tocitem" href="../../balance/balance/">Stability</a></li><li><span class="tocitem">Mission and sizing</span><ul><li><a class="tocitem" href="../../sizing/sizing/">Design and evaluation</a></li><li><a class="tocitem" href="../../sizing/weightmodels/">TASOPT Weight Model</a></li></ul></li><li><span class="tocitem">Data and I/O</span><ul><li><a class="tocitem" href="../../data_io/data_basics/">Data structure basics</a></li><li><a class="tocitem" href="../../data_io/structs/">Data structure details</a></li><li><a class="tocitem" href="../../data_io/data_io/">Loading and saving models</a></li></ul></li><li><span class="tocitem">Miscellaneous</span><ul><li><a class="tocitem" href="../../misc/dreladocs/">Original Drela docs</a></li><li><a class="tocitem" href="../../misc/fordevs/">Notes for devs</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>-</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>-</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/MIT-LAE/TASOPT.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/MIT-LAE/TASOPT.jl/blob/main/docs/src/aero/theory_trefftz_plane.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><details class="admonition is-details"><summary class="admonition-header">📖 Theory - induced drag $C_{d,i}$</summary><div class="admonition-body"><p>The induced drag is calculated using a discrete vortex Trefftz-Plane analysis. The circulation of the wing wake immediately behind the trailing edge is </p><p class="math-container">\[\begin{aligned}
+\Gamma_{\!{\rm wing}} {\scriptstyle (\eta)}
+&amp; = \frac{\tilde{p} {\scriptstyle (\eta)}}{\rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}}
+\; \simeq \; \frac{p {\scriptstyle (\eta)}}{\rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}} \, \sqrt{1 \!-\! \eta^{k_t}}
+\\
+k_t &amp; \simeq 16
+\end{aligned}\]</p><p>where the approximation realistically represents the tip lift rolloff for typical taper ratios, and is consistent with the assumed <span>$f_{L_{\scriptstyle t}}\simeq -0.05$</span> value for the tip lift loss factor. This circulation is convected into the wake along streamlines which will typically constrict behind the fuselage by continuity. The Figure above shows two possible aft fuselage taper shapes, giving two different wake constrictions.</p><p>An annular streamtube at the wing contracts to another annular streamtube in the wake with the same cross-sectional area. The <span>$y$</span> and <span>$y&#39;$</span> locations on the wing and wake which are connected by a streamline are therefore related by the correspondence function. </p><p class="math-container">\[\begin{aligned}
+y&#39;{\scriptstyle (y)}&amp; = &amp; \sqrt{ y^2 - y_o^2 + {y&#39;_o}^2}
+\end{aligned}\]</p><p>The Trefftz Plane circulation <span>$\Gamma {\scriptstyle (y&#39;)}$</span> is then given by the coordinate shift. The mapping function <span>$y&#39;{\scriptstyle (y)}$</span> is not defined for <span>$y \! &lt; \! y_o$</span>, so the circulation there is simply set from the <span>$y_o$</span> value. </p><p class="math-container">\[\begin{aligned}
+\Gamma_{\rm wake} {\scriptstyle (y&#39;)}&amp; = &amp; 
+\left\{
+\begin{array}{lcl}
+\Gamma_{\!{\rm wing}} \left( y {\scriptstyle (y&#39;)}\right)
+&amp; , &amp; y \!&gt;\! y_o \\
+\Gamma_{\!{\rm wing}} \left( y_o \right)
+\end{array}
+\right.
+\end{aligned}\]</p><p>The Trefftz Plane analysis uses point vortices. The circulation ([Gamwake]) is evaluated at the midpoints of <span>$n$</span> intervals along the wake trace, spaced more or less evenly in the Glauert angle to give a cosine distribution in physical space. The wake&#39;s vertical <span>$z$</span> positions are simply taken directly from the wing. </p><p class="math-container">\[\begin{aligned}
+\theta_{i+1/2} &amp; = &amp; \frac{\pi}{2} \, \frac{i-1/2}{n}
+\hspace{2ex} , \hspace{2ex} i = 1 \ldots n
+\\
+y_{i+1/2} &amp; = &amp; \frac{b}{2} \, \cos \theta_{i+1/2}
+\\
+y&#39;_{i+1/2} &amp; = &amp; \sqrt{y_{i+1/2}^2 - y_o^2 + {y&#39;_o}^2}
+\\
+z&#39;_{i+1/2} &amp; = &amp; z_{i+1/2}
+\\
+\Gamma_{\!i+1/2} &amp; = &amp; \Gamma_{\!{\rm wing}} (y_{i+1/2})
+\end{aligned}\]</p><p>The locations of <span>$n+1$</span> trailing vortices are computed similarly. </p><p class="math-container">\[\begin{aligned}
+\theta_i &amp; = &amp; \frac{\pi}{2} \, \frac{i-1}{n}
+\hspace{2ex} , \hspace{2ex} i = 1 \ldots n\!+\!1
+\\
+y_i &amp; = &amp; \frac{b}{2} \, \cos \theta_i
+\\
+y&#39;_i &amp; = &amp; \sqrt{y_i^2 - y_o^2 + {y&#39;_o}^2}
+\\
+z&#39;_i &amp; = &amp; z_i
+\end{aligned}\]</p><p>The circulations of these trailing vortices are the differences of the adjacent bound circulations, with the circulation beyond the tips effectively zero. </p><p class="math-container">\[\begin{aligned}
+\bar{\Gamma}_{\!i} &amp; = &amp; 
+\left\{
+\begin{array}{lcl}
+\hspace{6.5ex}
+-\Gamma_{\!i-1/2} &amp; , &amp; i = 1 \hspace{3.5em} \mathrm{(left tip)}
+\\
+\Gamma_{\!i+1/2}-\Gamma_{\!i-1/2} &amp; , &amp; i = 2 \ldots n
+\\
+\Gamma_{\!i+1/2} &amp; , &amp; i = n\!+\!1 \hspace{2em} \mathrm{(right tip)}
+\end{array}
+\right.
+\end{aligned}\]</p><p>The above definitions are also applied to the horizontal tail, with its discrete points simply appended to the list and <span>$n$</span> increased accordingly.</p><p>The Trefftz plane calculation proceeds by first calculating the <span>$y$</span>-<span>$z$</span> wake velocity components at the <span>$y&#39;_{i+1/2},z&#39;_{i+1/2}$</span> interval midpoints, induced by all the trailing vortices and their left-side images. </p><p class="math-container">\[\begin{aligned}
+v_{i+1/2} &amp; = &amp; \sum_{j=1}^{n+1} \frac{\bar{\Gamma}_{\!j}}{2\pi} 
+\left[
+\frac{-(z&#39;_{i+1/2}\!-\!z&#39;_j)}
+      {(y&#39;_{i+1/2}\!-\!y&#39;_j)^2
+     + (z&#39;_{i+1/2}\!-\!z&#39;_j)^2}
+\,-\,
+\frac{-(z&#39;_{i+1/2}\!-\!z&#39;_j)}
+      {(y&#39;_{i+1/2}\!+\!y&#39;_j)^2
+     + (z&#39;_{i+1/2}\!-\!z&#39;_j)^2}
+\right]
+\hspace{2em}
+\\
+w_{i+1/2} &amp; = &amp; \sum_{j=1}^{n+1} \frac{\bar{\Gamma}_{\!j}}{2\pi}
+\left[
+\frac{ y&#39;_{i+1/2}\!-\!y&#39;_j}
+     {(y&#39;_{i+1/2}\!-\!y&#39;_j)^2
+    + (z&#39;_{i+1/2}\!-\!z&#39;_j)^2}
+\,-\,
+\frac{ y&#39;_{i+1/2}\!+\!y&#39;_j}
+     {(y&#39;_{i+1/2}\!+\!y&#39;_j)^2
+    + (z&#39;_{i+1/2}\!-\!z&#39;_j)^2}
+\right]
+\end{aligned}\]</p><p>The overall lift and induced drag are then computed using the Trefftz Plane vertical impulse and kinetic energy. The sums are doubled to account for the left side image. </p><p class="math-container">\[\begin{aligned}
+C_{\!L_{\scriptscriptstyle T\!P}} &amp; = &amp; \frac{2}{{\textstyle \frac{1}{2}}\rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}^2 S} \: \sum_{i=1}^{n} 
+\: \rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}\, \Gamma_{\!i+1/2} \: (y&#39;_{i+1}-y&#39;_i)
+\\
+C_{\!D_{\scriptscriptstyle T\!P}} &amp; = &amp; \frac{2}{{\textstyle \frac{1}{2}}\rho_{\scriptscriptstyle \infty}V_{\!{\scriptscriptstyle \infty}}^2 S} \: \sum_{i=1}^{n} 
+-\frac{\rho_{\scriptscriptstyle \infty}}{2} \, \Gamma_{\!i+1/2} \left[
+      w_{i+1/2} \,(y&#39;_{i+1}\!-\!y&#39;_i)
+ \:-\:v_{i+1/2} \,(z&#39;_{i+1}\!-\!z&#39;_i) \right]
+\end{aligned}\]</p><p>To minimize any modeling and numerical errors incurred in the wake contraction model and the point-vortex summations, the final induced drag value is scaled by the square of the surface-integral and Trefftz-Plane drag values. </p><p class="math-container">\[\begin{aligned}
+C_{\!D_i} &amp; = &amp; C_{\!D_{\scriptscriptstyle T\!P}} \left(\frac{C_{\!L}}{C_{\!L_{\scriptscriptstyle T\!P}}} \right)^{\!2}
+\end{aligned}\]</p><p>This is equivalent to using the Trefftz Plane analysis to calculate the span efficiency rather than the actual induced drag coefficient.</p></div></details></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Wednesday 16 April 2025 14:06">Wednesday 16 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
