@@ -26,12 +26,12 @@ export __TASOPTroot__, __TASOPTindices__
 # Constants and array indices
 include(__TASOPTindices__)
 
-include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
+include(joinpath(__TASOPTroot__,"utils/constants.jl"))
 export ft_to_m, in_to_m, nmi_to_m, deg_to_rad, 
        lbf_to_N, kts_to_mps, hp_to_W, lb_N
 export gee, gamSL, cpSL, μAir, pref, Tref
 
-include(joinpath(__TASOPTroot__,"data_structs/units.jl"))
+include(joinpath(__TASOPTroot__,"utils/units.jl"))
 export convertMass, convertForce, convertDist, 
        convertSpeed, convertPower, convertAngle
 
@@ -46,13 +46,13 @@ include("./utils/helper_functions.jl")
 #Load modules
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
-include(joinpath(__TASOPTroot__,"sizing/wsize.jl"))
-include(joinpath(__TASOPTroot__,"mission/mission.jl"))
+include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
+include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
+include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
 export plot_airf
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
-include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
 
@@ -64,9 +64,7 @@ export fuselage_tank
 using .atmosphere
 using .aerodynamics
 using .structures
-using .propsys
 using .engine
-
 
 # Load primary aircraft structure 
 include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
@@ -81,12 +79,8 @@ using .CryoTank
 # Off-design performance via BADA file like output
 #  and LTO output for EDB points for use in AEIC
 include(joinpath(__TASOPTroot__,"mission/odperformance.jl"))
-include(joinpath(__TASOPTroot__,"mission/off_design.jl"))
-export fly_off_design!
-include(joinpath(__TASOPTroot__,"mission/LTO.jl"))
+export fly_mission!
 include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
-
-include(joinpath(__TASOPTroot__,"engine/PT.inc"))
 
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
@@ -97,7 +91,6 @@ include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
 include(joinpath(__TASOPTroot__,"IO/par_array_opers.jl"))
-include(joinpath(__TASOPTroot__,"IO/read_externals.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_csv.jl"))
 
 include(joinpath(__TASOPTroot__,"cost/cost_est.jl"))
@@ -120,18 +113,17 @@ RSL = pSL / (ρSL * TSL)
 # ----------------------
 # Sizing function
 # ----------------------
-
 """
     size_aircraft(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
         printiter=true, saveOD=false)
 
-sizes the given `aircraft` instance
+sizes the given `aircraft` instance. A light wrapper around the `_size_aircraft!` function, which does the actual work.
 """
 function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
         printiter=true, saveOD=false)
 
     Ldebug && println("Max weight iterations = $iter")
-    wsize(ac, itermax = iter, initwgt = initwgt,
+    _size_aircraft!(ac, itermax = iter, initwgt = initwgt,
         Ldebug = Ldebug, printiter = printiter,
         saveODperf = saveOD)
 
@@ -139,5 +131,6 @@ function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
     #TODO: apply logic and exit codes to make check more robust
     ac.is_sized .= true
     ;
-end
-end
+end # size_aircraft!
+
+end # module TASOPT

@@ -21,7 +21,7 @@ export check_engine_convergence_failure
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, StructuralAlloy, unpack_ac, compare_strings
 
 include(__TASOPTindices__)
-include(joinpath(__TASOPTroot__,"data_structs/constants.jl"))
+include(joinpath(__TASOPTroot__,"utils/constants.jl"))
 include("gasfun.jl")
 include("gascalc.jl")
 # include("tfan.jl")

@@ -28,7 +28,7 @@ except for some aero parameters where other points are more relevant (e.g., "Cru
     from the default functionality. Thorough knowledge of the model is required.
 """
 function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(), 
-    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/IO_samples/default_output.toml"),
+    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_output.toml"),
     save_output::Bool=false)
 
     #unpack aircraft struct
@@ -531,12 +531,12 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         TOML.print(io,d_out)
 
         if save_output
-            println("Functions for saving sized params not yet implemented.")
+            @warn "Functions for saving sized params to TOML not yet implemented. Consider `output_csv()` or `quicksave_aircraft()`"
             if ac.is_sized[1]
                 #TODO: sized aircraft output
 
             else
-                @warn ac.name * " is not sized. Outputs will not be saved."
+                # @warn ac.name * " is not sized. Outputs will not be saved."
             end #if
         end #if
     end #open()
@@ -590,10 +590,10 @@ function make_dict_singletons(dict::Dict{K, V}) where {K, V}
 end
 
 
-
+# a very outdated function to save the model contents to a file (formerly, the par array contents)
 # Store label names
 iglabels = ["igFOpt     ", "igPFEI     ","igRange    ","igWMTO     ","igWpay     ","igWfix     ","igWfuel    ","igWfmax    ","igrWfmax   ","igWshell   ","igWwindow  ","igWinsul   ","igWfloor   ","igWcone    ","igWhbend   ","igWvbend   ","igWfuse    ","igWweb     ","igWcap     ","igWwing    ","igWebare   ","igWnace    ","igWeng     ","igWhtail   ","igWvtail   ","igWstrut   ","igxWfuse   ","igdxWfuel  ","igdxWwing  ","igdxWstrut ","igdxWhtail ","igdxWvtail ","igWinn     ","igWout     ","igdyWinn   ","igdyWout   ","igxCGfwd   ","igxCGaft   ","igfreserve ","igfpadd    ","igfseat    ","igfeadd    ","igfpylon   ","igfnace    ","igfflap    ","igfslat    ","igfaile    ","igflete    ","igfribs    ","igfspoi    ","igfwatt    ","igfhadd    ","igfvadd    ","igfapu     ","igfhpesys  ","igflgnose  ","igflgmain  ","igfstring  ","igfframe   ","igffadd    ","igWpwindow ","igWppinsul ","igWppfloor ","igNlift    ","igNland    ","igVne      ","igneng     ","igGearf    ","igfTt4CL1  ","igfTt4CLn  ","igHTRf     ","igHTRlc    ","igHTRhc    ","igrSnace   ","igrVnace   ","igrVstrut  ","igfSnace   ","igpcabin   ","igdeltap   ","iganose    ","igbtail    ","igxnose    ","igxend     ","igxblend1  ","igxblend2  ","igxshell1  ","igxshell2  ","igxconend  ","igxhbend   ","igxvbend   ","igxhtail   ","igxvtail   ","igxeng     ","igxwing    ","igxwbox    ","igxhbox    ","igxvbox    ","igxfix     ","igxapu     ","igxhpesys  ","igxlgnose  ","igdxlgmain ","igyeng     ","igzwing    ","igzhtail   ","ignfweb    ","igwfb      ","igRfuse    ","igdRfuse   ","ighfloor   ","iglambdac  ","igcabVol   ","igcosLs    ","igSstrut   ","igrpayfwd  ","igrpayaft  ","igxNP      ","igCMVf1    ","igCLMf0    ","igdepsda   ","igdCLnda   ","igdCLhdCL  ","igdCLndCL  ","igCLhspec  ","igCLhCGfwd ","igCLveout  ","igCLhmax   ","igCLvmax   ","igfCDhcen  ","igSMmin    ","igrMh      ","igrMv      ","igXaxis    ","igwbox     ","ighboxo    ","ighboxs    ","igrh       ","igwboxh    ","ighboxh    ","igrhh      ","igwboxv    ","ighboxv    ","igrhv      ","igsigfac   ","igsigskin  ","igsigbend  ","igsigcap   ","igtauweb   ","igsigstrut ","igrEshell  ","igEcap     ","igEstrut   ","igrhoskin  ","igrhobend  ","igrhocap   ","igrhoweb   ","igrhostrut ","igrhofuel  ","igrcls     ","igrclt     ","igCLhNrat  ","igSomax    ","igMomax    ","igSsmax    ","igMsmax    ","igtbcapo   ","igtbwebo   ","igtbcaps   ","igtbwebs   ","igtbcaph   ","igtbwebh   ","igtbcapv   ","igtbwebv   ","igEIco     ","igEIno     ","igGJo      ","igEIcs     ","igEIns     ","igGJs      ","igEIch     ","igEInh     ","igGJh      ","igEIcv     ","igEInv     ","igGJv      ","igtskin    ","igtcone    ","igtfweb    ","igtfloor   ","igEIhshell ","igEIhbend  ","igEIvshell ","igEIvbend  ","igGJshell  ","igGJcone   ","igfLo      ","igfLt      ","igfLn      ","igcma      ","igAR       ","igS        ","igb        ","igbo       ","igbs       ","igetas     ","iglambdat  ","iglambdas  ","igco       ","igsweep    ","igVh       ","igARh      ","igSh       ","igbh       ","igboh      ","iglambdah  ","igcoh      ","igsweeph   ","igVv       ","igARv      ","igSv       ","igbv       ","igbov      ","iglambdav  ","igcov      ","igsweepv   ","ignvtail   ","igzs       ","ighstrut   ","igAstrut   ","igcstrut   ","igfBLIw    ","igfBLIf    ","igdfan     ","igdlcomp   ","igdhcomp   ","iglnace    ","igA5       ","igA7       ","igTmetal   ","igcdefan   ","igCDgear   ","igCDspoil  ","igmuroll   ","igmubrake  ","ighobst    ","iglBFmax   ","igbmax     ","iggtocmin  ","igdBSLmax  ","igdBCBmax  ","igmofWpay  ","igmofWMTO  ","igPofWpay  ","igPofWMTO  ","igWtshaft  ","igWgen     ","igWinv     ","igWmot     ","igWfan     ","igWftank   ","igxtshaft  ","igxgen     ","igxinv     ","igxmot     ","igxfan     ","igxftank   ","igxcables  ","igWcables  ","igxcat     ","igWcat     ","igWtesys   ","igxWtesys  ","iglftank   ","igWinsftank","igxWftank  ","igRftank   ","igWc3des   ", "igdaftfan", "lnaceaft", "igfuseVol", "igneout", "igyeout", "igyeinn", "iglftankin", "igLHVfuel", "igWfburn", "igWaftfan", "igWfanGB", "igWaftfanGB", "igWrect", "igWtms"] 
-function savemodel(fname, parg, parm, para, pare, parpt, parmot, pargen)
+function savemodel(fname, parg, parm, para, pare)
     open(fname, "w") do io
 
         @printf(io, "# --------------------------------\n")
@@ -634,29 +634,8 @@ function savemodel(fname, parg, parm, para, pare, parpt, parmot, pargen)
             end
             @printf(io, "]\n")
         end
-
-        @printf(io, "# ---------------------------------\n")
-        @printf(io, "# Powertrain-stored in parpt array:\n")
-        @printf(io, "# ---------------------------------\n")
-        for (i,val) in enumerate(parpt)
-            @printf(io, "parpt[%d] = %20.20f \n", i, val)
-        end
-
-        @printf(io, "# ---------------------------------\n")
-        @printf(io, "# Motor   - stored in parmot array:\n")
-        @printf(io, "# ---------------------------------\n")
-        for (i,val) in enumerate(parmot)
-            @printf(io, "parmot[%d] = %20.20f \n", i, val)
-        end
-        @printf(io, "# ---------------------------------\n")
-        @printf(io, "# Generator-stored in pargen array:\n")
-        @printf(io, "# ---------------------------------\n")
-        for (i,val) in enumerate(pargen)
-            @printf(io, "pargen[%d] = %20.20f \n", i, val)
-        end
-    end
-
-end
+    end #open() io
+end #savemodel()
 
 #TODO: Update to output ac.options (now that pari is dead)
 function reset_regression_test(ac)
@@ -890,7 +869,7 @@ function reset_regression_test(ac)
         @printf(io, "htail.outboard.cross_section.thickness_to_chord = %20.20f \n", htail.outboard.cross_section.thickness_to_chord)
         # @printf(io, "htail.opt_move_wing = %20.20f \n", htail.opt_move_wing) #moved to options
         @printf(io, "htail.CL_CLmax = %20.20f \n", htail.CL_CLmax)
-        #@printf(io, "htail.opt_sizing = %20.20f \n", htail.opt_sizing)
+        @printf(io, "htail.opt_sizing = \"%s\" \n", htail.opt_sizing)
         @printf(io, "htail.volume = %20.20f \n", htail.volume)
         @printf(io, "htail.outboard.GJ = %20.20f \n", htail.outboard.GJ)
         @printf(io, "htail.outboard.EI[4] = %20.20f \n", htail.outboard.EI[4])
@@ -943,7 +922,7 @@ function reset_regression_test(ac)
         @printf(io, "vtail.layout.span = %20.20f \n", vtail.layout.span)
         @printf(io, "vtail.layout.AR = %20.20f \n", vtail.layout.AR)
         @printf(io, "vtail.layout.S = %20.20f \n", vtail.layout.S)
-        #@printf(io, "vtail.opt_sizing = %20.20f \n", vtail.opt_sizing)
+        @printf(io, "vtail.opt_sizing = \"%s\" \n", vtail.opt_sizing)
         @printf(io, "vtail.dxW = %20.20f \n", vtail.dxW)
         @printf(io, "vtail.outboard.cross_section.width_to_chord = %20.20f \n", vtail.outboard.cross_section.width_to_chord)
         @printf(io, "vtail.outboard.cross_section.web_to_box_height = %20.20f \n", vtail.outboard.cross_section.web_to_box_height)
