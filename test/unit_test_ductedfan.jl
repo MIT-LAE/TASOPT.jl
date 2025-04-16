@@ -119,7 +119,7 @@
 
         enginecalc! = TASOPT.engine.calculate_fuel_cell_with_ducted_fan!
         engineweight! = TASOPT.engine.fuel_cell_with_ducted_fan_weight!
-        enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!)
+        enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, false)
         pare[iePfanmax,:,:] .= 20e6
 
         fcdata = TASOPT.engine.FuelCellDuctedFanData(2)

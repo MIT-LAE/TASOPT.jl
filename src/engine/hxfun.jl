@@ -1094,7 +1094,7 @@ HXsDict = Dict{String, Dict}(
 )
 
 """
-      hxdesign!(pare, pari, ipdes, HXs_prev)
+      hxdesign!(pare, igas, ipdes, HXs_prev)
 
 Heat exchanger design and operation function. It calls hxoptim!() to optimize the heat exchanger at the design point and 
 then evaluates performance for all missions and points with hxoper!().      
@@ -1102,7 +1102,7 @@ then evaluates performance for all missions and points with hxoper!().
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `pari::Vector{Int}`: vector with integer parameters
+    - `igas::Float64`: coolant gas index
     - `ipdes::Float64`: index for design mission segment
     - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HX_struct` structures
     - `rlx::Float64`: relaxation factor for pare update
@@ -1114,7 +1114,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
       #Unpack aircraft
       pare = view(ac.pare,:, :, imission)
       pare_sl = view(pare,:, ipdes)
-      pari = ac.pari
+      igas = ac.options.ifuel
       HXs_prev = ac.engine.heat_exchangers
       #---------------------------------
       # Extract inputs
@@ -1166,7 +1166,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
             #---------------------------------
             # Design exchangers
             #---------------------------------
-            HXgeom, HXgas = PrepareHXobjects(HeatExchangers, i, ipdes, imission, pari, pare_sl, type, "sizing", ε_des[i], Mp_in[i])
+            HXgeom, HXgas = PrepareHXobjects(HeatExchangers, i, ipdes, imission, igas, pare_sl, type, "sizing", ε_des[i], Mp_in[i])
             HXgeom.Δpdes = max(maximum(ac.pare[iept3,:,:]), maximum(ac.pare[ieRadiatorCoolantP,:,:])) #size wall thickness for maximum HPC or coolant pressure
 
             # Guess starting point for optimization
@@ -1196,7 +1196,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
       # Analyze off-design performance
       #---------------------------------
      
-      HXOffDesign!(HeatExchangers, pare, pari, imission, rlx = rlx)
+      HXOffDesign!(HeatExchangers, pare, igas, imission, rlx = rlx)
 
       for i in 1:length(HeatExchangers)
             HeatExchangers[i].HXgas_mission[ipdes,imission].Mc_in = Mc_opts[i] #Store optimum Mc_in
@@ -1206,7 +1206,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
 end #hxdesign!
 
 """
-      PrepareHXobjects(HeatExchangers, idx, pari, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
+      PrepareHXobjects(HeatExchangers, idx, igas, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
 
 This function prepares the gas and geometry heat exchanger objects to be used in design or 
 off design analysis.
@@ -1216,7 +1216,7 @@ off design analysis.
     - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
     - `idx::Int64`: index for the heat exchanger number
     - `ip::Int64`: mission point index
-    - `pari::Vector{Int}`: vector with integer parameters
+    - `igas::Int64`: gas index
     - `pare_sl::Vector{Float64}`: sliced engine array with engine parameters
     - `type::String`: heat exchanger type
     - `mode::String`: design or off design indicator
@@ -1227,14 +1227,13 @@ off design analysis.
     - `HXgeom::HX_tubular`: structure with the HX geometric properties
     - `HXgas::HX_gas`: structure with the gas properties
 """  
-function PrepareHXobjects(HeatExchangers, idx, ip, imission, pari, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
+function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
       #Initiliaze design geometry and gas property as empty structs
       HXgas = HX_gas()
       HXgeom = HX_tubular()
 
       #Extract some inputs
       D_i = pare_sl[ieDi]
-      igas = pari[iifuel]
       Tc_ft = pare_sl[ieTft]
       frecirc = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
@@ -1364,7 +1363,7 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, pari, pare_sl, type
 end
 
 """
-      HXOffDesign!(HeatExchangers, pare, pari; rlx = 1.0)
+      HXOffDesign!(HeatExchangers, pare, igas; rlx = 1.0)
 
 This function runs the heat exchangers through an aircraft mission and calculates performance at every
 mission point.      
@@ -1373,13 +1372,13 @@ mission point.
     **Inputs:**
     - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
     - `pare::Array{Float64 , 3}`: array with engine parameters
-    - `pari::Vector{Int}`: vector with integer parameters
+    - `igas::Int64`: gas index
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes and
     `HeatExchangers` with the gas properties at every mission point.
 """
-function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
+function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
       if length(HeatExchangers) == 0 #Skip if no HXs
             return
       end
@@ -1397,7 +1396,7 @@ function HXOffDesign!(HeatExchangers, pare, pari, imission; rlx = 1.0)
 
                   pare_sl = pare[:, ip] #Slice pare with the parameters for the current point
 
-                  _, HXgasp = PrepareHXobjects(HeatExchangers, i, ip, imission, pari, pare_sl, type)
+                  _, HXgasp = PrepareHXobjects(HeatExchangers, i, ip, imission, igas, pare_sl, type)
 
                   if HXgasp.mdot_p == 0 #If the mass flow rate in this mission is 0, nothing happens
                         HXgasp.Tp_out = HXgasp.Tp_in

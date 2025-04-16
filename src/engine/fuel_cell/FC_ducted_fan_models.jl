@@ -26,7 +26,7 @@ In the off-design case, it computes the power and thrust requirements for each m
 """
 function calculate_fuel_cell_with_ducted_fan!(ac, case, imission, ip, initializes_engine, iterw = 0) 
     #Unpack aircraft data
-    pari, parg, _, para, pare, _, _, _, _, _, _ = unpack_ac(ac, imission)
+    parg, _, para, pare, _, _, _, _, _, _, _, _ = unpack_ac(ac, imission)
     fcdata = ac.engine.data #Extract fuel cell data
 
     if case == "design"

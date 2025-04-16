@@ -322,14 +322,13 @@
     @testset "HEX design and off-design performance" begin
         ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"))
         pare = ac.pare
-        pari = ac.pari
 
         pare[ieDi, :] .= 0.564
         pare[ieTft, :] .= 20
         pare[iefrecirc, :] .= 0
         pare[ieetab,:] .= 1.0
 
-        pari[iifuel] = 40
+        ac.options.ifuel = 40
         pare[iePreCorder,:] .= 1
        
         pare[iePreCMp,:] .= 0.1
