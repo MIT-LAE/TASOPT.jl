@@ -35,10 +35,10 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       
-      - name: Cache Julia artifacts
-        uses: julia-actions/cache@v2
-        env:
-          cache-name: cache-artifacts
+      # - name: Cache Julia artifacts
+      #   uses: julia-actions/cache@v2
+      #   env:
+      #     cache-name: cache-artifacts
 
       - name: Build Julia package
         uses: julia-actions/julia-buildpkg@v1
