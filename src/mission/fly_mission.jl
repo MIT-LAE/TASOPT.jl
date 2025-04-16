@@ -264,8 +264,14 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    HXOffDesign!(engine.heat_exchangers, pare, options.ifuel)
-    
+    if engine.model.model_name == "ducted_fan"
+        pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
+        pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
+        pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+
+    end     
+    HXOffDesign!(engine.heat_exchangers, pare, ac.options.ifuel, imission)
+
 #-------------------------------------------------------------------------
 
 # Convergence tests
