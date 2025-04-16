@@ -126,7 +126,8 @@ end
 const _convSIspeed = Dict("m/s" => 1.0, 
                           "kts" => kts_to_mps,
                           "km/hr"=>1000.0/3600.0,
-                          "ft/s"=>ft_to_m/1.0)
+                          "ft/s"=>ft_to_m/1.0,
+                          "ft/min"=>ft_to_m/60.0)
 
 function convertSpeed(value::Float64, units_in::AbstractString="m/s", units_out="m/s")
     dict = _convSIspeed
