@@ -288,7 +288,14 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
 
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
-        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin)
+
+        seat_pitch = fuselage.cabin.seat_pitch
+        seat_width = fuselage.cabin.seat_width 
+        aisle_halfwidth = fuselage.cabin.aisle_halfwidth
+        front_seat_offset = fuselage.cabin.front_seat_offset
+
+        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin, seat_pitch = seat_pitch, seat_width = seat_width, 
+            aisle_halfwidth = aisle_halfwidth, front_seat_offset = front_seat_offset)
 
         xseats = xseats[:] .+ xseats0
         rows = length(xseats)

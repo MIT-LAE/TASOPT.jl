@@ -95,6 +95,7 @@ function update_fuse_for_pax!(ac)
     aisle_halfwidth = fuse.cabin.aisle_halfwidth
     h_seat = fuse.cabin.seat_height
     d_floor = fuse.cabin.floor_distance
+    front_seat_offset = fuse.cabin.front_seat_offset
 
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
@@ -115,7 +116,8 @@ function update_fuse_for_pax!(ac)
         θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
         paxsize = fuse.cabin.exit_limit #maximum number of passengers
         w = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
-        lcyl, _, seats_per_row = place_cabin_seats(paxsize, w, seat_pitch, seat_width, aisle_halfwidth) #Cabin length
+        lcyl, _, seats_per_row = place_cabin_seats(paxsize, w, seat_pitch = seat_pitch, seat_width = seat_width, 
+            aisle_halfwidth = aisle_halfwidth, front_seat_offset = front_seat_offset) #Cabin length
     end
 
     #Useful relative distances to conserve
@@ -134,14 +136,11 @@ function update_fuse_for_pax!(ac)
     h_seat = fuse.cabin.seat_height 
     θ = find_floor_angles(false, fuse.layout.radius, fuse.layout.cross_section.bubble_lower_downward_shift, h_seat = h_seat, d_floor=d_floor) #Find the floor angle
     wcabin = find_cabin_width(fuse.layout.radius, fuse.layout.bubble_center_y_offset, fuse.layout.n_webs, θ, h_seat) #Find cabin width
-    lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch, seat_width, aisle_halfwidth) #Size for max pax count
+    lcyl, _, _ = place_cabin_seats(paxsize, wcabin, seat_pitch = seat_pitch, seat_width = seat_width, 
+        aisle_halfwidth = aisle_halfwidth, front_seat_offset = front_seat_offset) #Size for max pax count
 
-    #When there is a fuel tank at the back of the fuselage, there is no offset between the end of the seat rows
-    #and the start of the tank. For this reason, leave a 5ft offset at back
-    if !(options.has_wing_fuel) && ((fuse_tank.placement == "rear") || (fuse_tank.placement == "both"))
-        lcyl = lcyl + 5.0 * ft_to_m #Make cabin longer to leave room in the back
-        #TODO the hardcoded 5 ft is not elegant
-    end
+    #Update positions and fuselage length
+    lcyl = lcyl + fuse.cabin.rear_seat_offset #Make cabin longer to leave room in the back
 
     #Update positions and fuselage length
     fuse.layout.x_end_cylinder = fuse.layout.x_start_cylinder + lcyl
