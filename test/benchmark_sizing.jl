@@ -1,7 +1,7 @@
 using BenchmarkTools
 using Profile
 using ProfileView
-using TASOPT
+using TASOpt
 
 #----Benchmark all files----
 println("---------------------------------------")
