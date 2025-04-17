@@ -717,10 +717,10 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             rho25c = p25c / (R25c * T25c)
             A25 = (1.0 - fo) * mcore / (rho25c * u25c)
 
-            if (ipass >= 2)
+            if (ipass >= 2) || (npass == 1)
                   dmfrac = 1.0 - mcold / mcore
 
-                  if (abs(dmfrac) < toler)
+                  if (abs(dmfrac) < toler) || (npass == 1)
 
                         # ===============================================================
                         #---- calculate component efficiencies  (informative only -- not needed here)
