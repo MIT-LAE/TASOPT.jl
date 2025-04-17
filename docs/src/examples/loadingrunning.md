@@ -4,7 +4,7 @@
 
 Start by importing `TASOPT.jl` and then loading the default aircraft model.
 ```julia-repl
-julia> using TASOPT
+julia> using TASOpt
 julia> example_ac = load_default_model()
 Loading default aircraft model
 Name: Default TASOPT Model;

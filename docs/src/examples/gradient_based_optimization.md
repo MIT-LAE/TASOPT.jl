@@ -18,7 +18,7 @@ Start the script importing the necessary modules.
 
 ```julia
 # Import modules
-using TASOPT
+using TASOpt
 using JuMP
 using Ipopt
 using Test
