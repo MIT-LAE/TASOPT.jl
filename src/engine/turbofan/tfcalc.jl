@@ -59,8 +59,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         epolht = pare[ieepolht]
         epollt = pare[ieepollt]
         etab = pare[ieetab]
-        pifK = pare[iepifK]
-        epfK = pare[ieepfK]
         M2 = pare[ieM2]
         M25 = pare[ieM25]
         M0 = pare[ieM0]
@@ -145,6 +143,10 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         Tt9 = pare[ieTt9]
         pt9 = pare[iept9]
 
+        #--------------------------------------------------------------------------
+        #Engine model convergence
+        pare[ieConvFail] = 0.0 #Converged by default
+
         # #--------------------------------------------------------------------------
         if compare_strings(opt_calc_call, "sizing")
                 #----- engine sizing case
@@ -192,7 +194,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         pid, pib, pifn, pitn,
                         Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
-                        pifK, epfK,
                         mofft, Pofft,
                         Tt9, pt9, Tt4,
                         epsl, epsh,
@@ -409,7 +410,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         opt_calc_call,
                         Tfuel, ifuel, hvap, etab,
                         epolf, epollc, epolhc, epolht, epollt,
-                        pifK, epfK,
                         mofft, Pofft,
                         Tt9, pt9,
                         epsl, epsh,
@@ -429,7 +429,8 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 end
 
                 if (!Lconv)
-                        println("Failed on operating point", ip, ":  ", cplab[ip])
+                        #@warn "Convergence failed on operating point: $ip"
+                        pare[ieConvFail] = 1.0 #Store convergence failure
                 end
 
                 fo = mofft / mcore
@@ -661,3 +662,11 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         
         return ichoke5, ichoke7
 end # tfcalc
+
+function check_engine_convergence_failure(pare)
+        if sum(pare[ieConvFail, :]) > 0.0 #If any operating point failed to converge
+                return true
+        else
+                return false #All operating points converged
+        end
+end

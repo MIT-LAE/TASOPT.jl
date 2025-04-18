@@ -880,7 +880,11 @@ function _size_aircraft!(ac; itermax=35,
     ξpay = 0.0
     opt_trim_var = "none"
     balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
-    
+
+    #Check if all engine points have converged
+    if check_engine_convergence_failure(pare)
+        @warn "Some engine points did not converge"
+    end
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description
