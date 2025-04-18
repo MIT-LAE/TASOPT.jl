@@ -2,7 +2,7 @@ using Pkg, Dates
 
 println(today())
 println("Current location $(pwd())")
-using TASOPT
+using TASOpt
 const aerodynamics = TASOPT.aerodynamics
 include(TASOPT.__TASOPTindices__)
 nmisx = 1

@@ -1,4 +1,5 @@
-using TASOPT
+using TASOpt
+const TASOPT = TASOpt
 using Test
 using Plots
 

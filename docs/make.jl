@@ -1,5 +1,5 @@
-using Documenter, TASOPT
-
+using Documenter, TASOpt
+const TASOPT = TASOpt
 push!(LOAD_PATH, "../src")
 
 # Shorthands for convenience

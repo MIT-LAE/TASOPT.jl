@@ -19,7 +19,7 @@ Four arrays contain both prescribed inputs *and* computed outputs, some of which
 Data in the `par` arrays are accessed via Integer indices defined at `src/data_structs/index.inc`. These indices can be added to a namespace via `include(__TASOPTindices__)`:
 
 ```julia
-using TASOPT
+using TASOpt
 #using __TASOPTroot__, which fetches the src directory
 include(joinpath(__TASOPTroot__, "data_structs/index.inc"))
 
@@ -33,7 +33,7 @@ Note that for the multi-dimensional `par` arrays, indexing with a single Integer
 
 
 ```@example dataaccess
-using TASOPT
+using TASOpt
 include(__TASOPTindices__)
 ac = load_default_model()
 

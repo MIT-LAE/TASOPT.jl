@@ -38,7 +38,7 @@ Specifically you want to follow the steps [here](https://github.com/JuliaCI/Cove
     Then run all the commands you want to profile (this is to ensure they compile first), then clear the memory allocation tracking by running `Profile.clear_malloc_data()`; run your commands again and then quit julia. For example:
 
     ```julia-repl
-    using TASOPT, Profile
+    using TASOpt, Profile
     julia> Re = 10e6
     1.0e7
 

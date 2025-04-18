@@ -21,7 +21,7 @@ To plot the payload-range diagram of an aircraft model with a fleet of missions,
 After the aircraft is sized, [`PayloadRange()`](@ref) can be called:
 ```julia
 #Use default model for payload-range diagram
-using TASOPT
+using TASOpt
 ac = load_default_model() 
 size_aircraft!(ac)
 
