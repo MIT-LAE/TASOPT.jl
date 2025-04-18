@@ -1,13 +1,17 @@
 # Aircraft Stability
 
-This module provides functions to size the tail surfaces and balance the aircraft to achieve pitch trim throughout flight when called by [`wsize()`](@ref TASOPT.wsize).
+This module provides functions to size the tail surfaces and balance the aircraft to achieve pitch trim throughout flight when called by [`_size_aircraft!()`](@ref TASOPT._size_aircraft!).
 
-- [`balance()`](@ref TASOPT.balance) makes adjustments as described below to achieve pitch trim. It calculates the aircraft's resulting **center of gravity (`xCG`)**, **center of pressure (`xCP`)**, and **neutral point (`xNP`)** at a specific flight point. To meet the pitch trim requirement, the routine adjusts one of (i) the horizontal tail's lift coefficient, (ii) its area, or (iii) the axial location of the wing box. In *almost all* the use cases, only option (i) adjusting the horizontal tail's lift coefficient is relevant for trim calculations. Exercise caution if options (ii) or (iii) are being used as these options *alter the design of the aircraft* (i.e., they should not be used in off-design cases). 
-- [`size_htail()`](@ref TASOPT.htsize) performs a more involved stability analysis: it determines the **horizontal tail area (`Sh`)** and **wing box position (`xwbox`)**, solving for pitch trim and static stability across all flight conditions.
+- [`balance_aircraft!()`](@ref TASOPT.balance_aircraft!) makes adjustments as described below to achieve pitch trim. It calculates the aircraft's resulting **center of gravity (`xCG`)**, **center of pressure (`xCP`)**, and **neutral point (`xNP`)** at a specific flight point. To meet the pitch trim requirement, the routine adjusts one of (i) the horizontal tail's lift coefficient, (ii) its area, or (iii) the axial location of the wing box. In *almost all* the use cases, only option (i) adjusting the horizontal tail's lift coefficient is relevant for trim calculations.
+
+!!! warning "Some `balance_aircraft!()` options change the aircraft design"
+    Exercise caution if options (ii) or (iii) are being used as these options *alter the design of the aircraft* (i.e., they should not be used in off-design cases).
+
+- [`size_htail()`](@ref TASOPT.size_htail) performs a more involved stability analysis: it determines the **horizontal tail area (`Sh`)** and **wing box position (`xwbox`)**, solving for pitch trim and static stability across all flight conditions.
 
 Both stability analyses call the following helper functions.
 
-- [`cglpay()`](@ref TASOPT.cglpay) computes **forward (`xcgF`) and aft (`xcgB`) CG limits** based on payload and fuel distribution. 
+- [`CG_limits()`](@ref TASOPT.CG_limits) computes **forward (`xcgF`) and aft (`xcgB`) CG limits** based on payload and fuel distribution. 
 - Lastly, [`cabin_centroid()`](@ref TASOPT.cabin_centroid) calculates the **cabin centroid (`xcabin`) and length (`lcabin`)**, accounting for fuel tank placement and fuselage geometry.
 
 !!! details "📖 Theory - Pitch trim and stability requirements"
@@ -24,8 +28,8 @@ Both stability analyses call the following helper functions.
     ```
 
 ```@docs
-TASOPT.balance
-TASOPT.htsize
-TASOPT.cglpay
+TASOPT.balance_aircraft!
+TASOPT.CG_limits
+TASOPT.size_htail
 TASOPT.cabin_centroid
 ```

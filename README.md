@@ -7,20 +7,20 @@ Transport Aircraft and the Environment System OPTimization (TASOPT) implemented 
 
 ### Simple install
 
-The easiest way to run `TASOPT.jl` would be to add the package using the julia package manager using the github repository.
+The easiest way to run `TASOpt.jl` would be to add the package using the julia package manager using the github repository.
 
 You can do this by starting a Julia session and then activating the package manager by typing `]` and then entering:
 ```julia-repl
 pkg> add git@github.com:MIT-LAE/TASOPT.jl.git
 ```
 
-You can then import `TASOPT` as you would with any Julia package:
+You can then import `TASOpt` as you would with any Julia package:
 ```julia-repl
-julia> using TASOPT
+julia> using TASOpt
 ```
 ### Local development
 
-If you are going to develop the source code of `TASOPT.jl` you might benefit from a local clone of the git repository which
+If you are going to develop the source code of `TASOpt.jl` you might benefit from a local clone of the git repository which
 can then fit into a workflow using [`Revise.jl`](https://timholy.github.io/Revise.jl/stable/) for example.
 
 Step 1: Clone the git repo locally
@@ -38,13 +38,13 @@ pkg> dev .
 
 You should now be able to import TASOPT from within any Julia script in your base environment.
 
-Note: If you clone another version of TASOPT, `using TASOPT` will always use the directory where `dev .` was used.
+Note: If you clone another version of TASOPT, `using TASOpt` will always use the directory where `dev .` was used.
 
-If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOPT`
+If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOpt`
 
 ```julia
 using Revise
-using TASOPT
+using TASOpt
 ```
 
 ## Collaboration guide
@@ -52,8 +52,8 @@ using TASOPT
 **Important**
 Before submitting a new pull request (PR), go to the `test` folder and run the tests by doing 
 ```julia
-using TASOPT, Pkg
-Pkg.test("TASOPT")
+using TASOpt, Pkg
+Pkg.test("TASOpt")
 ```
 If there is an error, it is your responsibility to edit your code and make it work.
 The PR will not be reviewed if the regression or unit test fails. If you find that the tests do not capture the right behavior or are flawed, please raise an issue.
@@ -61,7 +61,7 @@ The PR will not be reviewed if the regression or unit test fails. If you find th
 ### Work in branches
 
 Don't commit anything to the main branch. Here's how you create your own fork and branch.  
-First create a fork of this repo by clicking on "fork" on the top right hand of the github page. This creates a copy of this repo that is separate form this one. This ensures that any chagnes made to your fork will not affect other's forks.
+First create a fork of this repo by clicking on "fork" on the top right hand of the github page. This creates a copy of this repo that is separate form this one. This ensures that any changes made to your fork will not affect other's forks.
 
 You will now need to clone your forked version of the repo to your machine where you will be writing code. This [page](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) has a good overview of how to do this whole process.
 After this I highly recommend using branches within your own fork and I prefer the git command line interface over the web interface.

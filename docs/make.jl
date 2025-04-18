@@ -1,5 +1,5 @@
-using Documenter, TASOPT
-
+using Documenter, TASOpt
+const TASOPT = TASOpt
 push!(LOAD_PATH, "../src")
 
 # Shorthands for convenience
@@ -35,14 +35,15 @@ makedocs(
         "structures/landing_gear.md",
         "structures/cabin_sizing.md"
         ],
-    "Cryogenic tanks" => Any["cryo_tank/cryotank.md",
-    "cryo_tank/fueltanks.md"
-        ],
     "Propulsion systems" => Any[
             "propulsion/propsys.md",
             "propulsion/gascalc.md",
             "propulsion/hxfun.md",
             "propulsion/PEMfuelcell.md"
+        ],
+    "Cryogenic tanks" => Any[
+            "cryo_tank/fueltanks.md",
+            "cryo_tank/cryotank.md"
         ],
     "Stability" => "balance/balance.md",
     "Mission and sizing" => Any[
@@ -51,13 +52,13 @@ makedocs(
         ],
     "Data and I/O" => Any[
         "data_io/data_basics.md",
+        "data_io/structs.md",
         "data_io/data_io.md"
         ],
 
     "Miscellaneous" => Any[
-        "misc/structs.md",
         "misc/dreladocs.md",
-        "misc/misc.md",
+        # "misc/misc.md",
         "misc/fordevs.md"
         ]
     ],

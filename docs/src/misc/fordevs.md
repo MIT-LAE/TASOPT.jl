@@ -1,13 +1,13 @@
 # [Notes for devs](@id fordevs)
 
 !!! info
-    `TASOPT.jl` is very much a WIP. Get at us on github, but search the issues first.  
+    `TASOPT.jl` is very much a WIP. Get at us on github with ideas, contributions, and bugs, but search the issues first.  
     Thanks! 🙂
 
 !!! tip "Tips"
     - Refer to the [data structures](@ref datastructs) to see where input file parameters end up.
     - Look out for `!!! compat` admonishments marking where things will likely change in the future.
-    - References to NPSS are currently non-functional. We're working on replacing this functionality efficiently.
+    - Any remaining references to NPSS are currently non-functional. We're working on replacing detailed (but efficient) engine performance modelling.
 
 ## Benchmarks
 - Examples of aircraft-sizing benchmarking and profiling files are provided in `test/benchmark_sizing.jl`. These can be run after making changes to the code to check if there has been a speed-up or slow-down.
@@ -38,7 +38,7 @@ Specifically you want to follow the steps [here](https://github.com/JuliaCI/Cove
     Then run all the commands you want to profile (this is to ensure they compile first), then clear the memory allocation tracking by running `Profile.clear_malloc_data()`; run your commands again and then quit julia. For example:
 
     ```julia-repl
-    using TASOPT, Profile
+    using TASOpt, Profile
     julia> Re = 10e6
     1.0e7
 
@@ -64,7 +64,7 @@ Specifically you want to follow the steps [here](https://github.com/JuliaCI/Cove
 
 ## Custom types and type inference 
 
-While defining new types you need to think about type inference and how the compiler can or cannot learn the types of the downstream calculations. See this section [here in the Julia manual that has some examples](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-fields-with-abstract-type). I'll list a more TASOPT.jl relevant example here to emphasize the point. 
+While defining new types (i.e., `structs`) you need to think about type inference and how the compiler can or cannot learn the types of the downstream calculations. See this section [here in the Julia manual that has some examples](https://docs.julialang.org/en/v1/manual/performance-tips/#Avoid-fields-with-abstract-type). I'll list a more TASOPT.jl relevant example here to emphasize the point. 
 
 Let's take the `airfoil` example. Consider an airfoil database as follows:
 ```julia
@@ -86,7 +86,7 @@ julia> typeof(a.cl), typeof(a.cl) <: AbstractVector{Float64}, typeof(a.cl) <: Ve
 (LinRange{Float64, Int64}, true, false)
 ```
 
-We can do better by declaring the struct in such a way that the type of `cl` is inferred from the type of the wrapper object. Like,
+We can do better by declaring the `struct` in such a way that the type of `cl` is inferred from the type of the wrapper object. Like,
 ```julia
 struct airfoil{T<:AbstractFloat, V<:AbstractVector{Float64}}
 	Re::T
