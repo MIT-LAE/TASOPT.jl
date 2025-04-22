@@ -1,12 +1,12 @@
+#TODO: takeoff doc page needed; docstrings need updating
 """
-    takeoff(ac)
+    takeoff!(ac)
 
 Calculates takeoff parameters and balanced field length.
 The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
 
 """
 function takeoff!(ac; printTO = true)
-    pari  = ac.pari
     parg  = ac.parg
     parm  = ac.parmd
     para  = ac.parad
@@ -70,9 +70,9 @@ function takeoff!(ac; printTO = true)
     #cc      write(*,*) '^ 3a', Fmax, Fref
 
     #---- total CD during roll
-    icdfun = 0
+    computes_wing_direct = false
     # iairf = 1
-    cdsum!(ac, imission, ip, icdfun)
+    aircraft_drag!(ac, imission, ip, computes_wing_direct)
     CDroll = para[iaCD, ip] + parg[igCDgear]
 
     #---- thrust constants for all engines operating

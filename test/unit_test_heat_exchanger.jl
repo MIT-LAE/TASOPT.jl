@@ -31,9 +31,9 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
-        HXgeom.fshaft = false
+        HXgeom.is_concentric = true
+        HXgeom.recirculates = false
+        HXgeom.has_shaft = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.n_stages = 4
@@ -86,8 +86,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
+        HXgeom.is_concentric = true
+        HXgeom.recirculates = false
         HXgeom.D_i = 0.564
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.tD_o = 0.004760326082769499
@@ -132,8 +132,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
+        HXgeom.is_concentric = true
+        HXgeom.recirculates = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.xl_D = 1
@@ -152,7 +152,7 @@
 
         A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-        if HXgeom.fconc #Flow is concentric
+        if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -201,8 +201,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = false
-        HXgeom.frecirc = true
+        HXgeom.is_concentric = false
+        HXgeom.recirculates = true
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.xl_D = 1
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
@@ -220,7 +220,7 @@
 
         A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-        if HXgeom.fconc #Flow is concentric
+        if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -321,13 +321,12 @@
 
     @testset "HEX design and off-design performance" begin
         pare = zeros(ietotal, iptotal)
-        pari = zeros(iitotal)
 
         pare[ieDi, :] .= 0.564
         pare[ieTft, :] .= 20
         pare[iefrecirc, :] .= 0
 
-        pari[iifuel] = 40
+        ifuel = 40
         pare[iePreCorder,:] .= 1
        
         pare[iePreCMp,:] .= 0.1
@@ -360,7 +359,7 @@
 
         #Test precooler
         pare[iePreCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -381,7 +380,7 @@
 
         #Test intercooler
         pare[ieInterCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -403,7 +402,7 @@
 
         #Test cooler of turbine cool. air
         pare[ieTurbCepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -426,7 +425,7 @@
         #Test regenerative cooler
         pare[ieTfuel, :] .= 20
         pare[ieRegenepsilon,:] .= 0.5
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
@@ -451,7 +450,7 @@
         pare[ieRegenepsilon,:] .= 0.8
         pare[iefrecirc, :] .= 1
         pare[ierecircT, :] .= 200.0
-        HXs = TASOPT.hxdesign!(pare, pari, ipdes, [])
+        HXs = TASOPT.hxdesign!(pare, ifuel, ipdes, [])
 
         HX = HXs[1]
 
