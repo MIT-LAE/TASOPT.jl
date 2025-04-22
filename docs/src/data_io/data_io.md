@@ -7,7 +7,7 @@ TASOPT models can be loaded from and saved to human-readable TOML files via [`re
 Once it is loaded in this fashion, the `aircraft` can be manipulated and re-sized. Note: TOML-based saves **do not** store the performance of the sized model, so a model must be sized before data can be referenced usefully:
 
 ```julia
-using TASOpt
+using TASOPT
 
 include(__TASOPTindices__)  #import array indices from ./src/data_structs/index.inc, including igTmetal
 
@@ -25,7 +25,7 @@ Complete `aircraft` structs can also be serialized to JLD2 files by calling [`qu
 
 ```julia
 #load and size the default aircraft model
-using TASOpt
+using TASOPT
 ac2 = load_default_model()
 size_aircraft!(ac2)
 
@@ -53,7 +53,7 @@ The following example shows the basic functionalities for a parameter sweep. See
 
 ```julia 
 # Sweeping a parameter space and outputting each design
-using TASOpt
+using TASOPT
 include(__TASOPTindices__) #import par array indices, including igTmetal
 ac = load_default_model()
 filepath = "path/to/your/newfile.csv"

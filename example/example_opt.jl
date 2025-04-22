@@ -1,5 +1,5 @@
 # 1. Import modules
-using TASOpt
+using TASOPT
 using Printf
 using Plots
 # you can optionally define

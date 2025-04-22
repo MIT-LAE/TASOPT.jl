@@ -28,7 +28,7 @@ the index to its name as declared in `index.inc` and found in the global scope
 ex:
 
 ```@example par_indname
-    using TASOpt
+    using TASOPT
     #note that igRange = 1 (from `index.inc`)
 
     parg_indname = generate_par_indname("g")
