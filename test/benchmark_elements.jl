@@ -28,7 +28,7 @@ println("\nNotes (from BenchmarkTools Manual):
 
 println("Start Benchmarking...")
 
-function benchmark_fuseBL()
+function benchmark_fuselage_drag()
     println("---------------------------------------")
     println("Fuselage boundary layer calculations")
     println("---------------------------------------")
@@ -51,16 +51,16 @@ function benchmark_fuseBL()
     dybl = zeros(nbldim)
     uinv = zeros(nbldim)
 
-    println("Benchmarking... axisol")
+    println("Benchmarking... _axisymm_flow")
 
-    bench = @benchmarkable aerodynamics.axisol!($xnose,$xend,$xblend1,$xblend2,
+    bench = @benchmarkable aerodynamics._axisymm_flow($xnose,$xend,$xblend1,$xblend2,
     $Sfuse, $anose, $btail, $ifclose,
     $Mach, $nc, $nbldim,  $xbl, $zbl, $sbl, $dybl, $uinv) seconds=30 evals=50
-    bench_axisol = run(bench)
+    bench_axisymm_flow = run(bench)
 
     #results
     nbl =           47 ;iblte =          31 ;
-    # Blax benchmarks
+    # _axisymm_BL benchmarks
     # Load required inputs:
     ndim, n, ite = 60, 47, 31
     xi  = vec([0.0000000000000000       0.44074620753680366        1.2190552270904040        2.3347760331235596        3.7887094567541970
@@ -102,34 +102,34 @@ function benchmark_fuseBL()
     Mach = 0.84 
     fexcr = 1.03  
 
-    println("Benchmarking... blax")
+    println("Benchmarking... _axisymm_BL")
 
-    b = @benchmarkable aerodynamics.blax($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
+    b = @benchmarkable aerodynamics._axisymm_BL($ndim, $n, $ite, $xi, $bi, $rni, $uinv,
     $Reyn, $Mach, $fexcr) seconds=30 evals=5
-    bench_blax = run(b)
+    bench_axisymm_BL = run(b)
 
-    println("Benchmarking... fusebl")
-    b = @benchmarkable aerodynamics.fusebl!($(ac.fuselage), $parm, $para, $ipcruise1) seconds=30 evals=5
-    bench_fusebl = run(b)
+    println("Benchmarking... fuselage_drag!")
+    b = @benchmarkable aerodynamics.fuselage_drag!($(ac.fuselage), $parm, $para, $ipcruise1) seconds=30 evals=5
+    bench_fuselage_drag = run(b)
 
     println("Benchmark results...")
 
     println("---------------------------------------")
-    println("axisol (FORTRAN on MacPro M2 ~ 30 μs)")
+    println("_axisymm_flow (FORTRAN on MacPro M2 ~ 30 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_axisol)
+    show(stdout, MIME("text/plain"),bench_axisymm_flow)
     println(" ")
 
     println("---------------------------------------")
-    println("blax (FORTRAN on MacPro M2 ~ 1.9 ms)")
+    println("_axisymm_BL (FORTRAN on MacPro M2 ~ 1.9 ms)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_blax)
+    show(stdout, MIME("text/plain"),bench_axisymm_BL)
     println(" ")
 
     println("---------------------------------------")
-    println("fusebl (FORTRAN on MacPro M2 ~ 1.95 ms)")
+    println("fuselage_drag! (FORTRAN on MacPro M2 ~ 1.95 ms)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_fusebl)
+    show(stdout, MIME("text/plain"),bench_fuselage_drag)
     println(" ")
 end
 
@@ -147,8 +147,8 @@ function benchmark_drag()
     bench_cfturb = @benchmark aerodynamics.cfturb($Re)
 
 
-    println("Benchmarking... cditrp")
-    bench_cditrp = @benchmark aerodynamics.cditrp($view(para, :, ipcruise1), 
+    println("Benchmarking... induced_drag!")
+    bench_induced_drag = @benchmark aerodynamics.induced_drag!($view(para, :, ipcruise1), 
     $(ac.wing), $(ac.htail))
 
     nsurf = 2
@@ -167,7 +167,7 @@ function benchmark_drag()
     gammas = [0.77000000000000002,  1.0000000000000000]
     fLo = -0.29999999999999999 
     ktip = 16
-    Lspec = true
+    specifies_CL = true
     CLsurfsp =[1.2502595056643222, 1.1976021933848557E-002] 
     idim::Int = 360
     jdim::Int = 360
@@ -197,13 +197,13 @@ function benchmark_drag()
                                             $airfoil_section) seconds = 30 evals = 100
     bench_airfun = run(bench)
 
-    println("Benchmarking... trefftz1")
-    bench = @benchmarkable aerodynamics.trefftz1($nsurf, $npout,
+    println("Benchmarking... _trefftz_analysis")
+    bench = @benchmarkable aerodynamics._trefftz_analysis($nsurf, $npout,
                             $npinn, $npimg, 
                             $Sref, $bref,
                             $b,$bs,$bo,$bop, $zcent,
                             $po,$gammat,$gammas, $fLo, $ktip,
-                        $Lspec,$CLsurfsp,
+                        $specifies_CL,$CLsurfsp,
                             $t, $y, $yp, $z, $zp, $gw, $yc, $ycp, $zc, $zcp, $gc, $vc, $wc, $vnc) seconds=30 evals=100
     bench_trefftz = run(bench)
 
@@ -216,12 +216,12 @@ function benchmark_drag()
     # You can use the following tempalte to profile code in the REPL
     # using ProfView
     # Profile.init(delay = 1e-6)
-    # a = ProfileView.@profile (for i=1:10000; aerodynamics.trefftz1(nsurf, npout,
+    # a = ProfileView.@profile (for i=1:10000; aerodynamics._trefftz_analysis(nsurf, npout,
     # npinn, npimg, 
     # Sref, bref,
     # b,bs,bo,bop, zcent,
     # po,gammat,gammas, fLo, ktip,
-    # Lspec,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc); end)
+    # specifies_CL,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc); end)
     # # Profile.print()
     wing = ac.wing
     htail = ac.htail
@@ -240,22 +240,22 @@ function benchmark_drag()
     rkSunsw = 0.5
     aRexp  = para1[iaaRexp]
     fexcdw = para1[iafexcdw]
-    println("Benchmarking... surfcd2")
-    bench = @benchmarkable aerodynamics.surfcd2($(ac.wing), $gammat, $gammas,
+    println("Benchmarking... wing_profiledrag_direct")
+    bench = @benchmarkable aerodynamics.wing_profiledrag_direct($(ac.wing), $gammat, $gammas,
         $Mach, $CL, $CLhtail, $Reco,
         $aRexp, $rkSunsw, $fexcdw,
         $fduo, $fdus, $fdut) seconds=30 evals=5
 
-    bench_surfcd2 = run(bench)
+    wing_profiledrag_direct = run(bench)
 
-    println("Benchmarking... cdsum!")
-    bench = @benchmarkable aerodynamics.cdsum!($parg, 
+    println("Benchmarking... aircraft_drag!")
+    bench = @benchmarkable aerodynamics.aircraft_drag!($parg, 
     $view(para, :, 10),
     $view(pare,:, 10), $(ac.wing), $(ac.htail), $(ac.vtail),
     $(1)) seconds=30 evals=1
     
-    bench = @benchmarkable aerodynamics.cdsum!(ac, 1, 10, 1) seconds=30 evals=1
-    bench_cdsum = run(bench)
+    bench = @benchmarkable aerodynamics.aircraft_drag!(ac, 1, 10, true) seconds=30 evals=1
+    bench_aircraft_drag = run(bench)
 
 
     println("---------------------------------------")
@@ -265,9 +265,9 @@ function benchmark_drag()
     println(" ")
 
     println("---------------------------------------")
-    println("cditrp (FORTRAN on MacPro M2 ~ 4.5 μs)")
+    println("induced_drag! (FORTRAN on MacPro M2 ~ 4.5 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"), bench_cditrp)
+    show(stdout, MIME("text/plain"), bench_induced_drag)
     println(" ")
     
     println("---------------------------------------")
@@ -289,15 +289,15 @@ function benchmark_drag()
     println(" ")
 
     println("---------------------------------------")
-    println("surfcd2 (FORTRAN on MacPro M2 ~ 2.01 μs)")
+    println("wing_profiledrag_direct (FORTRAN on MacPro M2 ~ 2.01 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_surfcd2)
+    show(stdout, MIME("text/plain"),bench_wing_profiledrag_direct)
     println(" ")
 
     println("---------------------------------------")
-    println("cdsum (FORTRAN on MacPro M2 ~ 6.7 μs)")
+    println("aircraft_drag! (FORTRAN on MacPro M2 ~ 6.7 μs)")
     println("---------------------------------------")
-    show(stdout, MIME("text/plain"),bench_cdsum)
+    show(stdout, MIME("text/plain"),bench_aircraft_drag)
 
 end
 
@@ -370,5 +370,5 @@ function benchmark_gas()
     @benchmark f($100)
 end
 
-# benchmark_fuseBL()
+# benchmark_fuselage_drag()
 # benchmark_drag()

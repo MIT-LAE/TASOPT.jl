@@ -1,20 +1,20 @@
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-      Phiinl, Kinl, iBLIc,
+      Phiinl, Kinl, eng_has_BLI_cores,
       pid, pib, pifn, pitn,
       Gearf,
       pifD, pilcD, pihcD, pihtD, piltD,
       mbfD, mblcD, mbhcD, mbhtD, mbltD,
       NbfD, NblcD, NbhcD, NbhtD, NbltD,
       A2, A25, A5, A7,
-      iTFspec,
+      opt_calc_call,
       Ttf, ifuel, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
       pifK, epfK,
       mofft, Pofft,
       Tt9, pt9,
       epsl, epsh,
-      icool,
+      opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
       M4a, ruc,
       ncrowx, ncrow,
@@ -45,7 +45,7 @@ Turbofan operation routine
     - `Tref`:    reference temperature for corrected mass flow and speed
     - `pref`:    reference pressure for corrected mass flow
     - `Phiinl`:  inlet ingested dissipation  Phi_inl
-    - `iBLIc`:   0=core in clear flow, 1=core sees Phiinl
+    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees Phiinl
     - `pid`:     diffuser pressure ratio  ( = pt2/pt0)
     - `pib`:     burner   pressure ratio  ( = pt4/pt3)
     - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt6.9)
@@ -70,8 +70,9 @@ Turbofan operation routine
     - `A25`:     HPC-face area [m^2]
     - `A5`:      core nozzle area [m^2]
     - `A7`:      fan  nozzle area [m^2]
-    - `iTFspec`:   = 1 Tt4  is specified
-                   = 2 Feng is specified
+    - `opt_calc_call`:
+                  = "oper_fixedTt4", Tt4 is specified
+                  = "oper_fixedFe", Feng is specified
     - `Tt4`:     turbine-inlet total temperature [K]
     - `Ttf`:     fuel temperature entering combustor
     - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
@@ -92,22 +93,22 @@ Turbofan operation routine
     - `epsl`:    low  spool power loss fraction
     - `epsh`:    high spool power loss fraction
 
-    - `icool`:    turbine cooling flag
-                  0 = no cooling, ignore all cooling parameters below
-                  1 = usual cooling, using passed-in fc
-                  2 = usual cooling, but set (and return) fc from Tmetal
+    - `opt_cooling`:   turbine cooling flag
+               "none" = no cooling, ignore all cooling parameters below
+               "fixed_coolingflowratio" = usual cooling, using passed-in fcool
+               "fixed_Tmetal" = usual cooling, but set (and return) fcool from Tmetal
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `Tmetal`:   specified metal temperature  [K], used only if icool=2
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if icool=2
-    - `StA`:      area-weighted Stanton number    , used only if icool=2
+    - `Tmetal`:   specified metal temperature  [K], used only if opt_cooling="fixed_Tmetal"
+    - `dTstrk`:   hot-streak temperature delta {K}, used only if opt_cooling="fixed_Tmetal"
+    - `StA`:      area-weighted Stanton number    , used only if opt_cooling="fixed_Tmetal"
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
     - `ruc`:      cooling-flow outlet velocity ratio, u/ue
     - `ncrowx`:      dimension of epsrow array
     - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if icool=1
-                     output resulting cooling-flow bypass ratio if icool=2
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if icool=2
-                     output resulting metal temperature  [K]    if icool=1
+    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if opt_cooling="fixed_coolingflowratio"
+                     output resulting cooling-flow bypass ratio if opt_cooling="fixed_Tmetal"
+    - `Tmrow(.)`:    input specified  metal temperature  [K]    if opt_cooling="fixed_Tmetal"
+                     output resulting metal temperature  [K]    if opt_cooling="fixed_coolingflowratio"
 
       **Output:**
     ------
@@ -154,21 +155,21 @@ Turbofan operation routine
       8   fan flow downstream
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
-      Phiinl, Kinl, iBLIc,
+      Phiinl, Kinl, eng_has_BLI_cores,
       pid, pib, pifn, pitn,
       Gearf,
       pifD, pilcD, pihcD, pihtD, piltD,
       mbfD, mblcD, mbhcD, mbhtD, mbltD,
       NbfD, NblcD, NbhcD, NbhtD, NbltD,
       A2, A25, A5, A7,
-      iTFspec,
+      opt_calc_call,
       Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
       pifK, epfK,
       mofft, Pofft,
       Tt9, pt9,
       epsl, epsh,
-      icool,
+      opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
       fc0, epht_fc,
       M4a, ruc,
@@ -260,9 +261,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       Lprint = false
 
-      if (iTFspec == 1)
+      if compare_strings(opt_calc_call, "oper_fixedTt4")
             Tt4spec = Tt4
-      else
+      elseif compare_strings(opt_calc_call, "oper_fixedFe")
             Fspec = Feng
       end
 
@@ -359,7 +360,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #---- total cooling mass flow ratio
       fc = 0.0
 
-      if (icool == 1)
+      if compare_strings(opt_cooling, "fixed_coolingflowratio")
             if (mcore == 0.0)
                   fo = 0.0
             else
@@ -420,28 +421,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   a2sq_Mi = -a2sq / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2) *
                             (gam0 - 1.0) * Mi
 
-                  if (iBLIc == 0)
-                        #------ BL mixes with fan flow only
-                        #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
-                        #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
-
-                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
-                        mmix_Mi = 0.0
-
-                        sbfan = Kinl * gam0 / (mmix * a2sq)
-                        sbfan_mf = (-sbfan / mmix) * mmix_mf
-                        sbfan_ml = 0.0
-                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
-                                   (-sbfan / a2sq) * a2sq_Mi
-
-                        sbcore = 0.0
-                        sbcore_mf = 0.0
-                        sbcore_ml = 0.0
-                        sbcore_Mi = 0.0
-
-                  else
+                  if eng_has_BLI_cores
                         #------ BL mixes with fan + core flow
                         #c      mmix    = mf*sqrt(Tref/Tt2 ) * pt2    /pref
                         #c             + ml*sqrt(Tref/Tt19) * pt19   /pref
@@ -466,8 +446,28 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         sbcore_mf = sbfan_mf
                         sbcore_ml = sbfan_ml
                         sbcore_Mi = sbfan_Mi
-                  end
 
+                  else #clean flow
+                        #------ BL mixes with fan flow only
+                        #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
+                        #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
+                        #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
+
+                        mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
+                        mmix_mf = sqrt(Tref / Tt0) * pt0 / pref
+                        mmix_Mi = 0.0
+
+                        sbfan = Kinl * gam0 / (mmix * a2sq)
+                        sbfan_mf = (-sbfan / mmix) * mmix_mf
+                        sbfan_ml = 0.0
+                        sbfan_Mi = (-sbfan / mmix) * mmix_Mi +
+                                    (-sbfan / a2sq) * a2sq_Mi
+
+                        sbcore = 0.0
+                        sbcore_mf = 0.0
+                        sbcore_ml = 0.0
+                        sbcore_Mi = 0.0
+                  end
             end
 
             #---- note: BL is assumed adiabatic, 
@@ -804,7 +804,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # HSC: SEEMS TO BE FINE
             # ===============================================================
-            if (icool == 0)
+            if compare_strings(opt_cooling, "none")
                   #----- no cooling air present... station 41 is same as 4
                   pt41 = pt4
                   Tt41 = Tt4
@@ -906,7 +906,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   httc_ht3 = 1.0
                   Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
 
-                  if (icool == 1)
+                  if compare_strings(opt_cooling, "fixed_coolingflowratio")
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
                         Tmrow_copy = Tmcalc(ncrowx, ncrow,
                               Tt_tc, Tb, dTstrk, Trrat,
@@ -2432,7 +2432,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #-------------------------------------------------------------------------
 
-            if (iTFspec == 1)
+            if compare_strings(opt_calc_call, "oper_fixedTt4")
                   #----- specified Tt4 constraint
                   res[7, 1] = Tt4 - Tt4spec
                   a[7, 1] = 0.0
@@ -2737,7 +2737,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             if (iter < 0)
 
-                  println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
+                  println("TFOPER: Convergence failed.  opt_call_calc=", opt_calc_call)
 
                   Tt4 = Tb
                   pt5 = Pc
@@ -2997,7 +2997,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             end
 
             if (Lprint || iter >= itmax - 6)
-                  if (iTFspec == 1)
+                  if compare_strings(opt_calc_call, "oper_fixedTt4")
                         if (u0 == 0.0)
                               Finl = 0.0
                         else
@@ -3024,7 +3024,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   ru2 = rho2 * u2
                   ru19 = rho19 * u19
 
-                  println(iter, vrlx, rlx, iTFspec)
+                  println(iter, vrlx, rlx, opt_calc_call)
                   println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
                   println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
                   println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
