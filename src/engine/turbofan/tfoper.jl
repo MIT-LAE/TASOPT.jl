@@ -203,6 +203,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       res_dlls = zeros(T, 9)
       a_dlls = zeros(T, 9, 9)
 
+      Random.seed!(1234) #Seed for RNG in relaxation
 
       #---- number of gas constituents
       n = 6
@@ -3224,7 +3225,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             end
             #If iter>10, a limit cycle may have been reached
             #Apply a relaxation factor that does not oscillate
-            rlx_it = 1.0 - 0.6*mod(iter * pi, 1) * (iter > 10) #Relaxation based on decimals of pi
+            rlx_it = 1.0 - 0.6*rand() * (iter > 10) #Relaxation based on RNG
 
             #---- Newton update
             pf = pf + rlx * rlx_it * dpf

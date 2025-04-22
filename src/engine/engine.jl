@@ -7,6 +7,7 @@ module engine
 using NLopt
 using Roots
 using LinearAlgebra
+using Random
 
 export Engine
 
