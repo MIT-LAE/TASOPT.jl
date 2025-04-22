@@ -25,7 +25,7 @@ Start the script importing `TASOPT.jl`, `Plots`, `index.inc`, `NLopt`.
 ```julia
 # Import modules
 using Plots
-using TASOpt
+using TASOPT
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
@@ -126,7 +126,7 @@ function obj(x, grad)
     ac.pare[iepilc, :, :] .= 3 # Low Pressure Compressure Pressure Ratio set to 3
 
     # Sizing aircraft with new ac.parameters
-    TASOpt.size_aircraft!(ac, iter =50, printiter=false)
+    TASOPT.size_aircraft!(ac, iter =50, printiter=false)
     f = ac.parm[imPFEI]
     push!(PFEIarray, ac.parm[imPFEI])
     push!(xarray, x)

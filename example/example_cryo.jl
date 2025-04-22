@@ -1,8 +1,8 @@
 # This is an example file to load an aircraft model/ input file and 
-# size an aircraft using TASOpt. 
+# size an aircraft using TASOPT. 
 
 # 1) Load TASOPT
-using TASOpt
+using TASOPT
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand

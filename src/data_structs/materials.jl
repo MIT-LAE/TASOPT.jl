@@ -5,7 +5,7 @@ various materials such as `StructuralAlloy`s,`Conductor`s, and `Insulator`s.
 module materials
 
 using TOML, DocStringExtensions
-import ..TASOpt: __TASOPTroot__
+import ..TASOPT: __TASOPTroot__
 
 export StructuralAlloy, Conductor, Insulator, ThermalInsulator, thermal_conductivity
 

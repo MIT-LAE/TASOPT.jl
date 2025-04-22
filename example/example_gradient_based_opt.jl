@@ -1,7 +1,7 @@
 using JuMP
 using Ipopt
 using Test
-using TASOpt
+using TASOPT
 include(__TASOPTindices__)
 
 # Set relative tolerance for Finite difference method
