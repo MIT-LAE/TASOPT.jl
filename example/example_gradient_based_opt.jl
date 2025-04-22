@@ -1,7 +1,7 @@
 using JuMP
 using Ipopt
 using Test
-using TASOPT
+using TASOpt
 include(__TASOPTindices__)
 
 # Set relative tolerance for Finite difference method
@@ -67,7 +67,7 @@ function sizing_ac(x::T...) where {T<:Real}
         size_aircraft!(ac,printiter=false)
         return [con_f_arr[i](ac) for i in 1:length(con_f_arr)]
     catch
-        println("wsize FAILED")
+        println("size_aircraft! FAILED")
         return [Inf for i in 1:length(con_f_arr)]
     end
     

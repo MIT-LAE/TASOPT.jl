@@ -4,7 +4,7 @@ using central finite difference (relative change)
 
 Example Usage:
 
-using TASOPT
+using TASOpt
 include(__TASOPTindices__)
 # List of the parameters you want to update as symbols
     params = [
@@ -28,11 +28,11 @@ TASOPT.get_sensitivity(params)
 """
     expr_to_string(expr)
 
-`expr_to_string` converts a Julia expression representing a struct field access or indexed array access into a string format.
+`expr_to_string` converts a Julia expression representing a `struct` field access or indexed array access into a string format.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `expr`: A Julia expression representing a struct field access or indexed array access.
+    - `expr`: A Julia expression representing a `struct` field access or indexed array access.
 
     **Outputs:**
     - A string representation of the input expression.
@@ -85,20 +85,20 @@ end
 """
     format_params(param_str)
 
-`format_params` processes a string representation of a struct field access or indexed array access and converts it into a tuple format suitable for sensitivity analysis.
+`format_params` processes a string representation of a `struct` field access or indexed array access and converts it into a tuple format suitable for sensitivity analysis.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `param_str`: A string representing a struct field access or indexed array access (e.g., "parg[igetas]" or "fuselage.floor.material.ρ").
+    - `param_str`: A string representing a `struct` field access or indexed array access (e.g., "parg[igetas]" or "fuselage.floor.material.ρ").
 
     **Outputs:**
     - A tuple containing:
       1. A vector of symbols representing the field path.
-      2. Either `nothing` for nested struct fields, or a vector of processed indices for array access.
+      2. Either `nothing` for nested `struct` fields, or a vector of processed indices for array access.
 
 !!! note "Processing Details"
     - Removes 'ac.' prefix if present.
-    - Handles nested struct fields (e.g., "fuselage.floor.material.ρ").
+    - Handles nested `struct` fields (e.g., "fuselage.floor.material.ρ").
     - Processes array indices, including:
       - Single indices
       - Colon (:) for full range
@@ -271,7 +271,7 @@ function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothi
                 TASOPT.size_aircraft!(ac, printiter=false)
                 f_out = ac.parm[imPFEI]
             catch
-                println("wsize FAILED")
+                println("size_aircraft! FAILED")
             end
             push!(f_results, f_out)
         else
@@ -289,7 +289,7 @@ function central_diff_run(eps, par, model_state; optimizer=false, f_out_fn=nothi
                     push!(f_out, f_out_fn(ac))
                 end
             catch
-                println("wsize FAILED")
+                println("size_aircraft! FAILED")
                 if isa(f_out_fn, Array)
                     f_out = fill(Inf, length(f_out_fn))
                 else

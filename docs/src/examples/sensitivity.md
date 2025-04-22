@@ -7,7 +7,7 @@ Using the sensitivity module it is possible to calculate the gradients of TASOPT
 The function input takes parameters as a list of symbols. There are a variety of parameters that can be taken in shown in the example below. The sensitivities can also be plot in a bar chart.
 
 ```julia
-using TASOPT
+using TASOpt
 include(__TASOPTindices__)
 # List of the parameters you want to update as symbols
     params = [
