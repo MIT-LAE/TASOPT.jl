@@ -1,7 +1,7 @@
 """
-TASOpt - Transport Aircraft System Optimization
+TASOPT - Transport Aircraft System Optimization
 """
-module TASOpt
+module TASOPT
 
 const TASOPT = @__MODULE__
 # Add basic packages required by TASOPT

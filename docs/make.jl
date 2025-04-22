@@ -1,5 +1,5 @@
-using Documenter, TASOpt
-const TASOPT = TASOpt
+using Documenter, TASOPT
+
 push!(LOAD_PATH, "../src")
 
 # Shorthands for convenience

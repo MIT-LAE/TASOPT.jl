@@ -7,20 +7,20 @@ Transport Aircraft and the Environment System OPTimization (TASOPT) implemented 
 
 ### Simple install
 
-The easiest way to run `TASOpt.jl` would be to add the package using the julia package manager using the github repository.
+The easiest way to run `TASOPT.jl` would be to add the package using the julia package manager using the github repository.
 
 You can do this by starting a Julia session and then activating the package manager by typing `]` and then entering:
 ```julia-repl
 pkg> add git@github.com:MIT-LAE/TASOPT.jl.git
 ```
 
-You can then import `TASOpt` as you would with any Julia package:
+You can then import `TASOPT` as you would with any Julia package:
 ```julia-repl
-julia> using TASOpt
+julia> using TASOPT
 ```
 ### Local development
 
-If you are going to develop the source code of `TASOpt.jl` you might benefit from a local clone of the git repository which
+If you are going to develop the source code of `TASOPT.jl` you might benefit from a local clone of the git repository which
 can then fit into a workflow using [`Revise.jl`](https://timholy.github.io/Revise.jl/stable/) for example.
 
 Step 1: Clone the git repo locally
@@ -38,13 +38,13 @@ pkg> dev .
 
 You should now be able to import TASOPT from within any Julia script in your base environment.
 
-Note: If you clone another version of TASOPT, `using TASOpt` will always use the directory where `dev .` was used.
+Note: If you clone another version of TASOPT, `using TASOPT` will always use the directory where `dev .` was used.
 
-If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOpt`
+If you are using `Revise.jl` be sure to first import `Revise` before importing `TASOPT`
 
 ```julia
 using Revise
-using TASOpt
+using TASOPT
 ```
 
 ## Collaboration guide
@@ -52,8 +52,8 @@ using TASOpt
 **Important**
 Before submitting a new pull request (PR), go to the `test` folder and run the tests by doing 
 ```julia
-using TASOpt, Pkg
-Pkg.test("TASOpt")
+using TASOPT, Pkg
+Pkg.test("TASOPT")
 ```
 If there is an error, it is your responsibility to edit your code and make it work.
 The PR will not be reviewed if the regression or unit test fails. If you find that the tests do not capture the right behavior or are flawed, please raise an issue.
