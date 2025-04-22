@@ -492,8 +492,10 @@
       const iehvapcombustor = 234
       const ieHXminTwall = 235
       const iemfuel = 236
+      const iefc0 = 237
+      const iedehtdfc = 238
 
-      const ietotal = 236
+      const ietotal = 238
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
