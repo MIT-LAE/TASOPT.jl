@@ -4,7 +4,7 @@ using central finite difference (relative change)
 
 Example Usage:
 
-using TASOpt
+using TASOPT
 include(__TASOPTindices__)
 # List of the parameters you want to update as symbols
     params = [

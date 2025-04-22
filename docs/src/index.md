@@ -10,11 +10,11 @@ New modelling capabilities are actively being developed. Please be sure to refer
 
 ## Getting started
 
-There are several workflows that are possible to use `TASOpt.jl`. We outline here the most common few.
+There are several workflows that are possible to use `TASOPT.jl`. We outline here the most common few.
 
 ### Simple install
 
-The easiest way to run `TASOpt.jl` would be to add the package using the julia package manager using the github repository.
+The easiest way to run `TASOPT.jl` would be to add the package using the julia package manager using the github repository.
 
 You can do this by starting a Julia session and then activating the package manager by typing `]` and then entering:
 ```julia-repl
@@ -23,7 +23,7 @@ pkg> add git@github.com:MIT-LAE/TASOPT.jl.git
 
 You can then import `TASOPT` as you would with any Julia package:
 ```julia-repl
-julia> using TASOpt
+julia> using TASOPT
 ```
 ### Local development
 
@@ -52,7 +52,7 @@ We'd suggest starting with [the examples](@ref firstexample).
 
     ```julia
     using Revise
-    using TASOpt
+    using TASOPT
     ```
 
 ---

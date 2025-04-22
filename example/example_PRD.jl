@@ -4,7 +4,7 @@ fleet of missions
 """
 
 # 1. Import modules
-using TASOpt
+using TASOPT
 using Plots
 # import indices for calling parameters
 
