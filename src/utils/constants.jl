@@ -48,3 +48,14 @@ const aerodrome_codes = Dict{Int64, Vector{String}}(
     65 => ["E", "V"],
     80 => ["F", "VI"],
 )
+
+#Unit Load Devices are standardized containers for cargo
+#Dimensions are in meters
+const UnitLoadDeviceDimensions = Dict{String, Vector{Float64}}(
+    # ULD type => [height, width_base, width_overall]
+    "LD1" => [1.626, 3.124, 4.674], #Note: two side by side
+    "LD2" => [1.626, 2.388, 3.124], #Note: two side by side
+    "LD3" => [1.626, 3.124, 4.014], #Note: two side by side
+    "LD3-45" => [1.143, 1.562, 2.438], 
+    "LD4" => [1.626, 2.438, 2.438]
+)

@@ -315,7 +315,16 @@ readgeom(x) = read_input(x, geom, dgeom)
     is_doubledecker = Bool(readgeom("double_decker"))
 
     if is_doubledecker #If aircraft is a double decker
+        fuselage.n_decks =  2
         fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
+        fuselage.cabin.unit_load_device = readgeom("unit_load_device")
+        fuselage.cabin.min_top_cabin_height = Distance(readgeom("min_top_cabin_height"))
+    else
+        fuselage.n_decks =  1
+    end
+    if calculate_cabin
+        fuselage.cabin.front_seat_offset = Distance(readgeom("front_seat_offset"))
+        fuselage.cabin.rear_seat_offset = Distance(readgeom("rear_seat_offset"))
     end
 
     fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))
@@ -331,12 +340,6 @@ readgeom(x) = read_input(x, geom, dgeom)
 
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
-    
-    if readgeom("double_decker")
-        fuselage.n_decks =  2
-    else
-        fuselage.n_decks =  1
-    end
 
     # Number of webs = number of bubbles - 1
     n_bubbles = Int(readgeom("number_of_bubbles"))
