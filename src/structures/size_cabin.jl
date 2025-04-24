@@ -1,6 +1,7 @@
 """
-    place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
+    place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m,
+    front_seat_offset = 10 * ft_to_m)	
 
 Function to calculate the seat arrangement in the cabin and, therefore, the required cabin
 length.
@@ -13,17 +14,16 @@ length.
     - `seat_width::Float64`: width of one seat (m).
     - `aisle_halfwidth::Float64`: half the width of an aisle (m).
     - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
+    - `front_seat_offset::Float64`: distance from front of cabin to first row of seats (m).
 
     **Outputs:**
     - `lcabin::Float64`: cabin length (m).
     - `xseats::Vector{Float64}`: longitudinal coordinate of each row of seats, measured from front of cabin (m).
     - `seats_per_row::Float64`: number of seats per row.
 """
-function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
-
-    cabin_offset = 10 * ft_to_m #Distance to the front of seats
-    #TODO the hardcoded 10 ft is not elegant
+function place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m,
+    front_seat_offset = 10 * ft_to_m)	
 
     seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
 
@@ -36,7 +36,7 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     end
 
     xseats = zeros(rows)'
-    xseats[1] = cabin_offset
+    xseats[1] = front_seat_offset
     for r in 2:rows
         emergency_exit = 0.0
         if (r in emergency_rows)
@@ -248,8 +248,8 @@ function find_double_decker_cabin_length(x::Vector{Float64}, fuse)
         w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2, h_seat)
 
         #Find length of each cabin
-        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
-        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
+        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch = seat_pitch, seat_width = seat_width, aisle_halfwidth = aisle_halfwidth)
+        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch = seat_pitch, seat_width = seat_width, aisle_halfwidth = aisle_halfwidth)
 
         maxl = max(l1, l2) #Required length
         return maxl, pax_per_row_main 
@@ -341,7 +341,7 @@ function optimize_double_decker_cabin(fuse)
 end
 
 """
-    MinCargoHeightConst(x, fuse, minheight = 1.626)
+    MinCargoHeightConst(x, fuse, minheight = 1.626, minwidth = 3.13)
 
 This function evaluates a minimum height constraint on the cargo hold. It returns a number less than or equal 0 if
 the constraint is met and a value greater than 0 if it is not.
@@ -349,20 +349,26 @@ the constraint is met and a value greater than 0 if it is not.
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of cargo hold
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCargoHeightConst(x, fuse, minheight = 1.626)
+function MinCargoHeightConst(x, fuse)
     #Extract parameters
     θ1 = x[2]
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
 
-    hcargo = Rfuse * (1 + sin(θ1)) + dRfuse #Height left for cargo containers under floor; need to add dRfuse
+    #Find size of unit load device that must fit in cargo bay
+    ULD = fuse.cabin.unit_load_device
+    ULDdims = UnitLoadDeviceDimensions[ULD]
+    minheight = ULDdims[1]
+    minwidth = ULDdims[2] #Base width
 
-    constraint = minheight/hcargo - 1.0 #Constraint has to be negative if hcargo > minheight
+    θcargo = -acos(minwidth/(2*Rfuse)) #Angle of cargo hold floor
+    hmax = dRfuse + Rfuse * (sin(θ1) - sin(θcargo)) #Maximum height of cargo hold
+
+    constraint = minheight/hmax - 1.0 #Constraint has to be negative if hcargo > minheight
     return constraint
 end
 
@@ -376,17 +382,18 @@ the constraint is met and a value greater than 0 if it is not.
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of upper cabin
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCabinHeightConst(x, fuse, minheight = 2.0)
+function MinCabinHeightConst(x, fuse)
     #Extract parameters
     θ1 = x[2] #Main deck angle
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
     d_floor = fuse.cabin.floor_distance
+
+    minheight = fuse.cabin.min_top_cabin_height
 
     try #The calculation could fail for some inputs if an asin returns an error
 
