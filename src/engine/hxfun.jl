@@ -1363,8 +1363,7 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
 end
 
 """
-      HXOffDesign!(HeatExchangers, pare, igas; rlx = 1.0)
-
+     HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
 This function runs the heat exchangers through an aircraft mission and calculates performance at every
 mission point.      
 
@@ -1373,6 +1372,7 @@ mission point.
     - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
     - `pare::Array{Float64 , 3}`: array with engine parameters
     - `igas::Int64`: gas index
+    - `imission::Int64`: mission index
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes and
@@ -1382,7 +1382,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
       if length(HeatExchangers) == 0 #Skip if no HXs
             return
       end
-      frecirc = Bool(pare[iefrecirc,1, imission])
+      frecirc = Bool(pare[iefrecirc,1])
       #Operate off-design for engine-integrated HEXs
       for (i,HX) in enumerate(HeatExchangers)
             HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
