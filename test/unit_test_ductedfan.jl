@@ -1,5 +1,25 @@
 @testset "Ducted fan" begin
-    @testset "Ducetd fan models" begin
+    @testset "Thrust from ROC" begin
+        ac = TASOPT.load_default_model()
+        ip = TASOPT.ipclimb1
+        imission = 1
+
+        ac.wing.layout.S = 100.0
+        ac.parg[igWMTO] = 1e5
+        ac.para[iaCD,ip,imission] = 0.04
+        ac.para[iaCL,ip,imission] = 0.5
+        ac.para[iafracW,ip,imission] = 1.0
+        ac.pare[ierho0,ip,imission] = 1.2
+
+        ROC = 1.0 #m/s
+        
+        ac.para[iaROCdes,ip,1] = ROC
+
+        TASOPT.engine.calculate_thrust_from_ROC!(ac, ip, imission)
+
+        @test ac.pare[ieFe,ip,1] ≈ 4865.490242567016 #Check that the thrust is set to zero when the climb rate is zero
+    end
+    @testset "Ducted fan models" begin
         #__ Test ducted fan sizing function __
         gee = TASOPT.gee
         M0 = 0.8
