@@ -102,8 +102,8 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 
     # Define the system of equations: 
     function residuals!(F::Vector{Float64}, x::Vector{Float64})
-        x[1] = clamp(x[1], 0.0, 2.0) #Extrapolated speed map goes from 0 to 2.0
-        x[2] = clamp(x[2], 0.0, 4.0) #Extrapolated Rline map goes from 0 to 4.0
+        x[1] = clamp(x[1], 1e-4, 1.9999) #Extrapolated speed map goes from 0 to 2.0
+        x[2] = clamp(x[2], 1e-4, 3.9999) #Extrapolated Rline map goes from 0 to 4.0
         # Return the residuals for both equations
         F[1] = itp_Wc(x...) - Wc_target 
         F[2] = itp_PR(x...) - PR_target
@@ -111,8 +111,8 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
 
     # Define the Jacobian of the system (partial derivatives)
     function jacobian!(J::Matrix{Float64}, x::Vector{Float64})
-        x[1] = clamp(x[1], 0.0, 2.0)
-        x[2] = clamp(x[2], 0.0, 4.0)
+        x[1] = clamp(x[1], 1e-4, 1.9999) #Extrapolated speed map goes from 0 to 2.0
+        x[2] = clamp(x[2], 1e-4, 3.9999) #Extrapolated Rline map goes from 0 to 4.0
         # Compute the partial derivatives of W and PR with respect to N and R
         dw_dN, dw_dR = Interpolations.gradient(itp_Wc, x[1], x[2])
         dpr_dN, dpr_dR = Interpolations.gradient(itp_PR, x[1], x[2])
