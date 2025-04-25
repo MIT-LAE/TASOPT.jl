@@ -162,7 +162,7 @@ function _size_aircraft!(ac; itermax=35,
 
     # Reset engine values for heat exchangers
     resetHXs(pare)
-   
+
     # -------------------------------------------------------    
     ## Initial guess section [Section 3.2 of TASOPT docs]
     # -------------------------------------------------------
@@ -726,7 +726,13 @@ function _size_aircraft!(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            engine.heat_exchangers = hxdesign!(pare, options.ifuel, ipdes, engine.heat_exchangers, rlx = 0.5) #design and off-design HX performance
+            if engine.model.model_name == "fuel_cell_with_ducted_fan"
+                ipdes = iprotate #Design point: takeoff rotation
+                pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
+                pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
+                pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+            end
+            engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in engine.heat_exchangers
@@ -736,10 +742,12 @@ function _size_aircraft!(ac; itermax=35,
                     parg[igdHXInterC] = HX.HXgeom.D_o
                 elseif HX.type == "Regen"
                     parg[igdHXRegen] = HX.HXgeom.D_o
+                elseif HX.type == "Radiator"
+                    TASOPT.engine.VerifyRadiatorHeat(engine, imission)
                 end
             end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
-            #With fuel storage in tanks, this is done in the block above.
+            #With fuel storage in tanks, this is done in the block above.           
         end
 
         # -----------------------------
