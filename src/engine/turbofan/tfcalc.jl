@@ -296,6 +296,17 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 #Fuel mass flow rate
                 pare[iemfuel] = ff * mcore * neng
 
+                HTRf = parg[igHTRf]
+                HTRlc = parg[igHTRlc]
+                HTRhc = parg[igHTRhc]
+                Alc = A2 / (1.0 + BPR)
+                dfan = sqrt(4.0 * A2 / (pi * (1.0 - HTRf^2)))
+                dlcomp = sqrt(4.0 * Alc / (pi * (1.0 - HTRlc^2)))
+                dhcomp = sqrt(4.0 * A25 / (pi * (1.0 - HTRhc^2)))
+                parg[igdfan] = dfan
+                parg[igdlcomp] = dlcomp
+                parg[igdhcomp] = dhcomp
+
                 #--------------------------------------------------------------------------
         else
                 #----- off-design operation case
@@ -471,17 +482,6 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 pare[iefc] = (1.0 - fo) * epstot
 
         end
-
-        HTRf = parg[igHTRf]
-        HTRlc = parg[igHTRlc]
-        HTRhc = parg[igHTRhc]
-        Alc = A2 / (1.0 + BPR)
-        dfan = sqrt(4.0 * A2 / (pi * (1.0 - HTRf^2)))
-        dlcomp = sqrt(4.0 * Alc / (pi * (1.0 - HTRlc^2)))
-        dhcomp = sqrt(4.0 * A25 / (pi * (1.0 - HTRhc^2)))
-        parg[igdfan] = dfan
-        parg[igdlcomp] = dlcomp
-        parg[igdhcomp] = dhcomp
 
         pare[ieTSFC] = TSFC
         pare[ieFsp] = Fsp
