@@ -1,5 +1,6 @@
 using DocStringExtensions
 abstract type AbstractModel end
+abstract type AbstractData end
 """
 $TYPEDEF
 
@@ -11,10 +12,18 @@ mutable struct Engine{M<:AbstractModel}
     model::M
 
     #TODO add more engine elements are pare gets undone
+    """Engine data storage"""
+    data::AbstractData
     """Heat exchanger parameters and data"""
-    heat_exchangers::Vector{HX_struct}
+    heat_exchangers::Array{HX_struct}
+
 end
 
+struct EmptyData <: AbstractData 
+end
+#----------------------------
+# Turbofan model and data
+#----------------------------
 """
 $TYPEDEF
 
