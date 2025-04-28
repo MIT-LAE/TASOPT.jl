@@ -99,7 +99,6 @@ using a nonlinear solver with Jacobian information from interpolation gradients.
 """
 function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpolation, itp_PR::Interpolations.GriddedInterpolation, 
                                     Wc_target::Float64, PR_target::Float64; Ng::Float64 = 0.5, Rg::Float64 = 2.0)
-
     # Define the system of equations: 
     function residuals!(F::Vector{Float64}, x::Vector{Float64})
         x[1] = clamp(x[1], 1e-4, 1.9999) #Extrapolated speed map goes from 0 to 2.0
@@ -261,12 +260,12 @@ function create_extrapolated_maps(NcMap, RlineMap, WcMap, PRMap, polyeff_Map)
     highRPR = ones(size(PRMap)[1])                # Constant 1.0 padding on the right
     mPRMap = [lowRPR PRMap highRPR]
 
-    lowNPR = ones(1, size(mPRMap)[2])             # 1.0 padding on top
+    lowNPR = 0.99*ones(1, size(mPRMap)[2])             # 1.0 padding on top
     highNPR = PRmax * ones(1, size(mPRMap)[2])    # max value padding on bottom
     mPRMap = vcat(lowNPR, mPRMap, highNPR)
 
-    # Ensure bottom-right corner is 1.0 for robustness
-    mPRMap[end, end] = 1.0
+    # Ensure bottom-right corner is 0.99 for robustness
+    mPRMap[end, end] = 0.99
 
     # Pad efficiency map with zeros
     lowReff = zeros(size(polyeff_Map)[1])
