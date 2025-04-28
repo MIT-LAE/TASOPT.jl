@@ -172,8 +172,10 @@ fuselage.cabin.exit_limit = exitlimit
 options = read_input("Options", data, default)
 doptions = default["Options"]
 
-# these are used later
-propsys = read_input("prop_sys_arch", options, doptions)
+
+# -----------------------------
+# Engine model setup
+# ------------------------------
 engloc = read_input("engine_location", options, doptions)
 
 #throw error if engloc isn't a string indicating a supported location
@@ -799,7 +801,7 @@ readstruct(x) = read_input(x, structures, dstructures)
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
-
+propsys = read_input("prop_sys_arch", options, doptions)
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
@@ -1022,18 +1024,44 @@ if compare_strings(propsys,"tf")
     engineweight! = tfweightwrap!
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    engdata = TASOPT.engine.EmptyData()
+elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
+    modelname = lowercase(propsys)
+    engineweightname = "nasa"
 
-elseif compare_strings(propsys, "te")
-    nothing
-    #TODO: decide if turboelectric stuff still works, if we'll fix it, or if we'll remove all references
+    enginecalc! = calculate_fuel_cell_with_ducted_fan!
+    engineweight! = fuel_cell_with_ducted_fan_weight!
+    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    pare[iePfanmax,:,:] .= 20e6
+
+    fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+
+    fcdata.type = "HT-PEMFC"
+    fcdata.current_density[iprotate,:] .= 1e4
+    fcdata.FC_temperature .= 453.15
+    fcdata.FC_pressure .= 3e5
+    fcdata.water_concentration_anode .= 0.1
+    fcdata.water_concentration_cathode .= 0.1
+    fcdata.λ_H2 .= 3.0
+    fcdata.λ_O2 .= 3.0
+    fcdata.thickness_membrane = 100e-6
+    fcdata.thickness_anode  = 250e-6
+    fcdata.thickness_cathode  = 250e-6
+    fcdata.design_voltage = 200.0
+    pare[ieRadiatorepsilon,:,:] .= 0.7
+    pare[ieRadiatorMp,:,:] .= 0.12
+    pare[ieDi,:,:] .= 0.4
+
+    para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
+    engdata = fcdata
+
 else
+    
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-    
-engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
-
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
     
 # Heat exchangers
 HEx = readprop("HeatExchangers")

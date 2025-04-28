@@ -1148,6 +1148,7 @@ Calculates the power density of a fuel cell.
 """
 function P2Acalc(u, j, α_g::Float64 = 0.25)
     u.j = j
+
     if u.type == "LT-PEMFC"
         V_cell, α_star  = LT_PEMFC_voltage(u, α_g)
 
