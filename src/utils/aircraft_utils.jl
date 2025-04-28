@@ -32,7 +32,7 @@ function unpack_ac(ac, imission::Int64; ip::Int64 = 0)
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
-    engine = ac.engine
+    eng = ac.engine
     landing_gear = ac.landing_gear
 
     if ip == 0 #If no point is given
@@ -43,7 +43,7 @@ function unpack_ac(ac, imission::Int64; ip::Int64 = 0)
         pare = view(ac.pare, :, ip, imission)
     end
 
-    return parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear
+    return parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear
 end
 
 """
