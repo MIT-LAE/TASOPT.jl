@@ -128,7 +128,7 @@ function find_NR_inverse_with_derivatives(itp_Wc::Interpolations.GriddedInterpol
     sol = nlsolve(residuals!, jacobian!, [Ng, Rg], factor = 1.0, iterations = 100)
 
     if ~converged(sol) #Try again from a different initial guess if the first one fails
-        sol = nlsolve(residuals!, jacobian!, [0.5, 2.0], factor = 0.25, iterations = 100)
+        sol = nlsolve(residuals!, jacobian!, [1.0, 2.0], method = :newton, iterations = 150)
     end
 
     # Extract the solution: the x and y corresponding to the given Wc_target and PR_target
