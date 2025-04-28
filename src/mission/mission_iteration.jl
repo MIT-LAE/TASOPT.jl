@@ -672,8 +672,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   pare[iepif, ip] = pare[iepif, ip-1]
                   pare[iepilc, ip] = pare[iepilc, ip-1]
                   pare[iepihc, ip] = pare[iepihc, ip-1]
-                  initializes_engine = false
-
+                  initializes_engine = false #Apparently, this helps convergence
+                                             #on descent, where the engine is at lower throttle
 
                   # make better estimate for new Tt4, adjusted for new ambient T0
                   dTburn = pare[ieTt4, ip-1] - pare[ieTt3, ip-1]

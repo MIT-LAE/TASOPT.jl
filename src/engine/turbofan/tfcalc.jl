@@ -351,9 +351,9 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         mbf = pare[iembf]
                         mblc = pare[iemblc]
                         mbhc = pare[iembhc]
-                        pif = pare[iepif]
-                        pilc = pare[iepilc]
-                        pihc = pare[iepihc]
+                        pif = max(pare[iepif], 1.1)
+                        pilc = max(pare[iepilc], 1.1)
+                        pihc = max(pare[iepihc], 1.1)
                         pt5 = pare[iept5]
                         M2 = pare[ieM2]
                         M25 = pare[ieM25]
