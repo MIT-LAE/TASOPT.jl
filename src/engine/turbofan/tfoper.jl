@@ -2817,8 +2817,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   abs(dMi) / Mi)
 
             #---- max,min allowed changes 
-            pf0 = 0.8
-            pl0 = 0.8
+            pf0 = 1.0
+            pl0 = 1.0
 
             dpfmax = 0.30 * (pf - pf0)
             dplmax = 0.25 * (pl - pl0)
@@ -2843,8 +2843,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             #---- set underrelaxation factor, 
             #-    if needed to limit any one change to its max value
             rlx = 1.0
-
-
+            
             if (rlx * dpf > dpfmax)
                   rlx = dpfmax / dpf
             end
@@ -2979,6 +2978,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   rlx = dMimin / dMi
                   vrlx = "Mi"
             end
+
+            #If iter>10, a limit cycle may have been reached
+            #Apply a relaxation factor that does not oscillate
+            rlx_it = 1.0 - 0.6*rand() * (iter > 10) #Relaxation based on RNG
+            rlx = rlx * rlx_it
 
             #---- exit if convergence test is met or if max iterations reached
             if (dmax < toler) | (iter == itmax)
@@ -3223,20 +3227,18 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Lconv
 
             end
-            #If iter>10, a limit cycle may have been reached
-            #Apply a relaxation factor that does not oscillate
-            rlx_it = 1.0 - 0.6*rand() * (iter > 10) #Relaxation based on RNG
+            
 
             #---- Newton update
-            pf = pf + rlx * rlx_it * dpf
-            pl = pl + rlx * rlx_it * dpl
-            ph = ph + rlx * rlx_it * dph
-            mf = mf + rlx * rlx_it * dmf
-            ml = ml + rlx * rlx_it * dml
-            mh = mh + rlx * rlx_it * dmh
-            Tb = Tb + rlx * rlx_it * dTb
-            Pc = Pc + rlx * rlx_it * dPc
-            Mi = Mi + rlx * rlx_it * dMi
+            pf = pf + rlx * dpf
+            pl = pl + rlx * dpl
+            ph = ph + rlx * dph
+            mf = mf + rlx * dmf
+            ml = ml + rlx * dml
+            mh = mh + rlx * dmh
+            Tb = Tb + rlx * dTb
+            Pc = Pc + rlx * dPc
+            Mi = Mi + rlx * dMi
 
             Mi = min(Mi, Mimax)
 

@@ -183,7 +183,7 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
         cpt18 = cpt0
         Rt18 = Rt0
         pt18 = pt0 * pid
-        println(pf)
+
         _, epf, _, _, _, _, _, _ = 
             calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, 1.0, epf0)
   
