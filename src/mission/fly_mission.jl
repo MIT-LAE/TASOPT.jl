@@ -264,7 +264,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    if engine.model.model_name == "ducted_fan"
+    if eng.model.model_name == "ducted_fan"
         pare[ieRadiatorCoolantT,:] = eng.data.FC_temperature[:,imission]
         pare[ieRadiatorCoolantP,:] = eng.data.FC_pressure[:,imission]
         pare[ieRadiatorHeat,:] = eng.data.FC_heat[:,imission]
