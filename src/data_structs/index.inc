@@ -490,11 +490,18 @@
       const ieRadiatorMp = 231
       const ieRadiatorDeltah = 232
       const ieRadiatorDeltap = 233
-      const iehvapcombustor = 234
-      const ieHXminTwall = 235
-      const iemfuel = 236
+      const ieRadiatorCoolantT = 234
+      const ieRadiatorCoolantP = 235
+      const ieRadiatorHeat = 236
+      const iehvapcombustor = 237
+      const ieHXminTwall = 238
+      const iemfuel = 239
+      const iemfan = 240
+      const iePfan = 241
+      const iePfanmax = 242
+      const ieTSEC = 243
 
-      const ietotal = 236
+      const ietotal = 243
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
