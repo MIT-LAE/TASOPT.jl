@@ -29,15 +29,15 @@ end
 
 function get_template_input_file(designrange)
     if designrange <= 2600 * nmi_to_m
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_regional.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_regional.toml")
     elseif designrange <= 3115 * nmi_to_m
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml")
     elseif designrange <= 8500 * nmi_to_m
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_wide.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml")
     else
         println("\n")
         @warn """Requested aircraft design range exceeds expected capability. Selecting Wide Body Aircraft Template, but be warned. """
-        templatefile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml")
+        templatefile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml")
     end
     return templatefile
 end
@@ -56,11 +56,11 @@ Temp(x)     = convertTemp(parse_unit(x)...)
 
 """
     read_aircraft_model(datafile; 
-    defaultfile = joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"))
+    defaultfile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"))
 
 Reads a specified TOML file that describes a TASOPT `aircraft` model 
 with a fall back to the default `aircraft` definition 
-provided in \"src/IO/default_input.toml\""
+provided in \"/example/defaults/default_input.toml\""
 
 !!! note "Deviating from default"
     Extending `read_input.jl` and `save_model.jl` is recommended for models deviating appreciably 
@@ -68,7 +68,7 @@ provided in \"src/IO/default_input.toml\""
 
 # Examples
 ```julia-repl
-julia> read_aircraft_model("src/IO/input.toml")
+julia> read_aircraft_model("examples/defaults/default_input.toml")
 
 
 ┌ Info: engine_location not found in user specified input file. 
@@ -90,7 +90,7 @@ Cruise Mach = 0.8
 ```
 """
 function read_aircraft_model(
-    datafile=joinpath(TASOPT.__TASOPTroot__, "IO/default_input.toml"); 
+    datafile=joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"); 
     templatefile = "")
 
 data = TOML.parsefile(datafile)
@@ -118,7 +118,7 @@ default = TOML.parsefile(templatefile)
 ac_descrip = get(data, "Aircraft Description", Dict{})
 name = get(ac_descrip, "name", "Untitled Model")
 description = get(ac_descrip, "description", "---")
-sized = get(ac_descrip, "sized",[false])
+is_sized = get(ac_descrip, "is_sized",[false])
 
 
 #Get number of missions to create data arrays
@@ -126,7 +126,6 @@ mis = read_input("Mission", data, default)
 dmis = default["Mission"]
 readmis(x::String) = read_input(x, mis, dmis)
 nmisx = readmis("N_missions")
-pari = zeros(Int64, iitotal)
 parg = zeros(Float64, igtotal)
 parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
@@ -136,6 +135,7 @@ fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
+landing_gear = LandingGear()
 
 # Setup mission variables
 ranges = readmis("range")
@@ -172,62 +172,42 @@ fuselage.cabin.exit_limit = exitlimit
 options = read_input("Options", data, default)
 doptions = default["Options"]
 
-pari[iiopt] = read_input("optimize", options, doptions)
 
-propsys = read_input("prop_sys_arch", options, doptions)
-if lowercase(propsys) == "tf"
-    pari[iiengtype] = 1
-elseif lowercase(propsys) == "te"
-    pari[iiengtype] = 0
-else
-    error("Propulsion system \"$propsys\" specified. Choose between
-    > TF - turbo-fan
-    > TE - turbo-electric" )
-end
-
+# -----------------------------
+# Engine model setup
+# ------------------------------
 engloc = read_input("engine_location", options, doptions)
 
-if typeof(engloc) == Int
-    pari[iiengloc] = engloc
-elseif typeof(engloc) <: AbstractString
-    engloc = lowercase(engloc)
-    if engloc == "wing"
-        pari[iiengloc] = 1
-    elseif engloc == "fuselage" || engloc == "fuse"
-        pari[iiengloc] = 2
-    else
-        error("Engine location provided is \"$engloc\". Engine position can only be:
-        > 1: Engines on \"wing\"
-        > 2: Engines on \"fuselage\"")
-    end
-else
-    error("Check engine position input... something isn't right")
+#throw error if engloc isn't a string indicating a supported location
+if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
+   error("Engine location provided is \"$engloc\". Engine position can only be:
+        > \"wing\" - engines under wing
+        > \"fuselage\" - engines on aft fuselage")
 end
-
 
 # Fuel related options
 fuel = read_input("Fuel", data, default)
 dfuel = default["Fuel"]
 readfuel(x::String) = read_input(x, fuel, dfuel)
 fueltype = readfuel("fuel_type")
-#TODO this needs to be updated once I include Gas.jl into TASOPT
-if uppercase(fueltype) == "LH2"
-    pari[iifuel] = 40
-    
-elseif uppercase(fueltype) == "CH4"
-    pari[iifuel] = 11
-    
-elseif uppercase(fueltype) == "JET-A"
-    pari[iifuel] = 24
+#TODO this needs to be updated once Prash includes Gas.jl into TASOPT
 
+#check input, perform actions based on fuel type
+if compare_strings(fueltype, "JET-A")
     pare[ieTft, :, :] .= readfuel("fuel_temp") #Temperature of fuel in fuel tank
     pare[ieTfuel, :, :] .= readfuel("fuel_temp") #Initialize fuel temperature as temperature in tank
     parg[igrhofuel] = readfuel("fuel_density")
-else
-    error("Check fuel type")
+    ifuel = 24
+elseif compare_strings(fueltype, "LH2") 
+    ifuel = 40
+elseif compare_strings(fueltype, "CH4")
+    ifuel = 11
+#throw error if fueltype isn't a supported value
+else 
+    error("'$fueltype' is not a supported fuel type (e.g., \"JET-A\", \"LH2\", \"CH4\")")
 end
-pari[iifwing]  = readfuel("fuel_in_wing")
-pari[iifwcen]  = readfuel("fuel_in_wingcen")
+
+has_centerbox_fuel  = readfuel("fuel_in_wingcen")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
 pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
@@ -323,8 +303,6 @@ readweight(x) = read_input(x, weight, dweight)
     fuselage.floor_W_per_area = readweight("floor_weight_per_area")
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
-    parg[igflgnose] = readweight("LG_nose_weight_fraction")
-    parg[igflgmain] = readweight("LG_main_weight_fraction")
 
     fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
     fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
@@ -336,10 +314,19 @@ readgeom(x) = read_input(x, geom, dgeom)
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
-    pari[iidoubledeck] = readgeom("double_decker") 
+    is_doubledecker = Bool(readgeom("double_decker"))
 
-    if pari[iidoubledeck] == 1 #If aircraft is a double decker
+    if is_doubledecker #If aircraft is a double decker
+        fuselage.n_decks =  2
         fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
+        fuselage.cabin.unit_load_device = readgeom("unit_load_device")
+        fuselage.cabin.min_top_cabin_height = Distance(readgeom("min_top_cabin_height"))
+    else
+        fuselage.n_decks =  1
+    end
+    if calculate_cabin
+        fuselage.cabin.front_seat_offset = Distance(readgeom("front_seat_offset"))
+        fuselage.cabin.rear_seat_offset = Distance(readgeom("rear_seat_offset"))
     end
 
     fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))
@@ -348,8 +335,6 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.cabin.aisle_halfwidth = Distance(readgeom("aisle_halfwidth"))
     parg[igrMh] = readgeom("HT_load_fuse_bend_relief")
     parg[igrMv] = readgeom("VT_load_fuse_bend_relief")
-    parg[igxlgnose]  = Distance(readgeom("x_nose_landing_gear"))
-    parg[igdxlgmain] = Distance(readgeom("x_main_landing_gear_offset"))
     fuselage.APU.r = [Distance(readgeom("x_APU")),0.0,0.0]
     fuselage.HPE_sys.r  = [Distance(readgeom("x_HPE_sys")), 0.0, 0.0]
 
@@ -357,12 +342,6 @@ readgeom(x) = read_input(x, geom, dgeom)
 
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
-    
-    if readgeom("double_decker")
-        fuselage.n_decks =  2
-    else
-        fuselage.n_decks =  1
-    end
 
     # Number of webs = number of bubbles - 1
     n_bubbles = Int(readgeom("number_of_bubbles"))
@@ -391,17 +370,15 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
     fuselage.layout.taper_tailcone = readgeom("tailcone_taper")
-    fuse_end = lowercase(readgeom("taper_fuse_to")) 
-    if fuse_end == "point"
-        fuselage.layout.taper_fuse = 0
-    elseif fuse_end == "edge"
-        fuselage.layout.taper_fuse = 1
+
+    fuse_end = readgeom("tapers_to")
+    #throw error if fuse_end isn't a supported fuse taper
+    if !(fuse_end in ["point", "edge"])
+        error("Fuselage can only be closed to a 'point' or an 'edge' but '$fuse_end' was provided.")
     else
-        fuselage.layout.taper_fuse = 0
-        @warn "Fuselage can only be closed to a 'point' or an 'edge'"*
-                " but '$fuse_end' was provided."*
-                " Setting fuselage to end at a point."
+        fuselage.layout.opt_tapers_to = fuse_end
     end
+
     fuselage.layout.x_nose = Distance(readgeom("x_nose_tip")) 
     fuselage.layout.x_pressure_shell_fwd = Distance(readgeom("x_pressure_shell_fwd"))
     fuselage.layout.x_pressure_shell_aft = Distance(readgeom("x_pressure_shell_aft"))
@@ -413,11 +390,42 @@ readgeom(x) = read_input(x, geom, dgeom)
 
 # ------ End fuse -------
 
+# ---------------------------------
+# Landing gear
+# ---------------------------------
+lg = read_input("LandingGear", data, default)
+dlg = default["LandingGear"]
+readlg(x::String) = read_input(x, lg, dlg)
+
+#Landing gear CG positions or offsets
+xlgnose = Distance(readlg("x_nose_landing_gear"))
+landing_gear.nose_gear.weight = TASOPT.structures.Weight(W = 0.0, x = xlgnose)
+landing_gear.main_gear.distance_CG_to_landing_gear = Distance(readlg("x_main_landing_gear_offset"))
+
+#The mass model for the landing gear can be specified by the user
+lgmodel = readlg("landing_gear_model")
+landing_gear.model = lgmodel
+
+if lowercase(lgmodel) == "mass_fractions" #This is the most basic model, just fixed fractions of the MTOW
+    landing_gear.nose_gear.overall_mass_fraction = readlg("LG_nose_weight_fraction")
+    landing_gear.main_gear.overall_mass_fraction = readlg("LG_main_weight_fraction")
+elseif lowercase(lgmodel) == "historical_correlations" #model based on historical-data relations in Raymer (2012)
+    landing_gear.main_gear.y_offset_halfspan_fraction = readlg("y_main_landing_gear_halfspan_fraction")
+    landing_gear.tailstrike_angle = Angle(readlg("tailstrike_angle"))
+    landing_gear.wing_dihedral_angle = Angle(readlg("wing_dihedral_angle")) #TODO consider storing this as a wing parameter
+    landing_gear.engine_ground_clearance = Distance(readlg("engine_ground_clearance"))
+    landing_gear.nose_gear.number_struts = readlg("LG_nose_number_struts")
+    landing_gear.nose_gear.wheels_per_strut = readlg("LG_nose_wheels_per_strut")
+    landing_gear.main_gear.number_struts = readlg("LG_main_number_struts")
+    landing_gear.main_gear.wheels_per_strut = readlg("LG_main_wheels_per_strut")
+end
+# ------ End landing gear -------
 
 #Fuel storage options
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
 
-if pari[iifwing]  == 0 #If fuel is stored in fuselage
+has_wing_fuel = readfuel("fuel_in_wing")
+if !(has_wing_fuel) #If fuel is stored in fuselage
     fuel_stor = readfuel("Storage")
     dfuel_stor = dfuel["Storage"]
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
@@ -426,7 +434,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.fueltype = fueltype
     fuse_tank.clearance_fuse = Distance(readfuel_storage("fuselage_clearance"))
 
-    fuse_tank.size_insulation = readfuel_storage("size_insulation")
+    fuse_tank.sizes_insulation = readfuel_storage("sizes_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
     insul_mats_names = readfuel_storage("insulation_material")
     insul_mats = []
@@ -434,7 +442,7 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
         push!(insul_mats, ThermalInsulator(insul_mat_name))
     end
     fuse_tank.material_insul = insul_mats
-    if fuse_tank.size_insulation
+    if fuse_tank.sizes_insulation
         fuse_tank.boiloff_rate = readfuel_storage("cruise_boiloff_rate")
         fuse_tank.iinsuldes = readfuel_storage("insulation_thicknesses_design_indices")
     end
@@ -457,9 +465,9 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
     fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
-    flag_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
+    has_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
 
-    if flag_vacuum #If tank is double-walled
+    if has_vacuum #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
         fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
 
@@ -474,11 +482,15 @@ if pari[iifwing]  == 0 #If fuel is stored in fuselage
 
     #Find number of tanks from placement
     if (fuse_tank.placement == "front") || (fuse_tank.placement == "rear")
-        pari[iinftanks] = 1
+        nftanks = 1
     elseif (fuse_tank.placement == "both") 
-        pari[iinftanks] = 2
+        nftanks = 2
     end
-end
+    fuse_tank.tank_count = nftanks
+else #else all fuel in wings
+    nftanks = 0
+end #if
+
 # ---------------------------------
 # Wing
 # ---------------------------------
@@ -486,8 +498,7 @@ end
 wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
 readwing(x) = read_input(x, wing_i, dwing)
-    wing.planform = readwing("wing_planform")
-    wing.has_strut = readwing("strut_braced_wing")
+    wing.has_strut = readwing("has_strut")
 
     wing.layout.sweep = readwing("sweep")
     wing.layout.AR = readwing("AR")
@@ -522,7 +533,7 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     parg[igdxeng2wbox] = wing.layout.box_x - parg[igxeng] #TODO add this as a function of wing
 
-    ## Strut details only used if strut_braced_wing is true
+    ## Strut details only used if has_strut is true
     if wing.has_strut
         wing.strut.z  = Distance(readwing("z_strut"))
         wing.strut.thickness_to_chord  = readwing("strut_toc")
@@ -649,41 +660,28 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail.CL_CLmax = readhtail("max_tail_download")
 
-    htail_size = lowercase(readhtail("HTsize"))
-    if htail_size == "vh"
-        htail.size = 1
+    htail_sizing = readhtail("opt_sizing")
+    if compare_strings(htail_sizing,"fixed_Vh")
+        htail.opt_sizing = htail_sizing
         htail.volume = readhtail("Vh")
-    elseif htail_size == "maxforwardcg"
-        htail.size = 2
+    elseif compare_strings(htail_sizing,"CLmax_fwdCG")
+        htail.opt_sizing = htail_sizing
         htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
         htail.volume = 1.0
     else
         error("Horizontal tail can only be sized via:
-            1: specified tail volume coeff \"Vh\";
-            2: specified CLh at max-forward CG case during landing (\"maxforwardCG\")")
+            \"fixed_Vh\":   specified tail volume coeff (\"Vh\");
+            \"CLmax_fwdCG\": specified CLh (\"CLh_at_max_forward_CG\") at 'worst-case': max-forward CG, max wing lift")
     end
 
-
-    movewing = readhtail("move_wingbox")
-    if typeof(movewing) == Int
-        htail.move_wingbox = movewing
-    elseif typeof(movewing) <: AbstractString
-        movewing = lowercase(movewing)
-        if movewing =="fix"
-            htail.move_wingbox = 0
-        elseif movewing == "clhspec"
-            htail.move_wingbox = 1
-        elseif movewing == "smmin"
-            htail.move_wingbox = 2
-        else
-            error("Wing position during horizontal tail sizing can only be sized via:
-            0: \"fix\" wing position;
-            1: move wing to get CLh=\"CLhspec\" in cruise 
-            2: move wing to get min static margin = \"SMmin\"")
-        end
-    else
-        error("Check wing position input during htail sizing... something isn't right")
+    opt_move_wing = readhtail("opt_move_wing")
+    #if not an expected input, throw an error
+    valid_options = ["fixed", "fixed_CLh", "min_static_margin"]
+    if !(any(compare_strings.(opt_move_wing, valid_options)))
+        error("Input error: \"opt_move_wing\" = $opt_move_wing\nWing position during horizontal tail sizing can only be sized via:\n" *
+              join([">\"$opt\"" for opt in valid_options], "\n"))
     end
+
     htail.SM_min = readhtail("SM_min")
 
     parg[igCLhspec] = readhtail("CLh_spec")
@@ -716,17 +714,17 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
     vtail.layout.box_x  = Distance(readvtail("x_Vtail"))
     vtail.ntails  = readvtail("number_Vtails")
 
-    vtail_size = lowercase(readvtail("VTsize"))
-    if vtail_size == "vv"
-        vtail.size = 1
+    vtail_sizing = readvtail("opt_sizing")
+    if compare_strings(vtail_sizing, "fixed_Vv")
+        vtail.opt_sizing = vtail_sizing
         vtail.volume = readvtail("Vv")
-    elseif vtail_size == "oei"
-        vtail.size = 2
+    elseif compare_strings(vtail_sizing, "OEI")
+        vtail.opt_sizing = vtail_sizing
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
         error("Vertical tail can only be sized via:
-            1: specified tail volume coeff \"Vv\";
-            2: specified CL at one engine out trim (\"OEI\")")
+            \"fixed_Vv\": specified tail volume coeff \"Vv\";
+            \"OEI\": specified CL at one engine out trim (\"OEI\") via \"CLv_at_engine_out\"")
     end
 
     vtail.CL_max = readvtail("CLv_max")
@@ -742,12 +740,6 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
 # ----- End Stabilizers -----
 
-# ---------------------------------
-# Recalculate cabin length
-if calculate_cabin #Resize the cabin if desired, keeping deltas
-    @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-    update_fuse_for_pax!(pari, parg, fuselage, fuse_tank, wing, htail, vtail) #update fuselage dimensions
-end
 # ---------------------------------
 
 # ---------------------------------
@@ -809,7 +801,7 @@ readstruct(x) = read_input(x, structures, dstructures)
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
-
+propsys = read_input("prop_sys_arch", options, doptions)
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
@@ -830,7 +822,7 @@ readprop(x) = read_input(x, prop, dprop)
     pare[ieT0, iptakeoff, :] .= T0TO
 
     # Core in clean-flow -> 0; Core ingests KE defect -> 1
-    pari[iiBLIc] = !readprop("core_in_clean_flow")
+    eng_has_BLI_cores = !readprop("core_in_clean_flow")
 
     #Turbomachinery
     turb = readprop("Turbomachinery")
@@ -1011,20 +1003,67 @@ weight = readprop("Weight")
 dweight = dprop["Weight"]
     parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
     parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
-    TF_wmodel = read_input("weight_model", weight, dweight)
-    if lowercase(TF_wmodel) == "md"
-        pari[iiengwgt] = 0
-    elseif lowercase(TF_wmodel) == "basic"
-        pari[iiengwgt] = 1
-    elseif lowercase(TF_wmodel) == "advanced"
-        pari[iiengwgt] = 2
-    else
-        error("\"$TF_wmodel\" engine weight model was specifed. 
-        Engine weight can only be \"MD\", \"basic\" or \"advanced\".")
+    
+    #read/check engine weight model options
+    if compare_strings(propsys, "tf")
+    #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
+        TF_wmodel = read_input("weight_model", weight, dweight)
+        if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
+            error("\"$TF_wmodel\" engine weight model was specifed. 
+            Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
+        end
+    elseif compare_strings(propsys, "te")
+        @warn("Propulsion weight models for turboelectric are currently not available.")
     end
 
-# Heat exchangers
+# Create engine object
+if compare_strings(propsys,"tf")
+    modelname = "turbofan_md"
+    enginecalc! = tfwrap!
+    engineweightname = TF_wmodel
+    engineweight! = tfweightwrap!
 
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    engdata = TASOPT.engine.EmptyData()
+elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
+    modelname = lowercase(propsys)
+    engineweightname = "nasa"
+
+    enginecalc! = calculate_fuel_cell_with_ducted_fan!
+    engineweight! = fuel_cell_with_ducted_fan_weight!
+    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    pare[iePfanmax,:,:] .= 20e6
+
+    fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+
+    fcdata.type = "HT-PEMFC"
+    fcdata.current_density[iprotate,:] .= 1e4
+    fcdata.FC_temperature .= 453.15
+    fcdata.FC_pressure .= 3e5
+    fcdata.water_concentration_anode .= 0.1
+    fcdata.water_concentration_cathode .= 0.1
+    fcdata.λ_H2 .= 3.0
+    fcdata.λ_O2 .= 3.0
+    fcdata.thickness_membrane = 100e-6
+    fcdata.thickness_anode  = 250e-6
+    fcdata.thickness_cathode  = 250e-6
+    fcdata.design_voltage = 200.0
+    pare[ieRadiatorepsilon,:,:] .= 0.7
+    pare[ieRadiatorMp,:,:] .= 0.12
+    pare[ieDi,:,:] .= 0.4
+
+    para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
+    engdata = fcdata
+
+else
+    
+    error("Propulsion system \"$propsys\" specified. Choose between
+    > TF - turbo-fan
+    > TE - turbo-electric" )
+end
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
+    
+# Heat exchangers
 HEx = readprop("HeatExchangers")
 dHEx = dprop["HeatExchangers"]
     parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
@@ -1049,9 +1088,34 @@ dHEx = dprop["HeatExchangers"]
     pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
     pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
+    ac_options = TASOPT.Options(
+        opt_fuel = fueltype,
+        ifuel = ifuel,
+        has_wing_fuel = has_wing_fuel,
+        has_centerbox_fuel = has_centerbox_fuel,
+        has_fuselage_fuel = (nftanks>0),
+        
+        opt_engine_location = engloc,
+        opt_prop_sys_arch = propsys,
+        
+        is_doubledecker = is_doubledecker,
 
-return TASOPT.aircraft(name, description,
-    pari, parg, parm, para, pare, [false], fuse_tank, fuselage, wing, htail, vtail)
+        opt_move_wing = opt_move_wing
+    )
+    
+#Create aircraft object
+    ac = TASOPT.aircraft(name, description, ac_options,
+        parg, parm, para, pare, is_sized, 
+        fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
+    
+    # ---------------------------------
+    # Recalculate cabin length
+    if calculate_cabin #Resize the cabin if desired, keeping deltas
+        @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
+        update_fuse_for_pax!(ac) #update fuselage dimensions
+    end
+
+return ac
 
 end
 

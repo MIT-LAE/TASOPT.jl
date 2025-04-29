@@ -1,89 +1,137 @@
 
 
-@testset "wing aerodynamics" begin
+@testset "wing aerodynamics" verbose=true begin 
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
     fuselage = ac_test.fuselage
     wing = ac_test.wing
     airf = wing.airsection
+    @testset "Airfoil data" begin
+        #Test that it is reading the database correctly first
+        @test airf.Re == 2.0e7
+        @test airf.cl[1] == 0.4
+        @test airf.cl[end] == 0.9
+        @test airf.τ[1] == 0.09
+        @test airf.τ[end] == 0.145
+        @test airf.Ma[1] == 0.0
+        @test airf.Ma[end] == 0.81
+        @test all(airf.A[1, 1, 1, :] .== [0.537000E-02, 0.105000E-02, -0.114800])
+        @test all(airf.A[end, end, end, :] .== [0.330800E-02, 0.129780, -0.157000E-01])
 
-    #Test that it is reading the database correctly first
-    @test airf.Re == 2.0e7
-    @test airf.cl[1] == 0.4
-    @test airf.cl[end] == 0.9
-    @test airf.τ[1] == 0.09
-    @test airf.τ[end] == 0.145
-    @test airf.Ma[1] == 0.0
-    @test airf.Ma[end] == 0.81
-    @test all(airf.A[1,1,1,:] .== [0.537000E-02,  0.105000E-02, -0.114800])
-    @test all(airf.A[end,end,end,:] .== [0.330800E-02, 0.129780, -0.157000E-01])
+        # Airfun:
+        clp = 0.68657968661106417
+        toc = 0.12677500000000000
+        Mperp = 0.73161835368752204
+        cdf1 = 4.9548669970280916E-003
+        cdp1 = 3.8227447198802837E-003
+        cdwbar = 0.0000000000000000
+        cm1 = -0.11614728079885453
 
+        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
 
-    @test airf.A_cl[1] == 9.404466501241549e-5
-    @test airf.A_M_τ[1] == 0.0034955756541831962
-    @test airf.A_M_cl[1] == 0.00034329926965084645
-    @test airf.A_cl_τ[1] == 0.05053716600633287
-    @test airf.A_M_cl_τ[1] == -0.10670530182272829
+        @test cdf1 ≈ cdf rtol = 1e-6
+        @test cdp1 ≈ cdp rtol = 1e-6
+        @test cdwbar ≈ cdw
+        @test cm1 ≈ cm rtol = 1e-6
 
-    # Airfun:
-    clp = 0.39667037134404420
-    toc = 0.12662499999999999
-    Mperp = 0.53754830650101648
-    cdf1 = 5.3154757393313757E-003
-    cdp1 = 1.8299317908419433E-003
-    cdwbar = 0.0000000000000000
-    cm1 = -0.10544678833832639
+        clp = 0.67016181769975336
+        toc = 0.14401500000000000
+        Mperp = 0.72079998136376022
+        cdf1 = 4.9388801313136523E-003
+        cdp1 = 4.1045733512642419E-003
+        cdwbar = 0.0000000000000000
+        cm1 = -9.5253127678246632E-002
+        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
 
-    cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
+        @test cdf1 ≈ cdf
+        @test cdp1 ≈ cdp
+        @test cdwbar ≈ cdw
+        @test cm1 ≈ cm
+
+        @test all(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.3, airf) .== (0.00533, 0.0011, 0.0, -0.1171))
+        @test all(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.8, airf) .== (0.00487, 0.00722, 0.0, -0.1544))
+        # test_limits
+        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(0.0, 0.0, 0.8, airf)
+
+        @test cdp > 0.0
+
+    end # end airfun
+
+    #start wing_loading
+    wing.layout.root_chord = 5.3938688126436549
+    wing.layout.span = 35.486921629195265
+    wing.layout.ηs = 10.113772664320649 / wing.layout.span
+    wing.layout.root_span = 3.6067999999999998
+    wing.layout.S = 105.24594887917868
+    wing.inboard.λ = 0.69999999999999996
+    wing.outboard.λ = 0.25000000000000000
+    wing.layout.AR = 10.1
+    wing.fuse_lift_carryover = -0.29999999999999998890 
+    wing.tip_lift_loss = -0.05000000000000000278 
     
-    @test_broken cdf1 ≈ cdf rtol=1e-6
-    @test_broken cdp1 ≈ cdp rtol=1e-6
-    @test cdwbar ≈ cdw 
-    @test_broken cm1  ≈ cm rtol=1e-6
-    # end airfun
+    rclt = 0.9
+    rcls = 1.238
+    N = 3.0000000000000000
+    W = 778345.75427325454  
+    Lhtail = -132476.65894384126  
+    fort_po = 110091.58394892939 
 
-    # surfcd2
-    #Start surfcd2
+    po = TASOPT.aerodynamics.wing_loading(wing, rclt, rcls, N, W, Lhtail)
+
+    @test po ≈ fort_po
+    #end wing_loading
+    # wing_profiledrag_direct
+    #Start wing_profiledrag_direct
+
+    wing.layout.root_chord = 5.3938688126436549
+    wing.layout.span = 32.603436685105834
+    wing.layout.ηs = 9.2919794552551611 / wing.layout.span
+    wing.layout.root_span = 3.6067999999999998
+    wing.layout.S = 105.24594887917868
+    wing.inboard.λ = 0.69999999999999996
+    wing.outboard.λ = 0.25000000000000000
+
     γt = 0.225
     γs = 0.8665999999999999
-    Mach = 0.5917830310706261
-    CL = 0.285
-    CLhtail = -0.0016806695060863123
-    Reco = 6.5275125903133705e7
-    aRexp = -0.15
-    rkSunsw = 0.5
-    fexcdw = 1.02
-    fduo = 0.018
-    fdus = 0.014
-    fdut = 0.0045
+    Mach = 0.80000000000000004
+    CL = 0.56999999999999995
+    CLhtail = -2.1202672443102342E-002
+    Reco = 34058000.862060823
+    aRexp = -0.14999999999999999
+    rkSunsw = 0.50000000000000000
+    fexcdw = 1.0200000000000000
+    fduo = 1.7999999999999999E-002
+    fdus = 1.4000000000000000E-002
+    fdut = 4.4999999999999997E-003
 
-    fort_clpo = 0.32262961571123017
-    fort_clps = 0.40257288646711153
-    fort_clpt = 0.2982238785446501
-    fort_cdfw = 5.1447209302202422E-003
-    fort_cdpw = 2.2187499862715509E-003
-    fort_CDwing = 7.3634709164917935E-003
+    fort_clpo = 0.67137920779128768
+    fort_clps = 0.83773792743334130
+    fort_clpt = 0.62059185385188131
+    fort_cdfw = 5.1945675060967979E-003
+    fort_cdpw = 3.5732856303350158E-003
+    fort_CDwing = 8.7678531364318128E-003
     fort_CDover = 0.0000000000000000
+
     clpo, clps, clpt, CDfwing, CDpwing,
-    CDwing, CDover = TASOPT.aerodynamics.surfcd2(
+    CDwing, CDover = TASOPT.aerodynamics.wing_profiledrag_direct(
       wing, γt, γs,
       Mach, CL, CLhtail, 
       Reco, aRexp, rkSunsw, fexcdw,
       fduo, fdus, fdut)
 
-#       SURFCD2 INPUT
+#       wing_profiledrag_direct INPUT
 # (0.225, 0.8665999999999999, 0.5917830310706261, 0.285, -0.0016806695060863123, 6.5275125903133705e7, -0.15, 0.5, 1.02, 0.018, 0.014, 0.0045)
-# SURFCD2 OUTPUT
+# wing_profiledrag_direct OUTPUT
 # (0.005092435287160669, 0.002484528306027699, 0.007576963593188367, 0.0)
     @test fort_clpo ≈ clpo
     @test fort_clps ≈ clps
     @test fort_clpt ≈ clpt
-    @test_broken fort_cdfw ≈ CDfwing
-    @test_broken fort_cdpw ≈ CDpwing
-    @test_broken fort_CDwing ≈ CDwing
+    @test fort_cdfw ≈ CDfwing
+    @test fort_cdpw ≈ CDpwing
+    @test fort_CDwing ≈ CDwing
     @test fort_CDover ≈ CDover
-    #end surfcd2
+    #end wing_profiledrag_direct
 
-    #start surfcd
+    #start wing_profiledrag_scaled
     S = 124.68530759570760
     b = 35.486921629195265
     bs = 10.113772664320649
@@ -102,7 +150,7 @@
     CDwing = 9.4350192385200850E-003
     CDover = 0.0000000000000000
     
-    CDw, CDo = TASOPT.aerodynamics.surfcd(S,
+    CDw, CDo = TASOPT.aerodynamics.wing_profiledrag_scaled(S,
     b, bs, bo, λt, λs, sweep, co,
     cdfw, cdpw, Reco, Rerefw, aRexp, rkSunsw,
     fCDwcen)
@@ -110,19 +158,8 @@
     @test CDwing == CDw
     @test CDover == CDover
 
-    #end surfcd
-    #start Wingpo
-    rclt = 0.9
-    rcls = 1.238
-    N = 3.0000000000000000
-    W = 853967.1303861982
-    Lhtail = -152047.6033818514
-    fort_po = 114200.8070970394
+    #end wing_profiledrag_scaled
 
-    po = TASOPT.aerodynamics.wingpo(wing, rclt, rcls, N, W, Lhtail)
-    
-    @test po ≈ fort_po
-    #end Wingpo
 
     #start wingsc
     BW = 853967.1303861982
@@ -147,7 +184,7 @@
     @test fort_co == wing.layout.root_chord
     #end wingsc
     
-    #wingcl
+    #wing_section_cls
     gammat = 0.15
     gammas = 0.77
     CL,CLhtail = 1.2622355275981707,0.019038222769452273
@@ -156,32 +193,32 @@
     test_clpo = 1.5734696976792315
     test_clps = 1.7444989594158167
     test_clpt = 0.9696283564047791
-    clpo, clps, clpt = TASOPT.aerodynamics.wingcl(wing,gammat,gammas,
+    clpo, clps, clpt = TASOPT.aerodynamics.wing_section_cls(wing,gammat,gammas,
                               CL,CLhtail,
 	                        fduo,fdus,fdut)
     
     @test test_clpo == clpo
     @test test_clps == clps
     @test test_clpt == clpt
-    #end wingcl
+    #end wing_section_cls
 
-    #surfcm
+    #wing_CM
     (b, bs, bo, sweep, Xaxis,
         λt, λs, γt, γs,
         AR, fLo, fLt, cmpo, cmps, cmpt) = 35.723608571355676, 10.717082571406703, 5.7404, 27.567, 0.4, 0.1503, 0.8784, 0.09018, 0.96624, 10.4411, -0.3, -0.05, -0.2, -0.2, -0.02
 
-    CM0, CM1 = TASOPT.aerodynamics.surfcm(b, bs, bo, sweep, Xaxis,
+    CM0, CM1 = TASOPT.aerodynamics.wing_CM(b, bs, bo, sweep, Xaxis,
         λt, λs, γt, γs,
         AR, fLo, fLt, cmpo, cmps, cmpt)
 
     @test CM0 == -0.05330921996771545
     @test CM1 == -0.3480891589464312
-    #end surfcm
+    #end wing_CM
 
 end
 
 @testset "fuse aerodynamics" begin
-    #Axisol
+    #_axisymm_flow
     xnose = 0.0000000000000000
     xend = 37.795200000000001
     xblend1 = 6.0960000000000001
@@ -208,7 +245,7 @@ end
     dyl = zeros(nbldim)     # body y-offset of edge-type tail
     ql = zeros(nbldim)     # inviscid edge velocity (in absence of delta*)
 
-    nl, ilte = TASOPT.aerodynamics.axisol!(xnose, xend, xblend1, xblend2,
+    nl, ilte = TASOPT.aerodynamics._axisymm_flow(xnose, xend, xblend1, xblend2,
         Sfuse, anose, btail, ifclose,
         Mach, nc, nbldim,
         xl, zl, sl, dyl, ql)
@@ -221,9 +258,9 @@ end
     @test all(isapprox.(dyl, dybl'))
     @test all(isapprox.(ql, uinv'))
 
-    # end axisol
+    # end _axisymm_flow
 
-    #blax2
+    #_axisymm_BL
     nbldim, nbl, iblte = [60 47 31]
     sbl = [0.0000000000000000 0.25841299983870264 0.69309443916718450 1.3001178125821706 2.0803642302394660 3.0297111639838339 4.1405214334091553 5.4026510157169643 6.8043898816286141 8.3416218446335328 10.000552428355771 11.763006042166527 13.609672875455766 15.520320459958088 17.474015340908966 19.449352428355770 21.424689515802580 23.378384396753461 25.289031981255782 27.135698814545016 28.898152428355768 30.557093575238806 32.098527634941931 33.515875832618846 34.797462100476722 35.927263281032928 36.886781329295545 37.657175681161526 38.221334951814825 38.565663707653812 38.676246842534837 38.779972475720939 39.089407346005252 39.601363823293127 40.310232805285608 41.208247775075613 42.285569892732411 43.530395791690815 44.929086898905268 46.466318861910182 48.125249445632427 49.887703059443183 51.734369892732417 53.645017477234731 55.598712358185615 57.574049445632426 59.549386533079229 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000]
     bbl = [0.0000000000000000 1.4876728081089807 3.4058256034176799 5.4551261640898163 7.5035721481764730 9.4384332795128874 11.139268557067989 12.447915390991129 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 13.028389049617431 12.991192161382012 12.276540876679459 10.836346260450391 8.9215529527316466 6.7831664642886311 4.6594498399912689 2.7639239033344545 1.2747129112121085 0.32571575411203757 8.1428938528009392E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 4.0714469264004696E-002 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000 0.0000000000000000]
@@ -240,7 +277,7 @@ end
 
     uei, dsi, thi, tsi,
     dci, cfi, cdi, cti,
-    hki, phi = TASOPT.aerodynamics.blax(nbldim, nbl, iblte,
+    hki, phi = TASOPT.aerodynamics._axisymm_BL(nbldim, nbl, iblte,
         sbl, bbl, rnbl, univ,
         Reunit, Mach, fex)
 
@@ -266,7 +303,7 @@ end
     gammas = [0.77000000000000002,  1.0000000000000000]
     fLo = -0.29999999999999999 
     ktip = 16
-    Lspec = true
+    specifies_CL = true
     CLsurfsp = [1.2502595055642693 1.1976022033901442E-002]
 
     fort_CLsurf = [1.2502595055642693, 1.1976022033901442E-002]
@@ -292,11 +329,11 @@ end
     wc = zeros(Float64, idim)
     vnc = zeros(Float64, idim)
 
-    CLsurf, CL, CD, spanef = TASOPT.aerodynamics.trefftz1(nsurf, npout, npinn, npimg,
+    CLsurf, CL, CD, spanef = TASOPT.aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
         Sref, bref,
         b, bs, bo, bop, zcent,
         po, gammat, gammas, fLo, ktip,
-        Lspec, CLsurfsp,
+        specifies_CL, CLsurfsp,
         t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
     @test all(fort_CLsurf .≈ CLsurf)

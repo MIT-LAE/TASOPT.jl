@@ -1,6 +1,7 @@
 """
-    place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
+    place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m,
+    front_seat_offset = 10 * ft_to_m)	
 
 Function to calculate the seat arrangement in the cabin and, therefore, the required cabin
 length.
@@ -13,17 +14,16 @@ length.
     - `seat_width::Float64`: width of one seat (m).
     - `aisle_halfwidth::Float64`: half the width of an aisle (m).
     - `fuse_offset::Float64`: distance from outside of fuselage to edge of closest window seat (m).
+    - `front_seat_offset::Float64`: distance from front of cabin to first row of seats (m).
 
     **Outputs:**
     - `lcabin::Float64`: cabin length (m).
     - `xseats::Vector{Float64}`: longitudinal coordinate of each row of seats, measured from front of cabin (m).
     - `seats_per_row::Float64`: number of seats per row.
 """
-function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m, 
-    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m)
-
-    cabin_offset = 10 * ft_to_m #Distance to the front of seats
-    #TODO the hardcoded 10 ft is not elegant
+function place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m, 
+    seat_width = 19.0*in_to_m, aisle_halfwidth = 10.0*in_to_m, fuse_offset = 6.0*in_to_m,
+    front_seat_offset = 10 * ft_to_m)	
 
     seats_per_row = findSeatsAbreast(cabin_width, seat_width, aisle_halfwidth, fuse_offset)
 
@@ -36,7 +36,7 @@ function place_cabin_seats(pax, cabin_width, seat_pitch = 30.0*in_to_m,
     end
 
     xseats = zeros(rows)'
-    xseats[1] = cabin_offset
+    xseats[1] = front_seat_offset
     for r in 2:rows
         emergency_exit = 0.0
         if (r in emergency_rows)
@@ -120,8 +120,8 @@ function arrange_seats(seats_per_row, cabin_width,
     yseats = zeros(seats_per_row)
     yseats[1] = fuse_offset + seat_width/2 #First seat is window seat
     for i = 2:seats_per_row
-        flag_aisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
-        yseats[i] = yseats[i - 1] + seat_width + flag_aisle*2*exp_aisle_halfwidth
+        has_leftaisle = aisle_flag(i, layout) #1 if there is an aise to the left of seat, 0 if not
+        yseats[i] = yseats[i - 1] + seat_width + has_leftaisle*2*exp_aisle_halfwidth
     end
 
     #Shift seat coordinates to start in centerline
@@ -140,17 +140,17 @@ Helper function to find if there is an aisle to the left of a given seat.
     - `layout::Vector{Int64}`: seat layout map.
 
     **Outputs:**
-    - `flag::Float64`: 1.0 if there is an aise to the left of seat, 0.0 if not.
+    - `has_leftaisle::Bool`: true if there is an aisle to the left of seat, false if not.
 """
 function aisle_flag(idx, layout)
     #Use cumulative sum to find total number of seats to the left of a given aisle.
     #If the difference between the cumsum and the index is exactly 1, the seat has an aisle to the left.
     if 1 in (idx .- cumsum(layout))
-        flag = 1.0
+        has_leftaisle = 1.0
     else
-        flag = 0.0
+        has_leftaisle = 0.0
     end
-    return flag
+    return has_leftaisle
 end
 
 """
@@ -179,13 +179,13 @@ function find_cabin_width(Rfuse::Float64, wfb::Float64, nfweb::Int64, θ::Float6
 end
 
 """
-    find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
+    find_floor_angles(is_doubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
 
 This function can be used to place the passenger decks inside the fuselage. It works for single deck or double decker
 cabins. It returns the angular position of each deck with respect to the center of the upper bubble.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `Rfuse::Bool`: flag to indicate whether aircraft is a double decker
+    - `is_doubledecker::Bool`: flag to indicate whether aircraft is a double decker
     - `Rfuse::Float64`: fuselage exterior radius (m)
     - `dRfuse::Float64`: vertical shift of downward bubble (m)
     - `θ1::Float64`: required in some cases; angle of main floor wrt upper bubble center (rad)
@@ -196,8 +196,8 @@ cabins. It returns the angular position of each deck with respect to the center 
     - `θ1::Float64`: angle of main floor wrt upper bubble center (rad)
     - `θ2::Float64`: returned when double decker; angle of upper floor wrt upper bubble center (rad)
 """
-function find_floor_angles(fdoubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
-    if ~fdoubledecker #If it has a single deck
+function find_floor_angles(is_doubledecker::Bool, Rfuse::Float64, dRfuse::Float64; θ1::Float64 = 0.0, h_seat::Float64 = 0.0, d_floor::Float64 = 0.0)
+    if ~is_doubledecker #If it has a single deck
         θ1 = -asin(h_seat / (2*Rfuse)) #This angle maximizes the cabin width
         return θ1
     else #If it is a double decker with no lower bubble, the main cabin could be anywhere => Use provided angle
@@ -248,8 +248,8 @@ function find_double_decker_cabin_length(x::Vector{Float64}, fuse)
         w2 = find_cabin_width(Rfuse, wfb, nfweb, θ2, h_seat)
 
         #Find length of each cabin
-        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch, seat_width, aisle_halfwidth)
-        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch, seat_width, aisle_halfwidth)
+        l1, _, pax_per_row_main = place_cabin_seats(paxmain, w1, seat_pitch = seat_pitch, seat_width = seat_width, aisle_halfwidth = aisle_halfwidth)
+        l2, _, _ = place_cabin_seats(paxtop, w2, seat_pitch = seat_pitch, seat_width = seat_width, aisle_halfwidth = aisle_halfwidth)
 
         maxl = max(l1, l2) #Required length
         return maxl, pax_per_row_main 
@@ -341,7 +341,7 @@ function optimize_double_decker_cabin(fuse)
 end
 
 """
-    MinCargoHeightConst(x, fuse, minheight = 1.626)
+    MinCargoHeightConst(x, fuse, minheight = 1.626, minwidth = 3.13)
 
 This function evaluates a minimum height constraint on the cargo hold. It returns a number less than or equal 0 if
 the constraint is met and a value greater than 0 if it is not.
@@ -349,20 +349,26 @@ the constraint is met and a value greater than 0 if it is not.
     **Inputs:**
     - `x::Vector{Float64}`: vector with optimization variables
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of cargo hold
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCargoHeightConst(x, fuse, minheight = 1.626)
+function MinCargoHeightConst(x, fuse)
     #Extract parameters
     θ1 = x[2]
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
 
-    hcargo = Rfuse * (1 + sin(θ1)) + dRfuse #Height left for cargo containers under floor; need to add dRfuse
+    #Find size of unit load device that must fit in cargo bay
+    ULD = fuse.cabin.unit_load_device
+    ULDdims = UnitLoadDeviceDimensions[ULD]
+    minheight = ULDdims[1]
+    minwidth = ULDdims[2] #Base width
 
-    constraint = minheight/hcargo - 1.0 #Constraint has to be negative if hcargo > minheight
+    θcargo = -acos(minwidth/(2*Rfuse)) #Angle of cargo hold floor
+    hmax = dRfuse + Rfuse * (sin(θ1) - sin(θcargo)) #Maximum height of cargo hold
+
+    constraint = minheight/hmax - 1.0 #Constraint has to be negative if hcargo > minheight
     return constraint
 end
 
@@ -376,17 +382,18 @@ the constraint is met and a value greater than 0 if it is not.
     - `x::Vector{Float64}`: vector with optimization variables
     - `parg::Vector{Float64}`: vector with aircraft geometric and mass parameters
     - `fuse::Fuselage`: structure with fuselage parameters
-    - `minheight::Float64`:minimum height of upper cabin
 
     **Outputs:**
     - `constraint::Float64`: this is ≤0 if constraint is met and >0 if not
 """
-function MinCabinHeightConst(x, fuse, minheight = 2.0)
+function MinCabinHeightConst(x, fuse)
     #Extract parameters
     θ1 = x[2] #Main deck angle
     Rfuse = fuse.layout.radius
     dRfuse = fuse.layout.bubble_lower_downward_shift
     d_floor = fuse.cabin.floor_distance
+
+    minheight = fuse.cabin.min_top_cabin_height
 
     try #The calculation could fail for some inputs if an asin returns an error
 
