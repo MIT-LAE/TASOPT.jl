@@ -1439,6 +1439,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
                   end
 
                   if i == 1 && frecirc #If there is recirculation in the HX
+                        #Store power drawn by recirculation to use it in the engine
                         pare[ieHXrecircP, ip] = find_recirculation_power(HXgasp)
                   end
 
@@ -1793,6 +1794,9 @@ Calculates and stores the power needed to drive recirculation in a HX.
 function find_recirculation_power(HXgas)
       
       mdot_r = HXgas.mdot_r
+      if mdot_r ≈ 0.0 #If there is no recirculation, return 0
+            return 0.0
+      end
       Tout = HXgas.Tc_out
       igas_c = HXgas.igas_c
       Δp_c = HXgas.Δp_c
