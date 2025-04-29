@@ -12,11 +12,11 @@ ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/de
 res1 = @benchmark size_aircraft!(ac, iter=50; printiter = false) seconds=30 samples=5
 
 println("Benchmarking REGIONAL aircraft")
-ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/example_regional.toml")) # MODIFY <path> appropriately
+ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_regional.toml")) # MODIFY <path> appropriately
 res2 = @benchmark size_aircraft!(ac, iter=50; printiter = false) seconds=30 samples=5
 
 println("Benchmarking WIDEBODY aircraft")
-ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/example_widebody.toml")) # MODIFY <path> appropriately
+ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml")) # MODIFY <path> appropriately
 res3 = @benchmark size_aircraft!(ac, iter=50; printiter = false) seconds=30 samples=5
 
 println("Benchmarking HYDROGEN aircraft")

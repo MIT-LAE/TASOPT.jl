@@ -137,7 +137,7 @@ This function returns the time derivatives for pressure and liquid volume fill f
     **Outputs:**
     - `dydt::Vector{Float64}`: vector with the state derivatives in time
 """
-function TankDerivatives(t::Float64, y::Vector{Float64}, u::tank_inputs, params::tank_params)
+function TankDerivatives(t::Float64, y::AbstractVector{Float64}, u::tank_inputs, params::tank_params)
     #Extract states 
     p = y[1]
     β = y[2]
@@ -164,7 +164,6 @@ function TankDerivatives(t::Float64, y::Vector{Float64}, u::tank_inputs, params:
     end
 
     #Calculate derivatives
-    dydt = zeros(6)
     if p < pmax
         mdot_vent = 0.0
     else
@@ -177,13 +176,17 @@ function TankDerivatives(t::Float64, y::Vector{Float64}, u::tank_inputs, params:
     #Total mass flow rate for beta
     mdot_tot = mdot + mdot_vent
 
+    dp_dt = dpdt(mix_current, Q, W, mdot, xout, mdot_vent, xvent, V, α)
+    dβ_dt = dβdt(mix_current, dp_dt, mdot_tot, V) #dβ/dt
     #Calculate derivates and store them
-    dydt[1] = dpdt(mix_current, Q, W, mdot, xout, mdot_vent, xvent, V, α) #dp/dt
-    dydt[2] = dβdt(mix_current, dydt[1], mdot_tot, V) #dβ/dt
-    dydt[3] = -mdot_tot #dM_tank/dt
-    dydt[4] = mdot #dMburn/dt
-    dydt[5] = mdot_vent #dMvent/dt
-    dydt[6] = mdot_boiloff(mix_current, dydt[2], dydt[1], mdot_liq, V) #dMboiloff/dt
+    dydt = @SVector[
+        dp_dt, 
+        dβ_dt,
+        -mdot_tot, #dM_tank/dt
+        mdot, #dMburn/dt
+        mdot_vent, #dMvent/dt
+        mdot_boiloff(mix_current, dβ_dt, dp_dt, mdot_liq, V) #dMboiloff/dt
+    ]
     return dydt
 end
 

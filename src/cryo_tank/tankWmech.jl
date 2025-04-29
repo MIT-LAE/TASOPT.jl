@@ -7,7 +7,7 @@
       **Inputs:**
       - `fuse::Fuselage`: fuselage object.
       - `fuse_tank::fuselage_tank`: fuselage tank object.
-      - `t_cond::Float64`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
+      - `t_cond::Vector{Float64}`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
       non-linear solve process.
 
       **Outputs:**
@@ -35,7 +35,7 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
-      Rfuse = fuse.layout.radius
+      Rfuse = structures.Rfuse(fuse)
       fuse_cs = fuse.layout.cross_section #Fuselage cross section
 
       Wfuel = fuse_tank.Wfuelintank
@@ -119,11 +119,11 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       # Insulation weight
       N = length(t_cond) #Number of insulation layers
       #Initialize storage vectors
-      Vcyl_insul = zeros(N)
-      Winsul = zeros(N)
-      Shead_insul = zeros(N + 1) #add one for first (tank wall) surface 
-      Vhead_insul = zeros(N)
-      rho_insul = zeros(N)
+      Vcyl_insul = zeros(Float64, N)
+      Winsul = zeros(Float64, N)
+      Shead_insul = zeros(Float64, N + 1) #add one for first (tank wall) surface 
+      Vhead_insul = zeros(Float64, N)
+      rho_insul = zeros(Float64, N)
       L = Lhead + tskin #Length of ellipsoid semi-minor axis
 
       #Assemble vector with layer densities

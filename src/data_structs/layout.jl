@@ -87,6 +87,9 @@ function Base.getproperty(obj::MultiBubble, sym::Symbol)
     end
 end  # function Base.getproperty
 
+Rfuse(cs::SingleBubble) = cs.radius
+Rfuse(cs::MultiBubble) = cs.radius
+
 """
 $TYPEDEF
 

@@ -1,4 +1,45 @@
 """
+      thermal_params
+
+This structure stores the material and thermal properties of a cryogenic tank insulation layer.
+      
+!! details "💾 Data fields"
+    **Inputs:**
+    - `Q::Float64`: heat rate (W)
+    - `l_cyl::Float64`: length of cylindrical portion of tank (m)
+    - `l_tank::Float64`: full tank length (m)
+    - `r_tank::Float64`: tank radius (m)
+    - `Shead::Array{Float64}`: surface area of elliptical caps at different cross-sections (m^2)
+    - `hconvgas::Float64`: convective heat transfer coefficient across purged gas layer (W / (m^2 K))
+    - `hconvair::Float64 `: convective heat transfer coefficient on fuselage (W / (m^2 K))
+    - `material::Array{String} `: array with material names for different insulation layers
+    - `Tfuel::Float64`: fuel temperature (K)
+    - `z::Float64`: flight altitude (m)
+    - `TSL::Float64`: sea-level temperature (K)
+    - `Mair::Float64`: external air Mach number
+    - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
+    - `fuse_cs::AbtractCrossSection`: fuselage cross section
+    - `ifuel::Int64`: fuel species index
+"""
+mutable struct thermal_params
+      Q::Float64
+      l_cyl::Float64
+      l_tank::Float64
+      r_tank::Float64
+      Shead::Vector{Float64}
+      t_cond::Vector{Float64} 
+      material::Vector{ThermalInsulator}
+      Tfuel::Float64
+      z::Float64
+      TSL::Float64
+      Mair::Float64
+      xftank::Float64
+      ifuel::Int64
+      fuse_cs::AbstractCrossSection
+      thermal_params() = new() 
+end
+
+"""
       tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
 `tankWthermal` calculates the heat rate to a cryogenic tank for a given insulation thickness.
@@ -53,7 +94,6 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair
       ΔT = Taw - Tfuel
       
       fun(x) = residuals_Q(x, p, "Q_unknown") #Create function handle to be zeroed
-      
       #Initial guess for function
       guess = zeros(length(t_cond) + 2) 
 
@@ -87,7 +127,7 @@ the tank wall temperature, and the temperatures at the interfaces of each insula
       **Outputs:**
       - `F::Vector{Float64}`: vector with residuals.
 """
-function residuals_Q(x::Vector{Float64}, p, mode::String)
+function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
       #Unpack states
       if mode == "Q_known" #If the heat is known because the max boiloff is an input
             Q = p.Q
@@ -95,7 +135,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             T_w = x[1]
             T_ins = x[2:end]
             Tfuse = x[end] #fuselage wall temperature
-            F = zeros(length(x)+1) #initialize residual vector
+            F = zeros(Float64, length(x)+1) #initialize residual vector
 
       elseif mode == "Q_unknown" #heat is not known and we are solving for it too
             Q = x[1] #Heat rate is first input
@@ -103,7 +143,7 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
             T_w = x[2]
             T_ins = x[3:end]
             Tfuse = x[end]
-            F = zeros(length(x))
+            F = zeros(Float64, length(x))
       end
       
       #Unpack parameters
@@ -118,8 +158,8 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
       TSL = p.TSL
       Mair = p.Mair
       xftank = p.xftank
-      Rfuse = p.fuse_cs.radius
       fuse_cs = p.fuse_cs
+      Rfuse = structures.Rfuse(fuse_cs)
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature
@@ -187,47 +227,6 @@ function residuals_Q(x::Vector{Float64}, p, mode::String)
 
       return F
 end  
-
-"""
-      thermal_params
-
-This structure stores the material and thermal properties of a cryogenic tank insulation layer.
-      
-!! details "💾 Data fields"
-    **Inputs:**
-    - `Q::Float64`: heat rate (W)
-    - `l_cyl::Float64`: length of cylindrical portion of tank (m)
-    - `l_tank::Float64`: full tank length (m)
-    - `r_tank::Float64`: tank radius (m)
-    - `Shead::Array{Float64}`: surface area of elliptical caps at different cross-sections (m^2)
-    - `hconvgas::Float64`: convective heat transfer coefficient across purged gas layer (W / (m^2 K))
-    - `hconvair::Float64 `: convective heat transfer coefficient on fuselage (W / (m^2 K))
-    - `material::Array{String} `: array with material names for different insulation layers
-    - `Tfuel::Float64`: fuel temperature (K)
-    - `z::Float64`: flight altitude (m)
-    - `TSL::Float64`: sea-level temperature (K)
-    - `Mair::Float64`: external air Mach number
-    - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-    - `fuse_cs::AbtractCrossSection`: fuselage cross section
-    - `ifuel::Int64`: fuel species index
-"""
-mutable struct thermal_params
-      Q::Float64
-      l_cyl::Float64
-      l_tank::Float64
-      r_tank::Float64
-      Shead::Vector{Float64}
-      t_cond::Vector{Float64} 
-      material::Vector{ThermalInsulator}
-      Tfuel::Float64
-      z::Float64
-      TSL::Float64
-      Mair::Float64
-      xftank::Float64
-      ifuel::Int64
-      fuse_cs::AbstractCrossSection
-      thermal_params() = new() 
-end
 
 """
       tank_heat_coeff(T_w, ifuel, Tfuel, ltank)

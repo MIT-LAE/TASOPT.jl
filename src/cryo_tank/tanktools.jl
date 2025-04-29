@@ -16,9 +16,10 @@ model with fuselage fuel tanks.
 function find_mdot_time(t::Float64, tank_count::Int64, parg::Vector{Float64}, para::Array{Float64}, pare::Array{Float64})
 
     #Mass flow rate out of tank is total mass flow to engines divided by number of tanks
-    mdots = pare[ieff, :] .* pare[iemcore, :] .* parg[igneng] / tank_count
+    scale = parg[igneng] / tank_count
+    mdots = scale .* pare[ieff, :] .* pare[iemcore, :]
 
-    times = para[iatime,:]
+    times = @view para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
     if t in times
@@ -92,7 +93,7 @@ at each mission point for speed.
     - `Q::Float64`: heat transfer rate (W)
 """
 function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64})
-    times = para[iatime,:]
+    times = @view para[iatime,:]
 
     # Handle cases where t is exactly one of the sample points
     if t in times
@@ -135,7 +136,7 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
         xftank = parg[igxftank]
     end
     
-    times = para[iatime,:,1]
+    times = @view para[iatime,:,1]
 
     Q = 0.0
     for ip = 1:(length(times)-1)
@@ -164,12 +165,12 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
 end
 
 """
-    analyze_TASOPT_tank(ac_orig, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
+    analyze_TASOPT_tank(ac, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
 
 This function analyses the evolution in time of a cryogenic tank inside a TASOPT aircraft model.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `ac_orig::aicraft`: TASOPT aircraft model
+    - `ac::aicraft`: TASOPT aircraft model
     - `t_hold_orig::Float64`: hold at origin (s)
     - `t_hold_dest::Float64`: hold at destination (s)
     - `im::Int64`: mission index
@@ -185,23 +186,23 @@ This function analyses the evolution in time of a cryogenic tank inside a TASOPT
     - `Mvents::Vector{Float64}`: vector with cumulative mass that has been vented (kg)
     - `mdots::Vector{Float64}`: vector with fuel mass flow rate to engines (kg/s)
     - `Qs::Vector{Float64}`: vector with heat rate to tank (W)
-    
 """
-function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, im::Int64 = 1)
-    ac = deepcopy(ac_orig) #Deepcopy original struct to avoid modifying it
+function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, im::Int64 = 1)
+    para_orig = ac.para[:, :, im]
+    pare_orig = ac.pare[:, :, im]
 
     #Modify aircraft with holding times
-    para_alt = zeros(size(ac.para)[1], size(ac.para)[2] + 3)
-    ac.para[iatime, :, im] .= ac.para[iatime, :, im] .- minimum(ac.para[iatime, :, im])
-    para_alt[:, 3:(iptotal + 1)] .= ac.para[:, 1:(size(ac.para)[2] - 1), im] #Do not copy iptest
-    para_alt[iatime, 2:(iptotal + 1)] .= para_alt[iatime, 2:(iptotal + 1)] .+ t_hold_orig #Apply hold at origin
+    para_alt = zeros(size(para_orig, 1), size(para_orig, 2) + 3)
+    para_alt[:, 3:(iptotal + 1)] .= para_orig[:, 1:(size(para_orig, 2) - 1)]
+    # Apply time shift logic
+    para_alt[iatime, 2:(iptotal + 1)] .+= t_hold_orig
     para_alt[iatime, 1] = 0.0
-    Np = size(para_alt)[2]
+    Np = size(para_alt, 2)
     para_alt[iatime, Np-1] = maximum(para_alt[iatime, :])
-    para_alt[iatime, Np] = para_alt[iatime, Np-1] + t_hold_dest #Apply hold at destination
-
-    pare_alt = zeros(size(ac.pare)[1], size(ac.pare)[2] + 3)
-    pare_alt[:, 3:(iptotal + 2)] .= ac.pare[:,:, im]
+    para_alt[iatime, Np] = para_alt[iatime, Np-1] + t_hold_dest
+    
+    pare_alt = zeros(size(pare_orig, 1), size(pare_orig, 2) + 3)
+    pare_alt[:, 3:(iptotal + 2)] .= pare_orig
     
     #Precompute heat transfer rate at each mission point for speed
     Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt)
@@ -246,7 +247,7 @@ function analyze_TASOPT_tank(ac_orig::aircraft, t_hold_orig::Float64 = 0.0, t_ho
     ODEparams = (u, params)
 
     #Integrate profiles across mission
-    y0 = [p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
+    y0 = @SVector [p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
 
     tspan = (0.0, para_alt[iatime,end]) #start and end times
 
