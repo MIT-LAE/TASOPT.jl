@@ -21,22 +21,21 @@ This structure stores the material and thermal properties of a cryogenic tank in
     - `fuse_cs::AbtractCrossSection`: fuselage cross section
     - `ifuel::Int64`: fuel species index
 """
-mutable struct thermal_params
-      Q::Float64
-      l_cyl::Float64
-      l_tank::Float64
-      r_tank::Float64
-      Shead::Vector{Float64}
-      t_cond::Vector{Float64} 
-      material::Vector{ThermalInsulator}
-      Tfuel::Float64
-      z::Float64
-      TSL::Float64
-      Mair::Float64
-      xftank::Float64
-      ifuel::Int64
-      fuse_cs::AbstractCrossSection
-      thermal_params() = new() 
+@kwdef mutable struct thermal_params{T<:AbstractCrossSection}
+      Q::Float64 = 0.0
+      l_cyl::Float64 = 0.0
+      l_tank::Float64 = 0.0
+      r_tank::Float64 = 0.0
+      Shead::Vector{Float64} = Vector{Float64}() 
+      t_cond::Vector{Float64} = Vector{Float64}() 
+      material::Vector{ThermalInsulator} = Vector{ThermalInsulator}() 
+      Tfuel::Float64 = 0.0
+      z::Float64 = 0.0
+      TSL::Float64 = 0.0
+      Mair::Float64 = 0.0
+      xftank::Float64 = 0.0
+      ifuel::Int64 = 0
+      fuse_cs::T = SingleBubble()
 end
 
 """
@@ -63,24 +62,20 @@ for a given insulation thickness
 See [here](@ref fueltanks).
 """
 function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
-
+      TSL = fuse_tank.TSLtank
+      qfac = fuse_tank.qfac
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
-      qfac = fuse_tank.qfac
-      h_v = fuse_tank.hvap #heat of vaporization
-      TSL = fuse_tank.TSLtank
-
-      Wtank, Winsul_sum, Vfuel, Shead, r_tank, l_tank, l_cyl = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
       #Create struct with thermal parameters
       p = thermal_params()
-      p.l_cyl = l_cyl
-      p.l_tank = l_tank
-      p.r_tank = r_tank
-      p.Shead = Shead
+      p.l_cyl = fuse_tank.l_cyl_inner
+      p.l_tank = fuse_tank.l_inner
+      p.r_tank = fuse_tank.Rinnertank
+      p.Shead = fuse_tank.Shead_insul #Surface area of elliptical caps at different cross-sections (m^2)
       p.t_cond = t_cond
       p.material = fuse_tank.material_insul
-      p.Tfuel = Tfuel
+      p.Tfuel = fuse_tank.Tfuel
       p.z = z
       p.TSL = TSL
       p.Mair = Mair
@@ -296,7 +291,7 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
       u = M * a #freestrean velocity
 
       #Parameters for air
-      R, Pr, γ, cp, _, _ = gasPr("air", Tair)
+      R, Pr, γ, cp, _, _ = gasPr("air_simple", Tair)
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature
@@ -305,7 +300,7 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
       T_s = Tair * (0.5 * (1 + Tw/Tair) + 0.16 * r * (γ - 1)/2 * M^2) #Reference temperature
       
       #Find properties at reference temperature
-      _, Pr_s, _, cp, μ_s, k_s = gasPr("air", T_s)
+      _, Pr_s, _, cp, μ_s, k_s = gasPr("air_simple", T_s)
 
       ρ_s = p / (R * T_s) #density at reference temperature
 

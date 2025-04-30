@@ -340,6 +340,9 @@ This function can be used to calculate the bending moment distribution in a stif
 It applies Eqs. (7.4) and (7.5) in Barron (1985) to find the bending moment distribution. The function returns the
 maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
 
+Note: An attempt was made to use the NLopt.jl package to find the maximum value of k, 
+but this was more expensive and less robust than the brute-force approach.
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `θ::Float64`: angular position of tank supports, measured from the bottom of the tank (rad).

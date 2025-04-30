@@ -80,7 +80,12 @@ function tanksize!(ac, imission::Int64 = 1)
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        Winnertank, Winsul_sum, Vfuel, Shead_insul, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        #Store in fuse_tank
+        fuse_tank.Rinnertank = Rinnertank 
+        fuse_tank.l_inner = l_inner 
+        fuse_tank.l_cyl_inner = lcyl1 
+        fuse_tank.Shead_insul = Shead_insul 
 
         has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 

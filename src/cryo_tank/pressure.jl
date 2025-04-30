@@ -178,7 +178,7 @@ function TankDerivatives(t::Float64, y::AbstractVector{Float64}, u::tank_inputs,
 
     dp_dt = dpdt(mix_current, Q, W, mdot, xout, mdot_vent, xvent, V, α)
     dβ_dt = dβdt(mix_current, dp_dt, mdot_tot, V) #dβ/dt
-    #Calculate derivates and store them
+    #Calculate derivatives and store them
     dydt = @SVector[
         dp_dt, 
         dβ_dt,

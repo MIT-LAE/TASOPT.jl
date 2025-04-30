@@ -23,6 +23,14 @@ $TYPEDFIELDS
     material_insul::Vector{ThermalInsulator} = []
     """Vector with insulation layer design indices"""
     iinsuldes::Vector{Int64} = []
+    """Length of cylindrical portion of tank (m)"""
+    l_cyl_inner::Float64 = 0.0
+    """Length of inner tank (m)"""
+    l_inner::Float64 = 0.0
+    """Inner tank radius (m)"""
+    Rinnertank::Float64 = 0.0
+    """Vector with surface areas of insulation tank heads (m^2)"""
+    Shead_insul::Vector{Float64} = []
 
     """Inner vessel material"""
     inner_material::StructuralAlloy = StructuralAlloy("Al-2219-T87")
