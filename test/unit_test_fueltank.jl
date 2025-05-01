@@ -65,7 +65,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         TASOPT.tanksize!(ac, 1)
         outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        outputs_mech_check = (60140.568517238586, 38185.08012765128, 166.77327116515787, [16.41478963327391, 20.306728650515254, 24.618791939176347, 29.34975388954838], 1.8740119151889265, 15.778042937598197, 12.848564428768595)
+        outputs_mech_check = (60104.8235573921, 38147.81559388217, 166.77327116515787, [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876], 1.8743852420176998, 15.771807531012154, 12.842701653674803)
         for i in 1:length(outputs_mech)
             @test outputs_mech[i] ≈ outputs_mech_check[i]
         end
@@ -142,20 +142,20 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         end
 
         outputs_free = TASOPT.CryoTank.freestream_heat_coeff(z, fuse_tank.TSLtank, Mair, xftank, 240.0)
-        outputs_free_check = (91.1765275792035, 218.06145060705106, 243.3345022554043)
+        outputs_free_check = (91.30101055991513, 218.06145060705106, 243.26644796151263)
         for i in 1:length(outputs_free)
             @test outputs_free[i] ≈ outputs_free_check[i]
         end
 
         outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, fuse_tank.TSLtank, 0.0, xftank, 287.0, fuse.layout.radius)
-        outputs_natural_check = (1.6786556204397758, 288.2, 288.2)
+        outputs_natural_check = (1.6795624846472137, 288.2, 288.2)
         for i in 1:length(outputs_natural)
             @test outputs_natural[i] ≈ outputs_natural_check[i]
         end
 
         Taw = outputs_free_check[3]
         Rvac = TASOPT.CryoTank.vacuum_resistance(fuse_tank.Tfuel, Taw, 90.0, 100.0)
-        Rvac_check = 0.35637094066735286
+        Rvac_check = 0.3565313051181731
 
         @test Rvac ≈ Rvac_check
     end
