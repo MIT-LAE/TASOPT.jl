@@ -55,8 +55,6 @@ $TYPEDFIELDS
     t_hold_orig::Float64 = 0.0
     """Arrival hold time (s)"""
     t_hold_dest::Float64 = 0.0
-    """Sea-level temperature used to design tank (K)"""
-    TSLtank::Float64 = 0.0
 
     """Liquid fuel density (kg/m^3)"""
     rhofuel::Float64 = 0.0

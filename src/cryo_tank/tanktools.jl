@@ -57,7 +57,7 @@ This function calculates the heat transfer rate into the tank at the design miss
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
 """
-function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, ifuel::Int, parg::Vector{Float64}, para::Array{Float64})
+function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, ifuel::Int, parg::Vector{Float64}, para::Array{Float64}, TSL::Float64)
     #Extract tank parameters
     if fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -72,7 +72,7 @@ function calc_Q_points(fuse::Fuselage, fuse_tank::fuselage_tank, ifuel::Int, par
         z = para[iaalt, ip]
 
         #Calculate heat rate at this point
-        Qs[ip] = tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
+        Qs[ip] = tankWthermal(fuse, fuse_tank, z, TSL, Mair, xftank, ifuel)
        
     end
     return Qs
@@ -128,7 +128,7 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)
 """
-function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fueltype::String, parg::Vector{Float64}, para::Array{Float64})
+function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fueltype::String, parg::Vector{Float64}, para::Array{Float64}, TSL::Float64)
     #Extract tank parameters
     if ac.fuse_tank.placement == "rear"
         xftank = parg[igxftankaft]
@@ -144,7 +144,7 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
             M0 = para[iaMach, ip, 1]
             z0 = para[iaalt, ip, 1]
 
-            Q = tankWthermal(fuse, fuse_tank, z0, M0, xftank, ifuel)
+            Q = tankWthermal(fuse, fuse_tank, z0, TSL, M0, xftank, ifuel)
         elseif (t >= times[ip]) && (t< times[ip+1]) #If the point is the correct one
             t0 = times[ip]
             tf = times[ip+1]
@@ -158,7 +158,7 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
             z = z0 + (zf - z0)/(tf-t0) * (t - t0)
 
             #Calculate heat rate at this point
-            Q = tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
+            Q = tankWthermal(fuse, fuse_tank, z, TSL, Mair, xftank, ifuel)
         end
     end
     return Q
@@ -204,8 +204,9 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
     pare_alt = zeros(size(pare_orig, 1), size(pare_orig, 2) + 3)
     pare_alt[:, 3:(iptotal + 2)] .= pare_orig
     
+    TSL = Tref + ac.parm[imDeltaTatm, im] #sea-level temperature for tank analysis
     #Precompute heat transfer rate at each mission point for speed
-    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt)
+    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt, TSL)
 
     #Define functions for heat and fuel burn profiles through mission 
     Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)

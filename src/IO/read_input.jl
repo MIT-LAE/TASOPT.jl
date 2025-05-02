@@ -462,7 +462,6 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
-    fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
     has_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed

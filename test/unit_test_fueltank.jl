@@ -17,8 +17,7 @@ fuse_tank.fueltype = "LH2"
 fuse_tank.placement = "front"
 
 fuse_tank.clearance_fuse = 0.1
-fuse_tank.TSLtank = 288.2
-fuse_tank.TSLtank = 288.2
+TSL = 288.2
 
 fuse_tank.pvent = 2e5
 fuse_tank.ARtank = 2.0
@@ -70,7 +69,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
             @test outputs_mech[i] ≈ outputs_mech_check[i]
         end
         
-        outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse, fuse_tank, z, Mair, xftank, ifuel)
+        outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse, fuse_tank, z, TSL, Mair, xftank, ifuel)
 
         outputs_thermal_check = (1835.8608916011449,)
 
@@ -141,13 +140,13 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
             @test outputs_h[i] ≈ outputs_h_check[i]
         end
 
-        outputs_free = TASOPT.CryoTank.freestream_heat_coeff(z, fuse_tank.TSLtank, Mair, xftank, 240.0)
+        outputs_free = TASOPT.CryoTank.freestream_heat_coeff(z, TSL, Mair, xftank, 240.0)
         outputs_free_check = (91.30101055991513, 218.06145060705106, 243.26644796151263)
         for i in 1:length(outputs_free)
             @test outputs_free[i] ≈ outputs_free_check[i]
         end
 
-        outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, fuse_tank.TSLtank, 0.0, xftank, 287.0, fuse.layout.radius)
+        outputs_natural = TASOPT.CryoTank.freestream_heat_coeff(0.0, TSL, 0.0, xftank, 287.0, fuse.layout.radius)
         outputs_natural_check = (1.6795624846472137, 288.2, 288.2)
         for i in 1:length(outputs_natural)
             @test outputs_natural[i] ≈ outputs_natural_check[i]

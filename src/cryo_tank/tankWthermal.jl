@@ -39,7 +39,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
 end
 
 """
-      tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+      tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
 `tankWthermal` calculates the heat rate to a cryogenic tank for a given insulation thickness.
 
@@ -52,6 +52,7 @@ for a given insulation thickness
       - `fuse::Fuselage`: fuselage object.
       - `fuse_tank::fuselage_tank`: fuselage tank object.
       - `z::Float64`: flight altitude (m)
+      - `TSL::Float64`: sea-level temperature (K)
       - `Mair::Float64`: external air Mach number
       - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
       - `ifuel::Int64`: fuel index.
@@ -61,8 +62,7 @@ for a given insulation thickness
 
 See [here](@ref fueltanks).
 """
-function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
-      TSL = fuse_tank.TSLtank
+function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
       qfac = fuse_tank.qfac
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
