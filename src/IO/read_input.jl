@@ -149,7 +149,11 @@ function Weight(x)
         return [Weight(w) for w in x]  # Recursively call Weight on each element
     elseif x isa AbstractString
         value, unit = parse_unit(x)
-        return unit == "pax" ? value * Wpax : convertForce(value, unit)
+        if unit == "pax" 
+            return value * Wpax
+        else 
+            return convertForce(value, unit)
+        end
     elseif x isa Float64
         return x
     else
