@@ -61,3 +61,38 @@ struct WakeElement
         new(p1, p2, control_point, length, Δs[1], Δs[2], unit_normal)
     end
 end
+
+
+"""
+    generate_wake_elements(points::SVector{N, Point2D};
+    control_points::Union{SVector{M, Point2D}, Nothing}=nothing) where {N, M}
+
+Returns an SVector of WakeElements
+"""
+@inline function generate_wake_elements(points::SVector{N, Point2D};
+    control_points::Union{SVector{M, Point2D}, Nothing}=nothing) where {N, M}
+    if isnothing(control_points)
+        # If no control points are provided, calculate midpoints and set that as the control point
+        return SVector{N-1,WakeElement}(WakeElement(points[i], points[i+1]) for i in 1:N-1)
+    else
+        if M != N - 1
+            throw(ArgumentError("Number of control points must be exactly one less than the number of points."))
+        end
+    return SVector{N-1,WakeElement}(WakeElement(points[i], points[i+1]; 
+                                        control_point=control_points[i]) for i in 1:N-1)
+    end
+end
+
+function element_lengths(wake_elements::SVector{N, WakeElement}) where N
+    SVector{N, Float64}(wake_elements[i].length for i in 1:N)
+end
+
+"""
+"""
+function element_dys(wake_elements::SVector{N, WakeElement}) where N
+    SVector{N, Float64}(wake_elements[i].Δy for i in 1:N)
+end  # function element_dys
+
+function element_dzs(wake_elements::SVector{N, WakeElement}) where N
+    SVector{N, Float64}(wake_elements[i].Δz for i in 1:N)
+end  # function element_dys
