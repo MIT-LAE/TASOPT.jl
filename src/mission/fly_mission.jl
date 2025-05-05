@@ -236,7 +236,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
           rlx = 0.5
     end
 
-    # Calculate start-of-cruise altitude from desired cruise altitude
+    # Calculate start-of-cruise CL from desired cruise altitude
     # Use cabin volume to get buoyancy weight
     ρ0 = pare[ierho0, ipcruise1]
     ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
@@ -248,10 +248,8 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     BW = We + WbuoyCR # Weight including buoyancy
     S = wing.layout.S
 
-    CL = BW / (0.5*u0^2*S*ρ0) #Find density from L=W
+    CL = BW / (0.5*ρ0*u0^2*S) #Find CL from L=W
     para[iaCL, ip] = CL
-
-    set_ambient_conditions!(ac, ipcruise1, im = imission)
 
     if !(options.has_wing_fuel) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
