@@ -133,7 +133,7 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = ["35000 ft", "30000 ft"] 
+    cruise_alt  = ["35000 ft", "38000 ft"] 
     cruise_mach = 0.80
     cruise_CL   = 0.57 #This gets recalculated for off-design missions
 
