@@ -1440,7 +1440,9 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
 
                   if i == 1 && frecirc #If there is recirculation in the HX
                         #Store power drawn by recirculation to use it in the engine
-                        pare[ieHXrecircP, ip] = find_recirculation_power(HXgasp)
+                        P_recirc = find_recirculation_power(HXgasp)
+                        pare[ieHXrecircP, ip] =  P_recirc
+                        HXgasp.P_recirc = P_recirc
                   end
 
                   HXgas_mis[ip] = HXgasp
