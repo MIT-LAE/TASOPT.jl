@@ -249,7 +249,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true)
     S = wing.layout.S
 
     CL = BW / (0.5*ρ0*u0^2*S) #Find CL from L=W
-    para[iaCL, ip] = CL
+    para[iaCL, ipclimb1+1:ipdescentn-1] .= CL #Store CL in climb, cruise and descent phases
 
     if !(options.has_wing_fuel) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
