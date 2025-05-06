@@ -64,15 +64,7 @@ function _size_aircraft!(ac; itermax=35,
     time_fuselage_drag = @elapsed fuselage_drag!(fuse, parm, para, ipcruise1)
 
     # Extract and set constant values for all mission points
-    KAfTE, DAfsurf, DAfwake, PAfinf = 
-        para[iaKAfTE, ipcruise1], para[iaDAfsurf, ipcruise1], 
-        para[iaDAfwake, ipcruise1], para[iaPAfinf, ipcruise1]
-    
-    # Set constant values for all mission points
-    para[iaKAfTE, :] .= KAfTE
-    para[iaDAfsurf, :] .= DAfsurf
-    para[iaDAfwake, :] .= DAfwake
-    para[iaPAfinf, :] .= PAfinf
+    broadcast_fuselage_drag!(para, ipcruise1)
 
     #Calculate fuel lower heating value for PFEI
     parg[igLHVfuel] = fuelLHV(ifuel)
