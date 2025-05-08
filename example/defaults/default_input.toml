@@ -540,7 +540,7 @@
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 0
     recirculation_temperature = 0
-    core_inner_diameter = 0.4
+    core_inner_diameter = 0.0
     added_mass_frac = 0.0
 
     precooler_order = 0

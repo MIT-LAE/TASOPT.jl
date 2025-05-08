@@ -1,3 +1,19 @@
+"""
+    ductedfanweight(ac)
+
+Ducted fan engine weight estimation function using NASA.
+      
+!!! details "🔃 Inputs and Outputs"
+    **Input:**
+    - `ac::aircraft`: aircraft object
+
+    **Output:**
+    - `Weng`: Total engine weight.
+    - `Wnac`: Nacelle weight. 
+    - `Webare`: Bare engine weight.
+    - `W_HXs`: Weight of heat exchangers.
+    - `Snace1`: Nacelle area.
+"""
 function ductedfanweight(ac)
     Dfan   = ac.parg[igdfan]
     Nmech  = maximum(ac.pared[ieNf, :])

@@ -725,12 +725,7 @@ function _size_aircraft!(ac; itermax=35,
         ipdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            if engine.model.model_name == "fuel_cell_with_ducted_fan"
-                ipdes = iprotate #Design point: takeoff rotation
-                pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
-                pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
-                pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
-            end
+            update_radiator!(pare, engine, imission)
             engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
 
             #Find and store maximum HX outer diameter to check fit in engine 
