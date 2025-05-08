@@ -1,3 +1,17 @@
+"""
+    calculate_thrust_from_ROC!(ac, ip, imission)
+
+Calculates the tube diameter and thickness from flow and hoop stress balance.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft`: aircraft object
+    - `ip::Int64`: mission point index
+    - `imission::Int64`: mission index
+
+    **Outputs:**
+    Modifies `ac.pare` with the thrust required for the desired climb rate.
+"""
 function calculate_thrust_from_ROC!(ac, ip, imission)
     parg, _, para, pare, _, _, _, wing, _, _, _, _ = unpack_ac(ac, imission, ip = ip)
 

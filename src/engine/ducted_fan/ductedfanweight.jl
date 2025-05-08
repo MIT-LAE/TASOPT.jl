@@ -1,7 +1,9 @@
 """
     ductedfanweight(ac)
 
-Ducted fan engine weight estimation function using NASA.
+Ducted fan engine weight estimation function. The fan
+weight is from NASA TM X-2406 and the nacelle weight is
+from Drela's turbofan model.
       
 !!! details "🔃 Inputs and Outputs"
     **Input:**
@@ -35,6 +37,7 @@ function ductedfanweight(ac)
     Acowl  = 0.2*Snace1
     Aexh   = 0.4*Snace1
 
+    #Nacelle weight model is from Drela's original turbofan model
     Wnace = 4.45*(Ainlet/0.3048^2.0) * (2.5+0.0238*Dfan/0.0254) +
             4.45*(Acowl /0.3048^2.0) *  1.9 +
             4.45*(Aexh  /0.3048^2.0) * (2.5+0.0363*Dfan/0.0254)
