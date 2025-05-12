@@ -1235,7 +1235,7 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       #Extract some inputs
       D_i = pare_sl[ieDi]
       Tc_ft = pare_sl[ieTft]
-      has_recirculation = Bool(pare_sl[iehas_recirculation])
+      has_recirculation = Bool(pare_sl[iefrecirc])
       recircT = pare_sl[ierecircT]
       h_lat = pare_sl[iehvap]
 
@@ -1382,7 +1382,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
       if length(HeatExchangers) == 0 #Skip if no HXs
             return
       end
-      has_recirculation = Bool(pare[iehas_recirculation,1])
+      has_recirculation = Bool(pare[iefrecirc,1])
       #Operate off-design for engine-integrated HEXs
       for (i,HX) in enumerate(HeatExchangers)
             HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments

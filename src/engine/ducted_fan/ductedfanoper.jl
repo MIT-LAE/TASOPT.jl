@@ -30,7 +30,6 @@ Ducted fan operation routine
     - `Tref`:    reference temperature for corrected mass flow and speed
     - `pref`:    reference pressure for corrected mass flow
     - `Phiinl`:  inlet ingested dissipation  Phi_inl
-    - `iBLIc`:   0=core in clear flow, 1=core sees Phiinl
     - `pid`:     diffuser pressure ratio  ( = pt2/pt0)
     - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt6.9)
     - `pifD`:    design fan pressure ratio  ( = pt21/pt2 )
@@ -61,7 +60,7 @@ Ducted fan operation routine
       8   fan flow downstream
 """
 function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
-      Phiinl, Kinl, iBLIc,
+      Phiinl, Kinl,
       pid, pifn, 
       pifD, 
       mbfD,
@@ -146,24 +145,9 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
         else
             #----- account for inlet BLI defect via mass-averaged entropy
             a2sq = at0^2 / (1.0 + 0.5 * (gam0 - 1.0) * Mi^2)
-
-            if (iBLIc == 0)
-                #------ BL mixes with fan flow only
-                #c      mmix    = mf*sqrt(Tref/Tt2) * pt2   /pref
-                #c      mmix_mf =    sqrt(Tref/Tt2) * pt2   /pref
-                #c      mmix_Mi = mf*sqrt(Tref/Tt2) * pt2_Mi/pref
-
-                mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
-                
-                sbfan = Kinl * gam0 / (mmix * a2sq)
-
-            else
-                
-                mmix = mf * sqrt(Tref / Tt0) * pt0 / pref +
-                        ml * sqrt(Tref / Tt0) * pt0 / pref
-                
-                sbfan = Kinl * gam0 / (mmix * a2sq)
-            end
+            mmix = mf * sqrt(Tref / Tt0) * pt0 / pref
+            
+            sbfan = Kinl * gam0 / (mmix * a2sq)
         end
 
         Tt2 = Tt18

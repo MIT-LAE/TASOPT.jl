@@ -1,6 +1,6 @@
 """
       ductedfansize!(gee, M0, T0, p0, a0, M2,
-            Feng, Phiinl, Kinl, iBLIc,
+            Feng, Phiinl, Kinl,
             pif,
             pid, pifn, 
             epf0,
@@ -60,7 +60,7 @@ The gas routines reside in the following source files:
       8  fan flow downstream
 """
 function ductedfansize!(gee, M0, T0, p0, a0, M2,
-      Feng, Phiinl, Kinl, iBLIc,
+      Feng, Phiinl, Kinl,
       pif,
       pid, pifn, 
       epf0,
@@ -123,25 +123,15 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
             if (ipass == 1)
                   #c      if(mcore == 0.0)
                   #----- don't know engine mass flow yet, so ignore any BLI mixing
-                  if (iBLIc == 0)
-                        sbfan = 0.0
-                  else
-                        sbfan = 0.0
-                  end
+                  sbfan = 0.0
 
             else
                   #----- account for inlet BLI defect via mass-averaged entropy
                   a2sq = at0^2 / (1.0 + 0.5 * (gam0 - 1.0) * M2^2)
 
-                  if (iBLIc == 0)
-                        #------ BL mixes with fan flow only
-                        mmix = mfan * sqrt(Tt2 / Tt0) * pt0 / pt2
-                        sbfan2 = Kinl * gam0 / (mmix * a2sq)
-                  else
-                        #------ BL mixes with fan + core flow
-                        mmix = mfan * sqrt(Tt2 / Tt0) * pt0 / pt2 
-                        sbfan2 = Kinl * gam0 / (mmix * a2sq)
-                  end
+                  #------ BL mixes with fan + core flow
+                  mmix = mfan * sqrt(Tt2 / Tt0) * pt0 / pt2 
+                  sbfan2 = Kinl * gam0 / (mmix * a2sq)
 
                   #----- update mixed-out entropies, with some underrelaxation       
                   rlxs = 0.85

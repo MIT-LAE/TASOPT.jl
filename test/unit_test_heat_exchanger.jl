@@ -31,9 +31,9 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
-        HXgeom.fshaft = false
+        HXgeom.is_concentric = true
+        HXgeom.has_recirculation = false
+        HXgeom.has_shaft = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.n_stages = 4
@@ -86,8 +86,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
+        HXgeom.is_concentric = true
+        HXgeom.has_recirculation = false
         HXgeom.D_i = 0.564
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.tD_o = 0.004760326082769499
@@ -132,8 +132,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
+        HXgeom.is_concentric = true
+        HXgeom.has_recirculation = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.xl_D = 1
@@ -152,7 +152,7 @@
 
         A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-        if HXgeom.fconc #Flow is concentric
+        if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -201,8 +201,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = false
-        HXgeom.frecirc = true
+        HXgeom.is_concentric = false
+        HXgeom.has_recirculation = true
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.xl_D = 1
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
@@ -220,7 +220,7 @@
 
         A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-        if HXgeom.fconc #Flow is concentric
+        if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
