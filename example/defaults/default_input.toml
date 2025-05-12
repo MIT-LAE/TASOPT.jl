@@ -101,7 +101,7 @@
                                     # includes luggage [lbm or lbf or kg or N] 
                                     # judging you if you use imperial units but wtvs
 
-    exit_limit = 189            # Maximum number of passengers that can sit in the cabin
+    exit_limit = 230            # Maximum number of passengers that can sit in the cabin
 
     max_payload = "230 pax"     # Defines the maximum payload carrying capacity of the aircraft
                                 # It is the maximum payload that the aircraft can carry (including cargo),

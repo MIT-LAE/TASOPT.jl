@@ -311,9 +311,9 @@ readweight(x) = read_input(x, weight, dweight)
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
 
-    fuselage.APU.W = readweight("APU_weight_fraction")*maxpay
-    fuselage.seat.W = readweight("seat_weight_fraction")*maxpay #TODO it may be better to scale this with exit_limit
-    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpay
+    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
 
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
