@@ -204,7 +204,7 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
     pare_alt = zeros(size(pare_orig, 1), size(pare_orig, 2) + 3)
     pare_alt[:, 3:(iptotal + 2)] .= pare_orig
     
-    TSL = Tref + ac.parm[imDeltaTatm, im] #sea-level temperature for tank analysis
+    TSL = ac.fuse_tank.TSLtank[im]  #sea-level temperature for tank analysis
     #Precompute heat transfer rate at each mission point for speed
     Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt, TSL)
 

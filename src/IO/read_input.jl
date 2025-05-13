@@ -464,6 +464,11 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
+    for (i,altTO) in enumerate(parm[imaltTO, :]/1e3)
+        T_std, _, _, _, _ = atmos(altTO)
+        push!(fuse_tank.TSLtank, parm[imT0TO,i] - T_std + Tref)
+    end
+    
     has_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
 
     if has_vacuum #If tank is double-walled

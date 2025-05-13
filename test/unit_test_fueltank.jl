@@ -18,6 +18,7 @@ fuse_tank.placement = "front"
 
 fuse_tank.clearance_fuse = 0.1
 TSL = 288.2
+fuse_tank.TSLtank = [TSL]
 
 fuse_tank.pvent = 2e5
 fuse_tank.ARtank = 2.0

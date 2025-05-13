@@ -41,7 +41,7 @@ function tanksize!(ac, imission::Int64 = 1)
         Wfuelintank = fuse_tank.Wfuelintank #weight of fuel in tank
         Tfuel = fuse_tank.Tfuel #fuel temperature
         sizes_insulation = fuse_tank.sizes_insulation #Boolean for whether to size for a boiloff rate
-        TSL = Tref + ac.parm[imDeltaTatm, imission] #sea-level temperature for tank design
+        TSL = fuse_tank.TSLtank[imission] #sea-level temperature for tank design
 
         #------Size insulation, if requested------
         if sizes_insulation #If insulation is sized for a given boiloff rate

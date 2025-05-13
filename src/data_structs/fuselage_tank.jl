@@ -55,6 +55,8 @@ $TYPEDFIELDS
     t_hold_orig::Float64 = 0.0
     """Arrival hold time (s)"""
     t_hold_dest::Float64 = 0.0
+    """Sea-level temperature for tank design (K)"""
+    TSLtank::Vector{Float64} = []
 
     """Liquid fuel density (kg/m^3)"""
     rhofuel::Float64 = 0.0
