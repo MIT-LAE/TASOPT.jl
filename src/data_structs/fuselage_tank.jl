@@ -18,11 +18,11 @@ $TYPEDFIELDS
     clearance_fuse::Float64 = 0.0
 
     """Vector with insulation layer thickness (m)"""
-    t_insul::Vector{Float64} = []
+    t_insul::Vector{Float64} = Float64[]
     """Vector with insulation materials"""
-    material_insul::Vector{ThermalInsulator} = []
+    material_insul::Vector{ThermalInsulator} = Float64[]
     """Vector with insulation layer design indices"""
-    iinsuldes::Vector{Int64} = []
+    iinsuldes::Vector{Int64} = Float64[]
     """Length of cylindrical portion of tank (m)"""
     l_cyl_inner::Float64 = 0.0
     """Length of inner tank (m)"""
@@ -30,7 +30,7 @@ $TYPEDFIELDS
     """Inner tank radius (m)"""
     Rinnertank::Float64 = 0.0
     """Vector with surface areas of insulation tank heads (m^2)"""
-    Shead_insul::Vector{Float64} = []
+    Shead_insul::Vector{Float64} = Float64[]
 
     """Inner vessel material"""
     inner_material::StructuralAlloy = StructuralAlloy("Al-2219-T87")
@@ -41,7 +41,7 @@ $TYPEDFIELDS
     """Angular location of inner vessel stiffeners"""
     theta_inner::Float64 = 0.0
     """Vector with angular location of outer vessel stiffeners"""
-    theta_outer::Vector{Float64} = []
+    theta_outer::Vector{Float64} = Float64[]
     """Number of intermediate stiffeners in outer vessel"""
     Ninterm::Float64 = 1.0
     
