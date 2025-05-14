@@ -206,12 +206,12 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
     
     TSL = ac.fuse_tank.TSLtank[im]  #sea-level temperature for tank analysis
     #Precompute heat transfer rate at each mission point for speed
-    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt, TSL)
+    Qs_points = calc_Q_points(ac.fuselage, ac.fuse_tank, ac.options.ifuel, ac.parg, para_alt, TSL::Float64)
 
     #Define functions for heat and fuel burn profiles through mission 
-    Q_calc(t) = find_Q_time_interp(t, para_alt, Qs_points)
-    W_calc(t) = 0.0
-    mdot_calc(t) = find_mdot_time(t, ac.fuse_tank.tank_count, ac.parg, para_alt, pare_alt)
+    Q_calc(t::Float64) = find_Q_time_interp(t, para_alt, Qs_points)
+    W_calc(t::Float64) = 0.0
+    mdot_calc(t::Float64) = find_mdot_time(t, ac.fuse_tank.tank_count, ac.parg, para_alt, pare_alt)
 
     #Store profiles in input struct
     u = tank_inputs(Q_calc, W_calc, mdot_calc)

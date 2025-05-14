@@ -19,13 +19,13 @@ end
 """
 Structure with inputs for tank pressure calculation.
 """
-struct tank_inputs
+struct tank_inputs{F1, F2, F3}
     """Heat rate as a function of time (W)"""
-    Q_calc::Function
+    Q_calc::F1
     """Work rate as a function of time (W)"""
-    W_calc::Function
+    W_calc::F2
     """Liquid mass flow rate as a function of time (kg/s)"""
-    mdot_calc::Function
+    mdot_calc::F3
 end
 
 """

@@ -40,12 +40,12 @@ Refer to the docs for a summary of the main `struct`s.
     description::String = "Indescribable"
     options::TASOPT.Options
 
-    parg::AbstractVector{Float64}
-    parm::AbstractArray{Float64}
-    para::AbstractArray{Float64}
-    pare::AbstractArray{Float64}
+    parg::Vector{Float64}
+    parm::Array{Float64, 2}
+    para::Array{Float64, 3}
+    pare::Array{Float64, 3}
     
-    is_sized::AbstractVector{Bool} = [false]
+    is_sized::Vector{Bool} = [false]
 
     fuselage::Fuselage = Fuselage()
     fuse_tank::fuselage_tank = fuselage_tank()
