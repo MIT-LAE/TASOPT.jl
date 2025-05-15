@@ -88,18 +88,18 @@
 
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
-    pax = 370            # Number of passengers in each mission
+    payload = ["370 pax"]   # Mission payload; pax can be used as a unit of weight.
+                            # Weight per pax also specified (215 lbf/pax is std)
     exit_limit = 450            # Maximum number of passengers that can sit in the cabin
 
-    max_payload_in_pax_equivalent = 450         # Defines the maximum payload carrying capacity of the aircraft
-                                                # It is the maximum payload that the aircraft can carry (including cargo),
-                                                # as an equivalent number of passengers in an off-design mission
-                                
+    max_payload = "450 pax"     # Defines the maximum payload carrying capacity of the aircraft
+                                # It is the maximum payload that the aircraft can carry (including cargo),
+                                # in an off-design mission
+        
     range = "7800.0 nmi" # Design Range 
 
     weight_per_pax = "230.0 lbf" # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] 
-                            # judging you if you use imperial units but wtvs
 
     fuel_reserves = 0.07 # W_reserveFuel / W_fuelburned
 
