@@ -54,6 +54,7 @@ Angle(x)    = convertAngle(parse_unit(x)...)
 Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
+
 """
     read_aircraft_model(datafile; 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"))
@@ -140,40 +141,48 @@ landing_gear = LandingGear()
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
-
-maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
-                                                #This may exceed the seatable capacity to account for belly cargo
-pax = readmis("pax")
-exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
-despax = pax[1] #Design number of passengers
-
-if any(maxpax .< pax)
-    error("One or more missions have higher payload than prescribed maximum aircraft payload!:"*
-    "\n Max Payload [in pax] = "*string(maxpax)*
-    "\n Payloads listed [in pax] = "*string(pax))
-end
-if any(exitlimit .< pax)
-    error("One or more missions have higher passenger counts than the prescribed exit limit!:"*
-    "\n Exit limit [in pax] = "*string(exitlimit)*
-    "\n Payloads listed [in pax] = "*string(pax))
-end
-
 Wpax =  Force(readmis("weight_per_pax"))
+
+#Weight() can take in "pax" as a unit; the weight of a passenger is user-defined
+function Weight(x)
+    if x isa AbstractVector
+        return [Weight(w) for w in x]  # Recursively call Weight on each element
+    elseif x isa AbstractString
+        value, unit = parse_unit(x)
+        if unit == "pax" 
+            return value * Wpax
+        else 
+            return convertForce(value, unit)
+        end
+    elseif x isa Float64
+        return x
+    else
+        throw(ArgumentError("Unsupported input type: $(typeof(x))"))
+    end
+end
+
+maxpay = Weight(readmis("max_payload")) #This represents the maximum aircraft payload
+                                #This may exceed the seatable capacity to account for belly cargo
+
+payload = Weight(readmis("payload"))
+exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
+
 parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= pax * Wpax
-parg[igWpaymax] = maxpax * Wpax
+parm[imWpay, :] .= payload
+parg[igWpaymax] = maxpay 
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
-fuselage.cabin.design_pax = despax
 fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
 options = read_input("Options", data, default)
 doptions = default["Options"]
 
-# these are used later
-propsys = read_input("prop_sys_arch", options, doptions)
+
+# -----------------------------
+# Engine model setup
+# ------------------------------
 engloc = read_input("engine_location", options, doptions)
 
 #throw error if engloc isn't a string indicating a supported location
@@ -302,9 +311,9 @@ readweight(x) = read_input(x, weight, dweight)
 
     fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
 
-    fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
-    fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
-    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
+    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
 
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
@@ -315,7 +324,16 @@ readgeom(x) = read_input(x, geom, dgeom)
     is_doubledecker = Bool(readgeom("double_decker"))
 
     if is_doubledecker #If aircraft is a double decker
+        fuselage.n_decks =  2
         fuselage.cabin.floor_distance = Distance(readgeom("floor_distance")) #read vertical distance between floors
+        fuselage.cabin.unit_load_device = readgeom("unit_load_device")
+        fuselage.cabin.min_top_cabin_height = Distance(readgeom("min_top_cabin_height"))
+    else
+        fuselage.n_decks =  1
+    end
+    if calculate_cabin
+        fuselage.cabin.front_seat_offset = Distance(readgeom("front_seat_offset"))
+        fuselage.cabin.rear_seat_offset = Distance(readgeom("rear_seat_offset"))
     end
 
     fuselage.cabin.seat_pitch = Distance(readgeom("seat_pitch"))
@@ -331,12 +349,6 @@ readgeom(x) = read_input(x, geom, dgeom)
 
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
-    
-    if readgeom("double_decker")
-        fuselage.n_decks =  2
-    else
-        fuselage.n_decks =  1
-    end
 
     # Number of webs = number of bubbles - 1
     n_bubbles = Int(readgeom("number_of_bubbles"))
@@ -796,7 +808,7 @@ readstruct(x) = read_input(x, structures, dstructures)
 # ---------------------------------
 # Propulsion systems
 # ---------------------------------
-
+propsys = read_input("prop_sys_arch", options, doptions)
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
@@ -1023,18 +1035,44 @@ if compare_strings(propsys,"tf")
     engineweight! = tfweightwrap!
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    engdata = TASOPT.engine.EmptyData()
+elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
+    modelname = lowercase(propsys)
+    engineweightname = "nasa"
 
-elseif compare_strings(propsys, "te")
-    nothing
-    #TODO: decide if turboelectric stuff still works, if we'll fix it, or if we'll remove all references
+    enginecalc! = calculate_fuel_cell_with_ducted_fan!
+    engineweight! = fuel_cell_with_ducted_fan_weight!
+    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    pare[iePfanmax,:,:] .= 20e6
+
+    fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+
+    fcdata.type = "HT-PEMFC"
+    fcdata.current_density[iprotate,:] .= 1e4
+    fcdata.FC_temperature .= 453.15
+    fcdata.FC_pressure .= 3e5
+    fcdata.water_concentration_anode .= 0.1
+    fcdata.water_concentration_cathode .= 0.1
+    fcdata.λ_H2 .= 3.0
+    fcdata.λ_O2 .= 3.0
+    fcdata.thickness_membrane = 100e-6
+    fcdata.thickness_anode  = 250e-6
+    fcdata.thickness_cathode  = 250e-6
+    fcdata.design_voltage = 200.0
+    pare[ieRadiatorepsilon,:,:] .= 0.7
+    pare[ieRadiatorMp,:,:] .= 0.12
+    pare[ieDi,:,:] .= 0.4
+
+    para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
+    engdata = fcdata
+
 else
+    
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-    
-engine = TASOPT.engine.Engine(enginemodel, Vector{TASOPT.engine.HX_struct}())
-
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
     
 # Heat exchangers
 HEx = readprop("HeatExchangers")
