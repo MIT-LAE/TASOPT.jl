@@ -74,7 +74,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         
         d_miss["range"] = parm[imRange,:]
         d_miss["weight_per_pax"] = parm[imWperpax, :]
-        d_miss["pax"] = parm[imWpay,:] ./ parm[imWperpax, :]
+        d_miss["payload"] = parm[imWpay,:]
         d_miss["max_pax"] = parg[igWpaymax] ./ parm[imWperpax, :]
         d_miss["fuel_reserves"] = parg[igfreserve]
         d_miss["Vne"] = parg[igVne]
@@ -755,7 +755,6 @@ function reset_regression_test(ac)
         @printf(io,"fuse.HPE_sys.W = %20.20f \n", ac.fuselage.HPE_sys.W)
         @printf(io,"fuse.added_payload.W = %20.20f \n", ac.fuselage.added_payload.W)
 
-        @printf(io, "fuse.cabin.design_pax = %20.20f \n", ac.fuselage.cabin.design_pax)
         @printf(io, "fuse.cabin.exit_limit = %20.20f \n", ac.fuselage.cabin.exit_limit)
         @printf(io, "fuse.cabin.seat_pitch = %20.20f \n", ac.fuselage.cabin.seat_pitch)
         @printf(io, "fuse.cabin.seat_width = %20.20f \n", ac.fuselage.cabin.seat_width)
