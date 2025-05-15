@@ -65,7 +65,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         TASOPT.tanksize!(ac, 1)
         outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        outputs_mech_check = (60104.8235573921, 38147.81559388217, 166.77327116515787, [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876], 1.8743852420176998, 15.771807531012154, 12.842701653674803)
+        outputs_mech_check = (60109.124334566346 , 38147.81559388217, 166.77327116515787, [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876], 1.8743852420176998, 15.771807531012154, 12.842701653674803)
         for i in 1:length(outputs_mech)
             @test outputs_mech[i] ≈ outputs_mech_check[i]
         end
@@ -87,7 +87,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         TASOPT.tanksize!(ac, 1)
 
         outputs_vac_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
-        outputs_vac_mech_check = (24223.115473254056, 0.0, 166.77327116515787, [25.483812169139977, 27.21328988831087], 2.335, 9.994915110929762, 7.525566077704729)
+        outputs_vac_mech_check = (24229.845334360776, 0.0, 166.77327116515787, [25.483812169139977, 27.21328988831087], 2.335, 9.994915110929762, 7.525566077704729)
 
         for i in 1:length(outputs_vac_mech)
             @test outputs_vac_mech[i] ≈ outputs_vac_mech_check[i]
@@ -102,7 +102,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         @test Ninterm ≈ Ninterm_check
 
         outputs_vac_outer = TASOPT.CryoTank.size_outer_tank(fuse, fuse_tank, Winner_tot, l_cyl, Ninterm_check)
-        outputs_vac_outer_check = (87481.39236647873, 31381.827647692957, 13786.613724211644, 20573.48341886441, 171.6223477616751, 26.90237940128641, 117.81758895910225, 0.009560503271690743, 0.018394143361195915, 9.96235436442712)
+        outputs_vac_outer_check = (87481.40843690369, 31381.827647692957, 13786.613724211644, 20573.498028341648, 171.6223477616751, 26.90237940128641, 117.81758895910225, 0.009560503271690743, 0.018394143361195915, 9.96235436442712)
         for i in 1:length(outputs_vac_outer)
             @test outputs_vac_outer[i] ≈ outputs_vac_outer_check[i]
         end
@@ -112,7 +112,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
     @testset "Stringer sizing" begin
         θ = 85 * pi /180
         outputs_bendM = TASOPT.CryoTank.stiffeners_bendingM(θ)
-        outputs_bendM_check = [1.1693705988362009, 0.09494234539184043 ]
+        outputs_bendM_check = [1.1749999999999998, 0.09494892091249901]
         for i in 1:length(outputs_bendM)
             @test outputs_bendM[i] ≈ outputs_bendM_check[i]
         end
