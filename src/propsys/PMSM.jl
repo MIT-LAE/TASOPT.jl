@@ -3,6 +3,9 @@ module ElectricMachine
 abstract type AbstractElectricMachine end
 abstract type AbstractMagnets end
 
+struct Motor <: AbstractElectricMachine end
+struct Generator <: AbstractElectricMachine end
+
 import ..propsys: __TASOPTindices__, __TASOPTroot__
 
 using ..materials
@@ -129,9 +132,11 @@ $TYPEDEF
 
 $TYPEDFIELDS
 
-Structure that defines a permanent magnet synchronous motor (PMSM).
+Structure that defines a permanent magnet synchronous machine (PMSM).
 """
-@kwdef mutable struct PMSMBase
+@kwdef mutable struct PMSM{T<:AbstractElectricMachine}
+    type::T = T()
+    
     rotor::RotorGeometry = RotorGeometry()
     stator::StatorGeometry = StatorGeometry()
     teeth::Teeth = Teeth()
@@ -147,11 +152,11 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     """Angular velocity [rad/s]"""
     Ω::Float64 = 10e3
     """Slots per pole [-]"""
-    Nsp::Int = 3
+    Nsp::Int64 = 3
     """Phases [-]"""
-    phases::Int = 3
+    phases::Int64 = 3
     """Energized phases [-]"""
-    energized_phases::Int = 2
+    energized_phases::Int64 = 2
     """Phase resistance [Ω]"""
     phase_resistance::Float64 = 0.0
     """Design current in a slot [A]"""
@@ -183,10 +188,13 @@ Structure that defines a permanent magnet synchronous motor (PMSM).
     airgap_thickness::Float64 = 2e-3
     """Mass of machine [kg]"""
     mass::Float64 = 0.0
+
+    """Number of multi-phase inverters [-]"""
+    N_inverters::Int64 = 1
 end
 
 #Override PMSMBase to return other properties
-function Base.getproperty(obj::PMSMBase, sym::Symbol)
+function Base.getproperty(obj::PMSM, sym::Symbol)
     if sym === :f #Electric frequency
         return obj.Ω * obj.N_pole_pairs/ (2 * pi)
     elseif sym === :torque #Torque
@@ -201,87 +209,19 @@ function Base.getproperty(obj::PMSMBase, sym::Symbol)
         return obj.N_slots * obj.A_slot / cross_sectional_area(obj.teeth.Ri + obj.teeth.thickness, obj.teeth.Ri) 
     elseif sym === :B_gap #Air gap flux density
         return airgap_flux(obj.magnet.M, obj.magnet.thickness, obj.airgap_thickness)
-    else
-        return getfield(obj, sym)
-    end
-end  # function Base.getproperty
-
-#List of computed fields that are not stored in the structure but are derived from other fields
-const BASE_COMPUTED_FIELDS = [:f, :torque, :N_slots, :N_slots_per_phase, :N_energized_slots, :λ, :B_gap]
-
-"""
-$TYPEDEF
-
-$TYPEDFIELDS
-
-Structure that defines a permanent magnet synchronous motor (PMSM).
-"""
-@kwdef mutable struct Motor <: AbstractElectricMachine
-    base::PMSMBase = PMSMBase()
-
-    """Number of multi-phase inverters [-]"""
-    N_inverters::Int = 1
-end
-
-#Override Motor to return other properties
-function Base.getproperty(obj::Motor, sym::Symbol)
-    if hasfield(typeof(getfield(obj, :base)), sym)
-        return getfield(getfield(obj, :base), sym)
-    elseif sym in BASE_COMPUTED_FIELDS
-        return getproperty(getfield(obj, :base), sym)
-    elseif sym === :P_input # Input electric power
+    elseif (sym === :P_input && typeof(obj) == PMSM{Motor}) # Input electrical power
         #Assumes that multiple inverters are powering the motor
         return obj.phases * 2/pi * obj.I * obj.V * obj.N_inverters 
-    else
-        return getfield(obj, sym)
-    end
-end  # function Base.getproperty
-
-#Override Motor to set the base properties without accessing base
-function Base.setproperty!(obj::Motor, sym::Symbol, val)
-    base = getfield(obj, :base)
-    if hasfield(typeof(base), sym)
-        return setfield!(base, sym, val)
-    else
-        return setfield!(obj, sym, val)
-    end
-end
-
-"""
-$TYPEDEF
-
-$TYPEDFIELDS
-
-Structure that defines a permanent magnet synchronous motor (PMSM).
-"""
-@kwdef mutable struct Generator <: AbstractElectricMachine
-    base::PMSMBase = PMSMBase()
-end
-
-#Override Generator to return other properties
-function Base.getproperty(obj::Generator, sym::Symbol)
-    if hasfield(typeof(getfield(obj, :base)), sym)
-        return getfield(getfield(obj, :base), sym)
-    elseif sym in BASE_COMPUTED_FIELDS
-        return getproperty(getfield(obj, :base), sym)
-    elseif sym === :P_output # Input electric power
-        #Assumes that multiple inverters are powering the motor
+    elseif (sym === :P_output && typeof(obj) == PMSM{Generator}) # Output electrical power
         return obj.phases * 2/pi * obj.I * obj.V
     else
         return getfield(obj, sym)
     end
 end  # function Base.getproperty
 
-#Override Generator to set the base properties without accessing base
-function Base.setproperty!(obj::Generator, sym::Symbol, val)
-    base = getfield(obj, :base)
-    if hasfield(typeof(base), sym)
-        return setfield!(base, sym, val)
-    else
-        return setfield!(obj, sym, val)
-    end
-end
-
+# Define convenience constructors
+PMSM_generator() = PMSM{Generator}()
+PMSM_motor() = PMSM{Motor}()
 
 # Layout:
 # 		
@@ -319,7 +259,7 @@ Simplified permanent magnet synchronous machine (PMSM) sizing.
     **Outputs:**
     No direct outputs. `PMSM` object gets modified with the input power and mass.
 """
-function size_PMSM!(PMSM::AbstractElectricMachine, shaft_speed::AbstractFloat, design_power::AbstractFloat)
+function size_PMSM!(PMSM::PMSM, shaft_speed::AbstractFloat, design_power::AbstractFloat)
     rotor = PMSM.rotor
     stator = PMSM.stator
     magnet = PMSM.magnet
@@ -447,7 +387,7 @@ Runs a motor with a given shaft speed and power and calculates the back emf volt
     **Outputs:**
     No direct outputs. `motor` object gets modified with the input power.
 """
-function operate_PMSM!(motor::Motor, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+function operate_PMSM!(motor::PMSM{Motor}, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     motor.Ω = shaft_speed * (2 * π / 60)
     B_gap = motor.B_gap
     motor.P = shaft_power
@@ -477,7 +417,7 @@ Runs a generator with a given shaft speed and power and calculates the back emf 
     **Outputs:**
     No direct outputs. `generator` object gets modified with the input power.
 """
-function operate_PMSM!(generator::Generator, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
+function operate_PMSM!(generator::PMSM{Generator}, shaft_speed::AbstractFloat, shaft_power::AbstractFloat)
     generator.Ω = shaft_speed * (2 * π / 60)
     B_gap = generator.B_gap
     generator.P = shaft_power
@@ -496,7 +436,7 @@ end  # function operate_PMSM!
 """
 Calculates the power losses in a PMSM, including ohmic, core and windage losses.
 """
-function calculate_losses(EM::AbstractElectricMachine)
+function calculate_losses(EM::PMSM)
     Q_ohmic = ohmic_loss(EM.I, EM.phase_resistance, EM.energized_phases)
     Q_core = core_loss(EM)
     Q_wind = windage_loss(EM)
@@ -525,7 +465,7 @@ $TYPEDSIGNATURES
 
 Calculates the hysteresis loss in the motor (i.e., in the rotor + the stator)
 """
-function hysteresis_loss(motor::AbstractElectricMachine)
+function hysteresis_loss(motor::PMSM)
     return hysteresis_loss(motor.stator, motor.f) + hysteresis_loss(motor.teeth, motor.f)
 end  # function hysteresis_loss
 
@@ -542,7 +482,7 @@ $TYPEDSIGNATURES
 
 Calculates the eddy losses in the motor (i.e., due to the rotor + the stator)
 """
-function eddy_loss(motor::AbstractElectricMachine)
+function eddy_loss(motor::PMSM)
     return eddy_loss(motor.stator, motor.f) + eddy_loss(motor.teeth, motor.f)
 end #function eddy_loss
 
@@ -558,7 +498,7 @@ end  # function eddy_loss
 Calculates the windage (i.e., air friction losses) for the rotor.
 From Vrancik (1968) - Prediction of windage power loss in alternators
 """
-function windage_loss(motor::AbstractElectricMachine)
+function windage_loss(motor::PMSM)
     #air from IdealGases?
     Re = motor.Ω * motor.radius_gap * motor.airgap_thickness / motor.air.ν
     res(Cf) = 1/sqrt(Cf) - 2.04 - 1.768*log(Re*sqrt(Cf)) #From Vrancik, residual to be zeroed

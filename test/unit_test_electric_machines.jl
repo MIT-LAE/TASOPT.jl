@@ -1,6 +1,6 @@
 @testset "Electric machines" begin
     #Motor
-    mot = TASOPT.propsys.ElectricMachine.Motor()
+    mot = TASOPT.propsys.ElectricMachine.PMSM_motor()
     mot.N_pole_pairs = 10
     mot.J_max = 10e6
     mot.N_inverters = 10
@@ -23,7 +23,7 @@
     @test mot.P_input ≈ 259340.74513568674 rtol = 1e-8
 
     #Generator
-    gen = TASOPT.propsys.ElectricMachine.Generator()
+    gen = TASOPT.propsys.ElectricMachine.PMSM_generator()
     gen.N_pole_pairs = 10
     gen.J_max = 10e6
     gen.windings.kpf = 0.35

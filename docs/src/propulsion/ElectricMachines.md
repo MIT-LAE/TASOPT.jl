@@ -2,7 +2,7 @@
 
 ## Permanent-magnet synchronous machines
 
-Permanent-magnet synchronous machines (PMSMs), particularly motors and generators, can be modeled tp estimate their performance and weight. The function [`size_PMSM!()`](@ref propsys.ElectricMachine.size_PMSM!) can be used to find the thickness and lengths of the PMSM components, their masses, as well as to calculate the phase electrical resistance. Once a PMSM has been sized, its off-design performance can be computed using [`operate_PMSM!()`](@ref propsys.ElectricMachine.operate_PMSM!), which calculates power losses tp compute the input power (motor) or output power (generator).
+Permanent-magnet synchronous machines (PMSMs), particularly motors and generators, can be modeled to estimate their performance and weight. The function [`size_PMSM!()`](@ref propsys.ElectricMachine.size_PMSM!) can be used to find the thickness and lengths of the PMSM components, their masses, as well as to calculate the phase electrical resistance. Once a PMSM has been sized, its off-design performance can be computed using [`operate_PMSM!()`](@ref propsys.ElectricMachine.operate_PMSM!), which calculates power losses and computes the input electrical power required (motor) or output shaft power (generator).
 
 !!! details "📖 Theory - Permanent-magnet synchronous machines"
     The model for PMSMs is based on that in Dowdle et al.[^1], with some modifications for increased fidelity. The PMSM consists of:
