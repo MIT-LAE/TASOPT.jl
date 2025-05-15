@@ -94,18 +94,18 @@
                                 
     range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
 
-    pax = [180, 150]                    # Number of passengers in each mission
-                                        # weight per pax also specified (215 lbf/pax is std)
+    payload = ["180 pax", "150 pax"]     # Mission payload; pax can be used as a unit of weight.
+                                        # Weight per pax also specified (215 lbf/pax is std)
 
     weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
                                     # includes luggage [lbm or lbf or kg or N] 
                                     # judging you if you use imperial units but wtvs
 
-    exit_limit = 189            # Maximum number of passengers that can sit in the cabin
+    exit_limit = 230            # Maximum number of passengers that can sit in the cabin
 
-    max_payload_in_pax_equivalent = 230         # Defines the maximum payload carrying capacity of the aircraft
-                                                # It is the maximum payload that the aircraft can carry (including cargo),
-                                                # as an equivalent number of passengers in an off-design mission
+    max_payload = "230 pax"     # Defines the maximum payload carrying capacity of the aircraft
+                                # It is the maximum payload that the aircraft can carry (including cargo),
+                                # in an off-design mission
 
     fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
 

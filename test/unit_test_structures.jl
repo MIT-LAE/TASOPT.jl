@@ -428,6 +428,7 @@ update_fuse_out_test = [29.5656, 31.0896, 18.716634144, 36.57600000000001, 37.79
 ac = TASOPT.load_default_model()
 
 ac.parg = zeros(igtotal)
+ac.fuselage.cabin.exit_limit = 189
 ac.fuselage.layout.x_start_cylinder = 6.096
 ac.fuselage.layout.x_end_cylinder = 29.5656
 ac.fuselage.layout.x_pressure_shell_aft = 31.0896
