@@ -858,8 +858,6 @@ readturb(x) = read_input(x, turb, dturb)
     epolht = readturb("HPT_eta_poly") 
     epollt = readturb("LPT_eta_poly") 
 
-    pifK = readturb("FPR0")
-    epfK = readturb("Kf_polyeff")
     HTRf  = readturb("HTR_fan")
     HTRlc = readturb("HTR_LPC")
     HTRhc = readturb("HTR_HPC")
@@ -887,8 +885,6 @@ pare[ieepolhc, :, :] .= epolhc
 pare[ieepolht, :, :] .= epolht
 pare[ieepollt, :, :] .= epollt
 pare[ieetab, :, :] .= etab
-pare[iepifK, :, :] .= pifK
-pare[ieepfK, :, :] .= epfK
 pare[ieBPR, :, :] .= BPR
 pare[ieM2, :, :] .= M2
 pare[ieM25, :, :] .= M25
