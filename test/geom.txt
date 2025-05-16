@@ -27,7 +27,7 @@ Stability:
 xNP     =  19.6 m (    64.2 ft)
 xCGfwd  =  17.3 m (    56.7 ft)
 xCGaft  =  19.3 m (    63.3 ft)
-xSMfwd  = 0.5314
+xSMfwd  = 0.5327
 xSMaft  = 0.0640
 
 Wing Layout:
@@ -41,5 +41,5 @@ cs      =   4.4 m (    14.4 ft)
 ct      =   1.6 m (     5.1 ft)
 bo      =   3.6 m (    11.8 ft)
 bs      =  10.8 m (    35.3 ft)
-b       =  37.8 m (   124.0 ft)
-S       = 141.4 m²(  1522.2 ft²)
+b       =  37.8 m (   123.9 ft)
+S       = 141.2 m²(  1519.4 ft²)
