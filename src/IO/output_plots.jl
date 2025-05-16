@@ -973,12 +973,13 @@ Function to plot a payload range diagram for an aircraft
     - `OEW::Bool`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
     - `itermax::Int64`: Max Iterations for fly_mission! loop (Optional).
     - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true (Optional)
+    - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
 """
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
     filename::String = "", 
-    itermax::Int64 = 35, initializes_engine::Bool = true,
+    itermax::Int64 = 35, initializes_engine::Bool = true, specifying_cruise = "lift_coefficient",
     Ldebug::Bool = false)
 
     #Duplicate design mission as second mission, which will be modified
@@ -992,7 +993,6 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     #Extract aircraft parameters
     maxPay = ac.parg[igWpaymax]
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
-    maxPay = 0
 
     Wmax = ac.parg[igWMTO]
     Fuelmax = ac.parg[igWfmax]
@@ -1002,7 +1002,6 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     RangesToPlot = []
     PayloadToPlot = []
     PFEIsToPlot = []
-    maxPay = ac.parm[imWpay]
 
     for Range = RangeArray
         if maxPay == 0
@@ -1016,7 +1015,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
 
             ac.parm[imWpay,2] = mWpay
             try
-                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine)
+                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, specifying_cruise = specifying_cruise)
                 # fly_mission! success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
