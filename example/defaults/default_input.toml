@@ -477,10 +477,6 @@
     HPT_eta_poly = 0.889
     LPT_eta_poly = 0.899
 
-    #Fan efficiency function constants -> epoly_actual = epolyf + Kf*(FPR-FPR0)
-    FPR0 = 1.685
-    Kf_polyeff = -0.077 
-
     HTR_fan = 0.30
     HTR_LPC = 0.60
     HTR_HPC = 0.80
