@@ -7,7 +7,7 @@
       **Inputs:**
       - `fuse::Fuselage`: fuselage object.
       - `fuse_tank::fuselage_tank`: fuselage tank object.
-      - `t_cond::Float64`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
+      - `t_cond::Vector{Float64}`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
       non-linear solve process.
 
       **Outputs:**
@@ -35,7 +35,7 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
-      Rfuse = fuse.layout.radius
+      Rfuse = structures.Rfuse(fuse)
       fuse_cs = fuse.layout.cross_section #Fuselage cross section
 
       Wfuel = fuse_tank.Wfuelintank
@@ -119,11 +119,11 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       # Insulation weight
       N = length(t_cond) #Number of insulation layers
       #Initialize storage vectors
-      Vcyl_insul = zeros(N)
-      Winsul = zeros(N)
-      Shead_insul = zeros(N + 1) #add one for first (tank wall) surface 
-      Vhead_insul = zeros(N)
-      rho_insul = zeros(N)
+      Vcyl_insul = zeros(Float64, N)
+      Winsul = zeros(Float64, N)
+      Shead_insul = zeros(Float64, N + 1) #add one for first (tank wall) surface 
+      Vhead_insul = zeros(Float64, N)
+      rho_insul = zeros(Float64, N)
       L = Lhead + tskin #Length of ellipsoid semi-minor axis
 
       #Assemble vector with layer densities
@@ -340,6 +340,9 @@ This function can be used to calculate the bending moment distribution in a stif
 It applies Eqs. (7.4) and (7.5) in Barron (1985) to find the bending moment distribution. The function returns the
 maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
 
+Note: An attempt was made to use the NLopt.jl package to find the maximum value of k, 
+but this was more expensive and less robust than the brute-force approach.
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `θ::Float64`: angular position of tank supports, measured from the bottom of the tank (rad).
@@ -349,11 +352,11 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM(θ::Float64)
-      ϕlist = LinRange(0.0, π, 361)
+      ϕlist = [θ; LinRange(1.1,1.2,21);pi] #Take advantage of known form of maximum
       k = zeros(length(ϕlist))
 
       for (i,ϕ) in enumerate(ϕlist)
-            if 0 ≤ ϕ ≤ θ
+            if 0 ≤ ϕ < θ
                   k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
             elseif θ ≤ ϕ ≤ π
                   k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ  + cos(θ) + cos(ϕ)*(sin(θ)^2)
