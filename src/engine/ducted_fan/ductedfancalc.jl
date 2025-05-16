@@ -31,8 +31,6 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
     
     epolf = pare[ieepolf]
     
-    pifK = pare[iepifK]
-    epfK = pare[ieepfK]
     M2 = pare[ieM2]
     M0 = pare[ieM0]
     Tt0 = pare[ieTt0]
@@ -100,7 +98,6 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
                         pif,
                         pid, pifn, 
                         epolf,
-                        pifK, epfK,
                         Δh_radiator, Δp_radiator
                         )
 
@@ -167,7 +164,6 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
                             mbfD, NbfD,
                             A2, A7,
                             epolf,
-                            pifK, epfK,
                             Feng, Peng,
                             M2, pif, mbf, 
                             Δh_radiator, Δp_radiator,
@@ -196,7 +192,6 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
                             mbfD, NbfD,
                             A2, A7,
                             epolf,
-                            pifK, epfK,
                             Feng, Peng,
                             M2, pif, mbf, 
                             Δh_radiator, Δp_radiator,

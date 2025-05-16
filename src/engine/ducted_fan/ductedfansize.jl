@@ -3,8 +3,7 @@
             Feng, Phiinl, Kinl,
             pif,
             pid, pifn, 
-            epf0,
-            pifK, epfK
+            epf0
             )
 
 Ducted fan performance and sizing routine.
@@ -29,8 +28,6 @@ The gas routines reside in the following source files:
     - `pib`:     burner   pressure ratio  ( = pt4 /pt3)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    fan max polytropic efficiency
-    - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-    - `epfK`:    fan efficiency pif derivative
 
       **Outputs:**
     - `Fsp`:     specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
@@ -64,7 +61,6 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
       pif,
       pid, pifn, 
       epf0,
-      pifK, epfK,
       Δh_radiator,
       Δp_radiator
       )
@@ -155,8 +151,9 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
             mbfD = 1.0
             mf = 1.0
 
-            epf, epf_pf, epf_mf = ecmap(pif, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
-
+            _, epf, _, _, _, _, _, _ = 
+            calculate_compressor_speed_and_efficiency(FanMap, pif, mf, pifD, mbfD, 1.0, epf0)
+  
             pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
 

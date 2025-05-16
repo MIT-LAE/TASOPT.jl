@@ -6,7 +6,6 @@
         mbfD, 
         A2, A7,
         epf0,
-        pifK, epfK,
         Feng, Peng,
         M2, pif, mbf, 
         iPspec)
@@ -37,8 +36,6 @@ Ducted fan operation routine
     - `A2`:      fan-face area [m^2]                mf = mc*BPR, mt = mc*(1+ff)
     - `A7`:      fan  nozzle area [m^2]
     - `epf0`:    max fan polytropic efficiency
-    - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-    - `epfK`:    fan efficiency pif derivative
     - `Feng`:    required net thrust [N]
     - `Peng`:    power required to drive fan [W]
     - `M2`:      guess Mach number at station 2
@@ -67,7 +64,6 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
       NbfD, 
       A2, A7,
       epf0,
-      pifK, epfK,
       Feng, Peng,
       M2, pif, mbf, 
       Δh_radiator, Δp_radiator,
@@ -172,12 +168,9 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
         Rt18 = Rt0
         pt18 = pt0 * pid
 
-        epf, _, _ = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
-
-        if (epf < epfmin)
-                epf = epfmin
-
-        end
+        _, epf, _, _, _, _, _, _ = 
+            calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, 1.0, epf0)
+  
         if (pf < 1.0)
                 epf = 1.0 / epf
         end
