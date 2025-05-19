@@ -212,8 +212,6 @@ Contains seating dimensions and quantities to design a cabin layout
 $TYPEDFIELDS
 """
 @kwdef mutable struct Cabin <: AbstractCabin
-    """Design number of passengers"""
-    design_pax::Int64 = 0
     """Maximum number of passengers"""
     exit_limit::Int64 = 0
     """Longitudinal seat pitch [m]"""
