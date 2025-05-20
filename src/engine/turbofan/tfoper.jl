@@ -10,7 +10,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       opt_calc_call,
       Ttf, ifuel, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9,
       epsl, epsh,
@@ -83,8 +82,6 @@ Turbofan operation routine
     - `ephc0`:   HPC max polytropic efficiency
     - `epht0`:   HPT max polytropic efficiency
     - `eplt0`:   LPT max polytropic efficiency
-    - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-    - `epfK`:    fan efficiency pif derivative
 
     - `mofft`:    mass flow offtake at LPC discharge station 2.5
     - `Pofft`:    low spool power offtake
@@ -165,7 +162,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       opt_calc_call,
       Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9,
       epsl, epsh,
@@ -191,7 +187,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       prod *= A2 * A25 * A5 * A7
       prod *= Ttf * ifuel * etab
       prod *= epf0 * eplc0 * ephc0 * epht0 * eplt0
-      prod *= pifK * epfK * mofft * Pofft * Tt9 * pt9 * epsl * epsh
+      prod *= mofft * Pofft * Tt9 * pt9 * epsl * epsh
       prod *= Mtexit * dTstrk * StA * efilm * tfilm
       prod *= M4a * ruc
       prod *= epsrow[1] * M2 * pif * pilc * pihc * mbf * mblc * mbhc * Tt4 * pt5 * mcore * M25
@@ -208,6 +204,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       res_dlls = zeros(T, 9)
       a_dlls = zeros(T, 9, 9)
 
+      Random.seed!(1234) #Seed for RNG in relaxation
 
       #---- number of gas constituents
       n = 6
@@ -252,7 +249,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       #---- convergence tolerance
       #      data toler  1.0e-7 
-      toler = 1.0e-10
+      toler = 1.0e-9
 
       itmax = 50
 
@@ -283,6 +280,14 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             gamma[i] = etab * gamma[i]
       end
       gamma[n] = 1.0 - etab
+
+      #Starting guesses for compressor map non-linear solvers
+      Nfg = 0.5
+      Rfg = 2.0
+      Nlcg = 0.5
+      Rlcg = 2.0
+      Nhcg = 0.5
+      Rhcg = 2.0
       #
       # ===============================================================
       #---- freestream static quantities
@@ -540,8 +545,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # ===============================================================
             #---- fan flow 2-7
-            epf, epf_pf, epf_mf = ecmap(pf, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
-
+            Nf, epf, Nf_pf, Nf_mf, epf_pf, epf_mf, Nfg, Rfg = 
+                  calculate_compressor_speed_and_efficiency(FanMap, pf, mf, pifD, mbfD, NbfD, epf0, Ng = Nfg, Rg = Rfg)
+            
             if (epf < epfmin)
                   epf = epfmin
                   epf_pf = 0.0
@@ -653,8 +659,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       
             # ===============================================================
             #---- LP compressor flow 2-25
-            eplc, eplc_pl, eplc_ml = ecmap(pl, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
-
+            Nl, eplc, Nl_pl, Nl_ml, eplc_pl, eplc_ml, Nlcg, Rlcg = 
+                  calculate_compressor_speed_and_efficiency(LPCMap, pl, ml, pilcD, mblcD, NblcD, eplc0, Ng = Nlcg, Rg = Rlcg)
+                  
             if (eplc < 0.70)
                   eplc = 0.70
                   eplc_pl = 0.0
@@ -716,7 +723,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       
             # ===============================================================
             #---- HP compressor flow 25-3
-            ephc, ephc_ph, ephc_mh = ecmap(ph, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
+            Nh, ephc, Nh_ph, Nh_mh, ephc_ph, ephc_mh, Nhcg, Rhcg = 
+                  calculate_compressor_speed_and_efficiency(HPCMap, ph, mh, pihcD, mbhcD, NbhcD, ephc0, Ng = Nhcg, Rg = Rhcg)
+            
             if (ephc < 0.70)
                   ephc = 0.70
                   ephc_ph = 0.0
@@ -1357,17 +1366,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   end
 
             end
-
-            # ===============================================================
-            #---- fan corrected speed
-
-            Nf, Nf_pf, Nf_mf = Ncmap(pf, mf, pifD, mbfD, NbfD, Cmapf)
-
-            #---- LPC corrected speed
-            Nl, Nl_pl, Nl_ml = Ncmap(pl, ml, pilcD, mblcD, NblcD, Cmapl)
-
-            #---- HPC corrected speed
-            Nh, Nh_ph, Nh_mh = Ncmap(ph, mh, pihcD, mbhcD, NbhcD, Cmaph)
 
             # ===============================================================
             #---- HPT and LPT work
@@ -2699,7 +2697,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # ===========================================================================
 
-
             for i = 1:9
                   rsav[i] = res[i, 1]
                   for k = 1:9
@@ -2833,8 +2830,8 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   abs(dMi) / Mi)
 
             #---- max,min allowed changes 
-            pf0 = 0.8
-            pl0 = 0.8
+            pf0 = 1.0
+            pl0 = 1.0
 
             dpfmax = 0.30 * (pf - pf0)
             dplmax = 0.25 * (pl - pl0)
@@ -2859,8 +2856,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
             #---- set underrelaxation factor, 
             #-    if needed to limit any one change to its max value
             rlx = 1.0
-
-
+            
             if (rlx * dpf > dpfmax)
                   rlx = dpfmax / dpf
             end
@@ -2996,49 +2992,13 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   vrlx = "Mi"
             end
 
-            if (Lprint || iter >= itmax - 6)
-                  if compare_strings(opt_calc_call, "oper_fixedTt4")
-                        if (u0 == 0.0)
-                              Finl = 0.0
-                        else
-                              Finl = Phiinl / u0
-                        end
+            #If iter>10, a limit cycle may have been reached
+            #Apply a relaxation factor that does not oscillate
+            rlx_it = 1.0 - 0.6*rand() * (iter > 10) #Relaxation based on RNG
+            rlx = rlx * rlx_it
 
-                        pfn = p0 / pt7
-                        p8, T8, h8, s8, cp8, R8 = gas_prat(alpha, nair,
-                              pt7, Tt7, ht7, st7, cpt7, Rt7, pfn, 1.0)
-                        u8 = sqrt(2.0 * max(ht7 - h8, 0.0))
-
-                        pcn = p0 / pt5
-                        p6, T6, h6, s6, cp6, R6 = gas_prat(lambdap, nair,
-                              pt5, Tt5, ht5, st5, cpt5, Rt5, pcn, 1.0)
-                        u6 = sqrt(2.0 * max(ht5 - h6, 0.0))
-
-                        F = ((1.0 + ff) * u6 - u0 + BPR * (u8 - u0)) * mdotl + Finl
-                        Fspec = 0.0
-                  end
-
-                  if (iter == 1)
-                        println("---------------------------------")
-                  end
-                  ru2 = rho2 * u2
-                  ru19 = rho19 * u19
-
-                  println(iter, vrlx, rlx, opt_calc_call)
-                  println("pf dpf R1 ef", pf, dpf, rrel[1], epf)
-                  println("pl dpl R2 el", pl, dpl, rrel[2], eplc, eplt)
-                  println("ph dph R3 eh", ph, dph, rrel[3], ephc, epht)
-                  println("mf dmf R4   ", mf / mbfD, dmf / mbfD, rrel[4])
-                  println("ml dml R5   ", ml / mblcD, dml / mblcD, rrel[5])
-                  println("mh dmh R6   ", mh / mbhcD, dmh / mbhcD, rrel[6])
-                  println("Tb dTb R7 F ", Tb, dTb, rrel[7], F, Fspec, Tt4)
-                  println("Pc dPc R8 pt", Pc, dPc, rrel[8], pt5, pitn * pt5h)
-                  println("M2 dM2 R9   ", Mi, dMi, rrel[9], ru2, ru19)
-                  println("u0 u5 u7 del", u0, u5, u7, dmax - toler)
-            end
-
-            #---- exit if convergence test is met
-            if (dmax < toler)
+            #---- exit if convergence test is met or if max iterations reached
+            if (dmax < toler) | (iter == itmax)
 
                   # ===============================================================
                   #---- pick up here if converged normally
@@ -3223,7 +3183,30 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                         error("ht5 < h5 : ", ht5, h5)
                   end
                   
-                  Lconv = true
+                  if (dmax < toler) #Convergence achieved
+                        Lconv = true
+
+                  else #Finish run as max iterations reached
+                        Lconv = false
+                        
+                        # println("TFOPER: Convergence failed.  iTFspec=", iTFspec)
+
+                        # Tt4 = Tb
+                        # pt5 = Pc
+                        # BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
+
+                        # println("pt18 Tt18 =", pt18, Tt18)
+                        # println("pt2  Tt2  =", pt2, Tt2)
+                        # println("pt25 Tt25 =", pt25, Tt25)
+                        # println("pt3  Tt3  =", pt3, Tt3)
+                        # println("pt4  Tt4  =", pt4, Tt4)
+                        # println("pt41 Tt41 =", pt41, Tt41)
+                        # println("pt45 Tt45 =", pt45, Tt45)
+                        # println("pt5  Tt5  =", pt5, Tt5)
+                        # println("p5        =", p5)
+                        # println("FPR  BPR  =", pf, BPR)
+                  end
+                 
                   return TSFC, Fsp, hfuel, ff,
                   Feng, mcore,
                   pif, pilc, pihc,
@@ -3257,6 +3240,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   Lconv
 
             end
+            
 
             #---- Newton update
             pf = pf + rlx * dpf

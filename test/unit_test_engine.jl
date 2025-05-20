@@ -553,8 +553,6 @@ isGradient = false
         ephc0 = 0.87000000000000000
         epht0 = 0.88900000000000001
         eplt0 = 0.89900000000000002
-        pifK = 1.6850000000000001
-        epfK = -7.6999999999999999E-002
         mofft = 0.56969999999999998
         Pofft = 89407.867373646965
         Tt9 = 300.00000000000000
@@ -622,7 +620,6 @@ isGradient = false
             pid, pib, pifn, pitn,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
-            pifK, epfK,
             mofft, Pofft,
             Tt9, pt9, Tt4,
             epsl, epsh,
@@ -637,12 +634,12 @@ isGradient = false
 
 
 
-        @test etaf == 0.8669669309871176
-        @test etalc == 0.8253599539389056
-        @test etahc == 0.8328904728351655 
-        @test etaht ==  0.897964412328221
-        @test etalt == 0.9191100140438033
-        @test Tmrow[1] ≈ 1121.4017246720114  rtol = 1e-10
+        @test etaf == 0.8539899545024271
+        @test etalc ==  0.8298895182207285
+        @test etahc == 0.8384795893726779
+        @test etaht ==  0.8978789812518558
+        @test etalt == 0.9191845671925591
+        @test Tmrow[1] ≈ 1119.1584455133655  rtol = 1e-10
 
         if isGradient
             # AD
@@ -652,7 +649,6 @@ isGradient = false
                     pid, pib, pifn, pitn,
                     Ttf, ifuel, hvap, etab,
                     epf0, eplc0, ephc0, epht0, eplt0,
-                    pifK, epfK,
                     mofft, Pofft,
                     Tt9, pt9, Tt4,
                     epsl, epsh,
@@ -671,7 +667,6 @@ isGradient = false
                 pid, pib, pifn, pitn,
                 Ttf, ifuel, hvap, etab,
                 epf0, eplc0, ephc0, epht0, eplt0,
-                pifK, epfK,
                 mofft, Pofft,
                 Tt9, pt9, Tt4,
                 epsl, epsh,
@@ -716,8 +711,6 @@ isGradient = false
         ephc0 = 0.87000000000000000
         epht0 = 0.88900000000000001
         eplt0 = 0.89900000000000002
-        pifK = 1.6850000000000001
-        epfK = -7.6999999999999999E-002
         mofft = 0.56969999999999998
         Pofft = 89407.867373646965
         Tt9 = 300.00000000000000
@@ -772,7 +765,6 @@ isGradient = false
             pid, pib, pifn, pitn,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
-            pifK, epfK,
             mofft, Pofft,
             Tt9, pt9, Tt4,
             epsl, epsh,
@@ -784,7 +776,7 @@ isGradient = false
             epsrow, Tmrow, Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
             Δp_PreC, Δp_InterC, Δp_Regen)
 
-        @test epsrow[1] ≈ 0.13147111518413135 rtol = 1e-10
+        @test epsrow[1] ≈ 0.1303162243242347 rtol = 1e-10
 
     end
 
@@ -864,8 +856,6 @@ isGradient = false
         ephc0 = 0.87000000000000000
         epht0 = 0.88900000000000001
         eplt0 = 0.89900000000000002
-        pifK = 1.6850000000000001
-        epfK = -7.6999999999999999E-002
         mofft = 0.56969999999999998
         Pofft = 77800.595231538944
         Tt9 = 300.00000000000000
@@ -950,7 +940,6 @@ isGradient = false
             opt_calc_call,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
-            pifK, epfK,
             mofft, Pofft,
             Tt9, pt9,
             epsl, epsh,
@@ -966,17 +955,17 @@ isGradient = false
             Δp_PreC, Δp_InterC, Δp_Regen)
 
 
-        @test etaf ≈ 0.8832832281545349 atol = 1e-8
-        @test etalc ≈ 0.8292163505070079 atol = 1e-8
-        @test etahc ≈ 0.8396031409105092 atol = 1e-8
-        @test etaht ≈ 0.8974013806048625  atol = 1e-8
-        @test etalt ≈ 0.9177711851884208 atol = 1e-8
+        @test etaf ≈ 0.8741690445868673 atol = 1e-8
+        @test etalc ≈ 0.8367067552587594 atol = 1e-8
+        @test etahc ≈ 0.8393327258267146 atol = 1e-8
+        @test etaht ≈ 0.8974130931530157  atol = 1e-8
+        @test etalt ≈ 0.9176389341085217 atol = 1e-8
 
         Tt4_ref = 1783.8000000000002
-        ht4_ref = 477968.6525802446
-        pt4_ref = 2.7823232536409046e6
-        cpt4_ref = 1311.5865737175513
-        Rt4_ref =  288.11608774614365 
+        ht4_ref = 470172.6605599733
+        pt4_ref = 2.7406297732608365e6
+        cpt4_ref = 1312.0669933280028
+        Rt4_ref =  288.12027917359467
         @test Tt4 ≈ Tt4_ref atol = 1e-8 * Tt4_ref
         @test ht4 ≈ ht4_ref atol = 1e-8 * ht4_ref
         @test pt4 ≈ pt4_ref atol = 1e-8 * pt4_ref
@@ -1032,8 +1021,6 @@ isGradient = false
         ephc0 = 0.87000000000000000
         epht0 = 0.88900000000000001
         eplt0 = 0.89900000000000002
-        pifK = 1.6850000000000001
-        epfK = -7.6999999999999999E-002
         mofft = 0.56969999999999998
         Pofft = 77800.595231538944
         Tt9 = 300.00000000000000
@@ -1119,7 +1106,6 @@ isGradient = false
             opt_calc_call,
             Ttf, ifuel, hvap, etab,
             epf0, eplc0, ephc0, epht0, eplt0,
-            pifK, epfK,
             mofft, Pofft,
             Tt9, pt9,
             epsl, epsh,
@@ -1134,17 +1120,17 @@ isGradient = false
             Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
             Δp_PreC, Δp_InterC, Δp_Regen)
 
-        @test etaf ≈ 0.9030492271458281 rtol = 1e-6
-        @test etalc ≈ 0.6508936589177887 rtol = 1e-6
-        @test etahc ≈ 0.8354812454373838 rtol = 1e-6
-        @test etaht ≈ 0.897856854646557 rtol = 1e-6
-        @test etalt ≈ 0.8671218952270937 rtol = 1e-6
+        @test etaf ≈ 0.8862602081467577 rtol = 1e-6
+        @test etalc ≈ 0.6539900828671803 rtol = 1e-6
+        @test etahc ≈ 0.8390003200177845 rtol = 1e-6
+        @test etaht ≈ 0.8977614695292404 rtol = 1e-6
+        @test etalt ≈ 0.8649073213143893 rtol = 1e-6
 
         @test Tt4 ≈ 1783.8000000000002 rtol = 1e-6
-        @test ht4 ≈ 303318.6850089128  rtol = 1e-6
-        @test pt4 ≈ 1.0707777851566991e6  rtol = 1e-6
-        @test cpt4 ≈ 1322.349189837191 rtol = 1e-6
-        @test Rt4 ≈ 288.2099863374315  rtol = 1e-6
+        @test ht4 ≈ 292168.48621470056  rtol = 1e-6
+        @test pt4 ≈ 1.0428916387810945e6  rtol = 1e-6
+        @test cpt4 ≈ 1323.0363088269542 rtol = 1e-6
+        @test Rt4 ≈ 288.2159811164396  rtol = 1e-6
     end
 
     @testset "tfweight.jl" begin
@@ -1173,4 +1159,48 @@ isGradient = false
         @test Snace1 ≈ 24.374719583103083 rtol = 1e-10
 
     end
+
+    @testset "map_functions.jl" begin
+        #Check reverse interpolation function
+        map = TASOPT.engine.FanMap
+        Wc_target = 559.314
+        PR_target = 1.31
+        outps_NR = TASOPT.engine.find_NR_inverse_with_derivatives(map.itp_Wc, map.itp_PR, 
+            Wc_target, PR_target)
+        outp_NR_check = (0.7000000000000002, 1.799999999999995, 0.0002760733345430258, 0.6100706271038377, 0.00430742991535455, -2.9037427622059644)
+        
+        for (i,outp_NR) in enumerate(outps_NR)
+            @test outp_NR ≈ outps_NR[i]
+        end
+
+        #Check function to compute speed and efficiency
+        pratio = 1.6
+        mb = 0.8
+        piD = 1.7
+        mbD = 1.0
+        NbD = 1.0
+        ep0 = 0.9
+        outps_Ne = TASOPT.engine.calculate_compressor_speed_and_efficiency(map, pratio, mb, piD, mbD, NbD, ep0)
+        outps_Ne_check = (0.8826430459793184, 0.8251883153075635, 0.49351112427246263, -0.003692654225532323, -0.39245022849891215, 0.929263500483822, 0.8738166155195252, 1.4836439672220545)
+        
+        for (i,outp_Ne) in enumerate(outps_Ne)
+            @test outp_Ne ≈ outps_Ne_check[i]
+        end
+
+        #Use finite difference to validate derivatives of the maps
+        eps = 1e-6
+        outps_pi = TASOPT.engine.calculate_compressor_speed_and_efficiency(map, pratio + eps, mb, piD, mbD, NbD, ep0)
+        outps_mb = TASOPT.engine.calculate_compressor_speed_and_efficiency(map, pratio, mb + eps, piD, mbD, NbD, ep0)
+        
+        dN_dpi = (outps_pi[1] - outps_Ne[1])/eps
+        depol_dpi = (outps_pi[2] - outps_Ne[2])/eps
+
+        dN_dmb = (outps_mb[1] - outps_Ne[1])/eps
+        depol_dmb = (outps_mb[2] - outps_Ne[2])/eps
+
+        @test dN_dpi ≈ outps_Ne[3] rtol = 1e-4
+        @test dN_dmb ≈ outps_Ne[4] rtol = 1e-4
+        @test depol_dpi ≈ outps_Ne[5] rtol = 1e-4
+        @test depol_dmb ≈ outps_Ne[6] rtol = 1e-4
+    end 
 end
