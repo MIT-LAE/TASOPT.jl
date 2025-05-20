@@ -960,7 +960,7 @@ function MomentShear(ac::aircraft)
 end
 
 """
-    PayloadRange(ac_og, Rpts, Ppts, filename, plots_OEW, itermax)
+    PayloadRange(ac_og; Rpts, Ppts, plots_OEW, filename, itermax, initializes_engine, Ldebug)
 
 Function to plot a payload range diagram for an aircraft
 
@@ -970,9 +970,9 @@ Function to plot a payload range diagram for an aircraft
     - `Rpts::Int64`: Density of ranges to be plot (Optional).
     - `Ppts::Int64`: Density of payloads to be plot (Optional).
     - `filename::String`: filename string for the plot to be stored (Optional).
-    - `plots_OEW::Bool`: Whether to plot OEW+Payload [true] on the y-axis or just Payload [false, default] (Optional).
+    - `plots_OEW::Bool`: Whether to plot OEW+Payload (true) on the y-axis or just Payload (false, default) (Optional).
     - `itermax::Int64`: Max Iterations for fly_mission! loop (Optional).
-    - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true (Optional)
+    - `initializes_engine::Bool`: Use design case as initial guess for engine state if true (Optional)
     - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
 """
@@ -983,7 +983,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     Ldebug::Bool = false)
 
     if !ac_og.is_sized[1]
-        error("Aircraft $(ac_og.name) not sized. Please size aircraft before generating PayloadRange().")
+        error("Aircraft $(ac_og.name) not sized. Please size aircraft before calling `PayloadRange()`.")
     end
 
     #Duplicate design mission as second aircraft, which will be modified
