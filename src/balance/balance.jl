@@ -695,9 +695,10 @@ This function determines the CG shift due to varying passenger and fuel load con
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `ac` : Aircraft object 
+    - `ac` : Aircraft object
+    - `Ldebug` : Debug flag for verbose output (default: false)
 
-    **Outputs:**  
+    **Outputs:**
     Returns six values:
     - `rfuelF` : Fuel fraction for forward CG case (always 0.0).
     - `rfuelB` : Fuel fraction for aft CG case (always 0.0).
@@ -707,7 +708,7 @@ This function determines the CG shift due to varying passenger and fuel load con
     - `xcgB` : Most rearward CG location.
 
 """
-function CG_limits(ac)
+function CG_limits(ac, Ldebug::Bool = false)
       parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
       Wpay = parg[igWpay]
@@ -817,7 +818,8 @@ function CG_limits(ac)
             BB = 2.0 * a2 * b0
             CC = a1 * b0 - a0 * b1
 
-            if BB^2 - 4.0 * AA * CC ≤ 0.0
+            if BB^2 - 4.0 * AA * CC ≤ 0.0 && Ldebug
+                  @warn "CG_limits(): Warning: No real roots for quadratic equation"
                   println("a2 = $a2 ; b0^2 = $(b0^2); a0 = $(a0); b1^2 = $(b1^2); a1 = $(a1)")
             end
 

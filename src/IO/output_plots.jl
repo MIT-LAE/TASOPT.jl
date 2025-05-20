@@ -960,7 +960,7 @@ function MomentShear(ac::aircraft)
 end
 
 """
-    PayloadRange(ac_og, Rpts, Ppts, filename, OEW, itermax)
+    PayloadRange(ac_og, Rpts, Ppts, filename, plots_OEW, itermax)
 
 Function to plot a payload range diagram for an aircraft
 
@@ -970,19 +970,23 @@ Function to plot a payload range diagram for an aircraft
     - `Rpts::Int64`: Density of ranges to be plot (Optional).
     - `Ppts::Int64`: Density of payloads to be plot (Optional).
     - `filename::String`: filename string for the plot to be stored (Optional).
-    - `OEW::Bool`: Whether to have OEW+Payload on the y-axis or just Payload (Optional).
+    - `plots_OEW::Bool`: Whether to plot OEW+Payload [true] on the y-axis or just Payload [false, default] (Optional).
     - `itermax::Int64`: Max Iterations for fly_mission! loop (Optional).
     - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true (Optional)
     - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
 """
 function PayloadRange(ac_og::TASOPT.aircraft; 
-    Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
+    Rpts::Integer = 20, Ppts::Integer = 20, plots_OEW::Bool = false,
     filename::String = "", 
     itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
     Ldebug::Bool = false)
 
-    #Duplicate design mission as second mission, which will be modified
+    if !ac_og.is_sized[1]
+        error("Aircraft $(ac_og.name) not sized. Please size aircraft before generating PayloadRange().")
+    end
+
+    #Duplicate design mission as second aircraft, which will be modified
     parm = cat(ac_og.parm[:,1], ac_og.parm[:,1], dims=2)
     pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
@@ -994,9 +998,6 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         HX.HXgas_mission = cat(HX.HXgas_mission[:,1], HX.HXgas_mission[:,1], dims=2)
     end
     #Extract aircraft parameters
-    maxPay = ac.parg[igWpaymax]
-    RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
-
     Wmax = ac.parg[igWMTO]
     Fuelmax = ac.parg[igWfmax]
     Wempty = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
@@ -1005,6 +1006,10 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     RangesToPlot = []
     PayloadToPlot = []
     PFEIsToPlot = []
+    maxPay = ac.parm[imWpay, 1]
+    Wpax = ac.parm[imWperpax, 1]
+
+    RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
 
     for Range = RangeArray
         if maxPay == 0
@@ -1014,8 +1019,11 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         end
         ac.parm[imRange,2] = Range
         for mWpay = Payloads
-            if Ldebug println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822)) end
+            if Ldebug println("Checking for Range (nmi): ", convertDist(Range, "m", "nmi"), " and Pax = ", mWpay/convertForce(Wpax, "N", "lbf")) end
+            #reset the aircraft to the design altitude and cruise CL since one is changed during fly_mission!() per opt_prescribed_cruise_parameter
             ac.para[iaalt,ipcruise1,2] = ac.para[iaalt,ipcruise1,1]
+            ac.para[iaCL,ipcruise1,2] = ac.para[iaCL,ipcruise1,1]
+            
             ac.parm[imWpay,2] = mWpay
             try
                 fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter)
@@ -1047,7 +1055,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         end
         append!(RangesToPlot, Range)
         append!(PFEIsToPlot, PFEI)
-        if OEW
+        if plots_OEW
             append!(PayloadToPlot, maxPay+Wempty)
         else
             append!(PayloadToPlot, maxPay)
@@ -1055,34 +1063,43 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     end
 
     # Convert values for plotting
-    ranges_kft = RangesToPlot ./ (1000 * 1852.0)
-    payload_tons = PayloadToPlot ./ (9.8 * 1000)
+    ranges_nmi = convertDist.(RangesToPlot, "m", "nmi")
+    payload_tons = PayloadToPlot ./ (9.81 * 1000)
 
     # Standard PR Diagram
-    plot1 = plot(ranges_kft, payload_tons, 
+    plot1 = plot(ranges_nmi, payload_tons, 
         lw=2,                   # Line width
         line=:solid,            # Line style
         color=:blue,            # Line color
-        xlabel="Range (1000 nmi)", 
-        ylabel= OEW ? "Payload Weight (1000 kg)" : "OEW + Payload Weight (1000 kg)", 
+        xlabel="Range (nmi)", 
+        ylabel= plots_OEW ? "OEW + Payload Weight (tonnes)" : "Payload Weight (tonnes)",
         title="Payload-Range Diagram: "*string(ac.name), 
         grid=true,              # Enable grid
         dpi = 300,
         margin=4mm,
         legend=false)
 
+    # Add the design point to plot1
+    design_range = convertDist.(ac_og.parm[imRange,1], "m", "nmi")
+    design_payload = (plots_OEW ? ac_og.parm[imWpay, 1] + Wempty : ac_og.parm[imWpay, 1]) / (9.81 * 1000)
+    scatter!(plot1, [design_range], [design_payload], color=:blue, marker=:star5, ms=8, label="Design Point")
+
     # PFEI plot
-    plot2 = plot(ranges_kft, PFEIsToPlot, 
+    plot2 = plot(ranges_nmi, PFEIsToPlot, 
         lw=2,                   # Line width
         line=:solid,            # Line style
         color=:green,            # Line color
-        xlabel="Range (1000 nmi)", 
+        xlabel="Range (nmi)", 
         ylabel="PFEI at max payload (kJ/kg-km)", 
         title="Payload-Range Diagram: "*string(ac.name), 
         grid=true,              # Enable grid
         dpi = 300,
         margin=4mm,
         legend=false)
+
+    # Add the design point to plot2
+    design_PFEI = ac_og.parm[imPFEI, 1]
+    scatter!(plot2, [design_range], [design_PFEI], color=:green, marker=:star5, ms=8, label="Design Point")
 
     layout = @layout [A; B]
     fig = plot(plot1, plot2, layout=layout, 

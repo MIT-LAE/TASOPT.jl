@@ -866,7 +866,7 @@ function _size_aircraft!(ac; itermax=35,
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac, Ldebug)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
