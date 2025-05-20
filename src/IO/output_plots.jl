@@ -1077,12 +1077,15 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         grid=true,              # Enable grid
         dpi = 300,
         margin=4mm,
-        legend=false)
+        legend=false,
+        label="")
 
     # Add the design point to plot1
     design_range = convertDist.(ac_og.parm[imRange,1], "m", "nmi")
     design_payload = (plots_OEW ? ac_og.parm[imWpay, 1] + Wempty : ac_og.parm[imWpay, 1]) / (9.81 * 1000)
-    scatter!(plot1, [design_range], [design_payload], color=:blue, marker=:star5, ms=8, label="Design Point")
+    scatter!(plot1, [design_range], [design_payload], 
+             color=:blue, marker=:star5, ms=8, label="Design Point",
+             legend=:bottomleft)
 
     # PFEI plot
     plot2 = plot(ranges_nmi, PFEIsToPlot, 
