@@ -990,6 +990,9 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     ac_og.options, ac_og.parg, parm, para, pare, [true], 
     ac_og.fuselage, ac_og.fuse_tank, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine, ac_og.landing_gear)
 
+    for HX in ac.engine.heat_exchangers
+        HX.HXgas_mission = cat(HX.HXgas_mission[:,1], HX.HXgas_mission[:,1], dims=2)
+    end
     #Extract aircraft parameters
     maxPay = ac.parg[igWpaymax]
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
@@ -1012,7 +1015,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
         ac.parm[imRange,2] = Range
         for mWpay = Payloads
             if Ldebug println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822)) end
-
+            ac.para[iaalt,ipcruise1,2] = ac.para[iaalt,ipcruise1,1]
             ac.parm[imWpay,2] = mWpay
             try
                 fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter)
