@@ -979,7 +979,7 @@ Function to plot a payload range diagram for an aircraft
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 20, OEW::Bool = false,
     filename::String = "", 
-    itermax::Int64 = 35, initializes_engine::Bool = true, specifying_cruise = "lift_coefficient",
+    itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
     Ldebug::Bool = false)
 
     #Duplicate design mission as second mission, which will be modified
@@ -1015,7 +1015,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
 
             ac.parm[imWpay,2] = mWpay
             try
-                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, specifying_cruise = specifying_cruise)
+                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter)
                 # fly_mission! success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel

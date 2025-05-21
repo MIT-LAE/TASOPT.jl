@@ -1,5 +1,5 @@
 """
-    fly_mission!(ac, imission, itermax, initializes_engine, specifying_cruise)
+    fly_mission!(ac, imission, itermax, initializes_engine, opt_prescribed_cruise_parameter)
 
 Runs the aircraft through the specified mission, computing and converging the fuel weight. Formerly, `fly_offdesign_mission!()`.
 
@@ -9,13 +9,13 @@ Runs the aircraft through the specified mission, computing and converging the fu
 - `imission::Int64`: Off design mission to run (Default: 1)
 - `itermax::Int64`: Maximum iterations for sizing loop
 - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
-- `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
+- `opt_prescribed_cruise_parameter::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the mission selected
 
 """
 function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true, 
-        specifying_cruise = "altitude")
+        opt_prescribed_cruise_parameter = "altitude")
     if ~ac.is_sized[1]
         error("Aircraft not sized. Please size the aircraft before running the mission.")
     end
@@ -30,6 +30,18 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
 
     tolerW = 1.0e-8
     errw   = 1.0
+
+    #Warn user if CL or altitude are being unexpectedly overwritten
+    if compare_strings(opt_prescribed_cruise_parameter, "altitude")
+        if ac.para[iaCL, ipcruise1,1] != ac.para[iaCL, ipcruise1, imission] #if CLs are prescribed but overwritten 
+            @warn "An off-design CL is specified, but the analysis is set to rewrite it. Please review your inputs, especially `opt_prescribed_cruise_parameter`, if this is not the desired behavior" maxlog=1   
+        end
+
+    elseif compare_strings(opt_prescribed_cruise_parameter, "CL")
+        if ac.para[iaalt, ipcruise1,1] != ac.para[iaalt, ipcruise1, imission] #if CLs alts prescribed but overwritten
+            @warn "An off-design altitude is specified, but the analysis is set to rewrite it. Please review your inputs, especially `opt_prescribed_cruise_parameter`, if this is not the desired behavior" maxlog=1   
+        end
+    end
     
 #------ mission-varying excrescence factors disabled in this version
 #-      ( also commented out in getparm.f )
@@ -228,7 +240,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
     end
 
     # Calculate start-of-cruise altitude or CL from each other by ensuring L=W
-    calculate_cruise_altutide_or_CL!(specifying_cruise, WMTO, ac, imission)
+    calculate_cruise_altitude_or_CL!(opt_prescribed_cruise_parameter, WMTO, ac, imission)
     
     if !(options.has_wing_fuel) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
@@ -283,13 +295,14 @@ return
 end
 
 """
-    calculate_cruise_altutide_or_CL!(specifying_cruise, WMTO, parg, para, pare, wing, ΔTatmos, imission)
+    calculate_cruise_altitude_or_CL!(opt_prescribed_cruise_parameter, WMTO, parg, para, pare, wing, ΔTatmos, imission)
 
-Runs the aircraft through the specified mission, computing and converging the fuel weight. Formerly, `fly_offdesign_mission!()`.
+Calculates the cruise altitude or lift coefficient based on the specified option. If "altitude" is selected, it calculates the lift coefficient 
+from the weight and density. If "CL" is selected, it calculates the altitude from the lift coefficient and updates the fuselage drag.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
+    - `opt_prescribed_cruise_parameter::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "CL"
     - `WMTO::Float64`: Maximum takeoff weight (N)
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Matrix{Float64}`: array with aerodynamic parameters
@@ -300,7 +313,7 @@ Runs the aircraft through the specified mission, computing and converging the fu
 **Outputs:**
     - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the mission selected
 """
-function calculate_cruise_altutide_or_CL!(specifying_cruise, WMTO, ac, imission)
+function calculate_cruise_altitude_or_CL!(opt_prescribed_cruise_parameter, WMTO, ac, imission)
     parg, parm, para, pare, _, fuse, _, wing, _, _, _ = unpack_ac(ac, imission)
 
     #Calculate ΔT for the atmosphere
@@ -318,11 +331,11 @@ function calculate_cruise_altutide_or_CL!(specifying_cruise, WMTO, ac, imission)
     BW = We + WbuoyCR # Weight including buoyancy
     S = wing.layout.S
 
-    if compare_strings(specifying_cruise, "altitude")   
+    if compare_strings(opt_prescribed_cruise_parameter, "altitude")
         CL = BW / (0.5*ρ0*u0^2*S) #Find CL from L=W
         para[iaCL, ipclimb1+1:ipdescentn-1] .= CL #Store CL in climb, cruise and descent phases
     
-    elseif compare_strings(specifying_cruise, "lift_coefficient")
+    elseif compare_strings(opt_prescribed_cruise_parameter, "CL")
         CL = para[iaCL, ip]
         ρ0 = BW / (0.5*u0^2*S*CL) #Find density from L=W
         para[iaalt, ip] = find_altitude_from_density(ρ0, ΔTatmos) * 1e3 #Store altitude
