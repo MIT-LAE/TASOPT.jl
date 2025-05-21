@@ -977,7 +977,7 @@ Function to plot a payload range diagram for an aircraft
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
 """
 function PayloadRange(ac_og::TASOPT.aircraft; 
-    Rpts::Integer = 20, Ppts::Integer = 20, plots_OEW::Bool = false,
+    Rpts::Integer = 20, Ppts::Integer = 21, plots_OEW::Bool = false,
     filename::String = "", 
     itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
     Ldebug::Bool = false)
