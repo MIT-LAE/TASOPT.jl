@@ -3,6 +3,7 @@
 
 # 1) Load TASOPT
 using TASOPT
+include(TASOPT.__TASOPTindices__)
 # you can optionally define
 # const tas = TASOPT 
 # to use as a shorthand
