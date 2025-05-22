@@ -1031,7 +1031,8 @@ function PayloadRange(ac_og::TASOPT.aircraft;
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
 
-                if WTO > Wmax || mWfuel > Fuelmax || WTO < 0.0 || mWfuel < 0.0 
+                # if weights are negative or above their max, point is infeasible
+                if (WTO > Wmax) || (mWfuel > Fuelmax) || (WTO < 0.0) || (mWfuel < 0.0)
                     WTO = 0.0
                     mWfuel = 0.0
 
