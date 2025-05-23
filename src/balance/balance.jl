@@ -1,6 +1,6 @@
 
 """
-      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; Ldebug)
 
 Computes the aircraft's center of gravity (`xCG`), center of pressure (`xCP`), and neutral point (`xNP`) based on payload, fuel distribution, and trim adjustments.
 Makes one of three (or none) changes to achieve pitch trim. Formerly, `balance()`.
@@ -30,6 +30,7 @@ The routine computes the **neutral point (`xNP`), indicating the aircraft's long
       - `rpay` : Payload fraction.
       - `ξpay` : Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded).
       - `opt_trim_var` : Variable to adjust to achieve pitch trim (`"none"` for no adjustments, `"CL_htail"` for htail lift coefficient, `"S_htail"` for htail area, `"x_wingbox"` for wing box location).
+      - `Ldebug` : Optional debug flag (default: `false`). If `true`, prints debug information.
 
       **Outputs** 
       No explicit return values, but updates fields inside `para`. Namely:
@@ -44,7 +45,7 @@ The routine computes the **neutral point (`xNP`), indicating the aircraft's long
 - `xNP` is affected by engine placement (`xengcp`), aerodynamics (`CMw1`, `CMh1`), and fuel distribution.
 
 """
-function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; Ldebug::Bool = false)
       #Unpack aircraft
       parg, _, para, _, options, fuse, fuse_tank, wing, htail, vtail, _, landing_gear = unpack_ac(ac, imission, ip = ip)
 
@@ -80,7 +81,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
 
       xwbox = wing.layout.box_x
 
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = CG_limits(ac)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = CG_limits(ac; Ldebug = Ldebug)
 
       #---- wing centroid offset from wingbox, assumed fixed in CG calculations
       dxwing = wing.layout.x - wing.layout.box_x
@@ -283,7 +284,7 @@ This routine iteratively adjusts:
 - Wing box location (`xwbox`): Maintaining static and dynamic stability.
 
 The routine considers:
-- Max and min CG locations** (`xcgF`, `xcgB`) computed using `CG_limits(ac)`.
+- Max and min CG locations** (`xcgF`, `xcgB`) computed using `CG_limits()`.
 - Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
 - Static margin constraints (`SM`).
 - Fuel and payload distribution effects.
@@ -315,7 +316,7 @@ The routine considers:
 The two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function. 
 
 """
-function size_htail(ac, paraF, paraB, paraC)
+function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
       #TODO find a way to remove the para inputs and use ac instead
       parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
@@ -329,7 +330,7 @@ function size_htail(ac, paraF, paraB, paraC)
       cosL = cosd(sweep)
 
       #---- set CG limits with worst-case payload arrangements
-      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = CG_limits(ac)
+      rfuelF, rfuelB, rpayF, rpayB, xcgF, xcgB = CG_limits(ac; Ldebug = Ldebug)
 
       rpayC = 1.0
 
@@ -680,10 +681,10 @@ function size_htail(ac, paraF, paraB, paraC)
 end # size_htail
 
 """
-    CG_limits(ac)
+    CG_limits(ac; Ldebug::Bool = false)
 
 Computes the most forward (`xcgF`) and most rearward (`xcgB`) 
-enter of gravity (CG) locations based on payload extremes,
+center of gravity (CG) locations based on payload extremes,
 along with the corresponding payload fractions. Formerly, `cglpay()`.
 
 ## Description
@@ -696,7 +697,7 @@ This function determines the CG shift due to varying passenger and fuel load con
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac` : Aircraft object
-    - `Ldebug` : Debug flag for verbose output (default: false)
+    - `Ldebug` : Debug flag for verbose output (default: false, optional)
 
     **Outputs:**
     Returns six values:
@@ -708,11 +709,9 @@ This function determines the CG shift due to varying passenger and fuel load con
     - `xcgB` : Most rearward CG location.
 
 """
-function CG_limits(ac, Ldebug::Bool = false)
+function CG_limits(ac; Ldebug::Bool = false)
       parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
-      Wpay = parg[igWpay]
-      Wfuel = parg[igWfuel]
       Wpay = parg[igWpay]
       Wfuel = parg[igWfuel]
       Wfuse = fuse.weight
