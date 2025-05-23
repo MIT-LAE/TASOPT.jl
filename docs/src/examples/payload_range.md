@@ -56,7 +56,7 @@ for Range = RangeArray
     Payloads = (maxPay) * LinRange(1, 0.1, Ppts)
     ac.parm[imRange] = Range
     for mWpay = Payloads
-        println("Checking for Range (nmi): ",Range/1852.0, " and Pax = ", mWpay/(215*4.44822))
+        println("Checking for Range (nmi): ", convertDist(Range, "m", "nmi"), " and Pax = ", mWpay/convertForce(Wpax, "N", "lbf"))
         ac.parm[imWpay ] = mWpay
         # Try fly_mission! after setting new range and payload
         try

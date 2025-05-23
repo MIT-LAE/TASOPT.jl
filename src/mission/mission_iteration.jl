@@ -195,7 +195,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
       opt_trim_var = "CL_htail"
-      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
       CLh2 = para[iaCLh, ip]
       xCG2 = para[iaxCG, ip]
@@ -314,7 +315,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   Wf = W - Wzero
                   rfuel = Wf / parg[igWfuel]
                   opt_trim_var = "CL_htail"
-                  balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+                  balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
                   if (ip == ipclimb1)
                         computes_wing_direct = false #use explicitly specified wing cdf, cdp
@@ -419,7 +421,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       opt_trim_var = "CL_htail"
-      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
       if calculate_cruise #If start of cruise has to be calculated (e.g., in off-design)
             # println("Calculating cruise point")
@@ -502,7 +505,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
       opt_trim_var = "CL_htail"
-      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+      balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
       # Calc Drag
       computes_wing_direct = true
@@ -647,7 +651,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
             opt_trim_var = "CL_htail"
-            balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+            balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
             if (ip == ipdescentn)
                   # use explicitly specified wing cdf,cdp
