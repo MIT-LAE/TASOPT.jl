@@ -497,3 +497,23 @@ Cmap[8] = 2.5
 Cmap[9] = 15.0
 
 eff, eff_pi, eff_mb = Pimap(mb, Nb, piD, mbD, NbD, Cmap)
+
+"""
+    find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)
+
+Calculates the cooled efficiency of an HPT based on a linear approximation.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `epht0::Float64`: uncooled polytropic efficiency
+    - `epht_fc::Float64`: derivative of polytropic efficiency with respect to cooling fraction
+    - `fc0::Float64`: baseline cooling fraction
+    - `fc::Float64`: actual cooling fraction
+
+    **Outputs:**
+    - `epht::Float64`: cooled polytropic efficiency
+"""
+function find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)
+    epht = epht0 + epht_fc * (fc - fc0)
+    return epht
+end
