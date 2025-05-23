@@ -133,9 +133,10 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = "35000 ft" #This gets recalculated for off-design missions
+    cruise_alt  = ["35000 ft", "38000 ft"] 
     cruise_mach = 0.80
-    cruise_CL   = [0.57, 0.57]
+    cruise_CL   = 0.57 #By default, this gets recalculated for off-design mission analysis
+                       # (see `fly_mission!()` and `PayloadRange()` for details, or to recalculate altitude instead).
 
 [Mission.Descent]
     descent_angle_top-of-descent = "-3.0 deg"
