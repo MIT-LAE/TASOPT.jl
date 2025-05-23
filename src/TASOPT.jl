@@ -56,6 +56,7 @@ export plot_airf
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
+include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 
 include(joinpath(__TASOPTroot__,"data_structs/fuselage_tank.jl"))
 
