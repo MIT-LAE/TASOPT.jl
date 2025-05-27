@@ -185,6 +185,31 @@ function fuselage_drag!(fuse, parm, para, ip)
       para[iaKAfTE  , ip] = KTE/(qinf*Vinf)
       para[iaPAfinf , ip] = Pinf/qinf
     
-      end # fuselage_drag!
+end # fuselage_drag!
 
+"""
+    broadcast_fuselage_drag!(para, ip)
 
+Broadcasts fuselage drag calculations across all flight points in `para` arrays.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `para::AbstractArray{Float64}`: Vector of `aircraft` model aerodynamic parameters.
+      - `ip::Integer`: Index of flight point in `par` arrays.
+      
+      **Outputs:**
+      - No explicit outputs. Values are saved to `para` of `aircraft` model.
+"""
+function broadcast_fuselage_drag!(para, ip)
+    #---- assume K.E., dissipation, drag areas will be the same for all points
+    KAfTE   = para[iaKAfTE  , ip] # Kinetic energy area at T.E.
+    DAfsurf = para[iaDAfsurf, ip] # Surface dissapation area 
+    DAfwake = para[iaDAfwake, ip] # Wake dissapation area
+    PAfinf  = para[iaPAfinf , ip] # Momentum area at ∞
+
+    # Assume K.E., Disspation and momentum areas are const. for all mission points:
+    para[iaKAfTE  , :] .= KAfTE
+    para[iaDAfsurf, :] .= DAfsurf
+    para[iaDAfwake, :] .= DAfwake
+    para[iaPAfinf , :] .= PAfinf
+end
