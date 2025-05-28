@@ -37,6 +37,7 @@ Structure containing the gas properties of the process and coolant streams.
     - `recircT::Float64`: temperature of recirculating flow at HX inlet (K)
     - `mdot_r::Float64`: recirculating flow mass flow rate (kg/s)
     - `h_lat::Float64`: latent heat capacity in freestream coolant liquid (J/kg)
+    - `P_recirc::Float64`: power required to pump recirculating flow (W)
 """
 @kwdef mutable struct HX_gas
       fluid_p :: String = ""
@@ -64,6 +65,7 @@ Structure containing the gas properties of the process and coolant streams.
       recircT :: Float64 = 0.0 
       mdot_r :: Float64 = 0.0 
       h_lat :: Float64 = 0.0 
+      P_recirc :: Float64 = 0.0
 end
 
 # Overload Base.getproperty for convenience
@@ -633,12 +635,17 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       μ_p_m = 0.0
       Δh_p = 0.0
       Δh_c = 0.0
+      Vc_m = 0.0
+      ρ_c_m = 0.0
+      Cf = 0.0
+      Tc_m = 0.0
 
       mdot_r = 0.0 #Initialize
       for i = 1 : N_iter
             
             if frecirc
                   #Calculate assuming that C_c = C_min
+                  #Note that this ignores the enthalpy increase in the recirculation stream when it is recompressed
                   mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Tp_in -  recircT) )
                   
                   C_check = (mdot_c_inf + mdot_r) * cp_c_in #Coolant heat capacity rate, to check validity of above assumption
@@ -763,6 +770,13 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             Δp_p = Δp_calc_staggered_cyl(Re_Dv, G, L, ρ_p_m, Dv, tD_o, xtm_D, xl_D, μ_μw) #Calculate using the method of Gunter and Shaw (1945)
       end
 
+      # Compute coolant pressure drop
+      τw = ρ_c_m * Vc_m^2 / 2 * Cf
+      A_s_c = pi * tD_i * l * n_passes #Surface area on one coolant stream
+      A_cs_c = pi * tD_i^2 / 4 #cross-sectional area of one coolant stream
+      Δp_c = τw * A_s_c / A_cs_c
+      Δp_c = Δp_c * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
+
       #---------------------------------
       # Output structs
       #---------------------------------
@@ -773,6 +787,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgas.Δh_p = Δh_p
       HXgas.Δh_c = Δh_c
       HXgas.Δp_p = Δp_p
+      HXgas.Δp_c = Δp_c
       HXgas.ε = ε
 
       if frecirc
@@ -1423,6 +1438,14 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
                               hxoper!(HXgasp, HX.HXgeom)
                         end
                   end
+
+                  if i == 1 && frecirc #If there is recirculation in the HX
+                        #Store power drawn by recirculation to use it in the engine
+                        P_recirc = find_recirculation_power(HXgasp)
+                        pare[ieHXrecircP, ip] =  P_recirc
+                        HXgasp.P_recirc = P_recirc
+                  end
+
                   HXgas_mis[ip] = HXgasp
 
                   #Store output in pare
@@ -1505,6 +1528,7 @@ function resetHXs(pare)
       pare[ieRegenDeltap, :] .= 0.0
       pare[ieRadiatorDeltah, :] .= 0.0
       pare[ieRadiatorDeltap, :] .= 0.0
+      pare[ieHXrecircP, :] .= 0.0
 
       #Reset heat of vaporization in combustor
       pare[iehvapcombustor, :, :] = pare[iehvap, :, :]
@@ -1756,6 +1780,40 @@ function findMinWallTemperature!(pare, HXs)
             end
             pare[ieHXminTwall, ip] = minT
       end
+end
+
+"""
+      find_recirculation_power(HXgas)
+
+Calculates and stores the power needed to drive recirculation in a HX.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXgas::HX_gas`: structure with HX fluid data
+
+    **Outputs:**
+   - `P::Float64`: power needed to drive recirculation (W)
+"""
+function find_recirculation_power(HXgas)
+      
+      mdot_r = HXgas.mdot_r
+      if mdot_r ≈ 0.0 #If there is no recirculation, return 0
+            return 0.0
+      end
+      Tout = HXgas.Tc_out
+      igas_c = HXgas.igas_c
+      Δp_c = HXgas.Δp_c
+      pc_in = HXgas.pc_in
+
+      pc_out = pc_in - Δp_c #Outlet pressure of coolant in HX
+
+      #Find specific heat capacity at outlet
+      _, _, _, _, cp_out, R = gasfun(igas_c, Tout)
+      γ = cp_out / (cp_out - R)
+
+      #Isentropic compression power
+      P = mdot_r * cp_out * Tout * ((pc_in/pc_out)^(1 - 1 / γ) - 1)
+      return P
 end
 
 """
