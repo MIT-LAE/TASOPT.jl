@@ -645,6 +645,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             
             if frecirc
                   #Calculate assuming that C_c = C_min
+                  #Note that this ignores the enthalpy increase in the recirculation stream when it is recompressed
                   mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Tp_in -  recircT) )
                   
                   C_check = (mdot_c_inf + mdot_r) * cp_c_in #Coolant heat capacity rate, to check validity of above assumption
