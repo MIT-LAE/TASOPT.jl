@@ -1008,14 +1008,17 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     PFEIsToPlot = []
     maxPay = ac.parg[igWpaymax]
     Wpax = ac.parm[imWperpax, 1]
+    sizingWpay = ac.parm[imWpay, 1] #sizing payload
 
-    RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
+    RangeArray =  ac.parm[imRange,1] * sort([LinRange(0.1,2.0,Rpts-1); 1.0]) #This ensures design range is always shown
+    tolweight = 1.0 #One newton tolerance for weight checks
 
     for Range = RangeArray
         if maxPay == 0
             break
         else
-            Payloads = (maxPay) * LinRange(1, 0, Ppts)
+            #This ensures design payload is always included
+            Payloads = reverse(sort([(maxPay) * LinRange(0, 1, Ppts - 1); sizingWpay]))
         end
         ac.parm[imRange,2] = Range
         for mWpay = Payloads
@@ -1032,7 +1035,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
                 WTO = Wempty + mWpay + mWfuel
 
                 # if weights are negative or above their max, point is infeasible
-                if (WTO > Wmax) || (mWfuel > Fuelmax) || (WTO < 0.0) || (mWfuel < 0.0)
+                if ((WTO - Wmax) > tolweight) || ((mWfuel - Fuelmax) > tolweight) || (WTO < 0.0) || (mWfuel < 0.0)
                     WTO = 0.0
                     mWfuel = 0.0
 
