@@ -44,6 +44,11 @@ function size_fuel_cell!(ac, ip, imission)
     fcdata.FC_heat[ip, imission] = Q
     fcdata.number_cells = n_cells
     fcdata.area_cell = A_cell
+
+    #Fuel cell weight based on specific power
+    P2A_des = Pdes / (n_cells * A_cell) #Power to area ratio at design point
+    W_stack, _ = PEM_weight_from_specific_power(u_FC, Pdes, P2A_des, fcdata.specific_power)
+    fcdata.stack_weight = W_stack
 end
 
 """
