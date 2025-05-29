@@ -1066,57 +1066,61 @@ else
 end
 engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
     
-# Heat exchangers
-HEx = readprop("HeatExchangers")
-dHEx = dprop["HeatExchangers"]
-    parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
+# Heat exchangers, only if in the model file (assigned 0 in the default .tomls)
+# Would be better if there were an independent toggle like `has_wing_fuel` for `fuse_tank` but good enough for now
+if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
+    HEx = readprop("HeatExchangers")
+    dHEx = dprop["HeatExchangers"]
+        parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
 
-    pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
-    pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-    pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
+        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
+        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+        
+        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
+        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
+        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+
+        pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
+        pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
+        pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+
+        pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
+        pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
+        pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+
+        pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
+        pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
+        pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+end
+
+#create options object
+ac_options = TASOPT.Options(
+    opt_fuel = fueltype,
+    ifuel = ifuel,
+    has_wing_fuel = has_wing_fuel,
+    has_centerbox_fuel = has_centerbox_fuel,
+    has_fuselage_fuel = (nftanks>0),
     
-    pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
-    pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-    pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+    opt_engine_location = engloc,
+    opt_prop_sys_arch = propsys,
+    
+    is_doubledecker = is_doubledecker,
 
-    pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
-    pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
-    pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
-
-    pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
-    pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
-    pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
-
-    pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
-    pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
-    pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
-
-    ac_options = TASOPT.Options(
-        opt_fuel = fueltype,
-        ifuel = ifuel,
-        has_wing_fuel = has_wing_fuel,
-        has_centerbox_fuel = has_centerbox_fuel,
-        has_fuselage_fuel = (nftanks>0),
-        
-        opt_engine_location = engloc,
-        opt_prop_sys_arch = propsys,
-        
-        is_doubledecker = is_doubledecker,
-
-        opt_move_wing = opt_move_wing
-    )
+    opt_move_wing = opt_move_wing
+)
     
 #Create aircraft object
-    ac = TASOPT.aircraft(name, description, ac_options,
-        parg, parm, para, pare, is_sized, 
-        fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
-    
-    # ---------------------------------
-    # Recalculate cabin length
-    if calculate_cabin #Resize the cabin if desired, keeping deltas
-        @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-        update_fuse_for_pax!(ac) #update fuselage dimensions
-    end
+ac = TASOPT.aircraft(name, description, ac_options,
+    parg, parm, para, pare, is_sized, 
+    fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
+
+# ---------------------------------
+# Recalculate cabin length
+if calculate_cabin #Resize the cabin if desired, keeping deltas
+    @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
+    update_fuse_for_pax!(ac) #update fuselage dimensions
+end
 
 return ac
 
