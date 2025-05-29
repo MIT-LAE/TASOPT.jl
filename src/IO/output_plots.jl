@@ -1006,7 +1006,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     RangesToPlot = []
     PayloadToPlot = []
     PFEIsToPlot = []
-    maxPay = ac.parg[igWpay]
+    maxPay = ac.parg[igWpaymax]
     Wpax = ac.parm[imWperpax, 1]
 
     RangeArray = ac.parm[imRange,1] * LinRange(0.1,2,Rpts)
