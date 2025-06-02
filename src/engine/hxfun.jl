@@ -1042,7 +1042,6 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       Iobj = Inf #Start with very high value of objective function
       try 
             hxsize!(HXgas, HXgeom)
-            hxsize!(HXgas, HXgeom)
 
             #Extract outputs
             Pl_p = HXgas.Pl_p
