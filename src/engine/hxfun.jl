@@ -1182,6 +1182,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
             #---------------------------------
             HXgeom, HXgas = PrepareHXobjects(HeatExchangers, i, ipdes, imission, igas, pare_sl, type, "sizing", ε_des[i], Mp_in[i])
             HXgeom.Δpdes = max(maximum(ac.pare[iept3,:,:]), maximum(ac.pare[ieRadiatorCoolantP,:,:])) #size wall thickness for maximum HPC or coolant pressure
+            HXgeom.maxL = ac.parg[igHXmaxL] #Maximum HX length
 
             # Guess starting point for optimization
             #First calculate minimum tube length
@@ -1264,7 +1265,6 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       # Heat exchanger materials and wall properties
       HXgeom.xl_D = 1
       HXgeom.Rfc = 8.815E-05 #Hydrogen gas fouling resistance, m^2*K/W
-      HXgeom.maxL = 0.25 #maximum HEX length TODO make this an input?
 
       mcore = pare_sl[iemcore]
       mofft = pare_sl[iemofft]
@@ -1336,7 +1336,6 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
             HXgeom.D_i = D_i
             HXgeom.Rfp = 1.761e-4 #Compressed air fouling resistance, m^2*K/W 
             HXgeom.Rfc = 9E-05 #Distilled water fouling resistance, m^2*K/W
-            HXgeom.maxL = 2.0 #Maximum radiator length
             HXgeom.material = StructuralAlloy("Al-2219-T87")
 
             iTc_in = HXsDict[type]["iTc_in"]

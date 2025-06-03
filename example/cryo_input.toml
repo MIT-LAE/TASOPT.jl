@@ -532,8 +532,9 @@ name = "TASOPT Model with cryo fuel and HX"
 
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
     recirculation_flag = 1
-    recirculation_temperature = 200
-    core_inner_diameter = 0.2
+    recirculation_temperature = "200 K"
+    maximum_heat_exchanger_length = "0.25 m"
+    core_inner_diameter = "0.2 m"
     added_mass_frac = 1.0
 
     precooler_order = 1

@@ -182,8 +182,9 @@
       const igdHXInterC = 123
       const igdHXRegen = 124
       const igHXaddmassfrac = 125
-      const igWHXs = 126
-      const igtotal    = 126
+      igHXmaxL = 126
+      const igWHXs = 127
+      const igtotal    = 127
 
 #---- indices for aero variables at each mission point
       const iaalt     =  1
