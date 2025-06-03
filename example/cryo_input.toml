@@ -39,7 +39,7 @@ name = "TASOPT Model with cryo fuel and HX"
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
-    prop_sys_arch = "TF" #Options are TF: Turbofan
+    prop_sys_arch = "fuel_cell_with_ducted_fan" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
     fuel_type       = "LH2" # Choices are "Jet-A", "LH2" and "CH4"
@@ -545,12 +545,44 @@ name = "TASOPT Model with cryo fuel and HX"
     intercooler_inlet_mach = 0.1
 
     regenerative_order = 4
-    regenerative_effectiveness = 0.8
+    regenerative_effectiveness = 0
     regenerative_inlet_mach = 0.2
 
     turbine_cooler_order = 3
     turbine_cooler_effectiveness = 0
     turbine_cooler_inlet_mach = 0.02
+
+[Propulsion.DuctedFan]
+    maximum_fan_power = 10e6
+    
+    rate_of_climb = "2.5 m/s"
+
+    Fan_PR = 1.685
+    fan_eta_poly = 0.8948
+    M2  = 0.60
+
+    diffuser_PR    = 0.998
+    fan_nozzle_PR  = 0.98
+
+[Propulsion.FuelCell]
+    fuel_cell_type = "HT-PEMFC"
+    takeoff_current_density = 10000
+    fuel_cell_temperature = "453.15 K"
+    fuel_cell_pressure = "3 bar"
+    water_concentration_anode = 0.1
+    water_concentration_cathode = 0.1
+    hydrogen_equivalence_ratio = 3.0
+    oxygen_equivalence_ratio = 3.0
+    thickness_membrane = "0.1 mm"
+    thickness_anode = "0.25 mm"
+    thickness_cathode = "0.25 mm"
+    stack_design_voltage = 200
+    stack_specific_power = 5000 #W/kg
+
+    radiator_effectiveness = 0.8
+    radiator_inlet_mach = 0.12
+    radiator_inner_diameter = "0.4 m"
+    radiator_added_mass_frac = 1.0
     
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
