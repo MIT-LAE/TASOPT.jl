@@ -39,7 +39,7 @@ name = "TASOPT Model with cryo fuel and HX"
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
-    prop_sys_arch = "fuel_cell_with_ducted_fan" #Options are TF: Turbofan
+    prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            TE: Turbo-electric
 [Fuel]
     fuel_type       = "LH2" # Choices are "Jet-A", "LH2" and "CH4"
@@ -545,7 +545,7 @@ name = "TASOPT Model with cryo fuel and HX"
     intercooler_inlet_mach = 0.1
 
     regenerative_order = 4
-    regenerative_effectiveness = 0
+    regenerative_effectiveness = 0.8
     regenerative_inlet_mach = 0.2
 
     turbine_cooler_order = 3
