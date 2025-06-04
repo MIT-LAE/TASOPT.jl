@@ -20,7 +20,6 @@ Calls function ductedfansize! or ductedfanoper! for one operating point.
 function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initializes_engine::Bool, iterw::Int64 = 0)
     #Unpack data storage arrays
     parg, _, para, pare, options, _, _, wing, _, _, eng, _ = unpack_ac(ac, imission, ip=ip)
-    iBLIc = eng.model.has_BLI_cores
 
     neng = parg[igneng]
     S = wing.layout.S
@@ -95,7 +94,7 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
         T8, u8, p8, cp8, R8, A8,
         epf,
         etaf, Lconv = ductedfansize!(gee, M0, T0, p0, a0, M2,
-                        Fe, Phiinl, Kinl, iBLIc,
+                        Fe, Phiinl, Kinl,
                         pif,
                         pid, pifn, 
                         epolf,
@@ -159,7 +158,7 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
             T7, u7, p7, cp7, R7, M7,
             T8, u8, p8, cp8, R8, M8, A8,
             epf, etaf = ductedfanoper!(M0, T0, p0, a0, Tref, pref,
-                            Phiinl, Kinl, iBLIc,
+                            Phiinl, Kinl,
                             pid, pifn, 
                             pifD, 
                             mbfD, NbfD,
@@ -187,7 +186,7 @@ function ductedfancalc!(ac, case::String, imission::Int64, ip::Int64, initialize
             T7, u7, p7, cp7, R7, M7,
             T8, u8, p8, cp8, R8, M8, A8,
             epf, etaf = ductedfanoper!(M0, T0, p0, a0, Tref, pref,
-                            Phiinl, Kinl, iBLIc,
+                            Phiinl, Kinl,
                             pid, pifn, 
                             pifD, 
                             mbfD, NbfD,
