@@ -119,17 +119,9 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       # Insulation weight
       N = length(t_cond) #Number of insulation layers
       #Initialize storage vectors
-      Vcyl_insul = zeros(Float64, N)
-      Winsul = zeros(Float64, N)
+      Winsul_sum = 0.0
       Shead_insul = zeros(Float64, N + 1) #add one for first (tank wall) surface 
-      Vhead_insul = zeros(Float64, N)
-      rho_insul = zeros(Float64, N)
       L = Lhead + tskin #Length of ellipsoid semi-minor axis
-
-      #Assemble vector with layer densities
-      for i = 1:N
-            rho_insul[i] = material_insul[i].ρ
-      end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
       _, Ao = scaled_cross_section(fuse_cs, Ro) #Cross-sectional area of double bubble
@@ -142,18 +134,18 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
 
             _, Ao = scaled_cross_section(fuse_cs, Ro)
             _, Ai = scaled_cross_section(fuse_cs, Ri)
-            Vcyl_insul[n]  = l_cyl * (Ao - Ai) #Volume of cylindrical layer
+            rho_insul = material_insul[n].ρ
+            Vcyl_insul  = l_cyl * (Ao - Ai) #Volume of cylindrical layer
             Shead_insul[n+1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625 #Surface area of ellipsodal cap
 
             Area_coeff = Shead_insul[n+1] / Ro^2 #coefficient that relates area and radius squared
-            Vhead_insul[n] = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
+            Vhead_insul = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
             
-            Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee #Weight of insulation layer
+            Winsul_sum += (Vcyl_insul + 2*Vhead_insul) * rho_insul * gee #Weight of insulation layer
 
             Ri = Ro #Update inner radius for next point
       end
 
-      Winsul_sum = sum(Winsul)
       Wtank = (Wtank + Winsul_sum)
       l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
 
