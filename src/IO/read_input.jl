@@ -1035,29 +1035,35 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
     enginecalc! = calculate_fuel_cell_with_ducted_fan!
     engineweight! = fuel_cell_with_ducted_fan_weight!
     enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
-    pare[iePfanmax,:,:] .= 20e6
-
     fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+    
+    ductedfan = readprop("DuctedFan")
+    dductedfan = Dict()
+    pare[iePfanmax,:,:] .= read_input("maximum_fan_power", ductedfan, dductedfan)
+    para[iaROCdes, ipclimb1:ipclimbn,:] .= Speed(read_input("rate_of_climb", ductedfan, dductedfan))
 
-    fcdata.type = "HT-PEMFC"
-    fcdata.current_density[iprotate,:] .= 1e4
-    fcdata.FC_temperature .= 453.15
-    fcdata.FC_pressure .= 3e5
-    fcdata.water_concentration_anode .= 0.1
-    fcdata.water_concentration_cathode .= 0.1
-    fcdata.λ_H2 .= 3.0
-    fcdata.λ_O2 .= 3.0
-    fcdata.thickness_membrane = 100e-6
-    fcdata.thickness_anode  = 250e-6
-    fcdata.thickness_cathode  = 250e-6
-    fcdata.design_voltage = 200.0
-    pare[ieRadiatorepsilon,:,:] .= 0.7
-    pare[ieRadiatorMp,:,:] .= 0.12
-    pare[ieDi,:,:] .= 0.4
+    fuelcell = readprop("FuelCell")
+    dfuelcell = Dict()
+    fcdata.type = read_input("fuel_cell_type", fuelcell, dfuelcell)
+    fcdata.current_density[iprotate,:] .= read_input("takeoff_current_density", fuelcell, dfuelcell)
+    fcdata.FC_temperature .= Temp(read_input("fuel_cell_temperature", fuelcell, dfuelcell))
+    fcdata.FC_pressure .= Pressure(read_input("fuel_cell_pressure", fuelcell, dfuelcell))
+    fcdata.water_concentration_anode .= read_input("water_concentration_anode", fuelcell, dfuelcell)
+    fcdata.water_concentration_cathode .= read_input("water_concentration_cathode", fuelcell, dfuelcell)
+    fcdata.λ_H2 .= read_input("hydrogen_equivalence_ratio", fuelcell, dfuelcell)
+    fcdata.λ_O2 .= read_input("oxygen_equivalence_ratio", fuelcell, dfuelcell)
+    fcdata.thickness_membrane = Distance(read_input("thickness_membrane", fuelcell, dfuelcell))
+    fcdata.thickness_anode  = Distance(read_input("thickness_anode", fuelcell, dfuelcell))
+    fcdata.thickness_cathode  = Distance(read_input("thickness_cathode", fuelcell, dfuelcell))
+    fcdata.design_voltage = read_input("stack_design_voltage", fuelcell, dfuelcell)
+    fcdata.specific_power = read_input("stack_specific_power", fuelcell, dfuelcell)
 
-    para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
+    pare[ieRadiatorepsilon,:,:] .= read_input("radiator_effectiveness", fuelcell, dfuelcell)
+    pare[ieRadiatorMp,:,:] .= read_input("radiator_inlet_mach", fuelcell, dfuelcell)
+    pare[ieDi,:,:] .= Distance(read_input("radiator_inner_diameter", fuelcell, dfuelcell))
+    parg[igHXaddmassfrac] = read_input("radiator_added_mass_frac", fuelcell, dfuelcell)
+
     engdata = fcdata
-
 else
     
     error("Propulsion system \"$propsys\" specified. Choose between

@@ -49,7 +49,7 @@ include("ducted_fan/ductedfanoper.jl")
 include("ducted_fan/ductedfanweight.jl")
 
 #Fuel cell models
-include("PEMfuelcell.jl")
+include("fuel_cell/PEMfuelcell.jl")
 include("fuel_cell/FC_objects.jl")
 include("fuel_cell/fuel_cell_operations.jl")
 include("fuel_cell/FC_ducted_fan_models.jl")
