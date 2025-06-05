@@ -71,6 +71,8 @@ function dx_cabin(fuse::Fuselage)
     return fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder
 end
 
+Rfuse(fuse::Fuselage) = Rfuse(fuse.layout.cross_section)
+
 # fuselage = Fuselage()
 
 
