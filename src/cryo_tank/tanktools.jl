@@ -248,18 +248,18 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
     ODEparams = (u, params)
 
     #Integrate profiles across mission
-    y0 = @SVector [p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
+    y0 = @SVector Float64[p0, β0, M0, 0.0, 0.0, 0.0] #Initial states
 
     tspan = (0.0, para_alt[iatime,end]) #start and end times
 
     dy_dt(y, p, t) = TankDerivatives(t, y, p[1], p[2]) #State derivatives
     #ODE problem; specify changes in mission segments for better speed
     prob = ODEProblem(dy_dt, y0, tspan, ODEparams, tstops = para_alt[iatime,:], reltol = 1e-8)
-    sol = solve(prob, Tsit5()) #Solve ODE problem using recommended solver
+    sol = solve(prob, Tsit5())::ODESolution #Solve ODE problem using recommended solver
 
     #Extract solution vector
-    ts = sol.t 
-    y = sol.u
+    ts = Vector{Float64}(sol.t)
+    y = sol.u::Vector{StaticArraysCore.SVector{6, Float64}}
     y = hcat(y...) #Concatenate into array
 
     #Produce outputs
@@ -271,11 +271,11 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
     Mboils = y[6, :] #Cumulative mass that has been boiled off evolution
     mdot_boils = calculate_boiloff_rate(ts, Mboils) #Calculate boiloff rate
 
-    mdots = zeros(length(ts))
-    Qs = zeros(length(ts))
+    mdots = zeros(Float64, length(ts))
+    Qs = zeros(Float64, length(ts))
     for (i,t) in enumerate(ts)
-        mdots[i] = mdot_calc(t) #Fuel burn mass flow rate
-        Qs[i] = Q_calc(t) #Heat transfer rate into tank
+        mdots[i] = mdot_calc(t)::Float64 #Fuel burn mass flow rate
+        Qs[i] = Q_calc(t)::Float64 #Heat transfer rate into tank
     end
 
     return ts, ps, βs, Ms, Mburns, Mboils, mdot_boils, Mvents, mdots, Qs

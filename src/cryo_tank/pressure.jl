@@ -137,7 +137,7 @@ This function returns the time derivatives for pressure and liquid volume fill f
     **Outputs:**
     - `dydt::Vector{Float64}`: vector with the state derivatives in time
 """
-function TankDerivatives(t::Float64, y::AbstractVector{Float64}, u::tank_inputs, params::tank_params)
+function TankDerivatives(t::Float64, y::SVector{6, Float64}, u::tank_inputs, params::tank_params)
     #Extract states 
     p = y[1]
     β = y[2]
@@ -179,7 +179,7 @@ function TankDerivatives(t::Float64, y::AbstractVector{Float64}, u::tank_inputs,
     dp_dt = dpdt(mix_current, Q, W, mdot, xout, mdot_vent, xvent, V, α)
     dβ_dt = dβdt(mix_current, dp_dt, mdot_tot, V) #dβ/dt
     #Calculate derivatives and store them
-    dydt = @SVector[
+    dydt = @SVector Float64[
         dp_dt, 
         dβ_dt,
         -mdot_tot, #dM_tank/dt
