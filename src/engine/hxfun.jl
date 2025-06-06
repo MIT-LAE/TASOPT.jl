@@ -395,7 +395,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       n_passes_prev = n_passes
       Ah = 0.0
       Cf = 0.0
-      Tw = (Tp_out + Tp_in + Tc_out + Tc_in) / 4 #guess wall temperature
+      Tw_c = Tw_p = (Tp_out + Tp_in + Tc_out + Tc_in) / 4 #guess wall temperature
       for i = 1:N_iter
             N_L = n_passes * n_stages #total number of rows
 
@@ -404,7 +404,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor and skin-friction coefficient
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
-                  Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+                  Nu_c = Nu_cm * (Tw_c/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
             else
                   Nu_c = Nu_cm
             end
@@ -413,7 +413,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             # Calculate heat transfer coefficient for process side
             Re_D_p = G * tD_o / μ_p_m #Reynolds number based on minimum free flow and tube outer diameter
             Nu_pm = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number based on mean flow
-            Nu_p = Nu_pm * (Tw/Tc_m)^0.0 #Eq.(4.1) in Kays and London (1998)
+            Nu_p = Nu_pm * (Tw_p/Tp_m)^0.0 #Eq.(4.1) in Kays and London (1998)
             h_p = Nu_p * k_p_m / tD_o
 
             #Overall thermal resistance times area (m^2 K / W)
@@ -423,8 +423,11 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             Ah = NTU * C_min * RA   #Find required process-side cooling area from NTU
             n_passes = Ah / (N_t * n_stages * pi * tD_o * l)
 
-            #Wall temperature (neglect change across wall)
-            Tw = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc)
+            #Wall temperature (on process side)
+            Tw_p = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc + Rfp + t / kw)
+
+            #Wall temperature (on coolant side)
+            Tw_c = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ))
 
             if (abs((n_passes_prev - n_passes)/n_passes) < tol)
                   break #Break for loop if convergence has been reached
@@ -435,7 +438,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       # Compute pressure drops
       #---------------------------------
-      _, _, _, _, μ_p_w, _ = gasPr(fluid_p, Tw)
+      _, _, _, _, μ_p_w, _ = gasPr(fluid_p, Tw_p)
       μ_μw = μ_p_m / μ_p_w #Ratio of free flow viscosity to wall viscosity
 
       N_tubes_tot = N_t * n_passes * n_stages #total number of tubes across all rows
@@ -461,7 +464,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       A_s_c = pi * tD_i * l * n_passes #Surface area on one coolant stream
       A_cs_c = pi * tD_i^2 / 4 #cross-sectional area of one coolant stream
       Δp_c = τw * A_s_c / A_cs_c
-      Δp_c = Δp_c * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
+      Δp_c = Δp_c * (Tw_c/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
 
       Pl_c = Δp_c * mdot_c / ρ_c_m #Power loss due to pressure drop in coolant stream
 
@@ -627,7 +630,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       # Guess outlet and wall temperatures
       Tp_out = Tp_in - Qg / C_p 
       Tc_out = Tc_in + Qg / C_c
-      Tw = (Tp_out + Tp_in + Tc_out + Tc_in) / 4
+      Tw_c = Tw_p = (Tp_out + Tp_in + Tc_out + Tc_in) / 4
 
       N_iter = 20 #Rapid convergence expected
 
@@ -694,7 +697,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             # Calculate heat transfer coefficient for process side
             Re_D_p = G * tD_o / μ_p_m #Reynolds number based on minimum free flow and tube outer diameter
             Nu_pm = Nu_calc_staggered_cyl(Re_D_p, Pr_p_m, N_L, xtm_D, xl_D) #Nusselt number
-            Nu_p = Nu_pm * (Tw/Tc_m)^0.0 #Eq.(4.1) in Kays and London (1998)
+            Nu_p = Nu_pm * (Tw_p/Tp_m)^0.0 #Eq.(4.1) in Kays and London (1998)
             h_p = Nu_p * k_p_m / tD_o
 
             #Calculate heat transfer coefficient for coolant
@@ -702,7 +705,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor
             Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
-                  Nu_c = Nu_cm * (Tw/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
+                  Nu_c = Nu_cm * (Tw_c/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
             else
                   Nu_c = Nu_cm
             end
@@ -723,8 +726,11 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             # Calculate total heat transfer and exit temperatures
             Q = ε * Qmax #Actual heat transfer rate
 
-            #Wall temperature (neglect change across wall)
-            Tw = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc)
+            #Wall temperature (on process side)
+            Tw_p = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ) + tD_o / tD_i * Rfc + Rfp + t / kw)
+
+            #Wall temperature (on coolant side)
+            Tw_c = Tc_m + ((Tp_m - Tc_m)/RA) * (1 / ( h_c * (tD_i/tD_o) ))
 
             #Outlet properties
             Tp_out_guess = Tp_in - Q / C_p 
@@ -754,7 +760,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       # Compute pressure drop
       #---------------------------------
-      _, _, _, _, μ_p_w, _ = gasPr(fluid_p, Tw)
+      _, _, _, _, μ_p_w, _ = gasPr(fluid_p, Tw_p)
       _, _, _, _, μ_p_m, _ = gasPr(fluid_p, Tp_m)
       μ_μw = μ_p_m / μ_p_w #Ratio of free flow viscosity to wall viscosity
 
@@ -775,7 +781,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       A_s_c = pi * tD_i * l * n_passes #Surface area on one coolant stream
       A_cs_c = pi * tD_i^2 / 4 #cross-sectional area of one coolant stream
       Δp_c = τw * A_s_c / A_cs_c
-      Δp_c = Δp_c * (Tw/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
+      Δp_c = Δp_c * (Tw_c/Tc_m)^(-0.1) #Eq.(4.2) in Kays and London (1998)
 
       #---------------------------------
       # Output structs
@@ -783,7 +789,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       #Gas parameters
       HXgas.Tp_out = Tp_out
       HXgas.Tc_out = Tc_out
-      HXgas.Tw = Tw
+      HXgas.Tw = Tw_p #Store only process side wall temperature
       HXgas.Δh_p = Δh_p
       HXgas.Δh_c = Δh_c
       HXgas.Δp_p = Δp_p
