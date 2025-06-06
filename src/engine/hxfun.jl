@@ -2,7 +2,6 @@
 # These functions can be used to size and model a heat exchanger with involute staggered tubes in a crossflow
 # The design method is based on the effectiveness-NTU method, described in many sources such as 
 # https://www.mathworks.com/help/hydro/ref/entuheattransfer.html
-# Nicolas Gomez Vega, Oct 2023
 
 const alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
 
