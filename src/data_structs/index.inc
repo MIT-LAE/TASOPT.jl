@@ -182,7 +182,7 @@
       const igdHXInterC = 123
       const igdHXRegen = 124
       const igHXaddmassfrac = 125
-      igHXmaxL = 126
+      const igHXmaxL = 126
       const igWHXs = 127
       const igtotal    = 127
 
