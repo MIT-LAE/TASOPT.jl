@@ -440,97 +440,6 @@ name = "TASOPT Model with cryo fuel and HX"
 [Propulsion]
 
     number_of_engines = 2
-    T_max_metal = 1280.0
-
-    Tt4_takeoff = 1833.0
-    Tt4_frac_bottom_of_climb = 0.2
-    Tt4_frac_top_of_climb = 0.2
-    Tt4_cruise = 1587.0
-
-    # Core in clean flow or does core ingests KE defect?
-    core_in_clean_flow = true
-
-[Propulsion.Turbomachinery]
-
-    BPR = 5.1
-    gear_ratio = 1.0 #Fan gear ratio. 1 => direct drive turbofan
-
-    OPR    = 30.0
-    Fan_PR = 1.685
-    LPC_PR = 2.5
-    
-    diffuser_PR    = 0.998
-    burner_PR      = 0.94
-    fan_nozzle_PR  = 0.98
-    core_nozzle_PR = 0.989
-
-    fan_eta_poly = 0.8948
-    LPC_eta_poly = 0.88
-    HPC_eta_poly = 0.87
-    HPT_eta_poly = 0.889
-    LPT_eta_poly = 0.899
-
-    #Fan efficiency function constants -> epoly_actual = epolyf + Kf*(FPR-FPR0)
-    FPR0 = 1.685
-    Kf_polyeff = -0.077 
-
-    HTR_fan = 0.30
-    HTR_LPC = 0.60
-    HTR_HPC = 0.80
-
-    M2  = 0.60
-    M25 = 0.60
-
-    low_spool_loss  = 0.01
-    high_spool_loss = 0.022
-
-[Propulsion.Combustor]
-    combustion_efficiency = 0.98
-
-[Propulsion.Cooling]
-    hot_streak_T_allowance = 200.0
-    M_turbine_blade_exit = 1.0
-    St = 0.09 # area-weighted effective Stanton number
-    e_film_cooling = 0.70 #blade-to-cooling flow heat transfer eff
-    t_film_cooling = 0.30 #cooling-film effectiveness factor
-    M41 = 0.9 # Mach number at start of cooling-air mixing zone
-    cooling_air_V_ratio = 0.15 #v_cool/v_edge velocity ratio of exiting cooling air
-
-[Propulsion.Offtakes]
-    LPC_mass_offtake_per_pax = 0.0063
-    LPC_mass_offtake_per_max_mass = 0.0
-
-    Low_spool_power_offtake_per_pax = 200.0
-    Low_spool_power_offtake_per_max_mass = 1.8
-
-    Tt_offtake_air = 300.0
-    Pt_offtake_air = 30e3
-
-[Propulsion.Nozzles]
-#Nozzle area factors relative to cruise design_area
-
-    fan_nozzle_area.static       = 1.0
-    fan_nozzle_area.rotation     = 1.0
-    fan_nozzle_area.cutback      = 1.0
-    fan_nozzle_area.climbstart   = 1.0
-    fan_nozzle_area.climbend     = 1.0
-    fan_nozzle_area.descentstart = 1.0
-    fan_nozzle_area.descentend   = 1.0
-
-    core_nozzle_area.static       = 1.0
-    core_nozzle_area.rotation     = 1.0
-    core_nozzle_area.cutback      = 1.0
-    core_nozzle_area.climbstart   = 1.0
-    core_nozzle_area.climbend     = 1.0
-    core_nozzle_area.descentstart = 1.0
-    core_nozzle_area.descentend   = 1.0
-
-
-[Propulsion.Nacelles]
-    nacelle_pylon_wetted_area_ratio = 16.0 # = rSnace = wetted area/fan area
-    nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
-
-[Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
 
 [Propulsion.DuctedFan]
     maximum_fan_power = 10e6
@@ -543,6 +452,14 @@ name = "TASOPT Model with cryo fuel and HX"
 
     diffuser_PR    = 0.998
     fan_nozzle_PR  = 0.98
+
+    fan_nozzle_area.static       = 1.0
+    fan_nozzle_area.rotation     = 1.0
+    fan_nozzle_area.cutback      = 1.0
+    fan_nozzle_area.climbstart   = 1.0
+    fan_nozzle_area.climbend     = 1.0
+    fan_nozzle_area.descentstart = 1.0
+    fan_nozzle_area.descentend   = 1.0
 
 [Propulsion.FuelCell]
     fuel_cell_type = "HT-PEMFC"

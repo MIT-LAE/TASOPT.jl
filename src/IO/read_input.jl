@@ -812,215 +812,215 @@ propsys = read_input("prop_sys_arch", options, doptions)
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
-    parg[igneng] = readprop("number_of_engines")
-    parg[igTmetal] = Temp.(readprop("T_max_metal"))
-    parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
-    parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
+parg[igneng] = readprop("number_of_engines")
 
-    pare[ieTt4, :, :] .= transpose(Temp.(readprop("Tt4_cruise"))) #transpose for proper broadcasting
-
-    Tt4TO = transpose(Temp.(readprop("Tt4_takeoff")))
-    pare[ieTt4, ipstatic, :] .= Tt4TO
-    pare[ieTt4, iprotate, :] .= Tt4TO
-    pare[ieTt4, iptakeoff, :] .= Tt4TO
-
-    pare[ieT0, ipstatic, :] .= T0TO
-    pare[ieT0, iprotate, :] .= T0TO
-    pare[ieT0, iptakeoff, :] .= T0TO
-
-    # Core in clean-flow -> 0; Core ingests KE defect -> 1
-    eng_has_BLI_cores = !readprop("core_in_clean_flow")
-
-    #Turbomachinery
-    turb = readprop("Turbomachinery")
-    dturb = dprop["Turbomachinery"]
-
-readturb(x) = read_input(x, turb, dturb)
-    Gearf = readturb("gear_ratio")
-    BPR = readturb("BPR")
-    OPR = readturb("OPR")
-    pif = readturb("Fan_PR")
-    pilc = readturb("LPC_PR")
-    pihc = OPR./pilc
-
-    pid = readturb("diffuser_PR")
-    pib = readturb("burner_PR")
-    pifn = readturb("fan_nozzle_PR")
-    pitn = readturb("core_nozzle_PR")
-
-    epolf  = readturb("fan_eta_poly") 
-    epollc = readturb("LPC_eta_poly") 
-    epolhc = readturb("HPC_eta_poly") 
-    epolht = readturb("HPT_eta_poly") 
-    epollt = readturb("LPT_eta_poly") 
-
-    HTRf  = readturb("HTR_fan")
-    HTRlc = readturb("HTR_LPC")
-    HTRhc = readturb("HTR_HPC")
-
-    M2  = readturb("M2")
-    M25 = readturb("M25")
-
-    epsl = readturb("low_spool_loss")
-    epsh = readturb("high_spool_loss")
-
-comb = read_input("Combustor", prop, dprop)
-dcomb = dprop["Combustor"]
-    etab = read_input("combustion_efficiency", comb, dcomb)
-
-pare[iepid, :, :] .= pid
-pare[iepib, :, :] .= pib
-pare[iepifn, :, :] .= pifn
-pare[iepitn, :, :] .= pitn
-pare[iepif, :, :] .= pif
-pare[iepilc, :, :] .= pilc
-pare[iepihc, :, :] .= pihc
-pare[ieepolf, :, :] .= epolf
-pare[ieepollc, :, :] .= epollc
-pare[ieepolhc, :, :] .= epolhc
-pare[ieepolht, :, :] .= epolht
-pare[ieepollt, :, :] .= epollt
-pare[ieetab, :, :] .= etab
-pare[ieBPR, :, :] .= BPR
-pare[ieM2, :, :] .= M2
-pare[ieM25, :, :] .= M25
-pare[ieepsl, :, :] .= epsl
-pare[ieepsh, :, :] .= epsh
-
-parg[igGearf] = Gearf
-parg[igHTRf] = HTRf
-parg[igHTRlc] = HTRlc
-parg[igHTRhc] = HTRhc
-
-# Cooling
-cool = readprop("Cooling")
-dcool = dprop["Cooling"]
-readcool(x) = read_input(x, cool, dcool)
-    dTstrk = Temp(readcool("hot_streak_T_allowance"))
-    Mtexit = readcool("M_turbine_blade_exit")
-    StA = readcool("St")
-
-    efilm = readcool("e_film_cooling")
-    tfilm = readcool("t_film_cooling")
-
-    M41 = readcool("M41")
-    ruc = readcool("cooling_air_V_ratio")
-
-    pare[ieM4a, :, :] .= M41
-    pare[ieruc, :, :] .= ruc
-    pare[iedTstrk, :, :] .= dTstrk
-    pare[ieMtexit, :, :] .= Mtexit
-    pare[ieStA, :, :] .= StA
-    pare[ieefilm, :, :] .= efilm
-    pare[ietfilm, :, :] .= tfilm
-
-# Offtakes
-off = readprop("Offtakes")
-doff = dprop["Offtakes"]
-readoff(x) = read_input(x, off, doff)
-    mofftpax  = readoff("LPC_mass_offtake_per_pax")
-    mofftmMTO = readoff("LPC_mass_offtake_per_max_mass")
-
-    Pofftpax  = readoff("Low_spool_power_offtake_per_pax")
-    PofftmMTO = readoff("Low_spool_power_offtake_per_max_mass")
-
-    Ttdischarge = readoff("Tt_offtake_air")
-    Ptdischarge = readoff("Pt_offtake_air")
-
-    # TODO Tt9 is really a terrible numbering convention for the discharge temp 
-
-    pare[ieTt9, :, :] .= Ttdischarge
-    pare[iept9, :, :] .= Ptdischarge
-
-    parg[igmofWpay] = mofftpax ./ parm[imWperpax, 1]
-    parg[igmofWMTO] = mofftmMTO / gee
-    parg[igPofWpay] = Pofftpax ./ parm[imWperpax, 1]
-    parg[igPofWMTO] = PofftmMTO / gee
-
-## Nozzle areas
-noz = readprop("Nozzles")
-dnoz = dprop["Nozzles"]
-corenoz = read_input("core_nozzle_area", noz, dnoz)
-dcorenoz = dnoz["core_nozzle_area"]
-readcnoz(x) = read_input(x, corenoz, dcorenoz)
-    A5static   = readcnoz("static")
-    A5takeoff  = readcnoz("rotation")
-    A5cutback  = readcnoz("cutback")
-    A5climb1   = readcnoz("climbstart")
-    A5climbn   = readcnoz("climbend")
-    A5descent1 = readcnoz("descentstart")
-    A5descentn = readcnoz("descentend")
-
-fannoz = read_input("fan_nozzle_area", noz, dnoz)
-dfannoz = dnoz["fan_nozzle_area"]
-readfnoz(x) = read_input(x, fannoz, dfannoz)
-    A7static   = readfnoz("static")
-    A7takeoff  = readfnoz("rotation")
-    A7cutback  = readfnoz("cutback")
-    A7climb1   = readfnoz("climbstart")
-    A7climbn   = readfnoz("climbend")
-    A7descent1 = readfnoz("descentstart")
-    A7descentn = readfnoz("descentend")
-
-    pare[ieA7fac, ipstatic, :] .= A7static
-    pare[ieA7fac, iprotate, :] .= A7takeoff
-    pare[ieA7fac, iptakeoff, :] .= A7takeoff
-    pare[ieA7fac, ipcutback, :] .= A7cutback
-
-    pare[ieA5fac, ipstatic, :] .= A5static
-    pare[ieA5fac, iprotate, :] .= A5takeoff
-    pare[ieA5fac, iptakeoff, :] .= A5takeoff
-    pare[ieA5fac, ipcutback, :] .= A5cutback
-
-    for ip = ipclimb1:ipclimbn
-
-        frac = (ip - ipclimb1) /  (ipclimbn - ipclimb1)
-
-        pare[ieA7fac, ip, :] .= A7climb1 * (1.0 - frac) + A7climbn * frac
-        pare[ieA5fac, ip, :] .= A5climb1 * (1.0 - frac) + A5climbn * frac
-
-    end
-
-    pare[ieA7fac, ipcruise1:ipcruisen, :] .= 1.0
-    pare[ieA5fac, ipcruise1:ipcruisen, :] .= 1.0
-
-    for ip = ipdescent1:ipdescentn
-
-        frac = (ip - ipdescent1) / (ipdescentn - ipdescent1)
-
-        pare[ieA7fac, ip, :] .= A7descent1 * (1.0 - frac) + A7descentn * frac
-        pare[ieA5fac, ip, :] .= A5descent1 * (1.0 - frac) + A5descentn * frac
-
-    end
-
-    pare[ieA7fac, iptest, :] .= A7static
-    pare[ieA5fac, iptest, :] .= A5static
-
-nac = readprop("Nacelles")
-dnac = dprop["Nacelles"]
-    #- nacelle drag stuff
-    parg[igrSnace] = read_input("nacelle_pylon_wetted_area_ratio", nac, dnac)
-    parg[igrVnace] = read_input("nacelle_local_velocity_ratio", nac, dnac)
-
-weight = readprop("Weight")
-dweight = dprop["Weight"]
-    parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
-    parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
-    
-    #read/check engine weight model options
-    if compare_strings(propsys, "tf")
-    #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
-        TF_wmodel = read_input("weight_model", weight, dweight)
-        if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
-            error("\"$TF_wmodel\" engine weight model was specifed. 
-            Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
-        end
-    elseif compare_strings(propsys, "te")
-        @warn("Propulsion weight models for turboelectric are currently not available.")
-    end
-
-# Create engine object
 if compare_strings(propsys,"tf")
+        parg[igTmetal] = Temp.(readprop("T_max_metal"))
+        parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
+        parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
+
+        pare[ieTt4, :, :] .= transpose(Temp.(readprop("Tt4_cruise"))) #transpose for proper broadcasting
+
+        Tt4TO = transpose(Temp.(readprop("Tt4_takeoff")))
+        pare[ieTt4, ipstatic, :] .= Tt4TO
+        pare[ieTt4, iprotate, :] .= Tt4TO
+        pare[ieTt4, iptakeoff, :] .= Tt4TO
+
+        pare[ieT0, ipstatic, :] .= T0TO
+        pare[ieT0, iprotate, :] .= T0TO
+        pare[ieT0, iptakeoff, :] .= T0TO
+
+        # Core in clean-flow -> 0; Core ingests KE defect -> 1
+        eng_has_BLI_cores = !readprop("core_in_clean_flow")
+
+        #Turbomachinery
+        turb = readprop("Turbomachinery")
+        dturb = dprop["Turbomachinery"]
+
+    readturb(x) = read_input(x, turb, dturb)
+        Gearf = readturb("gear_ratio")
+        BPR = readturb("BPR")
+        OPR = readturb("OPR")
+        pif = readturb("Fan_PR")
+        pilc = readturb("LPC_PR")
+        pihc = OPR./pilc
+
+        pid = readturb("diffuser_PR")
+        pib = readturb("burner_PR")
+        pifn = readturb("fan_nozzle_PR")
+        pitn = readturb("core_nozzle_PR")
+
+        epolf  = readturb("fan_eta_poly") 
+        epollc = readturb("LPC_eta_poly") 
+        epolhc = readturb("HPC_eta_poly") 
+        epolht = readturb("HPT_eta_poly") 
+        epollt = readturb("LPT_eta_poly") 
+
+        HTRf  = readturb("HTR_fan")
+        HTRlc = readturb("HTR_LPC")
+        HTRhc = readturb("HTR_HPC")
+
+        M2  = readturb("M2")
+        M25 = readturb("M25")
+
+        epsl = readturb("low_spool_loss")
+        epsh = readturb("high_spool_loss")
+
+    comb = read_input("Combustor", prop, dprop)
+    dcomb = dprop["Combustor"]
+        etab = read_input("combustion_efficiency", comb, dcomb)
+
+    pare[iepid, :, :] .= pid
+    pare[iepib, :, :] .= pib
+    pare[iepifn, :, :] .= pifn
+    pare[iepitn, :, :] .= pitn
+    pare[iepif, :, :] .= pif
+    pare[iepilc, :, :] .= pilc
+    pare[iepihc, :, :] .= pihc
+    pare[ieepolf, :, :] .= epolf
+    pare[ieepollc, :, :] .= epollc
+    pare[ieepolhc, :, :] .= epolhc
+    pare[ieepolht, :, :] .= epolht
+    pare[ieepollt, :, :] .= epollt
+    pare[ieetab, :, :] .= etab
+    pare[ieBPR, :, :] .= BPR
+    pare[ieM2, :, :] .= M2
+    pare[ieM25, :, :] .= M25
+    pare[ieepsl, :, :] .= epsl
+    pare[ieepsh, :, :] .= epsh
+
+    parg[igGearf] = Gearf
+    parg[igHTRf] = HTRf
+    parg[igHTRlc] = HTRlc
+    parg[igHTRhc] = HTRhc
+
+    # Cooling
+    cool = readprop("Cooling")
+    dcool = dprop["Cooling"]
+    readcool(x) = read_input(x, cool, dcool)
+        dTstrk = Temp(readcool("hot_streak_T_allowance"))
+        Mtexit = readcool("M_turbine_blade_exit")
+        StA = readcool("St")
+
+        efilm = readcool("e_film_cooling")
+        tfilm = readcool("t_film_cooling")
+
+        M41 = readcool("M41")
+        ruc = readcool("cooling_air_V_ratio")
+
+        pare[ieM4a, :, :] .= M41
+        pare[ieruc, :, :] .= ruc
+        pare[iedTstrk, :, :] .= dTstrk
+        pare[ieMtexit, :, :] .= Mtexit
+        pare[ieStA, :, :] .= StA
+        pare[ieefilm, :, :] .= efilm
+        pare[ietfilm, :, :] .= tfilm
+
+    # Offtakes
+    off = readprop("Offtakes")
+    doff = dprop["Offtakes"]
+    readoff(x) = read_input(x, off, doff)
+        mofftpax  = readoff("LPC_mass_offtake_per_pax")
+        mofftmMTO = readoff("LPC_mass_offtake_per_max_mass")
+
+        Pofftpax  = readoff("Low_spool_power_offtake_per_pax")
+        PofftmMTO = readoff("Low_spool_power_offtake_per_max_mass")
+
+        Ttdischarge = readoff("Tt_offtake_air")
+        Ptdischarge = readoff("Pt_offtake_air")
+
+        # TODO Tt9 is really a terrible numbering convention for the discharge temp 
+
+        pare[ieTt9, :, :] .= Ttdischarge
+        pare[iept9, :, :] .= Ptdischarge
+
+        parg[igmofWpay] = mofftpax ./ parm[imWperpax, 1]
+        parg[igmofWMTO] = mofftmMTO / gee
+        parg[igPofWpay] = Pofftpax ./ parm[imWperpax, 1]
+        parg[igPofWMTO] = PofftmMTO / gee
+
+    ## Nozzle areas
+    noz = readprop("Nozzles")
+    dnoz = dprop["Nozzles"]
+    corenoz = read_input("core_nozzle_area", noz, dnoz)
+    dcorenoz = dnoz["core_nozzle_area"]
+    readcnoz(x) = read_input(x, corenoz, dcorenoz)
+        A5static   = readcnoz("static")
+        A5takeoff  = readcnoz("rotation")
+        A5cutback  = readcnoz("cutback")
+        A5climb1   = readcnoz("climbstart")
+        A5climbn   = readcnoz("climbend")
+        A5descent1 = readcnoz("descentstart")
+        A5descentn = readcnoz("descentend")
+
+    fannoz = read_input("fan_nozzle_area", noz, dnoz)
+    dfannoz = dnoz["fan_nozzle_area"]
+    readfnoz(x) = read_input(x, fannoz, dfannoz)
+        A7static   = readfnoz("static")
+        A7takeoff  = readfnoz("rotation")
+        A7cutback  = readfnoz("cutback")
+        A7climb1   = readfnoz("climbstart")
+        A7climbn   = readfnoz("climbend")
+        A7descent1 = readfnoz("descentstart")
+        A7descentn = readfnoz("descentend")
+
+        pare[ieA7fac, ipstatic, :] .= A7static
+        pare[ieA7fac, iprotate, :] .= A7takeoff
+        pare[ieA7fac, iptakeoff, :] .= A7takeoff
+        pare[ieA7fac, ipcutback, :] .= A7cutback
+
+        pare[ieA5fac, ipstatic, :] .= A5static
+        pare[ieA5fac, iprotate, :] .= A5takeoff
+        pare[ieA5fac, iptakeoff, :] .= A5takeoff
+        pare[ieA5fac, ipcutback, :] .= A5cutback
+
+        for ip = ipclimb1:ipclimbn
+
+            frac = (ip - ipclimb1) /  (ipclimbn - ipclimb1)
+
+            pare[ieA7fac, ip, :] .= A7climb1 * (1.0 - frac) + A7climbn * frac
+            pare[ieA5fac, ip, :] .= A5climb1 * (1.0 - frac) + A5climbn * frac
+
+        end
+
+        pare[ieA7fac, ipcruise1:ipcruisen, :] .= 1.0
+        pare[ieA5fac, ipcruise1:ipcruisen, :] .= 1.0
+
+        for ip = ipdescent1:ipdescentn
+
+            frac = (ip - ipdescent1) / (ipdescentn - ipdescent1)
+
+            pare[ieA7fac, ip, :] .= A7descent1 * (1.0 - frac) + A7descentn * frac
+            pare[ieA5fac, ip, :] .= A5descent1 * (1.0 - frac) + A5descentn * frac
+
+        end
+
+        pare[ieA7fac, iptest, :] .= A7static
+        pare[ieA5fac, iptest, :] .= A5static
+
+    nac = readprop("Nacelles")
+    dnac = dprop["Nacelles"]
+        #- nacelle drag stuff
+        parg[igrSnace] = read_input("nacelle_pylon_wetted_area_ratio", nac, dnac)
+        parg[igrVnace] = read_input("nacelle_local_velocity_ratio", nac, dnac)
+
+    weight = readprop("Weight")
+    dweight = dprop["Weight"]
+        parg[igfeadd] = read_input("engine_access_weight_fraction", weight, dweight)
+        parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
+        
+        #read/check engine weight model options
+        if compare_strings(propsys, "tf")
+        #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
+            TF_wmodel = read_input("weight_model", weight, dweight)
+            if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
+                error("\"$TF_wmodel\" engine weight model was specifed. 
+                Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
+            end
+        elseif compare_strings(propsys, "te")
+            @warn("Propulsion weight models for turboelectric are currently not available.")
+        end
+
     modelname = "turbofan_md"
     enginecalc! = tfwrap!
     engineweightname = TF_wmodel
@@ -1028,40 +1028,82 @@ if compare_strings(propsys,"tf")
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
     engdata = TASOPT.engine.EmptyData()
+ 
 elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
     modelname = lowercase(propsys)
     engineweightname = "nasa"
 
     enginecalc! = calculate_fuel_cell_with_ducted_fan!
     engineweight! = fuel_cell_with_ducted_fan_weight!
-    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
+    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, false)
     fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
     
     ductedfan = readprop("DuctedFan")
     dductedfan = Dict()
-    pare[iePfanmax,:,:] .= read_input("maximum_fan_power", ductedfan, dductedfan)
-    para[iaROCdes, ipclimb1:ipclimbn,:] .= Speed(read_input("rate_of_climb", ductedfan, dductedfan))
+        pare[iePfanmax,:,:] .= read_input("maximum_fan_power", ductedfan, dductedfan)
+        para[iaROCdes, ipclimb1:ipclimbn,:] .= Speed(read_input("rate_of_climb", ductedfan, dductedfan))
+        
+        pare[iepif, :, :] .= read_input("Fan_PR", ductedfan, dductedfan)
+        pare[ieepolf, :, :] .= read_input("fan_eta_poly", ductedfan, dductedfan)
+        pare[ieM2, :, :] .= read_input("M2", ductedfan, dductedfan)
+        pare[iepid, :, :] .= read_input("diffuser_PR", ductedfan, dductedfan)
+        pare[iepifn, :, :] .= read_input("fan_nozzle_PR", ductedfan, dductedfan)
+
+        ductfannoz = read_input("fan_nozzle_area", ductedfan, dductedfan)
+        dductfannoz = Dict()
+        readductfnoz(x) = read_input(x, ductfannoz, dductfannoz)
+        A7static   = readductfnoz("static")
+        A7takeoff  = readductfnoz("rotation")
+        A7cutback  = readductfnoz("cutback")
+        A7climb1   = readductfnoz("climbstart")
+        A7climbn   = readductfnoz("climbend")
+        A7descent1 = readductfnoz("descentstart")
+        A7descentn = readductfnoz("descentend")
+
+        pare[ieA7fac, ipstatic, :] .= A7static
+        pare[ieA7fac, iprotate, :] .= A7takeoff
+        pare[ieA7fac, iptakeoff, :] .= A7takeoff
+        pare[ieA7fac, ipcutback, :] .= A7cutback
+
+
+        for ip = ipclimb1:ipclimbn
+
+            frac = (ip - ipclimb1) /  (ipclimbn - ipclimb1)
+
+            pare[ieA7fac, ip, :] .= A7climb1 * (1.0 - frac) + A7climbn * frac
+        end
+
+        pare[ieA7fac, ipcruise1:ipcruisen, :] .= 1.0
+
+        for ip = ipdescent1:ipdescentn
+
+            frac = (ip - ipdescent1) / (ipdescentn - ipdescent1)
+
+            pare[ieA7fac, ip, :] .= A7descent1 * (1.0 - frac) + A7descentn * frac
+        end
+
+        pare[ieA7fac, iptest, :] .= A7static
 
     fuelcell = readprop("FuelCell")
     dfuelcell = Dict()
-    fcdata.type = read_input("fuel_cell_type", fuelcell, dfuelcell)
-    fcdata.current_density[iprotate,:] .= read_input("takeoff_current_density", fuelcell, dfuelcell)
-    fcdata.FC_temperature .= Temp(read_input("fuel_cell_temperature", fuelcell, dfuelcell))
-    fcdata.FC_pressure .= Pressure(read_input("fuel_cell_pressure", fuelcell, dfuelcell))
-    fcdata.water_concentration_anode .= read_input("water_concentration_anode", fuelcell, dfuelcell)
-    fcdata.water_concentration_cathode .= read_input("water_concentration_cathode", fuelcell, dfuelcell)
-    fcdata.λ_H2 .= read_input("hydrogen_equivalence_ratio", fuelcell, dfuelcell)
-    fcdata.λ_O2 .= read_input("oxygen_equivalence_ratio", fuelcell, dfuelcell)
-    fcdata.thickness_membrane = Distance(read_input("thickness_membrane", fuelcell, dfuelcell))
-    fcdata.thickness_anode  = Distance(read_input("thickness_anode", fuelcell, dfuelcell))
-    fcdata.thickness_cathode  = Distance(read_input("thickness_cathode", fuelcell, dfuelcell))
-    fcdata.design_voltage = read_input("stack_design_voltage", fuelcell, dfuelcell)
-    fcdata.specific_power = read_input("stack_specific_power", fuelcell, dfuelcell)
+        fcdata.type = read_input("fuel_cell_type", fuelcell, dfuelcell)
+        fcdata.current_density[iprotate,:] .= read_input("takeoff_current_density", fuelcell, dfuelcell)
+        fcdata.FC_temperature .= Temp(read_input("fuel_cell_temperature", fuelcell, dfuelcell))
+        fcdata.FC_pressure .= Pressure(read_input("fuel_cell_pressure", fuelcell, dfuelcell))
+        fcdata.water_concentration_anode .= read_input("water_concentration_anode", fuelcell, dfuelcell)
+        fcdata.water_concentration_cathode .= read_input("water_concentration_cathode", fuelcell, dfuelcell)
+        fcdata.λ_H2 .= read_input("hydrogen_equivalence_ratio", fuelcell, dfuelcell)
+        fcdata.λ_O2 .= read_input("oxygen_equivalence_ratio", fuelcell, dfuelcell)
+        fcdata.thickness_membrane = Distance(read_input("thickness_membrane", fuelcell, dfuelcell))
+        fcdata.thickness_anode  = Distance(read_input("thickness_anode", fuelcell, dfuelcell))
+        fcdata.thickness_cathode  = Distance(read_input("thickness_cathode", fuelcell, dfuelcell))
+        fcdata.design_voltage = read_input("stack_design_voltage", fuelcell, dfuelcell)
+        fcdata.specific_power = read_input("stack_specific_power", fuelcell, dfuelcell)
 
-    pare[ieRadiatorepsilon,:,:] .= read_input("radiator_effectiveness", fuelcell, dfuelcell)
-    pare[ieRadiatorMp,:,:] .= read_input("radiator_inlet_mach", fuelcell, dfuelcell)
-    pare[ieDi,:,:] .= Distance(read_input("radiator_inner_diameter", fuelcell, dfuelcell))
-    parg[igHXaddmassfrac] = read_input("radiator_added_mass_frac", fuelcell, dfuelcell)
+        pare[ieRadiatorepsilon,:,:] .= read_input("radiator_effectiveness", fuelcell, dfuelcell)
+        pare[ieRadiatorMp,:,:] .= read_input("radiator_inlet_mach", fuelcell, dfuelcell)
+        pare[ieDi,:,:] .= Distance(read_input("radiator_inner_diameter", fuelcell, dfuelcell))
+        parg[igHXaddmassfrac] = read_input("radiator_added_mass_frac", fuelcell, dfuelcell)
 
     engdata = fcdata
 else
