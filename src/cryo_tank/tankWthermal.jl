@@ -55,9 +55,13 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair
       fun(x) = residuals_Q(x, p, "Q_unknown") #Create function handle to be zeroed
       
       #Initial guess for function
+      #TODO find a better way to get temperature and Q guesses
       guess = zeros(length(t_cond) + 2) 
-
-      Rguess = 0.01
+      if fuse_tank.boiloff_rate > 1.0 #%/h, make resistance guess dependent on boiloff rate
+            Rguess = 0.001
+      else
+            Rguess = 0.01
+      end
       guess[1] = ΔT / Rguess
       guess[2] = Tfuel + 1.0
       
