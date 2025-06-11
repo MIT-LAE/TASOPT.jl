@@ -23,7 +23,7 @@ and iterates until the MTOW converges to within a specified tolerance. Formerly,
 """
 function _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
-    iairf=1, Ldebug=false, printiter=true, saveODperf=false)
+    iairf=1, Ldebug = false, printiter=true, saveODperf=false)
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
@@ -65,15 +65,7 @@ function _size_aircraft!(ac; itermax=35,
     time_fuselage_drag = @elapsed fuselage_drag!(fuse, parm, para, ipcruise1)
 
     # Extract and set constant values for all mission points
-    KAfTE, DAfsurf, DAfwake, PAfinf = 
-        para[iaKAfTE, ipcruise1], para[iaDAfsurf, ipcruise1], 
-        para[iaDAfwake, ipcruise1], para[iaPAfinf, ipcruise1]
-    
-    # Set constant values for all mission points
-    para[iaKAfTE, :] .= KAfTE
-    para[iaDAfsurf, :] .= DAfsurf
-    para[iaDAfwake, :] .= DAfwake
-    para[iaPAfinf, :] .= PAfinf
+    broadcast_fuselage_drag!(para, ipcruise1)
 
     #Calculate fuel lower heating value for PFEI
     parg[igLHVfuel] = fuelLHV(ifuel)
@@ -619,7 +611,8 @@ function _size_aircraft!(ac; itermax=35,
             Sh = Vh * wing.layout.S * wing.mean_aero_chord / lhtail
             htail.layout.S = Sh
         else
-            size_htail(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1))
+            size_htail(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1);
+                    Ldebug=Ldebug)
             wing.layout.box_x, xwing = wing.layout.box_x, wing.layout.x
             lhtail = xhtail - xwing
             Sh = htail.layout.S
@@ -778,7 +771,8 @@ function _size_aircraft!(ac; itermax=35,
         rpay = 1.0
         ξpay = 0.0
         opt_trim_var = "CL_htail"
-        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
         # Set N.P. at cruise
         parg[igxNP] = para[iaxNP, ip]
@@ -874,7 +868,7 @@ function _size_aircraft!(ac; itermax=35,
     takeoff!(ac, printTO = printiter)
 
     # calculate CG limits from worst-case payload fractions and packings
-    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac)
+    rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac; Ldebug = Ldebug)
     parg[igxCGfwd] = xCG0
     parg[igxCGaft] = xCG1
     parg[igrpayfwd] = rpay0
@@ -888,7 +882,8 @@ function _size_aircraft!(ac; itermax=35,
     rpay = 1.0
     ξpay = 0.0
     opt_trim_var = "none"
-    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var)
+    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
     #Check if all engine points have converged
     if check_engine_convergence_failure(pare)

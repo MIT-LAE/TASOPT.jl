@@ -56,38 +56,10 @@
     fuel_density = 817.0 #kg/m3
     fuel_enthalpy_vaporization = 0.0 #J/kg, latent heat of vaporization of fuel
 
-[Fuel.Storage] #Default fuselage fuel storage parameters for cryogenic fuels
-    tank_placement = "rear" #Location of tank in fuselage. Choices are "front", "rear", or "both".
-
-    tank_aspect_ratio = 2.0
-    fuselage_clearance = "0.3 ft"
-    additional_mass_fraction = 0.25
-    weld_efficiency = 0.9 
-    ullage_fraction = 0.05 #minimum ullage fraction at tank venting pressure
-    heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
-    SL_temperature_for_tank = "288.2 K"
-
-    #Tank pressure design parameters
-    pressure_rise_factor = 2.0 #Factor to account for stratification in homogenous tank model (pfac >= 1)
-    pressure_venting = "2 atm"
-    pressure_initial = "1.2 atm"
-    hold_departure = "0 h"
-    hold_arrival = "0 h"
-
-    inner_vessel_material = "Al-2219-T87"
-    inner_vessel_support_angle = "80 deg"
-    
-    #Insulation options: "rohacell41S", "polyurethane27", "polyurethane32", "polyurethane35", "vacuum", "mylar", "microspheres"
-    sizes_insulation = true #Flag to decide whether to size insulation for boiloff
-    insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
-    insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
-    
-    cruise_boiloff_rate = 0.4 #%/hour, used if sizes_insulation == true
-    insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if sizes_insulation == true
-
-    #Parameters for double-walled tank, if "vacuum" is in insulation_material
-    outer_vessel_material = "Al-2219-T87"
-    outer_vessel_support_angles = ["45 deg", "135 deg"]
+#Aircraft fuselage fuel storage parameters for cryogenic fuels
+#Default aircraft does not have a fuselage tank. See cryo_input.toml for template w/ representative values
+#Retained for compatibility as a default with cryo designs
+[Fuel.Storage]
     
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
@@ -133,9 +105,10 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = "35000 ft" #This gets recalculated for off-design missions
+    cruise_alt  = ["35000 ft", "38000 ft"] 
     cruise_mach = 0.80
-    cruise_CL   = [0.57, 0.57]
+    cruise_CL   = 0.57 #By default, this gets recalculated for off-design mission analysis
+                       # (see `fly_mission!()` and `PayloadRange()` for details, or to recalculate altitude instead).
 
 [Mission.Descent]
     descent_angle_top-of-descent = "-3.0 deg"
@@ -533,31 +506,14 @@
     nacelle_pylon_wetted_area_ratio = 16.0 # = rSnace = wetted area/fan area
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
-[Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
-    recirculation_flag = 0
-    recirculation_temperature = 0
-    core_inner_diameter = 0.4
-    added_mass_frac = 0.0
-
-    precooler_order = 0
-    precooler_effectiveness = 0
-    precooler_inlet_mach = 0
-
-    intercooler_order = 0
-    intercooler_effectiveness = 0
-    intercooler_inlet_mach = 0
-
-    regenerative_order = 0
-    regenerative_effectiveness = 0
-    regenerative_inlet_mach = 0
-
-    turbine_cooler_order = 0
-    turbine_cooler_effectiveness = 0
-    turbine_cooler_inlet_mach = 0
-    
 [Propulsion.Weight]
     engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   
     weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
                                     #   "fitzgerald_basic": NF's new model with basic tech
                                     #     "fitzgerald_adv": NF's new model with advanced tech
+                                    
+#Default model does not have heat exchangers in the propulsion system
+#See cryo_input.toml for template with representative values
+#Retained for compatibility as a default with HX designs
+[Propulsion.HeatExchangers] 
