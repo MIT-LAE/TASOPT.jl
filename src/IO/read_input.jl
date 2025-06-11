@@ -1010,16 +1010,14 @@ if compare_strings(propsys,"tf")
         parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
         
         #read/check engine weight model options
-        if compare_strings(propsys, "tf")
+       
         #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
-            TF_wmodel = read_input("weight_model", weight, dweight)
-            if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
-                error("\"$TF_wmodel\" engine weight model was specifed. 
-                Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
-            end
-        elseif compare_strings(propsys, "te")
-            @warn("Propulsion weight models for turboelectric are currently not available.")
+        TF_wmodel = read_input("weight_model", weight, dweight)
+        if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
+            error("\"$TF_wmodel\" engine weight model was specifed. 
+            Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
         end
+
 
     modelname = "turbofan_md"
     enginecalc! = tfwrap!
@@ -1031,12 +1029,9 @@ if compare_strings(propsys,"tf")
  
 elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
     modelname = lowercase(propsys)
-    engineweightname = "nasa"
 
     enginecalc! = calculate_fuel_cell_with_ducted_fan!
-    engineweight! = fuel_cell_with_ducted_fan_weight!
-    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, false)
-    fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
+    fcdata = TASOPT.engine.FuelCellDuctedFanData(nmisx)
     
     ductedfan = readprop("DuctedFan")
     dductedfan = Dict()
@@ -1105,6 +1100,17 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
         pare[ieDi,:,:] .= Distance(read_input("radiator_inner_diameter", fuelcell, dfuelcell))
         parg[igHXaddmassfrac] = read_input("radiator_added_mass_frac", fuelcell, dfuelcell)
 
+    weight = readprop("Weight")
+    dweight = dprop["Weight"]
+        parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
+        engineweightname = read_input("weight_model", weight, dweight)
+
+        if compare_strings(engineweightname, "ducted_fan_nasa")
+            # Ducted fan weight model
+            engineweight! = fuel_cell_with_ducted_fan_weight!
+        end
+
+    enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, false)
     engdata = fcdata
 else
     
