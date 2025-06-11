@@ -1027,7 +1027,6 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
       Iobj = Inf #Start with very high value of objective function
       try 
             hxsize!(HXgas, HXgeom)
-            hxsize!(HXgas, HXgeom)
 
             #Extract outputs
             Pl_p = HXgas.Pl_p
@@ -1694,20 +1693,21 @@ function tubesize!(K, HXgeom)
 end #tubesize!
 
 """
-      hxweight(gee, HXgeom, fouter)
+      hxweight(gee, HXgeom, HXgas, fouter)
 
 Calculates the weight of a heat exchanger with involute tubes.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `gee::Float64`: gravitational acceleration (m/s^2)
-    - `HXgeom::Struct`: structure of type HX_tubular with the HX geometric and material properties
+    - `HXgeom::HX_tubular`: structure of type HX_tubular with the HX geometric and material properties
+    - `HXgas::HX_gas`: structure with the gas properties, only used for coolant mass if coolant is liquid
     - `fouter::Float64`: ratio of HX external mass to tube mass
  
     **Outputs:**
     - `W_hx::Float64`: weight of heat exchanger (N)
 """
-function hxweight(gee, HXgeom, fouter)
+function hxweight(gee, HXgeom, HXgas, fouter)
       #Extract inputs
       tD_o = HXgeom.tD_o 
       ρ = HXgeom.material.ρ
@@ -1726,6 +1726,14 @@ function hxweight(gee, HXgeom, fouter)
             W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
             W_hx = W_hx + W_shaft
       end
+
+      if occursin("liquid", HXgas.fluid_c) #If the HX has a liquid coolant, add coolant mass
+            ρ, _, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in) #Get coolant properties
+            V_coolant = N_tubes_tot * pi * tD_i^2 / 4 * l #coolant volume
+            m_coolant = ρ * V_coolant #coolant mass
+            W_hx += gee * m_coolant #Add coolant weight
+      end
+      #TODO add mass of coolant if it is a gas
       return W_hx
 end #hxweight
 

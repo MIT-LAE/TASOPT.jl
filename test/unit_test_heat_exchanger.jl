@@ -60,7 +60,7 @@
         gee = 9.81
         fouter = 1
 
-        W = TASOPT.engine.hxweight(gee, HXgeom, fouter)
+        W = TASOPT.engine.hxweight(gee, HXgeom, HXgas, fouter)
 
         W_check = 801.5192810553101
 

@@ -327,7 +327,12 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::F
       b = -Z/2
       c = -1 * Icollapse - Z * t_f/2 + t_f^3 * W / 6
 
-      H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
+      if b^2 > 4*a*c #If a solution exists
+            H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
+      else #Parallel plates
+            H = t_f
+      end
+
       S = 2 * W * t_f + (H - t_f) * t_w #Beam cross-sectional area
 
       Wstiff = gee * ρstiff * S * perim #Weight of a single stiffener running along perimeter

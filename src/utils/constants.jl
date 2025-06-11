@@ -17,6 +17,8 @@ const Tref = 288.2
 const σ_SB = 5.670374419e-8
 const p_atm = 101325.0 #Pa in one atm
 const t_h = 3600.0 #s in one hour
+const Faraday_C = 96485.3329 # C/mol, Faraday constant
+const Runiv = 8.314 # J/(mol*K), universal gas constant
 
 const seat_layouts = Dict{Int64, Vector{Int64}}(
     1 => [1, 0],
