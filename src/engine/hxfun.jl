@@ -282,13 +282,15 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       if C_c == C_min
             ε_max = 1 / C_r * (1 - exp(-C_r)) #At ε = ε_max, NTU tends to infinity
             if ε > ε_max
-                  error("Effectiveness exceeds maximum possible one")
+                  ε = 0.99 * ε_max #Limit effectiveness to 99% of maximum possible one
+                                    #effectiveness is limited to avoid an error in the NTU formula
+                                    #TODO add a warning if effectiveness is still overwritten at the end of the weight loop
             end
             NTU = -log(1 + log(1 - C_r * ε) / C_r) # For cross-flow with C_max mixed and C_min unmixed
       else
             ε_max = 1 - exp(-1 / C_r)#At ε = ε_max, NTU tends to infinity
             if ε > ε_max
-                  error("Effectiveness exceeds maximum possible one")
+                  ε = 0.99 * ε_max #Limit effectiveness to 99% of maximum possible one
             end
             NTU = -1 / C_r * log(1 + C_r * log(1 - ε) ) # For cross-flow with C_max unmixed and C_min mixed
       end
