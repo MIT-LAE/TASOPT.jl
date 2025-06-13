@@ -1073,13 +1073,14 @@ if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
     dHEx = dprop["HeatExchangers"]
         parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
 
-        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
-        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
-        
-        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
-        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+    pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
+    pare[ierecircT, :, :] .= Temp(read_input("recirculation_temperature", HEx, dHEx))
+    pare[ieDi, :, :] .= Distance(read_input("core_inner_diameter", HEx, dHEx))
+    parg[igHXmaxL] = Distance(read_input("maximum_heat_exchanger_length", HEx, dHEx))
+    
+    pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
+    pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
+    pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
 
         pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
         pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)

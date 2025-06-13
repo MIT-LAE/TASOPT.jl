@@ -182,8 +182,9 @@
       const igdHXInterC = 123
       const igdHXRegen = 124
       const igHXaddmassfrac = 125
-      const igWHXs = 126
-      const igtotal    = 126
+      const igHXmaxL = 126
+      const igWHXs = 127
+      const igtotal    = 127
 
 #---- indices for aero variables at each mission point
       const iaalt     =  1
@@ -500,9 +501,10 @@
       const iePfan = 241
       const iePfanmax = 242
       const ieTSEC = 243
-      const ieConvFail = 244
+      const ieHXrecircP = 244
+      const ieConvFail = 245
 
-      const ietotal = 244
+      const ietotal = 245
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx
