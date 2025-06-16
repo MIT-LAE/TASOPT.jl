@@ -883,6 +883,8 @@ function _size_aircraft!(ac; itermax=35,
     if check_engine_convergence_failure(pare)
         @warn "Some engine points did not converge"
     end
+    #Warn user if HX effectiveness is overwritten
+    check_HX_overwriting(engine.heat_exchangers) 
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description

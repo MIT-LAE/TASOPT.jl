@@ -304,7 +304,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             if ε > ε_max
                   ε = 0.99 * ε_max #Limit effectiveness to 99% of maximum possible one
                                     #effectiveness is limited to avoid an error in the NTU formula
-                                    #TODO add a warning if effectiveness is still overwritten at the end of the weight loop
+                                    #User is warned if this happens at the end of the weight loop
             end
             NTU = -log(1 + log(1 - C_r * ε) / C_r) # For cross-flow with C_max mixed and C_min unmixed
       else
@@ -1517,6 +1517,31 @@ function resetHXs(pare)
       #Reset heat of vaporization in combustor
       pare[iehvapcombustor, :, :] = pare[iehvap, :, :]
 
+end
+
+"""
+      check_HX_overwriting(HXs)
+
+This function checks if a heat exchanger design effectiveness has been overwritten because it was too high.      
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `HXs::Vector{HX_struct}`: vector with heat exchanger data
+
+    **Outputs:**
+    Produces a warning if the effectiveness has been overwritten.
+"""
+function check_HX_overwriting(HXs)
+      flag = false
+      for HX in HXs 
+            if abs(HX.design_effectiveness - HX.HXgas_mission[ipcruise1].ε) > 1e-5
+                  flag = true
+                  break
+            end
+      end
+      if flag == true
+            @warn "Heat exchanger design effectiveness has been overwritten"
+      end
 end
 
 """
