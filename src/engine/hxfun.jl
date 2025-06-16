@@ -144,17 +144,37 @@ end
     HX_struct
 
 Structure containing all the heat exchanger geometry and operational information.
-
-!!! details "💾 Data fields"
-    **Inputs:**
-    - `type::String`: type of heat exchanger ("PreC": precooler; "InterC": intercooler; "Regen": regenerative; "TurbC": turbine cooling)
-    - `HXgeom::HX_tubular`: structure containing the HX geometric information
-    - `HXgas_mission::Array{Any}`: array containing the gas properties, of type `HX_gas` for each mission and segment
 """
 @kwdef mutable struct HX_struct
+      "HX type"
       type :: String = ""
+      "Geometry object"
       HXgeom :: HX_tubular = HX_tubular()
-      HXgas_mission :: Array{Any} = []
+      "Array of HX_gas objects for each mission point"
+      HXgas_mission :: Array{HX_gas} = HX_gas[]
+      "Order"
+      order::Int64 = 0
+      "Design-point effectiveness"
+      design_effectiveness::Float64 = 0.0 #Design effectiveness, used for sizing
+      "Design point inlet Mach number"
+      design_Mach::Float64 = 0.0 #Design Mach number, used for sizing
+      "Maximum allowable length"
+      maximum_length::Float64 = 0.0 #Maximum allowable HX length (m)
+      "Added mass fraction"
+      added_mass_fraction::Float64 = 0.0 #Added mass fraction due to hubs and structures
+      "Flag for recirculation"
+      has_recirculation::Bool = false #Flag for recirculation
+      "Recirculating fluid temperature"
+      recirculation_temperature::Float64 = 0.0 #temperature of recirculating flow at HX inlet (K)
+      "Minimum wall temperature in the sizing mission"
+      min_wall_temperature::Float64 = 0.0 #Minimum wall temperature (K)
+end
+
+# Outer constructor with custom size for HXgas_mission
+function make_HX_struct(nmis::Int; kwargs...)
+    obj = HX_struct(; kwargs...)  # initialize with other kwargs
+    obj.HXgas_mission = Array{HX_gas}(undef, iptotal, nmis)
+    return obj
 end
   
 """
@@ -1136,99 +1156,58 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
       pare = view(ac.pare,:, :, imission)
       pare_sl = view(pare,:, ipdes)
       igas = ac.options.ifuel
-      HXs_prev = ac.engine.heat_exchangers
-      #---------------------------------
-      # Extract inputs
-      #---------------------------------
-      PreCepsilon = pare_sl[iePreCepsilon]
-      InterCepsilon = pare_sl[ieInterCepsilon]
-      Regenepsilon = pare_sl[ieRegenepsilon]
-      TurbCepsilon = pare_sl[ieTurbCepsilon]
-      Radiatorepsilon = pare_sl[ieRadiatorepsilon]
-
-      all_eps = [PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon, Radiatorepsilon]
-      #Bypass rest if there are no HXs
-      if maximum(all_eps) ≈ 0
-            return HXs_prev
-      end
-
-      PreCorder = pare_sl[iePreCorder]
-      PreCMp = pare_sl[iePreCMp]
-      InterCorder = pare_sl[ieInterCorder]
-      InterCMp = pare_sl[ieInterCMp]
-      Regenorder = pare_sl[ieRegenorder]
-      RegenMp = pare_sl[ieRegenMp]
-      TurbCorder = pare_sl[ieTurbCorder]
-      TurbCMp = pare_sl[ieTurbCMp]
-      RadiatorMp = pare_sl[ieRadiatorMp]
-
-      all_types = ["PreC", "InterC", "Regen", "TurbC", "Radiator"]
-      all_orders = [PreCorder, InterCorder, Regenorder, TurbCorder, 0]
-      all_Mp = [PreCMp, InterCMp, RegenMp, TurbCMp, RadiatorMp]
+      HXs = ac.engine.heat_exchangers
       
-      HXtypes = []
-      Mp_in = []
-      ε_des = []
-      sort_i = sortperm(all_orders) #Sort according to order
-
-      for ind in sort_i
-            if (all_eps[ind] > 0) && (all_eps[ind] <= 1) #If effectiveness is between 0 and 1
-                  push!(HXtypes, all_types[ind])
-                  push!(Mp_in, all_Mp[ind])
-                  push!(ε_des, all_eps[ind])
-            end
-      end
-
       #Initialize Heat Exchanger vector
-      HeatExchangers = []
       Mc_opts = []
 
-      for (i,type) in enumerate(HXtypes) #For every desired type of heat exchanger (skipped if empty)
+      for (i,HX) in enumerate(HXs) #For every desired type of heat exchanger (skipped if empty)
+            type = HX.type
             #---------------------------------
             # Design exchangers
             #---------------------------------
-            HXgeom, HXgas = PrepareHXobjects(HeatExchangers, i, ipdes, imission, igas, pare_sl, type, "sizing", ε_des[i], Mp_in[i])
+            HXgeom, HXgas = PrepareHXobjects(HXs, i, ipdes, imission, igas, pare_sl, type, "sizing")
             HXgeom.Δpdes = max(maximum(ac.pare[iept3,:,:]), maximum(ac.pare[ieRadiatorCoolantP,:,:])) #size wall thickness for maximum HPC or coolant pressure
-            HXgeom.maxL = ac.parg[igHXmaxL] #Maximum HX length
+            HXgeom.maxL = HX.maximum_length #Maximum HX length TODO this is duplicated
 
             # Guess starting point for optimization
             #First calculate minimum tube length
             lmin, linit = calculate_min_tube_length(HXgeom, HXgas) #Minimum tube lenght and initial guess
 
             #Now set starting point
-            if isempty(HXs_prev) #If there is no previous heat exchanger design point
+            if ~isassigned(HX.HXgas_mission, 1, 1) #If there is no previous heat exchanger design point
                   #Calculate initial length
 
                   initial_x = [3, 4, 4, linit] #Initial guess
             else 
                   #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
-                  initial_x = [100 * HXs_prev[i].HXgas_mission[ipdes].Mc_in, 
-                  HXs_prev[i].HXgeom.n_stages, HXs_prev[i].HXgeom.xt_D, max(HXs_prev[i].HXgeom.l, lmin)] #guess is previous iteration design point
+                  initial_x = [100 * HX.HXgas_mission[ipdes].Mc_in, 
+                  HX.HXgeom.n_stages, HX.HXgeom.xt_D, max(HX.HXgeom.l, lmin)] #guess is previous iteration design point
             end
 
             hxoptim!(HXgas, HXgeom, initial_x) #Optimize heat exchanger geometry
             hxsize!(HXgas, HXgeom) #Evaluate all geometry properties at design point
 
             push!(Mc_opts, HXgas.Mc_in)
-            nmis = size(ac.pare)[3]
-            push!(HeatExchangers, HX_struct(type, HXgeom, Array{HX_gas}(undef,iptotal,nmis))) #Store HX struct in overall array
-            HeatExchangers[i].HXgas_mission[ipdes,imission] = HXgas #Store design point fluid state
+            
+            HX.HXgeom = HXgeom #Store design point geometry
+            HX.HXgas_mission[ipdes,imission] = HXgas #Store design point fluid state
       end
       #---------------------------------
       # Analyze off-design performance
       #---------------------------------
      
-      HXOffDesign!(HeatExchangers, pare, igas, imission, rlx = rlx)
+      HXOffDesign!(HXs, pare, igas, imission, rlx = rlx)
 
-      for i in 1:length(HeatExchangers)
-            HeatExchangers[i].HXgas_mission[ipdes,imission].Mc_in = Mc_opts[i] #Store optimum Mc_in
+      for i in 1:length(HXs)
+            HXs[i].HXgas_mission[ipdes,imission].Mc_in = Mc_opts[i] #Store optimum Mc_in
       end
 
-      return HeatExchangers
+      return HXs
 end #hxdesign!
 
 """
-      PrepareHXobjects(HeatExchangers, idx, igas, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
+      PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type, mode = "off_design")
 
 This function prepares the gas and geometry heat exchanger objects to be used in design or 
 off design analysis.
@@ -1242,14 +1221,12 @@ off design analysis.
     - `pare_sl::Vector{Float64}`: sliced engine array with engine parameters
     - `type::String`: heat exchanger type
     - `mode::String`: design or off design indicator
-    - `eps::Float64`: heat exchanger effectiveness
-    - `Mp::Float64`: Mach number of the process gas
 
     **Outputs:**
     - `HXgeom::HX_tubular`: structure with the HX geometric properties
     - `HXgas::HX_gas`: structure with the gas properties
 """  
-function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type, mode = "off_design", eps = 0.0, Mp = 0.0)
+function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type, mode = "off_design")
       #Initiliaze design geometry and gas property as empty structs
       HXgas = HX_gas()
       HXgeom = HX_tubular()
@@ -1257,8 +1234,8 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       #Extract some inputs
       D_i = pare_sl[ieDi]
       Tc_ft = pare_sl[ieTft]
-      frecirc = Bool(pare_sl[iefrecirc])
-      recircT = pare_sl[ierecircT]
+      frecirc = HeatExchangers[1].has_recirculation
+      recircT = HeatExchangers[1].recirculation_temperature
       h_lat = pare_sl[iehvap]
 
       if igas == 11 #TODO: add more options
@@ -1291,10 +1268,12 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       iTp_in = HXsDict[type]["iTp_in"]
       ipp_in = HXsDict[type]["ipp_in"]
       ipc_in = HXsDict[type]["ipc_in"]
-
+ 
       #Store inputs
-      HXgas.ε = eps
-      HXgas.Mp_in = Mp
+      if mode == "sizing"
+            HXgas.ε = HeatExchangers[idx].design_effectiveness
+            HXgas.Mp_in = HeatExchangers[idx].design_Mach
+      end
 
       HXgas.Tp_in = pare_sl[iTp_in]
       HXgas.pp_in = pare_sl[ipp_in]
@@ -1402,7 +1381,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
       if length(HeatExchangers) == 0 #Skip if no HXs
             return
       end
-      frecirc = Bool(pare[iefrecirc,1])
+      frecirc = HeatExchangers[1].has_recirculation #Check if there is recirculation in the first HX
       #Operate off-design for engine-integrated HEXs
       for (i,HX) in enumerate(HeatExchangers)
             HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
@@ -1480,7 +1459,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
                   pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
             end
 
-            findMinWallTemperature!(pare, HeatExchangers) #Store minimum wall temperature at each mission point to check for freezing
+            findMinWallTemperature!(HeatExchangers) #Store minimum wall temperature at each mission point to check for freezing
       end
 end
 
@@ -1759,31 +1738,30 @@ function hxweight(gee, HXgeom, fouter)
 end #hxweight
 
 """
-      findMinWallTemperature!(pare, HXs)
+      findMinWallTemperature!(HXs)
 
 Calculates and stores the minimum tube wall temperature at each mission point.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `pare::Array{Float64 , 3}`: array with engine parameters
     - `HXs_prev::Vector{HX_struct}`: vector with heat exchanger data
 
     **Outputs:**
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
-function findMinWallTemperature!(pare, HXs)
+function findMinWallTemperature!(HXs)
       
       for ip in 1:iptotal
             minT = Inf #Start with infinite temperature
             for HX in HXs
-                  if HX.HXgas_mission[ip].mdot_c > 0 
+                  if HX.HXgas_mission[ip, 1].mdot_c > 0  #TODO extend to off-design missions
                         minT = min(minT,  HX.HXgas_mission[ip].Tw)
                   end
             end
             if minT == Inf
                   minT = 0.0 #Replace Inf with 0 when there is no mass flow rate
             end
-            pare[ieHXminTwall, ip] = minT
+            HXs[1].min_wall_temperature = minT
       end
 end
 

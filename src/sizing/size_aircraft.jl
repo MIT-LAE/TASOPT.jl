@@ -729,13 +729,7 @@ function _size_aircraft!(ac; itermax=35,
 
             #Find and store maximum HX outer diameter to check fit in engine 
             for HX in engine.heat_exchangers
-                if HX.type == "PreC"
-                    parg[igdHXPreC] = HX.HXgeom.D_o
-                elseif HX.type == "InterC"
-                    parg[igdHXInterC] = HX.HXgeom.D_o
-                elseif HX.type == "Regen"
-                    parg[igdHXRegen] = HX.HXgeom.D_o
-                elseif HX.type == "Radiator"
+                if HX.type == "Radiator"
                     TASOPT.engine.VerifyRadiatorHeat(engine, imission)
                 end
             end
