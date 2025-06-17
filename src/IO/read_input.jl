@@ -1079,6 +1079,12 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
 
         pare[ieA7fac, iptest, :] .= A7static
 
+    nac = readprop("Nacelles")
+    dnac = dprop["Nacelles"]
+        #- nacelle drag stuff
+        parg[igrSnace] = read_input("nacelle_pylon_wetted_area_ratio", nac, dnac)
+        parg[igrVnace] = read_input("nacelle_local_velocity_ratio", nac, dnac)
+
     fuelcell = readprop("FuelCell")
     dfuelcell = Dict()
         fcdata.type = read_input("fuel_cell_type", fuelcell, dfuelcell)

@@ -1,6 +1,6 @@
 function ductedfanweight(ac)
     Dfan   = ac.parg[igdfan]
-    Nmech  = maximum(ac.pared[ieNf, :])
+    Nf  = maximum(ac.pared[ieNf, :])
     fpylon = ac.parg[igfpylon]
     neng = ac.parg[igneng]
     rSnace = ac.parg[igrSnace]
@@ -9,6 +9,7 @@ function ductedfanweight(ac)
     ARfan  = 3   #Blade aspeect ratio
     bladesolidity = 0.4 # Blade solidity c/s
     ktech = 0.5 
+    Nmech = Nf #TODO replace this with actual fan speed in rpm
     Utip  = Dfan/2* (2 * pi * Nmech/60);
     # Sagerser 1971, NASA TM X-2406
     # Note: The term "weight" in Sagerser1971 is actually mass

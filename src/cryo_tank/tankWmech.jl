@@ -84,7 +84,7 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #For a standard ellipsoid V = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. If base is circular,
       #a = R/AR, b=c=R. Since Abase = πR^2, this can also be written as V = 2 * (Abase * R/AR)/3.
       # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
-      V_cylinder = Vinternal - 2*V_ellipsoid
+      V_cylinder = max(Vinternal - 2*V_ellipsoid, 0.0)
       l_cyl = V_cylinder / Atank #required length of cylindrical portion
 
       # areas
