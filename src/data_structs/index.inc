@@ -456,35 +456,35 @@
       const ieOPR = 203
       const ieWc3 = 204
       
-#Heat exchanger variables
-const ieDi                = 205
-const ieTft               = 206
-const iehvap              = 207
-const iePreCDeltah        = 208
-const iePreCDeltap        = 209
-const ieInterCDeltah      = 210
-const ieInterCDeltap      = 211
-const ieRegenDeltah       = 212
-const ieRegenDeltap       = 213
-const ieTurbCDeltah       = 214
-const ieTurbCDeltap       = 215
-const ieRadiatorepsilon   = 216
-const ieRadiatorMp        = 217
-const ieRadiatorDeltah    = 218
-const ieRadiatorDeltap    = 219
-const ieRadiatorCoolantT  = 220
-const ieRadiatorCoolantP  = 221
-const ieRadiatorHeat      = 222
-const iehvapcombustor     = 223
-const iemfuel             = 224
-const iemfan              = 225
-const iePfan              = 226
-const iePfanmax           = 227
-const ieTSEC              = 228
-const ieHXrecircP         = 229
-const ieConvFail          = 230
+      #Heat exchanger variables
+      const ieDi                = 205
+      const ieTft               = 206
+      const iehvap              = 207
+      const iePreCDeltah        = 208
+      const iePreCDeltap        = 209
+      const ieInterCDeltah      = 210
+      const ieInterCDeltap      = 211
+      const ieRegenDeltah       = 212
+      const ieRegenDeltap       = 213
+      const ieTurbCDeltah       = 214
+      const ieTurbCDeltap       = 215
+      const ieRadiatorepsilon   = 216
+      const ieRadiatorMp        = 217
+      const ieRadiatorDeltah    = 218
+      const ieRadiatorDeltap    = 219
+      const ieRadiatorCoolantT  = 220
+      const ieRadiatorCoolantP  = 221
+      const ieRadiatorHeat      = 222
+      const iehvapcombustor     = 223
+      const iemfuel             = 224
+      const iemfan              = 225
+      const iePfan              = 226
+      const iePfanmax           = 227
+      const ieTSEC              = 228
+      const ieHXrecircP         = 229
+      const ieConvFail          = 230
 
-const ietotal = 230
+      const ietotal = 230
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

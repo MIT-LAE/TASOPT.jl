@@ -1540,7 +1540,7 @@ function check_HX_overwriting(HXs)
             end
       end
       if flag == true
-            @warn "Heat exchanger design effectiveness has been overwritten"
+            @warn "Heat-exchanger design effectiveness limited to 99% of maximum possible one"
       end
 end
 
