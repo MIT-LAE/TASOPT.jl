@@ -1064,7 +1064,7 @@ else
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
     
 # Heat exchangers, only if in the model file (assigned 0 in the default .tomls)
 # Would be better if there were an independent toggle like `has_wing_fuel` for `fuse_tank` but good enough for now
@@ -1115,7 +1115,7 @@ if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
             
     for (i,HXtype) in enumerate(HXtypes)
         #Create heat exchanger struct
-        HX = TASOPT.engine.make_HX_struct(nmis)
+        HX = TASOPT.engine.make_HeatExchanger(nmis)
         HX.type = HXtype
         HX.order = i
         HX.design_effectiveness = ε_des[i]

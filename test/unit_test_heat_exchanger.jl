@@ -357,7 +357,7 @@
         ipdes = ipcruise1
 
         #Test precooler
-        HXs = [TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "PreC"
         HXs[1].design_effectiveness = 0.5
         HXs[1].design_Mach = 0.1
@@ -383,7 +383,7 @@
         end
 
         #Test intercooler
-        HXs = [TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "InterC"
         HXs[1].design_effectiveness = 0.5
         HXs[1].design_Mach = 0.1
@@ -409,7 +409,7 @@
         end
 
         #Test cooler of turbine cool. air
-        HXs = [TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "TurbC"
         HXs[1].design_effectiveness = 0.5
         HXs[1].design_Mach = 0.02
@@ -436,7 +436,7 @@
 
         #Test regenerative cooler
         pare[ieTfuel, :] .= 20
-        HXs = [TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "Regen"
         HXs[1].design_effectiveness = 0.5
         HXs[1].design_Mach = 0.2
@@ -465,7 +465,7 @@
         pare[ieTfuel, :] .= 20
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
-        HXs = [TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "Regen"
         HXs[1].design_effectiveness = 0.8
         HXs[1].design_Mach = 0.2
@@ -495,7 +495,7 @@
         #Test two HXs: intercooler and regenerative cooler
         pare[ieTfuel, :] .= 20
         
-        HXs = [TASOPT.engine.make_HX_struct(1), TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1), TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "InterC"
         HXs[1].design_effectiveness = 0.8
         HXs[1].design_Mach = 0.1
@@ -533,7 +533,7 @@
         
         pare[ieDi,:,1] .= 0.4 #Inner diameter of HEX 
 
-        HXs = [TASOPT.engine.make_HX_struct(1)]
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
         HXs[1].type = "Radiator"
         HXs[1].design_effectiveness = 0.7
         HXs[1].design_Mach = 0.12

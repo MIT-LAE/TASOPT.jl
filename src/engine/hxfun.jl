@@ -8,65 +8,62 @@ const alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
 """
     HX_gas
 
-Structure containing the gas properties of the process and coolant streams.
-
-!!! details "💾 Data fields"
-    **Inputs:**
-    - `fluid_p::String`: process fluid name
-    - `fluid_c::String`: coolant fluid name
-    - `alpha_p::Vector{Float64}`: process gas composition
-    - `igas_c::Float64`: coolant gas index, if coolant is a gas
-    - `mdot_p::Float64`: mass flow rate of process gas (kg/s)
-    - `mdot_c::Float64`: mass flow rate of coolant gas (kg/s)
-    - `Tp_in::Float64`: process gas inlet temperature (K)
-    - `Tc_in::Float64`: coolant gas inlet temperature (K)
-    - `pp_in::Float64`: process gas inlet pressure (Pa)
-    - `pc_in::Float64`: coolant gas inlet pressure (Pa)
-    - `Mp_in::Float64`: process gas inlet Mach number
-    - `Mc_in::Float64`: coolant gas inlet Mach number
-    - `Tp_out::Float64`: process gas outlet temperature
-    - `Tc_out::Float64`: coolant gas outlet temperature
-    - `Tw::Float64`: wall temperature (K)
-    - `Δh_p::Float64`: enthalpy change across HX (J/kg)
-    - `Δp_p::Float64`: pressure drop of process gas across heat exchanger (Pa)
-    - `Δp_c::Float64`: pressure drop of coolant gas across tubes (Pa)
-    - `Pl_p::Float64`: power loss due to pressure drop in process stream (W)
-    - `Pl_c::Float64`: power loss due to pressure drop in coolant stream (W)
-    - `ε::Float64`: desired heat exchanger effectiveness
-    - `recircT::Float64`: temperature of recirculating flow at HX inlet (K)
-    - `mdot_r::Float64`: recirculating flow mass flow rate (kg/s)
-    - `h_lat::Float64`: latent heat capacity in freestream coolant liquid (J/kg)
-    - `P_recirc::Float64`: power required to pump recirculating flow (W)
+Structure containing the fluid properties of the process and coolant streams.
 """
 @kwdef mutable struct HX_gas
+      "Process fluid name"
       fluid_p :: String = ""
+      "Coolant fluid name"
       fluid_c :: String = "" 
+      "Process gas composition"
       alpha_p :: Vector{Float64} = []
+      "Coolant gas index, if coolant is a gas"
       igas_c :: Float64 = 0.0
+      "Mass flow rate of process gas (kg/s)"
       mdot_p :: Float64 = 0.0
+      "Mass flow rate of coolant gas (kg/s)"
       mdot_c :: Float64 = 0.0
+      "Process gas inlet temperature (K)"
       Tp_in :: Float64 = 0.0
+      "Coolant gas inlet temperature (K)"
       Tc_in :: Float64 = 0.0
+      "Process gas inlet pressure (Pa)"
       pp_in :: Float64 = 0.0
+      "Coolant gas inlet pressure (Pa)"
       pc_in :: Float64 = 0.0
+      "Process gas inlet Mach number"
       Mp_in  :: Float64 = 0.0
+      "Coolant gas inlet Mach number"
       Mc_in :: Float64 = 0.0
+      "Process gas outlet temperature (K)"
       Tp_out :: Float64 = 0.0
+      "Coolant gas outlet temperature (K)"
       Tc_out :: Float64 = 0.0
+      "Wall temperature (K)"
       Tw :: Float64 = 0.0
+      "Enthalpy change across HX (J/kg)"
       Δh_p :: Float64 = 0.0
+      "Enthalpy change across coolant (J/kg)"
       Δh_c :: Float64 = 0.0
+      "Pressure drop of process gas across heat exchanger (Pa)"
       Δp_p :: Float64 = 0.0
+      "Pressure drop of coolant gas across tubes (Pa)"
       Δp_c :: Float64 = 0.0
+      "Power loss due to pressure drop in process stream (W)"
       Pl_p :: Float64 = 0.0
+      "Power loss due to pressure drop in coolant stream (W)"
       Pl_c :: Float64 = 0.0
+      "Desired heat exchanger effectiveness"
       ε :: Float64 = 0.0 
+      "Temperature of recirculating flow at HX inlet (K)"
       recircT :: Float64 = 0.0 
+      "Recirculating flow mass flow rate (kg/s)"
       mdot_r :: Float64 = 0.0 
+      "Latent heat capacity in freestream coolant liquid (J/kg)"
       h_lat :: Float64 = 0.0 
+      "Power required to pump recirculating flow (W)"
       P_recirc :: Float64 = 0.0
 end
-
 # Overload Base.getproperty for convenience
 function Base.getproperty(HXgas::HX_gas, sym::Symbol)
       if (sym === :Q) 
@@ -80,45 +77,43 @@ end
     HX_tubular
 
 Structure containing the heat exchanger geometric and material properties.
-
-!!! details "💾 Data fields"
-    **Inputs:**
-    - `fconc::Bool`: flag for concentric geometry (true: concentric ; false: rectangular)
-    - `frecirc::Bool`: flag for recirculation (true: recirculation ; false: no recirculation)
-    - `fshaf::Bool`: flag for whether HX contains shaf(true: shaft ; false: no shaft)
-    - `N_t::Float64`: number of tubes per row
-    - `n_stages::Float64`: number of different coolant stages with different coolant flows
-    - `n_passes::Float64`: number of coolant passes
-    - `A_cs::Float64`: process side freestream cross-sectional area (m^2)
-    - `l::Float64`: length of tubes (m)
-    - `t::Float64`: cooling tube wall thickness (m)
-    - `tD_o::Float64`: tube outer diameter (m)
-    - `xt_D::Float64`: circumferential pitch between tubes at the root over tube outer diameter 
-    - `xl_D::Float64`: longitudinal pitch between rows over tube outer diameter
-    - `Rfp::Float64`: process-side fouling factor (m^2 K/W)
-    - `Rfc::Float64`: coolant-side fouling factor (m^2 K/W)
-    - `D_i::Float64`: inner diameter of core (m)
-    - `Δpdes::Float64`: design pressure difference between tube and outside (Pa)
-    - `maxL::Float64`: maximum allowable HEX length (m)
 """
 @kwdef mutable struct HX_tubular
+      "Flag for concentric geometry (true: concentric ; false: rectangular)"
       fconc :: Bool = false
+      "Flag for recirculation (true: recirculation ; false: no recirculation)"
       frecirc :: Bool = false
+      "Flag for whether HX contains shaft (true: shaft ; false: no shaft)"
       fshaft :: Bool = false
+      "Number of tubes per row"
       N_t :: Float64 = 0.0
+      "Number of different coolant stages with different coolant flows"
       n_stages :: Float64 = 0.0
+      "Number of coolant passes"
       n_passes:: Float64 = 0.0
+      "Process side freestream cross-sectional area (m^2)"
       A_cs:: Float64  = 0.0
+      "Length of tubes (m)"
       l :: Float64 = 0.0
+      "Cooling tube wall thickness (m)"
       t :: Float64 = 0.0
+      "Tube outer diameter (m)"
       tD_o :: Float64 = 0.0
+      "Circumferential pitch between tubes at the root over tube outer diameter"
       xt_D :: Float64 = 0.0
+      "Longitudinal pitch between rows over tube outer diameter"
       xl_D :: Float64 = 0.0
+      "Process-side fouling factor (m^2 K/W)"
       Rfp :: Float64 = 0.0
+      "Coolant-side fouling factor (m^2 K/W)"
       Rfc :: Float64 = 0.0
+      "Inner diameter of core (m)"
       D_i :: Float64 = 0.0
+      "Material"
       material :: StructuralAlloy = StructuralAlloy("Al-2219-T87")
+      "Design pressure difference between tube and outside (Pa)"
       Δpdes::Float64 = 0.0
+      "Maximum allowable HEX length (m)"
       maxL::Float64 = 0.0
 end
 
@@ -141,11 +136,11 @@ function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
 end
 
 """
-    HX_struct
+    HeatExchanger
 
 Structure containing all the heat exchanger geometry and operational information.
 """
-@kwdef mutable struct HX_struct
+@kwdef mutable struct HeatExchanger
       "HX type"
       type :: String = ""
       "Geometry object"
@@ -171,8 +166,8 @@ Structure containing all the heat exchanger geometry and operational information
 end
 
 # Outer constructor with custom size for HXgas_mission
-function make_HX_struct(nmis::Int; kwargs...)
-    obj = HX_struct(; kwargs...)  # initialize with other kwargs
+function make_HeatExchanger(nmis::Int; kwargs...)
+    obj = HeatExchanger(; kwargs...)  # initialize with other kwargs
     obj.HXgas_mission = Array{HX_gas}(undef, iptotal, nmis)
     return obj
 end
@@ -1145,10 +1140,10 @@ then evaluates performance for all missions and points with hxoper!().
     - `pare::Array{Float64 , 3}`: array with engine parameters
     - `igas::Float64`: coolant gas index
     - `ipdes::Float64`: index for design mission segment
-    - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HX_struct` structures
+    - `HXs_prev::Vector{Any}`: vector with heat exchanger data from the previous wsize iteration; elements are `HeatExchanger` structures
     - `rlx::Float64`: relaxation factor for pare update
     **Outputs:**
-    - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HX_struct` structures
+    - `HeatExchangers::Vector{Any}`: vector with heat exchanger data; elements are `HeatExchanger` structures
     - Also modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
 function hxdesign!(ac, ipdes, imission; rlx = 1.0)
@@ -1214,7 +1209,7 @@ off design analysis.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
+    - `HeatExchangers::Vector{HeatExchanger}`: vector with heat exchanger data
     - `idx::Int64`: index for the heat exchanger number
     - `ip::Int64`: mission point index
     - `igas::Int64`: gas index
@@ -1368,7 +1363,7 @@ mission point.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `HeatExchangers::Vector{HX_struct}`: vector with heat exchanger data
+    - `HeatExchangers::Vector{HeatExchanger}`: vector with heat exchanger data
     - `pare::Array{Float64 , 3}`: array with engine parameters
     - `igas::Int64`: gas index
     - `imission::Int64`: mission index
@@ -1526,7 +1521,7 @@ This function checks if a heat exchanger design effectiveness has been overwritt
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `HXs::Vector{HX_struct}`: vector with heat exchanger data
+    - `HXs::Vector{HeatExchanger}`: vector with heat exchanger data
 
     **Outputs:**
     Produces a warning if the effectiveness has been overwritten.
@@ -1769,7 +1764,7 @@ Calculates and stores the minimum tube wall temperature at each mission point.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `HXs_prev::Vector{HX_struct}`: vector with heat exchanger data
+    - `HXs_prev::Vector{HeatExchanger}`: vector with heat exchanger data
 
     **Outputs:**
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
