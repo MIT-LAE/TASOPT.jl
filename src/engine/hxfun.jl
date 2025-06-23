@@ -1770,19 +1770,18 @@ Calculates and stores the minimum tube wall temperature at each mission point.
     Modifies `pare` with the fuel temperature and the HX enthalpy and pressure changes
 """
 function findMinWallTemperature!(HXs)
-      
+      minT = Inf #Start with infinite temperature
       for ip in 1:iptotal
-            minT = Inf #Start with infinite temperature
             for HX in HXs
                   if HX.HXgas_mission[ip, 1].mdot_c > 0  #TODO extend to off-design missions
                         minT = min(minT,  HX.HXgas_mission[ip].Tw)
                   end
             end
-            if minT == Inf
-                  minT = 0.0 #Replace Inf with 0 when there is no mass flow rate
-            end
-            HXs[1].min_wall_temperature = minT
       end
+      if minT == Inf
+            minT = 0.0 #Replace Inf with 0 when there is no mass flow rate
+      end
+      HXs[1].min_wall_temperature = minT
 end
 
 """
