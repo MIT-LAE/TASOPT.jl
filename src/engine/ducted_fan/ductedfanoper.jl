@@ -311,8 +311,15 @@ function ductedfanoper!(M0, T0, p0, a0, Tref, pref,
         return outputs
     end
 
-    residual(x) = DuctedFanOffDesign(x, iPspec = iPspec)
-    sol = nlsolve(residual, guess, ftol = tol) #Use NLsolve.jl to solve for ducted fan state
+    #Function to calculate the residuals for the non-linear solver
+    function residuals(x) 
+        try
+            return DuctedFanOffDesign(x, iPspec = iPspec)
+        catch #Return a large residual if an error occurs
+            return ones(length(x)) * 1e6 
+        end
+    end
+    sol = nlsolve(residuals, guess, ftol = tol) #Use NLsolve.jl to solve for ducted fan state
 
     #Evaluate residual once more, storing parameters
     outputs = DuctedFanOffDesign(sol.zero, iPspec = iPspec, store_data = true)

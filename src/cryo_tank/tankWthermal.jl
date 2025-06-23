@@ -52,7 +52,14 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair
       thickness = sum(t_cond)  # total thickness of insulation
       ΔT = Taw - Tfuel
       
-      fun(x) = residuals_Q(x, p, "Q_unknown") #Create function handle to be zeroed
+      #Function to calculate the residuals for the non-linear solver
+      function residuals(x)
+            try 
+                  return residuals_Q(x, p, "Q_unknown") #Create function handle to be zeroed
+            catch
+                  return ones(length(x))*1e6 #Return a large number if the residuals function fails
+            end
+      end
       
       #Initial guess for function
       #TODO find a better way to get temperature and Q guesses
@@ -69,7 +76,7 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair
             guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
       end
       guess[end] = guess[end] - 1.0 #fuselage wall temperature
-      sol = nlsolve(fun, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
+      sol = nlsolve(residuals, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
       
       Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
       
