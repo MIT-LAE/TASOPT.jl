@@ -914,6 +914,10 @@ readcool(x) = read_input(x, cool, dcool)
     pare[ieefilm, :, :] .= efilm
     pare[ietfilm, :, :] .= tfilm
 
+    #HPT cooled efficiency
+    pare[iedehtdfc,:,:] .= readcool("HPT_efficiency_derivative_with_cooling")
+    pare[iefc0,:,:] .= readcool("baseline_cooling_fraction")
+
 # Offtakes
 off = readprop("Offtakes")
 doff = dprop["Offtakes"]

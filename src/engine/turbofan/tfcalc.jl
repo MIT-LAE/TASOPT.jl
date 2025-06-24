@@ -87,6 +87,10 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         Tmrow = zeros(ncrowx)
         hvap = pare[iehvapcombustor] #Enthalpy of vaporization of fuel
 
+        #Effect of cooling on HPT efficiency
+        epht_fc = pare[iedehtdfc]
+        fc0 = fc0 = pare[iefc0]
+
         #Heat exchanger variables
         Δh_PreC = pare[iePreCDeltah]
         Δh_InterC = pare[ieInterCDeltah]
@@ -200,6 +204,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         epsl, epsh,
                         opt_cooling,
                         Mtexit, dTstrk, StA, efilm, tfilm,
+                        fc0, epht_fc,
                         M4a, ruc,
                         ncrowx, ncrow,
                         epsrow, Tmrow,
@@ -427,6 +432,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         epsl, epsh,
                         opt_cooling,
                         Mtexit, dTstrk, StA, efilm, tfilm,
+                        fc0, epht_fc,
                         M4a, ruc,
                         ncrowx, ncrow,
                         epsrow, Tmrow,
