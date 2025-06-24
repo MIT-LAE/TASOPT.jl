@@ -12,8 +12,8 @@ basic engine inputs to those required by the function and storing the outputs.
     - `imission::Int64`: mission index
     - `ip::Int64`: mission point index
     - `initializes_engine::Bool`: flag to initialize engine:
-       - `false`: initialize variables for iteration in engine
-       - `true`: use current variables as initial guesses in engine
+       - `true`: initialize variables for iteration in engine
+       - `false`: use current variables as initial guesses in engine
     - `iterw::Int64`: sizing loop iteration
 
     **Output:**
