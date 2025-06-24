@@ -1068,34 +1068,71 @@ else
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
     
 # Heat exchangers, only if in the model file (assigned 0 in the default .tomls)
 # Would be better if there were an independent toggle like `has_wing_fuel` for `fuse_tank` but good enough for now
 if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
     HEx = readprop("HeatExchangers")
     dHEx = dprop["HeatExchangers"]
-        parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
+    HX_add_mass = read_input("added_mass_frac", HEx, dHEx)
+    
+    has_recirculation = read_input("has_recirculation", HEx, dHEx)
+    recircT = Temp(read_input("recirculation_temperature", HEx, dHEx))
+    pare[ieDi, :, :] .= Distance(read_input("core_inner_diameter", HEx, dHEx))
+    HXmaxL = Distance(read_input("maximum_heat_exchanger_length", HEx, dHEx))
+    
+    PreCorder = read_input("precooler_order", HEx, dHEx)
+    PreCepsilon = read_input("precooler_effectiveness", HEx, dHEx)
+    PreCMp = read_input("precooler_inlet_mach", HEx, dHEx)
 
-        pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
-        pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-        pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
-        
-        pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
-        pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-        pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+    InterCorder = read_input("intercooler_order", HEx, dHEx)
+    InterCepsilon = read_input("intercooler_effectiveness", HEx, dHEx)
+    InterCMp = read_input("intercooler_inlet_mach", HEx, dHEx)
 
-        pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
-        pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
-        pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+    Regenorder = read_input("regenerative_order", HEx, dHEx)
+    Regenepsilon = read_input("regenerative_effectiveness", HEx, dHEx)
+    RegenMp = read_input("regenerative_inlet_mach", HEx, dHEx)
 
-        pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
-        pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
-        pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+    TurbCorder = read_input("turbine_cooler_order", HEx, dHEx)
+    TurbCepsilon = read_input("turbine_cooler_effectiveness", HEx, dHEx)
+    TurbCMp = read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-        pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
-        pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
-        pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+    all_eps = [PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon]
+    all_types = ["PreC", "InterC", "Regen", "TurbC"]
+    all_orders = [PreCorder, InterCorder, Regenorder, TurbCorder]
+    all_Mp = [PreCMp, InterCMp, RegenMp, TurbCMp]
+
+    HXtypes = []
+    Mp_in = []
+    ε_des = []
+    sort_i = sortperm(all_orders) #Sort according to order
+
+    for ind in sort_i
+        if (all_eps[ind] > 0) && (all_eps[ind] <= 1) #If effectiveness is between 0 and 1
+                push!(HXtypes, all_types[ind])
+                push!(Mp_in, all_Mp[ind])
+                push!(ε_des, all_eps[ind])
+        end
+    end
+    nmis = size(pare)[3]
+            
+    for (i,HXtype) in enumerate(HXtypes)
+        #Create heat exchanger struct
+        HX = TASOPT.engine.make_HeatExchanger(nmis)
+        HX.type = HXtype
+        HX.order = i
+        HX.design_effectiveness = ε_des[i]
+        HX.design_Mach = Mp_in[i]
+        HX.added_mass_fraction = HX_add_mass
+        HX.maximum_length = HXmaxL
+        if i == 1 #For first HX
+            HX.has_recirculation = has_recirculation
+            HX.recirculation_temperature = recircT
+        end
+        #Add to engine heat exchangers
+        push!(engine.heat_exchangers, HX)
+    end
 end
 
 #create options object

@@ -1,21 +1,26 @@
 """ 
-    tfcalc(wing, engine, parg, para, pare, ip, ifuel, opt_calc_call, opt_cooling, initializes_engine)
+    tfcalc!(wing, engine, parg, para, pare, ip, ifuel, opt_calc_call, opt_cooling, initializes_engine)
 
-Calls function tfsize or tfoper for one operating point.
+Calls on-design sizing function [`tfsize!`](@ref) or off-design analysis function
+[`tfoper!`](@ref) for one operating point `ip`.
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**
-    - `opt_calc_call`:  "sizing"        call on-design  sizing   routine tfsize
-                        "oper_fixedTt4" call off-design analysis routine tfoper, specified Tt4
-                        "oper_fixedFe"  call off-design analysis routine tfoper, specified Fe
+    - `opt_calc_call`:
+      - "sizing": call on-design sizing routine `tfsize!`
+      - `"oper_fixedTt4"`: call off-design analysis routine `tfoper!` with specified Tt4
+      - `"oper_fixedFe"`: call off-design analysis routine `tfoper!` with specified
+        net thrust (`Fe`)
 
-    - `opt_cooling`:   turbine cooling flag
-               "none" = no cooling mass flow
-               "fixed_coolingflowratio" = use specified cooling flow ratios epsrow(.), calculate Tmrow(.)
-               "fixed_Tmetal" = use specified metal temperatures  Tmrow(.) , calculate epsrow(.)
-
-    - `initializes_engine`:    true  initialize variables for iteration in TFOPER
-                               false  use current variables as initial guesses in TFOPER
+    - `opt_cooling`: turbine cooling flag
+      - "none": no cooling mass flow
+      - `"fixed_coolingflowratio"`: use specified cooling flow ratios `epsrow(.)`;
+        calculate `Tmrow(.)`
+      - `"fixed_Tmetal"`: use specified metal temperatures `Tmrow(.)`; calculate
+        `epsrow(.)`
+    - `initializes_engine`:
+      - `true`: initialize variables for iteration in `tfoper!`
+      - `false`: use current variables as initial guesses in `tfoper!`
 """
 function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
         opt_calc_call::String, opt_cooling::String, initializes_engine::Bool)
@@ -141,8 +146,9 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         #- - - - - - - - - - - - - - - - - - - - - - - 
 
         #---- mass and power offtakes
+        Pofft_HX = pare[ieHXrecircP] #power offtakes to drive heat exchanger recirculation per engine
         mofft = (mofWpay * Wpay + mofWMTO * WMTO) / neng
-        Pofft = (PofWpay * Wpay + PofWMTO * WMTO) / neng
+        Pofft = (PofWpay * Wpay + PofWMTO * WMTO) / neng + Pofft_HX
 
         Tt9 = pare[ieTt9]
         pt9 = pare[iept9]
