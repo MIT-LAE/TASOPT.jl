@@ -208,7 +208,7 @@ engine.HX_gas
 engine.HX_tubular
 ```
 ```@docs
-engine.HX_struct
+engine.HeatExchanger
 ```
 ## Functions
 ### Heat exchanger sizing and off-design operations
