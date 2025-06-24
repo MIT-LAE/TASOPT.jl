@@ -1163,7 +1163,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
             #---------------------------------
             HXgeom, HXgas = PrepareHXobjects(HXs, i, ipdes, imission, igas, pare_sl, type, "sizing")
             HXgeom.Δpdes = max(maximum(ac.pare[iept3,:,:]), maximum(ac.pare[ieRadiatorCoolantP,:,:])) #size wall thickness for maximum HPC or coolant pressure
-            HXgeom.maxL = HX.maximum_length #Maximum HX length TODO this is duplicated as stored both in HX and HX.HXgeom
+            HXgeom.maxL = HX.maximum_length #HXgeom.maxL is redundant with HX.maximum_length. TODO: make more elegant
 
             # Guess starting point for optimization
             #First calculate minimum tube length
@@ -1536,7 +1536,7 @@ function check_HX_overwriting(HXs)
                   break
             end
       end
-      if flag == true
+      if flag
             @warn "Heat-exchanger design effectiveness limited to 99% of maximum possible one"
       end
 end
