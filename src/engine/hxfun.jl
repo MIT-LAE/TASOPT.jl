@@ -8,7 +8,7 @@ const alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127] #Air composition
 """
     HX_gas
 
-Structure containing the fluid properties of the process and coolant streams.
+Structure containing the fluid properties of the process (`_p`) and coolant (`_c`) streams.
 """
 @kwdef mutable struct HX_gas
       "Process fluid name"
@@ -80,11 +80,11 @@ Structure containing the heat exchanger geometric and material properties.
 """
 @kwdef mutable struct HX_tubular
       "Flag for concentric geometry (true: concentric ; false: rectangular)"
-      fconc :: Bool = false
+      is_concentric :: Bool = false
       "Flag for recirculation (true: recirculation ; false: no recirculation)"
-      frecirc :: Bool = false
+      has_recirculation :: Bool = false
       "Flag for whether HX contains shaft (true: shaft ; false: no shaft)"
-      fshaft :: Bool = false
+      has_shaft :: Bool = false
       "Number of tubes per row"
       N_t :: Float64 = 0.0
       "Number of different coolant stages with different coolant flows"
@@ -119,7 +119,7 @@ end
 
 # Overload Base.getproperty for convenience
 function Base.getproperty(HXgeom::HX_tubular, sym::Symbol)
-      if (sym === :D_o) && getfield(HXgeom, :fconc)
+      if (sym === :D_o) && getfield(HXgeom, :is_concentric)
             A_cs = getfield(HXgeom, :A_cs)
             D_i = getfield(HXgeom, :D_i)
             D_o = sqrt(4 * A_cs / pi +D_i^2)
@@ -207,8 +207,8 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       pc_in = HXgas.pc_in
 
       #Flags 
-      fconc = HXgeom.fconc
-      frecirc = HXgeom.frecirc
+      is_concentric = HXgeom.is_concentric
+      has_recirculation = HXgeom.has_recirculation
 
       #HX geometry
       t = HXgeom.t #Initial wall thickness, may be overwritten
@@ -221,11 +221,11 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
 
       tol = 1e-10 #convergence tolerance
 
-      if fconc #If geometry is concentric
+      if is_concentric #If geometry is concentric
             D_i = HXgeom.D_i
       end
 
-      if frecirc
+      if has_recirculation
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
 
@@ -250,7 +250,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       mdot_c = mdot_c_inf
       modot_c_prev = mdot_c
 
-      if frecirc #If there is recirculation
+      if has_recirculation #If there is recirculation
             _, _, hc_in, _, cp_c_in, _ = gasfun(igas_c, recircT)
             Tc_in = recircT
             N_iters_rec = 15 #Iterations in recirculation loop
@@ -375,7 +375,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       #---------------------------------
       A_cs = mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-      if fconc #If channel is concentric, e.g., engine core
+      if is_concentric #If channel is concentric, e.g., engine core
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
             b = pi * D_i #Inner circumference
       else #If channel is rectangular
@@ -418,7 +418,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
             #Calculate heat transfer coefficient for coolant
             Re_D_c = Vc_m * tD_i / ν_c_m #Reynolds number based on pipe diameter
             jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor and skin-friction coefficient
-            Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
+            Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nusselt number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw_c/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
             else
@@ -505,7 +505,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgeom.n_passes = n_passes
       HXgeom.A_cs = A_cs
 
-      if frecirc
+      if has_recirculation
             HXgas.mdot_r = mdot_r
       end
 
@@ -542,8 +542,8 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       pc_in = HXgas.pc_in
 
       #Flags 
-      fconc = HXgeom.fconc
-      frecirc = HXgeom.frecirc
+      is_concentric = HXgeom.is_concentric
+      has_recirculation = HXgeom.has_recirculation
 
       #HX geometry
       t = HXgeom.t
@@ -560,7 +560,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
 
       tol = 1e-10
 
-      if frecirc
+      if has_recirculation
             recircT = HXgas.recircT
             h_lat = HXgas.h_lat
       end
@@ -582,7 +582,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       # Fluid calculations
       #---------------------------------
 
-      if frecirc
+      if has_recirculation
             _, _, hc_in, _, cp_c_in, _ = gasfun(igas_c, recircT)
             Tc_in = recircT
       
@@ -662,7 +662,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       mdot_r = 0.0 #Initialize
       for i = 1 : N_iter
             
-            if frecirc
+            if has_recirculation
                   #Calculate assuming that C_c = C_min
                   #Note that this ignores the enthalpy increase in the recirculation stream when it is recompressed
                   mdot_r = mdot_c_inf * (hc_in - hc_inf + h_lat) / (ε * cp_c_in * (Tp_in -  recircT) )
@@ -719,7 +719,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             #Calculate heat transfer coefficient for coolant
             Re_D_c = Vc_m * tD_i / ν_c_m #Reynolds number based on pipe diameter
             jc, Cf = jcalc_pipe(Re_D_c) #Colburn j-factor
-            Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nussel number in mean flow
+            Nu_cm =  Re_D_c * jc * Pr_c_m ^ (1/3) #Nusselt number in mean flow
             if ~occursin("liquid", fluid_c) #if fluid is a gas
                   Nu_c = Nu_cm * (Tw_c/Tc_m)^(-0.5) #Eq.(4.1) in Kays and London (1998)
             else
@@ -812,7 +812,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       HXgas.Δp_c = Δp_c
       HXgas.ε = ε
 
-      if frecirc
+      if has_recirculation
             HXgas.mdot_r = mdot_r
       end
 
@@ -970,7 +970,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
       pp_in  = HXgas.pp_in
 
       #Flags 
-      fconc = HXgeom.fconc
+      is_concentric = HXgeom.is_concentric
 
       _, _, _, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
       γ_p_in = cp_p_in / (cp_p_in - Rp)
@@ -979,7 +979,7 @@ function hxoptim!(HXgas::HX_gas, HXgeom::HX_tubular, initial_x::Vector{Float64})
 
       A_cs = mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
       
-      if fconc #Flow is concentric
+      if is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -1163,7 +1163,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
             #---------------------------------
             HXgeom, HXgas = PrepareHXobjects(HXs, i, ipdes, imission, igas, pare_sl, type, "sizing")
             HXgeom.Δpdes = max(maximum(ac.pare[iept3,:,:]), maximum(ac.pare[ieRadiatorCoolantP,:,:])) #size wall thickness for maximum HPC or coolant pressure
-            HXgeom.maxL = HX.maximum_length #Maximum HX length TODO this is duplicated
+            HXgeom.maxL = HX.maximum_length #Maximum HX length TODO this is duplicated as stored both in HX and HX.HXgeom
 
             # Guess starting point for optimization
             #First calculate minimum tube length
@@ -1229,7 +1229,7 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       #Extract some inputs
       D_i = pare_sl[ieDi]
       Tc_ft = pare_sl[ieTft]
-      frecirc = HeatExchangers[1].has_recirculation
+      has_recirculation = HeatExchangers[1].has_recirculation
       recircT = HeatExchangers[1].recirculation_temperature
       h_lat = pare_sl[iehvap]
 
@@ -1278,25 +1278,25 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       HXgas.mdot_c = mcore * ff #Fuel fraction times core mass flow rate
 
       if type == "PreC" #Compressor Precooler
-            HXgeom.fconc = true #Concentric
+            HXgeom.is_concentric = true #Concentric
             HXgeom.D_i = D_i 
             HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
             HXgeom.material = StructuralAlloy("Al-2219-T87")
-            HXgeom.fshaft = true #HX contains a shaft
+            HXgeom.has_shaft = true #HX contains a shaft
 
             HXgas.mdot_p = mcore   #Core mass flow 
 
       elseif type == "InterC" #Compressor Intercooler
-            HXgeom.fconc = true #Concentric
+            HXgeom.is_concentric = true #Concentric
             HXgeom.D_i = D_i
             HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
             HXgeom.material = StructuralAlloy("Al-2219-T87")
-            HXgeom.fshaft = true
+            HXgeom.has_shaft = true
 
             HXgas.mdot_p = mcore * (1 - fo) #Core mass flow minus offtake
 
       elseif type == "Regen" #Regenerative cooling
-            HXgeom.fconc = true 
+            HXgeom.is_concentric = true 
             HXgeom.D_i = D_i
             HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W 
             HXgeom.material = StructuralAlloy("SS-304") #use stainless steel for regenerative cooler as temp is above melting for Al
@@ -1306,14 +1306,14 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
             HXgas.alpha_p = lambdap_calc(pare_sl, alpha, igas) #Calculate postcombustion and mixing composition
 
       elseif type =="TurbC" #Cooling of turbine cooling flow
-            HXgeom.fconc = false 
+            HXgeom.is_concentric = false 
             HXgeom.Rfp = 0.001*0.1761 #Compressed air fouling resistance, m^2*K/W 
             HXgeom.material = StructuralAlloy("Al-2219-T87")
 
             HXgas.mdot_p = mcore * fc #Only cooling mass flow rate
 
       elseif type == "Radiator" #Radiator to reject residual heat
-            HXgeom.fconc = true 
+            HXgeom.is_concentric = true 
             HXgeom.D_i = D_i
             HXgeom.Rfp = 1.761e-4 #Compressed air fouling resistance, m^2*K/W 
             HXgeom.Rfc = 9E-05 #Distilled water fouling resistance, m^2*K/W
@@ -1337,12 +1337,12 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       if type != "Radiator" #If HX is in the engine TODO make more robust to future HEX options
             if idx == 1 #At first heat exchanger
                   HXgas.Tc_in = Tc_ft #Coolant temperature is the tank temperature
-                  if frecirc #There can only be recirculation in the first heat exchanger
-                        HXgeom.frecirc = true 
+                  if has_recirculation #There can only be recirculation in the first heat exchanger
+                        HXgeom.has_recirculation = true 
                         HXgas.recircT = recircT
                         HXgas.h_lat = h_lat
                   else
-                        HXgeom.frecirc = false 
+                        HXgeom.has_recirculation = false 
                   end
                         
             else # For subsequent exchangers
@@ -1376,7 +1376,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
       if length(HeatExchangers) == 0 #Skip if no HXs
             return
       end
-      frecirc = HeatExchangers[1].has_recirculation #Check if there is recirculation in the first HX
+      has_recirculation = HeatExchangers[1].has_recirculation #Check if there is recirculation in the first HX
       #Operate off-design for engine-integrated HEXs
       for (i,HX) in enumerate(HeatExchangers)
             HXgas_mis = Vector{Any}(undef, size(pare)[2]) #Vector to store gas properties across missions and segments
@@ -1418,7 +1418,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
                         end
                   end
 
-                  if i == 1 && frecirc #If there is recirculation in the HX
+                  if i == 1 && has_recirculation #If there is recirculation in the HX
                         #Store power drawn by recirculation to use it in the engine
                         P_recirc = find_recirculation_power(HXgasp)
                         pare[ieHXrecircP, ip] =  P_recirc
@@ -1450,7 +1450,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
                   end
             end
 
-            if (frecirc)  #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
+            if (has_recirculation)  #Currently, non-zero heat of vaporization is only accounted for if there is recirculation
                   pare[iehvapcombustor, :, :] .= 0.0 #Fuel is vaporized in HX
             end
 
@@ -1517,7 +1517,9 @@ end
 """
       check_HX_overwriting(HXs)
 
-This function checks if a heat exchanger design effectiveness has been overwritten because it was too high.      
+This function checks if a heat exchanger design effectiveness has been overwritten because it was too high. 
+The heat transfer area tends to infinity as the effectiveness tends to the maximum possible one,
+so a limit is set to 99% of the maximum possible one.     
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -1562,7 +1564,7 @@ function calculate_min_tube_length(HXgeom::HX_tubular, HXgas::HX_gas)
 
       A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
       
-      if HXgeom.fconc #Flow is concentric
+      if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -1749,7 +1751,7 @@ function hxweight(gee, HXgeom, fouter)
 
       W_hx = gee * m_t * (1 + fouter)
 
-      if HXgeom.fshaft #If the HEX is in the core with a shaft through it, add additional mass for the shaft
+      if HXgeom.has_shaft #If the HEX is in the core with a shaft through it, add additional mass for the shaft
             shaft_material = StructuralAlloy("AISI-4340") #Assume shaft is made of 4340 steel
             W_shaft = gee * shaft_material.ρ * HXgeom.L * HXgeom.D_i^2 * pi / 4 #Weight of the extra shaft length because of the HEX
             W_hx = W_hx + W_shaft
@@ -1785,18 +1787,19 @@ function findMinWallTemperature!(HXs)
 end
 
 """
-      find_recirculation_power(HXgas)
+      find_recirculation_power(HXgas, η_i = 1.0)
 
 Calculates and stores the power needed to drive recirculation in a HX.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `HXgas::HX_gas`: structure with HX fluid data
+    - `η_i::Float64`: isentropic efficiency of the recirculation compressor (default 1.0, no losses)
 
     **Outputs:**
    - `P::Float64`: power needed to drive recirculation (W)
 """
-function find_recirculation_power(HXgas)
+function find_recirculation_power(HXgas, η_i = 1.0)
       
       mdot_r = HXgas.mdot_r
       if mdot_r ≈ 0.0 #If there is no recirculation, return 0
@@ -1814,7 +1817,7 @@ function find_recirculation_power(HXgas)
       γ = cp_out / (cp_out - R)
 
       #Isentropic compression power
-      P = mdot_r * cp_out * Tout * ((pc_in/pc_out)^(1 - 1 / γ) - 1)
+      P = 1/η_i * mdot_r * cp_out * Tout * ((pc_in/pc_out)^(1 - 1 / γ) - 1)
       return P
 end
 

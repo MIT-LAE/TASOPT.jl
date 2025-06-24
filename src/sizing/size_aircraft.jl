@@ -727,7 +727,6 @@ function _size_aircraft!(ac; itermax=35,
             end
             engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
 
-            #Find and store maximum HX outer diameter to check fit in engine 
             for HX in engine.heat_exchangers
                 if HX.type == "Radiator"
                     TASOPT.engine.VerifyRadiatorHeat(engine, imission)

@@ -1077,7 +1077,7 @@ if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
     dHEx = dprop["HeatExchangers"]
     HX_add_mass = read_input("added_mass_frac", HEx, dHEx)
     
-    has_recirculation = read_input("recirculation_flag", HEx, dHEx)
+    has_recirculation = read_input("has_recirculation", HEx, dHEx)
     recircT = Temp(read_input("recirculation_temperature", HEx, dHEx))
     pare[ieDi, :, :] .= Distance(read_input("core_inner_diameter", HEx, dHEx))
     HXmaxL = Distance(read_input("maximum_heat_exchanger_length", HEx, dHEx))
