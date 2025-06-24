@@ -17,18 +17,15 @@
       Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
       Δp_PreC, Δp_InterC, Δp_Regen)
 
-
 Turbofan performance and sizing routine.
-      
-Calculation procedure follows that of Kerrebrock, but the usual gas property formulas are replaced by function calls, which can therefore implement more general gas models.  
-In addition, a turbine cooling model is added.
-      
-The gas routines reside in the following source files:
-    gascalc.f  Routines for various processes (compressor, turbine, combustor, etc)
-    gasfun.f   Routines for computing cp[T], h[t], sigma[T], R, called by the routines in gascalc.f
-      
+
+Calculation procedure follows that of Kerrebrock, but the usual gas property formulas
+are replaced by function calls (described in [Gas Calculations](@ref)), which can
+therefore implement more general gas models. In addition, a turbine cooling model is
+added.
+
 !!! details "🔃 Inputs and Outputs"
-      **Inputs:**
+    **Inputs:**
     - `gee`:     gravity acceleration
     - `M0`:      freestream Mach
     - `T0`:      freestream temperature  [K]
@@ -37,8 +34,8 @@ The gas routines reside in the following source files:
     - `M25`:     HPC-face Mach number
     - `Feng`:    required net thrust  (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
     - `Phiinl`:  inlet ingested dissipation
-    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees Phiinl
-    - `BPR`:     bypass ratio  = mdot_fan/mdot_core
+    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees `Phiinl`
+    - `BPR`:     bypass ratio  = `mdot_fan/mdot_core`
     - `pif`:     fan      pressure ratio  ( = pt7 /pt2)
     - `pilc`:    LP comp  pressure ratio  ( = pt25/pt2)
     - `pihc`:    HP comp  pressure ratio  ( = pt3 /pt25)
@@ -47,7 +44,7 @@ The gas routines reside in the following source files:
     - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt2.1)
     - `pitn`:    turbine nozzle pressure ratio  ( = pt5/pt4.9)
     - `Ttf`:     fuel temperature entering combustor
-    - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
+    - `ifuel`:   fuel index, see function [`gasfun`](@ref)
     - `hvap`:    fuel enthalpy of vaporization (J/kg)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    fan max polytropic efficiency
@@ -56,37 +53,36 @@ The gas routines reside in the following source files:
     - `epht0`:   HPT max polytropic efficiency
     - `eplt0`:   LPT max polytropic efficiency
       
-    - `mofft`:    mass flow offtake at LPC discharge station 2.5
-    - `Pofft`:    low spool power offtake
+    - `mofft`:   mass flow offtake at LPC discharge station 2.5
+    - `Pofft`:   low spool power offtake
     - `Tt9`:     offtake air discharge total temperature
     - `pt9`:     offtake air discharge total pressure
     - `epsl`:    low  spool power loss fraction
     - `epsh`:    high spool power loss fraction
       
-    - `opt_cooling`:   turbine cooling flag
-               "none" = no cooling, ignore all cooling parameters below
-               "fixed_coolingflowratio" = usual cooling, using passed-in fcool
-               "fixed_Tmetal" = usual cooling, but set (and return) fcool from Tmetal
+    - `opt_cooling`: turbine cooling flag
+      - `"none"` = no cooling, ignore all cooling parameters below
+      - `"fixed_coolingflowratio"` = usual cooling, using passed-in fcool
+      - `"fixed_Tmetal"` = usual cooling, but set (and return) `fcool` from `Tmetal`
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if opt_cooling="fixed_Tmetal"
-    - `StA`:      area-weighted Stanton number    , used only if opt_cooling="fixed_Tmetal"
+    - `dTstrk`:   hot-streak temperature delta [K], used only if `opt_cooling="fixed_Tmetal"`
+    - `StA`:      area-weighted Stanton number    , used only if `opt_cooling="fixed_Tmetal"`
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
     - `ruc`:      cooling-flow outlet velocity ratio, u/ue
     - `ncrowx`:      dimension of epsrow array
     - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if opt_cooling="fixed_coolingflowratio"
-                     output resulting cooling-flow bypass ratio if opt_cooling="fixed_Tmetal"
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if opt_cooling="fixed_Tmetal"
-                     output resulting metal temperature  [K]    if opt_cooling="fixed_coolingflowratio"
+    - `epsrow(.)`:   specified cooling-flow bypass ratio if `opt_cooling="fixed_coolingflowratio"`
+    - `Tmrow(.)`:    specified metal temperature [K] if `opt_cooling="fixed_Tmetal"`
+
 
       **Outputs:**
-    - `epsrow(.)`:   see above
-    - `Tmrow(.)`:    see above
-    - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
-    - `Fsp`:     specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
+    - `epsrow(.)`:   resulting cooling-flow bypass ratio if `opt_cooling="fixed_Tmetal"`
+    - `Tmrow(.)`:    resulting metal temperature [K] if `opt_cooling="fixed_coolingflowratio"`
+    - `TSFC`:    thrust specific fuel consumption = `mdot_fuel g / F`   [1/s]
+    - `Fsp`:     specific thrust  = `F / (mdot u0) = F / ((1+BPR) mdot_core u0)`
     - `hfuel`:   fuel heating value   [J / kg K]
-    - `ff`:      fuel mass flow fraction  =  mdot_fuel / mdot_core
-    - `mcore`:   core mass flow = mdot_core  [kg/s]
+    - `ff`:      fuel mass flow fraction  =  `mdot_fuel / mdot_core`
+    - `mcore`:   core mass flow = `mdot_core`  [kg/s]
     - `A2`:      fan-face area [m^2]
     - `A25`:     HPC-face area [m^2]
     - `A5`:      core nozzle area [m^2]
@@ -96,7 +92,7 @@ The gas routines reside in the following source files:
     - `Tt?`:     total temperature
     - `ht?`:     total complete enthalpy (includes heat of formation)
     - `pt?`:     total pressure
-    - `cpt?`:    specific heat at stagnation temperature  (= dh/dT)
+    - `cpt?`:    specific heat at stagnation temperature  (= `dh/dT`)
     - `Rt?`:     gas constant  at stagnation conditions
     - `T?`:      static temperature
     - `u?`:      velocity
@@ -110,24 +106,24 @@ The gas routines reside in the following source files:
     - `etahc`:   HPC overall efficiency
     - `etaht`:   HPT overall efficiency
     - `etalt`:   LPT overall efficiency
-    - `Lconv`:   T if convergence was successful, F otherwise
+    - `Lconv`:   `true` if convergence was successful, `false` otherwise
 
     The "?" symbol denotes the station index:
-      0  freestream
-      18 fan face outside of casing BLs
-      19 fan face over LPC portion
-      2  fan face over fan portion
-      21 fan exit
-      25 LPC exit, HPC inlet
-      3  compressor exit
-      4  combustor exit before cooling air addition
-      41 turbine  inlet after  cooling air addition
-      45 HPT exit, LPT inlet
-      49 LPT exit
-      5  core nozzle
-      6  core flow downstream
-      7  fan nozzle
-      8  fan flow downstream
+    - 0: freestream
+    - 18: fan face outside of casing BLs
+    - 19: fan face over LPC portion
+    - 2: fan face over fan portion
+    - 21: fan exit
+    - 25: LPC exit, HPC inlet
+    - 3: compressor exit
+    - 4: combustor exit before cooling air addition
+    - 41: turbine inlet after cooling air addition
+    - 45: HPT exit, LPT inlet
+    - 49: LPT exit
+    - 5: core nozzle
+    - 6: core flow downstream
+    - 7: fan nozzle
+    - 8: fan flow downstream
 """
 function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Feng, Phiinl, Kinl, eng_has_BLI_cores,

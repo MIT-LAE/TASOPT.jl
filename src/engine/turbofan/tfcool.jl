@@ -6,22 +6,22 @@ Calculates cooling mass flow requirement.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `ncrowx`:    dimension of Tmrow(.),epsrow(.) arrays (max number of blade rows)
+    - `ncrowx`:    dimension of `Tmrow(.)` and `epsrow(.)` arrays (max number of blade rows)
     - `Tmrow(.)`:  design metal temperature for each blade row
     - `Tt3`:       cooling flow temperature
     - `Tt4`:       hot gas temperature from burner
     - `dTstreak`:  hot-streak temperature increase over Tt4, for first blade row 
     - `Trrat`:     static temperature ratio across each blade row, T4.1 / T4
-    - `efilm`:     cooling efficiency = (Tco-Tci)/(Tmetal-Tci)
-    - `tfilm`:     film effectiveness = (Tgas-Tfaw)/(Tgas-Tco)
-                   Tco = temperature of cooling air exiting  blade
-                   Tci = temperature of cooling air entering blade
-                   Tfaw = film adiabatic wall temperature (for insulated-wall case)
-      StA`:       area-weighted external Stanton number = St (Asurf/Aflow) cpgas/cpcool
+    - `efilm`:     cooling efficiency = `(Tco-Tci)/(Tmetal-Tci)`
+    - `tfilm`:     film effectiveness = `(Tgas-Tfaw)/(Tgas-Tco)` where
+      - `Tco` = temperature of cooling air exiting  blade
+      - `Tci` = temperature of cooling air entering blade
+      - `Tfaw` = film adiabatic wall temperature (for insulated-wall case)
+    - StA`:        area-weighted external Stanton number = `St (Asurf/Aflow) cpgas/cpcool`
 
     **Output:**
-      - `ncrow`:      number of blade rows which need cooling
-      - `epsrow(.)`:  cooling mass flow ratio for each blade row, m_c_row/m_air
+    - `ncrow`:      number of blade rows which need cooling
+    - `epsrow(.)`:  cooling mass flow ratio for each blade row, `m_c_row/m_air`
 
 """
 function mcool(ncrowx,
