@@ -146,8 +146,9 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         #- - - - - - - - - - - - - - - - - - - - - - - 
 
         #---- mass and power offtakes
+        Pofft_HX = pare[ieHXrecircP] #power offtakes to drive heat exchanger recirculation per engine
         mofft = (mofWpay * Wpay + mofWMTO * WMTO) / neng
-        Pofft = (PofWpay * Wpay + PofWMTO * WMTO) / neng
+        Pofft = (PofWpay * Wpay + PofWMTO * WMTO) / neng + Pofft_HX
 
         Tt9 = pare[ieTt9]
         pt9 = pare[iept9]

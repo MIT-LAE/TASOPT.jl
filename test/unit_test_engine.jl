@@ -1149,7 +1149,6 @@ isGradient = false
         ac.parg[igneng] = 2.0
         ac.parg[igfeadd] = 0.10000000000000001
         ac.parg[igfpylon] = 0.10000000000000001
-        ac.parg[igHXaddmassfrac] = 0.0
 
         Weng, Wnac, Webare, W_HXs, Snace1 = TASOPT.engine.tfweight(ac)
 

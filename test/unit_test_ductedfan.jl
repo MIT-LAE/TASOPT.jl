@@ -158,7 +158,7 @@
         para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
         engdata = fcdata
 
-        engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
+        engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
 
         ac.engine = engine
 

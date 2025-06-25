@@ -4,7 +4,6 @@ function ductedfanweight(ac)
     fpylon = ac.parg[igfpylon]
     neng = ac.parg[igneng]
     rSnace = ac.parg[igrSnace]
-    HX_add_mass_frac = ac.parg[igHXaddmassfrac]
 
     ARfan  = 3   #Blade aspeect ratio
     bladesolidity = 0.4 # Blade solidity c/s
@@ -32,7 +31,7 @@ function ductedfanweight(ac)
 
     W_HXs = 0.0 #Store total weight of HXs
     for HX in ac.engine.heat_exchangers #For every heat exchanger in the engine
-        W_HXs += hxweight(gee, HX.HXgeom, HX_add_mass_frac) * neng #Weight of a heat exchanger times number of engines
+        W_HXs += hxweight(gee, HX.HXgeom,  HX.added_mass_fraction) * neng #Weight of a heat exchanger times number of engines
     end
     Webare = Webare + W_HXs #Add heat exchanger weight to bare and full engine
     Weng = Weng + W_HXs
