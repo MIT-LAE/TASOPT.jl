@@ -1176,7 +1176,7 @@ function hxdesign!(ac, ipdes, imission; rlx = 1.0)
                   initial_x = [3, 4, 4, linit] #Initial guess
             else 
                   #x[1]: 100 * Mc_in; x[2]: n_stages; x[3]: xt_D; x[4]: l;
-                  initial_x = [100 * HX.HXgas_mission[ipdes].Mc_in, 
+                  initial_x = [100 * HX.HXgas_mission[ipdes, 1].Mc_in, 
                   HX.HXgeom.n_stages, HX.HXgeom.xt_D, max(HX.HXgeom.l, lmin)] #guess is previous iteration design point
             end
 
@@ -1443,7 +1443,7 @@ function HXOffDesign!(HeatExchangers, pare, igas, imission; rlx = 1.0)
             for ip = 1:size(pare)[2] #For every mission point
                   if length(HeatExchangers) > 0
                         lastHX = HeatExchangers[end]
-                        HXgas = lastHX.HXgas_mission[ip]
+                        HXgas = lastHX.HXgas_mission[ip, imission]
                         Tf = HXgas.Tc_out
 
                         pare[ieTfuel, ip] = (1 - rlx) * pare[ieTfuel, ip] + rlx * Tf
@@ -1531,7 +1531,7 @@ so a limit is set to 99% of the maximum possible one.
 function check_HX_overwriting(HXs)
       flag = false
       for HX in HXs 
-            if abs(HX.design_effectiveness - HX.HXgas_mission[ipcruise1].ε) > 1e-5
+            if abs(HX.design_effectiveness - HX.HXgas_mission[ipcruise1, 1].ε) > 1e-5
                   flag = true
                   break
             end
@@ -1776,7 +1776,7 @@ function findMinWallTemperature!(HXs)
       for ip in 1:iptotal
             for HX in HXs
                   if HX.HXgas_mission[ip, 1].mdot_c > 0  #TODO extend to off-design missions
-                        minT = min(minT,  HX.HXgas_mission[ip].Tw)
+                        minT = min(minT,  HX.HXgas_mission[ip, 1].Tw)
                   end
             end
       end
