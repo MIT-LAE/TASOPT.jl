@@ -2,39 +2,35 @@
       thermal_params
 
 This structure stores the material and thermal properties of a cryogenic tank insulation layer.
-      
-!! details "💾 Data fields"
-    **Inputs:**
-    - `Q::Float64`: heat rate (W)
-    - `l_cyl::Float64`: length of cylindrical portion of tank (m)
-    - `l_tank::Float64`: full tank length (m)
-    - `r_tank::Float64`: tank radius (m)
-    - `Shead::Array{Float64}`: surface area of elliptical caps at different cross-sections (m^2)
-    - `hconvgas::Float64`: convective heat transfer coefficient across purged gas layer (W / (m^2 K))
-    - `hconvair::Float64 `: convective heat transfer coefficient on fuselage (W / (m^2 K))
-    - `material::Array{String} `: array with material names for different insulation layers
-    - `Tfuel::Float64`: fuel temperature (K)
-    - `z::Float64`: flight altitude (m)
-    - `TSL::Float64`: sea-level temperature (K)
-    - `Mair::Float64`: external air Mach number
-    - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
-    - `fuse_cs::AbtractCrossSection`: fuselage cross section
-    - `ifuel::Int64`: fuel species index
 """
 @kwdef mutable struct thermal_params{T<:AbstractCrossSection}
+      """Heat rate (W)"""
       Q::Float64 = 0.0
+      """Length of cylindrical portion of tank (m)"""
       l_cyl::Float64 = 0.0
+      """Full tank length (m)"""
       l_tank::Float64 = 0.0
+      """Tank radius (m)"""
       r_tank::Float64 = 0.0
-      Shead::Vector{Float64} = Vector{Float64}() 
-      t_cond::Vector{Float64} = Vector{Float64}() 
-      material::Vector{ThermalInsulator} = Vector{ThermalInsulator}() 
+      """Surface area of elliptical caps at different cross-sections (m^2)"""
+      Shead::Vector{Float64} = Vector{Float64}()
+      """Thickness of each insulation layer (m)"""
+      t_cond::Vector{Float64} = Vector{Float64}()
+      """Array with materials for different insulation layers"""
+      material::Vector{ThermalInsulator} = Vector{ThermalInsulator}()
+      """Fuel temperature (K)"""
       Tfuel::Float64 = 0.0
+      """Flight altitude (m)"""
       z::Float64 = 0.0
+      """Sea-level temperature (K)"""
       TSL::Float64 = 0.0
+      """External air Mach number"""
       Mair::Float64 = 0.0
+      """Longitudinal coordinate of fuel tank centroid from nose (m)"""
       xftank::Float64 = 0.0
+      """Fuel species index"""
       ifuel::Int64 = 0
+      """Fuselage cross section"""
       fuse_cs::T = SingleBubble()
 end
 
@@ -291,7 +287,7 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
       u = M * a #freestrean velocity
 
       #Parameters for air
-      R, Pr, γ, cp, _, _ = gasPr("air_simple", Tair)
+      R, Pr, γ, cp, _, _ = gasPr("air_simple", Tair) #This saves some computational time by using a constant cp for air
       
       r = Pr^(1/3) #recovery factor for turbulent air
       Taw = Tair * (1 + r*M^2*(γ - 1)/2)  #K, adiabatic wall temperature

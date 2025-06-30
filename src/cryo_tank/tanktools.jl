@@ -44,7 +44,7 @@ function find_mdot_time(t::Float64, tank_count::Int64, parg::Vector{Float64}, pa
 end
 
 """
-    calc_Q_points(fuse, fuse_tank, ifuel, parg, para)
+    calc_Q_points(fuse, fuse_tank, ifuel, parg, para, TSL::Float64)
 
 This function calculates the heat transfer rate into the tank at the design mission points.
 !!! details "🔃 Inputs and Outputs"
@@ -53,6 +53,7 @@ This function calculates the heat transfer rate into the tank at the design miss
     - `ifuel::Integer`: fuel type specification for gas calcs from ac.options
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `pare::Array{Float64}`: array with aircraft engine parameters
+    - `TSL::Float64`: sea-level temperature (K)
     
     **Outputs:**
     - `Qs::Vector{Float64}`: vector with heat transfer rate at mission points (W)
@@ -113,7 +114,7 @@ function find_Q_time_interp(t::Float64, para::Array{Float64}, Qs::Vector{Float64
 end
 
 """
-    find_Q_time(t, fuse_tank, fueltype, parg, para)
+    find_Q_time(t, fuse_tank, fueltype, parg, para, TSL::Float64)
 
 This function calculates the heat transfer rate into the tank in a TASOPT model for a given time.
 !!! details "🔃 Inputs and Outputs"
@@ -124,6 +125,7 @@ This function calculates the heat transfer rate into the tank in a TASOPT model 
     - `fueltype::String`: fuel type specification from ac.options
     - `parg::Vector{Float64}`: vector with aircraft geometric parameters
     - `para::Array{Float64}`: array with aircraft aerodynamic parameters
+    - `TSL::Float64`: sea-level temperature (K)
     
     **Outputs:**
     - `Q::Float64`: heat transfer rate (W)

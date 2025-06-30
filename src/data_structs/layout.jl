@@ -87,6 +87,7 @@ function Base.getproperty(obj::MultiBubble, sym::Symbol)
     end
 end  # function Base.getproperty
 
+#Helper functions to access the radius of the cross section with type stability
 Rfuse(cs::SingleBubble) = cs.radius
 Rfuse(cs::MultiBubble) = cs.radius
 

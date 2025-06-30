@@ -6,6 +6,7 @@
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `ac::aircraft`: TASOPT aircraft object.
+        - `imission::Int64`: design mission index (default is 1).
         
         **Outputs:**
         No direct outputs. Aircraft object gets modified with tank parameters.

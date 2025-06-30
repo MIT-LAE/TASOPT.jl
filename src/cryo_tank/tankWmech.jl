@@ -35,7 +35,8 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
-      Rfuse = structures.Rfuse(fuse)
+      #Accessing Rfuse with the helper function instead of as fuse.radius ensures type stability of Rfuse
+      Rfuse = structures.Rfuse(fuse)  
       fuse_cs = fuse.layout.cross_section #Fuselage cross section
 
       Wfuel = fuse_tank.Wfuelintank
