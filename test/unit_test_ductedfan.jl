@@ -120,7 +120,6 @@
         for (i,item) in enumerate(out_opr_takeoff) 
             @test item ≈ out_opr_check[i]
         end
-        println(out_opr_takeoff)
     end
 
     @testset "Ducted fan with fuel cell" begin
@@ -152,15 +151,17 @@
         fcdata.thickness_anode  = 250e-6
         fcdata.thickness_cathode  = 250e-6
         fcdata.design_voltage = 200.0
-        pare[ieRadiatorepsilon,:,:] .= 0.7
-        pare[ieRadiatorMp,:,:] .= 0.12
         pare[ieDi,:,:] .= 0.4
 
         para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
         engdata = fcdata
 
-        engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
+        radiator = TASOPT.engine.make_HeatExchanger(1)
+        radiator.type = "Radiator"
+        radiator.design_effectiveness = 0.7
+        radiator.design_Mach = 0.12
 
+        engine = TASOPT.engine.Engine(enginemodel, engdata, [radiator])
         ac.engine = engine
 
         #Prepare the pare object

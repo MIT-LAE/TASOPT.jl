@@ -154,7 +154,10 @@ function tfweight(ac)
 
     W_HXs = 0.0 #Store total weight of HXs
     for HX in HXs #For every heat exchanger in the engine
-        W_HXs += hxweight(gee, HX.HXgeom, HX.HXgas_mission[ipcruise1,1], HX.added_mass_fraction) * neng #Weight of a heat exchanger times number of engines
+        if ~isassigned(HX.HXgas_mission, ipstatic, 1)
+                break #Skip if the object is not assigned
+        end
+        W_HXs += hxweight(gee, HX.HXgeom, HX.HXgas_mission[ipstatic,1], HX.added_mass_fraction) * neng #Weight of a heat exchanger times number of engines
     end
     Webare = Webare + W_HXs #Add heat exchanger weight to bare and full engine
     Weng = Weng + W_HXs
