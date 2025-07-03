@@ -966,10 +966,11 @@ function update_weights!(ac, rlx)
     Wftank = parg[igWftank]
     Wpay = parg[igWpay]
     Wfuse = fuse.weight
+    Weng = parg[igWeng] 
 
     ftank = parg[igWftank] / WMTO
 
-    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
+    fsum = fwing + fstrut + fhtail + fvtail + ffuel + fuse.HPE_sys.W +
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)
@@ -977,7 +978,7 @@ function update_weights!(ac, rlx)
     end
 
     # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
-    WMTO = rlx * (Wpay + fuse.weight) / (1.0 - fsum) + (1.0 - rlx) * WMTO
+    WMTO = rlx * (Wpay + fuse.weight + Weng) / (1.0 - fsum) + (1.0 - rlx) * WMTO
 
     parg[igWMTO] = WMTO
     wing.weight = WMTO * fwing
