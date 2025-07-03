@@ -480,6 +480,7 @@ name = "TASOPT Model with cryo fuel and HX"
     radiator_inlet_mach = 0.12
     radiator_inner_diameter = "0.4 m"
     radiator_added_mass_frac = 1.0
+    radiator_maximum_length = "2 m"
     
 [Propulsion.Weight]
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   

@@ -67,7 +67,7 @@ end
 # Overload Base.getproperty for convenience
 function Base.getproperty(HXgas::HX_gas, sym::Symbol)
       if (sym === :Q) 
-            return abs(getfield(HXgas, :mdot_c) * getfield(HXgas, :Δh_c))
+            return abs(getfield(HXgas, :mdot_p) * getfield(HXgas, :Δh_p))
       else
          return getfield(HXgas, sym)
       end

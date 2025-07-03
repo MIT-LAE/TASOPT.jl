@@ -1030,6 +1030,7 @@ if compare_strings(propsys,"tf")
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
     engdata = TASOPT.engine.EmptyData()
+    HXs = Vector{TASOPT.engine.HeatExchanger}() #Empty vector of heat exchangers
  
 elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
     modelname = lowercase(propsys)
@@ -1105,10 +1106,18 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
         fcdata.design_voltage = read_input("stack_design_voltage", fuelcell, dfuelcell)
         fcdata.specific_power = read_input("stack_specific_power", fuelcell, dfuelcell)
 
-        pare[ieRadiatorepsilon,:,:] .= read_input("radiator_effectiveness", fuelcell, dfuelcell)
-        pare[ieRadiatorMp,:,:] .= read_input("radiator_inlet_mach", fuelcell, dfuelcell)
+        rad_eff = read_input("radiator_effectiveness", fuelcell, dfuelcell)
+        rad_M = read_input("radiator_inlet_mach", fuelcell, dfuelcell)
         pare[ieDi,:,:] .= Distance(read_input("radiator_inner_diameter", fuelcell, dfuelcell))
-        parg[igHXaddmassfrac] = read_input("radiator_added_mass_frac", fuelcell, dfuelcell)
+        rad_add_mass_frac = read_input("radiator_added_mass_frac", fuelcell, dfuelcell)
+
+        radiator = TASOPT.engine.make_HeatExchanger(nmisx)
+        radiator.type = "Radiator"
+        radiator.design_effectiveness = rad_eff
+        radiator.design_Mach = rad_M
+        radiator.added_mass_fraction = rad_add_mass_frac
+        radiator.maximum_length = Distance(read_input("radiator_maximum_length", fuelcell, dfuelcell))
+        HXs = [radiator]
 
     weight = readprop("Weight")
     dweight = dprop["Weight"]
@@ -1122,13 +1131,14 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
 
     enginemodel = TASOPT.engine.FuelCellDuctedFan(modelname, enginecalc!, engineweightname, engineweight!, false)
     engdata = fcdata
+    println()
 else
     
     error("Propulsion system \"$propsys\" specified. Choose between
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
+engine = TASOPT.engine.Engine(enginemodel, engdata, HXs)
     
 # Heat exchangers, only if in the model file (assigned 0 in the default .tomls)
 # Would be better if there were an independent toggle like `has_wing_fuel` for `fuse_tank` but good enough for now
@@ -1175,11 +1185,10 @@ if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
                 push!(ε_des, all_eps[ind])
         end
     end
-    nmis = size(pare)[3]
             
     for (i,HXtype) in enumerate(HXtypes)
         #Create heat exchanger struct
-        HX = TASOPT.engine.make_HeatExchanger(nmis)
+        HX = TASOPT.engine.make_HeatExchanger(nmisx)
         HX.type = HXtype
         HX.order = i
         HX.design_effectiveness = ε_des[i]
