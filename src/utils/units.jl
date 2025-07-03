@@ -3,6 +3,7 @@ const _convSIdist = Dict("m" => 1.0,
                         "km"=>1000.0, 
                         "nmi" => nmi_to_m,
                         "ft"=> ft_to_m, 
+                        "mm" => 1e-3, 
                         "in"=> in_to_m)
 
 function convertDist(value::Float64, units_in::AbstractString="m", units_out="m")
@@ -114,6 +115,7 @@ end
 
 const _convSIpressure = Dict("Pa" => 1.0,
                             "atm" => 101325.0,
+                            "bar" => 1e5,
                             "lbf/in2" => lbf_to_N/in_to_m^2,
                             "psi" => lbf_to_N/in_to_m^2,
                             "lbf/ft2" => lbf_to_N/ft_to_m^2)

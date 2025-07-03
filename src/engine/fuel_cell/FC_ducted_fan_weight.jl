@@ -27,6 +27,9 @@ function fuel_cell_with_ducted_fan_weight!(ac)
     wing = ac.wing
     neng = parg[igneng]
     
+    #------------------
+    #Ducted fan weight
+    #------------------
     Weng, Wnace, Webare, W_HXs, Snace1 = ductedfanweight(ac)
 
     parg[igWeng] = Weng
@@ -48,6 +51,13 @@ function fuel_cell_with_ducted_fan_weight!(ac)
     lnace = parg[igdfan] * parg[igrSnace] * 0.15
     parg[iglnace] = lnace
 
-    #TODO add weight of fuel cell
+    #------------------
+    #Fuel cell weight
+    #------------------
+    W_FCstack = ac.engine.data.stack_weight
+    Weng = Weng + W_FCstack * neng #Add fuel cell stack weight to engine weight
+
     #TODO add weight of electric motor and machines
+
+    parg[igWeng] = Weng
 end
