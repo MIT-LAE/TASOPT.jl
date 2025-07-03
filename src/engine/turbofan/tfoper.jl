@@ -1,5 +1,5 @@
 """
-function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
+    function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, eng_has_BLI_cores,
       pid, pib, pifn, pitn,
       Gearf,
@@ -21,19 +21,11 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Feng,
       M2, pif, pilc, pihc, mbf, mblc, mbhc, Tt4, pt5, mcore, M25)
 
-Turbofan operation routine
+Turbofan operation routine. Calculation procedure follows that of Kerrebrock, but
+the usual gas property formulas are replaced by function calls, which can therefore
+implement more general gas models. In addition, a turbine cooling model is added.
 
-    Calculation procedure follows that of Kerrebrock,
-    but the usual gas property formulas are replaced
-    by function calls, which can therefore implement
-    more general gas models.  
-    In addition, a turbine cooling model is added.
-
-    The gas routines reside in the following source files:
-     gascalc.f  Routines for various processes 
-                (compressor, turbine, combustor, etc)
-     gasfun.f   Routines for computing cp[T], h[t], sigma[T], R,
-                called by the routines in gascalc.f
+The gas routines are described in [Gas Calculations](@ref)
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -43,38 +35,42 @@ Turbofan operation routine
     - `p0`:      freestream pressure  [Pa]
     - `Tref`:    reference temperature for corrected mass flow and speed
     - `pref`:    reference pressure for corrected mass flow
-    - `Phiinl`:  inlet ingested dissipation  Phi_inl
-    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees Phiinl
-    - `pid`:     diffuser pressure ratio  ( = pt2/pt0)
-    - `pib`:     burner   pressure ratio  ( = pt4/pt3)
-    - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt6.9)
-    - `pitn`:    turbine nozzle pressure ratio  ( = pt5/pt4.9)
+    - `Phiinl`:  inlet ingested dissipation  `Phi_inl`
+    - `eng_has_BLI_cores`:
+      - `false`: core in clear flow
+      - `true`: core sees `Phiinl`
+    - `pid`:     diffuser pressure ratio  ( = `pt2/pt0`)
+    - `pib`:     burner   pressure ratio  ( = `pt4/pt3`)
+    - `pifn`:    fan     nozzle pressure ratio  ( = `pt7/pt6.9`)
+    - `pitn`:    turbine nozzle pressure ratio  ( = `pt5/pt4.9`)
     - `Gearf`:   fan gear ratio  ( = Nl/Nf )
-    - `pifD`:    design fan pressure ratio  ( = pt21/pt2 )
-    - `pilcD`:   design LPC pressure ratio  ( = pt25/pt19)
-    - `pihcD`:   design HPC pressure ratio  ( = pt3 /pt25)
-    - `pihtD`:   design HPT pressure ratio  ( = pt45/pt41)
-    - `piltD`:   design LPT pressure ratio  ( = pt49/pt45)
-    - `mbfD`:    design corrected fan mass flow ( = mf*sqrt(Tt2 /Tref)/(pt2 /pref) )
-    - `mblcD`:   design corrected LPC mass flow ( = mc*sqrt(Tt19/Tref)/(pt19/pref) )
-    - `mbhcD`:   design corrected HLC mass flow ( = mc*sqrt(Tt25/Tref)/(pt25/pref) )
-    - `mbhtD`:   design corrected HPT mass flow ( = mt*sqrt(Tt41/Tref)/(pt41/pref) )
-    - `mbltD`:   design corrected LPT mass flow ( = mt*sqrt(Tt45/Tref)/(pt45/pref) )
-    - `NbfD`:    design corrected fan speed ( = Nf/sqrt(Tt2 /Tref) )
-    - `NblcD`:   design corrected LPC speed ( = Nl/sqrt(Tt19/Tref) )
-    - `NbhcD`:   design corrected HPC speed ( = Nh/sqrt(Tt25/Tref) )
-    - `NbhtD`:   design corrected HPT speed ( = Nh/sqrt(Tt41/Tref) )
-    - `NbltD`:   design corrected LPT speed ( = Nl/sqrt(Tt45/Tref) )
-    - `A2`:      fan-face area [m^2]                mf = mc*BPR, mt = mc*(1+ff)
+    - `pifD`:    design fan pressure ratio  ( = `pt21/pt2`)
+    - `pilcD`:   design LPC pressure ratio  ( = `pt25/pt19`)
+    - `pihcD`:   design HPC pressure ratio  ( = `pt3/pt25`)
+    - `pihtD`:   design HPT pressure ratio  ( = `pt45/pt41`)
+    - `piltD`:   design LPT pressure ratio  ( = `pt49/pt45`)
+    - `mbfD`:    design corrected fan mass flow ( = `mf*sqrt(Tt2/Tref)/(pt2/pref)` )
+      where `mf = mc*BPR`
+    - `mblcD`:   design corrected LPC mass flow ( = `mc*sqrt(Tt19/Tref)/(pt19/pref)` )
+    - `mbhcD`:   design corrected HLC mass flow ( = `mc*sqrt(Tt25/Tref)/(pt25/pref)` )
+    - `mbhtD`:   design corrected HPT mass flow ( = `mt*sqrt(Tt41/Tref)/(pt41/pref)` )
+      where `mt = mc*(1+ff)`
+    - `mbltD`:   design corrected LPT mass flow ( = `mt*sqrt(Tt45/Tref)/(pt45/pref)` )
+    - `NbfD`:    design corrected fan speed ( = `Nf/sqrt(Tt2/Tref)` )
+    - `NblcD`:   design corrected LPC speed ( = `Nl/sqrt(Tt19/Tref)` )
+    - `NbhcD`:   design corrected HPC speed ( = `Nh/sqrt(Tt25/Tref)` )
+    - `NbhtD`:   design corrected HPT speed ( = `Nh/sqrt(Tt41/Tref)` )
+    - `NbltD`:   design corrected LPT speed ( = `Nl/sqrt(Tt45/Tref)` )
+    - `A2`:      fan-face area [m^2]
     - `A25`:     HPC-face area [m^2]
     - `A5`:      core nozzle area [m^2]
     - `A7`:      fan  nozzle area [m^2]
     - `opt_calc_call`:
-                  = "oper_fixedTt4", Tt4 is specified
-                  = "oper_fixedFe", Feng is specified
+      - `"oper_fixedTt4"`: `Tt4` is specified
+      - `"oper_fixedFe"`: `Feng` is specified
     - `Tt4`:     turbine-inlet total temperature [K]
     - `Ttf`:     fuel temperature entering combustor
-    - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
+    - `ifuel`:   fuel index, see function [`gasfun`](@ref)
     - `hvap`:    fuel enthalpy of vaporization (J/kg)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    max fan polytropic efficiency
@@ -91,65 +87,65 @@ Turbofan operation routine
     - `epsh`:    high spool power loss fraction
 
     - `opt_cooling`:   turbine cooling flag
-               "none" = no cooling, ignore all cooling parameters below
-               "fixed_coolingflowratio" = usual cooling, using passed-in fcool
-               "fixed_Tmetal" = usual cooling, but set (and return) fcool from Tmetal
+      - `"none"`: no cooling, ignore all cooling parameters below
+      - `"fixed_coolingflowratio"`: usual cooling, using passed-in `fcool`
+      - `"fixed_Tmetal"`: usual cooling, but set (and return) `fcool` from `Tmetal`
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `Tmetal`:   specified metal temperature  [K], used only if opt_cooling="fixed_Tmetal"
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if opt_cooling="fixed_Tmetal"
-    - `StA`:      area-weighted Stanton number    , used only if opt_cooling="fixed_Tmetal"
+    - `Tmetal`:   specified metal temperature  [K], used only if `opt_cooling="fixed_Tmetal"`
+    - `dTstrk`:   hot-streak temperature delta {K}, used only if `opt_cooling="fixed_Tmetal"`
+    - `StA`:      area-weighted Stanton number    , used only if `opt_cooling="fixed_Tmetal"`
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
-    - `ruc`:      cooling-flow outlet velocity ratio, u/ue
-    - `ncrowx`:      dimension of epsrow array
+    - `ruc`:      cooling-flow outlet velocity ratio, `u/ue`
+    - `ncrowx`:      dimension of `epsrow` array
     - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if opt_cooling="fixed_coolingflowratio"
-                     output resulting cooling-flow bypass ratio if opt_cooling="fixed_Tmetal"
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if opt_cooling="fixed_Tmetal"
-                     output resulting metal temperature  [K]    if opt_cooling="fixed_coolingflowratio"
+    - `epsrow(.)`: input specified  cooling-flow bypass ratio if
+      `opt_cooling="fixed_coolingflowratio"`; output resulting cooling-flow bypass ratio
+      if `opt_cooling="fixed_Tmetal"`.
+    - `Tmrow(.)`: input specified metal temperature [K] if `opt_cooling="fixed_Tmetal"`;
+      output resulting metal temperature [K] if `opt_cooling="fixed_coolingflowratio"`
 
-      **Output:**
-    ------
+    **Output:**
     - `epsrow(.)`:   see above
     - `Tmrow(.)`:    see above
-    - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
-    - `Fsp`:     specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
+    - `TSFC`:    thrust specific fuel consumption = `mdot_fuel g / F`   [1/s]
+    - `Fsp`:     specific thrust  = `F / (mdot u0) = F / ((1+BPR) mdot_core u0)`
     - `hfuel`:   fuel heating value   [J / kg K]
-    - `ff`:      fuel mass flow fraction  =  mdot_fuel / mdot_core
-    - `Feng`:    net effective thrust  = (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
-    - `mcore`:   core mass flow = mdot_core  [kg/s]
-    - `BPR`:     bypass ratio   = mdot_fan/mdot_core
+    - `ff`:      fuel mass flow fraction  =  `mdot_fuel / mdot_core`
+    - `Feng`:    net effective thrust  = `(PK_inl+PK_out-Phi_jet)/u0  =  sum(mdot u)`
+    - `mcore`:   core mass flow = `mdot_core`  [kg/s]
+    - `BPR`:     bypass ratio   = `mdot_fan/mdot_core`
     - `Tt?`:     total temperature
     - `ht?`:     total complete enthalpy (includes heat of formation)
     - `pt?`:     total pressure
-    - `cpt?`:    specific heat at stagnation temperature  (= dh/dT)
+    - `cpt?`:    specific heat at stagnation temperature  (= `dh/dT`)
     - `Rt?`:     gas constant  at stagnation conditions
-    - `T?`:     static temperature
+    - `T?`:      static temperature
     - `u?`:      velocity
     - `etaf`:    fan          overall efficiency
     - `etac`:    compressor   overall efficiency
     - `etatf`:   fan-turbine  overall efficiency
     - `etatc`:   comp-turbine overall efficiency
-    - `Lconv`:   T if convergence was successful, F otherwise
+    - `Lconv`:   `true` if convergence was successful, `false` otherwise
 
     The "?" symbol denotes the station index:
-      0   freestream
-      18  fan face outside of casing BLs
-      19  fan face over LPC portion
-      2   fan face over fan portion
-      21  fan exit, precooler inlet
-      19c precooler outlet, LPC inlet
-      25  LPC exit, intercooler inlet 
-      25c intercooler exit, HPC inlet
-      3   compressor exit
-      4   combustor exit before cooling air addition
-      41  turbine  inlet after  cooling air addition
-      45  HPT exit, LPT inlet
-      49  LPT exit, regenerative cooler inlet
-      49c regenerative cooler outlet
-      5   core nozzle
-      6   core flow downstream
-      7   fan nozzle
-      8   fan flow downstream
+    - 0: freestream
+    - 18: fan face outside of casing BLs
+    - 19: fan face over LPC portion
+    - 2: fan face over fan portion
+    - 21: fan exit, precooler inlet
+    - 19c: precooler outlet, LPC inlet
+    - 25: LPC exit, intercooler inlet
+    - 25c: intercooler exit, HPC inlet
+    - 3: compressor exit
+    - 4: combustor exit before cooling air addition
+    - 41: turbine inlet after cooling air addition
+    - 45: HPT exit, LPT inlet
+    - 49: LPT exit, regenerative cooler inlet
+    - 49c: regenerative cooler outlet
+    - 5: core nozzle
+    - 6: core flow downstream
+    - 7: fan nozzle
+    - 8: fan flow downstream
 """
 function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       Phiinl, Kinl, eng_has_BLI_cores,
@@ -167,6 +163,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       epsl, epsh,
       opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow,
@@ -1467,44 +1464,56 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #---- HPT efficiency
             # HACK: HSC
-            epht, epht_dhht, epht_mbht, epht_Nbht, epht_Tt41,
-            epht_cpt41, epht_Rt41 = etmap(dhht, mbht, Nbht, pihtD, mbhtD, NbhtD, epht0, Tmaph,
+            #First find uncooled HPT efficiency and derivatives
+            epht1, epht1_dhht, epht1_mbht, epht1_Nbht, epht1_Tt41,
+            epht1_cpt41, epht1_Rt41 = etmap(dhht, mbht, Nbht, pihtD, mbhtD, NbhtD, epht0, Tmaph,
                   Tt41, cpt41, Rt41)
 
+            #Find cooled HPT efficiency epht
+            epht = find_cooled_hpt_efficiency(epht1, epht_fc, fc0, fc)
 
             if (epht < 0.80)
                   epht = 0.80
-                  epht_dhht = 0.0
-                  epht_mbht = 0.0
-                  epht_Nbht = 0.0
-                  epht_Tt41 = 0.0
-                  epht_cpt41 = 0.0
-                  epht_Rt41 = 0.0
+                  epht1_dhht = 0.0
+                  epht1_mbht = 0.0
+                  epht1_Nbht = 0.0
+                  epht1_Tt41 = 0.0
+                  epht1_cpt41 = 0.0
+                  epht1_Rt41 = 0.0
             end
 
-            epht_pl = epht_dhht * dhht_pl + epht_mbht * mbht_pl + epht_Nbht * Nbht_pl
-            epht_ph = epht_dhht * dhht_ph + epht_mbht * mbht_ph + epht_Nbht * Nbht_ph
-            epht_mf = epht_dhht * dhht_mf + epht_mbht * mbht_mf + epht_Nbht * Nbht_mf
-            epht_ml = epht_dhht * dhht_ml + epht_mbht * mbht_ml + epht_Nbht * Nbht_ml
-            epht_mh = epht_dhht * dhht_mh + epht_mbht * mbht_mh + epht_Nbht * Nbht_mh
-            epht_Tb = epht_dhht * dhht_Tb + epht_mbht * mbht_Tb + epht_Nbht * Nbht_Tb
-            epht_Mi = epht_dhht * dhht_Mi + epht_mbht * mbht_Mi + epht_Nbht * Nbht_Mi
+            epht1_pl = epht1_dhht * dhht_pl + epht1_mbht * mbht_pl + epht1_Nbht * Nbht_pl
+            epht1_ph = epht1_dhht * dhht_ph + epht1_mbht * mbht_ph + epht1_Nbht * Nbht_ph
+            epht1_mf = epht1_dhht * dhht_mf + epht1_mbht * mbht_mf + epht1_Nbht * Nbht_mf
+            epht1_ml = epht1_dhht * dhht_ml + epht1_mbht * mbht_ml + epht1_Nbht * Nbht_ml
+            epht1_mh = epht1_dhht * dhht_mh + epht1_mbht * mbht_mh + epht1_Nbht * Nbht_mh
+            epht1_Tb = epht1_dhht * dhht_Tb + epht1_mbht * mbht_Tb + epht1_Nbht * Nbht_Tb
+            epht1_Mi = epht1_dhht * dhht_Mi + epht1_mbht * mbht_Mi + epht1_Nbht * Nbht_Mi
 
-            epht_pl = epht_Tt41 * Tt41_pl + epht_cpt41 * cpt41_pl +
-                      epht_Rt41 * Rt41_pl + epht_pl
-            epht_ph = epht_Tt41 * Tt41_ph + epht_cpt41 * cpt41_ph +
-                      epht_Rt41 * Rt41_ph + epht_ph
-            epht_mf = epht_Tt41 * Tt41_mf + epht_cpt41 * cpt41_mf +
-                      epht_Rt41 * Rt41_mf + epht_mf
-            epht_ml = epht_Tt41 * Tt41_ml + epht_cpt41 * cpt41_ml +
-                      epht_Rt41 * Rt41_ml + epht_ml
-            epht_mh = epht_Tt41 * Tt41_mh + epht_cpt41 * cpt41_mh +
-                      epht_Rt41 * Rt41_mh + epht_mh
-            epht_Tb = epht_Tt41 * Tt41_Tb + epht_cpt41 * cpt41_Tb +
-                      epht_Rt41 * Rt41_Tb + epht_Tb
-            epht_Mi = epht_Tt41 * Tt41_Mi + epht_cpt41 * cpt41_Mi +
-                      epht_Rt41 * Rt41_Mi + epht_Mi
+            epht1_pl = epht1_Tt41 * Tt41_pl + epht1_cpt41 * cpt41_pl +
+                      epht1_Rt41 * Rt41_pl + epht1_pl
+            epht1_ph = epht1_Tt41 * Tt41_ph + epht1_cpt41 * cpt41_ph +
+                      epht1_Rt41 * Rt41_ph + epht1_ph
+            epht1_mf = epht1_Tt41 * Tt41_mf + epht1_cpt41 * cpt41_mf +
+                      epht1_Rt41 * Rt41_mf + epht1_mf
+            epht1_ml = epht1_Tt41 * Tt41_ml + epht1_cpt41 * cpt41_ml +
+                      epht1_Rt41 * Rt41_ml + epht1_ml
+            epht1_mh = epht1_Tt41 * Tt41_mh + epht1_cpt41 * cpt41_mh +
+                      epht1_Rt41 * Rt41_mh + epht1_mh
+            epht1_Tb = epht1_Tt41 * Tt41_Tb + epht1_cpt41 * cpt41_Tb +
+                      epht1_Rt41 * Rt41_Tb + epht1_Tb
+            epht1_Mi = epht1_Tt41 * Tt41_Mi + epht1_cpt41 * cpt41_Mi +
+                      epht1_Rt41 * Rt41_Mi + epht1_Mi
 
+            #Chain rule for HPT efficiency derivatives
+            epht_pl = epht1_pl + epht_fc * fc_pl
+            epht_ph = epht1_ph + epht_fc * fc_ph
+            epht_mf = epht1_mf + epht_fc * fc_mf
+            epht_ml = epht1_ml + epht_fc * fc_ml
+            epht_mh = epht1_mh + epht_fc * fc_mh
+            epht_Tb = epht1_Tb + epht_fc * fc_Tb
+            epht_Mi = epht1_Mi + epht_fc * fc_Mi
+           
             #---- HPT work to determine station 45
             epi = 1.0 / epht
             pt45, Tt45, ht45, st45, cpt45, Rt45,

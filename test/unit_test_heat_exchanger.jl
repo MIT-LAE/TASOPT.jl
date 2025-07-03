@@ -31,9 +31,9 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
-        HXgeom.fshaft = false
+        HXgeom.is_concentric = true
+        HXgeom.has_recirculation = false
+        HXgeom.has_shaft = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.n_stages = 4
@@ -49,7 +49,7 @@
         size_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgeom.N_t, HXgeom.n_passes, HXgeom.tD_o, HXgeom.A_cs]
 
         size_out_check = 
-        [731.5888605437423, 665.8848846504773, 1386.3503589746103, 62.03322510460286, 8.04559242739893, 0.004760508726403918, 1.0189779296746375]
+        [731.5888605437423, 665.8848846504773, 1414.022586064259, 62.03322510460286, 8.040614281031441, 0.004760508726403918, 1.0189779296746375]
 
         for i = 1: length(size_out)
             @test size_out[i] ≈ size_out_check[i]
@@ -62,7 +62,7 @@
 
         W = TASOPT.engine.hxweight(gee, HXgeom, HXgas, fouter)
 
-        W_check = 801.5192810553101
+        W_check = 801.0233473706918
 
         @test W == W_check
         #---------------------------------     
@@ -86,8 +86,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
+        HXgeom.is_concentric = true
+        HXgeom.has_recirculation = false
         HXgeom.D_i = 0.564
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.tD_o = 0.004760326082769499
@@ -106,7 +106,7 @@
 
         oper_out = [HXgas.Tp_out, HXgas.Tc_out, HXgas.Δp_p, HXgas.ε]
 
-        oper_out_check = [740.3160720471974, 591.0871550274949, 1657.0074667280992, 0.6501725929032108]
+        oper_out_check = [740.3018611354306, 591.2092288055287, 1707.3839192112114, 0.6504167938267722]
 
         for i = 1: length(oper_out)
             @test oper_out[i] ≈ oper_out_check[i]
@@ -132,8 +132,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = true
-        HXgeom.frecirc = false
+        HXgeom.is_concentric = true
+        HXgeom.has_recirculation = false
         HXgeom.D_i = 0.564
         HXgeom.l = 0.6084530646014857 #tube length
         HXgeom.xl_D = 1
@@ -152,7 +152,7 @@
 
         A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-        if HXgeom.fconc #Flow is concentric
+        if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -175,8 +175,7 @@
         TASOPT.engine.hxsize!(HXgas, HXgeom)
 
         Iobj = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. Check I too
-        I_check = 71419.66226260524
-
+        I_check = 72791.74211251132
         @test Iobj ≈ I_check    rtol = 1e-5
 
         #---------------------------------     
@@ -201,8 +200,8 @@
         HXgas.alpha_p = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127]
         HXgas.igas_c = 40
 
-        HXgeom.fconc = false
-        HXgeom.frecirc = true
+        HXgeom.is_concentric = false
+        HXgeom.has_recirculation = true
         HXgeom.t = 0.03e-2 #m, wall thicknesss
         HXgeom.xl_D = 1
         HXgeom.Rfp = 0.01*0.1761 #Engine exhaust air fouling resistance, m^2*K/W
@@ -220,7 +219,7 @@
 
         A_cs = HXgas.mdot_p / (ρ_p_in * Vp_in) #Cross-sectional area of freestream
 
-        if HXgeom.fconc #Flow is concentric
+        if HXgeom.is_concentric #Flow is concentric
             D_i = HXgeom.D_i
             D_o = sqrt(4 * (A_cs + pi * D_i^2 / 4) / pi) #Core outer diameter
 
@@ -243,7 +242,7 @@
 
         Iobj_rec = HXgas.Pl_p + HXgas.Pl_c #Optimizer may choose slightly different points with similar objective function. 
 
-        I_check_rec = 3498.8733964760736
+        I_check_rec = 3558.1693226234984
 
         @test Iobj_rec ≈ I_check_rec    rtol = 1e-5
     end
@@ -325,22 +324,20 @@
 
         pare[ieDi, :] .= 0.564
         pare[ieTft, :] .= 20
-        pare[iefrecirc, :] .= 0
         pare[ieetab,:] .= 1.0
 
         ac.options.ifuel = 40
-        pare[iePreCorder,:] .= 1
        
-        pare[iePreCMp,:] .= 0.1
-        pare[ieInterCorder,:] .= 2
+        # pare[iePreCMp,:] .= 0.1
+        # pare[ieInterCorder,:] .= 2
         
-        pare[ieInterCMp,:] .= 0.1
-        pare[ieRegenorder,:] .= 4
+        # pare[ieInterCMp,:] .= 0.1
+        # pare[ieRegenorder,:] .= 4
         
-        pare[ieRegenMp,:] .= 0.2
-        pare[ieTurbCorder,:] .= 3
+        # pare[ieRegenMp,:] .= 0.2
+        # pare[ieTurbCorder,:] .= 3
         
-        pare[ieTurbCMp,:] .= 0.02
+        # pare[ieTurbCMp,:] .= 0.02
 
         pare[iemcore, :] = [58.387756730737166, 59.361938832270724, 0.0, 0.0, 57.376289647792646, 48.637171035592324, 39.613606874361615, 31.882530992724078, 25.687220812619703, 22.634488608433564, 18.530429817478, 9.672011605618463, 13.622655467186979, 19.12825348500402, 24.22920161131781, 20.419257819838812, 0.0]
         pare[iemofft, :] =  [0.567, 0.567, 0.0, 0.0, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.567, 0.0]  
@@ -360,142 +357,172 @@
         ipdes = ipcruise1
 
         #Test precooler
-        pare[iePreCepsilon,:] .= 0.5
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "PreC"
+        HXs[1].design_effectiveness = 0.5
+        HXs[1].design_Mach = 0.1
+        HXs[1].order = 1
+        HXs[1].maximum_length = 0.25
+        ac.engine.heat_exchangers = HXs
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 17.323955467246847    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 17.266866731189637   rtol = 1e-5
         @test HX.HXgeom.n_passes ≈ 1.0000000035523804    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.44330987861529786    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 135.87947388047039    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 135.3019137307697    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.500000000011525    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈  -13469.833152449006    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.64270109056272   rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 41.80997134594434   rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[iePreCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
             @test pare[iePreCDeltap, ip] ≈ HX.HXgas_mission[ip].Δp_p
         end
-        pare[iePreCepsilon,:] .= 0.0
 
         #Test intercooler
-        pare[ieInterCepsilon,:] .= 0.5
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "InterC"
+        HXs[1].design_effectiveness = 0.5
+        HXs[1].design_Mach = 0.1
+        HXs[1].order = 1
+        HXs[1].maximum_length = 0.25
+        ac.engine.heat_exchangers = HXs
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 15.117642363818238     rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 1.270473046989811    rtol = 1e-5
+        @test HX.HXgeom.n_stages ≈ 15.785862675526603     rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 1.1996282036164532    rtol = 1e-5
         @test HX.HXgeom.l ≈ 0.24880364903969382    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 149.67684320661107   rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 152.91429827915564   rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -19023.600308918238    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.3113280324075     rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 169.37872694731894     rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieInterCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
             @test pare[ieInterCDeltap, ip] ≈ HX.HXgas_mission[ip].Δp_p
         end
 
-        pare[ieInterCepsilon,:] .= 0.0
-
         #Test cooler of turbine cool. air
-        pare[ieTurbCepsilon,:] .= 0.5
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "TurbC"
+        HXs[1].design_effectiveness = 0.5
+        HXs[1].design_Mach = 0.02
+        HXs[1].order = 1
+        HXs[1].maximum_length = 0.25
+        ac.engine.heat_exchangers = HXs
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
         @test HX.HXgeom.n_stages ≈ 20.0    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈  4.250517424315109    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  4.222480420567984    rtol = 1e-5
         @test HX.HXgeom.l ≈  0.08973681556581393    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 64.20716382870775    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 63.41852808272736    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -215422.60328655195    rtol = 1e-5 
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1123.6270956822698     rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 1110.4567435115546    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieTurbCDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
             @test pare[ieTurbCDeltap, ip] ≈ HX.HXgas_mission[ip].Δp_p
         end
 
-        pare[ieTurbCepsilon,:] .= 0.0
-
         #Test regenerative cooler
         pare[ieTfuel, :] .= 20
-        pare[ieRegenepsilon,:] .= 0.5
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "Regen"
+        HXs[1].design_effectiveness = 0.5
+        HXs[1].design_Mach = 0.2
+        HXs[1].order = 1
+        HXs[1].maximum_length = 0.25
+        ac.engine.heat_exchangers = HXs
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
-        @test HX.HXgeom.n_stages ≈ 6.968594258356102    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈  3.98619267045449   rtol = 1e-5 
+        @test HX.HXgeom.n_stages ≈ 6.7303408921923085    rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈  4.150266000814919   rtol = 1e-5 
         @test HX.HXgeom.l ≈ 0.27444954083880696    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈  87.82584539502656    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈  83.98323410362407    rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.5000000000012754    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -48190.134937808325    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 639.3384837065213    rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 683.4013294966753    rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
             @test pare[ieRegenDeltap, ip] ≈ HX.HXgas_mission[ip].Δp_p
         end
 
-        pare[ieRegenepsilon,:] .= 0.0
-
         #Test regenerative cooler with recirculation
         pare[ieTfuel, :] .= 20
-        pare[ieRegenepsilon,:] .= 0.8
-        pare[iefrecirc, :] .= 1
-        pare[ierecircT, :] .= 200.0
+        HXs = TASOPT.hxdesign!(ac, ipdes, 1)
+
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "Regen"
+        HXs[1].design_effectiveness = 0.8
+        HXs[1].design_Mach = 0.2
+        HXs[1].order = 1
+        HXs[1].maximum_length = 0.25
+        HXs[1].has_recirculation = true
+        HXs[1].recirculation_temperature = 200.0
+        ac.engine.heat_exchangers = HXs
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
         HX = HXs[1]
 
         @test HX.HXgeom.n_stages ≈ 19.999999999998554    rtol = 1e-5
-        @test HX.HXgeom.n_passes ≈ 5.144138346664717    rtol = 1e-5
-        @test HX.HXgeom.l ≈ 0.27444954083880696    rtol = 1e-5
-        @test HX.HXgeom.N_t ≈ 121.52912003676425   rtol = 1e-5
+        @test HX.HXgeom.n_passes ≈ 5.143443200853783    rtol = 1e-5
+        @test HX.HXgeom.l ≈  0.2742084922035852    rtol = 1e-5
+        @test HX.HXgeom.N_t ≈ 121.51269737216884   rtol = 1e-5
 
         @test HX.HXgas_mission[ipdes].ε ≈ 0.7999999999981817    rtol = 1e-5
         @test HX.HXgas_mission[ipdes].Δh_p ≈ -87846.51831616473    rtol = 1e-5
-        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2554.5115748995227   rtol = 1e-5
+        @test HX.HXgas_mission[ipdes].Δp_p ≈ 2631.338997757214   rtol = 1e-5
 
         for ip =1:iptotal
             @test pare[ieRegenDeltah, ip] ≈ HX.HXgas_mission[ip].Δh_p
             @test pare[ieRegenDeltap, ip] ≈ HX.HXgas_mission[ip].Δp_p
         end
 
-        pare[ieRegenepsilon,:] .= 0.0
-
         #Test two HXs: intercooler and regenerative cooler
         pare[ieTfuel, :] .= 20
-        pare[iefrecirc, :] .= 1
-        pare[ierecircT, :] .= 200.0
+        
+        HXs = [TASOPT.engine.make_HeatExchanger(1), TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "InterC"
+        HXs[1].design_effectiveness = 0.8
+        HXs[1].design_Mach = 0.1
+        HXs[1].order = 1
+        HXs[1].maximum_length = 0.25
+        HXs[1].has_recirculation = true
+        HXs[1].recirculation_temperature = 200.0
 
-        pare[ieInterCepsilon,:] .= 0.8
-        pare[ieRegenepsilon,:] .= 0.8
+        HXs[2].type = "Regen"
+        HXs[2].design_effectiveness = 0.8
+        HXs[2].design_Mach = 0.2
+        HXs[2].order = 2
+        HXs[2].maximum_length = 0.25
+        ac.engine.heat_exchangers = HXs
 
         HXs = TASOPT.hxdesign!(ac, ipdes, 1)
 
-        @test pare[ieInterCDeltah,:] ≈ [-47386.95464677776, -47726.63572722669, 0.0, 0.0, -46211.32759481792, -45606.01851070701, -44251.06028341857, -42508.85520286211, -40804.01785812904, -35670.276598604934, -35028.829562324456, -14649.1410492043, -15687.664552948696, -18743.39382283634, -19895.604265113787, -13459.615676975794, 0.0]
-        @test pare[ieInterCDeltap,:] ≈ [6887.43903560146, 6954.342049667676, 0.0, 0.0, 6550.90629970034, 5763.801398160496, 4949.808500330747, 4231.296794664719, 3620.5518098665075, 2785.528372658253, 2333.8029015164648, 836.7012971314007, 1153.279763403788, 1637.5109515072604, 2034.8034947514398, 1537.6757944981596, 0.0]
-        @test pare[ieRegenDeltah,:] ≈ [-56925.91232182563, -56162.80065235309, 0.0, 0.0, -53217.58882649994, -58338.517121742654, -65356.590678732726, -73098.9828321127, -80636.39928201906, -58693.27280747704, -60204.16582276992, -12779.707036603853, -13777.46204059766, -17276.557598378364, -18657.634353810456, -13727.54393175566, 0.0]
-        @test pare[ieRegenDeltap,:] ≈ [5229.267833754558, 5307.863784851764, 0.0, 0.0, 5067.2350656434755, 4393.910085221388, 3669.844871404999, 3030.3096165723246, 2502.954191225503, 2096.3504794711657, 1749.227439215619, 631.2267288186671, 844.278512508188, 1179.1009415134342, 1366.6262336626176, 706.754936861653, 0.0]
-
-        pare[ieInterCepsilon,:] .= 0.0
-        pare[ieRegenepsilon,:] .= 0.0
+        @test pare[ieInterCDeltah,:] ≈ [-47399.69471010697, -47740.144971300695, 0.0, 0.0, -46223.379303984744, -45614.35675042806, -44255.53328982122, -42510.31277332343, -40803.47385501281, -35670.27659861324, -35028.459999431696, -14649.123279205705, -15687.650334380585, -18743.437352033376, -19895.76521077102, -13459.629078839323, 0.0]
+        @test pare[ieInterCDeltap,:] ≈  [6911.221682597802, 6978.998282421636, 0.0, 0.0, 6572.481153264278, 5778.996020194068, 4959.106626836168, 4236.23491050882, 3622.597346961127, 2786.1893166247346, 2333.5956007679874, 835.7548979321061, 1152.3247104282796, 1636.9467985592994, 2034.8574376314803, 1536.8855772960753, 0.0]
+        @test pare[ieRegenDeltah,:] ≈ [-56935.283625696495, -56171.383754770155, 0.0, 0.0, -53223.268798485864, -58345.594608795596, -65365.3611087536, -73108.7906114299, -80645.93877914204, -58693.27280567447, -60203.14153190324, -12779.527804517973, -13777.042506893777, -17275.511909998022, -18656.185861179954, -13727.106880597872, 0.0]
+        @test pare[ieRegenDeltap,:] ≈ [5428.445956559963, 5510.077421406017, 0.0, 0.0, 5247.653722526897, 4540.47273559838, 3783.5827213135035, 3117.151404333784, 2568.8767033773825, 2137.661714406072, 1779.9034316690568, 634.8647314211605, 850.2758206339971, 1189.9236723819513, 1381.2066306170855, 713.2380850064121, 0.0]
 
     end
 
     @testset "Radiator design and off-design performance" begin
 
         ac = load_default_model()
-
         pare = ac.pare
         pare[ieTt21,:,1] .= [343.5937504775422, 345.1223581889431, 0.0, 0.0, 313.78565028844844, 307.1133732298289, 299.4976209320901, 295.77161933759936, 297.7979970527857, 292.4179898692317, 290.77602320035004, 263.0449635812037, 281.20843068925603, 298.112881341098, 309.3973072464574, 298.7327491186001, 0.0]
         pare[iept21,:,1] .= [175101.1544126459, 178399.39021402935, 0.0, 0.0, 133748.37095494103, 110626.50581060312, 89022.3186448056, 73988.05771998747, 64580.336522473954, 61271.983314487086, 60150.59571341334, 44236.17815241701, 63955.92953145897, 88974.3688113112, 114550.16697333875, 114113.91098410703, 0.0]
@@ -504,14 +531,20 @@
         pare[iemfan,:,1] .= [358.3434869671312, 366.38016489316016, 0.0, 0.0, 249.19699475758492, 234.48400704476614, 200.65335506151317, 170.25878321648813, 146.90816150458102, 141.16684807770758, 139.1072989341617, 108.25761644603271, 151.1038255310103, 202.63153614761245, 247.82443427439475, 149.89424326937296, 0.0]
         pare[ieRadiatorHeat,:,1] .= [1.3296113956684684e7, 1.3296113956683043e7, 0.0, 0.0, 1.6765644717054842e6, 1.863898537598179e6, 2.0218038992171476e6, 2.239585517913293e6, 2.592509216389226e6, 2.0910313931780618e6, 1.954040175585774e6, 379399.2116786214, 657833.3780815811, 1.0405791722436543e6, 1.2058361829043678e6, 200019.69516559975, 0.0]
         
-        pare[ieDi,:,1] .= 0.4 #Inner diameter of HEX
-        pare[ieRadiatorepsilon,:,1] .= 0.7
-        pare[ieRadiatorMp,:,1] .= 0.12 
+        pare[ieDi,:,1] .= 0.4 #Inner diameter of HEX 
+
+        HXs = [TASOPT.engine.make_HeatExchanger(1)]
+        HXs[1].type = "Radiator"
+        HXs[1].design_effectiveness = 0.7
+        HXs[1].design_Mach = 0.12
+        HXs[1].order = 1
+        HXs[1].maximum_length = 2.0
+        ac.engine.heat_exchangers = HXs
         HXs = TASOPT.hxdesign!(ac, ipstatic, 1)
 
-        RadDeltah = [37104.38291823695, 36290.485213795095, 0.0, 0.0, 6727.86793972544, 7948.936735981042, 10076.103131180309, 13154.008713110597, 17647.142199845614, 14812.481978963075, 14046.999622288717, 3504.596019511984, 4353.519017601429, 5135.326869780114, 4865.687221015694, 1334.405450155591, 0.0]
-        RadDeltap = [10431.676068444647, 10703.773168525882, 0.0, 0.0, 5996.395702369009, 6344.208128759337, 5773.9044301482245, 5087.048849542464, 4505.470849670224, 4301.2126715132, 4231.328370977249, 3158.063037334559, 4373.834782300968, 5787.144296194818, 6795.804358004942, 2557.187503734127, 0.0]
-        
+        RadDeltah = [37104.38291823695, 36290.485213795124, 0.0, 0.0, 6727.86793972544, 7948.936735981042, 10076.103131180309, 13154.008713110605, 17647.142199845595, 14812.481978963075, 14046.99962228872, 3504.596019511984, 4353.519017601429, 5135.326869780114, 4865.687221015694, 1334.405450155591, 0.0]
+        RadDeltap = [11889.782301788378, 12199.947884193309, 0.0, 0.0, 6837.973458639673, 7234.2480500052325, 6583.766226342551, 5800.5345858177925, 5137.454328099551, 4904.714770668473, 4825.08475325116, 3602.399089169455, 4988.699251604404, 6600.035502631082, 7750.168248828348, 2917.394569501564, 0.0]
+
         for ip =1:iptotal
             @test pare[ieRadiatorDeltah, ip, 1] ≈ RadDeltah[ip]
             @test pare[ieRadiatorDeltap, ip, 1] ≈ RadDeltap[ip]

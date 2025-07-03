@@ -727,15 +727,8 @@ function _size_aircraft!(ac; itermax=35,
             end
             engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
 
-            #Find and store maximum HX outer diameter to check fit in engine 
             for HX in engine.heat_exchangers
-                if HX.type == "PreC"
-                    parg[igdHXPreC] = HX.HXgeom.D_o
-                elseif HX.type == "InterC"
-                    parg[igdHXInterC] = HX.HXgeom.D_o
-                elseif HX.type == "Regen"
-                    parg[igdHXRegen] = HX.HXgeom.D_o
-                elseif HX.type == "Radiator"
+                if HX.type == "Radiator"
                     TASOPT.engine.VerifyRadiatorHeat(engine, imission)
                 end
             end
@@ -889,6 +882,8 @@ function _size_aircraft!(ac; itermax=35,
     if check_engine_convergence_failure(pare)
         @warn "Some engine points did not converge"
     end
+    #Warn user if HX effectiveness is overwritten
+    check_HX_overwriting(engine.heat_exchangers) 
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description

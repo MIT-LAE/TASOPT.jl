@@ -495,6 +495,8 @@ name = "TASOPT Model with cryo fuel and HX"
     t_film_cooling = 0.30 #cooling-film effectiveness factor
     M41 = 0.9 # Mach number at start of cooling-air mixing zone
     cooling_air_V_ratio = 0.15 #v_cool/v_edge velocity ratio of exiting cooling air
+    HPT_efficiency_derivative_with_cooling = 0.0
+    baseline_cooling_fraction = 0.0
 
 [Propulsion.Offtakes]
     LPC_mass_offtake_per_pax = 0.0063
@@ -531,9 +533,10 @@ name = "TASOPT Model with cryo fuel and HX"
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
-    recirculation_flag = 1
-    recirculation_temperature = 200
-    core_inner_diameter = 0.2
+    has_recirculation = true
+    recirculation_temperature = "200 K"
+    maximum_heat_exchanger_length = "0.25 m"
+    core_inner_diameter = "0.2 m"
     added_mass_frac = 1.0
 
     precooler_order = 1

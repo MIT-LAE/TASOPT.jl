@@ -501,7 +501,7 @@
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
 [Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
-    recirculation_flag = 0
+    has_recirculation = 0
     recirculation_temperature = 0
     core_inner_diameter = 0
     added_mass_frac = 0.0

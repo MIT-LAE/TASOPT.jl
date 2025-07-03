@@ -128,6 +128,6 @@ end
 
     size_aircraft!(ac, iter=50; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.0065810244986906 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.0076619899926231 rtol=1e-4
 
 end
