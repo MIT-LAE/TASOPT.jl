@@ -351,7 +351,7 @@ function _size_aircraft!(ac; itermax=35,
     # Initialize choke flags for all mission points
     ichoke5 = ichoke7 = zeros(Int, iptotal)
 
-
+    ipHXdes = 0 #Initialize but overwritten in for loop
     # -------------------------------------------------------    
     #                   Weight loop
     # -------------------------------------------------------    
@@ -716,16 +716,16 @@ function _size_aircraft!(ac; itermax=35,
         # -----------------------------
         # Heat exchanger design and operation
         # ------------------------------
-        ipdes = ipcruise1 #Design point: start of cruise
+        ipHXdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
             if engine.model.model_name == "fuel_cell_with_ducted_fan"
-                ipdes = iprotate #Design point: takeoff rotation
+                ipHXdes = iprotate #Design point: takeoff rotation
                 pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
                 pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
                 pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
             end
-            engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
+            engine.heat_exchangers = hxdesign!(ac, ipHXdes, imission, rlx = 0.5) #design and off-design HX performance
 
             for HX in engine.heat_exchangers
                 if HX.type == "Radiator"
@@ -883,7 +883,7 @@ function _size_aircraft!(ac; itermax=35,
         @warn "Some engine points did not converge"
     end
     #Warn user if HX effectiveness is overwritten
-    check_HX_overwriting(engine.heat_exchangers) 
+    check_HX_overwriting(engine.heat_exchangers, ipHXdes) 
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description

@@ -1524,14 +1524,15 @@ so a limit is set to 99% of the maximum possible one.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `HXs::Vector{HeatExchanger}`: vector with heat exchanger data
+    - `ipdes::Int64`: index for design mission segment
 
     **Outputs:**
     Produces a warning if the effectiveness has been overwritten.
 """
-function check_HX_overwriting(HXs)
+function check_HX_overwriting(HXs, ipdes)
       flag = false
       for HX in HXs 
-            if abs(HX.design_effectiveness - HX.HXgas_mission[ipcruise1, 1].ε) > 1e-5
+            if abs(HX.design_effectiveness - HX.HXgas_mission[ipdes, 1].ε) > 1e-5
                   flag = true
                   break
             end
