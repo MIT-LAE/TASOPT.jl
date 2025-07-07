@@ -9,9 +9,9 @@ Calls function ductedfansize! or ductedfanoper! for one operating point.
     - `case::String`: case identifier, e.g. "sizing" or "off_design"
     - `imission::Int64`: mission index
     - `ip::Int64`: mission point index
-    - `initeng::Int64`: flag to initialize engine 
-        0  initialize variables for iteration in engine
-        1  use current variables as initial guesses in engine
+    - `initializes_engine::Bool`: flag to initialize engine
+      - `true`: initialize variables for iteration in engine
+      - `false`: use current variables as initial guesses in engine
     - `iterw::Int64`: sizing loop iteration
 
     **Output:**
