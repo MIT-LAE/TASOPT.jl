@@ -18,7 +18,7 @@ The easiest way to run `TASOPT.jl` would be to add the package using the julia p
 
 You can do this by starting a Julia session and then activating the package manager by typing `]` and then entering:
 ```julia-repl
-pkg> add git@github.com:MIT-LAE/TASOPT.jl.git
+pkg> add TASOPT
 ```
 
 You can then import `TASOPT` as you would with any Julia package:
