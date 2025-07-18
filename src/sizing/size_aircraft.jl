@@ -351,7 +351,7 @@ function _size_aircraft!(ac; itermax=35,
     # Initialize choke flags for all mission points
     ichoke5 = ichoke7 = zeros(Int, iptotal)
 
-
+    ipHXdes = 0 #Initialize but overwritten in for loop
     # -------------------------------------------------------    
     #                   Weight loop
     # -------------------------------------------------------    
@@ -524,7 +524,7 @@ function _size_aircraft!(ac; itermax=35,
         if compare_strings(options.opt_engine_location,"wing")
             if compare_strings(options.opt_prop_sys_arch,"te")
                 @error "Support for turboelectric architectures is not currently supported. Their reintroduction with `struct`s is on the roadmap."
-            elseif compare_strings(options.opt_prop_sys_arch,"tf")
+            elseif compare_strings(options.opt_prop_sys_arch,"tf") || compare_strings(options.opt_prop_sys_arch,"fuel_cell_with_ducted_fan")
                 Weng1 = parg[igWeng] / parg[igneng]
             end
         else
@@ -716,16 +716,16 @@ function _size_aircraft!(ac; itermax=35,
         # -----------------------------
         # Heat exchanger design and operation
         # ------------------------------
-        ipdes = ipcruise1 #Design point: start of cruise
+        ipHXdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
             if engine.model.model_name == "fuel_cell_with_ducted_fan"
-                ipdes = iprotate #Design point: takeoff rotation
+                ipHXdes = iprotate #Design point: takeoff rotation
                 pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
                 pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
                 pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
             end
-            engine.heat_exchangers = hxdesign!(ac, ipdes, imission, rlx = 0.5) #design and off-design HX performance
+            engine.heat_exchangers = hxdesign!(ac, ipHXdes, imission, rlx = 0.5) #design and off-design HX performance
 
             for HX in engine.heat_exchangers
                 if HX.type == "Radiator"
@@ -883,7 +883,7 @@ function _size_aircraft!(ac; itermax=35,
         @warn "Some engine points did not converge"
     end
     #Warn user if HX effectiveness is overwritten
-    check_HX_overwriting(engine.heat_exchangers) 
+    check_HX_overwriting(engine.heat_exchangers, ipHXdes) 
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description
@@ -966,10 +966,11 @@ function update_weights!(ac, rlx)
     Wftank = parg[igWftank]
     Wpay = parg[igWpay]
     Wfuse = fuse.weight
+    Weng = parg[igWeng] 
 
     ftank = parg[igWftank] / WMTO
 
-    fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
+    fsum = fwing + fstrut + fhtail + fvtail + ffuel + fuse.HPE_sys.W +
            flgnose + flgmain + ftank + ftesys
 
     if (fsum ≥ 1.0)
@@ -977,7 +978,7 @@ function update_weights!(ac, rlx)
     end
 
     # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
-    WMTO = rlx * (Wpay + fuse.weight) / (1.0 - fsum) + (1.0 - rlx) * WMTO
+    WMTO = rlx * (Wpay + fuse.weight + Weng) / (1.0 - fsum) + (1.0 - rlx) * WMTO
 
     parg[igWMTO] = WMTO
     wing.weight = WMTO * fwing
