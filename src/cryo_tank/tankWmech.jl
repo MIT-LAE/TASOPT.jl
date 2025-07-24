@@ -7,7 +7,7 @@
       **Inputs:**
       - `fuse::Fuselage`: fuselage object.
       - `fuse_tank::fuselage_tank`: fuselage tank object.
-      - `t_cond::Vector{Float64}`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
+      - `t_cond::Vector{Float64}`: Vector with tank insulation layer thickness. Provided separately from fuse_tank as it changes during 
       non-linear solve process.
 
       **Outputs:**
