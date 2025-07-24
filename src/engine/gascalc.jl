@@ -1121,6 +1121,8 @@ function gasPr(gas, T)
                   alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
                   nair = 5
                   s, dsdt, ht, dhdt, cp, R = gassum(alpha, nair, T)
+                  
+             #The simple model should be used when results are not very sensitive to cp but a speedup is desired
             else #"air_simple"
                   R = 287.1 
                   cp = 1005.0 #Just return constant cp

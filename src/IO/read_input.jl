@@ -471,6 +471,7 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
+    #Store takeoff temperatures in tank object as well for ease of access
     for (i,altTO) in enumerate(parm[imaltTO, :]/1e3)
         T_std, _, _, _, _ = atmos(altTO)
         push!(fuse_tank.TSLtank, parm[imT0TO,i] - T_std + Tref)

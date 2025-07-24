@@ -17,7 +17,7 @@ struct tank_params
 end
 
 """
-Structure with inputs for tank pressure calculation.
+Structure with input time-dependent functions used for tank pressure calculation.
 """
 struct tank_inputs{F1, F2, F3}
     """Heat rate as a function of time (W)"""

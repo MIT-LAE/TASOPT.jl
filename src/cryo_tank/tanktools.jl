@@ -167,12 +167,13 @@ function find_Q_time(t::Float64, fuse::Fuselage, fuse_tank::fuselage_tank, fuelt
 end
 
 """
-    analyze_TASOPT_tank(ac, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, N::Int64 = 50)
+    analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_dest::Float64 = 0.0, im::Int64 = 1)
 
-This function analyses the evolution in time of a cryogenic tank inside a TASOPT aircraft model.
+This function analyses the evolution in time of a cryogenic tank inside a TASOPT aircraft model, 
+accounting for operational constraints (i.e., holding times and venting).
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `ac::aicraft`: TASOPT aircraft model
+    - `ac::aircraft`: TASOPT aircraft model
     - `t_hold_orig::Float64`: hold at origin (s)
     - `t_hold_dest::Float64`: hold at destination (s)
     - `im::Int64`: mission index

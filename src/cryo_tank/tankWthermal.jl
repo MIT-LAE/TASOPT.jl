@@ -297,6 +297,7 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
       
       #Find properties at reference temperature
       _, Pr_s, _, cp, μ_s, k_s = gasPr("air_simple", T_s)
+      #This uses a "simple air" model with constant R and cp for speed
 
       ρ_s = p / (R * T_s) #density at reference temperature
 
