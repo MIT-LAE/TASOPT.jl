@@ -6,6 +6,7 @@
 !!! details "🔃 Inputs and Outputs"
         **Inputs:**
         - `ac::aircraft`: TASOPT aircraft object.
+        - `imission::Int64`: design mission index (default is 1).
         
         **Outputs:**
         No direct outputs. Aircraft object gets modified with tank parameters.
@@ -41,7 +42,7 @@ function tanksize!(ac, imission::Int64 = 1)
         Wfuelintank = fuse_tank.Wfuelintank #weight of fuel in tank
         Tfuel = fuse_tank.Tfuel #fuel temperature
         sizes_insulation = fuse_tank.sizes_insulation #Boolean for whether to size for a boiloff rate
-        TSL = fuse_tank.TSLtank #sea-level temperature for tank design
+        TSL = fuse_tank.TSLtank[imission] #sea-level temperature for tank design
 
         #------Size insulation, if requested------
         if sizes_insulation #If insulation is sized for a given boiloff rate
@@ -53,8 +54,14 @@ function tanksize!(ac, imission::Int64 = 1)
 
                 ΔT = Taw - Tfuel
 
-                #Create inline function with residuals as a function of x
-                residual(x) = res_MLI_thick(x, fuse, fuse_tank, z, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
+                #Create inner function with residuals as a function of x
+                function residual(x) 
+                        try
+                                return res_MLI_thick(x, fuse, fuse_tank, z, TSL, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
+                        catch #Return some high residual if it fails
+                                return ones(length(x))*1e3
+                        end
+                end
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
                 guess = zeros(length(t_cond) + 2) 
@@ -80,7 +87,12 @@ function tanksize!(ac, imission::Int64 = 1)
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winnertank, Winsul_sum, Vfuel, _, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        Winnertank, Winsul_sum, Vfuel, Shead_insul, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        #Store in fuse_tank
+        fuse_tank.Rinnertank = Rinnertank 
+        fuse_tank.l_inner = l_inner 
+        fuse_tank.l_cyl_inner = lcyl1 
+        fuse_tank.Shead_insul = Shead_insul 
 
         has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
@@ -141,7 +153,7 @@ function tanksize!(ac, imission::Int64 = 1)
 end
 
 """
-        res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+        res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
 This function evaluates the residual vector for a given state containing change in wall thickness, heat transfer rate and 
 insulation interface temperatures.
@@ -152,6 +164,7 @@ insulation interface temperatures.
         - `fuse::Fuselage`: fuselage object.
         - `fuse_tank::fuselage_tank`: fuselage tank object.
         - `z::Float64`: flight altitude (m)
+        - `TSL::Float64`: sea-level temperature (K)
         - `Mair::Float64`: external air Mach number
         - `xftank::Float64`: longitudinal coordinate of fuel tank centroid from nose (m)
         - `ifuel::Int64`: fuel index.
@@ -159,7 +172,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate
@@ -169,7 +182,6 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         Tfuel = fuse_tank.Tfuel
         Wfuel = fuse_tank.Wfuelintank
         h_v = fuse_tank.hvap #heat of vaporization
-        TSL = fuse_tank.TSLtank
 
         # Extract states
         Δt = x[1]
@@ -190,7 +202,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         Q = Q_net / qfac
 
         #Assemble struct with parameters for residual_Q
-        p = thermal_params()
+        p = thermal_params{typeof(fuse.layout.cross_section)}()
         p.Q = Q #Store heat rate as it is known
         p.l_cyl = l_cyl
         p.l_tank = l_tank

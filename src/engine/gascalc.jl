@@ -1110,16 +1110,23 @@ viscosity, thermal conductivity, specific heat, and Prandtl number.
 """
 function gasPr(gas, T)
       #TODO: replace with new gas model
-      if (gas == "air")
+      if (gas == "air") || (gas == "air_simple")
             μ0 = 1.716e-5
             S_μ = 111
             K0 = 0.0241
             S_k = 194
             T0 = 273
 
-            alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
-            nair = 5
-            s, dsdt, ht, dhdt, cp, R = gassum(alpha, nair, T)
+            if gas == "air" 
+                  alpha = [0.7532, 0.2315, 0.0006, 0.0020, 0.0127, 0.0]
+                  nair = 5
+                  s, dsdt, ht, dhdt, cp, R = gassum(alpha, nair, T)
+                  
+             #The simple model should be used when results are not very sensitive to cp but a speedup is desired
+            else #"air_simple"
+                  R = 287.1 
+                  cp = 1005.0 #Just return constant cp
+            end
 
       elseif (gas == "co2")
             μ0 = 1.370e-5
