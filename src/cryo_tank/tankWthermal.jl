@@ -64,7 +64,7 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL:
       Tfuel = fuse_tank.Tfuel
 
       #Create struct with thermal parameters
-      p = thermal_params()
+      p = thermal_params{typeof(fuse.layout.cross_section)}()
       p.l_cyl = fuse_tank.l_cyl_inner
       p.l_tank = fuse_tank.l_inner
       p.r_tank = fuse_tank.Rinnertank

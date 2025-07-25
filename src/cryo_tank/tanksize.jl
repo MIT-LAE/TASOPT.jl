@@ -196,7 +196,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         Q = Q_net / qfac
 
         #Assemble struct with parameters for residual_Q
-        p = thermal_params()
+        p = thermal_params{typeof(fuse.layout.cross_section)}()
         p.Q = Q #Store heat rate as it is known
         p.l_cyl = l_cyl
         p.l_tank = l_tank
