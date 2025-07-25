@@ -132,7 +132,7 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
-fuselage = Fuselage()
+# fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
@@ -283,38 +283,6 @@ else  #if not set explicitly, use altitude (set by default)
 end
 parg[igpcabin] = p_cabin
 
-aero = read_input("Aero", fuse, dfuse)
-daero = dfuse["Aero"]
-readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
-    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
-    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
-    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
-
-    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
-    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
-    
-    parg[igfBLIf] = readaero("BLI_frac")
-
-weight = read_input("Weights", fuse, dfuse)
-dweight = dfuse["Weights"]
-readweight(x) = read_input(x, weight, dweight)
-    fuselage.weight_frac_frame = readweight("frame")
-    fuselage.weight_frac_stringers = readweight("stringer")
-    fuselage.weight_frac_skin_addl   = readweight("additional")
-
-    fuselage.fixed.W = Force(readweight("fixed_weight"))
-
-    fuselage.window_W_per_length= readweight("window_per_length")
-    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
-    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
-
-    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
-
-    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
-    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
-    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
-
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
 readgeom(x) = read_input(x, geom, dgeom)
@@ -394,6 +362,39 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
     fuselage.layout.x_end = Distance(readgeom("x_end")) 
     fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
+
+
+aero = read_input("Aero", fuse, dfuse)
+daero = dfuse["Aero"]
+readaero(x) = read_input(x, aero, daero)
+    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
+    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
+    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
+    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
+
+    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
+    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
+    
+    parg[igfBLIf] = readaero("BLI_frac")
+
+weight = read_input("Weights", fuse, dfuse)
+dweight = dfuse["Weights"]
+readweight(x) = read_input(x, weight, dweight)
+    fuselage.weight_frac_frame = readweight("frame")
+    fuselage.weight_frac_stringers = readweight("stringer")
+    fuselage.weight_frac_skin_addl   = readweight("additional")
+
+    fuselage.fixed.W = Force(readweight("fixed_weight"))
+
+    fuselage.window_W_per_length= readweight("window_per_length")
+    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
+    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
+
+    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
+
+    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
 
 # ------ End fuse -------
 
