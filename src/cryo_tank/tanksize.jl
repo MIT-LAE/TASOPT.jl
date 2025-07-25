@@ -54,8 +54,14 @@ function tanksize!(ac, imission::Int64 = 1)
 
                 ΔT = Taw - Tfuel
 
-                #Create inline function with residuals as a function of x
-                residual(x) = res_MLI_thick(x, fuse, fuse_tank, z, TSL, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
+                #Create inner function with residuals as a function of x
+                function residual(x) 
+                        try
+                                return res_MLI_thick(x, fuse, fuse_tank, z, TSL, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
+                        catch #Return some high residual if it fails
+                                return ones(length(x))*1e3
+                        end
+                end
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
                 guess = zeros(length(t_cond) + 2) 
