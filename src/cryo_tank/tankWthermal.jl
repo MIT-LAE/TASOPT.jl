@@ -150,7 +150,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
       Mair = p.Mair
       xftank = p.xftank
       fuse_cs = p.fuse_cs
-      Rfuse = structures.Rfuse(fuse_cs)
+      Rfuse = fuse_cs.radius
       ifuel = p.ifuel    
       
       #Calculate heat transfer coefficient, freestream temperature and adiabatic wall temperature

@@ -11,7 +11,7 @@ Fuselage Structure:
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct Fuselage
+@kwdef mutable struct Fuselage{CS<:AbstractCrossSection}
     # General Properties
     """Fuselage Weight [N] """
     weight::Float64 = 0.0
@@ -21,7 +21,7 @@ $TYPEDFIELDS
     moment::Float64 = 0.0
 
     """Fuselage Layout"""
-    layout::FuselageLayout = FuselageLayout()
+    layout::FuselageLayout{CS} = FuselageLayout{CS}()
 
     """Cabin Properties"""
     cabin::Cabin = Cabin()
@@ -71,7 +71,7 @@ function dx_cabin(fuse::Fuselage)
     return fuse.layout.x_end_cylinder - fuse.layout.x_start_cylinder
 end
 
-Rfuse(fuse::Fuselage) = Rfuse(fuse.layout.cross_section)
+# Rfuse(fuse::Fuselage) = Rfuse(fuse.layout.cross_section)
 
 # fuselage = Fuselage()
 
