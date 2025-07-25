@@ -172,7 +172,6 @@ parg[igWpaymax] = maxpay
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
-# fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
 options = read_input("Options", data, default)
