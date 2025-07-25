@@ -132,7 +132,6 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
-# fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
@@ -173,7 +172,7 @@ parg[igWpaymax] = maxpay
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
-fuselage.cabin.exit_limit = exitlimit
+# fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -286,6 +285,35 @@ parg[igpcabin] = p_cabin
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
 readgeom(x) = read_input(x, geom, dgeom)
+    
+    # Before doing anything else, first learn the shape of the fuselage 
+    # cross-section so you can create the appropriate typed Fuselage.
+    
+    # Number of webs = number of bubbles - 1
+    n_bubbles = Int(readgeom("number_of_bubbles"))
+
+    radius = Distance(readgeom("radius"))
+    dz = Distance(readgeom("dRadius"))
+    dy = Distance(readgeom("y_offset"))
+
+    if n_bubbles > 1 && dy == 0.0
+        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        "y-offset of bubble set to 0.0. "*
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        n_bubbles = 1
+    end
+
+    if n_bubbles == 1
+        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
+    else
+        n_webs = n_bubbles - 1
+        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
+        bubble_center_y_offset = dy, n_webs = n_webs)
+    end
+    fuselage = Fuselage{typeof(cross_section)}() #Create the right type of fuselage
+    
+    fuselage.layout.cross_section = cross_section
+    fuselage.cabin.exit_limit = exitlimit
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
@@ -318,29 +346,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
 
-    # Number of webs = number of bubbles - 1
-    n_bubbles = Int(readgeom("number_of_bubbles"))
-
-    radius = Distance(readgeom("radius"))
-    dz = Distance(readgeom("dRadius"))
-    dy = Distance(readgeom("y_offset"))
-
-    if n_bubbles > 1 && dy == 0.0
-        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
-        "y-offset of bubble set to 0.0. "*
-        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
-        n_bubbles = 1
-    end
-
-    if n_bubbles == 1
-        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
-    else
-        n_webs = n_bubbles - 1
-        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
-        bubble_center_y_offset = dy, n_webs = n_webs)
-    end
-
-    fuselage.layout.cross_section = cross_section
+    
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
