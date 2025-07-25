@@ -31,7 +31,7 @@ This structure stores the material and thermal properties of a cryogenic tank in
       """Fuel species index"""
       ifuel::Int64 = 0
       """Fuselage cross section"""
-      fuse_cs::T = SingleBubble()
+      fuse_cs::T = T()
 end
 
 """
