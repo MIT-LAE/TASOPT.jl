@@ -120,7 +120,6 @@
         for (i,item) in enumerate(out_opr_takeoff) 
             @test item ≈ out_opr_check[i]
         end
-        println(out_opr_takeoff)
     end
 
     @testset "Ducted fan with fuel cell" begin

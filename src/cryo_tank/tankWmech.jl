@@ -7,7 +7,7 @@
       **Inputs:**
       - `fuse::Fuselage`: fuselage object.
       - `fuse_tank::fuselage_tank`: fuselage tank object.
-      - `t_cond::Float64`: Vector with tank isulation layer thickness. Provided separately from fuse_tank as it changes during 
+      - `t_cond::Vector{Float64}`: Vector with tank insulation layer thickness. Provided separately from fuse_tank as it changes during 
       non-linear solve process.
 
       **Outputs:**
@@ -119,17 +119,9 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       # Insulation weight
       N = length(t_cond) #Number of insulation layers
       #Initialize storage vectors
-      Vcyl_insul = zeros(N)
-      Winsul = zeros(N)
-      Shead_insul = zeros(N + 1) #add one for first (tank wall) surface 
-      Vhead_insul = zeros(N)
-      rho_insul = zeros(N)
+      Winsul_sum = 0.0
+      Shead_insul = zeros(Float64, N + 1) #add one for first (tank wall) surface 
       L = Lhead + tskin #Length of ellipsoid semi-minor axis
-
-      #Assemble vector with layer densities
-      for i = 1:N
-            rho_insul[i] = material_insul[i].ρ
-      end
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
       _, Ao = scaled_cross_section(fuse_cs, Ro) #Cross-sectional area of double bubble
@@ -142,18 +134,18 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
 
             _, Ao = scaled_cross_section(fuse_cs, Ro)
             _, Ai = scaled_cross_section(fuse_cs, Ri)
-            Vcyl_insul[n]  = l_cyl * (Ao - Ai) #Volume of cylindrical layer
+            rho_insul = material_insul[n].ρ
+            Vcyl_insul  = l_cyl * (Ao - Ai) #Volume of cylindrical layer
             Shead_insul[n+1] = 2*Ao * ( 0.333 + 0.667*(L/Ro)^1.6 )^0.625 #Surface area of ellipsodal cap
 
             Area_coeff = Shead_insul[n+1] / Ro^2 #coefficient that relates area and radius squared
-            Vhead_insul[n] = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
+            Vhead_insul = ((Shead_insul[n] + Shead_insul[n+1])/2 - Area_coeff/(6) * t_cond[n]^2) * t_cond[n] #Closed-form solution
             
-            Winsul[n] = (Vcyl_insul[n] + 2*Vhead_insul[n]) * rho_insul[n] * gee #Weight of insulation layer
+            Winsul_sum += (Vcyl_insul + 2*Vhead_insul) * rho_insul * gee #Weight of insulation layer
 
             Ri = Ro #Update inner radius for next point
       end
 
-      Winsul_sum = sum(Winsul)
       Wtank = (Wtank + Winsul_sum)
       l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
 
@@ -340,6 +332,9 @@ This function can be used to calculate the bending moment distribution in a stif
 It applies Eqs. (7.4) and (7.5) in Barron (1985) to find the bending moment distribution. The function returns the
 maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
 
+Note: An attempt was made to use the NLopt.jl package to find the maximum value of k, 
+but this was more expensive and less robust than the brute-force approach.
+
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `θ::Float64`: angular position of tank supports, measured from the bottom of the tank (rad).
@@ -349,11 +344,11 @@ maximum value of ``k = 2πM/(WR)`` on the ring's circumference.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM(θ::Float64)
-      ϕlist = LinRange(0.0, π, 361)
+      ϕlist = [θ; LinRange(1.1,1.2,21);pi] #Take advantage of known form of maximum
       k = zeros(length(ϕlist))
 
       for (i,ϕ) in enumerate(ϕlist)
-            if 0 ≤ ϕ ≤ θ
+            if 0 ≤ ϕ < θ
                   k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
             elseif θ ≤ ϕ ≤ π
                   k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ  + cos(θ) + cos(ϕ)*(sin(θ)^2)
