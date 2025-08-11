@@ -8,7 +8,6 @@ const TASOPT = @__MODULE__
 using Base: SignedMultiplicativeInverse, @kwdef
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
 
-using BenchmarkTools
 using Printf
 
 using StaticArrays
