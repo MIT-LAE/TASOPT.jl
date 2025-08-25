@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Nelder Mead · TASOPT.jl</title><meta name="title" content="Nelder Mead · TASOPT.jl"/><meta property="og:title" content="Nelder Mead · TASOPT.jl"/><meta property="twitter:title" content="Nelder Mead · TASOPT.jl"/><meta name="description" content="Documentation for TASOPT.jl."/><meta property="og:description" content="Documentation for TASOPT.jl."/><meta property="twitter:description" content="Documentation for TASOPT.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">TASOPT.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../loadingrunning/">Loading and running</a></li><li><a class="tocitem" href="../payload_range/">Payload-range diagram</a></li><li><input class="collapse-toggle" id="menuitem-2-3" type="checkbox" checked/><label class="tocitem" for="menuitem-2-3"><span class="docs-label">Optimization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Nelder Mead</a><ul class="internal"><li><a class="tocitem" href="#Initialiation-and-loading-models"><span>Initialiation and loading models</span></a></li><li><a class="tocitem" href="#Setting-Optimization-Parameters"><span>Setting Optimization Parameters</span></a></li><li><a class="tocitem" href="#Objective-Function"><span>Objective Function</span></a></li><li><a class="tocitem" href="#Running-the-optimization"><span>Running the optimization</span></a></li><li><a class="tocitem" href="#Plotting-resulting-data"><span>Plotting resulting data</span></a></li></ul></li><li><a class="tocitem" href="../gradient_based_optimization/">Gradient Based Optimization</a></li></ul></li><li><a class="tocitem" href="../sensitivity/">Sensitivities</a></li></ul></li><li><span class="tocitem">Aerodynamics</span><ul><li><a class="tocitem" href="../../aero/geometry/">Geometry</a></li><li><a class="tocitem" href="../../aero/lift/">Lift</a></li><li><a class="tocitem" href="../../aero/drag/">Drag</a></li><li><a class="tocitem" href="../../aero/moment/">Pitching moment</a></li><li><a class="tocitem" href="../../atmos/atmos/">Atmospheric properties</a></li></ul></li><li><span class="tocitem">Structures</span><ul><li><a class="tocitem" href="../../structures/wing/">Wings and tails</a></li><li><a class="tocitem" href="../../structures/fuselage/">Fuselage</a></li><li><a class="tocitem" href="../../structures/landing_gear/">Landing gear</a></li><li><a class="tocitem" href="../../structures/cabin_sizing/">Cabin sizing</a></li></ul></li><li><span class="tocitem">Propulsion systems</span><ul><li><a class="tocitem" href="../../propulsion/propsys/">Propulsion system</a></li><li><a class="tocitem" href="../../propulsion/gascalc/">Gas Calculations</a></li><li><a class="tocitem" href="../../propulsion/hxfun/">Heat exchangers</a></li><li><a class="tocitem" href="../../propulsion/PEMfuelcell/">PEM fuel cells</a></li><li><a class="tocitem" href="../../propulsion/ElectricMachines/">Electric Machines</a></li></ul></li><li><span class="tocitem">Cryogenic tanks</span><ul><li><a class="tocitem" href="../../cryo_tank/fueltanks/">Thermal and structural models</a></li><li><a class="tocitem" href="../../cryo_tank/cryotank/">Homogeneous model</a></li></ul></li><li><a class="tocitem" href="../../balance/balance/">Stability</a></li><li><span class="tocitem">Mission and sizing</span><ul><li><a class="tocitem" href="../../sizing/sizing/">Design and evaluation</a></li><li><a class="tocitem" href="../../sizing/weightmodels/">TASOPT Weight Model</a></li></ul></li><li><span class="tocitem">Data and I/O</span><ul><li><a class="tocitem" href="../../data_io/data_basics/">Data structure basics</a></li><li><a class="tocitem" href="../../data_io/structs/">Data structure details</a></li><li><a class="tocitem" href="../../data_io/data_io/">Loading and saving models</a></li></ul></li><li><span class="tocitem">Miscellaneous</span><ul><li><a class="tocitem" href="../../misc/dreladocs/">Original Drela docs</a></li><li><a class="tocitem" href="../../misc/fordevs/">Notes for devs</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li><a class="is-disabled">Optimization</a></li><li class="is-active"><a href>Nelder Mead</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Nelder Mead</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/MIT-LAE/TASOPT.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/MIT-LAE/TASOPT.jl/blob/main/docs/src/examples/NM_optimization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Example-for-a-Multi-variable-Optimization"><a class="docs-heading-anchor" href="#Example-for-a-Multi-variable-Optimization">Example for a Multi-variable Optimization</a><a id="Example-for-a-Multi-variable-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Example-for-a-Multi-variable-Optimization" title="Permalink"></a></h1><p><img src="../../assets/Opt_tutorial_iterations.png" alt="Optimization Iteration Plot"/></p><p>To run a multi-variable optimization run on an aircraft model first determining your design variables. For this example, the design variables are:</p><ol><li>Aspect Ratio: <code>AR</code></li><li>Cruise Altitude: <code>Alt</code></li><li>Lift Coefficient: <code>Cl</code>  </li><li>Wing Sweep: <code>sweep</code></li><li>Inner panel taper ratio: <code>λs</code>  </li><li>Outer panel taper ratio: <code>λt</code>  </li><li>Root thickness to chord: <code>hboxo</code></li><li>Spanbreak thickness to chord: <code>hboxs</code></li><li>Break/root cl ratio = cls/clo: <code>rcls</code></li><li>Tip/root cl ratio = clt/clo: <code>rclt</code></li><li>Tt4: <code>Tt4</code></li><li>High Pressure Compressor Pressure Ratio: <code>pihc</code></li><li>Fan Pressure ratio: <code>pif</code></li></ol><h2 id="Initialiation-and-loading-models"><a class="docs-heading-anchor" href="#Initialiation-and-loading-models">Initialiation and loading models</a><a id="Initialiation-and-loading-models-1"></a><a class="docs-heading-anchor-permalink" href="#Initialiation-and-loading-models" title="Permalink"></a></h2><p>Start the script importing <code>TASOPT.jl</code>, <code>Plots</code>, <code>index.inc</code>, <code>NLopt</code>.</p><pre><code class="language-julia hljs"># Import modules
+using Plots
+using TASOPT
+# you can optionally define
+# const tas = TASOPT 
+# to use as a shorthand
+include(&quot;../src/data_structs/index.inc&quot;)
+# import indices for calling parameters
+using NLopt</code></pre><p>Initialize arrays used for plotting</p><pre><code class="language-julia hljs">xarray = []
+farray = []
+PFEIarray = []
+CDarray = []
+OPRarray = []
+plot_obj = nothing
+ft_to_m = 0.3048</code></pre><p>Load <code>aircraft</code> model and size it to get initial values:</p><pre><code class="language-julia hljs"># Load default model
+ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, &quot;../example/opt_input.toml&quot;))
+#     datafile
+# Size aircraft once to get initial values
+size_aircraft!(ac)</code></pre><h2 id="Setting-Optimization-Parameters"><a class="docs-heading-anchor" href="#Setting-Optimization-Parameters">Setting Optimization Parameters</a><a id="Setting-Optimization-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Setting-Optimization-Parameters" title="Permalink"></a></h2><p>This example uses a Nelder Mead optimization aimed towards optimizing for passenger fuel emission index (PFEI) while checking for other constraints.</p><h3 id="Set-the-Upper-and-Lower-limits-for-all-design-variables"><a class="docs-heading-anchor" href="#Set-the-Upper-and-Lower-limits-for-all-design-variables">Set the Upper and Lower limits for all design variables</a><a id="Set-the-Upper-and-Lower-limits-for-all-design-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Set-the-Upper-and-Lower-limits-for-all-design-variables" title="Permalink"></a></h3><pre><code class="language-julia hljs"># DESIGN VARIABLES
+#             AR    Alt(ft)  Cl     sweep     λs  λt   hboxo   hboxs   rcls    rclt     Tt4CR   iepihc iepif
+lower      = [7.0 , 20000.0, 0.40, 10.0, 0.1, 0.1, 0.10,   0.10,   0.1,    0.1,     700.0,  6,      0]
+upper      = [12.0, 60000.0, 0.65, 40.0, 1.0, 1.0, 0.15,   0.15,   1.4,    1.0,     2000.0, 15,     10] 
+</code></pre><h3 id="Set-the-initial-values-for-all-design-variables"><a class="docs-heading-anchor" href="#Set-the-initial-values-for-all-design-variables">Set the initial values for all design variables</a><a id="Set-the-initial-values-for-all-design-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Set-the-initial-values-for-all-design-variables" title="Permalink"></a></h3><pre><code class="language-julia hljs">initial =[
+        ac.parg[igAR], 33000.0, 0.57, ac.parg[igsweep], 
+        ac.parg[iglambdas], ac.parg[iglambdat], ac.parg[ighboxo], 
+        ac.parg[ighboxs], ac.para[iarcls, ipcruise1,1], ac.para[iarclt, ipcruise1,1], 1587, 11.46, 1.66
+]</code></pre><h3 id="Set-initial-dx-values-for-all-design-variables"><a class="docs-heading-anchor" href="#Set-initial-dx-values-for-all-design-variables">Set initial dx values for all design variables</a><a id="Set-initial-dx-values-for-all-design-variables-1"></a><a class="docs-heading-anchor-permalink" href="#Set-initial-dx-values-for-all-design-variables" title="Permalink"></a></h3><pre><code class="language-julia hljs">initial_dx = [ 0.5, 1000.0,  0.05, 0.1,  0.01,0.01,0.01,   0.01,   0.01,   0.01, 100, 0.5,0.2]</code></pre><h3 id="Set-other-optimization-factors"><a class="docs-heading-anchor" href="#Set-other-optimization-factors">Set other optimization factors</a><a id="Set-other-optimization-factors-1"></a><a class="docs-heading-anchor-permalink" href="#Set-other-optimization-factors" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Set FTOL
+f_tol_rel = 1e-5
+
+# Set Optimization module
+opt = NLopt.Opt(:LN_NELDERMEAD, length(initial))
+# Other Optimization algorithms are also possible:
+# # opt = NLopt.Opt(:LN_BOBYQA, length(initial))
+# # opt = NLopt.Opt(:LN_COBYLA, length(initial))
+
+# Set Optimization parameters
+opt.lower_bounds = lower
+opt.upper_bounds = upper
+opt.min_objective = obj
+opt.initial_step = initial_dx
+opt.ftol_rel = f_tol_rel</code></pre><h2 id="Objective-Function"><a class="docs-heading-anchor" href="#Objective-Function">Objective Function</a><a id="Objective-Function-1"></a><a class="docs-heading-anchor-permalink" href="#Objective-Function" title="Permalink"></a></h2><pre><code class="language-julia hljs">function obj(x, grad)
+    ac.parg[igAR] = x[1] # Aspect Ratio 
+    ac.para[iaalt, ipcruise1, :] .=  x[2] * ft_to_m # Cruise Altitude
+    ac.para[iaCL, ipclimb1+1:ipdescentn-1, :] .= x[3] # CL
+    ac.parg[igsweep] = x[4] # Wing sweep 
+    ac.parg[iglambdas] = x[5] #inner_panel_taper_ratio
+    ac.parg[iglambdat] = x[6] #outer_panel_taper_ratio
+    ac.parg[ighboxo] = x[7] #root_thickness_to_chord
+    ac.parg[ighboxs] = x[8] #spanbreak_thickness_to_chord
+    ac.para[iarcls, ipclimb1+1 : ipdescentn-1, :] .= x[9]   #  rcls    break/root cl ratio = cls/clo
+    ac.para[iarclt, ipclimb1+1 : ipdescentn-1, :] .= x[10]   #  rclt    tip  /root cl ratio = clt/clo
+    ac.pare[ieTt4, ipcruise1:ipcruise2, :] .= x[11] # Tt4
+    ac.pare[iepihc, ipclimb1+1 : ipdescentn-1, :] .= x[12] # High Pressure Compressor Pressure Ratio
+    ac.pare[iepif, ipclimbn, :] .= x[13] #Fan PR 
+    ac.pare[iepilc, :, :] .= 3 # Low Pressure Compressure Pressure Ratio set to 3
+
+    # Sizing aircraft with new ac.parameters
+    TASOPT.size_aircraft!(ac, iter =50, printiter=false)
+    f = ac.parm[imPFEI]
+    push!(PFEIarray, ac.parm[imPFEI])
+    push!(xarray, x)
+    push!(CDarray, ac.para[iaCD, ipcruise1, 1])
+    push!(OPRarray, ac.pare[iept3]/ac.pare[iept2])
+    
+    # Ensure aircraft weight makes sense
+    WTOmax = ac.parg[igWMTO]
+    WTO = ac.parm[imWTO,1]
+    constraint = WTO/WTOmax - 1.0
+    penfac = 10*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+
+    # Ensure fuel volume makes sense
+    Wfmax = ac.parg[igWfmax]
+    Wf    = ac.parg[igWfuel]
+    constraint = Wf/Wfmax - 1.0
+    penfac = 10*ac.parg[igWpay]
+    f = f + penfac*max(0.0, constraint)^2
+    
+    println(&quot;X̄ = $x  ⇨  PFEI = $(ac.parm[imPFEI]) f = $f, OPR = $(ac.pare[iept3]/ac.pare[iept2]),&quot;)
+    push!(farray, f)
+    
+    return f
+end</code></pre><h2 id="Running-the-optimization"><a class="docs-heading-anchor" href="#Running-the-optimization">Running the optimization</a><a id="Running-the-optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Running-the-optimization" title="Permalink"></a></h2><pre><code class="language-julia hljs">opt_time = @elapsed (optf, optx, ret) = NLopt.optimize(opt, initial)
+numevals = opt.numevals # the number of function evaluations
+
+println(&quot;got $optf at $optx after $numevals iterations which took $(opt_time/60) min (returned $ret)&quot;)
+</code></pre><h2 id="Plotting-resulting-data"><a class="docs-heading-anchor" href="#Plotting-resulting-data">Plotting resulting data</a><a id="Plotting-resulting-data-1"></a><a class="docs-heading-anchor-permalink" href="#Plotting-resulting-data" title="Permalink"></a></h2><h3 id="Plot-aircraft-model-details"><a class="docs-heading-anchor" href="#Plot-aircraft-model-details">Plot aircraft model details</a><a id="Plot-aircraft-model-details-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-aircraft-model-details" title="Permalink"></a></h3><pre><code class="language-julia hljs">figure()
+savedir = &quot;./example/optimization/&quot;
+if !isdir(savedir)
+    # If it doesn&#39;t exist, create the &quot;optimization&quot; directory
+    mkdir(savedir)
+    println(&quot;The &#39;optimization&#39; directory has been created.&quot;)
+end
+figname = &quot;Opt_tutorial_ac_details&quot;
+plot_obj = TASOPT.plot_details(ac; plot_obj = plot_obj)
+savefig(plot_obj, savedir*figname*&quot;.png&quot;)</code></pre><h3 id="Plot-optimization-outputs-over-iterations"><a class="docs-heading-anchor" href="#Plot-optimization-outputs-over-iterations">Plot optimization outputs over iterations</a><a id="Plot-optimization-outputs-over-iterations-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-optimization-outputs-over-iterations" title="Permalink"></a></h3><pre><code class="language-julia hljs">## Second figure
+# Create a 2x2 layout
+layout = @layout [a b; c d]
+
+p1 = plot(PFEIarray, xlabel=&quot;Iterations&quot;, ylabel=&quot;PFEI (J/Nm)&quot;, title=&quot;&quot;)
+p2 = plot(farray, yscale=:log10, xlabel=&quot;Iterations&quot;, ylabel=&quot;Objective f&quot;, title=&quot;&quot;)
+p3 = plot(CDarray, xlabel=&quot;Iterations&quot;, ylabel=&quot;CD&quot;, title=&quot;&quot;)
+p4 = plot(OPRarray, xlabel=&quot;Iterations&quot;, ylabel=&quot;OPR&quot;, title=&quot;&quot;)
+
+# Create the plot
+p = plot(p1, p2, p3, p4,    
+    layout = layout,
+    size=(1200, 800),
+    plot_title=&quot;Optimization outputs&quot;
+)
+
+# Save the plot
+figname2 = &quot;Opt_tutorial_iterations&quot;
+savefig(p, savedir * figname2 * &quot;.png&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../payload_range/">« Payload-range diagram</a><a class="docs-footer-nextpage" href="../gradient_based_optimization/">Gradient Based Optimization »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 25 August 2025 14:14">Monday 25 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
