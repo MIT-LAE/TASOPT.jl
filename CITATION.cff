@@ -1,0 +1,88 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Prashanth
+  given-names: Prakash
+  orcid: "https://orcid.org/0000-0002-2346-0697"
+- family-names: Gomez-Vega
+  given-names: Nicolas
+  orcid: "https://orcid.org/0000-0002-7921-2158"
+- family-names: He
+  given-names: Sicheng
+  orcid: "https://orcid.org/0000-0003-1307-4909"
+- family-names: Shukla
+  given-names: Aditeya
+  orcid: "https://orcid.org/0000-0002-9567-1602"
+- family-names: Gonzalez
+  given-names: Jonas J
+  orcid: "https://orcid.org/0009-0007-9210-9589"
+- family-names: Bobadilla
+  given-names: Diego Salgado
+- family-names: Lee
+  given-names: Kanghyun
+- family-names: Ranjan
+  given-names: Prateek
+  orcid: "https://orcid.org/0009-0001-9201-0630"
+- family-names: Zahid
+  given-names: Sayed Shayan
+  orcid: "https://orcid.org/0000-0001-8174-0956"
+- family-names: Abel
+  given-names: James
+- family-names: Drela
+  given-names: Mark
+  orcid: "https://orcid.org/0000-0002-3912-1753"
+- family-names: Speth
+  given-names: Raymond
+  orcid: "https://orcid.org/0000-0002-8941-4554"
+doi: 10.5281/zenodo.16950139
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Prashanth
+    given-names: Prakash
+    orcid: "https://orcid.org/0000-0002-2346-0697"
+  - family-names: Gomez-Vega
+    given-names: Nicolas
+    orcid: "https://orcid.org/0000-0002-7921-2158"
+  - family-names: He
+    given-names: Sicheng
+    orcid: "https://orcid.org/0000-0003-1307-4909"
+  - family-names: Shukla
+    given-names: Aditeya
+    orcid: "https://orcid.org/0000-0002-9567-1602"
+  - family-names: Gonzalez
+    given-names: Jonas J
+    orcid: "https://orcid.org/0009-0007-9210-9589"
+  - family-names: Bobadilla
+    given-names: Diego Salgado
+  - family-names: Lee
+    given-names: Kanghyun
+  - family-names: Ranjan
+    given-names: Prateek
+    orcid: "https://orcid.org/0009-0001-9201-0630"
+  - family-names: Zahid
+    given-names: Sayed Shayan
+    orcid: "https://orcid.org/0000-0001-8174-0956"
+  - family-names: Abel
+    given-names: James
+  - family-names: Drela
+    given-names: Mark
+    orcid: "https://orcid.org/0000-0002-3912-1753"
+  - family-names: Speth
+    given-names: Raymond
+    orcid: "https://orcid.org/0000-0002-8941-4554"
+  date-published: 2025-09-03
+  doi: 10.21105/joss.08521
+  issn: 2475-9066
+  issue: 113
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 8521
+  title: "TASOPT.jl: A Julia package for conceptual commercial transport
+    aircraft design"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.08521"
+  volume: 10
+title: "TASOPT.jl: A Julia package for conceptual commercial transport
+  aircraft design"
