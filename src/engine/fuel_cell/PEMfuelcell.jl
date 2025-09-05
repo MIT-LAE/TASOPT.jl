@@ -1247,7 +1247,7 @@ function find_maximum_PEMFC_power(u, jg = 1e3)
     lower = [0.0]
     upper = [1e5]
         
-    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a global optimizer as it is only 1 or 2 variables
+    opt = Opt(:LN_NELDERMEAD, length(initial_x)) #Use a local optimizer for speed
     opt.lower_bounds = lower
     opt.upper_bounds = upper
     opt.maxeval = 500  # Set the maximum number of function evaluations
