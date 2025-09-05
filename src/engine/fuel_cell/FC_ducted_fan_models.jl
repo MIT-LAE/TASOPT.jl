@@ -111,7 +111,7 @@ function VerifyRadiatorHeat(engine, imission)
     fcdata = engine.data
 
     for ip in 1:iptotal
-        if !isapprox(fcdata.FC_heat[ip, imission], radiator.HXgas_mission[ip].Q, rtol=1e-6)
+        if !isapprox(fcdata.FC_heat[ip, imission], radiator.HXgas_mission[ip, imission].Q, rtol=1e-6)
             error("Heat balance error in fuel cell & radiator")
         end
     end

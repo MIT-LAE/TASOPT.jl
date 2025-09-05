@@ -54,6 +54,7 @@ Angle(x)    = convertAngle(parse_unit(x)...)
 Time(x)     = convertTime(parse_unit(x)...)
 Temp(x)     = convertTemp(parse_unit(x)...)
 
+
 """
     read_aircraft_model(datafile; 
     defaultfile = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"))
@@ -131,7 +132,6 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
-fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
@@ -140,33 +140,38 @@ landing_gear = LandingGear()
 # Setup mission variables
 ranges = readmis("range")
 parm[imRange, :] .= Distance.(ranges)
-
-maxpax = readmis("max_payload_in_pax_equivalent") #This represents the maximum aircraft payload in equivalent number of pax
-                                                #This may exceed the seatable capacity to account for belly cargo
-pax = readmis("pax")
-exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
-despax = pax[1] #Design number of passengers
-
-if any(maxpax .< pax)
-    error("One or more missions have higher payload than prescribed maximum aircraft payload!:"*
-    "\n Max Payload [in pax] = "*string(maxpax)*
-    "\n Payloads listed [in pax] = "*string(pax))
-end
-if any(exitlimit .< pax)
-    error("One or more missions have higher passenger counts than the prescribed exit limit!:"*
-    "\n Exit limit [in pax] = "*string(exitlimit)*
-    "\n Payloads listed [in pax] = "*string(pax))
-end
-
 Wpax =  Force(readmis("weight_per_pax"))
+
+#Weight() can take in "pax" as a unit; the weight of a passenger is user-defined
+function Weight(x)
+    if x isa AbstractVector
+        return [Weight(w) for w in x]  # Recursively call Weight on each element
+    elseif x isa AbstractString
+        value, unit = parse_unit(x)
+        if unit == "pax" 
+            return value * Wpax
+        else 
+            return convertForce(value, unit)
+        end
+    elseif x isa Float64
+        return x
+    else
+        throw(ArgumentError("Unsupported input type: $(typeof(x))"))
+    end
+end
+
+maxpay = Weight(readmis("max_payload")) #This represents the maximum aircraft payload
+                                #This may exceed the seatable capacity to account for belly cargo
+
+payload = Weight(readmis("payload"))
+exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin in an all-economy layout
+
 parm[imWperpax, :] .= Wpax
-parm[imWpay, :] .= pax * Wpax
-parg[igWpaymax] = maxpax * Wpax
+parm[imWpay, :] .= payload
+parg[igWpaymax] = maxpay 
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
-fuselage.cabin.design_pax = despax
-fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -277,41 +282,38 @@ else  #if not set explicitly, use altitude (set by default)
 end
 parg[igpcabin] = p_cabin
 
-aero = read_input("Aero", fuse, dfuse)
-daero = dfuse["Aero"]
-readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
-    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
-    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
-    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
-
-    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
-    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
-    
-    parg[igfBLIf] = readaero("BLI_frac")
-
-weight = read_input("Weights", fuse, dfuse)
-dweight = dfuse["Weights"]
-readweight(x) = read_input(x, weight, dweight)
-    fuselage.weight_frac_frame = readweight("frame")
-    fuselage.weight_frac_stringers = readweight("stringer")
-    fuselage.weight_frac_skin_addl   = readweight("additional")
-
-    fuselage.fixed.W = Force(readweight("fixed_weight"))
-
-    fuselage.window_W_per_length= readweight("window_per_length")
-    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
-    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
-
-    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
-
-    fuselage.APU.W = readweight("APU_weight_fraction")*maxpax*Wpax
-    fuselage.seat.W = readweight("seat_weight_fraction")*maxpax*Wpax
-    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*maxpax*Wpax
-
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
 readgeom(x) = read_input(x, geom, dgeom)
+    
+    # Before doing anything else, first learn the shape of the fuselage 
+    # cross-section so you can create the appropriate typed Fuselage.
+    
+    # Number of webs = number of bubbles - 1
+    n_bubbles = Int(readgeom("number_of_bubbles"))
+
+    radius = Distance(readgeom("radius"))
+    dz = Distance(readgeom("dRadius"))
+    dy = Distance(readgeom("y_offset"))
+
+    if n_bubbles > 1 && dy == 0.0
+        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        "y-offset of bubble set to 0.0. "*
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        n_bubbles = 1
+    end
+
+    if n_bubbles == 1
+        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
+    else
+        n_webs = n_bubbles - 1
+        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
+        bubble_center_y_offset = dy, n_webs = n_webs)
+    end
+    fuselage = Fuselage{typeof(cross_section)}() #Create the right type of fuselage
+    
+    fuselage.layout.cross_section = cross_section
+    fuselage.cabin.exit_limit = exitlimit
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
@@ -344,29 +346,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
 
-    # Number of webs = number of bubbles - 1
-    n_bubbles = Int(readgeom("number_of_bubbles"))
-
-    radius = Distance(readgeom("radius"))
-    dz = Distance(readgeom("dRadius"))
-    dy = Distance(readgeom("y_offset"))
-
-    if n_bubbles > 1 && dy == 0.0
-        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
-        "y-offset of bubble set to 0.0. "*
-        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
-        n_bubbles = 1
-    end
-
-    if n_bubbles == 1
-        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
-    else
-        n_webs = n_bubbles - 1
-        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
-        bubble_center_y_offset = dy, n_webs = n_webs)
-    end
-
-    fuselage.layout.cross_section = cross_section
+    
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
@@ -388,6 +368,39 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
     fuselage.layout.x_end = Distance(readgeom("x_end")) 
     fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
+
+
+aero = read_input("Aero", fuse, dfuse)
+daero = dfuse["Aero"]
+readaero(x) = read_input(x, aero, daero)
+    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
+    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
+    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
+    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
+
+    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
+    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
+    
+    parg[igfBLIf] = readaero("BLI_frac")
+
+weight = read_input("Weights", fuse, dfuse)
+dweight = dfuse["Weights"]
+readweight(x) = read_input(x, weight, dweight)
+    fuselage.weight_frac_frame = readweight("frame")
+    fuselage.weight_frac_stringers = readweight("stringer")
+    fuselage.weight_frac_skin_addl   = readweight("additional")
+
+    fuselage.fixed.W = Force(readweight("fixed_weight"))
+
+    fuselage.window_W_per_length= readweight("window_per_length")
+    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
+    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
+
+    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
+
+    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
 
 # ------ End fuse -------
 
@@ -463,9 +476,14 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
-    fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
+    #Store takeoff temperatures in tank object as well for ease of access
+    for (i,altTO) in enumerate(parm[imaltTO, :]/1e3)
+        T_std, _, _, _, _ = atmos(altTO)
+        push!(fuse_tank.TSLtank, parm[imT0TO,i] - T_std + Tref)
+    end
+    
     has_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
 
     if has_vacuum #If tank is double-walled
@@ -851,8 +869,6 @@ readturb(x) = read_input(x, turb, dturb)
     epolht = readturb("HPT_eta_poly") 
     epollt = readturb("LPT_eta_poly") 
 
-    pifK = readturb("FPR0")
-    epfK = readturb("Kf_polyeff")
     HTRf  = readturb("HTR_fan")
     HTRlc = readturb("HTR_LPC")
     HTRhc = readturb("HTR_HPC")
@@ -880,8 +896,6 @@ pare[ieepolhc, :, :] .= epolhc
 pare[ieepolht, :, :] .= epolht
 pare[ieepollt, :, :] .= epollt
 pare[ieetab, :, :] .= etab
-pare[iepifK, :, :] .= pifK
-pare[ieepfK, :, :] .= epfK
 pare[ieBPR, :, :] .= BPR
 pare[ieM2, :, :] .= M2
 pare[ieM25, :, :] .= M25
@@ -914,6 +928,10 @@ readcool(x) = read_input(x, cool, dcool)
     pare[ieStA, :, :] .= StA
     pare[ieefilm, :, :] .= efilm
     pare[ietfilm, :, :] .= tfilm
+
+    #HPT cooled efficiency
+    pare[iedehtdfc,:,:] .= readcool("HPT_efficiency_derivative_with_cooling")
+    pare[iefc0,:,:] .= readcool("baseline_cooling_fraction")
 
 # Offtakes
 off = readprop("Offtakes")
@@ -1096,60 +1114,101 @@ else
     > TF - turbo-fan
     > TE - turbo-electric" )
 end
-engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HX_struct}())
+engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
     
-# Heat exchangers
-HEx = readprop("HeatExchangers")
-dHEx = dprop["HeatExchangers"]
-    parg[igHXaddmassfrac] = read_input("added_mass_frac", HEx, dHEx)
-
-    pare[iefrecirc, :, :] .= read_input("recirculation_flag", HEx, dHEx)
-    pare[ierecircT, :, :] .= read_input("recirculation_temperature", HEx, dHEx)
-    pare[ieDi, :, :] .= read_input("core_inner_diameter", HEx, dHEx)
+# Heat exchangers, only if in the model file (assigned 0 in the default .tomls)
+# Would be better if there were an independent toggle like `has_wing_fuel` for `fuse_tank` but good enough for now
+if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
+    HEx = readprop("HeatExchangers")
+    dHEx = dprop["HeatExchangers"]
+    HX_add_mass = read_input("added_mass_frac", HEx, dHEx)
     
-    pare[iePreCorder, :, :] .= read_input("precooler_order", HEx, dHEx)
-    pare[iePreCepsilon, :, :] .= read_input("precooler_effectiveness", HEx, dHEx)
-    pare[iePreCMp, :, :] .= read_input("precooler_inlet_mach", HEx, dHEx)
+    has_recirculation = read_input("has_recirculation", HEx, dHEx)
+    recircT = Temp(read_input("recirculation_temperature", HEx, dHEx))
+    pare[ieDi, :, :] .= Distance(read_input("core_inner_diameter", HEx, dHEx))
+    HXmaxL = Distance(read_input("maximum_heat_exchanger_length", HEx, dHEx))
+    
+    PreCorder = read_input("precooler_order", HEx, dHEx)
+    PreCepsilon = read_input("precooler_effectiveness", HEx, dHEx)
+    PreCMp = read_input("precooler_inlet_mach", HEx, dHEx)
 
-    pare[ieInterCorder, :, :] .= read_input("intercooler_order", HEx, dHEx)
-    pare[ieInterCepsilon, :, :] .= read_input("intercooler_effectiveness", HEx, dHEx)
-    pare[ieInterCMp, :, :] .= read_input("intercooler_inlet_mach", HEx, dHEx)
+    InterCorder = read_input("intercooler_order", HEx, dHEx)
+    InterCepsilon = read_input("intercooler_effectiveness", HEx, dHEx)
+    InterCMp = read_input("intercooler_inlet_mach", HEx, dHEx)
 
-    pare[ieRegenorder, :, :] .= read_input("regenerative_order", HEx, dHEx)
-    pare[ieRegenepsilon, :, :] .= read_input("regenerative_effectiveness", HEx, dHEx)
-    pare[ieRegenMp, :, :] .= read_input("regenerative_inlet_mach", HEx, dHEx)
+    Regenorder = read_input("regenerative_order", HEx, dHEx)
+    Regenepsilon = read_input("regenerative_effectiveness", HEx, dHEx)
+    RegenMp = read_input("regenerative_inlet_mach", HEx, dHEx)
 
-    pare[ieTurbCorder, :, :] .= read_input("turbine_cooler_order", HEx, dHEx)
-    pare[ieTurbCepsilon, :, :] .= read_input("turbine_cooler_effectiveness", HEx, dHEx)
-    pare[ieTurbCMp, :, :] .= read_input("turbine_cooler_inlet_mach", HEx, dHEx)
+    TurbCorder = read_input("turbine_cooler_order", HEx, dHEx)
+    TurbCepsilon = read_input("turbine_cooler_effectiveness", HEx, dHEx)
+    TurbCMp = read_input("turbine_cooler_inlet_mach", HEx, dHEx)
 
-    ac_options = TASOPT.Options(
-        opt_fuel = fueltype,
-        ifuel = ifuel,
-        has_wing_fuel = has_wing_fuel,
-        has_centerbox_fuel = has_centerbox_fuel,
-        has_fuselage_fuel = (nftanks>0),
-        
-        opt_engine_location = engloc,
-        opt_prop_sys_arch = propsys,
-        calculate_takeoff = calculate_takeoff,
-        
-        is_doubledecker = is_doubledecker,
+    all_eps = [PreCepsilon, InterCepsilon, Regenepsilon, TurbCepsilon]
+    all_types = ["PreC", "InterC", "Regen", "TurbC"]
+    all_orders = [PreCorder, InterCorder, Regenorder, TurbCorder]
+    all_Mp = [PreCMp, InterCMp, RegenMp, TurbCMp]
 
-        opt_move_wing = opt_move_wing
-    )
+    HXtypes = []
+    Mp_in = []
+    ε_des = []
+    sort_i = sortperm(all_orders) #Sort according to order
+
+    for ind in sort_i
+        if (all_eps[ind] > 0) && (all_eps[ind] <= 1) #If effectiveness is between 0 and 1
+                push!(HXtypes, all_types[ind])
+                push!(Mp_in, all_Mp[ind])
+                push!(ε_des, all_eps[ind])
+        end
+    end
+    nmis = size(pare)[3]
+            
+    for (i,HXtype) in enumerate(HXtypes)
+        #Create heat exchanger struct
+        HX = TASOPT.engine.make_HeatExchanger(nmis)
+        HX.type = HXtype
+        HX.order = i
+        HX.design_effectiveness = ε_des[i]
+        HX.design_Mach = Mp_in[i]
+        HX.added_mass_fraction = HX_add_mass
+        HX.maximum_length = HXmaxL
+        if i == 1 #For first HX
+            HX.has_recirculation = has_recirculation
+            HX.recirculation_temperature = recircT
+        end
+        #Add to engine heat exchangers
+        push!(engine.heat_exchangers, HX)
+    end
+end
+
+#create options object
+ac_options = TASOPT.Options(
+    opt_fuel = fueltype,
+    ifuel = ifuel,
+    has_wing_fuel = has_wing_fuel,
+    has_centerbox_fuel = has_centerbox_fuel,
+    has_fuselage_fuel = (nftanks>0),
+    
+    opt_engine_location = engloc,
+    opt_prop_sys_arch = propsys,
+    calculate_takeoff = calculate_takeoff,
+    
+    is_doubledecker = is_doubledecker,
+
+    opt_move_wing = opt_move_wing
+)
     
 #Create aircraft object
-    ac = TASOPT.aircraft(name, description, ac_options,
-        parg, parm, para, pare, is_sized, 
-        fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
-    
-    # ---------------------------------
-    # Recalculate cabin length
-    if calculate_cabin #Resize the cabin if desired, keeping deltas
-        @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
-        update_fuse_for_pax!(ac) #update fuselage dimensions
-    end
+ac = TASOPT.aircraft(name, description, ac_options,
+    parg, parm, para, pare, is_sized, 
+    fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
+
+# ---------------------------------
+# Recalculate cabin length
+if calculate_cabin #Resize the cabin if desired, keeping deltas
+    @info "Fuselage and stabilizer layouts have been overwritten; deltas will be maintained."
+    update_fuse_for_pax!(ac) #update fuselage dimensions
+end
 
 return ac
 

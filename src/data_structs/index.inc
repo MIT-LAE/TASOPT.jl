@@ -177,13 +177,9 @@
       const igxWfuel = 120
 
       const igWfvent = 121
-      const igdHXPreC = 122
-      const igdHXInterC = 123
-      const igdHXRegen = 124
-      const igHXaddmassfrac = 125
-      const igWHXs = 126
-      const igfeng = 127
-      const igtotal    = 127
+      const igWHXs = 122
+      const igfeng = 123
+      const igtotal    = 123
 
 #---- indices for aero variables at each mission point
       const iaalt     =  1
@@ -460,48 +456,37 @@
       const ieOPR = 203
       const ieWc3 = 204
       
-#Heat exchanger variables
-      const ieDi = 205
-      const ieTft = 206
-      const iefrecirc = 207
-      const ierecircT = 208
-      const iehvap = 209
-      const iePreCorder = 210
-      const iePreCepsilon = 211
-      const iePreCMp = 212
-      const iePreCDeltah = 213
-      const iePreCDeltap = 214
-      const ieInterCorder = 215
-      const ieInterCepsilon = 216 
-      const ieInterCMp = 217
-      const ieInterCDeltah = 218
-      const ieInterCDeltap = 219
-      const ieRegenorder = 220
-      const ieRegenepsilon = 221 
-      const ieRegenMp = 222
-      const ieRegenDeltah = 223
-      const ieRegenDeltap = 224
-      const ieTurbCorder = 225
-      const ieTurbCepsilon = 226 
-      const ieTurbCMp = 227
-      const ieTurbCDeltah = 228
-      const ieTurbCDeltap = 229
-      const ieRadiatorepsilon = 230
-      const ieRadiatorMp = 231
-      const ieRadiatorDeltah = 232
-      const ieRadiatorDeltap = 233
-      const ieRadiatorCoolantT = 234
-      const ieRadiatorCoolantP = 235
-      const ieRadiatorHeat = 236
-      const iehvapcombustor = 237
-      const ieHXminTwall = 238
-      const iemfuel = 239
-      const iemfan = 240
-      const iePfan = 241
-      const iePfanmax = 242
-      const ieTSEC = 243
+      #Heat exchanger variables
+      const ieDi                = 205
+      const ieTft               = 206
+      const iehvap              = 207
+      const iePreCDeltah        = 208
+      const iePreCDeltap        = 209
+      const ieInterCDeltah      = 210
+      const ieInterCDeltap      = 211
+      const ieRegenDeltah       = 212
+      const ieRegenDeltap       = 213
+      const ieTurbCDeltah       = 214
+      const ieTurbCDeltap       = 215
+      const ieRadiatorepsilon   = 216
+      const ieRadiatorMp        = 217
+      const ieRadiatorDeltah    = 218
+      const ieRadiatorDeltap    = 219
+      const ieRadiatorCoolantT  = 220
+      const ieRadiatorCoolantP  = 221
+      const ieRadiatorHeat      = 222
+      const iehvapcombustor     = 223
+      const iemfuel             = 224
+      const iemfan              = 225
+      const iePfan              = 226
+      const iePfanmax           = 227
+      const ieTSEC              = 228
+      const ieHXrecircP         = 229
+      const iefc0               = 230
+      const iedehtdfc           = 231
+      const ieConvFail          = 232
 
-      const ietotal = 243
+      const ietotal = 232
 
 #---- max number of blade rows allowed by ieepsc* and ieTmet* indices above
 # integer ncrowx

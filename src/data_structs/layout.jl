@@ -87,6 +87,10 @@ function Base.getproperty(obj::MultiBubble, sym::Symbol)
     end
 end  # function Base.getproperty
 
+# #Helper functions to access the radius of the cross section with type stability
+# Rfuse(cs::SingleBubble) = cs.radius
+# Rfuse(cs::MultiBubble) = cs.radius
+
 """
 $TYPEDEF
 
@@ -95,35 +99,35 @@ Contains dimensions, heights, etc. to design a fuselage
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct FuselageLayout <: AbstractLayout
+@kwdef mutable struct FuselageLayout{CS<:AbstractCrossSection} <: AbstractLayout
     """Cross section definition"""
-    cross_section::AbstractCrossSection = SingleBubble()
+    cross_section::CS = CS()
     """Thickness of webs """
-    thickness_webs::Float64 = 0
+    thickness_webs::Float64 = 0.0
     """X position of nose [m]"""
-    x_nose::Float64 = 0
+    x_nose::Float64 = 0.0
     """X position of pressure shell forward [m]"""
-    x_pressure_shell_fwd::Float64 = 0
+    x_pressure_shell_fwd::Float64 = 0.0
     """X position of pressure shell aft [m]"""
-    x_pressure_shell_aft::Float64 = 0
+    x_pressure_shell_aft::Float64 = 0.0
     """X position of cylinder start [m]"""
-    x_start_cylinder::Float64 = 0
+    x_start_cylinder::Float64 = 0.0
     """X position of cylinder end [m]"""
-    x_end_cylinder::Float64 = 0
+    x_end_cylinder::Float64 = 0.0
     """X position of fuselage cone end [m]"""
-    x_cone_end::Float64 = 0
+    x_cone_end::Float64 = 0.0
     """X position of fuselage end [m]"""
-    x_end::Float64 = 0
+    x_end::Float64 = 0.0
     """Tailcone taper (lambdac) [m]"""
-    taper_tailcone::Float64 = 0# lambdac
+    taper_tailcone::Float64 = 0.0 # lambdac
     """Floor depth (depth of floor beams) [m]"""
-    floor_depth::Float64 = 0
+    floor_depth::Float64 = 0.0
     """Nose Radius [m]"""
-    nose_radius::Float64 = 0
+    nose_radius::Float64 = 0.0
     """Tail Radius [m]"""
-    tail_radius::Float64 = 0
+    tail_radius::Float64 = 0.0
     """Taper fuselage to "point" or "edge" """
-    opt_tapers_to::String = "point" # "point" or "edge"
+    opt_tapers_to::String = "point"
     """Length of cylindrical portion of cabin that contains payload [m]"""
     l_cabin_cylinder::Float64 = 0.0
 end
@@ -212,8 +216,6 @@ Contains seating dimensions and quantities to design a cabin layout
 $TYPEDFIELDS
 """
 @kwdef mutable struct Cabin <: AbstractCabin
-    """Design number of passengers"""
-    design_pax::Int64 = 0
     """Maximum number of passengers"""
     exit_limit::Int64 = 0
     """Longitudinal seat pitch [m]"""

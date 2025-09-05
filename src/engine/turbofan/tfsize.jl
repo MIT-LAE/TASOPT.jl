@@ -5,30 +5,27 @@
       pid, pib, pifn, pitn,
       Ttf, ifuel, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9, Tt4,
       epsl, epsh,
       opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow, 
       Δh_PreC, Δh_InterC, Δh_Regen, Δh_TurbC,
       Δp_PreC, Δp_InterC, Δp_Regen)
 
-
 Turbofan performance and sizing routine.
-      
-Calculation procedure follows that of Kerrebrock, but the usual gas property formulas are replaced by function calls, which can therefore implement more general gas models.  
-In addition, a turbine cooling model is added.
-      
-The gas routines reside in the following source files:
-    gascalc.f  Routines for various processes (compressor, turbine, combustor, etc)
-    gasfun.f   Routines for computing cp[T], h[t], sigma[T], R, called by the routines in gascalc.f
-      
+
+Calculation procedure follows that of Kerrebrock, but the usual gas property formulas
+are replaced by function calls (described in [Gas Calculations](@ref)), which can
+therefore implement more general gas models. In addition, a turbine cooling model is
+added.
+
 !!! details "🔃 Inputs and Outputs"
-      **Inputs:**
+    **Inputs:**
     - `gee`:     gravity acceleration
     - `M0`:      freestream Mach
     - `T0`:      freestream temperature  [K]
@@ -37,8 +34,8 @@ The gas routines reside in the following source files:
     - `M25`:     HPC-face Mach number
     - `Feng`:    required net thrust  (PK_inl+PK_out-Phi_jet)/u0  =  sum( mdot u)
     - `Phiinl`:  inlet ingested dissipation
-    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees Phiinl
-    - `BPR`:     bypass ratio  = mdot_fan/mdot_core
+    - `eng_has_BLI_cores`:   false=core in clear flow, true=core sees `Phiinl`
+    - `BPR`:     bypass ratio  = `mdot_fan/mdot_core`
     - `pif`:     fan      pressure ratio  ( = pt7 /pt2)
     - `pilc`:    LP comp  pressure ratio  ( = pt25/pt2)
     - `pihc`:    HP comp  pressure ratio  ( = pt3 /pt25)
@@ -47,7 +44,7 @@ The gas routines reside in the following source files:
     - `pifn`:    fan     nozzle pressure ratio  ( = pt7/pt2.1)
     - `pitn`:    turbine nozzle pressure ratio  ( = pt5/pt4.9)
     - `Ttf`:     fuel temperature entering combustor
-    - `ifuel`:   fuel index, see function gasfun (in gasfun.f)
+    - `ifuel`:   fuel index, see function [`gasfun`](@ref)
     - `hvap`:    fuel enthalpy of vaporization (J/kg)
     - `etab`:    combustor efficiency (fraction of fuel burned)
     - `epf0`:    fan max polytropic efficiency
@@ -55,40 +52,37 @@ The gas routines reside in the following source files:
     - `ephc0`:   HPC max polytropic efficiency
     - `epht0`:   HPT max polytropic efficiency
     - `eplt0`:   LPT max polytropic efficiency
-    - `pifK`:    fan efficiency FPR offset:    epolf = epf0 + epfK*(pif-pifK)
-    - `epfK`:    fan efficiency pif derivative
       
-    - `mofft`:    mass flow offtake at LPC discharge station 2.5
-    - `Pofft`:    low spool power offtake
+    - `mofft`:   mass flow offtake at LPC discharge station 2.5
+    - `Pofft`:   low spool power offtake
     - `Tt9`:     offtake air discharge total temperature
     - `pt9`:     offtake air discharge total pressure
     - `epsl`:    low  spool power loss fraction
     - `epsh`:    high spool power loss fraction
       
-    - `opt_cooling`:   turbine cooling flag
-               "none" = no cooling, ignore all cooling parameters below
-               "fixed_coolingflowratio" = usual cooling, using passed-in fcool
-               "fixed_Tmetal" = usual cooling, but set (and return) fcool from Tmetal
+    - `opt_cooling`: turbine cooling flag
+      - `"none"` = no cooling, ignore all cooling parameters below
+      - `"fixed_coolingflowratio"` = usual cooling, using passed-in fcool
+      - `"fixed_Tmetal"` = usual cooling, but set (and return) `fcool` from `Tmetal`
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if opt_cooling="fixed_Tmetal"
-    - `StA`:      area-weighted Stanton number    , used only if opt_cooling="fixed_Tmetal"
+    - `dTstrk`:   hot-streak temperature delta [K], used only if `opt_cooling="fixed_Tmetal"`
+    - `StA`:      area-weighted Stanton number    , used only if `opt_cooling="fixed_Tmetal"`
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
     - `ruc`:      cooling-flow outlet velocity ratio, u/ue
     - `ncrowx`:      dimension of epsrow array
     - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`:   input specified  cooling-flow bypass ratio if opt_cooling="fixed_coolingflowratio"
-                     output resulting cooling-flow bypass ratio if opt_cooling="fixed_Tmetal"
-    - `Tmrow(.)`:    input specified  metal temperature  [K]    if opt_cooling="fixed_Tmetal"
-                     output resulting metal temperature  [K]    if opt_cooling="fixed_coolingflowratio"
+    - `epsrow(.)`:   specified cooling-flow bypass ratio if `opt_cooling="fixed_coolingflowratio"`
+    - `Tmrow(.)`:    specified metal temperature [K] if `opt_cooling="fixed_Tmetal"`
+
 
       **Outputs:**
-    - `epsrow(.)`:   see above
-    - `Tmrow(.)`:    see above
-    - `TSFC`:    thrust specific fuel consumption = mdot_fuel g / F   [1/s]
-    - `Fsp`:     specific thrust  = F / (mdot u0) = F / ((1+BPR) mdot_core u0)
+    - `epsrow(.)`:   resulting cooling-flow bypass ratio if `opt_cooling="fixed_Tmetal"`
+    - `Tmrow(.)`:    resulting metal temperature [K] if `opt_cooling="fixed_coolingflowratio"`
+    - `TSFC`:    thrust specific fuel consumption = `mdot_fuel g / F`   [1/s]
+    - `Fsp`:     specific thrust  = `F / (mdot u0) = F / ((1+BPR) mdot_core u0)`
     - `hfuel`:   fuel heating value   [J / kg K]
-    - `ff`:      fuel mass flow fraction  =  mdot_fuel / mdot_core
-    - `mcore`:   core mass flow = mdot_core  [kg/s]
+    - `ff`:      fuel mass flow fraction  =  `mdot_fuel / mdot_core`
+    - `mcore`:   core mass flow = `mdot_core`  [kg/s]
     - `A2`:      fan-face area [m^2]
     - `A25`:     HPC-face area [m^2]
     - `A5`:      core nozzle area [m^2]
@@ -98,7 +92,7 @@ The gas routines reside in the following source files:
     - `Tt?`:     total temperature
     - `ht?`:     total complete enthalpy (includes heat of formation)
     - `pt?`:     total pressure
-    - `cpt?`:    specific heat at stagnation temperature  (= dh/dT)
+    - `cpt?`:    specific heat at stagnation temperature  (= `dh/dT`)
     - `Rt?`:     gas constant  at stagnation conditions
     - `T?`:      static temperature
     - `u?`:      velocity
@@ -112,24 +106,24 @@ The gas routines reside in the following source files:
     - `etahc`:   HPC overall efficiency
     - `etaht`:   HPT overall efficiency
     - `etalt`:   LPT overall efficiency
-    - `Lconv`:   T if convergence was successful, F otherwise
+    - `Lconv`:   `true` if convergence was successful, `false` otherwise
 
     The "?" symbol denotes the station index:
-      0  freestream
-      18 fan face outside of casing BLs
-      19 fan face over LPC portion
-      2  fan face over fan portion
-      21 fan exit
-      25 LPC exit, HPC inlet
-      3  compressor exit
-      4  combustor exit before cooling air addition
-      41 turbine  inlet after  cooling air addition
-      45 HPT exit, LPT inlet
-      49 LPT exit
-      5  core nozzle
-      6  core flow downstream
-      7  fan nozzle
-      8  fan flow downstream
+    - 0: freestream
+    - 18: fan face outside of casing BLs
+    - 19: fan face over LPC portion
+    - 2: fan face over fan portion
+    - 21: fan exit
+    - 25: LPC exit, HPC inlet
+    - 3: compressor exit
+    - 4: combustor exit before cooling air addition
+    - 41: turbine inlet after cooling air addition
+    - 45: HPT exit, LPT inlet
+    - 49: LPT exit
+    - 5: core nozzle
+    - 6: core flow downstream
+    - 7: fan nozzle
+    - 8: fan flow downstream
 """
 function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       Feng, Phiinl, Kinl, eng_has_BLI_cores,
@@ -137,12 +131,12 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       pid, pib, pifn, pitn,
       Ttf, ifuel, hvap, etab,
       epf0, eplc0, ephc0, epht0, eplt0,
-      pifK, epfK,
       mofft, Pofft,
       Tt9, pt9, Tt4,
       epsl, epsh,
       opt_cooling,
       Mtexit, dTstrk, StA, efilm, tfilm,
+      fc0, epht_fc,
       M4a, ruc,
       ncrowx, ncrow,
       epsrow, Tmrow,
@@ -235,10 +229,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
       cpt18 = cpt0
       Rt18 = Rt0
       pt18 = pt0 * pid
-      epht = epht0
-      eplt = eplt0
-
-
+      
       #---- initial guesses for station 2, 1.9 and 1.9c
       pt2 = pt18
       Tt2 = Tt18
@@ -320,7 +311,8 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             mbfD = 1.0
             mf = 1.0
 
-            epf, epf_pf, epf_mf = ecmap(pif, mf, pifD, mbfD, Cmapf, epf0, pifK, epfK)
+            _, epf, _, _, _, _, _, _ = 
+                  calculate_compressor_speed_and_efficiency(FanMap, pif, mf, pifD, mbfD, 1.0, epf0, Ng = 1.0, Rg = 2.0)
 
             pt21, Tt21, ht21, st21, cpt21, Rt21 = gas_prat(alpha, nair,
                   pt2, Tt2, ht2, st2, cpt2, Rt2, pif, epf)
@@ -348,7 +340,9 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pilcD = pilc
             mblcD = 1.0
             ml = 1.0
-            eplc, eplc_pl, eplc_ml = ecmap(pilc, ml, pilcD, mblcD, Cmapl, eplc0, 1.0, 0.0)
+            
+            _, eplc, _, _, _, _, _, _ = 
+                  calculate_compressor_speed_and_efficiency(LPCMap, pilc, ml, pilcD, mblcD, 1.0, eplc0, Ng = 1.0, Rg = 2.0)
 
             pt25, Tt25, ht25, st25, cpt25, Rt25 = gas_prat(alpha, nair,
                   pt19c, Tt19c, ht19c, st19c, cpt19c, Rt19c, pilc, eplc)
@@ -365,10 +359,12 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             pihcD = pihc
             mbhcD = 1.0
             mh = 1.0
-            ephc, ephc_ph, ephc_mh = ecmap(pihc, mh, pihcD, mbhcD, Cmaph, ephc0, 1.0, 0.0)
+
+            _, ephc, _, _, _, _, _, _ = 
+                  calculate_compressor_speed_and_efficiency(HPCMap, pihc, mh, pihcD, mbhcD, 1.0, ephc0, Ng = 1.0, Rg = 2.0)
+
             pt3, Tt3, ht3, st3, cpt3, Rt3 = gas_prat(alpha, nair,
                   pt25c, Tt25c, ht25c, st25c, cpt25c, Rt25c, pihc, ephc)
-
 
             # ===============================================================
             #---- combustor flow 3-4   (ffb = mdot_fuel/mdot_burner)
@@ -507,12 +503,17 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             #     Trh =  Tt41/(Tt41 + dhht/cpt41)
             #     gexh = cpt41/(Rt41*epht0)
             #     pihtD = Trh^gexh
+            epht1 = epht0 #Assume same as design point prior to cooling
 
+            #Find cooled HPT efficiency
+            epht = find_cooled_hpt_efficiency(epht1, epht_fc, fc0, fc)
+            
             epi = 1.0 / epht
             pt45, Tt45, ht45, st45, cpt45, Rt45 = gas_delh(lambdap, nair,
                   pt41, Tt41, ht41, st41, cpt41, Rt41, dhht, epi)
 
 
+            eplt = eplt0 #Assume same as design turbine efficiency
             epi = 1.0 / eplt
             pt49, Tt49, ht49, st49, cpt49, Rt49 = gas_delh(lambdap, nair,
                   pt45, Tt45, ht45, st45, cpt45, Rt45, dhlt, epi)
@@ -716,10 +717,10 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             rho25c = p25c / (R25c * T25c)
             A25 = (1.0 - fo) * mcore / (rho25c * u25c)
 
-            if (ipass >= 2)
+            if (ipass >= 2) || (npass == 1)
                   dmfrac = 1.0 - mcold / mcore
 
-                  if (abs(dmfrac) < toler)
+                  if (abs(dmfrac) < toler) || (npass == 1)
 
                         # ===============================================================
                         #---- calculate component efficiencies  (informative only -- not needed here)

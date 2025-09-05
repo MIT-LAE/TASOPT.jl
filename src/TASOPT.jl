@@ -8,7 +8,6 @@ const TASOPT = @__MODULE__
 using Base: SignedMultiplicativeInverse, @kwdef
 using NLopt: G_MLSL_LDS, GN_MLSL_LDS, GN_CRS2_LM, GN_DIRECT_L
 
-using BenchmarkTools
 using Printf
 
 using StaticArrays
@@ -56,6 +55,7 @@ export plot_airf
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
+include(joinpath(__TASOPTroot__,"propsys/propsys.jl"))
 
 include(joinpath(__TASOPTroot__,"data_structs/fuselage_tank.jl"))
 

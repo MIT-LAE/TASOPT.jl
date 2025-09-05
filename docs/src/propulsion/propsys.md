@@ -43,12 +43,25 @@ engine.Tmcalc(ncrowx, ncrow, Tt3, Tt4, dTstreak, Trrat, efilm, tfilm, StA, epsro
 ```
 
 ## Turbomachinery Components
-The compressor off-design performance is determined by logarithmic fits to performance data generated from the Energy Efficient Engine ($E^3$) initiative and used in the Numerical Propulsion System Simulation ([NPSS](https://www.swri.org/markets/electronics-automation/software/aerospace-software/numerical-propulsion-system-simulation-npss)). A summary of the $E^3$ initiative can be found [here](https://arc.aiaa.org/doi/10.2514/3.23024) while a more detailed report on the program is hosted by NASA [here](https://ntrs.nasa.gov/citations/19840021807). The logarithmic fits are the same in form as those used by M. Drela in the original version of TASOPT. The specific form of the corrected speed and polytropic efficiency fits are detailed in [Turbofan Sizing and Analysis with Variable cp(T)](../assets/drela_TASOPT_2p16/engine.pdf). However, the coefficients used in this version differ from his documented values, as we find the values listed below more closely replicate the $E^3$ maps used. Plots of the $E^3$ data and the fits evaluated at the equivalent mass flow and corrected speed for each $E^3$ data point. 
+The compressor off-design performance is determined by interpolation to the compressor maps in pyCycle[^1]. The compressor parameters are scaled to the design pressure ratios, speeds, and mass flow rates in the pyCycle maps by using
+```math
+    \tilde{p} = \frac{\pi -1}{\pi_D -1}
+```
+```math
+    \tilde{m} = \frac{\bar{m}}{\bar{m}_D}
+```
+```math
+    \tilde{N} = \frac{\bar{N}}{\bar{N}_D},
+```
+where ``\pi`` represents the pressure ratio, ``\bar{m}`` is the corrected mass flow rate, ``\bar{N}`` is the corrected speed, and the subscript ``D`` denotes the design values. For a given set of compressor parameters, the normalized parameters ``\tilde{p}``, ``\tilde{m}``, and ``\tilde{N}`` are used to calculate the dimensional values in the pyCycle map space. 
 
-| Compressor | a   | b    | k    | $\widetilde m_0$  | $\Delta a$ | c   | d   | C    | D   |
-|------------|-----|------|------|-------------------|------------|-----|-----|------|-----|
-| **Fan**    | 3.50| 0.80 | 0.03 | 0.75              | -0.50      | 3.0 | 6.0 | 2.5  | 15.0|
-| **LPC**    | 2.50| 1.00 | 0.03 | 0.75              | -0.20      | 3.0 | 5.5 | 4.0  | 6.0 |
-| **HPC**    | 1.50| 5.00 | 0.03 | 0.75              | -0.35      | 3.0 | 5.0 | 10.5 | 3.0 |
+The pyCycle maps contain data for pressure ratio, corrected mass flow rate, and isentropic efficiency as a function of corrected speed and R-line parameter. However, the turbofan operation function, [`tfoper!()`](@ref engine.tfoper!), is set up so that the polytropic efficiency and corrected speed is calculated from the pressure ratio and corrected mass flow rate. Therefore, a reverse interpolation problem is required to compute these parameters. For this, the compressor maps are extrapolated and a standard non-linear solver is used in [`find_NR_inverse_with_derivatives()`](@ref engine.find_NR_inverse_with_derivatives) to calculate the corrected speed and R-line parameter that correspond to given corrected mass flow rate and pressure ratio. The extrapolated pressure ratio and polytropic efficiency maps are shown below. These parameters are then translated to the scaled map by using ``\tilde{p}``, ``\tilde{m}``, and ``\tilde{N}`` in [`calculate_compressor_speed_and_efficiency()`](@ref engine.calculate_compressor_speed_and_efficiency), which also returns the polytropic efficiency and derivatives.
 
-![E3_vs_Drela_Maps](../assets/E3_vs_Drela_Maps.svg)
+![PEMfig](../assets/extrapolated_PR_maps.svg)
+![PEMfig](../assets/extrapolated_eff_maps.svg)
+```@docs
+engine.calculate_compressor_speed_and_efficiency
+
+engine.find_NR_inverse_with_derivatives
+```
+[^1]: https://github.com/OpenMDAO/pyCycle

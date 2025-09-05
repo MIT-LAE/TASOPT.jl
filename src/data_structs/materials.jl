@@ -7,7 +7,9 @@ module materials
 using TOML, DocStringExtensions
 import ..TASOPT: __TASOPTroot__
 
-export StructuralAlloy, Conductor, Insulator, ThermalInsulator, thermal_conductivity
+export StructuralAlloy, Conductor, Insulator, ElectricSteel, 
+ThermalInsulator, thermal_conductivity
+export resistivity, resxden
 
 MaterialProperties = TOML.parsefile(joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml"))
 
@@ -176,6 +178,56 @@ function Insulator(material::String)
     end
 
 end
+"""
+$TYPEDEF
+
+ElectricSteel.
+
+$TYPEDFIELDS
+"""
+@kwdef struct ElectricSteel 
+    """Name"""
+    name::String = ""
+    """Density [kg/m³]"""
+    ρ::Float64
+    """Eddy current loss coefficient [W/lbm/Hz²/T²]"""
+    kₑ::Float64
+    """Hysteresis loss coefficient [W/lbm/Hz]"""
+    kₕ::Float64
+    """Exponential fit coefficient for hysteresis loss"""
+    α::Float64
+end
+"""
+    ElectricSteel(material::String)
+
+Outer constructor for `ElectricSteel` types. 
+Material specified needs to have the following data in the database:
+- ρ (density): Density [kg/m³]
+- ke
+- kh
+- α 
+"""
+function ElectricSteel(material::String)
+    local MatProp, ρ, ke, kh, α
+    try
+        MatProp = MaterialProperties[material]
+    catch
+        error("Cannot find $material in Material Properties database")
+    else
+        try
+            ρ = MatProp["density"]
+            ke = MatProp["ke"]
+            kh = MatProp["kh"]
+            α = MatProp["alpha"]
+        catch 
+            error("Insufficient data in database for $material to build a Conductor")
+        else
+            ElectricSteel(material, ρ, ke, kh, α)
+        end
+    end
+
+end
+
 
 """
     resxden(cond::conductor)
