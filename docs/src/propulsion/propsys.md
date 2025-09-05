@@ -1,6 +1,11 @@
 # Propulsion system
 
-A turbofan model is provided in `TASOPT.jl`
+TASOPT.jl can use multiple propulsion system options, ranging from a simple engine with a set specific fuel consumption to a detailed model of a turbofan engine.
+
+## Constant TSFC engine
+A simpler engine option is provided, consisting of an engine with a user-specified specific fuel consumptions (TSFC). As this engine is not physically sized, its weight has to be computed either as a fraction of the total maximum takeoff weight or directly specified. This engine options is also not compatible with takeoff calculations, as these are done at maximum throttle setting.
+
+The constant TSFC engine can be called through [`constant_TSFC_engine!()`](@ref engine.constant_TSFC_engine!). It uses [`calculate_thrust_from_ROC!()`](@ref engine.calculate_thrust_from_ROC!) to calculate the thrust required in climb from a given rate of climb.
 
 ## Turbofan model
 
@@ -59,9 +64,14 @@ The pyCycle maps contain data for pressure ratio, corrected mass flow rate, and 
 
 ![PEMfig](../assets/extrapolated_PR_maps.svg)
 ![PEMfig](../assets/extrapolated_eff_maps.svg)
+
 ```@docs
 engine.calculate_compressor_speed_and_efficiency
 
 engine.find_NR_inverse_with_derivatives
+
+engine.constant_TSFC_engine!
+
+engine.calculate_thrust_from_ROC!
 ```
 [^1]: https://github.com/OpenMDAO/pyCycle
