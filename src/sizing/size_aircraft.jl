@@ -54,7 +54,6 @@ function _size_aircraft!(ac; itermax=35,
     T_std, _, _, _, _ = atmos(altTO / 1e3)
     ΔTatmos = parm[imT0TO] - T_std
     parm[imDeltaTatm] = ΔTatmos
-    fuse_tank.TSLtank = Tref + ΔTatmos #store sea-level temperature in tank struct
 
     # Set atmospheric conditions for different flight phases
     set_ambient_conditions!(ac, ipcruise1)

@@ -66,7 +66,6 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
     T_std,_,_,_,_ = atmos(altTO/1e3)
     ΔTatmos = parm[imT0TO] - T_std #temperature difference such that T(altTO) = T0TO
     parm[imDeltaTatm] = ΔTatmos
-    fuse_tank.TSLtank = Tref + ΔTatmos #store sea-level temperature in tank struct
 
     # Calculates surface velocities, boundary layer, wake 
     fuselage_drag!(fuse, parm, para, ipcruise1)

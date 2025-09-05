@@ -132,7 +132,6 @@ parm = zeros(Float64, (imtotal, nmisx))
 para = zeros(Float64, (iatotal, iptotal, nmisx))
 pare = zeros(Float64, (ietotal, iptotal, nmisx))
 
-fuselage = Fuselage()
 wing = Wing()
 htail = Tail()
 vtail = Tail()
@@ -173,7 +172,6 @@ parg[igWpaymax] = maxpay
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
-fuselage.cabin.exit_limit = exitlimit
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -283,41 +281,38 @@ else  #if not set explicitly, use altitude (set by default)
 end
 parg[igpcabin] = p_cabin
 
-aero = read_input("Aero", fuse, dfuse)
-daero = dfuse["Aero"]
-readaero(x) = read_input(x, aero, daero)
-    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
-    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
-    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
-    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
-
-    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
-    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
-    
-    parg[igfBLIf] = readaero("BLI_frac")
-
-weight = read_input("Weights", fuse, dfuse)
-dweight = dfuse["Weights"]
-readweight(x) = read_input(x, weight, dweight)
-    fuselage.weight_frac_frame = readweight("frame")
-    fuselage.weight_frac_stringers = readweight("stringer")
-    fuselage.weight_frac_skin_addl   = readweight("additional")
-
-    fuselage.fixed.W = Force(readweight("fixed_weight"))
-
-    fuselage.window_W_per_length= readweight("window_per_length")
-    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
-    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
-
-    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
-
-    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
-    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
-    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
-
 geom = read_input("Geometry", fuse, dfuse)
 dgeom = dfuse["Geometry"]
 readgeom(x) = read_input(x, geom, dgeom)
+    
+    # Before doing anything else, first learn the shape of the fuselage 
+    # cross-section so you can create the appropriate typed Fuselage.
+    
+    # Number of webs = number of bubbles - 1
+    n_bubbles = Int(readgeom("number_of_bubbles"))
+
+    radius = Distance(readgeom("radius"))
+    dz = Distance(readgeom("dRadius"))
+    dy = Distance(readgeom("y_offset"))
+
+    if n_bubbles > 1 && dy == 0.0
+        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        "y-offset of bubble set to 0.0. "*
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        n_bubbles = 1
+    end
+
+    if n_bubbles == 1
+        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
+    else
+        n_webs = n_bubbles - 1
+        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
+        bubble_center_y_offset = dy, n_webs = n_webs)
+    end
+    fuselage = Fuselage{typeof(cross_section)}() #Create the right type of fuselage
+    
+    fuselage.layout.cross_section = cross_section
+    fuselage.cabin.exit_limit = exitlimit
     #Boolean to check if cabin length has to be recalculated; if true, this is done 
     #after loading the wing and stabilizer positions
     calculate_cabin = readgeom("calculate_cabin_length") 
@@ -350,29 +345,7 @@ readgeom(x) = read_input(x, geom, dgeom)
     parg[igxeng] = Distance(readgeom("x_engines"))
     parg[igyeng] = Distance(readgeom("y_critical_engines"))
 
-    # Number of webs = number of bubbles - 1
-    n_bubbles = Int(readgeom("number_of_bubbles"))
-
-    radius = Distance(readgeom("radius"))
-    dz = Distance(readgeom("dRadius"))
-    dy = Distance(readgeom("y_offset"))
-
-    if n_bubbles > 1 && dy == 0.0
-        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
-        "y-offset of bubble set to 0.0. "*
-        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
-        n_bubbles = 1
-    end
-
-    if n_bubbles == 1
-        cross_section = SingleBubble(radius = radius, bubble_lower_downward_shift = dz)
-    else
-        n_webs = n_bubbles - 1
-        cross_section = MultiBubble(radius = radius, bubble_lower_downward_shift = dz,
-        bubble_center_y_offset = dy, n_webs = n_webs)
-    end
-
-    fuselage.layout.cross_section = cross_section
+    
     fuselage.layout.floor_depth = Distance(readgeom("floor_depth"))
     fuselage.layout.nose_radius = readgeom("a_nose")
     fuselage.layout.tail_radius = readgeom("b_tail")
@@ -394,6 +367,39 @@ readgeom(x) = read_input(x, geom, dgeom)
     fuselage.layout.x_cone_end = Distance(readgeom("x_cone_end"))
     fuselage.layout.x_end = Distance(readgeom("x_end")) 
     fuselage.layout.l_cabin_cylinder = fuselage.layout.x_end_cylinder - fuselage.layout.x_start_cylinder
+
+
+aero = read_input("Aero", fuse, dfuse)
+daero = dfuse["Aero"]
+readaero(x) = read_input(x, aero, daero)
+    para[iafexcdf, :, :] .= transpose(readaero("excrescence_drag_factor")) #transpose for proper vector broadcasting
+    para[iafduo, :, :] .= transpose(readaero("wingroot_fuse_overspeed"))
+    para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
+    para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
+
+    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
+    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
+    
+    parg[igfBLIf] = readaero("BLI_frac")
+
+weight = read_input("Weights", fuse, dfuse)
+dweight = dfuse["Weights"]
+readweight(x) = read_input(x, weight, dweight)
+    fuselage.weight_frac_frame = readweight("frame")
+    fuselage.weight_frac_stringers = readweight("stringer")
+    fuselage.weight_frac_skin_addl   = readweight("additional")
+
+    fuselage.fixed.W = Force(readweight("fixed_weight"))
+
+    fuselage.window_W_per_length= readweight("window_per_length")
+    fuselage.insulation_W_per_area = readweight("window_insul_per_area")
+    fuselage.floor_W_per_area = readweight("floor_weight_per_area")
+
+    fuselage.HPE_sys.W = readweight("HPE_sys_weight_fraction")
+
+    fuselage.APU.W = readweight("APU_weight_fraction")*exitlimit*Wpax
+    fuselage.seat.W = readweight("seat_weight_fraction")*exitlimit*Wpax
+    fuselage.added_payload.W = readweight("add_payload_weight_fraction")*exitlimit*Wpax
 
 # ------ End fuse -------
 
@@ -469,9 +475,14 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuse_tank.ew = readfuel_storage("weld_efficiency")
     fuse_tank.ullage_frac = readfuel_storage("ullage_fraction")
     fuse_tank.qfac = readfuel_storage("heat_leak_factor")
-    fuse_tank.TSLtank = Temp(readfuel_storage("SL_temperature_for_tank"))
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
+    #Store takeoff temperatures in tank object as well for ease of access
+    for (i,altTO) in enumerate(parm[imaltTO, :]/1e3)
+        T_std, _, _, _, _ = atmos(altTO)
+        push!(fuse_tank.TSLtank, parm[imT0TO,i] - T_std + Tref)
+    end
+    
     has_vacuum = TASOPT.CryoTank.check_vacuum(fuse_tank.material_insul) #flag to check if an outer vessel is needed
 
     if has_vacuum #If tank is double-walled
