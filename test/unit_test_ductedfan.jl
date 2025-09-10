@@ -27,7 +27,6 @@
         T0,p0,ρ0,a0,μ0 = TASOPT.atmos(h)
         M2 = 0.6
         Kinl = 0
-        iBLIc = 0
         Phiinl = 0
         pifD = 1.5
         pid = 1.0
@@ -38,7 +37,7 @@
         Fe = 1e4
 
         out_size = TASOPT.ductedfansize!(gee, M0, T0, p0, a0, M2,
-            Fe, Phiinl, Kinl, iBLIc,
+            Fe, Phiinl, Kinl,
             pifD,
             pid, pifn, 
             epf0,
@@ -74,7 +73,7 @@
         #__ Test ducted fan operation function __
         #First check that it provides the desired values at the design point
         out_opr_des  = TASOPT.ductedfanoper!(M0, T0, p0, a0, Tref, pref,
-                    Phiinl, Kinl, iBLIc,
+                    Phiinl, Kinl,
                     pid, pifn, 
                     pifD, 
                     mbfD,
@@ -103,7 +102,7 @@
         Pf_takeoff = 8e6
 
         out_opr_takeoff  = TASOPT.ductedfanoper!(M0, T0, p0, a0, Tref, pref,
-                    Phiinl, Kinl, iBLIc,
+                    Phiinl, Kinl,
                     pid, pifn, 
                     pifD, 
                     mbfD,

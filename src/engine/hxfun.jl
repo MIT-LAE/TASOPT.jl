@@ -1822,6 +1822,28 @@ function find_recirculation_power(HXgas, η_i = 1.0)
 end
 
 """
+      update_radiator!(pare, engine, imission)
+
+Updates the radiator-related parameters in the pare array.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `pare::Array{Float64 , 2}`: array with engine parameters
+    - `engine::Engine`: engine object
+    - `imission::Int64`: mission index
+
+    **Outputs:**
+    Modifies `pare`with the radiator-related parameters.
+"""
+function update_radiator!(pare, engine, imission)
+      if engine.model.model_name == "fuel_cell_with_ducted_fan"
+            pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
+            pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
+            pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+      end 
+end
+
+"""
       lambdap_calc(pare_sl, alpha_in, ifuel)
 
 Calculates the mass fractions of the gases in post-combustion air.

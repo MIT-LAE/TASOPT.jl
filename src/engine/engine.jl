@@ -14,7 +14,7 @@ export Engine
 
 export tfwrap!, tfcalc!, mcool, Tmcalc, gas_tset, gaschem
 export tfweightwrap!, tfweight, ddct, ddat, gct, gat, tfsize!, Ncmap, ecmap, Ncmap1, ecmap1, etmap, Pimap, tfoper!
-export ductedfanoper!, ductedfansize!, ductedfancalc!, ductedfanweight, fuel_cell_with_ducted_fan_weight!
+export ductedfanoper!, ductedfansize!, ductedfancalc!, ductedfanweight, fuel_cell_with_ducted_fan_weight!, update_radiator!
 
 export gassum, gassumd, gas_prat, gas_delh, gas_delhd, gas_burn, gas_burnd, gas_mach, gas_machd, gas_mass, gasfuel, fuelLHV, gasPr
 export hxdesign!, radiator_design!, hxweight, resetHXs, HXOffDesign!, RadiatorOffDesign!, check_HX_overwriting
@@ -50,7 +50,7 @@ include("ducted_fan/ductedfanweight.jl")
 
 #Fuel cell models
 include("PEMfuelcell.jl")
-include("fuel_cell/FC_objects.jl")
+include("../data_structs/fuel_cells.jl")
 include("fuel_cell/fuel_cell_operations.jl")
 include("fuel_cell/FC_ducted_fan_models.jl")
 include("fuel_cell/FC_ducted_fan_weight.jl")

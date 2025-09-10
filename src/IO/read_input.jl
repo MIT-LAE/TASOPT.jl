@@ -1053,24 +1053,6 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
     pare[iePfanmax,:,:] .= 20e6
 
     fcdata = TASOPT.engine.FuelCellDuctedFanData(2)
-
-    fcdata.type = "HT-PEMFC"
-    fcdata.current_density[iprotate,:] .= 1e4
-    fcdata.FC_temperature .= 453.15
-    fcdata.FC_pressure .= 3e5
-    fcdata.water_concentration_anode .= 0.1
-    fcdata.water_concentration_cathode .= 0.1
-    fcdata.λ_H2 .= 3.0
-    fcdata.λ_O2 .= 3.0
-    fcdata.thickness_membrane = 100e-6
-    fcdata.thickness_anode  = 250e-6
-    fcdata.thickness_cathode  = 250e-6
-    fcdata.design_voltage = 200.0
-    pare[ieRadiatorepsilon,:,:] .= 0.7
-    pare[ieRadiatorMp,:,:] .= 0.12
-    pare[ieDi,:,:] .= 0.4
-
-    para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
     engdata = fcdata
 
 else
