@@ -290,6 +290,11 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
         @warn "Some engine points did not converge"
     end
 
+    #run takeoff calculation if converged (checks feasibility; populates iprotate entries)
+    if Lconv
+        takeoff!(ac)
+    end
+
 return 
 end
 

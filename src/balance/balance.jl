@@ -39,10 +39,10 @@ The routine computes the **neutral point (`xNP`), indicating the aircraft's long
       - `para[iaxNP]` : Computed neutral point (`xNP`).
 
 **Notes**
-- Uses [`CG_limits()`](@ref TASOPT.CG_limits) to compute CG limits (`xcgF`, `xcgB`).
 - Uses [`cabin_centroid()`](@ref TASOPT.cabin_centroid) to determine cabin location.
 - If there is fuel in the wings (`ac.options.has_wing_fuel`), it does not shift between CG cases.
 - `xNP` is affected by engine placement (`xengcp`), aerodynamics (`CMw1`, `CMh1`), and fuel distribution.
+- Uses [`CG_limits()`](@ref TASOPT.CG_limits) to estimate landing gear location **only**.
 
 """
 function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; Ldebug::Bool = false)
@@ -222,6 +222,12 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
             wing.layout.box_x = xwbox
             wing.layout.x = xwbox + dxwing
 
+      elseif compare_strings(opt_trim_var, "none")
+            #no adjustments, compute NP and return
+            nothing;
+
+      else
+            @error("Unsupported `opt_trim_var` during `balance_aircraft!()`: $opt_trim_var")
       end
 
       #---- calculate neutral point
