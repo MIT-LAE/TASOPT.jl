@@ -30,6 +30,7 @@ where:
 **Inputs:**
       - `ac::aircraft`: aircraft data storage object
       - `imission::Int64`: mission index
+      - `ip::Int64`: operating point index
       - `computes_wing_direct::Bool`: Flag if drag should be computed with `wing_profiledrag_direct` (true) or if para values should be used (false).
 
       **Outputs:**
@@ -38,7 +39,7 @@ where:
 See Section 2.14 of the [TASOPT Technical Desc](@ref dreladocs).
 See also [`fuselage_drag!`](@ref), [`wing_profiledrag_direct`](@ref), [`wing_profiledrag_scaled`](@ref), [`cfturb`](@ref), and [`induced_drag!`](@ref).
 """
-function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
+function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; Ldebug=false)
       #Unpack data storage
       parg = ac.parg
       para = view(ac.para, :, ip, imission)
@@ -157,6 +158,7 @@ function aircraft_drag!(ac, imission, ip, computes_wing_direct; Ldebug=false)
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- fuselage profile CD, using fuselage CDA from BLI calculation
+      #note/reminder that the CDA is assumed constant across the entire flight
       CDfuse = PAfinf/wing.layout.S
       para[iaCDfuse] = CDfuse
 
