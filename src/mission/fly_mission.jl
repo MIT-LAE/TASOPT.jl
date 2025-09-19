@@ -292,7 +292,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
 
     #run takeoff calculation if converged (checks feasibility; populates iprotate entries)
     if Lconv
-        takeoff!(ac)
+        takeoff!(ac, imission=imission)
     end
 
 return 

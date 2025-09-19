@@ -6,15 +6,9 @@ Calculates takeoff parameters and balanced field length.
 The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
 
 """
-function takeoff!(ac; printTO = true)
-    parg  = ac.parg
-    parm  = ac.parmd
-    para  = ac.parad
-    pare  = ac.pared  
-    wing  = ac.wing
-    htail = ac.htail
-    vtail = ac.vtail
-    imission = 1
+function takeoff!(ac; imission=1, printTO = true)
+    
+    parg, parm, para, pare, _, _, _, wing, _, _, _, _  = unpack_ac(ac, imission)
 
     #---- Newton convergence tolerance
     toler = 1.0e-7
