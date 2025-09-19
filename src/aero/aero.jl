@@ -11,7 +11,7 @@ using ..atmosphere
 import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
 
 export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, 
-    fuselage_drag!, broadcast_fuselage_drag!
+    fuselage_drag!, broadcast_fuselage_drag!, aeroperf_sweep
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -67,6 +67,9 @@ include("induced_drag.jl")
 
 # Total CD calculations 
 include("drag.jl")
+
+# sweep of aerodynamic points (e.g, for drag polars)
+include("aeroperf_sweep.jl")
 
 
 end
