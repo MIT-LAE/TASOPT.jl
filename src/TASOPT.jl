@@ -51,7 +51,7 @@ include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
 include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
-export plot_airf
+export plot_airf, aeroperf_sweep
 include(joinpath(__TASOPTroot__,"structures/structures.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 include(joinpath(__TASOPTroot__,"engine/engine.jl"))
@@ -87,7 +87,7 @@ include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
-export stickfig, plot_details, PayloadRange
+export stickfig, plot_details, PayloadRange, DragPolar
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
