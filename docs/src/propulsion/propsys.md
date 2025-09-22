@@ -1,6 +1,6 @@
 # Propulsion system
 
-TASOPT.jl can use multiple propulsion system options, ranging from a simple engine with a set specific fuel consumption to a detailed model of a turbofan engine.
+TASOPT.jl supports multiple propulsion system weight and performance options. Currently implemented are a simple engine with a fixed specific fuel consumption, a detailed model of a turbofan engine, and auxiliary models for novel aircraft leveraging cryogenic hydrogen. Other engine models can be added following the `TASOPT.Engine` interface object.
 
 ## Constant TSFC engine
 A simpler engine option is provided, consisting of an engine with a user-specified specific fuel consumptions (TSFC). As this engine is not physically sized, its weight has to be computed either as a fraction of the total maximum takeoff weight or directly specified. This engine options is also not compatible with takeoff calculations, as these are done at maximum throttle setting.

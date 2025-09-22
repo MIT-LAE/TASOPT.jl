@@ -45,7 +45,6 @@
                              # 2: Engines on "fuselage"
 
     prop_sys_arch = "TF" #Options are TF: Turbofan
-                         #            TE: Turbo-electric
                          #            constant_TSFC: simple engine with constant TSFC
 [Fuel]
     fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
@@ -432,7 +431,7 @@
     core_in_clean_flow = true
 
     #Parameters for "constant_TSFC" engine model; not used in other models
-    climb_TSFC = 0.00018 #1/s
+    climb_TSFC = 0.00018 #1/s, example TSFC based on default model
     cruise_TSFC = 0.00018 #1/s
     descent_TSFC = 0.00018 #1/s
     rate_of_climb = "500 ft/min" #needed for climb thrust

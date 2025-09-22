@@ -1023,7 +1023,7 @@ else #For constant TSFC model
         para[iaROCdes,ipclimb1:ipclimbn,:] .= Speed(ROCdes)
     end
     pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
-    pare[ieTSFC,ipcruise1:ipcruise2,:] .= readprop("cruise_TSFC")
+    pare[ieTSFC,ipcruise1:ipcruisen,:] .= readprop("cruise_TSFC")
     pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
 end
 

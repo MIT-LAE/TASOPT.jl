@@ -1,7 +1,7 @@
 """
     calculate_thrust_from_ROC!(ac, ip, imission)
 
-A simple 0D model of a low temperature PEM fuel cell, accounting for thermodynamic, activation, ohmic and concentration losses.      
+A model to estimate the required thrust based on the rate of climb and lift and drag conditions.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**

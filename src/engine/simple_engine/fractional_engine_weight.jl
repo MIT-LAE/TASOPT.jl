@@ -15,7 +15,7 @@ function fractional_engine_weight!(ac)
     parg = ac.parg
     parg[igWeng] = parg[igWMTO] * parg[igfeng] #Engine weight is MTOW times engine weight fraction
 
-    #Simple estimate of nacelle length
+    #Simple estimate of nacelle length, following orig. Drela assumptions
     lnace = parg[igdfan] * parg[igrSnace] * 0.15
     parg[iglnace] = lnace
 end
