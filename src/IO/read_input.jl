@@ -827,7 +827,7 @@ readprop(x) = read_input(x, prop, dprop)
 
 parg[igneng] = readprop("number_of_engines")
 
-if lowercase(propsys) != "constant_tsfc"
+if lowercase(propsys) == "tf"
     parg[igTmetal] = Temp.(readprop("T_max_metal"))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
@@ -1015,7 +1015,7 @@ readfnoz(x) = read_input(x, fannoz, dfannoz)
     pare[ieA7fac, iptest, :] .= A7static
     pare[ieA5fac, iptest, :] .= A5static
 
-else #For constant TSFC model
+elseif lowercase(propsys) == "constant_tsfc" #For constant TSFC model
     ROCdes = readprop("rate_of_climb")
     if ROCdes isa AbstractVector
         para[iaROCdes,ipclimb1:ipclimbn,:] .= [Speed(x) for x in ROCdes]
@@ -1025,6 +1025,9 @@ else #For constant TSFC model
     pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
     pare[ieTSFC,ipcruise1:ipcruisen,:] .= readprop("cruise_TSFC")
     pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
+
+else #unrecognized input
+    @warn("The engine type is not recognized")
 end
 
 nac = readprop("Nacelles")
