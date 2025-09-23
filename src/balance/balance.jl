@@ -1,3 +1,4 @@
+export balance_aircraft
 
 """
       balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; Ldebug)
@@ -168,6 +169,14 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       CMVf1 = parg[igCMVf1]
       CLMf0 = parg[igCLMf0]
 
+      #edge case: if CL = 0, the center of pressure is undefined, calc raises NaNs. 
+      # this works around that by setting this function's CL to approx 0, eps = 1.23E-6
+      if CL == 0.0
+            CL = 1.23e-6
+            #if verbose, give warning
+            if Ldebug @warn("Stability calcs in `balance_aircraft!()` approximated aircraft CL = 0 as "*eps) end
+      end
+
       cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +
             coh * CMh0 * Sh / S + (coh * CMh1 - xhbox) * CLh * Sh / S +
             CMVf1 * (CL - CLMf0) / S
@@ -183,7 +192,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       #      xCG = xW/W
 
       #---- total-moment residual
-      Res = cCM / CL + xW / W                 # Eq. 300
+      Res = cCM / CL + xW / W                 # Eq. 300 (xcp is undefined when CL = 0)
       Res_CLh = cCM_CLh / CL
       Res_Sh = cCM_Sh / CL + xW_Sh / W - (xW / W^2) * W_Sh
       Res_xwbox = cCM_xwbox / CL + xW_xwbox / W
@@ -251,7 +260,8 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 
       #---- x locations after one of the trim changes
       #-     (xCP,xCG will be equal if moments are linear)
-      xCP = -cCM / CL
+      # if CL is 0, xCP is undefined and CL for this function is set above to eps = 1.23e-6  
+      xCP = (CL == 1.23E-6) ? NaN : -cCM / CL 
       xCG = xW / W
 
       #---- component pitching moments

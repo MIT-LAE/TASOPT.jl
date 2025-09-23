@@ -1120,24 +1120,47 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     return fig
 end
 
-
-
-
 """
-Sample usage:
-f1 = plot_CL_CD_sweep(results_nb, show_drag_components=true, 
-                        show_airfoil_data=false)
-display(f1)
+    DragPolar(ac; CL_range_vec=[0.2:0.05:0.8...], 
+              show_drag_components=false, show_airfoil_data=false, 
+              title=nothing, legend=true, print_results=false)
 
+Generates drag polar plots for a given aircraft model by sweeping over a range of lift coefficients and computing aerodynamic performance metrics.
 
-TODO: need to plot CL = CLwing - CLh
-    limits of airfoil are correct as is
+This function calls [`aeroperf_sweep`](@ref) to evaluate drag, lift-to-drag ratio, and component breakdowns across `CL_range_vec`.  
+It produces two side-by-side plots:  
+- **CL vs CD** (with optional drag component breakdowns).  
+- **CL vs L/D** (with optional airfoil section data).  
 
-    decide what to do about airfoil data / infinite wing?
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac`: Aircraft model object.
+    - `CL_range_vec::AbstractVector{Float64}`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
+    - `show_drag_components::Bool`: If `true`, overlays induced drag and component drag contributions (`CDi`, `CDwing`, `CDfuse`, `CDhtail`, `CDvtail`, `CDother`) on the CL–CD plot (default: `false`).
+    - `show_airfoil_data::Bool`: If `true`, overlays airfoil section performance (`clpss`, `cdss`) on both plots (default: `false`).
+    - `title::Union{String,Nothing}`: Custom plot title. If `nothing`, uses a default title with aircraft name (default: `nothing`).
+    - `legend::Bool`: Show legend in plots (default: `true`).
+    - `print_results::Bool`: Print detailed output from [`aeroperf_sweep`](@ref) (default: `false`).
+
+    **Outputs:**
+    - Returns a combined `Plots.Plot` object with two subplots:
+        - **Left subplot:** CL vs CD (with optional drag components and airfoil data).
+        - **Right subplot:** CL vs L/D (with optional airfoil data).
+
+    Sample usage:
+
+        ```julia
+        f = DragPolar(ac; CL_range_vec=0.2:0.05:0.8, 
+                         show_drag_components=true, 
+                         show_airfoil_data=false)
+        display(f)
+        ```
+
+See also: [`aeroperf_sweep`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 
 """
 function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...], 
-    show_drag_components=false, #show_airfoil_data=false, 
+    show_drag_components=false, show_airfoil_data=false, 
     title=nothing, legend=true, print_results = false)
 
     #get results from aeroperf_sweep
@@ -1156,41 +1179,48 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
         plot!(p1, results.CDothers, results.CLs, label="CL-CDp_misc", lw=2, marker=:xcross)
     end
 
-    ylims!(p1, (0, maximum(results.CLs)*1.05))
-
-    if show_airfoil_data
-        plot!(p1, results.CDperps, results.CLperps, 
-            label="cl-cd (airfoil)", lw=2, marker=:hexagon, color=:black)
-        plot!(p1, results.CDs_inf_swept_wing, results.CLs_inf_swept_wing, 
-            label="Inf. Swept Wing \n (semi-corr.)", 
-            lw=2, marker=:diamond, color=:blue)
-    end
+    CLlims = (minimum([minimum(results.CLs) - 0.05*abs(minimum(results.CLs)),0]), maximum(results.CLs)*1.05)
+    ylims!(p1, CLlims)
 
   # == Create a second plot: CL vs L/D
     p2 = plot(results.LDs, results.CLs, 
         xlabel="L/D", ylabel="CL", label=false, 
         lw=2, marker=:o, color=:skyblue)
     annotate!(p2, (2.5, 1.4, text("Aircraft L/D", :skyblue, :left, 10)))
-    ylims!(p2, (0, maximum(results.CLs)*1.05))
-    # add the airfoil data #TODO??????
-    
-
+    ylims!(p2, CLlims)
 
   # == On both plots:
+    #plot airfoil spanbreak section data if requested
+    if show_airfoil_data
+        plot!(p1, results.cdss, results.clpss, 
+            label="cl-cd (airfoil)", lw=2, marker=:hexagon, color=:black)
+        plot!(p2, results.clpss./results.cdss, results.clpss,
+            label="cl-LoD (airfoil)", lw=2, marker=:hexagon, color=:black)
+        #limits of airfoil section
+
+        #removed to avoid confusion on "airfoil database limits", 
+        # but you can use it if you want
+        # plot!(p1, [0; maximum(results.CDs)], 
+        #     [0.4; 0.4], color=:black, label=false, linestyle=:dash)
+        # plot!(p2, [0; maximum(results.LDs)], 
+        #     [0.9; 0.9], color=:black, label=false, linestyle=:dash)
+        # annotate!(p1, maximum(results.CDs), 0.4 + 0.005, text("Airfoil database limits", :black, 6, :right, :bottom))
+    end
+
     # Mark with dotted y=constant lines where airfoil data is valid 
     # (i.e., only the lowest and highest CLs_inf_swept_wing where clpss is in [0.4, 0.9])
+    #TODO: un-hardcode the limits?
     inds = findall(x -> 0.4 <= x <= 0.9, results.clpss)
 
     if !isempty(inds)
         for i in (first(inds), last(inds))
-            # CL = results.CLs_inf_swept_wing[i]
             CL = results.CLs[i]
             plot!(p1, [0; maximum(results.CDs)], 
-                [CL; CL], color=:gray, label=false, linestyle=:dash)
+                [CL; CL], color=:deepskyblue, label=false, linestyle=:dash)
             plot!(p2, [0; maximum(results.LDs)], 
-                [CL; CL], color=:gray, label=false, linestyle=:dash)
+                [CL; CL], color=:deepskyblue, label=false, linestyle=:dash)
         end
-        annotate!(p1, maximum(results.CDs), results.CLs[last(inds)] + 0.005, text("Airfoil validity limits", :gray, 6, :right, :bottom))
+        annotate!(p1, maximum(results.CDs), results.CLs[first(inds)] + 0.005, text("Airfoil database limits", :gray, 6, :right, :bottom))
     end
 
     # Combine the two plots side by side with custom spacing

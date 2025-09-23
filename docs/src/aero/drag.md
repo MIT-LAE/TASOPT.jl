@@ -157,7 +157,7 @@ aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
 
 ## Total drag calculation
 ```@docs
-aerodynamics.aircraft_drag!(ac, imission, ip, computes_wing_direct)
+aerodynamics.aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; Ldebug=false)
 ```
 ---
 
