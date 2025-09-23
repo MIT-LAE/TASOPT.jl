@@ -37,6 +37,7 @@ function wing_profiledrag_direct(
       Reco, aRexp, kSuns, fexcd,
       fduo, fdus, fdut)
 
+      # number of elements in spanwise discretization of wing
       #     n = 4     #  ~0.30% error
       #     n = 6     #  ~0.13% error
       n::Int = 8     #  ~0.07% error

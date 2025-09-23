@@ -1,4 +1,4 @@
-import ..TASOPT: balance_aircraft!
+# import ....TASOPT: balance_aircraft!
 using Printf
 
 """
@@ -33,13 +33,19 @@ This function deep-copies the input aircraft model, sets the target lift coeffic
 
         ```julia
         CL_vec = [0.2:0.05:0.8...]
-        results_nb = aeroperf_sweep(ac, CL_vec)
+        results_nb = aeroperf_sweep(ac, CL_vec, print_results=true)
         ```
 
 See also: [`TASOPT.DragPolar`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 """
 function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
-                        print_results = False)
+                        print_results = false)
+
+    #confirm aircraft is sized
+    if !ac_orig.is_sized[1]
+        @error "Aircraft must be sized via `size_aircraft!()` before performing an aeroperformance sweep."
+    end
+
     #initalize results tuple
     n = length(CL_vec)
     results = (CLs = Vector{Float64}(undef, n),
@@ -56,6 +62,11 @@ function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay
                clpos = Vector{Float64}(undef, n),
                clpss = Vector{Float64}(undef, n),
                clpts = Vector{Float64}(undef, n),
+
+               cdfss = Vector{Float64}(undef, n),
+               cdpss = Vector{Float64}(undef, n),
+               cdwss = Vector{Float64}(undef, n),
+               cdss =  Vector{Float64}(undef, n),
                 )
 
     ac = deepcopy(ac_orig)
@@ -79,36 +90,29 @@ function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay
                                 ac.para[iadCDBLIf, ip, imission] + #fuse bli "drag" effect
                                 ac.para[iadCDBLIw, ip, imission] #wing bli "drag" effect
 
-        #get max clp for airfoil bounds if specified
+        #get max clp for airfoil bounds
         results.clpos[i] = ac.para[iaclpo, ip, imission]
         results.clpss[i] = ac.para[iaclps, ip, imission]
         results.clpts[i] = ac.para[iaclpt, ip, imission]
 
+        #get airfoil section drag via airfun (only for spanbreak section)
+        tau = ac.wing.outboard.cross_section.thickness_to_chord
+        sweep = ac.wing.sweep
+        Mach = ac.para[iaMach,ip,imission]
+        Mach_perp = Mach*cosd(sweep)  # Perpendicular Mach number
+        airf = ac.wing.airsection
+
+        cdfss, cdpss, cdwss, _ = airfun(results.clpss[i], tau, Mach_perp, airf)
+        results.cdfss[i] = cdfss #skin friction
+        results.cdpss[i] = cdpss #pressure
+        results.cdwss[i] = cdwss #wave (= 0, with models at time of writing)
+        results.cdss[i] = cdfss + cdpss + cdwss
     end
     
     # Calculate L/D for each point
     for i in 1:n
         results.LDs[i] = results.CLs[i] / results.CDs[i]
     end
-
-        # add a line to the first plot sampling the airfoil database
-    airf = ac.wing.airsection
-    tau = ac.wing.inboard.cross_section.thickness_to_chord
-    Mach = ac.para[iaMach,ip,imission]
-    sweep = ac.wing.sweep
-    Mach_perp = Mach*cosd(sweep)  # Perpendicular Mach number
-
-    # # Sample the airfoil database and plot as a reference curve
-    # for (i, CL) in enumerate(CL_vec)
-    #     CL_perp = CL / cosd(sweep)^2  # Perpendicular lift coefficient
-    #     cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(CL_perp, tau, Mach_perp, airf)
-    #     # Save airfoil performance to results
-    #     results.CLperps[i] = CL_perp  # airfoil CL
-    #     results.CDperps[i] = cdf + cdp + cdw  # Total drag from airfoil
-    #     # TODO: add sweep corrections
-    #     results.CDs_inf_swept_wing[i] = cdf + cdp + cdw  # Total drag from airfoil
-    #     results.CLs_inf_swept_wing[i] = CL  # Keep the same CL for comparison
-    # end
 
     if print_results
         # get headers
@@ -121,8 +125,7 @@ function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay
         println(join(headers, "\t"))
 
         # Print each row with each value formatted
-        for i in 1:size(table_data, 1)
-            row = table_data[i, :]
+        for (_, row) in enumerate(eachrow(table_data))
             formatted_row = [@sprintf("%5.4f", v) for v in row]
             println(join(formatted_row, "\t"))
         end

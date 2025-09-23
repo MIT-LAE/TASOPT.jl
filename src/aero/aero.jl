@@ -8,7 +8,7 @@ module aerodynamics
 using StaticArrays
 using LinearAlgebra
 using ..atmosphere
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, balance_aircraft!
 
 export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, 
     fuselage_drag!, broadcast_fuselage_drag!, aeroperf_sweep
