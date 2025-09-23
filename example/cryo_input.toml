@@ -40,7 +40,7 @@ name = "TASOPT Model with cryo fuel and HX"
                              # 2: Engines on "fuselage"
 
     prop_sys_arch = "TF" #Options are TF: Turbofan
-                         #            TE: Turbo-electric
+                         #            constant_TSFC: simple engine with constant TSFC
 [Fuel]
     fuel_type       = "LH2" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = false # Is fuel stored in wings?
