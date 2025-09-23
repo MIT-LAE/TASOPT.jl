@@ -1201,5 +1201,30 @@ isGradient = false
         @test dN_dmb ≈ outps_Ne[4] rtol = 1e-4
         @test depol_dpi ≈ outps_Ne[5] rtol = 1e-4
         @test depol_dmb ≈ outps_Ne[6] rtol = 1e-4
+    end
+
+    @testset "Simple engine" begin
+
+        ac = TASOPT.load_default_model()
+        ip = ipcruise1
+
+        TSFC = 1.8e-4
+        Fe = 1e4
+        neng = 2
+        MTOW = 1e5
+        feng = 0.05
+
+        ac.pare[ieTSFC, ip, 1] = TSFC
+        ac.pare[ieFe, ip, 1] = Fe
+        ac.parg[igWMTO] = MTOW
+        ac.parg[igfeng] = feng
+
+        TASOPT.engine.constant_TSFC_engine!(ac, 0, 1, ip, 0)
+
+        @test ac.pare[iemfuel,ip,1] ≈ neng*TSFC*Fe/gee rtol = 1e-10
+
+        TASOPT.engine.fractional_engine_weight!(ac)
+        @test ac.parg[igWeng] ≈ feng * MTOW rtol = 1e-10
+
     end 
 end

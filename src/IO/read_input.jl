@@ -182,6 +182,7 @@ doptions = default["Options"]
 # Engine model setup
 # ------------------------------
 engloc = read_input("engine_location", options, doptions)
+calculate_takeoff = true #true by default
 
 #throw error if engloc isn't a string indicating a supported location
 if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
@@ -823,7 +824,10 @@ propsys = read_input("prop_sys_arch", options, doptions)
 prop = read_input("Propulsion", data, default)
 dprop = default["Propulsion"]
 readprop(x) = read_input(x, prop, dprop)
-    parg[igneng] = readprop("number_of_engines")
+
+parg[igneng] = readprop("number_of_engines")
+
+if lowercase(propsys) == "tf"
     parg[igTmetal] = Temp.(readprop("T_max_metal"))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
@@ -1011,6 +1015,21 @@ readfnoz(x) = read_input(x, fannoz, dfannoz)
     pare[ieA7fac, iptest, :] .= A7static
     pare[ieA5fac, iptest, :] .= A5static
 
+elseif lowercase(propsys) == "constant_tsfc" #For constant TSFC model
+    ROCdes = readprop("rate_of_climb")
+    if ROCdes isa AbstractVector
+        para[iaROCdes,ipclimb1:ipclimbn,:] .= [Speed(x) for x in ROCdes]
+    else
+        para[iaROCdes,ipclimb1:ipclimbn,:] .= Speed(ROCdes)
+    end
+    pare[ieTSFC,ipclimb1:ipclimbn,:] .= readprop("climb_TSFC")
+    pare[ieTSFC,ipcruise1:ipcruisen,:] .= readprop("cruise_TSFC")
+    pare[ieTSFC,ipdescent1:ipdescentn,:] .= readprop("descent_TSFC")
+
+else #unrecognized input
+    @warn("The engine type is not recognized")
+end
+
 nac = readprop("Nacelles")
 dnac = dprop["Nacelles"]
     #- nacelle drag stuff
@@ -1023,13 +1042,26 @@ dweight = dprop["Weight"]
     parg[igfpylon] = read_input("pylon_weight_fraction", weight, dweight)
     
     #read/check engine weight model options
+    TF_wmodel = read_input("weight_model", weight, dweight)
     if compare_strings(propsys, "tf")
     #TODO: reincorporate "pantalone_basic" and "pantalone_adv" for direct-drive turbofans
-        TF_wmodel = read_input("weight_model", weight, dweight)
+        engineweightname = TF_wmodel
+        engineweight! = tfweightwrap!
         if !(TF_wmodel in ["md", "fitzgerald_basic", "fitzgerald_adv"]) 
             error("\"$TF_wmodel\" engine weight model was specifed. 
             Engine weight can only be \"MD\", \"fitzgerald_basic\" or \"fitzgerald_adv\".")
         end
+    elseif compare_strings(TF_wmodel, "fractional_weight")
+        parg[igfeng] = read_input("engine_weight_fraction", weight, dweight)
+        engineweightname = "fractional_weight"
+        engineweight! = TASOPT.engine.fractional_engine_weight!
+    elseif compare_strings(TF_wmodel, "constant_weight")
+        eng_weight = Force(read_input("engine_weight_total", weight, dweight))
+        engineweightname = "constant_weight"
+        function constant_engine_weight(ac)
+            ac.parg[igWeng] = eng_weight
+        end
+        engineweight! = constant_engine_weight
     elseif compare_strings(propsys, "te")
         @warn("Propulsion weight models for turboelectric are currently not available.")
     end
@@ -1038,8 +1070,7 @@ dweight = dprop["Weight"]
 if compare_strings(propsys,"tf")
     modelname = "turbofan_md"
     enginecalc! = tfwrap!
-    engineweightname = TF_wmodel
-    engineweight! = tfweightwrap!
+
 
     enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, eng_has_BLI_cores)
     engdata = TASOPT.engine.EmptyData()
@@ -1072,6 +1103,13 @@ elseif compare_strings(propsys,"fuel_cell_with_ducted_fan")
 
     para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
     engdata = fcdata
+
+elseif lowercase(propsys) == "constant_tsfc"
+    modelname = "constant_TSFC"
+    enginecalc! = TASOPT.engine.constant_TSFC_engine!
+    
+    enginemodel = TASOPT.engine.TurbofanModel(modelname, enginecalc!, engineweightname, engineweight!, false)
+    calculate_takeoff = false #Engine model cannot be used for takeoff
 
 else
     
@@ -1156,6 +1194,7 @@ ac_options = TASOPT.Options(
     
     opt_engine_location = engloc,
     opt_prop_sys_arch = propsys,
+    calculate_takeoff = calculate_takeoff,
     
     is_doubledecker = is_doubledecker,
 

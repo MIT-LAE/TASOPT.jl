@@ -25,6 +25,8 @@ $TYPEDFIELDS
     opt_engine_location::String
     """Propulsion system architecture (e.g., "tf" for turbofan, "te" for turboelectric), performance and weight models set in ac.Engine"""
     opt_prop_sys_arch::String
+    """Calculate takeoff length and engine performance"""
+    calculate_takeoff::Bool
     
     #fuselage/cabin options
 

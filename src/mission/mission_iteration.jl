@@ -20,7 +20,7 @@ They are updated and returned in the same para[iagamV,ip] array.
 """
 function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       #Unpack aircraft
-      parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission) 
+      parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear = unpack_ac(ac, imission) 
 
       ifirst = true
 
@@ -325,7 +325,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   end
                   aircraft_drag!(ac, imission, ip, computes_wing_direct)
 
-                  engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
+                  eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
             Ftotal = pare[ieFe, ip] * parg[igneng]
             TSFC = pare[ieTSFC, ip]
@@ -437,7 +437,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             pare[ieFe, ip] = F / parg[igneng] #Store required thrust for engine calcs
             Wpay = parg[igWpay]
             
-            engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
+            eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
       end
 
@@ -517,7 +517,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       Ftotal = BW * (DoL + para[iagamV, ip])
       pare[ieFe, ip] = Ftotal / parg[igneng]
 
-      engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
+      eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
       TSFC = pare[ieTSFC, ip]
 
       V = pare[ieu0, ip]
@@ -691,7 +691,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
             end
 
-            engine.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
+            eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
 
             # store effective thrust, effective TSFC
             F = pare[ieFe, ip] * parg[igneng]

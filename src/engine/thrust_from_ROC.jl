@@ -1,3 +1,17 @@
+"""
+    calculate_thrust_from_ROC!(ac, ip, imission)
+
+A model to estimate the required thrust based on the rate of climb and lift and drag conditions.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft`: aircraft object
+    - `ip::Int64`: mission point index
+    - `imission::Int64`: mission index
+     
+    **Outputs:**
+    No outputs. The `ac` object gets modified with the thrust Fe.
+"""
 function calculate_thrust_from_ROC!(ac, ip, imission)
     parg, _, para, pare, _, _, _, wing, _, _, _, _ = unpack_ac(ac, imission, ip = ip)
 
