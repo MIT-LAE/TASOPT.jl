@@ -1,5 +1,3 @@
-export balance_aircraft
-
 """
       balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; Ldebug)
 

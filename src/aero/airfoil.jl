@@ -56,6 +56,30 @@ function Base.show(io::IO, airf::airfoil)
 end
 
 using Plots
+"""
+    plot_airf(airf::airfoil)
+
+Plots aerodynamic characteristics of the airfoil database, including its drag and pitching moment curves across lift coefficients and airfoil thickness-to-chord ratios (`τ`).  
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `airf::airfoil`: `airfoil` data struct 
+
+    **Outputs:**
+    - Returns a `Plots.Plot` object with three panels:
+        - **Top subplot:** `cl` vs `cd` (drag polar for multiple `τ`).
+        - **Bottom subplot:** `cl` vs `cm` (moment curve for multiple `τ`).
+        - **Side panel:** Legend indicating the thickness-to-chord ratio values (`τ`).
+
+    Sample usage:
+
+        ```julia
+        ac = load_default_model(); size_aircraft!(ac)
+        airf = ac.wing.airsection
+        f1 = plot_airf(airf)
+        f2 = plot_airf(ac)
+        ```
+"""
 function plot_airf(airf::airfoil)
     # Create two subplots
     p1 = plot(
