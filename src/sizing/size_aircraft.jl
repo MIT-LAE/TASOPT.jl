@@ -523,7 +523,7 @@ function _size_aircraft!(ac; itermax=35,
         if compare_strings(options.opt_engine_location,"wing")
             if compare_strings(options.opt_prop_sys_arch,"te")
                 @error "Turboelectric architectures are not currently supported. Their reintroduction with `struct`s is on the roadmap."
-            elseif compare_strings(options.opt_prop_sys_arch,"tf")
+            elseif compare_strings(options.opt_prop_sys_arch,"tf")  || compare_strings(options.opt_prop_sys_arch,"constant_tsfc")
                 Weng1 = parg[igWeng] / parg[igneng]
             end
         else
