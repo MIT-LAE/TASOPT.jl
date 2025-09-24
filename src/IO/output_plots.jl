@@ -1,3 +1,5 @@
+
+
 """
     stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16, 
             annotate_text = true, annotate_length = true, 
@@ -1168,7 +1170,7 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
                         print_results = print_results)
 
   # == Plot CL vs CD and CL vs CDi, CDhtail, CDwing 
-    p1 = plot(results.CDs, results.CLs, xlabel="CD", ylabel="CL", label="CL-CD (aircraft)", lw=2, marker=:o,color=:skyblue)
+    p1 = plot(results.CDs, results.CLs, xlabel="\$C_D\$", ylabel="\$C_L\$", label="CL-CD (aircraft)", lw=2, marker=:o,color=:skyblue)
     
     if show_drag_components
         plot!(p1, results.CDis, results.CLs, label="CL-CDi", lw=2, marker=:diamond)
@@ -1184,9 +1186,9 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
 
   # == Create a second plot: CL vs L/D
     p2 = plot(results.LDs, results.CLs, 
-        xlabel="L/D", ylabel="CL", label=false, 
+        xlabel="\$L/D\$", ylabel="\$C_L\$", label=false, 
         lw=2, marker=:o, color=:skyblue)
-    annotate!(p2, (2.5, 1.4, text("Aircraft L/D", :skyblue, :left, 10)))
+    # annotate!(p2, (2.5, 1.4, text("Aircraft L/D", :skyblue, :left, 10)))
     ylims!(p2, CLlims)
 
   # == On both plots:
@@ -1237,4 +1239,16 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
         # legend=:outerleft
         )
     return f
+end
+
+
+import .aerodynamics: plot_airf
+"""
+    plot_airf(ac::TASOPT.aircraft)
+
+Convenience for `plot_airf(airf::airfoil)`
+"""
+function plot_airf(ac::aircraft)
+    airfoil = ac.wing.airsection
+    plot_airf(airfoil)
 end
