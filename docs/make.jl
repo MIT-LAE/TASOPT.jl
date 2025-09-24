@@ -25,6 +25,7 @@ makedocs(
         "Sensitivities"=>"examples/sensitivity.md"
         ],
     "Aerodynamics" => Any[
+        "aero/aerosummary.md",
         "aero/geometry.md",
         "aero/lift.md",
         "aero/drag.md",

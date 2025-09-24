@@ -1,4 +1,4 @@
-# Aircraft Stability
+# [Aircraft Stability](@id stability)
 
 This module provides functions to size the tail surfaces and balance the aircraft to achieve pitch trim throughout flight when called by [`_size_aircraft!()`](@ref TASOPT._size_aircraft!).
 

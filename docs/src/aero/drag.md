@@ -1,6 +1,6 @@
 # Drag
 
-The key drag contributions are assumed to come from the fuselage, wing and tail surfaces, and the lift-induced drag calculated at the Trefftz plane. Wave drag is not explicitly modelled.
+The key drag contributions are assumed to come from the fuselage, wing, and tail surfaces, and the lift-induced drag calculated at the Trefftz plane. Wave drag is not explicitly modelled.
 
 
 ## [Axisymmetric fuselage drag](@id axi)
