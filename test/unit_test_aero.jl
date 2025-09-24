@@ -343,3 +343,36 @@ end
 
     #Fuse BL
 end
+
+@testset "aeroperf sweep" begin
+    #loading known results, hardcoded; can be re-generated via aeroperf_sweep run in REPL
+    test_results = (
+        CLs = [0.0, 0.8],
+        CDs = [0.13604564972842678, 0.0722843829765934],
+        LDs = [0.0, 11.067397507689181],
+        CLhs = [-0.03491386059155641, 0.02051823369020262],
+        CDis = [0.0, 0.02204129870424348],
+        CDwings = [0.1231523917536438, 0.037349826297566946],
+        CDfuses = [0.006730077607760404, 0.006730077607760404],
+        CDhtails = [0.002552328555573282, 0.002552328555573282],
+        CDvtails = [0.0017234065078558269, 0.0017234065078558269],
+        CDothers = [0.0018874453035934617, 0.0018874453035934617],
+        clpos = [0.013712538878744015, 0.8919623261552116],
+        clpss = [0.017110321211644165, 1.1129785697715282],
+        clpts = [0.012675236029086595, 0.8244886751494099],
+        cdfss = [0.00487079907515317, 0.0042716938945399335],
+        cdpss = [0.14901598750066625, 0.07005378491557111],
+        cdwss = [0.0, 0.0],
+        cdss = [0.15388678657581942, 0.07432547881011105]
+    )
+
+    #get basic execution of default model
+    ac1 = load_default_model()
+    size_aircraft!(ac1)
+    results = aeroperf_sweep(ac1, [0.0, 0.8])
+
+    #compare the two for approximate equality
+    for field in keys(test_results)
+        @test isapprox(results[field], test_results[field]; atol=1e-5)
+    end
+end

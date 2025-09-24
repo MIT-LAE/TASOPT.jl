@@ -42,7 +42,7 @@ function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay
 
     #confirm aircraft is sized
     if !ac_orig.is_sized[1]
-        @error "Aircraft must be sized via `size_aircraft!()` before performing an aeroperformance sweep."
+        error("Aircraft must be sized via `size_aircraft!()` before performing an aeroperformance sweep.")
     end
 
     #initalize results tuple
