@@ -111,6 +111,7 @@ function plot_airf(airf::airfoil)
     
     l = @layout [[a; b] c{0.2w}]
     # Combine the subplots vertically
-    plot(p1, p2, p_legend, layout = l, link = :x,
+    f1 = plot(p1, p2, p_legend, layout = l, link = :x,
         suptitle="Airfoil Section Database")
+    return f1
 end

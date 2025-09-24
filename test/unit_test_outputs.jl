@@ -39,6 +39,10 @@
         @test p4 isa Plots.Plot
         p5 = TASOPT.PayloadRange(ac)
         @test p5 isa Plots.Plot
+        p6 = DragPolar(ac)
+        @test p6 isa Plots.Plot
+        p7 = plot_airf(ac)
+        @test p7 isa Plots.Plot
     end
 
 end

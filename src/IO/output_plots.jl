@@ -1250,5 +1250,5 @@ Convenience for `plot_airf(airf::airfoil)`
 """
 function plot_airf(ac::aircraft)
     airfoil = ac.wing.airsection
-    plot_airf(airfoil)
+    return plot_airf(airfoil)
 end
