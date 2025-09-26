@@ -1168,9 +1168,17 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
     #get results from aeroperf_sweep
     results = aeroperf_sweep(ac, CL_range_vec; #defaults: imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
                         print_results = print_results)
+    #get airfoil database limits
+    #TODO: un-hardcode the limits?
+    cl_lims = [0.4, 0.9]
+
 
   # == Plot CL vs CD and CL vs CDi, CDhtail, CDwing 
-    p1 = plot(results.CDs, results.CLs, xlabel="\$C_D\$", ylabel="\$C_L\$", label="CL-CD (aircraft)", lw=2, marker=:o,color=:skyblue)
+    p1 = plot(results.CDs, results.CLs, 
+    xlabel= show_airfoil_data ? "\$C_D,  c_d\$" : "\$C_D\$", 
+    ylabel=show_airfoil_data ? "\$C_L,  c_l\$" : "\$C_L\$", 
+    label="Aircraft", 
+    lw=2, marker=:o,color=:skyblue)
     
     if show_drag_components
         plot!(p1, results.CDis, results.CLs, label="CL-CDi", lw=2, marker=:diamond)
@@ -1181,39 +1189,57 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
         plot!(p1, results.CDothers, results.CLs, label="CL-CDp_misc", lw=2, marker=:xcross)
     end
 
-    CLlims = (minimum([minimum(results.CLs) - 0.05*abs(minimum(results.CLs)),0]), maximum(results.CLs)*1.05)
-    ylims!(p1, CLlims)
+    # Set y-limits with optional airfoil data included
+    if show_airfoil_data
+        min_CL = min(minimum(results.clpss), minimum(results.CLs), 0)
+        max_CL = max(maximum(results.clpss), maximum(results.CLs))
+    else
+        min_CL = min(0, minimum(results.CLs))
+        max_CL = maximum(results.CLs)
+    end
+
+    # Apply offsets
+    min_CL -= 0.05 * abs(min_CL)
+    max_CL *= 1.05
+
+    ylims!(p1, (min_CL, max_CL))
 
   # == Create a second plot: CL vs L/D
     p2 = plot(results.LDs, results.CLs, 
-        xlabel="\$L/D\$", ylabel="\$C_L\$", label=false, 
+        xlabel="\$L/D\$", 
+        ylabel= show_airfoil_data ? "\$C_L,  c_l\$" : "\$C_L\$", 
+        label="Aircraft", 
         lw=2, marker=:o, color=:skyblue)
     # annotate!(p2, (2.5, 1.4, text("Aircraft L/D", :skyblue, :left, 10)))
-    ylims!(p2, CLlims)
+    ylims!(p2, (min_CL, max_CL))
 
   # == On both plots:
     #plot airfoil spanbreak section data if requested
     if show_airfoil_data
+        clcdss = results.clpss./results.cdss
         plot!(p1, results.cdss, results.clpss, 
-            label="cl-cd (airfoil)", lw=2, marker=:hexagon, color=:black)
-        plot!(p2, results.clpss./results.cdss, results.clpss,
-            label="cl-LoD (airfoil)", lw=2, marker=:hexagon, color=:black)
+            label="Airfoil at η_s", lw=2, marker=:hexagon, color=:black)
+        plot!(p2, clcdss, results.clpss,
+            label="Airfoil at η_s", lw=2, marker=:hexagon, color=:black)
+        
         #limits of airfoil section
-
-        #removed to avoid confusion on "airfoil database limits", 
-        # but you can use it if you want
-        # plot!(p1, [0; maximum(results.CDs)], 
-        #     [0.4; 0.4], color=:black, label=false, linestyle=:dash)
-        # plot!(p2, [0; maximum(results.LDs)], 
-        #     [0.9; 0.9], color=:black, label=false, linestyle=:dash)
-        # annotate!(p1, maximum(results.CDs), 0.4 + 0.005, text("Airfoil database limits", :black, 6, :right, :bottom))
+        #plot1
+        plot!(p1, [0; maximum(results.cdss)], 
+            [cl_lims[1]; cl_lims[1]], color=:black, label=false, linestyle=:dash)
+        plot!(p1, [0; maximum(results.cdss)], 
+            [cl_lims[2]; cl_lims[2]], color=:black, label=false, linestyle=:dash)
+        annotate!(p1, maximum(results.CDs), cl_lims[1] + 0.002, text("Airfoil database limits (\$c_l\$)", :black, 7, :right, :bottom))
+        #plot2
+        
+        plot!(p2, [0; maximum(clcdss)], 
+            [cl_lims[1]; cl_lims[1]], color=:black, label=false, linestyle=:dash)
+        plot!(p2, [0; maximum(clcdss)], 
+            [cl_lims[2]; cl_lims[2]], color=:black, label=false, linestyle=:dash)
     end
 
     # Mark with dotted y=constant lines where airfoil data is valid 
     # (i.e., only the lowest and highest CLs_inf_swept_wing where clpss is in [0.4, 0.9])
-    #TODO: un-hardcode the limits?
-    inds = findall(x -> 0.4 <= x <= 0.9, results.clpss)
-
+    inds = findall(x -> cl_lims[1] <= x <= cl_lims[2], results.clpss)
     if !isempty(inds)
         for i in (first(inds), last(inds))
             CL = results.CLs[i]
@@ -1222,7 +1248,7 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
             plot!(p2, [0; maximum(results.LDs)], 
                 [CL; CL], color=:deepskyblue, label=false, linestyle=:dash)
         end
-        annotate!(p1, maximum(results.CDs), results.CLs[first(inds)] + 0.005, text("Airfoil database limits", :gray, 6, :right, :bottom))
+        annotate!(p1, maximum(results.CDs), results.CLs[first(inds)] + 0.002, text("Airfoil database limits (\$C_L\$)", :gray, 7, :right, :bottom))
     end
 
     # Combine the two plots side by side with custom spacing
@@ -1234,9 +1260,7 @@ function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...],
         left_margin=3Plots.mm,
         top_margin=6Plots.mm,
         right_margin=3Plots.mm,
-        legend= legend,
-        # legend=(0.4, 0.55),
-        # legend=:outerleft
+        legend= show_drag_components || show_airfoil_data, #only show legend if we're having many lines
         )
     return f
 end
