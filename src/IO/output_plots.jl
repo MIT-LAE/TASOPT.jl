@@ -1123,13 +1123,13 @@ function PayloadRange(ac_og::TASOPT.aircraft;
 end
 
 """
-    DragPolar(ac; CL_range_vec=[0.2:0.05:0.8...], 
+    DragPolar(ac; CL_range = 0.2:0.05:0.8, 
               show_drag_components=false, show_airfoil_data=false, 
               title=nothing, legend=true, print_results=false)
 
 Generates drag polar plots for a given aircraft model by sweeping over a range of lift coefficients and computing aerodynamic performance metrics.
 
-This function calls [`aeroperf_sweep`](@ref) to evaluate drag, lift-to-drag ratio, and component breakdowns across `CL_range_vec`.  
+This function calls [`aeroperf_sweep`](@ref) to evaluate drag, lift-to-drag ratio, and component breakdowns across `CL_range`.  
 It produces two side-by-side plots:  
 - **CL vs CD** (with optional drag component breakdowns).  
 - **CL vs L/D** (with optional airfoil section data).  
@@ -1137,7 +1137,7 @@ It produces two side-by-side plots:
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac`: Aircraft model object.
-    - `CL_range_vec::AbstractVector{Float64}`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
+    - `CL_range`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
     - `show_drag_components::Bool`: If `true`, overlays induced drag and component drag contributions (`CDi`, `CDwing`, `CDfuse`, `CDhtail`, `CDvtail`, `CDother`) on the CL–CD plot (default: `false`).
     - `show_airfoil_data::Bool`: If `true`, overlays airfoil section performance (`clpss`, `cdss`) on both plots (default: `false`).
     - `title::Union{String,Nothing}`: Custom plot title. If `nothing`, uses a default title with aircraft name (default: `nothing`).
@@ -1152,7 +1152,7 @@ It produces two side-by-side plots:
     Sample usage:
 
         ```julia
-        f = DragPolar(ac; CL_range_vec=0.2:0.05:0.8, 
+        f = DragPolar(ac; CL_range=0.2:0.05:0.8, 
                          show_drag_components=true, 
                          show_airfoil_data=false)
         display(f)
@@ -1161,12 +1161,12 @@ It produces two side-by-side plots:
 See also: [`aeroperf_sweep`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 
 """
-function DragPolar(ac; CL_range_vec = [0.2:0.05:0.8...], 
+function DragPolar(ac; CL_range = 0.2:0.05:0.8, 
     show_drag_components=false, show_airfoil_data=false, 
     title=nothing, legend=true, print_results = false)
 
     #get results from aeroperf_sweep
-    results = aeroperf_sweep(ac, CL_range_vec; #defaults: imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
+    results = aeroperf_sweep(ac, CL_range; #defaults: imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
                         print_results = print_results)
     #get airfoil database limits
     #TODO: un-hardcode the limits?

@@ -1,22 +1,23 @@
 using Printf
 
 """
-    aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5)
+    aeroperf_sweep(ac_orig, CL_range; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5)
 
-Performs a sweep over a vector of lift coefficients (`CL_vec`) for a given aircraft model, evaluating aerodynamic and performance metrics at each point.
+Performs a sweep over a range of lift coefficients (`CL_range`) for a given aircraft model, evaluating aerodynamic and performance metrics at each point.
 
-This function deep-copies the input aircraft model, sets the target lift coefficient, balances the aircraft, and computes drag and related quantities for each value in `CL_vec`. 
+This function deep-copies the input aircraft model, sets the lift coefficient, balances the aircraft, and computes drag and related quantities for each value in `CL_range`. 
     The results are collected in arrays for further analysis or plotting and returned in a NamedTuple.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `ac_orig`: Aircraft model object (deep-copied internally).
-    - `CL_vec::AbstractVector{Float64}`: Vector of target lift coefficients to sweep.
+    - `CL_range`: Range of lift coefficients to sweep.
     - `imission::Integer`: Mission index (default: 1).
     - `ip::Integer`: Flight point index (default: `ipcruise1`).
     - `rfuel::Float64`: Fuel fraction (default: 1).
     - `rpay::Float64`: Payload fraction (default: 1).
-    - `ξpay::Float64`: Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded; default: 0.5). Doesn't matter if rpay = 1.
+    - `ξpay::Float64`: Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded; default: 0.5). 
+                    Doesn't matter if rpay = 1.
 
     **Outputs:**
     - Returns a named tuple of vectors containing:
@@ -31,13 +32,13 @@ This function deep-copies the input aircraft model, sets the target lift coeffic
     Sample usage:
 
         ```julia
-        CL_vec = [0.2:0.05:0.8...]
-        results_nb = aeroperf_sweep(ac, CL_vec, print_results=true)
+        CL_range = 0.2:0.05:0.8
+        results_nb = aeroperf_sweep(ac, CL_range, print_results=true)
         ```
 
 See also: [`TASOPT.DragPolar`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 """
-function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
+function aeroperf_sweep(ac_orig, CL_range; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
                         print_results = false)
 
     #confirm aircraft is sized
@@ -46,7 +47,7 @@ function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay
     end
 
     #initalize results tuple
-    n = length(CL_vec)
+    n = length(CL_range)
     results = (CLs = Vector{Float64}(undef, n),
                CDs = Vector{Float64}(undef, n),
                LDs = Vector{Float64}(undef, n),
@@ -70,7 +71,7 @@ function aeroperf_sweep(ac_orig, CL_vec; imission=1, ip=ipcruise1, rfuel=1, rpay
 
     ac = deepcopy(ac_orig)
 
-    for (i, CL) in enumerate(CL_vec)
+    for (i, CL) in enumerate(CL_range)
         ac.para[iaCL, ip, imission] = CL
         balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, "CL_htail")
         aircraft_drag!(ac, imission, ip, true)
