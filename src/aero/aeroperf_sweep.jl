@@ -1,7 +1,7 @@
 using Printf
 
 """
-    aeroperf_sweep(ac_orig, CL_range; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5)
+    aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5)
 
 Performs a sweep over a range of lift coefficients (`CL_range`) for a given aircraft model, evaluating aerodynamic and performance metrics at each point.
 
@@ -38,7 +38,7 @@ This function deep-copies the input aircraft model, sets the lift coefficient, b
 
 See also: [`TASOPT.DragPolar`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 """
-function aeroperf_sweep(ac_orig, CL_range; imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
+function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
                         print_results = false)
 
     #confirm aircraft is sized
@@ -46,9 +46,18 @@ function aeroperf_sweep(ac_orig, CL_range; imission=1, ip=ipcruise1, rfuel=1, rp
         error("Aircraft must be sized via `size_aircraft!()` before performing an aeroperformance sweep.")
     end
 
+    #deepcopy to avoid overwrites to original aircraft
+    ac = deepcopy(ac_orig)
+
+    #substitute Mach if specified
+    if !isnothing(Mach) && Mach isa Number
+        ac.para[iaMach, ip, imission] = Mach
+    end
+
     #initalize results tuple
     n = length(CL_range)
-    results = (CLs = Vector{Float64}(undef, n),
+    results = (Mach = ac.para[iaMach, ip, imission],
+               CLs = Vector{Float64}(undef, n),
                CDs = Vector{Float64}(undef, n),
                LDs = Vector{Float64}(undef, n),
                CLhs = Vector{Float64}(undef, n),
@@ -68,8 +77,6 @@ function aeroperf_sweep(ac_orig, CL_range; imission=1, ip=ipcruise1, rfuel=1, rp
                cdwss = Vector{Float64}(undef, n),
                cdss =  Vector{Float64}(undef, n),
                 )
-
-    ac = deepcopy(ac_orig)
 
     for (i, CL) in enumerate(CL_range)
         ac.para[iaCL, ip, imission] = CL
