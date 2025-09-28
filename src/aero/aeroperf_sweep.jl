@@ -12,15 +12,17 @@ This function deep-copies the input aircraft model, sets the lift coefficient, b
     **Inputs:**
     - `ac_orig`: Aircraft model object (deep-copied internally).
     - `CL_range`: Range of lift coefficients to sweep.
-    - `imission::Integer`: Mission index (default: 1).
-    - `ip::Integer`: Flight point index (default: `ipcruise1`).
-    - `rfuel::Float64`: Fuel fraction (default: 1).
-    - `rpay::Float64`: Payload fraction (default: 1).
-    - `ξpay::Float64`: Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded; default: 0.5). 
+    - `Mach`: Mach number at which points are evaluated. If none specified, defaults to value at specified ip, imission (optl.).
+    - `imission::Integer`: Mission index (default: 1, optl.).
+    - `ip::Integer`: Flight point index, determining altitude (default: `ipcruise1`, optl.).
+    - `rfuel::Float64`: Fuel fraction (default: 1, optl.).
+    - `rpay::Float64`: Payload fraction (default: 1, optl.).
+    - `ξpay::Float64`: Payload distribution factor (0.0 = front-loaded, 1.0 = rear-loaded; default: 0.5, optl.). 
                     Doesn't matter if rpay = 1.
 
     **Outputs:**
     - Returns a named tuple of vectors containing:
+        - `Mach`: Mach number at which points are evaluated.
         - `CLs`: Lift coefficients at each point.
         - `CDs`: Drag coefficients at each point.
         - `LDs`: Lift-to-drag ratios.
