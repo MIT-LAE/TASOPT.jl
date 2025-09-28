@@ -1161,16 +1161,21 @@ It produces two side-by-side plots:
 See also: [`aeroperf_sweep`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 
 """
-function DragPolar(ac; CL_range = 0.2:0.05:0.8, 
+function DragPolar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
+    ip = ipcruise1, imission = 1,
     show_drag_components=false, show_airfoil_data=false, 
     title=nothing, legend=true, print_results = false)
 
     #get results from aeroperf_sweep
-    results = aeroperf_sweep(ac, CL_range; #defaults: imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
-                        print_results = print_results)
+    results = aeroperf_sweep(ac, CL_range; 
+                            imission=imission, ip=ip, 
+                            #defaults: rfuel=1, rpay=1, ξpay=0.5,
+                            Mach=Mach,
+                            print_results = print_results)
     #get airfoil database limits
     #TODO: un-hardcode the limits?
     cl_lims = [0.4, 0.9]
+    #TODO: warn if Mach outside of limits?
 
 
   # == Plot CL vs CD and CL vs CDi, CDhtail, CDwing 
@@ -1203,6 +1208,10 @@ function DragPolar(ac; CL_range = 0.2:0.05:0.8,
     max_CL *= 1.05
 
     ylims!(p1, (min_CL, max_CL))
+
+    #secondary title via hacky annotation
+    annot_text = @sprintf "Mach = %.2f, ip = %d, im = %d" results.Mach ip imission
+    annotate!(xlims(p1)[2]+.003, max_CL + .045, text(annot_text, 12, :gray22))
 
   # == Create a second plot: CL vs L/D
     p2 = plot(results.LDs, results.CLs, 
@@ -1237,6 +1246,7 @@ function DragPolar(ac; CL_range = 0.2:0.05:0.8,
             [cl_lims[2]; cl_lims[2]], color=:black, label=false, linestyle=:dash)
     end
 
+
     # Mark with dotted y=constant lines where airfoil data is valid 
     # (i.e., only the lowest and highest CLs_inf_swept_wing where clpss is in [0.4, 0.9])
     inds = findall(x -> cl_lims[1] <= x <= cl_lims[2], results.clpss)
@@ -1254,14 +1264,18 @@ function DragPolar(ac; CL_range = 0.2:0.05:0.8,
     # Combine the two plots side by side with custom spacing
     l = @layout [a{0.6w} b{0.4w}]
     f = plot(p1, p2, layout=l, size=(600,500))
+
+    default_title = @sprintf "TASOPT.jl Aeroperf. Sweep: \n %s" ac.name
+
     plot!(f,
-        suptitle=isnothing(title) ? "TASOPT.jl Aeroperf. Sweep: \n"*ac.name : title,
-        bottom_margin=3Plots.mm,
+        suptitle=isnothing(title) ? default_title : title,
+        bottom_margin=2Plots.mm,
         left_margin=3Plots.mm,
-        top_margin=6Plots.mm,
+        top_margin=12Plots.mm,
         right_margin=3Plots.mm,
         legend= show_drag_components || show_airfoil_data, #only show legend if we're having many lines
         )
+
     return f
 end
 
