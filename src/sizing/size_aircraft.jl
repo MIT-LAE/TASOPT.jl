@@ -718,7 +718,7 @@ function _size_aircraft!(ac; itermax=35,
         ipHXdes = ipcruise1 #Design point: start of cruise
 
         if iterw > 2 #Only include heat exchangers after second iteration
-            if engine.model.model_name == "fuel_cell_with_ducted_fan"
+            if eng.model.model_name == "fuel_cell_with_ducted_fan"
                 ipdes = iprotate #Design point: takeoff rotation
                 pare[ieRadiatorCoolantT,:] = eng.data.FC_temperature[:,imission]
                 pare[ieRadiatorCoolantP,:] = eng.data.FC_pressure[:,imission]
@@ -728,7 +728,7 @@ function _size_aircraft!(ac; itermax=35,
 
             for HX in eng.heat_exchangers
                 if HX.type == "Radiator"
-                    TASOPT.engine.VerifyRadiatorHeat(engine, imission)
+                    TASOPT.engine.VerifyRadiatorHeat(eng, imission)
                 end
             end
             #Note that engine state at takeoff should be calculated every iteration for correct balance-field. 
