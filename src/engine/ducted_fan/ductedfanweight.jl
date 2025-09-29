@@ -1,6 +1,6 @@
 function ductedfanweight(ac)
     Dfan   = ac.parg[igdfan]
-    Nmech  = maximum(ac.pared[ieNf, :])
+    Nf  = maximum(ac.pared[ieNf, :])
     fpylon = ac.parg[igfpylon]
     neng = ac.parg[igneng]
     rSnace = ac.parg[igrSnace]
@@ -8,6 +8,7 @@ function ductedfanweight(ac)
     ARfan  = 3   #Blade aspeect ratio
     bladesolidity = 0.4 # Blade solidity c/s
     ktech = 0.5 
+    Nmech = Nf #TODO replace this with actual fan speed in rpm
     Utip  = Dfan/2* (2 * pi * Nmech/60);
     # Sagerser 1971, NASA TM X-2406
     # Note: The term "weight" in Sagerser1971 is actually mass
@@ -31,7 +32,10 @@ function ductedfanweight(ac)
 
     W_HXs = 0.0 #Store total weight of HXs
     for HX in ac.engine.heat_exchangers #For every heat exchanger in the engine
-        W_HXs += hxweight(gee, HX.HXgeom,  HX.added_mass_fraction) * neng #Weight of a heat exchanger times number of engines
+        if ~isassigned(HX.HXgas_mission, ipstatic, 1)
+                break #Skip if the object is not assigned
+        end
+        W_HXs += hxweight(gee, HX.HXgeom, HX.HXgas_mission[ipstatic,1], HX.added_mass_fraction) * neng #Weight of a heat exchanger times number of engines
     end
     Webare = Webare + W_HXs #Add heat exchanger weight to bare and full engine
     Weng = Weng + W_HXs

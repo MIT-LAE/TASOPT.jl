@@ -151,15 +151,17 @@
         fcdata.thickness_anode  = 250e-6
         fcdata.thickness_cathode  = 250e-6
         fcdata.design_voltage = 200.0
-        pare[ieRadiatorepsilon,:,:] .= 0.7
-        pare[ieRadiatorMp,:,:] .= 0.12
         pare[ieDi,:,:] .= 0.4
 
         para[iaROCdes, ipclimb1:ipclimbn,:] .= 500 * ft_to_m / 60
         engdata = fcdata
 
-        engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
+        radiator = TASOPT.engine.make_HeatExchanger(1)
+        radiator.type = "Radiator"
+        radiator.design_effectiveness = 0.7
+        radiator.design_Mach = 0.12
 
+        engine = TASOPT.engine.Engine(enginemodel, engdata, [radiator])
         ac.engine = engine
 
         #Prepare the pare object
@@ -196,11 +198,11 @@
 
         engine.enginecalc!(ac, "design", 1, ipcruise1, true)
 
-        @test pare[iemfuel,ipcruise1,1] ≈ 0.0005481461619779067
+        @test pare[iemfuel,ipcruise1,1] ≈ 0.1453260014445107
         @test pare[iePfan,ipcruise1,1] ≈ 6.043228014711607e6
-        @test ac.engine.data.number_cells ≈ 265.5192500533146
+        @test ac.engine.data.number_cells ≈ 266.2475825969344
         @test ac.engine.data.area_cell ≈ 5.0
-        @test ac.engine.data.FC_heat[ipcruise1,1] ≈ 2.6917275229945835e6
+        @test ac.engine.data.FC_heat[ipcruise1,1] ≈ 2.715539996314526e6 
 
         #Next, test the off-design performance
 
@@ -231,8 +233,8 @@
         pare[ieu0,iprotate,1] = 73.89982446679213
         engine.enginecalc!(ac, "off_design", 1, iprotate, true)
 
-        @test pare[iemfuel,iprotate,1] ≈ 0.0010447183729991173
+        @test pare[iemfuel,iprotate,1] ≈ 0.2781537413058187
         @test pare[iePfan,iprotate,1] ≈ 1.0000000000384096e7
-        @test ac.engine.data.FC_heat[iprotate,1] ≈ 6.64805697887804e6
+        @test ac.engine.data.FC_heat[iprotate,1] ≈ 6.764268384354207e6 
     end
 end

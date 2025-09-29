@@ -39,8 +39,8 @@ name = "TASOPT Model with cryo fuel and HX"
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
-    prop_sys_arch = "TF" #Options are TF: Turbofan
-                         #            constant_TSFC: simple engine with constant TSFC
+    prop_sys_arch = "fuel_cell_with_ducted_fan" #Options are TF: Turbofan
+                         #            TE: Turbo-electric
 [Fuel]
     fuel_type       = "LH2" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = false # Is fuel stored in wings?
@@ -58,6 +58,7 @@ name = "TASOPT Model with cryo fuel and HX"
     weld_efficiency = 0.9 
     ullage_fraction = 0.05 #minimum ullage fraction at tank venting pressure
     heat_leak_factor = 1.3 #Factor to account for heat leakage through structural elements, piping, etc (qfac > 1)
+    SL_temperature_for_tank = "288.2 K"
 
     #Tank pressure design parameters
     pressure_rise_factor = 2.0 #Factor to account for stratification in homogenous tank model (pfac >= 1)
@@ -74,7 +75,7 @@ name = "TASOPT Model with cryo fuel and HX"
     insulation_material = ["polyurethane32", "polyurethane32", "polyurethane32"] 
     insulation_segment_base_thickness = [0.05, 0.05, 0.05] #m
     
-    cruise_boiloff_rate = 0.4 #%/hour, used if sizes_insulation == true
+    cruise_boiloff_rate = 2.0 #%/hour, used if sizes_insulation == true
     insulation_thicknesses_design_indices = [1,2,3] #insulation segments to size if sizes_insulation == true
 
     #Parameters for double-walled tank, if "vacuum" is in insulation_material
@@ -83,15 +84,15 @@ name = "TASOPT Model with cryo fuel and HX"
 
 [Mission]
     N_missions = 1 # Number of missions to be modeled (first mission is the design mission)
-    payload = ["180 pax"]    # Mission payload; pax can be used as a unit of weight.
+    payload = ["56 pax"]    # Mission payload; pax can be used as a unit of weight.
                              # Weight per pax also specified (215 lbf/pax is std)
-    exit_limit = 189            # Maximum number of passengers that can sit in the cabin
+    exit_limit = 56            # Maximum number of passengers that can sit in the cabin
 
-    max_payload = "189 pax"     # Defines the maximum payload carrying capacity of the aircraft
+    max_payload = "56 pax"     # Defines the maximum payload carrying capacity of the aircraft
                                 # It is the maximum payload that the aircraft can carry (including cargo),
                                 # in an off-design mission
     
-    range = "3000.0 nmi" # Design Range 
+    range = "924.0 nmi" # Design Range 
 
     weight_per_pax = "215.0 lbf" # Specify weight per passenger - 
                             # includes luggage [lbm or lbf or kg or N] 
@@ -124,7 +125,7 @@ name = "TASOPT Model with cryo fuel and HX"
 
 [Mission.Cruise]
     cruise_alt  = "35000.0 ft"
-    cruise_mach = 0.80
+    cruise_mach = 0.60
     cruise_CL   = 0.57
 
 [Mission.Descent]
@@ -135,8 +136,8 @@ name = "TASOPT Model with cryo fuel and HX"
     cabin_pressure_altitude = "8000.0 ft"
 
 [Fuselage.Geometry]
-    radius = "100 in"       # Fuselage radius
-    dRadius = "15 in"      # Downward shift of lower bubbles
+    radius = "1.5 m"       # Fuselage radius
+    dRadius = "0 in"      # Downward shift of lower bubbles
     y_offset = 0.0         # y offset of bubble center
     floor_depth = "5.0 in" # depth of floor beams
     Nwebs = 1              # number of webs (for double bubble designs)
@@ -439,76 +440,18 @@ name = "TASOPT Model with cryo fuel and HX"
 [Propulsion]
 
     number_of_engines = 2
-    T_max_metal = 1280.0
 
-    Tt4_takeoff = 1833.0
-    Tt4_frac_bottom_of_climb = 0.2
-    Tt4_frac_top_of_climb = 0.2
-    Tt4_cruise = 1587.0
-
-    # Core in clean flow or does core ingests KE defect?
-    core_in_clean_flow = true
-
-[Propulsion.Turbomachinery]
-
-    BPR = 5.1
-    gear_ratio = 1.0 #Fan gear ratio. 1 => direct drive turbofan
-
-    OPR    = 30.0
-    Fan_PR = 1.685
-    LPC_PR = 2.5
+[Propulsion.DuctedFan]
+    maximum_fan_power = 3.0e6
     
-    diffuser_PR    = 0.998
-    burner_PR      = 0.94
-    fan_nozzle_PR  = 0.98
-    core_nozzle_PR = 0.989
+    rate_of_climb = "2.5 m/s"
 
+    Fan_PR = 1.685
     fan_eta_poly = 0.8948
-    LPC_eta_poly = 0.88
-    HPC_eta_poly = 0.87
-    HPT_eta_poly = 0.889
-    LPT_eta_poly = 0.899
-
-    #Fan efficiency function constants -> epoly_actual = epolyf + Kf*(FPR-FPR0)
-    FPR0 = 1.685
-    Kf_polyeff = -0.077 
-
-    HTR_fan = 0.30
-    HTR_LPC = 0.60
-    HTR_HPC = 0.80
-
     M2  = 0.60
-    M25 = 0.60
 
-    low_spool_loss  = 0.01
-    high_spool_loss = 0.022
-
-[Propulsion.Combustor]
-    combustion_efficiency = 0.98
-
-[Propulsion.Cooling]
-    hot_streak_T_allowance = 200.0
-    M_turbine_blade_exit = 1.0
-    St = 0.09 # area-weighted effective Stanton number
-    e_film_cooling = 0.70 #blade-to-cooling flow heat transfer eff
-    t_film_cooling = 0.30 #cooling-film effectiveness factor
-    M41 = 0.9 # Mach number at start of cooling-air mixing zone
-    cooling_air_V_ratio = 0.15 #v_cool/v_edge velocity ratio of exiting cooling air
-    HPT_efficiency_derivative_with_cooling = 0.0
-    baseline_cooling_fraction = 0.0
-
-[Propulsion.Offtakes]
-    LPC_mass_offtake_per_pax = 0.0063
-    LPC_mass_offtake_per_max_mass = 0.0
-
-    Low_spool_power_offtake_per_pax = 200.0
-    Low_spool_power_offtake_per_max_mass = 1.8
-
-    Tt_offtake_air = 300.0
-    Pt_offtake_air = 30e3
-
-[Propulsion.Nozzles]
-#Nozzle area factors relative to cruise design_area
+    diffuser_PR    = 0.998
+    fan_nozzle_PR  = 0.98
 
     fan_nozzle_area.static       = 1.0
     fan_nozzle_area.rotation     = 1.0
@@ -518,45 +461,33 @@ name = "TASOPT Model with cryo fuel and HX"
     fan_nozzle_area.descentstart = 1.0
     fan_nozzle_area.descentend   = 1.0
 
-    core_nozzle_area.static       = 1.0
-    core_nozzle_area.rotation     = 1.0
-    core_nozzle_area.cutback      = 1.0
-    core_nozzle_area.climbstart   = 1.0
-    core_nozzle_area.climbend     = 1.0
-    core_nozzle_area.descentstart = 1.0
-    core_nozzle_area.descentend   = 1.0
-
-
 [Propulsion.Nacelles]
     nacelle_pylon_wetted_area_ratio = 16.0 # = rSnace = wetted area/fan area
     nacelle_local_velocity_ratio = 1.02 # local/freestream velocity
 
-[Propulsion.HeatExchangers] #Default model does not have heat exchangers in the propulsion system
-    has_recirculation = true
-    recirculation_temperature = "200 K"
-    maximum_heat_exchanger_length = "0.25 m"
-    core_inner_diameter = "0.2 m"
-    added_mass_frac = 1.0
+[Propulsion.FuelCell]
+    fuel_cell_type = "HT-PEMFC"
+    takeoff_current_density = 10000
+    fuel_cell_temperature = "453.15 K"
+    fuel_cell_pressure = "3 bar"
+    water_concentration_anode = 0.1
+    water_concentration_cathode = 0.1
+    hydrogen_equivalence_ratio = 3.0
+    oxygen_equivalence_ratio = 3.0
+    thickness_membrane = "0.1 mm"
+    thickness_anode = "0.25 mm"
+    thickness_cathode = "0.25 mm"
+    stack_design_voltage = 200
+    stack_specific_power = 1400 #W/kg
 
-    precooler_order = 1
-    precooler_effectiveness = 0
-    precooler_inlet_mach = 0.1
-
-    intercooler_order = 2
-    intercooler_effectiveness = 0
-    intercooler_inlet_mach = 0.1
-
-    regenerative_order = 4
-    regenerative_effectiveness = 0.8
-    regenerative_inlet_mach = 0.2
-
-    turbine_cooler_order = 3
-    turbine_cooler_effectiveness = 0
-    turbine_cooler_inlet_mach = 0.02
-
+    radiator_effectiveness = 0.8
+    radiator_inlet_mach = 0.12
+    radiator_inner_diameter = "0.4 m"
+    radiator_added_mass_frac = 1.0
+    radiator_maximum_length = "2 m"
+    
 [Propulsion.Weight]
-    engine_access_weight_fraction = 0.10 # feadd    Weadd/Wbare   engine accessories, fuel system fraction 
     pylon_weight_fraction = 0.10  # fpylon   Wpylon/We+a+n engine pylon weight fraction   
-    weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
+    weight_model = "ducted_fan_nasa"    #Options are "MD": Mark Drela's original model
                                     #   "fitzgerald_basic": NF's new model with basic tech
                                     #     "fitzgerald_adv": NF's new model with advanced tech

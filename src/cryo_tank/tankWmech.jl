@@ -84,7 +84,7 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #For a standard ellipsoid V = 1/2×(4π/3 ×(abc)) where a,b,c are the semi-axes length. If base is circular,
       #a = R/AR, b=c=R. Since Abase = πR^2, this can also be written as V = 2 * (Abase * R/AR)/3.
       # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
-      V_cylinder = Vinternal - 2*V_ellipsoid
+      V_cylinder = Vinternal - 2*V_ellipsoid #TODO add some exception handling if V_cylinder < 0. If you simply clamp it, the code fails
       l_cyl = V_cylinder / Atank #required length of cylindrical portion
 
       # areas
@@ -319,7 +319,12 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::F
       b = -Z/2
       c = -1 * Icollapse - Z * t_f/2 + t_f^3 * W / 6
 
-      H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
+      if b^2 > 4*a*c #If a solution exists
+            H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
+      else #Parallel plates
+            H = t_f
+      end
+
       S = 2 * W * t_f + (H - t_f) * t_w #Beam cross-sectional area
 
       Wstiff = gee * ρstiff * S * perim #Weight of a single stiffener running along perimeter
