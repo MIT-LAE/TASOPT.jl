@@ -21,7 +21,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
     end
     
     #Extract aircraft components and storage arrays
-    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine = unpack_ac(ac, imission)
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng = unpack_ac(ac, imission)
     
     parad = ac.parad
     pared = ac.pared
@@ -252,13 +252,13 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
     # println(parm[imWfuel,:])
 
     #Simulate heat exchanger performance if the engine contains any
-    if engine.model.model_name == "ducted_fan"
-        pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
-        pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
-        pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+    if eng.model.model_name == "ducted_fan"
+        pare[ieRadiatorCoolantT,:] = eng.data.FC_temperature[:,imission]
+        pare[ieRadiatorCoolantP,:] = eng.data.FC_pressure[:,imission]
+        pare[ieRadiatorHeat,:] = eng.data.FC_heat[:,imission]
 
     end     
-    HXOffDesign!(engine.heat_exchangers, pare, ac.options.ifuel, imission)
+    HXOffDesign!(eng.heat_exchangers, pare, ac.options.ifuel, imission)
 
 #-------------------------------------------------------------------------
 

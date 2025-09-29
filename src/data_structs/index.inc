@@ -1,4 +1,3 @@
-
 #---- indices for missions to be examined 
 #-      (different Ranges Payloads ...)
       const imwOpt = 1 
@@ -179,7 +178,8 @@
 
       const igWfvent = 121
       const igWHXs = 122
-      const igtotal    = 122
+      const igfeng = 123
+      const igtotal    = 123
 
 #---- indices for aero variables at each mission point
       const iaalt     =  1

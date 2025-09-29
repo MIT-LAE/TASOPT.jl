@@ -45,7 +45,7 @@
                              # 2: Engines on "fuselage"
 
     prop_sys_arch = "TF" #Options are TF: Turbofan
-                         #            TE: Turbo-electric
+                         #            constant_TSFC: simple engine with constant TSFC
 [Fuel]
     fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
@@ -430,6 +430,12 @@
     # Core in clean flow or does core ingests KE defect?
     core_in_clean_flow = true
 
+    #Parameters for "constant_TSFC" engine model; not used in other models
+    climb_TSFC = 0.00018 #1/s, example TSFC based on default model
+    cruise_TSFC = 0.00018 #1/s
+    descent_TSFC = 0.00018 #1/s
+    rate_of_climb = "500 ft/min" #needed for climb thrust
+
 [Propulsion.Turbomachinery]
 
     BPR = 5.1
@@ -514,6 +520,13 @@
     weight_model = "fitzgerald_basic"    #Options are "MD": Mark Drela's original model
                                     #   "fitzgerald_basic": NF's new model with basic tech
                                     #     "fitzgerald_adv": NF's new model with advanced tech
+                                    #  "fractional_weight": simple model with constant weight fractions
+                                    #    "constant_weight": use the specified total engine weight
+    #Parameters for "fractional_weight" engine weight model
+    engine_weight_fraction = 0.1 #Fraction of MTOW, includes accessories and pylon
+
+    #Parameters for "constant_weight" engine weight model
+    engine_weight_total = "10000 lbf" #Total weight of all engines, accessories, and pylons
                                     
 #Default model does not have heat exchangers in the propulsion system
 #See cryo_input.toml for template with representative values

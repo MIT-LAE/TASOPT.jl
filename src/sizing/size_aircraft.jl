@@ -27,7 +27,7 @@ function _size_aircraft!(ac; itermax=35,
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
-    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear  = unpack_ac(ac, imission)
+    parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear  = unpack_ac(ac, imission)
 
     # Initialize variables
     time_propsys = 0.0
@@ -523,7 +523,7 @@ function _size_aircraft!(ac; itermax=35,
         if compare_strings(options.opt_engine_location,"wing")
             if compare_strings(options.opt_prop_sys_arch,"te")
                 @error "Support for turboelectric architectures is not currently supported. Their reintroduction with `struct`s is on the roadmap."
-            elseif compare_strings(options.opt_prop_sys_arch,"tf") || compare_strings(options.opt_prop_sys_arch,"fuel_cell_with_ducted_fan")
+            elseif compare_strings(options.opt_prop_sys_arch,"tf") || compare_strings(options.opt_prop_sys_arch,"fuel_cell_with_ducted_fan") || compare_strings(options.opt_prop_sys_arch,"constant_tsfc")
                 Weng1 = parg[igWeng] / parg[igneng]
             end
         else
@@ -700,13 +700,13 @@ function _size_aircraft!(ac; itermax=35,
                 # set static thrust for takeoff routine
                 ip = ipstatic
                 case = "off_design"
-                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+                eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
                 # set rotation thrust for takeoff routine
                 # (already available from cooling calculations)
                 ip = iprotate
                 case = "off_design"
-                engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+                eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
                 takeoff!(ac; printTO = false)
             end
@@ -719,14 +719,14 @@ function _size_aircraft!(ac; itermax=35,
 
         if iterw > 2 #Only include heat exchangers after second iteration
             if engine.model.model_name == "fuel_cell_with_ducted_fan"
-                ipHXdes = iprotate #Design point: takeoff rotation
-                pare[ieRadiatorCoolantT,:] = engine.data.FC_temperature[:,imission]
-                pare[ieRadiatorCoolantP,:] = engine.data.FC_pressure[:,imission]
-                pare[ieRadiatorHeat,:] = engine.data.FC_heat[:,imission]
+                ipdes = iprotate #Design point: takeoff rotation
+                pare[ieRadiatorCoolantT,:] = eng.data.FC_temperature[:,imission]
+                pare[ieRadiatorCoolantP,:] = eng.data.FC_pressure[:,imission]
+                pare[ieRadiatorHeat,:] = eng.data.FC_heat[:,imission]
             end
-            engine.heat_exchangers = hxdesign!(ac, ipHXdes, imission, rlx = 0.5) #design and off-design HX performance
+            eng.heat_exchangers = hxdesign!(ac, ipHXdes, imission, rlx = 0.5) #design and off-design HX performance
 
-            for HX in engine.heat_exchangers
+            for HX in eng.heat_exchangers
                 if HX.type == "Radiator"
                     TASOPT.engine.VerifyRadiatorHeat(engine, imission)
                 end
@@ -787,10 +787,10 @@ function _size_aircraft!(ac; itermax=35,
 
         # Size engine for TOC
         case = "design" #Design the engine for this mission point
-        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
+        eng.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         #Calculate engine mass properties
-        engine.engineweight!(ac)
+        eng.engineweight!(ac)
 
         _mission_iteration!(ac, imission, Ldebug)
 
@@ -809,7 +809,7 @@ function _size_aircraft!(ac; itermax=35,
         para[iaCDwing, ip] = cdfw + cdpw * cosL^3
 
         case = "cooling_sizing"
-        engine.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
+        eng.enginecalc!(ac, case, imission, ip, initializes_engine, iterw)
 
         # Recalculate weight update_weights!()
         ip = ipcruise1
@@ -848,16 +848,20 @@ function _size_aircraft!(ac; itermax=35,
     # set static thrust for takeoff routine
     ip = ipstatic
     case = "off_design"
-    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+    eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
     # set rotation thrust for takeoff routine
     # (already available from cooling calculations)
     ip = iprotate
     case = "off_design"
-    engine.enginecalc!(ac, case, imission, ip, initializes_engine)
+    eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
-    # calculate takeoff and balanced-field lengths
-    takeoff!(ac, printTO = printiter)
+    if options.calculate_takeoff == true #If the engine can model the takeoff performance
+        # calculate takeoff and balanced-field lengths
+        takeoff!(ac, printTO = printiter)
+    else
+        @warn "Engine model does not allow takeoff calculations"
+    end
 
     # calculate CG limits from worst-case payload fractions and packings
     rfuel0, rfuel1, rpay0, rpay1, xCG0, xCG1 = CG_limits(ac; Ldebug = Ldebug)
@@ -882,7 +886,7 @@ function _size_aircraft!(ac; itermax=35,
         @warn "Some engine points did not converge"
     end
     #Warn user if HX effectiveness is overwritten
-    check_HX_overwriting(engine.heat_exchangers, ipHXdes) 
+    check_HX_overwriting(eng.heat_exchangers, ipHXdes) 
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description
