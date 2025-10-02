@@ -378,10 +378,14 @@ readaero(x) = read_input(x, aero, daero)
     para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
     para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
 
-    parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv"))
-    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
+    calculates_CMVf1 = readaero("calculates_CMVf1")
+    if !calculates_CMVf1
+        parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv")) #use specified value
+    #else, CMVf1 will be calculated at sizing using slender body theory assumptions
+    end
+    parg[igCLMf0] = readaero("CL_zero_fuse_moment") #CL where Mfuse = 0 must be specified in either case
     
-    parg[igfBLIf] = readaero("BLI_frac")
+    parg[igfBLIf] = readaero("BLI_frac") #fuselage boundary layer ingestion fraction
 
 weight = read_input("Weights", fuse, dfuse)
 dweight = dfuse["Weights"]
@@ -1112,10 +1116,11 @@ elseif lowercase(propsys) == "constant_tsfc"
     calculate_takeoff = false #Engine model cannot be used for takeoff
 
 else
-    
-    error("Propulsion system \"$propsys\" specified. Choose between
-    > TF - turbo-fan
-    > TE - turbo-electric" )
+    #TODO: FIX THIS labelling
+    error("Propulsion system performance model \"$propsys\" specified. Choose between
+    > `TF` - detailed turbofan cycle model
+    > `constant_tsfc` - simplest engine model
+    > `fuel_cell_with_ducted_fan` - hydrogen fuel cell driving electric fans")
 end
 engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
     

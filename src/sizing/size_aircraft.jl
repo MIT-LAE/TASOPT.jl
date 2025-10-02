@@ -600,8 +600,24 @@ function _size_aircraft!(ac; itermax=35,
                   (2.0 * π * (1.0 + 0.5 * wing.inboard.cross_section.thickness_to_chord))
         parg[igdCLndCL] = dCLndCL
 
-        # Fuselage pitching moment calculation omitted for now
-        # TODO: Add switch to either calculate fuse pitching moment online or use offline specified values
+        # Fuselage pitching moment
+        #=       Use this with caution - slender body theory can be used here to estimate the fuselage 
+        #       pitching moment - this ofc isn't true if the aircraft fuselage isn't "slender"
+        #       Drela used a 3D panel method to actually calculate the CMVf1 and CMV0  for the aircraft studied in the N+3 work
+        #       If sizes are roughly that of the 737/ 777 or D8 perhaps best to use those values and comment out the following bits of code
+        =#
+        if fuse.calculates_CMVf1
+            cosL = cos(wing.layout.sweep * π / 180.0)
+            Mperp = Mach * cosL
+            βn = sqrt(1 - Mperp^2) # PG correction factor with M⟂ 
+
+            # Estimate finite wing ∂CL/∂α from thin airfoil lift-slope 2π and 
+            #  corrections for sweep and compressibility:
+            CLα = 2π * cosL / (sqrt(βn^2 + (2 * cosL / wing.layout.AR)^2) + 2 * cosL / wing.layout.AR)
+            # Estimate CMVf1 via slender body theory: dM/dα = 𝒱 ⟹ dM/dCL = dM/dα × dα/dCL = 𝒱/(dCL/dα)
+            parg[igCMVf1] = fuse.volume/CLα
+        #else, the offline specified value is kept
+        end 
 
         # Size HT
         if (iterw <= 2 && initwgt == 0)
