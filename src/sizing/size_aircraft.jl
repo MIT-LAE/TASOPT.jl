@@ -897,10 +897,9 @@ function _size_aircraft!(ac; itermax=35,
     balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 
-    #Check if all engine points have converged
-    if check_engine_convergence_failure(pare)
-        @warn "Some engine points did not converge"
-    end
+    #Check if all engine points have converged, warn if not
+    check_engine_convergence_failure(pare)
+    
     #Warn user if HX effectiveness is overwritten
     check_HX_overwriting(eng.heat_exchangers) 
 end
