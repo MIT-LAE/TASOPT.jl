@@ -184,6 +184,8 @@
     add_payload_weight_fraction = 0.35 # Additional payload proportional Wfrac
 
 [Fuselage.Aero]
+    calculates_CMVf1 = false  # if true, CMVf1 calculated during size_aircraft!() via slender body theory
+                                # if false, value specified by fuse_moment_volume_deriv is used
     fuse_moment_volume_deriv = "2390.0 ft3" # d(Mfuse/q)/dCL
     CL_zero_fuse_moment      = 0.185         # CL when Mfuse = 0
     #Fuselage velocity overspeed at wing
