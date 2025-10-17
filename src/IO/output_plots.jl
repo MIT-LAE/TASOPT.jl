@@ -580,14 +580,15 @@ function plot_drag_breakdown(ac::aircraft;
         x, data,
         bar_position = :stack,
         label = ["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
-        xlabel = "ip", 
+        # xlabel = "ip", 
         ylabel = show_fractions ? "Fraction of total drag, \$C_{D,( )} / C_D\$" : "Drag component, \$C_{D, ( )}\$",
         title = "Drag Breakdown",
-        xticks = (x, ["$i" for i in ips]),
+        xticks = (x, ["$(ip_labels[i])" for i in ips]),
+        xrotation=-35,
         legend = :outerright
         )
 
-    # Add labels on each box
+    # Add data labels on each box
     if show_values
         for (i, series) in enumerate(eachcol(data))
             for (j, value) in enumerate(series)

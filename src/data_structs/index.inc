@@ -510,8 +510,21 @@ ncrowx = ieTmet1 - ieepsc1
       const ipdescent4 = 15
       const ipdescent5 = 16
       const iptest = 17
-      const iptotal = 17 
+
+      # generate label array programmatically from ip vars in TASOPT module namespace
+      # if it doesn't already exist
+      if !isdefined(@__MODULE__, :ip_labels)
+            names_with_ip = filter(n -> startswith(String(n), "ip"), names(@__MODULE__; all=true))
+            max_ip = maximum([getfield(@__MODULE__, n) for n in names_with_ip])
+            labels = Vector{String}(undef, max_ip)
+            for n in names_with_ip
+                  idx = getfield(@__MODULE__, n)
+                  labels[idx] = replace(String(n), "ip" => "")
+            end
+            const ip_labels = labels
+      end
       
+      const iptotal = 17 
       const ipclimbn   = ipclimb5      # last climb   point
       const ipcruisen  = ipcruise2     # last cruise  point
       const ipdescentn = ipdescent5    # last descent point
