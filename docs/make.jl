@@ -68,9 +68,9 @@ makedocs(
     format = Documenter.HTML(; mathengine=
         Documenter.KaTeX(
             Dict(:delimiters => [
-                Dict(:left => raw"$",   :right => raw"$",   display => false),
-                Dict(:left => raw"$$",  :right => raw"$$",  display => true),
-                Dict(:left => raw"\[",  :right => raw"\]",  display => true),
+                Dict(:left => raw"$",   :right => raw"$",   :display => false),
+                Dict(:left => raw"$$",  :right => raw"$$",  :display => true),
+                Dict(:left => raw"\[",  :right => raw"\]",  :display => true),
                 ],
                 :macros => 
                 Dict("\\genfuel" =>
