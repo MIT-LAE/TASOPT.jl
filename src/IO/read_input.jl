@@ -267,6 +267,7 @@ ddev = dmis["Deviation"]
 readdev(x) = read_input(x, dev, ddev)
 parm[imDeviationDH, :] = Distance.(readdev("deviation_dh"))
 parm[imDeviationDL, :] = Distance.(readdev("deviation_dl"))
+parm[imDeviationStart, :] = Distance.(readdev("deviation_start"))
 
 
 #---------- End Mission vars --------------
