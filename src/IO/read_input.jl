@@ -261,6 +261,14 @@ readdes(x) = read_input(x, des, ddes)
 parm[imgamVDE1, :] .= Angle.(readdes("descent_angle_top-of-descent"))
 parm[imgamVDEn, :] .= Angle.(readdes("descent_angle_bottom-of-descent"))
 
+##Deviation 
+dev = readmis("Deviation")
+ddev = dmis["Deviation"]
+readdev(x) = read_input(x, dev, ddev)
+parm[imDeviationDH, :] = Distance.(readdev("deviation_dh"))
+parm[imDeviationDL, :] = Distance.(readdev("deviation_dl"))
+
+
 #---------- End Mission vars --------------
 
 # ---------------------------------

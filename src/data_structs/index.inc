@@ -35,7 +35,9 @@
       const imfexcdf = 33
       const imDeltaTatm = 34
       const imWfvent = 35
-      const imtotal = 35
+      const imDeviationDH = 36
+      const imDeviationDL = 37
+      const imtotal = 37
 
 #---- indices for geometry (airframe) variables and other sizing variables
       const igRange    =   1
@@ -503,14 +505,18 @@ ncrowx = ieTmet1 - ieepsc1
       const ipclimb4 = 8
       const ipclimb5 = 9
       const ipcruise1 = 10
-      const ipcruise2 = 11
-      const ipdescent1 = 12
-      const ipdescent2 = 13
-      const ipdescent3 = 14
-      const ipdescent4 = 15
-      const ipdescent5 = 16
-      const iptest = 17
-      const iptotal = 17 
+      const ipdeviation1 = 11
+      const ipdeviation2 = 12
+      const ipdeviation3 = 13
+      const ipdeviation4 = 14
+      const ipcruise2 = 15
+      const ipdescent1 = 16
+      const ipdescent2 = 17
+      const ipdescent3 = 18
+      const ipdescent4 = 19
+      const ipdescent5 = 20
+      const iptest = 21
+      const iptotal = 21
       
       const ipclimbn   = ipclimb5      # last climb   point
       const ipcruisen  = ipcruise2     # last cruise  point

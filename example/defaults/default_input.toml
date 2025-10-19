@@ -64,9 +64,9 @@
 [Mission]
     N_missions = 2 # Number of missions to be modeled (first mission is the design mission)
                                 
-    range = ["3000.0 nmi", "2000.0 nmi"] # Design Range + second mission range
+    range = ["3000.0 nmi", "3000.0 nmi"] # Design Range + second mission range
 
-    payload = ["180 pax", "150 pax"]     # Mission payload; pax can be used as a unit of weight.
+    payload = ["180 pax", "180 pax"]     # Mission payload; pax can be used as a unit of weight.
                                         # Weight per pax also specified (215 lbf/pax is std)
 
     weight_per_pax = "215.0 lbf"    # Specify weight per passenger - 
@@ -85,8 +85,8 @@
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
-    takeoff_alt = ["0.0 ft", "500 ft"] 
-    takeoff_T = [288.2, 298.0]
+    takeoff_alt = ["0.0 ft", "0 ft"] 
+    takeoff_T = [288.2, 288.0]
 
     max_balanced_field_length = "8000.0 ft"
     Nland = 6.0 # Max vertical load factor for fuse bending loads
@@ -105,10 +105,14 @@
     minimum_top-of-climb_gradient = 0.015
 
 [Mission.Cruise]
-    cruise_alt  = ["35000 ft", "38000 ft"] 
+    cruise_alt  = ["35000 ft", "35000 ft"] 
     cruise_mach = 0.80
     cruise_CL   = 0.57 #By default, this gets recalculated for off-design mission analysis
                        # (see `fly_mission!()` and `PayloadRange()` for details, or to recalculate altitude instead).
+
+[Mission.Deviation]
+    deviation_dh = ["0.0", "1000.0 ft"]
+    deviation_dl = ["0.0", "50 nmi"]
 
 [Mission.Descent]
     descent_angle_top-of-descent = "-3.0 deg"
