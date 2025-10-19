@@ -486,13 +486,15 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
       cruise_indices = (ipcruise1, ipdeviation1, ipdeviation2, ipdeviation3, ipdeviation4, ipcruise2)
       ncr = length(cruise_indices)
-      # Initializes distance, offsets, climb rate arrays
+      # Track cumulative range from cruise start for each waypoint
       s_values = zeros(Float64, ncr)
+      # Altitude offset relative to the nominal cruise-climb line
       offsets = zeros(Float64, ncr)
+      # γ assigned to each cruise segment (piecewise constant between indices)
       segment_gammas = fill(gamVcr1, ncr - 1)
 
       dR_available = max(dRcruise, 0.0)
-      R_dev = clamp(R_dev_req, 0.0, dR_available)
+      R_dev = clamp(R_dev_req, 0.0, dR_available) # cannot exceed remaining cruise
 
       # TODO: This is a basic flag for the initial implementation, 
       # would want it to actually check if start of cruise / length of 
@@ -511,8 +513,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   sign_h = sign(Δh_dev)
                   γ_up = sign_h * γ_abs
                   γ_dn = -sign_h * γ_abs
-                  den_up = γ_up - gamVcr1
-                  den_dn = γ_dn - gamVcr1
+                  den_up = γ_up - gamVcr1   # difference between climb γ and baseline γ
+                  den_dn = γ_dn - gamVcr1   # difference between descent γ and baseline γ
                   eps_den = 1.0e-8
                   if abs(den_up) < eps_den || abs(den_dn) < eps_den
                         use_deviation = false
@@ -522,6 +524,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                               use_deviation = false
                         else
                               Δh_limit = R_dev / abs(coef_total)
+                              # Limit requested altitude change so climb/descent legs stay feasible
                               Δh_eff = clamp(Δh_dev, -Δh_limit, Δh_limit)
                               if abs(Δh_eff) < eps_height
                                     use_deviation = false
@@ -534,8 +537,10 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                                           R_hold = max(R_dev - (Δs_up + Δs_dn), 0.0)
                                           R_dev_total = Δs_up + R_hold + Δs_dn
                                           S_dev_max = max(dRcruise - R_dev_total, 0.0)
+                                          # Place deviation entry after requested start distance while staying in cruise span
                                           S_dev = clamp(S_dev_req, 0.0, S_dev_max)
 
+                                          # Assemble cumulative range markers for all cruise nodes
                                           s_values[1] = 0.0
                                           s_values[2] = S_dev
                                           s_values[3] = S_dev + Δs_up
@@ -543,6 +548,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                                           s_values[5] = s_values[4] + Δs_dn
                                           s_values[6] = dRcruise
 
+                                          # Compose straight–climb–level–descent–straight γ profile
                                           segment_gammas = [gamVcr1, γ_up, gamVcr1, γ_dn, gamVcr1]
                                     end
                               end
@@ -552,6 +558,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       end
 
       if !use_deviation
+            # No deviation requested, reuse non-deviation linear interpolation between cruise markers
             for (i, frac) in enumerate(range(0.0, stop = 1.0, length = ncr))
                   s_values[i] = frac * dRcruise
             end
@@ -561,9 +568,10 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       offsets[1] = 0.0
       for seg = 1:ncr-1
             Δs = s_values[seg+1] - s_values[seg]
+            # Offset integrates local γ minus baseline cruise γ so we return to the base profile
             offsets[seg+1] = offsets[seg] + (segment_gammas[seg] - gamVcr1) * Δs
       end
-      offsets[end] = 0.0
+      offsets[end] = 0.0 # Force return to nominal cruise altitude at ipcruise2
 
       range_start = para[iaRange, ipcruise1]
       for (idx, ipx) in enumerate(cruise_indices)
@@ -578,6 +586,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       para[iagamV, cruise_indices[end]] = para[iagamV, cruise_indices[end-1]]
 
       Mach_cruise = para[iaMach, ipcruise1]
+      # Recompute ambient conditions, trim, drag, and engine state at every cruise waypoint
+      # so the deviation feeds straight into the existing range/time integration.
       for k in 1:ncr
             ipx = cruise_indices[k]
             altkm = para[iaalt, ipx] / 1000.0
@@ -627,6 +637,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             para[iaROC, ipx] = sin(para[iagamV, ipx]) * V * 60.0 / ft_to_m
 
             if k > 1
+                  # Integrate range, time, and weight fraction over the cruise segment
+                  # using the same trapezoidal scheme applied in climb/descent.
                   ip_prev = cruise_indices[k-1]
                   ip_curr = ipx
                   dR = para[iaRange, ip_curr] - para[iaRange, ip_prev]
@@ -648,6 +660,8 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       V = pare[ieu0, ip]
       p0 = pare[iep0, ip]
       ρ0 = pare[ierho0, ip]
+      # Refresh end-of-cruise γ with the analytic cruise-climb expression so the
+      # downstream descent setup sees the same boundary condition as the original model.
       gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
       para[iagamV, ip] = gamVcr2
 
