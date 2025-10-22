@@ -43,6 +43,10 @@
         @test p6 isa Plots.Plot
         p7 = plot_airf(ac)
         @test p7 isa Plots.Plot
+        p8 = plot_drag_breakdown(ac, show_values=true)
+        p9 = plot_drag_breakdown(ac, ip = :, show_fractions=false)
+        @test p8 isa Plots.Plot
+        @test p9 isa Plots.Plot
     end
 
 end

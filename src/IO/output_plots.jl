@@ -507,23 +507,115 @@ function find_aerodrome_code(b::Float64)
     return groups, Float64(maxb)
 end
 
+#TODO: re-do/re-apply label_bars() to use here
 """
-    plot_details(ac::aircraft; plot_obj = nothing)
+    plot_drag_breakdown(ac::aircraft; ip = [ipclimb1, ipcruise1, ipcruisen, ipdescent1, ipdescentn], imission = 1, show_fractions = true, show_values = false)
+
+Generates a stacked bar plot showing the breakdown of drag components for specified flight points of an aircraft.
+
+# Arguments
+- `ac::aircraft`: Aircraft object containing aerodynamic data
+- `ip::Union{Int, AbstractVector{Int}, Colon}`: Mission point(s) to analyze. Can be a single integer, vector of integers, or `:` for all points
+- `imission::Int`: Mission number to analyze (default: 1)
+- `show_fractions::Bool`: If true, shows components as fractions of total drag (default: true)
+- `show_values::Bool`: If true, displays numerical values on each bar segment (default: false). Wouldn't advise true for len(ip) > 5
+
+# Returns
+- `Plots.Plot`: A stacked bar plot object showing drag components:
+  - CDi: Induced drag
+  - CDnace: Nacelle drag
+  - CDvtail: Vertical tail drag
+  - CDhtail: Horizontal tail drag
+  - CDwing: Wing drag
+  - CDfuse: Fuselage drag
+
+# Notes
+- Values less than 0.001 are not labeled when `show_values = true`
+- When `show_fractions = true`, components are normalized by total drag coefficient
+"""
+function plot_drag_breakdown(ac::aircraft; 
+    ip::Union{Int, AbstractVector{Int}, Colon} = [ipclimb1, ipcruise1, ipcruisen, ipdescent1, ipdescentn], imission::Int = 1,
+    show_fractions::Bool = true, show_values::Bool = false)
+    
+    #get aircraft aero data
+    para = view(ac.para, :, :, imission)
+
+    #if all points requested, generate ip
+    if ip == Colon()
+        ip = 1:1:iptotal
+    end
+
+    # make ip a vector for consistency
+    ips = isa(ip, Int) ? [ip] : ip
+
+    # fetch/arrange the data
+    LoD = [para[iaCL, i] for i in ips]./ [para[iaCD, i] for i in ips] 
+    CL = [para[iaCL, i] for i in ips]
+    CD = [para[iaCD, i] for i in ips]
+    CDfuse  = [para[iaCDfuse, i]  for i in ips]
+    CDi     = [para[iaCDi, i]     for i in ips]
+    CDwing  = [para[iaCDwing, i]  for i in ips]
+    CDhtail = [para[iaCDhtail, i] for i in ips]
+    CDvtail = [para[iaCDvtail, i] for i in ips]
+    CDnace  = [para[iaCDnace, i]  for i in ips]
+
+    if show_fractions
+        # Compute fractional contributions
+        CDfuse  = CDfuse  ./ CD
+        CDi     = CDi     ./ CD
+        CDwing  = CDwing  ./ CD
+        CDhtail = CDhtail ./ CD
+        CDvtail = CDvtail ./ CD
+        CDnace  = CDnace  ./ CD
+    end
+
+    # Combine drags into a matrix (points x components)
+    data = hcat(CDi, CDnace, CDvtail, CDhtail, CDwing, CDfuse)
+
+    # X positions
+    x = 0:length(ips)-1
+
+    # Plot
+    p = groupedbar(
+        x, data,
+        bar_position = :stack,
+        label = ["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
+        # xlabel = "ip", 
+        ylabel = show_fractions ? "Fraction of total drag, \$C_{D,( )} / C_D\$" : "Drag component, \$C_{D, ( )}\$",
+        title = "Drag Breakdown",
+        xticks = (x, ["$(ip_labels[i])" for i in ips]),
+        xrotation=-35,
+        legend = :outerright
+        )
+
+    # Add data labels on each box
+    if show_values
+        for (i, series) in enumerate(eachcol(data))
+            for (j, value) in enumerate(series)
+                if value > 0.001  # Only label if value is significant
+                    # Calculate cumulative sum up to but not including current value
+                    y_base = sum(data[j, 1:i-1])
+                    y_top = show_fractions ? 1 : CD[j]
+                    y_pos = y_top - y_base - value/2 # Position label in middle of current segment
+                    annotate!(p, j-1, y_pos, 
+                        text(@sprintf("%.5f", value), 9, :white, :center))
+                end
+            end
+        end    
+    end
+    
+    return p #plot object
+end
+
+"""
+    plot_details(ac::aircraft)
 
 `plot_details` combines a [`stickfig`](@ref) plot along with a mission summary,
 weight and drag buildup stacked bar charts to present results.
 """
-function plot_details(ac::aircraft)
-    parg = ac.parg
-    fuselage = ac.fuselage
-    wing = ac.wing
-    htail = ac.htail
-    vtail = ac.vtail
-    landing_gear = ac.landing_gear
-    
-    @views pare = ac.pare[:,:,1]
-    @views para = ac.para[:,:,1]
-    @views parm = ac.parm[:,:,1]
+function plot_details(ac::aircraft; imission::Int=1)
+
+    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission)
 
   ## Gather data to be plotted
     # Drag build-up for subplot 2
