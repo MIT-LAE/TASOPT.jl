@@ -9,7 +9,7 @@ const MIN_DISTANCE_SQUARED = eps()
     $(TYPEDEF)
 
 Two-dimensional point type using StaticArrays for stack allocation.
-First component is y-coordinate, second is z-coordinate.
+First component is y-coordinate (along wing direction), second is z-coordinate (up/down).
 # Examples
 ```julia-repl
 julia> p = Point2D(1.0, 2.0) # Creates point at y=1.0, z=2.0
@@ -55,6 +55,9 @@ struct WakeElement
         control_point::Union{Point2D, Nothing}=nothing)
         Δs = p2 - p1
         length = norm(Δs)
+        if (length == 0.0)
+            throw(ArgumentError("p1 and p2 must be distinct"))
+        end
         # Normal points "up" in s-n-l coordinate system along the sheet where 
         # s is along wake sheet (left to right), l is out of the page like x̂ and so n is up.
         unit_normal = Point2D(-Δs[2] / length, Δs[1] / length)
@@ -85,6 +88,7 @@ Returns an SVector of WakeElements
     end
 end
 
+#Convenience functions to get element lengths, Δy's and Δz's
 function element_lengths(wake_elements::SVector{N, WakeElement}) where N
     SVector{N, Float64}(wake_elements[i].length for i in 1:N)
 end
@@ -151,6 +155,18 @@ function WakeSystem(points::SVector{NP, Point2D};
     return ws
 end  # function WakeSystem
 
+"""
+    calculate_influence_coefficient(r_vec, normal)
+
+Returns the 2D vortex influence coefficient induced at a control point by a unit vortex
+at the wake point. 
+
+`r_vec` is the displacement vector `[Δy, Δz]` from the vortex to the evaluation point.
+⟹`  n⋅(x̂ × r)/|r|²`,
+  `= (-ny*z + nz*y)/|r|²  ⟸ x̂ × r = [-z, y]`
+
+If `|r|²` is below a threshold (`MIN_DISTANCE_SQUARED`), the value is clipped to zero to avoid singularities.
+"""
 @inline function calculate_influence_coefficient(r_vec::Point2D, normal::Point2D)
     r_squared = dot(r_vec, r_vec)
     # Effectively checking if the control point is too close to a wake point. 
