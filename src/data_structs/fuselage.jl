@@ -66,7 +66,7 @@ $TYPEDFIELDS
     """Fuselage Shell Modulus Ratio Ebend/Eskin"""
     ratio_young_mod_fuse_bending::Float64 = 0
     """Pitching moment estimation method flag"""
-    calculates_CMVf1::Bool = false
+    calculates_pitching_moment_volume::Bool = false
 end
 
 function dx_cabin(fuse::Fuselage)

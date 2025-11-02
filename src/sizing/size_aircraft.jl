@@ -604,9 +604,10 @@ function _size_aircraft!(ac; itermax=35,
         #=       Use this with caution - slender body theory can be used here to estimate the fuselage 
         #       pitching moment - this ofc isn't true if the aircraft fuselage isn't "slender"
         #       Drela used a 3D panel method to actually calculate the CMVf1 and CMV0  for the aircraft studied in the N+3 work
-        #       If sizes are roughly that of the 737/ 777 or D8 perhaps best to use those values and comment out the following bits of code
+        #       If sizes are roughly that of the 737/ 777 or D8 perhaps best to use those values and and specify 
+        #       `calculates_fuse_moment_vol_deriv = false`, which would better capture the "thick body" effects. 
         =#
-        if fuse.calculates_CMVf1
+        if fuse.calculates_pitching_moment_volume
             cosL = cos(wing.layout.sweep * π / 180.0)
             Mperp = Mach * cosL
             βn = sqrt(1 - Mperp^2) # PG correction factor with M⟂ 
