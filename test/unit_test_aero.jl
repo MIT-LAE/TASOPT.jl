@@ -347,7 +347,7 @@ end
     
     #CMVf1 calculation
     ac = load_default_model(); 
-    ac.fuselage.calculates_CMVf1 = true
+    ac.fuselage.calculates_pitching_moment_volume = true
     size_aircraft!(ac)
 
     #ref value from TASOPT.jl, REPL execution

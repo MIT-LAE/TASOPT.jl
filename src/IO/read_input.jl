@@ -378,12 +378,14 @@ readaero(x) = read_input(x, aero, daero)
     para[iafdus, :, :] .= transpose(readaero("wingbreak_fuse_overspeed"))
     para[iafdut, :, :] .= transpose(readaero("wingtip_fuse_overspeed"))
 
-    calculates_CMVf1 = readaero("calculates_CMVf1")
-    if !calculates_CMVf1
-        parg[igCMVf1] = Vol(readaero("fuse_moment_volume_deriv")) #use specified value
-    #else, CMVf1 will be calculated at sizing using slender body theory assumptions
-    end
-    parg[igCLMf0] = readaero("CL_zero_fuse_moment") #CL where Mfuse = 0 must be specified in either case
+    # if calculates_pitching_moment_volume, 
+    #  CMVf1 will be calculated at sizing using slender body theory assumptions
+    # else, the value specified in the input is used. 
+    # Note: specified CMVf1 is only accessible when read_aircraft_model() is called.
+    fuselage.calculates_pitching_moment_volume = readaero("calculates_pitching_moment_volume")
+    parg[igCMVf1] = fuselage.calculates_pitching_moment_volume ? nothing : Vol(readaero("pitching_moment_volume"))
+    #in either case, the CL where Mfuse = 0 must be specified
+    parg[igCLMf0] = readaero("CL_zero_fuse_moment")
     
     parg[igfBLIf] = readaero("BLI_frac") #fuselage boundary layer ingestion fraction
 

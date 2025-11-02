@@ -130,8 +130,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_aero["wingbreak_fuse_overspeed"] = para[iafdus,1,:]
         d_fuse_aero["wingtip_fuse_overspeed"] = para[iafdut,1,:]
 
-        d_fuse_aero["calculates_CMVf1"] = fuselage.calculates_CMVf1
-        d_fuse_aero["fuse_moment_volume_deriv"] = parg[igCMVf1]
+        d_fuse_aero["calculates_pitching_moment_volume"] = fuselage.calculates_pitching_moment_volume
+        d_fuse_aero["pitching_moment_volume"] = parg[igCMVf1]
         d_fuse_aero["CL_zero_fuse_moment"] = parg[igCLMf0]
     d_fuse["Aero"] = d_fuse_aero
 
