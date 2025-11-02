@@ -481,7 +481,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
       # ---- build cruise/deviation profile between ipcruise1 and ipcruise2
       Δh_dev = parm[imDeviationDH]
-      R_dev_req = parm[imDeviationDL]
+      R_dev_req = parm[imDeviationDL] # interpreted as level-leg distance between deviation waypoints 3 and 4
       S_dev_req = parm[imDeviationStart]
 
       cruise_indices = (ipcruise1, ipdeviation1, ipdeviation2, ipdeviation3, ipdeviation4, ipcruise2)
@@ -495,69 +495,118 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
       dR_available = max(dRcruise, 0.0)
       R_dev = clamp(R_dev_req, 0.0, dR_available) # cannot exceed remaining cruise
-
-      # TODO: This is a basic flag for the initial implementation, 
-      # would want it to actually check if start of cruise / length of 
-      #       deviation is shorter than cruise distance etc
       eps_range = 1.0e-6
       eps_height = 1.0e-3
-      use_deviation = (R_dev > eps_range) && (abs(Δh_dev) > eps_height)
+
+      # Evaluate feasibility checks before making deviation profile.
+      use_deviation = false
+      if dR_available > eps_range
+            use_deviation = true
+      elseif R_dev > eps_range
+            use_deviation = true
+      elseif abs(Δh_dev) > eps_height
+            use_deviation = true
+      end
 
       if use_deviation
             γ_climb = para[iagamV, ipclimbn]
             γ_abs = abs(γ_climb)
             eps_gamma = 1.0e-6
             if γ_abs < eps_gamma
+                  if Ldebug
+                        warn("Deviation skipped: reference climb angle at top-of-climb is near zero.")
+                  end
                   use_deviation = false
             else
-                  sign_h = sign(Δh_dev)
-                  γ_up = sign_h * γ_abs
-                  γ_dn = -sign_h * γ_abs
-                  den_up = γ_up - gamVcr1   # difference between climb γ and baseline γ
-                  den_dn = γ_dn - gamVcr1   # difference between descent γ and baseline γ
-                  eps_den = 1.0e-8
-                  if abs(den_up) < eps_den || abs(den_dn) < eps_den
+                  BW_cap = para[iafracW, ipcruise1] * WMTO + para[iaWbuoy, ipcruise1]
+                  # Commented for now but might need since dividing by this later
+                  # BW_cap = max(BW_cap, 1.0e-6)
+                  DoL_cap = para[iaCD, ipcruise1] / para[iaCL, ipcruise1]
+                  # Use the available thrust at top of climb
+                  F_available = max(pare[ieFe, ipclimbn] * parg[igneng], 0.0)
+                  sin_cap = F_available / BW_cap - DoL_cap
+                  if sin_cap <= eps_gamma
+                        if Ldebug
+                              warn("Deviation skipped: available thrust at cruise cannot sustain a climb above the baseline line.")
+                        end
                         use_deviation = false
                   else
-                        coef_total = (1.0 / den_up) - (1.0 / den_dn)
-                        if abs(coef_total) < eps_den
+                        γ_cap = asin(sin_cap)
+                        γ_eff = min(γ_abs, γ_cap)
+                        if γ_eff < eps_gamma
+                              if Ldebug
+                                    warn("Deviation skipped: available thrust leads to deviation climb angle of zero.")
+                              end
                               use_deviation = false
                         else
-                              Δh_limit = R_dev / abs(coef_total)
-                              # Limit requested altitude change so climb/descent legs stay feasible
-                              Δh_eff = clamp(Δh_dev, -Δh_limit, Δh_limit)
-                              if abs(Δh_eff) < eps_height
+                              sign_h = sign(Δh_dev)
+                              γ_up = sign_h * γ_eff
+                              γ_dn = -sign_h * γ_eff
+                              den_up = γ_up - gamVcr1   # difference between climb γ and baseline γ
+                              den_dn = γ_dn - gamVcr1   # difference between descent γ and baseline γ
+                              eps_den = 1.0e-8
+                              if abs(den_up) < eps_den || abs(den_dn) < eps_den
+                                    if Ldebug
+                                          warn("Deviation skipped: deviation climb/descend angles equal to cruise-climb angle.")
+                                    end
                                     use_deviation = false
                               else
-                                    Δs_up = Δh_eff / den_up
-                                    Δs_dn = -Δh_eff / den_dn
-                                    if (Δs_up < 0.0) || (Δs_dn < 0.0)
+                                    coef_total = (1.0 / den_up) - (1.0 / den_dn)
+                                    if abs(coef_total) < eps_den
+                                          if Ldebug
+                                                warn("Deviation skipped: deviation geometry becomes ill-conditioned (denominator nearly zero).")
+                                          end
                                           use_deviation = false
                                     else
-                                          R_hold = max(R_dev - (Δs_up + Δs_dn), 0.0)
-                                          R_dev_total = Δs_up + R_hold + Δs_dn
-                                          S_dev_max = max(dRcruise - R_dev_total, 0.0)
-                                          # Place deviation entry after requested start distance while staying in cruise span
-                                          S_dev = clamp(S_dev_req, 0.0, S_dev_max)
+                                          Δh_limit = dR_available / abs(coef_total)
+                                          # Limit requested altitude change so climb/descent legs stay feasible within cruise span
+                                          Δh_eff = clamp(Δh_dev, -Δh_limit, Δh_limit)
+                                          if abs(Δh_eff) < eps_height
+                                                if Ldebug
+                                                      warn("Deviation skipped: altitude change requirement shrinks to zero after enforcing geometry limits.")
+                                                end
+                                                use_deviation = false
+                                          else
+                                                Δs_up = Δh_eff / den_up
+                                                Δs_dn = -Δh_eff / den_dn
+                                                if (Δs_up < 0.0) || (Δs_dn < 0.0)
+                                                      if Ldebug
+                                                            warn("Deviation skipped: computed deviation leg is negative length.")
+                                                      end
+                                                      use_deviation = false
+                                                else
+                                                      base_length = Δs_up + Δs_dn
+                                                      if base_length > dR_available + eps_range
+                                                            if Ldebug
+                                                                  warn("Deviation skipped: climb/descent legs exceed available cruise distance.")
+                                                            end
+                                                            use_deviation = false
+                                                      else
+                                                            R_hold = max(R_dev - base_length, 0.0)
+                                                            R_dev_total = base_length + R_hold
+                                                            S_dev_max = max(dRcruise - R_dev_total, 0.0)
+                                                            # Place deviation entry after requested start distance while staying in cruise span
+                                                            S_dev = clamp(S_dev_req, 0.0, S_dev_max)
 
-                                          # Assemble cumulative range markers for all cruise nodes
-                                          s_values[1] = 0.0
-                                          s_values[2] = S_dev
-                                          s_values[3] = S_dev + Δs_up
-                                          s_values[4] = s_values[3] + R_hold
-                                          s_values[5] = s_values[4] + Δs_dn
-                                          s_values[6] = dRcruise
+                                                            # Assemble cumulative range markers for all cruise nodes
+                                                            s_values[1] = 0.0
+                                                            s_values[2] = S_dev
+                                                            s_values[3] = S_dev + Δs_up
+                                                            s_values[4] = s_values[3] + R_hold
+                                                            s_values[5] = s_values[4] + Δs_dn
+                                                            s_values[6] = dRcruise
 
-                                          # Compose straight–climb–level–descent–straight γ profile
-                                          segment_gammas = [gamVcr1, γ_up, gamVcr1, γ_dn, gamVcr1]
+                                                            # Compose straight–climb–level–descent–straight γ profile
+                                                            segment_gammas = [gamVcr1, γ_up, gamVcr1, γ_dn, gamVcr1]
+                                                      end
+                                                end
+                                          end
                                     end
                               end
                         end
                   end
             end
-      end
-
-      if !use_deviation
+      else
             # No deviation requested, reuse non-deviation linear interpolation between cruise markers
             for (i, frac) in enumerate(range(0.0, stop = 1.0, length = ncr))
                   s_values[i] = frac * dRcruise
@@ -651,7 +700,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             end
       end
 
-      # Update end-of-cruise gamma with analytic expression for consistency
+      # Update end-of-cruise gamma 
       ip = ipcruisen
       DoL = para[iaCD, ip] / para[iaCL, ip]
       W = para[iafracW, ip] * WMTO
@@ -661,7 +710,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       p0 = pare[iep0, ip]
       ρ0 = pare[ierho0, ip]
       # Refresh end-of-cruise γ with the analytic cruise-climb expression so the
-      # downstream descent setup sees the same boundary condition as the original model.
+      # downstream descent setup sees the same conditions as the original model.
       gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
       para[iagamV, ip] = gamVcr2
 
