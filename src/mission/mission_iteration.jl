@@ -515,8 +515,6 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   use_deviation = false
             else
                   BW_cap = para[iafracW, ipcruise1] * WMTO + para[iaWbuoy, ipcruise1]
-                  # Commented for now but might need since dividing by this later
-                  # BW_cap = max(BW_cap, 1.0e-6)
                   DoL_cap = para[iaCD, ipcruise1] / para[iaCL, ipcruise1]
                   # Use the available thrust at top of climb
                   F_available = max(pare[ieFe, ipclimbn] * parg[igneng], 0.0)
@@ -602,121 +600,219 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                         end
                   end
             end
-      else
-            # No deviation requested, reuse non-deviation linear interpolation between cruise markers
-            for (i, frac) in enumerate(range(0.0, stop = 1.0, length = ncr))
-                  s_values[i] = frac * dRcruise
+      end
+
+      if use_deviation
+            offsets[1] = 0.0
+            for seg = 1:ncr-1
+                  Δs = s_values[seg+1] - s_values[seg]
+                  # Offset integrates local γ minus baseline cruise γ so we return to the base profile
+                  offsets[seg+1] = offsets[seg] + (segment_gammas[seg] - gamVcr1) * Δs
             end
-            segment_gammas .= gamVcr1
-      end
+            offsets[end] = 0.0 # Force return to nominal cruise altitude at ipcruise2
 
-      offsets[1] = 0.0
-      for seg = 1:ncr-1
-            Δs = s_values[seg+1] - s_values[seg]
-            # Offset integrates local γ minus baseline cruise γ so we return to the base profile
-            offsets[seg+1] = offsets[seg] + (segment_gammas[seg] - gamVcr1) * Δs
-      end
-      offsets[end] = 0.0 # Force return to nominal cruise altitude at ipcruise2
+            range_start = para[iaRange, ipcruise1]
+            for (idx, ipx) in enumerate(cruise_indices)
+                  para[iaRange, ipx] = range_start + s_values[idx]
+                  para[iaalt, ipx] = altc + gamVcr1 * s_values[idx] + offsets[idx]
+            end
 
-      range_start = para[iaRange, ipcruise1]
-      for (idx, ipx) in enumerate(cruise_indices)
-            para[iaRange, ipx] = range_start + s_values[idx]
-            para[iaalt, ipx] = altc + gamVcr1 * s_values[idx] + offsets[idx]
-      end
+            for seg = 1:ncr-1
+                  start_idx = cruise_indices[seg]
+                  para[iagamV, start_idx] = segment_gammas[seg]
+            end
+            para[iagamV, cruise_indices[end]] = para[iagamV, cruise_indices[end-1]]
 
-      for seg = 1:ncr-1
-            start_idx = cruise_indices[seg]
-            para[iagamV, start_idx] = segment_gammas[seg]
-      end
-      para[iagamV, cruise_indices[end]] = para[iagamV, cruise_indices[end-1]]
+            Mach_cruise = para[iaMach, ipcruise1]
+            # Recompute ambient conditions, trim, drag, and engine state at every cruise waypoint
+            # so the deviation feeds straight into the existing range/time integration.
+            for k in 1:ncr
+                  ipx = cruise_indices[k]
+                  altkm = para[iaalt, ipx] / 1000.0
+                  T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
+                  pare[iep0, ipx] = p0
+                  pare[ieT0, ipx] = T0
+                  pare[iea0, ipx] = a0
+                  pare[ierho0, ipx] = ρ0
+                  pare[iemu0, ipx] = μ0
+                  para[iaMach, ipx] = Mach_cruise
+                  pare[ieM0, ipx] = Mach_cruise
+                  pare[ieu0, ipx] = Mach_cruise * a0
+                  para[iaReunit, ipx] = Mach_cruise * a0 * ρ0 / μ0
 
-      Mach_cruise = para[iaMach, ipcruise1]
-      # Recompute ambient conditions, trim, drag, and engine state at every cruise waypoint
-      # so the deviation feeds straight into the existing range/time integration.
-      for k in 1:ncr
-            ipx = cruise_indices[k]
-            altkm = para[iaalt, ipx] / 1000.0
+                  rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
+                  para[iaWbuoy, ipx] = (rhocab - ρ0) * gee * parg[igcabVol]
+
+                  γ = para[iagamV, ipx]
+                  cosg = cos(γ)
+
+                  W = para[iafracW, ipx] * WMTO
+                  BW = W + para[iaWbuoy, ipx]
+                  Wf = W - Wzero
+                  rfuel = Wf / parg[igWfuel]
+                  opt_trim_var = "CL_htail"
+                  balance_aircraft!(ac, imission, ipx, rfuel, rpay, ξpay, opt_trim_var; 
+                                    Ldebug = Ldebug)
+
+                  computes_wing_direct = true
+                  aircraft_drag!(ac, imission, ipx, computes_wing_direct)
+                  DoL = para[iaCD, ipx] / para[iaCL, ipx]
+                  W = para[iafracW, ipx] * WMTO
+                  BW = W + para[iaWbuoy, ipx]
+                  Ftotal = BW * (DoL + para[iagamV, ipx])
+                  pare[ieFe, ipx] = Ftotal / parg[igneng]
+
+                  eng.enginecalc!(ac, "off_design", imission, ipx, initializes_engine)
+
+                  Ftotal = pare[ieFe, ipx] * parg[igneng]
+                  TSFC = pare[ieTSFC, ipx]
+                  V = pare[ieu0, ipx]
+                  cosg = cos(para[iagamV, ipx])
+                  FoW[ipx] = Ftotal / (BW * cosg) - DoL
+                  mfuel = pare[iemfuel, ipx]
+                  FFC[ipx] = mfuel * gee / (W * V * cosg)
+                  Vgi[ipx] = 1.0 / (V * cosg)
+                  para[iaROC, ipx] = sin(para[iagamV, ipx]) * V * 60.0 / ft_to_m
+
+                  if k > 1
+                        # Integrate range, time, and weight fraction over the cruise segment
+                        # using the same trapezoidal scheme applied in climb/descent.
+                        ip_prev = cruise_indices[k-1]
+                        ip_curr = ipx
+                        dR = para[iaRange, ip_curr] - para[iaRange, ip_prev]
+                        FFCavg = 0.5 * (FFC[ip_curr] + FFC[ip_prev])
+                        Vgiavg = 0.5 * (Vgi[ip_curr] + Vgi[ip_prev])
+                        dt = dR * Vgiavg
+                        rW = exp(-dR * FFCavg)
+                        para[iatime, ip_curr] = para[iatime, ip_prev] + dt
+                        para[iafracW, ip_curr] = para[iafracW, ip_prev] * rW
+                  end
+            end
+
+            # Update end-of-cruise gamma for deviation path
+            ip = ipcruisen
+            DoL = para[iaCD, ip] / para[iaCL, ip]
+            W = para[iafracW, ip] * WMTO
+            BW = W + para[iaWbuoy, ip]
+            TSFC = pare[ieTSFC, ip]
+            V = pare[ieu0, ip]
+            p0 = pare[iep0, ip]
+            ρ0 = pare[ierho0, ip]
+            gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
+            para[iagamV, ip] = gamVcr2
+
+            cosg = cos(gamVcr2)
+            Ftotal = pare[ieFe, ip] * parg[igneng]
+            FoW[ip] = Ftotal / (BW * cosg) - DoL
+            mfuel = pare[iemfuel, ip]
+            FFC[ip] = mfuel * gee / (W * V * cosg)
+            Vgi[ip] = 1.0 / (V * cosg)
+            para[iaROC, ip] = sin(gamVcr2) * V * 60.0 / ft_to_m
+      else
+            # Final cruise point (legacy no-deviation behaviour)
+            ip = ipcruisen
+            Mach = para[iaMach, ip]
+            altkm = altd / 1000.0
+
             T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
-            pare[iep0, ipx] = p0
-            pare[ieT0, ipx] = T0
-            pare[iea0, ipx] = a0
-            pare[ierho0, ipx] = ρ0
-            pare[iemu0, ipx] = μ0
-            para[iaMach, ipx] = Mach_cruise
-            pare[ieM0, ipx] = Mach_cruise
-            pare[ieu0, ipx] = Mach_cruise * a0
-            para[iaReunit, ipx] = Mach_cruise * a0 * ρ0 / μ0
+            pare[iep0, ip] = p0
+            pare[ieT0, ip] = T0
+            pare[iea0, ip] = a0
+            pare[ierho0, ip] = ρ0
+            pare[iemu0, ip] = μ0
+            pare[ieM0, ip] = Mach
+            pare[ieu0, ip] = Mach * a0
+            para[iaReunit, ip] = Mach * a0 * ρ0 / μ0
+            para[iaalt, ip] = altd
 
-            rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
-            para[iaWbuoy, ipx] = (rhocab - ρ0) * gee * parg[igcabVol]
+            ρcab = max(parg[igpcabin], p0) / (RSL * Tref)
+            para[iaWbuoy, ip] = (ρcab - ρ0) * gee * parg[igcabVol]
 
-            γ = para[iagamV, ipx]
-            cosg = cos(γ)
-
-            W = para[iafracW, ipx] * WMTO
-            BW = W + para[iaWbuoy, ipx]
-            Wf = W - Wzero
+            # Set pitch trim by adjusting CLh
+            Wf = para[iafracW, ip] * WMTO - Wzero
             rfuel = Wf / parg[igWfuel]
             opt_trim_var = "CL_htail"
-            balance_aircraft!(ac, imission, ipx, rfuel, rpay, ξpay, opt_trim_var; 
-                              Ldebug = Ldebug)
+            balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+                        Ldebug = Ldebug)
 
+            # Calc Drag
             computes_wing_direct = true
-            aircraft_drag!(ac, imission, ipx, computes_wing_direct)
-            DoL = para[iaCD, ipx] / para[iaCL, ipx]
-            W = para[iafracW, ipx] * WMTO
-            BW = W + para[iaWbuoy, ipx]
-            Ftotal = BW * (DoL + para[iagamV, ipx])
-            pare[ieFe, ipx] = Ftotal / parg[igneng]
+            aircraft_drag!(ac, imission, ip, computes_wing_direct)
+            DoL = para[iaCD, ip] / para[iaCL, ip]
+            W = para[iafracW, ip] * WMTO
+            BW = W + para[iaWbuoy, ip]
+            Ftotal = BW * (DoL + para[iagamV, ip])
+            pare[ieFe, ip] = Ftotal / parg[igneng]
 
-            eng.enginecalc!(ac, "off_design", imission, ipx, initializes_engine)
+            eng.enginecalc!(ac, "off_design", imission, ip, initializes_engine)
+            TSFC = pare[ieTSFC, ip]
 
-            Ftotal = pare[ieFe, ipx] * parg[igneng]
-            TSFC = pare[ieTSFC, ipx]
-            V = pare[ieu0, ipx]
-            cosg = cos(para[iagamV, ipx])
-            FoW[ipx] = Ftotal / (BW * cosg) - DoL
-            mfuel = pare[iemfuel, ipx]
-            FFC[ipx] = mfuel * gee / (W * V * cosg)
-            Vgi[ipx] = 1.0 / (V * cosg)
-            para[iaROC, ipx] = sin(para[iagamV, ipx]) * V * 60.0 / ft_to_m
+            V = pare[ieu0, ip]
+            p0 = pare[iep0, ip]
+            ρ0 = pare[ierho0, ip]
+            DoL = para[iaCD, ip] / para[iaCL, ip]
 
-            if k > 1
-                  # Integrate range, time, and weight fraction over the cruise segment
-                  # using the same trapezoidal scheme applied in climb/descent.
-                  ip_prev = cruise_indices[k-1]
-                  ip_curr = ipx
-                  dR = para[iaRange, ip_curr] - para[iaRange, ip_prev]
-                  FFCavg = 0.5 * (FFC[ip_curr] + FFC[ip_prev])
-                  Vgiavg = 0.5 * (Vgi[ip_curr] + Vgi[ip_prev])
-                  dt = dR * Vgiavg
-                  rW = exp(-dR * FFCavg)
-                  para[iatime, ip_curr] = para[iatime, ip_prev] + dt
-                  para[iafracW, ip_curr] = para[iafracW, ip_prev] * rW
+            gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
+            para[iagamV, ip] = gamVcr2
+
+            cosg = cos(gamVcr1)
+
+            FoW[ip] = Ftotal / (BW * cosg) - DoL
+
+            mfuel = pare[iemfuel, ip]
+            FFC[ip] = mfuel * gee / (W * V * cosg) 
+
+            Vgi[ip] = 1.0 / (V * cosg)
+
+            ip1 = ipcruise1
+            ipn = ipcruisen
+
+            FoWavg = 0.5 * (FoW[ipn] + FoW[ip1])
+            FFCavg = 0.5 * (FFC[ipn] + FFC[ip1])
+            Vgiavg = 0.5 * (Vgi[ipn] + Vgi[ip1])
+
+
+            dtcruise = dRcruise * Vgiavg
+            rWcruise = exp(-dRcruise * FFCavg)
+
+            para[iaRange, ipn] = para[iaRange, ip1] + dRcruise
+            para[iatime, ipn] = para[iatime, ip1] + dtcruise
+            para[iafracW, ipn] = para[iafracW, ip1] * rWcruise
+
+
+            # set intermediate points over cruise, if any, just by interpolating
+            for ip = ipcruise1+1:ipcruisen-1
+                  frac = float(ip - ipcruise1) / float(ipcruisen - ipcruise1)
+                  Mach = para[iaMach, ip]
+                  para[iaalt, ip] = altc * (1.0 - frac) + altd * frac
+                  altkm = para[iaalt, ip] / 1000.0
+                  T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
+                  pare[iep0, ip] = p0
+                  pare[ieT0, ip] = T0
+                  pare[iea0, ip] = a0
+                  pare[ierho0, ip] = rho0
+                  pare[iemu0, ip] = mu0
+                  pare[ieM0, ip] = Mach
+                  pare[ieu0, ip] = Mach * a0
+                  para[iaReunit, ip] = Mach * a0 * rho0 / mu0
+
+                  rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
+                  para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
+
+                  para[iaRange, ip] = para[iaRange, ipcruise1] + dRcruise * frac
+                  para[iatime, ip] = para[iatime, ipcruise1] + dtcruise * frac
+                  para[iafracW, ip] = para[iafracW, ipcruise1] * rWcruise^frac
+
+            end
+
+            # Update parameters across deviation points
+            γ_base = para[iagamV, ipcruise1]
+            for ip_dev in (ipdeviation1, ipdeviation2, ipdeviation3, ipdeviation4)
+                  para[iagamV, ip_dev] = γ_base
+                  V_dev = pare[ieu0, ip_dev]
+                  para[iaROC, ip_dev] = sin(γ_base) * V_dev * 60.0 / ft_to_m
             end
       end
-
-      # Update end-of-cruise gamma 
-      ip = ipcruisen
-      DoL = para[iaCD, ip] / para[iaCL, ip]
-      W = para[iafracW, ip] * WMTO
-      BW = W + para[iaWbuoy, ip]
-      TSFC = pare[ieTSFC, ip]
-      V = pare[ieu0, ip]
-      p0 = pare[iep0, ip]
-      ρ0 = pare[ierho0, ip]
-      # Refresh end-of-cruise γ with the analytic cruise-climb expression so the
-      # downstream descent setup sees the same conditions as the original model.
-      gamVcr2 = DoL * p0 * TSFC / (ρ0 * gee * V - p0 * TSFC)
-      para[iagamV, ip] = gamVcr2
-
-      cosg = cos(gamVcr2)
-      Ftotal = pare[ieFe, ip] * parg[igneng]
-      FoW[ip] = Ftotal / (BW * cosg) - DoL
-      mfuel = pare[iemfuel, ip]
-      FFC[ip] = mfuel * gee / (W * V * cosg)
-      Vgi[ip] = 1.0 / (V * cosg)
-      para[iaROC, ip] = sin(gamVcr2) * V * 60.0 / ft_to_m
 
       # Descent
       ip = ipdescent1
