@@ -500,11 +500,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
       # Evaluate feasibility checks before making deviation profile.
       use_deviation = false
-      if dR_available > eps_range
-            use_deviation = true
-      elseif R_dev > eps_range
-            use_deviation = true
-      elseif abs(Δh_dev) > eps_height
+      if abs(Δh_dev) > eps_height && dR_available > eps_range && R_dev > eps_range
             use_deviation = true
       end
 
