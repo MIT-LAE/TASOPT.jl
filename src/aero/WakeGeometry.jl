@@ -142,6 +142,11 @@ element_lengths(WS::WakeSystem) = element_lengths(WS.elements)
 element_dys(WS::WakeSystem) = element_dys(WS.elements)
 element_dzs(WS::WakeSystem) = element_dzs(WS.elements)
 
+field_ys(WS::WakeSystem) = getindex.(WS.points, 1) #y-component
+field_zs(WS::WakeSystem) = getindex.(WS.points, 2) #z-component
+
+ctrl_ys(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 1) #y-component
+ctrl_zs(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 2) #z-component
 """
 """
 function WakeSystem(points::SVector{NP, Point2D}; 
