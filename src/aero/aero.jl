@@ -53,6 +53,7 @@ include("airfun.jl")
 # airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 # airsection = airtable(airfoil_data);
 
+include("trefftz_config.jl")
 include("wing_loading.jl")
 include("wing_drag.jl")
 
