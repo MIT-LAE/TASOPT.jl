@@ -46,6 +46,18 @@
 
     prop_sys_arch = "TF" #Options are TF: Turbofan
                          #            constant_TSFC: simple engine with constant TSFC
+    trefftz_resolution = "MEDIUM"
+    # Trefftz plane discretization quality
+    # "COARSE":  ~1.8% error rel. reference,  43 panels (fast, mainly for quick studies)
+    # "MEDIUM":  ~0.6% error rel. reference,  84 panels (balanced, recommended default)
+    # "FINE":    reference,   328 panels (reference)
+
+    # Optional: Advanced Trefftz plane analysis parameters (usually don't need to change)
+    trefftz_k_tip = 16.0            # Tip loading exponent (default: 16.0)
+    trefftz_bunch = 0.5             # Panel clustering factor ∈ [0,1] (default: 0.5)
+    trefftz_root_contraction = 0.2  # Root streamline contraction (default: 0.2)
+    
+
 [Fuel]
     fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
