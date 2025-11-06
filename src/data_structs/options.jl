@@ -36,6 +36,10 @@ $TYPEDFIELDS
     #wing/stability options
     """Move wingbox selection for longitudinal stability analysis. "fixed" = static wing position ,"fixed_CLh" move wing to get CLh="CLhspec" in cruise, "min_static_margin" = move wing to get min static margin = "SMmin"  """
     opt_move_wing::String
+
+    #Trefftz plane options
+    """Trefftz plane induced drag analysis configuration (discretization, k_tip, bunch, root_contraction)"""
+    trefftz_config::aerodynamics.TrefftzPlaneConfig
 end
 
 function Base.summary(opt::Options)
