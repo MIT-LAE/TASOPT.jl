@@ -1,5 +1,5 @@
 """
-      induced_drag!(para, wing, htail)
+      induced_drag!(para, wing, htail, trefftz_config)
 
 Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). Formerly, `cditrp!()`.
 
@@ -8,6 +8,7 @@ Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@re
       - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
       - `wing::TASOPT.Wing`: Wing Structure.
       - `htail::TASOPT.Tail`: Htail Structure.
+      - `trefftz_config::TrefftzPlaneConfig`: Trefftz plane analysis configuration (panel discretization and analysis parameters).
 
       **Outputs:**
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
@@ -16,7 +17,7 @@ Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@re
       In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function induced_drag!(para, wing, htail)
+function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 
       CL = para[iaCL]
 
@@ -45,10 +46,6 @@ function induced_drag!(para, wing, htail)
       po       = zeros(Float64, 2)
       CLsurfsp = zeros(Float64, 2)
 
-      npout = zeros(Float64, 2) # outer panel
-      npinn = zeros(Float64, 2) # inner panel
-      npimg = zeros(Float64, 2) # image inside fuselage
-
       #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
 #---- wing wake parameters
       fLo =  wing.fuse_lift_carryover
@@ -60,7 +57,7 @@ function induced_drag!(para, wing, htail)
       bo[1] = wing.layout.root_span
 
 #---- span of wing-root streamline in Trefftz Plane
-      bop[1] = wing.layout.root_span * 0.2
+      bop[1] = wing.layout.root_span * trefftz_config.root_contraction
 
       zcent[1]  = wing.layout.z
       gammas[1] = wing.inboard.λ*para[iarcls]
@@ -89,54 +86,10 @@ function induced_drag!(para, wing, htail)
 #---- number of surfaces  (wing, horizontal tail)
       nsurf = 2
 
-#---- number of spanwise intervals
-# -----------------------------------------------------------------------
-# The below # of panels (43 total) gives about 1.8% higher CDi relative to the 
-# finest one here with ~360 panels
-      npout[1] = 20  # outer panel
-      npinn[1] = 6   # inner panel
-      npimg[1] = 3   # image inside fuselage
-  
-      npout[2] = 10  # outer panel
-      npinn[2] = 0   # inner panel
-      if (bo[2] == 0.0) 
-       npimg[2] = 0
-      else
-       npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
-      end
-# -----------------------------------------------------------------------
-# The below # of panels (84 total) gives about 0.60% higher CDi relative to the 
-# finest one here with ~360 panels
-#     npout[1] = 40  # outer panel
-#     npinn[1] = 12  # inner panel
-#     npimg[1] = 6   # image inside fuselage
-# 
-#     npout[2] = 20  # outer panel
-#     npinn[2] = 0   # inner panel
-#     npimg[2] = 4   # image inside fuselage  (or inner panel if T-tail)
-# -----------------------------------------------------------------------
-#      npout[1] = 160  # outer panel
-#      npinn[1] = 48   # inner panel
-#      npimg[1] = 24   # image inside fuselage
-# 
-#      npout[2] = 80  # outer panel
-#      npinn[2] = 0   # inner panel
-#      npimg[2] = 16  # image inside fuselage  (or inner panel if T-tail)
-# -----------------------------------------------------------------------
-
-      ktip = 16
-      #CLsurf = zeros(Float64, nsurf)
-      # println("$nsurf, $npout, $npinn, $npimg, 
-	# $Sref, $bref,
-	# $b,$bs,$bo,$bop, $zcent,
-	# $po,$gammat,gammas, $fLo, $ktip,
-      # $specifies_CL,$CLsurfsp")
-
-
-      CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, npout, npinn, npimg, 
+      CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo, ktip,
+	po,gammat,gammas, fLo,
       specifies_CL,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
       
       # println("$CLsurf, $CLtp, $CDtp, $sefftp")
@@ -235,28 +188,32 @@ Trefftz plane routine for the induced drag computation of `nsurf` number of surf
 
 See [theory above](@ref trefftz) or Sections 2.14.7 and 3.8.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
-function _trefftz_analysis(nsurf, npout, npinn, npimg,
+function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
 	Sref, bref,
 	b,bs,bo,bop, zcent,
-	po, gammat, gammas, fLo, ktip,
+	po, gammat, gammas, fLo,
 	specifies_CL,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
-#---- center resolution increase factor (0..1)
-#     bunch = 0.75 
-      bunch =  0.5 
-#     bunch =  0. 
+      # Extract configuration parameters 
+      ktip = trefftz_config.k_tip
+      bunch = trefftz_config.bunch
 
       ifrst = zeros(Int, nsurf)
       ilast = zeros(Int, nsurf)
-      
+
       CLsurf= zeros(Float64, nsurf)
-      
+
       # Calculate total number of points
       # outboard point + inboard + points within fuselage + dummy between surfaces
-      isum = 0
-      @inbounds for  isurf = 1: nsurf
-        isum = isum + npout[isurf] + npinn[isurf] + npimg[isurf] + 1
-      end
+      # Wing contribution
+      isum = trefftz_config.wing_panels.n_outer_panels +
+             trefftz_config.wing_panels.n_inner_panels +
+             trefftz_config.wing_panels.n_image_panels + 1
+      # Tail contribution (handle T-tail case where bo[2] == 0)
+      tail_image_panels = (bo[2] == 0.0) ? 0 : trefftz_config.tail_panels.n_image_panels
+      isum += trefftz_config.tail_panels.n_outer_panels +
+              trefftz_config.tail_panels.n_inner_panels +
+              tail_image_panels + 1
 
       if(isum > idim) 
 	      println("TREFFTZ: Passed array overflow. Increase idim to ",isum)
@@ -315,10 +272,20 @@ function _trefftz_analysis(nsurf, npout, npinn, npimg,
       gs = po[isurf]*gammas[isurf]
       g1 = po[isurf]*gammat[isurf]
 
+      # Get panel counts for current surface
       k0 = 1
-      ko = 1 + npimg[isurf]
-      ks = 1 + npimg[isurf] + npinn[isurf]
-      k1 = 1 + npimg[isurf] + npinn[isurf] + npout[isurf]
+      if isurf == 1  # Wing
+          n_img = trefftz_config.wing_panels.n_image_panels
+          n_inn = trefftz_config.wing_panels.n_inner_panels
+          n_out = trefftz_config.wing_panels.n_outer_panels
+      else  # Tail (isurf == 2)
+          n_img = (bo[isurf] == 0.0) ? 0 : trefftz_config.tail_panels.n_image_panels
+          n_inn = trefftz_config.tail_panels.n_inner_panels
+          n_out = trefftz_config.tail_panels.n_outer_panels
+      end
+      ko = 1 + n_img
+      ks = 1 + n_img + n_inn
+      k1 = 1 + n_img + n_inn + n_out
 
       i = i+1
       ifrst[isurf] = i
