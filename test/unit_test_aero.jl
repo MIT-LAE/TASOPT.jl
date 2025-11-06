@@ -288,9 +288,14 @@ end
 
     #trefftz
     nsurf = 2
-    npout = [20, 10]
-    npinn = [6, 0]
-    npimg = [3, 2]
+    # Create TrefftzPlaneConfig with COARSE discretization matching original hardcoded values
+    trefftz_config = TASOPT.aerodynamics.TrefftzPlaneConfig(
+        TASOPT.aerodynamics.SurfaceDiscretization(20, 6, 3),  # Wing: npout=20, npinn=6, npimg=3
+        TASOPT.aerodynamics.SurfaceDiscretization(10, 0, 2),  # Tail: npout=10, npinn=0, npimg=2
+        k_tip = 16.0,
+        bunch = 0.5,
+        root_contraction = 0.2
+    )
     Sref = 124.68530761144433
     bref =  35.486921631434697
     b = [35.486921631434697, 15.958117796995291]
@@ -301,8 +306,7 @@ end
     po = [1.0000000000000000, 1.0000000000000000]
     gammat = [0.14999999999999999,  0.25000000000000000]
     gammas = [0.77000000000000002,  1.0000000000000000]
-    fLo = -0.29999999999999999 
-    ktip = 16
+    fLo = -0.29999999999999999
     specifies_CL = true
     CLsurfsp = [1.2502595055642693 1.1976022033901442E-002]
 
@@ -310,7 +314,7 @@ end
     fort_CLtp = 1.2622355275981709
     fort_CDtp = 6.0382619569389735E-002
     fort_sefftp = 0.83156768339673048
-   
+
     idim::Int = 360
     jdim::Int = 360
     t = zeros(Float64, jdim)
@@ -329,10 +333,10 @@ end
     wc = zeros(Float64, idim)
     vnc = zeros(Float64, idim)
 
-    CLsurf, CL, CD, spanef = TASOPT.aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
+    CLsurf, CL, CD, spanef = TASOPT.aerodynamics._trefftz_analysis(nsurf, trefftz_config,
         Sref, bref,
         b, bs, bo, bop, zcent,
-        po, gammat, gammas, fLo, ktip,
+        po, gammat, gammas, fLo,
         specifies_CL, CLsurfsp,
         t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
