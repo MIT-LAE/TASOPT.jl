@@ -226,7 +226,7 @@ Constructs a WakeSystem from vectors of y and z coordinates for wake points and 
     - `zp`: Vector of z-coordinates for wake points
     - `ycp`: Vector of y-coordinates for control points
     - `zcp`: Vector of z-coordinates for control points
-    (the _p suffix is to remember that these are locations far downstream in the wake (y′,z′))
+    (the _p suffix means "prime" and is to remember that these are locations far downstream in the wake (y′,z′))
 """
 function generate_wake_system(yp::AbstractVector{Float64}, zp::AbstractVector{Float64}, 
                             ycp::AbstractVector{Float64}, zcp::AbstractVector{Float64})
