@@ -66,7 +66,31 @@ The vorticity in the wake is numerically integrated at collocation points to det
 
 Trefftz Plane vortices $i,i\!+\!1 \ldots$ and collocation points
 $i\!+\!1/2$ used for velocity, impulse, and kinetic energy calculations.
-Left/right symmetry is exploited.  
+Left/right symmetry is exploited.
+
+### Configuration
+
+The Trefftz plane analysis requires configuration parameters that control both the discretization resolution and physical modeling:
+
+- **Panel discretization**: The number of spanwise panels used to discretize the wing and tail surfaces affects both accuracy and computational cost. Three preset resolutions are available:
+  - `"COARSE"`: 43 panels total, ~1.8% error vs reference, fastest
+  - `"MEDIUM"`: 84 panels total, ~0.6% error vs reference, balanced
+  - `"FINE"`: 328 panels total, reference accuracy, slowest
+
+- **Physical parameters**:
+  - `k_tip`: Tip loading exponent (default: 16.0) - controls circulation decay at wing tips
+  - `bunch`: Panel clustering factor ∈ [0,1] (default: 0.5) - controls spanwise panel spacing near root
+  - `root_contraction`: Root streamline contraction (default: 0.2) - accounts for streamtube contraction near fuselage
+
+These parameters are specified in the TOML input file under the `[Options]` section:
+```toml
+[Options]
+    trefftz_resolution = "MEDIUM"  # or "COARSE", "FINE"
+    # Optional advanced parameters (usually don't need to change):
+    trefftz_k_tip = 16.0
+    trefftz_bunch = 0.5
+    trefftz_root_contraction = 0.2
+```
 
 ```@eval
 using Markdown
@@ -74,13 +98,15 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-aerodynamics.induced_drag!(para, wing, htail)
+aerodynamics.TrefftzPlaneConfig
 
-aerodynamics._trefftz_analysis(nsurf, npout, npinn, npimg,
-	Sref, bref,
-	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo,ktip,
-	specifies_CL,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+aerodynamics.SurfaceDiscretization
+
+aerodynamics.get_trefftz_config
+
+aerodynamics.induced_drag!(para, wing, htail, trefftz_config)
+
+aerodynamics._trefftz_analysis
 ```
 ---
 
