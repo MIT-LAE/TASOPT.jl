@@ -80,11 +80,17 @@ Plots aerodynamic characteristics of the airfoil database, including its drag an
         f2 = plot_airf(ac)
         ```
 """
-function plot_airf(airf::airfoil)
+function plot_airf(airf::airfoil; iMach::Int = -1)
+    #mach number for plotting
+    if iMach == -1 
+        iMach = length(airf.Ma) 
+    end
+    mach = airf.Ma[iMach]
+
     # Create two subplots
     p1 = plot(
         airf.cl,
-        airf.A[end, :, :, 1] + airf.A[end, :, :, 2],
+        airf.A[iMach, :, :, 1] + airf.A[iMach, :, :, 2],
         label = string.(airf.τ'),
         # xlabel = "\$c_l\$",
         ylabel = "\$c_d\$",
@@ -94,7 +100,7 @@ function plot_airf(airf::airfoil)
     
     p2 = plot(
         airf.cl,
-        airf.A[end, :, :, 3],
+        airf.A[iMach, :, :, 3],
         label = "τ = ".*string.(airf.τ'),
         xlabel = "\$c_l\$",
         ylabel = "\$c_m\$",
@@ -112,6 +118,6 @@ function plot_airf(airf::airfoil)
     l = @layout [[a; b] c{0.2w}]
     # Combine the subplots vertically
     f1 = plot(p1, p2, p_legend, layout = l, link = :x,
-        suptitle="Airfoil Section Database")
+        suptitle="Airfoil Section Database, Mach = $(mach)")
     return f1
 end
