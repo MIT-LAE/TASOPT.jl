@@ -101,90 +101,71 @@ function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 end # induced_drag!
 
 
-# Trefftz analysis functions -------------------
-# Investigating potential to have wrappers to make code cleaner
-struct tfp_workarrays
-  t::Vector{Float64}
-  y::Vector{Float64}
-  yp::Vector{Float64}
-  z::Vector{Float64}
-  zp::Vector{Float64}
-  gw::Vector{Float64}
-  yc::Vector{Float64}
-  ycp::Vector{Float64}
-  zc::Vector{Float64}
-  zcp::Vector{Float64}
-  gc::Vector{Float64}
-  vc::Vector{Float64}
-  wc::Vector{Float64}
-  vnc::Vector{Float64}
-end
+"""
+    bunch_transform(t, bunch)
 
-struct tfp
-  nsurf::Int
-  npout::Vector{Int}
-  npinn::Vector{Int}
-  npimg::Vector{Int}
-  Sref::Float64
-  bref::Float64
-  b::Vector{Float64}
-  bs::Vector{Float64}
-  bo::Vector{Float64}
-  bop::Vector{Float64}
-  zcent::Vector{Float64}
-  po::Vector{Float64}
-  γt::Vector{Float64}
-  γs::Vector{Float64}
-  CLsurfsp::Vector{Float64}
-  ktip::Float64
-  workarrays::tfp_workarrays
-end
+Apply bunching transformation to parameter `t ∈ [0,1]`.
 
-function trefftz(tf::tfp)
-  
-  _trefftz_analysis(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
-	tf.Sref, tf.bref,
-	tf.b, tf.bs, tf.bo, tf.bop, tf.zcent,
-	tf.po,tf.γt,tf.γs, 1, tf.ktip,
-	true,tf.CLsurfsp,
-  tf.workarrays.t, tf.workarrays.y, tf.workarrays.yp, tf.workarrays.z, tf.workarrays.zp, 
-  tf.workarrays.gw, tf.workarrays.yc, tf.workarrays.ycp, tf.workarrays.zc, tf.workarrays.zcp,
-  tf.workarrays.gc, tf.workarrays.vc, tf.workarrays.wc, tf.workarrays.vnc)
-  ## Note: do not do the following. This will slow the code down. Interestingly seems to have more allocations than the above.
-  # [getproperty(tf.workarrays,f) for f in fieldnames(typeof(tf.workarrays))]...)
+Transforms `t` to cluster points near the center (t=0.5) when `bunch > 0`.
+The transformation is: `t_bunched = t + bunch * t * (1 - t)`
 
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `t::Float64`: Original parameter value ∈ [0,1].
+    - `bunch::Float64`: Clustering factor ∈ [0,1]. Higher values cluster more points near center.
+
+    **Outputs:**
+    - `t_bunched::Float64`: Transformed parameter value.
+
+See also [`inv_bunch_transform`](@ref).
+"""
+@inline function bunch_transform(t, bunch)
+    return t + bunch * t * (1.0 - t)
 end
 
 """
-    _trefftz_analysis(nsurf, npout, npinn, npimg, 
-          Sref, bref, b, bs, bo, bop, 
-          zcent, po, gammat, gammas, 
-          fLo,ktip, specifies_CL, CLsurfsp)
+    inv_bunch_transform(t_bunched, bunch)
+
+Inverse of the bunching transformation. Recovers original `t` from bunched value.
+
+Solves `t_bunched = t + bunch * t * (1 - t)` for `t` using the quadratic formula.
+See also [`bunch_transform`](@ref).
+"""
+@inline function inv_bunch_transform(t_bunched, bunch)
+    return (1.0 + bunch - sqrt((1.0 + bunch)^2 - 4.0 * bunch * t_bunched)) * 0.5 / bunch
+end
+
+"""
+    _trefftz_analysis(nsurf, trefftz_config, Sref, bref, b, bs, bo, bop,
+          zcent, po, gammat, gammas, fLo, specifies_CL, CLsurfsp,
+          t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
 
 Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces. Formerly, `trefftz1()`.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `nsurf::Integer`: Number of surfaces (typically wing and horizontal tail).
-    - `npout::Integer`: Number of spanwise intervals (outer panel).
-    - `npinn::Integer`:  "     "       (inner panel).
-    - `npimg::Integer`:  "     "       (image inside fuselage).
-    - `b::Float64`: Span.
-    - `bs::Float64`: Wing-break span.
-    - `bo::Float64`: Wing-root span.
-    - `bop::Float64`: Span of wing-root streamline in Trefftz plane
+    - `trefftz_config::TrefftzPlaneConfig`: Configuration containing panel discretization and analysis parameters.
+    - `Sref::Float64`: Reference wing area.
+    - `bref::Float64`: Reference wing span.
+    - `b::Vector{Float64}`: Span for each surface.
+    - `bs::Vector{Float64}`: Wing-break span for each surface.
+    - `bo::Vector{Float64}`: Wing-root span for each surface.
+    - `bop::Vector{Float64}`: Span of wing-root streamline in Trefftz plane for each surface.
     - `zcent::Vector{Float64}`: Vertical position at centerline for each surface.
-    - `gammat::Vector{Float64}`, gammas::Vector{Float64}`: Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
-    - `fLo`: wing root load adjustment factors (currently not implemented).
-    - `ktip::Float64`: wing tip load adjustment factors.
-    - `specifies_CL::Bool`: Flag for specified lift calculation (scales vorticities to achieve `CLsurfsp` before computing induced drag).
-    - `CLsurfsp::Vector{Float64}`: Prescribed surface lift coefficient.
+    - `po::Vector{Float64}`: Root circulation scaling factor for each surface.
+    - `gammat::Vector{Float64}`: Wing lift distribution "taper" ratios for outer sections.
+    - `gammas::Vector{Float64}`: Wing lift distribution "taper" ratios for inner sections.
+    - `fLo::Float64`: Wing root load adjustment factor (currently not implemented).
+    - `specifies_CL::Bool`: Flag for specified lift calculation (scales vorticities to achieve `CLsurfsp`).
+    - `CLsurfsp::Vector{Float64}`: Prescribed surface lift coefficient for each surface.
+    - `t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc`: Work arrays for computation.
 
     **Outputs:**
-    -`CLsurf::Vector{Float64}`: Lift coefficients for each surface. 
-    -`CL::Float64`: Sum of lift coefficients of all surfaces.
-    -`CD::Float64`: Sum of induced drag coefficients of all surfaces.
-    -`spanef::Float64`: Span efficiency of combined surfaces (``= (CL^2 / (π*AR))/CD``).
+    - `CLsurf::Vector{Float64}`: Lift coefficients for each surface.
+    - `CL::Float64`: Sum of lift coefficients of all surfaces.
+    - `CD::Float64`: Sum of induced drag coefficients of all surfaces.
+    - `spanef::Float64`: Span efficiency of combined surfaces (``= (CL^2 / (π*AR))/CD``).
 
 See [theory above](@ref trefftz) or Sections 2.14.7 and 3.8.1 of the [TASOPT Technical Desc](@ref dreladocs).
 """
@@ -250,9 +231,9 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
 
       # This is to transform the to and ts angles to the right values such
       # that the bunch transform gives us back exactly the right ηo and ηs.
-      if(bunch > 0.0) 
-       to = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*to))*0.5/bunch
-       ts = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*ts))*0.5/bunch
+      if(bunch > 0.0)
+       to = inv_bunch_transform(to, bunch)
+       ts = inv_bunch_transform(ts, bunch)
       end
 
       y0 = 0.
@@ -304,8 +285,8 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
         t[i] = t0*(1.0-fk) + to*fk #field points at i
         tc = 0.5*(t[i-1]+t[i]) #collocation point at i+1/2 points
 
-        e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
-        ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
+        e  = cos(0.5*π*bunch_transform(t[i], bunch))
+        ec = cos(0.5*π*bunch_transform(tc, bunch))
        
         # E.g., eo can be = e0 if we have something like a T-tail
         if(eo-e0 == 0.0) 
@@ -340,8 +321,8 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
         t[i] = to*(1.0-fk) + ts*fk
         tc = 0.5*(t[i-1]+t[i])
 
-        e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
-        ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
+        e  = cos(0.5*π*bunch_transform(t[i], bunch))
+        ec = cos(0.5*π*bunch_transform(tc, bunch))
         if(es-eo == 0.0) 
          fi = 1.0
          fc = 0.5
@@ -371,8 +352,8 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
         t[i] = ts*(1.0-fk) + t1*fk
         tc = 0.5*(t[i-1]+t[i])
 
-        e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
-        ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
+        e  = cos(0.5*π*bunch_transform(t[i], bunch))
+        ec = cos(0.5*π*bunch_transform(tc, bunch))
         if(e1-es == 0.0) 
          fi = 1.0
          fc = 0.5
