@@ -30,7 +30,8 @@ config = TrefftzPlaneConfig(
     tail_panels = SurfaceDiscretization(20, 0, 4),
     k_tip = 16.0,
     bunch = 0.5,
-    root_contraction = 0.2
+    wing_root_contraction = 0.2,
+    tail_root_contraction = 1.0
 )
 ```
 """
@@ -39,23 +40,27 @@ struct TrefftzPlaneConfig
     tail_panels::SurfaceDiscretization
     k_tip::Float64
     bunch::Float64
-    root_contraction::Float64
+    wing_root_contraction::Float64
+    tail_root_contraction::Float64
 
     function TrefftzPlaneConfig(wing_panels::SurfaceDiscretization,
                                 tail_panels::SurfaceDiscretization;
                                 k_tip::Float64=16.0,
                                 bunch::Float64=0.5,
-                                root_contraction::Float64=0.2)
+                                wing_root_contraction::Float64=0.2,
+                                tail_root_contraction::Float64=1.0)
+                                
         0.0 <= bunch <= 1.0 || throw(ArgumentError("bunch must be in [0,1]"))
         k_tip > 0.0 || throw(ArgumentError("k_tip must be positive"))
-        root_contraction > 0.0 || throw(ArgumentError("root_contraction must be positive"))
-        
-        new(wing_panels, tail_panels, k_tip, bunch, root_contraction)
+        0.0 < wing_root_contraction ≤ 1.0 || throw(ArgumentError("wing_root_contraction must be [0..1]"))
+        0.0 < tail_root_contraction ≤ 1.0 || throw(ArgumentError("tail_root_contraction must be [0..1]"))
+
+        new(wing_panels, tail_panels, k_tip, bunch, wing_root_contraction, tail_root_contraction)
     end
 end
 
 """
-    get_trefftz_config(quality::String; k_tip=16.0, bunch=0.5, root_contraction=0.2)
+    get_trefftz_config(quality::String; k_tip=16.0, bunch=0.5, wing_root_contraction=0.2, tail_root_contraction=1.0)
 
 Create a [`TrefftzPlaneConfig`](@ref).
 
@@ -64,7 +69,8 @@ Create a [`TrefftzPlaneConfig`](@ref).
     - `quality::String`: Discretization quality level ("COARSE", "MEDIUM", or "FINE").
     - `k_tip::Float64=16.0`: Tip loading exponent (controls circulation decay at wing tips).
     - `bunch::Float64=0.5`: Center clustering factor ∈ \\[0,1\\] (controls spanwise panel spacing near root).
-    - `root_contraction::Float64=0.2`: Root streamline contraction factor (stream tube contraction near fuselage).
+    - `wing_root_contraction::Float64=0.2`: Wing root streamline contraction factor (stream tube contraction near fuselage).
+    - `tail_root_contraction::Float64=1.0`: Tail root streamline contraction factor (typically 1.0 = no contraction).
 
     **Outputs:**
     - `TrefftzPlaneConfig`: Complete configuration for Trefftz plane induced drag analysis.
@@ -83,7 +89,8 @@ Create a [`TrefftzPlaneConfig`](@ref).
 function get_trefftz_config(quality::String;
                            k_tip::Float64=16.0,
                            bunch::Float64=0.5,
-                           root_contraction::Float64=0.2)
+                           wing_root_contraction::Float64=0.2,
+                           tail_root_contraction::Float64=1.0)
     quality_upper = uppercase(quality)
 
     if quality_upper == "FINE" # 328 panels. Reference case.
@@ -102,7 +109,8 @@ function get_trefftz_config(quality::String;
     return TrefftzPlaneConfig(wing_panels, tail_panels;
                              k_tip=k_tip,
                              bunch=bunch,
-                             root_contraction=root_contraction)
+                             wing_root_contraction=wing_root_contraction,
+                             tail_root_contraction=tail_root_contraction)
 end
 
 const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM")
