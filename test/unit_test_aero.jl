@@ -294,15 +294,29 @@ end
         TASOPT.aerodynamics.SurfaceDiscretization(10, 0, 2),  # Tail: npout=10, npinn=0, npimg=2
         k_tip = 16.0,
         bunch = 0.5,
-        root_contraction = 0.2
+        wing_root_contraction = 0.2,
+        tail_root_contraction = 1.0
     )
+
+    # Create wing and htail structures with test geometry
+    wing = TASOPT.structures.Wing()
+    wing.layout.span = 35.486921631434697
+    wing.layout.root_span = 3.6067999999999998
+    wing.layout.ηs = 10.113772664958887 / wing.layout.span
+    wing.layout.z = -1.6764000000000001
+    wing.inboard.λ = 1.0
+    wing.outboard.λ = 1.0
+
+    htail = TASOPT.structures.Tail()
+    htail.layout.span = 15.958117796995291
+    htail.layout.root_span = 1.5240000000000000
+    htail.layout.ηs = 1.5240000000000000 / htail.layout.span
+    htail.layout.z = 0.0
+    htail.inboard.λ = 1.0
+    htail.outboard.λ = 1.0
+
     Sref = 124.68530761144433
-    bref =  35.486921631434697
-    b = [35.486921631434697, 15.958117796995291]
-    bs = [10.113772664958887, 1.5240000000000000]
-    bo = [3.6067999999999998, 1.5240000000000000]
-    bop = [0.72136000000000000, 1.5240000000000000]
-    zcent = [-1.6764000000000001,  0.0000000000000000]
+    bref = 35.486921631434697
     po = [1.0000000000000000, 1.0000000000000000]
     gammat = [0.14999999999999999,  0.25000000000000000]
     gammas = [0.77000000000000002,  1.0000000000000000]
@@ -315,30 +329,19 @@ end
     fort_CDtp = 6.0382619569389735E-002
     fort_sefftp = 0.83156768339673048
 
-    idim::Int = 360
-    jdim::Int = 360
-    t = zeros(Float64, jdim)
-    y = zeros(Float64, jdim)
-    yp = zeros(Float64, jdim)
-    z = zeros(Float64, jdim)
-    zp = zeros(Float64, jdim)
-    gw = zeros(Float64, jdim)
-
-    yc = zeros(Float64, idim)
-    ycp = zeros(Float64, idim)
-    zc = zeros(Float64, idim)
-    zcp = zeros(Float64, idim)
-    gc = zeros(Float64, idim)
-    vc = zeros(Float64, idim)
-    wc = zeros(Float64, idim)
-    vnc = zeros(Float64, idim)
+    # Use module-level geometry and work arrays
+    geom = TASOPT.aerodynamics.TREFFTZ_GEOM
+    gw = TASOPT.aerodynamics.gw
+    vc = TASOPT.aerodynamics.vc
+    wc = TASOPT.aerodynamics.wc
+    vnc = TASOPT.aerodynamics.vnc
 
     CLsurf, CL, CD, spanef = TASOPT.aerodynamics._trefftz_analysis(nsurf, trefftz_config,
+        wing, htail,
         Sref, bref,
-        b, bs, bo, bop, zcent,
         po, gammat, gammas, fLo,
         specifies_CL, CLsurfsp,
-        t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+        geom, gw, vc, wc, vnc)
 
     @test all(fort_CLsurf .≈ CLsurf)
     @test fort_CLtp ≈ CL

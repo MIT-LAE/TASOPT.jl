@@ -114,3 +114,79 @@ function get_trefftz_config(quality::String;
 end
 
 const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM")
+
+"""
+    TrefftzGeometry{N}
+
+Geometry work arrays for Trefftz calculations.
+
+# Fields
+- `t, y, yp, z, zp`: Vortex point coordinates _p indicates far downstream wake points.
+- `yc, ycp, zc, zcp`: Control point coordinates
+- `gc`: Circulation strength at the control points.
+
+"""
+struct TrefftzGeometry{N}
+    t::MVector{N, Float64}
+    y::MVector{N, Float64}
+    yp::MVector{N, Float64}
+    z::MVector{N, Float64}
+    zp::MVector{N, Float64}
+    yc::MVector{N, Float64}
+    ycp::MVector{N, Float64}
+    zc::MVector{N, Float64}
+    zcp::MVector{N, Float64}
+    gc::MVector{N, Float64}
+end
+
+"""
+    calculate_array_size(config::TrefftzPlaneConfig, htail)
+
+Calculate required array size for geometry arrays based on panel configuration.
+Accounts for wing and tail panels, handling T-tail case where root_span == 0.
+"""
+function calculate_array_size(config::TrefftzPlaneConfig, htail)
+    # Wing contribution
+    n_panels = config.wing_panels.n_outer_panels +
+               config.wing_panels.n_inner_panels +
+               config.wing_panels.n_image_panels + 1
+
+    # Tail contribution (handle T-tail case where root_span == 0)
+    tail_image_panels = (htail.layout.root_span == 0.0) ? 0 : config.tail_panels.n_image_panels
+    n_panels += config.tail_panels.n_outer_panels +
+                config.tail_panels.n_inner_panels +
+                tail_image_panels + 1
+
+    return n_panels
+end
+
+"""
+    TrefftzGeometry{N}() where {N}
+
+Create zero-initialized geometry arrays of size N.
+"""
+function TrefftzGeometry{N}() where {N}
+    TrefftzGeometry{N}(
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64}),
+        zeros(MVector{N, Float64})
+    )
+end
+
+"""
+    TrefftzGeometry(config::TrefftzPlaneConfig, htail)
+
+Create geometry arrays sized for the given configuration.
+Uses StaticArrays for stack allocation, providing excellent performance.
+"""
+function TrefftzGeometry(config::TrefftzPlaneConfig, htail)
+    N = calculate_array_size(config, htail)
+    return TrefftzGeometry{N}()
+end

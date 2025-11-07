@@ -27,24 +27,6 @@ end
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"utils/spline.jl"))
 
-idim::Int = 360
-jdim::Int = 360
- t     = zeros(Float64, jdim)
- y     = zeros(Float64, jdim)
- yp    = zeros(Float64, jdim)
- z     = zeros(Float64, jdim)
- zp    = zeros(Float64, jdim)
- gw    = zeros(Float64, jdim)
-
- yc    = zeros(Float64, idim)
- ycp   = zeros(Float64, idim)
- zc    = zeros(Float64, idim)
- zcp   = zeros(Float64, idim)
- gc    = zeros(Float64, idim)
- vc    = zeros(Float64, idim)
- wc    = zeros(Float64, idim)
- vnc   = zeros(Float64, idim)
- 
 # Aerofoil calculations
 include("airfoil.jl")
 include("airtable.jl")
@@ -53,7 +35,19 @@ include("airfun.jl")
 # airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 # airsection = airtable(airfoil_data);
 
+# Include Trefftz plane configuration and geometry structs
 include("trefftz_config.jl")
+
+# Trefftz plane geometry arrays (sized for max resolution like before)
+# TODO: avoid module global and pass it into aircraft?
+const TREFFTZ_GEOM = TrefftzGeometry{360}()
+
+# Remaining work arrays for wake circulation and velocities
+# (will be moved to WakeSystem in future refactoring)
+const gw  = zeros(Float64, 360)
+const vc  = zeros(Float64, 360)
+const wc  = zeros(Float64, 360)
+const vnc = zeros(Float64, 360)
 include("wing_loading.jl")
 include("wing_drag.jl")
 
