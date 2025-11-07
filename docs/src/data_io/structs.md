@@ -24,9 +24,11 @@ TASOPT.Engine
 
 ## Subordinate `struct`s
 
-The above `struct`s are in turn partially composed of subordinate `struct`s, including some to represent materials, geometric layouts, and airfoil aerodynamic performance. 
+The above `struct`s are in turn partially composed of subordinate `struct`s, including some to represent materials, geometric layouts, airfoil aerodynamic performance, and analysis configuration.
 
 *Users shouldn't need to mess with these*, but a few for reference:
+
+### Geometric and structural components
 
 ```@docs
 
@@ -42,8 +44,18 @@ TASOPT.structures.WingSection
 
 TASOPT.structures.WingCrossSection
 
+TASOPT.materials.StructuralAlloy
+
+```
+
+### Aerodynamic configuration
+
+```@docs
+
 aerodynamics.airfoil
 
-TASOPT.materials.StructuralAlloy
+aerodynamics.TrefftzPlaneConfig
+
+aerodynamics.SurfaceDiscretization
 
 ```
