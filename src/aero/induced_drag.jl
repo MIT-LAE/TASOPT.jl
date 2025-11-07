@@ -104,15 +104,15 @@ end # induced_drag!
 """
     bunch_transform(t, bunch)
 
-Apply bunching transformation to parameter `t ∈ [0,1]`.
+Apply bunching transformation to input `t ∈ \\[0,1\\]`.
 
 Transforms `t` to cluster points near the center (t=0.5) when `bunch > 0`.
 The transformation is: `t_bunched = t + bunch * t * (1 - t)`
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `t::Float64`: Original parameter value ∈ [0,1].
-    - `bunch::Float64`: Clustering factor ∈ [0,1]. Higher values cluster more points near center.
+    - `t::Float64`: Original normalized angle ∈ \\[0,1\\].
+    - `bunch::Float64`: Clustering factor ∈ \\[0,1\\]. Higher values cluster more points near center.
 
     **Outputs:**
     - `t_bunched::Float64`: Transformed parameter value.
