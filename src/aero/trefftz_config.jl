@@ -63,7 +63,7 @@ Create a [`TrefftzPlaneConfig`](@ref).
     **Inputs:**
     - `quality::String`: Discretization quality level ("COARSE", "MEDIUM", or "FINE").
     - `k_tip::Float64=16.0`: Tip loading exponent (controls circulation decay at wing tips).
-    - `bunch::Float64=0.5`: Center clustering factor ∈ [0,1] (controls spanwise panel spacing near root).
+    - `bunch::Float64=0.5`: Center clustering factor ∈ \\[0,1\\] (controls spanwise panel spacing near root).
     - `root_contraction::Float64=0.2`: Root streamline contraction factor (stream tube contraction near fuselage).
 
     **Outputs:**

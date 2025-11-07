@@ -79,7 +79,7 @@ The Trefftz plane analysis requires configuration parameters that control both t
 
 - **Physical parameters**:
   - `k_tip`: Tip loading exponent (default: 16.0) - controls circulation decay at wing tips
-  - `bunch`: Panel clustering factor ∈ [0,1] (default: 0.5) - controls spanwise panel spacing near root
+  - `bunch`: Panel clustering factor ∈ \[0,1\] (default: 0.5) - controls spanwise panel spacing near root
   - `root_contraction`: Root streamline contraction (default: 0.2) - accounts for streamtube contraction near fuselage
 
 These parameters are specified in the TOML input file under the `[Options]` section:
@@ -98,13 +98,10 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-aerodynamics.TrefftzPlaneConfig
-
-aerodynamics.SurfaceDiscretization
 
 aerodynamics.get_trefftz_config
 
-aerodynamics.induced_drag!(para, wing, htail, trefftz_config)
+aerodynamics.induced_drag!
 
 aerodynamics._trefftz_analysis
 ```
