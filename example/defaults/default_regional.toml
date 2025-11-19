@@ -51,7 +51,8 @@
     # Optional: Advanced Trefftz plane analysis parameters (usually don't need to change)
     trefftz_k_tip = 16.0            # Tip loading exponent (default: 16.0)
     trefftz_bunch = 0.5             # Panel clustering factor ∈ [0,1] (default: 0.5)
-    trefftz_root_contraction = 0.2  # Root streamline contraction (default: 0.2)
+    wing_root_contraction = 0.2  # Root streamline contraction (default: 0.2)
+    tail_root_contraction = 1.0  # Root streamline contraction for tail (1.0 -> no real contraction)
 
 [Fuel]
     fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"

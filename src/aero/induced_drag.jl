@@ -64,7 +64,7 @@ function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 
 #---- number of surfaces  (wing, horizontal tail)
       nsurf = 2
-
+      
     CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
         wing, htail,
         Sref, bref,
