@@ -199,7 +199,7 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #---- induced CD
-      induced_drag!(para, wing, htail)
+      induced_drag!(para, wing, htail, ac.options.trefftz_config)
       CDi = para[iaCDi]
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
