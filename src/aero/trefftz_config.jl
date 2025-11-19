@@ -139,6 +139,9 @@ struct TrefftzGeometry{N}
     gc::MVector{N, Float64}
 end
 
+# These functions are to create properly sized TrefftzGeometry structs but for now
+# we will use a fixed size of 360 like the previous implementation to avoid changing
+# too much code at once.
 """
     calculate_array_size(config::TrefftzPlaneConfig, htail)
 
