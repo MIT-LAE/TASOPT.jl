@@ -194,12 +194,13 @@ end
 trefftz_resolution_str = read_input("trefftz_resolution", options, doptions)
 trefftz_k_tip = read_input("trefftz_k_tip", options, doptions)
 trefftz_bunch = read_input("trefftz_bunch", options, doptions)
-trefftz_root_contraction = read_input("trefftz_root_contraction", options, doptions)
+wing_root_contraction = read_input("wing_root_contraction", options, doptions)
+tail_root_contraction = read_input("tail_root_contraction", options, doptions)
 TREFFTZ_CONFIG = aerodynamics.get_trefftz_config(trefftz_resolution_str;
                                                   k_tip=trefftz_k_tip,
                                                   bunch=trefftz_bunch,
-                                                  wing_root_contraction=trefftz_root_contraction,
-                                                  tail_root_contraction=1.0)
+                                                  wing_root_contraction=wing_root_contraction,
+                                                  tail_root_contraction=tail_root_contraction)
 
 
 # Fuel related options

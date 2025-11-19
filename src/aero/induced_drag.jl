@@ -1,7 +1,8 @@
 """
       induced_drag!(para, wing, htail, trefftz_config)
 
-Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). Formerly, `cditrp!()`.
+Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). 
+Formerly, `cditrp!()` but now broken up into smaller functions.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -27,7 +28,7 @@ function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
        return
       end
 
-      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
+      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S #normalize by wing area
       # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
       bref = wing.layout.span
       Sref = wing.layout.S
@@ -44,8 +45,8 @@ function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 #---- wing wake parameters
       fLo =  wing.fuse_lift_carryover
 
-      gammas[1] = wing.inboard.λ*para[iarcls]
-      gammat[1] = wing.outboard.λ*para[iarclt]
+      gammas[1] = wing.inboard.λ * para[iarcls]
+      gammat[1] = wing.outboard.λ * para[iarclt]
       po[1]     = 1.0
       CLsurfsp[1] = CL - CLhtail
 
@@ -64,11 +65,11 @@ function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 #---- number of surfaces  (wing, horizontal tail)
       nsurf = 2
 
-      CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
-	wing, htail,
-	Sref, bref,
-	po,gammat,gammas, fLo,
-      specifies_CL, CLsurfsp, TREFFTZ_GEOM, gw, vc, wc, vnc)
+    CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
+        wing, htail,
+        Sref, bref,
+        po, gammat, gammas, fLo,
+        specifies_CL, CLsurfsp, TREFFTZ_GEOM, gw, vc, wc, vnc)
 
       # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 
@@ -111,6 +112,78 @@ See also [`bunch_transform`](@ref).
 """
 @inline function inv_bunch_transform(t_bunched, bunch)
     return (1.0 + bunch - sqrt((1.0 + bunch)^2 - 4.0 * bunch * t_bunched)) * 0.5 / bunch
+end
+
+"""
+    calculate_wake_circulation!(gw, gc, ifrst, ilast, nsurf)
+
+Compute wake vortex circulation from bound circulation `γ_wake = -dΓ/dy`.
+
+At each panel edge, the change in bound circulation is shed into the wake:
+- Root: `gw = 0` (no upstream circulation at the center of the fuselage)
+- Interior: `gw[i] = gc[i-1] - gc[i]` 
+- Tip: `gw[i] = gc[i-1]` 
+"""
+@inline function calculate_wake_circulation!(
+    gw::AbstractVector{Float64},
+    gc::AbstractVector{Float64},
+    i_first::AbstractVector{Int},
+    i_last::AbstractVector{Int},
+    nsurf::Int
+)
+    @inbounds for isurf = 1:nsurf
+        i = i_first[isurf]
+        gw[i] = 0.0
+
+        @inbounds for i = (i_first[isurf]+1):(i_last[isurf]-1)
+            gw[i] = gc[i-1] - gc[i]
+        end
+
+        i = i_last[isurf]
+        gw[i] = gc[i-1]
+    end
+
+    return nothing
+end
+
+"""
+    scale_circulation!(gc, gw, yp, ifrst, ilast, CLsurfsp, bref, Sref, nsurf)
+
+Scale circulation distribution to match specified specified lift coefficient for each surface.
+"""
+@inline function scale_circulation!(
+    gc::AbstractVector{Float64},
+    gw::AbstractVector{Float64},
+    yp::AbstractVector{Float64},
+    ifrst::AbstractVector{Int},
+    ilast::AbstractVector{Int},
+    CLsurfsp::AbstractVector{Float64},
+    bref::Float64,
+    Sref::Float64,
+    nsurf::Int
+)
+    @inbounds for isurf = 1:nsurf
+        # Integrate circulation distribution to find current CL
+        cl_test = 0.0
+        @inbounds for i = ifrst[isurf]:(ilast[isurf]-1)
+            dy = yp[i+1] - yp[i]
+            cl_test += gc[i] * dy
+        end
+
+        # Convert integrated circulation to lift coefficient
+        cl_test = cl_test * 2.0 * bref / (0.5 * Sref)
+
+        # Compute scaling factor
+        gfac = CLsurfsp[isurf] / cl_test
+
+        # Scale both bound and wake circulations
+        @inbounds for i = ifrst[isurf]:ilast[isurf]
+            gc[i] *= gfac
+            gw[i] *= gfac
+        end
+    end
+
+    return nothing
 end
 
 @enum WAKE_CONTRACTION_TYPE begin
@@ -180,7 +253,7 @@ Type-stable and efficient for repeated use in different panel sections.
         e  = cos(0.5π * bunch_transform(geom.t[i], bunch))
         ec = cos(0.5π * bunch_transform(tc, bunch))
 
-        # Interpolation fractions in eta space
+        # Interpolation fractions in η space
         if e_end - e_start == 0.0
             fi = 1.0
             fc = 0.5
@@ -200,6 +273,7 @@ Type-stable and efficient for repeated use in different panel sections.
         # Circulation with tip rolloff
         geom.gc[i-1] = (g_start * (1.0 - fc) + g_end * fc) * sqrt(1.0 - ec^ktip)
 
+        #Trefftz plane locations (y′ & yc′) of stream lines after wake contraction
         geom.yp[i] = get_wake_contraction(wake_contract, geom.y[i], yo, yop)
         geom.ycp[i-1] = get_wake_contraction(wake_contract, geom.yc[i-1], yo, yop)
 
@@ -211,7 +285,7 @@ Type-stable and efficient for repeated use in different panel sections.
 end
 
 """
-    generate_trefftz_points_single_surface!(
+    generate_trefftz_points!(
         i_start::Int,
         geom::TrefftzGeometry,
         surface,
@@ -241,7 +315,7 @@ This is an incremental refactoring step - extracted from _trefftz_analysis for c
     **Outputs:**
     - `i_end::Int`: Final index after point generation.
 """
-@inline function generate_trefftz_points_single_surface!(
+@inline function generate_trefftz_points!(
     i_start::Int,
     geom::TrefftzGeometry,
     surface,
@@ -423,7 +497,7 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
           ifrst[isurf] = i
 
           # Generate points for this surface
-          i = generate_trefftz_points_single_surface!(
+          i = generate_trefftz_points!(
               i, geom,
               surface,
               po[isurf], gammat[isurf], gammas[isurf],
@@ -440,39 +514,14 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
           geom.gc[i] = 0.0
       end # nsurf loop
 
- ii = ilast[nsurf]
+      ii = ilast[nsurf]
 
-      @inbounds for  isurf = 1: nsurf
-        i = ifrst[isurf]
-        gw[i] = 0. #Circulation in the wake
-        @inbounds for  i = ifrst[isurf]+1: ilast[isurf]-1
-          gw[i] = geom.gc[i-1] - geom.gc[i]
-        end
-        i = ilast[isurf]
-        gw[i] = geom.gc[i-1]
-      end
-
+      calculate_wake_circulation!(gw, geom.gc, ifrst, ilast, nsurf)
 
       if(specifies_CL)
-#----- scale circulations to get specified lift for each surface
-       @inbounds for  isurf = 1: nsurf
-         cltest = 0.
-         @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
-           dy = geom.yp[i+1] - geom.yp[i]
-           cltest = cltest + geom.gc[i]*dy
-         end
-
-         cltest = cltest * 2.0 * bref/(0.5*Sref)
-
-         ## Calculate the scaling factor for the circulations
-         gfac = CLsurfsp[isurf]/(cltest)
-        # println("$isurf, $gfac, $cltest, $(CLsurfsp[isurf])")
-
-         @inbounds for  i = ifrst[isurf]: ilast[isurf]
-           geom.gc[i] = geom.gc[i]*gfac
-           gw[i] = gw[i]*gfac
-         end
-       end
+        # Scale circulations to match specified lift coefficient
+        scale_circulation!(geom.gc, gw, geom.yp, ifrst, ilast, 
+                                 CLsurfsp, bref, Sref, nsurf)
       end
 
       CL = 0.
