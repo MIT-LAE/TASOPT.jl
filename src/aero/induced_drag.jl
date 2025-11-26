@@ -470,14 +470,19 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
               trefftz_config.tail_panels.n_inner_panels +
               tail_image_panels + 1
 
-      if(isum > length(geom.y))
-	      println("TREFFTZ: Passed array overflow. Increase geometry array size to ",isum)
-        exit()
+      # Note: TrefftzGeometry is a fixed-size struct with parametric type {N}
+      # This will be replaced by WakeSystem{NP,NE} which should check this at complie time?
+      geom_size = length(geom.y)
+      work_array_size = length(gw)
+
+      if isum > geom_size
+          error("TREFFTZ: Geometry array overflow. Required $isum panels but TrefftzGeometry{$geom_size} only has $geom_size slots. " *
+                "This indicates a configuration mismatch. Check panel discretization settings.")
       end
 
-      if(isum > length(gw))
-	      println("TREFFTZ: Local array overflow. Increase gw array size to ", isum)
-        exit()
+      if isum > work_array_size
+          error("TREFFTZ: Work array overflow. Required $isum points for circulation array but gw has only $work_array_size slots. " *
+                "Work arrays should match TrefftzGeometry size.")
       end
 
       i::Int64 = 0
