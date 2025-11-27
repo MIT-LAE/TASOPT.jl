@@ -18,7 +18,10 @@ Formerly, `cditrp!()` but now broken up into smaller functions.
       In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
+function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
+    
+    wing = ac.wing
+    htail = ac.htail
 
     CL = para[iaCL]
 
@@ -80,13 +83,20 @@ function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 end # induced_drag!
 
 """
+    ensure_trefftz_current(wing, htail)
+
+Checks if the Trefftz plane geometry is up-to-date with the current wing and tail geometry.
+If not, it rebuilds the geometry.
 """
-function ensure_trefftz_current(wing, htail)
+function ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
+    wing = ac.wing
+    htail = ac.htail
     current_hash = hash((wing.layout.span, wing.layout.root_span, wing.layout.ηs,
         htail.layout.span, htail.layout.root_span, htail.layout.ηs))
 
     if current_hash != TREFFTZ_GEOMETRY_HASH[]
-        _build_trefftz_geometry!()
+        ac.WakeSystem = _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
+        trefftz_config)
         TREFFTZ_GEOMETRY_HASH[] = current_hash
     end
 end  # function ensure_trefftz_current
