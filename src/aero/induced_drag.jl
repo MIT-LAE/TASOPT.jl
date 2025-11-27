@@ -458,33 +458,6 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
 
       CLsurf= zeros(Float64, nsurf)
 
-      # Calculate total number of points
-      # outboard point + inboard + points within fuselage + dummy between surfaces
-      # Wing contribution
-      isum = trefftz_config.wing_panels.n_outer_panels +
-             trefftz_config.wing_panels.n_inner_panels +
-             trefftz_config.wing_panels.n_image_panels + 1
-      # Tail contribution (handle T-tail case where root_span == 0)
-      tail_image_panels = (htail.layout.root_span == 0.0) ? 0 : trefftz_config.tail_panels.n_image_panels
-      isum += trefftz_config.tail_panels.n_outer_panels +
-              trefftz_config.tail_panels.n_inner_panels +
-              tail_image_panels + 1
-
-      # Note: TrefftzGeometry is a fixed-size struct with parametric type {N}
-      # This will be replaced by WakeSystem{NP,NE} which should check this at complie time?
-      geom_size = length(geom.y)
-      work_array_size = length(gw)
-
-      if isum > geom_size
-          error("TREFFTZ: Geometry array overflow. Required $isum panels but TrefftzGeometry{$geom_size} only has $geom_size slots. " *
-                "This indicates a configuration mismatch. Check panel discretization settings.")
-      end
-
-      if isum > work_array_size
-          error("TREFFTZ: Work array overflow. Required $isum points for circulation array but gw has only $work_array_size slots. " *
-                "Work arrays should match TrefftzGeometry size.")
-      end
-
       i::Int64 = 0
 
       @inbounds for isurf = 1:nsurf
