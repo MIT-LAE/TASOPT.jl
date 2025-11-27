@@ -416,6 +416,51 @@ This is an incremental refactoring step - extracted from _trefftz_analysis for c
 end
 
 """
+    _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
+    trefftz_config::TrefftzPlaneConfig,
+    geom::TrefftzGeometry)
+
+Construct the Trefftz plane geometry for the given wing and horizontal tail.
+"""
+function _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
+    trefftz_config::TrefftzPlaneConfig,
+    geom::TrefftzGeometry)
+
+    i::Int64 = 0
+
+    nsurf = 2
+    @inbounds for isurf = 1:nsurf
+        # Select the right surface and panel config
+        surface = isurf == 1 ? wing : htail
+        panels = isurf == 1 ? trefftz_config.wing_panels : trefftz_config.tail_panels
+        root_contraction = isurf == 1 ? trefftz_config.wing_root_contraction : trefftz_config.tail_root_contraction
+
+        # Handle T-tail special case (root_span = 0)
+        if isurf == 2 && surface.layout.root_span == 0.0
+            panels = SurfaceDiscretization(panels.n_outer_panels, panels.n_inner_panels, 0)
+        end
+
+        i = i + 1
+        # Generate points for this surface
+        i = generate_trefftz_points!(
+            i, geom,
+            surface,
+            po[isurf], gammat[isurf], gammas[isurf],
+            panels,
+            trefftz_config,
+            root_contraction
+        )
+
+        #---- dummy control point between surfaces
+        geom.yc[i] = 0.0
+        geom.zc[i] = 0.0
+        geom.gc[i] = 0.0
+    end # nsurf loop
+end
+
+
+
+"""
     _trefftz_analysis(nsurf, trefftz_config, wing, htail, Sref, bref,
           po, gammat, gammas, fLo, specifies_CL, CLsurfsp,
           geom, gw, vc, wc, vnc)
@@ -458,39 +503,12 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
 
       CLsurf= zeros(Float64, nsurf)
 
-      i::Int64 = 0
+    
+    ifrst = [i_first_wing(trefftz_config), i_first_tail(trefftz_config)]
+    ilast = [i_last_wing(trefftz_config), i_last_tail(trefftz_config)]
 
-      @inbounds for isurf = 1:nsurf
-          # Select the right surface and panel config
-          surface = isurf == 1 ? wing : htail
-          panels = isurf == 1 ? trefftz_config.wing_panels : trefftz_config.tail_panels
-          root_contraction = isurf == 1 ? trefftz_config.wing_root_contraction : trefftz_config.tail_root_contraction
-
-          # Handle T-tail special case (root_span = 0)
-          if isurf == 2 && surface.layout.root_span == 0.0
-              panels = SurfaceDiscretization(panels.n_outer_panels, panels.n_inner_panels, 0)
-          end
-
-          i = i + 1
-          ifrst[isurf] = i
-
-          # Generate points for this surface
-          i = generate_trefftz_points!(
-              i, geom,
-              surface,
-              po[isurf], gammat[isurf], gammas[isurf],
-              panels,
-              trefftz_config,
-              root_contraction
-          )
-
-          ilast[isurf] = i
-
-          #---- dummy control point between surfaces
-          geom.yc[i] = 0.0
-          geom.zc[i] = 0.0
-          geom.gc[i] = 0.0
-      end # nsurf loop
+    _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
+        trefftz_config, geom)
 
       ii = ilast[nsurf]
 
