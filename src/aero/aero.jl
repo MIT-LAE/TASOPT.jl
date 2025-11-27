@@ -41,6 +41,7 @@ include("trefftz_config.jl")
 # Trefftz plane geometry arrays (sized for max resolution like before)
 # TODO: avoid module global and pass it into aircraft?
 const TREFFTZ_GEOM = TrefftzGeometry{360}()
+const TREFFTZ_GEOMETRY_HASH = Ref{UInt64}(0)
 
 # Remaining work arrays for wake circulation and velocities
 # (will be moved to WakeSystem in future refactoring)
@@ -48,6 +49,7 @@ const gw  = zeros(Float64, 360)
 const vc  = zeros(Float64, 360)
 const wc  = zeros(Float64, 360)
 const vnc = zeros(Float64, 360)
+include("WakeGeometry.jl")
 include("wing_loading.jl")
 include("wing_drag.jl")
 

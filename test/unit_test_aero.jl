@@ -341,7 +341,7 @@ end
         Sref, bref,
         po, gammat, gammas, fLo,
         specifies_CL, CLsurfsp,
-        geom, gw, vc, wc, vnc)
+        geom)
 
     @test all(fort_CLsurf .≈ CLsurf)
     @test fort_CLtp ≈ CL

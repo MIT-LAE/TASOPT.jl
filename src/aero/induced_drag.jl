@@ -20,65 +20,76 @@ Formerly, `cditrp!()` but now broken up into smaller functions.
 """
 function induced_drag!(para, wing, htail, trefftz_config::TrefftzPlaneConfig)
 
-      CL = para[iaCL]
+    CL = para[iaCL]
 
-      if (CL == 0.0) 
-	    para[iaCDi]  = 0.
-	    para[iaspaneff] = 1.0
-       return
-      end
+    if (CL == 0.0)
+        para[iaCDi] = 0.
+        para[iaspaneff] = 1.0
+        return
+    end
 
-      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S #normalize by wing area
-      # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
-      bref = wing.layout.span
-      Sref = wing.layout.S
+    CLhtail = para[iaCLh] * htail.layout.S / wing.layout.S #normalize by wing area
+    # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
+    bref = wing.layout.span
+    Sref = wing.layout.S
 
-      Mach = para[iaMach]
+    Mach = para[iaMach]
 
-      specifies_CL = true
+    specifies_CL = true
 
-      gammas   = zeros(Float64, 2)
-      gammat   = zeros(Float64, 2)
-      po       = zeros(Float64, 2)
-      CLsurfsp = zeros(Float64, 2)
+    gammas = zeros(Float64, 2)
+    gammat = zeros(Float64, 2)
+    po = zeros(Float64, 2)
+    CLsurfsp = zeros(Float64, 2)
 
-#---- wing wake parameters
-      fLo =  wing.fuse_lift_carryover
+    #---- wing wake parameters
+    fLo = wing.fuse_lift_carryover
 
-      gammas[1] = wing.inboard.λ * para[iarcls]
-      gammat[1] = wing.outboard.λ * para[iarclt]
-      po[1]     = 1.0
-      CLsurfsp[1] = CL - CLhtail
+    gammas[1] = wing.inboard.λ * para[iarcls]
+    gammat[1] = wing.outboard.λ * para[iarclt]
+    po[1] = 1.0
+    CLsurfsp[1] = CL - CLhtail
 
-#---- velocity-change fractions at wing spanwise locations due to fuselage flow
-      fduo = para[iafduo]
-      fdus = para[iafdus]
-      fdut = para[iafdut]
+    #---- velocity-change fractions at wing spanwise locations due to fuselage flow
+    fduo = para[iafduo]
+    fdus = para[iafdus]
+    fdut = para[iafdut]
 
-#---- horizontal tail wake parameters
-      gammas[2] = 1.0
-      gammat[2] = htail.outboard.λ
-      po[2]     = 1.0
-      CLsurfsp[2] = CLhtail
+    #---- horizontal tail wake parameters
+    gammas[2] = 1.0
+    gammat[2] = htail.outboard.λ
+    po[2] = 1.0
+    CLsurfsp[2] = CLhtail
 
 
-#---- number of surfaces  (wing, horizontal tail)
-      nsurf = 2
-      
+    #---- number of surfaces  (wing, horizontal tail)
+    nsurf = 2
+
     CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
         wing, htail,
         Sref, bref,
         po, gammat, gammas, fLo,
-        specifies_CL, CLsurfsp, TREFFTZ_GEOM, gw, vc, wc, vnc)
+        specifies_CL, CLsurfsp, TREFFTZ_GEOM)
 
-      # println("$CLsurf, $CLtp, $CDtp, $sefftp")
+    # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 
-      para[iaCDi] = CDtp
-      para[iaspaneff] = sefftp
+    para[iaCDi] = CDtp
+    para[iaspaneff] = sefftp
 
-      return
+    return
 end # induced_drag!
 
+"""
+"""
+function ensure_trefftz_current(wing, htail)
+    current_hash = hash((wing.layout.span, wing.layout.root_span, wing.layout.ηs,
+        htail.layout.span, htail.layout.root_span, htail.layout.ηs))
+
+    if current_hash != TREFFTZ_GEOMETRY_HASH[]
+        _build_trefftz_geometry!()
+        TREFFTZ_GEOMETRY_HASH[] = current_hash
+    end
+end  # function ensure_trefftz_current
 
 """
     bunch_transform(t, bunch)
@@ -133,7 +144,7 @@ At each panel edge, the change in bound circulation is shed into the wake:
 )
     @inbounds for isurf = 1:nsurf
         i = i_first[isurf]
-        gw[i] = 0.0
+        gw[i] = 0.0 # centerline wake circulations cancel from left and right contributions
 
         @inbounds for i = (i_first[isurf]+1):(i_last[isurf]-1)
             gw[i] = gc[i-1] - gc[i]
@@ -417,14 +428,12 @@ end
 
 """
     _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
-    trefftz_config::TrefftzPlaneConfig,
-    geom::TrefftzGeometry)
+    trefftz_config::TrefftzPlaneConfig)
 
 Construct the Trefftz plane geometry for the given wing and horizontal tail.
 """
 function _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
-    trefftz_config::TrefftzPlaneConfig,
-    geom::TrefftzGeometry)
+    trefftz_config::TrefftzPlaneConfig)
 
     i::Int64 = 0
 
@@ -443,7 +452,7 @@ function _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
         i = i + 1
         # Generate points for this surface
         i = generate_trefftz_points!(
-            i, geom,
+            i, TREFFTZ_GEOM,
             surface,
             po[isurf], gammat[isurf], gammas[isurf],
             panels,
@@ -452,9 +461,9 @@ function _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
         )
 
         #---- dummy control point between surfaces
-        geom.yc[i] = 0.0
-        geom.zc[i] = 0.0
-        geom.gc[i] = 0.0
+        TREFFTZ_GEOM.yc[i] = 0.0
+        TREFFTZ_GEOM.zc[i] = 0.0
+        TREFFTZ_GEOM.gc[i] = 0.0
     end # nsurf loop
 end
 
@@ -507,8 +516,7 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
     ifrst = [i_first_wing(trefftz_config), i_first_tail(trefftz_config)]
     ilast = [i_last_wing(trefftz_config), i_last_tail(trefftz_config)]
 
-    _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
-        trefftz_config, geom)
+    _build_trefftz_geometry!(wing, htail, po, gammat, gammas, trefftz_config)
 
       ii = ilast[nsurf]
 
