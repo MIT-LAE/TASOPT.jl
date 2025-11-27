@@ -60,6 +60,24 @@ struct TrefftzPlaneConfig
 end
 
 """
+    n_points_used(config::TrefftzPlaneConfig)
+
+Returns the total number of points used in the Trefftz plane calculations
+based on the provided configuration.
+"""
+function n_points_used(config::TrefftzPlaneConfig)
+    n_wings = trefftz_config.wing_panels.n_outer_panels +
+              trefftz_config.wing_panels.n_inner_panels +
+              trefftz_config.wing_panels.n_image_panels + 1 
+              #add 1 for dummy point between surfaces
+    n_tails = trefftz_config.tail_panels.n_outer_panels +
+             trefftz_config.tail_panels.n_inner_panels +
+             trefftz_config.tail_panels.n_image_panels + 1 
+             #add 1 for dummy point between surfaces
+    return n_wings + n_tails
+end
+
+"""
     get_trefftz_config(quality::String; k_tip=16.0, bunch=0.5, wing_root_contraction=0.2, tail_root_contraction=1.0)
 
 Create a [`TrefftzPlaneConfig`](@ref).
