@@ -326,7 +326,7 @@ This is an incremental refactoring step - extracted from _trefftz_analysis for c
 )
     # Extract geometry from surface struct
     b = surface.layout.span
-    bs = surface.layout.break_span  # uses the getproperty accessor
+    bs = surface.layout.break_span 
     bo = surface.layout.root_span
     bop = bo * root_contraction
     zcent = surface.layout.z
