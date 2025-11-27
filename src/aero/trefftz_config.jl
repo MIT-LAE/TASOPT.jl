@@ -57,6 +57,17 @@ struct TrefftzPlaneConfig
         0.0 < wing_root_contraction ≤ 1.0 || throw(ArgumentError("wing_root_contraction must be [0..1]"))
         0.0 < tail_root_contraction ≤ 1.0 || throw(ArgumentError("tail_root_contraction must be [0..1]"))
 
+        i_sum = wing_panels.n_outer_panels +
+                wing_panels.n_inner_panels +
+                wing_panels.n_image_panels + 1 +
+                tail_panels.n_outer_panels +
+                tail_panels.n_inner_panels +
+                tail_panels.n_image_panels + 1
+        geom_size = length(TREFFTZ_GEOM.y)
+        if i_sum > geom_size
+            error("TREFFTZ: Geometry array overflow. Required $i_sum panels but TrefftzGeometry{$geom_size} only has $geom_size slots. " *
+                  "Check panel discretization settings.")
+        end
         new(wing_panels, tail_panels, k_tip, bunch, wing_root_contraction, tail_root_contraction)
     end
 end
