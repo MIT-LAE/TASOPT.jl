@@ -151,8 +151,6 @@ function get_trefftz_config(quality::String;
                              tail_root_contraction=tail_root_contraction)
 end
 
-const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM")
-
 """
     TrefftzGeometry{N}
 
