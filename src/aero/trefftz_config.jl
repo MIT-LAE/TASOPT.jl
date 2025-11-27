@@ -17,6 +17,8 @@ struct SurfaceDiscretization
     end
 end
 
+n_total(sd::SurfaceDiscretization) = sd.n_outer_panels + sd.n_inner_panels + sd.n_image_panels
+
 """
     TrefftzPlaneConfig
 
@@ -76,6 +78,13 @@ function n_points_used(config::TrefftzPlaneConfig)
              #add 1 for dummy point between surfaces
     return n_wings + n_tails
 end
+
+i_first_wing(config::TrefftzPlaneConfig) = 1
+i_last_wing(config::TrefftzPlaneConfig) = i_first_wing(config) +
+                                          n_total(config.wing_panels)
+i_first_tail(config::TrefftzPlaneConfig) = i_last_wing(config) + 1
+i_last_tail(config::TrefftzPlaneConfig) = i_first_tail(config) +
+                                          n_total(config.tail_panels)
 
 """
     get_trefftz_config(quality::String; k_tip=16.0, bunch=0.5, wing_root_contraction=0.2, tail_root_contraction=1.0)
