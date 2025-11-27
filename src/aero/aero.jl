@@ -42,6 +42,7 @@ include("trefftz_config.jl")
 # TODO: avoid module global and pass it into aircraft?
 const TREFFTZ_GEOM = TrefftzGeometry{360}()
 const TREFFTZ_GEOMETRY_HASH = Ref{UInt64}(0)
+const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM") # this has to come after defining TREFFTZ_GEOM
 
 # Remaining work arrays for wake circulation and velocities
 # (will be moved to WakeSystem in future refactoring)
