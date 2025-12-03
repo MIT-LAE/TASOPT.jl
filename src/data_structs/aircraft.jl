@@ -35,7 +35,7 @@ The indices for accessing specific data in the `par` arrays are defined in `/src
 Refer to the sample input file (`/example/defaults/default_input.toml` and `read_input.jl`) for usage.
 Refer to the docs for a summary of the main `struct`s.
 """
-@kwdef mutable struct aircraft
+@kwdef mutable struct aircraft{WS<:WakeSystem}
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
     options::TASOPT.Options
@@ -44,7 +44,7 @@ Refer to the docs for a summary of the main `struct`s.
     parm::Array{Float64, 2}
     para::Array{Float64, 3}
     pare::Array{Float64, 3}
-    
+
     is_sized::Vector{Bool} = [false]
 
     fuselage::Fuselage = Fuselage()
@@ -55,8 +55,40 @@ Refer to the docs for a summary of the main `struct`s.
     engine::Engine = Engine()
     landing_gear::LandingGear = LandingGear()
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
+    wake_system::WS
 end
 
+function aircraft(
+    name::String,
+    description::String,
+    options::TASOPT.Options,
+    parg::Vector{Float64},
+    parm::Array{Float64, 2},
+    para::Array{Float64, 3},
+    pare::Array{Float64, 3},
+    is_sized::Vector{Bool},
+    fuselage::Fuselage,
+    fuse_tank::fuselage_tank,
+    wing::Wing,
+    htail::Tail,
+    vtail::Tail,
+    engine::Engine,
+    landing_gear::LandingGear
+)
+    # Create placeholder WakeSystem with correct size for type stability
+    # This will be rebuilt with actual geometry in induced_drag!
+    wake_system = aerodynamics._create_placeholder_wake_system(options.trefftz_config)
+
+    # Construct the aircraft with the type parameter
+    return aircraft{typeof(wake_system)}(
+        name, description, options,
+        parg, parm, para, pare, is_sized,
+        fuselage, fuse_tank,
+        wing, htail, vtail,
+        engine, landing_gear,
+        wake_system
+    )
+end
 
 function Base.getproperty(ac::aircraft, sym::Symbol)
     if sym === :parad #Design para
