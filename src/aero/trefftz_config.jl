@@ -78,7 +78,7 @@ end
 Returns the total number of points used in the Trefftz plane calculations
 based on the provided configuration.
 """
-function n_points_used(config::TrefftzPlaneConfig)
+function n_points_used(trefftz_config::TrefftzPlaneConfig)
     n_wings = trefftz_config.wing_panels.n_outer_panels +
               trefftz_config.wing_panels.n_inner_panels +
               trefftz_config.wing_panels.n_image_panels + 1 

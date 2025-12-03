@@ -247,3 +247,22 @@ function generate_wake_system(yp::AbstractVector{Float64}, zp::AbstractVector{Fl
     control_points = SVector{np-1, Point2D}(Point2D(ycp[i], zcp[i]) for i in 1:np-1)
     WakeSystem(points, control_points = control_points)
 end
+
+"""
+    _create_placeholder_wake_system(trefftz_config::TrefftzPlaneConfig)
+
+Create a minimal valid WakeSystem for initialization.
+This is a placeholder that will be rebuilt with actual geometry in induced_drag!.
+"""
+function _create_placeholder_wake_system(trefftz_config)
+    # Calculate required array size from config
+    n_total = n_points_used(trefftz_config)
+
+    # Create simple placeholder geometry (straight line along y-axis)
+    yp = collect(range(0.0, 1.0, length=n_total))
+    zp = zeros(n_total)
+    ycp = 0.5 * (yp[1:end-1] + yp[2:end])
+    zcp = zeros(n_total - 1)
+
+    return generate_wake_system(yp, zp, ycp, zcp)
+end

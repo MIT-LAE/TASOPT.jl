@@ -68,6 +68,9 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
     #---- number of surfaces  (wing, horizontal tail)
     nsurf = 2
 
+    # Ensure wake_system has current geometry (rebuilds if geometry changed)
+    ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
+
     CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
         wing, htail,
         Sref, bref,
@@ -76,6 +79,12 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
 
     # println("$CLsurf, $CLtp, $CDtp, $sefftp")
 
+    # 1. Check if WakeSystem needs to be rebuilt
+    # ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
+    # 2. Wake circulations need to be calculated and then
+    # 3. Scale circulation to match CL
+    # 4. Use ac.WakeSystem to compute induced drag
+
     para[iaCDi] = CDtp
     para[iaspaneff] = sefftp
 
@@ -83,23 +92,25 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
 end # induced_drag!
 
 """
-    ensure_trefftz_current(wing, htail)
+    ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
 
 Checks if the Trefftz plane geometry is up-to-date with the current wing and tail geometry.
-If not, it rebuilds the geometry.
+If not, rebuilds the geometry.
 """
 function ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
     wing = ac.wing
     htail = ac.htail
-    current_hash = hash((wing.layout.span, wing.layout.root_span, wing.layout.ηs,
-        htail.layout.span, htail.layout.root_span, htail.layout.ηs))
 
+    current_hash = hash((wing.layout.span, wing.layout.root_span, wing.layout.ηs,
+        htail.layout.span, htail.layout.root_span, htail.layout.ηs, gammat..., gammas...))
+
+    # Only rebuild if geometry changed
     if current_hash != TREFFTZ_GEOMETRY_HASH[]
-        ac.WakeSystem = _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
-        trefftz_config)
+        # println("Rebuilding Trefftz plane geometry...", TREFFTZ_GEOMETRY_HASH[], " --> ", current_hash)
+        ac.wake_system = _build_trefftz_geometry!(wing, htail, po, gammat, gammas, trefftz_config)
         TREFFTZ_GEOMETRY_HASH[] = current_hash
     end
-end  # function ensure_trefftz_current
+end  # function ensure_trefftz_current!
 
 """
     bunch_transform(t, bunch)
