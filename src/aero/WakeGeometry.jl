@@ -126,12 +126,13 @@ where:
 struct WakeSystem{NP, NE}
     points::SVector{NP, Point2D}
     elements::SVector{NE, WakeElement}
-    influence_matrix::MMatrix{NE, NP, Float64}
+    influence_matrix::Matrix{Float64}
     
     function WakeSystem(points::SVector{NP, Point2D}, 
         elements::SVector{NE, WakeElement},
-        influence_matrix::MMatrix{NE, NP, Float64}) where {NP, NE}
-        if NE != NP - 1
+        influence_matrix::Matrix{Float64}) where {NP, NE}
+        AIC_size = size(influence_matrix)
+        if NE != NP - 1 || AIC_size[1] != (AIC_size[2] - 1) || AIC_size[1] != NE
             throw(ArgumentError("Number of elements (NE) must be exactly one less than the number of points (NP)."))
         end
         new{NP, NE}(points, elements, influence_matrix)
@@ -160,7 +161,7 @@ function WakeSystem(points::SVector{NP, Point2D};
 
     elements = generate_wake_elements(points; control_points = control_points)
     NE = NP - 1
-    influence_matrix = @MMatrix zeros(NE, NP)
+    influence_matrix = zeros(NE, NP)
     ws = WakeSystem(points,elements,influence_matrix)
     calculate_influence_matrix!(ws)
     return ws

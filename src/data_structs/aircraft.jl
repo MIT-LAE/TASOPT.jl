@@ -35,7 +35,8 @@ The indices for accessing specific data in the `par` arrays are defined in `/src
 Refer to the sample input file (`/example/defaults/default_input.toml` and `read_input.jl`) for usage.
 Refer to the docs for a summary of the main `struct`s.
 """
-@kwdef mutable struct aircraft{WS<:WakeSystem}
+@kwdef mutable struct aircraft{WS<:WakeSystem} 
+#TODO: Right now, only WakeSystem is a type parameter but I expect to make it parametric on more config options
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
     options::TASOPT.Options

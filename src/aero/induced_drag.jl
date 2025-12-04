@@ -66,24 +66,23 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
 
 
     #---- number of surfaces  (wing, horizontal tail)
-    nsurf = 2
+    nsurf = 2 # TODO SHould make this parametric too eventually
 
     # Ensure wake_system has current geometry (rebuilds if geometry changed)
     ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
 
-    CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, trefftz_config,
-        wing, htail,
-        Sref, bref,
-        po, gammat, gammas, fLo,
-        specifies_CL, CLsurfsp, TREFFTZ_GEOM)
+    ifrst = [i_first_wing(trefftz_config), i_first_tail(trefftz_config)]
+    ilast = [i_last_wing(trefftz_config), i_last_tail(trefftz_config)]
 
-    # println("$CLsurf, $CLtp, $CDtp, $sefftp")
+    calculate_wake_circulation!(gw, TREFFTZ_GEOM.gc, ifrst, ilast, nsurf) #TODO: next cut avoid these module consts. They're ugly.
 
-    # 1. Check if WakeSystem needs to be rebuilt
-    # ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
-    # 2. Wake circulations need to be calculated and then
-    # 3. Scale circulation to match CL
-    # 4. Use ac.WakeSystem to compute induced drag
+    if (specifies_CL)
+        # Scale circulations to match specified lift coefficient
+        scale_circulation!(TREFFTZ_GEOM.gc, gw, TREFFTZ_GEOM.yp, ifrst, ilast,
+            CLsurfsp, bref, Sref, nsurf)
+    end
+
+    CLtp, CDtp, sefftp = compute_induced_drag!(vnc, ac.wake_system, TREFFTZ_GEOM.gc, gw, bref, Sref)
 
     para[iaCDi] = CDtp
     para[iaspaneff] = sefftp
@@ -607,3 +606,40 @@ function _trefftz_analysis(nsurf, trefftz_config::TrefftzPlaneConfig,
 
       return CLsurf, CL, CD , spanef
       end
+
+function compute_induced_drag!(vnc, WS::WakeSystem{Npts, Nelems}, gc, gw, bref, Sref) where {Npts, Nelems}
+
+    @views mul!(vnc[1:Nelems], WS.influence_matrix[1:Nelems, 1:Npts], gw[1:Npts])
+
+    # Normalize in-place
+    factor = bref / (2.0π)
+    @inbounds for i in 1:Nelems
+        vnc[i] *= factor
+    end
+
+    # Compute CL and CD
+    # Need to extract element geometry on-the-fly
+    CL = 0.0
+    CD = 0.0
+
+    @inbounds for i in 1:Nelems
+        # Extract element geometry from WakeSystem
+        elem = WS.elements[i]
+        dy = elem.Δy
+        ds = elem.length
+
+        CD -= gc[i] * vnc[i] * ds
+        CL += 2.0 * gc[i] * dy
+    end
+
+    # Normalize
+    CD = CD * bref / (0.5 * Sref)
+    CL = CL * bref / (0.5 * Sref)
+
+    AR = bref^2 / Sref
+    CD_elliptical = CL^2 / (π * AR) #CD for elliptical loading here. 
+    # For general CD = CL²/(π*AR*spaneff) ∴spaneff calculated as:
+    span_eff = CD_elliptical / CD
+
+    return CL, CD, span_eff
+end
