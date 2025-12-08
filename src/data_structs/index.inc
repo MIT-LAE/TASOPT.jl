@@ -35,10 +35,11 @@
       const imfexcdf = 33
       const imDeltaTatm = 34
       const imWfvent = 35
-      const imDeviationDH = 36
-      const imDeviationDL = 37
-      const imDeviationStart = 38
-      const imtotal = 38
+      const imDeviationHeight = 36
+      const imDeviationLength = 37
+      const imDeviationStartFromTOC = 38
+      const imUseDeviation = 39
+      const imtotal = 39
 
 #---- indices for geometry (airframe) variables and other sizing variables
       const igRange    =   1
