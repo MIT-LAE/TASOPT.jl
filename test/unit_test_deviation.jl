@@ -61,17 +61,17 @@
     @testset "Sample deviation test" begin
         ac_default = deepcopy(default_ac)
 
-        ac_default.parm[TASOPT.imDeviationDH, mission_idx] = 304.8 # 1000 ft
-        ac_default.parm[TASOPT.imDeviationDL, mission_idx] = 185200 # 100 nmi
-        ac_default.parm[TASOPT.imDeviationStart, mission_idx] = 185200 # 100 nmi
+        ac_default.parm[TASOPT.imDeviationHeight, mission_idx] = 304.8 # 1000 ft
+        ac_default.parm[TASOPT.imDeviationLength, mission_idx] = 185200 # 100 nmi
+        ac_default.parm[TASOPT.imDeviationStartFromTOC, mission_idx] = 185200 # 100 nmi
 
         TASOPT._mission_iteration!(ac_default, mission_idx, false)
 
         snap = get_deviation_info(ac_default, mission_idx)
 
-        Δh_req = ac_default.parm[TASOPT.imDeviationDH, mission_idx]
-        R_dev_req = ac_default.parm[TASOPT.imDeviationDL, mission_idx]
-        S_dev_req = ac_default.parm[TASOPT.imDeviationStart, mission_idx]
+        Δh_req = ac_default.parm[TASOPT.imDeviationHeight, mission_idx]
+        R_dev_req = ac_default.parm[TASOPT.imDeviationLength, mission_idx]
+        S_dev_req = ac_default.parm[TASOPT.imDeviationStartFromTOC, mission_idx]
 
         gam_base = snap.gam_base
         gam_up = snap.gam_up
@@ -123,9 +123,9 @@
 
         snap = get_deviation_info(ac_default, mission_idx)
 
-        Δh_req = ac_default.parm[TASOPT.imDeviationDH, mission_idx]
-        R_dev_req = ac_default.parm[TASOPT.imDeviationDL, mission_idx]
-        S_dev_req = ac_default.parm[TASOPT.imDeviationStart, mission_idx]
+        Δh_req = ac_default.parm[TASOPT.imDeviationHeight, mission_idx]
+        R_dev_req = ac_default.parm[TASOPT.imDeviationLength, mission_idx]
+        S_dev_req = ac_default.parm[TASOPT.imDeviationStartFromTOC, mission_idx]
 
         gam_base = snap.gam_base
         gam_up = snap.gam_up
@@ -175,16 +175,16 @@
 
     @testset "Deviation start clamps to cruise span" begin
         ac_start = deepcopy(default_ac)
-        ac_start.parm[TASOPT.imDeviationDH, mission_idx] = 304.8 # ensure deviation active
-        ac_start.parm[TASOPT.imDeviationDL, mission_idx] = 185200.0
-        ac_start.parm[TASOPT.imDeviationStart, mission_idx] = 1.0e7
+        ac_start.parm[TASOPT.imDeviationHeight, mission_idx] = 304.8 # ensure deviation active
+        ac_start.parm[TASOPT.imDeviationLength, mission_idx] = 185200.0
+        ac_start.parm[TASOPT.imDeviationStartFromTOC, mission_idx] = 1.0e7
 
         TASOPT._mission_iteration!(ac_start, mission_idx, false)
         snap = get_deviation_info(ac_start, mission_idx)
 
-        S_dev_req = ac_start.parm[TASOPT.imDeviationStart, mission_idx]
-        R_dev_req = ac_start.parm[TASOPT.imDeviationDL, mission_idx]
-        Δh_req = ac_start.parm[TASOPT.imDeviationDH, mission_idx]
+        S_dev_req = ac_start.parm[TASOPT.imDeviationStartFromTOC, mission_idx]
+        R_dev_req = ac_start.parm[TASOPT.imDeviationLength, mission_idx]
+        Δh_req = ac_start.parm[TASOPT.imDeviationHeight, mission_idx]
 
         gam_base = snap.gam_base
         gam_up = snap.gam_up
@@ -215,10 +215,10 @@
 
     @testset "Altitude change clamps to cruise span limit" begin
         ac_clamp = deepcopy(default_ac)
-        ac_clamp.parm[TASOPT.imDeviationDL, mission_idx] = 185200 # 100 nmi
-        ac_clamp.parm[TASOPT.imDeviationStart, mission_idx] = 185200 # 100 nmi
+        ac_clamp.parm[TASOPT.imDeviationLength, mission_idx] = 185200 # 100 nmi
+        ac_clamp.parm[TASOPT.imDeviationStartFromTOC, mission_idx] = 185200 # 100 nmi
         requested = 3.0e4
-        ac_clamp.parm[TASOPT.imDeviationDH, mission_idx] = requested
+        ac_clamp.parm[TASOPT.imDeviationHeight, mission_idx] = requested
 
         TASOPT._mission_iteration!(ac_clamp, mission_idx, false)
         snap = get_deviation_info(ac_clamp, mission_idx)
@@ -247,9 +247,9 @@
 
     @testset "Hold segment disappears when requested length is too short" begin
         ac_short = deepcopy(default_ac)
-        ac_short.parm[TASOPT.imDeviationDH, mission_idx] = 304.8
-        ac_short.parm[TASOPT.imDeviationDL, mission_idx] = 1852.0 * 1
-        ac_short.parm[TASOPT.imDeviationStart, mission_idx] = 1.0e4
+        ac_short.parm[TASOPT.imDeviationHeight, mission_idx] = 304.8
+        ac_short.parm[TASOPT.imDeviationLength, mission_idx] = 1852.0 * 1
+        ac_short.parm[TASOPT.imDeviationStartFromTOC, mission_idx] = 1.0e4
 
         TASOPT._mission_iteration!(ac_short, mission_idx, true)
         snap = get_deviation_info(ac_short, mission_idx)
@@ -258,7 +258,7 @@
         @test isapprox(snap.R_hold, 0.0; atol = 1e-6)
         @test isapprox(snap.s_vals[4], snap.s_vals[3]; atol = 1e-6)
 
-        S_dev_req = ac_short.parm[TASOPT.imDeviationStart, mission_idx]
+        S_dev_req = ac_short.parm[TASOPT.imDeviationStartFromTOC, mission_idx]
         gam_base = snap.gam_base
         gam_up = snap.gam_up
         gam_dn = snap.gam_dn
@@ -267,7 +267,7 @@
 
         denom = abs((1 / den_up) - (1 / den_dn))
         Δh_limit = snap.dRcruise / denom
-        Δh_req = ac_short.parm[TASOPT.imDeviationDH, mission_idx]
+        Δh_req = ac_short.parm[TASOPT.imDeviationHeight, mission_idx]
         Δh_eff = clamp(Δh_req, -Δh_limit, Δh_limit)
 
         S_dev_max = max(snap.dRcruise - snap.base_length, 0.0)
