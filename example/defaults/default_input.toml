@@ -112,8 +112,8 @@
 
 [Mission.Deviation]
     deviation_height = ["0.0 ft", "1000.0 ft"]
-    deviation_length = ["0.0 nmi", "50 nmi"]
-    deviation_start_from_TOC = ["0.0 nmi", "200.0 nmi"]
+    deviation_length = ["0.0 nmi", "100 nmi"]
+    deviation_start_from_TOC = ["0.0 nmi", "100.0 nmi"]
 
 [Mission.Descent]
     descent_angle_top-of-descent = "-3.0 deg"

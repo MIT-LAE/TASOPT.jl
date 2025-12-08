@@ -87,7 +87,7 @@ include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
-export stickfig, plot_details, PayloadRange
+export stickfig, plot_details, plot_profile, PayloadRange
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))

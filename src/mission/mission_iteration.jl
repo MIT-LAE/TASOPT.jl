@@ -635,7 +635,6 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   # Limit climb γ to whichever is smaller: thrust capability or climb leg constraint
                   γ_cap = asin(sin_cap)
                   γ_eff = min(γ_abs, γ_cap)
-                  println("$(γ_cap), $(γ_eff)")
             end
       end
 

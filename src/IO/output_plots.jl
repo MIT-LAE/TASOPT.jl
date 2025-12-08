@@ -676,6 +676,33 @@ function plot_details(ac::aircraft)
 end
 
 """
+    plot_profile(ac::aircraft, imission::Integer)
+
+Plot altitude vs. range along with the trajectory climb angle for mission `imission`.
+"""
+function plot_profile(ac::aircraft, imission::Integer)
+    nmissions = size(ac.para, 3)
+    im = Int(imission)
+
+    @views para = ac.para[:, :, im]
+
+    h    = [para[iaalt, ipclimb1:ipcruisen]; 0.0] ./ ft_to_m ./ 1000 # show in 1000s of ft.
+    R    = [para[iaRange, ipclimb1:ipcruisen]; para[iaRange, ipdescentn]] ./ nmi_to_m
+    gamV = [para[iagamV, ipclimb1:ipcruisen]; para[iagamV, ipdescentn]]
+
+    title_str = im == 1 ? "Mission Profile" : "Mission $(im) Profile"
+
+    p = plot(R, h, label="Altitude", xlabel="Range [nmi]", 
+            title=title_str, ylabel="Altitude [kft]", lw=2.0)
+
+    yaxis2 = twinx(p)
+    plot!(yaxis2, R, gamV, color=:red, label="Traj. Climb Angle, γ", ylabel="Angle [rads]", lw=2, legend=:bottomright)
+    hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, label="γ = 0.015")
+
+    return p
+end
+
+"""
 Simple utility function to label bars in a stacked bar chart
 """
 #TODO: Bring this functionality back. Right now, we're working with legends in plots
