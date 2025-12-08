@@ -265,9 +265,36 @@ parm[imgamVDEn, :] .= Angle.(readdes("descent_angle_bottom-of-descent"))
 dev = readmis("Deviation")
 ddev = dmis["Deviation"]
 readdev(x) = read_input(x, dev, ddev)
-parm[imDeviationDH, :] = Distance.(readdev("deviation_dh"))
-parm[imDeviationDL, :] = Distance.(readdev("deviation_dl"))
-parm[imDeviationStart, :] = Distance.(readdev("deviation_start"))
+parm[imDeviationHeight, :] .= Distance.(readdev("deviation_height"))
+parm[imDeviationLength, :] .= Distance.(readdev("deviation_length"))
+parm[imDeviationStartFromTOC, :] .= Distance.(readdev("deviation_start_from_TOC"))
+
+eps_dev_height = 1.0e-3
+eps_dev_range = 1.0e-6
+use_deviation = falses(nmisx)
+
+for i in 1:nmisx
+    dh = parm[imDeviationHeight, i]
+    dl = parm[imDeviationLength, i]
+    start = parm[imDeviationStartFromTOC, i]
+
+    if dl < 0.0
+        @warn "Deviation level-leg distance must be non-negative. Clamping mission $i from $dl to 0.0."
+        parm[imDeviationLength, i] = 0.0
+        dl = 0.0
+    end
+
+    active = (abs(dh) > eps_dev_height) && (dl > eps_dev_range)
+
+    if start < 0.0
+        @warn "Deviation start distance must be non-negative. Clamping mission $i from $start to 0.0."
+        parm[imDeviationStartFromTOC, i] = 0.0
+    end
+
+    use_deviation[i] = active
+end
+
+parm[imUseDeviation, :] .= use_deviation
 
 
 #---------- End Mission vars --------------
