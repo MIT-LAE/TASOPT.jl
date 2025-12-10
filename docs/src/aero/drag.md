@@ -55,7 +55,7 @@ aerodynamics.fuselage_drag!(fuse, parm, para, ip)
 
 ## [Trefftz plane drag calculation](@id trefftz)
 
-Trefftz plane analysis computes the induced drag from lifting surfaces. The lift distributions are propagated downstream, accounting for streamline contraction from fuselage thickness variation as shown in the Figure below. 
+Trefftz plane analysis computes the induced drag from multiple lifting surfaces (wing + horizontal tail). The lift distributions are propagated downstream, accounting for streamline contraction from fuselage thickness variation as shown in the Figure below.
 
 ![](../assets/trefftz.png)
 Two shaded streamtubes are shown. Wake center radius $y'_o$ is nonzero due to the fuselage viscous wake displacement area.
@@ -68,28 +68,145 @@ Trefftz Plane vortices $i,i\!+\!1 \ldots$ and collocation points
 $i\!+\!1/2$ used for velocity, impulse, and kinetic energy calculations.
 Left/right symmetry is exploited.
 
+### Multi-surface formulation
+
+The induced drag calculation uses a discrete vortex method with a pre-computed influence matrix. For wing and tail surfaces, the system is:
+
+$$\mathbf{A}\boldsymbol{\Gamma} = \mathbf{w}$$
+
+where $\mathbf{A}$ is the aerodynamic influence matrix (purely geometric), $\boldsymbol{\Gamma}$ is the wake circulation vector, and $\mathbf{w}$ is the normal velocity at control points.
+
+Each influence coefficient $A_{ij}$ represents the velocity induced at control point $i$ by a unit vortex at wake point $j$, including its mirror image:
+
+$$A_{ij} = \frac{(\hat{\mathbf{x}} \times \mathbf{r}_{ij}) \cdot \hat{\mathbf{n}}_i}{|\mathbf{r}_{ij}|^2} - \frac{(\hat{\mathbf{x}} \times \mathbf{r}_{ij}^m) \cdot \hat{\mathbf{n}}_i}{|\mathbf{r}_{ij}^m|^2}$$
+
+where $\mathbf{r}_{ij}$ is the vector from wake point $j$ to control point $i$, $\mathbf{r}_{ij}^m$ is the vector from the mirror image of wake point $j$, and $\hat{\mathbf{n}}_i$ is the unit normal of element $i$.
+
+The influence matrix has block structure for wing-tail interactions:
+
+$$\begin{bmatrix}
+\mathbf{A}_{\mathrm{ww}} & \mathbf{A}_{\mathrm{wt}} \\
+\mathbf{A}_{\mathrm{tw}} & \mathbf{A}_{\mathrm{tt}}
+\end{bmatrix}
+\begin{bmatrix} \boldsymbol{\Gamma}_\mathrm{wing} \\ \boldsymbol{\Gamma}_\mathrm{tail}
+\end{bmatrix} =
+\begin{bmatrix} \mathbf{w}_\mathrm{wing} \\ \mathbf{w}_\mathrm{tail}
+\end{bmatrix}$$
+
+The structure of this block matrix looks like:
+
+$$\small{\left[
+\begin{array}{c:c}
+	\overbrace{\begin{bmatrix} 
+	a_{w_1,w_1}  & a_{w_1,w_2}&\cdots & a_{w_1,w_{n_\mathrm{wing+1}}}\\
+	\vdots & \ddots &  & \vdots\\
+	\vdots &  &  & \vdots \\
+	a_{w_{n_\mathrm{wing}},w_1}  & a_{w_1,w_2}&\cdots & a_{w_{n_\mathrm{wing}},w_{n_\mathrm{wing+1}}}\\
+	\end{bmatrix}}^{\mathbf{A}_{n_\mathrm{wing}\times n_\mathrm{wing+1}}}
+	&
+	\overbrace{\begin{bmatrix} 
+	a_{w_1,t_1}  & \cdots & a_{w_1,t_{n_\mathrm{tail+1}}} \\
+	\vdots & \ddots & \vdots \\
+	\vdots &  &   \vdots \\
+	a_{w_{n_\mathrm{wing}},t_1} &\cdots & a_{w_{n_\mathrm{wing}},t_{n_\mathrm{tail+1}}}\\
+	\end{bmatrix}}^{\mathbf{A}_{n_\mathrm{wing}\times n_\mathrm{tail+1}}} \\[2em]
+	
+	\hdashline \\
+	
+	\underbrace{\begin{bmatrix} 
+	a_{t_1,w_1}  & a_{t_1,w_2}&\cdots & a_{t_1,w_{n_\mathrm{wing+1}}}\\
+	\vdots & \ddots &  & \vdots\\
+	a_{t_{n_\mathrm{tail}},w_1}  & a_{t_1,w_2}&\cdots & a_{t_{n_\mathrm{tail}},w_{n_\mathrm{wing+1}}}\\
+	\end{bmatrix}}_{\mathbf{A}_{n_\mathrm{tail}\times n_\mathrm{wing+1}}}
+	&
+	\underbrace{\begin{bmatrix} 
+	a_{t_1,t_1}  & \cdots & a_{t_1,t_{n_\mathrm{tail+1}}} \\
+	\vdots & \ddots & \vdots \\
+	a_{t_{n_\mathrm{tail}},t_1} &\cdots & a_{t_{n_\mathrm{tail}},t_{n_\mathrm{tail+1}}}\\
+	\end{bmatrix}}_{\mathbf{A}_{n_\mathrm{wing}\times n_\mathrm{tail+1}}}
+\end{array}
+\right]
+\quad
+
+\begin{bmatrix}
+	\left.\begin{matrix}
+		\Gamma_{w_1} \\
+		\Gamma_{w_2} \\
+		\vdots \\
+		\vdots \\
+		\Gamma_{w_{n_\mathrm{wing}}}\\
+		\Gamma_{w_{n_\mathrm{wing}+1}}
+		\end{matrix}\right\} n_{\mathrm{wing}+1} \\[1em]
+		\left.\begin{matrix}
+		\Gamma_{t_1} \\
+		\Gamma_{t_2} \\
+		\vdots \\
+		\Gamma_{t_{n_\mathrm{tail}}}\\
+		\Gamma_{t_{n_\mathrm{tail}+1}}
+	\end{matrix}\right\} n_{\mathrm{tail+1}}
+\end{bmatrix} =
+
+\begin{bmatrix}
+	\left.\begin{matrix}
+		w_{w_1} \\
+		w_{w_2} \\
+		\vdots \\
+		\vdots \\
+		w_{w_{n_\mathrm{wing}}}
+		\end{matrix}\right\} n_\mathrm{wing} \\[1em]
+		\left.\begin{matrix}
+		w_{t_1} \\
+		w_{t_2} \\
+		\vdots \\
+		w_{t_{n_\mathrm{tail}}}
+	\end{matrix}\right\} n_\mathrm{tail}
+	 \\
+\end{bmatrix}}$$
+
+The AIC matrix looks like:
+
+![AIC](../assets/trefftz_AIC_spy.png)
+
+### Spanwise point distribution
+
+Points are distributed using a cosine spacing transformation for accuracy at the wing tip where circulation changes rapidly. A "bunching" parameter $\beta \in [0,1]$ clusters points toward the root:
+
+$$t_\mathrm{bunched} = t + \beta \cdot t(1-t)$$
+
+where $t \in [0,1]$ is the normalized spanwise coordinate.
+
+### Wake contraction
+
+Streamlines contract behind the fuselage due to mass conservation. Inside the fuselage region ($y \leq y_o$), a power-law contraction is used:
+
+$$y' = y'_o \left(\frac{y}{y_o}\right)^{(y_o/y'_o)^2}$$
+
+Outside the fuselage ($y > y_o$), contraction follows mass conservation:
+
+$$y' = \sqrt{y^2 - y_o^2 + {y'_o}^2}$$
+
 ### Configuration
 
-The Trefftz plane analysis requires configuration parameters that control both the discretization resolution and physical modeling:
+Panel discretization and physical parameters are specified in the TOML input file:
 
-- **Panel discretization**: The number of spanwise panels used to discretize the wing and tail surfaces affects both accuracy and computational cost. Three preset resolutions are available:
-  - `"COARSE"`: 43 panels total, ~1.8% error vs reference, fastest
-  - `"MEDIUM"`: 84 panels total, ~0.6% error vs reference, balanced
-  - `"FINE"`: 328 panels total, reference accuracy, slowest
-
-- **Physical parameters**:
-  - `k_tip`: Tip loading exponent (default: 16.0) - controls circulation decay at wing tips
-  - `bunch`: Panel clustering factor ∈ \[0,1\] (default: 0.5) - controls spanwise panel spacing near root
-  - `root_contraction`: Root streamline contraction (default: 0.2) - accounts for streamtube contraction near fuselage
-
-These parameters are specified in the TOML input file under the `[Options]` section:
 ```toml
 [Options]
-    trefftz_resolution = "MEDIUM"  # or "COARSE", "FINE"
-    # Optional advanced parameters (usually don't need to change):
-    trefftz_k_tip = 16.0
-    trefftz_bunch = 0.5
-    trefftz_root_contraction = 0.2
+    trefftz_resolution = "MEDIUM"  # "COARSE", "MEDIUM", or "FINE"
+```
+
+| Resolution | Wing panels | Tail panels | Accuracy |
+|------------|-------------|-------------|----------|
+| `COARSE`   | 29          | 12          | ~1.8% error |
+| `MEDIUM`   | 56          | 24          | ~0.6% error |
+| `FINE`     | 224         | 96          | Reference |
+
+Advanced parameters (usually don't need to change):
+```toml
+[Options]
+    trefftz_k_tip = 16.0           # Tip loading exponent
+    trefftz_bunch = 0.5            # Panel clustering factor [0,1]
+    wing_root_contraction = 0.2    # Wake contraction at wing root
+    tail_root_contraction = 1.0    # Wake contraction at tail root
 ```
 
 ```@eval
@@ -98,12 +215,27 @@ Markdown.parse_file(joinpath("../..", "src/aero","theory_trefftz_plane.md"))
 ```
 
 ```@docs
-
+aerodynamics.TrefftzPlaneConfig
+aerodynamics.SurfaceDiscretization
 aerodynamics.get_trefftz_config
-
 aerodynamics.induced_drag!
+```
 
-aerodynamics._trefftz_analysis
+#### Wake geometry types
+```@docs
+aerodynamics.WakeSystem
+aerodynamics.WakeElement
+aerodynamics.generate_wake_system
+aerodynamics.calculate_influence_coefficient
+aerodynamics._create_placeholder_wake_system
+```
+
+#### Helper functions
+```@docs
+aerodynamics.bunch_transform
+aerodynamics.inv_bunch_transform
+aerodynamics.calculate_wake_circulation!
+aerodynamics.scale_circulation!
 ```
 ---
 

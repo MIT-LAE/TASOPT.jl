@@ -54,8 +54,4 @@ TASOPT.materials.StructuralAlloy
 
 aerodynamics.airfoil
 
-aerodynamics.TrefftzPlaneConfig
-
-aerodynamics.SurfaceDiscretization
-
 ```

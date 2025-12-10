@@ -1,7 +1,7 @@
 """
       induced_drag!(para, wing, htail, trefftz_config)
 
-Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). 
+Computes the induced drag via the Trefftz plane using a discrete vortex method.
 Formerly, `cditrp!()` but now broken up into smaller functions.
 
 !!! details "🔃 Inputs and Outputs"
@@ -209,8 +209,10 @@ Scale circulation distribution to match specified specified lift coefficient for
 
         # Scale both bound and wake circulations
         @inbounds for i = ifrst[isurf]:ilast[isurf]
-            gc[i] *= gfac
             gw[i] *= gfac
+        end
+        @inbounds for i = ifrst[isurf]:ilast[isurf]-1
+            gc[i] *= gfac
         end
     end
 

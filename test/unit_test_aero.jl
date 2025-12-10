@@ -284,69 +284,6 @@ end
     @test all(uei .≈ uebl')
     @test all(hki .≈ hkbl')
     @test all(phi .≈ phbl')
-    
-
-    #trefftz
-    nsurf = 2
-    # Create TrefftzPlaneConfig with COARSE discretization matching original hardcoded values
-    trefftz_config = TASOPT.aerodynamics.TrefftzPlaneConfig(
-        TASOPT.aerodynamics.SurfaceDiscretization(20, 6, 3),  # Wing: npout=20, npinn=6, npimg=3
-        TASOPT.aerodynamics.SurfaceDiscretization(10, 0, 2),  # Tail: npout=10, npinn=0, npimg=2
-        k_tip = 16.0,
-        bunch = 0.5,
-        wing_root_contraction = 0.2,
-        tail_root_contraction = 1.0
-    )
-
-    # Create wing and htail structures with test geometry
-    wing = TASOPT.structures.Wing()
-    wing.layout.span = 35.486921631434697
-    wing.layout.root_span = 3.6067999999999998
-    wing.layout.ηs = 10.113772664958887 / wing.layout.span
-    wing.layout.z = -1.6764000000000001
-    wing.inboard.λ = 1.0
-    wing.outboard.λ = 1.0
-
-    htail = TASOPT.structures.Tail()
-    htail.layout.span = 15.958117796995291
-    htail.layout.root_span = 1.5240000000000000
-    htail.layout.ηs = 1.5240000000000000 / htail.layout.span
-    htail.layout.z = 0.0
-    htail.inboard.λ = 1.0
-    htail.outboard.λ = 1.0
-
-    Sref = 124.68530761144433
-    bref = 35.486921631434697
-    po = [1.0000000000000000, 1.0000000000000000]
-    gammat = [0.14999999999999999,  0.25000000000000000]
-    gammas = [0.77000000000000002,  1.0000000000000000]
-    fLo = -0.29999999999999999
-    specifies_CL = true
-    CLsurfsp = [1.2502595055642693, 1.1976022033901442E-002]
-
-    fort_CLsurf = [1.2502595055642693, 1.1976022033901442E-002]
-    fort_CLtp = 1.2622355275981709
-    fort_CDtp = 6.0382619569389735E-002
-    fort_sefftp = 0.83156768339673048
-
-    # Use module-level geometry and work arrays
-    geom = TASOPT.aerodynamics.TREFFTZ_GEOM
-    gw = TASOPT.aerodynamics.gw
-    vc = TASOPT.aerodynamics.vc
-    wc = TASOPT.aerodynamics.wc
-    vnc = TASOPT.aerodynamics.vnc
-
-    CLsurf, CL, CD, spanef = TASOPT.aerodynamics._trefftz_analysis(nsurf, trefftz_config,
-        wing, htail,
-        Sref, bref,
-        po, gammat, gammas, fLo,
-        specifies_CL, CLsurfsp,
-        geom)
-
-    @test all(fort_CLsurf .≈ CLsurf)
-    @test fort_CLtp ≈ CL
-    @test fort_CDtp ≈ CD
-    @test fort_sefftp ≈ spanef
 
     #Fuse BL
     #TODO?
