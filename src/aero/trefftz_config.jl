@@ -117,7 +117,7 @@ Create a [`TrefftzPlaneConfig`](@ref).
     - **"FINE"** (328 panels): Reference accuracy, slowest
       - Wing: 160 outer, 48 inner, 24 image
       - Tail: 80 outer, 0 inner, 16 image
-    - **"MEDIUM"** (84 panels): ~0.6% higher CDi vs FINE, recomended default
+    - **"MEDIUM"** (84 panels): ~0.6% higher CDi vs FINE,
       - Wing: 40 outer, 12 inner, 6 image
       - Tail: 20 outer, 0 inner, 4 image
     - **"COARSE"** (43 panels): ~1.8% higher CDi vs FINE, fastest

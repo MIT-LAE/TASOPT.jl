@@ -1383,3 +1383,125 @@ function plot_airf(ac::aircraft)
     airfoil = ac.wing.airsection
     return plot_airf(airfoil)
 end
+
+
+"""
+    plot_wake_system(ac; show_points=true, show_control=true, show_elements=true,
+                    show_geometry=true, annotate=false, mirror=true,
+                    title="Trefftz-Plane Wake System", P=nothing)
+
+Plots the wake points in the Trefftz plane.
+"""
+function plot_wake_system(ac; show_points::Bool=true, show_control::Bool=true,
+    show_elements::Bool=true, show_geometry::Bool=true, annotate::Bool=false,
+    mirror::Bool=true, title::String="Trefftz-Plane Wake System", P=nothing)
+
+    ws = ac.wake_system
+
+    ys = aerodynamics.field_ys(ws)
+    zs = aerodynamics.field_zs(ws)
+    ycp = aerodynamics.ctrl_ys(ws)
+    zcp = aerodynamics.ctrl_zs(ws)
+
+    if P === nothing
+        P = plot(xlabel = "y [m]", ylabel = "z [m]", aspect_ratio = :equal,
+        legend = :topright, title = title, grid=true,
+        framestyle=:box, size=(800, 600), dpi=300)
+    end
+    # Get indices for wing and tail
+    trefftz_config = ac.options.trefftz_config
+    i_w1 = aerodynamics.i_first_wing(trefftz_config)
+    i_w2 = aerodynamics.i_last_wing(trefftz_config) - 1
+    i_t1 = aerodynamics.i_first_tail(trefftz_config)
+    i_t2 = aerodynamics.i_last_tail(trefftz_config) - 1
+    wing_range = i_w1:i_w2
+    tail_range = i_t1:i_t2
+    # Plot wake elements as connected lines
+    if show_elements
+        plot!(P, ys[wing_range], zs[wing_range], lw=1.5, color=:gray60, alpha=0.6,
+              label=show_points ? "" : "Wake elements", linestyle=:solid)
+        plot!(P, ys[tail_range], zs[tail_range], lw=1.5, color=:gray60, alpha=0.6,
+              label=show_points ? "" : "Wake elements", linestyle=:solid)
+        if mirror
+            plot!(P, -ys[wing_range], zs[wing_range], lw=1.5, color=:gray60, alpha=0.6,
+                label=show_points ? "" : "Wake elements", linestyle=:solid)
+            plot!(P, -ys[tail_range], zs[tail_range], lw=1.5, color=:gray60, alpha=0.6,
+                label=show_points ? "" : "Wake elements", linestyle=:solid)
+        end
+    end
+
+    # Plot wake vortex points
+    if show_points
+        scatter!(P, ys, zs, marker=(:circle, 3), color=:dodgerblue,
+                label="Wake points", alpha=0.9)
+        if mirror
+            scatter!(P, -ys, zs, marker=(:circle, 3), color=:dodgerblue,
+                    label="", alpha=0.9)
+        end
+    end
+
+    # Plot control points
+    if show_control
+        scatter!(P, ycp, zcp, marker=(:x, 4), color=:crimson, label="Control points")
+        if mirror
+            scatter!(P, -ycp, zcp, marker=(:x, 4), color=:crimson, label="")
+        end
+    end
+
+    if annotate
+        for (i,(y,z)) in enumerate(zip(ys,zs))
+            annotate!(P, y, z + 0.3, text(string(i), :black, 7, :center))
+            if mirror
+                annotate!(P, -y, z + 0.3, text(string(i), :black, 7, :center))
+            end
+        end
+    end
+
+    # Mark wing geometry reference locations
+    if show_geometry
+        wing = ac.wing
+        bo = wing.layout.root_span
+        bs = wing.layout.break_span
+        b = wing.layout.span
+
+        z_bottom = minimum(zs) - 0.5
+        z_top = maximum(zs) + 0.5
+
+        # Root location
+        plot!(P, [bo/2, bo/2], [z_bottom, z_top], lw=1.5,
+              color=:orange, linestyle=:dash, alpha=0.7, label="")
+        if mirror
+            plot!(P, [-bo/2, -bo/2], [z_bottom, z_top], lw=1.5,
+                  color=:orange, linestyle=:dash, alpha=0.7, label="")
+        end
+
+        # Break location
+        plot!(P, [bs/2, bs/2], [z_bottom, z_top], lw=1.5,
+              color=:green, linestyle=:dash, alpha=0.7, label="")
+        if mirror
+            plot!(P, [-bs/2, -bs/2], [z_bottom, z_top], lw=1.5,
+                  color=:green, linestyle=:dash, alpha=0.7, label="")
+        end
+
+        # Tip location
+        plot!(P, [b/2, b/2], [z_bottom, z_top], lw=1.5,
+              color=:purple, linestyle=:dash, alpha=0.7, label="")
+        if mirror
+            plot!(P, [-b/2, -b/2], [z_bottom, z_top], lw=1.5,
+                  color=:purple, linestyle=:dash, alpha=0.7, label="")
+        end
+
+        # Add geometry labels at bottom
+        label_z = z_bottom - 0.3
+        annotate!(P, bo/2, label_z, text("Root", :orange, 9, :center, :top))
+        annotate!(P, bs/2, label_z, text("Break", :green, 9, :center, :top))
+        annotate!(P, b/2, label_z, text("Tip", :purple, 9, :center, :top))
+        if mirror
+            annotate!(P, -bo/2, label_z, text("Root", :orange, 9, :center, :top))
+            annotate!(P, -bs/2, label_z, text("Break", :green, 9, :center, :top))
+            annotate!(P, -b/2, label_z, text("Tip", :purple, 9, :center, :top))
+        end
+    end
+
+    return P
+end

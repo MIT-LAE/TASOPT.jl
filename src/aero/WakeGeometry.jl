@@ -177,7 +177,7 @@ at the wake point.
 ⟹`  n⋅(x̂ × r)/|r|²`,
   `= (-ny*z + nz*y)/|r|²  ⟸ x̂ × r = [-z, y]`
 
-If `|r|²` is below a threshold (`MIN_DISTANCE_SQUARED`), the value is clipped to zero to avoid singularities.
+If ``\\left|r^2\\right|`` is below a threshold (`MIN_DISTANCE_SQUARED`), the value is clipped to zero to avoid singularities.
 """
 @inline function calculate_influence_coefficient(r_vec::Point2D, normal::Point2D)
     r_squared = dot(r_vec, r_vec)
@@ -228,7 +228,7 @@ end
 
 Constructs a WakeSystem from vectors of y and z coordinates for wake points and control points.
 !!! details "🔃 Inputs and Outputs"
-**Inputs:**
+    **Inputs:**
     - `yp`: Vector of y-coordinates for wake points
     - `zp`: Vector of z-coordinates for wake points
     - `ycp`: Vector of y-coordinates for control points
