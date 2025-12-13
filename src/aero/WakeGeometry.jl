@@ -93,15 +93,14 @@ function element_lengths(wake_elements::SVector{N, WakeElement}) where N
     SVector{N, Float64}(wake_elements[i].length for i in 1:N)
 end
 
-"""
-"""
+
 function element_dys(wake_elements::SVector{N, WakeElement}) where N
     SVector{N, Float64}(wake_elements[i].Δy for i in 1:N)
 end  # function element_dys
 
 function element_dzs(wake_elements::SVector{N, WakeElement}) where N
     SVector{N, Float64}(wake_elements[i].Δz for i in 1:N)
-end  # function element_dys
+end  # function element_dzs
 
 
 """
