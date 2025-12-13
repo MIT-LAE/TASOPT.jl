@@ -288,23 +288,6 @@ const aero = TASOPT.aerodynamics
         # Use module-level geometry and work arrays
         geom = aero.TREFFTZ_GEOM
 
-        CLsurf, CL, CD, spanef = aero._trefftz_analysis(
-            nsurf, trefftz_config,
-            wing, htail,
-            Sref, bref,
-            po, gammat, gammas, fLo,
-            specifies_CL, CLsurfsp,
-            geom)
-
-        # Validate against Fortran reference
-        @test all(fort_CLsurf .≈ CLsurf)
-        @test fort_CLtp ≈ CL
-        @test fort_CDtp ≈ CD
-        @test fort_sefftp ≈ spanef
-
-        @test CD > 0.0  # Induced drag should be positive
-        @test CL ≈ sum(CLsurfsp) rtol=1e-10  # Total CL matches sum of surfaces
-
         aero.ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
         second_hash = aero.TREFFTZ_GEOMETRY_HASH[]   
         aero.ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)

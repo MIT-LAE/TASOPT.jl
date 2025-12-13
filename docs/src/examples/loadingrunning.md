@@ -1,4 +1,4 @@
-# [Loading and running a model] (@id firstexample)
+# [Loading and running a model](@id firstexample)
 
 `TASOPT.jl` uses TOML files to define aircraft models. You can find example input files at `/example/defaults/`. The majority of aircraft parameters and assumptions are defined here, and it's a useful resource for understanding the parameters and typical values.
 
