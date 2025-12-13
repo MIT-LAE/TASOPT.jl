@@ -87,7 +87,9 @@ include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
-include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
+# Plotting functions
+include(joinpath(__TASOPTroot__,"IO/plotting/output_plots.jl"))
+include(joinpath(__TASOPTroot__,"IO/plotting/trefftz_plots.jl"))
 export  stickfig, plot_details, plot_drag_breakdown, 
         PayloadRange, DragPolar
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
