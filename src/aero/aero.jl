@@ -47,8 +47,6 @@ const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM") # this has to come a
 # Remaining work arrays for wake circulation and velocities
 # (will be moved to WakeSystem in future refactoring)
 const gw  = zeros(Float64, 360)
-const vc  = zeros(Float64, 360)
-const wc  = zeros(Float64, 360)
 const vnc = zeros(Float64, 360)
 include("WakeGeometry.jl")
 include("wing_loading.jl")
