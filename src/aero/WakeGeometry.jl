@@ -20,7 +20,9 @@ julia> p = Point2D(1.0, 2.0) # Creates point at y=1.0, z=2.0
 """
 const Point2D = SVector{2, Float64} # [y, z] really just a shorthand for SVector
 
-
+function Base.show(io::IO, p::Point2D)
+    print(io,  @sprintf("[%8.3g, %8.3g]", p[1], p[2]))
+end
 """
     $(TYPEDEF)
 
@@ -102,6 +104,9 @@ function element_dzs(wake_elements::SVector{N, WakeElement}) where N
     SVector{N, Float64}(wake_elements[i].Δz for i in 1:N)
 end  # function element_dzs
 
+function Base.show(io::IO, el::WakeElement)
+    print(io, "WakeElement($(el.p1) -- $(el.p2))")
+end
 
 """
     $(TYPEDEF)
@@ -148,9 +153,66 @@ field_zs(WS::WakeSystem) = getindex.(WS.points, 2) #z-component
 ctrl_ys(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 1) #y-component
 ctrl_zs(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 2) #z-component
 
-function Base.show(io::IO, WS::WakeSystem)
-    println(io, "WakeSystem with $(length(WS.points)) wake points and $(length(WS.elements)) wake elements.")
-    return nothing
+# function Base.show(io::IO, WS::WakeSystem)
+#     println(io, "WakeSystem with $(length(WS.points)) wake points and $(length(WS.elements)) wake elements.")
+#     return nothing
+# end
+
+# Compact, one-line representation
+function Base.show(io::IO, WS::WakeSystem{NP, NE}) where {NP, NE}
+    print(io, "WakeSystem ($NP points, $NE elements)")
+end
+
+# Detailed, multi-line representation for the REPL
+function Base.show(io::IO, ::MIME"text/plain", WS::WakeSystem{NP, NE}) where {NP, NE}
+    # Use the compact show for the header
+    show(io, WS)
+    println(io, ":")
+
+    # Geometric Extents
+    ys = field_ys(WS)
+    zs = field_zs(WS)
+    y_min, y_max = extrema(ys)
+    z_min, z_max = extrema(zs)
+    span = y_max - y_min
+
+    println(io, " ├─ Geometric Extents")
+    println(io, " │  ├─ Y-range: [", @sprintf("%.4g", y_min), ", ", @sprintf("%.4g", y_max), "] (Span: ", @sprintf("%.4g", span), ")")
+    println(io, " │  └─ Z-range: [", @sprintf("%.4g", z_min), ", ", @sprintf("%.4g", z_max), "]")
+    println(io, " │  ")
+    # Display a preview of the points (e.g., first 3 and last 2)
+    println(io, " ├─ Points (SVector{$NP, Point2D})")
+    if NP < 6
+        for i in 1:NP
+            println(io, " │ ", @sprintf("%3d", i), ": ", WS.points[i])
+        end
+    else
+        for i in 1:3
+            println(io, " │ ", @sprintf("%3d", i), ": ", WS.points[i])
+        end
+        println(io, " │ ", @sprintf("%3s","⋮"))
+        println(io, " │ ", @sprintf("%3d", NP-1), ": ", WS.points[NP-1])
+        println(io, " │ ", @sprintf("%3d", NP), ": ", WS.points[NP])
+    end
+    println(io, " │ ")
+    # Display a preview of the elements
+    println(io, " ├─ Elements (SVector{$NE, WakeElement})")
+    if NE < 6
+        for i in 1:NE
+            println(io, " │ ", @sprintf("%3d", i), ": ", WS.elements[i])
+        end
+    else
+        for i in 1:3
+            println(io, " │ ", @sprintf("%3d", i), ": ", WS.elements[i])
+        end
+        println(io, " │ ", @sprintf("%3s","⋮"))
+        println(io, " │ ", @sprintf("%3d", NE), ": ", WS.elements[NE])
+        println(io, " │ ", @sprintf("%3d", NE-1), ": ", WS.elements[NE-1])
+    end
+    println(io, " │ ")
+    # Influence Matrix Info
+    aic_size = size(WS.influence_matrix)
+    print(io, " └─ Influence Matrix: ", aic_size[1], "×", aic_size[2], " ", typeof(WS.influence_matrix))
 end
 
 """
