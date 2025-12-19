@@ -54,7 +54,7 @@ struct WakeElement
     
     # Inner constructor to help in calculating the control point and the normal
     function WakeElement(p1::Point2D, p2::Point2D;
-        control_point::Union{Point2D, Nothing}=nothing)
+        control_point::Point2D=(p1 + p2) * 0.5)
         Δs = p2 - p1
         length = norm(Δs)
         if (length == 0.0)
@@ -63,8 +63,6 @@ struct WakeElement
         # Normal points "up" in s-n-l coordinate system along the sheet where 
         # s is along wake sheet (left to right), l is out of the page like x̂ and so n is up.
         unit_normal = Point2D(-Δs[2] / length, Δs[1] / length)
-        # Midpoint calculation as control point if not provided
-        control_point = isnothing(control_point) ? (p1 + p2) * 0.5 : control_point
         new(p1, p2, control_point, length, Δs[1], Δs[2], unit_normal)
     end
 end
