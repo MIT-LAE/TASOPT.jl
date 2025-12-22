@@ -7,6 +7,7 @@ module aerodynamics
 
 using StaticArrays
 using LinearAlgebra
+using Printf
 using ..atmosphere
 using ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, balance_aircraft!
 

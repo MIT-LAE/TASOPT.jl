@@ -218,14 +218,14 @@ const aero = TASOPT.aerodynamics
         @test influence ≈ 0.0  # Should be clipped to avoid infinity
     end
 
-    @testset "generate_wake_system" begin
+    @testset "Generate WakeSystem" begin
         # Test creation from coordinate vectors
         yp = [0.0, 1.0, 2.0, 3.0]
         zp = [0.0, 0.0, 0.0, 0.0]
         ycp = [0.5, 1.5, 2.5]
         zcp = [0.0, 0.0, 0.0]
 
-        ws = aero.generate_wake_system(yp, zp, ycp, zcp)
+        ws = aero.WakeSystem(yp, zp, ycp, zcp)
 
         @test length(ws.points) == 4
         @test length(ws.elements) == 3
@@ -236,7 +236,7 @@ const aero = TASOPT.aerodynamics
         @test all(aero.ctrl_zs(ws) .≈ zcp)
 
         # Test error on mismatched dimensions
-        @test_throws AssertionError aero.generate_wake_system(
+        @test_throws AssertionError aero.WakeSystem(
             yp, zp[1:2], ycp, zcp)  # Wrong zp length
     end
 
