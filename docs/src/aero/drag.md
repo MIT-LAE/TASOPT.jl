@@ -225,9 +225,7 @@ aerodynamics.induced_drag!
 ```@docs
 aerodynamics.WakeSystem
 aerodynamics.WakeElement
-aerodynamics.generate_wake_system
 aerodynamics.calculate_influence_coefficient
-aerodynamics._create_placeholder_wake_system
 ```
 
 #### Helper functions

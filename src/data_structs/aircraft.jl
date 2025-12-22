@@ -78,7 +78,7 @@ function aircraft(
 )
     # Create placeholder WakeSystem with correct size for type stability
     # This will be rebuilt with actual geometry in induced_drag!
-    wake_system = aerodynamics._create_placeholder_wake_system(options.trefftz_config)
+    wake_system = aerodynamics.WakeSystem(options.trefftz_config)
 
     # Construct the aircraft with the type parameter
     return aircraft{typeof(wake_system)}(

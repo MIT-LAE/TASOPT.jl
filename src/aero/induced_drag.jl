@@ -488,7 +488,7 @@ function _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
         TREFFTZ_GEOM.gc[i] = 0.0
     end # nsurf loop
     # ilast = i_last_tail(trefftz_config) # could use this instead of accumulating i...
-    WS = generate_wake_system(
+    WS = WakeSystem(
         TREFFTZ_GEOM.yp[1:i],
         TREFFTZ_GEOM.zp[1:i],
         TREFFTZ_GEOM.ycp[1:i-1],
