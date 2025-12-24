@@ -46,6 +46,7 @@ include("./utils/helper_functions.jl")
 #Load modules
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
+include(joinpath(__TASOPTroot__,"sizing/initialize_weights.jl"))
 include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
 include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
