@@ -175,7 +175,6 @@ function _size_aircraft!(ac; itermax=35,
         Wwing, Wstrut = wing.weight, wing.strut.weight
         Weng = parg[igWeng]
         Winn, Wout = wing.inboard.weight, wing.outboard.weight
-        Wftank = parg[igWftank]
         Wtesys = parg[igWtesys]
 
         # Extract weight moments
@@ -192,8 +191,10 @@ function _size_aircraft!(ac; itermax=35,
     end
 
     # Initialize previous weight iterations and convergence flag
-    # Initialize previous weight iterations
-    WMTO1, WMTO2, WMTO3 = zeros(Float64, 3) #1st-previous to 3rd previous iteration weight for convergence criterion
+    # 1st-previous to 3rd previous iteration weight for convergence criterion
+    WMTO1 = 0.0
+    WMTO2 = 0.0
+    WMTO3 = 0.0 
     Lconv = false
 
     # Initialize wing layout parameters for first iteration
@@ -201,7 +202,6 @@ function _size_aircraft!(ac; itermax=35,
 
     # Initialize choke flags for all mission points
     ichoke5 = ichoke7 = zeros(Int, iptotal)
-
 
     # -------------------------------------------------------    
     #                   Weight loop

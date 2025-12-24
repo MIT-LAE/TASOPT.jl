@@ -121,6 +121,7 @@ function initialize_sizing_loop!(ac)
     vtail.layout.S = Sv
 
     # ===== Initialize pitch moments =====
+    # These are all zeros already but leaving here for semantic clarity
     para[iaCMw0:iaCMh1, :] .= 0.0
     para[iaCLh, :] .= 0.0
 
@@ -145,42 +146,8 @@ function initialize_sizing_loop!(ac)
     pare[ieM2, ipstatic:ipcruisen] .= M2des
     pare[ieM2, ipdescent1:ipdescentn] .= 0.8 * M2des
 
-    # ===== Cooling mass flow ratios =====
-    ip = iprotate
-    cpc, cp4 = 1080.0, 1340.0
-    Rgc, Rg4 = 288.0, 288.0
-
-    M0to = pare[ieu0, ip] / pare[iea0, ip]
-    T0to = pare[ieT0, ip]
-    epolhc = pare[ieepolhc, ip]
-    OPRto = pare[iepilc, ipcruise1] * pare[iepihc, ipcruise1]
-    Tt4to = pare[ieTt4, ip]
-    dTstrk = pare[iedTstrk, ip]
-    Mtexit = pare[ieMtexit, ip]
-    efilm = pare[ieefilm, ip]
-    tfilm = pare[ietfilm, ip]
-    StA = pare[ieStA, ip]
-
-    # Create working arrays for cooling calculation
-    Tmrow = fill(parg[igTmetal], ncrowx)
-
-    Tt2to = T0to * (1.0 + 0.5 * (gamSL - 1.0) * M0to^2)
-    Tt3to = Tt2to * OPRto^(Rgc / (epolhc * cpc))
-    Trrat = 1.0 / (1.0 + 0.5 * Rg4 / (cp4 - Rg4) * Mtexit^2)
-
-    ncrow, epsrow, _, _, _ = mcool(ncrowx, Tmrow,
-        Tt3to, Tt4to, dTstrk, Trrat, efilm, tfilm, StA)
-
-    epstot = sum(epsrow[1:ncrow])
-    fo = pare[iemofft, ip] / pare[iemcore, ip]
-    fc = (1.0 - fo) * epstot
-
-    # Store cooling parameters for all mission points
-    for jp in 1:iptotal
-        pare[iefc, jp] = fc
-        pare[ieepsc1:ieepsc1+ncrowx-1, jp] .= epsrow
-        pare[ieTmet1:ieTmet1+ncrowx-1, jp] .= Tmrow
-    end
+    # Initialize engine cooling mass flow parameters
+    initialize_cooling_flow!(parg, pare)
 
     # ===== Initial WMTO estimate =====
     # Use assumed engine fraction and Breguet fuel fraction
@@ -197,6 +164,62 @@ function initialize_sizing_loop!(ac)
 
     return nothing
 end
+
+"""
+    initialize_cooling_flow!(parg, pare)
+
+Initializes turbine cooling mass flow parameters for all mission points.
+
+Computes initial cooling flow fractions based on takeoff/rotate conditions
+using the `mcool` turbine cooling model. Sets cooling parameters uniformly
+across all mission points as a starting estimate.
+"""
+function initialize_cooling_flow!(parg, pare)
+    ip = iprotate
+
+    # Gas properties
+    cpc, cp4 = 1080.0, 1340.0  # Specific heats [J/kg-K]
+    Rgc, Rg4 = 288.0, 288.0    # Gas constants [J/kg-K]
+
+    # Extract conditions at takeoff rotation
+    M0to = pare[ieu0, ip] / pare[iea0, ip]
+    T0to = pare[ieT0, ip]
+    epolhc = pare[ieepolhc, ip]
+    OPRto = pare[iepilc, ipcruise1] * pare[iepihc, ipcruise1]
+    Tt4to = pare[ieTt4, ip]
+    dTstrk = pare[iedTstrk, ip]
+    Mtexit = pare[ieMtexit, ip]
+    efilm = pare[ieefilm, ip]
+    tfilm = pare[ietfilm, ip]
+    StA = pare[ieStA, ip]
+
+    # Metal temperature for cooling calculation
+    Tmrow = fill(parg[igTmetal], ncrowx)
+
+    # Compute stagnation temperatures
+    Tt2to = T0to * (1.0 + 0.5 * (gamSL - 1.0) * M0to^2)
+    Tt3to = Tt2to * OPRto^(Rgc / (epolhc * cpc))
+    Trrat = 1.0 / (1.0 + 0.5 * Rg4 / (cp4 - Rg4) * Mtexit^2)
+
+    # Calculate cooling flow parameters
+    ncrow, epsrow, _, _, _ = mcool(ncrowx, Tmrow,
+        Tt3to, Tt4to, dTstrk, Trrat, efilm, tfilm, StA)
+
+    # Compute total cooling fraction
+    epstot = sum(epsrow[1:ncrow])
+    fo = pare[iemofft, ip] / pare[iemcore, ip]
+    fc = (1.0 - fo) * epstot
+
+    # Store cooling parameters for all mission points
+    for jp in 1:iptotal
+        pare[iefc, jp] = fc
+        pare[ieepsc1:ieepsc1+ncrowx-1, jp] .= epsrow
+        pare[ieTmet1:ieTmet1+ncrowx-1, jp] .= Tmrow
+    end
+
+    return nothing
+end
+
 
 """
     interp_Wfrac!(para, ip_start, ip_end, ffuel1, ffuel2, iafracW, ffuel)
