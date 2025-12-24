@@ -30,15 +30,8 @@ function _size_aircraft!(ac; itermax=35,
     parg, parm, para, pare, options, fuse, fuse_tank, wing, htail, vtail, eng, landing_gear  = unpack_ac(ac, imission)
 
     # Initialize variables
-    time_propsys = 0.0
-    inite1 = 0
     ichoke5 = zeros(iptotal)
     ichoke7 = zeros(iptotal)
-    Tmrow = zeros(ncrowx)
-    epsrow = zeros(ncrowx)
-    epsrow_Tt3 = zeros(ncrowx)
-    epsrow_Tt4 = zeros(ncrowx)
-    epsrow_Trr = zeros(ncrowx)
 
     # Weight convergence settings
     tolerW = 1.0e-8
@@ -61,7 +54,7 @@ function _size_aircraft!(ac; itermax=35,
     set_ambient_conditions!(ac, ipclimbn)
 
     # Calculate fuselage boundary layer development
-    time_fuselage_drag = @elapsed fuselage_drag!(fuse, parm, para, ipcruise1)
+    fuselage_drag!(fuse, parm, para, ipcruise1)
 
     # Extract and set constant values for all mission points
     broadcast_fuselage_drag!(para, ipcruise1)
@@ -84,12 +77,9 @@ function _size_aircraft!(ac; itermax=35,
     parg[igWpay] = Wpay
 
     # Extract weight fractions and factors
-    feadd = parg[igfeadd]
     fwadd = wing_additional_weight(wing)
-    fpylon = parg[igfpylon]
     flgnose = landing_gear.nose_gear.overall_mass_fraction
     flgmain = landing_gear.main_gear.overall_mass_fraction
-    freserve = parg[igfreserve]
     fLo =  wing.fuse_lift_carryover
     fLt =  wing.tip_lift_loss
 
@@ -116,8 +106,6 @@ function _size_aircraft!(ac; itermax=35,
     # Engine parameters
     neng = parg[igneng]
     yeng = parg[igyeng]
-    HTRf = parg[igHTRf]
-    rSnace = parg[igrSnace]
 
     # Fuel tank parameters
     nftanks = fuse_tank.tank_count
@@ -178,11 +166,9 @@ function _size_aircraft!(ac; itermax=35,
 
         # Extract layout parameters
         bv = vtail.layout.span
-        coh, cov = htail.layout.root_chord, vtail.layout.root_chord
         cbox = wing.layout.root_chord * wing.inboard.cross_section.width_to_chord
         xwing, xhtail, xvtail = wing.layout.x, htail.layout.x, vtail.layout.x
         xhbox, xvbox = htail.layout.box_x, vtail.layout.box_x
-        dxwing = xwing - wing.layout.box_x
 
         # Extract weights
         Whtail, Wvtail = htail.weight, vtail.weight
@@ -193,7 +179,6 @@ function _size_aircraft!(ac; itermax=35,
         Wtesys = parg[igWtesys]
 
         # Extract weight moments
-        dxWhtail, dxWvtail = htail.dxW, vtail.dxW
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
 
         # Calculate weight fractions
@@ -202,7 +187,6 @@ function _size_aircraft!(ac; itermax=35,
         ffuel = parg[igWfuel] / WMTO
 
         # Extract other parameters
-        fSnace = parg[igfSnace]
         Sh, Sv = htail.layout.S, vtail.layout.S
 
     end
