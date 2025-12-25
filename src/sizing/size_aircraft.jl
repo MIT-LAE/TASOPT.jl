@@ -2,7 +2,7 @@ using Printf
 """
     _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
-    iairf=1, Ldebug=false, printiter=true, saveODperf=false)
+    iairf=1, Ldebug=false, printiter=true)
 
 Main weight sizing function. Calls on various sub-functions to calculate weight of fuselage, wings, tails, etc.,
 and iterates until the MTOW converges to within a specified tolerance. Formerly, `wsize()`.
@@ -23,7 +23,7 @@ and iterates until the MTOW converges to within a specified tolerance. Formerly,
 """
 function _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
-    iairf=1, Ldebug = false, printiter=true, saveODperf=false)
+    iairf=1, Ldebug = false, printiter=true)
 
     # Unpack data storage arrays and components
     imission = 1 #Design mission
