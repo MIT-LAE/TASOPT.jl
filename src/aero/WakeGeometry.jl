@@ -76,7 +76,7 @@ Returns an SVector of WakeElements and assumes control points are midpoints of e
 end
 
 """
-    generate_wake_elements(points::SVector{N, Point2D};
+    generate_wake_elements(points::SVector{N, Point2D},
                         control_points::SVector{M, Point2D}) where {N, M}
 
 Returns an SVector of WakeElements using provided points and control points.
