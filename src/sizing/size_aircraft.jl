@@ -107,40 +107,12 @@ function _size_aircraft!(ac; itermax=35,
     neng = parg[igneng]
     yeng = parg[igyeng]
 
-    # Fuel tank parameters
+    # Fuel tank parameters (initialized here, updated in loop)
     nftanks = fuse_tank.tank_count
     xfuel = ltank = 0.0
 
-    if options.has_wing_fuel
-        xftank = xftankaft = 0.0
-    else
-        xftank = fuse.layout.x_start_cylinder + 1.0*ft_to_m
-        xftankaft = fuse.layout.x_end_cylinder
-
-        # Calculate fuel properties
-        β0 = 1 - fuse_tank.ullage_frac
-        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
-        Tfuel = fuel_mix.liquid.T
-        ρliq = fuel_mix.liquid.ρ
-        ρgas = fuel_mix.gas.ρ
-        hvap = fuel_mix.hvap
-
-        # Set fuel properties
-        pare[ieTft, :] .= Tfuel
-        pare[ieTfuel, :] .= Tfuel
-        parg[igrhofuel] = fuel_mix.ρ
-        fuse_tank.rhofuel = ρliq
-        fuse_tank.Tfuel = Tfuel
-        fuse_tank.hvap = hvap
-        fuse_tank.rhofuelgas = ρgas
-    end
-    
-    # Update fuel tank positions
-    parg[igxftank] = xftank
-    parg[igxftankaft] = xftankaft
-
-    # Reset engine values for heat exchangers
-    resetHXs(pare)
+    # Set up fuel storage parameters (wing vs fuselage)
+    setup_fuel_storage!(options, fuse, fuse_tank, parg, pare)
 
     # -------------------------------------------------------
     ## Initial guess section [Section 3.2 of TASOPT docs]
@@ -906,4 +878,50 @@ function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iac
         para[iaCMw0, ip] = CMw0
         para[iaCMw1, ip] = CMw1
     end
+end
+
+"""
+    setup_fuel_storage!(options, fuse, fuse_tank, parg, pare)
+
+Initializes fuel storage parameters based on whether fuel is stored in the
+wings or fuselage. For fuselage storage, computes fuel properties from the
+saturated mixture model and sets tank positions. #TODO this implicitly assumes that 
+if the fuel is stored in the tanks then it is cryogenic fuel... which is not 
+necessarily true.
+
+Also resets heat exchanger values for the engine.
+"""
+function setup_fuel_storage!(options, fuse, fuse_tank, parg, pare)
+    if options.has_wing_fuel
+        xftank = xftankaft = 0.0
+    else
+        xftank = fuse.layout.x_start_cylinder + 1.0 * ft_to_m
+        xftankaft = fuse.layout.x_end_cylinder
+
+        # Calculate fuel properties from saturated mixture model
+        β0 = 1 - fuse_tank.ullage_frac
+        fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
+        Tfuel = fuel_mix.liquid.T
+        ρliq = fuel_mix.liquid.ρ
+        ρgas = fuel_mix.gas.ρ
+        hvap = fuel_mix.hvap
+
+        # Set fuel properties in parameter arrays and tank struct
+        pare[ieTft, :] .= Tfuel
+        pare[ieTfuel, :] .= Tfuel
+        parg[igrhofuel] = fuel_mix.ρ
+        fuse_tank.rhofuel = ρliq
+        fuse_tank.Tfuel = Tfuel
+        fuse_tank.hvap = hvap
+        fuse_tank.rhofuelgas = ρgas
+    end
+
+    # Update fuel tank positions
+    parg[igxftank] = xftank
+    parg[igxftankaft] = xftankaft
+
+    # Reset engine values for heat exchangers
+    resetHXs(pare)
+
+    return nothing
 end
