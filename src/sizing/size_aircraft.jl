@@ -331,10 +331,11 @@ function _size_aircraft!(ac; itermax=35,
         calculate_centroid_offset!(wing,calc_cma=true)
         xwing = wing.layout.x
         
-        # Update wing pitching moment constants
-        update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
-        update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
-        update_wing_pitching_moments!(para, ipdescentn:ipdescentn, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+        # Update wing pitching moment constants, uses the first mission point 
+        # in the list as the reference for the others in the range.
+        update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing)
+        update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing)
+        update_wing_pitching_moments!(para, ipdescentn:ipdescentn, wing)
 
         # Calculate wing center load
         ip = ipcruise1
@@ -859,11 +860,11 @@ function set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
 end  # function set_ambient_conditions
 
 """
-update_wing_pitching_moments!(para, ip_range, wing, fLo, fLt, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+update_wing_pitching_moments!(para, ip_range, wing)
 
 Updates wing pitching moments and calls wing_CM for mission points
 """
-function update_wing_pitching_moments!(para, ip_range, wing, iacmpo, iacmps, iacmpt, iarclt, iarcls, iaCMw0, iaCMw1)
+function update_wing_pitching_moments!(para, ip_range, wing)
     ip = ip_range[1]
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
     γt = wing.outboard.λ * para[iarclt, ip]
