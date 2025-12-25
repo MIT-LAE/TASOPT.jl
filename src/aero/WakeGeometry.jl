@@ -76,7 +76,7 @@ Returns an SVector of WakeElements and assumes control points are midpoints of e
 end
 
 """
-    generate_wake_elements(points::SVector{N, Point2D};
+    generate_wake_elements(points::SVector{N, Point2D},
                         control_points::SVector{M, Point2D}) where {N, M}
 
 Returns an SVector of WakeElements using provided points and control points.
@@ -155,7 +155,7 @@ ctrl_zs(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 2) #
 function WakeSystem(points::SVector{NP, Point2D}; 
     control_points::Union{SVector{NC, Point2D}, Nothing}=nothing) where {NP, NC}
 
-    elements = generate_wake_elements(points, control_points = control_points)
+    elements = generate_wake_elements(points, control_points)
     NE = NP - 1
     influence_matrix = zeros(NE, NP)
     ws = WakeSystem(points,elements,influence_matrix)
