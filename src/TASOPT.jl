@@ -46,6 +46,8 @@ include("./utils/helper_functions.jl")
 #Load modules
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
+export AtmosphericState, atmos
+
 include(joinpath(__TASOPTroot__,"sizing/initialize_weights.jl"))
 include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
@@ -69,7 +71,13 @@ using .aerodynamics
 using .structures
 using .engine
 
-# Load primary aircraft structure 
+# Flight condition struct for mission point state (must come before aircraft.jl)
+include(joinpath(__TASOPTroot__,"data_structs/flight_condition.jl"))
+export FlightCondition, update_arrays!, altitude, altitude_km,
+       dynamic_pressure, total_temperature, total_pressure,
+       initialize_flight_conditions, set_flight_condition!, get_flight_condition
+
+# Load primary aircraft structure
 include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/aircraft.jl"))

@@ -118,3 +118,23 @@ function Base.show(io::IO, ac::aircraft)
     Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
+
+"""
+    set_flight_condition!(ac::aircraft, ip::Integer, fc::FlightCondition; im::Integer=1)
+
+Set the flight condition at mission point `ip` for mission `im`.
+Also updates the legacy para/pare arrays for backward compatibility during migration.
+"""
+function set_flight_condition!(ac::aircraft, ip::Integer, fc::FlightCondition; im::Integer=1)
+    ac.flight_conditions[ip, im] = fc
+    # Sync to legacy arrays during migration period
+    update_arrays!(view(ac.para, :, :, im), view(ac.pare, :, :, im), fc, ip)
+    return nothing
+end
+
+"""
+    get_flight_condition(ac::aircraft, ip::Integer; im::Integer=1)
+
+Get the flight condition at mission point `ip` for mission `im`.
+"""
+get_flight_condition(ac::aircraft, ip::Integer; im::Integer=1) = ac.flight_conditions[ip, im]
