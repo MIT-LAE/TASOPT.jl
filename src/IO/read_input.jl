@@ -1222,10 +1222,14 @@ ac_options = TASOPT.Options(
     trefftz_config = TREFFTZ_CONFIG
 )
     
+# Initialize flight conditions matrix [iptotal × n_missions]
+flight_conditions = initialize_flight_conditions(iptotal, nmisx)
+
 #Create aircraft object
 ac = TASOPT.aircraft(name, description, ac_options,
-    parg, parm, para, pare, is_sized, 
-    fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
+    parg, parm, para, pare, is_sized,
+    fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear,
+    flight_conditions)
 
 # ---------------------------------
 # Recalculate cabin length
