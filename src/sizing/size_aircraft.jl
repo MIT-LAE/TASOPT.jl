@@ -840,23 +840,21 @@ end
     set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
 
 Sets ambient condition at the given mission point `ip` and mission `im` (default is 1).
+
+Creates a `FlightCondition` from altitude and Mach, stores it in `ac.flight_conditions`,
+and updates legacy `para`/`pare` arrays for backward compatibility.
 """
 function set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
-    ΔTatmos = ac.parm[imDeltaTatm]
-    altkm = ac.para[iaalt, ip, im]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
+    ΔTatmos = ac.parm[imDeltaTatm, im]
+    alt = ac.para[iaalt, ip, im]
     if Mach === NaN
         Mach = ac.para[iaMach, ip, im]
     end
-    ac.pare[iep0, ip, im] = p0
-    ac.pare[ieT0, ip, im] = T0
-    ac.pare[iea0, ip, im] = a0
-    ac.pare[ierho0, ip, im] = ρ0
-    ac.pare[iemu0, ip, im] = μ0
-    ac.pare[ieM0, ip, im] = Mach
-    ac.pare[ieu0, ip, im] = Mach * a0
-    ac.para[iaReunit, ip, im] = Mach * a0 * ρ0 / μ0
+    γ = ac.para[iagamV, ip, im]
 
+    # Create FlightCondition and store it
+    fc = FlightCondition(alt, Mach; ΔT=ΔTatmos, climb_angle=γ)
+    set_flight_condition!(ac, ip, fc; im=im)
 end  # function set_ambient_conditions
 
 """
