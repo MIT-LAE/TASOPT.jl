@@ -1,13 +1,15 @@
 """
-      induced_drag!(para, wing, htail)
+      induced_drag!(para, wing, htail, trefftz_config)
 
-Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@ref). Formerly, `cditrp!()`.
+Computes the induced drag via the Trefftz plane using a discrete vortex method.
+Formerly, `cditrp!()` but now broken up into smaller functions.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `para::AbstractArray{Float64}`: Array of `aircraft` model aerodynamic parameters.
       - `wing::TASOPT.Wing`: Wing Structure.
       - `htail::TASOPT.Tail`: Htail Structure.
+      - `trefftz_config::TrefftzPlaneConfig`: Trefftz plane analysis configuration (panel discretization and analysis parameters).
 
       **Outputs:**
       - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
@@ -16,508 +18,523 @@ Computes the induced drag via the Trefftz plane. Calls [`_trefftz_analysis`](@re
       In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
 
 """
-function induced_drag!(para, wing, htail)
+function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
+    
+    wing = ac.wing
+    htail = ac.htail
 
-      CL = para[iaCL]
+    CL = para[iaCL]
 
-      if (CL == 0.0) 
-	    para[iaCDi]  = 0.
-	    para[iaspaneff] = 1.0
-       return
-      end
+    if (CL == 0.0)
+        para[iaCDi] = 0.
+        para[iaspaneff] = 1.0
+        return
+    end
 
-      CLhtail = para[iaCLh]*htail.layout.S/wing.layout.S
-      # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
-      bref = wing.layout.span
-      Sref = wing.layout.S
+    CLhtail = para[iaCLh] * htail.layout.S / wing.layout.S #normalize by wing area
+    # println("CLhtail: $(para[iaCLh]) $(htail.layout.S) $(parg[igS])")
+    bref = wing.layout.span
+    Sref = wing.layout.S
 
-      Mach = para[iaMach]
+    Mach = para[iaMach]
 
-      specifies_CL = true
+    specifies_CL = true
 
-      b        = zeros(Float64, 2)
-      bs       = zeros(Float64, 2)
-      bo       = zeros(Float64, 2)
-      bop      = zeros(Float64, 2)
-      zcent    = zeros(Float64, 2)
-      gammas   = zeros(Float64, 2)
-      gammat   = zeros(Float64, 2)
-      po       = zeros(Float64, 2)
-      CLsurfsp = zeros(Float64, 2)
+    gammas = zeros(Float64, 2)
+    gammat = zeros(Float64, 2)
+    po = zeros(Float64, 2)
+    CLsurfsp = zeros(Float64, 2)
 
-      npout = zeros(Float64, 2) # outer panel
-      npinn = zeros(Float64, 2) # inner panel
-      npimg = zeros(Float64, 2) # image inside fuselage
+    #---- wing wake parameters
+    fLo = wing.fuse_lift_carryover
 
-      #Alternatively can define as b  = [parg[igb], parg[igbh]] for both wing and tail simultaneously 
-#---- wing wake parameters
-      fLo =  wing.fuse_lift_carryover
-#      fLo = 0.0
+    gammas[1] = wing.inboard.λ * para[iarcls]
+    gammat[1] = wing.outboard.λ * para[iarclt]
+    po[1] = 1.0
+    CLsurfsp[1] = CL - CLhtail
 
-#---- span, wing-break span, wing-root span
-      b[1]  = wing.layout.span
-      bs[1] = wing.layout.break_span
-      bo[1] = wing.layout.root_span
+    #---- velocity-change fractions at wing spanwise locations due to fuselage flow
+    fduo = para[iafduo]
+    fdus = para[iafdus]
+    fdut = para[iafdut]
 
-#---- span of wing-root streamline in Trefftz Plane
-      bop[1] = wing.layout.root_span * 0.2
-
-      zcent[1]  = wing.layout.z
-      gammas[1] = wing.inboard.λ*para[iarcls]
-      gammat[1] = wing.outboard.λ*para[iarclt]
-      po[1]     = 1.0
-      CLsurfsp[1] = CL - CLhtail
-
-#---- velocity-change fractions at wing spanwise locations due to fuselage flow
-      fduo = para[iafduo]
-      fdus = para[iafdus]
-      fdut = para[iafdut]
-
-#---- horizontal tail wake parameters
-      b[2]   = htail.layout.span
-      bs[2]  = htail.layout.root_span
-      bo[2]  = htail.layout.root_span
-      bop[2] = htail.layout.root_span
-
-      zcent[2] = htail.layout.z
-      gammas[2] = 1.0
-      gammat[2] = htail.outboard.λ
-      po[2]     = 1.0
-      CLsurfsp[2] = CLhtail
+    #---- horizontal tail wake parameters
+    gammas[2] = 1.0
+    gammat[2] = htail.outboard.λ
+    po[2] = 1.0
+    CLsurfsp[2] = CLhtail
 
 
-#---- number of surfaces  (wing, horizontal tail)
-      nsurf = 2
+    #---- number of surfaces  (wing, horizontal tail)
+    nsurf = 2 # TODO SHould make this parametric too eventually
 
-#---- number of spanwise intervals
-# -----------------------------------------------------------------------
-# The below # of panels (43 total) gives about 1.8% higher CDi relative to the 
-# finest one here with ~360 panels
-      npout[1] = 20  # outer panel
-      npinn[1] = 6   # inner panel
-      npimg[1] = 3   # image inside fuselage
-  
-      npout[2] = 10  # outer panel
-      npinn[2] = 0   # inner panel
-      if (bo[2] == 0.0) 
-       npimg[2] = 0
-      else
-       npimg[2] = 2   # image inside fuselage  (or inner panel if T-tail)
-      end
-# -----------------------------------------------------------------------
-# The below # of panels (84 total) gives about 0.60% higher CDi relative to the 
-# finest one here with ~360 panels
-#     npout[1] = 40  # outer panel
-#     npinn[1] = 12  # inner panel
-#     npimg[1] = 6   # image inside fuselage
-# 
-#     npout[2] = 20  # outer panel
-#     npinn[2] = 0   # inner panel
-#     npimg[2] = 4   # image inside fuselage  (or inner panel if T-tail)
-# -----------------------------------------------------------------------
-#      npout[1] = 160  # outer panel
-#      npinn[1] = 48   # inner panel
-#      npimg[1] = 24   # image inside fuselage
-# 
-#      npout[2] = 80  # outer panel
-#      npinn[2] = 0   # inner panel
-#      npimg[2] = 16  # image inside fuselage  (or inner panel if T-tail)
-# -----------------------------------------------------------------------
+    # Ensure wake_system has current geometry (rebuilds if geometry changed)
+    ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
 
-      ktip = 16
-      #CLsurf = zeros(Float64, nsurf)
-      # println("$nsurf, $npout, $npinn, $npimg, 
-	# $Sref, $bref,
-	# $b,$bs,$bo,$bop, $zcent,
-	# $po,$gammat,gammas, $fLo, $ktip,
-      # $specifies_CL,$CLsurfsp")
+    ifrst = [i_first_wing(trefftz_config), i_first_tail(trefftz_config)]
+    ilast = [i_last_wing(trefftz_config), i_last_tail(trefftz_config)]
 
+    calculate_wake_circulation!(gw, TREFFTZ_GEOM.gc, ifrst, ilast, nsurf) #TODO: next cut avoid these module consts. They're ugly.
 
-      CLsurf, CLtp, CDtp, sefftp = _trefftz_analysis(nsurf, npout, npinn, npimg, 
-	Sref, bref,
-	b,bs,bo,bop, zcent,
-	po,gammat,gammas, fLo, ktip,
-      specifies_CL,CLsurfsp, t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
-      
-      # println("$CLsurf, $CLtp, $CDtp, $sefftp")
+    if (specifies_CL)
+        # Scale circulations to match specified lift coefficient
+        scale_circulation!(TREFFTZ_GEOM.gc, gw, TREFFTZ_GEOM.yp, ifrst, ilast,
+            CLsurfsp, bref, Sref, nsurf)
+    end
 
-      para[iaCDi] = CDtp
-      para[iaspaneff] = sefftp
+    CLtp, CDtp, sefftp = compute_induced_drag!(vnc, ac.wake_system, TREFFTZ_GEOM.gc, gw, bref, Sref)
 
-      return
+    para[iaCDi] = CDtp
+    para[iaspaneff] = sefftp
+
+    return
 end # induced_drag!
 
+"""
+    ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
 
-# Trefftz analysis functions -------------------
-# Investigating potential to have wrappers to make code cleaner
-struct tfp_workarrays
-  t::Vector{Float64}
-  y::Vector{Float64}
-  yp::Vector{Float64}
-  z::Vector{Float64}
-  zp::Vector{Float64}
-  gw::Vector{Float64}
-  yc::Vector{Float64}
-  ycp::Vector{Float64}
-  zc::Vector{Float64}
-  zcp::Vector{Float64}
-  gc::Vector{Float64}
-  vc::Vector{Float64}
-  wc::Vector{Float64}
-  vnc::Vector{Float64}
-end
+Checks if the Trefftz plane geometry is up-to-date with the current wing and tail geometry.
+If not, rebuilds the geometry.
+"""
+function ensure_trefftz_current!(ac, po, gammat, gammas, trefftz_config)
+    wing = ac.wing
+    htail = ac.htail
 
-struct tfp
-  nsurf::Int
-  npout::Vector{Int}
-  npinn::Vector{Int}
-  npimg::Vector{Int}
-  Sref::Float64
-  bref::Float64
-  b::Vector{Float64}
-  bs::Vector{Float64}
-  bo::Vector{Float64}
-  bop::Vector{Float64}
-  zcent::Vector{Float64}
-  po::Vector{Float64}
-  γt::Vector{Float64}
-  γs::Vector{Float64}
-  CLsurfsp::Vector{Float64}
-  ktip::Float64
-  workarrays::tfp_workarrays
-end
+    current_hash = hash((wing.layout.span, wing.layout.root_span, wing.layout.ηs,
+        htail.layout.span, htail.layout.root_span, htail.layout.ηs, gammat..., gammas...))
 
-function trefftz(tf::tfp)
-  
-  _trefftz_analysis(tf.nsurf, tf.npout, tf.npinn, tf.npimg,
-	tf.Sref, tf.bref,
-	tf.b, tf.bs, tf.bo, tf.bop, tf.zcent,
-	tf.po,tf.γt,tf.γs, 1, tf.ktip,
-	true,tf.CLsurfsp,
-  tf.workarrays.t, tf.workarrays.y, tf.workarrays.yp, tf.workarrays.z, tf.workarrays.zp, 
-  tf.workarrays.gw, tf.workarrays.yc, tf.workarrays.ycp, tf.workarrays.zc, tf.workarrays.zcp,
-  tf.workarrays.gc, tf.workarrays.vc, tf.workarrays.wc, tf.workarrays.vnc)
-  ## Note: do not do the following. This will slow the code down. Interestingly seems to have more allocations than the above.
-  # [getproperty(tf.workarrays,f) for f in fieldnames(typeof(tf.workarrays))]...)
-
-end
+    # Only rebuild if geometry changed
+    if current_hash != TREFFTZ_GEOMETRY_HASH[]
+        # println("Rebuilding Trefftz plane geometry...", TREFFTZ_GEOMETRY_HASH[], " --> ", current_hash)
+        ac.wake_system = _build_trefftz_geometry!(wing, htail, po, gammat, gammas, trefftz_config)
+        TREFFTZ_GEOMETRY_HASH[] = current_hash
+    end
+end  # function ensure_trefftz_current!
 
 """
-    _trefftz_analysis(nsurf, npout, npinn, npimg, 
-          Sref, bref, b, bs, bo, bop, 
-          zcent, po, gammat, gammas, 
-          fLo,ktip, specifies_CL, CLsurfsp)
+    bunch_transform(t, bunch)
 
-Trefftz plane routine for the induced drag computation of `nsurf` number of surfaces. Formerly, `trefftz1()`.
+Apply bunching transformation to input `t ∈ \\[0,1\\]`.
+
+Transforms `t` to cluster points near the center (t=0.5) when `bunch > 0`.
+The transformation is: `t_bunched = t + bunch * t * (1 - t)`
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `nsurf::Integer`: Number of surfaces (typically wing and horizontal tail).
-    - `npout::Integer`: Number of spanwise intervals (outer panel).
-    - `npinn::Integer`:  "     "       (inner panel).
-    - `npimg::Integer`:  "     "       (image inside fuselage).
-    - `b::Float64`: Span.
-    - `bs::Float64`: Wing-break span.
-    - `bo::Float64`: Wing-root span.
-    - `bop::Float64`: Span of wing-root streamline in Trefftz plane
-    - `zcent::Vector{Float64}`: Vertical position at centerline for each surface.
-    - `gammat::Vector{Float64}`, gammas::Vector{Float64}`: Wing lift distribution "taper" ratios for outer and inner wing sections, respectively.
-    - `fLo`: wing root load adjustment factors (currently not implemented).
-    - `ktip::Float64`: wing tip load adjustment factors.
-    - `specifies_CL::Bool`: Flag for specified lift calculation (scales vorticities to achieve `CLsurfsp` before computing induced drag).
-    - `CLsurfsp::Vector{Float64}`: Prescribed surface lift coefficient.
+    - `t::Float64`: Original normalized angle ∈ \\[0,1\\].
+    - `bunch::Float64`: Clustering factor ∈ \\[0,1\\]. Higher values cluster more points near center.
 
     **Outputs:**
-    -`CLsurf::Vector{Float64}`: Lift coefficients for each surface. 
-    -`CL::Float64`: Sum of lift coefficients of all surfaces.
-    -`CD::Float64`: Sum of induced drag coefficients of all surfaces.
-    -`spanef::Float64`: Span efficiency of combined surfaces (``= (CL^2 / (π*AR))/CD``).
+    - `t_bunched::Float64`: Transformed parameter value.
 
-See [theory above](@ref trefftz) or Sections 2.14.7 and 3.8.1 of the [TASOPT Technical Desc](@ref dreladocs).
+See also [`inv_bunch_transform`](@ref).
 """
-function _trefftz_analysis(nsurf, npout, npinn, npimg,
-	Sref, bref,
-	b,bs,bo,bop, zcent,
-	po, gammat, gammas, fLo, ktip,
-	specifies_CL,CLsurfsp,t, y, yp, z, zp, gw, yc, ycp, zc, zcp, gc, vc, wc, vnc)
+@inline function bunch_transform(t, bunch)
+    return t + bunch * t * (1.0 - t)
+end
 
-#---- center resolution increase factor (0..1)
-#     bunch = 0.75 
-      bunch =  0.5 
-#     bunch =  0. 
+"""
+    inv_bunch_transform(t_bunched, bunch)
 
-      ifrst = zeros(Int, nsurf)
-      ilast = zeros(Int, nsurf)
-      
-      CLsurf= zeros(Float64, nsurf)
-      
-      # Calculate total number of points
-      # outboard point + inboard + points within fuselage + dummy between surfaces
-      isum = 0
-      @inbounds for  isurf = 1: nsurf
-        isum = isum + npout[isurf] + npinn[isurf] + npimg[isurf] + 1
-      end
+Inverse of the bunching transformation. Recovers original `t` from bunched value.
 
-      if(isum > idim) 
-	      println("TREFFTZ: Passed array overflow. Increase idim to ",isum)
-        exit()
-      end
+Solves `t_bunched = t + bunch * t * (1 - t)` for `t` using the quadratic formula.
+See also [`bunch_transform`](@ref).
+"""
+@inline function inv_bunch_transform(t_bunched, bunch)
+    return (1.0 + bunch - sqrt((1.0 + bunch)^2 - 4.0 * bunch * t_bunched)) * 0.5 / bunch
+end
 
-      if(isum > jdim) 
-	      println("TREFFTZ: Local array overflow. Increase jdim to ", isum)
-        exit()
-      end
+"""
+    calculate_wake_circulation!(gw, gc, ifrst, ilast, nsurf)
 
+Compute wake vortex circulation from bound circulation `γ_wake = -dΓ/dy`.
 
-      i::Int64 = 0
+At each panel edge, the change in bound circulation is shed into the wake:
+- Root: `gw = 0` (no upstream circulation at the center of the fuselage)
+- Interior: `gw[i] = gc[i-1] - gc[i]` 
+- Tip: `gw[i] = gc[i-1]` 
+"""
+@inline function calculate_wake_circulation!(
+    gw::AbstractVector{Float64},
+    gc::AbstractVector{Float64},
+    i_first::AbstractVector{Int},
+    i_last::AbstractVector{Int},
+    nsurf::Int
+)
+    @inbounds for isurf = 1:nsurf
+        i = i_first[isurf]
+        gw[i] = 0.0 # centerline wake circulations cancel from left and right contributions
 
-@inbounds for  isurf = 1: nsurf
-
-#---- η at center, side-of-body, wing break, tip
-      e0 = 0.0
-      eo = bo[isurf]/b[isurf]
-      es = bs[isurf]/b[isurf]
-      e1 = 1.0
-
-      # ηₒ' fuse non-dim y location that is constricted in the Trefftz plane 
-      eop = bop[isurf]/b[isurf]
-
-      # Inverting the cosine spacing and 
-      # then normalizing by π/2 so θ spans from 1.0 to 0.0
-      # You want these specific θs since you know what Γ is at these points from 
-      # the piece wise lift distributions
-      t0 = 1.0 # which is basically acos(0.0)/(π/2)
-      to = acos(eo)/(0.5*π)
-      ts = acos(es)/(0.5*π)
-      t1 = 0.0 # which is basically acos(1.0)
-
-      # This is to transform the to and ts angles to the right values such
-      # that the bunch transform gives us back exactly the right ηo and ηs.
-      if(bunch > 0.0) 
-       to = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*to))*0.5/bunch
-       ts = (1.0+bunch - sqrt((1.0+bunch)^2 - 4.0*bunch*ts))*0.5/bunch
-      end
-
-      y0 = 0.
-      yo = 0.5*bo[isurf]
-      ys = 0.5*bs[isurf]
-      y1 = 0.5*b[isurf]
-
-      yop = 0.5*bop[isurf]
-
-      z0 = zcent[isurf]
-      zo = zcent[isurf]
-      zs = zcent[isurf]
-      z1 = zcent[isurf]
-
-      g0 = po[isurf]
-      go = po[isurf]
-      gs = po[isurf]*gammas[isurf]
-      g1 = po[isurf]*gammat[isurf]
-
-      k0 = 1
-      ko = 1 + npimg[isurf]
-      ks = 1 + npimg[isurf] + npinn[isurf]
-      k1 = 1 + npimg[isurf] + npinn[isurf] + npout[isurf]
-
-      i = i+1
-      ifrst[isurf] = i
-      t[i] = t0
-      y[i] = y0
-      z[i] = z0
-
-      yp[i] = y0
-      zp[i] = z0
-
-#---- set points over fuselage
-      @inbounds for  k = k0+1 : ko #start at k0+1 cause you already set stuff for k0.
-        i = i+1
-
-        fk = (k-k0)/(ko-k0)
-        t[i] = t0*(1.0-fk) + to*fk #field points at i
-        tc = 0.5*(t[i-1]+t[i]) #collocation point at i+1/2 points
-
-        e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
-        ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
-       
-        # E.g., eo can be = e0 if we have something like a T-tail
-        if(eo-e0 == 0.0) 
-         fi = 1.0
-         fc = 0.5
-        else
-         fi = (e -e0)/(eo-e0)
-         fc = (ec-e0)/(eo-e0)
+        @inbounds for i = (i_first[isurf]+1):(i_last[isurf]-1)
+            gw[i] = gc[i-1] - gc[i]
         end
 
-        y[i] = y0*(1.0-fi) + yo*fi
-        z[i] = z0*(1.0-fi) + zo*fi
-
-        yc[i-1] =  y0*(1.0-fc) + yo*fc
-        zc[i-1] =  z0*(1.0-fc) + zo*fc
-        gc[i-1] = (g0*(1.0-fc) + go*fc) * sqrt(1.0-ec^ktip) #Eq. 389
-
-        yexp = (eo/eop)^2
-
-        yp[i] = yop * (y[i]/yo)^yexp
-        zp[i] = z[i]
-
-
-        ycp[i-1] = yop * (yc[i-1]/yo)^yexp
-        zcp[i-1] = zc[i-1]
-      end
-      #Inner panel
-      @inbounds for  k = ko+1: ks
-        i = i+1
-
-        fk = (k-ko)/(ks-ko)
-        t[i] = to*(1.0-fk) + ts*fk
-        tc = 0.5*(t[i-1]+t[i])
-
-        e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
-        ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
-        if(es-eo == 0.0) 
-         fi = 1.0
-         fc = 0.5
-        else
-         fi = (e -eo)/(es-eo)
-         fc = (ec-eo)/(es-eo)
-        end
-
-        y[i] = yo*(1.0-fi) + ys*fi
-        z[i] = zo*(1.0-fi) + zs*fi
-
-        yc[i-1] =  yo*(1.0-fc) + ys*fc
-        zc[i-1] =  zo*(1.0-fc) + zs*fc
-        gc[i-1] = (go*(1.0-fc) + gs*fc) * sqrt(1.0-ec^ktip)
-
-        yp[i] = sqrt(y[i]^2 - yo^2 + yop^2) #Calculate y'[i] from Eq 391. conservtion of mass effectively
-        zp[i] = z[i]
-
-        ycp[i-1] = sqrt(yc[i-1]^2 - yo^2 + yop^2)
-        zcp[i-1] = zc[i-1]
-      end
-      # Outer panel
-      @inbounds for  k = ks+1 : k1
-        i = i+1
-
-        fk = (k-ks)/(k1-ks)
-        t[i] = ts*(1.0-fk) + t1*fk
-        tc = 0.5*(t[i-1]+t[i])
-
-        e  = cos(0.5*π*(t[i] + bunch*t[i]*(1.0-t[i])))
-        ec = cos(0.5*π*(tc   + bunch*tc  *(1.0-tc  )))
-        if(e1-es == 0.0) 
-         fi = 1.0
-         fc = 0.5
-        else
-         fi = (e -es)/(e1-es)
-         fc = (ec-es)/(e1-es)
-        end
-        y[i] = ys*(1.0-fi) + y1*fi
-        z[i] = zs*(1.0-fi) + z1*fi
-
-        yc[i-1] =  ys*(1.0-fc) + y1*fc
-        zc[i-1] =  zs*(1.0-fc) + z1*fc
-        gc[i-1] = (gs*(1.0-fc) + g1*fc) * sqrt(1.0-ec^ktip)
-
-        yp[i] = sqrt(y[i]^2 - yo^2 + yop^2)
-        zp[i] = z[i]
-
-        ycp[i-1] = sqrt(yc[i-1]^2 - yo^2 + yop^2)
-        zcp[i-1] = zc[i-1]
-      end
-      ilast[isurf] = i
-
-#---- dummy control point between surfaces
-      yc[i] = 0.
-      zc[i] = 0.
-      gc[i] = 0.
-
- end # nsurf loop
-
- ii = ilast[nsurf]
-
-      @inbounds for  isurf = 1: nsurf
-        i = ifrst[isurf]
-        gw[i] = 0. #Circulation in the wake
-        @inbounds for  i = ifrst[isurf]+1: ilast[isurf]-1
-          gw[i] = gc[i-1] - gc[i]
-        end
-        i = ilast[isurf]
+        i = i_last[isurf]
         gw[i] = gc[i-1]
-      end
+    end
 
+    return nothing
+end
 
-      if(specifies_CL) 
-#----- scale circulations to get specified lift for each surface
-       @inbounds for  isurf = 1: nsurf
-         cltest = 0.
-         @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
-           dy = yp[i+1] - yp[i]
-           cltest = cltest + gc[i]*dy
-         end
-         
-         cltest = cltest * 2.0 * bref/(0.5*Sref)
+"""
+    scale_circulation!(gc, gw, yp, ifrst, ilast, CLsurfsp, bref, Sref, nsurf)
 
-         ## Calculate the scaling factor for the circulations
-         gfac = CLsurfsp[isurf]/(cltest)
-        # println("$isurf, $gfac, $cltest, $(CLsurfsp[isurf])")
-
-         @inbounds for  i = ifrst[isurf]: ilast[isurf]
-           gc[i] = gc[i]*gfac
-           gw[i] = gw[i]*gfac
-         end
-       end
-      end
-
-      CL = 0.
-      CD = 0.
-      @inbounds for  isurf = 1: nsurf
-
-      CLsurf[isurf] = 0.
-
-      @inbounds for  i = ifrst[isurf]: ilast[isurf]-1
-        dy = yp[i+1] - yp[i]
-        dz = zp[i+1] - zp[i]
-        ds = sqrt(dy^2 + dz^2)
-
-        vsum = 0.
-        wsum = 0.
-        @inbounds for  j = 1: ii
-#-------- velocities of wake vortex, at control point
-          yb = ycp[i] - yp[j]
-          zb = zcp[i] - zp[j]
-          rsq = yb^2 + zb^2
-          vsum = vsum - gw[j] * zb/rsq
-          wsum = wsum + gw[j] * yb/rsq
-
-#-------- velocities of wake vortex image, at control point
-          yb = ycp[i] + yp[j]
-          zb = zcp[i] - zp[j]
-          rsq = yb^2 + zb^2
-          vsum = vsum + gw[j] * zb/rsq
-          wsum = wsum - gw[j] * yb/rsq
+Scale circulation distribution to match specified specified lift coefficient for each surface.
+"""
+@inline function scale_circulation!(
+    gc::AbstractVector{Float64},
+    gw::AbstractVector{Float64},
+    yp::AbstractVector{Float64},
+    ifrst::AbstractVector{Int},
+    ilast::AbstractVector{Int},
+    CLsurfsp::AbstractVector{Float64},
+    bref::Float64,
+    Sref::Float64,
+    nsurf::Int
+)
+    @inbounds for isurf = 1:nsurf
+        # Integrate circulation distribution to find current CL
+        cl_test = 0.0
+        @inbounds for i = ifrst[isurf]:(ilast[isurf]-1)
+            dy = yp[i+1] - yp[i]
+            cl_test += gc[i] * dy
         end
-        vc[i] = vsum*bref/(2.0*π)
-        wc[i] = wsum*bref/(2.0*π)
 
-        vnc[i] = (dy*wc[i] - dz*vc[i])/ds
+        # Convert integrated circulation to lift coefficient
+        cl_test = cl_test * 2.0 * bref / (0.5 * Sref)
 
-        dCL = 2.0*gc[i]       *dy * bref/(0.5*Sref)
-        dCD =    -gc[i]*vnc[i]*ds * bref/(0.5*Sref)
+        # Compute scaling factor
+        gfac = CLsurfsp[isurf] / cl_test
 
-        CL = CL + dCL
-        CD = CD + dCD
+        # Scale both bound and wake circulations
+        @inbounds for i = ifrst[isurf]:ilast[isurf]
+            gw[i] *= gfac
+        end
+        @inbounds for i = ifrst[isurf]:ilast[isurf]-1
+            gc[i] *= gfac
+        end
+    end
 
-        CLsurf[isurf] = CLsurf[isurf] + dCL
+    return nothing
+end
+
+@enum WAKE_CONTRACTION_TYPE begin
+    FUSEWAKE
+    WINGWAKE
+end
+
+function get_wake_contraction(wake_type::WAKE_CONTRACTION_TYPE, y, yo, yop)
+      if wake_type === FUSEWAKE
+            # Power law to contract the stream tubes in the fuselage region.
+            # Use tolerance for boundary case (y ≈ yo)
+            if y > yo * (1.0 + 1e-10)
+                  error("y=$y must be within fuselage region (y ≤ yo=$yo)")
+            end
+            yexp = (yo / yop)^2
+            return yop * (y / yo)^yexp
+      else
+            # Mass conservation based contraction outside fuselage region.
+            # Use tolerance for boundary case (y ≈ yo)
+            if y < yo * (1.0 - 1e-10)
+                  error("y=$y must be outside fuselage region (y ≥ yo=$yo)")
+            end
+            return sqrt(y^2 - yo^2 + yop^2)
       end
+end
 
- end #end for loop
+"""
+    generate_panel_points!(
+        i, geom,
+        k_start, k_end,
+        t_start, t_end,
+        e_start, e_end,
+        y_start, y_end, z_start, z_end,
+        g_start, g_end,
+        yo, yop, bunch, ktip
+    ) -> i_end
 
-      AR = bref^2/Sref
-      CDell = CL^2 / (π*AR) #CD for elliptical loading here. 
-      # For general CD = CL²/(π*AR*spaneff) ∴spaneff calculated as:
-      spanef = CDell / CD
+Generate points for a single panel section (image, inboard, or outboard).
+This eliminates code duplication between the three panel loops.
 
-      return CLsurf, CL, CD , spanef
-      end
+Type-stable and efficient for repeated use in different panel sections.
+"""
+@inline function generate_panel_points!(
+    i::Int,
+    geom::TrefftzGeometry,
+    k_start::Int, k_end::Int,
+    t_start::Float64, t_end::Float64,
+    e_start::Float64, e_end::Float64,
+    y_start::Float64, y_end::Float64,
+    z_start::Float64, z_end::Float64,
+    g_start::Float64, g_end::Float64,
+    yo::Float64, yop::Float64,
+    bunch::Float64, ktip::Float64,
+    wake_contract::WAKE_CONTRACTION_TYPE)
+
+    @inbounds for k = k_start+1:k_end
+        i = i + 1
+
+        # Interpolation fraction
+        fk = (k - k_start) / (k_end - k_start)
+
+        # Theta values for field point and control point
+        geom.t[i] = t_start * (1.0 - fk) + t_end * fk
+        tc = 0.5 * (geom.t[i-1] + geom.t[i])
+
+        # Eta values (spanwise position)
+        e  = cos(0.5π * bunch_transform(geom.t[i], bunch))
+        ec = cos(0.5π * bunch_transform(tc, bunch))
+
+        # Interpolation fractions in η space
+        if e_end - e_start == 0.0
+            fi = 1.0
+            fc = 0.5
+        else
+            fi = (e - e_start) / (e_end - e_start)
+            fc = (ec - e_start) / (e_end - e_start)
+        end
+
+        # Physical coordinates - field points
+        geom.y[i] = y_start * (1.0 - fi) + y_end * fi
+        geom.z[i] = z_start * (1.0 - fi) + z_end * fi
+
+        # Physical coordinates - control points
+        geom.yc[i-1] = y_start * (1.0 - fc) + y_end * fc
+        geom.zc[i-1] = z_start * (1.0 - fc) + z_end * fc
+
+        # Circulation with tip rolloff
+        geom.gc[i-1] = (g_start * (1.0 - fc) + g_end * fc) * sqrt(1.0 - ec^ktip)
+
+        #Trefftz plane locations (y′ & yc′) of stream lines after wake contraction
+        geom.yp[i] = get_wake_contraction(wake_contract, geom.y[i], yo, yop)
+        geom.ycp[i-1] = get_wake_contraction(wake_contract, geom.yc[i-1], yo, yop)
+
+        geom.zp[i] = geom.z[i]
+        geom.zcp[i-1] = geom.zc[i-1]
+    end
+
+    return i
+end
+
+"""
+    generate_trefftz_points!(
+        i_start::Int,
+        geom::TrefftzGeometry,
+        surface,
+        po, gammat, gammas,
+        panels::SurfaceDiscretization,
+        trefftz_config::TrefftzPlaneConfig,
+        root_contraction
+    ) -> i_end::Int
+
+Generate field points and control points for a single lifting surface in the Trefftz plane.
+Returns the final index after point generation.
+
+This is an incremental refactoring step - extracted from _trefftz_analysis for clarity.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `i_start::Int`: Starting index in the arrays.
+    - `geom::TrefftzGeometry`: Geometry arrays struct for point storage.
+    - `surface`: Wing or tail structure (TASOPT.Wing or TASOPT.Tail) containing geometry.
+    - `po::Float64`: Root circulation scaling factor.
+    - `gammat::Float64`: Outer section lift distribution taper ratio.
+    - `gammas::Float64`: Inner section lift distribution taper ratio.
+    - `panels::SurfaceDiscretization`: Panel discretization for this surface.
+    - `trefftz_config::TrefftzPlaneConfig`: Configuration with bunching and tip parameters.
+    - `root_contraction::Float64`: Wake contraction factor at fuselage root.
+
+    **Outputs:**
+    - `i_end::Int`: Final index after point generation.
+"""
+@inline function generate_trefftz_points!(
+    i_start::Int,
+    geom::TrefftzGeometry,
+    surface,
+    po::Float64, gammat::Float64, gammas::Float64,
+    panels::SurfaceDiscretization,
+    trefftz_config::TrefftzPlaneConfig,
+    root_contraction::Float64
+)
+    # Extract geometry from surface struct
+    b = surface.layout.span
+    bs = surface.layout.break_span 
+    bo = surface.layout.root_span
+    bop = bo * root_contraction
+    zcent = surface.layout.z
+
+    # Extract configuration
+    bunch = trefftz_config.bunch
+    ktip = trefftz_config.k_tip
+
+    # Extract panel counts
+    n_img = panels.n_image_panels
+    n_inn = panels.n_inner_panels
+    n_out = panels.n_outer_panels
+
+    # Key span positions (η = spanwise location normalized by b)
+    e0 = 0.0
+    eo = bo/b
+    es = bs/b
+    e1 = 1.0
+    eop = bop/b
+
+    # Transform to θ space
+    t0 = 1.0
+    to = acos(eo)/(0.5*π)
+    ts = acos(es)/(0.5*π)
+    t1 = 0.0
+
+    # Apply inverse bunching
+    if bunch > 0.0
+        to = inv_bunch_transform(to, bunch)
+        ts = inv_bunch_transform(ts, bunch)
+    end
+
+    # Physical coordinates at key stations
+    y0 = 0.0
+    yo = 0.5*bo
+    ys = 0.5*bs
+    y1 = 0.5*b
+    yop = 0.5*bop
+
+    z0 = zcent
+    zo = zcent
+    zs = zcent
+    z1 = zcent
+
+    # Circulation at key stations
+    g0 = po
+    go = po
+    gs = po*gammas
+    g1 = po*gammat
+
+    # Panel indices
+    k0 = 1
+    ko = 1 + n_img
+    ks = 1 + n_img + n_inn
+    k1 = 1 + n_img + n_inn + n_out
+
+    # Start with center point
+    i = i_start
+    geom.t[i] = t0
+    geom.y[i] = y0
+    geom.z[i] = z0
+    geom.yp[i] = y0
+    geom.zp[i] = z0
+
+    # Image panels (fuselage region)
+    i = generate_panel_points!(
+        i, geom,
+        k0, ko, t0, to, e0, eo,
+        y0, yo, z0, zo, g0, go,
+        yo, yop, bunch, ktip, FUSEWAKE)
+
+    # Inboard panels
+    i = generate_panel_points!(
+        i, geom,
+        ko, ks, to, ts, eo, es,
+        yo, ys, zo, zs, go, gs,
+        yo, yop, bunch, ktip, WINGWAKE)
+
+    # Outboard panels
+    i = generate_panel_points!(
+        i, geom,
+        ks, k1, ts, t1, es, e1,
+        ys, y1, zs, z1, gs, g1,
+        yo, yop, bunch, ktip, WINGWAKE)
+
+    return i
+end
+
+"""
+    _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
+    trefftz_config::TrefftzPlaneConfig)
+
+Construct the Trefftz plane geometry for the given wing and horizontal tail.
+"""
+function _build_trefftz_geometry!(wing, htail, po, gammat, gammas,
+    trefftz_config::TrefftzPlaneConfig)
+
+    i::Int64 = 0
+
+    nsurf = 2
+    @inbounds for isurf = 1:nsurf
+        # Select the right surface and panel config
+        surface = isurf == 1 ? wing : htail
+        panels = isurf == 1 ? trefftz_config.wing_panels : trefftz_config.tail_panels
+        root_contraction = isurf == 1 ? trefftz_config.wing_root_contraction : trefftz_config.tail_root_contraction
+
+        # Handle T-tail special case (root_span = 0)
+        if isurf == 2 && surface.layout.root_span == 0.0
+            panels = SurfaceDiscretization(panels.n_outer_panels, panels.n_inner_panels, 0)
+        end
+
+        i = i + 1
+        # Generate points for this surface
+        i = generate_trefftz_points!(
+            i, TREFFTZ_GEOM,
+            surface,
+            po[isurf], gammat[isurf], gammas[isurf],
+            panels,
+            trefftz_config,
+            root_contraction
+        )
+
+        #---- dummy control point between surfaces
+        TREFFTZ_GEOM.yc[i] = 0.0
+        TREFFTZ_GEOM.zc[i] = 0.0
+        TREFFTZ_GEOM.gc[i] = 0.0
+    end # nsurf loop
+    # ilast = i_last_tail(trefftz_config) # could use this instead of accumulating i...
+    WS = WakeSystem(
+        TREFFTZ_GEOM.yp[1:i],
+        TREFFTZ_GEOM.zp[1:i],
+        TREFFTZ_GEOM.ycp[1:i-1],
+        TREFFTZ_GEOM.zcp[1:i-1])
+    return WS
+end
+
+
+"""
+    compute_induced_drag!(vnc, WS::WakeSystem{Npts, Nelems}, gc, gw, bref, Sref) where {Npts, Nelems}
+
+Compute the induced drag and span efficiency from the wake system.
+"""
+function compute_induced_drag!(vnc, WS::WakeSystem{Npts, Nelems}, gc, gw, bref, Sref) where {Npts, Nelems}
+
+    @views mul!(vnc[1:Nelems], WS.influence_matrix[1:Nelems, 1:Npts], gw[1:Npts])
+
+    # Normalize in-place
+    factor = bref / (2.0π)
+    @inbounds for i in 1:Nelems
+        vnc[i] *= factor
+    end
+
+    # Compute CL and CD
+    # Need to extract element geometry on-the-fly
+    CL = 0.0
+    CD = 0.0
+
+    @inbounds for i in 1:Nelems
+        # Extract element geometry from WakeSystem
+        elem = WS.elements[i]
+        dy = elem.Δy
+        ds = elem.length
+
+        CD -= gc[i] * vnc[i] * ds
+        CL += 2.0 * gc[i] * dy
+    end
+
+    # Normalize
+    CD = CD * bref / (0.5 * Sref)
+    CL = CL * bref / (0.5 * Sref)
+
+    AR = bref^2 / Sref
+    CD_elliptical = CL^2 / (π * AR) #CD for elliptical loading here. 
+    # For general CD = CL²/(π*AR*spaneff) ∴spaneff calculated as:
+    span_eff = CD_elliptical / CD
+
+    return CL, CD, span_eff
+end

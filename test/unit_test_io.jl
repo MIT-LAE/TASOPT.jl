@@ -9,8 +9,8 @@
     save_aircraft_model(ac_def, filepath_rewrite)
     ac_reread = read_aircraft_model(filepath_rewrite)
 
-    size_aircraft!(ac_def, Ldebug=false, printiter=false, saveOD=false)
-    size_aircraft!(ac_reread, Ldebug=false, printiter=false, saveOD=false)
+    size_aircraft!(ac_def, Ldebug=false, printiter=false)
+    size_aircraft!(ac_reread, Ldebug=false, printiter=false)
 
     @test ac_def.parg[igWMTO] ≈ ac_reread.parg[igWMTO]
     rm(filepath_rewrite)
@@ -23,8 +23,8 @@
     save_aircraft_model(ac_lopay, filepath_nopay)
 
     ac_lopay_reread = read_aircraft_model(filepath_nopay)
-    size_aircraft!(ac_lopay, Ldebug=false, printiter=false, saveOD=false)
-    size_aircraft!(ac_lopay_reread, Ldebug=false, printiter=false, saveOD=false)
+    size_aircraft!(ac_lopay, Ldebug=false, printiter=false)
+    size_aircraft!(ac_lopay_reread, Ldebug=false, printiter=false)
     
     @test ac_lopay.parg[igWMTO] ≈ ac_lopay_reread.parg[igWMTO]
     @test !(ac_lopay.parg[igWMTO] ≈ ac_def.parg[igWMTO])
@@ -35,7 +35,7 @@
     filepath_quick = joinpath(TASOPT.__TASOPTroot__, "../test/iotest_quick.toml")
     quicksave_aircraft(load_default_model(), filepath_quick)
     ac_quick = quickload_aircraft(filepath_quick)
-    size_aircraft!(ac_quick, Ldebug=false, printiter=false, saveOD=false)
+    size_aircraft!(ac_quick, Ldebug=false, printiter=false)
 
     @test ac_quick.parg[igWMTO] ≈ ac_def.parg[igWMTO]
     rm(filepath_quick)
@@ -47,7 +47,7 @@
     quicksave_aircraft(ac_quick, filepath_quick_nopay)
 
     ac_quick_nopay_reread = quickload_aircraft(filepath_quick_nopay)
-    size_aircraft!(ac_quick_nopay_reread, Ldebug=false, printiter=false, saveOD=false)
+    size_aircraft!(ac_quick_nopay_reread, Ldebug=false, printiter=false)
     @test ac_quick_nopay_reread.parg[igWMTO] ≈ ac_lopay.parg[igWMTO]
     rm(filepath_quick_nopay)
 
@@ -87,8 +87,8 @@
     @test size(csv1,1) == 4 #4 rows w default indices
     @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test length(csv1[1]) == 764 # = entries w/ full ac `struct` and in default_output_indices
-    @test length(csv2[1]) == 1134 # = entries w/ full ac `struct` and all output_indices
+    @test length(csv1[1]) == 778 # = entries w/ full ac `struct` and in default_output_indices
+    @test length(csv2[1]) == 1148 # = entries w/ full ac `struct` and all output_indices
 
     #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 

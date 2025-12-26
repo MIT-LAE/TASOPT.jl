@@ -46,6 +46,9 @@ include("./utils/helper_functions.jl")
 #Load modules
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
+export AtmosphericState, atmos
+
+include(joinpath(__TASOPTroot__,"sizing/initialize_weights.jl"))
 include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
 include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
@@ -68,7 +71,13 @@ using .aerodynamics
 using .structures
 using .engine
 
-# Load primary aircraft structure 
+# Flight condition struct for mission point state (must come before aircraft.jl)
+include(joinpath(__TASOPTroot__,"data_structs/flight_condition.jl"))
+export FlightCondition, update_arrays!, altitude, altitude_km,
+       dynamic_pressure, total_temperature, total_pressure,
+       initialize_flight_conditions, set_flight_condition!, get_flight_condition
+
+# Load primary aircraft structure
 include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/aircraft.jl"))
@@ -87,7 +96,9 @@ include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
-include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
+# Plotting functions
+include(joinpath(__TASOPTroot__,"IO/plotting/output_plots.jl"))
+include(joinpath(__TASOPTroot__,"IO/plotting/trefftz_plots.jl"))
 export  stickfig, plot_details, plot_drag_breakdown, 
         PayloadRange, DragPolar
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
@@ -123,12 +134,11 @@ RSL = pSL / (ρSL * TSL)
 sizes the given `aircraft` instance. A light wrapper around the `_size_aircraft!` function, which does the actual work.
 """
 function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
-        printiter=true, saveOD=false)
+        printiter=true)
 
     Ldebug && println("Max weight iterations = $iter")
     _size_aircraft!(ac, itermax = iter, initwgt = initwgt,
-        Ldebug = Ldebug, printiter = printiter,
-        saveODperf = saveOD)
+        Ldebug = Ldebug, printiter = printiter)
 
     #if sized properly, mark as such
     #TODO: apply logic and exit codes to make check more robust

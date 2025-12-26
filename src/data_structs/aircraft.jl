@@ -30,12 +30,14 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `htail::Tail` : Horizontal tail data and parameters
 - `vtail::Tail` : Vertical tail data and parameters
 - `engine::Engine` : Engine models, data, and parameters
+- `flight_conditions::Matrix{FlightCondition}` : Flight conditions at each mission point [iptotal × n_missions]
 
 The indices for accessing specific data in the `par` arrays are defined in `/src/data_structs/index.inc`. 
 Refer to the sample input file (`/example/defaults/default_input.toml` and `read_input.jl`) for usage.
 Refer to the docs for a summary of the main `struct`s.
 """
-@kwdef mutable struct aircraft
+@kwdef mutable struct aircraft{WS<:WakeSystem} 
+#TODO: Right now, only WakeSystem is a type parameter but I expect to make it parametric on more config options
     name::String = "Untitled Aircraft"
     description::String = "Indescribable"
     options::TASOPT.Options
@@ -44,7 +46,7 @@ Refer to the docs for a summary of the main `struct`s.
     parm::Array{Float64, 2}
     para::Array{Float64, 3}
     pare::Array{Float64, 3}
-    
+
     is_sized::Vector{Bool} = [false]
 
     fuselage::Fuselage = Fuselage()
@@ -54,9 +56,48 @@ Refer to the docs for a summary of the main `struct`s.
     vtail::Tail = Tail()
     engine::Engine = Engine()
     landing_gear::LandingGear = LandingGear()
+
+    # Flight conditions at each mission point [iptotal × n_missions]
+    # Replaces para[iaalt/iaMach/...] and pare[ieT0/iep0/...] indices
+    flight_conditions::Matrix{FlightCondition}
+
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
+    wake_system::WS
 end
 
+function aircraft(
+    name::String,
+    description::String,
+    options::TASOPT.Options,
+    parg::Vector{Float64},
+    parm::Array{Float64, 2},
+    para::Array{Float64, 3},
+    pare::Array{Float64, 3},
+    is_sized::Vector{Bool},
+    fuselage::Fuselage,
+    fuse_tank::fuselage_tank,
+    wing::Wing,
+    htail::Tail,
+    vtail::Tail,
+    engine::Engine,
+    landing_gear::LandingGear,
+    flight_conditions::Matrix{FlightCondition}
+)
+    # Create placeholder WakeSystem with correct size for type stability
+    # This will be rebuilt with actual geometry in induced_drag!
+    wake_system = aerodynamics.WakeSystem(options.trefftz_config)
+
+    # Construct the aircraft with the type parameter
+    return aircraft{typeof(wake_system)}(
+        name, description, options,
+        parg, parm, para, pare, is_sized,
+        fuselage, fuse_tank,
+        wing, htail, vtail,
+        engine, landing_gear,
+        flight_conditions,
+        wake_system
+    )
+end
 
 function Base.getproperty(ac::aircraft, sym::Symbol)
     if sym === :parad #Design para
@@ -85,3 +126,23 @@ function Base.show(io::IO, ac::aircraft)
     Des. Range  = $(round(ac.parm[imRange]/1e3, sigdigits = 3)) km
     Cruise Mach = $(round(ac.para[iaMach, ipcruise1, 1], sigdigits=3))""")
 end
+
+"""
+    set_flight_condition!(ac::aircraft, ip::Integer, fc::FlightCondition; im::Integer=1)
+
+Set the flight condition at mission point `ip` for mission `im`.
+Also updates the legacy para/pare arrays for backward compatibility during migration.
+"""
+function set_flight_condition!(ac::aircraft, ip::Integer, fc::FlightCondition; im::Integer=1)
+    ac.flight_conditions[ip, im] = fc
+    # Sync to legacy arrays during migration period
+    update_arrays!(view(ac.para, :, :, im), view(ac.pare, :, :, im), fc, ip)
+    return nothing
+end
+
+"""
+    get_flight_condition(ac::aircraft, ip::Integer; im::Integer=1)
+
+Get the flight condition at mission point `ip` for mission `im`.
+"""
+get_flight_condition(ac::aircraft, ip::Integer; im::Integer=1) = ac.flight_conditions[ip, im]

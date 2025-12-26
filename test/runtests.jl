@@ -5,9 +5,11 @@ using Plots
 include(TASOPT.__TASOPTindices__)
 
 @testset verbose=true "TASOPT" begin
+    include("unit_test_flight_condition.jl")
     include("unit_test_structures.jl")
     include("unit_test_loads.jl")
     include("unit_test_aero.jl")
+    include("unit_test_trefftz.jl")
     include("regression_test_size_aircraft.jl")
     include("unit_test_heat_exchanger.jl")
     include("unit_test_ductedfan.jl")

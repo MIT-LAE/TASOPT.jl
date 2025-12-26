@@ -191,6 +191,18 @@ if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
         > \"fuselage\" - engines on aft fuselage")
 end
 
+trefftz_resolution_str = read_input("trefftz_resolution", options, doptions)
+trefftz_k_tip = read_input("trefftz_k_tip", options, doptions)
+trefftz_bunch = read_input("trefftz_bunch", options, doptions)
+wing_root_contraction = read_input("wing_root_contraction", options, doptions)
+tail_root_contraction = read_input("tail_root_contraction", options, doptions)
+TREFFTZ_CONFIG = aerodynamics.get_trefftz_config(trefftz_resolution_str;
+                                                  k_tip=trefftz_k_tip,
+                                                  bunch=trefftz_bunch,
+                                                  wing_root_contraction=wing_root_contraction,
+                                                  tail_root_contraction=tail_root_contraction)
+
+
 # Fuel related options
 fuel = read_input("Fuel", data, default)
 dfuel = default["Fuel"]
@@ -1205,13 +1217,19 @@ ac_options = TASOPT.Options(
     
     is_doubledecker = is_doubledecker,
 
-    opt_move_wing = opt_move_wing
+    opt_move_wing = opt_move_wing,
+
+    trefftz_config = TREFFTZ_CONFIG
 )
     
+# Initialize flight conditions matrix [iptotal × n_missions]
+flight_conditions = initialize_flight_conditions(iptotal, nmisx)
+
 #Create aircraft object
 ac = TASOPT.aircraft(name, description, ac_options,
-    parg, parm, para, pare, is_sized, 
-    fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear)
+    parg, parm, para, pare, is_sized,
+    fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear,
+    flight_conditions)
 
 # ---------------------------------
 # Recalculate cabin length

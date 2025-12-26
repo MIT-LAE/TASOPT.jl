@@ -7,11 +7,12 @@ module aerodynamics
 
 using StaticArrays
 using LinearAlgebra
+using Printf
 using ..atmosphere
 using ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, balance_aircraft!
 
 export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, 
-    fuselage_drag!, broadcast_fuselage_drag!, plot_airf, aeroperf_sweep
+    fuselage_drag!, broadcast_fuselage_drag!, plot_airf, aeroperf_sweep, WakeSystem
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -27,24 +28,6 @@ end
 include(__TASOPTindices__)
 include(joinpath(__TASOPTroot__,"utils/spline.jl"))
 
-idim::Int = 360
-jdim::Int = 360
- t     = zeros(Float64, jdim)
- y     = zeros(Float64, jdim)
- yp    = zeros(Float64, jdim)
- z     = zeros(Float64, jdim)
- zp    = zeros(Float64, jdim)
- gw    = zeros(Float64, jdim)
-
- yc    = zeros(Float64, idim)
- ycp   = zeros(Float64, idim)
- zc    = zeros(Float64, idim)
- zcp   = zeros(Float64, idim)
- gc    = zeros(Float64, idim)
- vc    = zeros(Float64, idim)
- wc    = zeros(Float64, idim)
- vnc   = zeros(Float64, idim)
- 
 # Aerofoil calculations
 include("airfoil.jl")
 include("airtable.jl")
@@ -53,6 +36,20 @@ include("airfun.jl")
 # airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/C.air")
 # airsection = airtable(airfoil_data);
 
+# Include Trefftz plane configuration and geometry structs
+include("trefftz_config.jl")
+
+# Trefftz plane geometry arrays (sized for max resolution like before)
+# TODO: avoid module global and pass it into aircraft?
+const TREFFTZ_GEOM = TrefftzGeometry{360}()
+const TREFFTZ_GEOMETRY_HASH = Ref{UInt64}(0)
+const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM") # this has to come after defining TREFFTZ_GEOM
+
+# Remaining work arrays for wake circulation and velocities
+# (will be moved to WakeSystem in future refactoring)
+const gw  = zeros(Float64, 360)
+const vnc = zeros(Float64, 360)
+include("WakeGeometry.jl")
 include("wing_loading.jl")
 include("wing_drag.jl")
 

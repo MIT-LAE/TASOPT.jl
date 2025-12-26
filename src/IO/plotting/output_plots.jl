@@ -1084,9 +1084,12 @@ function PayloadRange(ac_og::TASOPT.aircraft;
     parm = cat(ac_og.parm[:,1], ac_og.parm[:,1], dims=2)
     pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
     para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
+    # Duplicate flight conditions for the second mission
+    flight_conditions = cat(ac_og.flight_conditions[:,1], ac_og.flight_conditions[:,1], dims=2)
     ac = aircraft(ac_og.name, ac_og.description,
-    ac_og.options, ac_og.parg, parm, para, pare, [true], 
-    ac_og.fuselage, ac_og.fuse_tank, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine, ac_og.landing_gear)
+    ac_og.options, ac_og.parg, parm, para, pare, [true],
+    ac_og.fuselage, ac_og.fuse_tank, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine, ac_og.landing_gear,
+    flight_conditions)
 
     for HX in ac.engine.heat_exchangers
         HX.HXgas_mission = cat(HX.HXgas_mission[:,1], HX.HXgas_mission[:,1], dims=2)
@@ -1383,3 +1386,4 @@ function plot_airf(ac::aircraft)
     airfoil = ac.wing.airsection
     return plot_airf(airfoil)
 end
+
