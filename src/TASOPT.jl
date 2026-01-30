@@ -46,6 +46,7 @@ include("./utils/helper_functions.jl")
 #Load modules
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
 include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
+include(joinpath(__TASOPTroot__,"sizing/initialize_weights.jl"))
 include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
 include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
@@ -125,12 +126,11 @@ RSL = pSL / (ρSL * TSL)
 sizes the given `aircraft` instance. A light wrapper around the `_size_aircraft!` function, which does the actual work.
 """
 function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
-        printiter=true, saveOD=false)
+        printiter=true)
 
     Ldebug && println("Max weight iterations = $iter")
     _size_aircraft!(ac, itermax = iter, initwgt = initwgt,
-        Ldebug = Ldebug, printiter = printiter,
-        saveODperf = saveOD)
+        Ldebug = Ldebug, printiter = printiter)
 
     #if sized properly, mark as such
     #TODO: apply logic and exit codes to make check more robust
