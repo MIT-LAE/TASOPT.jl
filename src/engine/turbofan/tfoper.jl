@@ -254,9 +254,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       Lprint = false
 
-      if compare_strings(opt_calc_call, "oper_fixedTt4")
+      if opt_calc_call == CalcMode.FixedTt4OffDes
             Tt4spec = Tt4
-      elseif compare_strings(opt_calc_call, "oper_fixedFe")
+      elseif opt_calc_call == CalcMode.FixedFeOffDes
             Fspec = Feng
       end
 
@@ -361,7 +361,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #---- total cooling mass flow ratio
       fc = 0.0
 
-      if compare_strings(opt_cooling, "fixed_coolingflowratio")
+      if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
             if (mcore == 0.0)
                   fo = 0.0
             else
@@ -809,7 +809,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # HSC: SEEMS TO BE FINE
             # ===============================================================
-            if compare_strings(opt_cooling, "none")
+            if opt_cooling == CoolingOpt.NoCooling
                   #----- no cooling air present... station 41 is same as 4
                   pt41 = pt4
                   Tt41 = Tt4
@@ -911,7 +911,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   httc_ht3 = 1.0
                   Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
 
-                  if compare_strings(opt_cooling, "fixed_coolingflowratio")
+                  if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
                         Tmrow_copy = Tmcalc(ncrowx, ncrow,
                               Tt_tc, Tb, dTstrk, Trrat,
@@ -2426,7 +2426,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #-------------------------------------------------------------------------
 
-            if compare_strings(opt_calc_call, "oper_fixedTt4")
+            if opt_calc_call == CalcMode.FixedTt4OffDes
                   #----- specified Tt4 constraint
                   res[7, 1] = Tt4 - Tt4spec
                   a[7, 1] = 0.0

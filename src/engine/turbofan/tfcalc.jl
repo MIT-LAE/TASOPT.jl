@@ -23,7 +23,7 @@ Calls on-design sizing function [`tfsize!`](@ref) or off-design analysis functio
       - `false`: use current variables as initial guesses in `tfoper!`
 """
 function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
-        opt_calc_call::String, opt_cooling::String, initializes_engine::Bool)
+        opt_calc_call::CalcMode.T, opt_cooling::CoolingOpt.T, initializes_engine::Bool)
 
         Lprint = false
 
@@ -105,12 +105,12 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         Δp_InterC = pare[ieInterCDeltap]
         Δp_Regen = pare[ieRegenDeltap]
 
-        if compare_strings(opt_cooling, "fixed_coolingflowratio")
+        if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
                         epsrow[icrow] = pare[ieepsc1+icrow-1]
                 end
-        elseif compare_strings(opt_cooling, "fixed_Tmetal")
+        elseif opt_cooling == CoolingOpt.FixedTmetal
                 ncrow = ncrowx
                 for icrow = 1:ncrowx
                         #cc      Tmrow[icrow]  = pare(ieTmet1+icrow-1)
@@ -158,7 +158,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         pare[ieConvFail] = 0.0 #Converged by default
 
         # #--------------------------------------------------------------------------
-        if compare_strings(opt_calc_call, "sizing")
+        if opt_calc_call == CalcMode.Sizing
                 #----- engine sizing case
 
                 Fe = pare[ieFe]
@@ -373,10 +373,10 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 Fe = 0.0
                 Tt4 = pare[ieTt4]
 
-                if compare_strings(opt_calc_call, "oper_fixedTt4")
+                if opt_calc_call == CalcMode.FixedTt4OffDes
                         #------ specified Tt4 -- Fe will be computed
                         nothing; #nothing special is done
-                elseif compare_strings(opt_calc_call, "oper_fixedFe")
+                elseif opt_calc_call == CalcMode.FixedFeOffDes
                         #------ specified Fe -- Tt4 will be computed (set initial guess here)
                         Fe = pare[ieFe]
                 end
@@ -465,9 +465,9 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 pare[ieM2] = M2
                 pare[ieM25] = M25
 
-                if compare_strings(opt_calc_call, "oper_fixedTt4")
+                if opt_calc_call == CalcMode.FixedTt4OffDes
                         pare[ieFe] = Fe
-                elseif compare_strings(opt_calc_call, "oper_fixedFe")
+                elseif opt_calc_call == CalcMode.FixedFeOffDes
                         pare[ieTt4] = Tt4
                 end
 
@@ -478,13 +478,13 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         end
         #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        if compare_strings(opt_cooling, "fixed_coolingflowratio")
+        if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
                 #------ cooling flow was specified... set metal temperatures
                 for icrow = 1:ncrowx
                         pare[ieTmet1+icrow-1] = Tmrow[icrow]
                 end
 
-        elseif compare_strings(opt_cooling, "fixed_Tmetal")
+        elseif opt_cooling == CoolingOpt.FixedTmetal
                 #------ Tmetal was specified... set cooling flow ratios
                 epstot = 0.0
                 for icrow = 1:ncrowx
