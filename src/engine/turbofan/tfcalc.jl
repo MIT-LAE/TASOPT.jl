@@ -6,23 +6,20 @@ Calls on-design sizing function [`tfsize!`](@ref) or off-design analysis functio
 
 !!! details "🔃 Inputs and Outputs"
     **Input:**
-    - `opt_calc_call`:
-      - "sizing": call on-design sizing routine `tfsize!`
-      - `"oper_fixedTt4"`: call off-design analysis routine `tfoper!` with specified Tt4
-      - `"oper_fixedFe"`: call off-design analysis routine `tfoper!` with specified
-        net thrust (`Fe`)
+    - `opt_calc_call::CalcMode.T`:
+      - `CalcMode.Sizing`: call on-design sizing routine `tfsize!`
+      - `CalcMode.FixedTt4OffDes`: call off-design analysis routine `tfoper!` with specified Tt4
+      - `CalcMode.FixedFeOffDes`: call off-design analysis routine `tfoper!` with specified net thrust
 
-    - `opt_cooling`: turbine cooling flag
-      - "none": no cooling mass flow
-      - `"fixed_coolingflowratio"`: use specified cooling flow ratios `epsrow(.)`;
-        calculate `Tmrow(.)`
-      - `"fixed_Tmetal"`: use specified metal temperatures `Tmrow(.)`; calculate
-        `epsrow(.)`
+    - `opt_cooling::CoolingOpt.T`: turbine cooling model
+      - `CoolingOpt.NoCooling`: no cooling mass flow
+      - `CoolingOpt.FixedCoolingFlowRatio`: cooling flow ratios `epsrow` are inputs; compute `Tmrow`
+      - `CoolingOpt.FixedTmetal`: metal temperatures `Tmrow` are inputs; compute `epsrow`
     - `initializes_engine`:
       - `true`: initialize variables for iteration in `tfoper!`
       - `false`: use current variables as initial guesses in `tfoper!`
 """
-function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64, 
+function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifuel::Int64,
         opt_calc_call::CalcMode.T, opt_cooling::CoolingOpt.T, initializes_engine::Bool)
 
         Lprint = false
