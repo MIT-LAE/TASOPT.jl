@@ -307,11 +307,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_htail["max_tail_download"] = htail.CL_CLmax
     
-        if compare_strings(htail.opt_sizing, "fixed_Vh")
-            d_stab_htail["opt_sizing"] = htail.opt_sizing
+        if htail.opt_sizing == TailSizing.FixedVh
+            d_stab_htail["opt_sizing"] = string(htail.opt_sizing)
             d_stab_htail["Vh"] = htail.volume
-        elseif compare_strings(htail.opt_sizing, "CLmax_fwdCG")
-            d_stab_htail["opt_sizing"] = htail.opt_sizing
+        elseif htail.opt_sizing == TailSizing.CLmaxFwdCG
+            d_stab_htail["opt_sizing"] = string(htail.opt_sizing)
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
@@ -343,11 +343,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_stab_vtail["x_Vtail"] = vtail.layout.box_x
         d_stab_vtail["number_Vtails"] = vtail.ntails
 
-        if compare_strings(vtail.opt_sizing, "fixed_Vv")
-            d_stab_vtail["opt_sizing"] = vtail.opt_sizing
+        if vtail.opt_sizing == TailSizing.FixedVv
+            d_stab_vtail["opt_sizing"] = string(vtail.opt_sizing)
             d_stab_vtail["Vv"] = vtail.volume
-        elseif compare_strings(vtail.opt_sizing, "OEI")
-            d_stab_vtail["opt_sizing"] = vtail.opt_sizing
+        elseif vtail.opt_sizing == TailSizing.OEI
+            d_stab_vtail["opt_sizing"] = string(vtail.opt_sizing)
             d_stab_vtail["CLv_at_engine_out"] = parg[igCLveout]
         end
 

@@ -468,13 +468,13 @@ function _size_aircraft!(ac; itermax=35,
         Me = (Fe + De) * yeng
 
         #Size vertical tail ("size_vtail()")
-        if compare_strings(vtail.opt_sizing,"fixed_Vv")
+        if vtail.opt_sizing == TailSizing.FixedVv
             lvtail = xvtail - xwing
             Vv = vtail.volume
             Sv = Vv * wing.layout.S * wing.layout.span/ lvtail
             vtail.layout.S = Sv
             parg[igCLveout] = Me / (qstall * Sv * lvtail)
-        elseif compare_strings(vtail.opt_sizing,"OEI")
+        elseif vtail.opt_sizing == TailSizing.OEI
             lvtail = xvtail - xwing
             CLveout = parg[igCLveout]
             Sv = Me / (qstall * CLveout * lvtail)
@@ -600,8 +600,8 @@ function _size_aircraft!(ac; itermax=35,
         rfuel = Wf / parg[igWfuel]
         rpay = 1.0
         ξpay = 0.0
-        opt_trim_var = "CL_htail"
-        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+        opt_trim_var = TrimVar.CLHtail
+        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var;
                         Ldebug = Ldebug)
 
         # Set N.P. at cruise
@@ -715,8 +715,8 @@ function _size_aircraft!(ac; itermax=35,
     rfuel = Wf / parg[igWfuel]
     rpay = 1.0
     ξpay = 0.0
-    opt_trim_var = "none"
-    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+    opt_trim_var = TrimVar.None
+    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var;
                         Ldebug = Ldebug)
 
     #Check if all engine points have converged, warn if not

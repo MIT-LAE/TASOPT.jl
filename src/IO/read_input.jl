@@ -699,10 +699,10 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail_sizing = readhtail("opt_sizing")
     if compare_strings(htail_sizing,"fixed_Vh")
-        htail.opt_sizing = htail_sizing
+        htail.opt_sizing = TailSizing.FixedVh
         htail.volume = readhtail("Vh")
     elseif compare_strings(htail_sizing,"CLmax_fwdCG")
-        htail.opt_sizing = htail_sizing
+        htail.opt_sizing = TailSizing.CLmaxFwdCG
         htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
         htail.volume = 1.0
     else
@@ -753,10 +753,10 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
     vtail_sizing = readvtail("opt_sizing")
     if compare_strings(vtail_sizing, "fixed_Vv")
-        vtail.opt_sizing = vtail_sizing
+        vtail.opt_sizing = TailSizing.FixedVv
         vtail.volume = readvtail("Vv")
     elseif compare_strings(vtail_sizing, "OEI")
-        vtail.opt_sizing = vtail_sizing
+        vtail.opt_sizing = TailSizing.OEI
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
         error("Vertical tail can only be sized via:

@@ -82,7 +82,7 @@ function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise
 
     for (i, CL) in enumerate(CL_range)
         ac.para[iaCL, ip, imission] = CL
-        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, "CL_htail")
+        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, TrimVar.CLHtail)
         aircraft_drag!(ac, imission, ip, true)
 
         #get basic performance

@@ -42,6 +42,9 @@ export StructuralAlloy, Conductor, Insulator, ThermalInsulator
 #miscellaneous auxiliary fxns
 include("./utils/helper_functions.jl")
 
+# Enums used throughout modules (must come before any submodule that uses them)
+include(joinpath(__TASOPTroot__,"data_structs/options_enums.jl"))
+export EngineLocation, PropSysArch, WingMove, FuelType, TrimVar, TailSizing
 
 #Load modules
 include(joinpath(__TASOPTroot__,"utils/aircraft_utils.jl"))
@@ -69,10 +72,8 @@ using .aerodynamics
 using .structures
 using .engine
 
-# Load primary aircraft structure 
+# Load primary aircraft structure
 include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
-include(joinpath(__TASOPTroot__,"data_structs/options_enums.jl"))
-export EngineLocation, PropSysArch, WingMove, FuelType
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/aircraft.jl"))
 export aircraft, fuselage_tank
