@@ -80,3 +80,46 @@ function Base.string(fuel::FuelType.T)
     fuel == FuelType.CH4  && return "CH4"
     error("Unknown FuelType value: $fuel")
 end
+
+"""
+    TrimVar
+
+Variable adjusted to achieve pitch trim in `balance_aircraft!`.
+
+- `CLHtail`: adjust horizontal tail lift coefficient
+- `SHtail`: adjust horizontal tail area
+- `XWingbox`: adjust wing box x-position
+- `None`: no adjustment (compute NP and return)
+"""
+@enumx TrimVar CLHtail SHtail XWingbox None
+
+"""
+    TailSizing
+
+Sizing strategy for horizontal or vertical tail.
+
+For HTail:
+- `FixedVh`: size from a specified horizontal tail volume coefficient
+- `CLmaxFwdCG`: size by worst-case forward-CG trim with max wing CL
+
+For VTail:
+- `FixedVv`: size from a specified vertical tail volume coefficient
+- `OEI`: size for one-engine-out trim
+"""
+@enumx TailSizing FixedVh CLmaxFwdCG FixedVv OEI
+
+function Base.string(trim::TrimVar.T)
+    trim == TrimVar.CLHtail  && return "CL_htail"
+    trim == TrimVar.SHtail   && return "S_htail"
+    trim == TrimVar.XWingbox && return "x_wingbox"
+    trim == TrimVar.None     && return "none"
+    error("Unknown TrimVar value: $trim")
+end
+
+function Base.string(sizing::TailSizing.T)
+    sizing == TailSizing.FixedVh    && return "fixed_Vh"
+    sizing == TailSizing.CLmaxFwdCG && return "CLmax_fwdCG"
+    sizing == TailSizing.FixedVv    && return "fixed_Vv"
+    sizing == TailSizing.OEI        && return "OEI"
+    error("Unknown TailSizing value: $sizing")
+end
