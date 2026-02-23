@@ -203,15 +203,11 @@ function _size_aircraft!(ac; itermax=35,
         parg[igdeltap] = Δp
 
        # Engine weight mounted on tailcone, if any
-        if compare_strings(options.opt_engine_location, "wing") # Eng on "wing" or aft "fuselage"
+        if options.opt_engine_location == EngineLocation.Wing # Eng on "wing" or aft "fuselage"
             Wengtail = 0.0
             Waftfuel = 0.0
-        elseif compare_strings(options.opt_engine_location, "fuselage")
+        elseif options.opt_engine_location == EngineLocation.Fuselage
             Wengtail = parg[igWeng]
-        else
-            error("Engine location provided is \"$options.opt_engine_location\". Engine position can only be:
-                        > \"wing\" - engines under wing
-                        > \"fuselage\" - engines on aft fuselage")
         end
 
         # Extract relevant weights and positions
@@ -345,10 +341,10 @@ function _size_aircraft!(ac; itermax=35,
         po = wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
-        if compare_strings(options.opt_engine_location,"wing")
-            if compare_strings(options.opt_prop_sys_arch,"te")
+        if options.opt_engine_location == EngineLocation.Wing
+            if options.opt_prop_sys_arch == PropSysArch.TE
                 @error "Turboelectric architectures are not currently supported. Their reintroduction with `struct`s is on the roadmap."
-            elseif compare_strings(options.opt_prop_sys_arch,"tf")  || compare_strings(options.opt_prop_sys_arch,"constant_tsfc")
+            elseif options.opt_prop_sys_arch == PropSysArch.TF || options.opt_prop_sys_arch == PropSysArch.ConstantTSFC
                 Weng1 = parg[igWeng] / parg[igneng]
             end
         else
