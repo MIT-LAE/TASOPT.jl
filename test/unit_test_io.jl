@@ -87,8 +87,8 @@
     @test size(csv1,1) == 4 #4 rows w default indices
     @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test length(csv1[1]) == 777 # = entries w/ full ac `struct` and in default_output_indices
-    @test length(csv2[1]) == 1147 # = entries w/ full ac `struct` and all output_indices
+    @test length(csv1[1]) == 781 # = entries w/ full ac `struct` and in default_output_indices
+    @test length(csv2[1]) == 1151 # = entries w/ full ac `struct` and all output_indices
 
     #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 
