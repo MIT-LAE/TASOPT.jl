@@ -7,10 +7,10 @@ $TYPEDFIELDS
 """
 @kwdef mutable struct Options
     #fuel options
-    """Fuel type (e.g., Jet-A, LH2)"""
-    opt_fuel::String
+    """Fuel type"""
+    opt_fuel::FuelType.T
     """Fuel option index (non-driving; determined and used by gas calcs)"""
-    ifuel::Integer
+    ifuel::Int
     """Indicates presence of centerbox fuel tank, can only be true if has_wing_fuel is true"""
     has_centerbox_fuel::Bool
     """Indicates presence of wing fuel tanks """
@@ -21,10 +21,10 @@ $TYPEDFIELDS
       #Note: right now fuel can only be stored in the wings or the fuselage, not both
     
     #engine options
-    """Engine location ("wing", "fuselage")"""
-    opt_engine_location::String
-    """Propulsion system architecture (e.g., "tf" for turbofan, "te" for turboelectric), performance and weight models set in ac.Engine"""
-    opt_prop_sys_arch::String
+    """Engine location"""
+    opt_engine_location::EngineLocation.T
+    """Propulsion system architecture, performance and weight models set in ac.Engine"""
+    opt_prop_sys_arch::PropSysArch.T
     """Calculate takeoff length and engine performance"""
     calculate_takeoff::Bool
     
@@ -34,8 +34,8 @@ $TYPEDFIELDS
     is_doubledecker::Bool
 
     #wing/stability options
-    """Move wingbox selection for longitudinal stability analysis. "fixed" = static wing position ,"fixed_CLh" move wing to get CLh="CLhspec" in cruise, "min_static_margin" = move wing to get min static margin = "SMmin"  """
-    opt_move_wing::String
+    """Wing position strategy for longitudinal stability analysis: `Fixed` = static wing position, `FixedCLh` = move wing to achieve `CLh = CLhspec` in cruise, `MinStaticMargin` = move wing to achieve minimum static margin = `SMmin`"""
+    opt_move_wing::WingMove.T
 
     #Trefftz plane options
     """Trefftz plane induced drag analysis configuration (discretization, k_tip, bunch, root_contraction)"""
@@ -44,15 +44,15 @@ end
 
 function Base.summary(opt::Options)
   println("\n-------- Options Summary --------")
-  println("Fuel Type: ", opt.opt_fuel)
+  println("Fuel Type: ", string(opt.opt_fuel))
   println("Fuel stored in: "*(opt.has_wing_fuel ? "wing "*(opt.has_centerbox_fuel ? " wingbox " : "(none in wingbox)") : "")*(opt.has_fuselage_fuel ? "fuselage " : ""))
-  println("Propulsion Architecture: ", opt.opt_prop_sys_arch)
-  println("Engine Location: ", opt.opt_engine_location)
+  println("Propulsion Architecture: ", string(opt.opt_prop_sys_arch))
+  println("Engine Location: ", string(opt.opt_engine_location))
   println("Cabin decks: ", opt.is_doubledecker ? "double" : "single")
   println("---------------------------------")
 end
 function Base.show(io::IO, opt::Options)
-  print(io, "Options(Fuel: $(opt.opt_fuel); Fuel Storage: " * (opt.has_wing_fuel ? "wing " * 
+  print(io, "Options(Fuel: $(string(opt.opt_fuel)); Fuel Storage: " * (opt.has_wing_fuel ? "wing " *
       (opt.has_centerbox_fuel ? "wingbox " : "(none in wingbox) ") : "") * (opt.has_fuselage_fuel ? "fuselage " : "") * 
-      "; Propulsion Arch.: $(opt.opt_prop_sys_arch); Engine Location: $(opt.opt_engine_location); Cabin decks: $(opt.is_doubledecker ? "double" : "single"))")
+      "; Propulsion Arch.: $(string(opt.opt_prop_sys_arch)); Engine Location: $(string(opt.opt_engine_location)); Cabin decks: $(opt.is_doubledecker ? "double" : "single"))")
 end
