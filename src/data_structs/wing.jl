@@ -127,7 +127,7 @@ $TYPEDFIELDS
     """Tail Volume [m^3] """
     volume::Float64 = 0
     """Tail Sizing assumption selection - different for HTail vs VTail """
-    opt_sizing::String = ""
+    opt_sizing::TailSizing.T = TailSizing.FixedVh
     """Tail Downwash factor dε/dα """
     downwash_factor::Float64 = 0
     """Tail max fwd CG (only used if opt_sizing == "CLmax_fwdCG" for HTail) """

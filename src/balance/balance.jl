@@ -202,15 +202,15 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 
       #---- drive to Res=0 (pitch trim) by one of three changes...
 
-      if compare_strings(opt_trim_var,"CL_htail")
+      if opt_trim_var == TrimVar.CLHtail
             #----- ... adjust horizontal tail CLh
             delCLh = -Res / Res_CLh
             CLh = CLh + delCLh
-            #  println("inside opt_trim_var = "CL_htail": $delCLh, $CLh")
+            #  println("inside opt_trim_var = CLHtail: $delCLh, $CLh")
             cCM = cCM + cCM_CLh * delCLh
             para[iaCLh] = CLh
 
-      elseif compare_strings(opt_trim_var, "S_htail")
+      elseif opt_trim_var == TrimVar.SHtail
             #----- ... adjust horizontal tail area
             delSh = -Res / Res_Sh
             Sh = Sh + delSh
@@ -219,7 +219,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 
             htail.layout.S = Sh
 
-      elseif compare_strings(opt_trim_var, "x_wingbox")
+      elseif opt_trim_var == TrimVar.XWingbox
             #----- ... adjust wing box location
             delxwbox = -Res / Res_xwbox
             xwbox = xwbox + delxwbox
@@ -229,12 +229,10 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
             wing.layout.box_x = xwbox
             wing.layout.x = xwbox + dxwing
 
-      elseif compare_strings(opt_trim_var, "none")
+      elseif opt_trim_var == TrimVar.None
             #no adjustments, compute NP and return
             nothing;
 
-      else
-            @error("Unsupported `opt_trim_var` during `balance_aircraft!()`: $opt_trim_var")
       end
 
       #---- calculate neutral point
@@ -527,7 +525,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             xWB_Sh = xWe_Sh
             xWC_Sh = xWe_Sh
 
-            if compare_strings(htail.opt_sizing, "fixed_Vh")
+            if htail.opt_sizing == TailSizing.FixedVh
                   #----- set HT area from fixed volume (Section 2.12.1 of TASOPT docs)
                   lhtail = htail.layout.x - (xwbox + dxwing)
                   lhtail_xw = -1.0
@@ -539,7 +537,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   a[1, 1] = lhtail
                   a[1, 2] = Sh * lhtail_xw
 
-            elseif compare_strings(htail.opt_sizing, "CLmax_fwdCG")
+            elseif htail.opt_sizing == TailSizing.CLmaxFwdCG
                   #----- set HT area by worst case: max pitch trim power at forward CG case w/ max wing CL
                   CMw0 = paraF[iaCMw0]
                   CMw1 = paraF[iaCMw1]
@@ -667,7 +665,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
       dxeng2wbox = parg[igdxeng2wbox]
       parg[igxeng] = xwbox - dxeng2wbox
 
-      if compare_strings(ac.htail.opt_sizing, "fixed_Vh")
+      if ac.htail.opt_sizing == TailSizing.FixedVh
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
             CMw0 = paraF[iaCMw0]
             CMw1 = paraF[iaCMw1]
