@@ -71,6 +71,8 @@ using .engine
 
 # Load primary aircraft structure 
 include(joinpath(__TASOPTroot__,"data_structs/landing_gear.jl"))
+include(joinpath(__TASOPTroot__,"data_structs/options_enums.jl"))
+export EngineLocation, PropSysArch, WingMove, FuelType
 include(joinpath(__TASOPTroot__,"data_structs/options.jl"))
 include(joinpath(__TASOPTroot__,"data_structs/aircraft.jl"))
 export aircraft, fuselage_tank
