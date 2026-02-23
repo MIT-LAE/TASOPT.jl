@@ -60,8 +60,8 @@ function Base.string(loc::EngineLocation.T)
 end
 
 function Base.string(arch::PropSysArch.T)
-    arch == PropSysArch.TF                    && return "turbo-fan"
-    arch == PropSysArch.TE                    && return "turbo-electric"
+    arch == PropSysArch.TF                    && return "tf"
+    arch == PropSysArch.TE                    && return "te"
     arch == PropSysArch.ConstantTSFC          && return "constant_tsfc"
     arch == PropSysArch.FuelCellWithDuctedFan && return "fuel_cell_with_ducted_fan"
     error("Unknown PropSysArch value: $arch")
