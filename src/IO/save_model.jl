@@ -48,15 +48,15 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Options------------------------
     d_opt = Dict()
-        d_opt["prop_sys_arch"] = options.opt_prop_sys_arch
-        d_opt["engine_location"] = options.opt_engine_location
+        d_opt["prop_sys_arch"] = string(options.opt_prop_sys_arch)
+        d_opt["engine_location"] = string(options.opt_engine_location)
     d_out["Options"] = d_opt
     #--end options----------------
 
     #Fuel------------------------
 
     d_fuel = Dict()
-        d_fuel["fuel_type"] = options.opt_fuel
+        d_fuel["fuel_type"] = string(options.opt_fuel)
         d_fuel["fuel_in_wing"] = options.has_wing_fuel
         d_fuel["fuel_in_wingcen"] = options.has_centerbox_fuel
         d_fuel["fuel_usability_factor"] = parg[igrWfmax]
@@ -315,7 +315,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
-        d_stab_htail["opt_move_wing"] = options.opt_move_wing
+        d_stab_htail["opt_move_wing"] = string(options.opt_move_wing)
 
         d_stab_htail["SM_min"] = htail.SM_min
 
