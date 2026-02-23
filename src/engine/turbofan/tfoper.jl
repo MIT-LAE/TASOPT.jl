@@ -65,9 +65,9 @@ The gas routines are described in [Gas Calculations](@ref)
     - `A25`:     HPC-face area [m^2]
     - `A5`:      core nozzle area [m^2]
     - `A7`:      fan  nozzle area [m^2]
-    - `opt_calc_call`:
-      - `"oper_fixedTt4"`: `Tt4` is specified
-      - `"oper_fixedFe"`: `Feng` is specified
+    - `opt_calc_call::CalcMode.T`:
+      - `CalcMode.FixedTt4OffDes`: `Tt4` is specified
+      - `CalcMode.FixedFeOffDes`: `Feng` is specified
     - `Tt4`:     turbine-inlet total temperature [K]
     - `Ttf`:     fuel temperature entering combustor
     - `ifuel`:   fuel index, see function [`gasfun`](@ref)
@@ -86,23 +86,22 @@ The gas routines are described in [Gas Calculations](@ref)
     - `epsl`:    low  spool power loss fraction
     - `epsh`:    high spool power loss fraction
 
-    - `opt_cooling`:   turbine cooling flag
-      - `"none"`: no cooling, ignore all cooling parameters below
-      - `"fixed_coolingflowratio"`: usual cooling, using passed-in `fcool`
-      - `"fixed_Tmetal"`: usual cooling, but set (and return) `fcool` from `Tmetal`
+    - `opt_cooling::CoolingOpt.T`: turbine cooling model
+      - `CoolingOpt.NoCooling`: no cooling, ignore all cooling parameters below
+      - `CoolingOpt.FixedCoolingFlowRatio`: cooling flow ratios `epsrow` are inputs; compute `Tmrow`
+      - `CoolingOpt.FixedTmetal`: metal temperatures `Tmrow` are inputs; compute `epsrow`
     - `Mtexit`:   turbine blade-row exit Mach, for setting temperature drops
-    - `Tmetal`:   specified metal temperature  [K], used only if `opt_cooling="fixed_Tmetal"`
-    - `dTstrk`:   hot-streak temperature delta {K}, used only if `opt_cooling="fixed_Tmetal"`
-    - `StA`:      area-weighted Stanton number    , used only if `opt_cooling="fixed_Tmetal"`
+    - `Tmetal`:   specified metal temperature  [K], used only if `opt_cooling=CoolingOpt.FixedTmetal`
+    - `dTstrk`:   hot-streak temperature delta {K}, used only if `opt_cooling=CoolingOpt.FixedTmetal`
+    - `StA`:      area-weighted Stanton number    , used only if `opt_cooling=CoolingOpt.FixedTmetal`
     - `M4a`:      effective Mach at cooling-flow outlet (start of mixing)
     - `ruc`:      cooling-flow outlet velocity ratio, `u/ue`
     - `ncrowx`:      dimension of `epsrow` array
     - `ncrow`:       number of blade rows requiring cooling
-    - `epsrow(.)`: input specified  cooling-flow bypass ratio if
-      `opt_cooling="fixed_coolingflowratio"`; output resulting cooling-flow bypass ratio
-      if `opt_cooling="fixed_Tmetal"`.
-    - `Tmrow(.)`: input specified metal temperature [K] if `opt_cooling="fixed_Tmetal"`;
-      output resulting metal temperature [K] if `opt_cooling="fixed_coolingflowratio"`
+    - `epsrow(.)`: input specified cooling-flow bypass ratio if `opt_cooling=CoolingOpt.FixedCoolingFlowRatio`;
+      output resulting cooling-flow bypass ratio if `opt_cooling=CoolingOpt.FixedTmetal`.
+    - `Tmrow(.)`: input specified metal temperature [K] if `opt_cooling=CoolingOpt.FixedTmetal`;
+      output resulting metal temperature [K] if `opt_cooling=CoolingOpt.FixedCoolingFlowRatio`
 
     **Output:**
     - `epsrow(.)`:   see above
@@ -254,9 +253,9 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
       Lprint = false
 
-      if compare_strings(opt_calc_call, "oper_fixedTt4")
+      if opt_calc_call == CalcMode.FixedTt4OffDes
             Tt4spec = Tt4
-      elseif compare_strings(opt_calc_call, "oper_fixedFe")
+      elseif opt_calc_call == CalcMode.FixedFeOffDes
             Fspec = Feng
       end
 
@@ -361,7 +360,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       #---- total cooling mass flow ratio
       fc = 0.0
 
-      if compare_strings(opt_cooling, "fixed_coolingflowratio")
+      if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
             if (mcore == 0.0)
                   fo = 0.0
             else
@@ -809,7 +808,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             # HSC: SEEMS TO BE FINE
             # ===============================================================
-            if compare_strings(opt_cooling, "none")
+            if opt_cooling == CoolingOpt.NoCooling
                   #----- no cooling air present... station 41 is same as 4
                   pt41 = pt4
                   Tt41 = Tt4
@@ -911,7 +910,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   httc_ht3 = 1.0
                   Tttc_Tt3 = Tttc_httc * httc_ht3 / Tt3_ht3
 
-                  if compare_strings(opt_cooling, "fixed_coolingflowratio")
+                  if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
                         Tmrow_copy = Tmcalc(ncrowx, ncrow,
                               Tt_tc, Tb, dTstrk, Trrat,
@@ -2426,7 +2425,7 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
 
             #-------------------------------------------------------------------------
 
-            if compare_strings(opt_calc_call, "oper_fixedTt4")
+            if opt_calc_call == CalcMode.FixedTt4OffDes
                   #----- specified Tt4 constraint
                   res[7, 1] = Tt4 - Tt4spec
                   a[7, 1] = 0.0

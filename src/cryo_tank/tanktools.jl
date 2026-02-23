@@ -220,9 +220,9 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
     u = tank_inputs(Q_calc, W_calc, mdot_calc)
 
     # Original tank state in TASOPT
-    if compare_strings(ac.options.opt_fuel, "CH4")
+    if ac.options.opt_fuel == FuelType.CH4
         species = "CH4"
-    elseif compare_strings(ac.options.opt_fuel, "LH2")
+    elseif ac.options.opt_fuel == FuelType.LH2
         species = "H2"
     end
 

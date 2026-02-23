@@ -24,8 +24,8 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
     parg, _, para, pare, options, _, _, wing, _, _, engine = unpack_ac(ac, imission)
     
     if case == "design"
-        opt_calc_call = "sizing"
-        opt_cooling = "fixed_coolingflowratio"
+        opt_calc_call = CalcMode.Sizing
+        opt_cooling = CoolingOpt.FixedCoolingFlowRatio
         if (iterw == 1 || (initializes_engine))
             # initialize engine state
             initializes_engine_firstiter  = true
@@ -67,19 +67,19 @@ function tfwrap!(ac, case::String, imission::Int64, ip::Int64, initializes_engin
     elseif case == "off_design"
         #assume operating at max allowable temp if during TO and climb
         if ip in range(ipstatic, ipclimbn)
-            opt_calc_call = "oper_fixedTt4"
+            opt_calc_call = CalcMode.FixedTt4OffDes
         #otherwise, thrust balance sets op point
         else
-            opt_calc_call = "oper_fixedFe"
+            opt_calc_call = CalcMode.FixedFeOffDes
         end
-        opt_cooling = "fixed_coolingflowratio"
+        opt_cooling = CoolingOpt.FixedCoolingFlowRatio
 
         ichoke5, ichoke7 = tfcalc!(wing, engine, parg, view(para, :, ip), view(pare, :, ip), ip, options.ifuel, opt_calc_call, opt_cooling, initializes_engine)
         
 
     elseif case == "cooling_sizing"
-        opt_calc_call = "oper_fixedTt4"
-        opt_cooling = "fixed_Tmetal"
+        opt_calc_call = CalcMode.FixedTt4OffDes
+        opt_cooling = CoolingOpt.FixedTmetal
         ichoke5, ichoke7 = tfcalc!(wing, engine, parg, view(para, :, ip), view(pare, :, ip), ip, options.ifuel, opt_calc_call, opt_cooling, initializes_engine)
 
         # Tmetal was specified... set blade row cooling flow ratios for all points

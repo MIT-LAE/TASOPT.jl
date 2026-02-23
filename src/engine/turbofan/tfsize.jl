@@ -376,7 +376,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
             # ===============================================================
 
             lambdap = zeros(nair)
-            if compare_strings(opt_cooling, "none")
+            if opt_cooling == CoolingOpt.NoCooling
                   #----- no cooling air present... station 41 is same as 4
                   ff = ffb * (1.0 - fo)
 
@@ -402,12 +402,12 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
                   ht_tc = ht3 + Δh_TurbC #Specific enthalpy of turbine cooling air
                   Tt_tc = gas_tset(alpha, nair, ht_tc, Tt3) #Temperature of turbine cooling air
 
-                  if compare_strings(opt_cooling, "fixed_coolingflowratio")
+                  if opt_cooling == CoolingOpt.FixedCoolingFlowRatio
                         #------ epsrow(.) is assumed to be passed in.. calculate Tmrow(.)
                         Tmrow = Tmcalc(ncrowx, ncrow,
                         Tt_tc, Tt4, dTstrk, Trrat,
                               efilm, tfilm, StA, epsrow)
-                  elseif compare_strings(opt_cooling, "fixed_Tmetal")
+                  elseif opt_cooling == CoolingOpt.FixedTmetal
                         #------ calculate cooling mass flow ratios epsrow(.) to get specified Tmrow(.)
                         ncrow, epsrow, epsrow_Tt3, epsrow_Tt4, epsrow_Trr = mcool(ncrowx,
                               Tmrow, Tt_tc, Tt4, dTstrk, Trrat,

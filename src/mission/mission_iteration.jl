@@ -194,7 +194,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       #---- set pitch trim by adjusting CLh
       Wf = WTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      opt_trim_var = "CL_htail"
+      opt_trim_var = TrimVar.CLHtail
       balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 
@@ -314,7 +314,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
                   # Set pitch trim by adjusting CLh
                   Wf = W - Wzero
                   rfuel = Wf / parg[igWfuel]
-                  opt_trim_var = "CL_htail"
+                  opt_trim_var = TrimVar.CLHtail
                   balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 
@@ -420,7 +420,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      opt_trim_var = "CL_htail"
+      opt_trim_var = TrimVar.CLHtail
       balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 
@@ -504,7 +504,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       # Set pitch trim by adjusting CLh
       Wf = para[iafracW, ip] * WMTO - Wzero
       rfuel = Wf / parg[igWfuel]
-      opt_trim_var = "CL_htail"
+      opt_trim_var = TrimVar.CLHtail
       balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 
@@ -650,7 +650,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             # set pitch trim by adjusting CLh
             Wf = W - Wzero
             rfuel = Wf / parg[igWfuel]
-            opt_trim_var = "CL_htail"
+            opt_trim_var = TrimVar.CLHtail
             balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 

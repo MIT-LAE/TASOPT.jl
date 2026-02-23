@@ -142,7 +142,7 @@ for   i = 1:N
         # Set pitch trim by adjusting CLh
         Wf = W - Wzero
         rfuel = Wf/parg[igWfuel]*0
-        opt_trim_var = "CL_htail"
+        opt_trim_var = TrimVar.CLHtail
         balance_aircraft!(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
 
@@ -246,7 +246,7 @@ for   i = 1:N
         rfuel = Wf/parg[igWfuel]*0
 
         #Trim aircraft
-        opt_trim_var = "CL_htail"
+        opt_trim_var = TrimVar.CLHtail
         balance_aircraft!(pari, parg, view(para, :, ip), rfuel, rpay, ξpay, opt_trim_var; 
                         Ldebug = Ldebug)
         computes_wing_direct = true

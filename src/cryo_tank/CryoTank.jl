@@ -14,7 +14,7 @@ using NLopt
 using DifferentialEquations
 using StaticArrays
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, FuelType
 
 export SaturatedMixture, tanksize!
 

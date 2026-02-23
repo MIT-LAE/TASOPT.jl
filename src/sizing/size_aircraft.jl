@@ -203,15 +203,11 @@ function _size_aircraft!(ac; itermax=35,
         parg[igdeltap] = Δp
 
        # Engine weight mounted on tailcone, if any
-        if compare_strings(options.opt_engine_location, "wing") # Eng on "wing" or aft "fuselage"
+        if options.opt_engine_location == EngineLocation.Wing # Eng on "wing" or aft "fuselage"
             Wengtail = 0.0
             Waftfuel = 0.0
-        elseif compare_strings(options.opt_engine_location, "fuselage")
+        elseif options.opt_engine_location == EngineLocation.Fuselage
             Wengtail = parg[igWeng]
-        else
-            error("Engine location provided is \"$options.opt_engine_location\". Engine position can only be:
-                        > \"wing\" - engines under wing
-                        > \"fuselage\" - engines on aft fuselage")
         end
 
         # Extract relevant weights and positions
@@ -345,10 +341,10 @@ function _size_aircraft!(ac; itermax=35,
         po = wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
-        if compare_strings(options.opt_engine_location,"wing")
-            if compare_strings(options.opt_prop_sys_arch,"te")
+        if options.opt_engine_location == EngineLocation.Wing
+            if options.opt_prop_sys_arch == PropSysArch.TE
                 @error "Turboelectric architectures are not currently supported. Their reintroduction with `struct`s is on the roadmap."
-            elseif compare_strings(options.opt_prop_sys_arch,"tf")  || compare_strings(options.opt_prop_sys_arch,"constant_tsfc")
+            elseif options.opt_prop_sys_arch == PropSysArch.TF || options.opt_prop_sys_arch == PropSysArch.ConstantTSFC
                 Weng1 = parg[igWeng] / parg[igneng]
             end
         else
@@ -472,13 +468,13 @@ function _size_aircraft!(ac; itermax=35,
         Me = (Fe + De) * yeng
 
         #Size vertical tail ("size_vtail()")
-        if compare_strings(vtail.opt_sizing,"fixed_Vv")
+        if vtail.opt_sizing == TailSizing.FixedVv
             lvtail = xvtail - xwing
             Vv = vtail.volume
             Sv = Vv * wing.layout.S * wing.layout.span/ lvtail
             vtail.layout.S = Sv
             parg[igCLveout] = Me / (qstall * Sv * lvtail)
-        elseif compare_strings(vtail.opt_sizing,"OEI")
+        elseif vtail.opt_sizing == TailSizing.OEI
             lvtail = xvtail - xwing
             CLveout = parg[igCLveout]
             Sv = Me / (qstall * CLveout * lvtail)
@@ -604,8 +600,8 @@ function _size_aircraft!(ac; itermax=35,
         rfuel = Wf / parg[igWfuel]
         rpay = 1.0
         ξpay = 0.0
-        opt_trim_var = "CL_htail"
-        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+        opt_trim_var = TrimVar.CLHtail
+        balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var;
                         Ldebug = Ldebug)
 
         # Set N.P. at cruise
@@ -719,8 +715,8 @@ function _size_aircraft!(ac; itermax=35,
     rfuel = Wf / parg[igWfuel]
     rpay = 1.0
     ξpay = 0.0
-    opt_trim_var = "none"
-    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; 
+    opt_trim_var = TrimVar.None
+    balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var;
                         Ldebug = Ldebug)
 
     #Check if all engine points have converged, warn if not

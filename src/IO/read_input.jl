@@ -699,10 +699,10 @@ readhtail(x) = read_input(x, htail_input, dhtail)
 
     htail_sizing = readhtail("opt_sizing")
     if compare_strings(htail_sizing,"fixed_Vh")
-        htail.opt_sizing = htail_sizing
+        htail.opt_sizing = TailSizing.FixedVh
         htail.volume = readhtail("Vh")
     elseif compare_strings(htail_sizing,"CLmax_fwdCG")
-        htail.opt_sizing = htail_sizing
+        htail.opt_sizing = TailSizing.CLmaxFwdCG
         htail.CL_max_fwd_CG = readhtail("CLh_at_max_forward_CG")
         htail.volume = 1.0
     else
@@ -753,10 +753,10 @@ readvtail(x) = read_input(x, vtail_input, dvtail)
 
     vtail_sizing = readvtail("opt_sizing")
     if compare_strings(vtail_sizing, "fixed_Vv")
-        vtail.opt_sizing = vtail_sizing
+        vtail.opt_sizing = TailSizing.FixedVv
         vtail.volume = readvtail("Vv")
     elseif compare_strings(vtail_sizing, "OEI")
-        vtail.opt_sizing = vtail_sizing
+        vtail.opt_sizing = TailSizing.OEI
         parg[igCLveout] = readvtail("CLv_at_engine_out")
     else
         error("Vertical tail can only be sized via:
@@ -1203,21 +1203,65 @@ if "HeatExchangers" in keys(prop) && !isempty(prop["HeatExchangers"])
     end
 end
 
+# Convert fuel type to enum
+if compare_strings(fueltype, "JET-A")
+    _opt_fuel = FuelType.JetA
+elseif compare_strings(fueltype, "LH2")
+    _opt_fuel = FuelType.LH2
+elseif compare_strings(fueltype, "CH4")
+    _opt_fuel = FuelType.CH4
+else
+    error("Unrecognized fuel type: $fueltype")
+end
+
+# Convert engine location to enum
+if compare_strings(engloc, "wing")
+    _opt_engine_location = EngineLocation.Wing
+elseif compare_strings(engloc, "fuselage")
+    _opt_engine_location = EngineLocation.Fuselage
+else
+    error("Unrecognized engine location: $engloc")
+end
+
+# Convert prop sys architecture to enum
+if compare_strings(propsys, "tf")
+    _opt_prop_sys_arch = PropSysArch.TF
+elseif compare_strings(propsys, "te")
+    _opt_prop_sys_arch = PropSysArch.TE
+elseif compare_strings(propsys, "constant_tsfc")
+    _opt_prop_sys_arch = PropSysArch.ConstantTSFC
+elseif compare_strings(propsys, "fuel_cell_with_ducted_fan")
+    _opt_prop_sys_arch = PropSysArch.FuelCellWithDuctedFan
+else
+    error("Unrecognized propulsion system architecture: $propsys")
+end
+
+# Convert wing move option to enum
+if compare_strings(opt_move_wing, "fixed")
+    _opt_move_wing = WingMove.Fixed
+elseif compare_strings(opt_move_wing, "fixed_CLh")
+    _opt_move_wing = WingMove.FixedCLh
+elseif compare_strings(opt_move_wing, "min_static_margin")
+    _opt_move_wing = WingMove.MinStaticMargin
+else
+    error("Unrecognized wing move option: $opt_move_wing")
+end
+
 #create options object
 ac_options = TASOPT.Options(
-    opt_fuel = fueltype,
+    opt_fuel = _opt_fuel,
     ifuel = ifuel,
     has_wing_fuel = has_wing_fuel,
     has_centerbox_fuel = has_centerbox_fuel,
     has_fuselage_fuel = (nftanks>0),
-    
-    opt_engine_location = engloc,
-    opt_prop_sys_arch = propsys,
+
+    opt_engine_location = _opt_engine_location,
+    opt_prop_sys_arch = _opt_prop_sys_arch,
     calculate_takeoff = calculate_takeoff,
-    
+
     is_doubledecker = is_doubledecker,
 
-    opt_move_wing = opt_move_wing,
+    opt_move_wing = _opt_move_wing,
 
     trefftz_config = TREFFTZ_CONFIG
 )

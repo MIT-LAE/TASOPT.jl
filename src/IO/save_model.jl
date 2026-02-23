@@ -48,15 +48,15 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Options------------------------
     d_opt = Dict()
-        d_opt["prop_sys_arch"] = options.opt_prop_sys_arch
-        d_opt["engine_location"] = options.opt_engine_location
+        d_opt["prop_sys_arch"] = string(options.opt_prop_sys_arch)
+        d_opt["engine_location"] = string(options.opt_engine_location)
     d_out["Options"] = d_opt
     #--end options----------------
 
     #Fuel------------------------
 
     d_fuel = Dict()
-        d_fuel["fuel_type"] = options.opt_fuel
+        d_fuel["fuel_type"] = string(options.opt_fuel)
         d_fuel["fuel_in_wing"] = options.has_wing_fuel
         d_fuel["fuel_in_wingcen"] = options.has_centerbox_fuel
         d_fuel["fuel_usability_factor"] = parg[igrWfmax]
@@ -307,15 +307,15 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
         d_stab_htail["max_tail_download"] = htail.CL_CLmax
     
-        if compare_strings(htail.opt_sizing, "fixed_Vh")
-            d_stab_htail["opt_sizing"] = htail.opt_sizing
+        if htail.opt_sizing == TailSizing.FixedVh
+            d_stab_htail["opt_sizing"] = string(htail.opt_sizing)
             d_stab_htail["Vh"] = htail.volume
-        elseif compare_strings(htail.opt_sizing, "CLmax_fwdCG")
-            d_stab_htail["opt_sizing"] = htail.opt_sizing
+        elseif htail.opt_sizing == TailSizing.CLmaxFwdCG
+            d_stab_htail["opt_sizing"] = string(htail.opt_sizing)
             d_stab_htail["CLh_at_max_forward_CG"] = htail.CL_max_fwd_CG
         end
 
-        d_stab_htail["opt_move_wing"] = options.opt_move_wing
+        d_stab_htail["opt_move_wing"] = string(options.opt_move_wing)
 
         d_stab_htail["SM_min"] = htail.SM_min
 
@@ -343,11 +343,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_stab_vtail["x_Vtail"] = vtail.layout.box_x
         d_stab_vtail["number_Vtails"] = vtail.ntails
 
-        if compare_strings(vtail.opt_sizing, "fixed_Vv")
-            d_stab_vtail["opt_sizing"] = vtail.opt_sizing
+        if vtail.opt_sizing == TailSizing.FixedVv
+            d_stab_vtail["opt_sizing"] = string(vtail.opt_sizing)
             d_stab_vtail["Vv"] = vtail.volume
-        elseif compare_strings(vtail.opt_sizing, "OEI")
-            d_stab_vtail["opt_sizing"] = vtail.opt_sizing
+        elseif vtail.opt_sizing == TailSizing.OEI
+            d_stab_vtail["opt_sizing"] = string(vtail.opt_sizing)
             d_stab_vtail["CLv_at_engine_out"] = parg[igCLveout]
         end
 
