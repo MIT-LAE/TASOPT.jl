@@ -287,7 +287,7 @@ function size_tailcone(fuse::Fuselage, n_vertical_tails, L_vmax, b_v, λv)
       #Calculate torsional moment from vertical tail
       Qv = n_vertical_tails * (L_vmax * b_v / 3.0) * (1.0 + 2.0 * λv) / (1.0 + λv)
   
-      θ_web, h_web, sin2θ, web_length = web_geometry(layout.cross_section)
+      θ_web, h_web, sin2θ, _, web_length = web_geometry(layout.cross_section)
       n_webs = layout.n_webs
   
       # Get cone volume
