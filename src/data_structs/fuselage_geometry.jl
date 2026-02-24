@@ -14,7 +14,7 @@ function calculate_shell_geometry!(fuse::Fuselage, Δp::AbstractFloat)
     R = layout.cross_section.radius
     ΔR = layout.cross_section.bubble_lower_downward_shift
 
-    θ_web, h_web, sin2θ, web_length = web_geometry(layout.cross_section)
+    θ_web, h_web, sin2θ, _, web_length = web_geometry(layout.cross_section)
     perimeter = get_perimeter(layout.cross_section)
 
     fuse.skin.thickness = Δp * R / fuse.skin.σ
@@ -120,7 +120,7 @@ axis w.r.t the cross-section)
 
 """
 function Iy(cs::AbstractCrossSection)
-    θ_web, h_web, sin2θ, _ = web_geometry(cs)
+    θ_web, h_web, sin2θ, _, _ = web_geometry(cs)
     n_webs = cs.n_webs
     R = cs.radius
     skin =
@@ -160,7 +160,7 @@ $(TYPEDSIGNATURES)
 function area(cs::MultiBubble)
     R = cs.radius
     ΔR = cs.bubble_lower_downward_shift
-    θ_web, h_web, sin2θ, web_length = web_geometry(cs)
+    θ_web, h_web, sin2θ, _, _ = web_geometry(cs)
     enclosed_area = (π + cs.n_webs * (2θ_web + sin2θ)) * R^2 + 2R * ΔR
     return enclosed_area
 end # function area
@@ -184,7 +184,7 @@ $(TYPEDSIGNATURES)
 Returns the perimeter of a given cross-section
 """
 function get_perimeter(cs::MultiBubble)
-    θ_web, _, _, _ = web_geometry(cs)
+    θ_web, _, _, _, _ = web_geometry(cs)
     perimeter =
         (2π + 4.0 * θ_web * cs.n_webs) * cs.radius + (2 * cs.bubble_lower_downward_shift)
     return perimeter
