@@ -91,7 +91,11 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--- size tailcone to withstand vertical-tail torsion Qv
       size_tailcone(fuse, nvtail, Lvmax, bv, λv)
 
-      thetafb, hfb, sin2t, cost, web_length = web_geometry(layout.cross_section)
+      wg = web_geometry(layout.cross_section)
+      thetafb = wg.θ_web
+      hfb = wg.h_web
+      sin2t = wg.sin2θ
+      cost = wg.cosθ
 
       xWcone = y_moment(fuse.cone.weight)
 
@@ -287,12 +291,12 @@ function size_tailcone(fuse::Fuselage, n_vertical_tails, L_vmax, b_v, λv)
       #Calculate torsional moment from vertical tail
       Qv = n_vertical_tails * (L_vmax * b_v / 3.0) * (1.0 + 2.0 * λv) / (1.0 + λv)
   
-      θ_web, h_web, sin2θ, _, web_length = web_geometry(layout.cross_section)
+      wg = web_geometry(layout.cross_section)
       n_webs = layout.n_webs
   
       # Get cone volume
       V_cone = (Qv / cone.τ) *
-               (π + 2 * n_webs * θ_web) / (π + n_webs * (2θ_web + sin2θ)) *
+               (π + 2 * n_webs * wg.θ_web) / (π + n_webs * (2wg.θ_web + wg.sin2θ)) *
                (layout.x_cone_end - layout.x_pressure_shell_aft) / layout.radius *
                (2.0 / (1.0 + layout.taper_tailcone))
 
