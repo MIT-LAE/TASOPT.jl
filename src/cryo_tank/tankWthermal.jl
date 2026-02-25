@@ -291,7 +291,10 @@ p. 334 in Holman.
 """
 function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref, Rfuse::Float64 = 1.0)
       #Use ISA function to calculate freestream conditions
-      Tair, p, _, a, _ = atmos(z / 1e3, TSL - Tref)
+      atmos_state = atmos(z, TSL - Tref)
+      Tair = atmos_state.T
+      p = atmos_state.p
+      a = atmos_state.a
       u = M * a #freestrean velocity
 
       #Parameters for air

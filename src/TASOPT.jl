@@ -115,7 +115,12 @@ export size_aircraft!
 #------------------------------------------------------
 
 # Derived constants
-TSL, pSL, ρSL, aSL, μSL = atmos(0.0)
+atmos_sl = atmos(0.0)
+TSL = atmos_sl.T
+pSL = atmos_sl.p
+ρSL = atmos_sl.ρ
+aSL = atmos_sl.a
+μSL = atmos_sl.μ
 RSL = pSL / (ρSL * TSL)
 ρAir = ρSL
 

@@ -69,7 +69,12 @@ Tt4crz   = zeros(Float64, N)
 Tt4crzmax   = zeros(Float64, N)
 
 @inbounds for i =1:N
-    T0s[i], p0s[i], ρ0s[i], a0s[i], μ0s[i] = atmos(alts[i]/1000)
+    atmos_state = atmos(alts[i])
+    T0s[i] = atmos_state.T
+    p0s[i] = atmos_state.p
+    ρ0s[i] = atmos_state.ρ
+    a0s[i] = atmos_state.a
+    μ0s[i] = atmos_state.μ
     rhocab = max( parg[igpcabin] , p0s[i] ) / (RSL*TSL) #Should be T0s to be more accurate?
     Wbouys[i] = (rhocab-ρ0s[i])*gee*parg[igcabVol]
 end
@@ -355,7 +360,11 @@ function get_cruisespeed(h, MNcr)
     h_ft = h/0.3048
     Vcr2 = 280/1.944 # From BADA 737__.APF
     htrans_ft = Hptrans(Vcr2, 0.8)
-    T, P, ρ,  a = atmos(h/1000)
+    atmos_state = atmos(h)
+    T = atmos_state.T
+    P = atmos_state.p
+    ρ = atmos_state.ρ
+    a = atmos_state.a
     TAS = MNcr*a
     if h_ft<3000
         CAS = 170/1.944
@@ -380,7 +389,11 @@ end
 
 function get_climbspeed(h,MNcr)
     h_ft = h/0.3048
-    T, P, ρ,  a = atmos(h/1000)
+    atmos_state = atmos(h)
+    T = atmos_state.T
+    P = atmos_state.p
+    ρ = atmos_state.ρ
+    a = atmos_state.a
     TAS = a*MNcr
     Vcl1 = 300/1.944 # From BADA 737__.APF
     Vcl2 = 300/1.944 # From BADA 737__.APF
@@ -429,7 +442,11 @@ end
 
 function get_descentspeed(h,MNcr)
     h_ft = h/0.3048
-    T, P, ρ,  a = atmos(h/1000)
+    atmos_state = atmos(h)
+    T = atmos_state.T
+    P = atmos_state.p
+    ρ = atmos_state.ρ
+    a = atmos_state.a
     TAS = a*MNcr
     Vdes1 = 290/1.944 # From BADA 737__.APF
     Vdes2 = 290/1.944 # From BADA 737__.APF
@@ -492,7 +509,11 @@ function Hptrans(CAS, MNcr)
 end
 
 function CAS_TAS(CAS, h)
-    T, P, ρ,  a = atmos(h/1000) 
+    atmos_state = atmos(h)
+    T = atmos_state.T
+    P = atmos_state.p
+    ρ = atmos_state.ρ
+    a = atmos_state.a
     gam = gamSL
     gmi = gam - 1
     k = gmi/gam
@@ -504,7 +525,11 @@ function CAS_TAS(CAS, h)
 end
 
 function TAS_CAS(TAS, h)
-    T, P, ρ,  a = atmos(h/1000) 
+    atmos_state = atmos(h)
+    T = atmos_state.T
+    P = atmos_state.p
+    ρ = atmos_state.ρ
+    a = atmos_state.a
     gam = gamSL
     gmi = gam - 1
     k = gmi/gam

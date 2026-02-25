@@ -23,8 +23,13 @@
         #__ Test ducted fan sizing function __
         gee = TASOPT.gee
         M0 = 0.8
-        h = 11.0 #km
-        T0,p0,ρ0,a0,μ0 = TASOPT.atmos(h)
+        h = 11_000.0 #m
+        atmos_state = TASOPT.atmos(h)
+        T0 = atmos_state.T
+        p0 = atmos_state.p
+        ρ0 = atmos_state.ρ
+        a0 = atmos_state.a
+        μ0 = atmos_state.μ
         M2 = 0.6
         Kinl = 0
         iBLIc = 0
@@ -98,7 +103,12 @@
         @test pif2 ≈ pifD
 
         #Now check conditions at takeoff 
-        T0,p0,ρ0,a0,μ0 = TASOPT.atmos(0.0)
+        atmos_state = TASOPT.atmos(0.0)
+        T0 = atmos_state.T
+        p0 = atmos_state.p
+        ρ0 = atmos_state.ρ
+        a0 = atmos_state.a
+        μ0 = atmos_state.μ
         M0 = 0
         Pf_takeoff = 8e6
 
