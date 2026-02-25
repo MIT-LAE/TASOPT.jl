@@ -93,12 +93,20 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (computes_wing_direct) 
 #----- integrated across span for CDwing
-      clpo,clps,clpt,
-	cdfw,cdpw,CDwing,CDover = wing_profiledrag_direct(wing,gammat,gammas,
+      wing_drag_components = wing_profiledrag_direct(wing,gammat,gammas,
                                     Mach,CL,CLhtail,Reco,
                                     aRexp, rkSunsw,fexcdw,
                                     fduo,fdus,fdut)
-	
+      
+      # Will get rid of these when I start culling the para arrays.                                     
+      clpo = wing_drag_components.clpo
+      clps = wing_drag_components.clps
+      clpt = wing_drag_components.clpt
+      cdfw = wing_drag_components.CDfwing
+      cdpw = wing_drag_components.CDpwing
+      CDwing = wing_drag_components.CDwing
+      CDover = wing_drag_components.CDover
+		
        #if(Ldebug) write(*,*) '...exited wing_profiledrag_direct'
 
 #----- store CD values
@@ -243,5 +251,4 @@ function cfturb(Re)
 
       return cfturb
 end # cfturb
-
 

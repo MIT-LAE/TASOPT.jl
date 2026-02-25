@@ -1,4 +1,19 @@
 """
+    WingDragComponents{T<:Real}
+
+Output container for `wing_profiledrag_direct`.
+"""
+struct WingDragComponents{T<:Real}
+      clpo::T
+      clps::T
+      clpt::T
+      CDfwing::T
+      CDpwing::T
+      CDwing::T
+      CDover::T
+end
+
+"""
       wing_profiledrag_direct(wing, γt, γs,
             Mach, CL, CLhtail, 
             Reco, aRexp, kSuns, fexcd,
@@ -21,7 +36,7 @@ Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. F
       - `fexcd::Float64`: Excrescence cd scaling factor.
       - `fduo::Float64`, `fdus::Float64`, `fdut::Float64`: Velocity-change fractions at wing root, break ("snag"), and tip due to fuselage flow.
 
-      **Outputs:**
+      **Outputs (`WingDragComponents`):**
       - `clpo::Float64`,`clps::Float64`,`clpt::Float64`: Perpendicular sectional lift coefficient at wing root, break ("snag"), and tip.
       - `CDfwing::Float64`: Friction profile cd in perp. plane.
       - `CDpwing::Float64`: Pressure profile cd in perp. plane.
@@ -155,7 +170,7 @@ function wing_profiledrag_direct(
       #      CDover = 2.0*Cdiss*(ηo/Kc)*0.5*dCp*(3.0 + 0.0625*dCp^2)
       CDover = 0.0
 
-      return clpo, clps, clpt, CDfwing, CDpwing, CDwing, CDover
+      return WingDragComponents(clpo, clps, clpt, CDfwing, CDpwing, CDwing, CDover)
 
 end # wing_profiledrag_direct
 
