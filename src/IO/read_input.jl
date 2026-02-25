@@ -288,9 +288,9 @@ if  "cabin_pressure" in keys(fuse)
     p_cabin = Pressure.(read_input("cabin_pressure",fuse,dfuse))
 
 else  #if not set explicitly, use altitude (set by default)
-    cabinPressureAlt_km = convertDist(parse_unit(read_input("cabin_pressure_altitude",
-                                            fuse, dfuse))..., "km")
-    _, p_cabin, _, _, _ = atmos(cabinPressureAlt_km)
+    cabinPressureAlt_m = convertDist(parse_unit(read_input("cabin_pressure_altitude",
+                                           fuse, dfuse))..., "m")
+    p_cabin = atmos(cabinPressureAlt_m).p
 end
 parg[igpcabin] = p_cabin
 
@@ -497,8 +497,8 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuse_tank.pfac = readfuel_storage("pressure_rise_factor")
 
     #Store takeoff temperatures in tank object as well for ease of access
-    for (i,altTO) in enumerate(parm[imaltTO, :]/1e3)
-        T_std, _, _, _, _ = atmos(altTO)
+    for (i,altTO) in enumerate(parm[imaltTO, :])
+        T_std = atmos(altTO).T
         push!(fuse_tank.TSLtank, parm[imT0TO,i] - T_std + Tref)
     end
     
