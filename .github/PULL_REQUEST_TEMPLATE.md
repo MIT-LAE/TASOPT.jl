@@ -42,8 +42,7 @@ Closes #
 
 - [ ] The pull request includes a clear description of this code change
 - [ ] Commit messages have short titles and reference relevant issues
-- [ ] Build passes (`scons build` & `scons test`) and unit tests address code coverage
-- [ ] Style & formatting of contributed code follows [contributing guidelines](https://github.com/Cantera/cantera/blob/main/CONTRIBUTING.md)
+- [ ] All tests are passing
 - [ ] AI Statement is included
 - [ ] The pull request is ready for review
 
