@@ -237,7 +237,7 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       _, _, hp_in, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
 
       if occursin("liquid", fluid_c)
-            _, cp_c_inf, _, _, _, _  = liquid_properties(fluid_c, Tc_inf)
+            cp_c_inf = liquid_properties(fluid_c, Tc_inf).cp
             hc_inf = cp_c_inf * Tc_inf #TODO: replace with enthalpy calculation for non-constant cp
       else
             _, _, hc_inf, _, cp_c_inf, Rc = gasfun(igas_c, Tc_inf)
@@ -339,8 +339,9 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       Vp_in = Mp_in * sqrt(γ_p_in * Rp * Tp_in)
 
       if occursin("liquid", fluid_c)
-            ρ_c_in, _, _, _, _, ac_in = liquid_properties(fluid_c, Tc_inf)
-            Vc_in = Mc_in * ac_in
+            lc_in = liquid_properties(fluid_c, Tc_inf)
+            ρ_c_in = lc_in.ρ
+            Vc_in  = Mc_in * lc_in.a
       else
             γ_c_in = cp_c_in / (cp_c_in - Rc)
             ρ_c_in = pc_in / (Rc * Tc_in)
@@ -360,7 +361,11 @@ function hxsize!(HXgas::HX_gas, HXgeom::HX_tubular)
       ρ_p_m = pp_in / (Rp * Tp_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
 
       if occursin("liquid", fluid_c) #if coolant is liquid
-            ρ_c_m, cp_c_m, μ_c_m, k_c_m, Pr_c_m, ac_m  = liquid_properties(fluid_c, Tc_inf)
+            lc_m = liquid_properties(fluid_c, Tc_inf)
+            ρ_c_m  = lc_m.ρ
+            μ_c_m  = lc_m.μ
+            k_c_m  = lc_m.k
+            Pr_c_m = lc_m.Pr
             Vc_m = ρ_c_in * Vc_in / ρ_c_m
       else
             _, Pr_c_m, _, cp_c_m, μ_c_m, k_c_m = gasPr(fluid_c, Tc_m)
@@ -572,7 +577,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       _, _, hp_in, _, cp_p_in, Rp = gassum(alpha_p, length(alpha_p), Tp_in)
 
       if occursin("liquid", fluid_c)
-            _, cp_c_inf, _, _, _, _  = liquid_properties(fluid_c, Tc_inf)
+            cp_c_inf = liquid_properties(fluid_c, Tc_inf).cp
             hc_inf = cp_c_inf * Tc_inf #TODO: replace with enthalpy calculation for non-constant cp
       else
             _, _, hc_inf, _, cp_c_inf, Rc = gasfun(igas_c, Tc_inf)
@@ -596,7 +601,7 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
       ρ_p_in = pp_in / (Rp * Tp_in)
 
       if occursin("liquid", fluid_c)
-            ρ_c_in, _, _, _, _, _ = liquid_properties(fluid_c, Tc_inf)
+            ρ_c_in = liquid_properties(fluid_c, Tc_inf).ρ
       else
             ρ_c_in = pc_in / (Rc * Tc_in)
       end
@@ -698,7 +703,11 @@ function hxoper!(HXgas::HX_gas, HXgeom::HX_tubular)
             ρ_p_m = pp_in / (Rp * Tp_m) #Assume pressure is constant TODO: consider adding Rayleigh flow model
             
             if occursin("liquid", fluid_c)
-                  ρ_c_m, cp_c_m, μ_c_m, k_c_m, Pr_c_m, _  = liquid_properties(fluid_c, Tc_inf)
+                  lc_m = liquid_properties(fluid_c, Tc_inf)
+                  ρ_c_m  = lc_m.ρ
+                  μ_c_m  = lc_m.μ
+                  k_c_m  = lc_m.k
+                  Pr_c_m = lc_m.Pr
       
             else
                   _, Pr_c_m, _, cp_c_m, μ_c_m, k_c_m = gasPr(fluid_c, Tc_m)
@@ -841,7 +850,7 @@ function radiator_coolant_mass(HXgas::HX_gas, Q::Float64)
 
       #specific heats
       if occursin("liquid", HXgas.fluid_c)
-            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+            cp_c = liquid_properties(HXgas.fluid_c, HXgas.Tc_in).cp
       else
             _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
       end
@@ -881,7 +890,7 @@ function RadiatorOffDesignCalc!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64)
 
       #TODO: consider case with recirculation
       if occursin("liquid", HXgas.fluid_c)
-            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+            cp_c = liquid_properties(HXgas.fluid_c, HXgas.Tc_in).cp
       else
             _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
       end
@@ -920,7 +929,7 @@ ratio of heat capacity rates.
 function HXheating_residual!(HXgas::HX_gas, HXgeom::HX_tubular, Q::Float64, C_r::Float64)
 
       if occursin("liquid", HXgas.fluid_c)
-            _, cp_c, _, _, _, _ = liquid_properties(HXgas.fluid_c, HXgas.Tc_in)
+            cp_c = liquid_properties(HXgas.fluid_c, HXgas.Tc_in).cp
       else
             _, _, _, _, cp_c, _ = gasfun(HXgas.igas_c, HXgas.Tc_in)
       end
@@ -1901,6 +1910,20 @@ function lambdap_calc(pare_sl, alpha_in, ifuel)
       return lambdap
 end #lambdap_calc
 
+"""
+Thermodynamic transport properties of a liquid coolant.
+
+Returned by `liquid_properties`.
+"""
+struct LiquidCoolantProps
+      ρ::Float64   # density [kg/m³]
+      cp::Float64  # specific heat capacity [J/(kg·K)]
+      μ::Float64   # dynamic viscosity [Pa·s]
+      k::Float64   # thermal conductivity [W/(m·K)]
+      Pr::Float64  # Prandtl number [-]
+      a::Float64   # speed of sound [m/s]
+end
+
 function liquid_properties(fluid, T)
       #TODO: account for temperature dependence of properties
       if (fluid == "liquid water") #properties at 100 degrees Celsius and 3 bar pressure from NIST
@@ -1920,7 +1943,7 @@ function liquid_properties(fluid, T)
       end
       Pr = cp * μ / k
 
-      return ρ, cp, μ, k, Pr, a 
+      return LiquidCoolantProps(ρ, cp, μ, k, Pr, a)
 end #liquid_properties
 
 #Constraint functions for HX optimization
