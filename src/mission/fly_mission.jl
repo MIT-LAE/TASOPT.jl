@@ -1,5 +1,5 @@
 """
-    fly_mission!(ac, imission, itermax, initializes_engine, opt_prescribed_cruise_parameter)
+    fly_mission!(ac, imission, itermax, initializes_engine, opt_prescribed_cruise_parameter, printTO)
 
 Runs the aircraft through the specified mission, computing and converging the fuel weight. Formerly, `fly_offdesign_mission!()`.
 
@@ -10,12 +10,13 @@ Runs the aircraft through the specified mission, computing and converging the fu
 - `itermax::Int64`: Maximum iterations for sizing loop
 - `initializes_engine::Boolean`: Use design case as initial guess for engine state if true
 - `opt_prescribed_cruise_parameter::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
+- `printTO::Bool`: print takeoff convergence table if true
 **Outputs:**
 - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model for the mission selected
 
 """
 function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true, 
-        opt_prescribed_cruise_parameter = "altitude")
+        opt_prescribed_cruise_parameter = "altitude", printTO = true)
     if ~ac.is_sized[1]
         error("Aircraft not sized. Please size the aircraft before running the mission.")
     end
@@ -290,7 +291,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
 
     #run takeoff calculation if converged (checks feasibility; populates iprotate entries)
     if Lconv
-        takeoff!(ac, imission=imission)
+        takeoff!(ac, imission=imission, printTO=printTO)
     end
 
 return 

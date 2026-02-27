@@ -291,7 +291,7 @@ end
     #CMVf1 calculation
     ac = load_default_model(); 
     ac.fuselage.calculates_pitching_moment_volume = true
-    size_aircraft!(ac)
+    size_aircraft!(ac, printiter=false)
 
     #ref value from TASOPT.jl, REPL execution
     CMVf1_test = 67.0315667
@@ -322,7 +322,7 @@ end
 
     #get basic execution of default model
     ac1 = load_default_model()
-    size_aircraft!(ac1)
+    size_aircraft!(ac1, printiter=false)
     results = aeroperf_sweep(ac1, [0.0, 0.8])
 
     #compare the two for approximate equality
