@@ -1,4 +1,19 @@
 """
+Thermodynamic properties of one saturated phase (gas or liquid) at a given pressure.
+
+Returned by [`gas_properties`](@ref) and [`liquid_properties`](@ref).
+
+"""
+struct SaturatedPhaseProps
+    Tsat::Float64   # saturation temperature [K]
+    ρ::Float64      # density [kg/m³]
+    ρ_p::Float64    # ∂ρ/∂p [kg/(m³·Pa)]
+    h::Float64      # specific enthalpy [J/kg]
+    u::Float64      # specific internal energy [J/kg]
+    u_p::Float64    # ∂u/∂p [J/(kg·Pa)]
+end
+
+"""
     gas_properties(species::String, p::Float64)
 
 This function returns the thermodynamic properties of a saturated vapor.
@@ -7,13 +22,14 @@ This function returns the thermodynamic properties of a saturated vapor.
     - `species::String`: Species name
     - `p::Float64`: pressure (Pa)
     
-    **Outputs:**
-    - `Tsat::Float64`: temperature (K)
-    - `ρ::Float64`: density (kg/m^3)
-    - `ρ_p::Float64`: derivative of density with pressure (kg/m^3/Pa)
-    - `h::Float64`: specific enthalpy (J/kg)
-    - `u::Float64`: specific internal energy (J/kg)
-    - `u_p::Float64`: derivative of internal energy with pressure (J/kg/Pa)
+    **Output:**
+    - `props::SaturatedPhaseProps`
+        - `props.Tsat::Float64`: temperature (K)
+        - `props.ρ::Float64`: density (kg/m^3)
+        - `props.ρ_p::Float64`: derivative of density with pressure (kg/m^3/Pa)
+        - `props.h::Float64`: specific enthalpy (J/kg)
+        - `props.u::Float64`: specific internal energy (J/kg)
+        - `props.u_p::Float64`: derivative of internal energy with pressure (J/kg/Pa)
 """
 function gas_properties(species::String, p::Float64)
     x = p / p_atm #pressure in atm
@@ -48,7 +64,7 @@ function gas_properties(species::String, p::Float64)
     u = u * 1e3 #J/kg
     ρ_p = ρ_p / p_atm #kg/m^3/Pa
     u_p = u_p * 1e3 / p_atm #J/kg/Pa
-    return Tsat, ρ, ρ_p, h, u, u_p
+    return SaturatedPhaseProps(Tsat, ρ, ρ_p, h, u, u_p)
 end
 
 """
@@ -60,13 +76,14 @@ This function returns the thermodynamic properties of a saturated liquid.
     - `species::String`: Species name
     - `p::Float64`: pressure (Pa)
     
-    **Outputs:**
-    - `Tsat::Float64`: temperature (K)
-    - `ρ::Float64`: density (kg/m^3)
-    - `ρ_p::Float64`: derivative of density with pressure (kg/m^3/Pa)
-    - `h::Float64`: specific enthalpy (J/kg)
-    - `u::Float64`: specific internal energy (J/kg)
-    - `u_p::Float64`: derivative of internal energy with pressure (J/kg/Pa)
+    **Output:**
+    - `props::SaturatedPhaseProps`
+        - `props.Tsat::Float64`: temperature (K)
+        - `props.ρ::Float64`: density (kg/m^3)
+        - `props.ρ_p::Float64`: derivative of density with pressure (kg/m^3/Pa)
+        - `props.h::Float64`: specific enthalpy (J/kg)
+        - `props.u::Float64`: specific internal energy (J/kg)
+        - `props.u_p::Float64`: derivative of internal energy with pressure (J/kg/Pa)
 """
 function liquid_properties(species::String, p::Float64)
     x = p / p_atm #pressure in atm
@@ -102,5 +119,5 @@ function liquid_properties(species::String, p::Float64)
     ρ_p = ρ_p / p_atm #kg/m^3/Pa
     u_p = u_p * 1e3 / p_atm #J/kg/Pa
 
-    return Tsat, ρ, ρ_p, h, u, u_p
+    return SaturatedPhaseProps(Tsat, ρ, ρ_p, h, u, u_p)
 end

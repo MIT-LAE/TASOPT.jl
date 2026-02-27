@@ -1,4 +1,5 @@
 using StaticArrays
+using Random
 
 @testset "Cryogenic tank" begin
     p_atm = TASOPT.p_atm
@@ -16,18 +17,18 @@ using StaticArrays
         
         @testset "Hydrogen gas" begin
             for (i,p) in enumerate(ps)
-                Tsat, ρ, ρ_p, h, u, u_p =  TASOPT.CryoTank.gas_properties(species, p)
-                @test Tsat ≈ Tsats[i] atol = 0.5
-                @test ρ ≈ ρs[i] atol = 1e-1
-                @test u ≈ us[i] rtol = 1e-2
-                @test h ≈ hs[i] rtol = 1e-2
+                props = TASOPT.CryoTank.gas_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] atol = 0.5
+                @test props.ρ ≈ ρs[i] atol = 1e-1
+                @test props.u ≈ us[i] rtol = 1e-2
+                @test props.h ≈ hs[i] rtol = 1e-2
 
                 #Check derivative by finite differences
-                _, ρ2, _, _, u2, _ =  TASOPT.CryoTank.gas_properties(species, p + Δp)
-                ρ_pFD = (ρ2 - ρ) / Δp
-                u_pFD = (u2 - u) / Δp
-                @test ρ_p ≈ ρ_pFD rtol = 1e-2
-                @test u_p ≈ u_pFD rtol = 1e-2
+                props2 = TASOPT.CryoTank.gas_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
             end
         end
 
@@ -40,17 +41,17 @@ using StaticArrays
 
         @testset "Hydrogen liquid" begin
             for (i,p) in enumerate(ps)
-                Tsat, ρ, ρ_p, h, u, u_p =  TASOPT.CryoTank.liquid_properties(species, p)
-                @test Tsat ≈ Tsats[i] atol = 0.5
-                @test ρ ≈ ρs[i] rtol = 1e-2
-                @test u ≈ us[i] atol = 2e3
-                @test h ≈ hs[i] atol = 2e3
+                props = TASOPT.CryoTank.liquid_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] atol = 0.5
+                @test props.ρ ≈ ρs[i] rtol = 1e-2
+                @test props.u ≈ us[i] atol = 2e3
+                @test props.h ≈ hs[i] atol = 2e3
 
-                _, ρ2, _, _, u2, _ =  TASOPT.CryoTank.liquid_properties(species, p + Δp)
-                ρ_pFD = (ρ2 - ρ) / Δp
-                u_pFD = (u2 - u) / Δp
-                @test ρ_p ≈ ρ_pFD rtol = 1e-2
-                @test u_p ≈ u_pFD rtol = 1e-2
+                props2 = TASOPT.CryoTank.liquid_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
             end
         end
 
@@ -66,17 +67,17 @@ using StaticArrays
 
         @testset "Methane gas" begin
             for (i,p) in enumerate(ps)
-                Tsat, ρ, ρ_p, h, u, u_p =  TASOPT.CryoTank.gas_properties(species, p)
-                @test Tsat ≈ Tsats[i] atol = 0.6
-                @test ρ ≈ ρs[i] atol = 1e-1
-                @test u ≈ us[i] rtol = 1e-2
-                @test h ≈ hs[i] rtol = 1e-2
+                props = TASOPT.CryoTank.gas_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] atol = 0.6
+                @test props.ρ ≈ ρs[i] atol = 1e-1
+                @test props.u ≈ us[i] rtol = 1e-2
+                @test props.h ≈ hs[i] rtol = 1e-2
 
-                _, ρ2, _, _, u2, _ =  TASOPT.CryoTank.gas_properties(species, p + Δp)
-                ρ_pFD = (ρ2 - ρ) / Δp
-                u_pFD = (u2 - u) / Δp
-                @test ρ_p ≈ ρ_pFD rtol = 1e-2
-                @test u_p ≈ u_pFD rtol = 1e-2
+                props2 = TASOPT.CryoTank.gas_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
             end
         end
 
@@ -89,17 +90,17 @@ using StaticArrays
 
         @testset "Methane liquid" begin
             for (i,p) in enumerate(ps)
-                Tsat, ρ, ρ_p, h, u, u_p =  TASOPT.CryoTank.liquid_properties(species, p)
-                @test Tsat ≈ Tsats[i] atol = 0.6
-                @test ρ ≈ ρs[i] rtol = 1e-2
-                @test u ≈ us[i] atol = 2e3
-                @test h ≈ hs[i] atol = 2e3
+                props = TASOPT.CryoTank.liquid_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] atol = 0.6
+                @test props.ρ ≈ ρs[i] rtol = 1e-2
+                @test props.u ≈ us[i] atol = 2e3
+                @test props.h ≈ hs[i] atol = 2e3
 
-                _, ρ2, _, _, u2, _ =  TASOPT.CryoTank.liquid_properties(species, p + Δp)
-                ρ_pFD = (ρ2 - ρ) / Δp
-                u_pFD = (u2 - u) / Δp
-                @test ρ_p ≈ ρ_pFD rtol = 1e-2
-                @test u_p ≈ u_pFD rtol = 1e-2
+                props2 = TASOPT.CryoTank.liquid_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
             end
         end
     end
@@ -110,52 +111,49 @@ using StaticArrays
         p = p_atm
         β = 0.5
 
-        @testset "Saturated properties" begin
-            Tsat, ρ, ρ_p, h, u, u_p = TASOPT.CryoTank.gas_properties(species, p)
-            gas = TASOPT.CryoTank.SaturatedGas(species, p)
-
-            @test gas.p ≈ p
-            @test gas.T ≈ Tsat
-            @test gas.ρ ≈ ρ
-            @test gas.u ≈ u
-            @test gas.h ≈ h
-            @test gas.ρ_p ≈ ρ_p
-            @test gas.u_p ≈ u_p
-
-            Tsat, ρ, ρ_p, h, u, u_p = TASOPT.CryoTank.liquid_properties(species, p)
-            liq = TASOPT.CryoTank.SaturatedLiquid(species, p)
-
-            @test liq.p ≈ p
-            @test liq.T ≈ Tsat
-            @test liq.ρ ≈ ρ
-            @test liq.u ≈ u
-            @test liq.h ≈ h
-            @test liq.ρ_p ≈ ρ_p
-            @test liq.u_p ≈ u_p
-
+        @testset "SaturatedMixture assembly" begin
+            # gas_properties / liquid_properties → SaturatedPhaseProps stored directly
+            # in mix.gas and mix.liquid; verify the constructor assembles them correctly.
+            gas = TASOPT.CryoTank.gas_properties(species, p)
+            liq = TASOPT.CryoTank.liquid_properties(species, p)
             mix = TASOPT.CryoTank.SaturatedMixture(species, p, β)
 
+            @test mix.gas === mix.gas       # sanity: field exists
+            @test mix.p ≈ p
+            @test mix.T ≈ gas.Tsat         # temperature comes from saturation curve
+
+            # Verify mix.gas and mix.liquid hold the phase properties
+            @test mix.gas.Tsat ≈ gas.Tsat
+            @test mix.gas.ρ    ≈ gas.ρ
+            @test mix.gas.h    ≈ gas.h
+            @test mix.gas.u    ≈ gas.u
+            @test mix.gas.ρ_p  ≈ gas.ρ_p
+            @test mix.gas.u_p  ≈ gas.u_p
+            @test mix.liquid.ρ    ≈ liq.ρ
+            @test mix.liquid.h    ≈ liq.h
+            @test mix.liquid.u    ≈ liq.u
+            @test mix.liquid.ρ_p  ≈ liq.ρ_p
+            @test mix.liquid.u_p  ≈ liq.u_p
+
+            # Verify the mixture-level scalars against the mixing rule
             x = 1 / (1 + (liq.ρ/gas.ρ) * (β / (1 - β)))
             ρ = 1 / (x / gas.ρ + (1-x) / liq.ρ)
             u = x * gas.u + (1-x) * liq.u
             h = x * gas.h + (1-x) * liq.h
-
             x_p = (-x/gas.ρ^2 * gas.ρ_p - (1-x)/liq.ρ^2 * liq.ρ_p) / (1/liq.ρ - 1/gas.ρ)
             u_p = x * gas.u_p + (1 - x) * liq.u_p + x_p * (gas.u - liq.u)
-            ϕ = 1 / (u_p * ρ)
-            hvap = gas.h - liq.h
+            ϕ      = 1 / (u_p * ρ)
+            hvap   = gas.h - liq.h
             ρ_star = gas.ρ / (liq.ρ - gas.ρ)
 
-            @test mix.p ≈ p
-            @test mix.T ≈ Tsat
-            @test mix.ρ ≈ ρ
-            @test mix.x ≈ x
-            @test mix.h ≈ h
-            @test mix.u ≈ u
-            @test mix.β ≈ β
-            @test mix.u_p ≈ u_p
-            @test mix.ϕ ≈ ϕ
-            @test mix.hvap ≈ hvap
+            @test mix.ρ     ≈ ρ
+            @test mix.x     ≈ x
+            @test mix.h     ≈ h
+            @test mix.u     ≈ u
+            @test mix.β     ≈ β
+            @test mix.u_p   ≈ u_p
+            @test mix.ϕ     ≈ ϕ
+            @test mix.hvap  ≈ hvap
             @test mix.ρ_star ≈ ρ_star
         end
         @testset "Mixture functions" begin     
@@ -266,4 +264,72 @@ using StaticArrays
         @test dydt[5] ≈ 0.0
         @test dydt[6] ≈ mdotboil_regression
     end
+end
+
+# ── Property-based tests ────────────────────────────────────────────────────
+# Inspired by https://fsharpforfunandprofit.com/posts/property-based-testing-2/
+# Strategy: test *relationships* and *invariants* that must hold for all valid
+# inputs.
+@testset "SaturatedPhaseProps property tests" begin
+    rng = MersenneTwister(42)
+    p_atm_val = TASOPT.p_atm
+    p_lo = 0.1 * p_atm_val   # lower bound of polynomial fit domain
+    p_hi = 10.0 * p_atm_val  # upper bound
+
+    for species in ("H2", "CH4")
+        @testset "$(species): saturation temperature" begin
+            # gas_properties and liquid_properties are both fits to the same
+            # saturation curve - Tsat must be identical at any given pressure.
+            for _ in 1:10
+                p = p_lo + rand(rng) * (p_hi - p_lo)
+                gp = TASOPT.CryoTank.gas_properties(species, p)
+                lp = TASOPT.CryoTank.liquid_properties(species, p)
+                @test gp.Tsat ≈ lp.Tsat rtol = 1e-12
+            end
+        end
+
+        @testset "$(species): Tsat monotone with pressure (Clausius-Clapeyron)" begin
+            for _ in 1:10
+                p1 = p_lo + rand(rng) * (p_hi - p_lo - 0.1 * p_atm_val)
+                p2 = p1 + 0.05 * p_atm_val + rand(rng) * 0.5 * p_atm_val
+                gp1 = TASOPT.CryoTank.gas_properties(species, p1)
+                gp2 = TASOPT.CryoTank.gas_properties(species, p2)
+                @test gp2.Tsat > gp1.Tsat
+            end
+        end
+
+        @testset "$(species): thermodynamic identity h = u + p/ρ" begin
+            # Follows from the definition h ≡ u + pv, v = 1/ρ.
+            # h and u are independent NIST polynomial fits, so the identity holds
+            # to ~0.5% inside the fit range (0.5–9 atm) but degrades at the edges.
+            # We stay away from the edges.
+            p_lo_inner = 0.5 * p_atm_val
+            p_hi_inner = 9.0 * p_atm_val
+            for _ in 1:10
+                p = p_lo_inner + rand(rng) * (p_hi_inner - p_lo_inner)
+                for props in (TASOPT.CryoTank.gas_properties(species, p),
+                              TASOPT.CryoTank.liquid_properties(species, p))
+                    @test props.h ≈ props.u + p / props.ρ rtol = 5e-3
+                end
+            end
+        end
+
+        @testset "$(species): derivative consistency" begin
+            # ρ_p and u_p are analytic derivatives of the same polynomials.
+            # Try one-sided finite difference to within 0.05 %.
+            δ = 10.0  # 10 Pa — small relative to ~1e5 Pa but large enough to avoid cancellation
+            for _ in 1:10
+                p = p_lo + rand(rng) * (p_hi - p_lo - δ)
+                for (f, label) in ((TASOPT.CryoTank.gas_properties, "gas"),
+                                   (TASOPT.CryoTank.liquid_properties, "liquid"))
+                    props  = f(species, p)
+                    props2 = f(species, p + δ)
+                    @test props.ρ_p ≈ (props2.ρ - props.ρ) / δ rtol = 5e-4
+                    @test props.u_p ≈ (props2.u - props.u) / δ rtol = 5e-4
+                end
+            end
+        end
+    end
+
+    
 end

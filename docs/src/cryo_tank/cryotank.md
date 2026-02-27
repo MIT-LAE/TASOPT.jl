@@ -74,18 +74,15 @@ In a tank containing a boiling liquid, such as a cryogenic liquid that has reach
 ## Functions
 ### Thermodynamic properties
 ```@docs
+CryoTank.SaturatedPhaseProps
+```
+```@docs
 CryoTank.gas_properties
 ```
 ```@docs
 CryoTank.liquid_properties
 ```
 ### Saturated mixtures
-```@docs
-CryoTank.SaturatedGas
-```
-```@docs
-CryoTank.SaturatedLiquid
-```
 ```@docs
 CryoTank.SaturatedMixture
 ```
