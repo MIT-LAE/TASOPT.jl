@@ -44,7 +44,7 @@ fuse_tank.Ninterm = 1.0
 β0 = 1 - fuse_tank.ullage_frac
 fuel_mix = TASOPT.SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
 
-Tsat = fuel_mix.liquid.T
+Tsat = fuel_mix.liquid.Tsat
 ρl = fuel_mix.liquid.ρ
 ρg = fuel_mix.gas.ρ
 hvap = fuel_mix.hvap

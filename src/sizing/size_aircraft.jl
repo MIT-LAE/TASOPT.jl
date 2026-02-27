@@ -903,7 +903,7 @@ function setup_fuel_storage!(options, fuse, fuse_tank, parg, pare)
         # Calculate fuel properties from saturated mixture model
         β0 = 1 - fuse_tank.ullage_frac
         fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
-        Tfuel = fuel_mix.liquid.T
+        Tfuel = fuel_mix.liquid.Tsat
         ρliq = fuel_mix.liquid.ρ
         ρgas = fuel_mix.gas.ρ
         hvap = fuel_mix.hvap
