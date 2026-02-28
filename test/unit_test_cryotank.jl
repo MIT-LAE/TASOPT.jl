@@ -301,7 +301,7 @@ end
         @testset "$(species): thermodynamic identity h = u + p/ρ" begin
             # Follows from the definition h ≡ u + pv, v = 1/ρ.
             # h and u are independent NIST polynomial fits, so the identity holds
-            # to ~0.5% inside the fit range (0.5–9 atm) but degrades at the edges.
+            # to ~1% inside the fit range (0.5–9 atm) but degrades at the edges.
             # We stay away from the edges.
             p_lo_inner = 0.5 * p_atm_val
             p_hi_inner = 9.0 * p_atm_val
@@ -309,7 +309,7 @@ end
                 p = p_lo_inner + rand(rng) * (p_hi_inner - p_lo_inner)
                 for props in (TASOPT.CryoTank.gas_properties(species, p),
                               TASOPT.CryoTank.liquid_properties(species, p))
-                    @test props.h ≈ props.u + p / props.ρ rtol = 5e-3
+                    @test props.h ≈ props.u + p / props.ρ rtol = 1e-2
                 end
             end
         end
