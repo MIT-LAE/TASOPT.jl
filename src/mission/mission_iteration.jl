@@ -53,8 +53,13 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       # takeoff altitude conditions
       ΔTatmos = parm[imDeltaTatm]
       ip = ipstatic
-      altkm = para[iaalt, ip] / 1000.0
-      T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
+      alt_m = para[iaalt, ip]
+      atmos_state = atmos(alt_m, ΔTatmos)
+      T0 = atmos_state.T
+      p0 = atmos_state.p
+      ρ0 = atmos_state.ρ
+      a0 = atmos_state.a
+      μ0 = atmos_state.μ
 
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
@@ -81,9 +86,14 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       # Start-of-cruise altitude conditions
       ip = ipcruise1
       Mach = para[iaMach, ip]
-      altkm = para[iaalt, ip] / 1000.0
+      alt_m = para[iaalt, ip]
 
-      T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
+      atmos_state = atmos(alt_m, ΔTatmos)
+      T0 = atmos_state.T
+      p0 = atmos_state.p
+      rho0 = atmos_state.ρ
+      a0 = atmos_state.a
+      mu0 = atmos_state.μ
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -95,8 +105,13 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
 
       # End-of-descent altitude conditions
       ip = ipdescentn
-      altkm = para[iaalt, ip] / 1000.0
-      T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
+      alt_m = para[iaalt, ip]
+      atmos_state = atmos(alt_m, ΔTatmos)
+      T0 = atmos_state.T
+      p0 = atmos_state.p
+      rho0 = atmos_state.ρ
+      a0 = atmos_state.a
+      mu0 = atmos_state.μ
 
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
@@ -249,9 +264,14 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             frac = float(ip - ipclimb1) / float(ipclimbn - ipclimb1)
             para[iaalt, ip] = altb * (1.0 - frac) + altc * frac
 
-            altkm = para[iaalt, ip] / 1000.0
+            alt_m = para[iaalt, ip]
 
-            T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
+            atmos_state = atmos(alt_m, ΔTatmos)
+            T0 = atmos_state.T
+            p0 = atmos_state.p
+            rho0 = atmos_state.ρ
+            a0 = atmos_state.a
+            mu0 = atmos_state.μ
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
@@ -485,9 +505,14 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       # Final cruise point
       ip = ipcruisen
       Mach = para[iaMach, ip]
-      altkm = altd / 1000.0
+      alt_m = altd
 
-      T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
+      atmos_state = atmos(alt_m, ΔTatmos)
+      T0 = atmos_state.T
+      p0 = atmos_state.p
+      ρ0 = atmos_state.ρ
+      a0 = atmos_state.a
+      μ0 = atmos_state.μ
       pare[iep0, ip] = p0
       pare[ieT0, ip] = T0
       pare[iea0, ip] = a0
@@ -558,8 +583,13 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             frac = float(ip - ipcruise1) / float(ipcruisen - ipcruise1)
             Mach = para[iaMach, ip]
             para[iaalt, ip] = altc * (1.0 - frac) + altd * frac
-            altkm = para[iaalt, ip] / 1000.0
-            T0, p0, rho0, a0, mu0 = atmos(altkm, ΔTatmos)
+            alt_m = para[iaalt, ip]
+            atmos_state = atmos(alt_m, ΔTatmos)
+            T0 = atmos_state.T
+            p0 = atmos_state.p
+            rho0 = atmos_state.ρ
+            a0 = atmos_state.a
+            mu0 = atmos_state.μ
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0
@@ -612,8 +642,13 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             gamVde = gamVde1 * (1.0 - frac) + gamVden * frac
             para[iagamV, ip] = gamVde
 
-            altkm = alt / 1000.0
-            T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
+            alt_m = alt
+            atmos_state = atmos(alt_m, ΔTatmos)
+            T0 = atmos_state.T
+            p0 = atmos_state.p
+            ρ0 = atmos_state.ρ
+            a0 = atmos_state.a
+            μ0 = atmos_state.μ
             pare[iep0, ip] = p0
             pare[ieT0, ip] = T0
             pare[iea0, ip] = a0

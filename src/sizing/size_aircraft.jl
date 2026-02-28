@@ -44,7 +44,7 @@ function _size_aircraft!(ac; itermax=35,
 
     # Calculate sea level temperature for takeoff conditions
     altTO = parm[imaltTO]
-    T_std, _, _, _, _ = atmos(altTO / 1e3)
+    T_std = atmos(altTO).T
     ΔTatmos = parm[imT0TO] - T_std
     parm[imDeltaTatm] = ΔTatmos
 
@@ -839,8 +839,13 @@ Sets ambient condition at the given mission point `ip` and mission `im` (default
 """
 function set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
     ΔTatmos = ac.parm[imDeltaTatm]
-    altkm = ac.para[iaalt, ip, im]/1000.0
-    T0, p0, ρ0, a0, μ0 = atmos(altkm, ΔTatmos)
+    alt_m = ac.para[iaalt, ip, im]
+    atmos_state = atmos(alt_m, ΔTatmos)
+    T0 = atmos_state.T
+    p0 = atmos_state.p
+    ρ0 = atmos_state.ρ
+    a0 = atmos_state.a
+    μ0 = atmos_state.μ
     if Mach === NaN
         Mach = ac.para[iaMach, ip, im]
     end
@@ -898,7 +903,7 @@ function setup_fuel_storage!(options, fuse, fuse_tank, parg, pare)
         # Calculate fuel properties from saturated mixture model
         β0 = 1 - fuse_tank.ullage_frac
         fuel_mix = SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
-        Tfuel = fuel_mix.liquid.T
+        Tfuel = fuel_mix.liquid.Tsat
         ρliq = fuel_mix.liquid.ρ
         ρgas = fuel_mix.gas.ρ
         hvap = fuel_mix.hvap

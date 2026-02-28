@@ -44,7 +44,7 @@ fuse_tank.Ninterm = 1.0
 β0 = 1 - fuse_tank.ullage_frac
 fuel_mix = TASOPT.SaturatedMixture(fuse_tank.fueltype, fuse_tank.pvent, β0)
 
-Tsat = fuel_mix.liquid.T
+Tsat = fuel_mix.liquid.Tsat
 ρl = fuel_mix.liquid.ρ
 ρg = fuel_mix.gas.ρ
 hvap = fuel_mix.hvap
@@ -63,12 +63,15 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
     @testset "Foam insulation" begin
 
         TASOPT.tanksize!(ac, 1)
-        outputs_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        inner_tank_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        outputs_mech_check = (60109.124334566346 , 38147.81559388217, 166.77327116515787, [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876], 1.8743852420176998, 15.771807531012154, 12.842701653674803)
-        for i in 1:length(outputs_mech)
-            @test outputs_mech[i] ≈ outputs_mech_check[i]
-        end
+        @test inner_tank_mech.Wtank       ≈ 60109.124334566346
+        @test inner_tank_mech.Winsul_sum  ≈ 38147.81559388217
+        @test inner_tank_mech.Vfuel       ≈ 166.77327116515787
+        @test inner_tank_mech.Shead_insul ≈ [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876]
+        @test inner_tank_mech.Rtank_outer ≈ 1.8743852420176998
+        @test inner_tank_mech.l_tank      ≈ 15.771807531012154
+        @test inner_tank_mech.l_cyl       ≈ 12.842701653674803
         
         outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse, fuse_tank, z, TSL, Mair, xftank, ifuel)
 
@@ -86,14 +89,18 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
     @testset "Vacuum insulation" begin
         TASOPT.tanksize!(ac, 1)
 
-        outputs_vac_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
-        outputs_vac_mech_check = (24229.845334360776, 0.0, 166.77327116515787, [25.483812169139977, 27.21328988831087], 2.335, 9.994915110929762, 7.525566077704729)
+        inner_tank_vac = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        for i in 1:length(outputs_vac_mech)
-            @test outputs_vac_mech[i] ≈ outputs_vac_mech_check[i]
-        end
-        Winnertank = outputs_vac_mech_check[1]
-        l_cyl = outputs_vac_mech_check[7]
+        @test inner_tank_vac.Wtank       ≈ 24229.845334360776
+        @test inner_tank_vac.Winsul_sum  ≈ 0.0
+        @test inner_tank_vac.Vfuel       ≈ 166.77327116515787
+        @test inner_tank_vac.Shead_insul ≈ [25.483812169139977, 27.21328988831087]
+        @test inner_tank_vac.Rtank_outer ≈ 2.335
+        @test inner_tank_vac.l_tank      ≈ 9.994915110929762
+        @test inner_tank_vac.l_cyl       ≈ 7.525566077704729
+
+        Winnertank = inner_tank_vac.Wtank
+        l_cyl      = inner_tank_vac.l_cyl
         Winner_tot = Winnertank + fuse_tank.Wfuelintank
 
         fuse_tank.Ninterm = 1.0
@@ -101,11 +108,17 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         Ninterm_check = 14.025390625
         @test Ninterm ≈ Ninterm_check
 
-        outputs_vac_outer = TASOPT.CryoTank.size_outer_tank(fuse, fuse_tank, Winner_tot, l_cyl, Ninterm_check)
-        outputs_vac_outer_check = (87481.40843690369, 31381.827647692957, 13786.613724211644, 20573.498028341648, 171.6223477616751, 26.90237940128641, 117.81758895910225, 0.009560503271690743, 0.018394143361195915, 9.96235436442712)
-        for i in 1:length(outputs_vac_outer)
-            @test outputs_vac_outer[i] ≈ outputs_vac_outer_check[i]
-        end
+        outer_tank_vac = TASOPT.CryoTank.size_outer_tank(fuse, fuse_tank, Winner_tot, l_cyl, Ninterm_check)
+        @test outer_tank_vac.Wtank   ≈ 87481.40843690369
+        @test outer_tank_vac.Wcyl    ≈ 31381.827647692957
+        @test outer_tank_vac.Whead   ≈ 13786.613724211644
+        @test outer_tank_vac.Wstiff  ≈ 20573.498028341648
+        @test outer_tank_vac.Souter  ≈ 171.6223477616751
+        @test outer_tank_vac.Shead   ≈ 26.90237940128641
+        @test outer_tank_vac.Scyl    ≈ 117.81758895910225
+        @test outer_tank_vac.t_cyl   ≈ 0.009560503271690743
+        @test outer_tank_vac.t_head  ≈ 0.018394143361195915
+        @test outer_tank_vac.l_outer ≈ 9.96235436442712
 
     end
     

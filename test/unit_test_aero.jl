@@ -111,8 +111,7 @@
     fort_CDwing = 8.7678531364318128E-003
     fort_CDover = 0.0000000000000000
 
-    clpo, clps, clpt, CDfwing, CDpwing,
-    CDwing, CDover = TASOPT.aerodynamics.wing_profiledrag_direct(
+    wing_drag_components = TASOPT.aerodynamics.wing_profiledrag_direct(
       wing, γt, γs,
       Mach, CL, CLhtail, 
       Reco, aRexp, rkSunsw, fexcdw,
@@ -122,13 +121,13 @@
 # (0.225, 0.8665999999999999, 0.5917830310706261, 0.285, -0.0016806695060863123, 6.5275125903133705e7, -0.15, 0.5, 1.02, 0.018, 0.014, 0.0045)
 # wing_profiledrag_direct OUTPUT
 # (0.005092435287160669, 0.002484528306027699, 0.007576963593188367, 0.0)
-    @test fort_clpo ≈ clpo
-    @test fort_clps ≈ clps
-    @test fort_clpt ≈ clpt
-    @test fort_cdfw ≈ CDfwing
-    @test fort_cdpw ≈ CDpwing
-    @test fort_CDwing ≈ CDwing
-    @test fort_CDover ≈ CDover
+    @test fort_clpo ≈ wing_drag_components.clpo
+    @test fort_clps ≈ wing_drag_components.clps
+    @test fort_clpt ≈ wing_drag_components.clpt
+    @test fort_cdfw ≈ wing_drag_components.CDfwing
+    @test fort_cdpw ≈ wing_drag_components.CDpwing
+    @test fort_CDwing ≈ wing_drag_components.CDwing
+    @test fort_CDover ≈ wing_drag_components.CDover
     #end wing_profiledrag_direct
 
     #start wing_profiledrag_scaled
@@ -292,7 +291,7 @@ end
     #CMVf1 calculation
     ac = load_default_model(); 
     ac.fuselage.calculates_pitching_moment_volume = true
-    size_aircraft!(ac)
+    size_aircraft!(ac, printiter=false)
 
     #ref value from TASOPT.jl, REPL execution
     CMVf1_test = 67.0315667
@@ -323,7 +322,7 @@ end
 
     #get basic execution of default model
     ac1 = load_default_model()
-    size_aircraft!(ac1)
+    size_aircraft!(ac1, printiter=false)
     results = aeroperf_sweep(ac1, [0.0, 0.8])
 
     #compare the two for approximate equality

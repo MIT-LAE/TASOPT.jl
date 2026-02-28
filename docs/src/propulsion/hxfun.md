@@ -202,6 +202,9 @@ To study novel aircraft designs that may leverage cryogenic hydrogen, the follow
 
 ## Structures
 ```@docs
+engine.LiquidCoolantProps
+```
+```@docs
 engine.HX_gas
 ```
 ```@docs

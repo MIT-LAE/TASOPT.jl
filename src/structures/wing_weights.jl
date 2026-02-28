@@ -1,4 +1,23 @@
 """
+    WingSectionDimensions{T<:Real}
+
+Structural dimensions of a sized wing spar-box section.
+Fields are ordered as: thicknesses first (web, cap), then areas (web, cap).
+
+!!! details "Fields"
+    - `tbweb::T`: Normalized Web thickness
+    - `tbcap::T`: Normalized Cap thickness
+    - `Abweb::T`: Normalized Web cross-sectional area (both webs combined)
+    - `Abcap::T`: Normalized Cap cross-sectional area (both caps combined)
+"""
+struct WingSectionDimensions{T<:Real}
+    tbweb::T
+    tbcap::T
+    Abweb::T
+    Abcap::T
+end
+
+"""
     size_wing_section!(section, sweep, sigfac)
 
 Calculates Loads and thicknesses for wing sections
@@ -8,6 +27,8 @@ Calculates Loads and thicknesses for wing sections
     - `section::TASOPT.structures.Wing.WingSection`: Wing Section to be sized.
     - `sweep::Float64`: Wing sweep.
     - `sigfac::Float64`: Stress factor
+
+    **Outputs:** [`WingSectionDimensions`](@ref)
 """
 function size_wing_section!(section, sweep, sigfac)
     shear_load = section.max_shear_load
@@ -46,7 +67,7 @@ function size_wing_section!(section, sweep, sigfac)
         (  (cross_section.web_to_box_height*section.cross_section.thickness_to_chord-tbcap)/(Gweb*tbweb) +
         (   cross_section.width_to_chord -tbweb)/(Gcap*tbcap) )
 
-    return tbweb, tbcap, Abcap, Abweb  
+    return WingSectionDimensions(tbweb, tbcap, Abweb, Abcap)
 end
 
 """
@@ -106,7 +127,7 @@ function wing_weights!(wing, po, gammat, gammas,
     #---- size strut-attach station at etas
     cs = wing.layout.root_chord*wing.inboard.λ
 
-    tbwebs, tbcaps, Abcaps, Abwebs = size_wing_section!(wing.outboard, wing.sweep, sigfac)
+    outboard_dims = size_wing_section!(wing.outboard, wing.sweep, sigfac)
     # Inboard Section:
     if(!wing.has_strut) 
         #----- no strut, with or without engine at etas
@@ -129,7 +150,7 @@ function wing_weights!(wing, po, gammat, gammas,
         wing.inboard.max_shear_load = max(So ,wing.outboard.max_shear_load)
         wing.inboard.moment = max(Mo ,wing.outboard.moment)
 
-        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.inboard, wing.sweep, sigfac)
+        inboard_dims = size_wing_section!(wing.inboard, wing.sweep, sigfac)
 
         lsp = 0.
         Tstrutp = 0.
@@ -147,7 +168,7 @@ function wing_weights!(wing, po, gammat, gammas,
         wing.inboard.moment = wing.outboard.moment
         #
         #----- size inboard station at etao
-        tbwebo, tbcapo, Abcapo, Abwebo = size_wing_section!(wing.inboard, wing.sweep, sigfac)
+        inboard_dims = size_wing_section!(wing.inboard, wing.sweep, sigfac)
 
         #----- total strut length, tension
         lsp = sqrt(wing.strut.z^2 + (0.5*wing.layout.span*(etas-etao)/cosL)^2)
@@ -158,8 +179,10 @@ function wing_weights!(wing, po, gammat, gammas,
         wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.span*(etas-etao) * sinL/cosL
     end
 
-    Abfuels = calc_sparbox_internal_area(wing.inboard.cross_section.width_to_chord, h_avgs, tbcaps, tbwebs)
-    Abfuelo = calc_sparbox_internal_area(wing.inboard.cross_section.width_to_chord, h_avgo, tbcapo, tbwebo) 
+    Abfuels = calc_sparbox_internal_area(wing.inboard.cross_section.width_to_chord,
+                                    h_avgs, outboard_dims.tbcap, outboard_dims.tbweb)
+    Abfuelo = calc_sparbox_internal_area(wing.inboard.cross_section.width_to_chord,
+                                    h_avgo, inboard_dims.tbcap, inboard_dims.tbweb)
     
     
 
@@ -190,18 +213,18 @@ function wing_weights!(wing, po, gammat, gammas,
         cosL
 
     #---- set chord^2 weighted average areas for inner panel
-    Abcapi = (Abcapo + Abcaps*wing.inboard.λ^2)/(1.0+wing.inboard.λ^2)
-    Abwebi = (Abwebo + Abwebs*wing.inboard.λ^2)/(1.0+wing.inboard.λ^2)
+    Abcapi = (inboard_dims.Abcap + outboard_dims.Abcap*wing.inboard.λ^2)/(1.0+wing.inboard.λ^2)
+    Abwebi = (inboard_dims.Abweb + outboard_dims.Abweb*wing.inboard.λ^2)/(1.0+wing.inboard.λ^2)
 
-    Wscen   = (wing.inboard.caps.ρ*Abcapo + wing.inboard.webs.ρ*Abwebo)*gee*Vcen
-    Wsinn   = (wing.inboard.caps.ρ*Abcapi + wing.inboard.webs.ρ*Abwebi)*gee*Vinn
-    Wsout   = (wing.inboard.caps.ρ*Abcaps + wing.inboard.webs.ρ*Abwebs)*gee*Vout
+    Wscen   = (wing.inboard.caps.ρ*inboard_dims.Abcap  + wing.inboard.webs.ρ*inboard_dims.Abweb )*gee*Vcen
+    Wsinn   = (wing.inboard.caps.ρ*Abcapi              + wing.inboard.webs.ρ*Abwebi             )*gee*Vinn
+    Wsout   = (wing.inboard.caps.ρ*outboard_dims.Abcap + wing.inboard.webs.ρ*outboard_dims.Abweb)*gee*Vout
 
-    dxWsinn = (wing.inboard.caps.ρ*Abcapi + wing.inboard.webs.ρ*Abwebi)*gee*dxVinn
-    dxWsout = (wing.inboard.caps.ρ*Abcaps + wing.inboard.webs.ρ*Abwebs)*gee*dxVout
+    dxWsinn = (wing.inboard.caps.ρ*Abcapi              + wing.inboard.webs.ρ*Abwebi             )*gee*dxVinn
+    dxWsout = (wing.inboard.caps.ρ*outboard_dims.Abcap + wing.inboard.webs.ρ*outboard_dims.Abweb)*gee*dxVout
 
-    dyWsinn = (wing.inboard.caps.ρ*Abcapi + wing.inboard.webs.ρ*Abwebi)*gee*dyVinn
-    dyWsout = (wing.inboard.caps.ρ*Abcaps + wing.inboard.webs.ρ*Abwebs)*gee*dyVout
+    dyWsinn = (wing.inboard.caps.ρ*Abcapi              + wing.inboard.webs.ρ*Abwebi             )*gee*dyVinn
+    dyWsout = (wing.inboard.caps.ρ*outboard_dims.Abcap + wing.inboard.webs.ρ*outboard_dims.Abweb)*gee*dyVout
 
 
     Abfueli= (Abfuelo + Abfuels*wing.inboard.λ^2)/(1.0+wing.inboard.λ^2)
@@ -216,20 +239,20 @@ function wing_weights!(wing, po, gammat, gammas,
     dyWfinn = rhofuel*Abfueli *gee*dyVinn
     dyWfout = rhofuel*Abfuels *gee*dyVout
 
-    wing.inboard.caps.weight.W   = 2.0*wing.inboard.caps.ρ*gee*(Abcapo*Vcen + Abcapi*Vinn + Abcaps*Vout)
-    wing.inboard.webs.weight.W   = 2.0*wing.inboard.webs.ρ*gee*(Abwebo*Vcen + Abwebi*Vinn + Abwebs*Vout)
+    wing.inboard.caps.weight.W   = 2.0*wing.inboard.caps.ρ*gee*(inboard_dims.Abcap*Vcen + Abcapi*Vinn + outboard_dims.Abcap*Vout)
+    wing.inboard.webs.weight.W   = 2.0*wing.inboard.webs.ρ*gee*(inboard_dims.Abweb*Vcen + Abwebi*Vinn + outboard_dims.Abweb*Vout)
 
-    dxWcap = 2.0*wing.inboard.caps.ρ*gee*( Abcapi*dxVinn + Abcaps*dxVout )
-    dxWweb = 2.0*wing.inboard.webs.ρ*gee*( Abwebi*dxVinn + Abwebs*dxVout )
+    dxWcap = 2.0*wing.inboard.caps.ρ*gee*( Abcapi*dxVinn + outboard_dims.Abcap*dxVout )
+    dxWweb = 2.0*wing.inboard.webs.ρ*gee*( Abwebi*dxVinn + outboard_dims.Abweb*dxVout )
 
     Vout = wing.layout.root_chord^2*wing.layout.span* (1.0 -etas) *
     (wing.inboard.λ^2 + wing.inboard.λ*wing.outboard.λ + wing.outboard.λ^2)/6.0 *
     cosL
 
-    wing.inboard.caps.thickness = tbcapo
-    wing.inboard.webs.thickness = tbwebo
-    wing.outboard.caps.thickness = tbcaps
-    wing.outboard.webs.thickness = tbwebs
+    wing.inboard.caps.thickness = inboard_dims.tbcap
+    wing.inboard.webs.thickness = inboard_dims.tbweb
+    wing.outboard.caps.thickness = outboard_dims.tbcap
+    wing.outboard.webs.thickness = outboard_dims.tbweb
 
     fwadd = wing_additional_weight(wing)
     Wwing = n_wings * (Wscen + Wsinn + Wsout) * (1.0 + fwadd)
