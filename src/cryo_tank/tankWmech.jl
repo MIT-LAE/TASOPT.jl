@@ -1,4 +1,24 @@
 """
+Geometric and weight outputs of the inner cryogenic tank sizing.
+"""
+struct InnerTankGeometry
+      """Total tank weight (structural + insulation) (N)"""
+      Wtank::Float64
+      """Total insulation weight (N)"""
+      Winsul_sum::Float64
+      """Volume of fuel (m^3)"""
+      Vfuel::Float64
+      """Insulated surface area of each ellipsoidal-cap interface, length N+1 (m^2)"""
+      Shead_insul::Vector{Float64}
+      """Outer radius of the inner vessel (m)"""
+      Rtank_outer::Float64
+      """Total longitudinal length of the tank (m)"""
+      l_tank::Float64
+      """Length of the cylindrical portion (m)"""
+      l_cyl::Float64
+end
+
+"""
       size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vector{Float64})
 
 `size_inner_tank` calculates the weight of the cryogenic fuel tank for a LH-fueled aircraft.
@@ -7,25 +27,11 @@
       **Inputs:**
       - `fuse::Fuselage`: fuselage object.
       - `fuse_tank::fuselage_tank`: fuselage tank object.
-      - `t_cond::Vector{Float64}`: Vector with tank insulation layer thickness. Provided separately from fuse_tank as it changes during 
+      - `t_cond::Vector{Float64}`: Vector with tank insulation layer thickness. Provided separately from fuse_tank as it changes during
       non-linear solve process.
 
       **Outputs:**
-      - `Wtank_total::Float64`: Total tank weight including fuel (N).
-      - `l_cyl::Float64`: Length of the cylindrical portion (m).
-      - `tskin::Float64`: Thickness of the tank's skin (m).
-      - `Rtank_outer::Float64`: Outer radius of the tank (m).
-      - `Vfuel::Float64`: Volume of fuel (m^3).
-      - `Wtank::Float64`: Weight of the empty tank (N).
-      - `Wfuel_tot::Float64`: Total weight of fuel (N).
-      - `Winsul_sum::Float64`: Sum of insulation weight (N).
-      - `t_head::Float64`: Thickness of the tank's head (m).
-      - `Whead::Float64`: Weight of the tank's head (N).
-      - `Wcyl::Float64`: Weight of the tank's cylinder (N).
-      - `Wstiff::Float64`: Total stiffener weight (N)
-      - `Winsul::Float64`: Weight of insulation (N).
-      - `Shead_insul::Float64`: Insulated surface area of the head (m^2).
-      - `l_tank::Float64`: Total length of the tank (m).
+      - `::InnerTankGeometry`: inner tank geometry and weights.
 
 NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in OneNote)
 
@@ -149,9 +155,35 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       Wtank = (Wtank + Winsul_sum)
       l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
 
-return  Wtank, Winsul_sum, Vfuel, Shead_insul, Rtank_outer, l_tank, l_cyl
+return InnerTankGeometry(Wtank, Winsul_sum, Vfuel, Shead_insul, Rtank_outer, l_tank, l_cyl)
 end
 
+
+"""
+Geometric and weight outputs of the outer cryogenic tank (vacuum-jacket vessel) sizing.
+"""
+struct OuterTankGeometry
+      """Total weight of outer vessel (N)"""
+      Wtank::Float64
+      """Weight of cylindrical portion (N)"""
+      Wcyl::Float64
+      """Weight of one elliptical head (N)"""
+      Whead::Float64
+      """Total stiffener weight (N)"""
+      Wstiff::Float64
+      """Total surface area of outer vessel (m^2)"""
+      Souter::Float64
+      """Surface area of one outer-vessel head (m^2)"""
+      Shead::Float64
+      """Surface area of cylindrical portion (m^2)"""
+      Scyl::Float64
+      """Wall thickness of cylindrical portion (m)"""
+      t_cyl::Float64
+      """Wall thickness of tank head (m)"""
+      t_head::Float64
+      """Total length of the outer vessel (m)"""
+      l_outer::Float64
+end
 
 """
     size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
@@ -166,16 +198,7 @@ This function sizes the outer vessel and calculates the weights of its component
     - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
 
     **Outputs:**
-    - `Wtank::Float64`: total weight of outer vessel (N).
-    - `Wcyl::Float64`: weight of cylindrical portion of outer vessel (N).
-    - `Whead::Float64`: weight of one elliptical outer-tank head (N).
-    - `Wstiff::Float64`: total weight of stiffener material (N).
-    - `S_outer::Float64`: surface area of outer vessel (m^2).
-    - `Shead::Float64`: surface area of one outer vessel head (m^2).
-    - `Scyl::Float64`: surface area of cylindrical portion of tank (m^2).
-    - `t_cyl::Float64`: wall thickness of cylindrical portion of tank (m).
-    - `t_head::Float64`: wall thickness of tank head (m). 
-    - `l_tank::Float64`: Total length of the tank (m).
+    - `::OuterTankGeometry`: outer tank geometry and weights.
 """
 function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
       #---------------------------------
@@ -262,7 +285,7 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
 
       l_outer = l_cyl + Do / ARtank + 2*t_head #Total length of outer vessel
 
-      return Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer
+      return OuterTankGeometry(Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer)
 end
 
 """
@@ -413,7 +436,7 @@ This function optimizes the number of intermediate stiffener rings to minimize t
 """
 function optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64)
 
-      obj(x, grad) = size_outer_tank(fuse, fuse_tank, Winnertank, l_cyl, x[1])[1] #Minimize Wtank
+      obj(x, grad) = size_outer_tank(fuse, fuse_tank, Winnertank, l_cyl, x[1]).Wtank #Minimize Wtank
 
       initial_x = [fuse_tank.Ninterm]
 
