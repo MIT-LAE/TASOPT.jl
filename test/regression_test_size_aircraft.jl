@@ -32,7 +32,7 @@ end
 #Simple function to call fly_mission!() and test on- and off-design performance
 function test_ac_off_design(ac, PFEI, Wfuel, WTO)
     @testset "Off-design" begin
-        TASOPT.fly_mission!(ac, 2)
+        TASOPT.fly_mission!(ac, 2; printTO=false)
 
         @test ac.parm[imPFEI, 2] ≈ PFEI
         @test ac.parm[imWfuel, 2] ≈ Wfuel

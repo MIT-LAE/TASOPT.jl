@@ -1,3 +1,5 @@
+using Random
+
 @testset "structural components" begin
 
   # Fuselage
@@ -235,12 +237,13 @@ vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ
 vtail.inboard.co = vtail.layout.root_chord 
 #size_wing_section
 sigfac = 1.0
-test_tbwebs, test_tbcaps, test_Abcaps, test_Abwebs = 0.001541944450552547, 0.006480816113833214, 0.006480816113833214, 0.00029281525115992866
-tbwebs, tbcaps, Abcaps, Abwebs = TASOPT.structures.size_wing_section!(wing.outboard, wing.sweep, sigfac)
-@test test_tbwebs ≈ tbwebs
-@test test_tbcaps ≈ tbcaps
-@test test_Abcaps ≈ Abcaps
-@test test_Abwebs ≈ Abwebs
+sd = TASOPT.structures.size_wing_section!(wing.outboard, wing.sweep, sigfac)
+@test sd isa TASOPT.structures.WingSectionDimensions
+@test sd.tbweb ≈ 0.001541944450552547
+@test sd.tbcap ≈ 0.006480816113833214
+@test sd.Abweb ≈ 0.00029281525115992866
+@test sd.Abcap ≈ 0.006480816113833214
+@test_throws MethodError begin; a, b, c, d = sd; end
 #end size_wing_section!
 
 #size_cap
@@ -506,4 +509,42 @@ TASOPT.size_landing_gear!(ac)
 
 @test ac.landing_gear.main_gear.weight.W ≈ 31787.399917196755
 @test ac.landing_gear.nose_gear.weight.W ≈ 4854.384534273811
+
+@testset "size_wing_section! property tests" begin
+    # Re-use wing.outboard from the setup above which already has max_shear_load
+    # and moment set. size_wing_section! only side-effects EI and GJ, so calling it
+    # multiple times with different sigfac is safe (loads don't change).
+    rng = MersenneTwister(42)
+
+    @testset "Web shear: t_web·c_perp²·sigfac is invariant" begin
+        # t_web = V / (2·h_web·τmax·c_perp²), so
+        # t_web · c_perp² · sigfac = V / (2·h_web·τmax_material) = const.
+        for _ in 1:10
+            sf1 = 0.5 + 1.5 * rand(rng)
+            sf2 = 0.5 + 1.5 * rand(rng)
+            sw1 = 5.0 + 55.0 * rand(rng)
+            sw2 = 5.0 + 55.0 * rand(rng)
+            s1 = TASOPT.structures.size_wing_section!(wing.outboard, sw1, sf1)
+            s2 = TASOPT.structures.size_wing_section!(wing.outboard, sw2, sf2)
+            @test s1.tbweb * cosd(sw1)^2 * sf1 ≈ s2.tbweb * cosd(sw2)^2 * sf2 rtol = 1e-12
+        end
+    end
+
+    @testset "Cap bending: t_cap is monotone increasing with sweep angle" begin
+        # con (in calc_cap_thickness) ∝ M / (σmax · cosΛ⁴), so as sweep increases cosΛ shrinks
+        # and con grows. So the cap must be thicker to resist the same bending moment
+        # on the shorter effective structural chord. A more swept wing always needs
+        # a heavier spar cap for equal loads.
+        for _ in 1:10
+            sw_lo = 5.0  + 25.0 * rand(rng)
+            sw_hi = sw_lo + 5.0 + 10.0 * rand(rng)
+            sf    = 0.5  +  1.5 * rand(rng)
+            s_lo = TASOPT.structures.size_wing_section!(wing.outboard, sw_lo, sf)
+            s_hi = TASOPT.structures.size_wing_section!(wing.outboard, sw_hi, sf)
+            @test s_hi.tbcap > s_lo.tbcap
+            @test s_hi.Abcap > s_lo.Abcap
+        end
+    end
+end
+
 end

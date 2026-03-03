@@ -69,9 +69,14 @@ function fuselage_drag!(fuse, parm, para, ip)
       xblend2 = fuse.layout.x_end_cylinder
 
       Mach  = para[iaMach, ip]
-      altkm = para[iaalt, ip]/1000.0
+      alt_m = para[iaalt, ip]
       ΔTatmos = parm[imDeltaTatm] #atmosphere temperature difference
-      T0,p0,rho0,a0,mu0 = atmos(altkm, ΔTatmos) #get atmospheric parameters
+      atmos_state = atmos(alt_m, ΔTatmos) #get atmospheric parameters
+      T0 = atmos_state.T
+      p0 = atmos_state.p
+      rho0 = atmos_state.ρ
+      a0 = atmos_state.a
+      mu0 = atmos_state.μ
     
       Reunit = Mach*a0 * rho0/mu0
 

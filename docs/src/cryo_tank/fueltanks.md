@@ -187,6 +187,8 @@ However, alternate fuels such as cryogenic liquid hydrogen require additional st
     In the case of the outer vessel (when there is a vacuum layer), there is a tradeoff between stiffener mass and skin thickness, as adding more stiffeners results in a thinner skin. The optimal number of stiffeners that minizimizes the overall outer vessel mass is found using NLopt.jl with a Nelder-Mead algorithm.  
     
 ```@docs
+CryoTank.InnerTankGeometry
+CryoTank.OuterTankGeometry
 CryoTank.tanksize!
 CryoTank.res_MLI_thick
 CryoTank.size_inner_tank

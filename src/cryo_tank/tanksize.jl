@@ -87,12 +87,18 @@ function tanksize!(ac, imission::Int64 = 1)
         thickness_insul = sum(t_cond)
         
         #Evaluate tank weight
-        Winnertank, Winsul_sum, Vfuel, Shead_insul, Rinnertank, l_inner, lcyl1 = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        inner_tank        = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        Winnertank = inner_tank.Wtank
+        Winsul_sum = inner_tank.Winsul_sum
+        Vfuel      = inner_tank.Vfuel
+        Rinnertank = inner_tank.Rtank_outer
+        l_inner    = inner_tank.l_tank
+        lcyl1      = inner_tank.l_cyl
         #Store in fuse_tank
-        fuse_tank.Rinnertank = Rinnertank 
-        fuse_tank.l_inner = l_inner 
-        fuse_tank.l_cyl_inner = lcyl1 
-        fuse_tank.Shead_insul = Shead_insul 
+        fuse_tank.Rinnertank  = Rinnertank
+        fuse_tank.l_inner     = l_inner
+        fuse_tank.l_cyl_inner = lcyl1
+        fuse_tank.Shead_insul = inner_tank.Shead_insul
 
         has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
@@ -105,11 +111,10 @@ function tanksize!(ac, imission::Int64 = 1)
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next _size_aircraft! iteration
 
-                Wtank2, Wcyl2, Whead2, Wstiff2, Souter, Shead2, Scyl2, 
-                t_cyl2, t_head2, l_outer = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
+                outer_tank = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
 
-                Wtank = Winnertank + Wtank2
-                ltank = l_outer #If there is an outer vessel, the total length is the length of this tank
+                Wtank = Winnertank + outer_tank.Wtank
+                ltank = outer_tank.l_outer #If there is an outer vessel, the total length is the length of this tank
                 Rtank = Routertank
 
         else
@@ -194,9 +199,9 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
                 t_all[ind] = t_all[ind] + Δt
         end
 
-        Wtank, Winsul_sum, Vfuel, Shead, r_tank, l_tank, l_cyl = size_inner_tank(fuse, fuse_tank, t_all)
+        inner_tank = size_inner_tank(fuse, fuse_tank, t_all)
 
-        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600  
+        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600
         # Boil-off rate equals the heat rate divided by heat of vaporization
         Q_net = mdot_boiloff * h_v  # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
         Q = Q_net / qfac
@@ -204,10 +209,10 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         #Assemble struct with parameters for residual_Q
         p = thermal_params{typeof(fuse.layout.cross_section)}()
         p.Q = Q #Store heat rate as it is known
-        p.l_cyl = l_cyl
-        p.l_tank = l_tank
-        p.r_tank = r_tank
-        p.Shead = Shead
+        p.l_cyl = inner_tank.l_cyl
+        p.l_tank = inner_tank.l_tank
+        p.r_tank = inner_tank.Rtank_outer
+        p.Shead = inner_tank.Shead_insul
         p.t_cond = t_all
         p.material = fuse_tank.material_insul
         p.Tfuel = Tfuel

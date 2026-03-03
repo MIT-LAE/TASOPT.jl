@@ -165,7 +165,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                         println("     pif pilc =", pif, pilc)
                         println("        Tt4 F =", Tt4, Fe)
                         println("ncrow =", ncrow)
-                        println("        altkm =", para[iaalt] / 1000.0)
+                        println("        alt_m =", para[iaalt])
                 end
 
                 epsrow, Tmrow,

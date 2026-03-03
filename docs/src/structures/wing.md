@@ -15,6 +15,8 @@ Markdown.parse_file(joinpath("../..", "src/structures","theory_wingstruct.md"))
 
 ```@docs
 
+structures.WingSectionDimensions
+
 structures.size_wing_section!(section, sweep, sigfac)
 
 structures.wing_weights!(wing, po, gammat, gammas, 
