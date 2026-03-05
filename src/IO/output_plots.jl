@@ -1375,11 +1375,11 @@ end
 
 import .aerodynamics: plot_airf
 """
-    plot_airf(ac::TASOPT.aircraft)
+    plot_airf(ac::TASOPT.aircraft, iMach::Int=-1)
 
-Convenience for `plot_airf(airf::airfoil)`
+Convenience for `plot_airf(airf::airfoil, iMach::Int=-1)`
 """
-function plot_airf(ac::aircraft)
+function plot_airf(ac::aircraft, iMach=-1; use_interp=false)
     airfoil = ac.wing.airsection
-    return plot_airf(airfoil)
+    return plot_airf(airfoil, iMach, use_interp=use_interp)
 end
