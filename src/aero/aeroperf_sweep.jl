@@ -111,7 +111,7 @@ function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise
         Mach_perp = Mach*cosd(sweep)  # Perpendicular Mach number
         airf = ac.wing.airsection
 
-        cdfss, cdpss, cdwss, _ = airfun(results.clpss[i], tau, Mach_perp, airf)
+        cdfss, cdpss, cdwss, cms, alphas = airfun(results.clpss[i], tau, Mach_perp, airf)
         results.cdfss[i] = cdfss #skin friction
         results.cdpss[i] = cdpss #pressure
         results.cdwss[i] = cdwss #wave (= 0, with models at time of writing)

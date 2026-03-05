@@ -60,7 +60,7 @@ $TYPEDFIELDS
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 
     """Airfoil data"""
-    airsection::air = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C.air"))
+    airsection::air = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C_airfoil.csv"))
 
     """Inboard Wing Section (at wing root)"""
     inboard::WingSection = WingSection() # at wing root 

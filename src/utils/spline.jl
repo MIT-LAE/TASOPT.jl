@@ -16,10 +16,51 @@ use SEVAL and/or DEVAL.
 
   XS       dX/dS array                (calculated) 
     
-                                                      
+Handles NaN values by:
+- Computing derivatives only for valid (non-NaN) segments
+- Setting derivatives to NaN where data is NaN
+- Errors if there are internal holes (NaN surrounded by valid data)
 """
 function spline(S, X)
- 
+# Pre-processing for NaNs (i.e., missing or infeasible regions)
+N = length(S)
+nan_mask = isnan.(X) # Find NaN locations
+
+# If any NaNs in X
+if any(nan_mask)
+    # Find indices for valid data
+    valid_indices = findall(.!nan_mask)
+
+    # if all NaN, return all NaN derivatives
+    if isempty(valid_indices)
+        return fill(NaN, N)
+    end
+    
+    first_valid = first(valid_indices)
+    last_valid = last(valid_indices)
+    
+    # Check for internal holes (NaN between valid data)
+    if last_valid - first_valid + 1 != length(valid_indices)
+        error("NaN holes detected in airfoil: cannot compute spline with internal missing values. " *
+                "Valid indices: $(first_valid):$(last_valid), but only $(length(valid_indices)) valid points found.")
+    end
+    
+    # Extract valid segment
+    S_valid = S[first_valid:last_valid]
+    X_valid = X[first_valid:last_valid]
+    
+    # Recursively call spline on valid segment
+    XS_valid = spline(S_valid, X_valid)
+    
+    # Initialize output with NaNs
+    XS = fill(NaN, N)
+    
+    # Insert computed derivatives into valid positions
+    XS[first_valid:last_valid] = XS_valid
+    
+    return XS
+
+else #no NaNs
 # Create the N x N system to solve for spline parameters --> dX/dS
     N = length(S)
     B = zeros(N-1) # sub-diagonal
@@ -64,6 +105,7 @@ function spline(S, X)
     XS = SYS \ D    
     # @show XS
     return XS
+end #if-else
 end # SPLINE
 
 

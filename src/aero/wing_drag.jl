@@ -112,7 +112,7 @@ function wing_profiledrag_direct(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
+            cdf1, cdp1, cdwbar, cm, alpha = airfun(clp, toc, Mperp, wing.airsection)
             #println(cdf1, " ", cdp1, " ", cm)
 
             Refac = (Rec / ARe)^aRexp
@@ -144,7 +144,7 @@ function wing_profiledrag_direct(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
+            cdf1, cdp1, cdwbar, cm, alpha = airfun(clp, toc, Mperp, wing.airsection)
 
             Refac = (Rec / ARe)^aRexp
             cdf = cdf1 * Refac * fexcd * (1.0 + fdu)^3
