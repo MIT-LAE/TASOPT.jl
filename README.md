@@ -4,6 +4,8 @@
 
 Transport Aircraft and the Environment System OPTimization (TASOPT) implemented in Julia. Originally based on Mark Drela's [FORTRAN code](https://web.mit.edu/drela/Public/web/tasopt/) of the same name.
 
+The [public API](https://mit-lae.github.io/TASOPT.jl/stable/misc/public_api/) lists the semver-stable symbols available to users from v3.0 onwards.
+
 ## Getting started
 
 ### Simple install

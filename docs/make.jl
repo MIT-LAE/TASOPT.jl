@@ -60,6 +60,7 @@ makedocs(
         ],
 
     "Miscellaneous" => Any[
+        "misc/public_api.md",    
         "misc/dreladocs.md",
         # "misc/misc.md",
         "misc/fordevs.md"
