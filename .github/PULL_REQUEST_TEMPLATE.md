@@ -45,5 +45,3 @@ Closes #
 - [ ] All tests are passing
 - [ ] AI Statement is included
 - [ ] The pull request is ready for review
-
-Checklist and Template based on [Cantera's PR template](https://github.com/Cantera/cantera/tree/main)
