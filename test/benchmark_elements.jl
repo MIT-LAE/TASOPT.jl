@@ -187,7 +187,7 @@ function benchmark_drag()
     wc    = zeros(Float64, idim)
     vnc   = zeros(Float64, idim)
 
-    airfoil_section = aerodynamics.airtable(joinpath(TASOPT.__TASOPTroot__,"airfoil_data/C.air"));
+    airfoil_section = aerodynamics.airtable(joinpath(TASOPT.__TASOPTroot__,"airfoil_data/C_air.csv"));
 
     clp =  0.45     
     toc  = 0.126   

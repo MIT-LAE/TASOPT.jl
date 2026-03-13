@@ -4,7 +4,7 @@
             Reco, aRexp, kSuns, fexcd,
             fduo, fdus, fdut)
 
-Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
+Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C_airfoil.csv`] and accessed by [`airfun`], [`airtable`]).
 Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. Formerly, `surfcd2()`.
 
 !!! details "🔃 Inputs and Outputs"

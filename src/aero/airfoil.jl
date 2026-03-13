@@ -10,19 +10,19 @@ Overloads Base.show to print a summary of the `airfoil` model.
 # Fields:
 - `Ma::AbstractVector{Float64}` :  Mach nos.
 - `cl::AbstractVector{Float64}` :  Sectional lift coefficients.
-- `τ::AbstractVector{Float64}` :  Thickness-to-chord ratios.
+- `toc::AbstractVector{Float64}` :  Thickness-to-chord ratios.
 - `Re::Float64` :  Reynolds number.
 
 - `A::AbstractArray{Float64}`: Multi-dimensional array of aero performance data.
 
 Various views of the data:
 - `A_M::AbstractArray{Float64}`:
-- `A_τ::AbstractArray{Float64}`:
+- `A_toc::AbstractArray{Float64}`:
 - `A_cl::AbstractArray{Float64}`:
-- `A_M_τ::AbstractArray{Float64}`:
+- `A_M_toc::AbstractArray{Float64}`:
 - `A_M_cl::AbstractArray{Float64}`:
-- `A_cl_τ::AbstractArray{Float64}`:
-- `A_M_cl_τ::AbstractArray{Float64}`:
+- `A_cl_toc::AbstractArray{Float64}`:
+- `A_M_cl_toc::AbstractArray{Float64}`:
 
 See also [`airfun`](@ref) and [`airtable`](@ref).
 """
@@ -31,18 +31,18 @@ struct airfoil{T<:AbstractFloat,
         Ar<:AbstractArray{Float64}} 
     Ma::V
     cl::V
-    τ::V
+    toc::V
     Re::T # Data assumed for a single Re
   
     A::Ar # Airfoil aero data 
     
     A_M::Ar
-    A_τ::Ar
+    A_toc::Ar
     A_cl::Ar
-    A_M_τ::Ar
+    A_M_toc::Ar
     A_M_cl::Ar
-    A_cl_τ::Ar
-    A_M_cl_τ::Ar
+    A_cl_toc::Ar
+    A_M_cl_toc::Ar
 end 
 
 function Base.show(io::IO, airf::airfoil)
@@ -51,15 +51,17 @@ function Base.show(io::IO, airf::airfoil)
     "Re = ",airf.Re,"\n",
     "Ma = (", airf.Ma[1],", ", airf.Ma[end],")\n",
     "cl = (", airf.cl[1], ", ",airf.cl[end],")\n",
-    "τ  = (", airf.τ[1], ", ",airf.τ[end],")\n"
+    "toc  = (", airf.toc[1], ", ",airf.toc[end],")\n"
     )
 end
 
 using Plots
 """
-    plot_airf(airf::airfoil, iMach::Int=-1)
+    plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false, 
+                    cl_range=range(minimum(airf.cl), maximum(airf.cl), length=100), 
+                    toc_vals=airf.toc)
 
-Plots aerodynamic characteristics of the airfoil database, including its drag and pitching moment curves across lift coefficients and airfoil thickness-to-chord ratios (`τ`).  
+Plots aerodynamic characteristics of the airfoil database, including its drag and pitching moment curves across lift coefficients and airfoil thickness-to-chord ratios (`toc` = \$\\frac{t}{c}\$).  
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -68,9 +70,9 @@ Plots aerodynamic characteristics of the airfoil database, including its drag an
 
     **Outputs:**
     - Returns a `Plots.Plot` object with three panels:
-        - **Top subplot:** `cl` vs `cd` (drag polar for multiple `τ`).
-        - **Bottom subplot:** `cl` vs `cm` (moment curve for multiple `τ`).
-        - **Side panel:** Legend indicating the thickness-to-chord ratio values (`τ`).
+        - **Top subplot:** `cl` vs `cd` (drag polar for multiple `toc`).
+        - **Bottom subplot:** `cl` vs `cm` (moment curve for multiple `toc`).
+        - **Side panel:** Legend indicating the thickness-to-chord ratio values (`toc`).
 
     Note: can also be called with `iMach::Colon` to generate plots for all Mach numbers in the database, or with an aircraft object to plot its wing airfoil data directly.
 
@@ -85,7 +87,7 @@ Plots aerodynamic characteristics of the airfoil database, including its drag an
 """
 function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false, 
                     cl_range=range(minimum(airf.cl), maximum(airf.cl), length=100), 
-                    tau_vals=airf.τ)
+                    toc_vals=airf.toc)
     #mach number for plotting
     if iMach == -1 
         iMach = length(airf.Ma) 
@@ -97,14 +99,14 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
     if use_interp
         # Pre-allocate arrays for refined data
         n_cl = length(cl_range)
-        n_tau = length(tau_vals)
-        cd_total = zeros(n_cl, n_tau)
-        cm_vals = zeros(n_cl, n_tau)
+        n_toc = length(toc_vals)
+        cd_total = zeros(n_cl, n_toc)
+        cm_vals = zeros(n_cl, n_toc)
 
-        # Evaluate airfun for each combination of cl and tau
-        for (j, tau) in enumerate(tau_vals)
+        # Evaluate airfun for each combination of cl and toc
+        for (j, toc) in enumerate(toc_vals)
             for (i, cl) in enumerate(cl_range)
-                cdf, cdp, cdw, cm, alpha = airfun(cl, tau, mach, airf)
+                cdf, cdp, cdw, cm, alpha = airfun(cl, toc, mach, airf)
                 cd_total[i, j] = cdf + cdp # Total drag (friction + pressure)
                 cm_vals[i, j] = cm
             end
@@ -122,7 +124,7 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
     p1 = plot(
         cls,
         cds,
-        label = string.(airf.τ'),
+        label = string.(airf.toc'),
         # xlabel = "\$c_l\$",
         ylabel = "\$c_d\$",
         legend=:false,
@@ -132,7 +134,7 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
     p2 = plot(
         cls,
         cms,
-        label = "τ = ".*string.(airf.τ'),
+        label = "toc = ".*string.(airf.toc'),
         xlabel = "\$c_l\$",
         ylabel = "\$c_m\$",
         grid = true,
@@ -142,7 +144,7 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
     # If interp, overlay original data points as scatter
     if use_interp
         cl_scatter = airf.cl
-        for (j, tau) in enumerate(airf.τ)
+        for (j, toc) in enumerate(airf.toc)
             cd_scatter = airf.A[iMach, :, j, 1]
             cm_scatter = airf.A[iMach, :, j, 5]
             scatter!(p1, cl_scatter, cd_scatter; label="", marker=:circle, ms=3, color=j)
@@ -151,9 +153,9 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
     end
 
     #legend
-    labels = string.(airf.τ')
-    p_legend = plot((1:length(airf.τ))', labels = labels,
-        legendtitle = "Thickness-to-chord (τ)",
+    labels = string.(airf.toc')
+    p_legend = plot((1:length(airf.toc))', labels = labels,
+        legendtitle = "Thickness-to-chord (toc)",
         legend_title_font_pointsize = 7,
         legendfontsize=7, legend=:outertop, legendcolumns=1,
         fg_color_legend = nothing, frame=:none)

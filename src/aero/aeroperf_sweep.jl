@@ -105,13 +105,13 @@ function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise
         results.clpts[i] = ac.para[iaclpt, ip, imission]
 
         #get airfoil section drag via airfun (only for spanbreak section)
-        tau = ac.wing.outboard.cross_section.thickness_to_chord
+        toc = ac.wing.outboard.cross_section.thickness_to_chord
         sweep = ac.wing.sweep
         Mach = ac.para[iaMach,ip,imission]
         Mach_perp = Mach*cosd(sweep)  # Perpendicular Mach number
         airf = ac.wing.airsection
 
-        cdfss, cdpss, cdwss, cms, alphas = airfun(results.clpss[i], tau, Mach_perp, airf)
+        cdfss, cdpss, cdwss, cms, alphas = airfun(results.clpss[i], toc, Mach_perp, airf)
         results.cdfss[i] = cdfss #skin friction
         results.cdpss[i] = cdpss #pressure
         results.cdwss[i] = cdwss #wave (= 0, with models at time of writing)
