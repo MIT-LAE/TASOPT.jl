@@ -17,10 +17,10 @@ fuse.floor.weight.W = 13415.79649570315450546332
 fuse.floor_W_per_area = 60.00000000000000000000 
 fuse.cone.weight = Weight(W = 5771.54787313914584956365 ) 
 fuse.cone.weight.r = [ 33.37559999999999860165 ,0.0,0.0] 
-fuse.bendingmaterial_h.weight = Weight(W = 14601.36970587086398154497 ) 
-fuse.bendingmaterial_v.weight = Weight(W = 7564.73678496465799980797 ) 
-fuse.weight = 198619.75430121767567470670 
-fuse.moment = 3632749.60595998726785182953 
+fuse.bendingmaterial_h.weight = Weight(W = 14601.36949021355940199643 )
+fuse.bendingmaterial_v.weight = Weight(W = 7564.73665338828686799087 )
+fuse.weight = 198619.75390030644484795630
+fuse.moment = 3632749.59793335432186722755
 fuse.volume = 422.77743761859198912134 
 fuse.weight_frac_stringers = 0.34999999999999997780 
 fuse.weight_frac_frame = 0.25000000000000000000 
@@ -35,8 +35,8 @@ fuse.layout.x_end_cylinder = 29.56559999999999988063
 fuse.layout.x_pressure_shell_fwd = 5.18160000000000042775 
 fuse.layout.x_pressure_shell_aft = 31.08960000000000079012 
 fuse.layout.x_cone_end = 35.66159999999999996589 
-fuse.bendingmaterial_h.weight.r = [ 31.91057796046929695422 ,0.0,0.0] 
-fuse.bendingmaterial_v.weight.r = [ 31.15470082523115635809 ,0.0,0.0] 
+fuse.bendingmaterial_h.weight.r = [ 18.43340914444444503338 ,0.0,0.0]
+fuse.bendingmaterial_v.weight.r = [ 22.67383969414245825651 ,0.0,0.0]
 fuse.layout.cross_section.radius = 1.95579999999999998295 
 fuse.layout.cross_section.bubble_lower_downward_shift = 0.38100000000000000533 
 fuse.layout.floor_depth = 0.12700000000000000178 
@@ -97,9 +97,9 @@ wing.inboard.webs.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
 wing.outboard.webs.material = TASOPT.materials.StructuralAlloy("TASOPT-Al",
         max_avg_stress = 1.1,
         safety_factor = 1.5)
-wing.weight = 129917.20106136800313834101 
-wing.strut.weight = 0.00000000000000000000 
-wing.dxW = 305257.72239777888171374798 
+wing.weight = 129917.20113552740076556802
+wing.strut.weight = 0.00000000000000000000
+wing.dxW = 305257.72020009614061564207
 wing.strut.dxW = 0.00000000000000000000 
 wing.inboard.weight = 51358.85133881964429747313 
 wing.outboard.weight = 72612.79233481964911334217 
@@ -153,18 +153,18 @@ wing.fuse_lift_carryover = -0.29999999999999998890
 wing.tip_lift_loss = -0.05000000000000000278 
 wing.inboard.co = 6.27043612203654898707 
 wing.outboard.co = 4.38930528542558384686 
-wing.mean_aero_chord = 4.28293685009571234446 
+wing.mean_aero_chord = 4.28293683544948233788
 # ------------------------------
 # Htail
 # ------------------------------
 htail = ac_test.htail
-htail.weight = 14671.96541194806377461646 
-htail.dxW = 14449.46821474003445473500 
+htail.weight = 14671.96531497915020736400
+htail.dxW = 14449.46800209382308821660
 htail.weight_fraction_added = 0.29999999999999998890 
 htail.layout.box_x = 34.89959999999999951115 
 htail.layout.z = 0.00000000000000000000 
 htail.downwash_factor = 0.59999999999999997780 
-htail.CL_max_fwd_CG = -0.10395449962233449526 
+htail.CL_max_fwd_CG = -0.10395447479192611306
 htail.CL_max = 2.00000000000000000000 
 htail.SM_min = 0.05000000000000000278 
 htail.layout.x = 36.22244035284207086534 
@@ -204,8 +204,8 @@ htail.inboard.co = htail.layout.root_chord
 # Vtail
 # ------------------------------
 vtail = ac_test.vtail
-vtail.weight = 9821.75676941576602985151 
-vtail.dxW = 12334.00762453066272428259 
+vtail.weight = 9821.75670798239116265904
+vtail.dxW = 12334.00746086239814758301
 vtail.weight_fraction_added = 0.40000000000000002220 
 vtail.layout.box_x = 33.52799999999999869260 
 vtail.CL_max = 2.60000000000000008882 
