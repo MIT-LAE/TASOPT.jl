@@ -550,4 +550,66 @@ TASOPT.size_landing_gear!(ac)
     end
 end
 
+@testset "fusew! property-based tests" begin
+    # Helper: run fusew! on a fresh deep copy of fuselage, overriding specific load params.
+    # All geometry/material fields come from the already-run `fuselage` base state all the way on the top.
+    function call_fusew(; Lhmax_=Lhmax, Lvmax_=Lvmax,
+                          Whtail_=Whtail, Wvtail_=Wvtail,
+                          xwbox_=xwbox)
+        fuse_ = deepcopy(fuselage)
+        TASOPT.fusew!(fuse_, Nland, Wpaymax, Wengtail,
+                      nftanks, Waftfuel, Wftank_single, ltank, xftank_fuse, tank_placement,
+                      Δp, Whtail_, Wvtail_, rMh, rMv, Lhmax_, Lvmax_,
+                      bv, λv, nvtail, xhtail, xvtail, xwing, xwbox_, cbox, xeng)
+        return fuse_
+    end
+
+    rng = MersenneTwister(42)
+
+    @testset "Larger vertical tail load requires more vertical bending material" begin
+        # The vertical bending material is sized by the vertical tail torsion Qv ∝ Lvmax.
+        for _ in 1:10
+            Lv_lo = Lvmax * (0.3 + rand(rng))          # ∈ [0.3, 1.3] × baseline
+            Lv_hi = Lv_lo * (1.2 + rand(rng))          # ∈ [1.2, 2.2] × Lv_lo
+            f_lo = call_fusew(Lvmax_=Lv_lo)
+            f_hi = call_fusew(Lvmax_=Lv_hi)
+            @test f_hi.bendingmaterial_v.weight.W ≥ f_lo.bendingmaterial_v.weight.W
+        end
+    end
+
+    @testset "Larger horizontal tail load requires more horizontal bending material" begin
+        for _ in 1:10
+            Lh_lo = Lhmax + 1e6 * rand(rng)
+            Lh_hi = Lh_lo * (1.5 + rand(rng))
+            f_lo = call_fusew(Lhmax_=Lh_lo)
+            f_hi = call_fusew(Lhmax_=Lh_hi)
+            @test f_hi.bendingmaterial_h.weight.W ≥ f_lo.bendingmaterial_h.weight.W
+        end
+    end
+
+    @testset "Bending material never reduces fuselage stiffness" begin
+        # Physics: the sizing routine can only add material to the shell; it never removes it.
+        # Therefore EI_total ≥ EI_shell for both bending axes across all load combinations.
+        for _ in 1:10
+            Lh = 1e5 + 2e6 * rand(rng)
+            Lv = 1e5 + 2e6 * rand(rng)
+            f = call_fusew(Lhmax_=Lh, Lvmax_=Lv)
+            @test f.shell.EIh + f.bendingmaterial_h.EIh ≥ f.shell.EIh
+            @test f.shell.EIv + f.bendingmaterial_h.EIv ≥ f.shell.EIv
+        end
+    end
+
+    @testset "Wing-box symmetry preserves horizontal bending weight and stiffness" begin
+        for _ in 1:10
+            δ = 0.5 + 3.0 * rand(rng)
+            xwbox_fwd = xwing - δ  # dxwing = +δ
+            xwbox_aft = xwing + δ  # dxwing = -δ  (mirror image)
+            f_fwd = call_fusew(xwbox_=xwbox_fwd)
+            f_aft = call_fusew(xwbox_=xwbox_aft)
+            @test f_fwd.bendingmaterial_h.weight.W ≈ f_aft.bendingmaterial_h.weight.W rtol=1e-12
+            @test f_fwd.bendingmaterial_h.EIh       ≈ f_aft.bendingmaterial_h.EIh       rtol=1e-12
+        end
+    end
+end
+
 end
