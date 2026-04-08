@@ -10,8 +10,8 @@
         @test airf.Re == 2.0e7
         @test airf.cl[1] == 0.4
         @test airf.cl[end] == 0.9
-        @test airf.τ[1] == 0.09
-        @test airf.τ[end] == 0.145
+        @test airf.toc[1] == 0.09
+        @test airf.toc[end] == 0.145
         @test airf.Ma[1] == 0.0
         @test airf.Ma[end] == 0.81
         @test all(airf.A[1, 1, 1, :] .== [0.537000E-02, 0.105000E-02, -0.114800])
@@ -53,6 +53,18 @@
         cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(0.0, 0.0, 0.8, airf)
 
         @test cdp > 0.0
+
+        @testset "airfoil_cl_limits" begin
+            # At low Mach (0.0) all cl entries are valid → full grid range expected
+            cl_min, cl_max = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.0, 0.12)
+            @test cl_min == airf.cl[1]
+            @test cl_max == airf.cl[end]
+
+            # At high Mach + max toc, NaN entries reduce the upper limit to known values
+            cl_min_hi, cl_max_hi = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.8, 0.145)
+            @test cl_min_hi == 0.4
+            @test cl_max_hi == 0.6
+        end
 
     end # end airfun
 

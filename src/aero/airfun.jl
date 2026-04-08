@@ -1,4 +1,4 @@
-export airfun
+export airfun, airfoil_cl_limits
 const nAfun::Int = 6
 const Ai = @MMatrix zeros(2,2)
 const Ai_cl = @MMatrix zeros(2,2)
@@ -176,6 +176,37 @@ end
     end
 
     return cdf, cdp, cdw, cm, alpha
+
+"""
+    airfoil_cl_limits(airf::airfoil, Mach_perp::Float64, toc::Float64)
+
+Returns the valid `(cl_min, cl_max)` range of the airfoil database at the given
+perpendicular Mach number and thickness-to-chord ratio.
+
+Validity is determined by checking for `NaN` entries in the CD column of the data
+array `A`, which are used to mark infeasible (e.g. stalled) operating points in the
+MSES database. The bracketing Mach and toc grid cells are found with
+`searchsortedlast`; inputs outside the grid are clamped to the nearest cell so the
+function does not error on extrapolation queries.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `airf::airfoil`: Airfoil database struct (e.g. `ac.wing.airsection`).
+      - `Mach_perp::Float64`: Perpendicular Mach number (= aircraft Mach × cos(sweep)).
+      - `toc::Float64`: Thickness-to-chord ratio at the section of interest.
+
+      **Outputs:**
+      - `cl_min::Float64`: Lowest cl in the database with valid (non-NaN) data at `(Mach_perp, toc)`.
+      - `cl_max::Float64`: Highest cl in the database with valid (non-NaN) data at `(Mach_perp, toc)`.
+"""
+function airfoil_cl_limits(airf::airfoil, Mach_perp::Float64, toc::Float64)
+    i1 = clamp(searchsortedlast(airf.Ma,  Mach_perp), 1, length(airf.Ma)  - 1)
+    k1 = clamp(searchsortedlast(airf.toc, toc),       1, length(airf.toc) - 1)
+    valid = j -> !any(isnan, @view airf.A[i1:i1+1, j, k1:k1+1, 1])
+    jmin  = findfirst(valid, eachindex(airf.cl))
+    jmax  = findlast( valid, eachindex(airf.cl))
+    return (isnothing(jmin) ? airf.cl[1]   : airf.cl[jmin],
+            isnothing(jmax) ? airf.cl[end] : airf.cl[jmax])
 end
 
 

@@ -49,6 +49,7 @@ include(joinpath(__TASOPTroot__,"atmos/atmos.jl"))
 include(joinpath(__TASOPTroot__,"sizing/size_aircraft.jl"))
 include(joinpath(__TASOPTroot__,"mission/mission_iteration.jl"))
 include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
+export fly_mission!
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 export balance_aircraft!
@@ -89,7 +90,7 @@ include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_plots.jl"))
 export  stickfig, plot_details, plot_drag_breakdown, 
-        PayloadRange, DragPolar
+        PayloadRange, plot_drag_polar
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))

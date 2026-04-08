@@ -1215,7 +1215,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
 end
 
 """
-    DragPolar(ac; CL_range = 0.2:0.05:0.8, 
+    plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, 
               show_drag_components=false, show_airfoil_data=false, 
               title=nothing, legend=true, print_results=false)
 
@@ -1245,7 +1245,7 @@ It produces two side-by-side plots:
     Sample usage:
 
         ```julia
-        f = DragPolar(ac; CL_range=0.2:0.05:0.8, 
+        f = plot_drag_polar(ac; CL_range=0.2:0.05:0.8, 
                          show_drag_components=true, 
                          show_airfoil_data=false)
         display(f)
@@ -1254,7 +1254,7 @@ It produces two side-by-side plots:
 See also: [`aeroperf_sweep`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 
 """
-function DragPolar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
+function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
     ip = ipcruise1, imission = 1,
     show_drag_components=false, show_airfoil_data=false, 
     title=nothing, legend=true, print_results = false)
@@ -1265,10 +1265,16 @@ function DragPolar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
                             #defaults: rfuel=1, rpay=1, ξpay=0.5,
                             Mach=Mach,
                             print_results = print_results)
-    #get airfoil database limits
-    #TODO: un-hardcode the limits?
-    cl_lims = [0.4, 0.9]
-    #TODO: warn if Mach outside of limits?
+    #get airfoil database limits at the spanbreak section conditions to plot
+    airf      = ac.wing.airsection
+    toc_ss    = ac.wing.outboard.cross_section.thickness_to_chord
+    Mach_perp = results.Mach * cosd(ac.wing.sweep)
+
+    !(airf.Ma[1] <= Mach_perp <= airf.Ma[end]) &&
+        @warn "Mach_perp = $Mach_perp is outside airfoil database range [$(airf.Ma[1]), $(airf.Ma[end])]"
+
+    cl_min, cl_max = aerodynamics.airfoil_cl_limits(airf, Mach_perp, toc_ss)
+    cl_lims = [cl_min, cl_max]
 
 
   # == Plot CL vs CD and CL vs CDi, CDhtail, CDwing 

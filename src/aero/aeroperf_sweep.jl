@@ -38,7 +38,7 @@ This function deep-copies the input aircraft model, sets the lift coefficient, b
         results_nb = aeroperf_sweep(ac, CL_range, print_results=true)
         ```
 
-See also: [`TASOPT.DragPolar`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
+See also: [`TASOPT.plot_drag_polar`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 """
 function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
                         print_results = false)
@@ -70,6 +70,7 @@ function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise
                CDvtails = Vector{Float64}(undef, n),
                CDothers = Vector{Float64}(undef, n),
                
+               #spanbreak quantities
                clpos = Vector{Float64}(undef, n),
                clpss = Vector{Float64}(undef, n),
                clpts = Vector{Float64}(undef, n),
