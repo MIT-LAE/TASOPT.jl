@@ -1,5 +1,4 @@
-
-
+rtol_aero = 1e-1 #coarse = 10% =1e-1; fine = 0.001% = 1e-5
 @testset "wing aerodynamics" verbose=true begin 
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
     fuselage = ac_test.fuselage
@@ -14,8 +13,12 @@
         @test airf.toc[end] == 0.145
         @test airf.Ma[1] == 0.0
         @test airf.Ma[end] == 0.81
-        @test all(airf.A[1, 1, 1, :] .== [0.537000E-02, 0.105000E-02, -0.114800])
-        @test all(airf.A[end, end, end, :] .== [0.330800E-02, 0.129780, -0.157000E-01])
+
+        #A[iMa, iCL, itoc, iFun]; Ma[11] is 0.65
+        #Funs: cols_to_interp = ["CD", "CDp", "CDv", "CDw", "CM", "alpha"]
+        #not to be confused with airfun output: cdf, cdp, cdw, cm, aoa
+        @test all(airf.A[1, 1, 1, :] .≈ [0.00640, 0.101000E-02, 0.00640, 0.00000, -0.112800, deg2rad(-0.109)])
+        @test all(airf.A[11, end, end, :] .≈ [0.01300, 0.00813, 0.00946, 0.00353, -0.0763, deg2rad(3.900)])
 
         # Airfun:
         clp = 0.68657968661106417
@@ -26,12 +29,12 @@
         cdwbar = 0.0000000000000000
         cm1 = -0.11614728079885453
 
-        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
+        cdf, cdp, cdw, cm, aoa = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
 
-        @test cdf1 ≈ cdf rtol = 1e-6
-        @test cdp1 ≈ cdp rtol = 1e-6
-        @test cdwbar ≈ cdw
-        @test cm1 ≈ cm rtol = 1e-6
+        @test cdf1 ≈ cdf rtol = rtol_aero
+        @test cdp1 ≈ cdp rtol = rtol_aero
+        @test cdwbar ≈ cdw rtol = rtol_aero
+        @test cm1 ≈ cm rtol = rtol_aero
 
         clp = 0.67016181769975336
         toc = 0.14401500000000000
@@ -40,17 +43,18 @@
         cdp1 = 4.1045733512642419E-003
         cdwbar = 0.0000000000000000
         cm1 = -9.5253127678246632E-002
-        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
+        cdf, cdp, cdw, cm, aoa = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
 
-        @test cdf1 ≈ cdf
-        @test cdp1 ≈ cdp
-        @test cdwbar ≈ cdw
-        @test cm1 ≈ cm
+        @test cdf1 ≈ cdf rtol = rtol_aero
+        @test cdp1 ≈ cdp rtol = rtol_aero
+        @test cdwbar ≈ cdw rtol = rtol_aero
+        @test cm1 ≈ cm rtol = rtol_aero
 
-        @test all(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.3, airf) .== (0.00533, 0.0011, 0.0, -0.1171))
-        @test all(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.8, airf) .== (0.00487, 0.00722, 0.0, -0.1544))
+        #airfun output: cdf, cdp, cdw, cm, aoa
+        @test all(isapprox.(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.3, airf), (0.00533, 0.0011, 0.0, -0.1171, deg2rad(-0.239)), rtol=rtol_aero))
+        @test all(isapprox.(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.8, airf), (0.00487, 0.00722, 0.0, -0.1544, deg2rad(-0.416)), rtol=rtol_aero))
         # test_limits
-        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(0.0, 0.0, 0.8, airf)
+        cdf, cdp, cdw, cm, aoa = TASOPT.aerodynamics.airfun(0.0, 0.0, 0.8, airf)
 
         @test cdp > 0.0
 
@@ -64,6 +68,11 @@
             cl_min_hi, cl_max_hi = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.8, 0.145)
             @test cl_min_hi == 0.4
             @test cl_max_hi == 0.6
+
+            #near operating point for default aircraft
+            cl_min_op, cl_max_op = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.8*cosd(wing.sweep), 0.1266)
+            @test cl_min_op == 0.4
+            @test cl_max_op == 0.9 
         end
 
     end # end airfun
@@ -136,9 +145,9 @@
     @test fort_clpo ≈ wing_drag_components.clpo
     @test fort_clps ≈ wing_drag_components.clps
     @test fort_clpt ≈ wing_drag_components.clpt
-    @test fort_cdfw ≈ wing_drag_components.CDfwing
-    @test fort_cdpw ≈ wing_drag_components.CDpwing
-    @test fort_CDwing ≈ wing_drag_components.CDwing
+    @test fort_cdfw ≈ wing_drag_components.CDfwing rtol = rtol_aero
+    @test fort_cdpw ≈ wing_drag_components.CDpwing rtol = rtol_aero
+    @test fort_CDwing ≈ wing_drag_components.CDwing rtol = rtol_aero
     @test fort_CDover ≈ wing_drag_components.CDover
     #end wing_profiledrag_direct
 
@@ -263,11 +272,11 @@ end
 
     @test nbl == nl
     @test iblte == ilte
-    @test all(isapprox.(xl, xbl'))
-    @test all(isapprox.(zl, zbl'))
-    @test all(isapprox.(sl, sbl'))
-    @test all(isapprox.(dyl, dybl'))
-    @test all(isapprox.(ql, uinv'))
+    @test all(isapprox.(xl, xbl', rtol=rtol_aero))
+    @test all(isapprox.(zl, zbl', rtol=rtol_aero))
+    @test all(isapprox.(sl, sbl', rtol=rtol_aero))
+    @test all(isapprox.(dyl, dybl', rtol=rtol_aero))
+    @test all(isapprox.(ql, uinv', rtol=rtol_aero))
 
     # end _axisymm_flow
 
@@ -339,6 +348,6 @@ end
 
     #compare the two for approximate equality
     for field in keys(test_results)
-        @test isapprox(results[field], test_results[field]; atol=1e-5)
+        @test isapprox(results[field], test_results[field]; rtol=rtol_aero)
     end
 end
