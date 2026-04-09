@@ -25,7 +25,7 @@ Looks up airfoil performance data at specified conditions, as precomputed and fo
       - `cdp::Float64`: Airfoil section pressure drag.
       - `cdw::Float64`: Airfoil section wave drag (unused and assumed 0 here; placeholder left for future implementation).*
       - `cm::Float64`: Airfoil section pitching moment.
-      - `alpha::Float64`: Airfoil section angle of attack (perpendicular to leading edge).*
+      - `aoa::Float64`: Airfoil section angle of attack (perpendicular to leading edge).*
 """
 @views function airfun(cl, toc, Mach, air::airfoil)
 
@@ -157,7 +157,7 @@ end
     cdf = Aijk[1] - cdp     #friction drag
     cdw  = Aijk[4]*0          #wave drag #TODO: make nonzero after verification of csv import
     cm = Aijk[5]            #pitching moment
-    alpha = Aijk[6]         #angle of attack, aoa
+    aoa = Aijk[6]         #angle of attack, aoa
 
     #Add quadratic penalties for exceeding database cl or h/c limits
     clmax = isnothing(jupdate) ? Acl[end] : Acl[jupdate] #adjusts edge of database cl limits to account for NaNs 
@@ -175,7 +175,9 @@ end
         cdp = cdp + 25.0*(toc - Atoc[end])^2
     end
 
-    return cdf, cdp, cdw, cm, alpha
+    return cdf, cdp, cdw, cm, aoa
+end
+
 
 """
     airfoil_cl_limits(airf::airfoil, Mach_perp::Float64, toc::Float64)
@@ -200,8 +202,8 @@ function does not error on extrapolation queries.
       - `cl_max::Float64`: Highest cl in the database with valid (non-NaN) data at `(Mach_perp, toc)`.
 """
 function airfoil_cl_limits(airf::airfoil, Mach_perp::Float64, toc::Float64)
-    i1 = clamp(searchsortedlast(airf.Ma,  Mach_perp), 1, length(airf.Ma)  - 1)
-    k1 = clamp(searchsortedlast(airf.toc, toc),       1, length(airf.toc) - 1)
+    i1 = clamp(searchsortedfirst(airf.Ma,  Mach_perp) - 1, 1, length(airf.Ma)  - 1)
+    k1 = clamp(searchsortedfirst(airf.toc, toc)       - 1, 1, length(airf.toc) - 1)
     valid = j -> !any(isnan, @view airf.A[i1:i1+1, j, k1:k1+1, 1])
     jmin  = findfirst(valid, eachindex(airf.cl))
     jmax  = findlast( valid, eachindex(airf.cl))

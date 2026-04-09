@@ -95,6 +95,9 @@ $TYPEDFIELDS
     weight_frac_spoilers::Float64 = 0.0
     """Wing attachments weight fraction"""
     weight_frac_attachments::Float64 = 0.0
+    """Wing mounting angle [rad]. Set during sizing to the cruise AoA of the spanbreak section
+    in body axes, so that the aircraft AoA is zero at the design cruise condition."""
+    mounting_angle::Float64 = 0.0
 
 end
 

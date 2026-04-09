@@ -169,8 +169,9 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 
       #edge case: if CL = 0, the center of pressure is undefined, calc raises NaNs. 
       # this works around that by setting this function's CL to approx 0, eps = 1.23E-6
+      eps = 1.23e-6
       if CL == 0.0
-            CL = 1.23e-6
+            CL = eps
             #if verbose, give warning
             if Ldebug @warn("Stability calcs in `balance_aircraft!()` approximated aircraft CL = 0 as "*eps) end
       end
@@ -257,7 +258,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       #---- x locations after one of the trim changes
       #-     (xCP,xCG will be equal if moments are linear)
       # if CL is 0, xCP is undefined and CL for this function is set above to eps = 1.23e-6  
-      xCP = (CL == 1.23E-6) ? NaN : -cCM / CL 
+      xCP = (CL == eps) ? NaN : -cCM / CL 
       xCG = xW / W
 
       #---- component pitching moments

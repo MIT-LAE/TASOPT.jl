@@ -241,7 +241,7 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
 
     # Calculate start-of-cruise altitude or CL from each other by ensuring L=W
     calculate_cruise_altitude_or_CL!(opt_prescribed_cruise_parameter, WMTO, ac, imission)
-    
+
     if !(options.has_wing_fuel) #If fuel is stored in the fuselage
         #Analyze pressure evolution in tank and store the vented mass flow rate
         _, _, _, _, _, _, _, Mvents, _, _ = CryoTank.analyze_TASOPT_tank(ac, fuse_tank.t_hold_orig, fuse_tank.t_hold_dest, imission)
@@ -284,14 +284,17 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
     WTO2 = WTO1
     WTO1 = parm[imWTO]
 
-    end
+    end #weight loop
 
     #Check if all engine points have converged, warns if not
     check_engine_convergence_failure(pare)
 
-    #run takeoff calculation if converged (checks feasibility; populates iprotate entries)
+    #if converged 
     if Lconv
+        #run takeoff calculation (checks feasibility; populates iprotate entries)
         takeoff!(ac, imission=imission, printTO=printTO)
+        #compute AoAs and Thetas (aircraft attitude in global frame of reference) for this mission
+        calc_mission_attitude!(ac; imission=imission)
     end
 
 return 

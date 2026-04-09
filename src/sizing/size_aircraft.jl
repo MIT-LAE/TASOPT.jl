@@ -680,7 +680,16 @@ function _size_aircraft!(ac; itermax=35,
 
         # BFL calculations/ Noise? / Engine perf 
 
-    end
+    end        
+       
+    #set wing mounting angle based on ipcruise1 
+    # i.e., aircraft attitude theta = path angle gamma -> AoA aircraft = 0 -> mounting_angle = aoa of spanbreak in body axes
+    #get airfoil characteristics at ipcruise1
+    AoA_wing_cruise = calc_ac_AoA(ac, ip=ipcruise1, imission=1)
+    ac.wing.mounting_angle = AoA_wing_cruise
+
+    #compute AoAs and Thetas for all flight-phase points (mounting_angle must be set first)
+    # calc_mission_attitude!(ac; imission=1)
 
     # normal takeoff and balanced-field takeoff calculations
     # set static thrust for takeoff routine
