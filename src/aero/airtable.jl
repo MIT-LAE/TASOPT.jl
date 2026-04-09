@@ -61,6 +61,9 @@ df = DataFrame(CSV.File(fname))
             end
         end
     end
+
+    #convert alpha / aoa from degrees to radians for internal consistency
+    A[:,:,:,6] = deg2rad.(A[:,:,:,6])
     
 #assemble matrices of derivatives
 # ---------------------

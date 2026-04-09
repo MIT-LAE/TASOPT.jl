@@ -6,9 +6,9 @@
     - section lift coefficient, $c_l$, and
     - Mach number, $M$.
 
-    At each point, the raw database includes the section's angle-of-attack ($\alpha$), drag ($c_d$), pitching moment ($c_m$), viscous, wave, pressure, and skin friction drag components ($c_d = c_{d,v} + c_{d,w} = c_{d,p} + c_{d,f}$), and data source information (source file, status, interpolation status and axis). Since the processing requires a rectilinear grid of points, the status column ("Missing") indicates where data points are absent, usually due to performance infeasibility.
+    At each point, the raw database includes the section's angle-of-attack ($AoA$), drag ($c_d$), pitching moment ($c_m$), viscous, wave, pressure, and skin friction drag components ($c_d = c_{d,v} + c_{d,w} = c_{d,p} + c_{d,f}$), and data source information (source file, status, interpolation status and axis). Since the processing requires a rectilinear grid of points, the status column ("Missing") indicates where data points are absent, usually due to performance infeasibility.
 
-    The [`airtable`](@ref TASOPT.aerodynamics.airtable) function builds an `airfoil` structure that stores the database $C_D, C_{D,p}, C_{D,v}, C_{D,w}, C_M, \alpha = f(\frac{t}{c}, c_l, M)$ as well as the derivatives at the *knots* (as described below) to use for tricubic interpolation.
+    The [`airtable`](@ref TASOPT.aerodynamics.airtable) function builds an `airfoil` structure that stores the database $C_D, C_{D,p}, C_{D,v}, C_{D,w}, C_M, AoA = f(\frac{t}{c}, c_l, M)$ as well as the derivatives at the *knots* (as described below) to use for tricubic interpolation.
 
     ## Tricubic interpolation
     Below is a terse description of the cubic interpolation as relevant to the drag interpolation. There are several online resources available for a more in-depth description of the topic.

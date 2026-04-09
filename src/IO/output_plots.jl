@@ -1,5 +1,4 @@
-
-
+export plot_trajectory
 """
     stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16, 
             annotate_text = true, annotate_length = true, 
@@ -606,6 +605,95 @@ function plot_drag_breakdown(ac::aircraft;
     
     return p #plot object
 end
+
+"""
+    plot_trajectory(ac::aircraft; imission::Int=1, use_range::Bool=true)
+
+Plots the mission trajectory with three shared subplots:
+1. Mission profile (altitude vs range or flight point)
+2. Climb angle with reference line at 0.015 rad
+3. Aircraft pitch (AoA) and attitude (Theta)
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac::aircraft`: Aircraft object with completed mission
+    - `imission::Int`: Mission index (default: 1, the design mission)
+    - `use_range::Bool`: If true, use range (nmi) for x-axis; if false, use flight point index (default: true)
+    
+    **Outputs:**
+    - Returns a Plots.jl figure object with three subplots
+"""
+function plot_trajectory(ac::aircraft; imission::Int=1, use_range::Bool=true)
+    
+    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission)
+
+    ## Gather data to be plotted
+    # Extract altitude and range for all flight points
+    ips = 1:ipdescentn
+    altitude = para[iaalt, ips] ./ ft_to_m ./ 1000  # Convert to thousands of feet
+    range = para[iaRange, ips] ./ nmi_to_m          # Convert to nautical miles
+    gamma_ac = rad2deg.(para[iagamV, ips])                 # Flight path angle (degs)
+    AoA_ac = rad2deg.(para[iaAoA, ips])               # Angle of attack (degs)
+    Theta_ac = rad2deg.(para[iaTheta, ips])                  # Aircraft attitude (degs)
+    
+    # Determine x-axis: either range or flight point index
+    if use_range
+        x_data = range
+        x_label = "Range [nmi]"
+        xticks_arg = nothing                                 # ← NEW
+    else
+        x_data = ips
+        x_label = "Flight Point"
+        xticks_arg = (ips, ip_labels)                 # ← NEW: Map indices to flight point names
+    end
+    
+    ## Create subplots
+    # Subplot 1: Mission Profile (Altitude)
+    p1 = plot(x_data, altitude, 
+              label="Altitude", 
+            #   xlabel=x_label,
+              ylabel="Altitude [kft]",
+              title="Mission Profile (imission = $imission)",
+              lw=2.0,
+              color=:black)
+    
+    # Subplot 2: Angles, flight path, aoa, and attitude
+    p2 = plot(x_data, gamma_ac,
+              label="Climb Angle (γ)",
+            #   xlabel=x_label,
+              ylabel="Angle [deg]",
+              title="Angles, γ + AoA = Θ",
+              lw=2.0,
+              color=:blue)
+    
+    plot!(p2, x_data, AoA_ac,
+              label="Angle of Attack (AoA)",
+              xlabel=x_label,
+              ylabel="Angle [deg]",
+            #   title="Aircraft Pitch and Attitude",
+              lw=2.0,
+              color=:green)
+    if !use_range
+        xticks!(p1, ips, ip_labels, xrotation=45)
+        xticks!(p2, ips, ip_labels, xrotation=45)
+    end
+
+    plot!(p2, x_data, Theta_ac,
+          label="Attitude (Θ, Theta)",
+          lw=2.0,
+          color=:orange)
+    
+    # Combine subplots with shared x-axis
+    fig = plot(p1, p2,
+               layout=(2,1),
+               size=(500, 500),
+               dpi=300,
+               margin=4mm,
+               legend=:best)
+    
+    return fig
+end
+
 
 """
     plot_details(ac::aircraft)
@@ -1309,7 +1397,7 @@ function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
     ylims!(p1, (min_CL, max_CL))
 
     #secondary title via hacky annotation
-    annot_text = @sprintf "Mach = %.2f, ip = %d, im = %d" results.Mach ip imission
+    annot_text = @sprintf "Mach = %.3f, ip = %d (%s), im = %d" results.Mach ip ip_labels[ip] imission
     annotate!(xlims(p1)[2]+.003, max_CL + .045, text(annot_text, 12, :gray22))
 
   # == Create a second plot: CL vs L/D
@@ -1347,7 +1435,7 @@ function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
 
 
     # Mark with dotted y=constant lines where airfoil data is valid 
-    # (i.e., only the lowest and highest CLs_inf_swept_wing where clpss is in [0.4, 0.9])
+    # (i.e., only the lowest and highest CLs_inf_swept_wing where clpss is within cl_lims)
     inds = findall(x -> cl_lims[1] <= x <= cl_lims[2], results.clpss)
     if !isempty(inds)
         for i in (first(inds), last(inds))
@@ -1374,6 +1462,107 @@ function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
         right_margin=3Plots.mm,
         legend= show_drag_components || show_airfoil_data, #only show legend if we're having many lines
         )
+
+    return f
+end
+
+"""
+    plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8,
+        Mach=nothing, ip=ipcruise1, imission=1,
+        title=nothing, print_results=false)
+
+Generates a three-panel plot of the aircraft's lift, drag, and pitching moment
+coefficients versus angle of attack (AoA), evaluated by calling
+[`aeroperf_sweep`](@ref) over `CL_range`.
+
+The three subplots are:
+- **CL vs AoA [deg]**: lift curve.
+- **CD vs AoA [deg]**: drag curve.
+- **CM vs AoA [deg]**: pitching moments. Left y-axis shows aircraft-level component
+  contributions (`CMwing`, `CMtail`, `CMfuse`) and their sum (`CM_ac ≈ 0` in trimmed
+  flight). Right y-axis shows the airfoil section cm at the spanbreak (`cmss`).
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac`: Aircraft model object.
+    - `CL_range`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
+    - `Mach`: Mach number at which points are evaluated. If `nothing`, uses the value
+      stored at `ip`, `imission` (default: `nothing`).
+    - `ip::Integer`: Flight point index (default: `ipcruise1`).
+    - `imission::Integer`: Mission index (default: `1`).
+    - `title::Union{String,Nothing}`: Custom suptitle. If `nothing`, a default title
+      with the aircraft name is used (default: `nothing`).
+    - `print_results::Bool`: Print detailed output from [`aeroperf_sweep`](@ref)
+      (default: `false`).
+
+    **Outputs:**
+    - Returns a `Plots.Plot` object with three subplots.
+
+    Sample usage:
+
+        ```julia
+        f = plot_aero_coefficients(ac; CL_range=0.3:0.05:0.7, Mach=0.8)
+        display(f)
+        ```
+
+See also: [`plot_drag_polar`](@ref), [`aeroperf_sweep`](@ref).
+"""
+function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
+    ip = ipcruise1, imission = 1,
+    title=nothing, print_results = false)
+
+    results = aeroperf_sweep(ac, CL_range;
+                             imission=imission, ip=ip,
+                             Mach=Mach,
+                             print_results=print_results)
+
+    AoA_deg = rad2deg.(results.AoA)
+
+  # == p1: CL vs AoA (top — no x label, shared axis)
+    p1 = plot(AoA_deg, results.CLs,
+        xlabel="", ylabel="\$C_L\$",
+        label=false, lw=2, marker=:o, color=:skyblue)
+
+    # suptitle annotation on p1 (same style as plot_drag_polar)
+    annot_text = @sprintf "Mach = %.3f, ip = %d (%s), im = %d" results.Mach ip ip_labels[ip] imission
+    annotate!(p1, sum(xlims(p1))/2, ylims(p1)[2]+.1, text(annot_text, 10, :gray22, :center, :top))
+
+  # == p2: CD vs AoA (middle — no x label, shared axis)
+    p2 = plot(AoA_deg, results.CDs,
+        xlabel="", ylabel="\$C_D\$",
+        label=false, lw=2, marker=:o, color=:tomato)
+
+  # == p3: CM vs AoA (bottom — carries the shared x label, dual y-axis)
+    # left axis: aircraft-level component CMs
+    p3 = plot(AoA_deg, results.CMs,
+        xlabel="AoA (aircraft) [deg]", ylabel="\$C_M\$ (aircraft, about CG)",
+        label="\$C_{M,ac}\$", lw=2.5, marker=:circle, color=:red)
+    plot!(p3, AoA_deg, results.CMtails,
+        label="\$C_{M,tail}\$", lw=2, marker=:rtriangle, color=:darkorange)
+    plot!(p3, AoA_deg, results.CMfuses,
+        label="\$C_{M,fuse}\$", lw=2, marker=:diamond, color=:mediumseagreen)
+    plot!(p3, AoA_deg, results.CMwings,
+        label="\$C_{M,wing}\$", lw=2, marker=:circle, color=:black, linestyle=:dash)
+
+    # right axis: airfoil section cm at spanbreak
+    p3r = twinx(p3)
+    plot!(p3r, AoA_deg, results.cmss,
+        ylabel="\$c_m\$ (section, \$\\eta_s\$)", yguidefontcolor=:purple, ytickfontcolor=:purple,
+        label="\$c_{m,s}\$", lw=2, marker=:hexagon, color=:purple,
+        linestyle=:dot, legend=:topright)
+
+    default_title = @sprintf "TASOPT.jl Aero Coefficients: \n %s" ac.name
+
+    l = @layout [a; b; c]
+    f = plot(p1, p2, p3, layout=l,
+        size=(600, 900),
+        link=:x,
+        suptitle=isnothing(title) ? default_title : title,
+        bottom_margin=2Plots.mm,
+        left_margin=3Plots.mm,
+        top_margin=12Plots.mm,
+        right_margin=8Plots.mm,
+        legend=true)
 
     return f
 end

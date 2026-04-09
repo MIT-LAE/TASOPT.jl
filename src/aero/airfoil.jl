@@ -102,22 +102,26 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
         n_toc = length(toc_vals)
         cd_total = zeros(n_cl, n_toc)
         cm_vals = zeros(n_cl, n_toc)
+        aoa_vals = zeros(n_cl, n_toc)
 
         # Evaluate airfun for each combination of cl and toc
         for (j, toc) in enumerate(toc_vals)
             for (i, cl) in enumerate(cl_range)
-                cdf, cdp, cdw, cm, alpha = airfun(cl, toc, mach, airf)
+                cdf, cdp, cdw, cm, aoa = airfun(cl, toc, mach, airf)
                 cd_total[i, j] = cdf + cdp # Total drag (friction + pressure)
                 cm_vals[i, j] = cm
+                aoa_vals[i, j] = aoa
             end
         end
         cls = cl_range
         cds = cd_total
         cms = cm_vals
+        aoas = aoa_vals
     else #just show the data points
         cls = airf.cl
         cds = airf.A[iMach,:,:,1]
         cms = airf.A[iMach,:,:,5]
+        aoas = airf.A[iMach,:,:,6]
     end
 
     # Create two subplots
@@ -135,9 +139,18 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
         cls,
         cms,
         label = "toc = ".*string.(airf.toc'),
-        xlabel = "\$c_l\$",
         ylabel = "\$c_m\$",
         grid = true,
+        legend=:false,
+    )
+    
+    p3 = plot(
+        cls,
+        rad2deg.(aoas),
+        label = "toc = ".*string.(airf.toc'),
+        xlabel = "\$c_l\$",
+        ylabel = "\$α_⟂, \\mathrm{aoa}_⟂\$ [°]",
+        grid = true,    
         legend=:false,
     )
     
@@ -147,22 +160,25 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
         for (j, toc) in enumerate(airf.toc)
             cd_scatter = airf.A[iMach, :, j, 1]
             cm_scatter = airf.A[iMach, :, j, 5]
+            aoa_scatter = airf.A[iMach, :, j, 6]
             scatter!(p1, cl_scatter, cd_scatter; label="", marker=:circle, ms=3, color=j)
             scatter!(p2, cl_scatter, cm_scatter; label="", marker=:circle, ms=3, color=j)
+            scatter!(p3, cl_scatter, aoa_scatter; label="", marker=:circle, ms=3, color=j)
         end
     end
 
     #legend
     labels = string.(airf.toc')
     p_legend = plot((1:length(airf.toc))', labels = labels,
-        legendtitle = "Thickness-to-chord (toc)",
+        legendtitle = "Thickness-to-chord \n(toc)",
         legend_title_font_pointsize = 7,
         legendfontsize=7, legend=:outertop, legendcolumns=1,
         fg_color_legend = nothing, frame=:none)
     
-    l = @layout [[a; b] c{0.2w}]
+    l = @layout [[a; b; c] d{0.2w}]
     # Combine the subplots vertically
-    f1 = plot(p1, p2, p_legend, layout = l, link = :x,
+    f1 = plot(p1, p2, p3, p_legend, layout = l, link = :x,
+        size=(600, 600),
         suptitle="Airfoil Section Database, Mach = $(mach)")
     return f1
 end
