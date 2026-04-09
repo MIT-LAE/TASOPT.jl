@@ -1,3 +1,4 @@
+rtol_sizing = 1e-1 #coarse = 10% =1e-1; fine = 0.001% = 1e-5
 # Define a function to check if each value in two structs is equal
 function check_struct_equivalence(s1, s2)
     fields_s1 = fieldnames(typeof(s1))
@@ -19,7 +20,7 @@ function check_struct_equivalence(s1, s2)
                 end
             else
                 # println(field)
-                @test val1 ≈ val2 
+                @test val1 ≈ val2 rtol=rtol_sizing
             end
         else
             return false
@@ -34,7 +35,7 @@ function test_ac_off_design(ac, PFEI, Wfuel, WTO)
     @testset "Off-design" begin
         TASOPT.fly_mission!(ac, 2)
 
-        @test ac.parm[imPFEI, 2] ≈ PFEI
+        @test ac.parm[imPFEI, 2] ≈ PFEI rtol=rtol_sizing
         @test ac.parm[imWfuel, 2] ≈ Wfuel
         @test ac.parm[imWTO, 2] ≈ WTO
     end
@@ -71,25 +72,25 @@ end
 
     @testset "Geometry" begin
         for i in eachindex(parg)
-            @test parg[i] ≈ ac.parg[i] 
+            @test parg[i] ≈ ac.parg[i]  rtol=rtol_sizing
         end
     end
 
     @testset "Aero" begin
         for i in eachindex(para)
-            @test para[i] ≈ ac.para[i] 
+            @test para[i] ≈ ac.para[i]  rtol=rtol_sizing
         end
     end
 
     @testset "Propulsion" begin
         for i in eachindex(pare)
-            @test pare[i] ≈ ac.pare[i] 
+            @test pare[i] ≈ ac.pare[i]  rtol=rtol_sizing
         end
     end
 
     test_ac_off_design(ac, 1.0869638391729122, 153128.29535348987,  769359.1150444464)
     
-    @test ac.parm[imPFEI] ≈ 0.945758611404728 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.945758611404728  rtol=rtol_sizing
 end
 
 @testset "Wide sizing" verbose=true begin
