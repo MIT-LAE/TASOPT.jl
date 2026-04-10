@@ -1303,7 +1303,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
 end
 
 """
-    plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, 
+    plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach_ac = nothing,
               show_drag_components=false, show_airfoil_data=false, 
               title=nothing, legend=true, print_results=false)
 
@@ -1318,7 +1318,7 @@ It produces two side-by-side plots:
     **Inputs:**
     - `ac`: Aircraft model object.
     - `CL_range`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
-    - `Mach`: Mach number at which points are evaluated. If none specified, defaults to value at specified ip, imission (optl.).
+    - `Mach_ac`: Mach number at which points are evaluated. If none specified, defaults to value at specified ip, imission (optl.).
     - `show_drag_components::Bool`: If `true`, overlays induced drag and component drag contributions (`CDi`, `CDwing`, `CDfuse`, `CDhtail`, `CDvtail`, `CDother`) on the CL–CD plot (default: `false`).
     - `show_airfoil_data::Bool`: If `true`, overlays airfoil section performance (`clpss`, `cdss`) on both plots (default: `false`).
     - `title::Union{String,Nothing}`: Custom plot title. If `nothing`, uses a default title with aircraft name (default: `nothing`).
@@ -1342,7 +1342,7 @@ It produces two side-by-side plots:
 See also: [`aeroperf_sweep`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 
 """
-function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
+function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
     ip = ipcruise1, imission = 1,
     show_drag_components=false, show_airfoil_data=false, 
     title=nothing, legend=true, print_results = false)
@@ -1351,7 +1351,7 @@ function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
     results = aeroperf_sweep(ac, CL_range; 
                             imission=imission, ip=ip, 
                             #defaults: rfuel=1, rpay=1, ξpay=0.5,
-                            Mach=Mach,
+                            Mach_ac=Mach_ac,
                             print_results = print_results)
     #get airfoil database limits at the spanbreak section conditions to plot
     airf      = ac.wing.airsection
@@ -1468,7 +1468,7 @@ end
 
 """
     plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8,
-        Mach=nothing, ip=ipcruise1, imission=1,
+        Mach_ac=nothing, ip=ipcruise1, imission=1,
         title=nothing, print_results=false)
 
 Generates a three-panel plot of the aircraft's lift, drag, and pitching moment
@@ -1486,7 +1486,7 @@ The three subplots are:
     **Inputs:**
     - `ac`: Aircraft model object.
     - `CL_range`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
-    - `Mach`: Mach number at which points are evaluated. If `nothing`, uses the value
+    - `Mach_ac`: aircraft Mach number at which points are evaluated. If `nothing`, uses the value
       stored at `ip`, `imission` (default: `nothing`).
     - `ip::Integer`: Flight point index (default: `ipcruise1`).
     - `imission::Integer`: Mission index (default: `1`).
@@ -1507,13 +1507,13 @@ The three subplots are:
 
 See also: [`plot_drag_polar`](@ref), [`aeroperf_sweep`](@ref).
 """
-function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
+function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
     ip = ipcruise1, imission = 1,
     title=nothing, print_results = false)
 
     results = aeroperf_sweep(ac, CL_range;
                              imission=imission, ip=ip,
-                             Mach=Mach,
+                             Mach_ac=Mach_ac,
                              print_results=print_results)
 
     AoA_deg = rad2deg.(results.AoA)

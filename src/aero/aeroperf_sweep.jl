@@ -2,7 +2,7 @@ using Printf
 export calc_wing_aoa, calc_ac_AoA, calc_ac_AoA!, calc_ac_Theta!, calc_mission_attitude!
 
 """
-    aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5)
+    aeroperf_sweep(ac_orig, CL_range; Mach_ac=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5)
 
 Performs a sweep over a range of lift coefficients (`CL_range`) for a given aircraft model, evaluating aerodynamic and performance metrics at each point.
 
@@ -41,7 +41,7 @@ This function deep-copies the input aircraft model, sets the lift coefficient, b
 
 See also: [`TASOPT.plot_drag_polar`](@ref), [`TASOPT.balance_aircraft!`](@ref), [`TASOPT.aerodynamics.aircraft_drag!`](@ref).
 """
-function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
+function aeroperf_sweep(ac_orig, CL_range; Mach_ac=nothing, imission=1, ip=ipcruise1, rfuel=1, rpay=1, ξpay=0.5,
                         print_results = false)
 
     #confirm aircraft is sized
@@ -53,8 +53,8 @@ function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise
     ac = deepcopy(ac_orig)
 
     #substitute Mach if specified
-    if !isnothing(Mach) && Mach isa Number
-        ac.para[iaMach, ip, imission] = Mach
+    if !isnothing(Mach_ac) && Mach_ac isa Number
+        ac.para[iaMach, ip, imission] = Mach_ac
     end
 
     #initalize results tuple
@@ -132,8 +132,8 @@ function aeroperf_sweep(ac_orig, CL_range; Mach=nothing, imission=1, ip=ipcruise
         #get airfoil section drag via airfun (only for spanbreak section)
         toc = ac.wing.outboard.cross_section.thickness_to_chord
         sweep = ac.wing.sweep
-        Mach = ac.para[iaMach,ip,imission]
-        Mach_perp = Mach*cosd(sweep)  # Perpendicular Mach number
+        Mach_ac = ac.para[iaMach,ip,imission]
+        Mach_perp = Mach_ac*cosd(sweep)  # Perpendicular Mach number
         airf = ac.wing.airsection
 
         cdfss, cdpss, cdwss, cms, aoaps = airfun(results.clpss[i], toc, Mach_perp, airf)

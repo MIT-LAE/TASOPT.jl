@@ -160,7 +160,7 @@ function plot_airf(airf::airfoil, iMach::Int = -1; use_interp::Bool=false,
         for (j, toc) in enumerate(airf.toc)
             cd_scatter = airf.A[iMach, :, j, 1]
             cm_scatter = airf.A[iMach, :, j, 5]
-            aoa_scatter = airf.A[iMach, :, j, 6]
+            aoa_scatter = rad2deg.(airf.A[iMach, :, j, 6])
             scatter!(p1, cl_scatter, cd_scatter; label="", marker=:circle, ms=3, color=j)
             scatter!(p2, cl_scatter, cm_scatter; label="", marker=:circle, ms=3, color=j)
             scatter!(p3, cl_scatter, aoa_scatter; label="", marker=:circle, ms=3, color=j)
