@@ -390,7 +390,7 @@ end
     #get basic execution of default model
     ac1 = load_default_model()
     size_aircraft!(ac1)
-    results = aeroperf_sweep(ac1, [0.0, 0.8])
+    results = aeroperf_sweep(ac1, [0.0, 0.8]) #two CLs sampled
 
     #compare the two for approximate equality
     for field in keys(test_results)
