@@ -12,7 +12,18 @@ requirejs.config({
     'highlight-julia-repl': 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/julia-repl.min',
   },
   shim: {
+  "headroom-jquery": {
+    "deps": [
+      "jquery",
+      "headroom"
+    ]
+  },
   "highlight-julia": {
+    "deps": [
+      "highlight"
+    ]
+  },
+  "highlight-julia-repl": {
     "deps": [
       "highlight"
     ]
@@ -20,17 +31,6 @@ requirejs.config({
   "katex-auto-render": {
     "deps": [
       "katex"
-    ]
-  },
-  "headroom-jquery": {
-    "deps": [
-      "jquery",
-      "headroom"
-    ]
-  },
-  "highlight-julia-repl": {
-    "deps": [
-      "highlight"
     ]
   }
 }});
@@ -42,26 +42,26 @@ $(document).ready(function() {
     {
   "delimiters": [
     {
+      "display": false,
       "left": "$",
-      "right": "$",
-      "display": false
+      "right": "$"
     },
     {
+      "display": true,
       "left": "$$",
-      "right": "$$",
-      "display": true
+      "right": "$$"
     },
     {
+      "display": true,
       "left": "\\[",
-      "right": "\\]",
-      "display": true
+      "right": "\\]"
     }
   ],
   "macros": {
     "\\Pstd": "P_{\\mathrm{std}}",
     "\\Ru": "R_{\\mathrm{univ.}}",
-    "\\genfuel": "{\\mathrm{C}_{x_{\\mathrm{C}}}\\mathrm{H}_{x_{\\mathrm{H}}}\\mathrm{O}_{x_{\\mathrm{O}}}\\mathrm{N}_{x_{\\mathrm{N}}}}",
-    "\\Tstd": "T_{\\mathrm{std}}"
+    "\\Tstd": "T_{\\mathrm{std}}",
+    "\\genfuel": "{\\mathrm{C}_{x_{\\mathrm{C}}}\\mathrm{H}_{x_{\\mathrm{H}}}\\mathrm{O}_{x_{\\mathrm{O}}}\\mathrm{N}_{x_{\\mathrm{N}}}}"
   }
 }
   );
