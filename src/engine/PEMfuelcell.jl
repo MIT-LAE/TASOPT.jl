@@ -1,4 +1,4 @@
-using DifferentialEquations
+using OrdinaryDiffEq
 
 """
     LT_PEMFC_voltage_simple(j, T, p_H2, p_air)
