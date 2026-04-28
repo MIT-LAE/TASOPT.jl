@@ -367,17 +367,23 @@ function _size_aircraft!(ac; itermax=35,
 
         # Calculate fuel weight if stored in wings
         Wfmax, dxWfmax, rfmax = 0.0, 0.0, 0.0
-        if (options.has_wing_fuel)
-            Wfmax = 2.0 * ((options.has_centerbox_fuel ? Wfcen : 0.0) + Wfinn + Wfout)
-            dxWfmax = 2.0 * (dxWfinn + dxWfout)
+        if options.has_wing_fuel
+            # TASOPT Eq. 252/253: full geometric fuel capacity and moment
+            # from the wingbox fuel volume.
+            Wfmax_geom = 2.0 * ((options.has_centerbox_fuel ? Wfcen : 0.0) + Wfinn + Wfout)
+            dxWfmax_geom = 2.0 * (dxWfinn + dxWfout)
+
+            # Convert geometric capacity to usable capacity. This lets the
+            # input model represent unusable volume or volume not assigned to fuel.
+            Wfmax = Wfmax_geom * parg[igrWfmax]
+            dxWfmax = dxWfmax_geom * parg[igrWfmax]
+
+            # Use the actual max-payload fuel load to scale the fuel moment.
             Wfuelmp = Wpay - Wpaymax + parg[igWfuel]
             rfmax = Wfuelmp / Wfmax
         end
 
-        # Update wing properties
-        wing.weight = Wwing * rlx + wing.weight * (1.0 - rlx)
         parg[igWfmax] = Wfmax
-        # wing.dxW = dxWwing
         parg[igdxWfuel] = dxWfmax * rfmax
 
         wing.outboard.webs.weight = wing.inboard.webs.weight
