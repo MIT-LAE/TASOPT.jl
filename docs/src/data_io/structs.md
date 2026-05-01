@@ -44,8 +44,6 @@ TASOPT.structures.WingSection
 
 TASOPT.structures.WingCrossSection
 
-TASOPT.materials.StructuralAlloy
-
 ```
 
 ### Aerodynamic configuration
@@ -54,4 +52,27 @@ TASOPT.materials.StructuralAlloy
 
 aerodynamics.airfoil
 
+```
+### Materials
+
+```@docs
+
+TASOPT.materials.StructuralAlloy
+TASOPT.materials.Conductor
+TASOPT.materials.Insulator                                                                
+TASOPT.materials.ThermalInsulator
+
+```
+
+### Configuration Enums
+
+These enums populate fields on [`TASOPT.Options`](@ref) and select model variants.
+
+```@docs
+TASOPT.EngineLocation
+TASOPT.PropSysArch
+TASOPT.WingMove
+TASOPT.FuelType
+TASOPT.TrimVar
+TASOPT.TailSizing
 ```

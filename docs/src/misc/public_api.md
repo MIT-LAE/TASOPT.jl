@@ -40,7 +40,6 @@ These are the key functions that are used while reading an aircraft model defini
 ### Unit conversion and constants
 
 - `convertMass`, `convertForce`, `convertDist`, `convertSpeed`, `convertPower`, `convertAngle`
-- `ft_to_m`, `in_to_m`, `nmi_to_m`, `deg_to_rad`, `lbf_to_N`, `kts_to_mps`, `hp_to_W`, `lb_N`
 - `gee`, `gamSL`, `cpSL`, `μAir`, `pref`, `Tref`
 
 This API still supports the main user workflow:
