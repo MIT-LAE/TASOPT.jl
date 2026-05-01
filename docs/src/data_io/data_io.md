@@ -89,4 +89,8 @@ quickload_aircraft()
 output_csv()
 
 default_output_indices
+
+stickfig
+
+plot_details
 ```
