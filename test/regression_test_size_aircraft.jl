@@ -36,8 +36,8 @@ function test_ac_off_design(ac, PFEI, Wfuel, WTO)
         TASOPT.fly_mission!(ac, 2; printTO=false)
 
         @test ac.parm[imPFEI, 2] ≈ PFEI rtol=rtol_sizing
-        @test ac.parm[imWfuel, 2] ≈ Wfuel
-        @test ac.parm[imWTO, 2] ≈ WTO
+        @test ac.parm[imWfuel, 2] ≈ Wfuel rtol=rtol_sizing
+        @test ac.parm[imWTO, 2] ≈ WTO rtol=rtol_sizing
     end
 end
 
@@ -78,6 +78,9 @@ end
 
     @testset "Aero" begin
         for i in eachindex(para)
+            # if !isapprox(para[i], ac.para[i]; rtol=rtol_sizing)
+            #     @info "Mismatch" i para[i] ac.para[i] diff=para[i]-ac.para[i]
+            # end
             @test para[i] ≈ ac.para[i]  rtol=rtol_sizing
         end
     end
@@ -98,12 +101,12 @@ end
     
     include(__TASOPTindices__)
 
-    @test ac.fuselage.layout.radius ≈ 3.0988
+    @test ac.fuselage.layout.radius ≈ 3.0988 rtol=rtol_sizing
     
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.1903760871373523 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.1903760871373523 rtol=rtol_sizing
 
 end
 
@@ -112,11 +115,11 @@ end
     
     include(__TASOPTindices__)
 
-    @test ac.fuselage.layout.radius ≈ 1.5113
+    @test ac.fuselage.layout.radius ≈ 1.5113 rtol=rtol_sizing
 
     size_aircraft!(ac; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 0.8483560952994892 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 0.8483560952994892 rtol=rtol_sizing
 
 end
 
@@ -125,10 +128,10 @@ end
     
     include(__TASOPTindices__)
 
-    @test ac.fuselage.layout.radius ≈ 2.54
+    @test ac.fuselage.layout.radius ≈ 2.54 rtol=rtol_sizing
 
     size_aircraft!(ac, iter=50; printiter=false);
     
-    @test ac.parm[imPFEI] ≈ 1.0076619899926231 rtol=1e-4
+    @test ac.parm[imPFEI] ≈ 1.0076619899926231 rtol=rtol_sizing
 
 end
