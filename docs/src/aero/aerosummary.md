@@ -54,6 +54,4 @@ plot_drag_breakdown
 
 plot_airf
 
-plot_drag_breakdown
-
 ```
