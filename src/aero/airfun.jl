@@ -172,7 +172,7 @@ end
     # (note that cd = cdv + cdw [viscous + wave] = cdp + cdf [pressure + friction])
     cdp = Aijk[2]           #pressure drag
     cdf = Aijk[1] - cdp     #friction drag
-    cdw  = Aijk[4]*0          #wave drag #TODO: make nonzero after verification of csv import
+    cdw  = Aijk[4]            #wave drag
     cm = Aijk[5]            #pitching moment
     aoa = Aijk[6]         #angle of attack, aoa
 

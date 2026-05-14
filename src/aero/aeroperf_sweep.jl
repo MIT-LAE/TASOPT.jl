@@ -157,8 +157,8 @@ function aeroperf_sweep(ac_orig, CL_range; Mach_ac=nothing, imission=1, ip=ipcru
         cdfss, cdpss, cdwss, cms, aoaps = airfun(results.clpss[i], toc, Mach_perp, airf)
         results.cdfss[i] = cdfss #skin friction
         results.cdpss[i] = cdpss #pressure
-        results.cdwss[i] = cdwss #wave (= 0, with models at time of writing)
-        results.cdss[i] = cdfss + cdpss + cdwss
+        results.cdwss[i] = cdwss #wave (already included in cdss = cdfss + cdpss = cdwss + cdvss))
+        results.cdss[i] = cdfss + cdpss
 
         #compute aoa for section and AoA for aircraft (all in radians)
         wing_mounting_angle = ac.wing.mounting_angle

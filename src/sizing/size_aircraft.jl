@@ -874,19 +874,6 @@ function set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
 end  # function set_ambient_conditions
 
 """
-    interp_Wfrac!(para, ip_start, ip_end, ffuel1, ffuel2, iafracW, ffuel)
-
-Interpolates iafracW from two mission points
-"""
-function interp_Wfrac!(para, ip_start, ip_end, ffuel1, ffuel2, iafracW, ffuel)
-    @inbounds for ip in ip_start:ip_end
-        frac = float(ip - ip_start) / float(ip_end - ip_start)
-        ffp = ffuel1 * (1.0 - frac) + ffuel2 * frac
-        para[iafracW, ip] = 1.0 - ffuel + ffp
-    end
-end
-
-"""
     update_wing_pitching_moments!(para, wing, ip_range, imission = 1)
 
 Computes wing pitching moment coefficients `CMw0` and `CMw1` via [`wing_CM`](@ref) using
