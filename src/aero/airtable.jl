@@ -2,18 +2,46 @@ using DataFrames, CSV
 """
     airtable(fname)
 
-Reads airfoil file and outputs the matrix and splines as an `airfoil`.
+Reads an airfoil database CSV and returns a populated [`airfoil`](@ref) struct, including
+cubic-spline derivative tables at the grid knots for tricubic interpolation.
 
-The airfoil data is now stored as a CSV with data points determined by three variables:
-Mach number ``\\mathrm{Ma}``, lift coefficient ``c_l``, and thickness to chord ratio \$\\frac{t}{c}\$ (or `toc`).
-Though included in the entries, Reynolds number is presently assumed constant.
+# Required CSV schema
+The file must contain a rectilinear `(Mach, CL, toc)` grid (i.e., like `C_airfoil.csv`) with columns:
+
+| column | description |
+|--------|-------------|
+| `toc`            | thickness/chord ratio |
+| `Re`             | Reynolds number (must be the same value on every row) |
+| `Mach`           | freestream Mach |
+| `alpha`          | section angle of attack, **degrees** |
+| `CL`             | section lift coefficient |
+| `CD`             | total section drag |
+| `CM`             | section pitching moment |
+| `CDw`, `CDv`, `CDp` | wave / viscous / pressure drag components |
+| `file`           | provenance tag (source MSES `polar`/`blade` file) |
+| `Missing`        | `true`/`false` flag for infeasible rows (the row's drag/moment columns should already be `NaN`) |
+| `wasInterpolated`, `InterpAxis` | interpolation provenance (informational) |
+
+The 6-tuple of interpolated quantities `[CD, CDp, CDv, CDw, CM, alpha]` is the **fixed**
+4th-axis order of `airfoil.A` and is consumed positionally by [`airfun`](@ref).
+
+# Assumptions
+- **Single Reynolds number** — errors out if multiple `Re` values are present. Re-scaling is
+  applied separately (see [`wing_profiledrag_direct`](@ref) and [`wing_profiledrag_scaled`](@ref)).
+- **Rectilinear grid** in `(Mach, CL, toc)`; missing combinations emit a warning.
+- **Degree → radian** conversion of `alpha` happens here so the rest of the codebase
+  works in radians.
+- **`NaN` propagation** — `Missing == true` rows should carry `NaN` in the drag/moment
+  columns; these are passed through to `airfoil.A` and handled downstream by [`spline`](@ref)
+  and [`airfun`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
-    - `fname::String`: Path to file.
+    - `fname::String`: Path to a CSV file matching the schema above.
 
     **Outputs:**
-    - `airf::TASOPT.aerodynamics.airfoil`: `struct` with airfoil performance characteristics.
+    - `airf::TASOPT.aerodynamics.airfoil`: `struct` with airfoil performance characteristics
+      and derivative arrays for interpolation in `airfun`.
 
 """
 function airtable(fname)

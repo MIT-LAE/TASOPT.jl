@@ -1,30 +1,44 @@
 """
     airfoil
 
-A type representing a database of pre-computed airfoil data for a single Reyolds number 
-and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord ratios.
-By default, this is the original TASOPT transonic airfoil, as modelled by M. Drela in MSES and stored in `src/air/`.
+A type representing a database of pre-computed airfoil data for a single Reynolds
+number and a range of Mach numbers, sectional lift coefficients, and thickness-to-chord
+ratios. By default, this is the C-series transonic airfoil family designed by M. Drela in MSES,
+stored in `src/airfoil_data/C_airfoil.csv`. See [`airtable`](@ref) for the file schema and how the
+struct is populated from CSV.
 
-Overloads Base.show to print a summary of the `airfoil` model.
+Overloads `Base.show` to print a summary of the `airfoil` model.
 
-# Fields:
-- `Ma::AbstractVector{Float64}` :  Mach nos.
-- `cl::AbstractVector{Float64}` :  Sectional lift coefficients.
-- `toc::AbstractVector{Float64}` :  Thickness-to-chord ratios.
-- `Re::Float64` :  Reynolds number.
+# Conventions and assumptions
+- **4D data layout.** `A` is sized `(nMa, ncl, ntoc, nAfun)` where the 4th axis is **fixed-order**:
+  `[CD, CDp, CDv, CDw, CM, alpha]` (i.e. `A[:,:,:,1]` is total `cd`, `A[:,:,:,6]` is `α`).
+  This order is relied on by [`airfun`](@ref).
+- **Single Reynolds number.** All data correspond to one fixed `Re`; chord-Re effects are
+  applied externally as a power-law scaling (see [`wing_profiledrag_direct`](@ref)).
+- **Units.** `Ma`, `cl`, `toc`, and aerodynamic coefficients are dimensionless. **`alpha`
+  is stored in radians** (the source CSV is in degrees; conversion happens in [`airtable`](@ref)).
+- **Infeasible (NaN) entries.** MSES-infeasible operating points (e.g. stalled, beyond drag
+  divergence) are stored as `NaN` rather than duplicating neighbouring values (like original TASOPT). They are propagated
+  by [`TASOPT.aerodynamics.spline`](@ref) and handled in [`airfun`](@ref) via CL-segment fallback + quadratic drag
+  penalty. See [`airfoil_cl_limits`](@ref) to query the valid-data envelope.
 
-- `A::AbstractArray{Float64}`: Multi-dimensional array of aero performance data.
+# Fields
+- `Ma::AbstractVector{Float64}`  : Mach numbers covered by the database.
+- `cl::AbstractVector{Float64}`  : Sectional lift coefficients ".
+- `toc::AbstractVector{Float64}` : Thickness-to-chord ratios ".
+- `Re::Float64`                  : Reynolds number for which the data were computed.
+- `A::AbstractArray{Float64}`    : Aerodynamic data, again, layout is [CD, CDp, CDv, CDw, CM, alpha].
 
-Various views of the data:
-- `A_M::AbstractArray{Float64}`:
-- `A_toc::AbstractArray{Float64}`:
-- `A_cl::AbstractArray{Float64}`:
-- `A_M_toc::AbstractArray{Float64}`:
-- `A_M_cl::AbstractArray{Float64}`:
-- `A_cl_toc::AbstractArray{Float64}`:
-- `A_M_cl_toc::AbstractArray{Float64}`:
+Arrays of derivative arrays at the grid knots, used for tricubic interpolation in `airfun`.
+- `A_M`        : `∂A/∂Ma`
+- `A_toc`      : `∂A/∂toc`
+- `A_cl`       : `∂A/∂cl`
+- `A_M_toc`    : `∂²A/∂Ma∂toc`
+- `A_M_cl`     : `∂²A/∂Ma∂cl`
+- `A_cl_toc`   : `∂²A/∂cl∂toc`
+- `A_M_cl_toc` : `∂³A/∂Ma∂cl∂toc`
 
-See also [`airfun`](@ref) and [`airtable`](@ref).
+See also [`airfun`](@ref), [`airtable`](@ref), [`airfoil_cl_limits`](@ref).
 """
 struct airfoil{T<:AbstractFloat, 
         V<:AbstractVector{Float64}, 

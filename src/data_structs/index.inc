@@ -246,8 +246,8 @@
       const iadCDBLIw = 63
       const iaROC     = 64
       const iaROCdes  = 65
-      const iaAoA     = 66
-      const iaTheta   = 67
+      const iaAoA     = 66    # aircraft angle of attack [rad], body axes; populated by calc_ac_AoA! / calc_mission_attitude!
+      const iaTheta   = 67    # aircraft pitch attitude Θ = AoA + γ [rad], body axes; populated by calc_ac_Theta! / calc_mission_attitude!
       const iatotal   = 67 
 
 #---- indices for engine variables at each mission point

@@ -508,7 +508,7 @@ end
 
 #TODO: re-do/re-apply label_bars() to use here
 """
-    plot_drag_breakdown(ac::aircraft; ip = [ipclimb1, ipcruise1, ipcruisen, ipdescent1, ipdescentn], imission = 1, show_fractions = true, show_values = false)
+    plot_drag_breakdown(ac::aircraft; ip = [ipclimb1, ipcruise1, ipcruisen, ipdescent1, ipdescentn], imission = 1, show_fractions = false, show_values = false)
 
 Generates a stacked bar plot showing the breakdown of drag components for specified flight points of an aircraft.
 
@@ -516,7 +516,7 @@ Generates a stacked bar plot showing the breakdown of drag components for specif
 - `ac::aircraft`: Aircraft object containing aerodynamic data
 - `ip::Union{Int, AbstractVector{Int}, Colon}`: Mission point(s) to analyze. Can be a single integer, vector of integers, or `:` for all points
 - `imission::Int`: Mission number to analyze (default: 1)
-- `show_fractions::Bool`: If true, shows components as fractions of total drag (default: true)
+- `show_fractions::Bool`: If true, shows components as fractions of total drag (default: false)
 - `show_values::Bool`: If true, displays numerical values on each bar segment (default: false). Wouldn't advise true for len(ip) > 5
 
 # Returns
@@ -534,7 +534,7 @@ Generates a stacked bar plot showing the breakdown of drag components for specif
 """
 function plot_drag_breakdown(ac::aircraft; 
     ip::Union{Int, AbstractVector{Int}, Colon} = [ipclimb1, ipcruise1, ipcruisen, ipdescent1, ipdescentn], imission::Int = 1,
-    show_fractions::Bool = true, show_values::Bool = false)
+    show_fractions::Bool = false, show_values::Bool = false)
     
     #get aircraft aero data
     para = view(ac.para, :, :, imission)
@@ -581,7 +581,7 @@ function plot_drag_breakdown(ac::aircraft;
         label = ["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
         # xlabel = "ip", 
         ylabel = show_fractions ? "Fraction of total drag, \$C_{D,( )} / C_D\$" : "Drag component, \$C_{D, ( )}\$",
-        title = "Drag Breakdown",
+        title = "Drag Breakdown (imission = $imission)",
         xticks = (x, ["$(ip_labels[i])" for i in ips]),
         xrotation=-35,
         legend = :outerright
@@ -623,7 +623,7 @@ Plots the mission trajectory with three shared subplots:
     **Outputs:**
     - Returns a Plots.jl figure object with three subplots
 """
-function plot_trajectory(ac::aircraft; imission::Int=1, use_range::Bool=true)
+function plot_trajectory(ac::aircraft; imission::Int=1, use_range::Bool=false)
     
     parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac(ac, imission)
 
@@ -841,10 +841,11 @@ function plot_details(ac::aircraft; imission::Int=1)
 
     yaxis2 = twinx(p3)
     # Overlay climb angle on the secondary y-axis
-    plot!(yaxis2, R, gamV, color=:red, label="Traj. Climb Angle, γ", ylabel="Angle [rads]", lw=2,legend=:bottomright)
-    # Add a horizontal line at climb angle = 0.015
-    hline!(yaxis2, [0.015], lw=2.0, color=:red, linestyle=:dash, label="γ = 0.015")
-
+    plot!(yaxis2, R, rad2deg.(gamV), color=:red, label="Traj. Climb Angle, γ",
+        ylabel="Angle [deg]", lw=2, legend=:bottomright,
+        yguidefontcolor=:red, ytickfontcolor=:red,
+        yforeground_color_axis=:red, yforeground_color_border=:red)
+    
     # Define layout
     layout = @layout [A; B{0.6w} C]
 
@@ -1310,9 +1311,15 @@ end
 Generates drag polar plots for a given aircraft model by sweeping over a range of lift coefficients and computing aerodynamic performance metrics.
 
 This function calls [`aeroperf_sweep`](@ref) to evaluate drag, lift-to-drag ratio, and component breakdowns across `CL_range`.  
-It produces two side-by-side plots:  
+It produces two side-by-side plots. 
+  
 - **CL vs CD** (with optional drag component breakdowns).  
 - **CL vs L/D** (with optional airfoil section data).  
+
+The valid-data CL bounds shown as dashed reference
+lines are queried from the airfoil database directly via [`airfoil_cl_limits`](@ref) at
+the spanbreak section's perpendicular Mach and `toc`. A warning is emitted if `Mach_perp` falls outside the database's
+Mach range.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -1445,12 +1452,12 @@ function plot_drag_polar(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
             plot!(p2, [0; maximum(results.LDs)], 
                 [CL; CL], color=:deepskyblue, label=false, linestyle=:dash)
         end
-        annotate!(p1, maximum(results.CDs), results.CLs[first(inds)] + 0.002, text("Airfoil database limits (\$C_L\$)", :gray, 7, :right, :bottom))
+        annotate!(p1, maximum(results.CDs), results.CLs[first(inds)] + 0.002, text("Airfoil database limits (\$C_L\$)", :gray, 8, :right, :bottom))
     end
 
     # Combine the two plots side by side with custom spacing
     l = @layout [a{0.6w} b{0.4w}]
-    f = plot(p1, p2, layout=l, size=(600,500))
+    f = plot(p1, p2, layout=l, size=(600,500), dpi=300)
 
     default_title = @sprintf "TASOPT.jl Aeroperf. Sweep: \n %s" ac.name
 
@@ -1469,7 +1476,7 @@ end
 """
     plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8,
         Mach_ac=nothing, ip=ipcruise1, imission=1,
-        title=nothing, print_results=false)
+        title=nothing, print_results=false, show_airfoil_data = false)
 
 Generates a three-panel plot of the aircraft's lift, drag, and pitching moment
 coefficients versus angle of attack (AoA), evaluated by calling
@@ -1480,7 +1487,12 @@ The three subplots are:
 - **CD vs AoA [deg]**: drag curve.
 - **CM vs AoA [deg]**: pitching moments. Left y-axis shows aircraft-level component
   contributions (`CMwing`, `CMtail`, `CMfuse`) and their sum (`CM_ac ≈ 0` in trimmed
-  flight). Right y-axis shows the airfoil section cm at the spanbreak (`cmss`).
+  flight).
+
+When `show_airfoil_data=true`, each subplot gains a purple right y-axis with the
+corresponding airfoil-database section quantity at the spanbreak (`clpss`, `cdss`,
+`cmss`), all plotted against the same aircraft AoA axis. Note that the airfoil section Cms 
+are actually prescribed in the analysis by cmpo, cmps, cmpt, NOT the database values shown here (for now).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -1488,12 +1500,16 @@ The three subplots are:
     - `CL_range`: Range of lift coefficients to sweep (default: `0.2:0.05:0.8`).
     - `Mach_ac`: aircraft Mach number at which points are evaluated. If `nothing`, uses the value
       stored at `ip`, `imission` (default: `nothing`).
-    - `ip::Integer`: Flight point index (default: `ipcruise1`).
+    - `ip::Union{Integer,Colon}`: Flight point index (default: `ipcruise1`). Pass `:`
+      to generate one plot per flight point and return a `Vector{Plots.Plot}`.
     - `imission::Integer`: Mission index (default: `1`).
     - `title::Union{String,Nothing}`: Custom suptitle. If `nothing`, a default title
       with the aircraft name is used (default: `nothing`).
     - `print_results::Bool`: Print detailed output from [`aeroperf_sweep`](@ref)
       (default: `false`).
+    - `show_airfoil_data::Bool`: Overlay airfoil-section data at the spanbreak
+      (`clpss`, `cdss`, `cmss`) on a purple right y-axis versus the same aircraft
+      AoA x-axis as the main curves (default: `false`).
 
     **Outputs:**
     - Returns a `Plots.Plot` object with three subplots.
@@ -1509,7 +1525,15 @@ See also: [`plot_drag_polar`](@ref), [`aeroperf_sweep`](@ref).
 """
 function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
     ip = ipcruise1, imission = 1,
-    title=nothing, print_results = false)
+    title=nothing, print_results = false, show_airfoil_data = false)
+
+    if ip isa Colon
+        return [plot_aero_coefficients(ac;
+                    CL_range=CL_range, Mach_ac=Mach_ac, ip=i, imission=imission,
+                    title=title, print_results=print_results,
+                    show_airfoil_data=show_airfoil_data)
+                for i in 1:iptotal]
+    end
 
     results = aeroperf_sweep(ac, CL_range;
                              imission=imission, ip=ip,
@@ -1521,7 +1545,8 @@ function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
   # == p1: CL vs AoA (top — no x label, shared axis)
     p1 = plot(AoA_deg, results.CLs,
         xlabel="", ylabel="\$C_L\$",
-        label=false, lw=2, marker=:o, color=:skyblue)
+        label= show_airfoil_data ? "Aircraft \$C_L\$" : false,
+        lw=3, marker=:o, color=:skyblue, markersize=5)
 
     # suptitle annotation on p1 (same style as plot_drag_polar)
     annot_text = @sprintf "Mach = %.3f, ip = %d (%s), im = %d" results.Mach ip ip_labels[ip] imission
@@ -1530,26 +1555,47 @@ function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
   # == p2: CD vs AoA (middle — no x label, shared axis)
     p2 = plot(AoA_deg, results.CDs,
         xlabel="", ylabel="\$C_D\$",
-        label=false, lw=2, marker=:o, color=:tomato)
+        label= show_airfoil_data ? "Aircraft \$C_D\$" : false,
+        lw=2, marker=:o, color=:tomato, markersize=5)
 
   # == p3: CM vs AoA (bottom — carries the shared x label, dual y-axis)
     # left axis: aircraft-level component CMs
     p3 = plot(AoA_deg, results.CMs,
         xlabel="AoA (aircraft) [deg]", ylabel="\$C_M\$ (aircraft, about CG)",
-        label="\$C_{M,ac}\$", lw=2.5, marker=:circle, color=:red)
+        label="\$C_{M,ac}\$", lw=2.5, marker=:circle, color=:red, markersize=5)
+    hline!(p3, [0.0], color=:black, lw=2, label=false)
     plot!(p3, AoA_deg, results.CMtails,
-        label="\$C_{M,tail}\$", lw=2, marker=:rtriangle, color=:darkorange)
+        label="\$C_{M,tail}\$", lw=2, marker=:rtriangle, color=:teal, linestyle=:dash, markersize=7)
     plot!(p3, AoA_deg, results.CMfuses,
-        label="\$C_{M,fuse}\$", lw=2, marker=:diamond, color=:mediumseagreen)
+        label="\$C_{M,fuse}\$", lw=2, marker=:diamond, color=:goldenrod, linestyle=:dash, markersize=5)
     plot!(p3, AoA_deg, results.CMwings,
-        label="\$C_{M,wing}\$", lw=2, marker=:circle, color=:black, linestyle=:dash)
+        label="\$C_{M,wing}\$", lw=2, marker=:circle, color=:dodgerblue, linestyle=:dash, markersize=5)
 
-    # right axis: airfoil section cm at spanbreak
-    p3r = twinx(p3)
-    plot!(p3r, AoA_deg, results.cmss,
-        ylabel="\$c_m\$ (section, \$\\eta_s\$)", yguidefontcolor=:purple, ytickfontcolor=:purple,
-        label="\$c_{m,s}\$", lw=2, marker=:hexagon, color=:purple,
-        linestyle=:dot, legend=:topright)
+# Airfoil section data plotting on the right axis, if requested        
+# NOTE: these are pulled from the aero database (by way of aeroperf_sweep)
+# for the airfoil section cm, that is NOT what is used in the calculations (specified by input file via cmpo, cmps, cmpt)
+    if show_airfoil_data
+        # right axes: airfoil-section quantities at the spanbreak (vs section body-frame AoA)
+        #NOTE: data is from the aero database (airfun), NOT directly from the calculations
+        airf_style = (lw=2, marker=:square, markerstrokecolor=:purple, markercolor=:white,
+                      color=:purple, linestyle=:dot, markersize=3,
+                      yguidefontcolor=:purple, ytickfontcolor=:purple)
+
+        p1r = twinx(p1)
+        plot!(p1r, AoA_deg, results.clpss;
+            ylabel="\$c_l\$ (section, \$\\eta_s\$)",
+            label="\$c_{l,s}\$", legend=:bottomright, airf_style...)
+
+        p2r = twinx(p2)
+        plot!(p2r, AoA_deg, results.cdss;
+            ylabel="\$c_d\$ (section, \$\\eta_s\$)",
+            label="\$c_{d,s}\$", legend=:bottomright, airf_style...)
+
+        p3r = twinx(p3)
+        plot!(p3r, AoA_deg, results.cmss;
+            ylabel="\$c_m\$ (section, \$\\eta_s\$)",
+            label="\$c_{m,s}\$", legend=:topright, airf_style...)
+    end
 
     default_title = @sprintf "TASOPT.jl Aero Coefficients: \n %s" ac.name
 
@@ -1559,10 +1605,12 @@ function plot_aero_coefficients(ac; CL_range = 0.2:0.05:0.8, Mach_ac=nothing,
         link=:x,
         suptitle=isnothing(title) ? default_title : title,
         bottom_margin=2Plots.mm,
-        left_margin=3Plots.mm,
+        left_margin=8Plots.mm,
         top_margin=12Plots.mm,
         right_margin=8Plots.mm,
-        legend=true)
+        legendfontsize=10,
+        background_color_legend=:white,
+        foreground_color_legend=:gray)
 
     return f
 end

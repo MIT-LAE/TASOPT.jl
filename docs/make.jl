@@ -30,6 +30,7 @@ makedocs(
         "aero/lift.md",
         "aero/drag.md",
         "aero/moment.md",
+        "aero/attitude.md",
         "atmos/atmos.md"
         ],
     "Structures" => Any["structures/wing.md",

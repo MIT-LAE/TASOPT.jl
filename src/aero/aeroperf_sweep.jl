@@ -24,6 +24,15 @@ This function deep-copies the input aircraft model, sets the lift coefficient, b
     **Outputs:**
     - Returns a named tuple of vectors containing:
         - `Mach`: Mach number at which points are evaluated.
+
+!!! details "Assumptions"
+    - **Airfoil section quantities** (`cdfss`, `cdpss`, `cdwss`, `cmss`, `aoaps`) are sampled
+      **only at the spanbreak section** via [`airfun`](@ref), using `ac.wing.outboard.cross_section.thickness_to_chord`
+      and the perpendicular Mach `Mach_perp = Mach × cos(sweep)`.
+    - The aircraft is **trimmed** at each `CL` via `balance_aircraft!(..., "CL_htail")`.
+    - Aircraft AoA is computed from the spanbreak perpendicular AoA via the sweep correction
+      `aoaws = atan(cos(Λ) · tan(aoaps))` and the wing mounting offset (see [`calc_wing_aoa`](@ref),
+      [`calc_ac_AoA`](@ref)).
         - `CLs`: Lift coefficients at each point.
         - `CDs`: Drag coefficients at each point.
         - `LDs`: Lift-to-drag ratios.
@@ -31,6 +40,7 @@ This function deep-copies the input aircraft model, sets the lift coefficient, b
         - `CDis`: Induced drag coefficients.
         - `CDwings`, `CDfuses`, `CDhtails`, `CDvtails`, `CDothers`: Component drag breakdowns.
         - `clpos`, `clpss`, `clpts`: airfoil section lift coefficients (root, spanbreak, and tip).
+        - `xCGs`, `xCPs`, `xNPs`: center of gravity, center of pressure, and neutral point locations [m from nose].
 
     Sample usage:
 
@@ -92,6 +102,11 @@ function aeroperf_sweep(ac_orig, CL_range; Mach_ac=nothing, imission=1, ip=ipcru
                CMtails = Vector{Float64}(undef, n), #tail CM about CG
                CMfuses = Vector{Float64}(undef, n), #fuselage CM about CG
                CMs     = Vector{Float64}(undef, n), #total aircraft CM (≈ 0 in trimmed flight)
+
+               #balance quantities (from balance_aircraft!)
+               xCGs = Vector{Float64}(undef, n),
+               xCPs = Vector{Float64}(undef, n),
+               xNPs = Vector{Float64}(undef, n),
                 )
 
     # geometry constants for component CM calculations (invariant over CL sweep with "CL_htail" trim)
@@ -107,6 +122,9 @@ function aeroperf_sweep(ac_orig, CL_range; Mach_ac=nothing, imission=1, ip=ipcru
 
     for (i, CL) in enumerate(CL_range)
         ac.para[iaCL, ip, imission] = CL
+        #TODO: as currently written, update_wing_pitching_moments!() doesn't need to be called here since all the inputs are constant
+        # but it should be called in the case where section pitching moments are pulled from the airfoil database (rather than prescribed in the input file)
+        update_wing_pitching_moments!(ac.para, ac.wing, ip)
         balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, TrimVar.CLHtail)
         aircraft_drag!(ac, imission, ip, true)
 
@@ -151,21 +169,26 @@ function aeroperf_sweep(ac_orig, CL_range; Mach_ac=nothing, imission=1, ip=ipcru
         #store section cm from airfun
         results.cmss[i] = cms
 
+        #store balance quantities
+        xCG = ac.para[iaxCG, ip, imission]
+        xCP = ac.para[iaxCP, ip, imission]
+        xNP = ac.para[iaxNP, ip, imission]
+
+        results.xCGs[i] = xCG
+        results.xCPs[i] = xCP
+        results.xNPs[i] = xNP
+
         #compute aircraft component pitching moments about CG (formulas from balance.jl)
         CL_i  = results.CLs[i]
         CLh_i = results.CLhs[i]
-        xCG   = ac.para[iaxCG, ip, imission]
         CMw0  = ac.para[iaCMw0, ip, imission]
         CMw1  = ac.para[iaCMw1, ip, imission]
         CMh0  = ac.para[iaCMh0, ip, imission]
         CMh1  = ac.para[iaCMh1, ip, imission]
 
-        #TODO: confirm these calculations are correct (see Drela TASOPT PDF 2.11.2)
-        #they were borrowed from commented-out sections of balance.jl
-        #REMEMBER TO CHECK IF THE AIRCRAFT IS TRIMMED, AND IF THE REFERENCE POINTS ARE CORRECT/CONSISTENT
-        results.CMwings[i] = (co * CMw0 + (co * CMw1 - xwbox - xCG) * (CL_i - CLh_i * Sh / S_ref)) / cma
-        results.CMtails[i] = (coh * CMh0 * Sh / S_ref + (coh * CMh1 - xhbox - xCG) * CLh_i * Sh / S_ref) / cma
-        results.CMfuses[i] = CMVf1 * (CL_i - CLMf0) / (S_ref * cma)
+        results.CMwings[i] = ac.para[iaCMwing, ip, imission]
+        results.CMtails[i] = ac.para[iaCMtail, ip, imission]
+        results.CMfuses[i] = ac.para[iaCMfuse, ip, imission]
         results.CMs[i]     = results.CMwings[i] + results.CMtails[i] + results.CMfuses[i]
     end
     
@@ -270,7 +293,8 @@ end
 """
     calc_mission_attitude!(ac; imission=1, ips=ipclimb1:ipdescentn)
 
-Compute AoA and Theta for each mission point in `ips`.
+Compute and store the aircraft AoA (`iaAoA`) and pitch attitude Θ (`iaTheta`) at each
+mission point in `ips`. Both are stored in **radians, body axes** in `ac.para`.
 
 Skips ground/takeoff phases (`ipstatic`–`ipcutback`) by default, as `iagamV`,
 `iaclps`, and `iaMach` are not in steady trimmed-flight states for those points.

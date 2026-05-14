@@ -1,25 +1,33 @@
 using LinearAlgebra
 
 """
-Calculates spline coefficients for X(S).          
-Natural end conditions are used (zero 3rd        
-derivative over first, last intervals).         
-                                                  
-To evaluate the spline at some value of S,       
-use SEVAL and/or DEVAL.                          
+    spline(S, X)
+
+Calculate cubic-spline derivatives `dX/dS` at the knots of `S` using natural end
+conditions (zero third derivative over the first and last intervals).
+
+To evaluate the spline at some value of `S`, use `SEVAL` and/or `DEVAL`.
+
+# NaN handling — assumption
+The airfoil database (see [`airtable`](@ref)) marks infeasible operating points with
+`NaN`. This function tolerates `NaN` entries in `X` **only if the valid (non-NaN) entries
+form a single contiguous block** at one or both ends of the array — i.e. no internal
+holes.
+
+- If `X` is all `NaN`, returns a `NaN`-filled `XS` of the same length.
+- If `X` has a single contiguous valid block, the spline is computed on that block and
+  `XS` is `NaN` at the invalid positions.
+- If a `NaN` is *surrounded* by valid data (an internal hole), this function **errors**.
+  Callers are expected to ensure the database / input was constructed with this in mind.
+
 - Inputs
 
-  S        independent variable array (input)      
-  X        dependent variable array   (input) 
-  
+  S        independent variable array (input)
+  X        dependent variable array   (input)
+
 - Outputs
 
-  XS       dX/dS array                (calculated) 
-    
-Handles NaN values by:
-- Computing derivatives only for valid (non-NaN) segments
-- Setting derivatives to NaN where data is NaN
-- Errors if there are internal holes (NaN surrounded by valid data)
+  XS       dX/dS array                (calculated)
 """
 function spline(S, X)
 # Pre-processing for NaNs (i.e., missing or infeasible regions)

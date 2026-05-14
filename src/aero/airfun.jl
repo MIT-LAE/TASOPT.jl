@@ -11,21 +11,39 @@ const Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
 """
     airfun(cl, toc, Mach, air::airfoil)
 
-Looks up airfoil performance data at specified conditions, as precomputed and found in `./src/airfoil_data/`.
+Tricubic interpolation of airfoil performance data at the requested `(cl, toc, Mach)`
+operating point, using the precomputed table in `./src/airfoil_data/` (loaded via
+[`airtable`](@ref) into an [`airfoil`](@ref) struct).
 
 !!! details "🔃 Inputs and Outputs"
-      **Inputs:**      
-      - `cl::Float64`: Airfoil section lift coefficient.
+      **Inputs:**
+      - `cl::Float64`:  Airfoil section lift coefficient (perpendicular to LE).
       - `toc::Float64`: Airfoil section thickness-to-chord ratio.
-      - `Mach::Float64`: Mach number.
-      - `air::TASOPT.aerodynamics.airfoil`: `airfoil` structure with performance data.
+      - `Mach::Float64`: Section Mach number (perpendicular to LE if used for a swept wing).
+      - `air::TASOPT.aerodynamics.airfoil`: Database struct from [`airtable`](@ref).
 
       **Outputs:**
-      - `cdf::Float64`: Airfoil section skin friction drag.
-      - `cdp::Float64`: Airfoil section pressure drag.
-      - `cdw::Float64`: Airfoil section wave drag (unused and assumed 0 here; placeholder left for future implementation).*
-      - `cm::Float64`: Airfoil section pitching moment.
-      - `aoa::Float64`: Airfoil section angle of attack (perpendicular to leading edge).*
+      - `cdf::Float64`: Skin-friction drag coefficient.
+      - `cdp::Float64`: Pressure drag coefficient (includes any out-of-envelope penalty).
+      - `cdw::Float64`: Wave drag — **currently zero** (placeholder for future CSV-import work).*
+      - `cm::Float64`:  Pitching moment coefficient.
+      - `aoa::Float64`: Section angle of attack, **radians**, perpendicular to the leading edge.*
+
+
+!!! details "🔃 Behavior/logic outside the valid data region"
+        The MSES-infeasible region of the database is marked with `NaN` (see [`airtable`](@ref)).
+        `airfun` handles this with:
+
+        1. **CL-segment fallback.** If any of the four `(j1:j2) × (k1:k2)` corner samples used for
+        the local tricubic stencil contains a `NaN` (i.e. the upper-CL bracket has gone infeasible
+        at the local `toc`), `airfun` walks `j` downward to the **last fully-valid CL segment** at
+        the current `(Mach, toc)` cell and interpolates there. The query `cl` is then effectively
+        *extrapolated* from the lower segment. Use [`airfoil_cl_limits`](@ref) to pre-query the
+        valid envelope.
+
+        2. **Quadratic drag penalty.** Beyond the valid CL envelope (`cl < Acl[1]` or `cl > clmax`)
+        a `1.0·Δcl²` penalty is added to `cdp`; beyond the toc envelope a `25.0·Δtoc²` penalty is
+        added. This is a soft, gradient-friendly bound intended to steer optimization away from the infeasible region.
 """
 @views function airfun(cl, toc, Mach, air::airfoil)
 
@@ -72,8 +90,7 @@ end
     Aij, Aij_toc	Interpolated values at CL level
     Aijk	        Final interpolated value at target point
 =#
-
-    #TODO: rename the indices. 
+ 
     #find indices of known data points adjacent to query point
     i2, i1, dMa , tMa  = findsegment(Mach, AMa)
     j2, j1, dcl , tcl  = findsegment(cl, Acl)

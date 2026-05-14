@@ -300,10 +300,16 @@ is appropriate for fully-turbulent flow. See the theory 📖 block below for mor
 using Markdown
 Markdown.parse_file(joinpath("../..", "src/aero","theory_airfun_and_splines.md"))
 ```
+Use [`airfoil_cl_limits`](@ref TASOPT.aerodynamics.airfoil_cl_limits) to query the valid (non-`NaN`) `cl` range of the database at a given perpendicular Mach and `t/c` — useful when sweeping `CL` (e.g. via [`aeroperf_sweep`](@ref)) to know where extrapolation begins.
+
 ```@docs
 aerodynamics.airtable(fname)
 
 aerodynamics.airfun(cl, toc, Mach, air::aerodynamics.airfoil)
+
+aerodynamics.airfoil_cl_limits
+
+aerodynamics.spline
 
 ```
 
