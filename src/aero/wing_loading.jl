@@ -171,7 +171,10 @@ Calculates components of wing pitching moment (``C_M``) about wing root axis:
 
 ``ΔC_{m, surf} = ΔC_{m, 0} + dCₘ/dCL × (C_L - C_{L,h})``
 
-Formerly, `surfcm()`.
+The lift-independent moment (`CM0`) is determined from the user-specified airfoil pitching moment 
+coefficients (`cmpo`, `cmps`, `cmpt`) at the wing root, break, and tip, respectively.
+The lift-dependent moment (`CM1`) is determined from integration of the wing-loading over the wing span 
+(following geometry and loading assumptions). Formerly, `surfcm()`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**

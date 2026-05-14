@@ -98,7 +98,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 
       #---- for better convergence, 
       #      will assume that HT weight will scale with its area
-      Sh1 = Sh
+      Sh1 = Sh #initial HT area
 
       #---- total weight, weight moment, and derivatives
       W = rpay * Wpay +
@@ -115,21 +115,6 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
           Wlgnose +
           Wlgmain
 
-      #  println("rpay = $rpay, rufel = $rfuel;
-      #   rpay *Wpay  = $(rpay *Wpay ) 
-      #  rfuel*Wfuel = $(rfuel*Wfuel ) 
-      #  Wfuse  = $(Wfuse  ) 
-      #  Wtesys = $(Wtesys ) 
-      #  Wftank = $(Wftank ) 
-      #  Wwing  = $(Wwing  ) 
-      #  Wstrut = $(Wstrut ) 
-      #  Whtail*Sh/Sh1 = $(Whtail*Sh/Sh1) 
-      #  Wvtail  = $(Wvtail  ) 
-      #  Weng    = $(Weng    ) 
-      #  Whpesys = $(Whpesys ) 
-      #  Wlgnose = $(Wlgnose ) 
-      #  Wlgmain = $(Wlgmain )")
-
       W_Sh = Whtail / Sh1
 
       #Calculate fuel moment and derivatives wrt to wing box location 
@@ -141,6 +126,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
             xWfuel_xwbox = rfuel * Wfuel
       end
 
+      #weight pitching moments, some defined as baselined to wingbox, and an increment due to the weight distribution
       xW = rpay * Wpay * xpay +
            xWfuel +
            fuse.moment + xWtesys + xWftank +
@@ -152,11 +138,12 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
            Whpesys * fuse.HPE_sys.r.x +
            Wlgmain * (wing.layout.box_x + dxlg) + landing_gear.nose_gear.moment
 
+      #values used in total moment residual calc
       xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
-
       xW_Sh = (Whtail * htail.layout.box_x + htail.dxW) / Sh1
 
       #---- total aero moment and derivatives
+      #are these actually updated? where?
       CMw0 = para[iaCMw0]
       CMw1 = para[iaCMw1]
       CMh0 = para[iaCMh0]
@@ -169,12 +156,14 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 
       #edge case: if CL = 0, the center of pressure is undefined, calc raises NaNs. 
       # this works around that by setting this function's CL to approx 0, eps = 1.23E-6
+      eps = 1.23e-6
       if CL == 0.0
-            CL = 1.23e-6
+            CL = eps
             #if verbose, give warning
             if Ldebug @warn("Stability calcs in `balance_aircraft!()` approximated aircraft CL = 0 as "*eps) end
       end
 
+      #cCM = c_0*Cm
       cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +
             coh * CMh0 * Sh / S + (coh * CMh1 - xhbox) * CLh * Sh / S +
             CMVf1 * (CL - CLMf0) / S
@@ -257,25 +246,18 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       #---- x locations after one of the trim changes
       #-     (xCP,xCG will be equal if moments are linear)
       # if CL is 0, xCP is undefined and CL for this function is set above to eps = 1.23e-6  
-      xCP = (CL == 1.23E-6) ? NaN : -cCM / CL 
+      xCP = (CL == eps) ? NaN : -cCM / CL 
       xCG = xW / W
 
       #---- component pitching moments
-      #      cCM  = co *CMw0      + (co *CMw1 - xwbox)*(CL - CLh*Sh/S) - xref*CL
-      #     &     + coh*CMh0*Sh/S + (coh*CMh1 - xhbox)*      CLh*Sh/S
-      #     &     + CMVf1*(CL-CLMf0)/S
-      #
-      #      cCM_CL  = (co*CMw1  - xwbox - xref)*(1.0 - CLh_CL*Sh/S)
-      #     &        + (coh*CMh1 - xhbox - xref)*CLh_CL*Sh/S
-
-      #     CMwing = (co *CMw0      + (co *CMw1-xwbox-xCG)*(CL-CLh*Sh/S))/cma
-      #     CMtail = (coh*CMh0*Sh/S + (coh*CMh1-xhbox-xCG)*    CLh*Sh/S )/cma
-      #     CMfuse = CMVf1*(CL-CLMf0)/(S*cma)
+      CMwing = (co *CMw0      + (co *CMw1-xwbox+xCG)*(CL-CLh*Sh/S))/cma
+      CMtail = (coh*CMh0*Sh/S + (coh*CMh1-xhbox+xCG)*    CLh*Sh/S )/cma
+      CMfuse = CMVf1*(CL-CLMf0)/(S*cma)
 
       #---- store results for returning
-      #      para[iaCMwing] = CMwing
-      #      para[iaCMtail] = CMtail
-      #      para[iaCMfuse] = CMfuse
+      para[iaCMwing] = CMwing
+      para[iaCMtail] = CMtail
+      para[iaCMfuse] = CMfuse
 
       para[iaxCG] = xCG
       para[iaxCP] = xCP

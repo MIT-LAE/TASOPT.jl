@@ -1,25 +1,74 @@
 using LinearAlgebra
 
 """
-Calculates spline coefficients for X(S).          
-Natural end conditions are used (zero 3rd        
-derivative over first, last intervals).         
-                                                  
-To evaluate the spline at some value of S,       
-use SEVAL and/or DEVAL.                          
+    spline(S, X)
+
+Calculate cubic-spline derivatives `dX/dS` at the knots of `S` using natural end
+conditions (zero third derivative over the first and last intervals).
+
+To evaluate the spline at some value of `S`, use `SEVAL` and/or `DEVAL`.
+
+# NaN handling — assumption
+The airfoil database (see [`airtable`](@ref)) marks infeasible operating points with
+`NaN`. This function tolerates `NaN` entries in `X` **only if the valid (non-NaN) entries
+form a single contiguous block** at one or both ends of the array — i.e. no internal
+holes.
+
+- If `X` is all `NaN`, returns a `NaN`-filled `XS` of the same length.
+- If `X` has a single contiguous valid block, the spline is computed on that block and
+  `XS` is `NaN` at the invalid positions.
+- If a `NaN` is *surrounded* by valid data (an internal hole), this function **errors**.
+  Callers are expected to ensure the database / input was constructed with this in mind.
+
 - Inputs
 
-  S        independent variable array (input)      
-  X        dependent variable array   (input) 
-  
+  S        independent variable array (input)
+  X        dependent variable array   (input)
+
 - Outputs
 
-  XS       dX/dS array                (calculated) 
-    
-                                                      
+  XS       dX/dS array                (calculated)
 """
 function spline(S, X)
- 
+# Pre-processing for NaNs (i.e., missing or infeasible regions)
+N = length(S)
+nan_mask = isnan.(X) # Find NaN locations
+
+# If any NaNs in X
+if any(nan_mask)
+    # Find indices for valid data
+    valid_indices = findall(.!nan_mask)
+
+    # if all NaN, return all NaN derivatives
+    if isempty(valid_indices)
+        return fill(NaN, N)
+    end
+    
+    first_valid = first(valid_indices)
+    last_valid = last(valid_indices)
+    
+    # Check for internal holes (NaN between valid data)
+    if last_valid - first_valid + 1 != length(valid_indices)
+        error("NaN holes detected in airfoil: cannot compute spline with internal missing values. " *
+                "Valid indices: $(first_valid):$(last_valid), but only $(length(valid_indices)) valid points found.")
+    end
+    
+    # Extract valid segment
+    S_valid = S[first_valid:last_valid]
+    X_valid = X[first_valid:last_valid]
+    
+    # Recursively call spline on valid segment
+    XS_valid = spline(S_valid, X_valid)
+    
+    # Initialize output with NaNs
+    XS = fill(NaN, N)
+    
+    # Insert computed derivatives into valid positions
+    XS[first_valid:last_valid] = XS_valid
+    
+    return XS
+
+else #no NaNs
 # Create the N x N system to solve for spline parameters --> dX/dS
     N = length(S)
     B = zeros(N-1) # sub-diagonal
@@ -64,6 +113,7 @@ function spline(S, X)
     XS = SYS \ D    
     # @show XS
     return XS
+end #if-else
 end # SPLINE
 
 

@@ -1,121 +1,231 @@
-export airfun
-const nAfun::Int = 3
+export airfun, airfoil_cl_limits
+const nAfun::Int = 6
 const Ai = @MMatrix zeros(2,2)
 const Ai_cl = @MMatrix zeros(2,2)
-const Ai_tau = @MMatrix zeros(2,2)
-const Ai_cl_tau = @MMatrix zeros(2,2)
+const Ai_toc = @MMatrix zeros(2,2)
+const Ai_cl_toc = @MMatrix zeros(2,2)
 const Aij = @MVector zeros(2)
-const Aij_tau = @MVector zeros(2)
+const Aij_toc = @MVector zeros(2)
 const Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
 
 """
-    airfun(cl, τ, Mach, air::airfoil)
+    airfun(cl, toc, Mach, air::airfoil)
 
-Looks up airfoil performance data at specified conditions, as precomputed and found in `./src/airfoil_data/`.
+Tricubic interpolation of airfoil performance data at the requested `(cl, toc, Mach)`
+operating point, using the precomputed table in `./src/airfoil_data/` (loaded via
+[`airtable`](@ref) into an [`airfoil`](@ref) struct).
 
 !!! details "🔃 Inputs and Outputs"
-      **Inputs:**      
-      - `cl::Float64`: Airfoil section lift coefficient.
-      - `τ::Float64`: Airfoil section thickness-to-chord ratio.
-      - `Mach::Float64`: Mach number.
-      - `air::TASOPT.aerodynamics.airfoil`: `airfoil` structure with performance data.
+      **Inputs:**
+      - `cl::Float64`:  Airfoil section lift coefficient (perpendicular to LE).
+      - `toc::Float64`: Airfoil section thickness-to-chord ratio.
+      - `Mach::Float64`: Section Mach number (perpendicular to LE if used for a swept wing).
+      - `air::TASOPT.aerodynamics.airfoil`: Database struct from [`airtable`](@ref).
 
       **Outputs:**
-      - `cdf::Float64`: Airfoil section skin friction drag.
-      - `cdp::Float64`: Airfoil section pressure drag.
-      - `cdw::Float64`: Airfoil section wave drag (unused and assumed 0 here; placeholder left for future implementation).
-      - `cm::Float64`: Airfoil section pitching moment.
-"""
-@views function airfun(cl, τ, Mach, air::airfoil)
+      - `cdf::Float64`: Skin-friction drag coefficient.
+      - `cdp::Float64`: Pressure drag coefficient (includes any out-of-envelope penalty).
+      - `cdw::Float64`: Wave drag — **currently zero** (placeholder for future CSV-import work).*
+      - `cm::Float64`:  Pitching moment coefficient.
+      - `aoa::Float64`: Section angle of attack, **radians**, perpendicular to the leading edge.*
 
-    return airfun(cl, τ, Mach, 
-                    air.cl, air.τ, air.Ma,
+
+!!! details "🔃 Behavior/logic outside the valid data region"
+        The MSES-infeasible region of the database is marked with `NaN` (see [`airtable`](@ref)).
+        `airfun` handles this with:
+
+        1. **CL-segment fallback.** If any of the four `(j1:j2) × (k1:k2)` corner samples used for
+        the local tricubic stencil contains a `NaN` (i.e. the upper-CL bracket has gone infeasible
+        at the local `toc`), `airfun` walks `j` downward to the **last fully-valid CL segment** at
+        the current `(Mach, toc)` cell and interpolates there. The query `cl` is then effectively
+        *extrapolated* from the lower segment. Use [`airfoil_cl_limits`](@ref) to pre-query the
+        valid envelope.
+
+        2. **Quadratic drag penalty.** Beyond the valid CL envelope (`cl < Acl[1]` or `cl > clmax`)
+        a `1.0·Δcl²` penalty is added to `cdp`; beyond the toc envelope a `25.0·Δtoc²` penalty is
+        added. This is a soft, gradient-friendly bound intended to steer optimization away from the infeasible region.
+"""
+@views function airfun(cl, toc, Mach, air::airfoil)
+
+    return airfun(cl, toc, Mach, 
+                    air.cl, air.toc, air.Ma,
                     air.A,
                     air.A_M,
-                    air.A_τ,
+                    air.A_toc,
                     air.A_cl,
-                    air.A_M_τ,
+                    air.A_M_toc,
                     air.A_M_cl,
-                    air.A_cl_τ,
-                    air.A_M_cl_τ)
+                    air.A_cl_toc,
+                    air.A_M_cl_toc)
 
 end
 
-@views function airfun(cl, τ, Mach, 
+@views function airfun(cl, toc, Mach, 
                 Acl,
-                Aτ,
+                Atoc,
                 AMa,
                 A,
                 A_M,
-                A_τ,
+                A_toc,
                 A_cl,
-                A_M_τ,
+                A_M_toc,
                 A_M_cl,
-                A_cl_τ,
-                A_M_cl_τ)
-    
-    io, im, dMa , tMa  = findsegment(Mach, AMa)
-    jo, jm, dcl , tcl  = findsegment(cl, Acl)
-    ko, km, dtau, ttau = findsegment(τ, Aτ)
-    
-    @inbounds for l = 1:nAfun
-        @inbounds for jd = 1:2
-            @inbounds for kd = 1:2
-                j = jo + jd-2
-                k = ko + kd-2
+                A_cl_toc,
+                A_M_cl_toc)
+   
+#=
+ Explanation of variables, thanks Claude
+    Variable	    Purpose
+    i2, i1	        Upper/lower indices in Mach dimension
+    j2, j1	        Upper/lower indices in CL dimension
+    k2, k1	        Upper/lower indices in toc dimension
+    dMa, dcl, dtoc	Interval sizes between indexed points [i.e., x2 - x1 in an interp]
+    tMa, tcl, ttoc	Normalized positions (0-1) within intervals [i.e., interp at (x_sample - x1) / (x2-x1)]
+    A	            Core 4D database of aerodynamic coefficients
+    A_M, A_toc, A_cl	First derivative matrices (by Mach, toc, CL respectively)
+    A_M_toc, A_M_cl, 	Mixed partial derivatives
+    A_cl_toc, A_M_cl_toc
+    Ai, Ai_cl,      Intermediate interpolated values at Mach level
+    Ai_toc, Ai_cl_toc	
+    Aij, Aij_toc	Interpolated values at CL level
+    Aijk	        Final interpolated value at target point
+=#
+ 
+    #find indices of known data points adjacent to query point
+    i2, i1, dMa , tMa  = findsegment(Mach, AMa)
+    j2, j1, dcl , tcl  = findsegment(cl, Acl)
+    k2, k1, dtoc, ttoc = findsegment(toc, Atoc)
 
-                Ai[jd, kd] = interpolate(ix1=im, ix2=io,
+    #Extrapolating in CL 
+    #if any of the 4 elements in A[i,j,k,1] for combinations of {j2, j1} x {k2, k1} 
+    # are NaN (i.e., infeasible per MSES), use the next valid segments (i.e., lower cl points at given toc)
+    # to perform the interpolation (thus, an extrapolation). 
+    # drag performance is penalized later in this fxn to discourage such extrapolation (e.g., for optimization)
+
+    # Check if any points are NaN, making extrapolation necessary
+    any_nan = any(isnan.(A[i1:i2, j1:j2, k1:k2,1]))
+    jupdate = nothing #initialize index for updated cl segment; subs for j2 in case of NaNs
+    if any_nan   
+        # Find last valid cl segment at current toc to use instead of current segment
+        for j_valid in j2-1:-1:1 #step backwards to lower cls
+            #if all points relevant to tricubic interp are valid (i.e., none are invalid)...
+            if !any(isnan.(A[i1:i2, j_valid, k1:k2, 1])) 
+                jupdate = j_valid
+
+                #update reference cl values for tricubic eval
+                dcl = Acl[jupdate] - Acl[jupdate-1]
+                tcl = (cl - Acl[jupdate-1])/dcl
+                j2 = jupdate
+                break
+            end
+        end
+    end
+    
+    #tricubic interpolation
+    @inbounds for l = 1:nAfun #for every fxn to interpolate
+        @inbounds for jd = 1:2  #loop over adjacent cl values
+            @inbounds for kd = 1:2 #loop over adjacent toc values
+                j = j2 + jd-2
+                k = k2 + kd-2
+                
+                #interpolate vals at target Mach (along Mach)
+                # values
+                Ai[jd, kd] = interpolate(ix1=i1, ix2=i2,
                     dx=dMa, t=tMa, Y=view(A, :, j, k, l),
                     dYdX=view(A_M, :, j, k, l))
                 
-                Ai_cl[jd, kd] = interpolate(ix1=im, ix2=io,
+                #cl derivatives
+                Ai_cl[jd, kd] = interpolate(ix1=i1, ix2=i2,
                     dx=dMa, t=tMa, Y=view(A_cl, :, j, k, l),
                     dYdX=view(A_M_cl, :, j, k, l))
                 
-                Ai_tau[jd, kd] = interpolate(ix1=im, ix2=io,
-                    dx=dMa, t=tMa, Y=view(A_τ, :, j, k, l),
-                    dYdX=view(A_M_τ, :, j, k, l))
+                #toc derivatives
+                Ai_toc[jd, kd] = interpolate(ix1=i1, ix2=i2,
+                    dx=dMa, t=tMa, Y=view(A_toc, :, j, k, l),
+                    dYdX=view(A_M_toc, :, j, k, l))
                 
-                Ai_cl_tau[jd, kd] = interpolate(ix1=im, ix2=io,
-                    dx=dMa, t=tMa, Y=view(A_cl_τ, :, j, k, l),
-                    dYdX=view(A_M_cl_τ, :, j, k, l))
-
+                #cross derivatives
+                Ai_cl_toc[jd, kd] = interpolate(ix1=i1, ix2=i2,
+                    dx=dMa, t=tMa, Y=view(A_cl_toc, :, j, k, l),
+                    dYdX=view(A_M_cl_toc, :, j, k, l))
             end
         end
 
+        #interpolate vals at target cl (along cl)
         @inbounds for kd = 1:2
+            #values
             Aij[kd] = interpolate(ix1=1, ix2=2, 
                 dx=dcl, t=tcl, Y=view(Ai, :, kd), dYdX=view(Ai_cl, :, kd))
-            
-            Aij_tau[kd] = interpolate(ix1=1, ix2=2,
-                dx=dcl, t = tcl, Y=view(Ai_tau, :, kd), dYdX=view(Ai_cl_tau,:,kd))
+            #toc derivatives
+            Aij_toc[kd] = interpolate(ix1=1, ix2=2,
+                dx=dcl, t = tcl, Y=view(Ai_toc, :, kd), dYdX=view(Ai_cl_toc,:,kd))
         end
 
+        #interpolate vals at target toc (along toc)
         Aijk[l] = interpolate(ix1=1, ix2=2,
-            dx=dtau, t=ttau, Y=view(Aij, :), dYdX=view(Aij_tau, :))
+            dx=dtoc, t=ttoc, Y=view(Aij, :), dYdX=view(Aij_toc, :))
     end
-    cdf = Aijk[1]
-    cdp = Aijk[2]
-    cm  = Aijk[3]
-    cdw = 0.0
+
+    # extract data to return
+    # updated airfoil database contains:
+    # ["CD", "CDp", "CDv", "CDw", "CM", "alpha"]
+    # (note that cd = cdv + cdw [viscous + wave] = cdp + cdf [pressure + friction])
+    cdp = Aijk[2]           #pressure drag
+    cdf = Aijk[1] - cdp     #friction drag
+    cdw  = Aijk[4]            #wave drag
+    cm = Aijk[5]            #pitching moment
+    aoa = Aijk[6]         #angle of attack, aoa
 
     #Add quadratic penalties for exceeding database cl or h/c limits
-    # clmin, clmax = Acl[[1, end]]
+    clmax = isnothing(jupdate) ? Acl[end] : Acl[jupdate] #adjusts edge of database cl limits to account for NaNs 
+    # clmax = Acl[end] #to turn off NaN penalty
     if cl < Acl[1]
         cdp = cdp + 1.0*(cl-Acl[1])^2
-    elseif cl > Acl[end]
-        cdp = cdp + 1.0*(cl-Acl[end])^2
+    elseif cl > clmax
+        cdp = cdp + 1.0*(cl-clmax)^2
     end
 
-    # τmin, τmax = Aτ[[1, end]]
-    if τ < Aτ[1]
-        cdp = cdp + 25.0*(τ - Aτ[1])^2
-    elseif τ > Aτ[end]
-        cdp = cdp + 25.0*(τ - Aτ[end])^2
+    # tocmin, tocmax = Atoc[[1, end]]
+    if toc < Atoc[1]
+        cdp = cdp + 25.0*(toc - Atoc[1])^2
+    elseif toc > Atoc[end]
+        cdp = cdp + 25.0*(toc - Atoc[end])^2
     end
 
-    return cdf, cdp, cdw, cm
+    return cdf, cdp, cdw, cm, aoa
+end
 
+
+"""
+    airfoil_cl_limits(airf::airfoil, Mach_perp::Float64, toc::Float64)
+
+Returns the valid `(cl_min, cl_max)` range of the airfoil database at the given
+perpendicular Mach number and thickness-to-chord ratio.
+
+Validity is determined by checking for `NaN` entries in the CD column of the data
+array `A`, which are used to mark infeasible (e.g. stalled) operating points in the
+MSES database. The bracketing Mach and toc grid cells are found with
+`searchsortedlast`; inputs outside the grid are clamped to the nearest cell so the
+function does not error on extrapolation queries.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `airf::airfoil`: Airfoil database struct (e.g. `ac.wing.airsection`).
+      - `Mach_perp::Float64`: Perpendicular Mach number (= aircraft Mach × cos(sweep)).
+      - `toc::Float64`: Thickness-to-chord ratio at the section of interest.
+
+      **Outputs:**
+      - `cl_min::Float64`: Lowest cl in the database with valid (non-NaN) data at `(Mach_perp, toc)`.
+      - `cl_max::Float64`: Highest cl in the database with valid (non-NaN) data at `(Mach_perp, toc)`.
+"""
+function airfoil_cl_limits(airf::airfoil, Mach_perp::Float64, toc::Float64)
+    i1 = clamp(searchsortedfirst(airf.Ma,  Mach_perp) - 1, 1, length(airf.Ma)  - 1)
+    k1 = clamp(searchsortedfirst(airf.toc, toc)       - 1, 1, length(airf.toc) - 1)
+    valid = j -> !any(isnan, @view airf.A[i1:i1+1, j, k1:k1+1, 1])
+    jmin  = findfirst(valid, eachindex(airf.cl))
+    jmax  = findlast( valid, eachindex(airf.cl))
+    return (isnothing(jmin) ? airf.cl[1]   : airf.cl[jmin],
+            isnothing(jmax) ? airf.cl[end] : airf.cl[jmax])
 end
 
 
@@ -123,9 +233,9 @@ end
     findsegment(x::T, xarr::Vector{T})
 
 Uses bisection to find the right interval of the array `xarr` where x lies.
-Returns im and io s.t. `xarr[im] < x < xarr[io]`.
+Returns i1 and i2 s.t. `xarr[i1] < x < xarr[i2]`.
 
-Additionally returns the interval `dx = xarr[io] - xarr[im]`
+Additionally returns the interval `dx = xarr[i2] - xarr[i1]`
 """
 function findsegment(x::Float64, xarr)
 
@@ -133,13 +243,13 @@ function findsegment(x::Float64, xarr)
         error("Oops, you're searching for a NaN! Go fix your bug!")
     end
     
-    im::Int = find_bisection(x, xarr)
-    io = im+1
+    i1::Int = find_bisection(x, xarr)
+    i2 = i1+1
 
-    dx = xarr[io] - xarr[im]
-    t = (x - xarr[im])/dx
+    dx = xarr[i2] - xarr[i1]
+    t = (x - xarr[i1])/dx
 
-    return io, im, dx, t
+    return i2, i1, dx, t
 end
 """
     find_bisection(x::T, X::AbstractVector{T}) where T
@@ -151,7 +261,7 @@ function find_bisection(x::T, X::AbstractVector{T}) where T
     i::Int = length(X)
     while (i-ilow > 1)
         imid = (i+ilow)÷2
-        if x<X[imid]
+        if x<=X[imid]
             i = imid
         else
             ilow = imid
@@ -172,11 +282,11 @@ with this deep part of the code knows what they are doing. See [`eval_spline`](@
 """
 function interpolate(;ix1, ix2, dx, t, Y, dYdX)
 
-    yim = Y[ix1] 
-    yi = Y[ix2]
-    Δ = yi - yim
-    fxm = dx * dYdX[ix1] - Δ
-    fxo = dx * dYdX[ix2] - Δ
+    yim = Y[ix1]           # y-value at lower endpoint
+    yi = Y[ix2]            # y-value at upper endpoint
+    Δ = yi - yim           # difference: Δ = y₂ - y₁
+    fxm = dx * dYdX[ix1] - Δ   # "curvature" at lower point
+    fxo = dx * dYdX[ix2] - Δ   # "curvature" at upper point
 
     return eval_spline(t = t, yim = yim, yi = yi, fxm = fxm, fxo = fxo)
 end

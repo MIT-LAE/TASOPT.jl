@@ -245,7 +245,7 @@ name = "TASOPT Model with cryo fuel and HX"
     strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
 
     # Airfoil data (Should be stored in src/airfoil_data/)
-    airfoil = "C.air"
+    airfoil = "C_airfoil.csv"
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3

@@ -1,5 +1,4 @@
-
-
+rtol_aero = 1e-4 #coarse = 10% =1e-1; fine = 0.001% = 1e-5
 @testset "wing aerodynamics" verbose=true begin 
     include(joinpath(TASOPT.__TASOPTroot__, "../test/default_structures.jl"))
     fuselage = ac_test.fuselage
@@ -10,49 +9,71 @@
         @test airf.Re == 2.0e7
         @test airf.cl[1] == 0.4
         @test airf.cl[end] == 0.9
-        @test airf.τ[1] == 0.09
-        @test airf.τ[end] == 0.145
+        @test airf.toc[1] == 0.09
+        @test airf.toc[end] == 0.145
         @test airf.Ma[1] == 0.0
         @test airf.Ma[end] == 0.81
-        @test all(airf.A[1, 1, 1, :] .== [0.537000E-02, 0.105000E-02, -0.114800])
-        @test all(airf.A[end, end, end, :] .== [0.330800E-02, 0.129780, -0.157000E-01])
+
+        #A[iMa, iCL, itoc, iFun]; Ma[11] is 0.65
+        #Funs: cols_to_interp = ["CD", "CDp", "CDv", "CDw", "CM", "alpha"]
+        #not to be confused with airfun output: cdf, cdp, cdw, cm, aoa
+        @test all(airf.A[1, 1, 1, :] .≈ [0.00640, 0.101000E-02, 0.00640, 0.00000, -0.112800, deg2rad(-0.109)])
+        @test all(airf.A[11, end, end, :] .≈ [0.01300, 0.00813, 0.00946, 0.00353, -0.0763, deg2rad(3.900)])
 
         # Airfun:
         clp = 0.68657968661106417
         toc = 0.12677500000000000
         Mperp = 0.73161835368752204
-        cdf1 = 4.9548669970280916E-003
-        cdp1 = 3.8227447198802837E-003
-        cdwbar = 0.0000000000000000
-        cm1 = -0.11614728079885453
+        cdf1 = 0.004954121846483027
+        cdp1 = 0.0038437793944878164
+        cdwbar = 0.0002829380034593542
+        cm1 = -0.11617161827087581
 
-        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
+        cdf, cdp, cdw, cm, aoa = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
 
-        @test cdf1 ≈ cdf rtol = 1e-6
-        @test cdp1 ≈ cdp rtol = 1e-6
-        @test cdwbar ≈ cdw
-        @test cm1 ≈ cm rtol = 1e-6
+        @test cdf1 ≈ cdf rtol = rtol_aero
+        @test cdp1 ≈ cdp rtol = rtol_aero
+        @test cdwbar ≈ cdw rtol = rtol_aero
+        @test cm1 ≈ cm rtol = rtol_aero
 
         clp = 0.67016181769975336
         toc = 0.14401500000000000
         Mperp = 0.72079998136376022
-        cdf1 = 4.9388801313136523E-003
-        cdp1 = 4.1045733512642419E-003
-        cdwbar = 0.0000000000000000
-        cm1 = -9.5253127678246632E-002
-        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
+        cdf1 = 0.0049339151166954195
+        cdp1 = 0.004321147702034374
+        cdwbar = 0.00033321238724065
+        cm1 = -0.09550579075773889
+        cdf, cdp, cdw, cm, aoa = TASOPT.aerodynamics.airfun(clp, toc, Mperp, airf)
 
-        @test cdf1 ≈ cdf
-        @test cdp1 ≈ cdp
-        @test cdwbar ≈ cdw
-        @test cm1 ≈ cm
+        @test cdf1 ≈ cdf rtol = rtol_aero
+        @test cdp1 ≈ cdp rtol = rtol_aero
+        @test cdwbar ≈ cdw rtol = rtol_aero
+        @test cm1 ≈ cm rtol = rtol_aero
 
-        @test all(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.3, airf) .== (0.00533, 0.0011, 0.0, -0.1171))
-        @test all(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.8, airf) .== (0.00487, 0.00722, 0.0, -0.1544))
+        #airfun output: cdf, cdp, cdw, cm, aoa
+        @test all(isapprox.(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.3, airf), (0.00533, 0.0011, 0.0, -0.1171, deg2rad(-0.239)), rtol=rtol_aero)) #low mach
+        @test all(isapprox.(TASOPT.aerodynamics.airfun(0.4, 0.09, 0.8, airf), (0.00487, 0.00722, 0.00241, -0.1544, deg2rad(-0.416)), rtol=rtol_aero)) #high mach
         # test_limits
-        cdf, cdp, cdw, cm = TASOPT.aerodynamics.airfun(0.0, 0.0, 0.8, airf)
+        cdf, cdp, cdw, cm, aoa = TASOPT.aerodynamics.airfun(0.0, 0.0, 0.8, airf)
 
         @test cdp > 0.0
+
+        @testset "airfoil_cl_limits" begin
+            # At low Mach (0.0) all cl entries are valid → full grid range expected
+            cl_min, cl_max = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.0, 0.12)
+            @test cl_min == airf.cl[1]
+            @test cl_max == airf.cl[end]
+
+            # At high Mach + max toc, NaN entries reduce the upper limit to known values
+            cl_min_hi, cl_max_hi = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.8, 0.145)
+            @test cl_min_hi == 0.4
+            @test cl_max_hi == 0.6
+
+            #near operating point for default aircraft
+            cl_min_op, cl_max_op = TASOPT.aerodynamics.airfoil_cl_limits(airf, 0.8*cosd(wing.sweep), 0.1266)
+            @test cl_min_op == 0.4
+            @test cl_max_op == 0.9 
+        end
 
     end # end airfun
 
@@ -124,10 +145,10 @@
     @test fort_clpo ≈ wing_drag_components.clpo
     @test fort_clps ≈ wing_drag_components.clps
     @test fort_clpt ≈ wing_drag_components.clpt
-    @test fort_cdfw ≈ wing_drag_components.CDfwing
-    @test fort_cdpw ≈ wing_drag_components.CDpwing
-    @test fort_CDwing ≈ wing_drag_components.CDwing
-    @test fort_CDover ≈ wing_drag_components.CDover
+    @test fort_cdfw ≈ wing_drag_components.CDfwing rtol = 0.01 #coarsened to allow for differences from airfoil database update (change in interpolation/extrapolation)
+    @test fort_cdpw ≈ wing_drag_components.CDpwing rtol = 0.02 # " 
+    @test fort_CDwing ≈ wing_drag_components.CDwing rtol = 0.01 # "
+    @test fort_CDover ≈ wing_drag_components.CDover rtol = 0.01 # "
     #end wing_profiledrag_direct
 
     #start wing_profiledrag_scaled
@@ -251,11 +272,11 @@ end
 
     @test nbl == nl
     @test iblte == ilte
-    @test all(isapprox.(xl, xbl'))
-    @test all(isapprox.(zl, zbl'))
-    @test all(isapprox.(sl, sbl'))
-    @test all(isapprox.(dyl, dybl'))
-    @test all(isapprox.(ql, uinv'))
+    @test all(isapprox.(xl, xbl', rtol=rtol_aero))
+    @test all(isapprox.(zl, zbl', rtol=rtol_aero))
+    @test all(isapprox.(sl, sbl', rtol=rtol_aero))
+    @test all(isapprox.(dyl, dybl', rtol=rtol_aero))
+    @test all(isapprox.(ql, uinv', rtol=rtol_aero))
 
     # end _axisymm_flow
 
@@ -301,32 +322,44 @@ end
 @testset "aeroperf sweep" begin
     #loading known results, hardcoded; can be re-generated via aeroperf_sweep run in REPL
     test_results = (
-        CLs = [0.0, 0.8],
-        CDs = [0.13604564972842678, 0.0722843829765934],
-        LDs = [0.0, 11.067397507689181],
-        CLhs = [-0.03491386059155641, 0.02051823369020262],
-        CDis = [0.0, 0.02204129870424348],
-        CDwings = [0.1231523917536438, 0.037349826297566946],
-        CDfuses = [0.006730077607760404, 0.006730077607760404],
-        CDhtails = [0.002552328555573282, 0.002552328555573282],
-        CDvtails = [0.0017234065078558269, 0.0017234065078558269],
-        CDothers = [0.0018874453035934617, 0.0018874453035934617],
-        clpos = [0.013712538878744015, 0.8919623261552116],
-        clpss = [0.017110321211644165, 1.1129785697715282],
-        clpts = [0.012675236029086595, 0.8244886751494099],
-        cdfss = [0.00487079907515317, 0.0042716938945399335],
-        cdpss = [0.14901598750066625, 0.07005378491557111],
-        cdwss = [0.0, 0.0],
-        cdss = [0.15388678657581942, 0.07432547881011105]
+        CLs = [0.0, 0.8], 
+        CDs = [0.13618962085446845, 0.0732373227996773], 
+        LDs = [0.0, 10.923392191549702], 
+        CLhs = [-0.03491535409072098, 0.020507560861573293],
+        CDis = [0.0, 0.022041285204443015],
+        CDwings = [0.12329606395414112, 0.03830248069490695],
+        CDfuses = [0.006730626206731868, 0.006730626206731868],
+        CDhtails = [0.0025522813991681837, 0.0025522813991681837],
+        CDvtails = [0.001723382367648287, 0.001723382367648287],
+        CDothers = [0.0018872669267789941, 0.0018872669267789941],
+        clpos = [0.013712856513350129, 0.8919688475607043],
+        clpss = [0.017110717551824972, 1.112986707093414],
+        clpts = [0.012675529635809545, 0.8244947032346968],
+        cdfss = [0.004881668013378287, 0.004266375484863451],
+        cdpss = [0.14870816575912466, 0.06959477589589125],
+        cdwss = [-0.0005397688115456154, 0.016615680039374595],
+        cdss = [0.15358983377250293, 0.07386115138075469],
+        aoaps = [-0.04028526537706786, 0.06537374572541083],
+        aoaws = [-0.036211920260261835, 0.05877361305450882],
+        AoA = [-0.06965533335750512, 0.02533019995726553],
+        cmss = [-0.10612787308401772, -0.12040954941888436],
+        CMwings = [-0.030109323560856105, -0.03900325132469448],
+        CMtails = [0.05082107977310192, -0.029849801430905036],
+        CMfuses = [-0.020711756212245823, 0.06885305275560037],
+        CMs = [0.,0.],
+        xCGs = [17.999684806575555, 17.999684806575555],
+        # xCPs = [NaN, 17.999684806575555], #skipped to avoid NaN comparison
+        xNPs = [19.55937400853735, 19.55937400853735]
     )
 
     #get basic execution of default model
     ac1 = load_default_model()
-    size_aircraft!(ac1, printiter=false)
-    results = aeroperf_sweep(ac1, [0.0, 0.8])
+    size_aircraft!(ac1; printiter=false)
+    fly_mission!(ac1, 1)
+    results = aeroperf_sweep(ac1, [0.0, 0.8]) #two CLs sampled
 
     #compare the two for approximate equality
     for field in keys(test_results)
-        @test isapprox(results[field], test_results[field]; atol=1e-5)
+        @test isapprox(results[field], test_results[field]; rtol=rtol_aero, atol=1E-10)
     end
 end

@@ -60,7 +60,7 @@ $TYPEDFIELDS
     material::StructuralAlloy = StructuralAlloy("TASOPT-Al")
 
     """Airfoil data"""
-    airsection::air = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C.air"))
+    airsection::air = aerodynamics.airtable(joinpath(__TASOPTroot__,"airfoil_data/C_airfoil.csv"))
 
     """Inboard Wing Section (at wing root)"""
     inboard::WingSection = WingSection() # at wing root 
@@ -95,6 +95,9 @@ $TYPEDFIELDS
     weight_frac_spoilers::Float64 = 0.0
     """Wing attachments weight fraction"""
     weight_frac_attachments::Float64 = 0.0
+    """Wing mounting angle [rad]. Set during sizing to the cruise AoA of the spanbreak section
+    in body axes, so that the aircraft AoA is zero at the design cruise condition."""
+    mounting_angle::Float64 = 0.0
 
 end
 

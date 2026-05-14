@@ -295,14 +295,21 @@ the database and the computational effort needed to construct it. The
 value of the Re-scaling exponent $a_{\scriptscriptstyle Re}\simeq -0.15$
 is appropriate for fully-turbulent flow. See the theory 📖 block below for more details.
 
+#### [](@id airfoil_db)
 ```@eval
 using Markdown
 Markdown.parse_file(joinpath("../..", "src/aero","theory_airfun_and_splines.md"))
 ```
+Use [`airfoil_cl_limits`](@ref TASOPT.aerodynamics.airfoil_cl_limits) to query the valid (non-`NaN`) `cl` range of the database at a given perpendicular Mach and `t/c` — useful when sweeping `CL` (e.g. via [`aeroperf_sweep`](@ref)) to know where extrapolation begins.
+
 ```@docs
 aerodynamics.airtable(fname)
 
-aerodynamics.airfun(cl, τ, Mach, air::aerodynamics.airfoil)
+aerodynamics.airfun(cl, toc, Mach, air::aerodynamics.airfoil)
+
+aerodynamics.airfoil_cl_limits
+
+aerodynamics.spline
 
 ```
 

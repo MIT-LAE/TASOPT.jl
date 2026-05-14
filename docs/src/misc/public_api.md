@@ -30,7 +30,7 @@ These are the key functions that are used while reading an aircraft model defini
 - [`plot_details`](@ref)
 - [`plot_drag_breakdown`](@ref)
 - [`PayloadRange`](@ref TASOPT.PayloadRange)
-- [`DragPolar`](@ref)
+- [`plot_drag_polar`](@ref)
 
 ### Public configuration types and enums
 

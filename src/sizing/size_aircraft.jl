@@ -329,9 +329,9 @@ function _size_aircraft!(ac; itermax=35,
         
         # Update wing pitching moment constants, uses the first mission point 
         # in the list as the reference for the others in the range.
-        update_wing_pitching_moments!(para, ipstatic:ipclimb1, wing)
-        update_wing_pitching_moments!(para, ipclimb1+1:ipdescentn-1, wing)
-        update_wing_pitching_moments!(para, ipdescentn:ipdescentn, wing)
+        update_wing_pitching_moments!(para, wing, ipstatic:ipclimb1)
+        update_wing_pitching_moments!(para, wing, ipclimb1+1:ipdescentn-1)
+        update_wing_pitching_moments!(para, wing, ipdescentn:ipdescentn)
 
         # Calculate wing center load
         ip = ipcruise1
@@ -680,7 +680,20 @@ function _size_aircraft!(ac; itermax=35,
 
         # BFL calculations/ Noise? / Engine perf 
 
-    end
+    end        
+       
+    # === Set the wing mounting angle to zero the aircraft AoA at design cruise ===
+    # `mounting_angle` is the incidence of the wing relative to the fuselage reference line.
+    # By setting it to the body-frame AoA of the spanbreak section at ipcruise1, we fix the
+    # body frame so that `iaAoA = 0` at the design cruise condition. All subsequent
+    # `iaAoA` values (climb, descent, off-design points) are then offsets from this point.
+    # Equivalently: at design cruise, the aircraft pitch attitude Θ equals the flight-path
+    # angle γ exactly (since Θ = AoA + γ).
+    AoA_wing_cruise = calc_ac_AoA(ac, ip=ipcruise1, imission=1)
+    ac.wing.mounting_angle = AoA_wing_cruise
+
+    #compute AoAs and Thetas for all flight-phase points (mounting_angle must be set first)
+    # calc_mission_attitude!(ac; imission=1)
 
     # normal takeoff and balanced-field takeoff calculations
     # set static thrust for takeoff routine
@@ -861,12 +874,16 @@ function set_ambient_conditions!(ac, ip, Mach=NaN; im = 1)
 end  # function set_ambient_conditions
 
 """
-update_wing_pitching_moments!(para, ip_range, wing)
+    update_wing_pitching_moments!(para, wing, ip_range, imission = 1)
 
-Updates wing pitching moments and calls wing_CM for mission points
+Computes wing pitching moment coefficients `CMw0` and `CMw1` via [`wing_CM`](@ref) using
+airfoil pitching moments and taper-scaled chord ratios from `para`, then stores the results
+back into `para` for every mission point in `ip_range`.
 """
-function update_wing_pitching_moments!(para, ip_range, wing)
+function update_wing_pitching_moments!(para, wing, ip_range, imission = 1)
+    para = view(para, :, :, imission) 
     ip = ip_range[1]
+    
     cmpo, cmps, cmpt = para[iacmpo, ip], para[iacmps, ip], para[iacmpt, ip]
     γt = wing.outboard.λ * para[iarclt, ip]
     γs = wing.inboard.λ * para[iarcls, ip]

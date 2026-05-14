@@ -638,13 +638,12 @@ function savemodel(fname, parg, parm, para, pare)
     end #open() io
 end #savemodel()
 
-#TODO: Update to output ac.options (now that pari is dead)
-function reset_regression_test(ac)
+function reset_regression_test(ac; filename::String="default_sized.jl")
     options = ac.options
     wing = ac.wing
     htail = ac.htail
     vtail = ac.vtail
-    open(joinpath(__TASOPTroot__,"../test/default_sized.jl"), "w") do io
+    open(joinpath(__TASOPTroot__,"../test/$filename"), "w") do io
         @printf(io, "parg = zeros(Float64, igtotal)\n")
         @printf(io, "parm = zeros(Float64, imtotal)\n")
         @printf(io, "para = zeros(Float64, (iatotal, iptotal))\n")
@@ -851,6 +850,7 @@ function reset_regression_test(ac)
         @printf(io, "wing.inboard.co = %20.20f \n", wing.inboard.co)
         @printf(io, "wing.outboard.co = %20.20f \n", wing.outboard.co)
         @printf(io, "wing.mean_aero_chord = %20.20f \n", wing.mean_aero_chord)
+        @printf(io, "wing.mounting_angle = %20.20f \n", wing.mounting_angle)
 
         @printf(io, "# ------------------------------\n")
         @printf(io,"# Htail\n")
@@ -867,9 +867,8 @@ function reset_regression_test(ac)
         @printf(io, "htail.SM_min = %20.20f \n", htail.SM_min)
         @printf(io, "htail.layout.x = %20.20f \n", htail.layout.x)
         @printf(io, "htail.outboard.cross_section.thickness_to_chord = %20.20f \n", htail.outboard.cross_section.thickness_to_chord)
-        # @printf(io, "htail.opt_move_wing = %20.20f \n", htail.opt_move_wing) #moved to options
         @printf(io, "htail.CL_CLmax = %20.20f \n", htail.CL_CLmax)
-        @printf(io, "htail.opt_sizing = \"%s\" \n", htail.opt_sizing)
+        println(io, "htail.opt_sizing = TailSizing.", Symbol(htail.opt_sizing), " ")
         @printf(io, "htail.volume = %20.20f \n", htail.volume)
         @printf(io, "htail.outboard.GJ = %20.20f \n", htail.outboard.GJ)
         @printf(io, "htail.outboard.EI[4] = %20.20f \n", htail.outboard.EI[4])
@@ -922,7 +921,7 @@ function reset_regression_test(ac)
         @printf(io, "vtail.layout.span = %20.20f \n", vtail.layout.span)
         @printf(io, "vtail.layout.AR = %20.20f \n", vtail.layout.AR)
         @printf(io, "vtail.layout.S = %20.20f \n", vtail.layout.S)
-        @printf(io, "vtail.opt_sizing = \"%s\" \n", vtail.opt_sizing)
+        println(io, "vtail.opt_sizing = TailSizing.", Symbol(vtail.opt_sizing), " ")
         @printf(io, "vtail.dxW = %20.20f \n", vtail.dxW)
         @printf(io, "vtail.outboard.cross_section.width_to_chord = %20.20f \n", vtail.outboard.cross_section.width_to_chord)
         @printf(io, "vtail.outboard.cross_section.web_to_box_height = %20.20f \n", vtail.outboard.cross_section.web_to_box_height)
@@ -943,8 +942,31 @@ function reset_regression_test(ac)
         @printf(io, "vtail.outboard.co = vtail.layout.root_chord*vtail.inboard.λ \n")
         @printf(io, "vtail.inboard.co = vtail.layout.root_chord \n")
     end
+    return nothing
 end
 
+"""
+    reset_output_summaries(ac;
+        file_weights::String="weights.txt",
+        file_aero::String="aero.txt",
+        file_geom::String="geom.txt")
+
+Regenerates the baseline text files used by the `outputs` testset in
+`test/unit_test_outputs.jl` by running `weight_buildup`, `aero`, and
+`geometry` on `ac` and writing their output to `../test/<file>`. Call
+this after intentionally changing one of those output formats.
+"""
+function reset_output_summaries(ac;
+    file_weights::String="weights.txt",
+    file_aero::String="aero.txt",
+    file_geom::String="geom.txt")
+
+    testdir = joinpath(__TASOPTroot__, "../test")
+    open(io -> weight_buildup(ac; io=io), joinpath(testdir, file_weights), "w")
+    open(io -> aero(ac;          io=io), joinpath(testdir, file_aero),    "w")
+    open(io -> geometry(ac;      io=io), joinpath(testdir, file_geom),    "w")
+    return nothing
+end
 
 
 #NOTE:  the following functions are not currently used in the codebase, 

@@ -19,7 +19,7 @@ end
             Reco, aRexp, kSuns, fexcd,
             fduo, fdus, fdut)
 
-Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
+Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C_airfoil.csv`] and accessed by [`airfun`], [`airtable`]).
 Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. Formerly, `surfcd2()`.
 
 !!! details "🔃 Inputs and Outputs"
@@ -112,7 +112,7 @@ function wing_profiledrag_direct(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
+            cdf1, cdp1, cdwbar, cm, aoa = airfun(clp, toc, Mperp, wing.airsection)
             #println(cdf1, " ", cdp1, " ", cm)
 
             Refac = (Rec / ARe)^aRexp
@@ -144,7 +144,7 @@ function wing_profiledrag_direct(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
-            cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
+            cdf1, cdp1, cdwbar, cm, aoa = airfun(clp, toc, Mperp, wing.airsection)
 
             Refac = (Rec / ARe)^aRexp
             cdf = cdf1 * Refac * fexcd * (1.0 + fdu)^3
