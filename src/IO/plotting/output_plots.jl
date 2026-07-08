@@ -35,7 +35,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         bs = wing.layout.break_span
         b  = wing.layout.span
 
-        xax = 0.40
+        xax = wing.layout.spar_box_x_c
         xcLE = -xax
         xcTE = 1.0 - xax
 
