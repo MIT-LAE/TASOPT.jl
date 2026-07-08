@@ -378,7 +378,7 @@ function _size_aircraft!(ac; itermax=35,
         wing.weight = Wwing * rlx + wing.weight * (1.0 - rlx)
         parg[igWfmax] = Wfmax
         # wing.dxW = dxWwing
-        parg[igdxWfuel] = dxWfmax * rfmax
+        parg[igdxWfuel] = options.has_wing_fuel ? dxWfmax * parg[igWfuel] / Wfmax : 0.0
 
         wing.outboard.webs.weight = wing.inboard.webs.weight
         wing.outboard.caps.weight = wing.inboard.caps.weight
