@@ -362,7 +362,7 @@ function _size_aircraft!(ac; itermax=35,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = wing_weights!(wing, po, γt, γs,
-                                            Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
+                                            Nlift, Weng1, 0, 0.0, 1, 0.5*wing.layout.span*(wing.layout.ηs - wing.layout.ηo),
                                             parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings

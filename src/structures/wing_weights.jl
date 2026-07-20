@@ -86,9 +86,9 @@ Also returns the material gauges, torsional and bending stiffness. Formerly, `ge
     - `Nload::Int`: Max vertical load factor for wing bending loads.
     - `We::Float64`: Weight of the engine.
     - `neout::Int`:  Number of engines mounted outboard of the wing break (strut attachment point).
-    - `dyeout::Float64`: Spanwise moment arm for outboard engines, measured from the wing break station.
+    - `dyeout::Float64`: Spanwise moment arm for outboard engines, measured outward positive from the wing break station [m].
     - `neinn::Int`: Number of engines mounted inboard of the wing break (strut attachment point).
-    - `dyeinn::Float64`: Spanwise moment arm for inboard engines, measured from the wing break station.
+    - `dyeinn::Float64`: Spanwise moment arm for inboard engines, measured outward positive from the wing root half span ηₒ [m].
     - `sigfac::Float64`: Stress Factor.
     - `rhofuel::Float64`: Density of the fuel.
     - `n_wings::Int64`: Number of total wings (1 for Vtail).
