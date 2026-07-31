@@ -362,7 +362,7 @@ function _size_aircraft!(ac; itermax=35,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = wing_weights!(wing, po, γt, γs,
-                                            Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
+                                            Nlift, Weng1, 0, 0.0, 1, yeng - 0.5*wing.layout.span*wing.layout.ηo,
                                             parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings
@@ -462,7 +462,7 @@ function _size_aircraft!(ac; itermax=35,
         dfan = parg[igdfan]
         CDAe = parg[igcdefan] * 0.25π * dfan^2
         De = qstall * CDAe
-        Fe = pare[ieFe, ip]
+        Fe = pare[ieFe, iptakeoff] #Assume at u_stall = u_rotate/1.2, one engine goes out, and maximum rated thrust is forced on the other engine to compensate for lost thrust.
 
         # Calculate max eng out moment
         Me = (Fe + De) * yeng
@@ -476,8 +476,28 @@ function _size_aircraft!(ac; itermax=35,
             parg[igCLveout] = Me / (qstall * Sv * lvtail)
         elseif vtail.opt_sizing == TailSizing.OEI
             lvtail = xvtail - xwing
+            lvtail_cg = xvtail - ac.para[iaxCG,iptakeoff,1] #aircraft cg loading condition during emergency landing immediately right after takeoff [m]
             CLveout = parg[igCLveout]
-            Sv = Me / (qstall * CLveout * lvtail)
+            (CLveout > 0) || error("CLveout specified $(CLveout) needs to be positive")
+            (lvtail_cg > 0) || @warn ("Negative or zero lvtail_cg detected: $(lvtail_cg)")
+            #### (Criterion #1) Vertical tail sizing via engine-out yaw power
+            # Add aspect ratio correction for limiting tail lift coefficient under OEI (assuming the reference CLveout input is for typical aircraft with AR = 1.93)
+            slope0 = 2*pi #thin airfoil lift slope assumption
+            effVTail = 0.9 #trapozoidal wing efficiency (between 0.8->0.9), lower give more AR dependency
+            AR_ref = 1.93 #AR for the specified reference CLveout
+            OEI_AR_sensitivity = 0.5 #What portion of the CL limit were affected by AR (Relaxation factor to reduce the effect of AR) (Or else optimal AR goes up to 3.6) (TODO: This is also likely caused by bending and torsion calculation using a separate 5% lift loss coefficient indepdent of AR)
+            CL_AR_scaling = (1.0+slope0/(pi*effVTail*AR_ref))/(1.0+slope0/(pi*effVTail*vtail.layout.AR)) #CLact/CLref = (1+a0/pi/e/ARref)/(1+a0/pi/e/ARact)
+            CLveout_act = CLveout * (1.0 + OEI_AR_sensitivity*(CL_AR_scaling-1.0)) #From finite wing lift slope scaling due to induced downwash
+            # Size the vertical tail
+            Sv_OEI = Me / (qstall * CLveout_act * lvtail_cg)
+            (Sv_OEI > 0) || @warn "Negative or zero Sv_OEI detected: $(Sv_OEI)"
+            #### (Criterion #2) Vertical tail sizing via yaw acceleration authority
+            Izz = calculate_Izz(ac) #aircraft yaw moment of inertial around cg (kgm2)
+            omega_dot_req = 0.055 #maximum yawing angular acceleration required near stalling or landing with strong crosswind (1/s2)
+            Sv_YA = (omega_dot_req*Izz)/CLveout_act/lvtail_cg/qstall
+            (Sv_YA > 0) || @warn "Negative or zero Sv_YA detected: $(Sv_YA)"
+            #### Compute derived variables
+            Sv = max(Sv_OEI,Sv_YA)
             vtail.layout.S = Sv
             vtail.volume = Sv * lvtail / (wing.layout.S * wing.layout.span)
         end
@@ -491,6 +511,12 @@ function _size_aircraft!(ac; itermax=35,
         bv = bv2 / 2
         vtail.layout.span = bv2
         vtail.layout.ηs = vtail.layout.ηo
+
+        # Correct the vertical tail location if the trailing edge of vertical tail were sitting behind the tail cone
+        dx_vtailEnd_to_coneEnd = vtail.layout.box_x + 0.5*vtail.layout.root_chord - fuse.layout.x_cone_end
+        if dx_vtailEnd_to_coneEnd > 0 #If your vtail were not physically attached to fuselage, there is gonna a problem
+            vtail.layout.box_x -= dx_vtailEnd_to_coneEnd #This will constrain how low AR for vtail can be. If too low, vtail moment arm has to decrease. 
+        end
 
         # HT weight
         htail.weight, _ = wing_weights!(htail, poh, htail.outboard.λ, htail.inboard.λ,

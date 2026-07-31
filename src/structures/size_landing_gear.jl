@@ -32,7 +32,7 @@ function size_landing_gear!(ac)
         l_tailstrike = (fuse.layout.x_end - x_lg) * tan(tailstrike_angle) - 2*fuse.layout.radius
 
         #Next, find the nose length that gives desired engine ground clearance
-        yeng = wing.layout.ηs * wing.layout.span / 2
+        yeng = ac.parg[igyeng]
         ground_clearance = landing_gear.engine_ground_clearance
         dihedral_angle = landing_gear.wing_dihedral_angle
         Deng = parg[igdfan]
