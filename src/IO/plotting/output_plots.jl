@@ -1054,11 +1054,7 @@ function MomentShear(ac::aircraft)
 end
 
 """
-    PayloadRange(ac_og::TASOPT.aircraft; 
-    Rpts::Integer = 20, Ppts::Integer = 21, plots_OEW::Bool = false,
-    filename::String = "", 
-    itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
-    Ldebug::Bool = false, printTO::Bool = true)
+   PayloadRange(ac_og; Rpts, Ppts, plots_OEW, filename, itermax, initializes_engine, Ldebug, printTO)
 
 Function to plot a payload range diagram for an aircraft
 
