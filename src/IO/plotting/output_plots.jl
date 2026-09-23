@@ -1054,7 +1054,11 @@ function MomentShear(ac::aircraft)
 end
 
 """
-    PayloadRange(ac_og; Rpts, Ppts, plots_OEW, filename, itermax, initializes_engine, Ldebug)
+    PayloadRange(ac_og::TASOPT.aircraft; 
+    Rpts::Integer = 20, Ppts::Integer = 21, plots_OEW::Bool = false,
+    filename::String = "", 
+    itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
+    Ldebug::Bool = false, printTO::Bool = true)
 
 Function to plot a payload range diagram for an aircraft
 
@@ -1069,12 +1073,13 @@ Function to plot a payload range diagram for an aircraft
     - `initializes_engine::Bool`: Use design case as initial guess for engine state if true (Optional)
     - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
+    - `printTO::Bool`: flag to control printing of take off information (Optional).
 """
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 21, plots_OEW::Bool = false,
     filename::String = "", 
     itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
-    Ldebug::Bool = false)
+    Ldebug::Bool = false, printTO::Bool = true)
 
     if !ac_og.is_sized[1]
         error("Aircraft $(ac_og.name) not sized. Please size aircraft before calling `PayloadRange()`.")
@@ -1123,7 +1128,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
             
             ac.parm[imWpay,2] = mWpay
             try
-                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter)
+                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter, printTO = printTO)
                 # fly_mission! success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
