@@ -267,22 +267,30 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         # yt = zeros(length(xt))
         # @. yt = sqrt(Rfuse^2 * max((1 - ((xt-xcyl0)/(Rfuse/ARtank))^2), 0.0) )
 
-        xshell = zeros(ntank)
-        yshell = zeros(ntank)
+        xshellfwd = zeros(ntank)
+        yshellfwd = zeros(ntank)
+        xshellaft = zeros(ntank)
+        yshellaft = zeros(ntank)
         AR = 3.0
-        xshellcenter = fuselage.layout.x_pressure_shell_aft - Rfuse/AR
+        xshellcenterfwd = fuselage.layout.x_pressure_shell_fwd + Rfuse/AR
+        xshellcenteraft = fuselage.layout.x_pressure_shell_aft - Rfuse/AR
         for i = 1: ntank
             fraci = float(i-1)/float(ntank-1)
             fracx = sin(0.5*pi*fraci)
 
             k = i
-            xshell[k] = xshellcenter + Rfuse/AR *fracx
-            yshell[k] = sqrt(Rfuse^2 * max((1 - ((xshell[k]-xshellcenter)/(Rfuse/AR))^2), 0.0) )
+
+            xshellfwd[k] = xshellcenterfwd - Rfuse/AR *fracx
+            yshellfwd[k] = sqrt(Rfuse^2 * max((1 - ((xshellfwd[k]-xshellcenterfwd)/(Rfuse/AR))^2), 0.0) )
+
+            xshellaft[k] = xshellcenteraft + Rfuse/AR *fracx
+            yshellaft[k] = sqrt(Rfuse^2 * max((1 - ((xshellaft[k]-xshellcenteraft)/(Rfuse/AR))^2), 0.0) )
         end
+        
 
     if !(options.is_doubledecker) #Only show seats in single deck arrangements
         h_seat = fuselage.cabin.seat_height
-        pax = parg[igWpay]/parm[imWperpax]
+        pax = fuselage.cabin.exit_limit#parg[igWpay]/parm[imWperpax]
         Rfuse = fuselage.layout.radius
         dRfuse = fuselage.layout.bubble_lower_downward_shift
         wfb = fuselage.layout.bubble_center_y_offset
@@ -361,7 +369,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
             # Fuel name
             fuelname = ""
             if options.ifuel == 11
-                fuelname ="\$CH_4\$"
+                fuelname ="\$LCH_4\$"
             elseif options.ifuel == 40
                 fuelname ="\$LH_2\$"
             end
@@ -370,8 +378,10 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     end
 
     # Xshell2 plotting
-    plot!(plot_obj, xshell, yshell, color=:black, lw=1.5, z_order=10)
-    plot!(plot_obj, xshell, -yshell, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshellfwd, yshellfwd, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshellfwd, -yshellfwd, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshellaft, yshellaft, color=:black, lw=1.5, z_order=10)
+    plot!(plot_obj, xshellaft, -yshellaft, color=:black, lw=1.5, z_order=10)
 
     # Plot Engines
     D = parg[igdaftfan]
@@ -416,6 +426,7 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     
     # Plot engine locations
     plot!(plot_obj, xlocations, ylocations, color=:red, linewidth=1.5)
+    plot!(plot_obj, xlocations, -ylocations, color=:red, linewidth=1.5)
 
     # Plot NP and annotate
     scatter!(plot_obj, [parg[igxNP]], [0.0], color=:blue, marker=:circle, z_order=15, label="NP")
@@ -426,30 +437,50 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     scatter!(plot_obj, [parg[igxCGfwd], parg[igxCGaft]], [0.0, 0.0], marker=:vline, color=:black)                # End points
     annotate!(plot_obj, parg[igxCGfwd]-2, 0, text("CG", label_fs - 2.0, :center, :center))
 
-    # Show seats (single-deck case)
-    if !(options.is_doubledecker)
-        xgrid = repeat(xseats, inner=length(yseats))
-        ygrid = repeat(yseats, outer=length(xseats))
+    # Show seats (single-deck case)                                                             
+   if !(options.is_doubledecker)                                                               
+       xgrid = repeat(xseats, inner=length(yseats))                                            
+       ygrid = repeat(yseats, outer=length(xseats))                                            
+       seat_legroom = 0.30 # assumumed effective legroom between two economy seats (m). Only used to visualize                                                                                         
+       half_pitch = seat_pitch / 2                                                             
+       half_width = seat_width / 2
+       
+       #x = [xgrid[1] - fuselage.cabin.front_seat_offset, xgrid[1]]
+       #y = [0, 0]                                                             
+       #plot!(plot_obj, x, y, color=:lightgray, alpha=0.3, linecolor=:gray, linewidth=1, label="", z_order=:front)  # used for V&V
 
-        scatter!(plot_obj, xgrid, ygrid,
-            color=:gray, alpha=0.1, marker=:rect, 
-            ms=2, z_order=:front, label="")
-    end
+       half_pitches = [half_pitch+seat_legroom, half_pitch+seat_legroom, half_pitch+seat_legroom, half_pitch+seat_legroom, half_pitch+seat_legroom] # shifts seats to the right to allow first row to have legroom that is not part of the fornt seat offset
+                                                                                              
+       # Create all rectangle corners at once                                                  
+       for i in eachindex(xgrid)                                                               
+           x = [xgrid[i] - half_pitch , xgrid[i] + half_pitch - seat_legroom,                                  
+                xgrid[i] + half_pitch - seat_legroom, xgrid[i] - half_pitch, xgrid[i] - half_pitch]           
+           y = [ygrid[i] - half_width, ygrid[i] - half_width,                                  
+                ygrid[i] + half_width, ygrid[i] + half_width, ygrid[i] - half_width]           
+                                                                                               
+           plot!(plot_obj, x + half_pitches, y, color=:lightgray, alpha=0.3,                                  
+                 linecolor=:gray, linewidth=0.5, label="", z_order=:front)                     
+       end   
+       
+       #x = [xgrid[end] + seat_pitch, xgrid[end] + fuselage.cabin.rear_seat_offset + seat_pitch] # from last seat to the end of cabin
+       #y = [0, 0]                                                             
+       #plot!(plot_obj, x, y, color=:lightgray, alpha=0.3, linecolor=:gray, linewidth=1, label="", z_order=:front) # used for V&V                                                                                   
+   end                    
 
     # Annotations
     if annotate_text
         annotate!(plot_obj, 
-            maximum(xh)*1.11, 21, #position based on aircraft length (outside plotting area)
+            maximum(xh)*1.11, 0, #position based on aircraft length (outside plotting area)
             text("PFEI = $(round(parm[imPFEI], digits = 3))\n" *
             "Mₘₐₓ = $(round(maximum(para[iaMach,:,:]), digits=3))\n" *
-            "WMTO = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
+            "MTOW = $(round(parg[igWMTO] / 9.81 / 1000, digits=1)) t\n" *
             "Span = $(round(wing.layout.span, digits=1)) m\n" *
             "c₀ = $(round(wing.layout.root_chord, digits=1)) m\n" *
             "Λ = $(round(wing.layout.sweep, digits=1))°\n" *
             "Rfuse = $(round(fuselage.layout.radius,digits=2)) m\n" *
             "L/D = $(round(para[iaCL,ipcruise1,1] / para[iaCD,ipcruise1,1], digits=2))",
             label_fs, #fontsize
-            halign=:left, valign=:top, color=:black),
+            halign=:left, valign=:center, color=:black),
             z_order=:front)
 
         
@@ -462,16 +493,16 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
 
     if annotate_group
         box_color = :orange
-        plot!(plot_obj, [xcode, xcode], [-bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
-        plot!(plot_obj, [xcode, 40.0], [bmax / 2, bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
-        plot!(plot_obj, [xcode, 40.0], [-bmax / 2, -bmax / 2], lw=5, alpha=0.2, color=box_color, label="")
-        annotate!(plot_obj, 20, bmax / 2 + 1, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
+        xcords_box = [ac.wing.layout.x-xcode*10, xcode, xcode, ac.wing.layout.x-xcode*10]
+        ycords_box = [-bmax / 2, -bmax / 2, bmax / 2, bmax / 2]
+        plot!(plot_obj, xcords_box, ycords_box, lw=5, alpha=0.2, color=box_color, label="")
+        annotate!(plot_obj, 0, bmax / 2 + 0.1*bmax, text("ICAO Code $(groups[1])/ FAA Group $(groups[2])",
             label_fs, color=box_color, #fontsize
-            halign=:center, valign=:center))
+            halign=:left, valign=:top))
     end
     
     if annotate_length
-        yloc = (-bmax / 2) * 1.11
+        yloc = (-bmax / 2) * 1.15
         plot!(plot_obj, [0.0, xf[end]], [yloc, yloc], lw=1.5, color=:black, label="")       #line
         scatter!(plot_obj, [0.0, xf[end]], [yloc, yloc], yerror=0.03*yloc, markersize=0)    #end ticks
         annotate!(plot_obj, xf[end] *0.3, yloc+1.5, text("\$\\ell\$ = $(round(xf[end], digits=1)) m", #text
@@ -1054,7 +1085,7 @@ function MomentShear(ac::aircraft)
 end
 
 """
-    PayloadRange(ac_og; Rpts, Ppts, plots_OEW, filename, itermax, initializes_engine, Ldebug)
+   PayloadRange(ac_og; Rpts, Ppts, plots_OEW, filename, itermax, initializes_engine, Ldebug, printTO)
 
 Function to plot a payload range diagram for an aircraft
 
@@ -1069,12 +1100,13 @@ Function to plot a payload range diagram for an aircraft
     - `initializes_engine::Bool`: Use design case as initial guess for engine state if true (Optional)
     - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
     - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
+    - `printTO::Bool`: flag to control printing of take off information (Optional).
 """
 function PayloadRange(ac_og::TASOPT.aircraft; 
     Rpts::Integer = 20, Ppts::Integer = 21, plots_OEW::Bool = false,
     filename::String = "", 
     itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
-    Ldebug::Bool = false)
+    Ldebug::Bool = false, printTO::Bool = true)
 
     if !ac_og.is_sized[1]
         error("Aircraft $(ac_og.name) not sized. Please size aircraft before calling `PayloadRange()`.")
@@ -1123,7 +1155,7 @@ function PayloadRange(ac_og::TASOPT.aircraft;
             
             ac.parm[imWpay,2] = mWpay
             try
-                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter)
+                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter, printTO = printTO)
                 # fly_mission! success: store maxPay, break loop
                 mWfuel = ac.parm[imWfuel,2]
                 WTO = Wempty + mWpay + mWfuel
