@@ -22,6 +22,9 @@ function initialize_sizing_loop!(ac)
     Wpaymax = parg[igWpaymax]
     Rangetot = parm[imRange]
     freserve = parg[igfreserve]
+    # Use fractional reserve for initial weight estimate;
+    # if holding mode is active (sentinel = -1), fall back to a conservative 7%
+    freserve_init = freserve >= 0.0 ? freserve : 0.07
     neng = parg[igneng]
 
     # Extract layout parameters
@@ -92,13 +95,13 @@ function initialize_sizing_loop!(ac)
     LoD = 18.0  # Initial L/D estimate
     TSFC = 1.0 / 7000.0  # Typical TSFC
     V = pare[ieu0, ipcruise1]
-    ffburn = min((1.0 - exp(-Rangetot * TSFC / (V * LoD))), 0.8 / (1.0 + freserve))
+    ffburn = min((1.0 - exp(-Rangetot * TSFC / (V * LoD))), 0.8 / (1.0 + freserve_init))
 
     # Mission-point fuel fractions
-    ffuelb = ffburn * (1.0 + freserve)   # Start of climb
-    ffuelc = ffburn * (0.90 + freserve)  # Start of cruise
-    ffueld = ffburn * (0.02 + freserve)  # Start of descent
-    ffuele = ffburn * (0.0 + freserve)   # End of descent (landing)
+    ffuelb = ffburn * (1.0 + freserve_init)   # Start of climb
+    ffuelc = ffburn * (0.90 + freserve_init)  # Start of cruise
+    ffueld = ffburn * (0.02 + freserve_init)  # Start of descent
+    ffuele = ffburn * (0.0 + freserve_init)   # End of descent (landing)
 
     ffuel = ffuelb  # Max fuel fraction at start of climb
 
