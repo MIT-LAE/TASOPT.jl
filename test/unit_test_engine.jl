@@ -142,6 +142,32 @@ isGradient = false
         @test h1 == 6.369750419279992e6
         @test cp1 == 4432.240840800101
         @test r1 == 167.0
+
+        # =========================
+        # gas_C2H4
+        # =========================
+        
+        t1 = 2333.00e0
+        s1, h1, cp1, r1 = TASOPT.engine.gas_C2H4(t1)
+
+        @test s1 == 6202.282541457496
+        @test h1 == 8.97994459988662e6
+        @test cp1 == 4341.66979527111
+        @test r1 == 296.3735160103101
+
+        # =========================
+        # gas_C2H5OH
+        # =========================
+        
+        t1 = 2333.00e0
+        s1, h1, cp1, r1 = TASOPT.engine.gas_C2H5OH(t1)
+
+        @test s1 == 5734.756991481961
+        @test h1 == 1.456826070301201e6
+        @test cp1 == 3974.985538155787
+        @test r1 == 180.47846964668733
+
+
         #    
 
 
@@ -1226,5 +1252,132 @@ isGradient = false
         TASOPT.engine.fractional_engine_weight!(ac)
         @test ac.parg[igWeng] ≈ feng * MTOW rtol = 1e-10
 
-    end 
+    end
+
+
+    @testset "Testing gasfun dispatch" begin
+        # gasfun dispatch
+        for igas in (1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 16, 18, 24, 40)
+            result = TASOPT.engine.gasfun(igas, 300.0)
+            @test length(result) == 6
+            for v in result
+                @test isfinite(v)
+            end
+        end
+    end
+
+
+
+    @testset "Testing gaschem atom counts" begin
+
+        # gaschem atom counts in [C, H, O, N] order
+        nchon_N2 = TASOPT.engine.gaschem(1)
+        @test nchon_N2[1] == 0  # C
+        @test nchon_N2[2] == 0  # H
+        @test nchon_N2[3] == 0  # O
+        @test nchon_N2[4] == 2  # N
+
+        nchon_O2 = TASOPT.engine.gaschem(2)
+        @test nchon_O2[1] == 0  # C
+        @test nchon_O2[2] == 0  # H
+        @test nchon_O2[3] == 2  # O
+        @test nchon_O2[4] == 0  # N
+
+        nchon_CO2 = TASOPT.engine.gaschem(3)
+        @test nchon_CO2[1] == 1  # C
+        @test nchon_CO2[2] == 0  # H
+        @test nchon_CO2[3] == 2  # O
+        @test nchon_CO2[4] == 0  # N
+
+        nchon_H2O = TASOPT.engine.gaschem(4)
+        @test nchon_H2O[1] == 0  # C
+        @test nchon_H2O[2] == 2  # H
+        @test nchon_H2O[3] == 1  # O
+        @test nchon_H2O[4] == 0  # N
+
+        nchon_Ar = TASOPT.engine.gaschem(5)
+        @test nchon_Ar[1] == 0  # C
+        @test nchon_Ar[2] == 0  # H
+        @test nchon_Ar[3] == 0  # O
+        @test nchon_Ar[4] == 0  # N
+
+        nchon_CH4 = TASOPT.engine.gaschem(11)
+        @test nchon_CH4[1] == 1  # C
+        @test nchon_CH4[2] == 4  # H
+        @test nchon_CH4[3] == 0  # O
+        @test nchon_CH4[4] == 0  # N
+
+        nchon_C2H6 = TASOPT.engine.gaschem(12)
+        @test nchon_C2H6[1] == 2  # C
+        @test nchon_C2H6[2] == 6  # H
+        @test nchon_C2H6[3] == 0  # O
+        @test nchon_C2H6[4] == 0  # N
+
+        nchon_C3H8 = TASOPT.engine.gaschem(13)
+        @test nchon_C3H8[1] == 3  # C
+        @test nchon_C3H8[2] == 8  # H
+        @test nchon_C3H8[3] == 0  # O
+        @test nchon_C3H8[4] == 0  # N
+
+        nchon_C4H10 = TASOPT.engine.gaschem(14)
+        @test nchon_C4H10[1] == 4  # C
+        @test nchon_C4H10[2] == 10  # H
+        @test nchon_C4H10[3] == 0  # O
+        @test nchon_C4H10[4] == 0  # N
+
+        nchon_C8H18 = TASOPT.engine.gaschem(18)
+        @test nchon_C8H18[1] == 8  # C
+        @test nchon_C8H18[2] == 18  # H
+        @test nchon_C8H18[3] == 0  # O
+        @test nchon_C8H18[4] == 0  # N
+
+        nchon_C14H30 = TASOPT.engine.gaschem(24)
+        @test nchon_C14H30[1] == 14  # C
+        @test nchon_C14H30[2] == 30  # H
+        @test nchon_C14H30[3] == 0  # O
+        @test nchon_C14H30[4] == 0  # N
+
+        nchon_H2 = TASOPT.engine.gaschem(40)
+        @test nchon_H2[1] == 0  # C
+        @test nchon_H2[2] == 2  # H
+        @test nchon_H2[3] == 0  # O
+        @test nchon_H2[4] == 0  # N
+
+        nchon_C2H4 = TASOPT.engine.gaschem(15)
+        @test nchon_C2H4[1] == 2   # C
+        @test nchon_C2H4[2] == 4   # H
+        @test nchon_C2H4[3] == 0   # O
+        @test nchon_C2H4[4] == 0   # N
+
+        nchon_C2H5OH = TASOPT.engine.gaschem(16)
+        @test nchon_C2H5OH[1] == 2  # C
+        @test nchon_C2H5OH[2] == 6  # H
+        @test nchon_C2H5OH[3] == 1  # O
+        @test nchon_C2H5OH[4] == 0  # N
+    end
+
+    @testset "Testing fuel LHV" begin
+        # LHV values
+        @test TASOPT.engine.fuelLHV(40) ≈ 120.0e6 atol=1e5 # Hydrogen
+        @test TASOPT.engine.fuelLHV(11) ≈ 50.0e6 atol=1e5 # Methane
+        @test TASOPT.engine.fuelLHV(12) ≈ 47.5e6 atol=1e5 # Ethane
+        @test TASOPT.engine.fuelLHV(15) ≈ 47.2e6 atol=1e5 # Ethylene
+        @test TASOPT.engine.fuelLHV(16) ≈ 26.8e6+0.92e6 atol=1e5 # Ethanol # Latent heat of vaporization for ethanol is ~0.92 MJ/kg - fuelLHV assumes it is vapor
+    end
+
+    @testset "Testing gasPr transport properties for fuel gases" begin
+        # gasPr transport properties
+        for (gas, T) in (("c2h6", [175, 185, 273.0, 400, 800, 1600]), ("c2h4", [160, 170, 273.0, 400, 800, 1600]), ("h2", [15, 20, 273.0, 400, 800, 1600]), ("ch4", [100, 112, 273.0, 400, 800, 1600]))
+            for T in T
+                R, Pr, γ, cp_val, μ, k = TASOPT.engine.gasPr(gas, T)
+                @test isfinite(R)  && R  > 0
+                @test isfinite(Pr) && Pr > 0
+                @test isfinite(γ)  && γ  > 1
+                @test isfinite(cp_val) && cp_val > 0
+                @test isfinite(μ)  && μ  > 0
+                @test isfinite(k)  && k  > 0
+            end
+        end
+           
+    end
 end

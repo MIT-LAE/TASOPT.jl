@@ -60,7 +60,7 @@
     
 
 [Fuel]
-    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
+    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2", "LCH4", "C2H6", "C2H4", "C2H5OH"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable

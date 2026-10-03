@@ -173,3 +173,10 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         @test Rvac ≈ Rvac_check
     end
 end
+
+@testset "Tank heat coeff for cryogenic fuels" begin
+    for (T_w, ifuel, Tfuel) in ((25.0, 40, 20.0), (120.0, 11, 110.0), (195.0, 12, 185.0), (175.0, 15, 169.0))
+        h_coeff = TASOPT.CryoTank.tank_heat_coeff(T_w, ifuel, Tfuel, 5.0)
+        @test isfinite(h_coeff) && h_coeff > 0
+    end
+end
