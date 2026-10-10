@@ -306,7 +306,7 @@ This function evaluates a thermal conductivity polynomial.
       **Outputs:**
       - `k::Float64`: thermal conductivity ([W/(m⋅K)]).
 """
-function thermal_conductivity(material::ThermalInsulator, T::Float64)
+function thermal_conductivity(material::ThermalInsulator, T::Real)
     coeffs = material.conductivity_coeffs
     k = 0.0
     for i = 1:length(coeffs)
