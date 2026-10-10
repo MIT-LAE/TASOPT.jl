@@ -3,19 +3,19 @@
 
 This structure stores the material and thermal properties of a cryogenic tank insulation layer.
 """
-@kwdef mutable struct thermal_params{T<:AbstractCrossSection}
+@kwdef mutable struct thermal_params{T<:AbstractCrossSection, R<:Real}
       """Heat rate (W)"""
       Q::Float64 = 0.0
       """Length of cylindrical portion of tank (m)"""
-      l_cyl::Float64 = 0.0
+      l_cyl::R = zero(R)
       """Full tank length (m)"""
-      l_tank::Float64 = 0.0
+      l_tank::R = zero(R)
       """Tank radius (m)"""
-      r_tank::Float64 = 0.0
+      r_tank::R = zero(R)
       """Surface area of elliptical caps at different cross-sections (m^2)"""
-      Shead::Vector{Float64} = Vector{Float64}()
+      Shead::Vector{R} = Vector{R}()
       """Thickness of each insulation layer (m)"""
-      t_cond::Vector{Float64} = Vector{Float64}()
+      t_cond::Vector{R} = Vector{R}()
       """Array with materials for different insulation layers"""
       material::Vector{ThermalInsulator} = Vector{ThermalInsulator}()
       """Fuel temperature (K)"""
@@ -33,6 +33,40 @@ This structure stores the material and thermal properties of a cryogenic tank in
       """Fuselage cross section"""
       fuse_cs::T = T()
 end
+
+"""
+If `true`, the thermal-network `nlsolve` in [`tankWthermal`](@ref) uses forward-mode automatic differentiation 
+(`autodiff = :forward`) for the Jacobian instead of finite differences. If the residual turns out not to be 
+AD-compatible, this is switched to `false` automatically (with a warning) and finite differences are used.
+"""
+const THERMAL_AUTODIFF = Ref(true)
+
+"""
+Same as [`THERMAL_AUTODIFF`](@ref), but for the insulation-thickness (boiloff-constrained) solve in [`tanksize!`](@ref). 
+This solve only uses AD when the insulation stack has no vacuum layer (see [`tanksize!`](@ref)).
+"""
+const MLI_AUTODIFF = Ref(true)
+
+"""
+    nlsolve_autodiff(flag::Base.RefValue{Bool}, label::String, residual, guess; use_ad::Bool = true, kwargs...)
+
+Wrapper around `nlsolve` that uses forward-mode AD for the Jacobian when `flag[]` and `use_ad` are `true`, 
+and falls back to finite differences (setting `flag[] = false` and warning once) if AD fails with a `MethodError`.
+"""
+function nlsolve_autodiff(flag::Base.RefValue{Bool}, label::String, residual, guess; use_ad::Bool = true, kwargs...)
+      if flag[] && use_ad
+            try
+                  return nlsolve(residual, guess; autodiff = :forward, kwargs...)
+            catch e
+                  e isa MethodError || rethrow()
+                  flag[] = false
+                  @warn "CryoTank: $label residual is not compatible with ForwardDiff; falling back to finite-difference Jacobians" exception = e
+            end
+      end
+      return nlsolve(residual, guess; kwargs...)
+end
+
+nlsolve_thermal(residual, guess; kwargs...) = nlsolve_autodiff(THERMAL_AUTODIFF, "thermal-network", residual, guess; kwargs...)
 
 """
       tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
@@ -59,12 +93,13 @@ for a given insulation thickness
 See [here](@ref fueltanks).
 """
 function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+     
       qfac = fuse_tank.qfac
       t_cond = fuse_tank.t_insul
       Tfuel = fuse_tank.Tfuel
 
       #Create struct with thermal parameters
-      p = thermal_params{typeof(fuse.layout.cross_section)}()
+      p = thermal_params{typeof(fuse.layout.cross_section), Float64}()
       p.l_cyl = fuse_tank.l_cyl_inner
       p.l_tank = fuse_tank.l_inner
       p.r_tank = fuse_tank.Rinnertank
@@ -85,27 +120,52 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL:
       ΔT = Taw - Tfuel
       
       #Function to zero in solver
-      function residual(x) 
+      function residual(x)
             try
                   return residuals_Q(x, p, "Q_unknown") #This should be zeroed
-            catch #Return some high residual if it fails
+            catch e
+                  #A MethodError with ForwardDiff duals means the residual is not AD-compatible: rethrow so that 
+                  #`nlsolve_thermal` can fall back to finite differences instead of silently masking it.
+                  (e isa MethodError && eltype(x) <: ForwardDiff.Dual) && rethrow()
                   return ones(length(x))*1e3
             end
       end
 
-      #Initial guess for function
-      guess = zeros(length(t_cond) + 2) 
-
-      Rguess = 0.01
-      guess[1] = ΔT / Rguess
-      guess[2] = Tfuel + 1.0
-      
-      for i = 1:length(t_cond)
-            guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
+      #Generic (cold-start) initial guess: linear temperature profile through the insulation
+      function cold_guess()
+            g = zeros(length(t_cond) + 2)
+            Rguess = 0.01
+            g[1] = ΔT / Rguess
+            g[2] = Tfuel + 1.0
+            for i = 1:length(t_cond)
+                  g[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ thickness
+            end
+            g[end] = g[end] - 1.0 #fuselage wall temperature
+            return g
       end
-      guess[end] = guess[end] - 1.0 #fuselage wall temperature
-      sol = nlsolve(residual, guess, xtol = 1e-7, ftol = 1e-6) #Solve non-linear problem with NLsolve.jl
-      
+
+      #Warm start from the last converged solution if available (geometry changes only incrementally)
+      warm = length(fuse_tank.last_thermal_sol) == length(t_cond) + 2
+      guess = warm ? copy(fuse_tank.last_thermal_sol) : cold_guess()
+
+      sol = nlsolve_thermal(residual, guess, xtol = 1e-4, ftol = 1e-4, iterations = 500) #Solve non-linear problem with NLsolve.jl
+
+      if sol.x_converged || sol.f_converged
+            fuse_tank.last_thermal_sol = copy(sol.zero)
+      else
+            #Retry from the generic guess (a stale warm start may be the cause of the failure) with tighter tolerances
+            sol_retry = nlsolve_thermal(residual, cold_guess(), xtol = 1e-5, ftol = 1e-5, iterations = 1000)
+            if sol_retry.x_converged || sol_retry.f_converged
+                  fuse_tank.last_thermal_sol = copy(sol_retry.zero)
+                  sol = sol_retry
+            elseif warm
+                  Q = qfac * fuse_tank.last_thermal_sol[1]
+                  return Q
+            else
+                  error("tankWthermal: nonlinear thermal solve failed")
+            end
+      end
+
       Q = qfac * sol.zero[1]    # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
       
       return  Q
@@ -126,7 +186,7 @@ the tank wall temperature, and the temperatures at the interfaces of each insula
       **Outputs:**
       - `F::Vector{Float64}`: vector with residuals.
 """
-function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
+function residuals_Q(x::AbstractVector{<:Real}, p::thermal_params, mode::String)
       #Unpack states
       if mode == "Q_known" #If the heat is known because the max boiloff is an input
             Q = p.Q
@@ -134,7 +194,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
             T_w = x[1]
             T_ins = x[2:end]
             Tfuse = x[end] #fuselage wall temperature
-            F = zeros(Float64, length(x)+1) #initialize residual vector
+            F = zeros(promote_type(eltype(x), eltype(p.t_cond)), length(x)+1) #initialize residual vector (promoted type so ForwardDiff duals propagate)
 
       elseif mode == "Q_unknown" #heat is not known and we are solving for it too
             Q = x[1] #Heat rate is first input
@@ -142,7 +202,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
             T_w = x[2]
             T_ins = x[3:end]
             Tfuse = x[end]
-            F = zeros(Float64, length(x))
+            F = zeros(promote_type(eltype(x), eltype(p.t_cond)), length(x)) #promoted type so ForwardDiff duals propagate
       end
       
       #Unpack parameters
@@ -166,7 +226,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
 
       r_inner = r_tank #- thickness
       ΔT = Taw - Tfuel #Heat transfer is driven by difference between external adiabatic wall temperature and fuel temperature
-      thickness = sum(t_cond)  # total thickness of insulation
+      #thickness = sum(t_cond)  # total thickness of insulation - parameter not used
 
       #Geometry
       perim_inner, _ = scaled_cross_section(fuse_cs, r_inner) #Tank perimeter and cross-sectional area
@@ -184,9 +244,10 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
       R_liq = 1 / (h_liq * S_int) #Liquid-side thermal resistance
 
       N = length(t_cond)       # Number of layers in insulation
-      R_ins      = zeros(Float64, N)  #size of resistance vector (Based on number of layers)
-      R_ins_ends = zeros(Float64, N)
-      R_ins_cyl  = zeros(Float64, N)
+      Tel = promote_type(eltype(x), eltype(t_cond), eltype(Shead)) #Dual when the Jacobian is computed with ForwardDiff
+      R_ins      = zeros(Tel, N)  #size of resistance vector (Based on number of layers)
+      R_ins_ends = zeros(Tel, N)
+      R_ins_cyl  = zeros(Tel, N)
   
       #Find resistance of each insulation layer
       T_prev = T_w
@@ -219,7 +280,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
   
       T_calc = Tfuel + R_liq * Q #Wall temperature residual
       F[2] = T_w - T_calc
-      for i = 1:length(T_ins)
+      for i in eachindex(T_ins)
           T_calc = T_calc + R_ins[i] * Q 
           F[i + 2] = T_ins[i] - T_calc #Residual at the edge of each layer
       end
@@ -242,7 +303,7 @@ This function calculates the liquid-side heat transfer coefficient of a cryogeni
       **Outputs:**
       - `h_liq::Float64`: liquid-side heat tansfer coefficient (W/m^2/K).
 """
-function tank_heat_coeff(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Float64)
+function tank_heat_coeff(T_w::Real, ifuel::Int64, Tfuel::Float64, ltank::Real)
       #Get fuel properties
       if ifuel == 11 #CH4
             Pr_l = 2.0 #Prandtl number, from NIST at 2atm and 120 K
@@ -289,7 +350,7 @@ p. 334 in Holman.
       - `Tair::Float64`: air-side temperature (K).
       - `Taw::Float64`: adiabatic wall temperature (K).
 """
-function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Float64 = Tref, Rfuse::Float64 = 1.0)
+function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Float64, Tw::Real = Tref, Rfuse::Float64 = 1.0)
       #Use ISA function to calculate freestream conditions
       atmos_state = atmos(z, TSL - Tref)
       Tair = atmos_state.T
@@ -352,11 +413,11 @@ This function calculates the thermal resistance of a vacuum layer using the meth
       **Outputs:**
       - `R_eq::Float64`: equivalent thermal resistance of vacuum gap (K/W).
 """
-function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_outer::Float64)
+function vacuum_resistance(Tcold::Real, Thot::Real, S_inner::Real, S_outer::Real)
       #Assumed tank and gas properties
       a_outer = 0.9 
       a_inner = 1.0
-      ε = 0.04    # highly polished aluminum
+      ε = 0.04    # highly polished aluminum #TODO make this a function of material choice for inner and outer walls
       p_vacuum = 1e-2 #Assumed vacuum pressure, approximately 1e-4 Torr as in Brewer (1991) #TODO maybe make this an input?
 
       Rgas = 287.05  # specific gas constant
