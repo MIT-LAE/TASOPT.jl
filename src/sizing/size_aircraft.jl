@@ -356,13 +356,25 @@ function _size_aircraft!(ac; itermax=35,
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
         rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
+        # Engine spanwise locations used for wing bending relief
+        # Engine 1 (always present) sits at the wing break station ηs.
+        y_eng1 = wing.layout.ηs * wing.layout.span / 2 # Spanwise location of engine 1 [m]
+        dyeinn = y_eng1 - wing.layout.root_span / 2 # Moment arm of engine 1 about the wing root (ηo) station [m]
+
+        # TEMPORARY APPROXIMATION: a 2nd engine per wing (4-engine aircraft) is placed outboard of engine 1 by the
+        # same distance that engine 1 is from the center line, i.e. y_eng2 = 2*y_eng1.
+        neout = maximum([0,floor((parg[igneng]-2)/2)]) # Number of engines per wing outboard of the break, the odd engine is not on the wing
+        # If neout > 2 then a new logic has to be implemented
+        y_eng2 = 2*y_eng1 # Spanwise location of engine 2 [m] (only used if neout >= 1)
+        dyeout = neout * y_eng2 # Moment arm of engine 2 about the wing root (ηo) station [m]
+
         # Call wing_weights function
         Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = wing_weights!(wing, po, γt, γs,
-                                            Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
+                                            Nlift, Weng1, neout, dyeout, 1, dyeinn,
                                             parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings
