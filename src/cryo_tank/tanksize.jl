@@ -55,27 +55,63 @@ function tanksize!(ac, imission::Int64 = 1)
                 ΔT = Taw - Tfuel
 
                 #Create inner function with residuals as a function of x
-                function residual(x) 
+                function residual(x)
                         try
                                 return res_MLI_thick(x, fuse, fuse_tank, z, TSL, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
-                        catch #Return some high residual if it fails
+                        catch e
+                                #A MethodError with ForwardDiff duals means the residual is not AD-compatible: rethrow so that 
+                                #`nlsolve_autodiff` can fall back to finite differences instead of silently masking it.
+                                (e isa MethodError && eltype(x) <: ForwardDiff.Dual) && rethrow()
                                 return ones(length(x))*1e3
                         end
                 end
+
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
-                guess = zeros(length(t_cond) + 2) 
-                guess[1] = 0.0
-                guess[2] = Tfuel + 1.0
+                function cold_guess()
+                        g = zeros(length(t_cond) + 2)
+                        g[1] = 0.0
+                        g[2] = Tfuel + 1.0
 
-                n_layers = length(t_cond)
-                for i = 1:n_layers
-                        guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                        n_layers = length(t_cond)
+                        for i = 1:n_layers
+                                g[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                        end
+                        g[end] = g[end] - 1.0 #fuselage wall temperature
+                        return g
                 end
-                guess[end] = guess[end] - 1.0 #fuselage wall temperature
-                #Solve non-linear problem with NLsolve.jl
-                sol = nlsolve(residual, guess, ftol = 1e-7) 
-                Δt = sol.zero[1] 
+
+                warm = length(fuse_tank.last_MLI_sol) == length(t_cond) + 2
+                guess = warm ? copy(fuse_tank.last_MLI_sol) : cold_guess()
+                #The previous Δt has already been added to t_cond, so the remaining correction starts at zero;
+                #only the temperature states are worth warm-starting.
+                warm && (guess[1] = 0.0)
+
+                #Forward-mode AD for the Jacobian, except when a vacuum layer is present: in that case the residual has multiple roots 
+                #(including unphysical ones) and finite differences and AD can converge to different ones, so the
+                #original finite-difference Jacobian is kept to preserve results.
+                use_ad = !check_vacuum(fuse_tank.material_insul)
+
+                #Solve non-linear problem with NLsolve.jl with looser tolerances and iteration cap.
+                sol = nlsolve_autodiff(MLI_AUTODIFF, "MLI-thickness", residual, guess, use_ad = use_ad, ftol = 1e-4, iterations = 500)
+
+                if sol.x_converged || sol.f_converged
+                        Δt = sol.zero[1]
+                        # cache
+                        fuse_tank.last_MLI_sol = copy(sol.zero)
+                else
+                        # retry once from the generic guess (stale warm start may be the cause) with tighter tolerances
+                        sol_retry = nlsolve_autodiff(MLI_AUTODIFF, "MLI-thickness", residual, cold_guess(), use_ad = use_ad, ftol = 1e-5, iterations = 1000)
+                        if sol_retry.x_converged || sol_retry.f_converged
+                                Δt = sol_retry.zero[1]
+                                fuse_tank.last_MLI_sol = copy(sol_retry.zero)
+                        elseif warm
+                                # reuse last converged
+                                Δt = 0.0
+                        else
+                                error("tanksize!: MLI thickness nonlinear solve failed to converge and no warm-start available")
+                        end
+                end
 
                 for ind in iinsuldes #For every segment whose thickness can be changed
                         t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
@@ -177,7 +213,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+function res_MLI_thick(x::AbstractVector{<:Real}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate
@@ -193,7 +229,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         x_thermal = x[2:end]
 
         #Prepare to call residual_Q for thermal-related residuals
-        t_all = deepcopy(t_cond) #copy to avoid modifying input
+        t_all = Vector{eltype(x)}(t_cond) #copy (with the element type of x, for ForwardDiff) to avoid modifying input
 
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_all[ind] = t_all[ind] + Δt
@@ -207,7 +243,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         Q = Q_net / qfac
 
         #Assemble struct with parameters for residual_Q
-        p = thermal_params{typeof(fuse.layout.cross_section)}()
+        p = thermal_params{typeof(fuse.layout.cross_section), eltype(x)}()
         p.Q = Q #Store heat rate as it is known
         p.l_cyl = inner_tank.l_cyl
         p.l_tank = inner_tank.l_tank
