@@ -257,7 +257,7 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
 
     dy_dt(y, p, t) = TankDerivatives(t, y, p[1], p[2]) #State derivatives
     #ODE problem; specify changes in mission segments for better speed
-    prob = ODEProblem(dy_dt, y0, tspan, ODEparams, tstops = para_alt[iatime,:], reltol = 1e-8)
+    prob = ODEProblem(dy_dt, y0, tspan, ODEparams, tstops = para_alt[iatime,:], reltol = 1e-4)
     sol = solve(prob, Tsit5())::ODESolution #Solve ODE problem using recommended solver
 
     #Extract solution vector
