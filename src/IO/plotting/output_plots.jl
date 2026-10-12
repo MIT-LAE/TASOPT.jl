@@ -1984,8 +1984,8 @@ function side_view(ac::aircraft;
     # Cryo tanks (drawn *inside* fuselage, so on top of fuselage fill)
     for (xt_p, zt_p) in all_tank_polys
         plot!(plot_obj, xt_p, zt_p;
-              fillrange = minimum(zt_p), fillalpha = 0.40, fillcolor = :cyan,
-              linecolor = :steelblue4, linewidth = 1.5, label = "")
+              fillrange = minimum(zt_p), fillalpha = 0.10, fillcolor = :cyan,
+              linecolor = :color=:red, linewidth = 1.5, label = "")
     end
     # Fuel label
     if !isempty(all_tank_polys) && !options.has_wing_fuel
@@ -1993,7 +1993,7 @@ function side_view(ac::aircraft;
                    options.ifuel == 40 ? "LH₂" : ""
         for xc in _fuse_tank_centers(ac)
             annotate!(plot_obj, xc, 0.0,
-                      text(fuelname, label_fs - 2, :center, :center, :steelblue4))
+                      text(fuelname, label_fs - 2, :center, :center, :red))
         end
     end
 
