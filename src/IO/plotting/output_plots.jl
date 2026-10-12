@@ -129,19 +129,11 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         xh = zeros(6)
         yh = zeros(6)
         
-        boh = htail.layout.root_span
-        Sh  = htail.layout.S
-        ARh = htail.layout.AR
-        lambdah = htail.outboard.λ
+        (; xhbox, boh, bh, coh, cth) = _htail_geometry(ac)   # shared with side_view / front_view
         sweeph  = htail.layout.sweep
-
-        bh = sqrt(Sh*ARh)
-        coh = Sh/(boh + (bh-boh)*0.5*(1.0+lambdah))
-
 
         dx = xhbox
         tanLh = tan(sweeph*π/180.0)
-        cth = coh*lambdah
 
         xaxh = 0.40
 
@@ -213,54 +205,20 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         yh[ 5] = yoTEh
         yh[ 6] = ycTEh
   
-        #Initialize seat start x-position
-        xseats0 = fuselage.layout.x_pressure_shell_fwd
-        # Fuel tank
+        # Seat start x-position (pushed behind a front tank), see `_cabin_x_extent`
+        xseats0, _, _ = _cabin_x_extent(ac)
+
+        # Fuel tank(s): outline of the upper half, shared with side_view
         ntank = 8
         Rtank = Rfuse - 0.1 # Account for clearance_fuse
         l = max(parg[iglftankin], parg[iglftank])
-        nftanks = fuse_tank.tank_count #Number of fuel tanks
-        ARtank = 2.0
+        xtanks = _fuse_tank_centers(ac)
+        nftanks = length(xtanks) #Number of fuel tanks
 
-        if nftanks != 0
-            tank_placement = ac.fuse_tank.placement
-            if tank_placement == "front"
-                xtanks = [parg[igxftank]]
-                xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
-            elseif tank_placement == "rear"
-                xtanks = [parg[igxftankaft]]
-                xseats0 = fuselage.layout.x_pressure_shell_fwd
-            elseif tank_placement == "both"
-                xtanks = [parg[igxftank], parg[igxftankaft]]
-                xseats0 = xtanks[1] + l/2 + 1.0 * ft_to_m #move seats backwards
-            end
-            
-            xt = zeros(nftanks, ntank*2 )
-            yt = zeros(nftanks, ntank*2 )
-            for m = 1:nftanks
-                xcyl0 = xtanks[m] - l/2 + Rtank/ARtank
-                xcyl1 = xtanks[m] + l/2 - Rtank/ARtank
-                
-                for i = 1: ntank
-                    fraci = float(i-1)/float(ntank-1)
-                    fracx = cos(0.5*pi*fraci)
-
-                    k = i
-                    xt[m, k] = xcyl0 - Rtank/ARtank*fracx
-                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl0)/(Rtank/ARtank))^2), 0.0) )
-                end
-                # k = k+1
-                # xt[k] = xcyl0 + parg[iglftank]
-                # yt[k] = Rtank
-                for i = 1: ntank
-                    fraci = float(i-1)/float(ntank-1)
-                    fracx = sin(0.5*pi*fraci)
-
-                    k = i + ntank
-                    xt[m, k] = xcyl1 + (xcyl1 + Rtank/ARtank - xcyl1)*fracx
-                    yt[m, k] = sqrt(Rtank^2 * max((1 - ((xt[m, k]-xcyl1)/(Rtank/ARtank))^2), 0.0) )
-                end
-            end
+        xt = zeros(nftanks, ntank*2 )
+        yt = zeros(nftanks, ntank*2 )
+        for m = 1:nftanks
+            xt[m, :], yt[m, :] = _fuse_tank_half_outline(xtanks[m], l, Rtank; n = ntank)
         end
 
         # xt = LinRange(xcyl0 - Rfuse/ARtank , xcyl0, 20 )
@@ -281,29 +239,14 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
         end
 
     if !(options.is_doubledecker) #Only show seats in single deck arrangements
-        h_seat = fuselage.cabin.seat_height
-        pax = parg[igWpay]/parm[imWperpax]
-        Rfuse = fuselage.layout.radius
-        dRfuse = fuselage.layout.bubble_lower_downward_shift
-        wfb = fuselage.layout.bubble_center_y_offset
-        nfweb = fuselage.layout.n_webs
+        pax = parg[igWpay]/parm[imWperpax]   # seat the design passenger count
+        _, wcabin, seats_per_row = _deck_cabin_layout(ac)[1]   # floor angle -> cabin width -> seats abreast
 
-        θ = find_floor_angles(false, Rfuse, dRfuse, h_seat = h_seat) #Find the floor angle
-        wcabin = find_cabin_width(Rfuse, wfb, nfweb, θ, h_seat) #Cabin width
-
-        seat_pitch = fuselage.cabin.seat_pitch
-        seat_width = fuselage.cabin.seat_width 
-        aisle_halfwidth = fuselage.cabin.aisle_halfwidth
-        front_seat_offset = fuselage.cabin.front_seat_offset
-
-        _, xseats, seats_per_row = place_cabin_seats(pax, wcabin, seat_pitch = seat_pitch, seat_width = seat_width, 
-            aisle_halfwidth = aisle_halfwidth, front_seat_offset = front_seat_offset)
-
-        xseats = xseats[:] .+ xseats0
+        xseats = _deck_seat_rows(ac, xseats0; pax = pax)[1]
         rows = length(xseats)
 
         println("Seats per row = $seats_per_row, Total rows = $rows")
-        yseats = arrange_seats(seats_per_row, wcabin)
+        yseats = arrange_seats(seats_per_row, wcabin, fuselage.cabin.seat_width, fuselage.cabin.aisle_halfwidth)
     end
 
     # Plot
@@ -339,8 +282,9 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     plot!(plot_obj, xh, -yh, fillrange=yh, label = "", color = :white, alpha = 0.8, linecolor = :black, linewidth = 2.0, z_order = tailz)
     
     # Tail box (fill between xvt and yvt for the tail volume)
-    xvt = [-0.4, -0.15, 0.2, 0.6].*vtail.layout.root_chord .+ vtail.layout.box_x
-    yvt = hcat([0.0 ones(length(xvt) - 2)' .*(vtail.layout.root_chord*vtail.outboard.cross_section.thickness_to_chord/2) 0.0])[:]
+    (; xvbox, cov, tc_v) = _vtail_geometry(ac)   # shared with side_view / front_view
+    xvt = [-0.4, -0.15, 0.2, 0.6].*cov .+ xvbox
+    yvt = hcat([0.0 ones(length(xvt) - 2)' .*(cov*tc_v/2) 0.0])[:]
     plot!(plot_obj, xvt, -yvt, fillrange=yvt, label = "", color = :black, alpha = 0.8, linecolor = :black, z_order = :front)
     
     # Plot fuselage (fill with edge color)
@@ -373,49 +317,24 @@ function stickfig(ac::aircraft; plot_obj = nothing, label_fs = 16,
     plot!(plot_obj, xshell, yshell, color=:black, lw=1.5, z_order=10)
     plot!(plot_obj, xshell, -yshell, color=:black, lw=1.5, z_order=10)
 
-    # Plot Engines
-    D = parg[igdaftfan]
-    lnace = parg[iglnaceaft]
-    x = parg[igxtshaft]
+    # Plot Engines (same engine layout as side_view / front_view, see `_engine_layout`)
+    @assert iseven(Int(parg[igneng])) "Number of engines must be even"
+    eng_layout = _engine_layout(ac)
+    D     = eng_layout.D
+    lnace = eng_layout.lnace
 
-    # Aft fan outline
-    plot!(plot_obj, [x, x, x + lnace, x + lnace, x], [D / 8, D / 8 + D, D / 8 + D * 3 / 4, D / 8 + D / 4, D / 8],
-        lw=1.5, color=:red, z_order=:front)
-    plot!(plot_obj, [x, x, x + lnace, x + lnace, x], [-D / 8, -D / 8 - D, -D / 8 - D * 3 / 4, -D / 8 - D / 4, -D / 8],
-        lw=1.5, color=:red, z_order=:front)
+    # Mirror the one-wing engine list to the other wing
+    yi_w = [y for (y, _, _) in eng_layout.engines]
+    xi_w = [x for (_, x, _) in eng_layout.engines]
+    yi = vcat(-reverse(yi_w), yi_w)
+    xi = vcat( reverse(xi_w), xi_w)
 
-    D = parg[igdfan]
-    neng = parg[igneng]
-    lnace = parg[iglnace]
-    ηs = wing.layout.ηs
-    dy = 2 * D  # Space to leave near wing root and tip [m]
-
-    if neng == 2
-        yi = [ηs * b / 2]
-    else
-        yi = range(bo / 2 + dy, b / 2 * 3 / 4, length=Int(neng / 2))
+    # Plot each engine separately
+    for i in eachindex(yi)
+        xengine = [xi[i], xi[i], xi[i] + lnace, xi[i] + lnace, xi[i]]
+        yengine = [yi[i] - D/2, yi[i] + D/2, yi[i] + D/3, yi[i] - D/3, yi[i] - D/2]
+        plot!(plot_obj, xengine, yengine, color = :red, linewidth = 1.5, label = "", z_order = :front)
     end
-
-    xi = zeros(length(yi))
-    ηi = yi / (b / 2)
-    ηo = bo / b
-    ci = zeros(length(yi))
-
-    for (i, η) in enumerate(ηi)
-        if η <= ηs
-            ci[i] = co * (1 + (λs - 1) * (η - ηo) / (ηs - ηo))
-        else
-            ci[i] = co * (λs + (λt - λs) * (η - ηs) / (1 - ηs))
-        end
-    end
-
-    tanL = tan(wing.layout.sweep*π/180.0)
-    @. xi = tanL * (yi - bo/2) - 0.4ci + wing.layout.box_x - 1.0
-    xlocations = vec(hcat([xi, xi, xi.+lnace, xi.+lnace, xi]...)) #hcat is to avoid this being an array of arrays
-    ylocations = vec(hcat([yi.-D/2, yi.+D/2, yi.+D/3, yi.-D/3, yi.-D/2]...))
-    
-    # Plot engine locations
-    plot!(plot_obj, xlocations, ylocations, color=:red, linewidth=1.5)
 
     # Plot NP and annotate
     scatter!(plot_obj, [parg[igxNP]], [0.0], color=:blue, marker=:circle, z_order=15, label="NP")
@@ -1372,6 +1291,1186 @@ function DragPolar(ac; CL_range = 0.2:0.05:0.8, Mach=nothing,
     return f
 end
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Additional aircraft view functions: side_view and front_view
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Shared helpers (used by both side_view and front_view so the two views draw
+# identical seats / people)
+# ──────────────────────────────────────────────────────────────────────────────
+
+"""
+    _seated_person_geometry(h_seat)
+
+Heights (above the cabin floor, in metres) of the seat / seated-person icon used
+by both [`side_view`](@ref) and [`front_view`](@ref).  `h_seat` is the total seat
+height (`fuselage.cabin.seat_height`).
+"""
+function _seated_person_geometry(h_seat)
+    cushion    = 0.45                       # seat cushion height above floor [m]
+    backh      = max(h_seat - cushion, 0.0) # seat-back height above cushion [m]
+    z_shoulder = cushion + 0.75*backh
+    head_r     = 0.12*h_seat
+    z_head_c   = z_shoulder + 1.05*head_r
+    z_arm      = 0.85*z_shoulder
+    return (; cushion, backh, h_seat, z_shoulder, head_r, z_head_c,
+              z_head_top = z_head_c + head_r, z_arm)
+end
+
+"""
+    _deck_floor_z(ac)
+
+Vertical position (z, relative to the upper-bubble centreline) of the passenger
+floor(s), returned as `Vector{Float64}` (main deck first, then upper deck if
+`n_decks == 2`).  The angles stored in `fuselage.cabin` are used when available
+(`z = Rfuse*sin(θ)`); otherwise they are recomputed with [`find_floor_angles`](@ref)
+so that the plot never silently puts the floor on the centreline.  For a double
+decker the upper floor is `floor_distance` above the main floor (as in
+`find_floor_angles`).
+"""
+function _deck_floor_z(ac)
+    fus   = ac.fuselage
+    R     = fus.layout.radius
+    dR    = fus.layout.bubble_lower_downward_shift
+    h     = fus.cabin.seat_height
+    θ1    = fus.cabin.floor_angle_main
+    if fus.n_decks == 2
+        if abs(θ1) < 1e-9 && abs(fus.cabin.floor_angle_top) < 1e-9
+            @warn "Cabin floor angles not set for double-decker; plotting decks symmetrically about z = 0"
+            θ1 = asin(-0.5*fus.cabin.floor_distance/R)
+        end
+        θ2 = asin(clamp(R*sin(θ1) + fus.cabin.floor_distance, -R, R)/R)
+        return [R*sin(θ1), R*sin(θ2)]
+    else
+        if abs(θ1) < 1e-9
+            θ1 = find_floor_angles(false, R, dR, h_seat = h)
+        end
+        return [R*sin(θ1)]
+    end
+end
+
+"""
+    _deck_cabin_layout(ac)
+
+Per-deck cabin cross-section data `[(z_floor, cabin_width, seats_abreast), …]`
+(main deck first).  Uses exactly the same calculation as the sizing code and
+[`stickfig`](@ref): floor angle -> [`find_cabin_width`](@ref) (effective width at
+floor / seat height) -> `findSeatsAbreast`.  The values stored in
+`fuselage.cabin` are *not* relied upon, since they are only populated for some
+configurations (they are 0 for single-deck aircraft).
+"""
+function _deck_cabin_layout(ac)
+    fus  = ac.fuselage
+    lay  = fus.layout
+    cab  = fus.cabin
+    R    = lay.radius
+    wfb  = lay.bubble_center_y_offset
+    nweb = lay.n_webs
+    h    = cab.seat_height
+    zs   = _deck_floor_z(ac)
+    out  = Tuple{Float64,Float64,Int}[]
+    for z in zs
+        θ = asin(clamp(z/R, -1.0, 1.0))
+        w = find_cabin_width(R, wfb, nweb, θ, h)
+        n = structures.findSeatsAbreast(w, cab.seat_width, cab.aisle_halfwidth)
+        push!(out, (z, w, n))
+    end
+    return out
+end
+
+"""
+    _cabin_x_extent(ac)
+
+Longitudinal extent of the passenger cabin, following the convention of
+[`stickfig`](@ref): seat rows start at `x_pressure_shell_fwd`, but are pushed
+back behind a front (or "both") cryogenic tank (tank end + 1 ft).  A rear tank
+truncates the cabin floor at the tank's front end (- 1 ft).
+
+Returns `(x_seat0, x_floor_fwd, x_floor_aft)`.
+"""
+function _cabin_x_extent(ac)
+    parg    = ac.parg
+    layout  = ac.fuselage.layout
+    options = ac.options
+    ftank   = ac.fuse_tank
+
+    x_seat0     = layout.x_pressure_shell_fwd
+    x_floor_fwd = layout.x_start_cylinder
+    x_floor_aft = layout.x_end_cylinder
+
+    if ftank.tank_count > 0 && !options.has_wing_fuel
+        l_ft = max(parg[iglftankin], parg[iglftank])
+        if ftank.placement in ("front", "both")
+            x_seat0     = parg[igxftank] + l_ft/2 + 1.0*ft_to_m
+            x_floor_fwd = x_seat0
+        end
+        if ftank.placement in ("rear", "both")
+            x_floor_aft = parg[igxftankaft] - l_ft/2 - 1.0*ft_to_m
+        end
+    end
+    return x_seat0, x_floor_fwd, x_floor_aft
+end
+
+
+"""
+    _deck_seat_rows(ac, x_seat0)
+
+Longitudinal position of every seat row on each deck, `Vector{Vector{Float64}}`
+(main deck first), measured from the front of the cabin `x_seat0` (see
+[`_cabin_x_extent`](@ref)).  Uses [`place_cabin_seats`](@ref) (includes the extra
+legroom at the emergency-exit rows) for `pax` passengers, by default the
+aircraft's `fuselage.cabin.exit_limit` (the cabin the fuselage was sized for);
+[`stickfig`](@ref) passes the design passenger count instead.
+
+  • Single deck : all `exit_limit` passengers on the one deck.
+  • Double deck : `exit_limit` is split between the decks.  The split chosen by
+    the cabin optimizer (`optimize_double_decker_cabin`) is not stored in the
+    aircraft, so it is recovered here for the stored floor angles: the integer
+    split that minimises the longer of the two cabins (ties -> the most even
+    split), without re-running the optimizer.
+"""
+function _deck_seat_rows(ac, x_seat0; pax = ac.fuselage.cabin.exit_limit)
+    fus   = ac.fuselage
+    cab   = fus.cabin
+    decks = _deck_cabin_layout(ac)
+    kw    = (seat_pitch = cab.seat_pitch, seat_width = cab.seat_width,
+             aisle_halfwidth = cab.aisle_halfwidth, front_seat_offset = cab.front_seat_offset)
+    rows(pax, w) = place_cabin_seats(pax, w; kw...)[2]   # row x-positions (1 x nrows)
+
+    if !ac.options.is_doubledecker || length(decks) < 2
+        return [collect(rows(pax, decks[1][2])[:]) .+ x_seat0]
+    end
+
+    w1, w2 = decks[1][2], decks[2][2]
+    best = (Inf, Inf, 1)                                 # (max length, |l1 - l2|, pax on main deck)
+    for p1 in 1:(pax - 1)
+        l1 = rows(p1, w1)[end]
+        l2 = rows(pax - p1, w2)[end]
+        cand = (max(l1, l2), abs(l1 - l2), p1)
+        cand[1:2] < best[1:2] && (best = cand)
+    end
+    p1 = best[3]
+    return [collect(rows(p1, w1)[:]) .+ x_seat0, collect(rows(pax - p1, w2)[:]) .+ x_seat0]
+end
+
+"""
+    _fuse_tank_centers(ac)
+
+Longitudinal centres of the in-fuselage fuel tank(s) (`[]` if there are none), by `fuse_tank.placement`
+(`"front"`, `"rear"` or `"both"`).  Shared by [`stickfig`](@ref) and [`side_view`](@ref).
+"""
+function _fuse_tank_centers(ac)
+    parg = ac.parg
+    ftank = ac.fuse_tank
+    ftank.tank_count == 0 && return Float64[]
+    return ftank.placement == "front" ? [parg[igxftank]] :
+           ftank.placement == "rear"  ? [parg[igxftankaft]] :
+                                        [parg[igxftank], parg[igxftankaft]]
+end
+
+"""
+    _fuse_tank_half_outline(xc, l, Rtank; ARtank = 2.0, n = 20)
+
+Upper half `(x, z)` (`2n` points) of the outline of a tank of length `l` centred at `xc`: a cylinder of
+radius `Rtank` with elliptical end caps of aspect ratio `ARtank`.  Mirror about 0 for the lower half.
+"""
+function _fuse_tank_half_outline(xc, l, Rtank; ARtank = 2.0, n = 20)
+    xcyl0 = xc - l/2 + Rtank/ARtank
+    xcyl1 = xc + l/2 - Rtank/ARtank
+    x = zeros(2n);  z = zeros(2n)
+    for i in 1:n
+        frac = (i-1)/(n-1)
+        x[i]   = xcyl0 - Rtank/ARtank*cos(0.5π*frac)
+        x[i+n] = xcyl1 + Rtank/ARtank*sin(0.5π*frac)
+    end
+    for i in 1:n
+        z[i]   = sqrt(max(Rtank^2 * (1 - ((x[i]  -xcyl0)/(Rtank/ARtank))^2), 0.0))
+        z[i+n] = sqrt(max(Rtank^2 * (1 - ((x[i+n]-xcyl1)/(Rtank/ARtank))^2), 0.0))
+    end
+    return x, z
+end
+
+"""
+    _bubble_centers(ac)
+
+Lateral (y) positions of the bubble centres of the fuselage cross-section.  The
+fuselage has `n_webs + 1` bubbles of radius `Rfuse`, spaced `2·wfb`
+(`bubble_center_y_offset`) apart and centred on `y = 0`, i.e. the outermost
+centre is at `±n_webs·wfb` (same convention as the structural model in `fusew!`).
+A single-bubble fuselage (`n_webs = 0`) returns `[0.0]`.
+"""
+function _bubble_centers(ac)
+    lay = ac.fuselage.layout
+    n   = lay.n_webs
+    return [(k - 1 - n/2) * 2 * lay.bubble_center_y_offset for k in 1:(n + 1)]
+end
+
+"""
+    _inside_bubble(y, z, yc, R, dR)
+
+`true` if the point `(y, z)` lies strictly inside the bubble centred at `yc`.  The upper half of the
+bubble is a semicircle centred at `z = 0`; the lower half is the same semicircle shifted down by `dR`
+(`bubble_lower_downward_shift`), joined by vertical sides (`dR = 0` gives a circle).  A small relative
+tolerance means points on the boundary are *not* inside.
+"""
+function _inside_bubble(y, z, yc, R, dR)
+    zc = z > 0 ? z : (z < -dR ? z + dR : 0.0)   # distance to the centre line of the stadium
+    return (y - yc)^2 + zc^2 < R^2 * (1 - 1e-6)
+end
+
+"""
+    _bubble_outline(yc, R, dR; n = 240)
+
+Closed polyline `(y, z)` of the outline of one bubble (see [`_inside_bubble`](@ref)), counter-clockwise from
+the right-most point, with `n` points per half.
+"""
+function _bubble_outline(yc, R, dR; n = 240)
+    θu = range(0, π, length = n)          # upper half, centred at z = 0
+    θl = range(π, 2π, length = n)         # lower half, centred at z = -dR
+    y = [yc .+ R .* cos.(θu); yc .+ R .* cos.(θl); yc + R]
+    z = [R .* sin.(θu); R .* sin.(θl) .- dR; 0.0]
+    return y, z
+end
+
+"""
+    _nonoverlapping_mask(y, z, k, centers, R, dR)
+
+Logical array (`BitVector`) over the outline points `(y, z)` of bubble number `k`: `true` where the point is
+part of the **outer** skin, i.e. **not** inside any of the other bubbles in `centers`; `false` where it is
+buried inside a neighbouring bubble (the overlapping part).
+"""
+function _nonoverlapping_mask(y, z, k, centers, R, dR)
+    mask = trues(length(y))
+    for (j, yc) in enumerate(centers)
+        j == k && continue
+        for i in eachindex(y)
+            _inside_bubble(y[i], z[i], yc, R, dR) && (mask[i] = false)
+        end
+    end
+    return mask
+end
+
+"""
+    _bubble_sections(ac; n = 240)
+
+Outline of every bubble of the fuselage cross-section together with the logical array that marks its
+non-overlapping part (see [`_nonoverlapping_mask`](@ref)).  Returns a `NamedTuple` with `centers`, `R`, `dR`
+and, for each bubble, `y[k]`, `z[k]` and `mask[k]`.  The outline points where the mask changes value are
+refined (by bisection) so that the visible arcs end exactly where they meet the neighbouring bubble.
+"""
+function _bubble_sections(ac; n = 240)
+    lay = ac.fuselage.layout
+    R   = lay.radius
+    dR  = lay.bubble_lower_downward_shift
+    centers = _bubble_centers(ac)
+
+    ys = Vector{Vector{Float64}}(); zs = Vector{Vector{Float64}}(); masks = Vector{BitVector}()
+    for (k, yc) in enumerate(centers)
+        y, z = _bubble_outline(yc, R, dR; n)
+        m    = _nonoverlapping_mask(y, z, k, centers, R, dR)
+        inside_other(a, b) = any(j -> j != k && _inside_bubble(a, b, centers[j], R, dR), eachindex(centers))
+
+        # insert the exact boundary point wherever the mask changes between consecutive points
+        yn = Float64[]; zn = Float64[]
+        for i in 1:(length(y) - 1)
+            push!(yn, y[i]); push!(zn, z[i])
+            if m[i] != m[i+1]
+                (ya, za), (yb, zb) = m[i] ? ((y[i], z[i]), (y[i+1], z[i+1])) : ((y[i+1], z[i+1]), (y[i], z[i]))
+                for _ in 1:50        # (ya, za) is outside the other bubbles, (yb, zb) inside
+                    ym, zm = 0.5 * (ya + yb), 0.5 * (za + zb)
+                    inside_other(ym, zm) ? ((yb, zb) = (ym, zm)) : ((ya, za) = (ym, zm))
+                end
+                push!(yn, ya); push!(zn, za)
+            end
+        end
+        push!(yn, y[end]); push!(zn, z[end])
+        push!(ys, yn); push!(zs, zn)
+        push!(masks, _nonoverlapping_mask(yn, zn, k, centers, R, dR))
+    end
+    return (; centers, R, dR, y = ys, z = zs, mask = masks)
+end
+
+"""
+    _fuselage_tail_end_z(ac)
+
+Upper and lower z of the fuselage at its aft end, as a `NamedTuple` `(; top, bottom)`.
+
+In the side view the tail cone up-sweeps: the crown line stays at the top of the
+fuselage (`top = Rfuse`) while the keel line rises to meet it.  A pointed tail
+(`tapers_to = "point"`) closes onto the crown line (`bottom = top`); a tail that
+tapers to an edge keeps a residual height of `0.4·Rfuse` (as in the top view's
+`0.2·` half-width convention), hanging below the crown line.
+Used by [`side_view`](@ref) and [`_fuselage_top_z`](@ref).
+"""
+function _fuselage_tail_end_z(ac)
+    layout = ac.fuselage.layout
+    R      = layout.radius
+    h_end  = compare_strings(layout.opt_tapers_to, "point") ? 0.0 : 0.4*R
+    return (; top = R, bottom = R - h_end)
+end
+
+"""
+    _fuselage_tail_profile(ac, ξ)
+
+Upper and lower z of the fuselage in the tail cone at the normalized station
+`ξ = (x - x_end_cylinder)/(x_end - x_end_cylinder) ∈ [0, 1]`, returned as `(z_top, z_bot)`.
+
+Each surface blends from its value on the cylinder to its value at the tail end
+with the same exponent `b_tail` that governs the tail radius, `1 - ξ^b_tail`:
+
+    z(ξ) = z_cyl + (z_end - z_cyl) ξ^b_tail
+
+with `z_cyl = +Rfuse` (crown) / `-(Rfuse + ΔR)` (keel) and `z_end` from
+[`_fuselage_tail_end_z`](@ref).  Because `z_end,top = Rfuse` the crown line stays
+level, whereas the keel rises by `Rfuse + ΔR + z_end,bottom`, so the tail cone
+closes at the top of the fuselage instead of at its mid-height.
+"""
+function _fuselage_tail_profile(ac, ξ)
+    layout = ac.fuselage.layout
+    R      = layout.radius
+    z_bot0 = -(R + layout.bubble_lower_downward_shift)
+    zend   = _fuselage_tail_end_z(ac)
+    ξb     = ξ^layout.tail_radius
+    return (R + (zend.top - R)*ξb, z_bot0 + (zend.bottom - z_bot0)*ξb)
+end
+
+"""
+    _fuselage_top_z(ac, x)
+
+Height (z) of the top of the fuselage at longitudinal station `x`.  Used to
+place the vertical tail root in both views.
+"""
+function _fuselage_top_z(ac, x)
+    layout  = ac.fuselage.layout
+    xblend2 = layout.x_end_cylinder
+    xend    = layout.x_end
+    ξ = clamp((x - xblend2)/(xend - xblend2), 0.0, 1.0)
+    return _fuselage_tail_profile(ac, ξ)[1]
+end
+
+"""
+    _htail_geometry(ac)
+
+Horizontal-tail dimensions shared by both views: reference box position,
+root/total span, root & tip chords, z-position and thickness-to-chord.
+"""
+function _htail_geometry(ac)
+    htail = ac.htail
+    Sh    = htail.layout.S
+    boh   = htail.layout.root_span
+    bh    = sqrt(Sh * htail.layout.AR)
+    coh   = Sh / (boh + (bh - boh)*0.5*(1 + htail.outboard.λ))
+    return (; xhbox = htail.layout.box_x, zh = htail.layout.z, boh, bh, coh,
+              cth = coh * htail.outboard.λ,
+              tc_h = max(htail.outboard.cross_section.thickness_to_chord, 0.01))
+end
+
+"""
+    _vtail_geometry(ac)
+
+Vertical-tail dimensions shared by both views, including the z of the root
+(on top of the fuselage at the tail box position) and of the tip.
+"""
+function _vtail_geometry(ac)
+    vtail = ac.vtail
+    bov   = vtail.layout.root_span
+    bv    = vtail.layout.span
+    cov   = vtail.layout.root_chord
+    xvbox = vtail.layout.box_x
+    z_root = _fuselage_top_z(ac, xvbox)
+    return (; xvbox, bov, bv, cov, ctv = cov * vtail.outboard.λ,
+              sweepv = vtail.layout.sweep,
+              tc_v = max(vtail.outboard.cross_section.thickness_to_chord, 0.01),
+              z_root, z_tip = z_root + (bv - bov))
+end
+
+"""
+    _engine_layout(ac)
+
+Wing-mounted engine positions used by **both** [`side_view`](@ref) and
+[`front_view`](@ref), returned as a `NamedTuple` with `D`, `lnace` and a vector
+`engines` of `(y, x_LE, z_ctr)` for **one** wing (the other wing mirrors `y`):
+
+  • `y`     : spanwise position
+  • `x_LE`  : nacelle leading edge, `parg[igxeng]` for the inner engine and swept
+              aft by `tan(Λ)·(y − y_inner)` for the others
+  • `z_ctr` : nacelle centre height, following the wing dihedral
+
+Spanwise positions:
+  • 2-engine aircraft: single engine per wing at the structural break (ηs·b/2)
+  • 4-engine aircraft: inner at ηs·b/2, outer at twice that distance from the centreline
+                       (TEMPORARY APPROXIMATION, same as in `size_aircraft!` for
+                       `wing_weights!`; independent of `y_critical_engines`, which is
+                       only used for the OEI yaw moment)
+  • Other even count : evenly spaced from just outside the root to 0.75·b/2
+"""
+function _engine_layout(ac)
+    parg = ac.parg
+    wing = ac.wing
+    b    = wing.layout.span
+    bo   = wing.layout.root_span
+    zw   = wing.layout.z
+    ηs   = wing.layout.ηs
+    D    = parg[igdfan]
+    neng_wing = Int(round(parg[igneng])) ÷ 2
+
+    tanΓ   = tan(ac.landing_gear.wing_dihedral_angle)
+    tanΛ   = tan(wing.layout.sweep * π / 180)
+    y_root = bo / 2
+
+    if neng_wing == 1
+        ys = [ηs * b / 2]
+    elseif neng_wing == 2
+        y_eng1 = ηs * b / 2
+        ys = [y_eng1, 2*y_eng1]
+        if abs(ys[2] - ys[1]) < D
+            @warn "Engine layout: the two engines on each wing overlap " *
+                  "(y1 = $(round(ys[1], digits=2)) m, y2 = $(round(ys[2], digits=2)) m, " *
+                  "nacelle D = $(round(D, digits=2)) m)."
+        end
+    else # neng_wing => 3
+        ys = collect(range(bo/2 + 2.0*D, b/2*0.75, length = neng_wing))
+    end
+
+    engines = [(y, parg[igxeng] + tanΛ*(y - ys[1]), zw + tanΓ*(y - y_root) - 0.5*D) for y in ys]
+    return (; D, lnace = parg[iglnace], engines)
+end
+
+
+"""
+    side_view(ac::aircraft; plot_obj = nothing, label_fs = 14,
+              show_grid = false, annotate_dims = true, show_people = false)
+
+Draw a **side (profile) view** of the aircraft: fuselage outline, wing cross
+section at the root, horizontal tail, vertical tail, wing-mounted and aft-fan
+engines, and – when a cryogenic tank is present – the in-fuselage fuel tank(s).
+
+The x-axis is the longitudinal fuselage axis (same orientation as
+[`stickfig`](@ref)).  The z-axis is positive upward.  Wing and htail z-offsets
+(`wing.layout.z`, `htail.layout.z`) are respected so that low-wing and T-tail
+configurations render correctly.
+
+# Arguments
+- `ac::aircraft`       : sized aircraft object.
+- `plot_obj`           : existing `Plots.Plot` to draw on; `nothing` (default) creates a new one.
+- `label_fs::Int`      : font size for dimension annotations (default 14).
+- `show_grid::Bool`    : draw background grid (default `false`).
+- `annotate_dims::Bool`: add length / radius callouts (default `true`).
+- `show_people::Bool`  : draw the seated passengers (head, torso, arms, legs) on the seats (default `false`).
+                         The seats themselves are always drawn.
+
+# Returns
+`Plots.Plot` object.
+"""
+function side_view(ac::aircraft;
+        plot_obj      = nothing,
+        label_fs      = 14,
+        show_grid     = false,
+        annotate_dims = true,
+        show_people   = false)
+
+    # ── guard ─────────────────────────────────────────────────────────────
+    if !ac.is_sized[1]
+        @warn "Aircraft ($(ac.name)) must be sized before plotting. Skipping `side_view`…"
+        return nothing
+    end
+
+    # ── unpack ────────────────────────────────────────────────────────────
+    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine =
+        unpack_ac(ac, 1)
+
+    layout   = fuselage.layout
+    Rfuse    = layout.radius
+    dRfuse   = layout.bubble_lower_downward_shift
+    anose    = layout.nose_radius
+    n_decks  = fuselage.n_decks
+
+    xnose    = layout.x_nose
+    xend     = layout.x_end
+    xblend1  = layout.x_start_cylinder
+    xblend2  = layout.x_end_cylinder
+
+    # ── fuselage profile ──────────────────────────────────────────────────
+    nnose = 30
+    ntail_pts = 30
+
+    # upper profile
+    xu_nose = zeros(nnose);  zu_nose = zeros(nnose)
+    for i in 1:nnose
+        frac  = (i-1)/(nnose-1)
+        fracx = cos(0.5π * frac)
+        xu_nose[i] = xblend1 + (xnose - xblend1)*fracx
+        zu_nose[i] = Rfuse * (1 - fracx^anose)^(1/anose)
+    end
+    xu_tail = zeros(ntail_pts);  zu_tail = zeros(ntail_pts)
+    for i in 1:ntail_pts
+        frac = (i-1)/(ntail_pts-1)
+        xu_tail[i] = xblend2 + (xend - xblend2)*frac
+        zu_tail[i] = _fuselage_tail_profile(ac, frac)[1]
+    end
+    xu = [xu_nose; [xblend1, xblend2]; xu_tail]
+    zu = [zu_nose; [Rfuse,   Rfuse  ]; zu_tail]
+
+    # lower profile
+    z_bot = -(Rfuse + dRfuse)
+    xl_nose = zeros(nnose);  zl_nose = zeros(nnose)
+    for i in 1:nnose
+        frac  = (i-1)/(nnose-1)
+        fracx = cos(0.5π * frac)
+        xl_nose[i] = xblend1 + (xnose - xblend1)*fracx
+        zl_nose[i] = z_bot * (1 - fracx^anose)^(1/anose)
+    end
+
+
+    xl_tail = zeros(ntail_pts);  zl_tail = zeros(ntail_pts)
+    for i in 1:ntail_pts
+        frac = (i-1)/(ntail_pts-1)
+        xl_tail[i] = xblend2 + (xend - xblend2)*frac
+        zl_tail[i] = _fuselage_tail_profile(ac, frac)[2]
+    end
+    xl = [xl_nose; [xblend1, xblend2]; xl_tail]
+    zl = [zl_nose; [z_bot,   z_bot  ]; zl_tail]
+
+    # closed polygon for fill
+    xf_poly = [xu; reverse(xl); [xu[1]]]
+    zf_poly = [zu; reverse(zl); [zu[1]]]
+
+    # ── wing root chord cross-section ─────────────────────────────────────
+    co      = wing.layout.root_chord
+    xax     = wing.layout.spar_box_x_c
+    dx_wing = wing.layout.box_x
+    zw      = wing.layout.z
+    tc_wing = wing.inboard.cross_section.thickness_to_chord
+    hw      = tc_wing * co * 0.5
+
+    xwLE = (-xax)*co + dx_wing
+    xwTE = (1 - xax)*co + dx_wing
+    xw_box = [xwLE, xwLE, xwTE, xwTE, xwLE]
+    zw_box = [zw - hw, zw + hw, zw + hw, zw - hw, zw - hw]
+
+    # ── horizontal tail cross-section ─────────────────────────────────────
+    (; xhbox, zh, coh, tc_h) = _htail_geometry(ac)   # shared with front_view
+    hh    = tc_h * coh * 0.5
+
+    xhLE = -0.40*coh + xhbox
+    xhTE = (1 - 0.40)*coh + xhbox
+    xh_box = [xhLE, xhLE, xhTE, xhTE, xhLE]
+    zh_box = [zh - hh, zh + hh, zh + hh, zh - hh, zh - hh]
+
+    # ── vertical tail planform (side view shows the fin outline) ──────────
+    (; xvbox, bov, bv, cov, ctv, sweepv, z_root, z_tip) = _vtail_geometry(ac)   # shared with front_view
+    tanLv  = tan(sweepv*π/180)
+
+    xvLE_root = -0.40*cov + xvbox
+    xvTE_root = (1 - 0.40)*cov + xvbox
+
+    # leading / trailing edges at root and tip
+    xvLE_tip = xvLE_root + tanLv*(bv - bov)
+    xvTE_tip = xvLE_tip  + ctv
+    zv_root  = z_root     # z of fuselage top at the vtail x-location (on the tail cone)
+    zv_tip   = z_tip
+
+    xv_poly = [xvLE_root, xvLE_tip, xvTE_tip, xvTE_root, xvLE_root]
+    zv_poly = [zv_root,   zv_tip,   zv_tip,   zv_root,   zv_root  ]
+
+    # ── wing-mounted engine(s) ────────────────────────────────────────────────
+    # Same spanwise / vertical positions as `front_view` (via `_engine_layout`);
+    # in the side view engines at different y appear at different x due to sweep.
+    eng_layout = _engine_layout(ac)
+    D_eng  = eng_layout.D
+    lnace  = eng_layout.lnace
+    # (x_LE, nacelle_length, z_centre) for each engine on one wing
+    sv_eng_nacelles = [(x_e, lnace, z_e) for (_, x_e, z_e) in eng_layout.engines]
+
+    # For z_bot_lim calculation keep a combined ze reference
+    ze_poly_ref = reduce(vcat, [[z_e - 0.5*D_eng, z_e + 0.5*D_eng] for (_, _, z_e) in sv_eng_nacelles])
+
+
+    # ── aft-mounted / BLI fan ─────────────────────────────────────────────
+    D_aft     = parg[igdaftfan]
+    lnace_aft = parg[iglnaceaft]
+    x_aft     = parg[igxtshaft]
+
+    # ── cryo fuel tanks ───────────────────────────────────────────────────
+    nftanks = fuse_tank.tank_count
+    all_tank_polys = Vector{Tuple{Vector{Float64}, Vector{Float64}}}()
+
+    if nftanks > 0 && !options.has_wing_fuel
+        l_ftank = max(parg[iglftankin], parg[iglftank])
+        Rtank   = Rfuse - 0.1
+        xtanks  = _fuse_tank_centers(ac)
+
+        for xc in xtanks
+            xt_top, zt_top = _fuse_tank_half_outline(xc, l_ftank, Rtank; n = 20)
+
+            # closed polygon (top then bottom reversed)
+            xt_poly = [xt_top; reverse(xt_top); xt_top[1]]
+            zt_poly = [zt_top; -reverse(zt_top); zt_top[1]]
+            push!(all_tank_polys, (xt_poly, zt_poly))
+        end
+    end
+
+    # ── cabin floor(s) and seat rows (side view) ────────────────────────
+    # Floor z = Rfuse*sin(θ) (θ from the sized fuselage, negative below the
+    # bubble centre).  Seats/floor are pushed behind a front cryogenic tank
+    # exactly as in `stickfig`.
+    x_cab_fwd = layout.x_pressure_shell_fwd
+    x_cab_aft = layout.x_pressure_shell_aft
+    x_seat0_sv, x_floor_fwd_sv, x_floor_aft_sv = _cabin_x_extent(ac)
+
+    h_seat_sv = fuselage.cabin.seat_height
+    pgeom_sv  = _seated_person_geometry(h_seat_sv)
+    seat_height_body = pgeom_sv.cushion
+    head_r           = pgeom_sv.head_r
+    backh_sv         = pgeom_sv.backh
+
+    z_floors_sv  = _deck_floor_z(ac)
+    z_floor_main = z_floors_sv[1]            # z of main cabin floor
+
+    seat_pitch_sv        = fuselage.cabin.seat_pitch
+    front_seat_offset_sv = fuselage.cabin.front_seat_offset
+
+    decks_sv  = _deck_cabin_layout(ac)
+    wcabin_sv = decks_sv[1][2]
+    shoulder_w_sv = min(0.42, wcabin_sv * 0.06)  # narrow shoulder in side view
+
+    # Seat rows per deck (exit limit based, as in `stickfig`; see `_deck_seat_rows`)
+    xrows_sv = _deck_seat_rows(ac, x_seat0_sv)
+    for xr in xrows_sv
+        filter!(x -> x <= x_floor_aft_sv, xr)
+    end
+
+    sv_floor_polys  = Tuple{Vector{Float64},Vector{Float64}}[]  # (x,z) per floor line
+    sv_seat_data    = Tuple{Float64,Float64,Float64}[]          # (x_row, z_floor, shoulder_w)
+
+    # Main deck
+    push!(sv_floor_polys, ([x_floor_fwd_sv, x_floor_aft_sv], [z_floor_main, z_floor_main]))
+    for xr in xrows_sv[1]
+        push!(sv_seat_data, (xr, z_floor_main, shoulder_w_sv))
+    end
+
+    # Upper deck (double decker): floor_angle_top is the *sized* angle, i.e.
+    # z_top = z_main + floor_distance
+    if n_decks == 2
+        z_floor_top = z_floors_sv[2]
+        push!(sv_floor_polys, ([x_floor_fwd_sv, x_floor_aft_sv], [z_floor_top, z_floor_top]))
+        wcabin_top = decks_sv[2][2]
+        shoulder_w_top = min(0.42, wcabin_top * 0.06)
+        for xr in xrows_sv[2]
+            push!(sv_seat_data, (xr, z_floor_top, shoulder_w_top))
+        end
+    end
+
+    # ── create plot ───────────────────────────────────────────────────────
+    if isnothing(plot_obj)
+        plot_obj = plot(
+            legend       = false,
+            size         = (900, 420),
+            dpi          = 300,
+            grid         = show_grid,
+            show         = true,
+            aspect_ratio = :equal,
+            margin       = 6mm,
+        )
+    end
+
+    # Fuselage filled silhouette
+    plot!(plot_obj, xf_poly, zf_poly;
+          fillrange = minimum(zf_poly), fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 2.0, label = "")
+
+    # Cryo tanks (drawn *inside* fuselage, so on top of fuselage fill)
+    for (xt_p, zt_p) in all_tank_polys
+        plot!(plot_obj, xt_p, zt_p;
+              fillrange = minimum(zt_p), fillalpha = 0.10, fillcolor = :cyan,
+              linecolor = :color=:red, linewidth = 1.5, label = "")
+    end
+    # Fuel label
+    if !isempty(all_tank_polys) && !options.has_wing_fuel
+        fuelname = options.ifuel == 11 ? "CH₄" :
+                   options.ifuel == 40 ? "LH₂" : ""
+        for xc in _fuse_tank_centers(ac)
+            annotate!(plot_obj, xc, 0.0,
+                      text(fuelname, label_fs - 2, :center, :center, :red))
+        end
+    end
+
+    # Vertical tail
+    plot!(plot_obj, xv_poly, zv_poly;
+          fillrange = zv_poly[1], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+          
+    # Fuselage outline (drawn again on top of tank fill for clean boundary)
+    plot!(plot_obj, xu, zu; linecolor = :black, linewidth = 2.0, label = "")
+    plot!(plot_obj, xl, zl; linecolor = :black, linewidth = 2.0, label = "")
+
+    # Horizontal tail
+    plot!(plot_obj, xh_box, zh_box;
+          fillrange = zh_box[1], fillalpha = 0.45, fillcolor = :navy,
+          linecolor = :black, linewidth = 1.5, label = "")
+
+
+    # Aft fan (only when non-trivial)
+    if D_aft > 0.01 && lnace_aft > 0.01
+        xa_poly = [x_aft, x_aft, x_aft + lnace_aft, x_aft + lnace_aft, x_aft]
+        za_poly = [D_aft/8, D_aft/8 + D_aft,
+                   D_aft/8 + D_aft*0.75, D_aft/8 + D_aft*0.25,
+                   D_aft/8]
+        plot!(plot_obj, xa_poly, za_poly;
+              linecolor = :red, linewidth = 1.5,
+              fillrange = za_poly[1], fillalpha = 0.30, fillcolor = :tomato,
+              label = "")
+    end
+
+    # ── cabin floor lines ─────────────────────────────────────────────────
+    for (xfl, zfl) in sv_floor_polys
+        plot!(plot_obj, xfl, zfl;
+              linecolor = :black, linewidth = 1.8,
+              linestyle = :solid, label = "")
+    end
+
+    # ── seats (always) and stick figures (if `show_people`): one per row per deck ──
+    # Each figure: seat box + torso + head + arms + legs  (side profile)
+    for (xr, zf, sw) in sv_seat_data
+        # seat box: legroom is in *front* (lower x) of the seat
+        seat_d  = seat_pitch_sv * 0.50   # seat depth (fore-aft)
+        #seat_h  = h_seat_sv              # cushion height
+        seat_h = seat_height_body        # cushion height
+        x_seat_fwd = xr - seat_d         # front edge of seat
+        x_seat_aft = xr                  # back of seat = row reference
+        z_seat_top = zf + seat_h         # top of cushion
+        backh = backh_sv
+        z_shoulder = zf + pgeom_sv.z_shoulder   # shared with front_view
+
+        # Seat box (cushion)
+        plot!(plot_obj,
+              [x_seat_fwd, x_seat_aft, x_seat_aft, x_seat_fwd, x_seat_fwd],
+              [zf,         zf,         z_seat_top, z_seat_top, zf        ];
+              linecolor = :black, linewidth = 1.0, label = "")
+
+        # Seat back (vertical at aft edge)
+        plot!(plot_obj,
+              [x_seat_aft, x_seat_aft],
+              [z_seat_top, z_seat_top + backh];
+              linecolor = :black, linewidth = 1.0, label = "")
+
+        show_people || continue   # seated people are optional (`show_people` keyword)
+
+        # Person: torso (from seat top up)
+        plot!(plot_obj,
+              [xr - sw*0.3, xr - sw*0.3],
+              [z_seat_top,  z_shoulder];
+              linecolor = :steelblue, linewidth = 1.4, label = "")
+
+        # Head circle
+        z_head_c = zf + pgeom_sv.z_head_c       # shared with front_view
+        θh = LinRange(0, 2π, 24)
+        plot!(plot_obj,
+              xr .- sw*0.3 .+ head_r .* cos.(θh),
+              z_head_c .+ head_r .* sin.(θh);
+              linecolor = :steelblue, linewidth = 1.0, label = "")
+
+        # Arms (horizontal from mid-torso)
+        z_arm = zf + pgeom_sv.z_arm             # shared with front_view (relative to the deck floor)
+        plot!(plot_obj,
+              [xr - sw*0.3 - sw*0.9, xr - sw*0.3 + sw*0.2],
+              [z_arm, z_arm];
+              linecolor = :steelblue, linewidth = 1.0, label = "")
+
+        # Legs (from front of seat down to floor)
+        plot!(plot_obj,
+              [x_seat_fwd + seat_d*0.2, x_seat_fwd - seat_pitch_sv*0.15],
+              [zf + seat_h*0.1, zf];
+              linecolor = :steelblue, linewidth = 1.0, label = "")
+    end
+
+    # Wing root box
+    plot!(plot_obj, xw_box, zw_box;
+          fillrange = zw_box[1], fillalpha = 1, fillcolor = :royalblue,
+          linecolor = :black, linewidth = 1.5, label = "")
+
+    # Wing-mounted engine(s)
+    for (xi_e, ln_e, z_e) in sv_eng_nacelles
+        xe_poly = [xi_e,            xi_e,
+                   xi_e + ln_e,     xi_e + ln_e, xi_e]
+        ze_poly = [z_e - 0.5*D_eng, z_e + 0.5*D_eng,
+                   z_e + D_eng*0.25, z_e - D_eng*0.25,
+                   z_e - 0.5*D_eng]
+        plot!(plot_obj, xe_poly, ze_poly;
+              fillrange = ze_poly[1], fillalpha = 0.35, fillcolor = :tomato,
+              linecolor = :red, linewidth = 1.5, label = "")
+    end
+
+    # ── dimension callouts ────────────────────────────────────────────────
+    if annotate_dims
+        z_ann = 1.1*maximum(zv_poly)
+        plot!(plot_obj, [xnose, xend], [z_ann, z_ann]; lw = 1.5, color = :black)
+        scatter!(plot_obj, [xnose, xend], [z_ann, z_ann];
+                 yerror = abs(z_ann)*0.07, markersize = 0)
+        annotate!(plot_obj, (xnose + xend)*0.5, z_ann*1.25,
+                  text("ℓ = $(round(xend - xnose, digits=1)) m",
+                       label_fs, :center, :top))
+
+        # radius callout
+        #xmid = (xblend1 + xblend2)*0.5
+        #plot!(plot_obj, [xmid, xmid], [0.0, Rfuse];
+        #      lw = 1.2, color = :dimgray, linestyle = :dash)
+        #annotate!(plot_obj, xmid + 1.0, Rfuse*0.5,
+        #          text("R=$(round(Rfuse, digits=2)) m",
+        #               label_fs - 2, :left, :center, color = :dimgray))
+    end
+
+    # ── labels / limits ───────────────────────────────────────────────────
+    xlabel!(plot_obj, "x [m]"; fontsize = label_fs)
+    ylabel!(plot_obj, "z [m]"; fontsize = label_fs)
+    title!(plot_obj, "Side View — $(ac.name)"; fontsize = label_fs)
+
+    z_top = max(zv_tip * 1.15, Rfuse * 1.5)
+    z_bot_lim = min((Rfuse + dRfuse) * -1.8, minimum(ze_poly_ref)*1.1)
+    ylims!(plot_obj, z_bot_lim, z_top)
+    xlims!(plot_obj, xnose - 2.0, xend + 2.0)
+
+    return plot_obj
+end
+
+
+"""
+    front_view(ac::aircraft; plot_obj = nothing, label_fs = 14,
+               show_grid = false, annotate_dims = true, show_people = false)
+
+Draw a **front (head-on) view** of the aircraft: fuselage cross-section circle,
+wing silhouette (semi-span projected onto the y–z plane), horizontal tail,
+vertical tail, and engine nacelle circles.
+
+The y-axis is lateral (positive starboard); z is positive upward.
+
+# Arguments
+- `ac::aircraft`       : sized aircraft object.
+- `plot_obj`           : existing `Plots.Plot` to draw on; `nothing` (default) creates a new one.
+- `label_fs::Int`      : font size for annotation text (default 14).
+- `show_grid::Bool`    : draw background grid (default `false`).
+- `annotate_dims::Bool`: add span / radius callouts (default `true`).
+- `show_people::Bool`  : draw the seated passengers (head, torso, arms) on the seats (default `false`).
+                         The seats themselves are always drawn.
+
+# Returns
+`Plots.Plot` object.
+"""
+function front_view(ac::aircraft;
+        plot_obj      = nothing,
+        label_fs      = 14,
+        show_grid     = false,
+        annotate_dims = true,
+        show_people   = false)
+
+    # ── guard ─────────────────────────────────────────────────────────────
+    if !ac.is_sized[1]
+        @warn "Aircraft ($(ac.name)) must be sized before plotting. Skipping `front_view`…"
+        return nothing
+    end
+
+    # ── unpack ────────────────────────────────────────────────────────────
+    parg, parm, para, pare, options, fuselage, fuse_tank, wing, htail, vtail, engine =
+        unpack_ac(ac, 1)
+
+    layout  = fuselage.layout
+    Rfuse   = layout.radius
+    dRfuse  = layout.bubble_lower_downward_shift
+    wfb     = layout.bubble_center_y_offset
+    nfweb   = layout.n_webs
+    n_decks = fuselage.n_decks
+
+    # ── dihedral angle (from landing gear data) ────────────────────────────
+    Γ_wing = ac.landing_gear.wing_dihedral_angle   # [rad], positive = tips up
+    tanΓ   = tan(Γ_wing)
+
+    # ── wing semi-span silhouette ──────────────────────────────────────────
+    b    = wing.layout.span
+    bo   = wing.layout.root_span
+    bs   = wing.layout.break_span
+    zw   = wing.layout.z
+    co   = wing.layout.root_chord
+    λs   = wing.inboard.λ
+    λt   = wing.outboard.λ
+    tc_o = wing.inboard.cross_section.thickness_to_chord
+    tc_s = wing.outboard.cross_section.thickness_to_chord
+
+    hw_root  = tc_o * co * 0.5
+    hw_break = tc_o * co * λs * 0.5
+    hw_tip   = tc_s * co * λt * 0.5
+
+    y_root   = bo / 2
+    y_break  = bs / 2
+    y_tip    = b  / 2
+
+    # Dihedral z-rise at each span station (measured from root attachment)
+    dz_root  = tanΓ * (y_root  - y_root)   # = 0
+    dz_break = tanΓ * (y_break - y_root)
+    dz_tip   = tanΓ * (y_tip   - y_root)
+
+    # Trapezoid: upper then lower edge from root → break → tip, with dihedral
+    yw_r = [y_root,  y_break,  y_tip,     y_tip,      y_break,     y_root  ]
+    zw_r = [zw + dz_root  + hw_root,
+            zw + dz_break + hw_break,
+            zw + dz_tip   + hw_tip,
+            zw + dz_tip   - hw_tip,
+            zw + dz_break - hw_break,
+            zw + dz_root  - hw_root]
+    yw_l = -yw_r
+    zw_l =  zw_r
+
+    # ── horizontal tail ───────────────────────────────────────────────────
+    (; zh, boh, bh, coh, cth, tc_h) = _htail_geometry(ac)   # shared with side_view
+
+    hh_root = tc_h * coh * 0.5
+    hh_tip  = tc_h * cth * 0.5
+
+    yhr = [boh/2, bh/2,   bh/2,   boh/2   ]
+    zhr = [zh + hh_root, zh + hh_tip, zh - hh_tip, zh - hh_root]
+    yhl = -yhr
+    zhl =  zhr
+
+    # ── vertical tail (symmetric about y=0) ──────────────────────────────
+    (; cov, ctv, tc_v, z_root, z_tip) = _vtail_geometry(ac)   # shared with side_view
+    z_fuse_vtail = z_root
+    z_vtip       = z_tip
+
+    hw_v_root = tc_v * cov * 0.5
+    hw_v_tip  = tc_v * ctv * 0.5
+
+    # Trapezoid (root thickness → tip thickness), closed outline for the white fill
+    yv_fill = [ hw_v_root,  hw_v_tip, -hw_v_tip, -hw_v_root]
+    zv_fill = [z_fuse_vtail, z_vtip,   z_vtip,    z_fuse_vtail]
+    # Outline without the root edge (the root sits on the fuselage crown)
+    yv_poly = yv_fill
+    zv_poly = zv_fill
+
+    # ── engines ───────────────────────────────────────────────────────────
+    # Same engine layout as `side_view` (see `_engine_layout`)
+    eng_layout = _engine_layout(ac)
+    D_eng      = eng_layout.D
+    yi_engs    = [y_e for (y_e, _, _) in eng_layout.engines]
+    ηs         = wing.layout.ηs
+    z_eng_ctr  = minimum(z_e for (_, _, z_e) in eng_layout.engines)  # lowest nacelle centre (for plot limits)
+
+    # ── cabin floor(s) in front view ─────────────────────────────────────
+    # Same floor heights, seat height and person geometry as the side view.
+    z_floors_fv = _deck_floor_z(ac)
+    decks_fv    = _deck_cabin_layout(ac)
+    z_floor_fv, wcabin_fv, seats_abreast_fv = decks_fv[1]
+
+    h_seat_fv     = fuselage.cabin.seat_height          # total seat height [m]
+    pgeom_fv      = _seated_person_geometry(h_seat_fv)  # shared with side_view
+    seat_width_fv = fuselage.cabin.seat_width
+    aisle_hw_fv   = fuselage.cabin.aisle_halfwidth
+
+    yseats_fv = arrange_seats(seats_abreast_fv, wcabin_fv, seat_width_fv, aisle_hw_fv)
+
+    fv_floor_lines = Tuple{Float64,Float64,Float64,Float64}[]  # (y1,z1,y2,z2)
+    fv_seat_rows   = Tuple{Vector{Float64},Float64}[]          # (yseats, z_floor)
+
+    push!(fv_floor_lines, (-wcabin_fv/2, z_floor_fv, wcabin_fv/2, z_floor_fv))
+    push!(fv_seat_rows,   (yseats_fv, z_floor_fv))
+
+    if n_decks == 2
+        z_floor_top_fv, wcabin_top_fv, seats_abreast_top_fv = decks_fv[2]
+        yseats_top_fv = arrange_seats(seats_abreast_top_fv, wcabin_top_fv,
+                                      seat_width_fv, aisle_hw_fv)
+        push!(fv_floor_lines, (-wcabin_top_fv/2, z_floor_top_fv,
+                                wcabin_top_fv/2, z_floor_top_fv))
+        push!(fv_seat_rows, (yseats_top_fv, z_floor_top_fv))
+    end
+
+    # ── build plot ────────────────────────────────────────────────────────
+    if isnothing(plot_obj)
+        plot_obj = plot(
+            legend       = false,
+            size         = (700, 600),
+            dpi          = 300,
+            grid         = show_grid,
+            show         = true,
+            aspect_ratio = :equal,
+            margin       = 6mm,
+        )
+    end
+
+    # Right wing
+    plot!(plot_obj, yw_r, zw_r;
+          fillrange = zw_r[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+
+    # Left wing
+    plot!(plot_obj, yw_l, zw_l;
+          fillrange = zw_l[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+
+    # Between wings
+    plot!(plot_obj, [yw_r[1], yw_l[1]], [zw_r[1], zw_l[1]];
+          fillrange = zw_l[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+    plot!(plot_obj, [yw_r[end], yw_l[end]], [zw_r[end], zw_l[end]];
+          fillrange = zw_l[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+
+    # Right horizontal tail
+    plot!(plot_obj, yhr, zhr;
+          fillrange = zhr[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.2, label = "")
+
+    # Left horizontal tail
+    plot!(plot_obj, yhl, zhl;
+          fillrange = zhl[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.2, label = "")
+
+    # Between horizontal tails
+    plot!(plot_obj, [yhr[1], yhl[1]], [zhr[1], zhl[1]];
+          fillrange = zhl[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+    plot!(plot_obj, [zhl[end], yhl[end]], [zhr[end], zhl[end]];
+          fillrange = zw_l[end], fillalpha = 1, fillcolor = :white,
+          linecolor = :black, linewidth = 1.5, label = "")
+
+    # Vertical tail
+    # The fin is a *filled* closed shape so that it hides everything behind it
+    # (e.g. the lines joining the two horizontal-tail halves); the outline is
+    # then drawn on top of the fill along the two sides and the tip only.
+    plot!(plot_obj, Shape(yv_fill, zv_fill);
+          fillcolor = :white, fillalpha = 1, linealpha = 0, label = "")
+    plot!(plot_obj, yv_poly, zv_poly;
+          linecolor = :black, linewidth = 1.5, label = "")
+
+    # Engine circles
+    θ_e = LinRange(0, 2π, 60)
+    for y_eng in yi_engs
+        # Engine z follows wing dihedral at this spanwise station
+        z_eng_y = zw + tanΓ * (y_eng - y_root) - 0.5*D_eng
+        # starboard
+        yec =  y_eng .+ (D_eng/2) .* cos.(θ_e)
+        zec = z_eng_y .+ (D_eng/2) .* sin.(θ_e)
+        plot!(plot_obj, yec, zec;
+              fillrange = z_eng_y, fillalpha = 0.95, fillcolor = :tomato,
+              linecolor = :red, linewidth = 1.5, label = "")
+        # port
+        plot!(plot_obj, -yec, zec;
+              fillrange = z_eng_y, fillalpha = 0.95, fillcolor = :tomato,
+              linecolor = :red, linewidth = 1.5, label = "")
+    end
+
+
+
+    # ── fuselage cross section ─────────────────────────────────────────────
+    ncirc  = 120
+    θ_circ = LinRange(0, 2π, ncirc)
+
+    if nfweb > 0
+        # Multi-bubble fuselage: draw only the non-overlapping (outer) parts of the bubbles
+        # (see `_bubble_sections` / `_nonoverlapping_mask`) instead of full overlapping circles.
+        secs = _bubble_sections(ac)
+        # white fill of the whole cross-section (union of the bubbles) to hide the wing root behind it
+        for k in eachindex(secs.y)
+            plot!(plot_obj, Shape(secs.y[k], secs.z[k]);
+                  fillcolor = :white, fillalpha = 1, linealpha = 0, label = "")
+        end
+        # outer skin: points of the outline that are inside a neighbouring bubble become NaN (gap in the line)
+        for k in eachindex(secs.y)
+            plot!(plot_obj, ifelse.(secs.mask[k], secs.y[k], NaN), ifelse.(secs.mask[k], secs.z[k], NaN);
+                  linecolor = :black, linewidth = 2.5, label = "")
+        end
+    else
+
+        # Single-bubble fuselage: account for the lower-bubble downward shift.
+        lay = ac.fuselage.layout
+        R   = lay.radius
+        dR  = lay.bubble_lower_downward_shift
+
+        yf, zf = _bubble_outline(0.0, R, dR; n = length(θ_circ) ÷ 2)
+
+        plot!(plot_obj, Shape(yf, zf);
+            fillcolor = :white, fillalpha = 1, linealpha = 0, label = "")
+
+        plot!(plot_obj, yf, zf; fillcolor = :white,
+            linecolor = :black, linewidth = 2.5, label = "")
+    end
+
+    # ── cabin floor lines (front view) ───────────────────────────────────
+    for (y1, z1, y2, z2) in fv_floor_lines
+        plot!(plot_obj, [y1, y2], [z1, z2];
+              linecolor = :black, linewidth = 1.8, label = "")
+    end
+
+    # ── one row of seats (always) and stick figures (if `show_people`), front view ──
+    # Front-on: seat cushion + back, torso, head and arms.  All heights come
+    # from `_seated_person_geometry`, identical to the side view.
+    pg = pgeom_fv
+    for (yseats_deck, zf_deck) in fv_seat_rows
+        z_seat_top_fv = zf_deck + pg.cushion
+        z_shoulder_fv = zf_deck + pg.z_shoulder
+        z_head_c_fv   = zf_deck + pg.z_head_c
+        z_arm_fv      = zf_deck + pg.z_arm
+        sw2           = seat_width_fv * 0.5
+        arm_half      = seat_width_fv * 0.45
+        θh_fv         = LinRange(0, 2π, 24)
+
+        for ys in yseats_deck
+            # Seat cushion box
+            plot!(plot_obj,
+                  [ys - sw2, ys + sw2, ys + sw2, ys - sw2, ys - sw2],
+                  [zf_deck,  zf_deck,  z_seat_top_fv, z_seat_top_fv, zf_deck];
+                  linecolor = :black, linewidth = 0.9, label = "")
+            # Seat back (full seat height)
+            plot!(plot_obj,
+                  [ys - sw2, ys - sw2, ys + sw2, ys + sw2],
+                  [z_seat_top_fv, zf_deck + pg.h_seat, zf_deck + pg.h_seat, z_seat_top_fv];
+                  linecolor = :black, linewidth = 0.9, label = "")
+            show_people || continue   # seated people are optional (`show_people` keyword)
+            # Torso
+            plot!(plot_obj, [ys, ys], [z_seat_top_fv, z_shoulder_fv];
+                  linecolor = :steelblue, linewidth = 1.5, label = "")
+            # Head circle
+            plot!(plot_obj,
+                  ys .+ pg.head_r .* cos.(θh_fv),
+                  z_head_c_fv .+ pg.head_r .* sin.(θh_fv);
+                  linecolor = :steelblue, linewidth = 1.0, label = "")
+            # Arms
+            plot!(plot_obj, [ys - arm_half, ys + arm_half], [z_arm_fv, z_arm_fv];
+                  linecolor = :steelblue, linewidth = 1.0, label = "")
+        end
+    end
+
+    # ── dimension callouts ────────────────────────────────────────────────
+    if annotate_dims
+        # Full span arrow
+        z_ann = 1.1*maximum(zv_poly)
+        plot!(plot_obj, [-b/2, b/2], [z_ann, z_ann]; lw = 1.5, color = :black)
+        scatter!(plot_obj, [-b/2, b/2], [z_ann, z_ann];
+                 yerror = abs(z_ann)*0.07, markersize = 0)
+        annotate!(plot_obj, 0.0, z_ann * 1.28,
+                  text("Span = $(round(b, digits=1)) m",
+                       label_fs, :center, :top))
+
+        # Fuselage radius
+        #plot!(plot_obj, [0.0, Rfuse*cosd(45)], [0.0, Rfuse*cosd(45)];
+        #      lw = 1.2, color = :dimgray, linestyle = :dash)
+        #annotate!(plot_obj, Rfuse * 2, Rfuse * 1.5,
+        #          text("R=$(round(Rfuse, digits=2)) m",
+        #               label_fs - 2, :left, :center))
+    end
+
+    # ── labels / limits ───────────────────────────────────────────────────
+    xlabel!(plot_obj, "y [m]"; fontsize = label_fs)
+    ylabel!(plot_obj, "z [m]"; fontsize = label_fs)
+    title!(plot_obj, "Front View — $(ac.name)"; fontsize = label_fs)
+
+    y_lim = b/2 * 1.12
+    z_top = max(z_vtip * 1.15, Rfuse * 1.5)
+    z_bot_lim = min((Rfuse + dRfuse) * -1.9, (z_eng_ctr .- (D_eng/2))*1.1)
+    ylims!(plot_obj, z_bot_lim, z_top)
+    xlims!(plot_obj, -y_lim, y_lim)
+
+    return plot_obj
+end
 
 import .aerodynamics: plot_airf
 """
