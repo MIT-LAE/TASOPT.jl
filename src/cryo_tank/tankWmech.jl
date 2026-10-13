@@ -1,21 +1,29 @@
 """
 Geometric and weight outputs of the inner cryogenic tank sizing.
 """
-struct InnerTankGeometry
+struct InnerTankGeometry{T<:Real}
       """Total tank weight (structural + insulation) (N)"""
-      Wtank::Float64
+      Wtank::T
       """Total insulation weight (N)"""
-      Winsul_sum::Float64
+      Winsul_sum::T
       """Volume of fuel (m^3)"""
-      Vfuel::Float64
+      Vfuel::T
       """Insulated surface area of each ellipsoidal-cap interface, length N+1 (m^2)"""
-      Shead_insul::Vector{Float64}
+      Shead_insul::Vector{T}
       """Outer radius of the inner vessel (m)"""
-      Rtank_outer::Float64
+      Rtank_outer::T
       """Total longitudinal length of the tank (m)"""
-      l_tank::Float64
+      l_tank::T
       """Length of the cylindrical portion (m)"""
-      l_cyl::Float64
+      l_cyl::T
+end
+
+#Outer constructor that promotes mixed argument types (e.g., ForwardDiff duals and Float64)
+function InnerTankGeometry(Wtank, Winsul_sum, Vfuel, Shead_insul::AbstractVector, Rtank_outer, l_tank, l_cyl)
+      T = promote_type(typeof(Wtank), typeof(Winsul_sum), typeof(Vfuel), eltype(Shead_insul), 
+                       typeof(Rtank_outer), typeof(l_tank), typeof(l_cyl))
+      return InnerTankGeometry{T}(T(Wtank), T(Winsul_sum), T(Vfuel), convert(Vector{T}, Shead_insul), 
+                                  T(Rtank_outer), T(l_tank), T(l_cyl))
 end
 
 """
@@ -37,7 +45,7 @@ NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in
 
 See [here](@ref fueltanks).
 """
-function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vector{Float64})
+function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::AbstractVector{<:Real})
       #---------------------------------
       # Unpack parameters in fuse_tank
       #---------------------------------
@@ -125,8 +133,8 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       # Insulation weight
       N = length(t_cond) #Number of insulation layers
       #Initialize storage vectors
-      Winsul_sum = 0.0
-      Shead_insul = zeros(Float64, N + 1) #add one for first (tank wall) surface 
+      Winsul_sum = zero(eltype(t_cond)) #Element type follows t_cond so that ForwardDiff duals propagate
+      Shead_insul = zeros(eltype(t_cond), N + 1) #add one for first (tank wall) surface 
       L = Lhead + tskin #Length of ellipsoid semi-minor axis
 
       Ro = Ri = Rtank_outer # Start calculating insulation from the outer wall of the metal tank ∴Ri of insul = outer R of tank
@@ -310,7 +318,7 @@ This function calculates the weight of a single stiffener in an inner or outer v
     **Outputs:**
     - `Wstiff::Float64`: weight of a stiffener ring (N).
 """
-function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::Float64, s_a::Float64, 
+function stiffener_weight(tanktype::String, W::Real, Rtank::Real, perim::Real, s_a::Float64, 
       ρstiff::Float64, θ1::Float64, θ2::Float64 = 0.0, Nstiff::Float64 = 2.0, l_cyl::Float64 = 0.0, E::Float64 = 0.0)
     
       if tanktype == "inner" 
@@ -420,6 +428,7 @@ function stiffeners_bendingM_outer(θ1::Float64, θ2::Float64)
       return ϕmax, kmax
 end
 
+
 """
     optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank, l_cyl, θ1, θ2)
 This function optimizes the number of intermediate stiffener rings to minimize the weight of an outer vessel.
@@ -456,6 +465,81 @@ function optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertan
       (minf,xopt,ret) = NLopt.optimize(opt, initial_x)
       Ninterm = xopt[1]
       return Ninterm
+end
+
+
+
+
+"""
+    optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank, l_cyl; xtol = 0.05, halfwidth = 3.0, maxexpand = 6)
+This function optimizes the number of intermediate stiffener rings to minimize the weight of an outer vessel.
+It uses a bounded golden-section search in a bracket centered on the previous solution (`fuse_tank.Ninterm`),
+which is shifted outward if the minimum lands on a bracket edge. Typically requires ~10-15 evaluations of 
+`size_outer_tank` instead of up to 100 with Nelder-Mead.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `fuse::Fuselage`: fuselage object.
+    - `fuse_tank::fuselage_tank`: fuselage tank object.
+    - `Winnertank::Float64`: weight of inner vessel and contents (N).
+    - `l_cyl::Float64`: length of cylindrical portion of outer vessel (m).
+    - `xtol::Float64`: tolerance on `Ninterm` for the golden-section search.
+    - `halfwidth::Float64`: half-width of the initial bracket around the warm-start guess.
+    - `maxexpand::Int`: maximum number of times the bracket is shifted outward.
+
+    **Outputs:**
+    - `Ninterm::Float64`: optimum number of intermediate stiffener rings.
+"""
+function optimize_outer_tank_new(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64;
+      xtol::Float64 = 0.05, halfwidth::Float64 = 3.0, maxexpand::Int = 6)
+
+      ### This is not nessarily faster than previous iteration - both bug out at the same time within optimize iteration.
+      obj(N) = size_outer_tank(fuse, fuse_tank, Winnertank, l_cyl, N).Wtank #Minimize Wtank
+
+      #Global bounds on the number of intermediate stiffeners
+      Nmin, Nmax = 0.0, 50.0
+
+      #Warm-started bracket centered on the previous solution
+      x0 = clamp(fuse_tank.Ninterm, Nmin, Nmax)
+      lo = max(Nmin, x0 - halfwidth)
+      hi = min(Nmax, x0 + halfwidth)
+
+      invϕ = (sqrt(5.0) - 1) / 2 #1/golden ratio
+      xopt = x0
+      for _ in 0:maxexpand
+            #Golden-section search on [lo, hi]
+            a, b = lo, hi
+            c = b - invϕ * (b - a)
+            d = a + invϕ * (b - a)
+            fc, fd = obj(c), obj(d)
+            while (b - a) > xtol
+                  if fc < fd
+                        b, d, fd = d, c, fc
+                        c = b - invϕ * (b - a)
+                        fc = obj(c)
+                  else
+                        a, c, fc = c, d, fd
+                        d = a + invϕ * (b - a)
+                        fd = obj(d)
+                  end
+            end
+            xopt = (a + b) / 2
+
+            #If the minimum lies at a bracket edge that is not a global bound, the true optimum may be
+            #outside the bracket: shift/expand the bracket in that direction and search again
+            at_lo = (xopt - lo) < 2xtol && lo > Nmin
+            at_hi = (hi - xopt) < 2xtol && hi < Nmax
+            if at_lo
+                  hi = lo
+                  lo = max(Nmin, lo - 2halfwidth)
+            elseif at_hi
+                  lo = hi
+                  hi = min(Nmax, hi + 2halfwidth)
+            else
+                  break
+            end
+      end
+      return xopt
 end
 """
       find_K1_head(AR)
