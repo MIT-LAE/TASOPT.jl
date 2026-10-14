@@ -207,10 +207,10 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       Rfuse = fuse.layout.radius
       fuse_cs = fuse.layout.cross_section #Fuselage cross section
 
-      poiss = fuse_tank.inner_material.ν
-      Eouter = fuse_tank.inner_material.E
-      ρouter = fuse_tank.inner_material.ρ
-      UTSouter = fuse_tank.inner_material.UTS
+      poiss = fuse_tank.outer_material.ν
+      Eouter = fuse_tank.outer_material.E
+      ρouter = fuse_tank.outer_material.ρ
+      UTSouter = fuse_tank.outer_material.UTS
       ftankadd = fuse_tank.ftankadd
       ARtank = fuse_tank.ARtank
       θ_outer = fuse_tank.theta_outer
