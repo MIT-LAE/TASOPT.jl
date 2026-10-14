@@ -122,6 +122,15 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
 
     end
     
+    @testset "outer vessel uses outer_material instead of inner_material" begin
+        ft = deepcopy(fuse_tank)
+        ft.outer_material = StructuralAlloy("Ti-6242") # deliberately different from inner_material
+        out_ti = TASOPT.CryoTank.size_outer_tank(fuse, ft, 7e4, 10.0, 1.0)
+        ft.outer_material = StructuralAlloy("Al-2219-T87")
+        out_al = TASOPT.CryoTank.size_outer_tank(fuse, ft, 7e4, 10.0, 1.0)
+        @test out_ti.Wtank != out_al.Wtank # would be equal if inner_material were read
+    end
+
     @testset "Stringer sizing" begin
         θ = 85 * pi /180
         outputs_bendM = TASOPT.CryoTank.stiffeners_bendingM(θ)
@@ -171,5 +180,12 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         Rvac_check = 0.3565313051181731
 
         @test Rvac ≈ Rvac_check
+
+        # A composite inner wall takes its (higher) emissivity from the material
+        Rvac_cf = TASOPT.CryoTank.vacuum_resistance(fuse_tank.Tfuel, Taw, 90.0, 100.0;
+                        inner_material = TASOPT.materials.CompositeLaminate("CFRP-IM7-8552-PW-0090"))
+        @test Rvac_cf < Rvac
+        @test TASOPT.CryoTank.vacuum_resistance(fuse_tank.Tfuel, Taw, 90.0, 100.0;
+                        inner_material = fuse_tank.inner_material) ≈ Rvac_check
     end
 end
