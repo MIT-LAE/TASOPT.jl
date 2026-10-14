@@ -222,6 +222,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         p.xftank = xftank
         p.ifuel = ifuel
         p.fuse_cs = fuse.layout.cross_section
+        p.inner_material = fuse_tank.inner_material
 
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res
