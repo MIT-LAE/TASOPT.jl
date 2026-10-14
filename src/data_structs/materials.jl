@@ -9,9 +9,16 @@ import ..TASOPT: __TASOPTroot__
 
 export StructuralAlloy, Conductor, Insulator, ElectricSteel, 
 ThermalInsulator, thermal_conductivity
+export CompositeLaminate, TankWallMaterial, effective_allowable_stress
 export resistivity, resxden
 
 MaterialProperties = TOML.parsefile(joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml"))
+
+"""
+Abstract supertype of the materials a fuselage tank wall can be made of
+(`StructuralAlloy` and `CompositeLaminate`).
+"""
+abstract type TankWallMaterial end
 
 """
 $TYPEDEF
@@ -20,7 +27,7 @@ Generic structural alloy.
 
 $TYPEDFIELDS
 """
-@kwdef mutable struct StructuralAlloy
+@kwdef mutable struct StructuralAlloy <: TankWallMaterial
     """Name"""
     name::String = ""
     """Density [kg/m³]"""
@@ -82,6 +89,102 @@ function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor =
         end
     end
 
+end
+
+"""
+$TYPEDEF
+
+Cured carbon-fibre/epoxy laminate (smeared orthotropic) for a tank wall.
+Axis 1 / x is the tank axial direction, axis 2 / y is the hoop direction.
+
+$TYPEDFIELDS
+"""
+@kwdef mutable struct CompositeLaminate <: TankWallMaterial
+    """Name"""
+    name::String = ""
+    """CURED LAMINATE density, EPOXY MATRIX INCLUDED [kg/m³]. Never the dry-tow density."""
+    ρ::Float64
+    """Axial (x) Young's modulus [Pa]"""
+    E1::Float64
+    """Hoop (y) Young's modulus [Pa]"""
+    E2::Float64
+    """Equivalent-isotropic modulus for the buckling formula, √(E1 E2) [Pa]"""
+    E_eq::Float64
+    """Equivalent-isotropic Poisson's ratio for the buckling formula, √(ν12 ν21) [-]"""
+    ν_eq::Float64
+    """Tensile strain allowable [-]"""
+    ε_allow_t::Float64
+    """Cured ply thickness [m]"""
+    t_ply::Float64
+    """Human-readable stacking sequence"""
+    layup::String = ""
+    """Fibre volume fraction [-] (traceability only)"""
+    Vf::Float64 = 0.0
+    """Through-thickness thermal conductivity [W/(m K)] (0 if not given)"""
+    k_tt::Float64 = 0.0
+    """Surface emissivity [-] (bare CFRP)"""
+    ε_emis::Float64 = 0.88
+    """Areal mass of a low-emissivity facing (VDA/MLI), if any [kg/m²]"""
+    facing_areal_mass::Float64 = 0.0
+    """Multiplier on the strain allowable at LH2 temperature, ≤ 1 [-]"""
+    knockdown_cryo::Float64 = 1.0
+    """Multiplier on the strain allowable for process effects (OoA/AFP/ply drops), ≤ 1 [-]"""
+    knockdown_process::Float64 = 1.0
+end
+
+"""
+    CompositeLaminate(material::String; kwargs...)
+
+Outer constructor for `CompositeLaminate` types from a `[CFRP-*]` cured-laminate entry of the
+material database. Keyword arguments override any field of the struct (e.g. `knockdown_cryo`).
+The entry must provide `density`, `E1`, `E2`, `E_equivalent_buckling`, `nu_equivalent_buckling`,
+`strain_allowable_tension`, `ply_thickness` and `layup`; `fiber_volume_fraction`,
+`thermal_conductivity`, `emissivity` and `facing_areal_mass` are optional. `[CF-*]` reference
+entries and alloys are rejected. The recommended default is `CFRP-IM7-8552-PW-0090`.
+"""
+function CompositeLaminate(material::String; kwargs...)
+    haskey(MaterialProperties, material) ||
+        error("Cannot find $material in Material Properties database")
+    MatProp = MaterialProperties[material]
+    if !(haskey(MatProp, "E1") && haskey(MatProp, "layup"))
+        valid = join(sort([k for k in keys(MaterialProperties) if startswith(k, "CFRP-")]), ", ")
+        error("$material is not a cured composite laminate (no E1/layup); " *
+              "CompositeLaminate needs one of the [CFRP-*] entries: $valid")
+    end
+
+    local fields
+    try
+        fields = Dict{Symbol,Any}(
+            :name => material,
+            :ρ => MatProp["density"],
+            :E1 => MatProp["E1"],
+            :E2 => MatProp["E2"],
+            :E_eq => MatProp["E_equivalent_buckling"],
+            :ν_eq => MatProp["nu_equivalent_buckling"],
+            :ε_allow_t => MatProp["strain_allowable_tension"],
+            :t_ply => MatProp["ply_thickness"],
+            :layup => MatProp["layup"],
+            :Vf => get(MatProp, "fiber_volume_fraction", 0.0),
+            :k_tt => get(MatProp, "thermal_conductivity", 0.0),
+            :ε_emis => get(MatProp, "emissivity", 0.88),
+            :facing_areal_mass => get(MatProp, "facing_areal_mass", 0.0),
+        )
+    catch
+        error("Insufficient data in database for $material to build a CompositeLaminate")
+    end
+    for (key, value) in kwargs
+        fields[key] = value
+    end
+    return CompositeLaminate(; fields...)
+end
+
+"""
+    effective_allowable_stress(m::CompositeLaminate)
+
+Tensile stress allowable `E1 ε_allow_t knockdown_cryo knockdown_process` [Pa].
+"""
+function effective_allowable_stress(m::CompositeLaminate)
+    return m.E1 * m.ε_allow_t * m.knockdown_cryo * m.knockdown_process
 end
 
 """
@@ -358,6 +461,21 @@ function Base.show(io::IO, ::MIME"text/plain", alloy::StructuralAlloy)
     print("\n USS  = ",alloy.USS ," Pa")
     print("\n σmax = ",round(alloy.σmax,sigdigits=3)," Pa")
     print("\n τmax = ",round(alloy.τmax,sigdigits=3)," Pa")
+end
+
+function Base.show(io::IO, lam::CompositeLaminate)
+    print(io, "CompositeLaminate(", lam.name, ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", lam::CompositeLaminate)
+    print("CompositeLaminate(",lam.name,"):")
+    print("\n layup = ",lam.layup)
+    print("\n ρ     = ",lam.ρ," kg/m³ (cured laminate, resin-inclusive)")
+    print("\n E1    = ",lam.E1," Pa (axial)")
+    print("\n E2    = ",lam.E2," Pa (hoop)")
+    print("\n ε_allow_t = ",lam.ε_allow_t)
+    print("\n σ_allow = ",round(effective_allowable_stress(lam),sigdigits=3)," Pa (E1 ε_allow_t knockdowns)")
+    print("\n t_ply = ",lam.t_ply," m")
 end
 
 end
