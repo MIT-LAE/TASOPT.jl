@@ -344,8 +344,6 @@ end
       vacuum_resistance(Tcold, Thot, S_inner, S_outer; inner_material = nothing)
 
 This function calculates the thermal resistance of a vacuum layer using the methods of Barron (1985).
-The surface emissivity is taken from the inner tank material if it is a `CompositeLaminate`;
-otherwise it is 0.04 (highly polished aluminium).
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
