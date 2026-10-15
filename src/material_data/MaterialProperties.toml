@@ -145,7 +145,7 @@ density and 12% higher modulus, as well as other improved properties """
 
     source = "https://ntrs.nasa.gov/api/citations/20040086797/downloads/20040086797.pdf"
     density =  2600.0 #kg/m3
-    youngs_modulus = 78.4 #Pa
+    youngs_modulus = 78.4e9 #Pa
     shear_modulus = 28e9 #Pa
     poissons_ratio = 0.34
     YTS = 315e6 #Yield tensile strength
@@ -317,9 +317,11 @@ density and 12% higher modulus, as well as other improved properties """
     fiber_volume_fraction = 0.5557
     E1 = 76.0e9                        # Pa, axial
     E2 = 72.1e9                        # Pa, hoop
+    tensile_strength1 = 1090e6         # Pa, axial
+    tensile_strength2 = 945e6          # Pa, hoop
     E_equivalent_buckling = 74.0e9     # Pa, sqrt(E1*E2)
     nu_equivalent_buckling = 0.149     # assumed F0 nu12 = 0.0538, G12 = 4.2GPa (https://onlinelibrary.wiley.com/doi/10.1155/2021/5590448) and F45 nu12 = 0.74, G12 = 30GPa, E = 19.1GPa (Std. CF fabric - https://acpcomposites.com/wp-content/uploads/2023/12/Mechanical-Properties-of-Carbon-Fiber-Composite-Materials.pdf)
-    strain_allowable_tension = 5.0e-3   # -, design choice from NASA NTRS 20130013009 (strain allowable)
+    strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
     thermal_conductivity = 0.8          # W/(m K), through-thickness, PLACEHOLDER
     emissivity = 0.88                   # PLACEHOLDER
 
@@ -333,7 +335,7 @@ density and 12% higher modulus, as well as other improved properties """
     E2 = 72.1e9                        # Pa, hoop
     E_equivalent_buckling = 74.0e9     # Pa, sqrt(E1*E2)
     nu_equivalent_buckling = 0.149     # assumed F0 nu12 = 0.0538, G12 = 4.2GPa (https://onlinelibrary.wiley.com/doi/10.1155/2021/5590448) and F45 nu12 = 0.74, G12 = 30GPa, E = 19.1GPa (Std. CF fabric - https://acpcomposites.com/wp-content/uploads/2023/12/Mechanical-Properties-of-Carbon-Fiber-Composite-Materials.pdf)
-    strain_allowable_tension = 5.0e-3   # -, design choice from NASA NTRS 20130013009 (strain allowable)
+    strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
     thermal_conductivity = 0.8          # W/(m K), through-thickness, PLACEHOLDER
     emissivity = 0.05                   # PLACEHOLDER
     facing_areal_mass = 0.05            # kg/m2, VDA + tie coat, PLACEHOLDER
@@ -348,7 +350,7 @@ density and 12% higher modulus, as well as other improved properties """
     E2 = 56.8e9                        # Pa, hoop
     E_equivalent_buckling = 57.9e9     # Pa, sqrt(E1*E2)
     nu_equivalent_buckling = 0.334     # assumed F0 nu12 = 0.0538, G12 = 4.2GPa (https://onlinelibrary.wiley.com/doi/10.1155/2021/5590448) and F45 nu12 = 0.74, G12 = 30GPa, E = 19.1GPa (Std. CF fabric - https://acpcomposites.com/wp-content/uploads/2023/12/Mechanical-Properties-of-Carbon-Fiber-Composite-Materials.pdf)
-    strain_allowable_tension = 5.0e-3   # -, design choice from NASA NTRS 20130013009 (strain allowable)
+    strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
     thermal_conductivity = 0.8          # W/(m K), through-thickness, PLACEHOLDER
     emissivity = 0.88                   # PLACEHOLDER
 
@@ -363,4 +365,4 @@ density and 12% higher modulus, as well as other improved properties """
     E2 = 9.0e9                          # Pa, transverse
     E_equivalent_buckling = 38.2e9      # Pa, sqrt(E1*E2)
     nu_equivalent_buckling = 0.0754     # nu12 = 0.32 -- https://www.sciencedirect.com/science/article/pii/S0266353806000546 , nu21 = nu12*E2/E1
-    strain_allowable_tension = 5.0e-3   # -, design choice from NASA NTRS 20130013009 (strain allowable)
+    strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
