@@ -33,6 +33,11 @@ end
       **Outputs:**
       - `::InnerTankGeometry`: inner tank geometry and weights.
 
+The wall is selected from the type of `fuse_tank.inner_material`: a `StructuralAlloy` is sized with the
+Barron (1985) pressure-vessel formulas and its stiffener rings use the wall alloy, a `CompositeLaminate` is sized with
+the ply-based membrane model of `composite_inner_wall` and its rings use `fuse_tank.stiffener_material`. The
+permeation barrier and joint masses (`has_permeation_barrier`, `t_barrier`, `f_joint_add`) apply to composite walls only.
+
 NOTE: Al alloy 2219 has been recommended as tank material (from H2 tank paper in OneNote)
 
 See [here](@ref fueltanks).
@@ -49,14 +54,15 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       ρfuel = fuse_tank.rhofuel
       ρfgas = fuse_tank.rhofuelgas
       ftankadd = fuse_tank.ftankadd
-      Δp = fuse_tank.pvent
-      sigskin = fuse_tank.inner_material.UTS
       material_insul = fuse_tank.material_insul
-      rhoskin = fuse_tank.inner_material.ρ
+      wall_material = fuse_tank.inner_material
+      rhoskin = wall_material.ρ
+      ring_material = inner_ring_material(wall_material, fuse_tank)
+      s_a = ring_material.UTS / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
+      rhoring = ring_material.ρ
       clearance_fuse = fuse_tank.clearance_fuse
       AR = fuse_tank.ARtank
       ullage_frac = fuse_tank.ullage_frac
-      weld_eff = fuse_tank.ew
       θ = fuse_tank.theta_inner
 
       #---------------------------------
@@ -65,15 +71,12 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       thickness_insul = sum(t_cond) #Total insulation thickness
       Rtank_outer = Rfuse - thickness_insul - clearance_fuse #Inner vessel outer radius
 
-      #Cylindrical portion wall thickness
-      s_a = sigskin / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
-      tskin = Δp * (2 * Rtank_outer) / (2 * s_a * weld_eff + 0.8 * Δp) #(7.1) in Barron (1985)
+      wall = inner_wall(wall_material, fuse_tank, Rtank_outer) #Cylinder and head wall thicknesses
+      tskin = wall.t_cyl
+      t_head = wall.t_head
       Rtank = Rtank_outer - tskin #Inner vessel inner radius
 
-      #Ellipsoid wall thickness
       Lhead = Rtank / AR       # eg. for a 2:1 ellipsoid majorax/minorax = 2/1 ⟹ R/Lhead = 2/1 
-      K = (1/6) * (AR^2 + 2) # Barron pg 359
-      t_head = Δp* (2*Rtank_outer) * K/ (2 * s_a * weld_eff + 2 * Δp * (K - 0.1)) #(7.2) in Barron (1985)
 
       #---------------------------------
       # Vessel geometry
@@ -117,10 +120,19 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #stiffeners
       Nmain = 2 #Tanks typically have two main support rings
       Wmainstiff = stiffener_weight("inner", Winnertank / Nmain, Rtank, perim_tank, 
-                                s_a, rhoskin, θ) #Weight of one main stiffener
+                                s_a, rhoring, θ) #Weight of one main stiffener
 
       Wstiff = Nmain * Wmainstiff
-      Wtank = (Wcyl + 2*Whead + Wstiff) * (1 + ftankadd)
+
+      #Composite walls only: permeation barrier (mass only; its plies are part of the laminate thickness) and joints
+      Wextra = 0.0
+      if wall_material isa CompositeLaminate
+            W_barrier = fuse_tank.has_permeation_barrier ? rhoskin * fuse_tank.t_barrier * Sinternal * gee : 0.0
+            W_joint = fuse_tank.f_joint_add * (Wcyl + 2*Whead)
+            Wextra = W_barrier + W_joint
+      end
+
+      Wtank = (Wcyl + 2*Whead + Wstiff + Wextra) * (1 + ftankadd)
 
       # Insulation weight
       N = length(t_cond) #Number of insulation layers
@@ -222,8 +234,9 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       θ2 = θ_outer[2]
 
       Nmain = 2 #Tanks typically have two main support rings
+      # This is per ASME code in 1985. The required factor of safety may be substantially higher than aerospace requirements.
       pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
-      s_a = UTSouter / 4
+      s_a = UTSouter / 4 #Maximum allowable stress is approx. 1/4 Ultimate tensile strength (Barron 1985, p. 359)
 
       #Calculate outer vessel geometry
       Rtank_outer = Rfuse - fuse_tank.clearance_fuse
@@ -319,6 +332,7 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::F
 
       elseif tanktype == "outer"
             _, kmax = stiffeners_bendingM_outer(θ1, θ2) #Find k = 2πM/(WR)
+            # This is per ASME code in 1985. The required factor of safety may be substantially higher than aerospace requirements.
             pc = 4 * pref #Critical pressure is 4 times atmospheric pressure, Eq. (7.11) in Barron (1985)
             Do = 2 * Rtank #outer diameter
 
@@ -372,11 +386,9 @@ function stiffeners_bendingM(θ::Float64)
 
       for (i,ϕ) in enumerate(ϕlist)
             if 0 ≤ ϕ < θ
-                  k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
+                  k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2) # Barron 1985 eq. 7.4
             elseif θ ≤ ϕ ≤ π
-                  k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ  + cos(θ) + cos(ϕ)*(sin(θ)^2)
-                  #TODO this equation is Eq. (7.5) in Barron; however, this equation does not match the curves in Fig. 7.3
-                  #Suspect error in Barron.
+                  k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ*sin(θ)  + cos(θ) + cos(ϕ)*(sin(θ)^2) # Barron 1985 eq. 7.5
             end
       end
       kmax, imax = findmax(abs.(k))
@@ -489,4 +501,119 @@ function find_K1_head(AR)
             end
       end
       return K1
+end
+
+
+
+
+"""
+      inner_wall(mat::StructuralAlloy, fuse_tank::fuselage_tank, Rtank_outer::Float64)
+
+`inner_wall` sizes the cylinder and head wall thicknesses of a metal inner tank with the Barron (1985) pressure-vessel
+formulas, (7.1) and (7.2), at an allowable stress of 1/4 of the ultimate tensile strength and the weld efficiency `fuse_tank.ew`.
+For a `CompositeLaminate` wall it is `composite_inner_wall`.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `mat::StructuralAlloy`: inner tank wall alloy.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
+      - `Rtank_outer::Float64`: outer radius of the inner vessel (m).
+
+      **Outputs:**
+      - `t_cyl::Float64`: cylinder wall thickness (m).
+      - `t_head::Float64`: head wall thickness (m).
+"""
+function inner_wall(mat::StructuralAlloy, fuse_tank::fuselage_tank, Rtank_outer::Float64)
+      Δp = fuse_tank.pvent
+      AR = fuse_tank.ARtank
+      weld_eff = fuse_tank.ew
+      s_a = mat.UTS / 4 #Maximum allowable stress is approx. 1/4 Ultimate tensile strength (Barron 1985, p. 359)
+
+      #Cylindrical portion wall thickness
+      tskin = Δp * (2 * Rtank_outer) / (2 * s_a * weld_eff + 0.8 * Δp) #(7.1) in Barron (1985)
+
+      #Ellipsoid wall thickness
+      K = (1/6) * (AR^2 + 2) # Barron pg 359
+      t_head = Δp* Rtank_outer * K/ (s_a * weld_eff + Δp * (K - 0.1)) #(7.2) in Barron (1985)
+
+      return (t_cyl = tskin, t_head = t_head)
+end
+
+inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float64) =
+      composite_inner_wall(mat, fuse_tank, Rtank_outer)
+
+"""
+      inner_ring_material(wall_material, fuse_tank::fuselage_tank)
+
+`inner_ring_material` returns the material of the main stiffener rings of the inner tank: the wall alloy for a
+`StructuralAlloy` wall (`fuse_tank.stiffener_material` is ignored), `fuse_tank.stiffener_material` for a
+`CompositeLaminate` wall.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `wall_material::Union{StructuralAlloy, CompositeLaminate}`: inner tank wall material.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
+
+      **Outputs:**
+      - `::StructuralAlloy`: ring material.
+"""
+inner_ring_material(wall_material::StructuralAlloy, fuse_tank::fuselage_tank) = wall_material
+inner_ring_material(wall_material::CompositeLaminate, fuse_tank::fuselage_tank) = fuse_tank.stiffener_material
+
+"""
+      composite_inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float64)
+
+`composite_inner_wall` sizes the wall of a composite inner tank from membrane loads and a strain allowable,
+and rounds it up to a whole number of laminate stacks.
+
+The barrel carries the hoop load `N_θ = Δp R` on `E2` and the axial load `N_x = Δp R / 2` on `E1`; the thicker of
+the two governs. The domes carry the membrane load `Δp R K`, with `K = (AR² + 2)/6`, on the weaker of `E1` and `E2`,
+reduced by `fuse_tank.dome_layup_efficiency`. The strain allowable is `fuse_tank.design_strain_limit` if positive,
+otherwise `mat.ε_allow_t`, times the cryogenic and process knockdowns of the material. No weld efficiency is applied.
+
+The wall is built from whole stacks of `mat` (`mat.plies_per_stack` plies each): the number of stacks is
+`ceil(t_req / (n_stack * mat.t_ply) - 1e-9)`, with `n_stack = mat.plies_per_stack`, and a minimum of
+`max(1, fuse_tank.composite_min_stacks)` stacks.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `mat::CompositeLaminate`: inner tank wall laminate.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
+      - `Rtank_outer::Float64`: outer radius of the inner vessel (m).
+
+      **Outputs:**
+      - `t_cyl::Float64`: barrel wall thickness, `n_cyl * mat.t_ply` (m).
+      - `t_head::Float64`: dome wall thickness, `n_head * mat.t_ply` (m).
+      - `n_cyl::Int`, `n_head::Int`: number of plies of the barrel and dome (multiples of `mat.plies_per_stack`).
+      - `mode::Symbol`: `:hoop` or `:axial`, the barrel load direction that governs before rounding.
+      - `floor_governs::Bool`: true if the strength requirement of the barrel or dome is no more than the minimum (`max(1, fuse_tank.composite_min_stacks)` stacks), so the minimum sets its ply count.
+"""
+function composite_inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float64)
+      Δp = fuse_tank.pvent
+      AR = fuse_tank.ARtank
+      η = fuse_tank.eta_composite
+      epsa = (fuse_tank.design_strain_limit > 0 ? fuse_tank.design_strain_limit : mat.ε_allow_t) *
+             mat.knockdown_cryo * mat.knockdown_process #Design strain allowable
+
+      #Barrel
+      t_hoop  = Δp * 2 * Rtank_outer / (2*mat.E2 * epsa * η + 0.8*Δp) # Barron 1985 eq. 7.1
+      t_axial = Δp * Rtank_outer / 2 / (mat.E1 * epsa * η) # axial stress from internal pressure only
+      mode = t_hoop >= t_axial ? :hoop : :axial
+      t_cyl_req = max(t_hoop, t_axial)
+
+      #Domes
+      K = (AR^2 + 2) / 6 # Barron 1985 eq. 7.3
+      t_head_req = Δp * Rtank_outer * K / (min(mat.E1, mat.E2) * epsa * η * fuse_tank.dome_layup_efficiency + Δp * (K - 0.1)) # Barron 1985 eq. 7.2
+
+      #Round up to whole stacks, with a minimum of `composite_min_stacks` (at least one) stacks
+      n_stack = mat.plies_per_stack
+      stacks_floor = max(1, fuse_tank.composite_min_stacks)
+      stacks_cyl_strength  = ceil(Int, t_cyl_req  / (n_stack * mat.t_ply) - 1e-9)
+      stacks_head_strength = ceil(Int, t_head_req / (n_stack * mat.t_ply) - 1e-9)
+      n_cyl  = n_stack * max(stacks_cyl_strength,  stacks_floor)
+      n_head = n_stack * max(stacks_head_strength, stacks_floor)
+      floor_governs = stacks_floor >= stacks_cyl_strength || stacks_floor >= stacks_head_strength #strength needs no more than the minimum
+
+      return (t_cyl = n_cyl * mat.t_ply, t_head = n_head * mat.t_ply, n_cyl = n_cyl, n_head = n_head,
+              mode = mode, floor_governs = floor_governs)
 end
