@@ -48,6 +48,13 @@
         @test default.E1 ≈ 76.0e9
         @test !isempty(sprint(show, default))
 
+        # plies per stack is parsed once from the layup string (first bracketed group, also with trailing text)
+        @test default.plies_per_stack == 5
+        @test CL("CFRP-IM7-8552-PW-0090-VDA").plies_per_stack == 5
+        @test CL("CFRP-IM7-8552-PW-QI").plies_per_stack == 4
+        @test CL("CFRP-IM7-8552-UD-RING").plies_per_stack == 1
+        @test CL("CFRP-IM7-8552-PW-0090"; plies_per_stack = 3).plies_per_stack == 3
+
         # Alloys, dry fibre, resin and unknown names are not laminates
         @test_throws ErrorException CL("Al-2219-T87")
         @test_throws ErrorException CL("CF-IM7-fiber")
