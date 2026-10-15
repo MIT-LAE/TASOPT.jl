@@ -32,10 +32,10 @@ $TYPEDFIELDS
     """Vector with surface areas of insulation tank heads (m^2)"""
     Shead_insul::Vector{Float64} = Float64[]
 
-    """Inner vessel material"""
-    inner_material::StructuralAlloy = StructuralAlloy("Al-2219-T87")
-    """Outer vessel material"""
-    outer_material::StructuralAlloy = StructuralAlloy("Al-2219-T87")
+    """Inner vessel material (metal alloy or composite laminate)"""
+    inner_material::Union{StructuralAlloy, CompositeLaminate} = StructuralAlloy("Al-2219-T87")
+    """Outer vessel material (metal alloy or composite laminate)"""
+    outer_material::Union{StructuralAlloy, CompositeLaminate} = StructuralAlloy("Al-2219-T87")
     """Tank head aspect ratio"""
     ARtank::Float64 = 0.0
     """Angular location of inner vessel stiffeners"""
@@ -71,7 +71,7 @@ $TYPEDFIELDS
 
     """Vessel additional mass fraction"""
     ftankadd::Float64 = 0.0
-    """Vessel weld efficiency"""
+    """Vessel weld efficiency (metal walls only; not read for composite walls)"""
     ew::Float64 = 0.0
     """Minimum ullage fraction"""
     ullage_frac::Float64 = 0.0
@@ -79,4 +79,25 @@ $TYPEDFIELDS
     qfac::Float64 = 0.0
     """Pressure rise factor"""
     pfac::Float64 = 0.0
+
+    """Composite wall architecture: "monocoque", "sandwich" or "fluted_core" (composite walls only)"""
+    wall_architecture::String = "monocoque"
+    """Flag for a permeation barrier on the composite wall"""
+    has_permeation_barrier::Bool = false
+    """Permeation barrier thickness (m)"""
+    t_barrier::Float64 = 0.0
+    """Extra mass fraction for composite joints and metallic interface rings"""
+    f_joint_add::Float64 = 0.0
+    """Design strain limit overriding the material tensile strain allowable (-); 0 uses the material value"""
+    design_strain_limit::Float64 = 0.0
+    """Composite dome layup efficiency, drape/gore knockdown on dome thickness (-); 1 means no penalty"""
+    dome_layup_efficiency::Float64 = 1.0
+    """Shell buckling knockdown factor for the composite outer vessel (-); 1 means no knockdown"""
+    buckling_knockdown::Float64 = 1.0
+    """Minimum number of laminate stacks (see CompositeLaminate.plies_per_stack) in a composite wall; 1 = a single stack"""
+    composite_min_stacks::Int64 = 1
+    """Stiffener ring material"""
+    stiffener_material::StructuralAlloy = StructuralAlloy("Al-2219-T87")
+    """Process knockdown on the composite acreage allowable (-); not for joints"""
+    eta_composite::Float64 = 1.0
 end
