@@ -118,6 +118,8 @@ $TYPEDFIELDS
     t_ply::Float64
     """Human-readable stacking sequence"""
     layup::String = ""
+    """Number of plies in one stack of the layup (wall thickness increments in whole stacks)"""
+    plies_per_stack::Int = 1
     """Fibre volume fraction [-] (traceability only)"""
     Vf::Float64 = 0.0
     """Through-thickness thermal conductivity [W/(m K)] (0 if not given)"""
@@ -132,11 +134,20 @@ $TYPEDFIELDS
     knockdown_process::Float64 = 1.0
 end
 
+# Number of plies in one stack: the "/"-separated plies of the first bracketed group of the layup
+# string ("[F0/F45/F45/F0] + VDA facing" gives 4); 1 if there is no bracketed group ("[0] UD tape" gives 1 as well).
+function count_plies_per_stack(layup::AbstractString)
+    m = match(r"\[([^\]]*)\]", layup)
+    m === nothing && return 1
+    return count(!isempty, strip.(split(m.captures[1], '/')))
+end
+
 """
     CompositeLaminate(material::String; kwargs...)
 
 Outer constructor for `CompositeLaminate` types from a `[CFRP-*]` cured-laminate entry of the
 material database. Keyword arguments override any field of the struct (e.g. `knockdown_cryo`).
+`plies_per_stack` is computed once here from the layup string.
 The entry must provide `density`, `E1`, `E2`, `E_equivalent_buckling`, `nu_equivalent_buckling`,
 `strain_allowable_tension`, `ply_thickness` and `layup`; `fiber_volume_fraction`,
 `thermal_conductivity`, `emissivity` and `facing_areal_mass` are optional. `[CF-*]` reference
@@ -164,6 +175,7 @@ function CompositeLaminate(material::String; kwargs...)
             :ε_allow_t => MatProp["strain_allowable_tension"],
             :t_ply => MatProp["ply_thickness"],
             :layup => MatProp["layup"],
+            :plies_per_stack => count_plies_per_stack(MatProp["layup"]),
             :Vf => get(MatProp, "fiber_volume_fraction", 0.0),
             :k_tt => get(MatProp, "thermal_conductivity", 0.0),
             :ε_emis => get(MatProp, "emissivity", 0.88),
@@ -469,7 +481,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", lam::CompositeLaminate)
     print("CompositeLaminate(",lam.name,"):")
-    print("\n layup = ",lam.layup)
+    print("\n layup = ",lam.layup," (",lam.plies_per_stack," plies per stack)")
     print("\n ρ     = ",lam.ρ," kg/m³ (cured laminate, resin-inclusive)")
     print("\n E1    = ",lam.E1," Pa (axial)")
     print("\n E2    = ",lam.E2," Pa (hoop)")
