@@ -57,7 +57,7 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       material_insul = fuse_tank.material_insul
       wall_material = fuse_tank.inner_material
       rhoskin = wall_material.ρ
-      ring_material = inner_ring_material(wall_material, fuse_tank)
+      ring_material = stiffener_ring_material(wall_material, fuse_tank)
       s_a = ring_material.UTS / 4 #Maximum allowable stress is 1/4 Ultimate tensile strength (Barron 1985, p. 359)
       rhoring = ring_material.ρ
       clearance_fuse = fuse_tank.clearance_fuse
@@ -195,11 +195,14 @@ struct OuterTankGeometry
       t_head::Float64
       """Total length of the outer vessel (m)"""
       l_outer::Float64
+      """Weight of the low-emissivity facing on the vacuum-facing area, 0 for an alloy wall (N)"""
+      Wfacing::Float64
 end
 
 """
     size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::Float64, l_cyl::Float64, Ninterm::Float64)
 This function sizes the outer vessel and calculates the weights of its components.
+For a `CompositeLaminate` outer wall the buckling uses `E_eq * buckling_knockdown` and `ν_eq`, the thicknesses are rounded up to whole stacks, the rings use `stiffener_material`, and the facing mass is added.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -219,10 +222,6 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       Rfuse = fuse.layout.radius
       fuse_cs = fuse.layout.cross_section #Fuselage cross section
 
-      poiss = fuse_tank.outer_material.ν
-      Eouter = fuse_tank.outer_material.E
-      ρouter = fuse_tank.outer_material.ρ
-      UTSouter = fuse_tank.outer_material.UTS
       ftankadd = fuse_tank.ftankadd
       ARtank = fuse_tank.ARtank
       θ_outer = fuse_tank.theta_outer
@@ -236,7 +235,8 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       Nmain = 2 #Tanks typically have two main support rings
       # This is per ASME code in 1985. The required factor of safety may be substantially higher than aerospace requirements.
       pc = 4 * pref #4*p_atm; Collapsing pressure, Eq. (7.11) in Barron (1985)
-      s_a = UTSouter / 4 #Maximum allowable stress is approx. 1/4 Ultimate tensile strength (Barron 1985, p. 359)
+      ring_mat = stiffener_ring_material(fuse_tank.outer_material, fuse_tank) #Material of the stiffener rings
+      s_a = ring_mat.UTS / 4 #Maximum allowable stress is approx. 1/4 Ultimate tensile strength (Barron 1985, p. 359)
 
       #Calculate outer vessel geometry
       Rtank_outer = Rfuse - fuse_tank.clearance_fuse
@@ -250,14 +250,17 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       # Wall thicknesses
       #---------------------------------
 
+      E_wall, ν_wall = outer_buckling_properties(fuse_tank.outer_material, fuse_tank) #Modulus and Poisson ratio for buckling
+
       #Find cylinder wall thickness. This applies to a short cylinder.
-      pressure_res(t_D) = 2.42*Eouter*(t_D)^(5/2) / ( (1 - poiss^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
+      pressure_res(t_D) = 2.42*E_wall*(t_D)^(5/2) / ( (1 - ν_wall^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
       t_Do = find_zero(pressure_res, 1e-3) #Find root with Roots.jl
-      t_cyl = t_Do * Do
+      t_cyl = round_outer_wall(fuse_tank.outer_material, fuse_tank, t_Do * Do)
 
       #Find head wall thickness
       K1 = find_K1_head(ARtank) #Find coefficient K1
-      t_head = K1 * Do * sqrt(pc * sqrt(3*(1 - poiss^2))/ (0.5*Eouter))
+      t_head = round_outer_wall(fuse_tank.outer_material, fuse_tank,
+                                K1 * Do * sqrt(pc * sqrt(3*(1 - ν_wall^2))/ (0.5*E_wall)))
 
       #---------------------------------
       # Vessel geometry
@@ -273,8 +276,8 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       Vcyl  = Scyl*t_cyl
       Vhead = Shead*t_head
 
-      Wcyl  = Vcyl*ρouter*gee
-      Whead =  Vhead*ρouter*gee
+      Wcyl  = Vcyl*fuse_tank.outer_material.ρ*gee
+      Whead =  Vhead*fuse_tank.outer_material.ρ*gee
 
       Wtank_no_stiff = Wcyl + 2 * Whead
 
@@ -284,22 +287,71 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       tanktype = "outer"
 
       Wmainstiff = stiffener_weight(tanktype, Winnertank / Nmain, Rtank_outer, perim_vessel, #Weight of one main stiffener, each one 
-                                    s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter)  #carries half the inner vessel load
+                                    s_a, ring_mat.ρ, θ1, θ2, Nstiff, l_cyl, ring_mat.E)  #carries half the inner vessel load
                                                                               
       Wintermstiff = stiffener_weight(tanktype, 0.0, Rtank_outer, perim_vessel, 
-                                    s_a, ρouter, θ1, θ2, Nstiff, l_cyl, Eouter) #Weight of one intermediate stiffener, which carries no load
+                                    s_a, ring_mat.ρ, θ1, θ2, Nstiff, l_cyl, ring_mat.E) #Weight of one intermediate stiffener, which carries no load
 
       #---------------------------------
       # Weight estimation
       #---------------------------------
       Wstiff = Nmain * Wmainstiff + Ninterm * Wintermstiff #Total stiffener weight
 
-      Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd) #Find total tank weight, including additional mass factor
+      Wfacing = outer_facing_weight(fuse_tank.outer_material, Souter) #Low-emissivity facing on the vacuum-facing area
+
+      Wtank = (Wtank_no_stiff + Wstiff) * (1 + ftankadd) + Wfacing #Find total tank weight, including additional mass factor and facing
 
       l_outer = l_cyl + Do / ARtank + 2*t_head #Total length of outer vessel
 
-      return OuterTankGeometry(Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer)
+      return OuterTankGeometry(Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer, Wfacing)
 end
+
+"""
+      outer_buckling_properties(mat, fuse_tank::fuselage_tank)
+
+Returns the Young's modulus and Poisson ratio used in the outer-vessel buckling formulas. For a `StructuralAlloy` these are
+its own values. For a `CompositeLaminate` they are the equivalent-isotropic `E_eq * fuse_tank.buckling_knockdown` and `ν_eq`.
+"""
+outer_buckling_properties(mat::StructuralAlloy, fuse_tank::fuselage_tank) = (mat.E, mat.ν)
+outer_buckling_properties(mat::CompositeLaminate, fuse_tank::fuselage_tank) = (mat.E_eq * fuse_tank.buckling_knockdown, mat.ν_eq)
+
+"""
+      round_outer_wall(mat, fuse_tank::fuselage_tank, t_req::Float64)
+
+Rounds a required outer-wall thickness to the wall build-up. A `StructuralAlloy` is returned unchanged. A `CompositeLaminate`
+is rounded up to whole stacks of `mat.plies_per_stack` plies, with a minimum of `max(1, fuse_tank.composite_min_stacks)` stacks.
+"""
+round_outer_wall(mat::StructuralAlloy, fuse_tank::fuselage_tank, t_req::Float64) = t_req
+
+function round_outer_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, t_req::Float64)
+      n_stack = mat.plies_per_stack
+      stacks_floor = max(1, fuse_tank.composite_min_stacks)
+      n_stacks = max(stacks_floor, ceil(Int, t_req / (n_stack * mat.t_ply) - 1e-9))
+      return n_stacks * n_stack * mat.t_ply
+end
+
+"""
+      outer_facing_weight(mat, Souter::Float64)
+
+Weight (N) of the low-emissivity facing on the vacuum-facing outer-vessel area: zero for a `StructuralAlloy`, and
+`facing_areal_mass * Souter * gee` for a `CompositeLaminate`.
+"""
+outer_facing_weight(mat::StructuralAlloy, Souter::Float64) = 0.0
+outer_facing_weight(mat::CompositeLaminate, Souter::Float64) = mat.facing_areal_mass * Souter * gee
+
+"""
+      check_outer_wall_emissivity(mat)
+
+Warns if a bare composite outer wall (emissivity above 0.1) faces a vacuum gap, since it then radiates far more heat than
+a low-emissivity facing. Use a `-VDA` laminate. Does nothing for a `StructuralAlloy`.
+"""
+function check_outer_wall_emissivity(mat::CompositeLaminate)
+      if mat.ε_emis > 0.1
+            @warn "Outer composite wall '$(mat.name)' has emissivity $(mat.ε_emis) and faces a vacuum gap: a bare CFRP wall radiates far more heat than a low-emissivity facing. Use a '-VDA' laminate."
+      end
+      return nothing
+end
+check_outer_wall_emissivity(mat::StructuralAlloy) = nothing
 
 """
       stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::Float64, s_a::Float64, 
@@ -543,9 +595,9 @@ inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float6
       composite_inner_wall(mat, fuse_tank, Rtank_outer)
 
 """
-      inner_ring_material(wall_material, fuse_tank::fuselage_tank)
+      stiffener_ring_material(wall_material, fuse_tank::fuselage_tank)
 
-`inner_ring_material` returns the material of the main stiffener rings of the inner tank: the wall alloy for a
+`stiffener_ring_material` returns the material of the main stiffener rings of a tank: the wall alloy for a
 `StructuralAlloy` wall (`fuse_tank.stiffener_material` is ignored), `fuse_tank.stiffener_material` for a
 `CompositeLaminate` wall.
 
@@ -557,8 +609,8 @@ inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float6
       **Outputs:**
       - `::StructuralAlloy`: ring material.
 """
-inner_ring_material(wall_material::StructuralAlloy, fuse_tank::fuselage_tank) = wall_material
-inner_ring_material(wall_material::CompositeLaminate, fuse_tank::fuselage_tank) = fuse_tank.stiffener_material
+stiffener_ring_material(wall_material::StructuralAlloy, fuse_tank::fuselage_tank) = wall_material
+stiffener_ring_material(wall_material::CompositeLaminate, fuse_tank::fuselage_tank) = fuse_tank.stiffener_material
 
 """
       composite_inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float64)
