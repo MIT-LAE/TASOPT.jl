@@ -36,6 +36,10 @@ This structure stores the material and thermal properties of a cryogenic tank in
       inner_material::Union{Nothing, TankWallMaterial} = nothing
       """Outer tank wall material; sets the outer vacuum-gap emissivity (`nothing` ⇒ aluminium, ε = 0.04)"""
       outer_material::Union{Nothing, TankWallMaterial} = nothing
+      """Inner vessel wall thickness from the previous sizing pass (m); 0.0 = not yet known"""
+      t_wall_inner::Float64 = 0.0
+      """Outer vessel wall thickness from the previous sizing pass (m); 0.0 = not yet known"""
+      t_wall_outer::Float64 = 0.0
 end
 
 """
@@ -74,6 +78,8 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL:
       p.r_tank = fuse_tank.Rinnertank
       p.inner_material = fuse_tank.inner_material
       p.outer_material = fuse_tank.outer_material
+      p.t_wall_inner = fuse_tank.t_wall_inner
+      p.t_wall_outer = fuse_tank.t_wall_outer
       p.Shead = fuse_tank.Shead_insul #Surface area of elliptical caps at different cross-sections (m^2)
       p.t_cond = t_cond
       p.material = fuse_tank.material_insul
@@ -193,7 +199,11 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
       R_ins      = zeros(Float64, N)  #size of resistance vector (Based on number of layers)
       R_ins_ends = zeros(Float64, N)
       R_ins_cyl  = zeros(Float64, N)
-  
+      R_wall_out = zeros(Float64, N) #Outer vessel wall resistance (vacuum layers only)
+
+      #Inner vessel wall resistance between the liquid-side wall node and the insulation
+      R_wall_in = wall_resistance(p.inner_material, wall_thickness_or_default(p.t_wall_inner), S_int)
+
       #Find resistance of each insulation layer
       T_prev = T_w
       for i in 1:N
@@ -201,6 +211,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
                   S_inner = perim_R * l_cyl * r_inner + 2*Shead[i]
                   S_outer = perim_R * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
                   R_ins[i] = vacuum_resistance(T_prev, T_ins[i], S_inner, S_outer; inner_material = p.inner_material, outer_material = p.outer_material)
+                  R_wall_out[i] = wall_resistance(p.outer_material, wall_thickness_or_default(p.t_wall_outer), S_outer)
 
             else #If insulation layer is not a vacuum
                   k = thermal_conductivity(material[i], (T_ins[i] + T_prev)/2)
@@ -218,15 +229,17 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
       end
   
       R_ins_tot = sum(R_ins)  #Total thermal resistance of insulation
-      Req = R_ins_tot + R_liq + Rair # Total equivalent resistance of thermal circuit
+      Req = R_ins_tot + sum(R_wall_out) + R_wall_in + R_liq + Rair # Total equivalent resistance of thermal circuit
 
       #Assemble array with residuals
       F[1] = Q - ΔT / Req #Heat transfer rate residual
   
       T_calc = Tfuel + R_liq * Q #Wall temperature residual
       F[2] = T_w - T_calc
+      T_calc = T_calc + R_wall_in * Q
       for i = 1:length(T_ins)
-          T_calc = T_calc + R_ins[i] * Q 
+          # Vacuum layers add the outer-vessel wall, so T_ins[i] is its outer surface temperature
+          T_calc = T_calc + (R_ins[i] + R_wall_out[i]) * Q 
           F[i + 2] = T_ins[i] - T_calc #Residual at the edge of each layer
       end
 
@@ -351,6 +364,35 @@ otherwise 0.04 (highly polished aluminium; also used for `nothing`).
 """
 wall_emissivity(material::Union{Nothing, TankWallMaterial}) =
       material isa CompositeLaminate ? material.ε_emis : 0.04
+
+"""
+      wall_conductivity(material)
+
+Thermal conductivity (W/(m K)) of a tank wall: `material.k` for a `StructuralAlloy`, `material.k_tt`
+for a `CompositeLaminate`, and 121.0 for `nothing`.
+"""
+function wall_conductivity(material::Union{Nothing, TankWallMaterial})
+      k = material isa StructuralAlloy ? material.k :
+          material isa CompositeLaminate ? material.k_tt : nothing
+      # ASSUMPTION - Al-2219 value 121 W/(m K), applies to all structural materials when no value is available
+      return (k === nothing || k <= 0) ? 121.0 : k
+end
+
+"""
+      wall_resistance(material, t, S)
+
+Conductive resistance (K/W) of a wall of thickness `t` (m) and area `S` (m^2): `t / (k * S)`.
+"""
+wall_resistance(material::Union{Nothing, TankWallMaterial}, t::Float64, S::Float64) =
+      t / (wall_conductivity(material) * S)
+
+"""
+      wall_thickness_or_default(t)
+
+Returns `t` (m) if positive, otherwise a nominal 4.0 mm aluminium wall.
+"""
+# ASSUMPTION - nominal Al wall when the thickness is not yet known
+wall_thickness_or_default(t::Float64) = t > 0 ? t : 4.0e-3
 
 """
       vacuum_resistance(Tcold, Thot, S_inner, S_outer; inner_material = nothing, outer_material = nothing)
