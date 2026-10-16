@@ -107,6 +107,8 @@ function tanksize!(ac, imission::Int64 = 1)
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 Winner_tot = Winnertank + Wfuelintank #weight of inner vessel + fuel
 
+                check_outer_wall_emissivity(fuse_tank.outer_material) #warn if a bare composite outer wall faces the vacuum
+
                 Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next _size_aircraft! iteration
