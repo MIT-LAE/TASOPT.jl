@@ -336,3 +336,210 @@ end
         @test W_ti != W_al
     end
 end
+
+@testset "Composite outer tank (T5)" begin
+    CompositeLaminate = TASOPT.materials.CompositeLaminate
+    cfrp0090 = CompositeLaminate("CFRP-IM7-8552-PW-0090")
+    cfrpVDA  = CompositeLaminate("CFRP-IM7-8552-PW-0090-VDA")
+    cfrpQI   = CompositeLaminate("CFRP-IM7-8552-PW-QI")
+    Winner, l_cyl, Ninterm = 7e4, 10.0, 1.0 # inner-vessel load (N), cylinder length (m), intermediate rings
+    outer_tank(mat; kwargs...) = begin
+        ft = deepcopy(fuse_tank)
+        ft.outer_material = mat
+        for (name, value) in kwargs
+            setfield!(ft, name, value)
+        end
+        ft
+    end
+    size_outer(ft; l = l_cyl, N = Ninterm) = TASOPT.CryoTank.size_outer_tank(fuse, ft, Winner, l, N)
+
+    # Independent evaluation of the continuous required thicknesses (Barron 7.11 and the head formula)
+    # for a wall with modulus E and Poisson ratio ν
+    function required_thickness(ft, E, ν; l = l_cyl, N = Ninterm)
+        Do = 2 * (fuse.layout.radius - ft.clearance_fuse)
+        L_Do = l / (2 + N - 1) / Do
+        pc = 4 * TASOPT.pref
+        residual(t_D) = 2.42 * E * t_D^(5/2) / ((1 - ν^2)^(3/4) * (L_Do - 0.45 * sqrt(t_D))) - pc
+        t_cyl = TASOPT.CryoTank.find_zero(residual, 1e-3) * Do
+        K1 = TASOPT.CryoTank.find_K1_head(ft.ARtank)
+        t_head = K1 * Do * sqrt(pc * sqrt(3 * (1 - ν^2)) / (0.5 * E))
+        return t_cyl, t_head
+    end
+    t_stack(mat) = mat.plies_per_stack * mat.t_ply
+    composite_required(ft; kwargs...) = required_thickness(ft,
+        ft.outer_material.E_eq * ft.buckling_knockdown, ft.outer_material.ν_eq; kwargs...)
+
+    @testset "alloy outer wall is unchanged" begin
+        al = fuse_tank.outer_material
+        out = size_outer(fuse_tank)
+        # the independent requirement helper reproduces the existing Al-2219 outer wall
+        t_cyl_req, t_head_req = required_thickness(fuse_tank, al.E, al.ν)
+        @test out.t_cyl  ≈ t_cyl_req  rtol = 1e-6
+        @test out.t_head ≈ t_head_req rtol = 1e-6
+        # no facing on an alloy wall; the knockdown acts on composite walls only
+        @test out.Wfacing == 0.0
+        out_kd = size_outer(outer_tank(al; buckling_knockdown = 0.65))
+        @test out_kd.Wtank == out.Wtank
+        @test out_kd.t_cyl == out.t_cyl
+        @test out_kd.t_head == out.t_head
+        @test out_kd.Wfacing == 0.0
+    end
+
+    @testset "composite wall is built from whole stacks" begin
+        ft = outer_tank(cfrp0090)
+        out = size_outer(ft)
+        t_cyl_req, t_head_req = composite_required(ft)
+        ts = t_stack(cfrp0090)
+        for (t, t_req) in ((out.t_cyl, t_cyl_req), (out.t_head, t_head_req))
+            n_stacks = round(Int, t / ts)
+            @test t ≈ n_stacks * ts rtol = 1e-12  # exact integer multiple of plies_per_stack * t_ply
+            @test n_stacks >= ft.composite_min_stacks
+            @test t >= t_req * (1 - 1e-9)
+            # rounded up by less than one stack, unless the minimum-stack floor governs
+            @test (t - t_req < ts) || (n_stacks == ft.composite_min_stacks)
+        end
+        # mass uses the cured laminate density
+        @test out.Wcyl  ≈ out.Scyl  * out.t_cyl  * cfrp0090.ρ * TASOPT.gee rtol = 1e-9
+        @test out.Whead ≈ out.Shead * out.t_head * cfrp0090.ρ * TASOPT.gee rtol = 1e-9
+    end
+
+    @testset "buckling knockdown and minimum stacks" begin
+        out1  = size_outer(outer_tank(cfrp0090))
+        out65 = size_outer(outer_tank(cfrp0090; buckling_knockdown = 0.65)) # ASSUMPTION - 0.65 is an illustrative knockdown
+        @test out65.t_cyl  >= out1.t_cyl
+        @test out65.t_head >= out1.t_head
+        @test out65.Wtank  >= out1.Wtank
+        ft65 = outer_tank(cfrp0090; buckling_knockdown = 0.65)
+        t_cyl_req, t_head_req = composite_required(ft65)
+        @test out65.t_cyl >= t_cyl_req * (1 - 1e-9)
+        @test out65.t_head >= t_head_req * (1 - 1e-9)
+
+        # a large minimum number of stacks forces the floor on both cylinder and head
+        # ASSUMPTION - 40 stacks (about 40 mm) exceed the buckling requirement (of order 10 mm, similar to the Al-2219 jacket)
+        out40 = size_outer(outer_tank(cfrp0090; composite_min_stacks = 40))
+        @test out40.t_cyl  ≈ 40 * t_stack(cfrp0090) rtol = 1e-12
+        @test out40.t_head ≈ 40 * t_stack(cfrp0090) rtol = 1e-12
+        @test out40.Wtank > out1.Wtank
+    end
+
+    @testset "quasi-isotropic outer wall and comparison with aluminium" begin
+        ftqi = outer_tank(cfrpQI)
+        outqi = size_outer(ftqi)
+        tsqi = t_stack(cfrpQI)
+        @test outqi.t_cyl  ≈ round(Int, outqi.t_cyl  / tsqi) * tsqi rtol = 1e-12
+        @test outqi.t_head ≈ round(Int, outqi.t_head / tsqi) * tsqi rtol = 1e-12
+        t_cyl_req, t_head_req = composite_required(ftqi)
+        @test outqi.t_cyl >= t_cyl_req * (1 - 1e-9)
+        @test outqi.t_head >= t_head_req * (1 - 1e-9)
+
+        # ASSUMPTION - with knockdown 1.0 the 0/90 composite jacket is lighter than the Al-2219 jacket
+        @test size_outer(outer_tank(cfrp0090)).Wtank < size_outer(fuse_tank).Wtank
+    end
+
+    @testset "ring material of a composite outer wall" begin
+        out_al = size_outer(outer_tank(cfrp0090))
+        ft_ti = outer_tank(cfrp0090; stiffener_material = StructuralAlloy("Ti-6242"))
+        out_ti = size_outer(ft_ti)
+        @test out_ti.Wstiff != out_al.Wstiff
+        @test out_ti.t_cyl == out_al.t_cyl # the ring alloy does not change the wall
+        @test out_ti.t_head == out_al.t_head
+        # rings use the stiffener material, not the laminate: the default (Al-2219) ring is much heavier per volume than CFRP would give
+        ref_ring = TASOPT.CryoTank.size_outer_tank(fuse, outer_tank(StructuralAlloy("Al-2219-T87")), Winner, l_cyl, Ninterm)
+        @test out_al.Wstiff ≈ ref_ring.Wstiff rtol = 1e-9
+    end
+
+    @testset "low-emissivity facing mass" begin
+        outv = size_outer(outer_tank(cfrpVDA))
+        @test cfrpVDA.facing_areal_mass > 0
+        @test outv.Wfacing ≈ cfrpVDA.facing_areal_mass * outv.Souter * TASOPT.gee rtol = 1e-12
+        @test outv.Wfacing > 0
+        # included in the total weight: Wtank = (Wcyl + 2 Whead + Wstiff) (1 + ftankadd) + Wfacing
+        @test outv.Wtank ≈ (outv.Wcyl + 2 * outv.Whead + outv.Wstiff) * (1 + fuse_tank.ftankadd) + outv.Wfacing rtol = 1e-12
+        # the bare laminate carries no facing
+        out0 = size_outer(outer_tank(cfrp0090))
+        @test out0.Wfacing == 0.0
+        @test out0.Wtank ≈ (out0.Wcyl + 2 * out0.Whead + out0.Wstiff) * (1 + fuse_tank.ftankadd) rtol = 1e-12
+    end
+
+    @testset "outer wall emissivity check" begin
+        @test_logs (:warn,) TASOPT.CryoTank.check_outer_wall_emissivity(cfrp0090)
+        @test_logs TASOPT.CryoTank.check_outer_wall_emissivity(cfrpVDA)
+        @test_logs TASOPT.CryoTank.check_outer_wall_emissivity(StructuralAlloy("Al-2219-T87"))
+    end
+
+    @testset "optimize_outer_tank with a composite outer wall" begin
+        ft = outer_tank(cfrp0090)
+        Nopt = TASOPT.CryoTank.optimize_outer_tank(fuse, ft, Winner, l_cyl)
+        @test isfinite(Nopt)
+        @test 0.0 <= Nopt <= 50.0
+        Wopt = size_outer(ft; N = Nopt).Wtank
+        @test isfinite(Wopt) && Wopt > 0
+    end
+end
+
+@testset "Outer-wall emissivity (T7A)" begin
+    CompositeLaminate = TASOPT.materials.CompositeLaminate
+    Al = StructuralAlloy("Al-2219-T87")
+    cfrp_bare = CompositeLaminate("CFRP-IM7-8552-PW-0090")
+    cfrp_vda  = CompositeLaminate("CFRP-IM7-8552-PW-0090-VDA")
+    Taw = 243.26644796151263
+    Tcold = fuse_tank.Tfuel
+    Rvac_al = 0.3565313051181731  # reference value, alloy inner and outer walls (eps = 0.04)
+
+    # Independent re-implementation of the vacuum-gap model with separate inner/outer emissivities
+    function rvac_reference(Tc, Th, Si, So, εi, εo)
+        σ = TASOPT.σ_SB
+        ai, ao, pv, Rgas, γ = 1.0, 0.9, 1e-2, 287.05, 1.4
+        Fe = 1 / (1/εi + Si/So * (1/εo - 1))
+        R_rad = 1 / (σ * Fe * (Tc^2 + Th^2) * (Tc + Th) * Si)
+        Fa = 1 / (1/ai + Si/So * (1/ao - 1))
+        G = (γ + 1)/(γ - 1) * sqrt(Rgas / (8*pi*Th)) * Fa
+        R_conv = 1 / (G * pv * Si)
+        return R_conv * R_rad / (R_conv + R_rad)
+    end
+
+    @testset "vacuum_resistance outer_material keyword" begin
+        # ASSUMPTION: explicit alloy or nothing outer material keeps the eps = 0.04 path bit-identical
+        @test TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = Al, outer_material = Al) == Rvac_al
+        @test TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = Al, outer_material = nothing) == Rvac_al
+        # ASSUMPTION: outer_material = nothing is treated like an alloy (eps = 0.04) for a composite inner wall too
+        Rcf_nothing = TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = cfrp_bare, outer_material = nothing)
+        Rcf_al      = TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = cfrp_bare, outer_material = Al)
+        @test Rcf_nothing == Rcf_al
+    end
+
+    @testset "outer emissivity ordering" begin
+        Rbare = TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = Al, outer_material = cfrp_bare)
+        Rvda  = TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = Al, outer_material = cfrp_vda)
+        # ASSUMPTION: low outer emissivity (less radiation) => larger vacuum resistance; bare CFRP (eps 0.88) leaks most
+        @test Rbare < Rvda
+        # VDA facing (eps 0.05) is close to the alloy (eps 0.04): slightly smaller resistance than the alloy outer wall
+        @test Rvda < Rvac_al
+        # ASSUMPTION: 10% tolerance is a loose ordering-level bound, not a calibrated value
+        @test isapprox(Rvda, Rvac_al; rtol = 0.1)
+    end
+
+    @testset "emissivity factor matches independent formula" begin
+        for (outer, eps_out) in ((cfrp_bare, cfrp_bare.ε_emis), (cfrp_vda, cfrp_vda.ε_emis))
+            R = TASOPT.CryoTank.vacuum_resistance(Tcold, Taw, 90.0, 100.0; inner_material = Al, outer_material = outer)
+            @test R ≈ rvac_reference(Tcold, Taw, 90.0, 100.0, 0.04, eps_out) rtol = 1e-10
+        end
+    end
+
+    @testset "whole-tank heat leak with outer emissivity" begin
+        TASOPT.tanksize!(ac, 1)  # the vacuum layer is set above; same sizing as "Vacuum insulation"
+        Q_al = TASOPT.CryoTank.tankWthermal(fuse, fuse_tank, z, TSL, Mair, xftank, ifuel)
+        ft_bare = deepcopy(fuse_tank)
+        ft_bare.outer_material = cfrp_bare
+        ft_vda = deepcopy(fuse_tank)
+        ft_vda.outer_material = cfrp_vda
+        Q_bare = TASOPT.CryoTank.tankWthermal(fuse, ft_bare, z, TSL, Mair, xftank, ifuel)
+        Q_vda  = TASOPT.CryoTank.tankWthermal(fuse, ft_vda, z, TSL, Mair, xftank, ifuel)
+        @test isfinite(Q_bare) && Q_bare > 0
+        @test Q_bare > Q_vda  # bare CFRP outer vessel leaks more heat than the VDA-faced one
+        # alloy outer wall: unchanged from the baseline
+        ft_al = deepcopy(fuse_tank)
+        ft_al.outer_material = Al
+        @test TASOPT.CryoTank.tankWthermal(fuse, ft_al, z, TSL, Mair, xftank, ifuel) == Q_al
+    end
+end
