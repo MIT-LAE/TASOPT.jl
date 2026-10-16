@@ -88,6 +88,7 @@ function tanksize!(ac, imission::Int64 = 1)
         
         #Evaluate tank weight
         inner_tank        = size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        fuse_tank.t_wall_inner = inner_tank.t_cyl
         Winnertank = inner_tank.Wtank
         Winsul_sum = inner_tank.Winsul_sum
         Vfuel      = inner_tank.Vfuel
@@ -107,11 +108,14 @@ function tanksize!(ac, imission::Int64 = 1)
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 Winner_tot = Winnertank + Wfuelintank #weight of inner vessel + fuel
 
+                check_outer_wall_emissivity(fuse_tank.outer_material) #warn if a bare composite outer wall faces the vacuum
+
                 Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next _size_aircraft! iteration
 
                 outer_tank = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
+                fuse_tank.t_wall_outer = outer_tank.t_cyl
 
                 Wtank = Winnertank + outer_tank.Wtank
                 ltank = outer_tank.l_outer #If there is an outer vessel, the total length is the length of this tank
@@ -222,6 +226,10 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         p.xftank = xftank
         p.ifuel = ifuel
         p.fuse_cs = fuse.layout.cross_section
+        p.inner_material = fuse_tank.inner_material
+        p.outer_material = fuse_tank.outer_material
+        p.t_wall_inner = fuse_tank.t_wall_inner
+        p.t_wall_outer = fuse_tank.t_wall_outer
 
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res

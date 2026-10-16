@@ -48,6 +48,24 @@ Force(x)    = convertForce(parse_unit(x)...)
 Pressure(x) = convertPressure(parse_unit(x)...)
 Stress = Pressure
 Density(x)  = convertDensity(parse_unit(x)...)
+
+"""
+    build_tank_wall_material(name::String, mtype::String)
+
+Builds the fuselage tank wall material called `name` of input type `mtype`
+(`"alloy"` or `"composite"`, case-insensitive). A name starting with `"CFRP-"`
+with type `"alloy"` is taken as a `CompositeLaminate`. Any other type raises an error.
+"""
+function build_tank_wall_material(name::String, mtype::String)
+    mtype_lc = lowercase(mtype)
+    if mtype_lc == "alloy"
+        return startswith(name, "CFRP-") ? CompositeLaminate(name) : StructuralAlloy(name)
+    elseif mtype_lc == "composite"
+        return CompositeLaminate(name)
+    else
+        error("Unsupported tank wall material type '$mtype' for '$name'; use \"alloy\" or \"composite\".")
+    end
+end
 Area(x)     = convertArea(parse_unit(x)...)
 Vol(x)      = convertVolume(parse_unit(x)...)
 Angle(x)    = convertAngle(parse_unit(x)...)
@@ -461,6 +479,8 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     fuel_stor = readfuel("Storage")
     dfuel_stor = dfuel["Storage"]
     readfuel_storage(x::String) = read_input(x, fuel_stor, dfuel_stor)
+    #Local-default reader for the optional cryogenic keys: never consults the default input file, so old inputs keep working
+    readfuel_storage_opt(x::String, fallback) = get(fuel_stor, x, fallback)
 
     fuse_tank.placement = readfuel_storage("tank_placement")
     fuse_tank.fueltype = fueltype
@@ -480,7 +500,20 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
     end
     
     inner_mat_name = readfuel_storage("inner_vessel_material")
-    fuse_tank.inner_material = StructuralAlloy(inner_mat_name)
+    fuse_tank.inner_material = build_tank_wall_material(inner_mat_name,
+        readfuel_storage_opt("inner_vessel_material_type", "alloy"))
+    fuse_tank.design_strain_limit = Float64(readfuel_storage_opt("composite_design_strain", 0.0))
+    fuse_tank.f_joint_add = Float64(readfuel_storage_opt("composite_joint_mass_fraction", 0.0))
+    fuse_tank.eta_composite = Float64(readfuel_storage_opt("composite_efficiency", 1.0))
+    fuse_tank.has_permeation_barrier = readfuel_storage_opt("has_permeation_barrier", false)
+    fuse_tank.t_barrier = Distance(readfuel_storage_opt("permeation_barrier_thickness", "0.0 m"))
+    fuse_tank.dome_layup_efficiency = Float64(readfuel_storage_opt("dome_layup_efficiency", 1.0))
+    fuse_tank.buckling_knockdown = Float64(readfuel_storage_opt("buckling_knockdown", 1.0))
+    fuse_tank.composite_min_stacks = Int(readfuel_storage_opt("composite_min_stacks", 1))
+    wall_architecture = readfuel_storage_opt("wall_architecture", "monocoque")
+    wall_architecture == "monocoque" || error("Unsupported wall_architecture '$wall_architecture'; only \"monocoque\" is implemented.")
+    fuse_tank.wall_architecture = wall_architecture
+    fuse_tank.stiffener_material = StructuralAlloy(readfuel_storage_opt("stiffener_material", "Al-2219-T87"))
     
     fuse_tank.ARtank = readfuel_storage("tank_aspect_ratio")
     fuse_tank.theta_inner = Angle(readfuel_storage("inner_vessel_support_angle"))
@@ -506,7 +539,8 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
 
     if has_vacuum #If tank is double-walled
         outer_mat_name = readfuel_storage("outer_vessel_material")
-        fuse_tank.outer_material = StructuralAlloy(outer_mat_name)
+        fuse_tank.outer_material = build_tank_wall_material(outer_mat_name,
+            readfuel_storage_opt("outer_vessel_material_type", "alloy"))
 
         theta_outer_str = readfuel_storage("outer_vessel_support_angles")
         theta_outer = []
