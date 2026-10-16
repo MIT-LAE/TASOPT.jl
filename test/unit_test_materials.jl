@@ -18,9 +18,11 @@
         cfrp_keys = [k for k in keys(database) if startswith(k, "CFRP-")]
         @test !isempty(cfrp_keys)  # guard against a vacuous pass
         required = ["density", "E1", "E2", "E_equivalent_buckling", "nu_equivalent_buckling",
-            "ply_thickness", "layup", "strain_allowable_tension"]
+            "ply_thickness", "layup"]
         for k in cfrp_keys
             @test all(haskey(database[k], r) for r in required)
+            # The tank-wall strain allowable comes only from [composite_strain_allowable_by_fuel]
+            @test !haskey(database[k], "strain_allowable_tension")
             # Cured-laminate density must be resin-inclusive, never the dry-tow ~1780/1790
             @test 1400.0 <= database[k]["density"] <= 1700.0
             if haskey(database[k], "fiber_volume_fraction")
@@ -34,6 +36,10 @@
         @test Al2219.E == 73.1e9
         @test Al2219.UTS == 476e6
         @test Al2219.YTS == 393e6
+        # Buckling parity: the 0/90 laminate's equivalent modulus (74.0 GPa) exceeds the Al-2219 jacket (73.1 GPa)
+        @test TASOPT.materials.CompositeLaminate("CFRP-IM7-8552-PW-0090").E_eq > Al2219.E
+        # Alloy outer walls radiate at the polished-aluminium emissivity 0.04 (StructuralAlloy has no ε_emis field)
+        @test TASOPT.CryoTank.wall_emissivity(Al2219) == 0.04
     end
 
     @testset "S2 T1A: StructuralAlloy is a TankWallMaterial" begin
@@ -46,6 +52,7 @@
         @test default isa TASOPT.materials.TankWallMaterial
         @test default.ρ ≈ 1560.0
         @test default.E1 ≈ 76.0e9
+        @test !hasfield(CL, :ε_allow_t)
         @test !isempty(sprint(show, default))
 
         # plies per stack is parsed once from the layup string (first bracketed group, also with trailing text)
