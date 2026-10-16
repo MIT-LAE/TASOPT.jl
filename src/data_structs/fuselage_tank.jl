@@ -36,6 +36,10 @@ $TYPEDFIELDS
     inner_material::Union{StructuralAlloy, CompositeLaminate} = StructuralAlloy("Al-2219-T87")
     """Outer vessel material (metal alloy or composite laminate)"""
     outer_material::Union{StructuralAlloy, CompositeLaminate} = StructuralAlloy("Al-2219-T87")
+    """Inner vessel wall thickness from the previous sizing pass (m); 0.0 = not yet known"""
+    t_wall_inner::Float64 = 0.0
+    """Outer vessel wall thickness from the previous sizing pass (m); 0.0 = not yet known"""
+    t_wall_outer::Float64 = 0.0
     """Tank head aspect ratio"""
     ARtank::Float64 = 0.0
     """Angular location of inner vessel stiffeners"""
