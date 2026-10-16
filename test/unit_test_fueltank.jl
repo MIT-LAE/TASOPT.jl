@@ -666,14 +666,12 @@ end
         @test strain(cfrp0090, "lh2") ≈ 1.4e-3 rtol = 1e-12
     end
 
-    @testset "design_strain_limit overrides the table; unknown fuel falls back" begin
+    @testset "design_strain_limit overrides the table; unknown fuel throws" begin
         ft = fuel_tank(cfrp0090, "LH2")
         ft.design_strain_limit = 0.0025
         @test TASOPT.CryoTank.composite_strain_allowable(cfrp0090, ft) == 0.0025
-        eps_xyz = @test_logs (:warn,) TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuel_tank(cfrp0090, "XYZ"))
-        @test eps_xyz == cfrp0090.ε_allow_t
-        eps_empty = @test_logs (:warn,) TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuel_tank(cfrp0090, ""))
-        @test eps_empty == cfrp0090.ε_allow_t
+        @test_throws ArgumentError TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuel_tank(cfrp0090, "XYZ"))
+        @test_throws ArgumentError TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuel_tank(cfrp0090, ""))
     end
 
     @testset "fuel sets the composite wall thickness" begin
@@ -685,5 +683,98 @@ end
         @test wLH2.n_head >= wCH4.n_head >= wC2H4.n_head >= wC2H6.n_head
         # ratio of the continuous ply counts follows the ratio of the allowables (2.1 / 1.4)
         @test wLH2.n_cyl / wC2H6.n_cyl ≈ 2.1 / 1.4 atol = 0.10
+    end
+end
+
+@testset "Sizing diagnostics" begin
+    # Diagnostics the sizing functions return next to the wall thicknesses:
+    # ply counts, wall thicknesses, governing mode per wall (cylinder and head). Alloy walls report :alloy.
+    CompositeLaminate = TASOPT.materials.CompositeLaminate
+    cfrp0090 = CompositeLaminate("CFRP-IM7-8552-PW-0090")
+    Rout = 2.335 # outer radius of the inner vessel in the vacuum configuration
+    Winner, l_cyl, Ninterm = 7e4, 10.0, 1.0 # inner-vessel load (N), cylinder length (m), intermediate rings
+    cfrp_inner(; kwargs...) = begin
+        ft = deepcopy(fuse_tank)
+        ft.inner_material = cfrp0090
+        for (name, value) in kwargs
+            setfield!(ft, name, value)
+        end
+        ft
+    end
+    outer_tank(mat; kwargs...) = begin
+        ft = deepcopy(fuse_tank)
+        ft.outer_material = mat
+        for (name, value) in kwargs
+            setfield!(ft, name, value)
+        end
+        ft
+    end
+    size_outer(ft) = TASOPT.CryoTank.size_outer_tank(fuse, ft, Winner, l_cyl, Ninterm)
+
+    @testset "composite inner wall modes" begin
+        # high pressure (2e7 Pa, continuous limit): the barrel is set by hoop or axial strength, the head by strength
+        big = TASOPT.CryoTank.composite_inner_wall(cfrp0090, cfrp_inner(pvent = 2e7), Rout)
+        @test big.mode_cyl in (:hoop, :axial)
+        @test big.mode_cyl == big.mode
+        @test big.mode_head == :strength
+        @test big.n_cyl ≈ big.t_cyl / cfrp0090.t_ply rtol = 1e-12
+        @test big.n_cyl % cfrp0090.plies_per_stack == 0
+        # default pressure: the floor does not govern, so the barrel mode is the strength mode
+        w0 = TASOPT.CryoTank.composite_inner_wall(cfrp0090, cfrp_inner(), Rout)
+        @test !w0.floor_governs
+        @test w0.mode_cyl == w0.mode
+        # low pressure: the stack floor (one stack by default) sets both walls
+        low = TASOPT.CryoTank.composite_inner_wall(cfrp0090, cfrp_inner(pvent = 1e3), Rout)
+        @test low.floor_governs
+        @test low.mode_cyl == :min_stack
+        @test low.mode_head == :min_stack
+    end
+
+    @testset "inner wall diagnostics in the tank geometry" begin
+        # composite inner wall: ply counts and thicknesses match the wall, modes come from composite_inner_wall
+        ft = cfrp_inner(pvent = 2e7)
+        inner = TASOPT.CryoTank.size_inner_tank(fuse, ft, ft.t_insul)
+        d = inner.wall_diag
+        @test d isa TASOPT.CryoTank.WallDiagnostics
+        @test d.n_cyl > 0 && d.n_head > 0
+        @test d.t_cyl ≈ inner.t_cyl rtol = 1e-12
+        @test d.n_cyl * cfrp0090.t_ply ≈ inner.t_cyl rtol = 1e-12
+        @test d.mode_cyl in (:hoop, :axial)
+        @test d.mode_head == :strength
+        # default alloy inner wall: no plies, both modes :alloy, thickness equal to the geometry
+        ial = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        @test ial.wall_diag.n_cyl == 0 && ial.wall_diag.n_head == 0
+        @test ial.wall_diag.mode_cyl == :alloy && ial.wall_diag.mode_head == :alloy
+        @test ial.wall_diag.t_cyl == ial.t_cyl
+        @test ial.wall_diag.t_head > 0 # InnerTankGeometry has no t_head field; thickness checked via wall_diag
+    end
+
+    @testset "outer wall diagnostics in the tank geometry" begin
+        # buckling governs the composite jacket at the default one-stack floor
+        out = size_outer(outer_tank(cfrp0090))
+        d = out.wall_diag
+        @test d isa TASOPT.CryoTank.WallDiagnostics
+        @test d.mode_cyl == :buckling
+        @test d.n_cyl * cfrp0090.t_ply ≈ out.t_cyl rtol = 1e-12
+        @test d.t_cyl == out.t_cyl
+        @test d.n_head * cfrp0090.t_ply ≈ out.t_head rtol = 1e-12
+        # a large stack floor forces :min_stack on both walls
+        out40 = size_outer(outer_tank(cfrp0090; composite_min_stacks = 40))
+        @test out40.wall_diag.mode_cyl == :min_stack
+        @test out40.wall_diag.mode_head == :min_stack
+        # alloy outer wall: no plies, modes :alloy, thickness is the required thickness
+        outal = size_outer(fuse_tank)
+        @test outal.wall_diag.n_cyl == 0 && outal.wall_diag.n_head == 0
+        @test outal.wall_diag.mode_cyl == :alloy && outal.wall_diag.mode_head == :alloy
+        @test outal.wall_diag.t_cyl == outal.t_cyl
+    end
+
+    @testset "alloy sizing values unchanged by the diagnostics" begin
+        # same reference values as 'aluminium vacuum-tank sizing still matches the reference values'
+        ft = deepcopy(fuse_tank)
+        inner = TASOPT.CryoTank.size_inner_tank(fuse, ft, ft.t_insul)
+        outer = TASOPT.CryoTank.size_outer_tank(fuse, ft, inner.Wtank + ft.Wfuelintank, inner.l_cyl, 14.025390625)
+        @test inner.Wtank ≈ 24003.269280331166
+        @test outer.Wtank ≈ 87480.86746096004
     end
 end
