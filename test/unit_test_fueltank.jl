@@ -65,17 +65,17 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         TASOPT.tanksize!(ac, 1)
         inner_tank_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        @test inner_tank_mech.Wtank       ≈ 59964.0091800411
-        @test inner_tank_mech.Winsul_sum  ≈ 38147.81559388217
+        @test inner_tank_mech.Wtank       ≈ 59963.9469836711
+        @test inner_tank_mech.Winsul_sum  ≈ 38147.75085413718
         @test inner_tank_mech.Vfuel       ≈ 166.77327116515787
-        @test inner_tank_mech.Shead_insul ≈ [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876]
-        @test inner_tank_mech.Rtank_outer ≈ 1.8743852420176998
-        @test inner_tank_mech.l_tank      ≈ 15.771807531012154
-        @test inner_tank_mech.l_cyl       ≈ 12.842701653674803
+        @test inner_tank_mech.Shead_insul ≈ [16.421341718687554, 20.311098333705395, 24.62038329710079, 29.34797317883484]
+        @test inner_tank_mech.Rtank_outer ≈ 1.874385890773477
+        @test inner_tank_mech.l_tank      ≈ 15.771796698235905
+        @test inner_tank_mech.l_cyl       ≈ 12.842691468445997
         
         outputs_thermal = TASOPT.CryoTank.tankWthermal(fuse, fuse_tank, z, TSL, Mair, xftank, ifuel)
 
-        outputs_thermal_check = (1835.8608916011449,)
+        outputs_thermal_check = (1835.8610739583605,)
 
         for i in 1:length(outputs_thermal)
             @test outputs_thermal[i] ≈ outputs_thermal_check[i]
@@ -269,7 +269,7 @@ end
         @test !w.floor_governs
 
         # hand calculation: hoop load Δp R over E2 * strain allowable
-        epsa = cfrp0090.ε_allow_t * cfrp0090.knockdown_cryo * cfrp0090.knockdown_process
+        epsa = TASOPT.CryoTank.composite_strain_allowable(cfrp0090, ft) * cfrp0090.knockdown_cryo * cfrp0090.knockdown_process
         t_hoop = ft.pvent * Rout / (cfrp0090.E2 * epsa * ft.eta_composite)
         @test w.n_cyl == n_stack0090 * max(1, ceil(Int, t_hoop / (n_stack0090 * cfrp0090.t_ply) - 1e-9))
 
@@ -287,7 +287,7 @@ end
         @test n0.n_head / n0.n_cyl ≈ 1.0 atol = 0.10 # sphere-like head (AR=2, K=1) sees the same load as the barrel hoop (the Δp terms of Barron's Eqs. 7.1/7.2 still differ by ~5 % at 2e7 Pa)
         @test wall(cfrp0090, cfrp_tank(cfrp0090; pvent = 2e7, dome_layup_efficiency = 0.9)).n_head / n0.n_head ≈ 1 / 0.9 atol = 0.10
         # a design strain 20 % below the material allowable needs ~1/0.8 = 1.25 times the plies
-        @test wall(cfrp0090, cfrp_tank(cfrp0090; pvent = 2e7, design_strain_limit = 0.8 * cfrp0090.ε_allow_t)).n_cyl / n0.n_cyl ≈ 1.25 atol = 0.10
+        @test wall(cfrp0090, cfrp_tank(cfrp0090; pvent = 2e7, design_strain_limit = 0.8 * TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuse_tank))).n_cyl / n0.n_cyl ≈ 1.25 atol = 0.10
         @test wall(cfrp0090, cfrp_tank(cfrp0090; dome_layup_efficiency = 0.9)).n_head >= w.n_head
     end
 
@@ -477,7 +477,7 @@ end
     end
 end
 
-@testset "Outer-wall emissivity (T7A)" begin
+@testset "Outer-wall emissivity" begin
     CompositeLaminate = TASOPT.materials.CompositeLaminate
     Al = StructuralAlloy("Al-2219-T87")
     cfrp_bare = CompositeLaminate("CFRP-IM7-8552-PW-0090")
@@ -541,5 +541,149 @@ end
         ft_al = deepcopy(fuse_tank)
         ft_al.outer_material = Al
         @test TASOPT.CryoTank.tankWthermal(fuse, ft_al, z, TSL, Mair, xftank, ifuel) == Q_al
+    end
+end
+
+@testset "Wall thermal resistance" begin
+    CompositeLaminate = TASOPT.materials.CompositeLaminate
+    cfrp0090 = CompositeLaminate("CFRP-IM7-8552-PW-0090")
+    Al = StructuralAlloy("Al-2219-T87")
+
+    @testset "wall_conductivity and wall_resistance" begin
+        @test TASOPT.CryoTank.wall_conductivity(Al) == 121.0
+        @test TASOPT.CryoTank.wall_conductivity(Al) == Al.k
+        @test TASOPT.CryoTank.wall_conductivity(cfrp0090) == 0.8
+        @test TASOPT.CryoTank.wall_conductivity(cfrp0090) == cfrp0090.k_tt
+        # ASSUMPTION: a missing (k_tt = 0) CompositeLaminate conductivity falls back to Al-2219 (121 W/m/K)
+        cfrp_nok = deepcopy(cfrp0090)
+        cfrp_nok.k_tt = 0.0
+        @test TASOPT.CryoTank.wall_conductivity(cfrp_nok) == 121.0
+        @test TASOPT.CryoTank.wall_resistance(cfrp0090, 0.01, 50.0) ≈ 0.01 / (0.8 * 50.0)
+        @test TASOPT.CryoTank.wall_resistance(Al, 4.0e-3, 90.0) ≈ 4.0e-3 / (121.0 * 90.0)
+    end
+
+    @testset "new fuselage_tank wall fields and InnerTankGeometry.t_cyl" begin
+        ft0 = TASOPT.fuselage_tank()
+        @test ft0.t_wall_inner == 0.0
+        @test ft0.t_wall_outer == 0.0
+
+        inner_al = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        @test inner_al.t_cyl > 0.0
+
+        ft_cf = deepcopy(fuse_tank)
+        ft_cf.inner_material = cfrp0090
+        inner_cf = TASOPT.CryoTank.size_inner_tank(fuse, ft_cf, ft_cf.t_insul)
+        # ASSUMPTION: a composite inner wall is built from whole plies, so t_cyl is an integer number of plies
+        @test inner_cf.t_cyl == TASOPT.CryoTank.composite_inner_wall(cfrp0090, ft_cf, inner_cf.Rtank_outer).t_cyl
+        n_plies = inner_cf.t_cyl / cfrp0090.t_ply
+        @test isapprox(n_plies, round(n_plies); atol = 1e-6)
+    end
+
+    @testset "tanksize! stores the sized wall thicknesses" begin
+        TASOPT.tanksize!(ac, 1)  # vacuum configuration set at the top of this file
+        inner = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
+        @test fuse_tank.t_wall_inner > 0.0
+        @test fuse_tank.t_wall_inner ≈ inner.t_cyl
+        # outer vessel is sized on the scaled length, as in tanksize!
+        Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
+        lcyl2 = inner.l_cyl * Routertank / inner.Rtank_outer
+        outer = TASOPT.CryoTank.size_outer_tank(fuse, fuse_tank, inner.Wtank + fuse_tank.Wfuelintank, lcyl2, fuse_tank.Ninterm)
+        @test fuse_tank.t_wall_outer > 0.0
+        @test fuse_tank.t_wall_outer ≈ outer.t_cyl
+    end
+
+    @testset "wall resistance in the heat-leak model" begin
+        TASOPT.tanksize!(ac, 1)
+        heat(ft) = TASOPT.CryoTank.tankWthermal(fuse, ft, z, TSL, Mair, xftank, ifuel)
+        # ASSUMPTION: t_wall = 0.0 means "not yet sized" and the thermal model uses 4 mm (nominal Al)
+        ft_default = deepcopy(fuse_tank)
+        ft_default.t_wall_inner = 0.0 # not yet known => 4 mm assumed
+        ft_default.t_wall_outer = 0.0
+        ft_4mm = deepcopy(fuse_tank)
+        ft_4mm.t_wall_inner = 4.0e-3
+        ft_4mm.t_wall_outer = 4.0e-3
+        Q_default = heat(ft_default)
+        @test Q_default == heat(ft_4mm)
+        @test isfinite(Q_default) && Q_default > 0
+
+        # ASSUMPTION: a thick CFRP wall (k_tt = 0.8) adds a real resistance, so the heat leak falls
+        cfrp0090 = TASOPT.materials.CompositeLaminate("CFRP-IM7-8552-PW-0090")
+        inner_thin = deepcopy(fuse_tank); inner_thin.inner_material = cfrp0090; inner_thin.t_wall_inner = 1e-5
+        inner_thick = deepcopy(fuse_tank); inner_thick.inner_material = cfrp0090; inner_thick.t_wall_inner = 0.1
+        Q_thin = heat(inner_thin)
+        Q_thick = heat(inner_thick)
+        @test isfinite(Q_thin) && Q_thin > 0
+        @test isfinite(Q_thick) && Q_thick > 0
+        @test Q_thick < Q_thin
+
+        outer_thin = deepcopy(fuse_tank); outer_thin.outer_material = cfrp0090; outer_thin.t_wall_outer = 1e-5
+        outer_thick = deepcopy(fuse_tank); outer_thick.outer_material = cfrp0090; outer_thick.t_wall_outer = 0.1
+        @test heat(outer_thick) < heat(outer_thin)
+    end
+
+    @testset "outer-wall emissivity reaches the insulation sizing residual" begin
+        # ASSUMPTION: the vacuum layer is the only segment, so iinsuldes = [1] (res_MLI_thick would index past t_insul otherwise)
+        cfrp_bare = TASOPT.materials.CompositeLaminate("CFRP-IM7-8552-PW-0090")
+        cfrp_vda  = TASOPT.materials.CompositeLaminate("CFRP-IM7-8552-PW-0090-VDA")
+        TASOPT.tanksize!(ac, 1)
+        function res_for(outer)
+            ft = deepcopy(fuse_tank)
+            ft.outer_material = outer
+            ft.iinsuldes = [1]
+            x = [0.0, fuse_tank.Tfuel + 1.0, fuse_tank.Tfuel + 100.0]  # [Δt, T_w, T_fuse] for one vacuum layer; arbitrary but fixed
+            TASOPT.CryoTank.res_MLI_thick(x, fuse, ft, z, TSL, Mair, xftank, ifuel)
+        end
+        # ASSUMPTION: with the T7A gap-fix the outer wall emissivity enters the vacuum layer of the sizing residual
+        @test res_for(cfrp_bare) != res_for(cfrp_vda)
+    end
+end
+
+@testset "Fuel-dependent strain allowable" begin
+    CompositeLaminate = TASOPT.materials.CompositeLaminate
+    cfrp0090 = CompositeLaminate("CFRP-IM7-8552-PW-0090")
+    cfrpQI   = CompositeLaminate("CFRP-IM7-8552-PW-QI")
+    cfrpVDA  = CompositeLaminate("CFRP-IM7-8552-PW-0090-VDA")
+    Rout = 2.335 # outer radius of the inner vessel in the vacuum configuration
+    fuel_tank(mat, fuel; pvent = fuse_tank.pvent) = begin
+        ft = deepcopy(fuse_tank)
+        ft.inner_material = mat
+        ft.fueltype = fuel
+        ft.design_strain_limit = 0.0
+        ft.pvent = pvent
+        ft
+    end
+    strain(mat, fuel) = TASOPT.CryoTank.composite_strain_allowable(mat, fuel_tank(mat, fuel))
+
+    @testset "fuel table values" begin
+        @test strain(cfrp0090, "LH2")  ≈ 1.4e-3 rtol = 1e-12
+        @test strain(cfrp0090, "CH4")  ≈ 1.8e-3 rtol = 1e-12
+        @test strain(cfrp0090, "C2H4") ≈ 2.0e-3 rtol = 1e-12
+        @test strain(cfrp0090, "C2H6") ≈ 2.1e-3 rtol = 1e-12
+        # same design strain for all CFRP laminates
+        @test strain(cfrpQI, "LH2")  ≈ 1.4e-3 rtol = 1e-12
+        @test strain(cfrpVDA, "LH2") ≈ 1.4e-3 rtol = 1e-12
+        # fuel matching is case-insensitive
+        @test strain(cfrp0090, "lh2") ≈ 1.4e-3 rtol = 1e-12
+    end
+
+    @testset "design_strain_limit overrides the table; unknown fuel falls back" begin
+        ft = fuel_tank(cfrp0090, "LH2")
+        ft.design_strain_limit = 0.0025
+        @test TASOPT.CryoTank.composite_strain_allowable(cfrp0090, ft) == 0.0025
+        eps_xyz = @test_logs (:warn,) TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuel_tank(cfrp0090, "XYZ"))
+        @test eps_xyz == cfrp0090.ε_allow_t
+        eps_empty = @test_logs (:warn,) TASOPT.CryoTank.composite_strain_allowable(cfrp0090, fuel_tank(cfrp0090, ""))
+        @test eps_empty == cfrp0090.ε_allow_t
+    end
+
+    @testset "fuel sets the composite wall thickness" begin
+        # continuous limit (pvent = 2e7) so that ply quantisation does not hide the scaling
+        wall(mat, fuel) = TASOPT.CryoTank.composite_inner_wall(mat, fuel_tank(mat, fuel; pvent = 2e7), Rout)
+        wLH2, wCH4, wC2H4, wC2H6 = (wall(cfrp0090, f) for f in ("LH2", "CH4", "C2H4", "C2H6"))
+        # lower allowable strain needs a thicker wall
+        @test wLH2.n_cyl >= wCH4.n_cyl >= wC2H4.n_cyl >= wC2H6.n_cyl
+        @test wLH2.n_head >= wCH4.n_head >= wC2H4.n_head >= wC2H6.n_head
+        # ratio of the continuous ply counts follows the ratio of the allowables (2.1 / 1.4)
+        @test wLH2.n_cyl / wC2H6.n_cyl ≈ 2.1 / 1.4 atol = 0.10
     end
 end
