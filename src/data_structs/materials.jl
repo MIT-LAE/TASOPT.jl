@@ -9,7 +9,7 @@ import ..TASOPT: __TASOPTroot__
 
 export StructuralAlloy, Conductor, Insulator, ElectricSteel, 
 ThermalInsulator, thermal_conductivity
-export CompositeLaminate, TankWallMaterial, effective_allowable_stress
+export CompositeLaminate, TankWallMaterial
 export resistivity, resxden
 
 MaterialProperties = TOML.parsefile(joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml"))
@@ -112,8 +112,6 @@ $TYPEDFIELDS
     E_eq::Float64
     """Equivalent-isotropic Poisson's ratio for the buckling formula, √(ν12 ν21) [-]"""
     ν_eq::Float64
-    """Tensile strain allowable [-]"""
-    ε_allow_t::Float64
     """Cured ply thickness [m]"""
     t_ply::Float64
     """Human-readable stacking sequence"""
@@ -149,7 +147,7 @@ Outer constructor for `CompositeLaminate` types from a `[CFRP-*]` cured-laminate
 material database. Keyword arguments override any field of the struct (e.g. `knockdown_cryo`).
 `plies_per_stack` is computed once here from the layup string.
 The entry must provide `density`, `E1`, `E2`, `E_equivalent_buckling`, `nu_equivalent_buckling`,
-`strain_allowable_tension`, `ply_thickness` and `layup`; `fiber_volume_fraction`,
+`ply_thickness` and `layup`; `fiber_volume_fraction`,
 `thermal_conductivity`, `emissivity` and `facing_areal_mass` are optional. `[CF-*]` reference
 entries and alloys are rejected. The recommended default is `CFRP-IM7-8552-PW-0090`.
 """
@@ -172,7 +170,6 @@ function CompositeLaminate(material::String; kwargs...)
             :E2 => MatProp["E2"],
             :E_eq => MatProp["E_equivalent_buckling"],
             :ν_eq => MatProp["nu_equivalent_buckling"],
-            :ε_allow_t => MatProp["strain_allowable_tension"],
             :t_ply => MatProp["ply_thickness"],
             :layup => MatProp["layup"],
             :plies_per_stack => count_plies_per_stack(MatProp["layup"]),
@@ -188,15 +185,6 @@ function CompositeLaminate(material::String; kwargs...)
         fields[key] = value
     end
     return CompositeLaminate(; fields...)
-end
-
-"""
-    effective_allowable_stress(m::CompositeLaminate)
-
-Tensile stress allowable `E1 ε_allow_t knockdown_cryo knockdown_process` [Pa].
-"""
-function effective_allowable_stress(m::CompositeLaminate)
-    return m.E1 * m.ε_allow_t * m.knockdown_cryo * m.knockdown_process
 end
 
 """
@@ -485,8 +473,6 @@ function Base.show(io::IO, ::MIME"text/plain", lam::CompositeLaminate)
     print("\n ρ     = ",lam.ρ," kg/m³ (cured laminate, resin-inclusive)")
     print("\n E1    = ",lam.E1," Pa (axial)")
     print("\n E2    = ",lam.E2," Pa (hoop)")
-    print("\n ε_allow_t = ",lam.ε_allow_t)
-    print("\n σ_allow = ",round(effective_allowable_stress(lam),sigdigits=3)," Pa (E1 ε_allow_t knockdowns)")
     print("\n t_ply = ",lam.t_ply," m")
 end
 
