@@ -34,6 +34,8 @@ This structure stores the material and thermal properties of a cryogenic tank in
       fuse_cs::T = T()
       """Inner tank wall material; sets the vacuum-gap emissivity (`nothing` ⇒ aluminium, ε = 0.04)"""
       inner_material::Union{Nothing, TankWallMaterial} = nothing
+      """Outer tank wall material; sets the outer vacuum-gap emissivity (`nothing` ⇒ aluminium, ε = 0.04)"""
+      outer_material::Union{Nothing, TankWallMaterial} = nothing
 end
 
 """
@@ -71,6 +73,7 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL:
       p.l_tank = fuse_tank.l_inner
       p.r_tank = fuse_tank.Rinnertank
       p.inner_material = fuse_tank.inner_material
+      p.outer_material = fuse_tank.outer_material
       p.Shead = fuse_tank.Shead_insul #Surface area of elliptical caps at different cross-sections (m^2)
       p.t_cond = t_cond
       p.material = fuse_tank.material_insul
@@ -197,7 +200,7 @@ function residuals_Q(x::Vector{Float64}, p::thermal_params, mode::String)
             if lowercase(material[i].name) == "vacuum"
                   S_inner = perim_R * l_cyl * r_inner + 2*Shead[i]
                   S_outer = perim_R * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
-                  R_ins[i] = vacuum_resistance(T_prev, T_ins[i], S_inner, S_outer; inner_material = p.inner_material)
+                  R_ins[i] = vacuum_resistance(T_prev, T_ins[i], S_inner, S_outer; inner_material = p.inner_material, outer_material = p.outer_material)
 
             else #If insulation layer is not a vacuum
                   k = thermal_conductivity(material[i], (T_ins[i] + T_prev)/2)
@@ -341,9 +344,20 @@ function freestream_heat_coeff(z::Float64, TSL::Float64, M::Float64, xftank::Flo
 end
 
 """
-      vacuum_resistance(Tcold, Thot, S_inner, S_outer; inner_material = nothing)
+      wall_emissivity(material)
+
+Infrared emissivity of a tank wall facing the vacuum gap: `material.ε_emis` for a `CompositeLaminate`,
+otherwise 0.04 (highly polished aluminium; also used for `nothing`).
+"""
+wall_emissivity(material::Union{Nothing, TankWallMaterial}) =
+      material isa CompositeLaminate ? material.ε_emis : 0.04
+
+"""
+      vacuum_resistance(Tcold, Thot, S_inner, S_outer; inner_material = nothing, outer_material = nothing)
 
 This function calculates the thermal resistance of a vacuum layer using the methods of Barron (1985).
+The radiative exchange uses the two-surface emissivity factor
+`Fe = 1 / (1/ε_inner + S_inner/S_outer * (1/ε_outer - 1))`.
       
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
@@ -351,24 +365,27 @@ This function calculates the thermal resistance of a vacuum layer using the meth
       - `Thot::Float64`: hot wall temperature (K).
       - `S_inner::Float64`: area of tank inner surface (m^2).
       - `S_outer::Float64`: area of tank outer surface (m^2).
-      - `inner_material`: inner tank wall material (`StructuralAlloy`, `CompositeLaminate` or `nothing`).
+      - `inner_material`: inner tank wall material (`StructuralAlloy`, `CompositeLaminate` or `nothing`); sets `ε_inner`.
+      - `outer_material`: outer tank wall material (`StructuralAlloy`, `CompositeLaminate` or `nothing`); sets `ε_outer`.
 
       **Outputs:**
       - `R_eq::Float64`: equivalent thermal resistance of vacuum gap (K/W).
 """
 function vacuum_resistance(Tcold::Float64, Thot::Float64, S_inner::Float64, S_outer::Float64;
-                           inner_material::Union{Nothing, TankWallMaterial} = nothing)
+                           inner_material::Union{Nothing, TankWallMaterial} = nothing,
+                           outer_material::Union{Nothing, TankWallMaterial} = nothing)
       #Assumed tank and gas properties
       a_outer = 0.9 
       a_inner = 1.0
-      ε = inner_material isa CompositeLaminate ? inner_material.ε_emis : 0.04 # composite: from material; otherwise highly polished aluminum
+      ε_inner = wall_emissivity(inner_material)
+      ε_outer = wall_emissivity(outer_material)
       p_vacuum = 1e-2 #Assumed vacuum pressure, approximately 1e-4 Torr as in Brewer (1991) #TODO maybe make this an input?
 
       Rgas = 287.05  # specific gas constant
       gamma = 1.4
       
       #Emissivity factor
-      Fe = 1 / (1/ε + S_inner/S_outer * (1/ε - 1))
+      Fe = 1 / (1/ε_inner + S_inner/S_outer * (1/ε_outer - 1))
 
       #Find heat transfer coeff. for radiation and corresponding resistance
       hrad = σ_SB * Fe * ((Tcold^2) + (Thot^2)) * (Tcold + Thot) #Radiative heat transfer coefficient; Eq. (2.28) in https://ahtt.mit.edu/
