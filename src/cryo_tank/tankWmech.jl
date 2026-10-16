@@ -1,4 +1,22 @@
 """
+Wall build-up and governing sizing mode of the cylinder and head of a tank wall.
+"""
+struct WallDiagnostics
+      """Number of plies of the cylinder wall (0 for a metal wall)"""
+      n_cyl::Int
+      """Number of plies of the head wall (0 for a metal wall)"""
+      n_head::Int
+      """Cylinder wall thickness (m)"""
+      t_cyl::Float64
+      """Head wall thickness (m)"""
+      t_head::Float64
+      """Governing mode of the cylinder: inner `:hoop`, `:axial` or `:min_stack`; outer `:buckling` or `:min_stack`; `:alloy` for a metal wall"""
+      mode_cyl::Symbol
+      """Governing mode of the head: inner `:strength` or `:min_stack`; outer `:buckling` or `:min_stack`; `:alloy` for a metal wall"""
+      mode_head::Symbol
+end
+
+"""
 Geometric and weight outputs of the inner cryogenic tank sizing.
 """
 struct InnerTankGeometry
@@ -16,6 +34,10 @@ struct InnerTankGeometry
       l_tank::Float64
       """Length of the cylindrical portion (m)"""
       l_cyl::Float64
+      """Cylinder wall thickness of the inner vessel (m)"""
+      t_cyl::Float64
+      """Wall build-up and governing modes of the inner vessel (see [`WallDiagnostics`](@ref))"""
+      wall_diag::WallDiagnostics
 end
 
 """
@@ -167,7 +189,10 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       Wtank = (Wtank + Winsul_sum)
       l_tank = l_cyl + 2*Lhead + 2*thickness_insul + 2*t_head #Total longitudinal length of the tank
 
-return InnerTankGeometry(Wtank, Winsul_sum, Vfuel, Shead_insul, Rtank_outer, l_tank, l_cyl)
+      wall_diag = inner_wall_diagnostics(wall_material, wall)
+      @debug "Inner tank wall" wall_diag
+
+      return InnerTankGeometry(Wtank, Winsul_sum, Vfuel, Shead_insul, Rtank_outer, l_tank, l_cyl, tskin, wall_diag)
 end
 
 
@@ -197,6 +222,8 @@ struct OuterTankGeometry
       l_outer::Float64
       """Weight of the low-emissivity facing on the vacuum-facing area, 0 for an alloy wall (N)"""
       Wfacing::Float64
+      """Wall build-up and governing modes of the outer vessel (see [`WallDiagnostics`](@ref))"""
+      wall_diag::WallDiagnostics
 end
 
 """
@@ -255,12 +282,16 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       #Find cylinder wall thickness. This applies to a short cylinder.
       pressure_res(t_D) = 2.42*E_wall*(t_D)^(5/2) / ( (1 - ν_wall^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
       t_Do = find_zero(pressure_res, 1e-3) #Find root with Roots.jl
-      t_cyl = round_outer_wall(fuse_tank.outer_material, fuse_tank, t_Do * Do)
+      t_cyl_req = t_Do * Do
 
       #Find head wall thickness
       K1 = find_K1_head(ARtank) #Find coefficient K1
-      t_head = round_outer_wall(fuse_tank.outer_material, fuse_tank,
-                                K1 * Do * sqrt(pc * sqrt(3*(1 - ν_wall^2))/ (0.5*E_wall)))
+      t_head_req = K1 * Do * sqrt(pc * sqrt(3*(1 - ν_wall^2))/ (0.5*E_wall))
+
+      wall_diag = outer_wall_diagnostics(fuse_tank.outer_material, fuse_tank, t_cyl_req, t_head_req)
+      @debug "Outer tank wall" wall_diag
+      t_cyl = wall_diag.t_cyl
+      t_head = wall_diag.t_head
 
       #---------------------------------
       # Vessel geometry
@@ -303,7 +334,7 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
 
       l_outer = l_cyl + Do / ARtank + 2*t_head #Total length of outer vessel
 
-      return OuterTankGeometry(Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer, Wfacing)
+      return OuterTankGeometry(Wtank, Wcyl, Whead, Wstiff, Souter, Shead, Scyl, t_cyl, t_head, l_outer, Wfacing, wall_diag)
 end
 
 """
@@ -326,8 +357,49 @@ round_outer_wall(mat::StructuralAlloy, fuse_tank::fuselage_tank, t_req::Float64)
 function round_outer_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, t_req::Float64)
       n_stack = mat.plies_per_stack
       stacks_floor = max(1, fuse_tank.composite_min_stacks)
-      n_stacks = max(stacks_floor, ceil(Int, t_req / (n_stack * mat.t_ply) - 1e-9))
+      n_stacks = max(stacks_floor, required_stacks(mat, t_req))
       return n_stacks * n_stack * mat.t_ply
+end
+
+"""
+      required_stacks(mat::CompositeLaminate, t_req::Float64)
+
+Number of whole stacks of `mat.plies_per_stack` plies needed for a strength requirement of thickness `t_req` (m),
+before the minimum-stack floor is applied.
+"""
+required_stacks(mat::CompositeLaminate, t_req::Float64) =
+      ceil(Int, t_req / (mat.plies_per_stack * mat.t_ply) - 1e-9)
+
+"""
+      outer_wall_diagnostics(mat, fuse_tank::fuselage_tank, t_cyl_req::Float64, t_head_req::Float64)
+
+Rounds the required outer-wall thicknesses with `round_outer_wall` and reports the ply counts and governing modes.
+A `StructuralAlloy` is returned unchanged with modes `:alloy`. A `CompositeLaminate` wall is `:min_stack` where the
+minimum-stack floor sets its ply count, and `:buckling` otherwise.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `mat`: outer-vessel wall material.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
+      - `t_cyl_req::Float64`: required cylinder wall thickness (m).
+      - `t_head_req::Float64`: required head wall thickness (m).
+
+      **Outputs:**
+      - `::WallDiagnostics`: rounded wall thicknesses, ply counts and modes.
+"""
+function outer_wall_diagnostics(mat::StructuralAlloy, fuse_tank::fuselage_tank, t_cyl_req::Float64, t_head_req::Float64)
+      t_cyl = round_outer_wall(mat, fuse_tank, t_cyl_req)
+      t_head = round_outer_wall(mat, fuse_tank, t_head_req)
+      return WallDiagnostics(0, 0, t_cyl, t_head, :alloy, :alloy)
+end
+
+function outer_wall_diagnostics(mat::CompositeLaminate, fuse_tank::fuselage_tank, t_cyl_req::Float64, t_head_req::Float64)
+      stacks_floor = max(1, fuse_tank.composite_min_stacks)
+      t_cyl = round_outer_wall(mat, fuse_tank, t_cyl_req)
+      t_head = round_outer_wall(mat, fuse_tank, t_head_req)
+      mode_cyl = stacks_floor >= required_stacks(mat, t_cyl_req) ? :min_stack : :buckling
+      mode_head = stacks_floor >= required_stacks(mat, t_head_req) ? :min_stack : :buckling
+      return WallDiagnostics(round(Int, t_cyl / mat.t_ply), round(Int, t_head / mat.t_ply), t_cyl, t_head, mode_cyl, mode_head)
 end
 
 """
@@ -595,6 +667,16 @@ inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float6
       composite_inner_wall(mat, fuse_tank, Rtank_outer)
 
 """
+      inner_wall_diagnostics(mat, wall)
+
+Wall build-up and governing modes of an inner-vessel wall returned by `inner_wall`. A `StructuralAlloy` wall has no plies
+and both modes are `:alloy`.
+"""
+inner_wall_diagnostics(mat::StructuralAlloy, wall) = WallDiagnostics(0, 0, wall.t_cyl, wall.t_head, :alloy, :alloy)
+inner_wall_diagnostics(mat::CompositeLaminate, wall) =
+      WallDiagnostics(wall.n_cyl, wall.n_head, wall.t_cyl, wall.t_head, wall.mode_cyl, wall.mode_head)
+
+"""
       stiffener_ring_material(wall_material, fuse_tank::fuselage_tank)
 
 `stiffener_ring_material` returns the material of the main stiffener rings of a tank: the wall alloy for a
@@ -613,6 +695,31 @@ stiffener_ring_material(wall_material::StructuralAlloy, fuse_tank::fuselage_tank
 stiffener_ring_material(wall_material::CompositeLaminate, fuse_tank::fuselage_tank) = fuse_tank.stiffener_material
 
 """
+      composite_strain_allowable(mat::CompositeLaminate, fuse_tank::fuselage_tank)
+
+Design tensile strain allowable of a composite tank wall before the cryogenic and process knockdowns.
+
+Returns `fuse_tank.design_strain_limit` if positive. Otherwise returns the value for `fuse_tank.fueltype`
+from the `composite_strain_allowable_by_fuel` table of `MaterialProperties.toml` (case-insensitive).
+Throws an `ArgumentError` if the fuel is not in the table; there is no fallback.
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `mat::CompositeLaminate`: tank wall laminate.
+      - `fuse_tank::fuselage_tank`: fuselage tank object.
+
+      **Outputs:**
+      - `::Float64`: design strain allowable (-).
+"""
+function composite_strain_allowable(mat::CompositeLaminate, fuse_tank::fuselage_tank)::Float64
+      fuse_tank.design_strain_limit > 0 && return fuse_tank.design_strain_limit
+      table = get(MaterialProperties, "composite_strain_allowable_by_fuel", Dict{String,Any}())
+      key = uppercase(fuse_tank.fueltype)
+      haskey(table, key) || throw(ArgumentError("No composite strain allowable for fuel '$(fuse_tank.fueltype)' ($(mat.name)). Add the fuel to the 'composite_strain_allowable_by_fuel' table in MaterialProperties.toml or set design_strain_limit. Valid fuels: $(join(sort(collect(keys(table))), ", "))."))
+      return Float64(table[key])
+end
+
+"""
       composite_inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float64)
 
 `composite_inner_wall` sizes the wall of a composite inner tank from membrane loads and a strain allowable,
@@ -620,8 +727,7 @@ and rounds it up to a whole number of laminate stacks.
 
 The barrel carries the hoop load `N_θ = Δp R` on `E2` and the axial load `N_x = Δp R / 2` on `E1`; the thicker of
 the two governs. The domes carry the membrane load `Δp R K`, with `K = (AR² + 2)/6`, on the weaker of `E1` and `E2`,
-reduced by `fuse_tank.dome_layup_efficiency`. The strain allowable is `fuse_tank.design_strain_limit` if positive,
-otherwise `mat.ε_allow_t`, times the cryogenic and process knockdowns of the material. No weld efficiency is applied.
+reduced by `fuse_tank.dome_layup_efficiency`. The strain allowable is `composite_strain_allowable(mat, fuse_tank)`, times the cryogenic and process knockdowns of the material. No weld efficiency is applied.
 
 The wall is built from whole stacks of `mat` (`mat.plies_per_stack` plies each): the number of stacks is
 `ceil(t_req / (n_stack * mat.t_ply) - 1e-9)`, with `n_stack = mat.plies_per_stack`, and a minimum of
@@ -638,14 +744,15 @@ The wall is built from whole stacks of `mat` (`mat.plies_per_stack` plies each):
       - `t_head::Float64`: dome wall thickness, `n_head * mat.t_ply` (m).
       - `n_cyl::Int`, `n_head::Int`: number of plies of the barrel and dome (multiples of `mat.plies_per_stack`).
       - `mode::Symbol`: `:hoop` or `:axial`, the barrel load direction that governs before rounding.
+      - `mode_cyl::Symbol`: `:min_stack` if the minimum sets the barrel ply count, otherwise `mode`.
+      - `mode_head::Symbol`: `:min_stack` if the minimum sets the dome ply count, otherwise `:strength`.
       - `floor_governs::Bool`: true if the strength requirement of the barrel or dome is no more than the minimum (`max(1, fuse_tank.composite_min_stacks)` stacks), so the minimum sets its ply count.
 """
 function composite_inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, Rtank_outer::Float64)
       Δp = fuse_tank.pvent
       AR = fuse_tank.ARtank
       η = fuse_tank.eta_composite
-      epsa = (fuse_tank.design_strain_limit > 0 ? fuse_tank.design_strain_limit : mat.ε_allow_t) *
-             mat.knockdown_cryo * mat.knockdown_process #Design strain allowable
+      epsa = composite_strain_allowable(mat, fuse_tank) * mat.knockdown_cryo * mat.knockdown_process #Design strain allowable
 
       #Barrel
       t_hoop  = Δp * 2 * Rtank_outer / (2*mat.E2 * epsa * η + 0.8*Δp) # Barron 1985 eq. 7.1
@@ -660,12 +767,14 @@ function composite_inner_wall(mat::CompositeLaminate, fuse_tank::fuselage_tank, 
       #Round up to whole stacks, with a minimum of `composite_min_stacks` (at least one) stacks
       n_stack = mat.plies_per_stack
       stacks_floor = max(1, fuse_tank.composite_min_stacks)
-      stacks_cyl_strength  = ceil(Int, t_cyl_req  / (n_stack * mat.t_ply) - 1e-9)
-      stacks_head_strength = ceil(Int, t_head_req / (n_stack * mat.t_ply) - 1e-9)
+      stacks_cyl_strength  = required_stacks(mat, t_cyl_req)
+      stacks_head_strength = required_stacks(mat, t_head_req)
       n_cyl  = n_stack * max(stacks_cyl_strength,  stacks_floor)
       n_head = n_stack * max(stacks_head_strength, stacks_floor)
       floor_governs = stacks_floor >= stacks_cyl_strength || stacks_floor >= stacks_head_strength #strength needs no more than the minimum
+      mode_cyl = stacks_floor >= stacks_cyl_strength ? :min_stack : mode
+      mode_head = stacks_floor >= stacks_head_strength ? :min_stack : :strength
 
       return (t_cyl = n_cyl * mat.t_ply, t_head = n_head * mat.t_ply, n_cyl = n_cyl, n_head = n_head,
-              mode = mode, floor_governs = floor_governs)
+              mode = mode, mode_cyl = mode_cyl, mode_head = mode_head, floor_governs = floor_governs)
 end
