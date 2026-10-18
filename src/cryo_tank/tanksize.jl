@@ -77,8 +77,17 @@ function tanksize!(ac, imission::Int64 = 1)
                 sol = nlsolve(residual, guess, ftol = 1e-7) 
                 Δt = sol.zero[1] 
 
+                sol.f_converged || @warn "Insulation thickness solve did not converge (boiloff target $(boiloff_percent) %/h); thicknesses may be unreliable." maxlog=3
+
                 for ind in iinsuldes #For every segment whose thickness can be changed
                         t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
+                end
+                #Insulation thickness cannot be negative: a negative solution means the requested boiloff rate is looser than 
+                #the base insulation already achieves, so the sizeable layers are bounded at zero thickness.
+                if any(t_cond .< T_INSUL_MIN)
+                        @warn "Insulation thickness solve gave layer thicknesses $(t_cond) below the minimum of $(T_INSUL_MIN) m; raising them to the minimum. " *
+                              "The base insulation is more than needed for a cruise boiloff of $(boiloff_percent) %/h; reduce insulation_segment_base_thickness." maxlog=3
+                        clamp_insulation_thickness!(t_cond)
                 end
                 
         end
@@ -202,6 +211,7 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_all[ind] = t_all[ind] + Δt
         end
+        check_insulation_thickness(t_all) #Negative trial thicknesses are infeasible; the solver wrapper penalises the throw
 
         inner_tank = size_inner_tank(fuse, fuse_tank, t_all)
 
@@ -234,6 +244,33 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         res = residuals_Q(x_thermal, p, "Q_known") #Find thermal-related residuals
         return res
 end 
+
+"""
+Minimum insulation layer thickness (m). A layer of exactly zero thickness makes the thermal circuit singular
+(zero resistance, non-finite residuals), so the lower bound is a tiny positive value rather than 0.
+"""
+const T_INSUL_MIN = 1e-4
+
+"""
+        check_insulation_thickness(t_cond)
+
+Throws a `DomainError` if any insulation layer thickness is negative or not finite.
+"""
+function check_insulation_thickness(t_cond::AbstractVector{<:Real})
+        all(isfinite, t_cond) && all(>=(0.0), t_cond) ||
+                throw(DomainError(t_cond, "insulation layer thicknesses must be finite and >= 0 m"))
+        return nothing
+end
+
+"""
+        clamp_insulation_thickness!(t_cond)
+
+Raises any insulation layer thickness in `t_cond` below `T_INSUL_MIN` up to `T_INSUL_MIN` (in place).
+"""
+function clamp_insulation_thickness!(t_cond::AbstractVector{<:Real})
+        t_cond .= max.(t_cond, T_INSUL_MIN)
+        return t_cond
+end
 
 """
         check_vacuum(material_insul::Vector{String})
