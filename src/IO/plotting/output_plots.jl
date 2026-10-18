@@ -1984,8 +1984,8 @@ function side_view(ac::aircraft;
     # Cryo tanks (drawn *inside* fuselage, so on top of fuselage fill)
     for (xt_p, zt_p) in all_tank_polys
         plot!(plot_obj, xt_p, zt_p;
-              fillrange = minimum(zt_p), fillalpha = 0.10, fillcolor = :cyan,
-              linecolor = :color=:red, linewidth = 1.5, label = "")
+              fillrange = minimum(zt_p), fillalpha = 0.10, fillcolor = :red,
+              linecolor = :red, linewidth = 1.5, label = "")
     end
     # Fuel label
     if !isempty(all_tank_polys) && !options.has_wing_fuel
@@ -2008,7 +2008,7 @@ function side_view(ac::aircraft;
 
     # Horizontal tail
     plot!(plot_obj, xh_box, zh_box;
-          fillrange = zh_box[1], fillalpha = 0.45, fillcolor = :navy,
+          fillrange = zh_box[1], fillalpha = 0.45, fillcolor = :grey,
           linecolor = :black, linewidth = 1.5, label = "")
 
 
@@ -2088,7 +2088,7 @@ function side_view(ac::aircraft;
 
     # Wing root box
     plot!(plot_obj, xw_box, zw_box;
-          fillrange = zw_box[1], fillalpha = 1, fillcolor = :royalblue,
+          fillrange = zw_box[1], fillalpha = 0.5, fillcolor = :grey,
           linecolor = :black, linewidth = 1.5, label = "")
 
     # Wing-mounted engine(s)
@@ -2099,7 +2099,7 @@ function side_view(ac::aircraft;
                    z_e + D_eng*0.25, z_e - D_eng*0.25,
                    z_e - 0.5*D_eng]
         plot!(plot_obj, xe_poly, ze_poly;
-              fillrange = ze_poly[1], fillalpha = 0.35, fillcolor = :tomato,
+              fillrange = ze_poly[1], fillalpha = 0.0, fillcolor = :tomato,
               linecolor = :red, linewidth = 1.5, label = "")
     end
 
@@ -2350,11 +2350,11 @@ function front_view(ac::aircraft;
         yec =  y_eng .+ (D_eng/2) .* cos.(θ_e)
         zec = z_eng_y .+ (D_eng/2) .* sin.(θ_e)
         plot!(plot_obj, yec, zec;
-              fillrange = z_eng_y, fillalpha = 0.95, fillcolor = :tomato,
+              fillrange = z_eng_y, fillalpha = 0.0, fillcolor = :tomato,
               linecolor = :red, linewidth = 1.5, label = "")
         # port
         plot!(plot_obj, -yec, zec;
-              fillrange = z_eng_y, fillalpha = 0.95, fillcolor = :tomato,
+              fillrange = z_eng_y, fillalpha = 0.0, fillcolor = :tomato,
               linecolor = :red, linewidth = 1.5, label = "")
     end
 
