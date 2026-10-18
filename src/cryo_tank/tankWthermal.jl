@@ -360,10 +360,10 @@ end
       wall_emissivity(material)
 
 Infrared emissivity of a tank wall facing the vacuum gap: `material.ε_emis` for a `CompositeLaminate`,
-otherwise 0.04 (highly polished aluminium; also used for `nothing`).
+otherwise 0.02 (aluminium https://link.springer.com/article/10.1007/s10854-024-12219-x; also used for `nothing`).
 """
 wall_emissivity(material::Union{Nothing, TankWallMaterial}) =
-      material isa CompositeLaminate ? material.ε_emis : 0.04
+      material isa CompositeLaminate ? material.ε_emis : 0.02
 
 """
       wall_conductivity(material)
@@ -391,8 +391,7 @@ wall_resistance(material::Union{Nothing, TankWallMaterial}, t::Float64, S::Float
 
 Returns `t` (m) if positive, otherwise a nominal 4.0 mm aluminium wall.
 """
-# ASSUMPTION - nominal Al wall when the thickness is not yet known
-wall_thickness_or_default(t::Float64) = t > 0 ? t : 4.0e-3
+wall_thickness_or_default(t::Float64) = t > 0 ? t : 4.0e-3 # ASSUMPTION - nominal Al wall when the thickness is not yet known
 
 """
       vacuum_resistance(Tcold, Thot, S_inner, S_outer; inner_material = nothing, outer_material = nothing)
