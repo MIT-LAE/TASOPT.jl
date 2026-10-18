@@ -38,8 +38,8 @@
         @test Al2219.YTS == 393e6
         # Buckling parity: the 0/90 laminate's equivalent modulus (74.0 GPa) exceeds the Al-2219 jacket (73.1 GPa)
         @test TASOPT.materials.CompositeLaminate("CFRP-IM7-8552-PW-0090").E_eq > Al2219.E
-        # Alloy outer walls radiate at the polished-aluminium emissivity 0.04 (StructuralAlloy has no ε_emis field)
-        @test TASOPT.CryoTank.wall_emissivity(Al2219) == 0.04
+        # Alloy outer walls radiate at the polished-aluminium emissivity 0.02 (StructuralAlloy has no ε_emis field)
+        @test TASOPT.CryoTank.wall_emissivity(Al2219) == 0.02
     end
 
     @testset "S2 T1A: StructuralAlloy is a TankWallMaterial" begin
