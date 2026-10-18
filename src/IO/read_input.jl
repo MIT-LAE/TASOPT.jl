@@ -488,6 +488,7 @@ if !(has_wing_fuel) #If fuel is stored in fuselage
 
     fuse_tank.sizes_insulation = readfuel_storage("sizes_insulation")
     fuse_tank.t_insul = readfuel_storage("insulation_segment_base_thickness")
+    all(>=(0.0), fuse_tank.t_insul) || error("insulation_segment_base_thickness must be >= 0 for every layer, got $(fuse_tank.t_insul)")
     insul_mats_names = readfuel_storage("insulation_material")
     insul_mats = []
     for insul_mat_name in insul_mats_names
