@@ -17,6 +17,12 @@ struct WallDiagnostics
 end
 
 """
+Minimum cylindrical length of an inner tank as a fraction of the tank radius. Keeps the cylinder length strictly
+positive for every cryogenic fuel (LH2, CH4, ...) when the fuel volume is smaller than the two end caps.
+"""
+const L_CYL_MIN_FRAC = 0.1
+
+"""
 Geometric and weight outputs of the inner cryogenic tank sizing.
 """
 struct InnerTankGeometry
@@ -116,7 +122,13 @@ function size_inner_tank(fuse::Fuselage, fuse_tank::fuselage_tank, t_cond::Vecto
       #a = R/AR, b=c=R. Since Abase = πR^2, this can also be written as V = 2 * (Abase * R/AR)/3.
       # Also see: https://neutrium.net/equipment/volume-and-wetted-area-of-partially-filled-horizontal-vessels/
       V_cylinder = Vinternal - 2*V_ellipsoid
-      l_cyl = V_cylinder / Atank #required length of cylindrical portion
+      #The cylindrical length must be strictly positive. If the required volume is smaller than the two end caps
+      #(small fuel load, or fuel split over several tanks), V_cylinder < 0 and the length would be negative, which
+      #breaks the stiffener and outer-vessel buckling solves. Floor it at a fraction of the tank radius; the tank then
+      #holds slightly more volume than required (extra ullage), which is conservative for tank weight.
+      l_cyl_req = V_cylinder / Atank #required length of cylindrical portion
+      l_cyl = max(l_cyl_req, L_CYL_MIN_FRAC * Rtank)
+      l_cyl > l_cyl_req && @debug "Inner tank cylinder length floored" l_cyl_req l_cyl
 
       # areas
       Scyl = perim_tank*l_cyl # Surface area of cylindrical part
@@ -280,8 +292,7 @@ function size_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertank::F
       E_wall, ν_wall = outer_buckling_properties(fuse_tank.outer_material, fuse_tank) #Modulus and Poisson ratio for buckling
 
       #Find cylinder wall thickness. This applies to a short cylinder.
-      pressure_res(t_D) = 2.42*E_wall*(t_D)^(5/2) / ( (1 - ν_wall^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
-      t_Do = find_zero(pressure_res, 1e-3) #Find root with Roots.jl
+      t_Do = outer_cylinder_thickness_ratio(E_wall, ν_wall, L_Do, pc) #Find root with Roots.jl, bracketed to the valid range
       t_cyl_req = t_Do * Do
 
       #Find head wall thickness
@@ -480,7 +491,12 @@ function stiffener_weight(tanktype::String, W::Float64, Rtank::Float64, perim::F
       b = -Z/2
       c = -1 * Icollapse - Z * t_f/2 + t_f^3 * W / 6
 
-      H = (-b + sqrt(b^2 - 4 * a * c)) / (2 * a) #Solve quadratic eq.
+      #The discriminant is Z^2/4 + 4a(Icollapse + Z t_f/2 - t_f^3 W/6). The last term is a constant set by the fixed flange
+      #geometry, so for a lightly loaded ring (small Z and Icollapse) the flanges alone already exceed the requirement,
+      #the quadratic has no real root, and the beam only needs its minimum physical height. Bound the discriminant at zero
+      #and the height at two flange thicknesses (flanges touching) rather than taking the square root of a negative number.
+      disc = max(b^2 - 4 * a * c, 0.0)
+      H = max((-b + sqrt(disc)) / (2 * a), 2 * t_f) #Solve quadratic eq.
       S = 2 * W * t_f + (H - t_f) * t_w #Beam cross-sectional area
 
       Wstiff = gee * ρstiff * S * perim #Weight of a single stiffener running along perimeter
@@ -593,6 +609,48 @@ function optimize_outer_tank(fuse::Fuselage, fuse_tank::fuselage_tank, Winnertan
       Ninterm = xopt[1]
       return Ninterm
 end
+"""
+      outer_cylinder_thickness_ratio(E, ν, L_Do, pc)
+
+Wall thickness to diameter ratio `t/D` of a short outer-vessel cylinder that buckles at the collapsing pressure `pc`,
+from the short-cylinder form `pc = 2.42 E (t/D)^(5/2) / ((1 - ν²)^(3/4) (L/D - 0.45 sqrt(t/D)))` (Barron 1985).
+
+The formula is only valid for `0 ≤ t/D < (L/D / 0.45)²`: the residual is `-pc` at `t/D = 0`, increases monotonically,
+and diverges at the upper limit, so a unique root always lies in that interval. The root is therefore found by
+bisection on a bracket inside it, so the iteration can never leave the valid domain (a secant step to `t/D < 0` would
+otherwise raise a `DomainError` in `(t/D)^(5/2)`).
+
+!!! details "🔃 Inputs and Outputs"
+      **Inputs:**
+      - `E::Float64`: Young's modulus used for buckling (Pa).
+      - `ν::Float64`: Poisson ratio used for buckling.
+      - `L_Do::Float64`: stiffener spacing to outer diameter ratio.
+      - `pc::Float64`: collapsing pressure (Pa).
+
+      **Outputs:**
+      - `t_Do::Float64`: wall thickness to diameter ratio, strictly positive.
+"""
+function outer_cylinder_thickness_ratio(E::Float64, ν::Float64, L_Do::Float64, pc::Float64)
+      (L_Do > 0 && isfinite(L_Do)) ||
+            throw(DomainError(L_Do, "outer vessel stiffener spacing to diameter ratio must be positive and finite"))
+
+      residual(t_D) = 2.42*E*t_D^(5/2) / ( (1 - ν^2)^(3/4) * (L_Do - 0.45*sqrt(t_D)) ) - pc
+
+      t_pole = (L_Do / 0.45)^2 #Upper limit of validity, where the denominator vanishes
+      #Upper end of the bracket: approach the pole until the residual is positive (it always is close enough to the pole)
+      t_hi = NaN
+      for ε in (1e-3, 1e-6, 1e-9, 1e-12)
+            t_try = t_pole * (1 - ε)
+            if residual(t_try) > 0
+                  t_hi = t_try
+                  break
+            end
+      end
+      isnan(t_hi) && throw(DomainError(L_Do, "no buckling thickness found: outer vessel stiffener spacing to diameter ratio is too small"))
+
+      return find_zero(residual, (0.0, t_hi), Bisection())
+end
+
 """
       find_K1_head(AR)
 
