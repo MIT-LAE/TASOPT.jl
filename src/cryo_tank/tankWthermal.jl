@@ -132,9 +132,8 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL:
       end
 
       #Generic (cold-start) initial guess: linear temperature profile through the insulation
-      function cold_guess()
+      function cold_guess(Rguess = 0.01)
             g = zeros(length(t_cond) + 2)
-            Rguess = 0.01
             g[1] = ΔT / Rguess
             g[2] = Tfuel + 1.0
             for i = 1:length(t_cond)
@@ -150,12 +149,27 @@ function tankWthermal(fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL:
 
       sol = nlsolve_thermal(residual, guess, xtol = 1e-4, ftol = 1e-4, iterations = 500) #Solve non-linear problem with NLsolve.jl
 
-      if sol.x_converged || sol.f_converged
+      #A converged solution must also be physical: heat flows into the cold tank, so Q > 0. Convergence on step size alone 
+      #can otherwise accept a stagnated, non-physical point.
+      #It must also be a true root with temperatures between the fuel and the hot air: with a vacuum layer the network has 
+      #non-physical stagnation points (e.g. a 0 K wall, with a non-zero residual) where the step size vanishes, hence later solve fail.
+      solved(s) = (s.f_converged || (s.x_converged && s.residual_norm <= 1e-3 * max(1.0, abs(s.zero[1])))) && 
+                  isfinite(s.zero[1]) && s.zero[1] > 0 &&
+                  all(T -> Tfuel - 1e-3 <= T <= Taw + 1e-3, @view s.zero[2:end])
+
+      if solved(sol)
             fuse_tank.last_thermal_sol = copy(sol.zero)
       else
-            #Retry from the generic guess (a stale warm start may be the cause of the failure) with tighter tolerances
-            sol_retry = nlsolve_thermal(residual, cold_guess(), xtol = 1e-5, ftol = 1e-5, iterations = 1000)
-            if sol_retry.x_converged || sol_retry.f_converged
+            #Retry from the generic guess (a stale warm start may be the cause of the failure).
+            #A small tank (e.g. spherical) has a much higher thermal resistance than the first guess assumes. 
+            #The first Newton step can then overshoot into non-physical temperatures
+            #The guessed total resistance is increased on each attempt.
+            sol_retry = sol
+            for Rguess in (0.01, 0.1, 1.0, 10.0)
+                  sol_retry = nlsolve_thermal(residual, cold_guess(Rguess), xtol = 1e-4, ftol = 1e-4, iterations = 500)
+                  solved(sol_retry) && break
+            end
+            if solved(sol_retry)
                   fuse_tank.last_thermal_sol = copy(sol_retry.zero)
                   sol = sol_retry
             elseif warm
@@ -255,16 +269,26 @@ function residuals_Q(x::AbstractVector{<:Real}, p::thermal_params, mode::String)
             if lowercase(material[i].name) == "vacuum"
                   S_inner = perim_R * l_cyl * r_inner + 2*Shead[i]
                   S_outer = perim_R * l_cyl * (r_inner + t_cond[i]) + 2*Shead[i+1]
+                  #The vacuum resistance takes a square root of the hot-side temperature, so a non-positive temperature 
+                  #(Newton step can produce) would throw a DomainError. Throwing and catching is ~100x slower than a 
+                  #normal evaluation, so return the residual sentinel that the solver wrappers' `catch` blocks use.
+                  if !(T_ins[i] > 0)
+                        fill!(F, 1e3)
+                        return F
+                  end
                   R_ins[i] = vacuum_resistance(T_prev, T_ins[i], S_inner, S_outer)
 
             else #If insulation layer is not a vacuum
                   k = thermal_conductivity(material[i], (T_ins[i] + T_prev)/2)
-                  R_ins_cyl[i] = log((r_inner  + t_cond[i])/ (r_inner)) / (perim_R*l_cyl * k) #Resistance of each layer; from integration of Fourier's law in cylindrical coordinates
+                  #Conductance of the cylindrical portion in cylindrical coordinates. 
+                  #Written as a conductance so that it vanishes smoothly (instead of an infinite resistance) when l_cyl = 0
+                  G_cyl = perim_R*l_cyl * k / log((r_inner  + t_cond[i])/ (r_inner))
+                  R_ins_cyl[i] = 1 / G_cyl #Resistance of each layer's cylindrical portion (Inf if l_cyl = 0)
                   
                   Area_coeff = Shead[i] / r_inner^2 #Proportionality parameter in ellipsoidal area, approximately a constant
                   R_ins_ends[i] = t_cond[i] / (k * (Shead[i+1] + Shead[i] - Area_coeff * t_cond[i]^2)) #From closed-form solution for hemispherical caps
                   # Parallel addition of resistance
-                  R_ins[i] = (R_ins_ends[i] * R_ins_cyl[i]/(R_ins_ends[i] + R_ins_cyl[i])) 
+                  R_ins[i] = 1 / (1 / R_ins_ends[i] + G_cyl)
                   
                   # Update r_inner
                   r_inner = r_inner + t_cond[i]  
