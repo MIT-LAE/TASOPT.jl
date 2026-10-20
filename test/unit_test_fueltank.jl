@@ -65,7 +65,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         TASOPT.tanksize!(ac, 1)
         inner_tank_mech = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        @test inner_tank_mech.Wtank       ≈ 60109.124334566346
+        @test inner_tank_mech.Wtank       ≈ 59964.0091800411
         @test inner_tank_mech.Winsul_sum  ≈ 38147.81559388217
         @test inner_tank_mech.Vfuel       ≈ 166.77327116515787
         @test inner_tank_mech.Shead_insul ≈ [16.42133035129676, 20.311090752967278, 24.620380536430755, 29.34797626786876]
@@ -91,7 +91,7 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
 
         inner_tank_vac = TASOPT.CryoTank.size_inner_tank(fuse, fuse_tank, fuse_tank.t_insul)
 
-        @test inner_tank_vac.Wtank       ≈ 24229.845334360776
+        @test inner_tank_vac.Wtank       ≈ 24003.269280331166
         @test inner_tank_vac.Winsul_sum  ≈ 0.0
         @test inner_tank_vac.Vfuel       ≈ 166.77327116515787
         @test inner_tank_vac.Shead_insul ≈ [25.483812169139977, 27.21328988831087]
@@ -109,10 +109,10 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         @test Ninterm ≈ Ninterm_check
 
         outer_tank_vac = TASOPT.CryoTank.size_outer_tank(fuse, fuse_tank, Winner_tot, l_cyl, Ninterm_check)
-        @test outer_tank_vac.Wtank   ≈ 87481.40843690369
+        @test outer_tank_vac.Wtank   ≈ 87480.86746096004
         @test outer_tank_vac.Wcyl    ≈ 31381.827647692957
         @test outer_tank_vac.Whead   ≈ 13786.613724211644
-        @test outer_tank_vac.Wstiff  ≈ 20573.498028341648
+        @test outer_tank_vac.Wstiff  ≈ 20573.006232029245
         @test outer_tank_vac.Souter  ≈ 171.6223477616751
         @test outer_tank_vac.Shead   ≈ 26.90237940128641
         @test outer_tank_vac.Scyl    ≈ 117.81758895910225
@@ -128,6 +128,13 @@ fuse.layout.cross_section.bubble_lower_downward_shift = 0.3
         outputs_bendM_check = [1.1749999999999998, 0.09494892091249901]
         for i in 1:length(outputs_bendM)
             @test outputs_bendM[i] ≈ outputs_bendM_check[i]
+        end
+
+        #Barron (1985) Eq. (7.5) typo guard: the corrected k_max matches an independent exact
+        #(Castigliano) ring solution at support angles where the printed Eq. (7.5) is badly off
+        for (θdeg, kexact) in [(30.0, 0.46833), (45.0, 0.30833), (60.0, 0.21810)]
+            _, kmax = TASOPT.CryoTank.stiffeners_bendingM(θdeg * pi / 180)
+            @test kmax ≈ kexact rtol = 1e-4
         end
 
         θ1 = 45 * pi /180
