@@ -1,3 +1,122 @@
+"""Minimum insulation layer thickness (m). Small but positive, since a zero-thickness layer gives a singular thermal circuit."""
+const T_INSUL_MIN = 1e-4
+
+"""
+        check_insulation_thickness(t)
+
+Throws a `DomainError` if any insulation layer thickness is negative or non-finite. Used inside the insulation solve so that 
+infeasible trial points are turned into large residuals by the solver wrapper.
+"""
+function check_insulation_thickness(t::AbstractVector{<:Real})
+        for ti in t
+                (isfinite(ti) && ti >= 0) || throw(DomainError(ti, "insulation layer thickness must be non-negative and finite"))
+        end
+        return nothing
+end
+
+"""
+        clamp_insulation_thickness!(t, iinsuldes = eachindex(t))
+
+Raises any layer in `t` (restricted to indices `iinsuldes`) that is below `T_INSUL_MIN` to `T_INSUL_MIN`, with a warning.
+Returns `true` if any layer was clamped.
+"""
+function clamp_insulation_thickness!(t::AbstractVector{<:Real}, iinsuldes = eachindex(t))
+        clamped = false
+        for ind in iinsuldes
+                if t[ind] < T_INSUL_MIN
+                        clamped |= t[ind] < T_INSUL_MIN * (1 - 1e-6)
+                        t[ind] = T_INSUL_MIN
+                end
+        end
+        clamped && @warn "tanksize!: insulation layer thickness fell below the minimum; clamped to $(T_INSUL_MIN) m. " *
+                         "The boil-off target may not be met by this insulation stack." maxlog=3
+        return clamped
+end
+
+"""
+        boiloff_heat_rate(fuse_tank)
+
+Heat rate (W) into one tank that corresponds to the design boil-off rate `fuse_tank.boiloff_rate` (%/h), after removing the 
+extra heat leak factor `qfac`.
+"""
+function boiloff_heat_rate(fuse_tank::fuselage_tank)
+        mdot_boiloff = fuse_tank.boiloff_rate * fuse_tank.Wfuelintank / (gee * 100) / 3600 #Boil-off mass flow rate (kg/s)
+        Q_net = mdot_boiloff * fuse_tank.hvap #Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
+        return Q_net / fuse_tank.qfac
+end
+
+"""
+        min_insulation_shift(t_cond, iinsuldes)
+
+Smallest uniform shift `Δt` that can be added to the sizeable layers `iinsuldes` of `t_cond` while keeping every one of them at 
+or above `T_INSUL_MIN`. The insulation solve cannot go below this without producing a non-physical stack.
+"""
+min_insulation_shift(t_cond::AbstractVector{<:Real}, iinsuldes) = maximum(T_INSUL_MIN - t_cond[ind] for ind in iinsuldes)
+
+"""
+        max_heat_rate(fuse, fuse_tank, Δt, z, TSL, Mair, xftank, ifuel)
+
+Heat rate (W, before the `qfac` factor) into the tank when the sizeable layers are shifted by `Δt`, found by solving the thermal 
+network with the heat rate as an unknown. Called with the smallest admissible shift (see [`min_insulation_shift`](@ref)), it gives the 
+largest heat rate (i.e. boil-off) that the insulation stack can reach. Returns `NaN` if the thermal solve fails.
+"""
+function max_heat_rate(fuse::Fuselage, fuse_tank::fuselage_tank, Δt::Real, z::Float64, TSL::Float64, Mair::Float64, 
+                       xftank::Float64, ifuel::Int64)
+        t_all = copy(fuse_tank.t_insul)
+        for ind in fuse_tank.iinsuldes
+                t_all[ind] += Δt
+        end
+        inner_tank = size_inner_tank(fuse, fuse_tank, t_all)
+
+        p = thermal_params{typeof(fuse.layout.cross_section), Float64}()
+        p.l_cyl = inner_tank.l_cyl
+        p.l_tank = inner_tank.l_tank
+        p.r_tank = inner_tank.Rtank_outer
+        p.Shead = inner_tank.Shead_insul
+        p.t_cond = t_all
+        p.material = fuse_tank.material_insul
+        p.Tfuel = fuse_tank.Tfuel
+        p.z = z
+        p.TSL = TSL
+        p.Mair = Mair
+        p.xftank = xftank
+        p.ifuel = ifuel
+        p.fuse_cs = fuse.layout.cross_section
+
+        function residual(x)
+                try
+                        return residuals_Q(x, p, "Q_unknown")
+                catch e
+                        (e isa MethodError && eltype(x) <: ForwardDiff.Dual) && rethrow()
+                        return ones(length(x)) * 1e3
+                end
+        end
+
+        _, _, Taw = freestream_heat_coeff(z, TSL, Mair, xftank)
+        ΔT = Taw - fuse_tank.Tfuel
+        thickness = sum(t_all)
+        #Same cold guess as in tankWthermal, with a guess for the total resistance that is tried over a wide range. The thinnest
+        #admissible stack has a very small resistance (order 1e-4 K/W for a non-vacuum stack, where a guess of 0.01 K/W or more
+        #stagnates at a non-physical point), while a vacuum layer or a small tank has a large one.
+        for Rguess in (1e-3, 1e-2, 1e-4, 0.1, 1.0, 10.0)
+                g = zeros(length(t_all) + 2)
+                g[1] = ΔT / Rguess
+                g[2] = fuse_tank.Tfuel + 1.0
+                for i in eachindex(t_all)
+                        g[i + 2] = fuse_tank.Tfuel + ΔT * sum(t_all[1:i]) / thickness
+                end
+                g[end] -= 1.0
+                sol = nlsolve_thermal(residual, g, xtol = 1e-5, ftol = 1e-5, iterations = 500)
+                #Only a true root is accepted (small residual, and temperatures between the fuel and the hot air). Convergence on step
+                #size alone can stagnate at non-physical points with a spuriously high Q (e.g. a 0 K wall).
+                T_phys = all(T -> fuse_tank.Tfuel - 1e-3 <= T <= Taw + 1e-3, @view sol.zero[2:end])
+                if sol.f_converged && T_phys && isfinite(sol.zero[1]) && sol.zero[1] > 0
+                        return sol.zero[1]
+                end
+        end
+        return NaN
+end
+
 """
         tanksize!(ac, imission)
 
@@ -55,31 +174,86 @@ function tanksize!(ac, imission::Int64 = 1)
                 ΔT = Taw - Tfuel
 
                 #Create inner function with residuals as a function of x
-                function residual(x) 
+                function residual(x)
                         try
                                 return res_MLI_thick(x, fuse, fuse_tank, z, TSL, Mair, xftank_heat, ifuel) #Residual in boiloff rate as a function of Δt
-                        catch #Return some high residual if it fails
+                        catch e
+                                #A MethodError with ForwardDiff duals means the residual is not AD-compatible: rethrow so that 
+                                #`nlsolve_autodiff` can fall back to finite differences instead of silently masking it.
+                                (e isa MethodError && eltype(x) <: ForwardDiff.Dual) && rethrow()
                                 return ones(length(x))*1e3
                         end
                 end
+
                 #Assemble guess for non linear solver
                 #x[1] = Δt; x[2] = T_tank; x[3:(end-1)]: T at edge of insulation layer; x[end] = T at fuselage wall
-                guess = zeros(length(t_cond) + 2) 
-                guess[1] = 0.0
-                guess[2] = Tfuel + 1.0
+                function cold_guess()
+                        g = zeros(length(t_cond) + 2)
+                        g[1] = 0.0
+                        g[2] = Tfuel + 1.0
 
-                n_layers = length(t_cond)
-                for i = 1:n_layers
-                        guess[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                        n_layers = length(t_cond)
+                        for i = 1:n_layers
+                                g[i + 2] = Tfuel + ΔT * sum(t_cond[1:i])/ sum(t_cond)
+                        end
+                        g[end] = g[end] - 1.0 #fuselage wall temperature
+                        return g
                 end
-                guess[end] = guess[end] - 1.0 #fuselage wall temperature
-                #Solve non-linear problem with NLsolve.jl
-                sol = nlsolve(residual, guess, ftol = 1e-7) 
-                Δt = sol.zero[1] 
+
+                #Feasibility check before running the solver. The heat rate (boil-off) is largest for the most-reduced admissible stack
+                #(every sizeable layer shifted by `Δt_min`). If even that stack leaks less than the target, no thickness shift can match the
+                #target, so the solver is skipped and the stack is left in that state instead of letting the solver chase a non-physical root.
+                #The reverse case is always feasible, since a thicker stack leaks less.
+                Δt_min = min_insulation_shift(t_cond, iinsuldes)
+                Q_max = max_heat_rate(fuse, fuse_tank, Δt_min, z, TSL, Mair, xftank_heat, ifuel)
+                Q_target = boiloff_heat_rate(fuse_tank)
+                infeasible = isfinite(Q_max) && Q_max < Q_target #A failed thermal solve (NaN) is inconclusive, so the solver still runs
+
+                if infeasible
+                        boiloff_max = boiloff_percent * Q_max / Q_target #Boil-off rate (%/h) attained by the thinnest stack
+                        @warn "tanksize!: the boil-off target of $(boiloff_percent) %/h cannot be reached by this insulation stack " *
+                              "(highest attainable: $(round(boiloff_max, sigdigits = 3)) %/h). The sizeable layers are reduced as far as the " *
+                              "uniform thickness shift allows (the thinnest layer is set to $(T_INSUL_MIN) m). Check the insulation materials " *
+                              "and base thicknesses, or the target." maxlog=3
+                        Δt = Δt_min
+                else
+                        warm = length(fuse_tank.last_MLI_sol) == length(t_cond) + 2
+                        guess = warm ? copy(fuse_tank.last_MLI_sol) : cold_guess()
+                        #The previous Δt has already been added to t_cond, so the remaining correction starts at zero;
+                        #only the temperature states are worth warm-starting.
+                        warm && (guess[1] = 0.0)
+
+                        #Forward-mode AD for the Jacobian, except when a vacuum layer is present: in that case the residual has multiple roots 
+                        #(including unphysical ones) and finite differences and AD can converge to different ones, so the
+                        #original finite-difference Jacobian is kept to preserve results.
+                        use_ad = !check_vacuum(fuse_tank.material_insul)
+
+                        #Solve non-linear problem with NLsolve.jl with looser tolerances and iteration cap.
+                        sol = nlsolve_autodiff(MLI_AUTODIFF, "MLI-thickness", residual, guess, use_ad = use_ad, ftol = 1e-4, iterations = 500)
+
+                        if sol.x_converged || sol.f_converged
+                                Δt = sol.zero[1]
+                                # cache
+                                fuse_tank.last_MLI_sol = copy(sol.zero)
+                        else
+                                # retry once from the generic guess (stale warm start may be the cause) with tighter tolerances
+                                sol_retry = nlsolve_autodiff(MLI_AUTODIFF, "MLI-thickness", residual, cold_guess(), use_ad = use_ad, ftol = 1e-5, iterations = 1000)
+                                if sol_retry.x_converged || sol_retry.f_converged
+                                        Δt = sol_retry.zero[1]
+                                        fuse_tank.last_MLI_sol = copy(sol_retry.zero)
+                                elseif warm
+                                        # reuse last converged
+                                        Δt = 0.0
+                                else
+                                        error("tanksize!: MLI thickness nonlinear solve failed to converge and no warm-start available")
+                                end
+                        end
+                end
 
                 for ind in iinsuldes #For every segment whose thickness can be changed
                         t_cond[ind] = t_cond[ind] + Δt #This will modify fuse_tank.t_insul
                 end
+                clamp_insulation_thickness!(t_cond, iinsuldes) #Keep the layers physical
                 
         end
         
@@ -94,6 +268,7 @@ function tanksize!(ac, imission::Int64 = 1)
         Rinnertank = inner_tank.Rtank_outer
         l_inner    = inner_tank.l_tank
         lcyl1      = inner_tank.l_cyl
+        AR_head    = inner_tank.AR_head
         #Store in fuse_tank
         fuse_tank.Rinnertank  = Rinnertank
         fuse_tank.l_inner     = l_inner
@@ -103,15 +278,17 @@ function tanksize!(ac, imission::Int64 = 1)
         has_vacuum = check_vacuum(fuse_tank.material_insul) #check if there is a vacuum layer
 
         if has_vacuum #If tank is double-walled
-                Routertank = fuse.layout.radius - fuse_tank.clearance_fuse
+                #The outer vessel encloses the inner vessel and its insulation. When the inner vessel has its maximum size this is 
+                #Rfuse - clearance; when it is still smaller (spherical regime) the outer vessel shrinks with it.
+                Routertank = Rinnertank + thickness_insul
                 lcyl2 = lcyl1 * Routertank / Rinnertank #Scale outer vessel length for geometric similarity
                 Winner_tot = Winnertank + Wfuelintank #weight of inner vessel + fuel
 
-                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2) #Find optimal number of intermediate stiffeners
+                Ninterm = optimize_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2; Router = Routertank, AR_head = AR_head) #Find optimal number of intermediate stiffeners
                 
                 fuse_tank.Ninterm = Ninterm #Store in fuse_tank to use as guess in next _size_aircraft! iteration
 
-                outer_tank = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm)
+                outer_tank = size_outer_tank(fuse, fuse_tank, Winner_tot, lcyl2, Ninterm; Router = Routertank, AR_head = AR_head)
 
                 Wtank = Winnertank + outer_tank.Wtank
                 ltank = outer_tank.l_outer #If there is an outer vessel, the total length is the length of this tank
@@ -177,7 +354,7 @@ insulation interface temperatures.
         **Outputs:**
         - `res::Vector{Float64}`: residuals vector.
 """
-function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
+function res_MLI_thick(x::AbstractVector{<:Real}, fuse::Fuselage, fuse_tank::fuselage_tank, z::Float64, TSL::Float64, Mair::Float64, xftank::Float64, ifuel::Int64)
 
         #Extract parameters from fuse_tank
         boiloff_percent = fuse_tank.boiloff_rate
@@ -193,21 +370,19 @@ function res_MLI_thick(x::Vector{Float64}, fuse::Fuselage, fuse_tank::fuselage_t
         x_thermal = x[2:end]
 
         #Prepare to call residual_Q for thermal-related residuals
-        t_all = deepcopy(t_cond) #copy to avoid modifying input
+        t_all = Vector{eltype(x)}(t_cond) #copy (with the element type of x, for ForwardDiff) to avoid modifying input
 
         for ind in iinsuldes #For every segment whose thickness can be changed
                 t_all[ind] = t_all[ind] + Δt
         end
+        check_insulation_thickness(t_all) #Reject infeasible (negative) trial thicknesses
 
         inner_tank = size_inner_tank(fuse, fuse_tank, t_all)
 
-        mdot_boiloff = boiloff_percent *  Wfuel / (gee * 100) / 3600
-        # Boil-off rate equals the heat rate divided by heat of vaporization
-        Q_net = mdot_boiloff * h_v  # Heat rate from ambient to cryo fuel, including extra heat leak from valves etc as in eq 3.20 by Verstraete
-        Q = Q_net / qfac
+        Q = boiloff_heat_rate(fuse_tank) #Heat rate corresponding to the boil-off target (boil-off equals heat rate over heat of vaporization)
 
         #Assemble struct with parameters for residual_Q
-        p = thermal_params{typeof(fuse.layout.cross_section)}()
+        p = thermal_params{typeof(fuse.layout.cross_section), eltype(x)}()
         p.Q = Q #Store heat rate as it is known
         p.l_cyl = inner_tank.l_cyl
         p.l_tank = inner_tank.l_tank
