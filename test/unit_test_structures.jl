@@ -336,7 +336,25 @@ Wwing,Wsinn,Wsout,
 @test fort_dxWfout ≈ dxWfout 
 @test fort_dyWfinn ≈ dyWfinn 
 @test fort_dyWfout ≈ dyWfout 
-@test fort_lstrutp ≈ lstrutp 
+@test fort_lstrutp ≈ lstrutp
+
+# Engine at the span break ηs: root shear and moment should match
+# TASOPT 2.16 surfw.f (Drela eqs. 177-178 with R = N*We), i.e. moment arm (b/2)(ηs-ηo)
+wing_noeng = deepcopy(wing)
+wing_eng = deepcopy(wing)
+b, etas, etao = wing.layout.span, wing.layout.ηs, wing.layout.ηo
+Winn, dyWinn = wing.inboard.weight, wing.inboard.dyW
+dyeinn = 0.5*b*(etas - etao)
+TASOPT.wing_weights!(wing_noeng, po, gammat, gammas, Nlift, Weng1, 0, 0.0, 0, 0.0, sigfac, rhofuel)
+TASOPT.wing_weights!(wing_eng, po, gammat, gammas, Nlift, Weng1, 0, 0.0, 1, dyeinn, sigfac, rhofuel)
+Ss, Ms = wing_eng.outboard.max_shear_load, wing_eng.outboard.moment
+fort_So = Ss - Nlift*Weng1 + 0.25*po*b*(1.0+gammas)*(etas-etao) - Nlift*Winn
+fort_Mo = Ms + (Ss - Nlift*Weng1)*0.5*b*(etas-etao) +
+          (1.0/24.0)*po*b^2*(1.0+2.0*gammas)*(etas-etao)^2 - Nlift*dyWinn
+@test fort_Mo > Ms # Mo = max(Mo, Ms) clamp is inactive
+@test wing_eng.inboard.max_shear_load ≈ fort_So
+@test wing_eng.inboard.moment ≈ fort_Mo
+@test wing_noeng.inboard.moment - wing_eng.inboard.moment ≈ Nlift*Weng1*dyeinn
 #end wing_weights
 
 #wing_weights for Htail
