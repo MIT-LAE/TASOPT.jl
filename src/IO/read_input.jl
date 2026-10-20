@@ -220,9 +220,17 @@ elseif compare_strings(fueltype, "LH2")
     ifuel = 40
 elseif compare_strings(fueltype, "CH4")
     ifuel = 11
-#throw error if fueltype isn't a supported value
-else 
-    error("'$fueltype' is not a supported fuel type (e.g., \"JET-A\", \"LH2\", \"CH4\")")
+elseif compare_strings(fueltype, "C2H6")
+    ifuel = 12
+elseif compare_strings(fueltype, "C2H4")
+    ifuel = 15
+elseif compare_strings(fueltype, "C2H5OH")
+    pare[ieTft, :, :] .= readfuel("fuel_temp")
+    pare[ieTfuel, :, :] .= readfuel("fuel_temp")
+    parg[igrhofuel] = readfuel("fuel_density")
+    ifuel = 16
+else #throw error if fueltype isn't a supported value
+    error("'$fueltype' is not a supported fuel type (e.g., \"JET-A\", \"LH2\", \"CH4\", \"C2H6\", \"C2H4\", \"C2H5OH\")")
 end
 
 has_centerbox_fuel  = readfuel("fuel_in_wingcen")
@@ -1210,6 +1218,12 @@ elseif compare_strings(fueltype, "LH2")
     _opt_fuel = FuelType.LH2
 elseif compare_strings(fueltype, "CH4")
     _opt_fuel = FuelType.CH4
+elseif compare_strings(fueltype, "C2H6")
+    _opt_fuel = FuelType.C2H6
+elseif compare_strings(fueltype, "C2H4")
+    _opt_fuel = FuelType.C2H4
+elseif compare_strings(fueltype, "C2H5OH")
+    _opt_fuel = FuelType.C2H5OH
 else
     error("Unrecognized fuel type: $fueltype")
 end
