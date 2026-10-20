@@ -77,6 +77,15 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_miss["payload"] = parm[imWpay,:]
         d_miss["max_pax"] = parg[igWpaymax] ./ parm[imWperpax, :]
         d_miss["fuel_reserves"] = parg[igfreserve]
+        # Save holding-pattern reserve parameters when active (sentinel = -1)
+        if parg[igfreserve] < 0.0
+            d_miss["fuel_reserve_mode"]   = "holding"
+            d_miss["reserve_hold_time"]   = string(parm[imThold, 1], " s")
+            d_miss["reserve_hold_KIAS"]   = string(parm[imVhold, 1], " m/s")  # saved as EAS [m/s]
+            d_miss["reserve_hold_alt"]    = string(parm[imhhold, 1], " m")
+        else
+            d_miss["fuel_reserve_mode"]   = "fraction"
+        end
         d_miss["Vne"] = parg[igVne]
         d_miss["Nlift"] = parg[igNlift]
 

@@ -35,7 +35,10 @@
       const imfexcdf = 33
       const imDeltaTatm = 34
       const imWfvent = 35
-      const imtotal = 35
+      const imThold  = 36   # holding time [s] (used when fuel_reserve_mode = "holding")
+      const imVhold  = 37   # holding TAS [m/s]
+      const imhhold  = 38   # holding altitude [m]
+      const imtotal = 38
 
 #---- indices for geometry (airframe) variables and other sizing variables
       const igRange    =   1

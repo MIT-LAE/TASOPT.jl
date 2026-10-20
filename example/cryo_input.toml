@@ -97,7 +97,13 @@ name = "TASOPT Model with cryo fuel and HX"
                             # includes luggage [lbm or lbf or kg or N] 
                             # judging you if you use imperial units but wtvs
 
-    fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
+    fuel_reserve_mode = "fraction"  # "fraction" → legacy W_res/W_burned | "holding" → FAR/EASA 45-min hold
+    fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned  (used when fuel_reserve_mode = "fraction")
+
+    # Used when fuel_reserve_mode = "holding"
+    reserve_hold_time = "45 min"
+    reserve_hold_KIAS = "230 kts"
+    reserve_hold_alt  = "10000 ft"
 
     Nlift = 3.0 # Max vertical load factor for wing bending loads
     Vne = "280 kts" # Never exceed IAS for tail loads
