@@ -341,7 +341,7 @@ function optimize_double_decker_cabin(fuse)
 end
 
 """
-    MinCargoHeightConst(x, fuse, minheight = 1.626, minwidth = 3.13)
+    MinCargoHeightConst(x, fuse, fuse_offset = 6.0*in_to_m)
 
 This function evaluates a minimum height constraint on the cargo hold. It returns a number less than or equal 0 if
 the constraint is met and a value greater than 0 if it is not.
