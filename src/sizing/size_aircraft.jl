@@ -356,13 +356,17 @@ function _size_aircraft!(ac; itermax=35,
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
         rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
+        # One engine per wing at the span break ηs (as in TASOPT 2.16 surfw.f).
+        # dyeinn is its moment arm about the wing root station ηo [m]: y_e - y_o = (b/2)(ηs - ηo)
+        dyeinn = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
+
         # Call wing_weights function
         Wwing,Wsinn,Wsout,
         dyWsinn,dyWsout,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = wing_weights!(wing, po, γt, γs,
-                                            Nlift, Weng1, 0, 0.0, 1, wing.layout.ηs,
+                                            Nlift, Weng1, 0, 0.0, 1, dyeinn,
                                             parg[igsigfac], rhofuel)
 
         # Calculate fuel weight if stored in wings
