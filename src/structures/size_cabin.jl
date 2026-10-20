@@ -29,7 +29,7 @@ function place_cabin_seats(pax, cabin_width; seat_pitch = 30.0*in_to_m,
 
     rows = Int(ceil(pax / seats_per_row))
 
-    if seats_per_row <= 10
+    if seats_per_row <= 6
         emergency_rows = [12, 13]
     else
         emergency_rows = [19, 20]
