@@ -367,18 +367,16 @@ but this was more expensive and less robust than the brute-force approach.
     - `kmax::Float64`: Maximum value of the ratio ``k = 2πM/(WR)`` on ring circumference.
 """
 function stiffeners_bendingM(θ::Float64)
-      #Refined points near the known maximum for θ ≈ 80-90 deg, plus a uniform grid over [0, π] so that the
-      #maximum is also found for other support angles (e.g., at ϕ = π/2 or ϕ = π - θ)
-      ϕlist = [θ; LinRange(1.1,1.2,21); LinRange(0.0, π, 361)]
+      ϕlist = [θ; LinRange(1.05,1.4,36); π] #Refined points near the known maximum for θ ≈ 75-90 deg 
       k = zeros(length(ϕlist))
+      sinθ = sin(θ)
+      cosθ = cos(θ)
 
       for (i,ϕ) in enumerate(ϕlist)
             if 0 ≤ ϕ < θ
-                  k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2) #Eq. (7.4) in Barron (1985)
+                  k[i] = 0.5*cos(ϕ) + ϕ*sin(ϕ) - (π - θ)*sinθ + cosθ + cos(ϕ)*(sinθ^2) #Eq. (7.4) in Barron (1985)
             elseif θ ≤ ϕ ≤ π
-                  #Eq. (7.5) in Barron (1985), corrected: Barron prints the constant term as θ; it must be θ*sin(θ)
-                  #for the moment to be continuous with Eq. (7.4) at ϕ = θ
-                  k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ*sin(θ) + cos(θ) + cos(ϕ)*(sin(θ)^2)
+                  k[i] = 0.5*cos(ϕ) - (π - ϕ)*sin(ϕ) + θ*sinθ + cosθ + cos(ϕ)*(sinθ^2) #Eq. (7.5) in Barron (1985)
             end
       end
       kmax, imax = findmax(abs.(k))
