@@ -455,7 +455,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
 
       xWF, xWB, xWc = 0.0, 0.0, 0.0
       WF, WB, Wc = 0.0, 0.0, 0.0
-      dmax = 0.0
+      dmax, dxw, dSh = 0.0, 0.0, 0.0
 
       @inbounds for iter = 1:itmax
 
