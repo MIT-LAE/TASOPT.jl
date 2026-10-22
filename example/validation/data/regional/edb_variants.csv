@@ -1,0 +1,4 @@
+UID No,Engine Identification,Combustor Description,Rated Thrust (kN),Fuel Flow T/O (kg/sec),Fuel Flow C/O (kg/sec),Fuel Flow App (kg/sec),Fuel Flow Idle (kg/sec)
+10GE133,CF34-10E7,2253M21,83.7,0.866,0.714,0.237,0.087
+11GE146,CF34-10E7,2253M21-PFN,83.7,0.87,0.717,0.239,0.088
+8GE119,CF34-10E7,SAC,83.7,0.871,0.72,0.244,0.088

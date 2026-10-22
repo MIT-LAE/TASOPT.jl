@@ -1,0 +1,336 @@
+{
+  "task": "TASK-108",
+  "source": "outputs/experiments/b738_postdesign_20261021/source.toml",
+  "source_sha256": "a83200d7ef860f987f753c66533fc005de353d9eee8ec94cca19dbad87a1d5b3",
+  "template": "example/defaults/default_input.toml",
+  "fields": [
+    "Wing.AR",
+    "Wing.root_thickness_to_chord",
+    "Wing.spanbreak_thickness_to_chord",
+    "Wing.Aero.Climb.cls_clo",
+    "Wing.Aero.Climb.clt_clo",
+    "Mission.Cruise.cruise_CL",
+    "Propulsion.Tt4_cruise",
+    "Propulsion.Tt4_takeoff",
+    "Propulsion.Turbomachinery.Fan_PR",
+    "Propulsion.Turbomachinery.LPC_PR",
+    "Propulsion.Turbomachinery.BPR",
+    "Wing.inner_panel_taper_ratio",
+    "Wing.outer_panel_taper_ratio",
+    "Mission.Cruise.cruise_alt[1]",
+    "Mission.Cruise.cruise_alt[2]",
+    "Mission.Cruise.cruise_alt[3]",
+    "Mission.Cruise.cruise_alt[4]",
+    "Mission.Cruise.cruise_alt[5]",
+    "Mission.Cruise.cruise_alt[6]"
+  ],
+  "lower": [
+    7,
+    0.1,
+    0.1,
+    0.8,
+    0.3,
+    0.45,
+    700,
+    1100,
+    1,
+    1,
+    1,
+    0.5,
+    0.12,
+    20000,
+    20000,
+    20000,
+    20000,
+    20000,
+    20000
+  ],
+  "upper": [
+    12,
+    0.15,
+    0.15,
+    1.5,
+    1.5,
+    0.65,
+    2000,
+    2000,
+    3,
+    3.5,
+    12,
+    0.9,
+    0.4,
+    41000,
+    41000,
+    41000,
+    41000,
+    41000,
+    41000
+  ],
+  "initial": [
+    10.065340246838641,
+    0.14882481501032616,
+    0.12310694313435554,
+    1.078619414065985,
+    1.2635877864678389,
+    0.6232334220515061,
+    1500.1634955819238,
+    1739.0367660125446,
+    1.7153533751873007,
+    2.5090457405292024,
+    5.62508447960377,
+    0.9,
+    0.12,
+    35203.96776732208,
+    38186.513325594846,
+    37969.59389003074,
+    37157.94347597329,
+    36306.14492434748,
+    35392.17707456928
+  ],
+  "mission_ranges_nmi": [
+    2824,
+    500,
+    750,
+    1250,
+    1750,
+    2250
+  ],
+  "mission_payload_lbf": [
+    37446,
+    37446,
+    37446,
+    37446,
+    37446,
+    37446
+  ],
+  "mission_weights": [
+    0.0022,
+    0.3947,
+    0.3922,
+    0.1373,
+    0.0551,
+    0.0182
+  ],
+  "objective": "raw mission-weighted burned fuel kg, reserves excluded",
+  "engine_linkage": "HPC_PR=5*LPC_PR; OPR=5*LPC_PR^2",
+  "cruise_control": "design CL and initial altitude active; offdesign altitude prescribed, CL recomputed",
+  "rcls_rclt": "clean climb/cruise/descent values across all missions via Wing.Aero.Climb fields; takeoff and landing unchanged",
+  "limits": {
+    "wing_span_ft": 112.583,
+    "fan_diameter_m": 2,
+    "balanced_field_ft": 7000,
+    "minimum_top_of_climb_gradient": 0.015,
+    "Tt3_max_K": 950,
+    "static_margin_min": 0.05
+  },
+  "mission_limits": "takeoff weight <= native sized MTOW; loaded fuel <= geometric capacity; all6 missions",
+  "extra_constraints": [
+    "source static margin >=0.05",
+    "positive horizontal tail area"
+  ],
+  "excluded_from_objective_constraints": [
+    "APD weight errors",
+    "APD payload-range corners",
+    "APD area and tail area fit bands",
+    "EDB",
+    "landing-performance evidence",
+    "turbine metal temperature residual (not requested; report after freeze)"
+  ],
+  "fixed_assumptions": [
+    "reserve fraction",
+    "fixed equipment",
+    "payload-proportional equipment fraction",
+    "wing-box width/chord",
+    "wing sweep",
+    "all other non-DV TOML fields"
+  ],
+  "bounds_basis": "Exploratory sensitivity bounds, not measured aircraft evidence. Reserve is existing scalar approximation; drag factors >=1; positive off-takes retained; efficiency below1. All frozen during eventual inner fuel solve.",
+  "solver": "SLSQP normalized finite difference1e-5",
+  "maxeval": 500,
+  "ftol_rel": 1e-06,
+  "xtol_rel": 0,
+  "constraint_tolerance": 1e-06,
+  "special_tolerance": "BFL and climb normalized1e-5 retained from source study; final acceptance additional1e-6; fuel normalized1e-7",
+  "status": "post-design sensitivity study",
+  "taper_definition": "Both ratios are relative to wing root chord: break/root and tip/root, as used by TASOPT wing_weights.jl. Ordered bounds enforce tip < break < root.",
+  "taper_bounds_basis": "Existing B737 taper study config/optimization/b737800_fleet_taper20_v1.toml bounds reused as exploratory bounds only; legacy protocol not selected.",
+  "evidence_policy": "Only physical constraints in inner fuel search. Non-DV calibration candidates reviewed separately; EDB and APD landing data cannot tune inputs. No canonical digitized values overwritten.",
+  "selection": "Lowest raw weighted burned fuel among evaluated feasible candidates; endpoint retained separately",
+  "calibration_fixed": true,
+  "calibration_case": "balanced022_box0539",
+  "calibration_bounds": {
+    "Fuselage.Weights.add_payload_weight_fraction": [
+      0.35,
+      0.55
+    ],
+    "Mission.fuel_reserves": [
+      0.08,
+      0.3
+    ],
+    "Wing.box_width_to_chord": [
+      0.45,
+      0.6
+    ],
+    "Fuselage.Aero.excrescence_drag_factor": [
+      1.0,
+      1.25
+    ],
+    "Wing.Aero.excrescence_drag_factor": [
+      1.0,
+      1.25
+    ],
+    "Propulsion.Tt4_frac_bottom_of_climb": [
+      0,
+      0.5
+    ],
+    "Propulsion.Tt4_frac_top_of_climb": [
+      0,
+      0.2
+    ],
+    "Stabilizers.Htail.Vh": [
+      0.8,
+      1.2
+    ],
+    "Stabilizers.Htail.downwash_factor": [
+      0.3,
+      0.6
+    ]
+  },
+  "calibration_comparator": "feasible minimum-fuel initial altitude",
+  "curve_modes": [
+    "fixed_altitude",
+    "optimal_altitude",
+    "fixed_CL",
+    "optimal_CL"
+  ],
+  "curve_limits": {
+    "maximum_trajectory_altitude_ft": 41000,
+    "minimum_cruise_altitude_ft": 20000,
+    "BFL_ft": 7000,
+    "TOC_min": 0.015,
+    "Tt3_K": 950,
+    "SM_min": 0.05,
+    "native_MTOW": true,
+    "geometric_fuel_capacity": true,
+    "nonnegative_trajectory_distances": true
+  },
+  "control_search": {
+    "altitude_grid_ft": [
+      20000,
+      22000,
+      24000,
+      26000,
+      28000,
+      30000,
+      32000,
+      34000,
+      36000,
+      38000,
+      40000,
+      41000
+    ],
+    "CL_grid": [
+      0.45,
+      0.47500000000000003,
+      0.5,
+      0.525,
+      0.55,
+      0.575,
+      0.6000000000000001,
+      0.625,
+      0.65
+    ],
+    "include_fixed_control_anchor": true,
+    "refinement": "bounded scalar refinement around feasible grid minima; report numerical scope",
+    "CL_coupling": "Repeat-convergence verification only: TASOPT already refreshes drag inside its CL iteration; max8 passes, fuel relative1e-8/altitude0.01ft.",
+    "CL_schedule": "Prescribed CL assigned across clean climb/cruise/descent ipclimb1+1:ipdescentn-1, matching TASOPT altitude-mode broadcasting. Takeoff/landing untouched."
+  },
+  "protected_evidence": "EDB and landing unused",
+  "targets": {
+    "branch": "option_c_fuel_46063",
+    "canonical_corners": [
+      [
+        2020,
+        47000
+      ],
+      [
+        2824,
+        37446
+      ],
+      [
+        3700,
+        0
+      ]
+    ],
+    "post_design_samples": "3000, 3200, 3400 nmi; straight-segment interpolation of canonical APD corners, not independent digitized points"
+  },
+  "selection_policy": "Corner-first Pareto comparison against O4: do not select candidates that worsen first-corner range or materially move the full-fuel corner; ferry discrepancy is secondary. Retain <=1% compared weights. No V&V residual in inner fuel objective or constraints.",
+  "calibration_stage": "frozen19DVs sizing; inner fuel scope unchanged",
+  "exploratory_calibration_bounds": {
+    "Mission.fuel_reserves": [
+      0.08,
+      0.3
+    ],
+    "Fuselage.Weights.add_payload_weight_fraction": [
+      0.35,
+      0.55
+    ],
+    "Wing.box_width_to_chord": [
+      0.45,
+      0.6
+    ],
+    "Fuselage.Aero.excrescence_drag_factor": [
+      1,
+      1.25
+    ],
+    "Wing.Aero.excrescence_drag_factor": [
+      1,
+      1.25
+    ],
+    "Stabilizers.Htail.Vh": [
+      0.8,
+      1.2
+    ],
+    "Stabilizers.Htail.downwash_factor": [
+      0.3,
+      0.6
+    ],
+    "Fuselage.Aero.CL_zero_fuse_moment": [
+      0,
+      0.25
+    ],
+    "Propulsion.Nacelles.nacelle_pylon_wetted_area_ratio": [
+      12,
+      20
+    ],
+    "Propulsion.Offtakes.LPC_mass_offtake_per_pax": [
+      0.00315,
+      0.00945
+    ],
+    "Propulsion.Offtakes.Low_spool_power_offtake_per_pax": [
+      100,
+      300
+    ],
+    "Propulsion.Turbomachinery.fan_eta_poly": [
+      0.88,
+      0.91
+    ]
+  },
+  "study": "B738 O4 corner-first calibration",
+  "selection_priority": [
+    "Preserve or improve first maximum-payload corner relative to O4",
+    "Keep actual full-fuel corner near APD 2824 nmi and 37446 lb; do not trade it for ferry improvement",
+    "Reduce ferry shortfall among corner-preserving candidates"
+  ],
+  "sizing_weight_targets_lbf": [
+    91300,
+    174808,
+    46062
+  ],
+  "weight_target_reason": "MTOW = OEW + 37446 + geometric fuel capacity; all within 1 percent APD weights",
+  "candidate_rationale": {
+    "Q1": "Tail Vh1.0 and downwash0.3 combine measured opposing first-corner/ferry sensitivities; nacelle12 and fan efficiency0.905 offset ferry loss. Restore OEW and nominal full-fuel corner payload.",
+    "Q2": "Same as Q1 with tail Vh0.8, testing stronger ferry improvement versus first-corner accuracy."
+  },
+  "calibration_assumption_status": "Exploratory model assumptions, not measured aircraft properties. Lower-bound downwash and nacelle ratio require explicit interpretation."
+}

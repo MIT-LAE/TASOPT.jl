@@ -1,0 +1,30 @@
+[
+  {
+    "source_archive_path": "data/raw/737NG_REV_C.pdf",
+    "sha256": "22b1746201262dc34bb3ea46ae710b8802aff5c7df45ee73106f6f5ce9eb65bf"
+  },
+  {
+    "source_archive_path": "data/raw/e195_apm_apm_195_1.pdf",
+    "sha256": "80e58d25b1f7206cf1b3bfb7e135310d7999ff69232d095c266bc202f9086ced"
+  },
+  {
+    "source_archive_path": "data/raw/777-200LR-300ER-F_Rev_G.pdf",
+    "sha256": "9c98f2e9c013615c0eaa9dc87ccb82544b7a3333ed1b725d996e283d50da142a"
+  },
+  {
+    "source_archive_path": "data/raw/edb-emissions-databank_v32__web_.xlsx",
+    "sha256": "57a9ff572458ad3a3141afc1aea932b5faa5796d279f0ac74600b27869302530"
+  },
+  {
+    "source_archive_path": "outputs/reports/b738_cornerfirst_20261021/report.md",
+    "sha256": "daa7b3fbfae79b36e6b22b4d47927699e945255679544a11703504eb4dbd096e"
+  },
+  {
+    "source_archive_path": "outputs/reports/e195_corner_refit_20261021/E195_corner_fit_comparison.md",
+    "sha256": "93aae895f8ba74ba7049f58b2d3488003bb80fc2abef240b1103bf6538dbc449"
+  },
+  {
+    "source_archive_path": "outputs/reports/b777_economy_refined_21Oct/report.md",
+    "sha256": "063216d2a0c413e7fb8529b6bd42f5793b5a7e88f218f86411c23dee47b1bd07"
+  }
+]

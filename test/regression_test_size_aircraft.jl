@@ -92,31 +92,27 @@ end
     @test ac.parm[imPFEI] ≈ 0.9402313710034372 rtol=1e-4
 end
 
-@testset "Wide sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_wide.toml"))
-    
-    include(__TASOPTindices__)
-
-    @test ac.fuselage.layout.radius ≈ 3.0988
-    
-
-    size_aircraft!(ac; printiter=false);
-    
-    @test ac.parm[imPFEI] ≈ 1.1702982817495666 rtol=1e-4
-
-end
-
-@testset "Regional sizing" verbose=true begin
-    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_regional.toml"))
-    
-    include(__TASOPTindices__)
-
-    @test ac.fuselage.layout.radius ≈ 1.5113
-
-    size_aircraft!(ac; printiter=false);
-    
-    @test ac.parm[imPFEI] ≈ 0.8435990587821769 rtol=1e-4
-
+# Compare imported models with the independently replayed source-study masses.
+# The 0.01% tolerance covers rounded published values, not APD fit acceptance.
+@testset "Aircraft comparison models" verbose=true begin
+    for (class, mass_kg) in (("narrow", 174842.5 * 4.448222 / 9.81),
+                             ("regional", 52065.09),
+                             ("wide", 775421.06165 * 4.448222 / 9.81))
+        @testset "$class" begin
+            path = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_$class.toml")
+            ac = read_aircraft_model(path)
+            result = size_aircraft!(ac; printiter=false)
+            @test result.success
+            @test ac.is_sized[1]
+            @test ac.parg[igWMTO] / 9.81 ≈ mass_kg rtol=1e-4
+            @test ac.parg[igWMTO] > ac.parg[igWfuel] + ac.parg[igWpay] > 0
+            for mission in 2:size(ac.parm, 2)
+                @test TASOPT.fly_mission!(ac, mission; printTO=false)
+                @test isfinite(ac.parm[imPFEI, mission])
+                @test 0 < ac.parm[imWfuel, mission] < ac.parm[imWTO, mission]
+            end
+        end
+    end
 end
 
 @testset "Hydrogen sizing" verbose=true begin

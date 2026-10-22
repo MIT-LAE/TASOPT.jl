@@ -1,0 +1,12 @@
+all_missions_converged = true
+fuel_objective_kg = 51665.120401025895
+full_aircraft_reoptimized = true
+maximum_constraint = 0.0
+maximum_engine_failure_flag = 0.0
+model_input_mutations = 0
+physical_constraints_pass = true
+script_sha256 = "1e8d4da4dc8564d9d3d7dfc6574b8e0747c174d47bfb18a930cfb4c4c99428bd"
+sizing_converged = true
+source_sha256 = "181a229bef51ebb39bcba689edb7b127e00a4a0f6fc8a6220b72f88655003101"
+template_sha256 = "e3248b78cb806d83c52955e19d6fd937a4d7d26ecef1996a7a1fd0dbf9d68e94"
+verified_at_utc = "2026-10-21T18:47:58.447"

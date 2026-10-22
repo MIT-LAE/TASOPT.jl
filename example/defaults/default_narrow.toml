@@ -1,0 +1,372 @@
+["Aircraft Description"]
+aircraft_type = "Narrow Body Aircraft"
+description = "Numerical comparison model selected 21 October 2026. See example/validation/narrow.md for sources, assumptions and limitations."
+name = "Boeing 737-800 comparison (Q4)"
+
+[Fuel]
+fuel_density = 802.83
+fuel_enthalpy_vaporization = 0.0
+fuel_in_wing = true
+fuel_in_wingcen = true
+fuel_temp = 280.0
+fuel_type = "Jet-A"
+fuel_usability_factor = 0.9
+
+[Fuselage]
+cabin_pressure_altitude = "8000.0 ft"
+
+[LandingGear]
+LG_main_number_struts = 2
+LG_main_weight_fraction = 0.0396
+LG_main_wheels_per_strut = 2
+LG_nose_number_struts = 1
+LG_nose_weight_fraction = 0.0099
+LG_nose_wheels_per_strut = 2
+engine_ground_clearance = "23 in"
+landing_gear_model = "mass_fractions"
+tailstrike_angle = "10 deg"
+wing_dihedral_angle = "6 deg"
+x_main_landing_gear_offset = "1 ft"
+x_nose_landing_gear = "13.416667 ft"
+y_main_landing_gear_halfspan_fraction = 0.2
+
+[Mission]
+N_missions = 6
+Nlift = 3.0
+Vne = "280 kts"
+exit_limit = 184
+fuel_reserves = 0.2498969594445676
+max_payload = "47000 lbf"
+payload = [ "37446 lbf", "160 pax", "160 pax", "160 pax", "160 pax", "160 pax",]
+range = [ "2824 nmi", "500 nmi", "750 nmi", "1250 nmi", "1750 nmi", "2250 nmi",]
+weight_per_pax = "234.0375 lbf"
+
+[Options]
+engine_location = "wing"
+prop_sys_arch = "TF"
+tail_root_contraction = 1.0
+trefftz_bunch = 0.5
+trefftz_k_tip = 16.0
+trefftz_resolution = "COARSE"
+wing_root_contraction = 0.2
+
+[Propulsion]
+T_max_metal = 1280.0
+Tt4_cruise = 1497.4460312865513
+Tt4_frac_bottom_of_climb = 0.2
+Tt4_frac_top_of_climb = 0.0
+Tt4_takeoff = 1738.6838930930944
+climb_TSFC = 0.00018
+core_in_clean_flow = true
+cruise_TSFC = 0.00018
+descent_TSFC = 0.00018
+max_fan_diameter = 2.0
+number_of_engines = 2
+rate_of_climb = "500 ft/min"
+
+[Stabilizers]
+Re_ref = 10000000.0
+excrescence_drag_factor = 1.02
+lowspeed_cdf = 0.006
+lowspeed_cdp = 0.0035
+
+[Structures]
+E_struts = "10e6 lbf/in2"
+E_wing_spar_cap = "10e6 lbf/in2"
+bending_material = "TASOPT-Al"
+bending_max_avg_stress = 1.1
+bending_safety_factor = 1.5
+caps_material = "TASOPT-Al"
+caps_max_avg_stress = 1.1
+caps_safety_factor = 1.5
+cone_material = "TASOPT-Al"
+cone_max_avg_stress = 1.1
+cone_safety_factor = 2.0
+floor_material = "TASOPT-Al"
+floor_max_avg_stress = 1.1
+floor_safety_factor = 1.5
+fuse_shell_modulus_ratio = 1.0
+sigma_caps = "30e3 lbf/in2"
+sigma_struts = "30e3 lbf/in2"
+skin_material = "TASOPT-Al"
+skin_max_avg_stress = 1.1
+skin_safety_factor = 3.0
+stress_factor = 1.0
+strut_density = 2700.0
+tau_webs = "20e3 lbf/in2"
+webs_material = "TASOPT-Al"
+webs_max_avg_stress = 1.1
+webs_safety_factor = 1.5
+wing_tail_cap_density = 2700.0
+wing_tail_web_density = 2700.0
+
+[Wing]
+AR = 10.054876539724354
+airfoil = "C.air"
+box_width_to_chord = 0.5285481662777403
+center_box_halfspan = "74 in"
+has_strut = false
+hweb_to_hbox = 0.75
+inner_panel_taper_ratio = 0.899988197988935
+maxSpan = "112.583 ft"
+outer_panel_taper_ratio = 0.12000119613269199
+panel_break_location = 0.331263
+root_thickness_to_chord = 0.14857416984187505
+spanbreak_thickness_to_chord = 0.1245898384150095
+spar_box_x_c = 0.4
+strut_local_velocity_ratio = 1.0
+strut_toc = 0.15
+sweep = 27.00840501903191
+x_wing_box = "58.6925 ft"
+z_strut = "154 in"
+z_wing = "-5.48974 ft"
+
+[Fuel.Storage]
+
+[Fuselage.Aero]
+BLI_frac = 0.0
+CL_zero_fuse_moment = 0.185
+calculates_pitching_moment_volume = false
+excrescence_drag_factor = 1.03
+pitching_moment_volume = "2390.0 ft3"
+wingbreak_fuse_overspeed = 0.014
+wingroot_fuse_overspeed = 0.018
+wingtip_fuse_overspeed = 0.0045
+
+[Fuselage.Geometry]
+HT_load_fuse_bend_relief = 0.4
+VT_load_fuse_bend_relief = 0.7
+a_nose = 1.65
+aisle_halfwidth = "10 in"
+b_tail = 2.0
+calculate_cabin_length = false
+dRadius = "15 in"
+double_decker = false
+floor_depth = "5.0 in"
+floor_distance = "0 in"
+front_seat_offset = "10 ft"
+min_top_cabin_height = "2 m"
+number_of_bubbles = 1
+radius = "74 in"
+rear_seat_offset = "5 ft"
+seat_height = "45 in"
+seat_pitch = "30 in"
+seat_width = "17.0 in"
+tailcone_taper = 0.3
+tapers_to = "point"
+unit_load_device = "LD3"
+x_APU = "120 ft"
+x_HPE_sys = "62ft"
+x_cone_end = "124.75 ft"
+x_end = "129.5 ft"
+x_end_cylinder = "100.0 ft"
+x_engines = "52 ft"
+x_fixed_weight = "7ft"
+x_nose_tip = "0 ft"
+x_pressure_shell_aft = "112.5833 ft"
+x_pressure_shell_fwd = "13.4167 ft"
+x_start_cylinder = "20.0 ft"
+y_critical_engines = "16 ft"
+y_offset = 0.0
+
+[Fuselage.Weights]
+APU_weight_fraction = 0.0315
+HPE_sys_weight_fraction = 0.009
+add_payload_weight_fraction = 0.4420024111057421
+additional = 0.2
+fixed_weight = "3000 lbf"
+floor_weight_per_area = 54.0
+frame = 0.25
+seat_weight_fraction = 0.09
+stringer = 0.35
+window_insul_per_area = 19.8
+window_per_length = 391.5
+
+[Mission.Climb]
+minimum_top-of-climb_gradient = 0.015
+
+[Mission.Cruise]
+cruise_CL = [ 0.617650559166314, 0.57, 0.57, 0.57, 0.57, 0.57,]
+cruise_alt = [ "35164.76818626018 ft", "38438.84031781344 ft", "38125.67521444753 ft", "37295.54574643297 ft", "36305.21679908788 ft", "35310.2539145141 ft",]
+cruise_mach = [ 0.8, 0.8, 0.8, 0.8, 0.8, 0.8,]
+
+[Mission.Descent]
+descent_angle_bottom-of-descent = "-3.0 deg"
+descent_angle_top-of-descent = "-3.0 deg"
+
+[Mission.Takeoff]
+CD_dead_engine = 0.5
+CD_landing_gear = 0.015
+CD_spoilers = 0.1
+CL_max_perp = 2.8
+Nland = 6.0
+braking_resistance_coeff = 0.35
+max_balanced_field_length = "7000 ft"
+rolling_resistance_coeff = 0.025
+takeoff_T = [ 288.2, 288.2, 288.2, 288.2, 288.2, 288.2,]
+takeoff_alt = [ "0.0 ft", "0.0 ft", "0.0 ft", "0.0 ft", "0.0 ft", "0.0 ft",]
+takeoff_obstacle_height = "35 ft"
+
+[Propulsion.Combustor]
+combustion_efficiency = 0.98
+
+[Propulsion.Cooling]
+HPT_efficiency_derivative_with_cooling = 0.0
+M41 = 0.9
+M_turbine_blade_exit = 1.0
+St = 0.09
+baseline_cooling_fraction = 0.0
+cooling_air_V_ratio = 0.15
+e_film_cooling = 0.7
+hot_streak_T_allowance = 200.0
+t_film_cooling = 0.3
+
+[Propulsion.HeatExchangers]
+
+[Propulsion.Nacelles]
+nacelle_local_velocity_ratio = 1.02
+nacelle_pylon_wetted_area_ratio = 12.0
+
+[Propulsion.Offtakes]
+LPC_mass_offtake_per_max_mass = 0.0
+LPC_mass_offtake_per_pax = 0.0063
+Low_spool_power_offtake_per_max_mass = 1.8
+Low_spool_power_offtake_per_pax = 200.0
+Pt_offtake_air = 30000.0
+Tt_offtake_air = 300.0
+
+[Propulsion.Turbomachinery]
+BPR = 6.017562511323092
+Fan_PR = 1.6797342426830466
+HPC_eta_poly = 0.87
+HPT_eta_poly = 0.889
+HTR_HPC = 0.8
+HTR_LPC = 0.6
+HTR_fan = 0.3
+LPC_PR = 2.52790288608047
+LPC_eta_poly = 0.88
+LPT_eta_poly = 0.899
+M2 = 0.6
+M25 = 0.6
+OPR = 31.951465007269846
+burner_PR = 0.94
+core_nozzle_PR = 0.989
+diffuser_PR = 0.998
+fan_eta_poly = 0.905
+fan_nozzle_PR = 0.98
+gear_ratio = 1.0
+high_spool_loss = 0.022
+low_spool_loss = 0.01
+
+[Propulsion.Weight]
+engine_access_weight_fraction = 0.1
+engine_weight_fraction = 0.1
+engine_weight_total = "10000 lbf"
+pylon_weight_fraction = 0.1
+weight_model = "fitzgerald_basic"
+
+[Propulsion.temperature_limits]
+compressor_exit = 950.0
+turbine_metal = 1280.0
+
+[Stabilizers.Htail]
+AR_Htail = 6.0
+CD_Htail_from_center = 0.1
+CLh_at_max_forward_CG = -0.7
+CLh_max = 2.0
+CLh_spec = -0.02
+SM_min = 0.1
+Vh = 1.0
+added_weight_fraction = 0.27
+box_height_chord = 0.14
+box_width_to_chord = 0.5
+center_box_halfspan = "2.5 ft"
+downwash_factor = 0.3
+max_tail_download = -0.5
+multi_section = false
+nacelle_lift_curve_slope = 3.8
+number_Htails = 2.0
+opt_move_wing = "min_static_margin"
+opt_sizing = "fixed_Vh"
+sweep = 26.0
+taper = 0.25
+web_height_hbox = 0.75
+x_Htail = "114.5 ft"
+z_Htail = "0 ft"
+
+[Stabilizers.Vtail]
+AR_Vtail = 1.78766
+CLv_at_engine_out = 0.5
+CLv_max = 2.6
+Vv = 0.150655
+added_weight_fraction = 0.36
+box_height_chord = 0.14
+box_width_to_chord = 0.5
+center_box_halfspan = 0.0
+number_Vtails = 1.0
+opt_sizing = "fixed_Vv"
+sweep = 24.77185
+taper = 0.328622
+web_height_hbox = 0.75
+x_Vtail = "108.202894 ft"
+
+[Wing.Aero]
+BLI_frac = 0.0
+Re_ref = 20000000.0
+Reynolds_scaling = -0.15
+excrescence_drag_factor = 1.02
+fuselage_lift_carryover_loss_factor = -0.3
+lowspeed_cdf = 0.0085
+lowspeed_cdp = 0.0035
+strut_Re_ref = 1000000.0
+strut_lowspeed_cdf = 0.0085
+strut_lowspeed_cdp = 0.0035
+wing_tip_lift_rolloff_factor = -0.05
+
+[Wing.Weightfracs]
+aileron = 0.04
+attachments = 0.03
+flap = 0.2
+leading_trailing_edge = 0.1
+ribs = 0.15
+slat = 0.1
+spoilers = 0.02
+
+[Propulsion.Nozzles.core_nozzle_area]
+climbend = 1.0
+climbstart = 1.0
+cutback = 1.0
+descentend = 1.0
+descentstart = 1.0
+rotation = 1.0
+static = 1.0
+
+[Propulsion.Nozzles.fan_nozzle_area]
+climbend = 1.0
+climbstart = 1.0
+cutback = 1.0
+descentend = 1.0
+descentstart = 1.0
+rotation = 1.0
+static = 1.0
+
+[Wing.Aero.Climb]
+cls_clo = 1.0719678637988748
+clt_clo = 1.2499313236731824
+cm_o = -0.06
+cm_s = -0.06
+cm_t = -0.06
+
+[Wing.Aero.Landing]
+cls_clo = 1.1
+clt_clo = 0.5
+cm_o = -0.35
+cm_s = -0.35
+cm_t = -0.02
+
+[Wing.Aero.Takeoff]
+cls_clo = 1.1
+clt_clo = 0.6
+cm_o = -0.2
+cm_s = -0.2
+cm_t = -0.02

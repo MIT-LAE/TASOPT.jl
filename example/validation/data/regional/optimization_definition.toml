@@ -1,0 +1,156 @@
+[[design_variables]]
+name = "wing_sweep"
+lower = 10.0
+upper = 40.0
+unit = "deg"
+scope = "aircraft"
+
+[[design_variables]]
+name = "root_thickness_to_chord"
+lower = 0.1
+upper = 0.15
+unit = "dimensionless"
+scope = "aircraft"
+
+[[design_variables]]
+name = "spanbreak_thickness_to_chord"
+lower = 0.1
+upper = 0.15
+unit = "dimensionless"
+scope = "aircraft"
+
+[[design_variables]]
+name = "clean_rcls"
+lower = 0.8
+upper = 1.5
+unit = "dimensionless"
+scope = "shared_clean_flight_points"
+
+[[design_variables]]
+name = "clean_rclt"
+lower = 0.3
+upper = 1.5
+unit = "dimensionless"
+scope = "shared_clean_flight_points"
+
+[[design_variables]]
+name = "clean_lift_coefficient"
+lower = 0.45
+upper = 0.65
+unit = "dimensionless"
+scope = "design_mission"
+
+[[design_variables]]
+name = "cruise_turbine_inlet_temperature"
+lower = 700.0
+upper = 2000.0
+unit = "K"
+scope = "aircraft"
+
+[[design_variables]]
+name = "takeoff_turbine_inlet_temperature"
+lower = 1100.0
+upper = 2000.0
+unit = "K"
+scope = "aircraft"
+
+[[design_variables]]
+name = "fan_pressure_ratio"
+lower = 1.0
+upper = 3.0
+unit = "dimensionless"
+scope = "aircraft"
+
+[[design_variables]]
+name = "core_lpc_pressure_ratio"
+lower = 1.0
+upper = 5.0
+unit = "dimensionless"
+scope = "aircraft"
+derived_linkage = "HPC_PR = 1.35185785138 * LPC_PR; OPR = 1.35185785138 * LPC_PR^2"
+
+[[design_variables]]
+name = "bypass_ratio"
+lower = 1.0
+upper = 12.0
+unit = "dimensionless"
+scope = "aircraft"
+
+[[design_variables]]
+name = "cruise_altitude_m1"
+lower = 20000.0
+upper = 60000.0
+unit = "ft"
+scope = "mission_1"
+
+[[design_variables]]
+name = "cruise_altitude_m2"
+lower = 20000.0
+upper = 60000.0
+unit = "ft"
+scope = "mission_2"
+
+[[design_variables]]
+name = "cruise_altitude_m3"
+lower = 20000.0
+upper = 60000.0
+unit = "ft"
+scope = "mission_3"
+
+[[design_variables]]
+name = "cruise_altitude_m4"
+lower = 20000.0
+upper = 60000.0
+unit = "ft"
+scope = "mission_4"
+
+[[design_variables]]
+name = "cruise_altitude_m5"
+lower = 20000.0
+upper = 60000.0
+unit = "ft"
+scope = "mission_5"
+
+[[design_variables]]
+name = "cruise_altitude_m6"
+lower = 20000.0
+upper = 60000.0
+unit = "ft"
+scope = "mission_6"
+
+[missions]
+indices = [ 1, 2, 3, 4, 5, 6,]
+ranges_nmi = [ 2315.0, 500.0, 750.0, 1250.0, 1750.0, 2250.0,]
+weights = [ 0.0, 0.777475463381376, 0.19997145982971032, 0.0211006992341721, 0.0014523775547416321, 0.0,]
+payload_pax = [ 108, 108, 108, 108, 108, 108,]
+weight_per_pax_lbf = 182.22839023384213
+weight_policy = "Mission.payload uses 108 pax across the 2315 nmi Design Mission and five lower OAG bins; weight_per_pax is derived as 8927 kg / 108 pax; Mission.max_payload is APD-derived and expressed as 168.1626005732504 pax-equivalent."
+
+[feasibility]
+optimizer_scaled_residual = 0.0001
+final_acceptance_scaled_residual = 1e-6
+verification_fuel_rtol = 1e-10
+verification_fuel_atol_kg = 1e-8
+verification_constraint_rtol = 1e-10
+verification_constraint_atol = 1e-10
+
+[solver]
+mode = "derivative_free"
+workers = 0
+max_evaluations = 1500
+max_sizing_calls = 1500
+max_wall_time_seconds = 14400.0
+initial_step = 0.05
+cobyla_xtol_rel = 0.0001
+cobyla_ftol_rel = 1e-6
+slsqp_max_evaluations = 100
+slsqp_max_sizing_calls = 10000
+slsqp_max_wall_time_seconds = 14400.0
+
+[engine_cycle]
+hpc_pr_lpc_multiplier = 1.3518578513793105
+source_lpc_pr = 4.631626020155559
+source_hpc_pr = 6.2613
+source_opr = 29.0
+public_booster_lpc_pr = 1.8159
+pressure_ratio_linkage = "HPC_PR = hpc_pr_lpc_multiplier * LPC_PR; OPR = hpc_pr_lpc_multiplier * LPC_PR^2"
