@@ -846,7 +846,13 @@ readprop(x) = read_input(x, prop, dprop)
 parg[igneng] = readprop("number_of_engines")
 
 if lowercase(propsys) == "tf"
-    parg[igTmetal] = Temp.(readprop("T_max_metal"))
+    temperature_limits = get(prop, "temperature_limits", Dict())
+    temperature_limits isa AbstractDict || throw(ArgumentError("Propulsion.temperature_limits must be a table."))
+    all(k -> k in ("compressor_exit", "turbine_metal"), keys(temperature_limits)) ||
+        throw(ArgumentError("Unknown Propulsion.temperature_limits key; use compressor_exit or turbine_metal."))
+    parg[igTmetal] = Temp(get(temperature_limits, "turbine_metal", readprop("T_max_metal")))
+    isfinite(parg[igTmetal]) && parg[igTmetal] > 0 ||
+        throw(ArgumentError("Turbine-metal temperature limit must be positive and finite."))
     parg[igfTt4CL1] = readprop("Tt4_frac_bottom_of_climb")
     parg[igfTt4CLn] = readprop("Tt4_frac_top_of_climb")
 
@@ -1137,6 +1143,13 @@ else
     > `fuel_cell_with_ducted_fan` - hydrogen fuel cell driving electric fans")
 end
 engine = TASOPT.engine.Engine(enginemodel, engdata, Vector{TASOPT.engine.HeatExchanger}())
+engine.max_fan_diameter = Distance(get(prop, "max_fan_diameter", get(dprop, "max_fan_diameter", "2 m")))
+default_temperatures = get(dprop, "temperature_limits", Dict())
+engine.max_compressor_exit_temperature = Temp(get(get(prop, "temperature_limits", Dict()),
+    "compressor_exit", get(default_temperatures, "compressor_exit", "900 K")))
+all(x -> isfinite(x) && x > 0,
+    (engine.max_fan_diameter, engine.max_compressor_exit_temperature)) ||
+    throw(ArgumentError("Fan-diameter and compressor-exit temperature limits must be positive and finite."))
     
 # Heat exchangers, only if in the model file (assigned 0 in the default .tomls)
 # Would be better if there were an independent toggle like `has_wing_fuel` for `fuse_tank` but good enough for now

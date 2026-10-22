@@ -87,8 +87,13 @@
     @test size(csv1,1) == 4 #4 rows w default indices
     @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test length(csv1[1]) == 783 # = entries w/ full ac `struct` and in default_output_indices
-    @test length(csv2[1]) == 1153 # = entries w/ full ac `struct` and all output_indices
+    @test length(csv1[1]) == 785 # = entries w/ full ac `struct` and in default_output_indices
+    @test length(csv2[1]) == 1155 # = entries w/ full ac `struct` and all output_indices
+
+    for csv in (csv1, csv2), field in (:max_fan_diameter, :max_compressor_exit_temperature)
+        column = Symbol("engine.", field)
+        @test getproperty(csv[1], column) == getproperty(ac_def.engine, field)
+    end
 
     #test the nested vectors within par arrays
     #a: row 1 in both csvs matches the design cruise point/mission 

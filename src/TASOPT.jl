@@ -91,6 +91,9 @@ include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
+include(joinpath(__TASOPTroot__,"mission/constraints.jl"))
+export ConstraintReport, MissionConstraintContext, aircraft_constraint_report,
+       mission_constraint_report, is_feasible
 # Plotting functions
 include(joinpath(__TASOPTroot__,"IO/plotting/output_plots.jl"))
 include(joinpath(__TASOPTroot__,"IO/plotting/trefftz_plots.jl"))

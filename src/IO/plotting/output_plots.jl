@@ -1053,164 +1053,204 @@ function MomentShear(ac::aircraft)
 
 end
 
-"""
-    PayloadRange(ac_og; Rpts, Ppts, plots_OEW, filename, itermax, initializes_engine, Ldebug)
+# Evaluate each altitude independently: failed missions must not seed later trials.
+function _payload_range_trial(ac, range, payload, altitudes;
+    itermax = 35, initializes_engine = true, printTO = false,
+    mission_constraints = mission_constraint_report, constraint_tol = 1e-6)
 
-Function to plot a payload range diagram for an aircraft
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `ac_og::aircraft`: Aircraft structure for payload range diagram.
-    - `Rpts::Int64`: Density of ranges to be plot (Optional).
-    - `Ppts::Int64`: Density of payloads to be plot (Optional).
-    - `filename::String`: filename string for the plot to be stored (Optional).
-    - `plots_OEW::Bool`: Whether to plot OEW+Payload (true) on the y-axis or just Payload (false, default) (Optional).
-    - `itermax::Int64`: Max Iterations for fly_mission! loop (Optional).
-    - `initializes_engine::Bool`: Use design case as initial guess for engine state if true (Optional)
-    - `specifying_cruise::String`: option for whether cruise altitude or lift coefficient is specified. Options are "altitude" or "lift_coefficient"
-    - `Ldebug::Bool`: verbosity flag. false by default, hiding outputs as PR sweeps progress (Optional).
-"""
-function PayloadRange(ac_og::TASOPT.aircraft; 
-    Rpts::Integer = 20, Ppts::Integer = 21, plots_OEW::Bool = false,
-    filename::String = "", 
-    itermax::Int64 = 35, initializes_engine::Bool = true, opt_prescribed_cruise_parameter = "CL",
-    Ldebug::Bool = false)
-
-    if !ac_og.is_sized[1]
-        error("Aircraft $(ac_og.name) not sized. Please size aircraft before calling `PayloadRange()`.")
+    best = nothing
+    context = MissionConstraintContext(2, ac.parg[igWMTO], true)
+    for altitude in altitudes
+        trial = deepcopy(ac)
+        trial.parm[imRange, 2] = range
+        trial.parm[imWpay, 2] = payload
+        trial.para[iaalt, ipcruise1, 2] = altitude
+        converged = try
+            fly_mission!(trial, 2; itermax, initializes_engine, printTO,
+                         opt_prescribed_cruise_parameter = "altitude")
+        catch err
+            # Failed engine gas-flow/temperature solves can return nothing.
+            numerical_failure = err isa DomainError || err isa OverflowError ||
+                (err isa MethodError && err.f in (iterate, engine.get_thermo) &&
+                 any(isnothing, err.args)) ||
+                (err isa ErrorException && (startswith(err.msg, "ht5 < h5") ||
+                 startswith(err.msg, "Oops, you're searching for a NaN!")))
+            numerical_failure || rethrow()
+            false
+        end
+        converged || continue
+        fuel = trial.parm[imWfuel, 2]
+        # Reject trajectories whose climb/descent leaves no room for cruise.
+        cruise_range = trial.para[iaRange, ipcruisen, 2] - trial.para[iaRange, ipcruise1, 2]
+        isfinite(fuel) && fuel >= 0 || continue
+        constraints = mission_constraints(trial, 2, context)
+        feasible = is_feasible(constraints, constraint_tol) && cruise_range >= 0 &&
+                   all(>(0), trial.para[iagamV, ipclimb1:ipclimbn, 2])
+        # Reserves are a fixed fraction, so minimum fuel load also minimizes burn.
+        if best === nothing || (feasible && !best.feasible) ||
+           (feasible == best.feasible && fuel < best.fuel)
+            best = (; range, payload, fuel, altitude, feasible, constraints,
+                    pfei = iszero(payload) ? NaN : trial.parm[imPFEI, 2])
+        end
     end
+    best === nothing && error("No converged payload-range mission at range $range m, payload $payload N.")
+    return best
+end
 
-    #Duplicate design mission as second aircraft, which will be modified
-    parm = cat(ac_og.parm[:,1], ac_og.parm[:,1], dims=2)
-    pare = cat(ac_og.pare[:,:,1], ac_og.pare[:,:,1], dims=3)
-    para = cat(ac_og.para[:,:,1], ac_og.para[:,:,1], dims=3)
-    ac = aircraft(ac_og.name, ac_og.description,
-    ac_og.options, ac_og.parg, parm, para, pare, [true], 
-    ac_og.fuselage, ac_og.fuse_tank, ac_og.wing, ac_og.htail, ac_og.vtail, ac_og.engine, ac_og.landing_gear)
+# Bracket any aircraft/mission limit, retaining the feasible side of the bisection.
+function _payload_range_limit(mission, payload, short_range, design_range, range_tol)
+    low = mission(short_range, payload)
+    low.feasible || error("Verification mission violates constraints at payload $payload N: $(low.constraints.raw)")
+    upper = max(design_range, 2short_range)
+    high = mission(upper, payload)
+    for _ = 1:30
+        !high.feasible && break
+        low = high
+        upper *= 1.25
+        high = mission(upper, payload)
+    end
+    !high.feasible || error("Unable to bracket a payload-range constraint limit.")
+    while high.range - low.range > range_tol
+        mid = mission((low.range + high.range) / 2, payload)
+        if mid.feasible
+            low = mid
+        else
+            high = mid
+        end
+    end
+    return low
+end
 
+# Sample the level segment in range and each descending segment in payload.
+function _payload_range_samples(points, origin_check, mission, limit, Rpts, Ppts)
+    sampled = [origin_check]
+    for r in range(origin_check.range, points[1].range; length=Rpts)[2:end-1]
+        point = mission(r, points[1].payload)
+        point.feasible || error("Sampled payload-range mission violates constraints: $(point.constraints.raw)")
+        push!(sampled, point)
+    end
+    push!(sampled, points[1])
+    for (left, right) in zip(points[1:end-1], points[2:end])
+        for p in range(left.payload, right.payload; length=Ppts)[2:end-1]
+            push!(sampled, limit(p))
+        end
+        push!(sampled, right)
+    end
+    return unique(sampled)
+end
+
+"""
+    payload_range_data(ac; altitude_ft = 28000:1000:50000, range_tol = 100.0, ...)
+
+Calculate the maximum-payload, full-fuel and zero-payload range limits, with a
+zero-range plotting intercept. Each mission searches the altitude grid for the
+lowest fuel burn among feasible missions, preserving design Mach and reserves.
+The default constraint policies are the model-defined aircraft/mission reports
+(span, fan geometry, fuel, MTOW, BFL, climb and engine temperatures), with a scaled
+acceptance tolerance of `1e-6`. Supply other report functions for other aircraft.
+Operating limits can truncate the usual MTOW/full-fuel corners.
+`range_tol` is in metres; `short_range` is the verification mission range in metres.
+The intercept has no mission fuel, PFEI or altitude (NaN); `origin_check` contains
+its actual short-mission verification. The input aircraft is not modified.
+Set `all_points=true` to sample the boundary: `Rpts` counts missions from
+`short_range` to corner 1 (including both ends); `Ppts` counts payload levels
+on each descending segment (including both corners). The zero-range intercept
+is additional, and shared corners appear only once.
+"""
+function payload_range_data(ac_og::TASOPT.aircraft;
+    all_points::Bool = false, Rpts::Int = 10, Ppts::Int = 10,
+    altitude_ft = 28000:1000:50000, range_tol::Real = 100.0,
+    short_range::Real = 500 * 1852.0, itermax::Int = 35,
+    initializes_engine::Bool = true, printTO::Bool = false, Ldebug::Bool = false,
+    aircraft_constraints = aircraft_constraint_report,
+    mission_constraints = mission_constraint_report, constraint_tol::Real = 1e-6)
+
+    ac_og.is_sized[1] || error("Size the aircraft before calculating its payload-range diagram.")
+    Rpts >= 2 && Ppts >= 2 || throw(ArgumentError("Rpts and Ppts must each be at least 2."))
+    isfinite(range_tol) && range_tol > 0 || throw(ArgumentError("range_tol must be positive and finite."))
+    isfinite(short_range) && short_range > 0 || throw(ArgumentError("short_range must be positive and finite."))
+    altitudes = convertDist.(Float64.(collect(altitude_ft)), "ft", "m")
+    !isempty(altitudes) && all(h -> isfinite(h) && h > 0, altitudes) ||
+        throw(ArgumentError("altitude_ft must contain positive, finite altitudes."))
+
+    aircraft_report = aircraft_constraints(ac_og)
+    is_feasible(aircraft_report, constraint_tol) ||
+        error("Aircraft violates shared constraints: $(aircraft_report.raw)")
+
+    ac = deepcopy(ac_og)
+    ac.parm = repeat(ac.parm[:, 1:1], 1, 2)
+    ac.para = repeat(ac.para[:, :, 1:1], 1, 1, 2)
+    ac.pare = repeat(ac.pare[:, :, 1:1], 1, 1, 2)
     for HX in ac.engine.heat_exchangers
-        HX.HXgas_mission = cat(HX.HXgas_mission[:,1], HX.HXgas_mission[:,1], dims=2)
-    end
-    #Extract aircraft parameters
-    Wmax = ac.parg[igWMTO]
-    Fuelmax = ac.parg[igWfmax]
-    Wempty = ac.parg[igWMTO] - ac.parg[igWfuel] - ac.parg[igWpay]
-    PFEI = 0.0
-
-    RangesToPlot = []
-    PayloadToPlot = []
-    PFEIsToPlot = []
-    maxPay = ac.parg[igWpaymax]
-    Wpax = ac.parm[imWperpax, 1]
-    sizingWpay = ac.parm[imWpay, 1] #sizing payload
-
-    RangeArray =  ac.parm[imRange,1] * sort([LinRange(0.1,2.0,Rpts-1); 1.0]) #This ensures design range is always shown
-    tolweight = 1.0 #One newton tolerance for weight checks
-
-    for Range = RangeArray
-        if maxPay == 0
-            break
-        else
-            #This ensures design payload is always included
-            Payloads = reverse(sort([(maxPay) * LinRange(0, 1, Ppts - 1); sizingWpay]))
-        end
-        ac.parm[imRange,2] = Range
-        for mWpay = Payloads
-            if Ldebug println("Checking for Range (nmi): ", convertDist(Range, "m", "nmi"), " and Pax = ", mWpay/convertForce(Wpax, "N", "lbf")) end
-            #reset the aircraft to the design altitude and cruise CL since one is changed during fly_mission!() per opt_prescribed_cruise_parameter
-            ac.para[iaalt,ipcruise1,2] = ac.para[iaalt,ipcruise1,1]
-            ac.para[iaCL,ipcruise1,2] = ac.para[iaCL,ipcruise1,1]
-            
-            ac.parm[imWpay,2] = mWpay
-            try
-                fly_mission!(ac, 2; itermax = itermax, initializes_engine = initializes_engine, opt_prescribed_cruise_parameter = opt_prescribed_cruise_parameter)
-                # fly_mission! success: store maxPay, break loop
-                mWfuel = ac.parm[imWfuel,2]
-                WTO = Wempty + mWpay + mWfuel
-
-                # if weights are negative or above their max, point is infeasible
-                if ((WTO - Wmax) > tolweight) || ((mWfuel - Fuelmax) > tolweight) || (WTO < 0.0) || (mWfuel < 0.0)
-                    WTO = 0.0
-                    mWfuel = 0.0
-
-                    if Ldebug println("Max out error!") end
-
-                    if mWpay == 0
-                        if Ldebug println("Payload 0 and no convergence found") end
-                        
-                        maxPay = 0
-                    end
-                else
-                    maxPay = mWpay
-                    PFEI = ac.parm[imPFEI, 2]
-                    if Ldebug println("Converged - moving to next range...") end
-                    
-                    break
-                end     
-            catch
-                if Ldebug println("Not Converged - moving to lower payload...") end
-            end
-        end
-        append!(RangesToPlot, Range)
-        append!(PFEIsToPlot, PFEI)
-        if plots_OEW
-            append!(PayloadToPlot, maxPay+Wempty)
-        else
-            append!(PayloadToPlot, maxPay)
-        end
+        HX.HXgas_mission = repeat(HX.HXgas_mission[:, 1:1], 1, 2)
     end
 
-    # Convert values for plotting
-    ranges_nmi = convertDist.(RangesToPlot, "m", "nmi")
-    payload_tons = PayloadToPlot ./ (9.81 * 1000)
-
-    # Standard PR Diagram
-    plot1 = plot(ranges_nmi, payload_tons, 
-        lw=2,                   # Line width
-        line=:solid,            # Line style
-        color=:blue,            # Line color
-        xlabel="Range (nmi)", 
-        ylabel= plots_OEW ? "OEW + Payload Weight (tonnes)" : "Payload Weight (tonnes)",
-        title="Payload-Range Diagram: "*string(ac.name), 
-        grid=true,              # Enable grid
-        dpi = 300,
-        margin=4mm,
-        legend=false,
-        label="")
-
-    # Add the design point to plot1
-    design_range = convertDist.(ac_og.parm[imRange,1], "m", "nmi")
-    design_payload = (plots_OEW ? ac_og.parm[imWpay, 1] + Wempty : ac_og.parm[imWpay, 1]) / (9.81 * 1000)
-    scatter!(plot1, [design_range], [design_payload], 
-             color=:blue, marker=:star5, ms=8, label="Design Point",
-             legend=:bottomleft)
-
-    # PFEI plot
-    plot2 = plot(ranges_nmi, PFEIsToPlot, 
-        lw=2,                   # Line width
-        line=:solid,            # Line style
-        color=:green,            # Line color
-        xlabel="Range (nmi)", 
-        ylabel="PFEI at max payload (kJ/kg-km)", 
-        title="Payload-Range Diagram: "*string(ac.name), 
-        grid=true,              # Enable grid
-        dpi = 300,
-        margin=4mm,
-        legend=false)
-
-    # Add the design point to plot2
-    design_PFEI = ac_og.parm[imPFEI, 1]
-    scatter!(plot2, [design_range], [design_PFEI], color=:green, marker=:star5, ms=8, label="Design Point")
-
-    layout = @layout [A; B]
-    fig = plot(plot1, plot2, layout=layout, 
-    size=(600, 800), 
-    dpi=300, margin=4mm)
-        
-    if filename != ""
-        savefig(fig, filename)
+    Wmax, Fuelmax = ac.parg[igWMTO], ac.parg[igWfmax]
+    Wempty = Wmax - ac.parg[igWfuel] - ac.parg[igWpay]
+    max_payload = ac.parg[igWpaymax]
+    all(isfinite, (Wmax, Fuelmax, Wempty, max_payload)) &&
+        Wmax > Wempty >= 0 && Fuelmax > 0 && max_payload > 0 ||
+        throw(ArgumentError("Aircraft must have positive usable weight and fuel capacity."))
+    # If the intersection lies outside the payload interval, two corners coincide.
+    full_fuel_payload = clamp(Wmax - Wempty - Fuelmax, 0, max_payload)
+    mission(r, p) = _payload_range_trial(ac, r, p, altitudes;
+                                        itermax, initializes_engine, printTO, mission_constraints, constraint_tol)
+    origin_check = mission(short_range, max_payload)
+    limit(p) = _payload_range_limit(mission, p, short_range, ac.parm[imRange, 1], range_tol)
+    points = map(unique([max_payload, full_fuel_payload, 0.0])) do payload
+        point = limit(payload)
+        Ldebug && println("Payload-range point: ", point)
+        point
     end
+    if all_points
+        points = _payload_range_samples(points, origin_check, mission, limit, Rpts, Ppts)
+    end
+    origin = merge(origin_check, (; range = 0.0, fuel = NaN, altitude = NaN, pfei = NaN))
+    design_report = mission_constraints(ac, 1, MissionConstraintContext(1, Wmax, false))
+    pushfirst!(points, origin)
+    return (; range = getproperty.(points, :range), payload = getproperty.(points, :payload),
+            fuel = getproperty.(points, :fuel), pfei = getproperty.(points, :pfei),
+            altitude = getproperty.(points, :altitude),
+            WTO = [Wempty + p.payload + p.fuel for p in points],
+            constraints = getproperty.(points, :constraints), aircraft_report, design_report,
+            design_feasible = is_feasible(design_report, constraint_tol),
+            Wempty, Wmax, Fuelmax, origin_check)
+end
 
+"""
+    PayloadRange(ac; plots_OEW = false, all_points = false, Rpts = 10, Ppts = 10, ...)
+
+Plot the characteristic payload-range points, marking the original sizing mission
+separately and labeling it when outside the constraint tolerance. Straight lines
+connect the solved points. Set
+`plots_OEW=true` to include empty weight on the payload axis (false: payload only).
+The default marks only the four characteristic points and the design point.
+Set `all_points=true` to solve and mark additional boundary points, with `Rpts`
+range samples on the level segment and `Ppts` payload levels per descending segment.
+Other keywords are passed
+to [`payload_range_data`](@ref).
+"""
+function PayloadRange(ac::TASOPT.aircraft; plots_OEW::Bool = false,
+                      filename::String = "", kwargs...)
+    pr = payload_range_data(ac; kwargs...)
+    return _payload_range_plot(ac, pr; plots_OEW, filename)
+end
+
+function _payload_range_plot(ac, pr; plots_OEW = false, filename = "")
+    ranges = convertDist.(pr.range, "m", "nmi")
+    offset = plots_OEW ? pr.Wempty : 0.0
+    design_range = convertDist(ac.parm[imRange, 1], "m", "nmi")
+    design_payload = (ac.parm[imWpay, 1] + offset) / (gee * 1000)
+    ylabel = plots_OEW ? "OEW + Payload Weight (tonnes)" : "Payload Weight (tonnes)"
+
+    fig = plot(ranges, (pr.payload .+ offset) ./ (gee * 1000);
+               xlabel = "Range (nmi)", ylabel, title = "Payload-Range Diagram: " * ac.name,
+               lw = 2, marker = :circle, color = :blue, label = "Feasible boundary points",
+               size = (800, 500), dpi = 300, margin = 4mm, legend = :bottomleft)
+    scatter!(fig, [design_range], [design_payload]; marker = :star5, ms = 8,
+             color = pr.design_feasible ? :blue : :orange,
+             label = pr.design_feasible ? "Design point" : "Design point (outside tolerance)")
+    isempty(filename) || savefig(fig, filename)
     return fig
 end
 
