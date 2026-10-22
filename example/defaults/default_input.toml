@@ -433,6 +433,7 @@
     strut_density = 2700.0
 
 [Propulsion]
+    max_fan_diameter = "2 m"
 
     number_of_engines = 2
     T_max_metal = 1280.0
@@ -450,6 +451,10 @@
     cruise_TSFC = 0.00018 #1/s
     descent_TSFC = 0.00018 #1/s
     rate_of_climb = "500 ft/min" #needed for climb thrust
+
+[Propulsion.temperature_limits]
+    compressor_exit = "900 K"
+    # turbine_metal defaults to T_max_metal above.
 
 [Propulsion.Turbomachinery]
 

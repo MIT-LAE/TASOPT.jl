@@ -286,15 +286,15 @@ function fly_mission!(ac, imission = 1; itermax = 35, initializes_engine = true,
 
     end
 
-    #Check if all engine points have converged, warns if not
-    check_engine_convergence_failure(pare)
+    # Check if all engine points have converged; preserve their identities.
+    engine_failures = check_engine_convergence_failure(pare)
 
     #run takeoff calculation if converged (checks feasibility; populates iprotate entries)
     if Lconv
-        takeoff!(ac, imission=imission, printTO=printTO)
+        Lconv = takeoff!(ac, imission=imission, printTO=printTO)
     end
 
-return 
+return Lconv && isempty(engine_failures)
 end
 
 """

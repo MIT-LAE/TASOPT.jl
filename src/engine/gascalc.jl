@@ -249,7 +249,7 @@ function gas_prat(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
       end
 
       println("gas_prat: convergence failed.  dT =", dt)
-      println("To pratio ='", To, pratio)
+      println("To pratio = ", to, " ", pratio)
 
 end # gas_prat
 

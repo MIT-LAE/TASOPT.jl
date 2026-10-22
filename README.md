@@ -105,3 +105,7 @@ Once you are in your main branch do:
    git merge upstream/main
 ```
 This brings your fork's `main` branch into sync with the upstream repository, without losing your local changes.
+
+### Aircraft verification and validation
+
+See [aircraft comparison models and V&V reports](example/validation/Validation.md) for the Boeing 737-800, Embraer E195 and Boeing 777-300ER defaults, source data, payload-range comparisons and limitations.

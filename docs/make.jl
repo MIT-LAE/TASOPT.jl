@@ -1,6 +1,6 @@
-using Documenter, TASOPT
+push!(LOAD_PATH, normpath(joinpath(@__DIR__, "..")))
 
-push!(LOAD_PATH, "../src")
+using Documenter, TASOPT
 
 # Shorthands for convenience
 aerodynamics = TASOPT.aerodynamics

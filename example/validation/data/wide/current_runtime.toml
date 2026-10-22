@@ -1,0 +1,14 @@
+constraint_tolerance = 1.0e-6
+design_feasible = false
+initial_altitude_ft = [nan, 29000.0, 30000.0, 32000.0]
+payload_kg = [70264.6769745158, 70264.6769745158, 36270.936513919936, 0.0]
+range_nmi = [0.0, 5669.375, 8004.880126953125, 9185.357925415039]
+sizing_success = true
+
+[design_scaled_residuals]
+balanced_field_length = 7.980474890034728e-6
+compressor_exit_temperature = -0.0188257099987722
+design_mtow = 0.0
+fuel_capacity = -0.015644549942296804
+top_of_climb_gradient = -9.183378627986016e-6
+turbine_metal_temperature = 1.1569856184223681e-11

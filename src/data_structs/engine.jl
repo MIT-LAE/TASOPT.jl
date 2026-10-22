@@ -16,8 +16,15 @@ mutable struct Engine{M<:AbstractModel}
     data::AbstractData
     """Heat exchanger parameters and data"""
     heat_exchangers::Array{HeatExchanger}
+    """Maximum fan diameter (m) for aircraft feasibility checks."""
+    max_fan_diameter::Float64
+    """Maximum compressor-exit total temperature (K)."""
+    max_compressor_exit_temperature::Float64
 
 end
+
+# Preserve the existing constructor and legacy payload-range limits.
+Engine(model, data, heat_exchangers) = Engine(model, data, heat_exchangers, 2.0, 900.0)
 
 struct EmptyData <: AbstractData 
 end

@@ -5,6 +5,20 @@ using ForwardDiff
 isGradient = false
 
 @testset "Engine models" begin
+    @testset "engine convergence failure identities" begin
+        pare = zeros(ietotal, iptotal)
+        pare[ieConvFail, ipstatic] = 1.0
+        pare[ieConvFail, ipcruise1] = 1.0
+
+        failures = @test_logs (:warn, r"Some engine points failed to converge") TASOPT.engine.check_engine_convergence_failure(pare)
+
+        @test failures == [
+            (index=ipstatic, label=:static),
+            (index=ipcruise1, label=:cruise1),
+        ]
+        @test isempty(TASOPT.engine.check_engine_convergence_failure(zeros(ietotal, iptotal)))
+    end
+
     @testset "gasfun.jl" begin
 
         # =========================

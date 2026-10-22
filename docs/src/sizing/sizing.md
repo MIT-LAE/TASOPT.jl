@@ -89,3 +89,11 @@ TASOPT.takeoff!(ac; printTO)
 TASOPT.PayloadRange
 
 ```
+
+## Sizing success
+
+`size_aircraft!(ac)` returns a `SizingResult`. Check `result.success` before using
+the model for performance plots. `ac.is_sized[1]` is true only when the weight
+and pitch-balance iterations, engine operating points, and applicable takeoff
+calculation converge, and the primary output arrays are finite. Failure reasons
+are available in `result.reasons`; failed calls leave `ac.is_sized[1]` false.

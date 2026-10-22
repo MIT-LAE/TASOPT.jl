@@ -91,6 +91,9 @@ include(joinpath(__TASOPTroot__,"mission/AircraftDeck.jl"))
 # Input and output functions
 include(joinpath(__TASOPTroot__,"IO/read_input.jl"))
 include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
+include(joinpath(__TASOPTroot__,"mission/constraints.jl"))
+export ConstraintReport, MissionConstraintContext, aircraft_constraint_report,
+       mission_constraint_report, is_feasible
 # Plotting functions
 include(joinpath(__TASOPTroot__,"IO/plotting/output_plots.jl"))
 include(joinpath(__TASOPTroot__,"IO/plotting/trefftz_plots.jl"))
@@ -107,7 +110,7 @@ include(joinpath(__TASOPTroot__,"cost/cost_val.jl"))
 include(joinpath(__TASOPTroot__,"utils/printBADA.jl"))
 include(joinpath(__TASOPTroot__,"utils/sensitivity.jl"))
 
-export size_aircraft!
+export size_aircraft!, SizingResult, WeightFractionFailure
 
 
 #------------------------------------------------------
@@ -128,22 +131,24 @@ RSL = pSL / (ρSL * TSL)
 # Sizing function
 # ----------------------
 """
-    size_aircraft(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
-        printiter=true, saveOD=false)
+    size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
+        printiter=true)
 
-sizes the given `aircraft` instance. A light wrapper around the `_size_aircraft!` function, which does the actual work.
+Sizes the given `aircraft` instance and returns a [`SizingResult`](@ref). A
+light wrapper around `_size_aircraft!`, which does the actual work. The
+aircraft is mutated in place regardless of whether the caller uses the return
+value, and `ac.is_sized` is true only when the returned result is successful.
 """
 function size_aircraft!(ac::aircraft; iter=35, initwgt=false, Ldebug=false,
         printiter=true)
 
     Ldebug && println("Max weight iterations = $iter")
-    _size_aircraft!(ac, itermax = iter, initwgt = initwgt,
+    ac.is_sized .= false
+    result = _size_aircraft!(ac, itermax = iter, initwgt = initwgt,
         Ldebug = Ldebug, printiter = printiter)
 
-    #if sized properly, mark as such
-    #TODO: apply logic and exit codes to make check more robust
-    ac.is_sized .= true
-    ;
+    ac.is_sized .= result.success
+    return result
 end # size_aircraft!
 
 end # module TASOPT

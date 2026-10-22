@@ -1,0 +1,20 @@
+[narrow]
+imported_sha256 = "f02eec248c28edbd9f52b09e71ac0d4b51e9dcfed5ffec68a585ea0787fb13f6"
+source_file = "B738_Q4_cornerfirst_Oct21.toml"
+source_sha256 = "fb5f4ea7e1789db2de406c9efc6c3e7fc582ec68bf451402e694243e7bc58136"
+template_file = "default_input.toml"
+template_sha256 = "78f9f54a13cdaf226c4320df45f3674c53888835787f8de940cbb9bd99086f69"
+
+[regional]
+imported_sha256 = "8e9993755a490630a1b98c2b9071bb77fcd60899a799b2709d45774e787925c0"
+source_file = "E195_21Oct_corner_refit.toml"
+source_sha256 = "12494a52f8f7af068187ccccb29a836df0ce4cd5a0adf0dbbc370febdf16a563"
+template_file = "default_regional.toml"
+template_sha256 = "c6463fa4d90c77953ea120818e0d9f06aedee7763443ca68afd54e92f5ac150d"
+
+[wide]
+imported_sha256 = "def28814f691cd9a5bd87644bbef1083be8ffd2c281725411c28f530ec5bbaeb"
+source_file = "777300_economy_refined_21Oct.toml"
+source_sha256 = "181a229bef51ebb39bcba689edb7b127e00a4a0f6fc8a6220b72f88655003101"
+template_file = "default_wide.toml"
+template_sha256 = "e3248b78cb806d83c52955e19d6fd937a4d7d26ecef1996a7a1fd0dbf9d68e94"

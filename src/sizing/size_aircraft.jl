@@ -1,4 +1,91 @@
 using Printf
+
+const EnginePointFailure = NamedTuple{(:index, :label), Tuple{Int, Symbol}}
+
+"""Machine-readable details for an invalid summed weight fraction."""
+struct WeightFractionFailure
+    update::Symbol
+    classification::Symbol
+    fraction_sum::Union{Nothing, Float64}
+
+    function WeightFractionFailure(update::Symbol, classification::Symbol,
+        fraction_sum::Union{Nothing, Float64})
+        if classification === :nonfinite
+            fraction_sum === nothing || throw(ArgumentError(
+                "a nonfinite fraction sum must not be stored as a numeric diagnostic"))
+        elseif classification === :at_or_above_one
+            fraction_sum !== nothing && isfinite(fraction_sum) &&
+                fraction_sum >= 1.0 || throw(ArgumentError(
+                    "an at-or-above-one fraction sum must be finite and at least one"))
+        else
+            throw(ArgumentError("unknown weight-fraction failure classification"))
+        end
+        return new(update, classification, fraction_sum)
+    end
+end
+
+function _weight_fraction_failure(fsum::Real, update::Symbol)
+    isfinite(fsum) && fsum < 1.0 && return nothing
+    classification = isfinite(fsum) ? :at_or_above_one : :nonfinite
+    finite_sum = isfinite(fsum) ? Float64(fsum) : nothing
+    return WeightFractionFailure(update, classification, finite_sum)
+end
+
+"""
+    SizingResult
+
+Structured outcome of an aircraft sizing evaluation. `success` is true only
+when the weight and balance iterations converged, every engine point
+converged, the takeoff calculation either converged or was not requested, and
+all primary aircraft data arrays contain finite values.
+
+`takeoff_converged` is `nothing` when the selected engine model does not
+support takeoff calculations. `weight_fraction_failure` identifies the update
+stage and failure class without retaining a NaN or infinity in diagnostics.
+"""
+struct SizingResult
+    success::Bool
+    weight_converged::Bool
+    weight_iterations::Int
+    balance_converged::Bool
+    engine_failures::Vector{EnginePointFailure}
+    takeoff_converged::Union{Nothing, Bool}
+    finite_values::Bool
+    reasons::Vector{Symbol}
+    weight_fraction_failure::Union{Nothing, WeightFractionFailure}
+
+    function SizingResult(weight_converged::Bool, weight_iterations::Integer,
+        balance_converged::Bool, engine_failures::AbstractVector,
+        takeoff_converged::Union{Nothing, Bool}, finite_values::Bool,
+        weight_fraction_failure::Union{Nothing, WeightFractionFailure}=nothing)
+
+        failures = EnginePointFailure[engine_failures...]
+        reasons = Symbol[]
+        weight_converged || push!(reasons, :weight_loop_not_converged)
+        balance_converged || push!(reasons, :balance_not_converged)
+        isempty(failures) || push!(reasons, :engine_point_failure)
+        takeoff_converged === false && push!(reasons, :takeoff_not_converged)
+        finite_values || push!(reasons, :nonfinite_values)
+        weight_fraction_failure === nothing ||
+            push!(reasons, :invalid_weight_fraction_sum)
+
+        return new(isempty(reasons), weight_converged, Int(weight_iterations),
+            balance_converged, failures, takeoff_converged, finite_values,
+            reasons, weight_fraction_failure)
+    end
+end
+
+"""Return whether the primary array-backed outputs of `ac` are all finite."""
+function _sizing_values_are_finite(ac)
+    return all(isfinite, ac.parg) && all(isfinite, ac.parm) &&
+           all(isfinite, ac.para) && all(isfinite, ac.pare)
+end
+
+function _invalid_weight_fraction_result(ac, weight_iterations, failure)
+    return SizingResult(false, weight_iterations, true, EnginePointFailure[],
+        nothing, _sizing_values_are_finite(ac), failure)
+end
+
 """
     _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
@@ -19,7 +106,8 @@ and iterates until the MTOW converges to within a specified tolerance. Formerly,
     - Engine-specific parameters 
 
     **Outputs:**
-    - No explicit outputs. Computed quantities are saved to `par` arrays of `aircraft` model.
+    - A [`SizingResult`](@ref) describing convergence and output validity.
+      Computed quantities are also saved to the `aircraft` model as before.
 """
 function _size_aircraft!(ac; itermax=35,
     wrlx1=0.5, wrlx2=0.9, wrlx3=0.5, initwgt=false, initializes_engine=true, 
@@ -168,6 +256,8 @@ function _size_aircraft!(ac; itermax=35,
     WMTO2 = 0.0
     WMTO3 = 0.0 
     Lconv = false
+    weight_iterations = 0
+    balance_converged = true
 
     # Initialize wing layout parameters for first iteration
     wing.layout.span= wing.layout.S = 0.0
@@ -180,6 +270,7 @@ function _size_aircraft!(ac; itermax=35,
     # -------------------------------------------------------    
 
     @inbounds for iterw = 1:itermax
+        weight_iterations = iterw
         if iterw == itermax
             @warn "Reached max iterations in weight sizing loop!"
         end
@@ -259,6 +350,12 @@ function _size_aircraft!(ac; itermax=35,
 
             feng = 0.08
             fsum = feng + ffuel + fuse.HPE_sys.W + flgnose + flgmain
+            fraction_failure = _weight_fraction_failure(fsum,
+                :initial_weight_update)
+            if fraction_failure !== nothing
+                return _invalid_weight_fraction_result(ac, weight_iterations,
+                    fraction_failure)
+            end
             WMTO = (Wpay + fuse.weight + Wwing + Wstrut + Whtail + Wvtail) / (1.0 - fsum)
 
             Weng, Wfuel = WMTO .* [feng, ffuel]
@@ -271,7 +368,11 @@ function _size_aircraft!(ac; itermax=35,
 
         else
             # Call a better update_weights! function
-            update_WMTO!(ac, rlx)
+            fraction_failure = update_WMTO!(ac, rlx)
+            if fraction_failure !== nothing
+                return _invalid_weight_fraction_result(ac, weight_iterations,
+                    fraction_failure)
+            end
 
             parm[imWTO] = parg[igWMTO]
             parm[imWfuel] = parg[igWfuel]
@@ -452,8 +553,9 @@ function _size_aircraft!(ac; itermax=35,
             Sh = Vh * wing.layout.S * wing.mean_aero_chord / lhtail
             htail.layout.S = Sh
         else
-            size_htail(ac, view(para, :, ipdescentn), view(para, :, ipcruise1), view(para, :, ipcruise1);
-                    Ldebug=Ldebug)
+            balance_converged &= size_htail(ac, view(para, :, ipdescentn),
+                view(para, :, ipcruise1), view(para, :, ipcruise1);
+                Ldebug=Ldebug)
             wing.layout.box_x, xwing = wing.layout.box_x, wing.layout.x
             lhtail = xhtail - xwing
             Sh = htail.layout.S
@@ -655,7 +757,11 @@ function _size_aircraft!(ac; itermax=35,
 
         # Recalculate weight update_weights!()
         ip = ipcruise1
-        update_weights!(ac, rlx)
+        fraction_failure = update_weights!(ac, rlx)
+        if fraction_failure !== nothing
+            return _invalid_weight_fraction_result(ac, weight_iterations,
+                fraction_failure)
+        end
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -671,7 +777,11 @@ function _size_aircraft!(ac; itermax=35,
 
         # Recalculate weight update_weights!()
         ip = ipcruise1
-        update_weights!(ac, rlx)
+        fraction_failure = update_weights!(ac, rlx)
+        if fraction_failure !== nothing
+            return _invalid_weight_fraction_result(ac, weight_iterations,
+                fraction_failure)
+        end
 
         parm[imWTO] = parg[igWMTO]
         parm[imWfuel] = parg[igWfuel]
@@ -698,9 +808,10 @@ function _size_aircraft!(ac; itermax=35,
     case = "off_design"
     eng.enginecalc!(ac, case, imission, ip, initializes_engine)
 
+    takeoff_converged = nothing
     if options.calculate_takeoff == true #If the engine can model the takeoff performance
         # calculate takeoff and balanced-field lengths
-        takeoff!(ac, printTO = printiter)
+        takeoff_converged = takeoff!(ac, printTO = printiter)
     else
         @warn "Engine model does not allow takeoff calculations"
     end
@@ -724,10 +835,13 @@ function _size_aircraft!(ac; itermax=35,
                         Ldebug = Ldebug)
 
     #Check if all engine points have converged, warn if not
-    check_engine_convergence_failure(pare)
+    engine_failures = check_engine_convergence_failure(pare)
     
     #Warn user if HX effectiveness is overwritten
-    check_HX_overwriting(eng.heat_exchangers) 
+    check_HX_overwriting(eng.heat_exchangers)
+
+    return SizingResult(Lconv, weight_iterations, balance_converged,
+        engine_failures, takeoff_converged, _sizing_values_are_finite(ac))
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description
@@ -757,29 +871,32 @@ function update_WMTO!(ac, rlx)
            landing_gear.nose_gear.weight.W + 
            landing_gear.main_gear.weight.W
 
-    #update WMTO
-    WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
-    parg[igWMTO] = WMTO
+    fraction_failure = _weight_fraction_failure(ftotadd, :wmto_weight_update)
+    fraction_failure === nothing || return fraction_failure
+
+    # Compute the candidate before mutating the aircraft so a rejected update
+    # leaves the previous finite weight state intact.
+    candidate_WMTO = rlx * Wsum / (1.0 - ftotadd) + (1.0 - rlx) * WMTO
 
     #check that fsum <= 1.0
-    fwing = wing.weight / WMTO
-    fstrut = wing.strut.weight / WMTO
-    fhtail = htail.weight / WMTO
-    fvtail = vtail.weight / WMTO
-    feng = parg[igWeng] / WMTO
-    ffuel = parg[igWfuel] / WMTO
-    flgnose = landing_gear.nose_gear.weight.W / WMTO
-    flgmain = landing_gear.main_gear.weight.W / WMTO
-    ftesys = parg[igWtesys] / WMTO
-    ftank = parg[igWftank] / WMTO
+    fwing = wing.weight / candidate_WMTO
+    fstrut = wing.strut.weight / candidate_WMTO
+    fhtail = htail.weight / candidate_WMTO
+    fvtail = vtail.weight / candidate_WMTO
+    feng = parg[igWeng] / candidate_WMTO
+    ffuel = parg[igWfuel] / candidate_WMTO
+    flgnose = landing_gear.nose_gear.weight.W / candidate_WMTO
+    flgmain = landing_gear.main_gear.weight.W / candidate_WMTO
+    ftesys = parg[igWtesys] / candidate_WMTO
+    ftank = parg[igWftank] / candidate_WMTO
 
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
            flgnose + flgmain + ftank + ftesys
 
-    if (fsum >= 1.0)
-        @error "Something is wrong!! fsum ≥ 1.0"
-    end
-
+    fraction_failure = _weight_fraction_failure(fsum, :wmto_weight_update)
+    fraction_failure === nothing || return fraction_failure
+    parg[igWMTO] = candidate_WMTO
+    return nothing
 end
 
 
@@ -816,9 +933,8 @@ function update_weights!(ac, rlx)
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
            flgnose + flgmain + ftank + ftesys
 
-    if (fsum ≥ 1.0)
-        @error "SOMETHING IS WRONG fsum ≥ 1"
-    end
+    fraction_failure = _weight_fraction_failure(fsum, :iterative_weight_update)
+    fraction_failure === nothing || return fraction_failure
 
     # WMTO = rlx*(Wpay + Wfuse + Wtesys + Wftank)/(1.0-fsum) + (1.0-rlx)*WMTO
     WMTO = rlx * (Wpay + fuse.weight) / (1.0 - fsum) + (1.0 - rlx) * WMTO
@@ -834,6 +950,7 @@ function update_weights!(ac, rlx)
     parg[igWftank] = WMTO * ftank 
 
     parg[igWtesys] = WMTO * ftesys
+    return nothing
 end
 
 """

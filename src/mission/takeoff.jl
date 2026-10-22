@@ -1,12 +1,15 @@
 #TODO: takeoff doc page needed; docstrings need updating
 """
-    takeoff!(ac)
+    takeoff!(ac; imission=1, printTO=true, itermax=15)
 
 Calculates takeoff parameters and balanced field length.
 The aircraft must be defined in parg array. The ipstatic and iprotate points are assumed to exist.
 
+Returns `true` when the balanced-field calculation converges and `false` when
+the calculation cannot produce a valid result.
+
 """
-function takeoff!(ac; imission=1, printTO = true)
+function takeoff!(ac; imission=1, printTO=true, itermax=15)
     
     parg, parm, para, pare, _, _, _, wing, _, _, _, _  = unpack_ac(ac, imission)
 
@@ -82,7 +85,7 @@ function takeoff!(ac; imission=1, printTO = true)
 
     VAlim = sqrt(VAlimsq)
     if (VAlim <= V2)
-        println("Normal takeoff impossible. VAlim < V2:", VAlim, V2)
+        printTO && println("Normal takeoff impossible. VAlim < V2:", VAlim, V2)
         lTO = 10.0 / kA
         tTO = 2.0 * lTO / V2
     else
@@ -119,7 +122,7 @@ function takeoff!(ac; imission=1, printTO = true)
     VBlim = sqrt(VBlimsq)
 
     if (VBlim <= V2)
-        println("Engine-out takeoff impossible. VBlim < V2:", VBlim, V2)
+        printTO && println("Engine-out takeoff impossible. VBlim < V2:", VBlim, V2)
         l1 = 0.7 * lTO
         lBF = 10.0 * lTO
         V1 = Vstall
@@ -145,10 +148,10 @@ function takeoff!(ac; imission=1, printTO = true)
         parm[imlBF] = lBF
         parm[imtTO] = tTO
         parm[imFTO] = FTO
-        parm[imgamVTO] = asin[singTO]
-        parm[imgamVBF] = asin[singBF]
+        parm[imgamVTO] = asin(singTO)
+        parm[imgamVBF] = asin(singBF)
 
-        return
+        return false
     end
 
     #---- initial guesses for Newton iteration
@@ -162,7 +165,9 @@ function takeoff!(ac; imission=1, printTO = true)
     end
     
     #---- Newton iteration loop
-    for iter = 1:15
+    dl1 = NaN
+    dlBF = NaN
+    for iter = 1:itermax
         exA = exp(kA * (-l1))
         exB = exp(kB * (lBF - l1))
         exC = exp(kC * (lBF - l1))
@@ -229,11 +234,10 @@ function takeoff!(ac; imission=1, printTO = true)
             parm[imgamVTO] = asin(singTO)
             parm[imgamVBF] = asin(singBF)
 
-            return
+            return true
         end
     end
-    println("TAKEOFF: BFL convergence failed.  dl1,dlBF=", dl1, dlBF)
-    println("         Continuing anyway...")
+    printTO && println("TAKEOFF: BFL convergence failed.  dl1,dlBF=", dl1, dlBF)
 
+    return false
 end
-

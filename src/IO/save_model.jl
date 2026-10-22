@@ -401,7 +401,11 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     #Propulsion ------------------------
     d_prop = Dict()
         d_prop["number_of_engines"] = parg[igneng]
-        d_prop["T_max_metal"] = parg[igTmetal]
+        d_prop["T_max_metal"] = parg[igTmetal] # Legacy reader compatibility.
+        d_prop["max_fan_diameter"] = engine.max_fan_diameter
+        d_prop["temperature_limits"] = Dict(
+            "compressor_exit" => engine.max_compressor_exit_temperature,
+            "turbine_metal" => parg[igTmetal])
         d_prop["Tt4_frac_bottom_of_climb"] = parg[igfTt4CL1]
         d_prop["Tt4_frac_top_of_climb"] = parg[igfTt4CLn]
         
