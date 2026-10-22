@@ -284,51 +284,6 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       return
 end # balance_aircraft!
 
-"""
-    size_htail(ac, paraF, paraB, paraC; Ldebug=false, itermax=10)
-
-Solves for the feasible horizontal tail area (`Sh`) and wing box location 
-(`xwbox`) to ensure: (1) pitch trim req't with forward CG and
-(2) stability requirement with aft CG across different flight conditions.
-
-This routine iteratively adjusts:
-- Horizontal tail area (`Sh`): Ensuring sufficient control authority.
-- Wing box location (`xwbox`): Maintaining static and dynamic stability.
-
-The routine considers:
-- Max and min CG locations** (`xcgF`, `xcgB`) computed using `CG_limits()`.
-- Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
-- Static margin constraints (`SM`).
-- Fuel and payload distribution effects.
-
-!!! details "🔃 Inputs and Outputs"
-    **Inputs:**
-    - `ac` : Aircraft object
-    - `paraF[.]` : Aerodynamic parameters for the forward CG trim condition.
-    - `paraB[.]` : Aerodynamic parameters for the aft CG stability condition.
-    - `paraC[.]` : Aerodynamic parameters for the cruise tail lift condition.
-
-    **Output:**
-    Returns `true` when the pitch-balance iteration converges and `false`
-    otherwise. The function also updates key fields inside `ac`:
-      - `htail.layout.S` : Horizontal tail area (`Sh`).
-      - `wing.layout.box_x` : Wing box location (`xwbox`).
-      - `wing.layout.x` : Wing location (adjusted for `xwbox`).
-
-**Note**: two flags determine the sizing strategy:
-
-      - `htail.opt_sizing`
-            * = "fixed_Vh"    set Sh from prescribed tail volume
-            * = "CLmax_fwdCG" set Sh to meet the "worst-case" scenario: max wing CL with most fwd CG, with an assumed max CLh
-
-      - `ac.opt_move_wing`
-            * = "fixed"         no changes to wing location
-            * = "fixed_CLh"     adjust wingbox location to set tail lift at cruise, CLh = CLhspec
-            * = "min_static_margin" adjust wingbox location to get SM = SMmin at aft-CG
-
-The two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function. 
-
-"""
 function _horizontal_tail_newton_step(a, r, Sh, xwbox;
       area_bounds, x_bounds, max_area_step, max_x_step,
       condition_tol::Float64=1.0e-12)
@@ -381,6 +336,51 @@ function _horizontal_tail_newton_step(a, r, Sh, xwbox;
               limited=limited)
 end
 
+"""
+    size_htail(ac, paraF, paraB, paraC; Ldebug=false, itermax=10)
+
+Solves for the feasible horizontal tail area (`Sh`) and wing box location
+(`xwbox`) to ensure: (1) pitch trim req't with forward CG and
+(2) stability requirement with aft CG across different flight conditions.
+
+This routine iteratively adjusts:
+- Horizontal tail area (`Sh`): Ensuring sufficient control authority.
+- Wing box location (`xwbox`): Maintaining static and dynamic stability.
+
+The routine considers:
+- Max and min CG locations** (`xcgF`, `xcgB`) computed using `CG_limits()`.
+- Aerodynamic parameters (`paraF`, `paraB`, `paraC`).
+- Static margin constraints (`SM`).
+- Fuel and payload distribution effects.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `ac` : Aircraft object
+    - `paraF[.]` : Aerodynamic parameters for the forward CG trim condition.
+    - `paraB[.]` : Aerodynamic parameters for the aft CG stability condition.
+    - `paraC[.]` : Aerodynamic parameters for the cruise tail lift condition.
+
+    **Output:**
+    Returns `true` when the pitch-balance iteration converges and `false`
+    otherwise. The function also updates key fields inside `ac`:
+      - `htail.layout.S` : Horizontal tail area (`Sh`).
+      - `wing.layout.box_x` : Wing box location (`xwbox`).
+      - `wing.layout.x` : Wing location (adjusted for `xwbox`).
+
+**Note**: two flags determine the sizing strategy:
+
+      - `htail.opt_sizing`
+            * = "fixed_Vh"    set Sh from prescribed tail volume
+            * = "CLmax_fwdCG" set Sh to meet the "worst-case" scenario: max wing CL with most fwd CG, with an assumed max CLh
+
+      - `ac.opt_move_wing`
+            * = "fixed"         no changes to wing location
+            * = "fixed_CLh"     adjust wingbox location to set tail lift at cruise, CLh = CLhspec
+            * = "min_static_margin" adjust wingbox location to get SM = SMmin at aft-CG
+
+The two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function.
+
+"""
 function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool=false,
       itermax::Int=10, condition_tol::Float64=1.0e-12)
       #TODO find a way to remove the para inputs and use ac instead

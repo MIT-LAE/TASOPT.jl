@@ -94,3 +94,16 @@ stickfig
 
 plot_details
 ```
+
+## Engine feasibility limits
+
+Model TOMLs may specify `Propulsion.max_fan_diameter` and a
+`Propulsion.temperature_limits` table with `compressor_exit` and `turbine_metal`.
+These limits are used by the [Payload-range diagram](@ref) constraint checks and
+are preserved by `save_aircraft_model`. Bare values use metres and kelvin;
+unit strings are also accepted. Limits must be positive and finite.
+
+For legacy inputs, fan diameter defaults to 2 m and compressor-exit temperature
+to 900 K unless supplied by the input template. Turbine metal defaults to the
+existing `T_max_metal`; an explicit `temperature_limits.turbine_metal` overrides
+it for both cooling sizing and feasibility checks.

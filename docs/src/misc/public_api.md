@@ -85,3 +85,13 @@ Before release, if yes to any item below, use a MAJOR bump:
 
 1. Did any stable-listed symbol in the public API list above disappear, rename, or break behavior?
 2. Did any stable-listed function reject previously valid calls?
+
+### Payload-range feasibility
+
+```@docs
+TASOPT.payload_range_data
+TASOPT.aircraft_constraint_report
+TASOPT.mission_constraint_report
+TASOPT.is_feasible
+TASOPT.SizingResult
+```
