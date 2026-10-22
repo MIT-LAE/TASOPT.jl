@@ -3,7 +3,8 @@ const _convSIdist = Dict("m" => 1.0,
                         "km"=>1000.0, 
                         "nmi" => nmi_to_m,
                         "ft"=> ft_to_m, 
-                        "in"=> in_to_m)
+                        "in"=> in_to_m,
+                        "mm"=> 1.0e-3)
 
 function convertDist(value::Float64, units_in::AbstractString="m", units_out="m")
     dict = _convSIdist
