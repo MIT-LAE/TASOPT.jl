@@ -285,7 +285,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
 end # balance_aircraft!
 
 """
-    size_htail(ac, paraF, paraB, paraC)
+    size_htail(ac, paraF, paraB, paraC; Ldebug=false, itermax=10)
 
 Solves for the feasible horizontal tail area (`Sh`) and wing box location 
 (`xwbox`) to ensure: (1) pitch trim req't with forward CG and
@@ -308,8 +308,9 @@ The routine considers:
     - `paraB[.]` : Aerodynamic parameters for the aft CG stability condition.
     - `paraC[.]` : Aerodynamic parameters for the cruise tail lift condition.
 
-    **Outputs:**  
-    No direct return values. Instead, the function updates key fields inside `ac`:
+    **Output:**
+    Returns `true` when the pitch-balance iteration converges and `false`
+    otherwise. The function also updates key fields inside `ac`:
       - `htail.layout.S` : Horizontal tail area (`Sh`).
       - `wing.layout.box_x` : Wing box location (`xwbox`).
       - `wing.layout.x` : Wing location (adjusted for `xwbox`).
@@ -328,11 +329,63 @@ The routine considers:
 The two flags can be set independently and affect how the two stability residuals are driven to zero. The 2x2 system is built sequentially as annotated in the source code for this function. 
 
 """
-function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
+function _horizontal_tail_newton_step(a, r, Sh, xwbox;
+      area_bounds, x_bounds, max_area_step, max_x_step,
+      condition_tol::Float64=1.0e-12)
+
+      finite_system = all(isfinite, a) && all(isfinite, r) &&
+                      all(isfinite, (Sh, xwbox, max_area_step, max_x_step))
+      if !finite_system
+            return (accepted=false, reason=:nonfinite_system,
+                    condition_metric=0.0, dSh=0.0, dxw=0.0,
+                    Sh=Sh, xwbox=xwbox, damping=0.0, limited=false)
+      end
+
+      column_scale_1 = max(abs(a[1, 1]), abs(a[2, 1]))
+      column_scale_2 = max(abs(a[1, 2]), abs(a[2, 2]))
+      det = a[1, 1] * a[2, 2] - a[1, 2] * a[2, 1]
+      scale_product = column_scale_1 * column_scale_2
+      condition_metric = scale_product > 0.0 && isfinite(scale_product) ?
+                         abs(det) / scale_product : 0.0
+
+      if !(isfinite(condition_metric) && condition_metric > condition_tol)
+            return (accepted=false, reason=:ill_conditioned_system,
+                    condition_metric=isfinite(condition_metric) ? condition_metric : 0.0,
+                    dSh=0.0, dxw=0.0, Sh=Sh, xwbox=xwbox,
+                    damping=0.0, limited=false)
+      end
+
+      raw_dSh = -(r[1] * a[2, 2] - a[1, 2] * r[2]) / det
+      raw_dxw = -(a[1, 1] * r[2] - r[1] * a[2, 1]) / det
+      if !all(isfinite, (raw_dSh, raw_dxw))
+            return (accepted=false, reason=:nonfinite_update,
+                    condition_metric=condition_metric, dSh=0.0, dxw=0.0,
+                    Sh=Sh, xwbox=xwbox, damping=0.0, limited=false)
+      end
+
+      damping = min(1.0,
+                    raw_dSh == 0.0 ? 1.0 : max_area_step / abs(raw_dSh),
+                    raw_dxw == 0.0 ? 1.0 : max_x_step / abs(raw_dxw))
+      unclamped_Sh = Sh + damping * raw_dSh
+      unclamped_xw = xwbox + damping * raw_dxw
+      trial_Sh = clamp(unclamped_Sh, area_bounds...)
+      trial_xw = clamp(unclamped_xw, x_bounds...)
+      dSh = trial_Sh - Sh
+      dxw = trial_xw - xwbox
+      limited = damping < 1.0 || trial_Sh != unclamped_Sh ||
+                trial_xw != unclamped_xw
+
+      return (accepted=true, reason=:accepted,
+              condition_metric=condition_metric, dSh=dSh, dxw=dxw,
+              Sh=trial_Sh, xwbox=trial_xw, damping=damping,
+              limited=limited)
+end
+
+function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool=false,
+      itermax::Int=10, condition_tol::Float64=1.0e-12)
       #TODO find a way to remove the para inputs and use ac instead
       parg, options, fuse, fuse_tank, wing, htail, vtail, engine, landing_gear = unpack_ac_components(ac)
 
-      itmax = 10
       toler = 1.0e-7
 
       r = zeros(Float64, 2)
@@ -455,9 +508,30 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
 
       xWF, xWB, xWc = 0.0, 0.0, 0.0
       WF, WB, Wc = 0.0, 0.0, 0.0
-      dmax = 0.0
+      dxw = 0.0
+      dSh = 0.0
+      dmax = Inf
+      residual_norm = 0.0
+      condition_metric = 0.0
+      failure_reason = :iteration_limit
+      converged = false
+      rejected_update = false
 
-      @inbounds for iter = 1:itmax
+      area_bounds = (1.0e-3 * S, S)
+      x_bounds = (fuse.layout.x_nose,
+                  htail.layout.x - dxwing - 0.25 * cma)
+      valid_bounds = all(isfinite, (area_bounds..., x_bounds...)) &&
+                     area_bounds[1] < area_bounds[2] &&
+                     x_bounds[1] < x_bounds[2] &&
+                     area_bounds[1] <= Sh <= area_bounds[2] &&
+                     x_bounds[1] <= xwbox <= x_bounds[2]
+
+      if !valid_bounds
+            failure_reason = :invalid_geometry_bounds
+            rejected_update = true
+      end
+
+      @inbounds for iter = 1:(valid_bounds ? itermax : 0)
 
             # HT weight, moment and derivatives ∂Whtail/∂Sh
             Whtail = (Whtail_o / Sh_o) * Sh
@@ -635,24 +709,33 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
 
             end
 
-            det = a[1, 1] * a[2, 2] - a[1, 2] * a[2, 1]
-            d1 = (r[1] * a[2, 2] - a[1, 2] * r[2]) / det
-            d2 = (a[1, 1] * r[2] - r[1] * a[2, 1]) / det
+            residual_norm = all(isfinite, r) ? maximum(abs, r) : 0.0
+            step = _horizontal_tail_newton_step(a, r, Sh, xwbox;
+                  area_bounds=area_bounds, x_bounds=x_bounds,
+                  max_area_step=0.5 * S, max_x_step=2.0 * cma,
+                  condition_tol=condition_tol)
+            condition_metric = step.condition_metric
+            if !step.accepted
+                  failure_reason = step.reason
+                  rejected_update = true
+                  break
+            end
 
-            dSh = -d1
-            dxw = -d2
-
-            Sh = Sh + dSh
-            xwbox = xwbox + dxw
+            dSh = step.dSh
+            dxw = step.dxw
+            Sh = step.Sh
+            xwbox = step.xwbox
 
             dmax = max(abs(dxw) / cma, abs(dSh) / (0.2 * S))
-            if (dmax < toler)
+            if dmax < toler && !step.limited
+                  converged = true
                   break
             end
 
       end #end for loop iter
-      if (dmax > toler)
-            @warn "`size_htail()`: Pitch not converged. dxwbox,dSh = $dxw, $dSh"
+      if !converged
+            @warn "`size_htail()`: Pitch not converged" reason=failure_reason condition_metric residual_norm dxwbox=dxw dSh
+            rejected_update && return false
       end
 
 
@@ -689,7 +772,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
       end
 
 
-      return
+      return converged
 end # size_htail
 
 """

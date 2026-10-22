@@ -672,10 +672,20 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
         return ichoke5, ichoke7
 end # tfcalc
 
+"""
+    check_engine_convergence_failure(pare)
+
+Return the identities of engine operating points that failed to converge.
+Each identity contains the point's integer `index` and symbolic `label`. A
+warning is also emitted when failures are present.
+"""
 function check_engine_convergence_failure(pare)
-        if sum(pare[ieConvFail, :]) > 0.0 #If any operating point failed to converge
-                warn("Some engine points failed to converge: "*string(pare[ieConvFail,:]))
-        # else
-        #         nothing #All operating points converged
+        failed_indices = findall(!iszero, pare[ieConvFail, :])
+        failures = [(index=ip, label=Symbol(ip_labels[ip])) for ip in failed_indices]
+
+        if !isempty(failures)
+                @warn "Some engine points failed to converge" failures
         end
+
+        return failures
 end
