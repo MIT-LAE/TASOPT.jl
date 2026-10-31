@@ -2279,3 +2279,49 @@ const strut_stations = (0.5, 0.7, 0.9)
         @test aircraft[high].wing.strut.sizing_criterion === :buckling
     end
 end
+
+# ============================================================================
+# Weight build-up output: the empty-weight subtotal closes with WMTO - Wfuel - Wpay
+# ============================================================================
+
+"Text printed by `weight_buildup` for `ac`."
+weight_buildup_text(ac) = sprint(io -> TASOPT.weight_buildup(ac; io = io))
+
+"Weight [N] printed on the line of the weight build-up `text` that starts with `label` and the sign `+` or `=`, or `nothing` if there is no such line."
+function printed_weight(text, label, sign = '+')
+    m = match(Regex("^" * label * "\\s+\\" * sign * "\\s+([0-9.]+) N", "m"), text)
+    return m === nothing ? nothing : parse(Float64, m.captures[1])
+end
+
+@testset "Weight build-up empty weight" verbose=true begin
+    # Printed values are rounded to 0.1 N; a missing line is compared as NaN and so fails
+    printing_tolerance = 0.1
+
+    for (name, ac, has_strut, has_jury) in (
+            ("cantilever",   sized_default_aircraft(),                  false, false),
+            ("strut_braced", sized_jury_aircraft("strut_braced"),       true,  false),
+            ("truss_braced", sized_jury_aircraft("truss_braced", 0.5),  true,  true))
+        @testset "$name" begin
+            text = weight_buildup_text(ac)
+            parg = ac.parg
+
+            # The subtotal printed after the components equals the empty weight of the sized aircraft
+            Wempty_sized = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
+            @test something(printed_weight(text, "Wempty", '='), NaN) ≈ Wempty_sized atol = printing_tolerance
+
+            @test something(printed_weight(text, "Weng"), NaN) ≈ parg[igWeng] atol = printing_tolerance
+
+            # The strut and jury lines are printed only for the wing configurations that have these members
+            if has_strut
+                @test something(printed_weight(text, "Wstrut"), NaN) ≈ ac.wing.strut.weight atol = printing_tolerance
+            else
+                @test printed_weight(text, "Wstrut") === nothing
+            end
+            if has_jury
+                @test something(printed_weight(text, "Wjury"), NaN) ≈ ac.wing.jury.weight atol = printing_tolerance
+            else
+                @test printed_weight(text, "Wjury") === nothing
+            end
+        end
+    end
+end

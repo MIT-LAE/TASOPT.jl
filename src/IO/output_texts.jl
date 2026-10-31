@@ -1,5 +1,6 @@
 """
-`weight_buildup` prints out the weight build up for the aircraft
+`weight_buildup` prints out the weight build up for the aircraft. The component weights are summed
+into the empty weight; the strut and jury strut are listed for braced and truss-braced wings respectively.
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
@@ -8,6 +9,8 @@ function weight_buildup(ac::aircraft; io=stdout)
     htail = ac.htail
     vtail = ac.vtail
     landing_gear = ac.landing_gear
+    has_strut = ac.options.has_strut
+    has_jury = ac.options.opt_wing_config == WingConfig.TrussBraced
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
     Wlgnose = landing_gear.nose_gear.weight.W
@@ -24,6 +27,10 @@ function weight_buildup(ac::aircraft; io=stdout)
     Wwatt   = Wbox * wing.weight_frac_attachments
     Wwing   = Wbox + Wflap + Wslat + Waile + Wlete + Wribs + Wspoi + Wwatt
 
+    Wempty_sum = fuselage.weight + wing.weight + vtail.weight + htail.weight + parg[igWeng] +
+                 parg[igWtesys] + parg[igWftank] + Wtotadd
+    has_strut && (Wempty_sum += wing.strut.weight)
+    has_jury  && (Wempty_sum += wing.jury.weight)
 
     printstyled(io, "Weight build-up:\n -------------- \n", color=:bold )
     @printf(io, "Wempty  + %10.1f N (%8.1f lb)\n", Wempty, Wempty/lbf_to_N)
@@ -35,17 +42,16 @@ function weight_buildup(ac::aircraft; io=stdout)
 
     @printf(io,"Wfuse   + %10.1f N (%8.1f lb)\n", fuselage.weight, fuselage.weight/lbf_to_N)
     @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", wing.weight, wing.weight/lbf_to_N)
+    has_strut && @printf(io,"Wstrut  + %10.1f N (%8.1f lb)\n", wing.strut.weight, wing.strut.weight/lbf_to_N)
+    has_jury  && @printf(io,"Wjury   + %10.1f N (%8.1f lb)\n", wing.jury.weight, wing.jury.weight/lbf_to_N)
     @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", vtail.weight, vtail.weight/lbf_to_N)
     @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", htail.weight, htail.weight/lbf_to_N)
+    @printf(io,"Weng    + %10.1f N (%8.1f lb)\n", parg[igWeng], parg[igWeng]/lbf_to_N)
     @printf(io,"Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
     @printf(io,"Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
     @printf(io,"Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
     @printf(io,"--------------------\n")
-    printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
-    fuselage.weight + wing.weight + vtail.weight + htail.weight + 
-    parg[igWtesys] + +parg[igWftank] + Wtotadd, 
-    (fuselage.weight + wing.weight + vtail.weight + htail.weight + 
-    parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
+    printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", Wempty_sum, Wempty_sum/lbf_to_N); color=:bold)
 
     @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", wing.inboard.caps.weight.W, wing.inboard.caps.weight.W/lbf_to_N)
     @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", wing.inboard.webs.weight.W , wing.inboard.webs.weight.W /lbf_to_N)
