@@ -2325,3 +2325,53 @@ end
         end
     end
 end
+
+# ============================================================================
+# Inboard shear and moment distribution of a sizing load case, with the jump of the strut reaction
+# ============================================================================
+
+@testset "inboard load distribution of the sizing load cases" verbose=true begin
+    @testset "cantilever wing stores no inboard distribution" begin
+        sl = sized_default_aircraft().wing.sizing_loads
+        @test !isempty(sl.results)
+        for r in values(sl.results)
+            @test isempty(r.inboard_stations)
+            @test isempty(r.inboard_shear)
+            @test isempty(r.inboard_moment)
+            @test r.strut_reaction == 0.0
+        end
+    end
+
+    for (name, ac) in (("strut_braced", sized_jury_aircraft("strut_braced")),
+                       ("truss_braced", sized_jury_aircraft("truss_braced", 0.3)))
+        @testset "$name governing strut case" begin
+            wing = ac.wing
+            sl = wing.sizing_loads
+            @test sl.governing_strut != :none
+            r = sl.results[sl.governing_strut]
+
+            L = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
+            z = wing.strut.z
+            ls = sqrt(z^2 + L^2)
+
+            @test length(r.inboard_stations) == 11
+            @test length(r.inboard_shear) == 11
+            @test length(r.inboard_moment) == 11
+            @test r.inboard_stations[1] == 0.0
+            @test r.inboard_stations[end] ≈ L rtol = 1e-9
+
+            # the distribution starts at the sized root loads
+            @test r.inboard_shear[1] ≈ r.S_root rtol = 1e-6
+            @test r.inboard_moment[1] ≈ r.M_root rtol = 1e-6
+
+            # the moment is continuous at the strut attachment, the shear jumps there by the strut reaction
+            @test r.inboard_moment[end] ≈ r.M_break rtol = 1e-6
+            @test r.strut_reaction ≈ r.strut_force * z / ls rtol = 1e-9
+            @test r.strut_reaction != 0.0
+            @test r.inboard_shear[end] + r.strut_reaction ≈ r.S_break rtol = 1e-6
+
+            # the stored extreme moment is the moment of largest magnitude of the distribution
+            @test r.M_inboard_extreme == r.inboard_moment[argmax(abs.(r.inboard_moment))]
+        end
+    end
+end
