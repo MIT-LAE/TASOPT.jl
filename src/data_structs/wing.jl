@@ -236,6 +236,14 @@ $TYPEDFIELDS
     P_axial_inboard::Float64 = 0
     """Strut force of a braced wing, positive in tension [N]"""
     strut_force::Float64 = 0
+    """Distance from the wing root of the 11 stations along the inboard wing bay of a braced wing [m]; empty without a strut"""
+    inboard_stations::Vector{Float64} = Float64[]
+    """Shear load at `inboard_stations`, with the strut reaction applied [N]"""
+    inboard_shear::Vector{Float64} = Float64[]
+    """Bending moment at `inboard_stations`, with the strut reaction applied [N m]"""
+    inboard_moment::Vector{Float64} = Float64[]
+    """Vertical reaction of the strut on the wing at the strut attachment, positive upward [N]"""
+    strut_reaction::Float64 = 0
 end
 
 """
