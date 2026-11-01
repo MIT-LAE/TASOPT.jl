@@ -1009,3 +1009,250 @@ end
         @test TASOPT.wing_beam_column_ratio(P_axial, EI, 2L) ≈ 4 * ratio rtol = 1e-14
     end
 end
+
+# ============================================================================
+# Aerodynamics output: strut drag and lift lines, and the drag components closing with the total
+# ============================================================================
+
+"Text printed by `aero` for `ac`."
+aero_text(ac) = sprint(io -> TASOPT.aero(ac; io = io))
+
+"Number printed after the label matched by `pattern` (a regex with one capture group) in `text`, or `nothing` if there is no such line."
+function printed_aero_value(text, pattern)
+    m = match(pattern, text)
+    return m === nothing ? nothing : parse(Float64, m.captures[1])
+end
+
+const sized_aero_output_aircraft_cache = Dict{String,Any}()
+
+"""
+Aircraft of wing configuration `config` ("cantilever", "strut_braced" or "truss_braced"), sized once and shared by all
+later requests. A braced wing has its strut attached at ηs = 0.7, which sizes with a strut. Tests that change the aircraft
+must `deepcopy` it first.
+"""
+function sized_aero_output_aircraft(config)
+    return get!(sized_aero_output_aircraft_cache, config) do
+        CoreLogging.with_logger(CoreLogging.NullLogger()) do
+            txt = replace(read(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"), String),
+                          r"^[ \t]*(wing_config|has_strut)[ \t]*=.*\n"m => "")
+            txt = replace(txt, "[Options]" => "[Options]\n    wing_config = \"$config\""; count = 1)
+            ac = mktempdir() do dir
+                path = joinpath(dir, "aero_output_test.toml")
+                write(path, txt)
+                read_aircraft_model(path)
+            end
+            config == "cantilever" || (ac.wing.layout.ηs = 0.7)
+            size_aircraft!(ac; printiter = false)
+            ac
+        end
+    end
+end
+
+@testset "Aerodynamics output" verbose=true begin
+    # Printed values are rounded to 5 decimals
+    printing_tolerance = 5e-6
+
+    for (name, has_strut) in (("cantilever", false), ("strut_braced", true), ("truss_braced", true))
+        @testset "$name" begin
+            ac = sized_aero_output_aircraft(name)
+            text = aero_text(ac)
+            para = ac.para[:, ipcruise1, 1]
+            Sref = ac.wing.layout.S
+
+            @test ac.options.has_strut == has_strut
+
+            @testset "strut drag and lift lines are printed only with a strut" begin
+                CDstrut = printed_aero_value(text, r"^CDstrut\s*=\s*([-0-9.]+)"m)
+                CDstrut_area = printed_aero_value(text, r"^CDstrut\s*×\s*Sref\s*=\s*([-0-9.]+) m²"m)
+                CLstrut = printed_aero_value(text, r"^CLstrut\s*=\s*([-0-9.]+)"m)
+                lift_fraction = printed_aero_value(text, r"^Strut lift fraction\s*=\s*([-0-9.]+)"m)
+                if has_strut
+                    @test para[iaCDstrut] > 0
+                    @test something(CDstrut, NaN) ≈ para[iaCDstrut] atol = printing_tolerance
+                    @test something(CDstrut_area, NaN) ≈ Sref * para[iaCDstrut] atol = printing_tolerance
+                    # The default strut carries no lift
+                    @test something(CLstrut, NaN) == 0.0
+                    @test something(lift_fraction, NaN) == 0.0
+                else
+                    @test CDstrut === nothing
+                    @test CDstrut_area === nothing
+                    @test CLstrut === nothing
+                    @test lift_fraction === nothing
+                end
+            end
+
+            @testset "printed drag components add up to the printed drag" begin
+                printed = Dict(m.captures[1] => parse(Float64, m.captures[2])
+                               for m in eachmatch(r"^(CD\w*)\s*=\s*([-0-9.]+)"m, text))
+                components = [value for (label, value) in printed if label != "CD"]
+                @test printed["CD"] ≈ para[iaCD] atol = printing_tolerance
+                @test haskey(printed, "CDstrut") == has_strut
+                # Eight to ten components, each rounded to 5e-6
+                @test 8 <= length(components) <= 10
+                @test sum(components) ≈ printed["CD"] atol = 1e-4
+            end
+        end
+    end
+
+    @testset "strut lift is printed for a strut with a lift coefficient ratio" begin
+        # `wing.strut.CL` and `wing.strut.lift_fraction` hold the values of the last drag evaluation of a sizing, which is
+        # at zero lift, so the expected values come from a drag evaluation at the first cruise point
+        for name in ("strut_braced", "truss_braced")
+            @testset "$name" begin
+                ac = deepcopy(sized_aero_output_aircraft(name))
+                ac.wing.strut.cl_ratio = 0.5
+                trefftz_aero.aircraft_drag!(ac, 1, ipcruise1, true)
+                text = aero_text(ac)
+
+                @test 0 < ac.wing.strut.CL < ac.para[iaCL, ipcruise1, 1]
+                @test something(printed_aero_value(text, r"^CLstrut\s*=\s*([-0-9.]+)"m), NaN) ≈ ac.wing.strut.CL atol = 5e-6
+                @test something(printed_aero_value(text, r"^Strut lift fraction\s*=\s*([-0-9.]+)"m), NaN) ≈
+                      ac.wing.strut.lift_fraction atol = 5e-6
+            end
+        end
+    end
+end
+
+# ============================================================================
+# Geometry output
+# ============================================================================
+
+"Text printed by `geometry` for `ac`."
+geometry_text(ac) = sprint(io -> TASOPT.geometry(ac; io = io))
+
+"Word printed after the label matched by `pattern` (a regex with one capture group) in `text`, or `nothing` if there is no such line."
+function printed_geometry_word(text, pattern)
+    m = match(pattern, text)
+    return m === nothing ? nothing : String(m.captures[1])
+end
+
+@testset "Geometry output" verbose=true begin
+    # Lengths, areas and angles are printed with at least two decimals, so the printed value is within 0.01 of the model value
+    printing_tolerance = 0.01
+
+    for (name, has_strut, has_jury) in (("cantilever", false, false), ("strut_braced", true, false), ("truss_braced", true, true))
+        @testset "$name" begin
+            ac = sized_aero_output_aircraft(name)
+            text = geometry_text(ac)
+            strut = ac.wing.strut
+            jury = ac.wing.jury
+            sizing_loads = ac.wing.sizing_loads
+            printed(label) = printed_aero_value(text, Regex("^" * label * raw"\s*=\s*([-0-9.]+)", "m"))
+            printed_word(label) = printed_geometry_word(text, Regex("^" * label * raw"\s*=\s*(\w+)", "m"))
+
+            @test ac.options.has_strut == has_strut
+
+            @testset "strut layout is printed only with a strut" begin
+                @test occursin("Strut Layout:", text) == has_strut
+                if has_strut
+                    @test strut.length > 0
+                    @test something(printed("l_sp"), NaN) ≈ strut.length atol = printing_tolerance
+                    @test something(printed("c_strut"), NaN) ≈ strut.chord atol = printing_tolerance
+                    @test something(printed("S_strut"), NaN) ≈ strut.S atol = printing_tolerance
+                    @test something(printed("z_strut"), NaN) ≈ strut.z atol = printing_tolerance
+                    @test something(printed("y_strut"), NaN) ≈ strut.y_root atol = printing_tolerance
+                    @test something(printed("dihedral"), NaN) ≈ rad2deg(strut.dihedral) atol = printing_tolerance
+                    @test something(printed("t/c"), NaN) ≈ strut.thickness_to_chord atol = printing_tolerance
+                    @test printed_word("sizing case") == string(sizing_loads.governing_strut)
+                    @test printed_word("compression case") == string(sizing_loads.governing_strut_compression)
+                    @test printed_word("sizing criterion") == string(strut.sizing_criterion)
+                else
+                    for label in ("l_sp", "c_strut", "S_strut", "z_strut", "y_strut", "dihedral", "t/c")
+                        @test printed(label) === nothing
+                    end
+                    for label in ("sizing case", "compression case", "sizing criterion")
+                        @test printed_word(label) === nothing
+                    end
+                end
+            end
+
+            @testset "jury lines are printed only for a truss-braced wing" begin
+                if has_jury
+                    @test jury.length > 0
+                    @test something(printed("l_jury"), NaN) ≈ jury.length atol = printing_tolerance
+                    @test something(printed("c_jury"), NaN) ≈ jury.chord atol = printing_tolerance
+                    @test something(printed("eta_jury"), NaN) ≈ jury.eta_wing atol = printing_tolerance
+                else
+                    @test printed("l_jury") === nothing
+                    @test printed("c_jury") === nothing
+                    @test printed("eta_jury") === nothing
+                end
+            end
+
+            @testset "strut dihedral is the angle of the in-plane strut with the horizontal" begin
+                if has_strut
+                    layout = ac.wing.layout
+                    bay = 0.5 * layout.span * (layout.ηs - layout.ηo)
+                    @test strut.dihedral > 0
+                    @test strut.dihedral ≈ atan(strut.z / bay)
+                else
+                    @test strut.dihedral == 0.0
+                end
+            end
+        end
+    end
+end
+
+# ============================================================================
+# Drag breakdown plots
+# ============================================================================
+
+"""
+Drag component bars of the plot `p` as `label => values` pairs in plot order, one value per bar. A stacked bar is stored as
+a `:shape` series whose polygon runs from the top of the segment down to its bottom, so the value is the height of the segment.
+"""
+function drag_bar_segments(p)
+    segments = Pair{String,Vector{Float64}}[]
+    for series in p.series_list
+        label = string(series[:label])
+        if series[:seriestype] == :shape && startswith(label, "CD")
+            corners = reshape(filter(!isnan, series[:y]), 5, :)
+            push!(segments, label => abs.(corners[1, :] .- corners[2, :]))
+        end
+    end
+    return segments
+end
+
+@testset "Drag breakdown plots" verbose=true begin
+    breakdown_points = [ipclimb1, ipcruise1, ipcruisen, ipdescent1, ipdescentn]
+    base_labels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
+
+    @testset "cantilever has no strut series" begin
+        ac = sized_aero_output_aircraft("cantilever")
+        @test first.(drag_bar_segments(plot_drag_breakdown(ac))) == base_labels
+        @test first.(drag_bar_segments(plot_drag_breakdown(ac, show_fractions = false))) == base_labels
+        @test plot_details(ac) isa Plots.Plot
+        @test first.(drag_bar_segments(plot_details(ac))) == base_labels
+    end
+
+    for name in ("strut_braced", "truss_braced")
+        @testset "$name" begin
+            ac = sized_aero_output_aircraft(name)
+            para = ac.para[:, :, 1]
+            CDstrut = [para[iaCDstrut, i] for i in breakdown_points]
+            CD = [para[iaCD, i] for i in breakdown_points]
+
+            @testset "plot_drag_breakdown fractions" begin
+                segments = drag_bar_segments(plot_drag_breakdown(ac))
+                @test first.(segments) == [base_labels; "CDstrut"]
+                @test sum(last.(segments)) ≈ ones(length(breakdown_points)) atol = 1e-6
+                @test last(last(segments)) ≈ CDstrut ./ CD atol = 1e-12
+            end
+
+            @testset "plot_drag_breakdown values" begin
+                segments = drag_bar_segments(plot_drag_breakdown(ac, show_fractions = false))
+                @test first.(segments) == [base_labels; "CDstrut"]
+                @test last(last(segments)) ≈ CDstrut atol = 1e-12
+                @test sum(last.(segments)) ≈ CD atol = 1e-6
+            end
+
+            @testset "plot_details" begin
+                p = plot_details(ac)
+                @test p isa Plots.Plot
+                segments = drag_bar_segments(p)
+                @test first.(segments) == [base_labels; "CDstrut"]
+                @test only(last(last(segments))) ≈ para[iaCDstrut, ipcruise1] / para[iaCD, ipcruise1] atol = 1e-12
+            end
+        end
+    end
+end
