@@ -602,8 +602,11 @@ The returned loads are
 - `S_root`, `M_root`: shear and bending moment at the root, ``S_0(0) - R`` and ``M_0(0) - R L`` (the loads of
   the cantilever without its limiting to the break loads, with the strut reaction applied);
 - `S_break`, `M_break`: the outboard section loads;
-- `M_inboard_extreme`: the bending moment ``M_0(x) - R (L - x)`` of the largest magnitude at 11 stations
-  between the root and the strut attachment;
+- `inboard_stations`, `inboard_shear`, `inboard_moment`: the distance ``x`` from the root of 11 stations
+  between the root and the strut attachment, and the shear ``S_0(x) - R`` and bending moment
+  ``M_0(x) - R (L - x)`` there (the shear jumps by `R` at the strut attachment, the moment is continuous);
+- `M_inboard_extreme`: the bending moment of the largest magnitude of `inboard_moment`;
+- `strut_reaction`: the strut reaction ``R``, positive upward;
 - `strut_force` and `P_axial_inboard`: ``T`` and ``P``.
 
 Limitations: the offset torque of the strut joint on the wing box is not modelled, and the panel weights of
@@ -627,8 +630,8 @@ This function sizes nothing, but it mutates the outboard section load fields of 
     - `dyeinn::Float64`: Average spanwise moment arm of the inboard engines about the wing root station ηo [m].
 
     **Outputs:**
-    - `WingCaseLoads`: Shear and moment at the wing root and at the wing break, the extreme inboard moment,
-      the strut force and the axial force in the inboard wing.
+    - `WingCaseLoads`: Shear and moment at the wing root and at the wing break, the shear and moment along the
+      inboard wing, the extreme inboard moment, the strut reaction and force and the axial force in the inboard wing.
 """
 function wing_case_loads(::Braced, wing, po, gammat, gammas, Nload, We, neout, dyeout, neinn, dyeinn)
     outboard_section_loads!(wing, po, gammat, gammas, Nload, We, neout, dyeout)
@@ -643,13 +646,16 @@ function wing_case_loads(::Braced, wing, po, gammat, gammas, Nload, We, neout, d
 
     stations = range(0.0, L; length = 11)
     M_stations = [M0(x) - R * (L - x) for x in stations]
+    S_stations = [inboard_loads(x).S - R for x in stations]
     strut_force = R * ls / z
 
     root = inboard_loads(0.0)
     return WingCaseLoads(S_root = root.S - R, M_root = root.M - R * L,
                          S_break = wing.outboard.max_shear_load, M_break = wing.outboard.moment,
                          M_inboard_extreme = M_stations[argmax(abs.(M_stations))],
-                         P_axial_inboard = -strut_force * L / ls, strut_force = strut_force)
+                         P_axial_inboard = -strut_force * L / ls, strut_force = strut_force,
+                         inboard_stations = collect(stations), inboard_shear = S_stations,
+                         inboard_moment = M_stations, strut_reaction = R)
 end # wing_case_loads
 
 """
@@ -1018,6 +1024,7 @@ function wing_weights!(wing, po, gammat, gammas,
         Tstrutp = 0.
         if wing isa Wing # Tail has no strut
             wing.strut.cos_lambda = 1.0
+            wing.strut.dihedral = 0.0
             wing.strut.axial_force_compression = 0.0
             wing.strut.reaction_vertical = 0.0
         end
@@ -1053,6 +1060,7 @@ function wing_weights!(wing, po, gammat, gammas,
         lsp = sqrt(wing.strut.z^2 + (0.5*wing.layout.span*(etas-etao)/cosL)^2)
         Tstrutp = Tstrut*lsp/ls
         wing.strut.cos_lambda = ls/lsp
+        wing.strut.dihedral = atan(wing.strut.z/(0.5*wing.layout.span*(etas-etao))) # TODO: Update formulation # in-plane strut angle to the horizontal
         wing.strut.axial_force = Tstrutp
         # The compression is scaled by lsp/ls like the tension: it is the force along the total (swept, 3-D)
         # strut length lsp, whereas the strut force of the load cases is in the plane, along the length ls.
