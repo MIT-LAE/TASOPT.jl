@@ -81,6 +81,7 @@ of the aircraft
 function aero(ac::aircraft; io = stdout)
     parg = ac.parg
     wing = ac.wing
+    has_strut = ac.options.has_strut
     @views para = ac.para[:,:,1]
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
@@ -93,9 +94,19 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDwing  = %6.5f\n", para[iaCDwing, ipcruise1])
     @printf(io, "CDhtail = %6.5f\n", para[iaCDhtail, ipcruise1])
     @printf(io, "CDvtail = %6.5f\n", para[iaCDvtail, ipcruise1])
+    has_strut && @printf(io, "CDstrut = %6.5f\n", para[iaCDstrut, ipcruise1])
     @printf(io, "CDnace  = %6.5f\n", para[iaCDnace, ipcruise1])
     @printf(io, "CDBLIf  = %6.5f\n", para[iadCDBLIf, ipcruise1])
     @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
+
+    if has_strut
+        # Computed as in `induced_drag!`, because `wing.strut` holds the values of the last drag evaluation of a sizing (zero lift)
+        CL = para[iaCL, ipcruise1]
+        CLhtail = para[iaCLh, ipcruise1] * ac.htail.layout.S / wing.layout.S
+        CLstrut = aerodynamics.strut_lift_share(wing, ac.options.trefftz_config) * (CL - CLhtail)
+        @printf(io, "CLstrut = %6.5f\n", CLstrut)
+        @printf(io, "Strut lift fraction = %6.5f\n", CLstrut / CL)
+    end
 
     printstyled(io, "\nDrag Areas = CD × Sref:\n", color=:bold)
     @printf(io, "CL     × Sref = %6.5f m²\n", wing.layout.S*para[iaCL, ipcruise1])
@@ -105,6 +116,7 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDwing × Sref = %6.5f m²\n", wing.layout.S*para[iaCDwing, ipcruise1])
     @printf(io, "CDhtail× Sref = %6.5f m²\n", wing.layout.S*para[iaCDhtail, ipcruise1])
     @printf(io, "CDvtail× Sref = %6.5f m²\n", wing.layout.S*para[iaCDvtail, ipcruise1])
+    has_strut && @printf(io, "CDstrut× Sref = %6.5f m²\n", wing.layout.S*para[iaCDstrut, ipcruise1])
     @printf(io, "CDnace × Sref = %6.5f m²\n", wing.layout.S*para[iaCDnace, ipcruise1])
     @printf(io, "CDBLIf × Sref = %6.5f m²\n", wing.layout.S*para[iadCDBLIf, ipcruise1])
     @printf(io, "CDBLIw × Sref = %6.5f m²\n\n", wing.layout.S*para[iadCDBLIw, ipcruise1])
@@ -169,6 +181,29 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "bs      = %5.1f m (%8.1f ft)\n" , wing.layout.break_span, wing.layout.break_span/ft_to_m   )
     @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.span, wing.layout.span/ft_to_m   )
     @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , wing.layout.S, wing.layout.S/ft_to_m^2 )
+
+    if ac.options.has_strut
+        strut = wing.strut
+        sizing_loads = wing.sizing_loads
+        printstyled(io, "\nStrut Layout:\n -------------- \n", color=:bold )
+        @printf(io, "l_sp             = %6.2f m (%8.2f ft)\n", strut.length, strut.length/ft_to_m)
+        @printf(io, "c_strut          = %6.2f m (%8.2f ft)\n", strut.chord, strut.chord/ft_to_m)
+        @printf(io, "S_strut          = %6.2f m²(%8.2f ft²)\n", strut.S, strut.S/ft_to_m^2)
+        @printf(io, "z_strut          = %6.2f m (%8.2f ft)\n", strut.z, strut.z/ft_to_m)
+        @printf(io, "y_strut          = %6.2f m (%8.2f ft)\n", strut.y_root, strut.y_root/ft_to_m)
+        @printf(io, "t/c              = %5.3f\n", strut.thickness_to_chord)
+        @printf(io, "dihedral         = %5.2f deg\n", rad2deg(strut.dihedral))
+        @printf(io, "sweep            = %5.2f deg\n", acosd(strut.cos_lambda))
+        @printf(io, "sizing case      = %s\n", sizing_loads.governing_strut)
+        @printf(io, "compression case = %s\n", sizing_loads.governing_strut_compression)
+        @printf(io, "sizing criterion = %s\n", strut.sizing_criterion)
+        if ac.options.opt_wing_config == WingConfig.TrussBraced
+            jury = wing.jury
+            @printf(io, "l_jury           = %6.2f m (%8.2f ft)\n", jury.length, jury.length/ft_to_m)
+            @printf(io, "c_jury           = %6.2f m (%8.2f ft)\n", jury.chord, jury.chord/ft_to_m)
+            @printf(io, "eta_jury         = %5.3f\n", jury.eta_wing)
+        end
+    end
 
 
 end
