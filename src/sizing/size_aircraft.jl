@@ -96,7 +96,6 @@ function _size_aircraft!(ac; itermax=35,
 
 
     # Load factors and dynamic pressure
-    Nlift = wing.sizing_loads.pullup.load_factor
     Nland = parg[igNland]
     Vne = parg[igVne]
     qne = 0.5 * ρSL * Vne^2
@@ -247,7 +246,9 @@ function _size_aircraft!(ac; itermax=35,
             bv, vtail.outboard.λ, vtail.ntails,
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
-            xeng; strut_reaction_vertical = wing.strut.reaction_vertical)
+            xeng; strut_reaction_vertical = wing.strut.reaction_vertical,
+            strut_weight = wing.strut.weight,
+            strut_weight_frac_attachments = wing.strut.weight_frac_attachments)
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
@@ -310,6 +311,9 @@ function _size_aircraft!(ac; itermax=35,
         #--------------------------------
         WMTO = parg[igWMTO]
 
+        # Pull-up load factor of this iteration: the user input, or the FAR/CS 25.337 value of the WMTO.
+        Nlift = wing_case_load_factor(:pullup, wing.sizing_loads.pullup, WMTO, options.opt_far_load_factor)
+
         # Size wing area and chords at start-of-cruise
         ip = ipcruise1
         We = WMTO * para[iafracW, ip]
@@ -364,16 +368,14 @@ function _size_aircraft!(ac; itermax=35,
         (; neinn, dyeinn, neout, dyeout) = wing_engine_arms(wing)
 
         # Load cases of the wing sizing: records the case loads in wing.sizing_loads (results, governing_root,
-        # governing_break, governing_strut, governing_strut_compression and n_computed). The returned envelope sizes
-        # a cantilever wing when more than one case is active (with only the pull-up the loads computed in
-        # wing_weights! are used), and a braced wing with the compatibility strut force model. The wing is not modified.
-        # parg[igWfmax] is the wing tank capacity of the previous iteration.
+        # governing_break, governing_strut, governing_strut_compression and n_computed). The returned envelope sizes the wing.
         masses = wing_sizing_masses(W_cruise = BW, W_MTO = WMTO, W_pay = Wpay, W_paymax = Wpaymax,
                                     W_fuel = parg[igWfuel], freserve = parg[igfreserve],
                                     W_fuel_cap = parg[igWfmax], has_wing_fuel = options.has_wing_fuel)
         envelope = evaluate_wing_sizing_cases!(wing, masses, options.has_wing_fuel, para[iarclt, ip], para[iarcls, ip],
                                                Lhtail, γt, γs, Weng1, dyeinn; has_strut = options.has_strut,
-                                               neinn = neinn, neout = neout, dyeout = dyeout)
+                                               neinn = neinn, neout = neout, dyeout = dyeout,
+                                               far_load_factor = options.opt_far_load_factor)
         more_than_one_case = length(wing.sizing_loads.results) > 1
         section_loads_envelope = (more_than_one_case || options.has_strut) ? envelope : nothing
 
