@@ -659,11 +659,54 @@ function wing_case_loads(::Braced, wing, po, gammat, gammas, Nload, We, neout, d
 end # wing_case_loads
 
 """
-    wing_case_root_loading(case, wing, rclt, rcls, W_lift, Lhtail, n_pullup)
+    far_manoeuvre_load_factor(W_MTO)
+
+Returns the positive manoeuvre load factor required by FAR/CS 25.337 (n+) for an aircraft of maximum takeoff
+weight `W_MTO`:
+```math
+n = 2.1 + \\frac{24000}{W_{lb} + 10000}, \\quad 2.5 \\le n \\le 3.8
+```
+where ``W_{lb}`` is `W_MTO` in pounds-force. The load factor is limited to 2.5 for heavy aircraft and to 3.8 for light ones.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `W_MTO::Float64`: Maximum takeoff weight [N].
+
+    **Outputs:**
+    - `n::Float64`: Positive manoeuvre load factor [-].
+"""
+far_manoeuvre_load_factor(W_MTO) = clamp(2.1 + 24000 / (W_MTO / 4.4482216152605 + 10000), 2.5, 3.8)
+
+"""
+    wing_case_load_factor(name, case, W_MTO, far_load_factor)
+
+Returns the load factor that a wing sizing load case is evaluated at. It is the `case.load_factor` entered by the user,
+except for the positive manoeuvre cases `:pullup` and `:pullup_light` if `far_load_factor` is `true`: their load factor
+is then [`far_manoeuvre_load_factor`](@ref) of `W_MTO`. The `case` is not modified.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `name::Symbol`: Name of the case in `WingSizingLoads`.
+    - `case::WingLoadCase`: Wing sizing load case.
+    - `W_MTO::Float64`: Maximum takeoff weight of the current sizing iteration [N].
+    - `far_load_factor::Bool`: Whether the positive manoeuvre cases use the FAR/CS 25.337 load factor (`Options.opt_far_load_factor`).
+
+    **Outputs:**
+    - `n::Float64`: Load factor of the case [-].
+"""
+function wing_case_load_factor(name, case, W_MTO, far_load_factor)
+    if far_load_factor && (name === :pullup || name === :pullup_light)
+        return far_manoeuvre_load_factor(W_MTO)
+    end
+    return case.load_factor
+end # wing_case_load_factor
+
+"""
+    wing_case_root_loading(case, wing, rclt, rcls, W_lift, Lhtail, n_pullup; load_factor = case.load_factor)
 
 Returns the load factor and the wing root loading magnitude of one wing sizing load case.
 
-A `Maneuver` case uses the load factor of the case and a tail load of
+A `Maneuver` case uses the load factor of the case (`load_factor`, by default `case.load_factor`) and a tail load of
 `case.tail_load_scale * (load factor / n_pullup) * Lhtail`, and its root loading follows from
 [`wing_loading`](@ref). A `Ground` case has the load factor of the case and no wing lift. `Gust` cases
 are not supported yet and throw an `ArgumentError`.
@@ -677,17 +720,18 @@ are not supported yet and throw an `ArgumentError`.
     - `W_lift::Float64`: Aircraft weight carried by the wing lift in the case [N].
     - `Lhtail::Float64`: Worst-case (most negative) tail lift at the pull-up load factor [N].
     - `n_pullup::Float64`: Pull-up load factor that `Lhtail` belongs to.
+    - `load_factor::Float64`: (keyword, default `case.load_factor`) Load factor of the case, see [`wing_case_load_factor`](@ref).
 
     **Outputs:**
     - `(Nload, po)`: Load factor for wing bending loads and wing root loading magnitude.
 """
-function wing_case_root_loading(case, wing, rclt, rcls, W_lift, Lhtail, n_pullup)
+function wing_case_root_loading(case, wing, rclt, rcls, W_lift, Lhtail, n_pullup; load_factor = case.load_factor)
     if case.kind == WingLoadKind.Maneuver
-        n = case.load_factor
+        n = load_factor
         Lh = case.tail_load_scale * (n / n_pullup) * Lhtail
         return (Nload = n, po = wing_loading(wing, rclt, rcls, n, W_lift, Lh))
     elseif case.kind == WingLoadKind.Ground
-        return (Nload = case.load_factor, po = 0.0)
+        return (Nload = load_factor, po = 0.0)
     else
         throw(ArgumentError("gust sizing cases are not supported yet"))
     end
@@ -789,7 +833,7 @@ end # wing_sizing_masses
 
 """
     evaluate_wing_sizing_cases!(wing, masses, has_wing_fuel, rclt, rcls, Lhtail, gammat, gammas, We, dyeinn;
-        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0)
+        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0, far_load_factor = false)
 
 Computes the root and break loads of every active wing sizing load case and returns their envelope. The
 wing is a cantilever wing, or a wing braced by a strut if `has_strut` is `true`; the loads of each case follow
@@ -823,6 +867,7 @@ of the `wing` are not modified.
     - `neinn::Int`: (keyword, default 1) Number of engines per wing mounted at or inboard of the wing break.
     - `neout::Int`: (keyword, default 0) Number of engines per wing mounted outboard of the wing break.
     - `dyeout::Float64`: (keyword, default 0.0) Average spanwise moment arm of the outboard engines about the wing break station ηs [m].
+    - `far_load_factor::Bool`: (keyword, default `false`) Whether the positive manoeuvre cases use the FAR/CS 25.337 load factor.
 
     **Outputs:**
     - Cantilever wing: `(S_root, M_root, S_break, M_break)`: Largest magnitude of the shear and bending moment
@@ -835,9 +880,9 @@ of the `wing` are not modified.
       case was evaluated.
 """
 function evaluate_wing_sizing_cases!(wing, masses, has_wing_fuel, rclt, rcls, Lhtail, gammat, gammas, We, dyeinn;
-        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0)
+        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0, far_load_factor = false)
     sl = wing.sizing_loads
-    n_pullup = sl.pullup.load_factor
+    n_pullup = wing_case_load_factor(:pullup, sl.pullup, masses.W_MTO, far_load_factor)
     config = has_strut ? Braced() : Cantilever()
     empty!(sl.results)
     sl.governing_strut = :none
@@ -852,7 +897,8 @@ function evaluate_wing_sizing_cases!(wing, masses, has_wing_fuel, rclt, rcls, Lh
         (case.active && case.kind != WingLoadKind.Gust) || continue
 
         ms = wing_mass_state(case.mass_state, has_wing_fuel; masses...)
-        (Nload, po) = wing_case_root_loading(case, wing, rclt, rcls, ms.W_lift, Lhtail, n_pullup)
+        n_case = wing_case_load_factor(name, case, masses.W_MTO, far_load_factor)
+        (Nload, po) = wing_case_root_loading(case, wing, rclt, rcls, ms.W_lift, Lhtail, n_pullup; load_factor = n_case)
         case.n_computed = Nload
         sl.results[name] = wing_case_loads(config, deepcopy(wing), po, gammat, gammas, Nload, We, neout, dyeout, neinn, dyeinn)
     end
