@@ -1,4 +1,4 @@
-# Truss-braced-wing (SUGAR-like) reference input: a high-wing, strut-braced, Jet-A aircraft
+# Truss-braced-wing (SUGAR-like) reference input: a high-wing, truss-braced, Jet-A aircraft
 # with fuel in the wing. It is a starting point to be refined by the optimiser, based on
 # default_input.toml with only the wing and strut inputs changed (see the "TBW:" comments).
 # Convergence of aircraft sizing is not guaranteed with the current strut structural model.
@@ -46,7 +46,8 @@
 # ╚══════════╩══════════╩═════╩═══════╩═══════╩════╝
 
 [Options] #
-    wing_config = "strut_braced" # TBW: strut-braced wing. Options are "cantilever", "strut_braced" or "truss_braced"
+    wing_config = "truss_braced" # TBW: truss-braced wing (strut with a jury strut). Options are "cantilever", "strut_braced" or "truss_braced"
+    far_load_factor = true # TBW: FAR/CS 25.337 pull-up load factor (2.5 at this weight class) for the wing sizing, so that the wing is sized for +2.5 g / -1 g as in SUGAR, instead of `load_factor`
 
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
@@ -194,7 +195,8 @@
     fixed_weight = "3000 lbf" #cockpit, pilots etc
 
     # Fuselage reinforcement at the strut attachment, W = weight_frac_strut_attach * R, with R the largest vertical
-    # reaction of both struts on the fuselage [N]. Lumped at the wing-box x. 0.05 is a PLACEHOLDER.
+    # reaction of both struts on the fuselage [N]. CURRENTLY HAS NO EFFECT: this load-based weight is switched off until
+    # a derived value exists (0.05 is a PLACEHOLDER). The attachment weight is [Wing.Strut] weight_frac_attachments * strut weight.
     weight_frac_strut_attach = 0.05
 
     window_per_length     = 435.0 #[N/m]
@@ -224,13 +226,13 @@
 [Wing]
 
     sweep = 20.0 # wing sweep in degrees. TBW: low sweep for a high-AR wing
-    AR    = 20.0 # TBW: high aspect ratio enabled by the strut
-    maxSpan = "117.5 ft"
+    AR    = 16.0 # TBW: raised aspect ratio enabled by the strut
+    maxSpan = "170 ft" # TBW: the AR 16 wing spans about 152 ft, above the 117.5 ft gate limit; 170 ft is the SUGAR Mach 0.80 span (a ground-fold span limit is not modelled)
 
     inner_panel_taper_ratio = 0.7  #cs/co
     outer_panel_taper_ratio = 0.25 #ct/co
 
-    panel_break_location = 0.6 # eta_s panel break eta location. eta = y/(b/2). TBW: also the strut attachment on the wing
+    panel_break_location = 0.65 # eta_s panel break eta location. eta = y/(b/2). TBW: also the strut attachment on the wing
     engine_location = 0.285 # engine eta location. eta = y/(b/2). One engine per wing. TBW: inboard of the strut attachment at the panel break
     
     center_box_halfspan = "71.0 in"
@@ -254,26 +256,26 @@
     #Only used if `wing_config` is not "cantilever"
     z_fuselage_attach       = "120 in" # TBW: vertical distance from the wing box to the strut fuselage attachment, on the lower fuselage
     y_fuselage_attach       = "0.0 m" # strut y position at the fuselage attachment
-    thickness_to_chord      = 0.30 # strut thickness to chord
+    thickness_to_chord      = 0.20 # strut thickness to chord
     local_velocity_ratio    = 1.0 # V_strut/V_freestream
     box_width_to_chord      = 0.5 # strut box width to chord ratio
     web_to_box_height       = 0.75 # strut box web height to box height ratio
     end_fixity_K            = 1.0 # Euler effective-length factor of the strut end fixity
-    chord_to_wing_chord     = 0.8 # PLACEHOLDER: strut chord as a fraction of the wing chord at the strut attachment, chosen so that at the default strut-braced geometry the strut + jury share of the wing group weight is near the SUGAR Phase IV value of about 30 %
-    min_cap_thickness       = "1.5 mm" # PLACEHOLDER: minimum strut cap thickness (same as the braced wing minimum cap gauge)
-    min_web_thickness       = "1.0 mm" # PLACEHOLDER: minimum strut web thickness (same as the braced wing minimum web gauge)
+    chord_to_wing_chord     = 0.5 # PLACEHOLDER: strut chord as a fraction of the wing chord at the strut attachment, chosen so that at the default strut-braced geometry the strut + jury share of the wing group weight is near the SUGAR Phase IV value of about 30 %
+    min_cap_thickness       = "1.5 mm" # minimum strut cap thickness (same as the braced wing minimum cap gauge)
+    min_web_thickness       = "1.0 mm" # minimum strut web thickness (same as the braced wing minimum web gauge)
     weight_frac_added       = 0.60 # added weight fraction for fairings and fittings (placeholder)
     cl_ratio                = 0.0 # strut lift model input: strut section cl divided by the mean section cl of the wing (0 = strut carries no lift)
     spanload_exponent       = 0.0 # strut lift model input: exponent p of the strut circulation shape (1-xi^2)^p, xi = 0 at the fuselage end and 1 at the wing end (0.0 = constant) (0.5 = elliptic)
 
 [Wing.Jury]
-    # Vertical jury strut. Only used if `wing_config` is "truss_braced" (this file is strut_braced)
+    # Vertical jury strut. Only used if `wing_config` is "truss_braced"
     # A coarse scan of eta_strut from 0.05 to 0.95 in steps of 0.05 (truss_braced, panel break eta_s = 0.6, 0.7, 0.75) gives the minimum WMTO and PFEI at 0.5 in every case. The optimum is a sharp V because the main-strut buckling length is max(eta_strut, 1-eta_strut) times the strut length, and the jury weight is negligible (0.02-0.1 % of the wing structure), so the jury position is set by that symmetry only.
-    eta_strut = 0.5 # position of the jury along the strut as a fraction of the strut length, from the fuselage end
+    eta_strut = 0.75 # position of the jury along the strut as a fraction of the strut length, from the fuselage end
     weight_frac_added = 0.60 # added weight fraction for fairings and fittings of the jury (placeholder - same as for the strut)
     chord_to_strut_chord = 0.5 # PLACEHOLDER: jury strut chord as a fraction of the main strut chord
-    min_cap_thickness = "1.5 mm" # PLACEHOLDER: minimum jury strut cap thickness
-    min_web_thickness = "1.0 mm" # PLACEHOLDER: minimum jury strut web thickness
+    min_cap_thickness = "1.5 mm" # PLACEHOLDER: minimum jury strut cap thickness (same as the braced wing minimum cap gauge)
+    min_web_thickness = "1.0 mm" # PLACEHOLDER: minimum jury strut web thickness (same as the braced wing minimum web gauge)
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
