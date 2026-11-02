@@ -131,3 +131,169 @@ end
     @test ac.parm[imPFEI] ≈ 1.0042440592543385 rtol=1e-4
 
 end
+
+# Evaluates reference files from test/ in a module of their own, so that the variables they define
+# (parg, parm, para, pare, ac_test, fuse, wing, ...) do not leak into the other testsets.
+function include_references(files...)
+    reference = Module(:Reference)
+    Core.eval(reference, :(using TASOPT))
+    for file in (TASOPT.__TASOPTindices__, (joinpath(TASOPT.__TASOPTroot__, "../test", f) for f in files)...)
+        Base.include(reference, file)
+    end
+    return reference
+end
+
+# Compares the sized aircraft `ac` with the structures and parameter arrays stored in `reference`
+function test_against_reference(ac, reference)
+    @testset "Fuselage" begin
+        @test check_struct_equivalence(reference.ac_test.fuselage, ac.fuselage)
+    end
+
+    @testset "Wing" begin
+        @test check_struct_equivalence(reference.ac_test.wing, ac.wing)
+    end
+
+    @testset "Htail" begin
+        @test check_struct_equivalence(reference.ac_test.htail, ac.htail)
+    end
+
+    @testset "Vtail" begin
+        @test check_struct_equivalence(reference.ac_test.vtail, ac.vtail)
+    end
+
+    @testset "Geometry" begin
+        for i in eachindex(reference.parg)
+            @test reference.parg[i] ≈ ac.parg[i]
+        end
+    end
+
+    @testset "Mission" begin
+        for i in eachindex(reference.parm)
+            @test reference.parm[i] ≈ ac.parm[i]
+        end
+    end
+
+    @testset "Aero" begin
+        for i in eachindex(reference.para)
+            @test reference.para[i] ≈ ac.para[i]
+        end
+    end
+
+    @testset "Propulsion" begin
+        for i in eachindex(reference.pare)
+            @test reference.pare[i] ≈ ac.pare[i]
+        end
+    end
+end
+
+# Strut sizing criterion, governing wing load cases, strut attachment reinforcement and infeasibility
+# flags of a sized strut-braced aircraft. These are symbols that the reference files do not record.
+function test_strut_cases(ac; strut_criterion, governing_root, governing_break,
+                          governing_strut, governing_strut_compression, infeasibilities)
+    @test ac.options.opt_wing_config == WingConfig.StrutBraced
+    @test ac.wing.strut.sizing_criterion == strut_criterion
+    @test ac.wing.sizing_loads.governing_root == governing_root
+    @test ac.wing.sizing_loads.governing_break == governing_break
+    @test ac.wing.sizing_loads.governing_strut == governing_strut
+    @test ac.wing.sizing_loads.governing_strut_compression == governing_strut_compression
+    @test ac.fuselage.strut_attach_criterion == :strut_weight
+    @test ac.wing.jury.weight == 0.0 # no jury strut in a strut-braced wing
+    @test Set(ac.infeasibilities) == infeasibilities
+end
+
+@testset "TBW sizing" verbose=true begin
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw.toml"))
+
+    include(__TASOPTindices__)
+
+    reference = include_references("default_tbw_sized.jl", "default_tbw_structures.jl")
+
+    size_aircraft!(ac; iter=100, printiter=false)
+
+    test_against_reference(ac, reference)
+
+    @testset "Headline numbers" begin
+        @test ac.options.opt_fuel == FuelType.JetA
+        @test ac.parg[igWMTO] ≈ 845557.0439926593 rtol=1e-4
+        @test ac.wing.weight ≈ 84783.2207258189 rtol=1e-4
+        @test ac.wing.strut.weight ≈ 14455.501563151689 rtol=1e-4
+        @test ac.parg[igWfuel] ≈ 235455.1135001689 rtol=1e-4
+        @test ac.parm[imPFEI] ≈ 0.928528573114207 rtol=1e-4
+        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.15048601949315 rtol=1e-4
+    end
+
+    @testset "Strut" begin
+        @test ac.wing.strut.area ≈ 0.012843756160272394 rtol=1e-4
+        @test ac.wing.strut.axial_force ≈ 2.32212873911393e6 rtol=1e-4
+        @test ac.fuselage.strut_attach.W ≈ 867.3300937891013 rtol=1e-4
+        test_strut_cases(ac; strut_criterion = :tension,
+                         governing_root = :taxi, governing_break = :pullup,
+                         governing_strut = :pullup, governing_strut_compression = :pushover,
+                         infeasibilities = Set([:wing_beam_column_margin, :wing_fuel_volume_exceeded]))
+    end
+
+    test_ac_off_design(ac, 1.0848976016490726, 152837.20983765365, 734248.1084301441)
+end
+
+@testset "TBW LH2 sizing" verbose=true begin
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw_lh2.toml"))
+
+    include(__TASOPTindices__)
+
+    reference = include_references("default_tbw_lh2_sized.jl", "default_tbw_lh2_structures.jl")
+
+    size_aircraft!(ac; iter=100, printiter=false)
+
+    test_against_reference(ac, reference)
+
+    @testset "Headline numbers" begin
+        @test ac.options.opt_fuel == FuelType.LH2
+        @test ac.parg[igWMTO] ≈ 701634.3006520461 rtol=1e-4
+        @test ac.wing.weight ≈ 73271.73636355922 rtol=1e-4
+        @test ac.wing.strut.weight ≈ 11556.546521303133 rtol=1e-4
+        @test ac.parg[igWfuel] ≈ 82427.87032013286 rtol=1e-4
+        @test ac.parm[imPFEI] ≈ 0.8788310979958754 rtol=1e-4
+        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 15.702365717059205 rtol=1e-4
+    end
+
+    @testset "Strut" begin
+        @test ac.wing.strut.area ≈ 0.011259043727819107 rtol=1e-4
+        @test ac.wing.strut.axial_force ≈ 2.033217275922025e6 rtol=1e-4
+        @test ac.fuselage.strut_attach.W ≈ 693.3927912781879 rtol=1e-4
+        test_strut_cases(ac; strut_criterion = :tension,
+                         governing_root = :pullup, governing_break = :pullup,
+                         governing_strut = :pullup, governing_strut_compression = :pushover,
+                         infeasibilities = Set([:wing_beam_column_margin]))
+    end
+
+    @testset "Fuselage tanks" begin
+        @test ac.fuse_tank.placement == "both"
+        @test ac.parg[igWftank] ≈ 37479.30514442487 rtol=1e-4
+        @test ac.parg[iglftank] ≈ 8.047298699104497 rtol=1e-4
+        # Gravimetric efficiency: fuel weight over fuel plus tank weight
+        @test ac.parg[igWfuel] / (ac.parg[igWfuel] + ac.parg[igWftank]) ≈ 0.687383966972244 rtol=1e-4
+    end
+
+    test_ac_off_design(ac, 1.046349637706527, 54522.15132153331, 645037.5497534466)
+end
+
+@testset "TBW LCH4 smoke" verbose=true begin
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw_lch4.toml"))
+
+    include(__TASOPTindices__)
+
+    @test ac.options.opt_wing_config == WingConfig.StrutBraced
+    @test ac.options.opt_fuel == FuelType.CH4
+
+    size_aircraft!(ac; iter=100, printiter=false)
+    @test ac.is_sized == [true]
+
+    # Loose checks only: no golden values for this aircraft
+    @test isfinite(ac.parg[igWMTO])
+    @test ac.parg[igWMTO] ≈ 872e3 rtol=0.15
+    for weight in (ac.wing.weight, ac.wing.strut.weight, ac.fuselage.weight, ac.parg[igWftank])
+        @test isfinite(weight) && weight > 0
+    end
+    @test ac.wing.strut.sizing_criterion in (:tension, :buckling, :gauge)
+    @test issubset(Set(ac.infeasibilities), Set([:wing_beam_column_margin, :wing_fuel_volume_exceeded]))
+end
