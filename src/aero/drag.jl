@@ -98,7 +98,7 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
       wing_drag_components = wing_profiledrag_direct(wing,gammat,gammas,
                                     Mach,CL,CLhtail + CL_strut,Reco,
                                     aRexp, rkSunsw,fexcdw,
-                                    fduo,fdus,fdut)
+                                    fduo,fdus,fdut; imission, ip)
       
       # Will get rid of these when I start culling the para arrays.                                     
       clpo = wing_drag_components.clpo
