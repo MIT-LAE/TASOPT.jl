@@ -281,6 +281,47 @@ end
         end
     end
 
+    @testset "Two-element strut: influence coefficients, circulation and induced drag from hand calculation" begin
+        # Strut of two panels along the line z = y from (0, 0) to (2, 2): wake points (0, 0), (1, 1), (2, 2) and control points
+        # (0.5, 0.5), (1.5, 1.5). Both elements have the length sqrt(2) and the unit normal (-1, 1)/sqrt(2).
+        geom = trefftz_aero.TrefftzGeometry{40}()
+        i_end = trefftz_aero.generate_trefftz_points_inclined!(1, geom, 0.0, 0.0, 2.0, 2.0, 2)
+        @test i_end == 3
+        wake_system = trefftz_aero.WakeSystem(geom.yp[1:i_end], geom.zp[1:i_end], geom.ycp[1:(i_end - 1)], geom.zcp[1:(i_end - 1)])
+        for element in wake_system.elements
+            @test element.length ≈ sqrt(2) rtol = 1e-14
+            @test element.unit_normal ≈ [-1.0, 1.0] / sqrt(2) rtol = 1e-14
+        end
+
+        # Influence of the wake point at (y, z) on a control point c is n ⋅ (x̂ × r) / |r|² = (r_y + r_z) / (sqrt(2) |r|²) with
+        # r = c - (y, z), minus the same for the image point (-y, z). For element 1 and the wake point (1, 1): r = (-0.5, -0.5)
+        # gives -sqrt(2); the image has r = (1.5, -0.5) and gives sqrt(2)/5; the entry is -sqrt(2) - sqrt(2)/5 = -6 sqrt(2)/5.
+        # The wake point (0, 0) is on the symmetry plane y = 0, so it coincides with its image and the two cancel.
+        s = sqrt(2)
+        influence = [0.0  -6s / 5   -20s / 51;
+                     0.0  10s / 13  -28s / 25]
+        @test wake_system.influence_matrix ≈ influence rtol = 1e-13
+
+        # Bound circulation 1 and 1/2: the wake circulation is 0 at the centreline, the drop between the elements and the
+        # last bound circulation at the end
+        gc = [1.0, 0.5]
+        gw = zeros(3)
+        trefftz_aero.calculate_wake_circulation!(gw, [gc; 0.0], [1], [3], 1)
+        @test gw == [0.0, 0.5, 0.5]
+
+        # The normal wash is w = bref/(2π) A gw, the lift is 2 Σ gc Δy and the drag is -Σ gc w Δs, both times bref/(Sref/2)
+        bref, Sref = 2.0, 3.0
+        w = bref / (2π) * influence * gw
+        normalisation = bref / (0.5 * Sref)
+        CL_expected = 2 * (gc[1] * 1.0 + gc[2] * 1.0) * normalisation
+        CD_expected = -(gc[1] * w[1] + gc[2] * w[2]) * s * normalisation
+        CL, CD, span_efficiency = trefftz_aero.compute_induced_drag!(zeros(2), wake_system, gc, gw, bref, Sref)
+        @test CL ≈ CL_expected rtol = 1e-13
+        @test CL ≈ 4.0 rtol = 1e-13
+        @test CD ≈ CD_expected rtol = 1e-13
+        @test span_efficiency ≈ CL_expected^2 / (π * bref^2 / Sref) / CD_expected rtol = 1e-13
+    end
+
     @testset "Cantilever induced drag is unchanged" begin
         ac = load_aircraft_quietly()
         @test trefftz_aero.n_surfaces(ac.options.trefftz_config) == 2
