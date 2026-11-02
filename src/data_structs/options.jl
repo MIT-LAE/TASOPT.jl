@@ -38,6 +38,8 @@ $TYPEDFIELDS
     opt_move_wing::WingMove.T
     """Wing bracing configuration: `Cantilever` = unbraced, `StrutBraced` = braced by a strut, `TrussBraced` = braced by a truss"""
     opt_wing_config::WingConfig.T = WingConfig.Cantilever
+    """If `true`, the positive manoeuvre wing sizing cases (`pullup` and `pullup_light`) use the FAR/CS 25.337 load factor of the current maximum takeoff weight, instead of their `load_factor` input"""
+    opt_far_load_factor::Bool = false
 
     #Trefftz plane options
     """Trefftz plane induced drag analysis configuration (discretization, k_tip, bunch, root_contraction)"""
@@ -60,10 +62,11 @@ function Base.summary(opt::Options)
   println("Engine Location: ", string(opt.opt_engine_location))
   println("Cabin decks: ", opt.is_doubledecker ? "double" : "single")
   println("Wing Configuration: ", string(opt.opt_wing_config))
+  println("FAR Load Factor: ", opt.opt_far_load_factor)
   println("---------------------------------")
 end
 function Base.show(io::IO, opt::Options)
   print(io, "Options(Fuel: $(string(opt.opt_fuel)); Fuel Storage: " * (opt.has_wing_fuel ? "wing " *
       (opt.has_centerbox_fuel ? "wingbox " : "(none in wingbox) ") : "") * (opt.has_fuselage_fuel ? "fuselage " : "") * 
-      "; Propulsion Arch.: $(string(opt.opt_prop_sys_arch)); Engine Location: $(string(opt.opt_engine_location)); Cabin decks: $(opt.is_doubledecker ? "double" : "single"); Wing Configuration: $(string(opt.opt_wing_config)))")
+      "; Propulsion Arch.: $(string(opt.opt_prop_sys_arch)); Engine Location: $(string(opt.opt_engine_location)); Cabin decks: $(opt.is_doubledecker ? "double" : "single"); Wing Configuration: $(string(opt.opt_wing_config)); FAR Load Factor: $(opt.opt_far_load_factor))")
 end
