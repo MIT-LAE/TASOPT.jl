@@ -54,11 +54,13 @@ $TYPEDFIELDS
     HPE_sys::structures.Weight = structures.Weight()
     fixed::structures.Weight = structures.Weight()
     """
-    Reinforcement of the fuselage at the strut attachment [N, m]. Lumped weight `W = weight_frac_strut_attach * R` at the
-    wing-box x (the strut-box area of the fuselage), with `R = wing.strut.reaction_vertical`. Set by [`fusew!`](@ref);
-    zero for a cantilever wing.
+    Reinforcement of the fuselage at the strut attachment [N, m]. Lumped weight at the wing-box x (the strut-box area of
+    the fuselage): `wing.strut.weight_frac_attachments * wing.strut.weight`, as for the attachment hardware of the main wing.
+    Set by [`fusew!`](@ref); zero for a cantilever wing.
     """
     strut_attach::structures.Weight = structures.Weight()
+    """Candidate that sets `strut_attach`: `:strut_weight`, or `:none` if there is no reinforcement. Set by [`fusew!`](@ref)"""
+    strut_attach_criterion::Symbol = :none
 
     # Misc properties
     """Number of decks in fuselage"""
@@ -71,9 +73,12 @@ $TYPEDFIELDS
     weight_frac_skin_addl::Float64 = 0
     """
     Fuselage reinforcement weight at the strut attachment as a fraction of the vertical strut reaction [-]:
-    `W_attach = weight_frac_strut_attach * R`, with `R = wing.strut.reaction_vertical` [N]. The default 0.05 of
-    a braced wing in the input reader is a PLACEHOLDER (0 for a cantilever).
-    This is a lumped weight placed at the wing-box x. The strut attaches at (`y_root`, `z`) on the fuselage belly or the
+    `W_attach = weight_frac_strut_attach * R`, with `R = wing.strut.reaction_vertical` [N].
+    CURRENTLY UNUSED: this load-based candidate is switched off in [`fusew!`](@ref) until a derived value exists
+    (the former placeholder of 0.05, still the default of a braced wing in the input reader, gave a large weight that
+    destabilised the sizing loop), so it has no effect. The reinforcement weight is only
+    `wing.strut.weight_frac_attachments * wing.strut.weight`. The key is still read and saved.
+    The reinforcement is a lumped weight placed at the wing-box x. The strut attaches at (`y_root`, `z`) on the fuselage belly or the
     main-gear sponson, so a local frame, keel or sponson model, the landing-gear integration and the x-offset of the
     strut from the wing box (torque) are not modelled. The fuselage bending and the horizontal component of the
     strut force are unchanged.
