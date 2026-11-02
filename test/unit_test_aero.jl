@@ -196,6 +196,96 @@
         @test thin.penalty_fraction * thin.CDpwing ≈ 0.80 * 2.5e-3 rtol = 0.02
         @test thinner.penalty_fraction * thinner.CDpwing ≈ 0.80 * 1.0e-2 rtol = 0.02
     end
+
+    @testset "Wing profile drag warning outside the airfoil database" begin
+        Warn = Base.CoreLogging.Warn
+        toc_inboard = wing.inboard.cross_section.thickness_to_chord
+        toc_outboard = wing.outboard.cross_section.thickness_to_chord
+        function set_thickness(toc)
+            wing.inboard.cross_section.thickness_to_chord = toc
+            wing.outboard.cross_section.thickness_to_chord = toc
+        end
+        drag(; kwargs...) = TASOPT.aerodynamics.wing_profiledrag_direct(
+            wing, γt, γs, Mach, CL, CLhtail, Reco, aRexp, rkSunsw, fexcdw, fduo, fdus, fdut; kwargs...)
+        quiet_drag(; kwargs...) = Base.CoreLogging.with_logger(() -> drag(; kwargs...), Base.CoreLogging.NullLogger())
+        logs_of(f; min_level = Warn) = first(Test.collect_test_logs(f; min_level))
+        # The number written as `label = value` in a message
+        value_of(label, message) =
+            parse(Float64, match(Regex(label * raw"\s*=\s*([0-9]+\.?[0-9]*(?:[eE][+-]?[0-9]+)?)"), message)[1])
+
+        # The warnings are shown once per flight point and bound for the whole Julia session (as with `maxlog`),
+        # so each case below uses a flight point and bound not yet used by another case.
+        @testset "message names the flight point, stations, bound and penalty" begin
+            set_thickness(0.08)
+            thin = quiet_drag(imission = 1, ip = iptakeoff)
+            logs = logs_of(() -> drag(imission = 1, ip = iptakeoff))
+            @test length(logs) == 1
+            @test logs[1].level == Warn
+            message = logs[1].message
+            @test occursin("airfoil database", message)
+            @test occursin("takeoff", message)
+            @test occursin("inboard", message) && occursin("outboard", message)
+            @test occursin("thickness", message)
+            @test occursin("0.09", message)  # lower t/c bound of the database
+            # The wing-average penalty: `penalty_fraction` and `ΔCDp = penalty_fraction * CDpwing`
+            @test value_of("penalty_fraction", message) ≈ thin.penalty_fraction rtol = 1e-2
+            @test value_of("ΔCDp", message) ≈ thin.penalty_fraction * thin.CDpwing rtol = 1e-2
+        end
+
+        @testset "another flight point has its own warning" begin
+            set_thickness(0.08)
+            logs = logs_of(() -> drag(imission = 1, ip = ipcruise1))
+            @test length(logs) == 1
+            @test occursin("cruise", logs[1].message)
+            @test !occursin("takeoff", logs[1].message)
+        end
+
+        @testset "without a flight point the drag is unchanged and the warning is still logged" begin
+            set_thickness(0.08)
+            @test length(logs_of(() -> drag())) == 1
+            @test quiet_drag() == quiet_drag(imission = 1, ip = iptakeoff)
+        end
+
+        @testset "repeated evaluation logs a bounded number of warnings" begin
+            set_thickness(0.07)
+            logs = logs_of() do
+                for _ in 1:20
+                    drag(imission = 1, ip = ipclimb1)
+                end
+            end
+            @test length(logs) <= 1
+        end
+
+        @testset "debug log has one line per station" begin
+            set_thickness(0.07)
+            logs = logs_of(min_level = Base.CoreLogging.Debug) do
+                drag(imission = 1, ip = ipclimb1)
+            end
+            # 8 stations, all thinner than the database
+            @test count(l -> l.level == Base.CoreLogging.Debug && occursin("airfoil database", l.message), logs) == 8
+        end
+
+        @testset "no log inside the database" begin
+            set_thickness(0.12)
+            @test_logs min_level = Warn drag(imission = 1, ip = iptakeoff)
+        end
+
+        wing.inboard.cross_section.thickness_to_chord = toc_inboard
+        wing.outboard.cross_section.thickness_to_chord = toc_outboard
+    end
+
+    @testset "Sizing a wing outside the airfoil database logs a bounded number of warnings" begin
+        # default_tbw has section c_l below the database limit of 0.4 at several flight points; before
+        # the warning was bounded, each strip of each flight point and iteration could log
+        ac_braced = Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+            read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw.toml"))
+        end
+        logs = first(Test.collect_test_logs(min_level = Base.CoreLogging.Warn) do
+            size_aircraft!(ac_braced, printiter = false)
+        end)
+        database_warnings = filter(l -> occursin("airfoil database", l.message), logs)
+        @test length(database_warnings) <= 30
+    end
     #end wing_profiledrag_direct
 
     #start wing_profiledrag_scaled
