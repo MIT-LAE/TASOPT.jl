@@ -51,6 +51,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_opt["prop_sys_arch"] = string(options.opt_prop_sys_arch)
         d_opt["engine_location"] = string(options.opt_engine_location)
         d_opt["wing_config"] = string(options.opt_wing_config)
+        d_opt["far_load_factor"] = options.opt_far_load_factor
     d_out["Options"] = d_opt
     #--end options----------------
 
@@ -239,6 +240,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
                 d_wing_strut["min_web_thickness"] = wing.strut.min_web_thickness
                 d_wing_strut["opt_strut_force"] = string(wing.strut.opt_strut_force)
                 d_wing_strut["weight_frac_added"] = wing.strut.weight_frac_added
+                d_wing_strut["weight_frac_attachments"] = wing.strut.weight_frac_attachments
             d_wing["Strut"] = d_wing_strut
         end
 

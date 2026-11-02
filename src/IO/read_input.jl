@@ -208,6 +208,8 @@ else
     _opt_wing_config = legacy_has_strut ? WingConfig.StrutBraced : WingConfig.Cantilever
 end
 
+_opt_far_load_factor = read_input("far_load_factor", options, doptions)
+
 trefftz_resolution_str = read_input("trefftz_resolution", options, doptions)
 trefftz_k_tip = read_input("trefftz_k_tip", options, doptions)
 trefftz_bunch = read_input("trefftz_bunch", options, doptions)
@@ -656,6 +658,8 @@ readwing(x) = read_input(x, wing_i, dwing)
         isnothing(i_model) && error("Unrecognized strut force model: $strut_force_str. " *
                                     "Valid names: " * join(string.(strut_force_models), ", "))
         wing.strut.opt_strut_force = strut_force_models[i_model]
+        wing.strut.weight_frac_attachments = get(strut_i, "weight_frac_attachments",
+                                                 get(dstrut, "weight_frac_attachments", wing.strut.weight_frac_attachments))
     end
 
     ## Jury strut details only used if the wing is truss braced
@@ -1419,6 +1423,7 @@ ac_options = TASOPT.Options(
 
     opt_move_wing = _opt_move_wing,
     opt_wing_config = _opt_wing_config,
+    opt_far_load_factor = _opt_far_load_factor,
 
     trefftz_config = TREFFTZ_CONFIG
 )
