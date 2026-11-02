@@ -102,9 +102,9 @@ $TYPEDFIELDS
     """
     weight_frac_added::Float64 = 0.60
     """
-    Weight of the attachment hardware at the fuselage as a fraction of the strut weight [-].
+    Weight of the attachment hardware for the strut weight to the fuselage and wing. As it is attached at both ends it has double the wing default value of 0.03 [-].
     """
-    weight_frac_attachments::Float64 = 0.03
+    weight_frac_attachments::Float64 = 0.06
     """Aircraft pitching moment contribution from the weight distribution of the strut [N m]"""
     dxW::Float64 = 0
 end
