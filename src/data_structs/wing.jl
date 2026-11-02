@@ -101,6 +101,10 @@ $TYPEDFIELDS
     The strut weight is `2 g l (ρ_caps A_caps + ρ_webs A_webs) (1 + weight_frac_added)` for both wings. Placeholder value, derived from Boeing SUGAR Phase IV (NASA CR, NTRS 20220016017, Tables 12/16).
     """
     weight_frac_added::Float64 = 0.60
+    """
+    Weight of the attachment hardware at the fuselage as a fraction of the strut weight [-].
+    """
+    weight_frac_attachments::Float64 = 0.03
     """Aircraft pitching moment contribution from the weight distribution of the strut [N m]"""
     dxW::Float64 = 0
 end
