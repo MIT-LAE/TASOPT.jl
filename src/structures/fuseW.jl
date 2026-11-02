@@ -48,11 +48,6 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       - `strut_weight::Float64`: (keyword, default 0) Total weight of both struts [N], `wing.strut.weight` of the previous sizing iteration.
       - `strut_weight_frac_attachments::Float64`: (keyword, default 0) Strut attachment hardware as a fraction of the strut weight [-],
         `wing.strut.weight_frac_attachments`.
-        The strut attachment reinforcement of the fuselage, lumped at `xwbox`, is
-        `strut_weight_frac_attachments * strut_weight`, as for the attachment hardware of the main wing.
-        The load-based candidate `fuse.weight_frac_strut_attach * strut_reaction_vertical` is currently switched off, so
-        `strut_reaction_vertical` and `fuse.weight_frac_strut_attach` have no effect.
-        `fuse.strut_attach_criterion` is `:strut_weight`, or `:none` if the reinforcement is zero.
 
       **Outputs:**
       Pressurized cabin volume:
@@ -92,13 +87,9 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xWpadd = fuse.added_payload.W * x_cabin
 
 #--- reinforcement at the strut attachment, lumped at the wing-box x (see the docstring)
-#    The attachment hardware is a fixed fraction of the strut's own weight, as for the wing attachments.
-#    The candidate proportional to the vertical load that the struts put on the fuselage
-#    (fuse.weight_frac_strut_attach * strut_reaction_vertical) is switched off until a derived fraction exists:
-#    the former placeholder of 0.05 gave a large weight that fed back destabilisingly into the sizing loop.
       W_strut_attach = strut_weight_frac_attachments * strut_weight
       # W_attach_reaction = fuse.weight_frac_strut_attach * strut_reaction_vertical
-      # W_strut_attach = max(W_strut_attach, W_attach_reaction)
+      # W_strut_attach = max(W_strut_attach, W_attach_reaction) # placeholder of 0.05 gave a large weight that fed back destabilisingly into the sizing loop.
       fuse.strut_attach = iszero(W_strut_attach) ? Weight() : Weight(W = W_strut_attach, x = xwbox)
       fuse.strut_attach_criterion = iszero(W_strut_attach) ? :none : :strut_weight
       xWstrutattach = y_moment(fuse.strut_attach)
