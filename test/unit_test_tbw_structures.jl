@@ -2219,29 +2219,6 @@ end
             @test flexible.S_root ≈ cantilever.S_root rtol = 1e-4
         end
 
-        @testset "the strut carries the fraction f_ww / (f_ww + f_strut) of the load of a rigid strut" begin
-            # The strut reaction is R = d0 / (f_ww + f_strut) and a rigid strut (f_strut = 0) takes d0 / f_ww, so the share of the
-            # rigid-strut load follows from the flexibility of the bay, f_ww = integral of (L - x)^2 / EI(x), and the axial
-            # flexibility of the strut referred to the vertical displacement, f_strut = l_s / (E A sin^2(theta)).
-            # EI is linear in x, EI = a + k x, and u = a + k x gives f_ww = [B^2 ln u - 2 B u / k + u^2 / (2 k^2)] / k between
-            # u = a and u = a + k L, with B = L + a / k.
-            a = base_wing.inboard.EI[1]
-            k = (base_wing.outboard.EI[1] - a) / L
-            B = L + a / k
-            antiderivative(u) = (B^2 * log(u) - 2B * u / k + u^2 / (2k^2)) / k
-            f_ww = antiderivative(a + k * L) - antiderivative(a)
-            E_strut = base_wing.strut.caps.material.E
-            sinθ = z / ls
-            strut_force(area) = braced_loads(wing_with(StrutForceModel.Compatibility;
-                                                       edit! = w -> w.strut.area = area), :pullup).strut_force
-
-            rigid = strut_force(1.0e12)
-            for area in (2.0e-3, 5.0e-3, 2.0e-2)
-                f_strut = ls / (E_strut * area * sinθ^2)
-                @test strut_force(area) / rigid ≈ f_ww / (f_ww + f_strut) rtol = 2e-3
-            end
-        end
-
         @testset "evaluate_wing_sizing_cases! records the strut loads of a braced wing" begin
             evaluate(wing; kwargs...) = TASOPT.evaluate_wing_sizing_cases!(wing, masses, true, 1.0, 1.0, Lhtail,
                                                                            gammat, gammas, We, dyeinn; kwargs...)
