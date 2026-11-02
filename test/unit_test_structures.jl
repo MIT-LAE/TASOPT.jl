@@ -882,6 +882,96 @@ end
     end
 end
 
+@testset "fusew! strut-attach reinforcement is the wing-style fraction of the strut weight" begin
+    # Strut weight 40 kN, wing-style fraction 0.03: the reinforcement is 0.03 * 40e3 = 1200 N at the wing-box x.
+    # The vertical strut reaction (1 MN here) and the Fuselage weight_frac_strut_attach (0.05 here) are accepted
+    # but currently unused: they do not change the reinforcement, the weight or the moment.
+    # The reinforcement only adds to the fuselage weight and moment; it does not size the other components.
+    function call_fusew_with_attach(; f_reaction, f_strut_weight, strut_weight, reaction)
+        fuse_ = deepcopy(fuselage)
+        fuse_.weight_frac_strut_attach = f_reaction
+        TASOPT.fusew!(fuse_, Nland, Wpaymax, Wengtail,
+                      nftanks, Waftfuel, Wftank_single, ltank, xftank_fuse, tank_placement,
+                      Δp, Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
+                      bv, λv, nvtail, xhtail, xvtail, xwing, xwbox, cbox, xeng;
+                      strut_reaction_vertical = reaction, strut_weight = strut_weight,
+                      strut_weight_frac_attachments = f_strut_weight)
+        return fuse_
+    end
+    attach(; kwargs...) = call_fusew_with_attach(; f_reaction = 0.05, f_strut_weight = 0.03,
+                                                   strut_weight = 40e3, reaction = 1e6, kwargs...)
+    base = attach(strut_weight = 0.0, reaction = 0.0)
+
+    @testset "no strut weight (cantilever): no reinforcement, whatever the reaction and the fractions" begin
+        @test base.strut_attach.W == 0
+        @test base.strut_attach_criterion === :none
+        # the weight and moment are those of a fuselage without the keywords
+        plain = deepcopy(fuselage)
+        TASOPT.fusew!(plain, Nland, Wpaymax, Wengtail,
+                      nftanks, Waftfuel, Wftank_single, ltank, xftank_fuse, tank_placement,
+                      Δp, Whtail, Wvtail, rMh, rMv, Lhmax, Lvmax,
+                      bv, λv, nvtail, xhtail, xvtail, xwing, xwbox, cbox, xeng)
+        @test plain.strut_attach.W == 0
+        @test plain.strut_attach_criterion === :none
+        @test base.weight == plain.weight
+        @test base.moment == plain.moment
+
+        # a reaction without a strut weight adds nothing either
+        fuse_ = attach(strut_weight = 0.0)
+        @test fuse_.strut_attach.W == 0
+        @test fuse_.strut_attach_criterion === :none
+        @test fuse_.weight == base.weight
+        @test fuse_.moment == base.moment
+    end
+
+    @testset "the reinforcement is the wing-style fraction times the strut weight, at the wing-box x" begin
+        fuse_ = attach()
+        @test fuse_.strut_attach.W ≈ 0.03 * 40e3
+        @test fuse_.strut_attach.x == xwbox
+        @test fuse_.strut_attach_criterion === :strut_weight
+
+        # proportional to both the fraction and the strut weight
+        @test attach(strut_weight = 20e3).strut_attach.W ≈ 0.03 * 20e3
+        @test attach(f_strut_weight = 0.06).strut_attach.W ≈ 0.06 * 40e3
+        @test attach(strut_weight = 20e3).strut_attach_criterion === :strut_weight
+    end
+
+    @testset "the vertical strut reaction and weight_frac_strut_attach do not change the reinforcement, weight or moment" begin
+        reference = attach(f_reaction = 0.0, reaction = 0.0)
+        @test reference.strut_attach.W ≈ 0.03 * 40e3
+        for f_reaction in (0.0, 0.05, 5.0), reaction in (0.0, 10e3, 1e6, 1e9)
+            fuse_ = attach(; f_reaction, reaction)
+            @test fuse_.strut_attach.W == reference.strut_attach.W
+            @test fuse_.strut_attach.x == reference.strut_attach.x
+            @test fuse_.strut_attach_criterion === :strut_weight
+            @test fuse_.weight == reference.weight
+            @test fuse_.moment == reference.moment
+        end
+        # a reaction candidate of 0.05 * 1e6 = 50000 N would have exceeded 1200 N; the reinforcement stays 1200 N
+        @test attach().strut_attach.W < 0.05 * 1e6
+    end
+
+    @testset "a zero wing-style fraction gives no reinforcement, even with a reaction and a nonzero weight_frac_strut_attach" begin
+        fuse_ = attach(f_strut_weight = 0.0)
+        @test fuse_.strut_attach.W == 0
+        @test fuse_.strut_attach_criterion === :none
+        @test fuse_.weight == base.weight
+        @test fuse_.moment == base.moment
+    end
+
+    @testset "the reinforcement adds its weight and its moment about the wing-box x to the fuselage" begin
+        for fuse_ in (attach(), attach(strut_weight = 10e3), attach(reaction = 0.0))
+            W_attach = fuse_.strut_attach.W
+            @test W_attach > 0
+            @test fuse_.weight ≈ base.weight + W_attach rtol = 1e-12
+            @test fuse_.moment ≈ base.moment + W_attach * xwbox rtol = 1e-12
+            # the other components do not depend on the reinforcement
+            @test fuse_.shell.weight.W == base.shell.weight.W
+            @test fuse_.bendingmaterial_h.weight.W == base.bendingmaterial_h.weight.W
+        end
+    end
+end
+
 @testset "Phase 0 robustness: engine warning, tail guard, cap guard, minimum gauge" begin
     st = TASOPT.structures
 
