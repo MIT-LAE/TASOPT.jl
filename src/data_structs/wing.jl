@@ -204,8 +204,8 @@ $TYPEDFIELDS
     kind::WingLoadKind.T = WingLoadKind.Maneuver
     """Limit load factor for `Maneuver` and `Ground` cases; sign only (±1) for `Gust` cases [-]"""
     load_factor::Float64 = 0.0
-    """Gust cases: design gust velocity U_de [m/s EAS] (50 ft/s at the cruise speed)"""
-    gust_velocity_EAS::Float64 = 15.24
+    """Gust cases: design gust velocity U_de [m/s EAS] (56 ft/s at the cruise speed, the reference gust velocity of FAR 25.341(a)(5) at sea level)"""
+    gust_velocity_EAS::Float64 = 17.0688
     """Gust cases: flight speed [m/s EAS]; 0 means use the cruise speed from the mission"""
     gust_speed_EAS::Float64 = 0.0
     """Weight and wing fuel state in which the case is evaluated"""
