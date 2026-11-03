@@ -247,7 +247,13 @@ function _size_aircraft!(ac; itermax=35,
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
             xeng; strut_weight = wing.strut.weight,
-            strut_weight_frac_attachments = wing.strut.weight_frac_attachments)
+            strut_weight_frac_attachments = wing.strut.weight_frac_attachments,
+            strut_force_vertical = wing.strut.force_vertical,
+            strut_force_horizontal = wing.strut.force_horizontal,
+            strut_reaction_share = wing.strut.reaction_share,
+            strut_x_attach = isnan(wing.strut.x_strut_attach) ? wing.layout.box_x : wing.strut.x_strut_attach,
+            strut_z = wing.strut.z, strut_y_root = wing.strut.y_root,
+            strut_box_width = wing.strut.chord * wing.strut.box_width_to_chord)
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
