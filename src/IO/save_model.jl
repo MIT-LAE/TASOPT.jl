@@ -234,6 +234,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
                 d_wing_strut["end_fixity_K"] = wing.strut.end_fixity_K
                 d_wing_strut["chord_to_wing_chord"] = wing.strut.chord_to_wing_chord
                 d_wing_strut["cl_ratio"] = wing.strut.cl_ratio
+                isnan(wing.strut.x_strut_attach) || (d_wing_strut["x_strut_attach"] = wing.strut.x_strut_attach)
                 d_wing_strut["spanload_exponent"] = wing.strut.spanload_exponent
                 d_wing_strut["min_cap_thickness"] = wing.strut.min_cap_thickness
                 d_wing_strut["min_web_thickness"] = wing.strut.min_web_thickness

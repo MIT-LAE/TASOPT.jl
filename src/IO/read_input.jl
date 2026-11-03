@@ -640,6 +640,9 @@ readwing(x) = read_input(x, wing_i, dwing)
         wing.strut.chord_to_wing_chord = get(strut_i, "chord_to_wing_chord",
                                              get(dstrut, "chord_to_wing_chord", wing.strut.chord_to_wing_chord))
         wing.strut.cl_ratio = get(strut_i, "cl_ratio", get(dstrut, "cl_ratio", wing.strut.cl_ratio))
+        if haskey(strut_i, "x_strut_attach") || haskey(dstrut, "x_strut_attach")
+            wing.strut.x_strut_attach = Distance(get(strut_i, "x_strut_attach", get(dstrut, "x_strut_attach", NaN)))
+        end
         wing.strut.spanload_exponent = get(strut_i, "spanload_exponent",
                                            get(dstrut, "spanload_exponent", wing.strut.spanload_exponent))
         wing.strut.min_cap_thickness = Distance(get(strut_i, "min_cap_thickness",
