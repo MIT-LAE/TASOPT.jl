@@ -678,11 +678,14 @@ where ``W_{lb}`` is `W_MTO` in pounds-force. The load factor is limited to 2.5 f
 far_manoeuvre_load_factor(W_MTO) = clamp(2.1 + 24000 / (W_MTO / 4.4482216152605 + 10000), 2.5, 3.8)
 
 """
-    wing_case_load_factor(name, case, W_MTO, far_load_factor)
+    wing_case_load_factor(name, case, W_MTO, far_load_factor; wing = nothing, W_lift = NaN, Mach_cruise = NaN, V_cruise_EAS = 0.0)
 
-Returns the load factor that a wing sizing load case is evaluated at. It is the `case.load_factor` entered by the user,
-except for the positive manoeuvre cases `:pullup` and `:pullup_light` if `far_load_factor` is `true`: their load factor
-is then [`far_manoeuvre_load_factor`](@ref) of `W_MTO`. The `case` is not modified.
+Returns the load factor that a wing sizing load case is evaluated at. The `case` is not modified.
+- `Gust` cases: the load factor is ``n = 1 + \\mathrm{sign}(n_{case})\\,\\Delta n``, where `n_case` is `case.load_factor` (only its
+  sign is used) and ``\\Delta n`` is the Pratt–Walker increment of [`gust_load_increment`](@ref). 
+- Other cases: the load factor is the `case.load_factor` entered by the user, except for the positive manoeuvre cases
+  `:pullup` and `:pullup_light` if `far_load_factor` is `true`: their load factor is then
+  [`far_manoeuvre_load_factor`](@ref) of `W_MTO`. The gust keywords are ignored and not validated.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -690,11 +693,29 @@ is then [`far_manoeuvre_load_factor`](@ref) of `W_MTO`. The `case` is not modifi
     - `case::WingLoadCase`: Wing sizing load case.
     - `W_MTO::Float64`: Maximum takeoff weight of the current sizing iteration [N].
     - `far_load_factor::Bool`: Whether the positive manoeuvre cases use the FAR/CS 25.337 load factor (`Options.opt_far_load_factor`).
+    - `wing::TASOPT.structures.Wing`: (keyword, `Gust` cases only) Wing structure, with the layout area `S`, span `span`, `AR` and `sweep`.
+    - `W_lift::Float64`: (keyword, `Gust` cases only) Aircraft weight carried by the wing lift in the mass state of the case [N].
+    - `Mach_cruise::Float64`: (keyword, `Gust` cases only) Cruise Mach number, for the lift curve slope.
+    - `V_cruise_EAS::Float64`: (keyword, `Gust` cases only, default 0.0) Cruise equivalent airspeed [m/s], used if the case has no speed of its own.
 
     **Outputs:**
     - `n::Float64`: Load factor of the case [-].
 """
-function wing_case_load_factor(name, case, W_MTO, far_load_factor)
+function wing_case_load_factor(name, case, W_MTO, far_load_factor;
+        wing = nothing, W_lift = NaN, Mach_cruise = NaN, V_cruise_EAS = 0.0)
+    if case.kind == WingLoadKind.Gust
+        V_EAS = case.gust_speed_EAS > 0 ? case.gust_speed_EAS : V_cruise_EAS
+        if !(V_EAS > 0) || !(0 <= Mach_cruise < 1)
+            throw(ArgumentError("gust sizing cases need a positive speed (case.gust_speed_EAS or V_cruise_EAS) and a subsonic Mach_cruise; got V_EAS = $V_EAS, Mach_cruise = $Mach_cruise"))
+        end
+        if wing === nothing || isnan(W_lift)
+            throw(ArgumentError("gust sizing cases need the keywords wing and W_lift"))
+        end
+        S, span = wing.layout.S, wing.layout.span
+        CL_alpha = wing_lift_curve_slope(wing.layout.AR, wing.layout.sweep, Mach_cruise)
+        Δn = gust_load_increment(W_lift / S, S / span, CL_alpha, case.gust_velocity_EAS, V_EAS)
+        return 1 + sign(case.load_factor) * Δn
+    end
     if far_load_factor && (name === :pullup || name === :pullup_light)
         return far_manoeuvre_load_factor(W_MTO)
     end
@@ -708,8 +729,8 @@ Returns the load factor and the wing root loading magnitude of one wing sizing l
 
 A `Maneuver` case uses the load factor of the case (`load_factor`, by default `case.load_factor`) and a tail load of
 `case.tail_load_scale * (load factor / n_pullup) * Lhtail`, and its root loading follows from
-[`wing_loading`](@ref). A `Ground` case has the load factor of the case and no wing lift. `Gust` cases
-are not supported yet and throw an `ArgumentError`.
+[`wing_loading`](@ref). A `Gust` case is treated in the same way, with its computed load factor 1 ± Δn passed as
+`load_factor` (see [`wing_case_load_factor`](@ref)). A `Ground` case has the load factor of the case and no wing lift.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -726,15 +747,13 @@ are not supported yet and throw an `ArgumentError`.
     - `(Nload, po)`: Load factor for wing bending loads and wing root loading magnitude.
 """
 function wing_case_root_loading(case, wing, rclt, rcls, W_lift, Lhtail, n_pullup; load_factor = case.load_factor)
-    if case.kind == WingLoadKind.Maneuver
-        n = load_factor
-        Lh = case.tail_load_scale * (n / n_pullup) * Lhtail
-        return (Nload = n, po = wing_loading(wing, rclt, rcls, n, W_lift, Lh))
-    elseif case.kind == WingLoadKind.Ground
+    if case.kind == WingLoadKind.Ground
         return (Nload = load_factor, po = 0.0)
-    else
-        throw(ArgumentError("gust sizing cases are not supported yet"))
     end
+    # Maneuver and Gust cases
+    n = load_factor
+    Lh = case.tail_load_scale * (n / n_pullup) * Lhtail
+    return (Nload = n, po = wing_loading(wing, rclt, rcls, n, W_lift, Lh))
 end # wing_case_root_loading
 
 """
@@ -771,7 +790,7 @@ formula (https://ntrs.nasa.gov/api/citations/19930090988/downloads/19930090988.p
 \\Delta n = \\frac{\\rho_0\\, U_{de}\\, V_{EAS}\\, C_{L_\\alpha}\\, K_g}{2\\,(W/S)}
 ```
 where ``\\rho_0`` is the sea-level air density. The gust velocity and the airspeed are equivalent airspeeds (EAS).
-The wing sizing cases do not use this function yet.
+The wing sizing cases use this function for their gust cases, see [`wing_case_load_factor`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -833,7 +852,8 @@ end # wing_sizing_masses
 
 """
     evaluate_wing_sizing_cases!(wing, masses, has_wing_fuel, rclt, rcls, Lhtail, gammat, gammas, We, dyeinn;
-        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0, far_load_factor = false)
+        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0, far_load_factor = false,
+        Mach_cruise = NaN, V_cruise_EAS = 0.0)
 
 Computes the root and break loads of every active wing sizing load case and returns their envelope. The
 wing is a cantilever wing, or a wing braced by a strut if `has_strut` is `true`; the loads of each case follow
@@ -846,7 +866,9 @@ and the envelope of the inboard section is the largest over the cases of the roo
 and of the root and break shear, instead of the root loads only. The case with the most negative strut force,
 if the strut is compressed in any case, is stored in `wing.sizing_loads.governing_strut_compression`.
 
-Active gust cases are skipped. By default the wing has one engine per wing at the inboard side; the keywords
+Active gust cases are evaluated like the manoeuvre cases, with the load factor ``1 \\pm \\Delta n`` of
+[`wing_case_load_factor`](@ref), where the sign is that of the `load_factor` of the case. They need the keywords `Mach_cruise`
+and `V_cruise_EAS` (unless the case has its own `gust_speed_EAS` and the Mach number is given). By default the wing has one engine per wing at the inboard side; the keywords
 `neinn`, `neout` and `dyeout` set other engine locations (see [`wing_engine_arms`](@ref)). The section loads
 of the `wing` are not modified.
 
@@ -868,6 +890,8 @@ of the `wing` are not modified.
     - `neout::Int`: (keyword, default 0) Number of engines per wing mounted outboard of the wing break.
     - `dyeout::Float64`: (keyword, default 0.0) Average spanwise moment arm of the outboard engines about the wing break station ηs [m].
     - `far_load_factor::Bool`: (keyword, default `false`) Whether the positive manoeuvre cases use the FAR/CS 25.337 load factor.
+    - `Mach_cruise::Float64`: (keyword, default `NaN`) Cruise Mach number, for the lift curve slope of the gust cases.
+    - `V_cruise_EAS::Float64`: (keyword, default 0.0) Cruise equivalent airspeed [m/s] of the gust cases that have no `gust_speed_EAS` of their own.
 
     **Outputs:**
     - Cantilever wing: `(S_root, M_root, S_break, M_break)`: Largest magnitude of the shear and bending moment
@@ -880,7 +904,8 @@ of the `wing` are not modified.
       case was evaluated.
 """
 function evaluate_wing_sizing_cases!(wing, masses, has_wing_fuel, rclt, rcls, Lhtail, gammat, gammas, We, dyeinn;
-        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0, far_load_factor = false)
+        has_strut = false, neinn = 1, neout = 0, dyeout = 0.0, far_load_factor = false,
+        Mach_cruise = NaN, V_cruise_EAS = 0.0)
     sl = wing.sizing_loads
     n_pullup = wing_case_load_factor(:pullup, sl.pullup, masses.W_MTO, far_load_factor)
     config = has_strut ? Braced() : Cantilever()
@@ -894,10 +919,11 @@ function evaluate_wing_sizing_cases!(wing, masses, has_wing_fuel, rclt, rcls, Lh
     for name in fieldnames(WingSizingLoads)
         case = getfield(sl, name)
         case isa WingLoadCase || continue
-        (case.active && case.kind != WingLoadKind.Gust) || continue
+        case.active || continue
 
         ms = wing_mass_state(case.mass_state, has_wing_fuel; masses...)
-        n_case = wing_case_load_factor(name, case, masses.W_MTO, far_load_factor)
+        n_case = wing_case_load_factor(name, case, masses.W_MTO, far_load_factor;
+                                       wing, W_lift = ms.W_lift, Mach_cruise, V_cruise_EAS)
         (Nload, po) = wing_case_root_loading(case, wing, rclt, rcls, ms.W_lift, Lhtail, n_pullup; load_factor = n_case)
         case.n_computed = Nload
         sl.results[name] = wing_case_loads(config, deepcopy(wing), po, gammat, gammas, Nload, We, neout, dyeout, neinn, dyeinn)
