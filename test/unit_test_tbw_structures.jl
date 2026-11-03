@@ -1038,41 +1038,22 @@ end
     end
 end
 
-# Inputs of the fuselage strut-attach reinforcement. The Fuselage weight_frac_strut_attach key is currently unused by the
-# weight, but is still read and saved.
-
-"Default input text for `config` without the `weight_frac_strut_attach` key, and with `line` below [Fuselage.Weights] if given."
-function toml_with_strut_attach_fraction(config, line = "")
-    txt = replace(toml_with_wing_config(config), r"^[ \t]*weight_frac_strut_attach[ \t]*=.*\n"m => "")
-    return isempty(line) ? txt : insert_below_header(txt, "Fuselage.Weights", line)
-end
+# Inputs of the fuselage strut-attach reinforcement: a fraction of the strut weight (Wing.Strut weight_frac_attachments).
 
 @testset "fuselage strut-attach reinforcement inputs" verbose=true begin
-    attach_fraction(txt) = first(read_aircraft_from_text(txt)).fuselage.weight_frac_strut_attach
-
-    @testset "TOML weight_frac_strut_attach: the default depends on the wing configuration, an explicit key wins" begin
-        @test attach_fraction(toml_with_strut_attach_fraction("cantilever")) == 0.0
-        @test attach_fraction(toml_with_strut_attach_fraction("strut_braced")) == 0.05
-        @test attach_fraction(toml_with_strut_attach_fraction("truss_braced")) == 0.05
-
-        @test attach_fraction(toml_with_strut_attach_fraction("strut_braced", "weight_frac_strut_attach = 0.2")) == 0.2
-        @test attach_fraction(toml_with_strut_attach_fraction("truss_braced", "weight_frac_strut_attach = 0.0")) == 0.0
-        @test attach_fraction(toml_with_strut_attach_fraction("cantilever", "weight_frac_strut_attach = 0.1")) == 0.1
+    @testset "the vertical strut reaction and its Fuselage fraction are not fields" begin
+        @test :weight_frac_strut_attach ∉ fieldnames(TASOPT.structures.Fuselage)
+        @test :reaction_vertical ∉ fieldnames(TASOPT.structures.Strut)
     end
 
-    @testset "save and read reproduce the fraction exactly" begin
-        for (config, line, expected) in (("strut_braced", "", 0.05),
-                                         ("truss_braced", "weight_frac_strut_attach = 0.0123", 0.0123),
-                                         ("cantilever", "", 0.0))
-            ac = first(read_aircraft_from_text(toml_with_strut_attach_fraction(config, line)))
-            @test ac.fuselage.weight_frac_strut_attach == expected
-            mktempdir() do dir
-                path = joinpath(dir, "strut_attach_roundtrip.toml")
-                save_aircraft_model(ac, path)
-                saved = TASOPT.TOML.parsefile(path)
-                @test saved["Fuselage"]["Weights"]["weight_frac_strut_attach"] == expected
-                @test attach_fraction(read(path, String)) == expected
-            end
+    @testset "a stale TOML weight_frac_strut_attach key is ignored and not saved" begin
+        txt = insert_below_header(toml_with_wing_config("strut_braced"), "Fuselage.Weights", "weight_frac_strut_attach = 0.2")
+        @test occursin(r"^[ \t]*weight_frac_strut_attach[ \t]*="m, txt)
+        ac = first(read_aircraft_from_text(txt))
+        mktempdir() do dir
+            path = joinpath(dir, "stale_strut_attach_key.toml")
+            save_aircraft_model(ac, path)
+            @test !haskey(TASOPT.TOML.parsefile(path)["Fuselage"]["Weights"], "weight_frac_strut_attach")
         end
     end
 
@@ -1348,11 +1329,9 @@ sized_cryo_aircraft() = sized_once(() -> read_aircraft_model(cryo_input_path()),
         end
         @test !hasproperty(ac.htail, :strut)
         @test !hasproperty(ac.vtail, :strut)
-        @test ac.fuselage.weight_frac_strut_attach == 0.0
         @test ac.fuselage.strut_attach.W == 0
         @test ac.fuselage.strut_attach_criterion === :none
         @test strut.weight_frac_attachments == 0.06 # the struct default adds nothing: the strut weight is zero
-        @test strut.reaction_vertical == 0
     end
 
     @testset "sizing responds to the pull-up load factor" begin
@@ -2696,7 +2675,6 @@ end
 
 # Fuselage reinforcement at the strut attachment: a weight fraction of the strut weight of the previous sizing iteration
 # (like the attachment hardware of the main wing), added to the fuselage weight and moment and lumped at the wing-box x.
-# The vertical strut reaction and Fuselage weight_frac_strut_attach are currently unused: they do not change it.
 
 @testset "fuselage strut-attach reinforcement" verbose=true begin
     @testset "sized braced aircraft: the reinforcement is the fraction of the strut weight, at the wing box" begin
@@ -2710,10 +2688,6 @@ end
             @test reinforcement.W ≈ strut.weight_frac_attachments * strut.weight rtol = 1e-3
             @test ac.fuselage.strut_attach_criterion === :strut_weight
             @test reinforcement.x ≈ ac.wing.layout.box_x rtol = 1e-3
-            # the default weight_frac_strut_attach of 0.05 times the vertical reaction would be larger, and is not used
-            @test ac.fuselage.weight_frac_strut_attach == 0.05
-            @test strut.reaction_vertical > 0
-            @test ac.fuselage.weight_frac_strut_attach * strut.reaction_vertical > reinforcement.W
         end
     end
 
@@ -2725,7 +2699,6 @@ end
         @test without.wing.strut.weight_frac_attachments == 0.0
         @test without.fuselage.strut_attach.W == 0
         @test without.fuselage.strut_attach_criterion === :none
-        @test without.wing.strut.reaction_vertical > 0
 
         # the fuselage load-path feedback of the sizing loop changes the rest of the fuselage a little,
         # so the difference equals the reinforcement only roughly
@@ -2735,23 +2708,6 @@ end
         @test with_fraction.fuselage.weight - without.fuselage.weight ≈ W_attach rtol = 0.5
         @test with_fraction.fuselage.moment > without.fuselage.moment
         @test with_fraction.parg[igWMTO] > without.parg[igWMTO]
-    end
-
-    @testset "weight_frac_strut_attach does not change the reinforcement or the sized aircraft" begin
-        default = sized_braced_aircraft()
-        unused = sized_braced_aircraft(:strut_attach_no_reaction_fraction, ac -> (ac.fuselage.weight_frac_strut_attach = 0.0))
-
-        @test default.fuselage.weight_frac_strut_attach == 0.05
-        @test unused.fuselage.weight_frac_strut_attach == 0.0
-        @test unused.wing.strut.reaction_vertical > 0
-        @test unused.fuselage.strut_attach_criterion === :strut_weight
-        @test default.fuselage.strut_attach_criterion === :strut_weight
-        @test unused.fuselage.strut_attach.W ≈ 0.06 * unused.wing.strut.weight rtol = 1e-3
-        @test unused.fuselage.strut_attach.x ≈ unused.wing.layout.box_x rtol = 1e-3
-        @test unused.fuselage.strut_attach.W ≈ default.fuselage.strut_attach.W rtol = 1e-10
-        @test unused.fuselage.weight ≈ default.fuselage.weight rtol = 1e-10
-        @test unused.fuselage.moment ≈ default.fuselage.moment rtol = 1e-10
-        @test unused.parg[igWMTO] ≈ default.parg[igWMTO] rtol = 1e-10
     end
 end
 
