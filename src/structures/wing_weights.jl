@@ -867,8 +867,7 @@ and of the root and break shear, instead of the root loads only. The case with t
 if the strut is compressed in any case, is stored in `wing.sizing_loads.governing_strut_compression`.
 
 Active gust cases are evaluated like the manoeuvre cases, with the load factor ``1 \\pm \\Delta n`` of
-[`wing_case_load_factor`](@ref), where the sign is that of the `load_factor` of the case. They need the keywords `Mach_cruise`
-and `V_cruise_EAS` (unless the case has its own `gust_speed_EAS` and the Mach number is given). By default the wing has one engine per wing at the inboard side; the keywords
+[`wing_case_load_factor`](@ref). By default the wing has one engine per wing at the inboard side; the keywords
 `neinn`, `neout` and `dyeout` set other engine locations (see [`wing_engine_arms`](@ref)). The section loads
 of the `wing` are not modified.
 
