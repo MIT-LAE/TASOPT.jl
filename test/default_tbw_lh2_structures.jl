@@ -252,7 +252,6 @@ wing.strut.area = 0.011060060601803628
 wing.strut.dihedral = 0.2693907828533731
 wing.strut.axial_force = 2.043748729631084e6
 wing.strut.axial_force_compression = -823543.5306283267
-wing.strut.reaction_vertical = 1.0265193326286431e6
 wing.strut.shear_load = 19912.38296330804
 wing.strut.bending_moment = 5221.131573362297
 wing.strut.buckling_load = 1.8632473652059004e7

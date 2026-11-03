@@ -142,7 +142,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_fuse_weights["stringer"] = fuselage.weight_frac_stringers
         d_fuse_weights["additional"] = fuselage.weight_frac_skin_addl
         d_fuse_weights["fixed_weight"] = fuselage.fixed.W
-        d_fuse_weights["weight_frac_strut_attach"] = fuselage.weight_frac_strut_attach
 
         d_fuse_weights["window_per_length"] = fuselage.window_W_per_length
         d_fuse_weights["window_insul_per_area"] = fuselage.insulation_W_per_area

@@ -69,13 +69,6 @@ $TYPEDFIELDS
     axial_force::Float64 = 0
     """Strut axial force in the most compressive case [N], zero or negative, scaled to the total strut length like `axial_force`"""
     axial_force_compression::Float64 = 0
-    """
-    Largest vertical reaction of both struts on the fuselage over the active wing sizing cases [N]: for each case
-    the in-plane strut force of one wing (`strut_force`, along the in-plane length `ls = sqrt(z^2 + L^2)`) has the
-    vertical component `|strut_force| z / ls`, and the two wings give a factor 2. Zero for a cantilever.
-    Used for the fuselage reinforcement at the strut attachment ([`fusew!`](@ref)).
-    """
-    reaction_vertical::Float64 = 0
     """Shear load of the strut webs [N]: the jury strut load plus the shear of the own weight of the strut as a transverse load, set by [`wing_weights!`](@ref)"""
     shear_load::Float64 = 0
     """Midspan bending moment of the own weight of the strut as a transverse load [N m], carried by the caps, set by [`wing_weights!`](@ref)"""

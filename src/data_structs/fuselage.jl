@@ -71,16 +71,6 @@ $TYPEDFIELDS
     weight_frac_frame::Float64 = 0
     """Fuselage Weight fraction of additional weights on skin """
     weight_frac_skin_addl::Float64 = 0
-    """
-    Fuselage reinforcement weight at the strut attachment as a fraction of the vertical strut reaction [-]:
-    `W_attach = weight_frac_strut_attach * R`, with `R = wing.strut.reaction_vertical` [N].
-    CURRENTLY UNUSED:
-    The reinforcement is a lumped weight placed at the wing-box x. The strut attaches at (`y_root`, `z`) on the fuselage belly or the
-    main-gear sponson, so a local frame, keel or sponson model, the landing-gear integration and the x-offset of the
-    strut from the wing box (torque) are not modelled. The fuselage bending and the horizontal component of the
-    strut force are unchanged.
-    """
-    weight_frac_strut_attach::Float64 = 0
     """Fuselage Shell Modulus Ratio Ebend/Eskin"""
     ratio_young_mod_fuse_bending::Float64 = 0
     """Pitching moment estimation method flag"""

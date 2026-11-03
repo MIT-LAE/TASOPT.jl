@@ -5,7 +5,7 @@
       bv, λv,nvtail,
       xhtail,xvtail,
       xwing,xwbox,cbox,
-      xeng; strut_reaction_vertical = 0.0, strut_weight = 0.0, strut_weight_frac_attachments = 0.0)
+      xeng; strut_weight = 0.0, strut_weight_frac_attachments = 0.0)
 
 `fusew` sizes the fuselage and calculates the component weights and structural properties.
 It takes inputs related to geometry, fixed weights, material properties, and more to compute the fuselage dimensions, weights, and other parameters.
@@ -43,8 +43,6 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       - `xwing::Float64`: X location of the wing.
       - `xwbox::Float64`: X location of the wing box.
       - `cbox::Float64`: Wing box width.
-      - `strut_reaction_vertical::Float64`: (keyword, default 0) Largest vertical reaction of both struts on the fuselage [N],
-        `wing.strut.reaction_vertical` of the previous sizing iteration. Currently unused (see below).
       - `strut_weight::Float64`: (keyword, default 0) Total weight of both struts [N], `wing.strut.weight` of the previous sizing iteration.
       - `strut_weight_frac_attachments::Float64`: (keyword, default 0) Strut attachment hardware as a fraction of the strut weight [-],
         `wing.strut.weight_frac_attachments`.
@@ -61,7 +59,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       bv, λv,nvtail,
       xhtail,xvtail,
       xwing,xwbox,cbox,
-      xeng; strut_reaction_vertical = 0.0, strut_weight = 0.0, strut_weight_frac_attachments = 0.0)
+      xeng; strut_weight = 0.0, strut_weight_frac_attachments = 0.0)
 
       layout = fuse.layout
 
@@ -86,10 +84,8 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xWseat = fuse.seat.W * x_cabin
       xWpadd = fuse.added_payload.W * x_cabin
 
-#--- reinforcement at the strut attachment, lumped at the wing-box x (see the docstring)
+#--- reinforcement at the strut attachment, lumped at the wing-box x
       W_strut_attach = strut_weight_frac_attachments * strut_weight
-      # W_attach_reaction = fuse.weight_frac_strut_attach * strut_reaction_vertical
-      # W_strut_attach = max(W_strut_attach, W_attach_reaction) # placeholder of 0.05 gave a large weight that fed back destabilisingly into the sizing loop.
       fuse.strut_attach = iszero(W_strut_attach) ? Weight() : Weight(W = W_strut_attach, x = xwbox)
       fuse.strut_attach_criterion = iszero(W_strut_attach) ? :none : :strut_weight
       xWstrutattach = y_moment(fuse.strut_attach)

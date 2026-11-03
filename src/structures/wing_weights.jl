@@ -1097,7 +1097,6 @@ function wing_weights!(wing, po, gammat, gammas,
             wing.strut.cos_lambda = 1.0
             wing.strut.dihedral = 0.0
             wing.strut.axial_force_compression = 0.0
-            wing.strut.reaction_vertical = 0.0
         end
 
     else
@@ -1136,9 +1135,6 @@ function wing_weights!(wing, po, gammat, gammas,
         # The compression is scaled by lsp/ls like the tension: it is the force along the total (swept, 3-D)
         # strut length lsp, whereas the strut force of the load cases is in the plane, along the length ls.
         wing.strut.axial_force_compression = Tstrut_compression*lsp/ls
-        # Largest vertical reaction of both struts on the fuselage: the in-plane strut force of one wing (tension or
-        # compression, the largest magnitude over the cases) times z/ls
-        wing.strut.reaction_vertical = n_wings*max(Tstrut, abs(Tstrut_compression))*wing.strut.z/ls
         wing.strut.length = lsp
         # The strut is a box of caps and webs of the chord `chord_to_wing_chord` times the wing chord at the strut attachment.
         # A vertical jury strut shortens the buckling length of the strut and loads the webs in shear (previous iteration).

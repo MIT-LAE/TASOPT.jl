@@ -430,11 +430,6 @@ readweight(x) = read_input(x, weight, dweight)
 
     fuselage.fixed.W = Force(readweight("fixed_weight"))
 
-    # Fuselage reinforcement at the strut attachment, as a fraction of the vertical strut reaction. When the key is
-    # omitted, a braced wing uses 0.05 (a PLACEHOLDER) and a cantilever wing 0.0; an explicit key wins.
-    fuselage.weight_frac_strut_attach = haskey(weight, "weight_frac_strut_attach") ? weight["weight_frac_strut_attach"] :
-                                        (_opt_wing_config != WingConfig.Cantilever ? 0.05 : 0.0)
-
     fuselage.window_W_per_length= readweight("window_per_length")
     fuselage.insulation_W_per_area = readweight("window_insul_per_area")
     fuselage.floor_W_per_area = readweight("floor_weight_per_area")
