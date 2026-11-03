@@ -272,7 +272,9 @@ size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut, force_vertical, force_horizon
 
 Estimate the weight and governing failure criterion of the fuselage strut-load structure (two side walls and a belly tie).
 
-The side walls transfer the vertical strut loads to the wing box. Their load-path width varies linearly from box_width to cbox over height z. Required thickness is the maximum of yield and simply supported panel buckling thicknesses, neglecting frame support. Wall weight is integrated using a 20-interval midpoint rule.
+The side walls transfer the vertical strut loads to the wing box. Their load-path width varies linearly from box_width to 
+cbox over height z. Required thickness is the maximum of yield and simply supported panel buckling thicknesses, 
+neglecting frame support. Wall weight is integrated using a 20-interval midpoint rule.
 
 The belly tie reacts the horizontal strut loads and is sized for an area of force_horizontal / σ.
 
