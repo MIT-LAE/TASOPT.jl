@@ -214,25 +214,71 @@ end
 
     @testset "Headline numbers" begin
         @test ac.options.opt_fuel == FuelType.JetA
-        @test ac.parg[igWMTO] ≈ 850522.2556212277 rtol=1e-4
-        @test ac.wing.weight ≈ 85430.1649806509 rtol=1e-4
-        @test ac.wing.strut.weight ≈ 14228.268902687298 rtol=1e-4
-        @test ac.parg[igWfuel] ≈ 238033.71230789667 rtol=1e-4
-        @test ac.parm[imPFEI] ≈ 0.9386974007137876 rtol=1e-4
-        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.05125537285622 rtol=1e-4
+        @test ac.parg[igWMTO] ≈ 793543.0297425131 rtol=1e-4
+        @test ac.wing.weight ≈ 63031.83734133534 rtol=1e-4
+        @test ac.wing.strut.weight ≈ 15214.379996910357 rtol=1e-4
+        @test ac.parg[igWfuel] ≈ 218743.21971927164 rtol=1e-4
+        @test ac.parm[imPFEI] ≈ 0.862623980118232 rtol=1e-4
+        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.358149034725095 rtol=1e-4
     end
 
     @testset "Strut" begin
-        @test ac.wing.strut.area ≈ 0.012601845575000348 rtol=1e-4
-        @test ac.wing.strut.axial_force ≈ 2.337320299676268e6 rtol=1e-4
-        @test ac.fuselage.strut_attach.W ≈ 853.6961341612379 rtol=1e-4
-        test_strut_cases(ac; strut_criterion = :tension,
+        @test ac.wing.strut.area ≈ 0.012824677838249378 rtol=1e-4
+        @test ac.wing.strut.axial_force ≈ 2.1222622662934605e6 rtol=1e-4
+        @test ac.fuselage.strut_attach.W ≈ 912.8601123893361 rtol=1e-4
+        test_strut_cases(ac; strut_criterion = :buckling,
                          governing_root = :taxi, governing_break = :pullup,
                          governing_strut = :pullup, governing_strut_compression = :pushover,
                          infeasibilities = Set([:wing_beam_column_margin, :wing_fuel_volume_exceeded]))
     end
 
-    test_ac_off_design(ac, 1.0962576664894785, 154437.58263886857, 738235.0940521995)
+    test_ac_off_design(ac, 1.0105122329656862, 142358.01605472612, 688466.7941779675)
+end
+
+@testset "TBW gust sizing" verbose=true begin
+    ac = read_aircraft_model(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw_gust.toml"))
+
+    include(__TASOPTindices__)
+
+    reference = include_references("default_tbw_gust_sized.jl", "default_tbw_gust_structures.jl")
+
+    size_aircraft!(ac; iter=100, printiter=false)
+
+    test_against_reference(ac, reference)
+
+    @testset "Headline numbers" begin
+        @test ac.options.opt_fuel == FuelType.JetA
+        @test ac.parg[igWMTO] ≈ 793543.0297425131 rtol=1e-4
+        @test ac.wing.weight ≈ 63031.83734133534 rtol=1e-4
+        @test ac.wing.strut.weight ≈ 15214.379996910357 rtol=1e-4
+        @test ac.parg[igWfuel] ≈ 218743.21971927164 rtol=1e-4
+        @test ac.parm[imPFEI] ≈ 0.862623980118232 rtol=1e-4
+        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.358149034725095 rtol=1e-4
+    end
+
+    @testset "Strut" begin
+        @test ac.wing.strut.area ≈ 0.012824677838249378 rtol=1e-4
+        @test ac.wing.strut.axial_force ≈ 2.1222622662934605e6 rtol=1e-4
+        @test ac.fuselage.strut_attach.W ≈ 912.8601123893361 rtol=1e-4
+        test_strut_cases(ac; strut_criterion = :buckling,
+                         governing_root = :taxi, governing_break = :pullup,
+                         governing_strut = :pullup, governing_strut_compression = :pushover,
+                         infeasibilities = Set([:wing_beam_column_margin, :wing_fuel_volume_exceeded]))
+    end
+
+    @testset "Gust cases" begin
+        loads = ac.wing.sizing_loads
+        @test ac.is_sized == [true]
+        @test loads.gust_up_light.active
+        @test loads.gust_down_light.active
+        # Load factor 1 ± Δn of the light-mass gust cases
+        @test loads.gust_up_light.n_computed > 1 > loads.gust_down_light.n_computed
+        @test loads.gust_up_light.n_computed ≈ 3.2077142279486672 rtol=1e-4
+        @test loads.gust_down_light.n_computed ≈ -1.2077142279486672 rtol=1e-4
+        @test issubset(Set([:gust_up_light, :gust_down_light]), Set(keys(loads.results)))
+    end
+
+    test_ac_off_design(ac, 1.0105122329656862, 142358.01605472612, 688466.7941779675)
 end
 
 @testset "TBW LH2 sizing" verbose=true begin
