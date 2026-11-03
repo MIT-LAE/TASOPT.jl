@@ -61,6 +61,14 @@ $TYPEDFIELDS
     strut_attach::structures.Weight = structures.Weight()
     """Candidate that sets `strut_attach`: `:strut_weight`, or `:none` if there is no reinforcement. Set by [`fusew!`](@ref)"""
     strut_attach_criterion::Symbol = :none
+    """
+    Side walls and belly tie that carry the strut force into the fuselage [N, m], in addition to `strut_attach`. Placed at the strut attach x,
+    `wing.strut.x_strut_attach` (the wing-box x if that is NaN). Set by [`fusew!`](@ref) from the strut forces of the previous sizing iteration;
+    zero for a cantilever wing.
+    """
+    strut_patch::structures.Weight = structures.Weight()
+    """Criterion that sets the wall thickness of `strut_patch`: `:wall_yield` or `:wall_buckling`, or `:none` if there is no patch. Set by [`fusew!`](@ref)"""
+    strut_patch_criterion::Symbol = :none
 
     # Misc properties
     """Number of decks in fuselage"""

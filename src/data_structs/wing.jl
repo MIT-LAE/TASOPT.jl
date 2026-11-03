@@ -51,6 +51,12 @@ $TYPEDFIELDS
     the loading is largest at the fuselage and zero at the wing attachment. ``p = 0.5`` is elliptic.
     """
     spanload_exponent::Float64 = 0.0
+    """
+    Streamwise position of the strut attach on the fuselage [m]. NaN (default) follows the wing box, `wing.layout.box_x`;
+    a finite value is an absolute fuselage x that does not move with the wing, so it can be an independent design variable.
+    It places the strut loads in the fuselage sizing
+    """
+    x_strut_attach::Float64 = NaN
 
     # Computed geometry
     """Strut Length [m] """
@@ -79,6 +85,13 @@ $TYPEDFIELDS
     EI_min::Float64 = 0
     """Governing strut sizing criterion: `:tension`, `:buckling` or `:gauge`"""
     sizing_criterion::Symbol = :none
+
+    """Vertical force of both struts on the fuselage [N], from the largest in-plane strut force of the sizing cases. Set by [`wing_weights!`](@ref)"""
+    force_vertical::Float64 = 0
+    """Horizontal force of the strut of one wing on the fuselage [N], from the largest in-plane strut force of the sizing cases. Set by [`wing_weights!`](@ref)"""
+    force_horizontal::Float64 = 0
+    """Share of the vertical wing support taken by the strut [-], in the sizing case with the largest strut force: zero for a cantilever wing. Set by [`wing_weights!`](@ref)"""
+    reaction_share::Float64 = 0
 
     # Aerodynamics
     """Lift coefficient of both struts, referenced to the wing area, set by [`induced_drag!`](@ref)"""
