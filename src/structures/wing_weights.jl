@@ -1097,6 +1097,9 @@ function wing_weights!(wing, po, gammat, gammas,
             wing.strut.cos_lambda = 1.0
             wing.strut.dihedral = 0.0
             wing.strut.axial_force_compression = 0.0
+            wing.strut.force_vertical = 0.0
+            wing.strut.force_horizontal = 0.0
+            wing.strut.reaction_share = 0.0
         end
 
     else
@@ -1136,6 +1139,20 @@ function wing_weights!(wing, po, gammat, gammas,
         # strut length lsp, whereas the strut force of the load cases is in the plane, along the length ls.
         wing.strut.axial_force_compression = Tstrut_compression*lsp/ls
         wing.strut.length = lsp
+
+        # Force of the strut on the fuselage for the fuselage sizing: the largest in-plane force (tension or compression),
+        # and the share of the vertical wing support that the strut takes in the case with the largest strut force.
+        L_bay = 0.5*wing.layout.span*(etas-etao)
+        T_plane = max(Tstrut, abs(Tstrut_compression))
+        wing.strut.force_vertical = n_wings*T_plane*wing.strut.z/ls
+        wing.strut.force_horizontal = T_plane*L_bay/ls
+        results = wing.sizing_loads.results
+        wing.strut.reaction_share = 0.0
+        if !isempty(results)
+            worst = results[argmax(name -> abs(results[name].strut_force), collect(keys(results)))]
+            support = worst.S_root + worst.strut_reaction
+            iszero(support) || (wing.strut.reaction_share = clamp(worst.strut_reaction/support, 0.0, 1.0))
+        end
         # The strut is a box of caps and webs of the chord `chord_to_wing_chord` times the wing chord at the strut attachment.
         # A vertical jury strut shortens the buckling length of the strut and loads the webs in shear (previous iteration).
         strut = wing.strut
