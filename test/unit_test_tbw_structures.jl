@@ -1082,6 +1082,329 @@ end
     end
 end
 
+# Strut loads in the fuselage sizing: the side-wall patch, the belly tie and the pitch-bending relief of `fusew!`,
+# and the strut force, attach x and reaction share that `wing_weights!` computes for it.
+# `fusew!` gets the strut vertical force of both struts, the horizontal force of one wing, the strut geometry and the
+# strut box width at the attach.
+
+# `fusew!` arguments of the default fuselage (the values of the fuselage sizing test in unit_test_structures.jl)
+const fusew_cbox = 3.119635043953234
+const fusew_xwbox = 15.688410884477133
+const fusew_xwing = 18.465770971525686
+const fusew_args = (6.0, 219964.5779, 0.0, 0, 0.0, 0.0, 0.0, 0.0, "", 56016.1756316446, 14400.815502104786,
+    9645.22120844135, 0.4, 0.7, 1.2379754637499652e6, 1.0469704911343623e6, 7.958844386073947,
+    0.3, 1.0, 36.212475021199154, 35.05057234350367, fusew_xwing, fusew_xwbox, fusew_cbox, 14.164410884477133)
+
+const fusew_default_fuselage = load_default_model().fuselage
+
+"Copy of the default fuselage, sized by `fusew!` with the keywords `kwargs`."
+function fuselage_sized_with(; kwargs...)
+    fuse = deepcopy(fusew_default_fuselage)
+    TASOPT.fusew!(fuse, fusew_args...; kwargs...)
+    return fuse
+end
+
+# Strut geometry used to size the fuselage in the tests below
+const strut_patch_z = 154 * 0.0254 # [m]
+const strut_patch_y_root = 1.2 # [m]
+const strut_patch_box_width = 1.0 # [m]
+
+"""
+Weight [N] of the side walls and of the belly tie of the strut load-transfer patch, the x [m] of the patch and its
+governing criterion, written out independently of `fusew!`.
+
+Each side wall is a trapezoid from the strut box width `box_width` at the strut attach (height 0) to `cbox` at the wing
+box (height `z`); the load-path width at height `h` is `l = box_width + (cbox - box_width) h / z`.
+"""
+function expected_strut_patch(fuse; force_vertical, force_horizontal, box_width = strut_patch_box_width,
+                              x_attach = fusew_xwbox, xwbox = fusew_xwbox, cbox = fusew_cbox,
+                              z = strut_patch_z, y_root = strut_patch_y_root)
+    σ, ρ, E, ν = fuse.skin.σ, fuse.skin.ρ, fuse.material.E, 0.3
+    Vw = force_vertical / 2
+    n_intervals = 20
+    dh = z / n_intervals
+    load_width_yield = load_width_buckling = load_width_governing = 0.0
+    for i in 1:n_intervals
+        h = (i - 0.5) * dh
+        l = box_width + (cbox - box_width) * h / z
+        t_yield = Vw / (l * σ)
+        t_buckle = (Vw * l * 12 * (1 - ν^2) / (4π^2 * E))^(1 / 3)
+        load_width_yield += l * t_yield * dh
+        load_width_buckling += l * t_buckle * dh
+        load_width_governing += l * max(t_yield, t_buckle) * dh
+    end
+    W_walls = 2 * TASOPT.gee * ρ * load_width_governing
+    W_tie = TASOPT.gee * ρ * force_horizontal / σ * 2 * y_root
+    x = (W_walls * 0.5 * (xwbox + x_attach) + W_tie * x_attach) / (W_walls + W_tie)
+    return (W = W_walls + W_tie, W_walls = W_walls, W_tie = W_tie, x = x,
+            criterion = load_width_buckling > load_width_yield ? :wall_buckling : :wall_yield)
+end
+
+@testset "strut loads in the fuselage sizing" verbose=true begin
+    strut_geometry = (strut_z = strut_patch_z, strut_y_root = strut_patch_y_root, strut_box_width = strut_patch_box_width)
+    # With the strut box width of 1 m the yield thickness governs the walls of `yield_loads` (its integral of l t is 2.2 times
+    # the buckling one) and the buckling thickness those of `buckling_loads` (7 times the yield one), at every height.
+    yield_loads = (strut_force_vertical = 6.0e7, strut_force_horizontal = 1.5e7)
+    buckling_loads = (strut_force_vertical = 1.0e6, strut_force_horizontal = 5.0e5)
+    base = fuselage_sized_with()
+
+    expected_patch(fuse, loads; kwargs...) = expected_strut_patch(fuse; force_vertical = loads.strut_force_vertical,
+        force_horizontal = loads.strut_force_horizontal, kwargs...)
+
+    @testset "Strut has the attach x input and the computed fuselage loads" begin
+        strut = TASOPT.structures.Strut()
+        @test :x_strut_attach in fieldnames(TASOPT.structures.Strut)
+        @test isnan(strut.x_strut_attach)
+        for field in (:force_vertical, :force_horizontal, :reaction_share)
+            @test field in fieldnames(TASOPT.structures.Strut)
+            @test getfield(strut, field) == 0.0
+        end
+        @test strut.box_width_to_chord == 0.5
+        @test :strut_patch in fieldnames(TASOPT.structures.Fuselage)
+        @test :strut_patch_criterion in fieldnames(TASOPT.structures.Fuselage)
+    end
+
+    @testset "default keywords reproduce the call without them, and give no patch" begin
+        defaults = fuselage_sized_with(; strut_force_vertical = 0.0, strut_force_horizontal = 0.0,
+            strut_reaction_share = 0.0, strut_x_attach = fusew_xwbox, strut_z = 0.0, strut_y_root = 0.0,
+            strut_box_width = 0.0)
+        @test defaults.weight == base.weight
+        @test defaults.moment == base.moment
+        @test defaults.bendingmaterial_h.weight.W == base.bendingmaterial_h.weight.W
+        @test base.strut_patch.W == 0
+        @test base.strut_patch_criterion === :none
+        @test defaults.strut_patch.W == 0
+        @test defaults.strut_patch_criterion === :none
+
+        # geometry without a force gives no patch
+        geometry_only = fuselage_sized_with(; strut_geometry...)
+        @test geometry_only.strut_patch.W == 0
+        @test geometry_only.weight == base.weight
+    end
+
+    @testset "the strut forces add a patch of the weight of the side walls and the belly tie" begin
+        for (loads, criterion) in ((yield_loads, :wall_yield), (buckling_loads, :wall_buckling))
+            fuse = fuselage_sized_with(; loads..., strut_geometry...)
+            expected = expected_patch(fuse, loads)
+            @test expected.criterion === criterion # the loads are chosen to be governed by the criterion
+            @test fuse.strut_patch.W > 0
+            @test fuse.strut_patch.W ≈ expected.W rtol = 1e-10
+            @test fuse.strut_patch_criterion === criterion
+            @test fuse.strut_patch.x ≈ fusew_xwbox rtol = 1e-12 # the strut attach follows the wing box by default
+            @test fuse.weight > base.weight
+            @test fuse.weight ≈ base.weight + fuse.strut_patch.W rtol = 1e-12
+            @test fuse.moment ≈ base.moment + fuse.strut_patch.W * fusew_xwbox rtol = 1e-12
+        end
+
+        # the patch grows with the force
+        weight(loads; kwargs...) = fuselage_sized_with(; loads..., strut_geometry..., kwargs...).strut_patch.W
+        double(loads) = (strut_force_vertical = 2 * loads.strut_force_vertical, strut_force_horizontal = loads.strut_force_horizontal)
+        @test weight(double(yield_loads)) > weight(yield_loads)
+        @test weight(double(buckling_loads)) > weight(buckling_loads)
+
+        # without the belly tie the wall weight alone scales with the force to the power 1 (yield) or 1/3 (buckling)
+        walls_only(loads) = (strut_force_vertical = loads.strut_force_vertical, strut_force_horizontal = 0.0)
+        @test weight(double(walls_only(yield_loads))) ≈ 2 * weight(walls_only(yield_loads)) rtol = 1e-10
+        @test weight(double(walls_only(buckling_loads))) ≈ 2^(1 / 3) * weight(walls_only(buckling_loads)) rtol = 1e-10
+    end
+
+    @testset "a strut box as wide as the wing box makes the side walls rectangles" begin
+        for (loads, criterion) in ((yield_loads, :wall_yield), (buckling_loads, :wall_buckling))
+            fuse = fuselage_sized_with(; loads..., strut_geometry..., strut_box_width = fusew_cbox)
+            σ, ρ, E, ν = fuse.skin.σ, fuse.skin.ρ, fuse.material.E, 0.3
+            Vw = loads.strut_force_vertical / 2
+            t_yield = Vw / (fusew_cbox * σ)
+            t_buckle = (Vw * 12 * (1 - ν^2) / (4π^2 * E) * fusew_cbox)^(1 / 3)
+            W_rectangle = TASOPT.gee * ρ * (2 * fusew_cbox * strut_patch_z * max(t_yield, t_buckle) +
+                                            loads.strut_force_horizontal / σ * 2 * strut_patch_y_root)
+            @test (t_buckle > t_yield ? :wall_buckling : :wall_yield) === criterion
+            @test fuse.strut_patch.W ≈ W_rectangle rtol = 1e-10
+            @test fuse.strut_patch_criterion === criterion
+        end
+    end
+
+    @testset "the strut box width changes the buckling-governed patch only" begin
+        sized(loads; kwargs...) = fuselage_sized_with(; loads..., strut_geometry..., kwargs...)
+
+        # the yield thickness times the load-path width is the same at every height, so the box width does not matter
+        for box_width in (0.5, 2.0, fusew_cbox)
+            fuse = sized(yield_loads; strut_box_width = box_width)
+            expected = expected_patch(fuse, yield_loads; box_width)
+            @test expected.criterion === :wall_yield
+            @test fuse.strut_patch_criterion === :wall_yield
+            @test fuse.strut_patch.W ≈ expected.W rtol = 1e-10
+            @test fuse.strut_patch.W ≈ sized(yield_loads).strut_patch.W rtol = 1e-10
+        end
+
+        # the buckling thickness grows with the load-path width: a narrower box gives a lighter patch, a wider one a heavier patch
+        buckling_default = sized(buckling_loads)
+        for box_width in (0.75, 2.0)
+            buckling_other = sized(buckling_loads; strut_box_width = box_width)
+            expected = expected_patch(buckling_other, buckling_loads; box_width)
+            @test expected.criterion === :wall_buckling
+            @test buckling_other.strut_patch_criterion === :wall_buckling
+            @test buckling_other.strut_patch.W ≈ expected.W rtol = 1e-10
+            @test (buckling_other.strut_patch.W > buckling_default.strut_patch.W) == (box_width > strut_patch_box_width)
+        end
+    end
+
+    @testset "the patch is in addition to the strut-attachment hardware, and sits at the strut attach x" begin
+        with_hardware = fuselage_sized_with(; strut_weight = 40e3, strut_weight_frac_attachments = 0.03, yield_loads..., strut_geometry...)
+        without_hardware = fuselage_sized_with(; yield_loads..., strut_geometry...)
+        @test with_hardware.strut_attach.W ≈ 0.03 * 40e3
+        @test with_hardware.strut_patch.W == without_hardware.strut_patch.W
+        @test with_hardware.weight ≈ without_hardware.weight + 0.03 * 40e3 rtol = 1e-12
+
+        # the walls sit midway between the wing box and the strut attach, the tie at the strut attach: the patch is at their weighted mean
+        for loads in (yield_loads, buckling_loads)
+            x_attach = fusew_xwbox + 2.0
+            default_x = fuselage_sized_with(; loads..., strut_geometry...)
+            shifted = fuselage_sized_with(; loads..., strut_geometry..., strut_x_attach = x_attach)
+            expected = expected_patch(shifted, loads; x_attach)
+            @test shifted.strut_patch.W == default_x.strut_patch.W
+            @test shifted.strut_patch.x ≈ expected.x rtol = 1e-12
+            @test fusew_xwbox + 1.0 < shifted.strut_patch.x < x_attach # between the wall centroid and the tie
+            @test shifted.moment ≈ base.moment + shifted.strut_patch.W * expected.x rtol = 1e-12
+
+            # an attach forward of the wing box moves the patch forward
+            forward = fuselage_sized_with(; loads..., strut_geometry..., strut_x_attach = fusew_xwbox - 2.0)
+            @test forward.strut_patch.x < fusew_xwbox
+        end
+    end
+
+    @testset "the reaction share relieves the horizontal bending material only for a strut attach aft of the wing box" begin
+        bending(; share, x_attach) = fuselage_sized_with(; yield_loads..., strut_geometry...,
+            strut_reaction_share = share, strut_x_attach = x_attach).bendingmaterial_h.weight.W
+        reference = bending(share = 0.0, x_attach = fusew_xwbox)
+        @test reference == base.bendingmaterial_h.weight.W
+
+        # the strut attach at the wing box, or no share: the numbers are those of today (bit-identical)
+        @test bending(share = 0.5, x_attach = fusew_xwbox) == reference
+        @test bending(share = 1.0, x_attach = fusew_xwbox) == reference
+        @test bending(share = 0.0, x_attach = fusew_xwbox + 3.0) == reference
+
+        # an attach aft of the wing box takes part of the support there and relieves the bending material
+        relieved = bending(share = 0.5, x_attach = fusew_xwbox + 3.0)
+        @test relieved < reference
+        @test bending(share = 1.0, x_attach = fusew_xwbox + 3.0) < relieved
+        @test bending(share = 0.5, x_attach = fusew_xwbox + 8.0) < relieved
+
+        # vertical-axis bending is unchanged
+        with_relief = fuselage_sized_with(; yield_loads..., strut_geometry..., strut_reaction_share = 0.5,
+                                          strut_x_attach = fusew_xwbox + 3.0)
+        @test with_relief.bendingmaterial_v.weight.W == base.bendingmaterial_v.weight.W
+    end
+
+    @testset "sized strut-braced aircraft: the computed strut loads follow the strut force and geometry" begin
+        ac = sized_braced_aircraft()
+        wing, strut, sl = ac.wing, ac.wing.strut, ac.wing.sizing_loads
+        @test isnan(strut.x_strut_attach)
+
+        # In-plane strut force (the axial forces are scaled to the total strut length by 1 / cos_lambda)
+        L = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
+        ls = sqrt(strut.z^2 + L^2)
+        T_plane = max(strut.axial_force, abs(strut.axial_force_compression)) * strut.cos_lambda
+        @test T_plane > 0
+        @test strut.force_vertical > 0
+        @test strut.force_horizontal > 0
+        @test strut.force_vertical ≈ 2 * T_plane * strut.z / ls rtol = 1e-9
+        @test strut.force_horizontal ≈ T_plane * L / ls rtol = 1e-9
+        @test strut.force_vertical / (2 * strut.force_horizontal) ≈ strut.z / L rtol = 1e-9
+
+        # The share of the wing support taken by the strut, in the case with the largest strut force
+        results = sl.results
+        worst = argmax(name -> abs(results[name].strut_force), collect(keys(results)))
+        share = results[worst].strut_reaction / (results[worst].S_root + results[worst].strut_reaction)
+        @test 0 < strut.reaction_share < 1
+        @test strut.reaction_share ≈ share rtol = 1e-2
+
+        # The fuselage is sized with the patch
+        @test ac.fuselage.strut_patch.W > 0
+        @test ac.fuselage.strut_patch_criterion in (:wall_yield, :wall_buckling)
+    end
+
+    # The sized fuselage is compared with the patch recomputed from the converged strut and wing of the aircraft
+    sized_patch(ac; kwargs...) = expected_strut_patch(ac.fuselage;
+        force_vertical = ac.wing.strut.force_vertical, force_horizontal = ac.wing.strut.force_horizontal,
+        xwbox = ac.wing.layout.box_x, cbox = ac.wing.layout.root_chord * ac.wing.inboard.cross_section.width_to_chord,
+        z = ac.wing.strut.z, y_root = ac.wing.strut.y_root, kwargs...)
+
+    @testset "sized strut-braced aircraft: the strut box width at the attach sizes the patch" begin
+        ac = sized_braced_aircraft()
+        strut = ac.wing.strut
+        box_width = strut.chord * strut.box_width_to_chord
+        @test box_width > 0
+        expected = sized_patch(ac; box_width, x_attach = ac.wing.layout.box_x)
+        @test ac.fuselage.strut_patch.W ≈ expected.W rtol = 1e-4
+        @test ac.fuselage.strut_patch_criterion === expected.criterion
+    end
+
+    @testset "sized strut-braced aircraft: a NaN strut attach x follows the wing box" begin
+        ac = sized_braced_aircraft()
+        @test isnan(ac.wing.strut.x_strut_attach)
+        @test ac.fuselage.strut_patch.x ≈ ac.wing.layout.box_x rtol = 1e-9
+
+        # an explicit x equal to the converged wing box x gives the same sized fuselage
+        box_x = ac.wing.layout.box_x
+        explicit = sized_braced_aircraft(:strut_attach_at_wing_box, ac -> (ac.wing.strut.x_strut_attach = box_x))
+        @test explicit.wing.layout.box_x ≈ box_x rtol = 1e-6
+        @test explicit.fuselage.strut_patch.W ≈ ac.fuselage.strut_patch.W rtol = 1e-6
+        @test explicit.fuselage.strut_patch.x ≈ ac.fuselage.strut_patch.x rtol = 1e-6
+        @test explicit.fuselage.bendingmaterial_h.weight.W ≈ ac.fuselage.bendingmaterial_h.weight.W rtol = 1e-6
+    end
+
+    @testset "sized strut-braced aircraft: a strut attach x aft of the wing box moves the patch" begin
+        box_x = sized_braced_aircraft().wing.layout.box_x
+        x_attach = box_x + 3.0
+        aft = sized_braced_aircraft(:strut_attach_aft_of_wing_box, ac -> (ac.wing.strut.x_strut_attach = x_attach))
+        strut = aft.wing.strut
+        @test strut.x_strut_attach == x_attach # the attach x does not move with the wing box
+        @test x_attach > aft.wing.layout.box_x
+
+        expected = sized_patch(aft; box_width = strut.chord * strut.box_width_to_chord, x_attach)
+        @test aft.fuselage.strut_patch.x ≈ expected.x rtol = 1e-6
+        @test aft.fuselage.strut_patch.x > aft.wing.layout.box_x
+        @test aft.fuselage.strut_patch.W ≈ expected.W rtol = 1e-4
+    end
+
+    @testset "sized cantilever aircraft: the strut loads and the patch are zero" begin
+        ac = sized_default_aircraft()
+        strut = ac.wing.strut
+        @test strut.force_vertical == 0
+        @test strut.force_horizontal == 0
+        @test strut.reaction_share == 0
+        @test ac.fuselage.strut_patch.W == 0
+        @test ac.fuselage.strut_patch_criterion === :none
+    end
+
+    @testset "[Wing.Strut] x_strut_attach: absent is NaN, an explicit key is read exactly, save and read round-trip" begin
+        x_attach(txt) = first(read_aircraft_from_text(txt)).wing.strut.x_strut_attach
+        for config in ("strut_braced", "truss_braced")
+            @test isnan(x_attach(toml_with_wing_config(config)))
+            @test isnan(x_attach(toml_with_strut_inputs(config; block = "thickness_to_chord = 0.12")))
+            @test x_attach(toml_with_strut_inputs(config; block = "x_strut_attach = 17.25")) == 17.25
+            @test x_attach(toml_with_strut_inputs(config; block = "x_strut_attach = -0.75")) == -0.75
+
+            # a finite value is written and read back; NaN is not written
+            for (block, expected) in (("x_strut_attach = 21.234", 21.234), ("", NaN))
+                ac = first(read_aircraft_from_text(toml_with_strut_inputs(config; block)))
+                mktempdir() do dir
+                    path = joinpath(dir, "strut_x_attach_roundtrip.toml")
+                    save_aircraft_model(ac, path)
+                    saved_strut = TASOPT.TOML.parsefile(path)["Wing"]["Strut"]
+                    if isnan(expected)
+                        @test !haskey(saved_strut, "x_strut_attach")
+                        @test isnan(x_attach(read(path, String)))
+                    else
+                        @test saved_strut["x_strut_attach"] == expected
+                        @test x_attach(read(path, String)) == expected
+                    end
+                end
+            end
+        end
+    end
+end
+
 # Engine spanwise location input
 
 @testset "engine_location input" verbose=true begin
