@@ -1115,7 +1115,7 @@ end
 
     @testset "default_tbw.toml puts the engine inboard of the strut attachment" begin
         wing = read_example("defaults/default_tbw.toml").wing
-        @test wing.layout.ηs == 0.6
+        @test wing.layout.ηs == 0.65
         @test wing.η_engine == 0.285
     end
 
@@ -1254,18 +1254,18 @@ end
 
 @testset "gust load increment" verbose=true begin
     gust_load_increment = TASOPT.gust_load_increment
-    U_de, V_EAS, CL_alpha, c_mean = 15.24, 154.3, 4.5, 4.0   # m/s EAS (50 ft/s, 300 kt), 1/rad, m
+    U_de, V_EAS, CL_alpha, c_mean = 17.0688, 154.3, 4.5, 4.0   # m/s EAS (56 ft/s, 300 kt), 1/rad, m
     ρ0 = TASOPT.ρSL   # 1.2255627 kg/m³
 
     # Pratt–Walker: μ = 2(W/S) / (ρ0·c_mean·CLα·g),  K_g = 0.88μ/(5.3+μ),  Δn = ρ0·U_de·V·CLα·K_g / (2(W/S))
     @testset "hand calculation" begin
         # W/S = 5500 N/m²: μ = 11000 / (1.2255627·4·4.5·9.81) = 11000/216.40986 = 50.829476
         #   K_g = 0.88·50.829476/(5.3+50.829476) = 0.79690640
-        #   Δn  = 1.2255627·15.24·154.3·4.5·0.79690640 / 11000 = 12968.7746·0.79690640/11000 = 0.93953632
-        @test gust_load_increment(5500.0, c_mean, CL_alpha, U_de, V_EAS) ≈ 0.9395363236301301 rtol = 1e-6
+        #   Δn  = 1.2255627·17.0688·154.3·4.5·0.79690640 / 11000 = 14525.0275·0.79690640/11000 = 1.05228068
+        @test gust_load_increment(5500.0, c_mean, CL_alpha, U_de, V_EAS) ≈ 1.0522806792964052 rtol = 1e-6
         # W/S = 3500 N/m²: μ = 7000/216.40986 = 32.346030, K_g = 0.75610912
-        #   Δn  = 12968.7746·0.75610912/7000 = 1.40082982
-        @test gust_load_increment(3500.0, c_mean, CL_alpha, U_de, V_EAS) ≈ 1.4008298164662953 rtol = 1e-6
+        #   Δn  = 14525.0275·0.75610912/7000 = 1.56892939
+        @test gust_load_increment(3500.0, c_mean, CL_alpha, U_de, V_EAS) ≈ 1.5689293899587433 rtol = 1e-6
     end
 end
 
@@ -1993,6 +1993,136 @@ end
         end
     end
 
+    @testset "load factor of the cases" verbose=true begin
+        wing_case_load_factor = TASOPT.wing_case_load_factor
+        far_manoeuvre_load_factor = TASOPT.structures.far_manoeuvre_load_factor
+        gust_load_increment, wing_lift_curve_slope = TASOPT.gust_load_increment, TASOPT.wing_lift_curve_slope
+
+        cases = default_wing_with_span().sizing_loads
+        W_MTO = 5.5e5
+        manoeuvre_names = (:pullup, :pushover, :pullup_light, :pushover_light)
+
+        @testset "without FAR the load factor is the load factor of the case, for every kind of case" begin
+            for name in (manoeuvre_names..., :taxi)
+                @test wing_case_load_factor(name, getfield(cases, name), W_MTO, false) == getfield(cases, name).load_factor
+            end
+        end
+
+        @testset "with FAR only the positive manoeuvre cases follow the FAR load factor of W_MTO" begin
+            n_far = far_manoeuvre_load_factor(W_MTO)
+            @test n_far != cases.pullup.load_factor   # otherwise the test cannot tell the two apart
+            for name in (:pullup, :pullup_light)
+                @test wing_case_load_factor(name, getfield(cases, name), W_MTO, true) == n_far
+            end
+            for name in (:pushover, :pushover_light, :taxi)
+                @test wing_case_load_factor(name, getfield(cases, name), W_MTO, true) == getfield(cases, name).load_factor
+            end
+            # the FAR load factor follows W_MTO and the case is not modified
+            case = deepcopy(cases.pullup)
+            @test wing_case_load_factor(:pullup, case, 2.0e5, true) == far_manoeuvre_load_factor(2.0e5)
+            @test wing_case_load_factor(:pullup, case, 2.0e6, true) == far_manoeuvre_load_factor(2.0e6)
+            @test case.load_factor == cases.pullup.load_factor
+        end
+
+        @testset "manoeuvre and ground cases do not need or use the gust context" begin
+            wing = default_wing_with_span()
+            wing.layout.S = wing.layout.span^2 / wing.layout.AR
+            for far in (false, true), name in (manoeuvre_names..., :taxi)
+                case = getfield(cases, name)
+                without_context = wing_case_load_factor(name, case, W_MTO, far)
+                @test wing_case_load_factor(name, case, W_MTO, far; wing, W_lift = 3.2e5, Mach_cruise = 0.8,
+                                            V_cruise_EAS = 154.3) == without_context
+                # an invalid gust context is not validated for them
+                @test wing_case_load_factor(name, case, W_MTO, far; Mach_cruise = NaN, V_cruise_EAS = 0.0) == without_context
+            end
+        end
+
+        @testset "gust cases" verbose=true begin
+            wing = default_wing_with_span()
+            wing.layout.S = wing.layout.span^2 / wing.layout.AR
+            W_lift, Mach_cruise, V_cruise_EAS = 3.2e5, 0.8, 154.3   # N, -, m/s EAS (300 kt)
+            gust_up, gust_down = deepcopy(cases.gust_up_light), deepcopy(cases.gust_down_light)
+            gust_factor(name, case; far = false, kwargs...) = wing_case_load_factor(name, case, W_MTO, far;
+                wing, W_lift, Mach_cruise, V_cruise_EAS, kwargs...)
+
+            function expected_increment(case, V)
+                S, span = wing.layout.S, wing.layout.span
+                CL_alpha = wing_lift_curve_slope(wing.layout.AR, wing.layout.sweep, Mach_cruise)
+                return gust_load_increment(W_lift / S, S / span, CL_alpha, case.gust_velocity_EAS, V)
+            end
+
+            @testset "the load factor is 1 ± Δn with the sign of the load factor of the case" begin
+                Δn = expected_increment(gust_up, V_cruise_EAS)
+                @test Δn > 0
+                @test gust_factor(:gust_up_light, gust_up) ≈ 1 + Δn rtol = 1e-12
+                @test gust_factor(:gust_down_light, gust_down) ≈ 1 - Δn rtol = 1e-12
+
+                # only the sign of case.load_factor is used, not its magnitude
+                for load_factor in (0.1, 2.5)
+                    case = deepcopy(gust_up)
+                    case.load_factor = load_factor
+                    @test gust_factor(:gust_up_light, case) ≈ 1 + Δn rtol = 1e-12
+                    case.load_factor = -load_factor
+                    @test gust_factor(:gust_down_light, case) ≈ 1 - Δn rtol = 1e-12
+                end
+            end
+
+            @testset "the FAR option and W_MTO do not change the gust load factor" begin
+                n_up, n_down = gust_factor(:gust_up_light, gust_up), gust_factor(:gust_down_light, gust_down)
+                @test gust_factor(:gust_up_light, gust_up; far = true) == n_up
+                @test gust_factor(:gust_down_light, gust_down; far = true) == n_down
+                # the case is selected by its kind, not by its name
+                @test wing_case_load_factor(:pullup, gust_up, 1.0e6, true; wing, W_lift, Mach_cruise, V_cruise_EAS) == n_up
+            end
+
+            @testset "the speed of the case overrides the cruise speed, which is used if the case has no speed" begin
+                V_case = 100.0
+                case = deepcopy(gust_up)
+                case.gust_speed_EAS = V_case
+                @test gust_factor(:gust_up_light, case; V_cruise_EAS = 200.0) ≈ 1 + expected_increment(case, V_case) rtol = 1e-12
+                @test gust_factor(:gust_up_light, case) ≈ 1 + expected_increment(case, V_case) rtol = 1e-12
+
+                case.gust_speed_EAS = 0.0
+                @test gust_factor(:gust_up_light, case; V_cruise_EAS = V_case) ≈ 1 + expected_increment(case, V_case) rtol = 1e-12
+                @test gust_factor(:gust_up_light, case; V_cruise_EAS = V_case) < gust_factor(:gust_up_light, case)
+            end
+
+            @testset "the gust load factor depends on the wing loading and the Mach number" begin
+                @test gust_factor(:gust_up_light, gust_up; W_lift = 6.0e5) != gust_factor(:gust_up_light, gust_up)
+                @test gust_factor(:gust_up_light, gust_up; Mach_cruise = 0.5) != gust_factor(:gust_up_light, gust_up)
+                @test gust_factor(:gust_up_light, gust_up; Mach_cruise = 0.0) ≈
+                      1 + gust_load_increment(W_lift / wing.layout.S, wing.layout.S / wing.layout.span,
+                                              wing_lift_curve_slope(wing.layout.AR, wing.layout.sweep, 0.0),
+                                              gust_up.gust_velocity_EAS, V_cruise_EAS) rtol = 1e-12
+            end
+
+            @testset "the gust case is not modified" begin
+                case = deepcopy(gust_up)
+                gust_factor(:gust_up_light, case)
+                @test case.load_factor == gust_up.load_factor
+                @test case.gust_speed_EAS == gust_up.gust_speed_EAS
+                @test case.gust_velocity_EAS == gust_up.gust_velocity_EAS
+            end
+
+            @testset "a gust case needs a positive speed, a subsonic Mach number and the gust context" begin
+                @test gust_up.gust_speed_EAS <= 0   # so the cruise speed is the one that is used
+                for V in (0.0, -10.0, NaN)
+                    @test_throws ArgumentError gust_factor(:gust_up_light, gust_up; V_cruise_EAS = V)
+                end
+                for Mach in (1.0, 1.2, -0.1, NaN)
+                    @test_throws ArgumentError gust_factor(:gust_up_light, gust_up; Mach_cruise = Mach)
+                end
+                # a speed of the case is enough for the speed, but the Mach number is still needed
+                case = deepcopy(gust_up)
+                case.gust_speed_EAS = 100.0
+                @test isfinite(gust_factor(:gust_up_light, case; V_cruise_EAS = 0.0))
+                @test_throws ArgumentError gust_factor(:gust_up_light, case; V_cruise_EAS = 0.0, Mach_cruise = NaN)
+                # no gust context at all
+                @test_throws Exception wing_case_load_factor(:gust_up_light, gust_up, W_MTO, false)
+            end
+        end
+    end
+
     @testset "root loading of the cases" verbose=true begin
         wing_case_root_loading = TASOPT.wing_case_root_loading
         wing_loading = TASOPT.wing_loading
@@ -2024,7 +2154,22 @@ end
             @test loads.Nload == -2.0
             @test loads.po == 0.0
 
-            @test_throws ArgumentError root_loading(cases.gust_up_light)   # gust cases are not supported yet
+        end
+
+        @testset "root loading of the gust cases for a computed load factor" begin
+            # The gust load factor 1 ± Δn is computed by evaluate_wing_sizing_cases! and passed as `load_factor`.
+            # The root loading is then that of a manoeuvre case: the tail load is
+            # tail_load_scale · (n / n_pullup) · Lhtail, as for the push-over case.
+            n_up, n_down = 1.9, -0.4
+            for (case, n) in ((cases.gust_up_light, n_up), (cases.gust_down_light, n_down))
+                loads = wing_case_root_loading(case, wing, rclt, rcls, W_lift, Lhtail, n_pullup; load_factor = n)
+                @test loads.Nload == n
+                @test loads.po == wing_loading(wing, rclt, rcls, n, W_lift, (n / n_pullup) * Lhtail)
+            end
+            half = deepcopy(cases.gust_up_light)
+            half.tail_load_scale = 0.5
+            loads = wing_case_root_loading(half, wing, rclt, rcls, W_lift, Lhtail, n_pullup; load_factor = n_up)
+            @test loads.po == wing_loading(wing, rclt, rcls, n_up, W_lift, 0.5 * (n_up / n_pullup) * Lhtail)
         end
     end
 
@@ -2106,19 +2251,150 @@ end
             @test all(same_loads(sl.results[name], results[name]) for name in active)
         end
 
-        @testset "gust cases are skipped, stale results are removed, and no active case gives no envelope" begin
+        @testset "stale results are removed, and no active case gives no envelope" begin
             wing = deepcopy(base_wing)
             sl = wing.sizing_loads
-            sl.gust_up_light.active = true
             sl.results[:taxi] = TASOPT.structures.WingCaseLoads(M_root = 1.0e12)
             envelope = evaluate(wing)
             @test Set(keys(sl.results)) == Set([:pullup])
-            @test sl.gust_up_light.n_computed == 0.0
             @test envelope.M_root == abs(sl.results[:pullup].M_root)
 
             sl.pullup.active = false
             @test evaluate(wing) === nothing
             @test isempty(sl.results)
+        end
+
+        @testset "gust cases" verbose=true begin
+            gust_load_increment, wing_lift_curve_slope = TASOPT.gust_load_increment, TASOPT.wing_lift_curve_slope
+            Mach_cruise, V_cruise_EAS = 0.8, 154.3   # m/s EAS (300 kt)
+            n_pullup = 3.0
+
+            # The default wing has no area until it is sized: use the area of its aspect ratio and span
+            function gust_wing()
+                wing = deepcopy(base_wing)
+                wing.layout.S = wing.layout.span^2 / wing.layout.AR
+                wing.sizing_loads.gust_up_light.active = true
+                wing.sizing_loads.gust_down_light.active = true
+                return wing
+            end
+            evaluate_gust(wing; kwargs...) = TASOPT.evaluate_wing_sizing_cases!(wing, masses, true, rclt, rcls, Lhtail,
+                gammat, gammas, We, dyeinn; Mach_cruise, V_cruise_EAS, kwargs...)
+
+            # Pratt–Walker increment of the wing, for the lift weight of the Light mass state and the speed V
+            function expected_increment(wing, case, V)
+                S, span = wing.layout.S, wing.layout.span
+                CL_alpha = wing_lift_curve_slope(wing.layout.AR, wing.layout.sweep, Mach_cruise)
+                return gust_load_increment(W_lift_light / S, S / span, CL_alpha, case.gust_velocity_EAS, V)
+            end
+            # Loads of a gust case from its expected load factor n: the root loading of a manoeuvre case, with the
+            # tail load tail_load_scale · (n / n_pullup) · Lhtail
+            function gust_loads(wing, case, n)
+                Lh = case.tail_load_scale * (n / n_pullup) * Lhtail
+                return direct_loads(wing, n, TASOPT.wing_loading(wing, rclt, rcls, n, W_lift_light, Lh))
+            end
+
+            @testset "up and down gust load factors are 1 ± Δn and the cases enter the results" begin
+                wing = gust_wing()
+                sl = wing.sizing_loads
+                evaluate_gust(wing)
+                Δn = expected_increment(wing, sl.gust_up_light, V_cruise_EAS)
+
+                @test Δn > 0
+                @test sl.gust_up_light.n_computed ≈ 1 + Δn rtol = 1e-12
+                @test sl.gust_down_light.n_computed ≈ 1 - Δn rtol = 1e-12
+                @test sl.gust_up_light.n_computed > 1 > sl.gust_down_light.n_computed
+                @test Set(keys(sl.results)) == Set([:pullup, :gust_up_light, :gust_down_light])
+                @test same_loads(sl.results[:gust_up_light], gust_loads(wing, sl.gust_up_light, 1 + Δn))
+                @test same_loads(sl.results[:gust_down_light], gust_loads(wing, sl.gust_down_light, 1 - Δn))
+                # upward and downward gusts load the wing in opposite directions
+                @test sl.results[:gust_up_light].M_root * sl.results[:gust_down_light].M_root < 0
+            end
+
+            @testset "gust cases enter the envelope and the governing cases" begin
+                wing = gust_wing()
+                sl = wing.sizing_loads
+                envelope = evaluate_gust(wing)
+                active = (:pullup, :gust_up_light, :gust_down_light)
+
+                M_root = [abs(sl.results[name].M_root) for name in active]
+                M_break = [abs(sl.results[name].M_break) for name in active]
+                @test sl.governing_root == active[argmax(M_root)]
+                @test sl.governing_break == active[argmax(M_break)]
+                governing_root, governing_break = sl.results[sl.governing_root], sl.results[sl.governing_break]
+                @test envelope == (S_root = abs(governing_root.S_root), M_root = abs(governing_root.M_root),
+                                   S_break = abs(governing_break.S_break), M_break = abs(governing_break.M_break))
+                @test section_loads(wing) == section_loads(base_wing)
+
+                # with the manoeuvre cases switched off, a gust case sizes the wing
+                sl.pullup.active = false
+                envelope = evaluate_gust(wing)
+                @test Set(keys(sl.results)) == Set([:gust_up_light, :gust_down_light])
+                @test sl.governing_root in (:gust_up_light, :gust_down_light)
+                @test envelope.M_root == maximum(abs(sl.results[name].M_root) for name in (:gust_up_light, :gust_down_light))
+
+                # each gust direction alone enters the envelope with its own sign of the load factor
+                for (name, other) in ((:gust_up_light, :gust_down_light), (:gust_down_light, :gust_up_light))
+                    wing = gust_wing()
+                    getfield(wing.sizing_loads, other).active = false
+                    wing.sizing_loads.pullup.active = false
+                    envelope = evaluate_gust(wing)
+                    @test Set(keys(wing.sizing_loads.results)) == Set([name])
+                    @test wing.sizing_loads.governing_root == name
+                    @test envelope.M_root == abs(wing.sizing_loads.results[name].M_root)
+                end
+            end
+
+            @testset "gust speed: case speed overrides the cruise speed, and the increment grows with it" begin
+                V_case = 100.0
+                wing = gust_wing()
+                sl = wing.sizing_loads
+                sl.gust_up_light.gust_speed_EAS = V_case
+                sl.gust_down_light.gust_speed_EAS = V_case
+                evaluate_gust(wing; V_cruise_EAS = 200.0)   # the cruise speed is not used
+                Δn = expected_increment(wing, sl.gust_up_light, V_case)
+                @test sl.gust_up_light.n_computed ≈ 1 + Δn rtol = 1e-12
+                @test sl.gust_down_light.n_computed ≈ 1 - Δn rtol = 1e-12
+
+                # a lower speed gives a smaller increment
+                slower = gust_wing()
+                evaluate_gust(slower; V_cruise_EAS = V_case)
+                faster = gust_wing()
+                evaluate_gust(faster)
+                @test slower.sizing_loads.gust_up_light.n_computed ≈ 1 + Δn rtol = 1e-12
+                @test 1 < slower.sizing_loads.gust_up_light.n_computed < faster.sizing_loads.gust_up_light.n_computed
+                @test faster.sizing_loads.gust_down_light.n_computed < slower.sizing_loads.gust_down_light.n_computed < 1
+            end
+
+            @testset "gust cases leave the manoeuvre cases unchanged" begin
+                wing = gust_wing()
+                sl = wing.sizing_loads
+                for name in (:pushover, :pullup_light, :pushover_light, :taxi)
+                    getfield(sl, name).active = true
+                end
+                evaluate_gust(wing)
+                active = (:pullup, :pushover, :pullup_light, :pushover_light, :taxi)
+
+                without_gust = deepcopy(wing)
+                without_gust.sizing_loads.gust_up_light.active = false
+                without_gust.sizing_loads.gust_down_light.active = false
+                evaluate(without_gust)
+
+                @test Set(keys(sl.results)) == Set((active..., :gust_up_light, :gust_down_light))
+                @test all(same_loads(sl.results[name], without_gust.sizing_loads.results[name]) for name in active)
+                @test [getfield(sl, name).n_computed for name in active] == [3.0, -1.0, 3.0, -1.0, -2.0]
+                @test sl.gust_up_light.n_computed != 0.0 && sl.gust_down_light.n_computed != 0.0
+            end
+
+            @testset "inactive gust cases are not evaluated" begin
+                wing = gust_wing()
+                sl = wing.sizing_loads
+                sl.gust_up_light.active = false
+                sl.gust_down_light.active = false
+                evaluate_gust(wing)
+                @test Set(keys(sl.results)) == Set([:pullup])
+                @test sl.gust_up_light.n_computed == 0.0
+                @test sl.gust_down_light.n_computed == 0.0
+            end
         end
     end
 
@@ -2261,6 +2537,37 @@ end
                 @test envelope.S_root ≈ maximum(max(abs(results[name].S_root), abs(results[name].S_break))
                                                 for name in case_names)
             end
+        end
+
+        @testset "gust cases enter the braced strut loads and the envelope" begin
+            gust_load_increment, wing_lift_curve_slope = TASOPT.gust_load_increment, TASOPT.wing_lift_curve_slope
+            Mach_cruise, V_cruise_EAS = 0.8, 154.3
+            W_lift_light = 3.2e5   # lift weight of the Light mass state, from `masses`
+
+            wing = wing_with(StrutForceModel.Compatibility;
+                             edit! = w -> w.layout.S = w.layout.span^2 / w.layout.AR)
+            sl = wing.sizing_loads
+            sl.gust_up_light.active = true
+            sl.gust_down_light.active = true
+            envelope = TASOPT.evaluate_wing_sizing_cases!(wing, masses, true, 1.0, 1.0, Lhtail, gammat, gammas, We, dyeinn;
+                                                          has_strut = true, Mach_cruise, V_cruise_EAS)
+
+            S, b = wing.layout.S, wing.layout.span
+            CL_alpha = wing_lift_curve_slope(wing.layout.AR, wing.layout.sweep, Mach_cruise)
+            Δn = gust_load_increment(W_lift_light / S, S / b, CL_alpha, sl.gust_up_light.gust_velocity_EAS, V_cruise_EAS)
+            @test sl.gust_up_light.n_computed ≈ 1 + Δn rtol = 1e-12
+            @test sl.gust_down_light.n_computed ≈ 1 - Δn rtol = 1e-12
+            @test Set(keys(sl.results)) == Set([:pullup, :gust_up_light, :gust_down_light])
+
+            # the wing is lightly loaded in the Light mass state, so Δn > 2: the upward gust (n > 1) loads the strut
+            # in tension and the downward gust (n < 0) in compression, like a pull-up and a push-over
+            @test Δn > 1
+            forces = Dict(name => sl.results[name].strut_force for name in keys(sl.results))
+            @test forces[:gust_up_light] > 0 && forces[:gust_down_light] < 0
+            @test envelope.T_strut >= forces[:gust_up_light]
+            @test envelope.T_strut >= forces[:gust_down_light]
+            @test envelope.M_root >= maximum(max(abs(sl.results[name].M_root), abs(sl.results[name].M_inboard_extreme))
+                                             for name in (:gust_up_light, :gust_down_light))
         end
 
         @testset "a cantilever wing has no strut loads" begin
