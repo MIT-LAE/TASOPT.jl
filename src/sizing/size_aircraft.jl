@@ -372,10 +372,14 @@ function _size_aircraft!(ac; itermax=35,
         masses = wing_sizing_masses(W_cruise = BW, W_MTO = WMTO, W_pay = Wpay, W_paymax = Wpaymax,
                                     W_fuel = parg[igWfuel], freserve = parg[igfreserve],
                                     W_fuel_cap = parg[igWfmax], has_wing_fuel = options.has_wing_fuel)
+        # Cruise Mach number and equivalent airspeed of the start-of-cruise point that sizes the wing area (ρ0, u0 above)
+        Mach_cruise = pare[ieM0, ip]
+        V_cruise_EAS = u0 * sqrt(ρ0 / ρSL)
         envelope = evaluate_wing_sizing_cases!(wing, masses, options.has_wing_fuel, para[iarclt, ip], para[iarcls, ip],
                                                Lhtail, γt, γs, Weng1, dyeinn; has_strut = options.has_strut,
                                                neinn = neinn, neout = neout, dyeout = dyeout,
-                                               far_load_factor = options.opt_far_load_factor)
+                                               far_load_factor = options.opt_far_load_factor,
+                                               Mach_cruise = Mach_cruise, V_cruise_EAS = V_cruise_EAS)
         more_than_one_case = length(wing.sizing_loads.results) > 1
         section_loads_envelope = (more_than_one_case || options.has_strut) ? envelope : nothing
 
