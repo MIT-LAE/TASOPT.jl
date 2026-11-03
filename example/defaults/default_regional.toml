@@ -37,6 +37,9 @@
 # ╚══════════╩══════════╩═════╩═══════╩═══════╩════╝
 
 [Options] #
+    wing_config = "cantilever" # Options are "cantilever", "strut_braced" or "truss_braced"
+    far_load_factor = false # If true, the pull-up wing sizing cases use the FAR/CS 25.337 load factor (2.5 to 3.8, from the max takeoff weight) instead of their `load_factor`
+
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
@@ -200,7 +203,6 @@
     BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
 [Wing]
-    has_strut = false
 
     sweep = 26.0 # wing sweep in degrees
     AR    = 8.7
@@ -221,14 +223,20 @@
 
     x_wing_box = "55 ft"
     z_wing  = "-4.0 ft"
-    z_strut = "154 in" #Note only used if `has_strut = true` CHECK
-
-    #Only used if `has_strut == true`:
-    strut_toc = 0.15 #strut thickness to chord
-    strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
 
     # Airfoil data (Should be stored in src/airfoil_data/)
     airfoil = "C.air"
+
+[Wing.Strut]
+    #Only used if `wing_config` is not "cantilever"
+    z_fuselage_attach       = "154 in" # strut z position at the fuselage attachment
+    y_fuselage_attach       = "0.0 m" # strut y position at the fuselage attachment
+    thickness_to_chord      = 0.15 # strut thickness to chord
+    local_velocity_ratio    = 1.0 # V_strut/V_freestream
+    box_width_to_chord      = 0.5 # strut box width to chord ratio
+    web_to_box_height       = 0.75 # strut box web height to box height ratio
+    end_fixity_K            = 1.0 # Euler effective-length factor of the strut end fixity
+    weight_frac_added       = 0.60 # added weight fraction for fairings and fittings
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
@@ -386,6 +394,9 @@
     webs_material = "TASOPT-Al"
     webs_max_avg_stress = 1.1
     webs_safety_factor = 1.5
+    strut_material = "TASOPT-Al"
+    strut_max_avg_stress = 1.1
+    strut_safety_factor = 1.5
     # the sigma_max works out to be roughly 30e3 lbf/in2
     
     ## Fuselage pressurization skin stress and bending skin+stringer stress

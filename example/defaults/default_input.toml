@@ -42,6 +42,7 @@
 
 [Options] #
     wing_config = "cantilever" # Options are "cantilever", "strut_braced" or "truss_braced"
+    far_load_factor = false # If true, the pull-up wing sizing cases use the FAR/CS 25.337 load factor (2.5 to 3.8, from the max takeoff weight) instead of their `load_factor`
 
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
@@ -187,11 +188,6 @@
     additional = 0.20 # (Additional weight)/ Wskin
 
     fixed_weight = "3000 lbf" #cockpit, pilots etc
-
-    # Fuselage reinforcement at the strut attachment of a braced wing, W = weight_frac_strut_attach * R, with R the largest
-    # vertical reaction of both struts on the fuselage [N]. Lumped at the wing-box x. If omitted: 0.05 (PLACEHOLDER) for
-    # strut_braced and truss_braced wings, 0.0 for a cantilever wing.
-    # weight_frac_strut_attach = 0.05
 
     window_per_length     = 435.0 #[N/m]
     window_insul_per_area =  22.0 #[N/m2]

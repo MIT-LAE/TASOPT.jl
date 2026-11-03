@@ -218,11 +218,6 @@
 
     fixed_weight = "3000 lbf" #cockpit, pilots etc
 
-    # Fuselage reinforcement at the strut attachment, W = weight_frac_strut_attach * R, with R the largest vertical
-    # reaction of both struts on the fuselage [N]. CURRENTLY HAS NO EFFECT: this load-based weight is switched off until
-    # a derived value exists (0.05 is a PLACEHOLDER). The attachment weight is [Wing.Strut] weight_frac_attachments * strut weight.
-    weight_frac_strut_attach = 0.05
-
     window_per_length     = 435.0 #[N/m]
     window_insul_per_area =  22.0 #[N/m2]
     floor_weight_per_area =  60.0 #[N/m2]
