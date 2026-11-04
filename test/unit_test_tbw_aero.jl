@@ -99,6 +99,7 @@ function set_strut_drag_test_case!(ac)
 
     set_strut_lift_inputs!(ac, 0.0)
     ac.wing.strut.chord = 0.8
+    ac.wing.strut.root_chord = 0.8 # no taper
     ac.wing.strut.cos_lambda = 0.9
     ac.wing.strut.local_velocity_ratio = 1.1
     ac.wing.jury.chord = 0.4
@@ -113,10 +114,14 @@ function strut_drag_for_test_case!(ac)
     return para
 end
 
-"Strut profile drag coefficient of the main strut for the inputs set on `ac` and `para`, from its definition."
+"""
+Strut profile drag coefficient of the main strut for the inputs set on `ac` and `para`, from its definition:
+the Reynolds number scaling uses the mean of the chords at the two ends of the strut.
+"""
 function expected_main_strut_drag(ac, para)
     strut, Sw = ac.wing.strut, ac.wing.layout.S
-    Re_factor = (para[iaReunit] * strut.chord / para[iaRerefs])^para[iaaRexp]
+    mean_chord = (strut.root_chord + strut.chord) / 2
+    Re_factor = (para[iaReunit] * mean_chord / para[iaRerefs])^para[iaaRexp]
     return strut.S / Sw * (para[iacdfs] + para[iacdps] * strut.cos_lambda^3) * Re_factor * strut.local_velocity_ratio^3
 end
 
@@ -713,7 +718,26 @@ end
             para[iaReunit] /= 2
 
             ac.wing.strut.chord *= 2
+            ac.wing.strut.root_chord *= 2
             @test strut_drag_for_test_case!(ac)[iaCDstrut] ≈ CDstrut * 2.0^aRexp rtol = 1e-12
+        end
+
+        @testset "Tapered strut: Reynolds number scaling follows the mean of the chords at the two ends" begin
+            ac, para = strut_drag_case(WingConfig.StrutBraced)
+            strut = ac.wing.strut
+            CDstrut_untapered = strut_drag_for_test_case!(ac)[iaCDstrut]
+            area_ratio = strut.S / ac.wing.layout.S
+            section_cd = para[iacdfs] + para[iacdps] * strut.cos_lambda^3
+
+            # chord 0.8 m at the wing end and 1.6 m at the fuselage end: mean chord 1.2 m
+            strut.taper_ratio = 0.5
+            strut.root_chord = strut.chord / strut.taper_ratio
+            CDstrut = strut_drag_for_test_case!(ac)[iaCDstrut]
+            mean_chord = 1.2
+            @test CDstrut ≈ trefftz_aero.strut_profile_drag(area_ratio, mean_chord, section_cd, para[iaReunit],
+                para[iaRerefs], para[iaaRexp]) * strut.local_velocity_ratio^3 rtol = 1e-12
+            @test CDstrut ≈ expected_main_strut_drag(ac, para) rtol = 1e-12
+            @test CDstrut ≈ CDstrut_untapered * (mean_chord / strut.chord)^para[iaaRexp] rtol = 1e-12
         end
 
         @testset "Truss-braced wing adds the jury strut drag to the strut drag" begin
@@ -767,6 +791,7 @@ end
 
             ac.wing.strut.S = 10.0
             ac.wing.strut.chord = 0.0
+            ac.wing.strut.root_chord = 0.0
             @test strut_drag_for_test_case!(ac)[iaCDstrut] ≈ expected_jury rtol = 1e-12
 
             ac.wing.jury.chord = 0.0

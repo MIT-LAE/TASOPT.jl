@@ -76,14 +76,17 @@ function recomputed_strut_box(ac)
         min_cap_thickness = strut.min_cap_thickness, min_web_thickness = strut.min_web_thickness)
 end
 
+"Chord of the strut at the fraction `fraction` of its length from the fuselage end: linear from `root_chord` to `chord` at the wing end."
+strut_chord_at(strut, fraction) = strut.root_chord + (strut.chord - strut.root_chord) * fraction
+
 """
-Box of the jury strut recomputed with `size_member_box`: a pinned member of the chord ratio times the strut chord,
-carrying its recorded compression over its length, without tension or shear.
+Box of the jury strut recomputed with `size_member_box`: a pinned member of the chord ratio times the local strut chord
+at the jury attachment, carrying its recorded compression over its length, without tension or shear.
 """
 function recomputed_jury_box(ac)
     strut, jury = ac.wing.strut, ac.wing.jury
     return TASOPT.structures.size_member_box(jury.caps, jury.webs;
-        chord = jury.chord_to_strut_chord * strut.chord,
+        chord = jury.chord_to_strut_chord * strut_chord_at(strut, jury.eta_strut),
         height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
         web_to_box_height = strut.web_to_box_height,
         tension = 0.0, compression = jury.axial_force, buckling_length = jury.length, K = 1.0,
@@ -142,6 +145,17 @@ strut_dx_arm(ac) = 0.25 * ac.wing.layout.span * (ac.wing.layout.ηs - ac.wing.la
 
 "Pitching-moment arm of the jury about the wing-box x: the jury hangs at eta_wing, on the swept wing."
 jury_dx_arm(ac) = 0.5 * ac.wing.layout.span * (ac.wing.jury.eta_wing - ac.wing.layout.ηo) * tand(ac.wing.layout.sweep)
+
+# Truss-braced wing like `sized_jury_aircraft("truss_braced", 0.3)` but with a strut that tapers to `taper_ratio`
+function sized_tapered_strut_aircraft(taper_ratio)
+    return sized_once((:tapered_strut, taper_ratio)) do
+        ac = read_aircraft_with_wing_config("truss_braced")
+        ac.wing.layout.ηs = 0.7
+        ac.wing.jury.eta_strut = 0.3
+        ac.wing.strut.taper_ratio = taper_ratio
+        ac
+    end
+end
 
 # Strut-braced wing with the prescribed strut force and only the pull-up case active, sized once and shared
 function sized_prescribed_pullup_aircraft()
@@ -278,6 +292,7 @@ const strut_block_fields = (
     weight_frac_added = :weight_frac_added,
     weight_frac_attachments = :weight_frac_attachments,
     opt_strut_force = :opt_strut_force,
+    strut_taper_ratio = :taper_ratio,
 )
 
 # [Wing.Strut] body with values that differ from the defaults; distances carry units
@@ -292,6 +307,7 @@ const custom_strut_block = """
     weight_frac_added = 0.5
     weight_frac_attachments = 0.08
     opt_strut_force = "prescribed"
+    strut_taper_ratio = 0.6
 """
 
 "Default input text without the strut inputs, whether given as flat [Wing] keys or as a [Wing.Strut] table."
@@ -350,6 +366,7 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
         weight_frac_added = 0.5,
         weight_frac_attachments = 0.08,
         opt_strut_force = TASOPT.StrutForceModel.Prescribed,
+        strut_taper_ratio = 0.6,
     )
 
     @testset "[Wing.Strut] populates the strut fields" begin
@@ -403,6 +420,8 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
         @test strut.weight_frac_attachments == 0.06
         @test TASOPT.structures.Strut().weight_frac_attachments == 0.06
         @test TASOPT.structures.JuryStrut().weight_frac_added == 0.60
+        @test strut.taper_ratio == 1.0
+        @test TASOPT.structures.Strut().taper_ratio == 1.0
         @test !any(r -> any(key -> mentions_deprecated_strut_key(r, key), keys(deprecated_flat_strut_keys)), logs)
 
         # the jury of a truss-braced wing has its own added weight fraction, 0.60 as well
@@ -438,6 +457,22 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
                 @test !any(r -> any(key -> mentions_deprecated_strut_key(r, key), keys(deprecated_flat_strut_keys)), logs)
             end
         end
+    end
+
+    @testset "a [Wing.Strut] table without strut_taper_ratio keeps the untapered default" begin
+        for config in ("strut_braced", "truss_braced")
+            ac = first(read_aircraft_from_text(toml_with_strut_inputs(config; block = "thickness_to_chord = 0.12")))
+            @test ac.wing.strut.taper_ratio == 1.0
+        end
+    end
+
+    @testset "strut_taper_ratio must be above 0 and at most 1" begin
+        for config in ("strut_braced", "truss_braced"), bad in ("0.0", "-0.2", "1.5")
+            @test_throws Exception read_aircraft_from_text(
+                toml_with_strut_inputs(config; block = "strut_taper_ratio = $bad"))
+        end
+        ac = first(read_aircraft_from_text(toml_with_strut_inputs("truss_braced"; block = "strut_taper_ratio = 1.0")))
+        @test ac.wing.strut.taper_ratio == 1.0
     end
 
     @testset "opt_strut_force selects the strut force model" begin
@@ -1339,6 +1374,18 @@ end
         @test ac.fuselage.strut_patch_criterion === expected.criterion
     end
 
+    @testset "sized tapered strut: the strut box width at the fuselage attach is the chord at the fuselage end" begin
+        ac = sized_tapered_strut_aircraft(0.5)
+        strut = ac.wing.strut
+        box_width = strut.root_chord * strut.box_width_to_chord
+        expected = sized_patch(ac; box_width, x_attach = ac.wing.layout.box_x)
+        wing_end_box_width = strut.chord * strut.box_width_to_chord
+        wing_end = sized_patch(ac; box_width = wing_end_box_width, x_attach = ac.wing.layout.box_x)
+        @test ac.fuselage.strut_patch.W ≈ expected.W rtol = 1e-4
+        # the wing-end chord would give a different patch
+        @test abs(wing_end.W - expected.W) > 1e-3 * expected.W
+    end
+
     @testset "sized strut-braced aircraft: a NaN strut attach x follows the wing box" begin
         ac = sized_braced_aircraft()
         @test isnan(ac.wing.strut.x_strut_attach)
@@ -1902,6 +1949,34 @@ end
             @test strut.chord_to_wing_chord == 0.5
             @test strut.chord ≈ strut.chord_to_wing_chord * wing_chord_at_strut(ac) rtol = 1e-12
             @test strut.S ≈ 2 * strut.chord * strut.length rtol = 1e-10
+            # without taper the chord at the fuselage end is the chord at the wing end
+            @test strut.taper_ratio == 1.0
+            @test strut.root_chord == strut.chord
+        end
+    end
+
+    @testset "a tapered strut has the chord at the wing end from the chord ratio, and the chord at the fuselage end larger by the taper ratio" begin
+        for taper_ratio in (0.5, 0.8)
+            ac = sized_tapered_strut_aircraft(taper_ratio)
+            strut = ac.wing.strut
+            @test strut.taper_ratio == taper_ratio
+            @test strut.chord ≈ strut.chord_to_wing_chord * wing_chord_at_strut(ac) rtol = 1e-12
+            @test strut.root_chord ≈ strut.chord / taper_ratio rtol = 1e-12
+            @test strut.root_chord > strut.chord
+            # the planform area is the mean chord times the length of both struts
+            @test strut.S ≈ (strut.root_chord + strut.chord) * strut.length rtol = 1e-10
+        end
+    end
+
+    @testset "a tapered strut is sized with the wing-end chord, and weighs the mean chord over the wing-end chord more" begin
+        for taper_ratio in (0.5, 0.8)
+            ac = sized_tapered_strut_aircraft(taper_ratio)
+            strut = ac.wing.strut
+            box = recomputed_strut_box(ac)
+            mean_chord_ratio = (1 + 1 / taper_ratio) / 2
+            @test strut.area ≈ box.area_caps + box.area_webs rtol = 1e-6
+            @test strut.weight ≈ mean_chord_ratio * box_member_weight(strut, box) rtol = 1e-6
+            @test strut.dxW ≈ strut.weight * strut_dx_arm(ac) rtol = 1e-6
         end
     end
 
@@ -2098,6 +2173,23 @@ end
             end
             @test jury.weight ≈ box_member_weight(jury, box) rtol = 1e-6
         end
+    end
+
+    @testset "the jury chord is the chord ratio times the strut chord at the jury attachment" begin
+        tapered = sized_tapered_strut_aircraft(0.5)
+        for ac in (truss[0.3], truss[0.8], tapered)
+            strut, jury = ac.wing.strut, ac.wing.jury
+            local_strut_chord = strut.root_chord + (strut.chord - strut.root_chord) * jury.eta_strut
+            @test jury.chord ≈ jury.chord_to_strut_chord * local_strut_chord rtol = 1e-12
+            @test jury.area ≈ recomputed_jury_box(ac).area rtol = 1e-6
+        end
+        # without taper the jury chord is the chord ratio times the strut chord, exactly
+        for ac in values(truss)
+            @test ac.wing.jury.chord == ac.wing.jury.chord_to_strut_chord * ac.wing.strut.chord
+        end
+        # the local strut chord of a tapered strut lies between the chords at its two ends
+        strut, jury = tapered.wing.strut, tapered.wing.jury
+        @test strut.chord < jury.chord / jury.chord_to_strut_chord < strut.root_chord
     end
 
     @testset "jury weight is 2 g l (rho_cap A_caps + rho_web A_webs) (1 + weight_frac_added), and the moment uses the total weight" begin
