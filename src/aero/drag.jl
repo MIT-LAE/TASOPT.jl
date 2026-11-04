@@ -204,7 +204,8 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
             cdfs = para[iacdfs]
             cdps = para[iacdps]
             rVstrut = wing.strut.local_velocity_ratio
-            CDstrut = strut_profile_drag(wing.strut.S/wing.layout.S, wing.strut.chord,
+            mean_strut_chord = 0.5 * (wing.strut.root_chord + wing.strut.chord) # mean chord of the linear taper
+            CDstrut = strut_profile_drag(wing.strut.S/wing.layout.S, mean_strut_chord,
                                          cdfs + cdps*wing.strut.cos_lambda^3,
                                          Reunit, Rerefs, aRexp) * rVstrut^3
             if ac.options.opt_wing_config == WingConfig.TrussBraced
@@ -272,7 +273,7 @@ end # cfturb
     strut_profile_drag(area_ratio, chord, cd_section, Reunit, Rerefs, aRexp)
 
 Profile drag coefficient (referenced to the wing area, before the local velocity factor) of a strut surface with
-`area_ratio` = strut area / wing area and `chord`, with section drag coefficient `cd_section` at the reference
+`area_ratio` = strut area / wing area and mean `chord`, with section drag coefficient `cd_section` at the reference
 Reynolds number `Rerefs`. The coefficient is re-scaled by `(Reunit*chord/Rerefs)^aRexp`.
 A strut with no area or no chord has no drag.
 """

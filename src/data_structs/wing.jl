@@ -16,7 +16,7 @@ $TYPEDFIELDS
     webs::StructuralMember = StructuralMember(material = StructuralAlloy("TASOPT-Al"))
 
     # Geometry inputs
-    """Strut Area [m^2] """
+    """Planform area of both struts, at the mean of `root_chord` and `chord` [m^2]"""
     S::Float64 = 0
     """Strut z position [m]"""
     z::Float64 = 0
@@ -29,6 +29,8 @@ $TYPEDFIELDS
     Default 0.5 is a placeholder chosen so that, at the default strut-braced geometry, the strut and jury share of the wing group weight is near the SUGAR Phase IV value of about 30 %.
     """
     chord_to_wing_chord::Float64 = 0.5
+    """Strut chord at the wing end divided by the chord at the fuselage end [-], 0 < taper_ratio <= 1. 1 is an untapered strut"""
+    taper_ratio::Float64 = 1.0
     """Strut box width to chord ratio"""
     box_width_to_chord::Float64 = 0.5
     """Strut box web height to box height ratio"""
@@ -61,8 +63,10 @@ $TYPEDFIELDS
     # Computed geometry
     """Strut Length [m] """
     length::Float64 = 0
-    """Strut chord [m]: `chord_to_wing_chord` times the wing chord at the strut attachment, set by [`wing_weights!`](@ref)"""
+    """Strut chord at the wing end [m]: `chord_to_wing_chord` times the wing chord at the strut attachment, set by [`wing_weights!`](@ref)"""
     chord::Float64 = 0
+    """Strut chord at the fuselage end [m]: `chord / taper_ratio`, set by [`wing_weights!`](@ref)"""
+    root_chord::Float64 = 0
     """Strut material area of caps and webs, without the added weight fraction [m^2]"""
     area::Float64 = 0
     """Cosine of strut sweep angle"""

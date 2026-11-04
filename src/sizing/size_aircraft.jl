@@ -253,7 +253,7 @@ function _size_aircraft!(ac; itermax=35,
             strut_reaction_share = wing.strut.reaction_share,
             strut_x_attach = isnan(wing.strut.x_strut_attach) ? wing.layout.box_x : wing.strut.x_strut_attach,
             strut_z = wing.strut.z, strut_y_root = wing.strut.y_root,
-            strut_box_width = wing.strut.chord * wing.strut.box_width_to_chord)
+            strut_box_width = wing.strut.root_chord * wing.strut.box_width_to_chord)
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
@@ -429,7 +429,8 @@ function _size_aircraft!(ac; itermax=35,
 
         # Calculate strut properties
         if options.has_strut
-            wing.strut.S = 2.0 * wing.strut.chord * lstrutp
+            # Both struts at the mean chord of the linear taper: 2 * (root_chord + chord) / 2 * length
+            wing.strut.S = (wing.strut.root_chord + wing.strut.chord) * lstrutp
         end
 
         # -------------------------------

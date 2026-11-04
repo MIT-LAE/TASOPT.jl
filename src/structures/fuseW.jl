@@ -54,7 +54,7 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       - `strut_x_attach::Float64`: (keyword, default `xwbox`) X location of the strut attach [m], `wing.strut.x_strut_attach` (the wing-box x if that is NaN).
       - `strut_z::Float64`: (keyword, default 0) Height of the strut attach below the wing box [m], `wing.strut.z`.
       - `strut_y_root::Float64`: (keyword, default 0) Half the distance between the two strut attach points [m], `wing.strut.y_root`.
-      - `strut_box_width::Float64`: (keyword, default 0) Chordwise width of the strut box at the attach [m], `wing.strut.chord * wing.strut.box_width_to_chord`.
+      - `strut_box_width::Float64`: (keyword, default 0) Chordwise width of the strut box at the attach [m], `wing.strut.root_chord * wing.strut.box_width_to_chord` (the strut chord at the fuselage end).
 
       **Outputs:**
       Pressurized cabin volume:

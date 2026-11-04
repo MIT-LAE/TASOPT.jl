@@ -444,6 +444,14 @@ A conventional bracing-force fraction for a member that only restrains the main 
 const jury_load_fraction = 0.02
 
 """
+    strut_chord_at(strut, fraction)
+
+Chord of the main strut [m] at the `fraction` of its length from the fuselage end (0) to the wing end (1).
+The chord varies linearly from `strut.root_chord` to `strut.chord`.
+"""
+strut_chord_at(strut, fraction) = strut.root_chord + (strut.chord - strut.root_chord) * fraction
+
+"""
     size_jury!(wing, etao, etas, sigfac, sinL, cosL)
 
 Sizes the vertical jury strut `wing.jury` of a truss-braced wing and sets its geometry, axial force, area, buckling load,
@@ -451,7 +459,7 @@ weight and weight moment. The jury is a lateral support only, so its load is the
 of the main strut (`wing.strut.axial_force_compression`), taken as compression. Its length is ``z (1 - \\eta_{strut})`` with the
 strut height ``z`` (`wing.strut.z`) and its wing attachment is ``\\eta_o + \\eta_{strut} (\\eta_s - \\eta_o)``.
 The jury is a pinned (``K = 1``) box of caps and webs, sized by [`size_member_box`](@ref) for this compression over its length,
-without tension or shear (the webs are at their minimum gauge). Its chord is `jury.chord_to_strut_chord` times the strut chord, and the
+without tension or shear (the webs are at their minimum gauge). Its chord is `jury.chord_to_strut_chord` times the chord of the strut at the jury attachment ([`strut_chord_at`](@ref)), and the
 thickness-to-chord, width and web height ratios are those of the main strut. `jury.area` is the material area of caps and webs.
 The weight is the member weight of caps and webs of n_wings times ``1 + f_{added}`` (`jury.weight_frac_added`), with the bare areas. Its moment `jury.dxW` is the weight times the
 streamwise offset of the wing attachment station `jury.eta_wing` from the wing box root, ``0.5\\,b\\,(\\eta_{wing} - \\eta_o) \\tan\\Lambda``,
@@ -473,7 +481,7 @@ function size_jury!(wing, etao, etas, sigfac, sinL, cosL; n_wings = 2.0)
     jury.length = strut.z * (1.0 - jury.eta_strut) # only correct if the wing and truss/strut have the same sweep and are in the same plane. 3D effects on length missing
     jury.axial_force = -jury_load_fraction * abs(strut.axial_force_compression)
 
-    jury.chord = jury.chord_to_strut_chord * strut.chord
+    jury.chord = jury.chord_to_strut_chord * strut_chord_at(strut, jury.eta_strut)
     box = size_member_box(jury.caps, jury.webs;
         chord = jury.chord, height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
         web_to_box_height = strut.web_to_box_height, tension = 0.0, compression = jury.axial_force,
@@ -1039,9 +1047,11 @@ Also returns the material gauges, torsional and bending stiffness. Formerly, `ge
         the inboard section is then sized for the envelope shear, moment and axial force, and the strut for the envelope
         tension `T_strut` and, through `T_strut_compression` (recorded in `wing.strut.axial_force_compression`), for Euler buckling:
         the strut is a box of caps and webs sized by [`size_member_box`](@ref), with the chord `wing.strut.chord_to_wing_chord` times the wing
-        chord at the strut attachment (stored in `wing.strut.chord`). The load factor is the largest of the active sizing load cases, which is 
-        conservative, or `Nload` without the envelope. The strut weight is the weight of both wings of the caps and webs times 
-        `1 + wing.strut.weight_frac_added`. With the `Prescribed` strut force model, or if no envelope is given, a wing with `has_strut`
+        chord at the strut attachment (stored in `wing.strut.chord`, the chord at the wing end of the strut). The chord at the fuselage end,
+        `wing.strut.chord / wing.strut.taper_ratio`, is stored in `wing.strut.root_chord`. The box is sized with the chord at the wing end.
+        The load factor is the largest of the active sizing load cases, which is conservative, or `Nload` without the envelope.
+        The strut weight is the weight of both wings of the caps and webs times the mean chord over the chord at the wing end,
+        ``(1 + 1/\\text{taper ratio})/2``, times `1 + wing.strut.weight_frac_added`; `wing.strut.area` is the bare area of the box. With the `Prescribed` strut force model, or if no envelope is given, a wing with `has_strut`
         is sized for the outboard loads of the strut-attach station and the prescribed strut force, and the envelope is ignored.
         If `nothing` (default), the computed loads are used.
 
@@ -1154,9 +1164,11 @@ function wing_weights!(wing, po, gammat, gammas,
             iszero(support) || (wing.strut.reaction_share = clamp(worst.strut_reaction/support, 0.0, 1.0))
         end
         # The strut is a box of caps and webs of the chord `chord_to_wing_chord` times the wing chord at the strut attachment.
+        # With a tapered strut, this wing-end chord is the smaller chord, so the box is sized for the thinnest section.
         # A vertical jury strut shortens the buckling length of the strut and loads the webs in shear (previous iteration).
         strut = wing.strut
         strut.chord = strut.chord_to_wing_chord * cs
+        strut.root_chord = strut.chord / strut.taper_ratio
         buckling_length = strut_buckling_length(lsp, has_jury ? wing.jury.eta_strut : nothing)
 
         # The load factor is the largest of the active sizing cases, or Nload without the load case envelope.
@@ -1182,9 +1194,11 @@ function wing_weights!(wing, po, gammat, gammas,
         strut.buckling_load = box.buckling_load
         strut.sizing_criterion = box.criterion
         # The strut weight is the bare member weight of both wings times the added weight fraction (fairings and fittings);
-        # the area stays bare, and the weight moment uses the total weight
+        # the area stays bare, and the weight moment uses the total weight.
+        # The box area scales with the chord, so the weight is that of the mean chord over the wing-end chord of the box.
+        mean_to_wing_end_chord = (1.0 + 1.0/strut.taper_ratio) / 2
         strut.weight = n_wings*gee*lsp*(strut.caps.material.ρ*box.area_caps + strut.webs.material.ρ*box.area_webs) *
-                       (1.0 + strut.weight_frac_added)
+                       mean_to_wing_end_chord * (1.0 + strut.weight_frac_added)
         wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.span*(etas-etao) * sinL/cosL
         has_jury && size_jury!(wing, etao, etas, sigfac, sinL, cosL; n_wings = n_wings) 
     end

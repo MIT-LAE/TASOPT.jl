@@ -639,6 +639,10 @@ readwing(x) = read_input(x, wing_i, dwing)
         dstrut = dwing["Strut"]
         wing.strut.chord_to_wing_chord = get(strut_i, "chord_to_wing_chord",
                                              get(dstrut, "chord_to_wing_chord", wing.strut.chord_to_wing_chord))
+        wing.strut.taper_ratio = get(strut_i, "strut_taper_ratio",
+                                     get(dstrut, "strut_taper_ratio", wing.strut.taper_ratio))
+        0.0 < wing.strut.taper_ratio <= 1.0 ||
+            error("Input error: \"strut_taper_ratio\" = $(wing.strut.taper_ratio) must be above 0 and at most 1.")
         wing.strut.cl_ratio = get(strut_i, "cl_ratio", get(dstrut, "cl_ratio", wing.strut.cl_ratio))
         if haskey(strut_i, "x_strut_attach") || haskey(dstrut, "x_strut_attach")
             wing.strut.x_strut_attach = Distance(get(strut_i, "x_strut_attach", get(dstrut, "x_strut_attach", NaN)))
