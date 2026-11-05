@@ -45,8 +45,8 @@ $TYPEDFIELDS
     local_velocity_ratio::Float64 = 0
     """Model for the force that the strut carries"""
     opt_strut_force::StrutForceModel.T = StrutForceModel.Compatibility
-    """Strut section lift coefficient divided by the mean section lift coefficient of the wing [-]. Zero for a strut that carries no lift."""
-    cl_ratio::Float64 = 0.0
+    """Mean section lift coefficient of the strut divided by the mean section lift coefficient of the wing [-] (loading factor, 0 = strut carries no lift; the strut area and dihedral set the rest)"""
+    mean_cl_ratio_to_wing::Float64 = 0.33
     """
     Exponent ``p`` of the bound circulation shape of the strut, ``\\Gamma \\propto (1-\\xi^2)^p`` [-], with ``\\xi = 0`` at the fuselage end
     and ``\\xi = 1`` at the wing end of the strut. Each strut is treated as half a wing mirrored about the fuselage:
@@ -248,7 +248,7 @@ $TYPEDFIELDS
     M_inboard_extreme::Float64 = 0
     """Axial force in the inboard wing from the strut, positive in tension [N]"""
     P_axial_inboard::Float64 = 0
-    """Strut force of a braced wing, positive in tension [N]"""
+    """Axial force of the strut at its fuselage end, positive in tension [N]"""
     strut_force::Float64 = 0
     """Distance from the wing root of the 11 stations along the inboard wing bay of a braced wing [m]; empty without a strut"""
     inboard_stations::Vector{Float64} = Float64[]
@@ -256,8 +256,10 @@ $TYPEDFIELDS
     inboard_shear::Vector{Float64} = Float64[]
     """Bending moment at `inboard_stations`, with the strut reaction applied [N m]"""
     inboard_moment::Vector{Float64} = Float64[]
-    """Vertical reaction of the strut on the wing at the strut attachment, positive upward [N]"""
+    """Vertical reaction of the strut on the wing at the strut attachment [N]: it acts on the wing against the wing lift (downward for a positive load factor) and has the sign of the load factor"""
     strut_reaction::Float64 = 0
+    """Lift on the strut of one wing [N], with the sign of the load factor; 0 without a strut or strut lift"""
+    strut_lift::Float64 = 0
 end
 
 """
