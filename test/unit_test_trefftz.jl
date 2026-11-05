@@ -198,6 +198,87 @@ const aero = TASOPT.aerodynamics
         end
     end
 
+    @testset "Circulation calculations with three surfaces" begin
+        # Wing (6 points), tail (4 points) and strut (5 points) stored back to back in one array
+        nsurf = 3
+        i_first = [1, 7, 11]
+        i_last = [6, 10, 15]
+        n_total = 15
+
+        gc = [1.0, 0.9, 0.7, 0.4, 0.1, 0.0,  # Wing
+              0.5, 0.3, 0.1, 0.0,            # Tail
+              0.2, 0.15, 0.1, 0.05, 0.0]     # Strut
+        # y of each surface restarts at the centreline; the strut panels have different widths
+        yp = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0,
+              0.0, 0.5, 1.0, 1.5,
+              0.0, 0.4, 0.9, 1.5, 2.2]
+
+        @testset "calculate_wake_circulation!" begin
+            gw = zeros(n_total)
+            aero.calculate_wake_circulation!(gw, gc, i_first, i_last, nsurf)
+
+            # Each surface sheds the change of its own bound circulation: zero at the centreline,
+            # the difference of neighbouring panels inside, and the last panel's value at the tip
+            for isurf in 1:nsurf
+                i1, i2 = i_first[isurf], i_last[isurf]
+                @test gw[i1] == 0.0
+                @test gw[(i1 + 1):(i2 - 1)] ≈ gc[i1:(i2 - 2)] - gc[(i1 + 1):(i2 - 1)]
+                @test gw[i2] ≈ gc[i2 - 1]
+            end
+
+            # The strut block (the third) is the first-panel-to-tip telescoping sum: its net wake strength equals the
+            # bound circulation of its first panel
+            @test sum(gw[i_first[3]:i_last[3]]) ≈ gc[i_first[3]]
+
+            # Surfaces are independent: changing the tail circulation leaves the wing and strut wake unchanged
+            gc_changed = copy(gc)
+            gc_changed[i_first[2]:(i_last[2] - 1)] .*= 3.0
+            gw_changed = zeros(n_total)
+            aero.calculate_wake_circulation!(gw_changed, gc_changed, i_first, i_last, nsurf)
+            @test gw_changed[i_first[1]:i_last[1]] == gw[i_first[1]:i_last[1]]
+            @test gw_changed[i_first[3]:i_last[3]] == gw[i_first[3]:i_last[3]]
+            @test gw_changed[i_first[2]:i_last[2]] ≈ 3.0 * gw[i_first[2]:i_last[2]]
+        end
+
+        @testset "scale_circulation!" begin
+            gw = zeros(n_total)
+            aero.calculate_wake_circulation!(gw, gc, i_first, i_last, nsurf)
+            gc_scaled = copy(gc)
+            gw_scaled = copy(gw)
+            CLsurfsp = [1.1, 0.02, 0.15]  # Wing, tail and strut lift coefficients
+            bref = 6.0
+            Sref = 10.0
+
+            aero.scale_circulation!(gc_scaled, gw_scaled, yp, i_first, i_last, CLsurfsp, bref, Sref, nsurf)
+
+            # Each surface is scaled independently to its own target CL, using the circulation integrated over its span
+            for isurf in 1:nsurf
+                i1, i2 = i_first[isurf], i_last[isurf]
+                cl = 2.0 * bref / (0.5 * Sref) * sum(gc_scaled[i] * (yp[i + 1] - yp[i]) for i in i1:(i2 - 1))
+                @test cl ≈ CLsurfsp[isurf] rtol = 1e-14
+
+                # Bound and wake circulation are scaled by the same factor, so the shape of each surface is kept
+                factor = gc_scaled[i1] / gc[i1]
+                @test gc_scaled[i1:(i2 - 1)] ≈ factor * gc[i1:(i2 - 1)]
+                @test gw_scaled[i1:i2] ≈ factor * gw[i1:i2]
+            end
+        end
+
+        @testset "scale_circulation! keeps a surface without circulation at zero" begin
+            # A surface that carries no lift (strut with zero lift input) must not become NaN
+            gc_unlifted = copy(gc)
+            gc_unlifted[i_first[3]:(i_last[3] - 1)] .= 0.0
+            gw = zeros(n_total)
+            aero.calculate_wake_circulation!(gw, gc_unlifted, i_first, i_last, nsurf)
+
+            aero.scale_circulation!(gc_unlifted, gw, yp, i_first, i_last, [1.1, 0.02, 0.0], 6.0, 10.0, nsurf)
+
+            @test all(==(0.0), gc_unlifted[i_first[3]:i_last[3]])
+            @test all(==(0.0), gw[i_first[3]:i_last[3]])
+            @test all(isfinite, gc_unlifted) && all(isfinite, gw)
+        end
+    end
+
     @testset "calculate_influence_coefficient" begin
         # Test basic influence calculation
         normal = aero.Point2D(0.0, 1.0)  # Normal pointing up

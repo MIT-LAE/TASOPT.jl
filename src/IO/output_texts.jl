@@ -1,5 +1,6 @@
 """
-`weight_buildup` prints out the weight build up for the aircraft
+`weight_buildup` prints out the weight build up for the aircraft. The component weights are summed
+into the empty weight; the strut and jury strut are listed for braced and truss-braced wings respectively.
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
@@ -8,6 +9,8 @@ function weight_buildup(ac::aircraft; io=stdout)
     htail = ac.htail
     vtail = ac.vtail
     landing_gear = ac.landing_gear
+    has_strut = ac.options.has_strut
+    has_jury = ac.options.opt_wing_config == WingConfig.TrussBraced
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
     Whpesys = parg[igWMTO] * fuselage.HPE_sys.W
     Wlgnose = landing_gear.nose_gear.weight.W
@@ -24,6 +27,10 @@ function weight_buildup(ac::aircraft; io=stdout)
     Wwatt   = Wbox * wing.weight_frac_attachments
     Wwing   = Wbox + Wflap + Wslat + Waile + Wlete + Wribs + Wspoi + Wwatt
 
+    Wempty_sum = fuselage.weight + wing.weight + vtail.weight + htail.weight + parg[igWeng] +
+                 parg[igWtesys] + parg[igWftank] + Wtotadd
+    has_strut && (Wempty_sum += wing.strut.weight)
+    has_jury  && (Wempty_sum += wing.jury.weight)
 
     printstyled(io, "Weight build-up:\n -------------- \n", color=:bold )
     @printf(io, "Wempty  + %10.1f N (%8.1f lb)\n", Wempty, Wempty/lbf_to_N)
@@ -35,17 +42,16 @@ function weight_buildup(ac::aircraft; io=stdout)
 
     @printf(io,"Wfuse   + %10.1f N (%8.1f lb)\n", fuselage.weight, fuselage.weight/lbf_to_N)
     @printf(io,"Wwing   + %10.1f N (%8.1f lb)\n", wing.weight, wing.weight/lbf_to_N)
+    has_strut && @printf(io,"Wstrut  + %10.1f N (%8.1f lb)\n", wing.strut.weight, wing.strut.weight/lbf_to_N)
+    has_jury  && @printf(io,"Wjury   + %10.1f N (%8.1f lb)\n", wing.jury.weight, wing.jury.weight/lbf_to_N)
     @printf(io,"Wvtail  + %10.1f N (%8.1f lb)\n", vtail.weight, vtail.weight/lbf_to_N)
     @printf(io,"Whtail  + %10.1f N (%8.1f lb)\n", htail.weight, htail.weight/lbf_to_N)
+    @printf(io,"Weng    + %10.1f N (%8.1f lb)\n", parg[igWeng], parg[igWeng]/lbf_to_N)
     @printf(io,"Wtesys  + %10.1f N (%8.1f lb)\n", parg[igWtesys], parg[igWtesys]/lbf_to_N)
     @printf(io,"Wftank  + %10.1f N (%8.1f lb)\n", parg[igWftank], parg[igWftank]/lbf_to_N)
     @printf(io,"Wadd    + %10.1f N (%8.1f lb)\n", Wtotadd, Wtotadd/lbf_to_N)
     @printf(io,"--------------------\n")
-    printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", 
-    fuselage.weight + wing.weight + vtail.weight + htail.weight + 
-    parg[igWtesys] + +parg[igWftank] + Wtotadd, 
-    (fuselage.weight + wing.weight + vtail.weight + htail.weight + 
-    parg[igWtesys] + +parg[igWftank] + Wtotadd)/lbf_to_N); color=:bold)
+    printstyled(io, @sprintf("Wempty  = %10.1f N (%8.1f lb)\n\n", Wempty_sum, Wempty_sum/lbf_to_N); color=:bold)
 
     @printf(io,"Wcap    + %10.1f N (%8.1f lb)\n", wing.inboard.caps.weight.W, wing.inboard.caps.weight.W/lbf_to_N)
     @printf(io,"Wweb    + %10.1f N (%8.1f lb)\n", wing.inboard.webs.weight.W , wing.inboard.webs.weight.W /lbf_to_N)
@@ -75,6 +81,7 @@ of the aircraft
 function aero(ac::aircraft; io = stdout)
     parg = ac.parg
     wing = ac.wing
+    has_strut = ac.options.has_strut
     @views para = ac.para[:,:,1]
     printstyled(io, "Aerodynamics:\n -------------- \n", color=:bold)
 
@@ -87,9 +94,15 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDwing  = %6.5f\n", para[iaCDwing, ipcruise1])
     @printf(io, "CDhtail = %6.5f\n", para[iaCDhtail, ipcruise1])
     @printf(io, "CDvtail = %6.5f\n", para[iaCDvtail, ipcruise1])
+    has_strut && @printf(io, "CDstrut = %6.5f\n", para[iaCDstrut, ipcruise1])
     @printf(io, "CDnace  = %6.5f\n", para[iaCDnace, ipcruise1])
     @printf(io, "CDBLIf  = %6.5f\n", para[iadCDBLIf, ipcruise1])
     @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
+
+    if has_strut
+        @printf(io, "CLstrut = %6.5f\n", wing.strut.CL)
+        @printf(io, "Strut lift fraction = %6.5f\n", wing.strut.lift_fraction)
+    end
 
     printstyled(io, "\nDrag Areas = CD × Sref:\n", color=:bold)
     @printf(io, "CL     × Sref = %6.5f m²\n", wing.layout.S*para[iaCL, ipcruise1])
@@ -99,6 +112,7 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDwing × Sref = %6.5f m²\n", wing.layout.S*para[iaCDwing, ipcruise1])
     @printf(io, "CDhtail× Sref = %6.5f m²\n", wing.layout.S*para[iaCDhtail, ipcruise1])
     @printf(io, "CDvtail× Sref = %6.5f m²\n", wing.layout.S*para[iaCDvtail, ipcruise1])
+    has_strut && @printf(io, "CDstrut× Sref = %6.5f m²\n", wing.layout.S*para[iaCDstrut, ipcruise1])
     @printf(io, "CDnace × Sref = %6.5f m²\n", wing.layout.S*para[iaCDnace, ipcruise1])
     @printf(io, "CDBLIf × Sref = %6.5f m²\n", wing.layout.S*para[iadCDBLIf, ipcruise1])
     @printf(io, "CDBLIw × Sref = %6.5f m²\n\n", wing.layout.S*para[iadCDBLIw, ipcruise1])
@@ -164,5 +178,56 @@ function geometry(ac::aircraft; io = stdout)
     @printf(io, "b       = %5.1f m (%8.1f ft)\n" , wing.layout.span, wing.layout.span/ft_to_m   )
     @printf(io, "S       = %5.1f m²(%8.1f ft²)\n" , wing.layout.S, wing.layout.S/ft_to_m^2 )
 
+    if ac.options.has_strut
+        strut = wing.strut
+        sizing_loads = wing.sizing_loads
+        printstyled(io, "\nStrut Layout:\n -------------- \n", color=:bold )
+        @printf(io, "l_sp             = %6.2f m (%8.2f ft)\n", strut.length, strut.length/ft_to_m)
+        @printf(io, "c_strut          = %6.2f m (%8.2f ft)\n", strut.chord, strut.chord/ft_to_m)
+        @printf(io, "c_strut_root     = %6.2f m (%8.2f ft)\n", strut.root_chord, strut.root_chord/ft_to_m)
+        @printf(io, "S_strut          = %6.2f m²(%8.2f ft²)\n", strut.S, strut.S/ft_to_m^2)
+        @printf(io, "z_strut          = %6.2f m (%8.2f ft)\n", strut.z, strut.z/ft_to_m)
+        @printf(io, "y_strut          = %6.2f m (%8.2f ft)\n", strut.y_root, strut.y_root/ft_to_m)
+        @printf(io, "t/c              = %5.3f\n", strut.thickness_to_chord)
+        @printf(io, "dihedral         = %5.2f deg\n", rad2deg(strut.dihedral))
+        @printf(io, "sweep            = %5.2f deg\n", acosd(strut.cos_lambda))
+        @printf(io, "sizing case      = %s\n", sizing_loads.governing_strut)
+        @printf(io, "compression case = %s\n", sizing_loads.governing_strut_compression)
+        @printf(io, "sizing criterion = %s\n", strut.sizing_criterion)
+        if ac.options.opt_wing_config == WingConfig.TrussBraced
+            jury = wing.jury
+            @printf(io, "l_jury           = %6.2f m (%8.2f ft)\n", jury.length, jury.length/ft_to_m)
+            @printf(io, "c_jury           = %6.2f m (%8.2f ft)\n", jury.chord, jury.chord/ft_to_m)
+            @printf(io, "eta_jury         = %5.3f\n", jury.eta_wing)
+        end
+    end
 
+
+end
+
+"""
+`wing_sizing_loads_summary` prints a table of the wing root and break loads of the evaluated wing sizing
+load cases, with the load factor of each case. The cases that set the wing root and break loads are marked
+with a `*`.
+"""
+function wing_sizing_loads_summary(ac::aircraft; io = stdout)
+    sl = ac.wing.sizing_loads
+    printstyled(io, "Wing Sizing Load Cases:\n -------------- \n", color=:bold)
+
+    names = [name for name in fieldnames(typeof(sl)) if haskey(sl.results, name)]
+    if isempty(names)
+        println(io, "No wing sizing load cases have been evaluated.")
+        return
+    end
+
+    @printf(io, "%-16s %6s %12s %12s %12s %12s  %s  %s\n",
+            "Case", "n [-]", "S_root [kN]", "M_root [kNm]", "S_break [kN]", "M_break [kNm]", "Gov.root", "Gov.break")
+    for name in names
+        loads = sl.results[name]
+        @printf(io, "%-16s %6.2f %12.1f %12.1f %12.1f %12.1f  %8s  %9s\n",
+                name, getfield(sl, name).n_computed,
+                loads.S_root / 1e3, loads.M_root / 1e3, loads.S_break / 1e3, loads.M_break / 1e3,
+                name == sl.governing_root ? "*" : "", name == sl.governing_break ? "*" : "")
+    end
+    println(io, "* marks the case with the largest bending moment at the wing root or at the wing break.")
 end

@@ -9,10 +9,11 @@ using StaticArrays
 using LinearAlgebra
 using Printf
 using ..atmosphere
-using ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, balance_aircraft!, TrimVar
+using ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, balance_aircraft!, TrimVar, WingConfig, record_infeasibility!
 
-export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, tail_loading!, wing_section_cls, 
-    fuselage_drag!, broadcast_fuselage_drag!, plot_airf, aeroperf_sweep, WakeSystem
+export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, wing_lift_span_factor, tail_loading!, wing_section_cls, 
+    fuselage_drag!, broadcast_fuselage_drag!, plot_airf, aeroperf_sweep, WakeSystem,
+    strut_effective_area, strut_lift_share, strut_lift_centroid_fraction, strut_lift_arm, strut_blended_lift_arm
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -39,16 +40,16 @@ include("airfun.jl")
 # Include Trefftz plane configuration and geometry structs
 include("trefftz_config.jl")
 
-# Trefftz plane geometry arrays (sized for max resolution like before)
+# Trefftz plane geometry arrays (sized for the FINE quality level with a strut)
 # TODO: avoid module global and pass it into aircraft?
-const TREFFTZ_GEOM = TrefftzGeometry{360}()
+const TREFFTZ_GEOM = TrefftzGeometry{500}()
 const TREFFTZ_GEOMETRY_HASH = Ref{UInt64}(0)
 const DEFAULT_TREFFTZ_CONFIG = get_trefftz_config("MEDIUM") # this has to come after defining TREFFTZ_GEOM
 
 # Remaining work arrays for wake circulation and velocities
 # (will be moved to WakeSystem in future refactoring)
-const gw  = zeros(Float64, 360)
-const vnc = zeros(Float64, 360)
+const gw  = zeros(Float64, 500)
+const vnc = zeros(Float64, 500)
 include("WakeGeometry.jl")
 include("wing_loading.jl")
 include("wing_drag.jl")

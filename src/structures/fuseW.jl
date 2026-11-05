@@ -5,7 +5,9 @@
       bv, λv,nvtail,
       xhtail,xvtail,
       xwing,xwbox,cbox,
-      xeng)
+      xeng; strut_weight = 0.0, strut_weight_frac_attachments = 0.0,
+      strut_force_vertical = 0.0, strut_force_horizontal = 0.0, strut_reaction_share = 0.0,
+      strut_x_attach = xwbox, strut_z = 0.0, strut_y_root = 0.0, strut_box_width = 0.0)
 
 `fusew` sizes the fuselage and calculates the component weights and structural properties.
 It takes inputs related to geometry, fixed weights, material properties, and more to compute the fuselage dimensions, weights, and other parameters.
@@ -43,6 +45,16 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       - `xwing::Float64`: X location of the wing.
       - `xwbox::Float64`: X location of the wing box.
       - `cbox::Float64`: Wing box width.
+      - `strut_weight::Float64`: (keyword, default 0) Total weight of both struts [N], `wing.strut.weight` of the previous sizing iteration.
+      - `strut_weight_frac_attachments::Float64`: (keyword, default 0) Strut attachment hardware as a fraction of the strut weight [-],
+        `wing.strut.weight_frac_attachments`.
+      - `strut_force_vertical::Float64`: (keyword, default 0) Vertical force of both struts on the fuselage [N], `wing.strut.force_vertical`.
+      - `strut_force_horizontal::Float64`: (keyword, default 0) Horizontal force of the strut of one wing on the fuselage [N], `wing.strut.force_horizontal`.
+      - `strut_reaction_share::Float64`: (keyword, default 0) Share of the wing vertical support taken by the strut [-], `wing.strut.reaction_share`.
+      - `strut_x_attach::Float64`: (keyword, default `xwbox`) X location of the strut attach [m], `wing.strut.x_strut_attach` (the wing-box x if that is NaN).
+      - `strut_z::Float64`: (keyword, default 0) Height of the strut attach below the wing box [m], `wing.strut.z`.
+      - `strut_y_root::Float64`: (keyword, default 0) Half the distance between the two strut attach points [m], `wing.strut.y_root`.
+      - `strut_box_width::Float64`: (keyword, default 0) Chordwise width of the strut box at the attach [m], `wing.strut.root_chord * wing.strut.box_width_to_chord` (the strut chord at the fuselage end).
 
       **Outputs:**
       Pressurized cabin volume:
@@ -56,7 +68,9 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       bv, λv,nvtail,
       xhtail,xvtail,
       xwing,xwbox,cbox,
-      xeng)
+      xeng; strut_weight = 0.0, strut_weight_frac_attachments = 0.0,
+      strut_force_vertical = 0.0, strut_force_horizontal = 0.0, strut_reaction_share = 0.0,
+      strut_x_attach = xwbox, strut_z = 0.0, strut_y_root = 0.0, strut_box_width = 0.0)
 
       layout = fuse.layout
 
@@ -80,6 +94,18 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xWapu  = y_moment(fuse.APU)
       xWseat = fuse.seat.W * x_cabin
       xWpadd = fuse.added_payload.W * x_cabin
+
+#--- reinforcement at the strut attachment, lumped at the wing-box x
+      W_strut_attach = strut_weight_frac_attachments * strut_weight
+      fuse.strut_attach = iszero(W_strut_attach) ? Weight() : Weight(W = W_strut_attach, x = xwbox)
+      fuse.strut_attach_criterion = iszero(W_strut_attach) ? :none : :strut_weight
+      xWstrutattach = y_moment(fuse.strut_attach)
+
+#--- side walls and belly tie that carry the strut force into the fuselage, at the strut attach x
+      xstrut = strut_x_attach
+      fuse.strut_patch, fuse.strut_patch_criterion = size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut,
+            strut_force_vertical, strut_force_horizontal, strut_z, strut_y_root, strut_box_width)
+      xWstrutpatch = y_moment(fuse.strut_patch)
 
 #--------------------------------------------------------------------
 #--- floor structural sizing
@@ -155,15 +181,22 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xf = xwing + dxwing + 0.5*cbox
       xb = xwing - dxwing + 0.5*cbox
 
-      Ahbendf = max(Abar2*xf^2 - Abar1*xf + Abar0, 0)
-      Ahbendb = max(Abar2*xb^2 - Abar1*xb + Abar0, 0)
+      # The strut reaction is a second vertical support at the strut attach x. It takes the share
+      # `strut_reaction_share` of the wing support Rsh (the jump of -dA/dx at the wing), which reduces
+      # the bending material of the stations forward of it by share*Rsh*(xstrut - x), and its integral.
+      Rsh = 2.0*A2*(xbulk - xwing) + A1
+      relief_A(x) = x < xstrut ? strut_reaction_share*Rsh*(xstrut - x) : 0.0
+      relief_V(x) = x < xstrut ? strut_reaction_share*Rsh*(xstrut - x)^2/2.0 : 0.0
+
+      Ahbendf = max(Abar2*xf^2 - Abar1*xf + Abar0 - relief_A(xf), 0)
+      Ahbendb = max(Abar2*xb^2 - Abar1*xb + Abar0 - relief_A(xb), 0)
 
       Vhbendf = A2*((xbulk - xf)^3 - (xbulk - bending_h_x)^3)/3.0 +
                 A1*((xtail - xf)^2 - (xtail - bending_h_x)^2)/2.0 +
-                A0*(bending_h_x - xf)
+                A0*(bending_h_x - xf) - relief_V(xf)
       Vhbendb = A2*((xbulk - xb)^3 - (xbulk - bending_h_x)^3)/3.0 +
                 A1*((xtail - xb)^2 - (xtail - bending_h_x)^2)/2.0 +
-                A0*(bending_h_x - xb)
+                A0*(bending_h_x - xb) - relief_V(xb)
       Vhbendc = 0.5*(Ahbendf+Ahbendb)*cbox
 
 
@@ -215,11 +248,12 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 #--- overall fuse weight and moment
       fuse.weight = fuse.fixed.W + fuse.APU.W + fuse.added_payload.W + fuse.seat.W +
              fuse.shell.weight.W + fuse.cone.weight.W + fuse.window.W + fuse.insulation.W + fuse.floor.weight.W+
-             fuse.bendingmaterial_h.weight.W + fuse.bendingmaterial_v.weight.W
+             fuse.bendingmaterial_h.weight.W + fuse.bendingmaterial_v.weight.W +
+             fuse.strut_attach.W + fuse.strut_patch.W
 
       fuse.moment = xWfix + xWapu + xWpadd + xWseat+
       y_moment(fuse.shell.weight) + xWcone + y_moment(fuse.window) + y_moment(fuse.insulation) + xWfloor+
-             xWhbend + xWvbend 
+             xWhbend + xWvbend + xWstrutattach + xWstrutpatch
 
 #----------------------------------------------------------------
 #--- pressurized cabin volume
@@ -233,6 +267,46 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
 return  cabVol
 end # fusew
 
+""" 
+size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut, force_vertical, force_horizontal, z, y_root, box_width)
+
+Estimate the weight and governing failure criterion of the fuselage strut-load structure (two side walls and a belly tie).
+
+The side walls transfer the vertical strut loads to the wing box. Their load-path width varies linearly from box_width to 
+cbox over height z. Required thickness is the maximum of yield and simply supported panel buckling thicknesses, 
+neglecting frame support. Wall weight is integrated using a 20-interval midpoint rule.
+
+The belly tie reacts the horizontal strut loads and is sized for an area of force_horizontal / σ.
+
+Return the combined structural weight and its centroid, with criterion :wall_buckling, :wall_yield, or :none. 
+"""
+function size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut, force_vertical, force_horizontal, z, y_root, box_width)
+      no_force = iszero(force_vertical) && iszero(force_horizontal)
+      no_width = box_width <= 0.0 && cbox <= 0.0 # before the wing box is sized
+      (no_force || no_width) && return Weight(), :none
+
+      ν = 0.3
+      σ = fuse.skin.σ
+      force_wall = force_vertical / 2.0
+
+      n_intervals = 20
+      dh = z / n_intervals
+      load_width_yield = load_width_buckling = load_width_governing = 0.0 # integrals of l t over h
+      for i in 1:n_intervals
+            l = box_width + (cbox - box_width) * (i - 0.5) / n_intervals
+            t_yield = force_wall / (l * σ)
+            t_buckle = (force_wall * l * 12.0 * (1.0 - ν^2) / (4.0 * π^2 * Eskin))^(1.0 / 3.0)
+            load_width_yield += l * t_yield * dh
+            load_width_buckling += l * t_buckle * dh
+            load_width_governing += l * max(t_yield, t_buckle) * dh
+      end
+
+      W_walls = 2.0 * gee * fuse.skin.ρ * load_width_governing
+      W_tie = gee * fuse.skin.ρ * force_horizontal / σ * 2.0 * y_root
+      W = W_walls + W_tie
+      x = (W_walls * 0.5 * (xwbox + xstrut) + W_tie * xstrut) / W
+      return Weight(W = W, x = x), (load_width_buckling > load_width_yield ? :wall_buckling : :wall_yield)
+end # function size_strut_patch
 
 """
     size_floor(floor::StructuralMember, load, floor_depth, floor_half_width;

@@ -10,11 +10,12 @@ Wfuse   +   198165.8 N ( 44549.4 lb)
 Wwing   +   126383.0 N ( 28412.0 lb)
 Wvtail  +     9699.9 N (  2180.6 lb)
 Whtail  +    14483.6 N (  3256.0 lb)
+Weng    +    61867.5 N ( 13908.4 lb)
 Wtesys  +        0.0 N (     0.0 lb)
 Wftank  +        0.0 N (     0.0 lb)
 Wadd    +    57086.6 N ( 12833.6 lb)
 --------------------
-Wempty  =   405818.9 N ( 91231.7 lb)
+Wempty  =   467686.4 N (105140.1 lb)
 
 Wcap    +    73620.1 N ( 16550.5 lb)
 Wweb    +     3442.7 N (   773.9 lb)

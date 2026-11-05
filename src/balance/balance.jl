@@ -41,6 +41,7 @@ The routine computes the **neutral point (`xNP`), indicating the aircraft's long
 - Uses [`cabin_centroid()`](@ref TASOPT.cabin_centroid) to determine cabin location.
 - If there is fuel in the wings (`ac.options.has_wing_fuel`), it does not shift between CG cases.
 - `xNP` is affected by engine placement (`xengcp`), aerodynamics (`CMw1`, `CMh1`), and fuel distribution.
+- For a strut-braced wing, the wing lift arm `co * CMw1` is replaced by [`strut_blended_lift_arm`](@ref TASOPT.strut_blended_lift_arm), which weights it with the arm of the strut lift.
 - Uses [`CG_limits()`](@ref TASOPT.CG_limits) to estimate landing gear location **only**.
 
 """
@@ -54,6 +55,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       Wfuse = fuse.weight
       Wwing = wing.weight
       Wstrut = wing.strut.weight
+      Wjury = wing.jury.weight
       Whtail = htail.weight
       Wvtail = vtail.weight
       Weng = parg[igWeng]
@@ -108,6 +110,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
           Wftank +
           Wwing +
           Wstrut +
+          Wjury +
           Whtail * Sh / Sh1 +
           Wvtail +
           Weng +
@@ -123,6 +126,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       #  Wftank = $(Wftank ) 
       #  Wwing  = $(Wwing  ) 
       #  Wstrut = $(Wstrut ) 
+      #  Wjury  = $(Wjury  ) 
       #  Whtail*Sh/Sh1 = $(Whtail*Sh/Sh1) 
       #  Wvtail  = $(Wvtail  ) 
       #  Weng    = $(Weng    ) 
@@ -146,19 +150,21 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
            fuse.moment + xWtesys + xWftank +
            Wwing * wing.layout.box_x + wing.dxW +
            Wstrut * wing.layout.box_x + wing.strut.dxW +
+           Wjury * wing.layout.box_x + wing.jury.dxW +
            (Whtail * htail.layout.box_x + htail.dxW) * Sh / Sh1 +
            Wvtail * vtail.layout.box_x + vtail.dxW +
            Weng * parg[igxeng] +
            Whpesys * fuse.HPE_sys.r.x +
            Wlgmain * (wing.layout.box_x + dxlg) + landing_gear.nose_gear.moment
 
-      xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wlgmain
+      xW_xwbox = xWfuel_xwbox + Wwing + Wstrut + Wjury + Wlgmain
 
       xW_Sh = (Whtail * htail.layout.box_x + htail.dxW) / Sh1
 
       #---- total aero moment and derivatives
       CMw0 = para[iaCMw0]
       CMw1 = para[iaCMw1]
+      co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
       CMh0 = para[iaCMh0]
       CMh1 = para[iaCMh1]
       CL = para[iaCL]
@@ -175,14 +181,14 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
             if Ldebug @warn("Stability calcs in `balance_aircraft!()` approximated aircraft CL = 0 as "*eps) end
       end
 
-      cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +
+      cCM = co * CMw0 + (co_CMw1 - xwbox) * (CL - CLh * Sh / S) +
             coh * CMh0 * Sh / S + (coh * CMh1 - xhbox) * CLh * Sh / S +
             CMVf1 * (CL - CLMf0) / S
 
       cCM_xwbox = -(CL - CLh * Sh / S)
-      cCM_Sh = (co * CMw1 - xwbox) * (-CLh / S) +
+      cCM_Sh = (co_CMw1 - xwbox) * (-CLh / S) +
                coh * CMh0 / S + (coh * CMh1 - xhbox) * CLh / S
-      cCM_CLh = (co * CMw1 - xwbox) * (-Sh / S) +
+      cCM_CLh = (co_CMw1 - xwbox) * (-Sh / S) +
                 (coh * CMh1 - xhbox) * Sh / S
 
       #---- current CP and CG location
@@ -245,12 +251,12 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       Afan = 0.25 * pi * dfan^2
       xengcp = xeng - 0.25 * dfan
 
-      xNP = (co * CMw1 - xwbox) * (dCLhdCL * Sh / S - 1.0) -
+      xNP = (co_CMw1 - xwbox) * (dCLhdCL * Sh / S - 1.0) -
             (coh * CMh1 - xhbox) * dCLhdCL * Sh / S -
             CMVf1 / S -
             neng * xengcp * dCLndCL * Afan / S
       xNP_xwbox = -(dCLhdCL * Sh / S - 1.0)
-      xNP_Sh = (co * CMw1 - xwbox) * dCLhdCL / S -
+      xNP_Sh = (co_CMw1 - xwbox) * dCLhdCL / S -
                (coh * CMh1 - xhbox) * dCLhdCL / S
       xNP_CLh = 0.0
 
@@ -364,6 +370,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
       Wfuse = fuse.weight
       Wwing = wing.weight
       Wstrut = wing.strut.weight
+      Wjury = wing.jury.weight
       Whtail = htail.weight
       Wvtail = vtail.weight
       Weng = parg[igWeng]
@@ -392,6 +399,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
 
       dxWwing = wing.dxW
       dxWstrut = wing.strut.dxW
+      dxWjury = wing.jury.dxW
       dxWhtail = htail.dxW
       dxWvtail = vtail.dxW
 
@@ -435,6 +443,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                Wftank -
                Wwing -
                Wstrut -
+               Wjury -
                Whtail -
                Wvtail -
                Weng -
@@ -472,6 +481,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                  Wtesys +
                  Wftank +
                  Wstrut +
+                 Wjury +
                  Whtail +
                  Wvtail +
                  Weng +
@@ -485,6 +495,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             xWe = xWfuse + xWtesys + xWftank +
                   Wwing * xwbox + dxWwing +
                   Wstrut * xwbox + dxWstrut +
+                  Wjury * xwbox + dxWjury +
                   Whtail * xhbox + dxWhtail +
                   Wvtail * xvbox + dxWvtail +
                   Weng * xeng +
@@ -495,6 +506,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             xWe_Sh = Whtail_Sh * xhbox + dxWhtail_Sh
             xWe_xw = Wwing +
                      Wstrut +
+                     Wjury +
                      Wlgmain
 
 
@@ -541,6 +553,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   #----- set HT area by worst case: max pitch trim power at forward CG case w/ max wing CL
                   CMw0 = paraF[iaCMw0]
                   CMw1 = paraF[iaCMw1]
+                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
                   CMh0 = paraF[iaCMh0]
                   CMh1 = paraF[iaCMh1]
                   CMVf1 = parg[igCMVf1]
@@ -548,11 +561,11 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   CL = CLF
                   CLh = CLhF
 
-                  cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +
+                  cCM = co * CMw0 + (co_CMw1 - xwbox) * (CL - CLh * Sh / S) +
                         coh * CMh0 * Sh / S + (coh * CMh1 - xhbox) * CLh * Sh / S +
                         CMVf1 * (CL - CLMf0) / S
                   cCM_xw = -(CL - CLh * Sh / S)
-                  cCM_Sh = (co * CMw1 - xwbox) * (-CLh / S) +
+                  cCM_Sh = (co_CMw1 - xwbox) * (-CLh / S) +
                            coh * CMh0 / S + (coh * CMh1 - xhbox) * CLh / S
 
                   # Residual eqn ℛₘ that is equivalent to CP and CG coinciding
@@ -579,6 +592,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   #----- set wing location to get CLh=CLhspec in cruise
                   CMw0 = paraC[iaCMw0]
                   CMw1 = paraC[iaCMw1]
+                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
                   CMh0 = paraC[iaCMh0]
                   CMh1 = paraC[iaCMh1]
                   CMVf1 = parg[igCMVf1]
@@ -586,12 +600,12 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   CL = CLC
                   CLh = CLhC  #CLh is specified here
 
-                  cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +
+                  cCM = co * CMw0 + (co_CMw1 - xwbox) * (CL - CLh * Sh / S) +
                         coh * CMh0 * Sh / S + (coh * CMh1 - xhbox) * CLh * Sh / S +
                         CMVf1 * (CL - CLMf0) / S
                   #c   &        - neng*xenginl*CLn*Afan/S
                   cCM_xw = -(CL - CLh * Sh / S)
-                  cCM_Sh = (co * CMw1 - xwbox) * (-CLh / S) +
+                  cCM_Sh = (co_CMw1 - xwbox) * (-CLh / S) +
                            coh * CMh0 / S + (coh * CMh1 - xhbox) * CLh / S
 
                   r[2] = cCM / CL + xWC / WC
@@ -601,6 +615,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             elseif options.opt_move_wing == WingMove.MinStaticMargin
                   #----- set wing location by stability margin at aft-CG case
                   CMw1 = paraB[iaCMw1]
+                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
                   CMh1 = paraB[iaCMh1]
                   CMVf1 = parg[igCMVf1]
                   dCLhdCL = parg[igdCLhdCL]
@@ -612,13 +627,13 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   Afan = 0.25 * pi * dfan^2
                   xengcp = xeng - 0.25 * dfan
                   # Eqn 297, 298:
-                  xNP = (co * CMw1 - xwbox) * (dCLhdCL * Sh / S - 1.0) -
+                  xNP = (co_CMw1 - xwbox) * (dCLhdCL * Sh / S - 1.0) -
                         (coh * CMh1 - xhbox) * dCLhdCL * Sh / S -
                         CMVf1 / S -
                         neng * xengcp * dCLndCL * Afan / S  #∂CLnace/∂CL moments caused by engines
 
                   xNP_xw = -(dCLhdCL * Sh / S - 1.0)
-                  xNP_Sh = (co * CMw1 - xwbox) * dCLhdCL / S -
+                  xNP_Sh = (co_CMw1 - xwbox) * dCLhdCL / S -
                            (coh * CMh1 - xhbox) * dCLhdCL / S
 
                   # ℛsh(xw, Sh) ≡ xCG - xNP + fSM*cma 
@@ -652,7 +667,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
 
       end #end for loop iter
       if (dmax > toler)
-            @warn "`size_htail()`: Pitch not converged. dxwbox,dSh = $dxw, $dSh"
+            @warn "`size_htail()`: Pitch not converged. xwbox, Sh, dmax = $xwbox, $Sh, $dmax"
       end
 
 
@@ -669,16 +684,17 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
             CMw0 = paraF[iaCMw0]
             CMw1 = paraF[iaCMw1]
+            co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
             CMh0 = paraF[iaCMh0]
             CMh1 = paraF[iaCMh1]
             CMVf1 = parg[igCMVf1]
             CLMf0 = parg[igCLMf0]
             CL = CLF
             CLh = CLhF
-            cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +
+            cCM = co * CMw0 + (co_CMw1 - xwbox) * (CL - CLh * Sh / S) +
                   coh * CMh0 * Sh / S + (coh * CMh1 - xhbox) * CLh * Sh / S +
                   CMVf1 * (CL - CLMf0) / S
-            cCM_CLh = (co * CMw1 - xwbox) * (-Sh / S) +
+            cCM_CLh = (co_CMw1 - xwbox) * (-Sh / S) +
                       (coh * CMh1 - xhbox) * Sh / S
 
             res = cCM / CL + xWF / WF
@@ -729,6 +745,7 @@ function CG_limits(ac; Ldebug::Bool = false)
       Wfuse = fuse.weight
       Wwing = wing.weight
       Wstrut = wing.strut.weight
+      Wjury = wing.jury.weight
       Whtail = htail.weight
       Wvtail = vtail.weight
       Weng = parg[igWeng]
@@ -761,6 +778,7 @@ function CG_limits(ac; Ldebug::Bool = false)
            Wftank +
            Wwing +
            Wstrut +
+           Wjury +
            Whtail +
            Wvtail +
            Weng +
@@ -772,6 +790,7 @@ function CG_limits(ac; Ldebug::Bool = false)
             fuse.moment + parg[igxWtesys] + parg[igxWftank] +
             Wwing * wing.layout.box_x + wing.dxW +
             Wstrut * wing.layout.box_x + wing.strut.dxW +
+            Wjury * wing.layout.box_x + wing.jury.dxW +
             Whtail * htail.layout.box_x + htail.dxW +
             Wvtail * vtail.layout.box_x + vtail.dxW +
             Weng * parg[igxeng] +

@@ -15,7 +15,6 @@ function read_input(k::String, dict::AbstractDict=data,
 
     get!(dict, k) do 
         if k in keys(default_dict)
-            println("\n")
             @info """$k not found in user specified input file. 
             Reading $k from default TASOPT input:
             \n$k = $(default_dict[k])\n\n"""
@@ -171,7 +170,6 @@ parm[imWpay, :] .= payload
 parg[igWpaymax] = maxpay 
 parg[igfreserve] = readmis("fuel_reserves")
 parg[igVne] = Speed(readmis("Vne"))
-parg[igNlift] = readmis("Nlift")
 
 # Setup option variables
 options = read_input("Options", data, default)
@@ -191,12 +189,34 @@ if !(typeof(engloc) <: AbstractString && engloc in ["wing", "fuselage"])
         > \"fuselage\" - engines on aft fuselage")
 end
 
+# Wing bracing configuration. The legacy [Wing] has_strut key is only honored if the user file sets it
+legacy_has_strut = get(get(data, "Wing", Dict()), "has_strut", nothing)
+if haskey(options, "wing_config") || isnothing(legacy_has_strut)
+    wing_config_str = read_input("wing_config", options, doptions)
+    if compare_strings(wing_config_str, "cantilever")
+        _opt_wing_config = WingConfig.Cantilever
+    elseif compare_strings(wing_config_str, "strut_braced")
+        _opt_wing_config = WingConfig.StrutBraced
+    elseif compare_strings(wing_config_str, "truss_braced")
+        _opt_wing_config = WingConfig.TrussBraced
+    else
+        error("Unrecognized wing configuration: $wing_config_str")
+    end
+else
+    @info "The [Wing] key \"has_strut\" is deprecated; use `wing_config` in [Options] " *
+          "(\"cantilever\", \"strut_braced\" or \"truss_braced\") instead."
+    _opt_wing_config = legacy_has_strut ? WingConfig.StrutBraced : WingConfig.Cantilever
+end
+
+_opt_far_load_factor = read_input("far_load_factor", options, doptions)
+
 trefftz_resolution_str = read_input("trefftz_resolution", options, doptions)
 trefftz_k_tip = read_input("trefftz_k_tip", options, doptions)
 trefftz_bunch = read_input("trefftz_bunch", options, doptions)
 wing_root_contraction = read_input("wing_root_contraction", options, doptions)
 tail_root_contraction = read_input("tail_root_contraction", options, doptions)
 TREFFTZ_CONFIG = aerodynamics.get_trefftz_config(trefftz_resolution_str;
+                                                  braced=_opt_wing_config != WingConfig.Cantilever,
                                                   k_tip=trefftz_k_tip,
                                                   bunch=trefftz_bunch,
                                                   wing_root_contraction=wing_root_contraction,
@@ -535,7 +555,6 @@ end #if
 wing_i = read_input("Wing", data, default)
 dwing = default["Wing"]
 readwing(x) = read_input(x, wing_i, dwing)
-    wing.has_strut = readwing("has_strut")
 
     wing.layout.sweep = readwing("sweep")
     wing.layout.AR = readwing("AR")
@@ -554,6 +573,15 @@ readwing(x) = read_input(x, wing_i, dwing)
         @warn "ηs set to $(wing.layout.ηs)"
     end
 
+    # Engine spanwise location: the span break unless the user input sets it. The default input
+    # is not consulted so that an input without the key keeps the engine at the span break.
+    wing.η_engine = get(wing_i, "engine_location", wing.layout.ηs)
+    if !(0 ≤ wing.η_engine ≤ 1.0)
+        @warn "Wing engine location input was $(wing.η_engine); engine_location must be 0 ≤ engine_location ≤ 1.0"
+        wing.η_engine = clamp(wing.η_engine, 0.0, 1.0)
+        @warn "engine_location set to $(wing.η_engine)"
+    end
+
     wing.layout.root_span = 2*Distance(readwing("center_box_halfspan"))
     wing.inboard.cross_section.width_to_chord  = readwing("box_width_to_chord")
     wing.outboard.cross_section.width_to_chord  = readwing("box_width_to_chord")
@@ -570,11 +598,120 @@ readwing(x) = read_input(x, wing_i, dwing)
 
     parg[igdxeng2wbox] = wing.layout.box_x - parg[igxeng] #TODO add this as a function of wing
 
-    ## Strut details only used if has_strut is true
-    if wing.has_strut
-        wing.strut.z  = Distance(readwing("z_strut"))
-        wing.strut.thickness_to_chord  = readwing("strut_toc")
-        wing.strut.local_velocity_ratio = readwing("strut_local_velocity_ratio")
+    # Absolute minimum cap and web thickness, applied to both wing sections. A braced wing uses the
+    # defaults below unless the user input sets the key. These braced values (1.5 mm cap, 1.0 mm web)
+    # are temporary placeholders.
+    braced_wing = _opt_wing_config != WingConfig.Cantilever
+    read_min_gauge(key, braced_default) = haskey(wing_i, key) ? Distance(wing_i[key]) :
+                                                               (braced_wing ? braced_default : 0.0)
+    min_cap_thickness = read_min_gauge("min_cap_thickness", 1.5e-3)
+    min_web_thickness = read_min_gauge("min_web_thickness", 1.0e-3)
+    for section in (wing.inboard, wing.outboard)
+        section.min_cap_thickness = min_cap_thickness
+        section.min_web_thickness = min_web_thickness
+    end
+
+    ## Strut details only used if the wing is braced
+    if _opt_wing_config != WingConfig.Cantilever
+        strut_i = get!(wing_i, "Strut", Dict{String, Any}())
+
+        # Deprecated flat [Wing] keys are used unless [Wing.Strut] sets the same input
+        for (flat_key, strut_key) in ("z_strut" => "z_fuselage_attach",
+                                      "strut_toc" => "thickness_to_chord",
+                                      "strut_local_velocity_ratio" => "local_velocity_ratio")
+            if haskey(wing_i, flat_key)
+                @info "The [Wing] key \"$flat_key\" is deprecated; use \"$strut_key\" in [Wing.Strut] instead."
+                get!(strut_i, strut_key, wing_i[flat_key])
+            end
+        end
+
+        readstrut(x) = read_input(x, strut_i, dwing["Strut"])
+        wing.strut.z = Distance(readstrut("z_fuselage_attach"))
+        wing.strut.y_root = Distance(readstrut("y_fuselage_attach"))
+        wing.strut.thickness_to_chord = readstrut("thickness_to_chord")
+        wing.strut.local_velocity_ratio = readstrut("local_velocity_ratio")
+        wing.strut.box_width_to_chord = readstrut("box_width_to_chord")
+        wing.strut.web_to_box_height = readstrut("web_to_box_height")
+        wing.strut.end_fixity_K = readstrut("end_fixity_K")
+        wing.strut.weight_frac_added = readstrut("weight_frac_added")
+
+        # If the template lacks the key, the Strut() default is kept.
+        dstrut = dwing["Strut"]
+        wing.strut.chord_to_wing_chord = get(strut_i, "chord_to_wing_chord",
+                                             get(dstrut, "chord_to_wing_chord", wing.strut.chord_to_wing_chord))
+        wing.strut.taper_ratio = get(strut_i, "strut_taper_ratio",
+                                     get(dstrut, "strut_taper_ratio", wing.strut.taper_ratio))
+        0.0 < wing.strut.taper_ratio <= 1.0 ||
+            error("Input error: \"strut_taper_ratio\" = $(wing.strut.taper_ratio) must be above 0 and at most 1.")
+        wing.strut.mean_cl_ratio_to_wing = get(strut_i, "mean_cl_ratio_to_wing", get(dstrut, "mean_cl_ratio_to_wing", wing.strut.mean_cl_ratio_to_wing))
+        if haskey(strut_i, "x_strut_attach") || haskey(dstrut, "x_strut_attach")
+            wing.strut.x_strut_attach = Distance(get(strut_i, "x_strut_attach", get(dstrut, "x_strut_attach", NaN)))
+        end
+        wing.strut.spanload_exponent = get(strut_i, "spanload_exponent",
+                                           get(dstrut, "spanload_exponent", wing.strut.spanload_exponent))
+        wing.strut.min_cap_thickness = Distance(get(strut_i, "min_cap_thickness",
+                                                    get(dstrut, "min_cap_thickness", wing.strut.min_cap_thickness)))
+        wing.strut.min_web_thickness = Distance(get(strut_i, "min_web_thickness",
+                                                    get(dstrut, "min_web_thickness", wing.strut.min_web_thickness)))
+        strut_force_str = (haskey(strut_i, "opt_strut_force") || haskey(dstrut, "opt_strut_force")) ?
+            readstrut("opt_strut_force") : string(wing.strut.opt_strut_force)
+        strut_force_models = instances(StrutForceModel.T)
+        i_model = findfirst(model -> compare_strings(strut_force_str, string(model)), strut_force_models)
+        isnothing(i_model) && error("Unrecognized strut force model: $strut_force_str. " *
+                                    "Valid names: " * join(string.(strut_force_models), ", "))
+        wing.strut.opt_strut_force = strut_force_models[i_model]
+        wing.strut.weight_frac_attachments = get(strut_i, "weight_frac_attachments",
+                                                 get(dstrut, "weight_frac_attachments", wing.strut.weight_frac_attachments))
+    end
+
+    ## Jury strut details only used if the wing is truss braced
+    # If the table or the key is missing, the JuryStrut() default is kept.
+    if _opt_wing_config == WingConfig.TrussBraced
+        jury_i = get(wing_i, "Jury", Dict{String, Any}())
+        wing.jury.eta_strut = get(jury_i, "eta_strut", wing.jury.eta_strut)
+        wing.jury.weight_frac_added = get(jury_i, "weight_frac_added", wing.jury.weight_frac_added)
+        wing.jury.chord_to_strut_chord = get(jury_i, "chord_to_strut_chord", wing.jury.chord_to_strut_chord)
+        wing.jury.min_cap_thickness = Distance(get(jury_i, "min_cap_thickness", wing.jury.min_cap_thickness))
+        wing.jury.min_web_thickness = Distance(get(jury_i, "min_web_thickness", wing.jury.min_web_thickness))
+    end
+
+    ## Wing sizing load cases, one [Wing.SizingLoads.<case>] table per case.
+    # If the template lacks the table or a key, the WingSizingLoads() defaults are kept.
+    loads_i = get!(wing_i, "SizingLoads", Dict{String, Any}())
+    dloads = get(dwing, "SizingLoads", Dict{String, Any}())
+
+    # The deprecated [Mission] key Nlift is used unless [Wing.SizingLoads.pullup] sets load_factor
+    pullup_i = get!(loads_i, "pullup", Dict{String, Any}())
+    if haskey(mis, "Nlift") && !haskey(pullup_i, "load_factor")
+        @info "The [Mission] key \"Nlift\" is deprecated; use \"load_factor\" in [Wing.SizingLoads.pullup] instead."
+        pullup_i["load_factor"] = mis["Nlift"]
+    end
+
+    # A braced wing activates these cases unless the user input sets `active` for the case
+    braced_default_cases = (:pushover, :pullup_light, :pushover_light, :taxi)
+
+    for case_name in fieldnames(typeof(wing.sizing_loads))
+        case = getfield(wing.sizing_loads, case_name)
+        case isa typeof(wing.sizing_loads.pullup) || continue # skip results and governing_root
+
+        case_i = get!(loads_i, string(case_name), Dict{String, Any}())
+        dcase = get(dloads, string(case_name), Dict{String, Any}())
+        readcase(x, struct_default) = (haskey(case_i, x) || haskey(dcase, x)) ? read_input(x, case_i, dcase) : struct_default
+
+        case.load_factor = readcase("load_factor", case.load_factor)
+        if _opt_wing_config != WingConfig.Cantilever && case_name in braced_default_cases && !haskey(case_i, "active")
+            case.active = true
+        else
+            case.active = readcase("active", case.active)
+        end
+        case.tail_load_scale = readcase("tail_load_scale", case.tail_load_scale)
+
+        mass_state_str = readcase("mass_state", string(case.mass_state))
+        mass_states = instances(typeof(case.mass_state))
+        i_state = findfirst(state -> compare_strings(mass_state_str, string(state)), mass_states)
+        isnothing(i_state) && error("Unrecognized wing mass state for $case_name: $mass_state_str. " *
+                                    "Valid names: " * join(string.(mass_states), ", "))
+        case.mass_state = mass_states[i_state]
     end
 
     airfoil_data = joinpath(__TASOPTroot__,"airfoil_data/", readwing("airfoil"))
@@ -808,6 +945,31 @@ readstruct(x) = read_input(x, structures, dstructures)
     wing.outboard.webs.material = StructuralAlloy(readstruct("webs_material"),
                                 max_avg_stress = webs_max_avg,
                                 safety_factor = webs_safety_fac)
+
+    # The legacy keys `sigma_struts`, `E_struts` and `strut_density` are stale and ignored;
+    # the strut cap material comes from the three keys below.
+    strut_material_name = readstruct("strut_material")
+    strut_max_avg = readstruct("strut_max_avg_stress")
+    strut_safety_fac = readstruct("strut_safety_factor")
+    strut_caps_material() = StructuralAlloy(strut_material_name,
+                                max_avg_stress = strut_max_avg,
+                                safety_factor = strut_safety_fac)
+    wing.strut.caps.material = strut_caps_material()
+
+    # The strut web material keys are optional; each one defaults to the strut cap value.
+    strut_web_material_name = get(structures, "strut_web_material", strut_material_name)
+    strut_web_max_avg = get(structures, "strut_web_max_avg_stress", strut_max_avg)
+    strut_web_safety_fac = get(structures, "strut_web_safety_factor", strut_safety_fac)
+    strut_webs_material() = StructuralAlloy(strut_web_material_name,
+                                max_avg_stress = strut_web_max_avg,
+                                safety_factor = strut_web_safety_fac)
+    wing.strut.webs.material = strut_webs_material()
+
+    # The jury strut has the materials of the strut
+    if _opt_wing_config == WingConfig.TrussBraced
+        wing.jury.caps.material = strut_caps_material()
+        wing.jury.webs.material = strut_webs_material()
+    end
 
     skin_max_avg = readstruct("skin_max_avg_stress")
     skin_safety_fac = readstruct("skin_safety_factor")
@@ -1262,6 +1424,8 @@ ac_options = TASOPT.Options(
     is_doubledecker = is_doubledecker,
 
     opt_move_wing = _opt_move_wing,
+    opt_wing_config = _opt_wing_config,
+    opt_far_load_factor = _opt_far_load_factor,
 
     trefftz_config = TREFFTZ_CONFIG
 )

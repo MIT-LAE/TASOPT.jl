@@ -50,6 +50,8 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
     d_opt = Dict()
         d_opt["prop_sys_arch"] = string(options.opt_prop_sys_arch)
         d_opt["engine_location"] = string(options.opt_engine_location)
+        d_opt["wing_config"] = string(options.opt_wing_config)
+        d_opt["far_load_factor"] = options.opt_far_load_factor
     d_out["Options"] = d_opt
     #--end options----------------
 
@@ -78,7 +80,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_miss["max_pax"] = parg[igWpaymax] ./ parm[imWperpax, :]
         d_miss["fuel_reserves"] = parg[igfreserve]
         d_miss["Vne"] = parg[igVne]
-        d_miss["Nlift"] = parg[igNlift]
 
     # mission: Takeoff
     d_to = Dict()
@@ -200,8 +201,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
 
     #Wing ------------------------
     d_wing = Dict()
-        d_wing["has_strut"] = wing.has_strut
-
         d_wing["sweep"] = wing.layout.sweep
         d_wing["AR"] = wing.layout.AR
         d_wing["maxSpan"] = wing.layout.max_span
@@ -209,6 +208,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing["inner_panel_taper_ratio"] = wing.inboard.λ
         d_wing["outer_panel_taper_ratio"] = wing.outboard.λ
         d_wing["panel_break_location"] = wing.layout.ηs
+        d_wing["engine_location"] = wing.η_engine
 
         d_wing["center_box_halfspan"] = wing.layout.root_span/2
         d_wing["box_width_to_chord"] = wing.inboard.cross_section.width_to_chord
@@ -216,16 +216,57 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing["spanbreak_thickness_to_chord"] = wing.outboard.cross_section.thickness_to_chord
         d_wing["hweb_to_hbox"] = wing.inboard.cross_section.web_to_box_height
         d_wing["spar_box_x_c"] = wing.layout.spar_box_x_c
+        d_wing["min_cap_thickness"] = wing.inboard.min_cap_thickness #applied to both sections on reading
+        d_wing["min_web_thickness"] = wing.inboard.min_web_thickness
 
         d_wing["x_wing_box"] = wing.layout.box_x
         d_wing["z_wing"] = wing.layout.z
 
-    # Strut details (only used if has_strut is True)
-        if d_wing["has_strut"]
-            d_wing["z_strut"] = wing.strut.z
-            d_wing["strut_toc"] = wing.strut.thickness_to_chord
-            d_wing["strut_local_velocity_ratio"] = wing.strut.local_velocity_ratio
+    # Strut details (only used if the wing is braced)
+        if options.has_strut
+            d_wing_strut = Dict()
+                d_wing_strut["z_fuselage_attach"] = wing.strut.z
+                d_wing_strut["y_fuselage_attach"] = wing.strut.y_root
+                d_wing_strut["thickness_to_chord"] = wing.strut.thickness_to_chord
+                d_wing_strut["local_velocity_ratio"] = wing.strut.local_velocity_ratio
+                d_wing_strut["box_width_to_chord"] = wing.strut.box_width_to_chord
+                d_wing_strut["web_to_box_height"] = wing.strut.web_to_box_height
+                d_wing_strut["end_fixity_K"] = wing.strut.end_fixity_K
+                d_wing_strut["chord_to_wing_chord"] = wing.strut.chord_to_wing_chord
+                d_wing_strut["strut_taper_ratio"] = wing.strut.taper_ratio
+                d_wing_strut["mean_cl_ratio_to_wing"] = wing.strut.mean_cl_ratio_to_wing
+                isnan(wing.strut.x_strut_attach) || (d_wing_strut["x_strut_attach"] = wing.strut.x_strut_attach)
+                d_wing_strut["spanload_exponent"] = wing.strut.spanload_exponent
+                d_wing_strut["min_cap_thickness"] = wing.strut.min_cap_thickness
+                d_wing_strut["min_web_thickness"] = wing.strut.min_web_thickness
+                d_wing_strut["opt_strut_force"] = string(wing.strut.opt_strut_force)
+                d_wing_strut["weight_frac_added"] = wing.strut.weight_frac_added
+                d_wing_strut["weight_frac_attachments"] = wing.strut.weight_frac_attachments
+            d_wing["Strut"] = d_wing_strut
         end
+
+    # Jury strut details (only used if the wing is truss braced)
+        if options.opt_wing_config == WingConfig.TrussBraced
+            d_wing["Jury"] = Dict("eta_strut" => wing.jury.eta_strut,
+                                  "weight_frac_added" => wing.jury.weight_frac_added,
+                                  "chord_to_strut_chord" => wing.jury.chord_to_strut_chord,
+                                  "min_cap_thickness" => wing.jury.min_cap_thickness,
+                                  "min_web_thickness" => wing.jury.min_web_thickness)
+        end
+
+    # Sizing load cases
+        d_wing_loads = Dict()
+        for case_name in fieldnames(typeof(wing.sizing_loads))
+            case = getfield(wing.sizing_loads, case_name)
+            case isa typeof(wing.sizing_loads.pullup) || continue # skip results and governing_root
+
+            d_wing_loads[string(case_name)] = Dict(
+                "load_factor" => case.load_factor,
+                "mass_state" => string(case.mass_state),
+                "active" => case.active,
+                "tail_load_scale" => case.tail_load_scale)
+        end
+        d_wing["SizingLoads"] = d_wing_loads
 
     #Aero , for multiple segments
     d_wing_aero = Dict()
@@ -382,20 +423,34 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_struct["sigma_caps"] = wing.inboard.caps.σ
         d_struct["tau_webs"] = wing.inboard.webs.σ
 
-        d_struct["sigma_struts"] = wing.strut.material.σmax
-        
         d_struct["fuse_shell_modulus_ratio"] = fuselage.ratio_young_mod_fuse_bending
         
         d_struct["E_wing_spar_cap"] = wing.inboard.caps.material.E
-        d_struct["E_struts"] = wing.strut.material.E
         
         # Structural material densities
         d_struct["skin_density"] = fuselage.skin.ρ
         d_struct["fuse_stringer_density"] = fuselage.bendingmaterial_h.ρ
         d_struct["wing_tail_cap_density"] = wing.inboard.caps.ρ
         d_struct["wing_tail_web_density"] = wing.inboard.webs.ρ
-        d_struct["strut_density"] = wing.strut.material.ρ
-    d_out["Structures"] = d_struct
+
+        # The legacy keys `sigma_struts`, `E_struts` and `strut_density` are not saved and are ignored on read.
+        # Each material is saved with its own stress and safety factors. The wing caps and webs
+        # are saved from the inboard section, as the factors are read once for both sections.
+        structural_materials = (
+            caps = wing.inboard.caps.material,
+            webs = wing.inboard.webs.material,
+            strut = wing.strut.caps.material,
+            strut_web = wing.strut.webs.material,
+            skin = fuselage.skin.material,
+            cone = fuselage.cone.material,
+            bending = fuselage.bendingmaterial_h.material,
+            floor = fuselage.floor.material)
+        for (name, material) in pairs(structural_materials)
+            d_struct["$(name)_material"] = material.name
+            d_struct["$(name)_max_avg_stress"] = material.max_avg_stress
+            d_struct["$(name)_safety_factor"] = material.safety_factor
+        end
+        d_out["Structures"] = d_struct
     #--end Structures----------------
 
     #Propulsion ------------------------
@@ -798,6 +853,8 @@ function reset_regression_test(ac)
         @printf(io, "wing.strut.weight = %20.20f \n", wing.strut.weight)
         @printf(io, "wing.dxW = %20.20f \n", wing.dxW)
         @printf(io, "wing.strut.dxW = %20.20f \n", wing.strut.dxW)
+        @printf(io, "wing.jury.weight = %20.20f \n", wing.jury.weight)
+        @printf(io, "wing.jury.dxW = %20.20f \n", wing.jury.dxW)
         @printf(io, "wing.inboard.weight = %20.20f \n", wing.inboard.weight)
         @printf(io, "wing.outboard.weight = %20.20f \n", wing.outboard.weight)
         @printf(io, "wing.inboard.dyW = %20.20f \n", wing.inboard.dyW)
@@ -840,6 +897,7 @@ function reset_regression_test(ac)
         @printf(io, "wing.layout.S = %20.20f \n", wing.layout.S)
         @printf(io, "wing.layout.root_span = %20.20f \n", wing.layout.root_span)
         @printf(io, "wing.layout.ηs = %20.20f \n", wing.layout.ηs)
+        @printf(io, "wing.η_engine = %20.20f \n", wing.η_engine)
         @printf(io, "wing.inboard.λ = %20.20f \n", wing.inboard.λ)
         @printf(io, "wing.outboard.λ = %20.20f \n", wing.outboard.λ)
         @printf(io, "wing.layout.root_chord = %20.20f \n", wing.layout.root_chord)
@@ -884,7 +942,6 @@ function reset_regression_test(ac)
         @printf(io, "htail.outboard.cross_section.width_to_chord = %20.20f \n", htail.outboard.cross_section.width_to_chord)
         @printf(io, "htail.outboard.cross_section.web_to_box_height = %20.20f \n", htail.outboard.cross_section.web_to_box_height)
         @printf(io, "htail.layout.ηs = htail.layout.root_span/htail.layout.span \n")
-        @printf(io, "htail.strut.cos_lambda = %20.20f \n", htail.strut.cos_lambda)
         @printf(io, "htail.inboard.moment = %20.20f \n", htail.inboard.moment)
         @printf(io, "htail.outboard.moment = %20.20f \n", htail.outboard.moment)
         @printf(io, "htail.inboard.max_shear_load = %20.20f \n", htail.inboard.max_shear_load)
@@ -927,7 +984,6 @@ function reset_regression_test(ac)
         @printf(io, "vtail.outboard.cross_section.width_to_chord = %20.20f \n", vtail.outboard.cross_section.width_to_chord)
         @printf(io, "vtail.outboard.cross_section.web_to_box_height = %20.20f \n", vtail.outboard.cross_section.web_to_box_height)
         @printf(io, "vtail.layout.ηs = vtail.layout.root_span/vtail.layout.span \n")
-        @printf(io, "vtail.strut.cos_lambda = %20.20f \n", vtail.strut.cos_lambda)
         @printf(io, "vtail.inboard.moment = %20.20f \n", vtail.inboard.moment)
         @printf(io, "vtail.outboard.moment = %20.20f \n", vtail.outboard.moment)
         @printf(io, "vtail.inboard.max_shear_load = %20.20f \n", vtail.inboard.max_shear_load)

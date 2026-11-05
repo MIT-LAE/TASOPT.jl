@@ -77,7 +77,6 @@ function _size_aircraft!(ac; itermax=35,
     parg[igWpay] = Wpay
 
     # Extract weight fractions and factors
-    fwadd = wing_additional_weight(wing)
     flgnose = landing_gear.nose_gear.overall_mass_fraction
     flgmain = landing_gear.main_gear.overall_mass_fraction
     fLo =  wing.fuse_lift_carryover
@@ -94,11 +93,9 @@ function _size_aircraft!(ac; itermax=35,
 
     # Tail surface taper ratios and strut parameters
     λhs = λvs = 1.0
-    tohstrut = 0.05
 
 
     # Load factors and dynamic pressure
-    Nlift = parg[igNlift]
     Nland = parg[igNland]
     Vne = parg[igVne]
     qne = 0.5 * ρSL * Vne^2
@@ -249,7 +246,14 @@ function _size_aircraft!(ac; itermax=35,
             bv, vtail.outboard.λ, vtail.ntails,
             xhtail, xvtail,
             xwing, wing.layout.box_x, cbox,
-            xeng)
+            xeng; strut_weight = wing.strut.weight,
+            strut_weight_frac_attachments = wing.strut.weight_frac_attachments,
+            strut_force_vertical = wing.strut.force_vertical,
+            strut_force_horizontal = wing.strut.force_horizontal,
+            strut_reaction_share = wing.strut.reaction_share,
+            strut_x_attach = isnan(wing.strut.x_strut_attach) ? wing.layout.box_x : wing.strut.x_strut_attach,
+            strut_z = wing.strut.z, strut_y_root = wing.strut.y_root,
+            strut_box_width = wing.strut.root_chord * wing.strut.box_width_to_chord)
 
         # Use cabin volume to get actual buoyancy weight
         ρcab = max(parg[igpcabin], pare[iep0, ipcruise1]) / (RSL * TSL)
@@ -303,10 +307,17 @@ function _size_aircraft!(ac; itermax=35,
             break
         end
 
+        # Flags reflect the final sizing pass only. They are cleared after the convergence test so that the
+        # pass that detects convergence, which does not size the wing or the drag, keeps the flags of the previous pass
+        clear_infeasibilities!(ac)
+
         #--------------------------------
         ##  Wing sizing section
         #--------------------------------
         WMTO = parg[igWMTO]
+
+        # Pull-up load factor of this iteration: the user input, or the FAR/CS 25.337 value of the WMTO.
+        Nlift = wing_case_load_factor(:pullup, wing.sizing_loads.pullup, WMTO, options.opt_far_load_factor)
 
         # Size wing area and chords at start-of-cruise
         ip = ipcruise1
@@ -319,6 +330,7 @@ function _size_aircraft!(ac; itermax=35,
 
         # Size the wing area and chords
         set_wing_geometry!(BW, CL, qinf, wing)
+        check_wing_span!(ac)
 
         # Update wing box chord for fuseW in next iteration
         cbox = wing.layout.root_chord * wing.inboard.cross_section.width_to_chord
@@ -338,7 +350,9 @@ function _size_aircraft!(ac; itermax=35,
         γt, γs = wing.outboard.λ * para[iarclt, ip], wing.inboard.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
+        # The struts, if they carry lift, relieve the wing of the share of the lift given by the strut area and dihedral of the previous iteration
+        po = (1.0 - (options.has_strut ? strut_lift_share(wing) : 0.0)) *
+             wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
         if options.opt_engine_location == EngineLocation.Wing
@@ -356,9 +370,27 @@ function _size_aircraft!(ac; itermax=35,
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
         rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
-        # One engine per wing at the span break ηs (as in TASOPT 2.16 surfw.f).
-        # dyeinn is its moment arm about the wing root station ηo [m]: y_e - y_o = (b/2)(ηs - ηo)
-        dyeinn = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
+        # One engine per wing at wing.η_engine: inboard of the span break ηs or at it (dyeinn is its moment arm
+        # about the wing root station ηo [m]), or outboard of it (dyeout is its moment arm about ηs [m])
+        (; neinn, dyeinn, neout, dyeout) = wing_engine_arms(wing)
+
+        # Load cases of the wing sizing: records the case loads in wing.sizing_loads (results, governing_root,
+        # governing_break, governing_strut, governing_strut_compression and n_computed). The returned envelope sizes the wing.
+        masses = wing_sizing_masses(W_cruise = BW, W_MTO = WMTO, W_pay = Wpay, W_paymax = Wpaymax,
+                                    W_fuel = parg[igWfuel], freserve = parg[igfreserve],
+                                    W_fuel_cap = parg[igWfmax], has_wing_fuel = options.has_wing_fuel)
+        # Cruise Mach number and equivalent airspeed of the start-of-cruise point that sizes the wing area (ρ0, u0 above)
+        Mach_cruise = pare[ieM0, ip]
+        V_cruise_EAS = u0 * sqrt(ρ0 / ρSL)
+        envelope = evaluate_wing_sizing_cases!(wing, masses, options.has_wing_fuel, para[iarclt, ip], para[iarcls, ip],
+                                               Lhtail, γt, γs, Weng1, dyeinn; has_strut = options.has_strut,
+                                               neinn = neinn, neout = neout, dyeout = dyeout,
+                                               far_load_factor = options.opt_far_load_factor,
+                                               Mach_cruise = Mach_cruise, V_cruise_EAS = V_cruise_EAS)
+        more_than_one_case = length(wing.sizing_loads.results) > 1
+        section_loads_envelope = (more_than_one_case || options.has_strut) ? envelope : nothing
+
+        check_strut_attachment!(ac)
 
         # Call wing_weights function
         Wwing,Wsinn,Wsout,
@@ -366,8 +398,17 @@ function _size_aircraft!(ac; itermax=35,
         Wfcen,Wfinn,Wfout,
         dxWfinn,dxWfout,
         dyWfinn,dyWfout,lstrutp = wing_weights!(wing, po, γt, γs,
-                                            Nlift, Weng1, 0, 0.0, 1, dyeinn,
-                                            parg[igsigfac], rhofuel)
+                                            Nlift, Weng1, neout, dyeout, neinn, dyeinn,
+                                            parg[igsigfac], rhofuel;
+                                            has_strut = options.has_strut,
+                                            has_jury = options.opt_wing_config == WingConfig.TrussBraced,
+                                            design_wing_fuel = Wpay - Wpaymax + parg[igWfuel],
+                                            has_wing_fuel = options.has_wing_fuel,
+                                            has_centerbox_fuel = options.has_centerbox_fuel,
+                                            section_loads_envelope = section_loads_envelope)
+
+        check_wing_cap_min_gauge!(ac)
+        check_wing_beam_column!(ac)
 
         # Calculate fuel weight if stored in wings
         Wfmax, dxWfmax, rfmax = 0.0, 0.0, 0.0
@@ -376,6 +417,7 @@ function _size_aircraft!(ac; itermax=35,
             dxWfmax = 2.0 * (dxWfinn + dxWfout)
             Wfuelmp = Wpay - Wpaymax + parg[igWfuel]
             rfmax = Wfuelmp / Wfmax
+            check_wing_fuel_volume!(ac, parg[igWfuel], Wfmax)
         end
 
         # Update wing properties
@@ -388,19 +430,11 @@ function _size_aircraft!(ac; itermax=35,
         wing.outboard.caps.weight = wing.inboard.caps.weight
 
         # Calculate strut properties
-        if wing.has_strut
-            cstrut = sqrt(0.5 * wing.strut.axial_force / (tohstrut * wing.strut.thickness_to_chord))
-            wing.strut.chord = cstrut
-            wing.strut.S = 2.0 * cstrut * lstrutp
+        if options.has_strut
+            # Both struts at the mean chord of the linear taper: 2 * (root_chord + chord) / 2 * length
+            wing.strut.S = (wing.strut.root_chord + wing.strut.chord) * lstrutp
         end
 
-        # Update wing panel weights
-        wing.inboard.weight = Wsinn * (1.0 + fwadd) + rfmax * Wfinn
-        wing.outboard.weight = Wsout * (1.0 + fwadd) + rfmax * Wfout
-        wing.inboard.dyW = dyWsinn * (1.0 + fwadd) + rfmax * dyWfinn
-        wing.outboard.dyW = dyWsout * (1.0 + fwadd) + rfmax * dyWfout
-
-        #TODO: No reason why above lines shouldnt be inside wing_weights
         # -------------------------------
         #      Tail sizing section
         # -------------------------------
@@ -728,6 +762,13 @@ function _size_aircraft!(ac; itermax=35,
     
     #Warn user if HX effectiveness is overwritten
     check_HX_overwriting(eng.heat_exchangers) 
+
+    # The last drag evaluations of the sizing loop have zero lift, so take the strut lift from the start of cruise
+    wing.strut.CL = para[iaCLstrut, ipcruise1]
+    wing.strut.lift_fraction = wing.strut.CL / para[iaCL, ipcruise1]
+
+    #Warn user of any design constraints flagged as violated in the final iteration
+    report_infeasibilities(ac)
 end
 
 #TODO: update_WMTO! and update_weights! docstrings need full description
@@ -748,6 +789,7 @@ function update_WMTO!(ac, rlx)
            fuse.weight +
            wing.weight +
            wing.strut.weight +
+           wing.jury.weight +
            htail.weight +
            vtail.weight +
            parg[igWeng] +
@@ -764,6 +806,7 @@ function update_WMTO!(ac, rlx)
     #check that fsum <= 1.0
     fwing = wing.weight / WMTO
     fstrut = wing.strut.weight / WMTO
+    fjury = wing.jury.weight / WMTO
     fhtail = htail.weight / WMTO
     fvtail = vtail.weight / WMTO
     feng = parg[igWeng] / WMTO
@@ -774,7 +817,7 @@ function update_WMTO!(ac, rlx)
     ftank = parg[igWftank] / WMTO
 
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
-           flgnose + flgmain + ftank + ftesys
+           flgnose + flgmain + ftank + ftesys + fjury
 
     if (fsum >= 1.0)
         @error "Something is wrong!! fsum ≥ 1.0"
@@ -797,6 +840,7 @@ function update_weights!(ac, rlx)
 
     fwing = wing.weight / WMTO
     fstrut = wing.strut.weight / WMTO
+    fjury = wing.jury.weight / WMTO
     fhtail = htail.weight / WMTO
     fvtail = vtail.weight / WMTO
     feng = parg[igWeng] / WMTO
@@ -814,7 +858,7 @@ function update_weights!(ac, rlx)
     ftank = parg[igWftank] / WMTO
 
     fsum = fwing + fstrut + fhtail + fvtail + feng + ffuel + fuse.HPE_sys.W +
-           flgnose + flgmain + ftank + ftesys
+           flgnose + flgmain + ftank + ftesys + fjury
 
     if (fsum ≥ 1.0)
         @error "SOMETHING IS WRONG fsum ≥ 1"
@@ -826,6 +870,7 @@ function update_weights!(ac, rlx)
     parg[igWMTO] = WMTO
     wing.weight = WMTO * fwing
     wing.strut.weight = WMTO * fstrut
+    wing.jury.weight = WMTO * fjury
     htail.weight = WMTO * fhtail
     vtail.weight = WMTO * fvtail
     parg[igWeng] = WMTO * feng

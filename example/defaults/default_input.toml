@@ -41,6 +41,9 @@
 # ╚══════════╩══════════╩═════╩═══════╩═══════╩════╝
 
 [Options] #
+    wing_config = "cantilever" # Options are "cantilever", "strut_braced" or "truss_braced"
+    far_load_factor = false # If true, the pull-up wing sizing cases use the FAR/CS 25.337 load factor (2.5 to 3.8, from the max takeoff weight) instead of their `load_factor`
+
     engine_location = "wing" # 1: Engines on "wing"
                              # 2: Engines on "fuselage"
 
@@ -60,7 +63,7 @@
     
 
 [Fuel]
-    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2" and "CH4"
+    fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2", "CH4"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
@@ -94,7 +97,7 @@
 
     fuel_reserves = 0.20 # W_reserveFuel / W_fuelburned
 
-    Nlift = 3.0 # Max vertical load factor for wing bending loads
+    Nlift = 3.0 # Deprecated alias of `load_factor` in [Wing.SizingLoads.pullup]; used only if that key is not set
     Vne = "280 kts" # Never exceed IAS for tail loads
 
 [Mission.Takeoff]
@@ -211,7 +214,6 @@
     BLI_frac = 0.0 #Fraction of fuselage BL KE defect ingested
 
 [Wing]
-    has_strut = false
 
     sweep = 26.0 # wing sweep in degrees
     AR    = 10.1
@@ -221,6 +223,7 @@
     outer_panel_taper_ratio = 0.25 #ct/co
 
     panel_break_location = 0.285 # eta_s panel break eta location. eta = y/(b/2)
+    engine_location = 0.285 # engine eta location. eta = y/(b/2). One engine per wing. If omitted, the engine is at the panel break
     
     center_box_halfspan = "71.0 in"
     box_width_to_chord = 0.50 #Spar box width to chord ratio
@@ -230,16 +233,86 @@
     hweb_to_hbox = 0.75 #web-height/hbox ratio
     spar_box_x_c = 0.40 # spar box axis x/c location
 
+    # Absolute minimum cap and web thickness [m] of the wing box, applied to both wing sections.
+    # If a key is omitted, it is 0.0 for a cantilever wing and 1.5e-3 (cap) and 1.0e-3 (web) for a braced wing.
+    # min_cap_thickness = 0.0
+    # min_web_thickness = 0.0
+
     x_wing_box = "57 ft"
     z_wing  = "-5.5 ft"
-    z_strut = "154 in" #Note only used if `has_strut = true`
-
-    #Only used if `has_strut == true`:
-    strut_toc = 0.15 #strut thickness to chord
-    strut_local_velocity_ratio = 1.0 # V_strut/V_freestream
 
     # Airfoil data (Should be stored in src/airfoil_data/)
     airfoil = "C.air"
+
+[Wing.Strut]
+    #Only used if `wing_config` is not "cantilever"
+    z_fuselage_attach       = "154 in" # strut z position at the fuselage attachment
+    y_fuselage_attach       = "0.0 m" # strut y position at the fuselage attachment
+    thickness_to_chord      = 0.15 # strut thickness to chord
+    local_velocity_ratio    = 1.0 # V_strut/V_freestream
+    box_width_to_chord      = 0.5 # strut box width to chord ratio
+    web_to_box_height       = 0.75 # strut box web height to box height ratio
+    end_fixity_K            = 1.0 # Euler effective-length factor of the strut end fixity
+    chord_to_wing_chord     = 0.5 # PLACEHOLDER: strut chord as a fraction of the wing chord at the strut attachment, chosen so that at the default strut-braced geometry the strut + jury share of the wing group weight is near the SUGAR Phase IV value of about 30 %
+    min_cap_thickness       = "1.5 mm" # PLACEHOLDER: minimum strut cap thickness (same as the braced wing minimum cap gauge)
+    min_web_thickness       = "1.0 mm" # PLACEHOLDER: minimum strut web thickness (same as the braced wing minimum web gauge)
+    opt_strut_force         = "compatibility" # strut force model: "compatibility" (from the wing and strut deflections) or "prescribed" (fixed rule)
+    weight_frac_added       = 0.60 # added weight fraction for fairings and fittings
+
+#[Wing.Jury]
+    # Vertical jury strut. Only used if `wing_config` is "truss_braced"
+    #eta_strut         = 0.5 # position of the jury along the strut as a fraction of the strut length, from the fuselage end
+    #weight_frac_added = 0.30 # added weight fraction for fairings and fittings of the jury (placeholder)
+    #chord_to_strut_chord = 0.5 # PLACEHOLDER: jury strut chord as a fraction of the main strut chord
+    #min_cap_thickness = "1.5 mm" # PLACEHOLDER: minimum jury strut cap thickness
+    #min_web_thickness = "1.0 mm" # PLACEHOLDER: minimum jury strut web thickness
+
+[Wing.SizingLoads]
+    # One table per wing sizing load case, with the keys
+    #   load_factor     = limit load factor of the case (gust cases: sign only, the magnitude comes from the gust)
+    #   mass_state      = "DesignCruise", "MTOW_MaxFuel", "MZFW" or "Light"
+    #   active          = whether the case is used when sizing the wing. If omitted, the case is active for
+    #                     the pull-up and, for a braced wing (`wing_config` not "cantilever"), for the
+    #                     push-over, light pull-up, light push-over and taxi cases; otherwise it is inactive
+    #   tail_load_scale = scale on the tail load of the case
+
+    [Wing.SizingLoads.pullup]
+        load_factor     = 3.0
+        mass_state      = "DesignCruise"
+        active          = true
+        tail_load_scale = 1.0
+
+    [Wing.SizingLoads.pushover]
+        load_factor     = -1.0
+        mass_state      = "MTOW_MaxFuel"
+        tail_load_scale = 1.0
+
+    [Wing.SizingLoads.pullup_light]
+        load_factor     = 3.0
+        mass_state      = "Light"
+        tail_load_scale = 1.0
+
+    [Wing.SizingLoads.pushover_light]
+        load_factor     = -1.0
+        mass_state      = "Light"
+        tail_load_scale = 1.0
+
+    [Wing.SizingLoads.taxi]
+        load_factor     = -2.0
+        mass_state      = "MTOW_MaxFuel"
+        tail_load_scale = 1.0
+
+    [Wing.SizingLoads.gust_up_light]
+        load_factor     = 1.0 # sign only
+        mass_state      = "Light"
+        active          = false
+        tail_load_scale = 1.0
+
+    [Wing.SizingLoads.gust_down_light]
+        load_factor     = -1.0 # sign only
+        mass_state      = "Light"
+        active          = false
+        tail_load_scale = 1.0
 
 [Wing.Aero]
     fuselage_lift_carryover_loss_factor = -0.3
@@ -399,6 +472,14 @@
     # the sigma_max works out to be roughly 30e3 lbf/in2
     
     ## Fuselage pressurization skin stress and bending skin+stringer stress
+    strut_material = "TASOPT-Al"
+    strut_max_avg_stress = 1.1
+    strut_safety_factor = 1.5
+    # The strut_* keys above are the strut caps. The strut_web_* keys are the strut webs; they are optional and each defaults to the strut_* value
+    strut_web_material = "TASOPT-Al"
+    strut_web_max_avg_stress = 1.1
+    strut_web_safety_factor = 1.5
+
     skin_material = "TASOPT-Al"
     skin_max_avg_stress = 1.1
     skin_safety_factor = 3.0

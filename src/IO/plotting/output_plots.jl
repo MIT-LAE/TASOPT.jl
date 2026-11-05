@@ -528,6 +528,7 @@ Generates a stacked bar plot showing the breakdown of drag components for specif
   - CDhtail: Horizontal tail drag
   - CDwing: Wing drag
   - CDfuse: Fuselage drag
+  - CDstrut: Strut drag (braced wings only)
 
 # Notes
 - Values less than 0.001 are not labeled when `show_values = true`
@@ -559,18 +560,15 @@ function plot_drag_breakdown(ac::aircraft;
     CDvtail = [para[iaCDvtail, i] for i in ips]
     CDnace  = [para[iaCDnace, i]  for i in ips]
 
-    if show_fractions
-        # Compute fractional contributions
-        CDfuse  = CDfuse  ./ CD
-        CDi     = CDi     ./ CD
-        CDwing  = CDwing  ./ CD
-        CDhtail = CDhtail ./ CD
-        CDvtail = CDvtail ./ CD
-        CDnace  = CDnace  ./ CD
+    # Components in stacking order; the strut is last so the other series keep their position and colour
+    components = ["CDi" => CDi, "CDnace" => CDnace, "CDvtail" => CDvtail,
+                  "CDhtail" => CDhtail, "CDwing" => CDwing, "CDfuse" => CDfuse]
+    if ac.options.has_strut
+        push!(components, "CDstrut" => [para[iaCDstrut, i] for i in ips])
     end
 
-    # Combine drags into a matrix (points x components)
-    data = hcat(CDi, CDnace, CDvtail, CDhtail, CDwing, CDfuse)
+    # Combine drags into a matrix (points x components), as fractions of total drag if requested
+    data = reduce(hcat, [show_fractions ? drag ./ CD : drag for (_, drag) in components])
 
     # X positions
     x = 0:length(ips)-1
@@ -579,7 +577,7 @@ function plot_drag_breakdown(ac::aircraft;
     p = groupedbar(
         x, data,
         bar_position = :stack,
-        label = ["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
+        label = permutedims(first.(components)),
         # xlabel = "ip", 
         ylabel = show_fractions ? "Fraction of total drag, \$C_{D,( )} / C_D\$" : "Drag component, \$C_{D, ( )}\$",
         title = "Drag Breakdown",
@@ -635,6 +633,14 @@ function plot_details(ac::aircraft; imission::Int=1)
     CDhtailfrac = CDhtail/CD
     CDvtailfrac = CDvtail/CD
     CDnacefrac  = CDnace /CD
+
+    # Drag fractions in stacking order; the strut (braced wings only) is last
+    drag_labels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
+    drag_fractions = [CDifrac, CDnacefrac, CDvtailfrac, CDhtailfrac, CDwingfrac, CDfusefrac]
+    if ac.options.has_strut
+        push!(drag_labels, "CDstrut")
+        push!(drag_fractions, para[iaCDstrut, ipcruise1] / CD)
+    end
 
     # Weight build-up for subplot 2
     Wempty  = parg[igWMTO] - parg[igWfuel] - parg[igWpay]
@@ -698,10 +704,10 @@ function plot_details(ac::aircraft; imission::Int=1)
     # Bar plot 1: Drag Components (CD)
     p2 = groupedbar(
             [0],
-            [CDifrac, CDnacefrac, CDvtailfrac, CDhtailfrac, CDwingfrac, CDfusefrac]',
+            drag_fractions',
             bar_position=:stack,
             width=bar_width,
-            label=["CDi" "CDnace" "CDvtail" "CDhtail" "CDwing" "CDfuse"],
+            label=permutedims(drag_labels),
             ylabel="Fraction",
             title="Drag, Weight Breakdowns",
             )
@@ -1014,6 +1020,25 @@ function MomentShear(ac::aircraft)
         end
     end
 
+    # Wing sizing load cases that have been evaluated, in declaration order
+    sl = wing.sizing_loads
+    case_names = [name for name in fieldnames(typeof(sl)) if haskey(sl.results, name)]
+
+    # Braced wing: replace the inboard part by the distribution of the governing strut case
+    strut_case = nothing
+    if ac.options.has_strut && haskey(sl.results, sl.governing_strut) && !isempty(sl.results[sl.governing_strut].inboard_stations)
+        strut_case = sl.results[sl.governing_strut]
+        n_inboard = 20 # points of the inboard part of etaRange
+        etaRange = [etao .+ strut_case.inboard_stations ./ (0.5 * b); etaRange[n_inboard+1:end]]
+        S = [strut_case.inboard_shear; S[n_inboard+1:end]]
+        M = [strut_case.inboard_moment; M[n_inboard+1:end]]
+    end
+
+    title = "Shear and Moment Distribution along Wing"
+    if !isempty(case_names)
+        title *= "\nGoverning: root = $(sl.governing_root), break = $(sl.governing_break)"
+    end
+
     # Define layout
     layout = @layout [A; B]
     fig = plot(layout=layout, size=(800, 500), dpi=300, link=:x, margin=4mm)
@@ -1025,7 +1050,7 @@ function MomentShear(ac::aircraft)
         ylabel="Shear [N]", 
         label="",
         subplot=1,
-        title="Shear and Moment Distribution along Wing"
+        title=title
     )
     # Moment
     plot!(fig, 
@@ -1048,6 +1073,22 @@ function MomentShear(ac::aircraft)
     annotate!(fig[2], etas, Mo,
             text(" ← Planform Break",
             halign=:left, valign=:top, 11,))
+    if !isnothing(strut_case)
+        annotate!(fig[1], etas, strut_case.inboard_shear[end],
+                text(" R = $(round(strut_case.strut_reaction / 1e3, digits=1)) kN",
+                halign=:left, valign=:top, 11,))
+    end
+
+    # Root and break loads of each sizing load case (absolute values), one color per case.
+    # The legend is shown in the shear plot only.
+    for (i, name) in enumerate(case_names)
+        loads = sl.results[name]
+        scatter!(fig, [etao, etas], abs.([loads.S_root, loads.S_break]),
+                 subplot=1, label=string(name), color=i, markersize=5, markerstrokewidth=0)
+        scatter!(fig, [etao, etas], abs.([loads.M_root, loads.M_break]),
+                 subplot=2, label="", color=i, markersize=5, markerstrokewidth=0)
+    end
+    isempty(case_names) || plot!(fig, subplot=1, legend=:topright, legendfontsize=8)
 
     return fig
 

@@ -1,7 +1,9 @@
 """
     WingDragComponents{T<:Real}
 
-Output container for `wing_profiledrag_direct`.
+Output container for `wing_profiledrag_direct`. `penalty_fraction` is the share of `CDpwing` that is the
+quadratic airfoil-database extrapolation penalty (see [`airfoil_database_penalty`](@ref)); it is 0 when the
+whole wing lies inside the airfoil database.
 """
 struct WingDragComponents{T<:Real}
       clpo::T
@@ -11,13 +13,14 @@ struct WingDragComponents{T<:Real}
       CDpwing::T
       CDwing::T
       CDover::T
+      penalty_fraction::T
 end
 
 """
       wing_profiledrag_direct(wing, γt, γs,
             Mach, CL, CLhtail, 
             Reco, aRexp, kSuns, fexcd,
-            fduo, fdus, fdut)
+            fduo, fdus, fdut; imission = nothing, ip = nothing)
 
 Calculates wing or tail surface profile `CD` by calculating the performance of wing segments explicitly via airfoil data (found in [`./src/air/C.air`] and accessed by [`airfun`], [`airtable`]).
 Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. Formerly, `surfcd2()`.
@@ -35,6 +38,8 @@ Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. F
       - `kSuns::Float64`: Shock-unsweep area constant.
       - `fexcd::Float64`: Excrescence cd scaling factor.
       - `fduo::Float64`, `fdus::Float64`, `fdut::Float64`: Velocity-change fractions at wing root, break ("snag"), and tip due to fuselage flow.
+      - `imission::Int` (keyword, optional): Mission index, only used to say where a warning comes from.
+      - `ip::Int` (keyword, optional): Flight point index (`iptakeoff`, `ipcruise1`, ...), only used to say where a warning comes from.
 
       **Outputs (`WingDragComponents`):**
       - `clpo::Float64`,`clps::Float64`,`clpt::Float64`: Perpendicular sectional lift coefficient at wing root, break ("snag"), and tip.
@@ -42,6 +47,10 @@ Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. F
       - `CDpwing::Float64`: Pressure profile cd in perp. plane.
       - `CDwing::Float64`: Overall profile CD.
       - `CDover::Float64`: Fuselage added CD due to lift carryover.
+      - `penalty_fraction::Float64`: Share of `CDpwing` that is the airfoil-database extrapolation penalty (not physics); 0 inside the database.
+
+If any wing station is outside the airfoil database, one warning per call describes where and how large the
+penalty is (see [`warn_wing_outside_airfoil_database`](@ref)).
 
 See Sections 2.14.3 and 3.8.3 of TASOPT Technical Desc.
 See also [`aircraft_drag!`](@ref), [`wing_profiledrag_scaled`](@ref), [`wing_CM`], and [`airfun`].
@@ -50,7 +59,7 @@ function wing_profiledrag_direct(
       wing, γt, γs,
       Mach, CL, CLhtail, 
       Reco, aRexp, kSuns, fexcd,
-      fduo, fdus, fdut)
+      fduo, fdus, fdut; imission = nothing, ip = nothing)
 
       # number of elements in spanwise discretization of wing
       #     n = 4     #  ~0.30% error
@@ -90,9 +99,11 @@ function wing_profiledrag_direct(
       #---- fraction of exposed wing subject to wing-root shock unsweep
       CDfwing = 0.0
       CDpwing = 0.0
+      CDpenwing = 0.0
       CDwing = 0.0
       Snorm = 0.0
       ARe = wing.airsection.Re
+      outside = AirfoilDatabaseStation[] # stations outside the airfoil database
 
       #remember \ will give you a float which makes the iterator
       # also work on floats, which can make some cases type unstable.
@@ -112,12 +123,16 @@ function wing_profiledrag_direct(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
+            record_airfoil_database_station!(outside, :inboard, i, η, clp, toc, Mperp, wing.airsection)
             cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
             #println(cdf1, " ", cdp1, " ", cm)
 
             Refac = (Rec / ARe)^aRexp
             cdf = cdf1 * Refac * fexcd * (1.0 + fdu)^3
             cdp = cdp1 * Refac * fexcd * (1.0 + fdu)^3 *
+                  (fSuns + (1.0 - fSuns) * cosL^2) * cosL
+
+            cdpen = airfoil_database_penalty(clp, toc, wing.airsection) * Refac * fexcd * (1.0 + fdu)^3 *
                   (fSuns + (1.0 - fSuns) * cosL^2) * cosL
 
             cd = cdf + cdp
@@ -127,6 +142,7 @@ function wing_profiledrag_direct(
 
             CDfwing = CDfwing + C * dη * cdf
             CDpwing = CDpwing + C * dη * cdp
+            CDpenwing = CDpenwing + C * dη * cdpen
       end
 
       @inbounds for i = n/2+1:n
@@ -144,11 +160,15 @@ function wing_profiledrag_direct(
             Rec = Reco * C * (1.0 + fdu)
             Mperp = Mach * cosL * (1.0 + fdu)
 
+            record_airfoil_database_station!(outside, :outboard, Int(i), η, clp, toc, Mperp, wing.airsection)
             cdf1, cdp1, cdwbar, cm = airfun(clp, toc, Mperp, wing.airsection)
 
             Refac = (Rec / ARe)^aRexp
             cdf = cdf1 * Refac * fexcd * (1.0 + fdu)^3
             cdp = cdp1 * Refac * fexcd * (1.0 + fdu)^3 *
+                  (fSuns + (1.0 - fSuns) * cosL^2) * cosL
+
+            cdpen = airfoil_database_penalty(clp, toc, wing.airsection) * Refac * fexcd * (1.0 + fdu)^3 *
                   (fSuns + (1.0 - fSuns) * cosL^2) * cosL
 
             cd = cdf + cdp
@@ -158,11 +178,15 @@ function wing_profiledrag_direct(
 
             CDfwing = CDfwing + C * dη * cdf
             CDpwing = CDpwing + C * dη * cdp
+            CDpenwing = CDpenwing + C * dη * cdpen
       end
 
       CDwing = CDwing / Snorm
       CDfwing = CDfwing / Snorm
       CDpwing = CDpwing / Snorm
+      CDpenwing = CDpenwing / Snorm
+      penalty_fraction = CDpwing == 0.0 ? 0.0 : CDpenwing / CDpwing
+      warn_wing_outside_airfoil_database(outside, wing.airsection, penalty_fraction, CDpwing; imission, ip)
 
       #c---- fuselage carryover CD
       #      Cdiss = 0.001
@@ -170,7 +194,7 @@ function wing_profiledrag_direct(
       #      CDover = 2.0*Cdiss*(ηo/Kc)*0.5*dCp*(3.0 + 0.0625*dCp^2)
       CDover = 0.0
 
-      return WingDragComponents(clpo, clps, clpt, CDfwing, CDpwing, CDwing, CDover)
+      return WingDragComponents(clpo, clps, clpt, CDfwing, CDpwing, CDwing, CDover, penalty_fraction)
 
 end # wing_profiledrag_direct
 

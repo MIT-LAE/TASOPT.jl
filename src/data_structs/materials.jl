@@ -43,12 +43,18 @@ $TYPEDFIELDS
     USS::Float64
     """Thermal conductivity [W/(m K)]"""
     k::Float64
+    """Factor on the yield strength for the peak stress above the average stress [-]"""
+    max_avg_stress::Float64 = 1.1
+    """Safety factor on the yield and ultimate strengths [-]"""
+    safety_factor::Float64 = 1.5
 end
 
 """
-    StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.0)
+    StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor = 1.5)
 
-Outer constructor for `StructuralAlloy` types. 
+Outer constructor for `StructuralAlloy` types. The allowable stresses are
+`σmax = YTS/(max_avg_stress*safety_factor)` and `τmax = USS/(max_avg_stress*safety_factor)`, and the two
+factors are kept in the fields `max_avg_stress` and `safety_factor`.
 Material specified needs to have the following data in the database:
 - ρ   : Density [kg/m³]
 - E   : Young's Modulus [Pa]
@@ -78,7 +84,8 @@ function StructuralAlloy(material::String; max_avg_stress = 1.1, safety_factor =
         catch 
             error("Insufficient data in database for $material to build a StructuralAlloy")
         else
-            StructuralAlloy(material, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS, k)
+            StructuralAlloy(material, ρ, E, G, ν, σmax, τmax, YTS, UTS, USS, k,
+                            max_avg_stress, safety_factor)
         end
     end
 

@@ -1,6 +1,7 @@
 #Dist
 const _convSIdist = Dict("m" => 1.0, 
                         "km"=>1000.0, 
+                        "mm" => 1e-3,
                         "nmi" => nmi_to_m,
                         "ft"=> ft_to_m, 
                         "in"=> in_to_m)

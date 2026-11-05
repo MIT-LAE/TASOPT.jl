@@ -674,7 +674,7 @@ end # tfcalc
 
 function check_engine_convergence_failure(pare)
         if sum(pare[ieConvFail, :]) > 0.0 #If any operating point failed to converge
-                warn("Some engine points failed to converge: "*string(pare[ieConvFail,:]))
+                @warn "Some engine points failed to converge: "*string(pare[ieConvFail,:])
         # else
         #         nothing #All operating points converged
         end

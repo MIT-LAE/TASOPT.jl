@@ -65,6 +65,7 @@ function initialize_sizing_loop!(ac)
     vtail.weight = Wvtail
     wing.weight = Wwing
     wing.strut.weight = Wstrut
+    wing.jury.weight = 0.0
     wing.inboard.weight = Winn
     wing.outboard.weight = Wout
 

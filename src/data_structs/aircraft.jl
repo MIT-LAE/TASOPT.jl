@@ -23,6 +23,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `vtail::Tail`: vertical tail object
 - `engine::Engine`: engine object
 - `landing_gear::LandingGear`: landing gear object
+- `infeasibilities::Vector{Symbol}` : Flags of design constraints violated by the last sizing (see `record_infeasibility!`)
 
 - `fuselage::Fuselage` : Fuselage layout, data, and parameters
 - `fuse_tank::fuselage_tank` : Fuselage tank data and parameters (when applicable)
@@ -55,6 +56,7 @@ Refer to the docs for a summary of the main `struct`s.
     vtail::Tail = Tail()
     engine::Engine = Engine()
     landing_gear::LandingGear = LandingGear()
+    infeasibilities::Vector{Symbol} = Symbol[]
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
     wake_system::WS
 end
@@ -87,6 +89,7 @@ function aircraft(
         fuselage, fuse_tank,
         wing, htail, vtail,
         engine, landing_gear,
+        Symbol[],
         wake_system
     )
 end

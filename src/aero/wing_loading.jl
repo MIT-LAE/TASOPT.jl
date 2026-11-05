@@ -84,6 +84,42 @@ function wing_section_cls(wing, γt, γs, CL, CLhtail, duo, dus, dut)
 end # wing_section_cls
 
 """
+    wing_lift_span_factor(wing, gammat, gammas)
+
+Returns the factor ``K_p`` that relates the wing root loading ``p_o`` to the net lift carried by the wing, ``p_o K_p b``
+(``p_o K_p b / 2`` per wing), for the spanload of [`wing_loading`](@ref): the root, inboard and outboard trapezoids, the fuselage
+lift carryover and the tip lift loss.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `wing::TASOPT.structures.wing`: Wing structure.
+    - `gammat::Float64`: Wing outer section taper ratio, `wing.outboard.λ * rclt`.
+    - `gammas::Float64`: Wing inner section taper ratio, `wing.inboard.λ * rcls`.
+
+    **Outputs:**
+    - `Kp::Float64`: Spanload factor [-].
+"""
+function wing_lift_span_factor(wing, gammat, gammas)
+    ηo, ηs = wing.layout.ηo, wing.layout.ηs
+
+    Kc =
+        ηo +
+        0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
+        0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs)
+
+    Ko = 1.0 / (wing.layout.AR * Kc)
+
+    Kp =
+        ηo +
+        0.5 * (1.0 + gammas) * (ηs - ηo) +
+        0.5 * (gammas + gammat) * (1.0 - ηs) +
+        wing.fuse_lift_carryover * ηo +
+        2.0 * wing.tip_lift_loss * Ko * gammat * wing.outboard.λ
+
+    return Kp
+end # wing_lift_span_factor
+
+"""
     wing_loading(wing, rclt, rcls, N, W, Lhtail)
 
 Computes wing root ("center") loading ``p_o`` to balance the net load. Formerly, `wingpo()`.
@@ -110,21 +146,7 @@ function wing_loading(wing, rclt, rcls, N, W, Lhtail)
 
     γt, γs = wing.outboard.λ * rclt, wing.inboard.λ * rcls
 
-    ηo, ηs = wing.layout.ηo, wing.layout.ηs
-
-    Kc =
-        ηo +
-        0.5 * (1.0 + wing.inboard.λ) * (ηs - ηo) +
-        0.5 * (wing.inboard.λ + wing.outboard.λ) * (1.0 - ηs)
-
-    Ko = 1.0 / (wing.layout.AR * Kc)
-
-    Kp =
-        ηo +
-        0.5 * (1.0 + γs) * (ηs - ηo) +
-        0.5 * (γs + γt) * (1.0 - ηs) +
-        wing.fuse_lift_carryover * ηo +
-        2.0 * wing.tip_lift_loss * Ko * γt * wing.outboard.λ
+    Kp = wing_lift_span_factor(wing, γt, γs)
 
     po = (N * W - Lhtail) / (Kp * wing.layout.span)
 
@@ -151,7 +173,7 @@ never-exceed dynamic pressure, maximum CL, sweep, and aspect ratio. Formerly, `t
 See [Geometry](@ref geometry) or Section 2.3.2 and 2.9.6 of the [TASOPT Technical Description](@ref dreladocs).
 """
 function tail_loading!(tail, S, qne; t_fac = 1.0)
-
+    S < 0 && throw(ArgumentError("tail_loading!: negative tail area S = $S; the sizing iterate has left the feasible region"))
     b  = sqrt(S*tail.layout.AR*t_fac)
     tail.layout.root_chord = S/(0.5*b*(1.0+tail.outboard.λ))
     po = qne*S*tail.CL_max/b * 2.0/(1.0 + tail.outboard.λ)

@@ -64,6 +64,10 @@ $TYPEDFIELDS
     weight::Float64 = 0 # make it a weight
     """Wing root moment contribution from wing weight section of engine [N m]"""
     dyW::Float64 = 0
+    """Absolute minimum cap thickness of the section [m]"""
+    min_cap_thickness::Float64 = 0.0
+    """Absolute minimum web thickness of the section [m]"""
+    min_web_thickness::Float64 = 0.0
 end
 
 @kwdef mutable struct TailSection <: AbstractWingSection
