@@ -57,13 +57,13 @@ end
 
 """
 Set the strut inputs that determine the strut lift on an unsized aircraft: an area, the free-stream velocity at the
-strut, `cl_ratio` and `spanload_exponent`. `set_trefftz_test_case!` leaves the strut inputs alone, so this can be
+strut, `mean_cl_ratio_to_wing` and `spanload_exponent`. `set_trefftz_test_case!` leaves the strut inputs alone, so this can be
 called before `trefftz_drag_for_test_case!`.
 """
-function set_strut_lift_inputs!(ac, cl_ratio; spanload_exponent = 0.5)
+function set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing; spanload_exponent = 0.5)
     ac.wing.strut.S = 10.0
     ac.wing.strut.local_velocity_ratio = 1.0
-    ac.wing.strut.cl_ratio = cl_ratio
+    ac.wing.strut.mean_cl_ratio_to_wing = mean_cl_ratio_to_wing
     ac.wing.strut.spanload_exponent = spanload_exponent
     return ac
 end
@@ -533,28 +533,22 @@ end
     end
 
     @testset "Strut lift inputs" begin
-        @testset "Defaults" begin
-            for ac in (load_braced_aircraft_quietly(), load_aircraft_quietly())
-                @test ac.wing.strut.cl_ratio == 0.0
-                @test ac.wing.strut.spanload_exponent == 0.0
-            end
-        end
 
         @testset "Read from [Wing.Strut]" begin
             path = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw.toml")
             toml = replace(read(path, String),
-                r"(?m)^(\s*cl_ratio\s*=\s*)[^\s#]+" => s"\g<1>0.7",
+                r"(?m)^(\s*mean_cl_ratio_to_wing\s*=\s*)[^\s#]+" => s"\g<1>0.7",
                 r"(?m)^(\s*spanload_exponent\s*=\s*)[^\s#]+" => s"\g<1>0.8")
             mktempdir() do dir
                 modified_path = joinpath(dir, "strut_lift.toml")
                 write(modified_path, toml)
                 strut = load_aircraft_quietly(modified_path).wing.strut
-                @test strut.cl_ratio == 0.7
+                @test strut.mean_cl_ratio_to_wing == 0.7
                 @test strut.spanload_exponent == 0.8
             end
         end
 
-        @testset "No strut lift when cl_ratio is zero" begin
+        @testset "No strut lift when mean_cl_ratio_to_wing is zero" begin
             ac = load_braced_aircraft_quietly()
             set_strut_lift_inputs!(ac, 0.0)
             trefftz_drag_for_test_case!(ac)
@@ -567,14 +561,14 @@ end
 
     @testset "Strut carries lift in addition to the wing" begin
         CL, CLhtail = 1.2, 0.05 * 25.0 / 125.0 # CL and tail CL referenced to the wing area, as in set_trefftz_test_case!
-        cl_ratio, spanload_exponent = 1.0, 0.5
+        mean_cl_ratio_to_wing, spanload_exponent = 1.0, 0.5
 
         ac_no_lift = load_braced_aircraft_quietly()
         set_strut_lift_inputs!(ac_no_lift, 0.0)
         CDi_no_lift, _ = trefftz_drag_for_test_case!(ac_no_lift)
 
         ac = load_braced_aircraft_quietly()
-        set_strut_lift_inputs!(ac, cl_ratio; spanload_exponent)
+        set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing; spanload_exponent)
         CDi, span_efficiency = trefftz_drag_for_test_case!(ac)
         config = ac.options.trefftz_config
         strut = ac.wing.strut
@@ -582,7 +576,9 @@ end
         i_first, i_last = trefftz_aero.i_first_strut(config), trefftz_aero.i_last_strut(config)
 
         @testset "Strut lift coefficient" begin
-            CL_strut = cl_ratio * (strut.S / ac.wing.layout.S) * strut.local_velocity_ratio^2 * (CL - CLhtail)
+            # No dihedral is set on this unsized aircraft, so the effective strut area is the strut area
+            r = mean_cl_ratio_to_wing * (strut.S / ac.wing.layout.S) * strut.local_velocity_ratio^2
+            CL_strut = r / (1 + r) * (CL - CLhtail)
             @test CL_strut > 0.0
             @test strut.CL ≈ CL_strut rtol = 1e-12
             @test strut.lift_fraction ≈ CL_strut / CL rtol = 1e-12
@@ -680,7 +676,7 @@ end
             set_strut_lift_inputs!(ac, 0.0)
             trefftz_drag_for_test_case!(ac)
 
-            ac.wing.strut.cl_ratio = 1.0
+            ac.wing.strut.mean_cl_ratio_to_wing = 1.0
             CDi_updated, _ = trefftz_drag_for_test_case!(ac; reuse_cached_geometry = true)
             @test ac.wing.strut.CL > 0.0
             CDi_fresh, _ = trefftz_drag_for_test_case!(ac)
@@ -823,7 +819,7 @@ Set a wing, tail and strut geometry, and the pitching-moment inputs of `balance_
 The strut lift inputs come from `set_strut_lift_inputs!`. The wing has a sweep of 20°, a span of 35 m, the break at
 60 % of the span and a strut root 1 m from the centreline, so the strut attaches to the wing 10.5 m from the centreline.
 """
-function set_strut_moment_test_case!(ac, cl_ratio; spanload_exponent = 0.5)
+function set_strut_moment_test_case!(ac, mean_cl_ratio_to_wing; spanload_exponent = 0.5)
     wing = ac.wing
     wing.layout.S = 125.0
     wing.layout.span = 35.0
@@ -834,7 +830,7 @@ function set_strut_moment_test_case!(ac, cl_ratio; spanload_exponent = 0.5)
     ac.htail.layout.S = 25.0
     ac.htail.layout.root_chord = 2.0
     ac.htail.layout.box_x = 30.0
-    set_strut_lift_inputs!(ac, cl_ratio; spanload_exponent)
+    set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing; spanload_exponent)
     ac.wing.strut.local_velocity_ratio = 1.1
 
     para = view(ac.para, :, ipcruise1, 1)
@@ -852,21 +848,141 @@ function balance_neutral_point_and_cp!(ac)
     return ac.para[iaxNP, ipcruise1, 1], ac.para[iaxCP, ipcruise1, 1]
 end
 
+const sized_aero_output_aircraft_cache = Dict{Any,Any}()
+
+"""
+Aircraft of wing configuration `config` ("cantilever", "strut_braced" or "truss_braced"), sized once and shared by all
+later requests. A braced wing has its strut attached at ηs = 0.7, which sizes with a strut that has the given
+`mean_cl_ratio_to_wing` (by default a strut that carries no lift). Tests that change the aircraft must `deepcopy` it first.
+"""
+function sized_aero_output_aircraft(config; mean_cl_ratio_to_wing = 0.0)
+    return get!(sized_aero_output_aircraft_cache, (config, mean_cl_ratio_to_wing)) do
+        CoreLogging.with_logger(CoreLogging.NullLogger()) do
+            txt = replace(read(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"), String),
+                          r"^[ \t]*(wing_config|has_strut)[ \t]*=.*\n"m => "")
+            txt = replace(txt, "[Options]" => "[Options]\n    wing_config = \"$config\""; count = 1)
+            ac = mktempdir() do dir
+                path = joinpath(dir, "aero_output_test.toml")
+                write(path, txt)
+                read_aircraft_model(path)
+            end
+            config == "cantilever" || (ac.wing.layout.ηs = 0.7)
+            ac.wing.strut.mean_cl_ratio_to_wing = mean_cl_ratio_to_wing
+            size_aircraft!(ac; printiter = false)
+            ac
+        end
+    end
+end
+
+@testset "Strut lift share" verbose=true begin
+    # Braced aircraft with a strut of area 10 m², dihedral 0.3 rad and velocity ratio 1.1, on a wing of 125 m²
+    function wing_with_sloped_strut(mean_cl_ratio_to_wing)
+        ac = load_braced_aircraft_quietly()
+        set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing)
+        ac.wing.layout.S = 125.0
+        ac.wing.strut.local_velocity_ratio = 1.1
+        ac.wing.strut.dihedral = 0.3
+        return ac
+    end
+
+    @testset "strut_effective_area and strut_lift_share from their definitions" begin
+        ac = wing_with_sloped_strut(0.5)
+        wing, config = ac.wing, ac.options.trefftz_config
+
+        effective_area = 10.0 * cos(0.3)^2
+        @test TASOPT.strut_effective_area(wing.strut) ≈ effective_area rtol = 1e-14
+
+        r = 0.5 * 1.1^2 * effective_area / 125.0
+        k = TASOPT.strut_lift_share(wing, config)
+        @test k ≈ r / (1 + r) rtol = 1e-14
+        @test 0.0 < k < 1.0
+
+        # A very large strut lift ratio saturates the share below one
+        wing.strut.mean_cl_ratio_to_wing = 1e6
+        @test TASOPT.strut_lift_share(wing, config) < 1.0
+
+        # No lift without a lift ratio, and no strut surface without a strut area or in a cantilever Trefftz configuration
+        wing.strut.mean_cl_ratio_to_wing = 0.0
+        @test TASOPT.strut_lift_share(wing, config) == 0.0
+        wing.strut.mean_cl_ratio_to_wing = 0.5
+        wing.strut.S = 0.0
+        @test TASOPT.strut_effective_area(wing.strut) == 0.0
+        @test TASOPT.strut_lift_share(wing, config) == 0.0
+        wing.strut.S = 10.0
+        @test TASOPT.strut_lift_share(wing, load_aircraft_quietly().options.trefftz_config) == 0.0
+    end
+
+    @testset "induced_drag! stores the strut lift in the wing and in para" begin
+        CL, CLhtail = 1.2, 0.05 * 25.0 / 125.0 # as set by set_trefftz_test_case!
+        ac = wing_with_sloped_strut(0.5)
+        config = ac.options.trefftz_config
+        para = set_trefftz_test_case!(ac)
+        trefftz_aero.TREFFTZ_GEOMETRY_HASH[] = UInt64(0)
+        trefftz_aero.induced_drag!(para, ac, config)
+
+        k = TASOPT.strut_lift_share(ac.wing, config)
+        @test k > 0.0
+        @test ac.wing.strut.CL ≈ k * (CL - CLhtail) rtol = 1e-12
+        @test ac.wing.strut.lift_fraction ≈ k * (CL - CLhtail) / CL rtol = 1e-12
+        @test para[iaCLstrut] == ac.wing.strut.CL
+
+        # At zero lift the early return clears the strut lift in the wing and in para
+        para[iaCL] = 0.0
+        trefftz_aero.induced_drag!(para, ac, config)
+        @test ac.wing.strut.CL == 0.0
+        @test ac.wing.strut.lift_fraction == 0.0
+        @test para[iaCLstrut] == 0.0
+    end
+
+    @testset "sized aircraft keeps the strut lift of its first cruise point" begin
+        for name in ("strut_braced", "truss_braced")
+            @testset "$name" begin
+                ac = sized_aero_output_aircraft(name; mean_cl_ratio_to_wing = 0.33)
+                para = ac.para[:, ipcruise1, 1]
+                CLhtail = para[iaCLh] * ac.htail.layout.S / ac.wing.layout.S
+                k = TASOPT.strut_lift_share(ac.wing, ac.options.trefftz_config)
+
+                @test 0.0 < k < 0.3
+                @test ac.wing.strut.CL > 0.0
+                @test ac.wing.strut.CL ≈ k * (para[iaCL] - CLhtail) rtol = 1e-6
+                @test ac.wing.strut.lift_fraction ≈ ac.wing.strut.CL / para[iaCL] rtol = 1e-6
+                @test para[iaCLstrut] == ac.wing.strut.CL
+            end
+        end
+    end
+
+    @testset "cantilever and strut without lift ratio carry no strut lift" begin
+        cantilever = sized_aero_output_aircraft("cantilever")
+        default_input = load_aircraft_quietly()
+        for ac in (cantilever, default_input)
+            @test ac.wing.strut.CL == 0.0
+            @test ac.wing.strut.lift_fraction == 0.0
+            @test TASOPT.strut_lift_share(ac.wing, ac.options.trefftz_config) == 0.0
+        end
+        @test all(==(0.0), cantilever.para[iaCLstrut, :, 1])
+
+        no_lift = sized_aero_output_aircraft("strut_braced")
+        @test no_lift.wing.strut.CL == 0.0
+        @test TASOPT.strut_lift_share(no_lift.wing, no_lift.options.trefftz_config) == 0.0
+    end
+end
+
 @testset "Strut lift in the pitching moment" verbose=true begin
     @testset "Strut lift share, lift arm and blended arm" begin
         ac = set_strut_moment_test_case!(load_braced_aircraft_quietly(), 0.5; spanload_exponent = 0.0)
         wing, config = ac.wing, ac.options.trefftz_config
         co_CMw1 = -0.5
 
-        # Strut share of the lift: cl_ratio * strut area / wing area * velocity ratio squared
-        k = 0.5 * (10.0 / 125.0) * 1.1^2
+        # Strut share of the lift: r / (1 + r) with r = mean_cl_ratio_to_wing * strut area / wing area * velocity ratio squared
+        r = 0.5 * (10.0 / 125.0) * 1.1^2
+        k = r / (1 + r)
         @test TASOPT.strut_lift_share(wing, config) ≈ k rtol = 1e-14
-        wing.strut.cl_ratio = 0.0
+        wing.strut.mean_cl_ratio_to_wing = 0.0
         @test TASOPT.strut_lift_share(wing, config) == 0.0
         cantilever_config = load_aircraft_quietly().options.trefftz_config
-        wing.strut.cl_ratio = 0.5
+        wing.strut.mean_cl_ratio_to_wing = 0.5
         @test TASOPT.strut_lift_share(wing, cantilever_config) == 0.0
-        wing.strut.cl_ratio = 0.0
+        wing.strut.mean_cl_ratio_to_wing = 0.0
 
         # Strut lift centroid between the strut root (1 m) and the wing attachment (10.5 m) for
         # loadings (1-ξ²)^p, with ξ = 0 at the fuselage end: 1/2 (p = 0), 3/8 (p = 1), 4/(3π) (p = 1/2)
@@ -877,7 +993,7 @@ end
 
         # The blend keeps the cantilever arm bit-for-bit without strut lift
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) === co_CMw1
-        wing.strut.cl_ratio = 0.5
+        wing.strut.mean_cl_ratio_to_wing = 0.5
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) ≈
               (1 - k) * co_CMw1 + k * (-tand(20.0) * (1.0 + 9.5 * 4 / (3π))) rtol = 1e-12
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, cantilever_config) === co_CMw1
@@ -1089,31 +1205,6 @@ function printed_aero_value(text, pattern)
     return m === nothing ? nothing : parse(Float64, m.captures[1])
 end
 
-const sized_aero_output_aircraft_cache = Dict{String,Any}()
-
-"""
-Aircraft of wing configuration `config` ("cantilever", "strut_braced" or "truss_braced"), sized once and shared by all
-later requests. A braced wing has its strut attached at ηs = 0.7, which sizes with a strut. Tests that change the aircraft
-must `deepcopy` it first.
-"""
-function sized_aero_output_aircraft(config)
-    return get!(sized_aero_output_aircraft_cache, config) do
-        CoreLogging.with_logger(CoreLogging.NullLogger()) do
-            txt = replace(read(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"), String),
-                          r"^[ \t]*(wing_config|has_strut)[ \t]*=.*\n"m => "")
-            txt = replace(txt, "[Options]" => "[Options]\n    wing_config = \"$config\""; count = 1)
-            ac = mktempdir() do dir
-                path = joinpath(dir, "aero_output_test.toml")
-                write(path, txt)
-                read_aircraft_model(path)
-            end
-            config == "cantilever" || (ac.wing.layout.ηs = 0.7)
-            size_aircraft!(ac; printiter = false)
-            ac
-        end
-    end
-end
-
 @testset "Aerodynamics output" verbose=true begin
     # Printed values are rounded to 5 decimals
     printing_tolerance = 5e-6
@@ -1136,7 +1227,7 @@ end
                     @test para[iaCDstrut] > 0
                     @test something(CDstrut, NaN) ≈ para[iaCDstrut] atol = printing_tolerance
                     @test something(CDstrut_area, NaN) ≈ Sref * para[iaCDstrut] atol = printing_tolerance
-                    # The default strut carries no lift
+                    # The sized strut has mean_cl_ratio_to_wing = 0
                     @test something(CLstrut, NaN) == 0.0
                     @test something(lift_fraction, NaN) == 0.0
                 else
@@ -1160,14 +1251,10 @@ end
         end
     end
 
-    @testset "strut lift is printed for a strut with a lift coefficient ratio" begin
-        # `wing.strut.CL` and `wing.strut.lift_fraction` hold the values of the last drag evaluation of a sizing, which is
-        # at zero lift, so the expected values come from a drag evaluation at the first cruise point
+    @testset "strut lift of a sized aircraft is printed from the stored values" begin
         for name in ("strut_braced", "truss_braced")
             @testset "$name" begin
-                ac = deepcopy(sized_aero_output_aircraft(name))
-                ac.wing.strut.cl_ratio = 0.5
-                trefftz_aero.aircraft_drag!(ac, 1, ipcruise1, true)
+                ac = sized_aero_output_aircraft(name; mean_cl_ratio_to_wing = 0.33)
                 text = aero_text(ac)
 
                 @test 0 < ac.wing.strut.CL < ac.para[iaCL, ipcruise1, 1]

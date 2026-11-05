@@ -100,12 +100,8 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
 
     if has_strut
-        # Computed as in `induced_drag!`, because `wing.strut` holds the values of the last drag evaluation of a sizing (zero lift)
-        CL = para[iaCL, ipcruise1]
-        CLhtail = para[iaCLh, ipcruise1] * ac.htail.layout.S / wing.layout.S
-        CLstrut = aerodynamics.strut_lift_share(wing, ac.options.trefftz_config) * (CL - CLhtail)
-        @printf(io, "CLstrut = %6.5f\n", CLstrut)
-        @printf(io, "Strut lift fraction = %6.5f\n", CLstrut / CL)
+        @printf(io, "CLstrut = %6.5f\n", wing.strut.CL)
+        @printf(io, "Strut lift fraction = %6.5f\n", wing.strut.lift_fraction)
     end
 
     printstyled(io, "\nDrag Areas = CD × Sref:\n", color=:bold)

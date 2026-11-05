@@ -350,7 +350,9 @@ function _size_aircraft!(ac; itermax=35,
         γt, γs = wing.outboard.λ * para[iarclt, ip], wing.inboard.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        po = wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
+        # The struts, if they carry lift, relieve the wing of the share of the lift given by the strut area and dihedral of the previous iteration
+        po = (1.0 - (options.has_strut ? strut_lift_share(wing) : 0.0)) *
+             wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
         # Calculate wing engine weight
         if options.opt_engine_location == EngineLocation.Wing
@@ -760,6 +762,10 @@ function _size_aircraft!(ac; itermax=35,
     
     #Warn user if HX effectiveness is overwritten
     check_HX_overwriting(eng.heat_exchangers) 
+
+    # The last drag evaluations of the sizing loop have zero lift, so take the strut lift from the start of cruise
+    wing.strut.CL = para[iaCLstrut, ipcruise1]
+    wing.strut.lift_fraction = wing.strut.CL / para[iaCL, ipcruise1]
 
     #Warn user of any design constraints flagged as violated in the final iteration
     report_infeasibilities(ac)
