@@ -17,7 +17,7 @@ wing end of the strut (see [`set_strut_circulation_shape!`](@ref)).
       - `trefftz_config::TrefftzPlaneConfig`: Trefftz plane analysis configuration (panel discretization and analysis parameters).
 
       **Outputs:**
-      - No explicit outputs. Computed induced drag value and span efficiency are saved to `para` of `aircraft` model.
+      - No explicit outputs. Computed induced drag value, span efficiency and strut lift coefficient (`iaCLstrut`) are saved to `para` of `aircraft` model.
 
 !!! compat "Future Changes"
       In an upcoming revision, an `aircraft` `struct` and auxiliary indices will be passed in lieu of pre-sliced `par` arrays.
@@ -33,6 +33,7 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
     if (CL == 0.0)
         para[iaCDi] = 0.
         para[iaspaneff] = 1.0
+        para[iaCLstrut] = 0.0
         wing.strut.CL = 0.0
         wing.strut.lift_fraction = 0.0
         return
@@ -64,6 +65,7 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
 
     #---- strut lift (zero without a strut surface)
     CL_strut = strut_lift_share(wing, trefftz_config) * (CL - CLhtail)
+    para[iaCLstrut] = CL_strut
     wing.strut.CL = CL_strut
     wing.strut.lift_fraction = CL_strut / CL
 
@@ -113,17 +115,45 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
 end # induced_drag!
 
 """
+    strut_effective_area(strut)
+
+Lifting area of both struts [m²]: the sloped planform area `strut.S` times `cos(strut.dihedral)^2`. One factor
+`cos(dihedral)` gives the area seen from above, and the other accounts for the freestream meeting the sloped strut
+at an incidence reduced by `cos(dihedral)`.
+"""
+strut_effective_area(strut) = strut.S * cos(strut.dihedral)^2
+
+"""
+    strut_lift_share(wing)
     strut_lift_share(wing, trefftz_config)
 
-Share of the lift carried by the wing and the strut, `CL - CLhtail`, that is carried by both struts: `cl_ratio` times the
-strut to wing area ratio and the square of the local velocity ratio of the strut. Zero if `trefftz_config` has no
-strut surface.
+Share ``k`` of the lift carried by the wing and the strut, `CL - CLhtail`, that is carried by both struts: ``k = r / (1 + r)``
+with ``r`` = `mean_cl_ratio_to_wing` times the square of the local velocity ratio of the strut times the
+[`strut_effective_area`](@ref) divided by the wing area. ``k`` is always below 1. It is zero if the wing has no area or the
+strut has no area yet, and, with the `trefftz_config` argument, if the configuration has no strut surface.
 """
+function strut_lift_share(wing)
+    strut = wing.strut
+    wing.layout.S > 0.0 || return 0.0
+    r = strut.mean_cl_ratio_to_wing * strut.local_velocity_ratio^2 * strut_effective_area(strut) / wing.layout.S
+    return r / (1.0 + r)
+end
+
 function strut_lift_share(wing, trefftz_config::TrefftzPlaneConfig)
     n_surfaces(trefftz_config) == 3 || return 0.0
-    strut = wing.strut
-    return strut.cl_ratio * (strut.S / wing.layout.S) * strut.local_velocity_ratio^2
+    return strut_lift_share(wing)
 end
+
+"""
+    strut_lift_centroid_fraction(p)
+
+Centroid ``\\xi_{cp}`` of the strut loading ``(1-\\xi^2)^p`` on ``0 \\le \\xi \\le 1`` with ``\\xi = 0`` at the fuselage end of the strut and
+``\\xi = 1`` at the wing end, for the loading exponent `p` (`wing.strut.spanload_exponent`):
+``\\xi_{cp} = \\int_0^1 \\xi (1-\\xi^2)^p d\\xi / \\int_0^1 (1-\\xi^2)^p d\\xi
+= \\Gamma(p+3/2) / (\\sqrt{\\pi}\\,(p+1)\\,\\Gamma(p+1))``. It is 1/2 for ``p = 0``. This is the fraction of the strut lift that
+is carried at the wing end of a strut with pinned ends, and the position of the lift centre of the strut between its ends.
+"""
+strut_lift_centroid_fraction(p) = exp(log_gamma(p + 1.5) - log_gamma(p + 1.0)) / (sqrt(pi) * (p + 1.0))
 
 """
     strut_lift_arm(wing)
@@ -132,8 +162,7 @@ Streamwise offset of the lift centre of the strut from the wing box [m], with th
 `co * CMw1` in [`balance_aircraft!`](@ref): the lift acts at `xwbox - arm`, so a lift centre aft of the wing box has a
 negative arm. The lift acts at the spanwise centroid of the strut loading ``(1-\\xi^2)^p`` with ``p`` = `wing.strut.spanload_exponent` (see [`set_strut_circulation_shape!`](@ref)), between the
 strut root `wing.strut.y_root` (``\\xi = 0``) and the attachment at the wing break (``\\xi = 1``). The centroid is
-``\\xi_{cp} = \\int_0^1 \\xi (1-\\xi^2)^p d\\xi / \\int_0^1 (1-\\xi^2)^p d\\xi
-= \\Gamma(p+3/2) / (\\sqrt{\\pi}\\,(p+1)\\,\\Gamma(p+1))``.
+``\\xi_{cp}`` of [`strut_lift_centroid_fraction`](@ref).
 
 The strut is assumed to lie under the wing box axis, which is swept back by `wing.layout.sweep`, so a strut lift centre
 at the spanwise position `y_cp` is `y_cp tan(sweep)` aft of the wing box root. The chordwise offset of the strut from
@@ -141,8 +170,7 @@ the wing box and the pitching moment of the strut section (symmetric section) ar
 """
 function strut_lift_arm(wing)
     strut = wing.strut
-    p = strut.spanload_exponent
-    ξ_cp = exp(log_gamma(p + 1.5) - log_gamma(p + 1.0)) / (sqrt(pi) * (p + 1.0))
+    ξ_cp = strut_lift_centroid_fraction(strut.spanload_exponent)
     y_attach = 0.5 * wing.layout.break_span
     y_cp = strut.y_root + (y_attach - strut.y_root) * ξ_cp
     return -tand(wing.layout.sweep) * y_cp
