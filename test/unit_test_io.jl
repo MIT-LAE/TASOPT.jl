@@ -87,7 +87,7 @@
     @test size(csv1,1) == 4 #4 rows w default indices
     @test size(csv2,1) == 1 #1 row with addl indices (all)
 
-    @test length(csv1[1]) == 783 # = entries w/ full ac `struct` and in default_output_indices
+    @test length(csv1[1]) == 803 # = entries w/ full ac `struct` and in default_output_indices
     @test length(csv2[1]) == 1153 # = entries w/ full ac `struct` and all output_indices
 
     #test the nested vectors within par arrays
@@ -122,3 +122,124 @@
     rm(filepath_csv2)
 
 end #testset "io"
+
+@testset "Composite tank input parsing" begin
+    CompositeLaminate = TASOPT.materials.CompositeLaminate
+    # Reads example/cryo_input.toml with optional text edits applied to the temp copy only.
+    function read_cryo_variant(; extra::String = "", replacements::Vector{Pair{String,String}} = Pair{String,String}[])
+        text = read(joinpath(TASOPT.__TASOPTroot__, "../example/cryo_input.toml"), String)
+        for (old, new) in replacements
+            @assert count(old, text) == 1
+            text = replace(text, old => new)
+        end
+        @assert count("[Fuel.Storage]\n", text) == 1
+        text = replace(text, "[Fuel.Storage]\n" => "[Fuel.Storage]\n" * extra)
+        path = tempname() * ".toml"
+        write(path, text)
+        try
+            return read_aircraft_model(path)
+        finally
+            rm(path, force = true)
+        end
+    end
+    # Returns the error raised by reading a variant, or nothing if reading succeeded.
+    function read_error(; kwargs...)
+        try
+            read_cryo_variant(; kwargs...)
+            return nothing
+        catch err
+            return err
+        end
+    end
+
+    @testset "unmodified cryo_input.toml keeps alloy walls and inert composite defaults" begin
+        ac = read_cryo_variant()
+        d = TASOPT.fuselage_tank()
+        ft = ac.fuse_tank
+        @test ft.inner_material isa StructuralAlloy
+        @test ft.inner_material.name == "Al-2219-T87"
+        @test ft.design_strain_limit == d.design_strain_limit
+        @test ft.f_joint_add == d.f_joint_add
+        @test ft.eta_composite == d.eta_composite
+        @test ft.has_permeation_barrier == d.has_permeation_barrier
+        @test ft.t_barrier == d.t_barrier
+        @test ft.dome_layup_efficiency == d.dome_layup_efficiency
+        @test ft.buckling_knockdown == d.buckling_knockdown
+        @test ft.composite_min_stacks == d.composite_min_stacks
+        @test ft.wall_architecture == d.wall_architecture
+        @test ft.stiffener_material.name == "Al-2219-T87"
+    end
+
+    @testset "composite inner wall from explicit type and optional design keys" begin
+        extra = """
+            inner_vessel_material_type = "composite"
+            composite_design_strain = 0.0025
+            composite_joint_mass_fraction = 0.05
+            composite_efficiency = 0.9
+            has_permeation_barrier = true
+            permeation_barrier_thickness = "0.38 mm"
+            dome_layup_efficiency = 0.9
+            composite_min_stacks = 2
+            stiffener_material = "Ti-6242"
+            """
+        ac = read_cryo_variant(extra = extra,
+            replacements = ["inner_vessel_material = \"Al-2219-T87\"" => "inner_vessel_material = \"CFRP-IM7-8552-PW-0090\""])
+        ft = ac.fuse_tank
+        @test ft.inner_material isa CompositeLaminate
+        @test ft.inner_material.name == "CFRP-IM7-8552-PW-0090"
+        @test ft.design_strain_limit ≈ 0.0025
+        @test ft.f_joint_add ≈ 0.05
+        @test ft.eta_composite ≈ 0.9
+        @test ft.has_permeation_barrier == true
+        @test ft.t_barrier ≈ 0.38e-3
+        @test ft.dome_layup_efficiency ≈ 0.9
+        @test ft.composite_min_stacks == 2
+        @test ft.stiffener_material isa StructuralAlloy
+        @test ft.stiffener_material.name == "Ti-6242"
+    end
+
+    @testset "composite type selection: name convenience and case-insensitive type" begin
+        repl = ["inner_vessel_material = \"Al-2219-T87\"" => "inner_vessel_material = \"CFRP-IM7-8552-PW-0090\""]
+        ac_name = read_cryo_variant(replacements = repl)
+        @test ac_name.fuse_tank.inner_material isa CompositeLaminate
+        ac_case = read_cryo_variant(extra = "inner_vessel_material_type = \"Composite\"\n", replacements = repl)
+        @test ac_case.fuse_tank.inner_material isa CompositeLaminate
+        @test TASOPT.build_tank_wall_material("Al-2219-T87", "ALLOY") isa StructuralAlloy
+        @test TASOPT.build_tank_wall_material("CFRP-IM7-8552-PW-0090", "alloy") isa CompositeLaminate
+    end
+
+    @testset "double-walled (vacuum) tank: composite outer wall and buckling knockdown" begin
+        extra = """
+            outer_vessel_material_type = "composite"
+            buckling_knockdown = 0.65
+            """
+        ac = read_cryo_variant(extra = extra, replacements = [
+            "insulation_material = [\"polyurethane32\", \"polyurethane32\", \"polyurethane32\"]" =>
+                "insulation_material = [\"polyurethane32\", \"vacuum\", \"polyurethane32\"]",
+            "outer_vessel_material = \"Al-2219-T87\"" => "outer_vessel_material = \"CFRP-IM7-8552-PW-0090-VDA\"",
+        ])
+        @test ac.fuse_tank.outer_material isa CompositeLaminate
+        @test ac.fuse_tank.outer_material.name == "CFRP-IM7-8552-PW-0090-VDA"
+        @test ac.fuse_tank.buckling_knockdown ≈ 0.65
+        @test ac.fuse_tank.inner_material isa StructuralAlloy
+    end
+
+    @testset "invalid composite inputs raise helpful errors" begin
+        err = try
+            TASOPT.build_tank_wall_material("Al-2219-T87", "plastic")
+            nothing
+        catch e
+            e
+        end
+        @test err isa ErrorException
+        @test occursin("plastic", sprint(showerror, err))
+        @test occursin("alloy", sprint(showerror, err))
+        @test occursin("composite", sprint(showerror, err))
+
+        @test_throws Exception TASOPT.build_tank_wall_material("Al-2219-T87", "composite")
+
+        err_arch = read_error(extra = "wall_architecture = \"sandwich\"\n")
+        @test err_arch isa ErrorException
+        @test occursin("monocoque", sprint(showerror, err_arch))
+    end
+end #testset "Composite tank input parsing"
