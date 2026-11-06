@@ -95,7 +95,7 @@ include(joinpath(__TASOPTroot__,"IO/output_texts.jl"))
 include(joinpath(__TASOPTroot__,"IO/plotting/output_plots.jl"))
 include(joinpath(__TASOPTroot__,"IO/plotting/trefftz_plots.jl"))
 export  stickfig, plot_details, plot_drag_breakdown, 
-        PayloadRange, DragPolar
+        PayloadRange, DragPolar, side_view, front_view
 include(joinpath(__TASOPTroot__,"IO/save_model.jl"))
 
 include(joinpath(__TASOPTroot__,"IO/quicksave_load.jl"))
