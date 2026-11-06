@@ -56,7 +56,7 @@ include(joinpath(__TASOPTroot__,"mission/fly_mission.jl"))
 include(joinpath(__TASOPTroot__,"mission/takeoff.jl"))
 include(joinpath(__TASOPTroot__,"balance/balance.jl"))
 export balance_aircraft!
-# Declared here so that the aerodynamics module can record infeasibilities; the method is defined in sizing/infeasibilities.jl
+# Method defined in sizing/infeasibilities.jl
 function record_infeasibility! end
 include(joinpath(__TASOPTroot__,"aero/aero.jl"))
 export plot_airf, aeroperf_sweep

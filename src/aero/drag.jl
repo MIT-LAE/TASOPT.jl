@@ -93,7 +93,7 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
       if (computes_wing_direct) 
 #----- integrated across span for CDwing
-      # The strut lift is not carried by the wing, like the tail lift
+      # Strut lift is not carried by the wing
       CL_strut = strut_lift_share(wing, ac.options.trefftz_config) * (CL - CLhtail)
       wing_drag_components = wing_profiledrag_direct(wing,gammat,gammas,
                                     Mach,CL,CLhtail + CL_strut,Reco,
@@ -109,7 +109,7 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
       CDwing = wing_drag_components.CDwing
       CDover = wing_drag_components.CDover
 
-      # Flag a wing outside the airfoil database at a cruise point, where its drag includes the extrapolation penalty
+      # Flag a wing outside the airfoil database at cruise
       if ipcruise1 <= ip <= ipcruisen && wing_drag_components.penalty_fraction > 0.0
             record_infeasibility!(ac, :airfoil_database_exceeded)
       end
@@ -204,13 +204,12 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
             cdfs = para[iacdfs]
             cdps = para[iacdps]
             rVstrut = wing.strut.local_velocity_ratio
-            mean_strut_chord = 0.5 * (wing.strut.root_chord + wing.strut.chord) # mean chord of the linear taper
+            mean_strut_chord = 0.5 * (wing.strut.root_chord + wing.strut.chord)
             CDstrut = strut_profile_drag(wing.strut.S/wing.layout.S, mean_strut_chord,
                                          cdfs + cdps*wing.strut.cos_lambda^3,
                                          Reunit, Rerefs, aRexp) * rVstrut^3
             if ac.options.opt_wing_config == WingConfig.TrussBraced
-                  # The jury struts (one per side) are vertical, unswept and carry no lift. The main strut's
-                  # section drag coefficients are used as a placeholder for the jury strut's.
+                  # Jury struts (one per side) are vertical and carry no lift; main strut section cd is used
                   jury = wing.jury
                   CDstrut += strut_profile_drag(2*jury.chord*jury.length/wing.layout.S, jury.chord,
                                                 cdfs + cdps,
@@ -272,10 +271,8 @@ end # cfturb
 """
     strut_profile_drag(area_ratio, chord, cd_section, Reunit, Rerefs, aRexp)
 
-Profile drag coefficient (referenced to the wing area, before the local velocity factor) of a strut surface with
-`area_ratio` = strut area / wing area and mean `chord`, with section drag coefficient `cd_section` at the reference
-Reynolds number `Rerefs`. The coefficient is re-scaled by `(Reunit*chord/Rerefs)^aRexp`.
-A strut with no area or no chord has no drag.
+Profile drag coefficient of a strut surface, referenced to the wing area: `area_ratio` = strut area / wing area,
+section `cd_section` at `Rerefs`, scaled by `(Reunit*chord/Rerefs)^aRexp`. Zero if the area or chord is zero.
 """
 function strut_profile_drag(area_ratio, chord, cd_section, Reunit, Rerefs, aRexp)
       (area_ratio == 0.0 || chord == 0.0) && return 0.0

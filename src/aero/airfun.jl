@@ -12,9 +12,7 @@ const Aijk = @MVector zeros(nAfun) # for the three vars cdf, cdp and cm
     airfun(cl, τ, Mach, air::airfoil)
 
 Looks up airfoil performance data at specified conditions, as precomputed and found in `./src/airfoil_data/`.
-Outside the `cl` and `τ` limits of the database, a quadratic penalty is added to `cdp`; Mach is extrapolated by the spline without a penalty.
-Use [`airfoil_database_exceedances`](@ref), [`warn_outside_airfoil_database`](@ref) and, for a whole wing,
-[`warn_wing_outside_airfoil_database`](@ref) to detect such conditions.
+Outside the `cl` and `τ` limits of the database, a quadratic penalty is added to `cdp`; Mach is extrapolated without a penalty.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**      
@@ -25,7 +23,7 @@ Use [`airfoil_database_exceedances`](@ref), [`warn_outside_airfoil_database`](@r
 
       **Outputs:**
       - `cdf::Float64`: Airfoil section skin friction drag.
-      - `cdp::Float64`: Airfoil section pressure drag, including the quadratic penalty outside the `cl` and `τ` limits of the database (see [`airfoil_database_penalty`](@ref)).
+      - `cdp::Float64`: Airfoil section pressure drag, including the penalty outside the database (see [`airfoil_database_penalty`](@ref)).
       - `cdw::Float64`: Airfoil section wave drag (unused and assumed 0 here; placeholder left for future implementation).
       - `cm::Float64`: Airfoil section pitching moment.
 """
@@ -138,9 +136,7 @@ end
     airfoil_database_penalty(cl, τ, Acl, Aτ)
     airfoil_database_penalty(cl, τ, air::airfoil)
 
-Pressure drag penalty that [`airfun`](@ref) adds outside the airfoil database: the sum of a quadratic
-`cl` part and a quadratic `τ` part (see `cl_database_penalty` and `thickness_database_penalty`).
-Zero inside the database. This is an extrapolation penalty, not physics.
+Pressure drag penalty that [`airfun`](@ref) adds outside the airfoil database. Zero inside the database.
 """
 function airfoil_database_penalty(cl, τ, Acl, Aτ)
     return cl_database_penalty(cl, Acl) + thickness_database_penalty(τ, Aτ)
@@ -151,9 +147,7 @@ airfoil_database_penalty(cl, τ, air::airfoil) = airfoil_database_penalty(cl, τ
 """
     airfoil_database_exceedances(cl, τ, Mach, air::airfoil)
 
-Returns the airfoil database bounds exceeded by the given conditions as a `Vector{Symbol}`, in the order
-`:cl`, `:thickness`, `:Mach`. It is empty inside the database. `:Mach` is reported only above the
-largest Mach number of the database.
+Returns the airfoil database bounds exceeded (`:cl`, `:thickness`, `:Mach`) as a `Vector{Symbol}`, empty inside the database.
 """
 function airfoil_database_exceedances(cl, τ, Mach, air::airfoil)
     exceeded = Symbol[]
@@ -172,10 +166,7 @@ end
 """
     warn_outside_airfoil_database(cl, τ, Mach, air::airfoil)
 
-Does nothing inside the airfoil database. Otherwise logs one warning (`maxlog = 1`, so once per Julia session)
-naming the exceeded bounds, the database ranges, and where the share of the wing pressure drag due to the
-extrapolation penalty is reported (`penalty_fraction` of [`WingDragComponents`](@ref)).
-`wing_profiledrag_direct` uses [`warn_wing_outside_airfoil_database`](@ref) instead, which says where the wing is outside.
+Logs one warning per Julia session naming the exceeded bounds if the conditions are outside the airfoil database.
 """
 function warn_outside_airfoil_database(cl, τ, Mach, air::airfoil)
     exceeded = airfoil_database_exceedances(cl, τ, Mach, air)
@@ -196,9 +187,8 @@ end
 """
     AirfoilDatabaseStation
 
-Conditions at one wing station that lies outside the airfoil database: the `panel` (`:inboard` or `:outboard`),
-the `station` index and spanwise position `η` along the wing, and the section `cl`, thickness-to-chord `τ` and
-perpendicular Mach number `Mach`.
+Conditions at one wing station outside the airfoil database: `panel` (`:inboard` or `:outboard`), `station` index,
+spanwise position `η`, section `cl`, thickness-to-chord `τ` and perpendicular Mach number `Mach`.
 """
 struct AirfoilDatabaseStation
     panel::Symbol
@@ -212,7 +202,7 @@ end
 """
     record_airfoil_database_station!(outside, panel, station, η, cl, τ, Mach, air::airfoil)
 
-Appends the station to `outside` if it is outside the airfoil database (see [`airfoil_database_exceedances`](@ref)).
+Appends the station to `outside` if it is outside the airfoil database.
 """
 function record_airfoil_database_station!(outside, panel, station, η, cl, τ, Mach, air::airfoil)
     isempty(airfoil_database_exceedances(cl, τ, Mach, air)) && return nothing
@@ -223,16 +213,9 @@ end
 """
     warn_wing_outside_airfoil_database(outside, air::airfoil, penalty_fraction, CDpwing; imission = nothing, ip = nothing)
 
-Reports the stations `outside` the airfoil database (see [`AirfoilDatabaseStation`](@ref)) of one evaluation of
-`wing_profiledrag_direct`. Does nothing if `outside` is empty. Otherwise it logs
-
-- one `@debug` line per station (shown with `JULIA_DEBUG=TASOPT`), and
-- one `@warn` for the whole wing, naming the flight point `ip` (and mission `imission`) if given, the stations
-  and their `η`, the exceeded bounds with the database ranges and the amounts by which they are exceeded, and the
-  penalty `ΔCDp = penalty_fraction * CDpwing` with `penalty_fraction` from [`WingDragComponents`](@ref).
-
-The warning is shown once per Julia session for each combination of flight point and exceeded bounds (`maxlog = 1`
-with an `_id` made from them), so a sizing run logs a few warnings, not one per iteration.
+Reports the stations `outside` the airfoil database (see [`AirfoilDatabaseStation`](@ref)) of one `wing_profiledrag_direct` call.
+Does nothing if `outside` is empty. Otherwise logs one `@debug` per station and one `@warn` for the wing,
+shown once per Julia session for each flight point and set of exceeded bounds.
 """
 function warn_wing_outside_airfoil_database(outside, air::airfoil, penalty_fraction, CDpwing;
                                             imission = nothing, ip = nothing)
@@ -253,7 +236,7 @@ function warn_wing_outside_airfoil_database(outside, air::airfoil, penalty_fract
                      " (η = $(range_text(extrema(s.η for s in outside if s.panel == panel)...)))"
                     for panel in (:inboard, :outboard) if any(s.panel == panel for s in outside)), "; ")
 
-    # Name, values at the stations, and database limits of each quantity; M⟂ has an upper limit only
+    # M⟂ has an upper limit only
     quantities = ((:cl, "c_l", [s.cl for s in outside], air.cl[1], air.cl[end]),
                   (:thickness, "thickness t/c", [s.τ for s in outside], air.τ[1], air.τ[end]),
                   (:Mach, "M⟂", [s.Mach for s in outside], -Inf, air.Ma[end]))

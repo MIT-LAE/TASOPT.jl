@@ -13,7 +13,7 @@ using ..TASOPT: __TASOPTindices__, __TASOPTroot__, compare_strings, balance_airc
 
 export airfoil, aircraft_drag!, wing_CM, set_wing_geometry!, wing_loading, wing_lift_span_factor, tail_loading!, wing_section_cls, 
     fuselage_drag!, broadcast_fuselage_drag!, plot_airf, aeroperf_sweep, WakeSystem,
-    strut_effective_area, strut_lift_share, strut_lift_centroid_fraction, strut_lift_arm, strut_blended_lift_arm
+    strut_lift_share, strut_lift_centroid_fraction, strut_lift_arm, strut_blended_lift_arm
 
 # Define the __init__ function
 #This function gets executed automatically when the module is loaded
@@ -40,7 +40,7 @@ include("airfun.jl")
 # Include Trefftz plane configuration and geometry structs
 include("trefftz_config.jl")
 
-# Trefftz plane geometry arrays (sized for the FINE quality level with a strut)
+# Trefftz plane geometry arrays (sized for max resolution)
 # TODO: avoid module global and pass it into aircraft?
 const TREFFTZ_GEOM = TrefftzGeometry{500}()
 const TREFFTZ_GEOMETRY_HASH = Ref{UInt64}(0)

@@ -24,9 +24,7 @@ n_total(sd::SurfaceDiscretization) = sd.n_outer_panels + sd.n_inner_panels + sd.
 
 Configuration for Trefftz plane induced drag analysis.
 Contains both panel discretization and analysis constants/ parameters.
-The surfaces are ordered wing, tail, strut. The strut is only part of the analysis when `strut_panels`
-has panels; by default it has none and the analysis has two surfaces. [`get_trefftz_config`](@ref) gives
-the strut halfway between the panel counts of the wing and the tail.
+Surfaces are ordered wing, tail, strut. The strut is only included if `strut_panels` has panels.
 
 # Example
 ```julia
@@ -100,8 +98,7 @@ end
 """
     n_strut_points(strut_panels::SurfaceDiscretization)
 
-Number of points in the strut block of the Trefftz plane calculations: zero if the strut has no panels,
-otherwise its panels plus 1 for the dummy point after the surface.
+Number of points in the strut block: zero if no panels, otherwise panels plus 1 dummy point.
 """
 n_strut_points(strut_panels::SurfaceDiscretization) =
     n_total(strut_panels) == 0 ? 0 : n_total(strut_panels) + 1
@@ -109,8 +106,7 @@ n_strut_points(strut_panels::SurfaceDiscretization) =
 """
     n_surfaces(config::TrefftzPlaneConfig)
 
-Number of lifting surfaces in the Trefftz plane analysis: 2 (wing, tail), or 3 (wing, tail, strut)
-if the configuration has strut panels.
+Number of lifting surfaces in the Trefftz plane analysis: 2 (wing, tail) or 3 with strut panels.
 """
 n_surfaces(config::TrefftzPlaneConfig) = n_total(config.strut_panels) == 0 ? 2 : 3
 
@@ -132,9 +128,7 @@ Create a [`TrefftzPlaneConfig`](@ref).
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `quality::String`: Discretization quality level ("COARSE", "MEDIUM", or "FINE").
-    - `braced::Bool=false`: If `true`, the strut is included as a third surface with halfway between the total panel
-      counts of the wing and the tail, rounded down (20, 41 or 164 for "COARSE", "MEDIUM" or "FINE"), all laid out
-      along the strut. If `false`, the analysis has the wing and tail only.
+    - `braced::Bool=false`: If `true`, includes the strut as a third surface with panels halfway between the wing and tail counts.
     - `k_tip::Float64=16.0`: Tip loading exponent (controls circulation decay at wing tips).
     - `bunch::Float64=0.5`: Center clustering factor ∈ \\[0,1\\] (controls spanwise panel spacing near root).
     - `wing_root_contraction::Float64=0.2`: Wing root streamline contraction factor (stream tube contraction near fuselage).
@@ -175,7 +169,7 @@ function get_trefftz_config(quality::String;
         throw(ArgumentError("Invalid discretization resolution: $quality. Must be 'COARSE', 'MEDIUM', or 'FINE'."))
     end
 
-    # The strut has no fuselage image region, so its panels are all ordinary panels
+    # Strut panels are all ordinary panels
     n_strut_panels = div(n_total(wing_panels) + n_total(tail_panels), 2)
     strut_panels = braced ? SurfaceDiscretization(n_strut_panels, 0, 0) : SurfaceDiscretization(0, 0, 0)
 
@@ -212,12 +206,12 @@ struct TrefftzGeometry{N}
 end
 
 # These functions are to create properly sized TrefftzGeometry structs but for now
-# we use the fixed-size module arrays of aero.jl to avoid changing too much code at once.
+# we use the fixed-size module arrays of aero.jl.
 """
     calculate_array_size(config::TrefftzPlaneConfig, htail)
 
 Calculate required array size for geometry arrays based on panel configuration.
-Accounts for wing, tail and (if present) strut panels, handling T-tail case where root_span == 0.
+Accounts for wing, tail and strut panels, handling T-tail case where root_span == 0.
 """
 function calculate_array_size(config::TrefftzPlaneConfig, htail)
     # Wing contribution
@@ -231,7 +225,6 @@ function calculate_array_size(config::TrefftzPlaneConfig, htail)
                 config.tail_panels.n_inner_panels +
                 tail_image_panels + 1
 
-    # Strut contribution (none for a cantilever wing)
     n_panels += n_strut_points(config.strut_panels)
 
     return n_panels

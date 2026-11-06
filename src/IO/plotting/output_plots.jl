@@ -560,14 +560,14 @@ function plot_drag_breakdown(ac::aircraft;
     CDvtail = [para[iaCDvtail, i] for i in ips]
     CDnace  = [para[iaCDnace, i]  for i in ips]
 
-    # Components in stacking order; the strut is last so the other series keep their position and colour
+    # Components in stacking order, strut last
     components = ["CDi" => CDi, "CDnace" => CDnace, "CDvtail" => CDvtail,
                   "CDhtail" => CDhtail, "CDwing" => CDwing, "CDfuse" => CDfuse]
     if ac.options.has_strut
         push!(components, "CDstrut" => [para[iaCDstrut, i] for i in ips])
     end
 
-    # Combine drags into a matrix (points x components), as fractions of total drag if requested
+    # Combine drags into a matrix (points x components)
     data = reduce(hcat, [show_fractions ? drag ./ CD : drag for (_, drag) in components])
 
     # X positions
@@ -634,7 +634,7 @@ function plot_details(ac::aircraft; imission::Int=1)
     CDvtailfrac = CDvtail/CD
     CDnacefrac  = CDnace /CD
 
-    # Drag fractions in stacking order; the strut (braced wings only) is last
+    # Drag fractions in stacking order, strut last
     drag_labels = ["CDi", "CDnace", "CDvtail", "CDhtail", "CDwing", "CDfuse"]
     drag_fractions = [CDifrac, CDnacefrac, CDvtailfrac, CDhtailfrac, CDwingfrac, CDfusefrac]
     if ac.options.has_strut
@@ -1020,11 +1020,11 @@ function MomentShear(ac::aircraft)
         end
     end
 
-    # Wing sizing load cases that have been evaluated, in declaration order
+    # Evaluated wing sizing load cases
     sl = wing.sizing_loads
     case_names = [name for name in fieldnames(typeof(sl)) if haskey(sl.results, name)]
 
-    # Braced wing: replace the inboard part by the distribution of the governing strut case
+    # Braced wing: use the governing strut case for the inboard part
     strut_case = nothing
     if ac.options.has_strut && haskey(sl.results, sl.governing_strut) && !isempty(sl.results[sl.governing_strut].inboard_stations)
         strut_case = sl.results[sl.governing_strut]
@@ -1079,8 +1079,7 @@ function MomentShear(ac::aircraft)
                 halign=:left, valign=:top, 11,))
     end
 
-    # Root and break loads of each sizing load case (absolute values), one color per case.
-    # The legend is shown in the shear plot only.
+    # Root and break loads of each sizing load case
     for (i, name) in enumerate(case_names)
         loads = sl.results[name]
         scatter!(fig, [etao, etas], abs.([loads.S_root, loads.S_break]),

@@ -45,16 +45,15 @@ It takes inputs related to geometry, fixed weights, material properties, and mor
       - `xwing::Float64`: X location of the wing.
       - `xwbox::Float64`: X location of the wing box.
       - `cbox::Float64`: Wing box width.
-      - `strut_weight::Float64`: (keyword, default 0) Total weight of both struts [N], `wing.strut.weight` of the previous sizing iteration.
-      - `strut_weight_frac_attachments::Float64`: (keyword, default 0) Strut attachment hardware as a fraction of the strut weight [-],
-        `wing.strut.weight_frac_attachments`.
-      - `strut_force_vertical::Float64`: (keyword, default 0) Vertical force of both struts on the fuselage [N], `wing.strut.force_vertical`.
-      - `strut_force_horizontal::Float64`: (keyword, default 0) Horizontal force of the strut of one wing on the fuselage [N], `wing.strut.force_horizontal`.
-      - `strut_reaction_share::Float64`: (keyword, default 0) Share of the wing vertical support taken by the strut [-], `wing.strut.reaction_share`.
-      - `strut_x_attach::Float64`: (keyword, default `xwbox`) X location of the strut attach [m], `wing.strut.x_strut_attach` (the wing-box x if that is NaN).
-      - `strut_z::Float64`: (keyword, default 0) Height of the strut attach below the wing box [m], `wing.strut.z`.
-      - `strut_y_root::Float64`: (keyword, default 0) Half the distance between the two strut attach points [m], `wing.strut.y_root`.
-      - `strut_box_width::Float64`: (keyword, default 0) Chordwise width of the strut box at the attach [m], `wing.strut.root_chord * wing.strut.box_width_to_chord` (the strut chord at the fuselage end).
+      - `strut_weight::Float64`: (keyword, default 0) Total weight of both struts [N].
+      - `strut_weight_frac_attachments::Float64`: (keyword, default 0) Strut attachment weight as a fraction of strut weight [-].
+      - `strut_force_vertical::Float64`: (keyword, default 0) Vertical force of both struts on the fuselage [N].
+      - `strut_force_horizontal::Float64`: (keyword, default 0) Horizontal force of one strut on the fuselage [N].
+      - `strut_reaction_share::Float64`: (keyword, default 0) Share of the wing vertical support taken by the strut [-].
+      - `strut_x_attach::Float64`: (keyword, default `xwbox`) X location of the strut attach [m].
+      - `strut_z::Float64`: (keyword, default 0) Height of the strut attach below the wing box [m].
+      - `strut_y_root::Float64`: (keyword, default 0) Half the distance between the two strut attach points [m].
+      - `strut_box_width::Float64`: (keyword, default 0) Chordwise width of the strut box at the attach [m].
 
       **Outputs:**
       Pressurized cabin volume:
@@ -95,13 +94,13 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xWseat = fuse.seat.W * x_cabin
       xWpadd = fuse.added_payload.W * x_cabin
 
-#--- reinforcement at the strut attachment, lumped at the wing-box x
+#--- strut attachment reinforcement
       W_strut_attach = strut_weight_frac_attachments * strut_weight
       fuse.strut_attach = iszero(W_strut_attach) ? Weight() : Weight(W = W_strut_attach, x = xwbox)
       fuse.strut_attach_criterion = iszero(W_strut_attach) ? :none : :strut_weight
       xWstrutattach = y_moment(fuse.strut_attach)
 
-#--- side walls and belly tie that carry the strut force into the fuselage, at the strut attach x
+#--- strut side walls and belly tie
       xstrut = strut_x_attach
       fuse.strut_patch, fuse.strut_patch_criterion = size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut,
             strut_force_vertical, strut_force_horizontal, strut_z, strut_y_root, strut_box_width)
@@ -181,9 +180,7 @@ function fusew!(fuse,Nland,Wpay,Weng, nftanks,
       xf = xwing + dxwing + 0.5*cbox
       xb = xwing - dxwing + 0.5*cbox
 
-      # The strut reaction is a second vertical support at the strut attach x. It takes the share
-      # `strut_reaction_share` of the wing support Rsh (the jump of -dA/dx at the wing), which reduces
-      # the bending material of the stations forward of it by share*Rsh*(xstrut - x), and its integral.
+      # Strut reaction is a second vertical support at xstrut, taking a share of the wing support Rsh
       Rsh = 2.0*A2*(xbulk - xwing) + A1
       relief_A(x) = x < xstrut ? strut_reaction_share*Rsh*(xstrut - x) : 0.0
       relief_V(x) = x < xstrut ? strut_reaction_share*Rsh*(xstrut - x)^2/2.0 : 0.0
@@ -270,15 +267,12 @@ end # fusew
 """ 
 size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut, force_vertical, force_horizontal, z, y_root, box_width)
 
-Estimate the weight and governing failure criterion of the fuselage strut-load structure (two side walls and a belly tie).
+Estimate the weight of the fuselage strut-load structure (two side walls and a belly tie).
 
-The side walls transfer the vertical strut loads to the wing box. Their load-path width varies linearly from box_width to 
-cbox over height z. Required thickness is the maximum of yield and simply supported panel buckling thicknesses, 
-neglecting frame support. Wall weight is integrated using a 20-interval midpoint rule.
+The side walls carry the vertical strut load to the wing box, with width varying linearly from box_width to cbox
+over height z, and thickness set by yield or simply supported panel buckling. The belly tie carries the horizontal load.
 
-The belly tie reacts the horizontal strut loads and is sized for an area of force_horizontal / σ.
-
-Return the combined structural weight and its centroid, with criterion :wall_buckling, :wall_yield, or :none. 
+Return the `Weight` and the criterion `:wall_buckling`, `:wall_yield` or `:none`.
 """
 function size_strut_patch(fuse, Eskin, xwbox, cbox, xstrut, force_vertical, force_horizontal, z, y_root, box_width)
       no_force = iszero(force_vertical) && iszero(force_horizontal)

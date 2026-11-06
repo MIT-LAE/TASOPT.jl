@@ -86,9 +86,7 @@ end # wing_section_cls
 """
     wing_lift_span_factor(wing, gammat, gammas)
 
-Returns the factor ``K_p`` that relates the wing root loading ``p_o`` to the net lift carried by the wing, ``p_o K_p b``
-(``p_o K_p b / 2`` per wing), for the spanload of [`wing_loading`](@ref): the root, inboard and outboard trapezoids, the fuselage
-lift carryover and the tip lift loss.
+Returns the factor ``K_p`` relating the wing root loading ``p_o`` to the net wing lift, ``p_o K_p b``, for the spanload of [`wing_loading`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**

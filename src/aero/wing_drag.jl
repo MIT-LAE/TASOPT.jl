@@ -1,9 +1,7 @@
 """
     WingDragComponents{T<:Real}
 
-Output container for `wing_profiledrag_direct`. `penalty_fraction` is the share of `CDpwing` that is the
-quadratic airfoil-database extrapolation penalty (see [`airfoil_database_penalty`](@ref)); it is 0 when the
-whole wing lies inside the airfoil database.
+Output container for `wing_profiledrag_direct`.
 """
 struct WingDragComponents{T<:Real}
       clpo::T
@@ -38,8 +36,8 @@ Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. F
       - `kSuns::Float64`: Shock-unsweep area constant.
       - `fexcd::Float64`: Excrescence cd scaling factor.
       - `fduo::Float64`, `fdus::Float64`, `fdut::Float64`: Velocity-change fractions at wing root, break ("snag"), and tip due to fuselage flow.
-      - `imission::Int` (keyword, optional): Mission index, only used to say where a warning comes from.
-      - `ip::Int` (keyword, optional): Flight point index (`iptakeoff`, `ipcruise1`, ...), only used to say where a warning comes from.
+      - `imission::Int` (keyword, optional): Mission index, for warnings.
+      - `ip::Int` (keyword, optional): Flight point index, for warnings.
 
       **Outputs (`WingDragComponents`):**
       - `clpo::Float64`,`clps::Float64`,`clpt::Float64`: Perpendicular sectional lift coefficient at wing root, break ("snag"), and tip.
@@ -47,10 +45,9 @@ Called by [`aircraft_drag!`](@ref) if `computes_wing_direct` flag set to true. F
       - `CDpwing::Float64`: Pressure profile cd in perp. plane.
       - `CDwing::Float64`: Overall profile CD.
       - `CDover::Float64`: Fuselage added CD due to lift carryover.
-      - `penalty_fraction::Float64`: Share of `CDpwing` that is the airfoil-database extrapolation penalty (not physics); 0 inside the database.
+      - `penalty_fraction::Float64`: Share of `CDpwing` from the airfoil-database extrapolation penalty.
 
-If any wing station is outside the airfoil database, one warning per call describes where and how large the
-penalty is (see [`warn_wing_outside_airfoil_database`](@ref)).
+Warns once per call if any station is outside the airfoil database.
 
 See Sections 2.14.3 and 3.8.3 of TASOPT Technical Desc.
 See also [`aircraft_drag!`](@ref), [`wing_profiledrag_scaled`](@ref), [`wing_CM`], and [`airfun`].
@@ -103,7 +100,7 @@ function wing_profiledrag_direct(
       CDwing = 0.0
       Snorm = 0.0
       ARe = wing.airsection.Re
-      outside = AirfoilDatabaseStation[] # stations outside the airfoil database
+      outside = AirfoilDatabaseStation[] # stations outside airfoil database
 
       #remember \ will give you a float which makes the iterator
       # also work on floats, which can make some cases type unstable.

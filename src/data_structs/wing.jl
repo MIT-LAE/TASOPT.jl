@@ -10,64 +10,53 @@ Wing Strut
 $TYPEDFIELDS
 """
 @kwdef mutable struct Strut
-    """Strut box caps (top and bottom): material and, once sized, thickness and weight"""
+    """Strut box caps"""
     caps::StructuralMember = StructuralMember(material = StructuralAlloy("TASOPT-Al"))
-    """Strut box webs: material and, once sized, thickness and weight"""
+    """Strut box webs"""
     webs::StructuralMember = StructuralMember(material = StructuralAlloy("TASOPT-Al"))
 
     # Geometry inputs
-    """Planform area of both struts, at the mean of `root_chord` and `chord` [m^2]"""
+    """Planform area of both struts [m^2]"""
     S::Float64 = 0
     """Strut z position [m]"""
     z::Float64 = 0
-    """Strut y position at the fuselage attachment [m]"""
+    """Strut y position at fuselage [m]"""
     y_root::Float64 = 0
     """Strut thickness to chord"""
     thickness_to_chord::Float64 = 0
-    """
-    Strut chord as a fraction of the wing chord at the strut attachment [-].
-    Default 0.5 is a placeholder chosen so that, at the default strut-braced geometry, the strut and jury share of the wing group weight is near the SUGAR Phase IV value of about 30 %.
-    """
+    """Strut chord to wing chord at the strut attachment (placeholder default)"""
     chord_to_wing_chord::Float64 = 0.5
-    """Strut chord at the wing end divided by the chord at the fuselage end [-], 0 < taper_ratio <= 1. 1 is an untapered strut"""
+    """Strut chord taper ratio, wing end to fuselage end (0 < taper_ratio <= 1)"""
     taper_ratio::Float64 = 1.0
     """Strut box width to chord ratio"""
     box_width_to_chord::Float64 = 0.5
     """Strut box web height to box height ratio"""
     web_to_box_height::Float64 = 0.75
-    """Euler effective-length factor of the strut end fixity"""
+    """Euler effective-length factor"""
     end_fixity_K::Float64 = 1.0
-    """Minimum strut cap thickness [m]. Default 1.5e-3 is a placeholder, the same as the braced wing minimum cap gauge"""
+    """Minimum strut cap thickness [m]"""
     min_cap_thickness::Float64 = 1.5e-3
-    """Minimum strut web thickness [m]. Default 1.0e-3 is a placeholder, the same as the braced wing minimum web gauge"""
+    """Minimum strut web thickness [m]"""
     min_web_thickness::Float64 = 1.0e-3
     """Strut local velocity ratio"""
     local_velocity_ratio::Float64 = 0
-    """Model for the force that the strut carries"""
+    """Strut force model"""
     opt_strut_force::StrutForceModel.T = StrutForceModel.Compatibility
-    """Mean section lift coefficient of the strut divided by the mean section lift coefficient of the wing [-] (loading factor, 0 = strut carries no lift; the strut area and dihedral set the rest)"""
+    """Strut mean section cl over wing mean section cl (0 = no strut lift)"""
     mean_cl_ratio_to_wing::Float64 = 0.33
-    """
-    Exponent ``p`` of the bound circulation shape of the strut, ``\\Gamma \\propto (1-\\xi^2)^p`` [-], with ``\\xi = 0`` at the fuselage end
-    and ``\\xi = 1`` at the wing end of the strut. Each strut is treated as half a wing mirrored about the fuselage:
-    the loading is largest at the fuselage and zero at the wing attachment. ``p = 0.5`` is elliptic.
-    """
+    """Strut spanload exponent ``p``, ``\\Gamma \\propto (1-\\xi^2)^p`` with ``\\xi`` = 0 at fuselage, 1 at wing (``p = 0.5`` is elliptic)"""
     spanload_exponent::Float64 = 0.0
-    """
-    Streamwise position of the strut attach on the fuselage [m]. NaN (default) follows the wing box, `wing.layout.box_x`;
-    a finite value is an absolute fuselage x that does not move with the wing, so it can be an independent design variable.
-    It places the strut loads in the fuselage sizing
-    """
+    """Fuselage x of the strut attach [m]. NaN follows the wing box, `wing.layout.box_x`"""
     x_strut_attach::Float64 = NaN
 
     # Computed geometry
     """Strut Length [m] """
     length::Float64 = 0
-    """Strut chord at the wing end [m]: `chord_to_wing_chord` times the wing chord at the strut attachment, set by [`wing_weights!`](@ref)"""
+    """Strut chord at the wing end [m]"""
     chord::Float64 = 0
-    """Strut chord at the fuselage end [m]: `chord / taper_ratio`, set by [`wing_weights!`](@ref)"""
+    """Strut chord at the fuselage end [m]"""
     root_chord::Float64 = 0
-    """Strut material area of caps and webs, without the added weight fraction [m^2]"""
+    """Strut caps and webs material area [m^2]"""
     area::Float64 = 0
     """Cosine of strut sweep angle"""
     cos_lambda::Float64 = 0 
@@ -77,43 +66,38 @@ $TYPEDFIELDS
     # Loads
     """Maximum strut tension force [N]"""
     axial_force::Float64 = 0
-    """Strut axial force in the most compressive case [N], zero or negative, scaled to the total strut length like `axial_force`"""
+    """Strut axial force in the most compressive case [N] (<= 0)"""
     axial_force_compression::Float64 = 0
-    """Shear load of the strut webs [N]: the jury strut load plus the shear of the own weight of the strut as a transverse load, set by [`wing_weights!`](@ref)"""
+    """Strut web shear load, jury load plus strut own weight [N]"""
     shear_load::Float64 = 0
-    """Midspan bending moment of the own weight of the strut as a transverse load [N m], carried by the caps, set by [`wing_weights!`](@ref)"""
+    """Strut midspan bending moment from own weight [N m]"""
     bending_moment::Float64 = 0
     """Strut Euler buckling load P_cr [N]"""
     buckling_load::Float64 = 0
-    """Strut minor-axis bending stiffness of the sized box [N m^2]"""
+    """Strut minor-axis bending stiffness [N m^2]"""
     EI_min::Float64 = 0
     """Governing strut sizing criterion: `:tension`, `:buckling` or `:gauge`"""
     sizing_criterion::Symbol = :none
 
-    """Vertical force of both struts on the fuselage [N], from the largest in-plane strut force of the sizing cases. Set by [`wing_weights!`](@ref)"""
+    """Vertical force of both struts on the fuselage [N]"""
     force_vertical::Float64 = 0
-    """Horizontal force of the strut of one wing on the fuselage [N], from the largest in-plane strut force of the sizing cases. Set by [`wing_weights!`](@ref)"""
+    """Horizontal force of one strut on the fuselage [N]"""
     force_horizontal::Float64 = 0
-    """Share of the vertical wing support taken by the strut [-], in the sizing case with the largest strut force: zero for a cantilever wing. Set by [`wing_weights!`](@ref)"""
+    """Share of vertical wing support taken by the strut, in the largest-strut-force case"""
     reaction_share::Float64 = 0
 
     # Aerodynamics
-    """Lift coefficient of both struts, referenced to the wing area, set by [`induced_drag!`](@ref)"""
+    """Lift coefficient of both struts, referenced to wing area"""
     CL::Float64 = 0
-    """Strut lift divided by total lift, set by [`induced_drag!`](@ref)"""
+    """Strut lift over total lift"""
     lift_fraction::Float64 = 0
 
     # Weights
     """Strut weight [N]"""
     weight::Float64 = 0
-    """
-    Added weight fraction of the strut [-]: fairings, leading and trailing edge, splitter and fittings, as a fraction of the bare strut box weight.
-    The strut weight is `2 g l (ρ_caps A_caps + ρ_webs A_webs) (1 + weight_frac_added)` for both wings. Placeholder value, derived from Boeing SUGAR Phase IV (NASA CR, NTRS 20220016017, Tables 12/16).
-    """
+    """Strut added weight fraction (fairings, edges, fittings) on the bare box weight. Placeholder from Boeing SUGAR Phase IV"""
     weight_frac_added::Float64 = 0.60
-    """
-    Weight of the attachment hardware for the strut weight to the fuselage and wing. As it is attached at both ends it has double the wing default value of 0.03 [-].
-    """
+    """Strut attachment weight fraction (twice the wing default, as it attaches at both ends)"""
     weight_frac_attachments::Float64 = 0.06
     """Aircraft pitching moment contribution from the weight distribution of the strut [N m]"""
     dxW::Float64 = 0
@@ -123,82 +107,66 @@ end
 $TYPEDEF
 
 Vertical jury strut of a truss-braced wing, connecting the wing to the main strut.
-It holds the main strut laterally (a rigid lateral support), so it shortens the buckling length of the main strut,
-but it does not change the loads in the wing or in the main strut.
-
-Only `eta_strut` (and the materials, chord ratio, minimum gauges and added weight fraction) are inputs; the other fields are computed
-by [`wing_weights!`](@ref).
+It shortens the buckling length of the main strut but does not change the wing or strut loads.
 
 $TYPEDFIELDS
 """
 @kwdef mutable struct JuryStrut
-    """Jury strut box caps (top and bottom): material and, once sized, thickness and weight"""
+    """Jury strut box caps"""
     caps::StructuralMember = StructuralMember(material = StructuralAlloy("TASOPT-Al"))
-    """Jury strut box webs: material and, once sized, thickness and weight"""
+    """Jury strut box webs"""
     webs::StructuralMember = StructuralMember(material = StructuralAlloy("TASOPT-Al"))
     # Input
-    """
-    Position of the jury strut along the main strut, as a fraction of the strut length measured from the fuselage end [-].
-    Default 0.5 is a placeholder (jury at the middle of the strut). This is a fraction of the strut length, not of the semispan.
-    """
+    """Jury position as a fraction of the main strut length from the fuselage end"""
     eta_strut::Float64 = 0.5
-    """
-    Jury strut chord as a fraction of the main strut chord [-].
-    Default 0.5 is a placeholder, not derived from data.
-    """
+    """Jury strut chord to main strut chord"""
     chord_to_strut_chord::Float64 = 0.5
-    """Minimum jury strut cap thickness [m]. Default 1.5e-3 is a placeholder, the same as the braced wing minimum cap gauge"""
+    """Minimum jury strut cap thickness [m]"""
     min_cap_thickness::Float64 = 1.5e-3
-    """Minimum jury strut web thickness [m]. Default 1.0e-3 is a placeholder, the same as the braced wing minimum web gauge"""
+    """Minimum jury strut web thickness [m]"""
     min_web_thickness::Float64 = 1.0e-3
 
     # Computed geometry
-    """
-    Wing-side attachment, as a fraction of the wing semispan [-]: `ηo + eta_strut (ηs - ηo)`.
-    It is a different width from `eta_strut`, which is a fraction of the strut length.
-    """
+    """Wing-side attachment as a fraction of the semispan: `ηo + eta_strut (ηs - ηo)`"""
     eta_wing::Float64 = 0
-    """Jury strut length [m]: `strut.z (1 - eta_strut)`"""
+    """Jury strut length [m]"""
     length::Float64 = 0
     """Jury strut chord [m]"""
     chord::Float64 = 0
-    """Jury strut material area of caps and webs, without the added weight fraction [m^2]"""
+    """Jury strut caps and webs material area [m^2]"""
     area::Float64 = 0
 
     # Loads
-    """Jury strut axial force [N], negative (compression)"""
+    """Jury strut axial force [N] (compression is negative)"""
     axial_force::Float64 = 0
-    """Jury strut Euler buckling load [N]"""
+    """Jury strut buckling load [N]"""
     buckling_load::Float64 = 0
 
     # Weights
     """Jury strut weight [N], both wings"""
     weight::Float64 = 0
-    """
-    Added weight fraction of the jury strut [-] for fairings and fittings, as a fraction of the bare jury weight.
-    The jury weight is `2 g l (ρ_caps A_caps + ρ_webs A_webs) (1 + weight_frac_added)` for both wings. Placeholder value, not derived from data. Assumed to be the same as for the strut
-    """
+    """Jury strut added weight fraction (fairings, fittings) on the bare weight. Placeholder, same as the strut"""
     weight_frac_added::Float64 = 0.60
-    """Aircraft pitching moment contribution from the weight distribution of the jury strut [N m], computed by `size_jury!`"""
+    """Aircraft pitching moment contribution from the weight distribution of the jury strut [N m]"""
     dxW::Float64 = 0
 end
 
 """
-Mass state used for a wing sizing load case.
+Mass state of a wing sizing load case.
 
-- `DesignCruise`: start-of-cruise weight, wing fuel is the design-mission fuel
-- `MTOW_MaxFuel`: maximum takeoff weight, wing tanks as full as that weight allows
-- `MZFW`: maximum zero-fuel weight, wing fuel is the reserve only
-- `Light`: operating empty weight plus reserve fuel, no payload
+- `DesignCruise`: start-of-cruise weight
+- `MTOW_MaxFuel`: maximum takeoff weight, wing tanks as full as possible
+- `MZFW`: maximum zero-fuel weight, reserve wing fuel only
+- `Light`: operating empty weight plus reserve fuel
 """
 @enumx WingMassState DesignCruise MTOW_MaxFuel MZFW Light
 
 """
 How the load factor of a wing sizing load case is obtained.
 
-- `Maneuver`: prescribed limit load factor, in flight
-- `Gust`: load factor from a discrete gust; `load_factor` only gives the sign
-- `Ground`: prescribed load factor on the ground, with no wing lift
+- `Maneuver`: prescribed limit load factor in flight
+- `Gust`: from a discrete gust; `load_factor` gives the sign only
+- `Ground`: prescribed load factor on the ground, no wing lift
 """
 @enumx WingLoadKind Maneuver Gust Ground
 
@@ -212,19 +180,19 @@ $TYPEDFIELDS
 @kwdef mutable struct WingLoadCase
     """How the load factor is obtained"""
     kind::WingLoadKind.T = WingLoadKind.Maneuver
-    """Limit load factor for `Maneuver` and `Ground` cases; sign only (±1) for `Gust` cases [-]"""
+    """Limit load factor (sign only for `Gust`)"""
     load_factor::Float64 = 0.0
-    """Gust cases: design gust velocity U_de [m/s EAS] (56 ft/s at the cruise speed, the reference gust velocity of FAR 25.341(a)(5) at sea level)"""
+    """Design gust velocity U_de [m/s EAS] (56 ft/s, FAR 25.341(a)(5))"""
     gust_velocity_EAS::Float64 = 17.0688
-    """Gust cases: flight speed [m/s EAS]; 0 means use the cruise speed from the mission"""
+    """Gust flight speed [m/s EAS]; 0 uses the mission cruise speed"""
     gust_speed_EAS::Float64 = 0.0
-    """Weight and wing fuel state in which the case is evaluated"""
+    """Weight and wing fuel state"""
     mass_state::WingMassState.T
-    """Scale on the tail load of the case, which is tail_load_scale · (load factor / pull-up load factor) · maximum tail load [-]"""
+    """Tail load scale: tail_load_scale · (load factor / pull-up load factor) · maximum tail load"""
     tail_load_scale::Float64 = 1.0
-    """Whether the case is used when sizing the wing"""
+    """Whether the case is used in wing sizing"""
     active::Bool = true
-    """Load factor actually used by the case (gust cases: 1 ± Δn) [-]"""
+    """Load factor used (gust: 1 ± Δn)"""
     n_computed::Float64 = 0.0
 end
 
@@ -244,21 +212,21 @@ $TYPEDFIELDS
     S_break::Float64 = 0
     """Bending moment at the wing break [N m]"""
     M_break::Float64 = 0
-    """Bending moment of largest magnitude along the inboard wing bay of a braced wing [N m]"""
+    """Largest bending moment along the inboard bay of a braced wing [N m]"""
     M_inboard_extreme::Float64 = 0
-    """Axial force in the inboard wing from the strut, positive in tension [N]"""
+    """Inboard wing axial force from the strut, tension positive [N]"""
     P_axial_inboard::Float64 = 0
-    """Axial force of the strut at its fuselage end, positive in tension [N]"""
+    """Strut axial force at the fuselage end, tension positive [N]"""
     strut_force::Float64 = 0
-    """Distance from the wing root of the 11 stations along the inboard wing bay of a braced wing [m]; empty without a strut"""
+    """Distance from the root of the 11 stations along the inboard bay [m]; empty without a strut"""
     inboard_stations::Vector{Float64} = Float64[]
     """Shear load at `inboard_stations`, with the strut reaction applied [N]"""
     inboard_shear::Vector{Float64} = Float64[]
     """Bending moment at `inboard_stations`, with the strut reaction applied [N m]"""
     inboard_moment::Vector{Float64} = Float64[]
-    """Vertical reaction of the strut on the wing at the strut attachment [N]: it acts on the wing against the wing lift (downward for a positive load factor) and has the sign of the load factor"""
+    """Vertical strut reaction on the wing, against the wing lift [N]"""
     strut_reaction::Float64 = 0
-    """Lift on the strut of one wing [N], with the sign of the load factor; 0 without a strut or strut lift"""
+    """Lift on one strut [N]"""
     strut_lift::Float64 = 0
 end
 
@@ -271,15 +239,15 @@ Only the `pullup` case is active by default.
 $TYPEDFIELDS
 """
 @kwdef mutable struct WingSizingLoads
-    """Pull-up at the limit load factor, design cruise mass state"""
+    """Pull-up, design cruise mass state"""
     pullup::WingLoadCase = WingLoadCase(load_factor = 3.0, mass_state = WingMassState.DesignCruise)
-    """Push-over at negative load factor, maximum takeoff weight with full wing fuel"""
+    """Push-over, MTOW with full wing fuel"""
     pushover::WingLoadCase = WingLoadCase(load_factor = -1.0, mass_state = WingMassState.MTOW_MaxFuel, active = false)
-    """Pull-up at the limit load factor, light mass state"""
+    """Pull-up, light mass state"""
     pullup_light::WingLoadCase = WingLoadCase(load_factor = 3.0, mass_state = WingMassState.Light, active = false)
-    """Push-over at negative load factor, light mass state"""
+    """Push-over, light mass state"""
     pushover_light::WingLoadCase = WingLoadCase(load_factor = -1.0, mass_state = WingMassState.Light, active = false)
-    """Taxi on the ground, maximum takeoff weight with full wing fuel"""
+    """Taxi, MTOW with full wing fuel"""
     taxi::WingLoadCase = WingLoadCase(kind = WingLoadKind.Ground, load_factor = -2.0, mass_state = WingMassState.MTOW_MaxFuel, active = false)
     """Upward discrete gust, light mass state"""
     gust_up_light::WingLoadCase = WingLoadCase(kind = WingLoadKind.Gust, load_factor = 1.0, mass_state = WingMassState.Light, active = false)
@@ -292,9 +260,9 @@ $TYPEDFIELDS
     governing_root::Symbol = :pullup
     """Case that sets the wing break loads"""
     governing_break::Symbol = :pullup
-    """Case with the largest strut tension (`:none` for a wing without a strut)"""
+    """Case with the largest strut tension (`:none` without a strut)"""
     governing_strut::Symbol = :none
-    """Case with the most negative strut force (`:none` for a wing without a strut or a strut that is not compressed)"""
+    """Case with the most negative strut force (`:none` if none)"""
     governing_strut_compression::Symbol = :none
 end
 
@@ -331,7 +299,7 @@ $TYPEDFIELDS
     inboard::WingSection = WingSection() # at wing root 
     """Outboard Wing Section (at strut attachment point)"""
     outboard::WingSection = WingSection() # at strut attachment point
-    """Engine spanwise location as a fraction of the half-span, ``\\eta = y/(b/2)`` [-], with one engine per wing"""
+    """Engine spanwise location, ``\\eta = y/(b/2)``"""
     η_engine::Float64 = 0.0
 
     """Span fraction of inner wing break ("snag")"""

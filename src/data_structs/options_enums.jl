@@ -44,17 +44,17 @@ Wing structural bracing configuration.
 
 - `Cantilever`: unbraced cantilever wing
 - `StrutBraced`: wing braced by a strut
-- `TrussBraced`: wing braced by a truss (strut with jury struts)
+- `TrussBraced`: strut with jury struts
 """
 @enumx WingConfig Cantilever StrutBraced TrussBraced
 
 """
     StrutForceModel
 
-Model for the force that a strut carries in a braced wing.
+Model for the strut force in a braced wing.
 
-- `Compatibility`: strut force from the compatibility of the wing and strut deflections at the strut attachment
-- `Prescribed`: strut force from a fixed rule on the lift loading of the inboard wing
+- `Compatibility`: wing and strut deflections match at the attachment
+- `Prescribed`: fixed rule on the inboard wing lift loading
 """
 @enumx StrutForceModel Compatibility Prescribed
 

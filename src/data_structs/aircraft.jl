@@ -23,7 +23,7 @@ Overloads Base.summary to print a summary of the `aircraft` model.
 - `vtail::Tail`: vertical tail object
 - `engine::Engine`: engine object
 - `landing_gear::LandingGear`: landing gear object
-- `infeasibilities::Vector{Symbol}` : Flags of design constraints violated by the last sizing (see `record_infeasibility!`)
+- `infeasibilities::Vector{Symbol}` : Design constraints violated by the last sizing
 
 - `fuselage::Fuselage` : Fuselage layout, data, and parameters
 - `fuse_tank::fuselage_tank` : Fuselage tank data and parameters (when applicable)

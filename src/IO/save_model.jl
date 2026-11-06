@@ -216,7 +216,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing["spanbreak_thickness_to_chord"] = wing.outboard.cross_section.thickness_to_chord
         d_wing["hweb_to_hbox"] = wing.inboard.cross_section.web_to_box_height
         d_wing["spar_box_x_c"] = wing.layout.spar_box_x_c
-        d_wing["min_cap_thickness"] = wing.inboard.min_cap_thickness #applied to both sections on reading
+        d_wing["min_cap_thickness"] = wing.inboard.min_cap_thickness
         d_wing["min_web_thickness"] = wing.inboard.min_web_thickness
 
         d_wing["x_wing_box"] = wing.layout.box_x
@@ -258,7 +258,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing_loads = Dict()
         for case_name in fieldnames(typeof(wing.sizing_loads))
             case = getfield(wing.sizing_loads, case_name)
-            case isa typeof(wing.sizing_loads.pullup) || continue # skip results and governing_root
+            case isa typeof(wing.sizing_loads.pullup) || continue # skip non-case fields
 
             d_wing_loads[string(case_name)] = Dict(
                 "load_factor" => case.load_factor,
@@ -433,9 +433,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_struct["wing_tail_cap_density"] = wing.inboard.caps.ρ
         d_struct["wing_tail_web_density"] = wing.inboard.webs.ρ
 
-        # The legacy keys `sigma_struts`, `E_struts` and `strut_density` are not saved and are ignored on read.
-        # Each material is saved with its own stress and safety factors. The wing caps and webs
-        # are saved from the inboard section, as the factors are read once for both sections.
+        # Each material is saved with its own stress and safety factors; wing caps and webs from the inboard section
         structural_materials = (
             caps = wing.inboard.caps.material,
             webs = wing.inboard.webs.material,

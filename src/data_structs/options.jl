@@ -36,9 +36,9 @@ $TYPEDFIELDS
     #wing/stability options
     """Wing position strategy for longitudinal stability analysis: `Fixed` = static wing position, `FixedCLh` = move wing to achieve `CLh = CLhspec` in cruise, `MinStaticMargin` = move wing to achieve minimum static margin = `SMmin`"""
     opt_move_wing::WingMove.T
-    """Wing bracing configuration: `Cantilever` = unbraced, `StrutBraced` = braced by a strut, `TrussBraced` = braced by a truss"""
+    """Wing bracing: `Cantilever`, `StrutBraced` or `TrussBraced`"""
     opt_wing_config::WingConfig.T = WingConfig.Cantilever
-    """If `true`, the positive manoeuvre wing sizing cases (`pullup` and `pullup_light`) use the FAR/CS 25.337 load factor of the current maximum takeoff weight, instead of their `load_factor` input"""
+    """If `true`, `pullup` and `pullup_light` sizing cases use the FAR/CS 25.337 load factor instead of their `load_factor` input"""
     opt_far_load_factor::Bool = false
 
     #Trefftz plane options
@@ -46,8 +46,7 @@ $TYPEDFIELDS
     trefftz_config::aerodynamics.TrefftzPlaneConfig
 end
 
-# `options.has_strut` is derived from `opt_wing_config` (true for `StrutBraced` and `TrussBraced`,
-# false for `Cantilever`). It is read-only: there is no such field, so assigning to it throws.
+# `has_strut` is read-only, derived from `opt_wing_config`
 function Base.getproperty(opt::Options, name::Symbol)
   name === :has_strut && return getfield(opt, :opt_wing_config) != WingConfig.Cantilever
   return getfield(opt, name)

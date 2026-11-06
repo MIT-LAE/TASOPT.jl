@@ -1,6 +1,5 @@
 """
-`weight_buildup` prints out the weight build up for the aircraft. The component weights are summed
-into the empty weight; the strut and jury strut are listed for braced and truss-braced wings respectively.
+`weight_buildup` prints out the weight build up for the aircraft
 """
 function weight_buildup(ac::aircraft; io=stdout)
     parg = ac.parg
@@ -206,9 +205,8 @@ function geometry(ac::aircraft; io = stdout)
 end
 
 """
-`wing_sizing_loads_summary` prints a table of the wing root and break loads of the evaluated wing sizing
-load cases, with the load factor of each case. The cases that set the wing root and break loads are marked
-with a `*`.
+`wing_sizing_loads_summary` prints the wing root and break loads of each evaluated sizing load case,
+marking the governing cases with `*`.
 """
 function wing_sizing_loads_summary(ac::aircraft; io = stdout)
     sl = ac.wing.sizing_loads

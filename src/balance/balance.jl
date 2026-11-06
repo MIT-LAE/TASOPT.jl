@@ -41,7 +41,7 @@ The routine computes the **neutral point (`xNP`), indicating the aircraft's long
 - Uses [`cabin_centroid()`](@ref TASOPT.cabin_centroid) to determine cabin location.
 - If there is fuel in the wings (`ac.options.has_wing_fuel`), it does not shift between CG cases.
 - `xNP` is affected by engine placement (`xengcp`), aerodynamics (`CMw1`, `CMh1`), and fuel distribution.
-- For a strut-braced wing, the wing lift arm `co * CMw1` is replaced by [`strut_blended_lift_arm`](@ref TASOPT.strut_blended_lift_arm), which weights it with the arm of the strut lift.
+- For a strut-braced wing, `co * CMw1` is replaced by [`strut_blended_lift_arm`](@ref TASOPT.strut_blended_lift_arm).
 - Uses [`CG_limits()`](@ref TASOPT.CG_limits) to estimate landing gear location **only**.
 
 """
@@ -164,7 +164,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       #---- total aero moment and derivatives
       CMw0 = para[iaCMw0]
       CMw1 = para[iaCMw1]
-      co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
+      co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes strut lift
       CMh0 = para[iaCMh0]
       CMh1 = para[iaCMh1]
       CL = para[iaCL]
@@ -553,7 +553,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   #----- set HT area by worst case: max pitch trim power at forward CG case w/ max wing CL
                   CMw0 = paraF[iaCMw0]
                   CMw1 = paraF[iaCMw1]
-                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
+                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes strut lift
                   CMh0 = paraF[iaCMh0]
                   CMh1 = paraF[iaCMh1]
                   CMVf1 = parg[igCMVf1]
@@ -592,7 +592,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
                   #----- set wing location to get CLh=CLhspec in cruise
                   CMw0 = paraC[iaCMw0]
                   CMw1 = paraC[iaCMw1]
-                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
+                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes strut lift
                   CMh0 = paraC[iaCMh0]
                   CMh1 = paraC[iaCMh1]
                   CMVf1 = parg[igCMVf1]
@@ -615,7 +615,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             elseif options.opt_move_wing == WingMove.MinStaticMargin
                   #----- set wing location by stability margin at aft-CG case
                   CMw1 = paraB[iaCMw1]
-                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
+                  co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes strut lift
                   CMh1 = paraB[iaCMh1]
                   CMVf1 = parg[igCMVf1]
                   dCLhdCL = parg[igdCLhdCL]
@@ -684,7 +684,7 @@ function size_htail(ac, paraF, paraB, paraC; Ldebug::Bool = false)
             #----- for fixed HT area, find minimum required CLh for foward-CG trim
             CMw0 = paraF[iaCMw0]
             CMw1 = paraF[iaCMw1]
-            co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes the strut lift arm
+            co_CMw1 = strut_blended_lift_arm(co * CMw1, wing, options.trefftz_config) #includes strut lift
             CMh0 = paraF[iaCMh0]
             CMh1 = paraF[iaCMh1]
             CMVf1 = parg[igCMVf1]

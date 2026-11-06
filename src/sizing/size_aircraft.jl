@@ -307,16 +307,15 @@ function _size_aircraft!(ac; itermax=35,
             break
         end
 
-        # Flags reflect the final sizing pass only. They are cleared after the convergence test so that the
-        # pass that detects convergence, which does not size the wing or the drag, keeps the flags of the previous pass
-        clear_infeasibilities!(ac)
+        # Flags reflect the final sizing pass only
+        empty!(ac.infeasibilities)
 
         #--------------------------------
         ##  Wing sizing section
         #--------------------------------
         WMTO = parg[igWMTO]
 
-        # Pull-up load factor of this iteration: the user input, or the FAR/CS 25.337 value of the WMTO.
+        # Pull-up load factor: user input or FAR/CS 25.337
         Nlift = wing_case_load_factor(:pullup, wing.sizing_loads.pullup, WMTO, options.opt_far_load_factor)
 
         # Size wing area and chords at start-of-cruise
@@ -350,7 +349,7 @@ function _size_aircraft!(ac; itermax=35,
         γt, γs = wing.outboard.λ * para[iarclt, ip], wing.inboard.λ * para[iarcls, ip]
         Lhtail = WMTO * htail.CL_CLmax * htail.layout.S / wing.layout.S
 
-        # The struts, if they carry lift, relieve the wing of the share of the lift given by the strut area and dihedral of the previous iteration
+        # Struts relieve the wing of their share of the lift
         po = (1.0 - (options.has_strut ? strut_lift_share(wing) : 0.0)) *
              wing_loading(wing, para[iarclt, ip], para[iarcls, ip], Nlift, BW, Lhtail)
 
@@ -370,16 +369,14 @@ function _size_aircraft!(ac; itermax=35,
         dyWinn, dyWout = wing.inboard.dyW, wing.outboard.dyW
         rhofuel = !(options.has_wing_fuel) ? 0.0 : parg[igrhofuel]
 
-        # One engine per wing at wing.η_engine: inboard of the span break ηs or at it (dyeinn is its moment arm
-        # about the wing root station ηo [m]), or outboard of it (dyeout is its moment arm about ηs [m])
+        # One engine per wing at wing.η_engine: inboard (moment arm dyeinn about ηo) or outboard (dyeout about ηs) of the break
         (; neinn, dyeinn, neout, dyeout) = wing_engine_arms(wing)
 
-        # Load cases of the wing sizing: records the case loads in wing.sizing_loads (results, governing_root,
-        # governing_break, governing_strut, governing_strut_compression and n_computed). The returned envelope sizes the wing.
+        # Wing sizing load cases, recorded in wing.sizing_loads; the returned envelope sizes the wing
         masses = wing_sizing_masses(W_cruise = BW, W_MTO = WMTO, W_pay = Wpay, W_paymax = Wpaymax,
                                     W_fuel = parg[igWfuel], freserve = parg[igfreserve],
                                     W_fuel_cap = parg[igWfmax], has_wing_fuel = options.has_wing_fuel)
-        # Cruise Mach number and equivalent airspeed of the start-of-cruise point that sizes the wing area (ρ0, u0 above)
+        # Start-of-cruise Mach and equivalent airspeed
         Mach_cruise = pare[ieM0, ip]
         V_cruise_EAS = u0 * sqrt(ρ0 / ρSL)
         envelope = evaluate_wing_sizing_cases!(wing, masses, options.has_wing_fuel, para[iarclt, ip], para[iarcls, ip],
@@ -431,7 +428,7 @@ function _size_aircraft!(ac; itermax=35,
 
         # Calculate strut properties
         if options.has_strut
-            # Both struts at the mean chord of the linear taper: 2 * (root_chord + chord) / 2 * length
+            # Both struts at the mean chord
             wing.strut.S = (wing.strut.root_chord + wing.strut.chord) * lstrutp
         end
 
@@ -763,7 +760,7 @@ function _size_aircraft!(ac; itermax=35,
     #Warn user if HX effectiveness is overwritten
     check_HX_overwriting(eng.heat_exchangers) 
 
-    # The last drag evaluations of the sizing loop have zero lift, so take the strut lift from the start of cruise
+    # Take the strut lift from start of cruise, as the last drag evaluations have zero lift
     wing.strut.CL = para[iaCLstrut, ipcruise1]
     wing.strut.lift_fraction = wing.strut.CL / para[iaCL, ipcruise1]
 
