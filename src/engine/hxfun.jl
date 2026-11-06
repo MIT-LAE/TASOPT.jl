@@ -1242,10 +1242,14 @@ function PrepareHXobjects(HeatExchangers, idx, ip, imission, igas, pare_sl, type
       recircT = HeatExchangers[1].recirculation_temperature
       h_lat = pare_sl[iehvap]
 
-      if igas == 11 #TODO: add more options
+      if igas == 11
             coolant_name = "ch4"
       elseif igas == 40
             coolant_name = "h2"
+      elseif igas == 12
+            coolant_name = "c2h6"
+      elseif igas == 15
+            coolant_name = "c2h4"
       else
             coolant_name = ""
       end
