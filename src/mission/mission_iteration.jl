@@ -792,9 +792,86 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
       
       fracWa = para[iafracW, ipclimb1]
       fracWe = para[iafracW, ipdescentn]
-      freserve = parg[igfreserve]
       fburn = fracWa - fracWe + ffvent #include vented fuel, if any
-      ffuel = fburn * (1.0 + freserve)
+
+      if parg[igfreserve] >= 0.0
+            # ── Legacy fractional reserve ──────────────────────────────────────
+            ffuel = fburn * (1.0 + parg[igfreserve])
+
+      else
+            # ── Physics-based holding-pattern reserve
+            # Regulatory requirement: X minutes of holding at normal cruising fuel consumption
+            t_hold = parm[imThold]        # holding duration [s]
+            V_KIAS = parm[imVhold]        # EAS ≈ KIAS stored on input [m/s]
+            h_hold = parm[imhhold]        # holding altitude [m]  (10,000 ft default)
+
+            # ── ISA atmosphere at holding altitude ────────────────────────────
+            ΔT      = parm[imDeltaTatm]
+            atm_h   = atmos(h_hold, ΔT)
+            ρ_hold  = atm_h.ρ
+            atm_SL  = atmos(0.0,    ΔT)
+            σ       = ρ_hold / atm_SL.ρ          # density ratio
+
+            # Published holding speed is KIAS (indicated air speed)
+            # Approximate KIAS ≈ EAS (equivalent air speed) when compressibility is negligible.
+            V_EAS = V_KIAS 
+            V_TAS = V_EAS / sqrt(σ) # true air speed
+
+
+            # Approximate landing weight (start of holding ≈ end of descent)
+            W_land  = WMTO * fracWe
+
+            # ── Guard: fall back before the wing / polar are converged ────────
+            S_wing       = wing.layout.S
+            CL_cr        = para[iaCL,   ipcruisen]
+            CD_cr        = para[iaCD,   ipcruisen]
+            CDi_cr       = para[iaCDi,  ipcruisen]
+            TSFC_cr      = pare[ieTSFC, ipcruisen]   # [1/s]
+
+            use_physics  = (S_wing  > 0.0 &&
+                            isfinite(CL_cr)   && CL_cr   > 1e-6 &&
+                            isfinite(CD_cr)   && CD_cr   > 1e-6 &&
+                            isfinite(TSFC_cr) && TSFC_cr > 0.0)
+
+            if !use_physics
+                  # Pre-convergence: mirror the initialiser's fuel fraction so
+                  # the sizing loop weight update stays consistent.
+                  ffuel = parg[igWfuel] / WMTO
+            else
+
+                  # ── Local CL at holding conditions ────────────────────────────────
+                  CL_hold = 2.0 * W_land / (ρ_hold * V_TAS^2 * S_wing)
+
+                  # ── Drag polar decomposed from end-of-cruise conditions ──────────────
+                  # Use end-of-cruise aerodynamics for physically realistic holding performance.
+                  # CD  = CD0  +  k·CL²   (parabolic polar, k = CDi/CL²)
+                  # CD0 captures profile + compressibility drag; evaluated here at the
+                  # holding Mach number it is slightly conservative (lower Mach → less
+                  # wave drag), but the error is small for the typical holding speeds.
+                  CD0_cr  = CD_cr  - CDi_cr                    # profile drag at end-of-cruise
+                  k_cr    = CDi_cr / CL_cr^2                   # induced-drag factor
+                  CD_hold = CD0_cr + k_cr * CL_hold^2
+                  LoD_hold = CL_hold / CD_hold
+
+                  # ── TSFC at normal cruising conditions ─────────────────────────────────
+                  # Per FAR 91.167 / EASA AMC 20-6: reserve is based on 45 minutes of
+                  # holding at normal cruising fuel consumption (end-of-cruise point).
+                  # This is the fuel burn rate at cruise power settings, appropriate for
+                  # regulatory compliance and realistic aircraft performance.
+                  TSFC_hold = TSFC_cr
+
+                  # ── Breguet endurance ─────────────────────────────────────────────
+                  #   W_res / W_land = exp( t · WTSFC / (L/D) ) − 1
+                  # TASOPT stores WTSFC = gee·ṁ/F  [1/s] (weight-specific fuel consumption)
+                  # so the Breguet endurance exponent is  t·WTSFC/(L/D)  — no extra gee.
+                  fres_hold = exp(t_hold * TSFC_hold / LoD_hold) - 1.0
+
+                  # Express reserve as weight fraction of WMTO and add to mission burn
+                  Wres  = W_land * fres_hold
+                  ffuel = fburn + Wres / WMTO
+
+            end # use_physics guard
+      end
       Wfuel = WMTO * ffuel
       WTO = Wzero + Wfuel
 
