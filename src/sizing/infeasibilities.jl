@@ -25,8 +25,9 @@ Description of each infeasibility flag, shown by [`report_infeasibilities`](@ref
 const INFEASIBILITY_DESCRIPTIONS = Dict{Symbol,String}(
     :wing_cap_min_gauge => "minimum gauge sets the wing cap thickness",
     :airfoil_database_exceeded => "wing outside the airfoil database, drag includes the extrapolation penalty",
+    :strut_airfoil_database_exceeded => "strut or jury strut outside the airfoil database",
     :strut_attachment_outboard_limit => "strut attached outboard of the limit",
-    :wing_beam_column_margin => "inboard wing axial load too close to its Euler load (placeholder metric)",
+    :wing_beam_column_margin => "inboard wing compression too close to its Euler load (placeholder metric)",
     :wing_fuel_volume_exceeded => "fuel weight exceeds the capacity of the wing tanks",
     :wing_span_exceeded => "wing span exceeds the span limit",
 )
@@ -125,19 +126,57 @@ end
 """
     WING_BEAM_COLUMN_RATIO_MAX
 
-Placeholder limit of the inboard wing axial force to Euler load ratio, see [`check_wing_beam_column!`](@ref).
+Placeholder limit of the inboard wing compression to Euler load ratio, see [`check_wing_beam_column!`](@ref).
 """
 const WING_BEAM_COLUMN_RATIO_MAX = 0.5
 
 """
+    WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR
+
+Effective-length factor ``K`` of the inboard wing panel, see [`wing_beam_column_ratio`](@ref). The panel is clamped
+at the fuselage and pinned vertically at the strut attachment, which gives ``K = 0.7``. The rotational restraint of
+the outboard panel is ignored; it would lower ``K`` toward 0.5.
+"""
+const WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR = 0.7
+
+"""
+    wing_beam_column_ratio(wing::Wing)
+
+Returns the ratio ``P_c / P_E`` of the largest compression ``P_c`` in the inboard wing over the sizing load cases to the
+Euler load ``P_E = \\pi^2 EI / (K L)^2`` of the inboard panel, with ``K =`` [`WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR`](@ref)
+and the panel length ``L = (\\eta_s - \\eta_o) b / 2``.
+``EI`` is the mean of the flapwise stiffnesses at the wing root (`inboard.EI[1]`) and at the strut attachment
+(`outboard.EI[1]`), a rough estimate for the tapered inboard panel.
+Returns 0 if the wing has no compression or either stiffness is not sized.
+
+!!! details "🔃 Inputs and Outputs"
+    **Inputs:**
+    - `wing::Wing`: sized wing.
+
+    **Outputs:**
+    - `ratio::Float64`: compression over Euler load [-].
+"""
+function wing_beam_column_ratio(wing::Wing)
+    EI_root = wing.inboard.EI[1]
+    EI_strut = wing.outboard.EI[1]
+    (EI_root > 0.0 && EI_strut > 0.0) || return 0.0
+    EI = 0.5 * (EI_root + EI_strut)
+
+    L = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
+    P_c = maximum(max(-case.P_axial_inboard, 0.0) for case in values(wing.sizing_loads.results); init = 0.0) # tension positive
+    P_E = π^2 * EI / (WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR * L)^2
+    return P_c / P_E
+end
+
+"""
     check_wing_beam_column!(ac::aircraft)
 
-Records `:wing_beam_column_margin` if the axial force in the inboard wing of a braced wing exceeds
-[`WING_BEAM_COLUMN_RATIO_MAX`](@ref) times the Euler load ``\\pi^2 EI / (4 L^2)`` of a clamped-free column.
+Records `:wing_beam_column_margin` if the compression in the inboard wing of a braced wing exceeds
+[`WING_BEAM_COLUMN_RATIO_MAX`](@ref) times the Euler load of the inboard panel, see [`wing_beam_column_ratio`](@ref).
 Must be called after the wing has been sized.
 
 !!! warning "Placeholder metric"
-    Uses the largest axial force of the sizing load cases, the root stiffness `inboard.EI[1]` and the inboard panel length `(ηs - ηo) b / 2`.
+    Chordwise (in-plane) buckling and the beam-column moment amplification in the box sizing are not included.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -147,15 +186,9 @@ Must be called after the wing has been sized.
     - `ac::aircraft`: the same aircraft object.
 """
 function check_wing_beam_column!(ac::aircraft)
-    wing = ac.wing
     ac.options.has_strut || return ac
 
-    EI = wing.inboard.EI[1]
-    EI > 0.0 || return ac
-
-    L = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
-    P_axial = maximum(abs(case.P_axial_inboard) for case in values(wing.sizing_loads.results); init = 0.0)
-    if abs(P_axial) / (π^2 * EI / (4 * L^2)) > WING_BEAM_COLUMN_RATIO_MAX # axial force over Euler load
+    if wing_beam_column_ratio(ac.wing) > WING_BEAM_COLUMN_RATIO_MAX
         record_infeasibility!(ac, :wing_beam_column_margin)
     end
     return ac

@@ -197,6 +197,7 @@ function geometry(ac::aircraft; io = stdout)
             jury = wing.jury
             @printf(io, "l_jury           = %6.2f m (%8.2f ft)\n", jury.length, jury.length/ft_to_m)
             @printf(io, "c_jury           = %6.2f m (%8.2f ft)\n", jury.chord, jury.chord/ft_to_m)
+            @printf(io, "t/c_jury         = %5.3f\n", jury.thickness_to_chord)
             @printf(io, "eta_jury         = %5.3f\n", jury.eta_wing)
         end
     end

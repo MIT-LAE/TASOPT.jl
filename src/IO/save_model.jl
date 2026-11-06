@@ -234,7 +234,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
                 d_wing_strut["end_fixity_K"] = wing.strut.end_fixity_K
                 d_wing_strut["chord_to_wing_chord"] = wing.strut.chord_to_wing_chord
                 d_wing_strut["strut_taper_ratio"] = wing.strut.taper_ratio
-                d_wing_strut["mean_cl_ratio_to_wing"] = wing.strut.mean_cl_ratio_to_wing
+                d_wing_strut["lift_fraction_strut_to_total"] = wing.strut.lift_fraction_strut_to_total
                 isnan(wing.strut.x_strut_attach) || (d_wing_strut["x_strut_attach"] = wing.strut.x_strut_attach)
                 d_wing_strut["spanload_exponent"] = wing.strut.spanload_exponent
                 d_wing_strut["min_cap_thickness"] = wing.strut.min_cap_thickness
@@ -250,6 +250,7 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
             d_wing["Jury"] = Dict("eta_strut" => wing.jury.eta_strut,
                                   "weight_frac_added" => wing.jury.weight_frac_added,
                                   "chord_to_strut_chord" => wing.jury.chord_to_strut_chord,
+                                  "thickness_to_chord" => wing.jury.thickness_to_chord,
                                   "min_cap_thickness" => wing.jury.min_cap_thickness,
                                   "min_web_thickness" => wing.jury.min_web_thickness)
         end
@@ -276,10 +277,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         d_wing_aero["lowspeed_cdf"] = para[iacdfw, 1,:]
         d_wing_aero["lowspeed_cdp"] = para[iacdpw, 1,:]
         d_wing_aero["Re_ref"] = para[iaRerefw, 1,:]
-
-        d_wing_aero["strut_lowspeed_cdf"] = para[iacdfs, 1,:]
-        d_wing_aero["strut_lowspeed_cdp"] = para[iacdps, 1,:]
-        d_wing_aero["strut_Re_ref"] = para[iaRerefs, 1,:]
 
         d_wing_aero["Reynolds_scaling"] = para[iaaRexp, 1,:]
         d_wing_aero["excrescence_drag_factor"] = para[iafexcdw, 1,:]

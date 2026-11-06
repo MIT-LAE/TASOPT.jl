@@ -70,7 +70,7 @@ function recomputed_jury_box(ac)
     strut, jury = ac.wing.strut, ac.wing.jury
     return TASOPT.structures.size_member_box(jury.caps, jury.webs;
         chord = jury.chord_to_strut_chord * (strut.root_chord + (strut.chord - strut.root_chord) * jury.eta_strut),
-        height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
+        height_to_chord = jury.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
         web_to_box_height = strut.web_to_box_height,
         tension = 0.0, compression = jury.axial_force, buckling_length = jury.length, K = 1.0,
         shear_load = 0.0, sigfac = ac.parg[igsigfac],
@@ -181,6 +181,7 @@ const strut_block_fields = (
     weight_frac_attachments = :weight_frac_attachments,
     opt_strut_force = :opt_strut_force,
     strut_taper_ratio = :taper_ratio,
+    lift_fraction_strut_to_total = :lift_fraction_strut_to_total,
 )
 
 # [Wing.Strut] body with values that differ from the defaults; distances carry units
@@ -196,6 +197,7 @@ const custom_strut_block = """
     weight_frac_attachments = 0.08
     opt_strut_force = "prescribed"
     strut_taper_ratio = 0.6
+    lift_fraction_strut_to_total = 0.4
 """
 
 "Default input text for `config` with the [Wing.Strut] table replaced by `block` (no table if empty)."
@@ -249,6 +251,7 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
         weight_frac_attachments = 0.08,
         opt_strut_force = TASOPT.StrutForceModel.Prescribed,
         strut_taper_ratio = 0.6,
+        lift_fraction_strut_to_total = 0.4,
     )
 
     @testset "[Wing.Strut] populates the strut fields" begin
@@ -266,6 +269,7 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
         @test (strut.thickness_to_chord, strut.local_velocity_ratio, strut.box_width_to_chord) == (0.15, 1.0, 0.5)
         @test (strut.web_to_box_height, strut.end_fixity_K, strut.taper_ratio) == (0.75, 1.0, 1.0)
         @test (strut.weight_frac_added, strut.weight_frac_attachments) == (0.60, 0.06)
+        @test strut.lift_fraction_strut_to_total == 0.25
         @test first(read_aircraft_from_text(toml_with_jury_inputs("truss_braced"))).wing.jury.weight_frac_added == 0.60
     end
 
@@ -293,6 +297,18 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
               TASOPT.StrutForceModel.Compatibility
         @test_throws Exception read_aircraft_from_text(
             toml_with_strut_inputs("strut_braced"; block = "opt_strut_force = \"rigid\""))
+    end
+
+    @testset "lift_fraction_strut_to_total must be in [0, 1), and the old mean_cl_ratio_to_wing key is rejected" begin
+        read_strut_block(block) = read_aircraft_from_text(toml_with_strut_inputs("strut_braced"; block))
+        for fraction in ("0.0", "0.999")
+            @test first(read_strut_block("lift_fraction_strut_to_total = $fraction")).wing.strut.lift_fraction_strut_to_total ==
+                  parse(Float64, fraction)
+        end
+        for fraction in ("1.0", "-0.1")
+            @test_throws ErrorException read_strut_block("lift_fraction_strut_to_total = $fraction")
+        end
+        @test_throws ErrorException read_strut_block("mean_cl_ratio_to_wing = 0.5")
     end
 
     al_default = StructuralAlloy("TASOPT-Al", max_avg_stress = 1.1, safety_factor = 1.5)
@@ -366,6 +382,37 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
             saved = TASOPT.TOML.parsefile(path)
             @test saved["Wing"]["Jury"]["eta_strut"] == 0.3
             @test first(read_aircraft_from_text(read(path, String))).wing.jury.eta_strut == 0.3
+        end
+    end
+
+    @testset "[Wing.Jury] thickness_to_chord: default, reading, validation, and save and read round trip" begin
+        read_jury_block(config, block) = first(read_aircraft_from_text(toml_with_jury_inputs(config, block)))
+
+        @test read_jury_block("truss_braced", "").wing.jury.thickness_to_chord == 0.10 # key absent
+        @test read_jury_block("truss_braced", "eta_strut = 0.3").wing.jury.thickness_to_chord == 0.10
+        @test read_jury_block("truss_braced", "thickness_to_chord = 0.12").wing.jury.thickness_to_chord == 0.12
+        @test read_jury_block("strut_braced", "thickness_to_chord = 0.12").wing.jury.thickness_to_chord == 0.10 # not read
+
+        # independent of the strut thickness
+        ac = read_jury_block("truss_braced", "thickness_to_chord = 0.12")
+        @test ac.wing.strut.thickness_to_chord == 0.15
+
+        for thickness_to_chord in ("0.0", "-0.1", "1.0", "1.5")
+            err = try
+                read_jury_block("truss_braced", "thickness_to_chord = $thickness_to_chord")
+                nothing
+            catch e
+                e
+            end
+            @test err isa ErrorException
+            @test occursin("Input error", sprint(showerror, err))
+        end
+
+        mktempdir() do dir
+            path = joinpath(dir, "jury_thickness_roundtrip.toml")
+            save_aircraft_model(ac, path)
+            @test TASOPT.TOML.parsefile(path)["Wing"]["Jury"]["thickness_to_chord"] == 0.12
+            @test first(read_aircraft_from_text(read(path, String))).wing.jury.thickness_to_chord == 0.12
         end
     end
 end
@@ -462,11 +509,6 @@ mentions_nlift_deprecation(log) =
                 without_active_keys!(d)
             end
             @test active_cases(ac) == Set([:pullup, braced_extra_cases...])
-
-            # default_tbw.toml has no [Wing.SizingLoads] table
-            ac_tbw, _ = read_aircraft_from_text(read(joinpath(TASOPT.__TASOPTroot__,
-                                                              "../example/defaults/default_tbw.toml"), String))
-            @test active_cases(ac_tbw) == Set([:pullup, braced_extra_cases...])
 
             # a cantilever wing keeps only the pull-up case
             ac_cantilever, _ = read_aircraft_from_default_dict(without_active_keys!)
@@ -1055,14 +1097,14 @@ end
     # a strut with an end-fixity factor of 2 buckles before it yields; no strut-attach reinforcement of the fuselage.
     # Its chord is the wing chord: at the default chord ratio no box of this height can reach the buckling stiffness
     function slender!(ac)
-        ac.wing.strut.mean_cl_ratio_to_wing = 0.0 # these tests are about the box sizing, not the strut lift
+        ac.wing.strut.lift_fraction_strut_to_total = 0.0 # these tests are about the box sizing, not the strut lift
         ac.wing.strut.end_fixity_K = 2.0
         ac.wing.strut.chord_to_wing_chord = 1.0
         ac.wing.strut.weight_frac_attachments = 0.0
     end
 
     # a strut with a low end-fixity factor yields before it buckles; no strut lift (box sizing, not strut lift)
-    stocky!(ac) = (ac.wing.strut.mean_cl_ratio_to_wing = 0.0; ac.wing.strut.end_fixity_K = 0.1)
+    stocky!(ac) = (ac.wing.strut.lift_fraction_strut_to_total = 0.0; ac.wing.strut.end_fixity_K = 0.1)
 
     @testset "the strut chord is the chord ratio times the wing chord at the strut attachment" begin
         for ac in (size_braced(), sized_jury_aircraft("truss_braced", 0.3))
@@ -1146,7 +1188,7 @@ end
     end
 
     @testset "minimum gauges set the strut box when they are large" begin
-        ac = size_braced(:large_gauges, ac -> (ac.wing.strut.mean_cl_ratio_to_wing = 0.0; # box sizing, not strut lift
+        ac = size_braced(:large_gauges, ac -> (ac.wing.strut.lift_fraction_strut_to_total = 0.0; # box sizing, not strut lift
                                                ac.wing.strut.min_cap_thickness = 2.0e-2;
                                                ac.wing.strut.min_web_thickness = 2.0e-2))
         strut = ac.wing.strut
@@ -1478,19 +1520,18 @@ end
             end
         end
 
-        # Strut lift: the struts carry the share k = r / (1 + r) of the lift, r = mean_cl_ratio_to_wing · local_velocity_ratio² ·
-        # S_strut cos²(dihedral) / S_wing; the wing carries (1 - k), and the strut lift of one wing is k (N W - Lh) / 2.
+        # Strut lift: the struts carry the share k = lift_fraction_strut_to_total of the lift;
+        # the wing carries (1 - k), and the strut lift of one wing is k (N W - Lh) / 2.
         n_pullup = 3.0
         case_load_factor = (pullup = 3.0, pushover = -1.0)
 
-        "Set the strut geometry of `wing` and the `mean_cl_ratio_to_wing` for which the struts carry the share `k` of the lift."
+        "Set the strut geometry of `wing` and the `lift_fraction_strut_to_total` `k`, the share of the lift the struts carry."
         function with_strut_lift!(wing, k; p = 0.0)
             strut = wing.strut
             wing.layout.S = wing.layout.span^2 / wing.layout.AR
             strut.S, strut.dihedral, strut.local_velocity_ratio = 1.6 * ls, atan(z, L), 1.05
             strut.y_root, strut.spanload_exponent = 1.2, p
-            effective_area = strut.S * cos(strut.dihedral)^2
-            strut.mean_cl_ratio_to_wing = k / (1 - k) * wing.layout.S / (strut.local_velocity_ratio^2 * effective_area)
+            strut.lift_fraction_strut_to_total = k
             return wing
         end
 

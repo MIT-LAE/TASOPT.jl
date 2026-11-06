@@ -258,12 +258,14 @@
     min_web_thickness       = "1.0 mm" # PLACEHOLDER: minimum strut web thickness (same as the braced wing minimum web gauge)
     opt_strut_force         = "compatibility" # strut force model: "compatibility" (from the wing and strut deflections) or "prescribed" (fixed rule)
     weight_frac_added       = 0.60 # added weight fraction for fairings and fittings
+    lift_fraction_strut_to_total = 0.25 # share of the wing + strut lift carried by both struts, L_strut/(L_wing+L_strut); 0 = strut carries no lift
 
 #[Wing.Jury]
     # Vertical jury strut. Only used if `wing_config` is "truss_braced"
     #eta_strut         = 0.5 # position of the jury along the strut as a fraction of the strut length, from the fuselage end
     #weight_frac_added = 0.30 # added weight fraction for fairings and fittings of the jury (placeholder)
     #chord_to_strut_chord = 0.5 # PLACEHOLDER: jury strut chord as a fraction of the main strut chord
+    #thickness_to_chord = 0.10 # jury strut thickness to chord
     #min_cap_thickness = "1.5 mm" # PLACEHOLDER: minimum jury strut cap thickness
     #min_web_thickness = "1.0 mm" # PLACEHOLDER: minimum jury strut web thickness
 
@@ -321,11 +323,6 @@
     lowspeed_cdf = 0.0085
     lowspeed_cdp = 0.0035
     Re_ref       = 20e6
-
-    #Only used if strut present
-    strut_lowspeed_cdf = 0.0085
-    strut_lowspeed_cdp = 0.0035
-    strut_Re_ref       = 1e6
 
     Reynolds_scaling = -0.15 # = aRe, used for Re-scaling CD = cd*(Re/Re_ref)^aRe
 

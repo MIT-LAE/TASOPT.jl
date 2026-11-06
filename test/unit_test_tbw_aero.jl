@@ -46,11 +46,11 @@ function trefftz_drag_for_test_case!(ac; reuse_cached_geometry = false)
     return para[iaCDi], para[iaspaneff]
 end
 
-"Set the strut inputs that determine the strut lift (area, velocity ratio, `mean_cl_ratio_to_wing`, `spanload_exponent`)."
-function set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing; spanload_exponent = 0.5)
+"Set the strut inputs that determine the strut lift (area, velocity ratio, `lift_fraction_strut_to_total`, `spanload_exponent`)."
+function set_strut_lift_inputs!(ac, lift_fraction_strut_to_total; spanload_exponent = 0.5)
     ac.wing.strut.S = 10.0
     ac.wing.strut.local_velocity_ratio = 1.0
-    ac.wing.strut.mean_cl_ratio_to_wing = mean_cl_ratio_to_wing
+    ac.wing.strut.lift_fraction_strut_to_total = lift_fraction_strut_to_total
     ac.wing.strut.spanload_exponent = spanload_exponent
     return ac
 end
@@ -63,14 +63,18 @@ function trefftz_surface_lift(ac, i_first, i_last)
            sum(geom.gc[i] * (geom.yp[i + 1] - geom.yp[i]) for i in panels)
 end
 
-"Set the strut profile drag inputs (and what `aircraft_drag!` needs) on an unsized aircraft; returns the `para` slice of mission 1, point 1."
-function set_strut_drag_test_case!(ac)
-    para = view(ac.para, :, 1, 1)
+"""
+Set the strut and jury strut drag inputs (and what `aircraft_drag!` needs) on an unsized aircraft; returns the `para` slice of
+mission 1, point `ip`. The strut carries 20% of the wing and strut lift, which puts its section lift coefficient inside the
+airfoil database lift range, up to a share of 30%.
+"""
+function set_strut_drag_test_case!(ac; ip = 1)
+    para = view(ac.para, :, ip, 1)
     lift_inputs = set_trefftz_test_case!(ac)
     for i in (iaCL, iaCLh, iarcls, iarclt)
         para[i] = lift_inputs[i]
     end
-    para[iaMach] = 0.78
+    para[iaMach] = 0.70
     para[iaReunit] = 7.0e6
 
     ac.wing.layout.root_chord = 5.0
@@ -80,7 +84,9 @@ function set_strut_drag_test_case!(ac)
     ac.vtail.layout.root_span = 1.0
     ac.vtail.outboard.λ = 0.3
 
-    set_strut_lift_inputs!(ac, 0.0)
+    set_strut_lift_inputs!(ac, 0.20)
+    ac.wing.strut.S = 60.0
+    ac.wing.strut.dihedral = 0.3
     ac.wing.strut.chord = 0.8
     ac.wing.strut.root_chord = 0.8 # no taper
     ac.wing.strut.cos_lambda = 0.9
@@ -90,26 +96,51 @@ function set_strut_drag_test_case!(ac)
     return para
 end
 
-"Run `aircraft_drag!` for mission 1, point 1 and return the `para` slice."
-function strut_drag_for_test_case!(ac)
-    para = view(ac.para, :, 1, 1)
-    trefftz_aero.aircraft_drag!(ac, 1, 1, true)
+"Run `aircraft_drag!` for mission 1, point `ip` and return the `para` slice."
+function strut_drag_for_test_case!(ac; ip = 1)
+    para = view(ac.para, :, ip, 1)
+    trefftz_aero.aircraft_drag!(ac, 1, ip, true)
     return para
 end
 
-"Main strut profile drag from its definition; the Reynolds number scaling uses the mean of the end chords."
-function expected_main_strut_drag(ac, para)
-    strut, Sw = ac.wing.strut, ac.wing.layout.S
-    mean_chord = (strut.root_chord + strut.chord) / 2
-    Re_factor = (para[iaReunit] * mean_chord / para[iaRerefs])^para[iaaRexp]
-    return strut.S / Sw * (para[iacdfs] + para[iacdps] * strut.cos_lambda^3) * Re_factor * strut.local_velocity_ratio^3
+"""
+Streamwise section lift coefficient of the main strut: the lift of both struts (`lift_fraction_strut_to_total` of the wing and
+strut lift) over the effective area `S cos²(dihedral)`, at the local velocity ratio.
+"""
+function expected_strut_section_cl(ac, para)
+    wing, strut = ac.wing, ac.wing.strut
+    CLhtail = para[iaCLh] * ac.htail.layout.S / wing.layout.S
+    CL_strut = strut.lift_fraction_strut_to_total * (para[iaCL] - CLhtail)
+    return CL_strut * wing.layout.S / (strut.S * cos(strut.dihedral)^2 * strut.local_velocity_ratio^2)
 end
 
-"Profile drag of the two jury struts (vertical, unswept, no lift) from its definition."
+"Airfoil database section drag of the main strut (`strut_section_cd` result); the Reynolds number uses the mean of the end chords."
+function expected_main_strut_section(ac, para)
+    strut = ac.wing.strut
+    rV = strut.local_velocity_ratio
+    mean_chord = (strut.root_chord + strut.chord) / 2
+    return trefftz_aero.strut_section_cd(expected_strut_section_cl(ac, para), strut.thickness_to_chord, para[iaMach] * rV,
+        strut.cos_lambda, para[iaReunit] * rV * mean_chord, para[iaaRexp], para[iafexcdw], ac.wing.airsection)
+end
+
+"Airfoil database section drag of the jury struts (vertical, unswept, no lift), looked up at the strut local velocity ratio."
+function expected_jury_section(ac, para)
+    jury = ac.wing.jury
+    rV = ac.wing.strut.local_velocity_ratio
+    return trefftz_aero.strut_section_cd(0.0, jury.thickness_to_chord, para[iaMach] * rV, 1.0,
+        para[iaReunit] * rV * jury.chord, para[iaaRexp], para[iafexcdw], ac.wing.airsection)
+end
+
+"Main strut profile drag from its definition: area ratio times the section drag times the cubed local velocity ratio."
+function expected_main_strut_drag(ac, para)
+    strut = ac.wing.strut
+    return strut.S / ac.wing.layout.S * expected_main_strut_section(ac, para).cd * strut.local_velocity_ratio^3
+end
+
+"Profile drag of the two jury struts from its definition."
 function expected_jury_drag(ac, para)
-    jury, Sw = ac.wing.jury, ac.wing.layout.S
-    Re_factor = (para[iaReunit] * jury.chord / para[iaRerefs])^para[iaaRexp]
-    return 2 * jury.chord * jury.length / Sw * (para[iacdfs] + para[iacdps]) * Re_factor *
+    jury = ac.wing.jury
+    return 2 * jury.chord * jury.length / ac.wing.layout.S * expected_jury_section(ac, para).cd *
            ac.wing.strut.local_velocity_ratio^3
 end
 
@@ -243,7 +274,7 @@ end
     @testset "Cantilever induced drag is unchanged and ignores the strut lift input" begin
         ac = load_aircraft_quietly()
         @test trefftz_aero.n_surfaces(ac.options.trefftz_config) == 2
-        set_strut_lift_inputs!(ac, 1.0)
+        set_strut_lift_inputs!(ac, 0.5)
 
         CDi, span_efficiency = trefftz_drag_for_test_case!(ac)
 
@@ -359,27 +390,27 @@ end
     @testset "Strut lift inputs are read from [Wing.Strut]" begin
         path = joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw.toml")
         toml = replace(read(path, String),
-            r"(?m)^(\s*mean_cl_ratio_to_wing\s*=\s*)[^\s#]+" => s"\g<1>0.7",
+            r"(?m)^(\s*lift_fraction_strut_to_total\s*=\s*)[^\s#]+" => s"\g<1>0.4",
             r"(?m)^(\s*spanload_exponent\s*=\s*)[^\s#]+" => s"\g<1>0.8")
         mktempdir() do dir
             modified_path = joinpath(dir, "strut_lift.toml")
             write(modified_path, toml)
             strut = load_aircraft_quietly(modified_path).wing.strut
-            @test strut.mean_cl_ratio_to_wing == 0.7
+            @test strut.lift_fraction_strut_to_total == 0.4
             @test strut.spanload_exponent == 0.8
         end
     end
 
     @testset "Strut carries lift in addition to the wing" begin
         CL, CLhtail = 1.2, 0.05 * 25.0 / 125.0 # as in set_trefftz_test_case!, referenced to the wing area
-        mean_cl_ratio_to_wing, spanload_exponent = 1.0, 0.5
+        lift_fraction_strut_to_total, spanload_exponent = 0.1, 0.5
 
         ac_no_lift = load_braced_aircraft_quietly()
         set_strut_lift_inputs!(ac_no_lift, 0.0)
         CDi_no_lift, _ = trefftz_drag_for_test_case!(ac_no_lift)
 
         ac = load_braced_aircraft_quietly()
-        set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing; spanload_exponent)
+        set_strut_lift_inputs!(ac, lift_fraction_strut_to_total; spanload_exponent)
         CDi, span_efficiency = trefftz_drag_for_test_case!(ac)
         config = ac.options.trefftz_config
         strut = ac.wing.strut
@@ -387,8 +418,7 @@ end
         i_first, i_last = trefftz_aero.i_first_strut(config), trefftz_aero.i_last_strut(config)
 
         @testset "Strut lift coefficient" begin
-            r = mean_cl_ratio_to_wing * (strut.S / ac.wing.layout.S) * strut.local_velocity_ratio^2
-            CL_strut = r / (1 + r) * (CL - CLhtail)
+            CL_strut = lift_fraction_strut_to_total * (CL - CLhtail)
             @test CL_strut > 0.0
             @test strut.CL ≈ CL_strut rtol = 1e-12
             @test strut.lift_fraction ≈ CL_strut / CL rtol = 1e-12
@@ -432,7 +462,7 @@ end
 
         @testset "Induced drag" begin
             @test isfinite(CDi) && CDi > 0.0 && span_efficiency > 0.0
-            # The strut takes about 8 % of the lift, which changes the induced drag by several percent
+            # The strut takes about 10 % of the lift, which changes the induced drag by several percent
             @test abs(CDi - CDi_no_lift) / CDi_no_lift > 1e-3
         end
     end
@@ -444,7 +474,7 @@ end
         end
 
         ac = load_braced_aircraft_quietly()
-        set_strut_lift_inputs!(ac, 1.0; spanload_exponent = 0.5)
+        set_strut_lift_inputs!(ac, 0.5; spanload_exponent = 0.5)
         trefftz_drag_for_test_case!(ac)
         gc_before = strut_circulation(ac)
 
@@ -459,45 +489,90 @@ end
         @test gc_updated ≈ strut_circulation(ac) rtol = 1e-12
     end
 
-    @testset "Strut profile drag" begin
-        function strut_drag_case(config)
+    @testset "Strut and jury drag from the airfoil database" begin
+        function strut_drag_case(config; ip = 1)
             ac = load_braced_aircraft_quietly()
             ac.options.opt_wing_config = config
-            para = set_strut_drag_test_case!(ac)
+            para = set_strut_drag_test_case!(ac; ip)
             return ac, para
         end
 
-        @testset "Strut drag: Reynolds number scaling follows the mean of the end chords" begin
+        @testset "Main strut drag is the airfoil database section drag at the strut lift, thickness, sweep and Reynolds number" begin
             ac, para = strut_drag_case(WingConfig.StrutBraced)
-            strut = ac.wing.strut
-            CDstrut_untapered = strut_drag_for_test_case!(ac)[iaCDstrut]
-            @test CDstrut_untapered ≈ expected_main_strut_drag(ac, para) rtol = 1e-12
-            area_ratio = strut.S / ac.wing.layout.S
-            section_cd = para[iacdfs] + para[iacdps] * strut.cos_lambda^3
+            strut, air = ac.wing.strut, ac.wing.airsection
+            rV = strut.local_velocity_ratio
 
-            # 0.8 m at the wing end, 1.6 m at the fuselage end: mean 1.2 m
+            # Both struts carry 20% of the wing and strut lift, over the area S cos²(dihedral), at the local velocity
+            cl_strut = 0.20 * (1.2 - 0.05 * 25.0 / 125.0) * 125.0 / (60.0 * cos(0.3)^2 * rV^2)
+            @test expected_strut_section_cl(ac, para) ≈ cl_strut rtol = 1e-14
+            section = trefftz_aero.strut_section_cd(cl_strut, strut.thickness_to_chord, para[iaMach] * rV, strut.cos_lambda,
+                para[iaReunit] * rV * strut.chord, para[iaaRexp], para[iafexcdw], air)
+            @test isempty(section.exceeded)
+            @test air.cl[1] <= cl_strut / strut.cos_lambda^2 <= air.cl[end]
+            @test para[iafexcdw] != 1.0
+
+            CDstrut_untapered = strut_drag_for_test_case!(ac)[iaCDstrut]
+            @test CDstrut_untapered ≈ strut.S / ac.wing.layout.S * section.cd * rV^3 rtol = 1e-12
+            @test CDstrut_untapered ≈ expected_main_strut_drag(ac, para) rtol = 1e-12
+
+            # 0.8 m at the wing end, 1.6 m at the fuselage end: the Reynolds number uses the mean chord 1.2 m
             strut.taper_ratio = 0.5
             strut.root_chord = strut.chord / strut.taper_ratio
-            CDstrut = strut_drag_for_test_case!(ac)[iaCDstrut]
             mean_chord = 1.2
-            @test CDstrut ≈ trefftz_aero.strut_profile_drag(area_ratio, mean_chord, section_cd, para[iaReunit],
-                para[iaRerefs], para[iaaRexp]) * strut.local_velocity_ratio^3 rtol = 1e-12
-            @test CDstrut ≈ expected_main_strut_drag(ac, para) rtol = 1e-12
-            @test CDstrut ≈ CDstrut_untapered * (mean_chord / strut.chord)^para[iaaRexp] rtol = 1e-12
+            section_tapered = trefftz_aero.strut_section_cd(cl_strut, strut.thickness_to_chord, para[iaMach] * rV,
+                strut.cos_lambda, para[iaReunit] * rV * mean_chord, para[iaaRexp], para[iafexcdw], air)
+            CDstrut = strut_drag_for_test_case!(ac)[iaCDstrut]
+            @test CDstrut ≈ strut.S / ac.wing.layout.S * section_tapered.cd * rV^3 rtol = 1e-12
+            @test CDstrut ≈ CDstrut_untapered * (mean_chord / 0.8)^para[iaaRexp] rtol = 1e-12
         end
 
-        @testset "Truss-braced wing adds the jury strut drag to the strut drag" begin
+        @testset "Truss-braced wing adds the jury strut drag to the strut drag; a strut-braced wing has no jury term" begin
             ac, para = strut_drag_case(WingConfig.TrussBraced)
             expected_strut = expected_main_strut_drag(ac, para)
             expected_jury = expected_jury_drag(ac, para)
-            para = strut_drag_for_test_case!(ac)
             @test expected_jury > 0
+
+            # The jury carries no lift: it is looked up at the lowest database lift coefficient, without the lift penalty
+            jury, air = ac.wing.jury, ac.wing.airsection
+            jury_section = expected_jury_section(ac, para)
+            @test jury_section.exceeded == [:cl]
+            at_floor = trefftz_aero.strut_section_cd(air.cl[1], jury.thickness_to_chord, para[iaMach] * ac.wing.strut.local_velocity_ratio,
+                1.0, para[iaReunit] * ac.wing.strut.local_velocity_ratio * jury.chord, para[iaaRexp], para[iafexcdw], air)
+            @test jury_section.cd == at_floor.cd
+
+            para = strut_drag_for_test_case!(ac)
             @test para[iaCDstrut] ≈ expected_strut + expected_jury rtol = 1e-12
 
             # The jury drag is part of the total drag
-            ac_strut, _ = strut_drag_case(WingConfig.StrutBraced)
-            para_strut = strut_drag_for_test_case!(ac_strut)
+            ac_strut, para_strut = strut_drag_case(WingConfig.StrutBraced)
+            strut_drag_for_test_case!(ac_strut)
+            @test para_strut[iaCDstrut] ≈ expected_strut rtol = 1e-12
             @test para[iaCD] - para_strut[iaCD] ≈ expected_jury rtol = 1e-9
+        end
+
+        @testset "Strut drag is part of the total drag" begin
+            ac, _ = strut_drag_case(WingConfig.TrussBraced)
+            para = strut_drag_for_test_case!(ac)
+            @test para[iaCDstrut] > 0
+            components = (iaCDi, iaCDfuse, iaCDwing, iaCDover, iaCDhtail, iaCDvtail, iaCDstrut, iaCDnace, iadCDBLIf, iadCDBLIw)
+            @test para[iaCD] ≈ sum(para[i] for i in components) rtol = 1e-14
+        end
+
+        @testset "Lift dependence enters through the database lookup" begin
+            ac, para = strut_drag_case(WingConfig.StrutBraced)
+            air = ac.wing.airsection
+            CDstrut_by_share = Float64[]
+            for lift_fraction_strut_to_total in (0.20, 0.30)
+                ac.wing.strut.lift_fraction_strut_to_total = lift_fraction_strut_to_total
+                cl_perp = expected_strut_section_cl(ac, para) / ac.wing.strut.cos_lambda^2
+                @test air.cl[1] <= cl_perp <= air.cl[end]
+                @test isempty(expected_main_strut_section(ac, para).exceeded)
+
+                CDstrut = strut_drag_for_test_case!(ac)[iaCDstrut]
+                @test CDstrut ≈ expected_main_strut_drag(ac, para) rtol = 1e-12
+                push!(CDstrut_by_share, CDstrut)
+            end
+            @test CDstrut_by_share[2] > CDstrut_by_share[1]
         end
 
         @testset "Unsized strut or jury gives zero drag, not NaN" begin
@@ -518,7 +593,7 @@ end
             ac.wing.strut.S = 0.0
             @test strut_drag_for_test_case!(ac)[iaCDstrut] ≈ expected_jury rtol = 1e-12
 
-            ac.wing.strut.S = 10.0
+            ac.wing.strut.S = 60.0
             ac.wing.strut.chord = 0.0
             ac.wing.strut.root_chord = 0.0
             @test strut_drag_for_test_case!(ac)[iaCDstrut] ≈ expected_jury rtol = 1e-12
@@ -543,13 +618,86 @@ end
             @test strut_drag_for_test_case!(ac)[iaCD] ≈ CD rtol = 1e-12
         end
     end
+
+    @testset "Strut section drag from the airfoil database" begin
+        air = load_braced_aircraft_quietly().wing.airsection
+        strut_section_cd = trefftz_aero.strut_section_cd
+        airfoil_lookup = trefftz_aero.airfun
+
+        # Database lookup at the unswept lift and perpendicular Mach number, scaled to Re_chord, with the sweep factor on cdp
+        function expected_section_cd(cl, τ, Mach, cosΛ, Re_chord, aRexp, fexcd)
+            cdf1, cdp1, _, _ = airfoil_lookup(max(cl / cosΛ^2, air.cl[1]), τ, Mach * cosΛ, air)
+            Refac = (Re_chord / air.Re)^aRexp
+            return (cdf = cdf1 * Refac * fexcd, cdp = cdp1 * Refac * fexcd * cosΛ)
+        end
+
+        # Section drag at the database reference Reynolds number unless `Re_chord` is given, no excrescences unless `fexcd` is given
+        section_cd(cl, τ, Mach, cosΛ = 1.0; Re_chord = air.Re, aRexp = -0.15, fexcd = 1.0) =
+            strut_section_cd(cl, τ, Mach, cosΛ, Re_chord, aRexp, fexcd, air)
+
+        @testset "inside the database, matches the hand calculation from airfun" begin
+            cl, τ, Mach, cosΛ, Re_chord, aRexp, fexcd = 0.5, 0.12, 0.75, 0.94, 5.0e6, -0.15, 1.03
+            result = strut_section_cd(cl, τ, Mach, cosΛ, Re_chord, aRexp, fexcd, air)
+            expected = expected_section_cd(cl, τ, Mach, cosΛ, Re_chord, aRexp, fexcd)
+            @test result.cdf ≈ expected.cdf rtol = 1e-12
+            @test result.cdp ≈ expected.cdp rtol = 1e-12
+            @test result.cd ≈ expected.cdf + expected.cdp rtol = 1e-12
+            @test result.cd ≈ result.cdf + result.cdp rtol = 1e-14
+            @test result.cd > 0
+            @test isempty(result.exceeded)
+        end
+
+        @testset "lift enters through the database lookup at cl / cosΛ²" begin
+            cosΛ = 0.94
+            low, high = section_cd(0.5, 0.12, 0.75, cosΛ), section_cd(0.7, 0.12, 0.75, cosΛ)
+            for (cl, result) in ((0.5, low), (0.7, high))
+                _, cdp1, _, _ = airfoil_lookup(cl / cosΛ^2, 0.12, 0.75 * cosΛ, air)
+                @test result.cdp ≈ cdp1 * cosΛ rtol = 1e-12
+                @test isempty(result.exceeded)
+            end
+            @test high.cdp != low.cdp
+        end
+
+        @testset "thickness: drag grows with t/c, and the penalty applies outside the database" begin
+            @test section_cd(0.5, 0.145, 0.80).cd > section_cd(0.5, 0.10, 0.80).cd
+            @test isempty(section_cd(0.5, 0.145, 0.80).exceeded)
+
+            thick = section_cd(0.5, 0.20, 0.80)
+            expected = expected_section_cd(0.5, 0.20, 0.80, 1.0, air.Re, -0.15, 1.0)
+            @test thick.cdp ≈ expected.cdp rtol = 1e-12
+            @test thick.cd > section_cd(0.5, 0.145, 0.80).cd
+            @test thick.exceeded == [:thickness]
+        end
+
+        @testset "Mach drag rise, reduced by sweep" begin
+            @test section_cd(0.5, 0.145, 0.80).cd > section_cd(0.5, 0.145, 0.60).cd
+            @test section_cd(0.5, 0.145, 0.80, 0.9).cd < section_cd(0.5, 0.145, 0.80, 1.0).cd
+        end
+
+        @testset "Reynolds number scaling with the exponent aRexp" begin
+            aRexp = -0.15
+            Re1, Re2 = 4.0e6, 1.0e7
+            result1 = section_cd(0.5, 0.12, 0.75, 0.94; Re_chord = Re1, aRexp)
+            result2 = section_cd(0.5, 0.12, 0.75, 0.94; Re_chord = Re2, aRexp)
+            @test result1.cd / result2.cd ≈ (Re1 / Re2)^aRexp rtol = 1e-12
+            @test result1.cdf / result2.cdf ≈ (Re1 / Re2)^aRexp rtol = 1e-12
+            @test result1.cdp / result2.cdp ≈ (Re1 / Re2)^aRexp rtol = 1e-12
+        end
+
+        @testset "excrescence factor scales both drag components" begin
+            base = section_cd(0.5, 0.12, 0.75, 0.94)
+            scaled = section_cd(0.5, 0.12, 0.75, 0.94; fexcd = 1.2)
+            @test scaled.cdf ≈ 1.2 * base.cdf rtol = 1e-12
+            @test scaled.cdp ≈ 1.2 * base.cdp rtol = 1e-12
+        end
+    end
 end
 
 """
 Wing, tail, strut geometry and pitching-moment inputs of `balance_aircraft!` on an unsized aircraft: sweep 20°, span 35 m,
 strut root 1 m and wing attachment 10.5 m from the centreline.
 """
-function set_strut_moment_test_case!(ac, mean_cl_ratio_to_wing; spanload_exponent = 0.5)
+function set_strut_moment_test_case!(ac, lift_fraction_strut_to_total; spanload_exponent = 0.5)
     wing = ac.wing
     wing.layout.S = 125.0
     wing.layout.span = 35.0
@@ -560,7 +708,7 @@ function set_strut_moment_test_case!(ac, mean_cl_ratio_to_wing; spanload_exponen
     ac.htail.layout.S = 25.0
     ac.htail.layout.root_chord = 2.0
     ac.htail.layout.box_x = 30.0
-    set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing; spanload_exponent)
+    set_strut_lift_inputs!(ac, lift_fraction_strut_to_total; spanload_exponent)
     ac.wing.strut.local_velocity_ratio = 1.1
 
     para = view(ac.para, :, ipcruise1, 1)
@@ -581,8 +729,8 @@ end
 const sized_aero_output_aircraft_cache = Dict{Any,Any}()
 
 "Aircraft of wing configuration `config` (\"cantilever\", \"strut_braced\" or \"truss_braced\"), sized once and cached; `deepcopy` before changing it."
-function sized_aero_output_aircraft(config; mean_cl_ratio_to_wing = 0.33)
-    return get!(sized_aero_output_aircraft_cache, (config, mean_cl_ratio_to_wing)) do
+function sized_aero_output_aircraft(config; lift_fraction_strut_to_total = 0.25)
+    return get!(sized_aero_output_aircraft_cache, (config, lift_fraction_strut_to_total)) do
         CoreLogging.with_logger(CoreLogging.NullLogger()) do
             txt = replace(read(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_input.toml"), String),
                           r"^[ \t]*(wing_config|has_strut)[ \t]*=.*\n"m => "")
@@ -593,7 +741,7 @@ function sized_aero_output_aircraft(config; mean_cl_ratio_to_wing = 0.33)
                 read_aircraft_model(path)
             end
             config == "cantilever" || (ac.wing.layout.ηs = 0.7)
-            ac.wing.strut.mean_cl_ratio_to_wing = mean_cl_ratio_to_wing
+            ac.wing.strut.lift_fraction_strut_to_total = lift_fraction_strut_to_total
             size_aircraft!(ac; printiter = false)
             ac
         end
@@ -601,9 +749,9 @@ function sized_aero_output_aircraft(config; mean_cl_ratio_to_wing = 0.33)
 end
 
 @testset "Strut lift share" verbose=true begin
-    function wing_with_sloped_strut(mean_cl_ratio_to_wing)
+    function wing_with_sloped_strut(lift_fraction_strut_to_total)
         ac = load_braced_aircraft_quietly()
-        set_strut_lift_inputs!(ac, mean_cl_ratio_to_wing)
+        set_strut_lift_inputs!(ac, lift_fraction_strut_to_total)
         ac.wing.layout.S = 125.0
         ac.wing.strut.local_velocity_ratio = 1.1
         ac.wing.strut.dihedral = 0.3
@@ -614,18 +762,21 @@ end
         ac = wing_with_sloped_strut(0.5)
         wing, config = ac.wing, ac.options.trefftz_config
 
-        r = 0.5 * 1.1^2 * 10.0 * cos(0.3)^2 / 125.0
-        k = TASOPT.strut_lift_share(wing, config)
-        @test k ≈ r / (1 + r) rtol = 1e-14
-        @test 0.0 < k < 1.0
+        # The share is the input; strut velocity ratio and dihedral do not enter
+        @test TASOPT.strut_lift_share(wing, config) == 0.5
+        @test TASOPT.strut_lift_share(wing) == 0.5
 
-        # No lift without a lift ratio, without a strut area, or in a cantilever Trefftz configuration
-        wing.strut.mean_cl_ratio_to_wing = 0.0
+        # No lift without a lift fraction, without a strut area or wing area, or in a cantilever Trefftz configuration
+        wing.strut.lift_fraction_strut_to_total = 0.0
         @test TASOPT.strut_lift_share(wing, config) == 0.0
-        wing.strut.mean_cl_ratio_to_wing = 0.5
+        wing.strut.lift_fraction_strut_to_total = 0.5
         wing.strut.S = 0.0
         @test TASOPT.strut_lift_share(wing, config) == 0.0
+        @test TASOPT.strut_lift_share(wing) == 0.0
         wing.strut.S = 10.0
+        wing.layout.S = 0.0
+        @test TASOPT.strut_lift_share(wing) == 0.0
+        wing.layout.S = 125.0
         @test TASOPT.strut_lift_share(wing, load_aircraft_quietly().options.trefftz_config) == 0.0
     end
 
@@ -648,10 +799,9 @@ end
         wing, config = ac.wing, ac.options.trefftz_config
         co_CMw1 = -0.5
 
-        r = 0.5 * (10.0 / 125.0) * 1.1^2
-        k = r / (1 + r)
+        k = 0.5
         cantilever_config = load_aircraft_quietly().options.trefftz_config
-        wing.strut.mean_cl_ratio_to_wing = 0.0
+        wing.strut.lift_fraction_strut_to_total = 0.0
 
         # Lift centroid between strut root (1 m) and wing attachment (10.5 m) for loading (1-ξ²)^p:
         # 1/2 (p = 0), 3/8 (p = 1), 4/(3π) (p = 1/2)
@@ -662,7 +812,7 @@ end
 
         # The blend keeps the cantilever arm bit-for-bit without strut lift
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) === co_CMw1
-        wing.strut.mean_cl_ratio_to_wing = 0.5
+        wing.strut.lift_fraction_strut_to_total = 0.5
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) ≈
               (1 - k) * co_CMw1 + k * (-tand(20.0) * (1.0 + 9.5 * 4 / (3π))) rtol = 1e-12
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, cantilever_config) === co_CMw1
@@ -924,8 +1074,9 @@ end
                     @test something(printed("l_jury"), NaN) ≈ jury.length atol = printing_tolerance
                     @test something(printed("c_jury"), NaN) ≈ jury.chord atol = printing_tolerance
                     @test something(printed("eta_jury"), NaN) ≈ jury.eta_wing atol = printing_tolerance
+                    @test something(printed("t/c_jury"), NaN) ≈ jury.thickness_to_chord atol = printing_tolerance
                 else
-                    @test all(isnothing, printed.(("l_jury", "c_jury", "eta_jury")))
+                    @test all(isnothing, printed.(("l_jury", "c_jury", "eta_jury", "t/c_jury")))
                 end
             end
         end

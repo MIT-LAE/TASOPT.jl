@@ -640,7 +640,12 @@ readwing(x) = read_input(x, wing_i, dwing)
                                      get(dstrut, "strut_taper_ratio", wing.strut.taper_ratio))
         0.0 < wing.strut.taper_ratio <= 1.0 ||
             error("Input error: \"strut_taper_ratio\" = $(wing.strut.taper_ratio) must be above 0 and at most 1.")
-        wing.strut.mean_cl_ratio_to_wing = get(strut_i, "mean_cl_ratio_to_wing", get(dstrut, "mean_cl_ratio_to_wing", wing.strut.mean_cl_ratio_to_wing))
+        haskey(strut_i, "mean_cl_ratio_to_wing") &&
+            error("Input error: \"mean_cl_ratio_to_wing\" in [Wing.Strut] is no longer used; use \"lift_fraction_strut_to_total\" (L_strut / (L_wing + L_strut)) instead.")
+        wing.strut.lift_fraction_strut_to_total = get(strut_i, "lift_fraction_strut_to_total",
+                                                      get(dstrut, "lift_fraction_strut_to_total", wing.strut.lift_fraction_strut_to_total))
+        0.0 <= wing.strut.lift_fraction_strut_to_total < 1.0 ||
+            error("Input error: \"lift_fraction_strut_to_total\" = $(wing.strut.lift_fraction_strut_to_total) must be at least 0 and below 1.")
         if haskey(strut_i, "x_strut_attach") || haskey(dstrut, "x_strut_attach")
             wing.strut.x_strut_attach = Distance(get(strut_i, "x_strut_attach", get(dstrut, "x_strut_attach", NaN)))
         end
@@ -667,6 +672,9 @@ readwing(x) = read_input(x, wing_i, dwing)
         wing.jury.eta_strut = get(jury_i, "eta_strut", wing.jury.eta_strut)
         wing.jury.weight_frac_added = get(jury_i, "weight_frac_added", wing.jury.weight_frac_added)
         wing.jury.chord_to_strut_chord = get(jury_i, "chord_to_strut_chord", wing.jury.chord_to_strut_chord)
+        wing.jury.thickness_to_chord = get(jury_i, "thickness_to_chord", wing.jury.thickness_to_chord)
+        0.0 < wing.jury.thickness_to_chord < 1.0 ||
+            error("Input error: jury \"thickness_to_chord\" = $(wing.jury.thickness_to_chord) must be above 0 and below 1.")
         wing.jury.min_cap_thickness = Distance(get(jury_i, "min_cap_thickness", wing.jury.min_cap_thickness))
         wing.jury.min_web_thickness = Distance(get(jury_i, "min_web_thickness", wing.jury.min_web_thickness))
     end
@@ -725,10 +733,6 @@ daero = dwing["Aero"]
     para[iacdfw, 1:iptotal, :]   .= readaero("lowspeed_cdf")  #  cdfw    wing profile cd for low speed (takeoff, initial climb)
     para[iacdpw, 1:iptotal, :]   .= readaero("lowspeed_cdp")  #  cdpw    
     para[iaRerefw, 1:iptotal, :] .= readaero("Re_ref")  #  Rerefw
-
-    para[iacdfs, 1:iptotal, :]   .= readaero("strut_lowspeed_cdf")  #  cdfs    strut profile cd (not used if there's no strut)
-    para[iacdps, 1:iptotal, :]   .= readaero("strut_lowspeed_cdp")  #  cdps    
-    para[iaRerefs, 1:iptotal, :] .= readaero("strut_Re_ref")        #  Rerefs  
 
     para[iaaRexp, 1:iptotal, :] .= readaero("Reynolds_scaling")
     para[iafexcdw, 1:iptotal, :] .= readaero("excrescence_drag_factor")

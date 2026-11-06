@@ -116,15 +116,13 @@ end # induced_drag!
     strut_lift_share(wing)
     strut_lift_share(wing, trefftz_config)
 
-Share ``k = r / (1 + r)`` of the wing and strut lift, `CL - CLhtail`, carried by both struts, with ``r`` = `mean_cl_ratio_to_wing`
-times the squared strut velocity ratio times the effective strut area over the wing area.
-The effective area is `strut.S cos(strut.dihedral)^2`. Zero if the wing or strut has no area or, with `trefftz_config`, if there is no strut surface.
+Share ``L_{strut} / (L_{wing} + L_{strut})`` of the wing and strut lift, `CL - CLhtail`, carried by both struts.
+This is the input `strut.lift_fraction_strut_to_total`. Zero if the wing or strut has no area (not sized yet or no strut)
+or, with `trefftz_config`, if there is no strut surface.
 """
 function strut_lift_share(wing)
-    strut = wing.strut
-    wing.layout.S > 0.0 || return 0.0
-    r = strut.mean_cl_ratio_to_wing * strut.local_velocity_ratio^2 * (strut.S * cos(strut.dihedral)^2) / wing.layout.S # effective strut area: S cos²(dihedral)
-    return r / (1.0 + r)
+    (wing.layout.S > 0.0 && wing.strut.S > 0.0) || return 0.0
+    return wing.strut.lift_fraction_strut_to_total
 end
 
 function strut_lift_share(wing, trefftz_config::TrefftzPlaneConfig)

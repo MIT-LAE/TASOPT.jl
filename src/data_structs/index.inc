@@ -239,15 +239,12 @@
       const iacdft    = 56
       const iacdpt    = 57
       const iaRereft  = 58
-      const iacdfs    = 59
-      const iacdps    = 60
-      const iaRerefs  = 61
-      const iadCDBLIf = 62
-      const iadCDBLIw = 63
-      const iaROC     = 64
-      const iaROCdes  = 65
-      const iaCLstrut = 66
-      const iatotal   = 66 
+      const iadCDBLIf = 59
+      const iadCDBLIw = 60
+      const iaROC     = 61
+      const iaROCdes  = 62
+      const iaCLstrut = 63
+      const iatotal   = 63
 
 #---- indices for engine variables at each mission point
       const iehfuel = 1

@@ -42,8 +42,8 @@ $TYPEDFIELDS
     local_velocity_ratio::Float64 = 0
     """Strut force model"""
     opt_strut_force::StrutForceModel.T = StrutForceModel.Compatibility
-    """Strut mean section cl over wing mean section cl (0 = no strut lift)"""
-    mean_cl_ratio_to_wing::Float64 = 0.33
+    """Share of the wing and strut lift carried by both struts, ``L_{strut} / (L_{wing} + L_{strut})``, with ``L_{wing}`` the wing panels without the tail (0 = no strut lift)"""
+    lift_fraction_strut_to_total::Float64 = 0.25
     """Strut spanload exponent ``p``, ``\\Gamma \\propto (1-\\xi^2)^p`` with ``\\xi`` = 0 at fuselage, 1 at wing (``p = 0.5`` is elliptic)"""
     spanload_exponent::Float64 = 0.0
     """Fuselage x of the strut attach [m]. NaN follows the wing box, `wing.layout.box_x`"""
@@ -121,6 +121,8 @@ $TYPEDFIELDS
     eta_strut::Float64 = 0.5
     """Jury strut chord to main strut chord"""
     chord_to_strut_chord::Float64 = 0.5
+    """Jury strut thickness to chord"""
+    thickness_to_chord::Float64 = 0.10
     """Minimum jury strut cap thickness [m]"""
     min_cap_thickness::Float64 = 1.5e-3
     """Minimum jury strut web thickness [m]"""

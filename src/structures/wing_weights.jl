@@ -412,7 +412,8 @@ weight and weight moment. The jury only restrains the main strut, so its load is
 compression of the main strut (`wing.strut.axial_force_compression`). Its length is ``z (1 - \\eta_{strut})`` and its wing
 attachment is ``\\eta_o + \\eta_{strut} (\\eta_s - \\eta_o)``. It is a pinned (``K = 1``) box sized by
 [`size_member_box`](@ref) for this compression, with no tension or shear. Its chord is `jury.chord_to_strut_chord` times the
-strut chord at the jury attachment; the other box ratios are those of the main strut. The weight includes
+strut chord at the jury attachment; its box height is `jury.thickness_to_chord` times the chord and the other box
+ratios are those of the main strut. The weight includes
 ``1 + f_{added}`` (`jury.weight_frac_added`) and `jury.dxW` is the weight times the streamwise offset
 ``0.5\\,b\\,(\\eta_{wing} - \\eta_o) \\tan\\Lambda`` of the attachment.
 
@@ -434,7 +435,7 @@ function size_jury!(wing, etao, etas, sigfac, sinL, cosL; n_wings = 2.0)
 
     jury.chord = jury.chord_to_strut_chord * (strut.root_chord + (strut.chord - strut.root_chord) * jury.eta_strut) # strut chord at the jury attachment
     box = size_member_box(jury.caps, jury.webs;
-        chord = jury.chord, height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
+        chord = jury.chord, height_to_chord = jury.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
         web_to_box_height = strut.web_to_box_height, tension = 0.0, compression = jury.axial_force,
         buckling_length = jury.length, K = 1.0, shear_load = 0.0, sigfac = sigfac,
         min_cap_thickness = jury.min_cap_thickness, min_web_thickness = jury.min_web_thickness)

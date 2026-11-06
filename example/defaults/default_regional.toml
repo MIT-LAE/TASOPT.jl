@@ -246,11 +246,6 @@
     lowspeed_cdp = 0.0035
     Re_ref       = 20e6
 
-    #Only used if strut present
-    strut_lowspeed_cdf = 0.0085
-    strut_lowspeed_cdp = 0.0035
-    strut_Re_ref       = 1e6
-
     Reynolds_scaling = -0.15 # = aRe, used for Re-scaling CD = cd*(Re/Re_ref)^aRe
 
     excrescence_drag_factor = 1.08 # Rivets, sheet breaks etc
