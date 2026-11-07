@@ -558,6 +558,16 @@ end
             @test para[iaCD] ≈ sum(para[i] for i in components) rtol = 1e-14
         end
 
+        @testset "Strut drag with stored wing profile drag (computes_wing_direct = false), as in the mission iteration" begin
+            ac, para = strut_drag_case(WingConfig.StrutBraced)
+            CDstrut_direct = strut_drag_for_test_case!(ac)[iaCDstrut]
+
+            trefftz_aero.aircraft_drag!(ac, 1, 1, false)
+            @test para[iaCDstrut] > 0
+            @test para[iaCDstrut] ≈ expected_main_strut_drag(ac, para) rtol = 1e-12
+            @test para[iaCDstrut] ≈ CDstrut_direct rtol = 1e-12
+        end
+
         @testset "Lift dependence enters through the database lookup" begin
             ac, para = strut_drag_case(WingConfig.StrutBraced)
             air = ac.wing.airsection

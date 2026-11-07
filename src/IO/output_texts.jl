@@ -193,6 +193,10 @@ function geometry(ac::aircraft; io = stdout)
         @printf(io, "sizing case      = %s\n", sizing_loads.governing_strut)
         @printf(io, "compression case = %s\n", sizing_loads.governing_strut_compression)
         @printf(io, "sizing criterion = %s\n", strut.sizing_criterion)
+        if ac.options.has_strut_fuel
+            @printf(io, "fuel capacity    = %10.1f N (%10.1f lb)\n", strut.fuel_capacity, strut.fuel_capacity/lbf_to_N)
+            @printf(io, "strut share of tank volume = %5.3f\n", strut.fuel_capacity/ac.parg[igWfmax])
+        end
         if ac.options.opt_wing_config == WingConfig.TrussBraced
             jury = wing.jury
             @printf(io, "l_jury           = %6.2f m (%8.2f ft)\n", jury.length, jury.length/ft_to_m)

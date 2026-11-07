@@ -417,6 +417,47 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
     end
 end
 
+@testset "fuel in the strut: option and TOML input" verbose=true begin
+    read_strut_fuel_aircraft(config, in_strut) = read_aircraft_with_box_inputs(d -> d["Fuel"]["fuel_in_strut"] = in_strut, config)
+    error_message(f) = try
+        f()
+        ""
+    catch err
+        sprint(showerror, err)
+    end
+
+    @testset "default: no fuel in the strut" begin
+        for config in ("cantilever", "strut_braced", "truss_braced")
+            ac = read_aircraft_with_wing_config(config)
+            @test ac.options.has_strut_fuel === false
+            @test ac.wing.strut.fuel_capacity == 0.0
+        end
+    end
+
+    @testset "fuel_in_strut key is read exactly, and save and read reproduce it" begin
+        for in_strut in (true, false)
+            ac = read_strut_fuel_aircraft("strut_braced", in_strut)
+            @test ac.options.has_strut_fuel === in_strut
+            @test ac.wing.strut.fuel_capacity == 0.0 # the capacity is computed when sizing
+            mktempdir() do dir
+                path = joinpath(dir, "strut_fuel_roundtrip.toml")
+                save_aircraft_model(ac, path)
+                @test TASOPT.TOML.parsefile(path)["Fuel"]["fuel_in_strut"] === in_strut
+                @test first(read_aircraft_from_text(read(path, String))).options.has_strut_fuel === in_strut
+            end
+        end
+    end
+
+    @testset "fuel_in_strut = true needs wing fuel and a braced wing" begin
+        # the fuselage-tank truss-braced input: the only default with a braced wing and `fuel_in_wing = false`
+        lh2 = TASOPT.TOML.parsefile(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw_lh2.toml"))
+        @test lh2["Fuel"]["fuel_in_wing"] == false
+        lh2["Fuel"]["fuel_in_strut"] = true
+        @test occursin("fuel_in_strut", error_message(() -> read_aircraft_from_text(sprint(TASOPT.TOML.print, lh2))))
+        @test occursin("fuel_in_strut", error_message(() -> read_strut_fuel_aircraft("cantilever", true)))
+    end
+end
+
 const sizing_load_case_names = (:pullup, :pushover, :pullup_light, :pushover_light,
                                 :taxi, :gust_up_light, :gust_down_light)
 
@@ -808,6 +849,33 @@ end
     @test marked(rows[:pushover]) && marked(rows[:taxi]) && !marked(rows[:pullup])
 end
 
+@testset "geometry output of the strut tank" verbose=true begin
+    geometry_text(ac) = sprint(io -> TASOPT.geometry(ac; io = io))
+    printed(label, text) = (m = match(Regex("^" * label * raw"\s*=\s*([-0-9.]+)", "m"), text);
+                            m === nothing ? NaN : parse(Float64, m.captures[1]))
+
+    for config in ("strut_braced", "truss_braced")
+        @testset "$config" begin
+            ac = read_aircraft_with_wing_config(config)
+            ac.options.has_strut_fuel = true
+            ac.wing.strut.fuel_capacity = 2.0e5 # strut tank capacity [N]
+            ac.parg[igWfmax] = 1.0e6            # total tank capacity [N]
+            text_on = geometry_text(ac)
+            ac.options.has_strut_fuel = false
+            text_off = geometry_text(ac)
+
+            @test printed("fuel capacity", text_on) ≈ 2.0e5 atol = 0.1
+            @test printed("strut share of tank volume", text_on) ≈ 0.2 atol = 1e-3
+
+            # switched off, the strut block is unchanged whatever the capacity field holds
+            @test occursin("Strut Layout:", text_off)
+            @test !occursin("fuel capacity", text_off)
+            @test !occursin("strut share of tank volume", text_off)
+            @test text_off == replace(text_on, r"^(fuel capacity|strut share of tank volume).*\n"m => "")
+        end
+    end
+end
+
 @testset "regression-test parameter dump of the jury strut" verbose=true begin
     truss = sized_jury_aircraft("truss_braced", 0.3)
 
@@ -1142,6 +1210,52 @@ end
         end
     end
 
+    @testset "the strut transverse shear and moment are sized for the net of own weight, lift and fuel inertia" begin
+        ac = size_braced()
+        wing, strut = ac.wing, ac.wing.strut
+        results = wing.sizing_loads.results
+        n_wings = 2.0
+
+        # Strut fuel inertia load of one wing per case: a tenth of the largest strut lift, with the sign of the load factor
+        f_scale = 0.1 * maximum(abs(r.strut_lift) for r in values(results))
+        fuel_load(name) = sign(getfield(wing.sizing_loads, name).n_computed) * f_scale
+
+        # Sizing envelope of the recorded cases, as `evaluate_wing_sizing_cases!` returns it
+        cases = collect(values(results))
+        forces = [c.strut_force for c in cases]
+        envelope = (S_root = maximum(max(abs(c.S_root), abs(c.S_break)) for c in cases),
+                    M_root = maximum(max(abs(c.M_root), abs(c.M_inboard_extreme)) for c in cases),
+                    S_break = maximum(abs(c.S_break) for c in cases), M_break = maximum(abs(c.M_break) for c in cases),
+                    T_strut = max(0.0, maximum(forces)), T_strut_compression = min(0.0, minimum(forces)),
+                    P_axial = cases[argmax([abs(c.P_axial_inboard) for c in cases])].P_axial_inboard)
+
+        # Transverse shear and midspan moment of the strut after `wing_weights!` with the strut fuel loads `f(name)` in the cases
+        function strut_transverse_loads(f)
+            w = deepcopy(wing)
+            for (name, r) in w.sizing_loads.results
+                r.strut_fuel_load = f(name)
+            end
+            Weng1, (; neinn, dyeinn, neout, dyeout) = ac.parg[igWeng] / ac.parg[igneng], TASOPT.wing_engine_arms(w)
+            TASOPT.wing_weights!(w, 1.0e5, 0.3, 0.8, 3.0, Weng1, neout, dyeout, neinn, dyeinn, ac.parg[igsigfac], ac.parg[igrhofuel];
+                                 n_wings, has_strut = true, section_loads_envelope = envelope)
+            return (V = w.strut.shear_load, M = w.strut.bending_moment)
+        end
+        # Hand calculation: the net of lift, own weight and fuel acts on the strut, its component perpendicular to the strut over the length
+        function expected_transverse_loads(f)
+            L, z = strut.length, strut.z
+            q_net(name, r) = abs(r.strut_lift - getfield(wing.sizing_loads, name).n_computed * strut.weight / n_wings - f(name)) /
+                             L * sqrt(L^2 - z^2) / L
+            q_perp = maximum(q_net(name, r) for (name, r) in results)
+            return (V = q_perp * L / 2, M = q_perp * L^2 / 8)
+        end
+
+        without, with_fuel = strut_transverse_loads(name -> 0.0), strut_transverse_loads(fuel_load)
+        @test without.M ≈ expected_transverse_loads(name -> 0.0).M rtol = 1e-9
+        @test with_fuel.V ≈ expected_transverse_loads(fuel_load).V rtol = 1e-9
+        @test with_fuel.M ≈ expected_transverse_loads(fuel_load).M rtol = 1e-9
+        @test with_fuel.V < without.V && with_fuel.M < without.M # the pull-up governs and the fuel inertia opposes its lift
+    end
+
     # Probe values of the slender strut-braced aircraft (K = 2, chord ratio 1): tension area of the caps 6.3e-3 m^2,
     # total box area 2.2e-2 m^2 (the buckling cap thickness is proportional to K^2 for thin caps)
     @testset "a slender strut is governed by buckling" begin
@@ -1197,6 +1311,78 @@ end
         # the caps and the webs are at their gauge: area = 2 t w c + 2 t hw c
         @test strut.area ≈ 2 * 2.0e-2 * strut.chord * (strut.box_width_to_chord + hw) rtol = 1e-6
         @test strut.area ≈ recomputed_strut_box(ac).area rtol = 1e-6
+    end
+end
+
+# --- Fuel stored in the strut box (sized strut-braced aircraft) ---
+@testset "fuel in the strut tank" verbose=true begin
+    st = TASOPT.structures
+    sized_with_strut_fuel() = sized_braced_aircraft(:strut_fuel, ac -> ac.options.has_strut_fuel = true)
+
+    # Capacity [N] and moment about the wing box [N m] of the wing tanks (both wings) from the recorded cap and web
+    # thicknesses, as in `wing_weights!`; `inner_panel_fuel` and `inner_panel_structure` are the weights of one inner panel.
+    function wing_tank_capacity_and_moment(ac)
+        wing = ac.wing
+        c, b, ηo, ηs, λi, λo = wing.layout.root_chord, wing.layout.span, wing.layout.ηo, wing.layout.ηs,
+                               wing.inboard.λ, wing.outboard.λ
+        sinL, cosL = sind(wing.layout.sweep), cosd(wing.layout.sweep)
+        width = wing.inboard.cross_section.width_to_chord
+        area(section) = st.calc_sparbox_internal_area(width, first(st.get_average_sparbox_heights(section.cross_section)),
+                                                      section.caps.thickness, section.webs.thickness)
+        A_root, A_break = area(wing.inboard), area(wing.outboard)
+        A_inner = (A_root + A_break * λi^2) / (1 + λi^2)
+        V_center = c^2 * b * ηo / 2
+        V_inner = c^2 * b * (ηs - ηo) * (1 + λi + λi^2) / 6 * cosL
+        V_outer = c^2 * b * (1 - ηs) * (λi^2 + λi * λo + λo^2) / 6 * cosL
+        dxV_inner = c^2 * b^2 * (ηs - ηo)^2 * (1 + 2λi + 3λi^2) / 48 * sinL
+        dxV_outer = c^2 * b^2 * (1 - ηs)^2 * (λi^2 + 2λi * λo + 3λo^2) / 48 * sinL +
+                    c^2 * b^2 * (ηs - ηo) * (1 - ηs) * (λi^2 + λi * λo + λo^2) / 12 * sinL
+        weight_per_area = ac.parg[igrhofuel] * TASOPT.gee
+        capacity = 2 * weight_per_area * ((ac.options.has_centerbox_fuel ? A_root * V_center : 0.0) +
+                                          A_inner * V_inner + A_break * V_outer)
+        moment = 2 * weight_per_area * (A_inner * dxV_inner + A_break * dxV_outer)
+        web_height = wing.inboard.cross_section.web_to_box_height * wing.inboard.cross_section.thickness_to_chord
+        structure_area(section) = section.caps.ρ * 2 * section.caps.thickness * width +
+                                  section.webs.ρ * 2 * section.webs.thickness * web_height
+        structure_inner = (structure_area(wing.inboard) + structure_area(wing.outboard) * λi^2) / (1 + λi^2)
+        return (capacity = capacity, moment = moment, inner_panel_fuel = weight_per_area * A_inner * V_inner,
+                inner_panel_structure = TASOPT.gee * structure_inner * V_inner * (1 + TASOPT.wing_additional_weight(wing)))
+    end
+
+    @testset "without strut fuel the strut holds none, and the tank capacity and fuel moment are those of the wing" begin
+        ac = sized_braced_aircraft()
+        wing_tank = wing_tank_capacity_and_moment(ac)
+        parg = ac.parg
+        @test !ac.options.has_strut_fuel
+        @test ac.wing.strut.fuel_capacity == 0
+        @test parg[igWfmax] ≈ wing_tank.capacity rtol = 1e-6
+        @test parg[igdxWfuel] ≈ wing_tank.moment * parg[igWfuel] / parg[igWfmax] rtol = 1e-6
+    end
+
+    @testset "the strut tank capacity is the internal volume of the strut box times the fuel weight density, for both wings" begin
+        ac = sized_with_strut_fuel()
+        strut, box = ac.wing.strut, recomputed_strut_box(ac)
+        area = st.calc_sparbox_internal_area(strut.box_width_to_chord, strut.thickness_to_chord, box.tbcap, box.tbweb)
+        mean_chord_squared = (strut.chord^2 + strut.chord * strut.root_chord + strut.root_chord^2) / 3 # linear taper
+        @test ac.options.has_strut_fuel
+        @test strut.fuel_capacity > 0
+        @test strut.fuel_capacity ≈ 2 * ac.parg[igrhofuel] * TASOPT.gee * area * mean_chord_squared * strut.length rtol = 1e-6
+    end
+
+    @testset "the wing tanks and the strut tanks form one tank capacity, filled to one fraction" begin
+        ac = sized_with_strut_fuel()
+        wing_tank = wing_tank_capacity_and_moment(ac)
+        strut, parg = ac.wing.strut, ac.parg
+        Wfmax = wing_tank.capacity + strut.fuel_capacity
+        @test parg[igWfmax] ≈ Wfmax rtol = 1e-6
+
+        # the fuel moment is that of the tanks at the one fill fraction; the strut tank acts at the strut centroid
+        strut_moment = strut.fuel_capacity * strut_dx_arm(ac)
+        @test parg[igdxWfuel] ≈ (wing_tank.moment + strut_moment) * parg[igWfuel] / Wfmax rtol = 1e-6
+
+        # the wing panels carry the fuel at that fraction of the combined capacity (not of the wing capacity alone)
+        fill = (parg[igWpay] - parg[igWpaymax] + parg[igWfuel]) / Wfmax
+        @test ac.wing.inboard.weight ≈ wing_tank.inner_panel_structure + fill * wing_tank.inner_panel_fuel rtol = 1e-3
     end
 end
 
@@ -1626,6 +1812,97 @@ end
             @test evaluate_cantilever(lifting) == evaluate_cantilever(plain)
             for name in (:pullup, :pushover, :taxi)
                 @test same_loads(lifting.sizing_loads.results[name], plain.sizing_loads.results[name])
+            end
+        end
+
+        # Strut fuel: the inertia load of the fuel in one strut, positive downward, adds to the strut lift load case by case.
+        # Half of it goes to the wing end of the strut and half to the fuselage end.
+        fuel_load_wing(model) = (w = lift_only(model); w.strut.spanload_exponent = 0.5; w)
+        po_fuel, Nload_fuel, F_strut_fuel, f_fuel = 6.0e4, 3.0, 5.0e4, 2.0e4
+
+        "Closed-form loads for the strut lift `F` and the strut fuel load `f`: the wing end of the strut carries `ξcp F - f/2` as a point load at the attachment."
+        function expected_fuel_case(wing, F, f)
+            ξcp = TASOPT.strut_lift_centroid_fraction(wing.strut.spanload_exponent)
+            F_end = ξcp * F - f / 2
+            outboard = wing_case_loads(Cantilever(), deepcopy(wing), po_fuel, gammat, gammas, Nload_fuel, We, 0, 0.0, 0, dyeinn)
+            function M0(x)
+                u = L - x
+                a, c = po_fuel * (1 - (1 - gammas) * x / L), po_fuel * (1 - gammas) / L
+                return outboard.M_break + outboard.S_break * u + a * u^2 / 2 - c * u^3 / 3 + F_end * u
+            end
+            if wing.strut.opt_strut_force == StrutForceModel.Compatibility
+                EI(x) = wing.inboard.EI[1] + (wing.outboard.EI[1] - wing.inboard.EI[1]) * x / L
+                f_strut = ls / (wing.strut.caps.material.E * wing.strut.area * (z / ls)^2)
+                R = st.strut_force_compatibility(M0, EI, L, f_strut)
+            else
+                R = (po_fuel * span / 12) * (ηs - ηo) * (1 + 2gammas) + outboard.S_break + F_end
+            end
+            return (R = R, S_root = outboard.S_break + po_fuel * L * (1 + gammas) / 2 + F_end - R, M_root = M0(0) - R * L,
+                    strut_force = R * ls / z + ((F - f) - F_end) * z / ls)
+        end
+
+        @testset "wing_case_loads of a braced wing: the strut fuel load adds to the wing-end point load and the fuselage-end force" begin
+            braced_loads(wing; kwargs...) = wing_case_loads(st.Braced(), deepcopy(wing), po_fuel, gammat, gammas, Nload_fuel,
+                                                            We, 0, 0.0, 0, dyeinn; kwargs...)
+            for model in (StrutForceModel.Compatibility, StrutForceModel.Prescribed)
+                wing = fuel_load_wing(model)
+                without = braced_loads(wing; strut_lift = F_strut_fuel)
+                with_fuel = braced_loads(wing; strut_lift = F_strut_fuel, strut_fuel_load = f_fuel)
+                expected = expected_fuel_case(wing, F_strut_fuel, f_fuel)
+
+                @test same_loads(braced_loads(wing; strut_lift = F_strut_fuel, strut_fuel_load = 0.0), without)
+                @test with_fuel.strut_fuel_load == f_fuel
+                @test without.strut_fuel_load == 0.0
+                @test with_fuel.strut_lift == F_strut_fuel # the fuel load is not strut lift
+                # the point load sits at the attachment: the outboard section does not see it
+                @test (with_fuel.S_break, with_fuel.M_break) == (without.S_break, without.M_break)
+                @test with_fuel.strut_reaction ≈ expected.R rtol = 1e-9
+                @test with_fuel.S_root ≈ expected.S_root rtol = 1e-9
+                @test with_fuel.M_root ≈ expected.M_root rtol = 1e-9
+                @test with_fuel.strut_force ≈ expected.strut_force rtol = 1e-9
+                @test with_fuel.strut_force < without.strut_force # the fuel inertia relieves the strut lift
+                if model == StrutForceModel.Prescribed
+                    # the prescribed reaction takes the whole point load, so the root loads do not change
+                    @test with_fuel.S_root ≈ without.S_root rtol = 1e-9
+                    @test with_fuel.M_root ≈ without.M_root rtol = 1e-9
+                else
+                    @test with_fuel.M_root != without.M_root
+                end
+            end
+        end
+
+        @testset "evaluate_wing_sizing_cases! records the strut fuel inertia load n r_fuel_wing capacity / 2 of each case" begin
+            fuel_capacity = 4.0e4 # fuel that fills the struts of both wings [N]
+            r_fuel_wing = (pullup = 0.5, pushover = 8.0e4 / 1.5e5, pullup_light = 2.0e4 / 1.5e5, taxi = 8.0e4 / 1.5e5)
+            n_case = (pullup = 3.0, pushover = -1.0, pullup_light = 3.0, taxi = -2.0)
+            function wing_with_fuel(capacity)
+                wing = with_strut_lift!(fuel_load_wing(StrutForceModel.Compatibility), 0.2; p = 0.5)
+                wing.strut.fuel_capacity = capacity
+                for name in (:pushover, :pullup_light, :taxi)
+                    getfield(wing.sizing_loads, name).active = true
+                end
+                return wing
+            end
+            wing, dry = wing_with_fuel(fuel_capacity), wing_with_fuel(0.0)
+            evaluate_braced(wing; neinn = 0)
+            evaluate_braced(dry; neinn = 0)
+
+            for name in keys(n_case)
+                r, r_dry = wing.sizing_loads.results[name], dry.sizing_loads.results[name]
+                expected_load = n_case[name] * r_fuel_wing[name] * fuel_capacity / 2
+                @test r.strut_fuel_load ≈ expected_load rtol = 1e-12
+                @test sign(r.strut_fuel_load) == sign(n_case[name]) # the inertia load is upward for n < 0
+                @test r_dry.strut_fuel_load == 0.0
+                @test r.strut_lift == r_dry.strut_lift
+
+                # the case equals the direct evaluation with the fuel load of the case
+                (Nload, po) = wing_case_root_loading(getfield(wing.sizing_loads, name), wing, 1.0, 1.0, W_lift[name],
+                                                     Lhtail, n_pullup; strut_share = TASOPT.strut_lift_share(wing))
+                direct = wing_case_loads(st.Braced(), deepcopy(wing), po, gammat, gammas, Nload, We, 0, 0.0, 0, dyeinn;
+                                         strut_lift = r.strut_lift, strut_fuel_load = expected_load)
+                @test same_loads(r, direct)
+                # the fuel inertia opposes the lift of the strut: it relieves the strut force of the pull-up (n > 0)
+                n_case[name] > 0 && r.strut_lift != 0 && @test r.strut_force < r_dry.strut_force
             end
         end
     end

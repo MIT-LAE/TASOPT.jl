@@ -402,6 +402,7 @@ function _size_aircraft!(ac; itermax=35,
                                             design_wing_fuel = Wpay - Wpaymax + parg[igWfuel],
                                             has_wing_fuel = options.has_wing_fuel,
                                             has_centerbox_fuel = options.has_centerbox_fuel,
+                                            has_strut_fuel = options.has_strut_fuel,
                                             section_loads_envelope = section_loads_envelope)
 
         check_wing_cap_min_gauge!(ac)
@@ -412,6 +413,11 @@ function _size_aircraft!(ac; itermax=35,
         if (options.has_wing_fuel)
             Wfmax = 2.0 * ((options.has_centerbox_fuel ? Wfcen : 0.0) + Wfinn + Wfout)
             dxWfmax = 2.0 * (dxWfinn + dxWfout)
+            if options.has_strut_fuel
+                # Strut tanks share the wing tank fill fraction; their moment arm is that of the strut weight
+                Wfmax += wing.strut.fuel_capacity
+                dxWfmax += wing.strut.fuel_capacity * (wing.strut.weight > 0.0 ? wing.strut.dxW / wing.strut.weight : 0.0)
+            end
             Wfuelmp = Wpay - Wpaymax + parg[igWfuel]
             rfmax = Wfuelmp / Wfmax
             check_wing_fuel_volume!(ac, parg[igWfuel], Wfmax)

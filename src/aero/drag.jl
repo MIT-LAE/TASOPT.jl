@@ -90,10 +90,11 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
       Reco = Reunit*wing.layout.root_chord
 
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      if (computes_wing_direct) 
-#----- integrated across span for CDwing
       # Strut lift is not carried by the wing
       CL_strut = strut_lift_share(wing, ac.options.trefftz_config) * (CL - CLhtail)
+
+      if (computes_wing_direct) 
+#----- integrated across span for CDwing
       wing_drag_components = wing_profiledrag_direct(wing,gammat,gammas,
                                     Mach,CL,CLhtail + CL_strut,Reco,
                                     aRexp, rkSunsw,fexcdw,
@@ -203,7 +204,7 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
       if ac.options.has_strut
             strut = wing.strut
             rVstrut = strut.local_velocity_ratio
-            # Streamwise section cl of the main strut, from the lift of both struts on their effective area
+            # Main strut section cl from the lift of both struts on their effective area
             if strut.S > 0.0 && rVstrut > 0.0
                   cl_strut = CL_strut * wing.layout.S / (strut.S * cos(strut.dihedral)^2 * rVstrut^2)
             else
@@ -222,7 +223,7 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
                                                  jury.thickness_to_chord, Mach, 1.0,
                                                  Reunit, rVstrut, aRexp, fexcdw, wing.airsection)
                   CDstrut += jury_strut.CD
-                  # The jury cl is not flagged: it carries no lift and is looked up at the database cl floor
+                  # Jury cl is not flagged, it carries no lift
                   strut_exceeded |= :thickness in jury_strut.exceeded || :Mach in jury_strut.exceeded
             end
       else
@@ -284,17 +285,15 @@ end # cfturb
 """
     strut_section_cd(cl, τ, Mach, cosΛ, Re_chord, aRexp, fexcd, air)
 
-Section drag coefficient of a strut or jury strut member from the wing airfoil database `air` (see [`airfun`](@ref)),
-with the simple-sweep treatment of [`wing_profiledrag_direct`](@ref) and no root-shock unsweep. The lift and Mach number
-are taken perpendicular to the member: `cl/cosΛ^2` and `Mach*cosΛ`. Below the lowest database `cl` the lookup is made at
-that `cl` with no `cl` penalty (conservative for lightly loaded members). The drag is scaled by
-`(Re_chord/air.Re)^aRexp` and `fexcd`, and the pressure part by `cosΛ`.
+Section drag coefficient of a strut or jury strut member from the airfoil database `air` (see [`airfun`](@ref)),
+using simple sweep theory: `cl/cosΛ^2` and `Mach*cosΛ` normal to the member. Below the lowest database `cl`, the
+lookup is made at that `cl`. Drag is scaled by `(Re_chord/air.Re)^aRexp` and `fexcd`; the pressure part also by `cosΛ`.
 
 !!! details "🔃 Inputs and Outputs"
       **Inputs:**
       - `cl::Float64`: Streamwise section lift coefficient of the member.
       - `τ::Float64`: Thickness to chord ratio.
-      - `Mach::Float64`: Local Mach number at the member (freestream Mach times the local velocity ratio).
+      - `Mach::Float64`: Local Mach number at the member.
       - `cosΛ::Float64`: Cosine of the member sweep.
       - `Re_chord::Float64`: Reynolds number based on the member chord.
       - `aRexp::Float64`: Re-scaling exponent.
@@ -323,12 +322,11 @@ end
 """
     strut_member_drag(area_ratio, chord, cl, τ, Mach, cosΛ, Reunit, rV, aRexp, fexcd, air)
 
-Profile drag coefficient, referenced to the wing area, of a strut or jury strut member in the local flow
-`rV` times the freestream. The section drag is taken from [`strut_section_cd`](@ref) at the local Mach number
-`Mach*rV` and the chord Reynolds number `Reunit*rV*chord`, and multiplied by `area_ratio` (member area / wing area)
-and by `rV^3`, the dissipation scaling of the wing `(1+fdu)^3`. Zero (not `NaN`) if `area_ratio` or `chord` is zero.
+Profile drag coefficient, referenced to the wing area, of a strut or jury strut member in a local flow of `rV`
+times the freestream. Uses [`strut_section_cd`](@ref) scaled by `area_ratio` (member area / wing area) and `rV^3`.
+Zero if `area_ratio` or `chord` is zero.
 
-Returns a `NamedTuple` with `CD` and `exceeded`, the database bounds exceeded (see [`strut_section_cd`](@ref)).
+Returns a `NamedTuple` with `CD` and `exceeded` (database bounds exceeded).
 """
 function strut_member_drag(area_ratio, chord, cl, τ, Mach, cosΛ, Reunit, rV, aRexp, fexcd, air::airfoil)
       (area_ratio == 0.0 || chord == 0.0) && return (CD = 0.0, exceeded = Symbol[])

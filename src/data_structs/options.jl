@@ -15,6 +15,8 @@ $TYPEDFIELDS
     has_centerbox_fuel::Bool
     """Indicates presence of wing fuel tanks """
     has_wing_fuel::Bool
+    """Indicates presence of fuel tanks inside the strut box, can only be true if has_wing_fuel is true and the wing is braced"""
+    has_strut_fuel::Bool = false
     """Indicates presence of fuselage fuel tanks (non-driving; set by `fuse_tank` inputs)"""
     has_fuselage_fuel::Bool 
       #TODO: consider making ^ a driving parameter, rather than a reflection of fuse_tank parameters

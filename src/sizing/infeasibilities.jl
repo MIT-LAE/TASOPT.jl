@@ -133,21 +133,18 @@ const WING_BEAM_COLUMN_RATIO_MAX = 0.5
 """
     WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR
 
-Effective-length factor ``K`` of the inboard wing panel, see [`wing_beam_column_ratio`](@ref). The panel is clamped
-at the fuselage and pinned vertically at the strut attachment, which gives ``K = 0.7``. The rotational restraint of
-the outboard panel is ignored; it would lower ``K`` toward 0.5.
+Effective-length factor ``K`` of the inboard wing panel (clamped at the fuselage, pinned at the strut attachment),
+see [`wing_beam_column_ratio`](@ref). Ignores the outboard panel restraint, which would lower ``K`` toward 0.5.
 """
 const WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR = 0.7
 
 """
     wing_beam_column_ratio(wing::Wing)
 
-Returns the ratio ``P_c / P_E`` of the largest compression ``P_c`` in the inboard wing over the sizing load cases to the
-Euler load ``P_E = \\pi^2 EI / (K L)^2`` of the inboard panel, with ``K =`` [`WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR`](@ref)
-and the panel length ``L = (\\eta_s - \\eta_o) b / 2``.
-``EI`` is the mean of the flapwise stiffnesses at the wing root (`inboard.EI[1]`) and at the strut attachment
-(`outboard.EI[1]`), a rough estimate for the tapered inboard panel.
-Returns 0 if the wing has no compression or either stiffness is not sized.
+Returns ``P_c / P_E``, the largest inboard wing compression over the sizing load cases over the Euler load
+``P_E = \\pi^2 EI / (K L)^2``, with ``K =`` [`WING_INBOARD_PANEL_EFFECTIVE_LENGTH_FACTOR`](@ref) and
+``L = (\\eta_s - \\eta_o) b / 2``. ``EI`` is the mean of the flapwise stiffnesses at the root and at the strut
+attachment. Returns 0 if either stiffness is not sized.
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -172,7 +169,7 @@ end
     check_wing_beam_column!(ac::aircraft)
 
 Records `:wing_beam_column_margin` if the compression in the inboard wing of a braced wing exceeds
-[`WING_BEAM_COLUMN_RATIO_MAX`](@ref) times the Euler load of the inboard panel, see [`wing_beam_column_ratio`](@ref).
+[`WING_BEAM_COLUMN_RATIO_MAX`](@ref) times the Euler load, see [`wing_beam_column_ratio`](@ref).
 Must be called after the wing has been sized.
 
 !!! warning "Placeholder metric"

@@ -246,6 +246,7 @@ else
 end
 
 has_centerbox_fuel  = readfuel("fuel_in_wingcen")
+has_strut_fuel      = readfuel("fuel_in_strut")
 parg[igrWfmax] = readfuel("fuel_usability_factor")
 pare[iehvap, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of the fuel
 pare[iehvapcombustor, :, :] .= readfuel("fuel_enthalpy_vaporization") #Heat of vaporization of fuel, if vaporized in combustor
@@ -477,6 +478,12 @@ end
 fuse_tank = fuselage_tank() #Initialize struct for fuselage fuel tank params
 
 has_wing_fuel = readfuel("fuel_in_wing")
+if has_strut_fuel && !has_wing_fuel
+    error("fuel_in_strut = true requires fuel_in_wing = true")
+end
+if has_strut_fuel && _opt_wing_config == WingConfig.Cantilever
+    error("fuel_in_strut = true requires a braced wing (wing_config = \"strut_braced\" or \"truss_braced\")")
+end
 if !(has_wing_fuel) #If fuel is stored in fuselage
     fuel_stor = readfuel("Storage")
     dfuel_stor = dfuel["Storage"]
@@ -1413,6 +1420,7 @@ ac_options = TASOPT.Options(
     ifuel = ifuel,
     has_wing_fuel = has_wing_fuel,
     has_centerbox_fuel = has_centerbox_fuel,
+    has_strut_fuel = has_strut_fuel,
     has_fuselage_fuel = (nftanks>0),
 
     opt_engine_location = _opt_engine_location,

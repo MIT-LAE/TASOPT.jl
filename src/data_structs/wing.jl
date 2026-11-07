@@ -42,7 +42,7 @@ $TYPEDFIELDS
     local_velocity_ratio::Float64 = 0
     """Strut force model"""
     opt_strut_force::StrutForceModel.T = StrutForceModel.Compatibility
-    """Share of the wing and strut lift carried by both struts, ``L_{strut} / (L_{wing} + L_{strut})``, with ``L_{wing}`` the wing panels without the tail (0 = no strut lift)"""
+    """Strut lift over wing plus strut lift, ``L_{strut} / (L_{wing} + L_{strut})`` (0 = no strut lift)"""
     lift_fraction_strut_to_total::Float64 = 0.25
     """Strut spanload exponent ``p``, ``\\Gamma \\propto (1-\\xi^2)^p`` with ``\\xi`` = 0 at fuselage, 1 at wing (``p = 0.5`` is elliptic)"""
     spanload_exponent::Float64 = 0.0
@@ -95,7 +95,9 @@ $TYPEDFIELDS
     # Weights
     """Strut weight [N]"""
     weight::Float64 = 0
-    """Strut added weight fraction (fairings, edges, fittings) on the bare box weight. Placeholder from Boeing SUGAR Phase IV"""
+    """Weight of fuel that fills the tanks of both struts, 0 without strut fuel [N]"""
+    fuel_capacity::Float64 = 0
+    """Strut added weight fraction (fairings, edges, fittings) on the bare box weight. Placeholder from Boeing SUGAR Phase IV. It already accounts for what the main wing covers with `fwadd`, so strut fuel tanks need no extra fraction"""
     weight_frac_added::Float64 = 0.60
     """Strut attachment weight fraction (twice the wing default, as it attaches at both ends)"""
     weight_frac_attachments::Float64 = 0.06
@@ -230,6 +232,8 @@ $TYPEDFIELDS
     strut_reaction::Float64 = 0
     """Lift on one strut [N]"""
     strut_lift::Float64 = 0
+    """Inertia load of the fuel in one strut, positive downward [N]"""
+    strut_fuel_load::Float64 = 0
 end
 
 """

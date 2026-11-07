@@ -116,9 +116,8 @@ end # induced_drag!
     strut_lift_share(wing)
     strut_lift_share(wing, trefftz_config)
 
-Share ``L_{strut} / (L_{wing} + L_{strut})`` of the wing and strut lift, `CL - CLhtail`, carried by both struts.
-This is the input `strut.lift_fraction_strut_to_total`. Zero if the wing or strut has no area (not sized yet or no strut)
-or, with `trefftz_config`, if there is no strut surface.
+Share of the wing and strut lift, `CL - CLhtail`, carried by both struts: `strut.lift_fraction_strut_to_total`.
+Zero if the wing or strut has no area or, with `trefftz_config`, if there is no strut surface.
 """
 function strut_lift_share(wing)
     (wing.layout.S > 0.0 && wing.strut.S > 0.0) || return 0.0
