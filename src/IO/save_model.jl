@@ -227,7 +227,6 @@ function save_aircraft_model(ac::TASOPT.aircraft=TASOPT.read_aircraft_model(),
         if options.has_strut
             d_wing_strut = Dict()
                 d_wing_strut["z_fuselage_attach"] = wing.strut.z
-                d_wing_strut["y_fuselage_attach"] = wing.strut.y_root
                 d_wing_strut["thickness_to_chord"] = wing.strut.thickness_to_chord
                 d_wing_strut["local_velocity_ratio"] = wing.strut.local_velocity_ratio
                 d_wing_strut["box_width_to_chord"] = wing.strut.box_width_to_chord

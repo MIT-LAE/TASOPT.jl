@@ -214,25 +214,25 @@ end
 
     @testset "Headline numbers" begin
         @test ac.options.opt_fuel == FuelType.JetA
-        @test ac.parg[igWMTO] ≈ 809446.8407033044 rtol=1e-4
-        @test ac.wing.weight ≈ 56061.07398635441 rtol=1e-4
-        @test ac.wing.strut.weight ≈ 24596.220913845293 rtol=1e-4
-        @test ac.parg[igWfuel] ≈ 224605.59205944135 rtol=1e-4
-        @test ac.parm[imPFEI] ≈ 0.8857429625554126 rtol=1e-4
-        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.430988954584222 rtol=1e-4
+        @test ac.parg[igWMTO] ≈ 824001.2629941807 rtol=1e-4
+        @test ac.wing.weight ≈ 57743.722587894765 rtol=1e-4
+        @test ac.wing.strut.weight ≈ 26382.796051670055 rtol=1e-4
+        @test ac.parg[igWfuel] ≈ 229827.36299765212 rtol=1e-4
+        @test ac.parm[imPFEI] ≈ 0.9063352672087567 rtol=1e-4
+        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.334258934180458 rtol=1e-4
     end
 
     @testset "Strut" begin
-        @test ac.wing.strut.area ≈ 0.021411926295878153 rtol=1e-4
-        @test ac.wing.strut.axial_force ≈ 2.1102105409874977e6 rtol=1e-4
-        @test ac.fuselage.strut_attach.W ≈ 1475.7732548307174 rtol=1e-4
+        @test ac.wing.strut.area ≈ 0.022746757544568865 rtol=1e-4
+        @test ac.wing.strut.axial_force ≈ 2.228467666835765e6 rtol=1e-4
+        @test ac.fuselage.strut_attach.W ≈ 1582.9677631002032 rtol=1e-4
         test_strut_cases(ac; strut_criterion = :buckling,
                          governing_root = :taxi, governing_break = :pullup,
                          governing_strut = :pullup, governing_strut_compression = :pushover,
                          infeasibilities = Set([:wing_fuel_volume_exceeded]))
     end
 
-    test_ac_off_design(ac, 1.0300480637746714, 145110.1669196255, 701260.3836634884)
+    test_ac_off_design(ac, 1.065626762119952, 150122.39017137088, 715605.2582678995)
 end
 
 @testset "TBW LCH4 smoke" verbose=true begin

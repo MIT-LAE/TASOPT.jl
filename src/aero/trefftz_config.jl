@@ -128,7 +128,7 @@ Create a [`TrefftzPlaneConfig`](@ref).
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `quality::String`: Discretization quality level ("COARSE", "MEDIUM", or "FINE").
-    - `braced::Bool=false`: If `true`, includes the strut as a third surface with panels halfway between the wing and tail counts.
+    - `braced::Bool=false`: If `true`, includes the strut as a third surface with as many panels as the wing has outer panels (20 COARSE, 40 MEDIUM, 160 FINE).
     - `k_tip::Float64=16.0`: Tip loading exponent (controls circulation decay at wing tips).
     - `bunch::Float64=0.5`: Center clustering factor ∈ \\[0,1\\] (controls spanwise panel spacing near root).
     - `wing_root_contraction::Float64=0.2`: Wing root streamline contraction factor (stream tube contraction near fuselage).
@@ -147,6 +147,7 @@ Create a [`TrefftzPlaneConfig`](@ref).
     - **"COARSE"** (43 panels): ~1.8% higher CDi vs FINE, fastest
       - Wing: 20 outer, 6 inner, 3 image
       - Tail: 10 outer, 0 inner, 2 image
+    - Braced strut (if `braced`): as many panels as the wing has outer panels: 160 (FINE), 40 (MEDIUM), 20 (COARSE)
 """
 function get_trefftz_config(quality::String;
                            braced::Bool=false,
@@ -169,9 +170,8 @@ function get_trefftz_config(quality::String;
         throw(ArgumentError("Invalid discretization resolution: $quality. Must be 'COARSE', 'MEDIUM', or 'FINE'."))
     end
 
-    # Strut panels are all ordinary panels
-    n_strut_panels = div(n_total(wing_panels) + n_total(tail_panels), 2)
-    strut_panels = braced ? SurfaceDiscretization(n_strut_panels, 0, 0) : SurfaceDiscretization(0, 0, 0)
+    # Strut has as many panels as the wing has outer panels, all ordinary panels
+    strut_panels = braced ? SurfaceDiscretization(wing_panels.n_outer_panels, 0, 0) : SurfaceDiscretization(0, 0, 0)
 
     return TrefftzPlaneConfig(wing_panels, tail_panels;
                              k_tip=k_tip,

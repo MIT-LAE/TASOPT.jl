@@ -20,8 +20,6 @@ $TYPEDFIELDS
     S::Float64 = 0
     """Strut z position [m]"""
     z::Float64 = 0
-    """Strut y position at fuselage [m]"""
-    y_root::Float64 = 0
     """Strut thickness to chord"""
     thickness_to_chord::Float64 = 0
     """Strut chord to wing chord at the strut attachment (placeholder default)"""
@@ -44,8 +42,8 @@ $TYPEDFIELDS
     opt_strut_force::StrutForceModel.T = StrutForceModel.Compatibility
     """Strut lift over wing plus strut lift, ``L_{strut} / (L_{wing} + L_{strut})`` (0 = no strut lift)"""
     lift_fraction_strut_to_total::Float64 = 0.25
-    """Strut spanload exponent ``p``, ``\\Gamma \\propto (1-\\xi^2)^p`` with ``\\xi`` = 0 at fuselage, 1 at wing (``p = 0.5`` is elliptic)"""
-    spanload_exponent::Float64 = 0.0
+    """Strut spanload exponent ``p`` (``p > 0``), ``\\Gamma \\propto (4\\xi(1-\\xi))^p`` with ``\\xi`` = 0 at fuselage, 1 at wing (``p = 0.5`` is elliptic-like)"""
+    spanload_exponent::Float64 = 0.5
     """Fuselage x of the strut attach [m]. NaN follows the wing box, `wing.layout.box_x`"""
     x_strut_attach::Float64 = NaN
 

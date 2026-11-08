@@ -252,7 +252,7 @@ function _size_aircraft!(ac; itermax=35,
             strut_force_horizontal = wing.strut.force_horizontal,
             strut_reaction_share = wing.strut.reaction_share,
             strut_x_attach = isnan(wing.strut.x_strut_attach) ? wing.layout.box_x : wing.strut.x_strut_attach,
-            strut_z = wing.strut.z, strut_y_root = wing.strut.y_root,
+            strut_z = wing.strut.z, strut_y_root = wing.layout.root_span / 2,
             strut_box_width = wing.strut.root_chord * wing.strut.box_width_to_chord)
 
         # Use cabin volume to get actual buoyancy weight

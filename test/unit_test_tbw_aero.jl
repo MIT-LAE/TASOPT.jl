@@ -154,12 +154,15 @@ end
 
     @testset "Configuration with strut panels" begin
         # quality => (strut panels, points without strut, points with strut)
+        # The strut has as many panels as the wing has outer panels
         cases = ("COARSE" => (20, 43, 64),
-                 "FINE"   => (164, 330, 495))
+                 "MEDIUM" => (40, 84, 125),
+                 "FINE"   => (160, 330, 491))
         for (quality, (n_strut_panels, n_points_cantilever, n_points_braced)) in cases
             @testset "$quality" begin
                 config = trefftz_aero.get_trefftz_config(quality; braced = true)
                 @test trefftz_aero.n_surfaces(config) == 3
+                @test config.strut_panels.n_outer_panels == config.wing_panels.n_outer_panels
                 @test config.strut_panels == trefftz_aero.SurfaceDiscretization(n_strut_panels, 0, 0)
 
                 # Surface blocks are contiguous and the strut block ends the point list
@@ -176,7 +179,7 @@ end
     @testset "Geometry array overflow includes the strut block" begin
         n_slots = length(trefftz_aero.TREFFTZ_GEOM.y)
         n_strut_panels_that_fit = n_slots - 330 - 1 # one more point is the dummy point after the strut
-        @test n_slots >= 495 # FINE with a strut
+        @test n_slots >= 491 # FINE with a strut
         wing_panels = trefftz_aero.SurfaceDiscretization(160, 48, 24)
         tail_panels = trefftz_aero.SurfaceDiscretization(80, 0, 16)
         config_with_strut(n_strut_panels) = trefftz_aero.TrefftzPlaneConfig(wing_panels, tail_panels;
@@ -310,6 +313,64 @@ end
         @test CDi_again ≈ CDi_cantilever rtol = 1e-12
     end
 
+    @testset "Strut Trefftz line joins the structural strut at the wing root and the wing break" begin
+        ac = load_braced_aircraft_quietly()
+        config = ac.options.trefftz_config
+        wing = ac.wing
+        para = set_trefftz_test_case!(ac)
+        wing.layout.ηs = 0.625 # set after the test case, which sets the wing break
+        wing.strut.z = 3.0
+        trefftz_aero.TREFFTZ_GEOMETRY_HASH[] = UInt64(0)
+        trefftz_aero.induced_drag!(para, ac, config)
+
+        geom = trefftz_aero.TREFFTZ_GEOM
+        i_first, i_last = trefftz_aero.i_first_strut(config), trefftz_aero.i_last_strut(config)
+        y_root, z_root = 0.5 * wing.layout.root_span, wing.layout.z - wing.strut.z
+        y_break, z_break = 0.5 * wing.layout.break_span, wing.layout.z
+        @test geom.y[i_first] ≈ y_root rtol = 1e-14
+        @test geom.z[i_first] ≈ z_root rtol = 1e-14
+        @test geom.y[i_last] ≈ y_break rtol = 1e-14
+        @test geom.z[i_last] ≈ z_break rtol = 1e-14
+
+        # Same angle as the structural strut: dihedral atan(z / (b/2 (ηs - ηo)))
+        half_bay = 0.5 * wing.layout.span * (wing.layout.ηs - wing.layout.ηo)
+        @test y_break - y_root ≈ half_bay rtol = 1e-14
+        @test atan(geom.z[i_last] - geom.z[i_first], geom.y[i_last] - geom.y[i_first]) ≈ atan(wing.strut.z, half_bay) rtol = 1e-12
+    end
+
+    @testset "Strut tip meets the wing break in the Trefftz plane" begin
+        ac = load_braced_aircraft_quietly()
+        config = ac.options.trefftz_config
+        para = set_trefftz_test_case!(ac)
+        ac.wing.layout.ηs = 0.625 # set after the test case, which sets the wing break
+        trefftz_aero.TREFFTZ_GEOMETRY_HASH[] = UInt64(0)
+        trefftz_aero.induced_drag!(para, ac, config)
+
+        geom = trefftz_aero.TREFFTZ_GEOM
+        i_last_strut = trefftz_aero.i_last_strut(config)
+        # The wing node at the panel break follows the inboard panels after the image panels
+        i_break = trefftz_aero.i_first_wing(config) + config.wing_panels.n_image_panels + config.wing_panels.n_inner_panels
+        @test geom.y[i_break] ≈ 0.5 * ac.wing.layout.break_span rtol = 1e-14
+        @test geom.yp[i_last_strut] ≈ geom.yp[i_break] rtol = 1e-10
+        @test geom.zp[i_last_strut] ≈ geom.zp[i_break] rtol = 1e-10
+    end
+
+    @testset "Strut induced drag converges with strut panels" begin
+        function braced_cdi_with_strut_panels(n_strut_panels)
+            ac = braced_aircraft_with_strut_panels(n_strut_panels)
+            set_strut_lift_inputs!(ac, 0.2; spanload_exponent = 0.5)
+            para = set_trefftz_test_case!(ac)
+            ac.wing.layout.ηs = 0.625 # set after the test case, which sets the wing break
+            ac.wing.strut.z = 3.0
+            trefftz_aero.TREFFTZ_GEOMETRY_HASH[] = UInt64(0)
+            trefftz_aero.induced_drag!(para, ac, ac.options.trefftz_config)
+            return para[iaCDi]
+        end
+        CDi = Dict(n => braced_cdi_with_strut_panels(n) for n in (40, 80, 160))
+        @test abs(CDi[80] / CDi[160] - 1) < 5e-3
+        @test abs(CDi[40] / CDi[160] - 1) < 2e-2
+    end
+
     @testset "Wake geometry is rebuilt only when the geometry changes" begin
         wake_points(ac, i_points) = [ac.wake_system.points[i] for i in i_points]
         all_at_height(points, z) = all(point -> isapprox(point[2], z; atol = 1e-12), points)
@@ -346,8 +407,11 @@ end
                     wing_after = wake_points(ac, i_wing)
 
                     @test ac.wake_system !== wake_system
-                    @test all(isapprox.(strut_after[1], (wing.strut.y_root, wing.layout.z - wing.strut.z); rtol = 1e-14))
-                    @test all(isapprox.(strut_after[end], (0.5 * wing.layout.break_span, wing.layout.z); rtol = 1e-14))
+                    yo = 0.5 * wing.layout.root_span
+                    yop = yo * config.wing_root_contraction
+                    y_break_wake = trefftz_aero.get_wake_contraction(trefftz_aero.WINGWAKE, 0.5 * wing.layout.break_span, yo, yop)
+                    @test all(isapprox.(strut_after[1], (yop, wing.layout.z - wing.strut.z); rtol = 1e-14))
+                    @test all(isapprox.(strut_after[end], (y_break_wake, wing.layout.z); rtol = 1e-14))
                     @test all_at_height(wing_after, wing.layout.z)
                     @test strut_after != strut_before
                     name == "layout.z" && @test wing_after != wing_before
@@ -446,18 +510,18 @@ end
             gc = geom.gc[i_first:(i_last - 1)]
             # ξ = 0 at the fuselage, ξ = 1 at the wing attachment
             ξ = [(k - 0.5) / n for k in 1:n]
-            shape = (1 .- ξ .^ 2) .^ spanload_exponent
+            shape = (4 .* ξ .* (1 .- ξ)) .^ spanload_exponent
 
-            # Loading follows (1-ξ²)^p up to the last panel, which carries none (no tip vortex at the wing attachment)
-            @test gc[1] > 0.0
-            @test gc[end] == 0.0
-            @test gc[1:(end - 1)] ./ gc[1] ≈ shape[1:(end - 1)] ./ shape[1] rtol = 1e-10
+            # Loading follows (4ξ(1-ξ))^p over every panel, pinned to zero at both ends of the strut
+            @test all(>(0.0), gc)
+            @test gc ./ gc[1] ≈ shape ./ shape[1] rtol = 1e-10
 
-            # The wake circulation vanishes at both strut ends and its sum equals the loading of the first panel
+            # The strut sheds its root circulation at the fuselage end and its tip circulation at the wing end;
+            # the wake circulation of the strut sums to zero
             gw = trefftz_aero.gw[i_first:i_last]
-            @test gw[1] == 0.0
-            @test gw[end] == 0.0
-            @test sum(gw) ≈ gc[1] rtol = 1e-10
+            @test gw[1] ≈ -gc[1] rtol = 1e-10
+            @test gw[end] ≈ gc[end] rtol = 1e-10
+            @test sum(gw) ≈ 0.0 atol = 1e-12 * gc[1]
         end
 
         @testset "Induced drag" begin
@@ -465,6 +529,19 @@ end
             # The strut takes about 10 % of the lift, which changes the induced drag by several percent
             @test abs(CDi - CDi_no_lift) / CDi_no_lift > 1e-3
         end
+    end
+
+    @testset "Strut circulation shape on every strut panel" begin
+        geom = trefftz_aero.TrefftzGeometry{40}()
+        i_first, n_panels, p = 3, 6, 0.5
+        i_last = i_first + n_panels
+        trefftz_aero.generate_trefftz_points_inclined!(i_first, geom, 1.0, 1.0, 5.0, 2.0, n_panels)
+        trefftz_aero.set_strut_circulation_shape!(geom, i_first, i_last, p)
+
+        ξ = [(k - 0.5) / n_panels for k in 1:n_panels]
+        gc = geom.gc[i_first:(i_last - 1)]
+        @test all(>(0.0), gc)
+        @test gc ≈ (4 .* ξ .* (1 .- ξ)) .^ p rtol = 1e-14
     end
 
     @testset "Strut circulation is rebuilt when its inputs change on cached geometry" begin
@@ -714,7 +791,7 @@ function set_strut_moment_test_case!(ac, lift_fraction_strut_to_total; spanload_
     wing.layout.ηs = 0.6
     wing.layout.sweep = 20.0
     wing.layout.root_chord = 5.0
-    wing.strut.y_root = 1.0
+    wing.layout.root_span = 2.0
     ac.htail.layout.S = 25.0
     ac.htail.layout.root_chord = 2.0
     ac.htail.layout.box_x = 30.0
@@ -813,18 +890,18 @@ end
         cantilever_config = load_aircraft_quietly().options.trefftz_config
         wing.strut.lift_fraction_strut_to_total = 0.0
 
-        # Lift centroid between strut root (1 m) and wing attachment (10.5 m) for loading (1-ξ²)^p:
-        # 1/2 (p = 0), 3/8 (p = 1), 4/(3π) (p = 1/2)
-        for (p, ξ_cp) in ((0.0, 0.5), (1.0, 3 / 8), (0.5, 4 / (3π)))
+        # Lift centroid between strut root (1 m) and wing attachment (10.5 m): the centroid of the symmetric loading is at 1/2 for every p > 0
+        for p in (0.5, 1.0, 2.0)
             wing.strut.spanload_exponent = p
-            @test TASOPT.strut_lift_arm(wing) ≈ -tand(20.0) * (1.0 + 9.5 * ξ_cp) rtol = 1e-12
+            @test TASOPT.strut_lift_arm(wing) ≈ -tand(20.0) * (1.0 + 9.5 * 0.5) rtol = 1e-12
         end
+        @test TASOPT.strut_lift_centroid_fraction(0.5) == 0.5
 
         # The blend keeps the cantilever arm bit-for-bit without strut lift
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) === co_CMw1
         wing.strut.lift_fraction_strut_to_total = 0.5
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) ≈
-              (1 - k) * co_CMw1 + k * (-tand(20.0) * (1.0 + 9.5 * 4 / (3π))) rtol = 1e-12
+              (1 - k) * co_CMw1 + k * (-tand(20.0) * (1.0 + 9.5 * 0.5)) rtol = 1e-12
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, cantilever_config) === co_CMw1
     end
 
@@ -1069,7 +1146,7 @@ end
                     @test something(printed("c_strut"), NaN) ≈ strut.chord atol = printing_tolerance
                     @test something(printed("S_strut"), NaN) ≈ strut.S atol = printing_tolerance
                     @test something(printed("z_strut"), NaN) ≈ strut.z atol = printing_tolerance
-                    @test something(printed("y_strut"), NaN) ≈ strut.y_root atol = printing_tolerance
+                    @test something(printed("y_strut"), NaN) ≈ 0.5 * layout.root_span atol = printing_tolerance
                     @test something(printed("dihedral"), NaN) ≈ rad2deg(strut.dihedral) atol = printing_tolerance
                     @test something(printed("t/c"), NaN) ≈ strut.thickness_to_chord atol = printing_tolerance
                     @test printed_word("sizing case") == string(sizing_loads.governing_strut)

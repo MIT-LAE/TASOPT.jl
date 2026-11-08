@@ -171,7 +171,6 @@ end
 # [Wing.Strut] input keys and the `ac.wing.strut` fields they populate
 const strut_block_fields = (
     z_fuselage_attach = :z,
-    y_fuselage_attach = :y_root,
     thickness_to_chord = :thickness_to_chord,
     local_velocity_ratio = :local_velocity_ratio,
     box_width_to_chord = :box_width_to_chord,
@@ -187,7 +186,6 @@ const strut_block_fields = (
 # [Wing.Strut] body with values that differ from the defaults; distances carry units
 const custom_strut_block = """
     z_fuselage_attach = "170 in"
-    y_fuselage_attach = "1.5 ft"
     thickness_to_chord = 0.12
     local_velocity_ratio = 1.1
     box_width_to_chord = 0.45
@@ -241,7 +239,6 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
 @testset "strut and jury strut TOML inputs" verbose=true begin
     custom_values = (
         z_fuselage_attach = TASOPT.Distance("170 in"),
-        y_fuselage_attach = TASOPT.Distance("1.5 ft"),
         thickness_to_chord = 0.12,
         local_velocity_ratio = 1.1,
         box_width_to_chord = 0.45,
@@ -260,7 +257,6 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
             @test getfield(ac.wing.strut, field) == custom_values[key]
         end
         @test ac.wing.strut.z ≈ 170 * 0.0254
-        @test ac.wing.strut.y_root ≈ 1.5 * 0.3048
     end
 
     @testset "default input gives the default strut values" begin
@@ -290,6 +286,14 @@ jury_box_inputs(jury) = (alloy_signature(jury.caps.material), alloy_signature(ju
                 @test getfield(ac_reread.wing.strut, field) == getfield(ac.wing.strut, field)
             end
         end
+    end
+
+    @testset "spanload_exponent must be positive; the retired y_fuselage_attach key is read and ignored" begin
+        @test_throws ErrorException read_aircraft_from_text(
+            toml_with_strut_inputs("strut_braced"; block = "spanload_exponent = 0.0"))
+        ac, logs = read_aircraft_from_text(toml_with_strut_inputs("strut_braced"; block = "y_fuselage_attach = \"1.5 ft\""))
+        @test ac.wing.strut.spanload_exponent == 0.5
+        @test any(r -> r.level == CoreLogging.Info && occursin("y_fuselage_attach", r.message), logs)
     end
 
     @testset "opt_strut_force defaults to compatibility, and an unknown model is rejected" begin
@@ -780,7 +784,7 @@ end
     sized_patch(ac; kwargs...) = expected_strut_patch(ac.fuselage;
         force_vertical = ac.wing.strut.force_vertical, force_horizontal = ac.wing.strut.force_horizontal,
         xwbox = ac.wing.layout.box_x, cbox = ac.wing.layout.root_chord * ac.wing.inboard.cross_section.width_to_chord,
-        z = ac.wing.strut.z, y_root = ac.wing.strut.y_root, kwargs...)
+        z = ac.wing.strut.z, y_root = ac.wing.layout.root_span / 2, kwargs...)
 
     @testset "sized tapered strut: the strut box width at the fuselage attach is the chord at the fuselage end" begin
         ac = sized_tapered_strut_aircraft(0.5)
@@ -1712,11 +1716,11 @@ end
         case_load_factor = (pullup = 3.0, pushover = -1.0)
 
         "Set the strut geometry of `wing` and the `lift_fraction_strut_to_total` `k`, the share of the lift the struts carry."
-        function with_strut_lift!(wing, k; p = 0.0)
+        function with_strut_lift!(wing, k; p = 0.5)
             strut = wing.strut
             wing.layout.S = wing.layout.span^2 / wing.layout.AR
             strut.S, strut.dihedral, strut.local_velocity_ratio = 1.6 * ls, atan(z, L), 1.05
-            strut.y_root, strut.spanload_exponent = 1.2, p
+            strut.spanload_exponent = p
             strut.lift_fraction_strut_to_total = k
             return wing
         end

@@ -126,7 +126,6 @@ wing.strut.area = 0.00000000000000000000
 wing.strut.axial_force = 0.00000000000000000000 
 wing.strut.length = 0.00000000000000000000 
 wing.strut.chord = 0.00000000000000000000 
-wing.strut.y_root = 0.00000000000000000000 
 wing.strut.box_width_to_chord = 0.50000000000000000000 
 wing.strut.web_to_box_height = 0.75000000000000000000 
 wing.strut.end_fixity_K = 1.00000000000000000000 

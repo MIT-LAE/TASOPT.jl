@@ -631,7 +631,8 @@ readwing(x) = read_input(x, wing_i, dwing)
 
         readstrut(x) = read_input(x, strut_i, dwing["Strut"])
         wing.strut.z = Distance(readstrut("z_fuselage_attach"))
-        wing.strut.y_root = Distance(readstrut("y_fuselage_attach"))
+        haskey(strut_i, "y_fuselage_attach") &&
+            @info "The [Wing.Strut] key \"y_fuselage_attach\" is ignored: the strut root is at the wing root station (center_box_halfspan)."
         wing.strut.thickness_to_chord = readstrut("thickness_to_chord")
         wing.strut.local_velocity_ratio = readstrut("local_velocity_ratio")
         wing.strut.box_width_to_chord = readstrut("box_width_to_chord")
@@ -658,6 +659,8 @@ readwing(x) = read_input(x, wing_i, dwing)
         end
         wing.strut.spanload_exponent = get(strut_i, "spanload_exponent",
                                            get(dstrut, "spanload_exponent", wing.strut.spanload_exponent))
+        wing.strut.spanload_exponent > 0.0 ||
+            error("Input error: \"spanload_exponent\" = $(wing.strut.spanload_exponent) must be above 0.")
         wing.strut.min_cap_thickness = Distance(get(strut_i, "min_cap_thickness",
                                                     get(dstrut, "min_cap_thickness", wing.strut.min_cap_thickness)))
         wing.strut.min_web_thickness = Distance(get(strut_i, "min_web_thickness",

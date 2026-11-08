@@ -570,7 +570,7 @@ end # strut_lift_on_strut
     strut_wing_end_lift(wing, F_strut)
 
 Returns the part of the strut lift `F_strut` that loads the wing, as a point load at the attachment. The strut has
-pinned ends and its loading ``(1-\\xi^2)^p`` has the centroid fraction ``\\xi_{cp}`` of
+pinned ends and its loading ``(4\\xi(1-\\xi))^p`` is symmetric, with the centroid fraction ``\\xi_{cp} = 1/2`` of
 [`strut_lift_centroid_fraction`](@ref) from the fuselage end, so ``F_{wing} = \\xi_{cp} F_{strut}``.
 
 !!! details "🔃 Inputs and Outputs"
