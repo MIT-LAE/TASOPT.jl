@@ -44,7 +44,7 @@ $TYPEDFIELDS
     lift_fraction_strut_to_total::Float64 = 0.25
     """Strut spanload exponent ``p`` (``p > 0``), ``\\Gamma \\propto (4\\xi(1-\\xi))^p`` with ``\\xi`` = 0 at fuselage, 1 at wing (``p = 0.5`` is elliptic-like)"""
     spanload_exponent::Float64 = 0.5
-    """Fuselage x of the strut attach [m]. NaN follows the wing box, `wing.layout.box_x`"""
+    """Fuselage x of the strut attach [m]. NaN follows the wing box, `wing.layout.box_x`. Also sets the strut streamwise run and sweep"""
     x_strut_attach::Float64 = NaN
 
     # Computed geometry

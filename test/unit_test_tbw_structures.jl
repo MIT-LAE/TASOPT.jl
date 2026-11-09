@@ -135,6 +135,16 @@ function sized_jury_aircraft(config, eta_strut = 0.5)
     end
 end
 
+# The sized `sized_jury_aircraft` (or `size_braced`) with the strut attach moved 3 m aft of its wing box, sized again
+function sized_attach_aft_aircraft(config)
+    return sized_once((:attach_aft, config)) do
+        base = config == "strut_braced" ? sized_braced_aircraft() : sized_jury_aircraft(config, 0.3)
+        ac = deepcopy(base)
+        ac.wing.strut.x_strut_attach = base.wing.layout.box_x + 3.0
+        ac
+    end
+end
+
 # --- TOML input, defaults, and save and read round trips ---
 @testset "TBW wing configuration option" verbose=true begin
     ac_default = CoreLogging.with_logger(CoreLogging.NullLogger()) do
@@ -1305,6 +1315,30 @@ end
         @test strut.length ≈ length_3d rtol = 1e-6
     end
 
+    @testset "a strut attach aft of the wing box lengthens the strut run and reduces its planform sweep" begin
+        for config in ("strut_braced", "truss_braced")
+            ac = sized_attach_aft_aircraft(config)
+            wing, strut = ac.wing, ac.wing.strut
+            layout = wing.layout
+            dy = 0.5 * layout.span * (layout.ηs - layout.ηo)
+            dx = strut.x_strut_attach - layout.box_x # attach offset, final box_x
+            strut_run = dy * tand(layout.sweep) - dx # streamwise run of the strut
+            ls = sqrt(strut.z^2 + dy^2)
+            @test dx > 0
+            @test strut.length ≈ sqrt(ls^2 + strut_run^2) rtol = 1e-4
+            @test strut.cos_lambda ≈ ls / strut.length rtol = 1e-4
+            @test st.strut_sweep(wing) ≈ atand(strut_run / dy) rtol = 1e-4
+            @test st.strut_sweep(wing) < 0.5 * layout.sweep
+            @test strut.dxW ≈ strut.weight * (dx + dy * tand(layout.sweep)) / 2 rtol = 1e-4
+        end
+    end
+
+    @testset "with the strut attach at the wing box the strut sweep is the wing sweep" begin
+        ac = size_braced()
+        @test isnan(ac.wing.strut.x_strut_attach)
+        @test st.strut_sweep(ac.wing) ≈ ac.wing.layout.sweep rtol = 1e-6
+    end
+
     @testset "minimum gauges set the strut box when they are large" begin
         ac = size_braced(:large_gauges, ac -> (ac.wing.strut.lift_fraction_strut_to_total = 0.0; # box sizing, not strut lift
                                                ac.wing.strut.min_cap_thickness = 3.0e-2;
@@ -1425,6 +1459,16 @@ end
         jury, box = truss.wing.jury, recomputed_jury_box(truss)
         @test jury.weight ≈ box_member_weight(jury, box) rtol = 1e-6
         @test jury.dxW ≈ jury.weight * jury_dx_arm(truss) rtol = 1e-6
+    end
+
+    @testset "with the strut attach aft of the wing box the jury spans the attach offset as well as the height" begin
+        ac = sized_attach_aft_aircraft("truss_braced")
+        wing, strut, jury = ac.wing, ac.wing.strut, ac.wing.jury
+        layout = wing.layout
+        dy = 0.5 * layout.span * (layout.ηs - layout.ηo)
+        dx = strut.x_strut_attach - layout.box_x
+        @test jury.length ≈ (1 - jury.eta_strut) * sqrt(strut.z^2 + dx^2) rtol = 1e-4
+        @test jury.dxW ≈ jury.weight * (jury.eta_strut * dy * tand(layout.sweep) + 0.5 * dx * (1 - jury.eta_strut)) rtol = 1e-4
     end
 end
 

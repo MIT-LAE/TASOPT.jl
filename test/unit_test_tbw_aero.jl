@@ -897,6 +897,7 @@ end
         co_CMw1 = -0.5
         wing.strut.root_chord, wing.strut.chord, wing.strut.cos_lambda = 1.2, 0.8, 0.95
         wing.layout.spar_box_x_c = 0.4
+        wing.strut.x_strut_attach = NaN # attach at the wing box (the offset case is tested below)
         # Strut chord at the lift centroid (ξ = 1/2) of the linear taper
         c_cp = 1.2 + (0.8 - 1.2) * 0.5
         arm_hand = -tand(20.0) * 9.5 * 0.5 + (0.4 - 0.25) * c_cp * 0.95^2
@@ -918,6 +919,20 @@ end
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) ≈
               (1 - k) * co_CMw1 + k * arm_hand rtol = 1e-12
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, cantilever_config) === co_CMw1
+    end
+
+    @testset "Strut lift arm with the strut attach aft of the wing box" begin
+        ac = set_strut_moment_test_case!(load_braced_aircraft_quietly(), 0.5; spanload_exponent = 0.0)
+        wing = ac.wing
+        wing.strut.root_chord, wing.strut.chord, wing.strut.cos_lambda = 1.2, 0.8, 0.95
+        wing.layout.spar_box_x_c = 0.4
+        dx = 2.0 # the attach is 2 m aft of the wing box
+        wing.strut.x_strut_attach = wing.layout.box_x + dx
+        # The strut lift centroid is at the middle of the strut run from the attach: x = box_x + dx + (run)/2, with run = 9.5 tan(20) - dx
+        c_cp = 1.2 + (0.8 - 1.2) * 0.5
+        run = 9.5 * tand(20.0) - dx
+        arm_hand = -(dx + 0.5 * run) + (0.4 - 0.25) * c_cp * 0.95^2
+        @test TASOPT.strut_lift_arm(wing) ≈ arm_hand rtol = 1e-12
     end
 
     @testset "balance_aircraft! neutral point and centre of pressure" begin
@@ -1147,6 +1162,8 @@ end
             sizing_loads = ac.wing.sizing_loads
             printed(label) = printed_aero_value(text, Regex("^" * label * raw"\s*=\s*([-0-9.]+)", "m"))
             printed_word(label) = printed_geometry_word(text, Regex("^" * label * raw"\s*=\s*(\w+)", "m"))
+            # the planform sweep line of the Strut Layout block (the Wing Layout block also has a sweep line)
+            printed_strut_sweep() = printed_aero_value(text[first(findfirst("Strut Layout:", text)):end], r"^sweep\s*=\s*([-0-9.]+)"m)
 
             @test ac.options.has_strut == has_strut
 
@@ -1171,6 +1188,9 @@ end
                     @test strut.dihedral == 0.0
                     @test all(isnothing, printed.(strut_labels))
                     @test isnothing(printed_word("sizing case"))
+                end
+                if has_strut
+                    @test something(printed_strut_sweep(), NaN) ≈ TASOPT.structures.strut_sweep(ac.wing) atol = printing_tolerance
                 end
                 if has_jury
                     @test something(printed("l_jury"), NaN) ≈ jury.length atol = printing_tolerance

@@ -146,7 +146,8 @@ The lift acts at the centroid of the strut loading ([`strut_lift_centroid_fracti
 The box axis is unswept across the centre box and sweeps from the wing root station, so the sweep offset is measured
 from the root station (as in `wing_CM`). The chordwise term is the quarter-chord offset of the box axis,
 `(spar_box_x_c - 0.25) c_cp cos²Λ`, with the strut chord `c_cp` at the lift centroid (linear taper from `root_chord` to `chord`).
-The strut is assumed to lie under the swept wing box axis; the strut section pitching moment is zero (symmetric section).
+The strut lies along the wing box sweep from the wing root station, offset streamwise by the attach offset
+`strut.x_strut_attach - wing.layout.box_x` (0 if NaN); the lift centroid is at fraction `ξ_cp` of the streamwise run from the fuselage end. The strut section pitching moment is zero (symmetric section).
 """
 function strut_lift_arm(wing)
     strut = wing.strut
@@ -154,7 +155,8 @@ function strut_lift_arm(wing)
     y_root = 0.5 * wing.layout.root_span
     y_attach = 0.5 * wing.layout.break_span
     c_cp = strut.root_chord + (strut.chord - strut.root_chord) * ξ_cp
-    sweep_arm = -tand(wing.layout.sweep) * ξ_cp * (y_attach - y_root)
+    dx = isnan(strut.x_strut_attach) ? 0.0 : strut.x_strut_attach - wing.layout.box_x # attach offset from the box
+    sweep_arm = -(dx + ξ_cp * (tand(wing.layout.sweep) * (y_attach - y_root) - dx))
     chord_arm = (wing.layout.spar_box_x_c - 0.25) * c_cp * strut.cos_lambda^2
     return sweep_arm + chord_arm
 end

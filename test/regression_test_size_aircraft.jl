@@ -214,25 +214,27 @@ end
 
     @testset "Headline numbers" begin
         @test ac.options.opt_fuel == FuelType.JetA
-        @test ac.parg[igWMTO] ≈ 824001.2629941807 rtol=1e-4
-        @test ac.wing.weight ≈ 57743.722587894765 rtol=1e-4
-        @test ac.wing.strut.weight ≈ 26382.796051670055 rtol=1e-4
-        @test ac.parg[igWfuel] ≈ 229827.36299765212 rtol=1e-4
-        @test ac.parm[imPFEI] ≈ 0.9063352672087567 rtol=1e-4
-        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.334258934180458 rtol=1e-4
+        @test ac.parg[igWMTO] ≈ 807373.6511291902 rtol=1e-4
+        @test ac.wing.weight ≈ 55956.15824736599 rtol=1e-4
+        @test ac.wing.strut.weight ≈ 18617.20730567429 rtol=1e-4
+        @test ac.parg[igWfuel] ≈ 226756.75664593448 rtol=1e-4
+        @test ac.parm[imPFEI] ≈ 0.8942261829707749 rtol=1e-4
+        @test ac.para[iaCL, ipcruise1, 1] / ac.para[iaCD, ipcruise1, 1] ≈ 17.20733997080161 rtol=1e-4
     end
 
     @testset "Strut" begin
-        @test ac.wing.strut.area ≈ 0.022746757544568865 rtol=1e-4
-        @test ac.wing.strut.axial_force ≈ 2.228467666835765e6 rtol=1e-4
-        @test ac.fuselage.strut_attach.W ≈ 1582.9677631002032 rtol=1e-4
-        test_strut_cases(ac; strut_criterion = :buckling,
+        @test ac.wing.strut.area ≈ 0.016229505661328865 rtol=1e-4
+        @test ac.wing.jury.eta_strut == 0.5
+        @test ac.wing.strut.x_strut_attach ≈ 17.1123 rtol=1e-12
+        @test ac.wing.strut.axial_force ≈ 2.1531671085405173e6 rtol=1e-4
+        @test ac.fuselage.strut_attach.W ≈ 1117.0324383404572 rtol=1e-4
+        test_strut_cases(ac; strut_criterion = :tension,
                          governing_root = :taxi, governing_break = :pullup,
                          governing_strut = :pullup, governing_strut_compression = :pushover,
                          infeasibilities = Set([:wing_fuel_volume_exceeded]))
     end
 
-    test_ac_off_design(ac, 1.065626762119952, 150122.39017137088, 715605.2582678995)
+    test_ac_off_design(ac, 1.0513250520359694, 148107.606968034, 700033.4695512897)
 end
 
 @testset "TBW LCH4 smoke" verbose=true begin

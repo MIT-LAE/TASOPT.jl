@@ -399,6 +399,26 @@ strut_buckling_length(strut_length, eta_strut) = max(eta_strut, 1.0 - eta_strut)
 strut_buckling_length(strut_length, ::Nothing) = strut_length
 
 """
+    strut_attach_offset(wing)
+
+Streamwise offset [m] of the strut fuselage end from the wing box: `wing.strut.x_strut_attach - wing.layout.box_x`,
+or 0 if the attach is NaN (the attach follows the wing box).
+"""
+strut_attach_offset(wing) = isnan(wing.strut.x_strut_attach) ? 0.0 : wing.strut.x_strut_attach - wing.layout.box_x
+
+"""
+    strut_sweep(wing)
+
+Planform sweep [deg] of the strut, signed and positive aft: `atand(Δx / ΔY)`, where ``Δx = ΔY \tan Λ - dx`` is the streamwise
+run of the strut, ``ΔY`` the spanwise run from the fuselage end to the break and `dx` the [`strut_attach_offset`](@ref).
+Equals the wing sweep when the attach is NaN.
+"""
+function strut_sweep(wing)
+    ΔY = 0.5 * wing.layout.break_span - 0.5 * wing.layout.root_span
+    return atand((ΔY * tand(wing.layout.sweep) - strut_attach_offset(wing)) / ΔY)
+end
+
+"""
 Jury strut axial load as a fraction of the compression of the main strut [-].
 Assumed bracing-force fraction, not an input.
 """
@@ -409,13 +429,13 @@ const jury_load_fraction = 0.02
 
 Sizes the vertical jury strut `wing.jury` of a truss-braced wing: geometry, axial force, area, buckling load,
 weight and weight moment. The jury only restrains the main strut, so its load is `jury_load_fraction` times the
-compression of the main strut (`wing.strut.axial_force_compression`). Its length is ``z (1 - \\eta_{strut})`` and its wing
+compression of the main strut (`wing.strut.axial_force_compression`). Its length is ``(1 - \\eta_{strut}) \\sqrt{z^2 + \\Delta x_{attach}^2}`` and its wing
 attachment is ``\\eta_o + \\eta_{strut} (\\eta_s - \\eta_o)``. It is a pinned (``K = 1``) box sized by
 [`size_member_box`](@ref) for this compression, with no tension or shear. Its chord is `jury.chord_to_strut_chord` times the
 strut chord at the jury attachment; its box height is `jury.thickness_to_chord` times the chord and the other box
 ratios are those of the main strut. The weight includes
 ``1 + f_{added}`` (`jury.weight_frac_added`) and `jury.dxW` is the weight times the streamwise offset
-``0.5\\,b\\,(\\eta_{wing} - \\eta_o) \\tan\\Lambda`` of the attachment.
+``\\eta_{strut}\\,\\Delta Y \\tan\\Lambda + \\tfrac12 \\Delta x_{attach} (1 - \\eta_{strut})`` of the jury, with ``\\Delta x_{attach}`` the [`strut_attach_offset`](@ref).
 
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
@@ -430,7 +450,8 @@ function size_jury!(wing, etao, etas, sigfac, sinL, cosL; n_wings = 2.0)
     jury, strut = wing.jury, wing.strut
 
     jury.eta_wing = etao + jury.eta_strut * (etas - etao)
-    jury.length = strut.z * (1.0 - jury.eta_strut) # assumes wing and strut share sweep and plane; 3D effects missing
+    dx = strut_attach_offset(wing)
+    jury.length = (1.0 - jury.eta_strut) * sqrt(strut.z^2 + dx^2) # jury spans the remaining streamwise and vertical run of the strut
     jury.axial_force = -jury_load_fraction * abs(strut.axial_force_compression)
 
     jury.chord = jury.chord_to_strut_chord * (strut.root_chord + (strut.chord - strut.root_chord) * jury.eta_strut) # strut chord at the jury attachment
@@ -444,7 +465,8 @@ function size_jury!(wing, etao, etas, sigfac, sinL, cosL; n_wings = 2.0)
 
     jury.weight = n_wings * gee * jury.length * (jury.caps.material.ρ * box.area_caps + jury.webs.material.ρ * box.area_webs) *
                   (1.0 + jury.weight_frac_added)
-    jury.dxW = jury.weight * 0.5 * wing.layout.span * (jury.eta_wing - etao) * sinL / cosL
+    # jury attaches to the strut point at fraction eta_strut, so its streamwise centroid is the wing end of that run plus half the rest
+    jury.dxW = jury.weight * (jury.eta_strut * 0.5 * wing.layout.span * (etas - etao) * sinL / cosL + 0.5 * dx * (1.0 - jury.eta_strut))
     return nothing
 end # size_jury!
 
@@ -1154,7 +1176,10 @@ function wing_weights!(wing, po, gammat, gammas,
         end
 
         #----- total strut length, tension
-        lsp = sqrt(wing.strut.z^2 + (0.5*wing.layout.span*(etas-etao)/cosL)^2)
+        dx = strut_attach_offset(wing)
+        ΔY = 0.5*wing.layout.span*(etas-etao)
+        ΔX = ΔY*sinL/cosL - dx # streamwise run of the strut, positive aft
+        lsp = sqrt(wing.strut.z^2 + ΔY^2 + ΔX^2)
         Tstrutp = Tstrut*lsp/ls
         wing.strut.cos_lambda = ls/lsp
         wing.strut.dihedral = atan(wing.strut.z/(0.5*wing.layout.span*(etas-etao))) # in-plane strut angle
@@ -1216,7 +1241,7 @@ function wing_weights!(wing, po, gammat, gammas,
         mean_to_wing_end_chord = (1.0 + 1.0/strut.taper_ratio) / 2
         strut.weight = n_wings*gee*lsp*(strut.caps.material.ρ*box.area_caps + strut.webs.material.ρ*box.area_webs) *
                        mean_to_wing_end_chord * (1.0 + strut.weight_frac_added)
-        wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.span*(etas-etao) * sinL/cosL
+        wing.strut.dxW = wing.strut.weight * 0.5*(dx + ΔY*sinL/cosL)
         if has_strut_fuel
             # The whole internal volume of the strut box is tank; `weight_frac_added` already covers what the main wing covers
             # with `fwadd`, so there is no extra tank fraction. Perpendicular chord^2 is averaged over the linear taper of the strut.

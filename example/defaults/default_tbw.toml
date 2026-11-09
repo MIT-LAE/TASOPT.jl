@@ -72,6 +72,7 @@
     fuel_type       = "Jet-A" # Choices are "Jet-A", "LH2", "CH4", "C2H6", "C2H4", "C2H5OH"
     fuel_in_wing    = true # Is fuel stored in wings?
     fuel_in_wingcen = true # Is fuel stored in wing center box?
+    fuel_in_strut = false # Is fuel stored in the strut box? Needs fuel in wing and a braced wing
     fuel_usability_factor = 0.90 # fraction of max fuel volume that is usable
 
     fuel_temp = 280.0
@@ -251,24 +252,24 @@
 [Wing.Strut]
     #Only used if `wing_config` is not "cantilever"
     z_fuselage_attach       = "120 in" # TBW: vertical distance from the wing box to the strut fuselage attachment, on the lower fuselage
-    y_fuselage_attach       = "0.0 m" # strut y position at the fuselage attachment
+    x_strut_attach          = "17.1123 m" # fuselage x of the strut attach; the baseline sized wing-box x. Sets the strut streamwise run and sweep (NaN/absent follows the wing box)
     thickness_to_chord      = 0.125 # strut thickness to chord; best design of the airfoil-database strut sweep (analysis/parameter_sweep/results/strut_sweep_airfoil_db_refine.csv) that stays inside the database (t/c 0.09-0.145)
     local_velocity_ratio    = 1.0 # V_strut/V_freestream
     box_width_to_chord      = 0.5 # strut box width to chord ratio
     web_to_box_height       = 0.75 # strut box web height to box height ratio
     end_fixity_K            = 1.0 # Euler effective-length factor of the strut end fixity
     chord_to_wing_chord     = 0.6 # strut chord as a fraction of the wing chord at the strut attachment (placeholder)
-    strut_taper_ratio       = 1.0 # strut chord at the wing end divided by the chord at the fuselage end, 0 < ratio <= 1 (1 is an untapered strut); linear taper whose chord centroid matches the centroid of the (1-xi^2)^0.5 strut loading (0.376 for 4/(3 pi) = 0.424), rounded
+    strut_taper_ratio       = 1.0 # strut chord at the wing end divided by the chord at the fuselage end, 0 < ratio <= 1 (1 is an untapered strut); linear taper whose chord centroid matches the centroid of the symmetric strut loading (1/2 of the strut span)
     min_cap_thickness       = "1.5 mm" # minimum strut cap thickness (same as the braced wing minimum cap gauge)
     min_web_thickness       = "1.0 mm" # minimum strut web thickness (same as the braced wing minimum web gauge)
     weight_frac_added       = 0.60 # added weight fraction for fairings and fittings (placeholder)
     lift_fraction_strut_to_total = 0.20 # share of the wing + strut lift carried by both struts, L_strut/(L_wing+L_strut); 0 = strut carries no lift. Best design of the airfoil-database strut sweep (see thickness_to_chord)
-    spanload_exponent       = 0.5 # strut lift model input: exponent p of the strut circulation shape (1-xi^2)^p, xi = 0 at the fuselage end and 1 at the wing end (0.0 = constant) (0.5 = elliptic-like)
+    spanload_exponent       = 0.5 # strut lift model input: exponent p of the strut circulation shape (4 xi (1-xi))^p, xi = 0 at the fuselage end and 1 at the wing end (p > 0; 0.5 = elliptic-like)
 
 [Wing.Jury]
     # Vertical jury strut. Only used if `wing_config` is "truss_braced"
     # A coarse scan of eta_strut from 0.05 to 0.95 in steps of 0.05 (truss_braced, panel break eta_s = 0.6, 0.7, 0.75) gives the minimum WMTO and PFEI at 0.5 in every case. The optimum is a sharp V because the main-strut buckling length is max(eta_strut, 1-eta_strut) times the strut length, and the jury weight is negligible (0.02-0.1 % of the wing structure), so the jury position is set by that symmetry only.
-    eta_strut = 0.75 # position of the jury along the strut as a fraction of the strut length, from the fuselage end
+    eta_strut = 0.5 # position of the jury along the strut as a fraction of the strut length, from the fuselage end
     weight_frac_added = 0.60 # added weight fraction for fairings and fittings of the jury (placeholder - same as for the strut)
     chord_to_strut_chord = 0.5 # PLACEHOLDER: jury strut chord as a fraction of the main strut chord
     thickness_to_chord = 0.10 # jury strut thickness to chord (thin, unswept, no lift; inside the airfoil database t/c range 0.09-0.145)
