@@ -85,9 +85,9 @@ $TYPEDFIELDS
     reaction_share::Float64 = 0
 
     # Aerodynamics
-    """Lift coefficient of both struts, referenced to wing area"""
+    """Lift coefficient of both struts, referenced to wing area, at the start of cruise of the design mission (set by `size_aircraft!`)"""
     CL::Float64 = 0
-    """Strut lift over total lift"""
+    """Strut lift over total lift at the start of cruise of the design mission (set by `size_aircraft!`)"""
     lift_fraction::Float64 = 0
 
     # Weights

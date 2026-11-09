@@ -99,8 +99,8 @@ function aero(ac::aircraft; io = stdout)
     @printf(io, "CDBLIw  = %6.5f\n", para[iadCDBLIw, ipcruise1])
 
     if has_strut
-        @printf(io, "CLstrut = %6.5f\n", wing.strut.CL)
-        @printf(io, "Strut lift fraction = %6.5f\n", wing.strut.lift_fraction)
+        @printf(io, "CLstrut = %6.5f\n", para[iaCLstrut, ipcruise1])
+        @printf(io, "Strut lift fraction = %6.5f\n", para[iaCLstrut, ipcruise1] / para[iaCL, ipcruise1])
     end
 
     printstyled(io, "\nDrag Areas = CD × Sref:\n", color=:bold)

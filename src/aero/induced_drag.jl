@@ -32,8 +32,6 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
         para[iaCDi] = 0.
         para[iaspaneff] = 1.0
         para[iaCLstrut] = 0.0
-        wing.strut.CL = 0.0
-        wing.strut.lift_fraction = 0.0
         return
     end
 
@@ -64,8 +62,6 @@ function induced_drag!(para, ac, trefftz_config::TrefftzPlaneConfig)
     #---- strut lift
     CL_strut = strut_lift_share(wing, trefftz_config) * (CL - CLhtail)
     para[iaCLstrut] = CL_strut
-    wing.strut.CL = CL_strut
-    wing.strut.lift_fraction = CL_strut / CL
 
     CLsurfsp[1] = CL - CLhtail - CL_strut
 
@@ -147,15 +143,20 @@ strut_lift_centroid_fraction(p) = 0.5
 Streamwise offset of the strut lift centre from the wing box [m], with the sign convention of the wing lift arm
 `co * CMw1` in [`balance_aircraft!`](@ref): the lift acts at `xwbox - arm`.
 The lift acts at the centroid of the strut loading ([`strut_lift_centroid_fraction`](@ref)) between the strut root and the wing break.
-The strut is assumed to lie under the swept wing box axis; the strut section pitching moment is neglected.
+The box axis is unswept across the centre box and sweeps from the wing root station, so the sweep offset is measured
+from the root station (as in `wing_CM`). The chordwise term is the quarter-chord offset of the box axis,
+`(spar_box_x_c - 0.25) c_cp cos²Λ`, with the strut chord `c_cp` at the lift centroid (linear taper from `root_chord` to `chord`).
+The strut is assumed to lie under the swept wing box axis; the strut section pitching moment is zero (symmetric section).
 """
 function strut_lift_arm(wing)
     strut = wing.strut
     ξ_cp = strut_lift_centroid_fraction(strut.spanload_exponent)
     y_root = 0.5 * wing.layout.root_span
     y_attach = 0.5 * wing.layout.break_span
-    y_cp = y_root + (y_attach - y_root) * ξ_cp
-    return -tand(wing.layout.sweep) * y_cp
+    c_cp = strut.root_chord + (strut.chord - strut.root_chord) * ξ_cp
+    sweep_arm = -tand(wing.layout.sweep) * ξ_cp * (y_attach - y_root)
+    chord_arm = (wing.layout.spar_box_x_c - 0.25) * c_cp * strut.cos_lambda^2
+    return sweep_arm + chord_arm
 end
 
 """

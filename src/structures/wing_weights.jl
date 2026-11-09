@@ -1201,8 +1201,9 @@ function wing_weights!(wing, po, gammat, gammas,
         strut.bending_moment = q_perp * buckling_length^2 / 8
         strut.shear_load = (has_jury ? abs(wing.jury.axial_force) : 0.0) + V_transverse
 
+        # box is sized on the chord perpendicular to the strut axis, as the wing box is (c cosΛ)
         box = size_member_box(strut.caps, strut.webs;
-            chord = strut.chord, height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
+            chord = strut.chord * strut.cos_lambda, height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
             web_to_box_height = strut.web_to_box_height, tension = Tstrutp, compression = strut.axial_force_compression,
             buckling_length = buckling_length, K = strut.end_fixity_K,
             shear_load = strut.shear_load, bending_moment = strut.bending_moment, sigfac = sigfac,
@@ -1218,9 +1219,9 @@ function wing_weights!(wing, po, gammat, gammas,
         wing.strut.dxW = wing.strut.weight * 0.25*wing.layout.span*(etas-etao) * sinL/cosL
         if has_strut_fuel
             # The whole internal volume of the strut box is tank; `weight_frac_added` already covers what the main wing covers
-            # with `fwadd`, so there is no extra tank fraction. Chord^2 is averaged over the linear taper of the strut.
+            # with `fwadd`, so there is no extra tank fraction. Perpendicular chord^2 is averaged over the linear taper of the strut.
             Abfuelstrut = calc_sparbox_internal_area(strut.box_width_to_chord, strut.thickness_to_chord, box.tbcap, box.tbweb)
-            mean_chord_squared = (strut.chord^2 + strut.chord*strut.root_chord + strut.root_chord^2) / 3
+            mean_chord_squared = (strut.chord^2 + strut.chord*strut.root_chord + strut.root_chord^2) / 3 * strut.cos_lambda^2
             strut_fuel_capacity = n_wings*rhofuel*gee*Abfuelstrut*mean_chord_squared*lsp
         end
         strut.fuel_capacity = strut_fuel_capacity

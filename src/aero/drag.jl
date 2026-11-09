@@ -204,9 +204,9 @@ function aircraft_drag!(ac, imission::Int, ip::Int, computes_wing_direct::Bool; 
       if ac.options.has_strut
             strut = wing.strut
             rVstrut = strut.local_velocity_ratio
-            # Main strut section cl from the lift of both struts on their effective area
+            # Main strut section cl from the lift of both struts on their effective area S cosΓ (area seen from above)
             if strut.S > 0.0 && rVstrut > 0.0
-                  cl_strut = CL_strut * wing.layout.S / (strut.S * cos(strut.dihedral)^2 * rVstrut^2)
+                  cl_strut = CL_strut * wing.layout.S / (strut.S * cos(strut.dihedral) * rVstrut^2)
             else
                   cl_strut = 0.0
             end

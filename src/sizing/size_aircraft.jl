@@ -435,7 +435,7 @@ function _size_aircraft!(ac; itermax=35,
         # Calculate strut properties
         if options.has_strut
             # Both struts at the mean chord
-            wing.strut.S = (wing.strut.root_chord + wing.strut.chord) * lstrutp
+            wing.strut.S = (wing.strut.root_chord + wing.strut.chord) * lstrutp * wing.strut.cos_lambda
         end
 
         # -------------------------------

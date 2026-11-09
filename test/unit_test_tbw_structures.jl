@@ -55,7 +55,7 @@ function recomputed_strut_box(ac)
     wing, strut = ac.wing, ac.wing.strut
     has_jury = ac.options.opt_wing_config == WingConfig.TrussBraced
     return TASOPT.structures.size_member_box(strut.caps, strut.webs;
-        chord = strut.chord_to_wing_chord * wing.layout.root_chord * wing.inboard.λ,
+        chord = strut.chord_to_wing_chord * wing.layout.root_chord * wing.inboard.λ * strut.cos_lambda,
         height_to_chord = strut.thickness_to_chord, width_to_chord = strut.box_width_to_chord,
         web_to_box_height = strut.web_to_box_height,
         tension = strut.axial_force, compression = strut.axial_force_compression,
@@ -1183,7 +1183,7 @@ end
             strut = ac.wing.strut
             @test strut.chord_to_wing_chord == 0.5
             @test strut.chord ≈ strut.chord_to_wing_chord * wing_chord_at_strut(ac) rtol = 1e-12
-            @test strut.S ≈ 2 * strut.chord * strut.length rtol = 1e-10
+            @test strut.S ≈ 2 * strut.chord * strut.length * strut.cos_lambda rtol = 1e-10
             # without taper the chord at the fuselage end is the chord at the wing end
             @test strut.taper_ratio == 1.0
             @test strut.root_chord == strut.chord
@@ -1307,13 +1307,13 @@ end
 
     @testset "minimum gauges set the strut box when they are large" begin
         ac = size_braced(:large_gauges, ac -> (ac.wing.strut.lift_fraction_strut_to_total = 0.0; # box sizing, not strut lift
-                                               ac.wing.strut.min_cap_thickness = 2.0e-2;
-                                               ac.wing.strut.min_web_thickness = 2.0e-2))
+                                               ac.wing.strut.min_cap_thickness = 3.0e-2;
+                                               ac.wing.strut.min_web_thickness = 3.0e-2))
         strut = ac.wing.strut
         hw = strut.web_to_box_height * strut.thickness_to_chord
         @test strut.sizing_criterion === :gauge
         # the caps and the webs are at their gauge: area = 2 t w c + 2 t hw c
-        @test strut.area ≈ 2 * 2.0e-2 * strut.chord * (strut.box_width_to_chord + hw) rtol = 1e-6
+        @test strut.area ≈ 2 * 3.0e-2 * strut.chord * strut.cos_lambda * (strut.box_width_to_chord + hw) rtol = 1e-6
         @test strut.area ≈ recomputed_strut_box(ac).area rtol = 1e-6
     end
 end
@@ -1367,7 +1367,7 @@ end
         ac = sized_with_strut_fuel()
         strut, box = ac.wing.strut, recomputed_strut_box(ac)
         area = st.calc_sparbox_internal_area(strut.box_width_to_chord, strut.thickness_to_chord, box.tbcap, box.tbweb)
-        mean_chord_squared = (strut.chord^2 + strut.chord * strut.root_chord + strut.root_chord^2) / 3 # linear taper
+        mean_chord_squared = (strut.chord^2 + strut.chord * strut.root_chord + strut.root_chord^2) / 3 * strut.cos_lambda^2 # linear taper, perpendicular to the strut axis
         @test ac.options.has_strut_fuel
         @test strut.fuel_capacity > 0
         @test strut.fuel_capacity ≈ 2 * ac.parg[igrhofuel] * TASOPT.gee * area * mean_chord_squared * strut.length rtol = 1e-6

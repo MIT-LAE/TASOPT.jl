@@ -14,6 +14,16 @@ end
 load_braced_aircraft_quietly() =
     load_aircraft_quietly(joinpath(TASOPT.__TASOPTroot__, "../example/defaults/default_tbw.toml"))
 
+"Braced aircraft with MEDIUM wing and tail panels and `n_strut_panels` strut panels. A new aircraft, as its wake system has a type parameter set by the point count."
+function braced_aircraft_with_strut_panels(n_strut_panels)
+    ac = load_braced_aircraft_quietly()
+    options = deepcopy(ac.options)
+    options.trefftz_config = trefftz_aero.TrefftzPlaneConfig(trefftz_aero.SurfaceDiscretization(40, 12, 6),
+        trefftz_aero.SurfaceDiscretization(20, 0, 4); strut_panels = trefftz_aero.SurfaceDiscretization(n_strut_panels, 0, 0))
+    return TASOPT.aircraft(ac.name, ac.description, options, ac.parg, ac.parm, ac.para, ac.pare, ac.is_sized,
+        ac.fuselage, ac.fuse_tank, ac.wing, ac.htail, ac.vtail, ac.engine, ac.landing_gear)
+end
+
 "Fixed wing/tail geometry and loading (as in `unit_test_trefftz.jl`) on an unsized aircraft; returns the `para` read by `induced_drag!`."
 function set_trefftz_test_case!(ac)
     wing, htail = ac.wing, ac.htail
@@ -105,13 +115,13 @@ end
 
 """
 Streamwise section lift coefficient of the main strut: the lift of both struts (`lift_fraction_strut_to_total` of the wing and
-strut lift) over the effective area `S cos²(dihedral)`, at the local velocity ratio.
+strut lift) over the effective area `S cos(dihedral)`, at the local velocity ratio.
 """
 function expected_strut_section_cl(ac, para)
     wing, strut = ac.wing, ac.wing.strut
     CLhtail = para[iaCLh] * ac.htail.layout.S / wing.layout.S
     CL_strut = strut.lift_fraction_strut_to_total * (para[iaCL] - CLhtail)
-    return CL_strut * wing.layout.S / (strut.S * cos(strut.dihedral)^2 * strut.local_velocity_ratio^2)
+    return CL_strut * wing.layout.S / (strut.S * cos(strut.dihedral) * strut.local_velocity_ratio^2)
 end
 
 "Airfoil database section drag of the main strut (`strut_section_cd` result); the Reynolds number uses the mean of the end chords."
@@ -484,8 +494,6 @@ end
         @testset "Strut lift coefficient" begin
             CL_strut = lift_fraction_strut_to_total * (CL - CLhtail)
             @test CL_strut > 0.0
-            @test strut.CL ≈ CL_strut rtol = 1e-12
-            @test strut.lift_fraction ≈ CL_strut / CL rtol = 1e-12
 
             # The strut takes lift from the wing; the total stays CL
             strut_lift = trefftz_surface_lift(ac, i_first, i_last)
@@ -496,13 +504,15 @@ end
             @test wing_lift ≈ CL - CLhtail - CL_strut rtol = 1e-10
             @test wing_lift + tail_lift + strut_lift ≈ CL rtol = 1e-10
 
-            # Stored in para, and cleared at zero lift
+            # Stored in para, and cleared at zero lift; the strut summary fields are not written by induced_drag!
             para = set_trefftz_test_case!(ac)
             trefftz_aero.induced_drag!(para, ac, config)
-            @test para[iaCLstrut] == strut.CL > 0.0
+            @test para[iaCLstrut] ≈ CL_strut rtol = 1e-12
+            @test (strut.CL, strut.lift_fraction) == (0.0, 0.0)
             para[iaCL] = 0.0
             trefftz_aero.induced_drag!(para, ac, config)
-            @test (strut.CL, strut.lift_fraction, para[iaCLstrut]) == (0.0, 0.0, 0.0)
+            @test para[iaCLstrut] == 0.0
+            @test (strut.CL, strut.lift_fraction) == (0.0, 0.0)
         end
 
         @testset "Strut circulation shape" begin
@@ -579,8 +589,8 @@ end
             strut, air = ac.wing.strut, ac.wing.airsection
             rV = strut.local_velocity_ratio
 
-            # Both struts carry 20% of the wing and strut lift, over the area S cos²(dihedral), at the local velocity
-            cl_strut = 0.20 * (1.2 - 0.05 * 25.0 / 125.0) * 125.0 / (60.0 * cos(0.3)^2 * rV^2)
+            # Both struts carry 20% of the wing and strut lift, over the area S cos(dihedral), at the local velocity
+            cl_strut = 0.20 * (1.2 - 0.05 * 25.0 / 125.0) * 125.0 / (60.0 * cos(0.3) * rV^2)
             @test expected_strut_section_cl(ac, para) ≈ cl_strut rtol = 1e-14
             section = trefftz_aero.strut_section_cd(cl_strut, strut.thickness_to_chord, para[iaMach] * rV, strut.cos_lambda,
                 para[iaReunit] * rV * strut.chord, para[iaaRexp], para[iafexcdw], air)
@@ -885,6 +895,11 @@ end
         ac = set_strut_moment_test_case!(load_braced_aircraft_quietly(), 0.5; spanload_exponent = 0.0)
         wing, config = ac.wing, ac.options.trefftz_config
         co_CMw1 = -0.5
+        wing.strut.root_chord, wing.strut.chord, wing.strut.cos_lambda = 1.2, 0.8, 0.95
+        wing.layout.spar_box_x_c = 0.4
+        # Strut chord at the lift centroid (ξ = 1/2) of the linear taper
+        c_cp = 1.2 + (0.8 - 1.2) * 0.5
+        arm_hand = -tand(20.0) * 9.5 * 0.5 + (0.4 - 0.25) * c_cp * 0.95^2
 
         k = 0.5
         cantilever_config = load_aircraft_quietly().options.trefftz_config
@@ -893,7 +908,7 @@ end
         # Lift centroid between strut root (1 m) and wing attachment (10.5 m): the centroid of the symmetric loading is at 1/2 for every p > 0
         for p in (0.5, 1.0, 2.0)
             wing.strut.spanload_exponent = p
-            @test TASOPT.strut_lift_arm(wing) ≈ -tand(20.0) * (1.0 + 9.5 * 0.5) rtol = 1e-12
+            @test TASOPT.strut_lift_arm(wing) ≈ arm_hand rtol = 1e-12
         end
         @test TASOPT.strut_lift_centroid_fraction(0.5) == 0.5
 
@@ -901,7 +916,7 @@ end
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) === co_CMw1
         wing.strut.lift_fraction_strut_to_total = 0.5
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, config) ≈
-              (1 - k) * co_CMw1 + k * (-tand(20.0) * (1.0 + 9.5 * 0.5)) rtol = 1e-12
+              (1 - k) * co_CMw1 + k * arm_hand rtol = 1e-12
         @test TASOPT.strut_blended_lift_arm(co_CMw1, wing, cantilever_config) === co_CMw1
     end
 
