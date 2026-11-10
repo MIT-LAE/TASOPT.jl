@@ -169,7 +169,26 @@ exitlimit = readmis("exit_limit") #Maximum number of pax that could fit in cabin
 parm[imWperpax, :] .= Wpax
 parm[imWpay, :] .= payload
 parg[igWpaymax] = maxpay 
-parg[igfreserve] = readmis("fuel_reserves")
+reserve_mode = get(mis, "fuel_reserve_mode", "fraction")
+
+if reserve_mode == "fraction"
+    parg[igfreserve] = readmis("fuel_reserves")
+
+elseif reserve_mode == "holding"
+    t_hold  = Times(readmis("reserve_hold_time"))    # → seconds
+    V_EAS   = Speed(readmis("reserve_hold_KIAS"))    # → m/s  (EAS ≈ KIAS at low alt)
+    h_hold  = Distance(readmis("reserve_hold_alt"))  # → metres
+
+    # Store holding parameters; EAS→TAS conversion done in mission_iteration
+    # when local ISA density is known.  imVhold carries EAS [m/s].
+    parg[igfreserve] = -1.0   # sentinel: "compute from holding parameters"
+    parm[imThold, :] .= t_hold
+    parm[imVhold, :] .= V_EAS
+    parm[imhhold, :] .= h_hold
+
+else
+    error("Unknown fuel_reserve_mode: \"$reserve_mode\". Use \"fraction\" or \"holding\".")
+end
 parg[igVne] = Speed(readmis("Vne"))
 parg[igNlift] = readmis("Nlift")
 

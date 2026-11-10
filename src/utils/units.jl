@@ -147,7 +147,14 @@ end
 
 #Time
 const _convSItime = Dict("s"=>1.0,
+                        "sec"=>1.0,
+                        "min"=>60.0,
+                        "mins"=>60.0,
                         "h"=>3600.0,
+                        "hr"=>3600.0,
+                        "hrs"=>3600.0,
+                        "hour"=>3600.0,
+                        "hours"=>3600.0,
                         "days"=>86400.0)
 
 function convertTime(value::Float64, units_in::AbstractString="s", units_out="s")
