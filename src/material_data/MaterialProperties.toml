@@ -1,5 +1,7 @@
 # Default Material Properties for commonly used materials in TASOPT
 # All units are assumed to be in SI units
+# The [CF-*] / [CFRP-*] composite entries at the end of this file have their laminate constants
+# reproduced by docs/src/cryo_tank/scripts/laminate_CLT.py (see the CFRP section header below).
 [TASOPT-Al]
     description = "Aluminium used in default TASOPT models"
     density = 2700.0 #kg/m3
@@ -143,7 +145,7 @@ density and 12% higher modulus, as well as other improved properties """
 
     source = "https://ntrs.nasa.gov/api/citations/20040086797/downloads/20040086797.pdf"
     density =  2600.0 #kg/m3
-    youngs_modulus = 78.4 #Pa
+    youngs_modulus = 78.4e9 #Pa
     shear_modulus = 28e9 #Pa
     poissons_ratio = 0.34
     YTS = 315e6 #Yield tensile strength
@@ -285,3 +287,92 @@ density and 12% higher modulus, as well as other improved properties """
 [vacuum]
     density = 0.0
     conductivity_coeffs = [0.0]
+
+# =====================================================================================
+# Carbon-fibre composites (CFRP) for tank walls.
+# [CF-*]   : dry fibre / neat resin, reference only (dry-tow density is NOT a laminate density).
+# [CFRP-*] : cured laminate (resin included), smeared orthotropic; x = tank axial, y = hoop.
+# Laminate constants come from classical lamination theory (python3 docs/src/cryo_tank/scripts/laminate_CLT.py).
+# Ply: E1/E2 from the HexPly 8552 data sheet (SGP196-P); G12 = 4.2 GPa, nu12 = 0.0538 from a T700SC
+# plain-weave ply table (different fibre, approximate). The 45 deg plies are this ply rotated.
+# Values tagged ASSUMPTION / PLACEHOLDER have no source
+# =====================================================================================
+
+[CF-IM7-fiber]
+    description = "HexTow IM7 12K carbon fibre (reference only, not a tank wall material)"
+    source = "https://www.hexcel.com/wp-content/uploads/2025/12/IM7_HexTow_DataSheet.pdf"
+    density = 1780.0                     # kg/m3, DRY TOW - never use for mass
+
+[CF-8552-resin]
+    description = "HexPly 8552 neat epoxy resin (reference only, for the rule-of-mixtures density check)"
+    source = "https://www.hexcel.com/wp-content/uploads/2025/12/HexPly_8552_eu_DataSheet1.pdf"
+    density = 1301.0                     # kg/m3
+
+[CFRP-IM7-8552-PW-0090]
+    source = "https://www.hexcel.com/wp-content/uploads/2025/12/HexPly_8552_eu_DataSheet1.pdf (SGP196-P ply); NASA NTRS 20130013009 (strain allowable)"
+    description = "Default: IM7/8552 - SPG 196-P - plain-weave 0/90-dominant laminate, 20% +/-45 plies (bare surface). Classical laminate theory (CLT) used to derive net lamniate parameters."
+    layup = "[F0/F0/F45/F0/F0]"
+    ply_thickness = 0.199e-3            # m, cured
+    density = 1560.0                    # kg/m3, cured laminate (resin included)
+    fiber_volume_fraction = 0.5557
+    E1 = 76.0e9                        # Pa, axial
+    E2 = 72.1e9                        # Pa, hoop
+    tensile_strength1 = 1090e6         # Pa, axial
+    tensile_strength2 = 945e6          # Pa, hoop
+    E_equivalent_buckling = 74.0e9     # Pa, sqrt(E1*E2)
+    nu_equivalent_buckling = 0.149     # assumed F0 nu12 = 0.0538, G12 = 4.2GPa (https://onlinelibrary.wiley.com/doi/10.1155/2021/5590448) and F45 nu12 = 0.74, G12 = 30GPa, E = 19.1GPa (Std. CF fabric - https://acpcomposites.com/wp-content/uploads/2023/12/Mechanical-Properties-of-Carbon-Fiber-Composite-Materials.pdf)
+    #strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
+    thermal_conductivity = 0.94         # W/(m K), through-thickness, (untreated) https://www.sciencedirect.com/science/article/abs/pii/S0266353822005425
+    emissivity = 0.75                   # -, at ~225K https://www.sciencedirect.com/science/article/pii/S0011227524002157
+
+[CFRP-IM7-8552-PW-0090-VDA]
+    description = "As CFRP-IM7-8552-PW-0090 with a low-emissivity VDA facing on the vacuum side (for a CFRP outer vessel)"
+    layup = "[F0/F0/F45/F0/F0] + VDA facing"
+    ply_thickness = 0.199e-3            # m, cured
+    density = 1560.0                    # kg/m3, cured laminate (resin included)
+    fiber_volume_fraction = 0.5557
+    E1 = 76.0e9                        # Pa, axial
+    E2 = 72.1e9                        # Pa, hoop
+    E_equivalent_buckling = 74.0e9     # Pa, sqrt(E1*E2)
+    nu_equivalent_buckling = 0.149     # assumed F0 nu12 = 0.0538, G12 = 4.2GPa (https://onlinelibrary.wiley.com/doi/10.1155/2021/5590448) and F45 nu12 = 0.74, G12 = 30GPa, E = 19.1GPa (Std. CF fabric - https://acpcomposites.com/wp-content/uploads/2023/12/Mechanical-Properties-of-Carbon-Fiber-Composite-Materials.pdf)
+    #strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
+    thermal_conductivity = 0.94         # W/(m K), through-thickness, (untreated) https://www.sciencedirect.com/science/article/abs/pii/S0266353822005425
+    emissivity = 0.02                   # -, https://link.springer.com/article/10.1007/s10854-024-12219-x
+    facing_areal_mass = 0.027           # kg/m2, ASSUMPTION: 0.01 mm Al VDA film, 2700 kg/m3 x 1e-5 m (tie coat neglected), optically thick
+
+[CFRP-IM7-8552-PW-QI]
+    description = "IM7/8552 plain-weave quasi-isotropic laminate (alternative layup)"
+    layup = "[F0/F45/F45/F0]"
+    ply_thickness = 0.199e-3            # m, cured
+    density = 1560.0                    # kg/m3, cured laminate (resin included)
+    fiber_volume_fraction = 0.5557
+    E1 = 59.0e9                        # Pa, axial
+    E2 = 56.8e9                        # Pa, hoop
+    E_equivalent_buckling = 57.9e9     # Pa, sqrt(E1*E2)
+    nu_equivalent_buckling = 0.334     # assumed F0 nu12 = 0.0538, G12 = 4.2GPa (https://onlinelibrary.wiley.com/doi/10.1155/2021/5590448) and F45 nu12 = 0.74, G12 = 30GPa, E = 19.1GPa (Std. CF fabric - https://acpcomposites.com/wp-content/uploads/2023/12/Mechanical-Properties-of-Carbon-Fiber-Composite-Materials.pdf)
+    #strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
+    thermal_conductivity = 0.94         # W/(m K), through-thickness, (untreated) https://www.sciencedirect.com/science/article/abs/pii/S0266353822005425
+    emissivity = 0.75                   # -, at ~225K https://www.sciencedirect.com/science/article/pii/S0011227524002157
+
+[CFRP-IM7-8552-UD-RING]
+    description = "IM7/8552 unidirectional tape, all plies along the ring axis [0] (for composite stiffener rings, not a wall laminate)"
+    source = "NCAMP CAM-RP-2009-015 Rev B (8552/IM7 UD 190 gsm, RTD means)"
+    layup = "[0] UD tape"
+    ply_thickness = 0.183e-3            # m, cured
+    density = 1570.0                    # kg/m3, cured laminate (resin included)
+    fiber_volume_fraction = 0.60
+    E1 = 162.0e9                        # Pa, along the fibres (ring circumferential direction)
+    E2 = 9.0e9                          # Pa, transverse
+    E_equivalent_buckling = 38.2e9      # Pa, sqrt(E1*E2)
+    nu_equivalent_buckling = 0.0754     # nu12 = 0.32 -- https://www.sciencedirect.com/science/article/pii/S0266353806000546 , nu21 = nu12*E2/E1
+    #strain_allowable_tension = 2.5e-3   # -, design choice from NASA NTRS 20130013009 (5.0e-3 strain allowable), dozens of cycle loads. This paper describes 10.0e-3 strain for 100,000's of cycles: https://www.tandfonline.com/doi/epdf/10.1080/23311916.2022.2077680?needAccess=true -- additionally we are at cryogenic conditions we need to account for that relative to the paper; lets use 1/2 of the NASA value
+
+# =====================================================================================
+# Design tensile strain allowable of the CFRP tank wall per stored fuel (applies to all [CFRP-*] laminates).
+# Used by composite_strain_allowable unless design_strain_limit > 0.
+# =====================================================================================
+[composite_strain_allowable_by_fuel]
+    LH2  = 1.4e-3   # mm/mm
+    CH4  = 1.8e-3   # mm/mm
+    C2H4 = 2.0e-3   # mm/mm
+    C2H6 = 2.1e-3   # mm/mm
