@@ -84,11 +84,11 @@ Also returns the material gauges, torsional and bending stiffness. Formerly, `ge
     - `gammat::Float64`: Wing outer section taper ratio.
     - `gammas::Float64`: Wing inner section taper ratio.
     - `Nload::Int`: Max vertical load factor for wing bending loads.
-    - `We::Float64`: Weight of the engine.
-    - `neout::Int`:  Number of engines mounted outboard of the wing break (strut attachment point).
-    - `dyeout::Float64`: Spanwise moment arm for outboard engines, measured from the wing break station.
-    - `neinn::Int`: Number of engines mounted inboard of the wing break (strut attachment point).
-    - `dyeinn::Float64`: Spanwise moment arm for inboard engines, measured from the wing break station.
+    - `We::Float64`: Weight of one engine [N].
+    - `neout::Int`:  Number of engines per wing mounted outboard of the wing break (strut attachment point).
+    - `dyeout::Float64`: Average spanwise moment arm of the outboard engines about the wing break station ηs, i.e. ``y_e - y_s`` [m].
+    - `neinn::Int`: Number of engines per wing mounted at or inboard of the wing break (strut attachment point).
+    - `dyeinn::Float64`: Average spanwise moment arm of the inboard engines about the wing root station ηo, i.e. ``y_e - y_o`` [m]. For an engine at the break, ``(b/2)(η_s - η_o)``.
     - `sigfac::Float64`: Stress Factor.
     - `rhofuel::Float64`: Density of the fuel.
     - `n_wings::Int64`: Number of total wings (1 for Vtail).
