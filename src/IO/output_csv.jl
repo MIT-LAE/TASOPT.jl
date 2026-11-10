@@ -1,5 +1,5 @@
 export output_csv, default_output_indices
-export output_indices_all, output_indices_wGeom, output_indices_wEngine
+export output_indices_all, output_indices_wEngine
 
 """
     output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
