@@ -103,8 +103,109 @@ using Random
                 @test props.u_p ≈ u_pFD rtol = 1e-2
             end
         end
+
+        ### Ethane -- tolerances marginally wider due to poorer fit at 0.5 atm
+        species = "C2H6"
+
+        #Data from NIST for saturated vapor
+        ps = [0.5, 1.0, 2.0, 5.0] * p_atm 
+        Tsats = [172.6416, 184.5686, 198.4778, 220.7933]
+        ρs = [1.0831, 2.0544, 3.9087, 9.2729]
+        us = [428.7878, 440.0834, 452.7523, 471.5384] * 1e3
+        hs = [475.562, 489.4044, 504.5978, 526.1732] * 1e3
+
+        @testset "Ethane gas" begin
+            for (i,p) in enumerate(ps)
+                props = TASOPT.CryoTank.gas_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] rtol = 1e-2
+                @test props.ρ ≈ ρs[i] atol = 1e-1
+                @test props.u ≈ us[i] rtol = 1e-2
+                @test props.h ≈ hs[i] rtol = 1e-2
+
+                props2 = TASOPT.CryoTank.gas_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
+            end
+        end
+
+        #Data from NIST for saturated liquid
+        ps = [0.5, 1.0, 2.0, 5.0] * p_atm 
+        Tsats = [172.6416, 184.5686, 198.4778, 220.7933]
+        ρs = [558.499, 543.8283, 525.9863, 495.1146]
+        us = [-28.9692, -0.18632, 34.0793, 91.0945] * 1e3
+        hs = [-28.8784, 1.1313e-14, 34.4645, 92.1177] * 1e3
+
+        @testset "Ethane liquid" begin
+            for (i,p) in enumerate(ps)
+                props = TASOPT.CryoTank.liquid_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] rtol = 1e-2
+                @test props.ρ ≈ ρs[i] rtol = 1e-2
+                @test props.u ≈ us[i] atol = 4e3
+                @test props.h ≈ hs[i] atol = 4e3
+
+                props2 = TASOPT.CryoTank.liquid_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
+            end
+        end
+
+        
+        #Ethylene -- tolerances marginally wider due to poorer fit at 0.5 atm
+        species = "C2H4"
+
+        #Data from NIST for saturated vapor
+        ps = [0.5, 1.0, 2.0, 5.0] * p_atm 
+        Tsats = [158.4577, 169.3786, 182.1321, 202.6324]
+        ρs = [1.101, 2.0877, 3.9693, 9.4004]
+        us = [425.3804, 433.8779, 443.1265, 455.995] * 1e3
+        hs = [471.3959, 482.4112, 494.1806, 509.8893] * 1e3
+
+        @testset "Ethylene gas" begin
+            for (i,p) in enumerate(ps)
+                props = TASOPT.CryoTank.gas_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] rtol = 1e-2
+                @test props.ρ ≈ ρs[i] atol = 1e-1
+                @test props.u ≈ us[i] rtol = 1e-2
+                @test props.h ≈ hs[i] rtol = 1e-2
+
+                props2 = TASOPT.CryoTank.gas_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
+            end
+        end
+
+        #Data from NIST for saturated liquid
+        ps = [0.5, 1.0, 2.0, 5.0] * p_atm 
+        Tsats = [158.4577, 169.3786, 182.1321, 202.6324]
+        ρs = [583.0112, 567.6547, 549.0225, 516.9152]
+        us = [-26.4663, -0.1785, 30.7315, 81.4175] * 1e3
+        hs = [-26.3794, 2.2289e-14, 31.1006, 82.3976] * 1e3
+
+        @testset "Ethylene liquid" begin
+            for (i,p) in enumerate(ps)
+                props = TASOPT.CryoTank.liquid_properties(species, p)
+                @test props.Tsat ≈ Tsats[i] rtol = 1e-2
+                @test props.ρ ≈ ρs[i] rtol = 1e-2
+                @test props.u ≈ us[i] atol = 4e3
+                @test props.h ≈ hs[i] atol = 4e3
+
+                props2 = TASOPT.CryoTank.liquid_properties(species, p + Δp)
+                ρ_pFD = (props2.ρ - props.ρ) / Δp
+                u_pFD = (props2.u - props.u) / Δp
+                @test props.ρ_p ≈ ρ_pFD rtol = 1e-2
+                @test props.u_p ≈ u_pFD rtol = 1e-2
+            end
+        end
     end
 
+
+    
     @testset "Saturated mixtures" begin
         species = "H2"
         
@@ -276,7 +377,7 @@ end
     p_lo = 0.1 * p_atm_val   # lower bound of polynomial fit domain
     p_hi = 10.0 * p_atm_val  # upper bound
 
-    for species in ("H2", "CH4")
+    for species in ("H2", "CH4", "C2H6", "C2H4")
         @testset "$(species): saturation temperature" begin
             # gas_properties and liquid_properties are both fits to the same
             # saturation curve - Tsat must be identical at any given pressure.
@@ -330,6 +431,4 @@ end
             end
         end
     end
-
-    
 end

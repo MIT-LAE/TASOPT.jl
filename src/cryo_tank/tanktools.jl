@@ -224,6 +224,10 @@ function analyze_TASOPT_tank(ac::aircraft, t_hold_orig::Float64 = 0.0, t_hold_de
         species = "CH4"
     elseif ac.options.opt_fuel == FuelType.LH2
         species = "H2"
+    elseif ac.options.opt_fuel == FuelType.C2H6
+        species = "C2H6"
+    elseif ac.options.opt_fuel == FuelType.C2H4
+        species = "C2H4"
     end
 
     ullage_frac = ac.fuse_tank.ullage_frac

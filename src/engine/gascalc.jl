@@ -1111,10 +1111,10 @@ viscosity, thermal conductivity, specific heat, and Prandtl number.
 function gasPr(gas, T)
       #TODO: replace with new gas model
       if (gas == "air") || (gas == "air_simple")
-            μ0 = 1.716e-5
-            S_μ = 111
-            K0 = 0.0241
-            S_k = 194
+            μ0 = 1.716e-5 # Pa*s
+            S_μ = 111 # K
+            K0 = 0.0241 # W/m/K
+            S_k = 194 # K 
             T0 = 273
 
             if gas == "air" 
@@ -1189,6 +1189,26 @@ function gasPr(gas, T)
             
             igas = 40
             s, s_t, h, h_t, cp, R = gasfun(igas, T)
+
+      # C2H6 and C2H4 were fitted at 1 atm data, 5 K increments from the available NIST data, gas phase only. lsqurevefit w/ MatLab; validation run on O2 data against parameters above.
+      elseif (gas == "c2h6")
+            μ0 = 8.521413e-06
+            S_μ = 260.0
+            K0  = 0.021511
+            S_k = 62914279.304 # not the best fit...
+            T0  = 273.0
+            igas = 12
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
+
+      elseif (gas == "c2h4")
+            μ0 = 9.522285e-06
+            S_μ = 249.926
+            K0  = 0.019785
+            S_k = 36699819.999 # not the best fit...
+            T0  = 273.0
+            igas = 15
+            s, s_t, h, h_t, cp, R = gasfun(igas, T)
+
       end
       
 
@@ -1240,5 +1260,6 @@ function gas_tset_single(igas, hspec, tguess)
             t = t + dt
       end
       println("gas_tset_single: convergence failed.  dT =", dt)
+      return t  # return best estimate rather than nothing to avoid downstream MethodError
 
 end # gas_tset

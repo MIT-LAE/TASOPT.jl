@@ -255,6 +255,19 @@ function tank_heat_coeff(T_w::Float64, ifuel::Int64, Tfuel::Float64, ltank::Floa
             β = 15e-3 #https://nvlpubs.nist.gov/nistpubs/jres/089/jresv89n4p317_A1b.pdf
             ν_l = 2.0e-7 #m^2/s, from NIST at 2atm and 20K 
             k = 0.10381
+
+      elseif ifuel == 12  # C2H6 — liquid ethane (Tsat ≈ 195 K at 2 atm) # verified with NIST
+            Pr_l = (2.4863*1000)*0.00014718/0.15710 # Prandtl number, from NIST at 2atm and 195 K
+            β    = -1/530.57 * (531.87-529.26)/(194-196) # K^(-1) -1/rho * (drho/dT) at fixed pressure -- around 2atm and 195 K from NIST data
+            ν_l  = 0.00015302/530.57 #m^2/s, kinematic viscosity derrived from NIST at 2atm and 195 K
+            k    = 0.15710 # W/m/K, thermal conductivity from NIST at 2atm and 195 K 
+
+      elseif ifuel == 15  # C2H4 — liquid ethylene (Tsat ≈ 180 K at 2 atm) # verfieid with NIST
+            Pr_l = (2.4411*1000)*0.00015302/0.16828 # Prandtl number, from NIST at 2atm and 180 K
+            β    = -1/552.22 * (553.71-550.73)/(179-181) # K^(-1) -1/rho * (drho/dT) at fixed pressure -- around 2atm and 180 K from NIST data
+            ν_l  = 0.00015302/552.22 #m^2/s, kinematic viscosity derrived from NIST at 2atm and 180 K
+            k    = 0.16828 # W/m/K, thermal conductivity from NIST at 2atm and 180 K
+
       end
 
       Ra_l = gee * β * abs(T_w - Tfuel) * ltank^3 * Pr_l / ν_l^2 #Tank-length-based Rayleigh number

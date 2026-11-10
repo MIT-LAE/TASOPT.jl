@@ -54,6 +54,10 @@ function gasfun(igas, t)
         s, h, cp, r = gas_C14H30(t)
     elseif (igas == 40)
         s, h, cp, r = gas_H2(t)
+    elseif (igas == 15)
+        s, h, cp, r = gas_C2H4(t)
+    elseif (igas == 16)
+        s, h, cp, r = gas_C2H5OH(t)
     else
         error("GASFUN: undefined gas index: ", igas, " & code=0")
     end
@@ -121,6 +125,13 @@ function gaschem(igas)
     elseif (igas == 40)  #   H2
         buf[kc] = 0
         buf[kh] = 2
+    elseif (igas == 15)  #   C2H4
+        buf[kc] = 2
+        buf[kh] = 4
+    elseif (igas == 16)  #   C2H5OH
+        buf[kc] = 2
+        buf[kh] = 6
+        buf[ko] = 1
     else
         error("GASFUN: undefined gas index: ", igas, " & code=0")
     end
@@ -201,6 +212,20 @@ function gas_H2(t1, t, tl, cp, cpt, h, s)
     get_thermo(r, hform, t1, t, tl, cp, cpt, h, s)
 end # gas_H2
 
+function gas_C2H4(t1, t, tl, cp, cpt, h, s)
+    M = (2*12.011 + 4*1.008)/1000 # kg/mol
+    r = 8.31446261815324/M # J/kg-K
+    hform = 52.47*1000/M # J/kg # NIST - Chase, 1998
+    get_thermo(r, hform, t1, t, tl, cp, cpt, h, s)
+end
+
+function gas_C2H5OH(t1, t, tl, cp, cpt, h, s)
+    M = (2*12.011 + 6*1.008 + 1*15.999)/1000 # kg/mol
+    r = 8.31446261815324/M # J/kg-K
+    hform = -234.7*1000/M # J/kg # NIST Chao & Rossini 1965 - hform gas
+    get_thermo(r, hform, t1, t, tl, cp, cpt, h, s)
+end
+
 macro define_gas_method(func_name, gas_name)
     func_symbol = esc(func_name)
     gas_symbol = esc(gas_name)
@@ -229,6 +254,8 @@ end
 @define_gas_method gas_C8H18 C8H18
 @define_gas_method gas_C14H30 C14H30
 @define_gas_method gas_H2 H2
+@define_gas_method gas_C2H4 C2H4
+@define_gas_method gas_C2H5OH C2H5OH
 
 """
     findsegment(x::T, xarr::Vector{T})

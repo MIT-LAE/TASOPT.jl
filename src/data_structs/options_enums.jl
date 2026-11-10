@@ -46,7 +46,7 @@ Fuel type carried by the aircraft.
 - `LH2`: liquid hydrogen
 - `CH4`: liquid methane
 """
-@enumx FuelType JetA LH2 CH4
+@enumx FuelType JetA LH2 CH4 C2H6 C2H4 C2H5OH
 
 # ---------------------------------------------------------------------------
 # Canonical string representations (for TOML via save_model)
@@ -75,9 +75,12 @@ function Base.string(move::WingMove.T)
 end
 
 function Base.string(fuel::FuelType.T)
-    fuel == FuelType.JetA && return "JET-A"
-    fuel == FuelType.LH2  && return "LH2"
-    fuel == FuelType.CH4  && return "CH4"
+    fuel == FuelType.JetA   && return "JET-A"
+    fuel == FuelType.LH2    && return "LH2"
+    fuel == FuelType.CH4    && return "CH4"
+    fuel == FuelType.C2H6   && return "C2H6"
+    fuel == FuelType.C2H4   && return "C2H4"
+    fuel == FuelType.C2H5OH && return "C2H5OH"
     error("Unknown FuelType value: $fuel")
 end
 
