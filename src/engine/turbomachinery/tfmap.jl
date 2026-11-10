@@ -311,8 +311,8 @@ function ecmap1(pratio, m, piD, mbD, ABCDm, iabcd, effo, Tr, pr)
     prat = (pratio - 1.0) / (piD - 1.0)
     mrat = mb / mbD
 
-    psgn = sign(1.0, prat / m^2 - 1.0)
-    msgn = sign(1.0, mrat / mrato - 1.0)
+    psgn = copysign(1.0, prat / m^2 - 1.0)
+    msgn = copysign(1.0, mrat / mrato - 1.0)
 
     #c    eo  = 1.0 - D*(  abs(1.0 /mrato   - 1.0))^id
     eo = 1.0
