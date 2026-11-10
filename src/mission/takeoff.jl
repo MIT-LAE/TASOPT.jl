@@ -145,8 +145,8 @@ function takeoff!(ac; imission=1, printTO = true)
         parm[imlBF] = lBF
         parm[imtTO] = tTO
         parm[imFTO] = FTO
-        parm[imgamVTO] = asin[singTO]
-        parm[imgamVBF] = asin[singBF]
+        parm[imgamVTO] = asin(singTO)
+        parm[imgamVBF] = asin(singBF)
 
         return
     end
@@ -162,6 +162,8 @@ function takeoff!(ac; imission=1, printTO = true)
     end
     
     #---- Newton iteration loop
+    local dl1, dlBF
+    converged = false
     for iter = 1:15
         exA = exp(kA * (-l1))
         exB = exp(kB * (lBF - l1))
@@ -197,43 +199,46 @@ function takeoff!(ac; imission=1, printTO = true)
         lBF = lBF + dlBF
 
         if (dmax < toler * lTO)
-
-            V1 = VAlim * sqrt(1.0 - exp(-kA * l1))
-
-            #---- engine-out climbout, gear down
-            F2 = F0 - KV * 0.5 * V2^2
-            CD = CDclimb + CDgear + CDeng
-            #cc   singBF = (F2 - 0.5*V2^2 * rho0*S*CDb) / W
-            singBF = (F2 - 0.5 * V2^2 * rho0 * S * CD) / W
-            singBF = max(0.01, min(0.99, singBF))
-
-            #---- calculate fuel burn during takeoff run
-            ip1 = ipstatic
-            ip2 = iprotate
-            mdotf1 = pare[iemcore, ip1] * pare[ieff, ip1] * neng
-            mdotf2 = pare[iemcore, ip2] * pare[ieff, ip2] * neng
-            WfTO = 0.5 * (mdotf1 + mdotf2) * tTO * gee
-            para[iafracW, ipstatic] = para[iafracW, iptakeoff] +
-                                      WfTO / parg[igWMTO]
-            para[iatime, ipstatic] = para[iatime, iptakeoff] - tTO
-            para[iaRange, ipstatic] = para[iaRange, iptakeoff] - lTO
-
-            #---- store output quantities for returning
-            parm[imV1] = V1
-            parm[imV2] = V2
-            parm[imlTO] = lTO
-            parm[iml1] = l1
-            parm[imlBF] = lBF
-            parm[imtTO] = tTO
-            parm[imFTO] = FTO
-            parm[imgamVTO] = asin(singTO)
-            parm[imgamVBF] = asin(singBF)
-
-            return
+            converged = true
+            break
         end
     end
-    println("TAKEOFF: BFL convergence failed.  dl1,dlBF=", dl1, dlBF)
-    println("         Continuing anyway...")
+    if !converged
+        println("TAKEOFF: BFL convergence failed.  dl1,dlBF=", dl1, dlBF)
+        println("         Continuing anyway...")
+    end
 
+    V1 = VAlim * sqrt(1.0 - exp(-kA * l1))
+
+    #---- engine-out climbout, gear down
+    F2 = F0 - KV * 0.5 * V2^2
+    CD = CDclimb + CDgear + CDeng
+    #cc   singBF = (F2 - 0.5*V2^2 * rho0*S*CDb) / W
+    singBF = (F2 - 0.5 * V2^2 * rho0 * S * CD) / W
+    singBF = max(0.01, min(0.99, singBF))
+
+    #---- calculate fuel burn during takeoff run
+    ip1 = ipstatic
+    ip2 = iprotate
+    mdotf1 = pare[iemcore, ip1] * pare[ieff, ip1] * neng
+    mdotf2 = pare[iemcore, ip2] * pare[ieff, ip2] * neng
+    WfTO = 0.5 * (mdotf1 + mdotf2) * tTO * gee
+    para[iafracW, ipstatic] = para[iafracW, iptakeoff] +
+                              WfTO / parg[igWMTO]
+    para[iatime, ipstatic] = para[iatime, iptakeoff] - tTO
+    para[iaRange, ipstatic] = para[iaRange, iptakeoff] - lTO
+
+    #---- store output quantities for returning
+    parm[imV1] = V1
+    parm[imV2] = V2
+    parm[imlTO] = lTO
+    parm[iml1] = l1
+    parm[imlBF] = lBF
+    parm[imtTO] = tTO
+    parm[imFTO] = FTO
+    parm[imgamVTO] = asin(singTO)
+    parm[imgamVBF] = asin(singBF)
+
+    return
 end
 
