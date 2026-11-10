@@ -262,7 +262,7 @@ $TYPEDFIELDS
     """Density [kg/m³]"""
     ρ::Float64 = 0.0
     """Coefficients for thermal conductivity as a function of temperature [W/(m⋅K)]"""
-    conductivity_coeffs::Vector{Float64} = ""
+    conductivity_coeffs::Vector{Float64} = Float64[]
 end
 
 """

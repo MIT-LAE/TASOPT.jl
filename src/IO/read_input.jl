@@ -2,16 +2,16 @@ using TOML
 export read_aircraft_model, load_default_model
 
 """
-    read_input(k::String, dict::AbstractDict=data, 
-    default_dict::AbstractDict = default)
+    read_input(k::String, dict::AbstractDict, 
+    default_dict::AbstractDict)
 
 Reads the input from a given dictonary (typically parsed from a TOML file).
 If requested input does not exist in dictionary, looks for value in default input
 and stores default value into the given dictionary (primarily for later output/
 saving as an aircraft model file)
 """
-function read_input(k::String, dict::AbstractDict=data, 
-    default_dict::AbstractDict = default)
+function read_input(k::String, dict::AbstractDict, 
+    default_dict::AbstractDict)
 
     get!(dict, k) do 
         if k in keys(default_dict)

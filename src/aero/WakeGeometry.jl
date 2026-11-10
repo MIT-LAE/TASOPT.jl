@@ -90,6 +90,9 @@ Returns an SVector of WakeElements using provided points and control points.
         control_point=control_points[i]) for i in 1:N-1)
 end
 
+generate_wake_elements(points::SVector{N,Point2D}, ::Nothing) where {N} =
+    generate_wake_elements(points)
+
 #Convenience functions to get element lengths, Δy's and Δz's
 function element_lengths(wake_elements::SVector{N, WakeElement}) where N
     SVector{N, Float64}(wake_elements[i].length for i in 1:N)
@@ -153,7 +156,7 @@ ctrl_ys(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 1) #
 ctrl_zs(WS::WakeSystem) = getindex.(getfield.(WS.elements, :control_point), 2) #z-component
 
 function WakeSystem(points::SVector{NP, Point2D}; 
-    control_points::Union{SVector{NC, Point2D}, Nothing}=nothing) where {NP, NC}
+    control_points::Union{SVector{<:Any, Point2D}, Nothing}=nothing) where {NP}
 
     elements = generate_wake_elements(points, control_points)
     NE = NP - 1
