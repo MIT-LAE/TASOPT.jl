@@ -309,9 +309,9 @@ readgeom(x) = read_input(x, geom, dgeom)
     dy = Distance(readgeom("y_offset"))
 
     if n_bubbles > 1 && dy == 0.0
-        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        @warn "Multi-bubble ('$(n_bubbles)') fuselage specified but "*
         "y-offset of bubble set to 0.0. "*
-        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 1"
         n_bubbles = 1
     end
 
