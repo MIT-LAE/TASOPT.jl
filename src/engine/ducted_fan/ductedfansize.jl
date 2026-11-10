@@ -112,6 +112,7 @@ function ductedfansize!(gee, M0, T0, p0, a0, M2,
       npass = 60
 
       sbfan = 0.0
+      local dmfrac
       for ipass = 1:npass
 
             # ===============================================================

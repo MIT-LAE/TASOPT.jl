@@ -7,7 +7,7 @@ replacing the turbofan code such as `tfoper`, `tfsize`etc.
 """
 module propsys
 
-import ..TASOPT: __TASOPTindices__, __TASOPTroot__
+import ..TASOPT: __TASOPTindices__, __TASOPTroot__, gee
 using ..materials
 using ..engine
 using DocStringExtensions

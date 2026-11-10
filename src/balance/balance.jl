@@ -172,7 +172,7 @@ function balance_aircraft!(ac, imission, ip, rfuel, rpay, ξpay, opt_trim_var; L
       if CL == 0.0
             CL = 1.23e-6
             #if verbose, give warning
-            if Ldebug @warn("Stability calcs in `balance_aircraft!()` approximated aircraft CL = 0 as "*eps) end
+            if Ldebug @warn("Stability calcs in `balance_aircraft!()` approximated aircraft CL = 0 as $(CL)") end
       end
 
       cCM = co * CMw0 + (co * CMw1 - xwbox) * (CL - CLh * Sh / S) +

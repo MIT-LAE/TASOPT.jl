@@ -2,16 +2,16 @@ using TOML
 export read_aircraft_model, load_default_model
 
 """
-    read_input(k::String, dict::AbstractDict=data, 
-    default_dict::AbstractDict = default)
+    read_input(k::String, dict::AbstractDict, 
+    default_dict::AbstractDict)
 
 Reads the input from a given dictonary (typically parsed from a TOML file).
 If requested input does not exist in dictionary, looks for value in default input
 and stores default value into the given dictionary (primarily for later output/
 saving as an aircraft model file)
 """
-function read_input(k::String, dict::AbstractDict=data, 
-    default_dict::AbstractDict = default)
+function read_input(k::String, dict::AbstractDict, 
+    default_dict::AbstractDict)
 
     get!(dict, k) do 
         if k in keys(default_dict)
@@ -46,7 +46,7 @@ Speed(x)    = convertSpeed(parse_unit(x)...)
 Distance(x)      = convertDist(parse_unit(x)...)
 Force(x)    = convertForce(parse_unit(x)...)
 Pressure(x) = convertPressure(parse_unit(x)...)
-Stress = Pressure
+const Stress = Pressure
 Density(x)  = convertDensity(parse_unit(x)...)
 Area(x)     = convertArea(parse_unit(x)...)
 Vol(x)      = convertVolume(parse_unit(x)...)
@@ -309,9 +309,9 @@ readgeom(x) = read_input(x, geom, dgeom)
     dy = Distance(readgeom("y_offset"))
 
     if n_bubbles > 1 && dy == 0.0
-        @warn "Multi-bubble ('$(n_webs+1)') fuselage specified but "*
+        @warn "Multi-bubble ('$(n_bubbles)') fuselage specified but "*
         "y-offset of bubble set to 0.0. "*
-        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 0"
+        "Assuming this is a single-bubble design and setting 'number_of_bubbles' = 1"
         n_bubbles = 1
     end
 

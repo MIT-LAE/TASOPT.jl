@@ -47,6 +47,7 @@ function Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
     #---- corrected speed ratio initial guess from spine
     N = m^(1.0 / b)
 
+    local dN
     #---- converge to actual corrected speed by inverting compressor map function
     for iter = 1:20
 
@@ -310,8 +311,8 @@ function ecmap1(pratio, m, piD, mbD, ABCDm, iabcd, effo, Tr, pr)
     prat = (pratio - 1.0) / (piD - 1.0)
     mrat = mb / mbD
 
-    psgn = sign(1.0, prat / m^2 - 1.0)
-    msgn = sign(1.0, mrat / mrato - 1.0)
+    psgn = copysign(1.0, prat / m^2 - 1.0)
+    msgn = copysign(1.0, mrat / mrato - 1.0)
 
     #c    eo  = 1.0 - D*(  abs(1.0 /mrato   - 1.0))^id
     eo = 1.0
@@ -477,26 +478,6 @@ function Pimap(mb, Nb, piD, mbD, NbD, Cmap)
 
     return pratio, pi_mb, pi_Nb
 end # Pimap
-
-pratio = 10.0
-mb = 100.0
-Nb = 10.0
-piD = 15.0
-mbD = 120.0
-NbD = 10.0
-
-Cmap = zeros(9)
-Cmap[1] = 3.50
-Cmap[2] = 0.80
-Cmap[3] = 0.03
-Cmap[4] = 0.75
-Cmap[5] = -0.5
-Cmap[6] = 3.0
-Cmap[7] = 6.0
-Cmap[8] = 2.5
-Cmap[9] = 15.0
-
-eff, eff_pi, eff_mb = Pimap(mb, Nb, piD, mbD, NbD, Cmap)
 
 """
     find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)

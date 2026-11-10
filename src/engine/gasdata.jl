@@ -9,7 +9,7 @@ struct simple_gas
 end
 
 
-function simple_gas(; t=t, tl=tl, cp=cp, cpt=cpt, h=h, s=s)
+function simple_gas(; t, tl, cp, cpt, h, s)
     return simple_gas(t, tl, cp, cpt, h, s)
 end  # function simple_gas
 

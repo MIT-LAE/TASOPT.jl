@@ -1,5 +1,5 @@
 export output_csv, default_output_indices
-export output_indices_all, output_indices_wGeom, output_indices_wEngine
+export output_indices_all, output_indices_wEngine
 
 """
     output_csv(ac::TASOPT.aircraft=TASOPT.load_default_model(), 
@@ -269,7 +269,7 @@ For example:
 2 : `default_output_indices["para"] = Colon() #NOT [Colon()]`
         > when submitted to `output_csv()`, will output all indices of `para` (whether all flights or missions are included is controlled by a separate parameter)
 """
-default_output_indices = 
+const default_output_indices = 
     Dict("parg" => [#weights
                     igWMTO, igWfuel, igWpay, igWpaymax,
                     igWtesys, igWftank, 
@@ -287,10 +287,10 @@ default_output_indices =
         "pare" => [iehfuel, ieTfuel, ieff, ieTSFC, ieBPR, ieOPR, iepif, iepilc, iepihc
         ])
 
-output_indices_wEngine = deepcopy(default_output_indices)
+const output_indices_wEngine = deepcopy(default_output_indices)
 #append engine params
-pareinds = output_indices_wEngine["pare"]
-pare_toadd = [
+const pareinds = output_indices_wEngine["pare"]
+const pare_toadd = [
             ieFe, ieFsp,
             ieN1, ieN2,#spool speeds
             #core flow
@@ -306,7 +306,7 @@ pare_toadd = [
 append!(pareinds, pare_toadd)
 output_indices_wEngine["pare"] = pareinds
 
-output_indices_all =  Dict("parg" => Colon(),
+const output_indices_all =  Dict("parg" => Colon(),
                             "parm" => Colon(),
                             "para" => Colon(),
                             "pare" => Colon())

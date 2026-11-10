@@ -58,7 +58,7 @@ The following are **not** semver-protected and may change in minor/patch release
 - Submodule exports and internals (for example, `TASOPT.engine.*`, `TASOPT.aerodynamics.*`, `TASOPT.CryoTank.*`).
 - Non-listed top-level exports.
 - `quicksave_aircraft` and `quickload_aircraft` (JLD2 snapshot helpers).
-- CSV index helper exports (`default_output_indices`, `output_indices_all`, `output_indices_wGeom`, `output_indices_wEngine`).
+- CSV index helper exports (`default_output_indices`, `output_indices_all`, `output_indices_wEngine`).
 - Internal struct field layouts unless explicitly documented in the stable list above.
 - Internal solver, gas model, and mission iteration details.
 

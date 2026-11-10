@@ -249,7 +249,7 @@ function gas_prat(alpha, n, po, to, ho, so, cpo, ro, pratio, epol)
       end
 
       println("gas_prat: convergence failed.  dT =", dt)
-      println("To pratio ='", To, pratio)
+      println("To pratio ='", to, pratio)
 
 end # gas_prat
 
@@ -1189,6 +1189,8 @@ function gasPr(gas, T)
             
             igas = 40
             s, s_t, h, h_t, cp, R = gasfun(igas, T)
+      else
+            error("gasPr: unknown gas \"$gas\"")
       end
       
 

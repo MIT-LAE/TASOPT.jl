@@ -48,12 +48,12 @@ Refer to the docs for a summary of the main `struct`s.
 
     is_sized::Vector{Bool} = [false]
 
-    fuselage::Fuselage = Fuselage()
+    fuselage::Fuselage
     fuse_tank::fuselage_tank = fuselage_tank()
     wing::Wing = Wing()
     htail::Tail = Tail()
     vtail::Tail = Tail()
-    engine::Engine = Engine()
+    engine::Engine
     landing_gear::LandingGear = LandingGear()
     #TODO: update DOCSTRING for ANY NEW fields/sub-structures
     wake_system::WS

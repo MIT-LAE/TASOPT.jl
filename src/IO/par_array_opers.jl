@@ -1,4 +1,4 @@
-export init_par_arrays, fill_par_entry, generate_par_indname
+export init_par_arrays, generate_par_indname
 global par_indname
 export array2nestedvectors, nestedvectors2array
 
