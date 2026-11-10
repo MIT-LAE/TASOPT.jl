@@ -250,6 +250,7 @@ function tfsize!(gee, M0, T0, p0, a0, M2, M25,
 
       sbfan = 0.0
       sbcore = 0.0
+      local dmfrac
       for ipass = 1:npass
 
             # ===============================================================

@@ -117,8 +117,7 @@ function _axisymm_BL(ndim, n, ite, xᵢ, bi, rni, uinv, Reyn, Mach, fexcr )
       ε = 1.0e-6
 
       if(n > idim) 
-       println("_axisymm_BL: Local array overflow.  Increase idim to", n)
-       quit()
+       error("_axisymm_BL: Local array overflow.  Increase idim to ", n)
       end
 
       gmi = ɣ - 1.0

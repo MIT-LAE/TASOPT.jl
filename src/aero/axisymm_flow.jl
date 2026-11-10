@@ -58,16 +58,14 @@ function _axisymm_flow(xnose, xend, xblend1, xblend2, Amax,
       ispace =  1     # cosine  x spacing
 
       if(nc > idim) 
-	println("_axisymm_flow: Local-array overflow.  Increase idim to", nc)
-        quit()
+	error("_axisymm_flow: Local-array overflow.  Increase idim to ", nc)
       end
 
       ilte  = nc + 1
       nl = nc + Int(floor(nc/2)) + 2
 
       if(nl > nldim) 
-	println("_axisymm_flow: Passed-in array overflow.  Increase nldim to", nl)
-        quit()
+	error("_axisymm_flow: Passed-in array overflow.  Increase nldim to ", nl)
       end
 
       # xl  = @MVector zeros(nldim)

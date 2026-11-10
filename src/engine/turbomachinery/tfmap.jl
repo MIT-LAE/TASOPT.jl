@@ -47,6 +47,7 @@ function Ncmap(pratio, mb, piD, mbD, NbD, Cmap)
     #---- corrected speed ratio initial guess from spine
     N = m^(1.0 / b)
 
+    local dN
     #---- converge to actual corrected speed by inverting compressor map function
     for iter = 1:20
 
