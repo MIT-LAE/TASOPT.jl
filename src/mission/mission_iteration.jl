@@ -659,7 +659,7 @@ function _mission_iteration!(ac, imission, Ldebug; calculate_cruise = false)
             para[iaalt, ip] = alt
 
             rhocab = max(parg[igpcabin], p0) / (RSL * Tref)
-            para[iaWbuoy, ip] = (rhocab - rho0) * gee * parg[igcabVol]
+            para[iaWbuoy, ip] = (rhocab - ρ0) * gee * parg[igcabVol]
       end
       para[iaWbuoy, ipdescentn] = 0.0
 
