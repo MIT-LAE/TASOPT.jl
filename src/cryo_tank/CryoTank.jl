@@ -9,6 +9,7 @@ using ..structures
 using ..TASOPT: fuselage_tank, aircraft
 using ..materials
 using NLsolve
+using ForwardDiff
 using Roots
 using NLopt
 using OrdinaryDiffEq

@@ -333,3 +333,161 @@ end
 
     
 end
+
+# ── Scaled fuselage cross-section ───────────────────────────────────────────
+# `scaled_cross_section(cs, R)` returns (perimeter, area) of a cross-section that
+# is geometrically similar to `cs` but has radius `R`. It is used by the tank
+# mechanical and thermal sizing (size_inner_tank, size_outer_tank, residuals_Q).
+# Strategy: (i) compare against closed-form geometry written independently of
+# `area`/`get_perimeter`, and (ii) test invariants of a similarity transform.
+@testset "Scaled cross-section" begin
+    scs  = TASOPT.scaled_cross_section
+    SB   = TASOPT.SingleBubble
+    MB   = TASOPT.MultiBubble
+    get_perimeter = TASOPT.structures.get_perimeter
+    cs_area       = TASOPT.structures.area
+
+    # Independent closed-form references -------------------------------------
+    # Single bubble: circle of radius R whose lower half is moved down by ΔR,
+    # joined by a rectangle of size 2R x ΔR.
+    sb_perimeter(R, ΔR) = 2π * R + 2ΔR
+    sb_area(R, ΔR)      = π * R^2 + 2R * ΔR
+
+    # Double bubble (one web): union of two circles of radius R whose centres are
+    # at y = ±dy, plus the same 2R x ΔR block. The union area is built from the
+    # circle-circle "lens" overlap, and the outer perimeter from the arc that
+    # lies outside the other circle, so this does not reuse TASOPT's web_geometry.
+    function db_reference(R, ΔR, dy)
+        d     = 2dy                                  # centre distance
+        lens  = 2R^2 * acos(d / (2R)) - (d / 2) * sqrt(4R^2 - d^2)
+        area  = 2π * R^2 - lens + 2R * ΔR
+        φ     = acos(dy / R)                         # half-angle buried inside the other circle
+        perim = 2 * R * (2π - 2φ) + 2ΔR
+        return perim, area
+    end
+
+    sb  = SB(radius = 2.5, bubble_lower_downward_shift = 0.3)
+    mb  = MB(radius = 2.0, bubble_lower_downward_shift = 0.4,
+             bubble_center_y_offset = 0.5, n_webs = 1)
+
+    @testset "SingleBubble: closed form" begin
+        for R in (0.5, 1.0, 2.5, 3.7, 6.0)
+            p, A = scs(sb, R)
+            k    = sb.bubble_lower_downward_shift / sb.radius   # similarity ratio ΔR/R
+            @test p ≈ sb_perimeter(R, k * R)
+            @test A ≈ sb_area(R, k * R)
+        end
+        # Hand-computed value: R = 2.5, ΔR = 0.3
+        p, A = scs(sb, 2.5)
+        @test p ≈ 5π + 0.6
+        @test A ≈ 6.25π + 1.5
+    end
+
+    @testset "SingleBubble: identity and ratio" begin
+        # Scaling to its own radius must return the unscaled geometry
+        p, A = scs(sb, sb.radius)
+        @test p ≈ get_perimeter(sb)
+        @test A ≈ cs_area(sb)
+
+        # A circle (ΔR = 0) must reduce to the circle formulas
+        circle = SB(radius = 1.7, bubble_lower_downward_shift = 0.0)
+        for R in (0.3, 1.7, 4.0)
+            p, A = scs(circle, R)
+            @test p ≈ 2π * R
+            @test A ≈ π * R^2
+        end
+    end
+
+    @testset "MultiBubble: closed form" begin
+        for (R0, ΔR0, dy0) in ((2.0, 0.4, 0.5), (3.0, 0.2, 1.0), (1.5, 0.0, 0.3))
+            cs = MB(radius = R0, bubble_lower_downward_shift = ΔR0,
+                    bubble_center_y_offset = dy0, n_webs = 1)
+            for s in (0.4, 1.0, 1.9)                 # scale factors
+                R = s * R0
+                p, A = scs(cs, R)
+                p_ref, A_ref = db_reference(R, s * ΔR0, s * dy0)
+                @test p ≈ p_ref
+                @test A ≈ A_ref
+            end
+        end
+        # Special geometry with a hand-computed answer: dy = R/2 -> θ = 30°,
+        # so the web sits at sin(θ) = 1/2 and sin(2θ) = √3/2.
+        cs = MB(radius = 2.0, bubble_lower_downward_shift = 0.0,
+                bubble_center_y_offset = 1.0, n_webs = 1)
+        p, A = scs(cs, 2.0)
+        @test p ≈ (2π + 4 * π / 6) * 2.0
+        @test A ≈ (π + (2π / 6 + √3 / 2)) * 2.0^2
+    end
+
+    @testset "MultiBubble: identity and limits" begin
+        p, A = scs(mb, mb.radius)
+        @test p ≈ get_perimeter(mb)
+        @test A ≈ cs_area(mb)
+
+        # With the bubble centres on top of each other (dy -> 0) the double
+        # bubble degenerates to a single bubble.
+        mb_dy0 = MB(radius = 2.0, bubble_lower_downward_shift = 0.4,
+                    bubble_center_y_offset = 1e-12, n_webs = 1)
+        sb_eq  = SB(radius = 2.0, bubble_lower_downward_shift = 0.4)
+        for R in (1.0, 2.0, 3.5)
+            @test collect(scs(mb_dy0, R)) ≈ collect(scs(sb_eq, R)) rtol = 1e-9
+        end
+
+        # A MultiBubble with no webs is also a single bubble
+        mb_noweb = MB(radius = 2.0, bubble_lower_downward_shift = 0.4,
+                      bubble_center_y_offset = 0.5, n_webs = 0)
+        for R in (1.0, 2.0, 3.5)
+            @test collect(scs(mb_noweb, R)) ≈ collect(scs(sb_eq, R))
+        end
+
+        # A double bubble is larger than a single bubble of the same radius, so it
+        # encloses more area and has a longer perimeter.
+        p_mb, A_mb = scs(mb, 2.0)
+        p_sb, A_sb = scs(sb_eq, 2.0)
+        @test A_mb > A_sb
+        @test p_mb > p_sb
+    end
+
+    cross_sections = (
+        "SingleBubble"            => sb,
+        "SingleBubble (ΔR = 0)"   => SB(radius = 1.9, bubble_lower_downward_shift = 0.0),
+        "MultiBubble, 1 web"      => mb,
+        "MultiBubble, 2 webs"     => MB(radius = 2.2, bubble_lower_downward_shift = 0.3,
+                                        bubble_center_y_offset = 0.6, n_webs = 2),
+    )
+
+    @testset "Similarity invariants: $name" for (name, cs) in cross_sections
+        p0, A0 = scs(cs, cs.radius)
+        radii  = (0.25, 0.8, 1.3, 2.0, 5.0) .* cs.radius
+
+        @testset "Analytic sensitivities: dp/dR = p/R, dA/dR = 2A/R" begin
+            R  = 1.4 * cs.radius
+            h  = 1e-6 * R
+            p, A   = scs(cs, R)
+            pp, Ap = scs(cs, R + h)
+            pm, Am = scs(cs, R - h)
+            @test (pp - pm) / (2h) ≈ p / R rtol = 1e-6
+            @test (Ap - Am) / (2h) ≈ 2A / R rtol = 1e-6
+        end
+
+        @testset "Returns two Float64 values" begin
+            out = scs(cs, 1.1 * cs.radius)
+            @test out isa Tuple{Float64, Float64}
+        end
+    end
+
+    @testset "Fuselage cross-section in the tank sizing path" begin
+        # The default aircraft has a SingleBubble fuselage; the tank code passes
+        # `fuse.layout.cross_section` straight to scaled_cross_section.
+        ac_cs = load_default_model()
+        cs    = ac_cs.fuselage.layout.cross_section
+        @test cs isa SB
+        p, A = scs(cs, cs.radius)
+        @test p ≈ get_perimeter(cs)
+        @test A ≈ cs_area(cs)
+        # Inner tank radius must always yield smaller area/perimeter than the fuselage
+        p_in, A_in = scs(cs, cs.radius - 0.1)
+        @test p_in < p
+        @test A_in < A
+    end
+end

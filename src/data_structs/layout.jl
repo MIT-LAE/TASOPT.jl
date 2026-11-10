@@ -160,23 +160,21 @@ Calculates the geometric properties of a scaled single-bubble cross section.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `cross_section::SingleBubble`: unscaled fuselage cross-section
-    - `R::Float64`: radius of geometrically-similar cross-section (m)
+    - `R::Real`: radius of geometrically-similar cross-section (m)
 
     **Outputs:**
     - `p::Float64`: perimeter
     - `A::Float64`: cross-sectional area (m^2)
 """
-function scaled_cross_section(cross_section::SingleBubble, R::Float64)
-    scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
-    #Scale geometric parameters 
+function scaled_cross_section(cross_section::SingleBubble, R::Real)
+    #Geometric similarity: lengths scale with R. Written explicitly (no copy of the cross-section struct) so that
+    #R can be a ForwardDiff dual number.
     R_Rprev = R / cross_section.radius
+    ΔR = R_Rprev * cross_section.bubble_lower_downward_shift #Scaled downward shift
 
-    #Scale geometric parameters
-    scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
-    scaled_cs.bubble_lower_downward_shift =
-        R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
-
-    return get_perimeter(scaled_cs), area(scaled_cs)
+    perimeter = 2π * R + 2 * ΔR
+    area = π * R^2 + 2 * R * ΔR
+    return perimeter, area
 end
 
 """
@@ -187,24 +185,22 @@ Calculates the geometric properties of a scaled multi-bubble cross section.
 !!! details "🔃 Inputs and Outputs"
     **Inputs:**
     - `cross_section::MultiBubble`: unscaled fuselage cross-section
-    - `R::Float64`: radius of geometrically-similar cross-section (m)
+    - `R::Real`: radius of geometrically-similar cross-section (m)
 
     **Outputs:**
     - `p::Float64`: perimeter
     - `A::Float64`: cross-sectional area (m^2)
 """
-function scaled_cross_section(cross_section::MultiBubble, R::Float64)
-    scaled_cs = deepcopy(cross_section) #Deepcopy to avoid modifying
-    #Scale geometric parameters 
-    R_Rprev = R / cross_section.radius #Radii ratio
+function scaled_cross_section(cross_section::MultiBubble, R::Real)
+    #Geometric similarity: lengths scale with R, while the web angle (asin(offset/radius)) is scale-invariant. 
+    #Written explicitly (no copy of the cross-section struct) so that R can be a ForwardDiff dual number.
+    R_Rprev = R / cross_section.radius
+    ΔR = R_Rprev * cross_section.bubble_lower_downward_shift #Scaled downward shift
+    wg = web_geometry(cross_section) #Angles are the same for the scaled cross-section
 
-    #Scale geometric parameters
-    scaled_cs.radius = R_Rprev * cross_section.radius #Change radius 
-    scaled_cs.bubble_lower_downward_shift =
-        R_Rprev * cross_section.bubble_lower_downward_shift #Change downward shift
-    scaled_cs.bubble_center_y_offset = R_Rprev * cross_section.bubble_center_y_offset
-
-    return get_perimeter(scaled_cs), area(scaled_cs)
+    perimeter = (2π + 4.0 * wg.θ_web * cross_section.n_webs) * R + 2 * ΔR
+    area = (π + cross_section.n_webs * (2wg.θ_web + wg.sin2θ)) * R^2 + 2 * R * ΔR
+    return perimeter, area
 end
 
 """
