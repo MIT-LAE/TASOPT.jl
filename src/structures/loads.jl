@@ -7,7 +7,7 @@ const î = SA[1.0, 0.0, 0.0]
 const ĵ = SA[0.0, 1.0, 0.0]
 const k̂ = SA[0.0, 0.0, 1.0]
 
-next_id = Ref(0)
+const next_id = Ref(0)
 """
 $(TYPEDEF)
 

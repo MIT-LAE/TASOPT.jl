@@ -1087,7 +1087,7 @@ function hxobjf(x::Vector{Float64}, HXgas::HX_gas, HXgeom::HX_tubular)
 end #hxobjf
 
 #Dictionaries with indices for HXs in engine
-PreCDict = Dict{String, Int64}(
+const PreCDict = Dict{String, Int64}(
       "iTp_in" => ieTt19,
       "ipp_in" => iept19,
       "ipc_in" => iept3,
@@ -1095,7 +1095,7 @@ PreCDict = Dict{String, Int64}(
       "iDp"    => iePreCDeltap
 )
 
-InterCDict = Dict{String, Int64}(
+const InterCDict = Dict{String, Int64}(
       "iTp_in" => ieTt25,
       "ipp_in" => iept25,
       "ipc_in" => iept3,
@@ -1103,7 +1103,7 @@ InterCDict = Dict{String, Int64}(
       "iDp"    => ieInterCDeltap
 )
 
-RegenDict = Dict{String, Int64}(
+const RegenDict = Dict{String, Int64}(
       "iTp_in" => ieTt49,
       "ipp_in" => iept49,
       "ipc_in" => iept3,
@@ -1111,7 +1111,7 @@ RegenDict = Dict{String, Int64}(
       "iDp"    => ieRegenDeltap
 )
 
-TurbCDict = Dict{String, Int64}(
+const TurbCDict = Dict{String, Int64}(
       "iTp_in" => ieTt3,
       "ipp_in" => iept3,
       "ipc_in" => iept3,
@@ -1119,7 +1119,7 @@ TurbCDict = Dict{String, Int64}(
       "iDp"    => ieTurbCDeltap
 )
 
-rad_dict = Dict(
+const rad_dict = Dict(
       "iTp_in" => ieTt21,
       "ipp_in" => iept21,
       "iTc_in" => ieRadiatorCoolantT,
@@ -1130,7 +1130,7 @@ rad_dict = Dict(
       "iQheat" => ieRadiatorHeat
       )
 
-HXsDict = Dict{String, Dict}(
+const HXsDict = Dict{String, Dict}(
       "PreC" => PreCDict,
       "InterC" => InterCDict,
       "Regen" => RegenDict,

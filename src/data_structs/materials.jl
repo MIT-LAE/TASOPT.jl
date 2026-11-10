@@ -11,7 +11,7 @@ export StructuralAlloy, Conductor, Insulator, ElectricSteel,
 ThermalInsulator, thermal_conductivity
 export resistivity, resxden
 
-MaterialProperties = TOML.parsefile(joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml"))
+const MaterialProperties = TOML.parsefile(joinpath(__TASOPTroot__,"material_data/MaterialProperties.toml"))
 
 """
 $TYPEDEF

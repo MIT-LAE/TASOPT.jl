@@ -479,26 +479,6 @@ function Pimap(mb, Nb, piD, mbD, NbD, Cmap)
     return pratio, pi_mb, pi_Nb
 end # Pimap
 
-pratio = 10.0
-mb = 100.0
-Nb = 10.0
-piD = 15.0
-mbD = 120.0
-NbD = 10.0
-
-Cmap = zeros(9)
-Cmap[1] = 3.50
-Cmap[2] = 0.80
-Cmap[3] = 0.03
-Cmap[4] = 0.75
-Cmap[5] = -0.5
-Cmap[6] = 3.0
-Cmap[7] = 6.0
-Cmap[8] = 2.5
-Cmap[9] = 15.0
-
-eff, eff_pi, eff_mb = Pimap(mb, Nb, piD, mbD, NbD, Cmap)
-
 """
     find_cooled_hpt_efficiency(epht0, epht_fc, fc0, fc)
 
