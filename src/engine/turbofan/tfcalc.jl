@@ -379,7 +379,7 @@ function tfcalc!(wing, engine, parg::Vector{Float64}, para, pare, ip::Int64, ifu
                 end
 
                 if (Lprint)
-                        println(cplab[ip], opt_calc_call, Tt4, Fe)
+                        println(ip, opt_calc_call, Tt4, Fe)
                         println("Calling TFOPER...", opt_calc_call, opt_cooling, ip)
                         println(DAwsurf, para[iagamV])
                         println(rho0, u0, parg[igWMTO])

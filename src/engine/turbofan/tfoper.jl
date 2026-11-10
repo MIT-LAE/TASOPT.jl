@@ -196,9 +196,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
       rsav = zeros(T, 9)
       asav = zeros(T, 9, 10)
 
-      res_dlls = zeros(T, 9)
-      a_dlls = zeros(T, 9, 9)
-
       Random.seed!(1234) #Seed for RNG in relaxation
 
       #---- number of gas constituents
@@ -2699,84 +2696,6 @@ function tfoper!(gee, M0, T0, p0, a0, Tref, pref,
                   end
             end
 
-
-            if (iter == -2)
-                  for i = 1:9
-                        a_dlls[i, 1] = a[i, 1]
-                        a_dlls[i, 2] = a[i, 2]
-                        a_dlls[i, 3] = a[i, 3]
-                        a_dlls[i, 4] = a[i, 4]
-                        a_dlls[i, 5] = a[i, 5]
-                        a_dlls[i, 6] = a[i, 6]
-                        a_dlls[i, 7] = a[i, 7]
-                        a_dlls[i, 8] = a[i, 8]
-                        a_dlls[i, 9] = a[i, 9]
-                        res_dlls[i] = res[i, 1]
-                  end
-            elseif (iter == -1)
-
-                  for i = 1:9
-                        dd = (res[i, 1] - res_dlls[i]) / eps
-                        aa = (a[i, j] + a_dlls[i, j]) * 0.5
-                        compare(ss, aa, dd)
-                        println("Ja", i, j, aa, ss, "Jd", i, j, dd, ss)
-                  end
-
-                  error("tfoper.jl error due to iter == -1")
-
-            end
-
-
-            if (iter < 0)
-
-                  println("TFOPER: Convergence failed.  opt_call_calc=", opt_calc_call)
-
-                  Tt4 = Tb
-                  pt5 = Pc
-                  BPR = mf / ml * sqrt(Tt19c / Tt2) * pt2 / pt19c
-
-                  println("pt18 Tt18 =", pt18, Tt18)
-                  println("pt2  Tt2  =", pt2, Tt2)
-                  println("pt25 Tt25 =", pt25, Tt25)
-                  println("pt3  Tt3  =", pt3, Tt3)
-                  println("pt4  Tt4  =", pt4, Tt4)
-                  println("pt41 Tt41 =", pt41, Tt41)
-                  println("pt45 Tt45 =", pt45, Tt45)
-                  println("pt5  Tt5  =", pt5, Tt5)
-                  println("p5        =", p5)
-                  println("FPR  BPR  =", pf, BPR)
-
-                  Lconv = false
-                  return TSFC, Fsp, hfuel, ff,
-                  Feng, mcore,
-                  pif, pilc, pihc,
-                  mbf, mblc, mbhc,
-                  Nbf, Nblc, Nbhc,
-                  Tt0, ht0, pt0, cpt0, Rt0,
-                  Tt18, ht18, pt18, cpt18, Rt18,
-                  Tt19, ht19, pt19, cpt19, Rt19,
-                  Tt2, ht2, pt2, cpt2, Rt2,
-                  Tt21, ht21, pt21, cpt21, Rt21,
-                  Tt25, ht25, pt25, cpt25, Rt25,
-                  Tt3, ht3, pt3, cpt3, Rt3,
-                  Tt4, ht4, pt4, cpt4, Rt4,
-                  Tt41, ht41, pt41, cpt41, Rt41,
-                  Tt45, ht45, pt45, cpt45, Rt45,
-                  Tt49, ht49, pt49, cpt49, Rt49,
-                  Tt5, ht5, pt5, cpt5, Rt5,
-                  Tt7, ht7, pt7, cpt7, Rt7,
-                  u0,
-                  T2, u2, p2, cp2, R2, M2,
-                  T25c, u25c, p25c, cp25c, R25c, M25c,
-                  T5, u5, p5, cp5, R5, M5,
-                  T6, u6, p6, cp6, R6, M6, A6,
-                  T7, u7, p7, cp7, R7, M7,
-                  T8, u8, p8, cp8, R8, M8, A8,
-                  u9, A9,
-                  epf, eplc, ephc, epht, eplt,
-                  etaf, etalc, etahc, etaht, etalt,
-                  Lconv
-            end
 
             #---- solve Newton system and set Newton deltas
             res = gaussn(9, 9, a, res, 1)
